@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Privacy policy · TotalDrop</title>
+  <meta name="description" content="What TotalDrop collects (nothing), what its servers can see, and how long anything is kept.">
+  <meta name="theme-color" content="#F4F2FB" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#140E33" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="top">
+    <a class="brand" href="/" aria-label="TotalDrop home">
+      <svg class="mark" viewBox="0 0 112 112" aria-hidden="true">
+        <path class="mk-wave" stroke-width="8" d="M79.61 45.12A26 26 0 1 1 66.88 32.39"/>
+        <path class="mk-wave" stroke-width="6" d="M89.92 34.80A40 40 0 1 1 77.20 22.08"/>
+        <circle class="mk-file" cx="56" cy="56" r="12"/>
+        <circle class="mk-file" cx="92.77" cy="19.23" r="8"/>
+      </svg>
+      <span>TotalDrop</span>
+    </a>
+    <nav class="top-nav top-nav-keep" aria-label="Language">
+      <a href="#en">English</a>
+      <a href="#tr" lang="tr">Türkçe</a>
+    </nav>
+  </header>
+
+  <main id="main" class="prose">
+    <article id="en" lang="en">
+      <p class="eyebrow">Privacy policy · version 1 · 27 October 2026</p>
+      <h1>We collect nothing about you.</h1>
+      <p class="lead">TotalDrop has no accounts, no analytics, no advertising and no crash reporting. This page explains exactly what our servers can see while you transfer files, and how quickly it is gone.</p>
+
+      <h2>Who we are</h2>
+      <p>TotalDrop is a free, open-source project maintained by Ozan Özdil. It applies to the TotalDrop apps, the command-line client and the servers at <code>totaldrop.app</code>. Contact: <a href="mailto:privacy@totaldrop.app">privacy@totaldrop.app</a>.</p>
+
+      <h2>What the apps collect</h2>
+      <p>Nothing. The apps do not ask for your name, email address or phone number, and they contain no tracking, analytics, advertising or crash-reporting code. The only permission the Android app needs is internet access.</p>
+
+      <h2>Your files</h2>
+      <p>Files travel directly from one device to the other, encrypted end to end. Our servers never receive your files, their names or their contents, and could not read them if they did: the keys exist only on the two devices.</p>
+
+      <h2>What the rendezvous server sees</h2>
+      <p>To start a transfer, both devices connect to our rendezvous server at <code>rendezvous.totaldrop.app</code>, which runs on Cloudflare. It helps two devices that share a code find each other. While it does so it necessarily sees:</p>
+      <ul>
+        <li>the IP address of each device, as any internet server does;</li>
+        <li>the number at the start of the code (for example the 7 in 7-harbor-rocket), but never the words;</li>
+        <li>when you connect and the size of the short messages the two devices exchange. After the first two, these messages are encrypted so that only the other device can read them.</li>
+      </ul>
+      <p>The server writes none of this to a log. A mailbox and everything in it is deleted as soon as both devices leave, and after one hour at the latest. After a failed code attempt, only the code's number is remembered for 24 hours, so that it is not reused.</p>
+      <p>Cloudflare, as our infrastructure provider, processes IP addresses to deliver and protect the service under its own <a href="https://www.cloudflare.com/privacypolicy/">privacy policy</a>. We have turned off request logging for the TotalDrop server.</p>
+
+      <h2>What the other device sees</h2>
+      <p>To connect directly, the two devices exchange their network addresses with each other, encrypted. The device you send to therefore learns your local and public IP address, as with any direct connection.</p>
+
+      <h2>On your device</h2>
+      <p>Received files are saved in the <em>Download/TotalDrop</em> folder. The app stores one setting, the rendezvous server address. Nothing from the app is included in cloud backups.</p>
+
+      <h2>Children</h2>
+      <p>TotalDrop is not directed at children and collects no personal data from anyone.</p>
+
+      <h2>Your rights</h2>
+      <p>Because we hold no personal data about you, there is nothing to access, correct or delete. If you have a question or a complaint, write to us at the address above. You also have the right to complain to your data protection authority.</p>
+
+      <h2>Changes</h2>
+      <p>Features planned for later versions (a relay for transfers between networks, links, optional anonymous accounts) will change what our servers handle. We will update this policy before any such feature ships, and keep every version in the project's public repository.</p>
+    </article>
+
+    <article id="tr" lang="tr">
+      <p class="eyebrow">Gizlilik politikası · sürüm 1 · 27 Ekim 2026</p>
+      <h1>Hakkınızda hiçbir şey toplamıyoruz.</h1>
+      <p class="lead">TotalDrop'ta hesap, analiz, reklam ve çökme raporlaması yok. Bu sayfa, dosya gönderirken sunucularımızın tam olarak neyi görebildiğini ve bunun ne kadar çabuk silindiğini anlatır.</p>
+
+      <h2>Biz kimiz</h2>
+      <p>TotalDrop, Ozan Özdil'in yürüttüğü ücretsiz ve açık kaynak bir projedir. Bu politika TotalDrop uygulamalarını, komut satırı istemcisini ve <code>totaldrop.app</code> sunucularını kapsar. İletişim: <a href="mailto:privacy@totaldrop.app">privacy@totaldrop.app</a>.</p>
+
+      <h2>Uygulamalar ne toplar</h2>
+      <p>Hiçbir şey. Uygulamalar adınızı, e-posta adresinizi ya da telefon numaranızı istemez; izleme, analiz, reklam ya da çökme raporlama kodu içermez. Android uygulamasının istediği tek izin internet erişimidir.</p>
+
+      <h2>Dosyalarınız</h2>
+      <p>Dosyalar bir cihazdan diğerine doğrudan ve uçtan uca şifreli gider. Sunucularımız dosyalarınızı, adlarını ya da içeriklerini hiçbir zaman almaz; alsa da okuyamaz, çünkü anahtarlar yalnızca iki cihazda bulunur.</p>
+
+      <h2>Buluşma sunucusu neyi görür</h2>
+      <p>Bir gönderimi başlatmak için iki cihaz da Cloudflare üzerinde çalışan buluşma sunucumuza (<code>rendezvous.totaldrop.app</code>) bağlanır. Bu sunucu, aynı kodu bilen iki cihazın birbirini bulmasını sağlar. Bunu yaparken kaçınılmaz olarak şunları görür:</p>
+      <ul>
+        <li>her cihazın IP adresi (her internet sunucusunun gördüğü gibi);</li>
+        <li>kodun başındaki sayı (örneğin 7-harbor-rocket'taki 7), ama kelimeleri asla;</li>
+        <li>ne zaman bağlandığınız ve iki cihazın değiştirdiği kısa mesajların boyutu. İlk ikisinden sonra bu mesajlar yalnızca karşı cihazın okuyabileceği şekilde şifrelidir.</li>
+      </ul>
+      <p>Sunucu bunların hiçbirini kayda geçirmez. Bir posta kutusu ve içindeki her şey, iki cihaz da ayrılır ayrılmaz, en geç bir saat sonra silinir. Başarısız bir kod denemesinden sonra yalnızca kodun sayısı, yeniden kullanılmasın diye 24 saat hatırlanır.</p>
+      <p>Altyapı sağlayıcımız Cloudflare, hizmeti ulaştırmak ve korumak için IP adreslerini kendi <a href="https://www.cloudflare.com/privacypolicy/">gizlilik politikası</a> kapsamında işler. TotalDrop sunucusu için istek kaydını kapattık.</p>
+
+      <h2>Karşı cihaz neyi görür</h2>
+      <p>Doğrudan bağlanabilmek için iki cihaz ağ adreslerini birbirine şifreli olarak iletir. Bu yüzden gönderdiğiniz cihaz, her doğrudan bağlantıda olduğu gibi yerel ve genel IP adresinizi öğrenir.</p>
+
+      <h2>Cihazınızda</h2>
+      <p>Alınan dosyalar <em>İndirilenler/TotalDrop</em> klasörüne kaydedilir. Uygulama tek bir ayar saklar: buluşma sunucusunun adresi. Uygulamaya ait hiçbir şey bulut yedeklerine alınmaz.</p>
+
+      <h2>Çocuklar</h2>
+      <p>TotalDrop çocuklara yönelik değildir ve kimseden kişisel veri toplamaz.</p>
+
+      <h2>Haklarınız</h2>
+      <p>Hakkınızda hiçbir kişisel veri tutmadığımız için erişilecek, düzeltilecek ya da silinecek bir şey yoktur. Bir sorunuz ya da şikâyetiniz varsa yukarıdaki adrese yazın. Kişisel Verileri Koruma Kurumu'na ya da bulunduğunuz ülkedeki veri koruma otoritesine başvurma hakkınız da vardır.</p>
+
+      <h2>Değişiklikler</h2>
+      <p>Sonraki sürümlerde planlanan özellikler (farklı ağlar arası gönderim için aktarma sunucusu, bağlantılar, isteğe bağlı anonim hesaplar) sunucularımızın işlediği bilgileri değiştirecek. Bu politikayı, böyle bir özellik yayınlanmadan önce güncelleyeceğiz ve her sürümünü projenin açık deposunda saklayacağız.</p>
+    </article>
+  </main>
+
+  <footer class="foot">
+    <p>TotalDrop is open source and built in the open.</p>
+    <p class="foot-links"><a href="/">totaldrop.app</a> <a href="mailto:privacy@totaldrop.app">privacy@totaldrop.app</a></p>
+  </footer>
+</body>
+</html>

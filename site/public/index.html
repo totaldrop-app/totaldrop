@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TotalDrop: send files directly, encrypted end to end</title>
+  <meta name="description" content="TotalDrop is a free, open-source app that sends files directly from one device to another, encrypted end to end. No account, no email, no phone number.">
+  <meta name="theme-color" content="#F4F2FB" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#140E33" media="(prefers-color-scheme: dark)">
+  <meta property="og:title" content="TotalDrop">
+  <meta property="og:description" content="Send files directly from your device to theirs. Free, open source, end-to-end encrypted.">
+  <meta property="og:url" content="https://totaldrop.app/">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="alternate" type="application/atom+xml" title="TotalDrop releases" href="https://github.com/totaldrop-app/totaldrop/releases.atom">
+  <link rel="preload" href="/fonts/bricolage-grotesque-latin-800-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
+
+  <header class="top">
+    <a class="brand" href="/" aria-label="TotalDrop home">
+      <svg class="mark" viewBox="0 0 112 112" aria-hidden="true">
+        <path class="mk-wave" stroke-width="8" d="M79.61 45.12A26 26 0 1 1 66.88 32.39"/>
+        <path class="mk-wave" stroke-width="6" d="M89.92 34.80A40 40 0 1 1 77.20 22.08"/>
+        <circle class="mk-file" cx="56" cy="56" r="12"/>
+        <circle class="mk-file" cx="92.77" cy="19.23" r="8"/>
+      </svg>
+      <span>TotalDrop</span>
+    </a>
+    <nav class="top-nav" aria-label="Main">
+      <a href="#why" data-i18n="nav.why">Why TotalDrop</a>
+      <a href="#how" data-i18n="nav.how">How it works</a>
+      <a href="#security" data-i18n="nav.security">Security</a>
+      <a href="https://download.totaldrop.app/" data-i18n="nav.download">Download</a>
+      <button class="lang" type="button" id="lang-toggle" lang="tr" aria-label="Türkçe">TR</button>
+    </nav>
+  </header>
+
+  <main id="main">
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <p class="eyebrow" data-i18n="hero.eyebrow">Free · Open source · Beta</p>
+        <h1 id="hero-title" data-i18n="hero.title">Send a file straight to another device.</h1>
+        <p class="lede" data-i18n="hero.lede">TotalDrop moves files directly from your device to theirs, encrypted end to end. You share a short code; nobody in between can read what you send. No account, no email, no phone number.</p>
+        <div class="actions">
+          <a class="btn btn-primary" href="https://download.totaldrop.app/" data-i18n="hero.cta">Download the beta</a>
+          <a class="btn btn-quiet" href="https://github.com/totaldrop-app/totaldrop" data-i18n="hero.source">Read the code</a>
+        </div>
+      </div>
+
+      <figure class="hero-figure" aria-labelledby="hero-caption">
+        <svg class="hero-mark" viewBox="0 0 112 112" role="img" aria-labelledby="hero-mark-title">
+          <title id="hero-mark-title" data-i18n="hero.markTitle">A file leaving the centre through a channel in the waves</title>
+          <path class="mk-wave" stroke-width="8" d="M79.61 45.12A26 26 0 1 1 66.88 32.39"/>
+          <path class="mk-wave" stroke-width="6" d="M89.92 34.80A40 40 0 1 1 77.20 22.08"/>
+          <circle class="mk-ripple" cx="56" cy="56" r="12"/>
+          <circle class="mk-file" cx="56" cy="56" r="12"/>
+          <circle class="mk-file mk-travel" cx="92.77" cy="19.23" r="8"/>
+        </svg>
+        <div class="code-card">
+          <p class="code-label" data-i18n="code.label">Transfer code</p>
+          <p class="code" lang="en">7-harbor-rocket</p>
+        </div>
+        <figcaption id="hero-caption" data-i18n="code.caption">Say the code out loud or paste it in a message. Whoever types it in gets the files.</figcaption>
+      </figure>
+    </section>
+
+
+    <section class="block" id="why" aria-labelledby="why-title">
+      <h2 id="why-title" data-i18n="why.title">Why TotalDrop</h2>
+      <ul class="reasons">
+        <li>
+          <h3 data-i18n="why.r1.t">Nothing is uploaded</h3>
+          <p data-i18n="why.r1.d">Files go from your device to theirs. No copy waits on a company's server, and no link expires in a week.</p>
+        </li>
+        <li>
+          <h3 data-i18n="why.r2.t">No account, ever</h3>
+          <p data-i18n="why.r2.d">No email, no phone number, no sign-up. A short code is all two devices need.</p>
+        </li>
+        <li>
+          <h3 data-i18n="why.r3.t">Every platform, one app</h3>
+          <p data-i18n="why.r3.d">Android today, Linux, Windows, macOS and iOS on the way. Phone to laptop, any brand to any brand.</p>
+        </li>
+        <li>
+          <h3 data-i18n="why.r4.t">No size limit from us</h3>
+          <p data-i18n="why.r4.d">Whole folders, long videos, original-quality photos. Only your disk and your connection set the limit.</p>
+        </li>
+        <li>
+          <h3 data-i18n="why.r5.t">Verified, not trusted</h3>
+          <p data-i18n="why.r5.d">Four words on both screens prove nobody is in the middle. Encryption is end to end and post-quantum.</p>
+        </li>
+        <li>
+          <h3 data-i18n="why.r6.t">Free and open, for good</h3>
+          <p data-i18n="why.r6.d">Open source under the GPL, paid for by donations. No ads, no tracking, no premium tier.</p>
+        </li>
+      </ul>
+      <div class="compare-wrap">
+        <table class="compare">
+          <caption data-i18n="why.cmp.caption">How TotalDrop compares with the usual ways to send a file</caption>
+          <thead>
+            <tr><th scope="col"></th><th scope="col" class="is-us">TotalDrop</th><th scope="col" data-i18n="why.cmp.cloud">Cloud links</th><th scope="col" data-i18n="why.cmp.nearby">Nearby sharing</th></tr>
+          </thead>
+          <tbody>
+            <tr><th scope="row" data-i18n="why.cmp.q1">Files stay off company servers</th><td class="is-us"><span class="yes" data-i18n="cmp.yes">Yes</span></td><td><span class="no" data-i18n="cmp.no">No</span></td><td><span class="yes" data-i18n="cmp.yes">Yes</span></td></tr>
+            <tr><th scope="row" data-i18n="why.cmp.q2">Works without an account</th><td class="is-us"><span class="yes" data-i18n="cmp.yes">Yes</span></td><td><span class="no" data-i18n="cmp.usually">Usually not</span></td><td><span class="no" data-i18n="cmp.usually">Usually not</span></td></tr>
+            <tr><th scope="row" data-i18n="why.cmp.q3">Between any brands of device</th><td class="is-us"><span class="yes" data-i18n="cmp.yes">Yes</span></td><td><span class="yes" data-i18n="cmp.yes">Yes</span></td><td><span class="no" data-i18n="cmp.family">Within one family</span></td></tr>
+            <tr><th scope="row" data-i18n="why.cmp.q4">Across the world</th><td class="is-us"><span class="soon" data-i18n="cmp.relay">With the relay</span></td><td><span class="yes" data-i18n="cmp.yes">Yes</span></td><td><span class="no" data-i18n="cmp.room">Same room only</span></td></tr>
+            <tr><th scope="row" data-i18n="why.cmp.q5">Open source, can be audited</th><td class="is-us"><span class="yes" data-i18n="cmp.yes">Yes</span></td><td><span class="no" data-i18n="cmp.rarely">Rarely</span></td><td><span class="no" data-i18n="cmp.rarely">Rarely</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="block" id="how" aria-labelledby="how-title">
+      <h2 id="how-title" data-i18n="how.title">Three steps</h2>
+      <ol class="steps">
+        <li>
+          <h3 data-i18n="how.s1.t">Choose files</h3>
+          <p data-i18n="how.s1.d">Any type, as many as you like. The receiver gets only what you chose.</p>
+        </li>
+        <li>
+          <h3 data-i18n="how.s2.t">Share the code</h3>
+          <p data-i18n="how.s2.d">A number and two words, like 7-harbor-rocket. It works once and then expires.</p>
+        </li>
+        <li>
+          <h3 data-i18n="how.s3.t">Compare four words</h3>
+          <p data-i18n="how.s3.d">Both screens show the same four words. If they match, the connection is yours alone.</p>
+        </li>
+      </ol>
+      <p class="note" data-i18n="how.note">Today both devices need to be on the same network. Sending across the internet comes with the relay, next on the roadmap.</p>
+    </section>
+
+    <section class="block" id="security" aria-labelledby="sec-title">
+      <h2 id="sec-title" data-i18n="sec.title">Only you and the receiver can open it</h2>
+      <dl class="facts">
+        <div>
+          <dt data-i18n="sec.f1.t">Encrypted before it leaves</dt>
+          <dd data-i18n="sec.f1.d">Files are encrypted on your device and decrypted only on the receiver's. The keys never exist anywhere else.</dd>
+        </div>
+        <div>
+          <dt data-i18n="sec.f2.t">The code cannot be guessed offline</dt>
+          <dd data-i18n="sec.f2.d">The code turns into a key through a PAKE handshake, so a wrong guess fails at once and the attempt is burned. Key exchange includes post-quantum ML-KEM.</dd>
+        </div>
+        <div>
+          <dt data-i18n="sec.f3.t">Our server only introduces</dt>
+          <dd data-i18n="sec.f3.d">It sees your IP address and the code's number, never the words, the file names or the files. It keeps no logs.</dd>
+        </div>
+        <div>
+          <dt data-i18n="sec.f4.t">Code anyone can check</dt>
+          <dd data-i18n="sec.f4.d">Every line is public. Version 1.0 ships only after an independent security audit.</dd>
+        </div>
+      </dl>
+      <p class="note"><a href="/privacy" data-i18n="sec.privacy">Read the privacy policy</a></p>
+    </section>
+
+    <section class="block" id="roadmap" aria-labelledby="road-title">
+      <h2 id="road-title" data-i18n="road.title">Where we are</h2>
+      <ol class="roadmap">
+        <li class="is-done">
+          <span class="road-state" data-i18n="road.done">Done</span>
+          <h3 data-i18n="road.p0">Open protocol, command-line client and Android beta</h3>
+        </li>
+        <li class="is-now">
+          <span class="road-state" data-i18n="road.now">Now</span>
+          <h3 data-i18n="road.p1">Relay, so devices on different networks can send to each other</h3>
+        </li>
+        <li>
+          <span class="road-state" data-i18n="road.next">Next</span>
+          <h3 data-i18n="road.p2">Linux and Windows apps, receiving in the browser</h3>
+        </li>
+        <li>
+          <span class="road-state" data-i18n="road.next">Next</span>
+          <h3 data-i18n="road.p3">iOS and macOS, funded by donations</h3>
+        </li>
+        <li>
+          <span class="road-state" data-i18n="road.later">Later</span>
+          <h3 data-i18n="road.p4">Optional account that is only a random number, for contacts across your devices</h3>
+        </li>
+        <li>
+          <span class="road-state" data-i18n="road.later">Later</span>
+          <h3 data-i18n="road.p5">Independent audit and version 1.0</h3>
+        </li>
+      </ol>
+    </section>
+
+    <section class="block" id="support" aria-labelledby="free-title">
+      <h2 id="free-title" data-i18n="free.title">Free for everyone, paid for by those who can</h2>
+      <p data-i18n="free.d">No ads, no premium tier, no investors. Donations pay for what costs money, and we publish every month what came in and where it went.</p>
+      <dl class="costs">
+        <div><dt data-i18n="free.c1.t">Relay servers</dt><dd data-i18n="free.c1.d">Bandwidth for transfers between networks</dd></div>
+        <div><dt data-i18n="free.c2.t">Apple developer account</dt><dd data-i18n="free.c2.d">99 USD a year, required for iOS and macOS</dd></div>
+        <div><dt data-i18n="free.c3.t">Security audit</dt><dd data-i18n="free.c3.d">An independent review before 1.0</dd></div>
+      </dl>
+      <div class="actions">
+        <a class="btn btn-primary" href="https://github.com/sponsors/totaldrop-app" data-i18n="free.gh">Sponsor on GitHub</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <p data-i18n="foot.line">TotalDrop is open source and built in the open.</p>
+    <p class="foot-links">
+      <a href="https://github.com/totaldrop-app">GitHub</a>
+      <a href="https://github.com/totaldrop-app/totaldrop/releases.atom" data-i18n="foot.rss">RSS</a>
+      <a href="/privacy" data-i18n="foot.privacy">Privacy</a>
+      <a href="mailto:hello@totaldrop.app">hello@totaldrop.app</a>
+    </p>
+  </footer>
+
+  <script src="/app.js" defer></script>
+</body>
+</html>

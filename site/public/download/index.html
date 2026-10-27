@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Download TotalDrop</title>
+  <meta name="description" content="Download TotalDrop for Linux, Android and the command line. Windows, macOS, iOS and the browser are on the way.">
+  <meta name="theme-color" content="#F4F2FB" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#140E33" media="(prefers-color-scheme: dark)">
+  <link rel="canonical" href="https://download.totaldrop.app/">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="/fonts/bricolage-grotesque-latin-800-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body data-page="download">
+  <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
+
+  <header class="top">
+    <a class="brand" href="https://totaldrop.app/" aria-label="TotalDrop home">
+      <svg class="mark" viewBox="0 0 112 112" aria-hidden="true">
+        <path class="mk-wave" stroke-width="8" d="M79.61 45.12A26 26 0 1 1 66.88 32.39"/>
+        <path class="mk-wave" stroke-width="6" d="M89.92 34.80A40 40 0 1 1 77.20 22.08"/>
+        <circle class="mk-file" cx="56" cy="56" r="12"/>
+        <circle class="mk-file" cx="92.77" cy="19.23" r="8"/>
+      </svg>
+      <span>TotalDrop</span>
+    </a>
+    <nav class="top-nav" aria-label="Main">
+      <a href="https://totaldrop.app/#why" data-i18n="nav.why">Why TotalDrop</a>
+      <a href="https://totaldrop.app/#how" data-i18n="nav.how">How it works</a>
+      <a href="https://totaldrop.app/#security" data-i18n="nav.security">Security</a>
+      <a href="https://download.totaldrop.app/" data-i18n="nav.download" aria-current="page">Download</a>
+      <button class="lang" type="button" id="lang-toggle" lang="tr" aria-label="Türkçe">TR</button>
+    </nav>
+  </header>
+
+  <main id="main">
+    <section class="dl-hero" aria-labelledby="dl-title">
+      <p class="eyebrow"><span data-i18n="dl.version">Version 0.1.0-beta.2</span> · <time datetime="2026-10-27" data-i18n="dl.date">27 October 2026</time></p>
+      <h1 id="dl-title" data-i18n="dl.title">Download TotalDrop</h1>
+      <p class="lede" data-i18n="dl.lede">Free, open source, no account. Pick your device; the one you are using now is marked.</p>
+    </section>
+
+    <section class="block" aria-labelledby="dl-platforms">
+      <h2 id="dl-platforms" class="visually-hidden" data-i18n="dl.platforms">Platforms</h2>
+      <ul class="platforms">
+        <li class="platform" data-platform="android">
+          <span class="yours" data-i18n="dl.yours">For this device</span>
+          <header><h3 data-i18n="dl.android">Android</h3><span class="pill is-beta" data-i18n="dl.beta">Beta</span></header>
+          <p data-i18n="dl.android.d">The full app, in English and Turkish, following your phone's colours.</p>
+          <ul>
+            <li data-i18n="dl.android.r1">Android 15 or later, 64-bit</li>
+            <li data-i18n="dl.android.r2">Testing on Google Play, by invitation while the beta is closed</li>
+          </ul>
+          <div class="actions"><a class="btn btn-primary" href="mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta" data-i18n="dl.android.cta">Ask to join the beta</a></div>
+        </li>
+        <li class="platform" data-platform="cli">
+          <span class="yours" data-i18n="dl.yours">For this device</span>
+          <header><h3 data-i18n="dl.cli">Command line</h3><span class="pill is-ready" data-i18n="dl.ready">Available</span></header>
+          <p data-i18n="dl.cli.d">For Linux, macOS and Windows terminals. Sends files and whole folders.</p>
+          <pre class="cmd"><code>cargo install --locked \
+  --git https://github.com/totaldrop-app/totaldrop \
+  totaldrop-cli</code></pre>
+          <button class="copy" type="button" data-copy="cargo install --locked --git https://github.com/totaldrop-app/totaldrop totaldrop-cli" data-i18n="dl.copy">Copy command</button>
+          <pre class="cmd"><code>totaldrop send ~/Photos/trip
+totaldrop receive 7-harbor-rocket</code></pre>
+        </li>
+        <li class="platform" data-platform="linux">
+          <span class="yours" data-i18n="dl.yours">For this device</span>
+          <header><h3 data-i18n="dl.linux">Linux app</h3><span class="pill is-beta" data-i18n="dl.beta">Beta</span></header>
+          <p data-i18n="dl.linux.d">Built with Qt 6 for Wayland. It takes its colours, fonts and icons from your desktop: Plasma, Hyprland, Omarchy, GNOME.</p>
+          <ul>
+            <li data-i18n="dl.linux.r1">A separate package for each family of distributions, 64-bit</li>
+            <li data-i18n="dl.linux.r2">Also installs the totaldrop command</li>
+          </ul>
+          <div class="actions">
+            <a class="btn btn-primary" href="https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.1.0-beta.2/totaldrop-0.1.0_beta.2-1-x86_64.pkg.tar.zst" data-i18n="dl.linux.arch">Arch, Omarchy, Manjaro</a>
+            <a class="btn btn-quiet" href="https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.1.0-beta.2/totaldrop_0.1.0~beta.2-1_amd64.deb" data-i18n="dl.linux.deb">Debian, Ubuntu (.deb)</a>
+            <a class="btn btn-quiet" href="https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.1.0-beta.2/totaldrop-0.1.0~beta.2-1.fc43.x86_64.rpm" data-i18n="dl.linux.rpm">Fedora (.rpm)</a>
+          </div>
+        </li>
+        <li class="platform" data-platform="windows">
+          <span class="yours" data-i18n="dl.yours">For this device</span>
+          <header><h3 data-i18n="dl.windows">Windows</h3><span class="pill " data-i18n="dl.planned">Planned</span></header>
+          <p data-i18n="dl.windows.d">For Windows 11. The first builds are unsigned, so Windows will warn before the first run until code signing is funded.</p>
+        </li>
+        <li class="platform" data-platform="macos">
+          <span class="yours" data-i18n="dl.yours">For this device</span>
+          <header><h3 data-i18n="dl.macos">macOS</h3><span class="pill " data-i18n="dl.planned">Planned</span></header>
+          <p data-i18n="dl.macos.d">Apple requires a paid developer account (99 USD a year) to sign and notarise apps. Donations will pay for it.</p>
+        </li>
+        <li class="platform" data-platform="ios">
+          <span class="yours" data-i18n="dl.yours">For this device</span>
+          <header><h3 data-i18n="dl.ios">iPhone and iPad</h3><span class="pill " data-i18n="dl.planned">Planned</span></header>
+          <p data-i18n="dl.ios.d">Through the App Store, under the same developer account as macOS.</p>
+        </li>
+        <li class="platform" data-platform="web">
+          <span class="yours" data-i18n="dl.yours">For this device</span>
+          <header><h3 data-i18n="dl.web">In the browser</h3><span class="pill " data-i18n="dl.planned">Planned</span></header>
+          <p data-i18n="dl.web.d">Receive without installing anything: open a link, type the code, save the files.</p>
+        </li>
+      </ul>
+    </section>
+
+    <section class="block" aria-labelledby="dl-new">
+      <h2 id="dl-new" data-i18n="dl.new.title">New in 0.1.0-beta.2</h2>
+      <ul class="notes">
+        <li data-i18n="dl.new.n1">A new mark, Dalga: a drop, its waves and the file leaving through a channel. While you send, the file travels the channel.</li>
+        <li data-i18n="dl.new.n2">A calmer interface: one highlighted action per screen, no shadows, clearer lists.</li>
+        <li data-i18n="dl.new.n3">Fixed the settings screen, which could appear empty.</li>
+        <li data-i18n="dl.new.n4">The first Linux app: send and receive with a code or a QR code, following your desktop's theme.</li>
+      </ul>
+      <p class="note"><a href="https://github.com/totaldrop-app/totaldrop/releases" data-i18n="dl.all">All versions and release notes</a></p>
+    </section>
+
+    <section class="block" aria-labelledby="dl-req">
+      <h2 id="dl-req" data-i18n="dl.req.title">Requirements</h2>
+      <div class="compare-wrap">
+        <table class="req">
+          <thead><tr><th scope="col" data-i18n="dl.req.platform">Platform</th><th scope="col" data-i18n="dl.req.min">Minimum</th><th scope="col" data-i18n="dl.req.notes">Notes</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Android</th><td data-i18n="dl.req.android">Android 15, 64-bit ARM</td><td data-i18n="dl.req.android.n">Internet permission only</td></tr>
+            <tr><th scope="row">Linux</th><td data-i18n="dl.req.linux">Qt 6.8: Debian 13, Ubuntu 25.04, Fedora 43, Arch</td><td data-i18n="dl.req.linux.n">Wayland or X11, x86-64</td></tr>
+            <tr><th scope="row" data-i18n="dl.cli">Command line</th><td data-i18n="dl.req.cli">Rust 1.99 to build</td><td data-i18n="dl.req.cli.n">Linux, macOS, Windows</td></tr>
+            <tr><th scope="row" data-i18n="dl.req.net">Network</th><td data-i18n="dl.req.net.m">Both devices on the same network</td><td data-i18n="dl.req.net.n">Across networks with the relay, coming next</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="block" aria-labelledby="dl-verify">
+      <h2 id="dl-verify" data-i18n="dl.verify.title">Check what you install</h2>
+      <ul class="notes">
+        <li data-i18n="dl.verify.v1">Get TotalDrop only from Google Play, from this page or from the project's GitHub releases. We do not publish anywhere else.</li>
+        <li data-i18n="dl.verify.v4">On Linux, install the file you downloaded with sudo pacman -U, sudo apt install ./ or sudo dnf install ./ and its name.</li>
+        <li data-i18n="dl.verify.v2">Every release on GitHub lists SHA-256 checksums. Compare them before you run a file.</li>
+        <li data-i18n="dl.verify.v3">Everything is built from the public source code, which you can read and build yourself.</li>
+      </ul>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <p data-i18n="foot.line">TotalDrop is open source and built in the open.</p>
+    <p class="foot-links">
+      <a href="https://github.com/totaldrop-app">GitHub</a>
+      <a href="https://github.com/totaldrop-app/totaldrop/releases.atom" data-i18n="foot.rss">RSS</a>
+      <a href="https://totaldrop.app/privacy" data-i18n="foot.privacy">Privacy</a>
+      <a href="mailto:hello@totaldrop.app">hello@totaldrop.app</a>
+    </p>
+  </footer>
+
+  <script src="/app.js" defer></script>
+</body>
+</html>
