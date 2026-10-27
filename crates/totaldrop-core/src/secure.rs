@@ -90,18 +90,28 @@ async fn read_noise(state: &mut snow::HandshakeState, recv: &mut quinn::RecvStre
     Ok(())
 }
 
-/// Run the handshake. `initiator` is the QUIC client (the receiver of the
-/// transfer); it opens the control stream.
+/// Run the handshake. `initiator` is the receiver of the transfer; it opens
+/// the control stream, on whichever connection it chose.
 pub async fn handshake(
     conn: &quinn::Connection,
     input: HandshakeInput<'_>,
     initiator: bool,
 ) -> Result<SecureChannel> {
-    let (mut send, mut recv) = if initiator {
+    let (send, recv) = if initiator {
         conn.open_bi().await?
     } else {
         conn.accept_bi().await?
     };
+    handshake_on(send, recv, input, initiator).await
+}
+
+/// Run the handshake on a control stream already opened or accepted.
+pub async fn handshake_on(
+    mut send: quinn::SendStream,
+    mut recv: quinn::RecvStream,
+    input: HandshakeInput<'_>,
+    initiator: bool,
+) -> Result<SecureChannel> {
     let mut psk = input.psk;
     let params: snow::params::NoiseParams = NOISE_XXPSK3
         .parse()

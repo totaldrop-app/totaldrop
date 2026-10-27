@@ -7,6 +7,12 @@ All notable changes to TotalDrop are recorded here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- **Core:** a transfer no longer fails when a firewall blocks incoming
+  connections on the sending device (as Omarchy's ufw does by default). Both
+  sides now listen and dial; the first connection that comes up is used.
+
 ## [android-0.1.0-beta.3] - 2026-10-27
 
 ### Changed
