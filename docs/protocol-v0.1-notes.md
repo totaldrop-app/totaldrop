@@ -25,23 +25,30 @@ treated as final.
    - The phase name (`confirm`, `hints`) is authenticated as associated data,
      so a message cannot be replayed under another phase.
    - Counters must match exactly, because the server delivers in order.
-4. **Rendezvous wire format.** These are CBOR maps whose key `0` is the type.
-   - Client messages: `allocate`; `claim` with key 1 = nameplate; `add` with
-     key 1 = phase and key 2 = body; `close` with key 1 = mood.
-   - Server messages: `allocated` with key 1 = nameplate; `claimed` with key 1
-     = mailbox ID; `message` with key 1 = phase and key 2 = body;
-     `peer_closed` with key 1 = mood; `error` with key 1 = reason, after which
-     the server closes the connection.
+4. **Two endpoints instead of one connection.** The server can run as many
+   small objects (Cloudflare Durable Objects), so allocation and mailboxes
+   are separate WebSocket addresses:
+   - `/v0/allocate`: the client sends `allocate` and gets `allocated` with
+     key 1 = nameplate and key 2 = a random 16-byte allocator token. Then
+     the connection ends.
+   - `/v0/mailbox/<nameplate>`: `claim` (key 1 = nameplate, key 2 =
+     allocator token, optional), then `add` (key 1 = phase, key 2 = body)
+     and `close` (key 1 = mood).
+   - Server messages on a mailbox: `claimed` (key 1 = mailbox ID),
+     `message` (key 1 = phase, key 2 = body), `peer_closed` (key 1 = mood),
+     and `error` (key 1 = reason), after which the server closes the
+     connection.
+   - Clients ping every 20 seconds while they wait, so idle connections are
+     not dropped.
 5. **Claiming.**
-   - A client can claim only a nameplate that has been allocated, and the
-     allocator claims first. Anyone else claiming an empty nameplate is
-     guessing, and is refused.
-   - A connection holds at most one nameplate.
+   - The first claim of a nameplate must carry its allocator token. Only
+     the sender has it, so anyone else claiming an empty nameplate is
+     refused. A nameplate that was never allocated cannot be claimed.
+   - A connection claims once, and only the mailbox of its address.
    - A client that disconnects without `CLOSE` counts as a `lonely` close.
-   - Every request is checked against the mailbox ID the connection joined,
-     not only the nameplate number. A connection whose nameplate expired is
-     told and disconnected, and can never act on the number's next owner.
-     Only the allocator or a side of the mailbox can close it.
+   - Every mailbox has its own random ID, so a connection whose nameplate
+     expired can never act on the number's next owner. Only a side of the
+     mailbox can close it.
    - A freed nameplate rests for 10 minutes before reuse, while other
      numbers are free.
 6. **Mailbox lifetime.** Unclaimed nameplates expire after 15 minutes, as v0

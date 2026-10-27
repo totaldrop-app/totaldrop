@@ -26,6 +26,7 @@ use futures_util::{SinkExt, StreamExt};
 use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::{Mutex, Semaphore, mpsc};
 use tokio_tungstenite::tungstenite::Message;
+use tokio_tungstenite::tungstenite::handshake::server::{Request, Response};
 use tokio_tungstenite::tungstenite::protocol::WebSocketConfig;
 use totaldrop_proto::wire::{ClientMessage, MAX_MAILBOX_BODY, Mood, ServerMessage};
 
@@ -88,6 +89,15 @@ const COOLDOWN: Duration = Duration::from_secs(10 * 60);
 /// How long the WebSocket handshake and each write may take.
 const IO_TIMEOUT: Duration = Duration::from_secs(10);
 
+/// Which endpoint a connection opened.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Route {
+    /// `/v0/allocate`: one `allocate`, one reply.
+    Allocate,
+    /// `/v0/mailbox/<nameplate>`.
+    Mailbox(u32),
+}
+
 /// What a connection holds: a nameplate number and the mailbox it pointed to
 /// when this connection got it. A number can be reused after expiry; the
 /// mailbox ID cannot, so every request is checked against both.
@@ -104,8 +114,8 @@ struct Side {
 #[derive(Debug)]
 struct Nameplate {
     created: Instant,
-    allocated_by: ConnId,
-    allocator: Outbox,
+    /// Secret given to the allocator; the first claim must present it.
+    token: [u8; 16],
     mailbox: [u8; 16],
     sides: Vec<Side>,
     /// Messages posted before the other side arrived, by poster.
@@ -171,7 +181,6 @@ impl State {
             let age = now.saturating_duration_since(np.created);
             if (np.sides.len() < 2 && age > cfg.unclaimed_ttl) || age > cfg.mailbox_ttl {
                 expired_numbers.push(*n);
-                told.push(np.allocator.clone());
                 told.extend(
                     np.sides
                         .iter()
@@ -255,18 +264,35 @@ impl Server {
         }
     }
 
+    // The handshake callback's error type is fixed by tungstenite.
+    #[allow(clippy::result_large_err)]
     async fn handle(&self, stream: TcpStream) {
         let _ = stream.set_nodelay(true);
         let mut ws_config = WebSocketConfig::default();
         ws_config.max_message_size = Some(MAX_MAILBOX_BODY.saturating_add(1024));
         ws_config.max_frame_size = Some(MAX_MAILBOX_BODY.saturating_add(1024));
+        let mut path = String::new();
+        let callback = |req: &Request, resp: Response| {
+            path = req.uri().path().to_owned();
+            Ok(resp)
+        };
         let accepted = tokio::time::timeout(
             IO_TIMEOUT,
-            tokio_tungstenite::accept_async_with_config(stream, Some(ws_config)),
+            tokio_tungstenite::accept_hdr_async_with_config(stream, callback, Some(ws_config)),
         )
         .await;
         let Ok(Ok(ws)) = accepted else {
             return;
+        };
+        let route = match path.as_str() {
+            "/v0/allocate" => Route::Allocate,
+            p => match p
+                .strip_prefix("/v0/mailbox/")
+                .and_then(|n| n.parse::<u32>().ok())
+            {
+                Some(n) if n > 0 => Route::Mailbox(n),
+                _ => return,
+            },
         };
         let (mut sink, mut source) = ws.split();
         let (outbox, mut inbox) = mpsc::channel::<ServerMessage>(64);
@@ -313,13 +339,15 @@ impl Server {
                 _ => break,
             };
             let reply = match ClientMessage::decode(&data) {
-                Ok(msg) => self.on_message(conn, &outbox, &mut held, msg).await,
+                Ok(msg) => self.on_message(conn, route, &outbox, &mut held, msg).await,
                 Err(_) => Err("malformed message"),
             };
             if let Err(reason) = reply {
-                let _ = outbox.try_send(ServerMessage::Error {
-                    reason: reason.into(),
-                });
+                if reason != "done" {
+                    let _ = outbox.try_send(ServerMessage::Error {
+                        reason: reason.into(),
+                    });
+                }
                 break;
             }
         }
@@ -334,14 +362,15 @@ impl Server {
     async fn on_message(
         &self,
         conn: ConnId,
+        route: Route,
         outbox: &Outbox,
         held: &mut Held,
         msg: ClientMessage,
     ) -> Result<(), &'static str> {
         match msg {
             ClientMessage::Allocate => {
-                if held.is_some() {
-                    return Err("one nameplate per connection");
+                if route != Route::Allocate {
+                    return Err("allocate on /v0/allocate");
                 }
                 let wave = self
                     .state
@@ -359,12 +388,13 @@ impl Server {
                 let n = st.free_nameplate(now, &self.config).ok_or("server busy")?;
                 let mut mailbox = [0u8; 16];
                 getrandom::fill(&mut mailbox).map_err(|_| "server error")?;
+                let mut token = [0u8; 16];
+                getrandom::fill(&mut token).map_err(|_| "server error")?;
                 st.nameplates.insert(
                     n,
                     Nameplate {
                         created: now,
-                        allocated_by: conn,
-                        allocator: outbox.clone(),
+                        token,
                         mailbox,
                         sides: Vec::new(),
                         pending: Vec::new(),
@@ -372,42 +402,33 @@ impl Server {
                     },
                 );
                 st.cooling.remove(&n);
-                *held = Some((n, mailbox));
                 drop(st);
                 outbox
-                    .send(ServerMessage::Allocated { nameplate: n })
+                    .send(ServerMessage::Allocated {
+                        nameplate: n,
+                        token,
+                    })
                     .await
-                    .map_err(|_| "closed")
+                    .map_err(|_| "closed")?;
+                // An allocation connection does nothing else.
+                Err("done")
             }
-            ClientMessage::Claim { nameplate } => {
-                let mut st = self.state.lock().await;
-                let np = match *held {
-                    Some((n, _)) if n != nameplate => return Err("one nameplate per connection"),
-                    Some(_) => st
-                        .current(*held)
-                        .map(|(_, np)| np)
-                        .ok_or("mailbox expired")?,
-                    None => {
-                        let np = st
-                            .nameplates
-                            .get_mut(&nameplate)
-                            .ok_or("unknown nameplate")?;
-                        if np.sides.is_empty() {
-                            // The allocator always claims first; anyone else
-                            // claiming an empty nameplate is guessing.
-                            return Err("unknown nameplate");
-                        }
-                        np
-                    }
-                };
-                if np.sides.iter().any(|s| s.conn == conn) {
-                    return Err("already claimed");
+            ClientMessage::Claim { nameplate, token } => {
+                if route != Route::Mailbox(nameplate) || held.is_some() {
+                    return Err("claim the mailbox of this address once");
                 }
+                let mut st = self.state.lock().await;
+                let np = st
+                    .nameplates
+                    .get_mut(&nameplate)
+                    .ok_or("unknown nameplate")?;
                 if np.sides.len() >= 2 {
                     // The rule that limits an attacker to one guess.
                     return Err("nameplate full");
                 }
-                if np.sides.is_empty() && np.allocated_by != conn {
+                if np.sides.is_empty() && token != Some(np.token) {
+                    // The allocator always claims first, with its token;
+                    // anyone else claiming an empty nameplate is guessing.
                     return Err("unknown nameplate");
                 }
                 np.sides.push(Side {
@@ -488,8 +509,7 @@ impl Server {
             return;
         };
         let is_side = np.sides.iter().any(|s| s.conn == conn);
-        let is_allocator = np.allocated_by == conn;
-        if !is_side && !is_allocator {
+        if !is_side {
             // Only the two people in a mailbox can close it.
             return;
         }

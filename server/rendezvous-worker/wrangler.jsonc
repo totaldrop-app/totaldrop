@@ -1,0 +1,17 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "totaldrop-rendezvous",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-01",
+  // The rendezvous server logs nothing about clients.
+  "observability": { "enabled": false },
+  "routes": [{ "pattern": "rendezvous.totaldrop.app", "custom_domain": true }],
+  "workers_dev": false,
+  "durable_objects": {
+    "bindings": [
+      { "name": "DIRECTORY", "class_name": "Directory" },
+      { "name": "MAILBOX", "class_name": "Mailbox" }
+    ]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Directory", "Mailbox"] }]
+}

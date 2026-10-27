@@ -12,11 +12,17 @@
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
-use totaldrop_core::rendezvous::Mailbox;
+use totaldrop_core::rendezvous::{self, Mailbox};
 use totaldrop_core::{Error, IncomingOffer, PreparedSend, ReceiveOptions, SendOptions, no_events};
 use totaldrop_proto::wire::Mood;
 
+/// The server under test: the Rust server in-process, or another
+/// implementation (for example the Cloudflare Worker under `wrangler dev`)
+/// when `TOTALDROP_TEST_SERVER` names one.
 async fn server() -> String {
+    if let Ok(url) = std::env::var("TOTALDROP_TEST_SERVER") {
+        return url;
+    }
     let (addr, _server, _task) =
         totaldrop_rendezvous::spawn("127.0.0.1:0".parse().unwrap(), Default::default())
             .await
@@ -251,50 +257,55 @@ async fn declined_offer_is_reported_to_the_sender() {
 #[tokio::test(flavor = "multi_thread")]
 async fn server_refuses_a_third_claim() {
     let server = server().await;
-    let mut a = Mailbox::connect(&server).await.unwrap();
-    let n = a.allocate().await.unwrap();
-    let id_a = a.claim(n).await.unwrap();
-    let mut b = Mailbox::connect(&server).await.unwrap();
-    let id_b = b.claim(n).await.unwrap();
-    assert_eq!(id_a, id_b);
-    let mut c = Mailbox::connect(&server).await.unwrap();
-    assert!(matches!(c.claim(n).await, Err(Error::Rendezvous(r)) if r == "nameplate full"));
+    let alloc = rendezvous::allocate(&server).await.unwrap();
+    let n = alloc.nameplate;
+    let a = Mailbox::claim(&server, n, Some(&alloc)).await.unwrap();
+    let b = Mailbox::claim(&server, n, None).await.unwrap();
+    assert_eq!(a.id, b.id);
+    let c = Mailbox::claim(&server, n, None).await;
+    assert!(matches!(c, Err(Error::Rendezvous(r)) if r == "nameplate full"));
 }
 
 #[tokio::test(flavor = "multi_thread")]
-async fn server_does_not_hand_out_unallocated_nameplates() {
+async fn only_the_allocator_can_claim_first() {
     let server = server().await;
-    let mut c = Mailbox::connect(&server).await.unwrap();
-    assert!(matches!(c.claim(42).await, Err(Error::Rendezvous(_))));
+    let alloc = rendezvous::allocate(&server).await.unwrap();
+    // Someone who only knows the number cannot take the first seat.
+    assert!(matches!(
+        Mailbox::claim(&server, alloc.nameplate, None).await,
+        Err(Error::Rendezvous(_))
+    ));
+    // And nothing can be claimed that was never allocated.
+    assert!(matches!(
+        Mailbox::claim(&server, 4242, None).await,
+        Err(Error::Rendezvous(_))
+    ));
+    Mailbox::claim(&server, alloc.nameplate, Some(&alloc))
+        .await
+        .unwrap();
 }
 
 #[tokio::test(flavor = "multi_thread")]
 async fn scary_close_retires_the_nameplate() {
     let server = server().await;
-    let mut a = Mailbox::connect(&server).await.unwrap();
-    let n = a.allocate().await.unwrap();
-    a.claim(n).await.unwrap();
-    let mut b = Mailbox::connect(&server).await.unwrap();
-    b.claim(n).await.unwrap();
+    let alloc = rendezvous::allocate(&server).await.unwrap();
+    let n = alloc.nameplate;
+    let mut a = Mailbox::claim(&server, n, Some(&alloc)).await.unwrap();
+    let mut b = Mailbox::claim(&server, n, None).await.unwrap();
     a.add("pake", vec![1; 32]).await.unwrap();
     b.add("pake", vec![2; 32]).await.unwrap();
     assert_eq!(a.expect("pake").await.unwrap(), vec![2; 32]);
+    assert_eq!(b.expect("pake").await.unwrap(), vec![1; 32]);
     a.close(Mood::Scary).await;
+    assert!(matches!(b.expect("confirm").await, Err(Error::WrongCode)));
     b.close(Mood::Lonely).await;
     tokio::time::sleep(Duration::from_millis(100)).await;
-    let mut d = Mailbox::connect(&server).await.unwrap();
-    let next = d.allocate().await.unwrap();
-    assert_ne!(next, n, "a retired nameplate must not be reused");
+    let next = rendezvous::allocate(&server).await.unwrap();
+    assert_ne!(next.nameplate, n, "a retired nameplate must not be reused");
 }
 
 #[tokio::test(flavor = "multi_thread")]
-async fn plain_websocket_to_another_host_is_refused() {
-    let r = Mailbox::connect("ws://example.com/v0").await;
-    assert!(matches!(r, Err(Error::Rendezvous(_))));
-}
-
-#[tokio::test(flavor = "multi_thread")]
-async fn expired_nameplate_holders_are_disconnected() {
+async fn expired_nameplates_cannot_be_claimed() {
     let config = totaldrop_rendezvous::Config {
         unclaimed_ttl: Duration::from_millis(300),
         sweep_interval: Duration::from_millis(100),
@@ -305,12 +316,17 @@ async fn expired_nameplate_holders_are_disconnected() {
             .await
             .unwrap();
     let url = format!("ws://{addr}");
-    let mut stale = Mailbox::connect(&url).await.unwrap();
-    let n = stale.allocate().await.unwrap();
+    let stale = rendezvous::allocate(&url).await.unwrap();
     tokio::time::sleep(Duration::from_millis(800)).await;
-    // The number goes to someone else; the stale holder can no longer act.
-    let mut fresh = Mailbox::connect(&url).await.unwrap();
-    let m = fresh.allocate().await.unwrap();
-    fresh.claim(m).await.unwrap();
-    assert!(stale.claim(n).await.is_err());
+    assert!(
+        Mailbox::claim(&url, stale.nameplate, Some(&stale))
+            .await
+            .is_err()
+    );
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn plain_websocket_to_another_host_is_refused() {
+    let r = rendezvous::allocate("ws://example.com").await;
+    assert!(matches!(r, Err(Error::Rendezvous(_))));
 }

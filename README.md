@@ -17,7 +17,8 @@ Her dosyayı, herkese, her yere gönder. Ücretsiz, açık kaynak, uçtan uca ş
 | `app/` | Flutter app for Linux, Windows, macOS, Android, iOS (not created yet) | GPL-3.0-or-later |
 | `fuzz/` | Fuzz targets for every parser | MIT OR Apache-2.0 |
 
-| `server/totaldrop-rendezvous` | Rendezvous server: mailboxes for transfer codes | AGPL-3.0-or-later |
+| `server/totaldrop-rendezvous` | Rendezvous server in Rust, for self-hosting and tests | AGPL-3.0-or-later |
+| `server/rendezvous-worker` | The same rendezvous server on Cloudflare Workers, for `rendezvous.totaldrop.app` | AGPL-3.0-or-later |
 
 The relay and store servers will join `server/`. See [LICENSING.md](LICENSING.md).
 

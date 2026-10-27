@@ -133,10 +133,12 @@ impl PreparedSend {
             .await
             .map_err(|_| Error::Protocol("scan task failed"))??;
         let keys = DeviceKeys::generate()?;
-        let mut mailbox = rendezvous::Mailbox::connect(&opts.server).await?;
-        let nameplate = mailbox.allocate().await?;
+        let allocation = rendezvous::allocate(&opts.server).await?;
+        let nameplate = allocation.nameplate;
         let code = TransferCode::generate(nameplate, opts.words).map_err(Error::Code)?;
-        let mailbox_id = mailbox.claim(nameplate).await?;
+        let mailbox =
+            rendezvous::Mailbox::claim(&opts.server, nameplate, Some(&allocation)).await?;
+        let mailbox_id = mailbox.id;
         Ok(Self {
             mailbox,
             code,
@@ -265,8 +267,8 @@ impl IncomingOffer {
     pub async fn connect(opts: &ReceiveOptions, code: &str) -> Result<Self> {
         let code = TransferCode::parse(code).map_err(Error::Code)?;
         let keys = DeviceKeys::generate()?;
-        let mut mailbox = rendezvous::Mailbox::connect(&opts.server).await?;
-        let mailbox_id = mailbox.claim(code.nameplate()).await?;
+        let mailbox = rendezvous::Mailbox::claim(&opts.server, code.nameplate(), None).await?;
+        let mailbox_id = mailbox.id;
         let socket = transport::bind_socket()?;
         let endpoint_key = transport::EndpointKey::generate()?;
         let hints = own_hints(&socket, &endpoint_key)?;

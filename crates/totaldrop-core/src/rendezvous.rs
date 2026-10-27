@@ -12,7 +12,7 @@ use totaldrop_proto::wire::{ClientMessage, MAX_MAILBOX_BODY, Mood, ServerMessage
 use crate::error::{Error, Result};
 
 /// The project's rendezvous server.
-pub const DEFAULT_SERVER: &str = "wss://rendezvous.totaldrop.app/v0";
+pub const DEFAULT_SERVER: &str = "wss://rendezvous.totaldrop.app";
 
 /// Unencrypted `ws://` is accepted only for a server on this machine, for
 /// development and tests. Everything else must be `wss://` (TLS 1.3).
@@ -59,9 +59,110 @@ fn tls_config() -> Result<Arc<rustls::ClientConfig>> {
     Ok(Arc::new(config))
 }
 
-/// A connection to the rendezvous server.
+/// The rendezvous endpoint that hands out nameplates.
+pub const ALLOCATE_PATH: &str = "/v0/allocate";
+
+/// The rendezvous endpoint of one mailbox.
+pub fn mailbox_path(nameplate: u32) -> String {
+    format!("/v0/mailbox/{nameplate}")
+}
+
+/// How often a waiting client pings the server, so idle connections are not
+/// dropped by proxies along the way.
+const KEEPALIVE: std::time::Duration = std::time::Duration::from_secs(20);
+
+type Ws = WebSocketStream<MaybeTlsStream<TcpStream>>;
+
+fn join(server: &str, path: &str) -> String {
+    format!("{}{path}", server.trim_end_matches('/'))
+}
+
+async fn open(url: &str) -> Result<Ws> {
+    check_url(url)?;
+    let mut config = WebSocketConfig::default();
+    config.max_message_size = Some(MAX_MAILBOX_BODY.saturating_add(1024));
+    config.max_frame_size = Some(MAX_MAILBOX_BODY.saturating_add(1024));
+    let connector = if url.starts_with("wss://") {
+        Connector::Rustls(tls_config()?)
+    } else {
+        Connector::Plain
+    };
+    let (ws, _) =
+        tokio_tungstenite::connect_async_tls_with_config(url, Some(config), true, Some(connector))
+            .await
+            .map_err(|e| Error::Rendezvous(e.to_string()))?;
+    Ok(ws)
+}
+
+async fn send(ws: &mut Ws, msg: ClientMessage) -> Result<()> {
+    ws.send(Message::Binary(msg.encode().into()))
+        .await
+        .map_err(|e| Error::Rendezvous(e.to_string()))
+}
+
+/// Wait for the next server message, pinging while idle.
+async fn recv(ws: &mut Ws) -> Result<ServerMessage> {
+    let mut ping = tokio::time::interval(KEEPALIVE);
+    ping.tick().await;
+    loop {
+        tokio::select! {
+            frame = ws.next() => match frame {
+                Some(Ok(Message::Binary(b))) => {
+                    let msg = ServerMessage::decode(&b)?;
+                    if let ServerMessage::Error { reason } = msg {
+                        return Err(Error::Rendezvous(reason));
+                    }
+                    return Ok(msg);
+                }
+                Some(Ok(Message::Ping(_) | Message::Pong(_))) => {}
+                Some(Ok(Message::Close(_))) | None => {
+                    return Err(Error::Rendezvous("connection closed".into()));
+                }
+                Some(Ok(_)) => return Err(Error::Protocol("unexpected rendezvous frame")),
+                Some(Err(e)) => return Err(Error::Rendezvous(e.to_string())),
+            },
+            _ = ping.tick() => {
+                ws.send(Message::Ping(Vec::new().into()))
+                    .await
+                    .map_err(|e| Error::Rendezvous(e.to_string()))?;
+            }
+        }
+    }
+}
+
+/// A reserved nameplate and the token that lets its holder claim it first.
+#[derive(Clone, Copy)]
+pub struct Allocation {
+    /// The nameplate, the number at the start of the code.
+    pub nameplate: u32,
+    token: [u8; 16],
+}
+
+impl core::fmt::Debug for Allocation {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.debug_struct("Allocation")
+            .field("nameplate", &self.nameplate)
+            .finish_non_exhaustive()
+    }
+}
+
+/// `ALLOCATE`: reserve a nameplate on `server`.
+pub async fn allocate(server: &str) -> Result<Allocation> {
+    let mut ws = open(&join(server, ALLOCATE_PATH)).await?;
+    send(&mut ws, ClientMessage::Allocate).await?;
+    let reply = recv(&mut ws).await;
+    let _ = ws.close(None).await;
+    match reply? {
+        ServerMessage::Allocated { nameplate, token } => Ok(Allocation { nameplate, token }),
+        _ => Err(Error::Protocol("expected allocated")),
+    }
+}
+
+/// A claimed mailbox on the rendezvous server.
 pub struct Mailbox {
-    ws: WebSocketStream<MaybeTlsStream<TcpStream>>,
+    ws: Ws,
+    /// The mailbox ID (CPace session ID).
+    pub id: [u8; 16],
 }
 
 impl core::fmt::Debug for Mailbox {
@@ -71,84 +172,39 @@ impl core::fmt::Debug for Mailbox {
 }
 
 impl Mailbox {
-    /// Connect to the server at `url`.
-    pub async fn connect(url: &str) -> Result<Self> {
-        check_url(url)?;
-        let mut config = WebSocketConfig::default();
-        config.max_message_size = Some(MAX_MAILBOX_BODY.saturating_add(1024));
-        config.max_frame_size = Some(MAX_MAILBOX_BODY.saturating_add(1024));
-        let connector = if url.starts_with("wss://") {
-            Connector::Rustls(tls_config()?)
-        } else {
-            Connector::Plain
-        };
-        let (ws, _) = tokio_tungstenite::connect_async_tls_with_config(
-            url,
-            Some(config),
-            true,
-            Some(connector),
+    /// Claim `nameplate` on `server`. The allocator passes its token; the
+    /// other side passes `None`.
+    pub async fn claim(server: &str, nameplate: u32, token: Option<&Allocation>) -> Result<Self> {
+        let mut ws = open(&join(server, &mailbox_path(nameplate))).await?;
+        send(
+            &mut ws,
+            ClientMessage::Claim {
+                nameplate,
+                token: token.map(|a| a.token),
+            },
         )
-        .await
-        .map_err(|e| Error::Rendezvous(e.to_string()))?;
-        Ok(Self { ws })
-    }
-
-    async fn send(&mut self, msg: ClientMessage) -> Result<()> {
-        self.ws
-            .send(Message::Binary(msg.encode().into()))
-            .await
-            .map_err(|e| Error::Rendezvous(e.to_string()))
-    }
-
-    async fn recv(&mut self) -> Result<ServerMessage> {
-        loop {
-            match self.ws.next().await {
-                Some(Ok(Message::Binary(b))) => {
-                    let msg = ServerMessage::decode(&b)?;
-                    if let ServerMessage::Error { reason } = msg {
-                        return Err(Error::Rendezvous(reason));
-                    }
-                    return Ok(msg);
-                }
-                Some(Ok(Message::Ping(_) | Message::Pong(_))) => continue,
-                Some(Ok(_)) => return Err(Error::Protocol("unexpected rendezvous frame")),
-                Some(Err(e)) => return Err(Error::Rendezvous(e.to_string())),
-                None => return Err(Error::Rendezvous("connection closed".into())),
-            }
-        }
-    }
-
-    /// `ALLOCATE`: reserve a nameplate.
-    pub async fn allocate(&mut self) -> Result<u32> {
-        self.send(ClientMessage::Allocate).await?;
-        match self.recv().await? {
-            ServerMessage::Allocated { nameplate } => Ok(nameplate),
-            _ => Err(Error::Protocol("expected allocated")),
-        }
-    }
-
-    /// `CLAIM`: join the mailbox; returns the mailbox ID.
-    pub async fn claim(&mut self, nameplate: u32) -> Result<[u8; 16]> {
-        self.send(ClientMessage::Claim { nameplate }).await?;
-        match self.recv().await? {
-            ServerMessage::Claimed { mailbox } => Ok(mailbox),
-            // Our own messages are never echoed; nothing else may come first.
+        .await?;
+        match recv(&mut ws).await? {
+            ServerMessage::Claimed { mailbox } => Ok(Self { ws, id: mailbox }),
             _ => Err(Error::Protocol("expected claimed")),
         }
     }
 
     /// `ADD`: post a message to the other side.
     pub async fn add(&mut self, phase: &str, body: Vec<u8>) -> Result<()> {
-        self.send(ClientMessage::Add {
-            phase: phase.to_owned(),
-            body,
-        })
+        send(
+            &mut self.ws,
+            ClientMessage::Add {
+                phase: phase.to_owned(),
+                body,
+            },
+        )
         .await
     }
 
     /// Wait for the other side's next message, which must be of `phase`.
     pub async fn expect(&mut self, phase: &str) -> Result<Vec<u8>> {
-        match self.recv().await? {
+        match recv(&mut self.ws).await? {
             ServerMessage::Message { phase: p, body } if p == phase => Ok(body),
             ServerMessage::Message { .. } => Err(Error::Protocol("unexpected mailbox phase")),
             ServerMessage::PeerClosed { mood: Mood::Scary } => Err(Error::WrongCode),
@@ -159,7 +215,7 @@ impl Mailbox {
 
     /// `CLOSE`: leave the mailbox.
     pub async fn close(mut self, mood: Mood) {
-        let _ = self.send(ClientMessage::Close { mood }).await;
+        let _ = send(&mut self.ws, ClientMessage::Close { mood }).await;
         let _ = self.ws.close(None).await;
     }
 }

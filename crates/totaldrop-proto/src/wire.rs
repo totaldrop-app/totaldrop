@@ -228,6 +228,9 @@ pub enum ClientMessage {
     Claim {
         /// The nameplate from the code.
         nameplate: u32,
+        /// The allocator token from `allocated`. Only the allocator has it,
+        /// and the first claim must carry it.
+        token: Option<[u8; 16]>,
     },
     /// `ADD(phase, body)`: post an opaque message to the other side.
     Add {
@@ -253,8 +256,12 @@ impl ClientMessage {
     pub fn encode(&self) -> Vec<u8> {
         match self {
             ClientMessage::Allocate => encode_map(vec![(0, text("allocate"))]),
-            ClientMessage::Claim { nameplate } => {
-                encode_map(vec![(0, text("claim")), (1, int(u64::from(*nameplate)))])
+            ClientMessage::Claim { nameplate, token } => {
+                let mut fields = vec![(0, text("claim")), (1, int(u64::from(*nameplate)))];
+                if let Some(t) = token {
+                    fields.push((2, bytes(t)));
+                }
+                encode_map(fields)
             }
             ClientMessage::Add { phase, body } => {
                 encode_map(vec![(0, text("add")), (1, text(phase)), (2, bytes(body))])
@@ -272,6 +279,10 @@ impl ClientMessage {
             "allocate" => Ok(ClientMessage::Allocate),
             "claim" => Ok(ClientMessage::Claim {
                 nameplate: u32::try_from(f.u64(1)?).map_err(|_| WireError::Field(1))?,
+                token: match f.get(2) {
+                    None => None,
+                    Some(_) => Some(f.array(2)?),
+                },
             }),
             "add" => {
                 let phase = f.text(1)?;
@@ -302,6 +313,8 @@ pub enum ServerMessage {
     Allocated {
         /// The nameplate reserved for this client.
         nameplate: u32,
+        /// Secret that lets the allocator make the first claim.
+        token: [u8; 16],
     },
     /// Reply to `CLAIM`.
     Claimed {
@@ -331,9 +344,10 @@ impl ServerMessage {
     /// Deterministic CBOR encoding.
     pub fn encode(&self) -> Vec<u8> {
         match self {
-            ServerMessage::Allocated { nameplate } => encode_map(vec![
+            ServerMessage::Allocated { nameplate, token } => encode_map(vec![
                 (0, text("allocated")),
                 (1, int(u64::from(*nameplate))),
+                (2, bytes(token)),
             ]),
             ServerMessage::Claimed { mailbox } => {
                 encode_map(vec![(0, text("claimed")), (1, bytes(mailbox))])
@@ -358,6 +372,7 @@ impl ServerMessage {
         match f.kind()? {
             "allocated" => Ok(ServerMessage::Allocated {
                 nameplate: u32::try_from(f.u64(1)?).map_err(|_| WireError::Field(1))?,
+                token: f.array(2)?,
             }),
             "claimed" => Ok(ServerMessage::Claimed {
                 mailbox: f.array(1)?,
@@ -1022,7 +1037,14 @@ mod tests {
     fn rendezvous_round_trip() {
         let msgs = [
             ClientMessage::Allocate,
-            ClientMessage::Claim { nameplate: 7 },
+            ClientMessage::Claim {
+                nameplate: 7,
+                token: None,
+            },
+            ClientMessage::Claim {
+                nameplate: 8,
+                token: Some([5; 16]),
+            },
             ClientMessage::Add {
                 phase: "pake".into(),
                 body: vec![1, 2, 3],
@@ -1033,7 +1055,10 @@ mod tests {
             assert_eq!(ClientMessage::decode(&m.encode()).unwrap(), m);
         }
         let msgs = [
-            ServerMessage::Allocated { nameplate: 1 },
+            ServerMessage::Allocated {
+                nameplate: 1,
+                token: [6; 16],
+            },
             ServerMessage::Claimed { mailbox: [9; 16] },
             ServerMessage::Message {
                 phase: "hints".into(),
@@ -1055,7 +1080,10 @@ mod tests {
         let with_extra = encode_map(vec![(0, text("claim")), (1, int(7)), (99, text("future"))]);
         assert_eq!(
             ClientMessage::decode(&with_extra).unwrap(),
-            ClientMessage::Claim { nameplate: 7 }
+            ClientMessage::Claim {
+                nameplate: 7,
+                token: None
+            }
         );
         // Duplicate key 1, written by hand: a3 00 65 "claim" 01 07 01 08
         let dup = [
