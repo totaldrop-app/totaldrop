@@ -7,27 +7,30 @@ All notable changes to TotalDrop are recorded here. The format follows
 
 ## [Unreleased]
 
-### Added
-
-- **Linux:** first desktop app (`linux-v0.1.0-beta.2`), Qt 6 and QML, native
-  Wayland. Send with the desktop's file chooser or by drag and drop, a code
-  and a QR code; receive by typing the code with word completion, pasting it,
-  reading a QR code from an image or opening a TotalDrop link. Desktop
-  notifications when a transfer ends in the background.
-- **Linux:** follows the desktop's look: the Omarchy theme (live), the
-  portal's colour scheme and accent, the Plasma palette with Breeze controls
-  and icons, and Hyprland's corner rounding.
-- **Linux:** separate packages for Arch, Debian/Ubuntu (.deb) and
-  Fedora (.rpm).
-
-- **Site:** `totaldrop.app/r#code`, the page TotalDrop QR codes and links
-  open: it shows the code and opens the app with it. The code stays in the
-  browser. The download page offers the Linux packages.
+## [android-0.1.0-beta.3] - 2026-10-27
 
 ### Changed
 
 - **Android:** while sending, the mark plays the website's animation: the
   file travels the channel and a ring spreads from the drop.
+
+## [linux-0.1.0-beta.2] - 2026-10-27
+
+### Added
+
+- **Linux:** first desktop app, Qt 6 and QML, native Wayland. Send with the
+  desktop's file chooser or by drag and drop, a code and a QR code; receive
+  by typing the code with word completion, pasting it, reading a QR code from
+  an image or opening a TotalDrop link. Desktop notifications when a
+  transfer ends in the background.
+- **Linux:** follows the desktop's look: the Omarchy theme (live), the
+  portal's colour scheme and accent, the Plasma palette with Breeze controls
+  and icons, and Hyprland's corner rounding.
+- **Linux:** separate packages for Arch, Debian/Ubuntu (.deb) and
+  Fedora (.rpm).
+- **Site:** `totaldrop.app/r#code`, the page TotalDrop QR codes and links
+  open: it shows the code and opens the app with it. The code stays in the
+  browser. The download page offers the Linux packages.
 
 ## [0.1.0-beta.2] - 2026-10-27
 
