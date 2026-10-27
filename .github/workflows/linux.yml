@@ -76,9 +76,13 @@ jobs:
         with:
           path: packages
           merge-multiple: true
-      - name: Checksums
+      # GitHub turns "~" in asset names into "."; rename first so the
+      # checksums list the names people download.
+      - name: Names and checksums
         working-directory: packages
-        run: sha256sum * > SHA256SUMS
+        run: |
+          for f in *~*; do [ -e "$f" ] && mv "$f" "${f//\~/.}"; done
+          sha256sum * > SHA256SUMS
       - name: Draft release
         env:
           GH_TOKEN: ${{ github.token }}
