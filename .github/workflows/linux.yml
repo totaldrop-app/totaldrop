@@ -58,7 +58,7 @@ jobs:
         with:
           persist-credentials: false
       - run: packaging/build.sh ${{ matrix.format }}
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: totaldrop-linux-${{ matrix.format }}
           path: dist/packages/*
