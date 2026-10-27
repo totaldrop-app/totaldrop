@@ -18,7 +18,7 @@ All notable changes to TotalDrop are recorded here. The format follows
   portal's colour scheme and accent, the Plasma palette with Breeze controls
   and icons, and Hyprland's corner rounding.
 - **Linux:** separate packages for Arch, Debian/Ubuntu (.deb) and
-  Fedora/openSUSE (.rpm).
+  Fedora (.rpm).
 
 ### Changed
 

@@ -1,6 +1,7 @@
-# RPM package for TotalDrop (Fedora, openSUSE): the Qt 6 desktop app and
-# the CLI. The Rust toolchain comes from rustup: rust-toolchain.toml pins
-# the newest stable Rust, which distributions do not ship yet.
+# RPM package for TotalDrop on Fedora: the Qt 6 desktop app and the CLI.
+# openSUSE names its Qt packages differently and needs a spec of its own.
+# The Rust toolchain comes from rustup: rust-toolchain.toml pins the newest
+# stable Rust, which distributions do not ship yet.
 
 %global upstream_version 0.1.0-beta.2
 %global srcname totaldrop-linux-v%{upstream_version}
