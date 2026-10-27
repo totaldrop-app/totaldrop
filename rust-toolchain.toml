@@ -1,0 +1,6 @@
+[toolchain]
+# Always the newest stable Rust. Dependabot cannot bump this file, so update
+# it with every stable release (every six weeks).
+channel = "1.99.1"
+components = ["clippy", "rustfmt"]
+profile = "minimal"

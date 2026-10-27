@@ -25,7 +25,7 @@ cargo test
 cargo run -p totaldrop-cli -- code 7-harbor-rocket
 ```
 
-Requires Rust 1.87 or newer.
+The project always targets the newest stable Rust (currently 1.99.1, pinned in `rust-toolchain.toml`); rustup installs it automatically on the first build. Dependencies are kept current by Dependabot every week.
 
 ## Protocol
 

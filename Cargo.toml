@@ -6,7 +6,7 @@ exclude = ["fuzz"]
 [workspace.package]
 version = "0.0.1"
 edition = "2024"
-rust-version = "1.87"
+rust-version = "1.99"
 repository = "https://github.com/totaldrop-app/totaldrop"
 homepage = "https://totaldrop.app"
 

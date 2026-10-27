@@ -24,9 +24,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          components: clippy, rustfmt
+      # rustup reads rust-toolchain.toml and installs exactly that version.
+      - name: Install the pinned Rust toolchain
+        run: rustup show active-toolchain || rustup toolchain install
       - name: Format
         if: runner.os == 'Linux'
         run: cargo fmt --all -- --check
@@ -34,16 +34,6 @@ jobs:
         run: cargo clippy --all-targets --locked -- -D warnings
       - name: Test
         run: cargo test --locked
-
-  msrv:
-    name: Minimum Rust version
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-      - uses: dtolnay/rust-toolchain@1.87
-      - run: cargo check --locked
 
   deny:
     name: Dependencies (cargo-deny)
