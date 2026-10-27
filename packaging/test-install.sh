@@ -13,7 +13,7 @@ case $pkg in
 *.pkg.tar.zst) image=${2:-archlinux:latest}
   install="pacman -Sy --noconfirm >/dev/null && pacman -U --noconfirm /pkg/$(basename "$pkg") >/dev/null && pacman -S --noconfirm --needed desktop-file-utils appstream >/dev/null" ;;
 *.deb) image=${2:-debian:trixie}
-  install="apt-get update >/dev/null && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends /pkg/$(basename "$pkg") desktop-file-utils appstream >/dev/null" ;;
+  install="apt-get update >/dev/null && DEBIAN_FRONTEND=noninteractive apt-get install -y /pkg/$(basename "$pkg") desktop-file-utils appstream >/dev/null" ;;
 *.rpm) image=${2:-fedora:43}
   install="dnf install -y /pkg/$(basename "$pkg") desktop-file-utils appstream >/dev/null" ;;
 *) echo "unknown package type" >&2; exit 2 ;;

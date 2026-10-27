@@ -31,6 +31,7 @@ Requires:       qt6-qtwayland
 Requires:       qt6-qtsvg
 Requires:       xdg-desktop-portal
 Requires:       hicolor-icon-theme
+Requires:       (google-noto-sans-fonts or dejavu-sans-fonts or font(:lang=en))
 Recommends:     (kf6-qqc2-desktop-style if plasma-workspace)
 Recommends:     (xdg-desktop-portal-kde if plasma-workspace)
 Recommends:     (xdg-desktop-portal-gtk if gnome-shell)
