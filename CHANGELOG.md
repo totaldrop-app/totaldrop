@@ -20,6 +20,10 @@ All notable changes to TotalDrop are recorded here. The format follows
 - **Linux:** separate packages for Arch, Debian/Ubuntu (.deb) and
   Fedora (.rpm).
 
+- **Site:** `totaldrop.app/r#code`, the page TotalDrop QR codes and links
+  open: it shows the code and opens the app with it. The code stays in the
+  browser. The download page offers the Linux packages.
+
 ### Changed
 
 - **Android:** while sending, the mark plays the website's animation: the

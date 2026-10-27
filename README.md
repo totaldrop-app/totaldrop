@@ -17,6 +17,7 @@ Her dosyayı, herkese, her yere gönder. Ücretsiz, açık kaynak, uçtan uca ş
 | `linux/` | Linux desktop app: Qt 6 and QML over `totaldrop-core`, native Wayland, follows Plasma, Hyprland and Omarchy themes | GPL-3.0-or-later |
 | `packaging/` | Linux packages, each format on its own: Arch (`PKGBUILD`), Debian (`debian/`), RPM (`.spec`) | GPL-3.0-or-later |
 | `app/` | Android app (Flutter); iOS later | GPL-3.0-or-later |
+| `site/` | The web site: totaldrop.app, download.totaldrop.app and the page QR links open | GPL-3.0-or-later; fonts SIL OFL 1.1 |
 | `fuzz/` | Fuzz targets for every parser | MIT OR Apache-2.0 |
 | `server/totaldrop-rendezvous` | Rendezvous server in Rust, for self-hosting and tests | AGPL-3.0-or-later |
 | `server/rendezvous-worker` | The same rendezvous server on Cloudflare Workers, for `rendezvous.totaldrop.app` | AGPL-3.0-or-later |

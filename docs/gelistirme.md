@@ -29,6 +29,7 @@ anda ulaşır. Her platform kendi temposunda yayınlanır.
 | `packaging/` | Linux paket tarifleri ve derleme kapları | `linux.yml` |
 | `app/` | Android uygulaması (Flutter); ileride iOS | `android.yml` |
 | `server/` | Rendezvous sunucusu: Rust sürümü ve Cloudflare Workers sürümü | `core.yml`, `server.yml` |
+| `site/` | totaldrop.app, download.totaldrop.app ve QR bağlantı sayfası | `site.yml` |
 | `fuzz/` | Ayrıştırıcıların fuzz hedefleri | `fuzz.yml` (haftalık) |
 | `docs/` | Tasarım kuralları, sürümler, protokol notları, bu belge | |
 
