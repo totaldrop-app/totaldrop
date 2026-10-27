@@ -157,11 +157,15 @@ pub async fn handshake(
         buf.truncate(n);
         input.keys.decapsulate(&buf)?
     };
-    let (k_i2r, k_r2i) = session_keys(&h, &ss);
+    let (mut k_i2r, mut k_r2i) = session_keys(&h, &ss);
     let verification = totaldrop_crypto::channel::verification_indices(&h, &ss);
     ss.zeroize();
+    let mut h = h;
+    h.zeroize();
     drop(transport);
     let (mut sealer, mut opener) = session(k_i2r, k_r2i, initiator);
+    k_i2r.zeroize();
+    k_r2i.zeroize();
 
     // Key confirmation: nothing else flows until the peer proves it holds
     // the new keys.

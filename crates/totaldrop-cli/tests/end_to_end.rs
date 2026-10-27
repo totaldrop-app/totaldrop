@@ -276,6 +276,9 @@ async fn scary_close_retires_the_nameplate() {
     a.claim(n).await.unwrap();
     let mut b = Mailbox::connect(&server).await.unwrap();
     b.claim(n).await.unwrap();
+    a.add("pake", vec![1; 32]).await.unwrap();
+    b.add("pake", vec![2; 32]).await.unwrap();
+    assert_eq!(a.expect("pake").await.unwrap(), vec![2; 32]);
     a.close(Mood::Scary).await;
     b.close(Mood::Lonely).await;
     tokio::time::sleep(Duration::from_millis(100)).await;
@@ -288,4 +291,26 @@ async fn scary_close_retires_the_nameplate() {
 async fn plain_websocket_to_another_host_is_refused() {
     let r = Mailbox::connect("ws://example.com/v0").await;
     assert!(matches!(r, Err(Error::Rendezvous(_))));
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn expired_nameplate_holders_are_disconnected() {
+    let config = totaldrop_rendezvous::Config {
+        unclaimed_ttl: Duration::from_millis(300),
+        sweep_interval: Duration::from_millis(100),
+        ..Default::default()
+    };
+    let (addr, _server, _task) =
+        totaldrop_rendezvous::spawn("127.0.0.1:0".parse().unwrap(), config)
+            .await
+            .unwrap();
+    let url = format!("ws://{addr}");
+    let mut stale = Mailbox::connect(&url).await.unwrap();
+    let n = stale.allocate().await.unwrap();
+    tokio::time::sleep(Duration::from_millis(800)).await;
+    // The number goes to someone else; the stale holder can no longer act.
+    let mut fresh = Mailbox::connect(&url).await.unwrap();
+    let m = fresh.allocate().await.unwrap();
+    fresh.claim(m).await.unwrap();
+    assert!(stale.claim(n).await.is_err());
 }

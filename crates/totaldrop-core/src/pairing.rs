@@ -115,7 +115,13 @@ async fn run(
     mailbox
         .add("confirm", cipher.seal("confirm", &own_cert.encode())?)
         .await?;
-    let sealed = mailbox.expect("confirm").await?;
+    // A peer that leaves after seeing our confirmation may have taken its
+    // one guess offline; count it as a failed confirmation, so the
+    // nameplate is retired and the attempt is visible.
+    let sealed = match mailbox.expect("confirm").await {
+        Err(Error::PeerLeft) => return Err(Error::WrongCode),
+        other => other?,
+    };
     let plain = cipher
         .open("confirm", &sealed)
         .map_err(|_| Error::WrongCode)?;

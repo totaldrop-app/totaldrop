@@ -7,6 +7,9 @@
 
 use ciborium::Value;
 
+/// Most keys accepted in one map, known or unknown.
+const MAX_MAP_KEYS: usize = 64;
+
 /// Deepest nesting any v0 message needs (offer → entries → entry → path).
 const RECURSION_LIMIT: usize = 16;
 
@@ -74,7 +77,12 @@ fn value_to_map(value: Value) -> Result<Fields, WireError> {
     let Value::Map(entries) = value else {
         return Err(WireError::Shape);
     };
+    // No v0 map has more than a handful of fields; a huge map is an attack.
+    if entries.len() > MAX_MAP_KEYS {
+        return Err(WireError::Limit("map keys"));
+    }
     let mut fields: Vec<(u64, Value)> = Vec::with_capacity(entries.len());
+    let mut seen = std::collections::HashSet::with_capacity(entries.len());
     for (k, v) in entries {
         let Value::Integer(i) = k else {
             // Unknown, non-integer keys are ignored like any unknown key.
@@ -83,7 +91,7 @@ fn value_to_map(value: Value) -> Result<Fields, WireError> {
         let Ok(key) = u64::try_from(i) else {
             continue;
         };
-        if fields.iter().any(|(existing, _)| *existing == key) {
+        if !seen.insert(key) {
             return Err(WireError::Shape);
         }
         fields.push((key, v));
@@ -238,7 +246,7 @@ pub enum ClientMessage {
 /// Longest phase name accepted.
 pub const MAX_PHASE: usize = 32;
 /// Largest mailbox message body accepted by the server.
-pub const MAX_MAILBOX_BODY: usize = 64 * 1024;
+pub const MAX_MAILBOX_BODY: usize = 16 * 1024;
 
 impl ClientMessage {
     /// Deterministic CBOR encoding.

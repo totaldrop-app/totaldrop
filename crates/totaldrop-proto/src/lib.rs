@@ -82,6 +82,12 @@ const RESERVED: [&str; 22] = [
     "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9",
 ];
 
+/// Characters no segment may contain on any platform. Besides the path
+/// separators and NUL, these are the characters Windows reserves: `:` would
+/// otherwise let a segment such as `C:` name another drive, or `name:stream`
+/// an alternate data stream.
+const FORBIDDEN: [char; 10] = ['/', '\\', '\0', ':', '<', '>', '"', '|', '?', '*'];
+
 fn is_bidi_control(c: char) -> bool {
     matches!(c, '\u{202A}'..='\u{202E}' | '\u{2066}'..='\u{2069}')
 }
@@ -100,7 +106,7 @@ pub fn validate_path<S: AsRef<str>>(segments: &[S]) -> Result<SafePath, PathErro
         }
         if seg
             .chars()
-            .any(|c| c == '/' || c == '\\' || c == '\0' || c.is_control())
+            .any(|c| FORBIDDEN.contains(&c) || c.is_control())
         {
             return Err(PathError::ForbiddenChar(i));
         }
@@ -380,5 +386,26 @@ mod tests {
         let a = validate_path(&["Rapor.PDF"]).unwrap();
         let b = validate_path(&["rapor.pdf"]).unwrap();
         assert_eq!(a.collision_key(), b.collision_key());
+    }
+
+    #[test]
+    fn windows_drive_and_stream_names_are_rejected() {
+        for seg in [
+            "C:",
+            "D:evil",
+            "name:stream",
+            "a<b",
+            "a>b",
+            "a\"b",
+            "a|b",
+            "a?b",
+            "a*b",
+        ] {
+            assert_eq!(
+                validate_path(&["x", seg]),
+                Err(PathError::ForbiddenChar(1)),
+                "{seg}"
+            );
+        }
     }
 }

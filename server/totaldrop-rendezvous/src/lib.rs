@@ -7,7 +7,10 @@
 //! Rules enforced here:
 //! - a nameplate accepts exactly two claims; a third is refused, which is
 //!   what limits an attacker to one guess per code;
-//! - after a `scary` close the nameplate is retired for 24 hours;
+//! - after a `scary` close by one of two sides that exchanged messages, the
+//!   nameplate is retired for 24 hours;
+//! - every request is checked against the mailbox a connection joined, so a
+//!   connection whose nameplate expired cannot touch the number's next owner;
 //! - unclaimed nameplates expire after 15 minutes, and every mailbox is
 //!   deleted when both sides have left, or after one hour at the latest;
 //! - nothing is logged about clients: no addresses, no nameplates, no sizes.
@@ -49,6 +52,8 @@ pub struct Config {
     pub scary_window: Duration,
     /// Delay added to every allocation during an attack wave.
     pub wave_delay: Duration,
+    /// How often expired mailboxes are swept.
+    pub sweep_interval: Duration,
 }
 
 impl Default for Config {
@@ -64,12 +69,29 @@ impl Default for Config {
             scary_threshold: 100,
             scary_window: Duration::from_secs(10 * 60),
             wave_delay: Duration::from_secs(2),
+            sweep_interval: Duration::from_secs(5),
         }
     }
 }
 
 type ConnId = u64;
 type Outbox = mpsc::Sender<ServerMessage>;
+
+/// Most messages buffered for a side that has not arrived yet.
+const MAX_PENDING_MESSAGES: usize = 8;
+/// Most bytes buffered for a side that has not arrived yet. A real exchange
+/// buffers at most one CPace message, one certificate and one set of hints.
+const MAX_PENDING_BYTES: usize = 32 * 1024;
+/// How long a freed nameplate rests before it is handed out again, so a
+/// late receiver with an old code does not walk into a stranger's mailbox.
+const COOLDOWN: Duration = Duration::from_secs(10 * 60);
+/// How long the WebSocket handshake and each write may take.
+const IO_TIMEOUT: Duration = Duration::from_secs(10);
+
+/// What a connection holds: a nameplate number and the mailbox it pointed to
+/// when this connection got it. A number can be reused after expiry; the
+/// mailbox ID cannot, so every request is checked against both.
+type Held = Option<(u32, [u8; 16])>;
 
 #[derive(Debug)]
 struct Side {
@@ -83,16 +105,19 @@ struct Side {
 struct Nameplate {
     created: Instant,
     allocated_by: ConnId,
+    allocator: Outbox,
     mailbox: [u8; 16],
     sides: Vec<Side>,
     /// Messages posted before the other side arrived, by poster.
     pending: Vec<(ConnId, String, Vec<u8>)>,
+    pending_bytes: usize,
 }
 
 #[derive(Debug, Default)]
 struct State {
     nameplates: HashMap<u32, Nameplate>,
     retired: HashMap<u32, Instant>,
+    cooling: HashMap<u32, Instant>,
     scary: VecDeque<Instant>,
     next_conn: ConnId,
 }
@@ -104,10 +129,25 @@ impl State {
             .is_some_and(|t| now.saturating_duration_since(*t) < cfg.retire_for)
     }
 
+    fn is_cooling(&self, n: u32, now: Instant) -> bool {
+        self.cooling
+            .get(&n)
+            .is_some_and(|t| now.saturating_duration_since(*t) < COOLDOWN)
+    }
+
     fn free_nameplate(&self, now: Instant, cfg: &Config) -> Option<u32> {
+        let range = cfg.max_nameplates.saturating_mul(4);
+        let usable = |n: &u32| !self.nameplates.contains_key(n) && !self.is_retired(*n, now, cfg);
         (1u32..=u32::MAX)
-            .take(cfg.max_nameplates.saturating_add(cfg.max_nameplates))
-            .find(|n| !self.nameplates.contains_key(n) && !self.is_retired(*n, now, cfg))
+            .take(range)
+            .find(|n| usable(n) && !self.is_cooling(*n, now))
+            .or_else(|| (1u32..=u32::MAX).take(range).find(usable))
+    }
+
+    fn remove(&mut self, n: u32, now: Instant) {
+        if self.nameplates.remove(&n).is_some() {
+            self.cooling.insert(n, now);
+        }
     }
 
     fn attack_wave(&mut self, now: Instant, cfg: &Config) -> bool {
@@ -121,14 +161,17 @@ impl State {
         self.scary.len() >= cfg.scary_threshold
     }
 
-    /// Remove expired nameplates and retirements. Returns the outboxes of
-    /// clients whose mailbox disappeared, so they can be told.
+    /// Remove expired nameplates, retirements and cooldowns. Returns the
+    /// outboxes of every client that still held an expired nameplate, so
+    /// they can be told and disconnected.
     fn sweep(&mut self, now: Instant, cfg: &Config) -> Vec<Outbox> {
         let mut told = Vec::new();
-        self.nameplates.retain(|_, np| {
+        let mut expired_numbers = Vec::new();
+        for (n, np) in &self.nameplates {
             let age = now.saturating_duration_since(np.created);
-            let expired = (np.sides.len() < 2 && age > cfg.unclaimed_ttl) || age > cfg.mailbox_ttl;
-            if expired {
+            if (np.sides.len() < 2 && age > cfg.unclaimed_ttl) || age > cfg.mailbox_ttl {
+                expired_numbers.push(*n);
+                told.push(np.allocator.clone());
                 told.extend(
                     np.sides
                         .iter()
@@ -136,11 +179,24 @@ impl State {
                         .map(|s| s.outbox.clone()),
                 );
             }
-            !expired
-        });
+        }
+        for n in expired_numbers {
+            self.remove(n, now);
+        }
         self.retired
             .retain(|_, t| now.saturating_duration_since(*t) < cfg.retire_for);
+        self.cooling
+            .retain(|_, t| now.saturating_duration_since(*t) < COOLDOWN);
         told
+    }
+
+    /// The nameplate `held` points to, if it is still the same mailbox.
+    fn current(&mut self, held: Held) -> Option<(u32, &mut Nameplate)> {
+        let (n, id) = held?;
+        self.nameplates
+            .get_mut(&n)
+            .filter(|np| np.mailbox == id)
+            .map(|np| (n, np))
     }
 }
 
@@ -167,7 +223,7 @@ impl Server {
     pub async fn serve(self, listener: TcpListener) {
         let sweeper = self.clone();
         tokio::spawn(async move {
-            let mut tick = tokio::time::interval(Duration::from_secs(5));
+            let mut tick = tokio::time::interval(sweeper.config.sweep_interval);
             loop {
                 tick.tick().await;
                 let told = sweeper
@@ -176,11 +232,9 @@ impl Server {
                     .await
                     .sweep(Instant::now(), &sweeper.config);
                 for outbox in told {
-                    let _ = outbox
-                        .send(ServerMessage::Error {
-                            reason: "mailbox expired".into(),
-                        })
-                        .await;
+                    let _ = outbox.try_send(ServerMessage::Error {
+                        reason: "mailbox expired".into(),
+                    });
                 }
             }
         });
@@ -206,8 +260,12 @@ impl Server {
         let mut ws_config = WebSocketConfig::default();
         ws_config.max_message_size = Some(MAX_MAILBOX_BODY.saturating_add(1024));
         ws_config.max_frame_size = Some(MAX_MAILBOX_BODY.saturating_add(1024));
-        let Ok(ws) = tokio_tungstenite::accept_async_with_config(stream, Some(ws_config)).await
-        else {
+        let accepted = tokio::time::timeout(
+            IO_TIMEOUT,
+            tokio_tungstenite::accept_async_with_config(stream, Some(ws_config)),
+        )
+        .await;
+        let Ok(Ok(ws)) = accepted else {
             return;
         };
         let (mut sink, mut source) = ws.split();
@@ -219,33 +277,38 @@ impl Server {
             st.next_conn
         };
 
-        // Writer: forwards queued server messages; an error ends the connection.
+        // Writer: forwards queued server messages; an error, a failed write
+        // or a client that stops reading ends the connection.
         let writer = tokio::spawn(async move {
             while let Some(msg) = inbox.recv().await {
                 let fatal = matches!(msg, ServerMessage::Error { .. });
-                if sink
-                    .send(Message::Binary(msg.encode().into()))
-                    .await
-                    .is_err()
-                {
-                    break;
-                }
-                if fatal {
+                let sent = tokio::time::timeout(
+                    IO_TIMEOUT,
+                    sink.send(Message::Binary(msg.encode().into())),
+                )
+                .await;
+                if !matches!(sent, Ok(Ok(()))) || fatal {
                     break;
                 }
             }
-            let _ = sink.close().await;
+            let _ = tokio::time::timeout(IO_TIMEOUT, sink.close()).await;
         });
 
-        let mut held: Option<u32> = None;
+        let mut held: Held = None;
         loop {
-            let next = tokio::time::timeout(self.config.idle_timeout, source.next()).await;
+            let next = tokio::select! {
+                n = tokio::time::timeout(self.config.idle_timeout, source.next()) => n,
+                // The writer ended (expiry, error, or a client that stopped reading).
+                () = async { while !writer.is_finished() { tokio::time::sleep(Duration::from_millis(200)).await } } => break,
+            };
             let frame = match next {
                 Ok(Some(Ok(frame))) => frame,
                 _ => break,
             };
             let data = match frame {
                 Message::Binary(b) => b,
+                // Pings keep a connection open, but never a mailbox: expiry
+                // runs on the mailbox's own clock and disconnects its holders.
                 Message::Ping(_) | Message::Pong(_) => continue,
                 _ => break,
             };
@@ -254,20 +317,15 @@ impl Server {
                 Err(_) => Err("malformed message"),
             };
             if let Err(reason) = reply {
-                let _ = outbox
-                    .send(ServerMessage::Error {
-                        reason: reason.into(),
-                    })
-                    .await;
-                break;
-            }
-            if writer.is_finished() {
+                let _ = outbox.try_send(ServerMessage::Error {
+                    reason: reason.into(),
+                });
                 break;
             }
         }
         // A client that disappears without CLOSE counts as a lonely close.
-        if let Some(n) = held {
-            self.close(conn, n, Mood::Lonely, false).await;
+        if held.is_some() {
+            self.close(conn, held, Mood::Lonely).await;
         }
         drop(outbox);
         let _ = writer.await;
@@ -277,7 +335,7 @@ impl Server {
         &self,
         conn: ConnId,
         outbox: &Outbox,
-        held: &mut Option<u32>,
+        held: &mut Held,
         msg: ClientMessage,
     ) -> Result<(), &'static str> {
         match msg {
@@ -306,12 +364,15 @@ impl Server {
                     Nameplate {
                         created: now,
                         allocated_by: conn,
+                        allocator: outbox.clone(),
                         mailbox,
                         sides: Vec::new(),
                         pending: Vec::new(),
+                        pending_bytes: 0,
                     },
                 );
-                *held = Some(n);
+                st.cooling.remove(&n);
+                *held = Some((n, mailbox));
                 drop(st);
                 outbox
                     .send(ServerMessage::Allocated { nameplate: n })
@@ -319,14 +380,26 @@ impl Server {
                     .map_err(|_| "closed")
             }
             ClientMessage::Claim { nameplate } => {
-                if held.is_some_and(|h| h != nameplate) {
-                    return Err("one nameplate per connection");
-                }
                 let mut st = self.state.lock().await;
-                let np = st
-                    .nameplates
-                    .get_mut(&nameplate)
-                    .ok_or("unknown nameplate")?;
+                let np = match *held {
+                    Some((n, _)) if n != nameplate => return Err("one nameplate per connection"),
+                    Some(_) => st
+                        .current(*held)
+                        .map(|(_, np)| np)
+                        .ok_or("mailbox expired")?,
+                    None => {
+                        let np = st
+                            .nameplates
+                            .get_mut(&nameplate)
+                            .ok_or("unknown nameplate")?;
+                        if np.sides.is_empty() {
+                            // The allocator always claims first; anyone else
+                            // claiming an empty nameplate is guessing.
+                            return Err("unknown nameplate");
+                        }
+                        np
+                    }
+                };
                 if np.sides.iter().any(|s| s.conn == conn) {
                     return Err("already claimed");
                 }
@@ -334,9 +407,7 @@ impl Server {
                     // The rule that limits an attacker to one guess.
                     return Err("nameplate full");
                 }
-                if held.is_none() && np.sides.is_empty() && np.allocated_by != conn {
-                    // The allocator always claims first; anyone else claiming
-                    // an empty nameplate is guessing.
+                if np.sides.is_empty() && np.allocated_by != conn {
                     return Err("unknown nameplate");
                 }
                 np.sides.push(Side {
@@ -345,21 +416,16 @@ impl Server {
                     posted: 0,
                     closed: false,
                 });
-                *held = Some(nameplate);
                 let mailbox = np.mailbox;
+                *held = Some((nameplate, mailbox));
                 // Hand over anything the other side posted before we came.
                 let mut deliver = Vec::new();
-                np.pending.retain(|(from, phase, body)| {
-                    if *from != conn {
-                        deliver.push(ServerMessage::Message {
-                            phase: phase.clone(),
-                            body: body.clone(),
-                        });
-                        false
-                    } else {
-                        true
+                for (from, phase, body) in np.pending.drain(..) {
+                    if from != conn {
+                        deliver.push(ServerMessage::Message { phase, body });
                     }
-                });
+                }
+                np.pending_bytes = 0;
                 drop(st);
                 outbox
                     .send(ServerMessage::Claimed { mailbox })
@@ -371,9 +437,8 @@ impl Server {
                 Ok(())
             }
             ClientMessage::Add { phase, body } => {
-                let n = held.ok_or("claim first")?;
                 let mut st = self.state.lock().await;
-                let np = st.nameplates.get_mut(&n).ok_or("mailbox expired")?;
+                let (_, np) = st.current(*held).ok_or("claim first")?;
                 let me = np
                     .sides
                     .iter_mut()
@@ -397,24 +462,37 @@ impl Server {
                         // A slow or vanished peer must not stall us.
                         let _ = peer.try_send(ServerMessage::Message { phase, body });
                     }
-                    None => np.pending.push((conn, phase, body)),
+                    None => {
+                        let bytes = np.pending_bytes.saturating_add(body.len());
+                        if np.pending.len() >= MAX_PENDING_MESSAGES || bytes > MAX_PENDING_BYTES {
+                            return Err("mailbox full");
+                        }
+                        np.pending_bytes = bytes;
+                        np.pending.push((conn, phase, body));
+                    }
                 }
                 Ok(())
             }
             ClientMessage::Close { mood } => {
-                let n = held.take().ok_or("claim first")?;
-                self.close(conn, n, mood, true).await;
+                self.close(conn, *held, mood).await;
+                *held = None;
                 Err("closed")
             }
         }
     }
 
-    async fn close(&self, conn: ConnId, n: u32, mood: Mood, explicit: bool) {
+    async fn close(&self, conn: ConnId, held: Held, mood: Mood) {
         let mut st = self.state.lock().await;
         let now = Instant::now();
-        let Some(np) = st.nameplates.get_mut(&n) else {
+        let Some((n, np)) = st.current(held) else {
             return;
         };
+        let is_side = np.sides.iter().any(|s| s.conn == conn);
+        let is_allocator = np.allocated_by == conn;
+        if !is_side && !is_allocator {
+            // Only the two people in a mailbox can close it.
+            return;
+        }
         let mut notify = Vec::new();
         for side in &mut np.sides {
             if side.conn == conn {
@@ -423,15 +501,18 @@ impl Server {
                 notify.push(side.outbox.clone());
             }
         }
-        let allocator_only = np.sides.is_empty() && np.allocated_by == conn;
-        let all_closed = allocator_only || np.sides.iter().all(|s| s.closed);
-        let scary = explicit && mood == Mood::Scary;
+        let all_closed = np.sides.iter().all(|s| s.closed);
+        // A scary close only counts when two sides really exchanged
+        // messages; otherwise anyone could retire nameplates at will.
+        let exchanged = np.sides.len() == 2 && np.sides.iter().all(|s| s.posted > 0);
+        let scary = mood == Mood::Scary && is_side && exchanged;
         if all_closed || scary {
             // Contents are forgotten as soon as nobody needs them.
             np.pending.clear();
+            np.pending_bytes = 0;
         }
         if all_closed {
-            st.nameplates.remove(&n);
+            st.remove(n, now);
         }
         if scary {
             st.retired.insert(n, now);

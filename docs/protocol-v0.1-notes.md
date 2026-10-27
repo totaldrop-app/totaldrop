@@ -38,11 +38,28 @@ treated as final.
      guessing, and is refused.
    - A connection holds at most one nameplate.
    - A client that disconnects without `CLOSE` counts as a `lonely` close.
+   - Every request is checked against the mailbox ID the connection joined,
+     not only the nameplate number. A connection whose nameplate expired is
+     told and disconnected, and can never act on the number's next owner.
+     Only the allocator or a side of the mailbox can close it.
+   - A freed nameplate rests for 10 minutes before reuse, while other
+     numbers are free.
 6. **Mailbox lifetime.** Unclaimed nameplates expire after 15 minutes, as v0
    says. In addition, every mailbox is deleted after one hour at the latest.
-   Mailbox bodies are capped at 64 KiB, and each side may post 32 messages.
-7. **Attack waves.** When 100 or more `scary` closes happen within 10 minutes,
-   every allocation is delayed by 2 seconds.
+   - Mailbox bodies are capped at 16 KiB, and each side may post 32 messages.
+   - While the other side has not arrived, at most 8 messages and 32 KiB are
+     buffered per mailbox.
+7. **Scary closes and attack waves.**
+   - A `scary` close retires a nameplate only when it comes from one of two
+     sides that have both posted a message, so nobody can retire numbers at
+     will.
+   - A peer that leaves after the `pake` messages but before key
+     confirmation is treated as a failed confirmation: the other side
+     closes `scary`. Such a peer may have taken its one guess offline.
+   - When 100 or more counted `scary` closes happen within 10 minutes, every
+     allocation is delayed by 2 seconds.
+   - The WebSocket handshake and every server write must finish within 10
+     seconds.
 
 ## Section 6: connections and the handshake
 
@@ -83,21 +100,40 @@ treated as final.
     `offer` may carry a manifest of up to 16 MiB (section 11). Control
     messages are therefore allowed up to 16 MiB plus 1 KiB. Data chunks keep
     the 1 MiB plus 1 KiB limit.
-14. **Entries.** A directory has size 0 and no hash, and a file must have a
+14. **Path characters.** Besides v0's rules, segments must not contain `:`,
+    `<`, `>`, `"`, `|`, `?` or `*`. On Windows, `C:` would name another
+    drive and `name:stream` an alternate data stream. The receiver also
+    checks that every final path is the destination followed only by plain
+    names.
+15. **CBOR maps.** A map may have at most 64 keys. Duplicate keys are found
+    in linear time.
+16. **Entries.** A directory has size 0 and no hash, and a file must have a
     hash. The total size in the offer must equal the sum of all entries.
-15. **Data stream header.** A CBOR map: key 1 is the transfer ID, key 2 the
+17. **Data stream header.** A CBOR map: key 1 is the transfer ID, key 2 the
     entry index, key 3 the first chunk.
-16. **Placement.**
+18. **Placement.**
     - The receiver never merges into or overwrites anything already on disk.
     - If a top-level item already exists, it is saved as `name (2)`,
       `name (3)` and so on. The same applies to a file that appears at its
       final path during the transfer.
     - Verified files move into place from a temporary file in the same
-      folder.
+      folder, through a hard link that fails if the name exists. On a
+      filesystem without hard links, a checked rename is used instead.
+    - A receiver gives up after 60 seconds with no data at all.
     - No entry may sit beneath a file entry.
-17. **Device keys in the command-line client.** Until keystore support
+19. **Device keys in the command-line client.** Until keystore support
     arrives, the command-line client generates new device keys for every
     transfer, so it never stores an unprotected private key on disk.
+
+## Known limits, to be closed before 1.0
+
+- The rendezvous server has no per-client rate limiting yet. Adding it
+  without logging addresses needs a design: short-lived in-memory counters.
+- One control message of up to 16 MiB can cost about 1 GiB of memory while
+  it is decoded. Only a peer that holds the code can send it. A streaming
+  manifest format for v0.1 would remove this.
+- Secrets inside library types (snow's handshake state, ML-KEM's shared key
+  type) are wiped only as far as those libraries do it.
 
 ## Not in this slice yet
 

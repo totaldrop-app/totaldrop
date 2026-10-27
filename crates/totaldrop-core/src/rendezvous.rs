@@ -17,26 +17,33 @@ pub const DEFAULT_SERVER: &str = "wss://rendezvous.totaldrop.app/v0";
 /// Unencrypted `ws://` is accepted only for a server on this machine, for
 /// development and tests. Everything else must be `wss://` (TLS 1.3).
 fn check_url(url: &str) -> Result<()> {
-    if url.starts_with("wss://") {
-        return Ok(());
-    }
-    if let Some(rest) = url.strip_prefix("ws://") {
-        let host_port = rest.split('/').next().unwrap_or("");
-        let host = if let Some(v6) = host_port.strip_prefix('[') {
-            v6.split(']').next().unwrap_or("")
-        } else {
-            host_port.split(':').next().unwrap_or("")
-        };
-        if matches!(host, "localhost" | "127.0.0.1" | "::1") {
-            return Ok(());
-        }
+    // Parse exactly as the WebSocket client will, so a URL such as
+    // `ws://localhost@evil.example` cannot pass for a local one.
+    let uri: tokio_tungstenite::tungstenite::http::Uri = url
+        .parse()
+        .map_err(|_| Error::Rendezvous("invalid server address".into()))?;
+    let has_userinfo = uri.authority().is_some_and(|a| a.as_str().contains('@'));
+    if has_userinfo {
         return Err(Error::Rendezvous(
-            "unencrypted ws:// is only allowed for a server on this machine".into(),
+            "the server address must not contain a user name".into(),
         ));
     }
-    Err(Error::Rendezvous(
-        "the server address must start with wss://".into(),
-    ))
+    match uri.scheme_str() {
+        Some("wss") => Ok(()),
+        Some("ws") => {
+            let host = uri.host().unwrap_or("");
+            if matches!(host, "localhost" | "127.0.0.1" | "[::1]" | "::1") {
+                Ok(())
+            } else {
+                Err(Error::Rendezvous(
+                    "unencrypted ws:// is only allowed for a server on this machine".into(),
+                ))
+            }
+        }
+        _ => Err(Error::Rendezvous(
+            "the server address must start with wss://".into(),
+        )),
+    }
 }
 
 fn tls_config() -> Result<Arc<rustls::ClientConfig>> {
@@ -170,5 +177,7 @@ mod tests {
         assert!(check_url("ws://example.com").is_err());
         assert!(check_url("ws://127.0.0.1.evil.com").is_err());
         assert!(check_url("http://127.0.0.1").is_err());
+        assert!(check_url("ws://localhost:4000@evil.com/").is_err());
+        assert!(check_url("ws://127.0.0.1@evil.com").is_err());
     }
 }

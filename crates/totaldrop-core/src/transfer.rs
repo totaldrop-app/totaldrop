@@ -20,6 +20,9 @@ use crate::error::{Error, Result};
 use crate::framing::{expect_frame, read_frame, write_frame};
 use crate::secure::{SecureChannel, recv_control, send_control};
 
+/// How long a receiver waits with no data arriving at all.
+const INACTIVITY_TIMEOUT: Duration = Duration::from_secs(60);
+
 /// Data streams in flight at once (spec section 8).
 const PARALLEL_STREAMS: usize = 4;
 
@@ -429,9 +432,10 @@ pub async fn receive_offer(chan: &mut SecureChannel, peer: &Certificate) -> Resu
         Err(e) => return Err(reject_invalid(chan, tid, e).await),
     };
     let mut top_level: Vec<String> = Vec::new();
+    let mut seen_top = HashSet::new();
     for p in &paths {
         if let Some(first) = p.segments().first()
-            && !top_level.contains(first)
+            && seen_top.insert(first.clone())
         {
             top_level.push(first.clone());
         }
@@ -490,6 +494,57 @@ fn free_name(dir: &Path, name: &str, taken: &HashSet<String>) -> Result<String> 
         }
     }
     Err(Error::Io(std::io::Error::other("no free name")))
+}
+
+/// Move a verified temporary file to `name` in `dir` without ever replacing
+/// an existing file. A hard link fails atomically if the name exists, so a
+/// file that appears at the last moment is never overwritten; then the
+/// temporary name is removed. Filesystems without hard links fall back to a
+/// checked rename.
+fn place_no_clobber(tmp: &Path, dir: &Path, name: &str) -> Result<PathBuf> {
+    let mut taken = HashSet::new();
+    for _ in 0..10_000 {
+        let candidate = dir.join(free_name(dir, name, &taken)?);
+        match std::fs::hard_link(tmp, &candidate) {
+            Ok(()) => {
+                std::fs::remove_file(tmp)?;
+                return Ok(candidate);
+            }
+            Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => {
+                if let Some(n) = candidate.file_name().and_then(|n| n.to_str()) {
+                    taken.insert(n.to_lowercase());
+                }
+            }
+            Err(_) => {
+                if std::fs::symlink_metadata(&candidate).is_ok() {
+                    if let Some(n) = candidate.file_name().and_then(|n| n.to_str()) {
+                        taken.insert(n.to_lowercase());
+                    }
+                    continue;
+                }
+                std::fs::rename(tmp, &candidate)?;
+                return Ok(candidate);
+            }
+        }
+    }
+    Err(Error::Io(std::io::Error::other("no free name")))
+}
+
+/// Refuse any path that is not `dest` followed by plain names. This is a
+/// second line of defence behind `validate_path`: on Windows, a segment
+/// with a drive prefix would otherwise replace the whole path.
+fn check_beneath(dest: &Path, path: &Path) -> Result<()> {
+    let rest = path
+        .strip_prefix(dest)
+        .map_err(|_| Error::InvalidOffer("path escapes the destination".into()))?;
+    if rest
+        .components()
+        .all(|c| matches!(c, std::path::Component::Normal(_)))
+    {
+        Ok(())
+    } else {
+        Err(Error::InvalidOffer("path escapes the destination".into()))
+    }
 }
 
 /// Create a directory, refusing to go through anything that is not a plain
@@ -629,10 +684,15 @@ async fn receive_stream(
                 .file_name()
                 .and_then(|n| n.to_str())
                 .ok_or(Error::Protocol("bad file name"))?;
-            let final_path = parent.join(free_name(&parent, name, &HashSet::new())?);
-            if let Err(e) = tokio::fs::rename(&tmp_path, &final_path).await {
+            let placed = {
+                let (parent, name, tmp) = (parent.clone(), name.to_owned(), tmp_path.clone());
+                tokio::task::spawn_blocking(move || place_no_clobber(&tmp, &parent, &name))
+                    .await
+                    .map_err(|_| Error::Protocol("placement task failed"))?
+            };
+            if let Err(e) = placed {
                 let _ = tokio::fs::remove_file(&tmp_path).await;
-                return Err(e.into());
+                return Err(e);
             }
             Ok((index, true))
         }
@@ -668,28 +728,38 @@ pub async fn accept(
 
     // Every top-level item gets a name that does not exist yet, so nothing
     // already on disk is ever merged into or overwritten.
+    // Names the other top-level items keep are taken too. Built once, so a
+    // transfer of many loose files stays linear.
+    let mut taken: HashSet<String> = offer
+        .summary
+        .top_level
+        .iter()
+        .map(|t| t.to_lowercase())
+        .collect();
     let mut renames: Vec<(String, String)> = Vec::new();
-    let mut taken: HashSet<String> = HashSet::new();
     for top in &offer.summary.top_level {
-        // Names other top-level items will claim are taken too.
-        let others: HashSet<String> = offer
-            .summary
-            .top_level
-            .iter()
-            .filter(|t| *t != top)
-            .map(|t| t.to_lowercase())
-            .chain(taken.iter().cloned())
-            .collect();
-        let free = free_name(dest, top, &others)?;
+        let own = top.to_lowercase();
+        taken.remove(&own);
+        let free = if std::fs::symlink_metadata(dest.join(top)).is_ok() {
+            free_name(dest, top, &taken)?
+        } else {
+            top.clone()
+        };
         taken.insert(free.to_lowercase());
+        if free.to_lowercase() != own {
+            // The original name stays reserved for nobody else to take.
+            taken.insert(own);
+        }
         renames.push((top.clone(), free));
     }
+    let rename_map: std::collections::HashMap<&str, &str> = renames
+        .iter()
+        .map(|(from, to)| (from.as_str(), to.as_str()))
+        .collect();
     let rename_top = |seg: &str| {
-        renames
-            .iter()
-            .find(|(from, _)| from == seg)
-            .map(|(_, to)| to.clone())
-            .unwrap_or_else(|| seg.to_owned())
+        rename_map
+            .get(seg)
+            .map_or_else(|| seg.to_owned(), |t| (*t).to_owned())
     };
 
     let mut targets: Vec<Option<Target>> = Vec::with_capacity(offer.paths.len());
@@ -702,6 +772,7 @@ pub async fn accept(
             } else {
                 path.push(seg);
             }
+            check_beneath(dest, &path)?;
             if n.saturating_add(1) < safe.segments().len() || entry.kind == EntryKind::Dir {
                 make_dir(&path)?;
             }
@@ -756,8 +827,26 @@ pub async fn accept(
         report.placed.push(dest.join(to));
     }
     let mut pending = wanted.len();
+    let mut last_activity = tokio::time::Instant::now();
+    let done_at_check = Arc::clone(&done);
+    let mut seen_bytes = 0u64;
     while pending > 0 {
+        // Give up if nothing at all moves for a while: keep-alives alone
+        // would otherwise hold the receiver forever.
+        let now_bytes = done_at_check.load(Ordering::Relaxed);
+        if now_bytes != seen_bytes {
+            seen_bytes = now_bytes;
+            last_activity = tokio::time::Instant::now();
+        }
+        let deadline = last_activity
+            .checked_add(INACTIVITY_TIMEOUT)
+            .unwrap_or(last_activity);
         tokio::select! {
+            () = tokio::time::sleep_until(deadline) => {
+                if done_at_check.load(Ordering::Relaxed) == seen_bytes {
+                    return Err(Error::Connect("the sender stopped sending".into()));
+                }
+            }
             stream = conn.accept_uni() => {
                 let stream = stream?;
                 let permit = permits.clone().acquire_owned().await
@@ -774,6 +863,7 @@ pub async fn accept(
                 });
             }
             Some(r) = result_rx.recv() => {
+                last_activity = tokio::time::Instant::now();
                 let (index, ok) = r?;
                 if ok { report.files_ok = report.files_ok.saturating_add(1); }
                 else { report.files_failed = report.files_failed.saturating_add(1); }
@@ -833,5 +923,27 @@ mod tests {
         assert_eq!(free_name(&dir, "a.txt", &taken).unwrap(), "a (4).txt");
         assert_eq!(free_name(&dir, ".hidden", &none).unwrap(), ".hidden");
         std::fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[test]
+    fn placement_never_replaces_a_file() {
+        let dir = std::env::temp_dir().join(format!("td-place-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::write(dir.join("a.txt"), b"old").unwrap();
+        std::fs::write(dir.join(".tmp1"), b"new").unwrap();
+        let placed = place_no_clobber(&dir.join(".tmp1"), &dir, "a.txt").unwrap();
+        assert_eq!(placed, dir.join("a (2).txt"));
+        assert_eq!(std::fs::read(dir.join("a.txt")).unwrap(), b"old");
+        assert_eq!(std::fs::read(&placed).unwrap(), b"new");
+        assert!(!dir.join(".tmp1").exists());
+        std::fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[test]
+    fn paths_must_stay_beneath_the_destination() {
+        let dest = Path::new("/tmp/dest");
+        assert!(check_beneath(dest, &dest.join("a").join("b")).is_ok());
+        assert!(check_beneath(dest, Path::new("/etc/passwd")).is_err());
+        assert!(check_beneath(dest, &dest.join("..").join("x")).is_err());
     }
 }
