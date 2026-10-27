@@ -17,11 +17,18 @@ allow = [
     "Zlib",
     "Unicode-3.0",
     "CC0-1.0",
+    # curve25519-dalek, ed25519-dalek, subtle: permissive, GPL/AGPL compatible.
+    "BSD-3-Clause",
+    # ring, untrusted, rustls-webpki: permissive, GPL/AGPL compatible.
+    "ISC",
+    # webpki-roots (the Mozilla root list as data): permissive, compatible.
+    "CDLA-Permissive-2.0",
 ]
 # Add a license here only after checking that it is compatible with every
 # license in LICENSING.md, and say why in the pull request.
 exceptions = [
     { allow = ["GPL-3.0-or-later"], crate = "totaldrop-cli" },
+    { allow = ["AGPL-3.0-or-later"], crate = "totaldrop-rendezvous" },
 ]
 
 [bans]

@@ -5,6 +5,10 @@
 //! file chunks in the STREAM construction (spec section 8). It never invents
 //! primitives; it composes audited RustCrypto and BLAKE3 implementations.
 
+pub mod channel;
+pub mod cpace;
+pub mod identity;
+
 use chacha20poly1305::aead::{Aead, KeyInit, Payload};
 use chacha20poly1305::{ChaCha20Poly1305, Key, Nonce};
 use zeroize::{Zeroize, ZeroizeOnDrop};

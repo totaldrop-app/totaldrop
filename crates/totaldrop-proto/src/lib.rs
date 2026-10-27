@@ -1,6 +1,8 @@
 //! Protocol rules of TotalDrop version 0 that do not involve cryptography:
 //! transfer codes (spec section 5), limits and path safety (spec section 11).
 
+pub mod wire;
+
 use unicode_normalization::UnicodeNormalization;
 
 pub mod limits {
@@ -144,6 +146,23 @@ pub enum CodeError {
     Random,
 }
 
+impl core::fmt::Display for CodeError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match self {
+            CodeError::BadNameplate => {
+                f.write_str("the code must start with a number, like 7-harbor-rocket")
+            }
+            CodeError::WrongWordCount => {
+                f.write_str("the code must have two or three words after the number")
+            }
+            CodeError::UnknownWord(w) => write!(f, "{w:?} is not a code word"),
+            CodeError::Random => f.write_str("the random number generator failed"),
+        }
+    }
+}
+
+impl std::error::Error for CodeError {}
+
 /// A transfer code such as `7-harbor-rocket` (spec section 5).
 ///
 /// The protocol works with list indices, never with words: CPace receives
@@ -239,6 +258,15 @@ impl core::fmt::Display for TransferCode {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.write_str(&self.to_english())
     }
+}
+
+/// The English word at `index` of the 2048-word list, as shown for
+/// verification words (spec section 6). `None` for an index of 2048 or more.
+pub fn english_word(index: u16) -> Option<&'static str> {
+    bip39::Language::English
+        .word_list()
+        .get(usize::from(index))
+        .copied()
 }
 
 #[cfg(test)]

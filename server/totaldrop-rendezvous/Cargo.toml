@@ -1,0 +1,19 @@
+[package]
+name = "totaldrop-rendezvous"
+description = "TotalDrop rendezvous server: mailboxes for transfer codes"
+license = "AGPL-3.0-or-later"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+homepage.workspace = true
+
+[dependencies]
+futures-util = { version = "0.3.34", default-features = false, features = ["sink", "std"] }
+getrandom = "0.4.3"
+tokio = { version = "1.54.1", features = ["macros", "net", "rt-multi-thread", "sync", "time"] }
+tokio-tungstenite = { version = "0.30.0", default-features = false, features = ["handshake"] }
+totaldrop-proto = { version = "0.0.1", path = "../../crates/totaldrop-proto" }
+
+[lints]
+workspace = true

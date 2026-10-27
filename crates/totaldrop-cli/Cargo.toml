@@ -13,8 +13,15 @@ name = "totaldrop"
 path = "src/main.rs"
 
 [dependencies]
-clap = { version = "4.6.7", features = ["derive"] }
+clap = { version = "4.6.7", features = ["derive", "env"] }
+tokio = { version = "1.54.1", features = ["rt-multi-thread"] }
+totaldrop-core = { version = "0.0.1", path = "../totaldrop-core" }
 totaldrop-proto = { version = "0.0.1", path = "../totaldrop-proto" }
+
+[dev-dependencies]
+getrandom = "0.4.3"
+tokio = { version = "1.54.1", features = ["macros", "rt-multi-thread"] }
+totaldrop-rendezvous = { version = "0.0.1", path = "../../server/totaldrop-rendezvous" }
 
 [lints]
 workspace = true

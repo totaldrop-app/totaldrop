@@ -10,6 +10,7 @@ homepage.workspace = true
 
 [dependencies]
 bip39 = "3.0.0"
+ciborium = "0.2.2"
 getrandom = "0.4.3"
 unicode-normalization = "0.1.26"
 
