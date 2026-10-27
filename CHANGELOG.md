@@ -7,6 +7,14 @@ All notable changes to TotalDrop are recorded here. The format follows
 
 ## [Unreleased]
 
+## [linux-0.1.0-beta.3] - 2026-10-28
+
+### Fixed
+
+- **Linux:** sending no longer fails when this computer's firewall blocks
+  incoming connections (as Omarchy's ufw does by default). Built on the core
+  fix released in android-0.1.0-beta.4.
+
 ## [android-0.1.0-beta.4] - 2026-10-28
 
 ### Fixed
