@@ -70,13 +70,24 @@ treated as final.
 
 ## Section 6: connections and the handshake
 
-8. **Who connects.** The sender listens. The receiver is both the QUIC client
-   and the Noise initiator, so it is also the side that encapsulates to the
-   other's ML-KEM key.
+8. **Who connects.** Both sides listen and dial on the same UDP socket, so
+   a firewall in front of either device still leaves one way through.
+   - The receiver dials the sender's announced addresses at once and also
+     accepts the sender dialling it. It keeps the first connection that
+     completes and opens the control stream on it.
+   - The sender accepts and, after 400 ms, also dials the receiver's
+     addresses. The connection on which the receiver opens the control stream
+     is the one; the sender closes the others.
+   - The receiver is always the Noise initiator, whichever side opened the
+     QUIC connection, so it is also the side that encapsulates to the other's
+     ML-KEM key.
+   - Older clients (0.1.0-beta.2 and earlier) only dial (receiver) or only
+     listen (sender); they keep working with newer ones in that direction.
 9. **Raw public keys.**
    - Each side presents its endpoint key as an Ed25519 SubjectPublicKeyInfo.
    - Each side accepts only the exact key announced in the other's
-     authenticated `HINTS`. Client authentication is mandatory.
+     authenticated `HINTS`, in both QUIC roles. Client authentication is
+     mandatory.
    - Session resumption and 0-RTT are disabled.
    - The TLS server name is always `totaldrop`.
 10. **`HINTS` encoding.**

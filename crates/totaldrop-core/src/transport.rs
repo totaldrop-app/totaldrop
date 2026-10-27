@@ -282,43 +282,27 @@ pub fn local_addresses(socket: &UdpSocket) -> Result<Vec<SocketAddr>> {
     Ok(out)
 }
 
-/// The sending side's QUIC endpoint: a server that accepts only the
-/// receiver's announced endpoint key.
-pub fn server_endpoint(
-    socket: UdpSocket,
-    own: &EndpointKey,
-    peer: &[u8; 32],
-) -> Result<quinn::Endpoint> {
+/// One QUIC endpoint per side that both listens and dials. Each direction
+/// accepts only the peer's announced endpoint key, and each side presents its
+/// own, so the connection is equally authenticated whichever side opened it.
+/// A firewall in front of either device then still leaves one way through.
+pub fn endpoint(socket: UdpSocket, own: &EndpointKey, peer: &[u8; 32]) -> Result<quinn::Endpoint> {
     let provider = provider();
-    let mut tls = rustls::ServerConfig::builder_with_provider(provider.clone())
+
+    let mut server_tls = rustls::ServerConfig::builder_with_provider(provider.clone())
         .with_protocol_versions(&[&rustls::version::TLS13])
         .map_err(|e| Error::Connect(e.to_string()))?
         .with_client_cert_verifier(Arc::new(Pinned::new(peer, &provider)))
         .with_cert_resolver(Arc::new(
             rustls::server::AlwaysResolvesServerRawPublicKeys::new(own.certified(&provider)?),
         ));
-    tls.alpn_protocols = vec![ALPN.to_vec()];
-    let crypto = QuicServerConfig::try_from(tls).map_err(|e| Error::Connect(e.to_string()))?;
-    let mut config = quinn::ServerConfig::with_crypto(Arc::new(crypto));
-    config.transport_config(transport_config());
-    let runtime = quinn::default_runtime().ok_or(Error::Connect("no async runtime".into()))?;
-    Ok(quinn::Endpoint::new(
-        quinn::EndpointConfig::default(),
-        Some(config),
-        socket,
-        runtime,
-    )?)
-}
+    server_tls.alpn_protocols = vec![ALPN.to_vec()];
+    let server_crypto =
+        QuicServerConfig::try_from(server_tls).map_err(|e| Error::Connect(e.to_string()))?;
+    let mut server = quinn::ServerConfig::with_crypto(Arc::new(server_crypto));
+    server.transport_config(transport_config());
 
-/// The receiving side's QUIC client configuration: it accepts only the
-/// sender's announced endpoint key and presents its own.
-pub fn client_endpoint(
-    socket: UdpSocket,
-    own: &EndpointKey,
-    peer: &[u8; 32],
-) -> Result<quinn::Endpoint> {
-    let provider = provider();
-    let mut tls = rustls::ClientConfig::builder_with_provider(provider.clone())
+    let mut client_tls = rustls::ClientConfig::builder_with_provider(provider.clone())
         .with_protocol_versions(&[&rustls::version::TLS13])
         .map_err(|e| Error::Connect(e.to_string()))?
         .dangerous()
@@ -326,17 +310,140 @@ pub fn client_endpoint(
         .with_client_cert_resolver(Arc::new(
             rustls::client::AlwaysResolvesClientRawPublicKeys::new(own.certified(&provider)?),
         ));
-    tls.alpn_protocols = vec![ALPN.to_vec()];
+    client_tls.alpn_protocols = vec![ALPN.to_vec()];
     // No session tickets or 0-RTT: every connection is fresh and unlinkable.
-    tls.resumption = rustls::client::Resumption::disabled();
-    let crypto = QuicClientConfig::try_from(tls).map_err(|e| Error::Connect(e.to_string()))?;
-    let mut config = quinn::ClientConfig::new(Arc::new(crypto));
-    config.transport_config(transport_config());
+    client_tls.resumption = rustls::client::Resumption::disabled();
+    let client_crypto =
+        QuicClientConfig::try_from(client_tls).map_err(|e| Error::Connect(e.to_string()))?;
+    let mut client = quinn::ClientConfig::new(Arc::new(client_crypto));
+    client.transport_config(transport_config());
+
     let runtime = quinn::default_runtime().ok_or(Error::Connect("no async runtime".into()))?;
-    let mut endpoint =
-        quinn::Endpoint::new(quinn::EndpointConfig::default(), None, socket, runtime)?;
-    endpoint.set_default_client_config(config);
+    let mut endpoint = quinn::Endpoint::new(
+        quinn::EndpointConfig::default(),
+        Some(server),
+        socket,
+        runtime,
+    )?;
+    endpoint.set_default_client_config(client);
     Ok(endpoint)
+}
+
+/// The next incoming connection whose handshake completes; the pinned key
+/// check inside TLS turns away anyone else.
+async fn accept_one(endpoint: &quinn::Endpoint) -> Result<quinn::Connection> {
+    loop {
+        let incoming = endpoint
+            .accept()
+            .await
+            .ok_or(Error::Connect("endpoint closed".into()))?;
+        if let Ok(conn) = incoming.await {
+            return Ok(conn);
+        }
+    }
+}
+
+/// How long the side that normally waits holds back before it also dials,
+/// so the usual direction wins when both work.
+const REVERSE_DELAY: Duration = Duration::from_millis(400);
+
+/// The receiver's connection: it dials the sender and, at the same time,
+/// accepts the sender dialling it. The first connection that comes up is the
+/// one; the receiver then opens the control stream on it, which tells the
+/// sender which connection was chosen.
+pub async fn receiver_connection(
+    endpoint: &quinn::Endpoint,
+    sender: &[SocketAddr],
+    wait: Duration,
+) -> Result<quinn::Connection> {
+    let dial = async {
+        match connect_any(endpoint, sender).await {
+            Ok(conn) => Ok(conn),
+            // Keep waiting for the other direction.
+            Err(e) => {
+                tokio::time::sleep(wait).await;
+                Err(e)
+            }
+        }
+    };
+    let result = tokio::time::timeout(wait, async {
+        tokio::select! {
+            r = dial => r,
+            r = accept_one(endpoint) => r,
+        }
+    })
+    .await;
+    match result {
+        Ok(r) => r,
+        Err(_) => Err(Error::Connect("no connection to the other device".into())),
+    }
+}
+
+/// The sender's connection and the control stream the receiver opened on it.
+/// The sender accepts the receiver dialling in and, a moment later, also
+/// dials the receiver. Whichever connection carries the receiver's control
+/// stream is the one; the others are closed.
+pub async fn sender_connection(
+    endpoint: &quinn::Endpoint,
+    receiver: &[SocketAddr],
+    wait: Duration,
+) -> Result<(quinn::Connection, quinn::SendStream, quinn::RecvStream)> {
+    let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel::<quinn::Connection>();
+    let mut sources = tokio::task::JoinSet::new();
+    {
+        let (endpoint, tx) = (endpoint.clone(), tx.clone());
+        sources.spawn(async move {
+            while let Ok(conn) = accept_one(&endpoint).await {
+                if tx.send(conn).is_err() {
+                    break;
+                }
+            }
+        });
+    }
+    if !receiver.is_empty() {
+        let (endpoint, receiver) = (endpoint.clone(), receiver.to_vec());
+        sources.spawn(async move {
+            tokio::time::sleep(REVERSE_DELAY).await;
+            if let Ok(conn) = connect_any(&endpoint, &receiver).await {
+                let _ = tx.send(conn);
+            }
+        });
+    } else {
+        drop(tx);
+    }
+
+    let mut waiting = tokio::task::JoinSet::new();
+    let mut open: Vec<quinn::Connection> = Vec::new();
+    let chosen = tokio::time::timeout(wait, async {
+        loop {
+            tokio::select! {
+                Some(conn) = rx.recv() => {
+                    open.push(conn.clone());
+                    waiting.spawn(async move {
+                        conn.accept_bi().await.map(|(s, r)| (conn, s, r))
+                    });
+                }
+                Some(done) = waiting.join_next(), if !waiting.is_empty() => {
+                    if let Ok(Ok(found)) = done {
+                        return Some(found);
+                    }
+                }
+                else => return None,
+            }
+        }
+    })
+    .await;
+    sources.abort_all();
+    waiting.abort_all();
+    match chosen {
+        Ok(Some((conn, send, recv))) => {
+            for other in open.iter().filter(|c| c.stable_id() != conn.stable_id()) {
+                other.close(0u32.into(), b"another path won");
+            }
+            Ok((conn, send, recv))
+        }
+        _ => Err(Error::Connect("the receiver did not connect".into())),
+    }
 }
 
 /// Try every address at once, a little staggered, and keep the first
@@ -375,4 +482,82 @@ pub async fn connect_any(
         }
     }
     Err(last)
+}
+
+#[cfg(test)]
+mod tests {
+    #![allow(clippy::unwrap_used, clippy::expect_used)]
+
+    use super::*;
+
+    fn pair() -> (quinn::Endpoint, SocketAddr, quinn::Endpoint, SocketAddr) {
+        let (ka, kb) = (
+            EndpointKey::generate().unwrap(),
+            EndpointKey::generate().unwrap(),
+        );
+        let sa = UdpSocket::bind(SocketAddr::from(([127, 0, 0, 1], 0))).unwrap();
+        let sb = UdpSocket::bind(SocketAddr::from(([127, 0, 0, 1], 0))).unwrap();
+        let (aa, ab) = (sa.local_addr().unwrap(), sb.local_addr().unwrap());
+        let a = endpoint(sa, &ka, &kb.public()).unwrap();
+        let b = endpoint(sb, &kb, &ka.public()).unwrap();
+        (a, aa, b, ab)
+    }
+
+    /// A closed UDP port: what a firewall in front of the sender looks like.
+    fn unreachable() -> SocketAddr {
+        let s = UdpSocket::bind(SocketAddr::from(([127, 0, 0, 1], 0))).unwrap();
+        let addr = s.local_addr().unwrap();
+        drop(s);
+        addr
+    }
+
+    async fn run(sender_reachable: bool, receiver_reachable: bool) -> bool {
+        let (sender, sender_addr, receiver, receiver_addr) = pair();
+        let to_sender = if sender_reachable {
+            sender_addr
+        } else {
+            unreachable()
+        };
+        let to_receiver = if receiver_reachable {
+            receiver_addr
+        } else {
+            unreachable()
+        };
+        let wait = Duration::from_secs(8);
+        let recv_side = async {
+            let conn = receiver_connection(&receiver, &[to_sender], wait).await?;
+            let (mut send, _recv) = conn.open_bi().await?;
+            send.write_all(b"hello")
+                .await
+                .map_err(|e| Error::Connect(e.to_string()))?;
+            Ok::<_, Error>(conn)
+        };
+        let send_side = async {
+            let (_conn, _send, mut recv) = sender_connection(&sender, &[to_receiver], wait).await?;
+            let mut buf = [0u8; 5];
+            recv.read_exact(&mut buf)
+                .await
+                .map_err(|e| Error::Connect(e.to_string()))?;
+            Ok::<_, Error>(buf)
+        };
+        // A firewall drops packets instead of refusing them; a closed port on
+        // loopback refuses. Either way the dial to it fails.
+        let (r, s) = tokio::join!(recv_side, send_side);
+        matches!((r, s), (Ok(_), Ok(buf)) if &buf == b"hello")
+    }
+
+    #[tokio::test]
+    async fn receiver_dials_sender() {
+        assert!(run(true, false).await);
+    }
+
+    #[tokio::test]
+    async fn sender_dials_receiver_when_sender_is_unreachable() {
+        assert!(run(false, true).await);
+    }
+
+    #[tokio::test]
+    async fn both_directions_open() {
+        assert!(run(true, true).await);
+    }
 }

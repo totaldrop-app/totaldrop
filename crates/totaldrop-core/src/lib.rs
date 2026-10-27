@@ -77,6 +77,8 @@ fn progress_from(events: &Events) -> transfer::Progress {
 /// How long the sender waits for the receiver's QUIC connection after the
 /// mailbox phase.
 const ACCEPT_TIMEOUT: Duration = Duration::from_secs(30);
+/// How long the receiver tries both directions before giving up.
+const CONNECT_TIMEOUT: Duration = Duration::from_secs(20);
 
 fn own_hints(socket: &std::net::UdpSocket, key: &transport::EndpointKey) -> Result<Hints> {
     let local = transport::local_addresses(socket)?
@@ -183,13 +185,13 @@ impl PreparedSend {
         )
         .await?;
 
-        let endpoint =
-            transport::server_endpoint(socket, &endpoint_key, &paired.hints.endpoint_key)?;
-        let conn = tokio::time::timeout(ACCEPT_TIMEOUT, accept_first(&endpoint))
-            .await
-            .map_err(|_| Error::Connect("the receiver did not connect".into()))??;
-        let chan = secure::handshake(
-            &conn,
+        let endpoint = transport::endpoint(socket, &endpoint_key, &paired.hints.endpoint_key)?;
+        let (conn, send, recv) =
+            transport::sender_connection(&endpoint, &peer_addresses(&paired.hints), ACCEPT_TIMEOUT)
+                .await?;
+        let chan = secure::handshake_on(
+            send,
+            recv,
             secure::HandshakeInput {
                 keys: &self.keys,
                 peer: &paired.peer,
@@ -215,18 +217,14 @@ impl PreparedSend {
     }
 }
 
-/// Accept the first incoming connection that completes its handshake; the
-/// pinned key check inside TLS turns away anyone else.
-async fn accept_first(endpoint: &quinn::Endpoint) -> Result<quinn::Connection> {
-    loop {
-        let incoming = endpoint
-            .accept()
-            .await
-            .ok_or(Error::Connect("endpoint closed".into()))?;
-        if let Ok(conn) = incoming.await {
-            return Ok(conn);
-        }
-    }
+/// Where the other side said it can be reached.
+fn peer_addresses(hints: &Hints) -> Vec<SocketAddr> {
+    hints
+        .local
+        .iter()
+        .chain(hints.public.iter())
+        .map(|a| a.0)
+        .collect()
 }
 
 /// Options for receiving.
@@ -275,16 +273,13 @@ impl IncomingOffer {
         let paired =
             pairing::exchange(mailbox, Role::Responder, &code, mailbox_id, &keys, &hints).await?;
 
-        let endpoint =
-            transport::client_endpoint(socket, &endpoint_key, &paired.hints.endpoint_key)?;
-        let addresses: Vec<SocketAddr> = paired
-            .hints
-            .local
-            .iter()
-            .chain(paired.hints.public.iter())
-            .map(|a| a.0)
-            .collect();
-        let conn = transport::connect_any(&endpoint, &addresses).await?;
+        let endpoint = transport::endpoint(socket, &endpoint_key, &paired.hints.endpoint_key)?;
+        let conn = transport::receiver_connection(
+            &endpoint,
+            &peer_addresses(&paired.hints),
+            CONNECT_TIMEOUT,
+        )
+        .await?;
         let mut chan = secure::handshake(
             &conn,
             secure::HandshakeInput {
