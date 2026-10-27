@@ -63,7 +63,7 @@ Her biçim ayrı tariften ve ayrı kaptan derlenir:
 | --- | --- | --- | --- |
 | Arch | `packaging/arch/PKGBUILD` | `archlinux:latest` | Arch, Omarchy, EndeavourOS, Manjaro; AUR |
 | Debian | `packaging/debian/` | `debian:trixie` (Qt 6.8) | Debian 13+, Ubuntu 25.04+ ve türevleri |
-| RPM | `packaging/rpm/totaldrop.spec` | `fedora:43` (Qt 6.10) | Fedora 43+, openSUSE Tumbleweed |
+| RPM | `packaging/rpm/totaldrop.spec` | `fedora:43` (Qt 6.10) | Fedora 43+ (openSUSE için ayrı bir tarif gerekir) |
 
 Ortak dosyalar (`.desktop`, AppStream, simgeler, kurulum betiği)
 `packaging/linux/` altındadır. Üç paket de aynı dosyaları aynı yerlere
