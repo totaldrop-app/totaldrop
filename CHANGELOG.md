@@ -7,6 +7,8 @@ All notable changes to TotalDrop are recorded here. The format follows
 
 ## [Unreleased]
 
+## [android-0.1.0-beta.4] - 2026-10-28
+
 ### Fixed
 
 - **Core:** a transfer no longer fails when a firewall blocks incoming
