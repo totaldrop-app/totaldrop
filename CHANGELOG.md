@@ -7,6 +7,15 @@ All notable changes to TotalDrop are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.1.0-beta.2] - 2026-10-27
+
+### Changed
+
+- New mark, "Dalga": a drop at the centre, waves spreading from it, and the
+  file leaving through a channel in the waves. It replaces the orbit mark in
+  the app, the launcher icon and the site. While sending, the file travels
+  the channel; with reduced motion the mark stays still.
+
 ## [0.1.0-beta.1] - 2026-10-27
 
 First beta. Protocol v0 with the clarifications in

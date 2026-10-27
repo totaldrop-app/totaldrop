@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../core/common.dart';
-import '../core/orbit_logo.dart';
+import '../core/mark.dart';
 import '../core/theme.dart';
 import 'receive_view_model.dart';
 
@@ -80,7 +80,7 @@ class _ReceiveViewState extends State<ReceiveView> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const OrbitLogo(size: 120, orbiting: true),
+                          const TotalDropMark(size: 120, sending: true),
                           Gap.l,
                           Text(l.receiveConnecting, style: Theme.of(context).textTheme.titleMedium),
                         ],
@@ -132,7 +132,7 @@ class _Entering extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
-        const Center(child: OrbitLogo(size: 96)),
+        const Center(child: TotalDropMark(size: 96)),
         Gap.l,
         TextField(
           controller: controller,
@@ -199,59 +199,42 @@ class _Offered extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
-        Card(
-          color: theme.colorScheme.primaryContainer,
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  l.receiveOffer,
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    color: theme.colorScheme.onPrimaryContainer,
-                  ),
-                ),
-                Gap.s,
-                Text(
-                  l.receiveOfferSummary(o.files, formatBytes(o.totalBytes, locale)),
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    color: theme.colorScheme.onPrimaryContainer,
-                  ),
-                ),
-                Gap.m,
-                for (final n in names.take(6))
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 2),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.insert_drive_file_outlined,
-                          size: 18,
-                          color: theme.colorScheme.onPrimaryContainer,
-                        ),
-                        Gap.s,
-                        Expanded(
-                          child: Text(
-                            n,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(color: theme.colorScheme.onPrimaryContainer),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                if (names.length > 6)
-                  Text(
-                    l.receiveAndMore(names.length - 6),
-                    style: TextStyle(color: theme.colorScheme.onPrimaryContainer),
-                  ),
-              ],
-            ),
+        Text(l.receiveOffer, style: theme.textTheme.headlineSmall),
+        Gap.s,
+        Text(
+          l.receiveOfferSummary(o.files, formatBytes(o.totalBytes, locale)),
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontFeatures: const [FontFeature.tabularFigures()],
           ),
         ),
         Gap.m,
+        const Divider(),
+        for (final n in names.take(6)) ...[
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.insert_drive_file_outlined,
+                  size: 20,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+                Gap.s,
+                Expanded(child: Text(n, maxLines: 1, overflow: TextOverflow.ellipsis)),
+              ],
+            ),
+          ),
+          const Divider(),
+        ],
+        if (names.length > 6)
+          Padding(
+            padding: const EdgeInsets.only(top: 12),
+            child: Text(
+              l.receiveAndMore(names.length - 6),
+              style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+            ),
+          ),
+        Gap.l,
         VerificationWords(words: o.words),
         Gap.l,
         Row(
@@ -280,7 +263,7 @@ class _Transferring extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
-        const Center(child: OrbitLogo(size: 140, orbiting: true, fast: true)),
+        const Center(child: TotalDropMark(size: 140, sending: true, fast: true)),
         Gap.l,
         Text(
           l.receiveReceiving,
@@ -329,7 +312,7 @@ class _Done extends StatelessWidget {
         if (s != null)
           for (final p in s.saved)
             ListTile(
-              leading: const Icon(Icons.check),
+              leading: Icon(Icons.check, color: theme.colorScheme.onSurfaceVariant),
               title: Text(p.split('/').last, maxLines: 1, overflow: TextOverflow.ellipsis),
             ),
         Gap.l,
@@ -359,7 +342,7 @@ class _Message extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Icon(icon, size: 56),
+          Icon(icon, size: 56, color: Theme.of(context).colorScheme.onSurfaceVariant),
           Gap.m,
           Text(text, textAlign: TextAlign.center, style: Theme.of(context).textTheme.titleMedium),
           Gap.l,

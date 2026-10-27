@@ -58,28 +58,31 @@ class _SettingsViewState extends State<SettingsView> {
             onChanged: (_) => setState(() => _invalid = false),
             onSubmitted: (_) => _save(),
           ),
+          Gap.m,
+          FilledButton.tonal(onPressed: _save, child: Text(l.settingsSave)),
           Gap.s,
-          Row(
-            children: [
-              TextButton(
-                onPressed: () async {
-                  await widget.settings.resetServer();
-                  setState(() {
-                    _server.text = widget.settings.server;
-                    _invalid = false;
-                  });
-                },
-                child: Text(l.settingsServerReset),
-              ),
-              const Spacer(),
-              FilledButton.tonal(onPressed: _save, child: Text(l.settingsSave)),
-            ],
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton(
+              onPressed: () async {
+                await widget.settings.resetServer();
+                setState(() {
+                  _server.text = widget.settings.server;
+                  _invalid = false;
+                });
+              },
+              child: Text(l.settingsServerReset),
+            ),
           ),
-          Gap.xl,
+          Gap.l,
+          const Divider(),
+          Gap.l,
           Text(l.settingsPrivacy, style: theme.textTheme.titleLarge),
           Gap.s,
           Text(l.settingsPrivacyBody, style: theme.textTheme.bodyMedium),
-          Gap.xl,
+          Gap.l,
+          const Divider(),
+          Gap.l,
           Text(l.settingsAbout, style: theme.textTheme.titleLarge),
           Gap.s,
           Text(l.settingsAboutBody, style: theme.textTheme.bodyMedium),
@@ -88,7 +91,10 @@ class _SettingsViewState extends State<SettingsView> {
             l.settingsVersion(widget.version),
             style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
           ),
-          const Text('totaldrop.app'),
+          Text(
+            'totaldrop.app',
+            style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+          ),
         ],
       ),
     );

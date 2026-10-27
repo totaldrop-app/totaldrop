@@ -2,7 +2,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../../src/rust/api/transfer.dart';
-import 'orbit_logo.dart';
+import 'mark.dart';
 import 'theme.dart';
 
 /// "3.5 MB", in the person's locale.
@@ -194,7 +194,7 @@ class SameNetworkNote extends StatelessWidget {
   }
 }
 
-/// The resting logo with a check mark: the satellite is home.
+/// The resting mark with a check: the file has arrived.
 class DoneBadge extends StatelessWidget {
   const DoneBadge({super.key, required this.dark});
 
@@ -207,7 +207,7 @@ class DoneBadge extends StatelessWidget {
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          const OrbitLogo(size: 140),
+          const TotalDropMark(size: 140),
           Positioned(
             right: 4,
             bottom: 8,

@@ -11,6 +11,10 @@ abstract final class Brand {
   static const night = Color(0xFF140E33);
   static const glow = Color(0xFFA68BFF);
   static const mist = Color(0xFFE2DCF6);
+  static const muted = Color(0xFF463D72);
+  static const night2 = Color(0xFF1E1648);
+  static const glowMuted = Color(0xFFB9B1E0);
+  static const ruleDark = Color(0xFF2E2566);
   static const success = Color(0xFF0A7357);
   static const successDark = Color(0xFF7ED9B5);
 }
@@ -18,11 +22,44 @@ abstract final class Brand {
 const _display = 'BricolageGrotesque';
 const _body = 'AtkinsonHyperlegible';
 
+/// The Aurora palette as a Material scheme, for when the system offers no
+/// colours of its own. Values are the design system's tokens: `bg`,
+/// `bg-raised`, `rule`, `outline`, `ink`, `ink-muted`, `accent`, `on-accent`.
 ColorScheme fallbackScheme(Brightness brightness) {
   final base = ColorScheme.fromSeed(seedColor: Brand.accent, brightness: brightness);
   return brightness == Brightness.light
-      ? base.copyWith(primary: Brand.accent, surface: Brand.paper, onSurface: Brand.ink)
-      : base.copyWith(primary: Brand.glow, onPrimary: Brand.night, surface: Brand.night);
+      ? base.copyWith(
+          primary: Brand.accent,
+          onPrimary: const Color(0xFFFFFFFF),
+          surface: Brand.paper,
+          onSurface: Brand.ink,
+          onSurfaceVariant: Brand.muted,
+          surfaceContainerLowest: Brand.paper,
+          surfaceContainerLow: Brand.paper,
+          surfaceContainer: Brand.mist,
+          surfaceContainerHigh: Brand.mist,
+          surfaceContainerHighest: Brand.mist,
+          secondaryContainer: Brand.mist,
+          onSecondaryContainer: Brand.ink,
+          outline: Brand.muted,
+          outlineVariant: Brand.mist,
+        )
+      : base.copyWith(
+          primary: Brand.glow,
+          onPrimary: Brand.night,
+          surface: Brand.night,
+          onSurface: Brand.paper,
+          onSurfaceVariant: Brand.glowMuted,
+          surfaceContainerLowest: Brand.night,
+          surfaceContainerLow: Brand.night,
+          surfaceContainer: Brand.night2,
+          surfaceContainerHigh: Brand.night2,
+          surfaceContainerHighest: Brand.night2,
+          secondaryContainer: Brand.night2,
+          onSecondaryContainer: Brand.paper,
+          outline: Brand.glowMuted,
+          outlineVariant: Brand.ruleDark,
+        );
 }
 
 TextTheme _text(TextTheme base) {
@@ -54,30 +91,77 @@ TextTheme _text(TextTheme base) {
   );
 }
 
+/// Rams: surfaces are told apart by colour and a hairline, never by shadow.
+/// Every elevation is 0 and no surface takes the primary tint.
 ThemeData buildTheme(ColorScheme scheme) {
   final base = ThemeData(colorScheme: scheme, useMaterial3: true);
   return base.copyWith(
     textTheme: _text(base.textTheme),
-    appBarTheme: const AppBarTheme(centerTitle: false),
+    scaffoldBackgroundColor: scheme.surface,
+    appBarTheme: AppBarTheme(
+      centerTitle: false,
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      backgroundColor: scheme.surface,
+      surfaceTintColor: Colors.transparent,
+    ),
     cardTheme: const CardThemeData(
       elevation: 0,
       margin: EdgeInsets.zero,
+      surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(28))),
+    ),
+    dialogTheme: DialogThemeData(
+      elevation: 0,
+      backgroundColor: scheme.surface,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: const BorderRadius.all(Radius.circular(28)),
+        side: BorderSide(color: scheme.outlineVariant),
+      ),
+    ),
+    snackBarTheme: SnackBarThemeData(
+      elevation: 0,
+      behavior: SnackBarBehavior.floating,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(16))),
+      backgroundColor: scheme.onSurface,
+      contentTextStyle: TextStyle(fontFamily: _body, color: scheme.surface, fontSize: 14),
+    ),
+    dividerTheme: DividerThemeData(color: scheme.outlineVariant, thickness: 1, space: 1),
+    listTileTheme: const ListTileThemeData(contentPadding: EdgeInsets.zero),
+    progressIndicatorTheme: ProgressIndicatorThemeData(
+      color: scheme.primary,
+      linearTrackColor: scheme.surfaceContainerHigh,
+    ),
+    switchTheme: SwitchThemeData(
+      trackOutlineColor: WidgetStateProperty.resolveWith(
+        (states) => states.contains(WidgetState.selected) ? Colors.transparent : scheme.outline,
+      ),
     ),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
-        minimumSize: const Size.fromHeight(56),
+        minimumSize: const Size(64, 56),
         textStyle: const TextStyle(fontFamily: _body, fontWeight: FontWeight.w700, fontSize: 16),
       ),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
-        minimumSize: const Size.fromHeight(56),
+        minimumSize: const Size(64, 56),
+        side: BorderSide(color: scheme.outline),
         textStyle: const TextStyle(fontFamily: _body, fontWeight: FontWeight.w700, fontSize: 16),
       ),
     ),
-    inputDecorationTheme: const InputDecorationTheme(
-      border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(16))),
+    inputDecorationTheme: InputDecorationTheme(
+      border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(16))),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: const BorderRadius.all(Radius.circular(16)),
+        borderSide: BorderSide(color: scheme.outline),
+      ),
+    ),
+    textButtonTheme: TextButtonThemeData(
+      style: TextButton.styleFrom(
+        textStyle: const TextStyle(fontFamily: _body, fontWeight: FontWeight.w700, fontSize: 14),
+      ),
     ),
   );
 }
