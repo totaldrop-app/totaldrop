@@ -1,5 +1,5 @@
 # Build environment for the .rpm: Fedora 43 (Qt 6.10).
-FROM fedora:43
+FROM fedora:44
 RUN dnf install -y rpm-build rpmdevtools gcc-c++ lld pkgconf curl git \
       qt6-qtbase-devel qt6-qtdeclarative-devel desktop-file-utils libappstream-glib \
     && dnf clean all
