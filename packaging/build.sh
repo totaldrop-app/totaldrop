@@ -9,7 +9,7 @@
 set -eu
 format=$1
 root=$(cd "$(dirname "$0")/.." && pwd)
-ver=$(sed -n 's/^version = "\(.*\)"/\1/p' "$root/Cargo.toml" | head -1)
+ver=$(sed -n 's/^version = "\(.*\)"/\1/p' "$root/linux/Cargo.toml" | head -1)
 src=totaldrop-linux-v$ver
 out=$root/dist/packages; mkdir -p "$out"
 work=$root/dist/work-$format; rm -rf "$work"; mkdir -p "$work"
