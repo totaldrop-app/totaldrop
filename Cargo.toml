@@ -1,10 +1,10 @@
 [workspace]
 resolver = "3"
-members = ["crates/*", "server/totaldrop-rendezvous"]
+members = ["crates/*", "server/totaldrop-rendezvous", "app/rust"]
 exclude = ["fuzz"]
 
 [workspace.package]
-version = "0.0.1"
+version = "0.1.0-beta.1"
 edition = "2024"
 rust-version = "1.99"
 repository = "https://github.com/totaldrop-app/totaldrop"

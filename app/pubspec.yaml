@@ -1,0 +1,41 @@
+name: totaldrop
+description: "TotalDrop: send any file to anyone, anywhere, end-to-end encrypted."
+publish_to: 'none'
+version: 0.1.0-beta.1+1
+
+environment:
+  sdk: ^3.13.7
+
+dependencies:
+  dynamic_color: ^2.1.0
+  file_picker: ^13.3.0
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  flutter_rust_bridge: 2.13.0
+  intl: any
+  path_provider: ^2.1.6
+  rust_lib_totaldrop:
+    path: rust_builder
+  share_plus: ^13.3.1
+  shared_preferences: ^2.5.6
+
+  material_ui: ^1.8.0
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  generate: true
+  fonts:
+    - family: BricolageGrotesque
+      fonts:
+        - asset: assets/fonts/BricolageGrotesque.ttf
+    - family: AtkinsonHyperlegible
+      fonts:
+        - asset: assets/fonts/AtkinsonHyperlegible-Regular.ttf
+        - asset: assets/fonts/AtkinsonHyperlegible-Bold.ttf
+          weight: 700

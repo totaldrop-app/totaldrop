@@ -29,6 +29,7 @@ allow = [
 exceptions = [
     { allow = ["GPL-3.0-or-later"], crate = "totaldrop-cli" },
     { allow = ["AGPL-3.0-or-later"], crate = "totaldrop-rendezvous" },
+    { allow = ["GPL-3.0-or-later"], crate = "rust_lib_totaldrop" },
 ]
 
 [bans]
