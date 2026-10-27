@@ -6,6 +6,15 @@ all-features = true
 [advisories]
 version = 2
 yanked = "deny"
+# Unmaintained, not vulnerable: zbus 6 absorbed these crates. They reach us
+# only through ashpd (Linux app, desktop portals), whose newest release
+# (0.13) still uses zbus 5. Remove these once ashpd moves to zbus 6, or
+# when the Linux app talks to the portals through zbus 6 directly.
+ignore = [
+    { id = "RUSTSEC-2026-0370", reason = "zvariant: merged into zbus 6; via ashpd 0.13 only" },
+    { id = "RUSTSEC-2026-0371", reason = "zbus_names: merged into zbus 6; via ashpd 0.13 only" },
+    { id = "RUSTSEC-2026-0372", reason = "zvariant_derive: merged into zbus 6; via ashpd 0.13 only" },
+]
 
 [licenses]
 version = 2
