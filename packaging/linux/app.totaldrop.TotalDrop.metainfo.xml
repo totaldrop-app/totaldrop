@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>app.totaldrop.TotalDrop</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+  <name>TotalDrop</name>
+  <summary>Send files straight to another device</summary>
+  <summary xml:lang="tr">Dosyaları doğrudan başka bir cihaza gönderin</summary>
+  <description>
+    <p>TotalDrop sends files and folders from one device to another, end to end encrypted. Pick the files, share a short code or a QR code, and the other device receives them. No account, no email, no phone number.</p>
+    <p xml:lang="tr">TotalDrop dosya ve klasörleri bir cihazdan diğerine uçtan uca şifreli gönderir. Dosyaları seçin, kısa bir kodu ya da QR kodunu paylaşın, diğer cihaz dosyaları alsın. Hesap, e-posta, telefon numarası yok.</p>
+    <ul>
+      <li>Every file is verified on arrival; damaged files are discarded</li>
+      <li xml:lang="tr">Her dosya ulaştığında doğrulanır; bozuk dosyalar silinir</li>
+      <li>Four verification words show that nobody is in the middle</li>
+      <li xml:lang="tr">Dört doğrulama kelimesi araya kimsenin girmediğini gösterir</li>
+      <li>Follows your desktop's theme: Plasma, Hyprland, Omarchy, GNOME</li>
+      <li xml:lang="tr">Masaüstünüzün temasını izler: Plasma, Hyprland, Omarchy, GNOME</li>
+    </ul>
+  </description>
+  <launchable type="desktop-id">app.totaldrop.TotalDrop.desktop</launchable>
+  <url type="homepage">https://totaldrop.app</url>
+  <url type="bugtracker">https://github.com/totaldrop-app/totaldrop/issues</url>
+  <url type="vcs-browser">https://github.com/totaldrop-app/totaldrop</url>
+  <url type="donation">https://github.com/sponsors/totaldrop-app</url>
+  <developer id="app.totaldrop">
+    <name>TotalDrop</name>
+  </developer>
+  <branding>
+    <color type="primary" scheme_preference="light">#E2DCF6</color>
+    <color type="primary" scheme_preference="dark">#1E1648</color>
+  </branding>
+  <provides>
+    <binary>totaldrop-desktop</binary>
+    <binary>totaldrop</binary>
+  </provides>
+  <supports>
+    <control>pointing</control>
+    <control>keyboard</control>
+  </supports>
+  <requires>
+    <internet>always</internet>
+  </requires>
+  <content_rating type="oars-1.1"/>
+  <releases>
+    <release version="0.1.0~beta.2" date="2026-10-27" type="development">
+      <description>
+        <p>First Linux release: send and receive with a code or a QR code, following the desktop's theme.</p>
+      </description>
+    </release>
+  </releases>
+</component>

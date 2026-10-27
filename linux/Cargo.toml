@@ -1,0 +1,48 @@
+[package]
+name = "totaldrop-linux"
+description = "TotalDrop for Linux: Qt 6 / QML interface over totaldrop-core"
+license = "GPL-3.0-or-later"
+# The Linux app has its own version (docs/versioning.md).
+version = "0.1.0-beta.2"
+edition.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+homepage.workspace = true
+publish = false
+
+[[bin]]
+name = "totaldrop-desktop"
+path = "src/main.rs"
+
+[dependencies]
+cxx = "1"
+cxx-qt = "0.10"
+cxx-qt-lib = { version = "0.10", features = ["qt_full"] }
+tokio = { version = "1.54.1", features = ["rt-multi-thread", "time", "net", "io-util", "macros", "sync"] }
+totaldrop-core = { version = "0.1.0-beta.1", path = "../crates/totaldrop-core" }
+totaldrop-proto = { version = "0.1.0-beta.1", path = "../crates/totaldrop-proto" }
+ashpd = { version = "0.13", default-features = false, features = ["tokio", "settings", "file_chooser", "notification"] }
+toml = "0.9"
+serde = { version = "1", features = ["derive"] }
+dirs = "6"
+notify = "8"
+serde_json = "1"
+futures-util = "0.3"
+zbus = { version = "5", default-features = false, features = ["tokio"] }
+qrcode = { version = "0.14", default-features = false }
+rqrr = "0.10"
+image = { version = "0.25", default-features = false, features = ["png", "jpeg", "webp"] }
+
+[build-dependencies]
+cxx-qt-build = "0.10"
+
+# cxx-qt bridges are `unsafe extern "C++"` blocks by construction, so this
+# crate cannot take the workspace's `unsafe_code = "forbid"`. All unsafe
+# stays inside the generated bridge modules; the rest of the crate is safe.
+[lints.rust]
+missing_docs = "warn"
+
+[lints.clippy]
+unwrap_used = "warn"
+expect_used = "warn"
+panic = "warn"

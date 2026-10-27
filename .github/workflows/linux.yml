@@ -1,0 +1,88 @@
+# Linux desktop app: checks on every change to it, the three packages
+# (Arch, .deb, .rpm) built separately, each in its own container, and a
+# release from a `linux-v*` tag.
+name: Linux
+
+on:
+  push:
+    branches: [main]
+    tags: ["linux-v*"]
+    paths: &paths
+      - "linux/**"
+      - "packaging/**"
+      - "crates/totaldrop-core/**"
+      - "crates/totaldrop-crypto/**"
+      - "crates/totaldrop-proto/**"
+      - "crates/totaldrop-cli/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "rust-toolchain.toml"
+      - ".github/workflows/linux.yml"
+  pull_request:
+    paths: *paths
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTUP_TOOLCHAIN: "1.99.1"
+
+jobs:
+  check:
+    name: Format, Clippy, tests
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+    steps:
+      - name: Qt 6 and the toolchain
+        run: pacman -Syu --noconfirm --needed base-devel git rustup qt6-base qt6-declarative qt6-wayland qt6-svg
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - run: rustup toolchain install "$RUSTUP_TOOLCHAIN" --profile minimal -c clippy,rustfmt
+      - run: cargo fmt -p totaldrop-linux -- --check
+      - run: cargo clippy -p totaldrop-linux --all-targets --locked -- -D warnings
+      - run: cargo test -p totaldrop-linux --locked
+
+  package:
+    name: Package (${{ matrix.format }})
+    needs: check
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        format: [arch, deb, rpm]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - run: packaging/build.sh ${{ matrix.format }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: totaldrop-linux-${{ matrix.format }}
+          path: dist/packages/*
+          if-no-files-found: error
+
+  release:
+    name: Release
+    if: startsWith(github.ref, 'refs/tags/linux-v')
+    needs: package
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: packages
+          merge-multiple: true
+      - name: Checksums
+        working-directory: packages
+        run: sha256sum * > SHA256SUMS
+      - name: Draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: gh release create "$TAG" packages/* --repo "$GITHUB_REPOSITORY" --draft --prerelease --title "TotalDrop for Linux ${TAG#linux-v}"
+
+# Before the first public release, pin every action above to a full commit SHA.

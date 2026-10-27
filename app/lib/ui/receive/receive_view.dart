@@ -263,7 +263,7 @@ class _Transferring extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
-        const Center(child: TotalDropMark(size: 140, sending: true, fast: true)),
+        const Center(child: TotalDropMark(size: 140, sending: true)),
         Gap.l,
         Text(
           l.receiveReceiving,

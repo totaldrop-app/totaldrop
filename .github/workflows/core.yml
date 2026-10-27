@@ -1,9 +1,21 @@
-name: CI
+# Core: the protocol crates, the CLI and the Rust rendezvous server, on
+# Linux, macOS and Windows. Platform apps have their own workflows.
+name: Core
 
 on:
   push:
     branches: [main]
+    paths: &paths
+      - "crates/**"
+      - "server/totaldrop-rendezvous/**"
+      - "fuzz/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "deny.toml"
+      - "rust-toolchain.toml"
+      - ".github/workflows/core.yml"
   pull_request:
+    paths: *paths
 
 permissions:
   contents: read
@@ -11,6 +23,9 @@ permissions:
 env:
   CARGO_TERM_COLOR: always
   RUSTFLAGS: -D warnings
+  # The Linux desktop app needs Qt and builds in linux.yml; the Android
+  # bridge builds in android.yml.
+  EXCLUDE: --exclude totaldrop-linux --exclude rust_lib_totaldrop
 
 jobs:
   test:
@@ -31,9 +46,11 @@ jobs:
         if: runner.os == 'Linux'
         run: cargo fmt --all -- --check
       - name: Clippy
-        run: cargo clippy --all-targets --locked -- -D warnings
+        shell: bash
+        run: cargo clippy --workspace $EXCLUDE --all-targets --locked -- -D warnings
       - name: Test
-        run: cargo test --locked
+        shell: bash
+        run: cargo test --workspace $EXCLUDE --locked
 
   deny:
     name: Dependencies (cargo-deny)

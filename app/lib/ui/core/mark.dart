@@ -13,25 +13,22 @@ import 'theme.dart';
 /// colours in every theme: ink waves and violet file on light backgrounds,
 /// paper waves and glow file on dark ones.
 class TotalDropMark extends StatefulWidget {
-  const TotalDropMark({super.key, this.size = 96, this.sending = false, this.fast = false});
+  const TotalDropMark({super.key, this.size = 96, this.sending = false});
 
   final double size;
 
-  /// Whether the file travels the channel, over and over.
+  /// Whether the transfer animation runs: the file leaves the drop and
+  /// travels the channel while a ring spreads from the centre, exactly as on
+  /// totaldrop.app (see docs/tasarim.md).
   final bool sending;
-
-  /// Faster travel, for while data is flowing.
-  final bool fast;
 
   @override
   State<TotalDropMark> createState() => _TotalDropMarkState();
 }
 
 class _TotalDropMarkState extends State<TotalDropMark> with SingleTickerProviderStateMixin {
-  late final AnimationController _c = AnimationController(vsync: this);
-
-  Duration get _period =>
-      widget.fast ? const Duration(milliseconds: 1200) : const Duration(milliseconds: 2400);
+  late final AnimationController _c =
+      AnimationController(vsync: this, duration: const Duration(milliseconds: 3200));
 
   bool _shouldMove(BuildContext context) =>
       widget.sending && !(MediaQuery.maybeDisableAnimationsOf(context) ?? false);
@@ -39,7 +36,6 @@ class _TotalDropMarkState extends State<TotalDropMark> with SingleTickerProvider
   void _sync() {
     if (!mounted) return;
     if (_shouldMove(context)) {
-      _c.duration = _period;
       if (!_c.isAnimating) _c.repeat();
     } else {
       _c.stop();
@@ -55,13 +51,6 @@ class _TotalDropMarkState extends State<TotalDropMark> with SingleTickerProvider
   @override
   void didUpdateWidget(TotalDropMark old) {
     super.didUpdateWidget(old);
-    if (old.fast != widget.fast && _c.isAnimating) {
-      // Keep the file where it is while changing speed.
-      final at = _c.value;
-      _c.duration = _period;
-      _c.repeat();
-      _c.value = at;
-    }
     _sync();
   }
 
@@ -93,7 +82,7 @@ class _TotalDropMarkState extends State<TotalDropMark> with SingleTickerProvider
 class _MarkPainter extends CustomPainter {
   _MarkPainter({required this.phase, required this.dark});
 
-  /// 0..1 through one trip down the channel, or null for the resting mark.
+  /// 0..1 through one 3.2 s loop, or null for the resting mark.
   final double? phase;
   final bool dark;
 
@@ -106,18 +95,22 @@ class _MarkPainter extends CustomPainter {
   static const _fileDistance = 52.0;
   static const _axis = -math.pi / 4; // north-east
 
-  /// How far down the channel the file is: out of the drop, eased, then a
-  /// short rest at the end before the next one.
+  // The web's keyframes: travel 0..55 %, ripple 0..70 % of the loop.
+  static const _travelEnd = 0.55;
+  static const _rippleEnd = 0.70;
+  static const _travelCurve = Cubic(0.65, 0, 0.35, 1);
+  static const _rippleCurve = Cubic(0.2, 0.6, 0.3, 1);
+
   static double _distance(double t) {
-    const travel = 0.8;
-    if (t >= travel) return _fileDistance;
-    final u = Curves.easeInOutCubic.transform(t / travel);
+    if (t >= _travelEnd) return _fileDistance;
+    final u = _travelCurve.transform(t / _travelEnd);
     return _dropR + (_fileDistance - _dropR) * u;
   }
 
   @override
   void paint(Canvas canvas, Size size) {
-    canvas.scale(size.width / 112);
+    final unit = size.width / 112;
+    canvas.scale(unit);
 
     final waveColor = dark ? Brand.paper : Brand.ink;
     final fileColor = dark ? Brand.glow : Brand.accent;
@@ -141,9 +134,26 @@ class _MarkPainter extends CustomPainter {
       );
     }
 
+    final t = phase;
+    if (t != null && t < _rippleEnd) {
+      final u = _rippleCurve.transform(t / _rippleEnd);
+      final scale = 1 + 3.6 * u;
+      final opacity = 0.7 * (1 - u);
+      canvas.drawCircle(
+        _centre,
+        _dropR * scale,
+        Paint()
+          ..style = PaintingStyle.stroke
+          // 2 logical pixels whatever the size, like the web's non-scaling stroke.
+          ..strokeWidth = 2 / unit
+          ..color = fileColor.withValues(alpha: opacity)
+          ..isAntiAlias = true,
+      );
+    }
+
     canvas.drawCircle(_centre, _dropR, fill);
 
-    final d = phase == null ? _fileDistance : _distance(phase!);
+    final d = t == null ? _fileDistance : _distance(t);
     final file = _centre + Offset(math.cos(_axis), math.sin(_axis)) * d;
     canvas.drawCircle(file, _fileR, fill);
   }

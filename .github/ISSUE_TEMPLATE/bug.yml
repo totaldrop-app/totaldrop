@@ -1,0 +1,41 @@
+name: Hata / Bug
+description: Bir şey beklendiği gibi çalışmıyor. Something does not work as expected.
+labels: ["bug"]
+body:
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options: [Linux, Android, Windows, macOS, iOS, CLI, Web site, Server]
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Sürüm / Version
+      description: Ayarlar > Hakkında, ya da `totaldrop --version`.
+      placeholder: 0.1.0-beta.2
+    validations:
+      required: true
+  - type: input
+    id: system
+    attributes:
+      label: Sistem / System
+      description: Dağıtım ve masaüstü (örneğin Arch + Hyprland, Fedora + Plasma), ya da cihaz ve Android sürümü.
+  - type: textarea
+    id: what
+    attributes:
+      label: Ne oldu, ne bekliyordunuz? / What happened, what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Adımlar / Steps
+      placeholder: "1. ...\n2. ..."
+  - type: textarea
+    id: details
+    attributes:
+      label: Ayrıntılar / Details
+      description: Hata ekranındaki "Ayrıntılar" metni. Aktarım kodlarını ya da dosya adlarını paylaşmayın.
+      render: text

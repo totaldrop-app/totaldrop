@@ -1,0 +1,44 @@
+Source: totaldrop
+Section: net
+Priority: optional
+Maintainer: TotalDrop <hello@totaldrop.app>
+Build-Depends: debhelper-compat (= 13),
+               g++,
+               lld,
+               pkgconf,
+               qt6-base-dev,
+               qt6-base-dev-tools,
+               qt6-declarative-dev,
+               ca-certificates
+Standards-Version: 4.7.2
+Homepage: https://totaldrop.app
+Vcs-Browser: https://github.com/totaldrop-app/totaldrop
+Vcs-Git: https://github.com/totaldrop-app/totaldrop.git
+Rules-Requires-Root: no
+
+Package: totaldrop
+Architecture: amd64 arm64
+Depends: ${shlibs:Depends},
+         ${misc:Depends},
+         qml6-module-qtqml-workerscript,
+         qml6-module-qtquick,
+         qml6-module-qtquick-controls,
+         qml6-module-qtquick-layouts,
+         qml6-module-qtquick-shapes,
+         qml6-module-qtquick-templates,
+         qml6-module-qtquick-window,
+         qt6-svg-plugins,
+         qt6-wayland,
+         xdg-desktop-portal,
+         hicolor-icon-theme
+Recommends: xdg-desktop-portal-gtk | xdg-desktop-portal-kde,
+            adwaita-icon-theme | breeze-icon-theme,
+            fonts-noto-core | fonts-dejavu-core
+Suggests: qml6-module-org-kde-desktop
+Description: send files straight to another device, end-to-end encrypted
+ TotalDrop sends files and folders from one device to another, end to end
+ encrypted. Pick the files, share a short code or a QR code, and the other
+ device receives them. No account, no email, no phone number.
+ .
+ This package contains the desktop app, which follows the desktop's theme
+ (Plasma, Hyprland, Omarchy, GNOME), and the totaldrop command.

@@ -1,0 +1,24 @@
+#!/usr/bin/make -f
+# The toolchain comes from rustup (rust-toolchain.toml pins the newest
+# stable Rust, which distributions do not ship yet).
+export DH_VERBOSE = 1
+export QMAKE = /usr/lib/qt6/bin/qmake
+export CARGO_TARGET_DIR = $(CURDIR)/target
+
+%:
+	dh $@
+
+override_dh_auto_configure:
+
+override_dh_auto_build:
+	cargo build --release --locked -p totaldrop-linux -p totaldrop-cli
+
+override_dh_auto_test:
+	cargo test --release --locked -p totaldrop-linux -p totaldrop-proto
+
+override_dh_auto_install:
+	packaging/linux/install.sh $(CURDIR)/debian/totaldrop /usr $(CARGO_TARGET_DIR)/release
+
+override_dh_auto_clean:
+
+override_dh_dwz:
