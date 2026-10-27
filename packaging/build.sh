@@ -41,7 +41,7 @@ arch)
   cp "$root/packaging/arch/PKGBUILD" "$work/"
   mv "$work/$src.tar.gz" "$work/totaldrop-$ver.tar.gz"
   docker run --rm -v "$work:/w" "$image" sh -ec "
-    chown -R builder /w && cd /w && sudo -u builder makepkg -f --noconfirm
+    chown -R builder /w && cd /w && sudo -u builder makepkg -sf --noconfirm
     chown -R $(id -u):$(id -g) /w"
   cp "$work"/*.pkg.tar.zst "$out/" ;;
 esac
