@@ -107,10 +107,16 @@ ApplicationWindow {
     Dialog {
         id: stopDialog
         anchors.centerIn: parent
-        width: Math.min(parent.width - 2 * Theme.s24, 420)
         modal: true
         title: Strings.s.cancelTransferTitle
-        contentItem: Label { text: Strings.s.cancelTransferBody; wrapMode: Text.Wrap; color: Theme.ink }
+        // A fixed text width: wrapped text in a self-sizing popup loops.
+        contentWidth: Math.min(380, win.width - 4 * Theme.s24)
+        Label {
+            width: stopDialog.contentWidth
+            text: Strings.s.cancelTransferBody
+            wrapMode: Text.Wrap
+            color: Theme.ink
+        }
         footer: DialogButtonBox {
             Button { text: Strings.s.keepGoing; DialogButtonBox.buttonRole: DialogButtonBox.RejectRole }
             Button { text: Strings.s.stop; DialogButtonBox.buttonRole: DialogButtonBox.DestructiveRole
