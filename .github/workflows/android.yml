@@ -1,0 +1,40 @@
+# Android app: analysis and tests on every change to it. Signed release
+# builds are made from an `android-v*` tag once release signing lives in CI.
+name: Android
+
+on:
+  push:
+    branches: [main]
+    paths: &paths
+      - "app/**"
+      - "crates/totaldrop-core/**"
+      - "crates/totaldrop-crypto/**"
+      - "crates/totaldrop-proto/**"
+      - "Cargo.lock"
+      - ".github/workflows/android.yml"
+  pull_request:
+    paths: *paths
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Analyze and test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: flutter pub get
+      - run: flutter analyze
+      - name: Test
+        run: if [ -d test ]; then flutter test; else echo "no tests yet"; fi
+
+# Before the first public release, pin every action above to a full commit SHA.

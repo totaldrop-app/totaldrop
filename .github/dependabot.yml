@@ -11,6 +11,22 @@ updates:
     directory: /fuzz
     schedule:
       interval: weekly
+  - package-ecosystem: pub
+    directory: /app
+    schedule:
+      interval: weekly
+  - package-ecosystem: gradle
+    directory: /app/android
+    schedule:
+      interval: weekly
+  - package-ecosystem: npm
+    directory: /server/rendezvous-worker
+    schedule:
+      interval: weekly
+  - package-ecosystem: docker
+    directory: /packaging/containers
+    schedule:
+      interval: weekly
   - package-ecosystem: github-actions
     directory: /
     schedule:

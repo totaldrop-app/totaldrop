@@ -1,0 +1,22 @@
+name: Öneri / Feature request
+description: Yeni bir özellik ya da iyileştirme önerin. Suggest a feature or an improvement.
+labels: ["enhancement"]
+body:
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      multiple: true
+      options: [All, Linux, Android, Windows, macOS, iOS, CLI, Web site, Server, Protocol]
+    validations:
+      required: true
+  - type: textarea
+    id: need
+    attributes:
+      label: Hangi ihtiyacı karşılıyor? / What need does it meet?
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: Önerdiğiniz çözüm / Proposed solution

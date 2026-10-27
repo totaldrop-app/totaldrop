@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Güvenlik açığı / Security vulnerability
+    url: https://github.com/totaldrop-app/totaldrop/blob/main/SECURITY.md
+    about: Güvenlik sorunlarını açık bir issue olarak değil, SECURITY.md'deki yoldan bildirin. Report privately, never as a public issue.
