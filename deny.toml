@@ -30,6 +30,11 @@ exceptions = [
     { allow = ["GPL-3.0-or-later"], crate = "totaldrop-cli" },
     { allow = ["AGPL-3.0-or-later"], crate = "totaldrop-rendezvous" },
     { allow = ["GPL-3.0-or-later"], crate = "rust_lib_totaldrop" },
+    { allow = ["GPL-3.0-or-later"], crate = "totaldrop-linux" },
+    # Through dirs, only in the Linux app (GPL-3.0-or-later). MPL-2.0 is
+    # file-level copyleft and compatible with the GPL; it never reaches the
+    # MIT/Apache protocol crates.
+    { allow = ["MPL-2.0"], crate = "option-ext" },
 ]
 
 [bans]

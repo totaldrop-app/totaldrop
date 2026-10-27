@@ -42,9 +42,10 @@ jobs:
       # rustup reads rust-toolchain.toml and installs exactly that version.
       - name: Install the pinned Rust toolchain
         run: rustup show active-toolchain || rustup toolchain install
+      # Only hand-written crates: app/rust/src/frb_generated.rs is generated.
       - name: Format
         if: runner.os == 'Linux'
-        run: cargo fmt --all -- --check
+        run: cargo fmt --check -p totaldrop-crypto -p totaldrop-proto -p totaldrop-core -p totaldrop-cli -p totaldrop-rendezvous
       - name: Clippy
         shell: bash
         run: cargo clippy --workspace $EXCLUDE --all-targets --locked -- -D warnings
@@ -60,6 +61,8 @@ jobs:
         with:
           persist-credentials: false
       - uses: EmbarkStudios/cargo-deny-action@v2
+        with:
+          rust-version: "1.99.1"
 
 # Before the first public release, pin every action above to a full commit SHA
 # instead of a tag, so a compromised tag cannot change what runs here.
