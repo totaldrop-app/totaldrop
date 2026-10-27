@@ -1,0 +1,27 @@
+[workspace]
+resolver = "3"
+members = ["crates/*"]
+exclude = ["fuzz"]
+
+[workspace.package]
+version = "0.0.1"
+edition = "2024"
+rust-version = "1.87"
+repository = "https://github.com/totaldrop-app/totaldrop"
+homepage = "https://totaldrop.app"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+missing_docs = "warn"
+
+[workspace.lints.clippy]
+unwrap_used = "warn"
+expect_used = "warn"
+panic = "warn"
+indexing_slicing = "warn"
+arithmetic_side_effects = "warn"
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true

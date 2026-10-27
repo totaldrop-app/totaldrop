@@ -1,0 +1,27 @@
+[package]
+name = "totaldrop-fuzz"
+version = "0.0.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+publish = false
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+totaldrop-proto = { path = "../crates/totaldrop-proto" }
+
+[[bin]]
+name = "path"
+path = "fuzz_targets/path.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "code"
+path = "fuzz_targets/code.rs"
+test = false
+doc = false
+bench = false

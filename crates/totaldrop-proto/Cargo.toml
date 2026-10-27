@@ -1,0 +1,17 @@
+[package]
+name = "totaldrop-proto"
+description = "Protocol rules of TotalDrop: transfer codes, limits and path safety"
+license = "MIT OR Apache-2.0"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+homepage.workspace = true
+
+[dependencies]
+bip39 = "3.0.0"
+getrandom = "0.4.3"
+unicode-normalization = "0.1.26"
+
+[lints]
+workspace = true
