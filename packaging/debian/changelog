@@ -1,3 +1,10 @@
+totaldrop (0.1.0~beta.3-1) unstable; urgency=medium
+
+  * Sending to another device now works even when this computer's firewall
+    blocks incoming connections (as Omarchy's ufw does by default).
+
+ -- TotalDrop <hello@totaldrop.app>  Wed, 28 Oct 2026 01:00:00 +0300
+
 totaldrop (0.1.0~beta.2-1) unstable; urgency=medium
 
   * First Linux release: send and receive with a code or a QR code,
