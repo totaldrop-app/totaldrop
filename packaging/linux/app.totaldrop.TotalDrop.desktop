@@ -1,0 +1,17 @@
+[Desktop Entry]
+Type=Application
+Name=TotalDrop
+GenericName=File transfer
+GenericName[tr]=Dosya aktarımı
+Comment=Send files straight to another device, end-to-end encrypted
+Comment[tr]=Dosyaları başka bir cihaza doğrudan ve uçtan uca şifreli gönderin
+Exec=totaldrop-desktop %U
+Icon=app.totaldrop.TotalDrop
+Terminal=false
+Categories=Network;FileTransfer;Qt;
+Keywords=send;receive;share;transfer;files;wormhole;localsend;airdrop;
+Keywords[tr]=gönder;al;paylaş;aktar;dosya;
+MimeType=x-scheme-handler/totaldrop;
+StartupNotify=true
+StartupWMClass=app.totaldrop.TotalDrop
+SingleMainWindow=true

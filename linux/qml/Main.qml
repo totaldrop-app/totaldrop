@@ -14,28 +14,43 @@ ApplicationWindow {
     color: Theme.background
 
     // Outside Plasma (and qt6ct / hyprqt6engine) the controls take their
-    // colours from the desktop theme through the window palette. Under
-    // those, the Qt palette already is the desktop theme: leave it alone.
-    Binding { target: win.palette; property: "window"; value: Theme.background; when: !Theme.system }
-    Binding { target: win.palette; property: "windowText"; value: Theme.ink; when: !Theme.system }
-    Binding { target: win.palette; property: "base"; value: Theme.background; when: !Theme.system }
-    Binding { target: win.palette; property: "alternateBase"; value: Theme.raised; when: !Theme.system }
-    Binding { target: win.palette; property: "text"; value: Theme.ink; when: !Theme.system }
-    Binding { target: win.palette; property: "button"; value: Theme.raised; when: !Theme.system }
-    Binding { target: win.palette; property: "buttonText"; value: Theme.ink; when: !Theme.system }
-    Binding { target: win.palette; property: "brightText"; value: Theme.accentText; when: !Theme.system }
-    Binding { target: win.palette; property: "highlight"; value: Theme.accent; when: !Theme.system }
-    Binding { target: win.palette; property: "highlightedText"; value: Theme.accentText; when: !Theme.system }
-    Binding { target: win.palette; property: "accent"; value: Theme.accent; when: !Theme.system }
-    Binding { target: win.palette; property: "placeholderText"; value: Theme.muted; when: !Theme.system }
-    Binding { target: win.palette; property: "link"; value: Theme.accent; when: !Theme.system }
-    Binding { target: win.palette; property: "mid"; value: Theme.rule; when: !Theme.system }
-    Binding { target: win.palette; property: "midlight"; value: Qt.tint(Theme.raised, Qt.alpha(Theme.ink, 0.06)); when: !Theme.system }
-    Binding { target: win.palette; property: "light"; value: Qt.tint(Theme.raised, Qt.alpha(Theme.ink, 0.12)); when: !Theme.system }
-    Binding { target: win.palette; property: "dark"; value: Qt.tint(Theme.background, Qt.alpha(Theme.ink, 0.3)); when: !Theme.system }
-    Binding { target: win.palette; property: "shadow"; value: Qt.rgba(0, 0, 0, 0.5); when: !Theme.system }
-    Binding { target: win.palette; property: "toolTipBase"; value: Theme.raised; when: !Theme.system }
-    Binding { target: win.palette; property: "toolTipText"; value: Theme.ink; when: !Theme.system }
+    // colours from the desktop theme through the window palette, re-applied
+    // whenever the theme changes. Under those, the Qt palette already is the
+    // desktop theme: it is left alone.
+    function applyPalette() {
+        if (Theme.system) return
+        const p = win.palette
+        p.window = Theme.background
+        p.windowText = Theme.ink
+        p.base = Theme.background
+        p.alternateBase = Theme.raised
+        p.text = Theme.ink
+        p.button = Theme.raised
+        p.buttonText = Theme.ink
+        p.brightText = Theme.accentText
+        p.highlight = Theme.accent
+        p.highlightedText = Theme.accentText
+        p.accent = Theme.accent
+        p.placeholderText = Theme.muted
+        p.link = Theme.accent
+        p.mid = Theme.rule
+        p.midlight = Qt.tint(Theme.raised, Qt.alpha(Theme.ink, 0.06))
+        p.light = Qt.tint(Theme.raised, Qt.alpha(Theme.ink, 0.12))
+        p.dark = Qt.tint(Theme.background, Qt.alpha(Theme.ink, 0.3))
+        p.shadow = Qt.rgba(0, 0, 0, 0.5)
+        p.toolTipBase = Theme.raised
+        p.toolTipText = Theme.ink
+        // Disabled controls read as disabled.
+        p.disabled.windowText = Theme.muted
+        p.disabled.text = Theme.muted
+        p.disabled.buttonText = Theme.muted
+        p.disabled.highlight = Theme.rule
+        p.disabled.highlightedText = Theme.muted
+    }
+    readonly property string paletteKey: [Theme.system, Theme.background, Theme.raised, Theme.ink,
+        Theme.muted, Theme.rule, Theme.accent, Theme.accentText].join()
+    onPaletteKeyChanged: applyPalette()
+    Component.onCompleted: applyPalette()
 
     Transfer { id: xfer }
 
@@ -95,7 +110,7 @@ ApplicationWindow {
         width: Math.min(parent.width - 2 * Theme.s24, 420)
         modal: true
         title: Strings.s.cancelTransferTitle
-        Label { text: Strings.s.cancelTransferBody; wrapMode: Text.Wrap; width: parent.width; color: Theme.ink }
+        contentItem: Label { text: Strings.s.cancelTransferBody; wrapMode: Text.Wrap; color: Theme.ink }
         footer: DialogButtonBox {
             Button { text: Strings.s.keepGoing; DialogButtonBox.buttonRole: DialogButtonBox.RejectRole }
             Button { text: Strings.s.stop; DialogButtonBox.buttonRole: DialogButtonBox.DestructiveRole

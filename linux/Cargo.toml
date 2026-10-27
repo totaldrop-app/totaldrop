@@ -2,7 +2,8 @@
 name = "totaldrop-linux"
 description = "TotalDrop for Linux: Qt 6 / QML interface over totaldrop-core"
 license = "GPL-3.0-or-later"
-version.workspace = true
+# The Linux app has its own version (docs/versioning.md).
+version = "0.1.0-beta.2"
 edition.workspace = true
 rust-version.workspace = true
 repository.workspace = true

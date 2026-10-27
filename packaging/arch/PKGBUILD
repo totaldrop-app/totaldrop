@@ -1,0 +1,54 @@
+# Maintainer: TotalDrop <hello@totaldrop.app>
+#
+# Arch Linux package for TotalDrop: the Qt 6 desktop app and the CLI.
+# Release builds use the tag tarball. To build the working tree in a clean
+# container instead: packaging/build.sh arch
+
+pkgname=totaldrop
+_ver=0.1.0-beta.2
+pkgver=${_ver//-/_}
+pkgrel=1
+pkgdesc='Send files straight to another device, end-to-end encrypted'
+arch=('x86_64' 'aarch64')
+url='https://totaldrop.app'
+license=('GPL-3.0-or-later' 'MIT OR Apache-2.0')
+depends=('qt6-base' 'qt6-declarative' 'qt6-wayland' 'qt6-svg'
+         'xdg-desktop-portal' 'hicolor-icon-theme' 'gcc-libs' 'glibc')
+makedepends=('cargo')
+optdepends=('qqc2-desktop-style: Breeze controls under KDE Plasma'
+            'xdg-desktop-portal-kde: file chooser under KDE Plasma'
+            'xdg-desktop-portal-gtk: file chooser under Hyprland and GNOME'
+            'xdg-desktop-portal-hyprland: Hyprland integration')
+options=('!lto' '!debug')
+source=("$pkgname-$_ver.tar.gz::https://github.com/totaldrop-app/totaldrop/archive/refs/tags/linux-v$_ver.tar.gz")
+sha256sums=('SKIP')
+
+_srcdir() { echo "$srcdir/totaldrop-linux-v$_ver"; }
+
+prepare() {
+  cd "$(_srcdir)"
+  export RUSTUP_TOOLCHAIN=stable
+  cargo fetch --locked --target "$(rustc -vV | sed -n 's/host: //p')"
+}
+
+build() {
+  cd "$(_srcdir)"
+  export RUSTUP_TOOLCHAIN=stable
+  export CARGO_TARGET_DIR=target
+  cargo build --frozen --release -p totaldrop-linux -p totaldrop-cli
+}
+
+check() {
+  cd "$(_srcdir)"
+  export RUSTUP_TOOLCHAIN=stable
+  cargo test --frozen --release -p totaldrop-linux -p totaldrop-proto
+}
+
+package() {
+  cd "$(_srcdir)"
+  packaging/linux/install.sh "$pkgdir" /usr target/release
+  install -Dm644 LICENSE-GPL-3.0 "$pkgdir/usr/share/licenses/$pkgname/LICENSE-GPL-3.0"
+  install -Dm644 LICENSE-MIT "$pkgdir/usr/share/licenses/$pkgname/LICENSE-MIT"
+  install -Dm644 LICENSE-APACHE "$pkgdir/usr/share/licenses/$pkgname/LICENSE-APACHE"
+  install -Dm644 LICENSING.md "$pkgdir/usr/share/licenses/$pkgname/LICENSING.md"
+}

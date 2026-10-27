@@ -45,7 +45,9 @@ fn choose_style(session: &theme::Session) -> &'static str {
         }
         return "Fusion";
     }
-    if std::env::var_os("QT_QPA_PLATFORMTHEME").is_none() {
+    let has_display =
+        std::env::var_os("WAYLAND_DISPLAY").is_some() || std::env::var_os("DISPLAY").is_some();
+    if has_display && std::env::var_os("QT_QPA_PLATFORMTHEME").is_none() {
         // SAFETY: no other thread exists yet.
         unsafe { std::env::set_var("QT_QPA_PLATFORMTHEME", "gtk3") };
     }
