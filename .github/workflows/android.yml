@@ -38,4 +38,29 @@ jobs:
       - name: Test
         run: if [ -d test ]; then flutter test; else echo "no tests yet"; fi
 
+  build:
+    name: Debug build (arm64)
+    needs: check
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      # rustup reads rust-toolchain.toml, which lists the Android targets.
+      - name: Rust toolchain and Android targets
+        working-directory: .
+        run: rustup show active-toolchain || rustup toolchain install
+      - run: flutter pub get
+      - run: flutter build apk --debug --target-platform android-arm64
+
 # Before the first public release, pin every action above to a full commit SHA.
