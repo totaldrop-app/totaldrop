@@ -32,6 +32,11 @@ All notable changes to TotalDrop are recorded here. The format follows
 
 ### Fixed
 
+- **Relay (self-hosted):** The Caddy configuration now passes
+  `/v0/relay/<keys>` to the relay; it matched only the exact path
+  `/v0/relay`, so no relay connection could open. The server's name is now
+  an argument of `install.sh` instead of `relay.totaldrop.app` (#84).
+
 - **Relay:** A device signing in no longer pushes back the sign-in
   timeout of the other socket in the same pair, and a finished pair leaves
   no alarm behind (#75).
