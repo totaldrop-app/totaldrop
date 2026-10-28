@@ -86,7 +86,8 @@ yönlendirilmez. QUIC aktarma sunucusunu karşı cihazın bir adresi gibi görü
 - **Adres bulma:** Cloudflare'in STUN sunucusu, `stun.cloudflare.com:3478`.
 - **Kendi sunucunda çalıştırmak isteyenler için:** `server/totaldrop-relay`
   aynı protokolü konuşur ve STUN'u da kendisi cevaplar. `deploy/` altında
-  systemd, Caddy ve nftables dosyaları var.
+  systemd, Caddy ve nftables dosyaları var; kurulum betiği sunucunun adını
+  ister: `sh install.sh relay.example.org`.
 - **İleride:** kullanım büyür ya da hız yetmezse Cloudflare Realtime TURN
   ikinci bir aktarma yolu olarak eklenebilir (ayda 1.000 GB ücretsiz, sonrası
   GB başına 0,05 $).
