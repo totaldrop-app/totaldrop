@@ -10,7 +10,7 @@ use clap::{Parser, Subcommand};
 use totaldrop_core::{
     Event, Events, IncomingOffer, PathOptions, PreparedSend, ReceiveOptions, SendOptions,
 };
-use totaldrop_l10n::{Arg, Domain, Strings};
+use totaldrop_l10n::{Arg, Domain, Strings, reveal_controls as visible};
 use totaldrop_proto::TransferCode;
 
 #[derive(Parser)]
@@ -258,23 +258,6 @@ fn is_yes(answer: &str, words: &str) -> bool {
         })
 }
 
-/// A name from the other side, with direction controls and other invisible
-/// format characters shown as `<U+202E>`, so a name cannot pretend to have
-/// another extension (`invoice` U+202E `fdp.exe` reads as "invoiceexe.pdf").
-fn visible(name: &str) -> String {
-    let mut out = String::with_capacity(name.len());
-    for c in name.chars() {
-        if matches!(c, '\u{202A}'..='\u{202E}' | '\u{2066}'..='\u{2069}' | '\u{200B}'..='\u{200F}' | '\u{2060}' | '\u{FEFF}')
-            || c.is_control()
-        {
-            out.push_str(&format!("<U+{:04X}>", u32::from(c)));
-        } else {
-            out.push(c);
-        }
-    }
-    out
-}
-
 fn main() -> ExitCode {
     let cli = Cli::parse();
     let strings = Arc::new(Strings::system(Domain::Cli));
@@ -321,7 +304,7 @@ fn main() -> ExitCode {
 
 #[cfg(test)]
 mod tests {
-    use super::{is_yes, visible};
+    use super::is_yes;
 
     #[test]
     fn yes_in_any_case_and_language() {
@@ -332,12 +315,5 @@ mod tests {
         assert!(!is_yes("", "e|evet"));
         assert!(!is_yes("n", "e|evet"));
         assert!(!is_yes("hayır", "e|evet"));
-    }
-
-    #[test]
-    fn hidden_characters_become_visible() {
-        assert_eq!(visible("invoice\u{202E}fdp.exe"), "invoice<U+202E>fdp.exe");
-        assert_eq!(visible("photo.jpg"), "photo.jpg");
-        assert_eq!(visible("a\nb"), "a<U+000A>b");
     }
 }
