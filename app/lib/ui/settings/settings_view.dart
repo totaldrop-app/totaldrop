@@ -111,7 +111,11 @@ class _SettingsViewState extends State<SettingsView> {
               value: widget.settings.privacyMode,
               onChanged: (on) async {
                 if (on && !await _confirmPrivacy(context)) return;
-                await widget.settings.setPrivacyMode(on);
+                try {
+                  await widget.settings.setPrivacyMode(on);
+                } on Exception {
+                  // Not saved: the switch keeps showing the setting in force.
+                }
               },
             ),
           ),

@@ -127,6 +127,11 @@ All notable changes to TotalDrop are recorded here. The format follows
 
 ### Security
 
+- **Core, command line:** In privacy mode (`--relay-only`, and the apps'
+  new setting) a device refuses a direct connection even from the paired
+  device, which could only dial an address it learned some other way; the
+  transfer stays on the relay (#39).
+
 - **Build:** A Linux release starts only from a tag on `main` whose version
   matches `linux/Cargo.toml`, the PKGBUILD, the RPM spec, the Debian
   changelog and the AppStream metainfo; every PR checks that the files

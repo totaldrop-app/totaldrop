@@ -138,10 +138,11 @@ pub mod qobject {
         #[cxx_name = "saveServer"]
         fn save_server(self: Pin<&mut Transfer>, url: &QString) -> bool;
 
-        /// Turn privacy mode on or off and keep the choice.
+        /// Turn privacy mode on or off and keep the choice. False, and
+        /// unchanged, if the choice could not be saved.
         #[qinvokable]
         #[cxx_name = "savePrivacyMode"]
-        fn save_privacy_mode(self: Pin<&mut Transfer>, on: bool);
+        fn save_privacy_mode(self: Pin<&mut Transfer>, on: bool) -> bool;
 
         /// Back to the default server.
         #[qinvokable]
@@ -383,11 +384,15 @@ impl qobject::Transfer {
         }
     }
 
-    fn save_privacy_mode(mut self: Pin<&mut Self>, on: bool) {
+    fn save_privacy_mode(mut self: Pin<&mut Self>, on: bool) -> bool {
         let mut s = Settings::load();
         s.privacy_mode = on;
-        s.save();
+        // A choice that would quietly be gone after a restart is not made.
+        if !s.save() {
+            return false;
+        }
         self.as_mut().set_privacy_mode(on);
+        true
     }
 
     fn send(mut self: Pin<&mut Self>, paths: &QStringList, strong: bool) {
@@ -696,7 +701,7 @@ impl qobject::Transfer {
         }
         let mut s = Settings::load();
         s.server = Some(url.clone());
-        s.save();
+        let _ = s.save();
         self.as_mut().set_server(QString::from(&url));
         true
     }
@@ -704,7 +709,7 @@ impl qobject::Transfer {
     fn reset_server(mut self: Pin<&mut Self>) {
         let mut s = Settings::load();
         s.server = None;
-        s.save();
+        let _ = s.save();
         self.as_mut()
             .set_server(QString::from(totaldrop_core::rendezvous::DEFAULT_SERVER));
     }

@@ -27,19 +27,17 @@ impl Settings {
             .unwrap_or_default()
     }
 
-    /// Write the settings; failures leave the old file.
-    pub fn save(&self) {
-        let Some(p) = path() else { return };
+    /// Write the settings; failures leave the old file. True if written.
+    pub fn save(&self) -> bool {
+        let Some(p) = path() else { return false };
         let Ok(text) = toml::to_string(self) else {
-            return;
+            return false;
         };
         if let Some(dir) = p.parent() {
             let _ = std::fs::create_dir_all(dir);
         }
         let tmp = p.with_extension("toml.tmp");
-        if std::fs::write(&tmp, text).is_ok() {
-            let _ = std::fs::rename(&tmp, &p);
-        }
+        std::fs::write(&tmp, text).is_ok() && std::fs::rename(&tmp, &p).is_ok()
     }
 
     /// A server URL the app accepts.
