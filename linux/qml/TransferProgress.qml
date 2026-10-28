@@ -34,7 +34,7 @@ ColumnLayout {
     RowLayout {
         Layout.fillWidth: true
         Label {
-            text: Math.floor(p.fraction * 100) + " %"
+            text: Strings.f("progressPercent", { percent: Math.floor(p.fraction * 100) })
             color: Theme.ink
             font.features: { "tnum": 1 }
         }

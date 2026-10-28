@@ -90,7 +90,9 @@ ColumnLayout {
         }
         TextArea {
             visible: more.checked
-            text: r.detail
+            // May hold the other side's cancel reason: hidden direction
+            // characters are shown, not obeyed.
+            text: Strings.name(r.detail)
             readOnly: true
             selectByMouse: true
             wrapMode: Text.Wrap

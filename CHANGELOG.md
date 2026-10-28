@@ -19,10 +19,14 @@ All notable changes to TotalDrop are recorded here. The format follows
   name cannot disguise its extension.
 - **Linux:** The app takes its text from `l10n/app`, the same strings as
   Android, in the desktop's language, with sizes and counts in the region's
-  format. Right-to-left languages mirror the layout; the code and the
-  verification words stay left to right. Names from the other side show
-  hidden direction characters. Settings says when a translation is still a
-  draft. Packages suggest the Noto fonts for scripts beyond Latin.
+  format. The layout is ready for right-to-left languages (it mirrors, and
+  the code and the verification words stay left to right); tested with a
+  pseudo-locale until the first such translation lands. File names and
+  cancel reasons from the other side show hidden direction characters.
+  Settings says when a translation is still a draft. Packages recommend the
+  Noto fonts for scripts beyond Latin.
+- **Linux:** Sizes now read like on Android: one decimal below 10 and SI
+  "kB" ("12 kB", "1.5 MB"), where they had one decimal below 100 and "KB".
 - **Core:** `totaldrop-l10n`, the shared interface text for the Rust
   programs: all strings live in `l10n/`, one source with Android.
 
