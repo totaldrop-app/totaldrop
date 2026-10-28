@@ -160,8 +160,11 @@ treated as final.
       XOR-MAPPED-ADDRESS, sent from the QUIC socket. The default server is
       `stun.cloudflare.com:3478`; the self-hosted relay answers STUN too.
 21. **Which relay.** The sender announces its relay in `HINTS` field 5;
-    both sides connect there. A receiver accepts only `wss://` (or `ws://`
-    on the same machine) from `HINTS`.
+    both sides connect there. A receiver uses it only if it is `wss://` (or
+    `ws://` on the same machine) and the same as the receiver's own relay
+    setting (a trailing `/` aside); otherwise the receiver tries direct
+    paths only, and in privacy mode stops with an error. A receiver with no
+    relay set uses none.
 22. **Paths.** Direct addresses are tried at once; the relay path 1.2
     seconds later, or at once when no address was announced. The first
     connection whose handshake completes is used. Moving a connection from

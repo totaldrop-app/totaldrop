@@ -24,8 +24,9 @@ struct Cli {
     /// Rendezvous server. Only wss:// is allowed, except ws:// on this machine.
     #[arg(long, global = true, env = "TOTALDROP_SERVER")]
     server: Option<String>,
-    /// Relay for when no direct path works, and for finding this device's
-    /// public address. An empty value turns the relay off.
+    /// Relay for when no direct path works. When receiving, the sender's
+    /// relay is used only if it is this one. An empty value turns the relay
+    /// off.
     #[arg(long, global = true, env = "TOTALDROP_RELAY")]
     relay: Option<String>,
     /// STUN server (host:port) that tells this device its public address.
@@ -34,7 +35,7 @@ struct Cli {
     stun: Option<String>,
     /// Never connect directly and announce no IP address: everything goes
     /// through the relay. Slower, but the other side never learns your
-    /// address.
+    /// address. When receiving, the sender must use the same relay.
     #[arg(long, global = true)]
     relay_only: bool,
     #[command(subcommand)]
