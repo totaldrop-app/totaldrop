@@ -255,6 +255,7 @@ fn paths_to(
         transport::Paths {
             direct,
             relay: link.is_some().then_some(gate),
+            relay_only,
         },
         link,
     )

@@ -75,9 +75,12 @@ Page {
                 checked: page.transfer.privacyMode
                 Layout.fillWidth: true
                 Layout.topMargin: Theme.s8
-                // Turning it on is confirmed first: it is slower.
+                // Turning it on is confirmed first: it is slower. The switch
+                // always shows what is saved, so a failed save shows too.
                 onToggled: {
-                    if (checked) { checked = Qt.binding(() => page.transfer.privacyMode); privacyDialog.open() }
+                    const on = checked
+                    checked = Qt.binding(() => page.transfer.privacyMode)
+                    if (on) privacyDialog.open()
                     else page.transfer.savePrivacyMode(false)
                 }
             }

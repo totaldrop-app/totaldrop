@@ -299,21 +299,21 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get settingsPrivacyBody =>
-      'Buluşma sunucusu, aktarma sunucusu ve Cloudflare\'in STUN sunucusu IP adresinizi görür; doğrudan bağlandığınızda karşı cihaz da görür. Hiçbiri dosya adlarını, içerikleri ya da anahtarları görmez ve sunucularımız kayıt tutmaz. Dosyalar mümkünse cihazlar arasında doğrudan, değilse aktarma sunucusu üzerinden gider; her iki durumda da uçtan uca şifrelidir.';
+      'Buluşma sunucusu, aktarma sunucusu ve Cloudflare\'in STUN sunucusu IP adresinizi görür; doğrudan bağlandığınızda (gizlilik modu kapalıysa) karşı cihaz da görür. Hiçbiri dosya adlarını, içerikleri ya da anahtarları görmez ve sunucularımız kayıt tutmaz. Dosyalar mümkünse cihazlar arasında doğrudan, değilse aktarma sunucusu üzerinden gider; her iki durumda da uçtan uca şifrelidir.';
 
   @override
   String get privacyMode => 'Adresimi karşı cihazdan gizle';
 
   @override
   String get privacyModeHint =>
-      'Gizlilik modu: her şey aktarma sunucusundan geçer, böylece karşı cihaz IP adresinizi hiç öğrenmez. Daha yavaştır ve iki cihazın da aynı aktarma sunucusunu kullanması gerekir.';
+      'Gizlilik modu: tüm aktarımlar aktarma sunucusu üzerinden geçer, böylece karşı cihaz IP adresinizi hiç öğrenmez. Daha yavaştır ve karşı cihazın da aynı aktarma sunucusunu kullanması gerekir (varsayılan sunucu aynıdır).';
 
   @override
   String get privacyModeConfirmTitle => 'Gizlilik modu açılsın mı?';
 
   @override
   String get privacyModeConfirmBody =>
-      'Aktarımlar yavaşlar, çünkü cihazlar arasında doğrudan hiçbir şey geçmez. Aktarma sunucusu IP adresinizi görür; dosyalarınızı ya da anahtarlarınızı hiç görmez.';
+      'Aktarımlar yavaşlar, çünkü cihazlar arasında doğrudan hiçbir şey geçmez. Buluşma sunucusu ve aktarma sunucusu IP adresinizi yine görür; dosyalarınızı ya da anahtarlarınızı hiç görmez.';
 
   @override
   String get privacyModeTurnOn => 'Aç';

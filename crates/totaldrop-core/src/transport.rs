@@ -349,13 +349,20 @@ pub fn endpoint(
 }
 
 /// The next incoming connection whose handshake completes; the pinned key
-/// check inside TLS turns away anyone else.
-async fn accept_one(endpoint: &quinn::Endpoint) -> Result<quinn::Connection> {
+/// check inside TLS turns away anyone else. With `relay_only`, a connection
+/// that did not come through the relay is closed too: in privacy mode this
+/// side announced no address, and a peer that dials one anyway must not get
+/// a direct path that confirms it.
+async fn accept_one(endpoint: &quinn::Endpoint, relay_only: bool) -> Result<quinn::Connection> {
     loop {
         let incoming = endpoint
             .accept()
             .await
             .ok_or(Error::Connect("endpoint closed".into()))?;
+        if relay_only && incoming.remote_address() != crate::path::RELAY_PEER {
+            incoming.refuse();
+            continue;
+        }
         if let Ok(conn) = incoming.await {
             return Ok(conn);
         }
@@ -378,6 +385,8 @@ pub struct Paths {
     /// The relay link to it, if there is one. It is opened only when the
     /// relay attempt starts.
     pub relay: Option<crate::relay::Gate>,
+    /// Privacy mode on this side: accept only connections through the relay.
+    pub relay_only: bool,
 }
 
 impl Paths {
@@ -408,7 +417,7 @@ pub async fn receiver_connection(
     let result = tokio::time::timeout(wait, async {
         tokio::select! {
             r = dial => r,
-            r = accept_one(endpoint) => r,
+            r = accept_one(endpoint, sender.relay_only) => r,
         }
     })
     .await;
@@ -456,8 +465,9 @@ pub async fn sender_connection(
     }
     {
         let (endpoint, tx) = (endpoint.clone(), tx.clone());
+        let relay_only = receiver.relay_only;
         sources.spawn(async move {
-            while let Ok(conn) = accept_one(&endpoint).await {
+            while let Ok(conn) = accept_one(&endpoint, relay_only).await {
                 if tx.send(conn).is_err() {
                     break;
                 }
@@ -611,6 +621,7 @@ mod tests {
             let paths = Paths {
                 direct: vec![to_sender],
                 relay: None,
+                relay_only: false,
             };
             let conn = receiver_connection(&receiver, &paths, wait).await?;
             let (mut send, _recv) = conn.open_bi().await?;
@@ -623,6 +634,7 @@ mod tests {
             let paths = Paths {
                 direct: vec![to_receiver],
                 relay: None,
+                relay_only: false,
             };
             let (_conn, _send, mut recv) = sender_connection(&sender, &paths, wait).await?;
             let mut buf = [0u8; 5];
@@ -695,10 +707,12 @@ mod tests {
         let to_sender = Paths {
             direct: direct.clone(),
             relay: Some(recv_gate.clone()),
+            relay_only: false,
         };
         let to_receiver = Paths {
             direct,
             relay: Some(send_gate.clone()),
+            relay_only: false,
         };
         let wait = Duration::from_secs(10);
         let start = tokio::time::Instant::now();
@@ -727,6 +741,58 @@ mod tests {
         start.elapsed()
     }
 
+    /// A privacy-mode side refuses a direct connection even from the
+    /// paired device, which dials an address it learned some other way,
+    /// and the transfer goes through the relay.
+    #[tokio::test]
+    async fn privacy_mode_refuses_a_direct_dial() {
+        let (ka, kb) = (
+            EndpointKey::generate().unwrap(),
+            EndpointKey::generate().unwrap(),
+        );
+        let sa = UdpSocket::bind(SocketAddr::from(([127, 0, 0, 1], 0))).unwrap();
+        let sb = UdpSocket::bind(SocketAddr::from(([127, 0, 0, 1], 0))).unwrap();
+        let receiver_addr = sb.local_addr().unwrap();
+        let (sender, pa) = endpoint(sa, &ka, &kb.public()).unwrap();
+        let (receiver, pb) = endpoint(sb, &kb, &ka.public()).unwrap();
+        let (send_gate, recv_gate) = (crate::relay::Gate::default(), crate::relay::Gate::default());
+        cross(pa, pb, send_gate.clone(), recv_gate.clone());
+        // The receiver is in privacy mode and announced nothing; the sender
+        // dials its real address anyway.
+        let to_sender = Paths {
+            direct: Vec::new(),
+            relay: Some(recv_gate.clone()),
+            relay_only: true,
+        };
+        let to_receiver = Paths {
+            direct: vec![receiver_addr],
+            relay: Some(send_gate.clone()),
+            relay_only: false,
+        };
+        let wait = Duration::from_secs(10);
+        let recv_side = async {
+            let conn = receiver_connection(&receiver, &to_sender, wait).await?;
+            let (mut send, _recv) = conn.open_bi().await?;
+            send.write_all(b"relay")
+                .await
+                .map_err(|e| Error::Connect(e.to_string()))?;
+            Ok::<_, Error>(conn)
+        };
+        let send_side = async {
+            let (conn, _send, mut recv) = sender_connection(&sender, &to_receiver, wait).await?;
+            let mut buf = [0u8; 5];
+            recv.read_exact(&mut buf)
+                .await
+                .map_err(|e| Error::Connect(e.to_string()))?;
+            Ok::<_, Error>((conn, buf))
+        };
+        let (r, s) = tokio::join!(recv_side, send_side);
+        assert_eq!(r.unwrap().remote_address(), crate::path::RELAY_PEER);
+        let (conn, buf) = s.unwrap();
+        assert_eq!(&buf, b"relay");
+        assert_eq!(conn.remote_address(), crate::path::RELAY_PEER);
+    }
+
     #[tokio::test]
     async fn relay_path_when_no_direct_path_works() {
         over_relay(vec![unreachable()]).await;
@@ -749,6 +815,7 @@ mod tests {
             let paths = Paths {
                 direct: vec![sender_addr],
                 relay: Some(recv_gate.clone()),
+                relay_only: false,
             };
             let conn = receiver_connection(&receiver, &paths, wait).await?;
             let (mut send, _recv) = conn.open_bi().await?;
@@ -761,6 +828,7 @@ mod tests {
             let paths = Paths {
                 direct: vec![receiver_addr],
                 relay: Some(send_gate.clone()),
+                relay_only: false,
             };
             let (conn, _send, mut recv) = sender_connection(&sender, &paths, wait).await?;
             let mut buf = [0u8; 5];

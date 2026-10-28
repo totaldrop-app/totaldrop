@@ -557,7 +557,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsPrivacyBody.
   ///
   /// In en, this message translates to:
-  /// **'The rendezvous server, the relay and Cloudflare\'s STUN server see your IP address, and so does the other device when you connect directly. None of them sees file names, contents or keys, and our servers keep no logs. Files go directly between the devices when they can, otherwise through the relay; they are encrypted end to end either way.'**
+  /// **'The rendezvous server, the relay and Cloudflare\'s STUN server see your IP address, and so does the other device when you connect directly (unless privacy mode is on). None of them sees file names, contents or keys, and our servers keep no logs. Files go directly between the devices when they can, otherwise through the relay; they are encrypted end to end either way.'**
   String get settingsPrivacyBody;
 
   /// No description provided for @privacyMode.
@@ -569,7 +569,7 @@ abstract class AppLocalizations {
   /// No description provided for @privacyModeHint.
   ///
   /// In en, this message translates to:
-  /// **'Privacy mode: everything goes through the relay, so the other device never learns your IP address. Slower, and both devices must use the same relay.'**
+  /// **'Privacy mode: everything goes through the relay, so the other device never learns your IP address. Slower, and the other device must use the same relay (the default one does).'**
   String get privacyModeHint;
 
   /// No description provided for @privacyModeConfirmTitle.
@@ -581,7 +581,7 @@ abstract class AppLocalizations {
   /// No description provided for @privacyModeConfirmBody.
   ///
   /// In en, this message translates to:
-  /// **'Transfers will be slower, because nothing goes directly between the devices. The relay sees your IP address; it never sees your files or keys.'**
+  /// **'Transfers will be slower, because nothing goes directly between the devices. The rendezvous server and the relay still see your IP address; they never see your files or keys.'**
   String get privacyModeConfirmBody;
 
   /// No description provided for @privacyModeTurnOn.
