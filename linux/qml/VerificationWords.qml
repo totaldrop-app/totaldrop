@@ -42,6 +42,10 @@ Rectangle {
             }
         }
         Label {
+            // English words, left to right in every language: both sides
+            // compare them in the same order.
+            LayoutMirroring.enabled: false
+            horizontalAlignment: Text.AlignLeft
             text: box.words.join("  ·  ")
             color: Theme.ink
             font.pointSize: Qt.application.font.pointSize * 1.35

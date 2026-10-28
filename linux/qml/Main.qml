@@ -13,6 +13,11 @@ ApplicationWindow {
     visible: true
     color: Theme.background
 
+    // Right-to-left languages mirror the whole layout. The code and the
+    // verification words opt out where they are shown (ADR 0008).
+    LayoutMirroring.enabled: Strings.rtl
+    LayoutMirroring.childrenInherit: true
+
     // Outside Plasma (and qt6ct / hyprqt6engine) the controls take their
     // colours from the desktop theme through the window palette, re-applied
     // whenever the theme changes. Under those, the Qt palette already is the
