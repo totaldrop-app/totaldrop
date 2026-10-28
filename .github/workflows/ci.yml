@@ -43,11 +43,11 @@ jobs:
         run: |
           shared='Cargo\.toml$|Cargo\.lock$|rust-toolchain\.toml$'
           declare -A area=(
-            [core]="^(crates/|server/totaldrop-(rendezvous|relay)/|fuzz/|deny\.toml$|$shared|\.github/workflows/core\.yml$)"
-            [android]="^(app/|crates/totaldrop-(core|crypto|proto)/|$shared|\.github/workflows/android(-release)?\.yml$)"
-            [linux]="^(linux/|packaging/|crates/totaldrop-(core|crypto|proto|cli)/|$shared|\.github/workflows/linux(-release)?\.yml$)"
+            [core]="^(crates/|l10n/|server/totaldrop-(rendezvous|relay)/|fuzz/|deny\.toml$|$shared|\.github/workflows/core\.yml$)"
+            [android]="^(app/|l10n/|crates/totaldrop-(core|crypto|proto|l10n)/|$shared|\.github/workflows/android(-release)?\.yml$)"
+            [linux]="^(linux/|packaging/|l10n/|crates/totaldrop-(core|crypto|proto|cli|l10n)/|$shared|\.github/workflows/linux(-release)?\.yml$)"
             [server]="^(server/(rendezvous|relay)-worker/|\.github/workflows/server\.yml$)"
-            [site]="^(site/|\.github/workflows/site\.yml$)"
+            [site]="^(site/|l10n/tests/|\.github/workflows/site\.yml$)"
           )
           # Every changed path, unquoted (non-ASCII names stay as they are)
           # and with both sides of a rename, so moving a file out of an area
