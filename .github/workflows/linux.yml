@@ -1,6 +1,7 @@
-# Linux desktop app: checks, and the three packages (Arch, .deb, .rpm)
-# built separately, each in its own container. linux-release.yml turns them
-# into a release from a `linux-v*` tag.
+# Linux desktop app: checks, and the three packages (Arch, .deb, .rpm;
+# .deb and .rpm also for ARM64) built separately, each in its own
+# container. linux-release.yml turns them into a release from a `linux-v*`
+# tag.
 name: Linux
 
 # Runs from ci.yml when its files change (see the area filters there), from
@@ -34,14 +35,22 @@ jobs:
       - run: cargo clippy -p totaldrop-linux --all-targets --locked -- -D warnings
       - run: cargo test -p totaldrop-linux --locked
 
+  # ARM64 (Snapdragon X, RTX Spark) on GitHub's free ARM runner, #86. Arch
+  # has no official ARM64 image, so ARM64 Arch users build the PKGBUILD,
+  # which lists aarch64.
   package:
-    name: Package (${{ matrix.format }})
+    name: Package (${{ matrix.format }}, ${{ matrix.arch }})
     needs: check
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
       matrix:
-        format: [arch, deb, rpm]
+        include:
+          - { format: arch, arch: x86_64, runner: ubuntu-latest }
+          - { format: deb, arch: x86_64, runner: ubuntu-latest }
+          - { format: rpm, arch: x86_64, runner: ubuntu-latest }
+          - { format: deb, arch: aarch64, runner: ubuntu-24.04-arm }
+          - { format: rpm, arch: aarch64, runner: ubuntu-24.04-arm }
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -49,6 +58,6 @@ jobs:
       - run: packaging/build.sh ${{ matrix.format }}
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: totaldrop-linux-${{ matrix.format }}
+          name: totaldrop-linux-${{ matrix.format }}-${{ matrix.arch }}
           path: dist/packages/*
           if-no-files-found: error
