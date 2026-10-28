@@ -432,7 +432,8 @@ pub async fn sender_connection(
     let connected = Arc::new(std::sync::atomic::AtomicBool::new(false));
     // The relay link opens on the sender's own clock: at once with no direct
     // address, otherwise after RELAY_DELAY, and not at all once a
-    // connection has come up. The dial below only tries the relay path.
+    // connection has come up and been chosen. The dial below only tries the
+    // relay path.
     let mut dial = receiver.clone();
     if let Some(gate) = receiver.relay.clone() {
         let delay = if receiver.direct.is_empty() {
@@ -443,9 +444,13 @@ pub async fn sender_connection(
         let connected = connected.clone();
         sources.spawn(async move {
             tokio::time::sleep(delay).await;
-            if !connected.load(std::sync::atomic::Ordering::SeqCst) {
-                gate.open();
+            // A connection came up but was not chosen yet: give it time, then
+            // fall back to the relay if it still has not carried the control
+            // stream. This task is aborted as soon as one is chosen.
+            if connected.load(std::sync::atomic::Ordering::SeqCst) {
+                tokio::time::sleep(RELAY_DELAY).await;
             }
+            gate.open();
         });
         dial.relay = Some(crate::relay::Gate::default());
     }
