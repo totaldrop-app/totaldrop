@@ -55,6 +55,21 @@ impl core::fmt::Display for Error {
 
 impl std::error::Error for Error {}
 
+impl Error {
+    /// The rendezvous server says the code's number is not in use: it was
+    /// mistyped, has expired or was already used.
+    #[must_use]
+    pub fn is_code_not_in_use(&self) -> bool {
+        matches!(self, Error::Rendezvous(r) if crate::rendezvous::CODE_NOT_IN_USE.contains(&r.as_str()))
+    }
+
+    /// The rendezvous server's address was refused before any connection.
+    #[must_use]
+    pub fn is_bad_server_address(&self) -> bool {
+        matches!(self, Error::Rendezvous(r) if crate::rendezvous::BAD_ADDRESS.contains(&r.as_str()))
+    }
+}
+
 impl From<std::io::Error> for Error {
     fn from(e: std::io::Error) -> Self {
         Error::Io(e)

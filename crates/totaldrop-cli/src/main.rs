@@ -165,7 +165,7 @@ async fn send(
     paths: PathOptions,
     files: Vec<PathBuf>,
     strong: bool,
-) -> Result<(), totaldrop_core::Error> {
+) -> Result<(), Failure> {
     eprintln!("{}", s.get("cliPreparing", &[]));
     let opts = SendOptions {
         server,
@@ -175,7 +175,7 @@ async fn send(
     let stop = stop_on_ctrl_c(&s);
     let prepared = tokio::select! {
         r = PreparedSend::new(&opts, files) => r?,
-        () = stop.stopped() => return Err(totaldrop_core::Error::Stopped),
+        () = stop.stopped() => return Err(totaldrop_core::Error::Stopped.into()),
     };
     let (entries, total) = prepared.totals();
     if prepared.skipped() > 0 {
@@ -217,7 +217,7 @@ async fn receive(
     code: String,
     out: Option<PathBuf>,
     yes: bool,
-) -> Result<(), totaldrop_core::Error> {
+) -> Result<(), Failure> {
     let dest = match out {
         Some(d) => d,
         None => std::env::current_dir()?,
@@ -231,11 +231,15 @@ async fn receive(
                 std::io::ErrorKind::NotFound | std::io::ErrorKind::NotADirectory => "cliNoFolder",
                 _ => "cliFolderNotWritable",
             };
-            return Err(totaldrop_core::Error::Io(std::io::Error::other(
-                s.get(key, &[("folder", Arg::Text(&shown))]),
-            )));
+            // Said here, with the folder's name: better than any generic
+            // sentence main could choose.
+            eprintln!(
+                "totaldrop: {}",
+                s.get(key, &[("folder", Arg::Text(&shown))])
+            );
+            return Err(Failure::Shown);
         }
-        Err(e) => return Err(e),
+        Err(e) => return Err(e.into()),
     };
     let stop = stop_on_ctrl_c(&s);
     eprintln!("{}", s.get("cliConnecting", &[]));
@@ -287,7 +291,7 @@ async fn receive(
     if stop.is_stopped() {
         // Best effort: the sender may be gone already; stopping is the answer.
         let _ = offer.decline().await;
-        return Err(totaldrop_core::Error::Stopped);
+        return Err(totaldrop_core::Error::Stopped.into());
     }
     if !accepted {
         offer.decline().await?;
@@ -376,11 +380,12 @@ fn main() -> ExitCode {
     runtime.shutdown_background();
     match result {
         Ok(()) => ExitCode::SUCCESS,
-        Err(totaldrop_core::Error::Stopped) => {
+        Err(Failure::Shown) => ExitCode::FAILURE,
+        Err(Failure::Core(totaldrop_core::Error::Stopped)) => {
             eprintln!("{}", strings_for_exit.get("cliStopped", &[]));
             ExitCode::from(130)
         }
-        Err(e) => {
+        Err(Failure::Core(e)) => {
             // One sentence in the person's language, then the detail for a
             // bug report, which stays English.
             eprintln!("totaldrop: {}", strings_for_exit.get(error_key(&e), &[]));
@@ -390,7 +395,8 @@ fn main() -> ExitCode {
     }
 }
 
-/// The message for each kind of failure, as the apps show it.
+/// The message for each kind of failure, as the apps show it. Every variant
+/// is listed, so a new one has to be given a message.
 fn error_key(e: &totaldrop_core::Error) -> &'static str {
     use totaldrop_core::Error as E;
     use totaldrop_proto::wire::RejectReason;
@@ -402,11 +408,34 @@ fn error_key(e: &totaldrop_core::Error) -> &'static str {
         E::Rejected(RejectReason::Invalid) => "cliErrInvalidOffer",
         E::Cancelled(_) => "cliErrCancelled",
         E::Code(_) => "cliErrInvalidCode",
+        E::Rendezvous(_) if e.is_code_not_in_use() => "cliErrCodeNotInUse",
+        E::Rendezvous(_) if e.is_bad_server_address() => "cliErrBadServer",
         E::Rendezvous(_) => "cliErrServer",
         E::Connect(_) => "cliErrConnect",
         E::InvalidOffer(_) => "cliErrInvalidOffer",
         E::Io(_) => "cliErrStorage",
-        _ => "cliErrOther",
+        E::Stopped => "cliStopped",
+        E::Protocol(_) | E::Random => "cliErrOther",
+    }
+}
+
+/// How a command ends badly: an error to explain, or one already explained.
+#[derive(Debug)]
+enum Failure {
+    Core(totaldrop_core::Error),
+    /// Already printed, in the person's words.
+    Shown,
+}
+
+impl From<totaldrop_core::Error> for Failure {
+    fn from(e: totaldrop_core::Error) -> Self {
+        Failure::Core(e)
+    }
+}
+
+impl From<std::io::Error> for Failure {
+    fn from(e: std::io::Error) -> Self {
+        Failure::Core(e.into())
     }
 }
 
@@ -419,31 +448,49 @@ mod tests {
     use totaldrop_l10n::{Domain, Strings};
     use totaldrop_proto::wire::RejectReason;
 
-    /// Every failure has a sentence in English and in Turkish.
+    /// Every kind of failure has its own sentence in English and in
+    /// Turkish (not an English fallback).
     #[test]
     fn every_error_has_a_translated_message() {
         let errors = [
             Error::WrongCode,
             Error::PeerLeft,
+            Error::Rendezvous("connection closed".into()),
+            Error::Rendezvous("unknown nameplate".into()),
+            Error::Rendezvous("the server address must start with wss://".into()),
+            Error::Connect("x".into()),
+            Error::Protocol("x"),
+            Error::InvalidOffer("x".into()),
             Error::Rejected(RejectReason::Declined),
+            Error::Rejected(RejectReason::TooLarge),
             Error::Rejected(RejectReason::NoSpace),
             Error::Rejected(RejectReason::Invalid),
             Error::Cancelled("stopped".into()),
-            Error::Connect("x".into()),
+            Error::Stopped,
             Error::Io(std::io::Error::other("x")),
-            Error::Protocol("x"),
+            Error::Code(totaldrop_proto::TransferCode::parse("x").unwrap_err()),
+            Error::Random,
         ];
-        for tag in ["en", "tr"] {
-            let s = Strings::new(
+        let strings = |tag: &str| {
+            Strings::new(
                 Domain::Cli,
                 &[totaldrop_l10n::locale::parse(tag).unwrap()],
                 None,
+            )
+        };
+        let (en, tr) = (strings("en"), strings("tr"));
+        for e in &errors {
+            let key = error_key(e);
+            assert!(en.keys().contains(key), "{key}");
+            assert_ne!(
+                en.get(key, &[]),
+                tr.get(key, &[]),
+                "{key} is not in Turkish"
             );
-            let keys = s.keys();
-            for e in &errors {
-                assert!(keys.contains(error_key(e)), "{tag}: {}", error_key(e));
-            }
         }
+        assert_eq!(error_key(&errors[3]), "cliErrCodeNotInUse");
+        assert_eq!(error_key(&errors[4]), "cliErrBadServer");
+        assert_eq!(error_key(&errors[2]), "cliErrServer");
     }
 
     #[test]

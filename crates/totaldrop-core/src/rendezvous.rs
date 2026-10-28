@@ -14,6 +14,19 @@ use crate::error::{Error, Result};
 /// The project's rendezvous server.
 pub const DEFAULT_SERVER: &str = "wss://rendezvous.totaldrop.app";
 
+/// What the check below says about a server address it refuses.
+pub(crate) const BAD_ADDRESS: [&str; 4] = [
+    "invalid server address",
+    "the server address must not contain a user name",
+    "unencrypted ws:// is only allowed for a server on this machine",
+    "the server address must start with wss://",
+];
+
+/// What a rendezvous server answers when the code's number is not (or no
+/// longer) in use: mistyped, expired or already taken.
+pub(crate) const CODE_NOT_IN_USE: [&str; 3] =
+    ["unknown nameplate", "nameplate full", "mailbox expired"];
+
 /// Unencrypted `ws://` is accepted only for a server on this machine, for
 /// development and tests. Everything else must be `wss://` (TLS 1.3).
 pub(crate) fn check_url(url: &str) -> Result<()> {
