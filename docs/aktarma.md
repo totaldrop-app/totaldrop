@@ -52,7 +52,8 @@ kendi saatiyle, eşleşme bittiği andan sayar; bu yüzden biri aktarma
 sunucusuna bağlanıp öbürü bağlanmayabilir. Doğrudan yol bu süre içinde
 kazanırsa aktarma sunucusuna hiç bağlanılmaz ve sunucu o aktarımı görmez.
 Doğrudan yol daha geç gelip kazanırsa açılmış aktarma bağlantısı, yol seçilir
-seçilmez kapatılır; sunucu o kısa sürede cihazın IP adresini görmüş olur. Bu davranış bir sonraki sürümle gelir
+seçilmez kapatılır; sunucu o kısa sürede cihazın IP adresini görmüş olur.
+Bu davranış bir sonraki sürümle gelir
 ([#63](https://github.com/totaldrop-app/totaldrop/issues/63)); daha önceki
 sürümler bağlantıyı her aktarımın başında açar.
 Alan cihaz, gönderenin bildirdiği aktarma sunucusunu kullanır; gizlilik
