@@ -20,9 +20,11 @@ All notable changes to TotalDrop are recorded here. The format follows
 - **Site:** A language picker replaces the EN/TR button; the language
   follows the browser (`navigator.languages`, with likely scripts, so
   `zh-HK` would find Traditional Chinese) and translations load from
-  `/i18n/<lang>.json` on the same domain. Pages lay out right to left for
-  Arabic, Persian, Hebrew and Urdu (CSS logical properties); codes and
-  commands stay left to right. Receive links accept Turkish İ/ı and
+  `/i18n/<lang>.json` on the same domain. Pages are ready for right-to-left
+  translations (CSS logical properties; the direction comes from the
+  language's script), with codes and commands kept left to right; tested
+  with a temporary Arabic file until a real one lands. English text shown
+  inside another language keeps its own language and direction. Receive links accept Turkish İ/ı and
   Arabic-Indic digits in the code.
 - **Core:** `totaldrop-l10n`, the shared interface text for the Rust
   programs: all strings live in `l10n/`, one source with Android.

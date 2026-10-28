@@ -8,11 +8,17 @@
 
   const MAX_LEN = 16 * 1024;
   const MAX_DEPTH = 4;
+  const own = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
   const SLOTS = { "=0": "zero", zero: "zero", "=1": "one", one: "one", "=2": "two", two: "two", few: "few", many: "many", other: "other" };
-  const RTL = ["ar", "fa", "he", "ur", "ps", "yi"];
+  // Right to left: languages whose likely script is one of these.
+  const RTL_SCRIPTS = ["Arab", "Hebr", "Thaa", "Syrc", "Nkoo", "Adlm", "Rohg", "Mand", "Samr"];
+  function isRtl(tag) {
+    try { return RTL_SCRIPTS.includes(new Intl.Locale(tag).maximize().script); } catch (e) { return false; }
+  }
 
   function parse(src) {
-    if (src.length > MAX_LEN) throw new Error("too long");
+    // Bytes, as in the Rust parser.
+    if (new TextEncoder().encode(src).length > MAX_LEN) throw new Error("too long");
     let pos = 0;
     const peek = () => src[pos];
     const spaces = () => { while (pos < src.length && /[ \t\n\r\f]/.test(src[pos])) pos++; };
@@ -56,7 +62,7 @@
       spaces();
       eat(",");
       if (kind !== "plural" && kind !== "select") throw new Error("syntax at " + pos);
-      const cases = {};
+      const cases = Object.create(null);
       for (;;) {
         spaces();
         if (pos >= src.length) throw new Error("syntax at " + pos);
@@ -66,17 +72,17 @@
         let key = src.slice(start, pos);
         if (key === "=") throw new Error("syntax at " + start);
         if (kind === "plural") {
-          if (!(key in SLOTS)) throw new Error("syntax at " + start);
+          if (!own(SLOTS, key)) throw new Error("syntax at " + start);
           key = SLOTS[key];
         }
-        if (Object.prototype.hasOwnProperty.call(cases, key)) throw new Error("duplicate case");
+        if (own(cases, key)) throw new Error("duplicate case");
         spaces();
         eat("{");
         cases[key] = message(depth + 1);
         eat("}");
       }
       if (!Object.keys(cases).length) throw new Error("syntax at " + pos);
-      if (!("other" in cases)) throw new Error("no other");
+      if (!own(cases, "other")) throw new Error("no other");
       return kind === "plural" ? { p: arg, cases } : { s: arg, cases };
     }
 
@@ -90,19 +96,21 @@
     const parts = parse(src);
     const rules = new Intl.PluralRules(locale);
     const numbers = new Intl.NumberFormat(locale);
-    const rtl = RTL.includes(String(locale).split("-")[0]);
-    args = args || {};
+    const rtl = isRtl(String(locale));
+    const arg = (name) => (args && own(args, name) ? args[name] : undefined);
     const write = (list) => list.map((part) => {
       if ("t" in part) return part.t;
       if ("a" in part) {
-        const v = args[part.a];
-        if (typeof v === "number") return numbers.format(v);
+        const v = arg(part.a);
+        if (typeof v === "number" && Number.isSafeInteger(v) && v >= 0) return numbers.format(v);
         if (typeof v === "string") return rtl ? "\u2068" + v + "\u2069" : v;
         return "{" + part.a + "}";
       }
       if ("p" in part) {
-        const v = args[part.p];
-        const n = typeof v === "number" ? v : (typeof v === "string" && /^[0-9]+$/.test(v) ? Number(v) : null);
+        const v = arg(part.p);
+        // Counts are whole, non-negative numbers, as in the Rust parser.
+        const n = typeof v === "number" && Number.isSafeInteger(v) && v >= 0 ? v
+          : (typeof v === "string" && /^[0-9]+$/.test(v) ? Number(v) : null);
         let chosen = null;
         if (n !== null) {
           if (n === 0 && part.cases.zero) chosen = part.cases.zero;
@@ -112,12 +120,12 @@
         }
         return write(chosen || part.cases.other);
       }
-      const v = args[part.s];
+      const v = arg(part.s);
       const key = v === undefined ? "" : String(v);
-      return write(Object.prototype.hasOwnProperty.call(part.cases, key) && key !== "" ? part.cases[key] : part.cases.other);
+      return write(key !== "" && own(part.cases, key) ? part.cases[key] : part.cases.other);
     }).join("");
     return write(parts);
   }
 
-  root.TDMessage = { parse, format, RTL };
+  root.TDMessage = { parse, format, isRtl };
 })(typeof window !== "undefined" ? window : globalThis);
