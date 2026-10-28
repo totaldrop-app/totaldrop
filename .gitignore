@@ -8,3 +8,4 @@
 # Built packages
 dist/
 site/.wrangler/
+linux/.qmlls.ini

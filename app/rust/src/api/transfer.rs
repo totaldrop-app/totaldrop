@@ -277,6 +277,7 @@ pub async fn prepare_send(
         let opts = SendOptions {
             server,
             words: if strong { 3 } else { 2 },
+            ..SendOptions::default()
         };
         let prepared =
             PreparedSend::new(&opts, paths.into_iter().map(PathBuf::from).collect()).await?;
@@ -369,7 +370,13 @@ impl Offer {
 /// Use `code` to connect to the sender and receive its offer.
 pub async fn connect_receive(server: String, code: String) -> Result<Offer, TransferError> {
     on_runtime(async move {
-        let offer = IncomingOffer::connect(&ReceiveOptions { server }, &code).await?;
+        let offer = IncomingOffer::connect(
+            &ReceiveOptions {
+                server,
+                ..ReceiveOptions::default()
+            },
+            &code,
+        ).await?;
         let s = offer.summary().clone();
         Ok(Offer {
             files: n(s.files),

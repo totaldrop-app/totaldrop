@@ -89,6 +89,16 @@ impl EndpointKey {
         self.public
     }
 
+    /// Sign `message`, to prove to a relay that this side holds the key.
+    pub fn sign(&self, message: &[u8]) -> Result<[u8; 64]> {
+        let pair =
+            ring::signature::Ed25519KeyPair::from_pkcs8(&self.pkcs8).map_err(|_| Error::Random)?;
+        pair.sign(message)
+            .as_ref()
+            .try_into()
+            .map_err(|_| Error::Random)
+    }
+
     fn certified(&self, provider: &CryptoProvider) -> Result<Arc<CertifiedKey>> {
         let der = PrivateKeyDer::Pkcs8(PrivatePkcs8KeyDer::from(self.pkcs8.clone()));
         let signer = provider
@@ -286,7 +296,15 @@ pub fn local_addresses(socket: &UdpSocket) -> Result<Vec<SocketAddr>> {
 /// accepts only the peer's announced endpoint key, and each side presents its
 /// own, so the connection is equally authenticated whichever side opened it.
 /// A firewall in front of either device then still leaves one way through.
-pub fn endpoint(socket: UdpSocket, own: &EndpointKey, peer: &[u8; 32]) -> Result<quinn::Endpoint> {
+///
+/// The endpoint can also reach the peer through a relay at
+/// [`RELAY_PEER`](crate::path::RELAY_PEER); the returned pipes connect it to a
+/// relay link (see [`crate::relay::spawn`]).
+pub fn endpoint(
+    socket: UdpSocket,
+    own: &EndpointKey,
+    peer: &[u8; 32],
+) -> Result<(quinn::Endpoint, crate::path::RelayPipes)> {
     let provider = provider();
 
     let mut server_tls = rustls::ServerConfig::builder_with_provider(provider.clone())
@@ -319,14 +337,15 @@ pub fn endpoint(socket: UdpSocket, own: &EndpointKey, peer: &[u8; 32]) -> Result
     client.transport_config(transport_config());
 
     let runtime = quinn::default_runtime().ok_or(Error::Connect("no async runtime".into()))?;
-    let mut endpoint = quinn::Endpoint::new(
+    let (socket, pipes) = crate::path::PathSocket::new(runtime.wrap_udp_socket(socket)?);
+    let mut endpoint = quinn::Endpoint::new_with_abstract_socket(
         quinn::EndpointConfig::default(),
         Some(server),
         socket,
         runtime,
     )?;
     endpoint.set_default_client_config(client);
-    Ok(endpoint)
+    Ok((endpoint, pipes))
 }
 
 /// The next incoming connection whose handshake completes; the pinned key
@@ -347,13 +366,32 @@ async fn accept_one(endpoint: &quinn::Endpoint) -> Result<quinn::Connection> {
 /// so the usual direction wins when both work.
 const REVERSE_DELAY: Duration = Duration::from_millis(400);
 
+/// How long direct addresses get before the relay is tried as well, so a
+/// working direct path wins and the relay is spared.
+const RELAY_DELAY: Duration = Duration::from_millis(1200);
+
+/// Where the other device can be reached.
+#[derive(Debug, Clone, Default)]
+pub struct Paths {
+    /// Addresses from its `HINTS`, tried directly.
+    pub direct: Vec<SocketAddr>,
+    /// Whether a relay link to it runs.
+    pub relay: bool,
+}
+
+impl Paths {
+    fn is_empty(&self) -> bool {
+        self.direct.is_empty() && !self.relay
+    }
+}
+
 /// The receiver's connection: it dials the sender and, at the same time,
 /// accepts the sender dialling it. The first connection that comes up is the
 /// one; the receiver then opens the control stream on it, which tells the
 /// sender which connection was chosen.
 pub async fn receiver_connection(
     endpoint: &quinn::Endpoint,
-    sender: &[SocketAddr],
+    sender: &Paths,
     wait: Duration,
 ) -> Result<quinn::Connection> {
     let dial = async {
@@ -385,7 +423,7 @@ pub async fn receiver_connection(
 /// stream is the one; the others are closed.
 pub async fn sender_connection(
     endpoint: &quinn::Endpoint,
-    receiver: &[SocketAddr],
+    receiver: &Paths,
     wait: Duration,
 ) -> Result<(quinn::Connection, quinn::SendStream, quinn::RecvStream)> {
     let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel::<quinn::Connection>();
@@ -401,7 +439,7 @@ pub async fn sender_connection(
         });
     }
     if !receiver.is_empty() {
-        let (endpoint, receiver) = (endpoint.clone(), receiver.to_vec());
+        let (endpoint, receiver) = (endpoint.clone(), receiver.clone());
         sources.spawn(async move {
             tokio::time::sleep(REVERSE_DELAY).await;
             if let Ok(conn) = connect_any(&endpoint, &receiver).await {
@@ -446,19 +484,32 @@ pub async fn sender_connection(
     }
 }
 
-/// Try every address at once, a little staggered, and keep the first
-/// connection whose handshake completes.
-pub async fn connect_any(
-    endpoint: &quinn::Endpoint,
-    addresses: &[SocketAddr],
-) -> Result<quinn::Connection> {
-    if addresses.is_empty() {
+/// Try every path at once, a little staggered and the relay last, and keep
+/// the first connection whose handshake completes.
+pub async fn connect_any(endpoint: &quinn::Endpoint, paths: &Paths) -> Result<quinn::Connection> {
+    if paths.is_empty() {
         return Err(Error::Connect("the other side announced no address".into()));
     }
+    let mut targets: Vec<(SocketAddr, Duration)> = paths
+        .direct
+        .iter()
+        .enumerate()
+        .map(|(i, a)| {
+            let i = u64::try_from(i).unwrap_or(0);
+            (*a, Duration::from_millis(150u64.saturating_mul(i)))
+        })
+        .collect();
+    if paths.relay {
+        let delay = if paths.direct.is_empty() {
+            Duration::ZERO
+        } else {
+            RELAY_DELAY
+        };
+        targets.push((crate::path::RELAY_PEER, delay));
+    }
     let mut attempts = tokio::task::JoinSet::new();
-    for (i, addr) in addresses.iter().copied().enumerate() {
+    for (addr, delay) in targets {
         let endpoint = endpoint.clone();
-        let delay = Duration::from_millis(150u64.saturating_mul(u64::try_from(i).unwrap_or(0)));
         attempts.spawn(async move {
             tokio::time::sleep(delay).await;
             let connecting = endpoint
@@ -498,8 +549,8 @@ mod tests {
         let sa = UdpSocket::bind(SocketAddr::from(([127, 0, 0, 1], 0))).unwrap();
         let sb = UdpSocket::bind(SocketAddr::from(([127, 0, 0, 1], 0))).unwrap();
         let (aa, ab) = (sa.local_addr().unwrap(), sb.local_addr().unwrap());
-        let a = endpoint(sa, &ka, &kb.public()).unwrap();
-        let b = endpoint(sb, &kb, &ka.public()).unwrap();
+        let (a, _) = endpoint(sa, &ka, &kb.public()).unwrap();
+        let (b, _) = endpoint(sb, &kb, &ka.public()).unwrap();
         (a, aa, b, ab)
     }
 
@@ -525,7 +576,11 @@ mod tests {
         };
         let wait = Duration::from_secs(8);
         let recv_side = async {
-            let conn = receiver_connection(&receiver, &[to_sender], wait).await?;
+            let paths = Paths {
+                direct: vec![to_sender],
+                relay: false,
+            };
+            let conn = receiver_connection(&receiver, &paths, wait).await?;
             let (mut send, _recv) = conn.open_bi().await?;
             send.write_all(b"hello")
                 .await
@@ -533,7 +588,11 @@ mod tests {
             Ok::<_, Error>(conn)
         };
         let send_side = async {
-            let (_conn, _send, mut recv) = sender_connection(&sender, &[to_receiver], wait).await?;
+            let paths = Paths {
+                direct: vec![to_receiver],
+                relay: false,
+            };
+            let (_conn, _send, mut recv) = sender_connection(&sender, &paths, wait).await?;
             let mut buf = [0u8; 5];
             recv.read_exact(&mut buf)
                 .await
@@ -559,5 +618,58 @@ mod tests {
     #[tokio::test]
     async fn both_directions_open() {
         assert!(run(true, true).await);
+    }
+
+    /// Carry datagrams between two endpoints' relay pipes, as a relay would.
+    fn cross(a: crate::path::RelayPipes, b: crate::path::RelayPipes) {
+        let (mut a_out, a_in, mut b_out, b_in) = (a.outgoing, a.incoming, b.outgoing, b.incoming);
+        tokio::spawn(async move {
+            while let Some(d) = a_out.recv().await {
+                let _ = b_in.send(d).await;
+            }
+        });
+        tokio::spawn(async move {
+            while let Some(d) = b_out.recv().await {
+                let _ = a_in.send(d).await;
+            }
+        });
+    }
+
+    #[tokio::test]
+    async fn relay_path_when_no_direct_path_works() {
+        let (ka, kb) = (
+            EndpointKey::generate().unwrap(),
+            EndpointKey::generate().unwrap(),
+        );
+        let sa = UdpSocket::bind(SocketAddr::from(([127, 0, 0, 1], 0))).unwrap();
+        let sb = UdpSocket::bind(SocketAddr::from(([127, 0, 0, 1], 0))).unwrap();
+        let (sender, pa) = endpoint(sa, &ka, &kb.public()).unwrap();
+        let (receiver, pb) = endpoint(sb, &kb, &ka.public()).unwrap();
+        cross(pa, pb);
+        let blocked = Paths {
+            direct: vec![unreachable()],
+            relay: true,
+        };
+        let wait = Duration::from_secs(10);
+        let recv_side = async {
+            let conn = receiver_connection(&receiver, &blocked, wait).await?;
+            assert_eq!(conn.remote_address(), crate::path::RELAY_PEER);
+            let (mut send, _recv) = conn.open_bi().await?;
+            send.write_all(b"relay")
+                .await
+                .map_err(|e| Error::Connect(e.to_string()))?;
+            Ok::<_, Error>(conn)
+        };
+        let send_side = async {
+            let (_conn, _send, mut recv) = sender_connection(&sender, &blocked, wait).await?;
+            let mut buf = [0u8; 5];
+            recv.read_exact(&mut buf)
+                .await
+                .map_err(|e| Error::Connect(e.to_string()))?;
+            Ok::<_, Error>(buf)
+        };
+        let (r, s) = tokio::join!(recv_side, send_side);
+        assert!(r.is_ok());
+        assert_eq!(&s.unwrap(), b"relay");
     }
 }

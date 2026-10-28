@@ -335,6 +335,7 @@ impl qobject::Transfer {
         let opts = SendOptions {
             server: self.opts_server(),
             words: if strong { 3 } else { 2 },
+            ..SendOptions::default()
         };
         self.spawn(async move {
             let prepared = match PreparedSend::new(&opts, paths).await {
@@ -388,6 +389,7 @@ impl qobject::Transfer {
         let thread = self.qt_thread();
         let opts = ReceiveOptions {
             server: self.opts_server(),
+            ..ReceiveOptions::default()
         };
         let session = self.rust().session.clone();
         self.spawn(async move {

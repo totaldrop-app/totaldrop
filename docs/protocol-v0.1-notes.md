@@ -143,6 +143,34 @@ treated as final.
     arrives, the command-line client generates new device keys for every
     transfer, so it never stores an unprotected private key on disk.
 
+## Section 6: the relay
+
+20. **Relay wire format** (`totaldrop-proto/src/relay.rs`).
+    - Forwarding is one WebSocket per device at `/v0/relay`. The relay sends
+      `TDR0 || challenge` (32 random bytes); the device answers
+      `TDR0 || endpoint key || Ed25519 signature over "totaldrop relay v0
+      auth" || challenge`; the relay answers `TDR0 || "ok"`. Then every
+      binary message is `key || datagram`: the destination key when the
+      device sends, the source key when the relay delivers.
+    - One connection per key. A datagram for a key that is not connected is
+      dropped.
+    - Address discovery is a 64-byte UDP probe (`TDD0`, a 12-byte nonce,
+      zero padding) to the same host and port as the relay URL. The answer
+      (`TDD0 || nonce || 4 or 6 || IP || port`) is shorter than the probe,
+      so the relay cannot amplify traffic.
+21. **Which relay.** Each side discovers its public address with its own
+    relay. The sender announces its relay in `HINTS` field 5; both sides
+    connect there. A receiver accepts only `wss://` (or `ws://` on the same
+    machine) from `HINTS`.
+22. **Paths.** Direct addresses are tried at once; the relay path 1.2
+    seconds later, or at once when no address was announced. The first
+    connection whose handshake completes is used. Moving a connection from
+    the relay to a direct path that opens later (QUIC migration) is not done
+    yet.
+23. **Relay limits.** Per connection: 8 MiB/s, 32 GiB and 6 hours; closed
+    after 60 seconds without traffic. At most 2,000 devices at once. The
+    relay keeps nothing on disk and logs no client data.
+
 ## Known limits, to be closed before 1.0
 
 - The rendezvous server has no per-client rate limiting yet. Adding it
@@ -157,8 +185,7 @@ treated as final.
 
 These parts of v0 are not implemented yet:
 
-- the relay, and therefore address discovery and NAT traversal. Direct
-  connections work on the same machine or the same network;
-- privacy mode (Tor, relay only, padding);
+- moving a relayed connection to a direct path that opens later;
+- the parts of privacy mode beyond relay only: Tor and size padding;
 - resuming a transfer (the `accept` bitmaps are always empty);
 - links and offline delivery, saved contacts and accounts.

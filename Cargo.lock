@@ -2647,6 +2647,7 @@ dependencies = [
  "tokio",
  "totaldrop-core",
  "totaldrop-proto",
+ "totaldrop-relay",
  "totaldrop-rendezvous",
 ]
 
@@ -2715,6 +2716,18 @@ dependencies = [
  "ciborium",
  "getrandom 0.4.3",
  "unicode-normalization",
+]
+
+[[package]]
+name = "totaldrop-relay"
+version = "0.1.0-beta.2"
+dependencies = [
+ "futures-util",
+ "getrandom 0.4.3",
+ "ring",
+ "tokio",
+ "tokio-tungstenite",
+ "totaldrop-proto",
 ]
 
 [[package]]

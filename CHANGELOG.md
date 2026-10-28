@@ -7,6 +7,18 @@ All notable changes to TotalDrop are recorded here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- **Core:** transfers across the internet. Each device asks the relay for its
+  public address and both try to reach each other directly (NAT traversal);
+  when no direct path opens, the encrypted QUIC packets go through the
+  sender's relay over WebSocket on TCP 443. The relay sees only single-use
+  keys, sizes and timing, and logs nothing.
+- **Core, command line:** privacy mode, `--relay-only`: no IP address is
+  announced and everything goes through the relay.
+- **Server:** `totaldrop-relay`, the relay: address discovery on UDP and
+  forwarding on WebSocket, with per-connection rate, size and time limits.
+
 ## [linux-0.1.0-beta.3] - 2026-10-28
 
 ### Fixed

@@ -32,3 +32,10 @@ path = "fuzz_targets/wire.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "relay"
+path = "fuzz_targets/relay.rs"
+test = false
+doc = false
+bench = false

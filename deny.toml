@@ -38,6 +38,7 @@ allow = [
 exceptions = [
     { allow = ["GPL-3.0-or-later"], crate = "totaldrop-cli" },
     { allow = ["AGPL-3.0-or-later"], crate = "totaldrop-rendezvous" },
+    { allow = ["AGPL-3.0-or-later"], crate = "totaldrop-relay" },
     { allow = ["GPL-3.0-or-later"], crate = "rust_lib_totaldrop" },
     { allow = ["GPL-3.0-or-later"], crate = "totaldrop-linux" },
     # Through dirs, only in the Linux app (GPL-3.0-or-later). MPL-2.0 is
