@@ -8,6 +8,10 @@
   <meta name="theme-color" content="#F4F2FB" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#140E33" media="(prefers-color-scheme: dark)">
   <link rel="canonical" href="https://download.totaldrop.app/">
+  <meta property="og:title" content="Download TotalDrop">
+  <meta property="og:description" content="Download TotalDrop for Linux, Android and the command line. Windows, macOS, iOS and the browser are on the way.">
+  <meta property="og:url" content="https://download.totaldrop.app/">
+  <meta property="og:type" content="website">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="preload" href="/fonts/bricolage-grotesque-latin-800-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/styles.css">
@@ -58,11 +62,11 @@
           <span class="yours" data-i18n="dl.yours">For this device</span>
           <header><h3 data-i18n="dl.cli">Command line</h3><span class="pill is-ready" data-i18n="dl.ready">Available</span></header>
           <p data-i18n="dl.cli.d">For Linux, macOS and Windows terminals. Sends files and whole folders.</p>
-          <pre class="cmd"><code>cargo install --locked \
+          <pre class="cmd" tabindex="0" aria-label="Install command" data-i18n-label="dl.cmd.install"><code>cargo install --locked \
   --git https://github.com/totaldrop-app/totaldrop \
   totaldrop-cli</code></pre>
           <button class="copy" type="button" data-copy="cargo install --locked --git https://github.com/totaldrop-app/totaldrop totaldrop-cli" data-i18n="dl.copy">Copy command</button>
-          <pre class="cmd"><code>totaldrop send ~/Photos/trip
+          <pre class="cmd" tabindex="0" aria-label="Usage example" data-i18n-label="dl.cmd.use"><code>totaldrop send ~/Photos/trip
 totaldrop receive 7-harbor-rocket</code></pre>
         </li>
         <li class="platform" data-platform="linux">

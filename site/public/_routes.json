@@ -9,6 +9,8 @@
     "/styles.css",
     "/app.js",
     "/msg.js",
-    "/favicon.svg"
+    "/favicon.svg",
+    "/robots.txt",
+    "/sitemap.xml"
   ]
 }

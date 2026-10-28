@@ -21,6 +21,9 @@
   const descTag = document.querySelector('meta[name="description"]');
   const EN = {};
   nodes.forEach((el) => { EN[el.dataset.i18n] = el.textContent; });
+  // Accessible names (aria-label) translate the same way, by key.
+  const labelled = Array.from(document.querySelectorAll("[data-i18n-label]:not(#lang-select)"));
+  labelled.forEach((el) => { EN[el.dataset.i18nLabel] = el.getAttribute("aria-label"); });
   EN["meta." + PAGE + ".title"] = document.title;
   if (descTag) EN["meta." + PAGE + ".desc"] = descTag.getAttribute("content");
   EN["dl.copied"] = "Copied";
@@ -72,6 +75,7 @@
       // direction, for screen readers and punctuation.
       if (translated) { el.removeAttribute("lang"); el.removeAttribute("dir"); } else { el.lang = "en"; el.dir = "ltr"; }
     });
+    labelled.forEach((el) => el.setAttribute("aria-label", t(el.dataset.i18nLabel)));
     document.documentElement.lang = tag;
     document.documentElement.dir = isRtl(tag) ? "rtl" : "ltr";
     document.title = t("meta." + PAGE + ".title");

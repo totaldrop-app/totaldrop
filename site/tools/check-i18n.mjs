@@ -55,6 +55,10 @@ for (const page of pages) {
     const text = decode(m[3]).replace(/\s+/g, " ").trim();
     if (!(m[2] in fromHtml)) fromHtml[m[2]] = text;
   }
+  // Accessible names: aria-label="…" data-i18n-label="key".
+  for (const l of html.matchAll(/aria-label="([^"]*)"\s+data-i18n-label="([^"]+)"/g)) {
+    if (l[2] !== "lang.label" && !(l[2] in fromHtml)) fromHtml[l[2]] = decode(l[1]);
+  }
 }
 
 const files = readdirSync(join(pub, "i18n")).filter((f) => f.endsWith(".json")).sort();
