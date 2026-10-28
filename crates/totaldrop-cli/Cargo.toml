@@ -18,6 +18,7 @@ tokio = { version = "1.54.1", features = ["rt-multi-thread"] }
 totaldrop-core = { version = "0.1.0-beta.1", path = "../totaldrop-core" }
 totaldrop-l10n = { version = "0.1.0-beta.2", path = "../totaldrop-l10n" }
 totaldrop-proto = { version = "0.1.0-beta.1", path = "../totaldrop-proto" }
+unicode-normalization = "0.1.26"
 
 [dev-dependencies]
 getrandom = "0.4.3"

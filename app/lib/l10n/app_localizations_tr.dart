@@ -92,10 +92,14 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String sendDoneBody(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count dosyanın hepsi eksiksiz ulaştı.',
+      other: '$countString dosyanın hepsi eksiksiz ulaştı.',
       one: 'Dosya eksiksiz ulaştı.',
     );
     return '$_temp0';
@@ -103,10 +107,14 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String sendSomeFailed(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count dosya eksiksiz ulaşmadı ve silindi.',
+      other: '$countString dosya eksiksiz ulaşmadı ve silindi.',
       one: 'Bir dosya eksiksiz ulaşmadı ve silindi.',
     );
     return '$_temp0';
@@ -114,7 +122,11 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String itemsAndSize(int count, String size) {
-    return '$count öğe · $size';
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    return '$countString öğe · $size';
   }
 
   @override
@@ -147,12 +159,20 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String receiveOfferSummary(int files, String size) {
-    return '$files dosya · $size';
+    final intl.NumberFormat filesNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String filesString = filesNumberFormat.format(files);
+
+    return '$filesString dosya · $size';
   }
 
   @override
   String receiveAndMore(int count) {
-    return 've $count tane daha';
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    return 've $countString tane daha';
   }
 
   @override

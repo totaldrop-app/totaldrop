@@ -9,9 +9,13 @@
     "receiveAccept",
     "receiveDecline",
     "cliVerification",
-    "cliPromptSave"
+    "cliPromptSave",
+    "cliYes"
   ],
   "languages": {
-    "tr": { "reviewed": true, "draft": [] }
+    "tr": {
+      "reviewed": true,
+      "draft": []
+    }
   }
 }

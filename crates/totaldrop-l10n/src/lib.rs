@@ -2,19 +2,23 @@
 //! command line): the strings in `l10n/`, the language the system asks
 //! for, and numbers, sizes and plurals in that language and region.
 //!
-//! The rules are in `docs/kararlar/0008-diller-ve-bolgeler.md`. The ARB
-//! files are compiled in, so a program never reads translations from disk.
+//! The rules are in ADR 0008 (`docs/kararlar/0008-diller-ve-bolgeler.md`).
+//! The ARB files are compiled in, so a program never reads translations
+//! from disk.
 
 pub mod check;
 pub mod locale;
 pub mod message;
 
 use std::collections::{BTreeSet, HashMap};
+use std::sync::OnceLock;
 
 use icu_decimal::DecimalFormatter;
 use icu_decimal::input::Decimal;
 use icu_locale::Locale;
 use icu_plurals::{PluralCategory, PluralRules};
+use icu_properties::CodePointMapData;
+use icu_properties::props::GeneralCategory;
 
 pub use message::{Arg, Message};
 
@@ -24,6 +28,11 @@ mod files {
 
 /// The template language.
 pub const TEMPLATE: &str = "en";
+
+/// Pseudo-locales for testing layouts (ADR 0008), used only when asked for
+/// by name: `en-XA` accents every letter and makes text about 40% longer;
+/// `ar-XB` is English laid out right to left.
+pub const PSEUDO: [&str; 2] = ["en-XA", "ar-XB"];
 
 /// Which set of strings.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -52,36 +61,64 @@ pub(crate) struct File {
     pub(crate) raw: HashMap<String, String>,
 }
 
-pub(crate) fn files() -> Vec<File> {
-    files::FILES
-        .iter()
-        .filter_map(|(domain, json)| {
-            let value: serde_json::Value = serde_json::from_str(json).ok()?;
-            let object = value.as_object()?;
-            let locale = object.get("@@locale")?.as_str()?.replace('_', "-");
-            let mut messages = HashMap::new();
-            let mut raw = HashMap::new();
-            for (key, v) in object {
-                if key.starts_with('@') {
-                    continue;
-                }
-                if let Some(s) = v.as_str() {
-                    messages.insert(key.clone(), Message::parse(s));
-                    raw.insert(key.clone(), s.to_owned());
-                }
+/// Every compiled-in ARB file, parsed once, and the files that could not
+/// be read at all (bad JSON, no `@@locale`, a value that is not text, a
+/// key twice), which [`check::run`] reports.
+pub(crate) struct Catalog {
+    pub(crate) files: Vec<File>,
+    pub(crate) broken: Vec<String>,
+}
+
+pub(crate) fn catalog() -> &'static Catalog {
+    static CATALOG: OnceLock<Catalog> = OnceLock::new();
+    CATALOG.get_or_init(|| {
+        let mut files = Vec::new();
+        let mut broken = Vec::new();
+        for (i, (domain, json)) in files::FILES.iter().enumerate() {
+            match parse_file(domain, json) {
+                Ok(f) => files.push(f),
+                Err(e) => broken.push(format!("{domain} file #{i}: {e}")),
             }
-            Some(File {
-                domain,
-                locale,
-                messages,
-                raw,
-            })
-        })
-        .collect()
+        }
+        Catalog { files, broken }
+    })
+}
+
+fn parse_file(domain: &'static str, json: &str) -> Result<File, String> {
+    let value: serde_json::Value = serde_json::from_str(json).map_err(|e| e.to_string())?;
+    let object = value.as_object().ok_or("not a JSON object")?;
+    let locale = object
+        .get("@@locale")
+        .and_then(serde_json::Value::as_str)
+        .ok_or("no @@locale")?
+        .replace('_', "-");
+    let mut messages = HashMap::new();
+    let mut raw = HashMap::new();
+    for (key, v) in object {
+        if key.starts_with('@') {
+            continue;
+        }
+        let s = v
+            .as_str()
+            .ok_or_else(|| format!("{locale} `{key}` is not text"))?;
+        // serde_json keeps the last of two equal keys; refuse instead.
+        if json.matches(&format!("\"{key}\":")).count() > 1 {
+            return Err(format!("{locale} `{key}` appears twice"));
+        }
+        messages.insert(key.clone(), Message::parse(s));
+        raw.insert(key.clone(), s.to_owned());
+    }
+    Ok(File {
+        domain,
+        locale,
+        messages,
+        raw,
+    })
 }
 
 /// `l10n/status.json`: which languages were reviewed, which keys are still
-/// drafts, and which keys must never be shown as a draft.
+/// drafts, and which keys must never be shown as a draft. One status per
+/// language covers its app and command-line strings.
 #[derive(Debug, Default)]
 pub(crate) struct Status {
     pub(crate) critical: BTreeSet<String>,
@@ -89,46 +126,62 @@ pub(crate) struct Status {
     pub(crate) draft: HashMap<String, BTreeSet<String>>,
 }
 
-pub(crate) fn status() -> Status {
-    let Ok(value) = serde_json::from_str::<serde_json::Value>(files::STATUS) else {
-        return Status::default();
-    };
-    let strings = |v: Option<&serde_json::Value>| -> BTreeSet<String> {
-        v.and_then(serde_json::Value::as_array)
-            .map(|a| {
-                a.iter()
-                    .filter_map(|s| s.as_str().map(str::to_owned))
-                    .collect()
-            })
-            .unwrap_or_default()
-    };
-    let mut status = Status {
-        critical: strings(value.get("critical")),
-        ..Status::default()
-    };
-    if let Some(languages) = value
-        .get("languages")
-        .and_then(serde_json::Value::as_object)
-    {
-        for (tag, info) in languages {
-            let reviewed = info
-                .get("reviewed")
-                .and_then(serde_json::Value::as_bool)
-                .unwrap_or(false);
-            status.reviewed.insert(tag.clone(), reviewed);
-            status.draft.insert(tag.clone(), strings(info.get("draft")));
-        }
+impl Status {
+    /// Whether `key` in language `tag` is a draft nobody has reviewed.
+    fn is_draft(&self, tag: &str, key: &str) -> bool {
+        tag != TEMPLATE
+            && (!self.reviewed.get(tag).copied().unwrap_or(false)
+                || self.draft.get(tag).is_some_and(|d| d.contains(key)))
     }
-    status
 }
 
-/// The strings and formats for one language and region.
-pub struct Strings {
-    tag: String,
-    draft: bool,
-    /// Lookup order: this language, then the fallbacks, then English.
-    layers: Vec<HashMap<String, Message>>,
-    formats: Formats,
+pub(crate) fn status() -> &'static Status {
+    static STATUS: OnceLock<Status> = OnceLock::new();
+    STATUS.get_or_init(|| {
+        let Ok(value) = serde_json::from_str::<serde_json::Value>(files::STATUS) else {
+            return Status::default();
+        };
+        let strings = |v: Option<&serde_json::Value>| -> BTreeSet<String> {
+            v.and_then(serde_json::Value::as_array)
+                .map(|a| {
+                    a.iter()
+                        .filter_map(|s| s.as_str().map(str::to_owned))
+                        .collect()
+                })
+                .unwrap_or_default()
+        };
+        let mut status = Status {
+            critical: strings(value.get("critical")),
+            ..Status::default()
+        };
+        if let Some(languages) = value
+            .get("languages")
+            .and_then(serde_json::Value::as_object)
+        {
+            for (tag, info) in languages {
+                let reviewed = info
+                    .get("reviewed")
+                    .and_then(serde_json::Value::as_bool)
+                    .unwrap_or(false);
+                status.reviewed.insert(tag.clone(), reviewed);
+                status.draft.insert(tag.clone(), strings(info.get("draft")));
+            }
+        }
+        status
+    })
+}
+
+/// Every language with strings in `domain`.
+#[must_use]
+pub fn available(domain: Domain) -> Vec<String> {
+    let mut tags: Vec<String> = catalog()
+        .files
+        .iter()
+        .filter(|f| f.domain == domain.name())
+        .map(|f| f.locale.clone())
+        .collect();
+    tags.sort();
+    tags
 }
 
 /// Plurals, numbers and direction for one language and region, with or
@@ -154,203 +207,16 @@ impl Formats {
             .ok(),
         }
     }
-}
 
-impl std::fmt::Debug for Strings {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("Strings")
-            .field("tag", &self.tag)
-            .finish_non_exhaustive()
+    /// `tenths / 10` with one decimal in the region's format.
+    fn tenths(&self, tenths: u64) -> String {
+        let mut d = Decimal::from(tenths);
+        d.multiply_pow10(-1);
+        self.decimal.as_ref().map_or_else(
+            || format!("{}.{}", tenths / 10, tenths % 10),
+            |f| f.format(&d).to_string(),
+        )
     }
-}
-
-/// Every language with strings in `domain`.
-#[must_use]
-pub fn available(domain: Domain) -> Vec<String> {
-    let mut tags: Vec<String> = files()
-        .into_iter()
-        .filter(|f| f.domain == domain.name())
-        .map(|f| f.locale)
-        .collect();
-    tags.sort();
-    tags
-}
-
-impl Strings {
-    /// The strings for the system's language and region (see
-    /// [`locale::System`]).
-    #[must_use]
-    pub fn system(domain: Domain) -> Self {
-        let system = locale::System::from_env();
-        Self::new(domain, &system.messages, system.numeric.as_ref())
-    }
-
-    /// The strings for the best match of `preferences`, with numbers in
-    /// `numeric` (or the chosen language when `None`). The command line
-    /// keeps right-to-left languages in English, since terminals do not
-    /// lay out bidirectional text reliably.
-    #[must_use]
-    pub fn new(domain: Domain, preferences: &[Locale], numeric: Option<&Locale>) -> Self {
-        let all = files();
-        let tags = available(Domain::App);
-        let own = available(domain);
-        let candidates: Vec<&str> = own.iter().chain(tags.iter()).map(String::as_str).collect();
-        let mut tag = locale::negotiate(preferences, &candidates)
-            .unwrap_or(TEMPLATE)
-            .to_owned();
-        let mut chosen = locale::parse(&tag).unwrap_or(Locale::UNKNOWN);
-        if domain == Domain::Cli && locale::is_rtl(&chosen) {
-            tag = TEMPLATE.to_owned();
-            chosen = locale::parse(TEMPLATE).unwrap_or(Locale::UNKNOWN);
-        }
-        let status = status();
-        let drafts = status.draft.get(&tag).cloned().unwrap_or_default();
-        let reviewed = tag == TEMPLATE || status.reviewed.get(&tag).copied().unwrap_or(false);
-        // Safety-critical text is never shown as a draft: those keys stay
-        // English until a person has reviewed them.
-        let hidden: BTreeSet<&String> = status
-            .critical
-            .iter()
-            .filter(|k| !reviewed || drafts.contains(*k))
-            .collect();
-
-        // This language and its fallbacks (pt-BR → pt), then English; for
-        // the command line, its own strings before the app's at each step.
-        let mut chain: Vec<String> = Vec::new();
-        let mut parent = tag.clone();
-        loop {
-            chain.push(parent.clone());
-            match parent.rsplit_once('-') {
-                Some((p, _)) => parent = p.to_owned(),
-                None => break,
-            }
-        }
-        if !chain.iter().any(|t| t == TEMPLATE) {
-            chain.push(TEMPLATE.to_owned());
-        }
-        let domains: &[&str] = match domain {
-            Domain::App => &["app"],
-            Domain::Cli => &["cli", "app"],
-        };
-        let mut layers = Vec::new();
-        for t in &chain {
-            for d in domains {
-                if let Some(file) = all.iter().find(|f| f.domain == *d && f.locale == *t) {
-                    let layer: HashMap<String, Message> = file
-                        .messages
-                        .iter()
-                        .filter(|(k, _)| t == TEMPLATE || !hidden.contains(k))
-                        .filter_map(|(k, m)| m.as_ref().ok().map(|m| (k.clone(), m.clone())))
-                        .collect();
-                    layers.push(layer);
-                }
-            }
-        }
-        Self {
-            draft: !reviewed || !drafts.is_empty(),
-            formats: Formats::new(&chosen, numeric),
-            layers,
-            tag,
-        }
-    }
-
-    /// The chosen language, as a BCP 47 tag (`pt-BR`).
-    #[must_use]
-    pub fn tag(&self) -> &str {
-        &self.tag
-    }
-
-    /// Whether the language is written right to left.
-    #[must_use]
-    pub fn is_rtl(&self) -> bool {
-        self.formats.rtl
-    }
-
-    /// Whether some of the text is a translation nobody has reviewed yet.
-    #[must_use]
-    pub fn is_draft(&self) -> bool {
-        self.draft
-    }
-
-    /// Every key this language can show, translated or from English.
-    #[must_use]
-    pub fn keys(&self) -> BTreeSet<&str> {
-        self.layers
-            .iter()
-            .flat_map(|l| l.keys().map(String::as_str))
-            .collect()
-    }
-
-    /// The message `key` with `args`. An unknown key comes back as itself,
-    /// so a mistake is visible.
-    #[must_use]
-    pub fn get(&self, key: &str, args: &[(&str, Arg<'_>)]) -> String {
-        self.layers
-            .iter()
-            .find_map(|l| l.get(key))
-            .map_or_else(|| key.to_owned(), |m| m.format(args, &self.formats))
-    }
-
-    /// `n` with the region's digits and grouping.
-    #[must_use]
-    pub fn number(&self, n: u64) -> String {
-        message::Locale::number(&self.formats, n)
-    }
-
-    /// A size in bytes, in SI units ("1.5 MB", "1,5 MB", "١٫٥ MB").
-    #[must_use]
-    pub fn bytes(&self, n: u64) -> String {
-        const KEYS: [&str; 5] = ["sizeKB", "sizeMB", "sizeGB", "sizeTB", "sizePB"];
-        if n < 1000 {
-            return self.get("sizeBytes", &[("value", Arg::Text(&self.number(n)))]);
-        }
-        // Tenths of the unit, rounded half up: 1 549 999 B → 15 tenths of MB.
-        let mut divisor: u128 = 1000;
-        let mut unit = 0usize;
-        let n = u128::from(n);
-        while n >= divisor.saturating_mul(1000) && unit.saturating_add(1) < KEYS.len() {
-            divisor = divisor.saturating_mul(1000);
-            unit = unit.saturating_add(1);
-        }
-        let tenths = n
-            .saturating_mul(10)
-            .saturating_add(divisor / 2)
-            .checked_div(divisor)
-            .unwrap_or(0);
-        let tenths = u64::try_from(tenths).unwrap_or(u64::MAX);
-        let value = if tenths < 100 {
-            let mut d = Decimal::from(tenths);
-            d.multiply_pow10(-1);
-            self.formats.decimal.as_ref().map_or_else(
-                || format!("{}.{}", tenths / 10, tenths % 10),
-                |f| f.format(&d).to_string(),
-            )
-        } else {
-            self.number(tenths.saturating_add(5) / 10)
-        };
-        let key = KEYS.get(unit).copied().unwrap_or("sizePB");
-        self.get(key, &[("value", Arg::Text(&value))])
-    }
-}
-
-/// A name from the other side, with direction controls and other invisible
-/// format characters shown as `<U+202E>`, so a name cannot pretend to have
-/// another extension (`invoice` U+202E `fdp.exe` reads as "invoiceexe.pdf").
-#[must_use]
-pub fn reveal_controls(name: &str) -> String {
-    let mut out = String::with_capacity(name.len());
-    for c in name.chars() {
-        let hidden = c.is_control()
-            || matches!(c,
-                '\u{061C}' | '\u{180E}' | '\u{200B}'..='\u{200F}' | '\u{2028}'..='\u{202E}'
-                | '\u{2060}'..='\u{2069}' | '\u{FEFF}' | '\u{FFF9}'..='\u{FFFB}');
-        if hidden {
-            out.push_str(&format!("<U+{:04X}>", u32::from(c)));
-        } else {
-            out.push(c);
-        }
-    }
-    out
 }
 
 impl message::Locale for Formats {
@@ -385,9 +251,309 @@ impl message::Locale for Formats {
     }
 }
 
+/// The strings and formats for one language and region.
+pub struct Strings {
+    tag: String,
+    draft: bool,
+    /// Lookup order: this language, then the fallbacks, then English.
+    layers: Vec<HashMap<String, Message>>,
+    formats: Formats,
+}
+
+impl std::fmt::Debug for Strings {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Strings")
+            .field("tag", &self.tag)
+            .finish_non_exhaustive()
+    }
+}
+
+/// The tags to look in for `tag`: itself, then shorter forms (`pt-BR` →
+/// `pt`), but never across a script (`zh-Hant` does not fall back to
+/// Simplified `zh`, nor `sr-Latn` to Cyrillic `sr`), then English. This is
+/// how Flutter's generated classes inherit too.
+fn layer_tags(tag: &str) -> Vec<String> {
+    let mut out = vec![tag.to_owned()];
+    let mut current = tag.to_owned();
+    while let Some((parent, last)) = current.rsplit_once('-') {
+        let is_script = last.len() == 4 && last.chars().all(|c| c.is_ascii_alphabetic());
+        if is_script {
+            break;
+        }
+        current = parent.to_owned();
+        out.push(current.clone());
+    }
+    if !out.iter().any(|t| t == TEMPLATE) {
+        out.push(TEMPLATE.to_owned());
+    }
+    out
+}
+
+impl Strings {
+    /// The strings for the system's language and region (see
+    /// [`locale::System`]).
+    #[must_use]
+    pub fn system(domain: Domain) -> Self {
+        let system = locale::System::from_env();
+        Self::new(domain, &system.messages, system.numeric.as_ref())
+    }
+
+    /// The strings for the best match of `preferences`, with numbers in
+    /// `numeric` (or the chosen language when `None`). The command line
+    /// keeps right-to-left languages in English, since terminals do not
+    /// lay out bidirectional text reliably.
+    #[must_use]
+    pub fn new(domain: Domain, preferences: &[Locale], numeric: Option<&Locale>) -> Self {
+        if let Some(first) = preferences.first() {
+            let tag = first.to_string();
+            if PSEUDO.contains(&tag.as_str()) {
+                return Self::pseudo(domain, &tag, numeric);
+            }
+        }
+        let own = available(domain);
+        let app = available(Domain::App);
+        let candidates: Vec<&str> = own.iter().chain(app.iter()).map(String::as_str).collect();
+        let mut tag = locale::negotiate(preferences, &candidates)
+            .unwrap_or(TEMPLATE)
+            .to_owned();
+        let mut chosen = locale::parse(&tag).unwrap_or(Locale::UNKNOWN);
+        if domain == Domain::Cli && locale::is_rtl(&chosen) {
+            tag = TEMPLATE.to_owned();
+            chosen = locale::parse(TEMPLATE).unwrap_or(Locale::UNKNOWN);
+        }
+        let status = status();
+        let domains: &[&str] = match domain {
+            Domain::App => &["app"],
+            Domain::Cli => &["cli", "app"],
+        };
+        let mut layers = Vec::new();
+        let mut draft = false;
+        for t in layer_tags(&tag) {
+            for d in domains {
+                let Some(file) = catalog()
+                    .files
+                    .iter()
+                    .find(|f| f.domain == *d && f.locale == t)
+                else {
+                    continue;
+                };
+                let mut layer = HashMap::new();
+                for (k, m) in &file.messages {
+                    let Ok(m) = m else { continue };
+                    if status.is_draft(&t, k) {
+                        // Safety-critical text is never shown as a draft:
+                        // it stays English until a person has reviewed it.
+                        if status.critical.contains(k) {
+                            continue;
+                        }
+                        draft = true;
+                    }
+                    layer.insert(k.clone(), m.clone());
+                }
+                layers.push(layer);
+            }
+        }
+        Self {
+            draft,
+            formats: Formats::new(&chosen, numeric),
+            layers,
+            tag,
+        }
+    }
+
+    fn pseudo(domain: Domain, tag: &str, numeric: Option<&Locale>) -> Self {
+        let en: Vec<Locale> = locale::parse(TEMPLATE).into_iter().collect();
+        let base = Self::new(domain, &en, numeric);
+        let rtl = tag == "ar-XB";
+        let layers = base
+            .layers
+            .iter()
+            .map(|layer| {
+                layer
+                    .iter()
+                    .map(|(k, m)| {
+                        let m = if rtl {
+                            m.clone()
+                        } else {
+                            m.map_text(&accented)
+                        };
+                        (k.clone(), m)
+                    })
+                    .collect()
+            })
+            .collect();
+        let mut formats = base.formats;
+        formats.rtl = rtl;
+        Self {
+            tag: tag.to_owned(),
+            draft: false,
+            layers,
+            formats,
+        }
+    }
+
+    /// The chosen language, as a BCP 47 tag (`pt-BR`).
+    #[must_use]
+    pub fn tag(&self) -> &str {
+        &self.tag
+    }
+
+    /// Whether the language is written right to left.
+    #[must_use]
+    pub fn is_rtl(&self) -> bool {
+        self.formats.rtl
+    }
+
+    /// Whether some of the text shown, in this language or a fallback, is a
+    /// translation nobody has reviewed yet.
+    #[must_use]
+    pub fn is_draft(&self) -> bool {
+        self.draft
+    }
+
+    /// Every key this language can show, translated or from English.
+    #[must_use]
+    pub fn keys(&self) -> BTreeSet<&str> {
+        self.layers
+            .iter()
+            .flat_map(|l| l.keys().map(String::as_str))
+            .collect()
+    }
+
+    /// The message `key` with `args`. An unknown key comes back as itself,
+    /// so a mistake is visible.
+    #[must_use]
+    pub fn get(&self, key: &str, args: &[(&str, Arg<'_>)]) -> String {
+        self.layers
+            .iter()
+            .find_map(|l| l.get(key))
+            .map_or_else(|| key.to_owned(), |m| m.format(args, &self.formats))
+    }
+
+    /// `n` with the region's digits and grouping.
+    #[must_use]
+    pub fn number(&self, n: u64) -> String {
+        message::Locale::number(&self.formats, n)
+    }
+
+    /// A size in bytes, in SI units ("1.5 MB", "1,5 MB", "12 MB"): one
+    /// decimal below 10 of a unit, whole numbers above, and the next unit
+    /// once the rounded value reaches 1000.
+    #[must_use]
+    pub fn bytes(&self, n: u64) -> String {
+        const KEYS: [&str; 5] = ["sizeKB", "sizeMB", "sizeGB", "sizeTB", "sizePB"];
+        if n < 1000 {
+            return self.get("sizeBytes", &[("value", Arg::Text(&self.number(n)))]);
+        }
+        let n = u128::from(n);
+        let mut unit = 0usize;
+        let mut divisor: u128 = 1000;
+        loop {
+            // Tenths and whole units, each rounded once, half up.
+            let tenths = n
+                .saturating_mul(10)
+                .saturating_add(divisor / 2)
+                .checked_div(divisor)
+                .unwrap_or(0);
+            let whole = n
+                .saturating_add(divisor / 2)
+                .checked_div(divisor)
+                .unwrap_or(0);
+            let last = unit.saturating_add(1) >= KEYS.len();
+            if whole < 1000 || last {
+                let key = KEYS.get(unit).copied().unwrap_or("sizePB");
+                let value = if tenths < 100 {
+                    self.formats
+                        .tenths(u64::try_from(tenths).unwrap_or(u64::MAX))
+                } else {
+                    self.number(u64::try_from(whole).unwrap_or(u64::MAX))
+                };
+                return self.get(key, &[("value", Arg::Text(&value))]);
+            }
+            unit = unit.saturating_add(1);
+            divisor = divisor.saturating_mul(1000);
+        }
+    }
+}
+
+fn accented(text: &str) -> String {
+    let mut out = String::new();
+    let mut letters = 0usize;
+    for c in text.chars() {
+        let a = match c {
+            'a' => 'á',
+            'e' => 'é',
+            'i' => 'î',
+            'o' => 'ö',
+            'u' => 'ü',
+            'c' => 'ç',
+            'n' => 'ñ',
+            's' => 'š',
+            'y' => 'ý',
+            'A' => 'Å',
+            'E' => 'É',
+            'I' => 'Î',
+            'O' => 'Ö',
+            'U' => 'Ü',
+            'C' => 'Ç',
+            'N' => 'Ñ',
+            'S' => 'Š',
+            other => other,
+        };
+        if c.is_alphabetic() {
+            letters = letters.saturating_add(1);
+        }
+        out.push(a);
+    }
+    // About 40% longer, the most a translation usually grows.
+    for _ in 0..letters.saturating_mul(2) / 5 {
+        out.push('·');
+    }
+    out
+}
+
+/// Whether a character is invisible or changes how text around it is laid
+/// out: controls (Cc), format characters (Cf) and line or paragraph
+/// separators (Zl, Zp). Zero-width joiner and non-joiner, which Persian and
+/// Indic scripts need, are allowed.
+#[must_use]
+pub fn is_hidden(c: char) -> bool {
+    if matches!(c, '\u{200C}' | '\u{200D}') {
+        return false;
+    }
+    matches!(
+        CodePointMapData::<GeneralCategory>::new().get(c),
+        GeneralCategory::Control
+            | GeneralCategory::Format
+            | GeneralCategory::LineSeparator
+            | GeneralCategory::ParagraphSeparator
+    )
+}
+
+/// A name from the other side with every [hidden](is_hidden) character
+/// shown as `<U+202E>`, so a name cannot pretend to have another extension
+/// (`invoice` U+202E `fdp.exe` reads as "invoiceexe.pdf").
+#[must_use]
+pub fn reveal_controls(name: &str) -> String {
+    let mut out = String::with_capacity(name.len());
+    for c in name.chars() {
+        if is_hidden(c) {
+            out.push_str(&format!("<U+{:04X}>", u32::from(c)));
+        } else {
+            out.push(c);
+        }
+    }
+    out
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn strings(tag: &str) -> Strings {
+        let prefs: Vec<Locale> = locale::parse(tag).into_iter().collect();
+        Strings::new(Domain::App, &prefs, None)
+    }
 
     /// The shared vectors in `l10n/tests/messages.json`, which the site's
     /// formatter must pass too.
@@ -428,17 +594,13 @@ mod tests {
         }
     }
 
-    fn strings(tag: &str) -> Strings {
-        let prefs: Vec<Locale> = locale::parse(tag).into_iter().collect();
-        Strings::new(Domain::App, &prefs, None)
-    }
-
     #[test]
     fn english_and_turkish() {
         assert_eq!(strings("en-US").tag(), "en");
         assert_eq!(strings("tr-TR").tag(), "tr");
         assert_eq!(strings("xx").tag(), "en");
         assert!(!strings("tr").is_draft());
+        assert!(!strings("en").is_draft());
     }
 
     #[test]
@@ -461,11 +623,25 @@ mod tests {
         assert_eq!(en.bytes(999), "999 B");
         assert_eq!(en.bytes(1000), "1.0 kB");
         assert_eq!(en.bytes(1_549_999), "1.5 MB");
+        assert_eq!(en.bytes(9_960_000), "10 MB");
         assert_eq!(en.bytes(12_345_678), "12 MB");
-        assert_eq!(en.bytes(999_999_999), "1,000 MB");
+        assert_eq!(en.bytes(12_450_000), "12 MB");
+        assert_eq!(en.bytes(12_500_000), "13 MB");
+        assert_eq!(en.bytes(999_499), "999 kB");
+        assert_eq!(en.bytes(999_950), "1.0 MB");
+        assert_eq!(en.bytes(999_999_999), "1.0 GB");
         assert_eq!(en.bytes(u64::MAX), "18,447 PB");
         let tr = strings("tr");
         assert_eq!(tr.bytes(1_500_000), "1,5 MB");
+    }
+
+    #[test]
+    fn layers_do_not_cross_scripts() {
+        assert_eq!(layer_tags("pt-BR"), ["pt-BR", "pt", "en"]);
+        assert_eq!(layer_tags("zh-Hant"), ["zh-Hant", "en"]);
+        assert_eq!(layer_tags("zh-Hant-HK"), ["zh-Hant-HK", "zh-Hant", "en"]);
+        assert_eq!(layer_tags("sr-Latn"), ["sr-Latn", "en"]);
+        assert_eq!(layer_tags("en"), ["en"]);
     }
 
     #[test]
@@ -488,21 +664,6 @@ mod tests {
     }
 
     #[test]
-    fn hidden_characters_become_visible() {
-        assert_eq!(
-            reveal_controls("invoice\u{202E}fdp.exe"),
-            "invoice<U+202E>fdp.exe"
-        );
-        assert_eq!(
-            reveal_controls("a\u{2068}b\u{061C}c"),
-            "a<U+2068>b<U+061C>c"
-        );
-        assert_eq!(reveal_controls("a\nb\u{85}"), "a<U+000A>b<U+0085>");
-        assert_eq!(reveal_controls("fotoğraf 1.jpg"), "fotoğraf 1.jpg");
-        assert_eq!(reveal_controls("صورة.jpg"), "صورة.jpg");
-    }
-
-    #[test]
     fn command_line_falls_back_to_app_strings() {
         let prefs: Vec<Locale> = locale::parse("tr").into_iter().collect();
         let s = Strings::new(Domain::Cli, &prefs, None);
@@ -514,5 +675,61 @@ mod tests {
     fn command_line_keeps_right_to_left_languages_in_english() {
         let prefs: Vec<Locale> = locale::parse("ar").into_iter().collect();
         assert_eq!(Strings::new(Domain::Cli, &prefs, None).tag(), "en");
+    }
+
+    #[test]
+    fn pseudo_locales() {
+        let xa = strings("en-XA");
+        assert_eq!(xa.tag(), "en-XA");
+        let text = xa.get("sendShareText", &[("code", Arg::Text("7-harbor-rocket"))]);
+        assert!(text.starts_with("Gét mý fîléš"), "{text}");
+        assert!(
+            text.contains("7-harbor-rocket"),
+            "placeholders stay: {text}"
+        );
+        let xb = strings("ar-XB");
+        assert!(xb.is_rtl());
+        assert_eq!(xb.get("settings", &[]), "Settings");
+        assert!(!strings("en").is_rtl());
+    }
+
+    #[test]
+    fn hidden_characters_become_visible() {
+        assert_eq!(
+            reveal_controls("invoice\u{202E}fdp.exe"),
+            "invoice<U+202E>fdp.exe"
+        );
+        assert_eq!(
+            reveal_controls("a\u{2068}b\u{061C}c\u{00AD}d\u{2028}e\u{E0041}"),
+            "a<U+2068>b<U+061C>c<U+00AD>d<U+2028>e<U+E0041>"
+        );
+        assert_eq!(reveal_controls("a\nb\u{85}"), "a<U+000A>b<U+0085>");
+        assert_eq!(reveal_controls("fotoğraf 1.jpg"), "fotoğraf 1.jpg");
+        assert_eq!(reveal_controls("صورة.jpg"), "صورة.jpg");
+        assert_eq!(reveal_controls("می\u{200C}خواهم"), "می\u{200C}خواهم");
+    }
+
+    #[test]
+    fn drafts_are_per_language_and_key() {
+        let status = Status {
+            critical: BTreeSet::from(["verificationTitle".to_owned()]),
+            reviewed: HashMap::from([("pt-PT".to_owned(), true), ("pt".to_owned(), false)]),
+            draft: HashMap::from([("pt-PT".to_owned(), BTreeSet::from(["newKey".to_owned()]))]),
+        };
+        // A reviewed variant does not make its unreviewed base reviewed.
+        assert!(status.is_draft("pt", "verificationTitle"));
+        assert!(!status.is_draft("pt-PT", "verificationTitle"));
+        assert!(status.is_draft("pt-PT", "newKey"));
+        assert!(!status.is_draft("en", "anything"));
+        assert!(status.is_draft("xx", "anything"));
+    }
+
+    #[test]
+    fn the_catalog_parses() {
+        assert!(catalog().broken.is_empty(), "{:?}", catalog().broken);
+        assert!(parse_file("app", "{\"@@locale\": \"xx\", \"a\": \"1\",}").is_err());
+        assert!(parse_file("app", "{\"a\": \"1\"}").is_err());
+        assert!(parse_file("app", "{\"@@locale\": \"xx\", \"a\": 1}").is_err());
+        assert!(parse_file("app", "{\"@@locale\": \"xx\", \"a\": \"1\", \"a\": \"2\"}").is_err());
     }
 }
