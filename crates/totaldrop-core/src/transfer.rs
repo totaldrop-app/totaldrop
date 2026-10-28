@@ -19,9 +19,136 @@ use totaldrop_proto::{SafePath, chunk_count, limits, validate_path};
 use crate::error::{Error, Result};
 use crate::framing::{expect_frame, read_frame, write_frame};
 use crate::secure::{SecureChannel, recv_control, send_control};
+use crate::stop::Stop;
+use totaldrop_crypto::channel::Sealer;
 
 /// How long a receiver waits with no data arriving at all.
 const INACTIVITY_TIMEOUT: Duration = Duration::from_secs(60);
+
+/// How long the sender waits for the receiver to accept or decline.
+const DECISION_TIMEOUT: Duration = Duration::from_secs(10 * 60);
+
+/// How long telling the other side about a stop may take.
+const STOP_NOTICE: Duration = Duration::from_secs(2);
+
+/// Tell the other side this one stopped, best effort and briefly, and close
+/// the connection. Returns the error the stopped side reports.
+pub(crate) async fn tell_stopped(
+    conn: &quinn::Connection,
+    sealer: &mut Sealer,
+    send: &mut quinn::SendStream,
+    transfer_id: [u8; 16],
+) -> Error {
+    let notice = Control::Cancel {
+        transfer_id,
+        reason: "stopped".into(),
+    };
+    let _ = tokio::time::timeout(STOP_NOTICE, async {
+        send_control(sealer, send, &notice).await?;
+        let _ = send.finish();
+        // Give the message a moment to leave before the connection closes.
+        let _ = send.stopped().await;
+        Ok::<_, Error>(())
+    })
+    .await;
+    conn.close(0u32.into(), b"stopped");
+    Error::Stopped
+}
+
+/// Read control messages on their own task, because reading a frame cannot
+/// be interrupted safely: a `select!` that drops a half-read frame would put
+/// the stream out of step. Read errors are passed on; the channel closes
+/// when the stream ends.
+fn control_reader(
+    mut opener: totaldrop_crypto::channel::Opener,
+    mut recv: quinn::RecvStream,
+) -> (AbortOnDrop, mpsc::Receiver<Result<Control>>) {
+    let (tx, rx) = mpsc::channel::<Result<Control>>(8);
+    let task = tokio::spawn(async move {
+        loop {
+            let limit = totaldrop_crypto::channel::MAX_SESSION_MESSAGE.saturating_add(64);
+            let msg = match read_frame(&mut recv, limit).await {
+                Ok(Some(ct)) => opener
+                    .open(&ct)
+                    .map_err(Error::from)
+                    .and_then(|p| Control::decode(&p).map_err(Error::from)),
+                Ok(None) => break,
+                Err(e) => Err(e),
+            };
+            let failed = msg.is_err();
+            if tx.send(msg).await.is_err() || failed {
+                break;
+            }
+        }
+    });
+    (AbortOnDrop(task), rx)
+}
+
+/// Why the control stream ended: the connection's close reason if it has
+/// one (a "stopped" close reads as the other side stopping).
+fn control_ended(conn: &quinn::Connection) -> Error {
+    conn.close_reason()
+        .map_or(Error::Protocol("control stream ended"), Error::from)
+}
+
+/// After a data stream failed, give the other side's cancel a moment to
+/// arrive on the control stream: it may explain the failure.
+async fn cancel_or(err: Error, ctl: &mut mpsc::Receiver<Result<Control>>) -> Error {
+    let wait = async {
+        // Messages already on the way (an entry_done) may come first.
+        while let Some(msg) = ctl.recv().await {
+            if let Ok(Control::Cancel { reason, .. }) = msg {
+                return Some(reason);
+            }
+        }
+        None
+    };
+    match tokio::time::timeout(Duration::from_millis(500), wait).await {
+        Ok(Some(reason)) => Error::Cancelled(reason),
+        _ => err,
+    }
+}
+
+/// Aborts a task when dropped, so an early return never leaves it running.
+struct AbortOnDrop(tokio::task::JoinHandle<()>);
+
+impl Drop for AbortOnDrop {
+    fn drop(&mut self) {
+        self.0.abort();
+    }
+}
+
+/// A partial file that is removed unless it was placed. Dropping it (an
+/// error, a stop, an aborted task) removes the file.
+struct PartFile {
+    path: PathBuf,
+    keep: bool,
+}
+
+impl Drop for PartFile {
+    fn drop(&mut self) {
+        if !self.keep {
+            let _ = std::fs::remove_file(&self.path);
+        }
+    }
+}
+
+/// Directories this transfer created. Unless the transfer finishes, the
+/// empty ones are removed again, deepest first; anything with content stays.
+struct CreatedDirs {
+    dirs: Vec<PathBuf>,
+    keep: bool,
+}
+
+impl Drop for CreatedDirs {
+    fn drop(&mut self) {
+        if !self.keep {
+            for dir in self.dirs.iter().rev() {
+                let _ = std::fs::remove_dir(dir);
+            }
+        }
+    }
+}
 
 /// Data streams in flight at once (spec section 8).
 const PARALLEL_STREAMS: usize = 4;
@@ -253,6 +380,7 @@ pub async fn send_files(
     keys: &DeviceKeys,
     entries: Vec<SourceEntry>,
     progress: Progress,
+    stop: &Stop,
 ) -> Result<SendReport> {
     let transfer_id = totaldrop_crypto::new_transfer_id()?;
     let ck = ContentKey::generate()?;
@@ -271,7 +399,30 @@ pub async fn send_files(
     };
     send_control(&mut chan.sealer, &mut chan.send, &offer).await?;
 
-    let wanted = match recv_control(&mut chan.opener, &mut chan.recv).await? {
+    let SecureChannel {
+        mut sealer,
+        opener,
+        mut send,
+        recv,
+        ..
+    } = chan;
+    let (_reader, mut ctl_rx) = control_reader(opener, recv);
+
+    let decision = tokio::select! {
+        biased;
+        () = stop.stopped() => {
+            return Err(tell_stopped(conn, &mut sealer, &mut send, transfer_id).await);
+        }
+        msg = ctl_rx.recv() => match msg {
+            Some(m) => m?,
+            None => return Err(control_ended(conn)),
+        },
+        () = tokio::time::sleep(DECISION_TIMEOUT) => {
+            conn.close(0u32.into(), b"no answer");
+            return Err(Error::Connect("the receiver did not answer".into()));
+        }
+    };
+    let wanted = match decision {
         Control::Accept {
             transfer_id: t,
             wanted,
@@ -294,22 +445,27 @@ pub async fn send_files(
     }
     let wanted_bytes: u64 = to_send.iter().map(|(_, s)| s.entry.size).sum();
 
+    // Every file gets its task at once; the semaphore lets PARALLEL_STREAMS
+    // of them send at a time. Waiting happens inside the tasks, so the loop
+    // below always hears a stop or a cancel.
     let done = Arc::new(AtomicU64::new(0));
     let permits = Arc::new(Semaphore::new(PARALLEL_STREAMS));
     let mut tasks = tokio::task::JoinSet::new();
     for (index, src) in to_send.iter().cloned() {
         let Some(path) = src.source else { continue };
-        let permit = permits
-            .clone()
-            .acquire_owned()
-            .await
-            .map_err(|_| Error::Protocol("semaphore closed"))?;
-        let conn = conn.clone();
-        let ck = ck.clone();
-        let done = done.clone();
-        let progress = progress.clone();
+        let (conn, ck, done, progress, permits) = (
+            conn.clone(),
+            ck.clone(),
+            done.clone(),
+            progress.clone(),
+            permits.clone(),
+        );
         tasks.spawn(async move {
-            let r = send_entry(
+            let _permit = permits
+                .acquire_owned()
+                .await
+                .map_err(|_| Error::Protocol("semaphore closed"))?;
+            send_entry(
                 conn,
                 path,
                 src.entry,
@@ -320,14 +476,8 @@ pub async fn send_files(
                 wanted_bytes,
                 progress,
             )
-            .await;
-            drop(permit);
-            r
+            .await
         });
-        // Collect failures early, without blocking on progress.
-        while let Some(joined) = tasks.try_join_next() {
-            joined.map_err(|_| Error::Protocol("send task failed"))??;
-        }
     }
 
     let mut report = SendReport::default();
@@ -335,13 +485,16 @@ pub async fn send_files(
     let mut finished = HashSet::new();
     while pending > 0 {
         tokio::select! {
-            joined = tasks.join_next(), if !tasks.is_empty() => {
-                if let Some(joined) = joined {
-                    joined.map_err(|_| Error::Protocol("send task failed"))??;
-                }
+            biased;
+            () = stop.stopped() => {
+                // Cancel and close first: dropping a data stream finishes it
+                // cleanly, which the receiver would read as a short file.
+                let e = tell_stopped(conn, &mut sealer, &mut send, transfer_id).await;
+                tasks.abort_all();
+                return Err(e);
             }
-            msg = recv_control(&mut chan.opener, &mut chan.recv) => match msg? {
-                Control::EntryDone { transfer_id: t, index, ok } if t == transfer_id => {
+            msg = ctl_rx.recv() => match msg {
+                Some(Ok(Control::EntryDone { transfer_id: t, index, ok })) if t == transfer_id => {
                     if !to_send.iter().any(|(i, _)| *i == index) || !finished.insert(index) {
                         return Err(Error::Protocol("unexpected entry_done"));
                     }
@@ -349,16 +502,37 @@ pub async fn send_files(
                     else { report.files_failed = report.files_failed.saturating_add(1); }
                     pending = pending.saturating_sub(1);
                 }
-                Control::Cancel { reason, .. } => return Err(Error::Cancelled(reason)),
-                _ => return Err(Error::Protocol("unexpected control message")),
+                Some(Ok(Control::Cancel { reason, .. })) => return Err(Error::Cancelled(reason)),
+                Some(Ok(_)) => return Err(Error::Protocol("unexpected control message")),
+                Some(Err(e)) => return Err(e),
+                None => return Err(control_ended(conn)),
             },
+            joined = tasks.join_next(), if !tasks.is_empty() => {
+                match joined {
+                    Some(Ok(Ok(()))) | None => {}
+                    // A stream can fail because the receiver stopped; its
+                    // cancel may still be on the way.
+                    Some(Ok(Err(e))) => {
+                        let e = cancel_or(e, &mut ctl_rx).await;
+                        // Close before the other streams are dropped: a
+                        // dropped stream ends cleanly and would look like a
+                        // short file to the receiver.
+                        conn.close(0u32.into(), b"failed");
+                        return Err(e);
+                    }
+                    Some(Err(_)) => {
+                        conn.close(0u32.into(), b"failed");
+                        return Err(Error::Protocol("send task failed"));
+                    }
+                }
+            }
         }
     }
     while let Some(joined) = tasks.join_next().await {
         joined.map_err(|_| Error::Protocol("send task failed"))??;
     }
     report.bytes = done.load(Ordering::Relaxed);
-    let _ = chan.send.finish();
+    let _ = send.finish();
     conn.close(0u32.into(), b"done");
     Ok(report)
 }
@@ -386,6 +560,13 @@ pub struct VerifiedOffer {
     paths: Vec<SafePath>,
     /// What to show the person.
     pub summary: OfferSummary,
+}
+
+impl VerifiedOffer {
+    /// The transfer this offer starts.
+    pub(crate) fn transfer_id(&self) -> [u8; 16] {
+        self.manifest.transfer_id
+    }
 }
 
 impl core::fmt::Debug for VerifiedOffer {
@@ -549,14 +730,18 @@ fn check_beneath(dest: &Path, path: &Path) -> Result<()> {
 
 /// Create a directory, refusing to go through anything that is not a plain
 /// directory we can see (never follows symbolic links).
-fn make_dir(path: &Path) -> Result<()> {
+/// Returns whether it created the directory.
+fn make_dir(path: &Path) -> Result<bool> {
     match std::fs::symlink_metadata(path) {
-        Ok(m) if m.file_type().is_dir() => Ok(()),
+        Ok(m) if m.file_type().is_dir() => Ok(false),
         Ok(_) => Err(Error::Io(std::io::Error::other(format!(
             "{} exists and is not a directory",
             path.display()
         )))),
-        Err(_) => Ok(std::fs::create_dir(path)?),
+        Err(_) => {
+            std::fs::create_dir(path)?;
+            Ok(true)
+        }
     }
 }
 
@@ -589,6 +774,7 @@ async fn receive_stream(
     done: Arc<AtomicU64>,
     total: u64,
     progress: Progress,
+    abandoned: Arc<std::sync::atomic::AtomicBool>,
 ) -> Result<(u64, bool)> {
     let header = DataHeader::decode(&expect_frame(&mut stream, 1024).await?)?;
     if header.transfer_id != transfer_id || header.first_chunk != 0 {
@@ -630,11 +816,19 @@ async fn receive_stream(
             .map(|b| format!("{b:02x}"))
             .collect::<String>()
     ));
-    let mut file = tokio::fs::OpenOptions::new()
+    // Opened right here, not on a blocking thread: an abort between an
+    // asynchronous open finishing and the guard below would leave the file.
+    let std_file = std::fs::OpenOptions::new()
         .write(true)
         .create_new(true)
-        .open(&tmp_path)
-        .await?;
+        .open(&tmp_path)?;
+    // From here on the partial file goes away unless it is placed, also
+    // when this task is aborted.
+    let mut part = PartFile {
+        path: tmp_path.clone(),
+        keep: false,
+    };
+    let mut file = tokio::fs::File::from_std(std_file);
 
     let result: Result<bool> = async {
         let mut hasher = blake3::Hasher::new();
@@ -686,27 +880,60 @@ async fn receive_stream(
                 .ok_or(Error::Protocol("bad file name"))?;
             let placed = {
                 let (parent, name, tmp) = (parent.clone(), name.to_owned(), tmp_path.clone());
-                tokio::task::spawn_blocking(move || place_no_clobber(&tmp, &parent, &name))
-                    .await
-                    .map_err(|_| Error::Protocol("placement task failed"))?
+                // Placing cannot be aborted once it runs, so it checks first
+                // whether the receive was given up meanwhile.
+                tokio::task::spawn_blocking(move || {
+                    if abandoned.load(Ordering::SeqCst) {
+                        return Err(Error::Stopped);
+                    }
+                    place_no_clobber(&tmp, &parent, &name)
+                })
+                .await
+                .map_err(|_| Error::Protocol("placement task failed"))?
             };
-            if let Err(e) = placed {
-                let _ = tokio::fs::remove_file(&tmp_path).await;
-                return Err(e);
-            }
+            // Placing moved or linked the file away; whatever is left at
+            // the temporary path is removed by the guard.
+            placed?;
+            part.keep = !tmp_path.exists();
             Ok((index, true))
         }
         Ok(false) => {
             drop(file);
-            let _ = tokio::fs::remove_file(&tmp_path).await;
             Ok((index, false))
         }
         Err(e) => {
             drop(file);
-            let _ = tokio::fs::remove_file(&tmp_path).await;
             Err(e)
         }
     }
+}
+
+/// Check the folder a receive will write into, before anything is shared:
+/// it must exist, be a folder and be writable. A symbolic link given as the
+/// folder itself is followed; nothing beneath it ever is. Returns the folder
+/// as given, so paths shown to the person keep their spelling (no `/private`
+/// on macOS, no `\\?\` on Windows). Errors are [`Error::Io`] with kind
+/// `NotFound`, `NotADirectory` or the reason writing failed.
+pub fn check_destination(dest: &Path) -> Result<PathBuf> {
+    let dir = std::fs::canonicalize(dest)?;
+    if !std::fs::metadata(&dir)?.is_dir() {
+        return Err(Error::Io(std::io::Error::new(
+            std::io::ErrorKind::NotADirectory,
+            format!("{} is not a directory", dest.display()),
+        )));
+    }
+    let mut tag = [0u8; 8];
+    getrandom::fill(&mut tag).map_err(|_| Error::Random)?;
+    let probe = dir.join(format!(
+        ".totaldrop-check-{}",
+        tag.iter().map(|b| format!("{b:02x}")).collect::<String>()
+    ));
+    std::fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(&probe)?;
+    let _ = std::fs::remove_file(&probe);
+    Ok(dest.to_path_buf())
 }
 
 /// Accept an offer and write everything beneath `dest`.
@@ -716,15 +943,14 @@ pub async fn accept(
     offer: VerifiedOffer,
     dest: &Path,
     progress: Progress,
+    stop: &Stop,
 ) -> Result<ReceiveReport> {
-    let meta = std::fs::symlink_metadata(dest)?;
-    if !meta.file_type().is_dir() {
-        return Err(Error::Io(std::io::Error::other(format!(
-            "{} is not a directory",
-            dest.display()
-        ))));
-    }
+    let resolved = check_destination(dest)?;
+    let dest = resolved.as_path();
     let transfer_id = offer.manifest.transfer_id;
+    if stop.is_stopped() {
+        return Err(tell_stopped(conn, &mut chan.sealer, &mut chan.send, transfer_id).await);
+    }
 
     // Every top-level item gets a name that does not exist yet, so nothing
     // already on disk is ever merged into or overwritten.
@@ -764,6 +990,10 @@ pub async fn accept(
 
     let mut targets: Vec<Option<Target>> = Vec::with_capacity(offer.paths.len());
     let mut wanted = Vec::new();
+    let mut created = CreatedDirs {
+        dirs: Vec::new(),
+        keep: false,
+    };
     for (i, (entry, safe)) in offer.manifest.entries.iter().zip(&offer.paths).enumerate() {
         let mut path = dest.to_path_buf();
         for (n, seg) in safe.segments().iter().enumerate() {
@@ -773,8 +1003,10 @@ pub async fn accept(
                 path.push(seg);
             }
             check_beneath(dest, &path)?;
-            if n.saturating_add(1) < safe.segments().len() || entry.kind == EntryKind::Dir {
-                make_dir(&path)?;
+            if (n.saturating_add(1) < safe.segments().len() || entry.kind == EntryKind::Dir)
+                && make_dir(&path)?
+            {
+                created.dirs.push(path.clone());
             }
         }
         if entry.kind == EntryKind::File {
@@ -805,22 +1037,19 @@ pub async fn accept(
     let permits = Arc::new(Semaphore::new(PARALLEL_STREAMS));
     let (result_tx, mut result_rx) = mpsc::channel::<Result<(u64, bool)>>(16);
 
-    // Control messages from the sender (a cancel) arrive on their own task,
-    // because reading a frame cannot be interrupted safely.
-    let (ctl_tx, mut ctl_rx) = mpsc::channel::<Result<Control>>(4);
-    let mut opener = chan.opener;
-    let mut ctl_recv = chan.recv;
-    let ctl_task = tokio::spawn(async move {
-        while let Ok(Some(ct)) = read_frame(&mut ctl_recv, MAX_FRAME).await {
-            let msg = opener
-                .open(&ct)
-                .map_err(Error::from)
-                .and_then(|p| Control::decode(&p).map_err(Error::from));
-            if ctl_tx.send(msg).await.is_err() {
-                break;
-            }
-        }
-    });
+    // Control messages from the sender (a cancel) arrive on their own task.
+    let SecureChannel {
+        mut sealer,
+        opener,
+        mut send,
+        recv,
+        ..
+    } = chan;
+    let (_reader, mut ctl_rx) = control_reader(opener, recv);
+    let abandoned = Arc::new(std::sync::atomic::AtomicBool::new(false));
+    // Every data stream task belongs to this call: returning for any reason
+    // (done, an error, a stop) aborts the ones still running.
+    let mut streams = tokio::task::JoinSet::new();
 
     let mut report = ReceiveReport::default();
     for (_, to) in &renames {
@@ -830,58 +1059,91 @@ pub async fn accept(
     let mut last_activity = tokio::time::Instant::now();
     let done_at_check = Arc::clone(&done);
     let mut seen_bytes = 0u64;
-    while pending > 0 {
-        // Give up if nothing at all moves for a while: keep-alives alone
-        // would otherwise hold the receiver forever.
-        let now_bytes = done_at_check.load(Ordering::Relaxed);
-        if now_bytes != seen_bytes {
-            seen_bytes = now_bytes;
-            last_activity = tokio::time::Instant::now();
-        }
-        let deadline = last_activity
-            .checked_add(INACTIVITY_TIMEOUT)
-            .unwrap_or(last_activity);
-        tokio::select! {
-            () = tokio::time::sleep_until(deadline) => {
-                if done_at_check.load(Ordering::Relaxed) == seen_bytes {
-                    return Err(Error::Connect("the sender stopped sending".into()));
+    let outcome: Result<()> = async {
+        while pending > 0 {
+            // Give up if nothing at all moves for a while: keep-alives alone
+            // would otherwise hold the receiver forever.
+            let now_bytes = done_at_check.load(Ordering::Relaxed);
+            if now_bytes != seen_bytes {
+                seen_bytes = now_bytes;
+                last_activity = tokio::time::Instant::now();
+            }
+            let deadline = last_activity
+                .checked_add(INACTIVITY_TIMEOUT)
+                .unwrap_or(last_activity);
+            tokio::select! {
+                () = tokio::time::sleep_until(deadline) => {
+                    if done_at_check.load(Ordering::Relaxed) == seen_bytes {
+                        return Err(Error::Connect("the sender stopped sending".into()));
+                    }
+                }
+                stream = conn.accept_uni() => {
+                    let stream = stream?;
+                    let tx = result_tx.clone();
+                    let (targets, claimed, ck, done, progress, permits, abandoned) = (
+                        targets.clone(), claimed.clone(), offer.content_key.clone(),
+                        done.clone(), progress.clone(), permits.clone(), abandoned.clone(),
+                    );
+                    // The permit is waited for inside the task, so this loop
+                    // keeps hearing stops, cancels and the inactivity timer.
+                    streams.spawn(async move {
+                        let r = match permits.acquire_owned().await {
+                            Ok(_permit) => {
+                                receive_stream(stream, targets, claimed, ck, transfer_id, done, total, progress, abandoned).await
+                            }
+                            Err(_) => Err(Error::Protocol("semaphore closed")),
+                        };
+                        let _ = tx.send(r).await;
+                    });
+                    // Reap finished tasks so the set does not grow.
+                    while streams.try_join_next().is_some() {}
+                }
+                Some(r) = result_rx.recv() => {
+                    last_activity = tokio::time::Instant::now();
+                    let (index, ok) = match r {
+                    Ok(v) => v,
+                    // A stream can break because the sender stopped; its
+                    // cancel may still be on the way on the control stream.
+                    Err(e) => return Err(cancel_or(e, &mut ctl_rx).await),
+                };
+                    if ok { report.files_ok = report.files_ok.saturating_add(1); }
+                    else { report.files_failed = report.files_failed.saturating_add(1); }
+                    send_control(&mut sealer, &mut send,
+                        &Control::EntryDone { transfer_id, index, ok }).await?;
+                    pending = pending.saturating_sub(1);
+                }
+                msg = ctl_rx.recv() => match msg {
+                    Some(Ok(Control::Cancel { reason, .. })) => return Err(Error::Cancelled(reason)),
+                    Some(Ok(_)) => return Err(Error::Protocol("unexpected control message")),
+                    Some(Err(e)) => return Err(e),
+                    None => return Err(control_ended(conn)),
+                },
+                () = stop.stopped() => {
+                    // Cancel and close first: dropping a stream that is still
+                    // reading tells the sender to stop sending, which would
+                    // reach it before the cancel.
+                    let e = tell_stopped(conn, &mut sealer, &mut send, transfer_id).await;
+                    abandoned.store(true, Ordering::SeqCst);
+                    streams.abort_all();
+                    return Err(e);
                 }
             }
-            stream = conn.accept_uni() => {
-                let stream = stream?;
-                let permit = permits.clone().acquire_owned().await
-                    .map_err(|_| Error::Protocol("semaphore closed"))?;
-                let tx = result_tx.clone();
-                let (targets, claimed, ck, done, progress) = (
-                    targets.clone(), claimed.clone(), offer.content_key.clone(),
-                    done.clone(), progress.clone(),
-                );
-                tokio::spawn(async move {
-                    let r = receive_stream(stream, targets, claimed, ck, transfer_id, done, total, progress).await;
-                    drop(permit);
-                    let _ = tx.send(r).await;
-                });
-            }
-            Some(r) = result_rx.recv() => {
-                last_activity = tokio::time::Instant::now();
-                let (index, ok) = r?;
-                if ok { report.files_ok = report.files_ok.saturating_add(1); }
-                else { report.files_failed = report.files_failed.saturating_add(1); }
-                send_control(&mut chan.sealer, &mut chan.send,
-                    &Control::EntryDone { transfer_id, index, ok }).await?;
-                pending = pending.saturating_sub(1);
-            }
-            Some(msg) = ctl_rx.recv() => match msg? {
-                Control::Cancel { reason, .. } => return Err(Error::Cancelled(reason)),
-                _ => return Err(Error::Protocol("unexpected control message")),
-            },
         }
+        Ok(())
     }
+    .await;
+    if let Err(e) = outcome {
+        // No file is placed from now on; let every stream task end and drop
+        // its partial file before the folders this transfer created go.
+        abandoned.store(true, Ordering::SeqCst);
+        streams.shutdown().await;
+        return Err(e);
+    }
+    created.keep = true;
     report.bytes = done.load(Ordering::Relaxed);
-    let _ = chan.send.finish();
+    let _ = send.finish();
     // Wait briefly for the sender to close, so our last messages arrive.
     let _ = tokio::time::timeout(Duration::from_secs(5), conn.closed()).await;
-    ctl_task.abort();
     Ok(report)
 }
 
@@ -945,5 +1207,34 @@ mod tests {
         assert!(check_beneath(dest, &dest.join("a").join("b")).is_ok());
         assert!(check_beneath(dest, Path::new("/etc/passwd")).is_err());
         assert!(check_beneath(dest, &dest.join("..").join("x")).is_err());
+    }
+
+    #[test]
+    fn destination_checks() {
+        let mut tag = [0u8; 6];
+        getrandom::fill(&mut tag).unwrap();
+        let base = std::env::temp_dir().join(format!(
+            "totaldrop-dest-{}",
+            tag.iter().map(|b| format!("{b:02x}")).collect::<String>()
+        ));
+        let real = base.join("real");
+        std::fs::create_dir_all(&real).unwrap();
+        // A folder, and a symbolic link to it given as the folder.
+        assert_eq!(check_destination(&real).unwrap(), real);
+        #[cfg(unix)]
+        {
+            let link = base.join("link");
+            std::os::unix::fs::symlink(&real, &link).unwrap();
+            assert_eq!(check_destination(&link).unwrap(), link);
+        }
+        // Missing, and a file.
+        let missing = check_destination(&base.join("nope")).unwrap_err();
+        assert!(matches!(missing, Error::Io(ref e) if e.kind() == std::io::ErrorKind::NotFound));
+        std::fs::write(base.join("f"), b"x").unwrap();
+        let file = check_destination(&base.join("f")).unwrap_err();
+        assert!(matches!(file, Error::Io(ref e) if e.kind() == std::io::ErrorKind::NotADirectory));
+        // The probe leaves nothing behind.
+        assert_eq!(std::fs::read_dir(&real).unwrap().count(), 0);
+        std::fs::remove_dir_all(&base).unwrap();
     }
 }

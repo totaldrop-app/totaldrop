@@ -521,3 +521,204 @@ async fn receiver_never_contacts_a_relay_only_the_sender_chose() {
     assert_eq!(receivers.connections_accepted(), 0);
     std::fs::remove_dir_all(src).unwrap();
 }
+
+/// Progress events that count the bytes moved and, if `slow`, take a little
+/// time per chunk so a stop lands mid-transfer.
+fn counting(
+    moved: std::sync::Arc<std::sync::atomic::AtomicU64>,
+    slow: bool,
+) -> totaldrop_core::Events {
+    std::sync::Arc::new(move |e| {
+        if let totaldrop_core::Event::Progress { done, .. } = e {
+            moved.store(done, std::sync::atomic::Ordering::SeqCst);
+            if slow {
+                std::thread::sleep(Duration::from_millis(20));
+            }
+        }
+    })
+}
+
+/// Stop `stop` from its own task, as a person pressing Stop would, once
+/// `moved` reaches `after` bytes.
+fn stop_when(
+    stop: totaldrop_core::Stop,
+    moved: std::sync::Arc<std::sync::atomic::AtomicU64>,
+    after: u64,
+) {
+    tokio::spawn(async move {
+        while moved.load(std::sync::atomic::Ordering::SeqCst) < after {
+            tokio::time::sleep(Duration::from_millis(5)).await;
+        }
+        stop.stop();
+    });
+}
+
+/// Nothing this transfer started is left in `dest`: no partial files and no
+/// folders it created.
+fn left_nothing(dest: &Path) {
+    let names: Vec<_> = std::fs::read_dir(dest).unwrap().collect();
+    assert!(names.is_empty(), "left behind: {:?}", walk(dest));
+}
+
+/// A folder of `files` files of `size` bytes each, in a subfolder.
+fn folder(src: &Path, files: usize, size: usize) -> PathBuf {
+    let dir = src.join("album");
+    std::fs::create_dir_all(dir.join("raw")).unwrap();
+    for i in 0..files {
+        let seed = u8::try_from(i % 251).unwrap();
+        std::fs::write(
+            dir.join("raw").join(format!("{i:03}.bin")),
+            pseudo_random(size, seed),
+        )
+        .unwrap();
+    }
+    dir
+}
+
+async fn prepared(server: &str, what: PathBuf) -> PreparedSend {
+    PreparedSend::new(
+        &SendOptions {
+            server: server.to_owned(),
+            words: 2,
+            paths: no_relay(),
+        },
+        vec![what],
+    )
+    .await
+    .unwrap()
+}
+
+async fn offer(server: String, code: &str) -> IncomingOffer {
+    IncomingOffer::connect(
+        &ReceiveOptions {
+            server,
+            paths: no_relay(),
+        },
+        code,
+    )
+    .await
+    .unwrap()
+}
+
+/// The receiver stops while its streams wait for data: the sender is told,
+/// and nothing is left in the destination.
+#[tokio::test(flavor = "multi_thread", worker_threads = 8)]
+async fn receiver_stops_mid_transfer() {
+    let server = server().await;
+    let (src, dest) = (scratch("src"), scratch("dest"));
+    let p = prepared(&server, folder(&src, 2, 32 << 20)).await;
+    let code = p.code().to_string();
+    // The sender is the slow side, so the receiver's streams sit idle on a
+    // read when the stop comes, as they would behind a real network.
+    let sender = tokio::spawn(p.run(counting(Default::default(), true)));
+    let o = offer(server, &code).await;
+    let (stop, moved) = (totaldrop_core::Stop::new(), std::sync::Arc::default());
+    stop_when(stop.clone(), std::sync::Arc::clone(&moved), 4 << 20);
+    let r = o.accept_with(&dest, counting(moved, false), &stop).await;
+    assert!(matches!(r, Err(Error::Stopped)), "{r:?}");
+    let s = tokio::time::timeout(Duration::from_secs(10), sender)
+        .await
+        .unwrap()
+        .unwrap();
+    assert!(matches!(s, Err(Error::Cancelled(_))), "{s:?}");
+    left_nothing(&dest);
+    std::fs::remove_dir_all(src).unwrap();
+    std::fs::remove_dir_all(dest).unwrap();
+}
+
+/// The sender stops in the middle of a folder of many files: it stops at
+/// once, not after the files still waiting for a stream. The slow receiver
+/// blocks worker threads, so this test sets how many there are.
+#[tokio::test(flavor = "multi_thread", worker_threads = 8)]
+async fn sender_stops_mid_folder() {
+    let server = server().await;
+    let (src, dest) = (scratch("src"), scratch("dest"));
+    let total: u64 = 24 * (2 << 20);
+    let p = prepared(&server, folder(&src, 24, 2 << 20)).await;
+    let code = p.code().to_string();
+    let (stop, moved) = (totaldrop_core::Stop::new(), std::sync::Arc::default());
+    stop_when(stop.clone(), std::sync::Arc::clone(&moved), 4 << 20);
+    let sender = tokio::spawn(p.run_with(counting(std::sync::Arc::clone(&moved), false), stop));
+    let o = offer(server, &code).await;
+    // The receiver is the slow side here.
+    let r = o.accept(&dest, counting(Default::default(), true)).await;
+    assert!(matches!(r, Err(Error::Cancelled(_))), "{r:?}");
+    let s = sender.await.unwrap();
+    assert!(matches!(s, Err(Error::Stopped)), "{s:?}");
+    let sent = moved.load(std::sync::atomic::Ordering::SeqCst);
+    assert!(
+        sent < total / 2,
+        "sent {sent} of {total} bytes after the stop"
+    );
+    left_nothing(&dest);
+    std::fs::remove_dir_all(src).unwrap();
+    std::fs::remove_dir_all(dest).unwrap();
+}
+
+/// The receiver leaves while the offer is shown: the sender hears that it
+/// stopped, not a connection error.
+#[tokio::test(flavor = "multi_thread")]
+async fn receiver_stops_at_the_offer() {
+    let server = server().await;
+    let src = scratch("src");
+    std::fs::write(src.join("a.txt"), b"a").unwrap();
+    let p = prepared(&server, src.join("a.txt")).await;
+    let code = p.code().to_string();
+    let sender = tokio::spawn(p.run(no_events()));
+    let o = offer(server, &code).await;
+    assert!(matches!(o.stop().await, Error::Stopped));
+    let s = tokio::time::timeout(Duration::from_secs(10), sender)
+        .await
+        .unwrap()
+        .unwrap();
+    assert!(matches!(s, Err(Error::Cancelled(_))), "{s:?}");
+    std::fs::remove_dir_all(src).unwrap();
+}
+
+/// Stopping before anyone connected just leaves, at once; so does a
+/// receiver stopped while it connects.
+#[tokio::test(flavor = "multi_thread")]
+async fn stop_while_waiting_and_while_connecting() {
+    let server = server().await;
+    let src = scratch("src");
+    std::fs::write(src.join("a.txt"), b"a").unwrap();
+    let p = prepared(&server, src.join("a.txt")).await;
+    let code = p.code().to_string();
+    let stop = totaldrop_core::Stop::new();
+    let sender = tokio::spawn(p.run_with(no_events(), stop.clone()));
+    tokio::time::sleep(Duration::from_millis(200)).await;
+    stop.stop();
+    let s = tokio::time::timeout(Duration::from_secs(1), sender)
+        .await
+        .unwrap()
+        .unwrap();
+    assert!(matches!(s, Err(Error::Stopped)), "{s:?}");
+
+    // A receiver stopped while it is connecting to that (now gone) sender.
+    let stop = totaldrop_core::Stop::new();
+    let connecting = {
+        let stop = stop.clone();
+        tokio::spawn(async move {
+            IncomingOffer::connect_with(
+                &ReceiveOptions {
+                    server,
+                    paths: no_relay(),
+                },
+                &code,
+                &stop,
+            )
+            .await
+        })
+    };
+    tokio::time::sleep(Duration::from_millis(50)).await;
+    stop.stop();
+    let r = tokio::time::timeout(Duration::from_secs(1), connecting)
+        .await
+        .unwrap()
+        .unwrap();
+    assert!(
+        matches!(r, Err(Error::Stopped) | Err(Error::Rendezvous(_))),
+        "{r:?}"
+    );
+    std::fs::remove_dir_all(src).unwrap();
+}
