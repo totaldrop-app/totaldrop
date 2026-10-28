@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Why TotalDrop needs donations</title>
+  <meta name="description" content="TotalDrop is free and has no ads or investors. Here is every cost of running it, today and on the way to version 1.0, and what donations pay for.">
+  <meta name="theme-color" content="#F4F2FB" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#140E33" media="(prefers-color-scheme: dark)">
+  <link rel="canonical" href="https://totaldrop.app/donate/">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="/fonts/bricolage-grotesque-latin-800-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body data-page="donate">
+  <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
+
+  <header class="top">
+    <a class="brand" href="https://totaldrop.app/" aria-label="TotalDrop home">
+      <svg class="mark" viewBox="0 0 112 112" aria-hidden="true">
+        <path class="mk-wave" stroke-width="8" d="M79.61 45.12A26 26 0 1 1 66.88 32.39"/>
+        <path class="mk-wave" stroke-width="6" d="M89.92 34.80A40 40 0 1 1 77.20 22.08"/>
+        <circle class="mk-file" cx="56" cy="56" r="12"/>
+        <circle class="mk-file" cx="92.77" cy="19.23" r="8"/>
+      </svg>
+      <span>TotalDrop</span>
+    </a>
+    <nav class="top-nav" aria-label="Main">
+      <a href="https://totaldrop.app/#why" data-i18n="nav.why">Why TotalDrop</a>
+      <a href="https://totaldrop.app/#how" data-i18n="nav.how">How it works</a>
+      <a href="https://totaldrop.app/#security" data-i18n="nav.security">Security</a>
+      <a href="https://download.totaldrop.app/" data-i18n="nav.download">Download</a>
+      <button class="lang" type="button" id="lang-toggle" lang="tr" aria-label="Türkçe">TR</button>
+    </nav>
+  </header>
+
+  <main id="main">
+    <section class="dl-hero" aria-labelledby="don-title">
+      <p class="eyebrow" data-i18n="don.eyebrow">Donations · prices as of 28 October 2026</p>
+      <h1 id="don-title" data-i18n="don.title">Why TotalDrop needs donations</h1>
+      <p class="lede" data-i18n="don.lede">TotalDrop is free for everyone and stays that way: no ads, no premium tier, no investors, no data to sell. Some things still cost money. This page lists every one of them, so you can see exactly what a donation pays for.</p>
+      <div class="actions">
+        <a class="btn btn-primary" href="https://github.com/sponsors/ozdil" data-i18n="don.cta">Sponsor on GitHub</a>
+      </div>
+    </section>
+
+    <section class="block" aria-labelledby="don-raised">
+      <h2 id="don-raised" data-i18n="don.raised.title">Raised so far</h2>
+      <dl class="costs">
+        <div><dt data-i18n="don.raised.t1">0 USD raised</dt><dd data-i18n="don.raised.d1">Donations received since the project started</dd></div>
+        <div><dt data-i18n="don.raised.t2">39.20 USD spent</dt><dd data-i18n="don.raised.d2">The domain and the Google Play account, paid by the maintainer so far</dd></div>
+        <div><dt data-i18n="don.raised.t3">250 USD goal</dt><dd data-i18n="don.raised.d3">What one year on every platform costs</dd></div>
+      </dl>
+      <progress class="goal" value="0" max="250" aria-labelledby="don-goal-label">0%</progress>
+      <p class="note" id="don-goal-label" data-i18n="don.raised.goal">0 of 250 USD for the first year: 0%. Updated 28 October 2026.</p>
+      <div class="compare-wrap">
+        <table class="req narrow">
+          <caption data-i18n="don.ledger.caption">Every month, line by line</caption>
+          <thead><tr><th scope="col" data-i18n="don.ledger.month">Month</th><th scope="col" data-i18n="don.ledger.in">In</th><th scope="col" data-i18n="don.ledger.out">Out</th><th scope="col" data-i18n="don.ledger.what">What for</th></tr></thead>
+          <tbody>
+            <tr><th scope="row" data-i18n="don.ledger.m1">October 2026</th><td>0 USD</td><td data-i18n="don.m.3920">39.20 USD</td><td data-i18n="don.ledger.m1.w">totaldrop.app domain, 14.20 USD; Google Play developer account, 25 USD</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="block" aria-labelledby="don-budget">
+      <h2 id="don-budget" data-i18n="don.budget.title">Every cost, line by line</h2>
+      <div class="compare-wrap">
+        <table class="req stack">
+          <thead><tr><th scope="col" data-i18n="don.col.item">Item</th><th scope="col" data-i18n="don.col.for">What it is for</th><th scope="col" data-i18n="don.col.when">When</th><th scope="col" data-i18n="don.col.year">Per year</th></tr></thead>
+          <tbody>
+            <tr><th scope="row" data-i18n="don.b1">totaldrop.app domain</th><td data-i18n="don.b1.f">The address of the site and of every server, registered at cost with Cloudflare</td><td class="when" data-i18n="don.b1.w">Now</td><td class="cost" data-i18n="don.m.1420">14.20 USD</td></tr>
+            <tr><th scope="row" data-i18n="don.b2">Cloudflare Workers Paid</th><td data-i18n="don.b2.f">The site, the rendezvous server and the relay. Free until relay traffic passes the free daily limits; then 5 USD a month with 1 million requests and 400,000 GB-seconds included</td><td class="when" data-i18n="don.b2.w">When the relay gets busy</td><td class="cost">60 USD</td></tr>
+            <tr><th scope="row" data-i18n="don.b3">Apple Developer Program</th><td data-i18n="don.b3.f">Apple lets only signed and notarised apps run without warnings on iPhone, iPad and Mac</td><td class="when" data-i18n="don.b3.w">Before iOS and macOS</td><td class="cost">99 USD</td></tr>
+            <tr><th scope="row" data-i18n="don.b4">Windows code signing certificate</th><td data-i18n="don.b4.f">Without a signature Windows warns of an unknown publisher. Certum's certificate for open-source developers: 69 EUR the first year with card and reader, 49 EUR after. Microsoft's own service is not offered to individuals outside the US and Canada</td><td class="when" data-i18n="don.b4.w">Before Windows</td><td class="cost" data-i18n="don.b4.c">About 75 USD</td></tr>
+            <tr><th scope="row" data-i18n="don.b5">Cloudflare STUN</th><td data-i18n="don.b5.f">Tells each device its public address, so two devices can connect directly</td><td class="when" data-i18n="don.b5.w">Now</td><td class="cost" data-i18n="don.free">0 USD</td></tr>
+            <tr><th scope="row" data-i18n="don.b6">GitHub</th><td data-i18n="don.b6.f">The code, automatic builds and release downloads, free for open source</td><td class="when" data-i18n="don.b5.w">Now</td><td class="cost" data-i18n="don.free">0 USD</td></tr>
+            <tr><th scope="row" data-i18n="don.b7">Google Play developer account</th><td data-i18n="don.b7.f">Publishing the Android app; a one-time fee, already paid</td><td class="when" data-i18n="don.b7.w">Paid once</td><td class="cost" data-i18n="don.free">0 USD</td></tr>
+          </tbody>
+          <tfoot><tr><th scope="row" colspan="3" data-i18n="don.total">Total</th><td class="cost" data-i18n="don.total.c">About 250 USD</td></tr></tfoot>
+        </table>
+      </div>
+    </section>
+
+    <section class="block" aria-labelledby="don-relay">
+      <h2 id="don-relay" data-i18n="don.relay.title">If the relay grows</h2>
+      <p data-i18n="don.relay.d">Most transfers connect directly and cost nothing. The ones that cannot go through the relay. If it needs more speed, Cloudflare Realtime TURN carries them over UDP close to each user: the first 1,000 GB a month are free, then 0.05 USD per GB. Donations will pay for this as traffic grows.</p>
+      <div class="compare-wrap">
+        <table class="req narrow">
+          <thead><tr><th scope="col" data-i18n="don.relay.c1">Relayed traffic a month</th><th scope="col" data-i18n="don.relay.c2">Per month</th><th scope="col" data-i18n="don.relay.c3">Per year</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">1 TB</th><td data-i18n="don.free">0 USD</td><td data-i18n="don.free">0 USD</td></tr>
+            <tr><th scope="row">5 TB</th><td>200 USD</td><td>2,400 USD</td></tr>
+            <tr><th scope="row">10 TB</th><td>450 USD</td><td>5,400 USD</td></tr>
+            <tr><th scope="row">20 TB</th><td>950 USD</td><td>11,400 USD</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="block" aria-labelledby="don-audit">
+      <h2 id="don-audit" data-i18n="don.audit.title">The big one: an independent security audit</h2>
+      <p data-i18n="don.audit.d1">TotalDrop promises that nobody in between can read your files. A promise like that should be checked by people who did not write the code. Before version 1.0, an independent firm will review the protocol, the cryptography and the code that handles untrusted input, and the full report will be published.</p>
+      <p data-i18n="don.audit.d2">Audits of this kind are priced in tens of thousands of dollars; published quotes for similar work go as high as 64,000 USD. We expect 20,000 to 60,000 USD, depending on the firm and the scope. Version 1.0 waits for it.</p>
+    </section>
+
+    <section class="block" aria-labelledby="don-how">
+      <h2 id="don-how" data-i18n="don.how.title">How the money is handled</h2>
+      <ul class="notes">
+        <li data-i18n="don.how.h1">Donations go through GitHub Sponsors, once or every month.</li>
+        <li data-i18n="don.how.h2">They pay only for the costs on this page. When a cost is added or changes, this page changes first.</li>
+        <li data-i18n="don.how.h3">Every month we publish what came in and where it went, here and in the project's repository.</li>
+        <li data-i18n="don.how.h4">A donation buys no features, no priority and no influence over the app. Everyone gets the same TotalDrop.</li>
+      </ul>
+      <div class="actions">
+        <a class="btn btn-primary" href="https://github.com/sponsors/ozdil" data-i18n="don.cta">Sponsor on GitHub</a>
+        <a class="btn btn-quiet" href="https://github.com/totaldrop-app/totaldrop" data-i18n="don.code">Help with the code</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <p data-i18n="foot.line">TotalDrop is open source and built in the open.</p>
+    <p class="foot-links">
+      <a href="https://github.com/totaldrop-app">GitHub</a>
+      <a href="https://github.com/totaldrop-app/totaldrop/releases.atom" data-i18n="foot.rss">RSS</a>
+      <a href="https://totaldrop.app/roadmap/" data-i18n="foot.roadmap">Roadmap</a>
+      <a href="https://totaldrop.app/donate/" data-i18n="foot.donate" aria-current="page">Donate</a>
+      <a href="https://totaldrop.app/privacy" data-i18n="foot.privacy">Privacy</a>
+      <a href="mailto:hello@totaldrop.app">hello@totaldrop.app</a>
+    </p>
+  </footer>
+
+  <script src="/app.js" defer></script>
+</body>
+</html>

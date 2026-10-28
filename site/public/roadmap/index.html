@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TotalDrop roadmap</title>
+  <meta name="description" content="What is done, what comes next and what comes later in TotalDrop, platform by platform, on the way to version 1.0.">
+  <meta name="theme-color" content="#F4F2FB" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#140E33" media="(prefers-color-scheme: dark)">
+  <link rel="canonical" href="https://totaldrop.app/roadmap/">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="/fonts/bricolage-grotesque-latin-800-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body data-page="roadmap">
+  <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
+
+  <header class="top">
+    <a class="brand" href="https://totaldrop.app/" aria-label="TotalDrop home">
+      <svg class="mark" viewBox="0 0 112 112" aria-hidden="true">
+        <path class="mk-wave" stroke-width="8" d="M79.61 45.12A26 26 0 1 1 66.88 32.39"/>
+        <path class="mk-wave" stroke-width="6" d="M89.92 34.80A40 40 0 1 1 77.20 22.08"/>
+        <circle class="mk-file" cx="56" cy="56" r="12"/>
+        <circle class="mk-file" cx="92.77" cy="19.23" r="8"/>
+      </svg>
+      <span>TotalDrop</span>
+    </a>
+    <nav class="top-nav" aria-label="Main">
+      <a href="https://totaldrop.app/#why" data-i18n="nav.why">Why TotalDrop</a>
+      <a href="https://totaldrop.app/#how" data-i18n="nav.how">How it works</a>
+      <a href="https://totaldrop.app/#security" data-i18n="nav.security">Security</a>
+      <a href="https://download.totaldrop.app/" data-i18n="nav.download">Download</a>
+      <button class="lang" type="button" id="lang-toggle" lang="tr" aria-label="Türkçe">TR</button>
+    </nav>
+  </header>
+
+  <main id="main">
+    <section class="dl-hero" aria-labelledby="rm-title">
+      <p class="eyebrow" data-i18n="rm.eyebrow">Roadmap · updated 28 October 2026</p>
+      <h1 id="rm-title" data-i18n="rm.title">What is coming to TotalDrop</h1>
+      <p class="lede" data-i18n="rm.lede">Dates are aims, not promises: a feature ships only when it is safe. Every step can be followed in the open repository.</p>
+    </section>
+
+    <section class="block rm-phase is-done" aria-labelledby="rm-done">
+      <header class="rm-head">
+        <span class="road-state" data-i18n="rm.done.state">Done</span>
+        <h2 id="rm-done" data-i18n="rm.done.when">October 2026</h2>
+      </header>
+      <ul class="rm-items">
+          <li>
+            <h3 data-i18n="rm.d1.t">An open protocol</h3>
+            <p data-i18n="rm.d1.d">TotalDrop Protocol v0: transfer codes with CPace, Noise XXpsk3 with post-quantum ML-KEM-768, QUIC with single-use keys. Written down so anyone can build a compatible app.</p>
+            <span class="rm-plat" data-i18n="rm.all">All platforms</span>
+          </li>
+          <li>
+            <h3 data-i18n="rm.d2.t">Command-line client</h3>
+            <p data-i18n="rm.d2.d">Send and receive from a terminal on Linux, macOS and Windows.</p>
+            <span class="rm-plat">Linux · macOS · Windows</span>
+          </li>
+          <li>
+            <h3 data-i18n="rm.d3.t">Android beta</h3>
+            <p data-i18n="rm.d3.d">Send and receive with a code, in English and Turkish, following the phone&#x27;s colours. On Google Play by invitation.</p>
+            <span class="rm-plat">Android</span>
+          </li>
+          <li>
+            <h3 data-i18n="rm.d4.t">Linux app</h3>
+            <p data-i18n="rm.d4.d">Qt 6 and native Wayland. Follows the theme of KDE Plasma, Hyprland and Omarchy live. Packages for Arch, Debian, Ubuntu and Fedora.</p>
+            <span class="rm-plat">Linux</span>
+          </li>
+          <li>
+            <h3 data-i18n="rm.d5.t">Through firewalls</h3>
+            <p data-i18n="rm.d5.d">Both devices listen and dial, so a firewall on one side no longer stops a transfer.</p>
+            <span class="rm-plat" data-i18n="rm.all">All platforms</span>
+          </li>
+      </ul>
+    </section>
+    <section class="block rm-phase is-now" aria-labelledby="rm-now">
+      <header class="rm-head">
+        <span class="road-state" data-i18n="rm.now.state">Now</span>
+        <h2 id="rm-now" data-i18n="rm.now.when">November 2026</h2>
+      </header>
+      <ul class="rm-items">
+          <li>
+            <h3 data-i18n="rm.n1.t">Across the internet</h3>
+            <p data-i18n="rm.n1.d">Devices find their public address with STUN and connect directly through most home routers. When that is impossible, the encrypted traffic goes through our relay on Cloudflare, which sees nothing of it.</p>
+            <span class="rm-plat" data-i18n="rm.all">All platforms</span>
+          </li>
+          <li>
+            <h3 data-i18n="rm.n2.t">Privacy mode in the command line</h3>
+            <p data-i18n="rm.n2.d">Relay only: the other side never learns your IP address.</p>
+            <span class="rm-plat">Linux · macOS · Windows</span>
+          </li>
+      </ul>
+    </section>
+    <section class="block rm-phase " aria-labelledby="rm-next">
+      <header class="rm-head">
+        <span class="road-state" data-i18n="rm.next.state">Next</span>
+        <h2 id="rm-next" data-i18n="rm.next.when">Winter 2026–27</h2>
+      </header>
+      <ul class="rm-items">
+          <li>
+            <h3 data-i18n="rm.x1.t">Scan the QR code with the camera</h3>
+            <p data-i18n="rm.x1.d">Point the phone at the sender&#x27;s screen instead of typing the code.</p>
+            <span class="rm-plat">Android</span>
+          </li>
+          <li>
+            <h3 data-i18n="rm.x2.t">Receive in the browser</h3>
+            <p data-i18n="rm.x2.d">Open a link, type the code, save the files. Nothing to install, still end-to-end encrypted.</p>
+            <span class="rm-plat">Web</span>
+          </li>
+          <li>
+            <h3 data-i18n="rm.x3.t">Resume interrupted transfers</h3>
+            <p data-i18n="rm.x3.d">A dropped connection picks up where it stopped, without sending what already arrived.</p>
+            <span class="rm-plat" data-i18n="rm.all">All platforms</span>
+          </li>
+          <li>
+            <h3 data-i18n="rm.x4.t">Switch from relay to direct</h3>
+            <p data-i18n="rm.x4.d">A transfer that started through the relay moves to a direct path as soon as one opens.</p>
+            <span class="rm-plat" data-i18n="rm.all">All platforms</span>
+          </li>
+          <li>
+            <h3 data-i18n="rm.x5.t">Windows app</h3>
+            <p data-i18n="rm.x5.d">A native Windows 11 app. Signed once donations cover the certificate.</p>
+            <span class="rm-plat">Windows</span>
+          </li>
+          <li>
+            <h3 data-i18n="rm.x6.t">Arch User Repository</h3>
+            <p data-i18n="rm.x6.d">Install and update with your AUR helper.</p>
+            <span class="rm-plat">Linux</span>
+          </li>
+      </ul>
+    </section>
+    <section class="block rm-phase " aria-labelledby="rm-later">
+      <header class="rm-head">
+        <span class="road-state" data-i18n="rm.later.state">Later</span>
+        <h2 id="rm-later" data-i18n="rm.later.when">2027</h2>
+      </header>
+      <ul class="rm-items">
+          <li>
+            <h3 data-i18n="rm.l1.t">iPhone, iPad and Mac</h3>
+            <p data-i18n="rm.l1.d">Native apps, once donations cover Apple&#x27;s developer account.</p>
+            <span class="rm-plat">iOS · macOS</span>
+          </li>
+          <li>
+            <h3 data-i18n="rm.l2.t">Links and offline delivery</h3>
+            <p data-i18n="rm.l2.d">Send to someone who is not online: an encrypted copy waits up to 7 days, and only the link opens it.</p>
+            <span class="rm-plat" data-i18n="rm.all">All platforms</span>
+          </li>
+          <li>
+            <h3 data-i18n="rm.l3.t">An account that is only a number</h3>
+            <p data-i18n="rm.l3.d">Optional, Mullvad-style: no email, no phone, no password. Your own devices send to each other without a code.</p>
+            <span class="rm-plat" data-i18n="rm.all">All platforms</span>
+          </li>
+          <li>
+            <h3 data-i18n="rm.l4.t">Saved contacts</h3>
+            <p data-i18n="rm.l4.d">Pair once, check four words, and send to that person again without a code.</p>
+            <span class="rm-plat" data-i18n="rm.all">All platforms</span>
+          </li>
+          <li>
+            <h3 data-i18n="rm.l5.t">Full privacy mode in the apps</h3>
+            <p data-i18n="rm.l5.d">Relay only, over Tor, with padded sizes, for people who also need to hide their IP address.</p>
+            <span class="rm-plat" data-i18n="rm.all">All platforms</span>
+          </li>
+      </ul>
+    </section>
+    <section class="block rm-phase " aria-labelledby="rm-v1">
+      <header class="rm-head">
+        <span class="road-state" data-i18n="rm.v1.state">Version 1.0</span>
+        <h2 id="rm-v1" data-i18n="rm.v1.when">After the audit</h2>
+      </header>
+      <ul class="rm-items">
+          <li>
+            <h3 data-i18n="rm.v1.t">Independent security audit</h3>
+            <p data-i18n="rm.v1.d">An outside firm reviews the protocol, the cryptography and the code that handles untrusted input. The full report is published.</p>
+            <span class="rm-plat" data-i18n="rm.all">All platforms</span>
+          </li>
+          <li>
+            <h3 data-i18n="rm.v2.t">A formal model of the handshake</h3>
+            <p data-i18n="rm.v2.d">A ProVerif or Tamarin proof that the hybrid handshake keeps its promises.</p>
+            <span class="rm-plat" data-i18n="rm.all">All platforms</span>
+          </li>
+          <li>
+            <h3 data-i18n="rm.v3.t">Post-quantum signatures</h3>
+            <p data-i18n="rm.v3.d">Device keys add ML-DSA-65 next to Ed25519, so even a future quantum computer cannot impersonate you.</p>
+            <span class="rm-plat" data-i18n="rm.all">All platforms</span>
+          </li>
+          <li>
+            <h3 data-i18n="rm.v4.t">Community relays</h3>
+            <p data-i18n="rm.v4.d">People who opt in can use relays run by others, from a signed list.</p>
+            <span class="rm-plat" data-i18n="rm.all">All platforms</span>
+          </li>
+      </ul>
+    </section>
+
+    <section class="block" aria-labelledby="rm-help">
+      <h2 id="rm-help" class="visually-hidden" data-i18n="rm.issues">Suggest an idea</h2>
+      <div class="actions">
+        <a class="btn btn-primary" href="https://totaldrop.app/donate/" data-i18n="rm.cta">What donations pay for</a>
+        <a class="btn btn-quiet" href="https://github.com/totaldrop-app/totaldrop/issues/new/choose" data-i18n="rm.issues">Suggest an idea</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <p data-i18n="foot.line">TotalDrop is open source and built in the open.</p>
+    <p class="foot-links">
+      <a href="https://github.com/totaldrop-app">GitHub</a>
+      <a href="https://github.com/totaldrop-app/totaldrop/releases.atom" data-i18n="foot.rss">RSS</a>
+      <a href="https://totaldrop.app/roadmap/" data-i18n="foot.roadmap" aria-current="page">Roadmap</a>
+      <a href="https://totaldrop.app/donate/" data-i18n="foot.donate">Donate</a>
+      <a href="https://totaldrop.app/privacy" data-i18n="foot.privacy">Privacy</a>
+      <a href="mailto:hello@totaldrop.app">hello@totaldrop.app</a>
+    </p>
+  </footer>
+
+  <script src="/app.js" defer></script>
+</body>
+</html>
