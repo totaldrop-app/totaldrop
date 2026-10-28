@@ -18,9 +18,11 @@
   3. Bir çeviri hizmetinin (Crowdin, Lokalise) kendi biçimi. Kapalı kaynak,
      hesap ve ücret ister.
 - **Karar:** Seçenek 2.
-  - **Kaynak:** Bütün metinler depo kökündeki `l10n/` altında: `app/`
-    (Android ve Linux'un ortak arayüz metinleri), `cli/` (komut satırı),
-    `site/` (web sitesi). İngilizce şablondur; her dil bir dosyadır.
+  - **Kaynak:** Uygulama metinleri depo kökündeki `l10n/` altında: `app/`
+    (Android ve Linux'un ortak arayüz metinleri) ve `cli/` (komut satırı).
+    Site olduğu gibi yayınlandığı için kendi metinlerini
+    `site/public/i18n/` altında JSON olarak tutar. İngilizce şablondur; her
+    dil bir dosyadır.
   - **Dil seçimi:** Sistemin tercih listesine bakılır, CLDR'ın yakınlık
     kurallarıyla en uygun çeviri seçilir (`pt-BR` yoksa `pt`, `zh-HK` için
     `zh-Hant`); hiçbiri yoksa İngilizce. Android'de cihaz dili ve Android

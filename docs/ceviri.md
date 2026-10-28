@@ -7,7 +7,7 @@ TotalDrop'un bütün metinleri depo kökündeki `l10n/` klasöründe durur
 | --- | --- | --- |
 | `l10n/app/` | Android ve Linux uygulamalarının ortak metinleri | ARB (`app_<dil>.arb`) |
 | `l10n/cli/` | Komut satırı istemcisi | ARB (`cli_<dil>.arb`) |
-| `l10n/site/` | totaldrop.app | JSON (`<dil>.json`) |
+| `site/public/i18n/` | totaldrop.app (site olduğu gibi yayınlandığı için kendi klasöründe) | JSON (`<dil>.json`) |
 
 İngilizce dosyalar şablondur. Yeni bir metin önce İngilizce dosyaya, bir
 açıklamayla (`@anahtar` → `description`) eklenir; diğer diller sonra
