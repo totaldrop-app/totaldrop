@@ -411,7 +411,13 @@ impl Message {
                     let slot = |s: Slot| cases.iter().find(|(k, _)| *k == s).map(|(_, m)| m);
                     let n = match find(arg) {
                         Some(Arg::Count(n)) => Some(n),
-                        Some(Arg::Text(s)) => s.parse().ok(),
+                        // Only plain ASCII digits count, as on the site.
+                        Some(Arg::Text(s))
+                            if !s.is_empty() && s.bytes().all(|b| b.is_ascii_digit()) =>
+                        {
+                            s.parse().ok()
+                        }
+                        Some(Arg::Text(_)) => None,
                         None => None,
                     };
                     // As Intl.pluralLogic: 0, 1 and 2 take their own case
