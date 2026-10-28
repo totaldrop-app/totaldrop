@@ -306,7 +306,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsPrivacyBody =>
-      'The rendezvous server sees your IP address and when you connect, but no file names, contents or keys. It keeps no logs. Files go directly between the two devices, encrypted end to end.';
+      'The rendezvous server sees your IP address and when you connect, but no file names, contents or keys. It keeps no logs. Files go directly between the two devices when they can reach each other, otherwise through the relay; either way they are encrypted end to end and the relay cannot read them.';
 
   @override
   String settingsVersion(String version) {

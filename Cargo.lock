@@ -2290,6 +2290,7 @@ dependencies = [
  "flutter_rust_bridge",
  "tokio",
  "totaldrop-core",
+ "totaldrop-l10n",
  "totaldrop-proto",
 ]
 
