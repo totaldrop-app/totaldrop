@@ -16,6 +16,7 @@
   "sendStrongCode": "Stronger code",
   "sendStrongCodeHint": "Three words instead of two: much harder to guess",
   "sendCreateCode": "Create code",
+  "sendCounting": "Counting…",
   "sendRemove": "Remove",
   "sendPreparing": "Preparing your files…",
   "sendYourCode": "Your code",

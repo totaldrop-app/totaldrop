@@ -55,6 +55,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get sendCreateCode => 'Kod oluştur';
 
   @override
+  String get sendCounting => 'Hesaplanıyor…';
+
+  @override
   String get sendRemove => 'Kaldır';
 
   @override

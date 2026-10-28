@@ -55,6 +55,9 @@ All notable changes to TotalDrop are recorded here. The format follows
 
 ### Fixed
 
+- **Linux:** Adding a large folder no longer freezes the window: its size
+  is added up in the background and shows "Counting…" until then (#103).
+
 - **Android, Linux:** Stop works at every stage: while the files are
   prepared, while waiting for the receiver, while connecting and during the
   transfer. Before, stopping before the transfer began did nothing and the

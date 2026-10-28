@@ -182,6 +182,12 @@ abstract class AppLocalizations {
   /// **'Create code'**
   String get sendCreateCode;
 
+  /// No description provided for @sendCounting.
+  ///
+  /// In en, this message translates to:
+  /// **'Counting…'**
+  String get sendCounting;
+
   /// No description provided for @sendRemove.
   ///
   /// In en, this message translates to:

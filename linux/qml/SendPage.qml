@@ -36,6 +36,8 @@ Page {
             if (known) continue
             const [name, bytes, dir] = page.transfer.describe(p).split("\t")
             files.append({ path: p, name: name, bytes: Number(bytes), dir: dir === "1" })
+            // A folder is -1 bytes until measured off the GUI thread.
+            if (Number(bytes) < 0) page.transfer.measure(p)
         }
     }
     function paths() {
@@ -45,13 +47,21 @@ Page {
     }
     function totalBytes() {
         let t = 0
-        for (let i = 0; i < files.count; i++) t += files.get(i).bytes
+        for (let i = 0; i < files.count; i++) t += Math.max(files.get(i).bytes, 0)
         return t
+    }
+    function counting() {
+        for (let i = 0; i < files.count; i++) if (files.get(i).bytes < 0) return true
+        return false
     }
 
     Connections {
         target: page.transfer
         function onPicked(paths) { page.add(paths) }
+        function onMeasured(path, bytes) {
+            for (let i = 0; i < files.count; i++)
+                if (files.get(i).path === path) files.setProperty(i, "bytes", bytes)
+        }
     }
 
     // Hidden editor for the clipboard.
@@ -143,7 +153,7 @@ Page {
                             spacing: 0
                             Layout.fillWidth: true
                             Label { text: row.name; color: Theme.ink; elide: Text.ElideMiddle; Layout.fillWidth: true }
-                            Label { text: Strings.size(row.bytes); color: Theme.muted; font.features: { "tnum": 1 } }
+                            Label { text: row.bytes < 0 ? Strings.s.sendCounting : Strings.size(row.bytes); color: Theme.muted; font.features: { "tnum": 1 } }
                         }
                         ToolButton {
                             icon.name: Theme.icon("list-remove")
@@ -170,7 +180,7 @@ Page {
                 spacing: Theme.s8
                 Layout.fillWidth: true
                 Label {
-                    text: Strings.f("itemsAndSize", { count: files.count, size: Strings.size(page.totalBytes()) })
+                    text: Strings.f("itemsAndSize", { count: files.count, size: page.counting() ? Strings.s.sendCounting : Strings.size(page.totalBytes()) })
                     color: Theme.muted
                     font.features: { "tnum": 1 }
                 }

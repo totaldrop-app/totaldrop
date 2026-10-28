@@ -55,6 +55,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sendCreateCode => 'Create code';
 
   @override
+  String get sendCounting => 'Counting…';
+
+  @override
   String get sendRemove => 'Remove';
 
   @override

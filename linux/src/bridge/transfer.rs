@@ -99,9 +99,15 @@ pub mod qobject {
         #[cxx_name = "codeFromLink"]
         fn code_from_link(self: &Transfer, text: &QString) -> QString;
 
-        /// `name \t bytes \t is-folder` for a local path or file URL.
+        /// `name \t bytes \t is-folder` for a local path or file URL; a
+        /// folder is -1 bytes until `measure` answers.
         #[qinvokable]
         fn describe(self: &Transfer, path: &QString) -> QString;
+
+        /// Measure a folder's size off the GUI thread; answers with
+        /// `measured`.
+        #[qinvokable]
+        fn measure(self: Pin<&mut Transfer>, path: &QString);
 
         /// Local paths for dropped URLs.
         #[qinvokable]
@@ -146,6 +152,10 @@ pub mod qobject {
         #[qsignal]
         #[cxx_name = "codeNotFound"]
         fn code_not_found(self: Pin<&mut Transfer>);
+
+        /// The size of a folder passed to `measure`.
+        #[qsignal]
+        fn measured(self: Pin<&mut Transfer>, path: QString, bytes: f64);
     }
 
     impl cxx_qt::Threading for Transfer {}
@@ -586,12 +596,26 @@ impl qobject::Transfer {
             .file_name()
             .map(|n| n.to_string_lossy().into_owned())
             .unwrap_or_default();
+        // A folder's size can take minutes to add up; it comes later, by
+        // `measure`, and is -1 until then.
         let (bytes, dir) = match std::fs::metadata(&p) {
-            Ok(m) if m.is_dir() => (desktop::folder_size(&p), true),
-            Ok(m) => (m.len(), false),
+            Ok(m) if m.is_dir() => (-1, true),
+            Ok(m) => (i64::try_from(m.len()).unwrap_or(i64::MAX), false),
             Err(_) => (0, false),
         };
         QString::from(format!("{name}\t{bytes}\t{}", u8::from(dir)).as_str())
+    }
+
+    fn measure(self: Pin<&mut Self>, path: &QString) {
+        let thread = self.qt_thread();
+        let path = path.to_string();
+        RUNTIME.spawn(async move {
+            let dir = path_of(&path);
+            let bytes = tokio::task::spawn_blocking(move || desktop::folder_size(&dir))
+                .await
+                .unwrap_or(0);
+            let _ = thread.queue(move |obj| obj.measured(QString::from(&path), to_f64(bytes)));
+        });
     }
 
     fn local_paths(&self, urls: &QList<QUrl>) -> QStringList {
