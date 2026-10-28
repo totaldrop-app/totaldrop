@@ -16,10 +16,13 @@ jobs:
       matrix:
         target: [path, code, relay]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: dtolnay/rust-toolchain@nightly
+      # Pinned by SHA, so the toolchain is named here instead of in the ref.
+      - uses: dtolnay/rust-toolchain@2c76c034f9e32a5d6e2c104dc4df23a22476db04 # nightly
+        with:
+          toolchain: nightly
       - run: cargo install cargo-fuzz --locked
       - name: Fuzz ${{ matrix.target }} for 10 minutes
         working-directory: fuzz

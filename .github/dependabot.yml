@@ -20,14 +20,21 @@ updates:
     schedule:
       interval: weekly
   - package-ecosystem: npm
-    directory: /server/rendezvous-worker
+    directories:
+      - /server/rendezvous-worker
+      - /server/relay-worker
     schedule:
       interval: weekly
   - package-ecosystem: docker
     directory: /packaging/containers
     schedule:
       interval: weekly
+  # Actions are pinned to commit SHAs (threat model T11); Dependabot keeps
+  # the SHA and the version comment current.
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
