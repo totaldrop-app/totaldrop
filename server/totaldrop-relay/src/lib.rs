@@ -161,15 +161,15 @@ impl Relay {
         else {
             return;
         };
-        // `/v0/relay/<pair>` names the only two keys that may sign in here;
-        // plain `/v0/relay` takes any key.
-        let pair = match path.strip_prefix(PATH) {
-            Some("") => None,
-            Some(rest) => match rest.strip_prefix('/').and_then(wire::parse_pair_name) {
-                Some(p) => Some(p),
-                None => return,
-            },
-            None => return,
+        // `/v0/relay/<pair>` names the only two keys that may sign in here,
+        // and the only two that datagrams may pass between (as on the
+        // Cloudflare relay). Any other path is refused.
+        let Some(pair) = path
+            .strip_prefix(PATH)
+            .and_then(|rest| rest.strip_prefix('/'))
+            .and_then(wire::parse_pair_name)
+        else {
+            return;
         };
 
         // Sign in: the device proves it holds the endpoint key it claims.
@@ -186,7 +186,7 @@ impl Relay {
                 _ => return None,
             };
             let (key, signature) = hello;
-            if pair.is_some_and(|(a, b)| key != a && key != b) {
+            if key != pair.0 && key != pair.1 {
                 return None;
             }
             ring::signature::UnparsedPublicKey::new(&ring::signature::ED25519, key)
@@ -196,6 +196,7 @@ impl Relay {
         })
         .await;
         let Ok(Some(key)) = key else { return };
+        let other = if key == pair.0 { pair.1 } else { pair.0 };
 
         let (outbox, mut inbox) = mpsc::channel::<Vec<u8>>(self.config.queue);
         let id = self.next.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
@@ -230,13 +231,17 @@ impl Relay {
         });
 
         let started = Instant::now();
+        // Idle time counts from the last datagram: pings keep TCP alive but
+        // do not keep a connection that carries nothing.
+        let mut last_data = started;
         let mut budget = Budget::new(self.config.rate);
         let mut total: u64 = 0;
         loop {
             if started.elapsed() > self.config.session_time || writer.is_finished() {
                 break;
             }
-            let next = match tokio::time::timeout(self.config.idle, source.next()).await {
+            let wait = self.config.idle.saturating_sub(last_data.elapsed());
+            let next = match tokio::time::timeout(wait, source.next()).await {
                 Ok(Some(Ok(m))) => m,
                 _ => break,
             };
@@ -248,6 +253,11 @@ impl Relay {
             let Some((to, datagrams)) = wire::parse_frame(&frame) else {
                 break;
             };
+            // Only the other key of this pair is a destination.
+            if to != other {
+                break;
+            }
+            last_data = Instant::now();
             let payload: usize = datagrams.iter().map(|d| d.len()).sum();
             let size = u64::try_from(frame.len()).unwrap_or(u64::MAX);
             total = total.saturating_add(size);
@@ -345,7 +355,8 @@ pub async fn spawn(
     Ok((ws, udp, relay, task))
 }
 
-/// For tests: forwarding on `ws://127.0.0.1:<port>/v0/relay` and STUN on UDP
+/// For tests: forwarding on `ws://127.0.0.1:<port>/v0/relay` (clients add
+/// `/<key A>-<key B>`) and STUN on UDP
 /// `127.0.0.1:<port>`. Returns both, the relay and its task.
 pub async fn spawn_local(
     config: Config,
@@ -401,6 +412,145 @@ mod tests {
                 .await
                 .is_err()
         );
+    }
+
+    type Ws = tokio_tungstenite::WebSocketStream<
+        tokio_tungstenite::MaybeTlsStream<tokio::net::TcpStream>,
+    >;
+
+    fn keypair() -> (ring::signature::Ed25519KeyPair, [u8; 32]) {
+        use ring::signature::KeyPair;
+        let rng = ring::rand::SystemRandom::new();
+        let pkcs8 = ring::signature::Ed25519KeyPair::generate_pkcs8(&rng).unwrap();
+        let kp = ring::signature::Ed25519KeyPair::from_pkcs8(pkcs8.as_ref()).unwrap();
+        let public: [u8; 32] = kp.public_key().as_ref().try_into().unwrap();
+        (kp, public)
+    }
+
+    /// Connect to `url` and sign in with `kp`; `None` when the relay refuses.
+    async fn sign_in(
+        url: &str,
+        kp: &ring::signature::Ed25519KeyPair,
+        public: &[u8; 32],
+    ) -> Option<Ws> {
+        let (mut ws, _) = tokio_tungstenite::connect_async(url).await.ok()?;
+        let challenge = match tokio::time::timeout(Duration::from_secs(2), ws.next()).await {
+            Ok(Some(Ok(Message::Binary(b)))) => wire::parse_challenge(&b)?,
+            _ => return None,
+        };
+        let sig: [u8; 64] = kp
+            .sign(&wire::signed_bytes(&challenge))
+            .as_ref()
+            .try_into()
+            .ok()?;
+        ws.send(Message::Binary(wire::hello(public, &sig).into()))
+            .await
+            .ok()?;
+        match tokio::time::timeout(Duration::from_secs(2), ws.next()).await {
+            Ok(Some(Ok(Message::Binary(b)))) if wire::is_ok(&b) => Some(ws),
+            _ => None,
+        }
+    }
+
+    /// The next datagram frame on `ws` within `wait`, skipping pings.
+    async fn next_frame(ws: &mut Ws, wait: Duration) -> Option<Vec<u8>> {
+        let deadline = tokio::time::Instant::now().checked_add(wait).unwrap();
+        loop {
+            match tokio::time::timeout_at(deadline, ws.next()).await {
+                Ok(Some(Ok(Message::Binary(b)))) => return Some(b.to_vec()),
+                Ok(Some(Ok(Message::Ping(_) | Message::Pong(_)))) => {}
+                _ => return None,
+            }
+        }
+    }
+
+    /// Whether the relay closed `ws` within `wait`.
+    async fn closed(ws: &mut Ws, wait: Duration) -> bool {
+        let deadline = tokio::time::Instant::now().checked_add(wait).unwrap();
+        loop {
+            match tokio::time::timeout_at(deadline, ws.next()).await {
+                Err(_) => return false,
+                Ok(None | Some(Err(_)) | Some(Ok(Message::Close(_)))) => return true,
+                Ok(Some(Ok(_))) => {}
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn plain_path_is_refused() {
+        let (url, _stun, _relay, _task) = spawn_local(Config::default()).await.unwrap();
+        let (kp, public) = keypair();
+        assert!(sign_in(&url, &kp, &public).await.is_none());
+    }
+
+    /// A device can reach only the other key of its own pair; trying another
+    /// pair's key ends its connection and delivers nothing.
+    #[tokio::test]
+    async fn forwards_only_within_the_pair() {
+        let (url, _stun, relay, _task) = spawn_local(Config::default()).await.unwrap();
+        let (ka, a) = keypair();
+        let (kb, b) = keypair();
+        let (kc, c) = keypair();
+        let (kd, d) = keypair();
+        let ab = format!("{url}/{}", wire::pair_name(&a, &b));
+        let cd = format!("{url}/{}", wire::pair_name(&c, &d));
+        let mut wa = sign_in(&ab, &ka, &a).await.unwrap();
+        let mut wb = sign_in(&ab, &kb, &b).await.unwrap();
+        let mut wc = sign_in(&cd, &kc, &c).await.unwrap();
+        let _wd = sign_in(&cd, &kd, &d).await.unwrap();
+
+        // C, signed in on the C–D pair, aims at A.
+        wc.send(Message::Binary(wire::frame(&a, b"injected").into()))
+            .await
+            .unwrap();
+        assert!(closed(&mut wc, Duration::from_secs(2)).await);
+        assert!(
+            next_frame(&mut wa, Duration::from_millis(300))
+                .await
+                .is_none()
+        );
+        assert_eq!(relay.forwarded_bytes(), 0);
+
+        // Within the pair it works.
+        wb.send(Message::Binary(wire::frame(&a, b"hello").into()))
+            .await
+            .unwrap();
+        let got = next_frame(&mut wa, Duration::from_secs(2)).await.unwrap();
+        let (from, datagrams) = wire::parse_frame(&got).unwrap();
+        assert_eq!(from, b);
+        assert_eq!(datagrams, vec![&b"hello"[..]]);
+    }
+
+    /// Pings do not keep a connection that carries no datagrams.
+    #[tokio::test]
+    async fn pings_do_not_keep_an_idle_connection() {
+        let config = Config {
+            idle: Duration::from_millis(400),
+            ..Config::default()
+        };
+        let (url, _stun, _relay, _task) = spawn_local(config).await.unwrap();
+        let (ka, a) = keypair();
+        let (_kb, b) = keypair();
+        let mut wa = sign_in(&format!("{url}/{}", wire::pair_name(&a, &b)), &ka, &a)
+            .await
+            .unwrap();
+        let start = Instant::now();
+        let mut was_closed = false;
+        while start.elapsed() < Duration::from_secs(3) {
+            if wa.send(Message::Ping(Vec::new().into())).await.is_err() {
+                was_closed = true;
+                break;
+            }
+            if closed(&mut wa, Duration::from_millis(100)).await {
+                was_closed = true;
+                break;
+            }
+        }
+        assert!(
+            was_closed,
+            "a ping-only connection must be closed when idle"
+        );
+        assert!(start.elapsed() < Duration::from_secs(2));
     }
 
     #[tokio::test]

@@ -30,7 +30,8 @@ birbirlerine doğrudan ulaşamazlar. Aktarma sunucusu iki iş yapar:
   birbirine bağlayamaz.
 - İki cihaz, iki tek kullanımlık anahtarın adını taşıyan adreste buluşur
   (`/v0/relay/<anahtar A>-<anahtar B>`). Sunucu orada yalnızca bu iki
-  anahtarı kabul eder; başka biri araya giremez.
+  anahtarı kabul eder ve paketleri yalnızca bu ikisi arasında taşır; başka
+  biri araya giremez.
 - Sunucu adres, anahtar ya da trafik kaydı tutmaz; diske hiçbir şey yazmaz.
 - Her aktarım sınırlıdır: en çok 32 GiB ve 6 saat.
 - Alıcı, gönderenin `HINTS` içinde bildirdiği aktarma sunucusunu kullanır.

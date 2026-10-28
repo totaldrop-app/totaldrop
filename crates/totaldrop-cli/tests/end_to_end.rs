@@ -340,6 +340,64 @@ async fn scary_close_retires_the_nameplate() {
     assert_ne!(next.nameplate, n, "a retired nameplate must not be reused");
 }
 
+/// Both sides close `scary` after a wrong code; the attack-wave counter goes
+/// up once, not twice.
+#[tokio::test(flavor = "multi_thread")]
+async fn a_failed_code_counts_once() {
+    let (addr, server, _task) =
+        totaldrop_rendezvous::spawn("127.0.0.1:0".parse().unwrap(), Default::default())
+            .await
+            .unwrap();
+    let url = format!("ws://{addr}");
+    let alloc = rendezvous::allocate(&url).await.unwrap();
+    let n = alloc.nameplate;
+    let mut a = Mailbox::claim(&url, n, Some(&alloc)).await.unwrap();
+    let mut b = Mailbox::claim(&url, n, None).await.unwrap();
+    a.add("pake", vec![1; 32]).await.unwrap();
+    b.add("pake", vec![2; 32]).await.unwrap();
+    a.expect("pake").await.unwrap();
+    b.expect("pake").await.unwrap();
+    a.close(Mood::Scary).await;
+    b.close(Mood::Scary).await;
+    tokio::time::sleep(Duration::from_millis(200)).await;
+    assert_eq!(server.scary_count().await, 1);
+}
+
+/// A connection that never claims is closed at the claim deadline, pings or
+/// not.
+#[tokio::test(flavor = "multi_thread")]
+async fn an_unclaimed_connection_is_closed() {
+    use futures_util::{SinkExt, StreamExt};
+    use tokio_tungstenite::tungstenite::Message;
+    let config = totaldrop_rendezvous::Config {
+        claim_timeout: Duration::from_millis(400),
+        ..Default::default()
+    };
+    let (addr, _server, _task) =
+        totaldrop_rendezvous::spawn("127.0.0.1:0".parse().unwrap(), config)
+            .await
+            .unwrap();
+    let (mut ws, _) = tokio_tungstenite::connect_async(format!("ws://{addr}/v0/mailbox/7"))
+        .await
+        .unwrap();
+    let start = std::time::Instant::now();
+    let mut closed = false;
+    while start.elapsed() < Duration::from_secs(3) {
+        if ws.send(Message::Ping(Vec::new().into())).await.is_err() {
+            closed = true;
+            break;
+        }
+        if let Ok(None | Some(Err(_)) | Some(Ok(Message::Close(_)))) =
+            tokio::time::timeout(Duration::from_millis(100), ws.next()).await
+        {
+            closed = true;
+            break;
+        }
+    }
+    assert!(closed);
+    assert!(start.elapsed() < Duration::from_secs(2));
+}
+
 #[tokio::test(flavor = "multi_thread")]
 async fn expired_nameplates_cannot_be_claimed() {
     let config = totaldrop_rendezvous::Config {

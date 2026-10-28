@@ -132,6 +132,14 @@ All notable changes to TotalDrop are recorded here. The format follows
 
 ### Security
 
+- **Servers (self-hosted):** The Rust relay accepts only the pair path and
+  forwards datagrams only to the other key of the pair, as the Cloudflare
+  relay does; a ping-only connection is closed after 60 seconds without
+  datagrams. The Rust rendezvous server closes a connection that does not
+  allocate or claim within 10 seconds, pings or not, and counts a failed
+  code once instead of twice toward the attack-wave threshold
+  (GHSA-57x6-rcg9-m954).
+
 - **Core, command line:** In privacy mode (`--relay-only`, and the apps'
   new setting) a device refuses a direct connection even from the paired
   device, which could only dial an address it learned some other way; the
