@@ -11,8 +11,24 @@ permissions:
   contents: read
 
 jobs:
+  tag:
+    name: Tag matches and is on main
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Versions agree with the tag
+        run: packaging/check-versions.sh "$GITHUB_REF_NAME"
+      - name: The tagged commit is on main
+        run: |
+          git fetch --no-tags origin main
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/main
+
   verify:
     name: Checks and packages
+    needs: tag
     uses: ./.github/workflows/linux.yml
 
   release:
