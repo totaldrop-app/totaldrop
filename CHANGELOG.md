@@ -37,6 +37,13 @@ All notable changes to TotalDrop are recorded here. The format follows
   an English voice. Names from the other side show hidden direction
   characters. Safety-critical text stays English while its translation is
   an unreviewed draft, and Settings says when a translation is a draft.
+- **Site:** A language picker replaces the EN/TR button; the language
+  follows the browser (`navigator.languages`, with likely scripts, so
+  `zh-HK` would find Traditional Chinese) and translations load from
+  `/i18n/<lang>.json` on the same domain. Pages lay out right to left for
+  Arabic, Persian, Hebrew and Urdu (CSS logical properties); codes and
+  commands stay left to right. Receive links accept Turkish İ/ı and
+  Arabic-Indic digits in the code.
 - **Core:** `totaldrop-l10n`, the shared interface text for the Rust
   programs: all strings live in `l10n/`, one source with Android.
 
@@ -129,6 +136,9 @@ All notable changes to TotalDrop are recorded here. The format follows
 ## [linux-0.1.0-beta.3] - 2026-10-28
 
 ### Fixed
+
+- **Site:** The Turkish download page showed last release's version numbers;
+  CI now checks that versions in a translation match English.
 
 - **Linux:** sending no longer fails when this computer's firewall blocks
   incoming connections (as Omarchy's ufw does by default). Built on the core
