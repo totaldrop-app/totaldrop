@@ -11,8 +11,10 @@ All notable changes to TotalDrop are recorded here. The format follows
 
 - **Site:** The privacy policy (version 3) now says that the apps connect
   to the relay at the start of every transfer, not only when no direct path
-  works, as version 2 said. A coming version will connect only when needed
-  (#63).
+  works, as version 2 said, and that in privacy mode a receiver still uses
+  the relay the sender names. The android-0.1.0-beta.5 notes above said the
+  relay sees "only single-use keys, sizes and timing"; it also sees both IP
+  addresses. A coming version will connect only when needed (#63, #68).
 
 ### Security
 

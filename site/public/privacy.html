@@ -51,26 +51,28 @@
         <li>the number at the start of the code (for example the 7 in 7-harbor-rocket), but never the words;</li>
         <li>when you connect and the size of the short messages the two devices exchange. After the first two, these messages are encrypted so that only the other device can read them.</li>
       </ul>
-      <p>The server writes none of this to a log. A mailbox and everything in it is deleted as soon as both devices leave, and after one hour at the latest. After a failed code attempt, only the code's number is remembered for 24 hours, so that it is not reused.</p>
-      <p>Cloudflare, as our infrastructure provider, processes IP addresses to deliver and protect the service under its own <a href="https://www.cloudflare.com/privacypolicy/">privacy policy</a>. We have turned off request logging for the TotalDrop server.</p>
+      <p>The server writes none of this to a log. A mailbox and everything in it is deleted as soon as both devices leave, and after one hour at the latest. After every transfer the code's number rests for 10 minutes before it is given out again; after a failed code attempt, for 24 hours.</p>
+      <p>Cloudflare, as our infrastructure provider, processes IP addresses to deliver and protect the service under its own <a href="https://www.cloudflare.com/privacypolicy/">privacy policy</a>. The same applies to the relay. We have turned off request logs and Workers logging for both servers.</p>
 
       <h2>Finding a direct path</h2>
       <p>To connect across the internet, each device first asks a STUN server which public IP address and port it appears to have. By default this is Cloudflare's free STUN service at <code>stun.cloudflare.com</code>. It sees your IP address, as any internet server does, and nothing else.</p>
 
       <h2>What the relay sees</h2>
-      <p>In the current versions (Android 0.1.0-beta.5, Linux 0.1.0-beta.4, the command line 0.1.0-beta.2), both devices connect to our relay at <code>relay.totaldrop.app</code>, which runs on Cloudflare, at the start of <strong>every</strong> transfer, so that it is ready if no direct path works. When a direct path works, no file data passes through it, but it has still seen the connection. A coming version connects to the relay only when no direct path opens within about a second; this policy will say so when it ships. The relay sees:</p>
+      <p>In the current versions (Android 0.1.0-beta.5, Linux 0.1.0-beta.4, and the command line built from the repository since 28 October 2026), both devices connect to our relay at <code>relay.totaldrop.app</code>, which runs on Cloudflare, at the start of <strong>every</strong> transfer, so that it is ready if no direct path works. The connection stays open until the transfer ends. When a direct path works, no file data passes through the relay, at most a few encrypted connection-setup packets. A coming version will connect to the relay only when no direct path opens in time; this policy will say so when it ships. The relay sees:</p>
       <ul>
         <li>the IP address of each device;</li>
-        <li>two random keys that are made for this one transfer and never used again, so one transfer cannot be linked to another;</li>
-        <li>that two devices met, when, and how much encrypted data passes (none, when the transfer goes directly).</li>
+        <li>two random keys made for this one transfer and never used again;</li>
+        <li>when each device connected and disconnected, and how much encrypted data passed.</li>
       </ul>
-      <p>It cannot read the files, their names or anything about who you are. It writes nothing to a log and keeps nothing once the transfer ends. In privacy mode (<code>--relay-only</code> in the command line), every transfer goes through the relay and the other device never learns your IP address.</p>
+      <p>The keys do not link one transfer to another, but your IP address can: the relay and the rendezvous server, both run by us on Cloudflare, see it moments apart. The relay cannot read the files, their names or anything about who you are. It writes nothing to a log and keeps nothing about the transfer once it ends.</p>
+      <p>If the sender uses a relay of its own (the command line's <code>--relay</code> option), the receiving device connects to that relay instead, and whoever runs it sees what is listed above.</p>
+      <p>Privacy mode (<code>--relay-only</code>, in the command line only): when you send, every transfer goes through the relay and the other device does not learn your IP address. When you receive, your device uses the relay the sender names, so a sender who runs their own relay can still learn your IP address.</p>
 
       <h2>What the other device sees</h2>
-      <p>To connect directly, the two devices exchange their network addresses with each other, encrypted. The device you send to therefore learns your local and public IP address, as with any direct connection, unless you use privacy mode.</p>
+      <p>To connect directly, the two devices exchange their network addresses with each other, encrypted. Each device therefore learns the other's local and public IP address, as with any direct connection, unless privacy mode is used as described above.</p>
 
       <h2>On your device</h2>
-      <p>Received files are saved in the <em>Download/TotalDrop</em> folder. The app stores one setting, the rendezvous server address. Nothing from the app is included in cloud backups.</p>
+      <p>Received files are saved in <em>Download/TotalDrop</em> on Android and in <em>~/Downloads/TotalDrop</em> on Linux. The apps store one setting, the rendezvous server address (on Linux in <em>~/.config/totaldrop/settings.toml</em>). Nothing from the Android app is included in cloud backups.</p>
 
       <h2>Children</h2>
       <p>TotalDrop is not directed at children and collects no personal data from anyone.</p>
@@ -79,7 +81,7 @@
       <p>Because we hold no personal data about you, there is nothing to access, correct or delete. If you have a question or a complaint, write to us at the address above. You also have the right to complain to your data protection authority.</p>
 
       <h2>Changes</h2>
-      <p>Version 3 corrects version 2, which said the apps reach the relay only when no direct path works: today they connect to it at the start of every transfer. Version 2 added the STUN service and the relay. Features planned for later versions (links, optional anonymous accounts) will change what our servers handle. We will update this policy before any such feature ships, and keep every version in the project's public repository.</p>
+      <p>Version 3 corrects version 2, which said the apps reach the relay only when no direct path works (today they connect to it at the start of every transfer) and that privacy mode hides a receiver's address. It also names the Linux app's files. Version 2 added the STUN service and the relay. Features planned for later versions (links, optional anonymous accounts) will change what our servers handle. We will update this policy before any such feature ships, and keep every version in the project's public repository.</p>
     </article>
 
     <article id="tr" lang="tr">
@@ -103,26 +105,28 @@
         <li>kodun başındaki sayı (örneğin 7-harbor-rocket'taki 7), ama kelimeleri asla;</li>
         <li>ne zaman bağlandığınız ve iki cihazın değiştirdiği kısa mesajların boyutu. İlk ikisinden sonra bu mesajlar yalnızca karşı cihazın okuyabileceği şekilde şifrelidir.</li>
       </ul>
-      <p>Sunucu bunların hiçbirini kayda geçirmez. Bir posta kutusu ve içindeki her şey, iki cihaz da ayrılır ayrılmaz, en geç bir saat sonra silinir. Başarısız bir kod denemesinden sonra yalnızca kodun sayısı, yeniden kullanılmasın diye 24 saat hatırlanır.</p>
-      <p>Altyapı sağlayıcımız Cloudflare, hizmeti ulaştırmak ve korumak için IP adreslerini kendi <a href="https://www.cloudflare.com/privacypolicy/">gizlilik politikası</a> kapsamında işler. TotalDrop sunucusu için istek kaydını kapattık.</p>
+      <p>Sunucu bunların hiçbirini kayda geçirmez. Bir posta kutusu ve içindeki her şey, iki cihaz da ayrılır ayrılmaz, en geç bir saat sonra silinir. Her aktarımdan sonra kodun sayısı yeniden verilmeden önce 10 dakika bekletilir; başarısız bir kod denemesinden sonra 24 saat.</p>
+      <p>Altyapı sağlayıcımız Cloudflare, hizmeti ulaştırmak ve korumak için IP adreslerini kendi <a href="https://www.cloudflare.com/privacypolicy/">gizlilik politikası</a> kapsamında işler. Aynısı aktarma sunucusu için de geçerlidir. İki sunucu için de istek kayıtlarını ve Workers günlüklerini kapattık.</p>
 
       <h2>Doğrudan yolu bulmak</h2>
       <p>İnternet üzerinden bağlanmak için her cihaz önce bir STUN sunucusuna hangi genel IP adresi ve portla göründüğünü sorar. Varsayılan olarak bu, Cloudflare'in ücretsiz STUN hizmetidir (<code>stun.cloudflare.com</code>). Bu hizmet, her internet sunucusu gibi IP adresinizi görür; başka hiçbir şey görmez.</p>
 
       <h2>Aktarma sunucusu neyi görür</h2>
-      <p>Bugünkü sürümlerde (Android 0.1.0-beta.5, Linux 0.1.0-beta.4, komut satırı 0.1.0-beta.2) iki cihaz da, doğrudan yol açılmazsa hazır olsun diye, <strong>her</strong> aktarımın başında Cloudflare üzerinde çalışan aktarma sunucumuza (<code>relay.totaldrop.app</code>) bağlanır. Doğrudan yol çalıştığında üzerinden dosya verisi geçmez, ama bağlantıyı yine de görmüş olur. Gelecek bir sürüm, aktarma sunucusuna yalnızca yaklaşık bir saniye içinde doğrudan yol açılmazsa bağlanacak; o sürüm çıktığında bu politika bunu söyleyecek. Sunucu şunları görür:</p>
+      <p>Bugünkü sürümlerde (Android 0.1.0-beta.5, Linux 0.1.0-beta.4 ve 28 Ekim 2026'dan beri depodan derlenen komut satırı) iki cihaz da, doğrudan yol açılmazsa hazır olsun diye, <strong>her</strong> aktarımın başında Cloudflare üzerinde çalışan aktarma sunucumuza (<code>relay.totaldrop.app</code>) bağlanır. Bağlantı aktarım bitene kadar açık kalır. Doğrudan yol çalıştığında aktarma sunucusundan dosya verisi geçmez; en fazla birkaç şifreli bağlantı kurma paketi geçer. Gelecek bir sürüm aktarma sunucusuna yalnızca doğrudan yol zamanında açılmazsa bağlanacak; o sürüm çıktığında bu politika bunu söyleyecek. Sunucu şunları görür:</p>
       <ul>
         <li>her cihazın IP adresi;</li>
-        <li>yalnızca bu aktarım için üretilen ve bir daha kullanılmayan iki rastgele anahtar; böylece bir aktarım bir başkasıyla ilişkilendirilemez;</li>
-        <li>iki cihazın buluştuğu, ne zaman buluştuğu ve ne kadar şifreli veri geçtiği (doğrudan aktarımda hiç).</li>
+        <li>yalnızca bu aktarım için üretilen ve bir daha kullanılmayan iki rastgele anahtar;</li>
+        <li>her cihazın ne zaman bağlanıp ayrıldığı ve ne kadar şifreli veri geçtiği.</li>
       </ul>
-      <p>Dosyaları, adlarını ya da kim olduğunuza dair herhangi bir şeyi okuyamaz. Hiçbir şeyi kayda geçirmez ve aktarım bitince hiçbir şey saklamaz. Gizlilik modunda (komut satırında <code>--relay-only</code>) her aktarım aktarma sunucusundan geçer ve karşı cihaz IP adresinizi hiç öğrenmez.</p>
+      <p>Anahtarlar bir aktarımı bir başkasıyla ilişkilendirmez, ama IP adresiniz ilişkilendirebilir: ikisini de Cloudflare üzerinde bizim çalıştırdığımız aktarma sunucusu ve buluşma sunucusu, adresinizi birkaç saniye arayla görür. Aktarma sunucusu dosyaları, adlarını ya da kim olduğunuza dair herhangi bir şeyi okuyamaz. Hiçbir şeyi kayda geçirmez ve aktarım bitince aktarımla ilgili hiçbir şey saklamaz.</p>
+      <p>Gönderen kendi aktarma sunucusunu kullanıyorsa (komut satırındaki <code>--relay</code> seçeneği), alan cihaz o sunucuya bağlanır ve onu çalıştıran kişi yukarıdakileri görür.</p>
+      <p>Gizlilik modu (<code>--relay-only</code>, yalnızca komut satırında): gönderirken her aktarım aktarma sunucusundan geçer ve karşı cihaz IP adresinizi öğrenmez. Alırken cihazınız gönderenin bildirdiği aktarma sunucusunu kullanır; bu yüzden kendi aktarma sunucusunu çalıştıran bir gönderen IP adresinizi yine öğrenebilir.</p>
 
       <h2>Karşı cihaz neyi görür</h2>
-      <p>Doğrudan bağlanabilmek için iki cihaz ağ adreslerini birbirine şifreli olarak iletir. Bu yüzden gönderdiğiniz cihaz, gizlilik modunu kullanmadığınız sürece, her doğrudan bağlantıda olduğu gibi yerel ve genel IP adresinizi öğrenir.</p>
+      <p>Doğrudan bağlanabilmek için iki cihaz ağ adreslerini birbirine şifreli olarak iletir. Bu yüzden her cihaz, her doğrudan bağlantıda olduğu gibi, karşı cihazın yerel ve genel IP adresini öğrenir; yukarıda anlatılan gizlilik modu kullanılmadıkça.</p>
 
       <h2>Cihazınızda</h2>
-      <p>Alınan dosyalar <em>İndirilenler/TotalDrop</em> klasörüne kaydedilir. Uygulama tek bir ayar saklar: buluşma sunucusunun adresi. Uygulamaya ait hiçbir şey bulut yedeklerine alınmaz.</p>
+      <p>Alınan dosyalar Android'de <em>İndirilenler/TotalDrop</em>, Linux'ta <em>~/Downloads/TotalDrop</em> klasörüne kaydedilir. Uygulamalar tek bir ayar saklar: buluşma sunucusunun adresi (Linux'ta <em>~/.config/totaldrop/settings.toml</em> içinde). Android uygulamasına ait hiçbir şey bulut yedeklerine alınmaz.</p>
 
       <h2>Çocuklar</h2>
       <p>TotalDrop çocuklara yönelik değildir ve kimseden kişisel veri toplamaz.</p>
@@ -131,7 +135,7 @@
       <p>Hakkınızda hiçbir kişisel veri tutmadığımız için erişilecek, düzeltilecek ya da silinecek bir şey yoktur. Bir sorunuz ya da şikâyetiniz varsa yukarıdaki adrese yazın. Kişisel Verileri Koruma Kurumu'na ya da bulunduğunuz ülkedeki veri koruma otoritesine başvurma hakkınız da vardır.</p>
 
       <h2>Değişiklikler</h2>
-      <p>3. sürüm, uygulamaların aktarma sunucusuna yalnızca doğrudan yol açılmadığında bağlandığını söyleyen 2. sürümü düzeltir: bugün her aktarımın başında bağlanırlar. 2. sürüm STUN hizmetini ve aktarma sunucusunu eklemişti. Sonraki sürümlerde planlanan özellikler (bağlantılar, isteğe bağlı anonim hesaplar) sunucularımızın işlediği bilgileri değiştirecek. Bu politikayı, böyle bir özellik yayınlanmadan önce güncelleyeceğiz ve her sürümünü projenin açık deposunda saklayacağız.</p>
+      <p>3. sürüm 2. sürümü düzeltir: 2. sürüm uygulamaların aktarma sunucusuna yalnızca doğrudan yol açılmadığında bağlandığını (bugün her aktarımın başında bağlanırlar) ve gizlilik modunun alıcının adresini de gizlediğini söylüyordu. Ayrıca Linux uygulamasının dosyalarını da anlatır. 2. sürüm STUN hizmetini ve aktarma sunucusunu eklemişti. Sonraki sürümlerde planlanan özellikler (bağlantılar, isteğe bağlı anonim hesaplar) sunucularımızın işlediği bilgileri değiştirecek. Bu politikayı, böyle bir özellik yayınlanmadan önce güncelleyeceğiz ve her sürümünü projenin açık deposunda saklayacağız.</p>
     </article>
   </main>
 

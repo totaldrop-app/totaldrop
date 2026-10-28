@@ -46,6 +46,13 @@ Her iki cihaz aynı anda şunları dener:
 | Açık adres (adres bulma ile) | hemen, NAT delme için |
 | Aktarma sunucusu | 1,2 saniye sonra, doğrudan yol açılmadıysa |
 
+Aktarma sunucusuna WebSocket bağlantısı ise bu sürümde her aktarımın başında
+açılır ve aktarım bitene kadar açık kalır; sunucu bu yüzden doğrudan
+aktarımlarda da iki cihazın IP adresini görür. Bağlantının yalnızca
+gerektiğinde açılması [#63](https://github.com/totaldrop-app/totaldrop/issues/63)'te.
+Alan cihaz, gönderenin bildirdiği aktarma sunucusunu kullanır; gizlilik
+modunda da ([#68](https://github.com/totaldrop-app/totaldrop/issues/68)).
+
 İlk açılan bağlantı kullanılır. Gizlilik modunda (`--relay-only`) cihaz hiçbir
 IP adresi bildirmez ve yalnızca aktarma sunucusunu kullanır.
 
