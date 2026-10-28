@@ -20,6 +20,7 @@
   "cliReceiveSomeFailed": "{count, plural, other{{count} dosya sağlam ulaşmadı ve atıldı.}}",
   "cliRelayOnlyNeedsRelay": "--relay-only için bir aktarma sunucusu gerekir",
   "cliStopping": "Durduruluyor… (hemen çıkmak için Ctrl-C'ye yeniden basın)",
-  "cliStopped": "Durduruldu. Karşı tarafa bildirildi; yarım kalan dosyalar silindi.",
-  "cliNoFolder": "{folder} bir klasör değil."
+  "cliStopped": "Durduruldu.",
+  "cliNoFolder": "{folder} yok ya da bir klasör değil.",
+  "cliFolderNotWritable": "{folder} klasörüne yazılamıyor."
 }
