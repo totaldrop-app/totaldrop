@@ -74,6 +74,14 @@ Page {
 
             Label { text: Strings.s.settingsAbout; color: Theme.ink; font.pointSize: Qt.application.font.pointSize * 1.25; font.weight: Font.DemiBold }
             Label { text: Strings.s.settingsAboutBody; color: Theme.ink; wrapMode: Text.Wrap; Layout.fillWidth: true }
+            Label {
+                visible: Strings.draft
+                text: Strings.s.draftTranslation
+                color: Theme.muted
+                wrapMode: Text.Wrap
+                Layout.fillWidth: true
+                Layout.topMargin: Theme.s8
+            }
             Label { text: Strings.f("settingsVersion", { version: Qt.application.version }); color: Theme.muted; Layout.topMargin: Theme.s8 }
             Label {
                 text: "<a href=\"https://totaldrop.app\">totaldrop.app</a>"

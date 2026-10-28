@@ -34,6 +34,7 @@ Depends: ${shlibs:Depends},
 Recommends: xdg-desktop-portal-gtk | xdg-desktop-portal-kde,
             adwaita-icon-theme | breeze-icon-theme,
             fonts-noto-core | fonts-dejavu-core
+Suggests: fonts-noto-cjk
 Suggests: qml6-module-org-kde-desktop
 Description: send files straight to another device, end-to-end encrypted
  TotalDrop sends files and folders from one device to another, end to end

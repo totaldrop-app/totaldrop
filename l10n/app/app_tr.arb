@@ -88,5 +88,17 @@
   "sizeGB": "{value} GB",
   "sizeTB": "{value} TB",
   "sizePB": "{value} PB",
-  "draftTranslation": "Bu çeviri gözden geçiriliyor. Weblate'te iyileştirmeye yardım edin."
+  "draftTranslation": "Bu çeviri gözden geçiriliyor. Weblate'te iyileştirmeye yardım edin.",
+
+  "sendDropHere": "Dosyaları buraya bırakın",
+  "sendDropHint": "Dosyaları bu pencereye sürükleyip de ekleyebilirsiniz.",
+  "sendQrHint": "Ya da bu kodu diğer cihazın kamerasıyla okutun.",
+  "sendWaitingAccept": "Kelimeleri karşılaştırın, ardından alıcının kabul etmesini bekleyin.",
+  "receiveFromImage": "Resimden QR oku",
+  "receiveQrNotFound": "Bu resimde TotalDrop kodu yok.",
+  "pickTitle": "Gönderilecek dosyaları seçin",
+  "pickImageTitle": "QR kodlu bir resim seçin",
+  "openFolder": "Klasörü aç",
+  "back": "Geri",
+  "codeSuggestions": "Öneriler"
 }
