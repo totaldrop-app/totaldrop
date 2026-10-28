@@ -595,6 +595,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This translation is being reviewed. Help improve it on Weblate.'**
   String get draftTranslation;
+
+  /// No description provided for @sendDropHere.
+  ///
+  /// In en, this message translates to:
+  /// **'Drop files here'**
+  String get sendDropHere;
+
+  /// No description provided for @sendDropHint.
+  ///
+  /// In en, this message translates to:
+  /// **'You can also drag files onto this window.'**
+  String get sendDropHint;
+
+  /// No description provided for @sendQrHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Or scan this code with the other device\'s camera.'**
+  String get sendQrHint;
+
+  /// No description provided for @sendWaitingAccept.
+  ///
+  /// In en, this message translates to:
+  /// **'Check the words, then wait for the receiver to accept.'**
+  String get sendWaitingAccept;
+
+  /// No description provided for @receiveFromImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Read QR from image'**
+  String get receiveFromImage;
+
+  /// No description provided for @receiveQrNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'There is no TotalDrop code in that image.'**
+  String get receiveQrNotFound;
+
+  /// No description provided for @pickTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose files to send'**
+  String get pickTitle;
+
+  /// No description provided for @pickImageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose an image with a QR code'**
+  String get pickImageTitle;
+
+  /// No description provided for @openFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Open folder'**
+  String get openFolder;
+
+  /// No description provided for @back.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get back;
+
+  /// No description provided for @codeSuggestions.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggestions'**
+  String get codeSuggestions;
+
+  /// Transfer progress; use your language's percent style
+  ///
+  /// In en, this message translates to:
+  /// **'{percent}%'**
+  String progressPercent(int percent);
 }
 
 class _AppLocalizationsDelegate
