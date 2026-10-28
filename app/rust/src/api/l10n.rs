@@ -26,7 +26,7 @@ pub fn reveal_controls(name: String) -> String {
 /// is a safety-critical string nobody has reviewed yet.
 #[flutter_rust_bridge::frb(sync)]
 pub fn needs_english(tag: String, key: String) -> bool {
-    totaldrop_l10n::is_critical(&key) && totaldrop_l10n::is_draft(&tag, &key)
+    totaldrop_l10n::needs_english(&tag, &key)
 }
 
 /// Whether some text in language `tag` is an unreviewed draft.
@@ -50,6 +50,7 @@ mod tests {
     fn critical_strings() {
         assert!(!needs_english("tr".into(), "verificationTitle".into()));
         assert!(!needs_english("xx".into(), "settings".into()));
-        assert!(needs_english("xx".into(), "verificationTitle".into()));
+        // No file for xx: the text is English already.
+        assert!(!needs_english("xx".into(), "verificationTitle".into()));
     }
 }
