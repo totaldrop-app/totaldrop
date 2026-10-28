@@ -126,18 +126,34 @@ fn paths(relay: Option<String>, stun: Option<String>, relay_only: bool) -> PathO
 }
 
 /// Ctrl-C stops the transfer cleanly: the other side is told and partial
-/// files are removed. A second Ctrl-C quits at once.
+/// files are removed. A second Ctrl-C quits at once, cleanup or not.
 fn stop_on_ctrl_c(s: &Arc<Strings>) -> Stop {
     let stop = Stop::new();
     let (handle, s) = (stop.clone(), Arc::clone(s));
+    // Registered here, before anything runs, so no Ctrl-C slips past.
+    #[cfg(unix)]
+    let mut interrupt =
+        match tokio::signal::unix::signal(tokio::signal::unix::SignalKind::interrupt()) {
+            Ok(i) => i,
+            Err(_) => return stop,
+        };
     tokio::spawn(async move {
-        if tokio::signal::ctrl_c().await.is_ok() {
-            eprintln!();
-            eprintln!("{}", s.get("cliStopping", &[]));
-            handle.stop();
-            if tokio::signal::ctrl_c().await.is_ok() {
-                std::process::exit(130);
-            }
+        #[cfg(unix)]
+        let first = interrupt.recv().await.is_some();
+        #[cfg(not(unix))]
+        let first = tokio::signal::ctrl_c().await.is_ok();
+        if !first {
+            return;
+        }
+        eprintln!();
+        eprintln!("{}", s.get("cliStopping", &[]));
+        handle.stop();
+        #[cfg(unix)]
+        let again = interrupt.recv().await.is_some();
+        #[cfg(not(unix))]
+        let again = tokio::signal::ctrl_c().await.is_ok();
+        if again {
+            std::process::exit(130);
         }
     });
     stop
@@ -206,13 +222,21 @@ async fn receive(
         Some(d) => d,
         None => std::env::current_dir()?,
     };
-    // Check the destination before the code is used up.
-    if !std::fs::metadata(&dest).is_ok_and(|m| m.is_dir()) {
-        let shown = dest.display().to_string();
-        return Err(totaldrop_core::Error::Io(std::io::Error::other(
-            s.get("cliNoFolder", &[("folder", Arg::Text(&shown))]),
-        )));
-    }
+    // Check the destination, as the core will, before the code is used up.
+    let dest = match totaldrop_core::check_destination(&dest) {
+        Ok(d) => d,
+        Err(totaldrop_core::Error::Io(e)) => {
+            let shown = dest.display().to_string();
+            let key = match e.kind() {
+                std::io::ErrorKind::NotFound | std::io::ErrorKind::NotADirectory => "cliNoFolder",
+                _ => "cliFolderNotWritable",
+            };
+            return Err(totaldrop_core::Error::Io(std::io::Error::other(
+                s.get(key, &[("folder", Arg::Text(&shown))]),
+            )));
+        }
+        Err(e) => return Err(e),
+    };
     let stop = stop_on_ctrl_c(&s);
     eprintln!("{}", s.get("cliConnecting", &[]));
     let offer =
@@ -261,7 +285,8 @@ async fn receive(
         }
     };
     if stop.is_stopped() {
-        offer.decline().await?;
+        // Best effort: the sender may be gone already; stopping is the answer.
+        let _ = offer.decline().await;
         return Err(totaldrop_core::Error::Stopped);
     }
     if !accepted {
@@ -346,6 +371,9 @@ fn main() -> ExitCode {
             runtime.block_on(receive(strings, server(cli.server), route, code, out, yes))
         }
     };
+    // A question still waiting for a line on stdin, or hashing a stopped
+    // send left running, must not keep the process alive.
+    runtime.shutdown_background();
     match result {
         Ok(()) => ExitCode::SUCCESS,
         Err(totaldrop_core::Error::Stopped) => {

@@ -35,7 +35,9 @@
   "@cliRelayOnlyNeedsRelay": {"description": "--relay-only is an option name and stays as it is"},
   "cliStopping": "Stopping… (press Ctrl-C again to quit at once)",
   "@cliStopping": {"description": "Ctrl-C is the key name and stays as it is"},
-  "cliStopped": "Stopped. The other side was told; unfinished files were removed.",
-  "cliNoFolder": "{folder} is not a folder.",
-  "@cliNoFolder": {"placeholders": {"folder": {"type": "String", "example": "/home/ada/Downloads"}}}
+  "cliStopped": "Stopped.",
+  "cliNoFolder": "{folder} does not exist or is not a folder.",
+  "@cliNoFolder": {"placeholders": {"folder": {"type": "String", "example": "/home/ada/Downloads"}}},
+  "cliFolderNotWritable": "Cannot write to {folder}.",
+  "@cliFolderNotWritable": {"placeholders": {"folder": {"type": "String", "example": "/home/ada/Downloads"}}}
 }
