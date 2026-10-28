@@ -54,6 +54,10 @@ class SendViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  @visibleForTesting
+  void addFakeFileForTest(String name) =>
+      _files.add(PickedFile(name: name, path: '/tmp/$name', size: 1));
+
   void remove(PickedFile f) {
     _files.remove(f);
     notifyListeners();
@@ -83,7 +87,11 @@ class SendViewModel extends ChangeNotifier {
       if (generation == _generation) _fail(e);
       return;
     }
-    if (generation != _generation) return;
+    if (generation != _generation) {
+      // Prepared just before a stop: release the code now, not at GC.
+      session.dispose();
+      return;
+    }
     code = session.code;
     total = session.totalBytes;
     stage = SendStage.waiting;
