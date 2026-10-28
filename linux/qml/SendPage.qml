@@ -39,20 +39,27 @@ Page {
             // A folder is -1 bytes until measured off the GUI thread.
             if (Number(bytes) < 0) page.transfer.measure(p)
         }
+        recalc()
     }
     function paths() {
         const out = []
         for (let i = 0; i < files.count; i++) out.push(files.get(i).path)
         return out
     }
-    function totalBytes() {
+    // Kept as properties: a binding that reads ListModel.get() is not
+    // re-evaluated when a row's size arrives, so every change calls recalc().
+    property real totalBytes: 0
+    property bool counting: false
+    function recalc() {
         let t = 0
-        for (let i = 0; i < files.count; i++) t += Math.max(files.get(i).bytes, 0)
-        return t
-    }
-    function counting() {
-        for (let i = 0; i < files.count; i++) if (files.get(i).bytes < 0) return true
-        return false
+        let c = false
+        for (let i = 0; i < files.count; i++) {
+            const b = files.get(i).bytes
+            if (b < 0) c = true
+            else t += b
+        }
+        totalBytes = t
+        counting = c
     }
 
     Connections {
@@ -61,6 +68,7 @@ Page {
         function onMeasured(path, bytes) {
             for (let i = 0; i < files.count; i++)
                 if (files.get(i).path === path) files.setProperty(i, "bytes", bytes)
+            page.recalc()
         }
     }
 
@@ -161,7 +169,7 @@ Page {
                             text: Strings.s.sendRemove
                             ToolTip.visible: hovered
                             ToolTip.text: text
-                            onClicked: files.remove(row.index)
+                            onClicked: { files.remove(row.index); page.recalc() }
                         }
                     }
                 }
@@ -180,7 +188,7 @@ Page {
                 spacing: Theme.s8
                 Layout.fillWidth: true
                 Label {
-                    text: Strings.f("itemsAndSize", { count: files.count, size: page.counting() ? Strings.s.sendCounting : Strings.size(page.totalBytes()) })
+                    text: Strings.f("itemsAndSize", { count: files.count, size: page.counting ? Strings.s.sendCounting : Strings.size(page.totalBytes) })
                     color: Theme.muted
                     font.features: { "tnum": 1 }
                 }
@@ -356,7 +364,7 @@ Page {
             detail: page.phase === "done" ? "" : page.transfer.errorDetail
             canRetry: page.phase === "failed"
             onRetry: page.transfer.send(page.paths(), page.strong)
-            onFinished: { page.transfer.reset(); files.clear(); page.close() }
+            onFinished: { page.transfer.reset(); files.clear(); page.recalc(); page.close() }
         }
     }
 
