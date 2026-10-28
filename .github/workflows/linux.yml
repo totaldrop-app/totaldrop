@@ -37,7 +37,7 @@ jobs:
     steps:
       - name: Qt 6 and the toolchain
         run: pacman -Syu --noconfirm --needed base-devel git rustup qt6-base qt6-declarative qt6-wayland qt6-svg
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - run: rustup toolchain install "$RUSTUP_TOOLCHAIN" --profile minimal -c clippy,rustfmt
@@ -54,11 +54,11 @@ jobs:
       matrix:
         format: [arch, deb, rpm]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - run: packaging/build.sh ${{ matrix.format }}
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: totaldrop-linux-${{ matrix.format }}
           path: dist/packages/*
@@ -76,7 +76,7 @@ jobs:
       id-token: write
       attestations: write
     steps:
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           path: packages
           merge-multiple: true
@@ -87,7 +87,7 @@ jobs:
         run: |
           for f in *~*; do [ -e "$f" ] && mv "$f" "${f//\~/.}"; done
           sha256sum * > SHA256SUMS
-      - uses: actions/attest-build-provenance@v4
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
           subject-path: "packages/*.pkg.tar.zst, packages/*.deb, packages/*.rpm"
       - name: Draft release
