@@ -251,8 +251,21 @@ impl qobject::Transfer {
             .generation
             .fetch_add(1, Ordering::SeqCst)
             + 1;
+        // Whatever ran before stops, and an offer it left is declined.
         if let Ok(mut s) = self.rust().session.stop.lock() {
-            *s = Stop::new();
+            std::mem::replace(&mut *s, Stop::new()).stop();
+        }
+        let left = self
+            .rust()
+            .session
+            .offer
+            .lock()
+            .ok()
+            .and_then(|mut o| o.take());
+        if let Some(offer) = left {
+            RUNTIME.spawn(async move {
+                let _ = offer.decline().await;
+            });
         }
         self.as_mut().set_role(QString::from(role));
         self.as_mut().set_code(QString::default());
@@ -420,8 +433,19 @@ impl qobject::Transfer {
                 Ok(offer) => {
                     let s = offer.summary().clone();
                     let words = offer.words().to_vec();
-                    if let Ok(mut o) = session.offer.lock() {
-                        *o = Some(offer);
+                    // Cancel bumps the generation before it takes the offer,
+                    // so an offer that comes back after a cancel is told to
+                    // stop here instead of being kept.
+                    let stale = match session.offer.lock() {
+                        Ok(mut o) if session.generation.load(Ordering::SeqCst) == g => {
+                            *o = Some(offer);
+                            None
+                        }
+                        _ => Some(offer),
+                    };
+                    if let Some(offer) = stale {
+                        let _ = offer.stop().await;
+                        return;
                     }
                     let _ = thread.queue(move |mut obj| {
                         if !obj.current(g) {

@@ -53,7 +53,11 @@ class ReceiveViewModel extends ChangeNotifier {
     try {
       final o = await _repo.connect(code, stopper);
       final f = await _repo.receiveFolder();
-      if (generation != _generation) return;
+      if (generation != _generation) {
+        // Arrived just after a stop: tell the sender, do not keep it open.
+        unawaited(_repo.decline(o).catchError((Object _) {}));
+        return;
+      }
       offer = o;
       folder = f;
       stage = ReceiveStage.offered;
@@ -146,6 +150,10 @@ class ReceiveViewModel extends ChangeNotifier {
 
   @override
   void dispose() {
+    final o = offer;
+    if (stage == ReceiveStage.offered && o != null) {
+      unawaited(_repo.decline(o).catchError((Object _) {}));
+    }
     cancel();
     _sub?.cancel();
     super.dispose();
