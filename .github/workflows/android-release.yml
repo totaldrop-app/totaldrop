@@ -39,6 +39,8 @@ jobs:
       - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
         with:
           channel: stable
+          # The signed bundle is built with a known Flutter, not the day's.
+          flutter-version: 3.47.8
       - name: Rust toolchain and Android targets
         working-directory: .
         run: rustup show active-toolchain || rustup toolchain install

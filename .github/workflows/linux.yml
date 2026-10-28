@@ -20,7 +20,7 @@ jobs:
   check:
     name: Format, Clippy, tests
     runs-on: ubuntu-latest
-    container: archlinux:latest
+    container: archlinux:latest@sha256:e82623936fa1a69700b48e98b058df6eaab18b737c27473a7234a40fdecb9413
     steps:
       - name: Qt 6 and the toolchain
         run: pacman -Syu --noconfirm --needed base-devel git rustup qt6-base qt6-declarative qt6-wayland qt6-svg
@@ -28,6 +28,8 @@ jobs:
         with:
           persist-credentials: false
       - run: rustup toolchain install "$RUSTUP_TOOLCHAIN" --profile minimal -c clippy,rustfmt
+      - name: Versions agree
+        run: packaging/check-versions.sh
       - run: cargo fmt -p totaldrop-linux -- --check
       - run: cargo clippy -p totaldrop-linux --all-targets --locked -- -D warnings
       - run: cargo test -p totaldrop-linux --locked

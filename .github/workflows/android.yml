@@ -25,6 +25,7 @@ jobs:
       - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
         with:
           channel: stable
+          flutter-version: 3.47.8
       - run: flutter pub get --enforce-lockfile
       # Generated from l10n/: must be committed and current.
       - name: Localizations are current
@@ -58,6 +59,7 @@ jobs:
       - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
         with:
           channel: stable
+          flutter-version: 3.47.8
       # rustup reads rust-toolchain.toml, which lists the Android targets.
       - name: Rust toolchain and Android targets
         working-directory: .

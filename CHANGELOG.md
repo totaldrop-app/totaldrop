@@ -86,6 +86,14 @@ All notable changes to TotalDrop are recorded here. The format follows
 
 ### Security
 
+- **Build:** A Linux release starts only from a tag on `main` whose version
+  matches `linux/Cargo.toml`, the PKGBUILD, the RPM spec, the Debian
+  changelog and the AppStream metainfo; every PR checks that the files
+  agree. All packages are built with the pinned Rust (the Arch package used
+  Arch's own), the Android bundle with a pinned Flutter, from base images
+  pinned by digest, and the source archive carries the last commit's time
+  (#90).
+
 - **Build:** Linux packages are built only in CI from a release tag and
   carry signed build provenance, so anyone can check that a package came
   from this repository: `gh attestation verify <file> --repo
