@@ -2,9 +2,13 @@
 //! that TotalDrop's ARB files use: `{name}`, `{n, plural, =1{…} one{…}
 //! other{…}}` and `{x, select, a{…} other{…}}`.
 //!
-//! Apostrophes are plain text, as in Flutter's gen_l10n without
-//! `use-escaping`. There is no `#` shorthand: the count is written as
-//! `{count}` inside the case.
+//! It follows Flutter's gen_l10n so the same ARB string reads the same on
+//! Android and in the Rust programs: apostrophes are plain text (no
+//! `use-escaping`), there is no `#` shorthand, and `=0`, `=1`, `=2` are the
+//! same cases as `zero`, `one`, `two` (gen_l10n passes them to
+//! `Intl.pluralLogic` that way), so a message uses one spelling or the
+//! other, not both. Other exact numbers (`=5`) do not exist there and are
+//! rejected here. Only ASCII spaces may separate the parts inside braces.
 //!
 //! Translations come from outside contributors, so parsing is bounded in
 //! length and depth and never panics.
@@ -26,7 +30,7 @@ enum Part {
     Arg(String),
     Plural {
         arg: String,
-        cases: Vec<(Key, Message)>,
+        cases: Vec<(Slot, Message)>,
     },
     Select {
         arg: String,
@@ -34,11 +38,29 @@ enum Part {
     },
 }
 
-/// A plural case: an exact number or a CLDR category name.
-#[derive(Debug, Clone, PartialEq, Eq)]
-enum Key {
-    Exact(u64),
-    Category(String),
+/// A plural case, as Flutter's `Intl.pluralLogic` has them.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Slot {
+    Zero,
+    One,
+    Two,
+    Few,
+    Many,
+    Other,
+}
+
+impl Slot {
+    fn parse(key: &str) -> Option<Self> {
+        Some(match key {
+            "=0" | "zero" => Self::Zero,
+            "=1" | "one" => Self::One,
+            "=2" | "two" => Self::Two,
+            "few" => Self::Few,
+            "many" => Self::Many,
+            "other" => Self::Other,
+            _ => return None,
+        })
+    }
 }
 
 /// Why a message could not be parsed.
@@ -52,6 +74,8 @@ pub enum ParseError {
     Syntax(usize),
     /// A plural or select without an `other` case.
     NoOther(String),
+    /// The same case twice (`=1` and `one` are the same case).
+    Duplicate(String),
 }
 
 impl std::fmt::Display for ParseError {
@@ -61,6 +85,7 @@ impl std::fmt::Display for ParseError {
             Self::TooDeep => write!(f, "nested deeper than {MAX_DEPTH}"),
             Self::Syntax(at) => write!(f, "syntax error at byte {at}"),
             Self::NoOther(arg) => write!(f, "`{arg}` has no `other` case"),
+            Self::Duplicate(arg) => write!(f, "`{arg}` has the same case twice"),
         }
     }
 }
@@ -114,7 +139,7 @@ impl<'a> Parser<'a> {
     }
 
     fn spaces(&mut self) {
-        while self.peek().is_some_and(char::is_whitespace) {
+        while self.peek().is_some_and(|c| c.is_ascii_whitespace()) {
             self.bump();
         }
     }
@@ -180,27 +205,26 @@ impl<'a> Parser<'a> {
         self.eat(',')?;
         match kind {
             "plural" => {
-                let mut cases = Vec::new();
+                let mut cases: Vec<(Slot, Message)> = Vec::new();
                 for (key, body) in self.cases(depth)? {
-                    let key = match key.strip_prefix('=') {
-                        Some(n) => Key::Exact(n.parse().map_err(|_| ParseError::Syntax(kind_at))?),
-                        None => match key.as_str() {
-                            "zero" | "one" | "two" | "few" | "many" | "other" => Key::Category(key),
-                            _ => return Err(ParseError::Syntax(kind_at)),
-                        },
-                    };
-                    cases.push((key, body));
+                    let slot = Slot::parse(&key).ok_or(ParseError::Syntax(kind_at))?;
+                    if cases.iter().any(|(s, _)| *s == slot) {
+                        return Err(ParseError::Duplicate(arg));
+                    }
+                    cases.push((slot, body));
                 }
-                if !cases
-                    .iter()
-                    .any(|(k, _)| *k == Key::Category("other".into()))
-                {
+                if !cases.iter().any(|(s, _)| *s == Slot::Other) {
                     return Err(ParseError::NoOther(arg));
                 }
                 Ok(Part::Plural { arg, cases })
             }
             "select" => {
                 let cases = self.cases(depth)?;
+                for (i, (k, _)) in cases.iter().enumerate() {
+                    if cases.iter().skip(i.saturating_add(1)).any(|(o, _)| o == k) {
+                        return Err(ParseError::Duplicate(arg));
+                    }
+                }
                 if !cases.iter().any(|(k, _)| k == "other") {
                     return Err(ParseError::NoOther(arg));
                 }
@@ -272,35 +296,96 @@ impl Message {
     #[must_use]
     pub fn arguments(&self) -> BTreeSet<String> {
         let mut out = BTreeSet::new();
-        self.collect(&mut out);
+        self.collect(&mut out, false);
         out
     }
 
-    fn collect(&self, out: &mut BTreeSet<String>) {
+    /// Arguments used to choose a plural or select case, at any depth.
+    #[must_use]
+    pub fn selectors(&self) -> BTreeSet<String> {
+        let mut out = BTreeSet::new();
+        self.collect(&mut out, true);
+        out
+    }
+
+    fn collect(&self, out: &mut BTreeSet<String>, only_selectors: bool) {
         for part in &self.0 {
             match part {
                 Part::Text(_) => {}
                 Part::Arg(a) => {
-                    out.insert(a.clone());
+                    if !only_selectors {
+                        out.insert(a.clone());
+                    }
                 }
                 Part::Plural { arg, cases } => {
                     out.insert(arg.clone());
                     for (_, m) in cases {
-                        m.collect(out);
+                        m.collect(out, only_selectors);
                     }
                 }
                 Part::Select { arg, cases } => {
                     out.insert(arg.clone());
                     for (_, m) in cases {
-                        m.collect(out);
+                        m.collect(out, only_selectors);
                     }
                 }
             }
         }
     }
 
+    /// How many times `name` is inserted, for every way the cases can be
+    /// chosen: `{1}` means once, whichever case is shown.
+    #[must_use]
+    pub fn counts(&self, name: &str) -> BTreeSet<usize> {
+        let mut totals = BTreeSet::from([0usize]);
+        for part in &self.0 {
+            let options: BTreeSet<usize> = match part {
+                Part::Text(_) => BTreeSet::from([0]),
+                Part::Arg(a) => BTreeSet::from([usize::from(a == name)]),
+                Part::Plural { cases, .. } => {
+                    cases.iter().flat_map(|(_, m)| m.counts(name)).collect()
+                }
+                Part::Select { cases, .. } => {
+                    cases.iter().flat_map(|(_, m)| m.counts(name)).collect()
+                }
+            };
+            totals = totals
+                .iter()
+                .flat_map(|t| options.iter().map(move |o| t.saturating_add(*o)))
+                .collect();
+        }
+        totals
+    }
+
+    /// The same message with `f` applied to every piece of literal text,
+    /// leaving placeholders and case keys alone (for pseudo-locales).
+    #[must_use]
+    pub fn map_text(&self, f: &dyn Fn(&str) -> String) -> Self {
+        Self(
+            self.0
+                .iter()
+                .map(|part| match part {
+                    Part::Text(t) => Part::Text(f(t)),
+                    Part::Arg(a) => Part::Arg(a.clone()),
+                    Part::Plural { arg, cases } => Part::Plural {
+                        arg: arg.clone(),
+                        cases: cases.iter().map(|(k, m)| (*k, m.map_text(f))).collect(),
+                    },
+                    Part::Select { arg, cases } => Part::Select {
+                        arg: arg.clone(),
+                        cases: cases
+                            .iter()
+                            .map(|(k, m)| (k.clone(), m.map_text(f)))
+                            .collect(),
+                    },
+                })
+                .collect(),
+        )
+    }
+
     /// Formats the message. An argument that was not given is left as
-    /// `{name}`, so a mistake shows instead of silently disappearing.
+    /// `{name}`, so a mistake shows instead of silently disappearing; a
+    /// plural without a usable count takes its `other` case.
     #[must_use]
     pub fn format(&self, args: &[(&str, Arg<'_>)], locale: &dyn Locale) -> String {
         let mut out = String::new();
@@ -323,26 +408,31 @@ impl Message {
                     }
                 },
                 Part::Plural { arg, cases } => {
+                    let slot = |s: Slot| cases.iter().find(|(k, _)| *k == s).map(|(_, m)| m);
                     let n = match find(arg) {
-                        Some(Arg::Count(n)) => n,
-                        Some(Arg::Text(s)) => s.parse().unwrap_or(0),
-                        None => 0,
+                        Some(Arg::Count(n)) => Some(n),
+                        Some(Arg::Text(s)) => s.parse().ok(),
+                        None => None,
                     };
-                    let category = locale.plural(n);
-                    let chosen = cases
-                        .iter()
-                        .find(|(k, _)| *k == Key::Exact(n))
-                        .or_else(|| {
-                            cases
-                                .iter()
-                                .find(|(k, _)| matches!(k, Key::Category(c) if c == category))
+                    // As Intl.pluralLogic: 0, 1 and 2 take their own case
+                    // when there is one, then the language's CLDR rule.
+                    let chosen = n.and_then(|n| {
+                        let exact = match n {
+                            0 => slot(Slot::Zero),
+                            1 => slot(Slot::One),
+                            2 => slot(Slot::Two),
+                            _ => None,
+                        };
+                        exact.or_else(|| match locale.plural(n) {
+                            "zero" => slot(Slot::Zero),
+                            "one" => slot(Slot::One),
+                            "two" => slot(Slot::Two),
+                            "few" => slot(Slot::Few),
+                            "many" => slot(Slot::Many),
+                            _ => None,
                         })
-                        .or_else(|| {
-                            cases
-                                .iter()
-                                .find(|(k, _)| matches!(k, Key::Category(c) if c == "other"))
-                        });
-                    if let Some((_, m)) = chosen {
+                    });
+                    if let Some(m) = chosen.or_else(|| slot(Slot::Other)) {
                         m.write(args, locale, out);
                     }
                 }
@@ -412,8 +502,23 @@ mod tests {
     }
 
     #[test]
+    fn exact_cases_are_the_flutter_cases() {
+        let z = "{n, plural, zero{none} other{{n} files}}";
+        assert_eq!(fmt(z, &[("n", Arg::Count(0))]), "none");
+        let t = "{n, plural, =2{a pair} other{{n} files}}";
+        assert_eq!(fmt(t, &[("n", Arg::Count(2))]), "a pair");
+    }
+
+    #[test]
+    fn missing_or_bad_count_takes_other() {
+        let m = "{n, plural, =0{none} other{{n} files}}";
+        assert_eq!(fmt(m, &[]), "{n} files");
+        assert_eq!(fmt(m, &[("n", Arg::Text("1,5"))]), "1,5 files");
+    }
+
+    #[test]
     fn plural_inside_a_sentence_with_another_argument() {
-        let m = "{count, plural, =1{1 item} other{{count} items}} · {size}";
+        let m = "{count, plural, one{{count} item} other{{count} items}} · {size}";
         assert_eq!(
             fmt(m, &[("count", Arg::Count(3)), ("size", Arg::Text("2 MB"))]),
             "3 items · 2 MB"
@@ -428,12 +533,25 @@ mod tests {
     }
 
     #[test]
-    fn arguments_at_any_depth() {
+    fn arguments_selectors_and_counts() {
         let m = Message::parse("{n, plural, =1{{a}} other{{b} {n}}} {c}").ok();
         let args: Vec<String> = m
+            .as_ref()
             .map(|m| m.arguments().into_iter().collect())
             .unwrap_or_default();
         assert_eq!(args, ["a", "b", "c", "n"]);
+        let sel: Vec<String> = m
+            .map(|m| m.selectors().into_iter().collect())
+            .unwrap_or_default();
+        assert_eq!(sel, ["n"]);
+        let once = Message::parse("{n, plural, one{{name}} other{{name} and more}}").ok();
+        assert_eq!(once.map(|m| m.counts("name")), Some(BTreeSet::from([1])));
+        let fake = Message::parse("Code: {code, select, zzzz{{code}} other{1-fake-word}}").ok();
+        assert_eq!(
+            fake.as_ref().map(|m| m.counts("code")),
+            Some(BTreeSet::from([0, 1]))
+        );
+        assert!(fake.is_some_and(|m| m.selectors().contains("code")));
     }
 
     #[test]
@@ -450,6 +568,12 @@ mod tests {
             "{n, choice, other{y}}",
             "{n, select, a{x}}",
             "{n plural}",
+            "{n, plural, =5{x} other{y}}",
+            "{n, plural, =01{x} other{y}}",
+            "{n, plural, =1{x} one{y} other{z}}",
+            "{n, plural, other{x} other{y}}",
+            "{n, select, a{x} a{y} other{z}}",
+            "{\u{00A0}n}",
         ] {
             assert!(Message::parse(bad).is_err(), "{bad} should be rejected");
         }
