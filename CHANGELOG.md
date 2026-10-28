@@ -9,9 +9,9 @@ All notable changes to TotalDrop are recorded here. The format follows
 
 ### Added
 
-- **Linux, core:** ARM64 (Snapdragon X, NVIDIA RTX Spark): CI tests the
-  core and the command line on ARM64 Linux and Windows, and builds the
-  .deb and .rpm for ARM64 too (#86).
+- **Linux:** .deb and .rpm packages for ARM64 (Snapdragon X, NVIDIA RTX
+  Spark). The command line is now also tested on ARM64 Linux and Windows
+  (#86).
 
 - **Command line:** Speaks the system's language (`LANGUAGE`, `LC_ALL`,
   `LC_MESSAGES`, `LANG`) and writes numbers and sizes in the region's format
