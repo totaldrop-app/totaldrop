@@ -2,8 +2,9 @@
 //!
 //! It does two jobs, both described in [`totaldrop_proto::relay`]:
 //!
-//! - **address discovery** on UDP: it tells a device the address and port it
-//!   saw, so the device can announce its public address;
+//! - **address discovery**: a STUN responder (Binding requests only) that
+//!   tells a device the address and port it saw, for relays that are run
+//!   without a separate STUN server;
 //! - **forwarding** on WebSocket: devices sign in with a single-use endpoint
 //!   key, and the relay passes QUIC datagrams between keys.
 //!
@@ -99,15 +100,15 @@ impl Relay {
         self.forwarded.load(std::sync::atomic::Ordering::Relaxed)
     }
 
-    /// Answer discovery probes on `socket` until the task is dropped.
+    /// Answer STUN Binding requests on `socket` until the task is dropped.
     pub async fn discovery(socket: UdpSocket) {
-        let mut buf = [0u8; 128];
+        let mut buf = [0u8; 548];
         loop {
             let Ok((n, from)) = socket.recv_from(&mut buf).await else {
                 continue;
             };
-            if let Some(nonce) = buf.get(..n).and_then(wire::parse_probe) {
-                let _ = socket.send_to(&wire::answer(&nonce, from), from).await;
+            if let Some(id) = buf.get(..n).and_then(wire::parse_stun_request) {
+                let _ = socket.send_to(&wire::stun_response(&id, from), from).await;
             }
         }
     }
@@ -151,9 +152,16 @@ impl Relay {
         else {
             return;
         };
-        if path != PATH {
-            return;
-        }
+        // `/v0/relay/<pair>` names the only two keys that may sign in here;
+        // plain `/v0/relay` takes any key.
+        let pair = match path.strip_prefix(PATH) {
+            Some("") => None,
+            Some(rest) => match rest.strip_prefix('/').and_then(wire::parse_pair_name) {
+                Some(p) => Some(p),
+                None => return,
+            },
+            None => return,
+        };
 
         // Sign in: the device proves it holds the endpoint key it claims.
         let mut challenge = [0u8; 32];
@@ -169,6 +177,9 @@ impl Relay {
                 _ => return None,
             };
             let (key, signature) = hello;
+            if pair.is_some_and(|(a, b)| key != a && key != b) {
+                return None;
+            }
             ring::signature::UnparsedPublicKey::new(&ring::signature::ED25519, key)
                 .verify(&wire::signed_bytes(&challenge), &signature)
                 .ok()?;
@@ -225,9 +236,10 @@ impl Relay {
                 Message::Ping(_) | Message::Pong(_) => continue,
                 _ => break,
             };
-            let Some((to, datagram)) = wire::parse_frame(&frame) else {
+            let Some((to, datagrams)) = wire::parse_frame(&frame) else {
                 break;
             };
+            let payload: usize = datagrams.iter().map(|d| d.len()).sum();
             let size = u64::try_from(frame.len()).unwrap_or(u64::MAX);
             total = total.saturating_add(size);
             if total > self.config.session_bytes {
@@ -238,8 +250,13 @@ impl Relay {
             let target = self.clients.lock().await.get(&to).map(|(_, o)| o.clone());
             if let Some(target) = target {
                 // A full queue drops, like a busy network; QUIC recovers.
-                if target.try_send(wire::frame(&key, datagram)).is_ok() {
-                    let n = u64::try_from(datagram.len()).unwrap_or(0);
+                // Same message with the source key in place of the target's.
+                let mut out = frame.to_vec();
+                if let Some(head) = out.get_mut(..32) {
+                    head.copy_from_slice(&key);
+                }
+                if target.try_send(out).is_ok() {
+                    let n = u64::try_from(payload).unwrap_or(0);
                     self.forwarded
                         .fetch_add(n, std::sync::atomic::Ordering::Relaxed);
                 }
@@ -319,11 +336,11 @@ pub async fn spawn(
     Ok((ws, udp, relay, task))
 }
 
-/// For tests: forwarding and discovery on the same loopback port, as clients
-/// expect (`ws://127.0.0.1:<port>/v0/relay`, UDP on that port).
+/// For tests: forwarding on `ws://127.0.0.1:<port>/v0/relay` and STUN on UDP
+/// `127.0.0.1:<port>`. Returns both, the relay and its task.
 pub async fn spawn_local(
     config: Config,
-) -> std::io::Result<(String, Relay, tokio::task::JoinHandle<()>)> {
+) -> std::io::Result<(String, String, Relay, tokio::task::JoinHandle<()>)> {
     // Find a port free for both TCP and UDP.
     for _ in 0..20 {
         let listener = TcpListener::bind(SocketAddr::from(([127, 0, 0, 1], 0))).await?;
@@ -336,7 +353,12 @@ pub async fn spawn_local(
         let task = tokio::spawn(async move {
             tokio::join!(serving.serve(listener), Relay::discovery(socket));
         });
-        return Ok((format!("ws://127.0.0.1:{port}{PATH}"), relay, task));
+        return Ok((
+            format!("ws://127.0.0.1:{port}{PATH}"),
+            format!("127.0.0.1:{port}"),
+            relay,
+            task,
+        ));
     }
     Err(std::io::Error::other("no free port"))
 }
@@ -349,27 +371,22 @@ mod tests {
 
     #[tokio::test]
     async fn discovery_answers_with_the_seen_address() {
-        let (_url, _relay, _task) = spawn_local(Config::default()).await.unwrap();
-        let port: u16 = _url
-            .trim_start_matches("ws://127.0.0.1:")
-            .trim_end_matches(PATH)
-            .parse()
-            .unwrap();
+        let (_url, stun, _relay, _task) = spawn_local(Config::default()).await.unwrap();
         let client = UdpSocket::bind("127.0.0.1:0").await.unwrap();
         let nonce = [5u8; 12];
         client
-            .send_to(&wire::probe(&nonce), ("127.0.0.1", port))
+            .send_to(&wire::stun_request(&nonce), stun.as_str())
             .await
             .unwrap();
-        let mut buf = [0u8; 64];
+        let mut buf = [0u8; 128];
         let (n, _) = tokio::time::timeout(Duration::from_secs(2), client.recv_from(&mut buf))
             .await
             .unwrap()
             .unwrap();
-        let seen = wire::parse_answer(&buf[..n], &nonce).unwrap();
+        let seen = wire::parse_stun_response(&buf[..n], &nonce).unwrap();
         assert_eq!(seen, client.local_addr().unwrap());
         // Garbage gets no answer.
-        client.send_to(b"hello", ("127.0.0.1", port)).await.unwrap();
+        client.send_to(b"hello", stun.as_str()).await.unwrap();
         assert!(
             tokio::time::timeout(Duration::from_millis(300), client.recv_from(&mut buf))
                 .await

@@ -12,12 +12,19 @@ fuzz_target!(|data: &[u8]| {
     if let Some((k, s)) = relay::parse_hello(data) {
         assert_eq!(relay::hello(&k, &s), data);
     }
-    if let Some((k, d)) = relay::parse_frame(data) {
-        assert_eq!(relay::frame(&k, d), data);
+    if let Some((k, datagrams)) = relay::parse_frame(data) {
+        let mut b = relay::Batch::new(&k);
+        for d in &datagrams {
+            assert!(b.push(d));
+        }
+        assert_eq!(b.finish(), data);
     }
-    if let Some(n) = relay::parse_probe(data) {
-        assert_eq!(relay::parse_probe(&relay::probe(&n)), Some(n));
+    if let Ok(s) = std::str::from_utf8(data) {
+        if let Some((a, b)) = relay::parse_pair_name(s) {
+            assert_eq!(relay::pair_name(&a, &b), s);
+        }
     }
-    let _ = relay::parse_answer(data, &[0u8; 12]);
+    let _ = relay::parse_stun_request(data);
+    let _ = relay::parse_stun_response(data, &[0u8; 12]);
     let _ = relay::is_ok(data);
 });

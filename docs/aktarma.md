@@ -9,8 +9,10 @@ Aynı ağdaki iki cihaz birbirini zaten bulur. İnternet üzerinden ise cihazlar
 çoğunlukla bir modemin (NAT) ya da güvenlik duvarının arkasındadır ve
 birbirlerine doğrudan ulaşamazlar. Aktarma sunucusu iki iş yapar:
 
-1. **Adres bulma:** Cihaz, sunucuya küçük bir UDP paketi gönderir; sunucu
-   "seni şu adres ve portta görüyorum" diye cevap verir. Cihaz bu açık
+1. **Adres bulma:** Cihaz, bir STUN sunucusuna (varsayılan olarak
+   Cloudflare'in ücretsiz `stun.cloudflare.com` sunucusu) küçük bir UDP
+   paketi gönderir; sunucu "seni şu adres ve portta görüyorum" diye cevap
+   verir. Cihaz bu açık
    adresi şifreli `HINTS` mesajında karşı tarafa bildirir. İki cihaz
    birbirinin açık adresine aynı anda paket göndererek çoğu modemi deler
    (NAT delme) ve doğrudan bağlanır.
@@ -26,12 +28,13 @@ birbirlerine doğrudan ulaşamazlar. Aktarma sunucusu iki iş yapar:
 - Cihaz sunucuya her aktarım için yeni üretilen, tek kullanımlık bir uç nokta
   anahtarıyla bağlanır ve anahtarı imzalayarak kanıtlar. Sunucu iki aktarımı
   birbirine bağlayamaz.
+- İki cihaz, iki tek kullanımlık anahtarın adını taşıyan adreste buluşur
+  (`/v0/relay/<anahtar A>-<anahtar B>`). Sunucu orada yalnızca bu iki
+  anahtarı kabul eder; başka biri araya giremez.
 - Sunucu adres, anahtar ya da trafik kaydı tutmaz; diske hiçbir şey yazmaz.
-  Yalnızca toplam aktarılan bayt sayısını sayar.
-- Her bağlantı sınırlıdır: saniyede 8 MiB, en çok 32 GiB ve 6 saat. Bu,
-  aylık 20 TB trafik kotasını kötüye kullanıma karşı korur.
-- Alıcı, gönderenin `HINTS` içinde bildirdiği aktarma sunucusunu kullanır
-  (iki taraf aynı sunucuda buluşur). Bu adres yalnızca `wss://` olabilir.
+- Her aktarım sınırlıdır: en çok 32 GiB ve 6 saat.
+- Alıcı, gönderenin `HINTS` içinde bildirdiği aktarma sunucusunu kullanır.
+  Bu adres yalnızca `wss://` olabilir.
 
 ## Yol seçimi
 
@@ -57,8 +60,8 @@ adımdır.
 | Mesaj biçimi | `crates/totaldrop-proto/src/relay.rs` |
 | İstemci: adres bulma, aktarma bağlantısı | `crates/totaldrop-core/src/relay.rs` |
 | İstemci: tek QUIC soketi, iki yol | `crates/totaldrop-core/src/path.rs` |
-| Sunucu | `server/totaldrop-relay` |
-| Kurulum | `server/totaldrop-relay/deploy/` |
+| Sunucu (Cloudflare) | `server/relay-worker` |
+| Sunucu (kendi makinende) | `server/totaldrop-relay`, kurulum dosyaları `deploy/` altında |
 
 İstemci QUIC'e kendi soketini verir (`PathSocket`). Bu soket normal paketleri
 gerçek UDP soketine, `240.84.68.1:1` adresine gidenleri ise aktarma
@@ -67,13 +70,16 @@ yönlendirilmez. QUIC aktarma sunucusunu karşı cihazın bir adresi gibi görü
 
 ## Sunucu
 
-- **Adres:** `wss://relay.totaldrop.app/v0/relay`. Adres bulma aynı ad ve
-  portta, UDP 443'te çalışır.
-- **Makine:** Hetzner CX22 (2 vCPU, 4 GB, 20 TB trafik), Debian 13.
-- **TLS:** Caddy, Let's Encrypt sertifikasıyla TCP 443'ü karşılar ve
-  WebSocket'i `127.0.0.1:4100` adresindeki aktarma sunucusuna geçirir.
-  Caddy'nin HTTP/3'ü kapalıdır, çünkü UDP 443 adres bulmaya ayrılmıştır.
-- **DNS:** Cloudflare'de `relay` için A ve AAAA kaydı, proxy kapalı (gri
-  bulut). Cloudflare proxy'si UDP taşımaz.
-- **Güncelleme:** `server/totaldrop-relay/deploy/install.sh` derlenmiş
-  ikiliyi kopyalar ve servisi yeniden başlatır.
+- **Adres:** `wss://relay.totaldrop.app/v0/relay`, Cloudflare Workers
+  üzerinde. Her aktarım kendi Durable Object'inde iki WebSocket'i birbirine
+  bağlar. Birkaç QUIC paketi tek bir WebSocket mesajında taşınır; böylece
+  hem hız artar hem istek sayısı düşer.
+- **Ölçüm:** yerel test ortamında, yalnızca aktarma yoluyla 100 MB, 8 saniye
+  (yaklaşık 12 MB/s).
+- **Adres bulma:** Cloudflare'in STUN sunucusu, `stun.cloudflare.com:3478`.
+- **Kendi sunucunda çalıştırmak isteyenler için:** `server/totaldrop-relay`
+  aynı protokolü konuşur ve STUN'u da kendisi cevaplar. `deploy/` altında
+  systemd, Caddy ve nftables dosyaları var.
+- **İleride:** kullanım büyür ya da hız yetmezse Cloudflare Realtime TURN
+  ikinci bir aktarma yolu olarak eklenebilir (ayda 1.000 GB ücretsiz, sonrası
+  GB başına 0,05 $).
