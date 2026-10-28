@@ -14,6 +14,7 @@ olur ve yenisine bağlanır.
 | [0006](0006-linux-qt.md) | Linux uygulaması Qt 6 ve QML, sistem temasına tam uyum | Kabul |
 | [0007](0007-surec.md) | Issue, PR, bağımsız inceleme ve CI'da derlenen sürümler | Kabul |
 | [0008](0008-diller-ve-bolgeler.md) | Her dil ve bölge: tek kaynak ARB, ICU ve CLDR | Kabul |
+| [0009](0009-ios-macos.md) | iOS ve macOS: ücretsiz CI, Apple hesabı yalnızca yayında | Kabul |
 
 Yeni bir karar için bir sonraki numarayla `NNNN-kisa-ad.md` açın ve bu
 tabloya ekleyin.
