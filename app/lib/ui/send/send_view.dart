@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -241,12 +242,25 @@ class _Waiting extends StatelessWidget {
                 ),
                 Gap.s,
                 // English words, left to right in every language.
-                Directionality(
-                  textDirection: TextDirection.ltr,
-                  child: SelectableText(
+                // Spoken with an English voice; the Copy button below copies it.
+                Semantics(
+                  attributedLabel: AttributedString(
                     code,
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.headlineLarge,
+                    attributes: [
+                      LocaleStringAttribute(
+                        range: TextRange(start: 0, end: code.length),
+                        locale: const Locale('en'),
+                      ),
+                    ],
+                  ),
+                  excludeSemantics: true,
+                  child: Directionality(
+                    textDirection: TextDirection.ltr,
+                    child: SelectableText(
+                      code,
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.headlineLarge,
+                    ),
                   ),
                 ),
                 Gap.m,

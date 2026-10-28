@@ -26,9 +26,19 @@ jobs:
         with:
           channel: stable
       - run: flutter pub get --enforce-lockfile
+      # Generated from l10n/: must be committed and current.
+      - name: Localizations are current
+        run: |
+          flutter gen-l10n
+          dart run tool/gen_locales_config.dart
+          git diff --exit-code -- lib/l10n android/app/src/main/res/xml/locales_config.xml
       - run: flutter analyze
       - name: Test
-        run: if [ -d test ]; then flutter test; else echo "no tests yet"; fi
+        run: flutter test
+      # The bridge's own tests (core.yml leaves this crate out).
+      - name: Bridge tests
+        working-directory: .
+        run: rustup show active-toolchain || rustup toolchain install; cargo test -p rust_lib_totaldrop --locked
 
   build:
     name: Debug build (arm64)
