@@ -333,8 +333,16 @@ impl Server {
         let claim_deadline = tokio::time::Instant::now().checked_add(self.config.claim_timeout);
         loop {
             let wait = match (held, claim_deadline) {
-                (None, Some(d)) => d.saturating_duration_since(tokio::time::Instant::now()),
-                _ => self.config.idle_timeout,
+                (None, Some(d)) => {
+                    let left = d.saturating_duration_since(tokio::time::Instant::now());
+                    // A ping flood must not keep a message ready forever.
+                    if left.is_zero() {
+                        break;
+                    }
+                    left
+                }
+                (None, None) => break,
+                (Some(_), _) => self.config.idle_timeout,
             };
             let next = tokio::select! {
                 n = tokio::time::timeout(wait, source.next()) => n,
@@ -347,8 +355,9 @@ impl Server {
             };
             let data = match frame {
                 Message::Binary(b) => b,
-                // Pings keep a connection open, but never a mailbox: expiry
-                // runs on the mailbox's own clock and disconnects its holders.
+                // After a claim, pings keep a connection open, but never a
+                // mailbox: expiry runs on the mailbox's own clock and
+                // disconnects its holders. Before a claim they change nothing.
                 Message::Ping(_) | Message::Pong(_) => continue,
                 _ => break,
             };
