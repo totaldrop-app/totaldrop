@@ -17,8 +17,21 @@ All notable changes to TotalDrop are recorded here. The format follows
 - **Command line:** File names from the other side show hidden characters
   (controls, direction and other format characters) as `<U+202E>`, so a
   name cannot disguise its extension.
+- **Android:** Chooses the language like the Linux app and the command line
+  (`zh-HK` gets Traditional Chinese, `pt-AO` gets European Portuguese), and
+  lists the app's languages in Android 13+ per-app language settings. Sizes
+  and counts follow the region ("1.234 öğe · 1,5 MB"). The code and the
+  verification words stay left to right and are read by screen readers with
+  an English voice. Names from the other side show hidden direction
+  characters. Safety-critical text stays English while its translation is
+  an unreviewed draft, and Settings says when a translation is a draft.
 - **Core:** `totaldrop-l10n`, the shared interface text for the Rust
   programs: all strings live in `l10n/`, one source with Android.
+
+### Fixed
+
+- **Android:** The privacy text in Settings no longer says files always go
+  directly between the devices; it explains the relay.
 
 ### Security
 

@@ -5,6 +5,7 @@ import 'data/settings_repository.dart';
 import 'data/transfer_repository.dart';
 import 'l10n/app_localizations.dart';
 import 'src/rust/frb_generated.dart';
+import 'ui/core/l10n.dart';
 import 'ui/core/theme.dart';
 import 'ui/home/home_view.dart';
 import 'ui/receive/receive_view.dart';
@@ -60,6 +61,7 @@ class TotalDropApp extends StatelessWidget {
             ...GlobalMaterialLocalizations.delegates,
           ],
           supportedLocales: AppLocalizations.supportedLocales,
+          localeListResolutionCallback: resolveLocale,
           home: Builder(
             builder: (context) => HomeView(
               onSend: () => Navigator.push(

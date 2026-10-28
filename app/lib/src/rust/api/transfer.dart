@@ -18,8 +18,11 @@ Future<SendSession> prepareSend({
   required String server,
   required List<String> paths,
   required bool strong,
-}) =>
-    RustLib.instance.api.crateApiTransferPrepareSend(server: server, paths: paths, strong: strong);
+}) => RustLib.instance.api.crateApiTransferPrepareSend(
+  server: server,
+  paths: paths,
+  strong: strong,
+);
 
 /// Stop a running send.
 void cancelSend({required SendSession session}) =>
@@ -31,12 +34,20 @@ Stream<TransferEvent> runSend({required SendSession session}) =>
 
 /// Use `code` to connect to the sender and receive its offer.
 Future<Offer> connectReceive({required String server, required String code}) =>
-    RustLib.instance.api.crateApiTransferConnectReceive(server: server, code: code);
+    RustLib.instance.api.crateApiTransferConnectReceive(
+      server: server,
+      code: code,
+    );
 
 /// Accept the offer and save everything beneath `destination`, which is
 /// created if missing. Events end with `Finished` or `Failed`.
-Stream<TransferEvent> acceptOffer({required Offer offer, required String destination}) =>
-    RustLib.instance.api.crateApiTransferAcceptOffer(offer: offer, destination: destination);
+Stream<TransferEvent> acceptOffer({
+  required Offer offer,
+  required String destination,
+}) => RustLib.instance.api.crateApiTransferAcceptOffer(
+  offer: offer,
+  destination: destination,
+);
 
 /// Stop a running receive.
 void cancelReceive({required Offer offer}) =>
@@ -230,7 +241,8 @@ class TransferSummary {
       RustLib.instance.api.crateApiTransferTransferSummaryDefault();
 
   @override
-  int get hashCode => filesOk.hashCode ^ filesFailed.hashCode ^ bytes.hashCode ^ saved.hashCode;
+  int get hashCode =>
+      filesOk.hashCode ^ filesFailed.hashCode ^ bytes.hashCode ^ saved.hashCode;
 
   @override
   bool operator ==(Object other) =>
