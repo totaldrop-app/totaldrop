@@ -23,10 +23,11 @@ Her değişiklikten sonra bu ortamların hepsinde açık ve koyu temada ekran g�
 Dil, bölge biçimleri ve yazı yönü de sistemden gelir ([karar 0008](kararlar/0008-diller-ve-bolgeler.md)):
 
 - Arayüz sistemin tercih ettiği dilde açılır; çevirisi yoksa en yakın varyanta, o da yoksa İngilizce'ye düşer.
-- Sayılar, boyutlar ve çoğullar bölge ayarına göre biçimlenir. Kodda `toStringAsFixed`, elle ondalık ayırıcı ya da "1 file / 2 files" gibi elle çoğul yazılmaz.
+- Sayılar ve boyutlar bölge ayarına, çoğullar gösterilen dilin kurallarına göre biçimlenir. Kodda `toStringAsFixed`, elle ondalık ayırıcı ya da "1 file / 2 files" gibi elle çoğul yazılmaz.
 - Sağdan sola dillerde (Arapça, Farsça, İbranice, Urduca) yerleşim aynalanır. Simgelerde yön bildirenler (geri oku) aynalanır, işaret (Dalga) ve logolar aynalanmaz.
 - Metin kutuları uzun çevirilere göre büyür: Almanca ve Fince'de metin İngilizce'den %30–40 uzun olabilir; sabit genişlik verilmez.
-- Aktarım kodu ve doğrulama kelimeleri her dilde İngilizce ve soldan sağa gösterilir.
+- Aktarım kodu ve doğrulama kelimeleri her dilde İngilizce gösterilir ve soldan sağa yalıtılır (Flutter'da `Directionality(textDirection: ltr)` ve cümle içinde FSI…PDI; Qt'de `LayoutMirroring` dışında tutulur). Kod alanında otomatik büyük harf ve düzeltme kapalıdır.
+- Karşı taraftan gelen dosya adları cümleye yön yalıtımıyla girer; içlerindeki yön denetim karakterleri görünür yapılır.
 
 Arayüz değişiklikleri açık ve koyu temaya ek olarak en az bir sağdan sola (Arapça) ve bir CJK (Japonca) dilinde denenir.
 
