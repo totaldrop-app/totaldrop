@@ -55,9 +55,11 @@ for (const page of pages) {
     const text = decode(m[3]).replace(/\s+/g, " ").trim();
     if (!(m[2] in fromHtml)) fromHtml[m[2]] = text;
   }
-  // Accessible names: aria-label="…" data-i18n-label="key".
-  for (const l of html.matchAll(/aria-label="([^"]*)"\s+data-i18n-label="([^"]+)"/g)) {
-    if (l[2] !== "lang.label" && !(l[2] in fromHtml)) fromHtml[l[2]] = decode(l[1]);
+  // Accessible names: a tag with data-i18n-label="key" and an aria-label.
+  for (const tagm of html.matchAll(/<[a-z0-9]+\b[^>]*\bdata-i18n-label="([^"]+)"[^>]*>/g)) {
+    const label = /\baria-label="([^"]*)"/.exec(tagm[0]);
+    if (!label) { errors.push(`${page} \`${tagm[1]}\`: data-i18n-label without aria-label`); continue; }
+    if (!(tagm[1] in fromHtml)) fromHtml[tagm[1]] = decode(label[1]);
   }
 }
 

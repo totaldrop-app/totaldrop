@@ -108,7 +108,7 @@ pre, code, kbd, .code { direction: ltr; unicode-bidi: isolate; }
 pre { text-align: left; }
 [dir="rtl"] .code { text-align: right; }
 /* Letter spacing breaks the joining of Arabic-script letters. */
-:is(:lang(ar), :lang(fa), :lang(ur), :lang(ps)) :is(h1, h2, .eyebrow, .road-state, .yours, .pill) { letter-spacing: 0; }
+:is(:lang(ar), :lang(fa), :lang(ur), :lang(ps)) { letter-spacing: 0; }
 @media (prefers-reduced-motion: reduce) { ::view-transition-group(root) { animation: none; } }
 
 /* Language picker: a plain pill with a small chevron, so it reads as a menu. */
@@ -123,7 +123,7 @@ select.lang {
   font: inherit; font-weight: 700; color: var(--text); background: transparent;
   border: 1px solid var(--outline); border-radius: 999px; min-height: 44px; min-width: 44px; padding: 0 0.9rem; cursor: pointer;
 }
-@media (max-width: 40rem) { .top-nav a { display: none; } }
+@media (max-width: 40rem) { .top-nav a { display: none; } .top-nav-links { display: none; } }
 
 /* Buttons: one filled per view, the rest outlined */
 .actions { display: flex; flex-wrap: wrap; gap: 0.75rem; }
