@@ -8,7 +8,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 
 use clap::{Parser, Subcommand};
 use totaldrop_core::{
-    Event, Events, IncomingOffer, PathOptions, PreparedSend, ReceiveOptions, SendOptions,
+    Event, Events, IncomingOffer, PathOptions, PreparedSend, ReceiveOptions, SendOptions, Stop,
 };
 use totaldrop_l10n::{Arg, Domain, Strings, reveal_controls as visible};
 use totaldrop_proto::TransferCode;
@@ -125,6 +125,24 @@ fn paths(relay: Option<String>, stun: Option<String>, relay_only: bool) -> PathO
     }
 }
 
+/// Ctrl-C stops the transfer cleanly: the other side is told and partial
+/// files are removed. A second Ctrl-C quits at once.
+fn stop_on_ctrl_c(s: &Arc<Strings>) -> Stop {
+    let stop = Stop::new();
+    let (handle, s) = (stop.clone(), Arc::clone(s));
+    tokio::spawn(async move {
+        if tokio::signal::ctrl_c().await.is_ok() {
+            eprintln!();
+            eprintln!("{}", s.get("cliStopping", &[]));
+            handle.stop();
+            if tokio::signal::ctrl_c().await.is_ok() {
+                std::process::exit(130);
+            }
+        }
+    });
+    stop
+}
+
 async fn send(
     s: Arc<Strings>,
     server: String,
@@ -138,7 +156,11 @@ async fn send(
         words: if strong { 3 } else { 2 },
         paths,
     };
-    let prepared = PreparedSend::new(&opts, files).await?;
+    let stop = stop_on_ctrl_c(&s);
+    let prepared = tokio::select! {
+        r = PreparedSend::new(&opts, files) => r?,
+        () = stop.stopped() => return Err(totaldrop_core::Error::Stopped),
+    };
     let (entries, total) = prepared.totals();
     if prepared.skipped() > 0 {
         let n = u64::try_from(prepared.skipped()).unwrap_or(u64::MAX);
@@ -158,7 +180,7 @@ async fn send(
     // The command itself is never translated: it is what the other side types.
     println!("totaldrop receive {}", prepared.code());
     eprintln!();
-    let report = prepared.run(printer(Arc::clone(&s))).await?;
+    let report = prepared.run_with(printer(Arc::clone(&s)), stop).await?;
     if report.files_failed > 0 {
         let n = u64::try_from(report.files_failed).unwrap_or(u64::MAX);
         eprintln!(
@@ -184,8 +206,17 @@ async fn receive(
         Some(d) => d,
         None => std::env::current_dir()?,
     };
+    // Check the destination before the code is used up.
+    if !std::fs::metadata(&dest).is_ok_and(|m| m.is_dir()) {
+        let shown = dest.display().to_string();
+        return Err(totaldrop_core::Error::Io(std::io::Error::other(
+            s.get("cliNoFolder", &[("folder", Arg::Text(&shown))]),
+        )));
+    }
+    let stop = stop_on_ctrl_c(&s);
     eprintln!("{}", s.get("cliConnecting", &[]));
-    let offer = IncomingOffer::connect(&ReceiveOptions { server, paths }, &code).await?;
+    let offer =
+        IncomingOffer::connect_with(&ReceiveOptions { server, paths }, &code, &stop).await?;
     let summary = offer.summary().clone();
     eprintln!("{}", s.get("cliConnected", &[]));
     let words = offer.words().join(" ");
@@ -216,21 +247,31 @@ async fn receive(
     let shown = dest.display().to_string();
     let prompt = s.get("cliPromptSave", &[("folder", Arg::Text(&shown))]);
     let yes_words = s.get("cliYes", &[]);
-    let accepted = yes
-        || tokio::task::spawn_blocking(move || {
+    let accepted = yes || {
+        let answer = tokio::task::spawn_blocking(move || {
             eprint!("{prompt}");
             let _ = std::io::stderr().flush();
             let mut line = String::new();
             std::io::stdin().read_line(&mut line).is_ok() && is_yes(&line, &yes_words)
-        })
-        .await
-        .unwrap_or(false);
+        });
+        tokio::select! {
+            a = answer => a.unwrap_or(false),
+            // Ctrl-C at the question declines, so the sender is not left waiting.
+            () = stop.stopped() => false,
+        }
+    };
+    if stop.is_stopped() {
+        offer.decline().await?;
+        return Err(totaldrop_core::Error::Stopped);
+    }
     if !accepted {
         offer.decline().await?;
         eprintln!("{}", s.get("cliDeclined", &[]));
         return Ok(());
     }
-    let report = offer.accept(&dest, printer(Arc::clone(&s))).await?;
+    let report = offer
+        .accept_with(&dest, printer(Arc::clone(&s)), &stop)
+        .await?;
     for p in &report.placed {
         let name = visible(&p.display().to_string());
         eprintln!("{}", s.get("cliSaved", &[("name", Arg::Text(&name))]));
@@ -283,6 +324,7 @@ fn main() -> ExitCode {
         eprintln!("totaldrop: {}", strings.get("cliRelayOnlyNeedsRelay", &[]));
         return ExitCode::from(2);
     }
+    let strings_for_exit = Arc::clone(&strings);
     let result = match cli.command {
         Command::Code { code } => {
             return match TransferCode::parse(&code) {
@@ -306,6 +348,10 @@ fn main() -> ExitCode {
     };
     match result {
         Ok(()) => ExitCode::SUCCESS,
+        Err(totaldrop_core::Error::Stopped) => {
+            eprintln!("{}", strings_for_exit.get("cliStopped", &[]));
+            ExitCode::from(130)
+        }
         Err(e) => {
             eprintln!("totaldrop: {e}");
             ExitCode::FAILURE

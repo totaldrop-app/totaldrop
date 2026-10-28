@@ -37,7 +37,7 @@ impl Stop {
     }
 
     /// Resolves once the transfer is stopped; at once if it already is.
-    pub(crate) async fn stopped(&self) {
+    pub async fn stopped(&self) {
         let notified = self.0.notify.notified();
         tokio::pin!(notified);
         // Register before checking, so a stop in between is not missed.
