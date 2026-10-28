@@ -293,7 +293,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get settingsPrivacyBody =>
-      'Buluşma sunucusu IP adresinizi ve ne zaman bağlandığınızı görür, ama dosya adlarını, içerikleri ya da anahtarları görmez. Kayıt tutmaz. Dosyalar iki cihaz arasında doğrudan, uçtan uca şifreli gider.';
+      'Buluşma sunucusu IP adresinizi ve ne zaman bağlandığınızı görür, ama dosya adlarını, içerikleri ya da anahtarları görmez. Kayıt tutmaz. Dosyalar, iki cihaz birbirine ulaşabiliyorsa doğrudan, ulaşamıyorsa aktarma sunucusu üzerinden gider; her iki durumda da uçtan uca şifrelidir ve aktarma sunucusu içeriği okuyamaz.';
 
   @override
   String settingsVersion(String version) {

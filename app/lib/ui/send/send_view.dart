@@ -4,6 +4,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../core/common.dart';
+import '../core/l10n.dart';
 import '../core/mark.dart';
 import '../core/theme.dart';
 import 'send_view_model.dart';
@@ -107,7 +108,6 @@ class _Picking extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    final locale = Localizations.localeOf(context).languageCode;
     if (vm.files.isEmpty) {
       // One screen, one job: the only action is choosing files.
       return Padding(
@@ -161,7 +161,7 @@ class _Picking extends StatelessWidget {
                 ),
                 title: Text(f.name, maxLines: 1, overflow: TextOverflow.ellipsis),
                 subtitle: Text(
-                  formatBytes(f.size, locale),
+                  formatBytes(l, f.size),
                   style: const TextStyle(fontFeatures: [FontFeature.tabularFigures()]),
                 ),
                 trailing: IconButton(
@@ -175,27 +175,27 @@ class _Picking extends StatelessWidget {
         ),
         const Divider(),
         Padding(
-            padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(l.sendStrongCode),
-                  subtitle: Text(l.sendStrongCodeHint),
-                  value: vm.strong,
-                  onChanged: vm.setStrong,
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(l.sendStrongCode),
+                subtitle: Text(l.sendStrongCodeHint),
+                value: vm.strong,
+                onChanged: vm.setStrong,
+              ),
+              Gap.s,
+              FilledButton.icon(
+                onPressed: vm.start,
+                icon: const Icon(Icons.key_outlined),
+                label: Text(
+                  '${l.sendCreateCode} · ${l.itemsAndSize(vm.files.length, formatBytes(l, vm.totalSize))}',
                 ),
-                Gap.s,
-                FilledButton.icon(
-                  onPressed: vm.start,
-                  icon: const Icon(Icons.key_outlined),
-                  label: Text(
-                    '${l.sendCreateCode} · ${l.itemsAndSize(vm.files.length, formatBytes(vm.totalSize, locale))}',
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
+          ),
         ),
       ],
     );
@@ -240,10 +240,14 @@ class _Waiting extends StatelessWidget {
                   ),
                 ),
                 Gap.s,
-                SelectableText(
-                  code,
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.headlineLarge,
+                // English words, left to right in every language.
+                Directionality(
+                  textDirection: TextDirection.ltr,
+                  child: SelectableText(
+                    code,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.headlineLarge,
+                  ),
                 ),
                 Gap.m,
                 Row(

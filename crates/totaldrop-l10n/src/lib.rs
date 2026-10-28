@@ -171,6 +171,32 @@ pub(crate) fn status() -> &'static Status {
     })
 }
 
+/// Whether `key` must never be shown as an unreviewed draft (for apps
+/// that format messages themselves, such as Android's generated classes).
+#[must_use]
+pub fn is_critical(key: &str) -> bool {
+    status().critical.contains(key)
+}
+
+/// Whether `key` in language `tag` (`pt-BR`) is a draft nobody has
+/// reviewed.
+#[must_use]
+pub fn is_draft(tag: &str, key: &str) -> bool {
+    status().is_draft(tag, key)
+}
+
+/// Whether any text in language `tag`, or in a language it falls back to,
+/// is an unreviewed draft.
+#[must_use]
+pub fn has_drafts(tag: &str) -> bool {
+    layer_tags(tag).iter().any(|t| {
+        t != TEMPLATE
+            && (!status().reviewed.get(t).copied().unwrap_or(false)
+                || status().draft.get(t).is_some_and(|d| !d.is_empty()))
+            && catalog().files.iter().any(|f| f.locale == *t)
+    })
+}
+
 /// Every language with strings in `domain`.
 #[must_use]
 pub fn available(domain: Domain) -> Vec<String> {
@@ -722,6 +748,16 @@ mod tests {
         assert!(status.is_draft("pt-PT", "newKey"));
         assert!(!status.is_draft("en", "anything"));
         assert!(status.is_draft("xx", "anything"));
+    }
+
+    #[test]
+    fn status_queries() {
+        assert!(is_critical("verificationTitle"));
+        assert!(!is_critical("settings"));
+        assert!(!is_draft("tr", "verificationTitle"));
+        assert!(!has_drafts("tr"));
+        assert!(!has_drafts("en"));
+        assert!(!has_drafts("xx"));
     }
 
     #[test]

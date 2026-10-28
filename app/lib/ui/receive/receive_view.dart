@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../core/common.dart';
+import '../core/l10n.dart';
 import '../core/mark.dart';
 import '../core/theme.dart';
 import 'receive_view_model.dart';
@@ -193,7 +194,6 @@ class _Offered extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    final locale = Localizations.localeOf(context).languageCode;
     final o = vm.offer!;
     final names = o.names;
     return ListView(
@@ -202,7 +202,7 @@ class _Offered extends StatelessWidget {
         Text(l.receiveOffer, style: theme.textTheme.headlineSmall),
         Gap.s,
         Text(
-          l.receiveOfferSummary(o.files, formatBytes(o.totalBytes, locale)),
+          l.receiveOfferSummary(o.files, formatBytes(l, o.totalBytes)),
           style: theme.textTheme.titleMedium?.copyWith(
             fontFeatures: const [FontFeature.tabularFigures()],
           ),
@@ -220,7 +220,11 @@ class _Offered extends StatelessWidget {
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
                 Gap.s,
-                Expanded(child: Text(n, maxLines: 1, overflow: TextOverflow.ellipsis)),
+                // Names come from the other side: hidden direction
+                // characters are shown, not obeyed.
+                Expanded(
+                  child: Text(revealControls(n), maxLines: 1, overflow: TextOverflow.ellipsis),
+                ),
               ],
             ),
           ),
@@ -240,11 +244,17 @@ class _Offered extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: OutlinedButton(onPressed: vm.decline, child: Text(l.receiveDecline)),
+              child: OutlinedButton(
+                onPressed: vm.decline,
+                child: Text(safeL10n(context, 'receiveDecline').receiveDecline),
+              ),
             ),
             Gap.m,
             Expanded(
-              child: FilledButton(onPressed: vm.accept, child: Text(l.receiveAccept)),
+              child: FilledButton(
+                onPressed: vm.accept,
+                child: Text(safeL10n(context, 'receiveAccept').receiveAccept),
+              ),
             ),
           ],
         ),
