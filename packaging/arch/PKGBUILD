@@ -29,20 +29,20 @@ _srcdir() { echo "$srcdir/totaldrop-linux-v$_ver"; }
 
 prepare() {
   cd "$(_srcdir)"
-  export RUSTUP_TOOLCHAIN=${TOTALDROP_RUST:-stable}
+  export RUSTUP_TOOLCHAIN=${TOTALDROP_RUST:-${RUSTUP_TOOLCHAIN:-stable}}
   cargo fetch --locked --target "$(rustc -vV | sed -n 's/host: //p')"
 }
 
 build() {
   cd "$(_srcdir)"
-  export RUSTUP_TOOLCHAIN=${TOTALDROP_RUST:-stable}
+  export RUSTUP_TOOLCHAIN=${TOTALDROP_RUST:-${RUSTUP_TOOLCHAIN:-stable}}
   export CARGO_TARGET_DIR=target
   cargo build --frozen --release -p totaldrop-linux -p totaldrop-cli
 }
 
 check() {
   cd "$(_srcdir)"
-  export RUSTUP_TOOLCHAIN=${TOTALDROP_RUST:-stable}
+  export RUSTUP_TOOLCHAIN=${TOTALDROP_RUST:-${RUSTUP_TOOLCHAIN:-stable}}
   cargo test --frozen --release -p totaldrop-linux -p totaldrop-proto
 }
 

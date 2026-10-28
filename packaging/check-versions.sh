@@ -45,16 +45,21 @@ rust=$(sed -n 's/^channel = "\(.*\)"/\1/p' "$root/rust-toolchain.toml" | head -1
 for f in .github/workflows/core.yml .github/workflows/linux.yml packaging/build.sh \
   packaging/containers/arch.Dockerfile packaging/containers/debian.Dockerfile \
   packaging/containers/fedora.Dockerfile; do
-  for v in $(grep -oE '(RUSTUP_TOOLCHAIN[=:] *"?|TOTALDROP_RUST=|rust-version: "|--default-toolchain |toolchain install )[0-9]+\.[0-9]+\.[0-9]+' "$root/$f" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+$'); do
+  [ -f "$root/$f" ] || { fail "$f: missing"; continue; }
+  # A file on this list with no pin left is a pin that was lost.
+  vs=$(grep -oE "(RUSTUP_TOOLCHAIN[=:] *[\"']?|TOTALDROP_RUST=|rust-version: *[\"']?|--default-toolchain |toolchain install )[0-9]+\.[0-9]+\.[0-9]+" "$root/$f" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+$' || true)
+  [ -n "$vs" ] || fail "$f: no Rust pin found"
+  for v in $vs; do
     same "$f (Rust)" "$v" "$rust"
   done
 done
 
-flutter=$(grep -hoE 'flutter-version: *[0-9.]+' "$root"/.github/workflows/*.yml | grep -oE '[0-9.]+$' | sort -u)
-[ "$(printf '%s\n' "$flutter" | grep -c .)" -le 1 ] || fail "Flutter pinned to different versions: $(echo $flutter)"
+flutter=$(grep -hoE "flutter-version: *[\"']?[0-9.]+" "$root"/.github/workflows/*.yml | grep -oE '[0-9.]+$' | sort -u || true)
+[ "$(printf '%s\n' "$flutter" | grep -c . || true)" -eq 1 ] || fail "Flutter must be pinned to exactly one version, found: '$(echo $flutter)'"
 
 base=$(sed -n 's/^FROM \(archlinux:[^ ]*\).*/\1/p' "$root/packaging/containers/arch.Dockerfile" | head -1)
 check=$(sed -n 's/^ *container: *\(archlinux:[^ ]*\).*/\1/p' "$root/.github/workflows/linux.yml" | head -1)
+[ -n "$base" ] || fail "no archlinux FROM in packaging/containers/arch.Dockerfile"
 same ".github/workflows/linux.yml (container)" "$check" "$base"
 
 [ $status -eq 0 ] && echo "versions agree: $cargo; Rust $rust; Flutter $flutter"
