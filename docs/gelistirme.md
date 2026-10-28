@@ -1,7 +1,9 @@
 # Geliştirme düzeni
 
 Bu belge deponun nasıl düzenlendiğini, hangi branch'te ne yapıldığını ve
-platformların birbirini bozmadan nasıl güncellendiğini anlatır.
+platformların birbirini bozmadan nasıl güncellendiğini anlatır. Bir işin
+issue'dan yayına giden yolu, bitti tanımı ve inceleme kuralı
+[surec.md](surec.md) içindedir.
 
 ## İlke: tek depo, bağımsız platformlar
 
@@ -38,8 +40,8 @@ kendi iş akışlarını alır.
 
 ## Branch'ler
 
-- **`main`:** her zaman derlenen, testleri geçen hâl. Doğrudan commit
-  edilmez; değişiklik bir branch'ten birleşir.
+- **`main`:** her zaman derlenen, testleri geçen hâl. Doğrudan push ve
+  force push kapalıdır; değişiklik yalnızca PR ile, rebase ederek birleşir.
 - **İş branch'leri:** kısa ömürlüdür ve adı platformu söyler:
 
   | Branch | Ne için |
