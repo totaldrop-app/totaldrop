@@ -45,6 +45,7 @@ Rectangle {
             // English words, left to right in every language: both sides
             // compare them in the same order.
             LayoutMirroring.enabled: false
+            LayoutMirroring.childrenInherit: true
             horizontalAlignment: Text.AlignLeft
             text: box.words.join("  ·  ")
             color: Theme.ink

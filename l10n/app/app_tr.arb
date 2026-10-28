@@ -100,5 +100,6 @@
   "pickImageTitle": "QR kodlu bir resim seçin",
   "openFolder": "Klasörü aç",
   "back": "Geri",
-  "codeSuggestions": "Öneriler"
+  "codeSuggestions": "Öneriler",
+  "progressPercent": "%{percent}"
 }

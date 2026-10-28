@@ -85,6 +85,7 @@ Page {
                 id: field
                 // The code is always English words, left to right.
                 LayoutMirroring.enabled: false
+                LayoutMirroring.childrenInherit: true
                 horizontalAlignment: TextInput.AlignLeft
                 placeholderText: Strings.s.receiveCodeHint
                 inputMethodHints: Qt.ImhNoAutoUppercase | Qt.ImhNoPredictiveText | Qt.ImhPreferLowercase

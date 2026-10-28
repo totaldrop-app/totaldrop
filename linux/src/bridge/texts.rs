@@ -61,9 +61,12 @@ fn strings() -> &'static Strings {
     STRINGS.get_or_init(|| Strings::system(Domain::App))
 }
 
-/// A QML number as a count: negative, fractional or huge values clamp.
+/// A QML number as a count: rounded; negative and NaN give 0, huge values
+/// and infinity saturate.
 fn count(n: f64) -> u64 {
-    if n.is_finite() && n > 0.0 {
+    if n == f64::INFINITY {
+        u64::MAX
+    } else if n.is_finite() && n > 0.0 {
         // Saturating float-to-int conversion; sizes fit easily.
         #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
         let v = n.round() as u64;
@@ -129,6 +132,7 @@ mod tests {
         assert_eq!(count(f64::NAN), 0);
         assert_eq!(count(2.6), 3);
         assert_eq!(count(1.5e6), 1_500_000);
-        assert_eq!(count(f64::INFINITY), 0);
+        assert_eq!(count(f64::INFINITY), u64::MAX);
+        assert_eq!(count(f64::NEG_INFINITY), 0);
     }
 }
