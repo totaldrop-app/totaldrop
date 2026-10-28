@@ -16,5 +16,8 @@ tokio = { version = "1.54.1", features = ["macros", "net", "rt-multi-thread", "s
 tokio-tungstenite = { version = "0.30.0", default-features = false, features = ["handshake"] }
 totaldrop-proto = { version = "0.1.0-beta.1", path = "../../crates/totaldrop-proto" }
 
+[dev-dependencies]
+tokio-tungstenite = { version = "0.30.0", default-features = false, features = ["connect", "handshake"] }
+
 [lints]
 workspace = true

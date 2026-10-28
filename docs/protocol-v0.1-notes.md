@@ -39,7 +39,8 @@ treated as final.
      and `error` (key 1 = reason), after which the server closes the
      connection.
    - Clients ping every 20 seconds while they wait, so idle connections are
-     not dropped.
+     not dropped. A connection must allocate or claim within 10 seconds of
+     opening; pings do not extend that.
 5. **Claiming.**
    - The first claim of a nameplate must carry its allocator token. Only
      the sender has it, so anyone else claiming an empty nameplate is
@@ -180,9 +181,11 @@ treated as final.
     the relay to a direct path that opens later (QUIC migration) is not done
     yet.
 23. **Relay limits.** Per transfer side: 32 GiB and 6 hours; ten seconds to
-    sign in. The self-hosted relay also caps each connection at 8 MiB/s and
-    closes it after 60 seconds without traffic. Neither keeps anything on
-    disk or logs client data.
+    sign in. Both accept only the pair path `/v0/relay/<key A>-<key B>` and
+    forward only to the other key of that pair. The self-hosted relay also
+    caps each connection at 8 MiB/s and closes it after 60 seconds without
+    datagrams (pings do not count). Neither keeps anything on disk or logs
+    client data.
 
 ## Known limits, to be closed before 1.0
 

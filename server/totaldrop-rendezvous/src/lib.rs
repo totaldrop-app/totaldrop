@@ -41,6 +41,9 @@ pub struct Config {
     pub retire_for: Duration,
     /// How long an idle connection is kept.
     pub idle_timeout: Duration,
+    /// How long a connection may wait before it allocates or claims. Pings
+    /// do not extend it.
+    pub claim_timeout: Duration,
     /// Most simultaneous connections.
     pub max_connections: usize,
     /// Most simultaneous nameplates.
@@ -64,6 +67,7 @@ impl Default for Config {
             mailbox_ttl: Duration::from_secs(60 * 60),
             retire_for: Duration::from_secs(24 * 60 * 60),
             idle_timeout: Duration::from_secs(10 * 60),
+            claim_timeout: Duration::from_secs(10),
             max_connections: 10_000,
             max_nameplates: 100_000,
             max_messages_per_side: 32,
@@ -121,6 +125,9 @@ struct Nameplate {
     /// Messages posted before the other side arrived, by poster.
     pending: Vec<(ConnId, String, Vec<u8>)>,
     pending_bytes: usize,
+    /// Set by the first counted scary close: the other side's close counts
+    /// for nothing more.
+    scared: bool,
 }
 
 #[derive(Debug, Default)]
@@ -321,9 +328,16 @@ impl Server {
         });
 
         let mut held: Held = None;
+        // Until it allocates or claims, a connection has a fixed deadline
+        // that pings do not move, so idle sockets cannot use up the slots.
+        let claim_deadline = tokio::time::Instant::now().checked_add(self.config.claim_timeout);
         loop {
+            let wait = match (held, claim_deadline) {
+                (None, Some(d)) => d.saturating_duration_since(tokio::time::Instant::now()),
+                _ => self.config.idle_timeout,
+            };
             let next = tokio::select! {
-                n = tokio::time::timeout(self.config.idle_timeout, source.next()) => n,
+                n = tokio::time::timeout(wait, source.next()) => n,
                 // The writer ended (expiry, error, or a client that stopped reading).
                 () = async { while !writer.is_finished() { tokio::time::sleep(Duration::from_millis(200)).await } } => break,
             };
@@ -399,6 +413,7 @@ impl Server {
                         sides: Vec::new(),
                         pending: Vec::new(),
                         pending_bytes: 0,
+                        scared: false,
                     },
                 );
                 st.cooling.remove(&n);
@@ -525,7 +540,10 @@ impl Server {
         // A scary close only counts when two sides really exchanged
         // messages; otherwise anyone could retire nameplates at will.
         let exchanged = np.sides.len() == 2 && np.sides.iter().all(|s| s.posted > 0);
-        let scary = mood == Mood::Scary && is_side && exchanged;
+        let scary = mood == Mood::Scary && is_side && exchanged && !np.scared;
+        if scary {
+            np.scared = true;
+        }
         if all_closed || scary {
             // Contents are forgotten as soon as nobody needs them.
             np.pending.clear();
@@ -542,6 +560,12 @@ impl Server {
         for peer in notify {
             let _ = peer.try_send(ServerMessage::PeerClosed { mood });
         }
+    }
+
+    /// Scary closes in the current attack-wave window, for tests and health
+    /// checks.
+    pub async fn scary_count(&self) -> usize {
+        self.state.lock().await.scary.len()
     }
 
     /// Number of live nameplates, for tests and health checks.
