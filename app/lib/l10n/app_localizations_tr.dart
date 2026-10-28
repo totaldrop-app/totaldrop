@@ -184,7 +184,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get sameNetworkNote =>
-      'Şimdilik iki cihaz aynı ağda olmalı. İnternet üzerinden gönderim, aktarma sunucusuyla gelecek.';
+      'İnternet üzerinden çalışır. Cihazlar birbirine doğrudan ulaşamazsa şifreli aktarım, içeriği okuyamayan aktarma sunucusundan geçer.';
 
   @override
   String get done => 'Tamam';
@@ -233,7 +233,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get errorConnect =>
-      'Diğer cihaza bağlanılamadı. Şimdilik iki cihaz aynı ağda olmalı.';
+      'Diğer cihaza bağlanılamadı. İki cihazın da internete bağlı olduğundan emin olup yeniden deneyin.';
 
   @override
   String get errorInvalidOffer =>

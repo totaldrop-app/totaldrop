@@ -58,7 +58,7 @@
 
   "verificationTitle": "Verification words",
   "verificationHint": "The other person sees the same four words. If they differ, stop.",
-  "sameNetworkNote": "For now both devices must be on the same network. Transfers across the internet arrive with the relay.",
+  "sameNetworkNote": "Works across the internet. When the devices cannot reach each other directly, the encrypted transfer goes through the relay, which cannot read it.",
   "done": "Done",
   "tryAgain": "Try again",
   "cancel": "Cancel",
@@ -74,7 +74,7 @@
   "errorCancelled": "The other side stopped the transfer.",
   "errorInvalidCode": "That code is not valid.",
   "errorServer": "Could not reach the TotalDrop server. Check your internet connection.",
-  "errorConnect": "Could not connect to the other device. For now both devices must be on the same network.",
+  "errorConnect": "Could not connect to the other device. Check that both devices are online and try again.",
   "errorInvalidOffer": "The offer broke a safety rule, so it was refused.",
   "errorStorage": "A file could not be read or saved.",
   "errorOther": "Something went wrong.",

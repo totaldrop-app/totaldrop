@@ -383,7 +383,7 @@ abstract class AppLocalizations {
   /// No description provided for @sameNetworkNote.
   ///
   /// In en, this message translates to:
-  /// **'For now both devices must be on the same network. Transfers across the internet arrive with the relay.'**
+  /// **'Works across the internet. When the devices cannot reach each other directly, the encrypted transfer goes through the relay, which cannot read it.'**
   String get sameNetworkNote;
 
   /// No description provided for @done.
@@ -473,7 +473,7 @@ abstract class AppLocalizations {
   /// No description provided for @errorConnect.
   ///
   /// In en, this message translates to:
-  /// **'Could not connect to the other device. For now both devices must be on the same network.'**
+  /// **'Could not connect to the other device. Check that both devices are online and try again.'**
   String get errorConnect;
 
   /// No description provided for @errorInvalidOffer.

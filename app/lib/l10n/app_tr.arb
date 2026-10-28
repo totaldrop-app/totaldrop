@@ -50,7 +50,7 @@
 
   "verificationTitle": "Doğrulama kelimeleri",
   "verificationHint": "Karşı taraf da aynı dört kelimeyi görür. Farklıysa durun.",
-  "sameNetworkNote": "Şimdilik iki cihaz aynı ağda olmalı. İnternet üzerinden gönderim, aktarma sunucusuyla gelecek.",
+  "sameNetworkNote": "İnternet üzerinden çalışır. Cihazlar birbirine doğrudan ulaşamazsa şifreli aktarım, içeriği okuyamayan aktarma sunucusundan geçer.",
   "done": "Tamam",
   "tryAgain": "Tekrar dene",
   "cancel": "Vazgeç",
@@ -66,7 +66,7 @@
   "errorCancelled": "Karşı taraf gönderimi durdurdu.",
   "errorInvalidCode": "Bu kod geçerli değil.",
   "errorServer": "TotalDrop sunucusuna ulaşılamadı. İnternet bağlantınızı kontrol edin.",
-  "errorConnect": "Diğer cihaza bağlanılamadı. Şimdilik iki cihaz aynı ağda olmalı.",
+  "errorConnect": "Diğer cihaza bağlanılamadı. İki cihazın da internete bağlı olduğundan emin olup yeniden deneyin.",
   "errorInvalidOffer": "Teklif bir güvenlik kuralını çiğnediği için reddedildi.",
   "errorStorage": "Bir dosya okunamadı ya da kaydedilemedi.",
   "errorOther": "Bir şeyler ters gitti.",
