@@ -80,5 +80,13 @@
   "settingsAboutBody": "TotalDrop ücretsiz ve açık kaynaktır, bağışlarla yürür. Lisansı GPL-3.0-or-later.",
   "settingsPrivacy": "Gizlilik",
   "settingsPrivacyBody": "Buluşma sunucusu IP adresinizi ve ne zaman bağlandığınızı görür, ama dosya adlarını, içerikleri ya da anahtarları görmez. Kayıt tutmaz. Dosyalar iki cihaz arasında doğrudan, uçtan uca şifreli gider.",
-  "settingsVersion": "Sürüm {version}"
+  "settingsVersion": "Sürüm {version}",
+
+  "sizeBytes": "{value} B",
+  "sizeKB": "{value} kB",
+  "sizeMB": "{value} MB",
+  "sizeGB": "{value} GB",
+  "sizeTB": "{value} TB",
+  "sizePB": "{value} PB",
+  "draftTranslation": "Bu çeviri gözden geçiriliyor. Weblate'te iyileştirmeye yardım edin."
 }
