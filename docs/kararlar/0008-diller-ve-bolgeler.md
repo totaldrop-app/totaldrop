@@ -29,9 +29,11 @@
   Bölge ya da yazı varyantı olan her dilin bir de temel dosyası vardır
   (`app_pt.arb`, `app_zh.arb`): gen_l10n bunu ister ve en yakın eşleşme
   ona düşer.
-- İngilizce şablondur. Şablonda çoğullar `one{…}`/`other{…}` ile yazılır;
-  `=0`, `=1` yalnızca o sayıya özel bir cümle gerektiğinde kullanılır
-  (Rusçada 21 "one" kategorisindedir, `=1` değildir).
+- İngilizce şablondur. Şablonda çoğullar `one{…}`/`other{…}` ile yazılır.
+  Flutter `=0`, `=1`, `=2`'yi `zero`, `one`, `two` durumu olarak kullanır;
+  Rust çözücüsü de aynısını yapar, başka tam sayıları ve aynı durumun iki
+  kez yazılmasını reddeder. Sayılar iki tarafta da gruplanır
+  (`decimalPattern`).
 
 ## Mesaj biçimi
 

@@ -35,8 +35,14 @@ olduğunu tutar. Bu dosyayı bakımcı değiştirir.
   sıraları cümleye göre değişebilir.
 - Çoğullar ICU biçimindedir: `{count, plural, one{…} other{…}}`. Diliniz
   başka çoğul biçimleri istiyorsa (`zero`, `two`, `few`, `many`) ekleyin;
-  CLDR kuralları uygulanır. `=1{…}` yalnızca tam olarak bir için özel bir
-  cümle gerekiyorsa kullanılır (Rusçada 21 de `one`'dır).
+  CLDR kuralları uygulanır.
+- `=0`, `=1` ve `=2`, Flutter'da `zero`, `one` ve `two` ile aynı durumdur;
+  ikisini birden yazmayın. Rusça, Ukraynaca gibi dillerde `one` 21, 31…
+  için de seçilir, bu yüzden `one` cümlesine sayıyı (`{count}`) yazın.
+  Başka tam sayılar (`=5`) kullanılamaz.
+- Güvenlik metinlerindeki yer tutucular (`{code}`, `{words}`, `{folder}`,
+  `{name}`) her durumda İngilizce'deki kadar geçer ve bir durumu seçmek
+  için kullanılamaz.
 - Kesme işareti düz metindir; kaçış gerekmez (`L'envoi`).
 - Çevirilerde bağlantı, HTML ve görünmez yön karakterleri (U+202A–U+202E,
   U+2066–U+2069) kullanılmaz; CI reddeder.
