@@ -37,7 +37,7 @@ jobs:
     steps:
       - name: Qt 6 and the toolchain
         run: pacman -Syu --noconfirm --needed base-devel git rustup qt6-base qt6-declarative qt6-wayland qt6-svg
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
       - run: rustup toolchain install "$RUSTUP_TOOLCHAIN" --profile minimal -c clippy,rustfmt
@@ -54,7 +54,7 @@ jobs:
       matrix:
         format: [arch, deb, rpm]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
       - run: packaging/build.sh ${{ matrix.format }}
