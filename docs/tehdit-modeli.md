@@ -17,7 +17,7 @@ Bugün korunanlar ile henüz yalnızca tasarımda olanlar ayrı yazılır.
 | Dosya boyutları | Sunucular ve ağ gözlemcisi şifreli trafiğin toplam boyutunu görür; tek tek dosya boyutları gizli kalır | Kısmen |
 | Kullanıcının kimliği | Herkes: hesap gerekmez | Var; isteğe bağlı numara hesapları [tasarımda](hesap.md) |
 | Kim kime gönderdi | Sunucular iki cihazın IP adreslerini aynı anda görür | Yok; gizlilik modu ve Tor ile azaltılacak |
-| IP adresi | Gizlilik modunda karşı cihaz | Yalnızca komut satırı istemcisinde (`--relay-only`) |
+| IP adresi | Gizlilik modunda karşı cihaz | Var: komut satırında `--relay-only`, uygulamalarda Ayarlar → "Adresimi karşı cihazdan gizle" |
 | Alıcının diski | Kötü niyetli gönderen (yol dışına yazma, üzerine yazma) | Var |
 
 ## Saldırganlar
@@ -51,7 +51,7 @@ Bugün korunanlar ile henüz yalnızca tasarımda olanlar ayrı yazılır.
 | T3 | Kodu tahmin etmek | 3 | CPace: deneme başına tek tahmin, çevrimdışı deneme yok; iki kelimede 2⁻²² olasılık; başarısız deneme iki tarafa "scary" kapanış olarak görünür; saldırı dalgasında yavaşlatma | Çok sayıda koda aynı anda saldırı; üç kelimelik kod (2⁻³³) seçenek olarak var |
 | T4 | Kaydedip sonra çözmek | 5 | ML-KEM-768 hibrit adım; oturum anahtarları hem X25519'dan hem ML-KEM'den türer | Kimlik doğrulama v0'da klasik (Ed25519); ML-DSA-65 plan aşamasında ([#42](https://github.com/totaldrop-app/totaldrop/issues/42)) |
 | T5 | Aktarımları birbirine bağlamak | 2 | Her aktarımda yeni, tek kullanımlık uç nokta anahtarı; sunucular kayıt tutmaz | Sunucu aynı anda IP ve zamanlamayı görür; yayımlanmış sürümlerde aktarma sunucusu da, doğrudan aktarımlarda bile, her aktarımda iki cihazın IP'sini görür; bir sonraki sürümden itibaren yalnızca doğrudan yol 1,2 saniye içinde açılmazsa, o cihazınkini ([#63](https://github.com/totaldrop-app/totaldrop/issues/63)) |
-| T6 | IP adresini öğrenmek | 2, 4 | Gizlilik modu: adres bildirilmez, yalnızca aktarma (bugün yalnızca komut satırında `--relay-only`) | Uygulamalarda henüz yok ([#39](https://github.com/totaldrop-app/totaldrop/issues/39)); varsayılan modda karşı taraf IP'yi görür; Tor yok |
+| T6 | IP adresini öğrenmek | 2, 4 | Gizlilik modu: adres bildirilmez, yalnızca aktarma (komut satırında `--relay-only`, uygulamalarda Ayarlar'da) | Varsayılan modda karşı taraf IP'yi görür; aktarma sunucusu IP'yi görür; Tor ve boyut doldurma yok ([#39](https://github.com/totaldrop-app/totaldrop/issues/39)) |
 | T7 | Alıcının diskine zarar | 4 | Yol denetimi (NFC, `..`, ayırıcılar, Windows adları, bidi), yalnızca seçilen klasörün altına, var olanın üzerine asla yazmama, sembolik bağ izlememe, BLAKE3 doğrulamasından sonra yerine koyma | Aynı dosya sistemi yarış koşulları; denetim kapsamında |
 | T8 | Bellek ya da disk tüketme | 4 | Sınırlar: 100.000 girdi, 16 MiB manifest, yol uzunlukları; reddedilen teklif | 16 MiB manifest çözülürken yaklaşık 1 GiB bellek; v0.1'de akış biçimine geçilecek |
 | T9 | Sunucuyu kötüye kullanmak | 2, 3 | Rendezvous: kutu başına mesaj ve boyut sınırları, süreler; aktarma: aktarım başına iki anahtar, 32 GiB ve 6 saat | Rendezvous'ta istemci başına hız sınırı henüz yok |

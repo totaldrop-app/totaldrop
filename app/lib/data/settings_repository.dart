@@ -8,12 +8,13 @@ class SettingsRepository extends ChangeNotifier {
   SettingsRepository._(this._prefs);
 
   static const _serverKey = 'rendezvous_server';
+  static const _privacyKey = 'privacy_mode';
 
   final SharedPreferencesWithCache _prefs;
 
   static Future<SettingsRepository> load() async {
     final prefs = await SharedPreferencesWithCache.create(
-      cacheOptions: const SharedPreferencesWithCacheOptions(allowList: {_serverKey}),
+      cacheOptions: const SharedPreferencesWithCacheOptions(allowList: {_serverKey, _privacyKey}),
     );
     return SettingsRepository._(prefs);
   }
@@ -36,6 +37,19 @@ class SettingsRepository extends ChangeNotifier {
       await _prefs.remove(_serverKey);
     } else {
       await _prefs.setString(_serverKey, v);
+    }
+    notifyListeners();
+  }
+
+  /// Privacy mode: every transfer goes through the relay only, so the
+  /// other device never learns this device's IP address. Off by default.
+  bool get privacyMode => _prefs.getBool(_privacyKey) ?? false;
+
+  Future<void> setPrivacyMode(bool on) async {
+    if (on) {
+      await _prefs.setBool(_privacyKey, true);
+    } else {
+      await _prefs.remove(_privacyKey);
     }
     notifyListeners();
   }

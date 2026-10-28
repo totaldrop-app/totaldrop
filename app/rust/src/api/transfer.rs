@@ -9,7 +9,9 @@ use std::path::PathBuf;
 use std::sync::{Arc, LazyLock, Mutex};
 
 use flutter_rust_bridge::frb;
-use totaldrop_core::{Event, IncomingOffer, PreparedSend, ReceiveOptions, SendOptions, Stop};
+use totaldrop_core::{
+    Event, IncomingOffer, PathOptions, PreparedSend, ReceiveOptions, SendOptions, Stop,
+};
 
 use crate::frb_generated::StreamSink;
 
@@ -273,11 +275,22 @@ impl SendSession {
     }
 }
 
-/// Scan and hash `paths`, reserve a code. `strong` adds a third word.
+/// The paths a transfer may take. With `privacy`, only the relay: the
+/// other device never learns this one's IP address.
+fn route(privacy: bool) -> PathOptions {
+    PathOptions {
+        relay_only: privacy,
+        ..PathOptions::default()
+    }
+}
+
+/// Scan and hash `paths`, reserve a code. `strong` adds a third word;
+/// `privacy` sends through the relay only.
 pub async fn prepare_send(
     server: String,
     paths: Vec<String>,
     strong: bool,
+    privacy: bool,
     stopper: &Stopper,
 ) -> Result<SendSession, TransferError> {
     let stop = stopper.stop.clone();
@@ -285,7 +298,7 @@ pub async fn prepare_send(
         let opts = SendOptions {
             server,
             words: if strong { 3 } else { 2 },
-            ..SendOptions::default()
+            paths: route(privacy),
         };
         let paths = paths.into_iter().map(PathBuf::from).collect();
         // Dropping the preparation releases the reserved code at once.
@@ -372,10 +385,11 @@ impl Offer {
 }
 
 /// Use `code` to connect to the sender and receive its offer, until
-/// `stopper` is stopped.
+/// `stopper` is stopped. `privacy` receives through the relay only.
 pub async fn connect_receive(
     server: String,
     code: String,
+    privacy: bool,
     stopper: &Stopper,
 ) -> Result<Offer, TransferError> {
     let stop = stopper.stop.clone();
@@ -383,7 +397,7 @@ pub async fn connect_receive(
         let offer = IncomingOffer::connect_with(
             &ReceiveOptions {
                 server,
-                ..ReceiveOptions::default()
+                paths: route(privacy),
             },
             &code,
             &stop,

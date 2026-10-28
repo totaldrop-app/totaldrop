@@ -530,6 +530,7 @@ fn wire__crate__api__transfer__connect_receive_impl(
                 flutter_rust_bridge::for_generated::SseDeserializer::new(message);
             let api_server = <String>::sse_decode(&mut deserializer);
             let api_code = <String>::sse_decode(&mut deserializer);
+            let api_privacy = <bool>::sse_decode(&mut deserializer);
             let api_stopper = <RustOpaqueMoi<
                 flutter_rust_bridge::for_generated::RustAutoOpaqueInner<Stopper>,
             >>::sse_decode(&mut deserializer);
@@ -559,6 +560,7 @@ fn wire__crate__api__transfer__connect_receive_impl(
                         let output_ok = crate::api::transfer::connect_receive(
                             api_server,
                             api_code,
+                            api_privacy,
                             &*api_stopper_guard,
                         )
                         .await?;
@@ -834,6 +836,7 @@ fn wire__crate__api__transfer__prepare_send_impl(
             let api_server = <String>::sse_decode(&mut deserializer);
             let api_paths = <Vec<String>>::sse_decode(&mut deserializer);
             let api_strong = <bool>::sse_decode(&mut deserializer);
+            let api_privacy = <bool>::sse_decode(&mut deserializer);
             let api_stopper = <RustOpaqueMoi<
                 flutter_rust_bridge::for_generated::RustAutoOpaqueInner<Stopper>,
             >>::sse_decode(&mut deserializer);
@@ -864,6 +867,7 @@ fn wire__crate__api__transfer__prepare_send_impl(
                             api_server,
                             api_paths,
                             api_strong,
+                            api_privacy,
                             &*api_stopper_guard,
                         )
                         .await?;

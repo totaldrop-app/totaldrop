@@ -7,7 +7,7 @@ import '../frb_generated.dart';
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `b`, `core_events`, `emit`, `finish`, `n`, `of`, `on_runtime`, `other`, `stopped`
+// These functions are ignored because they are not marked as `pub`: `b`, `core_events`, `emit`, `finish`, `n`, `of`, `on_runtime`, `other`, `route`, `stopped`
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `assert_fields_are_eq`, `clone`, `clone`, `clone`, `clone`, `clone`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`
 
 /// A new, unstopped stopper.
@@ -21,16 +21,19 @@ void stopTransfer({required Stopper stopper}) =>
 /// The default rendezvous server.
 String defaultServer() => RustLib.instance.api.crateApiTransferDefaultServer();
 
-/// Scan and hash `paths`, reserve a code. `strong` adds a third word.
+/// Scan and hash `paths`, reserve a code. `strong` adds a third word;
+/// `privacy` sends through the relay only.
 Future<SendSession> prepareSend({
   required String server,
   required List<String> paths,
   required bool strong,
+  required bool privacy,
   required Stopper stopper,
 }) => RustLib.instance.api.crateApiTransferPrepareSend(
   server: server,
   paths: paths,
   strong: strong,
+  privacy: privacy,
   stopper: stopper,
 );
 
@@ -45,14 +48,16 @@ Stream<TransferEvent> runSend({
 );
 
 /// Use `code` to connect to the sender and receive its offer, until
-/// `stopper` is stopped.
+/// `stopper` is stopped. `privacy` receives through the relay only.
 Future<Offer> connectReceive({
   required String server,
   required String code,
+  required bool privacy,
   required Stopper stopper,
 }) => RustLib.instance.api.crateApiTransferConnectReceive(
   server: server,
   code: code,
+  privacy: privacy,
   stopper: stopper,
 );
 

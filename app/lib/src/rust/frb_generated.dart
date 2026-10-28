@@ -107,6 +107,7 @@ abstract class RustLibApi extends BaseApi {
   Future<Offer> crateApiTransferConnectReceive({
     required String server,
     required String code,
+    required bool privacy,
     required Stopper stopper,
   });
 
@@ -131,6 +132,7 @@ abstract class RustLibApi extends BaseApi {
     required String server,
     required List<String> paths,
     required bool strong,
+    required bool privacy,
     required Stopper stopper,
   });
 
@@ -439,6 +441,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   Future<Offer> crateApiTransferConnectReceive({
     required String server,
     required String code,
+    required bool privacy,
     required Stopper stopper,
   }) {
     return handler.executeNormal(
@@ -447,6 +450,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(server, serializer);
           sse_encode_String(code, serializer);
+          sse_encode_bool(privacy, serializer);
           sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerStopper(
             stopper,
             serializer,
@@ -464,7 +468,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeErrorData: sse_decode_transfer_error,
         ),
         constMeta: kCrateApiTransferConnectReceiveConstMeta,
-        argValues: [server, code, stopper],
+        argValues: [server, code, privacy, stopper],
         apiImpl: this,
       ),
     );
@@ -473,7 +477,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiTransferConnectReceiveConstMeta =>
       const TaskConstMeta(
         debugName: "connect_receive",
-        argNames: ["server", "code", "stopper"],
+        argNames: ["server", "code", "privacy", "stopper"],
       );
 
   @override
@@ -660,6 +664,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     required String server,
     required List<String> paths,
     required bool strong,
+    required bool privacy,
     required Stopper stopper,
   }) {
     return handler.executeNormal(
@@ -669,6 +674,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           sse_encode_String(server, serializer);
           sse_encode_list_String(paths, serializer);
           sse_encode_bool(strong, serializer);
+          sse_encode_bool(privacy, serializer);
           sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerStopper(
             stopper,
             serializer,
@@ -686,7 +692,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeErrorData: sse_decode_transfer_error,
         ),
         constMeta: kCrateApiTransferPrepareSendConstMeta,
-        argValues: [server, paths, strong, stopper],
+        argValues: [server, paths, strong, privacy, stopper],
         apiImpl: this,
       ),
     );
@@ -695,7 +701,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiTransferPrepareSendConstMeta =>
       const TaskConstMeta(
         debugName: "prepare_send",
-        argNames: ["server", "paths", "strong", "stopper"],
+        argNames: ["server", "paths", "strong", "privacy", "stopper"],
       );
 
   @override

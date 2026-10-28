@@ -69,6 +69,25 @@ Page {
 
             Label { text: Strings.s.settingsPrivacy; color: Theme.ink; font.pointSize: Qt.application.font.pointSize * 1.25; font.weight: Font.DemiBold }
             Label { text: Strings.s.settingsPrivacyBody; color: Theme.ink; wrapMode: Text.Wrap; Layout.fillWidth: true }
+            Switch {
+                id: privacy
+                text: Strings.s.privacyMode
+                checked: page.transfer.privacyMode
+                Layout.fillWidth: true
+                Layout.topMargin: Theme.s8
+                // Turning it on is confirmed first: it is slower.
+                onToggled: {
+                    if (checked) { checked = Qt.binding(() => page.transfer.privacyMode); privacyDialog.open() }
+                    else page.transfer.savePrivacyMode(false)
+                }
+            }
+            Label {
+                text: Strings.s.privacyModeHint
+                color: Theme.muted
+                wrapMode: Text.Wrap
+                Layout.fillWidth: true
+                Layout.leftMargin: privacy.indicator ? privacy.indicator.width + privacy.spacing : 0
+            }
 
             MenuSeparator { Layout.fillWidth: true; Layout.topMargin: Theme.s16; Layout.bottomMargin: Theme.s16 }
 
@@ -92,5 +111,25 @@ Page {
                 HoverHandler { cursorShape: Qt.PointingHandCursor }
             }
         }
+    }
+
+    Dialog {
+        id: privacyDialog
+        anchors.centerIn: parent
+        modal: true
+        title: Strings.s.privacyModeConfirmTitle
+        // A fixed text width: wrapped text in a self-sizing popup loops.
+        contentWidth: Math.min(380, page.width - 4 * Theme.s24)
+        Label {
+            width: privacyDialog.contentWidth
+            text: Strings.s.privacyModeConfirmBody
+            wrapMode: Text.Wrap
+            color: Theme.ink
+        }
+        footer: DialogButtonBox {
+            Button { text: Strings.s.cancel; DialogButtonBox.buttonRole: DialogButtonBox.RejectRole }
+            Button { text: Strings.s.privacyModeTurnOn; DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole }
+        }
+        onAccepted: page.transfer.savePrivacyMode(true)
     }
 }

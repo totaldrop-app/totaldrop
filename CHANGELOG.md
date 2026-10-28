@@ -9,6 +9,11 @@ All notable changes to TotalDrop are recorded here. The format follows
 
 ### Added
 
+- **Android, Linux:** Privacy mode in Settings ("Hide my address from the
+  other device"): every transfer goes through the relay, so the other device
+  never learns your IP address. It is slower, and the app asks before
+  turning it on. The command line has had it as `--relay-only` (#39).
+
 - **Linux:** .deb and .rpm packages for ARM64 (Snapdragon X, NVIDIA RTX
   Spark). The command line is now also tested on ARM64 Linux and Windows
   (#86).
