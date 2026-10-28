@@ -84,7 +84,7 @@ const CONNECT_TIMEOUT: Duration = Duration::from_secs(20);
 
 /// How this side can be reached, for its `HINTS`. With `relay_only`, no
 /// address at all (spec section 6, privacy mode). Otherwise the local
-/// addresses, and the public address the relay saw, if it answered.
+/// addresses, and the public address the STUN server saw, if it answered.
 async fn own_hints(
     socket: &std::net::UdpSocket,
     key: &transport::EndpointKey,
@@ -152,7 +152,10 @@ fn usable_relay(hints: &Hints) -> Option<&str> {
         .filter(|url| relay::check_url(url).is_ok())
 }
 
-/// Start the relay link at `url`, if any, and say which paths to try.
+/// Prepare the relay link at `url`, if any, and say which paths to try. The
+/// link connects only when a connection attempt needs the relay: at once
+/// with no direct address (privacy mode), otherwise after the direct
+/// addresses had their head start.
 fn paths_to(
     peer: &Hints,
     url: Option<&str>,
@@ -160,7 +163,16 @@ fn paths_to(
     own: &Arc<transport::EndpointKey>,
     pipes: path::RelayPipes,
 ) -> (transport::Paths, Option<relay::Link>) {
-    let link = url.map(|u| relay::spawn(u.to_owned(), own.clone(), peer.endpoint_key, pipes));
+    let gate = relay::Gate::default();
+    let link = url.map(|u| {
+        relay::spawn(
+            u.to_owned(),
+            own.clone(),
+            peer.endpoint_key,
+            pipes,
+            gate.clone(),
+        )
+    });
     let direct = if relay_only {
         Vec::new()
     } else {
@@ -169,7 +181,7 @@ fn paths_to(
     (
         transport::Paths {
             direct,
-            relay: link.is_some(),
+            relay: link.is_some().then_some(gate),
         },
         link,
     )
@@ -326,8 +338,8 @@ fn peer_addresses(hints: &Hints) -> Vec<SocketAddr> {
 pub struct ReceiveOptions {
     /// Rendezvous server URL.
     pub server: String,
-    /// Relay and privacy settings. The transfer goes through the sender's
-    /// relay; this side's relay is used to find its public address.
+    /// Relay and privacy settings. When a relay is needed, the transfer goes
+    /// through the sender's relay.
     pub paths: PathOptions,
 }
 

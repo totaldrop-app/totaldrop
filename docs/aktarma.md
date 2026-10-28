@@ -46,10 +46,13 @@ Her iki cihaz aynı anda şunları dener:
 | Açık adres (adres bulma ile) | hemen, NAT delme için |
 | Aktarma sunucusu | 1,2 saniye sonra, doğrudan yol açılmadıysa |
 
-Aktarma sunucusuna WebSocket bağlantısı ise bu sürümde her aktarımın başında
-açılır ve aktarım bitene kadar açık kalır; sunucu bu yüzden doğrudan
-aktarımlarda da iki cihazın IP adresini görür. Bağlantının yalnızca
-gerektiğinde açılması [#63](https://github.com/totaldrop-app/totaldrop/issues/63)'te.
+Aktarma sunucusuna WebSocket bağlantısı da ancak bu 1,2 saniye dolup hâlâ
+doğrudan bağlantı yoksa açılır; gizlilik modunda hemen. Doğrudan yol kazanırsa
+aktarma sunucusuna hiç bağlanılmaz ve sunucu o aktarımı hiç görmez. Doğrudan
+yol 1,2 saniyeden uzun sürüp sonunda kazanırsa açılmış aktarma bağlantısı
+kapatılır. Bu davranış bir sonraki sürümle gelir
+([#63](https://github.com/totaldrop-app/totaldrop/issues/63)); daha önceki
+sürümler bağlantıyı her aktarımın başında açar.
 Alan cihaz, gönderenin bildirdiği aktarma sunucusunu kullanır; gizlilik
 modunda da ([#68](https://github.com/totaldrop-app/totaldrop/issues/68)).
 
