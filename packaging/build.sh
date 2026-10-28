@@ -24,7 +24,8 @@ docker build -q -t "$image" -f "$root/packaging/containers/$df.Dockerfile" "$roo
 tar -C "$root" --exclude=./target --exclude=./dist --exclude=./.git --exclude=./app/build \
     --exclude=./app/.dart_tool --exclude=./fuzz/target \
     --sort=name --mtime="@$SOURCE_DATE_EPOCH" --owner=0 --group=0 --numeric-owner \
-    --transform "s,^\.,$src," -cf - . | gzip -n > "$work/$src.tar.gz"
+    --mode=u+rwX,go=rX --transform "s,^\.,$src," -cf "$work/$src.tar" .
+gzip -n "$work/$src.tar"
 
 case $format in
 deb)
@@ -40,6 +41,7 @@ rpm)
     tar xzf /w/$src.tar.gz -C /tmp $src/packaging/rpm/totaldrop.spec
     export RUSTUP_TOOLCHAIN=1.99.1
     rpmbuild --define '_topdir /tmp/rpm' --define 'use_source_date_epoch_as_buildtime 1' \
+      --define '_buildhost reproducible' \
       --define 'clamp_mtime_to_source_date_epoch 1' -bb /tmp/$src/packaging/rpm/totaldrop.spec
     cp /tmp/rpm/RPMS/*/*.rpm /w/"
   cp "$work"/*.rpm "$out/" ;;
@@ -48,7 +50,7 @@ arch)
   mv "$work/$src.tar.gz" "$work/totaldrop-$ver.tar.gz"
   docker run --rm -e SOURCE_DATE_EPOCH -v "$work:/w" "$image" sh -ec "
     chown -R builder /w && cd /w
-    sudo -u builder env RUSTUP_TOOLCHAIN=1.99.1 RUSTUP_HOME=/opt/rustup CARGO_HOME=/opt/cargo \
+    sudo -u builder env TOTALDROP_RUST=1.99.1 RUSTUP_HOME=/opt/rustup CARGO_HOME=/opt/cargo \
       PATH=/opt/cargo/bin:\$PATH SOURCE_DATE_EPOCH=\$SOURCE_DATE_EPOCH makepkg -sf --noconfirm
     chown -R $(id -u):$(id -g) /w"
   cp "$work"/*.pkg.tar.zst "$out/" ;;

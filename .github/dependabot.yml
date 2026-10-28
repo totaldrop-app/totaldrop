@@ -25,10 +25,16 @@ updates:
       - /server/relay-worker
     schedule:
       interval: weekly
+  # Base images are pinned by digest; Dependabot bumps the digests. A new
+  # major version (fedora:44) changes the oldest supported system, so it is
+  # a decision, not an update.
   - package-ecosystem: docker
     directory: /packaging/containers
     schedule:
       interval: weekly
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
   # Actions are pinned to commit SHAs (threat model T11); Dependabot keeps
   # the SHA and the version comment current.
   - package-ecosystem: github-actions
