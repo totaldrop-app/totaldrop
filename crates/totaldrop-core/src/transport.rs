@@ -366,8 +366,8 @@ async fn accept_one(endpoint: &quinn::Endpoint) -> Result<quinn::Connection> {
 /// so the usual direction wins when both work.
 const REVERSE_DELAY: Duration = Duration::from_millis(400);
 
-/// How long direct addresses get before the relay is tried as well, so a
-/// working direct path wins and the relay is spared.
+/// How long direct addresses get before the relay is contacted and tried as
+/// well, so a working direct path wins and the relay never hears of it.
 const RELAY_DELAY: Duration = Duration::from_millis(1200);
 
 /// Where the other device can be reached.
@@ -375,13 +375,14 @@ const RELAY_DELAY: Duration = Duration::from_millis(1200);
 pub struct Paths {
     /// Addresses from its `HINTS`, tried directly.
     pub direct: Vec<SocketAddr>,
-    /// Whether a relay link to it runs.
-    pub relay: bool,
+    /// The relay link to it, if there is one. It is opened only when the
+    /// relay attempt starts.
+    pub relay: Option<crate::relay::Gate>,
 }
 
 impl Paths {
     fn is_empty(&self) -> bool {
-        self.direct.is_empty() && !self.relay
+        self.direct.is_empty() && self.relay.is_none()
     }
 }
 
@@ -490,28 +491,33 @@ pub async fn connect_any(endpoint: &quinn::Endpoint, paths: &Paths) -> Result<qu
     if paths.is_empty() {
         return Err(Error::Connect("the other side announced no address".into()));
     }
-    let mut targets: Vec<(SocketAddr, Duration)> = paths
+    let mut targets: Vec<(SocketAddr, Duration, Option<crate::relay::Gate>)> = paths
         .direct
         .iter()
         .enumerate()
         .map(|(i, a)| {
             let i = u64::try_from(i).unwrap_or(0);
-            (*a, Duration::from_millis(150u64.saturating_mul(i)))
+            (*a, Duration::from_millis(150u64.saturating_mul(i)), None)
         })
         .collect();
-    if paths.relay {
+    if let Some(gate) = &paths.relay {
         let delay = if paths.direct.is_empty() {
             Duration::ZERO
         } else {
             RELAY_DELAY
         };
-        targets.push((crate::path::RELAY_PEER, delay));
+        targets.push((crate::path::RELAY_PEER, delay, Some(gate.clone())));
     }
     let mut attempts = tokio::task::JoinSet::new();
-    for (addr, delay) in targets {
+    for (addr, delay, gate) in targets {
         let endpoint = endpoint.clone();
         attempts.spawn(async move {
             tokio::time::sleep(delay).await;
+            // Only now, with no direct connection yet, contact the relay.
+            // Datagrams wait in the pipes until the link is up.
+            if let Some(gate) = gate {
+                gate.open();
+            }
             let connecting = endpoint
                 .connect(addr, SERVER_NAME)
                 .map_err(|e| Error::Connect(e.to_string()))?;
@@ -578,7 +584,7 @@ mod tests {
         let recv_side = async {
             let paths = Paths {
                 direct: vec![to_sender],
-                relay: false,
+                relay: None,
             };
             let conn = receiver_connection(&receiver, &paths, wait).await?;
             let (mut send, _recv) = conn.open_bi().await?;
@@ -590,7 +596,7 @@ mod tests {
         let send_side = async {
             let paths = Paths {
                 direct: vec![to_receiver],
-                relay: false,
+                relay: None,
             };
             let (_conn, _send, mut recv) = sender_connection(&sender, &paths, wait).await?;
             let mut buf = [0u8; 5];
@@ -646,9 +652,10 @@ mod tests {
         let (sender, pa) = endpoint(sa, &ka, &kb.public()).unwrap();
         let (receiver, pb) = endpoint(sb, &kb, &ka.public()).unwrap();
         cross(pa, pb);
+        let gate = crate::relay::Gate::default();
         let blocked = Paths {
             direct: vec![unreachable()],
-            relay: true,
+            relay: Some(gate.clone()),
         };
         let wait = Duration::from_secs(10);
         let recv_side = async {
@@ -671,5 +678,47 @@ mod tests {
         let (r, s) = tokio::join!(recv_side, send_side);
         assert!(r.is_ok());
         assert_eq!(&s.unwrap(), b"relay");
+        assert!(gate.is_open());
+    }
+
+    /// When a direct path works, neither side contacts the relay (#63).
+    #[tokio::test]
+    async fn direct_path_never_opens_the_relay() {
+        let (sender, sender_addr, receiver, receiver_addr) = pair();
+        let (recv_gate, send_gate) = (crate::relay::Gate::default(), crate::relay::Gate::default());
+        let wait = Duration::from_secs(8);
+        let recv_side = async {
+            let paths = Paths {
+                direct: vec![sender_addr],
+                relay: Some(recv_gate.clone()),
+            };
+            let conn = receiver_connection(&receiver, &paths, wait).await?;
+            let (mut send, _recv) = conn.open_bi().await?;
+            send.write_all(b"hello")
+                .await
+                .map_err(|e| Error::Connect(e.to_string()))?;
+            Ok::<_, Error>(conn)
+        };
+        let send_side = async {
+            let paths = Paths {
+                direct: vec![receiver_addr],
+                relay: Some(send_gate.clone()),
+            };
+            let (conn, _send, mut recv) = sender_connection(&sender, &paths, wait).await?;
+            let mut buf = [0u8; 5];
+            recv.read_exact(&mut buf)
+                .await
+                .map_err(|e| Error::Connect(e.to_string()))?;
+            Ok::<_, Error>((conn, buf))
+        };
+        let (r, s) = tokio::join!(recv_side, send_side);
+        let (conn, buf) = s.unwrap();
+        assert_ne!(r.unwrap().remote_address(), crate::path::RELAY_PEER);
+        assert_ne!(conn.remote_address(), crate::path::RELAY_PEER);
+        assert_eq!(&buf, b"hello");
+        // Well past the relay's head start: still nobody asked for it.
+        tokio::time::sleep(RELAY_DELAY.saturating_add(REVERSE_DELAY)).await;
+        assert!(!recv_gate.is_open());
+        assert!(!send_gate.is_open());
     }
 }

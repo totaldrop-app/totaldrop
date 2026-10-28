@@ -73,6 +73,44 @@ pub async fn discover(socket: &UdpSocket, server: &str) -> Option<SocketAddr> {
 }
 
 /// Ends the relay link when dropped.
+/// Holds a relay link back until a connection attempt needs the relay, so
+/// that a transfer a direct path carries never contacts the relay at all.
+#[derive(Debug, Clone, Default)]
+pub struct Gate(Arc<GateInner>);
+
+#[derive(Debug, Default)]
+struct GateInner {
+    notify: tokio::sync::Notify,
+    opened: std::sync::atomic::AtomicBool,
+}
+
+impl Gate {
+    /// Let the link connect. Calling it again does nothing.
+    pub fn open(&self) {
+        if !self
+            .0
+            .opened
+            .swap(true, std::sync::atomic::Ordering::SeqCst)
+        {
+            // Stores a permit when the link is not waiting yet.
+            self.0.notify.notify_one();
+        }
+    }
+
+    /// Whether [`Gate::open`] was called.
+    pub fn is_open(&self) -> bool {
+        self.0.opened.load(std::sync::atomic::Ordering::SeqCst)
+    }
+
+    async fn opened(&self) {
+        if !self.is_open() {
+            self.0.notify.notified().await;
+        }
+    }
+}
+
+/// A relay link. It connects only once its [`Gate`] opens, and stops when
+/// dropped.
 #[derive(Debug)]
 pub struct Link(tokio::task::JoinHandle<()>);
 
@@ -85,8 +123,15 @@ impl Drop for Link {
 /// Connect to the relay at `url` as `own`, and carry datagrams between the
 /// pipes and the device with endpoint key `peer` until the link is dropped.
 /// Failures are silent: the relay is only one of the paths.
-pub fn spawn(url: String, own: Arc<EndpointKey>, peer: [u8; 32], pipes: RelayPipes) -> Link {
+pub fn spawn(
+    url: String,
+    own: Arc<EndpointKey>,
+    peer: [u8; 32],
+    pipes: RelayPipes,
+    gate: Gate,
+) -> Link {
     Link(tokio::spawn(async move {
+        gate.opened().await;
         let _ = run(&url, &own, peer, pipes).await;
     }))
 }
@@ -172,4 +217,37 @@ async fn run(url: &str, own: &EndpointKey, peer: [u8; 32], mut pipes: RelayPipes
     }
     let _ = ws.close(None).await;
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    #![allow(clippy::unwrap_used, clippy::expect_used)]
+
+    use super::*;
+
+    /// A link whose gate stays shut never connects to the relay; once the
+    /// gate opens, it does (#63).
+    #[tokio::test]
+    async fn link_connects_only_after_its_gate_opens() {
+        let relay = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let url = format!("ws://{}/v0/relay", relay.local_addr().unwrap());
+        let (own, peer) = (
+            Arc::new(EndpointKey::generate().unwrap()),
+            EndpointKey::generate().unwrap(),
+        );
+        let socket = UdpSocket::bind(SocketAddr::from(([127, 0, 0, 1], 0))).unwrap();
+        let (_endpoint, pipes) = crate::transport::endpoint(socket, &own, &peer.public()).unwrap();
+        let gate = Gate::default();
+        let _link = spawn(url, own, peer.public(), pipes, gate.clone());
+
+        let early = tokio::time::timeout(Duration::from_millis(500), relay.accept()).await;
+        assert!(
+            early.is_err(),
+            "the relay was contacted before it was needed"
+        );
+
+        gate.open();
+        let late = tokio::time::timeout(Duration::from_secs(5), relay.accept()).await;
+        assert!(late.is_ok_and(|r| r.is_ok()));
+    }
 }

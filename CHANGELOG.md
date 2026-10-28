@@ -36,11 +36,14 @@ All notable changes to TotalDrop are recorded here. The format follows
   `/v0/relay/<keys>` to the relay; it matched only the exact path
   `/v0/relay`, so no relay connection could open. The server's name is now
   an argument of `install.sh` instead of `relay.totaldrop.app` (#84).
-
 - **Relay:** A device signing in no longer pushes back the sign-in
   timeout of the other socket in the same pair, and a finished pair leaves
   no alarm behind (#75).
-
+- **Core:** The apps now connect to the relay only when it is needed: when
+  no direct connection is up 1.2 seconds after both sides start dialling,
+  or at once in privacy mode. A transfer a direct path carries no longer
+  reaches the relay at all, so the relay no longer sees the IP addresses of
+  devices it does not carry (#63).
 - **Site:** The privacy policy (version 3) now says that the apps connect
   to the relay at the start of every transfer, not only when no direct path
   works, as version 2 said, and that in privacy mode a receiver still uses
