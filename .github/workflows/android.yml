@@ -37,7 +37,7 @@ jobs:
       - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
         with:
           channel: stable
-      - run: flutter pub get
+      - run: flutter pub get --enforce-lockfile
       - run: flutter analyze
       - name: Test
         run: if [ -d test ]; then flutter test; else echo "no tests yet"; fi
@@ -64,7 +64,7 @@ jobs:
       - name: Rust toolchain and Android targets
         working-directory: .
         run: rustup show active-toolchain || rustup toolchain install
-      - run: flutter pub get
+      - run: flutter pub get --enforce-lockfile
       - run: flutter build apk --debug --target-platform android-arm64
 
   release:
@@ -150,5 +150,3 @@ jobs:
           name: play-bundle
           path: dist/
           retention-days: 30
-
-# Before the first public release, pin every action above to a full commit SHA.
