@@ -26,7 +26,7 @@ Free, open source, end-to-end encrypted. No email, no phone number, no account.
 - **A short code is all it takes.** Pick files, get a code like `7-harbor-rocket`, read it out or show the QR. The other side types it and the files arrive.
 - **Encrypted end to end, checked by you.** Both screens show the same four words before anything moves. If they differ, stop.
 - **Nothing to sign up for.** No account, email or phone number. Optional accounts will be numbers only, Mullvad-style ([design](docs/hesap.md)).
-- **Straight from device to device.** The rendezvous server only introduces the two devices and keeps no logs; files go directly between them. The relay that comes next will only ever see encrypted data.
+- **Straight from device to device, anywhere.** The rendezvous server only introduces the two devices and keeps no logs. Devices connect directly across the internet wherever they can; when a router or firewall is in the way, the relay carries traffic it cannot read.
 - **At home on your desktop.** The Linux app is native Qt 6 and Wayland and follows your theme on KDE Plasma, Hyprland and Omarchy, live.
 - **Free, for good.** Open source and funded by donations. No ads, no tracking, no paid tier for the basics.
 
@@ -39,7 +39,7 @@ Free, open source, end-to-end encrypted. No email, no phone number, no account.
 
 | Platform | Get it | Notes |
 | --- | --- | --- |
-| **Linux** | [Arch / Omarchy](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.1.0-beta.3/totaldrop-0.1.0_beta.3-1-x86_64.pkg.tar.zst) · [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.1.0-beta.3/totaldrop_0.1.0.beta.3-1_amd64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.1.0-beta.3/totaldrop-0.1.0.beta.3-1.fc43.x86_64.rpm) | Qt 6.8 or newer, x86-64 |
+| **Linux** | [Arch / Omarchy](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.1.0-beta.4/totaldrop-0.1.0_beta.4-1-x86_64.pkg.tar.zst) · [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.1.0-beta.4/totaldrop_0.1.0.beta.4-1_amd64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.1.0-beta.4/totaldrop-0.1.0.beta.4-1.fc43.x86_64.rpm) | Qt 6.8 or newer, x86-64 |
 | **Android** | [Join the beta](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | Android 15 or newer, on Google Play by invitation |
 | **Command line** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux, macOS, Windows |
 | Windows, macOS, iOS | Coming | Signing for these is what donations pay for first |
@@ -47,7 +47,7 @@ Free, open source, end-to-end encrypted. No email, no phone number, no account.
 Every Linux release carries a `SHA256SUMS` file.
 
 > [!NOTE]
-> **Beta.** Today both devices must be on the same network; the relay for transfers across the internet comes next. The code has not had an independent security review yet, so please don't rely on it for sensitive files.
+> **Beta.** The code has not had an independent security review yet, so please don't rely on it for sensitive files.
 
 ## How it works
 

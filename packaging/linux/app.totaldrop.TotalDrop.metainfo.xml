@@ -43,6 +43,11 @@
   </requires>
   <content_rating type="oars-1.1"/>
   <releases>
+    <release version="0.1.0~beta.4" date="2026-10-28" type="development">
+      <description>
+        <p>Transfers across the internet: devices connect directly through most routers, or through the encrypted relay when they cannot.</p>
+      </description>
+    </release>
     <release version="0.1.0~beta.3" date="2026-10-28" type="development">
       <description>
         <p>Sending to another device now works even when this computer's firewall blocks incoming connections (as Omarchy's ufw does by default).</p>

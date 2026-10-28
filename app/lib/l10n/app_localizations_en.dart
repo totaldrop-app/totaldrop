@@ -196,7 +196,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sameNetworkNote =>
-      'For now both devices must be on the same network. Transfers across the internet arrive with the relay.';
+      'Works across the internet. When the devices cannot reach each other directly, the encrypted transfer goes through the relay, which cannot read it.';
 
   @override
   String get done => 'Done';
@@ -246,7 +246,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get errorConnect =>
-      'Could not connect to the other device. For now both devices must be on the same network.';
+      'Could not connect to the other device. Check that both devices are online and try again.';
 
   @override
   String get errorInvalidOffer =>

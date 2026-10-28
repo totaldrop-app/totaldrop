@@ -7,6 +7,8 @@ All notable changes to TotalDrop are recorded here. The format follows
 
 ## [Unreleased]
 
+## [android-0.1.0-beta.5] and [linux-0.1.0-beta.4] - 2026-10-28
+
 ### Added
 
 - **Core:** transfers across the internet. Each device asks a STUN server

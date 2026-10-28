@@ -3,12 +3,12 @@
 # The Rust toolchain comes from rustup: rust-toolchain.toml pins the newest
 # stable Rust, which distributions do not ship yet.
 
-%global upstream_version 0.1.0-beta.3
+%global upstream_version 0.1.0-beta.4
 %global srcname totaldrop-linux-v%{upstream_version}
 %global debug_package %{nil}
 
 Name:           totaldrop
-Version:        0.1.0~beta.3
+Version:        0.1.0~beta.4
 Release:        1%{?dist}
 Summary:        Send files straight to another device, end-to-end encrypted
 License:        GPL-3.0-or-later AND (MIT OR Apache-2.0)
@@ -71,6 +71,10 @@ cargo test --release --locked -p totaldrop-linux -p totaldrop-proto
 %{_datadir}/icons/hicolor/symbolic/apps/app.totaldrop.TotalDrop-symbolic.svg
 
 %changelog
+* Wed Oct 28 2026 TotalDrop <hello@totaldrop.app> - 0.1.0~beta.4-1
+- Transfers across the internet: devices connect directly through most
+  routers, or through the encrypted relay when they cannot.
+
 * Wed Oct 28 2026 TotalDrop <hello@totaldrop.app> - 0.1.0~beta.3-1
 - Sending to another device now works even when this computer's firewall
   blocks incoming connections (as Omarchy's ufw does by default).
