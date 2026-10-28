@@ -1,15 +1,11 @@
-# Web site (totaldrop.app): checks on every change. Deploys stay manual
+# Web site (totaldrop.app): checks. Deploys stay manual
 # (wrangler pages deploy) until deploy keys live in CI.
 name: Site
 
+# Runs from ci.yml when its files change (see the area filters there), from
+# the release workflow on a tag, or by hand.
 on:
-  push:
-    branches: [main]
-    paths: &paths
-      - "site/**"
-      - ".github/workflows/site.yml"
-  pull_request:
-    paths: *paths
+  workflow_call:
   workflow_dispatch:
 
 permissions:

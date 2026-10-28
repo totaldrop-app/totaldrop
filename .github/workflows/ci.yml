@@ -1,0 +1,102 @@
+# The one workflow every pull request and every push to main runs. It works
+# out which areas changed and runs only their workflows; the final "CI" job
+# is the single required check on main, and passes only when every workflow
+# that ran passed. A change to CI itself runs everything.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  changes:
+    name: Changed areas
+    runs-on: ubuntu-latest
+    outputs:
+      core: ${{ steps.areas.outputs.core }}
+      android: ${{ steps.areas.outputs.android }}
+      linux: ${{ steps.areas.outputs.linux }}
+      server: ${{ steps.areas.outputs.server }}
+      site: ${{ steps.areas.outputs.site }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - id: areas
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD: ${{ github.sha }}
+        run: |
+          shared='Cargo\.toml$|Cargo\.lock$|rust-toolchain\.toml$'
+          declare -A area=(
+            [core]="^(crates/|server/totaldrop-(rendezvous|relay)/|fuzz/|deny\.toml$|$shared|\.github/workflows/core\.yml$)"
+            [android]="^(app/|crates/totaldrop-(core|crypto|proto)/|$shared|\.github/workflows/android(-release)?\.yml$)"
+            [linux]="^(linux/|packaging/|crates/totaldrop-(core|crypto|proto|cli)/|$shared|\.github/workflows/linux(-release)?\.yml$)"
+            [server]="^(server/(rendezvous|relay)-worker/|\.github/workflows/server\.yml$)"
+            [site]="^(site/|\.github/workflows/site\.yml$)"
+          )
+          # Run everything when the base is unknown (new branch, manual run,
+          # force push) or when CI itself changed.
+          if [ "$EVENT" = workflow_dispatch ] || ! files=$(git diff --name-only "$BASE...$HEAD" 2>/dev/null); then
+            all=true
+          elif grep -qE '^(\.github/workflows/ci\.yml|\.github/actions/)' <<<"$files"; then
+            all=true
+          else
+            all=false
+          fi
+          printf 'Changed files:\n%s\n' "${files:-(unknown)}"
+          for name in "${!area[@]}"; do
+            if [ "$all" = true ] || grep -qE "${area[$name]}" <<<"$files"; then v=true; else v=false; fi
+            echo "$name=$v" | tee -a "$GITHUB_OUTPUT"
+          done
+
+  core:
+    name: Core
+    needs: changes
+    if: needs.changes.outputs.core == 'true'
+    uses: ./.github/workflows/core.yml
+  android:
+    name: Android
+    needs: changes
+    if: needs.changes.outputs.android == 'true'
+    uses: ./.github/workflows/android.yml
+  linux:
+    name: Linux
+    needs: changes
+    if: needs.changes.outputs.linux == 'true'
+    uses: ./.github/workflows/linux.yml
+  server:
+    name: Server
+    needs: changes
+    if: needs.changes.outputs.server == 'true'
+    uses: ./.github/workflows/server.yml
+  site:
+    name: Site
+    needs: changes
+    if: needs.changes.outputs.site == 'true'
+    uses: ./.github/workflows/site.yml
+
+  # The required check. Skipped areas count as passed; anything failed or
+  # cancelled, including the area detection, fails it.
+  gate:
+    name: CI
+    if: always()
+    needs: [changes, core, android, linux, server, site]
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          NEEDS: ${{ toJSON(needs) }}
+        run: |
+          jq -r 'to_entries[] | "\(.key): \(.value.result)"' <<<"$NEEDS"
+          jq -e '.changes.result == "success" and all(.[]; .result == "success" or .result == "skipped")' <<<"$NEEDS" >/dev/null
