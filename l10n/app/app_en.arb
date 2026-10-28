@@ -104,5 +104,17 @@
   "sizePB": "{value} PB",
   "@sizePB": {"description": "Petabytes", "placeholders": {"value": {"type": "String", "example": "1.5"}}},
   "draftTranslation": "This translation is being reviewed. Help improve it on Weblate.",
-  "@draftTranslation": {"description": "Shown in Settings when some of the text in this language is an unreviewed draft"}
+  "@draftTranslation": {"description": "Shown in Settings when some of the text in this language is an unreviewed draft"},
+
+  "sendDropHere": "Drop files here",
+  "sendDropHint": "You can also drag files onto this window.",
+  "sendQrHint": "Or scan this code with the other device's camera.",
+  "sendWaitingAccept": "Check the words, then wait for the receiver to accept.",
+  "receiveFromImage": "Read QR from image",
+  "receiveQrNotFound": "There is no TotalDrop code in that image.",
+  "pickTitle": "Choose files to send",
+  "pickImageTitle": "Choose an image with a QR code",
+  "openFolder": "Open folder",
+  "back": "Back",
+  "codeSuggestions": "Suggestions"
 }

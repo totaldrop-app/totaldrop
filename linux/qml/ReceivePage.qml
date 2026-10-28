@@ -83,6 +83,9 @@ Page {
             Label { text: Strings.s.receiveCodeLabel; color: Theme.ink; font.weight: Font.DemiBold }
             TextField {
                 id: field
+                // The code is always English words, left to right.
+                LayoutMirroring.enabled: false
+                horizontalAlignment: TextInput.AlignLeft
                 placeholderText: Strings.s.receiveCodeHint
                 inputMethodHints: Qt.ImhNoAutoUppercase | Qt.ImhNoPredictiveText | Qt.ImhPreferLowercase
                 font.pointSize: Qt.application.font.pointSize * 1.35
@@ -195,7 +198,9 @@ Page {
                         Layout.fillWidth: true
                         MenuSeparator { Layout.fillWidth: true; padding: 0 }
                         Label {
-                            text: modelData
+                            // Names come from the other side: hidden direction
+                            // characters are shown, not obeyed.
+                            text: Strings.name(modelData)
                             color: Theme.ink
                             elide: Text.ElideMiddle
                             textFormat: Text.PlainText
