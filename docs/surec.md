@@ -59,14 +59,20 @@ Bir değişiklik ancak şunların hepsi doğruysa bitmiştir:
    `android-v…`) ve gönder. Linux'ta CI, etiketin `main` üzerinde olduğunu
    ve beş dosyadaki sürümün etiketle aynı olduğunu denetler
    (`packaging/check-versions.sh`; aynı denetim her PR'da da çalışır).
+   Sürüm etiketlerini yalnızca depo yöneticisi oluşturabilir (kural "release
+   tags"); yayın işleri `linux-release` ve `play-release` ortamlarında,
+   yöneticinin onayıyla çalışır.
 4. CI paketleri etiketten derler. Linux: her pakete derleme kaynağını
    gösteren imzalı bir kanıt (build provenance) ekler ve taslak bir GitHub
    yayını açar. Android: `play-release` ortamında yükleme anahtarıyla
    imzalı `.aab` üretir ve iş çıktısı (artifact) olarak bırakır; GitHub
    yayını açılmaz. Kişisel bir makinede derlenen hiçbir şey yayınlanmaz.
    Derleyiciler sabittir (Rust `rust-toolchain.toml`'daki sürüm, Flutter
-   iş akışındaki sürüm), taban imajlar özetle (digest) sabittir ve kaynak
-   arşivi son commit'in zamanıyla (`SOURCE_DATE_EPOCH`) üretilir.
+   iş akışındaki sürüm; `check-versions.sh` her yerde aynı olduklarını
+   denetler), taban imajlar özetle (digest) sabittir ve kaynak arşivi son
+   commit'in zamanıyla (`SOURCE_DATE_EPOCH`) üretilir. Taban imajın sabit
+   olması paketleri sabitlemez: kapta kurulan dağıtım paketleri o günün
+   sürümleridir.
 5. İndirilen paketler sağlama toplamıyla ve temiz kaplarda kurulumla
    (`packaging/test-install.sh`) denenir.
 6. Yayın notları İngilizce ve Türkçe yazılır, taslak yayımlanır.

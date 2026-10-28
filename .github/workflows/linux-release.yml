@@ -22,9 +22,7 @@ jobs:
       - name: Versions agree with the tag
         run: packaging/check-versions.sh "$GITHUB_REF_NAME"
       - name: The tagged commit is on main
-        run: |
-          git fetch --no-tags origin main
-          git merge-base --is-ancestor "$GITHUB_SHA" origin/main
+        run: git merge-base --is-ancestor "$GITHUB_SHA" origin/main
 
   verify:
     name: Checks and packages
@@ -35,6 +33,10 @@ jobs:
     name: Release
     needs: verify
     runs-on: ubuntu-latest
+    # Waits for the maintainer's approval, and only linux-v* tags may
+    # deploy here. Only an admin may create such a tag (ruleset "release
+    # tags"), so the checks above cannot be skipped by tagging another commit.
+    environment: linux-release
     permissions:
       contents: write
       # Build provenance: a signed statement that these files were built
