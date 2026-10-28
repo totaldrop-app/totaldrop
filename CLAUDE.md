@@ -11,14 +11,17 @@
   - Aktarım sırasında işaret, web sitesindeki animasyonun aynısını oynatır.
 - Gizli bilgiler (`key.properties`, imza anahtarı parolası) okunmaz ve depoya eklenmez.
 - Paketler yalnızca CI'da derlenir; CI çıktısı (ör. Play Console için `.aab`) yerelde `~/Projects/totaldrop/dist` altına indirilir.
-- Her işte konuya göre ilgili skill kendiliğinden yüklenir; branch'in ve değişen klasörlerin alanı hangisiyse o (birden çok alan varsa hepsi). `software-engineering-discipline` her zaman geçerlidir:
+- Her işin başında, değişen klasörlerin alanına göre aşağıdaki skill'leri yükle (birden çok alan varsa hepsini; branch adı yalnızca ipucudur, klasörler belirler). `software-engineering-discipline` her zaman geçerlidir; tabloda karşılığı olmayan işlerde yalnızca o yüklenir:
 
-  | Alan | Branch / klasör | Skill |
+  | Alan | Klasör (branch ipucu) | Skill |
   | --- | --- | --- |
-  | Android | `*/android-*`, `app/` | `android-app-engineering` |
-  | Linux masaüstü | `*/linux-*`, `linux/`, `packaging/` | `fullstack-engineering`, tasarım için `web-design-pro` yerine `docs/tasarim.md` |
-  | Web sitesi | `*/site-*`, `site/` | `web-design-pro` |
+  | Android, ileride iOS (Flutter) | `app/` (`*android*`), `app/ios/` (`*ios*`) | `android-app-engineering`; iOS kodu için `ios-app-engineering` |
+  | Linux masaüstü (Qt 6, QML, CXX-Qt) | `linux/`, `packaging/` (`*linux*`, `*packaging*`) | `fullstack-engineering` (Qt/QML için ayrı skill yok; arayüz kuralları `docs/tasarim.md`) |
+  | Web sitesi | `site/` (`*site*`) | `web-design-pro`; `site/functions/` ve `site/public/_headers` için ayrıca `fullstack-engineering` ve `security-engineering-analyst` |
   | Sunucular, Worker'lar, CI | `server/`, `.github/` | `fullstack-engineering`, `security-engineering-analyst` |
-  | Protokol, kriptografi | `crates/totaldrop-crypto`, `crates/totaldrop-proto`, `crates/totaldrop-core` | `applied-cryptography-review`, `security-engineering-analyst` |
-  | Güvenlik ve gizlilik (tehdit modeli, gizlilik politikası, açık) | `docs/tehdit-modeli.md`, `site/public/privacy.html`, `type: security` issue'ları | `security-engineering-analyst` |
-  | iOS, macOS, Windows | ileride `ios/`, `macos/`, `windows/` | `ios-app-engineering`, `macos-app-engineering`, `windows-app-engineering` |
+  | Protokol, kriptografi, çekirdek | `crates/totaldrop-crypto`, `-proto`, `-core`, `fuzz/`, `docs/protocol-v0.1-notes.md` (`*core*`) | `applied-cryptography-review`, `security-engineering-analyst` |
+  | Komut satırı | `crates/totaldrop-cli` (`*cli*`) | `fullstack-engineering` |
+  | Bağımlılıklar ve tedarik zinciri | `Cargo.toml`, `Cargo.lock`, `deny.toml`, Dependabot PR'ları | `security-engineering-analyst` |
+  | Güvenlik ve gizlilik | `docs/tehdit-modeli.md`, `site/public/privacy.html`, `SECURITY.md` | `security-engineering-analyst` (açık raporları `SECURITY.md`'deki gizli kanaldan gelir, herkese açık issue'dan değil) |
+  | Diller ve çeviriler | `l10n/`, `crates/totaldrop-l10n` | kurallar `docs/kararlar/0008-diller-ve-bolgeler.md` ve `docs/ceviri.md` |
+  | macOS, Windows | ileride `macos/`, `windows/` | `macos-app-engineering`, `windows-app-engineering` |
