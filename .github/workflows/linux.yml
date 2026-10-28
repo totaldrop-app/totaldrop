@@ -95,5 +95,3 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.ref_name }}
         run: gh release create "$TAG" packages/* --repo "$GITHUB_REPOSITORY" --draft --prerelease --title "TotalDrop for Linux ${TAG#linux-v}"
-
-# Before the first public release, pin every action above to a full commit SHA.

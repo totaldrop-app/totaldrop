@@ -35,5 +35,3 @@ jobs:
           node-version: lts/*
       - run: npm ci
       - run: npm run check
-
-# Before the first public release, pin every action above to a full commit SHA.

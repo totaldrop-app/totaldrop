@@ -39,5 +39,3 @@ jobs:
             done
           done
           exit $status
-
-# Before the first public release, pin every action above to a full commit SHA.

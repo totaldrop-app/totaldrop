@@ -16,7 +16,7 @@ All notable changes to TotalDrop are recorded here. The format follows
   signed with the upload key in CI; Google Play re-signs it, so for
   Android the provenance is for the project's own records.
 - **Build:** Every GitHub Action in CI is pinned to a full commit SHA, so
-  a moved tag upstream cannot change what runs. Dependabot proposes the
+  a moved action tag cannot change which action code runs. Dependabot proposes the
   updates, which are reviewed like any other change. `actions/checkout`
   moved to v7 and `actions/setup-java` to v6.
 

@@ -11,6 +11,8 @@ permissions:
 jobs:
   fuzz:
     runs-on: ubuntu-latest
+    env:
+      RUSTUP_TOOLCHAIN: nightly
     strategy:
       fail-fast: false
       matrix:
@@ -20,7 +22,9 @@ jobs:
         with:
           persist-credentials: false
       # Pinned by SHA, so the toolchain is named here instead of in the ref.
-      - uses: dtolnay/rust-toolchain@2c76c034f9e32a5d6e2c104dc4df23a22476db04 # nightly
+      # RUSTUP_TOOLCHAIN (below) overrides rust-toolchain.toml, which would
+      # otherwise pick stable; cargo-fuzz needs nightly.
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
         with:
           toolchain: nightly
       - run: cargo install cargo-fuzz --locked
