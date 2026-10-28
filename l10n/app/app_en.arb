@@ -116,5 +116,7 @@
   "pickImageTitle": "Choose an image with a QR code",
   "openFolder": "Open folder",
   "back": "Back",
-  "codeSuggestions": "Suggestions"
+  "codeSuggestions": "Suggestions",
+  "progressPercent": "{percent}%",
+  "@progressPercent": {"description": "Transfer progress; use your language's percent style", "placeholders": {"percent": {"type": "int", "format": "decimalPattern"}}}
 }
