@@ -50,8 +50,9 @@ pub struct PathSocket {
 }
 
 impl PathSocket {
-    /// Wrap `inner`. The returned pipes connect it to a relay link; until one
-    /// runs, datagrams for the relay are dropped.
+    /// Wrap `inner`. The returned pipes connect it to a relay link. Until the
+    /// link is up, datagrams for the relay wait in a short queue; once it is
+    /// full, or when no link runs, they are dropped.
     pub fn new(inner: Arc<dyn AsyncUdpSocket>) -> (Arc<Self>, RelayPipes) {
         let (to_relay, outgoing) = mpsc::channel(QUEUE);
         let (incoming, from_relay) = mpsc::channel(QUEUE);

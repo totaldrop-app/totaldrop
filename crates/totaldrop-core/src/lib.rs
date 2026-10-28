@@ -286,7 +286,7 @@ impl PreparedSend {
         let (endpoint, pipes) =
             transport::endpoint(socket, &endpoint_key, &paired.hints.endpoint_key)?;
         // The sender's own relay carries the transfer when nothing else works.
-        let (paths, _link) = paths_to(
+        let (paths, link) = paths_to(
             &paired.hints,
             self.paths.relay_url(),
             self.paths.relay_only,
@@ -295,6 +295,8 @@ impl PreparedSend {
         );
         let (conn, send, recv) =
             transport::sender_connection(&endpoint, &paths, ACCEPT_TIMEOUT).await?;
+        // A relay link opened before a slower direct path won is closed now.
+        let _link = link.filter(|_| conn.remote_address() == path::RELAY_PEER);
         let chan = secure::handshake_on(
             send,
             recv,
@@ -395,6 +397,8 @@ impl IncomingOffer {
             pipes,
         );
         let conn = transport::receiver_connection(&endpoint, &paths, CONNECT_TIMEOUT).await?;
+        // A relay link opened before a slower direct path won is closed now.
+        let link = link.filter(|_| conn.remote_address() == path::RELAY_PEER);
         let mut chan = secure::handshake(
             &conn,
             secure::HandshakeInput {
