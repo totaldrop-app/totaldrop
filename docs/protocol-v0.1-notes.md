@@ -162,9 +162,11 @@ treated as final.
 21. **Which relay.** The sender announces its relay in `HINTS` field 5;
     both sides connect there. A receiver uses it only if it is `wss://` (or
     `ws://` on the same machine) and the same as the receiver's own relay
-    setting (a trailing `/` aside); otherwise the receiver tries direct
-    paths only, and in privacy mode stops with an error. A receiver with no
-    relay set uses none.
+    setting (the case of scheme and host, a default port and a trailing `/`
+    aside); otherwise the receiver tries direct paths only. When that
+    leaves no path, or in privacy mode, it stops with an error at once; a
+    sender that can see the mismatch in the receiver's `HINTS` does too. A
+    receiver with no relay set uses none.
 22. **Paths.** Direct addresses are tried at once; the relay path 1.2
     seconds later, or at once when no address was announced. The first
     connection whose handshake completes is used. Moving a connection from

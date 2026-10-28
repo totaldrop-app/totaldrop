@@ -55,6 +55,9 @@ All notable changes to TotalDrop are recorded here. The format follows
   relay can no longer learn the receiver's IP address that way. An empty
   `--relay` turns the relay off when receiving too, and in privacy mode a
   different relay stops the transfer with an error (#68).
+  `--relay` turns the relay off when receiving too. When different relays
+  leave no path (or in privacy mode), both sides stop at once with an
+  error that says so, instead of timing out (#68).
 - **Site:** The privacy policy (version 3) now says that the apps connect
   to the relay at the start of every transfer, not only when no direct path
   works, as version 2 said, and that in privacy mode a receiver still uses

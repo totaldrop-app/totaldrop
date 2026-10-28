@@ -143,10 +143,29 @@ impl PathOptions {
     }
 }
 
-/// Whether two relay URLs name the same relay. Only a trailing `/` may
-/// differ.
+/// A relay URL in a form two spellings of the same relay share: scheme and
+/// host in lower case, the default port filled in, trailing `/` removed.
+fn relay_identity(url: &str) -> Option<(String, String, u16, String)> {
+    let uri: tokio_tungstenite::tungstenite::http::Uri = url.parse().ok()?;
+    let scheme = uri.scheme_str()?.to_ascii_lowercase();
+    let port = match (uri.port_u16(), scheme.as_str()) {
+        (Some(p), _) => p,
+        (None, "wss") => 443,
+        (None, "ws") => 80,
+        _ => return None,
+    };
+    let host = uri.host()?.to_ascii_lowercase();
+    let path = uri
+        .path_and_query()
+        .map_or("", |p| p.as_str())
+        .trim_end_matches('/')
+        .to_owned();
+    Some((scheme, host, port, path))
+}
+
+/// Whether two relay URLs name the same relay.
 fn same_relay(a: &str, b: &str) -> bool {
-    a.trim_end_matches('/') == b.trim_end_matches('/')
+    relay_identity(a).is_some_and(|x| relay_identity(b).is_some_and(|y| x == y))
 }
 
 /// The relay the receiver uses: the one the sender's `HINTS` name, but only
@@ -156,27 +175,54 @@ fn same_relay(a: &str, b: &str) -> bool {
 /// receiver's address by naming a relay it runs (#68); an empty setting
 /// turns the relay off on this side too. In privacy mode there is no other
 /// path, so a different relay is an error rather than a silent fallback.
-fn receiver_relay<'a>(hints: &'a Hints, own: &PathOptions) -> Result<Option<&'a str>> {
-    let relay = own.relay_url().and_then(|mine| {
-        hints
-            .relay
-            .as_deref()
-            .filter(|url| relay::check_url(url).is_ok() && same_relay(url, mine))
+///
+/// The URL returned is this side's own spelling, so what is dialled always
+/// comes from the local setting. With no path left at all (the sender
+/// announced no address and uses another relay), it fails at once instead
+/// of waiting out the connection timeout.
+fn receiver_relay<'a>(hints: &Hints, own: &'a PathOptions) -> Result<Option<&'a str>> {
+    let relay = own.relay_url().filter(|mine| {
+        relay::check_url(mine).is_ok()
+            && hints
+                .relay
+                .as_deref()
+                .is_some_and(|theirs| same_relay(theirs, mine))
     });
-    if own.relay_only && relay.is_none() {
-        return Err(Error::Connect(if own.relay_url().is_none() {
-            "privacy mode needs a relay".into()
-        } else {
-            "privacy mode: the sender uses a different relay".into()
-        }));
+    if relay.is_none() {
+        if own.relay_only {
+            return Err(Error::Connect(if own.relay_url().is_none() {
+                "privacy mode needs a relay".into()
+            } else {
+                "privacy mode: the sender uses a different relay".into()
+            }));
+        }
+        if peer_addresses(hints).is_empty() {
+            return Err(Error::Connect(
+                "the sender uses only a relay, and a different one from this device's".into(),
+            ));
+        }
     }
     Ok(relay)
 }
 
-/// Prepare the relay link at `url`, if any, and say which paths to try. The
-/// link connects only when a connection attempt needs the relay: at once
-/// with no direct address (privacy mode), otherwise after the direct
-/// addresses had their head start.
+/// Whether the sender can already tell that the receiver will find no path:
+/// the two relays differ and one side announces no address. The receiver
+/// stops at once in that case; the sender says why instead of timing out.
+fn sender_check(receiver: &Hints, own: &PathOptions) -> Result<()> {
+    let same = match (own.relay_url(), receiver.relay.as_deref()) {
+        (Some(mine), Some(theirs)) => same_relay(mine, theirs),
+        _ => false,
+    };
+    let no_direct = own.relay_only || peer_addresses(receiver).is_empty();
+    if !same && no_direct {
+        return Err(Error::Connect(
+            "the receiver uses a different relay, and no direct path is possible".into(),
+        ));
+    }
+    Ok(())
+}
+
+/// Start the relay link at `url`, if any, and say which paths to try.
 fn paths_to(
     peer: &Hints,
     url: Option<&str>,
@@ -303,6 +349,7 @@ impl PreparedSend {
             &hints,
         )
         .await?;
+        sender_check(&paired.hints, &self.paths)?;
 
         let (endpoint, pipes) =
             transport::endpoint(socket, &endpoint_key, &paired.hints.endpoint_key)?;
@@ -362,7 +409,8 @@ pub struct ReceiveOptions {
     /// Rendezvous server URL.
     pub server: String,
     /// Relay and privacy settings. The sender's relay is used only when it
-    /// is also the relay set here.
+    /// is also the relay set here (scheme and host case and the default
+    /// port aside).
     pub paths: PathOptions,
 }
 
@@ -406,12 +454,12 @@ impl IncomingOffer {
         let hints = own_hints(&socket, &endpoint_key, &opts.paths).await?;
         let paired =
             pairing::exchange(mailbox, Role::Responder, &code, mailbox_id, &keys, &hints).await?;
-
-        let (endpoint, pipes) =
-            transport::endpoint(socket, &endpoint_key, &paired.hints.endpoint_key)?;
         // Both sides meet on the sender's relay, if it is also ours (spec
         // section 6).
         let relay = receiver_relay(&paired.hints, &opts.paths)?;
+
+        let (endpoint, pipes) =
+            transport::endpoint(socket, &endpoint_key, &paired.hints.endpoint_key)?;
         let (paths, link) = paths_to(
             &paired.hints,
             relay,
@@ -504,49 +552,89 @@ mod tests {
         }
     }
 
+    fn with_address(mut h: Hints) -> Hints {
+        h.local = vec![totaldrop_proto::wire::Address(SocketAddr::from((
+            [192, 168, 1, 2],
+            4000,
+        )))];
+        h
+    }
+
     #[test]
-    fn receiver_uses_the_senders_relay_when_it_is_its_own() {
-        let h = hints(Some("wss://relay.totaldrop.app/v0/relay/"));
-        let own = options(relay::DEFAULT_RELAY, false);
-        assert_eq!(
-            receiver_relay(&h, &own).unwrap(),
-            Some("wss://relay.totaldrop.app/v0/relay/")
-        );
-        let private = options(relay::DEFAULT_RELAY, true);
-        assert!(receiver_relay(&h, &private).unwrap().is_some());
+    fn receiver_uses_its_own_spelling_of_the_same_relay() {
+        let own = options("wss://relay.totaldrop.app/v0/relay", false);
+        for theirs in [
+            "wss://relay.totaldrop.app/v0/relay/",
+            "WSS://Relay.TotalDrop.App:443/v0/relay",
+        ] {
+            let h = hints(Some(theirs));
+            assert_eq!(
+                receiver_relay(&h, &own).unwrap(),
+                Some("wss://relay.totaldrop.app/v0/relay")
+            );
+        }
+        let own_slash = options("wss://relay.totaldrop.app/v0/relay/", true);
+        let h = hints(Some(relay::DEFAULT_RELAY));
+        assert!(receiver_relay(&h, &own_slash).unwrap().is_some());
     }
 
     /// A sender that names a relay of its own does not get the receiver to
     /// connect there (#68).
     #[test]
     fn receiver_ignores_a_relay_only_the_sender_chose() {
+        let own = options(relay::DEFAULT_RELAY, false);
+        for theirs in [
+            "wss://relay.example.org/v0/relay",
+            "wss://relay.totaldrop.app:8443/v0/relay",
+            "wss://relay.totaldrop.app/v0/other",
+            "wss://relay.totaldrop.app@relay.example.org/v0/relay",
+        ] {
+            let h = with_address(hints(Some(theirs)));
+            assert_eq!(receiver_relay(&h, &own).unwrap(), None, "{theirs}");
+        }
+        let h = with_address(hints(Some("wss://relay.example.org/v0/relay")));
+        let err = receiver_relay(&h, &options(relay::DEFAULT_RELAY, true)).unwrap_err();
+        assert!(err.to_string().contains("different relay"));
+    }
+
+    #[test]
+    fn no_path_at_all_fails_at_once() {
         let h = hints(Some("wss://relay.example.org/v0/relay"));
-        assert_eq!(
-            receiver_relay(&h, &options(relay::DEFAULT_RELAY, false)).unwrap(),
-            None
-        );
-        assert!(receiver_relay(&h, &options(relay::DEFAULT_RELAY, true)).is_err());
+        let err = receiver_relay(&h, &options(relay::DEFAULT_RELAY, false)).unwrap_err();
+        assert!(err.to_string().contains("different one"));
     }
 
     #[test]
     fn an_empty_relay_setting_turns_the_relay_off_when_receiving() {
-        let h = hints(Some(relay::DEFAULT_RELAY));
+        let h = with_address(hints(Some(relay::DEFAULT_RELAY)));
         assert_eq!(receiver_relay(&h, &options("", false)).unwrap(), None);
-        assert!(receiver_relay(&h, &options("", true)).is_err());
+        let err = receiver_relay(&h, &options("", true)).unwrap_err();
+        assert!(err.to_string().contains("needs a relay"));
     }
 
     #[test]
     fn receiver_refuses_an_unsafe_relay_even_if_it_is_its_own() {
         let url = "ws://relay.example.org/v0/relay";
-        assert_eq!(
-            receiver_relay(&hints(Some(url)), &options(url, false)).unwrap(),
-            None
-        );
+        let h = with_address(hints(Some(url)));
+        assert_eq!(receiver_relay(&h, &options(url, false)).unwrap(), None);
     }
 
     #[test]
     fn no_relay_announced() {
         let own = options(relay::DEFAULT_RELAY, false);
-        assert_eq!(receiver_relay(&hints(None), &own).unwrap(), None);
+        let h = with_address(hints(None));
+        assert_eq!(receiver_relay(&h, &own).unwrap(), None);
+    }
+
+    #[test]
+    fn sender_explains_a_relay_mismatch_it_can_see() {
+        let other = "wss://relay.example.org/v0/relay";
+        let private = options(relay::DEFAULT_RELAY, true);
+        assert!(sender_check(&with_address(hints(Some(other))), &private).is_err());
+        let normal = options(relay::DEFAULT_RELAY, false);
+        // The receiver in privacy mode announces no address.
+        assert!(sender_check(&hints(Some(other)), &normal).is_err());
+        assert!(sender_check(&with_address(hints(Some(other))), &normal).is_ok());
+        assert!(sender_check(&hints(Some(relay::DEFAULT_RELAY)), &private).is_ok());
     }
 }

@@ -25,8 +25,8 @@ struct Cli {
     #[arg(long, global = true, env = "TOTALDROP_SERVER")]
     server: Option<String>,
     /// Relay for when no direct path works. When receiving, the sender's
-    /// relay is used only if it is this one. An empty value turns the relay
-    /// off.
+    /// relay is used only if it is this same address. An empty value turns
+    /// the relay off.
     #[arg(long, global = true, env = "TOTALDROP_RELAY")]
     relay: Option<String>,
     /// STUN server (host:port) that tells this device its public address.
