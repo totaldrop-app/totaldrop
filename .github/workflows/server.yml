@@ -38,6 +38,8 @@ jobs:
     timeout-minutes: 30
     env:
       WRANGLER_SEND_METRICS: "false"
+      CARGO_TERM_COLOR: always
+      RUSTFLAGS: -D warnings
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -55,21 +57,27 @@ jobs:
       # Build first, so the Workers are not waiting through a compile.
       - name: Build the tests
         run: cargo test -p totaldrop-cli --test end_to_end --locked --no-run
-      # Both run on this machine only (--local): no Cloudflare account, no
-      # network beyond loopback. Two inspectors cannot share a port.
+      # Both run on this machine (--local, no Cloudflare account) and listen
+      # on loopback only. Two inspectors cannot share a port. Ready means the
+      # Worker answers; a Worker that exits fails the step at once.
       - name: Start the Workers
         run: |
           cd server/rendezvous-worker
           nohup npx wrangler dev --local --ip 127.0.0.1 --port 8787 >"$RUNNER_TEMP/rendezvous.log" 2>&1 &
+          echo "rendezvous $! 8787" >"$RUNNER_TEMP/workers"
           cd ../relay-worker
           nohup npx wrangler dev --local --ip 127.0.0.1 --port 8788 --inspector-port 9230 >"$RUNNER_TEMP/relay.log" 2>&1 &
-          for name in rendezvous relay; do
+          echo "relay $! 8788" >>"$RUNNER_TEMP/workers"
+          while read -r name pid port; do
             for _ in $(seq 120); do
-              grep -q "Ready on" "$RUNNER_TEMP/$name.log" && break
+              curl -fs -o /dev/null "http://127.0.0.1:$port/" && continue 2
+              kill -0 "$pid" 2>/dev/null || break
               sleep 1
             done
-            grep -q "Ready on" "$RUNNER_TEMP/$name.log" || { cat "$RUNNER_TEMP/$name.log"; exit 1; }
-          done
+            echo "$name did not come up"
+            cat "$RUNNER_TEMP/$name.log"
+            exit 1
+          done <"$RUNNER_TEMP/workers"
       - name: Test
         env:
           TOTALDROP_TEST_SERVER: ws://127.0.0.1:8787

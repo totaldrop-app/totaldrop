@@ -1,6 +1,6 @@
 # TotalDrop relay on Cloudflare Workers
 
-This is the production relay for `relay.totaldrop.app`. It speaks the same protocol as the Rust relay in `../totaldrop-relay` (see `crates/totaldrop-proto/src/relay.rs`), and the same end-to-end tests run against both, in CI on every change to either side (`.github/workflows/server.yml`). Licensed AGPL-3.0-or-later.
+This is the production relay for `relay.totaldrop.app`. It speaks the same protocol as the Rust relay in `../totaldrop-relay` (see `crates/totaldrop-proto/src/relay.rs`), and the same end-to-end tests run against both, in CI whenever a Worker, a Rust server or the client crates change (`.github/workflows/server.yml`). Against a Worker a few checks are weaker: byte counts are not read and STUN is not tried. Licensed AGPL-3.0-or-later.
 
 | Path | What it does |
 | --- | --- |
