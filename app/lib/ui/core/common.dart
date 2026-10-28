@@ -2,35 +2,25 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../../src/rust/api/transfer.dart';
+import 'l10n.dart';
 import 'mark.dart';
 import 'theme.dart';
 
-/// "3.5 MB", in the person's locale.
-String formatBytes(int bytes, String locale) {
-  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
-  var value = bytes.toDouble();
-  var unit = 0;
-  while (value >= 1000 && unit < units.length - 1) {
-    value /= 1000;
-    unit++;
-  }
-  final text = unit == 0 ? bytes.toString() : value.toStringAsFixed(value < 10 ? 1 : 0);
-  final localized = locale.startsWith('tr') ? text.replaceAll('.', ',') : text;
-  return '$localized ${units[unit]}';
+String errorMessage(BuildContext context, ErrorKind kind) {
+  final l = AppLocalizations.of(context);
+  return switch (kind) {
+    ErrorKind.wrongCode => safeL10n(context, 'errorWrongCode').errorWrongCode,
+    ErrorKind.peerLeft => l.errorPeerLeft,
+    ErrorKind.declined => l.errorDeclined,
+    ErrorKind.cancelled => l.errorCancelled,
+    ErrorKind.invalidCode => l.errorInvalidCode,
+    ErrorKind.server => l.errorServer,
+    ErrorKind.connect => l.errorConnect,
+    ErrorKind.invalidOffer => safeL10n(context, 'errorInvalidOffer').errorInvalidOffer,
+    ErrorKind.storage => l.errorStorage,
+    ErrorKind.other => l.errorOther,
+  };
 }
-
-String errorMessage(AppLocalizations l, ErrorKind kind) => switch (kind) {
-  ErrorKind.wrongCode => l.errorWrongCode,
-  ErrorKind.peerLeft => l.errorPeerLeft,
-  ErrorKind.declined => l.errorDeclined,
-  ErrorKind.cancelled => l.errorCancelled,
-  ErrorKind.invalidCode => l.errorInvalidCode,
-  ErrorKind.server => l.errorServer,
-  ErrorKind.connect => l.errorConnect,
-  ErrorKind.invalidOffer => l.errorInvalidOffer,
-  ErrorKind.storage => l.errorStorage,
-  ErrorKind.other => l.errorOther,
-};
 
 /// The four verification words, with the instruction to compare them.
 class VerificationWords extends StatelessWidget {
@@ -40,7 +30,6 @@ class VerificationWords extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context);
     final theme = Theme.of(context);
     // A calm outlined frame: the words are the content, not the box.
     return Card(
@@ -58,17 +47,23 @@ class VerificationWords extends StatelessWidget {
               children: [
                 Icon(Icons.verified_user_outlined, color: theme.colorScheme.primary),
                 Gap.s,
-                Text(l.verificationTitle, style: theme.textTheme.titleMedium),
+                Text(
+                  safeL10n(context, 'verificationTitle').verificationTitle,
+                  style: theme.textTheme.titleMedium,
+                ),
               ],
             ),
             Gap.m,
+            // English words in the same order on both sides, whatever the
+            // language's direction.
             Wrap(
+              textDirection: TextDirection.ltr,
               spacing: 8,
               runSpacing: 8,
               children: [
                 for (final w in words)
                   Chip(
-                    label: Text(w, style: theme.textTheme.titleMedium),
+                    label: LtrEnglish(w, style: theme.textTheme.titleMedium),
                     side: BorderSide.none,
                     backgroundColor: theme.colorScheme.secondaryContainer,
                   ),
@@ -76,7 +71,7 @@ class VerificationWords extends StatelessWidget {
             ),
             Gap.m,
             Text(
-              l.verificationHint,
+              safeL10n(context, 'verificationHint').verificationHint,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
@@ -110,7 +105,7 @@ class ErrorPanel extends StatelessWidget {
         ),
         Gap.m,
         Text(
-          errorMessage(l, error.kind),
+          errorMessage(context, error.kind),
           textAlign: TextAlign.center,
           style: theme.textTheme.titleMedium,
         ),
@@ -142,8 +137,8 @@ class TransferProgress extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    final locale = Localizations.localeOf(context).languageCode;
     final fraction = total == 0 ? null : (done / total).clamp(0.0, 1.0);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -161,7 +156,7 @@ class TransferProgress extends StatelessWidget {
             ),
             const Spacer(),
             Text(
-              '${formatBytes(done, locale)} / ${formatBytes(total, locale)}',
+              '${formatBytes(l, done)} / ${formatBytes(l, total)}',
               style: theme.textTheme.bodyMedium,
             ),
           ],

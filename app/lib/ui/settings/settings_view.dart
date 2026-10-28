@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../data/settings_repository.dart';
 import '../../l10n/app_localizations.dart';
+import '../core/l10n.dart';
 import '../core/theme.dart';
 
 class SettingsView extends StatefulWidget {
@@ -86,6 +87,13 @@ class _SettingsViewState extends State<SettingsView> {
           Text(l.settingsAbout, style: theme.textTheme.titleLarge),
           Gap.s,
           Text(l.settingsAboutBody, style: theme.textTheme.bodyMedium),
+          if (hasDraftTranslation(context)) ...[
+            Gap.s,
+            Text(
+              l.draftTranslation,
+              style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+            ),
+          ],
           Gap.s,
           Text(
             l.settingsVersion(widget.version),
