@@ -83,8 +83,8 @@ h2 { font-weight: 800; font-size: clamp(1.75rem, 3.6vw, 2.5rem); line-height: 1.
 h3 { font-weight: 700; font-size: 1.25rem; line-height: 1.25; }
 p, dl, dd, ol { margin: 0; }
 
-.skip { position: absolute; left: -999px; top: 0; padding: 0.75rem 1rem; background: var(--accent); color: var(--on-accent); z-index: 10; }
-.skip:focus { left: 1rem; top: 1rem; }
+.skip { position: absolute; inset-inline-start: -999px; top: 0; padding: 0.75rem 1rem; background: var(--accent); color: var(--on-accent); z-index: 10; }
+.skip:focus { inset-inline-start: 1rem; top: 1rem; }
 
 .eyebrow { font-size: 0.875rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-2); }
 
@@ -103,6 +103,18 @@ p, dl, dd, ol { margin: 0; }
 .top-nav { display: flex; align-items: center; gap: 0.25rem 1.5rem; flex-wrap: wrap; }
 .top-nav a { color: var(--text-2); text-decoration: none; font-weight: 700; padding: 0.5rem 0; }
 .top-nav a:hover { color: var(--text); }
+/* Codes, commands and file names read left to right in every language. */
+pre, code, kbd, .code { direction: ltr; unicode-bidi: isolate; }
+pre { text-align: left; }
+
+/* Language picker: a plain pill with a small chevron, so it reads as a menu. */
+select.lang {
+  appearance: none; padding-inline: 0.9rem 2rem;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(-45deg, transparent 50%, currentColor 50%);
+  background-size: 5px 5px; background-repeat: no-repeat;
+  background-position: right 1.05rem center, right 0.75rem center;
+}
+[dir="rtl"] select.lang { background-position: left 0.75rem center, left 1.05rem center; }
 .lang {
   font: inherit; font-weight: 700; color: var(--text); background: transparent;
   border: 1px solid var(--outline); border-radius: 999px; min-height: 44px; min-width: 44px; padding: 0 0.9rem; cursor: pointer;
@@ -160,12 +172,12 @@ p, dl, dd, ol { margin: 0; }
 @supports (animation-timeline: view()) {
   .steps { position: relative; }
   .steps::after {
-    content: ""; position: absolute; top: -6px; left: 0; width: 12px; height: 12px; border-radius: 50%;
+    content: ""; position: absolute; top: -6px; inset-inline-start: 0; width: 12px; height: 12px; border-radius: 50%;
     background: var(--accent); animation: along linear both; animation-timeline: view(); animation-range: entry 30% cover 55%;
   }
-  @keyframes along { from { left: 0; } to { left: calc(100% - 12px); } }
+  @keyframes along { from { inset-inline-start: 0; } to { inset-inline-start: calc(100% - 12px); } }
   @media (max-width: 48rem) { .steps::after { display: none; } }
-  @media (prefers-reduced-motion: reduce) { .steps::after { animation: none; left: calc(100% - 12px); } }
+  @media (prefers-reduced-motion: reduce) { .steps::after { animation: none; inset-inline-start: calc(100% - 12px); } }
 }
 @media (max-width: 48rem) { .steps { grid-template-columns: minmax(0, 1fr); } }
 
@@ -175,8 +187,8 @@ p, dl, dd, ol { margin: 0; }
 .reasons p { color: var(--text-2); text-wrap: pretty; }
 .compare-wrap { overflow-x: auto; }
 .compare { width: 100%; min-width: 34rem; border-collapse: collapse; font-size: 0.975rem; }
-.compare caption { text-align: left; color: var(--text-2); padding-bottom: var(--s16); }
-.compare th, .compare td { text-align: left; padding: 0.875rem var(--s16) 0.875rem 0; border-bottom: 1px solid var(--rule); vertical-align: baseline; }
+.compare caption { text-align: start; color: var(--text-2); padding-bottom: var(--s16); }
+.compare th, .compare td { text-align: start; padding-block: 0.875rem; padding-inline: 0 var(--s16); border-bottom: 1px solid var(--rule); vertical-align: baseline; }
 .compare thead th { font-family: var(--display); font-weight: 700; font-size: 1.125rem; border-bottom-color: var(--outline); }
 .compare tbody th { font-weight: 700; }
 .compare .is-us { color: var(--text); }
@@ -226,7 +238,7 @@ p, dl, dd, ol { margin: 0; }
 .platform header { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s16); flex-wrap: wrap; }
 .platform h3 { font-size: 1.5rem; }
 .platform p, .platform li { color: var(--text-2); font-size: 0.975rem; }
-.platform ul { margin: 0; padding-left: 1.1rem; display: grid; gap: 0.25rem; }
+.platform ul { margin: 0; padding-inline-start: 1.1rem; display: grid; gap: 0.25rem; }
 .platform .actions { margin-top: auto; }
 .yours { display: none; font-size: 0.8125rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); }
 .platform.is-yours .yours { display: block; }
@@ -237,10 +249,10 @@ p, dl, dd, ol { margin: 0; }
 pre.cmd { margin: 0; padding: var(--s16); background: var(--bg-raised); border-radius: 16px; overflow-x: auto; font: 0.875rem/1.6 ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; color: var(--text); }
 .copy { font: inherit; font-size: 0.875rem; font-weight: 700; color: var(--accent); background: none; border: 0; padding: var(--s8) 0; cursor: pointer; align-self: flex-start; }
 .req { width: 100%; border-collapse: collapse; font-size: 0.975rem; min-width: 30rem; }
-.req th, .req td { text-align: left; padding: 0.75rem var(--s16) 0.75rem 0; border-bottom: 1px solid var(--rule); vertical-align: baseline; }
+.req th, .req td { text-align: start; padding-block: 0.75rem; padding-inline: 0 var(--s16); border-bottom: 1px solid var(--rule); vertical-align: baseline; }
 .req thead th { border-bottom-color: var(--outline); font-weight: 700; }
 .req td { color: var(--text-2); }
-.notes { display: grid; gap: var(--s8); padding-left: 1.1rem; color: var(--text-2); margin: 0; }
+.notes { display: grid; gap: var(--s8); padding-inline-start: 1.1rem; color: var(--text-2); margin: 0; }
 
 /* Footer */
 .foot { max-width: var(--wrap); margin: 0 auto; padding: var(--s40) var(--gutter) 3rem; border-top: 1px solid var(--rule); display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--s16); color: var(--text-2); font-size: 0.975rem; }
@@ -254,7 +266,7 @@ pre.cmd { margin: 0; padding: var(--s16); background: var(--bg-raised); border-r
 .prose h1 { font-size: clamp(2.2rem, 5vw, 3.25rem); }
 .prose h2 { font-size: 1.5rem; margin-top: var(--s24); max-width: none; }
 .prose .lead { font-size: 1.25rem; color: var(--text-2); }
-.prose ul { margin: 0; padding-left: 1.25rem; display: grid; gap: var(--s8); }
+.prose ul { margin: 0; padding-inline-start: 1.25rem; display: grid; gap: var(--s8); }
 .prose code { font-size: 0.95em; overflow-wrap: anywhere; }
 .prose article + article { border-top: 1px solid var(--rule); padding-top: 3rem; }
 @media (max-width: 40rem) { .top-nav-keep a { display: inline; } }
@@ -267,7 +279,7 @@ pre.cmd { margin: 0; padding: var(--s16); background: var(--bg-raised); border-r
 .goal::-webkit-progress-bar { background: var(--bg-raised); border-radius: 999px; }
 .goal::-webkit-progress-value { background: var(--accent); border-radius: 999px; }
 .goal::-moz-progress-bar { background: var(--accent); border-radius: 999px; }
-.req caption { text-align: left; color: var(--text-2); padding-bottom: var(--s16); }
+.req caption { text-align: start; color: var(--text-2); padding-bottom: var(--s16); }
 .req.narrow { min-width: 0; }
 .req tfoot th, .req tfoot td { border-bottom: 0; padding-top: var(--s16); color: var(--text); font-weight: 700; }
 /* On a phone, wide tables become one block per row: item, explanation,
