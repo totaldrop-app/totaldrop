@@ -7,7 +7,9 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
 
 use clap::{Parser, Subcommand};
-use totaldrop_core::{Event, Events, IncomingOffer, PreparedSend, ReceiveOptions, SendOptions};
+use totaldrop_core::{
+    Event, Events, IncomingOffer, PathOptions, PreparedSend, ReceiveOptions, SendOptions,
+};
 use totaldrop_proto::TransferCode;
 
 #[derive(Parser)]
@@ -20,6 +22,15 @@ struct Cli {
     /// Rendezvous server. Only wss:// is allowed, except ws:// on this machine.
     #[arg(long, global = true, env = "TOTALDROP_SERVER")]
     server: Option<String>,
+    /// Relay for when no direct path works, and for finding this device's
+    /// public address. An empty value turns the relay off.
+    #[arg(long, global = true, env = "TOTALDROP_RELAY")]
+    relay: Option<String>,
+    /// Never connect directly and announce no IP address: everything goes
+    /// through the relay. Slower, but the other side never learns your
+    /// address.
+    #[arg(long, global = true)]
+    relay_only: bool,
     #[command(subcommand)]
     command: Command,
 }
@@ -96,17 +107,31 @@ fn server(cli: Option<String>) -> String {
     cli.unwrap_or_else(|| totaldrop_core::rendezvous::DEFAULT_SERVER.to_owned())
 }
 
+fn paths(relay: Option<String>, relay_only: bool) -> PathOptions {
+    PathOptions {
+        relay: relay.unwrap_or_else(|| totaldrop_core::relay::DEFAULT_RELAY.to_owned()),
+        relay_only,
+    }
+}
+
 async fn send(
     server: String,
-    paths: Vec<PathBuf>,
+    paths: PathOptions,
+    files: Vec<PathBuf>,
     strong: bool,
 ) -> Result<(), totaldrop_core::Error> {
     eprintln!("Preparing…");
+    if paths.relay_only && paths.relay.is_empty() {
+        return Err(totaldrop_core::Error::Connect(
+            "--relay-only needs a relay".into(),
+        ));
+    }
     let opts = SendOptions {
         server,
         words: if strong { 3 } else { 2 },
+        paths,
     };
-    let prepared = PreparedSend::new(&opts, paths).await?;
+    let prepared = PreparedSend::new(&opts, files).await?;
     let (entries, total) = prepared.totals();
     if prepared.skipped() > 0 {
         eprintln!(
@@ -133,6 +158,7 @@ async fn send(
 
 async fn receive(
     server: String,
+    paths: PathOptions,
     code: String,
     out: Option<PathBuf>,
     yes: bool,
@@ -142,7 +168,7 @@ async fn receive(
         None => std::env::current_dir()?,
     };
     eprintln!("Connecting…");
-    let offer = IncomingOffer::connect(&ReceiveOptions { server }, &code).await?;
+    let offer = IncomingOffer::connect(&ReceiveOptions { server, paths }, &code).await?;
     let s = offer.summary().clone();
     eprintln!("Connected, end-to-end encrypted.");
     eprintln!("Verification words: {}", offer.words().join(" "));
@@ -202,6 +228,7 @@ fn main() -> ExitCode {
             return ExitCode::FAILURE;
         }
     };
+    let route = paths(cli.relay, cli.relay_only);
     let result = match cli.command {
         Command::Code { code } => {
             return match TransferCode::parse(&code) {
@@ -217,10 +244,10 @@ fn main() -> ExitCode {
             };
         }
         Command::Send { paths, strong } => {
-            runtime.block_on(send(server(cli.server), paths, strong))
+            runtime.block_on(send(server(cli.server), route, paths, strong))
         }
         Command::Receive { code, out, yes } => {
-            runtime.block_on(receive(server(cli.server), code, out, yes))
+            runtime.block_on(receive(server(cli.server), route, code, out, yes))
         }
     };
     match result {

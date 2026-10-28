@@ -17,6 +17,8 @@
 pub mod error;
 pub mod framing;
 pub mod pairing;
+pub mod path;
+pub mod relay;
 pub mod rendezvous;
 pub mod secure;
 pub mod transfer;
@@ -80,18 +82,94 @@ const ACCEPT_TIMEOUT: Duration = Duration::from_secs(30);
 /// How long the receiver tries both directions before giving up.
 const CONNECT_TIMEOUT: Duration = Duration::from_secs(20);
 
-fn own_hints(socket: &std::net::UdpSocket, key: &transport::EndpointKey) -> Result<Hints> {
-    let local = transport::local_addresses(socket)?
-        .into_iter()
-        .map(totaldrop_proto::wire::Address)
-        .collect();
-    Ok(Hints {
+/// How this side can be reached, for its `HINTS`. With `relay_only`, no
+/// address at all (spec section 6, privacy mode). Otherwise the local
+/// addresses, and the public address the relay saw, if it answered.
+async fn own_hints(
+    socket: &std::net::UdpSocket,
+    key: &transport::EndpointKey,
+    paths: &PathOptions,
+) -> Result<Hints> {
+    let mut hints = Hints {
         versions: pairing::VERSIONS.to_vec(),
         endpoint_key: key.public(),
         public: Vec::new(),
-        local,
-        relay: None,
-    })
+        local: Vec::new(),
+        relay: paths.relay_url().map(str::to_owned),
+    };
+    if paths.relay_only {
+        return Ok(hints);
+    }
+    hints.local = transport::local_addresses(socket)?
+        .into_iter()
+        .map(totaldrop_proto::wire::Address)
+        .collect();
+    if let Some(url) = paths.relay_url()
+        && let Some(seen) = relay::discover(socket, url).await
+        && !hints.local.iter().any(|a| a.0 == seen)
+    {
+        hints.public.push(totaldrop_proto::wire::Address(seen));
+    }
+    Ok(hints)
+}
+
+/// How a transfer may reach the other device.
+#[derive(Debug, Clone)]
+pub struct PathOptions {
+    /// Relay URL; empty for none. The sender's relay carries the transfer
+    /// when no direct path works, and either side's relay tells it its public
+    /// address.
+    pub relay: String,
+    /// Never connect directly and announce no address: everything goes
+    /// through the relay (spec section 6, privacy mode).
+    pub relay_only: bool,
+}
+
+impl Default for PathOptions {
+    fn default() -> Self {
+        Self {
+            relay: relay::DEFAULT_RELAY.into(),
+            relay_only: false,
+        }
+    }
+}
+
+impl PathOptions {
+    fn relay_url(&self) -> Option<&str> {
+        (!self.relay.is_empty()).then_some(self.relay.as_str())
+    }
+}
+
+/// The sender's relay, as its `HINTS` name it, if it is one this side may
+/// use (`wss://`, or `ws://` on this machine).
+fn usable_relay(hints: &Hints) -> Option<&str> {
+    hints
+        .relay
+        .as_deref()
+        .filter(|url| relay::check_url(url).is_ok())
+}
+
+/// Start the relay link at `url`, if any, and say which paths to try.
+fn paths_to(
+    peer: &Hints,
+    url: Option<&str>,
+    relay_only: bool,
+    own: &Arc<transport::EndpointKey>,
+    pipes: path::RelayPipes,
+) -> (transport::Paths, Option<relay::Link>) {
+    let link = url.map(|u| relay::spawn(u.to_owned(), own.clone(), peer.endpoint_key, pipes));
+    let direct = if relay_only {
+        Vec::new()
+    } else {
+        peer_addresses(peer)
+    };
+    (
+        transport::Paths {
+            direct,
+            relay: link.is_some(),
+        },
+        link,
+    )
 }
 
 /// Options for sending.
@@ -101,6 +179,8 @@ pub struct SendOptions {
     pub server: String,
     /// Secret words in the code: 2 (default) or 3.
     pub words: usize,
+    /// Relay and privacy settings.
+    pub paths: PathOptions,
 }
 
 impl Default for SendOptions {
@@ -108,6 +188,7 @@ impl Default for SendOptions {
         Self {
             server: rendezvous::DEFAULT_SERVER.into(),
             words: 2,
+            paths: PathOptions::default(),
         }
     }
 }
@@ -120,6 +201,7 @@ pub struct PreparedSend {
     keys: DeviceKeys,
     entries: Vec<transfer::SourceEntry>,
     skipped: usize,
+    paths: PathOptions,
 }
 
 impl core::fmt::Debug for PreparedSend {
@@ -148,6 +230,7 @@ impl PreparedSend {
             keys,
             entries,
             skipped,
+            paths: opts.paths.clone(),
         })
     }
 
@@ -173,8 +256,8 @@ impl PreparedSend {
     pub async fn run(self, events: Events) -> Result<SendReport> {
         events(Event::Waiting);
         let socket = transport::bind_socket()?;
-        let endpoint_key = transport::EndpointKey::generate()?;
-        let hints = own_hints(&socket, &endpoint_key)?;
+        let endpoint_key = Arc::new(transport::EndpointKey::generate()?);
+        let hints = own_hints(&socket, &endpoint_key, &self.paths).await?;
         let paired = pairing::exchange(
             self.mailbox,
             Role::Initiator,
@@ -185,10 +268,18 @@ impl PreparedSend {
         )
         .await?;
 
-        let endpoint = transport::endpoint(socket, &endpoint_key, &paired.hints.endpoint_key)?;
+        let (endpoint, pipes) =
+            transport::endpoint(socket, &endpoint_key, &paired.hints.endpoint_key)?;
+        // The sender's own relay carries the transfer when nothing else works.
+        let (paths, _link) = paths_to(
+            &paired.hints,
+            self.paths.relay_url(),
+            self.paths.relay_only,
+            &endpoint_key,
+            pipes,
+        );
         let (conn, send, recv) =
-            transport::sender_connection(&endpoint, &peer_addresses(&paired.hints), ACCEPT_TIMEOUT)
-                .await?;
+            transport::sender_connection(&endpoint, &paths, ACCEPT_TIMEOUT).await?;
         let chan = secure::handshake_on(
             send,
             recv,
@@ -232,12 +323,16 @@ fn peer_addresses(hints: &Hints) -> Vec<SocketAddr> {
 pub struct ReceiveOptions {
     /// Rendezvous server URL.
     pub server: String,
+    /// Relay and privacy settings. The transfer goes through the sender's
+    /// relay; this side's relay is used to find its public address.
+    pub paths: PathOptions,
 }
 
 impl Default for ReceiveOptions {
     fn default() -> Self {
         Self {
             server: rendezvous::DEFAULT_SERVER.into(),
+            paths: PathOptions::default(),
         }
     }
 }
@@ -250,6 +345,7 @@ pub struct IncomingOffer {
     offer: transfer::VerifiedOffer,
     words: Vec<String>,
     _peer: Certificate,
+    _link: Option<relay::Link>,
 }
 
 impl core::fmt::Debug for IncomingOffer {
@@ -268,18 +364,22 @@ impl IncomingOffer {
         let mailbox = rendezvous::Mailbox::claim(&opts.server, code.nameplate(), None).await?;
         let mailbox_id = mailbox.id;
         let socket = transport::bind_socket()?;
-        let endpoint_key = transport::EndpointKey::generate()?;
-        let hints = own_hints(&socket, &endpoint_key)?;
+        let endpoint_key = Arc::new(transport::EndpointKey::generate()?);
+        let hints = own_hints(&socket, &endpoint_key, &opts.paths).await?;
         let paired =
             pairing::exchange(mailbox, Role::Responder, &code, mailbox_id, &keys, &hints).await?;
 
-        let endpoint = transport::endpoint(socket, &endpoint_key, &paired.hints.endpoint_key)?;
-        let conn = transport::receiver_connection(
-            &endpoint,
-            &peer_addresses(&paired.hints),
-            CONNECT_TIMEOUT,
-        )
-        .await?;
+        let (endpoint, pipes) =
+            transport::endpoint(socket, &endpoint_key, &paired.hints.endpoint_key)?;
+        // Both sides meet on the sender's relay (spec section 6).
+        let (paths, link) = paths_to(
+            &paired.hints,
+            usable_relay(&paired.hints),
+            opts.paths.relay_only,
+            &endpoint_key,
+            pipes,
+        );
+        let conn = transport::receiver_connection(&endpoint, &paths, CONNECT_TIMEOUT).await?;
         let mut chan = secure::handshake(
             &conn,
             secure::HandshakeInput {
@@ -300,6 +400,7 @@ impl IncomingOffer {
             offer,
             words,
             _peer: paired.peer.clone(),
+            _link: link,
         })
     }
 

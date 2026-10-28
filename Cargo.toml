@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["crates/*", "server/totaldrop-rendezvous", "app/rust", "linux"]
+members = ["crates/*", "server/totaldrop-rendezvous", "server/totaldrop-relay", "app/rust", "linux"]
 exclude = ["fuzz"]
 
 [workspace.package]

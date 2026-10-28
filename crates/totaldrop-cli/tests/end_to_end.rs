@@ -13,7 +13,9 @@ use std::path::{Path, PathBuf};
 use std::time::Duration;
 
 use totaldrop_core::rendezvous::{self, Mailbox};
-use totaldrop_core::{Error, IncomingOffer, PreparedSend, ReceiveOptions, SendOptions, no_events};
+use totaldrop_core::{
+    Error, IncomingOffer, PathOptions, PreparedSend, ReceiveOptions, SendOptions, no_events,
+};
 use totaldrop_proto::wire::Mood;
 
 /// The server under test: the Rust server in-process, or another
@@ -28,6 +30,14 @@ async fn server() -> String {
             .await
             .unwrap();
     format!("ws://{addr}")
+}
+
+/// Most tests run without a relay, on loopback only.
+fn no_relay() -> PathOptions {
+    PathOptions {
+        relay: String::new(),
+        relay_only: false,
+    }
 }
 
 fn scratch(name: &str) -> PathBuf {
@@ -98,6 +108,7 @@ async fn transfer(
         &SendOptions {
             server: server.to_owned(),
             words: 2,
+            paths: no_relay(),
         },
         paths,
     )
@@ -108,6 +119,7 @@ async fn transfer(
     let offer = IncomingOffer::connect(
         &ReceiveOptions {
             server: server.to_owned(),
+            paths: no_relay(),
         },
         &code,
     )
@@ -191,6 +203,7 @@ async fn wrong_code_fails_on_both_sides_and_burns_the_nameplate() {
         &SendOptions {
             server: server.clone(),
             words: 2,
+            paths: no_relay(),
         },
         vec![src.join("secret.txt")],
     )
@@ -206,6 +219,7 @@ async fn wrong_code_fails_on_both_sides_and_burns_the_nameplate() {
     guess = format!("{}-{wrong}", guess.rsplit_once('-').unwrap().0);
     let opts = ReceiveOptions {
         server: server.clone(),
+        paths: no_relay(),
     };
     let attacker = IncomingOffer::connect(&opts, &guess).await;
     assert!(matches!(attacker, Err(Error::WrongCode)), "{attacker:?}");
@@ -227,6 +241,7 @@ async fn declined_offer_is_reported_to_the_sender() {
         &SendOptions {
             server: server.clone(),
             words: 3,
+            paths: no_relay(),
         },
         vec![src.join("a.txt")],
     )
@@ -235,9 +250,15 @@ async fn declined_offer_is_reported_to_the_sender() {
     let code = prepared.code().to_string();
     assert_eq!(code.split('-').count(), 4, "three words plus the nameplate");
     let sender = tokio::spawn(prepared.run(no_events()));
-    let offer = IncomingOffer::connect(&ReceiveOptions { server }, &code)
-        .await
-        .unwrap();
+    let offer = IncomingOffer::connect(
+        &ReceiveOptions {
+            server,
+            paths: no_relay(),
+        },
+        &code,
+    )
+    .await
+    .unwrap();
     assert_eq!(offer.summary().files, 1);
     assert_eq!(offer.words().len(), 4);
     offer.decline().await.unwrap();
@@ -329,4 +350,106 @@ async fn expired_nameplates_cannot_be_claimed() {
 async fn plain_websocket_to_another_host_is_refused() {
     let r = rendezvous::allocate("ws://example.com").await;
     assert!(matches!(r, Err(Error::Rendezvous(_))));
+}
+
+async fn transfer_with(
+    server: &str,
+    send_paths: PathOptions,
+    recv_paths: PathOptions,
+    files: Vec<PathBuf>,
+    dest: &Path,
+) -> (totaldrop_core::SendReport, totaldrop_core::ReceiveReport) {
+    let prepared = PreparedSend::new(
+        &SendOptions {
+            server: server.to_owned(),
+            words: 2,
+            paths: send_paths,
+        },
+        files,
+    )
+    .await
+    .unwrap();
+    let code = prepared.code().to_string();
+    let sender = tokio::spawn(prepared.run(no_events()));
+    let offer = IncomingOffer::connect(
+        &ReceiveOptions {
+            server: server.to_owned(),
+            paths: recv_paths,
+        },
+        &code,
+    )
+    .await
+    .unwrap();
+    let received = offer.accept(dest, no_events()).await.unwrap();
+    let sent = sender.await.unwrap().unwrap();
+    (sent, received)
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn relay_only_transfer_goes_through_the_relay() {
+    let server = server().await;
+    let (relay_url, relay, _task) = totaldrop_relay::spawn_local(Default::default())
+        .await
+        .unwrap();
+    let src = scratch("src");
+    let dest = scratch("dest");
+    std::fs::write(src.join("film.bin"), pseudo_random(3 << 20, 7)).unwrap();
+    let only = PathOptions {
+        relay: relay_url,
+        relay_only: true,
+    };
+    // The receiver needs no relay of its own: it uses the sender's.
+    let (sent, received) = transfer_with(
+        &server,
+        only,
+        PathOptions {
+            relay: String::new(),
+            relay_only: true,
+        },
+        vec![src.join("film.bin")],
+        &dest,
+    )
+    .await;
+    assert_eq!((sent.files_ok, received.files_ok), (1, 1));
+    same_tree(&src, &dest);
+    assert!(
+        relay.forwarded_bytes() > 3 << 20,
+        "{}",
+        relay.forwarded_bytes()
+    );
+    std::fs::remove_dir_all(src).unwrap();
+    std::fs::remove_dir_all(dest).unwrap();
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn a_direct_path_wins_over_the_relay() {
+    let server = server().await;
+    let (relay_url, relay, _task) = totaldrop_relay::spawn_local(Default::default())
+        .await
+        .unwrap();
+    let src = scratch("src");
+    let dest = scratch("dest");
+    std::fs::write(src.join("photo.bin"), pseudo_random(2 << 20, 8)).unwrap();
+    let both = PathOptions {
+        relay: relay_url,
+        relay_only: false,
+    };
+    let (sent, received) = transfer_with(
+        &server,
+        both.clone(),
+        both,
+        vec![src.join("photo.bin")],
+        &dest,
+    )
+    .await;
+    assert_eq!((sent.files_ok, received.files_ok), (1, 1));
+    same_tree(&src, &dest);
+    // At most a few handshake packets went through the relay.
+    assert!(
+        relay.forwarded_bytes() < 256 * 1024,
+        "{}",
+        relay.forwarded_bytes()
+    );
+    std::fs::remove_dir_all(src).unwrap();
+    std::fs::remove_dir_all(dest).unwrap();
 }

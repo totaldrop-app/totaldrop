@@ -1,0 +1,20 @@
+{
+	# UDP 443 belongs to the relay's address discovery, so no HTTP/3.
+	servers {
+		protocols h1 h2
+	}
+	# Caddy's access log is off unless configured; keep it that way.
+}
+
+relay.totaldrop.app {
+	handle /v0/relay {
+		reverse_proxy 127.0.0.1:4100
+	}
+	handle {
+		respond "TotalDrop relay" 200
+	}
+	header {
+		Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+		-Server
+	}
+}

@@ -21,6 +21,7 @@ totaldrop-proto = { version = "0.1.0-beta.1", path = "../totaldrop-proto" }
 [dev-dependencies]
 getrandom = "0.4.3"
 tokio = { version = "1.54.1", features = ["macros", "rt-multi-thread"] }
+totaldrop-relay = { version = "0.1.0-beta.1", path = "../../server/totaldrop-relay" }
 totaldrop-rendezvous = { version = "0.1.0-beta.1", path = "../../server/totaldrop-rendezvous" }
 
 [lints]

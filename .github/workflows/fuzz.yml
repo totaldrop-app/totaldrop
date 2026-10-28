@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target: [path, code]
+        target: [path, code, relay]
     steps:
       - uses: actions/checkout@v4
         with:

@@ -16,7 +16,7 @@ pub const DEFAULT_SERVER: &str = "wss://rendezvous.totaldrop.app";
 
 /// Unencrypted `ws://` is accepted only for a server on this machine, for
 /// development and tests. Everything else must be `wss://` (TLS 1.3).
-fn check_url(url: &str) -> Result<()> {
+pub(crate) fn check_url(url: &str) -> Result<()> {
     // Parse exactly as the WebSocket client will, so a URL such as
     // `ws://localhost@evil.example` cannot pass for a local one.
     let uri: tokio_tungstenite::tungstenite::http::Uri = url
@@ -71,17 +71,23 @@ pub fn mailbox_path(nameplate: u32) -> String {
 /// dropped by proxies along the way.
 const KEEPALIVE: std::time::Duration = std::time::Duration::from_secs(20);
 
-type Ws = WebSocketStream<MaybeTlsStream<TcpStream>>;
+pub(crate) type Ws = WebSocketStream<MaybeTlsStream<TcpStream>>;
 
 fn join(server: &str, path: &str) -> String {
     format!("{}{path}", server.trim_end_matches('/'))
 }
 
 async fn open(url: &str) -> Result<Ws> {
+    open_ws(url, MAX_MAILBOX_BODY.saturating_add(1024)).await
+}
+
+/// Open a WebSocket to `url`, which must pass [`check_url`], accepting
+/// messages up to `max` bytes.
+pub(crate) async fn open_ws(url: &str, max: usize) -> Result<Ws> {
     check_url(url)?;
     let mut config = WebSocketConfig::default();
-    config.max_message_size = Some(MAX_MAILBOX_BODY.saturating_add(1024));
-    config.max_frame_size = Some(MAX_MAILBOX_BODY.saturating_add(1024));
+    config.max_message_size = Some(max);
+    config.max_frame_size = Some(max);
     let connector = if url.starts_with("wss://") {
         Connector::Rustls(tls_config()?)
     } else {
