@@ -216,7 +216,7 @@
   "rm.later.state": "Later",
   "rm.later.when": "2027",
   "rm.lede": "Dates are aims, not promises: a feature ships only when it is safe. Every step can be followed in the open repository.",
-  "rm.n1.d": "Devices find their public address with STUN and connect directly through most home routers. When that is impossible, the encrypted traffic goes through our relay on Cloudflare, which sees nothing of it.",
+  "rm.n1.d": "Devices find their public address with STUN and connect directly through most home routers. When that is impossible, the encrypted traffic goes through our relay on Cloudflare, which cannot read it.",
   "rm.n1.t": "Across the internet",
   "rm.n2.d": "Relay only: the other side never learns your IP address.",
   "rm.n2.t": "Privacy mode in the command line",
