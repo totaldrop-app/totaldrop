@@ -7,6 +7,13 @@ All notable changes to TotalDrop are recorded here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- **Site:** The privacy policy (version 3) now says that the apps connect
+  to the relay at the start of every transfer, not only when no direct path
+  works, as version 2 said. A coming version will connect only when needed
+  (#63).
+
 ### Security
 
 - **Build:** Linux packages are built only in CI from a release tag and
