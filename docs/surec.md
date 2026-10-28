@@ -72,7 +72,9 @@ Bir değişiklik ancak şunların hepsi doğruysa bitmiştir:
    denetler), taban imajlar özetle (digest) sabittir ve kaynak arşivi son
    commit'in zamanıyla (`SOURCE_DATE_EPOCH`) üretilir. Taban imajın sabit
    olması paketleri sabitlemez: kapta kurulan dağıtım paketleri o günün
-   sürümleridir.
+   sürümleridir. Dependabot Arch imajının özetini yalnız
+   `arch.Dockerfile`'da günceller; aynı PR'da `linux.yml`'deki `container:`
+   satırı da elle aynı özete getirilir, yoksa sürüm denetimi PR'ı durdurur.
 5. İndirilen paketler sağlama toplamıyla ve temiz kaplarda kurulumla
    (`packaging/test-install.sh`) denenir.
 6. Yayın notları İngilizce ve Türkçe yazılır, taslak yayımlanır.
