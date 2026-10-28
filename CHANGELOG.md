@@ -27,6 +27,14 @@ All notable changes to TotalDrop are recorded here. The format follows
   Noto fonts for scripts beyond Latin.
 - **Linux:** Sizes now read like on Android: one decimal below 10 and SI
   "kB" ("12 kB", "1.5 MB"), where they had one decimal below 100 and "KB".
+- **Android:** Chooses the language like the Linux app and the command line
+  (`zh-HK` gets Traditional Chinese, `pt-AO` gets European Portuguese), and
+  lists the app's languages in Android 13+ per-app language settings. Sizes
+  and counts follow the region ("1.234 öğe · 1,5 MB"). The code and the
+  verification words stay left to right and are read by screen readers with
+  an English voice. Names from the other side show hidden direction
+  characters. Safety-critical text stays English while its translation is
+  an unreviewed draft, and Settings says when a translation is a draft.
 - **Core:** `totaldrop-l10n`, the shared interface text for the Rust
   programs: all strings live in `l10n/`, one source with Android.
 
@@ -56,6 +64,8 @@ All notable changes to TotalDrop are recorded here. The format follows
   the relay the sender names. The android-0.1.0-beta.5 notes above said the
   relay sees "only single-use keys, sizes and timing"; it also sees both IP
   addresses. A coming version will connect only when needed (#63, #68).
+- **Android:** The privacy text in Settings no longer says files always go
+  directly between the devices; it explains the relay.
 
 ### Security
 
