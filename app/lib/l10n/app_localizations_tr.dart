@@ -333,4 +333,48 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get draftTranslation =>
       'Bu çeviri gözden geçiriliyor. Weblate\'te iyileştirmeye yardım edin.';
+
+  @override
+  String get sendDropHere => 'Dosyaları buraya bırakın';
+
+  @override
+  String get sendDropHint =>
+      'Dosyaları bu pencereye sürükleyip de ekleyebilirsiniz.';
+
+  @override
+  String get sendQrHint => 'Ya da bu kodu diğer cihazın kamerasıyla okutun.';
+
+  @override
+  String get sendWaitingAccept =>
+      'Kelimeleri karşılaştırın, ardından alıcının kabul etmesini bekleyin.';
+
+  @override
+  String get receiveFromImage => 'Resimden QR oku';
+
+  @override
+  String get receiveQrNotFound => 'Bu resimde TotalDrop kodu yok.';
+
+  @override
+  String get pickTitle => 'Gönderilecek dosyaları seçin';
+
+  @override
+  String get pickImageTitle => 'QR kodlu bir resim seçin';
+
+  @override
+  String get openFolder => 'Klasörü aç';
+
+  @override
+  String get back => 'Geri';
+
+  @override
+  String get codeSuggestions => 'Öneriler';
+
+  @override
+  String progressPercent(int percent) {
+    final intl.NumberFormat percentNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String percentString = percentNumberFormat.format(percent);
+
+    return '%$percentString';
+  }
 }
