@@ -12,7 +12,7 @@ use std::sync::{Arc, Mutex};
 
 use cxx_qt::{CxxQtType, Threading};
 use cxx_qt_lib::{QList, QString, QStringList, QUrl};
-use totaldrop_core::{Event, IncomingOffer, PreparedSend, ReceiveOptions, SendOptions};
+use totaldrop_core::{Event, IncomingOffer, PreparedSend, ReceiveOptions, SendOptions, Stop};
 
 use crate::desktop;
 use crate::runtime::RUNTIME;
@@ -152,12 +152,14 @@ pub mod qobject {
     impl cxx_qt::Initialize for Transfer {}
 }
 
-/// What lives between invokables: the pending send or offer and the handle
-/// to stop the running task.
+/// What lives between invokables: the pending offer and the stop of the
+/// current operation.
 #[derive(Default)]
 struct Session {
     offer: Mutex<Option<IncomingOffer>>,
-    abort: Mutex<Option<tokio::task::AbortHandle>>,
+    /// Stops the current transfer at any stage; once the session is up the
+    /// other side is told, and partial files are removed.
+    stop: Mutex<Stop>,
     /// Bumped by every new operation and by cancel; events of an older
     /// operation are dropped.
     generation: AtomicU64,
@@ -221,6 +223,7 @@ fn kind(e: &totaldrop_core::Error) -> &'static str {
         E::PeerLeft => "PeerLeft",
         E::Rejected(_) => "Declined",
         E::Cancelled(_) => "Cancelled",
+        E::Stopped => "Stopped",
         E::Code(_) => "InvalidCode",
         E::Rendezvous(_) => "Server",
         E::Connect(_) => "Connect",
@@ -248,6 +251,9 @@ impl qobject::Transfer {
             .generation
             .fetch_add(1, Ordering::SeqCst)
             + 1;
+        if let Ok(mut s) = self.rust().session.stop.lock() {
+            *s = Stop::new();
+        }
         self.as_mut().set_role(QString::from(role));
         self.as_mut().set_code(QString::default());
         self.as_mut().set_link(QString::default());
@@ -313,12 +319,19 @@ impl qobject::Transfer {
         })
     }
 
-    /// Run `fut` on the runtime as operation `g`, keeping its abort handle.
+    /// The stop of the current operation.
+    fn stop_handle(&self) -> Stop {
+        self.rust()
+            .session
+            .stop
+            .lock()
+            .map(|s| s.clone())
+            .unwrap_or_default()
+    }
+
+    /// Run `fut` on the runtime.
     fn spawn(&self, fut: impl std::future::Future<Output = ()> + Send + 'static) {
-        let task = RUNTIME.spawn(fut);
-        if let Ok(mut a) = self.rust().session.abort.lock() {
-            *a = Some(task.abort_handle());
-        }
+        RUNTIME.spawn(fut);
     }
 
     fn opts_server(&self) -> String {
@@ -337,8 +350,15 @@ impl qobject::Transfer {
             words: if strong { 3 } else { 2 },
             ..SendOptions::default()
         };
+        let stop = self.stop_handle();
         self.spawn(async move {
-            let prepared = match PreparedSend::new(&opts, paths).await {
+            // Dropping the preparation releases the reserved code at once.
+            let prepared = tokio::select! {
+                biased;
+                () = stop.stopped() => Err(totaldrop_core::Error::Stopped),
+                r = PreparedSend::new(&opts, paths) => r,
+            };
+            let prepared = match prepared {
                 Ok(p) => p,
                 Err(e) => {
                     let (k, d) = (kind(&e), e.to_string());
@@ -366,7 +386,9 @@ impl qobject::Transfer {
                 obj.as_mut().set_size(to_f64(bytes));
                 obj.as_mut().set_state(QString::from("waiting"));
             });
-            let result = prepared.run(Self::events(thread.clone(), g)).await;
+            let result = prepared
+                .run_with(Self::events(thread.clone(), g), stop)
+                .await;
             let _ = thread.queue(move |mut obj| {
                 if !obj.current(g) {
                     return;
@@ -392,8 +414,9 @@ impl qobject::Transfer {
             ..ReceiveOptions::default()
         };
         let session = self.rust().session.clone();
+        let stop = self.stop_handle();
         self.spawn(async move {
-            match IncomingOffer::connect(&opts, &code).await {
+            match IncomingOffer::connect_with(&opts, &code, &stop).await {
                 Ok(offer) => {
                     let s = offer.summary().clone();
                     let words = offer.words().to_vec();
@@ -440,9 +463,14 @@ impl qobject::Transfer {
         self.as_mut().set_state(QString::from("transferring"));
         let thread = self.qt_thread();
         let dest = PathBuf::from(self.destination().to_string());
+        let stop = self.stop_handle();
         self.spawn(async move {
             let result = match std::fs::create_dir_all(&dest) {
-                Ok(()) => offer.accept(&dest, Self::events(thread.clone(), g)).await,
+                Ok(()) => {
+                    offer
+                        .accept_with(&dest, Self::events(thread.clone(), g), &stop)
+                        .await
+                }
                 Err(e) => Err(totaldrop_core::Error::Io(e)),
             };
             let saved = dest.display().to_string();
@@ -485,20 +513,20 @@ impl qobject::Transfer {
             .session
             .generation
             .fetch_add(1, Ordering::SeqCst);
-        if let Some(h) = self
+        // The running operation tells the other side and cleans up.
+        self.stop_handle().stop();
+        // An unanswered offer is declined, so the sender hears why.
+        let pending = self
             .rust()
             .session
-            .abort
+            .offer
             .lock()
             .ok()
-            .and_then(|mut a| a.take())
-        {
-            h.abort();
-        }
-        // Dropping an unanswered offer closes the connection; the sender
-        // sees the transfer end.
-        if let Ok(mut o) = self.rust().session.offer.lock() {
-            o.take();
+            .and_then(|mut o| o.take());
+        if let Some(offer) = pending {
+            RUNTIME.spawn(async move {
+                let _ = offer.decline().await;
+            });
         }
         self.as_mut().set_state(QString::from("idle"));
     }

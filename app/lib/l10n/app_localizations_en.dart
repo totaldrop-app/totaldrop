@@ -258,6 +258,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorCancelled => 'The other side stopped the transfer.';
 
   @override
+  String get errorStopped => 'Stopped on this device.';
+
+  @override
   String get errorInvalidCode => 'That code is not valid.';
 
   @override

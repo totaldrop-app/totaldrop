@@ -42,7 +42,10 @@ mod tests {
     #[test]
     fn negotiation() {
         let avail = vec!["en".to_owned(), "tr".to_owned()];
-        assert_eq!(negotiate_locale(vec!["tr-TR".into()], avail.clone()).as_deref(), Some("tr"));
+        assert_eq!(
+            negotiate_locale(vec!["tr-TR".into()], avail.clone()).as_deref(),
+            Some("tr")
+        );
         assert_eq!(negotiate_locale(vec!["de".into()], avail), None);
     }
 

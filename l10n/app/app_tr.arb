@@ -64,6 +64,7 @@
   "errorPeerLeft": "Karşı taraf gönderim bitmeden ayrıldı.",
   "errorDeclined": "Alıcı dosyaları reddetti.",
   "errorCancelled": "Karşı taraf gönderimi durdurdu.",
+  "errorStopped": "Bu cihazda durduruldu.",
   "errorInvalidCode": "Bu kod geçerli değil.",
   "errorServer": "TotalDrop sunucusuna ulaşılamadı. İnternet bağlantınızı kontrol edin.",
   "errorConnect": "Diğer cihaza bağlanılamadı. İki cihazın da internete bağlı olduğundan emin olup yeniden deneyin.",

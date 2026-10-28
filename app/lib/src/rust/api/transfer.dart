@@ -7,8 +7,16 @@ import '../frb_generated.dart';
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `b`, `cancellable`, `core_events`, `emit`, `finish`, `n`, `of`, `on_runtime`, `other`
+// These functions are ignored because they are not marked as `pub`: `b`, `core_events`, `emit`, `finish`, `n`, `of`, `on_runtime`, `other`, `stopped`
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `assert_fields_are_eq`, `clone`, `clone`, `clone`, `clone`, `clone`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`
+
+/// A new, unstopped stopper.
+Stopper newStopper() => RustLib.instance.api.crateApiTransferNewStopper();
+
+/// Stop the transfer `stopper` belongs to. Safe to call more than once,
+/// and before the transfer starts.
+void stopTransfer({required Stopper stopper}) =>
+    RustLib.instance.api.crateApiTransferStopTransfer(stopper: stopper);
 
 /// The default rendezvous server.
 String defaultServer() => RustLib.instance.api.crateApiTransferDefaultServer();
@@ -18,40 +26,48 @@ Future<SendSession> prepareSend({
   required String server,
   required List<String> paths,
   required bool strong,
+  required Stopper stopper,
 }) => RustLib.instance.api.crateApiTransferPrepareSend(
   server: server,
   paths: paths,
   strong: strong,
+  stopper: stopper,
 );
 
-/// Stop a running send.
-void cancelSend({required SendSession session}) =>
-    RustLib.instance.api.crateApiTransferCancelSend(session: session);
+/// Wait for the receiver and send, until `stopper` is stopped. Events end
+/// with `Finished` or `Failed`.
+Stream<TransferEvent> runSend({
+  required SendSession session,
+  required Stopper stopper,
+}) => RustLib.instance.api.crateApiTransferRunSend(
+  session: session,
+  stopper: stopper,
+);
 
-/// Wait for the receiver and send. Events end with `Finished` or `Failed`.
-Stream<TransferEvent> runSend({required SendSession session}) =>
-    RustLib.instance.api.crateApiTransferRunSend(session: session);
-
-/// Use `code` to connect to the sender and receive its offer.
-Future<Offer> connectReceive({required String server, required String code}) =>
-    RustLib.instance.api.crateApiTransferConnectReceive(
-      server: server,
-      code: code,
-    );
+/// Use `code` to connect to the sender and receive its offer, until
+/// `stopper` is stopped.
+Future<Offer> connectReceive({
+  required String server,
+  required String code,
+  required Stopper stopper,
+}) => RustLib.instance.api.crateApiTransferConnectReceive(
+  server: server,
+  code: code,
+  stopper: stopper,
+);
 
 /// Accept the offer and save everything beneath `destination`, which is
-/// created if missing. Events end with `Finished` or `Failed`.
+/// created if missing, until `stopper` is stopped. Events end with
+/// `Finished` or `Failed`.
 Stream<TransferEvent> acceptOffer({
   required Offer offer,
   required String destination,
+  required Stopper stopper,
 }) => RustLib.instance.api.crateApiTransferAcceptOffer(
   offer: offer,
   destination: destination,
+  stopper: stopper,
 );
-
-/// Stop a running receive.
-void cancelReceive({required Offer offer}) =>
-    RustLib.instance.api.crateApiTransferCancelReceive(offer: offer);
 
 /// Decline the offer.
 Future<void> declineOffer({required Offer offer}) =>
@@ -92,6 +108,9 @@ abstract class SendSession implements RustOpaqueInterface {
   PlatformInt64 get totalBytes;
 }
 
+// Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<Stopper>>
+abstract class Stopper implements RustOpaqueInterface {}
+
 /// Kinds of failure. Dart shows a translated message for each.
 enum ErrorKind {
   /// The code did not match: mistyped, or someone tried to intercept.
@@ -105,6 +124,9 @@ enum ErrorKind {
 
   /// The other side cancelled.
   cancelled,
+
+  /// Stopped on this device.
+  stopped,
 
   /// The code could not be read.
   invalidCode,

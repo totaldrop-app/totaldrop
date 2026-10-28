@@ -9,7 +9,7 @@ use std::path::PathBuf;
 use std::sync::{Arc, LazyLock, Mutex};
 
 use flutter_rust_bridge::frb;
-use totaldrop_core::{Event, IncomingOffer, PreparedSend, ReceiveOptions, SendOptions};
+use totaldrop_core::{Event, IncomingOffer, PreparedSend, ReceiveOptions, SendOptions, Stop};
 
 use crate::frb_generated::StreamSink;
 
@@ -29,32 +29,36 @@ where
     F: std::future::Future<Output = Result<T, TransferError>> + Send + 'static,
     T: Send + 'static,
 {
-    cancellable(fut, &Mutex::new(None)).await
+    RUNTIME
+        .spawn(fut)
+        .await
+        .unwrap_or_else(|_| Err(TransferError::other("internal task failed")))
 }
 
-/// Run on the runtime, leaving an abort handle in `slot` so the person can
-/// stop the transfer. Aborting drops every connection, so the other side
-/// sees the transfer end at once.
-async fn cancellable<F, T>(
-    fut: F,
-    slot: &Mutex<Option<tokio::task::AbortHandle>>,
-) -> Result<T, TransferError>
-where
-    F: std::future::Future<Output = Result<T, TransferError>> + Send + 'static,
-    T: Send + 'static,
-{
-    let task = RUNTIME.spawn(fut);
-    if let Ok(mut s) = slot.lock() {
-        *s = Some(task.abort_handle());
-    }
-    match task.await {
-        Ok(r) => r,
-        Err(e) if e.is_cancelled() => Err(TransferError {
-            kind: ErrorKind::Cancelled,
-            detail: "stopped on this device".into(),
-        }),
-        Err(_) => Err(TransferError::other("internal task failed")),
-    }
+/// Stops one transfer, at any stage: preparing, waiting, connecting or
+/// moving files. Dart makes one per transfer and passes it to every call
+/// of that transfer. Once the session is up, the other side is told and
+/// sees "the other side stopped"; partial files are removed.
+#[frb(opaque)]
+pub struct Stopper {
+    stop: Stop,
+}
+
+/// A new, unstopped stopper.
+#[frb(sync)]
+pub fn new_stopper() -> Stopper {
+    Stopper { stop: Stop::new() }
+}
+
+/// Stop the transfer `stopper` belongs to. Safe to call more than once,
+/// and before the transfer starts.
+#[frb(sync)]
+pub fn stop_transfer(stopper: &Stopper) {
+    stopper.stop.stop();
+}
+
+fn stopped() -> TransferError {
+    TransferError::from(totaldrop_core::Error::Stopped)
 }
 
 fn n(v: usize) -> i64 {
@@ -82,6 +86,8 @@ pub enum ErrorKind {
     Declined,
     /// The other side cancelled.
     Cancelled,
+    /// Stopped on this device.
+    Stopped,
     /// The code could not be read.
     InvalidCode,
     /// The rendezvous server could not be reached or refused.
@@ -123,6 +129,7 @@ impl From<totaldrop_core::Error> for TransferError {
             E::PeerLeft => ErrorKind::PeerLeft,
             E::Rejected(_) => ErrorKind::Declined,
             E::Cancelled(_) => ErrorKind::Cancelled,
+            E::Stopped => ErrorKind::Stopped,
             E::Code(_) => ErrorKind::InvalidCode,
             E::Rendezvous(_) => ErrorKind::Server,
             E::Connect(_) => ErrorKind::Connect,
@@ -241,7 +248,6 @@ fn finish(sink: &Sink, result: Result<TransferSummary, TransferError>) {
 #[frb(opaque)]
 pub struct SendSession {
     inner: Mutex<Option<PreparedSend>>,
-    abort: Mutex<Option<tokio::task::AbortHandle>>,
     code: String,
     items: i64,
     total_bytes: i64,
@@ -272,53 +278,52 @@ pub async fn prepare_send(
     server: String,
     paths: Vec<String>,
     strong: bool,
+    stopper: &Stopper,
 ) -> Result<SendSession, TransferError> {
+    let stop = stopper.stop.clone();
     on_runtime(async move {
         let opts = SendOptions {
             server,
             words: if strong { 3 } else { 2 },
             ..SendOptions::default()
         };
-        let prepared =
-            PreparedSend::new(&opts, paths.into_iter().map(PathBuf::from).collect()).await?;
+        let paths = paths.into_iter().map(PathBuf::from).collect();
+        // Dropping the preparation releases the reserved code at once.
+        let prepared = tokio::select! {
+            biased;
+            () = stop.stopped() => return Err(stopped()),
+            r = PreparedSend::new(&opts, paths) => r?,
+        };
         let (items, total_bytes) = prepared.totals();
         Ok(SendSession {
             code: prepared.code().to_string(),
             items: n(items),
             total_bytes: b(total_bytes),
             inner: Mutex::new(Some(prepared)),
-            abort: Mutex::new(None),
         })
     })
     .await
 }
 
-/// Stop a running send.
-#[frb(sync)]
-pub fn cancel_send(session: &SendSession) {
-    // No let-chains here: the frb macro re-emits this code as edition 2021.
-    if let Some(h) = session.abort.lock().ok().and_then(|mut a| a.take()) {
-        h.abort();
-    }
-}
-
-/// Wait for the receiver and send. Events end with `Finished` or `Failed`.
-pub async fn run_send(session: &SendSession, sink: StreamSink<TransferEvent>) {
+/// Wait for the receiver and send, until `stopper` is stopped. Events end
+/// with `Finished` or `Failed`.
+pub async fn run_send(session: &SendSession, stopper: &Stopper, sink: StreamSink<TransferEvent>) {
     let sink: Sink = Arc::new(Mutex::new(sink));
     let prepared = session.inner.lock().ok().and_then(|mut g| g.take());
     let Some(prepared) = prepared else {
         return finish(&sink, Err(TransferError::other("this send already ran")));
     };
     let events = core_events(sink.clone());
-    let result = cancellable(async move {
-        let r = prepared.run(events).await?;
+    let stop = stopper.stop.clone();
+    let result = on_runtime(async move {
+        let r = prepared.run_with(events, stop).await?;
         Ok(TransferSummary {
             files_ok: n(r.files_ok),
             files_failed: n(r.files_failed),
             bytes: b(r.bytes),
             saved: Vec::new(),
         })
-    }, &session.abort)
+    })
     .await;
     finish(&sink, result);
 }
@@ -327,7 +332,6 @@ pub async fn run_send(session: &SendSession, sink: StreamSink<TransferEvent>) {
 #[frb(opaque)]
 pub struct Offer {
     inner: Mutex<Option<IncomingOffer>>,
-    abort: Mutex<Option<tokio::task::AbortHandle>>,
     files: i64,
     folders: i64,
     total_bytes: i64,
@@ -367,16 +371,24 @@ impl Offer {
     }
 }
 
-/// Use `code` to connect to the sender and receive its offer.
-pub async fn connect_receive(server: String, code: String) -> Result<Offer, TransferError> {
+/// Use `code` to connect to the sender and receive its offer, until
+/// `stopper` is stopped.
+pub async fn connect_receive(
+    server: String,
+    code: String,
+    stopper: &Stopper,
+) -> Result<Offer, TransferError> {
+    let stop = stopper.stop.clone();
     on_runtime(async move {
-        let offer = IncomingOffer::connect(
+        let offer = IncomingOffer::connect_with(
             &ReceiveOptions {
                 server,
                 ..ReceiveOptions::default()
             },
             &code,
-        ).await?;
+            &stop,
+        )
+        .await?;
         let s = offer.summary().clone();
         Ok(Offer {
             files: n(s.files),
@@ -385,46 +397,46 @@ pub async fn connect_receive(server: String, code: String) -> Result<Offer, Tran
             names: s.top_level,
             words: offer.words().to_vec(),
             inner: Mutex::new(Some(offer)),
-            abort: Mutex::new(None),
         })
     })
     .await
 }
 
 /// Accept the offer and save everything beneath `destination`, which is
-/// created if missing. Events end with `Finished` or `Failed`.
-pub async fn accept_offer(offer: &Offer, destination: String, sink: StreamSink<TransferEvent>) {
+/// created if missing, until `stopper` is stopped. Events end with
+/// `Finished` or `Failed`.
+pub async fn accept_offer(
+    offer: &Offer,
+    destination: String,
+    stopper: &Stopper,
+    sink: StreamSink<TransferEvent>,
+) {
     let sink: Sink = Arc::new(Mutex::new(sink));
     let incoming = offer.inner.lock().ok().and_then(|mut g| g.take());
     let Some(incoming) = incoming else {
-        return finish(&sink, Err(TransferError::other("this offer was already answered")));
+        return finish(
+            &sink,
+            Err(TransferError::other("this offer was already answered")),
+        );
     };
     let events = core_events(sink.clone());
-    let result = cancellable(async move {
+    let stop = stopper.stop.clone();
+    let result = on_runtime(async move {
         let dest = PathBuf::from(destination);
         std::fs::create_dir_all(&dest).map_err(|e| TransferError {
             kind: ErrorKind::Storage,
             detail: e.to_string(),
         })?;
-        let r = incoming.accept(&dest, events).await?;
+        let r = incoming.accept_with(&dest, events, &stop).await?;
         Ok(TransferSummary {
             files_ok: n(r.files_ok),
             files_failed: n(r.files_failed),
             bytes: b(r.bytes),
             saved: r.placed.iter().map(|p| p.display().to_string()).collect(),
         })
-    }, &offer.abort)
+    })
     .await;
     finish(&sink, result);
-}
-
-/// Stop a running receive.
-#[frb(sync)]
-pub fn cancel_receive(offer: &Offer) {
-    // No let-chains here: the frb macro re-emits this code as edition 2021.
-    if let Some(h) = offer.abort.lock().ok().and_then(|mut a| a.take()) {
-        h.abort();
-    }
 }
 
 /// Decline the offer.
