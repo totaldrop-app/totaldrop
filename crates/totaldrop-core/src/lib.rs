@@ -143,13 +143,34 @@ impl PathOptions {
     }
 }
 
-/// The sender's relay, as its `HINTS` name it, if it is one this side may
-/// use (`wss://`, or `ws://` on this machine).
-fn usable_relay(hints: &Hints) -> Option<&str> {
-    hints
-        .relay
-        .as_deref()
-        .filter(|url| relay::check_url(url).is_ok())
+/// Whether two relay URLs name the same relay. Only a trailing `/` may
+/// differ.
+fn same_relay(a: &str, b: &str) -> bool {
+    a.trim_end_matches('/') == b.trim_end_matches('/')
+}
+
+/// The relay the receiver uses: the one the sender's `HINTS` name, but only
+/// if it is a relay this side may use (`wss://`, or `ws://` on this
+/// machine) and also this side's own relay setting. A receiver never
+/// contacts a relay only the sender chose, so a sender cannot learn the
+/// receiver's address by naming a relay it runs (#68); an empty setting
+/// turns the relay off on this side too. In privacy mode there is no other
+/// path, so a different relay is an error rather than a silent fallback.
+fn receiver_relay<'a>(hints: &'a Hints, own: &PathOptions) -> Result<Option<&'a str>> {
+    let relay = own.relay_url().and_then(|mine| {
+        hints
+            .relay
+            .as_deref()
+            .filter(|url| relay::check_url(url).is_ok() && same_relay(url, mine))
+    });
+    if own.relay_only && relay.is_none() {
+        return Err(Error::Connect(if own.relay_url().is_none() {
+            "privacy mode needs a relay".into()
+        } else {
+            "privacy mode: the sender uses a different relay".into()
+        }));
+    }
+    Ok(relay)
 }
 
 /// Prepare the relay link at `url`, if any, and say which paths to try. The
@@ -340,8 +361,8 @@ fn peer_addresses(hints: &Hints) -> Vec<SocketAddr> {
 pub struct ReceiveOptions {
     /// Rendezvous server URL.
     pub server: String,
-    /// Relay and privacy settings. When a relay is needed, the transfer goes
-    /// through the sender's relay.
+    /// Relay and privacy settings. The sender's relay is used only when it
+    /// is also the relay set here.
     pub paths: PathOptions,
 }
 
@@ -388,10 +409,12 @@ impl IncomingOffer {
 
         let (endpoint, pipes) =
             transport::endpoint(socket, &endpoint_key, &paired.hints.endpoint_key)?;
-        // Both sides meet on the sender's relay (spec section 6).
+        // Both sides meet on the sender's relay, if it is also ours (spec
+        // section 6).
+        let relay = receiver_relay(&paired.hints, &opts.paths)?;
         let (paths, link) = paths_to(
             &paired.hints,
-            usable_relay(&paired.hints),
+            relay,
             opts.paths.relay_only,
             &endpoint_key,
             pipes,
@@ -454,5 +477,76 @@ impl IncomingOffer {
         let _ = tokio::time::timeout(Duration::from_secs(2), self.conn.closed()).await;
         self.conn.close(0u32.into(), b"declined");
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #![allow(clippy::unwrap_used, clippy::expect_used)]
+
+    use super::*;
+
+    fn hints(relay: Option<&str>) -> Hints {
+        Hints {
+            versions: pairing::VERSIONS.to_vec(),
+            endpoint_key: [7; 32],
+            public: Vec::new(),
+            local: Vec::new(),
+            relay: relay.map(str::to_owned),
+        }
+    }
+
+    fn options(relay: &str, relay_only: bool) -> PathOptions {
+        PathOptions {
+            relay: relay.into(),
+            relay_only,
+            ..PathOptions::default()
+        }
+    }
+
+    #[test]
+    fn receiver_uses_the_senders_relay_when_it_is_its_own() {
+        let h = hints(Some("wss://relay.totaldrop.app/v0/relay/"));
+        let own = options(relay::DEFAULT_RELAY, false);
+        assert_eq!(
+            receiver_relay(&h, &own).unwrap(),
+            Some("wss://relay.totaldrop.app/v0/relay/")
+        );
+        let private = options(relay::DEFAULT_RELAY, true);
+        assert!(receiver_relay(&h, &private).unwrap().is_some());
+    }
+
+    /// A sender that names a relay of its own does not get the receiver to
+    /// connect there (#68).
+    #[test]
+    fn receiver_ignores_a_relay_only_the_sender_chose() {
+        let h = hints(Some("wss://relay.example.org/v0/relay"));
+        assert_eq!(
+            receiver_relay(&h, &options(relay::DEFAULT_RELAY, false)).unwrap(),
+            None
+        );
+        assert!(receiver_relay(&h, &options(relay::DEFAULT_RELAY, true)).is_err());
+    }
+
+    #[test]
+    fn an_empty_relay_setting_turns_the_relay_off_when_receiving() {
+        let h = hints(Some(relay::DEFAULT_RELAY));
+        assert_eq!(receiver_relay(&h, &options("", false)).unwrap(), None);
+        assert!(receiver_relay(&h, &options("", true)).is_err());
+    }
+
+    #[test]
+    fn receiver_refuses_an_unsafe_relay_even_if_it_is_its_own() {
+        let url = "ws://relay.example.org/v0/relay";
+        assert_eq!(
+            receiver_relay(&hints(Some(url)), &options(url, false)).unwrap(),
+            None
+        );
+    }
+
+    #[test]
+    fn no_relay_announced() {
+        let own = options(relay::DEFAULT_RELAY, false);
+        assert_eq!(receiver_relay(&hints(None), &own).unwrap(), None);
     }
 }

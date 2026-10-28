@@ -50,6 +50,11 @@ All notable changes to TotalDrop are recorded here. The format follows
   wins, the relay connection is closed as soon as it is chosen (#63).
   wins, the relay connection is closed as soon as the direct path is
   chosen (#63).
+- **Core, CLI:** A receiver now uses the relay the sender names only when
+  it is also the receiver's own relay setting, so a sender running its own
+  relay can no longer learn the receiver's IP address that way. An empty
+  `--relay` turns the relay off when receiving too, and in privacy mode a
+  different relay stops the transfer with an error (#68).
 - **Site:** The privacy policy (version 3) now says that the apps connect
   to the relay at the start of every transfer, not only when no direct path
   works, as version 2 said, and that in privacy mode a receiver still uses
