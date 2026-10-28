@@ -55,6 +55,11 @@ All notable changes to TotalDrop are recorded here. The format follows
 
 ### Fixed
 
+- **Command line:** Ctrl-C stops a transfer cleanly: the other side is told
+  and unfinished files are removed; a second Ctrl-C quits at once. Ctrl-C
+  at the "Save?" question declines. `receive` checks the destination folder
+  before it uses up the code (#87).
+
 - **Core:** Stopping a transfer now tells the other device, which reports
   that the other side stopped instead of a connection error. A stopped or
   failed receive no longer keeps writing in the background: unfinished

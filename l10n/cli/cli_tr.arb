@@ -18,5 +18,8 @@
   "cliDeclined": "Reddedildi.",
   "cliSaved": "Kaydedildi: {name}",
   "cliReceiveSomeFailed": "{count, plural, other{{count} dosya sağlam ulaşmadı ve atıldı.}}",
-  "cliRelayOnlyNeedsRelay": "--relay-only için bir aktarma sunucusu gerekir"
+  "cliRelayOnlyNeedsRelay": "--relay-only için bir aktarma sunucusu gerekir",
+  "cliStopping": "Durduruluyor… (hemen çıkmak için Ctrl-C'ye yeniden basın)",
+  "cliStopped": "Durduruldu. Karşı tarafa bildirildi; yarım kalan dosyalar silindi.",
+  "cliNoFolder": "{folder} bir klasör değil."
 }

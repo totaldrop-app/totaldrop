@@ -15,7 +15,11 @@
   "languages": {
     "tr": {
       "reviewed": true,
-      "draft": []
+      "draft": [
+        "cliNoFolder",
+        "cliStopped",
+        "cliStopping"
+      ]
     }
   }
 }
