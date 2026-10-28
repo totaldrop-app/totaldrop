@@ -272,6 +272,15 @@ impl Strings {
         self.draft
     }
 
+    /// Every key this language can show, translated or from English.
+    #[must_use]
+    pub fn keys(&self) -> BTreeSet<&str> {
+        self.layers
+            .iter()
+            .flat_map(|l| l.keys().map(String::as_str))
+            .collect()
+    }
+
     /// The message `key` with `args`. An unknown key comes back as itself,
     /// so a mistake is visible.
     #[must_use]
@@ -322,6 +331,26 @@ impl Strings {
         let key = KEYS.get(unit).copied().unwrap_or("sizePB");
         self.get(key, &[("value", Arg::Text(&value))])
     }
+}
+
+/// A name from the other side, with direction controls and other invisible
+/// format characters shown as `<U+202E>`, so a name cannot pretend to have
+/// another extension (`invoice` U+202E `fdp.exe` reads as "invoiceexe.pdf").
+#[must_use]
+pub fn reveal_controls(name: &str) -> String {
+    let mut out = String::with_capacity(name.len());
+    for c in name.chars() {
+        let hidden = c.is_control()
+            || matches!(c,
+                '\u{061C}' | '\u{180E}' | '\u{200B}'..='\u{200F}' | '\u{2028}'..='\u{202E}'
+                | '\u{2060}'..='\u{2069}' | '\u{FEFF}' | '\u{FFF9}'..='\u{FFFB}');
+        if hidden {
+            out.push_str(&format!("<U+{:04X}>", u32::from(c)));
+        } else {
+            out.push(c);
+        }
+    }
+    out
 }
 
 impl message::Locale for Formats {
@@ -456,6 +485,21 @@ mod tests {
             en.get("sendShareText", &[]),
             "Get my files with TotalDrop. Code: {code}"
         );
+    }
+
+    #[test]
+    fn hidden_characters_become_visible() {
+        assert_eq!(
+            reveal_controls("invoice\u{202E}fdp.exe"),
+            "invoice<U+202E>fdp.exe"
+        );
+        assert_eq!(
+            reveal_controls("a\u{2068}b\u{061C}c"),
+            "a<U+2068>b<U+061C>c"
+        );
+        assert_eq!(reveal_controls("a\nb\u{85}"), "a<U+000A>b<U+0085>");
+        assert_eq!(reveal_controls("fotoğraf 1.jpg"), "fotoğraf 1.jpg");
+        assert_eq!(reveal_controls("صورة.jpg"), "صورة.jpg");
     }
 
     #[test]
