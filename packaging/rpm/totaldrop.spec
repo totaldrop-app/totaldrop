@@ -33,6 +33,12 @@ Requires:       qt6-qtsvg
 Requires:       xdg-desktop-portal
 Requires:       hicolor-icon-theme
 Requires:       (google-noto-sans-fonts or dejavu-sans-fonts or font(:lang=en))
+Recommends:     google-noto-sans-arabic-fonts
+Recommends:     google-noto-sans-hebrew-fonts
+Recommends:     google-noto-sans-devanagari-fonts
+Recommends:     google-noto-sans-bengali-fonts
+Recommends:     google-noto-sans-thai-fonts
+Suggests:       google-noto-sans-cjk-fonts
 Recommends:     (kf6-qqc2-desktop-style if plasma-workspace)
 Recommends:     (xdg-desktop-portal-kde if plasma-workspace)
 Recommends:     (xdg-desktop-portal-gtk if gnome-shell)

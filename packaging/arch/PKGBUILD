@@ -18,7 +18,9 @@ makedepends=('cargo')
 optdepends=('qqc2-desktop-style: Breeze controls under KDE Plasma'
             'xdg-desktop-portal-kde: file chooser under KDE Plasma'
             'xdg-desktop-portal-gtk: file chooser under Hyprland and GNOME'
-            'xdg-desktop-portal-hyprland: Hyprland integration')
+            'xdg-desktop-portal-hyprland: Hyprland integration'
+            'noto-fonts: Arabic, Hebrew, Devanagari, Bengali, Thai and other scripts'
+            'noto-fonts-cjk: Chinese, Japanese and Korean')
 options=('!lto' '!debug')
 source=("$pkgname-$_ver.tar.gz::https://github.com/totaldrop-app/totaldrop/archive/refs/tags/linux-v$_ver.tar.gz")
 sha256sums=('SKIP')

@@ -17,6 +17,12 @@ All notable changes to TotalDrop are recorded here. The format follows
 - **Command line:** File names from the other side show hidden characters
   (controls, direction and other format characters) as `<U+202E>`, so a
   name cannot disguise its extension.
+- **Linux:** The app takes its text from `l10n/app`, the same strings as
+  Android, in the desktop's language, with sizes and counts in the region's
+  format. Right-to-left languages mirror the layout; the code and the
+  verification words stay left to right. Names from the other side show
+  hidden direction characters. Settings says when a translation is still a
+  draft. Packages suggest the Noto fonts for scripts beyond Latin.
 - **Core:** `totaldrop-l10n`, the shared interface text for the Rust
   programs: all strings live in `l10n/`, one source with Android.
 
