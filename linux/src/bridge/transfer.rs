@@ -8,7 +8,7 @@
 use std::path::PathBuf;
 use std::pin::Pin;
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, LazyLock, Mutex};
 
 use cxx_qt::{CxxQtType, Threading};
 use cxx_qt_lib::{QList, QString, QStringList, QUrl};
@@ -17,6 +17,11 @@ use totaldrop_core::{Event, IncomingOffer, PreparedSend, ReceiveOptions, SendOpt
 use crate::desktop;
 use crate::runtime::RUNTIME;
 use crate::settings::Settings;
+
+/// One folder is measured at a time, so dropping many folders does not
+/// send many threads across the disk at once.
+static MEASURING: LazyLock<tokio::sync::Semaphore> =
+    LazyLock::new(|| tokio::sync::Semaphore::new(1));
 
 #[cxx_qt::bridge]
 pub mod qobject {
@@ -610,6 +615,9 @@ impl qobject::Transfer {
         let thread = self.qt_thread();
         let path = path.to_string();
         RUNTIME.spawn(async move {
+            let Ok(_turn) = MEASURING.acquire().await else {
+                return;
+            };
             let dir = path_of(&path);
             let bytes = tokio::task::spawn_blocking(move || desktop::folder_size(&dir))
                 .await
