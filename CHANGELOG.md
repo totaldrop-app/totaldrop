@@ -55,6 +55,12 @@ All notable changes to TotalDrop are recorded here. The format follows
 
 ### Fixed
 
+- **Android, Linux:** Stop works at every stage: while the files are
+  prepared, while waiting for the receiver, while connecting and during the
+  transfer. Before, stopping before the transfer began did nothing and the
+  other side later saw a stale offer or a connection error; now it is told
+  that the transfer was stopped, and leaving an unanswered offer declines
+  it (#87).
 - **Command line:** Ctrl-C stops a transfer cleanly: once connected, the
   other side is told and unfinished files are removed; a second Ctrl-C quits
   at once and may leave them. Ctrl-C at the "Save?" question declines.

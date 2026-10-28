@@ -12,6 +12,10 @@ class ReceiveViewModel extends ChangeNotifier {
 
   final TransferRepository _repo;
   StreamSubscription<TransferEvent>? _sub;
+  Stopper? _stopper;
+  // Bumped by every connect and reset, so a call that returns after the
+  // person moved on changes nothing.
+  int _generation = 0;
 
   ReceiveStage stage = ReceiveStage.entering;
   String input = '';
@@ -42,12 +46,19 @@ class ReceiveViewModel extends ChangeNotifier {
     }
     stage = ReceiveStage.connecting;
     error = null;
+    final generation = ++_generation;
+    final stopper = _repo.newStopper();
+    _stopper = stopper;
     notifyListeners();
     try {
-      offer = await _repo.connect(code);
-      folder = await _repo.receiveFolder();
+      final o = await _repo.connect(code, stopper);
+      final f = await _repo.receiveFolder();
+      if (generation != _generation) return;
+      offer = o;
+      folder = f;
       stage = ReceiveStage.offered;
     } on TransferError catch (e) {
+      if (generation != _generation) return;
       error = e;
       stage = ReceiveStage.failed;
     }
@@ -57,12 +68,13 @@ class ReceiveViewModel extends ChangeNotifier {
   Future<void> accept() async {
     final o = offer;
     final dest = folder;
-    if (o == null || dest == null) return;
+    final stopper = _stopper;
+    if (o == null || dest == null || stopper == null) return;
     stage = ReceiveStage.transferring;
     total = o.totalBytes;
     notifyListeners();
     _sub = _repo
-        .accept(o, dest)
+        .accept(o, dest, stopper)
         .listen(
           _onEvent,
           onError: (Object e) {
@@ -109,13 +121,16 @@ class ReceiveViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Stop the transfer, at whatever stage it is in. The sender is told.
   void cancel() {
-    final o = offer;
-    if (o != null) cancelReceive(offer: o);
+    final s = _stopper;
+    _stopper = null;
+    if (s != null) _repo.stop(s);
   }
 
   void reset() {
     cancel();
+    _generation++;
     _sub?.cancel();
     _sub = null;
     stage = ReceiveStage.entering;

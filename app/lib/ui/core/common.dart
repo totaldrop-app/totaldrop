@@ -13,6 +13,7 @@ String errorMessage(BuildContext context, ErrorKind kind) {
     ErrorKind.peerLeft => l.errorPeerLeft,
     ErrorKind.declined => l.errorDeclined,
     ErrorKind.cancelled => l.errorCancelled,
+    ErrorKind.stopped => l.errorStopped,
     ErrorKind.invalidCode => l.errorInvalidCode,
     ErrorKind.server => l.errorServer,
     ErrorKind.connect => l.errorConnect,

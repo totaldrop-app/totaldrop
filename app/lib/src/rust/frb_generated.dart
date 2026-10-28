@@ -68,7 +68,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.13.0';
 
   @override
-  int get rustContentHash => -1921000190;
+  int get rustContentHash => -586660041;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -101,15 +101,13 @@ abstract class RustLibApi extends BaseApi {
   Stream<TransferEvent> crateApiTransferAcceptOffer({
     required Offer offer,
     required String destination,
+    required Stopper stopper,
   });
-
-  void crateApiTransferCancelReceive({required Offer offer});
-
-  void crateApiTransferCancelSend({required SendSession session});
 
   Future<Offer> crateApiTransferConnectReceive({
     required String server,
     required String code,
+    required Stopper stopper,
   });
 
   Future<void> crateApiTransferDeclineOffer({required Offer offer});
@@ -125,17 +123,25 @@ abstract class RustLibApi extends BaseApi {
     required List<String> available,
   });
 
+  Stopper crateApiTransferNewStopper();
+
   String? crateApiTransferNormalizeCode({required String input});
 
   Future<SendSession> crateApiTransferPrepareSend({
     required String server,
     required List<String> paths,
     required bool strong,
+    required Stopper stopper,
   });
 
   String crateApiL10NRevealControls({required String name});
 
-  Stream<TransferEvent> crateApiTransferRunSend({required SendSession session});
+  Stream<TransferEvent> crateApiTransferRunSend({
+    required SendSession session,
+    required Stopper stopper,
+  });
+
+  void crateApiTransferStopTransfer({required Stopper stopper});
 
   Future<TransferSummary> crateApiTransferTransferSummaryDefault();
 
@@ -152,6 +158,12 @@ abstract class RustLibApi extends BaseApi {
   get rust_arc_decrement_strong_count_SendSession;
 
   CrossPlatformFinalizerArg get rust_arc_decrement_strong_count_SendSessionPtr;
+
+  RustArcIncrementStrongCountFnType get rust_arc_increment_strong_count_Stopper;
+
+  RustArcDecrementStrongCountFnType get rust_arc_decrement_strong_count_Stopper;
+
+  CrossPlatformFinalizerArg get rust_arc_decrement_strong_count_StopperPtr;
 }
 
 class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
@@ -379,6 +391,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   Stream<TransferEvent> crateApiTransferAcceptOffer({
     required Offer offer,
     required String destination,
+    required Stopper stopper,
   }) {
     final sink = RustStreamSink<TransferEvent>();
     unawaited(
@@ -391,6 +404,10 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
               serializer,
             );
             sse_encode_String(destination, serializer);
+            sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerStopper(
+              stopper,
+              serializer,
+            );
             sse_encode_StreamSink_transfer_event_Sse(sink, serializer);
             pdeCallFfi(
               generalizedFrbRustBinding,
@@ -404,7 +421,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             decodeErrorData: null,
           ),
           constMeta: kCrateApiTransferAcceptOfferConstMeta,
-          argValues: [offer, destination, sink],
+          argValues: [offer, destination, stopper, sink],
           apiImpl: this,
         ),
       ),
@@ -415,65 +432,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiTransferAcceptOfferConstMeta =>
       const TaskConstMeta(
         debugName: "accept_offer",
-        argNames: ["offer", "destination", "sink"],
+        argNames: ["offer", "destination", "stopper", "sink"],
       );
-
-  @override
-  void crateApiTransferCancelReceive({required Offer offer}) {
-    return handler.executeSync(
-      SyncTask(
-        callFfi: () {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerOffer(
-            offer,
-            serializer,
-          );
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 10)!;
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_unit,
-          decodeErrorData: null,
-        ),
-        constMeta: kCrateApiTransferCancelReceiveConstMeta,
-        argValues: [offer],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiTransferCancelReceiveConstMeta =>
-      const TaskConstMeta(debugName: "cancel_receive", argNames: ["offer"]);
-
-  @override
-  void crateApiTransferCancelSend({required SendSession session}) {
-    return handler.executeSync(
-      SyncTask(
-        callFfi: () {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSendSession(
-            session,
-            serializer,
-          );
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 11)!;
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_unit,
-          decodeErrorData: null,
-        ),
-        constMeta: kCrateApiTransferCancelSendConstMeta,
-        argValues: [session],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiTransferCancelSendConstMeta =>
-      const TaskConstMeta(debugName: "cancel_send", argNames: ["session"]);
 
   @override
   Future<Offer> crateApiTransferConnectReceive({
     required String server,
     required String code,
+    required Stopper stopper,
   }) {
     return handler.executeNormal(
       NormalTask(
@@ -481,10 +447,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(server, serializer);
           sse_encode_String(code, serializer);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerStopper(
+            stopper,
+            serializer,
+          );
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 12,
+            funcId: 10,
             port: port_,
           );
         },
@@ -494,7 +464,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeErrorData: sse_decode_transfer_error,
         ),
         constMeta: kCrateApiTransferConnectReceiveConstMeta,
-        argValues: [server, code],
+        argValues: [server, code, stopper],
         apiImpl: this,
       ),
     );
@@ -503,7 +473,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiTransferConnectReceiveConstMeta =>
       const TaskConstMeta(
         debugName: "connect_receive",
-        argNames: ["server", "code"],
+        argNames: ["server", "code", "stopper"],
       );
 
   @override
@@ -519,7 +489,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 13,
+            funcId: 11,
             port: port_,
           );
         },
@@ -543,7 +513,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 14)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 12)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_String,
@@ -566,7 +536,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(tag, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 15)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 13)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_bool,
@@ -593,7 +563,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(tag, serializer);
           sse_encode_String(key, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 16)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 14)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_bool,
@@ -620,7 +590,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_list_String(preferences, serializer);
           sse_encode_list_String(available, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 17)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 15)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_opt_String,
@@ -640,13 +610,36 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
+  Stopper crateApiTransferNewStopper() {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 16)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData:
+              sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerStopper,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiTransferNewStopperConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiTransferNewStopperConstMeta =>
+      const TaskConstMeta(debugName: "new_stopper", argNames: []);
+
+  @override
   String? crateApiTransferNormalizeCode({required String input}) {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(input, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 18)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 17)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_opt_String,
@@ -667,6 +660,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     required String server,
     required List<String> paths,
     required bool strong,
+    required Stopper stopper,
   }) {
     return handler.executeNormal(
       NormalTask(
@@ -675,10 +669,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           sse_encode_String(server, serializer);
           sse_encode_list_String(paths, serializer);
           sse_encode_bool(strong, serializer);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerStopper(
+            stopper,
+            serializer,
+          );
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 19,
+            funcId: 18,
             port: port_,
           );
         },
@@ -688,7 +686,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeErrorData: sse_decode_transfer_error,
         ),
         constMeta: kCrateApiTransferPrepareSendConstMeta,
-        argValues: [server, paths, strong],
+        argValues: [server, paths, strong, stopper],
         apiImpl: this,
       ),
     );
@@ -697,7 +695,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiTransferPrepareSendConstMeta =>
       const TaskConstMeta(
         debugName: "prepare_send",
-        argNames: ["server", "paths", "strong"],
+        argNames: ["server", "paths", "strong", "stopper"],
       );
 
   @override
@@ -707,7 +705,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(name, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 20)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 19)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_String,
@@ -726,6 +724,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   @override
   Stream<TransferEvent> crateApiTransferRunSend({
     required SendSession session,
+    required Stopper stopper,
   }) {
     final sink = RustStreamSink<TransferEvent>();
     unawaited(
@@ -737,11 +736,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
               session,
               serializer,
             );
+            sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerStopper(
+              stopper,
+              serializer,
+            );
             sse_encode_StreamSink_transfer_event_Sse(sink, serializer);
             pdeCallFfi(
               generalizedFrbRustBinding,
               serializer,
-              funcId: 21,
+              funcId: 20,
               port: port_,
             );
           },
@@ -750,7 +753,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             decodeErrorData: null,
           ),
           constMeta: kCrateApiTransferRunSendConstMeta,
-          argValues: [session, sink],
+          argValues: [session, stopper, sink],
           apiImpl: this,
         ),
       ),
@@ -758,8 +761,36 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     return sink.stream;
   }
 
-  TaskConstMeta get kCrateApiTransferRunSendConstMeta =>
-      const TaskConstMeta(debugName: "run_send", argNames: ["session", "sink"]);
+  TaskConstMeta get kCrateApiTransferRunSendConstMeta => const TaskConstMeta(
+    debugName: "run_send",
+    argNames: ["session", "stopper", "sink"],
+  );
+
+  @override
+  void crateApiTransferStopTransfer({required Stopper stopper}) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerStopper(
+            stopper,
+            serializer,
+          );
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 21)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiTransferStopTransferConstMeta,
+        argValues: [stopper],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiTransferStopTransferConstMeta =>
+      const TaskConstMeta(debugName: "stop_transfer", argNames: ["stopper"]);
 
   @override
   Future<TransferSummary> crateApiTransferTransferSummaryDefault() {
@@ -804,6 +835,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   get rust_arc_decrement_strong_count_SendSession => wire
       .rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSendSession;
 
+  RustArcIncrementStrongCountFnType
+  get rust_arc_increment_strong_count_Stopper => wire
+      .rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerStopper;
+
+  RustArcDecrementStrongCountFnType
+  get rust_arc_decrement_strong_count_Stopper => wire
+      .rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerStopper;
+
   @protected
   AnyhowException dco_decode_AnyhowException(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
@@ -829,6 +868,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Stopper
+  dco_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerStopper(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return StopperImpl.frbInternalDcoDecode(raw as List<dynamic>);
+  }
+
+  @protected
   Offer
   dco_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerOffer(
     dynamic raw,
@@ -847,6 +895,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Stopper
+  dco_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerStopper(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return StopperImpl.frbInternalDcoDecode(raw as List<dynamic>);
+  }
+
+  @protected
   Offer
   dco_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerOffer(
     dynamic raw,
@@ -862,6 +919,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return SendSessionImpl.frbInternalDcoDecode(raw as List<dynamic>);
+  }
+
+  @protected
+  Stopper
+  dco_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerStopper(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return StopperImpl.frbInternalDcoDecode(raw as List<dynamic>);
   }
 
   @protected
@@ -1042,6 +1108,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Stopper
+  sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerStopper(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return StopperImpl.frbInternalSseDecode(
+      sse_decode_usize(deserializer),
+      sse_decode_i_32(deserializer),
+    );
+  }
+
+  @protected
   Offer
   sse_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerOffer(
     SseDeserializer deserializer,
@@ -1066,6 +1144,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Stopper
+  sse_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerStopper(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return StopperImpl.frbInternalSseDecode(
+      sse_decode_usize(deserializer),
+      sse_decode_i_32(deserializer),
+    );
+  }
+
+  @protected
   Offer
   sse_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerOffer(
     SseDeserializer deserializer,
@@ -1084,6 +1174,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return SendSessionImpl.frbInternalSseDecode(
+      sse_decode_usize(deserializer),
+      sse_decode_i_32(deserializer),
+    );
+  }
+
+  @protected
+  Stopper
+  sse_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerStopper(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return StopperImpl.frbInternalSseDecode(
       sse_decode_usize(deserializer),
       sse_decode_i_32(deserializer),
     );
@@ -1304,6 +1406,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @protected
   void
+  sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerStopper(
+    Stopper self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_usize(
+      (self as StopperImpl).frbInternalSseEncode(move: true),
+      serializer,
+    );
+  }
+
+  @protected
+  void
   sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerOffer(
     Offer self,
     SseSerializer serializer,
@@ -1330,6 +1445,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @protected
   void
+  sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerStopper(
+    Stopper self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_usize(
+      (self as StopperImpl).frbInternalSseEncode(move: false),
+      serializer,
+    );
+  }
+
+  @protected
+  void
   sse_encode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerOffer(
     Offer self,
     SseSerializer serializer,
@@ -1350,6 +1478,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_usize(
       (self as SendSessionImpl).frbInternalSseEncode(move: null),
+      serializer,
+    );
+  }
+
+  @protected
+  void
+  sse_encode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerStopper(
+    Stopper self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_usize(
+      (self as StopperImpl).frbInternalSseEncode(move: null),
       serializer,
     );
   }
@@ -1598,4 +1739,24 @@ class SendSessionImpl extends RustOpaque implements SendSession {
   /// Total bytes offered.
   PlatformInt64 get totalBytes =>
       RustLib.instance.api.crateApiTransferSendSessionTotalBytes(that: this);
+}
+
+@sealed
+class StopperImpl extends RustOpaque implements Stopper {
+  // Not to be used by end users
+  StopperImpl.frbInternalDcoDecode(List<dynamic> wire)
+    : super.frbInternalDcoDecode(wire, _kStaticData);
+
+  // Not to be used by end users
+  StopperImpl.frbInternalSseDecode(BigInt ptr, int externalSizeOnNative)
+    : super.frbInternalSseDecode(ptr, externalSizeOnNative, _kStaticData);
+
+  static final _kStaticData = RustArcStaticData(
+    rustArcIncrementStrongCount:
+        RustLib.instance.api.rust_arc_increment_strong_count_Stopper,
+    rustArcDecrementStrongCount:
+        RustLib.instance.api.rust_arc_decrement_strong_count_Stopper,
+    rustArcDecrementStrongCountPtr:
+        RustLib.instance.api.rust_arc_decrement_strong_count_StopperPtr,
+  );
 }

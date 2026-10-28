@@ -245,6 +245,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get errorCancelled => 'Karşı taraf gönderimi durdurdu.';
 
   @override
+  String get errorStopped => 'Bu cihazda durduruldu.';
+
+  @override
   String get errorInvalidCode => 'Bu kod geçerli değil.';
 
   @override

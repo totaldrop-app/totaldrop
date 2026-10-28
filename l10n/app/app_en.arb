@@ -72,6 +72,7 @@
   "errorPeerLeft": "The other side left before the transfer finished.",
   "errorDeclined": "The receiver declined the files.",
   "errorCancelled": "The other side stopped the transfer.",
+  "errorStopped": "Stopped on this device.",
   "errorInvalidCode": "That code is not valid.",
   "errorServer": "Could not reach the TotalDrop server. Check your internet connection.",
   "errorConnect": "Could not connect to the other device. Check that both devices are online and try again.",

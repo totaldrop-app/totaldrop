@@ -458,6 +458,12 @@ abstract class AppLocalizations {
   /// **'The other side stopped the transfer.'**
   String get errorCancelled;
 
+  /// No description provided for @errorStopped.
+  ///
+  /// In en, this message translates to:
+  /// **'Stopped on this device.'**
+  String get errorStopped;
+
   /// No description provided for @errorInvalidCode.
   ///
   /// In en, this message translates to:

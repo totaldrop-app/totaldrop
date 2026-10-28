@@ -20,7 +20,10 @@ class SendViewModel extends ChangeNotifier {
 
   final TransferRepository _repo;
   StreamSubscription<TransferEvent>? _sub;
-  SendSession? _session;
+  Stopper? _stopper;
+  // Bumped by every start and reset, so a call that returns after the
+  // person moved on changes nothing.
+  int _generation = 0;
 
   final List<PickedFile> _files = [];
   List<PickedFile> get files => List.unmodifiable(_files);
@@ -65,21 +68,28 @@ class SendViewModel extends ChangeNotifier {
     if (_files.isEmpty || busy) return;
     stage = SendStage.preparing;
     error = null;
+    final generation = ++_generation;
+    final stopper = _repo.newStopper();
+    _stopper = stopper;
     notifyListeners();
     final SendSession session;
     try {
-      session = await _repo.prepareSend(_files.map((f) => f.path).toList(), strong: strong);
+      session = await _repo.prepareSend(
+        _files.map((f) => f.path).toList(),
+        strong: strong,
+        stopper: stopper,
+      );
     } on TransferError catch (e) {
-      _fail(e);
+      if (generation == _generation) _fail(e);
       return;
     }
-    _session = session;
+    if (generation != _generation) return;
     code = session.code;
     total = session.totalBytes;
     stage = SendStage.waiting;
     notifyListeners();
     _sub = _repo
-        .runSend(session)
+        .runSend(session, stopper)
         .listen(
           _onEvent,
           onError: (Object e) {
@@ -122,18 +132,19 @@ class SendViewModel extends ChangeNotifier {
     _sub = null;
   }
 
-  /// Stop a running transfer.
+  /// Stop the transfer, at whatever stage it is in. The receiver is told.
   void cancel() {
-    final s = _session;
-    if (s != null) cancelSend(session: s);
+    final s = _stopper;
+    _stopper = null;
+    if (s != null) _repo.stop(s);
   }
 
   /// Back to an empty selection.
   void reset() {
     cancel();
+    _generation++;
     _sub?.cancel();
     _sub = null;
-    _session = null;
     _files.clear();
     // The picker keeps copies of picked files in the app cache; drop them.
     unawaited(FilePicker.clearTemporaryFiles().catchError((_) => false));
