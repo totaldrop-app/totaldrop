@@ -20,6 +20,7 @@ public/
   _headers            Güvenlik başlıkları (katı CSP, HSTS, no-referrer)
   _routes.json        Ara katman (functions/) yalnız sayfalarda çalışır; yazı
                       tipi, stil, betik ve çeviri dosyaları doğrudan sunulur
+                      (www'de de yönlendirmesiz; sayfalar yine yönlenir)
   fonts/              Bricolage Grotesque ve Atkinson Hyperlegible (SIL OFL 1.1)
 functions/
   _middleware.js      www → kök yönlendirmesi; download alt alan adı → /download/
