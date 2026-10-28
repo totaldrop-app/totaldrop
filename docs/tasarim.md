@@ -18,6 +18,18 @@ Sistem temasını değiştirdiğinizde uygulama yeniden başlatılmadan yeni tem
 
 Her değişiklikten sonra bu ortamların hepsinde açık ve koyu temada ekran görüntüsü alınarak kontrol edilir.
 
+### Dil ve bölge
+
+Dil, bölge biçimleri ve yazı yönü de sistemden gelir ([karar 0008](kararlar/0008-diller-ve-bolgeler.md)):
+
+- Arayüz sistemin tercih ettiği dilde açılır; çevirisi yoksa en yakın varyanta, o da yoksa İngilizce'ye düşer.
+- Sayılar, boyutlar ve çoğullar bölge ayarına göre biçimlenir. Kodda `toStringAsFixed`, elle ondalık ayırıcı ya da "1 file / 2 files" gibi elle çoğul yazılmaz.
+- Sağdan sola dillerde (Arapça, Farsça, İbranice, Urduca) yerleşim aynalanır. Simgelerde yön bildirenler (geri oku) aynalanır, işaret (Dalga) ve logolar aynalanmaz.
+- Metin kutuları uzun çevirilere göre büyür: Almanca ve Fince'de metin İngilizce'den %30–40 uzun olabilir; sabit genişlik verilmez.
+- Aktarım kodu ve doğrulama kelimeleri her dilde İngilizce ve soldan sağa gösterilir.
+
+Arayüz değişiklikleri açık ve koyu temaya ek olarak en az bir sağdan sola (Arapça) ve bir CJK (Japonca) dilinde denenir.
+
 ## 2. Hareketli işaret
 
 Aktarım sürerken işaret web sitesindeki animasyonun aynısını oynatır. Değerler `totaldrop-site/public/styles.css` dosyasındaki `travel` ve `ripple` animasyonlarıyla birebir aynıdır:
