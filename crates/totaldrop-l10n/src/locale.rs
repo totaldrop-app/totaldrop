@@ -80,7 +80,7 @@ pub fn is_rtl(locale: &Locale) -> bool {
 pub struct System {
     /// Languages for messages, most preferred first.
     pub messages: Vec<Locale>,
-    /// The locale for numbers, if it differs from the first language.
+    /// The locale for numbers (`LC_ALL` > `LC_NUMERIC` > `LANG`), if set.
     pub numeric: Option<Locale>,
 }
 

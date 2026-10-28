@@ -92,10 +92,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String sendDoneBody(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'All $count files arrived intact.',
+      other: 'All $countString files arrived intact.',
       one: 'The file arrived intact.',
     );
     return '$_temp0';
@@ -103,10 +107,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String sendSomeFailed(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count files did not arrive intact and were discarded.',
+      other: '$countString files did not arrive intact and were discarded.',
       one: 'One file did not arrive intact and was discarded.',
     );
     return '$_temp0';
@@ -114,11 +122,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String itemsAndSize(int count, String size) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count items',
-      one: '$count item',
+      other: '$countString items',
+      one: '$countString item',
     );
     return '$_temp0 · $size';
   }
@@ -153,18 +165,26 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String receiveOfferSummary(int files, String size) {
+    final intl.NumberFormat filesNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String filesString = filesNumberFormat.format(files);
+
     String _temp0 = intl.Intl.pluralLogic(
       files,
       locale: localeName,
-      other: '$files files',
-      one: '$files file',
+      other: '$filesString files',
+      one: '$filesString file',
     );
     return '$_temp0 · $size';
   }
 
   @override
   String receiveAndMore(int count) {
-    return 'and $count more';
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    return 'and $countString more';
   }
 
   @override
