@@ -15,12 +15,7 @@
   "languages": {
     "tr": {
       "reviewed": true,
-      "draft": [
-        "cliFolderNotWritable",
-        "cliNoFolder",
-        "cliStopped",
-        "cliStopping"
-      ]
+      "draft": []
     }
   }
 }
