@@ -6,14 +6,22 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
-// Release signing comes from android/key.properties, which is never
-// committed. Without it, release builds fall back to the debug key, which is
-// fine for testing but rejected by Google Play.
+// Release signing. In CI the upload key comes from environment variables
+// (the play-release environment's secrets), so the password never touches
+// disk. On a developer machine it comes from android/key.properties, which
+// is never committed. Without either, release builds use the debug key,
+// which Google Play rejects; with TOTALDROP_REQUIRE_RELEASE_KEY set, that is
+// an error instead.
 val keyProperties = Properties().apply {
     val f = rootProject.file("key.properties")
     if (f.exists()) f.inputStream().use { load(it) }
 }
-val hasReleaseKey = keyProperties.getProperty("storeFile") != null
+val envStoreFile: String? = System.getenv("ANDROID_UPLOAD_STORE_FILE")
+val signingFromEnv = !envStoreFile.isNullOrEmpty()
+val hasReleaseKey = signingFromEnv || keyProperties.getProperty("storeFile") != null
+if (!hasReleaseKey && !System.getenv("TOTALDROP_REQUIRE_RELEASE_KEY").isNullOrEmpty()) {
+    throw GradleException("No upload key: set ANDROID_UPLOAD_STORE_FILE or android/key.properties")
+}
 
 android {
     namespace = "app.totaldrop.totaldrop"
@@ -43,10 +51,18 @@ android {
     signingConfigs {
         if (hasReleaseKey) {
             create("release") {
-                storeFile = file(keyProperties.getProperty("storeFile"))
-                storePassword = keyProperties.getProperty("storePassword")
-                keyAlias = keyProperties.getProperty("keyAlias")
-                keyPassword = keyProperties.getProperty("keyPassword")
+                if (signingFromEnv) {
+                    val password = System.getenv("ANDROID_UPLOAD_PASSWORD")
+                    storeFile = file(envStoreFile!!)
+                    storePassword = password
+                    keyAlias = System.getenv("ANDROID_UPLOAD_ALIAS") ?: "upload"
+                    keyPassword = password
+                } else {
+                    storeFile = file(keyProperties.getProperty("storeFile"))
+                    storePassword = keyProperties.getProperty("storePassword")
+                    keyAlias = keyProperties.getProperty("keyAlias")
+                    keyPassword = keyProperties.getProperty("keyPassword")
+                }
             }
         }
     }

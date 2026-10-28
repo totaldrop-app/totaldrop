@@ -23,7 +23,8 @@ için [versioning.md](versioning.md) bağlayıcıdır.
    görmez. Bulduğu her doğruluk ya da güvenlik sorunu birleştirmeden önce
    düzeltilir; düzeltilmeyenler için gerekçe PR'a yazılır.
 6. **Birleştirme:** `main`'e yalnızca PR ile, rebase ile birleştirilir;
-   geçmiş doğrusal kalır. Doğrudan push ve force push kapalıdır.
+   geçmiş doğrusal kalır. Doğrudan push ve force push kapalıdır. Zorunlu
+   CI kontrollerinin kurala bağlanması [#45](https://github.com/totaldrop-app/totaldrop/issues/45)'te.
 7. **Yayın:** [Sürüm listesi](#sürüm-listesi) adım adım izlenir.
 
 ## Bitti tanımı
@@ -47,14 +48,20 @@ Bir değişiklik ancak şunların hepsi doğruysa bitmiştir:
 
 ## Sürüm listesi
 
-1. Platformun sürümünü ve (Linux'ta) paket tariflerini artır,
-   `CHANGELOG.md` girdilerini sürüm başlığına taşı.
+1. Platformun sürümünü artır ve `CHANGELOG.md` girdilerini sürüm başlığına
+   taşı. Linux: `linux/Cargo.toml`, `packaging/arch/PKGBUILD`,
+   `packaging/debian/changelog`, `packaging/rpm/totaldrop.spec` ve
+   `packaging/linux/app.totaldrop.TotalDrop.metainfo.xml`. Android: `app/pubspec.yaml` içinde hem sürüm hem
+   derleme numarası (`+N`); numara her yüklemede artmalıdır, CI bunu
+   denetler.
 2. Sürüm PR'ı: kontroller ve bağımsız inceleme, sonra birleştir.
 3. `main`'deki sürüm commit'ine açıklamalı etiket at (`linux-v…`,
    `android-v…`) ve gönder.
-4. CI paketleri etiketten derler, her pakete derleme kaynağını gösteren
-   imzalı bir kanıt (build provenance) ekler ve taslak bir yayın açar.
-   Kişisel bir makinede derlenen hiçbir şey yayınlanmaz.
+4. CI paketleri etiketten derler. Linux: her pakete derleme kaynağını
+   gösteren imzalı bir kanıt (build provenance) ekler ve taslak bir GitHub
+   yayını açar. Android: `play-release` ortamında yükleme anahtarıyla
+   imzalı `.aab` üretir ve iş çıktısı (artifact) olarak bırakır; GitHub
+   yayını açılmaz. Kişisel bir makinede derlenen hiçbir şey yayınlanmaz.
 5. İndirilen paketler sağlama toplamıyla ve temiz kaplarda kurulumla
    (`packaging/test-install.sh`) denenir.
 6. Yayın notları İngilizce ve Türkçe yazılır, taslak yayımlanır.
