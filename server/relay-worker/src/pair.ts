@@ -21,6 +21,9 @@ const SESSION_BYTES = 32 * 1024 * 1024 * 1024;
 
 /** WebSocket readyState OPEN. */
 const OPEN = 1;
+/** Sockets an object holds at most, lingering closed ones included: a
+ * client that ignores close frames cannot pile them up. */
+const MAX_SOCKETS = 8;
 
 interface Attachment {
   /** Hex of the challenge sent to this socket. */
@@ -95,12 +98,12 @@ export class Pair extends DurableObject<Env> {
 
   /** Close `ws` and remember that this object did, so it stops counting. */
   private shut(ws: WebSocket, code: number, reason: string): void {
-    const att = attachment(ws);
-    if (att && !att.ended) {
-      att.ended = true;
-      ws.serializeAttachment(att);
-    }
     try {
+      const att = attachment(ws);
+      if (att && !att.ended && ws.readyState === OPEN) {
+        att.ended = true;
+        ws.serializeAttachment(att);
+      }
       ws.close(code, reason);
     } catch {
       // Already closed.
@@ -110,7 +113,8 @@ export class Pair extends DurableObject<Env> {
   async fetch(request: Request): Promise<Response> {
     const name = new URL(request.url).pathname.split("/").pop() ?? "";
     if (!parsePairName(name)) return new Response(null, { status: 400 });
-    if (this.live().length >= 2) return new Response(null, { status: 409 });
+    if (this.live().length >= 2 || this.ctx.getWebSockets().length >= MAX_SOCKETS)
+      return new Response(null, { status: 409 });
     const [client, server] = Object.values(new WebSocketPair()) as [WebSocket, WebSocket];
     const challenge = crypto.getRandomValues(new Uint8Array(32));
     this.ctx.acceptWebSocket(server, [name]);
