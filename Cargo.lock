@@ -2934,6 +2934,7 @@ dependencies = [
  "tokio",
  "toml",
  "totaldrop-core",
+ "totaldrop-l10n",
  "totaldrop-proto",
  "zbus",
 ]

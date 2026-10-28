@@ -238,6 +238,9 @@ Page {
                         spacing: Theme.s8
                         Label { text: Strings.s.sendYourCode; color: Theme.muted; font.weight: Font.DemiBold }
                         TextEdit {
+                            // The code is English words, left to right.
+                            LayoutMirroring.enabled: false
+                            horizontalAlignment: TextEdit.AlignLeft
                             text: page.transfer.code
                             readOnly: true
                             selectByMouse: true

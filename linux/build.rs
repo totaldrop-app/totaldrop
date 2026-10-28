@@ -24,6 +24,10 @@ fn main() {
         .qt_module("Gui")
         .qt_module("Quick")
         .qt_module("QuickControls2")
-        .files(["src/bridge/theme.rs", "src/bridge/transfer.rs"])
+        .files([
+            "src/bridge/texts.rs",
+            "src/bridge/theme.rs",
+            "src/bridge/transfer.rs",
+        ])
         .build();
 }
