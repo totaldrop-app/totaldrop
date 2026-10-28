@@ -34,7 +34,7 @@ for (const bad of vectors.invalid) {
 }
 
 // English from the pages: textContent of every data-i18n element.
-const pages = ["index.html", "download/index.html", "donate/index.html", "roadmap/index.html", "r/index.html"];
+const pages = ["index.html", "download/index.html", "donate/index.html", "roadmap/index.html", "r/index.html", "404.html"];
 const fromHtml = {};
 const NAMED = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: "\u00a0", rsquo: "\u2019", lsquo: "\u2018", rdquo: "\u201d", ldquo: "\u201c", mdash: "\u2014", ndash: "\u2013", hellip: "\u2026", middot: "\u00b7", copy: "\u00a9" };
 const decode = (s) => s.replace(/&([a-z]+);/gi, (all, n) => {
