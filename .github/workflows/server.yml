@@ -1,4 +1,4 @@
-# Rendezvous server on Cloudflare Workers: type check on every change.
+# Rendezvous server and relay on Cloudflare Workers: type check on every change.
 # Deploys stay manual (wrangler deploy) until deploy keys live in CI.
 name: Server
 
@@ -7,6 +7,7 @@ on:
     branches: [main]
     paths: &paths
       - "server/rendezvous-worker/**"
+      - "server/relay-worker/**"
       - ".github/workflows/server.yml"
   pull_request:
     paths: *paths
@@ -17,11 +18,14 @@ permissions:
 
 jobs:
   check:
-    name: Type check
+    name: Type check (${{ matrix.worker }})
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        worker: [rendezvous-worker, relay-worker]
     defaults:
       run:
-        working-directory: server/rendezvous-worker
+        working-directory: server/${{ matrix.worker }}
     steps:
       - uses: actions/checkout@v4
         with:

@@ -13,9 +13,11 @@ use crate::error::{Error, Result};
 use crate::path::RelayPipes;
 use crate::transport::EndpointKey;
 
-/// The project's relay. Address discovery answers on UDP at the same host and
-/// port as this URL.
+/// The project's relay.
 pub const DEFAULT_RELAY: &str = "wss://relay.totaldrop.app/v0/relay";
+
+/// The STUN server used to find this device's public address.
+pub const DEFAULT_STUN: &str = wire::DEFAULT_STUN;
 
 /// How long one discovery probe waits for its answer.
 const PROBE_WAIT: Duration = Duration::from_millis(700);
@@ -32,46 +34,36 @@ pub fn check_url(url: &str) -> Result<()> {
     crate::rendezvous::check_url(url).map_err(|_| Error::Connect("invalid relay address".into()))
 }
 
-/// The UDP address of `url`'s discovery service: same host and port.
-async fn discovery_address(url: &str, ipv4: bool) -> Option<SocketAddr> {
-    let uri: tokio_tungstenite::tungstenite::http::Uri = url.parse().ok()?;
-    let host = uri
-        .host()?
-        .trim_start_matches('[')
-        .trim_end_matches(']')
-        .to_owned();
-    let port = uri.port_u16().unwrap_or(match uri.scheme_str() {
-        Some("ws") => 80,
-        _ => 443,
-    });
-    tokio::net::lookup_host((host.as_str(), port))
+/// The address of the STUN server `host:port`, in the socket's family.
+async fn stun_address(server: &str, ipv4: bool) -> Option<SocketAddr> {
+    tokio::net::lookup_host(server)
         .await
         .ok()?
         .find(|a| a.is_ipv4() == ipv4)
 }
 
-/// Ask the relay at `url` which public address `socket` has: two probes at
-/// most, sent from the socket QUIC will use, so the answer is the mapping
-/// the other device must aim at. `None` when the relay does not answer (for
-/// example when UDP is blocked).
-pub async fn discover(socket: &UdpSocket, url: &str) -> Option<SocketAddr> {
+/// Ask the STUN server `server` (`host:port`) which public address `socket`
+/// has: two requests at most, sent from the socket QUIC will use, so the
+/// answer is the mapping the other device must aim at. `None` when nothing
+/// answers (for example when UDP is blocked).
+pub async fn discover(socket: &UdpSocket, server: &str) -> Option<SocketAddr> {
     let local = socket.local_addr().ok()?;
-    let target = discovery_address(url, local.is_ipv4()).await?;
+    let target = stun_address(server, local.is_ipv4()).await?;
     // A second handle on the same socket; QUIC gets the original.
     let clone = socket.try_clone().ok()?;
     clone.set_nonblocking(true).ok()?;
     let udp = tokio::net::UdpSocket::from_std(clone).ok()?;
     for _ in 0..2 {
-        let mut nonce = [0u8; 12];
-        getrandom::fill(&mut nonce).ok()?;
-        udp.send_to(&wire::probe(&nonce), target).await.ok()?;
+        let mut id = [0u8; 12];
+        getrandom::fill(&mut id).ok()?;
+        udp.send_to(&wire::stun_request(&id), target).await.ok()?;
         let deadline = tokio::time::Instant::now().checked_add(PROBE_WAIT)?;
-        let mut buf = [0u8; 64];
+        let mut buf = [0u8; 512];
         while let Ok(Ok((n, from))) =
             tokio::time::timeout_at(deadline, udp.recv_from(&mut buf)).await
         {
             if from == target
-                && let Some(addr) = buf.get(..n).and_then(|a| wire::parse_answer(a, &nonce))
+                && let Some(addr) = buf.get(..n).and_then(|a| wire::parse_stun_response(a, &id))
             {
                 return Some(addr);
             }
@@ -101,8 +93,14 @@ pub fn spawn(url: String, own: Arc<EndpointKey>, peer: [u8; 32], pipes: RelayPip
 
 async fn run(url: &str, own: &EndpointKey, peer: [u8; 32], mut pipes: RelayPipes) -> Result<()> {
     check_url(url)?;
+    // Both sides meet under the name of their two keys.
+    let url = format!(
+        "{}/{}",
+        url.trim_end_matches('/'),
+        wire::pair_name(&own.public(), &peer)
+    );
     let mut ws = tokio::time::timeout(CONNECT_WAIT, async {
-        let mut ws = crate::rendezvous::open_ws(url, wire::MAX_MESSAGE).await?;
+        let mut ws = crate::rendezvous::open_ws(&url, wire::MAX_MESSAGE).await?;
         let challenge = match ws.next().await {
             Some(Ok(Message::Binary(b))) => wire::parse_challenge(&b),
             _ => None,
@@ -127,17 +125,39 @@ async fn run(url: &str, own: &EndpointKey, peer: [u8; 32], mut pipes: RelayPipes
     loop {
         tokio::select! {
             out = pipes.outgoing.recv() => {
-                let Some(datagram) = out else { break };
-                ws.send(Message::Binary(wire::frame(&peer, &datagram).into()))
+                let Some(first) = out else { break };
+                // Send whatever else is already queued in the same message.
+                let mut batch = wire::Batch::new(&peer);
+                batch.push(&first);
+                let mut carry = None;
+                while let Ok(next) = pipes.outgoing.try_recv() {
+                    if !batch.push(&next) {
+                        carry = Some(next);
+                        break;
+                    }
+                }
+                for message in [Some(batch.finish()), carry.map(|d| wire::frame(&peer, &d))]
+                    .into_iter()
+                    .flatten()
+                {
+                    if message.len() > 32 {
+                        ws.feed(Message::Binary(message.into()))
+                            .await
+                            .map_err(|e| Error::Connect(format!("relay: {e}")))?;
+                    }
+                }
+                ws.flush()
                     .await
                     .map_err(|e| Error::Connect(format!("relay: {e}")))?;
             }
             msg = ws.next() => match msg {
                 Some(Ok(Message::Binary(b))) => {
-                    if let Some((from, datagram)) = wire::parse_frame(&b)
+                    if let Some((from, datagrams)) = wire::parse_frame(&b)
                         && from == peer
                     {
-                        let _ = pipes.incoming.try_send(datagram.to_vec());
+                        for d in datagrams {
+                            let _ = pipes.incoming.try_send(d.to_vec());
+                        }
                     }
                 }
                 Some(Ok(Message::Ping(_) | Message::Pong(_))) => {}

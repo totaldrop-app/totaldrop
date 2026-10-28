@@ -36,8 +36,23 @@ async fn server() -> String {
 fn no_relay() -> PathOptions {
     PathOptions {
         relay: String::new(),
+        stun: String::new(),
         relay_only: false,
     }
+}
+
+/// The relay under test: the Rust relay in-process (which also answers
+/// STUN), or another implementation (for example the Cloudflare Worker under
+/// `wrangler dev`) when `TOTALDROP_TEST_RELAY` names one. The relay is
+/// returned when it is the in-process one, to read its counter.
+async fn relay() -> (String, String, Option<totaldrop_relay::Relay>) {
+    if let Ok(url) = std::env::var("TOTALDROP_TEST_RELAY") {
+        return (url, String::new(), None);
+    }
+    let (url, stun, relay, _task) = totaldrop_relay::spawn_local(Default::default())
+        .await
+        .unwrap();
+    (url, stun, Some(relay))
 }
 
 fn scratch(name: &str) -> PathBuf {
@@ -388,14 +403,14 @@ async fn transfer_with(
 #[tokio::test(flavor = "multi_thread")]
 async fn relay_only_transfer_goes_through_the_relay() {
     let server = server().await;
-    let (relay_url, relay, _task) = totaldrop_relay::spawn_local(Default::default())
-        .await
-        .unwrap();
+    let (relay_url, stun, relay) = relay().await;
     let src = scratch("src");
     let dest = scratch("dest");
     std::fs::write(src.join("film.bin"), pseudo_random(3 << 20, 7)).unwrap();
+    let _ = stun;
     let only = PathOptions {
         relay: relay_url,
+        stun: String::new(),
         relay_only: true,
     };
     // The receiver needs no relay of its own: it uses the sender's.
@@ -404,6 +419,7 @@ async fn relay_only_transfer_goes_through_the_relay() {
         only,
         PathOptions {
             relay: String::new(),
+            stun: String::new(),
             relay_only: true,
         },
         vec![src.join("film.bin")],
@@ -412,11 +428,13 @@ async fn relay_only_transfer_goes_through_the_relay() {
     .await;
     assert_eq!((sent.files_ok, received.files_ok), (1, 1));
     same_tree(&src, &dest);
-    assert!(
-        relay.forwarded_bytes() > 3 << 20,
-        "{}",
-        relay.forwarded_bytes()
-    );
+    if let Some(relay) = relay {
+        assert!(
+            relay.forwarded_bytes() > 3 << 20,
+            "{}",
+            relay.forwarded_bytes()
+        );
+    }
     std::fs::remove_dir_all(src).unwrap();
     std::fs::remove_dir_all(dest).unwrap();
 }
@@ -424,14 +442,13 @@ async fn relay_only_transfer_goes_through_the_relay() {
 #[tokio::test(flavor = "multi_thread")]
 async fn a_direct_path_wins_over_the_relay() {
     let server = server().await;
-    let (relay_url, relay, _task) = totaldrop_relay::spawn_local(Default::default())
-        .await
-        .unwrap();
+    let (relay_url, stun, relay) = relay().await;
     let src = scratch("src");
     let dest = scratch("dest");
     std::fs::write(src.join("photo.bin"), pseudo_random(2 << 20, 8)).unwrap();
     let both = PathOptions {
         relay: relay_url,
+        stun,
         relay_only: false,
     };
     let (sent, received) = transfer_with(
@@ -445,11 +462,13 @@ async fn a_direct_path_wins_over_the_relay() {
     assert_eq!((sent.files_ok, received.files_ok), (1, 1));
     same_tree(&src, &dest);
     // At most a few handshake packets went through the relay.
-    assert!(
-        relay.forwarded_bytes() < 256 * 1024,
-        "{}",
-        relay.forwarded_bytes()
-    );
+    if let Some(relay) = relay {
+        assert!(
+            relay.forwarded_bytes() < 256 * 1024,
+            "{}",
+            relay.forwarded_bytes()
+        );
+    }
     std::fs::remove_dir_all(src).unwrap();
     std::fs::remove_dir_all(dest).unwrap();
 }

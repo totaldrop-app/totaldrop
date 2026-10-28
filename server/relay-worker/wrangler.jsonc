@@ -1,0 +1,14 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "totaldrop-relay",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-01",
+  // The relay logs nothing about clients.
+  "observability": { "enabled": false },
+  "routes": [{ "pattern": "relay.totaldrop.app", "custom_domain": true }],
+  "workers_dev": false,
+  "durable_objects": {
+    "bindings": [{ "name": "PAIR", "class_name": "Pair" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Pair"] }]
+}

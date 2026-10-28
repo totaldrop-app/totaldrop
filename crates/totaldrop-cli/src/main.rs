@@ -26,6 +26,10 @@ struct Cli {
     /// public address. An empty value turns the relay off.
     #[arg(long, global = true, env = "TOTALDROP_RELAY")]
     relay: Option<String>,
+    /// STUN server (host:port) that tells this device its public address.
+    /// An empty value turns it off.
+    #[arg(long, global = true, env = "TOTALDROP_STUN")]
+    stun: Option<String>,
     /// Never connect directly and announce no IP address: everything goes
     /// through the relay. Slower, but the other side never learns your
     /// address.
@@ -107,9 +111,10 @@ fn server(cli: Option<String>) -> String {
     cli.unwrap_or_else(|| totaldrop_core::rendezvous::DEFAULT_SERVER.to_owned())
 }
 
-fn paths(relay: Option<String>, relay_only: bool) -> PathOptions {
+fn paths(relay: Option<String>, stun: Option<String>, relay_only: bool) -> PathOptions {
     PathOptions {
         relay: relay.unwrap_or_else(|| totaldrop_core::relay::DEFAULT_RELAY.to_owned()),
+        stun: stun.unwrap_or_else(|| totaldrop_core::relay::DEFAULT_STUN.to_owned()),
         relay_only,
     }
 }
@@ -228,7 +233,7 @@ fn main() -> ExitCode {
             return ExitCode::FAILURE;
         }
     };
-    let route = paths(cli.relay, cli.relay_only);
+    let route = paths(cli.relay, cli.stun, cli.relay_only);
     let result = match cli.command {
         Command::Code { code } => {
             return match TransferCode::parse(&code) {

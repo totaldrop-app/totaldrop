@@ -104,8 +104,8 @@ async fn own_hints(
         .into_iter()
         .map(totaldrop_proto::wire::Address)
         .collect();
-    if let Some(url) = paths.relay_url()
-        && let Some(seen) = relay::discover(socket, url).await
+    if !paths.stun.is_empty()
+        && let Some(seen) = relay::discover(socket, &paths.stun).await
         && !hints.local.iter().any(|a| a.0 == seen)
     {
         hints.public.push(totaldrop_proto::wire::Address(seen));
@@ -117,9 +117,11 @@ async fn own_hints(
 #[derive(Debug, Clone)]
 pub struct PathOptions {
     /// Relay URL; empty for none. The sender's relay carries the transfer
-    /// when no direct path works, and either side's relay tells it its public
-    /// address.
+    /// when no direct path works.
     pub relay: String,
+    /// STUN server (`host:port`) that tells this device its public address;
+    /// empty for none.
+    pub stun: String,
     /// Never connect directly and announce no address: everything goes
     /// through the relay (spec section 6, privacy mode).
     pub relay_only: bool,
@@ -129,6 +131,7 @@ impl Default for PathOptions {
     fn default() -> Self {
         Self {
             relay: relay::DEFAULT_RELAY.into(),
+            stun: relay::DEFAULT_STUN.into(),
             relay_only: false,
         }
     }
