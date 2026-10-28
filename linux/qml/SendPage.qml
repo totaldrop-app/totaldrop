@@ -240,6 +240,7 @@ Page {
                         TextEdit {
                             // The code is English words, left to right.
                             LayoutMirroring.enabled: false
+                            LayoutMirroring.childrenInherit: true
                             horizontalAlignment: TextEdit.AlignLeft
                             text: page.transfer.code
                             readOnly: true
