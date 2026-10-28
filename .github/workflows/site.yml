@@ -23,12 +23,14 @@ jobs:
         with:
           node-version: lts/*
       - name: Scripts parse
-        run: node --check site/public/app.js && node --check site/functions/_middleware.js
+        run: node --check site/public/app.js && node --check site/public/msg.js && node --check site/functions/_middleware.js
+      - name: Translations follow the rules
+        run: node site/tools/check-i18n.mjs
       - name: Every page links only to files that exist
         working-directory: site/public
         run: |
           status=0
-          for page in index.html download/index.html r/index.html privacy.html; do
+          for page in index.html download/index.html donate/index.html roadmap/index.html r/index.html privacy.html; do
             for ref in $(grep -oE '(href|src)="/[^"#]*"' "$page" | sed -E 's/.*="\/([^"]*)"/\1/'); do
               [ -z "$ref" ] && continue
               [ -e "$ref" ] || [ -e "$ref/index.html" ] || [ -e "$ref.html" ] || { echo "$page → /$ref missing"; status=1; }
