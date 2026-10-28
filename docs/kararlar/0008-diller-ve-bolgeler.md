@@ -114,7 +114,7 @@
 - Karşı taraftan gelen metin (dosya ve klasör adları) cümleye yön
   yalıtımıyla (FSI…PDI; Flutter'da `Directionality`/`BidiFormatter`)
   girer. Dosya adlarındaki yön denetim karakterleri görünür hale getirilir
-  ("fatura‮fdp.exe" gibi uzantı gizleme saldırısına karşı).
+  (`fatura` + U+202E + `fdp.exe` adı ekranda "faturaexe.pdf" gibi görünür; uzantı gizleme saldırısına karşı).
 - Aktarım kodu her dilde İngilizce kelimelerle, soldan sağa yalıtılmış
   olarak gösterilir. Kod girişinde otomatik büyük harf ve düzeltme kapalı;
   harfler dile bağlı olmadan küçültülür (Türkçe `İ` ve `ı` açıkça `i`'ye),
