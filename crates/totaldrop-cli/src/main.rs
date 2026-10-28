@@ -381,15 +381,70 @@ fn main() -> ExitCode {
             ExitCode::from(130)
         }
         Err(e) => {
-            eprintln!("totaldrop: {e}");
+            // One sentence in the person's language, then the detail for a
+            // bug report, which stays English.
+            eprintln!("totaldrop: {}", strings_for_exit.get(error_key(&e), &[]));
+            eprintln!("  ({e})");
             ExitCode::FAILURE
         }
     }
 }
 
+/// The message for each kind of failure, as the apps show it.
+fn error_key(e: &totaldrop_core::Error) -> &'static str {
+    use totaldrop_core::Error as E;
+    use totaldrop_proto::wire::RejectReason;
+    match e {
+        E::WrongCode => "cliErrWrongCode",
+        E::PeerLeft => "cliErrPeerLeft",
+        E::Rejected(RejectReason::Declined) => "cliErrDeclined",
+        E::Rejected(RejectReason::TooLarge | RejectReason::NoSpace) => "cliErrNoRoom",
+        E::Rejected(RejectReason::Invalid) => "cliErrInvalidOffer",
+        E::Cancelled(_) => "cliErrCancelled",
+        E::Code(_) => "cliErrInvalidCode",
+        E::Rendezvous(_) => "cliErrServer",
+        E::Connect(_) => "cliErrConnect",
+        E::InvalidOffer(_) => "cliErrInvalidOffer",
+        E::Io(_) => "cliErrStorage",
+        _ => "cliErrOther",
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use super::is_yes;
+    #![allow(clippy::unwrap_used)]
+
+    use super::{error_key, is_yes};
+    use totaldrop_core::Error;
+    use totaldrop_l10n::{Domain, Strings};
+    use totaldrop_proto::wire::RejectReason;
+
+    /// Every failure has a sentence in English and in Turkish.
+    #[test]
+    fn every_error_has_a_translated_message() {
+        let errors = [
+            Error::WrongCode,
+            Error::PeerLeft,
+            Error::Rejected(RejectReason::Declined),
+            Error::Rejected(RejectReason::NoSpace),
+            Error::Rejected(RejectReason::Invalid),
+            Error::Cancelled("stopped".into()),
+            Error::Connect("x".into()),
+            Error::Io(std::io::Error::other("x")),
+            Error::Protocol("x"),
+        ];
+        for tag in ["en", "tr"] {
+            let s = Strings::new(
+                Domain::Cli,
+                &[totaldrop_l10n::locale::parse(tag).unwrap()],
+                None,
+            );
+            let keys = s.keys();
+            for e in &errors {
+                assert!(keys.contains(error_key(e)), "{tag}: {}", error_key(e));
+            }
+        }
+    }
 
     #[test]
     fn yes_in_any_case_and_language() {

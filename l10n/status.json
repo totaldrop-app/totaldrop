@@ -10,7 +10,9 @@
     "receiveDecline",
     "cliVerification",
     "cliPromptSave",
-    "cliYes"
+    "cliYes",
+    "cliErrWrongCode",
+    "cliErrInvalidOffer"
   ],
   "languages": {
     "tr": {
