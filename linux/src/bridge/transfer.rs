@@ -12,7 +12,9 @@ use std::sync::{Arc, LazyLock, Mutex};
 
 use cxx_qt::{CxxQtType, Threading};
 use cxx_qt_lib::{QList, QString, QStringList, QUrl};
-use totaldrop_core::{Event, IncomingOffer, PreparedSend, ReceiveOptions, SendOptions, Stop};
+use totaldrop_core::{
+    Event, IncomingOffer, PathOptions, PreparedSend, ReceiveOptions, SendOptions, Stop,
+};
 
 use crate::desktop;
 use crate::runtime::RUNTIME;
@@ -61,6 +63,7 @@ pub mod qobject {
         #[qproperty(QString, error_detail, cxx_name = "errorDetail")]
         #[qproperty(QString, server)]
         #[qproperty(QString, default_server, cxx_name = "defaultServer")]
+        #[qproperty(bool, privacy_mode, cxx_name = "privacyMode")]
         #[qproperty(QString, destination)]
         type Transfer = super::TransferRust;
 
@@ -135,6 +138,11 @@ pub mod qobject {
         #[cxx_name = "saveServer"]
         fn save_server(self: Pin<&mut Transfer>, url: &QString) -> bool;
 
+        /// Turn privacy mode on or off and keep the choice.
+        #[qinvokable]
+        #[cxx_name = "savePrivacyMode"]
+        fn save_privacy_mode(self: Pin<&mut Transfer>, on: bool);
+
         /// Back to the default server.
         #[qinvokable]
         #[cxx_name = "resetServer"]
@@ -203,6 +211,7 @@ pub struct TransferRust {
     error_detail: QString,
     server: QString,
     default_server: QString,
+    privacy_mode: bool,
     destination: QString,
     session: Arc<Session>,
 }
@@ -366,6 +375,21 @@ impl qobject::Transfer {
         self.server().to_string()
     }
 
+    /// The paths a transfer may take: the relay only in privacy mode.
+    fn route(&self) -> PathOptions {
+        PathOptions {
+            relay_only: *self.privacy_mode(),
+            ..PathOptions::default()
+        }
+    }
+
+    fn save_privacy_mode(mut self: Pin<&mut Self>, on: bool) {
+        let mut s = Settings::load();
+        s.privacy_mode = on;
+        s.save();
+        self.as_mut().set_privacy_mode(on);
+    }
+
     fn send(mut self: Pin<&mut Self>, paths: &QStringList, strong: bool) {
         let paths: Vec<PathBuf> = strings(paths).iter().map(|p| path_of(p)).collect();
         if paths.is_empty() {
@@ -376,7 +400,7 @@ impl qobject::Transfer {
         let opts = SendOptions {
             server: self.opts_server(),
             words: if strong { 3 } else { 2 },
-            ..SendOptions::default()
+            paths: self.route(),
         };
         let stop = self.stop_handle();
         self.spawn(async move {
@@ -439,7 +463,7 @@ impl qobject::Transfer {
         let thread = self.qt_thread();
         let opts = ReceiveOptions {
             server: self.opts_server(),
-            ..ReceiveOptions::default()
+            paths: self.route(),
         };
         let session = self.rust().session.clone();
         let stop = self.stop_handle();
@@ -698,6 +722,7 @@ impl cxx_qt::Initialize for qobject::Transfer {
         self.as_mut().set_default_server(QString::from(default));
         self.as_mut()
             .set_server(QString::from(s.server.as_deref().unwrap_or(default)));
+        self.as_mut().set_privacy_mode(s.privacy_mode);
         self.as_mut().set_destination(QString::from(
             desktop::downloads().display().to_string().as_str(),
         ));

@@ -9,6 +9,9 @@ use serde::{Deserialize, Serialize};
 pub struct Settings {
     /// Rendezvous server, a `wss://` URL.
     pub server: Option<String>,
+    /// Privacy mode: transfers go through the relay only.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub privacy_mode: bool,
 }
 
 fn path() -> Option<PathBuf> {
@@ -55,5 +58,20 @@ mod tests {
         assert!(Settings::valid_server("wss://rendezvous.totaldrop.app"));
         assert!(!Settings::valid_server("ws://insecure.example"));
         assert!(!Settings::valid_server("wss://"));
+    }
+
+    #[test]
+    fn privacy_mode_is_off_unless_saved() {
+        // Files written before privacy mode existed still load.
+        let old: Settings = toml::from_str("server = \"wss://example.org\"").unwrap();
+        assert!(!old.privacy_mode);
+        // Off is not written at all; on is.
+        assert_eq!(toml::to_string(&Settings::default()).unwrap(), "");
+        let on = Settings {
+            privacy_mode: true,
+            ..Settings::default()
+        };
+        let text = toml::to_string(&on).unwrap();
+        assert!(toml::from_str::<Settings>(&text).unwrap().privacy_mode);
     }
 }

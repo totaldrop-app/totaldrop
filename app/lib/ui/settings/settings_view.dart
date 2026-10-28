@@ -35,6 +35,26 @@ class _SettingsViewState extends State<SettingsView> {
     if (mounted) FocusScope.of(context).unfocus();
   }
 
+  /// Privacy mode is slower; say so before turning it on.
+  Future<bool> _confirmPrivacy(BuildContext context) async {
+    final l = AppLocalizations.of(context);
+    return await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text(l.privacyModeConfirmTitle),
+            content: Text(l.privacyModeConfirmBody),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(context, false), child: Text(l.cancel)),
+              FilledButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: Text(l.privacyModeTurnOn),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
@@ -81,6 +101,20 @@ class _SettingsViewState extends State<SettingsView> {
           Text(l.settingsPrivacy, style: theme.textTheme.titleLarge),
           Gap.s,
           Text(l.settingsPrivacyBody, style: theme.textTheme.bodyMedium),
+          Gap.m,
+          ListenableBuilder(
+            listenable: widget.settings,
+            builder: (context, _) => SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(l.privacyMode),
+              subtitle: Text(l.privacyModeHint),
+              value: widget.settings.privacyMode,
+              onChanged: (on) async {
+                if (on && !await _confirmPrivacy(context)) return;
+                await widget.settings.setPrivacyMode(on);
+              },
+            ),
+          ),
           Gap.l,
           const Divider(),
           Gap.l,

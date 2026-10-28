@@ -21,14 +21,23 @@ class TransferRepository {
     List<String> paths, {
     required bool strong,
     required bridge.Stopper stopper,
-  }) =>
-      bridge.prepareSend(server: _settings.server, paths: paths, strong: strong, stopper: stopper);
+  }) => bridge.prepareSend(
+    server: _settings.server,
+    paths: paths,
+    strong: strong,
+    privacy: _settings.privacyMode,
+    stopper: stopper,
+  );
 
   Stream<bridge.TransferEvent> runSend(bridge.SendSession session, bridge.Stopper stopper) =>
       bridge.runSend(session: session, stopper: stopper);
 
-  Future<bridge.Offer> connect(String code, bridge.Stopper stopper) =>
-      bridge.connectReceive(server: _settings.server, code: code, stopper: stopper);
+  Future<bridge.Offer> connect(String code, bridge.Stopper stopper) => bridge.connectReceive(
+    server: _settings.server,
+    code: code,
+    privacy: _settings.privacyMode,
+    stopper: stopper,
+  );
 
   Stream<bridge.TransferEvent> accept(
     bridge.Offer offer,

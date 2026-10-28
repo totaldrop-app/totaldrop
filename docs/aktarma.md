@@ -59,8 +59,9 @@ sürümler bağlantıyı her aktarımın başında açar.
 Alan cihaz, gönderenin bildirdiği aktarma sunucusunu kullanır; gizlilik
 modunda da ([#68](https://github.com/totaldrop-app/totaldrop/issues/68)).
 
-İlk açılan bağlantı kullanılır. Gizlilik modunda (`--relay-only`) cihaz hiçbir
-IP adresi bildirmez ve yalnızca aktarma sunucusunu kullanır.
+İlk açılan bağlantı kullanılır. Gizlilik modunda (komut satırında
+`--relay-only`, uygulamalarda Ayarlar → "Adresimi karşı cihazdan gizle") cihaz
+hiçbir IP adresi bildirmez ve yalnızca aktarma sunucusunu kullanır.
 
 Bu sürümde bağlantı, kurulduğu yolda kalır: aktarma üzerinden başlayan bir
 aktarım sonradan doğrudan yola geçmez. Bu geçiş (QUIC bağlantı göçü) sonraki

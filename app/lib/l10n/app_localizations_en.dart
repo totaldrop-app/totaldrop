@@ -315,6 +315,23 @@ class AppLocalizationsEn extends AppLocalizations {
       'The rendezvous server, the relay and Cloudflare\'s STUN server see your IP address, and so does the other device when you connect directly. None of them sees file names, contents or keys, and our servers keep no logs. Files go directly between the devices when they can, otherwise through the relay; they are encrypted end to end either way.';
 
   @override
+  String get privacyMode => 'Hide my address from the other device';
+
+  @override
+  String get privacyModeHint =>
+      'Privacy mode: everything goes through the relay, so the other device never learns your IP address. Slower, and both devices must use the same relay.';
+
+  @override
+  String get privacyModeConfirmTitle => 'Turn on privacy mode?';
+
+  @override
+  String get privacyModeConfirmBody =>
+      'Transfers will be slower, because nothing goes directly between the devices. The relay sees your IP address; it never sees your files or keys.';
+
+  @override
+  String get privacyModeTurnOn => 'Turn on';
+
+  @override
   String settingsVersion(String version) {
     return 'Version $version';
   }
