@@ -14,8 +14,11 @@ yollarla ayrılır:
 - **Klasör:** her platformun kendi klasörü vardır.
 - **Sürüm:** her platformun kendi sürüm numarası ve etiketi vardır
   ([versioning.md](versioning.md)).
-- **Derleme hattı:** her platformun kendi CI iş akışı vardır ve yalnızca
-  ilgili klasörler değişince çalışır.
+- **Derleme hattı:** her platformun kendi CI iş akışı vardır. Her PR'da
+  `ci.yml` çalışır, hangi klasörlerin değiştiğine bakar ve yalnızca ilgili
+  iş akışlarını çağırır. Sondaki `CI` işi `main` için tek zorunlu
+  kontroldür. Sürümleri `android-release.yml` ve `linux-release.yml`
+  etiketten derler.
 - **Paket:** Linux'ta Arch, Debian ve RPM paketleri ayrı tariflerden, ayrı
   kaplarda derlenir.
 
@@ -56,7 +59,8 @@ kendi iş akışlarını alır.
   branch'leri açılmaz: ayrılırlarsa çekirdekteki bir düzeltmeyi her birine
   ayrı taşımak gerekir ve biri unutulur.
 - Çekirdekte bir değişiklik bütün platform iş akışlarını çalıştırır. Bir
-  platformu bozan çekirdek değişikliği `main`'e giremez.
+  platformu bozan çekirdek değişikliği `main`'e giremez: `CI` kontrolü
+  kırmızıyken birleştirme kapalıdır.
 
 ## Linux paketleri
 

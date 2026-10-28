@@ -23,8 +23,8 @@ için [versioning.md](versioning.md) bağlayıcıdır.
    görmez. Bulduğu her doğruluk ya da güvenlik sorunu birleştirmeden önce
    düzeltilir; düzeltilmeyenler için gerekçe PR'a yazılır.
 6. **Birleştirme:** `main`'e yalnızca PR ile, rebase ile birleştirilir;
-   geçmiş doğrusal kalır. Doğrudan push ve force push kapalıdır. Zorunlu
-   CI kontrollerinin kurala bağlanması [#45](https://github.com/totaldrop-app/totaldrop/issues/45)'te.
+   geçmiş doğrusal kalır. Doğrudan push ve force push kapalıdır. `CI`
+   kontrolü yeşil olmadan kural birleştirmeye izin vermez.
 7. **Yayın:** [Sürüm listesi](#sürüm-listesi) adım adım izlenir.
 
 ## Bitti tanımı

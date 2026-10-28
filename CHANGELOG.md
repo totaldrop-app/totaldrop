@@ -19,6 +19,10 @@ All notable changes to TotalDrop are recorded here. The format follows
   a moved action tag cannot change which action code runs. Dependabot proposes the
   updates, which are reviewed like any other change. `actions/checkout`
   moved to v7 and `actions/setup-java` to v6.
+- **Build:** One `CI` check now runs on every pull request and is required
+  to merge into `main`. It runs the workflows of the areas that changed and
+  fails if any of them fails. Releases build from their own workflows,
+  which run the same checks first.
 
 ## [android-0.1.0-beta.5] and [linux-0.1.0-beta.4] - 2026-10-28
 
