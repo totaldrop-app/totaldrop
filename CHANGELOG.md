@@ -12,7 +12,8 @@ All notable changes to TotalDrop are recorded here. The format follows
 - **Build:** Linux packages are built only in CI from a release tag and
   carry signed build provenance, so anyone can check that a package came
   from this repository: `gh attestation verify <file> --repo
-  totaldrop-app/totaldrop`. The Android Play bundle is also built and
+  totaldrop-app/totaldrop`. The signing workflow is
+  `.github/workflows/linux-release.yml`. The Android Play bundle is also built and
   signed with the upload key in CI; Google Play re-signs it, so for
   Android the provenance is for the project's own records.
 - **Build:** Every GitHub Action in CI is pinned to a full commit SHA, so

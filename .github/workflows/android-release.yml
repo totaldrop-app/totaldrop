@@ -1,4 +1,4 @@
-# Android release: from an `android-v*` tag, the same checks as every PR,
+# Android release: from an `android-v*` tag, the Android checks a PR runs,
 # then the Play bundle signed with the upload key. Only bundles built here
 # are uploaded to Google Play (docs/surec.md).
 name: Android release

@@ -8,13 +8,16 @@ on:
   pull_request:
   push:
     branches: [main]
+  # Not used yet; here so the required check also reports if a merge queue
+  # is turned on.
+  merge_group:
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.event.pull_request.number || github.sha }}
+  group: ci-${{ github.event_name }}-${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: true
 
 jobs:
@@ -35,7 +38,7 @@ jobs:
       - id: areas
         env:
           EVENT: ${{ github.event_name }}
-          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          BASE: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha || github.event.before }}
           HEAD: ${{ github.sha }}
         run: |
           shared='Cargo\.toml$|Cargo\.lock$|rust-toolchain\.toml$'
@@ -46,9 +49,11 @@ jobs:
             [server]="^(server/(rendezvous|relay)-worker/|\.github/workflows/server\.yml$)"
             [site]="^(site/|\.github/workflows/site\.yml$)"
           )
-          # Run everything when the base is unknown (new branch, manual run,
-          # force push) or when CI itself changed.
-          if [ "$EVENT" = workflow_dispatch ] || ! files=$(git diff --name-only "$BASE...$HEAD" 2>/dev/null); then
+          # Every changed path, unquoted (non-ASCII names stay as they are)
+          # and with both sides of a rename, so moving a file out of an area
+          # still runs that area. Run everything on a manual run, when the
+          # base commit is unknown or missing, or when CI itself changed.
+          if [ "$EVENT" = workflow_dispatch ] || ! files=$(git -c core.quotePath=false diff --no-renames --name-only "$BASE...$HEAD" 2>/dev/null); then
             all=true
           elif grep -qE '^(\.github/workflows/ci\.yml|\.github/actions/)' <<<"$files"; then
             all=true
@@ -57,7 +62,13 @@ jobs:
           fi
           printf 'Changed files:\n%s\n' "${files:-(unknown)}"
           for name in "${!area[@]}"; do
-            if [ "$all" = true ] || grep -qE "${area[$name]}" <<<"$files"; then v=true; else v=false; fi
+            if [ "$all" = true ]; then
+              v=true
+            else
+              # grep exits 2 on a broken pattern; fail rather than skip.
+              rc=0; grep -qE "${area[$name]}" <<<"$files" || rc=$?
+              case $rc in 0) v=true ;; 1) v=false ;; *) echo "bad pattern for $name"; exit 1 ;; esac
+            fi
             echo "$name=$v" | tee -a "$GITHUB_OUTPUT"
           done
 
