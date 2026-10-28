@@ -10,4 +10,4 @@
   - Arayüz her platformda sistem temasına yüzde yüz uyar. Linux'ta KDE, Hyprland ve Omarchy desteklenir. Her adımda üçü de kontrol edilir.
   - Aktarım sırasında işaret, web sitesindeki animasyonun aynısını oynatır.
 - Gizli bilgiler (`key.properties`, imza anahtarı parolası) okunmaz ve depoya eklenmez.
-- Derlenen paketler (ör. Play Console için `.aab`) `~/Projects/totaldrop/dist` altına konur.
+- Paketler yalnızca CI'da derlenir; CI çıktısı (ör. Play Console için `.aab`) yerelde `~/Projects/totaldrop/dist` altına indirilir.

@@ -6,8 +6,10 @@
   belgelerimizdeki kurala aykırıydı.
 - **Karar:** Her iş bir issue ile başlar; her PR'ı kodu yazmamış bir
   inceleyici okur; bütün CI kontrolleri yeşil olmadan birleştirme yapılmaz;
-  `main` doğrudan push'a kapalıdır; yayınlanan her paket CI'da derlenir ve
-  derleme kaynağı kanıtı (build provenance) taşır.
+  `main` doğrudan push'a kapalıdır; yayınlanan her paket CI'da derlenir.
+  Linux paketleri, kullanıcının doğrulayabileceği derleme kaynağı kanıtı
+  (build provenance) taşır; Play paketini Google yeniden imzaladığı için
+  Android'deki kanıt yalnızca projenin kendi kaydıdır.
 - **Neden:** Güvenlik iddiası taşıyan bir yazılımda yazarın kendi işini
   onaylaması yeterli değildir; kullanıcı da indirdiği paketin depodaki
   koddan geldiğini doğrulayabilmelidir.

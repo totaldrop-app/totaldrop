@@ -9,13 +9,16 @@ Son gözden geçirme: 28 Ekim 2026.
 
 ## Korunan varlıklar
 
-| Varlık | Kimden saklanır |
-| --- | --- |
-| Dosyaların içeriği, adları, boyutları ve klasör yapısı | Sunucular, ağdaki herkes, kodu bilmeyen herkes |
-| Kim kime gönderdi | Sunucular, ağdaki gözlemciler |
-| Kullanıcının kimliği | Herkes; hesap yalnızca rastgele bir numara |
-| IP adresi | Gizlilik modunda: karşı cihaz |
-| Alıcının diski | Kötü niyetli gönderen (yol dışına yazma, üzerine yazma) |
+Bugün korunanlar ile henüz yalnızca tasarımda olanlar ayrı yazılır.
+
+| Varlık | Kimden saklanır | Durum |
+| --- | --- | --- |
+| Dosyaların içeriği, adları ve klasör yapısı | Sunucular, ağdaki herkes, kodu bilmeyen herkes | Var |
+| Dosya boyutları | Sunucular ve ağ gözlemcisi şifreli trafiğin toplam boyutunu görür; tek tek dosya boyutları gizli kalır | Kısmen |
+| Kullanıcının kimliği | Herkes: hesap gerekmez | Var; isteğe bağlı numara hesapları [tasarımda](hesap.md) |
+| Kim kime gönderdi | Sunucular iki cihazın IP adreslerini aynı anda görür | Yok; gizlilik modu ve Tor ile azaltılacak |
+| IP adresi | Gizlilik modunda karşı cihaz | Yalnızca komut satırı istemcisinde (`--relay-only`) |
+| Alıcının diski | Kötü niyetli gönderen (yol dışına yazma, üzerine yazma) | Var |
 
 ## Saldırganlar
 
@@ -43,18 +46,18 @@ Son gözden geçirme: 28 Ekim 2026.
 
 | # | Tehdit | Saldırgan | Karşılık | Kalan risk |
 | --- | --- | --- | --- | --- |
-| T1 | Trafiği okumak | 1, 2 | QUIC/TLS 1.3 içinde Noise XXpsk3; dosyalar ayrıca STREAM ile şifreli | Yok, kriptografi sağlam kaldıkça |
+| T1 | Trafiği okumak | 1, 2 | QUIC/TLS 1.3 içinde Noise XXpsk3; dosyalar ayrıca STREAM ile şifreli | Bilinen yok; bağımsız denetime kadar ([#40](https://github.com/totaldrop-app/totaldrop/issues/40)) doğrulanmadı |
 | T2 | Araya girmek (MITM) | 1, 2 | Anahtarlar koddan CPace ile türer; yanlış kod el sıkışmayı bozar; dört doğrulama kelimesi | Kullanıcı kelimeleri karşılaştırmazsa, kodu bilen biri araya girebilir |
 | T3 | Kodu tahmin etmek | 3 | CPace: deneme başına tek tahmin, çevrimdışı deneme yok; iki kelimede 2⁻²² olasılık; başarısız deneme iki tarafa "scary" kapanış olarak görünür; saldırı dalgasında yavaşlatma | Çok sayıda koda aynı anda saldırı; üç kelimelik kod (2⁻³³) seçenek olarak var |
-| T4 | Kaydedip sonra çözmek | 5 | ML-KEM-768 hibrit adım; oturum anahtarları hem X25519'dan hem ML-KEM'den türer | Kimlik doğrulama v0'da klasik (Ed25519); v1'de ML-DSA-65 |
+| T4 | Kaydedip sonra çözmek | 5 | ML-KEM-768 hibrit adım; oturum anahtarları hem X25519'dan hem ML-KEM'den türer | Kimlik doğrulama v0'da klasik (Ed25519); ML-DSA-65 plan aşamasında ([#42](https://github.com/totaldrop-app/totaldrop/issues/42)) |
 | T5 | Aktarımları birbirine bağlamak | 2 | Her aktarımda yeni, tek kullanımlık uç nokta anahtarı; sunucular kayıt tutmaz | Sunucu aynı anda IP ve zamanlamayı görür |
-| T6 | IP adresini öğrenmek | 2, 4 | Gizlilik modu: adres bildirilmez, yalnızca aktarma | Varsayılan modda karşı taraf IP'yi görür; Tor henüz yok |
+| T6 | IP adresini öğrenmek | 2, 4 | Gizlilik modu: adres bildirilmez, yalnızca aktarma (bugün yalnızca komut satırında `--relay-only`) | Uygulamalarda henüz yok ([#39](https://github.com/totaldrop-app/totaldrop/issues/39)); varsayılan modda karşı taraf IP'yi görür; Tor yok |
 | T7 | Alıcının diskine zarar | 4 | Yol denetimi (NFC, `..`, ayırıcılar, Windows adları, bidi), yalnızca seçilen klasörün altına, var olanın üzerine asla yazmama, sembolik bağ izlememe, BLAKE3 doğrulamasından sonra yerine koyma | Aynı dosya sistemi yarış koşulları; denetim kapsamında |
 | T8 | Bellek ya da disk tüketme | 4 | Sınırlar: 100.000 girdi, 16 MiB manifest, yol uzunlukları; reddedilen teklif | 16 MiB manifest çözülürken yaklaşık 1 GiB bellek; v0.1'de akış biçimine geçilecek |
 | T9 | Sunucuyu kötüye kullanmak | 2, 3 | Rendezvous: kutu başına mesaj ve boyut sınırları, süreler; aktarma: aktarım başına iki anahtar, 32 GiB ve 6 saat | Rendezvous'ta istemci başına hız sınırı henüz yok |
-| T10 | Aktarma sunucusuna başka bir anahtarla girmek | 2, 4 | Aktarım adresi iki anahtarı taşır; sunucu yalnızca bu iki anahtarı, imzalı bir meydan okumayla kabul eder | Yok |
+| T10 | Aktarma sunucusuna başka bir anahtarla girmek | 2, 4 | Aktarım adresi iki anahtarı taşır; sunucu yalnızca bu iki anahtarı, imzalı bir meydan okumayla kabul eder | Bilinen yok; bağımsız denetime kadar doğrulanmadı |
 | T11 | Tedarik zinciri | 6 | `cargo-deny` (lisans, güvenlik ilanları), Dependabot, kilitli bağımlılıklar, CI'da derleme ve derleme kaynağı kanıtı | Eylemler henüz commit SHA'sına sabitlenmedi |
-| T12 | Sahte uygulama ya da paket | 6 | Yalnızca Google Play, GitHub sürümleri ve totaldrop.app; SHA-256 sağlama toplamları; derleme kaynağı kanıtı | Windows ve macOS imzası bağışları bekliyor |
+| T12 | Sahte uygulama ya da paket | 6 | Yalnızca Google Play, GitHub sürümleri ve totaldrop.app; SHA-256 sağlama toplamları; Linux paketlerinde derleme kaynağı kanıtı | Play paketini Google yeniden imzalar, kullanıcı kanıtı doğrulayamaz; Windows ve macOS imzası bağışları bekliyor |
 
 ## Kapsam dışı
 

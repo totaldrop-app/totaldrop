@@ -12,7 +12,9 @@ on:
       - "crates/totaldrop-core/**"
       - "crates/totaldrop-crypto/**"
       - "crates/totaldrop-proto/**"
+      - "Cargo.toml"
       - "Cargo.lock"
+      - "rust-toolchain.toml"
       - ".github/workflows/android.yml"
   pull_request:
     paths: *paths
@@ -68,7 +70,7 @@ jobs:
   release:
     name: Signed Play bundle
     if: startsWith(github.ref, 'refs/tags/android-v')
-    needs: check
+    needs: [check, build]
     runs-on: ubuntu-latest
     environment: play-release
     permissions:
@@ -82,6 +84,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+          fetch-depth: 0
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -92,27 +95,36 @@ jobs:
       - name: Rust toolchain and Android targets
         working-directory: .
         run: rustup show active-toolchain || rustup toolchain install
-      - name: Version matches the tag
+      # The version must match the tag, and the build number (versionCode)
+      # must be higher than the last release's: Google Play refuses reuse.
+      - name: Version and build number
         env:
           TAG: ${{ github.ref_name }}
         run: |
           want="${TAG#android-v}"
           have=$(sed -n 's/^version: \([^+]*\)+.*/\1/p' pubspec.yaml)
+          code=$(sed -n 's/^version: [^+]*+\([0-9]*\).*/\1/p' pubspec.yaml)
           [ "$want" = "$have" ] || { echo "tag $want, pubspec $have"; exit 1; }
-      # The upload key lives only in this environment's secrets. Without
-      # it Gradle would quietly sign with the debug key, so stop instead.
-      - name: Upload key
+          prev=$(git describe --tags --abbrev=0 --match 'android-v*' "${TAG}^" 2>/dev/null || true)
+          if [ -n "$prev" ]; then
+            old=$(git show "$prev:app/pubspec.yaml" | sed -n 's/^version: [^+]*+\([0-9]*\).*/\1/p')
+            [ "$code" -gt "$old" ] || { echo "build number $code is not above $old ($prev)"; exit 1; }
+          fi
+      - run: flutter pub get --enforce-lockfile
+      # The upload key lives only in this environment's secrets and reaches
+      # Gradle through environment variables, so the password never touches
+      # disk. Without the key the build fails instead of using the debug key.
+      - name: Build the signed bundle
         env:
           KEYSTORE: ${{ secrets.ANDROID_UPLOAD_KEYSTORE }}
-          PASSWORD: ${{ secrets.ANDROID_UPLOAD_PASSWORD }}
+          ANDROID_UPLOAD_PASSWORD: ${{ secrets.ANDROID_UPLOAD_PASSWORD }}
+          TOTALDROP_REQUIRE_RELEASE_KEY: "1"
         run: |
-          [ -n "$KEYSTORE" ] && [ -n "$PASSWORD" ] || { echo "upload key secrets missing"; exit 1; }
+          [ -n "$KEYSTORE" ] && [ -n "$ANDROID_UPLOAD_PASSWORD" ] || { echo "upload key secrets missing"; exit 1; }
           umask 077
-          echo "$KEYSTORE" | base64 -d > "$RUNNER_TEMP/upload.jks"
-          printf 'storeFile=%s\nstorePassword=%s\nkeyAlias=upload\nkeyPassword=%s\n' \
-            "$RUNNER_TEMP/upload.jks" "$PASSWORD" "$PASSWORD" > android/key.properties
-      - run: flutter pub get
-      - run: flutter build appbundle --release
+          printf '%s' "$KEYSTORE" | base64 -d > "$RUNNER_TEMP/upload.jks"
+          ANDROID_UPLOAD_STORE_FILE="$RUNNER_TEMP/upload.jks" flutter build appbundle --release
+          rm -f "$RUNNER_TEMP/upload.jks"
       - name: Signed with the upload key
         env:
           # SHA-256 of the upload certificate registered with Google Play.
@@ -129,7 +141,7 @@ jobs:
           (cd ../dist && sha256sum *.aab > SHA256SUMS)
       - name: Remove the key
         if: always()
-        run: rm -f android/key.properties "$RUNNER_TEMP/upload.jks"
+        run: rm -f "$RUNNER_TEMP/upload.jks"
       - uses: actions/attest-build-provenance@v4
         with:
           subject-path: dist/*.aab
