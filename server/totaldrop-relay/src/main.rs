@@ -2,9 +2,9 @@
 //!
 //! Usage: `totaldrop-relay [WEBSOCKET_ADDRESS] [DISCOVERY_ADDRESS]`, default
 //! `127.0.0.1:4100` for both. In production a TLS terminator serves
-//! `wss://<host>/v0/relay` on TCP 443 and passes it to the WebSocket address,
-//! and discovery listens on UDP 443 of the public address, because clients
-//! probe the same host and port as the relay URL.
+//! `wss://<host>/v0/relay/<key A>-<key B>` on TCP 443 and passes it to the
+//! WebSocket address, and discovery listens on UDP 443 of the public address,
+//! because clients probe the same host and port as the relay URL.
 
 use std::net::SocketAddr;
 

@@ -43,7 +43,8 @@ pub struct Config {
     pub session_bytes: u64,
     /// How long one connection may last.
     pub session_time: Duration,
-    /// A connection with no traffic for this long is closed.
+    /// A connection that sends no datagram for this long is closed; pings do
+    /// not count.
     pub idle: Duration,
     /// Datagrams queued for one device before more are dropped.
     pub queue: usize,
@@ -64,8 +65,12 @@ impl Default for Config {
 
 type Outbox = mpsc::Sender<Vec<u8>>;
 
-/// Signed-in devices: endpoint key, connection number, outbox.
-type Clients = HashMap<[u8; 32], (u64, Outbox)>;
+/// The two endpoint keys a pair path names.
+type Pair = ([u8; 32], [u8; 32]);
+
+/// Signed-in devices: endpoint key, connection number, the pair it signed in
+/// on, outbox. A datagram reaches a key only on the same pair.
+type Clients = HashMap<[u8; 32], (u64, Pair, Outbox)>;
 
 /// A running relay.
 #[derive(Debug, Clone)]
@@ -207,7 +212,7 @@ impl Relay {
             if clients.contains_key(&key) {
                 return;
             }
-            clients.insert(key, (id, outbox));
+            clients.insert(key, (id, pair, outbox));
         }
         if !matches!(
             tokio::time::timeout(IO_TIMEOUT, ws.send(Message::Binary(wire::ok().into()))).await,
@@ -240,7 +245,14 @@ impl Relay {
             if started.elapsed() > self.config.session_time || writer.is_finished() {
                 break;
             }
-            let wait = self.config.idle.saturating_sub(last_data.elapsed());
+            let Some(wait) = self
+                .config
+                .idle
+                .checked_sub(last_data.elapsed())
+                .filter(|w| !w.is_zero())
+            else {
+                break;
+            };
             let next = match tokio::time::timeout(wait, source.next()).await {
                 Ok(Some(Ok(m))) => m,
                 _ => break,
@@ -266,7 +278,15 @@ impl Relay {
             }
             // Slow the sender down instead of dropping: TCP pushes back.
             budget.spend(size).await;
-            let target = self.clients.lock().await.get(&to).map(|(_, o)| o.clone());
+            // The target must have signed in on this same pair: a key that is
+            // part of two pairs is reachable only from the one it chose.
+            let target = self
+                .clients
+                .lock()
+                .await
+                .get(&to)
+                .filter(|(_, p, _)| *p == pair)
+                .map(|(_, _, o)| o.clone());
             if let Some(target) = target {
                 // A full queue drops, like a busy network; QUIC recovers.
                 // Same message with the source key in place of the target's.
@@ -287,7 +307,7 @@ impl Relay {
 
     async fn leave(&self, key: &[u8; 32], id: u64) {
         let mut clients = self.clients.lock().await;
-        if clients.get(key).is_some_and(|(i, _)| *i == id) {
+        if clients.get(key).is_some_and(|(i, _, _)| *i == id) {
             clients.remove(key);
         }
     }
@@ -519,6 +539,41 @@ mod tests {
         let (from, datagrams) = wire::parse_frame(&got).unwrap();
         assert_eq!(from, b);
         assert_eq!(datagrams, vec![&b"hello"[..]]);
+    }
+
+    /// A key in two pairs is reachable only on the pair it signed in on: C,
+    /// on its own pair with A, cannot reach A, who is on the A–B pair.
+    #[tokio::test]
+    async fn a_shared_key_is_reachable_only_on_its_own_pair() {
+        let (url, _stun, relay, _task) = spawn_local(Config::default()).await.unwrap();
+        let (ka, a) = keypair();
+        let (_kb, b) = keypair();
+        let (kc, c) = keypair();
+        let mut wa = sign_in(&format!("{url}/{}", wire::pair_name(&a, &b)), &ka, &a)
+            .await
+            .unwrap();
+        let mut wc = sign_in(&format!("{url}/{}", wire::pair_name(&a, &c)), &kc, &c)
+            .await
+            .unwrap();
+        wc.send(Message::Binary(wire::frame(&a, b"flood").into()))
+            .await
+            .unwrap();
+        assert!(
+            next_frame(&mut wa, Duration::from_millis(400))
+                .await
+                .is_none()
+        );
+        assert_eq!(relay.forwarded_bytes(), 0);
+    }
+
+    #[tokio::test]
+    async fn a_key_outside_the_pair_cannot_sign_in() {
+        let (url, _stun, _relay, _task) = spawn_local(Config::default()).await.unwrap();
+        let (_ka, a) = keypair();
+        let (_kb, b) = keypair();
+        let (kc, c) = keypair();
+        let ab = format!("{url}/{}", wire::pair_name(&a, &b));
+        assert!(sign_in(&ab, &kc, &c).await.is_none());
     }
 
     /// Pings do not keep a connection that carries no datagrams.

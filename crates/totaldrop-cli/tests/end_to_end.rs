@@ -359,8 +359,36 @@ async fn a_failed_code_counts_once() {
     b.expect("pake").await.unwrap();
     a.close(Mood::Scary).await;
     b.close(Mood::Scary).await;
-    tokio::time::sleep(Duration::from_millis(200)).await;
+    // Wait until both closes were handled, then check the count stays one.
+    let start = std::time::Instant::now();
+    while server.scary_count().await == 0 && start.elapsed() < Duration::from_secs(5) {
+        tokio::time::sleep(Duration::from_millis(20)).await;
+    }
+    tokio::time::sleep(Duration::from_millis(300)).await;
     assert_eq!(server.scary_count().await, 1);
+}
+
+/// A claimed connection keeps waiting past the claim deadline: senders
+/// wait for their receiver much longer than ten seconds.
+#[tokio::test(flavor = "multi_thread")]
+async fn a_claimed_connection_outlives_the_claim_deadline() {
+    let config = totaldrop_rendezvous::Config {
+        claim_timeout: Duration::from_millis(300),
+        ..Default::default()
+    };
+    let (addr, _server, _task) =
+        totaldrop_rendezvous::spawn("127.0.0.1:0".parse().unwrap(), config)
+            .await
+            .unwrap();
+    let url = format!("ws://{addr}");
+    let alloc = rendezvous::allocate(&url).await.unwrap();
+    let mut a = Mailbox::claim(&url, alloc.nameplate, Some(&alloc))
+        .await
+        .unwrap();
+    tokio::time::sleep(Duration::from_millis(900)).await;
+    let mut b = Mailbox::claim(&url, alloc.nameplate, None).await.unwrap();
+    a.add("pake", vec![1; 32]).await.unwrap();
+    assert_eq!(b.expect("pake").await.unwrap(), vec![1; 32]);
 }
 
 /// A connection that never claims is closed at the claim deadline, pings or
