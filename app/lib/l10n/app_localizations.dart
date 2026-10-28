@@ -263,7 +263,7 @@ abstract class AppLocalizations {
   /// No description provided for @itemsAndSize.
   ///
   /// In en, this message translates to:
-  /// **'{count, plural, =1{1 item} other{{count} items}} · {size}'**
+  /// **'{count, plural, one{{count} item} other{{count} items}} · {size}'**
   String itemsAndSize(int count, String size);
 
   /// No description provided for @receiveTitle.
@@ -323,7 +323,7 @@ abstract class AppLocalizations {
   /// No description provided for @receiveOfferSummary.
   ///
   /// In en, this message translates to:
-  /// **'{files, plural, =1{1 file} other{{files} files}} · {size}'**
+  /// **'{files, plural, one{{files} file} other{{files} files}} · {size}'**
   String receiveOfferSummary(int files, String size);
 
   /// No description provided for @receiveAndMore.
@@ -553,6 +553,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Version {version}'**
   String settingsVersion(String version);
+
+  /// A size in bytes. value is already formatted for the region
+  ///
+  /// In en, this message translates to:
+  /// **'{value} B'**
+  String sizeBytes(String value);
+
+  /// Kilobytes (1000 bytes)
+  ///
+  /// In en, this message translates to:
+  /// **'{value} kB'**
+  String sizeKB(String value);
+
+  /// Megabytes
+  ///
+  /// In en, this message translates to:
+  /// **'{value} MB'**
+  String sizeMB(String value);
+
+  /// Gigabytes
+  ///
+  /// In en, this message translates to:
+  /// **'{value} GB'**
+  String sizeGB(String value);
+
+  /// Terabytes
+  ///
+  /// In en, this message translates to:
+  /// **'{value} TB'**
+  String sizeTB(String value);
+
+  /// Petabytes
+  ///
+  /// In en, this message translates to:
+  /// **'{value} PB'**
+  String sizePB(String value);
+
+  /// Shown in Settings when some of the text in this language is an unreviewed draft
+  ///
+  /// In en, this message translates to:
+  /// **'This translation is being reviewed. Help improve it on Weblate.'**
+  String get draftTranslation;
 }
 
 class _AppLocalizationsDelegate

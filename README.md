@@ -75,7 +75,9 @@ You can also help by [reporting bugs](https://github.com/totaldrop-app/totaldrop
 | `crates/totaldrop-crypto` | Suite TD0: CPace, key derivation, mailbox and session encryption, device keys, STREAM chunk encryption | MIT OR Apache-2.0 |
 | `crates/totaldrop-proto` | Transfer codes, limits, path safety, every wire message (CBOR) | MIT OR Apache-2.0 |
 | `crates/totaldrop-core` | Client engine: rendezvous, QUIC with raw public keys, Noise XXpsk3 + ML-KEM-768, transfer | MIT OR Apache-2.0 |
+| `crates/totaldrop-l10n` | Interface text for the Rust programs: language negotiation, ICU messages, plurals, regional numbers | MIT OR Apache-2.0 |
 | `crates/totaldrop-cli` | The `totaldrop` command-line client | GPL-3.0-or-later |
+| `l10n/` | Every interface string, shared by Android, Linux and the CLI ([translating](docs/ceviri.md)) | GPL-3.0-or-later |
 | `linux/` | Linux desktop app: Qt 6 and QML over `totaldrop-core`, native Wayland | GPL-3.0-or-later |
 | `packaging/` | Linux packages, each format on its own: Arch (`PKGBUILD`), Debian (`debian/`), RPM (`.spec`) | GPL-3.0-or-later |
 | `app/` | Android app (Flutter); iOS later | GPL-3.0-or-later |

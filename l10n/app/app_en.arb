@@ -32,7 +32,7 @@
   "@sendDoneBody": {"placeholders": {"count": {"type": "int"}}},
   "sendSomeFailed": "{count, plural, =1{One file did not arrive intact and was discarded.} other{{count} files did not arrive intact and were discarded.}}",
   "@sendSomeFailed": {"placeholders": {"count": {"type": "int"}}},
-  "itemsAndSize": "{count, plural, =1{1 item} other{{count} items}} · {size}",
+  "itemsAndSize": "{count, plural, one{{count} item} other{{count} items}} · {size}",
   "@itemsAndSize": {"placeholders": {"count": {"type": "int"}, "size": {"type": "String"}}},
 
   "receiveTitle": "Receive files",
@@ -44,7 +44,7 @@
   "receiveConnect": "Connect",
   "receiveConnecting": "Connecting securely…",
   "receiveOffer": "Incoming files",
-  "receiveOfferSummary": "{files, plural, =1{1 file} other{{files} files}} · {size}",
+  "receiveOfferSummary": "{files, plural, one{{files} file} other{{files} files}} · {size}",
   "@receiveOfferSummary": {"placeholders": {"files": {"type": "int"}, "size": {"type": "String"}}},
   "receiveAndMore": "and {count} more",
   "@receiveAndMore": {"placeholders": {"count": {"type": "int"}}},
@@ -89,5 +89,20 @@
   "settingsPrivacy": "Privacy",
   "settingsPrivacyBody": "The rendezvous server sees your IP address and when you connect, but no file names, contents or keys. It keeps no logs. Files go directly between the two devices, encrypted end to end.",
   "settingsVersion": "Version {version}",
-  "@settingsVersion": {"placeholders": {"version": {"type": "String"}}}
+  "@settingsVersion": {"placeholders": {"version": {"type": "String"}}},
+
+  "sizeBytes": "{value} B",
+  "@sizeBytes": {"description": "A size in bytes. value is already formatted for the region", "placeholders": {"value": {"type": "String", "example": "512"}}},
+  "sizeKB": "{value} kB",
+  "@sizeKB": {"description": "Kilobytes (1000 bytes)", "placeholders": {"value": {"type": "String", "example": "1.5"}}},
+  "sizeMB": "{value} MB",
+  "@sizeMB": {"description": "Megabytes", "placeholders": {"value": {"type": "String", "example": "1.5"}}},
+  "sizeGB": "{value} GB",
+  "@sizeGB": {"description": "Gigabytes", "placeholders": {"value": {"type": "String", "example": "1.5"}}},
+  "sizeTB": "{value} TB",
+  "@sizeTB": {"description": "Terabytes", "placeholders": {"value": {"type": "String", "example": "1.5"}}},
+  "sizePB": "{value} PB",
+  "@sizePB": {"description": "Petabytes", "placeholders": {"value": {"type": "String", "example": "1.5"}}},
+  "draftTranslation": "This translation is being reviewed. Help improve it on Weblate.",
+  "@draftTranslation": {"description": "Shown in Settings when some of the text in this language is an unreviewed draft"}
 }

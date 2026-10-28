@@ -1,0 +1,22 @@
+{
+  "@@locale": "tr",
+  "cliPreparing": "Hazırlanıyor…",
+  "cliWaiting": "Alıcı bekleniyor…",
+  "cliConnecting": "Bağlanılıyor…",
+  "cliConnected": "Bağlandı, uçtan uca şifreli.",
+  "cliVerification": "Doğrulama kelimeleri: {words}",
+  "cliProgress": "%{percent}  {done} / {total}",
+  "cliSkipping": "{count, plural, other{{count} sembolik bağlantı ya da özel dosya atlanıyor.}}",
+  "cliSending": "{count, plural, other{{count} öğe gönderiliyor, {size}.}}",
+  "cliRunThis": "Diğer cihazda şunu çalıştırın:",
+  "cliSendDone": "{count, plural, other{Bitti: {count} dosya gönderildi ve doğrulandı.}}",
+  "cliSendSomeFailed": "{count, plural, other{Bitti, ama {count} dosya sağlam ulaşmadı ve atıldı.}}",
+  "cliOffered": "Teklif: {files} dosya, {dirs} klasör, toplam {size}:",
+  "cliAndMore": "… ve {count} tane daha",
+  "cliPromptSave": "{folder} klasörüne kaydedilsin mi? [e/H] ",
+  "cliYes": "e|evet",
+  "cliDeclined": "Reddedildi.",
+  "cliSaved": "Kaydedildi: {name}",
+  "cliReceiveSomeFailed": "{count, plural, other{{count} dosya sağlam ulaşmadı ve atıldı.}}",
+  "cliRelayOnlyNeedsRelay": "--relay-only için bir aktarma sunucusu gerekir"
+}

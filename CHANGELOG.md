@@ -7,6 +7,18 @@ All notable changes to TotalDrop are recorded here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- **Command line:** Speaks the system's language (`LANGUAGE`, `LC_ALL`,
+  `LC_MESSAGES`, `LANG`) and writes numbers and sizes in the region's format
+  (`LC_NUMERIC`), for example "1,5 MB". English and Turkish today; more
+  languages follow. Right-to-left languages stay English in the terminal.
+- **Command line:** File names from the other side show hidden direction
+  and control characters as `<U+202E>`, so a name cannot disguise its
+  extension.
+- **Core:** `totaldrop-l10n`, the shared interface text for the Rust
+  programs: all strings live in `l10n/`, one source with Android.
+
 ### Fixed
 
 - **Site:** The privacy policy (version 3) now says that the apps connect
