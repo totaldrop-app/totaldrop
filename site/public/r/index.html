@@ -31,7 +31,7 @@
       <a href="https://totaldrop.app/#how" data-i18n="nav.how">How it works</a>
       <a href="https://totaldrop.app/#security" data-i18n="nav.security">Security</a>
       <a href="https://download.totaldrop.app/" data-i18n="nav.download">Download</a>
-      <button class="lang" type="button" id="lang-toggle" lang="tr" aria-label="Türkçe">TR</button>
+      <select class="lang" id="lang-select" aria-label="Language / Dil" hidden></select>
     </nav>
   </header>
 
@@ -42,7 +42,7 @@
       <div id="r-has-code" hidden>
         <div class="code-card">
           <p class="code-label" data-i18n="r.code">Transfer code</p>
-          <p class="code" id="r-code" lang="en"></p>
+          <p class="code" id="r-code" lang="en" dir="ltr"></p>
         </div>
         <p class="lede" data-i18n="r.lede">Open TotalDrop on this device; the code is filled in for you. On another device, choose Receive and type the code.</p>
         <div class="actions">
