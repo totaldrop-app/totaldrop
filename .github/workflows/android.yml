@@ -1,10 +1,12 @@
-# Android app: analysis and tests on every change to it. Signed release
-# builds are made from an `android-v*` tag once release signing lives in CI.
+# Android app: analysis and tests on every change to it, and the signed
+# Play bundle from an `android-v*` tag. Only bundles built here are uploaded
+# to Google Play.
 name: Android
 
 on:
   push:
     branches: [main]
+    tags: ["android-v*"]
     paths: &paths
       - "app/**"
       - "crates/totaldrop-core/**"
@@ -62,5 +64,79 @@ jobs:
         run: rustup show active-toolchain || rustup toolchain install
       - run: flutter pub get
       - run: flutter build apk --debug --target-platform android-arm64
+
+  release:
+    name: Signed Play bundle
+    if: startsWith(github.ref, 'refs/tags/android-v')
+    needs: check
+    runs-on: ubuntu-latest
+    environment: play-release
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - name: Rust toolchain and Android targets
+        working-directory: .
+        run: rustup show active-toolchain || rustup toolchain install
+      - name: Version matches the tag
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          want="${TAG#android-v}"
+          have=$(sed -n 's/^version: \([^+]*\)+.*/\1/p' pubspec.yaml)
+          [ "$want" = "$have" ] || { echo "tag $want, pubspec $have"; exit 1; }
+      # The upload key lives only in this environment's secrets. Without
+      # it Gradle would quietly sign with the debug key, so stop instead.
+      - name: Upload key
+        env:
+          KEYSTORE: ${{ secrets.ANDROID_UPLOAD_KEYSTORE }}
+          PASSWORD: ${{ secrets.ANDROID_UPLOAD_PASSWORD }}
+        run: |
+          [ -n "$KEYSTORE" ] && [ -n "$PASSWORD" ] || { echo "upload key secrets missing"; exit 1; }
+          umask 077
+          echo "$KEYSTORE" | base64 -d > "$RUNNER_TEMP/upload.jks"
+          printf 'storeFile=%s\nstorePassword=%s\nkeyAlias=upload\nkeyPassword=%s\n' \
+            "$RUNNER_TEMP/upload.jks" "$PASSWORD" "$PASSWORD" > android/key.properties
+      - run: flutter pub get
+      - run: flutter build appbundle --release
+      - name: Signed with the upload key
+        env:
+          # SHA-256 of the upload certificate registered with Google Play.
+          EXPECTED: "42:65:75:4D:25:74:3A:5A:EA:AC:CA:92:4F:03:6A:DB:F3:77:9E:95:FB:6A:B9:87:17:50:59:3C:9C:7F:B0:FB"
+        run: |
+          got=$(keytool -printcert -jarfile build/app/outputs/bundle/release/app-release.aab | sed -n 's/^\s*SHA256: //p' | head -1)
+          [ "$got" = "$EXPECTED" ] || { echo "signed with $got"; exit 1; }
+      - name: Name the bundle
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          mkdir -p ../dist
+          cp build/app/outputs/bundle/release/app-release.aab "../dist/TotalDrop-${TAG#android-v}.aab"
+          (cd ../dist && sha256sum *.aab > SHA256SUMS)
+      - name: Remove the key
+        if: always()
+        run: rm -f android/key.properties "$RUNNER_TEMP/upload.jks"
+      - uses: actions/attest-build-provenance@v4
+        with:
+          subject-path: dist/*.aab
+      - uses: actions/upload-artifact@v7
+        with:
+          name: play-bundle
+          path: dist/
+          retention-days: 30
 
 # Before the first public release, pin every action above to a full commit SHA.

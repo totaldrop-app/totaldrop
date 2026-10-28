@@ -7,6 +7,13 @@ All notable changes to TotalDrop are recorded here. The format follows
 
 ## [Unreleased]
 
+### Security
+
+- **Build:** Linux packages and the Android Play bundle are built only in
+  CI from a release tag, and carry signed build provenance, so anyone can
+  check that a file came from this repository. Verify with
+  `gh attestation verify <file> --repo totaldrop-app/totaldrop`.
+
 ## [android-0.1.0-beta.5] and [linux-0.1.0-beta.4] - 2026-10-28
 
 ### Added

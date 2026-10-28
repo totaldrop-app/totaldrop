@@ -69,14 +69,12 @@ TotalDrop [Semantic Versioning 2.0](https://semver.org/) kullanır.
 
 ## Yayın yapmak
 
-1. O platformun sürümünü yukarıdaki dosyada artırın (Android'de derleme
-   numarasını da). Linux için paket tariflerindeki sürümü de güncelleyin:
-   `packaging/arch/PKGBUILD`, `packaging/debian/changelog`,
-   `packaging/rpm/totaldrop.spec`, `packaging/linux/*.metainfo.xml`.
-2. "Unreleased" altındaki o platforma ait girdileri yeni sürüme ve tarihe
-   taşıyın.
-3. `chore(release): linux-v0.1.0-beta.2` gibi commit'leyin, etiketleyin,
-   gönderin.
-4. CI o platformun paketlerini etiketten derler ve taslak bir yayın açar.
-   CI yayın derlemeleri olduktan sonra kişisel bir makinede derlenen hiçbir
-   şey yayınlanmaz.
+Adım adım sürüm listesi [surec.md](surec.md#sürüm-listesi) içindedir. Kısaca:
+sürüm ve paket tarifleri artırılır, CHANGELOG girdileri sürüm başlığına
+taşınır, sürüm PR'ı incelenip birleştirilir, `main`'deki commit'e etiket
+atılır. CI paketleri etiketten derler, derleme kaynağı kanıtı ekler ve taslak
+bir yayın açar. Kişisel bir makinede derlenen hiçbir şey yayınlanmaz.
+
+Android'de imzalı Play paketi `android-v*` etiketinden, yalnızca
+`play-release` ortamının gizli değerlerindeki yükleme anahtarıyla derlenir;
+paket GitHub Actions çıktısı olarak indirilir ve Play Console'a yüklenir.
