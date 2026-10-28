@@ -1,6 +1,6 @@
 //! `totaldrop`: the command-line client.
 
-use std::io::Write as _;
+use std::io::{IsTerminal as _, Write as _};
 use std::path::PathBuf;
 use std::process::ExitCode;
 use std::sync::Arc;
@@ -12,6 +12,7 @@ use totaldrop_core::{
 };
 use totaldrop_l10n::{Arg, Domain, Strings, reveal_controls as visible};
 use totaldrop_proto::TransferCode;
+use unicode_normalization::UnicodeNormalization as _;
 
 #[derive(Parser)]
 #[command(
@@ -94,7 +95,14 @@ fn printer(s: Arc<Strings>) -> Events {
                         ("total", Arg::Text(&total_s)),
                     ],
                 );
-                eprint!("\r{line:>3}");
+                // On a terminal, clear the rest of the line: a shorter
+                // translation must not leave old characters behind.
+                let clear = if std::io::stderr().is_terminal() {
+                    "\x1b[K"
+                } else {
+                    ""
+                };
+                eprint!("\r{line}{clear}");
                 let _ = std::io::stderr().flush();
                 if done >= total {
                     eprintln!();
@@ -124,11 +132,6 @@ async fn send(
     strong: bool,
 ) -> Result<(), totaldrop_core::Error> {
     eprintln!("{}", s.get("cliPreparing", &[]));
-    if paths.relay_only && paths.relay.is_empty() {
-        return Err(totaldrop_core::Error::Connect(
-            s.get("cliRelayOnlyNeedsRelay", &[]),
-        ));
-    }
     let opts = SendOptions {
         server,
         words: if strong { 3 } else { 2 },
@@ -245,17 +248,20 @@ async fn receive(
 /// translation's words (`cliYes`, separated by `|`). Case is folded without
 /// regard to language, so a Turkish `E` or `EVET` works on any system.
 fn is_yes(answer: &str, words: &str) -> bool {
-    let answer = answer
-        .trim()
-        .replace(['İ', 'I'], "i")
-        .replace('ı', "i")
-        .to_lowercase();
+    // Compatibility forms fold too: a full-width "ｙ" or a decomposed "sí".
+    let fold = |w: &str| -> String {
+        w.trim()
+            .nfkc()
+            .collect::<String>()
+            .replace(['İ', 'I'], "i")
+            .replace('ı', "i")
+            .to_lowercase()
+    };
+    let answer = fold(answer);
     ["y", "yes"]
         .into_iter()
-        .chain(words.split('|').map(str::trim))
-        .any(|w| {
-            !w.is_empty() && w.replace(['İ', 'I'], "i").replace('ı', "i").to_lowercase() == answer
-        })
+        .chain(words.split('|'))
+        .any(|w| !fold(w).is_empty() && fold(w) == answer)
 }
 
 fn main() -> ExitCode {
@@ -272,6 +278,10 @@ fn main() -> ExitCode {
         }
     };
     let route = paths(cli.relay, cli.stun, cli.relay_only);
+    if route.relay_only && route.relay.is_empty() {
+        eprintln!("totaldrop: {}", strings.get("cliRelayOnlyNeedsRelay", &[]));
+        return ExitCode::from(2);
+    }
     let result = match cli.command {
         Command::Code { code } => {
             return match TransferCode::parse(&code) {
@@ -315,5 +325,7 @@ mod tests {
         assert!(!is_yes("", "e|evet"));
         assert!(!is_yes("n", "e|evet"));
         assert!(!is_yes("hayır", "e|evet"));
+        assert!(is_yes("ｙ", ""));
+        assert!(is_yes("si\u{301}", "sí|s"));
     }
 }
