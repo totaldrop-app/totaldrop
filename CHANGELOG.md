@@ -22,6 +22,10 @@ All notable changes to TotalDrop are recorded here. The format follows
 
 ### Fixed
 
+- **Relay:** A device signing in no longer pushes back the sign-in
+  timeout of the other socket in the same pair, and a finished pair leaves
+  no alarm behind (#75).
+
 - **Site:** The privacy policy (version 3) now says that the apps connect
   to the relay at the start of every transfer, not only when no direct path
   works, as version 2 said, and that in privacy mode a receiver still uses

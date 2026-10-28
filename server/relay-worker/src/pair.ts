@@ -88,7 +88,7 @@ export class Pair extends DurableObject<Env> {
     const attachment: Attachment = { challenge: hex(challenge), key: null, since: Date.now() };
     server.serializeAttachment(attachment);
     server.send(new Uint8Array([...MAGIC, ...challenge]));
-    await this.ctx.storage.setAlarm(Date.now() + SIGN_IN_TIMEOUT);
+    await this.schedule();
     return new Response(null, { status: 101, webSocket: client });
   }
 
@@ -122,7 +122,7 @@ export class Pair extends DurableObject<Env> {
     ws.serializeAttachment(att);
     this.byKey.set(keyHex, ws);
     ws.send(OK);
-    await this.ctx.storage.setAlarm(att.since + SESSION_TIME);
+    await this.schedule();
   }
 
   /** The signed-in key of `ws`, from memory or its attachment. */
@@ -155,15 +155,16 @@ export class Pair extends DurableObject<Env> {
   }
 
   async webSocketClose(ws: WebSocket): Promise<void> {
-    this.end(ws);
+    await this.end(ws);
   }
 
   async webSocketError(ws: WebSocket): Promise<void> {
-    this.end(ws);
+    await this.end(ws);
   }
 
-  /** When one side leaves, the transfer is over: close the other too. */
-  private end(ws: WebSocket): void {
+  /** When one side leaves, the transfer is over: close the other too, and
+   * leave no alarm behind to wake an empty object. */
+  private async end(ws: WebSocket): Promise<void> {
     for (const o of this.ctx.getWebSockets()) {
       try {
         o.close(1000, o === ws ? "closed" : "peer left");
@@ -173,6 +174,24 @@ export class Pair extends DurableObject<Env> {
     }
     this.sent.clear();
     this.byKey.clear();
+    await this.ctx.storage.deleteAlarm();
+  }
+
+  /** When `ws` must have signed in, or must leave. */
+  private static deadline(att: Attachment): number {
+    return att.key === null ? att.since + SIGN_IN_TIMEOUT : att.since + SESSION_TIME;
+  }
+
+  /** Set the one alarm to the earliest deadline of any socket, so a sign-in
+   * does not push back the other socket's sign-in timeout. */
+  private async schedule(): Promise<void> {
+    let next = Infinity;
+    for (const ws of this.ctx.getWebSockets()) {
+      const att = ws.deserializeAttachment() as Attachment | null;
+      if (att) next = Math.min(next, Pair.deadline(att));
+    }
+    if (next === Infinity) await this.ctx.storage.deleteAlarm();
+    else await this.ctx.storage.setAlarm(next);
   }
 
   /** Close sockets that did not sign in in time, or outlived the session. */
@@ -182,7 +201,7 @@ export class Pair extends DurableObject<Env> {
     for (const ws of this.ctx.getWebSockets()) {
       const att = ws.deserializeAttachment() as Attachment | null;
       if (!att) continue;
-      const deadline = att.key === null ? att.since + SIGN_IN_TIMEOUT : att.since + SESSION_TIME;
+      const deadline = Pair.deadline(att);
       if (now >= deadline) {
         ws.close(1008, att.key === null ? "sign-in timeout" : "session over");
       } else {
