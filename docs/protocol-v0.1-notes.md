@@ -159,8 +159,9 @@ treated as final.
     - Address discovery is plain STUN (RFC 8489), Binding with
       XOR-MAPPED-ADDRESS, sent from the QUIC socket. The default server is
       `stun.cloudflare.com:3478`; the self-hosted relay answers STUN too.
-21. **Which relay.** The sender announces its relay in `HINTS` field 5;
-    both sides connect there. A receiver uses it only if it is `wss://` (or
+21. **Which relay.** Each side announces its relay in `HINTS` field 5.
+    The relay path runs over the sender's relay. A receiver uses it only if
+    it is `wss://` (or
     `ws://` on the same machine) and the same as the receiver's own relay
     setting (the case of scheme and host, a default port and a trailing `/`
     aside); otherwise the receiver tries direct paths only. When that

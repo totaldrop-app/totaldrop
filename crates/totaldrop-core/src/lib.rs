@@ -116,8 +116,9 @@ async fn own_hints(
 /// How a transfer may reach the other device.
 #[derive(Debug, Clone)]
 pub struct PathOptions {
-    /// Relay URL; empty for none. The sender's relay carries the transfer
-    /// when no direct path works.
+    /// Relay URL; empty for none. When no direct path works, the transfer
+    /// runs over the sender's relay, which a receiver uses only if it is
+    /// this same relay.
     pub relay: String,
     /// STUN server (`host:port`) that tells this device its public address;
     /// empty for none.
@@ -148,6 +149,13 @@ impl PathOptions {
 fn relay_identity(url: &str) -> Option<(String, String, u16, String)> {
     let uri: tokio_tungstenite::tungstenite::http::Uri = url.parse().ok()?;
     let scheme = uri.scheme_str()?.to_ascii_lowercase();
+    // A port that is written but not a valid number (`:65536`, `host:`)
+    // matches nothing, rather than falling back to the default.
+    let host_port = uri.authority()?.as_str().rsplit('@').next()?;
+    let written_port = host_port.rsplit(']').next()?.contains(':');
+    if written_port && uri.port_u16().is_none() {
+        return None;
+    }
     let port = match (uri.port_u16(), scheme.as_str()) {
         (Some(p), _) => p,
         (None, "wss") => 443,
@@ -189,16 +197,12 @@ fn receiver_relay<'a>(hints: &Hints, own: &'a PathOptions) -> Result<Option<&'a 
                 .is_some_and(|theirs| same_relay(theirs, mine))
     });
     if relay.is_none() {
-        if own.relay_only {
-            return Err(Error::Connect(if own.relay_url().is_none() {
-                "privacy mode needs a relay".into()
-            } else {
-                "privacy mode: the sender uses a different relay".into()
-            }));
+        if own.relay_only && own.relay_url().is_none() {
+            return Err(Error::Connect("privacy mode needs a relay".into()));
         }
-        if peer_addresses(hints).is_empty() {
+        if own.relay_only || peer_addresses(hints).is_empty() {
             return Err(Error::Connect(
-                "the sender uses only a relay, and a different one from this device's".into(),
+                "no usable path: the transfer needs a relay both devices use".into(),
             ));
         }
     }
@@ -210,13 +214,13 @@ fn receiver_relay<'a>(hints: &Hints, own: &'a PathOptions) -> Result<Option<&'a 
 /// stops at once in that case; the sender says why instead of timing out.
 fn sender_check(receiver: &Hints, own: &PathOptions) -> Result<()> {
     let same = match (own.relay_url(), receiver.relay.as_deref()) {
-        (Some(mine), Some(theirs)) => same_relay(mine, theirs),
+        (Some(mine), Some(theirs)) => relay::check_url(mine).is_ok() && same_relay(mine, theirs),
         _ => false,
     };
     let no_direct = own.relay_only || peer_addresses(receiver).is_empty();
     if !same && no_direct {
         return Err(Error::Connect(
-            "the receiver uses a different relay, and no direct path is possible".into(),
+            "no usable path: the transfer needs a relay both devices use".into(),
         ));
     }
     Ok(())
@@ -409,8 +413,8 @@ pub struct ReceiveOptions {
     /// Rendezvous server URL.
     pub server: String,
     /// Relay and privacy settings. The sender's relay is used only when it
-    /// is also the relay set here (scheme and host case and the default
-    /// port aside).
+    /// is also the relay set here (the case of scheme and host, a default
+    /// port and a trailing `/` aside).
     pub paths: PathOptions,
 }
 
@@ -575,7 +579,10 @@ mod tests {
         }
         let own_slash = options("wss://relay.totaldrop.app/v0/relay/", true);
         let h = hints(Some(relay::DEFAULT_RELAY));
-        assert!(receiver_relay(&h, &own_slash).unwrap().is_some());
+        assert_eq!(
+            receiver_relay(&h, &own_slash).unwrap(),
+            Some("wss://relay.totaldrop.app/v0/relay/")
+        );
     }
 
     /// A sender that names a relay of its own does not get the receiver to
@@ -588,20 +595,22 @@ mod tests {
             "wss://relay.totaldrop.app:8443/v0/relay",
             "wss://relay.totaldrop.app/v0/other",
             "wss://relay.totaldrop.app@relay.example.org/v0/relay",
+            "wss://relay.totaldrop.app:65536/v0/relay",
+            "wss://relay.totaldrop.app:/v0/relay",
         ] {
             let h = with_address(hints(Some(theirs)));
             assert_eq!(receiver_relay(&h, &own).unwrap(), None, "{theirs}");
         }
         let h = with_address(hints(Some("wss://relay.example.org/v0/relay")));
         let err = receiver_relay(&h, &options(relay::DEFAULT_RELAY, true)).unwrap_err();
-        assert!(err.to_string().contains("different relay"));
+        assert!(err.to_string().contains("no usable path"));
     }
 
     #[test]
     fn no_path_at_all_fails_at_once() {
         let h = hints(Some("wss://relay.example.org/v0/relay"));
         let err = receiver_relay(&h, &options(relay::DEFAULT_RELAY, false)).unwrap_err();
-        assert!(err.to_string().contains("different one"));
+        assert!(err.to_string().contains("no usable path"));
     }
 
     #[test]
@@ -636,5 +645,19 @@ mod tests {
         assert!(sender_check(&hints(Some(other)), &normal).is_err());
         assert!(sender_check(&with_address(hints(Some(other))), &normal).is_ok());
         assert!(sender_check(&hints(Some(relay::DEFAULT_RELAY)), &private).is_ok());
+        // A sender with no relay: fine with a normal receiver, not with a
+        // receiver in privacy mode.
+        let none = options("", false);
+        assert!(sender_check(&with_address(hints(Some(relay::DEFAULT_RELAY))), &none).is_ok());
+        assert!(sender_check(&hints(Some(relay::DEFAULT_RELAY)), &none).is_err());
+        // Both on the same relay, but one this side may not use.
+        let unsafe_relay = options("ws://relay.example.org/v0/relay", true);
+        assert!(
+            sender_check(
+                &hints(Some("ws://relay.example.org/v0/relay")),
+                &unsafe_relay
+            )
+            .is_err()
+        );
     }
 }
