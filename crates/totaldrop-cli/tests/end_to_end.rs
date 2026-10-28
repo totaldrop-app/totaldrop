@@ -413,15 +413,11 @@ async fn relay_only_transfer_goes_through_the_relay() {
         stun: String::new(),
         relay_only: true,
     };
-    // The receiver needs no relay of its own: it uses the sender's.
+    // The receiver uses the sender's relay because it is also its own.
     let (sent, received) = transfer_with(
         &server,
+        only.clone(),
         only,
-        PathOptions {
-            relay: String::new(),
-            stun: String::new(),
-            relay_only: true,
-        },
         vec![src.join("film.bin")],
         &dest,
     )
@@ -471,4 +467,57 @@ async fn a_direct_path_wins_over_the_relay() {
     }
     std::fs::remove_dir_all(src).unwrap();
     std::fs::remove_dir_all(dest).unwrap();
+}
+
+/// A receiver in privacy mode never contacts a relay only the sender chose,
+/// and says why at once (#68).
+#[tokio::test(flavor = "multi_thread")]
+async fn receiver_never_contacts_a_relay_only_the_sender_chose() {
+    let server = server().await;
+    let (senders_url, _, senders, _senders_task) = totaldrop_relay::spawn_local(Default::default())
+        .await
+        .unwrap();
+    let (receivers_url, _, receivers, _receivers_task) =
+        totaldrop_relay::spawn_local(Default::default())
+            .await
+            .unwrap();
+    let src = scratch("src");
+    std::fs::write(src.join("note.txt"), b"hello").unwrap();
+    let prepared = PreparedSend::new(
+        &SendOptions {
+            server: server.clone(),
+            words: 2,
+            paths: PathOptions {
+                relay: senders_url,
+                stun: String::new(),
+                relay_only: true,
+            },
+        },
+        vec![src.join("note.txt")],
+    )
+    .await
+    .unwrap();
+    let code = prepared.code().to_string();
+    let sender = tokio::spawn(prepared.run(no_events()));
+    let started = std::time::Instant::now();
+    let offer = IncomingOffer::connect(
+        &ReceiveOptions {
+            server,
+            paths: PathOptions {
+                relay: receivers_url,
+                stun: String::new(),
+                relay_only: true,
+            },
+        },
+        &code,
+    )
+    .await;
+    assert!(matches!(offer, Err(Error::Connect(_))));
+    assert!(started.elapsed() < Duration::from_secs(10));
+    // The sender sees the mismatch in the receiver's HINTS and stops too.
+    assert!(sender.await.unwrap().is_err());
+    // Neither side's relay heard of the transfer.
+    assert_eq!(senders.connections_accepted(), 0);
+    assert_eq!(receivers.connections_accepted(), 0);
+    std::fs::remove_dir_all(src).unwrap();
 }
