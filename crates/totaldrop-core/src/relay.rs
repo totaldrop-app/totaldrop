@@ -72,7 +72,6 @@ pub async fn discover(socket: &UdpSocket, server: &str) -> Option<SocketAddr> {
     None
 }
 
-/// Ends the relay link when dropped.
 /// Holds a relay link back until a connection attempt needs the relay, so
 /// that a transfer a direct path carries never contacts the relay at all.
 #[derive(Debug, Clone, Default)]

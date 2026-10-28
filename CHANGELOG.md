@@ -44,6 +44,10 @@ All notable changes to TotalDrop are recorded here. The format follows
   or at once in privacy mode. A transfer a direct path carries no longer
   reaches the relay at all, so the relay no longer sees the IP addresses of
   devices it does not carry (#63).
+  a device has no direct connection 1.2 seconds after pairing, or at once
+  in privacy mode. A transfer whose direct path is up within that time no
+  longer reaches the relay at all; when a direct path comes up later and
+  wins, the relay connection is closed as soon as it is chosen (#63).
 - **Site:** The privacy policy (version 3) now says that the apps connect
   to the relay at the start of every transfer, not only when no direct path
   works, as version 2 said, and that in privacy mode a receiver still uses
