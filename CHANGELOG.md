@@ -58,6 +58,10 @@ All notable changes to TotalDrop are recorded here. The format follows
   `--relay` turns the relay off when receiving too. When different relays
   leave no path (or in privacy mode), both sides stop at once with an
   error that says so, instead of timing out (#68).
+  leave no path (or in privacy mode), the receiver stops at once with an
+  error that says so, and so does the sender when it can tell, instead of
+  timing out. A sender with this version no longer pairs with an older
+  receiver that would have used a relay it does not use itself (#68).
 - **Site:** The privacy policy (version 3) now says that the apps connect
   to the relay at the start of every transfer, not only when no direct path
   works, as version 2 said, and that in privacy mode a receiver still uses
