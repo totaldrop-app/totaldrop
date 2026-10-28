@@ -6,8 +6,12 @@
 	# Caddy's access log is off unless configured; keep it that way.
 }
 
-relay.totaldrop.app {
-	handle /v0/relay {
+# install.sh replaces RELAY_HOST with the server's name.
+RELAY_HOST {
+	# Clients dial /v0/relay/<key A>-<key B>; Caddy paths match exactly
+	# unless they end in *.
+	@relay path /v0/relay /v0/relay/*
+	handle @relay {
 		reverse_proxy 127.0.0.1:4100
 	}
 	handle {
