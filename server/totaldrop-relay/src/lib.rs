@@ -72,6 +72,7 @@ type Clients = HashMap<[u8; 32], (u64, Outbox)>;
 pub struct Relay {
     clients: Arc<Mutex<Clients>>,
     next: Arc<std::sync::atomic::AtomicU64>,
+    accepted: Arc<std::sync::atomic::AtomicU64>,
     forwarded: Arc<std::sync::atomic::AtomicU64>,
     slots: Arc<Semaphore>,
     config: Arc<Config>,
@@ -83,6 +84,7 @@ impl Relay {
         Self {
             clients: Arc::default(),
             next: Arc::default(),
+            accepted: Arc::default(),
             forwarded: Arc::default(),
             slots: Arc::new(Semaphore::new(config.max_clients)),
             config: Arc::new(config),
@@ -92,6 +94,11 @@ impl Relay {
     /// Devices signed in right now, for tests and health checks.
     pub async fn client_count(&self) -> usize {
         self.clients.lock().await.len()
+    }
+
+    /// TCP connections accepted since start: one total, for tests.
+    pub fn connections_accepted(&self) -> u64 {
+        self.accepted.load(std::sync::atomic::Ordering::Relaxed)
     }
 
     /// Bytes of datagrams forwarded since start: one total, nothing per
@@ -119,6 +126,8 @@ impl Relay {
             let Ok((stream, _addr)) = listener.accept().await else {
                 continue;
             };
+            self.accepted
+                .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
             let Ok(permit) = self.slots.clone().try_acquire_owned() else {
                 // Over capacity: drop the connection without reading it.
                 drop(stream);
