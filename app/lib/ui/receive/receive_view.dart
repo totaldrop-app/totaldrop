@@ -138,6 +138,8 @@ class _Entering extends StatelessWidget {
         TextField(
           controller: controller,
           autofocus: true,
+          // The code is English words, left to right in every language.
+          textDirection: TextDirection.ltr,
           autocorrect: false,
           enableSuggestions: false,
           keyboardType: TextInputType.visiblePassword,
@@ -323,7 +325,11 @@ class _Done extends StatelessWidget {
           for (final p in s.saved)
             ListTile(
               leading: Icon(Icons.check, color: theme.colorScheme.onSurfaceVariant),
-              title: Text(p.split('/').last, maxLines: 1, overflow: TextOverflow.ellipsis),
+              title: Text(
+                revealControls(p.split('/').last),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
         Gap.l,
         FilledButton(

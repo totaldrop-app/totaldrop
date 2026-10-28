@@ -37,11 +37,27 @@ bool hasDraftTranslation(BuildContext context) =>
 /// shown, not obeyed.
 String revealControls(String name) => rust.revealControls(name: name);
 
+/// The locale for numbers: the device's region (its first locale, so a
+/// device set to en-DE writes "1,5 MB"), or the app language when intl
+/// does not know the device's locale.
+String _numberLocale(AppLocalizations l) {
+  final device = WidgetsBinding.instance.platformDispatcher.locale.toLanguageTag();
+  for (final candidate in [device, l.localeName]) {
+    try {
+      intl.NumberFormat.decimalPattern(candidate);
+      return candidate;
+    } catch (_) {
+      // Not a locale intl has data for: try the next one.
+    }
+  }
+  return 'en';
+}
+
 /// "1.5 MB" in the region's format: one decimal below 10 of a unit, whole
 /// numbers above, the next unit once the rounded value reaches 1000. The
-/// same rules as the Rust programs.
-String formatBytes(AppLocalizations l, int bytes) {
-  final locale = l.localeName;
+/// same rules as the Rust programs. `numberLocale` is for tests.
+String formatBytes(AppLocalizations l, int bytes, {String? numberLocale}) {
+  final locale = numberLocale ?? _numberLocale(l);
   if (bytes < 1000) {
     return l.sizeBytes(intl.NumberFormat.decimalPattern(locale).format(bytes));
   }

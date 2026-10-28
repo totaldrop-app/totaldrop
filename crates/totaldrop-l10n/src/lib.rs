@@ -185,6 +185,30 @@ pub fn is_draft(tag: &str, key: &str) -> bool {
     status().is_draft(tag, key)
 }
 
+/// Whether an app that formats messages itself (Android) must show `key`
+/// in English for language `tag`: the layer the text would come from (the
+/// language or the first fallback that has the key, as generated classes
+/// inherit) holds an unreviewed draft of a safety-critical string.
+#[must_use]
+pub fn needs_english(tag: &str, key: &str) -> bool {
+    if !is_critical(key) {
+        return false;
+    }
+    for t in layer_tags(tag) {
+        if t == TEMPLATE {
+            return false;
+        }
+        let has = catalog()
+            .files
+            .iter()
+            .any(|f| f.domain == "app" && f.locale == t && f.messages.contains_key(key));
+        if has {
+            return status().is_draft(&t, key);
+        }
+    }
+    false
+}
+
 /// Whether any text in language `tag`, or in a language it falls back to,
 /// is an unreviewed draft.
 #[must_use]
@@ -748,6 +772,14 @@ mod tests {
         assert!(status.is_draft("pt-PT", "newKey"));
         assert!(!status.is_draft("en", "anything"));
         assert!(status.is_draft("xx", "anything"));
+    }
+
+    #[test]
+    fn needs_english_follows_the_layer_the_text_comes_from() {
+        assert!(!needs_english("tr", "verificationTitle"));
+        assert!(!needs_english("en", "verificationTitle"));
+        assert!(!needs_english("xx", "verificationTitle"));
+        assert!(!needs_english("tr", "settings"));
     }
 
     #[test]

@@ -116,7 +116,12 @@ class ErrorPanel extends StatelessWidget {
             children: [
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                child: SelectableText(error.detail, style: theme.textTheme.bodySmall),
+                // May hold the other side's cancel reason: hidden
+                // characters are shown, not obeyed.
+                child: SelectableText(
+                  revealControls(error.detail),
+                  style: theme.textTheme.bodySmall,
+                ),
               ),
             ],
           ),

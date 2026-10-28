@@ -6,20 +6,25 @@ import 'package:totaldrop/ui/core/l10n.dart';
 // Sizes must read the same as in the Rust programs (totaldrop-l10n's
 // `sizes` test); plurals and counts follow Flutter's generated code.
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   final en = lookupAppLocalizations(const Locale('en'));
   final tr = lookupAppLocalizations(const Locale('tr'));
 
   test('sizes match the Rust programs', () {
-    expect(formatBytes(en, 0), '0 B');
-    expect(formatBytes(en, 999), '999 B');
-    expect(formatBytes(en, 1000), '1.0 kB');
-    expect(formatBytes(en, 1549999), '1.5 MB');
-    expect(formatBytes(en, 9960000), '10 MB');
-    expect(formatBytes(en, 12450000), '12 MB');
-    expect(formatBytes(en, 12500000), '13 MB');
-    expect(formatBytes(en, 999950), '1.0 MB');
-    expect(formatBytes(en, 999999999), '1.0 GB');
-    expect(formatBytes(tr, 1500000), '1,5 MB');
+    expect(formatBytes(en, 0, numberLocale: 'en'), '0 B');
+    expect(formatBytes(en, 999, numberLocale: 'en'), '999 B');
+    expect(formatBytes(en, 1000, numberLocale: 'en'), '1.0 kB');
+    expect(formatBytes(en, 1549999, numberLocale: 'en'), '1.5 MB');
+    expect(formatBytes(en, 9960000, numberLocale: 'en'), '10 MB');
+    expect(formatBytes(en, 12450000, numberLocale: 'en'), '12 MB');
+    expect(formatBytes(en, 12500000, numberLocale: 'en'), '13 MB');
+    expect(formatBytes(en, 999950, numberLocale: 'en'), '1.0 MB');
+    expect(formatBytes(en, 999999999, numberLocale: 'en'), '1.0 GB');
+    expect(formatBytes(tr, 1500000, numberLocale: 'tr'), '1,5 MB');
+    expect(formatBytes(en, 1500000, numberLocale: 'de'), '1,5 MB');
+    expect(formatBytes(en, 999499, numberLocale: 'en'), '999 kB');
+    expect(formatBytes(en, 12345678, numberLocale: 'en'), '12 MB');
+    expect(formatBytes(en, 9223372036854775807, numberLocale: 'en'), '9,223 PB');
   });
 
   test('counts are grouped and plurals follow the language', () {
