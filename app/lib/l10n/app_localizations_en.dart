@@ -118,7 +118,7 @@ class AppLocalizationsEn extends AppLocalizations {
       count,
       locale: localeName,
       other: '$count items',
-      one: '1 item',
+      one: '$count item',
     );
     return '$_temp0 · $size';
   }
@@ -157,7 +157,7 @@ class AppLocalizationsEn extends AppLocalizations {
       files,
       locale: localeName,
       other: '$files files',
-      one: '1 file',
+      one: '$files file',
     );
     return '$_temp0 · $size';
   }
@@ -292,4 +292,38 @@ class AppLocalizationsEn extends AppLocalizations {
   String settingsVersion(String version) {
     return 'Version $version';
   }
+
+  @override
+  String sizeBytes(String value) {
+    return '$value B';
+  }
+
+  @override
+  String sizeKB(String value) {
+    return '$value kB';
+  }
+
+  @override
+  String sizeMB(String value) {
+    return '$value MB';
+  }
+
+  @override
+  String sizeGB(String value) {
+    return '$value GB';
+  }
+
+  @override
+  String sizeTB(String value) {
+    return '$value TB';
+  }
+
+  @override
+  String sizePB(String value) {
+    return '$value PB';
+  }
+
+  @override
+  String get draftTranslation =>
+      'This translation is being reviewed. Help improve it on Weblate.';
 }

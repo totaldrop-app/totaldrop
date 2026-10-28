@@ -1,0 +1,28 @@
+{
+  "about": "Shared test vectors for every message formatter (Rust in crates/totaldrop-l10n, the site in site/public). Each case formats `message` with `args` in `locale` and must give `expect`. Numbers in args are counts; strings are text.",
+  "cases": [
+    {"locale": "en", "message": "Plain text, with an apostrophe: it's fine", "args": {}, "expect": "Plain text, with an apostrophe: it's fine"},
+    {"locale": "fr", "message": "L'envoi n'a pas abouti", "args": {}, "expect": "L'envoi n'a pas abouti"},
+    {"locale": "en", "message": "Code: {code}", "args": {"code": "7-harbor-rocket"}, "expect": "Code: 7-harbor-rocket"},
+    {"locale": "en", "message": "Code: {code}", "args": {}, "expect": "Code: {code}"},
+    {"locale": "en", "message": "{n, plural, one{{n} file} other{{n} files}}", "args": {"n": 1}, "expect": "1 file"},
+    {"locale": "en", "message": "{n, plural, one{{n} file} other{{n} files}}", "args": {"n": 2}, "expect": "2 files"},
+    {"locale": "en", "message": "{n, plural, =0{No files} one{{n} file} other{{n} files}}", "args": {"n": 0}, "expect": "No files"},
+    {"locale": "en", "message": "{n, plural, one{{n} file} other{{n} files}}", "args": {"n": 1234}, "expect": "1,234 files"},
+    {"locale": "ru", "message": "{n, plural, one{{n} файл} few{{n} файла} many{{n} файлов} other{{n} файла}}", "args": {"n": 21}, "expect": "21 файл"},
+    {"locale": "ru", "message": "{n, plural, one{{n} файл} few{{n} файла} many{{n} файлов} other{{n} файла}}", "args": {"n": 3}, "expect": "3 файла"},
+    {"locale": "ru", "message": "{n, plural, one{{n} файл} few{{n} файла} many{{n} файлов} other{{n} файла}}", "args": {"n": 11}, "expect": "11 файлов"},
+    {"locale": "ar", "message": "{n, plural, zero{لا ملفات} one{ملف واحد} two{ملفان} few{{n} ملفات} many{{n} ملفًا} other{{n} ملف}}", "args": {"n": 2}, "expect": "ملفان"},
+    {"locale": "ar", "message": "{n, plural, zero{لا ملفات} one{ملف واحد} two{ملفان} few{{n} ملفات} many{{n} ملفًا} other{{n} ملف}}", "args": {"n": 0}, "expect": "لا ملفات"},
+    {"locale": "pl", "message": "{n, plural, one{{n} plik} few{{n} pliki} many{{n} plików} other{{n} pliku}}", "args": {"n": 22}, "expect": "22 pliki"},
+    {"locale": "de", "message": "{n, plural, one{{n} Datei} other{{n} Dateien}}", "args": {"n": 1500}, "expect": "1.500 Dateien"},
+    {"locale": "en", "message": "{kind, select, file{a file} folder{a folder} other{something}}", "args": {"kind": "folder"}, "expect": "a folder"},
+    {"locale": "en", "message": "{kind, select, file{a file} folder{a folder} other{something}}", "args": {"kind": "link"}, "expect": "something"},
+    {"locale": "en", "message": "{n, plural, one{{n} item} other{{n} items}} · {size}", "args": {"n": 3, "size": "2 MB"}, "expect": "3 items · 2 MB"},
+    {"locale": "ar", "message": "الرمز: {code}", "args": {"code": "7-harbor-rocket"}, "expect": "الرمز: ⁨7-harbor-rocket⁩"}
+  ],
+  "invalid": [
+    "{", "}", "{}", "{1x}", "{n, plural, =1{x}}", "{n, plural, one{x}", "{n, plural, lots{x} other{y}}",
+    "{n, plural, ={x} other{y}}", "{n, choice, other{y}}", "{n, select, a{x}}", "{n plural}"
+  ]
+}

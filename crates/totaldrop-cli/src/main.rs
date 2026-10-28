@@ -10,6 +10,7 @@ use clap::{Parser, Subcommand};
 use totaldrop_core::{
     Event, Events, IncomingOffer, PathOptions, PreparedSend, ReceiveOptions, SendOptions,
 };
+use totaldrop_l10n::{Arg, Domain, Strings};
 use totaldrop_proto::TransferCode;
 
 #[derive(Parser)]
@@ -68,36 +69,32 @@ enum Command {
     },
 }
 
-fn human(bytes: u64) -> String {
-    const UNITS: [&str; 6] = ["B", "KB", "MB", "GB", "TB", "PB"];
-    #[allow(clippy::cast_precision_loss)]
-    let mut value = bytes as f64;
-    let mut unit = 0usize;
-    while value >= 1000.0 && unit < UNITS.len().saturating_sub(1) {
-        value /= 1000.0;
-        unit = unit.saturating_add(1);
-    }
-    let name = UNITS.get(unit).copied().unwrap_or("B");
-    if unit == 0 {
-        format!("{bytes} B")
-    } else {
-        format!("{value:.1} {name}")
-    }
-}
-
 /// Prints events to stderr; progress at most once per percent.
-fn printer() -> Events {
+fn printer(s: Arc<Strings>) -> Events {
     let last = Arc::new(AtomicU64::new(u64::MAX));
     Arc::new(move |event| match event {
-        Event::Waiting => eprintln!("Waiting for the receiver…"),
+        Event::Waiting => eprintln!("{}", s.get("cliWaiting", &[])),
         Event::Connected { words } => {
-            eprintln!("Connected, end-to-end encrypted.");
-            eprintln!("Verification words: {}", words.join(" "));
+            eprintln!("{}", s.get("cliConnected", &[]));
+            let words = words.join(" ");
+            eprintln!(
+                "{}",
+                s.get("cliVerification", &[("words", Arg::Text(&words))])
+            );
         }
         Event::Progress { done, total } => {
             let pct = done.saturating_mul(100).checked_div(total).unwrap_or(100);
             if last.swap(pct, Ordering::Relaxed) != pct {
-                eprint!("\r{pct:3}%  {} of {}", human(done), human(total));
+                let (done_s, total_s) = (s.bytes(done), s.bytes(total));
+                let line = s.get(
+                    "cliProgress",
+                    &[
+                        ("percent", Arg::Count(pct)),
+                        ("done", Arg::Text(&done_s)),
+                        ("total", Arg::Text(&total_s)),
+                    ],
+                );
+                eprint!("\r{line:>3}");
                 let _ = std::io::stderr().flush();
                 if done >= total {
                     eprintln!();
@@ -120,15 +117,16 @@ fn paths(relay: Option<String>, stun: Option<String>, relay_only: bool) -> PathO
 }
 
 async fn send(
+    s: Arc<Strings>,
     server: String,
     paths: PathOptions,
     files: Vec<PathBuf>,
     strong: bool,
 ) -> Result<(), totaldrop_core::Error> {
-    eprintln!("Preparing…");
+    eprintln!("{}", s.get("cliPreparing", &[]));
     if paths.relay_only && paths.relay.is_empty() {
         return Err(totaldrop_core::Error::Connect(
-            "--relay-only needs a relay".into(),
+            s.get("cliRelayOnlyNeedsRelay", &[]),
         ));
     }
     let opts = SendOptions {
@@ -139,29 +137,39 @@ async fn send(
     let prepared = PreparedSend::new(&opts, files).await?;
     let (entries, total) = prepared.totals();
     if prepared.skipped() > 0 {
-        eprintln!(
-            "Skipping {} symbolic link(s) or special file(s).",
-            prepared.skipped()
-        );
+        let n = u64::try_from(prepared.skipped()).unwrap_or(u64::MAX);
+        eprintln!("{}", s.get("cliSkipping", &[("count", Arg::Count(n))]));
     }
-    eprintln!("Sending {entries} item(s), {}.", human(total));
+    let size = s.bytes(total);
+    let entries = u64::try_from(entries).unwrap_or(u64::MAX);
+    eprintln!(
+        "{}",
+        s.get(
+            "cliSending",
+            &[("count", Arg::Count(entries)), ("size", Arg::Text(&size))]
+        )
+    );
     eprintln!();
-    eprintln!("On the other device, run:");
+    eprintln!("{}", s.get("cliRunThis", &[]));
+    // The command itself is never translated: it is what the other side types.
     println!("totaldrop receive {}", prepared.code());
     eprintln!();
-    let report = prepared.run(printer()).await?;
+    let report = prepared.run(printer(Arc::clone(&s))).await?;
     if report.files_failed > 0 {
+        let n = u64::try_from(report.files_failed).unwrap_or(u64::MAX);
         eprintln!(
-            "Done, but {} file(s) did not arrive intact and were discarded.",
-            report.files_failed
+            "{}",
+            s.get("cliSendSomeFailed", &[("count", Arg::Count(n))])
         );
     } else {
-        eprintln!("Done: {} file(s) sent and verified.", report.files_ok);
+        let n = u64::try_from(report.files_ok).unwrap_or(u64::MAX);
+        eprintln!("{}", s.get("cliSendDone", &[("count", Arg::Count(n))]));
     }
     Ok(())
 }
 
 async fn receive(
+    s: Arc<Strings>,
     server: String,
     paths: PathOptions,
     code: String,
@@ -172,57 +180,104 @@ async fn receive(
         Some(d) => d,
         None => std::env::current_dir()?,
     };
-    eprintln!("Connecting…");
+    eprintln!("{}", s.get("cliConnecting", &[]));
     let offer = IncomingOffer::connect(&ReceiveOptions { server, paths }, &code).await?;
-    let s = offer.summary().clone();
-    eprintln!("Connected, end-to-end encrypted.");
-    eprintln!("Verification words: {}", offer.words().join(" "));
+    let summary = offer.summary().clone();
+    eprintln!("{}", s.get("cliConnected", &[]));
+    let words = offer.words().join(" ");
     eprintln!(
-        "Offered: {} file(s), {} folder(s), {} in total:",
-        s.files,
-        s.dirs,
-        human(s.total_size)
+        "{}",
+        s.get("cliVerification", &[("words", Arg::Text(&words))])
     );
-    for name in s.top_level.iter().take(10) {
-        eprintln!("  {name}");
+    let size = s.bytes(summary.total_size);
+    let count = |n: usize| Arg::Count(u64::try_from(n).unwrap_or(u64::MAX));
+    eprintln!(
+        "{}",
+        s.get(
+            "cliOffered",
+            &[
+                ("files", count(summary.files)),
+                ("dirs", count(summary.dirs)),
+                ("size", Arg::Text(&size)),
+            ],
+        )
+    );
+    for name in summary.top_level.iter().take(10) {
+        eprintln!("  {}", visible(name));
     }
-    if s.top_level.len() > 10 {
-        eprintln!("  … and {} more", s.top_level.len().saturating_sub(10));
+    if summary.top_level.len() > 10 {
+        let more = summary.top_level.len().saturating_sub(10);
+        eprintln!("  {}", s.get("cliAndMore", &[("count", count(more))]));
     }
     let shown = dest.display().to_string();
+    let prompt = s.get("cliPromptSave", &[("folder", Arg::Text(&shown))]);
+    let yes_words = s.get("cliYes", &[]);
     let accepted = yes
         || tokio::task::spawn_blocking(move || {
-            eprint!("Save into {shown}? [y/N] ");
+            eprint!("{prompt}");
             let _ = std::io::stderr().flush();
             let mut line = String::new();
-            std::io::stdin().read_line(&mut line).is_ok()
-                && matches!(
-                    line.trim().to_lowercase().as_str(),
-                    "y" | "yes" | "e" | "evet"
-                )
+            std::io::stdin().read_line(&mut line).is_ok() && is_yes(&line, &yes_words)
         })
         .await
         .unwrap_or(false);
     if !accepted {
         offer.decline().await?;
-        eprintln!("Declined.");
+        eprintln!("{}", s.get("cliDeclined", &[]));
         return Ok(());
     }
-    let report = offer.accept(&dest, printer()).await?;
+    let report = offer.accept(&dest, printer(Arc::clone(&s))).await?;
     for p in &report.placed {
-        eprintln!("Saved {}", p.display());
+        let name = visible(&p.display().to_string());
+        eprintln!("{}", s.get("cliSaved", &[("name", Arg::Text(&name))]));
     }
     if report.files_failed > 0 {
+        let n = u64::try_from(report.files_failed).unwrap_or(u64::MAX);
         eprintln!(
-            "{} file(s) did not arrive intact and were discarded.",
-            report.files_failed
+            "{}",
+            s.get("cliReceiveSomeFailed", &[("count", Arg::Count(n))])
         );
     }
     Ok(())
 }
 
+/// Whether an answer means yes: English `y`/`yes`, or one of the
+/// translation's words (`cliYes`, separated by `|`). Case is folded without
+/// regard to language, so a Turkish `E` or `EVET` works on any system.
+fn is_yes(answer: &str, words: &str) -> bool {
+    let answer = answer
+        .trim()
+        .replace(['İ', 'I'], "i")
+        .replace('ı', "i")
+        .to_lowercase();
+    ["y", "yes"]
+        .into_iter()
+        .chain(words.split('|').map(str::trim))
+        .any(|w| {
+            !w.is_empty() && w.replace(['İ', 'I'], "i").replace('ı', "i").to_lowercase() == answer
+        })
+}
+
+/// A name from the other side, with direction controls and other invisible
+/// format characters shown as `<U+202E>`, so a name cannot pretend to have
+/// another extension (`invoice` U+202E `fdp.exe` reads as "invoiceexe.pdf").
+fn visible(name: &str) -> String {
+    let mut out = String::with_capacity(name.len());
+    for c in name.chars() {
+        if matches!(c, '\u{202A}'..='\u{202E}' | '\u{2066}'..='\u{2069}' | '\u{200B}'..='\u{200F}' | '\u{2060}' | '\u{FEFF}')
+            || c.is_control()
+        {
+            out.push_str(&format!("<U+{:04X}>", u32::from(c)));
+        } else {
+            out.push(c);
+        }
+    }
+    out
+}
+
 fn main() -> ExitCode {
     let cli = Cli::parse();
+    let strings = Arc::new(Strings::system(Domain::Cli));
     let runtime = match tokio::runtime::Builder::new_multi_thread()
         .enable_all()
         .build()
@@ -249,10 +304,10 @@ fn main() -> ExitCode {
             };
         }
         Command::Send { paths, strong } => {
-            runtime.block_on(send(server(cli.server), route, paths, strong))
+            runtime.block_on(send(strings, server(cli.server), route, paths, strong))
         }
         Command::Receive { code, out, yes } => {
-            runtime.block_on(receive(server(cli.server), route, code, out, yes))
+            runtime.block_on(receive(strings, server(cli.server), route, code, out, yes))
         }
     };
     match result {
@@ -261,5 +316,28 @@ fn main() -> ExitCode {
             eprintln!("totaldrop: {e}");
             ExitCode::FAILURE
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{is_yes, visible};
+
+    #[test]
+    fn yes_in_any_case_and_language() {
+        assert!(is_yes("y\n", "e|evet"));
+        assert!(is_yes("YES", "e|evet"));
+        assert!(is_yes("EVET", "e|evet"));
+        assert!(is_yes("E", "e|evet"));
+        assert!(!is_yes("", "e|evet"));
+        assert!(!is_yes("n", "e|evet"));
+        assert!(!is_yes("hayır", "e|evet"));
+    }
+
+    #[test]
+    fn hidden_characters_become_visible() {
+        assert_eq!(visible("invoice\u{202E}fdp.exe"), "invoice<U+202E>fdp.exe");
+        assert_eq!(visible("photo.jpg"), "photo.jpg");
+        assert_eq!(visible("a\nb"), "a<U+000A>b");
     }
 }

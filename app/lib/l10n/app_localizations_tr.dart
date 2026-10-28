@@ -279,4 +279,38 @@ class AppLocalizationsTr extends AppLocalizations {
   String settingsVersion(String version) {
     return 'Sürüm $version';
   }
+
+  @override
+  String sizeBytes(String value) {
+    return '$value B';
+  }
+
+  @override
+  String sizeKB(String value) {
+    return '$value kB';
+  }
+
+  @override
+  String sizeMB(String value) {
+    return '$value MB';
+  }
+
+  @override
+  String sizeGB(String value) {
+    return '$value GB';
+  }
+
+  @override
+  String sizeTB(String value) {
+    return '$value TB';
+  }
+
+  @override
+  String sizePB(String value) {
+    return '$value PB';
+  }
+
+  @override
+  String get draftTranslation =>
+      'Bu çeviri gözden geçiriliyor. Weblate\'te iyileştirmeye yardım edin.';
 }
