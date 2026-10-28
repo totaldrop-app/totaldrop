@@ -236,7 +236,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get errorWrongCode =>
-      'Kod eşleşmedi. Ya yanlış yazıldı ya da biri gönderimi araya girerek almaya çalıştı. Hiçbir şey gönderilmedi. Yeni bir kodla yeniden başlayın.';
+      'Kod eşleşmedi. Ya yanlış yazıldı ya da biri gönderimi ele geçirmeye çalıştı. Hiçbir şey gönderilmedi. Yeni bir kodla yeniden başlayın.';
 
   @override
   String get errorPeerLeft => 'Karşı taraf gönderim bitmeden ayrıldı.';

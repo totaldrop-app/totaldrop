@@ -61,7 +61,7 @@
   "stop": "Durdur",
   "moreInfo": "Ayrıntılar",
 
-  "errorWrongCode": "Kod eşleşmedi. Ya yanlış yazıldı ya da biri gönderimi araya girerek almaya çalıştı. Hiçbir şey gönderilmedi. Yeni bir kodla yeniden başlayın.",
+  "errorWrongCode": "Kod eşleşmedi. Ya yanlış yazıldı ya da biri gönderimi ele geçirmeye çalıştı. Hiçbir şey gönderilmedi. Yeni bir kodla yeniden başlayın.",
   "errorPeerLeft": "Karşı taraf gönderim bitmeden ayrıldı.",
   "errorDeclined": "Alıcı dosyaları reddetti.",
   "errorCancelled": "Karşı taraf gönderimi durdurdu.",

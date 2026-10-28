@@ -61,7 +61,9 @@ All notable changes to TotalDrop are recorded here. The format follows
 ### Fixed
 
 - **Command line:** Failures are explained in the system's language, in the
-  same words as the apps, with the technical detail on a second line (#106).
+  same words as the apps, with the technical detail on a second line. A
+  code that is not in use and a bad server address get their own message
+  instead of "check your internet connection" (#106).
 
 - **Linux:** Adding a large folder no longer freezes the window: its size
   is added up in the background and shows "Counting…" until then (#103).
