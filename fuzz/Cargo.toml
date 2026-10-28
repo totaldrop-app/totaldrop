@@ -11,6 +11,7 @@ cargo-fuzz = true
 [dependencies]
 libfuzzer-sys = "0.4"
 totaldrop-proto = { path = "../crates/totaldrop-proto" }
+totaldrop-l10n = { path = "../crates/totaldrop-l10n" }
 
 [[bin]]
 name = "path"
@@ -36,6 +37,13 @@ bench = false
 [[bin]]
 name = "relay"
 path = "fuzz_targets/relay.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "message"
+path = "fuzz_targets/message.rs"
 test = false
 doc = false
 bench = false

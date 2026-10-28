@@ -1,0 +1,17 @@
+{
+  "about": "Maintained by the project, changed only through reviewed pull requests (docs/ceviri.md). A language is 'reviewed' once a native speaker has checked every string; 'draft' lists keys added or machine-drafted since. Keys in 'critical' are shown in English until reviewed.",
+  "drafts": "Draft translations were produced with Claude (Anthropic) and are licensed like the rest of the project.",
+  "critical": [
+    "verificationTitle",
+    "verificationHint",
+    "errorWrongCode",
+    "errorInvalidOffer",
+    "receiveAccept",
+    "receiveDecline",
+    "cliVerification",
+    "cliPromptSave"
+  ],
+  "languages": {
+    "tr": { "reviewed": true, "draft": [] }
+  }
+}

@@ -36,7 +36,7 @@ jobs:
       # Only hand-written crates: app/rust/src/frb_generated.rs is generated.
       - name: Format
         if: runner.os == 'Linux'
-        run: cargo fmt --check -p totaldrop-crypto -p totaldrop-proto -p totaldrop-core -p totaldrop-cli -p totaldrop-rendezvous -p totaldrop-relay
+        run: cargo fmt --check -p totaldrop-crypto -p totaldrop-proto -p totaldrop-core -p totaldrop-cli -p totaldrop-l10n -p totaldrop-rendezvous -p totaldrop-relay
       - name: Clippy
         shell: bash
         run: cargo clippy --workspace $EXCLUDE --all-targets --locked -- -D warnings
