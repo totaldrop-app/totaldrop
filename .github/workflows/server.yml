@@ -1,5 +1,6 @@
-# Rendezvous server and relay on Cloudflare Workers: type check.
-# Deploys stay manual (wrangler deploy) until deploy keys live in CI.
+# Rendezvous server and relay on Cloudflare Workers: type check, then the
+# shared end-to-end suite against both, run locally with wrangler dev.
+# Deploys stay manual (wrangler deploy) until deploy keys live in CI (#94).
 name: Server
 
 # Runs from ci.yml when its files change (see the area filters there), or
@@ -30,3 +31,55 @@ jobs:
           node-version: lts/*
       - run: npm ci
       - run: npm run check
+
+  end-to-end:
+    name: End to end against both Workers
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      WRANGLER_SEND_METRICS: "false"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: lts/*
+      # rustup reads rust-toolchain.toml and installs exactly that version.
+      - name: Install the pinned Rust toolchain
+        run: rustup show active-toolchain || rustup toolchain install
+      - name: Install the Workers
+        run: |
+          npm ci --prefix server/rendezvous-worker
+          npm ci --prefix server/relay-worker
+      # Build first, so the Workers are not waiting through a compile.
+      - name: Build the tests
+        run: cargo test -p totaldrop-cli --test end_to_end --locked --no-run
+      # Both run on this machine only (--local): no Cloudflare account, no
+      # network beyond loopback. Two inspectors cannot share a port.
+      - name: Start the Workers
+        run: |
+          cd server/rendezvous-worker
+          nohup npx wrangler dev --local --ip 127.0.0.1 --port 8787 >"$RUNNER_TEMP/rendezvous.log" 2>&1 &
+          cd ../relay-worker
+          nohup npx wrangler dev --local --ip 127.0.0.1 --port 8788 --inspector-port 9230 >"$RUNNER_TEMP/relay.log" 2>&1 &
+          for name in rendezvous relay; do
+            for _ in $(seq 120); do
+              grep -q "Ready on" "$RUNNER_TEMP/$name.log" && break
+              sleep 1
+            done
+            grep -q "Ready on" "$RUNNER_TEMP/$name.log" || { cat "$RUNNER_TEMP/$name.log"; exit 1; }
+          done
+      - name: Test
+        env:
+          TOTALDROP_TEST_SERVER: ws://127.0.0.1:8787
+          TOTALDROP_TEST_RELAY: ws://127.0.0.1:8788/v0/relay
+        run: cargo test -p totaldrop-cli --test end_to_end --locked
+      - name: Worker logs
+        if: always()
+        run: |
+          for name in rendezvous relay; do
+            echo "::group::$name"
+            cat "$RUNNER_TEMP/$name.log" || true
+            echo "::endgroup::"
+          done
