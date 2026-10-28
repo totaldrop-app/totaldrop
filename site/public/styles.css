@@ -261,3 +261,37 @@ pre.cmd { margin: 0; padding: var(--s16); background: var(--bg-raised); border-r
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .top-nav a[aria-current="page"] { color: var(--text); }
 #r-has-code:not([hidden]) { display: flex; flex-direction: column; gap: var(--s24); }
+
+/* Donation goal: a plain bar in the accent colour. */
+.goal { width: 100%; max-width: 40rem; height: 0.75rem; appearance: none; border: 0; border-radius: 999px; background: var(--bg-raised); overflow: hidden; }
+.goal::-webkit-progress-bar { background: var(--bg-raised); border-radius: 999px; }
+.goal::-webkit-progress-value { background: var(--accent); border-radius: 999px; }
+.goal::-moz-progress-bar { background: var(--accent); border-radius: 999px; }
+.req caption { text-align: left; color: var(--text-2); padding-bottom: var(--s16); }
+.req.narrow { min-width: 0; }
+.req tfoot th, .req tfoot td { border-bottom: 0; padding-top: var(--s16); color: var(--text); font-weight: 700; }
+/* On a phone, wide tables become one block per row: item, explanation,
+   then when and how much. */
+@media (max-width: 44rem) {
+  .req.stack, .req.stack tbody, .req.stack tfoot, .req.stack tr, .req.stack th, .req.stack td { display: block; }
+  .req.stack { min-width: 0; }
+  .req.stack thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .req.stack tr { padding: var(--s16) 0; border-bottom: 1px solid var(--rule); }
+  .req.stack th, .req.stack td { border: 0; padding: 0.15rem 0; }
+  .req.stack td.when, .req.stack td.cost { display: inline; }
+  .req.stack td.when::after { content: " · "; }
+  .req.stack td.cost { color: var(--text); font-weight: 700; }
+  .req.stack tfoot tr { border-bottom: 0; }
+}
+
+/* Roadmap page: one block per phase, items in a grid. */
+.rm-head { display: flex; flex-direction: column; gap: var(--s8); }
+.rm-items { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s24); }
+.rm-items li { display: flex; flex-direction: column; gap: var(--s8); padding-top: var(--s16); border-top: 1px solid var(--outline); }
+.rm-items h3 { font-size: 1.125rem; }
+.rm-items p { color: var(--text-2); }
+.rm-plat { font-size: 0.875rem; color: var(--text-2); font-weight: 700; }
+.rm-phase.is-done .road-state::before { background: var(--text); border-color: var(--text); }
+.rm-phase.is-now .road-state { color: var(--accent); }
+.rm-phase.is-now .road-state::before { background: var(--accent); border-color: var(--accent); }
+@media (max-width: 44rem) { .rm-items { grid-template-columns: minmax(0, 1fr); } }
