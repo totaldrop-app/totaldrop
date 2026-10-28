@@ -1,6 +1,6 @@
 # TotalDrop rendezvous on Cloudflare Workers
 
-This is the production rendezvous server for `rendezvous.totaldrop.app`. It speaks exactly the same protocol as the Rust server in `../totaldrop-rendezvous`, and the same end-to-end tests run against both, in CI on every change to either side (`.github/workflows/server.yml`). Licensed AGPL-3.0-or-later.
+This is the production rendezvous server for `rendezvous.totaldrop.app`. It speaks exactly the same protocol as the Rust server in `../totaldrop-rendezvous`, and the same end-to-end tests run against both, in CI whenever a Worker, a Rust server or the client crates change (`.github/workflows/server.yml`). Against a Worker a few checks are weaker: byte counts are not read and STUN is not tried. Licensed AGPL-3.0-or-later.
 
 | Path | What it does |
 | --- | --- |
