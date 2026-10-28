@@ -12,10 +12,14 @@ public/
   r/index.html        QR ve paylaşım bağlantıları: kodu # işaretinden sonra okur,
                       uygulamayı totaldrop://r/kod ile açar; kod sunucuya gitmez
   privacy.html        Gizlilik
+  404.html            Bulunamayan her adres için; o olmadan Pages her adrese
+                      ana sayfayı 200 ile döner
   styles.css          Aurora tokenları, açık ve koyu tema, hareketli işaret
   app.js              Türkçe metinler, dil düğmesi, platform algılama, /r mantığı
   favicon.svg         Dalga işareti, koyu temada renk değiştirir
   _headers            Güvenlik başlıkları (katı CSP, HSTS, no-referrer)
+  _routes.json        Ara katman (functions/) yalnız sayfalarda çalışır; yazı
+                      tipi, stil, betik ve çeviri dosyaları doğrudan sunulur
   fonts/              Bricolage Grotesque ve Atkinson Hyperlegible (SIL OFL 1.1)
 functions/
   _middleware.js      www → kök yönlendirmesi; download alt alan adı → /download/

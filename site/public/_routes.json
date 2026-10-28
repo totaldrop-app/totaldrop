@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "include": [
+    "/*"
+  ],
+  "exclude": [
+    "/fonts/*",
+    "/i18n/*",
+    "/styles.css",
+    "/app.js",
+    "/msg.js",
+    "/favicon.svg"
+  ]
+}
