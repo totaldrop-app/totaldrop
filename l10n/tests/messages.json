@@ -19,7 +19,7 @@
     {"locale": "en", "message": "{kind, select, file{a file} folder{a folder} other{something}}", "args": {"kind": "folder"}, "expect": "a folder"},
     {"locale": "en", "message": "{kind, select, file{a file} folder{a folder} other{something}}", "args": {"kind": "link"}, "expect": "something"},
     {"locale": "en", "message": "{n, plural, one{{n} item} other{{n} items}} · {size}", "args": {"n": 3, "size": "2 MB"}, "expect": "3 items · 2 MB"},
-    {"locale": "ar", "message": "الرمز: {code}", "args": {"code": "7-harbor-rocket"}, "expect": "الرمز: ⁨7-harbor-rocket⁩"}
+    {"locale": "ar", "message": "الرمز: {code}", "args": {"code": "7-harbor-rocket"}, "expect": "الرمز: \u20687-harbor-rocket\u2069"}
   ],
   "invalid": [
     "{", "}", "{}", "{1x}", "{n, plural, =1{x}}", "{n, plural, one{x}", "{n, plural, lots{x} other{y}}",
