@@ -106,6 +106,10 @@ p, dl, dd, ol { margin: 0; }
 /* Codes, commands and file names read left to right in every language. */
 pre, code, kbd, .code { direction: ltr; unicode-bidi: isolate; }
 pre { text-align: left; }
+[dir="rtl"] .code { text-align: right; }
+/* Letter spacing breaks the joining of Arabic-script letters. */
+:lang(ar) .eyebrow, :lang(fa) .eyebrow, :lang(ur) .eyebrow, :lang(ps) .eyebrow { letter-spacing: 0; }
+@media (prefers-reduced-motion: reduce) { ::view-transition-group(root) { animation: none; } }
 
 /* Language picker: a plain pill with a small chevron, so it reads as a menu. */
 select.lang {

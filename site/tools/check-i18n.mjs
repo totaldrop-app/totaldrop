@@ -18,7 +18,7 @@ const errors = [];
 const read = (p) => readFileSync(join(root, p), "utf8");
 
 // The formatter, loaded the way the browser would.
-const sandbox = { Intl };
+const sandbox = { Intl, TextEncoder };
 vm.runInNewContext(read("site/public/msg.js"), sandbox);
 const { parse, format } = sandbox.TDMessage;
 
@@ -36,15 +36,23 @@ for (const bad of vectors.invalid) {
 // English from the pages: textContent of every data-i18n element.
 const pages = ["index.html", "download/index.html", "donate/index.html", "roadmap/index.html", "r/index.html"];
 const fromHtml = {};
-const decode = (s) => s.replace(/&#x([0-9a-f]+);/gi, (_, h) => String.fromCodePoint(parseInt(h, 16)))
+const NAMED = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: "\u00a0", rsquo: "\u2019", lsquo: "\u2018", rdquo: "\u201d", ldquo: "\u201c", mdash: "\u2014", ndash: "\u2013", hellip: "\u2026", middot: "\u00b7", copy: "\u00a9" };
+const decode = (s) => s.replace(/&([a-z]+);/gi, (all, n) => {
+  if (!(n in NAMED)) { errors.push(`unknown entity ${all}`); return all; }
+  return "\u0000" + n + ";";
+}).replace(/&#x([0-9a-f]+);/gi, (_, h) => String.fromCodePoint(parseInt(h, 16)))
   .replace(/&#([0-9]+);/g, (_, d) => String.fromCodePoint(Number(d)))
   .replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&nbsp;/g, " ");
 for (const page of pages) {
-  const html = read("site/public/" + page);
+  const html = read("site/public/" + page).replace(/<!--[\s\S]*?-->/g, "");
+  if (/data-i18n=\'|<[A-Z]+[^>]*data-i18n/.test(html)) errors.push(`${page}: data-i18n must be a double-quoted attribute on a lowercase tag`);
   const re = /<([a-z0-9]+)\b[^>]*\bdata-i18n="([^"]+)"[^>]*>([\s\S]*?)<\/\1>/g;
   let m;
   while ((m = re.exec(html)) !== null) {
-    const text = decode(m[3].replace(/<[^>]+>/g, "")).replace(/\s+/g, " ").trim();
+    // apply() replaces textContent, so a translated element may hold no
+    // other elements (they would be lost in every other language).
+    if (/<[a-z]/i.test(m[3])) errors.push(`${page} \`${m[2]}\`: a translated element has child elements`);
+    const text = decode(m[3]).replace(/\s+/g, " ").trim();
     if (!(m[2] in fromHtml)) fromHtml[m[2]] = text;
   }
 }
@@ -61,8 +69,13 @@ const listed = [...block.matchAll(/\["([a-zA-Z-]+)", "[^"]+"\]/g)].map((m) => m[
 const tags = files.map((f) => f.replace(/\.json$/, "")).sort();
 if (JSON.stringify(listed) !== JSON.stringify(tags)) errors.push(`app.js LANGUAGES ${listed} differ from i18n files ${tags}`);
 
-const forbidden = /[\u0000-\u0008\u000b-\u001f\u007f-\u009f\u00ad\u061c\u180e\u200b\u2028-\u202e\u2060-\u206f\ufeff\ufff9-\ufffb]|[\u{e0000}-\u{e007f}]/u;
-const link = /:\/\/[a-z0-9]|www\.|[a-z0-9]\.(com|org|net|app|io|co|info|xyz|link|site|online|me|ly|gl|to|dev)\b/i;
+// Controls, format characters and separators (as the Rust check), except
+// ZWNJ/ZWJ and the left-to-right and right-to-left marks.
+const forbidden = /(?![\u200c\u200d\u200e\u200f])[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/u;
+// Anything that looks like a link or a domain: a translation may contain
+// exactly the links its English text has, no others.
+const links = (x) => [...String(x || "").matchAll(/[a-z][a-z0-9+.-]*:\/\/[^\s"'<>]+|www\.[^\s"'<>]+|[\p{L}\p{N}-]+(?:\.[\p{L}\p{N}-]+)*\.\p{L}{2,}(?:\/[^\s"'<>]*)?/giu)]
+  .map((m) => m[0].toLowerCase().replace(/[.,;:!?)]+$/, "")).filter((l) => !/^\p{L}\.\p{L}/u.test(l)).sort();
 const markup = /<[A-Za-z/!]/;
 for (const f of files) {
   const tag = f.replace(/\.json$/, "");
@@ -77,13 +90,14 @@ for (const f of files) {
     if (!(k in en)) errors.push(`${f} \`${k}\`: not in en.json`);
     if (typeof v !== "string") { errors.push(`${f} \`${k}\`: not text`); continue; }
     if (forbidden.test(v)) errors.push(`${f} \`${k}\`: invisible or control character`);
-    // A translation may keep a link the English text already has.
-    if (link.test(v) && !link.test(en[k] || "")) errors.push(`${f} \`${k}\`: contains a link`);
+    const extra = links(v).filter((l) => !links(en[k]).includes(l));
+    if (extra.length) errors.push(`${f} \`${k}\`: contains a link not in English: ${extra.join(" ")}`);
     if (markup.test(v)) errors.push(`${f} \`${k}\`: contains markup`);
     try { parse(v); } catch (e) { errors.push(`${f} \`${k}\`: ${e.message}`); }
     // Version numbers must be the same as in English: a stale translation
     // once showed last release's versions.
-    const versions = (x) => [...String(x || "").matchAll(/\d+\.\d+\.\d+(?:-[a-z]+\.\d+)?/g)].map((m) => m[0]).sort().join(" ");
+    const versions = (x) => [...String(x || "").matchAll(/\d+\.\d+\.\d+(?:-[a-z]+\.\d+)?/g)].map((m) => m[0])
+      .filter((x) => !/^\d{1,3}(\.\d{3})+$/.test(x)).sort().join(" "); // 1.000.000 is a number
     if (k in en && versions(v) !== versions(en[k])) errors.push(`${f} \`${k}\`: versions differ from English (${versions(v)} vs ${versions(en[k])})`);
   }
 }

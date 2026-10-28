@@ -9,7 +9,12 @@
     ["en", "English"],
     ["tr", "Türkçe"]
   ];
-  const RTL = ["ar", "fa", "he", "ur", "ps", "yi"];
+  // Right to left: languages whose likely script is one of these (the
+  // same rule as msg.js).
+  const RTL_SCRIPTS = ["Arab", "Hebr", "Thaa", "Syrc", "Nkoo", "Adlm", "Rohg", "Mand", "Samr"];
+  const isRtl = (tag) => {
+    try { return RTL_SCRIPTS.includes(new Intl.Locale(tag).maximize().script); } catch (e) { return false; }
+  };
   const PAGE = document.body.dataset.page || "home";
 
   const nodes = Array.from(document.querySelectorAll("[data-i18n]"));
@@ -20,8 +25,11 @@
   if (descTag) EN["meta." + PAGE + ".desc"] = descTag.getAttribute("content");
   EN["dl.copied"] = "Copied";
   EN["r.copied"] = "Copied";
+  EN["lang.label"] = "Language";
   let dict = EN;
-  const t = (key) => (typeof dict[key] === "string" ? dict[key] : EN[key]);
+  // An empty or missing translation falls back to English.
+  const has = (d, key) => typeof d[key] === "string" && d[key] !== "";
+  const t = (key) => (has(dict, key) ? dict[key] : EN[key]);
 
   const store = {
     get() { try { return localStorage.getItem("td-lang"); } catch (e) { return null; } },
@@ -34,8 +42,10 @@
   function negotiate(prefs) {
     const tags = LANGUAGES.map((l) => l[0]);
     const script = (tag) => { try { return new Intl.Locale(tag).maximize(); } catch (e) { return null; } };
-    for (const pref of prefs) {
+    for (let pref of prefs) {
       if (!pref) continue;
+      // tr_TR, and Norwegian as Bokmål, as the apps read them.
+      pref = String(pref).replace(/_/g, "-").replace(/^(no|nn)(?=-|$)/i, "nb");
       if (tags.includes(pref)) return pref;
       const p = script(pref);
       if (!p) continue;
@@ -54,27 +64,47 @@
   function apply(tag, d) {
     dict = d;
     nodes.forEach((el) => {
-      const text = t(el.dataset.i18n);
+      const key = el.dataset.i18n;
+      const translated = tag === "en" || has(d, key);
+      const text = t(key);
       if (typeof text === "string") el.textContent = text;
+      // English shown inside another language keeps its own language and
+      // direction, for screen readers and punctuation.
+      if (translated) { el.removeAttribute("lang"); el.removeAttribute("dir"); } else { el.lang = "en"; el.dir = "ltr"; }
     });
     document.documentElement.lang = tag;
-    document.documentElement.dir = RTL.includes(tag.split("-")[0]) ? "rtl" : "ltr";
+    document.documentElement.dir = isRtl(tag) ? "rtl" : "ltr";
     document.title = t("meta." + PAGE + ".title");
     if (descTag) descTag.setAttribute("content", t("meta." + PAGE + ".desc"));
-    if (picker) picker.value = tag;
+    if (picker) {
+      picker.value = tag;
+      picker.setAttribute("aria-label", t("lang.label"));
+    }
   }
 
-  async function show(tag) {
-    if (tag === "en") { apply("en", EN); return; }
-    try {
-      const res = await fetch("/i18n/" + tag + ".json", { credentials: "omit" });
-      if (!res.ok) throw new Error(String(res.status));
-      const d = await res.json();
-      if (document.startViewTransition) document.startViewTransition(() => apply(tag, d));
-      else apply(tag, d);
-    } catch (e) {
-      apply("en", EN);
+  // Only the latest choice is applied, however the downloads finish; the
+  // choice is saved once its language has loaded.
+  let request = 0;
+  const reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  async function show(tag, { save = false, animate = false } = {}) {
+    const mine = ++request;
+    let d = EN;
+    if (tag !== "en") {
+      try {
+        const res = await fetch("/i18n/" + tag + ".json", { credentials: "omit" });
+        if (!res.ok) throw new Error(String(res.status));
+        d = await res.json();
+      } catch (e) {
+        // Could not load it: show English and remember nothing.
+        tag = "en";
+        d = EN;
+        save = false;
+      }
     }
+    if (mine !== request) return;
+    if (save) store.set(tag);
+    if (animate && !reduced && document.startViewTransition) document.startViewTransition(() => apply(tag, d));
+    else apply(tag, d);
   }
 
   if (picker) {
@@ -86,7 +116,7 @@
       picker.append(o);
     });
     picker.hidden = false;
-    picker.addEventListener("change", () => { store.set(picker.value); show(picker.value); });
+    picker.addEventListener("change", () => show(picker.value, { save: true, animate: true }));
   }
 
   const saved = store.get();
@@ -120,9 +150,11 @@
   // nowhere either. It only hands it to the app.
   if (PAGE === "receive") {
     window.addEventListener("hashchange", () => location.reload());
-    // Fold the way the apps do: Turkish İ/ı and Arabic-Indic or Persian
-    // digits must not make a valid code look invalid.
-    const raw = decodeURIComponent(location.hash.slice(1)).trim()
+    // Turkish İ/ı and Arabic-Indic or Persian digits must not make a valid
+    // code look invalid; the app then gets the plain ASCII form.
+    let hash = "";
+    try { hash = decodeURIComponent(location.hash.slice(1)); } catch (e) { hash = ""; }
+    const raw = hash.trim()
       .replace(/[İIı]/g, "i")
       .replace(/[\u0660-\u0669]/g, (d) => String(d.charCodeAt(0) - 0x0660))
       .replace(/[\u06F0-\u06F9]/g, (d) => String(d.charCodeAt(0) - 0x06F0))
