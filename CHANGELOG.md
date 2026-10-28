@@ -42,6 +42,13 @@ All notable changes to TotalDrop are recorded here. The format follows
 
 ### Fixed
 
+- **Core:** Stopping a transfer now tells the other device, which reports
+  that the other side stopped instead of a connection error. A stopped or
+  failed receive no longer keeps writing in the background: unfinished
+  files are removed with the empty folders the transfer created, and no
+  file is placed afterwards. A sender waits at most 10 minutes for the
+  receiver's answer (#87).
+
 - **Relay (self-hosted):** The Caddy configuration now passes
   `/v0/relay/<keys>` to the relay; it matched only the exact path
   `/v0/relay`, so no relay connection could open. The server's name is now

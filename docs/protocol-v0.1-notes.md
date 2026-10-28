@@ -137,7 +137,13 @@ treated as final.
     - Verified files move into place from a temporary file in the same
       folder, through a hard link that fails if the name exists. On a
       filesystem without hard links, a checked rename is used instead.
-    - A receiver gives up after 60 seconds with no data at all.
+    - A receiver gives up after 60 seconds with no data at all. A sender
+      waits at most 10 minutes for the receiver to accept or decline.
+    - A side that stops sends `cancel` (reason `stopped`) on the control
+      stream, best effort within 2 seconds, then closes the connection. The
+      other side reports that the other device stopped. A stopped receiver
+      removes its partial files and the empty folders this transfer created;
+      files already placed stay.
     - No entry may sit beneath a file entry.
 19. **Device keys in the command-line client.** Until keystore support
     arrives, the command-line client generates new device keys for every

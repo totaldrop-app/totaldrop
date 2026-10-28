@@ -21,6 +21,7 @@ pub mod path;
 pub mod relay;
 pub mod rendezvous;
 pub mod secure;
+mod stop;
 pub mod transfer;
 pub mod transport;
 
@@ -35,7 +36,8 @@ use totaldrop_proto::TransferCode;
 use totaldrop_proto::wire::{Certificate, Hints};
 
 pub use error::{Error, Result};
-pub use transfer::{OfferSummary, ReceiveReport, SendReport};
+pub use stop::Stop;
+pub use transfer::{OfferSummary, ReceiveReport, SendReport, check_destination};
 
 /// Something worth telling the person while a transfer runs.
 #[derive(Debug, Clone)]
@@ -340,47 +342,64 @@ impl PreparedSend {
 
     /// Wait for the receiver and send.
     pub async fn run(self, events: Events) -> Result<SendReport> {
-        events(Event::Waiting);
-        let socket = transport::bind_socket()?;
-        let endpoint_key = Arc::new(transport::EndpointKey::generate()?);
-        let hints = own_hints(&socket, &endpoint_key, &self.paths).await?;
-        let paired = pairing::exchange(
-            self.mailbox,
-            Role::Initiator,
-            &self.code,
-            self.mailbox_id,
-            &self.keys,
-            &hints,
-        )
-        .await?;
-        sender_check(&paired.hints, &self.paths)?;
+        self.run_with(events, Stop::new()).await
+    }
 
-        let (endpoint, pipes) =
-            transport::endpoint(socket, &endpoint_key, &paired.hints.endpoint_key)?;
-        // The sender's own relay carries the transfer when nothing else works.
-        let (paths, link) = paths_to(
-            &paired.hints,
-            self.paths.relay_url(),
-            self.paths.relay_only,
-            &endpoint_key,
-            pipes,
-        );
-        let (conn, send, recv) =
-            transport::sender_connection(&endpoint, &paths, ACCEPT_TIMEOUT).await?;
-        // A relay link opened before a slower direct path won is closed now.
-        let _link = link.filter(|_| conn.remote_address() == path::RELAY_PEER);
-        let chan = secure::handshake_on(
-            send,
-            recv,
-            secure::HandshakeInput {
-                keys: &self.keys,
-                peer: &paired.peer,
-                psk: paired.psk,
-                mailbox_id: paired.mailbox_id,
-            },
-            false,
-        )
-        .await?;
+    /// Like [`PreparedSend::run`], until `stop` is stopped. Before the
+    /// secure session is up, stopping just leaves; after it, the receiver is
+    /// told and the transfer ends with [`Error::Stopped`].
+    pub async fn run_with(self, events: Events, stop: Stop) -> Result<SendReport> {
+        events(Event::Waiting);
+        let setup = async {
+            let socket = transport::bind_socket()?;
+            let endpoint_key = Arc::new(transport::EndpointKey::generate()?);
+            let hints = own_hints(&socket, &endpoint_key, &self.paths).await?;
+            let paired = pairing::exchange(
+                self.mailbox,
+                Role::Initiator,
+                &self.code,
+                self.mailbox_id,
+                &self.keys,
+                &hints,
+            )
+            .await?;
+            sender_check(&paired.hints, &self.paths)?;
+
+            let (endpoint, pipes) =
+                transport::endpoint(socket, &endpoint_key, &paired.hints.endpoint_key)?;
+            // The sender's own relay carries the transfer when nothing else works.
+            let (paths, link) = paths_to(
+                &paired.hints,
+                self.paths.relay_url(),
+                self.paths.relay_only,
+                &endpoint_key,
+                pipes,
+            );
+            let (conn, send, recv) =
+                transport::sender_connection(&endpoint, &paths, ACCEPT_TIMEOUT).await?;
+            // A relay link opened before a slower direct path won is closed now.
+            let _link = link.filter(|_| conn.remote_address() == path::RELAY_PEER);
+            let chan = secure::handshake_on(
+                send,
+                recv,
+                secure::HandshakeInput {
+                    keys: &self.keys,
+                    peer: &paired.peer,
+                    psk: paired.psk,
+                    mailbox_id: paired.mailbox_id,
+                },
+                false,
+            )
+            .await?;
+            Ok::<_, Error>((endpoint, conn, chan, _link))
+        };
+        // A session that is already up wins over a stop at the same moment:
+        // send_files then sees the stop and tells the receiver.
+        let (endpoint, conn, chan, _link) = tokio::select! {
+            biased;
+            r = setup => r?,
+            () = stop.stopped() => return Err(Error::Stopped),
+        };
         events(Event::Connected {
             words: words(chan.verification),
         });
@@ -390,8 +409,13 @@ impl PreparedSend {
             &self.keys,
             self.entries,
             progress_from(&events),
+            &stop,
         )
         .await;
+        if report.is_err() {
+            // Free the connection at once instead of waiting for it to idle.
+            conn.close(0u32.into(), b"failed");
+        }
         let _ = tokio::time::timeout(Duration::from_secs(5), endpoint.wait_idle()).await;
         report
     }
@@ -447,6 +471,31 @@ impl core::fmt::Debug for IncomingOffer {
 }
 
 impl IncomingOffer {
+    /// Like [`IncomingOffer::connect`], until `stop` is stopped. A stop while
+    /// connecting just leaves; if the offer arrives as the stop lands, the
+    /// sender is told.
+    pub async fn connect_with(opts: &ReceiveOptions, code: &str, stop: &Stop) -> Result<Self> {
+        let offer = tokio::select! {
+            biased;
+            r = Self::connect(opts, code) => r?,
+            () = stop.stopped() => return Err(Error::Stopped),
+        };
+        if stop.is_stopped() {
+            return Err(offer.stop().await);
+        }
+        Ok(offer)
+    }
+
+    /// Tell the sender this side stopped and close; returns
+    /// [`Error::Stopped`]. For a person who leaves while the offer is shown.
+    pub async fn stop(mut self) -> Error {
+        let id = self.offer.transfer_id();
+        let e = transfer::tell_stopped(&self.conn, &mut self.chan.sealer, &mut self.chan.send, id)
+            .await;
+        let _ = tokio::time::timeout(Duration::from_secs(2), self.endpoint.wait_idle()).await;
+        e
+    }
+
     /// Use `code` to connect to the sender and receive its offer.
     pub async fn connect(opts: &ReceiveOptions, code: &str) -> Result<Self> {
         let code = TransferCode::parse(code).map_err(Error::Code)?;
@@ -510,12 +559,25 @@ impl IncomingOffer {
 
     /// Accept and write everything beneath `dest`.
     pub async fn accept(self, dest: &Path, events: Events) -> Result<ReceiveReport> {
+        self.accept_with(dest, events, &Stop::new()).await
+    }
+
+    /// Like [`IncomingOffer::accept`], until `stop` is stopped: then the
+    /// sender is told, partial files are removed and the transfer ends with
+    /// [`Error::Stopped`]. Files already placed stay.
+    pub async fn accept_with(
+        self,
+        dest: &Path,
+        events: Events,
+        stop: &Stop,
+    ) -> Result<ReceiveReport> {
         let report = transfer::accept(
             &self.conn,
             self.chan,
             self.offer,
             dest,
             progress_from(&events),
+            stop,
         )
         .await;
         self.conn.close(0u32.into(), b"done");

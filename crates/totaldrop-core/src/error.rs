@@ -22,6 +22,8 @@ pub enum Error {
     Rejected(RejectReason),
     /// The other side cancelled.
     Cancelled(String),
+    /// This side stopped the transfer (see [`crate::Stop`]).
+    Stopped,
     /// A local file problem.
     Io(std::io::Error),
     /// The transfer code could not be read.
@@ -43,6 +45,7 @@ impl core::fmt::Display for Error {
             Error::InvalidOffer(m) => write!(f, "invalid offer: {m}"),
             Error::Rejected(r) => write!(f, "the receiver declined ({r:?})"),
             Error::Cancelled(m) => write!(f, "cancelled by the other side: {m}"),
+            Error::Stopped => f.write_str("stopped on this device"),
             Error::Io(e) => write!(f, "{e}"),
             Error::Code(e) => write!(f, "{e}"),
             Error::Random => f.write_str("the random number generator failed"),
@@ -76,15 +79,30 @@ impl From<totaldrop_proto::wire::WireError> for Error {
     }
 }
 
+/// A side that stops closes the connection with reason `stopped` right
+/// after its cancel message, and the close can overtake the message. Seen
+/// that way, it is still the other side stopping.
+fn closed_by_peer(e: &quinn::ConnectionError) -> Option<Error> {
+    match e {
+        quinn::ConnectionError::ApplicationClosed(c) if &c.reason[..] == b"stopped" => {
+            Some(Error::Cancelled("stopped".into()))
+        }
+        _ => None,
+    }
+}
+
 impl From<quinn::ConnectionError> for Error {
     fn from(e: quinn::ConnectionError) -> Self {
-        Error::Connect(e.to_string())
+        closed_by_peer(&e).unwrap_or_else(|| Error::Connect(e.to_string()))
     }
 }
 
 impl From<quinn::WriteError> for Error {
     fn from(e: quinn::WriteError) -> Self {
-        Error::Connect(e.to_string())
+        match e {
+            quinn::WriteError::ConnectionLost(c) => c.into(),
+            e => Error::Connect(e.to_string()),
+        }
     }
 }
 
@@ -92,14 +110,17 @@ impl From<quinn::ReadExactError> for Error {
     fn from(e: quinn::ReadExactError) -> Self {
         match e {
             quinn::ReadExactError::FinishedEarly(_) => Error::Protocol("stream ended early"),
-            quinn::ReadExactError::ReadError(e) => Error::Connect(e.to_string()),
+            quinn::ReadExactError::ReadError(e) => e.into(),
         }
     }
 }
 
 impl From<quinn::ReadError> for Error {
     fn from(e: quinn::ReadError) -> Self {
-        Error::Connect(e.to_string())
+        match e {
+            quinn::ReadError::ConnectionLost(c) => c.into(),
+            e => Error::Connect(e.to_string()),
+        }
     }
 }
 
