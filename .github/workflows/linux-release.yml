@@ -1,6 +1,6 @@
-# Linux release: from a `linux-v*` tag, the Linux checks and the three
-# packages a PR runs, then a draft GitHub release with checksums and
-# build provenance (docs/surec.md).
+# Linux release: from a `linux-v*` tag, the Linux checks and the packages
+# a PR builds (Arch; .deb and .rpm for x86-64 and ARM64), then a draft
+# GitHub release with checksums and build provenance (docs/surec.md).
 name: Linux release
 
 on:

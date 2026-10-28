@@ -36,8 +36,8 @@ jobs:
       - run: cargo test -p totaldrop-linux --locked
 
   # ARM64 (Snapdragon X, RTX Spark) on GitHub's free ARM runner, #86. Arch
-  # has no official ARM64 image, so ARM64 Arch users build the PKGBUILD,
-  # which lists aarch64.
+  # has no official ARM64 Docker image; the PKGBUILD lists aarch64 for
+  # Arch Linux ARM users to build, untested in CI.
   package:
     name: Package (${{ matrix.format }}, ${{ matrix.arch }})
     needs: check
