@@ -545,7 +545,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsPrivacyBody.
   ///
   /// In en, this message translates to:
-  /// **'The rendezvous server sees your IP address and when you connect, but no file names, contents or keys. It keeps no logs. Files go directly between the two devices when they can reach each other, otherwise through the relay; either way they are encrypted end to end and the relay cannot read them.'**
+  /// **'The rendezvous server, the relay and Cloudflare\'s STUN server see your IP address, and so does the other device when you connect directly. None of them sees file names, contents or keys, and our servers keep no logs. Files go directly between the devices when they can, otherwise through the relay; they are encrypted end to end either way.'**
   String get settingsPrivacyBody;
 
   /// No description provided for @settingsVersion.
