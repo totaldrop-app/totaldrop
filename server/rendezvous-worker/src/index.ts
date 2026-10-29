@@ -21,6 +21,10 @@ export interface Env {
 
 /** How long an allocation connection may take to send its request. */
 const ALLOCATE_TIMEOUT = 10_000;
+/** Tries at opening a mailbox object, and the pause before the second
+ * (it grows by this much each time). */
+const MAILBOX_ATTEMPTS = 3;
+const MAILBOX_RETRY_DELAY = 50;
 
 function isUpgrade(request: Request): boolean {
   return (
@@ -89,8 +93,24 @@ async function mailbox(env: Env, request: Request, nameplate: number): Promise<R
     "x-td-token": record.token,
     "x-td-created": String(record.created),
   });
-  const forward = new Request("https://mailbox.internal/", { method: "GET", headers });
-  return env.MAILBOX.getByName(record.mailbox).fetch(forward);
+  // Every code opens a brand-new mailbox object, and the platform now and
+  // then fails that first request with a bare "internal error" (#119).
+  // Opening is idempotent (the record is stored once; a socket left by a
+  // failed try is never claimed and is closed at the claim deadline), so
+  // try again with a new stub, as Cloudflare advises, unless the object is
+  // overloaded. If it still fails, the client gets a reason, not a 500.
+  for (let attempt = 1; ; attempt++) {
+    const forward = new Request("https://mailbox.internal/", { method: "GET", headers });
+    try {
+      return await env.MAILBOX.getByName(record.mailbox).fetch(forward);
+    } catch (e) {
+      const overloaded = (e as { overloaded?: unknown } | null)?.overloaded === true;
+      if (overloaded || attempt >= MAILBOX_ATTEMPTS) {
+        return refuse(overloaded ? "server busy" : "server error, try again");
+      }
+      await new Promise((r) => setTimeout(r, MAILBOX_RETRY_DELAY * attempt));
+    }
+  }
 }
 
 export default {

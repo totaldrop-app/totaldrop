@@ -340,6 +340,29 @@ async fn scary_close_retires_the_nameplate() {
     assert_ne!(next.nameplate, n, "a retired nameplate must not be reused");
 }
 
+/// Many codes back to back, as a user retrying or a busy server sees them
+/// (issue #119): every allocation opens its mailbox, whether the previous
+/// sender left with CLOSE or just went away.
+#[tokio::test(flavor = "multi_thread")]
+async fn codes_back_to_back_all_open() {
+    let server = server().await;
+    for i in 0..24 {
+        let alloc = rendezvous::allocate(&server).await.unwrap();
+        let n = alloc.nameplate;
+        let mailbox = Mailbox::claim(&server, n, Some(&alloc))
+            .await
+            .unwrap_or_else(|e| panic!("code {i} (nameplate {n}) did not open: {e}"));
+        if i % 2 == 0 {
+            // The only side leaves explicitly, so the mailbox ends while it
+            // handles that message.
+            mailbox.close(Mood::Lonely).await;
+        } else {
+            // The sender is killed: the socket just goes away.
+            drop(mailbox);
+        }
+    }
+}
+
 /// Both sides close `scary` after a wrong code; the attack-wave counter goes
 /// up once, not twice.
 #[tokio::test(flavor = "multi_thread")]
