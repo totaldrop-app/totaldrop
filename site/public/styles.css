@@ -89,8 +89,7 @@ p, dl, dd, ol { margin: 0; }
 .eyebrow { font-size: 0.875rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-2); }
 
 /* Mark */
-.mk-wave { fill: none; stroke: var(--text); }
-.mk-file { fill: var(--accent); }
+.mk { fill: var(--accent); }
 
 /* Header */
 .top {
@@ -150,12 +149,20 @@ select.lang {
 .lede { font-size: 1.2rem; color: var(--text-2); max-width: 36rem; }
 
 .hero-figure { margin: 0; display: flex; flex-direction: column; gap: var(--s24); min-width: 0; }
-.hero-mark { width: min(100%, 16rem); height: auto; align-self: center; }
-/* The one moving thing: the drop visits each device in turn (app.js starts
-   the SVG's animateMotion unless motion is reduced). Rest state = the static mark. */
-.mk-moving { display: none; }
-.hero-mark.moving .mk-moving { display: inline; }
-.hero-mark.moving .mk-rest { display: none; }
+.hero-mark { width: min(100%, 16rem); height: auto; align-self: center; overflow: visible; }
+/* The one moving thing: the mark turns a quarter at a time, its corner
+   pointing at each side in turn (docs/tasarim.md, "Hareket"; the same timing
+   as the apps). With reduced motion it stays at rest. */
+@keyframes mk-turn {
+  0% { transform: rotate(0deg); }
+  18.75%, 25% { transform: rotate(90deg); }
+  43.75%, 50% { transform: rotate(180deg); }
+  68.75%, 75% { transform: rotate(270deg); }
+  93.75%, 100% { transform: rotate(360deg); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .mk-turn { transform-box: view-box; transform-origin: 55px 57px; animation: mk-turn 3.2s cubic-bezier(0.65, 0, 0.35, 1) infinite; }
+}
 
 .code-card { border: 1px solid var(--rule); border-radius: 28px; padding: var(--s24); display: flex; flex-direction: column; gap: var(--s8); }
 .code-label { color: var(--text-2); font-weight: 700; font-size: 0.875rem; }
