@@ -6,12 +6,13 @@
   "type": "module",
   "scripts": {
     "dev": "wrangler dev",
-    "check": "tsc --noEmit",
-    "test": "node --test test/",
+    "check": "tsc --noEmit && tsc -p tsconfig.test.json",
+    "test": "node --test \"test/*.test.ts\"",
     "deploy": "wrangler deploy"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "5.20261024.1",
+    "@types/node": "24.19.2",
     "typescript": "7.0.2",
     "wrangler": "4.154.0"
   }
