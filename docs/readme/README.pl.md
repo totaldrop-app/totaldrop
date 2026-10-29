@@ -1,4 +1,4 @@
-<!-- Translated from README.md f62f3fe1ba22. -->
+<!-- Translated from README.md e572385d1192. -->
 <div align="center">
 
 <picture>
@@ -36,8 +36,8 @@ Za darmo i na otwartych źródłach. Szyfrowanie end-to-end. Bez e-maila, bez nu
 - **Wystarczy krótki kod.** Wybierz pliki i otrzymaj kod w rodzaju `7-harbor-rocket`. Przeczytaj go na głos albo pokaż kod QR; druga osoba go wpisuje i pliki docierają.
 - **Szyfrowanie end-to-end, które możesz sprawdzić.** Zanim cokolwiek zostanie przesłane, oba ekrany pokazują te same cztery słowa. Jeśli się różnią, przerwij.
 - **Nie trzeba się nigdzie rejestrować.** Bez konta, e-maila i numeru telefonu. Opcjonalne konta będą tylko numerami, w stylu Mullvad ([projekt](../../docs/hesap.md)).
-- **Prosto z urządzenia na urządzenie, wszędzie.** Serwer spotkań tylko przedstawia sobie dwa urządzenia i nie prowadzi logów. Urządzenia łączą się bezpośrednio przez internet wszędzie, gdzie to możliwe. Gdy przeszkadza router lub zapora, ruch przenosi serwer pośredniczący, który nie może go odczytać.
-- **Jak u siebie w każdym systemie.** Każda aplikacja podąża za motywem, czcionkami, kolorem akcentu, językiem i ustawieniami animacji swojego systemu. Aplikacja na Linuksa to natywne Qt 6 na Waylandzie, które na bieżąco podąża za motywami KDE Plasma, Hyprland i Omarchy.
+- **Prosto z urządzenia na urządzenie, wszędzie.** Serwer spotkań tylko przedstawia sobie dwa urządzenia i nie prowadzi logów; jak każdy serwer widzi ich adresy IP. Urządzenia łączą się bezpośrednio przez internet wszędzie, gdzie to możliwe. Gdy przeszkadza router lub zapora, ruch przenosi serwer pośredniczący, który nie może go odczytać.
+- **Jak u siebie w twoim systemie.** Aplikacje podążają za jasnym lub ciemnym motywem systemu, kolorem akcentu, językiem i ustawieniem ograniczenia ruchu. Aplikacja na Linuksa to natywne Qt 6 na Waylandzie, które dodatkowo na bieżąco pobiera czcionki, narożniki i ikony z motywów KDE Plasma, Hyprland i Omarchy.
 - **Za darmo, na zawsze.** Otwarte źródła, finansowane z darowizn. Bez reklam, bez śledzenia, bez płatnej wersji dla podstawowych funkcji.
 
 <p align="center">
@@ -68,16 +68,16 @@ gh attestation verify totaldrop_0.2.0.beta.1-1_amd64.deb --repo totaldrop-app/to
 
 1. Nadawca prosi serwer spotkań o krótki kod. Kod jest jedynym sekretem, który dzielą obie osoby.
 2. Oba urządzenia zamieniają kod w silny klucz za pomocą **CPace**. Atakujący ma jedną próbę na transfer i nie może sprawdzać kodów offline.
-3. Urządzenia łączą się bezpośrednio przez **QUIC** (TLS 1.3 z przypiętymi surowymi kluczami publicznymi) i wykonują **Noise XXpsk3 z ML-KEM-768**, który pozostaje bezpieczny także wobec przyszłych komputerów kwantowych.
+3. Urządzenia łączą się bezpośrednio przez **QUIC** (TLS 1.3 z przypiętymi surowymi kluczami publicznymi) i wykonują **Noise XXpsk3 z ML-KEM-768**, który zaprojektowano tak, by wytrzymał także przyszłe komputery kwantowe.
 4. Pliki są szyfrowane fragmentami (STREAM), więc każdy fragment jest uwierzytelniany w chwili, gdy dociera.
 
-Protokół jest opisany w dokumencie *TotalDrop Protocol v0*. Decyzje podjęte podczas jego implementacji znajdują się w [docs/protocol-v0.1-notes.md](../../docs/protocol-v0.1-notes.md), a to, co każdy serwer może, a czego nie może zobaczyć, opisują [model zagrożeń](../../docs/tehdit-modeli.md) i [polityka prywatności](https://totaldrop.app/privacy).
+Protokół jest opisany w dokumencie *TotalDrop Protocol v0*. Decyzje podjęte podczas jego implementacji znajdują się w [docs/protocol-v0.1-notes.md](../../docs/protocol-v0.1-notes.md), a to, co każdy serwer może, a czego nie może zobaczyć, opisują [model zagrożeń](../../docs/tehdit-modeli.md) (po turecku) i [polityka prywatności](https://totaldrop.app/privacy).
 
 ## W twoim języku
 
 TotalDrop mówi w 35 językach i stosuje formaty liczb twojego regionu. Angielski i turecki są sprawdzone; pozostałe 33 to wersje robocze, które sprawdzają rodzimi użytkownicy, dlatego aplikacje zostawiają teksty dotyczące bezpieczeństwa (weryfikacja, błędny kod, akceptacja i odrzucenie) po angielsku, dopóki dany język nie zostanie sprawdzony. Strona ma je wszystkie już dziś; aplikacje dostaną je w kolejnych wydaniach.
 
-Zauważyłeś niezgrabne zdanie? [Pomóż w tłumaczeniu](../../docs/ceviri.md).
+Zauważyłeś niezgrabne zdanie? [Pomóż w tłumaczeniu](../../docs/ceviri.md) (przewodnik jest po turecku).
 
 ## Wesprzyj projekt
 
@@ -109,7 +109,7 @@ Możesz też pomóc, [zgłaszając błędy](https://github.com/totaldrop-app/tot
 
 Biblioteki mają licencje permisywne, aby każdy mógł budować na protokole; aplikacje są na GPL, a serwery na AGPL. Zobacz [LICENSING.md](../../LICENSING.md).
 
-Każda platforma ma własną wersję, tag (`linux-v…`, `android-v…`) i proces CI, więc jedną można wydać, nie ruszając pozostałych. Jak działają gałęzie i wydania: [docs/gelistirme.md](../../docs/gelistirme.md) i [docs/versioning.md](../../docs/versioning.md). Zasady projektowe: [docs/tasarim.md](../../docs/tasarim.md). Decyzje architektoniczne: [docs/kararlar](../../docs/kararlar/README.md).
+Każda platforma ma własną wersję, tag (`linux-v…`, `android-v…`) i proces CI, więc jedną można wydać, nie ruszając pozostałych. Jak działają gałęzie i wydania: [docs/gelistirme.md](../../docs/gelistirme.md) (po turecku) i [docs/versioning.md](../../docs/versioning.md). Zasady projektowe: [docs/tasarim.md](../../docs/tasarim.md) i decyzje architektoniczne: [docs/kararlar](../../docs/kararlar/README.md), jedno i drugie po turecku.
 
 ### Budowanie
 

@@ -1,4 +1,4 @@
-<!-- Translated from README.md f62f3fe1ba22. -->
+<!-- Translated from README.md e572385d1192. -->
 <div align="center">
 
 <picture>
@@ -36,8 +36,8 @@ Gratuito e de código aberto. Encriptação ponto a ponto. Sem e-mail, sem núme
 - **Basta um código curto.** Escolha os ficheiros e obtenha um código como `7-harbor-rocket`. Leia-o em voz alta ou mostre o código QR; a outra pessoa introduz o código e os ficheiros chegam.
 - **Encriptação ponto a ponto, e pode confirmá-la.** Os dois ecrãs mostram as mesmas quatro palavras antes de qualquer coisa ser enviada. Se forem diferentes, pare.
 - **Sem qualquer registo.** Sem conta, e-mail ou número de telefone. As contas opcionais serão apenas um número, ao estilo da Mullvad ([conceção](../../docs/hesap.md)).
-- **Diretamente de dispositivo para dispositivo, em qualquer lugar.** O servidor de encontro apenas apresenta os dois dispositivos e não guarda registos. Os dispositivos ligam-se diretamente através da Internet sempre que possível. Quando um router ou uma firewall o impede, um servidor de retransmissão transporta o tráfego sem o conseguir ler.
-- **Em casa em qualquer sistema.** Cada aplicação segue o tema, os tipos de letra, a cor de destaque, o idioma e as definições de movimento do respetivo sistema. A aplicação para Linux é Qt 6 nativo no Wayland e acompanha em tempo real os temas do KDE Plasma, Hyprland e Omarchy.
+- **Diretamente de dispositivo para dispositivo, em qualquer lugar.** O servidor de encontro apenas apresenta os dois dispositivos e não guarda registos; como qualquer servidor, vê os respetivos endereços IP. Os dispositivos ligam-se diretamente através da Internet sempre que possível. Quando um router ou uma firewall o impede, um servidor de retransmissão transporta o tráfego sem o conseguir ler.
+- **Em casa no seu sistema.** As aplicações seguem o tema claro ou escuro do sistema, a cor de destaque, o idioma e a definição de movimento reduzido. A aplicação para Linux é Qt 6 nativo no Wayland e também usa em tempo real os tipos de letra, os cantos e os ícones dos temas do KDE Plasma, Hyprland e Omarchy.
 - **Gratuito, para sempre.** Código aberto e financiado por donativos. Sem anúncios, sem rastreio, sem plano pago para o essencial.
 
 <p align="center">
@@ -68,16 +68,16 @@ gh attestation verify totaldrop_0.2.0.beta.1-1_amd64.deb --repo totaldrop-app/to
 
 1. O remetente pede um código curto ao servidor de encontro. O código é o único segredo que as duas pessoas partilham.
 2. Os dois dispositivos transformam o código numa chave forte com **CPace**. Um atacante tem uma única tentativa por transferência e não consegue testar códigos offline.
-3. Ligam-se diretamente através de **QUIC** (TLS 1.3 com chaves públicas em bruto fixadas) e executam **Noise XXpsk3 com ML-KEM-768**, que se mantém seguro face a futuros computadores quânticos.
+3. Ligam-se diretamente através de **QUIC** (TLS 1.3 com chaves públicas em bruto fixadas) e executam **Noise XXpsk3 com ML-KEM-768**, que foi concebido para resistir a futuros computadores quânticos.
 4. Os ficheiros são encriptados em blocos (STREAM), pelo que cada parte é autenticada à chegada.
 
-O protocolo está descrito em *TotalDrop Protocol v0*. As decisões tomadas durante a implementação estão em [docs/protocol-v0.1-notes.md](../../docs/protocol-v0.1-notes.md), e o que cada servidor pode e não pode ver está no [modelo de ameaças](../../docs/tehdit-modeli.md) e na [política de privacidade](https://totaldrop.app/privacy).
+O protocolo está descrito em *TotalDrop Protocol v0*. As decisões tomadas durante a implementação estão em [docs/protocol-v0.1-notes.md](../../docs/protocol-v0.1-notes.md), e o que cada servidor pode e não pode ver está no [modelo de ameaças](../../docs/tehdit-modeli.md) (em turco) e na [política de privacidade](https://totaldrop.app/privacy).
 
 ## No seu idioma
 
 O TotalDrop fala 35 idiomas e segue os formatos numéricos da sua região. O inglês e o turco estão revistos; os outros 33 são rascunhos que falantes nativos estão a verificar, pelo que as aplicações mantêm os textos de segurança (verificação, código errado, aceitar e recusar) em inglês até que o idioma seja revisto. O site já os tem todos; as aplicações vão recebê-los nas próximas versões.
 
-Encontrou uma frase pouco natural? [Ajude a traduzir](../../docs/ceviri.md).
+Encontrou uma frase pouco natural? [Ajude a traduzir](../../docs/ceviri.md) (o guia está em turco).
 
 ## Apoie o projeto
 
@@ -109,7 +109,7 @@ Também pode ajudar [comunicando erros](https://github.com/totaldrop-app/totaldr
 
 As bibliotecas têm licenças permissivas para que qualquer pessoa possa construir sobre o protocolo; as aplicações são GPL e os servidores, AGPL. Consulte [LICENSING.md](../../LICENSING.md).
 
-Cada plataforma tem a sua própria versão, etiqueta (`linux-v…`, `android-v…`) e workflow de CI, pelo que uma pode ser lançada sem mexer nas outras. Como funcionam os branches e as versões: [docs/gelistirme.md](../../docs/gelistirme.md) e [docs/versioning.md](../../docs/versioning.md). Regras de design: [docs/tasarim.md](../../docs/tasarim.md). Decisões de arquitetura: [docs/kararlar](../../docs/kararlar/README.md).
+Cada plataforma tem a sua própria versão, etiqueta (`linux-v…`, `android-v…`) e workflow de CI, pelo que uma pode ser lançada sem mexer nas outras. Como funcionam os branches e as versões: [docs/gelistirme.md](../../docs/gelistirme.md) (em turco) e [docs/versioning.md](../../docs/versioning.md). Regras de design: [docs/tasarim.md](../../docs/tasarim.md) e decisões de arquitetura: [docs/kararlar](../../docs/kararlar/README.md), ambas em turco.
 
 ### Compilação
 

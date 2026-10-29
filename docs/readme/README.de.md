@@ -1,4 +1,4 @@
-<!-- Translated from README.md f62f3fe1ba22. -->
+<!-- Translated from README.md e572385d1192. -->
 <div align="center">
 
 <picture>
@@ -36,8 +36,8 @@ Kostenlos und quelloffen. Ende-zu-Ende-verschlüsselt. Keine E-Mail, keine Telef
 - **Ein kurzer Code genügt.** Wählen Sie Dateien aus und Sie erhalten einen Code wie `7-harbor-rocket`. Lesen Sie ihn vor oder zeigen Sie den QR-Code; die andere Person gibt ihn ein, und die Dateien kommen an.
 - **Ende-zu-Ende-verschlüsselt, und Sie können es prüfen.** Beide Bildschirme zeigen dieselben vier Wörter, bevor etwas übertragen wird. Stimmen sie nicht überein, brechen Sie ab.
 - **Keine Anmeldung.** Kein Konto, keine E-Mail, keine Telefonnummer. Optionale Konten werden nur aus einer Nummer bestehen, wie bei Mullvad ([Konzept](../../docs/hesap.md)).
-- **Direkt von Gerät zu Gerät, überall.** Der Vermittlungsserver stellt die beiden Geräte nur einander vor und speichert keine Protokolle. Die Geräte verbinden sich über das Internet direkt, wo immer es geht. Steht ein Router oder eine Firewall im Weg, transportiert ein Relay-Server den Verkehr, ohne ihn lesen zu können.
-- **Auf jedem System zu Hause.** Jede App folgt dem Design, den Schriften, der Akzentfarbe, der Sprache und den Bewegungseinstellungen ihres Systems. Die Linux-App ist natives Qt 6 unter Wayland und folgt live den Designs von KDE Plasma, Hyprland und Omarchy.
+- **Direkt von Gerät zu Gerät, überall.** Der Vermittlungsserver stellt die beiden Geräte nur einander vor und speichert keine Protokolle; wie jeder Server sieht er ihre IP-Adressen. Die Geräte verbinden sich über das Internet direkt, wo immer es geht. Steht ein Router oder eine Firewall im Weg, transportiert ein Relay-Server den Verkehr, ohne ihn lesen zu können.
+- **Auf Ihrem System zu Hause.** Die Apps folgen dem hellen oder dunklen Design des Systems, seiner Akzentfarbe, seiner Sprache und der Einstellung für reduzierte Bewegung. Die Linux-App ist natives Qt 6 unter Wayland und übernimmt außerdem live Schriften, Ecken und Symbole aus den Designs von KDE Plasma, Hyprland und Omarchy.
 - **Kostenlos, für immer.** Quelloffen und durch Spenden finanziert. Keine Werbung, kein Tracking, kein kostenpflichtiger Tarif für die Grundfunktionen.
 
 <p align="center">
@@ -68,16 +68,16 @@ gh attestation verify totaldrop_0.2.0.beta.1-1_amd64.deb --repo totaldrop-app/to
 
 1. Der Absender bittet den Vermittlungsserver um einen kurzen Code. Der Code ist das einzige Geheimnis, das die beiden Personen teilen.
 2. Beide Geräte machen aus dem Code mit **CPace** einen starken Schlüssel. Ein Angreifer hat pro Übertragung einen Versuch und kann Codes nicht offline testen.
-3. Sie verbinden sich direkt über **QUIC** (TLS 1.3 mit fest hinterlegten öffentlichen Rohschlüsseln) und führen **Noise XXpsk3 mit ML-KEM-768** aus, das auch gegen künftige Quantencomputer sicher bleibt.
+3. Sie verbinden sich direkt über **QUIC** (TLS 1.3 mit fest hinterlegten öffentlichen Rohschlüsseln) und führen **Noise XXpsk3 mit ML-KEM-768** aus, das darauf ausgelegt ist, auch künftigen Quantencomputern standzuhalten.
 4. Dateien werden in Blöcken verschlüsselt (STREAM), sodass jedes Stück beim Eintreffen authentifiziert wird.
 
-Das Protokoll ist in *TotalDrop Protocol v0* beschrieben. Entscheidungen, die bei der Implementierung getroffen wurden, stehen in [docs/protocol-v0.1-notes.md](../../docs/protocol-v0.1-notes.md). Was jeder Server sehen kann und was nicht, steht im [Bedrohungsmodell](../../docs/tehdit-modeli.md) und in der [Datenschutzerklärung](https://totaldrop.app/privacy).
+Das Protokoll ist in *TotalDrop Protocol v0* beschrieben. Entscheidungen, die bei der Implementierung getroffen wurden, stehen in [docs/protocol-v0.1-notes.md](../../docs/protocol-v0.1-notes.md). Was jeder Server sehen kann und was nicht, steht im [Bedrohungsmodell](../../docs/tehdit-modeli.md) (auf Türkisch) und in der [Datenschutzerklärung](https://totaldrop.app/privacy).
 
 ## In Ihrer Sprache
 
 TotalDrop spricht 35 Sprachen und folgt den Zahlenformaten Ihrer Region. Englisch und Türkisch sind geprüft; die anderen 33 sind Entwürfe, die Muttersprachler gerade prüfen. Deshalb behalten die Apps die Sicherheitstexte (Prüfung, falscher Code, Annehmen und Ablehnen) auf Englisch, bis eine Sprache geprüft ist. Die Website hat schon heute alle Sprachen; die Apps erhalten sie mit ihren nächsten Versionen.
 
-Einen holprigen Satz entdeckt? [Beim Übersetzen helfen](../../docs/ceviri.md).
+Einen holprigen Satz entdeckt? [Beim Übersetzen helfen](../../docs/ceviri.md) (die Anleitung ist auf Türkisch).
 
 ## Das Projekt unterstützen
 
@@ -109,7 +109,7 @@ Sie können auch helfen, indem Sie [Fehler melden](https://github.com/totaldrop-
 
 Die Bibliotheken stehen unter freizügigen Lizenzen, damit jeder auf dem Protokoll aufbauen kann; die Apps stehen unter der GPL, die Server unter der AGPL. Siehe [LICENSING.md](../../LICENSING.md).
 
-Jede Plattform hat ihre eigene Version, ihren eigenen Tag (`linux-v…`, `android-v…`) und ihren eigenen CI-Workflow, sodass eine Plattform veröffentlicht werden kann, ohne die anderen anzufassen. Wie Branches und Releases funktionieren: [docs/gelistirme.md](../../docs/gelistirme.md) und [docs/versioning.md](../../docs/versioning.md). Designregeln: [docs/tasarim.md](../../docs/tasarim.md). Architekturentscheidungen: [docs/kararlar](../../docs/kararlar/README.md).
+Jede Plattform hat ihre eigene Version, ihren eigenen Tag (`linux-v…`, `android-v…`) und ihren eigenen CI-Workflow, sodass eine Plattform veröffentlicht werden kann, ohne die anderen anzufassen. Wie Branches und Releases funktionieren: [docs/gelistirme.md](../../docs/gelistirme.md) (auf Türkisch) und [docs/versioning.md](../../docs/versioning.md). Designregeln: [docs/tasarim.md](../../docs/tasarim.md) und Architekturentscheidungen: [docs/kararlar](../../docs/kararlar/README.md), beides auf Türkisch.
 
 ### Bauen
 

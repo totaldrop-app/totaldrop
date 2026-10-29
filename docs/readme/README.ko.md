@@ -1,4 +1,4 @@
-<!-- Translated from README.md f62f3fe1ba22. -->
+<!-- Translated from README.md e572385d1192. -->
 <div align="center">
 
 <picture>
@@ -36,8 +36,8 @@
 - **짧은 코드 하나면 됩니다.** 파일을 고르면 `7-harbor-rocket` 같은 코드가 나옵니다. 코드를 읽어 주거나 QR 코드를 보여 주면, 상대가 그 코드를 입력하고 파일이 도착합니다.
 - **종단간 암호화되며, 직접 확인할 수 있습니다.** 무엇이든 전송되기 전에 두 화면에 같은 네 단어가 표시됩니다. 다르면 중단하세요.
 - **가입할 것이 없습니다.** 계정도, 이메일도, 전화번호도 필요 없습니다. 선택형 계정이 생기더라도 Mullvad처럼 번호만 사용합니다 ([설계](../../docs/hesap.md)).
-- **어디서든 기기에서 기기로 바로.** 중개 서버는 두 기기를 서로 소개할 뿐이며 로그를 남기지 않습니다. 기기들은 가능한 한 인터넷을 통해 직접 연결됩니다. 공유기나 방화벽이 가로막으면, 내용을 읽을 수 없는 릴레이가 트래픽을 전달합니다.
-- **어떤 시스템에서도 자연스럽게.** 각 앱은 시스템의 테마, 글꼴, 강조 색상, 언어, 모션 설정을 따릅니다. Linux 앱은 Wayland에서 동작하는 네이티브 Qt 6 앱이며, KDE Plasma, Hyprland, Omarchy 테마를 실시간으로 따라갑니다.
+- **어디서든 기기에서 기기로 바로.** 중개 서버는 두 기기를 서로 소개할 뿐이며 로그를 남기지 않습니다. 다른 모든 서버와 마찬가지로 두 기기의 IP 주소는 볼 수 있습니다. 기기들은 가능한 한 인터넷을 통해 직접 연결됩니다. 공유기나 방화벽이 가로막으면, 내용을 읽을 수 없는 릴레이가 트래픽을 전달합니다.
+- **사용 중인 시스템에서 자연스럽게.** 앱은 시스템의 라이트 또는 다크 테마, 강조 색상, 언어, 동작 줄이기 설정을 따릅니다. Linux 앱은 Wayland에서 동작하는 네이티브 Qt 6 앱이며, KDE Plasma, Hyprland, Omarchy 테마에서 글꼴, 모서리, 아이콘도 실시간으로 가져옵니다.
 - **영원히 무료.** 오픈 소스이며 후원으로 운영됩니다. 광고도, 추적도, 기본 기능을 위한 유료 등급도 없습니다.
 
 <p align="center">
@@ -68,16 +68,16 @@ gh attestation verify totaldrop_0.2.0.beta.1-1_amd64.deb --repo totaldrop-app/to
 
 1. 보내는 사람이 중개 서버에 짧은 코드를 요청합니다. 이 코드가 두 사람이 공유하는 유일한 비밀입니다.
 2. 두 기기는 **CPace**로 코드를 강력한 키로 바꿉니다. 공격자는 전송 한 번에 한 번만 추측할 수 있고, 오프라인에서 코드를 시험해 볼 수 없습니다.
-3. 두 기기는 **QUIC**(고정된 원시 공개 키를 사용하는 TLS 1.3)으로 직접 연결하고, 미래의 양자 컴퓨터에 대해서도 안전한 **ML-KEM-768을 더한 Noise XXpsk3**를 실행합니다.
+3. 두 기기는 **QUIC**(고정된 원시 공개 키를 사용하는 TLS 1.3)으로 직접 연결하고, 미래의 양자 컴퓨터에도 견디도록 설계된 **ML-KEM-768을 더한 Noise XXpsk3**를 실행합니다.
 4. 파일은 청크 단위로 암호화되므로(STREAM), 각 조각은 도착하는 즉시 인증됩니다.
 
-프로토콜은 *TotalDrop Protocol v0* 문서에 설명되어 있습니다. 구현하면서 내린 결정은 [docs/protocol-v0.1-notes.md](../../docs/protocol-v0.1-notes.md) 문서에 있고, 각 서버가 볼 수 있는 것과 볼 수 없는 것은 [위협 모델](../../docs/tehdit-modeli.md) 및 [개인정보 처리방침](https://totaldrop.app/privacy) 문서에 나와 있습니다.
+프로토콜은 *TotalDrop Protocol v0* 문서에 설명되어 있습니다. 구현하면서 내린 결정은 [docs/protocol-v0.1-notes.md](../../docs/protocol-v0.1-notes.md) 문서에 있고, 각 서버가 볼 수 있는 것과 볼 수 없는 것은 [위협 모델](../../docs/tehdit-modeli.md) (터키어) 및 [개인정보 처리방침](https://totaldrop.app/privacy) 문서에 나와 있습니다.
 
 ## 사용자의 언어로
 
 TotalDrop은 35개 언어를 지원하며 사용자 지역의 숫자 형식을 따릅니다. 영어와 터키어는 검토를 마쳤고, 나머지 33개 언어는 원어민이 확인 중인 초안입니다. 그래서 앱은 해당 언어의 검토가 끝날 때까지 보안 관련 문구(검증, 잘못된 코드, 수락과 거절)를 영어로 유지합니다. 사이트에는 지금 모든 언어가 있으며, 앱에는 다음 릴리스부터 들어갑니다.
 
-어색한 문장을 발견하셨나요? [번역 돕기](../../docs/ceviri.md)
+어색한 문장을 발견하셨나요? [번역 돕기](../../docs/ceviri.md) (안내서는 터키어로 되어 있습니다)
 
 ## 프로젝트 후원하기
 
@@ -109,7 +109,7 @@ TotalDrop이 무료로 유지되는 것은 사람들이 힘을 보태 주기 때
 
 라이브러리는 누구나 프로토콜 위에 무언가를 만들 수 있도록 관대한 라이선스를 쓰고, 앱은 GPL, 서버는 AGPL입니다. 자세한 내용: [LICENSING.md](../../LICENSING.md)
 
-각 플랫폼은 자체 버전, 태그(`linux-v…`, `android-v…`), CI 워크플로를 가지므로, 하나를 출시할 때 다른 플랫폼을 건드리지 않아도 됩니다. 브랜치와 릴리스 운영 방식: [docs/gelistirme.md](../../docs/gelistirme.md), [docs/versioning.md](../../docs/versioning.md). 디자인 규칙: [docs/tasarim.md](../../docs/tasarim.md). 아키텍처 결정: [docs/kararlar](../../docs/kararlar/README.md).
+각 플랫폼은 자체 버전, 태그(`linux-v…`, `android-v…`), CI 워크플로를 가지므로, 하나를 출시할 때 다른 플랫폼을 건드리지 않아도 됩니다. 브랜치와 릴리스 운영 방식: [docs/gelistirme.md](../../docs/gelistirme.md) (터키어), [docs/versioning.md](../../docs/versioning.md). 디자인 규칙: [docs/tasarim.md](../../docs/tasarim.md), 아키텍처 결정: [docs/kararlar](../../docs/kararlar/README.md) (둘 다 터키어).
 
 ### 빌드
 

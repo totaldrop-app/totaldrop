@@ -1,4 +1,4 @@
-<!-- Translated from README.md f62f3fe1ba22. -->
+<!-- Translated from README.md e572385d1192. -->
 <div align="center">
 
 <picture>
@@ -36,8 +36,8 @@ Gratis en open source. End-to-end versleuteld. Geen e-mail, geen telefoonnummer,
 - **Een korte code is genoeg.** Kies bestanden en je krijgt een code zoals `7-harbor-rocket`. Lees hem voor of laat de QR-code zien; de ander typt hem in en de bestanden komen aan.
 - **End-to-end versleuteld, en je kunt het controleren.** Beide schermen tonen dezelfde vier woorden voordat er iets wordt verstuurd. Verschillen ze, stop dan.
 - **Nergens voor aanmelden.** Geen account, e-mail of telefoonnummer. Optionele accounts worden alleen een nummer, in de stijl van Mullvad ([ontwerp](../../docs/hesap.md)).
-- **Rechtstreeks van apparaat naar apparaat, overal.** De ontmoetingsserver stelt de twee apparaten alleen aan elkaar voor en houdt geen logboeken bij. Apparaten verbinden waar mogelijk rechtstreeks via het internet. Als een router of firewall in de weg zit, vervoert een relayserver het verkeer zonder het te kunnen lezen.
-- **Thuis op elk systeem.** Elke app volgt het thema, de lettertypen, de accentkleur, de taal en de bewegingsinstellingen van zijn systeem. De Linux-app is native Qt 6 op Wayland en volgt live de thema's van KDE Plasma, Hyprland en Omarchy.
+- **Rechtstreeks van apparaat naar apparaat, overal.** De ontmoetingsserver stelt de twee apparaten alleen aan elkaar voor en houdt geen logboeken bij; zoals elke server ziet hij hun IP-adressen. Apparaten verbinden waar mogelijk rechtstreeks via het internet. Als een router of firewall in de weg zit, vervoert een relayserver het verkeer zonder het te kunnen lezen.
+- **Thuis op je systeem.** De apps volgen het lichte of donkere thema van het systeem, de accentkleur, de taal en de instelling voor minder beweging. De Linux-app is native Qt 6 op Wayland en neemt daarnaast live de lettertypen, hoeken en pictogrammen over van de thema's van KDE Plasma, Hyprland en Omarchy.
 - **Gratis, voorgoed.** Open source en betaald met donaties. Geen advertenties, geen tracking, geen betaald abonnement voor de basis.
 
 <p align="center">
@@ -68,16 +68,16 @@ gh attestation verify totaldrop_0.2.0.beta.1-1_amd64.deb --repo totaldrop-app/to
 
 1. De verzender vraagt de ontmoetingsserver om een korte code. De code is het enige geheim dat de twee mensen delen.
 2. Beide apparaten maken van de code een sterke sleutel met **CPace**. Een aanvaller krijgt één poging per overdracht en kan codes niet offline testen.
-3. Ze verbinden rechtstreeks via **QUIC** (TLS 1.3 met vastgepinde ruwe publieke sleutels) en voeren **Noise XXpsk3 met ML-KEM-768** uit, dat ook veilig blijft tegen toekomstige kwantumcomputers.
+3. Ze verbinden rechtstreeks via **QUIC** (TLS 1.3 met vastgepinde ruwe publieke sleutels) en voeren **Noise XXpsk3 met ML-KEM-768** uit, dat is ontworpen om ook toekomstige kwantumcomputers te weerstaan.
 4. Bestanden worden in blokken versleuteld (STREAM), zodat elk stuk bij aankomst wordt geauthenticeerd.
 
-Het protocol is beschreven in *TotalDrop Protocol v0*. Beslissingen die bij de implementatie zijn genomen staan in [docs/protocol-v0.1-notes.md](../../docs/protocol-v0.1-notes.md), en wat elke server wel en niet kan zien staat in het [dreigingsmodel](../../docs/tehdit-modeli.md) en het [privacybeleid](https://totaldrop.app/privacy).
+Het protocol is beschreven in *TotalDrop Protocol v0*. Beslissingen die bij de implementatie zijn genomen staan in [docs/protocol-v0.1-notes.md](../../docs/protocol-v0.1-notes.md), en wat elke server wel en niet kan zien staat in het [dreigingsmodel](../../docs/tehdit-modeli.md) (in het Turks) en het [privacybeleid](https://totaldrop.app/privacy).
 
 ## In jouw taal
 
 TotalDrop spreekt 35 talen en volgt de getalnotatie van jouw regio. Engels en Turks zijn nagekeken; de andere 33 zijn concepten die moedertaalsprekers nu controleren. Daarom houden de apps de beveiligingsteksten (verificatie, verkeerde code, accepteren en weigeren) in het Engels tot een taal is nagekeken. De site heeft ze vandaag al allemaal; de apps krijgen ze bij hun volgende releases.
 
-Een onhandige zin gezien? [Help mee met vertalen](../../docs/ceviri.md).
+Een onhandige zin gezien? [Help mee met vertalen](../../docs/ceviri.md) (de handleiding is in het Turks).
 
 ## Steun het project
 
@@ -109,7 +109,7 @@ Je kunt ook helpen door [bugs te melden](https://github.com/totaldrop-app/totald
 
 De bibliotheken hebben permissieve licenties, zodat iedereen op het protocol kan voortbouwen; de apps zijn GPL en de servers AGPL. Zie [LICENSING.md](../../LICENSING.md).
 
-Elk platform heeft een eigen versie, tag (`linux-v…`, `android-v…`) en CI-workflow, zodat er één kan uitkomen zonder de andere aan te raken. Hoe branches en releases werken: [docs/gelistirme.md](../../docs/gelistirme.md) en [docs/versioning.md](../../docs/versioning.md). Ontwerpregels: [docs/tasarim.md](../../docs/tasarim.md). Architectuurbeslissingen: [docs/kararlar](../../docs/kararlar/README.md).
+Elk platform heeft een eigen versie, tag (`linux-v…`, `android-v…`) en CI-workflow, zodat er één kan uitkomen zonder de andere aan te raken. Hoe branches en releases werken: [docs/gelistirme.md](../../docs/gelistirme.md) (in het Turks) en [docs/versioning.md](../../docs/versioning.md). Ontwerpregels: [docs/tasarim.md](../../docs/tasarim.md) en architectuurbeslissingen: [docs/kararlar](../../docs/kararlar/README.md), allebei in het Turks.
 
 ### Bouwen
 

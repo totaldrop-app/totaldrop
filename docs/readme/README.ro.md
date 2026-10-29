@@ -1,4 +1,4 @@
-<!-- Translated from README.md f62f3fe1ba22. -->
+<!-- Translated from README.md e572385d1192. -->
 <div align="center">
 
 <picture>
@@ -36,8 +36,8 @@ Gratuit și open source. Criptat end-to-end. Fără e-mail, fără număr de tel
 - **Ajunge un cod scurt.** Alegeți fișierele și primiți un cod de tipul `7-harbor-rocket`. Citiți-l cu voce tare sau arătați codul QR; cealaltă persoană îl introduce și fișierele sosesc.
 - **Criptat end-to-end, iar dvs. puteți verifica.** Înainte să se transfere ceva, ambele ecrane arată aceleași patru cuvinte. Dacă diferă, opriți-vă.
 - **Nu trebuie să vă înregistrați nicăieri.** Fără cont, e-mail sau număr de telefon. Conturile opționale vor fi doar numere, în stilul Mullvad ([design](../../docs/hesap.md)).
-- **Direct de pe un dispozitiv pe altul, oriunde.** Serverul de întâlnire doar face prezentările între cele două dispozitive și nu păstrează jurnale. Dispozitivele se conectează direct prin internet oriunde pot. Când un router sau un firewall stă în cale, traficul este transportat de un server releu care nu îl poate citi.
-- **Ca acasă pe orice sistem.** Fiecare aplicație urmează tema, fonturile, culoarea de accent, limba și setările de animație ale sistemului său. Aplicația pentru Linux este Qt 6 nativ pe Wayland și urmează în timp real temele KDE Plasma, Hyprland și Omarchy.
+- **Direct de pe un dispozitiv pe altul, oriunde.** Serverul de întâlnire doar face prezentările între cele două dispozitive și nu păstrează jurnale; ca orice server, vede adresele lor IP. Dispozitivele se conectează direct prin internet oriunde pot. Când un router sau un firewall stă în cale, traficul este transportat de un server releu care nu îl poate citi.
+- **Ca acasă pe sistemul dumneavoastră.** Aplicațiile urmează tema deschisă sau întunecată a sistemului, culoarea de accent, limba și setarea de reducere a mișcării. Aplicația pentru Linux este Qt 6 nativ pe Wayland și preia în plus, în timp real, fonturile, colțurile și pictogramele din temele KDE Plasma, Hyprland și Omarchy.
 - **Gratuit, definitiv.** Open source și finanțat din donații. Fără reclame, fără urmărire, fără versiune plătită pentru funcțiile de bază.
 
 <p align="center">
@@ -68,16 +68,16 @@ gh attestation verify totaldrop_0.2.0.beta.1-1_amd64.deb --repo totaldrop-app/to
 
 1. Expeditorul cere serverului de întâlnire un cod scurt. Codul este singurul secret pe care îl împart cele două persoane.
 2. Ambele dispozitive transformă codul într-o cheie puternică folosind **CPace**. Un atacator are o singură încercare pe transfer și nu poate testa coduri offline.
-3. Dispozitivele se conectează direct prin **QUIC** (TLS 1.3 cu chei publice brute fixate) și rulează **Noise XXpsk3 cu ML-KEM-768**, care rămâne sigur și în fața viitoarelor computere cuantice.
+3. Dispozitivele se conectează direct prin **QUIC** (TLS 1.3 cu chei publice brute fixate) și rulează **Noise XXpsk3 cu ML-KEM-768**, care este conceput să reziste și în fața viitoarelor computere cuantice.
 4. Fișierele sunt criptate pe bucăți (STREAM), așa că fiecare bucată este autentificată pe măsură ce sosește.
 
-Protocolul este descris în *TotalDrop Protocol v0*. Deciziile luate la implementarea lui se află în [docs/protocol-v0.1-notes.md](../../docs/protocol-v0.1-notes.md), iar ce poate și ce nu poate vedea fiecare server este descris în [modelul de amenințări](../../docs/tehdit-modeli.md) și în [politica de confidențialitate](https://totaldrop.app/privacy).
+Protocolul este descris în *TotalDrop Protocol v0*. Deciziile luate la implementarea lui se află în [docs/protocol-v0.1-notes.md](../../docs/protocol-v0.1-notes.md), iar ce poate și ce nu poate vedea fiecare server este descris în [modelul de amenințări](../../docs/tehdit-modeli.md) (în turcă) și în [politica de confidențialitate](https://totaldrop.app/privacy).
 
 ## În limba dvs.
 
 TotalDrop vorbește 35 de limbi și urmează formatele de numere ale regiunii dvs. Engleza și turca sunt verificate; celelalte 33 sunt ciorne pe care le verifică vorbitori nativi, așa că aplicațiile păstrează textele de securitate (verificare, cod greșit, acceptare și refuz) în engleză până când o limbă este verificată. Site-ul le are pe toate de azi; aplicațiile le primesc în versiunile următoare.
 
-Ați găsit o frază stângace? [Ajutați la traducere](../../docs/ceviri.md).
+Ați găsit o frază stângace? [Ajutați la traducere](../../docs/ceviri.md) (ghidul este în turcă).
 
 ## Susțineți proiectul
 
@@ -109,7 +109,7 @@ Puteți ajuta și [raportând erori](https://github.com/totaldrop-app/totaldrop/
 
 Bibliotecile au licențe permisive, ca oricine să poată construi pe protocol; aplicațiile sunt GPL, iar serverele AGPL. Vedeți [LICENSING.md](../../LICENSING.md).
 
-Fiecare platformă are propria versiune, etichetă (`linux-v…`, `android-v…`) și flux CI, așa că una poate fi lansată fără să le atingă pe celelalte. Cum funcționează ramurile și versiunile: [docs/gelistirme.md](../../docs/gelistirme.md) și [docs/versioning.md](../../docs/versioning.md). Reguli de design: [docs/tasarim.md](../../docs/tasarim.md). Decizii de arhitectură: [docs/kararlar](../../docs/kararlar/README.md).
+Fiecare platformă are propria versiune, etichetă (`linux-v…`, `android-v…`) și flux CI, așa că una poate fi lansată fără să le atingă pe celelalte. Cum funcționează ramurile și versiunile: [docs/gelistirme.md](../../docs/gelistirme.md) (în turcă) și [docs/versioning.md](../../docs/versioning.md). Reguli de design: [docs/tasarim.md](../../docs/tasarim.md) și decizii de arhitectură: [docs/kararlar](../../docs/kararlar/README.md), ambele în turcă.
 
 ### Compilare
 

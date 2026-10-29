@@ -1,4 +1,4 @@
-<!-- Translated from README.md f62f3fe1ba22. -->
+<!-- Translated from README.md e572385d1192. -->
 <div align="center">
 
 <picture>
@@ -29,15 +29,15 @@ Gratis och öppen källkod. End-to-end-krypterat. Ingen e-post, inget telefonnum
 </div>
 
 > [!NOTE]
-> Den här översättningen är ett utkast och granskas. [English](../../README.md) är referensversionen.
+> Den här översättningen är ett utkast och granskas. [Den engelska versionen](../../README.md) är referensen.
 
 ## Varför TotalDrop
 
 - **En kort kod är allt som behövs.** Välj filer och få en kod som `7-harbor-rocket`. Läs upp den eller visa QR-koden; den andra personen skriver in den och filerna kommer fram.
 - **Krypterat end-to-end, och du kan kontrollera det.** Båda skärmarna visar samma fyra ord innan något överförs. Om de skiljer sig åt, avbryt.
 - **Inget att registrera sig för.** Inget konto, ingen e-post, inget telefonnummer. Valfria konton kommer bara att vara nummer, som hos Mullvad ([utformning](../../docs/hesap.md)).
-- **Direkt från enhet till enhet, var som helst.** Mötesservern presenterar bara de två enheterna för varandra och sparar inga loggar. Enheterna ansluter direkt över internet där det går. När en router eller brandvägg står i vägen bär en reläserver trafiken, utan att kunna läsa den.
-- **Hemma i alla system.** Varje app följer systemets tema, typsnitt, accentfärg, språk och inställningar för rörelse. Linux-appen är inbyggd Qt 6 på Wayland och följer teman i KDE Plasma, Hyprland och Omarchy direkt.
+- **Direkt från enhet till enhet, var som helst.** Mötesservern presenterar bara de två enheterna för varandra och sparar inga loggar; som alla servrar ser den deras IP-adresser. Enheterna ansluter direkt över internet där det går. När en router eller brandvägg står i vägen bär en reläserver trafiken, utan att kunna läsa den.
+- **Hemma i ditt system.** Apparna följer systemets ljusa eller mörka tema, accentfärg, språk och inställning för reducerad rörelse. Linux-appen är inbyggd Qt 6 på Wayland och hämtar dessutom typsnitt, hörn och ikoner från teman i KDE Plasma, Hyprland och Omarchy direkt.
 - **Gratis, för gott.** Öppen källkod, finansierat av donationer. Inga annonser, ingen spårning, ingen betalnivå för grunderna.
 
 <p align="center">
@@ -68,16 +68,16 @@ gh attestation verify totaldrop_0.2.0.beta.1-1_amd64.deb --repo totaldrop-app/to
 
 1. Avsändaren ber mötesservern om en kort kod. Koden är den enda hemlighet som de två personerna delar.
 2. Båda enheterna gör om koden till en stark nyckel med **CPace**. En angripare får en gissning per överföring och kan inte testa koder offline.
-3. De ansluter direkt över **QUIC** (TLS 1.3 med fästa råa publika nycklar) och kör **Noise XXpsk3 med ML-KEM-768**, som förblir säkert även mot framtida kvantdatorer.
+3. De ansluter direkt över **QUIC** (TLS 1.3 med fästa råa publika nycklar) och kör **Noise XXpsk3 med ML-KEM-768**, som är utformat för att stå emot även framtida kvantdatorer.
 4. Filerna krypteras i block (STREAM), så varje del autentiseras när den kommer fram.
 
-Protokollet beskrivs i *TotalDrop Protocol v0*. Beslut som fattats under implementeringen finns i [docs/protocol-v0.1-notes.md](../../docs/protocol-v0.1-notes.md), och vad varje server kan och inte kan se står i [hotmodellen](../../docs/tehdit-modeli.md) och [integritetspolicyn](https://totaldrop.app/privacy).
+Protokollet beskrivs i *TotalDrop Protocol v0*. Beslut som fattats under implementeringen finns i [docs/protocol-v0.1-notes.md](../../docs/protocol-v0.1-notes.md), och vad varje server kan och inte kan se står i [hotmodellen](../../docs/tehdit-modeli.md) (på turkiska) och [integritetspolicyn](https://totaldrop.app/privacy).
 
 ## På ditt språk
 
 TotalDrop finns på 35 språk och följer din regions talformat. Engelska och turkiska är granskade; de övriga 33 är utkast som modersmålstalare håller på att kontrollera, så apparna behåller säkerhetstexterna (verifiering, fel kod, acceptera och avböj) på engelska tills ett språk har granskats. Webbplatsen har alla redan i dag; apparna får dem i sina nästa versioner.
 
-Har du hittat en klumpig mening? [Hjälp till att översätta](../../docs/ceviri.md).
+Har du hittat en klumpig mening? [Hjälp till att översätta](../../docs/ceviri.md) (guiden är på turkiska).
 
 ## Stöd projektet
 
@@ -109,7 +109,7 @@ Du kan också hjälpa till genom att [rapportera buggar](https://github.com/tota
 
 Biblioteken har tillåtande licenser så att vem som helst kan bygga vidare på protokollet; apparna är GPL och servrarna AGPL. Se [LICENSING.md](../../LICENSING.md).
 
-Varje plattform har sin egen version, tagg (`linux-v…`, `android-v…`) och sitt eget CI-arbetsflöde, så att en kan släppas utan att de andra berörs. Hur grenar och versioner fungerar: [docs/gelistirme.md](../../docs/gelistirme.md) och [docs/versioning.md](../../docs/versioning.md). Designregler: [docs/tasarim.md](../../docs/tasarim.md). Arkitekturbeslut: [docs/kararlar](../../docs/kararlar/README.md).
+Varje plattform har sin egen version, tagg (`linux-v…`, `android-v…`) och sitt eget CI-arbetsflöde, så att en kan släppas utan att de andra berörs. Hur grenar och versioner fungerar: [docs/gelistirme.md](../../docs/gelistirme.md) (på turkiska) och [docs/versioning.md](../../docs/versioning.md). Designregler: [docs/tasarim.md](../../docs/tasarim.md) och arkitekturbeslut: [docs/kararlar](../../docs/kararlar/README.md), båda på turkiska.
 
 ### Bygga
 

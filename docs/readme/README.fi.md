@@ -1,4 +1,4 @@
-<!-- Translated from README.md f62f3fe1ba22. -->
+<!-- Translated from README.md e572385d1192. -->
 <div align="center">
 
 <picture>
@@ -29,15 +29,15 @@ Ilmainen ja avointa lähdekoodia. Päästä päähän salattu. Ei sähköpostia,
 </div>
 
 > [!NOTE]
-> Tämä käännös on luonnos, ja sitä tarkistetaan parhaillaan. [English](../../README.md) on viiteversio.
+> Tämä käännös on luonnos, ja sitä tarkistetaan parhaillaan. Viiteversio on [englanninkielinen](../../README.md).
 
 ## Miksi TotalDrop
 
 - **Lyhyt koodi riittää.** Valitse tiedostot, niin saat koodin, kuten `7-harbor-rocket`. Lue se ääneen tai näytä QR-koodi; toinen henkilö kirjoittaa sen, ja tiedostot saapuvat.
 - **Päästä päähän salattu, ja voit tarkistaa sen.** Molemmat näytöt näyttävät samat neljä sanaa ennen kuin mitään siirretään. Jos ne eroavat, keskeytä.
 - **Ei mitään, mihin rekisteröityä.** Ei tiliä, sähköpostia tai puhelinnumeroa. Valinnaiset tilit ovat pelkkiä numeroita, Mullvadin tapaan ([suunnitelma](../../docs/hesap.md)).
-- **Suoraan laitteelta laitteelle, missä tahansa.** Kohtauspalvelin vain esittelee kaksi laitetta toisilleen eikä tallenna lokeja. Laitteet yhdistävät suoraan internetin yli aina kun voivat. Kun reititin tai palomuuri on tiellä, välityspalvelin kuljettaa liikenteen pystymättä lukemaan sitä.
-- **Kotonaan jokaisessa järjestelmässä.** Jokainen sovellus noudattaa järjestelmänsä teemaa, fontteja, korostusväriä, kieltä ja liikeasetuksia. Linux-sovellus on natiivi Qt 6 -sovellus Waylandilla ja seuraa KDE Plasman, Hyprlandin ja Omarchyn teemoja reaaliajassa.
+- **Suoraan laitteelta laitteelle, missä tahansa.** Kohtauspalvelin vain esittelee kaksi laitetta toisilleen eikä tallenna lokeja; kuten mikä tahansa palvelin, se näkee niiden IP-osoitteet. Laitteet yhdistävät suoraan internetin yli aina kun voivat. Kun reititin tai palomuuri on tiellä, välityspalvelin kuljettaa liikenteen pystymättä lukemaan sitä.
+- **Kotonaan järjestelmässäsi.** Sovellukset noudattavat järjestelmän vaaleaa tai tummaa teemaa, korostusväriä, kieltä ja vähennetyn liikkeen asetusta. Linux-sovellus on natiivi Qt 6 -sovellus Waylandilla ja ottaa lisäksi fontit, kulmat ja kuvakkeet KDE Plasman, Hyprlandin ja Omarchyn teemoista reaaliajassa.
 - **Ilmainen, pysyvästi.** Avointa lähdekoodia ja lahjoituksilla rahoitettu. Ei mainoksia, ei seurantaa, ei maksullista tasoa perustoiminnoille.
 
 <p align="center">
@@ -68,16 +68,16 @@ gh attestation verify totaldrop_0.2.0.beta.1-1_amd64.deb --repo totaldrop-app/to
 
 1. Lähettäjä pyytää kohtauspalvelimelta lyhyen koodin. Koodi on ainoa salaisuus, jonka kaksi henkilöä jakavat.
 2. Molemmat laitteet muuttavat koodin vahvaksi avaimeksi **CPacella**. Hyökkääjä saa yhden arvauksen siirtoa kohden eikä voi testata koodeja offline-tilassa.
-3. Laitteet yhdistävät suoraan **QUIC**-yhteydellä (TLS 1.3 kiinnitetyillä raaoilla julkisilla avaimilla) ja ajavat **Noise XXpsk3:n ML-KEM-768:lla**, joka pysyy turvallisena myös tulevia kvanttitietokoneita vastaan.
+3. Laitteet yhdistävät suoraan **QUIC**-yhteydellä (TLS 1.3 kiinnitetyillä raaoilla julkisilla avaimilla) ja ajavat **Noise XXpsk3:n ML-KEM-768:lla**, joka on suunniteltu kestämään myös tulevia kvanttitietokoneita.
 4. Tiedostot salataan lohkoina (STREAM), joten jokainen osa todennetaan sen saapuessa.
 
-Protokolla on kuvattu dokumentissa *TotalDrop Protocol v0*. Toteutuksen aikana tehdyt päätökset ovat tiedostossa [docs/protocol-v0.1-notes.md](../../docs/protocol-v0.1-notes.md), ja se, mitä kukin palvelin näkee ja ei näe, on kerrottu [uhkamallissa](../../docs/tehdit-modeli.md) ja [tietosuojakäytännössä](https://totaldrop.app/privacy).
+Protokolla on kuvattu dokumentissa *TotalDrop Protocol v0*. Toteutuksen aikana tehdyt päätökset ovat tiedostossa [docs/protocol-v0.1-notes.md](../../docs/protocol-v0.1-notes.md), ja se, mitä kukin palvelin näkee ja ei näe, on kerrottu [uhkamallissa](../../docs/tehdit-modeli.md) (turkiksi) ja [tietosuojakäytännössä](https://totaldrop.app/privacy).
 
 ## Omalla kielelläsi
 
 TotalDrop puhuu 35:tä kieltä ja noudattaa alueesi numeromuotoja. Englanti ja turkki on tarkistettu; muut 33 ovat luonnoksia, joita äidinkieliset puhujat tarkistavat, joten sovellukset pitävät tietoturvatekstit (tarkistus, väärä koodi, hyväksy ja hylkää) englanniksi, kunnes kieli on tarkistettu. Sivustolla ne kaikki ovat jo nyt; sovellukset saavat ne seuraavissa julkaisuissaan.
 
-Huomasitko kömpelön lauseen? [Auta kääntämisessä](../../docs/ceviri.md).
+Huomasitko kömpelön lauseen? [Auta kääntämisessä](../../docs/ceviri.md) (opas on turkiksi).
 
 ## Tue projektia
 
@@ -109,7 +109,7 @@ Voit auttaa myös [ilmoittamalla virheistä](https://github.com/totaldrop-app/to
 
 Kirjastoilla on sallivat lisenssit, jotta kuka tahansa voi rakentaa protokollan päälle; sovellukset ovat GPL- ja palvelimet AGPL-lisensoituja. Katso [LICENSING.md](../../LICENSING.md).
 
-Jokaisella alustalla on oma versionsa, tagi (`linux-v…`, `android-v…`) ja CI-työnkulku, joten yhden voi julkaista koskematta muihin. Haarojen ja julkaisujen toiminta: [docs/gelistirme.md](../../docs/gelistirme.md) ja [docs/versioning.md](../../docs/versioning.md). Suunnittelusäännöt: [docs/tasarim.md](../../docs/tasarim.md). Arkkitehtuuripäätökset: [docs/kararlar](../../docs/kararlar/README.md).
+Jokaisella alustalla on oma versionsa, tagi (`linux-v…`, `android-v…`) ja CI-työnkulku, joten yhden voi julkaista koskematta muihin. Haarojen ja julkaisujen toiminta: [docs/gelistirme.md](../../docs/gelistirme.md) (turkiksi) ja [docs/versioning.md](../../docs/versioning.md). Suunnittelusäännöt: [docs/tasarim.md](../../docs/tasarim.md) ja arkkitehtuuripäätökset: [docs/kararlar](../../docs/kararlar/README.md), molemmat turkiksi.
 
 ### Rakentaminen
 
