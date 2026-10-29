@@ -1,4 +1,4 @@
-<!-- Translated from README.md f62f3fe1ba22. -->
+<!-- Translated from README.md e572385d1192. -->
 <div align="center">
 
 <picture>
@@ -29,15 +29,15 @@ Gratis dan open source. Terenkripsi end-to-end. Tanpa email, tanpa nomor telepon
 </div>
 
 > [!NOTE]
-> Terjemahan ini masih draf dan sedang ditinjau. Versi [English](../../README.md) adalah acuannya.
+> Terjemahan ini masih draf dan sedang ditinjau. Versi [bahasa Inggris](../../README.md) adalah acuannya.
 
 ## Mengapa TotalDrop
 
 - **Cukup dengan kode singkat.** Pilih file dan dapatkan kode seperti `7-harbor-rocket`. Bacakan kodenya atau tunjukkan kode QR; orang lain mengetiknya dan file pun tiba.
 - **Terenkripsi end-to-end, dan Anda bisa memeriksanya.** Kedua layar menampilkan empat kata yang sama sebelum apa pun dikirim. Jika berbeda, hentikan.
 - **Tidak perlu mendaftar apa pun.** Tanpa akun, email, atau nomor telepon. Akun opsional nantinya hanya berupa angka, ala Mullvad ([desain](../../docs/hesap.md)).
-- **Langsung dari perangkat ke perangkat, di mana pun.** Server pertemuan hanya memperkenalkan kedua perangkat dan tidak menyimpan log. Perangkat terhubung langsung melalui internet di mana pun memungkinkan. Jika router atau firewall menghalangi, server relai meneruskan lalu lintas yang tidak dapat dibacanya.
-- **Menyatu dengan setiap sistem.** Setiap aplikasi mengikuti tema, font, warna aksen, bahasa, dan setelan animasi sistemnya. Aplikasi Linux adalah Qt 6 native di Wayland dan mengikuti tema KDE Plasma, Hyprland, dan Omarchy secara langsung.
+- **Langsung dari perangkat ke perangkat, di mana pun.** Server pertemuan hanya memperkenalkan kedua perangkat dan tidak menyimpan log; seperti server mana pun, server ini melihat alamat IP keduanya. Perangkat terhubung langsung melalui internet di mana pun memungkinkan. Jika router atau firewall menghalangi, server relai meneruskan lalu lintas yang tidak dapat dibacanya.
+- **Menyatu dengan sistem Anda.** Aplikasi mengikuti tema terang atau gelap sistem, warna aksen, bahasa, dan setelan pengurangan gerakan. Aplikasi Linux adalah Qt 6 native di Wayland dan juga mengambil font, sudut, dan ikon dari tema KDE Plasma, Hyprland, dan Omarchy secara langsung.
 - **Gratis, selamanya.** Open source dan dibiayai oleh donasi. Tanpa iklan, tanpa pelacakan, tanpa paket berbayar untuk fitur dasar.
 
 <p align="center">
@@ -68,16 +68,16 @@ gh attestation verify totaldrop_0.2.0.beta.1-1_amd64.deb --repo totaldrop-app/to
 
 1. Pengirim meminta kode singkat dari server pertemuan. Kode ini adalah satu-satunya rahasia yang dimiliki bersama oleh kedua orang.
 2. Kedua perangkat mengubah kode menjadi kunci yang kuat dengan **CPace**. Penyerang hanya mendapat satu tebakan per transfer dan tidak dapat menguji kode secara offline.
-3. Perangkat terhubung langsung melalui **QUIC** (TLS 1.3 dengan kunci publik mentah yang di-pin) dan menjalankan **Noise XXpsk3 dengan ML-KEM-768**, yang tetap aman terhadap komputer kuantum di masa depan.
+3. Perangkat terhubung langsung melalui **QUIC** (TLS 1.3 dengan kunci publik mentah yang di-pin) dan menjalankan **Noise XXpsk3 dengan ML-KEM-768**, yang dirancang untuk bertahan terhadap komputer kuantum di masa depan.
 4. File dienkripsi per potongan (STREAM), sehingga setiap bagian diautentikasi begitu tiba.
 
-Protokolnya dijelaskan dalam *TotalDrop Protocol v0*. Keputusan yang diambil saat mengimplementasikannya ada di [docs/protocol-v0.1-notes.md](../../docs/protocol-v0.1-notes.md), dan apa yang dapat dan tidak dapat dilihat setiap server ada di [model ancaman](../../docs/tehdit-modeli.md) dan [kebijakan privasi](https://totaldrop.app/privacy).
+Protokolnya dijelaskan dalam *TotalDrop Protocol v0*. Keputusan yang diambil saat mengimplementasikannya ada di [docs/protocol-v0.1-notes.md](../../docs/protocol-v0.1-notes.md), dan apa yang dapat dan tidak dapat dilihat setiap server ada di [model ancaman](../../docs/tehdit-modeli.md) (bahasa Turki) dan [kebijakan privasi](https://totaldrop.app/privacy).
 
 ## Dalam bahasa Anda
 
 TotalDrop tersedia dalam 35 bahasa dan mengikuti format angka wilayah Anda. Bahasa Inggris dan Turki sudah ditinjau; 33 lainnya masih draf yang sedang diperiksa penutur asli, sehingga aplikasi mempertahankan teks keamanan (verifikasi, kode salah, terima dan tolak) dalam bahasa Inggris sampai bahasa tersebut selesai ditinjau. Situs sudah memiliki semuanya hari ini; aplikasi mendapatkannya pada rilis berikutnya.
 
-Menemukan kalimat yang janggal? [Bantu terjemahkan](../../docs/ceviri.md).
+Menemukan kalimat yang janggal? [Bantu terjemahkan](../../docs/ceviri.md) (panduannya dalam bahasa Turki).
 
 ## Dukung proyek ini
 
@@ -109,7 +109,7 @@ Anda juga dapat membantu dengan [melaporkan bug](https://github.com/totaldrop-ap
 
 Pustaka-pustakanya berlisensi permisif agar siapa pun dapat membangun di atas protokol ini; aplikasinya GPL dan servernya AGPL. Lihat [LICENSING.md](../../LICENSING.md).
 
-Setiap platform memiliki versi, tag (`linux-v…`, `android-v…`), dan alur kerja CI sendiri, sehingga satu platform dapat dirilis tanpa menyentuh yang lain. Cara kerja branch dan rilis: [docs/gelistirme.md](../../docs/gelistirme.md) dan [docs/versioning.md](../../docs/versioning.md). Aturan desain: [docs/tasarim.md](../../docs/tasarim.md). Keputusan arsitektur: [docs/kararlar](../../docs/kararlar/README.md).
+Setiap platform memiliki versi, tag (`linux-v…`, `android-v…`), dan alur kerja CI sendiri, sehingga satu platform dapat dirilis tanpa menyentuh yang lain. Cara kerja branch dan rilis: [docs/gelistirme.md](../../docs/gelistirme.md) (bahasa Turki) dan [docs/versioning.md](../../docs/versioning.md). Aturan desain: [docs/tasarim.md](../../docs/tasarim.md) dan keputusan arsitektur: [docs/kararlar](../../docs/kararlar/README.md), keduanya dalam bahasa Turki.
 
 ### Build
 

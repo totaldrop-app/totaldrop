@@ -1,4 +1,4 @@
-<!-- Translated from README.md f62f3fe1ba22. -->
+<!-- Translated from README.md e572385d1192. -->
 <div align="center">
 
 <picture>
@@ -29,15 +29,15 @@ Bure na chanzo huria. Imesimbwa fiche kutoka mwanzo hadi mwisho. Hakuna barua pe
 </div>
 
 > [!NOTE]
-> Tafsiri hii ni rasimu na inakaguliwa. Toleo la [English](../../README.md) ndilo marejeleo.
+> Tafsiri hii ni rasimu na inakaguliwa. Toleo la [Kiingereza](../../README.md) ndilo marejeleo.
 
 ## Kwa nini TotalDrop
 
 - **Msimbo mfupi unatosha.** Chagua faili na upate msimbo kama `7-harbor-rocket`. Usome kwa sauti au uonyeshe msimbo wa QR; mtu mwingine anauandika na faili zinafika.
 - **Imesimbwa fiche kutoka mwanzo hadi mwisho, na unaweza kuikagua.** Skrini zote mbili zinaonyesha maneno manne yale yale kabla chochote hakijatumwa. Yakitofautiana, simama.
 - **Hakuna cha kujisajili.** Hakuna akaunti, barua pepe wala nambari ya simu. Akaunti za hiari zitakuwa nambari tu, kwa mtindo wa Mullvad ([muundo](../../docs/hesap.md)).
-- **Moja kwa moja kutoka kifaa hadi kifaa, popote.** Seva ya kukutanisha hutambulisha vifaa viwili tu na haihifadhi kumbukumbu. Vifaa huunganishwa moja kwa moja kupitia intaneti popote inapowezekana. Ruta au ngome ikiwa kizuizi, seva ya kati hubeba trafiki ambayo haiwezi kuisoma.
-- **Nyumbani kwenye kila mfumo.** Kila programu hufuata mandhari, fonti, rangi ya msisitizo, lugha na mipangilio ya mwendo ya mfumo wake. Programu ya Linux ni Qt 6 asilia kwenye Wayland na hufuata mandhari ya KDE Plasma, Hyprland na Omarchy papo hapo.
+- **Moja kwa moja kutoka kifaa hadi kifaa, popote.** Seva ya kukutanisha hutambulisha vifaa viwili tu na haihifadhi kumbukumbu; kama seva yoyote, inaona anwani zao za IP. Vifaa huunganishwa moja kwa moja kupitia intaneti popote inapowezekana. Ruta au ngome ikiwa kizuizi, seva ya kati hubeba trafiki ambayo haiwezi kuisoma.
+- **Nyumbani kwenye mfumo wako.** Programu hufuata mandhari ya mwanga au giza ya mfumo, rangi ya msisitizo, lugha na mpangilio wa kupunguza mwendo. Programu ya Linux ni Qt 6 asilia kwenye Wayland na pia huchukua fonti, pembe na aikoni kutoka kwenye mandhari ya KDE Plasma, Hyprland na Omarchy papo hapo.
 - **Bure, daima.** Chanzo huria na inafadhiliwa kwa michango. Hakuna matangazo, hakuna ufuatiliaji, hakuna kiwango cha kulipia kwa mambo ya msingi.
 
 <p align="center">
@@ -68,16 +68,16 @@ gh attestation verify totaldrop_0.2.0.beta.1-1_amd64.deb --repo totaldrop-app/to
 
 1. Mtumaji anaomba msimbo mfupi kutoka kwa seva ya kukutanisha. Msimbo huo ndiyo siri pekee ambayo watu wawili wanashiriki.
 2. Vifaa vyote viwili hugeuza msimbo kuwa ufunguo imara kwa **CPace**. Mshambulizi anapata kukisia mara moja tu kwa kila uhamishaji na hawezi kujaribu misimbo nje ya mtandao.
-3. Vinaunganishwa moja kwa moja kupitia **QUIC** (TLS 1.3 pamoja na funguo ghafi za umma zilizobanwa) na huendesha **Noise XXpsk3 pamoja na ML-KEM-768**, ambayo inabaki salama dhidi ya kompyuta za kwanta za siku zijazo.
+3. Vinaunganishwa moja kwa moja kupitia **QUIC** (TLS 1.3 pamoja na funguo ghafi za umma zilizobanwa) na huendesha **Noise XXpsk3 pamoja na ML-KEM-768**, ambayo imeundwa kustahimili kompyuta za kwanta za siku zijazo.
 4. Faili husimbwa fiche kwa vipande (STREAM), kwa hiyo kila kipande huthibitishwa kinapofika.
 
-Itifaki imeelezwa katika *TotalDrop Protocol v0*. Maamuzi yaliyofanywa wakati wa kuitekeleza yako katika [docs/protocol-v0.1-notes.md](../../docs/protocol-v0.1-notes.md), na kile ambacho kila seva inaweza na isichoweza kuona kiko katika [mfano wa vitisho](../../docs/tehdit-modeli.md) na [sera ya faragha](https://totaldrop.app/privacy).
+Itifaki imeelezwa katika *TotalDrop Protocol v0*. Maamuzi yaliyofanywa wakati wa kuitekeleza yako katika [docs/protocol-v0.1-notes.md](../../docs/protocol-v0.1-notes.md), na kile ambacho kila seva inaweza na isichoweza kuona kiko katika [mfano wa vitisho](../../docs/tehdit-modeli.md) (kwa Kituruki) na [sera ya faragha](https://totaldrop.app/privacy).
 
 ## Katika lugha yako
 
 TotalDrop inapatikana katika lugha 35 na hufuata miundo ya nambari ya eneo lako. Kiingereza na Kituruki vimekaguliwa; zile 33 nyingine ni rasimu ambazo wazungumzaji asilia wanazikagua, kwa hiyo programu huacha maandishi ya usalama (uthibitishaji, msimbo usio sahihi, kukubali na kukataa) kwa Kiingereza hadi lugha ikaguliwe. Tovuti ina zote leo; programu zitazipata katika matoleo yao yajayo.
 
-Umeona sentensi isiyokaa vizuri? [Saidia kutafsiri](../../docs/ceviri.md).
+Umeona sentensi isiyokaa vizuri? [Saidia kutafsiri](../../docs/ceviri.md) (mwongozo uko kwa Kituruki).
 
 ## Saidia mradi
 
@@ -109,7 +109,7 @@ Unaweza pia kusaidia kwa [kuripoti hitilafu](https://github.com/totaldrop-app/to
 
 Maktaba zina leseni huru ili mtu yeyote aweze kujenga juu ya itifaki; programu ni GPL na seva ni AGPL. Tazama [LICENSING.md](../../LICENSING.md).
 
-Kila mfumo una toleo lake, tagi (`linux-v…`, `android-v…`) na mtiririko wa kazi wa CI, kwa hiyo mmoja unaweza kutolewa bila kugusa mingine. Jinsi matawi na matoleo yanavyofanya kazi: [docs/gelistirme.md](../../docs/gelistirme.md) na [docs/versioning.md](../../docs/versioning.md). Kanuni za muundo: [docs/tasarim.md](../../docs/tasarim.md). Maamuzi ya usanifu: [docs/kararlar](../../docs/kararlar/README.md).
+Kila mfumo una toleo lake, tagi (`linux-v…`, `android-v…`) na mtiririko wa kazi wa CI, kwa hiyo mmoja unaweza kutolewa bila kugusa mingine. Jinsi matawi na matoleo yanavyofanya kazi: [docs/gelistirme.md](../../docs/gelistirme.md) (kwa Kituruki) na [docs/versioning.md](../../docs/versioning.md). Kanuni za muundo: [docs/tasarim.md](../../docs/tasarim.md) na maamuzi ya usanifu: [docs/kararlar](../../docs/kararlar/README.md), yote kwa Kituruki.
 
 ### Kujenga
 

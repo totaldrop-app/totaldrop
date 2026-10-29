@@ -1,4 +1,4 @@
-<!-- Translated from README.md f62f3fe1ba22. -->
+<!-- Translated from README.md e572385d1192. -->
 <div align="center">
 
 <picture>
@@ -36,8 +36,8 @@
 - **Kısa bir kod yeter.** Dosyaları seçin ve `7-harbor-rocket` gibi bir kod alın. Kodu sesli okuyun ya da QR kodunu gösterin; karşı taraf kodu girer ve dosyalar gelir.
 - **Uçtan uca şifreli ve bunu siz de doğrulayabilirsiniz.** Hiçbir şey aktarılmadan önce iki ekran da aynı dört sözcüğü gösterir. Sözcükler farklıysa durun.
 - **Kaydolacak hiçbir şey yok.** Hesap, e-posta ya da telefon numarası yok. İsteğe bağlı hesaplar Mullvad tarzında yalnızca bir numaradan oluşacak ([tasarım](../../docs/hesap.md)).
-- **Doğrudan cihazdan cihaza, her yerde.** Buluşma sunucusu yalnızca iki cihazı tanıştırır ve kayıt tutmaz. Cihazlar internet üzerinden mümkün olan her yerde doğrudan bağlanır. Arada bir modem ya da güvenlik duvarı varsa trafiği, içeriğini okuyamayan bir aktarma sunucusu taşır.
-- **Her sistemde evindeymiş gibi.** Her uygulama kendi sisteminin temasını, yazı tiplerini, vurgu rengini, dilini ve hareket ayarlarını izler. Linux uygulaması Wayland üzerinde yerel bir Qt 6 uygulamasıdır ve KDE Plasma, Hyprland ve Omarchy temalarını canlı izler.
+- **Doğrudan cihazdan cihaza, her yerde.** Buluşma sunucusu yalnızca iki cihazı tanıştırır ve kayıt tutmaz; her sunucu gibi, cihazların IP adreslerini görür. Cihazlar internet üzerinden mümkün olan her yerde doğrudan bağlanır. Arada bir modem ya da güvenlik duvarı varsa trafiği, içeriğini okuyamayan bir aktarma sunucusu taşır.
+- **Sisteminizde evindeymiş gibi.** Uygulamalar sistemin açık ya da koyu temasını, vurgu rengini, dilini ve azaltılmış hareket ayarını izler. Linux uygulaması Wayland üzerinde yerel bir Qt 6 uygulamasıdır; yazı tiplerini, köşelerini ve simgelerini de KDE Plasma, Hyprland ve Omarchy temalarından canlı alır.
 - **Ücretsiz, kalıcı olarak.** Açık kaynak, bağışlarla ayakta. Reklam yok, takip yok, temel özellikler için ücretli sürüm yok.
 
 <p align="center">
@@ -68,7 +68,7 @@ gh attestation verify totaldrop_0.2.0.beta.1-1_amd64.deb --repo totaldrop-app/to
 
 1. Gönderen, buluşma sunucusundan kısa bir kod ister. Kod, iki kişinin paylaştığı tek sırdır.
 2. İki cihaz da kodu **CPace** ile güçlü bir anahtara dönüştürür. Bir saldırganın her aktarımda yalnızca bir tahmin hakkı olur ve kodları çevrimdışı deneyemez.
-3. Cihazlar **QUIC** (sabitlenmiş ham açık anahtarlarla TLS 1.3) üzerinden doğrudan bağlanır ve gelecekteki kuantum bilgisayarlara karşı da güvenli kalan **ML-KEM-768 ile Noise XXpsk3** çalıştırır.
+3. Cihazlar **QUIC** (sabitlenmiş ham açık anahtarlarla TLS 1.3) üzerinden doğrudan bağlanır ve gelecekteki kuantum bilgisayarlara karşı da dayanacak şekilde tasarlanmış **ML-KEM-768 ile Noise XXpsk3** çalıştırır.
 4. Dosyalar parçalar halinde şifrelenir (STREAM); böylece her parça ulaştığı anda doğrulanır.
 
 Protokol *TotalDrop Protokolü v0* belgesinde anlatılır. Uygulanırken alınan kararlar [docs/protocol-v0.1-notes.md](../../docs/protocol-v0.1-notes.md) dosyasındadır; her sunucunun neyi görüp neyi göremediği ise [tehdit modeli](../../docs/tehdit-modeli.md) ve [gizlilik politikası](https://totaldrop.app/privacy) içinde yer alır.

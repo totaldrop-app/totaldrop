@@ -1,4 +1,4 @@
-<!-- Translated from README.md f62f3fe1ba22. -->
+<!-- Translated from README.md e572385d1192. -->
 <div align="center">
 
 <picture>
@@ -36,8 +36,8 @@
 - **只需要一組簡短的代碼。** 選好檔案後，你會拿到一組類似 `7-harbor-rocket` 的代碼。把它念給對方，或出示 QR 碼；對方輸入代碼後，檔案就會送達。
 - **端對端加密，而且你可以親自核對。** 在傳輸任何內容之前，兩個螢幕會顯示同樣的四個單字。如果不一致，請停止。
 - **不需要註冊任何東西。** 沒有帳號、電子郵件或手機號碼。日後的選用帳號將像 Mullvad 一樣只使用編號（[設計](../../docs/hesap.md)）。
-- **裝置直連，身在何處都可以。** 中介伺服器只負責為兩部裝置牽線，不保留記錄。裝置會盡可能透過網際網路直接連線。如果路由器或防火牆阻擋，流量會由中繼伺服器轉送，而中繼伺服器無法讀取其內容。
-- **在每個系統上都自然融入。** 每個應用程式都會遵循所在系統的主題、字型、強調色、語言和動態效果設定。Linux 應用程式是在 Wayland 上執行的原生 Qt 6 應用程式，並即時跟隨 KDE Plasma、Hyprland 和 Omarchy 的主題。
+- **裝置直連，身在何處都可以。** 中介伺服器只負責為兩部裝置牽線，不保留記錄；和任何伺服器一樣，它能看到兩部裝置的 IP 位址。裝置會盡可能透過網際網路直接連線。如果路由器或防火牆阻擋，流量會由中繼伺服器轉送，而中繼伺服器無法讀取其內容。
+- **在你的系統上自然融入。** 應用程式會遵循系統的淺色或深色主題、強調色、語言和減少動態效果設定。Linux 應用程式是在 Wayland 上執行的原生 Qt 6 應用程式，還會即時從 KDE Plasma、Hyprland 和 Omarchy 的主題取得字型、圓角和圖示。
 - **永久免費。** 開放原始碼，由捐款支持。沒有廣告，沒有追蹤，基本功能也沒有付費版。
 
 <p align="center">
@@ -68,16 +68,16 @@ gh attestation verify totaldrop_0.2.0.beta.1-1_amd64.deb --repo totaldrop-app/to
 
 1. 傳送方向中介伺服器要求一組簡短的代碼。這組代碼是雙方共享的唯一祕密。
 2. 兩部裝置用 **CPace** 將代碼轉換為強金鑰。攻擊者每次傳輸只有一次猜測機會，也無法離線測試代碼。
-3. 兩部裝置透過 **QUIC**（使用固定原始公開金鑰的 TLS 1.3）直接連線，並執行 **結合 ML-KEM-768 的 Noise XXpsk3**，即使面對未來的量子電腦也依然安全。
+3. 兩部裝置透過 **QUIC**（使用固定原始公開金鑰的 TLS 1.3）直接連線，並執行 **結合 ML-KEM-768 的 Noise XXpsk3**，其設計旨在抵禦未來的量子電腦。
 4. 檔案以區塊為單位加密（STREAM），因此每個區塊在抵達時都會經過驗證。
 
-協定記載於 *TotalDrop Protocol v0*。實作過程中做出的決定請見 [docs/protocol-v0.1-notes.md](../../docs/protocol-v0.1-notes.md)，每部伺服器能看到什麼、不能看到什麼，請見 [威脅模型](../../docs/tehdit-modeli.md) 和 [隱私權政策](https://totaldrop.app/privacy)。
+協定記載於 *TotalDrop Protocol v0*。實作過程中做出的決定請見 [docs/protocol-v0.1-notes.md](../../docs/protocol-v0.1-notes.md)，每部伺服器能看到什麼、不能看到什麼，請見 [威脅模型](../../docs/tehdit-modeli.md)（土耳其文）和 [隱私權政策](https://totaldrop.app/privacy)。
 
 ## 使用你的語言
 
 TotalDrop 支援 35 種語言，並依照你所在地區的數字格式。英文和土耳其文已經過審校；其餘 33 種語言是母語人士正在檢查的草稿，因此在某個語言審校完成之前，應用程式會將安全相關的文字（驗證、代碼錯誤、接受和拒絕）保留為英文。網站現已提供所有語言；應用程式會在下一個版本中加入。
 
-發現了不通順的句子嗎？[協助翻譯](../../docs/ceviri.md)。
+發現了不通順的句子嗎？[協助翻譯](../../docs/ceviri.md)（指南為土耳其文）。
 
 ## 支持本專案
 
@@ -109,7 +109,7 @@ TotalDrop 能保持免費，是因為大家出手相助。捐款用於支付中�
 
 程式庫採用寬鬆授權，讓任何人都能以這個協定為基礎進行開發；應用程式採用 GPL，伺服器採用 AGPL。詳見 [LICENSING.md](../../LICENSING.md)。
 
-每個平台都有自己的版本、標籤（`linux-v…`、`android-v…`）和 CI 工作流程，因此一個平台可以單獨發布，而不影響其他平台。分支和發布的流程：[docs/gelistirme.md](../../docs/gelistirme.md) 和 [docs/versioning.md](../../docs/versioning.md)。設計規則：[docs/tasarim.md](../../docs/tasarim.md)。架構決策：[docs/kararlar](../../docs/kararlar/README.md)。
+每個平台都有自己的版本、標籤（`linux-v…`、`android-v…`）和 CI 工作流程，因此一個平台可以單獨發布，而不影響其他平台。分支和發布的流程：[docs/gelistirme.md](../../docs/gelistirme.md)（土耳其文）和 [docs/versioning.md](../../docs/versioning.md)。設計規則：[docs/tasarim.md](../../docs/tasarim.md)，架構決策：[docs/kararlar](../../docs/kararlar/README.md)（皆為土耳其文）。
 
 ### 建置
 

@@ -24,6 +24,6 @@ Maintainers may edit or remove comments, lock threads, and warn, suspend or ban 
 
 ## Reporting
 
-Write to **hello@totaldrop.app** with "Conduct" in the subject, or contact a maintainer privately on GitHub. Reports are read only by the maintainers, kept confidential, and answered within a week. If the report concerns a maintainer, say so and another maintainer handles it.
+Write to **hello@totaldrop.app** with "Conduct" in the subject. The project maintainer reads these reports, keeps them confidential, and answers within a week. TotalDrop has one maintainer today; if your report is about the maintainer, or you would rather not write to the project, report it to GitHub instead: every comment and profile has a "Report" option.
 
 This code applies in every project space, and in public when someone represents the project.

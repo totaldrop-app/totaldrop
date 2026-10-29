@@ -32,8 +32,8 @@ Free and open source. End-to-end encrypted. No email, no phone number, no accoun
 - **A short code is all it takes.** Pick files and get a code like `7-harbor-rocket`. Read it out or show the QR code; the other person types it in and the files arrive.
 - **Encrypted end to end, and you can check it.** Both screens show the same four words before anything moves. If they differ, stop.
 - **Nothing to sign up for.** No account, email or phone number. Optional accounts will be numbers only, Mullvad-style ([design](docs/hesap.md)).
-- **Straight from device to device, anywhere.** The rendezvous server only introduces the two devices and keeps no logs. Devices connect directly across the internet wherever they can. When a router or firewall is in the way, a relay carries traffic it cannot read.
-- **At home on every system.** Each app follows its system's theme, fonts, accent colour, language and motion settings. The Linux app is native Qt 6 on Wayland and follows KDE Plasma, Hyprland and Omarchy themes live.
+- **Straight from device to device, anywhere.** The rendezvous server only introduces the two devices and keeps no logs; like any server, it sees their IP addresses. Devices connect directly across the internet wherever they can. When a router or firewall is in the way, a relay carries traffic it cannot read.
+- **At home on your system.** The apps follow the system's light or dark theme, accent colour, language and reduced-motion setting. The Linux app is native Qt 6 on Wayland and also takes its fonts, corners and icons from KDE Plasma, Hyprland and Omarchy themes, live.
 - **Free, for good.** Open source and funded by donations. No ads, no tracking, no paid tier for the basics.
 
 <p align="center">
@@ -64,16 +64,16 @@ gh attestation verify totaldrop_0.2.0.beta.1-1_amd64.deb --repo totaldrop-app/to
 
 1. The sender asks the rendezvous server for a short code. The code is the only secret the two people share.
 2. Both devices turn the code into a strong key with **CPace**. An attacker gets one guess per transfer and cannot test codes offline.
-3. They connect directly over **QUIC** (TLS 1.3 with pinned raw public keys) and run **Noise XXpsk3 with ML-KEM-768**, which stays safe against future quantum computers.
+3. They connect directly over **QUIC** (TLS 1.3 with pinned raw public keys) and run **Noise XXpsk3 with ML-KEM-768**, which is designed to hold up against future quantum computers.
 4. Files are encrypted in chunks (STREAM), so every piece is authenticated as it arrives.
 
-The protocol is described in *TotalDrop Protocol v0*. Decisions made while implementing it are in [docs/protocol-v0.1-notes.md](docs/protocol-v0.1-notes.md), and what each server can and cannot see is in the [threat model](docs/tehdit-modeli.md) and the [privacy policy](https://totaldrop.app/privacy).
+The protocol is described in *TotalDrop Protocol v0*. Decisions made while implementing it are in [docs/protocol-v0.1-notes.md](docs/protocol-v0.1-notes.md), and what each server can and cannot see is in the [threat model](docs/tehdit-modeli.md) (Turkish) and the [privacy policy](https://totaldrop.app/privacy).
 
 ## In your language
 
 TotalDrop speaks 35 languages and follows your region's number formats. English and Turkish are reviewed; the other 33 are drafts that native speakers are checking, so the apps keep the security texts (verification, wrong code, accept and decline) in English until a language is reviewed. The site has them all today; the apps get them with their next releases.
 
-Spotted a clumsy sentence? [Help translate](docs/ceviri.md).
+Spotted a clumsy sentence? [Help translate](docs/ceviri.md) (the guide is in Turkish).
 
 ## Support the project
 
@@ -105,7 +105,7 @@ You can also help by [reporting bugs](https://github.com/totaldrop-app/totaldrop
 
 The libraries are permissive so anyone can build on the protocol; the apps are GPL and the servers AGPL. See [LICENSING.md](LICENSING.md).
 
-Each platform has its own version, tag (`linux-v…`, `android-v…`) and CI workflow, so one can ship without touching the others. How branches and releases work: [docs/gelistirme.md](docs/gelistirme.md) and [docs/versioning.md](docs/versioning.md). Design rules: [docs/tasarim.md](docs/tasarim.md). Architecture decisions: [docs/kararlar](docs/kararlar/README.md).
+Each platform has its own version, tag (`linux-v…`, `android-v…`) and CI workflow, so one can ship without touching the others. How branches and releases work: [docs/gelistirme.md](docs/gelistirme.md) (Turkish) and [docs/versioning.md](docs/versioning.md). Design rules: [docs/tasarim.md](docs/tasarim.md) and architecture decisions: [docs/kararlar](docs/kararlar/README.md), both in Turkish.
 
 ### Build
 

@@ -9,7 +9,7 @@
 // - no direction or invisible control characters (ZWNJ only in Persian);
 // - a translation older than README.md is reported, not an error: its first
 //   line names the README.md it was translated from.
-import { readFileSync, writeFileSync, existsSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync, readdirSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -25,7 +25,14 @@ const stamp = process.argv.slice(2).filter((a) => !a.startsWith("--"));
 const errors = [];
 const warnings = [];
 
+const block = /<!-- languages -->[\s\S]*?<!-- \/languages -->/;
 const fileOf = (tag) => (tag === "en" ? "README.md" : `docs/readme/README.${tag}.md`);
+// The English first, so translations are stamped with the README.md as it
+// will be committed.
+if (write) {
+  const en = read("README.md");
+  if (block.test(en)) writeFileSync(join(root, "README.md"), en.replace(block, list("en")));
+}
 const source = createHash("sha256").update(read("README.md")).digest("hex").slice(0, 12);
 const marker = (s) => `<!-- Translated from README.md ${s}. -->`;
 
@@ -39,7 +46,6 @@ function list(tag) {
   return `<!-- languages -->\n<sub>${items.join(" · ")}</sub>\n<!-- /languages -->`;
 }
 
-const block = /<!-- languages -->[\s\S]*?<!-- \/languages -->/;
 const forbidden = /[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/u;
 
 for (const [tag] of LANGUAGES) {
@@ -70,12 +76,20 @@ for (const [tag] of LANGUAGES) {
   });
   // Relative links and images: [..](path), src="path", srcset="path".
   const dir = dirname(join(root, path));
-  const refs = [...text.matchAll(/\]\(([^)\s]+)\)|(?:src|srcset)="([^"]+)"/g)].map((x) => x[1] || x[2]);
+  const refs = [...text.matchAll(/\]\(<?([^)\s>]+)>?\)|(?:src|srcset|href)="([^"]+)"|^\[[^\]]+\]:\s*(\S+)/gm)].map((x) => x[1] || x[2] || x[3]);
   for (const ref of refs) {
     if (/^(https?:|mailto:|#)/.test(ref)) continue;
     const file = ref.split("#")[0];
-    if (file && !existsSync(join(dir, file))) errors.push(`${path}: link to ${ref} does not exist`);
+    const target = resolve(dir, file);
+    if (file && !target.startsWith(root + "/")) errors.push(`${path}: link to ${ref} leaves the repository`);
+    else if (file && !existsSync(target)) errors.push(`${path}: link to ${ref} does not exist`);
   }
+}
+
+// A README for a language the site does not list.
+for (const f of readdirSync(join(root, "docs/readme"))) {
+  const m = /^README\.(.+)\.md$/.exec(f);
+  if (!m || !LANGUAGES.some(([t]) => t === m[1])) errors.push(`docs/readme/${f}: not a site language (site/public/lang.js)`);
 }
 
 for (const w of warnings) console.log(`::warning::${w}`);
