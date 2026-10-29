@@ -81,7 +81,7 @@
   "don.b1.f": "Sitenin ve bütün sunucuların adresi; Cloudflare'de maliyet fiyatına kayıtlı",
   "don.b1.w": "Şimdi",
   "don.b2": "Cloudflare Workers Paid",
-  "don.b2.f": "Site, rendezvous sunucusu ve aktarma sunucusu. Aktarma trafiği günlük ücretsiz sınırları aşana kadar ücretsiz; sonra ayda 5 USD, içinde 1 milyon istek ve 400.000 GB-saniye",
+  "don.b2.f": "Site, buluşma sunucusu ve aktarma sunucusu. Aktarma trafiği günlük ücretsiz sınırları aşana kadar ücretsiz; sonra ayda 5 USD, içinde 1 milyon istek ve 400.000 GB-saniye",
   "don.b2.w": "Aktarma yoğunlaşınca",
   "don.b3": "Apple Developer Program",
   "don.b3.f": "Apple, iPhone, iPad ve Mac'te yalnızca imzalı ve onaylı uygulamaların uyarısız çalışmasına izin veriyor",

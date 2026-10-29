@@ -47,7 +47,7 @@ jobs:
             [android]="^(app/|l10n/|crates/totaldrop-(core|crypto|proto|l10n)/|$shared|\.github/workflows/android(-release)?\.yml$)"
             [linux]="^(linux/|packaging/|l10n/|crates/totaldrop-(core|crypto|proto|cli|l10n)/|$shared|\.github/workflows/linux(-release)?\.yml$)"
             [server]="^(server/(rendezvous|relay)-worker/|server/totaldrop-(rendezvous|relay)/|crates/totaldrop-(core|crypto|proto|cli|l10n)/|l10n/|$shared|\.github/workflows/server\.yml$)"
-            [site]="^(site/|l10n/tests/|\.github/workflows/site\.yml$)"
+            [site]="^(site/|l10n/tests/|README\.md$|docs/readme/|docs/assets/|\.github/workflows/site\.yml$)"
           )
           # Every changed path, unquoted (non-ASCII names stay as they are)
           # and with both sides of a rename, so moving a file out of an area
