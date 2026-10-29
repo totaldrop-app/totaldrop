@@ -15,7 +15,7 @@ import 'ui/send/send_view_model.dart';
 import 'ui/settings/settings_view.dart';
 
 /// Shown in Settings; kept in step with pubspec.yaml by the release script.
-const appVersion = String.fromEnvironment('TOTALDROP_VERSION', defaultValue: '0.1.0-beta.5');
+const appVersion = String.fromEnvironment('TOTALDROP_VERSION', defaultValue: '0.2.0-beta.1');
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();

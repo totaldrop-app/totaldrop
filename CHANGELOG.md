@@ -7,6 +7,8 @@ All notable changes to TotalDrop are recorded here. The format follows
 
 ## [Unreleased]
 
+## [android-0.2.0-beta.1] and [linux-0.2.0-beta.1] - 2026-10-29
+
 ### Added
 
 - **Android, Linux:** Privacy mode in Settings ("Hide my address from the
