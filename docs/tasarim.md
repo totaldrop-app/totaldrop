@@ -37,7 +37,7 @@ Tek köşesi kare olan bir daire. Daire bütünlüktür (*Total*), kare köşe o
 
 - **Yapı (112 birimlik tuval):** merkezi (55, 57), yarıçapı 42 olan daire; sağ üst çeyreği kare köşeyle doldurulur (köşe 97, 15). Yol: `M55 15H97V57A42 42 0 1 1 55 15Z`. Daire, tuvalin merkezinden bir birim sola ve aşağı kaydırılmıştır: köşe tarafı ağır olduğu için şekil böyle ortada görünür.
 - **Renkler:** açık zeminde mor (#6D4AE0), koyu zeminde parlak mor (#A68BFF). Tek renktir; gölge, degrade ya da kontur yoktur.
-- **Uygulama simgesi:** mor zeminde kâğıt rengi (#F4F2FB) işaret. Android uyarlanabilir simgesinde işaret 0,55 ölçekle güvenli alanın içinde kalır (köşe, merkezden en uzak nokta); tek renkli katmanda beyaz. Linux simgesi aynı karoyu 128 birimde çizer; sembolik simge yalnız işarettir.
+- **Uygulama simgesi:** mor zeminde kâğıt rengi (#F4F2FB) işaret; işaret karonun genişliğinin yarısıdır (0,68 ölçek: Linux 128 birimlik simge, eski Android simgesi, Play simgesi). Android uyarlanabilir simgesinde işaret 0,55 ölçekle güvenli alanın içinde kalır (köşe, merkezden en uzak nokta, 33 dp'lik sınırın 1 dp içinde); tek renkli katmanda beyaz. Sembolik simge yalnız işarettir.
 - **Bitti rozeti:** dinlenen işaretin dairesine kâğıt rengi bir onay işareti (açık temada; koyu temada mürekkep), kalınlığı 9.
 - **Boşluk ve en küçük boy:** her yanda en az yarıçapın yarısı (21) boşluk; en küçük boy 16 px. Küçük boy için ayrı çizim gerekmez.
 - **Yapılmaz:** köşeyi yuvarlatmak, daireyi elipse çevirmek, işareti çerçeve ya da halka içine almak, başka renge boyamak, dinlenirken döndürmek.
