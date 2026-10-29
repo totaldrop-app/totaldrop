@@ -83,7 +83,7 @@ cargo test --release --locked -p totaldrop-linux -p totaldrop-proto
 - Stop now works at every stage, tells the other side, and leaves no
   unfinished files behind.
 - Adding a large folder no longer freezes the window.
-- Packages for ARM64 (Snapdragon X, NVIDIA RTX Spark).
+- .deb and .rpm packages for ARM64 (Snapdragon X, NVIDIA RTX Spark).
 
 * Wed Oct 28 2026 TotalDrop <hello@totaldrop.app> - 0.1.0~beta.4-1
 - Transfers across the internet: devices connect directly through most

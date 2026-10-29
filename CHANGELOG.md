@@ -102,24 +102,16 @@ All notable changes to TotalDrop are recorded here. The format follows
   timeout of the other socket in the same pair, and a finished pair leaves
   no alarm behind (#75).
 - **Core:** The apps now connect to the relay only when it is needed: when
-  no direct connection is up 1.2 seconds after both sides start dialling,
-  or at once in privacy mode. A transfer a direct path carries no longer
-  reaches the relay at all, so the relay no longer sees the IP addresses of
-  devices it does not carry (#63).
   a device has no direct connection 1.2 seconds after pairing, or at once
   in privacy mode. A transfer whose direct path is up within that time no
-  longer reaches the relay at all; when a direct path comes up later and
-  wins, the relay connection is closed as soon as it is chosen (#63).
-  wins, the relay connection is closed as soon as the direct path is
+  longer reaches the relay at all, so the relay no longer sees the IP
+  addresses of devices it does not carry; when a direct path comes up later
+  and wins, the relay connection is closed as soon as the direct path is
   chosen (#63).
 - **Core, CLI:** A receiver now uses the relay the sender names only when
   it is also the receiver's own relay setting, so a sender running its own
   relay can no longer learn the receiver's IP address that way. An empty
-  `--relay` turns the relay off when receiving too, and in privacy mode a
-  different relay stops the transfer with an error (#68).
   `--relay` turns the relay off when receiving too. When different relays
-  leave no path (or in privacy mode), both sides stop at once with an
-  error that says so, instead of timing out (#68).
   leave no path (or in privacy mode), the receiver stops at once with an
   error that says so, and so does the sender when it can tell, instead of
   timing out. A sender with this version no longer pairs with an older
@@ -130,8 +122,6 @@ All notable changes to TotalDrop are recorded here. The format follows
   the relay the sender names. The android-0.1.0-beta.5 notes above said the
   relay sees "only single-use keys, sizes and timing"; it also sees both IP
   addresses. A coming version will connect only when needed (#63, #68).
-- **Android:** The privacy text in Settings no longer says files always go
-  directly between the devices; it explains the relay.
 - **Android:** The privacy text in Settings said files always go directly
   between the devices and only the rendezvous server sees your IP address;
   it now names the relay, STUN and the other device too (#63).
