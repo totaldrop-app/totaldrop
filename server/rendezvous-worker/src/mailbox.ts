@@ -19,6 +19,13 @@ import {
   unhex,
 } from "./messages";
 
+/** Most connections a mailbox holds: its two sides and two still claiming. */
+const MAX_SOCKETS = 4;
+/** A connection that has not claimed a side by then is closed, as on the
+ * Rust server; otherwise anyone who knows a nameplate could hold
+ * connections on someone else's mailbox until it expires. */
+const CLAIM_TIMEOUT = 10_000;
+
 /** Most messages one side may post. */
 const MAX_MESSAGES_PER_SIDE = 32;
 /** Most messages and bytes buffered for a side that has not arrived yet. */
@@ -29,7 +36,7 @@ export interface Env {
   DIRECTORY: DurableObjectNamespace<Directory>;
 }
 
-type Attachment = { conn: string; side: number | null };
+type Attachment = { conn: string; side: number | null; opened: number };
 
 type Meta = { nameplate: number; mailbox: string; token: string; created: number };
 
@@ -118,10 +125,44 @@ export class Mailbox extends DurableObject<Env> {
       meta = { nameplate, mailbox, token, created };
       await this.ctx.storage.setAlarm(created + LIMITS.unclaimedTtl);
     }
-    const attachment: Attachment = { conn: hex(randomBytes(8)), side: null };
+    if (this.ctx.getWebSockets().length >= MAX_SOCKETS) {
+      socket.accept();
+      this.refuse(socket, "mailbox busy");
+      return new Response(null, { status: 101, webSocket: client });
+    }
+    const now = Date.now();
+    const attachment: Attachment = { conn: hex(randomBytes(8)), side: null, opened: now };
     this.ctx.acceptWebSocket(socket);
     socket.serializeAttachment(attachment);
+    await this.wakeBy(now + CLAIM_TIMEOUT);
     return new Response(null, { status: 101, webSocket: client });
+  }
+
+  /** Make sure the alarm runs by `when` (it may already run earlier). */
+  private async wakeBy(when: number): Promise<void> {
+    const at = await this.ctx.storage.getAlarm();
+    if (at === null || at > when) await this.ctx.storage.setAlarm(when);
+  }
+
+  /** Close connections that have not claimed a side in time; returns when
+   * the next one would be due, if any. */
+  private closeIdle(now: number): number | null {
+    let next: number | null = null;
+    for (const ws of this.ctx.getWebSockets()) {
+      const a = ws.deserializeAttachment() as Attachment | null;
+      if (!a || a.side !== null) continue;
+      const due = a.opened + CLAIM_TIMEOUT;
+      if (due <= now) {
+        try {
+          ws.close(1000, "claim timeout");
+        } catch {
+          // Gone already.
+        }
+      } else if (next === null || due < next) {
+        next = due;
+      }
+    }
+    return next;
   }
 
   private refuse(ws: WebSocket, reason: string): void {
@@ -198,6 +239,9 @@ export class Mailbox extends DurableObject<Env> {
     if (side === 1) {
       await this.directory().markFull(meta.nameplate, meta.mailbox);
       await this.ctx.storage.setAlarm(meta.created + LIMITS.mailboxTtl);
+      // Still owed: the claim deadline of any connection that has not claimed.
+      const idle = this.closeIdle(Date.now());
+      if (idle !== null) await this.wakeBy(idle);
     }
   }
 
@@ -308,8 +352,9 @@ export class Mailbox extends DurableObject<Env> {
     const deadline = meta.created + (full ? LIMITS.mailboxTtl : LIMITS.unclaimedTtl);
     if (now >= deadline) {
       await this.finish(meta, "mailbox expired");
-    } else {
-      await this.ctx.storage.setAlarm(deadline);
+      return;
     }
+    const idle = this.closeIdle(now);
+    await this.ctx.storage.setAlarm(idle !== null && idle < deadline ? idle : deadline);
   }
 }

@@ -47,6 +47,9 @@ export class Directory extends DurableObject {
           retired INTEGER NOT NULL
         );
         CREATE TABLE IF NOT EXISTS scary (t INTEGER NOT NULL);
+        CREATE INDEX IF NOT EXISTS active_created ON active (created);
+        CREATE INDEX IF NOT EXISTS resting_until ON resting (until);
+        CREATE INDEX IF NOT EXISTS scary_t ON scary (t);
       `);
     });
   }
@@ -55,11 +58,14 @@ export class Directory extends DurableObject {
     return Date.now();
   }
 
+  /** Move expired nameplates to resting. The index on `created` keeps this
+   * to the rows older than the shorter lifetime, not the whole table. */
   private expireActive(now: number): void {
     const sql = this.ctx.storage.sql;
+    // unclaimedTtl < mailboxTtl, so both kinds of expiry are older than this.
     const expired = sql
       .exec<{ n: number }>(
-        "SELECT n FROM active WHERE (full = 0 AND created < ?) OR created < ?",
+        "SELECT n FROM active WHERE created < ? AND (full = 0 OR created < ?)",
         now - LIMITS.unclaimedTtl,
         now - LIMITS.mailboxTtl,
       )
@@ -91,33 +97,33 @@ export class Directory extends DurableObject {
       now = this.now();
     }
     this.expireActive(now);
-    const active = new Set(
-      sql.exec<{ n: number }>("SELECT n FROM active").toArray().map((r) => r.n),
-    );
-    if (active.size >= LIMITS.maxNameplates) return { error: "server busy" };
-    const retired = new Set<number>();
-    const cooling = new Set<number>();
-    for (const r of sql
-      .exec<{ n: number; retired: number }>("SELECT n, retired FROM resting WHERE until > ?", now)
-      .toArray()) {
-      (r.retired ? retired : cooling).add(r.n);
-    }
-    const range = LIMITS.maxNameplates * 4;
-    let n = 0;
-    for (let i = 1; i <= range; i++) {
-      if (!active.has(i) && !retired.has(i) && !cooling.has(i)) {
-        n = i;
-        break;
-      }
-    }
-    if (n === 0) {
-      for (let i = 1; i <= range; i++) {
-        if (!active.has(i) && !retired.has(i)) {
-          n = i;
-          break;
-        }
-      }
-    }
+    const active = sql.exec<{ c: number }>("SELECT count(*) AS c FROM active").one().c;
+    if (active >= LIMITS.maxNameplates) return { error: "server busy" };
+    // The lowest number free of both, else the lowest that is only cooling
+    // down: either 1, or one past a number in use. Found in SQL, one indexed
+    // probe per candidate, instead of reading every row into memory.
+    const lowest = (blocked: string): number => {
+      const free = (x: string) =>
+        `NOT EXISTS (SELECT 1 FROM active a WHERE a.n = ${x}) AND ` +
+        `NOT EXISTS (SELECT 1 FROM resting r WHERE r.n = ${x} AND r.until > ?1 AND ${blocked})`;
+      const row = sql
+        .exec<{ n: number }>(
+          `SELECT n FROM (
+             SELECT 1 AS n WHERE ${free("1")}
+             UNION ALL
+             SELECT u.n + 1 AS n FROM (
+               SELECT n FROM active UNION SELECT n FROM resting WHERE until > ?1
+             ) u
+             WHERE u.n + 1 <= ?2 AND ${free("u.n + 1")}
+           ) ORDER BY n LIMIT 1`,
+          now,
+          LIMITS.maxNameplates * 4,
+        )
+        .toArray()[0];
+      return row?.n ?? 0;
+    };
+    let n = lowest("1");
+    if (n === 0) n = lowest("r.retired = 1");
     if (n === 0) return { error: "server busy" };
     const token = hex(randomBytes(16));
     const mailbox = hex(randomBytes(16));
@@ -133,12 +139,17 @@ export class Directory extends DurableObject {
     return { nameplate: n, token, mailbox };
   }
 
+  /** The live mailbox of nameplate `n`. An expired row is not returned;
+   * allocation and the alarm move it to resting. */
   async lookup(n: number): Promise<Lookup | null> {
-    this.expireActive(this.now());
+    const now = this.now();
     const row = this.ctx.storage.sql
       .exec<{ mailbox: string; token: string; created: number }>(
-        "SELECT mailbox, token, created FROM active WHERE n = ?",
+        `SELECT mailbox, token, created FROM active
+         WHERE n = ? AND created >= ? AND (full = 1 OR created >= ?)`,
         n,
+        now - LIMITS.mailboxTtl,
+        now - LIMITS.unclaimedTtl,
       )
       .toArray()[0];
     return row ?? null;
