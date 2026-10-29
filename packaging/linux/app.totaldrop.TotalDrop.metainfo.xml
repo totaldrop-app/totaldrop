@@ -47,6 +47,7 @@
       <description>
         <p>Privacy mode in Settings: everything goes through the relay, so the other device never learns your IP address.</p>
         <p>Stop now works at every stage, tells the other side, and leaves no unfinished files behind. Adding a large folder no longer freezes the window.</p>
+        <p>.deb and .rpm packages for ARM64 are now available too.</p>
       </description>
     </release>
     <release version="0.1.0~beta.4" date="2026-10-28" type="development">
