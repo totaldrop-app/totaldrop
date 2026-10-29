@@ -1,25 +1,23 @@
-import 'dart:math' as math;
-
 import 'package:material_ui/material_ui.dart';
 
 import 'theme.dart';
 
-/// The TotalDrop mark, "Dalga" (wave): a drop at the centre, two waves
-/// spreading from it, a straight channel cut through them to the north-east
-/// and the file again at the end of the channel, arrived.
+/// The TotalDrop mark, "Ağ" (network): three equal devices on a circle, each
+/// joined to the other two, and a drop on the bottom link pointing the way
+/// it travels.
 ///
-/// Drawn in code so the file can travel the channel while a transfer runs.
+/// Drawn in code so the drop can visit the devices while a transfer runs.
 /// At rest it matches `assets/logo.svg` exactly. The mark keeps its own
-/// colours in every theme: ink waves and violet file on light backgrounds,
-/// paper waves and glow file on dark ones.
+/// colours in every theme: ink links and violet devices on light
+/// backgrounds, paper links and glow devices on dark ones.
 class TotalDropMark extends StatefulWidget {
   const TotalDropMark({super.key, this.size = 96, this.sending = false});
 
   final double size;
 
-  /// Whether the transfer animation runs: the file leaves the drop and
-  /// travels the channel while a ring spreads from the centre, exactly as on
-  /// totaldrop.app (see docs/tasarim.md).
+  /// Whether the transfer animation runs: the drop travels the links and
+  /// stops briefly at each device, exactly as on totaldrop.app (see
+  /// docs/tasarim.md).
   final bool sending;
 
   @override
@@ -27,8 +25,7 @@ class TotalDropMark extends StatefulWidget {
 }
 
 class _TotalDropMarkState extends State<TotalDropMark> with SingleTickerProviderStateMixin {
-  late final AnimationController _c =
-      AnimationController(vsync: this, duration: const Duration(milliseconds: 3200));
+  late final AnimationController _c = AnimationController(vsync: this, duration: MarkMotion.loop);
 
   bool _shouldMove(BuildContext context) =>
       widget.sending && !(MediaQuery.maybeDisableAnimationsOf(context) ?? false);
@@ -71,7 +68,10 @@ class _TotalDropMarkState extends State<TotalDropMark> with SingleTickerProvider
           animation: _c,
           builder: (context, _) => CustomPaint(
             size: Size.square(widget.size),
-            painter: _MarkPainter(phase: _shouldMove(context) ? _c.value : null, dark: dark),
+            painter: _MarkPainter(
+              along: _shouldMove(context) ? MarkMotion.along(_c.value) : 0,
+              dark: dark,
+            ),
           ),
         ),
       ),
@@ -79,85 +79,106 @@ class _TotalDropMarkState extends State<TotalDropMark> with SingleTickerProvider
   }
 }
 
-class _MarkPainter extends CustomPainter {
-  _MarkPainter({required this.phase, required this.dark});
+/// The transfer animation's timing, shared with the website (styles.css and
+/// the hero's `animateMotion`) and the Linux app (Mark.qml).
+abstract final class MarkMotion {
+  static const loop = Duration(milliseconds: 4800);
 
-  /// 0..1 through one 3.2 s loop, or null for the resting mark.
-  final double? phase;
+  /// Each leg: start and end of the loop (0..1), start and end along the
+  /// motion path (0..1). Between legs the drop rests on a device.
+  static const legs = [
+    (0.0, 0.125, 0.0, 1 / 6),
+    (0.2, 0.45, 1 / 6, 0.5),
+    (0.525, 0.775, 0.5, 5 / 6),
+    (0.85, 0.975, 5 / 6, 1.0),
+  ];
+  static const _ease = Cubic(0.65, 0, 0.35, 1);
+
+  /// How far along the motion path the drop is at [t] (0..1 through the loop).
+  static double along(double t) {
+    var at = 0.0;
+    for (final (t0, t1, p0, p1) in legs) {
+      if (t < t0) return at;
+      if (t <= t1) return p0 + (p1 - p0) * _ease.transform((t - t0) / (t1 - t0));
+      at = p1;
+    }
+    return at;
+  }
+}
+
+class _MarkPainter extends CustomPainter {
+  _MarkPainter({required this.along, required this.dark});
+
+  /// 0..1 along the motion path; 0 (and 1) is the resting place.
+  final double along;
   final bool dark;
 
   // Geometry, in the SVG's units (viewBox 0 0 112 112).
-  static const _centre = Offset(56, 56);
-  static const _dropR = 12.0;
-  static const _waves = [(26.0, 8.0), (40.0, 6.0)];
-  static const _channelHalfWidth = 9.0;
-  static const _fileR = 8.0;
-  static const _fileDistance = 52.0;
-  static const _axis = -math.pi / 4; // north-east
+  static const _nodes = [Offset(56, 24), Offset(88.91, 81), Offset(23.09, 81)];
+  static const _nodeR = 11.0;
+  static const _linkR = Radius.circular(60);
+  static const _linkWidth = 7.0;
 
-  // The web's keyframes: travel 0..55 %, ripple 0..70 % of the loop.
-  static const _travelEnd = 0.55;
-  static const _rippleEnd = 0.70;
-  static const _travelCurve = Cubic(0.65, 0, 0.35, 1);
-  static const _rippleCurve = Cubic(0.2, 0.6, 0.3, 1);
+  /// The links: each pair of devices joined by an arc bowing outwards.
+  static final Path _links = Path()
+    ..moveTo(_nodes[0].dx, _nodes[0].dy)
+    ..arcToPoint(_nodes[1], radius: _linkR)
+    ..arcToPoint(_nodes[2], radius: _linkR)
+    ..arcToPoint(_nodes[0], radius: _linkR)
+    ..close();
 
-  static double _distance(double t) {
-    if (t >= _travelEnd) return _fileDistance;
-    final u = _travelCurve.transform(t / _travelEnd);
-    return _dropR + (_fileDistance - _dropR) * u;
-  }
+  /// The drop's way round: from its resting place in the middle of the
+  /// bottom link, to the right device, the top one, the left one and back.
+  static final _motion =
+      (Path()
+            ..moveTo(56, 90.83)
+            ..arcToPoint(_nodes[1], radius: _linkR, clockwise: false)
+            ..arcToPoint(_nodes[0], radius: _linkR, clockwise: false)
+            ..arcToPoint(_nodes[2], radius: _linkR, clockwise: false)
+            ..arcToPoint(const Offset(56, 90.83), radius: _linkR, clockwise: false))
+          .computeMetrics()
+          .first;
+
+  /// The drop, body centred on the origin and pointing along +x.
+  static final Path _drop = Path()
+    ..moveTo(11, 0)
+    ..lineTo(3.84, -5.24)
+    ..arcToPoint(
+      const Offset(3.84, 5.24),
+      radius: const Radius.circular(6.5),
+      largeArc: true,
+      clockwise: false,
+    )
+    ..close();
 
   @override
   void paint(Canvas canvas, Size size) {
-    final unit = size.width / 112;
-    canvas.scale(unit);
+    canvas.scale(size.width / 112);
 
-    final waveColor = dark ? Brand.paper : Brand.ink;
-    final fileColor = dark ? Brand.glow : Brand.accent;
-    final wave = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.butt
-      ..color = waveColor
-      ..isAntiAlias = true;
     final fill = Paint()
-      ..color = fileColor
+      ..color = dark ? Brand.glow : Brand.accent
       ..isAntiAlias = true;
-
-    for (final (r, width) in _waves) {
-      final h = math.asin(_channelHalfWidth / r);
-      canvas.drawArc(
-        Rect.fromCircle(center: _centre, radius: r),
-        _axis + h,
-        2 * math.pi - 2 * h,
-        false,
-        wave..strokeWidth = width,
-      );
+    canvas.drawPath(
+      _links,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = _linkWidth
+        ..color = dark ? Brand.paper : Brand.ink
+        ..isAntiAlias = true,
+    );
+    for (final n in _nodes) {
+      canvas.drawCircle(n, _nodeR, fill);
     }
 
-    final t = phase;
-    if (t != null && t < _rippleEnd) {
-      final u = _rippleCurve.transform(t / _rippleEnd);
-      final scale = 1 + 3.6 * u;
-      final opacity = 0.7 * (1 - u);
-      canvas.drawCircle(
-        _centre,
-        _dropR * scale,
-        Paint()
-          ..style = PaintingStyle.stroke
-          // 2 logical pixels whatever the size, like the web's non-scaling stroke.
-          ..strokeWidth = 2 / unit
-          ..color = fileColor.withValues(alpha: opacity)
-          ..isAntiAlias = true,
-      );
-    }
-
-    canvas.drawCircle(_centre, _dropR, fill);
-
-    final d = t == null ? _fileDistance : _distance(t);
-    final file = _centre + Offset(math.cos(_axis), math.sin(_axis)) * d;
-    canvas.drawCircle(file, _fileR, fill);
+    final at = _motion.getTangentForOffset(_motion.length * (along % 1.0))!;
+    canvas
+      ..save()
+      ..translate(at.position.dx, at.position.dy)
+      ..rotate(-at.angle)
+      ..drawPath(_drop, fill)
+      ..restore();
   }
 
   @override
-  bool shouldRepaint(_MarkPainter old) => old.phase != phase || old.dark != dark;
+  bool shouldRepaint(_MarkPainter old) => old.along != along || old.dark != dark;
 }
