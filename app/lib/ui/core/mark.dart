@@ -35,7 +35,10 @@ class _TotalDropMarkState extends State<TotalDropMark> with SingleTickerProvider
     if (_shouldMove(context)) {
       if (!_c.isAnimating) _c.repeat();
     } else {
-      _c.stop();
+      // Back to rest, so the next transfer starts the loop from the beginning.
+      _c
+        ..stop()
+        ..value = 0;
     }
   }
 
@@ -79,8 +82,8 @@ class _TotalDropMarkState extends State<TotalDropMark> with SingleTickerProvider
   }
 }
 
-/// The transfer animation's timing, shared with the website (styles.css and
-/// the hero's `animateMotion`) and the Linux app (Mark.qml).
+/// The transfer animation's timing, shared with the website (the hero's
+/// `animateMotion` in index.html) and the Linux app (Mark.qml).
 abstract final class MarkMotion {
   static const loop = Duration(milliseconds: 4800);
 
