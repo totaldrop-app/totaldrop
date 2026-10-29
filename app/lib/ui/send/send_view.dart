@@ -338,14 +338,13 @@ class _Done extends StatelessWidget {
     final l = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final s = vm.summary;
-    final dark = theme.brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Center(child: DoneBadge(dark: dark)),
+          const Center(child: DoneBadge()),
           Gap.l,
           Text(l.sendDone, textAlign: TextAlign.center, style: theme.textTheme.headlineSmall),
           Gap.s,

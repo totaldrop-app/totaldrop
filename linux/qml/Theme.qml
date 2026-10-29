@@ -45,6 +45,7 @@ QtObject {
     readonly property int s40: 40
 
     // The mark keeps its own colours in every theme.
-    readonly property color markWave: dark ? "#F4F2FB" : "#22184F"
-    readonly property color markFile: dark ? "#A68BFF" : "#6D4AE0"
+    readonly property color mark: dark ? "#A68BFF" : "#6D4AE0"
+    // The check drawn on the mark.
+    readonly property color markOn: dark ? "#22184F" : "#F4F2FB"
 }

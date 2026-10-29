@@ -14,11 +14,11 @@ public/
   privacy.html        Gizlilik
   404.html            Bulunamayan her adres için; o olmadan Pages her adrese
                       ana sayfayı 200 ile döner
-  styles.css          Aurora tokenları, açık ve koyu tema, hareketli işaret
+  styles.css          Aurora tokenları, açık ve koyu tema, dönen işaret
   lang.js             Dil listesi, gözden geçirilmiş diller, dil seçimi
   app.js              Çeviriyi uygulama, taslak notu, platform algılama, /r mantığı
   i18n/<dil>.json     Her dilin metinleri (docs/ceviri.md)
-  favicon.svg         Ağ işaretinin küçük boyu, koyu temada renk değiştirir
+  favicon.svg         Köşe işareti, koyu temada renk değiştirir
   _headers            Güvenlik başlıkları (katı CSP, HSTS, no-referrer)
   _routes.json        Ara katman (functions/) yalnız sayfalarda çalışır; yazı
                       tipi, stil, betik ve çeviri dosyaları doğrudan sunulur

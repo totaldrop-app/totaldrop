@@ -27,6 +27,13 @@ All notable changes to TotalDrop are recorded here. The format follows
 
 ### Changed
 
+- **Android, Linux, site:** New mark, "Köşe" (corner): a circle with one
+  square corner. The circle is the whole file and the corner makes it a
+  drop, pointing the way it goes. While a file is on its way the mark turns
+  a quarter at a time, 3.2 s a loop, the same on the site, Android and Linux,
+  and it stays still when the system asks for less motion. The app icons are
+  the paper mark on violet; the done screen shows a check inside the mark
+  (#133).
 - **Site (download page, roadmap, home), README:** The download page and
   the README point at Linux 0.2.0-beta.1, with the ARM64 .deb and .rpm,
   and the page lists what is new in Android 0.2.0-beta.2 and Linux

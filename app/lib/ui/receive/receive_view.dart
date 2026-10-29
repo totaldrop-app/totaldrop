@@ -303,7 +303,7 @@ class _Done extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
-        Center(child: DoneBadge(dark: theme.brightness == Brightness.dark)),
+        const Center(child: DoneBadge()),
         Gap.l,
         Text(l.receiveDone, textAlign: TextAlign.center, style: theme.textTheme.headlineSmall),
         Gap.s,

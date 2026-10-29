@@ -195,38 +195,10 @@ class SameNetworkNote extends StatelessWidget {
   }
 }
 
-/// The resting mark with a check: the file has arrived.
+/// The resting mark with a check inside its circle: the file has arrived.
 class DoneBadge extends StatelessWidget {
-  const DoneBadge({super.key, required this.dark});
-
-  final bool dark;
+  const DoneBadge({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return SizedBox.square(
-      dimension: 140,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          const TotalDropMark(size: 140),
-          // Top right, the one corner the mark leaves empty.
-          Positioned(
-            right: 4,
-            top: 4,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.check_circle,
-                size: 44,
-                color: dark ? Brand.successDark : Brand.success,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  Widget build(BuildContext context) => const TotalDropMark(size: 140, done: true);
 }

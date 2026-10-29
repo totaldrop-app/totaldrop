@@ -188,24 +188,4 @@
       }
     });
   });
-
-  // The hero mark: the drop visits each device in turn (docs/tasarim.md).
-  // Without JavaScript, or with reduced motion, the mark stays at rest.
-  const hero = document.querySelector(".hero-mark");
-  const motion = hero && hero.querySelector("animateMotion");
-  if (motion && typeof motion.beginElement === "function" && window.matchMedia) {
-    const less = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const sync = () => {
-      if (less.matches) {
-        hero.classList.remove("moving");
-        motion.endElement();
-      } else {
-        hero.classList.add("moving");
-        motion.beginElement();
-      }
-    };
-    sync();
-    if (less.addEventListener) less.addEventListener("change", sync);
-    else if (less.addListener) less.addListener(sync);
-  }
 })();

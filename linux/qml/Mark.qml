@@ -2,17 +2,17 @@ import QtQuick
 import QtQuick.Shapes
 import app.totaldrop
 
-// The Ağ mark: three devices, each joined to the other two, and a drop on
-// the bottom link. At rest it matches the SVG. While `sending`, it plays the
-// website's animation exactly (docs/tasarim.md): a 4.8 s loop in which the
-// drop goes to the right device, the top one, the left one and back to its
-// place, each leg on cubic-bezier(0.65, 0, 0.35, 1), resting briefly at
-// every device. The links and devices never move.
+// The Köşe mark: a circle with one square corner, at top right when at rest.
+// It matches the SVG. While `sending`, it plays the website's animation
+// exactly (docs/tasarim.md, "Hareket"): four quarter turns clockwise around
+// the circle's centre, each 0.6 s on cubic-bezier(0.65, 0, 0.35, 1) and
+// followed by a 0.2 s rest, 3.2 s in all. `done` draws a check inside.
 Item {
     id: root
 
     property real size: 96
     property bool sending: false
+    property bool done: false
 
     implicitWidth: size
     implicitHeight: size
@@ -25,95 +25,67 @@ Item {
     readonly property real unit: size / 112
     readonly property bool moving: sending && !Theme.reducedMotion && visible
 
-    // 0..1 along the motion path; 0 is the resting place.
-    property real along: 0
+    // Degrees turned from rest, clockwise.
+    property real angle: 0
 
     Shape {
         anchors.fill: parent
         preferredRendererType: Shape.CurveRenderer
         antialiasing: true
+        transform: Rotation { origin.x: 55 * root.unit; origin.y: 57 * root.unit; angle: root.angle }
 
         ShapePath {
-            strokeColor: Theme.markWave
-            strokeWidth: 7 * root.unit
-            fillColor: "transparent"
-            startX: 56 * root.unit; startY: 24 * root.unit
-            PathArc { x: 88.91 * root.unit; y: 81 * root.unit; radiusX: 60 * root.unit; radiusY: 60 * root.unit }
-            PathArc { x: 23.09 * root.unit; y: 81 * root.unit; radiusX: 60 * root.unit; radiusY: 60 * root.unit }
-            PathArc { x: 56 * root.unit; y: 24 * root.unit; radiusX: 60 * root.unit; radiusY: 60 * root.unit }
-        }
-    }
-
-    // The devices.
-    Repeater {
-        model: [[56, 24], [88.91, 81], [23.09, 81]]
-        Rectangle {
-            required property var modelData
-            x: (modelData[0] - 11) * root.unit
-            y: (modelData[1] - 11) * root.unit
-            width: 22 * root.unit
-            height: width
-            radius: width / 2
-            color: Theme.markFile
-            antialiasing: true
-        }
-    }
-
-    // The drop's way round, counter-clockwise from the middle of the bottom
-    // link: right device, top, left, and back.
-    PathInterpolator {
-        id: way
-        progress: root.along
-        path: Path {
-            startX: 56 * root.unit; startY: 90.83 * root.unit
-            PathArc { x: 88.91 * root.unit; y: 81 * root.unit; radiusX: 60 * root.unit; radiusY: 60 * root.unit; direction: PathArc.Counterclockwise }
-            PathArc { x: 56 * root.unit; y: 24 * root.unit; radiusX: 60 * root.unit; radiusY: 60 * root.unit; direction: PathArc.Counterclockwise }
-            PathArc { x: 23.09 * root.unit; y: 81 * root.unit; radiusX: 60 * root.unit; radiusY: 60 * root.unit; direction: PathArc.Counterclockwise }
-            PathArc { x: 56 * root.unit; y: 90.83 * root.unit; radiusX: 60 * root.unit; radiusY: 60 * root.unit; direction: PathArc.Counterclockwise }
-        }
-    }
-
-    // The drop, body centred on the path and pointing the way it goes.
-    Item {
-        x: way.x
-        y: way.y
-        rotation: way.angle
-        Shape {
-            preferredRendererType: Shape.CurveRenderer
-            antialiasing: true
-            ShapePath {
-                fillColor: Theme.markFile
-                strokeColor: "transparent"
-                startX: 11 * root.unit; startY: 0
-                PathLine { x: 3.84 * root.unit; y: -5.24 * root.unit }
-                PathArc {
-                    x: 3.84 * root.unit; y: 5.24 * root.unit
-                    radiusX: 6.5 * root.unit; radiusY: 6.5 * root.unit
-                    useLargeArc: true; direction: PathArc.Counterclockwise
-                }
+            fillColor: Theme.mark
+            strokeColor: "transparent"
+            startX: 55 * root.unit; startY: 15 * root.unit
+            PathLine { x: 97 * root.unit; y: 15 * root.unit }
+            PathLine { x: 97 * root.unit; y: 57 * root.unit }
+            PathArc {
+                x: 55 * root.unit; y: 15 * root.unit
+                radiusX: 42 * root.unit; radiusY: 42 * root.unit
+                useLargeArc: true
             }
         }
     }
 
-    // Legs and rests of the 4.8 s loop, as in mark.dart's MarkMotion.legs.
-    component Leg: NumberAnimation {
-        target: root; property: "along"
+    // The check, when the file has arrived.
+    Shape {
+        anchors.fill: parent
+        visible: root.done
+        preferredRendererType: Shape.CurveRenderer
+        antialiasing: true
+        ShapePath {
+            strokeColor: Theme.markOn
+            strokeWidth: 9 * root.unit
+            fillColor: "transparent"
+            capStyle: ShapePath.RoundCap
+            joinStyle: ShapePath.RoundJoin
+            startX: 37 * root.unit; startY: 58 * root.unit
+            PathLine { x: 50 * root.unit; y: 71 * root.unit }
+            PathLine { x: 74 * root.unit; y: 45 * root.unit }
+        }
+    }
+
+    // A quarter turn and its rest, as in mark.dart's MarkMotion.
+    component Quarter: NumberAnimation {
+        target: root; property: "angle"
+        duration: 600
         easing.type: Easing.BezierSpline
         easing.bezierCurve: [0.65, 0, 0.35, 1, 1, 1]
     }
     SequentialAnimation {
         running: root.moving
         loops: Animation.Infinite
-        Leg { from: 0; to: 1 / 6; duration: 600 }
-        PauseAnimation { duration: 360 }
-        Leg { from: 1 / 6; to: 0.5; duration: 1200 }
-        PauseAnimation { duration: 360 }
-        Leg { from: 0.5; to: 5 / 6; duration: 1200 }
-        PauseAnimation { duration: 360 }
-        Leg { from: 5 / 6; to: 1; duration: 600 }
-        PauseAnimation { duration: 120 }
-        onStopped: root.along = 0
+        Quarter { from: 0; to: 90 }
+        PauseAnimation { duration: 200 }
+        Quarter { from: 90; to: 180 }
+        PauseAnimation { duration: 200 }
+        Quarter { from: 180; to: 270 }
+        PauseAnimation { duration: 200 }
+        Quarter { from: 270; to: 360 }
+        PauseAnimation { duration: 200 }
+        onStopped: root.angle = 0
     }
 
-    onMovingChanged: if (!moving) along = 0
+    onMovingChanged: if (!moving) angle = 0
 }
