@@ -143,7 +143,11 @@ export class Directory extends DurableObject {
     const sql = this.ctx.storage.sql;
     let now = this.now();
     const scary = sql
-      .exec<{ c: number }>("SELECT count(*) AS c FROM scary WHERE t > ?", now - LIMITS.scaryWindow)
+      .exec<{ c: number }>(
+        "SELECT count(*) AS c FROM (SELECT 1 FROM scary WHERE t > ? LIMIT ?)",
+        now - LIMITS.scaryWindow,
+        LIMITS.scaryThreshold,
+      )
       .one().c;
     if (scary >= LIMITS.scaryThreshold) {
       await new Promise((r) => setTimeout(r, LIMITS.waveDelay));

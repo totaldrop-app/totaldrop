@@ -25,8 +25,10 @@ import {
 const MAX_UNCLAIMED = 2;
 /** WebSocket readyState OPEN (the runtime has no WebSocket.OPEN). */
 const OPEN = 1;
-/** Most sockets at all, lingering closed ones included. */
-const MAX_SOCKETS = 8;
+/** Most closed sockets a client may keep from going away before new
+ * connections are refused; open ones are bounded by the sides and
+ * MAX_UNCLAIMED. */
+const MAX_LINGERING = 6;
 /** A connection that has not claimed a side by then is closed, as on the
  * Rust server; otherwise anyone who knows a nameplate could hold
  * connections on someone else's mailbox until it expires. */
@@ -134,7 +136,7 @@ export class Mailbox extends DurableObject<Env> {
     const now = Date.now();
     const all = this.ctx.getWebSockets();
     // Closed sockets a client keeps from going away still use the object.
-    if (all.length >= MAX_SOCKETS) {
+    if (all.filter((ws) => ws.readyState !== OPEN).length >= MAX_LINGERING) {
       socket.accept();
       this.refuse(socket, "mailbox busy");
       return new Response(null, { status: 101, webSocket: client });
