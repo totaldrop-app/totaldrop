@@ -220,7 +220,12 @@ export class Mailbox extends DurableObject<Env> {
           const a = ws.deserializeAttachment() as Attachment;
           if (a.side === null) throw new Refusal("claim first");
           await this.leave(a.side, msg.mood);
-          ws.close(1000, "closed");
+          // leave() may have ended the mailbox and closed this socket.
+          try {
+            ws.close(1000, "closed");
+          } catch {
+            // Closed already.
+          }
           return;
         }
       }
