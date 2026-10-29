@@ -132,10 +132,12 @@ All notable changes to TotalDrop are recorded here. The format follows
 
 ### Security
 
-- **Rendezvous (Cloudflare):** A mailbox holds at most four connections, and
-  one that has not claimed a side within 10 seconds is closed; before, anyone
-  who knew a nameplate in use could hold idle connections on it until it
-  expired. The directory no longer reads every nameplate on each request
+- **Rendezvous (Cloudflare):** A connection to a mailbox that has not
+  claimed a side within 10 seconds is closed, and at most two such
+  connections wait at once (a newer one replaces the oldest, so a real
+  claim is never kept out); before, anyone who knew a nameplate in use could
+  hold idle connections on it until it expired. The directory hands out
+  nameplates from a pool instead of reading every nameplate on each request
   (GHSA-r9gc-m8c8-2xqw).
 
 - **Servers (self-hosted):** The Rust relay accepts only the pair path and

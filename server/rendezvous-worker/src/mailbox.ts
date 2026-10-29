@@ -19,8 +19,14 @@ import {
   unhex,
 } from "./messages";
 
-/** Most connections a mailbox holds: its two sides and two still claiming. */
-const MAX_SOCKETS = 4;
+/** Most connections a mailbox holds that have not claimed a side yet. A
+ * newer one pushes out the oldest, so idle connections can delay a real
+ * claim by a moment at most, never keep it out. */
+const MAX_UNCLAIMED = 2;
+/** WebSocket readyState OPEN (the runtime has no WebSocket.OPEN). */
+const OPEN = 1;
+/** Most sockets at all, lingering closed ones included. */
+const MAX_SOCKETS = 8;
 /** A connection that has not claimed a side by then is closed, as on the
  * Rust server; otherwise anyone who knows a nameplate could hold
  * connections on someone else's mailbox until it expires. */
@@ -36,7 +42,7 @@ export interface Env {
   DIRECTORY: DurableObjectNamespace<Directory>;
 }
 
-type Attachment = { conn: string; side: number | null; opened: number };
+type Attachment = { conn: string; side: number | null; opened?: number };
 
 type Meta = { nameplate: number; mailbox: string; token: string; created: number };
 
@@ -125,12 +131,25 @@ export class Mailbox extends DurableObject<Env> {
       meta = { nameplate, mailbox, token, created };
       await this.ctx.storage.setAlarm(created + LIMITS.unclaimedTtl);
     }
-    if (this.ctx.getWebSockets().length >= MAX_SOCKETS) {
+    const now = Date.now();
+    const all = this.ctx.getWebSockets();
+    // Closed sockets a client keeps from going away still use the object.
+    if (all.length >= MAX_SOCKETS) {
       socket.accept();
       this.refuse(socket, "mailbox busy");
       return new Response(null, { status: 101, webSocket: client });
     }
-    const now = Date.now();
+    const waiting = all
+      .map((ws) => ({ ws, a: ws.deserializeAttachment() as Attachment | null }))
+      .filter(({ ws, a }) => ws.readyState === OPEN && (!a || a.side === null))
+      .sort((x, y) => (x.a?.opened ?? 0) - (y.a?.opened ?? 0));
+    for (const { ws: old } of waiting.slice(0, Math.max(0, waiting.length - MAX_UNCLAIMED + 1))) {
+      try {
+        old.close(1000, "replaced");
+      } catch {
+        // Gone already.
+      }
+    }
     const attachment: Attachment = { conn: hex(randomBytes(8)), side: null, opened: now };
     this.ctx.acceptWebSocket(socket);
     socket.serializeAttachment(attachment);
@@ -150,8 +169,9 @@ export class Mailbox extends DurableObject<Env> {
     let next: number | null = null;
     for (const ws of this.ctx.getWebSockets()) {
       const a = ws.deserializeAttachment() as Attachment | null;
-      if (!a || a.side !== null) continue;
-      const due = a.opened + CLAIM_TIMEOUT;
+      if (ws.readyState !== OPEN || !a || a.side !== null) continue;
+      // A connection from before this field existed is due at once.
+      const due = (a.opened ?? 0) + CLAIM_TIMEOUT;
       if (due <= now) {
         try {
           ws.close(1000, "claim timeout");
