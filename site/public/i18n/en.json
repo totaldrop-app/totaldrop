@@ -151,7 +151,7 @@
   "hero.cta": "Download the beta",
   "hero.eyebrow": "Free · Open source · Beta",
   "hero.lede": "TotalDrop moves files directly from your device to theirs, encrypted end to end. You share a short code; nobody in between can read what you send. No account, no email, no phone number.",
-  "hero.markTitle": "A file leaving the centre through a channel in the waves",
+  "hero.markTitle": "Three connected devices and a file travelling between them",
   "hero.source": "Read the code",
   "hero.title": "Send a file straight to another device.",
   "how.note": "Across the internet, the two devices connect directly wherever they can. When a router or firewall is in the way, the encrypted transfer goes through our relay, which cannot read it.",

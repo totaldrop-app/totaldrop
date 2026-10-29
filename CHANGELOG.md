@@ -7,6 +7,14 @@ All notable changes to TotalDrop are recorded here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- **Android, Linux, site:** New mark, "Ağ" (network): three equal devices,
+  each joined to the other two, and a drop on the way between them. While
+  a transfer runs the drop visits each device in turn; with reduced motion
+  it stays still. It replaces "Dalga", whose waves spread from one centre
+  and did not show that every device sends to every other (#116).
+
 ## [android-0.2.0-beta.1] and [linux-0.2.0-beta.1] - 2026-10-29
 
 ### Added

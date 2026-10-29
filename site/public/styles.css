@@ -146,14 +146,11 @@ select.lang {
 
 .hero-figure { margin: 0; display: flex; flex-direction: column; gap: var(--s24); min-width: 0; }
 .hero-mark { width: min(100%, 16rem); height: auto; align-self: center; }
-/* The one moving thing: the file leaves the drop and travels the channel,
-   while a ripple spreads from the centre. Rest state = the static mark. */
-.mk-ripple { fill: none; stroke: var(--accent); stroke-width: 2; vector-effect: non-scaling-stroke; opacity: 0; transform-origin: 56px 56px; }
-.mk-travel { animation: travel 3.2s cubic-bezier(0.65, 0, 0.35, 1) 0.4s infinite both; }
-.hero-mark .mk-ripple { animation: ripple 3.2s cubic-bezier(0.2, 0.6, 0.3, 1) 0.4s infinite both; }
-@keyframes travel { 0% { transform: translate(-28.28px, 28.28px); } 55%, 100% { transform: none; } }
-@keyframes ripple { 0% { transform: scale(1); opacity: 0.7; } 70%, 100% { transform: scale(4.6); opacity: 0; } }
-@media (prefers-reduced-motion: reduce) { .mk-travel, .hero-mark .mk-ripple { animation: none; } }
+/* The one moving thing: the drop visits each device in turn (app.js starts
+   the SVG's animateMotion unless motion is reduced). Rest state = the static mark. */
+.mk-moving { display: none; }
+.hero-mark.moving .mk-moving { display: inline; }
+.hero-mark.moving .mk-rest { display: none; }
 
 .code-card { border: 1px solid var(--rule); border-radius: 28px; padding: var(--s24); display: flex; flex-direction: column; gap: var(--s8); }
 .code-label { color: var(--text-2); font-weight: 700; font-size: 0.875rem; }

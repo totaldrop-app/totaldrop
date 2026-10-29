@@ -2,12 +2,12 @@ import QtQuick
 import QtQuick.Shapes
 import app.totaldrop
 
-// The Dalga mark. At rest it matches the SVG. While `sending`, it plays the
-// website's animation exactly (styles.css, `travel` and `ripple`): a 3.2 s
-// loop; the file goes from the drop to the end of the channel in the first
-// 55 % on cubic-bezier(0.65, 0, 0.35, 1); a 2 px ring in the file colour
-// grows from 1x to 4.6x the drop and fades from 0.7 to 0 in the first 70 %
-// on cubic-bezier(0.2, 0.6, 0.3, 1). The waves never move.
+// The Ağ mark: three devices, each joined to the other two, and a drop on
+// the bottom link. At rest it matches the SVG. While `sending`, it plays the
+// website's animation exactly (docs/tasarim.md): a 4.8 s loop in which the
+// drop goes to the right device, the top one, the left one and back to its
+// place, each leg on cubic-bezier(0.65, 0, 0.35, 1), resting briefly at
+// every device. The links and devices never move.
 Item {
     id: root
 
@@ -25,11 +25,8 @@ Item {
     readonly property real unit: size / 112
     readonly property bool moving: sending && !Theme.reducedMotion && visible
 
-    // 0..1 along the channel, and 0..1 through the ring's growth.
-    property real travel: 1
-    property real ripple: 1
-
-    function half(r) { return Math.asin(9 / r) * 180 / Math.PI }
+    // 0..1 along the motion path; 0 is the resting place.
+    property real along: 0
 
     Shape {
         anchors.fill: parent
@@ -38,94 +35,85 @@ Item {
 
         ShapePath {
             strokeColor: Theme.markWave
-            strokeWidth: 8 * root.unit
+            strokeWidth: 7 * root.unit
             fillColor: "transparent"
-            capStyle: ShapePath.FlatCap
-            PathAngleArc {
-                centerX: 56 * root.unit; centerY: 56 * root.unit
-                radiusX: 26 * root.unit; radiusY: 26 * root.unit
-                startAngle: -45 + root.half(26)
-                sweepAngle: 360 - 2 * root.half(26)
-            }
-        }
-        ShapePath {
-            strokeColor: Theme.markWave
-            strokeWidth: 6 * root.unit
-            fillColor: "transparent"
-            capStyle: ShapePath.FlatCap
-            PathAngleArc {
-                centerX: 56 * root.unit; centerY: 56 * root.unit
-                radiusX: 40 * root.unit; radiusY: 40 * root.unit
-                startAngle: -45 + root.half(40)
-                sweepAngle: 360 - 2 * root.half(40)
-            }
+            startX: 56 * root.unit; startY: 24 * root.unit
+            PathArc { x: 88.91 * root.unit; y: 81 * root.unit; radiusX: 60 * root.unit; radiusY: 60 * root.unit }
+            PathArc { x: 23.09 * root.unit; y: 81 * root.unit; radiusX: 60 * root.unit; radiusY: 60 * root.unit }
+            PathArc { x: 56 * root.unit; y: 24 * root.unit; radiusX: 60 * root.unit; radiusY: 60 * root.unit }
         }
     }
 
-    // The ring: 2 px whatever the size, like the web's non-scaling stroke.
-    Rectangle {
-        readonly property real r: 12 * root.unit * (1 + 3.6 * root.ripple)
-        visible: root.moving && root.ripple < 1
-        x: 56 * root.unit - r
-        y: 56 * root.unit - r
-        width: 2 * r
-        height: 2 * r
-        radius: r
-        color: "transparent"
-        border.width: 2
-        border.color: Theme.markFile
-        opacity: 0.7 * (1 - root.ripple)
-        antialiasing: true
+    // The devices.
+    Repeater {
+        model: [[56, 24], [88.91, 81], [23.09, 81]]
+        Rectangle {
+            required property var modelData
+            x: (modelData[0] - 11) * root.unit
+            y: (modelData[1] - 11) * root.unit
+            width: 22 * root.unit
+            height: width
+            radius: width / 2
+            color: Theme.markFile
+            antialiasing: true
+        }
     }
 
-    // The drop.
-    Rectangle {
-        x: (56 - 12) * root.unit
-        y: (56 - 12) * root.unit
-        width: 24 * root.unit
-        height: width
-        radius: width / 2
-        color: Theme.markFile
-        antialiasing: true
+    // The drop's way round, counter-clockwise from the middle of the bottom
+    // link: right device, top, left, and back.
+    PathInterpolator {
+        id: way
+        progress: root.along
+        path: Path {
+            startX: 56 * root.unit; startY: 90.83 * root.unit
+            PathArc { x: 88.91 * root.unit; y: 81 * root.unit; radiusX: 60 * root.unit; radiusY: 60 * root.unit; direction: PathArc.Counterclockwise }
+            PathArc { x: 56 * root.unit; y: 24 * root.unit; radiusX: 60 * root.unit; radiusY: 60 * root.unit; direction: PathArc.Counterclockwise }
+            PathArc { x: 23.09 * root.unit; y: 81 * root.unit; radiusX: 60 * root.unit; radiusY: 60 * root.unit; direction: PathArc.Counterclockwise }
+            PathArc { x: 56 * root.unit; y: 90.83 * root.unit; radiusX: 60 * root.unit; radiusY: 60 * root.unit; direction: PathArc.Counterclockwise }
+        }
     }
 
-    // The file, at distance 12..52 from the centre along the north-east axis.
-    Rectangle {
-        readonly property real d: 12 + 40 * root.travel
-        x: (56 + d * Math.SQRT1_2 - 8) * root.unit
-        y: (56 - d * Math.SQRT1_2 - 8) * root.unit
-        width: 16 * root.unit
-        height: width
-        radius: width / 2
-        color: Theme.markFile
-        antialiasing: true
+    // The drop, body centred on the path and pointing the way it goes.
+    Item {
+        x: way.x
+        y: way.y
+        rotation: way.angle
+        Shape {
+            preferredRendererType: Shape.CurveRenderer
+            antialiasing: true
+            ShapePath {
+                fillColor: Theme.markFile
+                strokeColor: "transparent"
+                startX: 11 * root.unit; startY: 0
+                PathLine { x: 3.84 * root.unit; y: -5.24 * root.unit }
+                PathArc {
+                    x: 3.84 * root.unit; y: 5.24 * root.unit
+                    radiusX: 6.5 * root.unit; radiusY: 6.5 * root.unit
+                    useLargeArc: true; direction: PathArc.Counterclockwise
+                }
+            }
+        }
     }
 
+    // Legs and rests of the 4.8 s loop, as in mark.dart's MarkMotion.legs.
+    component Leg: NumberAnimation {
+        target: root; property: "along"
+        easing.type: Easing.BezierSpline
+        easing.bezierCurve: [0.65, 0, 0.35, 1, 1, 1]
+    }
     SequentialAnimation {
-        id: loop
         running: root.moving
-        // The web's 0.4 s delay before the first loop.
-        PropertyAction { target: root; properties: "travel,ripple"; value: 0 }
-        PauseAnimation { duration: 400 }
-        SequentialAnimation {
-            loops: Animation.Infinite
-            PropertyAction { target: root; properties: "travel,ripple"; value: 0 }
-            ParallelAnimation {
-                NumberAnimation {
-                    target: root; property: "travel"; from: 0; to: 1; duration: 1760
-                    easing.type: Easing.BezierSpline
-                    easing.bezierCurve: [0.65, 0, 0.35, 1, 1, 1]
-                }
-                NumberAnimation {
-                    target: root; property: "ripple"; from: 0; to: 1; duration: 2240
-                    easing.type: Easing.BezierSpline
-                    easing.bezierCurve: [0.2, 0.6, 0.3, 1, 1, 1]
-                }
-            }
-            PauseAnimation { duration: 960 }
-        }
-        onStopped: { root.travel = 1; root.ripple = 1 }
+        loops: Animation.Infinite
+        Leg { from: 0; to: 1 / 6; duration: 600 }
+        PauseAnimation { duration: 360 }
+        Leg { from: 1 / 6; to: 0.5; duration: 1200 }
+        PauseAnimation { duration: 360 }
+        Leg { from: 0.5; to: 5 / 6; duration: 1200 }
+        PauseAnimation { duration: 360 }
+        Leg { from: 5 / 6; to: 1; duration: 600 }
+        PauseAnimation { duration: 120 }
+        onStopped: root.along = 0
     }
 
-    onMovingChanged: if (!moving) { travel = 1; ripple = 1 }
+    onMovingChanged: if (!moving) along = 0
 }

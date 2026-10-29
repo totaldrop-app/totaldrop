@@ -16,7 +16,7 @@ public/
                       ana sayfayı 200 ile döner
   styles.css          Aurora tokenları, açık ve koyu tema, hareketli işaret
   app.js              Türkçe metinler, dil düğmesi, platform algılama, /r mantığı
-  favicon.svg         Dalga işareti, koyu temada renk değiştirir
+  favicon.svg         Ağ işaretinin küçük boyu, koyu temada renk değiştirir
   _headers            Güvenlik başlıkları (katı CSP, HSTS, no-referrer)
   _routes.json        Ara katman (functions/) yalnız sayfalarda çalışır; yazı
                       tipi, stil, betik ve çeviri dosyaları doğrudan sunulur
