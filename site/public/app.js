@@ -209,6 +209,7 @@
       }
     };
     sync();
-    less.addEventListener("change", sync);
+    if (less.addEventListener) less.addEventListener("change", sync);
+    else if (less.addListener) less.addListener(sync);
   }
 })();
