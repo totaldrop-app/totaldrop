@@ -85,9 +85,14 @@ function allocate(env: Env): Response {
     clearTimeout(timer);
     try {
       socket.send(await answer(env, event.data));
-      socket.close(1000, "done");
     } catch {
       // The client is gone.
+    } finally {
+      try {
+        socket.close(1000, "done");
+      } catch {
+        // Closed already.
+      }
     }
   });
   return new Response(null, { status: 101, webSocket: pair[0] });

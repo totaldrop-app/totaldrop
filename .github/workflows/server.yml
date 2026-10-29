@@ -26,13 +26,15 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      # A fixed major: the unit tests rely on Node stripping TypeScript
+      # types itself (Node 22.18 and later), and @types/node matches it.
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: lts/*
+          node-version: "24"
       - run: npm ci
+      # Type checks the Worker and, where there are any, its unit tests.
       - run: npm run check
-      # Unit tests on Node's own runner (it strips the types itself), for
-      # the Workers that have them.
+      # Unit tests on Node's own runner, for the Workers that have them.
       - run: npm run --if-present test
 
   end-to-end:

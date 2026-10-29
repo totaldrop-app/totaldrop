@@ -1,0 +1,11 @@
+{
+  // The unit tests run on Node, so they see Node's types, not the Workers
+  // runtime's; only the modules they test are included from src.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": ["node"],
+    "allowImportingTsExtensions": true,
+    "noEmit": true
+  },
+  "include": ["src/retry.ts", "test"]
+}

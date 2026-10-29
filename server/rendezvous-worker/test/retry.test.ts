@@ -80,11 +80,38 @@ test("an error thrown by our own object code is not tried again", async () => {
   assert.equal(calls.n, 1);
 });
 
+test("a thrown non-object did not come from inside the object and is tried again", async () => {
+  const { call, calls } = flaky(["x"], "opened");
+  const { pauses, sleep } = recorder();
+  const out = await withRetry(call, sleep);
+  assert.deepEqual(out, { ok: true, value: "opened" });
+  assert.equal(calls.n, 2);
+  assert.deepEqual(pauses, [RETRY_DELAY]);
+});
+
+test("an object that turns out overloaded on the second try ends as busy", async () => {
+  const overloaded = Object.assign(new Error("Durable Object is overloaded."), {
+    overloaded: true,
+    remote: true,
+  });
+  const { call, calls } = flaky([internalError(), overloaded], "never");
+  const { pauses, sleep } = recorder();
+  const out = await withRetry(call, sleep);
+  assert.deepEqual(out, { ok: false, reason: BUSY });
+  assert.equal(calls.n, 2);
+  assert.deepEqual(pauses, [RETRY_DELAY]);
+});
+
 test("which errors may be tried again", () => {
   assert.equal(mayRetry(Object.assign(new Error("x"), { remote: true, retryable: true })), true);
-  // The call never reached the object's code.
+  // Not thrown inside the object: from the call itself.
   assert.equal(mayRetry(new Error("Network connection lost.")), true);
   assert.equal(mayRetry(internalError()), true);
+  // Only workerd's exact wording counts as its internal error.
+  assert.equal(
+    mayRetry(Object.assign(new Error("internal error in our parser"), { remote: true })),
+    false,
+  );
   assert.equal(mayRetry(Object.assign(new Error("x"), { remote: true })), false);
   assert.equal(
     mayRetry(Object.assign(new Error("x"), { overloaded: true, retryable: true })),

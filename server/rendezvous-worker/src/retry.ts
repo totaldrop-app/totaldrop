@@ -16,20 +16,26 @@ export type Outcome<T> = { ok: true; value: T } | { ok: false; reason: string };
 
 type Flags = { retryable?: unknown; overloaded?: unknown; remote?: unknown; message?: unknown };
 
+/** How workerd words an error it hides the details of. */
+const INTERNAL_ERROR = "internal error; reference = ";
+
 /** Whether a failed Durable Object call may be tried again. The runtime
  * marks its errors: `overloaded` means more calls only make it worse, so
  * never; `retryable` means a transient failure, so yes. An error without
- * `remote` never reached the object's code (the connection to it failed),
- * so yes. A bare "internal error" is the runtime's, never ours (our code
- * throws no such error), and it is what a new object's first request
- * failed with in #119, so yes. Anything else was thrown by our own code
- * and would fail the same way again. */
+ * `remote: true` was not thrown inside the object: it comes from the call
+ * itself (the connection to the object, or building the request in this
+ * Worker), and the calls passed here are cheap and safe to repeat, so yes.
+ * An error from inside the object arrives with `remote: true`; if it is
+ * workerd's "internal error; reference = …", it is the runtime's, never
+ * ours (our code throws no such error), and it is what a new object's
+ * first request failed with in #119, so yes. Anything else was thrown by
+ * our own code and would fail the same way again. */
 export function mayRetry(e: unknown): boolean {
   const f = (typeof e === "object" && e !== null ? e : {}) as Flags;
   if (f.overloaded === true) return false;
   if (f.retryable === true) return true;
   if (f.remote !== true) return true;
-  return typeof f.message === "string" && f.message.startsWith("internal error");
+  return typeof f.message === "string" && f.message.startsWith(INTERNAL_ERROR);
 }
 
 /** Run `call`, trying again as `mayRetry` allows. Only a thrown error is
