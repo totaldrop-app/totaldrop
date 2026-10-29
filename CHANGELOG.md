@@ -9,10 +9,12 @@ All notable changes to TotalDrop are recorded here. The format follows
 
 ### Changed
 
-- **Site, README:** The download page and the README point at Linux
-  0.2.0-beta.1, with the ARM64 .deb and .rpm, and the page lists what is
-  new in Android 0.2.0-beta.2 and Linux 0.2.0-beta.1. The roadmap moves
-  privacy mode in the apps and Linux on ARM to Done (#122).
+- **Site (download page, roadmap, home), README:** The download page and
+  the README point at Linux 0.2.0-beta.1, with the ARM64 .deb and .rpm,
+  and the page lists what is new in Android 0.2.0-beta.2 and Linux
+  0.2.0-beta.1. The roadmap moves privacy mode in the apps and Linux on
+  ARM to Done, and the home page's summary shows privacy mode in the apps
+  as done (#122).
 
 ## [android-0.2.0-beta.2] - 2026-10-29
 
