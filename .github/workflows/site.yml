@@ -23,7 +23,7 @@ jobs:
         with:
           node-version: lts/*
       - name: Scripts parse
-        run: node --check site/public/app.js && node --check site/public/msg.js && node --check site/functions/_middleware.js
+        run: node --check site/public/app.js && node --check site/public/lang.js && node --check site/public/msg.js && node --check site/functions/_middleware.js
       - name: Translations follow the rules
         run: node site/tools/check-i18n.mjs
       - name: Every page links only to files that exist

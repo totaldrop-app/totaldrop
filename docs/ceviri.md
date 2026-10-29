@@ -74,7 +74,7 @@ Taslaklar Claude (Anthropic) ile üretildi ve proje lisansı altındadır.
    dosyaları kopyalayıp çevirin (varyantlı dillerde temel dosyayla birlikte).
 2. `l10n/status.json`'a dili ekleyin.
 3. Android `localeConfig` bu dosyalardan üretilir; CI üretilen dosyaların
-   güncel olduğunu denetler. Site dil listesine (`site/public/app.js`
+   güncel olduğunu denetler. Site dil listesine (`site/public/lang.js`
    `LANGUAGES`) dili kendi adıyla ekleyin; CI listenin `i18n/` dosyalarıyla,
    `REVIEWED` listesinin de `l10n/status.json` ile aynı olduğunu denetler.
    Gözden geçirilmemiş bir dilde site, başlığın altında kısa bir taslak

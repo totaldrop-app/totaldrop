@@ -16,10 +16,14 @@ All notable changes to TotalDrop are recorded here. The format follows
   Polish, Portuguese (Brazil and Portugal), Romanian, Russian, Spanish,
   Swahili, Swedish, Thai, Ukrainian, Urdu and Vietnamese. They are made
   with Claude and not yet checked by native speakers, so the apps say so in
-  Settings and keep the verification, wrong-code and accept/decline texts in
-  English until a language is reviewed. The site shows a short note under
-  the header in a draft language and lists every language under its own
-  name; the picker is as wide as the chosen language (#127).
+  Settings and keep the security texts in English until a language is
+  reviewed: verification, wrong code, invalid offer, accept and decline, and
+  the command line's save prompt and yes answer. The site shows a short note
+  at the top of the page in a draft language, lists every language under
+  its own name, and picks Portuguese from Portugal outside Brazil, as the
+  apps do; the picker is as wide as the chosen language. The comparison
+  table now says no copy is stored on a company's server, instead of "files
+  stay off company servers", which the relay made too broad (#127).
 
 ### Changed
 
