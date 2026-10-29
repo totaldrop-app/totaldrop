@@ -363,6 +363,18 @@ async fn codes_back_to_back_all_open() {
     }
 }
 
+/// A code whose number was never handed out is reported as not in use, so
+/// the apps can say so, rather than as a server failure.
+#[tokio::test(flavor = "multi_thread")]
+async fn a_never_allocated_nameplate_is_not_in_use() {
+    let server = server().await;
+    // Far above any number a server hands out.
+    let err = Mailbox::claim(&server, 4_000_000_000, None)
+        .await
+        .unwrap_err();
+    assert!(err.is_code_not_in_use(), "{err}");
+}
+
 /// Both sides close `scary` after a wrong code; the attack-wave counter goes
 /// up once, not twice.
 #[tokio::test(flavor = "multi_thread")]
