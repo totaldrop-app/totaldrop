@@ -18,6 +18,10 @@ const SIGN_IN_TIMEOUT = 10_000;
 const SESSION_TIME = 6 * 60 * 60 * 1000;
 /** Bytes one side may send in total. */
 const SESSION_BYTES = 32 * 1024 * 1024 * 1024;
+/** The count of bytes sent is written to the socket's attachment, which
+ * survives hibernation, each time it passes another step of this size; a
+ * datagram costs no extra write, and waking loses less than one step. */
+const SENT_STEP = 4 * 1024 * 1024;
 
 /** WebSocket readyState OPEN. */
 const OPEN = 1;
@@ -34,6 +38,8 @@ interface Attachment {
   since: number;
   /** Set when this object closed the socket; it may linger as CLOSING. */
   ended?: boolean;
+  /** Bytes this socket had sent, at the last SENT_STEP passed. */
+  sent?: number;
 }
 
 function attachment(ws: WebSocket): Attachment | null {
@@ -75,7 +81,8 @@ async function verify(key: Uint8Array, signature: Uint8Array, message: Uint8Arra
 }
 
 export class Pair extends DurableObject<Env> {
-  /** Bytes sent by each key since this object woke; a cap, not a record. */
+  /** Bytes sent by each key: from the attachment after the object wakes,
+   * then counted here. */
   private sent = new Map<string, number>();
   /** Signed-in sockets by key, rebuilt after the object wakes. */
   private byKey = new Map<string, WebSocket>();
@@ -177,9 +184,17 @@ export class Pair extends DurableObject<Env> {
     if (!pair || m.length <= 32 + 2) return this.shut(ws, 1008, "bad frame");
     const other = own === pair[0] ? pair[1] : pair[0];
     if (hex(m.subarray(0, 32)) !== other) return this.shut(ws, 1008, "bad destination");
-    const total = (this.sent.get(own) ?? 0) + m.length;
+    const before = this.sent.get(own) ?? attachment(ws)?.sent ?? 0;
+    const total = before + m.length;
     if (total > SESSION_BYTES) return this.shut(ws, 1008, "limit reached");
     this.sent.set(own, total);
+    if (Math.floor(total / SENT_STEP) > Math.floor(before / SENT_STEP)) {
+      const att = attachment(ws);
+      if (att) {
+        att.sent = total;
+        ws.serializeAttachment(att);
+      }
+    }
     const peer = this.socketFor(other);
     // Nobody there yet: drop, like a lossy network. QUIC retransmits.
     if (!peer) return;
