@@ -21,7 +21,7 @@ const SESSION_BYTES = 32 * 1024 * 1024 * 1024;
 /** The count of bytes sent is written to the socket's attachment, which
  * survives hibernation, each time it passes another step of this size; a
  * datagram costs no extra write, and waking loses less than one step. */
-const SENT_STEP = 4 * 1024 * 1024;
+const SENT_STEP = 1024 * 1024;
 
 /** WebSocket readyState OPEN. */
 const OPEN = 1;
@@ -81,9 +81,10 @@ async function verify(key: Uint8Array, signature: Uint8Array, message: Uint8Arra
 }
 
 export class Pair extends DurableObject<Env> {
-  /** Bytes sent by each key: from the attachment after the object wakes,
-   * then counted here. */
-  private sent = new Map<string, number>();
+  /** Bytes each socket sent: the cap is per connection, as on the Rust
+   * relay. Read from the attachment after the object wakes (a woken object
+   * sees new socket objects), then counted here. */
+  private sent = new WeakMap<WebSocket, number>();
   /** Signed-in sockets by key, rebuilt after the object wakes. */
   private byKey = new Map<string, WebSocket>();
 
@@ -184,10 +185,10 @@ export class Pair extends DurableObject<Env> {
     if (!pair || m.length <= 32 + 2) return this.shut(ws, 1008, "bad frame");
     const other = own === pair[0] ? pair[1] : pair[0];
     if (hex(m.subarray(0, 32)) !== other) return this.shut(ws, 1008, "bad destination");
-    const before = this.sent.get(own) ?? attachment(ws)?.sent ?? 0;
+    const before = this.sent.get(ws) ?? attachment(ws)?.sent ?? 0;
     const total = before + m.length;
     if (total > SESSION_BYTES) return this.shut(ws, 1008, "limit reached");
-    this.sent.set(own, total);
+    this.sent.set(ws, total);
     if (Math.floor(total / SENT_STEP) > Math.floor(before / SENT_STEP)) {
       const att = attachment(ws);
       if (att) {
@@ -224,7 +225,6 @@ export class Pair extends DurableObject<Env> {
     this.shut(ws, 1000, "closed");
     if (cascade) {
       for (const o of this.live()) this.shut(o, 1000, "peer left");
-      this.sent.clear();
       this.byKey.clear();
     } else if (att?.key) {
       this.byKey.delete(att.key);
