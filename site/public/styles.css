@@ -252,9 +252,7 @@ select.lang {
 .dl-hero .lede { max-width: 40rem; }
 .platforms { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr)); gap: var(--s24); }
 /* What is coming, in the order it comes: smaller, four to a row. */
-.soon-title { margin-top: var(--s16); margin-bottom: 0; font-size: 1.25rem; color: var(--text-2); }
-/* The block's gap is for sections; a title sits close to its list. */
-.platforms.soon { margin-top: calc(var(--s16) - var(--s40)); grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr)); gap: var(--s16); }
+.platforms.soon { grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr)); gap: var(--s16); }
 .platforms.soon .platform { padding: var(--s16) var(--s24); gap: var(--s8); }
 .platforms.soon .platform header { flex-direction: column; align-items: flex-start; gap: var(--s8); }
 .platforms.soon .platform h3 { font-size: 1.25rem; }
@@ -273,8 +271,7 @@ select.lang {
 .pill.is-beta { color: var(--accent); } .pill.is-beta::before { background: currentColor; }
 /* Long commands wrap inside their box instead of running out of it; the
    copy button copies the one-line form. */
-pre.cmd { white-space: pre-wrap; overflow-wrap: anywhere; }
-pre.cmd { margin: 0; padding: var(--s16); background: var(--bg-raised); border-radius: 16px; overflow-x: auto; font: 0.875rem/1.6 ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; color: var(--text); }
+pre.cmd { white-space: pre-wrap; overflow-wrap: break-word; margin: 0; padding: var(--s16); background: var(--bg-raised); border-radius: 16px; font: 0.875rem/1.6 ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; color: var(--text); }
 .copy { font: inherit; font-size: 0.875rem; font-weight: 700; color: var(--accent); background: none; border: 0; padding: var(--s8) 0; cursor: pointer; align-self: flex-start; }
 .req { width: 100%; border-collapse: collapse; font-size: 0.975rem; min-width: 30rem; }
 .req th, .req td { text-align: start; padding-block: 0.75rem; padding-inline: 0 var(--s16); border-bottom: 1px solid var(--rule); vertical-align: baseline; }

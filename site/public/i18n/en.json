@@ -267,7 +267,7 @@
   "road.now": "Now",
   "road.p0": "Open protocol, command-line client, Android beta and Linux app",
   "road.p1": "Relay, so devices on different networks can send to each other",
-  "road.p2": "Privacy mode in the apps, scanning the QR code with the camera, receiving in the browser",
+  "road.p2": "Privacy mode in the apps, QR scanning, receiving in the browser",
   "road.p3": "Windows app, and resuming interrupted transfers",
   "road.p4": "iPhone, iPad and Mac, and an optional account that is only a random number",
   "road.p5": "Independent audit and version 1.0",
