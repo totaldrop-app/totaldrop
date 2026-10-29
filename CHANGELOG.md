@@ -62,7 +62,7 @@ All notable changes to TotalDrop are recorded here. The format follows
 
 - **Relay (Cloudflare):** The 32 GiB limit per connection no longer starts
   again from zero when the relay object sleeps; the count is kept with the
-  connection (#110).
+  connection, losing at most 1 MiB each time the object wakes (#110).
 
 - **Command line:** Failures are explained in the system's language, in the
   same words as the apps, with the technical detail on a second line. A
