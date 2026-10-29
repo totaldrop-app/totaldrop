@@ -15,6 +15,13 @@ All notable changes to TotalDrop are recorded here. The format follows
   0.2.0-beta.1. The roadmap moves privacy mode in the apps and Linux on
   ARM to Done, and the home page's summary shows privacy mode in the apps
   as done (#122).
+- **Site:** Privacy policy version 4, for Android and Linux 0.2.0-beta.1
+  and later: devices contact the relay only when no direct connection is
+  up about 1.2 seconds after they start connecting, or at once in privacy
+  mode; a receiver no longer uses a relay only the sender chose; privacy
+  mode is in the apps' Settings, skips STUN and refuses direct connections;
+  the apps also store the privacy mode setting. It replaces the sentences
+  that described Android 0.1.0-beta.5 and Linux 0.1.0-beta.4 (#124).
 
 ## [android-0.2.0-beta.2] - 2026-10-29
 
