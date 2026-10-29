@@ -1,7 +1,9 @@
 // Checks the site's translations (ADR 0008), run in CI:
 //   node site/tools/check-i18n.mjs
 // - every site/public/i18n/<tag>.json is valid, names its own @@locale and
-//   is listed in app.js's LANGUAGES (and the other way round);
+//   is listed in lang.js's LANGUAGES (and the other way round), and
+//   REVIEWED matches l10n/status.json;
+// - lang.js chooses languages as l10n/tests/negotiation.json says;
 // - en.json matches the English text in the pages;
 // - no translation has keys English lacks, direction or invisible control
 //   characters, links or markup, or a message the formatter rejects;
@@ -69,19 +71,27 @@ for (const [k, v] of Object.entries(fromHtml)) {
   if (en[k] !== v) errors.push(`en.json \`${k}\` differs from the page: ${JSON.stringify(v)}`);
 }
 
-const app = read("site/public/app.js");
-const block = app.slice(app.indexOf("const LANGUAGES"), app.indexOf("];", app.indexOf("const LANGUAGES")));
-const listed = [...block.matchAll(/\["([a-zA-Z-]+)", "[^"]+"\]/g)].map((m) => m[1]).sort();
+// The language list, loaded the way the browser would.
+const langbox = { Intl };
+vm.runInNewContext(read("site/public/lang.js"), langbox);
+const { LANGUAGES, REVIEWED, negotiate } = langbox.TDLang;
+const listed = LANGUAGES.map((l) => l[0]).sort();
 const tags = files.map((f) => f.replace(/\.json$/, "")).sort();
-if (JSON.stringify(listed) !== JSON.stringify(tags)) errors.push(`app.js LANGUAGES ${listed} differ from i18n files ${tags}`);
+if (JSON.stringify(listed) !== JSON.stringify(tags)) errors.push(`lang.js LANGUAGES ${listed} differ from i18n files ${tags}`);
 // The draft note: REVIEWED must be English plus exactly the site languages
 // l10n/status.json marks as reviewed, and every site language must be there.
 const status = JSON.parse(read("l10n/status.json")).languages;
-const rev = app.slice(app.indexOf("const REVIEWED"), app.indexOf("];", app.indexOf("const REVIEWED")));
-const reviewed = [...rev.matchAll(/"([a-zA-Z-]+)"/g)].map((m) => m[1]).sort();
+const reviewed = [...REVIEWED].sort();
 const want = tags.filter((tag) => tag === "en" || (status[tag] && status[tag].reviewed === true)).sort();
-if (JSON.stringify(reviewed) !== JSON.stringify(want)) errors.push(`app.js REVIEWED ${reviewed} differs from l10n/status.json ${want}`);
+if (JSON.stringify(reviewed) !== JSON.stringify(want)) errors.push(`lang.js REVIEWED ${reviewed} differs from l10n/status.json ${want}`);
 for (const tag of tags) if (tag !== "en" && !(tag in status)) errors.push(`${tag}.json: not listed in l10n/status.json`);
+// Negotiation: the same cases the Rust programs pass.
+const nego = JSON.parse(read("l10n/tests/negotiation.json"));
+if (JSON.stringify([...nego.available].sort()) !== JSON.stringify(tags)) errors.push(`l10n/tests/negotiation.json available differs from the site's languages`);
+for (const c of nego.cases) {
+  const got = negotiate(c.prefs, nego.available);
+  if (got !== c.expect) errors.push(`negotiation ${JSON.stringify(c.prefs)}: got ${got}, want ${c.expect}`);
+}
 
 // Controls, format characters and separators (as the Rust check), except
 // ZWNJ/ZWJ and the left-to-right and right-to-left marks.

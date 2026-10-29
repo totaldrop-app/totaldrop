@@ -1,0 +1,27 @@
+{
+  "about": "Which language a device or browser gets, shared by the Rust negotiation (crates/totaldrop-l10n) and the site (site/public/lang.js). 'available' is the site's list; 'en' means nothing fitted and English is shown.",
+  "available": ["ar", "bn", "cs", "da", "de", "el", "en", "es", "fa", "fi", "fr", "he", "hi", "hu", "id", "it", "ja", "ko", "ms", "nb", "nl", "pl", "pt-BR", "pt-PT", "ro", "ru", "sv", "sw", "th", "tr", "uk", "ur", "vi", "zh-Hans", "zh-Hant"],
+  "cases": [
+    { "prefs": ["tr_TR"], "expect": "tr" },
+    { "prefs": ["ar-EG"], "expect": "ar" },
+    { "prefs": ["fa-AF"], "expect": "fa" },
+    { "prefs": ["es-MX"], "expect": "es" },
+    { "prefs": ["es-419"], "expect": "es" },
+    { "prefs": ["pt"], "expect": "pt-BR" },
+    { "prefs": ["pt-BR"], "expect": "pt-BR" },
+    { "prefs": ["pt-PT"], "expect": "pt-PT" },
+    { "prefs": ["pt-AO"], "expect": "pt-PT" },
+    { "prefs": ["pt-MZ"], "expect": "pt-PT" },
+    { "prefs": ["zh"], "expect": "zh-Hans" },
+    { "prefs": ["zh-CN"], "expect": "zh-Hans" },
+    { "prefs": ["zh-SG"], "expect": "zh-Hans" },
+    { "prefs": ["zh-TW"], "expect": "zh-Hant" },
+    { "prefs": ["zh-HK"], "expect": "zh-Hant" },
+    { "prefs": ["zh-MO"], "expect": "zh-Hant" },
+    { "prefs": ["no"], "expect": "nb" },
+    { "prefs": ["nn-NO"], "expect": "nb" },
+    { "prefs": ["no_NO"], "expect": "nb" },
+    { "prefs": ["xx", "de-AT", "tr"], "expect": "de" },
+    { "prefs": ["sr", "hr"], "expect": "en" }
+  ]
+}

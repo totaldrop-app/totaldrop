@@ -151,6 +151,31 @@ mod tests {
         negotiate(&prefs, &AVAILABLE)
     }
 
+    /// The cases in `l10n/tests/negotiation.json`, which the site's
+    /// `lang.js` passes too, so a browser and an app on the same device
+    /// pick the same language.
+    #[test]
+    fn shared_negotiation_vectors() {
+        let v: serde_json::Value =
+            serde_json::from_str(include_str!("../../../l10n/tests/negotiation.json")).unwrap();
+        let available: Vec<&str> = v["available"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|a| a.as_str().unwrap())
+            .collect();
+        for case in v["cases"].as_array().unwrap() {
+            let prefs: Vec<Locale> = case["prefs"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .filter_map(|p| parse(p.as_str().unwrap()))
+                .collect();
+            let got = negotiate(&prefs, &available).unwrap_or("en");
+            assert_eq!(got, case["expect"].as_str().unwrap(), "{}", case["prefs"]);
+        }
+    }
+
     #[test]
     fn exact_and_regional_fallback() {
         assert_eq!(pick(&["tr-TR"]), Some("tr"));

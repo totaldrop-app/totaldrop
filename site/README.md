@@ -7,7 +7,7 @@ taraf istek yok. Yazı tipleri de sitenin kendisinden gelir.
 
 ```
 public/
-  index.html          Tanıtım sayfası (İngilizce varsayılan, Türkçe app.js'te)
+  index.html          Tanıtım sayfası (metni İngilizce; diğer diller i18n/'den)
   download/index.html İndirme sayfası; ziyaretçinin cihazına uyan kart öne gelir
   r/index.html        QR ve paylaşım bağlantıları: kodu # işaretinden sonra okur,
                       uygulamayı totaldrop://r/kod ile açar; kod sunucuya gitmez
@@ -15,7 +15,9 @@ public/
   404.html            Bulunamayan her adres için; o olmadan Pages her adrese
                       ana sayfayı 200 ile döner
   styles.css          Aurora tokenları, açık ve koyu tema, hareketli işaret
-  app.js              Türkçe metinler, dil düğmesi, platform algılama, /r mantığı
+  lang.js             Dil listesi, gözden geçirilmiş diller, dil seçimi
+  app.js              Çeviriyi uygulama, taslak notu, platform algılama, /r mantığı
+  i18n/<dil>.json     Her dilin metinleri (docs/ceviri.md)
   favicon.svg         Ağ işaretinin küçük boyu, koyu temada renk değiştirir
   _headers            Güvenlik başlıkları (katı CSP, HSTS, no-referrer)
   _routes.json        Ara katman (functions/) yalnız sayfalarda çalışır; yazı
@@ -41,7 +43,8 @@ Yayın şimdilik elle yapılır; CI yalnızca kontrol eder (`site.yml`).
 
 - Tasarım [docs/tasarim.md](../docs/tasarim.md)'ye uyar; işaretin animasyonu
   uygulamalardakiyle aynıdır.
-- Yeni bir metin hem `index.html`/`download/index.html`'e (İngilizce) hem
-  `app.js`'teki `TR` sözlüğüne (Türkçe) eklenir.
+- Yeni bir metin sayfaya (İngilizce, `data-i18n` anahtarıyla) ve
+  `i18n/en.json`'a eklenir; diğer diller [docs/ceviri.md](../docs/ceviri.md)'ye
+  göre doldurulur. `node tools/check-i18n.mjs` hepsini denetler.
 - Üçüncü taraf kaynak (CDN, analiz, yazı tipi servisi) eklenmez. CSP bunu
   zaten engeller.
