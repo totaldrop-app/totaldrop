@@ -15,8 +15,8 @@ All notable changes to TotalDrop are recorded here. The format follows
   each joined to the other two, and a drop on the way between them. While
   a transfer runs the drop visits each device in turn; with reduced motion
   it stays still. It replaces "Dalga", whose waves spread from one centre
-  and did not show that every device sends to every other (#116). The Linux app gets it with
-  its next release.
+  and did not show that every device sends to every other (#116). The
+  Linux app gets it with its next release.
 
 ## [android-0.2.0-beta.1] and [linux-0.2.0-beta.1] - 2026-10-29
 
