@@ -209,9 +209,10 @@ class DoneBadge extends StatelessWidget {
         clipBehavior: Clip.none,
         children: [
           const TotalDropMark(size: 140),
+          // Top right, the one corner the mark leaves empty.
           Positioned(
             right: 4,
-            bottom: 8,
+            top: 4,
             child: DecoratedBox(
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.surface,

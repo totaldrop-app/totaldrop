@@ -28,13 +28,14 @@ ColumnLayout {
         Layout.preferredHeight: 140
         Layout.bottomMargin: Theme.s16
         Mark { size: 140; visible: r.success }
-        // The done badge: the resting mark with a check in the success colour.
+        // The done badge: the resting mark with a check in the success colour,
+        // top right, the one corner the mark leaves empty.
         Rectangle {
             visible: r.success
             width: 44; height: 44; radius: 22
             color: Theme.background
             anchors.right: parent.right
-            anchors.bottom: parent.bottom
+            anchors.top: parent.top
             IconImage {
                 anchors.centerIn: parent
                 name: Theme.icon("object-select", "checkmark")
