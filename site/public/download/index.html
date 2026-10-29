@@ -73,15 +73,15 @@ totaldrop receive 7-harbor-rocket</code></pre>
           <header><h3 data-i18n="dl.linux">Linux app</h3><span class="pill is-beta" data-i18n="dl.beta">Beta</span></header>
           <p data-i18n="dl.linux.d">Built with Qt 6 for Wayland. It takes its colours, fonts and icons from your desktop: Plasma, Hyprland, Omarchy, GNOME.</p>
           <ul>
-            <li data-i18n="dl.linux.r1">A separate package for each family of distributions, for x86-64 and ARM64</li>
+            <li data-i18n="dl.linux.r1">A separate package for each family of distributions: all for x86-64, Debian, Ubuntu and Fedora also for ARM64</li>
             <li data-i18n="dl.linux.r2">Also installs the totaldrop command</li>
           </ul>
           <div class="actions">
-            <a class="btn btn-primary" href="https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop-0.2.0_beta.1-1-x86_64.pkg.tar.zst" data-i18n="dl.linux.arch">Arch, Omarchy, Manjaro</a>
-            <a class="btn btn-quiet" href="https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop_0.2.0.beta.1-1_amd64.deb" data-i18n="dl.linux.deb">Debian, Ubuntu (.deb)</a>
-            <a class="btn btn-quiet" href="https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop-0.2.0.beta.1-1.fc43.x86_64.rpm" data-i18n="dl.linux.rpm">Fedora (.rpm)</a>
+            <a class="btn btn-primary" href="https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop-0.2.0_beta.1-1-x86_64.pkg.tar.zst" aria-label="Arch, Omarchy, Manjaro, x86-64" data-i18n-label="dl.linux.arch.label" data-i18n="dl.linux.arch">Arch, Omarchy, Manjaro</a>
+            <a class="btn btn-quiet" href="https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop_0.2.0.beta.1-1_amd64.deb" aria-label="Debian, Ubuntu (.deb), x86-64" data-i18n-label="dl.linux.deb.label" data-i18n="dl.linux.deb">Debian, Ubuntu (.deb)</a>
+            <a class="btn btn-quiet" href="https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop-0.2.0.beta.1-1.fc43.x86_64.rpm" aria-label="Fedora (.rpm), x86-64" data-i18n-label="dl.linux.rpm.label" data-i18n="dl.linux.rpm">Fedora (.rpm)</a>
+            <p class="arch-alt"><span data-i18n="dl.linux.arm">The buttons above are for x86-64. For ARM64:</span> <a href="https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop_0.2.0.beta.1-1_arm64.deb" data-i18n="dl.linux.deb.arm">Debian, Ubuntu (.deb, ARM64)</a> · <a href="https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop-0.2.0.beta.1-1.fc43.aarch64.rpm" data-i18n="dl.linux.rpm.arm">Fedora (.rpm, ARM64)</a></p>
           </div>
-          <p><span data-i18n="dl.linux.arm">The buttons above are for x86-64. For ARM64:</span> <a href="https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop_0.2.0.beta.1-1_arm64.deb" data-i18n="dl.linux.deb.arm">Debian, Ubuntu (.deb)</a> · <a href="https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop-0.2.0.beta.1-1.fc43.aarch64.rpm" data-i18n="dl.linux.rpm.arm">Fedora (.rpm)</a></p>
         </li>
       </ul>
     </section>
@@ -115,11 +115,11 @@ totaldrop receive 7-harbor-rocket</code></pre>
     <section class="block" aria-labelledby="dl-new">
       <h2 id="dl-new" data-i18n="dl.new.title">What's new</h2>
       <ul class="notes">
-        <li data-i18n="dl.new.privacy">Privacy mode, in Settings: every transfer goes through the relay, so the other device never learns your IP address. It is slower, and the app asks before turning it on.</li>
+        <li data-i18n="dl.new.privacy">Privacy mode, in Settings: every transfer goes through the relay, so the other device never learns your IP address. It is slower, and the app asks you to confirm before turning it on.</li>
+        <li data-i18n="dl.new.relay">Devices contact the relay only when no direct connection comes up in time, or in privacy mode, so a transfer that connects directly never reaches it.</li>
         <li data-i18n="dl.new.stop">Stop works at every stage: while the files are prepared, while waiting for the receiver, while connecting and during the transfer. The other side is told that you stopped.</li>
         <li data-i18n="dl.new.folder">On Linux, adding a large folder no longer freezes the window. Its size is counted in the background.</li>
-        <li data-i18n="dl.new.arm">Linux packages for ARM64, as .deb and .rpm.</li>
-        <li data-i18n="dl.new.lang">The apps and the command line use your system's language and write numbers and sizes in your region's format.</li>
+        <li data-i18n="dl.new.lang">The apps and the command line use your system's language and write numbers and sizes in your region's format. English and Turkish today.</li>
         <li data-i18n="dl.new.mark">A new mark, Ağ: three equal devices, each joined to the other two. On Android and this site now; the Linux app gets it with its next release.</li>
       </ul>
       <p class="note"><a href="https://github.com/totaldrop-app/totaldrop/releases" data-i18n="dl.all">All versions and release notes</a></p>
@@ -132,7 +132,7 @@ totaldrop receive 7-harbor-rocket</code></pre>
           <thead><tr><th scope="col" data-i18n="dl.req.platform">Platform</th><th scope="col" data-i18n="dl.req.min">Minimum</th><th scope="col" data-i18n="dl.req.notes">Notes</th></tr></thead>
           <tbody>
             <tr><th scope="row">Android</th><td data-i18n="dl.req.android">Android 15, 64-bit ARM</td><td data-i18n="dl.req.android.n">Internet permission only</td></tr>
-            <tr><th scope="row">Linux</th><td data-i18n="dl.req.linux">Qt 6.8: Debian 13, Ubuntu 25.04, Fedora 43, Arch</td><td data-i18n="dl.req.linux.n">Wayland or X11; x86-64 and ARM64 (deb, rpm; Arch x86-64 only)</td></tr>
+            <tr><th scope="row">Linux</th><td data-i18n="dl.req.linux">Qt 6.8: Debian 13, Ubuntu 25.04, Fedora 43, Arch</td><td data-i18n="dl.req.linux.n">Wayland or X11; x86-64 and ARM64 (.deb, .rpm; Arch x86-64 only)</td></tr>
             <tr><th scope="row" data-i18n="dl.cli">Command line</th><td data-i18n="dl.req.cli">Rust 1.99 to build</td><td data-i18n="dl.req.cli.n">Linux, macOS, Windows</td></tr>
             <tr><th scope="row" data-i18n="dl.req.net">Network</th><td data-i18n="dl.req.net.m">Internet, or the same network</td><td data-i18n="dl.req.net.n">Directly where possible, otherwise through the relay</td></tr>
           </tbody>
