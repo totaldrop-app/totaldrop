@@ -72,6 +72,8 @@ class _SettingsViewState extends State<SettingsView> {
             controller: _server,
             autocorrect: false,
             keyboardType: TextInputType.url,
+            // An address reads left to right in every language.
+            textDirection: TextDirection.ltr,
             decoration: InputDecoration(
               errorText: _invalid ? l.settingsServerInvalid : null,
               prefixIcon: const Icon(Icons.dns_outlined),
@@ -83,7 +85,7 @@ class _SettingsViewState extends State<SettingsView> {
           FilledButton.tonal(onPressed: _save, child: Text(l.settingsSave)),
           Gap.s,
           Align(
-            alignment: Alignment.centerLeft,
+            alignment: AlignmentDirectional.centerStart,
             child: TextButton(
               onPressed: () async {
                 await widget.settings.resetServer();
@@ -134,7 +136,7 @@ class _SettingsViewState extends State<SettingsView> {
           ],
           Gap.s,
           Text(
-            l.settingsVersion(widget.version),
+            l.settingsVersion(isolate(widget.version)),
             style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
           ),
           Text(

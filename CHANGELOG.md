@@ -7,6 +7,20 @@ All notable changes to TotalDrop are recorded here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- **Android, Linux, CLI, site:** Draft translations in 31 more languages,
+  33 with the Portuguese and Chinese variants (ADR 0008): Arabic, Bengali, Chinese (Simplified and Traditional), Czech,
+  Danish, Dutch, Finnish, French, German, Greek, Hebrew, Hindi, Hungarian,
+  Indonesian, Italian, Japanese, Korean, Malay, Norwegian Bokmål, Persian,
+  Polish, Portuguese (Brazil and Portugal), Romanian, Russian, Spanish,
+  Swahili, Swedish, Thai, Ukrainian, Urdu and Vietnamese. They are made
+  with Claude and not yet checked by native speakers, so the apps say so in
+  Settings and keep the verification, wrong-code and accept/decline texts in
+  English until a language is reviewed. The site shows a short note under
+  the header in a draft language and lists every language under its own
+  name; the picker is as wide as the chosen language (#127).
+
 ### Changed
 
 - **Site (download page, roadmap, home), README:** The download page and
@@ -27,6 +41,11 @@ All notable changes to TotalDrop are recorded here. The format follows
   update (#124).
 ### Fixed
 
+- **Android:** In right-to-left languages the home screen's mark, the
+  "Add files" and "Use the default" buttons stayed on the left, the
+  version showed as "beta.2-0.2.0", and the server address ran right to
+  left. They now follow the language's direction, and the version and the
+  save folder keep their own (#127).
 - **Rendezvous (Cloudflare):** About 1 in 15 new codes failed with HTTP 500
   when Cloudflare returned a transient error on a new mailbox's first
   request. Opening a mailbox and looking up a code are now tried again on a

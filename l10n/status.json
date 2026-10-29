@@ -15,8 +15,148 @@
     "cliErrInvalidOffer"
   ],
   "languages": {
+    "ar": {
+      "reviewed": false,
+      "draft": []
+    },
+    "bn": {
+      "reviewed": false,
+      "draft": []
+    },
+    "cs": {
+      "reviewed": false,
+      "draft": []
+    },
+    "da": {
+      "reviewed": false,
+      "draft": []
+    },
+    "de": {
+      "reviewed": false,
+      "draft": []
+    },
+    "el": {
+      "reviewed": false,
+      "draft": []
+    },
+    "es": {
+      "reviewed": false,
+      "draft": []
+    },
+    "fa": {
+      "reviewed": false,
+      "draft": []
+    },
+    "fi": {
+      "reviewed": false,
+      "draft": []
+    },
+    "fr": {
+      "reviewed": false,
+      "draft": []
+    },
+    "he": {
+      "reviewed": false,
+      "draft": []
+    },
+    "hi": {
+      "reviewed": false,
+      "draft": []
+    },
+    "hu": {
+      "reviewed": false,
+      "draft": []
+    },
+    "id": {
+      "reviewed": false,
+      "draft": []
+    },
+    "it": {
+      "reviewed": false,
+      "draft": []
+    },
+    "ja": {
+      "reviewed": false,
+      "draft": []
+    },
+    "ko": {
+      "reviewed": false,
+      "draft": []
+    },
+    "ms": {
+      "reviewed": false,
+      "draft": []
+    },
+    "nb": {
+      "reviewed": false,
+      "draft": []
+    },
+    "nl": {
+      "reviewed": false,
+      "draft": []
+    },
+    "pl": {
+      "reviewed": false,
+      "draft": []
+    },
+    "pt": {
+      "reviewed": false,
+      "draft": []
+    },
+    "pt-BR": {
+      "reviewed": false,
+      "draft": []
+    },
+    "pt-PT": {
+      "reviewed": false,
+      "draft": []
+    },
+    "ro": {
+      "reviewed": false,
+      "draft": []
+    },
+    "ru": {
+      "reviewed": false,
+      "draft": []
+    },
+    "sv": {
+      "reviewed": false,
+      "draft": []
+    },
+    "sw": {
+      "reviewed": false,
+      "draft": []
+    },
+    "th": {
+      "reviewed": false,
+      "draft": []
+    },
     "tr": {
       "reviewed": true,
+      "draft": []
+    },
+    "uk": {
+      "reviewed": false,
+      "draft": []
+    },
+    "ur": {
+      "reviewed": false,
+      "draft": []
+    },
+    "vi": {
+      "reviewed": false,
+      "draft": []
+    },
+    "zh": {
+      "reviewed": false,
+      "draft": []
+    },
+    "zh-Hans": {
+      "reviewed": false,
+      "draft": []
+    },
+    "zh-Hant": {
+      "reviewed": false,
       "draft": []
     }
   }
