@@ -155,24 +155,27 @@ mod tests {
     /// `lang.js` passes too, so a browser and an app on the same device
     /// pick the same language.
     #[test]
+    // Indexing a serde_json::Value yields Null when absent; it cannot panic.
+    #[allow(clippy::indexing_slicing)]
     fn shared_negotiation_vectors() {
-        let v: serde_json::Value =
-            serde_json::from_str(include_str!("../../../l10n/tests/negotiation.json")).unwrap();
-        let available: Vec<&str> = v["available"]
-            .as_array()
-            .unwrap()
-            .iter()
-            .map(|a| a.as_str().unwrap())
-            .collect();
-        for case in v["cases"].as_array().unwrap() {
+        let text = include_str!("../../../l10n/tests/negotiation.json");
+        let v: serde_json::Value = serde_json::from_str(text).unwrap_or_default();
+        let list = v["available"].as_array().cloned().unwrap_or_default();
+        let available: Vec<&str> = list.iter().filter_map(serde_json::Value::as_str).collect();
+        let cases = v["cases"].as_array().cloned().unwrap_or_default();
+        assert!(available.len() > 30 && cases.len() > 10);
+        for case in cases {
             let prefs: Vec<Locale> = case["prefs"]
                 .as_array()
-                .unwrap()
+                .cloned()
+                .unwrap_or_default()
                 .iter()
-                .filter_map(|p| parse(p.as_str().unwrap()))
+                .filter_map(serde_json::Value::as_str)
+                .filter_map(parse)
                 .collect();
             let got = negotiate(&prefs, &available).unwrap_or("en");
-            assert_eq!(got, case["expect"].as_str().unwrap(), "{}", case["prefs"]);
+            let want = case["expect"].as_str().unwrap_or_default();
+            assert_eq!(got, want, "{}", case["prefs"]);
         }
     }
 
