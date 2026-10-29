@@ -21,9 +21,10 @@ All notable changes to TotalDrop are recorded here. The format follows
   there is no direct path to try; a receiver no longer uses a relay only
   the sender chose; privacy mode is in the apps' Settings, skips STUN and
   never connects directly; the apps also store the privacy mode setting,
-  and Android keeps the files you pick in its cache until the send screen
-  is cleared. Android 0.1.0-beta.5, Linux 0.1.0-beta.4 and earlier are
-  still described, with the advice to update (#124).
+  and Android keeps the files you pick in its cache until the send
+  is closed or stopped. Android 0.1.0-beta.5 and Linux 0.1.0-beta.4, the
+  first versions with the relay, are still described, with the advice to
+  update (#124).
 
 ## [android-0.2.0-beta.2] - 2026-10-29
 
