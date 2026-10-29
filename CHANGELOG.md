@@ -7,6 +7,12 @@ All notable changes to TotalDrop are recorded here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- **Site, README:** The download page and the README point at Linux
+  0.2.0-beta.1, with the ARM64 .deb and .rpm, and the page lists what is
+  new in Android 0.2.0-beta.2 and Linux 0.2.0-beta.1 (#122).
+
 ## [android-0.2.0-beta.2] - 2026-10-29
 
 ### Changed
