@@ -149,7 +149,7 @@
       mine.parentElement.prepend(mine);
       // Where the desktop app is still planned, the command line works today.
       const cli = document.querySelector('[data-platform="cli"]');
-      if (cli && ["macos", "windows"].includes(p)) mine.after(cli);
+      if (cli && ["macos", "windows"].includes(p)) cli.parentElement.prepend(cli);
     }
   }
   // Receive link (totaldrop.app/r#7-harbor-rocket): the code is after "#",
