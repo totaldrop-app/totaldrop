@@ -26,6 +26,8 @@ jobs:
         run: node --check site/public/app.js && node --check site/public/lang.js && node --check site/public/msg.js && node --check site/functions/_middleware.js
       - name: Translations follow the rules
         run: node site/tools/check-i18n.mjs
+      - name: README and its translations
+        run: node site/tools/check-readmes.mjs
       - name: Every page links only to files that exist
         working-directory: site/public
         run: |

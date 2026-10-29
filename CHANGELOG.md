@@ -9,6 +9,12 @@ All notable changes to TotalDrop are recorded here. The format follows
 
 ### Added
 
+- **GitHub:** The README is rewritten around the new mark, with a light and
+  dark lockup, current screenshots and a section on languages, and it is
+  translated into the site's 35 languages (docs/readme/), each listed under
+  its own name. CI checks every translation's links and language list and
+  reports translations older than the English. A code of conduct and a
+  support page complete the community files (#135).
 - **Android, Linux, CLI, site:** Draft translations in 31 more languages,
   33 with the Portuguese and Chinese variants (ADR 0008): Arabic, Bengali, Chinese (Simplified and Traditional), Czech,
   Danish, Dutch, Finnish, French, German, Greek, Hebrew, Hindi, Hungarian,
