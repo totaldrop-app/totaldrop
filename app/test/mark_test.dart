@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:totaldrop/ui/core/mark.dart';
@@ -42,6 +44,57 @@ void main() {
     expect(shape.contains(const Offset(15, 97)), isFalse);
     expect(shape.contains(const Offset(95, 97)), isFalse);
     expect(shape.contains(MarkGeometry.centre), isTrue);
+  });
+
+  test('the turn is eased: halfway through a quarter it has turned half of it', () {
+    // cubic-bezier(0.65, 0, 0.35, 1) is symmetric, so it passes (0.5, 0.5).
+    expect(MarkMotion.turn(0.375 / 4), closeTo(0.125, 1e-3));
+    // Slow at the start: a tenth of the time turns far less than a tenth.
+    expect(MarkMotion.turn(0.075 / 4), lessThan(0.025 / 4));
+  });
+
+  // Every copy of the mark uses the same path and timing (docs/tasarim.md).
+  const path = 'M55 15H97V57A42 42 0 1 1 55 15Z';
+  test('the SVGs, the icon script and the site draw the same path', () {
+    for (final f in [
+      'assets/logo.svg',
+      '../site/public/favicon.svg',
+      '../site/public/index.html',
+      '../packaging/linux/app.totaldrop.TotalDrop.svg',
+      '../packaging/linux/app.totaldrop.TotalDrop-symbolic.svg',
+      '../packaging/render-icons.sh',
+    ]) {
+      expect(File(f).readAsStringSync(), contains(path), reason: f);
+    }
+  });
+
+  test('the Linux app and the site turn the same way, on the same timing', () {
+    final qml = File('../linux/qml/Mark.qml').readAsStringSync().replaceAll(RegExp(r'\s+'), ' ');
+    expect(qml, contains('origin.x: 55 * root.unit; origin.y: 57 * root.unit'));
+    expect(qml, contains('startX: 55 * root.unit; startY: 15 * root.unit'));
+    expect(qml, contains('PathLine { x: 97 * root.unit; y: 15 * root.unit }'));
+    expect(qml, contains('PathLine { x: 97 * root.unit; y: 57 * root.unit }'));
+    expect(qml, contains('duration: 600'));
+    expect(RegExp(r'PauseAnimation \{ duration: 200 \}').allMatches(qml).length, 4);
+    expect(qml, contains('[0.65, 0, 0.35, 1, 1, 1]'));
+    final css = File('../site/public/styles.css').readAsStringSync();
+    expect(css, contains('transform-origin: 55px 57px'));
+    expect(css, contains('animation: mk-turn 3.2s cubic-bezier(0.65, 0, 0.35, 1) infinite'));
+    for (final stop in ['18.75%, 25%', '43.75%, 50%', '68.75%, 75%', '93.75%, 100%']) {
+      expect(css, contains(stop));
+    }
+  });
+
+  testWidgets('it turns while sending', (tester) async {
+    await tester.pumpWidget(
+      const Directionality(
+        textDirection: TextDirection.ltr,
+        child: Center(child: TotalDropMark(sending: true)),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(tester.hasRunningAnimations, isTrue);
+    await tester.pumpWidget(const SizedBox());
   });
 
   testWidgets('it stays still when animations are off', (tester) async {

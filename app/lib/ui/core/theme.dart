@@ -15,8 +15,6 @@ abstract final class Brand {
   static const night2 = Color(0xFF1E1648);
   static const glowMuted = Color(0xFFB9B1E0);
   static const ruleDark = Color(0xFF2E2566);
-  static const success = Color(0xFF0A7357);
-  static const successDark = Color(0xFF7ED9B5);
 }
 
 const _display = 'BricolageGrotesque';

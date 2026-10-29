@@ -26,7 +26,7 @@ layer '#F4F2FB' > "$tmp/foreground.svg"
 layer '#FFFFFF' > "$tmp/monochrome.svg"
 
 # Legacy icon for launchers without adaptive icons: the paper mark on violet.
-printf '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 112 112"><rect width="112" height="112" rx="22" fill="#6D4AE0"/><g transform="translate(21.28 21.28) scale(0.62)">%s</g></svg>' \
+printf '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 112 112"><rect width="112" height="112" rx="22" fill="#6D4AE0"/><g transform="translate(17.92 17.92) scale(0.68)">%s</g></svg>' \
   "$(mark '#F4F2FB')" > "$tmp/legacy.svg"
 
 for d in mdpi:1 hdpi:1.5 xhdpi:2 xxhdpi:3 xxxhdpi:4; do
