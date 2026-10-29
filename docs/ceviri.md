@@ -73,7 +73,11 @@ Taslaklar Claude (Anthropic) ile üretildi ve proje lisansı altındadır.
 1. `l10n/app/`, `l10n/cli/` ve `site/public/i18n/` için şablondan
    dosyaları kopyalayıp çevirin (varyantlı dillerde temel dosyayla birlikte).
 2. `l10n/status.json`'a dili ekleyin.
-3. Android `localeConfig` ve site dil listesi bu dosyalardan üretilir;
-   CI üretilen dosyaların güncel olduğunu denetler.
+3. Android `localeConfig` bu dosyalardan üretilir; CI üretilen dosyaların
+   güncel olduğunu denetler. Site dil listesine (`site/public/app.js`
+   `LANGUAGES`) dili kendi adıyla ekleyin; CI listenin `i18n/` dosyalarıyla,
+   `REVIEWED` listesinin de `l10n/status.json` ile aynı olduğunu denetler.
+   Gözden geçirilmemiş bir dilde site, başlığın altında kısa bir taslak
+   notu gösterir.
 4. Yazı sistemi yeni ise Linux paketlerine ilgili Noto yazı tipini ekleyin
    ve ekran görüntüsüyle deneyin.

@@ -34,7 +34,7 @@ class HomeView extends StatelessWidget {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
           children: [
-            const Align(alignment: Alignment.centerLeft, child: TotalDropMark(size: 88)),
+            const Align(alignment: AlignmentDirectional.centerStart, child: TotalDropMark(size: 88)),
             Gap.m,
             Text('TotalDrop', style: theme.textTheme.displaySmall),
             Text(

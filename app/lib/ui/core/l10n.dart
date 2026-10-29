@@ -85,6 +85,12 @@ String formatBytes(AppLocalizations l, int bytes, {String? numberLocale}) {
   return l.sizePB(bytes.toString());
 }
 
+/// A value from outside the translation (a version, a folder) placed in a
+/// sentence. Isolated, it keeps its own direction in a right-to-left
+/// language: "0.2.0-beta.2" would otherwise show as "beta.2-0.2.0".
+/// Translations never contain these characters; only the code adds them.
+String isolate(String value) => '\u2068$value\u2069';
+
 /// Text that must read left to right in every language (the transfer code,
 /// the verification words), spoken by screen readers with an English voice.
 class LtrEnglish extends StatelessWidget {

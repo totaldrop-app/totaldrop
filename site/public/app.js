@@ -5,10 +5,47 @@
   // languages come from /i18n/<tag>.json on this same domain. The choice
   // follows the browser's languages and can be changed with the picker;
   // it is remembered only in this browser.
+  // Each language under its own name (never a flag), in tag order.
   const LANGUAGES = [
+    ["ar", "العربية"],
+    ["bn", "বাংলা"],
+    ["cs", "Čeština"],
+    ["da", "Dansk"],
+    ["de", "Deutsch"],
+    ["el", "Ελληνικά"],
     ["en", "English"],
-    ["tr", "Türkçe"]
+    ["es", "Español"],
+    ["fa", "فارسی"],
+    ["fi", "Suomi"],
+    ["fr", "Français"],
+    ["he", "עברית"],
+    ["hi", "हिन्दी"],
+    ["hu", "Magyar"],
+    ["id", "Bahasa Indonesia"],
+    ["it", "Italiano"],
+    ["ja", "日本語"],
+    ["ko", "한국어"],
+    ["ms", "Bahasa Melayu"],
+    ["nb", "Norsk bokmål"],
+    ["nl", "Nederlands"],
+    ["pl", "Polski"],
+    ["pt-BR", "Português (Brasil)"],
+    ["pt-PT", "Português (Portugal)"],
+    ["ro", "Română"],
+    ["ru", "Русский"],
+    ["sv", "Svenska"],
+    ["sw", "Kiswahili"],
+    ["th", "ไทย"],
+    ["tr", "Türkçe"],
+    ["uk", "Українська"],
+    ["ur", "اردو"],
+    ["vi", "Tiếng Việt"],
+    ["zh-Hans", "简体中文"],
+    ["zh-Hant", "繁體中文"]
   ];
+  // Languages a native speaker has checked (l10n/status.json); every other
+  // one shows a note that it is a draft.
+  const REVIEWED = ["en", "tr"];
   // Right to left: languages whose likely script is one of these (the
   // same rule as msg.js).
   const RTL_SCRIPTS = ["Arab", "Hebr", "Thaa", "Syrc", "Nkoo", "Adlm", "Rohg", "Mand", "Samr"];
@@ -29,6 +66,7 @@
   EN["dl.copied"] = "Copied";
   EN["r.copied"] = "Copied";
   EN["lang.label"] = "Language";
+  EN["lang.draft"] = "This translation is a draft and is being reviewed.";
   let dict = EN;
   // An empty or missing translation falls back to English.
   const has = (d, key) => typeof d[key] === "string" && d[key] !== "";
@@ -63,6 +101,17 @@
   }
 
   const picker = document.getElementById("lang-select");
+  // The draft note sits right under the header, so it is read before the
+  // translated text.
+  let note = null;
+  const header = document.querySelector("body > header");
+  if (header) {
+    note = document.createElement("p");
+    note.className = "lang-note";
+    note.setAttribute("role", "note");
+    note.hidden = true;
+    header.after(note);
+  }
 
   function apply(tag, d) {
     dict = d;
@@ -83,6 +132,10 @@
     document.documentElement.dir = isRtl(tag) ? "rtl" : "ltr";
     document.title = t("meta." + PAGE + ".title");
     if (descTag) descTag.setAttribute("content", t("meta." + PAGE + ".desc"));
+    if (note) {
+      note.hidden = REVIEWED.includes(tag);
+      note.textContent = note.hidden ? "" : t("lang.draft");
+    }
     if (picker) {
       picker.value = tag;
       picker.setAttribute("aria-label", t("lang.label"));

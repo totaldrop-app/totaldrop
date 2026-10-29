@@ -74,6 +74,14 @@ const block = app.slice(app.indexOf("const LANGUAGES"), app.indexOf("];", app.in
 const listed = [...block.matchAll(/\["([a-zA-Z-]+)", "[^"]+"\]/g)].map((m) => m[1]).sort();
 const tags = files.map((f) => f.replace(/\.json$/, "")).sort();
 if (JSON.stringify(listed) !== JSON.stringify(tags)) errors.push(`app.js LANGUAGES ${listed} differ from i18n files ${tags}`);
+// The draft note: REVIEWED must be English plus exactly the site languages
+// l10n/status.json marks as reviewed, and every site language must be there.
+const status = JSON.parse(read("l10n/status.json")).languages;
+const rev = app.slice(app.indexOf("const REVIEWED"), app.indexOf("];", app.indexOf("const REVIEWED")));
+const reviewed = [...rev.matchAll(/"([a-zA-Z-]+)"/g)].map((m) => m[1]).sort();
+const want = tags.filter((tag) => tag === "en" || (status[tag] && status[tag].reviewed === true)).sort();
+if (JSON.stringify(reviewed) !== JSON.stringify(want)) errors.push(`app.js REVIEWED ${reviewed} differs from l10n/status.json ${want}`);
+for (const tag of tags) if (tag !== "en" && !(tag in status)) errors.push(`${tag}.json: not listed in l10n/status.json`);
 
 // Controls, format characters and separators (as the Rust check), except
 // ZWNJ/ZWJ and the left-to-right and right-to-left marks.

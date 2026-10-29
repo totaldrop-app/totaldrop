@@ -309,7 +309,7 @@ class _Done extends StatelessWidget {
         Gap.s,
         if (vm.folder != null)
           Text(
-            l.receiveSaveTo(vm.folder!.replaceFirst('/storage/emulated/0/', '')),
+            l.receiveSaveTo(isolate(vm.folder!.replaceFirst('/storage/emulated/0/', ''))),
             textAlign: TextAlign.center,
           ),
         if (s != null && s.filesFailed > 0) ...[

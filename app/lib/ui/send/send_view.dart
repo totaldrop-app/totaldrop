@@ -146,7 +146,7 @@ class _Picking extends StatelessWidget {
             itemBuilder: (context, i) {
               if (i == vm.files.length) {
                 return Align(
-                  alignment: Alignment.centerLeft,
+                  alignment: AlignmentDirectional.centerStart,
                   child: TextButton.icon(
                     onPressed: vm.addFiles,
                     icon: const Icon(Icons.add),
