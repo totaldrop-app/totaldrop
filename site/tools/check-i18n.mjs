@@ -130,4 +130,4 @@ if (errors.length) {
   console.error(errors.join("\n"));
   process.exit(1);
 }
-console.log(`site translations ok: ${tags.join(", ")}; ${vectors.cases.length} shared vectors pass`);
+console.log(`site translations ok: ${tags.join(", ")}; ${vectors.cases.length} shared vectors and ${nego.cases.length} negotiation cases pass`);

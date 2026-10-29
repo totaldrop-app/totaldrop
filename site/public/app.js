@@ -6,7 +6,10 @@
   // follows the browser's languages and can be changed with the picker;
   // it is remembered only in this browser.
   // The languages, which are reviewed, and how one is chosen: lang.js.
-  const { LANGUAGES, REVIEWED, negotiate } = window.TDLang;
+  // If lang.js did not load, the page stays in English and the rest
+  // (downloads, copy buttons, /r) still works.
+  const { LANGUAGES, REVIEWED, negotiate } = window.TDLang
+    || { LANGUAGES: [["en", "English"]], REVIEWED: ["en"], negotiate: () => "en" };
   // Right to left: languages whose likely script is one of these (the
   // same rule as msg.js).
   const RTL_SCRIPTS = ["Arab", "Hebr", "Thaa", "Syrc", "Nkoo", "Adlm", "Rohg", "Mand", "Samr"];
