@@ -11,6 +11,7 @@
 import { Directory } from "./directory";
 import { Mailbox } from "./mailbox";
 import { decodeClient, server, unhex } from "./messages";
+import { BUSY, FAILED, withRetry } from "./retry";
 
 export { Directory, Mailbox };
 
@@ -21,10 +22,6 @@ export interface Env {
 
 /** How long an allocation connection may take to send its request. */
 const ALLOCATE_TIMEOUT = 10_000;
-/** Tries at opening a mailbox object, and the pause before the second
- * (it grows by this much each time). */
-const MAILBOX_ATTEMPTS = 3;
-const MAILBOX_RETRY_DELAY = 50;
 
 function isUpgrade(request: Request): boolean {
   return (
@@ -52,6 +49,28 @@ function refuse(reason: string): Response {
   return new Response(null, { status: 101, webSocket: pair[0] });
 }
 
+/** The reply to an allocation request. Only fixed reasons reach the
+ * client, never a runtime error's text. Allocation is not tried again: a
+ * call that failed after the directory handed out a number would hold a
+ * second one until it expires. */
+async function answer(env: Env, data: unknown): Promise<Uint8Array> {
+  let msg;
+  try {
+    msg = decodeClient(await binary(data));
+  } catch {
+    return server.error("malformed message");
+  }
+  if (msg.type !== "allocate") return server.error("only allocate here");
+  let result;
+  try {
+    result = await env.DIRECTORY.getByName("directory").allocate();
+  } catch (e) {
+    return server.error((e as { overloaded?: unknown } | null)?.overloaded === true ? BUSY : FAILED);
+  }
+  if ("error" in result) return server.error(result.error);
+  return server.allocated(result.nameplate, unhex(result.token));
+}
+
 function allocate(env: Env): Response {
   const pair = new WebSocketPair();
   const socket = pair[1];
@@ -65,24 +84,20 @@ function allocate(env: Env): Response {
     answered = true;
     clearTimeout(timer);
     try {
-      const msg = decodeClient(await binary(event.data));
-      if (msg.type !== "allocate") throw new Error("only allocate here");
-      const result = await env.DIRECTORY.getByName("directory").allocate();
-      if ("error" in result) {
-        socket.send(server.error(result.error));
-      } else {
-        socket.send(server.allocated(result.nameplate, unhex(result.token)));
-      }
-    } catch (e) {
-      socket.send(server.error(e instanceof Error ? e.message : "server error"));
+      socket.send(await answer(env, event.data));
+      socket.close(1000, "done");
+    } catch {
+      // The client is gone.
     }
-    socket.close(1000, "done");
   });
   return new Response(null, { status: 101, webSocket: pair[0] });
 }
 
 async function mailbox(env: Env, request: Request, nameplate: number): Promise<Response> {
-  const record = await env.DIRECTORY.getByName("directory").lookup(nameplate);
+  // A lookup only reads, so it may be tried again too.
+  const found = await withRetry(() => env.DIRECTORY.getByName("directory").lookup(nameplate));
+  if (!found.ok) return refuse(found.reason);
+  const record = found.value;
   if (!record) return refuse("unknown nameplate");
   // Only these headers reach the mailbox; nothing the client sent is
   // forwarded except the upgrade itself.
@@ -95,22 +110,16 @@ async function mailbox(env: Env, request: Request, nameplate: number): Promise<R
   });
   // Every code opens a brand-new mailbox object, and the platform now and
   // then fails that first request with a bare "internal error" (#119).
-  // Opening is idempotent (the record is stored once; a socket left by a
-  // failed try is never claimed and is closed at the claim deadline), so
-  // try again with a new stub, as Cloudflare advises, unless the object is
-  // overloaded. If it still fails, the client gets a reason, not a 500.
-  for (let attempt = 1; ; attempt++) {
-    const forward = new Request("https://mailbox.internal/", { method: "GET", headers });
-    try {
-      return await env.MAILBOX.getByName(record.mailbox).fetch(forward);
-    } catch (e) {
-      const overloaded = (e as { overloaded?: unknown } | null)?.overloaded === true;
-      if (overloaded || attempt >= MAILBOX_ATTEMPTS) {
-        return refuse(overloaded ? "server busy" : "server error, try again");
-      }
-      await new Promise((r) => setTimeout(r, MAILBOX_RETRY_DELAY * attempt));
-    }
-  }
+  // Opening is safe to repeat (the record is stored once; a socket left by
+  // a failed try is never claimed and is closed at the claim deadline), so
+  // it is tried again on a new stub as `mayRetry` allows. If it still
+  // fails, the client gets a reason, not a 500.
+  const opened = await withRetry(() =>
+    env.MAILBOX.getByName(record.mailbox).fetch(
+      new Request("https://mailbox.internal/", { method: "GET", headers }),
+    ),
+  );
+  return opened.ok ? opened.value : refuse(opened.reason);
 }
 
 export default {

@@ -25,6 +25,13 @@ All notable changes to TotalDrop are recorded here. The format follows
   is closed or stopped. Android 0.1.0-beta.5 and Linux 0.1.0-beta.4, the
   first versions with the relay, are still described, with the advice to
   update (#124).
+### Fixed
+
+- **Rendezvous (Cloudflare):** About 1 in 15 new codes failed with HTTP 500
+  when Cloudflare returned a transient error on a new mailbox's first
+  request. Opening a mailbox and looking up a code are now tried again on a
+  fresh stub, and if every try fails the client gets a readable error
+  instead of a 500 (#119).
 
 ## [android-0.2.0-beta.2] - 2026-10-29
 

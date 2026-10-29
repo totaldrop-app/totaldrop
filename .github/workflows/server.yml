@@ -31,6 +31,9 @@ jobs:
           node-version: lts/*
       - run: npm ci
       - run: npm run check
+      # Unit tests on Node's own runner (it strips the types itself), for
+      # the Workers that have them.
+      - run: npm run --if-present test
 
   end-to-end:
     name: End to end against both Workers
