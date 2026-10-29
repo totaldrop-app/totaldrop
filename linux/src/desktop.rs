@@ -190,8 +190,8 @@ pub async fn notify(title: String, body: String) {
     let Ok(conn) = zbus::Connection::session().await else {
         return;
     };
-    let hints: HashMap<&str, zbus::zvariant::Value<'_>> =
-        HashMap::from([("desktop-entry", zbus::zvariant::Value::from(crate::APP_ID))]);
+    let hints: HashMap<&str, zbus::Variant<'_>> =
+        HashMap::from([("desktop-entry", zbus::Variant::from(crate::APP_ID))]);
     let _ = conn
         .call_method(
             Some("org.freedesktop.Notifications"),
