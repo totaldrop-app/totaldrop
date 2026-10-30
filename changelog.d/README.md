@@ -42,9 +42,20 @@ Dependabot's pull requests need no file.
 
 ## A release for one platform
 
-`release` moves every file. When only one platform is released, move the
-other platform's files out of `changelog.d/` first and back afterwards, in
-the same release pull request (#152).
+A heading for one platform, `"[linux-…]"` or `"[android-…]"`, takes only
+what that platform ships (#152):
+
+- an entry whose bold area names that platform, or no platform at all
+  (Core, Site, CI, Build, translations…), moves into the release;
+- an entry that names only the other platform stays in its file;
+- an entry that names both moves in under every area except the other
+  platform's, and stays in its file under the other platform's area only,
+  for that platform's release. For a Linux release, `**Android, Linux,
+  site:**` is released as `**Linux, site:**` and left as `**Android:**`.
+
+The command line ships with the Linux packages, so `CLI` and `Command line`
+count as Linux. Any other heading, such as `"[android-…] and [linux-…]"`,
+takes every entry. `.none.md` files go with any release.
 
 ## Checks
 

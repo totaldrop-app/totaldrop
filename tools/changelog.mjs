@@ -12,9 +12,12 @@
 //       needed), or are a release: change CHANGELOG.md and delete entry
 //       files from changelog.d/.
 //   node tools/changelog.mjs release "<heading>" [YYYY-MM-DD]
-//       Moves every entry into a new "## <heading> - <date>" section under
+//       Moves the entries into a new "## <heading> - <date>" section under
 //       Unreleased, in Keep a Changelog order, and deletes the files. Within
 //       a section, entries are ordered by issue number, then file name.
+//       A release of one platform ("[linux-…]" or "[android-…]") takes only
+//       the entries that name it or no platform; an entry that names both
+//       stays behind under the other platform's area for its release.
 //
 // A file is named <issue>-<slug>.<section>.md, where <section> is added,
 // changed, deprecated, removed, fixed, security, or none. It holds one or
@@ -141,23 +144,88 @@ export function checkRepo(root) {
   return errors;
 }
 
-/** The new release section built from the files, in Keep a Changelog order. */
+/** The platforms a release heading names, e.g. ["linux"] for "[linux-0.4.0-beta.1]". */
+export function headingPlatforms(heading) {
+  return [...heading.matchAll(/\[([a-z]+)-[^\]]*\]/g)].map((m) => m[1]);
+}
+
+/**
+ * The platform an entry's area belongs to, or null for an area that is not
+ * a platform of its own (Core, Site, CI, Build…). The command line ships
+ * with the Linux packages (docs/versioning.md).
+ */
+export function areaPlatform(area) {
+  if (/\bandroid\b/i.test(area)) return "android";
+  if (/\b(linux|cli|command line)\b/i.test(area)) return "linux";
+  return null;
+}
+
+/** The entries of an entry file: each a list of lines, the first "- **Area:** …". */
+function entriesOf(text) {
+  const entries = [];
+  for (const line of text.replace(/\n$/, "").split("\n")) {
+    if (line.startsWith("- ")) entries.push([line]);
+    else entries.at(-1).push(line);
+  }
+  return entries;
+}
+
+/**
+ * Splits one entry for a release of `platforms`. A release for one platform
+ * takes an entry that names that platform or no platform at all, under the
+ * areas that are not another platform's; an entry that also names another
+ * platform stays in its file under that platform's areas only, for that
+ * platform's release.
+ */
+function splitEntry(lines, platforms) {
+  const m = /^- \*\*([^*]+):\*\*/.exec(lines[0]);
+  const areas = m[1].split(/,\s*/);
+  const kinds = areas.map(areaPlatform);
+  const named = kinds.filter((k) => k !== null);
+  const known = named.length === 0 || named.some((k) => platforms.includes(k));
+  if (!known) return { take: null, keep: lines };
+  const later = areas.filter((_, i) => kinds[i] !== null && !platforms.includes(kinds[i]));
+  if (later.length === 0) return { take: lines, keep: null };
+  const now = areas.filter((_, i) => kinds[i] === null || platforms.includes(kinds[i]));
+  const withAreas = (list) => [lines[0].replace(m[0], `- **${list.join(", ")}:**`), ...lines.slice(1)];
+  return { take: withAreas(now), keep: withAreas(later) };
+}
+
+/**
+ * The new release section built from the files, in Keep a Changelog order.
+ * A heading for exactly one known platform ("[linux-…]") takes only what
+ * that platform ships (splitEntry); any other heading takes every entry.
+ */
 export function buildSection(root, heading, date) {
   const dir = join(root, "changelog.d");
+  const named = headingPlatforms(heading);
+  const single = named.length === 1 && ["android", "linux"].includes(named[0]);
   const bySection = new Map(SECTIONS.map((s) => [s, []]));
   const used = [];
+  const rewritten = new Map();
   for (const name of fragments(dir)) {
     const { section } = parseName(name);
-    used.push(name);
-    if (section === "none") continue;
-    bySection.get(section).push(readFileSync(join(dir, name), "utf8").replace(/\n$/, ""));
+    if (section === "none") {
+      used.push(name);
+      continue;
+    }
+    const taken = [];
+    const kept = [];
+    for (const lines of entriesOf(readFileSync(join(dir, name), "utf8"))) {
+      const { take, keep } = single ? splitEntry(lines, named) : { take: lines, keep: null };
+      if (take) taken.push(take.join("\n"));
+      if (keep) kept.push(keep.join("\n"));
+    }
+    bySection.get(section).push(...taken);
+    if (kept.length === 0) used.push(name);
+    else if (taken.length > 0) rewritten.set(name, kept.join("\n") + "\n");
   }
   const parts = [`## ${heading} - ${date}`];
   for (const s of SECTIONS) {
     const entries = bySection.get(s);
     if (entries.length) parts.push(`### ${s[0].toUpperCase()}${s.slice(1)}`, entries.join("\n"));
   }
-  return { text: parts.join("\n\n") + "\n", used, count: [...bySection.values()].flat().length };
+  return { text: parts.join("\n\n") + "\n", used, rewritten, count: [...bySection.values()].flat().length };
 }
 
 function isDate(text) {
@@ -180,7 +248,7 @@ export function release(root, heading, date) {
     throw new Error(`heading must look like "[linux-0.4.0-beta.1]" or "[android-…] and [linux-…]", not "${heading}"`);
   }
   if (!isDate(date)) throw new Error(`date must be a real date as YYYY-MM-DD, not "${date}"`);
-  const { text, used, count } = buildSection(root, heading, date);
+  const { text, used, rewritten, count } = buildSection(root, heading, date);
   if (count === 0) throw new Error("changelog.d/ holds no entries to release");
   const path = join(root, "CHANGELOG.md");
   const changelog = readFileSync(path, "utf8");
@@ -191,6 +259,7 @@ export function release(root, heading, date) {
   const rest = changelog.slice(end);
   writeFileSync(path, rest ? `${head}${text}\n${rest}` : `${head}${text}`);
   for (const name of used) unlinkSync(join(root, "changelog.d", name));
+  for (const [name, rest] of rewritten) writeFileSync(join(root, "changelog.d", name), rest);
   return { count, removed: used.length };
 }
 

@@ -139,6 +139,72 @@ test("release into a changelog with no earlier release", () => {
   }
 });
 
+test("a single-platform release takes only its platform's entries (#152)", () => {
+  const files = {
+    "12-core.fixed.md": "- **Core:** Fixed in the shared code (#12).\n",
+    "13-android.fixed.md": "- **Android:** Fixed on Android only (#13).\n",
+    "14-both.changed.md":
+      "- **Android, Linux, site:** Changed on both platforms, with a line\n" +
+      "  that wraps (#14).\n" +
+      "- **CLI:** A second entry in the same file (#14).\n",
+    "15-cli.added.md": "- **Command line:** Added to the CLI, which ships with Linux (#15).\n",
+    "16-quiet.none.md": "Only a test changes.\n",
+  };
+  const root = repo(files);
+  try {
+    const result = release(root, "[linux-0.4.0-beta.1]", "2026-11-02");
+    assert.deepEqual(result, { count: 4, removed: 3 });
+    const expected =
+      HEADER +
+      "## [linux-0.4.0-beta.1] - 2026-11-02\n\n" +
+      "### Added\n\n- **Command line:** Added to the CLI, which ships with Linux (#15).\n\n" +
+      "### Changed\n\n" +
+      "- **Linux, site:** Changed on both platforms, with a line\n  that wraps (#14).\n" +
+      "- **CLI:** A second entry in the same file (#14).\n\n" +
+      "### Fixed\n\n- **Core:** Fixed in the shared code (#12).\n\n" +
+      OLD;
+    assert.equal(readFileSync(join(root, "CHANGELOG.md"), "utf8"), expected);
+    // Android's entries wait for its own release; a spanning entry keeps
+    // only the platform that has not shipped it yet.
+    assert.deepEqual(readdirSync(join(root, "changelog.d")).sort(), ["13-android.fixed.md", "14-both.changed.md", "README.md"]);
+    assert.equal(readFileSync(join(root, "changelog.d", "13-android.fixed.md"), "utf8"), files["13-android.fixed.md"]);
+    assert.equal(
+      readFileSync(join(root, "changelog.d", "14-both.changed.md"), "utf8"),
+      "- **Android:** Changed on both platforms, with a line\n  that wraps (#14).\n",
+    );
+    assert.deepEqual(checkRepo(root), [], "the result passes the check");
+
+    // Then Android's release takes what is left.
+    assert.deepEqual(release(root, "[android-0.4.0-beta.1]", "2026-11-03"), { count: 2, removed: 2 });
+    assert.deepEqual(readdirSync(join(root, "changelog.d")), ["README.md"]);
+    assert.ok(
+      readFileSync(join(root, "CHANGELOG.md"), "utf8").startsWith(
+        HEADER +
+          "## [android-0.4.0-beta.1] - 2026-11-03\n\n" +
+          "### Changed\n\n- **Android:** Changed on both platforms, with a line\n  that wraps (#14).\n\n" +
+          "### Fixed\n\n- **Android:** Fixed on Android only (#13).\n\n" +
+          "## [linux-0.4.0-beta.1] - 2026-11-02\n",
+      ),
+    );
+  } finally {
+    rmSync(root, { recursive: true });
+  }
+});
+
+test("a release that is not for one known platform takes every entry", () => {
+  for (const heading of ["[android-0.4.0-beta.1] and [linux-0.4.0-beta.1]", "[server-0.1.0-beta.1]", "[0.4.0-beta.1]"]) {
+    const root = repo({
+      "13-android.fixed.md": "- **Android:** Fixed on Android only (#13).\n",
+      "14-linux.fixed.md": "- **Linux:** Fixed on Linux only (#14).\n",
+    });
+    try {
+      assert.deepEqual(release(root, heading, "2026-11-02"), { count: 2, removed: 2 }, heading);
+    } finally {
+      rmSync(root, { recursive: true });
+    }
+  }
+});
+
 test("release refuses bad input and changes nothing", () => {
   const cases = [
     [{ "12-a.fixed.md": "nonsense\n" }, "[linux-0.4.0-beta.1]", "2026-11-02", /12-a\.fixed\.md/],
