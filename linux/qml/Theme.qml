@@ -49,8 +49,10 @@ QtObject {
     // Width of a page's content in a window `w` wide, with the side margins.
     function columnWidth(w) { return Math.min(w - 2 * s24, contentWidth) }
 
-    // Behind a modal dialog.
-    readonly property color dim: Qt.rgba(0, 0, 0, dark ? 0.5 : 0.3)
+    // Behind a modal dialog. Plasma's control style dims (and fades) on
+    // its own; Fusion's shade is too faint to see, so it gets this one.
+    readonly property bool fusion: SystemTheme.controlStyle === "Fusion"
+    readonly property Component dim: Component { Rectangle { color: Qt.rgba(0, 0, 0, t.dark ? 0.5 : 0.3) } }
 
     // The mark keeps its own colours in every theme.
     readonly property color mark: dark ? "#A68BFF" : "#6D4AE0"
