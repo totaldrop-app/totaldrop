@@ -20,7 +20,9 @@ TotalDrop [Semantic Versioning 2.0](https://semver.org/) kullanır.
   devralmaz: CLI'ın sürümü yükselince yayınlanmamış bir sürümle
   görünmesinler. `tools/check-component-versions.sh` bunu ve yukarıdaki
   eşitlikleri her PR'da denetler; Linux paketlerini
-  `packaging/check-versions.sh` denetler.
+  `packaging/check-versions.sh` denetler. Sunucuların sürümü 0.1.0-beta.1
+  ile başladı (#146); daha önce çalışma alanından devraldıkları 0.2.0-beta.1
+  hiçbir zaman etiketlenmedi ya da paketlenmedi.
 
 - **CLI, Linux paketleriyle yayınlanır.** Her `linux-v…` etiketi aynı
   zamanda o commit'teki CLI sürümünün yayınıdır; `cli-v…` etiketi isteğe
