@@ -19,6 +19,12 @@ cargo test
 node tools/changelog.mjs check
 ```
 
+If you changed the Android app's Dart code, also run the format check CI runs (it leaves out the generated `lib/l10n` and `lib/src/rust`):
+
+```bash
+cd app && find lib test tool -name '*.dart' -not -path 'lib/l10n/*' -not -path 'lib/src/rust/*' -print0 | xargs -0 dart format
+```
+
 Which branch to use, how platforms are versioned and released, and the Linux packages: see [docs/gelistirme.md](docs/gelistirme.md). Interface changes follow [docs/tasarim.md](docs/tasarim.md).
 
 Security problems go to [SECURITY.md](SECURITY.md), never to public issues.
