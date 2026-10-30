@@ -133,10 +133,12 @@ final a = [
     // In Arabic, "Version 0.2.0-beta.2" once showed as "beta.2-0.2.0".
     expect(isolate('0.2.0-beta.2'), '\u20680.2.0-beta.2\u2069');
     expect(isolate('Download/TotalDrop'), '\u2068Download/TotalDrop\u2069');
-    final settings = File('lib/ui/settings/settings_view.dart')
-        .readAsStringSync();
-    final receive = File('lib/ui/receive/receive_view.dart').readAsStringSync();
-    final send = File('lib/ui/send/send_view.dart').readAsStringSync();
+    // Read without whitespace, so the formatter's line breaks don't matter.
+    String code(String path) =>
+        File(path).readAsStringSync().replaceAll(RegExp(r'\s'), '');
+    final settings = code('lib/ui/settings/settings_view.dart');
+    final receive = code('lib/ui/receive/receive_view.dart');
+    final send = code('lib/ui/send/send_view.dart');
     expect(settings, contains('l.settingsVersion(isolate('));
     expect(receive, contains('l.receiveSaveTo(isolate('));
     expect(send, contains('l.sendShareText(isolate(code))'));
