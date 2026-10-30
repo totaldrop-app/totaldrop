@@ -1,4 +1,4 @@
-<!-- Translated from README.md e572385d1192. -->
+<!-- Translated from README.md 529368877e8d. -->
 <div align="center">
 
 <picture>
@@ -49,16 +49,16 @@
 
 | Πλατφόρμα | Λήψη | Σημειώσεις |
 | --- | --- | --- |
-| **Linux** (x86-64) | [Arch / Omarchy](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop-0.2.0_beta.1-1-x86_64.pkg.tar.zst) · [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop_0.2.0.beta.1-1_amd64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop-0.2.0.beta.1-1.fc43.x86_64.rpm) | 0.2.0-beta.1, Qt 6.8 ή νεότερο |
-| **Linux** (ARM64) | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop_0.2.0.beta.1-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop-0.2.0.beta.1-1.fc43.aarch64.rpm) | 0.2.0-beta.1, Qt 6.8 ή νεότερο |
-| **Android** | [Συμμετοχή στη beta](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.2.0-beta.2, Android 15 ή νεότερο, Google Play με πρόσκληση |
+| **Linux** (x86-64) | [Arch / Omarchy](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop-0.3.0_beta.1-1-x86_64.pkg.tar.zst) · [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop_0.3.0.beta.1-1_amd64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop-0.3.0.beta.1-1.fc43.x86_64.rpm) | 0.3.0-beta.1, Qt 6.8 ή νεότερο |
+| **Linux** (ARM64) | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop_0.3.0.beta.1-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop-0.3.0.beta.1-1.fc43.aarch64.rpm) | 0.3.0-beta.1, Qt 6.8 ή νεότερο |
+| **Android** | [Συμμετοχή στη beta](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.1, Android 15 ή νεότερο, Google Play με πρόσκληση |
 | **Γραμμή εντολών** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux, macOS, Windows |
 | **Windows, macOS, iOS** | Έρχεται | Η υπογραφή κώδικα για αυτά είναι το πρώτο που πληρώνουν οι δωρεές |
 
 Κάθε πακέτο κατασκευάζεται από το CI από ένα commit με ετικέτα, ποτέ στον υπολογιστή κάποιου προγραμματιστή. Για να ελέγξετε ένα πακέτο πριν το εγκαταστήσετε, συγκρίνετέ το με το `SHA256SUMS` της έκδοσης και επαληθεύστε πού κατασκευάστηκε:
 
 ```bash
-gh attestation verify totaldrop_0.2.0.beta.1-1_amd64.deb --repo totaldrop-app/totaldrop
+gh attestation verify totaldrop_0.3.0.beta.1-1_amd64.deb --repo totaldrop-app/totaldrop
 ```
 
 > [!NOTE]
@@ -75,7 +75,7 @@ gh attestation verify totaldrop_0.2.0.beta.1-1_amd64.deb --repo totaldrop-app/to
 
 ## Στη γλώσσα σας
 
-Το TotalDrop μιλά 35 γλώσσες και ακολουθεί τις μορφές αριθμών της περιοχής σας. Τα αγγλικά και τα τουρκικά έχουν ελεγχθεί· οι άλλες 33 είναι προσχέδια που ελέγχουν φυσικοί ομιλητές, γι’ αυτό οι εφαρμογές κρατούν τα κείμενα ασφαλείας (επαλήθευση, λάθος κωδικός, αποδοχή και απόρριψη) στα αγγλικά μέχρι να ελεγχθεί μια γλώσσα. Ο ιστότοπος τις έχει όλες ήδη σήμερα· οι εφαρμογές θα τις πάρουν με τις επόμενες εκδόσεις τους.
+Το TotalDrop μιλά 35 γλώσσες και ακολουθεί τις μορφές αριθμών της περιοχής σας. Τα αγγλικά και τα τουρκικά έχουν ελεγχθεί· οι άλλες 33 είναι προσχέδια που ελέγχουν φυσικοί ομιλητές, γι’ αυτό οι εφαρμογές κρατούν τα κείμενα ασφαλείας (επαλήθευση, λάθος κωδικός, αποδοχή και απόρριψη) στα αγγλικά μέχρι να ελεγχθεί μια γλώσσα. Ο ιστότοπος και οι εφαρμογές τις έχουν όλες, από το Android και το Linux 0.3.0-beta.1.
 
 Βρήκατε κάποια αδέξια πρόταση; [Βοηθήστε στη μετάφραση](../../docs/ceviri.md) (ο οδηγός είναι στα τουρκικά).
 

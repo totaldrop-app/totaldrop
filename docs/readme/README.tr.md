@@ -1,4 +1,4 @@
-<!-- Translated from README.md e572385d1192. -->
+<!-- Translated from README.md 529368877e8d. -->
 <div align="center">
 
 <picture>
@@ -49,16 +49,16 @@
 
 | Platform | İndirme | Notlar |
 | --- | --- | --- |
-| **Linux** (x86-64) | [Arch / Omarchy](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop-0.2.0_beta.1-1-x86_64.pkg.tar.zst) · [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop_0.2.0.beta.1-1_amd64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop-0.2.0.beta.1-1.fc43.x86_64.rpm) | 0.2.0-beta.1, Qt 6.8 veya daha yenisi |
-| **Linux** (ARM64) | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop_0.2.0.beta.1-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop-0.2.0.beta.1-1.fc43.aarch64.rpm) | 0.2.0-beta.1, Qt 6.8 veya daha yenisi |
-| **Android** | [Betaya katılın](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.2.0-beta.2, Android 15 veya daha yenisi, Google Play'de davetle |
+| **Linux** (x86-64) | [Arch / Omarchy](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop-0.3.0_beta.1-1-x86_64.pkg.tar.zst) · [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop_0.3.0.beta.1-1_amd64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop-0.3.0.beta.1-1.fc43.x86_64.rpm) | 0.3.0-beta.1, Qt 6.8 veya daha yenisi |
+| **Linux** (ARM64) | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop_0.3.0.beta.1-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop-0.3.0.beta.1-1.fc43.aarch64.rpm) | 0.3.0-beta.1, Qt 6.8 veya daha yenisi |
+| **Android** | [Betaya katılın](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.1, Android 15 veya daha yenisi, Google Play'de davetle |
 | **Komut satırı** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux, macOS, Windows |
 | **Windows, macOS, iOS** | Yolda | Bağışların ilk karşılayacağı şey bunların kod imzalaması |
 
 Her paket, bir geliştiricinin bilgisayarında değil, etiketli bir commit'ten CI tarafından derlenir. Bir paketi kurmadan önce denetlemek için onu sürümdeki `SHA256SUMS` ile karşılaştırın ve nerede derlendiğini doğrulayın:
 
 ```bash
-gh attestation verify totaldrop_0.2.0.beta.1-1_amd64.deb --repo totaldrop-app/totaldrop
+gh attestation verify totaldrop_0.3.0.beta.1-1_amd64.deb --repo totaldrop-app/totaldrop
 ```
 
 > [!NOTE]
@@ -75,7 +75,7 @@ Protokol *TotalDrop Protokolü v0* belgesinde anlatılır. Uygulanırken alınan
 
 ## Kendi dilinizde
 
-TotalDrop 35 dil konuşur ve bölgenizin sayı biçimlerini izler. İngilizce ve Türkçe gözden geçirildi; diğer 33 dil, ana dili konuşanların kontrol ettiği taslaklardır. Bu yüzden uygulamalar, bir dil gözden geçirilene kadar güvenlik metinlerini (doğrulama, yanlış kod, kabul ve ret) İngilizce gösterir. Sitede bugün hepsi var; uygulamalar onları sonraki sürümlerinde alacak.
+TotalDrop 35 dil konuşur ve bölgenizin sayı biçimlerini izler. İngilizce ve Türkçe gözden geçirildi; diğer 33 dil, ana dili konuşanların kontrol ettiği taslaklardır. Bu yüzden uygulamalar, bir dil gözden geçirilene kadar güvenlik metinlerini (doğrulama, yanlış kod, kabul ve ret) İngilizce gösterir. Android ve Linux 0.3.0-beta.1 sürümünden itibaren hepsi hem sitede hem uygulamalarda var.
 
 Kulağa tuhaf gelen bir cümle mi gördünüz? [Çeviriye yardım edin](../../docs/ceviri.md).
 

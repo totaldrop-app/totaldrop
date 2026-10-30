@@ -1,4 +1,4 @@
-<!-- Translated from README.md e572385d1192. -->
+<!-- Translated from README.md 529368877e8d. -->
 <div align="center">
 
 <picture>
@@ -49,16 +49,16 @@ Percuma dan sumber terbuka. Disulitkan hujung ke hujung. Tiada e-mel, tiada nomb
 
 | Platform | Dapatkan | Nota |
 | --- | --- | --- |
-| **Linux** (x86-64) | [Arch / Omarchy](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop-0.2.0_beta.1-1-x86_64.pkg.tar.zst) · [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop_0.2.0.beta.1-1_amd64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop-0.2.0.beta.1-1.fc43.x86_64.rpm) | 0.2.0-beta.1, Qt 6.8 atau lebih baharu |
-| **Linux** (ARM64) | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop_0.2.0.beta.1-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop-0.2.0.beta.1-1.fc43.aarch64.rpm) | 0.2.0-beta.1, Qt 6.8 atau lebih baharu |
-| **Android** | [Sertai beta](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.2.0-beta.2, Android 15 atau lebih baharu, Google Play melalui jemputan |
+| **Linux** (x86-64) | [Arch / Omarchy](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop-0.3.0_beta.1-1-x86_64.pkg.tar.zst) · [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop_0.3.0.beta.1-1_amd64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop-0.3.0.beta.1-1.fc43.x86_64.rpm) | 0.3.0-beta.1, Qt 6.8 atau lebih baharu |
+| **Linux** (ARM64) | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop_0.3.0.beta.1-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop-0.3.0.beta.1-1.fc43.aarch64.rpm) | 0.3.0-beta.1, Qt 6.8 atau lebih baharu |
+| **Android** | [Sertai beta](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.1, Android 15 atau lebih baharu, Google Play melalui jemputan |
 | **Baris perintah** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux, macOS, Windows |
 | **Windows, macOS, iOS** | Akan datang | Penandatanganan kod untuk platform ini ialah perkara pertama yang dibiayai oleh derma |
 
 Setiap pakej dibina oleh CI daripada commit bertag, tidak pernah pada mesin pembangun. Untuk menyemak pakej sebelum memasangnya, bandingkan dengan `SHA256SUMS` keluaran tersebut dan sahkan di mana ia dibina:
 
 ```bash
-gh attestation verify totaldrop_0.2.0.beta.1-1_amd64.deb --repo totaldrop-app/totaldrop
+gh attestation verify totaldrop_0.3.0.beta.1-1_amd64.deb --repo totaldrop-app/totaldrop
 ```
 
 > [!NOTE]
@@ -75,7 +75,7 @@ Protokol ini diterangkan dalam *TotalDrop Protocol v0*. Keputusan yang dibuat se
 
 ## Dalam bahasa anda
 
-TotalDrop tersedia dalam 35 bahasa dan mengikut format nombor wilayah anda. Bahasa Inggeris dan Turki telah disemak; 33 yang lain ialah draf yang sedang disemak oleh penutur asli, jadi aplikasi mengekalkan teks keselamatan (pengesahan, kod salah, terima dan tolak) dalam bahasa Inggeris sehingga sesuatu bahasa selesai disemak. Laman web sudah mempunyai kesemuanya hari ini; aplikasi akan menerimanya dalam keluaran seterusnya.
+TotalDrop tersedia dalam 35 bahasa dan mengikut format nombor wilayah anda. Bahasa Inggeris dan Turki telah disemak; 33 yang lain ialah draf yang sedang disemak oleh penutur asli, jadi aplikasi mengekalkan teks keselamatan (pengesahan, kod salah, terima dan tolak) dalam bahasa Inggeris sehingga sesuatu bahasa selesai disemak. Laman web dan aplikasi mempunyai kesemuanya, mulai Android dan Linux 0.3.0-beta.1.
 
 Terjumpa ayat yang janggal? [Bantu menterjemah](../../docs/ceviri.md) (panduannya dalam bahasa Turki).
 

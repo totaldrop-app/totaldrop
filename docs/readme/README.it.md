@@ -1,4 +1,4 @@
-<!-- Translated from README.md e572385d1192. -->
+<!-- Translated from README.md 529368877e8d. -->
 <div align="center">
 
 <picture>
@@ -49,16 +49,16 @@ Gratuito e open source. Crittografato end-to-end. Niente email, niente numero di
 
 | Piattaforma | Dove trovarlo | Note |
 | --- | --- | --- |
-| **Linux** (x86-64) | [Arch / Omarchy](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop-0.2.0_beta.1-1-x86_64.pkg.tar.zst) · [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop_0.2.0.beta.1-1_amd64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop-0.2.0.beta.1-1.fc43.x86_64.rpm) | 0.2.0-beta.1, Qt 6.8 o successivo |
-| **Linux** (ARM64) | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop_0.2.0.beta.1-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop-0.2.0.beta.1-1.fc43.aarch64.rpm) | 0.2.0-beta.1, Qt 6.8 o successivo |
-| **Android** | [Partecipa alla beta](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.2.0-beta.2, Android 15 o successivo, Google Play su invito |
+| **Linux** (x86-64) | [Arch / Omarchy](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop-0.3.0_beta.1-1-x86_64.pkg.tar.zst) · [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop_0.3.0.beta.1-1_amd64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop-0.3.0.beta.1-1.fc43.x86_64.rpm) | 0.3.0-beta.1, Qt 6.8 o successivo |
+| **Linux** (ARM64) | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop_0.3.0.beta.1-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop-0.3.0.beta.1-1.fc43.aarch64.rpm) | 0.3.0-beta.1, Qt 6.8 o successivo |
+| **Android** | [Partecipa alla beta](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.1, Android 15 o successivo, Google Play su invito |
 | **Riga di comando** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux, macOS, Windows |
 | **Windows, macOS, iOS** | In arrivo | La firma del codice per queste piattaforme è la prima cosa che le donazioni pagano |
 
 Ogni pacchetto viene compilato dalla CI a partire da un commit con tag, mai sul computer di uno sviluppatore. Per verificarne uno prima di installarlo, confrontalo con il file `SHA256SUMS` della release e verifica dove è stato compilato:
 
 ```bash
-gh attestation verify totaldrop_0.2.0.beta.1-1_amd64.deb --repo totaldrop-app/totaldrop
+gh attestation verify totaldrop_0.3.0.beta.1-1_amd64.deb --repo totaldrop-app/totaldrop
 ```
 
 > [!NOTE]
@@ -75,7 +75,7 @@ Il protocollo è descritto in *TotalDrop Protocol v0*. Le decisioni prese durant
 
 ## Nella tua lingua
 
-TotalDrop parla 35 lingue e segue i formati numerici della tua regione. L'inglese e il turco sono revisionati; le altre 33 sono bozze che madrelingua stanno controllando, quindi le app mantengono in inglese i testi di sicurezza (verifica, codice errato, accetta e rifiuta) finché una lingua non viene revisionata. Il sito le ha già tutte; le app le riceveranno con le prossime versioni.
+TotalDrop parla 35 lingue e segue i formati numerici della tua regione. L'inglese e il turco sono revisionati; le altre 33 sono bozze che madrelingua stanno controllando, quindi le app mantengono in inglese i testi di sicurezza (verifica, codice errato, accetta e rifiuta) finché una lingua non viene revisionata. Il sito e le app le hanno tutte, a partire da Android e Linux 0.3.0-beta.1.
 
 Hai notato una frase goffa? [Aiuta a tradurre](../../docs/ceviri.md) (la guida è in turco).
 
