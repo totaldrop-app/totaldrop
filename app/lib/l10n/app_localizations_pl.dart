@@ -376,7 +376,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get draftTranslation =>
-      'To tłumaczenie jest w trakcie sprawdzania. Pomóż je ulepszyć na GitHub.';
+      'To tłumaczenie jest w trakcie sprawdzania. Pomóż je ulepszyć na GitHubie.';
 
   @override
   String get sendDropHere => 'Upuść pliki tutaj';

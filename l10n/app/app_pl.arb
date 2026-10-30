@@ -95,7 +95,7 @@
   "sizeGB": "{value} GB",
   "sizeTB": "{value} TB",
   "sizePB": "{value} PB",
-  "draftTranslation": "To tłumaczenie jest w trakcie sprawdzania. Pomóż je ulepszyć na GitHub.",
+  "draftTranslation": "To tłumaczenie jest w trakcie sprawdzania. Pomóż je ulepszyć na GitHubie.",
 
   "sendDropHere": "Upuść pliki tutaj",
   "sendDropHint": "Możesz też przeciągnąć pliki na to okno.",

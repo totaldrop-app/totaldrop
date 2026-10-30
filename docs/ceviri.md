@@ -32,8 +32,8 @@ olduğunu tutar. Bu dosyayı bakımcı değiştirir.
   gösterir; Weblate açılınca `draftTranslation` metni her dilde
   güncellenmelidir.)
 - PR ile de düzeltebilirsiniz: ilgili dosyayı değiştirin, CI biçimi denetler.
-- Bir dili baştan sona gözden geçirdiyseniz PR'da ya da Weblate'te
-  belirtin; bakımcı `l10n/status.json`'u günceller ve arayüzdeki "çeviri
+- Bir dili baştan sona gözden geçirdiyseniz PR'da ya da bir issue'da
+  (Weblate açılınca orada da) belirtin; bakımcı `l10n/status.json`'u günceller ve arayüzdeki "çeviri
   gözden geçiriliyor" notu kalkar. Kritik metinler (doğrulama, yanlış kod,
   kabul/ret) gözden geçirilene kadar İngilizce görünür.
 

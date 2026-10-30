@@ -375,7 +375,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get draftTranslation =>
-      'Tento překlad se kontroluje. Pomozte ho vylepšit na GitHub.';
+      'Tento překlad se kontroluje. Pomozte ho vylepšit na GitHubu.';
 
   @override
   String get sendDropHere => 'Přetáhněte soubory sem';
