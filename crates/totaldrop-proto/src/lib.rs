@@ -214,6 +214,24 @@ pub fn strip_invisible_format(text: &str) -> String {
         .collect()
 }
 
+/// `text` with Arabic-Indic (U+0660 to U+0669) and Extended Arabic-Indic
+/// (U+06F0 to U+06F9) digits replaced by ASCII digits. Arabic, Persian and
+/// Urdu keyboards type these for the number keys. Only these two ranges:
+/// the code still reaches CPace as ASCII ([`TransferCode::canonical`]), so
+/// nothing changes on the wire.
+pub fn ascii_digits(text: &str) -> String {
+    text.chars()
+        .map(|c| match c {
+            // Both ranges start at a multiple of 16, so the low four bits
+            // are the digit's value.
+            '\u{0660}'..='\u{0669}' | '\u{06F0}'..='\u{06F9}' => {
+                char::from_digit(u32::from(c) & 0xF, 10).unwrap_or(c)
+            }
+            _ => c,
+        })
+        .collect()
+}
+
 fn english() -> &'static [&'static str; 2048] {
     bip39::Language::English.word_list()
 }
@@ -239,9 +257,12 @@ impl TransferCode {
 
     /// Parse what a person typed: words or list indices, separated by
     /// hyphens or spaces, in any letter case. Invisible format characters
-    /// are dropped first ([`strip_invisible_format`]).
+    /// are dropped first ([`strip_invisible_format`]) and Arabic-Indic
+    /// digits read as ASCII ([`ascii_digits`]).
     pub fn parse(input: &str) -> Result<Self, CodeError> {
-        let lowered = strip_invisible_format(input).trim().to_lowercase();
+        let lowered = ascii_digits(&strip_invisible_format(input))
+            .trim()
+            .to_lowercase();
         let mut tokens = lowered
             .split(|c: char| c == '-' || c.is_whitespace())
             .filter(|t| !t.is_empty());
@@ -366,6 +387,33 @@ mod tests {
             TransferCode::parse("7-h\u{0430}rbor-rocket"),
             Err(CodeError::UnknownWord(_))
         ));
+    }
+
+    #[test]
+    fn arabic_indic_digits_are_read_as_ascii() {
+        let want = TransferCode::parse("7-harbor-rocket").unwrap();
+        // Arabic (ar) and Extended Arabic-Indic (fa, ur) keyboards.
+        for typed in ["\u{0667}-harbor-rocket", "\u{06F7}-harbor-rocket"] {
+            assert_eq!(TransferCode::parse(typed).as_ref(), Ok(&want), "{typed:?}");
+        }
+        // Word indices too, and mixed with ASCII and isolated as in a share text.
+        assert_eq!(
+            TransferCode::parse("\u{2068}\u{0667}-\u{0668}4\u{06F0}-1\u{0664}\u{0669}9\u{2069}"),
+            Ok(want)
+        );
+        let big = TransferCode::parse("\u{0661}\u{0660}\u{06F2}\u{06F5}-harbor-rocket").unwrap();
+        assert_eq!(big.nameplate(), 1025);
+        assert_eq!(big.to_string(), "1025-harbor-rocket");
+        assert_eq!(ascii_digits("\u{0660}\u{0669}\u{06F0}\u{06F9}"), "0909");
+        // Other scripts' digits are not mapped: the code stays ASCII on the wire.
+        assert_eq!(
+            TransferCode::parse("\u{0967}-harbor-rocket"),
+            Err(CodeError::BadNameplate)
+        );
+        assert_eq!(
+            TransferCode::parse("\u{0660}-harbor-rocket"),
+            Err(CodeError::BadNameplate)
+        );
     }
 
     #[test]

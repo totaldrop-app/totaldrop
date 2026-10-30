@@ -496,6 +496,18 @@ mod tests {
     }
 
     #[test]
+    fn codes_typed_with_arabic_indic_digits() {
+        // Arabic, Persian and Urdu keyboards; the field then shows ASCII.
+        for code in ["\u{0667}-abandon-ability", "\u{06F7} abandon ability"] {
+            assert_eq!(
+                normalize_code(code.into()),
+                Some("7-abandon-ability".into()),
+                "{code:?}"
+            );
+        }
+    }
+
+    #[test]
     fn codes_pasted_from_a_right_to_left_message() {
         // The share text isolates the code (U+2068 … U+2069); a copy of the
         // code alone can carry the isolates or other direction marks.
