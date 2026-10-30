@@ -22,16 +22,20 @@ kırılmaz. Bölge ya da yazı varyantı olan dillerin temel dosyası da vardır
 
 `l10n/status.json` hangi dilin gözden geçirildiğini, hangi anahtarların
 hâlâ taslak olduğunu ve hangi anahtarların güvenlik açısından kritik
-olduğunu tutar. Bu dosyayı bakımcı değiştirir.
+olduğunu tutar. Dosya yalnızca gözden geçirilmiş PR'larla değişir; PR'ı
+bakımcı birleştirir.
 
 Her dilin `noWords` alanı, o dilde "hayır" anlamına gelen cevapları `|`
 ile ayırarak tutar (Türkçe: `"hayır|h|yok"`). Komut satırının "evet"
 cevapları (`cliYes`) bunlardan biri olamaz. Kayıt sorusundaki `[e/H]`
-gibi köşeli parantezin ikinci cevabı da "hayır" sayılır; sorunun ilk
-cevabı ise `cliYes` içinde bulunmalıdır. CI, cevapları komut satırının
-karşılaştırdığı gibi (büyük-küçük harf, noktalı ve noktasız i, tam
-genişlikli harfler) denetler. Eksik bir "hayır" kelimesi görürseniz PR'da
-belirtin ya da `noWords` alanına `|` ile ekleyin.
+gibi köşeli parantezin ikinci cevabı da "hayır" sayılır. Sorunun ilk
+cevabı ise `cliYes` içinde bulunmalı ya da İngilizce `y` veya `yes`
+olmalıdır; bu ikisini komut satırı her dilde "evet" sayar. CI, cevapları
+komut satırının karşılaştırdığı gibi denetler: büyük-küçük harf, noktalı
+ve noktasız i ve tam genişlikli harfler aynı sayılır. Aksanlı ve aksansız
+yazımlar ise farklıdır, ikisini de yazın (`não|nao`, `όχι|οχι`,
+`không|khong`). Eksik bir "hayır" kelimesi görürseniz `noWords` alanına
+`|` ile ekleyen bir PR açın ya da PR'da belirtin.
 
 ## Çevirmenler için
 
@@ -90,8 +94,9 @@ Taslaklar Claude (Anthropic) ile üretildi ve proje lisansı altındadır.
 
 1. `l10n/app/`, `l10n/cli/` ve `site/public/i18n/` için şablondan
    dosyaları kopyalayıp çevirin (varyantlı dillerde temel dosyayla birlikte).
-2. `l10n/status.json`'a dili, "hayır" cevaplarıyla (`noWords`) birlikte
-   ekleyin; CI `noWords` alanı olmayan dili reddeder.
+2. `l10n/status.json`'a dili ekleyin. Komut satırı dosyası olan bir dil
+   için "hayır" cevaplarını da (`noWords`) yazın; CI, komut satırı dosyası
+   olup `noWords` alanı olmayan dili reddeder.
 3. Android `localeConfig` bu dosyalardan üretilir; CI üretilen dosyaların
    güncel olduğunu denetler. Site dil listesine (`site/public/lang.js`
    `LANGUAGES`) dili kendi adıyla ekleyin; CI listenin `i18n/` dosyalarıyla,

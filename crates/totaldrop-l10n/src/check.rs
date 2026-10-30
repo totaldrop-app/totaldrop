@@ -336,7 +336,10 @@ fn layers<'a>(all: &'a [File], tag: &str, key: &str) -> Vec<(&'a File, &'a str)>
 /// combination the command line cannot actually show. The third pairs only
 /// the layers the command line shows once everything is reviewed: across
 /// layers it would fail every language (English `cliYes` does not take
-/// `e`), and a mismatch there only declines a transfer.
+/// `e`). It ignores which keys are drafts or reviewed, and that the
+/// command line shows ar, fa, he and ur in English, so it can miss a
+/// mismatch the command line does show; that fails safe, as a declined
+/// transfer. It fails only a prompt and a `cliYes` that really disagree.
 ///
 /// The command line takes only the active language's answers and
 /// [`ALWAYS_YES`], so another language's no-words do not matter (Arabic
@@ -648,6 +651,21 @@ mod tests {
             ),
             ["cli/pt `cliYes`: `não` means no in pt (`noWords` in l10n/status.json)"]
         );
+    }
+
+    #[test]
+    fn english_no_word_in_no_words_is_reported_once() {
+        // `n` is both an English no-word and in the language's noWords:
+        // check_yes reports it and check_answers leaves it to check_yes.
+        let arb: Arb<'_> = ("cli", "xx", "j|ja|N", "[j/K]");
+        let mut report = Report::default();
+        for file in files(&[arb]) {
+            if let Some(raw) = file.raw.get("cliYes") {
+                check_yes(raw, "cli/xx `cliYes`", &mut report);
+            }
+        }
+        check_answers(&files(&[arb]), &no_words(&[("xx", "nein|n")]), &mut report);
+        assert_eq!(report.errors, ["cli/xx `cliYes`: `N` cannot mean yes"]);
     }
 
     #[test]

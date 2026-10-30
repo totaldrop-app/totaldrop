@@ -18,7 +18,7 @@
     "ar": {
       "reviewed": false,
       "draft": [],
-      "noWords": "لا|ل|كلا"
+      "noWords": "لا|ل|كلا|لأ"
     },
     "bn": {
       "reviewed": false,
@@ -33,17 +33,17 @@
     "da": {
       "reviewed": false,
       "draft": [],
-      "noWords": "nej|n"
+      "noWords": "nej|n|næ"
     },
     "de": {
       "reviewed": false,
       "draft": [],
-      "noWords": "nein|n|ne|nö"
+      "noWords": "nein|n|ne|nö|nee"
     },
     "el": {
       "reviewed": false,
       "draft": [],
-      "noWords": "όχι|οχι|ο|ό"
+      "noWords": "όχι|οχι|ο|ό|oxi|ochi"
     },
     "es": {
       "reviewed": false,
@@ -63,7 +63,7 @@
     "fr": {
       "reviewed": false,
       "draft": [],
-      "noWords": "non|n"
+      "noWords": "non|n|nan"
     },
     "he": {
       "reviewed": false,
@@ -73,7 +73,7 @@
     "hi": {
       "reviewed": false,
       "draft": [],
-      "noWords": "नहीं|नही|न|ना"
+      "noWords": "नहीं|नही|न|ना|nahi|nahin|na"
     },
     "hu": {
       "reviewed": false,
@@ -83,7 +83,7 @@
     "id": {
       "reviewed": false,
       "draft": [],
-      "noWords": "tidak|t|tdk|enggak|nggak|gak"
+      "noWords": "tidak|t|tdk|enggak|nggak|gak|bukan|ga|engga"
     },
     "it": {
       "reviewed": false,
@@ -93,17 +93,17 @@
     "ja": {
       "reviewed": false,
       "draft": [],
-      "noWords": "いいえ|いや|ノー"
+      "noWords": "いいえ|いや|ノー|いえ"
     },
     "ko": {
       "reviewed": false,
       "draft": [],
-      "noWords": "아니요|아니오|아니|아뇨"
+      "noWords": "아니요|아니오|아니|아뇨|ㄴ|ㄴㄴ"
     },
     "ms": {
       "reviewed": false,
       "draft": [],
-      "noWords": "tidak|t|tak|tdk"
+      "noWords": "tidak|t|tak|tdk|bukan"
     },
     "nb": {
       "reviewed": false,
@@ -113,7 +113,7 @@
     "nl": {
       "reviewed": false,
       "draft": [],
-      "noWords": "nee|n"
+      "noWords": "nee|n|neen"
     },
     "pl": {
       "reviewed": false,
@@ -143,12 +143,12 @@
     "ru": {
       "reviewed": false,
       "draft": [],
-      "noWords": "нет|не|н"
+      "noWords": "нет|не|н|неа"
     },
     "sv": {
       "reviewed": false,
       "draft": [],
-      "noWords": "nej|n"
+      "noWords": "nej|n|nä"
     },
     "sw": {
       "reviewed": false,
@@ -173,27 +173,27 @@
     "ur": {
       "reviewed": false,
       "draft": [],
-      "noWords": "نہیں|ن|نا"
+      "noWords": "نہیں|ن|نا|نہ"
     },
     "vi": {
       "reviewed": false,
       "draft": [],
-      "noWords": "không|khong|k|ko"
+      "noWords": "không|khong|k|ko|hông"
     },
     "zh": {
       "reviewed": false,
       "draft": [],
-      "noWords": "不|否|不是|不要"
+      "noWords": "不|否|不是|不要|没有|不用"
     },
     "zh-Hans": {
       "reviewed": false,
       "draft": [],
-      "noWords": "不|否|不是|不要"
+      "noWords": "不|否|不是|不要|没有|不用"
     },
     "zh-Hant": {
       "reviewed": false,
       "draft": [],
-      "noWords": "不|否|不是|不要"
+      "noWords": "不|否|不是|不要|沒有|不用"
     }
   }
 }
