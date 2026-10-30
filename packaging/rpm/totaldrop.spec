@@ -80,7 +80,7 @@ cargo test --release --locked -p totaldrop-linux -p totaldrop-proto
 * Fri Oct 30 2026 TotalDrop <hello@totaldrop.app> - 0.3.0~beta.1-1
 - New mark, Köşe, and a new icon: a circle with one square corner. It
   turns while a file is on its way.
-- The interface in 33 more languages, including Arabic, Chinese, Hindi,
+- The interface in 31 more languages, including Arabic, Chinese, Hindi,
   Japanese and Spanish. They are drafts being reviewed, so the security
   texts stay in English until a language is checked.
 - QR codes are read more reliably.

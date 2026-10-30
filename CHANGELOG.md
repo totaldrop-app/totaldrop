@@ -17,31 +17,32 @@ All notable changes to TotalDrop are recorded here. The format follows
   its own name. CI checks every translation's links and language list and
   reports translations older than the English. A code of conduct and a
   support page complete the community files (#135).
-- **Android, Linux, CLI, site:** Draft translations in 31 more languages,
-  33 with the Portuguese and Chinese variants (ADR 0008): Arabic, Bengali,
-  Chinese (Simplified and Traditional), Czech, Danish, Dutch, Finnish, French, German, Greek, Hebrew, Hindi, Hungarian,
-  Indonesian, Italian, Japanese, Korean, Malay, Norwegian Bokmål, Persian,
-  Polish, Portuguese (Brazil and Portugal), Romanian, Russian, Spanish,
-  Swahili, Swedish, Thai, Ukrainian, Urdu and Vietnamese. They are made
-  with Claude and not yet checked by native speakers, so the apps say so in
-  Settings and keep the security texts in English until a language is
-  reviewed: verification, wrong code, invalid offer, accept and decline, and
-  the command line's save prompt and yes answer. The site shows a short note
-  at the top of the page in a draft language, lists every language under
-  its own name, and picks Portuguese from Portugal outside Brazil, as the
-  apps do; the picker is as wide as the chosen language. The comparison
-  table now says no copy is stored on a company's server, instead of "files
-  stay off company servers", which the relay made too broad (#127).
+- **Android, Linux, CLI, site:** Draft translations in 31 more languages, 33
+  with the Portuguese and Chinese variants (ADR 0008): Arabic, Bengali,
+  Chinese (Simplified and Traditional), Czech, Danish, Dutch, Finnish,
+  French, German, Greek, Hebrew, Hindi, Hungarian, Indonesian, Italian,
+  Japanese, Korean, Malay, Norwegian Bokmål, Persian, Polish, Portuguese
+  (Brazil and Portugal), Romanian, Russian, Spanish, Swahili, Swedish, Thai,
+  Ukrainian, Urdu and Vietnamese. They are made with Claude and not yet
+  checked by native speakers, so the apps say so in Settings and keep the
+  security texts in English until a language is reviewed: verification,
+  wrong code, invalid offer, accept and decline, and the command line's save
+  prompt and yes answer. The site shows a short note at the top of the page
+  in a draft language, lists every language under its own name, and picks
+  Portuguese from Portugal outside Brazil, as the apps do; the picker is as
+  wide as the chosen language. The comparison table now says no copy is
+  stored on a company's server, instead of "files stay off company servers",
+  which the relay made too broad (#127).
 
 ### Changed
 
-- **Android, Linux, site:** New mark, "Köşe" (corner), replacing "Ağ" from
-  android-0.2.0-beta.2: a circle with one square corner. The circle is the
-  whole file and the corner makes it a drop, pointing the way it goes. While a file is on its way the mark turns
-  a quarter at a time, 3.2 s a loop, the same on the site, Android and Linux,
-  and it stays still when the system asks for less motion. The app icons are
-  the paper mark on violet; the done screen shows a check inside the mark
-  (#133).
+- **Android, Linux, site:** New mark, "Köşe" (corner), replacing "Ağ" on
+  Android and "Dalga" on Linux: a circle with one square corner. The circle is the
+  whole file and the corner makes it a drop, pointing the way it goes. While
+  a file is on its way the mark turns a quarter at a time, 3.2 s a loop, the
+  same on the site, Android and Linux, and it stays still when the system
+  asks for less motion. The app icons are the paper mark on violet; the done
+  screen shows a check inside the mark (#133).
 - **Site (download page, roadmap, home), README:** The download page and
   the README point at Linux 0.2.0-beta.1, with the ARM64 .deb and .rpm,
   and the page lists what is new in Android 0.2.0-beta.2 and Linux
