@@ -7,6 +7,7 @@
 //! [`Look`]. Only the mark keeps its own colours.
 
 pub mod color;
+pub mod gtk;
 pub mod hyprland;
 pub mod kde;
 pub mod omarchy;
@@ -22,7 +23,8 @@ pub enum Source {
     /// The Qt palette the platform theme hands every application: Plasma,
     /// qt6ct or hyprqt6engine. The interface reads it directly.
     System,
-    /// The portal's colour scheme and accent over the Aurora palette.
+    /// The GTK theme's colours (Adwaita on GNOME), with the portal's colour
+    /// scheme and accent.
     Portal,
     /// Aurora only (forced with `TOTALDROP_THEME=aurora`).
     Aurora,
@@ -65,6 +67,13 @@ impl Session {
             platform_theme: var("QT_QPA_PLATFORMTHEME"),
             omarchy: omarchy::theme_dir().is_some(),
         }
+    }
+
+    /// A GNOME session: libadwaita's palette, whatever `gtk-theme` says.
+    pub fn is_gnome(&self) -> bool {
+        self.desktop
+            .split(':')
+            .any(|d| d.eq_ignore_ascii_case("gnome"))
     }
 
     /// A KDE Plasma session.
@@ -130,12 +139,22 @@ pub struct Inputs {
     pub kde: bool,
     /// Last Omarchy theme read.
     pub omarchy: Option<Palette>,
+    /// The GTK palettes, light and dark, last read (portal source only).
+    pub gtk: Option<[Palette; 2]>,
     /// Last portal reading.
     pub portal: portal::Appearance,
     /// Last `kdeglobals` reading.
     pub kde_globals: kde::Globals,
     /// Hyprland's rounding, if Hyprland runs.
     pub hyprland_rounding: Option<i32>,
+}
+
+/// The GTK palettes for `session`, light then dark. `theme` is the GTK
+/// theme's name if the portal gave it.
+pub fn gtk_palettes(session: &Session, theme: Option<&str>) -> [Palette; 2] {
+    let name = theme.map(str::to_owned).or_else(gtk::settings_theme);
+    let gnome = session.is_gnome();
+    [false, true].map(|dark| gtk::palette(dark, name.as_deref(), gnome))
 }
 
 /// Breeze's frame radius.
@@ -155,6 +174,7 @@ impl Inputs {
             } else {
                 None
             },
+            gtk: (source == Source::Portal).then(|| gtk_palettes(session, None)),
             portal: portal::Appearance::default(),
             kde_globals: if session.is_kde() {
                 kde::read()
@@ -173,10 +193,18 @@ impl Inputs {
                 .omarchy
                 .unwrap_or_else(|| Palette::aurora(portal_dark.unwrap_or(true))),
             Source::Portal => {
-                let p = Palette::aurora(portal_dark.unwrap_or(false));
-                match self.portal.accent {
-                    Some(a) => p.with_accent(a),
-                    None => p,
+                let dark = portal_dark.unwrap_or(false);
+                match (self.gtk, self.portal.accent) {
+                    (Some([light, dark_p]), accent) => {
+                        let mut p = if dark { dark_p } else { light };
+                        if let Some(a) = accent {
+                            p.accent = a;
+                            p.accent_text = gtk::accent_text(a, &p);
+                        }
+                        p
+                    }
+                    (None, Some(a)) => Palette::aurora(dark).with_accent(a),
+                    (None, None) => Palette::aurora(dark),
                 }
             }
             Source::System | Source::Aurora => Palette::aurora(portal_dark.unwrap_or(false)),
@@ -240,6 +268,21 @@ mod tests {
         assert_eq!(i.look().radius, 0);
         i.kde = true;
         assert_eq!(i.look().radius, BREEZE_RADIUS);
+    }
+
+    #[test]
+    fn gtk_desktops_take_gtk_colours() {
+        let mut i = Inputs::new(&session("GNOME", "", false));
+        i.gtk = Some([gtk::adwaita(false), gtk::adwaita(true)]);
+        i.portal.dark = Some(true);
+        assert_eq!(i.look().palette.background.hex(), "#222226");
+        i.portal.dark = Some(false);
+        assert_eq!(i.look().palette.background.hex(), "#fafafb");
+        // Not Aurora's lavender (#170, #174).
+        assert_ne!(
+            i.look().palette.background,
+            Palette::aurora(false).background
+        );
     }
 
     #[test]

@@ -13,7 +13,9 @@ use cxx_qt_lib::{QColor, QString};
 
 use crate::runtime::RUNTIME;
 use crate::theme::color::Rgb;
-use crate::theme::{Inputs, Look, Session, Source, hyprland, kde, omarchy, portal};
+use crate::theme::{
+    Inputs, Look, Session, Source, gtk, gtk_palettes, hyprland, kde, omarchy, portal,
+};
 
 #[cxx_qt::bridge]
 pub mod qobject {
@@ -139,6 +141,14 @@ impl cxx_qt::Initialize for qobject::SystemTheme {
         if let Some(a) = first(portal::current()) {
             inputs.portal = a;
         }
+        let gtk_theme = if inputs.source == Source::Portal {
+            first(portal::gtk_theme())
+        } else {
+            None
+        };
+        if gtk_theme.is_some() {
+            inputs.gtk = Some(gtk_palettes(&session, gtk_theme.as_deref()));
+        }
         let hypr = hyprland::running();
         if hypr {
             inputs.hyprland_rounding = first(hyprland::rounding());
@@ -170,7 +180,8 @@ impl cxx_qt::Initialize for qobject::SystemTheme {
             });
         }
 
-        // Omarchy: the theme folder; KDE: kdeglobals.
+        // Omarchy: the theme folder; KDE: kdeglobals; GTK: the person's
+        // gtk.css and settings.ini.
         let watched = match source {
             Source::Omarchy => omarchy::roots()
                 .into_iter()
@@ -179,16 +190,29 @@ impl cxx_qt::Initialize for qobject::SystemTheme {
             Source::System if session.is_kde() => kde::kdeglobals()
                 .and_then(|p| p.parent().map(|d| vec![d.to_path_buf()]))
                 .unwrap_or_default(),
+            Source::Portal => [gtk::user_css(), gtk::settings_ini()]
+                .into_iter()
+                .flatten()
+                .filter_map(|p| p.parent().map(|d| d.to_path_buf()))
+                .filter(|d| d.exists())
+                .collect(),
             _ => Vec::new(),
         };
         if !watched.is_empty() {
-            watch_files(watched, source, shared, thread);
+            watch_files(watched, source, shared, thread, session, gtk_theme);
         }
     }
 }
 
 /// Watch `dirs` and read the theme again after changes settle.
-fn watch_files(dirs: Vec<std::path::PathBuf>, source: Source, shared: Shared, thread: Thread) {
+fn watch_files(
+    dirs: Vec<std::path::PathBuf>,
+    source: Source,
+    shared: Shared,
+    thread: Thread,
+    session: Session,
+    gtk_theme: Option<String>,
+) {
     use notify::{RecursiveMode, Watcher};
 
     let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel::<()>();
@@ -196,6 +220,10 @@ fn watch_files(dirs: Vec<std::path::PathBuf>, source: Source, shared: Shared, th
         if let Ok(event) = res {
             let relevant = match source {
                 Source::Omarchy => true,
+                Source::Portal => event.paths.iter().any(|p| {
+                    p.file_name()
+                        .is_some_and(|n| n == "gtk.css" || n == "settings.ini")
+                }),
                 _ => event
                     .paths
                     .iter()
@@ -227,6 +255,10 @@ fn watch_files(dirs: Vec<std::path::PathBuf>, source: Source, shared: Shared, th
                     if p.is_some() {
                         push(&shared, &thread, |i| i.omarchy = p);
                     }
+                }
+                Source::Portal => {
+                    let g = gtk_palettes(&session, gtk_theme.as_deref());
+                    push(&shared, &thread, |i| i.gtk = Some(g));
                 }
                 _ => {
                     let g = kde::read();
