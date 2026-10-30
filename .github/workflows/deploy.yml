@@ -1,12 +1,14 @@
 # Deploys the site and the two Workers to Cloudflare from main, so what runs
-# in production is a reviewed commit. Every deploy waits in the `cloudflare`
-# environment for the owner's approval, and is followed by a health probe.
+# in production is a reviewed commit. The commit's checks run again first;
+# then every deploy waits in the `cloudflare` environment for the owner's
+# approval and is followed by a health probe.
 # Setup, approval and rollback: docs/surec.md, "Dağıtım".
 name: Deploy
 
 on:
   push:
     branches: [main]
+    # Keep in step with the patterns in the `targets` job below.
     paths:
       - site/public/**
       - site/functions/**
@@ -19,6 +21,7 @@ on:
       target:
         description: What to deploy (the head of main)
         type: choice
+        required: true
         options: [site, rendezvous, relay]
 
 permissions:
@@ -31,6 +34,8 @@ jobs:
     if: github.ref == 'refs/heads/main'
     outputs:
       list: ${{ steps.pick.outputs.list }}
+      site: ${{ steps.pick.outputs.site }}
+      server: ${{ steps.pick.outputs.server }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -43,28 +48,54 @@ jobs:
           BEFORE: ${{ github.event.before }}
         run: |
           if [ "$EVENT" = workflow_dispatch ]; then
-            list="[\"$CHOSEN\"]"
+            files=$(case $CHOSEN in
+              site) echo site/public/ ;;
+              rendezvous) echo server/rendezvous-worker/ ;;
+              relay) echo server/relay-worker/ ;;
+            esac)
+          # A new branch or a force push has no usable "before"; deploy all.
+          elif git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+            # As in ci.yml: names unquoted, and both sides of a rename, so a
+            # file moved out of a Worker still deploys that Worker.
+            files=$(git -c core.quotePath=false diff --no-renames --name-only "$BEFORE" "$GITHUB_SHA")
           else
-            # A new branch or a force push has no usable "before"; deploy all.
-            if git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
-              files=$(git diff --name-only "$BEFORE" "$GITHUB_SHA")
-            else
-              files=$(printf '%s\n' site/ server/rendezvous-worker/ server/relay-worker/)
-            fi
-            list=$(printf '%s\n' "$files" | awk '
-              /^site\//                    { t["site"] = 1 }
-              /^server\/rendezvous-worker\// { t["rendezvous"] = 1 }
-              /^server\/relay-worker\//      { t["relay"] = 1 }
-              /^server\/tools\/probe\.mjs$/  { t["site"] = t["rendezvous"] = t["relay"] = 1 }
-              END { s = ""; for (k in t) s = s (s ? "," : "") "\"" k "\""; print "[" s "]" }')
+            files=$(printf '%s\n' site/public/ server/rendezvous-worker/ server/relay-worker/)
           fi
+          list=$(printf '%s\n' "$files" | awk '
+            /^site\/(public|functions)\// || /^site\/wrangler\.toml$/ { t["site"] = 1 }
+            /^server\/rendezvous-worker\//                          { t["rendezvous"] = 1 }
+            /^server\/relay-worker\//                               { t["relay"] = 1 }
+            /^server\/tools\/probe\.mjs$/                           { t["site"] = t["rendezvous"] = t["relay"] = 1 }
+            END { s = ""; for (k in t) s = s (s ? "," : "") "\"" k "\""; print "[" s "]" }')
           echo "targets: $list"
-          echo "list=$list" >> "$GITHUB_OUTPUT"
+          {
+            echo "list=$list"
+            case $list in *site*) echo site=true ;; *) echo site=false ;; esac
+            case $list in *rendezvous*|*relay*) echo server=true ;; *) echo server=false ;; esac
+          } >> "$GITHUB_OUTPUT"
+
+  # The same checks a pull request runs, on the exact commit being deployed.
+  verify-site:
+    name: Verify the site
+    needs: targets
+    if: needs.targets.outputs.site == 'true'
+    uses: ./.github/workflows/site.yml
+  verify-server:
+    name: Verify the Workers
+    needs: targets
+    if: needs.targets.outputs.server == 'true'
+    uses: ./.github/workflows/server.yml
 
   deploy:
     name: Deploy ${{ matrix.target }}
-    needs: targets
-    if: needs.targets.outputs.list != '[]'
+    needs: [targets, verify-site, verify-server]
+    # Runs when there is something to deploy and every check that ran passed;
+    # a check that was not needed is skipped, which is fine.
+    if: >-
+      !cancelled() && needs.targets.result == 'success' &&
+      needs.targets.outputs.list != '[]' &&
+      contains(fromJSON('["success", "skipped"]'), needs.verify-site.result) &&
+      contains(fromJSON('["success", "skipped"]'), needs.verify-server.result)
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment: cloudflare
@@ -77,8 +108,6 @@ jobs:
       cancel-in-progress: false
     env:
       WRANGLER_SEND_METRICS: "false"
-      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -87,7 +116,9 @@ jobs:
         with:
           node-version: "24"
       # Wrangler at the version pinned in the Worker's lock file. The site
-      # has no package of its own and uses the rendezvous Worker's.
+      # has no package of its own and uses the rendezvous Worker's. The
+      # Cloudflare token is not in this step's environment: install scripts
+      # never see it.
       - name: Install wrangler
         env:
           TARGET: ${{ matrix.target }}
@@ -99,14 +130,24 @@ jobs:
       - name: Deploy the rendezvous Worker
         if: matrix.target == 'rendezvous'
         working-directory: server/rendezvous-worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
         run: npx wrangler deploy --message "$GITHUB_SHA"
       - name: Deploy the relay Worker
         if: matrix.target == 'relay'
         working-directory: server/relay-worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
         run: npx wrangler deploy --message "$GITHUB_SHA"
+      # Run from site/ so that functions/ and wrangler.toml are picked up.
       - name: Deploy the site
         if: matrix.target == 'site'
         working-directory: site
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
         run: >
           ../server/rendezvous-worker/node_modules/.bin/wrangler pages deploy public
           --project-name totaldrop --branch main
