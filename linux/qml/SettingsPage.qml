@@ -18,6 +18,13 @@ Page {
         onBack: page.close()
     }
 
+    // Escape does what the back button does.
+    Shortcut {
+        sequence: StandardKey.Cancel
+        enabled: page.StackView.status === StackView.Active
+        onActivated: page.close()
+    }
+
     Flickable {
         anchors.fill: parent
         contentHeight: col.implicitHeight + 2 * Theme.s24

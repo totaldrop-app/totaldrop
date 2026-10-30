@@ -24,7 +24,24 @@ Page {
 
     header: PageHeader {
         title: Strings.s.receiveTitle
-        onBack: page.running ? page.askCancel() : page.close()
+        onBack: page.goBack()
+    }
+
+    // Back, from the header or Escape. A running transfer asks first; an
+    // ended one is cleared, so the page opens fresh the next time.
+    function goBack() {
+        if (page.running) page.askCancel()
+        else {
+            if (page.phase !== "idle") page.transfer.reset()
+            page.close()
+        }
+    }
+
+    // Escape does what the back button does.
+    Shortcut {
+        sequence: StandardKey.Cancel
+        enabled: page.StackView.status === StackView.Active
+        onActivated: page.goBack()
     }
 
     Component.onCompleted: {
