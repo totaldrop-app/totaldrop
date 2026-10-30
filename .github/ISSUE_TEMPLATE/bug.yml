@@ -14,7 +14,7 @@ body:
     attributes:
       label: Sürüm / Version
       description: Ayarlar > Hakkında, ya da `totaldrop --version`.
-      placeholder: 0.1.0-beta.2
+      placeholder: e.g. 0.3.0-beta.1 (app), totaldrop --version for the CLI
     validations:
       required: true
   - type: input
