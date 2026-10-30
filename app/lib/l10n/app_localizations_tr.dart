@@ -355,7 +355,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get draftTranslation =>
-      'Bu çeviri gözden geçiriliyor. Weblate\'te iyileştirmeye yardım edin.';
+      'Bu çeviri gözden geçiriliyor. GitHub\'da iyileştirmeye yardım edin.';
 
   @override
   String get sendDropHere => 'Dosyaları buraya bırakın';

@@ -701,7 +701,7 @@ abstract class AppLocalizations {
   /// Shown in Settings when some of the text in this language is an unreviewed draft
   ///
   /// In en, this message translates to:
-  /// **'This translation is being reviewed. Help improve it on Weblate.'**
+  /// **'This translation is being reviewed. Help improve it on GitHub.'**
   String get draftTranslation;
 
   /// No description provided for @sendDropHere.

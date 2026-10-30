@@ -356,7 +356,7 @@ class AppLocalizationsMs extends AppLocalizations {
 
   @override
   String get draftTranslation =>
-      'Terjemahan ini sedang disemak. Bantu memperbaikinya di Weblate.';
+      'Terjemahan ini sedang disemak. Bantu memperbaikinya di GitHub.';
 
   @override
   String get sendDropHere => 'Lepaskan fail di sini';

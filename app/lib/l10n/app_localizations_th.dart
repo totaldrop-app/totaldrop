@@ -352,7 +352,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get draftTranslation =>
-      'คำแปลนี้อยู่ระหว่างการตรวจทาน ช่วยปรับปรุงได้ที่ Weblate';
+      'คำแปลนี้อยู่ระหว่างการตรวจทาน ช่วยปรับปรุงได้ที่ GitHub';
 
   @override
   String get sendDropHere => 'วางไฟล์ที่นี่';

@@ -95,7 +95,7 @@
   "sizeGB": "{value} GB",
   "sizeTB": "{value} TB",
   "sizePB": "{value} PB",
-  "draftTranslation": "คำแปลนี้อยู่ระหว่างการตรวจทาน ช่วยปรับปรุงได้ที่ Weblate",
+  "draftTranslation": "คำแปลนี้อยู่ระหว่างการตรวจทาน ช่วยปรับปรุงได้ที่ GitHub",
 
   "sendDropHere": "วางไฟล์ที่นี่",
   "sendDropHint": "คุณลากไฟล์มาวางบนหน้าต่างนี้ได้ด้วย",

@@ -362,7 +362,7 @@ class AppLocalizationsSw extends AppLocalizations {
 
   @override
   String get draftTranslation =>
-      'Tafsiri hii inakaguliwa. Saidia kuiboresha kwenye Weblate.';
+      'Tafsiri hii inakaguliwa. Saidia kuiboresha kwenye GitHub.';
 
   @override
   String get sendDropHere => 'Dondosha faili hapa';

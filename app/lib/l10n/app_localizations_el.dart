@@ -371,7 +371,7 @@ class AppLocalizationsEl extends AppLocalizations {
 
   @override
   String get draftTranslation =>
-      'Αυτή η μετάφραση βρίσκεται υπό έλεγχο. Βοηθήστε να βελτιωθεί στο Weblate.';
+      'Αυτή η μετάφραση βρίσκεται υπό έλεγχο. Βοηθήστε να βελτιωθεί στο GitHub.';
 
   @override
   String get sendDropHere => 'Αφήστε αρχεία εδώ';

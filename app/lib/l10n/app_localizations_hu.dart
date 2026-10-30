@@ -357,7 +357,7 @@ class AppLocalizationsHu extends AppLocalizations {
 
   @override
   String get draftTranslation =>
-      'Ez a fordítás ellenőrzés alatt áll. Segíts javítani a Weblate-en.';
+      'Ez a fordítás ellenőrzés alatt áll. Segíts javítani a GitHubon.';
 
   @override
   String get sendDropHere => 'Húzd ide a fájlokat';

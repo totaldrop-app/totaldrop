@@ -95,7 +95,7 @@
   "sizeGB": "{value} GB",
   "sizeTB": "{value} TB",
   "sizePB": "{value} PB",
-  "draftTranslation": "Ez a fordítás ellenőrzés alatt áll. Segíts javítani a Weblate-en.",
+  "draftTranslation": "Ez a fordítás ellenőrzés alatt áll. Segíts javítani a GitHubon.",
 
   "sendDropHere": "Húzd ide a fájlokat",
   "sendDropHint": "A fájlokat erre az ablakra is ráhúzhatod.",

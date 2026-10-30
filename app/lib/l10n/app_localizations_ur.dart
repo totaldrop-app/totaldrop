@@ -368,7 +368,7 @@ class AppLocalizationsUr extends AppLocalizations {
 
   @override
   String get draftTranslation =>
-      'اس ترجمے کا جائزہ لیا جا رہا ہے۔ Weblate پر اسے بہتر بنانے میں مدد کریں۔';
+      'اس ترجمے کا جائزہ لیا جا رہا ہے۔ GitHub پر اسے بہتر بنانے میں مدد کریں۔';
 
   @override
   String get sendDropHere => 'فائلیں یہاں چھوڑیں';

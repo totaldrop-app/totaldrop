@@ -95,7 +95,7 @@
   "sizeGB": "{value} GB",
   "sizeTB": "{value} TB",
   "sizePB": "{value} PB",
-  "draftTranslation": "התרגום הזה נמצא בבדיקה. אפשר לעזור לשפר אותו ב־Weblate.",
+  "draftTranslation": "התרגום הזה נמצא בבדיקה. אפשר לעזור לשפר אותו ב־GitHub.",
 
   "sendDropHere": "אפשר לשחרר כאן קבצים",
   "sendDropHint": "אפשר גם לגרור קבצים אל החלון הזה.",

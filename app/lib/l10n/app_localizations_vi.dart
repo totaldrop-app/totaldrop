@@ -354,7 +354,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get draftTranslation =>
-      'Bản dịch này đang được xem xét. Hãy giúp cải thiện trên Weblate.';
+      'Bản dịch này đang được xem xét. Hãy giúp cải thiện trên GitHub.';
 
   @override
   String get sendDropHere => 'Thả tệp vào đây';

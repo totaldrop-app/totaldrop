@@ -95,7 +95,7 @@
   "sizeGB": "{value} GB",
   "sizeTB": "{value} TB",
   "sizePB": "{value} PB",
-  "draftTranslation": "Tafsiri hii inakaguliwa. Saidia kuiboresha kwenye Weblate.",
+  "draftTranslation": "Tafsiri hii inakaguliwa. Saidia kuiboresha kwenye GitHub.",
 
   "sendDropHere": "Dondosha faili hapa",
   "sendDropHint": "Unaweza pia kuburuta faili hadi kwenye dirisha hili.",

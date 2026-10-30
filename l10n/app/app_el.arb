@@ -95,7 +95,7 @@
   "sizeGB": "{value} GB",
   "sizeTB": "{value} TB",
   "sizePB": "{value} PB",
-  "draftTranslation": "Αυτή η μετάφραση βρίσκεται υπό έλεγχο. Βοηθήστε να βελτιωθεί στο Weblate.",
+  "draftTranslation": "Αυτή η μετάφραση βρίσκεται υπό έλεγχο. Βοηθήστε να βελτιωθεί στο GitHub.",
 
   "sendDropHere": "Αφήστε αρχεία εδώ",
   "sendDropHint": "Μπορείτε επίσης να σύρετε αρχεία σε αυτό το παράθυρο.",

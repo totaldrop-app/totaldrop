@@ -95,7 +95,7 @@
   "sizeGB": "{value} GB",
   "sizeTB": "{value} TB",
   "sizePB": "{value} PB",
-  "draftTranslation": "Terjemahan ini sedang ditinjau. Bantu perbaiki di Weblate.",
+  "draftTranslation": "Terjemahan ini sedang ditinjau. Bantu perbaiki di GitHub.",
 
   "sendDropHere": "Letakkan file di sini",
   "sendDropHint": "Anda juga bisa menyeret file ke jendela ini.",

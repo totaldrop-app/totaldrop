@@ -368,7 +368,7 @@ class AppLocalizationsDa extends AppLocalizations {
 
   @override
   String get draftTranslation =>
-      'Denne oversættelse er ved at blive gennemgået. Hjælp med at forbedre den på Weblate.';
+      'Denne oversættelse er ved at blive gennemgået. Hjælp med at forbedre den på GitHub.';
 
   @override
   String get sendDropHere => 'Slip filer her';

@@ -375,7 +375,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get draftTranslation =>
-      'Цей переклад перевіряється. Допоможіть покращити його на Weblate.';
+      'Цей переклад перевіряється. Допоможіть покращити його на GitHub.';
 
   @override
   String get sendDropHere => 'Перетягніть файли сюди';

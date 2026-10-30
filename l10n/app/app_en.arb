@@ -110,7 +110,7 @@
   "@sizeTB": {"description": "Terabytes", "placeholders": {"value": {"type": "String", "example": "1.5"}}},
   "sizePB": "{value} PB",
   "@sizePB": {"description": "Petabytes", "placeholders": {"value": {"type": "String", "example": "1.5"}}},
-  "draftTranslation": "This translation is being reviewed. Help improve it on Weblate.",
+  "draftTranslation": "This translation is being reviewed. Help improve it on GitHub.",
   "@draftTranslation": {"description": "Shown in Settings when some of the text in this language is an unreviewed draft"},
 
   "sendDropHere": "Drop files here",

@@ -95,7 +95,7 @@
   "sizeGB": "{value} GB",
   "sizeTB": "{value} TB",
   "sizePB": "{value} PB",
-  "draftTranslation": "هذه الترجمة قيد المراجعة. ساعد في تحسينها على Weblate.",
+  "draftTranslation": "هذه الترجمة قيد المراجعة. ساعد في تحسينها على GitHub.",
 
   "sendDropHere": "أفلت الملفات هنا",
   "sendDropHint": "يمكنك أيضًا سحب الملفات إلى هذه النافذة.",

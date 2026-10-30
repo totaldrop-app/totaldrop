@@ -370,7 +370,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get draftTranslation =>
-      'Diese Übersetzung wird noch geprüft. Helfen Sie auf Weblate, sie zu verbessern.';
+      'Diese Übersetzung wird noch geprüft. Helfen Sie auf GitHub, sie zu verbessern.';
 
   @override
   String get sendDropHere => 'Dateien hier ablegen';

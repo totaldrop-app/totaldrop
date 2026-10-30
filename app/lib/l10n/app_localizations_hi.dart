@@ -368,7 +368,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get draftTranslation =>
-      'इस अनुवाद की समीक्षा हो रही है। Weblate पर इसे बेहतर बनाने में मदद करें।';
+      'इस अनुवाद की समीक्षा हो रही है। GitHub पर इसे बेहतर बनाने में मदद करें।';
 
   @override
   String get sendDropHere => 'फ़ाइलें यहाँ छोड़ें';

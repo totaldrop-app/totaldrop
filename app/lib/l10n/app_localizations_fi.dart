@@ -369,7 +369,7 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String get draftTranslation =>
-      'Tätä käännöstä tarkistetaan. Auta parantamaan sitä Weblatessa.';
+      'Tätä käännöstä tarkistetaan. Auta parantamaan sitä GitHubissa.';
 
   @override
   String get sendDropHere => 'Pudota tiedostot tähän';

@@ -376,7 +376,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get draftTranslation =>
-      'Cette traduction est en cours de relecture. Aidez à l\'améliorer sur Weblate.';
+      'Cette traduction est en cours de relecture. Aidez à l\'améliorer sur GitHub.';
 
   @override
   String get sendDropHere => 'Déposez les fichiers ici';
