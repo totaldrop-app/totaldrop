@@ -1,4 +1,4 @@
-<!-- Translated from README.md e572385d1192. -->
+<!-- Translated from README.md 529368877e8d. -->
 <div align="center">
 
 <picture>
@@ -49,16 +49,16 @@ Ingyenes és nyílt forráskódú. Végpontok közötti titkosítás. Nincs e-ma
 
 | Platform | Honnan | Megjegyzések |
 | --- | --- | --- |
-| **Linux** (x86-64) | [Arch / Omarchy](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop-0.2.0_beta.1-1-x86_64.pkg.tar.zst) · [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop_0.2.0.beta.1-1_amd64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop-0.2.0.beta.1-1.fc43.x86_64.rpm) | 0.2.0-beta.1, Qt 6.8 vagy újabb |
-| **Linux** (ARM64) | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop_0.2.0.beta.1-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop-0.2.0.beta.1-1.fc43.aarch64.rpm) | 0.2.0-beta.1, Qt 6.8 vagy újabb |
-| **Android** | [Csatlakozz a bétához](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.2.0-beta.2, Android 15 vagy újabb, Google Play meghívással |
+| **Linux** (x86-64) | [Arch / Omarchy](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop-0.3.0_beta.1-1-x86_64.pkg.tar.zst) · [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop_0.3.0.beta.1-1_amd64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop-0.3.0.beta.1-1.fc43.x86_64.rpm) | 0.3.0-beta.1, Qt 6.8 vagy újabb |
+| **Linux** (ARM64) | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop_0.3.0.beta.1-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop-0.3.0.beta.1-1.fc43.aarch64.rpm) | 0.3.0-beta.1, Qt 6.8 vagy újabb |
+| **Android** | [Csatlakozz a bétához](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.1, Android 15 vagy újabb, Google Play meghívással |
 | **Parancssor** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux, macOS, Windows |
 | **Windows, macOS, iOS** | Úton van | Ezek kódaláírását fedezik elsőként az adományok |
 
 Minden csomagot a CI készít egy címkézett commitból, soha nem egy fejlesztő gépén. Ha telepítés előtt ellenőriznél egy csomagot, hasonlítsd össze a kiadás `SHA256SUMS` fájljával, és ellenőrizd, hol készült:
 
 ```bash
-gh attestation verify totaldrop_0.2.0.beta.1-1_amd64.deb --repo totaldrop-app/totaldrop
+gh attestation verify totaldrop_0.3.0.beta.1-1_amd64.deb --repo totaldrop-app/totaldrop
 ```
 
 > [!NOTE]
@@ -75,7 +75,7 @@ A protokoll leírása a *TotalDrop Protocol v0* dokumentumban található. A meg
 
 ## A te nyelveden
 
-A TotalDrop 35 nyelven beszél, és a régiód számformátumait követi. Az angol és a török ellenőrzött; a többi 33 vázlat, amelyet anyanyelvi beszélők ellenőriznek, ezért az alkalmazások a biztonsági szövegeket (ellenőrzés, hibás kód, elfogadás és elutasítás) angolul hagyják, amíg egy nyelv ellenőrzése meg nem történik. A weboldalon ma már mind megvan; az alkalmazások a következő kiadásaikkal kapják meg őket.
+A TotalDrop 35 nyelven beszél, és a régiód számformátumait követi. Az angol és a török ellenőrzött; a többi 33 vázlat, amelyet anyanyelvi beszélők ellenőriznek, ezért az alkalmazások a biztonsági szövegeket (ellenőrzés, hibás kód, elfogadás és elutasítás) angolul hagyják, amíg egy nyelv ellenőrzése meg nem történik. A weboldalon és az alkalmazásokban mind megvan, az Android és Linux 0.3.0-beta.1 verziótól kezdve.
 
 Esetlen mondatot találtál? [Segíts a fordításban](../../docs/ceviri.md) (az útmutató törökül van).
 

@@ -1,4 +1,4 @@
-<!-- Translated from README.md e572385d1192. -->
+<!-- Translated from README.md 529368877e8d. -->
 <div align="center">
 
 <picture>
@@ -49,16 +49,16 @@
 
 | پلتفرم | دریافت | یادداشت‌ها |
 | --- | --- | --- |
-| **Linux** (x86-64) | [Arch / Omarchy](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop-0.2.0_beta.1-1-x86_64.pkg.tar.zst) · [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop_0.2.0.beta.1-1_amd64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop-0.2.0.beta.1-1.fc43.x86_64.rpm) | 0.2.0-beta.1، Qt 6.8 یا جدیدتر |
-| **Linux** (ARM64) | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop_0.2.0.beta.1-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop-0.2.0.beta.1-1.fc43.aarch64.rpm) | 0.2.0-beta.1، Qt 6.8 یا جدیدتر |
-| **Android** | [پیوستن به نسخه بتا](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.2.0-beta.2، Android 15 یا جدیدتر، Google Play با دعوت |
+| **Linux** (x86-64) | [Arch / Omarchy](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop-0.3.0_beta.1-1-x86_64.pkg.tar.zst) · [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop_0.3.0.beta.1-1_amd64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop-0.3.0.beta.1-1.fc43.x86_64.rpm) | 0.3.0-beta.1، Qt 6.8 یا جدیدتر |
+| **Linux** (ARM64) | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop_0.3.0.beta.1-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop-0.3.0.beta.1-1.fc43.aarch64.rpm) | 0.3.0-beta.1، Qt 6.8 یا جدیدتر |
+| **Android** | [پیوستن به نسخه بتا](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.1، Android 15 یا جدیدتر، Google Play با دعوت |
 | **خط فرمان** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux، macOS، Windows |
 | **Windows، macOS، iOS** | در راه | امضای کد برای این‌ها نخستین چیزی است که کمک‌های مالی هزینه‌اش را می‌پردازند |
 
 هر بسته را CI از یک کامیت برچسب‌دار می‌سازد، هرگز روی دستگاه یک توسعه‌دهنده. برای بررسی یک بسته پیش از نصب، آن را با `SHA256SUMS` همان انتشار مقایسه کنید و محل ساخت آن را تأیید کنید:
 
 ```bash
-gh attestation verify totaldrop_0.2.0.beta.1-1_amd64.deb --repo totaldrop-app/totaldrop
+gh attestation verify totaldrop_0.3.0.beta.1-1_amd64.deb --repo totaldrop-app/totaldrop
 ```
 
 > [!NOTE]
@@ -75,7 +75,7 @@ gh attestation verify totaldrop_0.2.0.beta.1-1_amd64.deb --repo totaldrop-app/to
 
 ## به زبان شما
 
-TotalDrop به 35 زبان صحبت می‌کند و از قالب اعداد منطقه شما پیروی می‌کند. انگلیسی و ترکی بازبینی شده‌اند؛ 33 زبان دیگر پیش‌نویس‌هایی هستند که گویشوران بومی در حال بررسی آن‌ها هستند، بنابراین برنامه‌ها متن‌های امنیتی (تأیید، کد اشتباه، پذیرفتن و رد کردن) را تا زمان بازبینی هر زبان به انگلیسی نگه می‌دارند. سایت امروز همه آن‌ها را دارد؛ برنامه‌ها با انتشارهای بعدی خود آن‌ها را دریافت می‌کنند.
+TotalDrop به 35 زبان صحبت می‌کند و از قالب اعداد منطقه شما پیروی می‌کند. انگلیسی و ترکی بازبینی شده‌اند؛ 33 زبان دیگر پیش‌نویس‌هایی هستند که گویشوران بومی در حال بررسی آن‌ها هستند، بنابراین برنامه‌ها متن‌های امنیتی (تأیید، کد اشتباه، پذیرفتن و رد کردن) را تا زمان بازبینی هر زبان به انگلیسی نگه می‌دارند. سایت و برنامه‌ها همه آن‌ها را دارند، از Android و Linux 0.3.0-beta.1 به بعد.
 
 جمله‌ای ناشیانه دیدید؟ [در ترجمه کمک کنید](../../docs/ceviri.md) (راهنما به ترکی است).
 

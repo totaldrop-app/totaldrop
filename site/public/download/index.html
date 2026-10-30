@@ -35,7 +35,7 @@
 
   <main id="main">
     <section class="dl-hero" aria-labelledby="dl-title">
-      <p class="eyebrow"><span data-i18n="dl.version">Android 0.2.0-beta.2 · Linux 0.2.0-beta.1</span> · <time datetime="2026-10-29" data-i18n="dl.date">29 October 2026</time></p>
+      <p class="eyebrow"><span data-i18n="dl.version">Android 0.3.0-beta.1 · Linux 0.3.0-beta.1</span> · <time datetime="2026-10-30" data-i18n="dl.date">30 October 2026</time></p>
       <h1 id="dl-title" data-i18n="dl.title">Download TotalDrop</h1>
       <p class="lede" data-i18n="dl.lede">Free, open source, no account. Pick your device; the one you are using now is marked.</p>
     </section>
@@ -46,7 +46,7 @@
         <li class="platform" data-platform="android">
           <span class="yours" data-i18n="dl.yours">For this device</span>
           <header><h3 data-i18n="dl.android">Android</h3><span class="pill is-beta" data-i18n="dl.beta">Beta</span></header>
-          <p data-i18n="dl.android.d">The full app, in English and Turkish, following your phone's colours.</p>
+          <p data-i18n="dl.android.d">The full app, in your language, following your phone's colours.</p>
           <ul>
             <li data-i18n="dl.android.r1">Android 15 or later, 64-bit</li>
             <li data-i18n="dl.android.r2">Testing on Google Play, by invitation while the beta is closed</li>
@@ -73,10 +73,10 @@ totaldrop receive 7-harbor-rocket</code></pre>
             <li data-i18n="dl.linux.r2">Also installs the totaldrop command</li>
           </ul>
           <div class="actions">
-            <a class="btn btn-primary" href="https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop-0.2.0_beta.1-1-x86_64.pkg.tar.zst" aria-label="Arch, Omarchy, Manjaro, x86-64" data-i18n-label="dl.linux.arch.label" data-i18n="dl.linux.arch">Arch, Omarchy, Manjaro</a>
-            <a class="btn btn-quiet" href="https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop_0.2.0.beta.1-1_amd64.deb" aria-label="Debian, Ubuntu (.deb), x86-64" data-i18n-label="dl.linux.deb.label" data-i18n="dl.linux.deb">Debian, Ubuntu (.deb)</a>
-            <a class="btn btn-quiet" href="https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop-0.2.0.beta.1-1.fc43.x86_64.rpm" aria-label="Fedora (.rpm), x86-64" data-i18n-label="dl.linux.rpm.label" data-i18n="dl.linux.rpm">Fedora (.rpm)</a>
-            <p class="arch-alt"><span data-i18n="dl.linux.arm">The buttons above are for x86-64. For ARM64:</span> <a href="https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop_0.2.0.beta.1-1_arm64.deb" data-i18n="dl.linux.deb.arm">Debian, Ubuntu (.deb, ARM64)</a> · <a href="https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop-0.2.0.beta.1-1.fc43.aarch64.rpm" data-i18n="dl.linux.rpm.arm">Fedora (.rpm, ARM64)</a></p>
+            <a class="btn btn-primary" href="https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop-0.3.0_beta.1-1-x86_64.pkg.tar.zst" aria-label="Arch, Omarchy, Manjaro, x86-64" data-i18n-label="dl.linux.arch.label" data-i18n="dl.linux.arch">Arch, Omarchy, Manjaro</a>
+            <a class="btn btn-quiet" href="https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop_0.3.0.beta.1-1_amd64.deb" aria-label="Debian, Ubuntu (.deb), x86-64" data-i18n-label="dl.linux.deb.label" data-i18n="dl.linux.deb">Debian, Ubuntu (.deb)</a>
+            <a class="btn btn-quiet" href="https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop-0.3.0.beta.1-1.fc43.x86_64.rpm" aria-label="Fedora (.rpm), x86-64" data-i18n-label="dl.linux.rpm.label" data-i18n="dl.linux.rpm">Fedora (.rpm)</a>
+            <p class="arch-alt"><span data-i18n="dl.linux.arm">The buttons above are for x86-64. For ARM64:</span> <a href="https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop_0.3.0.beta.1-1_arm64.deb" data-i18n="dl.linux.deb.arm">Debian, Ubuntu (.deb, ARM64)</a> · <a href="https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop-0.3.0.beta.1-1.fc43.aarch64.rpm" data-i18n="dl.linux.rpm.arm">Fedora (.rpm, ARM64)</a></p>
           </div>
         </li>
       </ul>
@@ -111,11 +111,10 @@ totaldrop receive 7-harbor-rocket</code></pre>
     <section class="block" aria-labelledby="dl-new">
       <h2 id="dl-new" data-i18n="dl.new.title">What's new</h2>
       <ul class="notes">
-        <li data-i18n="dl.new.privacy">Privacy mode, in Settings: every transfer goes through the relay, so the other device never learns your IP address. It is slower, and the app asks you to confirm before turning it on.</li>
-        <li data-i18n="dl.new.relay">Devices contact the relay only when no direct connection comes up in time, or in privacy mode, so a transfer that connects directly never reaches it.</li>
-        <li data-i18n="dl.new.stop">Stop works at every stage: while the files are prepared, while waiting for the receiver, while connecting and during the transfer. The other side is told that you stopped.</li>
-        <li data-i18n="dl.new.folder">On Linux, adding a large folder no longer freezes the window. Its size is counted in the background.</li>
-        <li data-i18n="dl.new.lang">The apps and the command line use your system's language and write numbers and sizes in your region's format. English and Turkish today.</li>
+        <li data-i18n="dl.new.mark">A new mark and icon, Köşe: a circle with one square corner. It turns while a file is on its way.</li>
+        <li data-i18n="dl.new.lang">The apps, the command line and this site speak 35 languages and write numbers and sizes in your region's format. 33 of them are drafts that native speakers are checking; until a language is checked, the security texts stay in English.</li>
+        <li data-i18n="dl.new.rtl">In Arabic, Persian, Hebrew and Urdu the screens mirror, and versions, codes and folders keep their own direction.</li>
+        <li data-i18n="dl.new.qr">On Linux, QR codes are read more reliably.</li>
       </ul>
       <p class="note"><a href="https://github.com/totaldrop-app/totaldrop/releases" data-i18n="dl.all">All versions and release notes</a></p>
     </section>

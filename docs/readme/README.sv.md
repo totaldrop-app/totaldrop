@@ -1,4 +1,4 @@
-<!-- Translated from README.md e572385d1192. -->
+<!-- Translated from README.md 529368877e8d. -->
 <div align="center">
 
 <picture>
@@ -49,16 +49,16 @@ Gratis och öppen källkod. End-to-end-krypterat. Ingen e-post, inget telefonnum
 
 | Plattform | Hämta | Anmärkningar |
 | --- | --- | --- |
-| **Linux** (x86-64) | [Arch / Omarchy](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop-0.2.0_beta.1-1-x86_64.pkg.tar.zst) · [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop_0.2.0.beta.1-1_amd64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop-0.2.0.beta.1-1.fc43.x86_64.rpm) | 0.2.0-beta.1, Qt 6.8 eller senare |
-| **Linux** (ARM64) | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop_0.2.0.beta.1-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop-0.2.0.beta.1-1.fc43.aarch64.rpm) | 0.2.0-beta.1, Qt 6.8 eller senare |
-| **Android** | [Gå med i betan](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.2.0-beta.2, Android 15 eller senare, Google Play via inbjudan |
+| **Linux** (x86-64) | [Arch / Omarchy](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop-0.3.0_beta.1-1-x86_64.pkg.tar.zst) · [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop_0.3.0.beta.1-1_amd64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop-0.3.0.beta.1-1.fc43.x86_64.rpm) | 0.3.0-beta.1, Qt 6.8 eller senare |
+| **Linux** (ARM64) | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop_0.3.0.beta.1-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop-0.3.0.beta.1-1.fc43.aarch64.rpm) | 0.3.0-beta.1, Qt 6.8 eller senare |
+| **Android** | [Gå med i betan](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.1, Android 15 eller senare, Google Play via inbjudan |
 | **Kommandorad** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux, macOS, Windows |
 | **Windows, macOS, iOS** | Kommer | Kodsignering för dessa är det som donationerna betalar för först |
 
 Varje paket byggs av CI från en taggad commit, aldrig på en utvecklares dator. Om du vill kontrollera ett paket innan du installerar det, jämför det med versionens `SHA256SUMS` och verifiera var det byggdes:
 
 ```bash
-gh attestation verify totaldrop_0.2.0.beta.1-1_amd64.deb --repo totaldrop-app/totaldrop
+gh attestation verify totaldrop_0.3.0.beta.1-1_amd64.deb --repo totaldrop-app/totaldrop
 ```
 
 > [!NOTE]
@@ -75,7 +75,7 @@ Protokollet beskrivs i *TotalDrop Protocol v0*. Beslut som fattats under impleme
 
 ## På ditt språk
 
-TotalDrop finns på 35 språk och följer din regions talformat. Engelska och turkiska är granskade; de övriga 33 är utkast som modersmålstalare håller på att kontrollera, så apparna behåller säkerhetstexterna (verifiering, fel kod, acceptera och avböj) på engelska tills ett språk har granskats. Webbplatsen har alla redan i dag; apparna får dem i sina nästa versioner.
+TotalDrop finns på 35 språk och följer din regions talformat. Engelska och turkiska är granskade; de övriga 33 är utkast som modersmålstalare håller på att kontrollera, så apparna behåller säkerhetstexterna (verifiering, fel kod, acceptera och avböj) på engelska tills ett språk har granskats. Webbplatsen och apparna har alla, från Android och Linux 0.3.0-beta.1.
 
 Har du hittat en klumpig mening? [Hjälp till att översätta](../../docs/ceviri.md) (guiden är på turkiska).
 

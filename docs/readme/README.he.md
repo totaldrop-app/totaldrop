@@ -1,4 +1,4 @@
-<!-- Translated from README.md e572385d1192. -->
+<!-- Translated from README.md 529368877e8d. -->
 <div align="center">
 
 <picture>
@@ -49,16 +49,16 @@
 
 | פלטפורמה | איפה להשיג | הערות |
 | --- | --- | --- |
-| **Linux** (x86-64) | [Arch / Omarchy](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop-0.2.0_beta.1-1-x86_64.pkg.tar.zst) · [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop_0.2.0.beta.1-1_amd64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop-0.2.0.beta.1-1.fc43.x86_64.rpm) | 0.2.0-beta.1, Qt 6.8 ומעלה |
-| **Linux** (ARM64) | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop_0.2.0.beta.1-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop-0.2.0.beta.1-1.fc43.aarch64.rpm) | 0.2.0-beta.1, Qt 6.8 ומעלה |
-| **Android** | [הצטרפות לבטא](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.2.0-beta.2, Android 15 ומעלה, Google Play בהזמנה |
+| **Linux** (x86-64) | [Arch / Omarchy](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop-0.3.0_beta.1-1-x86_64.pkg.tar.zst) · [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop_0.3.0.beta.1-1_amd64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop-0.3.0.beta.1-1.fc43.x86_64.rpm) | 0.3.0-beta.1, Qt 6.8 ומעלה |
+| **Linux** (ARM64) | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop_0.3.0.beta.1-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop-0.3.0.beta.1-1.fc43.aarch64.rpm) | 0.3.0-beta.1, Qt 6.8 ומעלה |
+| **Android** | [הצטרפות לבטא](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.1, Android 15 ומעלה, Google Play בהזמנה |
 | **שורת פקודה** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux, macOS, Windows |
 | **Windows, macOS, iOS** | בדרך | חתימת קוד עבורן היא הדבר הראשון שהתרומות משלמות עליו |
 
 כל חבילה נבנית על ידי CI מ־commit מתויג, אף פעם לא על המחשב של מפתח. כדי לבדוק חבילה לפני שמתקינים אותה, משווים אותה ל־`SHA256SUMS` של הגרסה ומאמתים היכן היא נבנתה:
 
 ```bash
-gh attestation verify totaldrop_0.2.0.beta.1-1_amd64.deb --repo totaldrop-app/totaldrop
+gh attestation verify totaldrop_0.3.0.beta.1-1_amd64.deb --repo totaldrop-app/totaldrop
 ```
 
 > [!NOTE]
@@ -75,7 +75,7 @@ gh attestation verify totaldrop_0.2.0.beta.1-1_amd64.deb --repo totaldrop-app/to
 
 ## בשפה שלך
 
-TotalDrop מדבר 35 שפות ועוקב אחר תבניות המספרים של האזור שלך. אנגלית וטורקית עברו בדיקה; 33 האחרות הן טיוטות שדוברים ילידיים בודקים, ולכן האפליקציות משאירות את טקסטי האבטחה (אימות, קוד שגוי, קבלה ודחייה) באנגלית עד ששפה עוברת בדיקה. באתר כולן זמינות כבר היום; האפליקציות יקבלו אותן בגרסאות הבאות שלהן.
+TotalDrop מדבר 35 שפות ועוקב אחר תבניות המספרים של האזור שלך. אנגלית וטורקית עברו בדיקה; 33 האחרות הן טיוטות שדוברים ילידיים בודקים, ולכן האפליקציות משאירות את טקסטי האבטחה (אימות, קוד שגוי, קבלה ודחייה) באנגלית עד ששפה עוברת בדיקה. האתר והאפליקציות כוללים את כולן, החל מ־Android ו־Linux 0.3.0-beta.1.
 
 נתקלתם במשפט מסורבל? [לעזור בתרגום](../../docs/ceviri.md) (המדריך בטורקית).
 

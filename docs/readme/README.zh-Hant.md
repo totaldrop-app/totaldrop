@@ -1,4 +1,4 @@
-<!-- Translated from README.md e572385d1192. -->
+<!-- Translated from README.md 529368877e8d. -->
 <div align="center">
 
 <picture>
@@ -49,16 +49,16 @@
 
 | 平台 | 取得 | 說明 |
 | --- | --- | --- |
-| **Linux**（x86-64） | [Arch / Omarchy](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop-0.2.0_beta.1-1-x86_64.pkg.tar.zst) · [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop_0.2.0.beta.1-1_amd64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop-0.2.0.beta.1-1.fc43.x86_64.rpm) | 0.2.0-beta.1，Qt 6.8 或更新版本 |
-| **Linux**（ARM64） | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop_0.2.0.beta.1-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop-0.2.0.beta.1-1.fc43.aarch64.rpm) | 0.2.0-beta.1，Qt 6.8 或更新版本 |
-| **Android** | [加入測試版](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.2.0-beta.2，Android 15 或更新版本，透過邀請在 Google Play 上提供 |
+| **Linux**（x86-64） | [Arch / Omarchy](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop-0.3.0_beta.1-1-x86_64.pkg.tar.zst) · [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop_0.3.0.beta.1-1_amd64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop-0.3.0.beta.1-1.fc43.x86_64.rpm) | 0.3.0-beta.1，Qt 6.8 或更新版本 |
+| **Linux**（ARM64） | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop_0.3.0.beta.1-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop-0.3.0.beta.1-1.fc43.aarch64.rpm) | 0.3.0-beta.1，Qt 6.8 或更新版本 |
+| **Android** | [加入測試版](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.1，Android 15 或更新版本，透過邀請在 Google Play 上提供 |
 | **命令列** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux、macOS、Windows |
 | **Windows、macOS、iOS** | 即將推出 | 捐款會優先用於這些平台的程式碼簽署 |
 
 每個套件都由 CI 從加上標籤的提交建置，絕不在開發者的電腦上建置。若要在安裝前檢查，請將它與發行版本的 `SHA256SUMS` 比對，並驗證它的建置來源：
 
 ```bash
-gh attestation verify totaldrop_0.2.0.beta.1-1_amd64.deb --repo totaldrop-app/totaldrop
+gh attestation verify totaldrop_0.3.0.beta.1-1_amd64.deb --repo totaldrop-app/totaldrop
 ```
 
 > [!NOTE]
@@ -75,7 +75,7 @@ gh attestation verify totaldrop_0.2.0.beta.1-1_amd64.deb --repo totaldrop-app/to
 
 ## 使用你的語言
 
-TotalDrop 支援 35 種語言，並依照你所在地區的數字格式。英文和土耳其文已經過審校；其餘 33 種語言是母語人士正在檢查的草稿，因此在某個語言審校完成之前，應用程式會將安全相關的文字（驗證、代碼錯誤、接受和拒絕）保留為英文。網站現已提供所有語言；應用程式會在下一個版本中加入。
+TotalDrop 支援 35 種語言，並依照你所在地區的數字格式。英文和土耳其文已經過審校；其餘 33 種語言是母語人士正在檢查的草稿，因此在某個語言審校完成之前，應用程式會將安全相關的文字（驗證、代碼錯誤、接受和拒絕）保留為英文。從 Android 和 Linux 0.3.0-beta.1 起，網站和應用程式都已提供所有語言。
 
 發現了不通順的句子嗎？[協助翻譯](../../docs/ceviri.md)（指南為土耳其文）。
 

@@ -1,4 +1,4 @@
-<!-- Translated from README.md e572385d1192. -->
+<!-- Translated from README.md 529368877e8d. -->
 <div align="center">
 
 <picture>
@@ -49,16 +49,16 @@
 
 | プラットフォーム | 入手 | 備考 |
 | --- | --- | --- |
-| **Linux**（x86-64） | [Arch / Omarchy](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop-0.2.0_beta.1-1-x86_64.pkg.tar.zst) · [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop_0.2.0.beta.1-1_amd64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop-0.2.0.beta.1-1.fc43.x86_64.rpm) | 0.2.0-beta.1、Qt 6.8 以降 |
-| **Linux**（ARM64） | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop_0.2.0.beta.1-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop-0.2.0.beta.1-1.fc43.aarch64.rpm) | 0.2.0-beta.1、Qt 6.8 以降 |
-| **Android** | [ベータに参加する](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.2.0-beta.2、Android 15 以降、Google Play で招待制 |
+| **Linux**（x86-64） | [Arch / Omarchy](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop-0.3.0_beta.1-1-x86_64.pkg.tar.zst) · [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop_0.3.0.beta.1-1_amd64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop-0.3.0.beta.1-1.fc43.x86_64.rpm) | 0.3.0-beta.1、Qt 6.8 以降 |
+| **Linux**（ARM64） | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop_0.3.0.beta.1-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop-0.3.0.beta.1-1.fc43.aarch64.rpm) | 0.3.0-beta.1、Qt 6.8 以降 |
+| **Android** | [ベータに参加する](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.1、Android 15 以降、Google Play で招待制 |
 | **コマンドライン** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux、macOS、Windows |
 | **Windows、macOS、iOS** | 準備中 | 寄付でまず賄うのは、これらのコード署名です |
 
 すべてのパッケージは、タグ付きのコミットから CI でビルドされます。開発者のマシンでビルドされることはありません。インストールする前に確認するには、リリースの `SHA256SUMS` と照合し、どこでビルドされたかを検証してください：
 
 ```bash
-gh attestation verify totaldrop_0.2.0.beta.1-1_amd64.deb --repo totaldrop-app/totaldrop
+gh attestation verify totaldrop_0.3.0.beta.1-1_amd64.deb --repo totaldrop-app/totaldrop
 ```
 
 > [!NOTE]
@@ -75,7 +75,7 @@ gh attestation verify totaldrop_0.2.0.beta.1-1_amd64.deb --repo totaldrop-app/to
 
 ## あなたの言語で
 
-TotalDrop は35の言語に対応し、地域の数値形式に従います。英語とトルコ語は確認済みです。残りの33言語はネイティブスピーカーが確認中の下書きのため、アプリでは言語の確認が済むまで、セキュリティに関わる文言（検証、コードの誤り、承認と拒否）を英語のまま表示します。サイトには現在すべての言語がそろっており、アプリには次のリリースで入ります。
+TotalDrop は35の言語に対応し、地域の数値形式に従います。英語とトルコ語は確認済みです。残りの33言語はネイティブスピーカーが確認中の下書きのため、アプリでは言語の確認が済むまで、セキュリティに関わる文言（検証、コードの誤り、承認と拒否）を英語のまま表示します。サイトとアプリは、Android と Linux の 0.3.0-beta.1 からすべての言語に対応しています。
 
 ぎこちない文を見つけましたか？[翻訳に協力する](../../docs/ceviri.md)（ガイドはトルコ語です）
 

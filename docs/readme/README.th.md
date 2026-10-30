@@ -1,4 +1,4 @@
-<!-- Translated from README.md e572385d1192. -->
+<!-- Translated from README.md 529368877e8d. -->
 <div align="center">
 
 <picture>
@@ -49,16 +49,16 @@
 
 | แพลตฟอร์ม | ดาวน์โหลดได้ที่ | หมายเหตุ |
 | --- | --- | --- |
-| **Linux** (x86-64) | [Arch / Omarchy](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop-0.2.0_beta.1-1-x86_64.pkg.tar.zst) · [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop_0.2.0.beta.1-1_amd64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop-0.2.0.beta.1-1.fc43.x86_64.rpm) | 0.2.0-beta.1, Qt 6.8 ขึ้นไป |
-| **Linux** (ARM64) | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop_0.2.0.beta.1-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.2.0-beta.1/totaldrop-0.2.0.beta.1-1.fc43.aarch64.rpm) | 0.2.0-beta.1, Qt 6.8 ขึ้นไป |
-| **Android** | [เข้าร่วมเบต้า](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.2.0-beta.2, Android 15 ขึ้นไป, Google Play ตามคำเชิญ |
+| **Linux** (x86-64) | [Arch / Omarchy](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop-0.3.0_beta.1-1-x86_64.pkg.tar.zst) · [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop_0.3.0.beta.1-1_amd64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop-0.3.0.beta.1-1.fc43.x86_64.rpm) | 0.3.0-beta.1, Qt 6.8 ขึ้นไป |
+| **Linux** (ARM64) | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop_0.3.0.beta.1-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop-0.3.0.beta.1-1.fc43.aarch64.rpm) | 0.3.0-beta.1, Qt 6.8 ขึ้นไป |
+| **Android** | [เข้าร่วมเบต้า](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.1, Android 15 ขึ้นไป, Google Play ตามคำเชิญ |
 | **บรรทัดคำสั่ง** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux, macOS, Windows |
 | **Windows, macOS, iOS** | กำลังมา | การเซ็นโค้ดสำหรับแพลตฟอร์มเหล่านี้คือสิ่งแรกที่เงินบริจาคจะนำไปจ่าย |
 
 ทุกแพ็กเกจสร้างโดย CI จากคอมมิตที่ติดแท็ก ไม่เคยสร้างบนเครื่องของนักพัฒนา หากต้องการตรวจสอบแพ็กเกจก่อนติดตั้ง ให้เทียบกับ `SHA256SUMS` ของรุ่นนั้น และยืนยันว่าแพ็กเกจสร้างขึ้นที่ใด:
 
 ```bash
-gh attestation verify totaldrop_0.2.0.beta.1-1_amd64.deb --repo totaldrop-app/totaldrop
+gh attestation verify totaldrop_0.3.0.beta.1-1_amd64.deb --repo totaldrop-app/totaldrop
 ```
 
 > [!NOTE]
@@ -75,7 +75,7 @@ gh attestation verify totaldrop_0.2.0.beta.1-1_amd64.deb --repo totaldrop-app/to
 
 ## ในภาษาของคุณ
 
-TotalDrop รองรับ 35 ภาษา และใช้รูปแบบตัวเลขตามภูมิภาคของคุณ ภาษาอังกฤษและภาษาตุรกีผ่านการตรวจทานแล้ว อีก 33 ภาษาเป็นฉบับร่างที่เจ้าของภาษากำลังตรวจทาน แอปจึงคงข้อความด้านความปลอดภัย (การยืนยัน รหัสผิด การยอมรับและการปฏิเสธ) ไว้เป็นภาษาอังกฤษจนกว่าภาษานั้นจะผ่านการตรวจทาน วันนี้เว็บไซต์มีครบทุกภาษาแล้ว ส่วนแอปจะได้รับในรุ่นถัดไป
+TotalDrop รองรับ 35 ภาษา และใช้รูปแบบตัวเลขตามภูมิภาคของคุณ ภาษาอังกฤษและภาษาตุรกีผ่านการตรวจทานแล้ว อีก 33 ภาษาเป็นฉบับร่างที่เจ้าของภาษากำลังตรวจทาน แอปจึงคงข้อความด้านความปลอดภัย (การยืนยัน รหัสผิด การยอมรับและการปฏิเสธ) ไว้เป็นภาษาอังกฤษจนกว่าภาษานั้นจะผ่านการตรวจทาน เว็บไซต์และแอปมีครบทุกภาษาแล้ว ตั้งแต่ Android และ Linux 0.3.0-beta.1
 
 เจอประโยคที่ฟังไม่เป็นธรรมชาติใช่ไหม [ช่วยแปล](../../docs/ceviri.md) (คู่มือเป็นภาษาตุรกี)
 
