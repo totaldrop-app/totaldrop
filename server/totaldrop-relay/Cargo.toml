@@ -2,7 +2,8 @@
 name = "totaldrop-relay"
 description = "TotalDrop relay: address discovery and forwarding of encrypted QUIC datagrams"
 license = "AGPL-3.0-or-later"
-version.workspace = true
+# The servers have their own version (docs/versioning.md).
+version = "0.1.0-beta.1"
 edition.workspace = true
 rust-version.workspace = true
 repository.workspace = true

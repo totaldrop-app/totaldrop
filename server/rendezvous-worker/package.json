@@ -1,5 +1,6 @@
 {
   "name": "totaldrop-rendezvous-worker",
+  "version": "0.1.0-beta.1",
   "private": true,
   "license": "AGPL-3.0-or-later",
   "description": "TotalDrop rendezvous server on Cloudflare Workers and Durable Objects",
