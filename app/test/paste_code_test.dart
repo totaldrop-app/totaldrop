@@ -15,6 +15,17 @@ void main() {
     expect(codeFromPaste('not a code'), 'not a code');
   });
 
+  test('a pasted message gives a code typed with Arabic-Indic digits', () {
+    expect(
+      codeFromPaste('the code is \u0667-abandon-ability, thanks'),
+      '\u0667-abandon-ability',
+    );
+    expect(
+      codeFromPaste('kod: \u06F1\u06F2 zoo zone able.'),
+      '\u06F1\u06F2 zoo zone able',
+    );
+  });
+
   test('direction marks around the code are dropped', () {
     // The share text isolates the code (U+2068 … U+2069), so a right-to-left
     // sentence keeps it in order. Pasted back, the marks must not reach the

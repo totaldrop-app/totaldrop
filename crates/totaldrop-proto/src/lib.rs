@@ -404,16 +404,27 @@ mod tests {
         let big = TransferCode::parse("\u{0661}\u{0660}\u{06F2}\u{06F5}-harbor-rocket").unwrap();
         assert_eq!(big.nameplate(), 1025);
         assert_eq!(big.to_string(), "1025-harbor-rocket");
-        assert_eq!(ascii_digits("\u{0660}\u{0669}\u{06F0}\u{06F9}"), "0909");
-        // Other scripts' digits are not mapped: the code stays ASCII on the wire.
-        assert_eq!(
-            TransferCode::parse("\u{0967}-harbor-rocket"),
-            Err(CodeError::BadNameplate)
-        );
-        assert_eq!(
-            TransferCode::parse("\u{0660}-harbor-rocket"),
-            Err(CodeError::BadNameplate)
-        );
+        // Every digit of both ranges.
+        for first in [0x0660, 0x06F0] {
+            for value in 0..10u32 {
+                let c = char::from_u32(first + value).unwrap();
+                let want = char::from_digit(value, 10).unwrap();
+                assert_eq!(ascii_digits(&c.to_string()), want.to_string(), "{c:?}");
+                let code = TransferCode::parse(&format!("1{c}-harbor-rocket")).unwrap();
+                assert_eq!(code.nameplate(), 10 + value, "{c:?}");
+            }
+        }
+        // Neighbours of the ranges (U+066A is the Arabic percent sign) and
+        // other scripts' digits stay as they are, so they cannot make a code.
+        let kept = "\u{065F}\u{066A}\u{06EF}\u{06FA}\u{0967}\u{FF17}";
+        assert_eq!(ascii_digits(kept), kept);
+        for c in kept.chars() {
+            assert_eq!(
+                TransferCode::parse(&format!("{c}-harbor-rocket")),
+                Err(CodeError::BadNameplate),
+                "{c:?}"
+            );
+        }
     }
 
     #[test]

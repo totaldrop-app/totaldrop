@@ -68,6 +68,14 @@ treated as final.
      allocation is delayed by 2 seconds.
    - The WebSocket handshake and every server write must finish within 10
      seconds.
+8. **Reading a typed code.** Before a code is split into its number and
+   words, invisible format characters (direction marks, isolates, zero-width
+   characters, the soft hyphen, the byte order mark; `INVISIBLE_FORMAT` in
+   totaldrop-proto) are dropped, and Arabic-Indic (U+0660 to U+0669) and
+   Extended Arabic-Indic (U+06F0 to U+06F9) digits are read as ASCII digits.
+   CPace always gets the canonical ASCII form (`7-840-1499`), so another
+   implementation that skips these steps stays compatible; it only rejects
+   more of what people type.
 
 ## Section 6: connections and the handshake
 

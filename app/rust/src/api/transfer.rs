@@ -497,7 +497,7 @@ mod tests {
 
     #[test]
     fn codes_typed_with_arabic_indic_digits() {
-        // Arabic, Persian and Urdu keyboards; the field then shows ASCII.
+        // Arabic, Persian and Urdu keyboards; what connects is ASCII.
         for code in ["\u{0667}-abandon-ability", "\u{06F7} abandon ability"] {
             assert_eq!(
                 normalize_code(code.into()),
