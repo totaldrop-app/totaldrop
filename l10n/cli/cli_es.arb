@@ -30,6 +30,7 @@
   "cliErrCancelled": "La otra parte detuvo la transferencia.",
   "cliErrInvalidCode": "Ese código no es válido.",
   "cliErrCodeNotInUse": "Ese código no está en uso: se escribió mal, caducó o ya se usó. Pide uno nuevo a quien te envía los archivos.",
+  "cliErrCodeExpired": "El código caducó antes de que alguien lo usara. Vuelve a enviar para obtener un código nuevo.",
   "cliErrBadServer": "La dirección del servidor no es válida. Debe empezar por wss://.",
   "cliErrServer": "No se pudo acceder al servidor de TotalDrop. Comprueba tu conexión a internet.",
   "cliErrConnect": "No se pudo conectar con el otro dispositivo. Comprueba que ambos dispositivos estén en línea y vuelve a intentarlo.",

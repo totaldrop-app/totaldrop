@@ -30,6 +30,7 @@
   "cliErrCancelled": "Den anden side stoppede overførslen.",
   "cliErrInvalidCode": "Koden er ikke gyldig.",
   "cliErrCodeNotInUse": "Koden er ikke i brug: den blev skrevet forkert, er udløbet eller er allerede brugt. Bed afsenderen om en ny.",
+  "cliErrCodeExpired": "Koden udløb, før nogen brugte den. Send igen for at få en ny kode.",
   "cliErrBadServer": "Serveradressen er ikke gyldig. Den skal starte med wss://.",
   "cliErrServer": "Kunne ikke nå TotalDrop-serveren. Tjek din internetforbindelse.",
   "cliErrConnect": "Kunne ikke oprette forbindelse til den anden enhed. Tjek, at begge enheder er online, og prøv igen.",

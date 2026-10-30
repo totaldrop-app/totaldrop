@@ -264,6 +264,14 @@ class AppLocalizationsHu extends AppLocalizations {
       'Ez a kód nincs használatban: elgépelték, lejárt, vagy már felhasználták. Kérj újat a küldőtől.';
 
   @override
+  String get errorCodeExpired =>
+      'A kód lejárt, mielőtt bárki használta volna. Küldd el újra, hogy új kódot kapj.';
+
+  @override
+  String get errorBadServer =>
+      'A szervercím érvénytelen. wss:// előtaggal kell kezdődnie.';
+
+  @override
   String get errorConnect =>
       'Nem sikerült kapcsolódni a másik eszközhöz. Ellenőrizd, hogy mindkét eszköz online van-e, és próbáld újra.';
 

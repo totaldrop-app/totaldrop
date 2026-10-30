@@ -269,6 +269,14 @@ class AppLocalizationsSw extends AppLocalizations {
       'Msimbo huo hautumiki: ulikosewa kuandikwa, umeisha muda au tayari umetumika. Mwombe mtumaji msimbo mpya.';
 
   @override
+  String get errorCodeExpired =>
+      'Msimbo uliisha muda kabla ya mtu yeyote kuutumia. Tuma tena ili upate msimbo mpya.';
+
+  @override
+  String get errorBadServer =>
+      'Anwani ya seva si sahihi. Lazima ianze na wss://.';
+
+  @override
   String get errorConnect =>
       'Imeshindwa kuunganisha na kifaa kingine. Hakikisha vifaa vyote viwili viko mtandaoni kisha ujaribu tena.';
 

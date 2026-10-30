@@ -69,6 +69,8 @@
   "errorInvalidCode": "Tento kód není platný.",
   "errorServer": "Nelze se spojit se serverem TotalDrop. Zkontrolujte připojení k internetu.",
   "errorCodeNotInUse": "Tento kód se nepoužívá: byl chybně zadán, vypršel nebo už byl použit. Požádejte odesílatele o nový.",
+  "errorCodeExpired": "Kód vypršel dřív, než ho někdo použil. Pro nový kód odešlete soubory znovu.",
+  "errorBadServer": "Adresa serveru není platná. Musí začínat wss://.",
   "errorConnect": "Nelze se připojit k druhému zařízení. Zkontrolujte, že jsou obě zařízení online, a zkuste to znovu.",
   "errorInvalidOffer": "Nabídka porušila bezpečnostní pravidlo, a proto byla odmítnuta.",
   "errorStorage": "Soubor nelze přečíst nebo uložit.",

@@ -276,6 +276,14 @@ class AppLocalizationsHe extends AppLocalizations {
       'הקוד הזה אינו בשימוש: הוא הוקלד בטעות, פג תוקפו או שכבר נעשה בו שימוש. יש לבקש מהשולח קוד חדש.';
 
   @override
+  String get errorCodeExpired =>
+      'תוקף הקוד פג לפני שמישהו השתמש בו. יש לשלוח שוב כדי לקבל קוד חדש.';
+
+  @override
+  String get errorBadServer =>
+      'כתובת השרת אינה תקפה. היא חייבת להתחיל ב־wss://.';
+
+  @override
   String get errorConnect =>
       'לא ניתן להתחבר למכשיר השני. יש לוודא ששני המכשירים מחוברים לאינטרנט ולנסות שוב.';
 

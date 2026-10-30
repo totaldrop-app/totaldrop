@@ -276,6 +276,14 @@ class AppLocalizationsNl extends AppLocalizations {
       'Die code is niet in gebruik: hij is verkeerd getypt, verlopen of al gebruikt. Vraag de afzender om een nieuwe.';
 
   @override
+  String get errorCodeExpired =>
+      'De code is verlopen voordat iemand hem gebruikte. Verstuur opnieuw voor een nieuwe code.';
+
+  @override
+  String get errorBadServer =>
+      'Het serveradres is niet geldig. Het moet beginnen met wss://.';
+
+  @override
   String get errorConnect =>
       'Kan geen verbinding maken met het andere apparaat. Controleer of beide apparaten online zijn en probeer het opnieuw.';
 

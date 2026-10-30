@@ -287,6 +287,13 @@ class AppLocalizationsAr extends AppLocalizations {
       'هذا الرمز غير مستخدم: ربما كُتب بشكل خاطئ، أو انتهت صلاحيته، أو استُخدم من قبل. اطلب رمزًا جديدًا من المرسل.';
 
   @override
+  String get errorCodeExpired =>
+      'انتهت صلاحية الرمز قبل أن يستخدمه أحد. أرسل مرة أخرى للحصول على رمز جديد.';
+
+  @override
+  String get errorBadServer => 'عنوان الخادم غير صالح. يجب أن يبدأ بـ wss://.';
+
+  @override
   String get errorConnect =>
       'تعذر الاتصال بالجهاز الآخر. تأكد من أن الجهازين كليهما متصلان بالإنترنت، ثم أعد المحاولة.';
 

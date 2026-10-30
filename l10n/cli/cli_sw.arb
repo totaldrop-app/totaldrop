@@ -30,6 +30,7 @@
   "cliErrCancelled": "Upande mwingine umesimamisha uhamishaji.",
   "cliErrInvalidCode": "Msimbo huo si sahihi.",
   "cliErrCodeNotInUse": "Msimbo huo hautumiki: ulikosewa kuandikwa, umeisha muda au tayari umetumika. Mwombe mtumaji msimbo mpya.",
+  "cliErrCodeExpired": "Msimbo uliisha muda kabla ya mtu yeyote kuutumia. Tuma tena ili upate msimbo mpya.",
   "cliErrBadServer": "Anwani ya seva si sahihi. Lazima ianze na wss://.",
   "cliErrServer": "Imeshindwa kufikia seva ya TotalDrop. Angalia muunganisho wako wa intaneti.",
   "cliErrConnect": "Imeshindwa kuunganisha na kifaa kingine. Hakikisha vifaa vyote viwili viko mtandaoni kisha ujaribu tena.",

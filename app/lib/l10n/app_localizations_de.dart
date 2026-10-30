@@ -276,6 +276,14 @@ class AppLocalizationsDe extends AppLocalizations {
       'Dieser Code ist nicht in Gebrauch: Er wurde falsch eingegeben, ist abgelaufen oder wurde schon verwendet. Bitten Sie den Absender um einen neuen.';
 
   @override
+  String get errorCodeExpired =>
+      'Der Code ist abgelaufen, bevor ihn jemand verwendet hat. Senden Sie erneut, um einen neuen Code zu erhalten.';
+
+  @override
+  String get errorBadServer =>
+      'Die Serveradresse ist ungültig. Sie muss mit wss:// beginnen.';
+
+  @override
   String get errorConnect =>
       'Keine Verbindung zum anderen Gerät möglich. Prüfen Sie, ob beide Geräte online sind, und versuchen Sie es erneut.';
 

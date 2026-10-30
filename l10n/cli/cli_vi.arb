@@ -30,6 +30,7 @@
   "cliErrCancelled": "Bên kia đã dừng việc truyền.",
   "cliErrInvalidCode": "Mã này không hợp lệ.",
   "cliErrCodeNotInUse": "Mã này không được sử dụng: có thể đã nhập sai, đã hết hạn hoặc đã được dùng. Hãy xin người gửi một mã mới.",
+  "cliErrCodeExpired": "Mã đã hết hạn trước khi có người dùng. Hãy gửi lại để nhận mã mới.",
   "cliErrBadServer": "Địa chỉ máy chủ không hợp lệ. Địa chỉ phải bắt đầu bằng wss://.",
   "cliErrServer": "Không thể kết nối tới máy chủ TotalDrop. Hãy kiểm tra kết nối internet.",
   "cliErrConnect": "Không thể kết nối với thiết bị kia. Hãy kiểm tra cả hai thiết bị đều đang trực tuyến rồi thử lại.",

@@ -280,6 +280,14 @@ class AppLocalizationsRo extends AppLocalizations {
       'Codul nu este folosit: a fost tastat greșit, a expirat sau a fost deja folosit. Cereți expeditorului unul nou.';
 
   @override
+  String get errorCodeExpired =>
+      'Codul a expirat înainte să îl folosească cineva. Trimiteți din nou pentru a primi un cod nou.';
+
+  @override
+  String get errorBadServer =>
+      'Adresa serverului nu este validă. Trebuie să înceapă cu wss://.';
+
+  @override
   String get errorConnect =>
       'Nu s-a putut realiza conexiunea cu celălalt dispozitiv. Verificați că ambele dispozitive sunt online și încercați din nou.';
 

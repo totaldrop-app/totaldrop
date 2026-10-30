@@ -69,6 +69,8 @@
   "errorInvalidCode": "Codul nu este valid.",
   "errorServer": "Serverul TotalDrop nu a putut fi contactat. Verificați conexiunea la internet.",
   "errorCodeNotInUse": "Codul nu este folosit: a fost tastat greșit, a expirat sau a fost deja folosit. Cereți expeditorului unul nou.",
+  "errorCodeExpired": "Codul a expirat înainte să îl folosească cineva. Trimiteți din nou pentru a primi un cod nou.",
+  "errorBadServer": "Adresa serverului nu este validă. Trebuie să înceapă cu wss://.",
   "errorConnect": "Nu s-a putut realiza conexiunea cu celălalt dispozitiv. Verificați că ambele dispozitive sunt online și încercați din nou.",
   "errorInvalidOffer": "Oferta a încălcat o regulă de siguranță, așa că a fost refuzată.",
   "errorStorage": "Un fișier nu a putut fi citit sau salvat.",

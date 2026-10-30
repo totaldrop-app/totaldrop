@@ -16,6 +16,8 @@ String errorMessage(BuildContext context, ErrorKind kind) {
     ErrorKind.stopped => l.errorStopped,
     ErrorKind.invalidCode => l.errorInvalidCode,
     ErrorKind.codeNotInUse => l.errorCodeNotInUse,
+    ErrorKind.codeExpired => l.errorCodeExpired,
+    ErrorKind.badServer => l.errorBadServer,
     ErrorKind.server => l.errorServer,
     ErrorKind.connect => l.errorConnect,
     ErrorKind.invalidOffer => safeL10n(

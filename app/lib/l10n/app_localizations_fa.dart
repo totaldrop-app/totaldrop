@@ -273,6 +273,14 @@ class AppLocalizationsFa extends AppLocalizations {
       'این کد در حال استفاده نیست: اشتباه تایپ شده، منقضی شده یا قبلا استفاده شده است. از فرستنده یک کد جدید بخواهید.';
 
   @override
+  String get errorCodeExpired =>
+      'کد پیش از آنکه کسی از آن استفاده کند منقضی شد. برای گرفتن کد جدید دوباره ارسال کنید.';
+
+  @override
+  String get errorBadServer =>
+      'نشانی سرور معتبر نیست. باید با wss:// شروع شود.';
+
+  @override
   String get errorConnect =>
       'اتصال به دستگاه دیگر ممکن نشد. مطمئن شوید هر دو دستگاه آنلاین هستند و دوباره تلاش کنید.';
 

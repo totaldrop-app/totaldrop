@@ -275,6 +275,14 @@ class AppLocalizationsEn extends AppLocalizations {
       'That code is not in use: it was mistyped, has expired or was already used. Ask the sender for a new one.';
 
   @override
+  String get errorCodeExpired =>
+      'Nobody used the code before it expired. Send again to get a new code.';
+
+  @override
+  String get errorBadServer =>
+      'The server address is not valid. It must start with wss://.';
+
+  @override
   String get errorConnect =>
       'Could not connect to the other device. Check that both devices are online and try again.';
 

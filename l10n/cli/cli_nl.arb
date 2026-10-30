@@ -30,6 +30,7 @@
   "cliErrCancelled": "De andere kant heeft de overdracht gestopt.",
   "cliErrInvalidCode": "Die code is niet geldig.",
   "cliErrCodeNotInUse": "Die code is niet in gebruik: hij is verkeerd getypt, verlopen of al gebruikt. Vraag de afzender om een nieuwe.",
+  "cliErrCodeExpired": "De code is verlopen voordat iemand hem gebruikte. Verstuur opnieuw voor een nieuwe code.",
   "cliErrBadServer": "Het serveradres is niet geldig. Het moet beginnen met wss://.",
   "cliErrServer": "Kan de TotalDrop-server niet bereiken. Controleer je internetverbinding.",
   "cliErrConnect": "Kan geen verbinding maken met het andere apparaat. Controleer of beide apparaten online zijn en probeer het opnieuw.",

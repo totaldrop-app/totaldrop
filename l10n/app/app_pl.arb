@@ -69,6 +69,8 @@
   "errorInvalidCode": "Ten kod jest nieprawidłowy.",
   "errorServer": "Nie można połączyć się z serwerem TotalDrop. Sprawdź połączenie z internetem.",
   "errorCodeNotInUse": "Ten kod nie jest używany: został źle wpisany, wygasł albo został już wykorzystany. Poproś nadawcę o nowy.",
+  "errorCodeExpired": "Kod wygasł, zanim ktokolwiek go użył. Wyślij ponownie, aby dostać nowy kod.",
+  "errorBadServer": "Adres serwera jest nieprawidłowy. Musi zaczynać się od wss://.",
   "errorConnect": "Nie można połączyć się z drugim urządzeniem. Sprawdź, czy oba urządzenia są online, i spróbuj ponownie.",
   "errorInvalidOffer": "Oferta naruszyła regułę bezpieczeństwa, więc została odrzucona.",
   "errorStorage": "Nie można odczytać lub zapisać pliku.",

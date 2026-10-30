@@ -283,6 +283,14 @@ class AppLocalizationsPl extends AppLocalizations {
       'Ten kod nie jest używany: został źle wpisany, wygasł albo został już wykorzystany. Poproś nadawcę o nowy.';
 
   @override
+  String get errorCodeExpired =>
+      'Kod wygasł, zanim ktokolwiek go użył. Wyślij ponownie, aby dostać nowy kod.';
+
+  @override
+  String get errorBadServer =>
+      'Adres serwera jest nieprawidłowy. Musi zaczynać się od wss://.';
+
+  @override
   String get errorConnect =>
       'Nie można połączyć się z drugim urządzeniem. Sprawdź, czy oba urządzenia są online, i spróbuj ponownie.';
 

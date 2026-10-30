@@ -281,6 +281,14 @@ class AppLocalizationsIt extends AppLocalizations {
       'Questo codice non è in uso: è stato digitato male, è scaduto o è già stato usato. Chiedine uno nuovo a chi invia.';
 
   @override
+  String get errorCodeExpired =>
+      'Il codice è scaduto prima che qualcuno lo usasse. Invia di nuovo per ottenere un nuovo codice.';
+
+  @override
+  String get errorBadServer =>
+      'L\'indirizzo del server non è valido. Deve iniziare con wss://.';
+
+  @override
   String get errorConnect =>
       'Impossibile connettersi all\'altro dispositivo. Controlla che entrambi i dispositivi siano online e riprova.';
 

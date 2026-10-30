@@ -253,6 +253,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get errorCodeNotInUse => '该代码未在使用中：可能输错了、已过期或已被使用。请向发送方索取新代码。';
 
   @override
+  String get errorCodeExpired => '代码在有人使用之前就已过期。请重新发送以获取新代码。';
+
+  @override
+  String get errorBadServer => '服务器地址无效。必须以 wss:// 开头。';
+
+  @override
   String get errorConnect => '无法连接到另一台设备。请确认两台设备都已联网，然后重试。';
 
   @override
@@ -639,6 +645,12 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get errorCodeNotInUse => '该代码未在使用中：可能输错了、已过期或已被使用。请向发送方索取新代码。';
 
   @override
+  String get errorCodeExpired => '代码在有人使用之前就已过期。请重新发送以获取新代码。';
+
+  @override
+  String get errorBadServer => '服务器地址无效。必须以 wss:// 开头。';
+
+  @override
   String get errorConnect => '无法连接到另一台设备。请确认两台设备都已联网，然后重试。';
 
   @override
@@ -1023,6 +1035,12 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get errorCodeNotInUse => '這組代碼目前未使用：可能輸入錯誤、已過期或已被使用。請向傳送者索取新的代碼。';
+
+  @override
+  String get errorCodeExpired => '代碼在有人使用之前就已過期。請重新傳送以取得新的代碼。';
+
+  @override
+  String get errorBadServer => '伺服器位址無效。必須以 wss:// 開頭。';
 
   @override
   String get errorConnect => '無法連線到另一部裝置。請確認兩部裝置都已連上網路，然後再試一次。';

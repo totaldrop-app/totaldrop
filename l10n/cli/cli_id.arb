@@ -30,6 +30,7 @@
   "cliErrCancelled": "Pihak lain menghentikan transfer.",
   "cliErrInvalidCode": "Kode itu tidak valid.",
   "cliErrCodeNotInUse": "Kode itu tidak sedang digunakan: salah ketik, sudah kedaluwarsa, atau sudah dipakai. Minta kode baru dari pengirim.",
+  "cliErrCodeExpired": "Kode kedaluwarsa sebelum ada yang memakainya. Kirim lagi untuk mendapatkan kode baru.",
   "cliErrBadServer": "Alamat server tidak valid. Harus diawali wss://.",
   "cliErrServer": "Tidak dapat menjangkau server TotalDrop. Periksa koneksi internet Anda.",
   "cliErrConnect": "Tidak dapat terhubung ke perangkat lain. Pastikan kedua perangkat online, lalu coba lagi.",

@@ -69,6 +69,8 @@
   "errorInvalidCode": "Koden är inte giltig.",
   "errorServer": "Kunde inte nå TotalDrop-servern. Kontrollera din internetanslutning.",
   "errorCodeNotInUse": "Koden används inte: den skrevs fel, har gått ut eller har redan använts. Be avsändaren om en ny.",
+  "errorCodeExpired": "Koden gick ut innan någon använde den. Skicka igen för att få en ny kod.",
+  "errorBadServer": "Serveradressen är inte giltig. Den måste börja med wss://.",
   "errorConnect": "Kunde inte ansluta till den andra enheten. Kontrollera att båda enheterna är online och försök igen.",
   "errorInvalidOffer": "Erbjudandet bröt mot en säkerhetsregel och avvisades.",
   "errorStorage": "En fil kunde inte läsas eller sparas.",

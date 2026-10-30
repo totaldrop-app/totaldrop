@@ -69,6 +69,8 @@
   "errorInvalidCode": "Questo codice non è valido.",
   "errorServer": "Impossibile raggiungere il server di TotalDrop. Controlla la connessione a internet.",
   "errorCodeNotInUse": "Questo codice non è in uso: è stato digitato male, è scaduto o è già stato usato. Chiedine uno nuovo a chi invia.",
+  "errorCodeExpired": "Il codice è scaduto prima che qualcuno lo usasse. Invia di nuovo per ottenere un nuovo codice.",
+  "errorBadServer": "L'indirizzo del server non è valido. Deve iniziare con wss://.",
   "errorConnect": "Impossibile connettersi all'altro dispositivo. Controlla che entrambi i dispositivi siano online e riprova.",
   "errorInvalidOffer": "L'offerta violava una regola di sicurezza ed è stata rifiutata.",
   "errorStorage": "Non è stato possibile leggere o salvare un file.",

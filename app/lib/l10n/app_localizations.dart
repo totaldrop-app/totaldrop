@@ -554,6 +554,18 @@ abstract class AppLocalizations {
   /// **'That code is not in use: it was mistyped, has expired or was already used. Ask the sender for a new one.'**
   String get errorCodeNotInUse;
 
+  /// Shown to the sender: nobody came for the code before the server let it expire (15 minutes). Same text as cliErrCodeExpired
+  ///
+  /// In en, this message translates to:
+  /// **'Nobody used the code before it expired. Send again to get a new code.'**
+  String get errorCodeExpired;
+
+  /// The rendezvous server address in the settings is not valid. Same text as cliErrBadServer
+  ///
+  /// In en, this message translates to:
+  /// **'The server address is not valid. It must start with wss://.'**
+  String get errorBadServer;
+
   /// No description provided for @errorConnect.
   ///
   /// In en, this message translates to:
