@@ -73,6 +73,21 @@ pub async fn gtk_theme() -> Option<String> {
     s.read::<String>(GNOME_INTERFACE, "gtk-theme").await.ok()
 }
 
+/// Call `on_change` with the GTK theme's name each time it changes, as
+/// GNOME Tweaks, nwg-look or `gsettings` set it. Returns if the portal is
+/// missing or goes away.
+pub async fn watch_gtk_theme(mut on_change: impl FnMut(Option<String>)) {
+    let Ok(s) = Settings::new().await else { return };
+    let Ok(mut changes) = s.receive_setting_changed().await else {
+        return;
+    };
+    while let Some(setting) = changes.next().await {
+        if setting.namespace() == GNOME_INTERFACE && setting.key() == "gtk-theme" {
+            on_change(s.read::<String>(GNOME_INTERFACE, "gtk-theme").await.ok());
+        }
+    }
+}
+
 /// Read the appearance once.
 pub async fn current() -> Option<Appearance> {
     let s = Settings::new().await.ok()?;

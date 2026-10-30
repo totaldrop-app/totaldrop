@@ -59,33 +59,72 @@ pub fn adwaita(dark: bool) -> Palette {
     }
 }
 
-/// Named colours from a `gtk.css`: `@define-color name value;`.
+/// A colour as a theme writes it. A translucent one is drawn over what
+/// lies under it, which is only known once the whole palette is.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Colour {
+    /// The colour itself.
+    pub rgb: Rgb,
+    /// Its opacity, 0 to 1.
+    pub alpha: f64,
+}
+
+impl Colour {
+    /// The colour as seen over `under`.
+    pub fn over(self, under: Rgb) -> Rgb {
+        under.mix(self.rgb, self.alpha)
+    }
+}
+
+/// Named colours from a `gtk.css`: `@define-color name value;`, and the
+/// CSS variables libadwaita 1.6 reads (`--accent-bg-color: value;`, kept
+/// as `accent_bg_color`).
 ///
 /// Values are `#rgb`, `#rrggbb`, `rgb()`, `rgba()` or a reference to a
-/// colour defined earlier (`@name`). A translucent colour is laid over
-/// `under`, as GTK draws it on the window. Anything else (`shade()`,
-/// `mix()`, `alpha()` and the like) is skipped.
-pub fn define_colors(css: &str, under: Rgb) -> HashMap<String, Rgb> {
-    let mut out: HashMap<String, Rgb> = HashMap::new();
-    for statement in css.split(';') {
-        let s = strip_comments(statement);
-        let Some(rest) = s.trim().strip_prefix("@define-color") else {
+/// colour defined earlier (`@name`, `var(--name)`). Anything else
+/// (`shade()`, `mix()`, `alpha()` and the like) is skipped.
+pub fn define_colors(css: &str) -> HashMap<String, Colour> {
+    let mut out: HashMap<String, Colour> = HashMap::new();
+    let css = strip_comments(css);
+    // Rule blocks hold the variables; their braces end a statement too.
+    for statement in css.split([';', '{', '}']) {
+        let s = statement.trim();
+        let (name, value) = if let Some(rest) = s.strip_prefix("@define-color") {
+            if !rest.starts_with(char::is_whitespace) {
+                continue;
+            }
+            let mut parts = rest.trim().splitn(2, char::is_whitespace);
+            let (Some(name), Some(value)) = (parts.next(), parts.next()) else {
+                continue;
+            };
+            (name.to_owned(), value.trim())
+        } else if let Some(rest) = s.strip_prefix("--") {
+            let Some((name, value)) = rest.split_once(':') else {
+                continue;
+            };
+            (name.trim().replace('-', "_"), value.trim())
+        } else {
             continue;
         };
-        let mut parts = rest.trim().splitn(2, char::is_whitespace);
-        let (Some(name), Some(value)) = (parts.next(), parts.next()) else {
-            continue;
-        };
-        let value = value.trim();
-        let colour = match value.strip_prefix('@') {
-            Some(other) => out.get(other).copied(),
-            None => css_colour(value, under),
+        let reference = value.strip_prefix('@').or_else(|| {
+            value
+                .strip_prefix("var(--")
+                .and_then(|v| v.strip_suffix(')'))
+        });
+        let colour = match reference {
+            Some(other) => out.get(&other.trim().replace('-', "_")).copied(),
+            None => css_colour(value),
         };
         if let Some(c) = colour {
-            out.insert(name.to_owned(), c);
+            out.insert(name, c);
         }
     }
     out
+}
+
+/// Whether `colors` names an accent of its own.
+pub fn defines_accent(colors: &HashMap<String, Colour>) -> bool {
+    ACCENT.iter().any(|n| colors.contains_key(*n))
 }
 
 fn strip_comments(s: &str) -> String {
@@ -102,8 +141,8 @@ fn strip_comments(s: &str) -> String {
     out
 }
 
-/// One CSS colour value, laid over `under` if translucent.
-fn css_colour(value: &str, under: Rgb) -> Option<Rgb> {
+/// One CSS colour value.
+fn css_colour(value: &str) -> Option<Colour> {
     let v = value.trim();
     if let Some(hex) = v.strip_prefix('#') {
         let full: String = match hex.len() {
@@ -111,7 +150,7 @@ fn css_colour(value: &str, under: Rgb) -> Option<Rgb> {
             6 => hex.to_owned(),
             _ => return None,
         };
-        return Rgb::parse(&format!("#{full}"));
+        return Rgb::parse(&format!("#{full}")).map(|rgb| Colour { rgb, alpha: 1.0 });
     }
     let inner = v
         .strip_prefix("rgba(")
@@ -132,51 +171,119 @@ fn css_colour(value: &str, under: Rgb) -> Option<Rgb> {
         Some(a) => a.parse::<f64>().ok()?.clamp(0.0, 1.0),
         None => 1.0,
     };
-    let solid = Rgb::from_unit(r, g, b)?;
-    Some(under.mix(solid, alpha))
+    Some(Colour {
+        rgb: Rgb::from_unit(r, g, b)?,
+        alpha,
+    })
 }
 
+const BACKGROUND: &[&str] = &["window_bg_color", "theme_bg_color"];
+const INK: &[&str] = &["window_fg_color", "theme_fg_color"];
+const CARD: &[&str] = &["card_bg_color", "view_bg_color", "theme_base_color"];
+const ACCENT: &[&str] = &["accent_bg_color", "accent_color", "theme_selected_bg_color"];
+const ACCENT_TEXT: &[&str] = &["accent_fg_color", "theme_selected_fg_color"];
+const SUCCESS: &[&str] = &["success_color", "success_bg_color"];
+const ERROR: &[&str] = &["error_color", "destructive_color", "error_bg_color"];
+
 /// Overlay the named colours in `colors` on `base`. Both the GTK 4 names
-/// (`window_bg_color`) and the GTK 3 ones (`theme_bg_color`) count.
-pub fn apply(base: Palette, colors: &HashMap<String, Rgb>) -> Palette {
+/// (`window_bg_color`) and the GTK 3 ones (`theme_bg_color`) count. The
+/// background is laid over the base's, everything else over the new
+/// background.
+pub fn apply(base: Palette, colors: &HashMap<String, Colour>) -> Palette {
     let get = |names: &[&str]| names.iter().find_map(|n| colors.get(*n).copied());
     let mut p = base;
-    if let Some(bg) = get(&["window_bg_color", "theme_bg_color"]) {
-        p.background = bg;
-        p.dark = bg.is_dark();
+    let bg = get(BACKGROUND);
+    let ink = get(INK);
+    if let Some(bg) = bg {
+        p.background = bg.over(base.background);
+        p.dark = p.background.is_dark();
     }
-    if let Some(ink) = get(&["window_fg_color", "theme_fg_color"]) {
-        p.ink = ink;
+    if let Some(ink) = ink {
+        p.ink = ink.over(p.background);
     }
-    match get(&["card_bg_color", "view_bg_color", "theme_base_color"]) {
+    // The roles GTK does not name follow the base colours, and only them.
+    let base_changed = bg.is_some() || ink.is_some();
+    match get(CARD).map(|c| c.over(p.background)) {
         Some(card) if card != p.background => p.raised = card,
-        _ if colors.is_empty() => {}
-        _ => p.raised = p.background.mix(p.ink, 0.06),
+        _ if base_changed => p.raised = p.background.mix(p.ink, 0.06),
+        _ => {}
     }
-    if let Some(accent) = get(&["accent_bg_color", "accent_color", "theme_selected_bg_color"]) {
-        p.accent = accent;
+    if let Some(accent) = get(ACCENT) {
+        p.accent = accent.over(p.background);
     }
-    p.accent_text = match get(&["accent_fg_color", "theme_selected_fg_color"]) {
+    p.accent_text = match get(ACCENT_TEXT).map(|t| t.over(p.accent)) {
         Some(t) if t.contrast(p.accent) >= ACCENT_TEXT_CONTRAST => t,
         _ => accent_text(p.accent, &p),
     };
-    if let Some(s) = get(&["success_color", "success_fg_color"]) {
-        p.success = s;
+    if let Some(s) = get(SUCCESS) {
+        p.success = s.over(p.background);
     }
-    if let Some(e) = get(&["error_color", "destructive_color", "error_fg_color"]) {
-        p.error = e;
+    if let Some(e) = get(ERROR) {
+        p.error = e.over(p.background);
     }
     // Derived roles keep their contrast whatever the theme gave.
-    if p.muted.contrast(p.background) < 4.5 || !colors.is_empty() {
+    if base_changed || p.muted.contrast(p.background) < 4.5 {
         p.muted = p.ink.mix(p.background, 0.35);
         if p.muted.contrast(p.background) < 4.5 {
             p.muted = p.ink.mix(p.background, 0.2);
         }
     }
-    if !colors.is_empty() {
+    if base_changed {
         p.rule = p.background.mix(p.ink, 0.14);
     }
     p
+}
+
+/// How deep `@import`s are followed.
+const IMPORT_DEPTH: u8 = 3;
+
+/// The text of a `gtk.css`, with the files it imports from its own folder
+/// put in place of the `@import`, as many themes keep their colours in
+/// `gtk-contained.css`. Imports of GResources, absolute paths and paths
+/// out of the folder are left out.
+pub fn read_css(path: &Path) -> String {
+    read_css_at(path, IMPORT_DEPTH)
+}
+
+fn read_css_at(path: &Path, depth: u8) -> String {
+    let Ok(text) = std::fs::read_to_string(path) else {
+        return String::new();
+    };
+    let text = strip_comments(&text);
+    let mut out = String::new();
+    for statement in text.split(';') {
+        let import = statement
+            .trim()
+            .strip_prefix("@import")
+            .and_then(import_target)
+            .filter(|_| depth > 0)
+            .and_then(|t| path.parent().map(|d| d.join(t)));
+        match import {
+            Some(child) => out.push_str(&read_css_at(&child, depth.saturating_sub(1))),
+            None => out.push_str(statement),
+        }
+        out.push(';');
+    }
+    out
+}
+
+/// The file an `@import` names, if it is a plain relative path inside the
+/// importing file's folder.
+fn import_target(rest: &str) -> Option<PathBuf> {
+    let r = rest.trim();
+    let r = r
+        .strip_prefix("url(")
+        .and_then(|u| u.strip_suffix(')'))
+        .unwrap_or(r)
+        .trim()
+        .trim_matches(|c| c == '"' || c == '\'');
+    if r.is_empty() || r.contains(':') || r.contains('\0') {
+        return None;
+    }
+    let path = PathBuf::from(r);
+    path.components()
+        .all(|c| matches!(c, std::path::Component::Normal(_)))
+        .then_some(path)
 }
 
 /// `~/.config/gtk-4.0/gtk.css`: the person's own overrides, which
@@ -188,7 +295,12 @@ pub fn user_css() -> Option<PathBuf> {
 /// The `gtk.css` of the GTK theme called `name`, GTK 4 first, in the
 /// places GTK looks.
 pub fn theme_css(name: &str, dark: bool) -> Option<PathBuf> {
-    if name.is_empty() || name.contains('/') || name.starts_with("Adwaita") {
+    if name.is_empty()
+        || name == "."
+        || name == ".."
+        || name.contains(['/', '\0'])
+        || name.starts_with("Adwaita")
+    {
         return None;
     }
     let mut roots = Vec::new();
@@ -232,28 +344,57 @@ pub fn settings_theme() -> Option<String> {
     })
 }
 
+/// A GTK palette, and whether its files named an accent: one they name
+/// wins over the portal's, as it does in GTK.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Gtk {
+    /// The colours.
+    pub palette: Palette,
+    /// The theme or the person's `gtk.css` named an accent.
+    pub own_accent: bool,
+}
+
 /// The palette: Adwaita in the given scheme, then the GTK theme `theme`
 /// (outside GNOME, where libadwaita ignores it), then the person's own
 /// overrides.
-pub fn palette(dark: bool, theme: Option<&str>, gnome: bool) -> Palette {
-    let mut p = adwaita(dark);
-    let read = |path: &Path, under: Rgb| {
-        std::fs::read_to_string(path)
-            .map(|css| define_colors(&css, under))
-            .unwrap_or_default()
+pub fn palette(dark: bool, theme: Option<&str>, gnome: bool) -> Gtk {
+    let theme_file = if gnome {
+        None
+    } else {
+        theme.and_then(|t| theme_css(t, dark))
     };
-    if !gnome && let Some(path) = theme.and_then(|t| theme_css(t, dark)) {
-        p = apply(p, &read(&path, p.background));
+    palette_from(dark, theme_file.as_deref(), user_css().as_deref())
+}
+
+/// [`palette`] from the given files.
+pub fn palette_from(dark: bool, theme_file: Option<&Path>, user_file: Option<&Path>) -> Gtk {
+    let mut g = Gtk {
+        palette: adwaita(dark),
+        own_accent: false,
+    };
+    for file in [theme_file, user_file].into_iter().flatten() {
+        let colors = define_colors(&read_css(file));
+        g.own_accent |= defines_accent(&colors);
+        g.palette = apply(g.palette, &colors);
     }
-    if let Some(path) = user_css() {
-        p = apply(p, &read(&path, p.background));
-    }
-    p
+    g
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// A fresh folder for one test's files.
+    fn scratch(name: &str) -> PathBuf {
+        let d = std::env::temp_dir().join(format!("totaldrop-gtk-{}-{name}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&d);
+        std::fs::create_dir_all(&d).unwrap_or_default();
+        d
+    }
+
+    fn rgb(c: &HashMap<String, Colour>, name: &str, under: Rgb) -> String {
+        c.get(name).map(|c| c.over(under).hex()).unwrap_or_default()
+    }
 
     #[test]
     fn adwaita_meets_contrast() {
@@ -274,14 +415,35 @@ mod tests {
                    @define-color blue_3 #3584e4;\n\
                    @define-color headerbar_bg_color shade(#303030, 1.1);\n\
                    @define-color theme_selected_bg_color #f0f;";
-        let c = define_colors(css, Rgb(0x24, 0x24, 0x24));
-        assert_eq!(c["window_bg_color"].hex(), "#242424");
-        assert_eq!(c["window_fg_color"].hex(), "#ffffff");
-        assert_eq!(c["card_bg_color"].hex(), "#363636");
+        let c = define_colors(css);
+        let under = Rgb(0x24, 0x24, 0x24);
+        assert_eq!(rgb(&c, "window_bg_color", under), "#242424");
+        assert_eq!(rgb(&c, "window_fg_color", under), "#ffffff");
+        assert_eq!(rgb(&c, "card_bg_color", under), "#363636");
         // Defined later: not known yet when referenced.
         assert!(!c.contains_key("accent_bg_color"));
         assert!(!c.contains_key("headerbar_bg_color"));
-        assert_eq!(c["theme_selected_bg_color"].hex(), "#ff00ff");
+        assert_eq!(rgb(&c, "theme_selected_bg_color", under), "#ff00ff");
+    }
+
+    #[test]
+    fn comments_and_rules_do_not_hide_colours() {
+        let css = "/* @define-color accent_bg_color #f00; */\n\
+                   @define-color window_bg_color #101010;\n\
+                   window { color: red; }\n\
+                   @define-color accent_bg_color #00ff00;";
+        let c = define_colors(css);
+        assert_eq!(rgb(&c, "window_bg_color", Rgb::WHITE), "#101010");
+        assert_eq!(rgb(&c, "accent_bg_color", Rgb::WHITE), "#00ff00");
+    }
+
+    #[test]
+    fn reads_css_variables() {
+        let css = ":root { --accent-bg-color: #e01b24; --accent-color: var(--accent-bg-color); }";
+        let c = define_colors(css);
+        assert_eq!(rgb(&c, "accent_bg_color", Rgb::WHITE), "#e01b24");
+        assert_eq!(rgb(&c, "accent_color", Rgb::WHITE), "#e01b24");
+        assert!(defines_accent(&c));
     }
 
     #[test]
@@ -290,7 +452,7 @@ mod tests {
                    @define-color theme_fg_color #d3dae3;\n\
                    @define-color theme_base_color #383c4a;\n\
                    @define-color theme_selected_bg_color #5294e2;";
-        let p = apply(adwaita(false), &define_colors(css, Rgb::WHITE));
+        let p = apply(adwaita(false), &define_colors(css));
         assert!(p.dark);
         assert_eq!(p.background.hex(), "#2b2e37");
         assert_eq!(p.raised.hex(), "#383c4a");
@@ -300,8 +462,90 @@ mod tests {
     }
 
     #[test]
+    fn translucent_colours_lie_on_the_files_own_background() {
+        // A dark file read for the light scheme (#174 review).
+        let css = "@define-color window_bg_color #242424;\n\
+                   @define-color window_fg_color #ffffff;\n\
+                   @define-color card_bg_color rgba(255, 255, 255, 0.08);";
+        let p = apply(adwaita(false), &define_colors(css));
+        assert_eq!(p.raised.hex(), "#363636");
+        assert!(p.ink.contrast(p.raised) >= 4.5);
+    }
+
+    #[test]
+    fn an_accent_alone_changes_only_the_accent() {
+        let css = "@define-color accent_bg_color #e01b24;";
+        let p = apply(adwaita(false), &define_colors(css));
+        let a = adwaita(false);
+        assert_eq!(p.accent.hex(), "#e01b24");
+        assert_eq!(p.raised, a.raised);
+        assert_eq!(p.muted, a.muted);
+        assert_eq!(p.rule, a.rule);
+    }
+
+    #[test]
+    fn success_and_error_are_not_their_text() {
+        let css = "@define-color error_bg_color #c01c28;\n\
+                   @define-color error_fg_color #ffffff;\n\
+                   @define-color success_bg_color #2ec27e;\n\
+                   @define-color success_fg_color #ffffff;";
+        let p = apply(adwaita(false), &define_colors(css));
+        assert_eq!(p.error.hex(), "#c01c28");
+        assert_eq!(p.success.hex(), "#2ec27e");
+    }
+
+    #[test]
     fn nothing_defined_keeps_adwaita() {
         assert_eq!(apply(adwaita(true), &HashMap::new()), adwaita(true));
+    }
+
+    #[test]
+    fn follows_imports_inside_the_theme_only() {
+        let d = scratch("import");
+        let write = |name: &str, text: &str| std::fs::write(d.join(name), text).unwrap_or_default();
+        write(
+            "gtk.css",
+            "@import url(\"gtk-contained.css\");\n@import url(\"../outside.css\");\n@import url(\"resource:///org/gtk/x.css\");",
+        );
+        write("gtk-contained.css", "@define-color theme_bg_color #2b2e37;");
+        let colors = define_colors(&read_css(&d.join("gtk.css")));
+        assert_eq!(rgb(&colors, "theme_bg_color", Rgb::WHITE), "#2b2e37");
+        assert_eq!(import_target("url(\"../outside.css\")"), None);
+        assert_eq!(import_target("\"/etc/passwd\""), None);
+        // A file that imports itself stops.
+        write(
+            "loop.css",
+            "@import \"loop.css\"; @define-color theme_bg_color #000000;",
+        );
+        let looped = define_colors(&read_css(&d.join("loop.css")));
+        assert_eq!(rgb(&looped, "theme_bg_color", Rgb::WHITE), "#000000");
+        let _ = std::fs::remove_dir_all(&d);
+    }
+
+    #[test]
+    fn the_persons_css_comes_after_the_theme() {
+        let d = scratch("layers");
+        let theme = d.join("theme.css");
+        let user = d.join("user.css");
+        std::fs::write(
+            &theme,
+            "@define-color theme_bg_color #2b2e37; @define-color theme_fg_color #d3dae3;",
+        )
+        .unwrap_or_default();
+        std::fs::write(&user, "@define-color accent_bg_color #e01b24;").unwrap_or_default();
+        let g = palette_from(false, Some(&theme), Some(&user));
+        assert_eq!(g.palette.background.hex(), "#2b2e37");
+        assert_eq!(g.palette.accent.hex(), "#e01b24");
+        assert!(g.own_accent);
+        let plain = palette_from(true, Some(&d.join("missing.css")), None);
+        assert_eq!(
+            plain,
+            Gtk {
+                palette: adwaita(true),
+                own_accent: false
+            }
+        );
+        let _ = std::fs::remove_dir_all(&d);
     }
 
     #[test]
@@ -309,5 +553,8 @@ mod tests {
         assert_eq!(theme_css("Adwaita", false), None);
         assert_eq!(theme_css("Adwaita-dark", true), None);
         assert_eq!(theme_css("../etc", true), None);
+        assert_eq!(theme_css("..", true), None);
+        assert_eq!(theme_css(".", true), None);
+        assert_eq!(theme_css("a\0b", true), None);
     }
 }

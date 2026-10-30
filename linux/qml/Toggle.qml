@@ -28,7 +28,11 @@ Switch {
                 radius: 10
                 y: 3
                 x: s.checked !== s.mirrored ? parent.width - width - 3 : 3
-                color: s.checked ? Theme.accentText : Theme.ink
+                // GTK draws the knob white, on or off.
+                color: "#ffffff"
+                // GTK shades its edge so it shows on a light track.
+                border.width: 1
+                border.color: Qt.rgba(0, 0, 0, 0.15)
                 Behavior on x { enabled: !Theme.reducedMotion; NumberAnimation { duration: 120 } }
             }
             Rectangle {

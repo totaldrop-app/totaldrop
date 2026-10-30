@@ -8,7 +8,7 @@ import app.totaldrop
 ToolButton {
     id: b
     display: AbstractButton.IconOnly
-    icon.color: Theme.fusion ? Theme.ink : "transparent"
+    icon.color: !Theme.fusion ? "transparent" : enabled ? Theme.ink : Theme.muted
     ToolTip.visible: hovered
     ToolTip.text: text
     Keys.onReturnPressed: (e) => { if (!e.isAutoRepeat) click() }

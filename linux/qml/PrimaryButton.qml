@@ -32,7 +32,7 @@ Button {
         id: fill
         Rectangle {
             implicitHeight: 36
-            radius: Math.min(Theme.radius, height / 2)
+            radius: Theme.controlRadius
             color: !b.enabled ? Qt.alpha(Theme.accent, 0.4)
                  : b.down ? Qt.tint(Theme.accent, Qt.alpha(Theme.accentText, 0.2))
                  : b.hovered ? Qt.tint(Theme.accent, Qt.alpha(Theme.accentText, 0.1))

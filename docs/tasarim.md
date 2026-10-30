@@ -12,9 +12,9 @@ Sistem temasını değiştirdiğinizde uygulama yeniden başlatılmadan yeni tem
 |---|---|---|---|
 | Android 12 ve üstü | Material You (dynamic_color) | Material 3 | Sistem |
 | Omarchy | `~/.local/state/omarchy/current/theme/colors.toml`; tema değişince canlı yeniden okunur | Fusion, renkler temadan | Hyprland çizer, uygulama kendi çerçevesini çizmez |
-| Hyprland (Omarchy olmadan) | xdg-desktop-portal `org.freedesktop.appearance` (color-scheme, accent-color) ve Qt paleti (hyprqt6engine ya da qt6ct) | Sistem Qt stili, yoksa Fusion | Hyprland çizer |
+| Hyprland (Omarchy olmadan) | Qt paleti varsa (hyprqt6engine ya da qt6ct) o; yoksa GTK teması (`gtk-theme` adıyla `gtk.css`, üstüne `~/.config/gtk-4.0/gtk.css`), açık/koyu ve vurgu portaldan (temanın kendi vurgusu varsa o kazanır) | Sistem Qt stili, yoksa GTK biçiminde Fusion | Hyprland çizer |
 | KDE Plasma | Plasma'nın Qt paleti ve `kdeglobals` (vurgu dahil) | `org.kde.desktop` (qqc2-desktop-style), Breeze simgeler | KWin çizer (sunucu tarafı çerçeve) |
-| GNOME ve diğerleri | xdg-desktop-portal color-scheme ve accent-color | Fusion | Sistem |
+| GNOME ve diğerleri | GNOME'da libadwaita paleti, diğerlerinde GTK teması; ikisinde de üstüne `~/.config/gtk-4.0/gtk.css`. Açık/koyu ve vurgu portaldan; `gtk.css` vurgu verirse o kazanır. Tema ya da `gtk.css` değişince canlı yeniden okunur | GTK biçiminde Fusion (düğme, alan ve anahtar GTK gibi çizilir, simgeler yazı renginde) | Sistem |
 
 Her değişiklikten sonra bu ortamların hepsinde açık ve koyu temada ekran görüntüsü alınarak kontrol edilir.
 

@@ -20,10 +20,13 @@ TextField {
         id: surface
         Rectangle {
             implicitHeight: 36
-            radius: Math.min(Theme.radius, height / 2)
+            radius: Theme.controlRadius
             color: Theme.raised
             border.width: f.activeFocus ? 2 : 1
-            border.color: f.activeFocus ? Theme.accent : Theme.rule
+            border.color: f.activeFocus ? Theme.accent
+                        : f.hovered ? Qt.tint(Theme.rule, Qt.alpha(Theme.ink, 0.2))
+                        : Theme.rule
+            opacity: f.enabled ? 1 : 0.6
         }
     }
 }
