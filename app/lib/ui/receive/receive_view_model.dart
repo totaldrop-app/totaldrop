@@ -44,6 +44,9 @@ class ReceiveViewModel extends ChangeNotifier {
   ReceiveStage stage = ReceiveStage.entering;
   String input = '';
   bool showInvalid = false;
+  // The code as read, shown while connecting: what is typed or pasted can
+  // look different (direction marks, Arabic-Indic digits, a whole message).
+  String? connectingCode;
   Offer? offer;
   String? folder;
   int done = 0;
@@ -70,6 +73,7 @@ class ReceiveViewModel extends ChangeNotifier {
       return;
     }
     stage = ReceiveStage.connecting;
+    connectingCode = code;
     error = null;
     final generation = ++_generation;
     final stopper = _repo.newStopper();
@@ -171,6 +175,7 @@ class ReceiveViewModel extends ChangeNotifier {
     stage = ReceiveStage.entering;
     input = '';
     showInvalid = false;
+    connectingCode = null;
     offer = null;
     done = 0;
     total = 0;

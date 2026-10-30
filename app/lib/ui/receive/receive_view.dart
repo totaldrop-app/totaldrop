@@ -96,6 +96,16 @@ class _ReceiveViewState extends State<ReceiveView> {
                             l.receiveConnecting,
                             style: Theme.of(context).textTheme.titleMedium,
                           ),
+                          if (vm.connectingCode case final code?) ...[
+                            Gap.s,
+                            // The code is English words, left to right in
+                            // every language.
+                            Text(
+                              code,
+                              textDirection: TextDirection.ltr,
+                              style: Theme.of(context).textTheme.titleLarge,
+                            ),
+                          ],
                         ],
                       ),
                     ),

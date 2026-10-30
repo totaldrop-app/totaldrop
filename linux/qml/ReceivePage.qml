@@ -16,6 +16,9 @@ Page {
     readonly property bool running: ["connecting", "offer", "transferring"].indexOf(phase) >= 0
     property bool tried: false
     property string notice: ""
+    // The code as read, shown while connecting: what is typed or pasted can
+    // look different (direction marks, Arabic-Indic digits, a whole message).
+    property string connectingCode: ""
 
     background: null
 
@@ -40,7 +43,9 @@ Page {
     readonly property string normalized: transfer.normalizeCode(field.text)
     function connect() {
         page.tried = true
-        if (page.normalized !== "") page.transfer.receive(page.normalized)
+        if (page.normalized === "") return
+        page.connectingCode = page.normalized
+        page.transfer.receive(page.normalized)
     }
 
     // The word being typed, for completion: the last part, letters only,
@@ -169,6 +174,16 @@ Page {
             Item { Layout.fillHeight: true }
             Mark { size: 140; sending: page.phase === "connecting"; Layout.alignment: Qt.AlignHCenter }
             Label { text: Strings.s.receiveConnecting; color: Theme.muted; Layout.alignment: Qt.AlignHCenter }
+            Label {
+                text: page.connectingCode
+                visible: text !== ""
+                // The code is English words, left to right in every language.
+                LayoutMirroring.enabled: false
+                textFormat: Text.PlainText
+                color: Theme.ink
+                font.pointSize: Qt.application.font.pointSize * 1.35
+                Layout.alignment: Qt.AlignHCenter
+            }
             Item { Layout.fillHeight: true }
             Button { text: Strings.s.cancel; onClicked: page.transfer.cancel(); Layout.alignment: Qt.AlignRight }
         }
