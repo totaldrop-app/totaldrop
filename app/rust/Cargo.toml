@@ -15,9 +15,9 @@ crate-type = ["cdylib", "staticlib"]
 [dependencies]
 flutter_rust_bridge = "=2.13.0"
 tokio = { version = "1.54.1", features = ["macros", "rt-multi-thread"] }
-totaldrop-core = { version = "0.1.0-beta.1", path = "../../crates/totaldrop-core" }
-totaldrop-proto = { version = "0.1.0-beta.1", path = "../../crates/totaldrop-proto" }
-totaldrop-l10n = { version = "0.1.0-beta.2", path = "../../crates/totaldrop-l10n" }
+totaldrop-core = { version = "0.2.0-beta.1", path = "../../crates/totaldrop-core" }
+totaldrop-proto = { version = "0.2.0-beta.1", path = "../../crates/totaldrop-proto" }
+totaldrop-l10n = { version = "0.2.0-beta.1", path = "../../crates/totaldrop-l10n" }
 
 [lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(frb_expand)'] }
