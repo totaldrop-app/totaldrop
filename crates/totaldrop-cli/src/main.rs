@@ -433,7 +433,8 @@ fn error_key(e: &totaldrop_core::Error, sending: bool) -> &'static str {
         E::Rejected(RejectReason::Invalid) => "cliErrInvalidOffer",
         E::Cancelled(_) => "cliErrCancelled",
         E::Code(_) => "cliErrInvalidCode",
-        E::Rendezvous(_) if e.is_code_not_in_use() && sending => "cliErrCodeExpired",
+        // Only waiting gives "mailbox expired"; allocating does not.
+        E::Rendezvous(r) if sending && r == "mailbox expired" => "cliErrCodeExpired",
         E::Rendezvous(_) if e.is_code_not_in_use() => "cliErrCodeNotInUse",
         E::Rendezvous(_) if e.is_bad_server_address() => "cliErrBadServer",
         E::Rendezvous(_) => "cliErrServer",
@@ -578,5 +579,8 @@ mod tests {
         let expired = Error::Rendezvous("mailbox expired".into());
         assert_eq!(error_key(&expired, true), "cliErrCodeExpired");
         assert_eq!(error_key(&expired, false), "cliErrCodeNotInUse");
+        // A failed claim of the sender's own number is not that.
+        let claim = Error::Rendezvous("unknown nameplate".into());
+        assert_eq!(error_key(&claim, true), "cliErrCodeNotInUse");
     }
 }

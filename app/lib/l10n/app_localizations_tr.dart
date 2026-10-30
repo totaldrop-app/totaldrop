@@ -263,7 +263,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get errorCodeExpired =>
-      'Kodun süresi, kimse kullanmadan doldu. Yeni bir kod almak için yeniden gönderin.';
+      'Kodun süresi kimse kullanmadan doldu. Yeni bir kod almak için yeniden gönderin.';
 
   @override
   String get errorBadServer =>
