@@ -289,6 +289,63 @@ impl TransferCode {
         Ok(Self { nameplate, words })
     }
 
+    /// The code in a text that may hold more than the code, such as a
+    /// whole share message pasted back. The whole text is tried first, then
+    /// every number that does not follow a letter or digit, with the next
+    /// three words and then two, so a word that goes on the sentence after
+    /// the code is left out. The first one that parses wins.
+    pub fn find(text: &str) -> Option<Self> {
+        if let Ok(code) = Self::parse(text) {
+            return Some(code);
+        }
+        let chars: Vec<char> = ascii_digits(&strip_invisible_format(text))
+            .chars()
+            .collect();
+        let is_separator = |c: &char| *c == '-' || c.is_whitespace();
+        // The end of the run of ASCII letters and digits starting at `from`.
+        let run_end = |from: usize| {
+            chars
+                .get(from..)
+                .and_then(|rest| rest.iter().position(|c| !c.is_ascii_alphanumeric()))
+                .map_or(chars.len(), |n| from.saturating_add(n))
+        };
+        for (start, c) in chars.iter().enumerate() {
+            let after_text = start
+                .checked_sub(1)
+                .and_then(|i| chars.get(i))
+                .is_some_and(char::is_ascii_alphanumeric);
+            if !c.is_ascii_digit() || after_text {
+                continue;
+            }
+            let number_end = chars
+                .get(start..)
+                .and_then(|rest| rest.iter().position(|c| !c.is_ascii_digit()))
+                .map_or(chars.len(), |n| start.saturating_add(n));
+            // Where each of up to three following words ends.
+            let mut ends = Vec::with_capacity(3);
+            let mut at = number_end;
+            while ends.len() < 3 {
+                let gap = chars.get(at..).map_or(0, |rest| {
+                    rest.iter().take_while(|c| is_separator(c)).count()
+                });
+                let word = at.saturating_add(gap);
+                let end = run_end(word);
+                if gap == 0 || end == word {
+                    break;
+                }
+                ends.push(end);
+                at = end;
+            }
+            for &end in ends.iter().skip(1).rev() {
+                let candidate: String = chars.get(start..end).unwrap_or_default().iter().collect();
+                if let Ok(code) = Self::parse(&candidate) {
+                    return Some(code);
+                }
+            }
+        }
+        None
+    }
+
     /// The nameplate number.
     pub fn nameplate(&self) -> u32 {
         self.nameplate
@@ -424,6 +481,45 @@ mod tests {
                 Err(CodeError::BadNameplate),
                 "{c:?}"
             );
+        }
+    }
+
+    #[test]
+    fn codes_are_found_in_a_pasted_message() {
+        let want = TransferCode::parse("7-abandon-ability").unwrap();
+        for text in [
+            "7-abandon-ability",
+            "  7 Abandon   ABILITY ",
+            "Get my files with TotalDrop. Code: 7-abandon-ability",
+            "Get my files with TotalDrop. Code: \u{2068}7-abandon-ability\u{2069}",
+            "استلم ملفاتي عبر TotalDrop. الرمز: \u{2068}7-abandon-ability\u{2069}",
+            "TotalDrop で私のファイルを受け取ってください。コード：7-abandon-ability",
+            // A sentence goes on after the code; a word that is not a code
+            // word, or a fourth word, is not taken along.
+            "Code: 7 abandon ability thanks",
+            "code 7-abandon-ability, see you at 9",
+            "the code is \u{0667}-abandon-ability.",
+            // An earlier number that is not a code is skipped.
+            "Room 12, code 7-abandon-ability",
+        ] {
+            assert_eq!(TransferCode::find(text).as_ref(), Some(&want), "{text:?}");
+        }
+        assert_eq!(
+            TransferCode::find("Code: 12-zoo-zone-able!"),
+            TransferCode::parse("12-zoo-zone-able").ok()
+        );
+        assert_eq!(
+            TransferCode::find("7-840-1499"),
+            TransferCode::parse("7-harbor-rocket").ok()
+        );
+        for text in [
+            "",
+            "not a code",
+            "7 abandon",
+            "abc7-abandon-ability",
+            "\u{2068}\u{2069}",
+        ] {
+            assert_eq!(TransferCode::find(text), None, "{text:?}");
         }
     }
 

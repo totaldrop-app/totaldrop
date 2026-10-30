@@ -464,22 +464,14 @@ pub async fn decline_offer(offer: &Offer) -> Result<(), TransferError> {
     on_runtime(async move { Ok(incoming.decline().await?) }).await
 }
 
-/// Normalize a code as typed: lowercase, spaces to dashes, invisible format
-/// characters such as direction marks dropped. Returns `None` if it cannot
-/// be a code, so the UI can say so before connecting.
+/// The code in what was typed or pasted, in its English form
+/// (`7-harbor-rocket`): any letter case, spaces or hyphens, invisible format
+/// characters dropped, and found inside a whole share message, as a
+/// long-press paste puts it in the field ([`totaldrop_proto::TransferCode::find`]).
+/// Returns `None` if there is no code, so the UI can say so before connecting.
 #[frb(sync)]
 pub fn normalize_code(input: String) -> Option<String> {
-    let cleaned = totaldrop_proto::strip_invisible_format(&input);
-    let cleaned = cleaned
-        .trim()
-        .to_lowercase()
-        .split(|c: char| c.is_whitespace() || c == '-')
-        .filter(|s| !s.is_empty())
-        .collect::<Vec<_>>()
-        .join("-");
-    totaldrop_proto::TransferCode::parse(&cleaned)
-        .ok()
-        .map(|c| c.to_string())
+    totaldrop_proto::TransferCode::find(&input).map(|c| c.to_string())
 }
 
 #[cfg(test)]
@@ -503,6 +495,21 @@ mod tests {
                 normalize_code(code.into()),
                 Some("7-abandon-ability".into()),
                 "{code:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn codes_in_a_pasted_share_message() {
+        // The whole message, pasted into the field with the system menu.
+        for text in [
+            "Get my files with TotalDrop. Code: \u{2068}7-abandon-ability\u{2069}",
+            "استلم ملفاتي عبر TotalDrop. الرمز: \u{2068}7-abandon-ability\u{2069}",
+        ] {
+            assert_eq!(
+                normalize_code(text.into()),
+                Some("7-abandon-ability".into()),
+                "{text:?}"
             );
         }
     }

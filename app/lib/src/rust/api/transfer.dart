@@ -78,8 +78,11 @@ Stream<TransferEvent> acceptOffer({
 Future<void> declineOffer({required Offer offer}) =>
     RustLib.instance.api.crateApiTransferDeclineOffer(offer: offer);
 
-/// Normalize a code as typed: lowercase, spaces to dashes. Returns `None`
-/// if it cannot be a code, so the UI can say so before connecting.
+/// The code in what was typed or pasted, in its English form
+/// (`7-harbor-rocket`): any letter case, spaces or hyphens, invisible format
+/// characters dropped, and found inside a whole share message, as a
+/// long-press paste puts it in the field ([`totaldrop_proto::TransferCode::find`]).
+/// Returns `None` if there is no code, so the UI can say so before connecting.
 String? normalizeCode({required String input}) =>
     RustLib.instance.api.crateApiTransferNormalizeCode(input: input);
 

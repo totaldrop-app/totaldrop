@@ -57,21 +57,12 @@ pub fn folder_size(dir: &Path) -> u64 {
     total
 }
 
-/// Normalize a code as typed: lowercase, spaces to dashes, invisible format
-/// characters such as direction marks dropped. `None` if it cannot be a
-/// code.
+/// The code in what was typed or pasted, in its English form
+/// (`7-harbor-rocket`): any letter case, spaces or hyphens, invisible format
+/// characters dropped, and found inside a whole share message
+/// ([`totaldrop_proto::TransferCode::find`]). `None` if there is no code.
 pub fn normalize_code(input: &str) -> Option<String> {
-    let cleaned = totaldrop_proto::strip_invisible_format(input);
-    let cleaned = cleaned
-        .trim()
-        .to_lowercase()
-        .split(|c: char| c.is_whitespace() || c == '-')
-        .filter(|s| !s.is_empty())
-        .collect::<Vec<_>>()
-        .join("-");
-    totaldrop_proto::TransferCode::parse(&cleaned)
-        .ok()
-        .map(|c| c.to_string())
+    totaldrop_proto::TransferCode::find(input).map(|c| c.to_string())
 }
 
 /// Code words that start with `prefix`.
@@ -246,6 +237,21 @@ mod tests {
                 normalize_code(code),
                 Some("7-abandon-ability".into()),
                 "{code:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn codes_in_a_pasted_share_message() {
+        // The whole message, pasted into the field or read from the clipboard.
+        for text in [
+            "Get my files with TotalDrop. Code: \u{2068}7-abandon-ability\u{2069}",
+            "استلم ملفاتي عبر TotalDrop. الرمز: \u{2068}7-abandon-ability\u{2069}",
+        ] {
+            assert_eq!(
+                normalize_code(text),
+                Some("7-abandon-ability".into()),
+                "{text:?}"
             );
         }
     }
