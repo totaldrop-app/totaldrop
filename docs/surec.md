@@ -53,12 +53,27 @@ Bir değişiklik ancak şunların hepsi doğruysa bitmiştir:
    `packaging/debian/changelog`, `packaging/rpm/totaldrop.spec` ve
    `packaging/linux/app.totaldrop.TotalDrop.metainfo.xml`. Android: `app/pubspec.yaml` içinde hem sürüm hem
    derleme numarası (`+N`); numara her yüklemede artmalıdır, CI bunu
-   denetler.
+   denetler. CLI ve çekirdek: kök `Cargo.toml`'daki `[workspace.package]`
+   sürümü, iç bağımlılıkların (`totaldrop-core = { version = … }`)
+   sürümleri ve `Cargo.lock`. CLI, Linux paketleriyle yayınlanır; CLI
+   kodu son Linux yayınından bu yana değiştiyse ve sürüm henüz
+   artırılmadıysa Linux yayını bu sürümü de artırır.
 2. Sürüm PR'ı: kontroller ve bağımsız inceleme, sonra birleştir.
 3. `main`'deki sürüm commit'ine açıklamalı etiket at (`linux-v…`,
    `android-v…`) ve gönder. Linux'ta CI, etiketin `main` üzerinde olduğunu
    ve beş dosyadaki sürümün etiketle aynı olduğunu denetler
    (`packaging/check-versions.sh`; aynı denetim her PR'da da çalışır).
+   Linux etiketinde ayrıca CLI'nin sürümüne bakılır
+   (`packaging/check-cli-version.sh`). Etiketlenen commit'ten önceki
+   `linux-v…` ve `cli-v…` etiketlerinin her biri, o etiketteki
+   `Cargo.toml` sürümünün yayınıdır. Bunların en yükseğinden daha yüksek
+   bir sürüm geçer, daha düşük bir sürüm yayını durdurur. Sürüm aynıysa,
+   o sürümü yayınlamış etiketlerin herhangi birinden bu yana `crates/`
+   (`tests/` ve `benches/` klasörleri hariç), `l10n/app/`, `l10n/cli/` ya
+   da `l10n/status.json` değiştiyse yayın durur. Bütün sürümler
+   `0.MINOR.PATCH-beta.N` biçiminde olmalıdır. `Cargo.lock` ve kök
+   `Cargo.toml` sayılmaz; CLI'yi etkileyen bir bağımlılık güncellemesinde
+   sürümü artırmak yayınlayanın kararıdır.
    Sürüm etiketlerini yalnızca depo yöneticisi oluşturabilir (kural "release
    tags"); yayın işleri `linux-release` ve `play-release` ortamlarında,
    yöneticinin onayıyla çalışır.

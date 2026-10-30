@@ -5,7 +5,10 @@
 # Debian changelog and the newest release in the AppStream metainfo. RPM,
 # Debian and AppStream must write a pre-release with "~" (0.1.0~beta.4), so
 # that it sorts before the final release. With a tag (linux-v0.1.0-beta.5),
-# the tag must match too.
+# the tag must match too, and the command line the packages ship must have
+# a version higher than any released one, or the highest with the same
+# code (check-cli-version.sh; it needs the full history, which the release
+# workflow fetches).
 #
 # The tools: every pinned Rust version equals rust-toolchain.toml, every
 # pinned Flutter version is the same, and the Arch check container uses the
@@ -38,6 +41,7 @@ same packaging/linux/app.totaldrop.TotalDrop.metainfo.xml \
   "$(sed -n 's/.*<release version="\([^"]*\)".*/\1/p' "$root/packaging/linux/app.totaldrop.TotalDrop.metainfo.xml" | head -1)" "$tilde"
 if [ $# -ge 1 ]; then
   same "tag $1" "${1#linux-v}" "$cargo"
+  "$root/packaging/check-cli-version.sh" || status=1
 fi
 
 rust=$(sed -n 's/^channel = "\(.*\)"/\1/p' "$root/rust-toolchain.toml" | head -1)
