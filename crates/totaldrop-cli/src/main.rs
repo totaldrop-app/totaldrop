@@ -206,7 +206,9 @@ fn help(s: &Strings) -> clap::Command {
         let name = sub.get_name().to_owned();
         localize(&name, sub)
     });
-    // Clap adds `help` as a command only when it builds the parser.
+    // Clap adds `help` as a command only when it builds the parser. Built
+    // here, `help help` lists the commands instead of taking them as
+    // arguments, and its own lines stay English; nothing else changes.
     cmd.build();
     cmd.mut_subcommand("help", |h| h.about(t("cliHelpHelpCommand")))
 }
@@ -577,9 +579,6 @@ mod tests {
     use totaldrop_l10n::{Domain, Strings};
     use totaldrop_proto::wire::RejectReason;
 
-    /// The code is said back before connecting, in its logical order and
-    /// plain ASCII: an override such as U+202E can show a pasted code in
-    /// another order on screen than the one the parser reads (#149).
     /// `--help` speaks the person's language, as every other line does
     /// (#171): each description, the headings and the help flag.
     #[test]
@@ -629,6 +628,9 @@ mod tests {
         }
     }
 
+    /// The code is said back before connecting, in its logical order and
+    /// plain ASCII: an override such as U+202E can show a pasted code in
+    /// another order on screen than the one the parser reads (#149).
     #[test]
     fn the_parsed_code_is_said_before_connecting() {
         let strings = |tag: &str| {

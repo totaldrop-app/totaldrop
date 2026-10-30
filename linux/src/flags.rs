@@ -4,6 +4,8 @@
 //! a TotalDrop link, `--screen=…`, and Qt's own options. Unknown options
 //! are left to Qt, which ignores what it does not know.
 
+use std::ffi::OsString;
+
 use totaldrop_l10n::Strings;
 
 /// A request the terminal answers without opening the window.
@@ -14,13 +16,14 @@ pub enum Flag {
 }
 
 /// The first `--help` or `--version` in `args` (without the program
-/// name), up to a `--` that ends the options.
-pub fn early(args: impl IntoIterator<Item = String>) -> Option<Flag> {
+/// name), up to a `--` that ends the options. Arguments are taken as
+/// bytes: a file name need not be UTF-8.
+pub fn early(args: impl IntoIterator<Item = OsString>) -> Option<Flag> {
     args.into_iter()
         .take_while(|a| a != "--")
-        .find_map(|a| match a.as_str() {
-            "--help" | "-h" => Some(Flag::Help),
-            "--version" | "-V" => Some(Flag::Version),
+        .find_map(|a| match a.to_str() {
+            Some("--help" | "-h") => Some(Flag::Help),
+            Some("--version" | "-V") => Some(Flag::Version),
             _ => None,
         })
 }
@@ -54,8 +57,8 @@ mod tests {
     use super::*;
     use totaldrop_l10n::Domain;
 
-    fn args(a: &[&str]) -> Vec<String> {
-        a.iter().map(|s| (*s).to_owned()).collect()
+    fn args(a: &[&str]) -> Vec<OsString> {
+        a.iter().map(OsString::from).collect()
     }
 
     /// `totaldrop-desktop --help` printed nothing and opened the window
@@ -78,6 +81,15 @@ mod tests {
         assert_eq!(early(args(&["--foo", "-platform", "wayland"])), None);
         // After `--`, a file may be called `--help`.
         assert_eq!(early(args(&["--", "--help"])), None);
+    }
+
+    /// A file name that is not UTF-8 opens the window like any other.
+    #[test]
+    fn file_names_need_not_be_utf8() {
+        use std::os::unix::ffi::OsStringExt as _;
+        let odd = OsString::from_vec(b"/tmp/\xff.jpg".to_vec());
+        assert_eq!(early([odd.clone()]), None);
+        assert_eq!(early([odd, OsString::from("--help")]), Some(Flag::Help));
     }
 
     #[test]

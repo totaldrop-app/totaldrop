@@ -56,7 +56,7 @@ fn choose_style(session: &theme::Session) -> &'static str {
 }
 
 fn main() {
-    if let Some(flag) = flags::early(std::env::args().skip(1)) {
+    if let Some(flag) = flags::early(std::env::args_os().skip(1)) {
         match flag {
             flags::Flag::Help => {
                 print!(
