@@ -258,6 +258,10 @@ class AppLocalizationsId extends AppLocalizations {
       'Tidak dapat menjangkau server TotalDrop. Periksa koneksi internet Anda.';
 
   @override
+  String get errorCodeNotInUse =>
+      'Kode itu tidak sedang digunakan: salah ketik, sudah kedaluwarsa, atau sudah dipakai. Minta kode baru dari pengirim.';
+
+  @override
   String get errorConnect =>
       'Tidak dapat terhubung ke perangkat lain. Pastikan kedua perangkat online, lalu coba lagi.';
 

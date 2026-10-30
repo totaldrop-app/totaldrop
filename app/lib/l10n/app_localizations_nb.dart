@@ -272,6 +272,10 @@ class AppLocalizationsNb extends AppLocalizations {
       'Kunne ikke nå TotalDrop-serveren. Sjekk internettilkoblingen.';
 
   @override
+  String get errorCodeNotInUse =>
+      'Koden er ikke i bruk: den ble skrevet feil, har utløpt eller er allerede brukt. Be avsenderen om en ny.';
+
+  @override
   String get errorConnect =>
       'Kunne ikke koble til den andre enheten. Sjekk at begge enhetene er på nett, og prøv igjen.';
 

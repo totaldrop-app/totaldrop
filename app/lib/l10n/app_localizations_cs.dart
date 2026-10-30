@@ -278,6 +278,10 @@ class AppLocalizationsCs extends AppLocalizations {
       'Nelze se spojit se serverem TotalDrop. Zkontrolujte připojení k internetu.';
 
   @override
+  String get errorCodeNotInUse =>
+      'Tento kód se nepoužívá: byl chybně zadán, vypršel nebo už byl použit. Požádejte odesílatele o nový.';
+
+  @override
   String get errorConnect =>
       'Nelze se připojit k druhému zařízení. Zkontrolujte, že jsou obě zařízení online, a zkuste to znovu.';
 

@@ -260,6 +260,10 @@ class AppLocalizationsHu extends AppLocalizations {
       'Nem sikerült elérni a TotalDrop szervert. Ellenőrizd az internetkapcsolatot.';
 
   @override
+  String get errorCodeNotInUse =>
+      'Ez a kód nincs használatban: elgépelték, lejárt, vagy már felhasználták. Kérj újat a küldőtől.';
+
+  @override
   String get errorConnect =>
       'Nem sikerült kapcsolódni a másik eszközhöz. Ellenőrizd, hogy mindkét eszköz online van-e, és próbáld újra.';
 

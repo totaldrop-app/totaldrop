@@ -251,6 +251,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get errorServer => 'TotalDrop 서버에 연결할 수 없습니다. 인터넷 연결을 확인하세요.';
 
   @override
+  String get errorCodeNotInUse =>
+      '사용 중인 코드가 아닙니다. 잘못 입력했거나, 만료되었거나, 이미 사용된 코드입니다. 보내는 사람에게 새 코드를 요청하세요.';
+
+  @override
   String get errorConnect =>
       '다른 기기에 연결할 수 없습니다. 두 기기가 모두 온라인 상태인지 확인하고 다시 시도하세요.';
 

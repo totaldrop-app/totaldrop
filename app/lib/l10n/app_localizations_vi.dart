@@ -257,6 +257,10 @@ class AppLocalizationsVi extends AppLocalizations {
       'Không thể kết nối tới máy chủ TotalDrop. Hãy kiểm tra kết nối internet.';
 
   @override
+  String get errorCodeNotInUse =>
+      'Mã này không được sử dụng: có thể đã nhập sai, đã hết hạn hoặc đã được dùng. Hãy xin người gửi một mã mới.';
+
+  @override
   String get errorConnect =>
       'Không thể kết nối với thiết bị kia. Hãy kiểm tra cả hai thiết bị đều đang trực tuyến rồi thử lại.';
 

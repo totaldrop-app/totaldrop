@@ -258,6 +258,17 @@ fn kind(e: &totaldrop_core::Error) -> &'static str {
     }
 }
 
+/// [`kind`] for an error while the receiver connects with the code. Only
+/// there does "no sender uses this code" mean the code: a sender whose
+/// code expired unused hears the same from the server.
+fn connect_kind(e: &totaldrop_core::Error) -> &'static str {
+    if e.is_code_not_in_use() {
+        "CodeNotInUse"
+    } else {
+        kind(e)
+    }
+}
+
 fn to_f64(v: u64) -> f64 {
     // Byte counts stay far below 2^53.
     v as f64
@@ -505,7 +516,7 @@ impl qobject::Transfer {
                     });
                 }
                 Err(e) => {
-                    let (k, d) = (kind(&e), e.to_string());
+                    let (k, d) = (connect_kind(&e), e.to_string());
                     let _ = thread.queue(move |obj| {
                         if obj.current(g) {
                             obj.fail(k, &d);
@@ -732,5 +743,33 @@ impl cxx_qt::Initialize for qobject::Transfer {
             desktop::downloads().display().to_string().as_str(),
         ));
         self.as_mut().set_state(QString::from("idle"));
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{connect_kind, kind};
+    use totaldrop_core::Error as E;
+
+    #[test]
+    fn a_code_not_in_use_is_not_a_server_problem() {
+        // What the rendezvous server says when no sender uses the number.
+        for reason in ["unknown nameplate", "nameplate full", "mailbox expired"] {
+            assert_eq!(
+                connect_kind(&E::Rendezvous(reason.into())),
+                "CodeNotInUse",
+                "{reason}"
+            );
+        }
+        assert_eq!(
+            connect_kind(&E::Rendezvous("connection refused".into())),
+            "Server"
+        );
+    }
+
+    #[test]
+    fn a_sender_is_not_told_its_code_was_mistyped() {
+        // A sender's mailbox expires when nobody comes: not the code's fault.
+        assert_eq!(kind(&E::Rendezvous("mailbox expired".into())), "Server");
     }
 }

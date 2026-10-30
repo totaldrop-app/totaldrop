@@ -265,6 +265,10 @@ class AppLocalizationsSw extends AppLocalizations {
       'Imeshindwa kufikia seva ya TotalDrop. Angalia muunganisho wako wa intaneti.';
 
   @override
+  String get errorCodeNotInUse =>
+      'Msimbo huo hautumiki: ulikosewa kuandikwa, umeisha muda au tayari umetumika. Mwombe mtumaji msimbo mpya.';
+
+  @override
   String get errorConnect =>
       'Imeshindwa kuunganisha na kifaa kingine. Hakikisha vifaa vyote viwili viko mtandaoni kisha ujaribu tena.';
 

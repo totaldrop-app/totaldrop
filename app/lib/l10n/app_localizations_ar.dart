@@ -283,6 +283,10 @@ class AppLocalizationsAr extends AppLocalizations {
       'تعذر الوصول إلى خادم TotalDrop. تحقق من اتصالك بالإنترنت.';
 
   @override
+  String get errorCodeNotInUse =>
+      'هذا الرمز غير مستخدم: ربما كُتب بشكل خاطئ، أو انتهت صلاحيته، أو استُخدم من قبل. اطلب رمزًا جديدًا من المرسل.';
+
+  @override
   String get errorConnect =>
       'تعذر الاتصال بالجهاز الآخر. تأكد من أن الجهازين كليهما متصلان بالإنترنت، ثم أعد المحاولة.';
 

@@ -68,6 +68,7 @@
   "errorStopped": "Gestopt op dit apparaat.",
   "errorInvalidCode": "Die code is niet geldig.",
   "errorServer": "Kan de TotalDrop-server niet bereiken. Controleer je internetverbinding.",
+  "errorCodeNotInUse": "Die code is niet in gebruik: hij is verkeerd getypt, verlopen of al gebruikt. Vraag de afzender om een nieuwe.",
   "errorConnect": "Kan geen verbinding maken met het andere apparaat. Controleer of beide apparaten online zijn en probeer het opnieuw.",
   "errorInvalidOffer": "Het aanbod overtrad een veiligheidsregel en is daarom geweigerd.",
   "errorStorage": "Een bestand kon niet worden gelezen of opgeslagen.",

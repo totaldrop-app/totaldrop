@@ -256,6 +256,10 @@ class AppLocalizationsTh extends AppLocalizations {
       'เชื่อมต่อเซิร์ฟเวอร์ TotalDrop ไม่ได้ ตรวจสอบการเชื่อมต่ออินเทอร์เน็ตของคุณ';
 
   @override
+  String get errorCodeNotInUse =>
+      'รหัสนี้ไม่ได้ใช้งานอยู่ อาจพิมพ์ผิด หมดอายุ หรือถูกใช้ไปแล้ว ขอรหัสใหม่จากผู้ส่ง';
+
+  @override
   String get errorConnect =>
       'เชื่อมต่อกับอุปกรณ์อีกเครื่องไม่ได้ ตรวจสอบว่าอุปกรณ์ทั้งสองออนไลน์อยู่ แล้วลองอีกครั้ง';
 

@@ -272,6 +272,10 @@ class AppLocalizationsNl extends AppLocalizations {
       'Kan de TotalDrop-server niet bereiken. Controleer je internetverbinding.';
 
   @override
+  String get errorCodeNotInUse =>
+      'Die code is niet in gebruik: hij is verkeerd getypt, verlopen of al gebruikt. Vraag de afzender om een nieuwe.';
+
+  @override
   String get errorConnect =>
       'Kan geen verbinding maken met het andere apparaat. Controleer of beide apparaten online zijn en probeer het opnieuw.';
 

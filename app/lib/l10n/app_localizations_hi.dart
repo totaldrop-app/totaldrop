@@ -271,6 +271,10 @@ class AppLocalizationsHi extends AppLocalizations {
       'TotalDrop सर्वर तक नहीं पहुँच सके। अपना इंटरनेट कनेक्शन जाँचें।';
 
   @override
+  String get errorCodeNotInUse =>
+      'यह कोड इस्तेमाल में नहीं है: यह गलत टाइप हुआ, इसकी अवधि खत्म हो गई या यह पहले ही इस्तेमाल हो चुका है। भेजने वाले से नया कोड माँगें।';
+
+  @override
   String get errorConnect =>
       'दूसरे डिवाइस से कनेक्ट नहीं हो सका। जाँचें कि दोनों डिवाइस ऑनलाइन हैं और फिर से कोशिश करें।';
 

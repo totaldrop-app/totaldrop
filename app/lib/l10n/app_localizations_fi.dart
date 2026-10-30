@@ -272,6 +272,10 @@ class AppLocalizationsFi extends AppLocalizations {
       'TotalDrop-palvelimeen ei saatu yhteyttä. Tarkista internetyhteys.';
 
   @override
+  String get errorCodeNotInUse =>
+      'Koodi ei ole käytössä: se kirjoitettiin väärin, on vanhentunut tai on jo käytetty. Pyydä lähettäjältä uusi.';
+
+  @override
   String get errorConnect =>
       'Toiseen laitteeseen ei saatu yhteyttä. Varmista, että molemmat laitteet ovat verkossa, ja yritä uudelleen.';
 

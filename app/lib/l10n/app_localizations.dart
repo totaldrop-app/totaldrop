@@ -548,6 +548,12 @@ abstract class AppLocalizations {
   /// **'Could not reach the TotalDrop server. Check your internet connection.'**
   String get errorServer;
 
+  /// The server says no sender is using this code's number. Same text as cliErrCodeNotInUse
+  ///
+  /// In en, this message translates to:
+  /// **'That code is not in use: it was mistyped, has expired or was already used. Ask the sender for a new one.'**
+  String get errorCodeNotInUse;
+
   /// No description provided for @errorConnect.
   ///
   /// In en, this message translates to:

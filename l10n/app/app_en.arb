@@ -76,6 +76,8 @@
   "errorStopped": "Stopped on this device.",
   "errorInvalidCode": "That code is not valid.",
   "errorServer": "Could not reach the TotalDrop server. Check your internet connection.",
+  "errorCodeNotInUse": "That code is not in use: it was mistyped, has expired or was already used. Ask the sender for a new one.",
+  "@errorCodeNotInUse": {"description": "The server says no sender is using this code's number. Same text as cliErrCodeNotInUse"},
   "errorConnect": "Could not connect to the other device. Check that both devices are online and try again.",
   "errorInvalidOffer": "The offer broke a safety rule, so it was refused.",
   "errorStorage": "A file could not be read or saved.",

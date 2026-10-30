@@ -68,6 +68,7 @@
   "errorStopped": "Bu cihazda durduruldu.",
   "errorInvalidCode": "Bu kod geçerli değil.",
   "errorServer": "TotalDrop sunucusuna ulaşılamadı. İnternet bağlantınızı kontrol edin.",
+  "errorCodeNotInUse": "Bu kod kullanımda değil: yanlış yazılmış, süresi dolmuş ya da zaten kullanılmış olabilir. Gönderenden yeni bir kod isteyin.",
   "errorConnect": "Diğer cihaza bağlanılamadı. İki cihazın da internete bağlı olduğundan emin olup yeniden deneyin.",
   "errorInvalidOffer": "Teklif bir güvenlik kuralını çiğnediği için reddedildi.",
   "errorStorage": "Bir dosya okunamadı ya da kaydedilemedi.",

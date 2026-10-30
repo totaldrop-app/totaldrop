@@ -68,6 +68,7 @@
   "errorStopped": "Ezen az eszközön leállítva.",
   "errorInvalidCode": "Ez a kód érvénytelen.",
   "errorServer": "Nem sikerült elérni a TotalDrop szervert. Ellenőrizd az internetkapcsolatot.",
+  "errorCodeNotInUse": "Ez a kód nincs használatban: elgépelték, lejárt, vagy már felhasználták. Kérj újat a küldőtől.",
   "errorConnect": "Nem sikerült kapcsolódni a másik eszközhöz. Ellenőrizd, hogy mindkét eszköz online van-e, és próbáld újra.",
   "errorInvalidOffer": "Az ajánlat megszegett egy biztonsági szabályt, ezért el lett utasítva.",
   "errorStorage": "Egy fájlt nem sikerült beolvasni vagy menteni.",

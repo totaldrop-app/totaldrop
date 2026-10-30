@@ -258,6 +258,10 @@ class AppLocalizationsTr extends AppLocalizations {
       'TotalDrop sunucusuna ulaşılamadı. İnternet bağlantınızı kontrol edin.';
 
   @override
+  String get errorCodeNotInUse =>
+      'Bu kod kullanımda değil: yanlış yazılmış, süresi dolmuş ya da zaten kullanılmış olabilir. Gönderenden yeni bir kod isteyin.';
+
+  @override
   String get errorConnect =>
       'Diğer cihaza bağlanılamadı. İki cihazın da internete bağlı olduğundan emin olup yeniden deneyin.';
 

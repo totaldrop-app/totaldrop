@@ -68,6 +68,7 @@
   "errorStopped": "Imesimamishwa kwenye kifaa hiki.",
   "errorInvalidCode": "Msimbo huo si sahihi.",
   "errorServer": "Imeshindwa kufikia seva ya TotalDrop. Angalia muunganisho wako wa intaneti.",
+  "errorCodeNotInUse": "Msimbo huo hautumiki: ulikosewa kuandikwa, umeisha muda au tayari umetumika. Mwombe mtumaji msimbo mpya.",
   "errorConnect": "Imeshindwa kuunganisha na kifaa kingine. Hakikisha vifaa vyote viwili viko mtandaoni kisha ujaribu tena.",
   "errorInvalidOffer": "Ofa ilivunja kanuni ya usalama, kwa hiyo imekataliwa.",
   "errorStorage": "Faili moja haikuweza kusomwa au kuhifadhiwa.",

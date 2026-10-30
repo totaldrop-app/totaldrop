@@ -68,6 +68,7 @@
   "errorStopped": "Stoppet på denne enhed.",
   "errorInvalidCode": "Koden er ikke gyldig.",
   "errorServer": "Kunne ikke nå TotalDrop-serveren. Tjek din internetforbindelse.",
+  "errorCodeNotInUse": "Koden er ikke i brug: den blev skrevet forkert, er udløbet eller er allerede brugt. Bed afsenderen om en ny.",
   "errorConnect": "Kunne ikke oprette forbindelse til den anden enhed. Tjek, at begge enheder er online, og prøv igen.",
   "errorInvalidOffer": "Tilbuddet brød en sikkerhedsregel og blev afvist.",
   "errorStorage": "En fil kunne ikke læses eller gemmes.",

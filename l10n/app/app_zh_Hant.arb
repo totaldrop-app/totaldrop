@@ -68,6 +68,7 @@
   "errorStopped": "已在這部裝置上停止。",
   "errorInvalidCode": "這組代碼無效。",
   "errorServer": "無法連線到 TotalDrop 伺服器。請檢查網路連線。",
+  "errorCodeNotInUse": "這組代碼目前未使用：可能輸入錯誤、已過期或已被使用。請向傳送者索取新的代碼。",
   "errorConnect": "無法連線到另一部裝置。請確認兩部裝置都已連上網路，然後再試一次。",
   "errorInvalidOffer": "這項傳輸要求違反了安全規則，已被拒絕。",
   "errorStorage": "無法讀取或儲存某個檔案。",

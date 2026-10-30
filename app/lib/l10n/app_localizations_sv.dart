@@ -272,6 +272,10 @@ class AppLocalizationsSv extends AppLocalizations {
       'Kunde inte nå TotalDrop-servern. Kontrollera din internetanslutning.';
 
   @override
+  String get errorCodeNotInUse =>
+      'Koden används inte: den skrevs fel, har gått ut eller har redan använts. Be avsändaren om en ny.';
+
+  @override
   String get errorConnect =>
       'Kunde inte ansluta till den andra enheten. Kontrollera att båda enheterna är online och försök igen.';
 

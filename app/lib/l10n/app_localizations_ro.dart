@@ -276,6 +276,10 @@ class AppLocalizationsRo extends AppLocalizations {
       'Serverul TotalDrop nu a putut fi contactat. Verificați conexiunea la internet.';
 
   @override
+  String get errorCodeNotInUse =>
+      'Codul nu este folosit: a fost tastat greșit, a expirat sau a fost deja folosit. Cereți expeditorului unul nou.';
+
+  @override
   String get errorConnect =>
       'Nu s-a putut realiza conexiunea cu celălalt dispozitiv. Verificați că ambele dispozitive sunt online și încercați din nou.';
 

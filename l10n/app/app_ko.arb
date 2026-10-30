@@ -68,6 +68,7 @@
   "errorStopped": "이 기기에서 중단했습니다.",
   "errorInvalidCode": "유효하지 않은 코드입니다.",
   "errorServer": "TotalDrop 서버에 연결할 수 없습니다. 인터넷 연결을 확인하세요.",
+  "errorCodeNotInUse": "사용 중인 코드가 아닙니다. 잘못 입력했거나, 만료되었거나, 이미 사용된 코드입니다. 보내는 사람에게 새 코드를 요청하세요.",
   "errorConnect": "다른 기기에 연결할 수 없습니다. 두 기기가 모두 온라인 상태인지 확인하고 다시 시도하세요.",
   "errorInvalidOffer": "전송 요청이 보안 규칙을 위반하여 거부되었습니다.",
   "errorStorage": "파일을 읽거나 저장할 수 없습니다.",
