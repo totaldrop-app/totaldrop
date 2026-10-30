@@ -788,19 +788,23 @@ mod tests {
     #[test]
     fn share_text_gives_its_code_back_in_every_language() {
         // Pasting the whole share message must connect (#148). The app
-        // isolates the code (U+2068 … U+2069) so it keeps its order.
+        // isolates the code (U+2068 … U+2069) so it keeps its order; a chat
+        // app may drop the isolates, and the hyphens still find it.
         let tags = available(Domain::App);
         assert!(tags.len() > 30, "{tags:?}");
         for tag in tags {
             let s = strings(&tag);
             for code in ["7-abandon-ability", "12-zoo-zone-able"] {
+                // As shared, and with the isolates lost on the way.
                 let isolated = format!("\u{2068}{code}\u{2069}");
-                let text = s.get("sendShareText", &[("code", Arg::Text(&isolated))]);
-                assert_eq!(
-                    totaldrop_proto::TransferCode::find(&text).map(|c| c.to_string()),
-                    Some(code.to_string()),
-                    "{tag}: {text}"
-                );
+                for arg in [isolated.as_str(), code] {
+                    let text = s.get("sendShareText", &[("code", Arg::Text(arg))]);
+                    assert_eq!(
+                        totaldrop_proto::TransferCode::find(&text).map(|c| c.to_string()),
+                        Some(code.to_string()),
+                        "{tag}: {text}"
+                    );
+                }
             }
         }
     }

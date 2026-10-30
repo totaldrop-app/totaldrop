@@ -290,57 +290,68 @@ impl TransferCode {
     }
 
     /// The code in a text that may hold more than the code, such as a
-    /// whole share message pasted back. The whole text is tried first, then
-    /// every number that does not follow a letter or digit, with the next
-    /// three words and then two, so a word that goes on the sentence after
-    /// the code is left out. The first one that parses wins.
+    /// whole share message pasted back. In this order, the first that
+    /// parses wins:
+    ///
+    /// 1. the whole text, as [`TransferCode::parse`] reads it;
+    /// 2. a part between U+2068 and U+2069: the share text isolates the
+    ///    code so that a right-to-left sentence keeps its order;
+    /// 3. a number with two or three words joined by hyphens
+    ///    (`7-harbor-rocket`), with no letter, digit or hyphen glued to
+    ///    either end.
+    ///
+    /// Spaces between the parts and numbers as words are only read in 1
+    /// and 2, so a date, a file name or a sentence that goes on after the
+    /// code never turns into a different code.
     pub fn find(text: &str) -> Option<Self> {
         if let Ok(code) = Self::parse(text) {
             return Some(code);
         }
+        let mut rest = text;
+        while let Some((_, after)) = rest.split_once('\u{2068}') {
+            let Some((inside, next)) = after.split_once('\u{2069}') else {
+                break;
+            };
+            if let Ok(code) = Self::parse(inside) {
+                return Some(code);
+            }
+            rest = next;
+        }
         let chars: Vec<char> = ascii_digits(&strip_invisible_format(text))
             .chars()
             .collect();
-        let is_separator = |c: &char| *c == '-' || c.is_whitespace();
-        // The end of the run of ASCII letters and digits starting at `from`.
-        let run_end = |from: usize| {
+        let glued = |at: Option<usize>| {
+            at.and_then(|i| chars.get(i))
+                .is_some_and(|c| c.is_alphanumeric() || *c == '-')
+        };
+        // The index just past the run of `pred` characters from `from`.
+        let run_end = |from: usize, pred: fn(&char) -> bool| {
             chars
                 .get(from..)
-                .and_then(|rest| rest.iter().position(|c| !c.is_ascii_alphanumeric()))
+                .and_then(|rest| rest.iter().position(|c| !pred(c)))
                 .map_or(chars.len(), |n| from.saturating_add(n))
         };
         for (start, c) in chars.iter().enumerate() {
-            let after_text = start
-                .checked_sub(1)
-                .and_then(|i| chars.get(i))
-                .is_some_and(char::is_ascii_alphanumeric);
-            if !c.is_ascii_digit() || after_text {
+            if !c.is_ascii_digit() || glued(start.checked_sub(1)) {
                 continue;
             }
-            let number_end = chars
-                .get(start..)
-                .and_then(|rest| rest.iter().position(|c| !c.is_ascii_digit()))
-                .map_or(chars.len(), |n| start.saturating_add(n));
-            // Where each of up to three following words ends.
-            let mut ends = Vec::with_capacity(3);
-            let mut at = number_end;
-            while ends.len() < 3 {
-                let gap = chars.get(at..).map_or(0, |rest| {
-                    rest.iter().take_while(|c| is_separator(c)).count()
-                });
-                let word = at.saturating_add(gap);
-                let end = run_end(word);
-                if gap == 0 || end == word {
+            let mut end = run_end(start, char::is_ascii_digit);
+            let mut words = 0usize;
+            while chars.get(end) == Some(&'-') {
+                let word = end.saturating_add(1);
+                let word_end = run_end(word, char::is_ascii_alphabetic);
+                if word_end == word {
                     break;
                 }
-                ends.push(end);
-                at = end;
+                words = words.saturating_add(1);
+                end = word_end;
             }
-            for &end in ends.iter().skip(1).rev() {
-                let candidate: String = chars.get(start..end).unwrap_or_default().iter().collect();
-                if let Ok(code) = Self::parse(&candidate) {
-                    return Some(code);
-                }
+            if !(2..=3).contains(&words) || glued(Some(end)) {
+                continue;
+            }
+            let candidate: String = chars.get(start..end).unwrap_or_default().iter().collect();
+            if let Ok(code) = Self::parse(&candidate) {
+                return Some(code);
             }
         }
         None
@@ -494,13 +505,15 @@ mod tests {
             "Get my files with TotalDrop. Code: \u{2068}7-abandon-ability\u{2069}",
             "استلم ملفاتي عبر TotalDrop. الرمز: \u{2068}7-abandon-ability\u{2069}",
             "TotalDrop で私のファイルを受け取ってください。コード：7-abandon-ability",
-            // A sentence goes on after the code; a word that is not a code
-            // word, or a fourth word, is not taken along.
-            "Code: 7 abandon ability thanks",
-            "code 7-abandon-ability, see you at 9",
+            // Isolated, spaces and numbers as words are read too.
+            "Code: \u{2068}7 abandon 1\u{2069}, thanks",
+            "\u{2068}not this\u{2069} \u{2068}7-abandon-ability\u{2069}",
+            // Numbers and words around the code are not taken along.
+            "Room 12 code 7-abandon-ability",
+            "On 2026-10-30, code 7-abandon-ability",
+            "Code 7-abandon-ability all good",
             "the code is \u{0667}-abandon-ability.",
-            // An earlier number that is not a code is skipped.
-            "Room 12, code 7-abandon-ability",
+            "(7-abandon-ability)",
         ] {
             assert_eq!(TransferCode::find(text).as_ref(), Some(&want), "{text:?}");
         }
@@ -516,8 +529,23 @@ mod tests {
             "",
             "not a code",
             "7 abandon",
-            "abc7-abandon-ability",
             "\u{2068}\u{2069}",
+            // Glued to a letter, a digit or a hyphen at either end.
+            "abc7-abandon-ability",
+            "7-abandon-abilityé",
+            "Code: 7-abandon-ability-",
+            "コード7-abandon-ability",
+            // An unfinished or extra word is not cut off.
+            "12-zoo-zone-ab",
+            "7-abandon-ability-zoo-zone",
+            // Dates, numbers and file names.
+            "meet at 3 4 5",
+            "On 2026-10-30",
+            "call 555 1234 0000 code",
+            "/home/u/Photos/2024-10-30/beach.jpg",
+            "IMG 2024 10 30.jpg",
+            // Spaced words in a sentence are only read when isolated.
+            "Code: 7 abandon ability thanks",
         ] {
             assert_eq!(TransferCode::find(text), None, "{text:?}");
         }

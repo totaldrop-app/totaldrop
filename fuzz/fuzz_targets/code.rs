@@ -33,7 +33,17 @@ fuzz_target!(|data: &[u8]| {
             assert!(code.to_english().is_ascii());
         }
         if let Some(code) = found {
-            assert_eq!(TransferCode::parse(&code.canonical()).ok(), Some(code));
+            // The text holds the code: its number and each word, as a
+            // word or as its index, appear in the text as read.
+            let read = ascii_digits(&strip_invisible_format(s)).to_lowercase();
+            let english = code.to_english();
+            let canonical = code.canonical();
+            for (word, index) in english.split('-').zip(canonical.split('-')) {
+                assert!(
+                    read.contains(word) || read.contains(index),
+                    "{s:?} -> {english}"
+                );
+            }
         }
     }
 });
