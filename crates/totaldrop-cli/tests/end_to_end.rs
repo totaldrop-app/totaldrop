@@ -816,30 +816,28 @@ async fn stop_while_waiting_and_while_connecting() {
     assert!(matches!(s, Err(Error::Stopped)), "{s:?}");
 
     // A receiver stopped while it is connecting to that (now gone) sender.
+    // The server notices the sender's disconnect on its own time, so its
+    // mailbox may still be there: a receiver left running could claim it,
+    // read the sender's PAKE message and end in WrongCode, which is right
+    // for a peer that left after the exchange began (#126). The stop is
+    // therefore ordered before any reply can come back: one poll starts the
+    // connection, which cannot get past opening the TCP connection without
+    // a turn of the event loop, and then the stop lands. On its next poll
+    // connect_with sees the stop at once, long before the several round
+    // trips that claiming the mailbox and reading a message take.
     let stop = totaldrop_core::Stop::new();
-    let connecting = {
-        let stop = stop.clone();
-        tokio::spawn(async move {
-            IncomingOffer::connect_with(
-                &ReceiveOptions {
-                    server,
-                    paths: no_relay(),
-                },
-                &code,
-                &stop,
-            )
-            .await
-        })
+    let opts = ReceiveOptions {
+        server,
+        paths: no_relay(),
     };
-    tokio::time::sleep(Duration::from_millis(50)).await;
+    let mut connecting = std::pin::pin!(IncomingOffer::connect_with(&opts, &code, &stop));
+    let first =
+        std::future::poll_fn(|cx| std::task::Poll::Ready(connecting.as_mut().poll(cx))).await;
+    assert!(first.is_pending());
     stop.stop();
     let r = tokio::time::timeout(Duration::from_secs(1), connecting)
         .await
-        .unwrap()
         .unwrap();
-    assert!(
-        matches!(r, Err(Error::Stopped) | Err(Error::Rendezvous(_))),
-        "{r:?}"
-    );
+    assert!(matches!(r, Err(Error::Stopped)), "{r:?}");
     std::fs::remove_dir_all(src).unwrap();
 }
