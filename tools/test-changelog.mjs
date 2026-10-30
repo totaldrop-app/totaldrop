@@ -191,6 +191,46 @@ test("a single-platform release takes only its platform's entries (#152)", () =>
   }
 });
 
+test("single-platform release: parentheses, wrapped areas, both platforms in one area", () => {
+  const root = repo({
+    "20-site.fixed.md":
+      "- **Site (Linux page, Android page), README:** Commas inside parentheses\n" +
+      "  do not split an area (#20).\n",
+    "21-both.fixed.md": "- **Linux and Android:** One area naming both (#21).\n",
+    "22-android.fixed.md": "- **Android:** Android only (#22).\n",
+  });
+  try {
+    // Both areas name both platforms, so both entries also wait for Android.
+    assert.deepEqual(release(root, "[linux-0.4.0-beta.1]", "2026-11-02"), { count: 2, removed: 0 });
+    const log = readFileSync(join(root, "CHANGELOG.md"), "utf8");
+    assert.ok(log.includes("- **Site (Linux page, Android page), README:** Commas"), log);
+    assert.ok(log.includes("- **Linux and Android:** One area naming both (#21)."), log);
+    assert.equal(
+      readFileSync(join(root, "changelog.d", "21-both.fixed.md"), "utf8"),
+      "- **Linux and Android:** One area naming both (#21).\n",
+      "it stays for Android's release too",
+    );
+    assert.equal(
+      readFileSync(join(root, "changelog.d", "20-site.fixed.md"), "utf8"),
+      "- **Site (Linux page, Android page):** Commas inside parentheses\n" +
+        "  do not split an area (#20).\n",
+    );
+    assert.deepEqual(checkRepo(root), []);
+  } finally {
+    rmSync(root, { recursive: true });
+  }
+  // Nothing for this platform: a clear message, nothing changed.
+  const only = repo({ "22-android.fixed.md": "- **Android:** Android only (#22).\n" });
+  try {
+    assert.throws(() => release(only, "[linux-0.4.0-beta.1]", "2026-11-02"), /no entries for linux/);
+    assert.equal(readFileSync(join(only, "CHANGELOG.md"), "utf8"), HEADER + OLD);
+  } finally {
+    rmSync(only, { recursive: true });
+  }
+  // The area must fit on the first line, so a release can rewrite it.
+  has(one("12-x.fixed.md", "- **Android,\n  Linux:** Wrapped area (#12).\n"), "first line");
+});
+
 test("a release that is not for one known platform takes every entry", () => {
   for (const heading of ["[android-0.4.0-beta.1] and [linux-0.4.0-beta.1]", "[server-0.1.0-beta.1]", "[0.4.0-beta.1]"]) {
     const root = repo({
@@ -252,6 +292,14 @@ test("require sees only files a branch adds", () => {
     git("-c", "user.name=t", "-c", "user.email=t@t", "add", "-A");
     git("-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "release");
     assert.deepEqual(recordsChange(root, added, "HEAD"), { ok: true, added: [], released: true }, "a release passes");
+    // A release for one platform that only rewrites an entry spanning both.
+    writeFileSync(join(root, "changelog.d", "14-both.fixed.md"), "- **Android, Linux:** Both (#14).\n");
+    git("-c", "user.name=t", "-c", "user.email=t@t", "add", "-A");
+    git("-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "both");
+    const both = git("rev-parse", "HEAD");
+    release(root, "[linux-0.4.0-beta.2]", "2026-11-03");
+    git("-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qam", "linux release");
+    assert.deepEqual(recordsChange(root, both, "HEAD"), { ok: true, added: [], released: true }, "a rewrite-only release passes");
   } finally {
     rmSync(root, { recursive: true });
   }
