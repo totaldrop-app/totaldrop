@@ -294,8 +294,9 @@ impl TransferCode {
     /// parses wins:
     ///
     /// 1. the whole text, as [`TransferCode::parse`] reads it;
-    /// 2. a part between U+2068 and U+2069: the share text isolates the
-    ///    code so that a right-to-left sentence keeps its order;
+    /// 2. a part between U+2068 and U+2069 with at least one word: the share
+    ///    text isolates the code so that a right-to-left sentence keeps its
+    ///    order;
     /// 3. a number with two or three words joined by hyphens
     ///    (`7-harbor-rocket`), with no letter, digit or hyphen glued to
     ///    either end.
@@ -312,7 +313,11 @@ impl TransferCode {
             let Some((inside, next)) = after.split_once('\u{2069}') else {
                 break;
             };
-            if let Ok(code) = Self::parse(inside) {
+            // At least one word: right-to-left chat apps isolate numbers and
+            // dates too, and "2026 10 30" must not read as a code.
+            if inside.chars().any(|c| c.is_ascii_alphabetic())
+                && let Ok(code) = Self::parse(inside)
+            {
                 return Some(code);
             }
             rest = next;
@@ -544,6 +549,8 @@ mod tests {
             "call 555 1234 0000 code",
             "/home/u/Photos/2024-10-30/beach.jpg",
             "IMG 2024 10 30.jpg",
+            "\u{2068}2026 10 30\u{2069}",
+            "on \u{2068}2026-10-30\u{2069}",
             // Spaced words in a sentence are only read when isolated.
             "Code: 7 abandon ability thanks",
         ] {
