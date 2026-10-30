@@ -45,8 +45,6 @@ All notable changes to TotalDrop are recorded here. The format follows
   totaldrop:// link; the command line does the same with a code given to
   it, so a code copied with them still connects (#130).
 
-### Fixed
-
 - **CLI, translations:** The translation check rejected only the English
   no-words (n, no, not) among a language's yes answers (`cliYes`), so a
   draft could make a word for no, such as нет, nein or لا, mean yes. Each
@@ -57,9 +55,6 @@ All notable changes to TotalDrop are recorded here. The format follows
   be in `cliYes` or be y or yes. Answers are compared exactly as the
   command line compares them: `fold_answer`, `is_yes` and `ALWAYS_YES` are
   now public in `totaldrop-l10n`, and the command line uses them (#129).
-
-### Fixed
-
 - **Core, command line:** `totaldrop --version` printed 0.1.0-beta.2 in
   the Linux 0.2.0-beta.1 and 0.3.0-beta.1 packages, although the command
   line had since gained the relay, privacy mode (`--relay-only`),
