@@ -80,8 +80,8 @@ TotalDrop [Semantic Versioning 2.0](https://semver.org/) kullanır.
 
 Adım adım sürüm listesi [surec.md](surec.md#sürüm-listesi) içindedir. Kısaca:
 sürüm ve paket tarifleri artırılır, `changelog.d/` girdileri
-`tools/changelog.mjs release` ile sürüm başlığına taşınır, sürüm PR'ı incelenip birleştirilir, `main`'deki commit'e etiket
-atılır. CI paketleri etiketten derler, derleme kaynağı kanıtı ekler ve taslak
+`tools/changelog.mjs release` ile sürüm başlığına taşınır, sürüm PR'ı
+incelenip birleştirilir, `main`'deki commit'e etiket atılır. CI paketleri etiketten derler, derleme kaynağı kanıtı ekler ve taslak
 bir yayın açar. Kişisel bir makinede derlenen hiçbir şey yayınlanmaz.
 
 Android'de imzalı Play paketi `android-v*` etiketinden, yalnızca

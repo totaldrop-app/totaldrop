@@ -55,8 +55,11 @@ Bir değişiklik ancak şunların hepsi doğruysa bitmiştir:
    taşı: `node tools/changelog.mjs release "[linux-0.4.0-beta.1]"` (ortak
    yayında `"[android-…] and [linux-…]"`). Komut girdileri Keep a
    Changelog sırasıyla yeni bir bölüme yazar, dosyaları siler ve kurallara
-   uymayan bir dosya varsa hiçbir şeyi değiştirmeden durur. Sürüm şu
-   dosyalarda artırılır. Linux: `linux/Cargo.toml`, `packaging/arch/PKGBUILD`,
+   uymayan bir dosya varsa hiçbir şeyi değiştirmeden durur. Komut bütün
+   dosyaları taşır; yalnızca bir platform yayınlanıyorsa öteki platformun
+   dosyaları önce `changelog.d/` dışına alınır, sonra aynı PR'da geri
+   konur (#152). Sürüm şu dosyalarda artırılır. Linux: `linux/Cargo.toml`,
+   `packaging/arch/PKGBUILD`,
    `packaging/debian/changelog`, `packaging/rpm/totaldrop.spec` ve
    `packaging/linux/app.totaldrop.TotalDrop.metainfo.xml`. Android: `app/pubspec.yaml` içinde hem sürüm hem
    derleme numarası (`+N`); numara her yüklemede artmalıdır, CI bunu

@@ -13,7 +13,8 @@ Name the file `<issue>-<slug>.<section>.md`, for example
 - `<issue>` is the issue the pull request closes or refers to;
 - `<slug>` is a few lowercase words joined by hyphens;
 - `<section>` is one of `added`, `changed`, `deprecated`, `removed`,
-  `fixed`, `security` ([Keep a Changelog](https://keepachangelog.com/en/1.1.0/)).
+  `fixed`, `security`, as in
+  [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Write the entry exactly as it will appear in CHANGELOG.md:
 
@@ -32,10 +33,18 @@ Write the entry exactly as it will appear in CHANGELOG.md:
 
 ## A change that needs no entry
 
-Some changes mean nothing to someone using TotalDrop: a comment, a CI
-setting, a test-only refactor. Say so in `<issue>-<slug>.none.md`, one
+Some changes mean nothing to someone using or contributing to TotalDrop: a
+comment, a typo in a document, a test-only refactor. Say so in `<issue>-<slug>.none.md`, one
 sentence on why, so the choice is visible in review. A release deletes
-these files without copying them. Dependabot's pull requests need no file.
+these files without copying them. A correction to an old release section
+of CHANGELOG.md also comes with one. Dependabot's pull requests need no
+file.
+
+## A release for one platform
+
+`release` moves every file. When only one platform is released, move the
+other platform's files out of `changelog.d/` first and back afterwards, in
+the same release pull request (#152).
 
 ## Checks
 
