@@ -67,8 +67,8 @@ Bir değişiklik ancak şunların hepsi doğruysa bitmiştir:
    numarası olmadan `app/rust/Cargo.toml`'a ve `Cargo.lock`'a da yazılır.
    Sunucular: `server/totaldrop-{rendezvous,relay}/Cargo.toml`, iki
    Worker'ın `package.json` ve `package-lock.json` dosyaları, CLI'ın bu
-   ikisine dev-dependency sürümleri ve `Cargo.lock`
-   (`tools/check-component-versions.sh`). CLI ve çekirdek: kök
+   iki sunucuya olan geliştirme bağımlılığı sürümleri ve `Cargo.lock`
+   (`tools/check-component-versions.sh` hepsini denetler). CLI ve çekirdek: kök
    `Cargo.toml`'daki `[workspace.package]` sürümü, iç bağımlılıkların
    (`totaldrop-core = { version = … }`) sürümleri ve `Cargo.lock`. CLI,
    Linux paketleriyle yayınlanır; CLI kodu son Linux yayınından bu yana
