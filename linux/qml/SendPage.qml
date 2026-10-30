@@ -203,12 +203,9 @@ Page {
                             Label { text: row.name; color: Theme.ink; elide: Text.ElideMiddle; Layout.fillWidth: true }
                             Label { text: row.bytes < 0 ? Strings.s.sendCounting : Strings.size(row.bytes); color: Theme.muted; font.features: { "tnum": 1 } }
                         }
-                        ToolButton {
+                        IconButton {
                             icon.name: Theme.icon("list-remove")
-                            display: AbstractButton.IconOnly
                             text: Strings.s.sendRemove
-                            ToolTip.visible: hovered
-                            ToolTip.text: text
                             onClicked: { files.remove(row.index); page.recalc() }
                         }
                     }
@@ -241,7 +238,7 @@ Page {
                     color: Theme.muted
                     font.features: { "tnum": 1 }
                 }
-                Switch {
+                Toggle {
                     id: strongSwitch
                     text: Strings.s.sendStrongCode
                     checked: page.strong
@@ -331,7 +328,7 @@ Page {
                             horizontalAlignment: Text.AlignHCenter
                             Layout.fillWidth: true
                         }
-                        Button {
+                        SecondaryButton {
                             id: copyButton
                             text: Strings.s.sendCopy
                             icon.name: Theme.icon("edit-copy")
@@ -366,7 +363,7 @@ Page {
                     Layout.fillWidth: true
                     Layout.topMargin: Theme.s8
                 }
-                Button {
+                SecondaryButton {
                     text: Strings.s.cancel
                     onClicked: page.askCancel()
                     Layout.alignment: Qt.AlignHCenter
@@ -388,7 +385,7 @@ Page {
                 Layout.fillWidth: true
             }
             Item { Layout.fillHeight: true }
-            Button { text: Strings.s.cancel; onClicked: page.askCancel(); Layout.alignment: Qt.AlignRight }
+            SecondaryButton { text: Strings.s.cancel; onClicked: page.askCancel(); Layout.alignment: Qt.AlignRight }
         }
 
         // 4: sending
@@ -403,7 +400,7 @@ Page {
             }
             VerificationWords { words: page.transfer.words; Layout.fillWidth: true }
             Item { Layout.fillHeight: true }
-            Button { text: Strings.s.stop; onClicked: page.askCancel(); Layout.alignment: Qt.AlignRight }
+            SecondaryButton { text: Strings.s.stop; onClicked: page.askCancel(); Layout.alignment: Qt.AlignRight }
         }
 
         // 5: result

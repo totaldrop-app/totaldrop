@@ -68,7 +68,7 @@ Page {
 
             Label { text: Strings.s.settingsServer; color: Theme.ink; font.pointSize: Qt.application.font.pointSize * 1.25; font.weight: Font.DemiBold }
             Label { text: Strings.s.settingsServerHelp; color: Theme.muted; wrapMode: Text.Wrap; Layout.fillWidth: true }
-            TextField {
+            Field {
                 id: server
                 text: page.transfer.server
                 inputMethodHints: Qt.ImhUrlCharactersOnly | Qt.ImhNoAutoUppercase
@@ -92,7 +92,7 @@ Page {
                     enabled: server.text.trim() !== page.transfer.server
                     onClicked: server.save()
                 }
-                Button {
+                SecondaryButton {
                     text: Strings.s.settingsServerReset
                     flat: true
                     enabled: page.transfer.server !== page.transfer.defaultServer
@@ -104,7 +104,7 @@ Page {
 
             Label { text: Strings.s.settingsPrivacy; color: Theme.ink; font.pointSize: Qt.application.font.pointSize * 1.25; font.weight: Font.DemiBold }
             Label { text: Strings.s.settingsPrivacyBody; color: Theme.ink; wrapMode: Text.Wrap; Layout.fillWidth: true }
-            Switch {
+            Toggle {
                 id: privacy
                 text: Strings.s.privacyMode
                 checked: page.transfer.privacyMode
@@ -187,8 +187,8 @@ Page {
             color: Theme.ink
         }
         footer: DialogButtonBox {
-            Button { text: Strings.s.cancel; DialogButtonBox.buttonRole: DialogButtonBox.RejectRole }
-            Button { text: Strings.s.privacyModeTurnOn; DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole }
+            SecondaryButton { text: Strings.s.cancel; DialogButtonBox.buttonRole: DialogButtonBox.RejectRole }
+            SecondaryButton { text: Strings.s.privacyModeTurnOn; DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole }
         }
         onAccepted: page.transfer.savePrivacyMode(true)
     }

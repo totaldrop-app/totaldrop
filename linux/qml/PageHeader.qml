@@ -17,13 +17,10 @@ ToolBar {
         anchors.fill: parent
         spacing: Theme.s8
 
-        ToolButton {
+        IconButton {
             // Qt does not pick -rtl icon variants: flip the arrow itself.
             icon.name: Theme.icon(Strings.rtl ? "go-next" : "go-previous")
-            display: AbstractButton.IconOnly
             text: Strings.s.back
-            ToolTip.visible: hovered
-            ToolTip.text: text
             onClicked: bar.back()
         }
         Label {
