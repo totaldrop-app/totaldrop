@@ -52,10 +52,17 @@ void main() {
     // Neighbours of the ranges, and a Cyrillic look-alike, stay.
     final kept = String.fromCharCodes([
       0x00AC,
+      0x00AE,
       0x061B,
+      0x061D,
+      0x200A,
       0x2010,
+      0x2029,
+      0x202F,
+      0x205F,
       0x2061,
       0x2065,
+      0x206A,
       0xFEFE,
       0x0430,
       0x20,
@@ -67,15 +74,28 @@ void main() {
   test('the list matches the code parser in totaldrop-proto', () {
     final rust = File('../crates/totaldrop-proto/src/lib.rs')
         .readAsStringSync();
-    final start = rust.indexOf('pub const INVISIBLE_FORMAT');
-    expect(start, isNot(-1));
-    final block = rust.substring(start, rust.indexOf('];', start));
+    const declaration = 'pub const INVISIBLE_FORMAT: &[(u32, u32)] = &[';
+    final start = rust.indexOf(declaration);
+    expect(start, isNot(-1), reason: 'declaration not found');
+    final body = rust.substring(
+      start + declaration.length,
+      rust.indexOf('];', start),
+    );
+    // Every entry must be read: an entry the pattern misses (another
+    // spelling, a constant) fails the count instead of passing unseen.
+    final entries = '('.allMatches(body).length;
+    final hex = RegExp(
+      r'\(\s*0x([0-9a-f_]+)\s*,\s*0x([0-9a-f_]+)\s*\)',
+      caseSensitive: false,
+    );
+    int value(String digits) =>
+        int.parse(digits.replaceAll('_', ''), radix: 16);
     final ranges = [
-      for (final m in RegExp(
-        r'\(0x([0-9A-F]+), 0x([0-9A-F]+)\)',
-      ).allMatches(block))
-        (int.parse(m.group(1)!, radix: 16), int.parse(m.group(2)!, radix: 16)),
+      for (final m in hex.allMatches(body))
+        (value(m.group(1)!), value(m.group(2)!)),
     ];
+    expect(entries, greaterThan(0));
+    expect(ranges, hasLength(entries));
     expect(ranges, invisibleFormat);
   });
 
