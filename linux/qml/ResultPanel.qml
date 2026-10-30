@@ -6,7 +6,9 @@ import app.totaldrop
 
 // The end of a transfer: success, a decline or an error. Errors say what
 // happened and what to do; the technical detail sits under Details as
-// selectable text.
+// selectable text. Enter presses the focused button, as Space does: Qt
+// Quick buttons take only Space, and GTK desktops press with Enter too.
+// Escape is Done, through the page's back.
 ColumnLayout {
     id: r
 
@@ -60,6 +62,8 @@ ColumnLayout {
         text: Strings.s.openFolder
         icon.name: Theme.icon("folder-open", "folder-open")
         onClicked: Qt.openUrlExternally("file://" + r.folder)
+        Keys.onReturnPressed: clicked()
+        Keys.onEnterPressed: clicked()
         Layout.alignment: Qt.AlignHCenter
     }
 
@@ -73,6 +77,8 @@ ColumnLayout {
             checkable: true
             text: Strings.s.moreInfo
             icon.name: Theme.icon(checked ? "go-up" : "go-down")
+            Keys.onReturnPressed: toggle()
+            Keys.onEnterPressed: toggle()
             Layout.alignment: Qt.AlignHCenter
         }
         TextArea {
@@ -98,6 +104,8 @@ ColumnLayout {
             visible: r.canRetry
             text: Strings.s.tryAgain
             onClicked: r.retry()
+            Keys.onReturnPressed: clicked()
+            Keys.onEnterPressed: clicked()
         }
         PrimaryButton {
             text: Strings.s.done
