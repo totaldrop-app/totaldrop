@@ -797,8 +797,9 @@ async fn receiver_stops_at_the_offer() {
 }
 
 /// Stopping before anyone connected just leaves, at once; so does a
-/// receiver stopped while it connects.
-#[tokio::test(flavor = "multi_thread")]
+/// receiver stopped while it connects. The runtime has a single thread, so
+/// the event loop runs only when this test yields (see below).
+#[tokio::test]
 async fn stop_while_waiting_and_while_connecting() {
     let server = server().await;
     let src = scratch("src");
@@ -820,11 +821,12 @@ async fn stop_while_waiting_and_while_connecting() {
     // mailbox may still be there: a receiver left running could claim it,
     // read the sender's PAKE message and end in WrongCode, which is right
     // for a peer that left after the exchange began (#126). The stop is
-    // therefore ordered before any reply can come back: one poll starts the
-    // connection, which cannot get past opening the TCP connection without
-    // a turn of the event loop, and then the stop lands. On its next poll
-    // connect_with sees the stop at once, long before the several round
-    // trips that claiming the mailbox and reading a message take.
+    // therefore ordered before any reply can come back. One poll starts the
+    // connection, which cannot get past opening the TCP connection: on this
+    // single-threaded runtime no I/O is driven until the test yields. The
+    // stop then lands, and the timeout's first poll, still without a yield,
+    // lets connect_with see it, before claiming the mailbox or reading a
+    // message could even begin.
     let stop = totaldrop_core::Stop::new();
     let opts = ReceiveOptions {
         server,
@@ -833,7 +835,7 @@ async fn stop_while_waiting_and_while_connecting() {
     let mut connecting = std::pin::pin!(IncomingOffer::connect_with(&opts, &code, &stop));
     let first =
         std::future::poll_fn(|cx| std::task::Poll::Ready(connecting.as_mut().poll(cx))).await;
-    assert!(first.is_pending());
+    assert!(first.is_pending(), "{first:?}");
     stop.stop();
     let r = tokio::time::timeout(Duration::from_secs(1), connecting)
         .await
