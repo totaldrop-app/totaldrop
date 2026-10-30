@@ -20,7 +20,7 @@ unicode-normalization = "0.1.26"  # folds answers to the CLI's save prompt (fold
 
 [dev-dependencies]
 # The share text in every language must give its code back (#148).
-totaldrop-proto = { path = "../totaldrop-proto" }
+totaldrop-proto = { version = "0.2.0-beta.1", path = "../totaldrop-proto" }
 
 [lints]
 workspace = true

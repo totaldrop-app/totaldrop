@@ -85,7 +85,9 @@ pub fn link_for(code: &str) -> String {
 }
 
 /// The code in a TotalDrop link (`https://totaldrop.app/r#…`,
-/// `totaldrop://r/…`) or a bare code, normalized.
+/// `totaldrop://r/…`) or a bare code, normalized. Strict: the whole rest
+/// must be the code. This also reads command-line arguments and QR codes,
+/// so a file name or text with a date in it must not become a code.
 pub fn code_from_link(text: &str) -> Option<String> {
     // Before the prefixes: a mark in front of the link hides them.
     let t = totaldrop_proto::strip_invisible_format(text);
@@ -96,7 +98,9 @@ pub fn code_from_link(text: &str) -> Option<String> {
         .or_else(|| t.strip_prefix("totaldrop://r/"))
         .or_else(|| t.strip_prefix("totaldrop:"))
         .unwrap_or(t);
-    normalize_code(&percent_decode(raw))
+    totaldrop_proto::TransferCode::parse(&percent_decode(raw))
+        .ok()
+        .map(|c| c.to_string())
 }
 
 /// QR modules for `text` as a row-major string of `1` (dark) and `0`, and
@@ -227,6 +231,14 @@ mod tests {
             Some("12-zoo-zone-able".into())
         );
         assert_eq!(code_from_link("https://example.com"), None);
+        // Files opened with TotalDrop, and QR codes, are not searched.
+        for text in [
+            "/home/u/Photos/2024-10-30/beach.jpg",
+            "IMG 7-abandon-ability.jpg",
+            "Get my files with TotalDrop. Code: 7-abandon-ability",
+        ] {
+            assert_eq!(code_from_link(text), None, "{text:?}");
+        }
     }
 
     #[test]
