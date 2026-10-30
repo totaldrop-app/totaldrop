@@ -31,9 +31,25 @@ jobs:
       - run: rustup toolchain install "$RUSTUP_TOOLCHAIN" --profile minimal -c clippy,rustfmt
       - name: Versions agree
         run: packaging/check-versions.sh
+      # The release runs check-cli-version.sh on the full history; a PR
+      # checkout is shallow, so here it is tested on its own repositories
+      # (with bash as /bin/sh; the scripts job below uses dash).
+      - name: CLI version check works
+        run: packaging/test-check-cli-version.sh
       - run: cargo fmt -p totaldrop-linux -- --check
       - run: cargo clippy -p totaldrop-linux --all-targets --locked -- -D warnings
       - run: cargo test -p totaldrop-linux --locked
+
+  # The release scripts are POSIX sh. On Ubuntu /bin/sh is dash, so the
+  # scripts the test calls run under dash too.
+  scripts:
+    name: Release scripts under dash
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: dash packaging/test-check-cli-version.sh
 
   # ARM64 (Snapdragon X, RTX Spark) on GitHub's free ARM runner, #86. Arch
   # has no official ARM64 Docker image; the PKGBUILD lists aarch64 for

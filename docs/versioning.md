@@ -16,6 +16,13 @@ TotalDrop [Semantic Versioning 2.0](https://semver.org/) kullanır.
   | Android uygulaması | `app/pubspec.yaml` |
   | Rendezvous sunucusu | `server/*/Cargo.toml`, `server/rendezvous-worker/package.json` |
 
+- **CLI, Linux paketleriyle yayınlanır.** Her `linux-v…` etiketi aynı
+  zamanda o commit'teki CLI sürümünün yayınıdır; `cli-v…` etiketi isteğe
+  bağlıdır. Linux yayınında CLI sürümü şimdiye kadar yayınlananların en
+  yükseğinden düşük olamaz, CLI kodu değiştiyse de aynı kalamaz
+  (`packaging/check-cli-version.sh`). Bu denetim yalnızca
+  `0.MINOR.PATCH-beta.N` biçimini tanır; 1.0'da değiştirilmelidir.
+
 - **1.0'a kadar beta.** Beş platform (Linux, Windows, macOS, Android, iOS)
   yayınlanana ve bağımsız güvenlik incelemesi bitene kadar her sürüm bir ön
   sürümdür: `0.MINOR.PATCH-beta.N`. Uygulamalar sürüm numarasının yanında
@@ -60,7 +67,7 @@ TotalDrop [Semantic Versioning 2.0](https://semver.org/) kullanır.
   | --- | --- |
   | Linux | `linux-v0.1.0-beta.2` |
   | Android | `android-v0.1.0-beta.2` |
-  | CLI | `cli-v0.1.0-beta.2` |
+  | CLI (isteğe bağlı, yukarıya bakın) | `cli-v0.1.0-beta.2` |
   | Rendezvous sunucusu | `server-v0.1.0-beta.2` |
 
 - [`CHANGELOG.md`](../CHANGELOG.md) [Keep a Changelog](https://keepachangelog.com/)
