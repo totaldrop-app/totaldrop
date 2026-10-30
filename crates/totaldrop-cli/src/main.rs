@@ -6,13 +6,17 @@ use std::process::ExitCode;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
 
-use clap::{Parser, Subcommand};
+use clap::{
+    Arg as ClapArg, ArgAction, CommandFactory as _, FromArgMatches as _, Parser, Subcommand,
+};
 use totaldrop_core::{
     Event, Events, IncomingOffer, PathOptions, PreparedSend, ReceiveOptions, SendOptions, Stop,
 };
 use totaldrop_l10n::{Arg, Domain, Strings, is_yes, reveal_controls as visible};
 use totaldrop_proto::TransferCode;
 
+// The doc comments are the English help; `help` puts each in the person's
+// language from l10n/cli under the key named next to it.
 #[derive(Parser)]
 #[command(
     name = "totaldrop",
@@ -110,6 +114,101 @@ fn printer(s: Arc<Strings>) -> Events {
             }
         }
     })
+}
+
+/// Help text keys of the arguments, by command (`""` for the top level) and
+/// argument id.
+const ARG_HELP: [(&str, &str, &str); 10] = [
+    ("", "server", "cliHelpServer"),
+    ("", "relay", "cliHelpRelay"),
+    ("", "stun", "cliHelpStun"),
+    ("", "relay_only", "cliHelpRelayOnly"),
+    ("send", "paths", "cliHelpSendPaths"),
+    ("send", "strong", "cliHelpSendStrong"),
+    ("receive", "code", "cliHelpReceiveCode"),
+    ("receive", "out", "cliHelpReceiveOut"),
+    ("receive", "yes", "cliHelpReceiveYes"),
+    ("code", "code", "cliHelpCodeCode"),
+];
+
+/// Help text keys of the commands.
+const COMMAND_HELP: [(&str, &str); 4] = [
+    ("", "cliHelpAbout"),
+    ("send", "cliHelpSend"),
+    ("receive", "cliHelpReceive"),
+    ("code", "cliHelpCode"),
+];
+
+/// The command line with its help in the language of `s`: descriptions,
+/// headings and the help and version flags. Clap's own error messages
+/// stay English.
+fn help(s: &Strings) -> clap::Command {
+    // A command's own options, then the shared ones, then help and version.
+    const SHARED: usize = 100;
+    const LAST: usize = 1000;
+    let t = |key: &str| s.get(key, &[]);
+    let (options, arguments) = (t("cliHelpOptions"), t("cliHelpArguments"));
+    let template = format!(
+        "{{about-with-newline}}\n{}: {{usage}}\n\n{{all-args}}{{after-help}}",
+        t("cliHelpUsage")
+    );
+    let localize = |name: &str, cmd: clap::Command| {
+        let mut cmd = cmd
+            .help_template(template.clone())
+            .subcommand_help_heading(t("cliHelpCommands"))
+            .disable_help_flag(true)
+            .arg(
+                ClapArg::new("help")
+                    .short('h')
+                    .long("help")
+                    .action(ArgAction::Help)
+                    .help(t("cliHelpHelp"))
+                    .display_order(LAST),
+            );
+        if let Some((_, key)) = COMMAND_HELP.iter().find(|(c, _)| *c == name) {
+            cmd = cmd.about(t(key));
+        }
+        let ids: Vec<String> = cmd
+            .get_arguments()
+            .map(|a| a.get_id().to_string())
+            .collect();
+        for (i, id) in ids.into_iter().enumerate() {
+            cmd = cmd.mut_arg(&id, |a| {
+                // The shared options follow a command's own.
+                let a = if name.is_empty() && a.get_display_order() < LAST {
+                    a.display_order(SHARED.saturating_add(i))
+                } else {
+                    a
+                };
+                let a = match ARG_HELP.iter().find(|(c, i, _)| *c == name && *i == id) {
+                    Some((_, _, key)) => a.help(t(key)),
+                    None => a,
+                };
+                let heading = if a.is_positional() {
+                    &arguments
+                } else {
+                    &options
+                };
+                a.help_heading(heading.clone())
+            });
+        }
+        cmd
+    };
+    let cmd = Cli::command().disable_version_flag(true).arg(
+        ClapArg::new("version")
+            .short('V')
+            .long("version")
+            .action(ArgAction::Version)
+            .help(t("cliHelpVersion"))
+            .display_order(LAST),
+    );
+    let mut cmd = localize("", cmd).mut_subcommands(|sub| {
+        let name = sub.get_name().to_owned();
+        localize(&name, sub)
+    });
+    // Clap adds `help` as a command only when it builds the parser.
+    cmd.build();
+    cmd.mut_subcommand("help", |h| h.about(t("cliHelpHelpCommand")))
 }
 
 fn server(cli: Option<String>) -> String {
@@ -355,8 +454,11 @@ fn ask(
 }
 
 fn main() -> ExitCode {
-    let cli = Cli::parse();
     let strings = Arc::new(Strings::system(Domain::Cli));
+    let cli = match Cli::from_arg_matches(&help(&strings).get_matches()) {
+        Ok(cli) => cli,
+        Err(e) => e.exit(),
+    };
     let runtime = match tokio::runtime::Builder::new_multi_thread()
         .enable_all()
         .build()
@@ -470,7 +572,7 @@ impl From<std::io::Error> for Failure {
 mod tests {
     #![allow(clippy::unwrap_used)]
 
-    use super::{ask, connecting_line, error_key};
+    use super::{ARG_HELP, COMMAND_HELP, ask, connecting_line, error_key, help};
     use totaldrop_core::Error;
     use totaldrop_l10n::{Domain, Strings};
     use totaldrop_proto::wire::RejectReason;
@@ -478,6 +580,55 @@ mod tests {
     /// The code is said back before connecting, in its logical order and
     /// plain ASCII: an override such as U+202E can show a pasted code in
     /// another order on screen than the one the parser reads (#149).
+    /// `--help` speaks the person's language, as every other line does
+    /// (#171): each description, the headings and the help flag.
+    #[test]
+    fn help_is_in_the_persons_language() {
+        let strings = |tag: &str| {
+            Strings::new(
+                Domain::Cli,
+                &[totaldrop_l10n::locale::parse(tag).unwrap()],
+                None,
+            )
+        };
+        help(&strings("en")).debug_assert();
+        let tr = strings("tr");
+        let mut cmd = help(&tr);
+        let text = |cmd: &mut clap::Command, name: &str| match name {
+            "" => cmd.render_help().to_string(),
+            _ => cmd
+                .find_subcommand_mut(name)
+                .unwrap()
+                .render_help()
+                .to_string(),
+        };
+        for name in ["", "send", "receive", "code"] {
+            let shown = text(&mut cmd, name);
+            let mut keys: Vec<&str> = ARG_HELP
+                .iter()
+                .filter(|(c, _, _)| c.is_empty() || *c == name)
+                .map(|(_, _, k)| *k)
+                .collect();
+            keys.extend(
+                COMMAND_HELP
+                    .iter()
+                    .filter(|(c, _)| *c == name)
+                    .map(|(_, k)| *k),
+            );
+            keys.extend(["cliHelpUsage", "cliHelpOptions", "cliHelpHelp"]);
+            if !name.is_empty() {
+                keys.push("cliHelpArguments");
+            }
+            for key in keys {
+                let line = tr.get(key, &[]);
+                assert!(shown.contains(&line), "{name}: {key} missing:\n{shown}");
+            }
+            for english in ["Usage", "Options", "Print help", "Arguments"] {
+                assert!(!shown.contains(english), "{name}: {english} in:\n{shown}");
+            }
+        }
+    }
+
     #[test]
     fn the_parsed_code_is_said_before_connecting() {
         let strings = |tag: &str| {
