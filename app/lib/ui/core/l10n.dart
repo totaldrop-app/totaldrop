@@ -91,6 +91,15 @@ String formatBytes(AppLocalizations l, int bytes, {String? numberLocale}) {
 /// Translations never contain these characters; only the code adds them.
 String isolate(String value) => '\u2068$value\u2069';
 
+/// The bidirectional controls: the Arabic letter mark, the left-to-right
+/// and right-to-left marks, the embeddings and overrides with their pop,
+/// and the isolates with theirs (U+2066 to U+2069).
+final _bidiControls = RegExp('[\u061C\u200E\u200F\u202A-\u202E\u2066-\u2069]');
+
+/// [value] without bidirectional controls: the reverse of [isolate], for
+/// text that comes back in, such as a pasted message holding a code.
+String stripBidiControls(String value) => value.replaceAll(_bidiControls, '');
+
 /// Text that must read left to right in every language (the transfer code,
 /// the verification words), spoken by screen readers with an English voice.
 class LtrEnglish extends StatelessWidget {

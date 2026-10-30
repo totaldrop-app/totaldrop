@@ -57,10 +57,11 @@ pub fn folder_size(dir: &Path) -> u64 {
     total
 }
 
-/// Normalize a code as typed: lowercase, spaces to dashes. `None` if it
-/// cannot be a code.
+/// Normalize a code as typed: lowercase, spaces to dashes, direction marks
+/// dropped. `None` if it cannot be a code.
 pub fn normalize_code(input: &str) -> Option<String> {
-    let cleaned = input
+    let cleaned = strip_bidi_controls(input);
+    let cleaned = cleaned
         .trim()
         .to_lowercase()
         .split(|c: char| c.is_whitespace() || c == '-')
@@ -70,6 +71,22 @@ pub fn normalize_code(input: &str) -> Option<String> {
     totaldrop_proto::TransferCode::parse(&cleaned)
         .ok()
         .map(|c| c.to_string())
+}
+
+/// `text` without bidirectional controls: the Arabic letter mark, the
+/// left-to-right and right-to-left marks, the embeddings and overrides
+/// with their pop, and the isolates with theirs. The Android share text
+/// isolates the code so it keeps its order in a right-to-left sentence;
+/// pasted back, these must go.
+fn strip_bidi_controls(text: &str) -> String {
+    text.chars()
+        .filter(|c| {
+            !matches!(
+                u32::from(*c),
+                0x061C | 0x200E | 0x200F | 0x202A..=0x202E | 0x2066..=0x2069
+            )
+        })
+        .collect()
 }
 
 /// Code words that start with `prefix`.
@@ -94,7 +111,9 @@ pub fn link_for(code: &str) -> String {
 /// The code in a TotalDrop link (`https://totaldrop.app/r#…`,
 /// `totaldrop://r/…`) or a bare code, normalized.
 pub fn code_from_link(text: &str) -> Option<String> {
-    let t = text.trim();
+    // Before the prefixes: a mark in front of the link hides them.
+    let t = strip_bidi_controls(text);
+    let t = t.trim();
     let raw = t
         .strip_prefix("https://totaldrop.app/r#")
         .or_else(|| t.strip_prefix("http://totaldrop.app/r#"))
@@ -232,6 +251,37 @@ mod tests {
             Some("12-zoo-zone-able".into())
         );
         assert_eq!(code_from_link("https://example.com"), None);
+    }
+
+    #[test]
+    fn codes_pasted_from_a_right_to_left_message() {
+        // The Android share text isolates the code (U+2068 … U+2069); a copy
+        // of the code alone can carry the isolates or other direction marks.
+        for code in [
+            "\u{2068}7-abandon-ability\u{2069}",
+            "\u{2066}7 abandon ability\u{2069}",
+            "\u{2067}7-abandon-ability\u{2069}\u{200F}",
+            "\u{200E}7-\u{202D}abandon\u{202C}-ability\u{061C}",
+        ] {
+            assert_eq!(
+                normalize_code(code),
+                Some("7-abandon-ability".into()),
+                "{code:?}"
+            );
+        }
+        assert_eq!(normalize_code("\u{2068}\u{2069}"), None);
+        for link in [
+            "\u{2068}totaldrop://r/7-abandon-ability\u{2069}",
+            "\u{2068}https://totaldrop.app/r#7-abandon-ability\u{2069}",
+            "totaldrop://r/\u{2068}7-abandon-ability\u{2069}",
+            "totaldrop://r/%E2%81%A87-abandon-ability%E2%81%A9",
+        ] {
+            assert_eq!(
+                code_from_link(link),
+                Some("7-abandon-ability".into()),
+                "{link:?}"
+            );
+        }
     }
 
     #[test]

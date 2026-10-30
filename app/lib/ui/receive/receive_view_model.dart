@@ -4,6 +4,17 @@ import 'package:flutter/foundation.dart';
 
 import '../../data/transfer_repository.dart';
 import '../../src/rust/api/transfer.dart';
+import '../core/l10n.dart';
+
+/// The code in pasted text. A shared message holds more than the code
+/// (it may be the whole share text), so this takes its number and word
+/// group, and falls back to the whole text. Direction marks are dropped:
+/// the share text isolates the code, and they must not reach the field.
+String codeFromPaste(String text) {
+  final clean = stripBidiControls(text).trim();
+  final match = RegExp(r'\d+(?:[-\s][a-zA-Z]+){2,3}').firstMatch(clean);
+  return match?.group(0) ?? clean;
+}
 
 enum ReceiveStage { entering, connecting, offered, transferring, done, declined, failed }
 

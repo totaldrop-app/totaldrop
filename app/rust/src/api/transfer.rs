@@ -464,11 +464,15 @@ pub async fn decline_offer(offer: &Offer) -> Result<(), TransferError> {
     on_runtime(async move { Ok(incoming.decline().await?) }).await
 }
 
-/// Normalize a code as typed: lowercase, spaces to dashes. Returns `None`
-/// if it cannot be a code, so the UI can say so before connecting.
+/// Normalize a code as typed: lowercase, spaces to dashes, direction marks
+/// dropped. Returns `None` if it cannot be a code, so the UI can say so
+/// before connecting.
 #[frb(sync)]
 pub fn normalize_code(input: String) -> Option<String> {
     let cleaned = input
+        .chars()
+        .filter(|c| !is_bidi_control(*c))
+        .collect::<String>()
         .trim()
         .to_lowercase()
         .split(|c: char| c.is_whitespace() || c == '-')
@@ -478,4 +482,49 @@ pub fn normalize_code(input: String) -> Option<String> {
     totaldrop_proto::TransferCode::parse(&cleaned)
         .ok()
         .map(|c| c.to_string())
+}
+
+/// A bidirectional control: the Arabic letter mark, the left-to-right and
+/// right-to-left marks, the embeddings and overrides with their pop, and
+/// the isolates with theirs. The share text isolates the code so it keeps
+/// its order in a right-to-left sentence; pasted back, these must go.
+fn is_bidi_control(c: char) -> bool {
+    matches!(
+        u32::from(c),
+        0x061C | 0x200E | 0x200F | 0x202A..=0x202E | 0x2066..=0x2069
+    )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn codes_as_typed() {
+        assert_eq!(
+            normalize_code(" 7 Abandon  ability ".into()),
+            Some("7-abandon-ability".into())
+        );
+        assert_eq!(normalize_code("seven words".into()), None);
+    }
+
+    #[test]
+    fn codes_pasted_from_a_right_to_left_message() {
+        // The share text isolates the code (U+2068 … U+2069); a copy of the
+        // code alone can carry the isolates or other direction marks.
+        for code in [
+            "\u{2068}7-abandon-ability\u{2069}",
+            "\u{2066}7 abandon ability\u{2069}",
+            "\u{2067}7-abandon-ability\u{2069}\u{200F}",
+            "\u{200E}7-\u{202D}abandon\u{202C}-ability\u{061C}",
+            " \u{2068} 7-abandon-ability \u{2069} ",
+        ] {
+            assert_eq!(
+                normalize_code(code.into()),
+                Some("7-abandon-ability".into()),
+                "{code:?}"
+            );
+        }
+        assert_eq!(normalize_code("\u{2068}\u{2069}".into()), None);
+    }
 }
