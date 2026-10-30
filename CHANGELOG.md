@@ -28,6 +28,12 @@ All notable changes to TotalDrop are recorded here. The format follows
   clock and checks that the relay connection comes up before the sender's
   own dial would start, instead of timing the connection on the wall clock
   (#126).
+- **Android, Linux:** In a right-to-left language the shared message could
+  show the code out of order, with its number on the wrong side of its
+  words; the code is now isolated, as the version and the save folder are.
+  Both apps drop direction marks from a pasted code or totaldrop:// link,
+  so the code still connects. The right-to-left layout check reads whole
+  calls, so one spread over several lines no longer slips through (#130).
 
 ### Fixed
 
