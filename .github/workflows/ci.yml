@@ -46,7 +46,7 @@ jobs:
             [core]="^(crates/|l10n/|server/totaldrop-(rendezvous|relay)/|fuzz/|deny\.toml$|$shared|\.github/workflows/core\.yml$)"
             [android]="^(app/|l10n/|crates/totaldrop-(core|crypto|proto|l10n)/|$shared|\.github/workflows/android(-release)?\.yml$)"
             [linux]="^(linux/|packaging/|l10n/|crates/totaldrop-(core|crypto|proto|cli|l10n)/|$shared|\.github/workflows/linux(-release)?\.yml$)"
-            [server]="^(server/(rendezvous|relay)-worker/|server/totaldrop-(rendezvous|relay)/|crates/totaldrop-(core|crypto|proto|cli|l10n)/|l10n/|$shared|\.github/workflows/server\.yml$)"
+            [server]="^(server/(rendezvous|relay)-worker/|server/tools/|server/totaldrop-(rendezvous|relay)/|crates/totaldrop-(core|crypto|proto|cli|l10n)/|l10n/|$shared|\.github/workflows/server\.yml$)"
             [site]="^(site/|l10n/tests/|[^/]+\.md$|docs/|\.github/workflows/site\.yml$)"
           )
           # Every changed path, unquoted (non-ASCII names stay as they are)

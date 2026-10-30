@@ -107,6 +107,48 @@ Bir değişiklik ancak şunların hepsi doğruysa bitmiştir:
 7. Site güncellenir ve indirme bağlantılarının her biri denenir.
 8. Android'de CI'ın imzaladığı paket Play Console'a yüklenir.
 
+## Dağıtım
+
+Site (totaldrop.app) ile buluşma ve aktarma sunucuları (rendezvous ve
+relay Worker'ları) Cloudflare'e yalnızca CI'dan, `main`'den dağıtılır
+(`.github/workflows/deploy.yml`). Böylece üretimde çalışan şey her zaman
+incelenmiş bir commit'tir.
+
+- **Ne zaman:** `main`'e gelen bir commit `site/` ya da
+  `server/*-worker/` altında bir dosyayı değiştirdiyse yalnızca değişen
+  hedef dağıtılır. Elle dağıtmak için Actions → Deploy → "Run workflow"
+  ile hedef seçilir; her zaman `main`'in son hâli dağıtılır.
+- **Onay:** her dağıtım işi `cloudflare` ortamında bekler ve depo
+  yöneticisi onaylamadan çalışmaz. Ortam yalnızca `main` dalına açıktır.
+- **Denetim:** dağıtımdan sonra `server/tools/probe.mjs` çalışır. Buluşma
+  ve aktarma sunucusunda gerçek bir WebSocket el sıkışması yapar (hiç ileti
+  göndermeden kapatır, numara ayırmaz), sitede ana sayfayı ve indirme
+  sayfasını açar. Bir dakika içinde yanıt yoksa iş başarısız olur.
+- **Geri alma:** Worker için `server/<worker>` dizininde
+  `npx wrangler deployments list` ile önceki sürümü bulup
+  `npx wrangler rollback <sürüm-kimliği>` çalıştırın. Site için
+  Cloudflare panelinde Workers & Pages → totaldrop → Deployments altında
+  önceki dağıtımda "Rollback to this deployment" seçilir. Geri almadan
+  sonra hatayı düzelten commit normal yoldan gelir; CI'ın bir sonraki
+  dağıtımı geri alınmış sürümün yerine geçer.
+
+**Kurulum (bir kez, depo yöneticisi yapar):**
+
+1. Cloudflare'de bir API belirteci oluşturun: Account → Workers Scripts:
+   Edit ve Cloudflare Pages: Edit; Zone (yalnız totaldrop.app) → Workers
+   Routes: Edit. Cloudflare belirteci tek tek Worker'lara kısıtlayamaz;
+   en dar kapsam bu hesap ve bu alan adıdır. İstemci IP'si kısıtlaması
+   eklemeyin; GitHub'ın çalıştırıcıları değişken adres kullanır.
+2. GitHub'da Settings → Environments → `cloudflare`: gerekli onaylayıcı
+   olarak kendinizi ekleyin, dağıtım dalını `main` ile sınırlayın. Ortam,
+   iş akışı ilk kez çalışmadan önce var olmalıdır: olmayan bir ortamı
+   GitHub korumasız olarak kendisi açar.
+3. Aynı ortama gizli değer `CLOUDFLARE_API_TOKEN` (belirteç) ve değişken
+   `CLOUDFLARE_ACCOUNT_ID` (hesap kimliği) ekleyin. Belirteç başka hiçbir
+   yerde durmaz.
+4. Eski, geniş yetkili belirteçleri ya da yerelde kalan oturumları
+   (`wrangler logout`) kaldırın; elle dağıtım artık gerekmez.
+
 ## Gizli bilgiler
 
 İmza anahtarları, parolalar ve API anahtarları yalnızca GitHub Actions

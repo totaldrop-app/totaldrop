@@ -1,0 +1,124 @@
+# Deploys the site and the two Workers to Cloudflare from main, so what runs
+# in production is a reviewed commit. Every deploy waits in the `cloudflare`
+# environment for the owner's approval, and is followed by a health probe.
+# Setup, approval and rollback: docs/surec.md, "Dağıtım".
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - site/public/**
+      - site/functions/**
+      - site/wrangler.toml
+      - server/rendezvous-worker/**
+      - server/relay-worker/**
+      - server/tools/probe.mjs
+  workflow_dispatch:
+    inputs:
+      target:
+        description: What to deploy (the head of main)
+        type: choice
+        options: [site, rendezvous, relay]
+
+permissions:
+  contents: read
+
+jobs:
+  targets:
+    name: What changed
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    outputs:
+      list: ${{ steps.pick.outputs.list }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - id: pick
+        env:
+          EVENT: ${{ github.event_name }}
+          CHOSEN: ${{ inputs.target }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          if [ "$EVENT" = workflow_dispatch ]; then
+            list="[\"$CHOSEN\"]"
+          else
+            # A new branch or a force push has no usable "before"; deploy all.
+            if git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+              files=$(git diff --name-only "$BEFORE" "$GITHUB_SHA")
+            else
+              files=$(printf '%s\n' site/ server/rendezvous-worker/ server/relay-worker/)
+            fi
+            list=$(printf '%s\n' "$files" | awk '
+              /^site\//                    { t["site"] = 1 }
+              /^server\/rendezvous-worker\// { t["rendezvous"] = 1 }
+              /^server\/relay-worker\//      { t["relay"] = 1 }
+              /^server\/tools\/probe\.mjs$/  { t["site"] = t["rendezvous"] = t["relay"] = 1 }
+              END { s = ""; for (k in t) s = s (s ? "," : "") "\"" k "\""; print "[" s "]" }')
+          fi
+          echo "targets: $list"
+          echo "list=$list" >> "$GITHUB_OUTPUT"
+
+  deploy:
+    name: Deploy ${{ matrix.target }}
+    needs: targets
+    if: needs.targets.outputs.list != '[]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: cloudflare
+    strategy:
+      fail-fast: false
+      matrix:
+        target: ${{ fromJSON(needs.targets.outputs.list) }}
+    concurrency:
+      group: deploy-${{ matrix.target }}
+      cancel-in-progress: false
+    env:
+      WRANGLER_SEND_METRICS: "false"
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+      # Wrangler at the version pinned in the Worker's lock file. The site
+      # has no package of its own and uses the rendezvous Worker's.
+      - name: Install wrangler
+        env:
+          TARGET: ${{ matrix.target }}
+        run: |
+          case $TARGET in
+            relay) npm ci --prefix server/relay-worker ;;
+            *) npm ci --prefix server/rendezvous-worker ;;
+          esac
+      - name: Deploy the rendezvous Worker
+        if: matrix.target == 'rendezvous'
+        working-directory: server/rendezvous-worker
+        run: npx wrangler deploy --message "$GITHUB_SHA"
+      - name: Deploy the relay Worker
+        if: matrix.target == 'relay'
+        working-directory: server/relay-worker
+        run: npx wrangler deploy --message "$GITHUB_SHA"
+      - name: Deploy the site
+        if: matrix.target == 'site'
+        working-directory: site
+        run: >
+          ../server/rendezvous-worker/node_modules/.bin/wrangler pages deploy public
+          --project-name totaldrop --branch main
+          --commit-hash "$GITHUB_SHA" --commit-dirty=false
+      - name: Health probe
+        env:
+          TARGET: ${{ matrix.target }}
+        run: node server/tools/probe.mjs "$TARGET"
+      - name: How to roll back
+        if: failure()
+        env:
+          TARGET: ${{ matrix.target }}
+        run: |
+          echo "::error::The $TARGET deploy or its probe failed."
+          echo "Roll back as described in docs/surec.md, section Dağıtım."
