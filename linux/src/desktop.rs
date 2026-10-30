@@ -57,10 +57,11 @@ pub fn folder_size(dir: &Path) -> u64 {
     total
 }
 
-/// Normalize a code as typed: lowercase, spaces to dashes, direction marks
-/// dropped. `None` if it cannot be a code.
+/// Normalize a code as typed: lowercase, spaces to dashes, invisible format
+/// characters such as direction marks dropped. `None` if it cannot be a
+/// code.
 pub fn normalize_code(input: &str) -> Option<String> {
-    let cleaned = strip_bidi_controls(input);
+    let cleaned = totaldrop_proto::strip_invisible_format(input);
     let cleaned = cleaned
         .trim()
         .to_lowercase()
@@ -71,22 +72,6 @@ pub fn normalize_code(input: &str) -> Option<String> {
     totaldrop_proto::TransferCode::parse(&cleaned)
         .ok()
         .map(|c| c.to_string())
-}
-
-/// `text` without bidirectional controls: the Arabic letter mark, the
-/// left-to-right and right-to-left marks, the embeddings and overrides
-/// with their pop, and the isolates with theirs. The Android share text
-/// isolates the code so it keeps its order in a right-to-left sentence;
-/// pasted back, these must go.
-fn strip_bidi_controls(text: &str) -> String {
-    text.chars()
-        .filter(|c| {
-            !matches!(
-                u32::from(*c),
-                0x061C | 0x200E | 0x200F | 0x202A..=0x202E | 0x2066..=0x2069
-            )
-        })
-        .collect()
 }
 
 /// Code words that start with `prefix`.
@@ -112,7 +97,7 @@ pub fn link_for(code: &str) -> String {
 /// `totaldrop://r/…`) or a bare code, normalized.
 pub fn code_from_link(text: &str) -> Option<String> {
     // Before the prefixes: a mark in front of the link hides them.
-    let t = strip_bidi_controls(text);
+    let t = totaldrop_proto::strip_invisible_format(text);
     let t = t.trim();
     let raw = t
         .strip_prefix("https://totaldrop.app/r#")
@@ -275,6 +260,7 @@ mod tests {
             "\u{2068}https://totaldrop.app/r#7-abandon-ability\u{2069}",
             "totaldrop://r/\u{2068}7-abandon-ability\u{2069}",
             "totaldrop://r/%E2%81%A87-abandon-ability%E2%81%A9",
+            "\u{FEFF}totaldrop://r/7-aban\u{200B}don-ability",
         ] {
             assert_eq!(
                 code_from_link(link),

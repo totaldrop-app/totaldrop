@@ -91,14 +91,33 @@ String formatBytes(AppLocalizations l, int bytes, {String? numberLocale}) {
 /// Translations never contain these characters; only the code adds them.
 String isolate(String value) => '\u2068$value\u2069';
 
-/// The bidirectional controls: the Arabic letter mark, the left-to-right
-/// and right-to-left marks, the embeddings and overrides with their pop,
-/// and the isolates with theirs (U+2066 to U+2069).
-final _bidiControls = RegExp('[\u061C\u200E\u200F\u202A-\u202E\u2066-\u2069]');
+/// Invisible format characters a code can pick up when it is copied, as
+/// inclusive ranges: the soft hyphen, the Arabic letter mark, the zero-width
+/// space, non-joiner and joiner, the left-to-right and right-to-left marks,
+/// the embeddings and overrides with their pop, the word joiner, the
+/// isolates with theirs, and the byte order mark. The same list as
+/// `INVISIBLE_FORMAT` in crates/totaldrop-proto/src/lib.rs, which the code
+/// parser strips; test/paste_code_test.dart checks that they match.
+const invisibleFormat = <(int, int)>[
+  (0x00AD, 0x00AD),
+  (0x061C, 0x061C),
+  (0x200B, 0x200F),
+  (0x202A, 0x202E),
+  (0x2060, 0x2060),
+  (0x2066, 0x2069),
+  (0xFEFF, 0xFEFF),
+];
 
-/// [value] without bidirectional controls: the reverse of [isolate], for
-/// text that comes back in, such as a pasted message holding a code.
-String stripBidiControls(String value) => value.replaceAll(_bidiControls, '');
+final _invisibleFormat = RegExp(
+  '[${invisibleFormat.map((r) => '${_char(r.$1)}-${_char(r.$2)}').join()}]',
+);
+
+String _char(int code) => String.fromCharCode(code);
+
+/// [value] without [invisibleFormat] characters: the reverse of [isolate],
+/// for text that comes back in, such as a pasted message holding a code.
+String stripInvisibleFormat(String value) =>
+    value.replaceAll(_invisibleFormat, '');
 
 /// Text that must read left to right in every language (the transfer code,
 /// the verification words), spoken by screen readers with an English voice.

@@ -11,7 +11,7 @@ import '../core/l10n.dart';
 /// group, and falls back to the whole text. Direction marks are dropped:
 /// the share text isolates the code, and they must not reach the field.
 String codeFromPaste(String text) {
-  final clean = stripBidiControls(text).trim();
+  final clean = stripInvisibleFormat(text).trim();
   final match = RegExp(r'\d+(?:[-\s][a-zA-Z]+){2,3}').firstMatch(clean);
   return match?.group(0) ?? clean;
 }
