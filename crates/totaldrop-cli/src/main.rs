@@ -290,10 +290,14 @@ async fn receive(
     let yes_words = s.get("cliYes", &[]);
     let accepted = yes || {
         let answer = tokio::task::spawn_blocking(move || {
-            eprint!("{prompt}");
-            let _ = std::io::stderr().flush();
-            let mut line = String::new();
-            std::io::stdin().read_line(&mut line).is_ok() && is_yes(&line, &yes_words)
+            let typed = std::io::stdin().is_terminal();
+            let line = ask(
+                &prompt,
+                &mut std::io::stdin().lock(),
+                &mut std::io::stderr(),
+                typed,
+            );
+            line.is_some_and(|l| is_yes(&l, &yes_words))
         });
         tokio::select! {
             a = answer => a.unwrap_or(false),
@@ -326,6 +330,26 @@ async fn receive(
         );
     }
     Ok(())
+}
+
+/// Asks `prompt` on `out` and reads one line of answer from `input`, or
+/// `None` if it cannot be read. A terminal echoes what is `typed`, Enter
+/// included; an answer from a pipe or a file is not echoed, so the line is
+/// ended here and what comes next does not follow the question (#163).
+fn ask(
+    prompt: &str,
+    input: &mut impl std::io::BufRead,
+    out: &mut impl std::io::Write,
+    typed: bool,
+) -> Option<String> {
+    let _ = write!(out, "{prompt}");
+    let _ = out.flush();
+    let mut line = String::new();
+    let read = input.read_line(&mut line);
+    if !typed {
+        let _ = writeln!(out);
+    }
+    read.ok().map(|_| line)
 }
 
 fn main() -> ExitCode {
@@ -436,7 +460,7 @@ impl From<std::io::Error> for Failure {
 mod tests {
     #![allow(clippy::unwrap_used)]
 
-    use super::{connecting_line, error_key};
+    use super::{ask, connecting_line, error_key};
     use totaldrop_core::Error;
     use totaldrop_l10n::{Domain, Strings};
     use totaldrop_proto::wire::RejectReason;
@@ -468,6 +492,25 @@ mod tests {
         let (_, line) = connecting_line(&strings("tr"), "\u{202E}7-harbor-rocket").unwrap();
         assert_eq!(line, "7-harbor-rocket koduyla bağlanılıyor…");
         assert!(connecting_line(&en, "7-harbor").is_err());
+    }
+
+    /// An answer that is not typed (a pipe or a file) is not echoed, so the
+    /// question ends its own line: what comes next starts on a new one (#163).
+    #[test]
+    fn an_answer_from_a_pipe_ends_the_line() {
+        for (typed, shown) in [(false, "Save? \n"), (true, "Save? ")] {
+            let mut out = Vec::new();
+            let line = ask("Save? ", &mut &b"y\n"[..], &mut out, typed);
+            assert_eq!(line.as_deref(), Some("y\n"));
+            assert_eq!(String::from_utf8(out).unwrap(), shown, "typed: {typed}");
+        }
+        // Nothing to read: no answer, and the line still ends.
+        let mut out = Vec::new();
+        assert_eq!(
+            ask("Save? ", &mut &b""[..], &mut out, false).as_deref(),
+            Some("")
+        );
+        assert_eq!(out, b"Save? \n");
     }
 
     /// Every kind of failure has its own sentence in English and in
