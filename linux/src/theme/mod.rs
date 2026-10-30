@@ -140,7 +140,9 @@ pub struct Inputs {
     /// Last Omarchy theme read.
     pub omarchy: Option<Palette>,
     /// The GTK palettes, light and dark, last read (portal source only).
-    pub gtk: Option<[Palette; 2]>,
+    pub gtk: Option<[gtk::Gtk; 2]>,
+    /// The GTK theme's name the portal last gave.
+    pub gtk_theme: Option<String>,
     /// Last portal reading.
     pub portal: portal::Appearance,
     /// Last `kdeglobals` reading.
@@ -151,7 +153,7 @@ pub struct Inputs {
 
 /// The GTK palettes for `session`, light then dark. `theme` is the GTK
 /// theme's name if the portal gave it.
-pub fn gtk_palettes(session: &Session, theme: Option<&str>) -> [Palette; 2] {
+pub fn gtk_palettes(session: &Session, theme: Option<&str>) -> [gtk::Gtk; 2] {
     let name = theme.map(str::to_owned).or_else(gtk::settings_theme);
     let gnome = session.is_gnome();
     [false, true].map(|dark| gtk::palette(dark, name.as_deref(), gnome))
@@ -175,6 +177,7 @@ impl Inputs {
                 None
             },
             gtk: (source == Source::Portal).then(|| gtk_palettes(session, None)),
+            gtk_theme: None,
             portal: portal::Appearance::default(),
             kde_globals: if session.is_kde() {
                 kde::read()
@@ -195,9 +198,12 @@ impl Inputs {
             Source::Portal => {
                 let dark = portal_dark.unwrap_or(false);
                 match (self.gtk, self.portal.accent) {
-                    (Some([light, dark_p]), accent) => {
-                        let mut p = if dark { dark_p } else { light };
-                        if let Some(a) = accent {
+                    (Some([light, dark_g]), accent) => {
+                        let g = if dark { dark_g } else { light };
+                        let mut p = g.palette;
+                        // An accent the theme or the person's gtk.css names
+                        // wins, as in GTK; the portal always reports one.
+                        if let Some(a) = accent.filter(|_| !g.own_accent) {
                             p.accent = a;
                             p.accent_text = gtk::accent_text(a, &p);
                         }
@@ -273,7 +279,7 @@ mod tests {
     #[test]
     fn gtk_desktops_take_gtk_colours() {
         let mut i = Inputs::new(&session("GNOME", "", false));
-        i.gtk = Some([gtk::adwaita(false), gtk::adwaita(true)]);
+        i.gtk = Some(plain_gtk());
         i.portal.dark = Some(true);
         assert_eq!(i.look().palette.background.hex(), "#222226");
         i.portal.dark = Some(false);
@@ -285,9 +291,32 @@ mod tests {
         );
     }
 
+    /// Adwaita with nothing on top, whatever files this machine has.
+    fn plain_gtk() -> [gtk::Gtk; 2] {
+        [false, true].map(|dark| gtk::Gtk {
+            palette: gtk::adwaita(dark),
+            own_accent: false,
+        })
+    }
+
+    #[test]
+    fn a_themes_own_accent_beats_the_portals() {
+        let mut i = Inputs::new(&session("Hyprland", "", false));
+        let mut g = plain_gtk();
+        g[0].palette.accent = color::Rgb(0x52, 0x94, 0xe2);
+        g[0].own_accent = true;
+        i.gtk = Some(g);
+        i.portal.dark = Some(false);
+        i.portal.accent = Some(color::Rgb(53, 132, 228));
+        assert_eq!(i.look().palette.accent.hex(), "#5294e2");
+        i.gtk = Some(plain_gtk());
+        assert_eq!(i.look().palette.accent.hex(), "#3584e4");
+    }
+
     #[test]
     fn portal_accent_and_scheme() {
         let mut i = Inputs::new(&session("GNOME", "", false));
+        i.gtk = Some(plain_gtk());
         i.portal = portal::Appearance {
             dark: Some(true),
             accent: Some(color::Rgb(53, 132, 228)),

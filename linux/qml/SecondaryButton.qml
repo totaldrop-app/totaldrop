@@ -14,10 +14,10 @@ Button {
 
     readonly property bool styled: Theme.fusion
 
-    topPadding: styled ? 8 : undefined
-    bottomPadding: styled ? 8 : undefined
-    leftPadding: styled ? 16 : undefined
-    rightPadding: styled ? 16 : undefined
+    topPadding: styled ? 10 : undefined
+    bottomPadding: styled ? 10 : undefined
+    leftPadding: styled ? 20 : undefined
+    rightPadding: styled ? 20 : undefined
 
     Keys.onReturnPressed: (e) => { if (enabled && !e.isAutoRepeat) click() }
     Keys.onEnterPressed: (e) => { if (enabled && !e.isAutoRepeat) click() }
@@ -31,8 +31,8 @@ Button {
     Component {
         id: surface
         Rectangle {
-            implicitHeight: 34
-            radius: Math.min(Theme.radius, height / 2)
+            implicitHeight: 36
+            radius: Theme.controlRadius
             color: b.down || b.checked ? Qt.tint(Theme.raised, Qt.alpha(Theme.ink, 0.16))
                  : b.hovered ? Qt.tint(Theme.raised, Qt.alpha(Theme.ink, 0.08))
                  : b.flat ? "transparent"

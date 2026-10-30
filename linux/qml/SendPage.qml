@@ -164,6 +164,8 @@ Page {
                     id: addButton
                     text: Strings.s.sendAddFiles
                     icon.name: Theme.icon("list-add")
+                // Fusion leaves symbolic icons black; Breeze's already follow.
+                icon.color: Theme.fusion ? Theme.ink : "transparent"
                     onClicked: page.transfer.pickFiles(Strings.s.pickTitle)
                     Layout.alignment: Qt.AlignHCenter
                     Layout.topMargin: Theme.s16

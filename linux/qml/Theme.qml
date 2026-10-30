@@ -27,6 +27,9 @@ QtObject {
     readonly property bool dark: system ? luma(sys.window) < 0.5 : SystemTheme.dark
 
     readonly property int radius: SystemTheme.radius
+    // Buttons and fields: GTK rounds them less than its cards (6 px in
+    // libadwaita), and never more than the desktop rounds.
+    readonly property int controlRadius: Math.min(radius, 6)
     readonly property bool reducedMotion: SystemTheme.reducedMotion
 
     // A freedesktop icon name in the form that takes the text colour:

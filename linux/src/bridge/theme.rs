@@ -4,6 +4,7 @@
 //! background runtime: the portal, the Omarchy theme folder, `kdeglobals`
 //! and Hyprland's event socket. Every change is queued onto the Qt thread.
 
+use std::path::{Path, PathBuf};
 use std::pin::Pin;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
@@ -148,6 +149,7 @@ impl cxx_qt::Initialize for qobject::SystemTheme {
         };
         if gtk_theme.is_some() {
             inputs.gtk = Some(gtk_palettes(&session, gtk_theme.as_deref()));
+            inputs.gtk_theme = gtk_theme;
         }
         let hypr = hyprland::running();
         if hypr {
@@ -163,6 +165,18 @@ impl cxx_qt::Initialize for qobject::SystemTheme {
         {
             let (s, t) = (shared.clone(), thread.clone());
             RUNTIME.spawn(portal::watch(move |a| push(&s, &t, |i| i.portal = a)));
+        }
+
+        // GTK: the theme's name, when GNOME Tweaks or nwg-look switch it.
+        if source == Source::Portal {
+            let (s, t, session) = (shared.clone(), thread.clone(), session.clone());
+            RUNTIME.spawn(portal::watch_gtk_theme(move |name| {
+                let g = gtk_palettes(&session, name.as_deref());
+                push(&s, &t, |i| {
+                    i.gtk = Some(g);
+                    i.gtk_theme = name;
+                });
+            }));
         }
 
         // Hyprland: rounding, after every configuration reload.
@@ -190,28 +204,46 @@ impl cxx_qt::Initialize for qobject::SystemTheme {
             Source::System if session.is_kde() => kde::kdeglobals()
                 .and_then(|p| p.parent().map(|d| vec![d.to_path_buf()]))
                 .unwrap_or_default(),
-            Source::Portal => [gtk::user_css(), gtk::settings_ini()]
+            Source::Portal => gtk_dirs()
                 .into_iter()
-                .flatten()
-                .filter_map(|p| p.parent().map(|d| d.to_path_buf()))
-                .filter(|d| d.exists())
-                .collect(),
+                // A folder made later shows up in the one above it.
+                .filter_map(|d| {
+                    if d.exists() {
+                        Some(d)
+                    } else {
+                        d.parent().filter(|p| p.exists()).map(Path::to_path_buf)
+                    }
+                })
+                .fold(Vec::new(), |mut v, d| {
+                    if !v.contains(&d) {
+                        v.push(d);
+                    }
+                    v
+                }),
             _ => Vec::new(),
         };
         if !watched.is_empty() {
-            watch_files(watched, source, shared, thread, session, gtk_theme);
+            watch_files(watched, source, shared, thread, session);
         }
     }
 }
 
+/// The folders of the person's `gtk.css` and `settings.ini`.
+fn gtk_dirs() -> Vec<PathBuf> {
+    [gtk::user_css(), gtk::settings_ini()]
+        .into_iter()
+        .flatten()
+        .filter_map(|p| p.parent().map(Path::to_path_buf))
+        .collect()
+}
+
 /// Watch `dirs` and read the theme again after changes settle.
 fn watch_files(
-    dirs: Vec<std::path::PathBuf>,
+    dirs: Vec<PathBuf>,
     source: Source,
     shared: Shared,
     thread: Thread,
     session: Session,
-    gtk_theme: Option<String>,
 ) {
     use notify::{RecursiveMode, Watcher};
 
@@ -221,8 +253,9 @@ fn watch_files(
             let relevant = match source {
                 Source::Omarchy => true,
                 Source::Portal => event.paths.iter().any(|p| {
-                    p.file_name()
-                        .is_some_and(|n| n == "gtk.css" || n == "settings.ini")
+                    p.file_name().is_some_and(|n| {
+                        n == "gtk.css" || n == "settings.ini" || n == "gtk-4.0" || n == "gtk-3.0"
+                    })
                 }),
                 _ => event
                     .paths
@@ -244,7 +277,7 @@ fn watch_files(
     }
 
     RUNTIME.spawn(async move {
-        let _keep = watcher;
+        let mut watcher = watcher;
         while rx.recv().await.is_some() {
             // A theme switch rewrites many files; read once it is done.
             tokio::time::sleep(Duration::from_millis(150)).await;
@@ -257,7 +290,12 @@ fn watch_files(
                     }
                 }
                 Source::Portal => {
-                    let g = gtk_palettes(&session, gtk_theme.as_deref());
+                    // A GTK folder may have just been made.
+                    for d in gtk_dirs().iter().filter(|d| d.exists()) {
+                        let _ = watcher.watch(d, RecursiveMode::NonRecursive);
+                    }
+                    let name = shared.lock().ok().and_then(|i| i.gtk_theme.clone());
+                    let g = gtk_palettes(&session, name.as_deref());
                     push(&shared, &thread, |i| i.gtk = Some(g));
                 }
                 _ => {
