@@ -44,6 +44,14 @@ QtObject {
     readonly property int s24: 24
     readonly property int s40: 40
 
+    // The widest a page's content grows; a wider window centres it.
+    readonly property int contentWidth: 560
+    // Width of a page's content in a window `w` wide, with the side margins.
+    function columnWidth(w) { return Math.min(w - 2 * s24, contentWidth) }
+
+    // Behind a modal dialog.
+    readonly property color dim: Qt.rgba(0, 0, 0, dark ? 0.5 : 0.3)
+
     // The mark keeps its own colours in every theme.
     readonly property color mark: dark ? "#A68BFF" : "#6D4AE0"
     // The check drawn on the mark.

@@ -86,8 +86,11 @@ Page {
     }
 
     StackLayout {
-        anchors.fill: parent
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        anchors.horizontalCenter: parent.horizontalCenter
         anchors.margins: Theme.s24
+        width: Theme.columnWidth(parent.width)
         currentIndex: {
             switch (page.phase) {
             case "idle": return 0

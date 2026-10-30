@@ -25,8 +25,11 @@ Page {
     }
 
     ColumnLayout {
-        anchors.fill: parent
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        anchors.horizontalCenter: parent.horizontalCenter
         anchors.margins: Theme.s24
+        width: Theme.columnWidth(parent.width)
         spacing: Theme.s16
 
         Item { Layout.fillHeight: true; Layout.maximumHeight: Theme.s40 }

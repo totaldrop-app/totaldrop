@@ -32,16 +32,36 @@ Page {
     }
 
     Flickable {
+        id: flick
         anchors.fill: parent
         contentHeight: col.implicitHeight + 2 * Theme.s24
         clip: true
-        ScrollBar.vertical: ScrollBar {}
+        // Shown whenever the page is taller than the window, so it is
+        // clear that there is more below.
+        ScrollBar.vertical: ScrollBar {
+            policy: flick.contentHeight > flick.height ? ScrollBar.AlwaysOn : ScrollBar.AsNeeded
+        }
+
+        // Tab to a control out of view scrolls it into view.
+        Connections {
+            target: page.Window.window
+            function onActiveFocusItemChanged() {
+                const item = page.Window.activeFocusItem
+                if (!item || !col.contains(col.mapFromItem(item, 0, 0))) return
+                const top = item.mapToItem(flick.contentItem, 0, 0).y
+                const bottom = top + item.height
+                if (top < flick.contentY + Theme.s24)
+                    flick.contentY = Math.max(0, top - Theme.s24)
+                else if (bottom > flick.contentY + flick.height - Theme.s24)
+                    flick.contentY = Math.min(flick.contentHeight - flick.height, bottom - flick.height + Theme.s24)
+            }
+        }
 
         ColumnLayout {
             id: col
-            x: Theme.s24
+            x: (parent.width - width) / 2
             y: Theme.s24
-            width: parent.width - 2 * Theme.s24
+            width: Theme.columnWidth(parent.width)
             spacing: Theme.s8
 
             Label { text: Strings.s.settingsServer; color: Theme.ink; font.pointSize: Qt.application.font.pointSize * 1.25; font.weight: Font.DemiBold }
@@ -119,12 +139,32 @@ Page {
             }
             Label { text: Strings.f("settingsVersion", { version: Qt.application.version }); color: Theme.muted; Layout.topMargin: Theme.s8 }
             Label {
-                text: "<a href=\"https://totaldrop.app\">totaldrop.app</a>"
+                id: site
+                readonly property string url: "https://totaldrop.app"
+                text: "<a href=\"" + url + "\">totaldrop.app</a>"
                 textFormat: Text.StyledText
                 linkColor: Theme.accent
                 color: Theme.muted
                 onLinkActivated: (l) => Qt.openUrlExternally(l)
                 HoverHandler { cursorShape: Qt.PointingHandCursor }
+                // Reached with Tab and opened with Enter or Space, like a
+                // link in a browser; the focus ring is the accent outline.
+                activeFocusOnTab: true
+                Accessible.role: Accessible.Link
+                Accessible.name: "totaldrop.app"
+                Accessible.onPressAction: Qt.openUrlExternally(url)
+                Keys.onReturnPressed: (e) => { if (!e.isAutoRepeat) Qt.openUrlExternally(url) }
+                Keys.onEnterPressed: (e) => { if (!e.isAutoRepeat) Qt.openUrlExternally(url) }
+                Keys.onSpacePressed: (e) => { if (!e.isAutoRepeat) Qt.openUrlExternally(url) }
+                Rectangle {
+                    visible: site.activeFocus
+                    anchors.fill: parent
+                    anchors.margins: -2
+                    radius: 2
+                    color: "transparent"
+                    border.width: 1
+                    border.color: Theme.accent
+                }
             }
         }
     }
@@ -133,6 +173,7 @@ Page {
         id: privacyDialog
         anchors.centerIn: parent
         modal: true
+        Overlay.modal: Rectangle { color: Theme.dim }
         title: Strings.s.privacyModeConfirmTitle
         // A fixed text width: wrapped text in a self-sizing popup loops.
         contentWidth: Math.min(380, page.width - 4 * Theme.s24)

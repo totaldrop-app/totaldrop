@@ -25,6 +25,14 @@ ColumnLayout {
 
     spacing: Theme.s16
 
+    // Shown, the panel hands Done the keyboard: focus would otherwise stay
+    // on the hidden button that started the transfer. Details closes again
+    // for the next result.
+    onVisibleChanged: if (visible) {
+        more.checked = false
+        Qt.callLater(() => doneButton.forceActiveFocus())
+    }
+
     Item {
         Layout.alignment: Qt.AlignHCenter
         Layout.preferredWidth: 140
@@ -68,31 +76,29 @@ ColumnLayout {
         Layout.alignment: Qt.AlignHCenter
     }
 
-    ColumnLayout {
+    // Details and its text sit directly in the column: nested in a layout
+    // of their own, the button moved when the text opened.
+    Button {
+        id: more
         visible: r.detail !== ""
+        flat: true
+        checkable: true
+        text: Strings.s.moreInfo
+        icon.name: Theme.icon(checked ? "go-up" : "go-down")
+        Keys.onReturnPressed: (e) => { if (!e.isAutoRepeat) click() }
+        Keys.onEnterPressed: (e) => { if (!e.isAutoRepeat) click() }
+        Layout.alignment: Qt.AlignHCenter
+    }
+    TextArea {
+        visible: more.visible && more.checked
+        // May hold the other side's cancel reason: hidden direction
+        // characters are shown, not obeyed.
+        text: Strings.name(r.detail)
+        readOnly: true
+        selectByMouse: true
+        wrapMode: Text.Wrap
+        font.family: "monospace"
         Layout.fillWidth: true
-        spacing: Theme.s8
-        Button {
-            id: more
-            flat: true
-            checkable: true
-            text: Strings.s.moreInfo
-            icon.name: Theme.icon(checked ? "go-up" : "go-down")
-            Keys.onReturnPressed: (e) => { if (!e.isAutoRepeat) click() }
-            Keys.onEnterPressed: (e) => { if (!e.isAutoRepeat) click() }
-            Layout.alignment: Qt.AlignHCenter
-        }
-        TextArea {
-            visible: more.checked
-            // May hold the other side's cancel reason: hidden direction
-            // characters are shown, not obeyed.
-            text: Strings.name(r.detail)
-            readOnly: true
-            selectByMouse: true
-            wrapMode: Text.Wrap
-            font.family: "monospace"
-            Layout.fillWidth: true
-        }
     }
 
     Item { Layout.fillHeight: true }
@@ -109,6 +115,7 @@ ColumnLayout {
             Keys.onEnterPressed: (e) => { if (!e.isAutoRepeat) click() }
         }
         PrimaryButton {
+            id: doneButton
             text: Strings.s.done
             onClicked: r.finished()
         }
