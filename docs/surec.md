@@ -58,8 +58,9 @@ Bir değişiklik ancak şunların hepsi doğruysa bitmiştir:
    uymayan bir dosya varsa hiçbir şeyi değiştirmeden durur. Tek platformun
    yayını (`"[linux-…]"` ya da `"[android-…]"`) yalnızca o platformu ya da
    hiçbir platformu anmayan girdileri alır (Çekirdek, Site, CI gibi); CLI
-   Linux'la gider. İki platformu birden anan girdi yayına bu platformun
-   alanıyla girer, dosyada öteki platformun alanıyla onun yayınına kalır
+   Linux'la gider. İki platformu birden anan girdi, öteki platformun alanı
+   çıkarılarak yayına girer (platformsuz alanlar, ör. site, de onunla
+   gider); dosyada yalnızca öteki platformun alanıyla onun yayınına kalır
    (#152). Sürüm şu dosyalarda artırılır. Linux: `linux/Cargo.toml`,
    `packaging/arch/PKGBUILD`, `packaging/debian/changelog`,
    `packaging/rpm/totaldrop.spec` ve

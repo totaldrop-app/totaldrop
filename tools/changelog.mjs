@@ -86,6 +86,7 @@ export function checkText(name, text) {
   for (const e of entries) {
     const body = e.lines.map((l) => l.trim()).join(" ");
     if (!/^- \*\*[^*]+:\*\* \S/.test(body)) at(e.start, 'an entry starts with a bold area: "- **Area:** …"');
+    else if (!/^- \*\*[^*]+:\*\*/.test(e.lines[0])) at(e.start, "the bold area must fit on the entry's first line");
     const refs = /\(([^()]*#[0-9][^()]*)\)\.$/.exec(body);
     if (!refs) at(e.start, 'an entry ends with its issue references and a full stop: "… (#123)."');
     else if (!new RegExp(`#${parsed.issue}(?![0-9])`).test(refs[1])) {
@@ -150,14 +151,29 @@ export function headingPlatforms(heading) {
 }
 
 /**
- * The platform an entry's area belongs to, or null for an area that is not
- * a platform of its own (Core, Site, CI, Build…). The command line ships
- * with the Linux packages (docs/versioning.md).
+ * The platforms an entry's area belongs to: none for an area that is not a
+ * platform of its own (Core, Site, CI, Build…), both for "Linux and
+ * Android". The command line ships with the Linux packages
+ * (docs/versioning.md).
  */
-export function areaPlatform(area) {
-  if (/\bandroid\b/i.test(area)) return "android";
-  if (/\b(linux|cli|command line)\b/i.test(area)) return "linux";
-  return null;
+export function areaPlatforms(area) {
+  const found = [];
+  if (/\bandroid\b/i.test(area)) found.push("android");
+  if (/\b(linux|cli|command line)\b/i.test(area)) found.push("linux");
+  return found;
+}
+
+/** The areas of "A, B (x, y), C": split at the commas outside parentheses. */
+export function splitAreas(text) {
+  const areas = [""];
+  let depth = 0;
+  for (const c of text) {
+    if (c === "(") depth += 1;
+    if (c === ")") depth = Math.max(0, depth - 1);
+    if (c === "," && depth === 0) areas.push("");
+    else areas[areas.length - 1] += c;
+  }
+  return areas.map((a) => a.trim());
 }
 
 /** The entries of an entry file: each a list of lines, the first "- **Area:** …". */
@@ -179,15 +195,15 @@ function entriesOf(text) {
  */
 function splitEntry(lines, platforms) {
   const m = /^- \*\*([^*]+):\*\*/.exec(lines[0]);
-  const areas = m[1].split(/,\s*/);
-  const kinds = areas.map(areaPlatform);
-  const named = kinds.filter((k) => k !== null);
-  const known = named.length === 0 || named.some((k) => platforms.includes(k));
-  if (!known) return { take: null, keep: lines };
-  const later = areas.filter((_, i) => kinds[i] !== null && !platforms.includes(kinds[i]));
-  if (later.length === 0) return { take: lines, keep: null };
-  const now = areas.filter((_, i) => kinds[i] === null || platforms.includes(kinds[i]));
+  const areas = splitAreas(m[1]);
+  const kinds = areas.map(areaPlatforms);
+  const now = areas.filter((_, i) => kinds[i].length === 0 || kinds[i].some((k) => platforms.includes(k)));
+  const later = areas.filter((_, i) => kinds[i].some((k) => !platforms.includes(k)));
   const withAreas = (list) => [lines[0].replace(m[0], `- **${list.join(", ")}:**`), ...lines.slice(1)];
+  if (later.length === 0) return { take: lines, keep: null };
+  // Only areas without a platform left for this release: they go with the
+  // platform that names them.
+  if (!kinds.some((k) => k.some((p) => platforms.includes(p)))) return { take: null, keep: lines };
   return { take: withAreas(now), keep: withAreas(later) };
 }
 
@@ -249,7 +265,14 @@ export function release(root, heading, date) {
   }
   if (!isDate(date)) throw new Error(`date must be a real date as YYYY-MM-DD, not "${date}"`);
   const { text, used, rewritten, count } = buildSection(root, heading, date);
-  if (count === 0) throw new Error("changelog.d/ holds no entries to release");
+  if (count === 0) {
+    const named = headingPlatforms(heading);
+    throw new Error(
+      named.length === 1 && ["android", "linux"].includes(named[0])
+        ? `changelog.d/ holds no entries for ${named[0]} (entries that name only another platform wait for its release)`
+        : "changelog.d/ holds no entries to release",
+    );
+  }
   const path = join(root, "CHANGELOG.md");
   const changelog = readFileSync(path, "utf8");
   const [, end] = unreleased(changelog);
@@ -258,8 +281,10 @@ export function release(root, heading, date) {
   const head = changelog.slice(0, end).replace(/\n+$/, "\n\n");
   const rest = changelog.slice(end);
   writeFileSync(path, rest ? `${head}${text}\n${rest}` : `${head}${text}`);
-  for (const name of used) unlinkSync(join(root, "changelog.d", name));
+  // Entries that stay behind are rewritten before anything is deleted, so a
+  // failure part way never leaves an entry to be released twice in full.
   for (const [name, rest] of rewritten) writeFileSync(join(root, "changelog.d", name), rest);
+  for (const name of used) unlinkSync(join(root, "changelog.d", name));
   return { count, removed: used.length };
 }
 
@@ -285,14 +310,16 @@ export function addedFragments(root, base, head) {
 /**
  * Whether a branch records its change: it adds an entry file to
  * changelog.d/, or it is a release, which changes CHANGELOG.md and deletes
- * entry files from changelog.d/. A correction to an old release section
+ * or rewrites entry files in changelog.d/. A correction to an old release section
  * adds a .none.md file like any other change.
  */
 export function recordsChange(root, base, head) {
   const added = addedFragments(root, base, head);
   const released =
     changedPaths(root, base, head, "M", "CHANGELOG.md").length > 0 &&
-    changedPaths(root, base, head, "D", "changelog.d/").some((p) => !parseName(p.slice("changelog.d/".length)).error);
+    // A release deletes entry files, or for one platform may only rewrite
+    // entries that the other platform still has to release.
+    changedPaths(root, base, head, "DM", "changelog.d/").some((p) => !parseName(p.slice("changelog.d/".length)).error);
   return { ok: added.length > 0 || released, added, released };
 }
 
