@@ -34,7 +34,7 @@ Bir değişiklik ancak şunların hepsi doğruysa bitmiştir:
 - Davranışı sınayan testler var ve geçiyor. Hata düzeltmesinde, önce hatayı
   gösteren bir test yazılır.
 - `cargo fmt`, `cargo clippy -- -D warnings` ve platformun kendi denetimi
-  (`flutter analyze`, `tsc`) temiz.
+  (`flutter analyze`, `dart format`, `tsc`) temiz.
 - Dışarıdan gelen veriyi okuyan her yeni ayrıştırıcının bir fuzz hedefi var.
 - Protokolü etkileyen her karar `docs/protocol-v0.1-notes.md`'ye, mimariyi
   etkileyen her karar `docs/kararlar/` altına yazıldı.

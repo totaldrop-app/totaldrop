@@ -34,6 +34,13 @@ jobs:
           dart run tool/gen_locales_config.dart
           git diff --exit-code -- lib/l10n android/app/src/main/res/xml/locales_config.xml
       - run: flutter analyze
+      # Hand-written code only: lib/l10n and lib/src/rust are generated
+      # (gen-l10n, flutter_rust_bridge) and checked above or by codegen.
+      - name: Format
+        run: |
+          find lib test tool -name '*.dart' \
+            -not -path 'lib/l10n/*' -not -path 'lib/src/rust/*' -print0 |
+            xargs -0 dart format --output=none --set-exit-if-changed
       - name: Test
         run: flutter test
       # The bridge's own tests (core.yml leaves this crate out).
