@@ -2,7 +2,7 @@
   "@@locale": "da",
   "cliPreparing": "Forbereder…",
   "cliWaiting": "Venter på modtageren…",
-  "cliConnecting": "Opretter forbindelse…",
+  "cliConnectingCode": "Opretter forbindelse med koden {code}…",
   "cliConnected": "Forbundet, end-to-end-krypteret.",
   "cliVerification": "Bekræftelsesord: {words}",
   "cliProgress": "{percent} %  {done} af {total}",

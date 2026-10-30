@@ -2,7 +2,7 @@
   "@@locale": "uk",
   "cliPreparing": "Підготовка…",
   "cliWaiting": "Очікування отримувача…",
-  "cliConnecting": "Підключення…",
+  "cliConnectingCode": "Підключення з кодом {code}…",
   "cliConnected": "Підключено, наскрізне шифрування.",
   "cliVerification": "Слова перевірки: {words}",
   "cliProgress": "{percent}%  {done} з {total}",

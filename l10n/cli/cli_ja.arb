@@ -2,7 +2,7 @@
   "@@locale": "ja",
   "cliPreparing": "準備しています…",
   "cliWaiting": "受信者を待っています…",
-  "cliConnecting": "接続しています…",
+  "cliConnectingCode": "コード {code} で接続しています…",
   "cliConnected": "接続しました。エンドツーエンドで暗号化されています。",
   "cliVerification": "確認用の単語：{words}",
   "cliProgress": "{percent}%  {done} / {total}",

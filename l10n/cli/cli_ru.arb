@@ -2,7 +2,7 @@
   "@@locale": "ru",
   "cliPreparing": "Подготовка…",
   "cliWaiting": "Ожидание получателя…",
-  "cliConnecting": "Подключение…",
+  "cliConnectingCode": "Подключение с кодом {code}…",
   "cliConnected": "Подключено, сквозное шифрование.",
   "cliVerification": "Проверочные слова: {words}",
   "cliProgress": "{percent}%  {done} из {total}",

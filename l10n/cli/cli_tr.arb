@@ -2,7 +2,7 @@
   "@@locale": "tr",
   "cliPreparing": "Hazırlanıyor…",
   "cliWaiting": "Alıcı bekleniyor…",
-  "cliConnecting": "Bağlanılıyor…",
+  "cliConnectingCode": "{code} koduyla bağlanılıyor…",
   "cliConnected": "Bağlandı, uçtan uca şifreli.",
   "cliVerification": "Doğrulama kelimeleri: {words}",
   "cliProgress": "%{percent}  {done} / {total}",

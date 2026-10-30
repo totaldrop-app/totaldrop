@@ -2,7 +2,7 @@
   "@@locale": "hi",
   "cliPreparing": "तैयारी हो रही है…",
   "cliWaiting": "पाने वाले का इंतज़ार है…",
-  "cliConnecting": "कनेक्ट हो रहा है…",
+  "cliConnectingCode": "कोड {code} से कनेक्ट हो रहा है…",
   "cliConnected": "कनेक्ट हो गया, एंड-टू-एंड एन्क्रिप्टेड।",
   "cliVerification": "सत्यापन शब्द: {words}",
   "cliProgress": "{percent}%  {total} में से {done}",

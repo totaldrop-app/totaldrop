@@ -2,7 +2,7 @@
   "@@locale": "sv",
   "cliPreparing": "Förbereder…",
   "cliWaiting": "Väntar på mottagaren…",
-  "cliConnecting": "Ansluter…",
+  "cliConnectingCode": "Ansluter med koden {code}…",
   "cliConnected": "Ansluten, end-to-end-krypterat.",
   "cliVerification": "Verifieringsord: {words}",
   "cliProgress": "{percent} %  {done} av {total}",

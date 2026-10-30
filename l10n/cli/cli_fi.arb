@@ -2,7 +2,7 @@
   "@@locale": "fi",
   "cliPreparing": "Valmistellaan…",
   "cliWaiting": "Odotetaan vastaanottajaa…",
-  "cliConnecting": "Yhdistetään…",
+  "cliConnectingCode": "Yhdistetään koodilla {code}…",
   "cliConnected": "Yhdistetty, päästä päähän salattu.",
   "cliVerification": "Tarkistussanat: {words}",
   "cliProgress": "{percent} %  {done} / {total}",

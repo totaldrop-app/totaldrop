@@ -2,7 +2,7 @@
   "@@locale": "zh_Hans",
   "cliPreparing": "正在准备…",
   "cliWaiting": "正在等待接收方…",
-  "cliConnecting": "正在连接…",
+  "cliConnectingCode": "正在使用代码 {code} 连接…",
   "cliConnected": "已连接，端到端加密。",
   "cliVerification": "验证词：{words}",
   "cliProgress": "{percent}%  {done} / {total}",

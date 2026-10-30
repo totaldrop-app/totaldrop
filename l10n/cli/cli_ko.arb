@@ -2,7 +2,7 @@
   "@@locale": "ko",
   "cliPreparing": "준비하는 중…",
   "cliWaiting": "받는 사람을 기다리는 중…",
-  "cliConnecting": "연결하는 중…",
+  "cliConnectingCode": "코드 {code}(으)로 연결하는 중…",
   "cliConnected": "연결되었습니다. 종단간 암호화됩니다.",
   "cliVerification": "확인 단어: {words}",
   "cliProgress": "{percent}%  {done} / {total}",

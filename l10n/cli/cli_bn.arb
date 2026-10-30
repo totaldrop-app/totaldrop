@@ -2,7 +2,7 @@
   "@@locale": "bn",
   "cliPreparing": "প্রস্তুত করা হচ্ছে…",
   "cliWaiting": "প্রাপকের জন্য অপেক্ষা করা হচ্ছে…",
-  "cliConnecting": "সংযোগ করা হচ্ছে…",
+  "cliConnectingCode": "{code} কোড দিয়ে সংযোগ করা হচ্ছে…",
   "cliConnected": "সংযুক্ত, এন্ড-টু-এন্ড এনক্রিপ্টেড।",
   "cliVerification": "যাচাইয়ের শব্দ: {words}",
   "cliProgress": "{percent}%  {total}-এর মধ্যে {done}",

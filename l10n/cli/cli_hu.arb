@@ -2,7 +2,7 @@
   "@@locale": "hu",
   "cliPreparing": "Előkészítés…",
   "cliWaiting": "Várakozás a címzettre…",
-  "cliConnecting": "Kapcsolódás…",
+  "cliConnectingCode": "Kapcsolódás a(z) {code} kóddal…",
   "cliConnected": "Kapcsolódva, végpontok közötti titkosítással.",
   "cliVerification": "Ellenőrző szavak: {words}",
   "cliProgress": "{percent}%  {done} / {total}",

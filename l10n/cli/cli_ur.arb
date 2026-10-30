@@ -2,7 +2,7 @@
   "@@locale": "ur",
   "cliPreparing": "تیاری ہو رہی ہے…",
   "cliWaiting": "وصول کنندہ کا انتظار ہے…",
-  "cliConnecting": "منسلک ہو رہا ہے…",
+  "cliConnectingCode": "کوڈ {code} سے منسلک ہو رہا ہے…",
   "cliConnected": "منسلک ہو گیا، اینڈ ٹو اینڈ انکرپٹڈ۔",
   "cliVerification": "تصدیقی الفاظ: {words}",
   "cliProgress": "{percent}%  {total} میں سے {done}",

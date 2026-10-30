@@ -2,7 +2,7 @@
   "@@locale": "fr",
   "cliPreparing": "Préparation…",
   "cliWaiting": "En attente du destinataire…",
-  "cliConnecting": "Connexion…",
+  "cliConnectingCode": "Connexion avec le code {code}…",
   "cliConnected": "Connecté, chiffré de bout en bout.",
   "cliVerification": "Mots de vérification : {words}",
   "cliProgress": "{percent} %  {done} sur {total}",

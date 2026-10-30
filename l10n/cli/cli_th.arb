@@ -2,7 +2,7 @@
   "@@locale": "th",
   "cliPreparing": "กำลังเตรียม…",
   "cliWaiting": "กำลังรอผู้รับ…",
-  "cliConnecting": "กำลังเชื่อมต่อ…",
+  "cliConnectingCode": "กำลังเชื่อมต่อด้วยรหัส {code}…",
   "cliConnected": "เชื่อมต่อแล้ว เข้ารหัสตั้งแต่ต้นทางถึงปลายทาง",
   "cliVerification": "คำยืนยัน: {words}",
   "cliProgress": "{percent}%  {done} จาก {total}",
