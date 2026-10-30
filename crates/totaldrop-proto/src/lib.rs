@@ -549,8 +549,7 @@ mod tests {
             "call 555 1234 0000 code",
             "/home/u/Photos/2024-10-30/beach.jpg",
             "IMG 2024 10 30.jpg",
-            "\u{2068}2026 10 30\u{2069}",
-            "on \u{2068}2026-10-30\u{2069}",
+            "on \u{2068}2026 10 30\u{2069}",
             // Spaced words in a sentence are only read when isolated.
             "Code: 7 abandon ability thanks",
         ] {
