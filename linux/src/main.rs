@@ -61,6 +61,7 @@ fn main() {
         QQuickStyle::set_style(&QString::from(style));
     }
     QQuickStyle::set_fallback_style(&QString::from("Fusion"));
+    bridge::surface::use_true_colour();
 
     let mut app = QGuiApplication::new();
     QGuiApplication::set_desktop_file_name(&QString::from(APP_ID));
