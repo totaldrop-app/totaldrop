@@ -2,10 +2,11 @@
 //! `cargo test -p totaldrop-l10n` runs them on the compiled-in files, so CI
 //! fails on a broken translation; missing translations are only reported.
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use crate::{
-    ALWAYS_YES, File, Message, TEMPLATE, catalog, fold_answer, is_hidden, layer_tags, status,
+    ALWAYS_YES, File, Message, TEMPLATE, catalog, fold_answer, is_hidden, is_yes, layer_tags,
+    status,
 };
 
 /// Placeholders a translation must insert exactly as the English text does,
@@ -15,8 +16,8 @@ use crate::{
 pub const CRITICAL_PLACEHOLDERS: [&str; 4] = ["code", "words", "folder", "name"];
 
 /// English answers that mean no; a translation's yes-words may not be one.
-/// Each language's own no answer comes from its save prompt (see
-/// [`prompt_no`]).
+/// Each language's own come from `noWords` in `l10n/status.json` and from
+/// its save prompt (see [`prompt_answers`]).
 const NO_WORDS: [&str; 3] = ["n", "no", "not"];
 
 /// The domains the command line looks a key up in, in order.
@@ -97,7 +98,8 @@ pub fn run() -> Report {
     for file in all {
         check_file(file, all, &mut report);
     }
-    check_answers(all, &mut report);
+    check_no_words(all, &status.no_words, &mut report);
+    check_answers(all, &status.no_words, &mut report);
     for key in &status.critical {
         if !all
             .iter()
@@ -234,27 +236,69 @@ fn check_yes(raw: &str, at: &str, report: &mut Report) {
     }
 }
 
-/// The answer a save prompt offers for no: the second of the last
-/// `[yes/no]` in it (`[y/N]` → `N`, `[ن/ل]` → `ل`).
-fn prompt_no(raw: &str) -> Option<&str> {
+/// The answers a save prompt offers for yes and for no: the two sides of
+/// the last ASCII `[yes/no]` in it (`[y/N]` → `y`, `N`; `[ن/ل]` → `ن`,
+/// `ل`).
+fn prompt_answers(raw: &str) -> Option<(&str, &str)> {
     let open = raw.rfind('[')?;
     let inside = raw.get(open.saturating_add(1)..)?;
     let close = inside.find(']')?;
-    let (_, no) = inside.get(..close)?.split_once('/')?;
-    Some(no.trim())
+    let (yes, no) = inside.get(..close)?.split_once('/')?;
+    Some((yes.trim(), no.trim()))
 }
 
 fn check_prompt(raw: &str, at: &str, report: &mut Report) {
-    match prompt_no(raw) {
-        None => report.errors.push(format!(
-            "{at}: shows no `[yes/no]` answers to check `cliYes` against"
-        )),
-        Some(no) => {
-            let folded = fold_answer(no);
-            if folded.is_empty() || folded.contains('/') || ALWAYS_YES.contains(&folded.as_str()) {
+    let Some((yes, no)) = prompt_answers(raw) else {
+        report.errors.push(format!(
+            "{at}: shows no ASCII `[yes/no]` answers (square brackets around two \
+             answers split by `/`), so `cliYes` cannot be checked against them"
+        ));
+        return;
+    };
+    let mut fault = |why: String| report.errors.push(format!("{at}: {why}"));
+    if fold_answer(yes).is_empty() {
+        fault("the answer for yes in `[yes/no]` is empty".to_owned());
+    }
+    let folded = fold_answer(no);
+    if folded.is_empty() {
+        fault("the answer for no in `[yes/no]` is empty".to_owned());
+    } else if folded.contains('/') {
+        fault(format!(
+            "the answer for no, `{no}`, contains `/`: `[yes/no]` takes two answers"
+        ));
+    } else if ALWAYS_YES.contains(&folded.as_str()) {
+        fault(format!(
+            "the answer for no, `{no}`, always means yes on the command line (y, yes)"
+        ));
+    }
+}
+
+/// Checks each language's `noWords` in `l10n/status.json`: every language
+/// with command-line strings has some, and none is empty or always means
+/// yes.
+fn check_no_words(all: &[File], no_words: &HashMap<String, Vec<String>>, report: &mut Report) {
+    let tags: BTreeSet<&str> = all
+        .iter()
+        .filter(|f| f.domain == "cli" && f.locale != TEMPLATE)
+        .map(|f| f.locale.as_str())
+        .collect();
+    for tag in tags {
+        let words = no_words.get(tag).map(Vec::as_slice).unwrap_or_default();
+        if words.is_empty() {
+            report.errors.push(format!(
+                "status.json: `{tag}` has no `noWords` (the answers that mean no)"
+            ));
+        }
+        for word in words {
+            let w = fold_answer(word);
+            if w.is_empty() {
                 report
                     .errors
-                    .push(format!("{at}: `{no}` cannot be the answer for no"));
+                    .push(format!("status.json: `{tag}` `noWords` has an empty word"));
+            } else if ALWAYS_YES.contains(&w.as_str()) {
+                report.errors.push(format!(
+                    "status.json: `{tag}` `noWords`: `{word}` always means yes on the command line"
+                ));
             }
         }
     }
@@ -275,40 +319,85 @@ fn layers<'a>(all: &'a [File], tag: &str, key: &str) -> Vec<(&'a File, &'a str)>
         .collect()
 }
 
-/// Checks that no answer in `cliYes` is the answer the save prompt shown
-/// with it offers for no, folded as the command line folds answers
-/// ([`fold_answer`]). For each language this pairs every `cliYes` with
-/// every `cliPromptSave` it could be shown with: a key can come from the
-/// language, a fallback or English, since an unreviewed critical key is
-/// skipped. The command line takes only the active language's answers and
+/// Checks the answers in `cliYes` against what means no for the person
+/// answering, all folded as the command line folds answers
+/// ([`fold_answer`]):
+///
+/// - no yes answer is one of the language's `noWords`
+///   (`l10n/status.json`), or a fallback language's;
+/// - no yes answer is the answer for no in a save prompt shown with it;
+/// - the prompt's answer for yes is accepted, by `cliYes` or
+///   [`ALWAYS_YES`].
+///
+/// The first two are deliberately conservative: for each language they
+/// pair every `cliYes` layer (the language, its fallbacks and English, in
+/// [`CLI_DOMAINS`]) with every `cliPromptSave` layer, because an
+/// unreviewed critical key is skipped on its own, and they may reject a
+/// combination the command line cannot actually show. The third pairs only
+/// the layers the command line shows once everything is reviewed: across
+/// layers it would fail every language (English `cliYes` does not take
+/// `e`), and a mismatch there only declines a transfer.
+///
+/// The command line takes only the active language's answers and
 /// [`ALWAYS_YES`], so another language's no-words do not matter (Arabic
 /// yes `ن` is Urdu's no).
-fn check_answers(all: &[File], report: &mut Report) {
+fn check_answers(all: &[File], no_words: &HashMap<String, Vec<String>>, report: &mut Report) {
     let tags: BTreeSet<&str> = all.iter().map(|f| f.locale.as_str()).collect();
     let mut errors = BTreeSet::new();
+    // (file, word) → the first language that reported it, so a base
+    // language's word is reported once, not once per variant.
+    let mut means_no: BTreeMap<(String, String), String> = BTreeMap::new();
     for tag in tags {
+        let language_no: Vec<(String, String)> = layer_tags(tag)
+            .into_iter()
+            .filter_map(|t| no_words.get(&t).map(|w| (t, w)))
+            .flat_map(|(t, words)| words.iter().map(move |w| (fold_answer(w), t.clone())))
+            .collect();
         let prompts = layers(all, tag, "cliPromptSave");
-        for (yes_file, yes) in layers(all, tag, "cliYes") {
-            for (prompt_file, prompt) in &prompts {
-                let Some(no) = prompt_no(prompt).map(fold_answer) else {
+        let yeses = layers(all, tag, "cliYes");
+        for (yes_file, yes) in &yeses {
+            let at = format!("{}/{} `cliYes`", yes_file.domain, yes_file.locale);
+            for word in yes.split('|') {
+                let w = fold_answer(word);
+                // check_yes reports these already.
+                if w.is_empty() || NO_WORDS.contains(&w.as_str()) {
                     continue;
-                };
-                for word in yes.split('|') {
-                    let w = fold_answer(word);
-                    // check_yes reports these already.
-                    if w.is_empty() || NO_WORDS.contains(&w.as_str()) {
+                }
+                if let Some((_, t)) = language_no.iter().find(|(no, _)| *no == w) {
+                    means_no
+                        .entry((at.clone(), word.to_owned()))
+                        .or_insert_with(|| {
+                            format!(
+                                "{at}: `{word}` means no in {t} (`noWords` in l10n/status.json)"
+                            )
+                        });
+                }
+                for (prompt_file, prompt) in &prompts {
+                    let Some((_, no)) = prompt_answers(prompt) else {
                         continue;
-                    }
-                    if w == no {
+                    };
+                    if w == fold_answer(no) {
                         errors.insert(format!(
-                            "{}/{} `cliYes`: `{word}` is the answer for no in {}/{} `cliPromptSave`",
-                            yes_file.domain, yes_file.locale, prompt_file.domain, prompt_file.locale
+                            "{at}: `{word}` is the answer for no in {}/{} `cliPromptSave`",
+                            prompt_file.domain, prompt_file.locale
                         ));
                     }
                 }
             }
         }
+        if let (Some((yes_file, yes)), Some((prompt_file, prompt))) =
+            (yeses.first(), prompts.first())
+            && let Some((offered, _)) = prompt_answers(prompt)
+            && !fold_answer(offered).is_empty()
+            && !is_yes(offered, yes)
+        {
+            errors.insert(format!(
+                "{}/{} `cliPromptSave`: offers `{offered}` for yes, which {}/{} `cliYes` does not accept",
+                prompt_file.domain, prompt_file.locale, yes_file.domain, yes_file.locale
+            ));
+        }
     }
+    errors.extend(means_no.into_values());
     report.errors.extend(errors);
 }
 
@@ -403,33 +492,42 @@ mod tests {
     }
 
     #[test]
-    fn prompt_answers() {
-        assert_eq!(prompt_no("Save into {folder}? [y/N] "), Some("N"));
-        assert_eq!(prompt_no("هل تريد الحفظ في {folder}؟ [ن/ل] "), Some("ل"));
-        assert_eq!(prompt_no("[a] b [ d / Н ]"), Some("Н"));
-        assert_eq!(prompt_no("Save into {folder}? "), None);
-        assert_eq!(prompt_no("Save [y/N"), None);
+    fn prompt_answers_and_faults() {
+        let parse = prompt_answers;
+        assert_eq!(parse("Save into {folder}? [y/N] "), Some(("y", "N")));
+        assert_eq!(parse("هل تريد الحفظ في {folder}؟ [ن/ل] "), Some(("ن", "ل")));
+        assert_eq!(parse("[a] b [ d / Н ]"), Some(("d", "Н")));
+        assert_eq!(parse("Save into {folder}? "), None);
+        assert_eq!(parse("Save [y/N"), None);
+        assert_eq!(parse("保存到 {folder}？［y／N］"), None);
         let errors = |raw: &str| {
             let mut r = Report::default();
             check_prompt(raw, "x", &mut r);
-            r.errors.len()
+            r.errors
         };
-        assert_eq!(errors("Сохранить в {folder}? [д/Н] "), 0);
-        assert_eq!(errors("Save into {folder}? "), 1);
-        assert_eq!(errors("[j/]"), 1);
-        assert_eq!(errors("[j/a/n]"), 1);
+        assert!(errors("Сохранить в {folder}? [д/Н] ").is_empty());
+        let why = |raw: &str, part: &str| {
+            let e = errors(raw);
+            assert_eq!(e.len(), 1, "{raw}: {e:?}");
+            assert!(e.iter().all(|e| e.contains(part)), "{raw}: {e:?}");
+        };
+        why("Save into {folder}? ", "no ASCII `[yes/no]` answers");
+        why("[j/]", "the answer for no in `[yes/no]` is empty");
+        why("[ /n]", "the answer for yes in `[yes/no]` is empty");
+        why("[j/a/n]", "`a/n`, contains `/`");
         // English y and yes always mean yes.
-        assert_eq!(errors("[j/Y]"), 1);
-        assert_eq!(errors("[j/ｙｅｓ]"), 1);
+        why("[j/Y]", "`Y`, always means yes");
+        why("[j/ｙｅｓ]", "always means yes");
     }
 
-    /// Errors from [`check_answers`] for ARB files given as
-    /// (locale, `cliYes`, `cliPromptSave`); an empty text leaves the key
-    /// out.
-    fn answer_errors(files: &[(&str, &str, &str)]) -> Vec<String> {
-        let all: Vec<File> = files
+    /// An ARB file for the tests: (domain, locale, `cliYes`,
+    /// `cliPromptSave`); an empty text leaves the key out.
+    type Arb<'a> = (&'static str, &'a str, &'a str, &'a str);
+
+    fn files(arbs: &[Arb<'_>]) -> Vec<File> {
+        let all: Vec<File> = arbs
             .iter()
-            .filter_map(|(locale, yes, prompt)| {
+            .filter_map(|(domain, locale, yes, prompt)| {
                 let mut json = serde_json::Map::new();
                 json.insert("@@locale".into(), (*locale).into());
                 if !yes.is_empty() {
@@ -439,65 +537,230 @@ mod tests {
                     json.insert("cliPromptSave".into(), (*prompt).into());
                 }
                 let text = serde_json::Value::Object(json).to_string();
-                crate::parse_file("cli", &text).ok()
+                crate::parse_file(domain, &text).ok()
             })
             .collect();
-        assert_eq!(all.len(), files.len());
+        assert_eq!(all.len(), arbs.len());
+        all
+    }
+
+    fn no_words(list: &[(&str, &str)]) -> HashMap<String, Vec<String>> {
+        list.iter()
+            .map(|(tag, words)| {
+                let words = words.split('|').map(str::to_owned).collect();
+                ((*tag).to_owned(), words)
+            })
+            .collect()
+    }
+
+    /// Errors from [`check_answers`].
+    fn answers(arbs: &[Arb<'_>], no_words: &HashMap<String, Vec<String>>) -> Vec<String> {
         let mut report = Report::default();
-        check_answers(&all, &mut report);
+        check_answers(&files(arbs), no_words, &mut report);
         report.errors
     }
 
-    const EN: (&str, &str, &str) = ("en", "y|yes", "Save into {folder}? [y/N] ");
+    /// Errors from [`check_answers`] without `noWords`, for the prompt's
+    /// answers alone.
+    fn prompt_errors(arbs: &[Arb<'_>]) -> Vec<String> {
+        answers(arbs, &HashMap::new())
+    }
+
+    const EN: Arb<'static> = ("cli", "en", "y|yes", "Save into {folder}? [y/N] ");
+
+    #[test]
+    fn no_words_in_status() {
+        let all = files(&[
+            ("cli", "ru", "д|да", ""),
+            ("cli", "de", "j|ja", ""),
+            ("app", "fr", "", ""),
+            EN,
+        ]);
+        let mut r = Report::default();
+        check_no_words(
+            &all,
+            &no_words(&[("ru", "нет|не|н"), ("de", "nein||Y")]),
+            &mut r,
+        );
+        assert_eq!(
+            r.errors,
+            [
+                "status.json: `de` `noWords` has an empty word",
+                "status.json: `de` `noWords`: `Y` always means yes on the command line",
+            ]
+        );
+        let mut r = Report::default();
+        check_no_words(&all, &no_words(&[("ru", "нет")]), &mut r);
+        assert_eq!(
+            r.errors,
+            ["status.json: `de` has no `noWords` (the answers that mean no)"]
+        );
+        // Every language has them, and every current file passes.
+        assert!(run().errors.is_empty());
+    }
+
+    #[test]
+    fn yes_is_not_a_no_word() {
+        // The issue's examples, against the no-words in l10n/status.json.
+        let seeded = &status().no_words;
+        for (tag, yes, prompt, word) in [
+            ("ru", "д|да|нет", "[д/Н]", "нет"),
+            ("de", "j|ja|nein", "[j/N]", "nein"),
+            ("ar", "ن|نعم|لا", "[ن/ل]", "لا"),
+            ("fa", "ب|بله|نه", "[ب/خ]", "نه"),
+            ("el", "ν|ναι|όχι", "[ν/Ο]", "όχι"),
+            // Folded: HAYIR is hayır.
+            ("tr", "e|evet|HAYIR", "[e/H]", "HAYIR"),
+        ] {
+            let arb: Arb<'_> = ("cli", tag, yes, prompt);
+            assert_eq!(
+                answers(&[arb], seeded),
+                [format!(
+                    "cli/{tag} `cliYes`: `{word}` means no in {tag} (`noWords` in l10n/status.json)"
+                )]
+            );
+            // The same file without the no-word passes.
+            let good = yes.rsplit_once('|').map(|(g, _)| g).unwrap_or_default();
+            assert!(answers(&[("cli", tag, good, prompt)], seeded).is_empty());
+        }
+        // A fallback's no-words count too.
+        let words = no_words(&[("pt", "não|nao")]);
+        assert_eq!(
+            answers(
+                &[
+                    ("cli", "pt", "s|sim", "[s/N]"),
+                    ("cli", "pt-BR", "s|sim|nao", "[s/N]")
+                ],
+                &words
+            ),
+            ["cli/pt-BR `cliYes`: `nao` means no in pt (`noWords` in l10n/status.json)"]
+        );
+        // A base language's word is reported once, not once per variant.
+        let words = no_words(&[("pt", "não"), ("pt-BR", "não"), ("pt-PT", "não")]);
+        assert_eq!(
+            answers(
+                &[
+                    ("cli", "pt", "s|sim|não", "[s/N]"),
+                    ("cli", "pt-BR", "", ""),
+                    ("cli", "pt-PT", "", ""),
+                ],
+                &words
+            ),
+            ["cli/pt `cliYes`: `não` means no in pt (`noWords` in l10n/status.json)"]
+        );
+    }
 
     #[test]
     fn yes_is_not_the_prompts_no() {
-        // Good drafts, and the files as they are.
+        // Good drafts.
         assert!(
-            answer_errors(&[
+            prompt_errors(&[
                 EN,
-                ("ru", "д|да", "Сохранить в {folder}? [д/Н] "),
-                ("ar", "ن|نعم", "هل تريد الحفظ في {folder}؟ [ن/ل] "),
+                ("cli", "ru", "д|да", "Сохранить в {folder}? [д/Н] "),
+                ("cli", "ar", "ن|نعم", "هل تريد الحفظ في {folder}؟ [ن/ل] "),
                 // Arabic yes is Urdu's no, but the command line takes only
                 // the active language's answers.
-                ("ur", "ہ|ہاں|جی", "{folder} میں محفوظ کریں؟ [ہ/ن] "),
-                ("tr", "e|evet", "{folder} klasörüne kaydedilsin mi? [e/H] "),
+                ("cli", "ur", "ہ|ہاں|جی", "{folder} میں محفوظ کریں؟ [ہ/ن] "),
+                (
+                    "cli",
+                    "tr",
+                    "e|evet",
+                    "{folder} klasörüne kaydedilsin mi? [e/H] "
+                ),
             ])
             .is_empty()
         );
-        assert!(run().errors.iter().all(|e| !e.contains("answer for no")));
-
         // Russian: the prompt's no letter, in either case.
-        let errors = answer_errors(&[EN, ("ru", "д|да|н", "Сохранить в {folder}? [д/Н] ")]);
         assert_eq!(
-            errors,
+            prompt_errors(&[EN, ("cli", "ru", "д|да|н", "Сохранить в {folder}? [д/Н] ")]),
             ["cli/ru `cliYes`: `н` is the answer for no in cli/ru `cliPromptSave`"]
         );
         // Russian: a no word the prompt offers.
-        let errors = answer_errors(&[EN, ("ru", "да|нет", "Сохранить в {folder}? [да/нет] ")]);
-        assert_eq!(errors.len(), 1);
-        assert!(errors.iter().all(|e| e.contains("`нет`")));
+        assert_eq!(
+            prompt_errors(&[
+                EN,
+                ("cli", "ru", "да|нет", "Сохранить в {folder}? [да/нет] ")
+            ]),
+            ["cli/ru `cliYes`: `нет` is the answer for no in cli/ru `cliPromptSave`"]
+        );
         // Arabic.
-        let errors = answer_errors(&[EN, ("ar", "ن|نعم|ل", "هل تريد الحفظ في {folder}؟ [ن/ل] ")]);
-        assert_eq!(errors.len(), 1);
+        assert_eq!(
+            prompt_errors(&[
+                EN,
+                ("cli", "ar", "ن|نعم|ل", "هل تريد الحفظ في {folder}؟ [ن/ل] ")
+            ]),
+            ["cli/ar `cliYes`: `ل` is the answer for no in cli/ar `cliPromptSave`"]
+        );
         // Folded as the command line folds: full-width, case, Turkish i.
-        assert_eq!(answer_errors(&[("tr", "e|ｈ", "[e/H]")]).len(), 1);
-        assert_eq!(answer_errors(&[("xx", "ı", "[e/İ]")]).len(), 1);
+        assert_eq!(
+            prompt_errors(&[("cli", "tr", "e|ｈ", "[e/H]")]),
+            ["cli/tr `cliYes`: `ｈ` is the answer for no in cli/tr `cliPromptSave`"]
+        );
+        assert_eq!(
+            prompt_errors(&[("cli", "xx", "e|ı", "[e/İ]")]),
+            ["cli/xx `cliYes`: `ı` is the answer for no in cli/xx `cliPromptSave`"]
+        );
+        // Empty answers and English no-words are check_yes's to report.
+        assert!(prompt_errors(&[("cli", "xx", "x||n", "[x/N]")]).is_empty());
         // A translated yes is checked against the English prompt too, which
         // is shown while the translated prompt is an unreviewed draft.
         assert_eq!(
-            answer_errors(&[("en", "", "[j/X]"), ("xx", "x", "[x/N]")]),
+            prompt_errors(&[("cli", "en", "", "[j/X]"), ("cli", "xx", "x", "[x/N]")]),
             ["cli/xx `cliYes`: `x` is the answer for no in cli/en `cliPromptSave`"]
         );
         // A regional variant pairs with its base language's prompt.
-        let errors = answer_errors(&[
-            EN,
-            ("pt", "s|sim", "Salvar em {folder}? [s/X] "),
-            ("pt-BR", "s|sim|x", ""),
-        ]);
         assert_eq!(
-            errors,
+            prompt_errors(&[
+                EN,
+                ("cli", "pt", "s|sim", "Salvar em {folder}? [s/X] "),
+                ("cli", "pt-BR", "s|sim|x", ""),
+            ]),
             ["cli/pt-BR `cliYes`: `x` is the answer for no in cli/pt `cliPromptSave`"]
+        );
+        // The command line falls back to the app strings.
+        assert_eq!(
+            prompt_errors(&[("app", "xx", "", "[x/K]"), ("cli", "xx", "x|k", "")]),
+            ["cli/xx `cliYes`: `k` is the answer for no in app/xx `cliPromptSave`"]
+        );
+        // One error per file pair, however many languages fall back to it.
+        assert_eq!(
+            prompt_errors(&[
+                ("cli", "pt", "s|x", "[s/X]"),
+                ("cli", "pt-BR", "", ""),
+                ("cli", "pt-PT", "", ""),
+            ]),
+            ["cli/pt `cliYes`: `x` is the answer for no in cli/pt `cliPromptSave`"]
+        );
+    }
+
+    #[test]
+    fn prompts_yes_is_accepted() {
+        assert_eq!(
+            prompt_errors(&[("cli", "ru", "да", "[д/Н]")]),
+            ["cli/ru `cliPromptSave`: offers `д` for yes, which cli/ru `cliYes` does not accept"]
+        );
+        // Folded, and English y always works.
+        assert!(prompt_errors(&[("cli", "ru", "Д|да", "[д/Н]")]).is_empty());
+        assert!(prompt_errors(&[("cli", "xx", "ja", "[y/N]")]).is_empty());
+        // Only the layers shown once everything is reviewed: English yes
+        // does not take a translated prompt's `s`.
+        assert!(
+            prompt_errors(&[
+                EN,
+                ("cli", "pt", "s|sim", "[s/N]"),
+                ("cli", "pt-BR", "", "[s/N]"),
+            ])
+            .is_empty()
+        );
+        // The base language's yes, for a variant's prompt.
+        assert_eq!(
+            prompt_errors(&[
+                ("cli", "pt", "s|sim", "[s/N]"),
+                ("cli", "pt-BR", "", "[x/N]")
+            ]),
+            [
+                "cli/pt-BR `cliPromptSave`: offers `x` for yes, which cli/pt `cliYes` does not accept"
+            ]
         );
     }
 }

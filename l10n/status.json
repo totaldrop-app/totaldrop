@@ -1,5 +1,5 @@
 {
-  "about": "Maintained by the project, changed only through reviewed pull requests (docs/ceviri.md). A language is 'reviewed' once a native speaker has checked every string; 'draft' lists keys added or machine-drafted since. Keys in 'critical' are shown in English until reviewed.",
+  "about": "Maintained by the project, changed only through reviewed pull requests (docs/ceviri.md). A language is 'reviewed' once a native speaker has checked every string; 'draft' lists keys added or machine-drafted since; 'noWords' lists, separated by |, the answers that mean no in the language, which its command-line yes answers (cliYes) may not include. Keys in 'critical' are shown in English until reviewed.",
   "drafts": "Draft translations were produced with Claude (Anthropic) and are licensed like the rest of the project.",
   "critical": [
     "verificationTitle",
@@ -17,147 +17,183 @@
   "languages": {
     "ar": {
       "reviewed": false,
-      "draft": []
+      "draft": [],
+      "noWords": "لا|ل|كلا"
     },
     "bn": {
       "reviewed": false,
-      "draft": []
+      "draft": [],
+      "noWords": "না|ন"
     },
     "cs": {
       "reviewed": false,
-      "draft": []
+      "draft": [],
+      "noWords": "ne|n"
     },
     "da": {
       "reviewed": false,
-      "draft": []
+      "draft": [],
+      "noWords": "nej|n"
     },
     "de": {
       "reviewed": false,
-      "draft": []
+      "draft": [],
+      "noWords": "nein|n|ne|nö"
     },
     "el": {
       "reviewed": false,
-      "draft": []
+      "draft": [],
+      "noWords": "όχι|οχι|ο|ό"
     },
     "es": {
       "reviewed": false,
-      "draft": []
+      "draft": [],
+      "noWords": "no|n"
     },
     "fa": {
       "reviewed": false,
-      "draft": []
+      "draft": [],
+      "noWords": "نه|ن|خیر|نخیر|خ"
     },
     "fi": {
       "reviewed": false,
-      "draft": []
+      "draft": [],
+      "noWords": "ei|e"
     },
     "fr": {
       "reviewed": false,
-      "draft": []
+      "draft": [],
+      "noWords": "non|n"
     },
     "he": {
       "reviewed": false,
-      "draft": []
+      "draft": [],
+      "noWords": "לא|ל"
     },
     "hi": {
       "reviewed": false,
-      "draft": []
+      "draft": [],
+      "noWords": "नहीं|नही|न|ना"
     },
     "hu": {
       "reviewed": false,
-      "draft": []
+      "draft": [],
+      "noWords": "nem|n"
     },
     "id": {
       "reviewed": false,
-      "draft": []
+      "draft": [],
+      "noWords": "tidak|t|tdk|enggak|nggak|gak"
     },
     "it": {
       "reviewed": false,
-      "draft": []
+      "draft": [],
+      "noWords": "no|n"
     },
     "ja": {
       "reviewed": false,
-      "draft": []
+      "draft": [],
+      "noWords": "いいえ|いや|ノー"
     },
     "ko": {
       "reviewed": false,
-      "draft": []
+      "draft": [],
+      "noWords": "아니요|아니오|아니|아뇨"
     },
     "ms": {
       "reviewed": false,
-      "draft": []
+      "draft": [],
+      "noWords": "tidak|t|tak|tdk"
     },
     "nb": {
       "reviewed": false,
-      "draft": []
+      "draft": [],
+      "noWords": "nei|n"
     },
     "nl": {
       "reviewed": false,
-      "draft": []
+      "draft": [],
+      "noWords": "nee|n"
     },
     "pl": {
       "reviewed": false,
-      "draft": []
+      "draft": [],
+      "noWords": "nie|n"
     },
     "pt": {
       "reviewed": false,
-      "draft": []
+      "draft": [],
+      "noWords": "não|nao|n"
     },
     "pt-BR": {
       "reviewed": false,
-      "draft": []
+      "draft": [],
+      "noWords": "não|nao|n"
     },
     "pt-PT": {
       "reviewed": false,
-      "draft": []
+      "draft": [],
+      "noWords": "não|nao|n"
     },
     "ro": {
       "reviewed": false,
-      "draft": []
+      "draft": [],
+      "noWords": "nu|n"
     },
     "ru": {
       "reviewed": false,
-      "draft": []
+      "draft": [],
+      "noWords": "нет|не|н"
     },
     "sv": {
       "reviewed": false,
-      "draft": []
+      "draft": [],
+      "noWords": "nej|n"
     },
     "sw": {
       "reviewed": false,
-      "draft": []
+      "draft": [],
+      "noWords": "hapana|la|h"
     },
     "th": {
       "reviewed": false,
-      "draft": []
+      "draft": [],
+      "noWords": "ไม่|ไม่ใช่|ม"
     },
     "tr": {
       "reviewed": true,
-      "draft": []
+      "draft": [],
+      "noWords": "hayır|h|yok"
     },
     "uk": {
       "reviewed": false,
-      "draft": []
+      "draft": [],
+      "noWords": "ні|н|не"
     },
     "ur": {
       "reviewed": false,
-      "draft": []
+      "draft": [],
+      "noWords": "نہیں|ن|نا"
     },
     "vi": {
       "reviewed": false,
-      "draft": []
+      "draft": [],
+      "noWords": "không|khong|k|ko"
     },
     "zh": {
       "reviewed": false,
-      "draft": []
+      "draft": [],
+      "noWords": "不|否|不是|不要"
     },
     "zh-Hans": {
       "reviewed": false,
-      "draft": []
+      "draft": [],
+      "noWords": "不|否|不是|不要"
     },
     "zh-Hant": {
       "reviewed": false,
-      "draft": []
+      "draft": [],
+      "noWords": "不|否|不是|不要"
     }
   }
 }

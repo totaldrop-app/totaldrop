@@ -24,6 +24,15 @@ kırılmaz. Bölge ya da yazı varyantı olan dillerin temel dosyası da vardır
 hâlâ taslak olduğunu ve hangi anahtarların güvenlik açısından kritik
 olduğunu tutar. Bu dosyayı bakımcı değiştirir.
 
+Her dilin `noWords` alanı, o dilde "hayır" anlamına gelen cevapları `|`
+ile ayırarak tutar (Türkçe: `"hayır|h|yok"`). Komut satırının "evet"
+cevapları (`cliYes`) bunlardan biri olamaz. Kayıt sorusundaki `[e/H]`
+gibi köşeli parantezin ikinci cevabı da "hayır" sayılır; sorunun ilk
+cevabı ise `cliYes` içinde bulunmalıdır. CI, cevapları komut satırının
+karşılaştırdığı gibi (büyük-küçük harf, noktalı ve noktasız i, tam
+genişlikli harfler) denetler. Eksik bir "hayır" kelimesi görürseniz PR'da
+belirtin ya da `noWords` alanına `|` ile ekleyin.
+
 ## Çevirmenler için
 
 - En kolay yol Weblate olacak: bir metni düzeltmek için depoyu bilmek
@@ -81,7 +90,8 @@ Taslaklar Claude (Anthropic) ile üretildi ve proje lisansı altındadır.
 
 1. `l10n/app/`, `l10n/cli/` ve `site/public/i18n/` için şablondan
    dosyaları kopyalayıp çevirin (varyantlı dillerde temel dosyayla birlikte).
-2. `l10n/status.json`'a dili ekleyin.
+2. `l10n/status.json`'a dili, "hayır" cevaplarıyla (`noWords`) birlikte
+   ekleyin; CI `noWords` alanı olmayan dili reddeder.
 3. Android `localeConfig` bu dosyalardan üretilir; CI üretilen dosyaların
    güncel olduğunu denetler. Site dil listesine (`site/public/lang.js`
    `LANGUAGES`) dili kendi adıyla ekleyin; CI listenin `i18n/` dosyalarıyla,
