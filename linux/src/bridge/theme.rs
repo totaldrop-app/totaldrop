@@ -296,7 +296,12 @@ fn watch_files(
                     }
                     let name = shared.lock().ok().and_then(|i| i.gtk_theme.clone());
                     let g = gtk_palettes(&session, name.as_deref());
-                    push(&shared, &thread, |i| i.gtk = Some(g));
+                    // The portal may have switched the theme meanwhile.
+                    push(&shared, &thread, |i| {
+                        if i.gtk_theme == name {
+                            i.gtk = Some(g);
+                        }
+                    });
                 }
                 _ => {
                     let g = kde::read();
