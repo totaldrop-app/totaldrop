@@ -34,11 +34,11 @@ Write the entry exactly as it will appear in CHANGELOG.md:
 ## A change that needs no entry
 
 Some changes mean nothing to someone using or contributing to TotalDrop: a
-comment, a typo in a document, a test-only refactor. Say so in `<issue>-<slug>.none.md`, one
-sentence on why, so the choice is visible in review. A release deletes
-these files without copying them. A correction to an old release section
-of CHANGELOG.md also comes with one. Dependabot's pull requests need no
-file.
+comment, a typo in a document, a test-only refactor. Say so in
+`<issue>-<slug>.none.md`, one sentence on why, so the choice is visible in
+review. A release deletes these files without copying them. A correction
+to an old release section of CHANGELOG.md also comes with one.
+Dependabot's pull requests need no file.
 
 ## A release for one platform
 

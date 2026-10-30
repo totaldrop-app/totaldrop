@@ -59,15 +59,16 @@ Bir değişiklik ancak şunların hepsi doğruysa bitmiştir:
    dosyaları taşır; yalnızca bir platform yayınlanıyorsa öteki platformun
    dosyaları önce `changelog.d/` dışına alınır, sonra aynı PR'da geri
    konur (#152). Sürüm şu dosyalarda artırılır. Linux: `linux/Cargo.toml`,
-   `packaging/arch/PKGBUILD`,
-   `packaging/debian/changelog`, `packaging/rpm/totaldrop.spec` ve
-   `packaging/linux/app.totaldrop.TotalDrop.metainfo.xml`. Android: `app/pubspec.yaml` içinde hem sürüm hem
-   derleme numarası (`+N`); numara her yüklemede artmalıdır, CI bunu
-   denetler. CLI ve çekirdek: kök `Cargo.toml`'daki `[workspace.package]`
-   sürümü, iç bağımlılıkların (`totaldrop-core = { version = … }`)
-   sürümleri ve `Cargo.lock`. CLI, Linux paketleriyle yayınlanır; CLI
-   kodu son Linux yayınından bu yana değiştiyse ve sürüm henüz
-   artırılmadıysa Linux yayını bu sürümü de artırır.
+   `packaging/arch/PKGBUILD`, `packaging/debian/changelog`,
+   `packaging/rpm/totaldrop.spec` ve
+   `packaging/linux/app.totaldrop.TotalDrop.metainfo.xml`. Android:
+   `app/pubspec.yaml` içinde hem sürüm hem derleme numarası (`+N`); numara
+   her yüklemede artmalıdır, CI bunu denetler. CLI ve çekirdek: kök
+   `Cargo.toml`'daki `[workspace.package]` sürümü, iç bağımlılıkların
+   (`totaldrop-core = { version = … }`) sürümleri ve `Cargo.lock`. CLI,
+   Linux paketleriyle yayınlanır; CLI kodu son Linux yayınından bu yana
+   değiştiyse ve sürüm henüz artırılmadıysa Linux yayını bu sürümü de
+   artırır.
 2. Sürüm PR'ı: kontroller ve bağımsız inceleme, sonra birleştir.
 3. `main`'deki sürüm commit'ine açıklamalı etiket at (`linux-v…`,
    `android-v…`) ve gönder. Linux'ta CI, etiketin `main` üzerinde olduğunu

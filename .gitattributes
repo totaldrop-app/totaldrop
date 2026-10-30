@@ -1,0 +1,4 @@
+# The changelog tool (tools/changelog.mjs) accepts LF line endings only;
+# keep them on every checkout, Windows included.
+CHANGELOG.md text eol=lf
+changelog.d/** text eol=lf

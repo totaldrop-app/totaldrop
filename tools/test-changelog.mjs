@@ -250,13 +250,15 @@ test("require ignores dotfiles, bad names, renames and old-section edits", () =>
   }
 });
 
-test("check flags dotfiles, directories and CRLF", () => {
+test("check flags dotfiles, directories, symbolic links and CRLF", () => {
   const root = repo({ ".gitkeep": "", "12-a.fixed.md": ENTRY.replace("\n", "\r\n") });
   mkdirSync(join(root, "changelog.d", "sub"));
+  symlinkSync("missing.md", join(root, "changelog.d", "13-gone.fixed.md"));
   try {
     const errors = checkRepo(root);
     has(errors, ".gitkeep: name must be");
-    has(errors, "sub: changelog.d/ holds only entry files");
+    has(errors, "sub: changelog.d/ holds only plain entry files, no directories");
+    has(errors, "13-gone.fixed.md: changelog.d/ holds only plain entry files, no symbolic links");
     has(errors, "Windows line endings");
     assert.throws(() => checkChangelog((HEADER + OLD).replaceAll("\n", "\r\n")), /Windows line endings/);
   } finally {
@@ -272,10 +274,28 @@ test("the width limit is exactly 76 columns", () => {
 });
 
 test("dates", () => {
-  assert.equal(today(new Date(2026, 0, 5, 1, 30)), "2026-01-05", "local date, not UTC");
+  assert.equal(today(new Date(2026, 0, 5, 1, 30)), "2026-01-05");
+  // 01:30 in Istanbul is still the day before in UTC: the default must be
+  // the local date. Run in a child with a fixed time zone, so this holds
+  // on a UTC CI runner too.
+  const probe = `import { today } from ${JSON.stringify(new URL("./changelog.mjs", import.meta.url).href)};
+    console.log(today(new Date("2026-01-04T22:30:00Z")));`;
+  const local = spawnSync(process.execPath, ["--input-type=module", "-e", probe], {
+    encoding: "utf8",
+    env: { ...process.env, TZ: "Europe/Istanbul" },
+  });
+  assert.equal(local.stdout.trim(), "2026-01-05", local.stderr);
   const root = repo({ "12-a.fixed.md": ENTRY });
   try {
-    for (const bad of ["2026-02-30", "2026-13-01", "2026-1-05"]) {
+    for (const good of ["2024-02-29", "2000-02-29"]) {
+      const copy = repo({ "12-a.fixed.md": ENTRY });
+      try {
+        release(copy, "[linux-0.4.0-beta.1]", good);
+      } finally {
+        rmSync(copy, { recursive: true });
+      }
+    }
+    for (const bad of ["2026-02-29", "1900-02-29", "2026-02-30", "2026-04-31", "2026-13-01", "2026-00-10", "2026-01-00", "2026-1-05"]) {
       assert.throws(() => release(root, "[linux-0.4.0-beta.1]", bad), /real date/, bad);
     }
   } finally {
