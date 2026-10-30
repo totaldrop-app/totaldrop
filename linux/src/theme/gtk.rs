@@ -89,12 +89,21 @@ impl Colour {
 /// `color-mix()` and the like) is skipped.
 pub fn define_colors(css: &str, dark: bool) -> HashMap<String, Colour> {
     let mut out: HashMap<String, Colour> = HashMap::new();
-    let css = strip_comments(css);
+    // A last statement may end with the file instead of a `;`.
+    let css = strip_comments(css) + ";";
     // The headers of the blocks the current statement is in.
     let mut blocks: Vec<String> = Vec::new();
     let mut start = 0;
+    // Braces and semicolons in a quoted string are text.
+    let mut quote: Option<char> = None;
     for (i, ch) in css.char_indices() {
-        if !matches!(ch, ';' | '{' | '}') {
+        match (quote, ch) {
+            (Some(q), c) if c == q => quote = None,
+            (Some(_), _) => continue,
+            (None, '"' | '\'') => quote = Some(ch),
+            _ => {}
+        }
+        if quote.is_some() || !matches!(ch, ';' | '{' | '}') {
             continue;
         }
         let s = css[start..i].trim();
@@ -218,8 +227,16 @@ fn css_colour(value: &str) -> Option<Colour> {
     };
     let channel = |s: &str| -> Option<f64> {
         match s.strip_suffix('%') {
-            Some(p) => p.parse::<f64>().ok().map(|p| p / 100.0),
-            None => s.parse::<f64>().ok().map(|n| n / 255.0),
+            Some(p) => p
+                .parse::<f64>()
+                .ok()
+                .filter(|n| n.is_finite())
+                .map(|p| p / 100.0),
+            None => s
+                .parse::<f64>()
+                .ok()
+                .filter(|n| n.is_finite())
+                .map(|n| n / 255.0),
         }
     };
     let [r, g, b] = channels.as_slice() else {
@@ -227,8 +244,8 @@ fn css_colour(value: &str) -> Option<Colour> {
     };
     let alpha = match alpha {
         Some(a) => match a.strip_suffix('%') {
-            Some(p) => p.parse::<f64>().ok()? / 100.0,
-            None => a.parse::<f64>().ok()?,
+            Some(p) => p.parse::<f64>().ok().filter(|n| n.is_finite())? / 100.0,
+            None => a.parse::<f64>().ok().filter(|n| n.is_finite())?,
         }
         .clamp(0.0, 1.0),
         None => 1.0,
@@ -520,6 +537,17 @@ mod tests {
         assert_eq!(rgb(&dark, "window_bg_color", Rgb::WHITE), "#111111");
         assert!(!defines_accent(&light) && !defines_accent(&dark));
         assert!(!light.contains_key("nested"));
+    }
+
+    #[test]
+    fn odd_but_harmless_css() {
+        let css = ":root { --a: url(\"data:x{y;\"); --window-bg-color: #101010; }\n\
+                   @define-color b rgb(0 0 0 / NaN);\n\
+                   @define-color accent_bg_color #e01b24";
+        let c = define_colors(css, false);
+        assert_eq!(rgb(&c, "window_bg_color", Rgb::WHITE), "#101010");
+        assert!(!c.contains_key("b"));
+        assert_eq!(rgb(&c, "accent_bg_color", Rgb::WHITE), "#e01b24");
     }
 
     #[test]
