@@ -46,7 +46,7 @@
     <release version="0.3.0~beta.1" date="2026-10-30" type="development">
       <description>
         <p>New mark, Köşe, and a new icon: a circle with one square corner. It turns while a file is on its way.</p>
-        <p>The interface in 33 more languages, including Arabic, Chinese, Hindi, Japanese and Spanish. They are drafts being reviewed, so the security texts stay in English until a language is checked.</p>
+        <p>The interface in 31 more languages, including Arabic, Chinese, Hindi, Japanese and Spanish. They are drafts being reviewed, so the security texts stay in English until a language is checked.</p>
         <p>QR codes are read more reliably.</p>
       </description>
     </release>
