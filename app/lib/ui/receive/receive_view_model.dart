@@ -10,9 +10,13 @@ import '../core/l10n.dart';
 /// (it may be the whole share text), so this takes its number and word
 /// group, and falls back to the whole text. Direction marks are dropped:
 /// the share text isolates the code, and they must not reach the field.
+/// The number may use Arabic-Indic digits (ar, fa, ur keyboards); Rust
+/// reads them as ASCII (`ascii_digits` in totaldrop-proto).
 String codeFromPaste(String text) {
   final clean = stripInvisibleFormat(text).trim();
-  final match = RegExp(r'\d+(?:[-\s][a-zA-Z]+){2,3}').firstMatch(clean);
+  final match = RegExp(
+    r'[0-9\u0660-\u0669\u06F0-\u06F9]+(?:[-\s][a-zA-Z]+){2,3}',
+  ).firstMatch(clean);
   return match?.group(0) ?? clean;
 }
 
