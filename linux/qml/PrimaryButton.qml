@@ -26,6 +26,7 @@ Button {
         b.background = fill.createObject(b)
         b.palette.buttonText = Qt.binding(() => Theme.accentText)
         b.icon.color = Qt.binding(() => Theme.accentText)
+        b.opacity = Qt.binding(() => b.enabled ? 1 : 0.5)
     }
 
     Component {
@@ -33,8 +34,9 @@ Button {
         Rectangle {
             implicitHeight: 36
             radius: Theme.controlRadius
-            color: !b.enabled ? Qt.alpha(Theme.accent, 0.4)
-                 : b.down ? Qt.tint(Theme.accent, Qt.alpha(Theme.accentText, 0.2))
+            // Disabled, the whole button fades, text too, as GTK draws it:
+            // a faint fill under full-strength text read as active.
+            color: b.down ? Qt.tint(Theme.accent, Qt.alpha(Theme.accentText, 0.2))
                  : b.hovered ? Qt.tint(Theme.accent, Qt.alpha(Theme.accentText, 0.1))
                  : Theme.accent
             Rectangle {

@@ -234,7 +234,7 @@ Page {
                         required property string modelData
                         spacing: 0
                         Layout.fillWidth: true
-                        MenuSeparator { Layout.fillWidth: true; padding: 0 }
+                        Divider { Layout.fillWidth: true; padding: 0 }
                         Label {
                             // Names come from the other side: hidden direction
                             // characters are shown, not obeyed.

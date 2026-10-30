@@ -100,7 +100,7 @@ Page {
                 }
             }
 
-            MenuSeparator { Layout.fillWidth: true; Layout.topMargin: Theme.s16; Layout.bottomMargin: Theme.s16 }
+            Divider { Layout.fillWidth: true; Layout.topMargin: Theme.s16; Layout.bottomMargin: Theme.s16 }
 
             Label { text: Strings.s.settingsPrivacy; color: Theme.ink; font.pointSize: Qt.application.font.pointSize * 1.25; font.weight: Font.DemiBold }
             Label { text: Strings.s.settingsPrivacyBody; color: Theme.ink; wrapMode: Text.Wrap; Layout.fillWidth: true }
@@ -127,7 +127,7 @@ Page {
                 Layout.leftMargin: privacy.indicator ? privacy.indicator.width + privacy.spacing : 0
             }
 
-            MenuSeparator { Layout.fillWidth: true; Layout.topMargin: Theme.s16; Layout.bottomMargin: Theme.s16 }
+            Divider { Layout.fillWidth: true; Layout.topMargin: Theme.s16; Layout.bottomMargin: Theme.s16 }
 
             Label { text: Strings.s.settingsAbout; color: Theme.ink; font.pointSize: Qt.application.font.pointSize * 1.25; font.weight: Font.DemiBold }
             Label { text: Strings.s.settingsAboutBody; color: Theme.ink; wrapMode: Text.Wrap; Layout.fillWidth: true }
