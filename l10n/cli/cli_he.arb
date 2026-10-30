@@ -2,7 +2,7 @@
   "@@locale": "he",
   "cliPreparing": "בהכנה…",
   "cliWaiting": "בהמתנה לנמען…",
-  "cliConnecting": "מתבצעת התחברות…",
+  "cliConnectingCode": "מתבצעת התחברות עם הקוד {code}…",
   "cliConnected": "מחובר, מוצפן מקצה לקצה.",
   "cliVerification": "מילות אימות: {words}",
   "cliProgress": "{percent}%  {done} מתוך {total}",

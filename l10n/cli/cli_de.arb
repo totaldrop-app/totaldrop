@@ -2,7 +2,7 @@
   "@@locale": "de",
   "cliPreparing": "Wird vorbereitet…",
   "cliWaiting": "Warten auf den Empfänger…",
-  "cliConnecting": "Verbindung wird hergestellt…",
+  "cliConnectingCode": "Verbindung mit dem Code {code} wird hergestellt…",
   "cliConnected": "Verbunden, Ende-zu-Ende-verschlüsselt.",
   "cliVerification": "Prüfwörter: {words}",
   "cliProgress": "{percent} %  {done} von {total}",

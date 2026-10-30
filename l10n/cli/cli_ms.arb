@@ -2,7 +2,7 @@
   "@@locale": "ms",
   "cliPreparing": "Menyediakan…",
   "cliWaiting": "Menunggu penerima…",
-  "cliConnecting": "Menyambung…",
+  "cliConnectingCode": "Menyambung dengan kod {code}…",
   "cliConnected": "Bersambung, disulitkan hujung ke hujung.",
   "cliVerification": "Perkataan pengesahan: {words}",
   "cliProgress": "{percent}%  {done} daripada {total}",

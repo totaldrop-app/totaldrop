@@ -209,6 +209,19 @@ async fn send(
     Ok(())
 }
 
+/// The code as parsed, in its English form, and the line that says it back
+/// before connecting. A pasted code can carry a direction override, so the
+/// terminal may show it in another order than the parser reads; the person
+/// sees the code that is used, in plain ASCII (#149).
+fn connecting_line(
+    s: &Strings,
+    typed: &str,
+) -> Result<(String, String), totaldrop_proto::CodeError> {
+    let code = TransferCode::parse(typed)?.to_english();
+    let line = s.get("cliConnectingCode", &[("code", Arg::Text(&code))]);
+    Ok((code, line))
+}
+
 async fn receive(
     s: Arc<Strings>,
     server: String,
@@ -240,8 +253,9 @@ async fn receive(
         }
         Err(e) => return Err(e.into()),
     };
+    let (code, line) = connecting_line(&s, &code).map_err(totaldrop_core::Error::Code)?;
     let stop = stop_on_ctrl_c(&s);
-    eprintln!("{}", s.get("cliConnecting", &[]));
+    eprintln!("{line}");
     let offer =
         IncomingOffer::connect_with(&ReceiveOptions { server, paths }, &code, &stop).await?;
     let summary = offer.summary().clone();
@@ -422,10 +436,39 @@ impl From<std::io::Error> for Failure {
 mod tests {
     #![allow(clippy::unwrap_used)]
 
-    use super::error_key;
+    use super::{connecting_line, error_key};
     use totaldrop_core::Error;
     use totaldrop_l10n::{Domain, Strings};
     use totaldrop_proto::wire::RejectReason;
+
+    /// The code is said back before connecting, in its logical order and
+    /// plain ASCII: an override such as U+202E can show a pasted code in
+    /// another order on screen than the one the parser reads (#149).
+    #[test]
+    fn the_parsed_code_is_said_before_connecting() {
+        let strings = |tag: &str| {
+            Strings::new(
+                Domain::Cli,
+                &[totaldrop_l10n::locale::parse(tag).unwrap()],
+                None,
+            )
+        };
+        let en = strings("en");
+        for typed in [
+            "7-harbor-rocket",
+            "\u{202E}7-harbor-rocket\u{202C}",
+            "7 HARBOR \u{202E}rocket",
+            "\u{0667}-840-1499",
+        ] {
+            let (code, line) = connecting_line(&en, typed).unwrap();
+            assert_eq!(code, "7-harbor-rocket");
+            assert_eq!(line, "Connecting with 7-harbor-rocket…", "{typed:?}");
+        }
+        let (_, line) = connecting_line(&strings("tr"), "7-harbor-rocket").unwrap();
+        assert!(line.contains("7-harbor-rocket"), "{line}");
+        assert_ne!(line, "Connecting with 7-harbor-rocket…");
+        assert!(connecting_line(&en, "7-harbor").is_err());
+    }
 
     /// Every kind of failure has its own sentence in English and in
     /// Turkish (not an English fallback).

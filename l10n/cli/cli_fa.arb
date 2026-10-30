@@ -2,7 +2,7 @@
   "@@locale": "fa",
   "cliPreparing": "در حال آماده‌سازی…",
   "cliWaiting": "در انتظار گیرنده…",
-  "cliConnecting": "در حال اتصال…",
+  "cliConnectingCode": "در حال اتصال با کد {code}…",
   "cliConnected": "وصل شد، با رمزگذاری سرتاسری.",
   "cliVerification": "کلمات تأیید: {words}",
   "cliProgress": "{percent}٪  {done} از {total}",

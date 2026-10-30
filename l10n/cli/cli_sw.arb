@@ -2,7 +2,7 @@
   "@@locale": "sw",
   "cliPreparing": "Inaandaa…",
   "cliWaiting": "Inamsubiri mpokeaji…",
-  "cliConnecting": "Inaunganisha…",
+  "cliConnectingCode": "Inaunganisha kwa msimbo {code}…",
   "cliConnected": "Imeunganishwa, imesimbwa fiche kutoka mwanzo hadi mwisho.",
   "cliVerification": "Maneno ya uthibitisho: {words}",
   "cliProgress": "{percent}%  {done} kati ya {total}",

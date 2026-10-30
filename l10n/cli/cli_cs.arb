@@ -2,7 +2,7 @@
   "@@locale": "cs",
   "cliPreparing": "Příprava…",
   "cliWaiting": "Čekání na příjemce…",
-  "cliConnecting": "Připojování…",
+  "cliConnectingCode": "Připojování s kódem {code}…",
   "cliConnected": "Připojeno, koncově šifrováno.",
   "cliVerification": "Ověřovací slova: {words}",
   "cliProgress": "{percent} %  {done} z {total}",

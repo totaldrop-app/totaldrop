@@ -2,7 +2,7 @@
   "@@locale": "el",
   "cliPreparing": "Προετοιμασία…",
   "cliWaiting": "Αναμονή για τον παραλήπτη…",
-  "cliConnecting": "Σύνδεση…",
+  "cliConnectingCode": "Σύνδεση με τον κωδικό {code}…",
   "cliConnected": "Συνδέθηκε, κρυπτογράφηση από άκρο σε άκρο.",
   "cliVerification": "Λέξεις επαλήθευσης: {words}",
   "cliProgress": "{percent}%  {done} από {total}",

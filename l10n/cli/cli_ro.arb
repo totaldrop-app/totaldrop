@@ -2,7 +2,7 @@
   "@@locale": "ro",
   "cliPreparing": "Se pregătește…",
   "cliWaiting": "Se așteaptă destinatarul…",
-  "cliConnecting": "Se conectează…",
+  "cliConnectingCode": "Se conectează cu codul {code}…",
   "cliConnected": "Conectat, criptat end-to-end.",
   "cliVerification": "Cuvinte de verificare: {words}",
   "cliProgress": "{percent}%  {done} din {total}",

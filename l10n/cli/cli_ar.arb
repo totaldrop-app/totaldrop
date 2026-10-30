@@ -2,7 +2,7 @@
   "@@locale": "ar",
   "cliPreparing": "جارٍ التجهيز…",
   "cliWaiting": "في انتظار المستلم…",
-  "cliConnecting": "جارٍ الاتصال…",
+  "cliConnectingCode": "جارٍ الاتصال بالرمز {code}…",
   "cliConnected": "تم الاتصال، مشفّر بين الطرفين.",
   "cliVerification": "كلمات التحقق: {words}",
   "cliProgress": "{percent}٪  {done} من {total}",

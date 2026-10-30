@@ -2,7 +2,7 @@
   "@@locale": "nb",
   "cliPreparing": "Klargjør …",
   "cliWaiting": "Venter på mottakeren …",
-  "cliConnecting": "Kobler til …",
+  "cliConnectingCode": "Kobler til med koden {code} …",
   "cliConnected": "Tilkoblet, ende-til-ende-kryptert.",
   "cliVerification": "Bekreftelsesord: {words}",
   "cliProgress": "{percent} %  {done} av {total}",

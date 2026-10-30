@@ -2,7 +2,7 @@
   "@@locale": "nl",
   "cliPreparing": "Voorbereiden…",
   "cliWaiting": "Wachten op de ontvanger…",
-  "cliConnecting": "Verbinden…",
+  "cliConnectingCode": "Verbinden met code {code}…",
   "cliConnected": "Verbonden, end-to-end versleuteld.",
   "cliVerification": "Verificatiewoorden: {words}",
   "cliProgress": "{percent}%  {done} van {total}",

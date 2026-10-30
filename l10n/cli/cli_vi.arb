@@ -2,7 +2,7 @@
   "@@locale": "vi",
   "cliPreparing": "Đang chuẩn bị…",
   "cliWaiting": "Đang chờ người nhận…",
-  "cliConnecting": "Đang kết nối…",
+  "cliConnectingCode": "Đang kết nối bằng mã {code}…",
   "cliConnected": "Đã kết nối, mã hóa đầu cuối.",
   "cliVerification": "Từ xác minh: {words}",
   "cliProgress": "{percent}%  {done} / {total}",

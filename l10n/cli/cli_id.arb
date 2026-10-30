@@ -2,7 +2,7 @@
   "@@locale": "id",
   "cliPreparing": "Menyiapkan…",
   "cliWaiting": "Menunggu penerima…",
-  "cliConnecting": "Menghubungkan…",
+  "cliConnectingCode": "Menghubungkan dengan kode {code}…",
   "cliConnected": "Terhubung, terenkripsi end-to-end.",
   "cliVerification": "Kata verifikasi: {words}",
   "cliProgress": "{percent}%  {done} dari {total}",
