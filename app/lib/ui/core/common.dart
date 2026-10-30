@@ -17,7 +17,10 @@ String errorMessage(BuildContext context, ErrorKind kind) {
     ErrorKind.invalidCode => l.errorInvalidCode,
     ErrorKind.server => l.errorServer,
     ErrorKind.connect => l.errorConnect,
-    ErrorKind.invalidOffer => safeL10n(context, 'errorInvalidOffer').errorInvalidOffer,
+    ErrorKind.invalidOffer => safeL10n(
+      context,
+      'errorInvalidOffer',
+    ).errorInvalidOffer,
     ErrorKind.storage => l.errorStorage,
     ErrorKind.other => l.errorOther,
   };
@@ -46,7 +49,10 @@ class VerificationWords extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(Icons.verified_user_outlined, color: theme.colorScheme.primary),
+                Icon(
+                  Icons.verified_user_outlined,
+                  color: theme.colorScheme.primary,
+                ),
                 Gap.s,
                 Text(
                   safeL10n(context, 'verificationTitle').verificationTitle,
@@ -187,7 +193,9 @@ class SameNetworkNote extends StatelessWidget {
         Expanded(
           child: Text(
             AppLocalizations.of(context).sameNetworkNote,
-            style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
           ),
         ),
       ],
@@ -200,5 +208,6 @@ class DoneBadge extends StatelessWidget {
   const DoneBadge({super.key});
 
   @override
-  Widget build(BuildContext context) => const TotalDropMark(size: 140, done: true);
+  Widget build(BuildContext context) =>
+      const TotalDropMark(size: 140, done: true);
 }

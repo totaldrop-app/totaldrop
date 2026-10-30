@@ -34,8 +34,14 @@ class _ReceiveViewState extends State<ReceiveView> {
             title: Text(l.cancelTransferTitle),
             content: Text(l.cancelTransferBody),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(context, false), child: Text(l.keepGoing)),
-              FilledButton(onPressed: () => Navigator.pop(context, true), child: Text(l.stop)),
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: Text(l.keepGoing),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: Text(l.stop),
+              ),
             ],
           ),
         ) ??
@@ -76,14 +82,20 @@ class _ReceiveViewState extends State<ReceiveView> {
                 child: KeyedSubtree(
                   key: ValueKey(vm.stage),
                   child: switch (vm.stage) {
-                    ReceiveStage.entering => _Entering(vm: vm, controller: _controller),
+                    ReceiveStage.entering => _Entering(
+                      vm: vm,
+                      controller: _controller,
+                    ),
                     ReceiveStage.connecting => Center(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           const TotalDropMark(size: 120, sending: true),
                           Gap.l,
-                          Text(l.receiveConnecting, style: Theme.of(context).textTheme.titleMedium),
+                          Text(
+                            l.receiveConnecting,
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
                         ],
                       ),
                     ),
@@ -224,7 +236,11 @@ class _Offered extends StatelessWidget {
                 // Names come from the other side: hidden direction
                 // characters are shown, not obeyed.
                 Expanded(
-                  child: Text(revealControls(n), maxLines: 1, overflow: TextOverflow.ellipsis),
+                  child: Text(
+                    revealControls(n),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ],
             ),
@@ -304,11 +320,17 @@ class _Done extends StatelessWidget {
       children: [
         const Center(child: DoneBadge()),
         Gap.l,
-        Text(l.receiveDone, textAlign: TextAlign.center, style: theme.textTheme.headlineSmall),
+        Text(
+          l.receiveDone,
+          textAlign: TextAlign.center,
+          style: theme.textTheme.headlineSmall,
+        ),
         Gap.s,
         if (vm.folder != null)
           Text(
-            l.receiveSaveTo(isolate(vm.folder!.replaceFirst('/storage/emulated/0/', ''))),
+            l.receiveSaveTo(
+              isolate(vm.folder!.replaceFirst('/storage/emulated/0/', '')),
+            ),
             textAlign: TextAlign.center,
           ),
         if (s != null && s.filesFailed > 0) ...[
@@ -323,7 +345,10 @@ class _Done extends StatelessWidget {
         if (s != null)
           for (final p in s.saved)
             ListTile(
-              leading: Icon(Icons.check, color: theme.colorScheme.onSurfaceVariant),
+              leading: Icon(
+                Icons.check,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
               title: Text(
                 revealControls(p.split('/').last),
                 maxLines: 1,
@@ -344,7 +369,11 @@ class _Done extends StatelessWidget {
 }
 
 class _Message extends StatelessWidget {
-  const _Message({required this.icon, required this.text, required this.onDone});
+  const _Message({
+    required this.icon,
+    required this.text,
+    required this.onDone,
+  });
   final IconData icon;
   final String text;
   final VoidCallback onDone;
@@ -357,11 +386,22 @@ class _Message extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Icon(icon, size: 56, color: Theme.of(context).colorScheme.onSurfaceVariant),
+          Icon(
+            icon,
+            size: 56,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
           Gap.m,
-          Text(text, textAlign: TextAlign.center, style: Theme.of(context).textTheme.titleMedium),
+          Text(
+            text,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
           Gap.l,
-          FilledButton(onPressed: onDone, child: Text(AppLocalizations.of(context).done)),
+          FilledButton(
+            onPressed: onDone,
+            child: Text(AppLocalizations.of(context).done),
+          ),
         ],
       ),
     );

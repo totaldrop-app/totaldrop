@@ -24,7 +24,10 @@ const _body = 'AtkinsonHyperlegible';
 /// colours of its own. Values are the design system's tokens: `bg`,
 /// `bg-raised`, `rule`, `outline`, `ink`, `ink-muted`, `accent`, `on-accent`.
 ColorScheme fallbackScheme(Brightness brightness) {
-  final base = ColorScheme.fromSeed(seedColor: Brand.accent, brightness: brightness);
+  final base = ColorScheme.fromSeed(
+    seedColor: Brand.accent,
+    brightness: brightness,
+  );
   return brightness == Brightness.light
       ? base.copyWith(
           primary: Brand.accent,
@@ -62,15 +65,17 @@ ColorScheme fallbackScheme(Brightness brightness) {
 
 TextTheme _text(TextTheme base) {
   // Display type is tracked tight only where it is large; titles keep air.
-  TextStyle? display(TextStyle? s, FontWeight w, double tracking) => s?.copyWith(
-    fontFamily: _display,
-    fontWeight: w,
-    letterSpacing: tracking,
-    height: 1.12,
-    fontVariations: [FontVariation('wght', w.value.toDouble())],
-  );
+  TextStyle? display(TextStyle? s, FontWeight w, double tracking) =>
+      s?.copyWith(
+        fontFamily: _display,
+        fontWeight: w,
+        letterSpacing: tracking,
+        height: 1.12,
+        fontVariations: [FontVariation('wght', w.value.toDouble())],
+      );
   // Atkinson Hyperlegible is already wide: drop Material's extra tracking.
-  TextStyle? body(TextStyle? s, [FontWeight? w]) => s?.copyWith(letterSpacing: 0.1, fontWeight: w);
+  TextStyle? body(TextStyle? s, [FontWeight? w]) =>
+      s?.copyWith(letterSpacing: 0.1, fontWeight: w);
   final t = base.apply(fontFamily: _body);
   return t.copyWith(
     displayLarge: display(t.displayLarge, FontWeight.w800, -1.0),
@@ -107,7 +112,9 @@ ThemeData buildTheme(ColorScheme scheme) {
       elevation: 0,
       margin: EdgeInsets.zero,
       surfaceTintColor: Colors.transparent,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(28))),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.all(Radius.circular(28)),
+      ),
     ),
     dialogTheme: DialogThemeData(
       elevation: 0,
@@ -121,11 +128,21 @@ ThemeData buildTheme(ColorScheme scheme) {
     snackBarTheme: SnackBarThemeData(
       elevation: 0,
       behavior: SnackBarBehavior.floating,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(16))),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.all(Radius.circular(16)),
+      ),
       backgroundColor: scheme.onSurface,
-      contentTextStyle: TextStyle(fontFamily: _body, color: scheme.surface, fontSize: 14),
+      contentTextStyle: TextStyle(
+        fontFamily: _body,
+        color: scheme.surface,
+        fontSize: 14,
+      ),
     ),
-    dividerTheme: DividerThemeData(color: scheme.outlineVariant, thickness: 1, space: 1),
+    dividerTheme: DividerThemeData(
+      color: scheme.outlineVariant,
+      thickness: 1,
+      space: 1,
+    ),
     listTileTheme: const ListTileThemeData(contentPadding: EdgeInsets.zero),
     progressIndicatorTheme: ProgressIndicatorThemeData(
       color: scheme.primary,
@@ -133,24 +150,36 @@ ThemeData buildTheme(ColorScheme scheme) {
     ),
     switchTheme: SwitchThemeData(
       trackOutlineColor: WidgetStateProperty.resolveWith(
-        (states) => states.contains(WidgetState.selected) ? Colors.transparent : scheme.outline,
+        (states) => states.contains(WidgetState.selected)
+            ? Colors.transparent
+            : scheme.outline,
       ),
     ),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
         minimumSize: const Size(64, 56),
-        textStyle: const TextStyle(fontFamily: _body, fontWeight: FontWeight.w700, fontSize: 16),
+        textStyle: const TextStyle(
+          fontFamily: _body,
+          fontWeight: FontWeight.w700,
+          fontSize: 16,
+        ),
       ),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
         minimumSize: const Size(64, 56),
         side: BorderSide(color: scheme.outline),
-        textStyle: const TextStyle(fontFamily: _body, fontWeight: FontWeight.w700, fontSize: 16),
+        textStyle: const TextStyle(
+          fontFamily: _body,
+          fontWeight: FontWeight.w700,
+          fontSize: 16,
+        ),
       ),
     ),
     inputDecorationTheme: InputDecorationTheme(
-      border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(16))),
+      border: const OutlineInputBorder(
+        borderRadius: BorderRadius.all(Radius.circular(16)),
+      ),
       enabledBorder: OutlineInputBorder(
         borderRadius: const BorderRadius.all(Radius.circular(16)),
         borderSide: BorderSide(color: scheme.outline),
@@ -158,7 +187,11 @@ ThemeData buildTheme(ColorScheme scheme) {
     ),
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(
-        textStyle: const TextStyle(fontFamily: _body, fontWeight: FontWeight.w700, fontSize: 14),
+        textStyle: const TextStyle(
+          fontFamily: _body,
+          fontWeight: FontWeight.w700,
+          fontSize: 14,
+        ),
       ),
     ),
   );

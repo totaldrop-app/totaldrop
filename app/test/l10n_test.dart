@@ -24,7 +24,10 @@ void main() {
     expect(formatBytes(en, 1500000, numberLocale: 'de'), '1,5 MB');
     expect(formatBytes(en, 999499, numberLocale: 'en'), '999 kB');
     expect(formatBytes(en, 12345678, numberLocale: 'en'), '12 MB');
-    expect(formatBytes(en, 9223372036854775807, numberLocale: 'en'), '9,223 PB');
+    expect(
+      formatBytes(en, 9223372036854775807, numberLocale: 'en'),
+      '9,223 PB',
+    );
   });
 
   test('counts are grouped and plurals follow the language', () {

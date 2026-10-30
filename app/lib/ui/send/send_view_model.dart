@@ -9,7 +9,11 @@ import '../../src/rust/api/transfer.dart';
 enum SendStage { picking, preparing, waiting, transferring, done, failed }
 
 class PickedFile {
-  const PickedFile({required this.name, required this.path, required this.size});
+  const PickedFile({
+    required this.name,
+    required this.path,
+    required this.size,
+  });
   final String name;
   final String path;
   final int size;
@@ -39,7 +43,9 @@ class SendViewModel extends ChangeNotifier {
   TransferError? error;
 
   bool get busy =>
-      stage == SendStage.preparing || stage == SendStage.waiting || stage == SendStage.transferring;
+      stage == SendStage.preparing ||
+      stage == SendStage.waiting ||
+      stage == SendStage.transferring;
 
   Future<void> addFiles() async {
     // Multiple selection; files are copied to the app cache, never loaded
@@ -101,7 +107,11 @@ class SendViewModel extends ChangeNotifier {
         .listen(
           _onEvent,
           onError: (Object e) {
-            _fail(e is TransferError ? e : TransferError(kind: ErrorKind.other, detail: '$e'));
+            _fail(
+              e is TransferError
+                  ? e
+                  : TransferError(kind: ErrorKind.other, detail: '$e'),
+            );
           },
         );
   }
@@ -122,7 +132,9 @@ class SendViewModel extends ChangeNotifier {
         stage = SendStage.done;
         _cleanUp();
       case EventKind.failed:
-        _fail(e.error ?? const TransferError(kind: ErrorKind.other, detail: ''));
+        _fail(
+          e.error ?? const TransferError(kind: ErrorKind.other, detail: ''),
+        );
         return;
     }
     notifyListeners();

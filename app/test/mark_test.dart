@@ -7,10 +7,13 @@ import 'package:totaldrop/ui/core/mark.dart';
 // The mark's shape and timing must match the SVG, the website and the
 // Linux app (docs/tasarim.md, "İşaret" and "Hareket").
 void main() {
-  test('the loop lasts 3.2 s: four quarter turns of 0.6 s, each with a 0.2 s rest', () {
-    expect(MarkMotion.loop, const Duration(milliseconds: 3200));
-    expect(MarkMotion.turning * MarkMotion.loop.inMilliseconds / 4, 600);
-  });
+  test(
+    'the loop lasts 3.2 s: four quarter turns of 0.6 s, each with a 0.2 s rest',
+    () {
+      expect(MarkMotion.loop, const Duration(milliseconds: 3200));
+      expect(MarkMotion.turning * MarkMotion.loop.inMilliseconds / 4, 600);
+    },
+  );
 
   test('it rests on each quarter and ends where it started', () {
     expect(MarkMotion.turn(0), 0);
@@ -46,12 +49,15 @@ void main() {
     expect(shape.contains(MarkGeometry.centre), isTrue);
   });
 
-  test('the turn is eased: halfway through a quarter it has turned half of it', () {
-    // cubic-bezier(0.65, 0, 0.35, 1) is symmetric, so it passes (0.5, 0.5).
-    expect(MarkMotion.turn(0.375 / 4), closeTo(0.125, 1e-3));
-    // Slow at the start: a tenth of the time turns far less than a tenth.
-    expect(MarkMotion.turn(0.075 / 4), lessThan(0.025 / 4));
-  });
+  test(
+    'the turn is eased: halfway through a quarter it has turned half of it',
+    () {
+      // cubic-bezier(0.65, 0, 0.35, 1) is symmetric, so it passes (0.5, 0.5).
+      expect(MarkMotion.turn(0.375 / 4), closeTo(0.125, 1e-3));
+      // Slow at the start: a tenth of the time turns far less than a tenth.
+      expect(MarkMotion.turn(0.075 / 4), lessThan(0.025 / 4));
+    },
+  );
 
   // Every copy of the mark uses the same path and timing (docs/tasarim.md).
   const path = 'M55 15H97V57A42 42 0 1 1 55 15Z';
@@ -69,18 +75,33 @@ void main() {
   });
 
   test('the Linux app and the site turn the same way, on the same timing', () {
-    final qml = File('../linux/qml/Mark.qml').readAsStringSync().replaceAll(RegExp(r'\s+'), ' ');
+    final qml = File('../linux/qml/Mark.qml')
+        .readAsStringSync()
+        .replaceAll(RegExp(r'\s+'), ' ');
     expect(qml, contains('origin.x: 55 * root.unit; origin.y: 57 * root.unit'));
     expect(qml, contains('startX: 55 * root.unit; startY: 15 * root.unit'));
     expect(qml, contains('PathLine { x: 97 * root.unit; y: 15 * root.unit }'));
     expect(qml, contains('PathLine { x: 97 * root.unit; y: 57 * root.unit }'));
     expect(qml, contains('duration: 600'));
-    expect(RegExp(r'PauseAnimation \{ duration: 200 \}').allMatches(qml).length, 4);
+    expect(
+      RegExp(r'PauseAnimation \{ duration: 200 \}').allMatches(qml).length,
+      4,
+    );
     expect(qml, contains('[0.65, 0, 0.35, 1, 1, 1]'));
     final css = File('../site/public/styles.css').readAsStringSync();
     expect(css, contains('transform-origin: 55px 57px'));
-    expect(css, contains('animation: mk-turn 3.2s cubic-bezier(0.65, 0, 0.35, 1) infinite'));
-    for (final stop in ['18.75%, 25%', '43.75%, 50%', '68.75%, 75%', '93.75%, 100%']) {
+    expect(
+      css,
+      contains(
+        'animation: mk-turn 3.2s cubic-bezier(0.65, 0, 0.35, 1) infinite',
+      ),
+    );
+    for (final stop in [
+      '18.75%, 25%',
+      '43.75%, 50%',
+      '68.75%, 75%',
+      '93.75%, 100%',
+    ]) {
       expect(css, contains(stop));
     }
   });

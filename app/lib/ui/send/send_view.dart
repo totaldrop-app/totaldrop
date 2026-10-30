@@ -23,8 +23,14 @@ class SendView extends StatelessWidget {
         title: Text(l.cancelTransferTitle),
         content: Text(l.cancelTransferBody),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(l.keepGoing)),
-          FilledButton(onPressed: () => Navigator.pop(context, true), child: Text(l.stop)),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(l.keepGoing),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(l.stop),
+          ),
         ],
       ),
     );
@@ -117,14 +123,24 @@ class _Picking extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const Spacer(),
-            Icon(Icons.upload_file_outlined, size: 56, color: theme.colorScheme.onSurfaceVariant),
+            Icon(
+              Icons.upload_file_outlined,
+              size: 56,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
             Gap.m,
-            Text(l.sendEmpty, style: theme.textTheme.headlineSmall, textAlign: TextAlign.center),
+            Text(
+              l.sendEmpty,
+              style: theme.textTheme.headlineSmall,
+              textAlign: TextAlign.center,
+            ),
             Gap.s,
             Text(
               l.sendEmptyHint,
               textAlign: TextAlign.center,
-              style: theme.textTheme.bodyLarge?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
             ),
             const Spacer(),
             FilledButton.icon(
@@ -160,10 +176,16 @@ class _Picking extends StatelessWidget {
                   Icons.insert_drive_file_outlined,
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
-                title: Text(f.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+                title: Text(
+                  f.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
                 subtitle: Text(
                   formatBytes(l, f.size),
-                  style: const TextStyle(fontFeatures: [FontFeature.tabularFigures()]),
+                  style: const TextStyle(
+                    fontFeatures: [FontFeature.tabularFigures()],
+                  ),
                 ),
                 trailing: IconButton(
                   tooltip: l.sendRemove,
@@ -220,7 +242,9 @@ class _Waiting extends StatelessWidget {
         Text(
           l.sendWaiting,
           textAlign: TextAlign.center,
-          style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
         ),
         Gap.l,
         // The code is the content; the frame stays quiet.
@@ -271,8 +295,9 @@ class _Waiting extends StatelessWidget {
                         onPressed: () async {
                           await Clipboard.setData(ClipboardData(text: code));
                           if (context.mounted) {
-                            ScaffoldMessenger.of(context)
-                                .showSnackBar(SnackBar(content: Text(l.sendCopied)));
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(l.sendCopied)),
+                            );
                           }
                         },
                         icon: const Icon(Icons.copy),
@@ -298,7 +323,11 @@ class _Waiting extends StatelessWidget {
           ),
         ),
         Gap.m,
-        Text(l.sendCodeHint, textAlign: TextAlign.center, style: theme.textTheme.bodyLarge),
+        Text(
+          l.sendCodeHint,
+          textAlign: TextAlign.center,
+          style: theme.textTheme.bodyLarge,
+        ),
         Gap.xl,
         const SameNetworkNote(),
       ],
@@ -349,7 +378,11 @@ class _Done extends StatelessWidget {
         children: [
           const Center(child: DoneBadge()),
           Gap.l,
-          Text(l.sendDone, textAlign: TextAlign.center, style: theme.textTheme.headlineSmall),
+          Text(
+            l.sendDone,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.headlineSmall,
+          ),
           Gap.s,
           if (s != null) ...[
             Text(l.sendDoneBody(s.filesOk), textAlign: TextAlign.center),

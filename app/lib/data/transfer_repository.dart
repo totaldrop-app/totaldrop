@@ -29,21 +29,28 @@ class TransferRepository {
     stopper: stopper,
   );
 
-  Stream<bridge.TransferEvent> runSend(bridge.SendSession session, bridge.Stopper stopper) =>
-      bridge.runSend(session: session, stopper: stopper);
+  Stream<bridge.TransferEvent> runSend(
+    bridge.SendSession session,
+    bridge.Stopper stopper,
+  ) => bridge.runSend(session: session, stopper: stopper);
 
-  Future<bridge.Offer> connect(String code, bridge.Stopper stopper) => bridge.connectReceive(
-    server: _settings.server,
-    code: code,
-    privacy: _settings.privacyMode,
-    stopper: stopper,
-  );
+  Future<bridge.Offer> connect(String code, bridge.Stopper stopper) =>
+      bridge.connectReceive(
+        server: _settings.server,
+        code: code,
+        privacy: _settings.privacyMode,
+        stopper: stopper,
+      );
 
   Stream<bridge.TransferEvent> accept(
     bridge.Offer offer,
     String destination,
     bridge.Stopper stopper,
-  ) => bridge.acceptOffer(offer: offer, destination: destination, stopper: stopper);
+  ) => bridge.acceptOffer(
+    offer: offer,
+    destination: destination,
+    stopper: stopper,
+  );
 
   Future<void> decline(bridge.Offer offer) => bridge.declineOffer(offer: offer);
 

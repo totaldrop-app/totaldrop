@@ -12,7 +12,12 @@ import 'theme.dart';
 /// At rest it matches `assets/logo.svg` exactly. It keeps its own colour in
 /// every theme: violet on light backgrounds, glow on dark ones.
 class TotalDropMark extends StatefulWidget {
-  const TotalDropMark({super.key, this.size = 96, this.sending = false, this.done = false});
+  const TotalDropMark({
+    super.key,
+    this.size = 96,
+    this.sending = false,
+    this.done = false,
+  });
 
   final double size;
 
@@ -27,11 +32,16 @@ class TotalDropMark extends StatefulWidget {
   State<TotalDropMark> createState() => _TotalDropMarkState();
 }
 
-class _TotalDropMarkState extends State<TotalDropMark> with SingleTickerProviderStateMixin {
-  late final AnimationController _c = AnimationController(vsync: this, duration: MarkMotion.loop);
+class _TotalDropMarkState extends State<TotalDropMark>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(
+    vsync: this,
+    duration: MarkMotion.loop,
+  );
 
   bool _shouldMove(BuildContext context) =>
-      widget.sending && !(MediaQuery.maybeDisableAnimationsOf(context) ?? false);
+      widget.sending &&
+      !(MediaQuery.maybeDisableAnimationsOf(context) ?? false);
 
   void _sync() {
     if (!mounted) return;
@@ -118,7 +128,11 @@ abstract final class MarkGeometry {
     ..moveTo(55, 15)
     ..lineTo(97, 15)
     ..lineTo(97, 57)
-    ..arcToPoint(const Offset(55, 15), radius: const Radius.circular(radius), largeArc: true)
+    ..arcToPoint(
+      const Offset(55, 15),
+      radius: const Radius.circular(radius),
+      largeArc: true,
+    )
     ..close();
 
   /// The check drawn inside the circle when a file has arrived.
@@ -169,5 +183,6 @@ class _MarkPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_MarkPainter old) => old.turn != turn || old.dark != dark || old.done != done;
+  bool shouldRepaint(_MarkPainter old) =>
+      old.turn != turn || old.dark != dark || old.done != done;
 }

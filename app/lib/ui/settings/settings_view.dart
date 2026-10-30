@@ -6,7 +6,11 @@ import '../core/l10n.dart';
 import '../core/theme.dart';
 
 class SettingsView extends StatefulWidget {
-  const SettingsView({super.key, required this.settings, required this.version});
+  const SettingsView({
+    super.key,
+    required this.settings,
+    required this.version,
+  });
 
   final SettingsRepository settings;
   final String version;
@@ -44,7 +48,10 @@ class _SettingsViewState extends State<SettingsView> {
             title: Text(l.privacyModeConfirmTitle),
             content: Text(l.privacyModeConfirmBody),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(context, false), child: Text(l.cancel)),
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: Text(l.cancel),
+              ),
               FilledButton(
                 onPressed: () => Navigator.pop(context, true),
                 child: Text(l.privacyModeTurnOn),
@@ -131,17 +138,23 @@ class _SettingsViewState extends State<SettingsView> {
             Gap.s,
             Text(
               l.draftTranslation,
-              style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
             ),
           ],
           Gap.s,
           Text(
             l.settingsVersion(isolate(widget.version)),
-            style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
           ),
           Text(
             'totaldrop.app',
-            style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
           ),
         ],
       ),
