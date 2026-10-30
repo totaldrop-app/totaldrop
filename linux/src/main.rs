@@ -8,6 +8,7 @@
 
 mod bridge;
 mod desktop;
+mod flags;
 mod runtime;
 mod settings;
 mod theme;
@@ -55,6 +56,20 @@ fn choose_style(session: &theme::Session) -> &'static str {
 }
 
 fn main() {
+    if let Some(flag) = flags::early(std::env::args().skip(1)) {
+        match flag {
+            flags::Flag::Help => {
+                print!(
+                    "{}",
+                    flags::help(&totaldrop_l10n::Strings::system(
+                        totaldrop_l10n::Domain::Cli
+                    ))
+                );
+            }
+            flags::Flag::Version => println!("totaldrop-desktop {}", env!("CARGO_PKG_VERSION")),
+        }
+        return;
+    }
     let session = theme::Session::current();
     let style = choose_style(&session);
     if std::env::var_os("QT_QUICK_CONTROLS_STYLE").is_none() {
