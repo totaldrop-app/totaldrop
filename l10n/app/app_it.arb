@@ -68,6 +68,7 @@
   "errorStopped": "Interrotto su questo dispositivo.",
   "errorInvalidCode": "Questo codice non è valido.",
   "errorServer": "Impossibile raggiungere il server di TotalDrop. Controlla la connessione a internet.",
+  "errorCodeNotInUse": "Questo codice non è in uso: è stato digitato male, è scaduto o è già stato usato. Chiedine uno nuovo a chi invia.",
   "errorConnect": "Impossibile connettersi all'altro dispositivo. Controlla che entrambi i dispositivi siano online e riprova.",
   "errorInvalidOffer": "L'offerta violava una regola di sicurezza ed è stata rifiutata.",
   "errorStorage": "Non è stato possibile leggere o salvare un file.",

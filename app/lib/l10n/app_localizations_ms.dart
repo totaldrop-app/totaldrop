@@ -259,6 +259,10 @@ class AppLocalizationsMs extends AppLocalizations {
       'Tidak dapat mencapai pelayan TotalDrop. Semak sambungan internet anda.';
 
   @override
+  String get errorCodeNotInUse =>
+      'Kod itu tidak digunakan: tersalah taip, telah tamat tempoh atau sudah digunakan. Minta kod baharu daripada penghantar.';
+
+  @override
   String get errorConnect =>
       'Tidak dapat menyambung ke peranti lain. Pastikan kedua-dua peranti dalam talian dan cuba lagi.';
 

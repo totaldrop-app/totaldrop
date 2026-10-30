@@ -1193,11 +1193,12 @@ impl SseDecode for crate::api::transfer::ErrorKind {
             3 => crate::api::transfer::ErrorKind::Cancelled,
             4 => crate::api::transfer::ErrorKind::Stopped,
             5 => crate::api::transfer::ErrorKind::InvalidCode,
-            6 => crate::api::transfer::ErrorKind::Server,
-            7 => crate::api::transfer::ErrorKind::Connect,
-            8 => crate::api::transfer::ErrorKind::InvalidOffer,
-            9 => crate::api::transfer::ErrorKind::Storage,
-            10 => crate::api::transfer::ErrorKind::Other,
+            6 => crate::api::transfer::ErrorKind::CodeNotInUse,
+            7 => crate::api::transfer::ErrorKind::Server,
+            8 => crate::api::transfer::ErrorKind::Connect,
+            9 => crate::api::transfer::ErrorKind::InvalidOffer,
+            10 => crate::api::transfer::ErrorKind::Storage,
+            11 => crate::api::transfer::ErrorKind::Other,
             _ => unreachable!("Invalid variant for ErrorKind: {}", inner),
         };
     }
@@ -1470,11 +1471,12 @@ impl flutter_rust_bridge::IntoDart for crate::api::transfer::ErrorKind {
             Self::Cancelled => 3.into_dart(),
             Self::Stopped => 4.into_dart(),
             Self::InvalidCode => 5.into_dart(),
-            Self::Server => 6.into_dart(),
-            Self::Connect => 7.into_dart(),
-            Self::InvalidOffer => 8.into_dart(),
-            Self::Storage => 9.into_dart(),
-            Self::Other => 10.into_dart(),
+            Self::CodeNotInUse => 6.into_dart(),
+            Self::Server => 7.into_dart(),
+            Self::Connect => 8.into_dart(),
+            Self::InvalidOffer => 9.into_dart(),
+            Self::Storage => 10.into_dart(),
+            Self::Other => 11.into_dart(),
             _ => unreachable!(),
         }
     }
@@ -1681,11 +1683,12 @@ impl SseEncode for crate::api::transfer::ErrorKind {
                 crate::api::transfer::ErrorKind::Cancelled => 3,
                 crate::api::transfer::ErrorKind::Stopped => 4,
                 crate::api::transfer::ErrorKind::InvalidCode => 5,
-                crate::api::transfer::ErrorKind::Server => 6,
-                crate::api::transfer::ErrorKind::Connect => 7,
-                crate::api::transfer::ErrorKind::InvalidOffer => 8,
-                crate::api::transfer::ErrorKind::Storage => 9,
-                crate::api::transfer::ErrorKind::Other => 10,
+                crate::api::transfer::ErrorKind::CodeNotInUse => 6,
+                crate::api::transfer::ErrorKind::Server => 7,
+                crate::api::transfer::ErrorKind::Connect => 8,
+                crate::api::transfer::ErrorKind::InvalidOffer => 9,
+                crate::api::transfer::ErrorKind::Storage => 10,
+                crate::api::transfer::ErrorKind::Other => 11,
                 _ => {
                     unimplemented!("");
                 }

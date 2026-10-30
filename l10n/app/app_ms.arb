@@ -68,6 +68,7 @@
   "errorStopped": "Dihentikan pada peranti ini.",
   "errorInvalidCode": "Kod itu tidak sah.",
   "errorServer": "Tidak dapat mencapai pelayan TotalDrop. Semak sambungan internet anda.",
+  "errorCodeNotInUse": "Kod itu tidak digunakan: tersalah taip, telah tamat tempoh atau sudah digunakan. Minta kod baharu daripada penghantar.",
   "errorConnect": "Tidak dapat menyambung ke peranti lain. Pastikan kedua-dua peranti dalam talian dan cuba lagi.",
   "errorInvalidOffer": "Tawaran melanggar peraturan keselamatan, jadi ia ditolak.",
   "errorStorage": "Satu fail tidak dapat dibaca atau disimpan.",

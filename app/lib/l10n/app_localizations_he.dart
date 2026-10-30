@@ -272,6 +272,10 @@ class AppLocalizationsHe extends AppLocalizations {
       'לא ניתן להגיע לשרת של TotalDrop. יש לבדוק את החיבור לאינטרנט.';
 
   @override
+  String get errorCodeNotInUse =>
+      'הקוד הזה אינו בשימוש: הוא הוקלד בטעות, פג תוקפו או שכבר נעשה בו שימוש. יש לבקש מהשולח קוד חדש.';
+
+  @override
   String get errorConnect =>
       'לא ניתן להתחבר למכשיר השני. יש לוודא ששני המכשירים מחוברים לאינטרנט ולנסות שוב.';
 

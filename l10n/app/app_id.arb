@@ -68,6 +68,7 @@
   "errorStopped": "Dihentikan di perangkat ini.",
   "errorInvalidCode": "Kode itu tidak valid.",
   "errorServer": "Tidak dapat menjangkau server TotalDrop. Periksa koneksi internet Anda.",
+  "errorCodeNotInUse": "Kode itu tidak sedang digunakan: salah ketik, sudah kedaluwarsa, atau sudah dipakai. Minta kode baru dari pengirim.",
   "errorConnect": "Tidak dapat terhubung ke perangkat lain. Pastikan kedua perangkat online, lalu coba lagi.",
   "errorInvalidOffer": "Tawaran melanggar aturan keamanan, jadi ditolak.",
   "errorStorage": "Sebuah file tidak dapat dibaca atau disimpan.",

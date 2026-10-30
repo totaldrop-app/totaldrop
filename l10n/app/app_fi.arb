@@ -68,6 +68,7 @@
   "errorStopped": "Lopetettu tällä laitteella.",
   "errorInvalidCode": "Koodi ei ole kelvollinen.",
   "errorServer": "TotalDrop-palvelimeen ei saatu yhteyttä. Tarkista internetyhteys.",
+  "errorCodeNotInUse": "Koodi ei ole käytössä: se kirjoitettiin väärin, on vanhentunut tai on jo käytetty. Pyydä lähettäjältä uusi.",
   "errorConnect": "Toiseen laitteeseen ei saatu yhteyttä. Varmista, että molemmat laitteet ovat verkossa, ja yritä uudelleen.",
   "errorInvalidOffer": "Tarjous rikkoi turvasääntöä, joten se hylättiin.",
   "errorStorage": "Tiedostoa ei voitu lukea tai tallentaa.",

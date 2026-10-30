@@ -277,6 +277,10 @@ class AppLocalizationsPt extends AppLocalizations {
       'Não foi possível acessar o servidor do TotalDrop. Verifique sua conexão com a internet.';
 
   @override
+  String get errorCodeNotInUse =>
+      'Esse código não está em uso: foi digitado errado, expirou ou já foi usado. Peça um novo a quem está enviando.';
+
+  @override
   String get errorConnect =>
       'Não foi possível conectar ao outro dispositivo. Verifique se os dois dispositivos estão on-line e tente de novo.';
 
@@ -693,6 +697,10 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String get errorServer =>
       'Não foi possível acessar o servidor do TotalDrop. Verifique sua conexão com a internet.';
+
+  @override
+  String get errorCodeNotInUse =>
+      'Esse código não está em uso: foi digitado errado, expirou ou já foi usado. Peça um novo a quem está enviando.';
 
   @override
   String get errorConnect =>
@@ -1112,6 +1120,10 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
   @override
   String get errorServer =>
       'Não foi possível contactar o servidor do TotalDrop. Verifique a sua ligação à Internet.';
+
+  @override
+  String get errorCodeNotInUse =>
+      'Esse código não está em uso: foi mal escrito, expirou ou já foi usado. Peça um novo a quem está a enviar.';
 
   @override
   String get errorConnect =>

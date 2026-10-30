@@ -276,6 +276,10 @@ class AppLocalizationsEs extends AppLocalizations {
       'No se pudo acceder al servidor de TotalDrop. Comprueba tu conexión a internet.';
 
   @override
+  String get errorCodeNotInUse =>
+      'Ese código no está en uso: se escribió mal, caducó o ya se usó. Pide uno nuevo a quien te envía los archivos.';
+
+  @override
   String get errorConnect =>
       'No se pudo conectar con el otro dispositivo. Comprueba que ambos dispositivos estén en línea y vuelve a intentarlo.';
 

@@ -92,6 +92,8 @@ pub enum ErrorKind {
     Stopped,
     /// The code could not be read.
     InvalidCode,
+    /// The server says no sender uses the code: mistyped, expired or used.
+    CodeNotInUse,
     /// The rendezvous server could not be reached or refused.
     Server,
     /// No network path to the other device worked.
@@ -140,6 +142,22 @@ impl From<totaldrop_core::Error> for TransferError {
             _ => ErrorKind::Other,
         };
         Self { kind, detail }
+    }
+}
+
+impl TransferError {
+    /// An error while the receiver connects with the code. Only there does
+    /// "no sender uses this code" mean the code: a sender whose code
+    /// expired unused hears the same from the server.
+    fn on_connect(e: totaldrop_core::Error) -> Self {
+        if e.is_code_not_in_use() {
+            Self {
+                kind: ErrorKind::CodeNotInUse,
+                detail: e.to_string(),
+            }
+        } else {
+            e.into()
+        }
     }
 }
 
@@ -402,7 +420,8 @@ pub async fn connect_receive(
             &code,
             &stop,
         )
-        .await?;
+        .await
+        .map_err(TransferError::on_connect)?;
         let s = offer.summary().clone();
         Ok(Offer {
             files: n(s.files),
@@ -477,6 +496,26 @@ pub fn normalize_code(input: String) -> Option<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_code_not_in_use_is_not_a_server_problem() {
+        use totaldrop_core::Error as E;
+        // What the rendezvous server says when no sender uses the number.
+        for reason in ["unknown nameplate", "nameplate full", "mailbox expired"] {
+            let e = TransferError::on_connect(E::Rendezvous(reason.into()));
+            assert_eq!(e.kind, ErrorKind::CodeNotInUse, "{reason}");
+        }
+        let e = TransferError::on_connect(E::Rendezvous("connection refused".into()));
+        assert_eq!(e.kind, ErrorKind::Server);
+    }
+
+    #[test]
+    fn a_sender_is_not_told_its_code_was_mistyped() {
+        use totaldrop_core::Error as E;
+        // A sender's mailbox expires when nobody comes: not the code's fault.
+        let e = TransferError::from(E::Rendezvous("mailbox expired".into()));
+        assert_eq!(e.kind, ErrorKind::Server);
+    }
 
     #[test]
     fn codes_as_typed() {

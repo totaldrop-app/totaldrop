@@ -250,6 +250,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get errorServer => '无法连接到 TotalDrop 服务器。请检查网络连接。';
 
   @override
+  String get errorCodeNotInUse => '该代码未在使用中：可能输错了、已过期或已被使用。请向发送方索取新代码。';
+
+  @override
   String get errorConnect => '无法连接到另一台设备。请确认两台设备都已联网，然后重试。';
 
   @override
@@ -633,6 +636,9 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get errorServer => '无法连接到 TotalDrop 服务器。请检查网络连接。';
 
   @override
+  String get errorCodeNotInUse => '该代码未在使用中：可能输错了、已过期或已被使用。请向发送方索取新代码。';
+
+  @override
   String get errorConnect => '无法连接到另一台设备。请确认两台设备都已联网，然后重试。';
 
   @override
@@ -1014,6 +1020,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get errorServer => '無法連線到 TotalDrop 伺服器。請檢查網路連線。';
+
+  @override
+  String get errorCodeNotInUse => '這組代碼目前未使用：可能輸入錯誤、已過期或已被使用。請向傳送者索取新的代碼。';
 
   @override
   String get errorConnect => '無法連線到另一部裝置。請確認兩部裝置都已連上網路，然後再試一次。';

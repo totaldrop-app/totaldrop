@@ -259,6 +259,10 @@ class AppLocalizationsBn extends AppLocalizations {
       'TotalDrop সার্ভারে পৌঁছানো যায়নি। আপনার ইন্টারনেট সংযোগ দেখুন।';
 
   @override
+  String get errorCodeNotInUse =>
+      'এই কোডটি ব্যবহারে নেই: এটি ভুল টাইপ হয়েছে, মেয়াদ শেষ হয়ে গেছে অথবা আগেই ব্যবহার করা হয়েছে। প্রেরকের কাছে নতুন কোড চেয়ে নিন।';
+
+  @override
   String get errorConnect =>
       'অন্য ডিভাইসের সঙ্গে সংযোগ করা যায়নি। দুটি ডিভাইসই অনলাইনে আছে কিনা দেখে আবার চেষ্টা করুন।';
 
