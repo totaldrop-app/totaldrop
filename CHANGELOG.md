@@ -34,6 +34,13 @@ All notable changes to TotalDrop are recorded here. The format follows
   Both apps drop direction marks from a pasted code or totaldrop:// link,
   so the code still connects. The right-to-left layout check reads whole
   calls, so one spread over several lines no longer slips through (#130).
+- **Android, Linux, CLI:** In a right-to-left language the shared message
+  could show the code out of order, with its number on the wrong side of
+  its words; the code is now isolated, as the version and the save folder
+  are. Both apps drop direction marks and other invisible characters, such
+  as a zero-width space, from a pasted code, and Linux also from a
+  totaldrop:// link; the command line does the same with a code given to
+  it, so a code copied with them still connects (#130).
 
 ### Fixed
 

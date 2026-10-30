@@ -181,6 +181,39 @@ pub struct TransferCode {
     words: Vec<u16>,
 }
 
+/// Invisible format characters a code can pick up when it is copied, as
+/// inclusive ranges: the soft hyphen, the Arabic letter mark, the zero-width
+/// space, non-joiner and joiner, the left-to-right and right-to-left marks,
+/// the embeddings and overrides with their pop, the word joiner, the
+/// isolates with theirs, and the byte order mark. Only these: no letter,
+/// digit or space is ever dropped. The Android app's `stripInvisibleFormat`
+/// (app/lib/ui/core/l10n.dart) uses the same list, and a test checks it.
+pub const INVISIBLE_FORMAT: [(u32, u32); 7] = [
+    (0x00AD, 0x00AD),
+    (0x061C, 0x061C),
+    (0x200B, 0x200F),
+    (0x202A, 0x202E),
+    (0x2060, 0x2060),
+    (0x2066, 0x2069),
+    (0xFEFF, 0xFEFF),
+];
+
+/// `text` without [`INVISIBLE_FORMAT`] characters. A right-to-left message
+/// isolates the code (U+2068 and U+2069) so it keeps its order, and a copy
+/// of the code takes the marks along; chat apps add others. CPace only
+/// sees [`TransferCode::canonical`], so this lets more spellings reach the
+/// same code and no more: a look-alike letter still fails.
+pub fn strip_invisible_format(text: &str) -> String {
+    text.chars()
+        .filter(|c| {
+            let c = u32::from(*c);
+            !INVISIBLE_FORMAT
+                .iter()
+                .any(|(start, end)| (*start..=*end).contains(&c))
+        })
+        .collect()
+}
+
 fn english() -> &'static [&'static str; 2048] {
     bip39::Language::English.word_list()
 }
@@ -205,9 +238,10 @@ impl TransferCode {
     }
 
     /// Parse what a person typed: words or list indices, separated by
-    /// hyphens or spaces, in any letter case.
+    /// hyphens or spaces, in any letter case. Invisible format characters
+    /// are dropped first ([`strip_invisible_format`]).
     pub fn parse(input: &str) -> Result<Self, CodeError> {
-        let lowered = input.trim().to_lowercase();
+        let lowered = strip_invisible_format(input).trim().to_lowercase();
         let mut tokens = lowered
             .split(|c: char| c == '-' || c.is_whitespace())
             .filter(|t| !t.is_empty());
@@ -293,6 +327,42 @@ mod tests {
         let a = TransferCode::parse("  7 Harbor   ROCKET ").unwrap();
         let b = TransferCode::parse("7-840-1499").unwrap();
         assert_eq!(a, b);
+    }
+
+    #[test]
+    fn invisible_format_characters_are_dropped() {
+        let want = TransferCode::parse("7-harbor-rocket").unwrap();
+        for typed in [
+            // Isolated in a right-to-left share text, copied with the marks.
+            "\u{2068}7-harbor-rocket\u{2069}",
+            "\u{200F}\u{2066}7 harbor\u{2069} rocket\u{061C}",
+            "\u{202A}7-harbor-\u{202E}rocket\u{202C}",
+            // Zero-width space, joiners, word joiner, soft hyphen, BOM.
+            "\u{FEFF}7-har\u{200B}bor-rock\u{00AD}et\u{200D}",
+            "7\u{2060}-harbor\u{200C}-rocket\u{200E}",
+        ] {
+            assert_eq!(TransferCode::parse(typed).as_ref(), Ok(&want), "{typed:?}");
+        }
+        assert_eq!(
+            TransferCode::parse("\u{2068}\u{2069}"),
+            Err(CodeError::BadNameplate)
+        );
+    }
+
+    #[test]
+    fn only_invisible_format_characters_are_dropped() {
+        for (start, end) in INVISIBLE_FORMAT {
+            for c in (start..=end).filter_map(char::from_u32) {
+                assert_eq!(strip_invisible_format(&format!("a{c}b")), "ab");
+            }
+        }
+        // Neighbours of the ranges, and a Cyrillic look-alike "а", stay.
+        let kept = "\u{00AC}\u{061B}\u{2010}\u{2061}\u{2065}\u{FEFE}\u{0430} 7-x";
+        assert_eq!(strip_invisible_format(kept), kept);
+        assert!(matches!(
+            TransferCode::parse("7-h\u{0430}rbor-rocket"),
+            Err(CodeError::UnknownWord(_))
+        ));
     }
 
     #[test]

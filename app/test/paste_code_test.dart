@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:totaldrop/l10n/app_localizations.dart';
 import 'package:totaldrop/ui/core/l10n.dart';
@@ -36,29 +38,45 @@ void main() {
     expect(codeFromPaste('\u2068\u2069'), '');
   });
 
-  test('every bidirectional control is stripped', () {
-    const controls = [
-      0x061C,
-      0x200E,
-      0x200F,
-      0x202A,
-      0x202B,
-      0x202C,
-      0x202D,
-      0x202E,
-      0x2066,
-      0x2067,
-      0x2068,
-      0x2069,
-    ];
-    for (final c in controls) {
-      final mark = String.fromCharCode(c);
-      expect(
-        stripBidiControls('${mark}7-abandon$mark-ability$mark'),
-        '7-abandon-ability',
-        reason: c.toRadixString(16),
-      );
+  test('every invisible format character is stripped, and nothing else', () {
+    for (final (start, end) in invisibleFormat) {
+      for (var c = start; c <= end; c++) {
+        final mark = String.fromCharCode(c);
+        expect(
+          stripInvisibleFormat('${mark}7-abandon$mark-ability$mark'),
+          '7-abandon-ability',
+          reason: c.toRadixString(16),
+        );
+      }
     }
+    // Neighbours of the ranges, and a Cyrillic look-alike, stay.
+    final kept = String.fromCharCodes([
+      0x00AC,
+      0x061B,
+      0x2010,
+      0x2061,
+      0x2065,
+      0xFEFE,
+      0x0430,
+      0x20,
+      0x37,
+    ]);
+    expect(stripInvisibleFormat(kept), kept);
+  });
+
+  test('the list matches the code parser in totaldrop-proto', () {
+    final rust = File('../crates/totaldrop-proto/src/lib.rs')
+        .readAsStringSync();
+    final start = rust.indexOf('pub const INVISIBLE_FORMAT');
+    expect(start, isNot(-1));
+    final block = rust.substring(start, rust.indexOf('];', start));
+    final ranges = [
+      for (final m in RegExp(
+        r'\(0x([0-9A-F]+), 0x([0-9A-F]+)\)',
+      ).allMatches(block))
+        (int.parse(m.group(1)!, radix: 16), int.parse(m.group(2)!, radix: 16)),
+    ];
+    expect(ranges, invisibleFormat);
   });
 
   test('the share text gives its code back in every language', () {
