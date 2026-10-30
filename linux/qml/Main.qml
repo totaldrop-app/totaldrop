@@ -113,6 +113,8 @@ ApplicationWindow {
         id: stopDialog
         anchors.centerIn: parent
         modal: true
+        // The control style draws no backdrop: dim the page behind.
+        Overlay.modal: Rectangle { color: Theme.dim }
         title: Strings.s.cancelTransferTitle
         // A fixed text width: wrapped text in a self-sizing popup loops.
         contentWidth: Math.min(380, win.width - 4 * Theme.s24)

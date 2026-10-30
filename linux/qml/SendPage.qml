@@ -91,13 +91,31 @@ Page {
         }
     }
 
+    // A generic icon for the kind of file the name says, as file managers
+    // show it.
+    function fileIcon(name) {
+        const ext = name.lastIndexOf(".") > 0 ? name.slice(name.lastIndexOf(".") + 1).toLowerCase() : ""
+        const kinds = {
+            "image-x-generic": ["jpg", "jpeg", "png", "gif", "webp", "heic", "heif", "avif", "bmp", "tif", "tiff", "svg", "raw", "dng"],
+            "video-x-generic": ["mp4", "mkv", "mov", "webm", "avi", "m4v", "3gp"],
+            "audio-x-generic": ["mp3", "flac", "ogg", "opus", "wav", "m4a", "aac"],
+            "package-x-generic": ["zip", "tar", "gz", "xz", "zst", "bz2", "7z", "rar", "deb", "rpm"],
+            "x-office-document": ["pdf", "doc", "docx", "odt", "rtf"],
+        }
+        for (const icon in kinds) if (kinds[icon].indexOf(ext) >= 0) return Theme.icon(icon)
+        return Theme.icon("text-x-generic")
+    }
+
     // Hidden editor for the clipboard.
     TextEdit { id: clip; visible: false }
     function copy(text) { clip.text = text; clip.selectAll(); clip.copy() }
 
     StackLayout {
-        anchors.fill: parent
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        anchors.horizontalCenter: parent.horizontalCenter
         anchors.margins: Theme.s24
+        width: Theme.columnWidth(parent.width)
         currentIndex: {
             switch (page.phase) {
             case "idle": return 0
@@ -171,7 +189,7 @@ Page {
                     contentItem: RowLayout {
                         spacing: Theme.s16
                         IconImage {
-                            name: row.dir ? Theme.icon("folder") : Theme.icon("text-x-generic", "text-x-generic")
+                            name: row.dir ? Theme.icon("folder") : page.fileIcon(row.name)
                             color: Theme.muted
                             sourceSize: Qt.size(24, 24)
                             Layout.preferredWidth: 24
@@ -193,12 +211,20 @@ Page {
                         }
                     }
                 }
-                footer: ItemDelegate {
-                    width: ListView.view.width
-                    text: Strings.s.sendAddFiles
-                    icon.name: Theme.icon("list-add")
-                    onClicked: page.transfer.pickFiles(Strings.s.pickTitle)
-                }
+            }
+            // Under the list rather than its footer: a footer comes before
+            // the rows in the Tab order.
+            ItemDelegate {
+                visible: files.count > 0
+                text: Strings.s.sendAddFiles
+                icon.name: Theme.icon("list-add")
+                // Delegates take no keyboard focus by default.
+                focusPolicy: Qt.StrongFocus
+                onClicked: page.transfer.pickFiles(Strings.s.pickTitle)
+                Keys.onReturnPressed: (e) => { if (!e.isAutoRepeat) click() }
+                Keys.onEnterPressed: (e) => { if (!e.isAutoRepeat) click() }
+                Layout.fillWidth: true
+                Layout.topMargin: -Theme.s16
             }
 
             MenuSeparator { visible: files.count > 0; Layout.fillWidth: true; padding: 0 }
@@ -276,12 +302,12 @@ Page {
                         anchors.fill: parent
                         anchors.margins: Theme.s24
                         spacing: Theme.s8
-                        Label { text: Strings.s.sendYourCode; color: Theme.muted; font.weight: Font.DemiBold }
+                        Label { text: Strings.s.sendYourCode; color: Theme.muted; font.weight: Font.DemiBold; Layout.alignment: Qt.AlignHCenter }
                         TextEdit {
                             // The code is English words, left to right.
                             LayoutMirroring.enabled: false
                             LayoutMirroring.childrenInherit: true
-                            horizontalAlignment: TextEdit.AlignLeft
+                            horizontalAlignment: TextEdit.AlignHCenter
                             text: page.transfer.code
                             readOnly: true
                             selectByMouse: true
@@ -299,6 +325,7 @@ Page {
                             text: Strings.s.sendCodeHint
                             color: Theme.muted
                             wrapMode: Text.Wrap
+                            horizontalAlignment: Text.AlignHCenter
                             Layout.fillWidth: true
                         }
                         Button {
@@ -309,6 +336,7 @@ Page {
                             Timer { id: copied; interval: 2000 }
                             ToolTip.visible: copied.running
                             ToolTip.text: Strings.s.sendCopied
+                            Layout.alignment: Qt.AlignHCenter
                         }
                     }
                 }
@@ -330,6 +358,7 @@ Page {
                     text: Strings.s.sameNetworkNote
                     color: Theme.muted
                     wrapMode: Text.Wrap
+                    horizontalAlignment: Text.AlignHCenter
                     font.pointSize: Qt.application.font.pointSize * 0.9
                     Layout.fillWidth: true
                     Layout.topMargin: Theme.s8
