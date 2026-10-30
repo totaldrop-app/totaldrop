@@ -1,9 +1,10 @@
 // Tests for tools/changelog.mjs: node --test tools/test-changelog.mjs
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { execFileSync, spawnSync } from "node:child_process";
+import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 import {
   POINTER,
@@ -14,6 +15,7 @@ import {
   checkText,
   parseName,
   release,
+  today,
 } from "./changelog.mjs";
 
 const ENTRY = "- **Core:** A short entry that says what changed for the user (#12).\n";
@@ -186,5 +188,117 @@ test("require sees only files a branch adds", () => {
     assert.deepEqual(recordsChange(root, added, "HEAD"), { ok: true, added: [], released: true }, "a release passes");
   } finally {
     rmSync(root, { recursive: true });
+  }
+});
+
+// A throwaway git repository with history, for `require`.
+function gitRepo(files) {
+  const root = repo(files);
+  const env = { ...process.env, GIT_CONFIG_GLOBAL: "/dev/null", GIT_CONFIG_NOSYSTEM: "1", GIT_DIR: undefined, GIT_WORK_TREE: undefined, GIT_INDEX_FILE: undefined };
+  const git = (...args) => execFileSync("git", ["-c", "user.name=t", "-c", "user.email=t@t", ...args], { cwd: root, encoding: "utf8", env }).trim();
+  git("init", "-q", "-b", "main");
+  git("add", "-A");
+  git("commit", "-qm", "base");
+  const commit = (msg) => {
+    git("add", "-A");
+    git("commit", "-qm", msg);
+    return git("rev-parse", "HEAD");
+  };
+  return { root, git, commit };
+}
+
+test("require on branched history counts only the branch's own files", () => {
+  const { root, git, commit } = gitRepo({});
+  try {
+    git("switch", "-q", "-c", "topic");
+    writeFileSync(join(root, "changelog.d", "20-topic.fixed.md"), ENTRY.replace("#12", "#20"));
+    commit("topic");
+    git("switch", "-q", "main");
+    writeFileSync(join(root, "changelog.d", "21-main.fixed.md"), ENTRY.replace("#12", "#21"));
+    const mainTip = commit("main moves on");
+    // A branch with no file of its own, made from the older base.
+    git("switch", "-q", "-c", "empty", "HEAD~1");
+    writeFileSync(join(root, "code.txt"), "code\n");
+    commit("code only");
+    assert.deepEqual(recordsChange(root, mainTip, "HEAD").ok, false, "a file added on main does not count for the branch");
+    // The pull request merge commit, as CI checks it: first parent is main.
+    git("switch", "-q", "main");
+    git("merge", "-q", "--no-ff", "-m", "merge topic", "topic");
+    assert.deepEqual(addedFragments(root, "HEAD^1", "HEAD"), ["changelog.d/20-topic.fixed.md"]);
+  } finally {
+    rmSync(root, { recursive: true });
+  }
+});
+
+test("require ignores dotfiles, bad names, renames and old-section edits", () => {
+  const { root, git, commit } = gitRepo({ "12-old.fixed.md": ENTRY });
+  try {
+    const base = git("rev-parse", "HEAD");
+    writeFileSync(join(root, "changelog.d", ".gitkeep"), "");
+    writeFileSync(join(root, "changelog.d", "notes.md"), "x\n");
+    commit("dotfile and bad name");
+    assert.deepEqual(recordsChange(root, base, "HEAD").added, [], "only entry files count");
+    git("mv", "changelog.d/12-old.fixed.md", "changelog.d/12-old.changed.md");
+    commit("rename");
+    assert.equal(recordsChange(root, base, "HEAD").ok, false, "renaming a file is not adding one");
+    const changelog = readFileSync(join(root, "CHANGELOG.md"), "utf8");
+    writeFileSync(join(root, "CHANGELOG.md"), changelog.replace("Old (#1).", "Older (#1)."));
+    commit("fix an old section");
+    assert.equal(recordsChange(root, base, "HEAD").ok, false, "editing an old release alone needs a .none.md");
+  } finally {
+    rmSync(root, { recursive: true });
+  }
+});
+
+test("check flags dotfiles, directories and CRLF", () => {
+  const root = repo({ ".gitkeep": "", "12-a.fixed.md": ENTRY.replace("\n", "\r\n") });
+  mkdirSync(join(root, "changelog.d", "sub"));
+  try {
+    const errors = checkRepo(root);
+    has(errors, ".gitkeep: name must be");
+    has(errors, "sub: changelog.d/ holds only entry files");
+    has(errors, "Windows line endings");
+    assert.throws(() => checkChangelog((HEADER + OLD).replaceAll("\n", "\r\n")), /Windows line endings/);
+  } finally {
+    rmSync(root, { recursive: true });
+  }
+});
+
+test("the width limit is exactly 76 columns", () => {
+  const line = (n) => "- **Core:** " + "x".repeat(n - 19) + " (#12).\n";
+  assert.equal([...line(76).trimEnd()].length, 76);
+  assert.deepEqual(one("12-x.fixed.md", line(76)), []);
+  has(one("12-x.fixed.md", line(77)), "longer than 76");
+});
+
+test("dates", () => {
+  assert.equal(today(new Date(2026, 0, 5, 1, 30)), "2026-01-05", "local date, not UTC");
+  const root = repo({ "12-a.fixed.md": ENTRY });
+  try {
+    for (const bad of ["2026-02-30", "2026-13-01", "2026-1-05"]) {
+      assert.throws(() => release(root, "[linux-0.4.0-beta.1]", bad), /real date/, bad);
+    }
+  } finally {
+    rmSync(root, { recursive: true });
+  }
+});
+
+test("the command line: exit codes, messages, and a symbolic link", () => {
+  const tool = fileURLToPath(new URL("./changelog.mjs", import.meta.url));
+  const run = (path, ...args) => spawnSync(process.execPath, [path, ...args], { encoding: "utf8" });
+  const usage = run(tool, "nonsense");
+  assert.equal(usage.status, 2);
+  assert.match(usage.stderr, /usage:/);
+  const ok = run(tool, "check");
+  assert.equal(ok.status, 0, ok.stderr);
+  assert.match(ok.stdout, /changelog ok/);
+  const dir = mkdtempSync(join(tmpdir(), "changelog-link-"));
+  try {
+    symlinkSync(dirname(tool), join(dir, "tools"));
+    const linked = run(join(dir, "tools", "changelog.mjs"), "check");
+    assert.equal(linked.status, 0, linked.stderr);
+    assert.match(linked.stdout, /changelog ok/, "runs, not a silent no-op");
+  } finally {
+    rmSync(dir, { recursive: true });
   }
 });

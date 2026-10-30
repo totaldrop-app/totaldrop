@@ -116,12 +116,11 @@ jobs:
       - name: Entries follow the rules
         run: node tools/changelog.mjs check
       # Dependabot's updates are recorded by the release that ships them.
+      # On a pull request the checkout is the merge commit; its first parent
+      # is main as it is now, so only the pull request's own files count.
       - name: The pull request records its change
         if: github.event_name == 'pull_request' && github.event.pull_request.user.login != 'dependabot[bot]'
-        env:
-          BASE: ${{ github.event.pull_request.base.sha }}
-          HEAD: ${{ github.sha }}
-        run: node tools/changelog.mjs require "$BASE" "$HEAD"
+        run: node tools/changelog.mjs require HEAD^1 HEAD
 
   # The required check. Skipped areas count as passed; anything failed or
   # cancelled, including the area detection, fails it.

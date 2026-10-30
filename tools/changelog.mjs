@@ -27,7 +27,7 @@
 // holds one sentence saying why the change needs no entry.
 
 import { execFileSync } from "node:child_process";
-import { readFileSync, readdirSync, unlinkSync, writeFileSync } from "node:fs";
+import { readFileSync, readdirSync, realpathSync, statSync, unlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -57,6 +57,7 @@ export function checkText(name, text) {
   if (parsed.error) return [parsed.error];
   const errors = [];
   const at = (n, msg) => errors.push(`${name}:${n}: ${msg}`);
+  if (text.includes("\r")) return [`${name}: Windows line endings (CRLF); save the file with LF only`];
   if (!text.endsWith("\n") || text.endsWith("\n\n")) at(0, "must end with exactly one newline");
   const lines = text.replace(/\n$/, "").split("\n");
   lines.forEach((line, i) => {
@@ -65,7 +66,7 @@ export function checkText(name, text) {
     if (line.includes("\t")) at(i + 1, "tab character");
   });
   if (parsed.section === "none") {
-    if (lines.length === 0 || lines.join("").trim() === "") at(1, "say why this change needs no entry");
+    if (lines.join("").trim() === "") at(1, "say why this change needs no entry");
     else if (lines.some((l) => l.startsWith("- "))) at(1, "a .none.md file holds a reason, not an entry");
     return errors;
   }
@@ -92,6 +93,7 @@ export function checkText(name, text) {
 
 /** The Unreleased section of a CHANGELOG.md text: [start, end) offsets. */
 function unreleased(changelog) {
+  if (changelog.includes("\r")) throw new Error("CHANGELOG.md has Windows line endings (CRLF); save it with LF only");
   const start = changelog.indexOf(`${UNRELEASED}\n`);
   if (start < 0) throw new Error(`CHANGELOG.md has no "${UNRELEASED}" heading`);
   const next = changelog.indexOf("\n## ", start + UNRELEASED.length);
@@ -113,7 +115,7 @@ export function checkChangelog(changelog) {
 
 function fragments(dir) {
   return readdirSync(dir)
-    .filter((n) => n !== "README.md" && !n.startsWith("."))
+    .filter((n) => n !== "README.md")
     .sort((a, b) => {
       const pa = parseName(a);
       const pb = parseName(b);
@@ -126,6 +128,10 @@ export function checkRepo(root) {
   const dir = join(root, "changelog.d");
   const errors = [];
   for (const name of fragments(dir)) {
+    if (!statSync(join(dir, name)).isFile()) {
+      errors.push(`${name}: changelog.d/ holds only entry files, no directories`);
+      continue;
+    }
     errors.push(...checkText(name, readFileSync(join(dir, name), "utf8")));
   }
   errors.push(...checkChangelog(readFileSync(join(root, "CHANGELOG.md"), "utf8")));
@@ -151,6 +157,18 @@ export function buildSection(root, heading, date) {
   return { text: parts.join("\n\n") + "\n", used, count: [...bySection.values()].flat().length };
 }
 
+function isDate(text) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) return false;
+  const d = new Date(`${text}T00:00:00Z`);
+  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === text;
+}
+
+/** Today in local time, as YYYY-MM-DD. */
+export function today(now = new Date()) {
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+}
+
 /** Moves every entry into a new section and deletes the files. */
 export function release(root, heading, date) {
   const errors = checkRepo(root);
@@ -158,7 +176,7 @@ export function release(root, heading, date) {
   if (!/^\[[^\]]+\]( and \[[^\]]+\])*$/.test(heading)) {
     throw new Error(`heading must look like "[linux-0.4.0-beta.1]" or "[android-…] and [linux-…]", not "${heading}"`);
   }
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Error(`date must be YYYY-MM-DD, not "${date}"`);
+  if (!isDate(date)) throw new Error(`date must be a real date as YYYY-MM-DD, not "${date}"`);
   const { text, used, count } = buildSection(root, heading, date);
   if (count === 0) throw new Error("changelog.d/ holds no entries to release");
   const path = join(root, "CHANGELOG.md");
@@ -173,32 +191,40 @@ export function release(root, heading, date) {
   return { count, removed: used.length };
 }
 
+// Renames are detected, so moving or renaming an existing file is not
+// counted as adding one.
 function changedPaths(root, base, head, filter, path) {
   const out = execFileSync(
     "git",
-    ["-c", "core.quotePath=false", "diff", "--no-renames", "--name-only", `--diff-filter=${filter}`, `${base}...${head}`, "--", path],
+    ["-c", "core.quotePath=false", "diff", "--find-renames", "--name-only", `--diff-filter=${filter}`, `${base}...${head}`, "--", path],
     { cwd: root, encoding: "utf8" },
   );
   return out.split("\n").filter(Boolean);
 }
 
-/** Files added to changelog.d/ between two commits. */
+/** Entry files (valid names only) added to changelog.d/ between two commits. */
 export function addedFragments(root, base, head) {
-  return changedPaths(root, base, head, "A", "changelog.d/").filter((p) => p !== "changelog.d/README.md");
+  return changedPaths(root, base, head, "A", "changelog.d/").filter((p) => {
+    const name = p.slice("changelog.d/".length);
+    return !name.includes("/") && !parseName(name).error;
+  });
 }
 
 /**
- * Whether a branch records its change: it adds a file to changelog.d/, or it
- * changes CHANGELOG.md, which `check` allows only outside Unreleased, so only
- * a release (or a correction to an old one) does it.
+ * Whether a branch records its change: it adds an entry file to
+ * changelog.d/, or it is a release, which changes CHANGELOG.md and deletes
+ * entry files from changelog.d/. A correction to an old release section
+ * adds a .none.md file like any other change.
  */
 export function recordsChange(root, base, head) {
   const added = addedFragments(root, base, head);
-  const released = changedPaths(root, base, head, "AM", "CHANGELOG.md").length > 0;
+  const released =
+    changedPaths(root, base, head, "M", "CHANGELOG.md").length > 0 &&
+    changedPaths(root, base, head, "D", "changelog.d/").some((p) => !parseName(p.slice("changelog.d/".length)).error);
   return { ok: added.length > 0 || released, added, released };
 }
 
-function main(argv) {
+export function main(argv) {
   const root = fileURLToPath(new URL("..", import.meta.url));
   const [cmd, ...args] = argv;
   if (cmd === "check" && args.length === 0) {
@@ -220,11 +246,11 @@ function main(argv) {
       );
       return 1;
     }
-    console.log(added.length ? `changelog files added: ${added.join(", ")}` : "CHANGELOG.md changed (a release)");
+    console.log(added.length ? `changelog files added: ${added.join(", ")}` : "a release: entries moved into CHANGELOG.md");
     return 0;
   }
   if (cmd === "release" && (args.length === 1 || args.length === 2)) {
-    const date = args[1] ?? new Date().toISOString().slice(0, 10);
+    const date = args[1] ?? today();
     const { count, removed } = release(root, args[0], date);
     console.log(`moved ${count} entries into "## ${args[0]} - ${date}" and removed ${removed} files from changelog.d/`);
     return 0;
@@ -233,7 +259,11 @@ function main(argv) {
   return 2;
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+// Run as a script, also when called through a symbolic link.
+const isScript =
+  import.meta.main ??
+  (process.argv[1] !== undefined && realpathSync(process.argv[1]) === realpathSync(fileURLToPath(import.meta.url)));
+if (isScript) {
   try {
     process.exitCode = main(process.argv.slice(2));
   } catch (e) {
