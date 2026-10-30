@@ -47,7 +47,9 @@ Page {
             target: page.Window.window
             function onActiveFocusItemChanged() {
                 const item = page.Window.activeFocusItem
-                if (!item || !col.contains(col.mapFromItem(item, 0, 0))) return
+                let inside = false
+                for (let p = item; p && !inside; p = p.parent) inside = p === col
+                if (!inside) return
                 const top = item.mapToItem(flick.contentItem, 0, 0).y
                 const bottom = top + item.height
                 if (top < flick.contentY + Theme.s24)
@@ -147,8 +149,9 @@ Page {
                 color: Theme.muted
                 onLinkActivated: (l) => Qt.openUrlExternally(l)
                 HoverHandler { cursorShape: Qt.PointingHandCursor }
-                // Reached with Tab and opened with Enter or Space, like a
-                // link in a browser; the focus ring is the accent outline.
+                // Reached with Tab and opened with Enter, like a link in a
+                // browser, or Space, like the buttons; the focus ring is the
+                // accent outline.
                 activeFocusOnTab: true
                 Accessible.role: Accessible.Link
                 Accessible.name: "totaldrop.app"
@@ -173,7 +176,7 @@ Page {
         id: privacyDialog
         anchors.centerIn: parent
         modal: true
-        Overlay.modal: Rectangle { color: Theme.dim }
+        Component.onCompleted: if (Theme.fusion) Overlay.modal = Theme.dim
         title: Strings.s.privacyModeConfirmTitle
         // A fixed text width: wrapped text in a self-sizing popup loops.
         contentWidth: Math.min(380, page.width - 4 * Theme.s24)

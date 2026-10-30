@@ -178,6 +178,8 @@ Page {
                 clip: true
                 Layout.fillWidth: true
                 Layout.fillHeight: true
+                // No taller than its rows, so "Add files" follows the last.
+                Layout.maximumHeight: contentHeight
                 ScrollBar.vertical: ScrollBar {}
                 delegate: ItemDelegate {
                     id: row
@@ -226,6 +228,7 @@ Page {
                 Layout.fillWidth: true
                 Layout.topMargin: -Theme.s16
             }
+            Item { visible: files.count > 0; Layout.fillHeight: true }
 
             MenuSeparator { visible: files.count > 0; Layout.fillWidth: true; padding: 0 }
 

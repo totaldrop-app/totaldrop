@@ -113,8 +113,7 @@ ApplicationWindow {
         id: stopDialog
         anchors.centerIn: parent
         modal: true
-        // The control style draws no backdrop: dim the page behind.
-        Overlay.modal: Rectangle { color: Theme.dim }
+        Component.onCompleted: if (Theme.fusion) Overlay.modal = Theme.dim
         title: Strings.s.cancelTransferTitle
         // A fixed text width: wrapped text in a self-sizing popup loops.
         contentWidth: Math.min(380, win.width - 4 * Theme.s24)
@@ -135,6 +134,9 @@ ApplicationWindow {
     Connections {
         target: xfer
         function onStateChanged() {
+            // The stop question is moot once the transfer has ended; left
+            // open, Enter would go to the result screen under it.
+            if (["done", "failed", "declined", "idle"].indexOf(xfer.state) >= 0) stopDialog.close()
             if (win.active) return
             const send = xfer.role === "send"
             if (xfer.state === "done")
