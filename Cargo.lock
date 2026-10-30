@@ -2891,6 +2891,7 @@ dependencies = [
  "icu_properties",
  "icu_provider",
  "serde_json",
+ "totaldrop-proto",
  "unicode-normalization",
 ]
 

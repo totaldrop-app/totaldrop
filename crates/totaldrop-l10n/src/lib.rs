@@ -786,6 +786,26 @@ mod tests {
     }
 
     #[test]
+    fn share_text_gives_its_code_back_in_every_language() {
+        // Pasting the whole share message must connect (#148). The app
+        // isolates the code (U+2068 … U+2069) so it keeps its order.
+        let tags = available(Domain::App);
+        assert!(tags.len() > 30, "{tags:?}");
+        for tag in tags {
+            let s = strings(&tag);
+            for code in ["7-abandon-ability", "12-zoo-zone-able"] {
+                let isolated = format!("\u{2068}{code}\u{2069}");
+                let text = s.get("sendShareText", &[("code", Arg::Text(&isolated))]);
+                assert_eq!(
+                    totaldrop_proto::TransferCode::find(&text).map(|c| c.to_string()),
+                    Some(code.to_string()),
+                    "{tag}: {text}"
+                );
+            }
+        }
+    }
+
+    #[test]
     fn pseudo_locales() {
         let xa = strings("en-XA");
         assert_eq!(xa.tag(), "en-XA");
