@@ -229,7 +229,7 @@ Page {
             }
             Item { visible: files.count > 0; Layout.fillHeight: true }
 
-            MenuSeparator { visible: files.count > 0; Layout.fillWidth: true; padding: 0 }
+            Divider { visible: files.count > 0; Layout.fillWidth: true; padding: 0 }
 
             ColumnLayout {
                 visible: files.count > 0
