@@ -99,7 +99,8 @@ Page {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 spacing: Theme.s8
-                Item { Layout.fillHeight: true }
+                // Fills the width too, so a wide window centres this.
+                Item { Layout.fillHeight: true; Layout.fillWidth: true }
                 IconImage {
                     name: Theme.icon("document-send")
                     color: Theme.muted
