@@ -66,6 +66,13 @@ async fn read(s: &Settings) -> Appearance {
     }
 }
 
+/// The GTK theme's name (`gtk-theme`), where the portal passes GNOME's
+/// interface settings.
+pub async fn gtk_theme() -> Option<String> {
+    let s = Settings::new().await.ok()?;
+    s.read::<String>(GNOME_INTERFACE, "gtk-theme").await.ok()
+}
+
 /// Read the appearance once.
 pub async fn current() -> Option<Appearance> {
     let s = Settings::new().await.ok()?;
