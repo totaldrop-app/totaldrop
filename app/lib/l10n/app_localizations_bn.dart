@@ -356,7 +356,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get draftTranslation =>
-      'এই অনুবাদটি পর্যালোচনা করা হচ্ছে। Weblate-এ এটি আরও ভালো করতে সাহায্য করুন।';
+      'এই অনুবাদটি পর্যালোচনা করা হচ্ছে। GitHub-এ এটি আরও ভালো করতে সাহায্য করুন।';
 
   @override
   String get sendDropHere => 'ফাইলগুলো এখানে ছাড়ুন';

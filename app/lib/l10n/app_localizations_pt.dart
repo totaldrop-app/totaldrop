@@ -374,7 +374,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get draftTranslation =>
-      'Esta tradução está em revisão. Ajude a melhorá-la no Weblate.';
+      'Esta tradução está em revisão. Ajude a melhorá-la no GitHub.';
 
   @override
   String get sendDropHere => 'Solte os arquivos aqui';
@@ -792,7 +792,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get draftTranslation =>
-      'Esta tradução está em revisão. Ajude a melhorá-la no Weblate.';
+      'Esta tradução está em revisão. Ajude a melhorá-la no GitHub.';
 
   @override
   String get sendDropHere => 'Solte os arquivos aqui';
@@ -1211,7 +1211,7 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
 
   @override
   String get draftTranslation =>
-      'Esta tradução está em revisão. Ajude a melhorá-la no Weblate.';
+      'Esta tradução está em revisão. Ajude a melhorá-la no GitHub.';
 
   @override
   String get sendDropHere => 'Largue os ficheiros aqui';

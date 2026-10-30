@@ -346,7 +346,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get draftTranslation => 'この翻訳はレビュー中です。Weblate で改善にご協力ください。';
+  String get draftTranslation => 'この翻訳はレビュー中です。GitHub で改善にご協力ください。';
 
   @override
   String get sendDropHere => 'ここにファイルをドロップ';

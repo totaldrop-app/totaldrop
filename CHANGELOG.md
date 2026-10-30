@@ -14,6 +14,9 @@ All notable changes to TotalDrop are recorded here. The format follows
   languages, right-to-left screens and steadier QR reading on Linux. The
   apps are no longer described as English and Turkish only, and the
   roadmap adds "In your language" to Done (#132, #137).
+- **Android, Linux:** The note in Settings for a language that is still a
+  draft asks for help on GitHub instead of Weblate, which is not set up yet.
+  The note is updated in all 37 language files (#131).
 
 ## [android-0.3.0-beta.1] and [linux-0.3.0-beta.1] - 2026-10-30
 

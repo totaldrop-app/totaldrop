@@ -379,7 +379,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get draftTranslation =>
-      'هذه الترجمة قيد المراجعة. ساعد في تحسينها على Weblate.';
+      'هذه الترجمة قيد المراجعة. ساعد في تحسينها على GitHub.';
 
   @override
   String get sendDropHere => 'أفلت الملفات هنا';

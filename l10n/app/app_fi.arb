@@ -95,7 +95,7 @@
   "sizeGB": "{value} Gt",
   "sizeTB": "{value} Tt",
   "sizePB": "{value} Pt",
-  "draftTranslation": "Tätä käännöstä tarkistetaan. Auta parantamaan sitä Weblatessa.",
+  "draftTranslation": "Tätä käännöstä tarkistetaan. Auta parantamaan sitä GitHubissa.",
 
   "sendDropHere": "Pudota tiedostot tähän",
   "sendDropHint": "Voit myös vetää tiedostoja tähän ikkunaan.",

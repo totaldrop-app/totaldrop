@@ -95,7 +95,7 @@
   "sizeGB": "{value} GB",
   "sizeTB": "{value} TB",
   "sizePB": "{value} PB",
-  "draftTranslation": "Această traducere este în curs de revizuire. Ajutați la îmbunătățirea ei pe Weblate.",
+  "draftTranslation": "Această traducere este în curs de revizuire. Ajutați la îmbunătățirea ei pe GitHub.",
 
   "sendDropHere": "Plasați fișierele aici",
   "sendDropHint": "Puteți și să trageți fișiere în această fereastră.",

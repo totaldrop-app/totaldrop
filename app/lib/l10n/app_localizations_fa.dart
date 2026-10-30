@@ -366,7 +366,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get draftTranslation =>
-      'این ترجمه در حال بازبینی است. در Weblate به بهتر شدن آن کمک کنید.';
+      'این ترجمه در حال بازبینی است. در GitHub به بهتر شدن آن کمک کنید.';
 
   @override
   String get sendDropHere => 'فایل‌ها را اینجا رها کنید';

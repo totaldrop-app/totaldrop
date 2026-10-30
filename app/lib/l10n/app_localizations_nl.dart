@@ -370,7 +370,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get draftTranslation =>
-      'Deze vertaling wordt nagekeken. Help haar te verbeteren op Weblate.';
+      'Deze vertaling wordt nagekeken. Help haar te verbeteren op GitHub.';
 
   @override
   String get sendDropHere => 'Zet bestanden hier neer';

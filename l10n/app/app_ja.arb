@@ -95,7 +95,7 @@
   "sizeGB": "{value} GB",
   "sizeTB": "{value} TB",
   "sizePB": "{value} PB",
-  "draftTranslation": "この翻訳はレビュー中です。Weblate で改善にご協力ください。",
+  "draftTranslation": "この翻訳はレビュー中です。GitHub で改善にご協力ください。",
 
   "sendDropHere": "ここにファイルをドロップ",
   "sendDropHint": "このウィンドウにファイルをドラッグして追加することもできます。",

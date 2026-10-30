@@ -373,7 +373,7 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get draftTranslation =>
-      'Această traducere este în curs de revizuire. Ajutați la îmbunătățirea ei pe Weblate.';
+      'Această traducere este în curs de revizuire. Ajutați la îmbunătățirea ei pe GitHub.';
 
   @override
   String get sendDropHere => 'Plasați fișierele aici';

@@ -343,7 +343,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get draftTranslation => '此翻译正在审核中。欢迎在 Weblate 上帮助改进。';
+  String get draftTranslation => '此翻译正在审核中。欢迎在 GitHub 上帮助改进。';
 
   @override
   String get sendDropHere => '将文件拖放到此处';
@@ -726,7 +726,7 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   }
 
   @override
-  String get draftTranslation => '此翻译正在审核中。欢迎在 Weblate 上帮助改进。';
+  String get draftTranslation => '此翻译正在审核中。欢迎在 GitHub 上帮助改进。';
 
   @override
   String get sendDropHere => '将文件拖放到此处';
@@ -1109,7 +1109,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   }
 
   @override
-  String get draftTranslation => '這份翻譯正在審閱中。歡迎到 Weblate 協助改進。';
+  String get draftTranslation => '這份翻譯正在審閱中。歡迎到 GitHub 協助改進。';
 
   @override
   String get sendDropHere => '將檔案拖放到這裡';

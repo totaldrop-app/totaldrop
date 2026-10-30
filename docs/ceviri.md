@@ -26,8 +26,11 @@ olduğunu tutar. Bu dosyayı bakımcı değiştirir.
 
 ## Çevirmenler için
 
-- En kolay yol Weblate: bir metni düzeltmek için depoyu bilmek gerekmez.
-  (Bağlantı, proje Hosted Weblate'e alınınca buraya eklenecek.)
+- En kolay yol Weblate olacak: bir metni düzeltmek için depoyu bilmek
+  gerekmez. (Bağlantı, proje Hosted Weblate'e alınınca buraya eklenecek.
+  O zamana kadar uygulamalardaki "çeviri gözden geçiriliyor" notu GitHub'ı
+  gösterir; Weblate açılınca `draftTranslation` metni her dilde
+  güncellenmelidir.)
 - PR ile de düzeltebilirsiniz: ilgili dosyayı değiştirin, CI biçimi denetler.
 - Bir dili baştan sona gözden geçirdiyseniz PR'da ya da Weblate'te
   belirtin; bakımcı `l10n/status.json`'u günceller ve arayüzdeki "çeviri

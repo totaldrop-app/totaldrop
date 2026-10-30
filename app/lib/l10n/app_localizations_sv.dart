@@ -369,7 +369,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get draftTranslation =>
-      'Den här översättningen granskas. Hjälp till att förbättra den på Weblate.';
+      'Den här översättningen granskas. Hjälp till att förbättra den på GitHub.';
 
   @override
   String get sendDropHere => 'Släpp filer här';

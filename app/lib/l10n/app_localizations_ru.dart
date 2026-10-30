@@ -376,7 +376,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get draftTranslation =>
-      'Этот перевод проверяется. Помогите улучшить его на Weblate.';
+      'Этот перевод проверяется. Помогите улучшить его на GitHub.';
 
   @override
   String get sendDropHere => 'Перетащите файлы сюда';

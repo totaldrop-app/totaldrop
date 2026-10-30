@@ -368,7 +368,7 @@ class AppLocalizationsHe extends AppLocalizations {
 
   @override
   String get draftTranslation =>
-      'התרגום הזה נמצא בבדיקה. אפשר לעזור לשפר אותו ב־Weblate.';
+      'התרגום הזה נמצא בבדיקה. אפשר לעזור לשפר אותו ב־GitHub.';
 
   @override
   String get sendDropHere => 'אפשר לשחרר כאן קבצים';

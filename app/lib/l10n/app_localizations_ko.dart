@@ -346,7 +346,7 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get draftTranslation => '이 번역은 검토 중입니다. Weblate에서 개선을 도와주세요.';
+  String get draftTranslation => '이 번역은 검토 중입니다. GitHub에서 개선을 도와주세요.';
 
   @override
   String get sendDropHere => '여기에 파일을 놓으세요';
