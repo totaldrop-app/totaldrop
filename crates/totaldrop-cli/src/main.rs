@@ -463,10 +463,10 @@ mod tests {
             let (code, line) = connecting_line(&en, typed).unwrap();
             assert_eq!(code, "7-harbor-rocket");
             assert_eq!(line, "Connecting with 7-harbor-rocket…", "{typed:?}");
+            assert!(code.is_ascii());
         }
-        let (_, line) = connecting_line(&strings("tr"), "7-harbor-rocket").unwrap();
-        assert!(line.contains("7-harbor-rocket"), "{line}");
-        assert_ne!(line, "Connecting with 7-harbor-rocket…");
+        let (_, line) = connecting_line(&strings("tr"), "\u{202E}7-harbor-rocket").unwrap();
+        assert_eq!(line, "7-harbor-rocket koduyla bağlanılıyor…");
         assert!(connecting_line(&en, "7-harbor").is_err());
     }
 
