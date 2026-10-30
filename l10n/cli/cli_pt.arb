@@ -30,6 +30,7 @@
   "cliErrCancelled": "O outro lado parou a transferência.",
   "cliErrInvalidCode": "Esse código não é válido.",
   "cliErrCodeNotInUse": "Esse código não está em uso: foi digitado errado, expirou ou já foi usado. Peça um novo a quem está enviando.",
+  "cliErrCodeExpired": "O código expirou antes que alguém o usasse. Envie de novo para receber um código novo.",
   "cliErrBadServer": "O endereço do servidor não é válido. Ele precisa começar com wss://.",
   "cliErrServer": "Não foi possível acessar o servidor do TotalDrop. Verifique sua conexão com a internet.",
   "cliErrConnect": "Não foi possível conectar ao outro dispositivo. Verifique se os dois dispositivos estão on-line e tente de novo.",

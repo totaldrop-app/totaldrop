@@ -255,6 +255,13 @@ class AppLocalizationsKo extends AppLocalizations {
       '사용 중인 코드가 아닙니다. 잘못 입력했거나, 만료되었거나, 이미 사용된 코드입니다. 보내는 사람에게 새 코드를 요청하세요.';
 
   @override
+  String get errorCodeExpired =>
+      '아무도 사용하지 않은 채 코드가 만료되었습니다. 새 코드를 받으려면 다시 보내세요.';
+
+  @override
+  String get errorBadServer => '서버 주소가 유효하지 않습니다. \'wss://\'로 시작해야 합니다.';
+
+  @override
   String get errorConnect =>
       '다른 기기에 연결할 수 없습니다. 두 기기가 모두 온라인 상태인지 확인하고 다시 시도하세요.';
 

@@ -30,6 +30,7 @@
   "cliErrCancelled": "A másik fél leállította az átvitelt.",
   "cliErrInvalidCode": "Ez a kód érvénytelen.",
   "cliErrCodeNotInUse": "Ez a kód nincs használatban: elgépelték, lejárt, vagy már felhasználták. Kérj újat a küldőtől.",
+  "cliErrCodeExpired": "A kód lejárt, mielőtt bárki használta volna. Küldd el újra, hogy új kódot kapj.",
   "cliErrBadServer": "A szervercím érvénytelen. wss:// előtaggal kell kezdődnie.",
   "cliErrServer": "Nem sikerült elérni a TotalDrop szervert. Ellenőrizd az internetkapcsolatot.",
   "cliErrConnect": "Nem sikerült kapcsolódni a másik eszközhöz. Ellenőrizd, hogy mindkét eszköz online van-e, és próbáld újra.",

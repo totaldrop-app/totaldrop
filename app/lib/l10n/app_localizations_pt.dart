@@ -281,6 +281,14 @@ class AppLocalizationsPt extends AppLocalizations {
       'Esse código não está em uso: foi digitado errado, expirou ou já foi usado. Peça um novo a quem está enviando.';
 
   @override
+  String get errorCodeExpired =>
+      'O código expirou antes que alguém o usasse. Envie de novo para receber um código novo.';
+
+  @override
+  String get errorBadServer =>
+      'O endereço do servidor não é válido. Ele precisa começar com wss://.';
+
+  @override
   String get errorConnect =>
       'Não foi possível conectar ao outro dispositivo. Verifique se os dois dispositivos estão on-line e tente de novo.';
 
@@ -701,6 +709,14 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String get errorCodeNotInUse =>
       'Esse código não está em uso: foi digitado errado, expirou ou já foi usado. Peça um novo a quem está enviando.';
+
+  @override
+  String get errorCodeExpired =>
+      'O código expirou antes que alguém o usasse. Envie de novo para receber um código novo.';
+
+  @override
+  String get errorBadServer =>
+      'O endereço do servidor não é válido. Ele precisa começar com wss://.';
 
   @override
   String get errorConnect =>
@@ -1124,6 +1140,14 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
   @override
   String get errorCodeNotInUse =>
       'Esse código não está em uso: foi mal escrito, expirou ou já foi usado. Peça um novo a quem está a enviar.';
+
+  @override
+  String get errorCodeExpired =>
+      'O código expirou antes de alguém o usar. Envie de novo para obter um código novo.';
+
+  @override
+  String get errorBadServer =>
+      'O endereço do servidor não é válido. Tem de começar por wss://.';
 
   @override
   String get errorConnect =>

@@ -262,6 +262,14 @@ class AppLocalizationsId extends AppLocalizations {
       'Kode itu tidak sedang digunakan: salah ketik, sudah kedaluwarsa, atau sudah dipakai. Minta kode baru dari pengirim.';
 
   @override
+  String get errorCodeExpired =>
+      'Kode kedaluwarsa sebelum ada yang memakainya. Kirim lagi untuk mendapatkan kode baru.';
+
+  @override
+  String get errorBadServer =>
+      'Alamat server tidak valid. Harus diawali wss://.';
+
+  @override
   String get errorConnect =>
       'Tidak dapat terhubung ke perangkat lain. Pastikan kedua perangkat online, lalu coba lagi.';
 

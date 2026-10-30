@@ -69,6 +69,8 @@
   "errorInvalidCode": "Kode itu tidak valid.",
   "errorServer": "Tidak dapat menjangkau server TotalDrop. Periksa koneksi internet Anda.",
   "errorCodeNotInUse": "Kode itu tidak sedang digunakan: salah ketik, sudah kedaluwarsa, atau sudah dipakai. Minta kode baru dari pengirim.",
+  "errorCodeExpired": "Kode kedaluwarsa sebelum ada yang memakainya. Kirim lagi untuk mendapatkan kode baru.",
+  "errorBadServer": "Alamat server tidak valid. Harus diawali wss://.",
   "errorConnect": "Tidak dapat terhubung ke perangkat lain. Pastikan kedua perangkat online, lalu coba lagi.",
   "errorInvalidOffer": "Tawaran melanggar aturan keamanan, jadi ditolak.",
   "errorStorage": "Sebuah file tidak dapat dibaca atau disimpan.",

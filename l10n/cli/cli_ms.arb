@@ -30,6 +30,7 @@
   "cliErrCancelled": "Pihak satu lagi menghentikan pemindahan.",
   "cliErrInvalidCode": "Kod itu tidak sah.",
   "cliErrCodeNotInUse": "Kod itu tidak digunakan: tersalah taip, telah tamat tempoh atau sudah digunakan. Minta kod baharu daripada penghantar.",
+  "cliErrCodeExpired": "Kod tamat tempoh sebelum sesiapa menggunakannya. Hantar semula untuk mendapatkan kod baharu.",
   "cliErrBadServer": "Alamat pelayan tidak sah. Ia mesti bermula dengan wss://.",
   "cliErrServer": "Tidak dapat mencapai pelayan TotalDrop. Semak sambungan internet anda.",
   "cliErrConnect": "Tidak dapat menyambung ke peranti lain. Pastikan kedua-dua peranti dalam talian dan cuba lagi.",

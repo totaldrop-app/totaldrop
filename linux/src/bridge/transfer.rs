@@ -250,6 +250,7 @@ fn kind(e: &totaldrop_core::Error) -> &'static str {
         E::Cancelled(_) => "Cancelled",
         E::Stopped => "Stopped",
         E::Code(_) => "InvalidCode",
+        E::Rendezvous(_) if e.is_bad_server_address() => "BadServer",
         E::Rendezvous(_) => "Server",
         E::Connect(_) => "Connect",
         E::InvalidOffer(_) => "InvalidOffer",
@@ -264,6 +265,17 @@ fn kind(e: &totaldrop_core::Error) -> &'static str {
 fn connect_kind(e: &totaldrop_core::Error) -> &'static str {
     if e.is_code_not_in_use() {
         "CodeNotInUse"
+    } else {
+        kind(e)
+    }
+}
+
+/// [`kind`] for an error while the sender waits and sends. What the server
+/// says when no sender uses a code reaches the sender only from the waiting
+/// step, when its own code expired with nobody coming.
+fn send_kind(e: &totaldrop_core::Error) -> &'static str {
+    if e.is_code_not_in_use() {
+        "CodeExpired"
     } else {
         kind(e)
     }
@@ -467,7 +479,7 @@ impl qobject::Transfer {
                         obj.as_mut().set_files_failed(count(r.files_failed));
                         obj.as_mut().set_state(QString::from("done"));
                     }
-                    Err(e) => obj.fail(kind(&e), &e.to_string()),
+                    Err(e) => obj.fail(send_kind(&e), &e.to_string()),
                 }
             });
         });
@@ -748,7 +760,7 @@ impl cxx_qt::Initialize for qobject::Transfer {
 
 #[cfg(test)]
 mod tests {
-    use super::{connect_kind, kind};
+    use super::{connect_kind, kind, send_kind};
     use totaldrop_core::Error as E;
 
     #[test]
@@ -768,8 +780,21 @@ mod tests {
     }
 
     #[test]
-    fn a_sender_is_not_told_its_code_was_mistyped() {
-        // A sender's mailbox expires when nobody comes: not the code's fault.
-        assert_eq!(kind(&E::Rendezvous("mailbox expired".into())), "Server");
+    fn a_sender_is_told_its_code_expired() {
+        // A sender's mailbox expires when nobody comes (#164).
+        assert_eq!(
+            send_kind(&E::Rendezvous("mailbox expired".into())),
+            "CodeExpired"
+        );
+        assert_eq!(
+            send_kind(&E::Rendezvous("connection refused".into())),
+            "Server"
+        );
+    }
+
+    #[test]
+    fn a_bad_server_address_is_named() {
+        let e = E::Rendezvous("the server address must start with wss://".into());
+        assert_eq!(kind(&e), "BadServer");
     }
 }

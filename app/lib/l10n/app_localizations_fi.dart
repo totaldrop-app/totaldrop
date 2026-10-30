@@ -276,6 +276,14 @@ class AppLocalizationsFi extends AppLocalizations {
       'Koodi ei ole käytössä: se kirjoitettiin väärin, on vanhentunut tai on jo käytetty. Pyydä lähettäjältä uusi.';
 
   @override
+  String get errorCodeExpired =>
+      'Koodi vanheni ennen kuin kukaan käytti sitä. Lähetä uudelleen saadaksesi uuden koodin.';
+
+  @override
+  String get errorBadServer =>
+      'Palvelimen osoite ei ole kelvollinen. Sen on alettava wss://.';
+
+  @override
   String get errorConnect =>
       'Toiseen laitteeseen ei saatu yhteyttä. Varmista, että molemmat laitteet ovat verkossa, ja yritä uudelleen.';
 

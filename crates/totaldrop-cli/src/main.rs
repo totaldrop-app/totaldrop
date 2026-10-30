@@ -373,6 +373,7 @@ fn main() -> ExitCode {
         return ExitCode::from(2);
     }
     let strings_for_exit = Arc::clone(&strings);
+    let sending = matches!(cli.command, Command::Send { .. });
     let result = match cli.command {
         Command::Code { code } => {
             return match TransferCode::parse(&code) {
@@ -407,7 +408,10 @@ fn main() -> ExitCode {
         Err(Failure::Core(e)) => {
             // One sentence in the person's language, then the detail for a
             // bug report, which stays English.
-            eprintln!("totaldrop: {}", strings_for_exit.get(error_key(&e), &[]));
+            eprintln!(
+                "totaldrop: {}",
+                strings_for_exit.get(error_key(&e, sending), &[])
+            );
             eprintln!("  ({e})");
             ExitCode::FAILURE
         }
@@ -415,8 +419,10 @@ fn main() -> ExitCode {
 }
 
 /// The message for each kind of failure, as the apps show it. Every variant
-/// is listed, so a new one has to be given a message.
-fn error_key(e: &totaldrop_core::Error) -> &'static str {
+/// is listed, so a new one has to be given a message. What the server says
+/// when no sender uses a code reaches a sender only when its own code
+/// expired with nobody coming.
+fn error_key(e: &totaldrop_core::Error, sending: bool) -> &'static str {
     use totaldrop_core::Error as E;
     use totaldrop_proto::wire::RejectReason;
     match e {
@@ -427,6 +433,7 @@ fn error_key(e: &totaldrop_core::Error) -> &'static str {
         E::Rejected(RejectReason::Invalid) => "cliErrInvalidOffer",
         E::Cancelled(_) => "cliErrCancelled",
         E::Code(_) => "cliErrInvalidCode",
+        E::Rendezvous(_) if e.is_code_not_in_use() && sending => "cliErrCodeExpired",
         E::Rendezvous(_) if e.is_code_not_in_use() => "cliErrCodeNotInUse",
         E::Rendezvous(_) if e.is_bad_server_address() => "cliErrBadServer",
         E::Rendezvous(_) => "cliErrServer",
@@ -554,16 +561,22 @@ mod tests {
         };
         let (en, tr) = (strings("en"), strings("tr"));
         for e in &errors {
-            let key = error_key(e);
-            assert!(en.keys().contains(key), "{key}");
-            assert_ne!(
-                en.get(key, &[]),
-                tr.get(key, &[]),
-                "{key} is not in Turkish"
-            );
+            for sending in [false, true] {
+                let key = error_key(e, sending);
+                assert!(en.keys().contains(key), "{key}");
+                assert_ne!(
+                    en.get(key, &[]),
+                    tr.get(key, &[]),
+                    "{key} is not in Turkish"
+                );
+            }
         }
-        assert_eq!(error_key(&errors[3]), "cliErrCodeNotInUse");
-        assert_eq!(error_key(&errors[4]), "cliErrBadServer");
-        assert_eq!(error_key(&errors[2]), "cliErrServer");
+        assert_eq!(error_key(&errors[3], false), "cliErrCodeNotInUse");
+        assert_eq!(error_key(&errors[4], false), "cliErrBadServer");
+        assert_eq!(error_key(&errors[2], false), "cliErrServer");
+        // The sender's own code expired with nobody coming (#164).
+        let expired = Error::Rendezvous("mailbox expired".into());
+        assert_eq!(error_key(&expired, true), "cliErrCodeExpired");
+        assert_eq!(error_key(&expired, false), "cliErrCodeNotInUse");
     }
 }

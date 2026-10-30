@@ -276,6 +276,14 @@ class AppLocalizationsSv extends AppLocalizations {
       'Koden används inte: den skrevs fel, har gått ut eller har redan använts. Be avsändaren om en ny.';
 
   @override
+  String get errorCodeExpired =>
+      'Koden gick ut innan någon använde den. Skicka igen för att få en ny kod.';
+
+  @override
+  String get errorBadServer =>
+      'Serveradressen är inte giltig. Den måste börja med wss://.';
+
+  @override
   String get errorConnect =>
       'Kunde inte ansluta till den andra enheten. Kontrollera att båda enheterna är online och försök igen.';
 

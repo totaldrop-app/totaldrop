@@ -261,6 +261,14 @@ class AppLocalizationsVi extends AppLocalizations {
       'Mã này không được sử dụng: có thể đã nhập sai, đã hết hạn hoặc đã được dùng. Hãy xin người gửi một mã mới.';
 
   @override
+  String get errorCodeExpired =>
+      'Mã đã hết hạn trước khi có người dùng. Hãy gửi lại để nhận mã mới.';
+
+  @override
+  String get errorBadServer =>
+      'Địa chỉ máy chủ không hợp lệ. Địa chỉ phải bắt đầu bằng wss://.';
+
+  @override
   String get errorConnect =>
       'Không thể kết nối với thiết bị kia. Hãy kiểm tra cả hai thiết bị đều đang trực tuyến rồi thử lại.';
 

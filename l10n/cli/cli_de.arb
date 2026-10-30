@@ -30,6 +30,7 @@
   "cliErrCancelled": "Die Gegenseite hat die Übertragung beendet.",
   "cliErrInvalidCode": "Dieser Code ist ungültig.",
   "cliErrCodeNotInUse": "Dieser Code ist nicht in Gebrauch: Er wurde falsch eingegeben, ist abgelaufen oder wurde schon verwendet. Bitten Sie den Absender um einen neuen.",
+  "cliErrCodeExpired": "Der Code ist abgelaufen, bevor ihn jemand verwendet hat. Senden Sie erneut, um einen neuen Code zu erhalten.",
   "cliErrBadServer": "Die Serveradresse ist ungültig. Sie muss mit wss:// beginnen.",
   "cliErrServer": "Der TotalDrop-Server ist nicht erreichbar. Prüfen Sie Ihre Internetverbindung.",
   "cliErrConnect": "Keine Verbindung zum anderen Gerät möglich. Prüfen Sie, ob beide Geräte online sind, und versuchen Sie es erneut.",

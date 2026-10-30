@@ -7,7 +7,7 @@ import '../frb_generated.dart';
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `b`, `core_events`, `emit`, `finish`, `n`, `of`, `on_connect`, `on_runtime`, `other`, `route`, `stopped`
+// These functions are ignored because they are not marked as `pub`: `b`, `core_events`, `emit`, `finish`, `n`, `of`, `on_connect`, `on_runtime`, `on_send`, `other`, `route`, `stopped`
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `assert_fields_are_eq`, `clone`, `clone`, `clone`, `clone`, `clone`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`
 
 /// A new, unstopped stopper.
@@ -141,6 +141,12 @@ enum ErrorKind {
 
   /// The server says no sender uses the code: mistyped, expired or used.
   codeNotInUse,
+
+  /// Nobody used the sender's code before it expired.
+  codeExpired,
+
+  /// The rendezvous server address in the settings is not valid.
+  badServer,
 
   /// The rendezvous server could not be reached or refused.
   server,

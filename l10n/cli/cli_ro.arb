@@ -30,6 +30,7 @@
   "cliErrCancelled": "Cealaltă parte a oprit transferul.",
   "cliErrInvalidCode": "Codul nu este valid.",
   "cliErrCodeNotInUse": "Codul nu este folosit: a fost tastat greșit, a expirat sau a fost deja folosit. Cereți expeditorului unul nou.",
+  "cliErrCodeExpired": "Codul a expirat înainte să îl folosească cineva. Trimiteți din nou pentru a primi un cod nou.",
   "cliErrBadServer": "Adresa serverului nu este validă. Trebuie să înceapă cu wss://.",
   "cliErrServer": "Serverul TotalDrop nu a putut fi contactat. Verificați conexiunea la internet.",
   "cliErrConnect": "Nu s-a putut realiza conexiunea cu celălalt dispozitiv. Verificați că ambele dispozitive sunt online și încercați din nou.",

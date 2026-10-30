@@ -260,6 +260,14 @@ class AppLocalizationsTh extends AppLocalizations {
       'รหัสนี้ไม่ได้ใช้งานอยู่ อาจพิมพ์ผิด หมดอายุ หรือถูกใช้ไปแล้ว ขอรหัสใหม่จากผู้ส่ง';
 
   @override
+  String get errorCodeExpired =>
+      'รหัสหมดอายุก่อนที่จะมีคนใช้ ส่งอีกครั้งเพื่อรับรหัสใหม่';
+
+  @override
+  String get errorBadServer =>
+      'ที่อยู่เซิร์ฟเวอร์ไม่ถูกต้อง ต้องขึ้นต้นด้วย wss://';
+
+  @override
   String get errorConnect =>
       'เชื่อมต่อกับอุปกรณ์อีกเครื่องไม่ได้ ตรวจสอบว่าอุปกรณ์ทั้งสองออนไลน์อยู่ แล้วลองอีกครั้ง';
 

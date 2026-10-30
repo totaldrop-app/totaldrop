@@ -275,6 +275,14 @@ class AppLocalizationsDa extends AppLocalizations {
       'Koden er ikke i brug: den blev skrevet forkert, er udløbet eller er allerede brugt. Bed afsenderen om en ny.';
 
   @override
+  String get errorCodeExpired =>
+      'Koden udløb, før nogen brugte den. Send igen for at få en ny kode.';
+
+  @override
+  String get errorBadServer =>
+      'Serveradressen er ikke gyldig. Den skal starte med wss://.';
+
+  @override
   String get errorConnect =>
       'Kunne ikke oprette forbindelse til den anden enhed. Tjek, at begge enheder er online, og prøv igen.';
 

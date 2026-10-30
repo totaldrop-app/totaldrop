@@ -282,6 +282,14 @@ class AppLocalizationsCs extends AppLocalizations {
       'Tento kód se nepoužívá: byl chybně zadán, vypršel nebo už byl použit. Požádejte odesílatele o nový.';
 
   @override
+  String get errorCodeExpired =>
+      'Kód vypršel dřív, než ho někdo použil. Pro nový kód odešlete soubory znovu.';
+
+  @override
+  String get errorBadServer =>
+      'Adresa serveru není platná. Musí začínat wss://.';
+
+  @override
   String get errorConnect =>
       'Nelze se připojit k druhému zařízení. Zkontrolujte, že jsou obě zařízení online, a zkuste to znovu.';
 

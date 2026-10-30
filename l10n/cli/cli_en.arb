@@ -48,6 +48,8 @@
   "cliErrCancelled": "The other side stopped the transfer.",
   "cliErrInvalidCode": "That code is not valid.",
   "cliErrCodeNotInUse": "That code is not in use: it was mistyped, has expired or was already used. Ask the sender for a new one.",
+  "cliErrCodeExpired": "Nobody used the code before it expired. Send again to get a new code.",
+  "@cliErrCodeExpired": {"description": "Shown to the sender: nobody came for the code before the server let it expire (15 minutes)"},
   "cliErrBadServer": "The server address is not valid. It must start with wss://.",
   "cliErrServer": "Could not reach the TotalDrop server. Check your internet connection.",
   "cliErrConnect": "Could not connect to the other device. Check that both devices are online and try again.",

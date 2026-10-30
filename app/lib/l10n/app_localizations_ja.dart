@@ -255,6 +255,13 @@ class AppLocalizationsJa extends AppLocalizations {
       'このコードは使われていません。入力を間違えたか、有効期限が切れたか、すでに使用済みです。送信者に新しいコードを依頼してください。';
 
   @override
+  String get errorCodeExpired =>
+      '誰にも使われないまま、コードの有効期限が切れました。もう一度送信すると新しいコードが発行されます。';
+
+  @override
+  String get errorBadServer => 'サーバーのアドレスが無効です。「wss://」で始まる必要があります。';
+
+  @override
   String get errorConnect =>
       '相手のデバイスに接続できませんでした。両方のデバイスがオンラインであることを確認して、もう一度お試しください。';
 

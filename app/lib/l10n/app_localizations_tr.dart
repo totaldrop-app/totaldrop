@@ -262,6 +262,14 @@ class AppLocalizationsTr extends AppLocalizations {
       'Bu kod kullanımda değil: yanlış yazılmış, süresi dolmuş ya da zaten kullanılmış olabilir. Gönderenden yeni bir kod isteyin.';
 
   @override
+  String get errorCodeExpired =>
+      'Kodun süresi, kimse kullanmadan doldu. Yeni bir kod almak için yeniden gönderin.';
+
+  @override
+  String get errorBadServer =>
+      'Sunucu adresi geçerli değil. wss:// ile başlamalı.';
+
+  @override
   String get errorConnect =>
       'Diğer cihaza bağlanılamadı. İki cihazın da internete bağlı olduğundan emin olup yeniden deneyin.';
 

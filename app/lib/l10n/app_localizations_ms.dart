@@ -263,6 +263,14 @@ class AppLocalizationsMs extends AppLocalizations {
       'Kod itu tidak digunakan: tersalah taip, telah tamat tempoh atau sudah digunakan. Minta kod baharu daripada penghantar.';
 
   @override
+  String get errorCodeExpired =>
+      'Kod tamat tempoh sebelum sesiapa menggunakannya. Hantar semula untuk mendapatkan kod baharu.';
+
+  @override
+  String get errorBadServer =>
+      'Alamat pelayan tidak sah. Ia mesti bermula dengan wss://.';
+
+  @override
   String get errorConnect =>
       'Tidak dapat menyambung ke peranti lain. Pastikan kedua-dua peranti dalam talian dan cuba lagi.';
 

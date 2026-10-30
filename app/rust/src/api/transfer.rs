@@ -94,6 +94,10 @@ pub enum ErrorKind {
     InvalidCode,
     /// The server says no sender uses the code: mistyped, expired or used.
     CodeNotInUse,
+    /// Nobody used the sender's code before it expired.
+    CodeExpired,
+    /// The rendezvous server address in the settings is not valid.
+    BadServer,
     /// The rendezvous server could not be reached or refused.
     Server,
     /// No network path to the other device worked.
@@ -135,6 +139,7 @@ impl From<totaldrop_core::Error> for TransferError {
             E::Cancelled(_) => ErrorKind::Cancelled,
             E::Stopped => ErrorKind::Stopped,
             E::Code(_) => ErrorKind::InvalidCode,
+            E::Rendezvous(_) if e.is_bad_server_address() => ErrorKind::BadServer,
             E::Rendezvous(_) => ErrorKind::Server,
             E::Connect(_) => ErrorKind::Connect,
             E::InvalidOffer(_) => ErrorKind::InvalidOffer,
@@ -153,6 +158,20 @@ impl TransferError {
         if e.is_code_not_in_use() {
             Self {
                 kind: ErrorKind::CodeNotInUse,
+                detail: e.to_string(),
+            }
+        } else {
+            e.into()
+        }
+    }
+
+    /// An error while the sender waits and sends. What the server says when
+    /// no sender uses a code reaches the sender only from the waiting step,
+    /// when its own code expired with nobody coming.
+    fn on_send(e: totaldrop_core::Error) -> Self {
+        if e.is_code_not_in_use() {
+            Self {
+                kind: ErrorKind::CodeExpired,
                 detail: e.to_string(),
             }
         } else {
@@ -347,7 +366,10 @@ pub async fn run_send(session: &SendSession, stopper: &Stopper, sink: StreamSink
     let events = core_events(sink.clone());
     let stop = stopper.stop.clone();
     let result = on_runtime(async move {
-        let r = prepared.run_with(events, stop).await?;
+        let r = prepared
+            .run_with(events, stop)
+            .await
+            .map_err(TransferError::on_send)?;
         Ok(TransferSummary {
             files_ok: n(r.files_ok),
             files_failed: n(r.files_failed),
@@ -510,11 +532,22 @@ mod tests {
     }
 
     #[test]
-    fn a_sender_is_not_told_its_code_was_mistyped() {
+    fn a_sender_is_told_its_code_expired() {
         use totaldrop_core::Error as E;
-        // A sender's mailbox expires when nobody comes: not the code's fault.
-        let e = TransferError::from(E::Rendezvous("mailbox expired".into()));
+        // A sender's mailbox expires when nobody comes (#164).
+        let e = TransferError::on_send(E::Rendezvous("mailbox expired".into()));
+        assert_eq!(e.kind, ErrorKind::CodeExpired);
+        let e = TransferError::on_send(E::Rendezvous("connection refused".into()));
         assert_eq!(e.kind, ErrorKind::Server);
+    }
+
+    #[test]
+    fn a_bad_server_address_is_named() {
+        use totaldrop_core::Error as E;
+        let e = TransferError::from(E::Rendezvous(
+            "the server address must start with wss://".into(),
+        ));
+        assert_eq!(e.kind, ErrorKind::BadServer);
     }
 
     #[test]
