@@ -12,15 +12,12 @@ Page {
 
     background: null
 
-    ToolButton {
+    IconButton {
         anchors.top: parent.top
         anchors.right: parent.right
         anchors.margins: Theme.s8
         icon.name: Theme.icon("preferences-system", "configure")
-        display: AbstractButton.IconOnly
         text: Strings.s.settings
-        ToolTip.visible: hovered
-        ToolTip.text: text
         onClicked: page.settings()
     }
 

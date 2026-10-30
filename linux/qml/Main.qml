@@ -124,8 +124,8 @@ ApplicationWindow {
             color: Theme.ink
         }
         footer: DialogButtonBox {
-            Button { text: Strings.s.keepGoing; DialogButtonBox.buttonRole: DialogButtonBox.RejectRole }
-            Button { text: Strings.s.stop; DialogButtonBox.buttonRole: DialogButtonBox.DestructiveRole
+            SecondaryButton { text: Strings.s.keepGoing; DialogButtonBox.buttonRole: DialogButtonBox.RejectRole }
+            SecondaryButton { text: Strings.s.stop; DialogButtonBox.buttonRole: DialogButtonBox.DestructiveRole
                      onClicked: { xfer.cancel(); stopDialog.close() } }
         }
     }

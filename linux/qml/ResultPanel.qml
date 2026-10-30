@@ -66,27 +66,23 @@ ColumnLayout {
         horizontalAlignment: Text.AlignHCenter
         Layout.fillWidth: true
     }
-    Button {
+    SecondaryButton {
         visible: r.folder !== ""
         text: Strings.s.openFolder
         icon.name: Theme.icon("folder-open", "folder-open")
         onClicked: Qt.openUrlExternally("file://" + r.folder)
-        Keys.onReturnPressed: (e) => { if (!e.isAutoRepeat) click() }
-        Keys.onEnterPressed: (e) => { if (!e.isAutoRepeat) click() }
         Layout.alignment: Qt.AlignHCenter
     }
 
     // Details and its text sit directly in the column: nested in a layout
     // of their own, the button moved when the text opened.
-    Button {
+    SecondaryButton {
         id: more
         visible: r.detail !== ""
         flat: true
         checkable: true
         text: Strings.s.moreInfo
         icon.name: Theme.icon(checked ? "go-up" : "go-down")
-        Keys.onReturnPressed: (e) => { if (!e.isAutoRepeat) click() }
-        Keys.onEnterPressed: (e) => { if (!e.isAutoRepeat) click() }
         Layout.alignment: Qt.AlignHCenter
     }
     TextArea {
@@ -107,12 +103,10 @@ ColumnLayout {
         Layout.fillWidth: true
         spacing: Theme.s8
         Item { Layout.fillWidth: true }
-        Button {
+        SecondaryButton {
             visible: r.canRetry
             text: Strings.s.tryAgain
             onClicked: r.retry()
-            Keys.onReturnPressed: (e) => { if (!e.isAutoRepeat) click() }
-            Keys.onEnterPressed: (e) => { if (!e.isAutoRepeat) click() }
         }
         PrimaryButton {
             id: doneButton

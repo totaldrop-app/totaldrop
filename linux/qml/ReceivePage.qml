@@ -106,7 +106,7 @@ Page {
             spacing: Theme.s16
 
             Label { text: Strings.s.receiveCodeLabel; color: Theme.ink; font.weight: Font.DemiBold }
-            TextField {
+            Field {
                 id: field
                 // The code is always English words, left to right.
                 LayoutMirroring.enabled: false
@@ -134,7 +134,7 @@ Page {
                 Accessible.name: Strings.s.codeSuggestions
                 Repeater {
                     model: page.suggestions
-                    delegate: Button {
+                    delegate: SecondaryButton {
                         required property string modelData
                         text: modelData
                         flat: true
@@ -154,7 +154,7 @@ Page {
             Flow {
                 spacing: Theme.s8
                 Layout.fillWidth: true
-                Button {
+                SecondaryButton {
                     text: Strings.s.receivePaste
                     icon.name: Theme.icon("edit-paste")
                     onClicked: {
@@ -164,7 +164,7 @@ Page {
                         page.tried = false
                     }
                 }
-                Button {
+                SecondaryButton {
                     text: Strings.s.receiveFromImage
                     icon.name: Theme.icon("view-barcode-qr", "view-barcode-qr")
                     onClicked: page.transfer.readQrImage(Strings.s.pickImageTitle)
@@ -207,7 +207,7 @@ Page {
                 Layout.alignment: Qt.AlignHCenter
             }
             Item { Layout.fillHeight: true }
-            Button { text: Strings.s.cancel; onClicked: page.transfer.cancel(); Layout.alignment: Qt.AlignRight }
+            SecondaryButton { text: Strings.s.cancel; onClicked: page.transfer.cancel(); Layout.alignment: Qt.AlignRight }
         }
 
         // 2: the offer
@@ -266,7 +266,7 @@ Page {
                 spacing: Theme.s8
                 Layout.fillWidth: true
                 Item { Layout.fillWidth: true }
-                Button { text: Strings.s.receiveDecline; onClicked: page.transfer.decline() }
+                SecondaryButton { text: Strings.s.receiveDecline; onClicked: page.transfer.decline() }
                 PrimaryButton {
                     id: acceptButton
                     text: Strings.s.receiveAccept
@@ -287,7 +287,7 @@ Page {
                 Layout.fillWidth: true
             }
             Item { Layout.fillHeight: true }
-            Button { text: Strings.s.stop; onClicked: page.askCancel(); Layout.alignment: Qt.AlignRight }
+            SecondaryButton { text: Strings.s.stop; onClicked: page.askCancel(); Layout.alignment: Qt.AlignRight }
         }
 
         // 4: result
