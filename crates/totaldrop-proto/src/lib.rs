@@ -188,7 +188,7 @@ pub struct TransferCode {
 /// isolates with theirs, and the byte order mark. Only these: no letter,
 /// digit or space is ever dropped. The Android app's `stripInvisibleFormat`
 /// (app/lib/ui/core/l10n.dart) uses the same list, and a test checks it.
-pub const INVISIBLE_FORMAT: [(u32, u32); 7] = [
+pub const INVISIBLE_FORMAT: &[(u32, u32)] = &[
     (0x00AD, 0x00AD),
     (0x061C, 0x061C),
     (0x200B, 0x200F),
@@ -351,13 +351,16 @@ mod tests {
 
     #[test]
     fn only_invisible_format_characters_are_dropped() {
-        for (start, end) in INVISIBLE_FORMAT {
+        for &(start, end) in INVISIBLE_FORMAT {
             for c in (start..=end).filter_map(char::from_u32) {
                 assert_eq!(strip_invisible_format(&format!("a{c}b")), "ab");
             }
         }
         // Neighbours of the ranges, and a Cyrillic look-alike "а", stay.
-        let kept = "\u{00AC}\u{061B}\u{2010}\u{2061}\u{2065}\u{FEFE}\u{0430} 7-x";
+        let kept = concat!(
+            "\u{00AC}\u{00AE}\u{061B}\u{061D}\u{200A}\u{2010}\u{2029}\u{202F}",
+            "\u{205F}\u{2061}\u{2065}\u{206A}\u{FEFE}\u{0430} 7-x",
+        );
         assert_eq!(strip_invisible_format(kept), kept);
         assert!(matches!(
             TransferCode::parse("7-h\u{0430}rbor-rocket"),

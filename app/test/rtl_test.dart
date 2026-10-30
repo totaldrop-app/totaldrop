@@ -76,6 +76,35 @@ Widget build() => Stack(children: [
     ]);
   });
 
+  test('import prefixes and dot shorthands are checked too', () {
+    const fixture = '''
+final a = [
+  m.EdgeInsets.only(left: 8),
+  const m.EdgeInsets.only(right: 8),
+  Text(x, textAlign: m.TextAlign.left),
+  Align(alignment: m.Alignment.centerRight),
+  Text(x, textAlign: .right),
+  Padding(padding: .only(top: 4, left: 8)),
+  Padding(padding: const .only(right: 8)),
+  Padding(padding: .fromLTRB(8, 0, 16, 0)),
+  Container(decoration: BoxDecoration(borderRadius: .only(topLeft: r))),
+  Align(alignment: .bottomLeft),
+];
+''';
+    expect(physicalSides(fixture, 'fixture.dart'), [
+      'fixture.dart:2: m.EdgeInsets.only',
+      'fixture.dart:3: m.EdgeInsets.only',
+      'fixture.dart:4: m.TextAlign.left',
+      'fixture.dart:5: m.Alignment.centerRight',
+      'fixture.dart:6: .right',
+      'fixture.dart:7: .only',
+      'fixture.dart:8: .only',
+      'fixture.dart:9: .fromLTRB',
+      'fixture.dart:10: .only',
+      'fixture.dart:11: .bottomLeft',
+    ]);
+  });
+
   test('start and end, and equal sides, pass', () {
     const fixture = '''
 final a = [
@@ -90,6 +119,11 @@ final a = [
   AlignmentDirectional.centerStart,
   TextAlign.start,
   EdgeInsets.only(top: 4),
+  m.EdgeInsetsDirectional.only(start: 8),
+  Text(x, textAlign: .start),
+  Padding(padding: .only(top: 4)),
+  Padding(padding: .fromLTRB(8, 0, 8, 0)),
+  Align(alignment: .centerStart),
 ];
 ''';
     expect(physicalSides(fixture, 'fixture.dart'), isEmpty);
@@ -110,10 +144,10 @@ final a = [
 }
 
 /// Every call or constant in [source] that names a physical side, as
-/// `path:line: name`, where name is what is called or read, such as
-/// `EdgeInsets.only` or `TextAlign.left`. The file is parsed, so a call
-/// that spans several lines is checked as a whole, and comments and
-/// strings are ignored.
+/// `path:line: name`, where name is what is called or read as written,
+/// such as `EdgeInsets.only`, `m.TextAlign.left` or `.left`. The file is
+/// parsed, so a call that spans several lines is checked as a whole, and
+/// comments and strings are ignored.
 List<String> physicalSides(String source, String path) {
   final unit = parseString(
     content: source,
@@ -134,29 +168,43 @@ const _sideArguments = <String, Set<String>>{
   'Positioned': {'left', 'right'},
   'Positioned.fill': {'left', 'right'},
   'AnimatedPositioned': {'left', 'right'},
-  'BorderRadius.only': {'topLeft', 'topRight', 'bottomLeft', 'bottomRight'},
+  'BorderRadius.only': _corners,
   'BorderRadius.horizontal': {'left', 'right'},
   'Border': {'left', 'right'},
 };
+
+const _corners = {'topLeft', 'topRight', 'bottomLeft', 'bottomRight'};
 
 /// Calls whose first and third positional arguments are left and right:
 /// fine only when both sides are the same.
 const _leftTopRightBottom = {'EdgeInsets.fromLTRB', 'Positioned.fromLTRB'};
 
+const _sideMembers = {
+  'centerLeft',
+  'centerRight',
+  'topLeft',
+  'topRight',
+  'bottomLeft',
+  'bottomRight',
+};
+
 final _sideConstants = {
   for (final type in ['Alignment', 'FractionalOffset'])
-    for (final side in [
-      'centerLeft',
-      'centerRight',
-      'topLeft',
-      'topRight',
-      'bottomLeft',
-      'bottomRight',
-    ])
-      '$type.$side',
+    for (final side in _sideMembers) '$type.$side',
   'TextAlign.left',
   'TextAlign.right',
 };
+
+/// A dot shorthand (`.only(…)`, `.left`) has no type in an unresolved
+/// parse, so it is judged by its name alone: the constructors and
+/// constants above, without their type.
+const _shorthandArguments = <String, Set<String>>{
+  'only': {'left', 'right', ..._corners},
+  'horizontal': {'left', 'right'},
+  'fill': {'left', 'right'},
+};
+const _shorthandLeftTopRightBottom = {'fromLTRB'};
+const _shorthandConstants = {'left', 'right', ..._sideMembers};
 
 class _PhysicalSides extends RecursiveAstVisitor<void> {
   /// The offset and the name of each physical side found.
@@ -172,7 +220,7 @@ class _PhysicalSides extends RecursiveAstVisitor<void> {
       c.type.name.lexeme,
       ?c.name?.name,
     ].join('.');
-    _check(node.offset, callee, node.argumentList);
+    _call(node.offset, callee, node.argumentList);
     super.visitInstanceCreationExpression(node);
   }
 
@@ -183,9 +231,9 @@ class _PhysicalSides extends RecursiveAstVisitor<void> {
     final target = node.target;
     final method = node.methodName.name;
     if (target == null) {
-      _check(node.offset, method, node.argumentList);
-    } else if (target is SimpleIdentifier) {
-      _check(node.offset, '${target.name}.$method', node.argumentList);
+      _call(node.offset, method, node.argumentList);
+    } else if (_dotted(target) case final prefix?) {
+      _call(node.offset, '$prefix.$method', node.argumentList);
     }
     super.visitMethodInvocation(node);
   }
@@ -198,32 +246,101 @@ class _PhysicalSides extends RecursiveAstVisitor<void> {
 
   @override
   void visitPropertyAccess(PropertyAccess node) {
-    final target = node.target;
-    if (target is SimpleIdentifier) {
-      _constant(node.offset, '${target.name}.${node.propertyName.name}');
-    }
+    if (_dotted(node) case final name?) _constant(node.offset, name);
     super.visitPropertyAccess(node);
   }
 
-  void _constant(int offset, String name) {
-    if (_sideConstants.contains(name)) found.add((offset, name));
+  @override
+  void visitDotShorthandInvocation(DotShorthandInvocation node) {
+    _shorthand(node.offset, node.memberName.name, node.argumentList);
+    super.visitDotShorthandInvocation(node);
   }
 
-  void _check(int offset, String callee, ArgumentList list) {
-    final sides = _sideArguments[callee];
+  @override
+  void visitDotShorthandConstructorInvocation(
+    DotShorthandConstructorInvocation node,
+  ) {
+    _shorthand(node.offset, node.constructorName.name, node.argumentList);
+    super.visitDotShorthandConstructorInvocation(node);
+  }
+
+  @override
+  void visitDotShorthandPropertyAccess(DotShorthandPropertyAccess node) {
+    final name = node.propertyName.name;
+    if (_shorthandConstants.contains(name)) found.add((node.offset, '.$name'));
+    super.visitDotShorthandPropertyAccess(node);
+  }
+
+  /// `a`, `a.b` or `a.b.c` as written, or null for anything else.
+  static String? _dotted(Expression e) => switch (e) {
+    SimpleIdentifier(:final name) => name,
+    PrefixedIdentifier(:final prefix, :final identifier) =>
+      '${prefix.name}.${identifier.name}',
+    PropertyAccess(:final target?, :final propertyName) => switch (_dotted(
+      target,
+    )) {
+      final t? => '$t.${propertyName.name}',
+      null => null,
+    },
+    _ => null,
+  };
+
+  /// [name] without an import prefix (`m.TextAlign.left` is
+  /// `TextAlign.left`), as a key of the tables above.
+  static String? _known(String name, Iterable<String> keys) {
+    for (final k in keys) {
+      if (name == k || name.endsWith('.$k')) return k;
+    }
+    return null;
+  }
+
+  void _constant(int offset, String name) {
+    if (_known(name, _sideConstants) != null) found.add((offset, name));
+  }
+
+  void _call(int offset, String callee, ArgumentList list) {
+    final key = _known(callee, [
+      ..._sideArguments.keys,
+      ..._leftTopRightBottom,
+    ]);
+    if (key == null) return;
+    _check(
+      offset,
+      callee,
+      list,
+      _sideArguments[key],
+      _leftTopRightBottom.contains(key),
+    );
+  }
+
+  void _shorthand(int offset, String member, ArgumentList list) => _check(
+    offset,
+    '.$member',
+    list,
+    _shorthandArguments[member],
+    _shorthandLeftTopRightBottom.contains(member),
+  );
+
+  void _check(
+    int offset,
+    String name,
+    ArgumentList list,
+    Set<String>? sides,
+    bool leftTopRightBottom,
+  ) {
     if (sides != null &&
         list.arguments.any(
           (a) => a is NamedArgument && sides.contains(a.name.lexeme),
         )) {
-      found.add((offset, callee));
+      found.add((offset, name));
     }
-    if (_leftTopRightBottom.contains(callee)) {
+    if (leftTopRightBottom) {
       final positional = [
         for (final a in list.arguments)
           if (a is! NamedArgument) _lexemes(a),
       ];
       if (positional.length == 4 && positional[0] != positional[2]) {
-        found.add((offset, callee));
+        found.add((offset, name));
       }
     }
   }
