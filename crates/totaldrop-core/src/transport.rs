@@ -692,8 +692,8 @@ mod tests {
     }
 
     /// Connect over the relay stand-in, with `direct` as each side's direct
-    /// addresses, and return how long it took.
-    async fn over_relay(direct: Vec<SocketAddr>) -> Duration {
+    /// addresses.
+    async fn over_relay(direct: Vec<SocketAddr>) {
         let (ka, kb) = (
             EndpointKey::generate().unwrap(),
             EndpointKey::generate().unwrap(),
@@ -715,7 +715,6 @@ mod tests {
             relay_only: false,
         };
         let wait = Duration::from_secs(10);
-        let start = tokio::time::Instant::now();
         let recv_side = async {
             let conn = receiver_connection(&receiver, &to_sender, wait).await?;
             assert_eq!(conn.remote_address(), crate::path::RELAY_PEER);
@@ -738,7 +737,6 @@ mod tests {
         assert!(r.is_ok());
         assert_eq!(&s.unwrap(), b"relay");
         assert!(send_gate.is_open() && recv_gate.is_open());
-        start.elapsed()
     }
 
     /// A privacy-mode side refuses a direct connection even from the
@@ -798,11 +796,28 @@ mod tests {
         over_relay(vec![unreachable()]).await;
     }
 
-    /// In privacy mode both sides contact the relay at once (#63).
-    #[tokio::test]
+    /// In privacy mode both sides contact the relay at once (#63): the
+    /// connection over the relay comes up before the sender's own dial
+    /// starts, so the sender's link did not wait for that dial.
+    ///
+    /// The clock is paused, so it moves only when every task is waiting on
+    /// a timer. The marker below is a timer of REVERSE_DELAY, the one the
+    /// sender's dial waits on, started at the same instant; it can fire only
+    /// once nothing else can make progress, however slow the machine is
+    /// (#126). Had the sender's link waited for its dial, the receiver's
+    /// first packets would be dropped and nothing could connect before the
+    /// marker.
+    #[tokio::test(start_paused = true)]
     async fn privacy_mode_uses_the_relay_at_once() {
-        // Before the sender's own dial even starts: its link did not wait for it.
-        assert!(over_relay(Vec::new()).await < REVERSE_DELAY);
+        let connected_first = tokio::select! {
+            biased;
+            () = over_relay(Vec::new()) => true,
+            () = tokio::time::sleep(REVERSE_DELAY) => false,
+        };
+        assert!(
+            connected_first,
+            "the relay link waited for the sender's own dial"
+        );
     }
 
     /// When a direct path works, neither side contacts the relay (#63).
