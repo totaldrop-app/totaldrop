@@ -9,7 +9,8 @@
 //   node tools/changelog.mjs require <base> <head>
 //       The commits between base and head add at least one file to
 //       changelog.d/ (an entry, or a .none.md file that says why none is
-//       needed), or change CHANGELOG.md, which only a release does.
+//       needed), or are a release: change CHANGELOG.md and delete entry
+//       files from changelog.d/.
 //   node tools/changelog.mjs release "<heading>" [YYYY-MM-DD]
 //       Moves every entry into a new "## <heading> - <date>" section under
 //       Unreleased, in Keep a Changelog order, and deletes the files. Within
@@ -27,7 +28,7 @@
 // holds one sentence saying why the change needs no entry.
 
 import { execFileSync } from "node:child_process";
-import { readFileSync, readdirSync, realpathSync, statSync, unlinkSync, writeFileSync } from "node:fs";
+import { lstatSync, readFileSync, readdirSync, realpathSync, unlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -128,8 +129,10 @@ export function checkRepo(root) {
   const dir = join(root, "changelog.d");
   const errors = [];
   for (const name of fragments(dir)) {
-    if (!statSync(join(dir, name)).isFile()) {
-      errors.push(`${name}: changelog.d/ holds only entry files, no directories`);
+    const kind = lstatSync(join(dir, name));
+    if (!kind.isFile()) {
+      const what = kind.isSymbolicLink() ? "symbolic links" : "directories or other special files";
+      errors.push(`${name}: changelog.d/ holds only plain entry files, no ${what}`);
       continue;
     }
     errors.push(...checkText(name, readFileSync(join(dir, name), "utf8")));
