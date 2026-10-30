@@ -18,11 +18,17 @@ Page {
         onBack: page.close()
     }
 
-    // Escape does what the back button does.
+    // Escape first drops an unsaved server address, then does what the
+    // back button does.
     Shortcut {
         sequence: StandardKey.Cancel
         enabled: page.StackView.status === StackView.Active
-        onActivated: page.close()
+        onActivated: {
+            if (server.text !== page.transfer.server) {
+                server.text = page.transfer.server
+                page.invalid = false
+            } else page.close()
+        }
     }
 
     Flickable {

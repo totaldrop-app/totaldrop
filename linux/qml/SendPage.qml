@@ -37,10 +37,12 @@ Page {
         }
     }
 
-    // Escape does what the back button does.
+    // Escape does what the back button does, but does not throw away a
+    // list of files not yet sent: that takes the back button.
     Shortcut {
         sequence: StandardKey.Cancel
         enabled: page.StackView.status === StackView.Active
+                 && !(page.phase === "idle" && files.count > 0)
         onActivated: page.goBack()
     }
 
