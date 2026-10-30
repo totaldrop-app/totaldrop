@@ -17,8 +17,9 @@ Button {
     leftPadding: filled ? 20 : undefined
     rightPadding: filled ? 20 : undefined
 
-    Keys.onReturnPressed: if (enabled) clicked()
-    Keys.onEnterPressed: if (enabled) clicked()
+    // Held down, Enter repeats; only the first press counts.
+    Keys.onReturnPressed: (e) => { if (enabled && !e.isAutoRepeat) click() }
+    Keys.onEnterPressed: (e) => { if (enabled && !e.isAutoRepeat) click() }
 
     Component.onCompleted: {
         if (!filled) return
