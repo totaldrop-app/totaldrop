@@ -89,8 +89,10 @@ final a = [
     final settings = File('lib/ui/settings/settings_view.dart')
         .readAsStringSync();
     final receive = File('lib/ui/receive/receive_view.dart').readAsStringSync();
+    final send = File('lib/ui/send/send_view.dart').readAsStringSync();
     expect(settings, contains('l.settingsVersion(isolate('));
     expect(receive, contains('l.receiveSaveTo(isolate('));
+    expect(send, contains('l.sendShareText(isolate(code))'));
   });
 }
 

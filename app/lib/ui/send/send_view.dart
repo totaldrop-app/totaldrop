@@ -282,8 +282,11 @@ class _Waiting extends StatelessWidget {
                     Gap.s,
                     Expanded(
                       child: FilledButton.icon(
-                        onPressed: () =>
-                            SharePlus.instance.share(ShareParams(text: l.sendShareText(code))),
+                        // Isolated, the code keeps its order in a right-to-left
+                        // sentence; pasted back, the receiver drops the marks.
+                        onPressed: () => SharePlus.instance.share(
+                          ShareParams(text: l.sendShareText(isolate(code))),
+                        ),
                         icon: const Icon(Icons.share),
                         label: Text(l.sendShare),
                       ),
