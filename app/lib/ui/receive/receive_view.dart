@@ -87,26 +87,30 @@ class _ReceiveViewState extends State<ReceiveView> {
                       controller: _controller,
                     ),
                     ReceiveStage.connecting => Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const TotalDropMark(size: 120, sending: true),
-                          Gap.l,
-                          Text(
-                            l.receiveConnecting,
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
-                          if (vm.connectingCode case final code?) ...[
-                            Gap.s,
-                            // The code is English words, left to right in
-                            // every language.
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const TotalDropMark(size: 120, sending: true),
+                            Gap.l,
                             Text(
-                              code,
-                              textDirection: TextDirection.ltr,
-                              style: Theme.of(context).textTheme.titleLarge,
+                              l.receiveConnecting,
+                              style: Theme.of(context).textTheme.titleMedium,
                             ),
+                            if (vm.connectingCode case final code?) ...[
+                              Gap.s,
+                              // The code is English words, left to right in
+                              // every language.
+                              Text(
+                                code,
+                                textAlign: TextAlign.center,
+                                textDirection: TextDirection.ltr,
+                                style: Theme.of(context).textTheme.titleLarge,
+                              ),
+                            ],
                           ],
-                        ],
+                        ),
                       ),
                     ),
                     ReceiveStage.offered => _Offered(vm: vm),
