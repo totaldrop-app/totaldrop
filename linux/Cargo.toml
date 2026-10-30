@@ -19,9 +19,9 @@ cxx = "1"
 cxx-qt = "0.10"
 cxx-qt-lib = { version = "0.10", features = ["qt_full"] }
 tokio = { version = "1.54.1", features = ["rt-multi-thread", "time", "net", "io-util", "macros", "sync"] }
-totaldrop-core = { version = "0.1.0-beta.1", path = "../crates/totaldrop-core" }
-totaldrop-proto = { version = "0.1.0-beta.1", path = "../crates/totaldrop-proto" }
-totaldrop-l10n = { version = "0.1.0-beta.2", path = "../crates/totaldrop-l10n" }
+totaldrop-core = { version = "0.2.0-beta.1", path = "../crates/totaldrop-core" }
+totaldrop-proto = { version = "0.2.0-beta.1", path = "../crates/totaldrop-proto" }
+totaldrop-l10n = { version = "0.2.0-beta.1", path = "../crates/totaldrop-l10n" }
 ashpd = { version = "0.13", default-features = false, features = ["tokio", "settings", "file_chooser", "notification"] }
 toml = "1.1"
 serde = { version = "1", features = ["derive"] }

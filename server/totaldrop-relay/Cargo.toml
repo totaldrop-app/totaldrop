@@ -14,7 +14,7 @@ getrandom = "0.4.3"
 ring = "0.17.14"
 tokio = { version = "1.54.1", features = ["macros", "net", "rt-multi-thread", "signal", "sync", "time"] }
 tokio-tungstenite = { version = "0.30.0", default-features = false, features = ["handshake"] }
-totaldrop-proto = { version = "0.1.0-beta.1", path = "../../crates/totaldrop-proto" }
+totaldrop-proto = { version = "0.2.0-beta.1", path = "../../crates/totaldrop-proto" }
 
 [dev-dependencies]
 tokio-tungstenite = { version = "0.30.0", default-features = false, features = ["connect", "handshake"] }

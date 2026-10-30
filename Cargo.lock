@@ -2271,7 +2271,7 @@ dependencies = [
 
 [[package]]
 name = "rust_lib_totaldrop"
-version = "0.1.0-beta.2"
+version = "0.2.0-beta.1"
 dependencies = [
  "flutter_rust_bridge",
  "tokio",
@@ -2834,7 +2834,7 @@ checksum = "06bdbd8cfc056b8d2e2e85f29b56a3bdbecb527cef81eb39e3e7b98af4652770"
 
 [[package]]
 name = "totaldrop-cli"
-version = "0.1.0-beta.2"
+version = "0.2.0-beta.1"
 dependencies = [
  "clap",
  "futures-util",
@@ -2850,7 +2850,7 @@ dependencies = [
 
 [[package]]
 name = "totaldrop-core"
-version = "0.1.0-beta.2"
+version = "0.2.0-beta.1"
 dependencies = [
  "blake3",
  "futures-util",
@@ -2869,7 +2869,7 @@ dependencies = [
 
 [[package]]
 name = "totaldrop-crypto"
-version = "0.1.0-beta.2"
+version = "0.2.0-beta.1"
 dependencies = [
  "blake3",
  "chacha20poly1305 0.11.0",
@@ -2883,7 +2883,7 @@ dependencies = [
 
 [[package]]
 name = "totaldrop-l10n"
-version = "0.1.0-beta.2"
+version = "0.2.0-beta.1"
 dependencies = [
  "icu_decimal",
  "icu_locale",
@@ -2921,7 +2921,7 @@ dependencies = [
 
 [[package]]
 name = "totaldrop-proto"
-version = "0.1.0-beta.2"
+version = "0.2.0-beta.1"
 dependencies = [
  "bip39",
  "ciborium",
@@ -2931,7 +2931,7 @@ dependencies = [
 
 [[package]]
 name = "totaldrop-relay"
-version = "0.1.0-beta.2"
+version = "0.2.0-beta.1"
 dependencies = [
  "futures-util",
  "getrandom 0.4.3",
@@ -2943,7 +2943,7 @@ dependencies = [
 
 [[package]]
 name = "totaldrop-rendezvous"
-version = "0.1.0-beta.2"
+version = "0.2.0-beta.1"
 dependencies = [
  "futures-util",
  "getrandom 0.4.3",

@@ -4,7 +4,7 @@ members = ["crates/*", "server/totaldrop-rendezvous", "server/totaldrop-relay", 
 exclude = ["fuzz"]
 
 [workspace.package]
-version = "0.1.0-beta.2"
+version = "0.2.0-beta.1"
 edition = "2024"
 rust-version = "1.99"
 repository = "https://github.com/totaldrop-app/totaldrop"
