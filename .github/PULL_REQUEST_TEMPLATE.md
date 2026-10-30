@@ -23,7 +23,7 @@ Closes #
 - [ ] Arayüz değiştiyse: açık ve koyu temada, Linux'ta KDE Plasma, Hyprland ve Omarchy'de ekran görüntüsü (docs/tasarim.md)
 - [ ] Sunucuların gördüğü bilgi değiştiyse gizlilik politikası güncellendi
 - [ ] Yeni bağımlılık varsa: neden gerektiği ve kimin bakımını yaptığı yazıldı
-- [ ] CHANGELOG.md "Unreleased" girdisi eklendi
+- [ ] `changelog.d/` altına girdi dosyası eklendi (ya da nedenini söyleyen bir `.none.md`)
 
 ## Bağımsız inceleme / Independent review
 
