@@ -2,7 +2,8 @@
 name = "totaldrop-rendezvous"
 description = "TotalDrop rendezvous server: mailboxes for transfer codes"
 license = "AGPL-3.0-or-later"
-version.workspace = true
+# The servers have their own version (docs/versioning.md).
+version = "0.1.0-beta.1"
 edition.workspace = true
 rust-version.workspace = true
 repository.workspace = true

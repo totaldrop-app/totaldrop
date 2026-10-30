@@ -13,8 +13,14 @@ TotalDrop [Semantic Versioning 2.0](https://semver.org/) kullanır.
   | --- | --- |
   | Çekirdek kütüphaneler ve CLI | `Cargo.toml`, `[workspace.package]` |
   | Linux uygulaması | `linux/Cargo.toml` |
-  | Android uygulaması | `app/pubspec.yaml` |
-  | Rendezvous sunucusu | `server/*/Cargo.toml`, `server/rendezvous-worker/package.json` |
+  | Android uygulaması | `app/pubspec.yaml`; Rust kütüphanesi `app/rust/Cargo.toml` aynı sürümü, derleme numarası olmadan taşır |
+  | Sunucular (rendezvous ve aktarma) | `server/totaldrop-{rendezvous,relay}/Cargo.toml`, `server/{rendezvous,relay}-worker/package.json`; dördü aynı sürümdür |
+
+- Sunucular ve `app/rust` çalışma alanının (workspace) sürümünü
+  devralmaz: CLI'ın sürümü yükselince yayınlanmamış bir sürümle
+  görünmesinler. `tools/check-component-versions.sh` bunu ve yukarıdaki
+  eşitlikleri her PR'da denetler; Linux paketlerini
+  `packaging/check-versions.sh` denetler.
 
 - **CLI, Linux paketleriyle yayınlanır.** Her `linux-v…` etiketi aynı
   zamanda o commit'teki CLI sürümünün yayınıdır; `cli-v…` etiketi isteğe
@@ -68,7 +74,7 @@ TotalDrop [Semantic Versioning 2.0](https://semver.org/) kullanır.
   | Linux | `linux-v0.1.0-beta.2` |
   | Android | `android-v0.1.0-beta.2` |
   | CLI (isteğe bağlı, yukarıya bakın) | `cli-v0.1.0-beta.2` |
-  | Rendezvous sunucusu | `server-v0.1.0-beta.2` |
+  | Sunucular | `server-v0.1.0-beta.2` |
 
 - [`CHANGELOG.md`](../CHANGELOG.md) [Keep a
   Changelog](https://keepachangelog.com/) biçimindedir. Her girdi

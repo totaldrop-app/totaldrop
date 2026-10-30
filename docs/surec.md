@@ -63,7 +63,12 @@ Bir değişiklik ancak şunların hepsi doğruysa bitmiştir:
    `packaging/rpm/totaldrop.spec` ve
    `packaging/linux/app.totaldrop.TotalDrop.metainfo.xml`. Android:
    `app/pubspec.yaml` içinde hem sürüm hem derleme numarası (`+N`); numara
-   her yüklemede artmalıdır, CI bunu denetler. CLI ve çekirdek: kök
+   her yüklemede artmalıdır, CI bunu denetler. Aynı sürüm, derleme
+   numarası olmadan `app/rust/Cargo.toml`'a ve `Cargo.lock`'a da yazılır.
+   Sunucular: `server/totaldrop-{rendezvous,relay}/Cargo.toml`, iki
+   Worker'ın `package.json` ve `package-lock.json` dosyaları, CLI'ın bu
+   ikisine dev-dependency sürümleri ve `Cargo.lock`
+   (`tools/check-component-versions.sh`). CLI ve çekirdek: kök
    `Cargo.toml`'daki `[workspace.package]` sürümü, iç bağımlılıkların
    (`totaldrop-core = { version = … }`) sürümleri ve `Cargo.lock`. CLI,
    Linux paketleriyle yayınlanır; CLI kodu son Linux yayınından bu yana

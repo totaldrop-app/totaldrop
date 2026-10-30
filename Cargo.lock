@@ -2271,7 +2271,7 @@ dependencies = [
 
 [[package]]
 name = "rust_lib_totaldrop"
-version = "0.2.0-beta.1"
+version = "0.3.0-beta.1"
 dependencies = [
  "flutter_rust_bridge",
  "tokio",
@@ -2932,7 +2932,7 @@ dependencies = [
 
 [[package]]
 name = "totaldrop-relay"
-version = "0.2.0-beta.1"
+version = "0.1.0-beta.1"
 dependencies = [
  "futures-util",
  "getrandom 0.4.3",
@@ -2944,7 +2944,7 @@ dependencies = [
 
 [[package]]
 name = "totaldrop-rendezvous"
-version = "0.2.0-beta.1"
+version = "0.1.0-beta.1"
 dependencies = [
  "futures-util",
  "getrandom 0.4.3",
