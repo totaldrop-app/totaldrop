@@ -30,7 +30,7 @@
   "cliErrCancelled": "Karşı taraf gönderimi durdurdu.",
   "cliErrInvalidCode": "Bu kod geçerli değil.",
   "cliErrCodeNotInUse": "Bu kod kullanımda değil: yanlış yazılmış, süresi dolmuş ya da zaten kullanılmış olabilir. Gönderenden yeni bir kod isteyin.",
-  "cliErrCodeExpired": "Kodun süresi, kimse kullanmadan doldu. Yeni bir kod almak için yeniden gönderin.",
+  "cliErrCodeExpired": "Kodun süresi kimse kullanmadan doldu. Yeni bir kod almak için yeniden gönderin.",
   "cliErrBadServer": "Sunucu adresi geçerli değil. wss:// ile başlamalı.",
   "cliErrServer": "TotalDrop sunucusuna ulaşılamadı. İnternet bağlantınızı kontrol edin.",
   "cliErrConnect": "Diğer cihaza bağlanılamadı. İki cihazın da internete bağlı olduğundan emin olup yeniden deneyin.",
