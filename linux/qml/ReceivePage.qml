@@ -171,7 +171,9 @@ Page {
         // 1: connecting
         ColumnLayout {
             spacing: Theme.s24
-            Item { Layout.fillHeight: true }
+            // Fills the width too: a layout with no child that does keeps
+            // its implicit width, and the stack leaves it at the left.
+            Item { Layout.fillHeight: true; Layout.fillWidth: true }
             Mark { size: 140; sending: page.phase === "connecting"; Layout.alignment: Qt.AlignHCenter }
             Label { text: Strings.s.receiveConnecting; color: Theme.muted; Layout.alignment: Qt.AlignHCenter }
             Label {
