@@ -1,5 +1,5 @@
-# Web site (totaldrop.app): checks. Deploys stay manual
-# (wrangler pages deploy) until deploy keys live in CI.
+# Web site (totaldrop.app): checks. Deploys run from deploy.yml, from
+# main only, after approval.
 name: Site
 
 # Runs from ci.yml when its files change (see the area filters there), or

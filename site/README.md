@@ -31,13 +31,11 @@ wrangler.toml         Cloudflare Pages projesi "totaldrop"
 
 ## Yayınlama
 
-Site Cloudflare Pages'te `totaldrop` projesidir. Bu klasörden:
-
-```bash
-npx wrangler pages deploy public --project-name totaldrop --branch main
-```
-
-Yayın şimdilik elle yapılır; CI yalnızca kontrol eder (`site.yml`).
+Site Cloudflare Pages'te `totaldrop` projesidir. Yayın CI'dan, yalnızca
+`main`'den ve depo yöneticisinin `cloudflare` ortamındaki onayıyla yapılır
+(`.github/workflows/deploy.yml`); ardından `server/tools/probe.mjs site`
+ana sayfayı ve indirme sayfasını dener. Kurulum ve geri alma:
+[docs/surec.md](../docs/surec.md), "Dağıtım" bölümü.
 
 ## Kurallar
 

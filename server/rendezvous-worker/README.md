@@ -25,9 +25,9 @@ TOTALDROP_TEST_SERVER=ws://127.0.0.1:8799 cargo test -p totaldrop-cli --test end
 
 ## Deploy
 
-```bash
-npx wrangler login
-npm run deploy
-```
+Deploys run from CI, from `main` only, after the owner approves them in the
+`cloudflare` environment (`.github/workflows/deploy.yml`). A health probe
+(`server/tools/probe.mjs rendezvous`) follows every deploy. Setup and rollback
+are in [docs/surec.md](../../docs/surec.md), section "Dağıtım".
 
 The route in `wrangler.jsonc` attaches the Worker to the custom domain `rendezvous.totaldrop.app`. Cloudflare creates the DNS record itself.

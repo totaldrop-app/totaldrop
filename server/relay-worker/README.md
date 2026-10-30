@@ -25,9 +25,9 @@ TOTALDROP_TEST_RELAY=ws://127.0.0.1:8798/v0/relay cargo test -p totaldrop-cli --
 
 ## Deploy
 
-```bash
-npx wrangler login
-npm run deploy
-```
+Deploys run from CI, from `main` only, after the owner approves them in the
+`cloudflare` environment (`.github/workflows/deploy.yml`). A health probe
+(`server/tools/probe.mjs relay`) follows every deploy. Setup and rollback
+are in [docs/surec.md](../../docs/surec.md), section "Dağıtım".
 
 The route in `wrangler.jsonc` attaches the Worker to the custom domain `relay.totaldrop.app`. Cloudflare creates the DNS record itself.
