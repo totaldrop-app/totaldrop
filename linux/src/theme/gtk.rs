@@ -76,50 +76,90 @@ impl Colour {
     }
 }
 
-/// Named colours from a `gtk.css`: `@define-color name value;`, and the
-/// CSS variables libadwaita 1.6 reads (`--accent-bg-color: value;`, kept
-/// as `accent_bg_color`).
+/// Named colours from a `gtk.css` for the `dark` or light scheme:
+/// `@define-color name value;` at the top level, and the CSS variables
+/// libadwaita 1.6 reads from `:root` (`--accent-bg-color: value;`, kept as
+/// `accent_bg_color`), including those in a `@media
+/// (prefers-color-scheme: …)` block for that scheme. Variables set for one
+/// kind of widget are not the palette and are skipped.
 ///
-/// Values are `#rgb`, `#rrggbb`, `rgb()`, `rgba()` or a reference to a
-/// colour defined earlier (`@name`, `var(--name)`). Anything else
-/// (`shade()`, `mix()`, `alpha()` and the like) is skipped.
-pub fn define_colors(css: &str) -> HashMap<String, Colour> {
+/// Values are hex (`#rgb`, `#rgba`, `#rrggbb`, `#rrggbbaa`), `rgb()` or
+/// `rgba()` with commas or spaces, or a reference to a colour defined
+/// earlier (`@name`, `var(--name)`). Anything else (`shade()`, `mix()`,
+/// `color-mix()` and the like) is skipped.
+pub fn define_colors(css: &str, dark: bool) -> HashMap<String, Colour> {
     let mut out: HashMap<String, Colour> = HashMap::new();
     let css = strip_comments(css);
-    // Rule blocks hold the variables; their braces end a statement too.
-    for statement in css.split([';', '{', '}']) {
-        let s = statement.trim();
-        let (name, value) = if let Some(rest) = s.strip_prefix("@define-color") {
-            if !rest.starts_with(char::is_whitespace) {
+    // The headers of the blocks the current statement is in.
+    let mut blocks: Vec<String> = Vec::new();
+    let mut start = 0;
+    for (i, ch) in css.char_indices() {
+        if !matches!(ch, ';' | '{' | '}') {
+            continue;
+        }
+        let s = css[start..i].trim();
+        start = i + ch.len_utf8();
+        match ch {
+            '{' => {
+                blocks.push(s.to_owned());
                 continue;
             }
-            let mut parts = rest.trim().splitn(2, char::is_whitespace);
-            let (Some(name), Some(value)) = (parts.next(), parts.next()) else {
+            '}' if s.is_empty() => {
+                blocks.pop();
                 continue;
+            }
+            _ => {}
+        }
+        if let Some((name, value)) = declaration(s, &blocks, dark) {
+            let reference = value.strip_prefix('@').or_else(|| {
+                value
+                    .strip_prefix("var(--")
+                    .and_then(|v| v.strip_suffix(')'))
+            });
+            let colour = match reference {
+                Some(other) => out.get(&other.trim().replace('-', "_")).copied(),
+                None => css_colour(value),
             };
-            (name.to_owned(), value.trim())
-        } else if let Some(rest) = s.strip_prefix("--") {
-            let Some((name, value)) = rest.split_once(':') else {
-                continue;
-            };
-            (name.trim().replace('-', "_"), value.trim())
-        } else {
-            continue;
-        };
-        let reference = value.strip_prefix('@').or_else(|| {
-            value
-                .strip_prefix("var(--")
-                .and_then(|v| v.strip_suffix(')'))
-        });
-        let colour = match reference {
-            Some(other) => out.get(&other.trim().replace('-', "_")).copied(),
-            None => css_colour(value),
-        };
-        if let Some(c) = colour {
-            out.insert(name, c);
+            if let Some(c) = colour {
+                out.insert(name, c);
+            }
+        }
+        // A block's last declaration may lack its `;`.
+        if ch == '}' {
+            blocks.pop();
         }
     }
     out
+}
+
+/// A colour statement `s` inside `blocks`, as its name and value, if it
+/// sets the palette for the scheme.
+fn declaration<'a>(s: &'a str, blocks: &[String], dark: bool) -> Option<(String, &'a str)> {
+    if let Some(rest) = s.strip_prefix("@define-color") {
+        if !blocks.is_empty() || !rest.starts_with(char::is_whitespace) {
+            return None;
+        }
+        let mut parts = rest.trim().splitn(2, char::is_whitespace);
+        let (name, value) = (parts.next()?, parts.next()?);
+        return Some((name.to_owned(), value.trim()));
+    }
+    let rest = s.strip_prefix("--")?;
+    let root = |b: &str| b == ":root" || b == "*";
+    let scheme = |b: &str| {
+        let b: String = b.chars().filter(|c| !c.is_whitespace()).collect();
+        b == "@media(prefers-color-scheme:dark)" && dark
+            || b == "@media(prefers-color-scheme:light)" && !dark
+    };
+    let for_palette = match blocks {
+        [r] => root(r),
+        [m, r] => scheme(m) && root(r),
+        _ => false,
+    };
+    if !for_palette {
+        return None;
+    }
+    let (name, value) = rest.split_once(':')?;
+    Some((name.trim().replace('-', "_"), value.trim()))
 }
 
 /// Whether `colors` names an accent of its own.
@@ -146,33 +186,55 @@ fn css_colour(value: &str) -> Option<Colour> {
     let v = value.trim();
     if let Some(hex) = v.strip_prefix('#') {
         let full: String = match hex.len() {
-            3 => hex.chars().flat_map(|c| [c, c]).collect(),
-            6 => hex.to_owned(),
+            3 | 4 => hex.chars().flat_map(|c| [c, c]).collect(),
+            6 | 8 => hex.to_owned(),
             _ => return None,
         };
-        return Rgb::parse(&format!("#{full}")).map(|rgb| Colour { rgb, alpha: 1.0 });
+        let rgb = Rgb::parse(&format!("#{}", full.get(..6)?))?;
+        let alpha = match full.get(6..8) {
+            Some(a) => f64::from(u8::from_str_radix(a, 16).ok()?) / 255.0,
+            None => 1.0,
+        };
+        return Some(Colour { rgb, alpha });
     }
     let inner = v
         .strip_prefix("rgba(")
         .or_else(|| v.strip_prefix("rgb("))?
         .strip_suffix(')')?;
-    let parts: Vec<&str> = inner.split(',').map(str::trim).collect();
+    // `rgb(r, g, b, a)` or `rgb(r g b / a)`.
+    let (channels, alpha): (Vec<&str>, Option<&str>) = if inner.contains(',') {
+        let parts: Vec<&str> = inner.split(',').map(str::trim).collect();
+        match parts.as_slice() {
+            [r, g, b] => (vec![*r, *g, *b], None),
+            [r, g, b, a] => (vec![*r, *g, *b], Some(*a)),
+            _ => return None,
+        }
+    } else {
+        let (c, a) = match inner.split_once('/') {
+            Some((c, a)) => (c, Some(a.trim())),
+            None => (inner, None),
+        };
+        (c.split_whitespace().collect(), a)
+    };
     let channel = |s: &str| -> Option<f64> {
         match s.strip_suffix('%') {
             Some(p) => p.parse::<f64>().ok().map(|p| p / 100.0),
             None => s.parse::<f64>().ok().map(|n| n / 255.0),
         }
     };
-    let (r, g, b) = match parts.as_slice() {
-        [r, g, b] | [r, g, b, _] => (channel(r)?, channel(g)?, channel(b)?),
-        _ => return None,
+    let [r, g, b] = channels.as_slice() else {
+        return None;
     };
-    let alpha = match parts.get(3) {
-        Some(a) => a.parse::<f64>().ok()?.clamp(0.0, 1.0),
+    let alpha = match alpha {
+        Some(a) => match a.strip_suffix('%') {
+            Some(p) => p.parse::<f64>().ok()? / 100.0,
+            None => a.parse::<f64>().ok()?,
+        }
+        .clamp(0.0, 1.0),
         None => 1.0,
     };
     Some(Colour {
-        rgb: Rgb::from_unit(r, g, b)?,
+        rgb: Rgb::from_unit(channel(r)?, channel(g)?, channel(b)?)?,
         alpha,
     })
 }
@@ -373,7 +435,7 @@ pub fn palette_from(dark: bool, theme_file: Option<&Path>, user_file: Option<&Pa
         own_accent: false,
     };
     for file in [theme_file, user_file].into_iter().flatten() {
-        let colors = define_colors(&read_css(file));
+        let colors = define_colors(&read_css(file), dark);
         g.own_accent |= defines_accent(&colors);
         g.palette = apply(g.palette, &colors);
     }
@@ -415,7 +477,7 @@ mod tests {
                    @define-color blue_3 #3584e4;\n\
                    @define-color headerbar_bg_color shade(#303030, 1.1);\n\
                    @define-color theme_selected_bg_color #f0f;";
-        let c = define_colors(css);
+        let c = define_colors(css, false);
         let under = Rgb(0x24, 0x24, 0x24);
         assert_eq!(rgb(&c, "window_bg_color", under), "#242424");
         assert_eq!(rgb(&c, "window_fg_color", under), "#ffffff");
@@ -432,7 +494,7 @@ mod tests {
                    @define-color window_bg_color #101010;\n\
                    window { color: red; }\n\
                    @define-color accent_bg_color #00ff00;";
-        let c = define_colors(css);
+        let c = define_colors(css, false);
         assert_eq!(rgb(&c, "window_bg_color", Rgb::WHITE), "#101010");
         assert_eq!(rgb(&c, "accent_bg_color", Rgb::WHITE), "#00ff00");
     }
@@ -440,10 +502,34 @@ mod tests {
     #[test]
     fn reads_css_variables() {
         let css = ":root { --accent-bg-color: #e01b24; --accent-color: var(--accent-bg-color); }";
-        let c = define_colors(css);
+        let c = define_colors(css, false);
         assert_eq!(rgb(&c, "accent_bg_color", Rgb::WHITE), "#e01b24");
         assert_eq!(rgb(&c, "accent_color", Rgb::WHITE), "#e01b24");
         assert!(defines_accent(&c));
+    }
+
+    #[test]
+    fn variables_follow_the_scheme_and_skip_widgets() {
+        let css = ":root { --window-bg-color: #fafafa }\n\
+                   @media (prefers-color-scheme: dark) { :root { --window-bg-color: #111111; } }\n\
+                   .destructive-action { --accent-bg-color: #ff0000; }\n\
+                   button { @define-color nested #00ff00; }";
+        let light = define_colors(css, false);
+        let dark = define_colors(css, true);
+        assert_eq!(rgb(&light, "window_bg_color", Rgb::WHITE), "#fafafa");
+        assert_eq!(rgb(&dark, "window_bg_color", Rgb::WHITE), "#111111");
+        assert!(!defines_accent(&light) && !defines_accent(&dark));
+        assert!(!light.contains_key("nested"));
+    }
+
+    #[test]
+    fn reads_modern_colour_syntax() {
+        let css = ":root { --window-fg-color: rgb(0 0 6 / 80%); --view-bg-color: #ffffff80; --a: #f008; }";
+        let c = define_colors(css, false);
+        assert_eq!(c["window_fg_color"].rgb.hex(), "#000006");
+        assert!((c["window_fg_color"].alpha - 0.8).abs() < 1e-9);
+        assert_eq!(rgb(&c, "view_bg_color", Rgb::BLACK), "#808080");
+        assert_eq!(c["a"].rgb.hex(), "#ff0000");
     }
 
     #[test]
@@ -452,7 +538,7 @@ mod tests {
                    @define-color theme_fg_color #d3dae3;\n\
                    @define-color theme_base_color #383c4a;\n\
                    @define-color theme_selected_bg_color #5294e2;";
-        let p = apply(adwaita(false), &define_colors(css));
+        let p = apply(adwaita(false), &define_colors(css, false));
         assert!(p.dark);
         assert_eq!(p.background.hex(), "#2b2e37");
         assert_eq!(p.raised.hex(), "#383c4a");
@@ -467,7 +553,7 @@ mod tests {
         let css = "@define-color window_bg_color #242424;\n\
                    @define-color window_fg_color #ffffff;\n\
                    @define-color card_bg_color rgba(255, 255, 255, 0.08);";
-        let p = apply(adwaita(false), &define_colors(css));
+        let p = apply(adwaita(false), &define_colors(css, false));
         assert_eq!(p.raised.hex(), "#363636");
         assert!(p.ink.contrast(p.raised) >= 4.5);
     }
@@ -475,7 +561,7 @@ mod tests {
     #[test]
     fn an_accent_alone_changes_only_the_accent() {
         let css = "@define-color accent_bg_color #e01b24;";
-        let p = apply(adwaita(false), &define_colors(css));
+        let p = apply(adwaita(false), &define_colors(css, false));
         let a = adwaita(false);
         assert_eq!(p.accent.hex(), "#e01b24");
         assert_eq!(p.raised, a.raised);
@@ -489,7 +575,7 @@ mod tests {
                    @define-color error_fg_color #ffffff;\n\
                    @define-color success_bg_color #2ec27e;\n\
                    @define-color success_fg_color #ffffff;";
-        let p = apply(adwaita(false), &define_colors(css));
+        let p = apply(adwaita(false), &define_colors(css, false));
         assert_eq!(p.error.hex(), "#c01c28");
         assert_eq!(p.success.hex(), "#2ec27e");
     }
@@ -508,7 +594,7 @@ mod tests {
             "@import url(\"gtk-contained.css\");\n@import url(\"../outside.css\");\n@import url(\"resource:///org/gtk/x.css\");",
         );
         write("gtk-contained.css", "@define-color theme_bg_color #2b2e37;");
-        let colors = define_colors(&read_css(&d.join("gtk.css")));
+        let colors = define_colors(&read_css(&d.join("gtk.css")), false);
         assert_eq!(rgb(&colors, "theme_bg_color", Rgb::WHITE), "#2b2e37");
         assert_eq!(import_target("url(\"../outside.css\")"), None);
         assert_eq!(import_target("\"/etc/passwd\""), None);
@@ -517,7 +603,7 @@ mod tests {
             "loop.css",
             "@import \"loop.css\"; @define-color theme_bg_color #000000;",
         );
-        let looped = define_colors(&read_css(&d.join("loop.css")));
+        let looped = define_colors(&read_css(&d.join("loop.css")), false);
         assert_eq!(rgb(&looped, "theme_bg_color", Rgb::WHITE), "#000000");
         let _ = std::fs::remove_dir_all(&d);
     }

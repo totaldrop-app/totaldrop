@@ -164,8 +164,6 @@ Page {
                     id: addButton
                     text: Strings.s.sendAddFiles
                     icon.name: Theme.icon("list-add")
-                // Fusion leaves symbolic icons black; Breeze's already follow.
-                icon.color: Theme.fusion ? Theme.ink : "transparent"
                     onClicked: page.transfer.pickFiles(Strings.s.pickTitle)
                     Layout.alignment: Qt.AlignHCenter
                     Layout.topMargin: Theme.s16
@@ -219,6 +217,8 @@ Page {
                 visible: files.count > 0
                 text: Strings.s.sendAddFiles
                 icon.name: Theme.icon("list-add")
+                // Fusion leaves symbolic icons black; Breeze's already follow.
+                icon.color: Theme.fusion ? Theme.ink : "transparent"
                 // Delegates take no keyboard focus by default.
                 focusPolicy: Qt.StrongFocus
                 onClicked: page.transfer.pickFiles(Strings.s.pickTitle)
