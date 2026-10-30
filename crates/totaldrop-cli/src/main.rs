@@ -10,9 +10,8 @@ use clap::{Parser, Subcommand};
 use totaldrop_core::{
     Event, Events, IncomingOffer, PathOptions, PreparedSend, ReceiveOptions, SendOptions, Stop,
 };
-use totaldrop_l10n::{Arg, Domain, Strings, reveal_controls as visible};
+use totaldrop_l10n::{Arg, Domain, Strings, is_yes, reveal_controls as visible};
 use totaldrop_proto::TransferCode;
-use unicode_normalization::UnicodeNormalization as _;
 
 #[derive(Parser)]
 #[command(
@@ -315,26 +314,6 @@ async fn receive(
     Ok(())
 }
 
-/// Whether an answer means yes: English `y`/`yes`, or one of the
-/// translation's words (`cliYes`, separated by `|`). Case is folded without
-/// regard to language, so a Turkish `E` or `EVET` works on any system.
-fn is_yes(answer: &str, words: &str) -> bool {
-    // Compatibility forms fold too: a full-width "ｙ" or a decomposed "sí".
-    let fold = |w: &str| -> String {
-        w.trim()
-            .nfkc()
-            .collect::<String>()
-            .replace(['İ', 'I'], "i")
-            .replace('ı', "i")
-            .to_lowercase()
-    };
-    let answer = fold(answer);
-    ["y", "yes"]
-        .into_iter()
-        .chain(words.split('|'))
-        .any(|w| !fold(w).is_empty() && fold(w) == answer)
-}
-
 fn main() -> ExitCode {
     let cli = Cli::parse();
     let strings = Arc::new(Strings::system(Domain::Cli));
@@ -443,7 +422,7 @@ impl From<std::io::Error> for Failure {
 mod tests {
     #![allow(clippy::unwrap_used)]
 
-    use super::{error_key, is_yes};
+    use super::error_key;
     use totaldrop_core::Error;
     use totaldrop_l10n::{Domain, Strings};
     use totaldrop_proto::wire::RejectReason;
@@ -491,18 +470,5 @@ mod tests {
         assert_eq!(error_key(&errors[3]), "cliErrCodeNotInUse");
         assert_eq!(error_key(&errors[4]), "cliErrBadServer");
         assert_eq!(error_key(&errors[2]), "cliErrServer");
-    }
-
-    #[test]
-    fn yes_in_any_case_and_language() {
-        assert!(is_yes("y\n", "e|evet"));
-        assert!(is_yes("YES", "e|evet"));
-        assert!(is_yes("EVET", "e|evet"));
-        assert!(is_yes("E", "e|evet"));
-        assert!(!is_yes("", "e|evet"));
-        assert!(!is_yes("n", "e|evet"));
-        assert!(!is_yes("hayır", "e|evet"));
-        assert!(is_yes("ｙ", ""));
-        assert!(is_yes("si\u{301}", "sí|s"));
     }
 }

@@ -19,6 +19,7 @@ use icu_locale::Locale;
 use icu_plurals::{PluralCategory, PluralRules};
 use icu_properties::CodePointMapData;
 use icu_properties::props::GeneralCategory;
+use unicode_normalization::UnicodeNormalization as _;
 
 pub use message::{Arg, Message};
 
@@ -596,9 +597,57 @@ pub fn reveal_controls(name: &str) -> String {
     out
 }
 
+/// Answers the command line takes as yes in every language, besides the
+/// translation's own (`cliYes`).
+pub const ALWAYS_YES: [&str; 2] = ["y", "yes"];
+
+/// An answer as the command line compares it: trimmed, with compatibility
+/// forms folded (NFKC: a full-width "ｙ", a decomposed "sí") and case
+/// folded without regard to language, the dotted and dotless i included,
+/// so a Turkish `E` or `EVET` works on any system. [`check`] folds a
+/// translation's answers the same way.
+#[must_use]
+pub fn fold_answer(answer: &str) -> String {
+    answer
+        .trim()
+        .nfkc()
+        .collect::<String>()
+        .replace(['İ', 'I'], "i")
+        .replace('ı', "i")
+        .to_lowercase()
+}
+
+/// Whether an answer means yes: one of [`ALWAYS_YES`], or one of the
+/// translation's `words` (`cliYes`, separated by `|`), compared after
+/// [`fold_answer`].
+#[must_use]
+pub fn is_yes(answer: &str, words: &str) -> bool {
+    let answer = fold_answer(answer);
+    ALWAYS_YES
+        .into_iter()
+        .chain(words.split('|'))
+        .map(fold_answer)
+        .any(|w| !w.is_empty() && w == answer)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn yes_answers() {
+        assert!(is_yes("y\n", "e|evet"));
+        assert!(is_yes("YES", "e|evet"));
+        assert!(is_yes("EVET", "e|evet"));
+        assert!(is_yes("E", "e|evet"));
+        assert!(!is_yes("", "e|evet"));
+        assert!(!is_yes("n", "e|evet"));
+        assert!(!is_yes("hayır", "e|evet"));
+        assert!(is_yes("ｙ", ""));
+        assert!(is_yes("si\u{301}", "sí|s"));
+        assert!(is_yes("İ", "i|igen"));
+        assert!(!is_yes(" ", "|"));
+    }
 
     fn strings(tag: &str) -> Strings {
         let prefs: Vec<Locale> = locale::parse(tag).into_iter().collect();

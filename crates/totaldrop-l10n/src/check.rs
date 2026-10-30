@@ -4,7 +4,9 @@
 
 use std::collections::BTreeSet;
 
-use crate::{File, Message, TEMPLATE, catalog, is_hidden, status};
+use crate::{
+    ALWAYS_YES, File, Message, TEMPLATE, catalog, fold_answer, is_hidden, layer_tags, status,
+};
 
 /// Placeholders a translation must insert exactly as the English text does,
 /// in every case, and never use to choose a case: dropping, repeating or
@@ -13,7 +15,12 @@ use crate::{File, Message, TEMPLATE, catalog, is_hidden, status};
 pub const CRITICAL_PLACEHOLDERS: [&str; 4] = ["code", "words", "folder", "name"];
 
 /// English answers that mean no; a translation's yes-words may not be one.
+/// Each language's own no answer comes from its save prompt (see
+/// [`prompt_no`]).
 const NO_WORDS: [&str; 3] = ["n", "no", "not"];
+
+/// The domains the command line looks a key up in, in order.
+const CLI_DOMAINS: [&str; 2] = ["cli", "app"];
 
 /// Top-level domains that would make a bare word a link.
 const TLDS: [&str; 16] = [
@@ -90,6 +97,7 @@ pub fn run() -> Report {
     for file in all {
         check_file(file, all, &mut report);
     }
+    check_answers(all, &mut report);
     for key in &status.critical {
         if !all
             .iter()
@@ -158,6 +166,9 @@ fn check_file(file: &File, all: &[File], report: &mut Report) {
         if key == "cliYes" {
             check_yes(raw, &at(key), report);
         }
+        if key == "cliPromptSave" {
+            check_prompt(raw, &at(key), report);
+        }
         if file.locale == TEMPLATE {
             continue;
         }
@@ -214,13 +225,91 @@ fn check_placeholders(message: &Message, expected: &Message, at: &str, report: &
 
 fn check_yes(raw: &str, at: &str, report: &mut Report) {
     for word in raw.split('|') {
-        let w = word.trim().to_lowercase();
+        let w = fold_answer(word);
         if w.is_empty() || NO_WORDS.contains(&w.as_str()) {
             report
                 .errors
                 .push(format!("{at}: `{word}` cannot mean yes"));
         }
     }
+}
+
+/// The answer a save prompt offers for no: the second of the last
+/// `[yes/no]` in it (`[y/N]` → `N`, `[ن/ل]` → `ل`).
+fn prompt_no(raw: &str) -> Option<&str> {
+    let open = raw.rfind('[')?;
+    let inside = raw.get(open.saturating_add(1)..)?;
+    let close = inside.find(']')?;
+    let (_, no) = inside.get(..close)?.split_once('/')?;
+    Some(no.trim())
+}
+
+fn check_prompt(raw: &str, at: &str, report: &mut Report) {
+    match prompt_no(raw) {
+        None => report.errors.push(format!(
+            "{at}: shows no `[yes/no]` answers to check `cliYes` against"
+        )),
+        Some(no) => {
+            let folded = fold_answer(no);
+            if folded.is_empty() || folded.contains('/') || ALWAYS_YES.contains(&folded.as_str()) {
+                report
+                    .errors
+                    .push(format!("{at}: `{no}` cannot be the answer for no"));
+            }
+        }
+    }
+}
+
+/// The files the command line looks `key` up in for language `tag`, in
+/// order, with their text: the language, its fallbacks and English, each
+/// in [`CLI_DOMAINS`].
+fn layers<'a>(all: &'a [File], tag: &str, key: &str) -> Vec<(&'a File, &'a str)> {
+    layer_tags(tag)
+        .iter()
+        .flat_map(|t| {
+            CLI_DOMAINS
+                .iter()
+                .filter_map(move |d| all.iter().find(|f| f.domain == *d && f.locale == *t))
+        })
+        .filter_map(|f| f.raw.get(key).map(|raw| (f, raw.as_str())))
+        .collect()
+}
+
+/// Checks that no answer in `cliYes` is the answer the save prompt shown
+/// with it offers for no, folded as the command line folds answers
+/// ([`fold_answer`]). For each language this pairs every `cliYes` with
+/// every `cliPromptSave` it could be shown with: a key can come from the
+/// language, a fallback or English, since an unreviewed critical key is
+/// skipped. The command line takes only the active language's answers and
+/// [`ALWAYS_YES`], so another language's no-words do not matter (Arabic
+/// yes `ن` is Urdu's no).
+fn check_answers(all: &[File], report: &mut Report) {
+    let tags: BTreeSet<&str> = all.iter().map(|f| f.locale.as_str()).collect();
+    let mut errors = BTreeSet::new();
+    for tag in tags {
+        let prompts = layers(all, tag, "cliPromptSave");
+        for (yes_file, yes) in layers(all, tag, "cliYes") {
+            for (prompt_file, prompt) in &prompts {
+                let Some(no) = prompt_no(prompt).map(fold_answer) else {
+                    continue;
+                };
+                for word in yes.split('|') {
+                    let w = fold_answer(word);
+                    // check_yes reports these already.
+                    if w.is_empty() || NO_WORDS.contains(&w.as_str()) {
+                        continue;
+                    }
+                    if w == no {
+                        errors.insert(format!(
+                            "{}/{} `cliYes`: `{word}` is the answer for no in {}/{} `cliPromptSave`",
+                            yes_file.domain, yes_file.locale, prompt_file.domain, prompt_file.locale
+                        ));
+                    }
+                }
+            }
+        }
+    }
+    report.errors.extend(errors);
 }
 
 #[cfg(test)]
@@ -309,5 +398,106 @@ mod tests {
         assert_eq!(errors("e|evet"), 0);
         assert_eq!(errors("n|no|j|ja"), 2);
         assert_eq!(errors("ja||j"), 1);
+        // Folded as the command line folds answers.
+        assert_eq!(errors("ＮＯ| N |j"), 2);
+    }
+
+    #[test]
+    fn prompt_answers() {
+        assert_eq!(prompt_no("Save into {folder}? [y/N] "), Some("N"));
+        assert_eq!(prompt_no("هل تريد الحفظ في {folder}؟ [ن/ل] "), Some("ل"));
+        assert_eq!(prompt_no("[a] b [ d / Н ]"), Some("Н"));
+        assert_eq!(prompt_no("Save into {folder}? "), None);
+        assert_eq!(prompt_no("Save [y/N"), None);
+        let errors = |raw: &str| {
+            let mut r = Report::default();
+            check_prompt(raw, "x", &mut r);
+            r.errors.len()
+        };
+        assert_eq!(errors("Сохранить в {folder}? [д/Н] "), 0);
+        assert_eq!(errors("Save into {folder}? "), 1);
+        assert_eq!(errors("[j/]"), 1);
+        assert_eq!(errors("[j/a/n]"), 1);
+        // English y and yes always mean yes.
+        assert_eq!(errors("[j/Y]"), 1);
+        assert_eq!(errors("[j/ｙｅｓ]"), 1);
+    }
+
+    /// Errors from [`check_answers`] for ARB files given as
+    /// (locale, `cliYes`, `cliPromptSave`); an empty text leaves the key
+    /// out.
+    fn answer_errors(files: &[(&str, &str, &str)]) -> Vec<String> {
+        let all: Vec<File> = files
+            .iter()
+            .filter_map(|(locale, yes, prompt)| {
+                let mut json = serde_json::Map::new();
+                json.insert("@@locale".into(), (*locale).into());
+                if !yes.is_empty() {
+                    json.insert("cliYes".into(), (*yes).into());
+                }
+                if !prompt.is_empty() {
+                    json.insert("cliPromptSave".into(), (*prompt).into());
+                }
+                let text = serde_json::Value::Object(json).to_string();
+                crate::parse_file("cli", &text).ok()
+            })
+            .collect();
+        assert_eq!(all.len(), files.len());
+        let mut report = Report::default();
+        check_answers(&all, &mut report);
+        report.errors
+    }
+
+    const EN: (&str, &str, &str) = ("en", "y|yes", "Save into {folder}? [y/N] ");
+
+    #[test]
+    fn yes_is_not_the_prompts_no() {
+        // Good drafts, and the files as they are.
+        assert!(
+            answer_errors(&[
+                EN,
+                ("ru", "д|да", "Сохранить в {folder}? [д/Н] "),
+                ("ar", "ن|نعم", "هل تريد الحفظ في {folder}؟ [ن/ل] "),
+                // Arabic yes is Urdu's no, but the command line takes only
+                // the active language's answers.
+                ("ur", "ہ|ہاں|جی", "{folder} میں محفوظ کریں؟ [ہ/ن] "),
+                ("tr", "e|evet", "{folder} klasörüne kaydedilsin mi? [e/H] "),
+            ])
+            .is_empty()
+        );
+        assert!(run().errors.iter().all(|e| !e.contains("answer for no")));
+
+        // Russian: the prompt's no letter, in either case.
+        let errors = answer_errors(&[EN, ("ru", "д|да|н", "Сохранить в {folder}? [д/Н] ")]);
+        assert_eq!(
+            errors,
+            ["cli/ru `cliYes`: `н` is the answer for no in cli/ru `cliPromptSave`"]
+        );
+        // Russian: a no word the prompt offers.
+        let errors = answer_errors(&[EN, ("ru", "да|нет", "Сохранить в {folder}? [да/нет] ")]);
+        assert_eq!(errors.len(), 1);
+        assert!(errors.iter().all(|e| e.contains("`нет`")));
+        // Arabic.
+        let errors = answer_errors(&[EN, ("ar", "ن|نعم|ل", "هل تريد الحفظ في {folder}؟ [ن/ل] ")]);
+        assert_eq!(errors.len(), 1);
+        // Folded as the command line folds: full-width, case, Turkish i.
+        assert_eq!(answer_errors(&[("tr", "e|ｈ", "[e/H]")]).len(), 1);
+        assert_eq!(answer_errors(&[("xx", "ı", "[e/İ]")]).len(), 1);
+        // A translated yes is checked against the English prompt too, which
+        // is shown while the translated prompt is an unreviewed draft.
+        assert_eq!(
+            answer_errors(&[("en", "", "[j/X]"), ("xx", "x", "[x/N]")]),
+            ["cli/xx `cliYes`: `x` is the answer for no in cli/en `cliPromptSave`"]
+        );
+        // A regional variant pairs with its base language's prompt.
+        let errors = answer_errors(&[
+            EN,
+            ("pt", "s|sim", "Salvar em {folder}? [s/X] "),
+            ("pt-BR", "s|sim|x", ""),
+        ]);
+        assert_eq!(
+            errors,
+            ["cli/pt-BR `cliYes`: `x` is the answer for no in cli/pt `cliPromptSave`"]
+        );
     }
 }

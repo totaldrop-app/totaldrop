@@ -16,6 +16,7 @@ icu_plurals = "2.4.0"
 icu_properties = "2.4.0"
 icu_provider = { version = "2.4.0", features = ["sync"] }  # Send + Sync data, for sharing Strings across threads
 serde_json = "1.0.154"
+unicode-normalization = "0.1.26"  # folds answers to the CLI's save prompt (fold_answer)
 
 [lints]
 workspace = true
