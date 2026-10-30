@@ -162,11 +162,10 @@ class _Entering extends StatelessWidget {
               icon: const Icon(Icons.content_paste),
               onPressed: () async {
                 final data = await Clipboard.getData(Clipboard.kTextPlain);
-                final text = data?.text?.trim();
-                if (text == null || text.isEmpty) return;
-                // A shared message holds more than the code: take its last word group.
-                final match = RegExp(r'\d+(?:[-\s][a-zA-Z]+){2,3}').firstMatch(text);
-                final value = match?.group(0) ?? text;
+                final text = data?.text;
+                if (text == null) return;
+                final value = codeFromPaste(text);
+                if (value.isEmpty) return;
                 controller.text = value;
                 vm.setInput(value);
               },
