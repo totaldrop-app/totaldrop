@@ -3,12 +3,12 @@
 # The Rust toolchain comes from rustup: rust-toolchain.toml pins the newest
 # stable Rust, which distributions do not ship yet.
 
-%global upstream_version 0.2.0-beta.1
+%global upstream_version 0.3.0-beta.1
 %global srcname totaldrop-linux-v%{upstream_version}
 %global debug_package %{nil}
 
 Name:           totaldrop
-Version:        0.2.0~beta.1
+Version:        0.3.0~beta.1
 Release:        1%{?dist}
 Summary:        Send files straight to another device, end-to-end encrypted
 License:        GPL-3.0-or-later AND (MIT OR Apache-2.0)
@@ -77,6 +77,14 @@ cargo test --release --locked -p totaldrop-linux -p totaldrop-proto
 %{_datadir}/icons/hicolor/symbolic/apps/app.totaldrop.TotalDrop-symbolic.svg
 
 %changelog
+* Fri Oct 30 2026 TotalDrop <hello@totaldrop.app> - 0.3.0~beta.1-1
+- New mark, Köşe, and a new icon: a circle with one square corner. It
+  turns while a file is on its way.
+- The interface in 33 more languages, including Arabic, Chinese, Hindi,
+  Japanese and Spanish. They are drafts being reviewed, so the security
+  texts stay in English until a language is checked.
+- QR codes are read more reliably.
+
 * Thu Oct 29 2026 TotalDrop <hello@totaldrop.app> - 0.2.0~beta.1-1
 - Privacy mode in Settings: everything goes through the relay, so the
   other device never learns your IP address.

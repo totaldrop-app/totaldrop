@@ -2896,7 +2896,7 @@ dependencies = [
 
 [[package]]
 name = "totaldrop-linux"
-version = "0.2.0-beta.1"
+version = "0.3.0-beta.1"
 dependencies = [
  "ashpd",
  "cxx",

@@ -7,6 +7,8 @@ All notable changes to TotalDrop are recorded here. The format follows
 
 ## [Unreleased]
 
+## [android-0.3.0-beta.1] and [linux-0.3.0-beta.1] - 2026-10-30
+
 ### Added
 
 - **GitHub:** The README is rewritten around the new mark, with a light and
@@ -16,8 +18,8 @@ All notable changes to TotalDrop are recorded here. The format follows
   reports translations older than the English. A code of conduct and a
   support page complete the community files (#135).
 - **Android, Linux, CLI, site:** Draft translations in 31 more languages,
-  33 with the Portuguese and Chinese variants (ADR 0008): Arabic, Bengali, Chinese (Simplified and Traditional), Czech,
-  Danish, Dutch, Finnish, French, German, Greek, Hebrew, Hindi, Hungarian,
+  33 with the Portuguese and Chinese variants (ADR 0008): Arabic, Bengali,
+  Chinese (Simplified and Traditional), Czech, Danish, Dutch, Finnish, French, German, Greek, Hebrew, Hindi, Hungarian,
   Indonesian, Italian, Japanese, Korean, Malay, Norwegian Bokmål, Persian,
   Polish, Portuguese (Brazil and Portugal), Romanian, Russian, Spanish,
   Swahili, Swedish, Thai, Ukrainian, Urdu and Vietnamese. They are made
@@ -34,8 +36,8 @@ All notable changes to TotalDrop are recorded here. The format follows
 ### Changed
 
 - **Android, Linux, site:** New mark, "Köşe" (corner), replacing "Ağ" from
-  android-0.2.0-beta.2: a circle with one square corner. The circle is the whole file and the corner makes it a
-  drop, pointing the way it goes. While a file is on its way the mark turns
+  android-0.2.0-beta.2: a circle with one square corner. The circle is the
+  whole file and the corner makes it a drop, pointing the way it goes. While a file is on its way the mark turns
   a quarter at a time, 3.2 s a loop, the same on the site, Android and Linux,
   and it stays still when the system asks for less motion. The app icons are
   the paper mark on violet; the done screen shows a check inside the mark
@@ -56,6 +58,10 @@ All notable changes to TotalDrop are recorded here. The format follows
   is closed or stopped. Android 0.1.0-beta.5 and Linux 0.1.0-beta.4, the
   first versions with the relay, are still described, with the advice to
   update (#124).
+- **Linux, Android:** Dependencies: zbus 6.1, toml 1.1, dirs 7 and rqrr
+  0.11 (QR codes with mixed block sizes now decode) in the Linux app; the
+  Android Gradle plugin 9.5.
+
 ### Fixed
 
 - **Android:** In right-to-left languages the home screen's mark, the
