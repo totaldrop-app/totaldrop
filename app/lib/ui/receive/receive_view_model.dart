@@ -20,10 +20,19 @@ String codeFromPaste(String text) {
   return match?.group(0) ?? clean;
 }
 
-enum ReceiveStage { entering, connecting, offered, transferring, done, declined, failed }
+enum ReceiveStage {
+  entering,
+  connecting,
+  offered,
+  transferring,
+  done,
+  declined,
+  failed,
+}
 
 class ReceiveViewModel extends ChangeNotifier {
-  ReceiveViewModel({required TransferRepository repository}) : _repo = repository;
+  ReceiveViewModel({required TransferRepository repository})
+    : _repo = repository;
 
   final TransferRepository _repo;
   StreamSubscription<TransferEvent>? _sub;
@@ -42,7 +51,8 @@ class ReceiveViewModel extends ChangeNotifier {
   TransferSummary? summary;
   TransferError? error;
 
-  bool get busy => stage == ReceiveStage.connecting || stage == ReceiveStage.transferring;
+  bool get busy =>
+      stage == ReceiveStage.connecting || stage == ReceiveStage.transferring;
 
   String? get normalized => _repo.normalizeCode(input);
 
@@ -97,7 +107,11 @@ class ReceiveViewModel extends ChangeNotifier {
         .listen(
           _onEvent,
           onError: (Object e) {
-            _fail(e is TransferError ? e : TransferError(kind: ErrorKind.other, detail: '$e'));
+            _fail(
+              e is TransferError
+                  ? e
+                  : TransferError(kind: ErrorKind.other, detail: '$e'),
+            );
           },
         );
   }
@@ -127,7 +141,9 @@ class ReceiveViewModel extends ChangeNotifier {
         stage = ReceiveStage.done;
         _sub?.cancel();
       case EventKind.failed:
-        _fail(e.error ?? const TransferError(kind: ErrorKind.other, detail: ''));
+        _fail(
+          e.error ?? const TransferError(kind: ErrorKind.other, detail: ''),
+        );
         return;
     }
     notifyListeners();

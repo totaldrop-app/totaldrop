@@ -34,12 +34,17 @@ class HomeView extends StatelessWidget {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
           children: [
-            const Align(alignment: AlignmentDirectional.centerStart, child: TotalDropMark(size: 88)),
+            const Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: TotalDropMark(size: 88),
+            ),
             Gap.m,
             Text('TotalDrop', style: theme.textTheme.displaySmall),
             Text(
               l.appTagline,
-              style: theme.textTheme.bodyLarge?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
             ),
             Gap.xl,
             _ActionCard(
@@ -65,7 +70,11 @@ class HomeView extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.lock_outline, size: 20, color: theme.colorScheme.onSurfaceVariant),
+                Icon(
+                  Icons.lock_outline,
+                  size: 20,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
                 Gap.s,
                 Expanded(
                   child: Text(
@@ -127,8 +136,18 @@ class _ActionCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title, style: theme.textTheme.headlineMedium?.copyWith(color: foreground)),
-                    Text(body, style: theme.textTheme.bodyLarge?.copyWith(color: foreground)),
+                    Text(
+                      title,
+                      style: theme.textTheme.headlineMedium?.copyWith(
+                        color: foreground,
+                      ),
+                    ),
+                    Text(
+                      body,
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        color: foreground,
+                      ),
+                    ),
                   ],
                 ),
               ),

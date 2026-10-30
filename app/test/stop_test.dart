@@ -2,7 +2,8 @@
 // repository in place of the Rust bridge.
 import 'dart:async';
 
-import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart' show PlatformInt64;
+import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart'
+    show PlatformInt64;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:totaldrop/data/transfer_repository.dart';
 import 'package:totaldrop/src/rust/api/transfer.dart';
@@ -66,13 +67,18 @@ class FakeRepository implements TransferRepository {
   }) => prepared.future;
 
   @override
-  Stream<TransferEvent> runSend(SendSession session, Stopper stopper) => events.stream;
+  Stream<TransferEvent> runSend(SendSession session, Stopper stopper) =>
+      events.stream;
 
   @override
   Future<Offer> connect(String code, Stopper stopper) => connected.future;
 
   @override
-  Stream<TransferEvent> accept(Offer offer, String destination, Stopper stopper) => events.stream;
+  Stream<TransferEvent> accept(
+    Offer offer,
+    String destination,
+    Stopper stopper,
+  ) => events.stream;
 
   @override
   Future<void> decline(Offer offer) async => declined.add(offer);
@@ -87,47 +93,67 @@ class FakeRepository implements TransferRepository {
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
-TransferEvent _event(EventKind kind) =>
-    TransferEvent(kind: kind, words: const [], done: 0, total: 0, summary: null, error: null);
+TransferEvent _event(EventKind kind) => TransferEvent(
+  kind: kind,
+  words: const [],
+  done: 0,
+  total: 0,
+  summary: null,
+  error: null,
+);
 
 void main() {
   group('send', () {
-    test('stopping while preparing stops the core and drops the late session', () async {
-      final repo = FakeRepository();
-      final vm = SendViewModel(repository: repo);
-      vm.addFakeFileForTest('a.txt');
-      unawaited(vm.start());
-      expect(vm.stage, SendStage.preparing);
-      vm.reset();
-      expect(repo.stoppers.single.stopped, isTrue);
-      final late = FakeSession();
-      repo.prepared.complete(late);
-      await pumpEventQueue();
-      expect(vm.stage, SendStage.picking);
-      expect(vm.code, isNull);
-      expect(late.disposed, isTrue, reason: 'the reserved code is released at once');
-    });
+    test(
+      'stopping while preparing stops the core and drops the late session',
+      () async {
+        final repo = FakeRepository();
+        final vm = SendViewModel(repository: repo);
+        vm.addFakeFileForTest('a.txt');
+        unawaited(vm.start());
+        expect(vm.stage, SendStage.preparing);
+        vm.reset();
+        expect(repo.stoppers.single.stopped, isTrue);
+        final late = FakeSession();
+        repo.prepared.complete(late);
+        await pumpEventQueue();
+        expect(vm.stage, SendStage.picking);
+        expect(vm.code, isNull);
+        expect(
+          late.disposed,
+          isTrue,
+          reason: 'the reserved code is released at once',
+        );
+      },
+    );
 
-    test('a new send after a reset uses a new stopper and ignores the old one', () async {
-      final repo = FakeRepository();
-      final vm = SendViewModel(repository: repo);
-      vm.addFakeFileForTest('a.txt');
-      unawaited(vm.start());
-      final first = repo.prepared;
-      vm.reset();
-      vm.addFakeFileForTest('b.txt');
-      repo.prepared = Completer();
-      unawaited(vm.start());
-      first.complete(FakeSession());
-      await pumpEventQueue();
-      expect(vm.stage, SendStage.preparing, reason: 'the old result changes nothing');
-      repo.prepared.complete(FakeSession());
-      await pumpEventQueue();
-      expect(vm.stage, SendStage.waiting);
-      expect(repo.stoppers, hasLength(2));
-      expect(repo.stoppers.first.stopped, isTrue);
-      expect(repo.stoppers.last.stopped, isFalse);
-    });
+    test(
+      'a new send after a reset uses a new stopper and ignores the old one',
+      () async {
+        final repo = FakeRepository();
+        final vm = SendViewModel(repository: repo);
+        vm.addFakeFileForTest('a.txt');
+        unawaited(vm.start());
+        final first = repo.prepared;
+        vm.reset();
+        vm.addFakeFileForTest('b.txt');
+        repo.prepared = Completer();
+        unawaited(vm.start());
+        first.complete(FakeSession());
+        await pumpEventQueue();
+        expect(
+          vm.stage,
+          SendStage.preparing,
+          reason: 'the old result changes nothing',
+        );
+        repo.prepared.complete(FakeSession());
+        await pumpEventQueue();
+        expect(vm.stage, SendStage.waiting);
+        expect(repo.stoppers, hasLength(2));
+        expect(repo.stoppers.first.stopped, isTrue);
+        expect(repo.stoppers.last.stopped, isFalse);
+      },
+    );
 
     test('stopping while waiting or transferring stops the core', () async {
       final repo = FakeRepository();
@@ -146,21 +172,24 @@ void main() {
   });
 
   group('receive', () {
-    test('stopping while connecting declines an offer that arrives late', () async {
-      final repo = FakeRepository();
-      final vm = ReceiveViewModel(repository: repo);
-      vm.setInput('7-harbor-rocket');
-      unawaited(vm.connect());
-      expect(vm.stage, ReceiveStage.connecting);
-      vm.reset();
-      expect(repo.stoppers.single.stopped, isTrue);
-      final late = FakeOffer();
-      repo.connected.complete(late);
-      await pumpEventQueue();
-      expect(vm.stage, ReceiveStage.entering);
-      expect(vm.offer, isNull);
-      expect(repo.declined, [late]);
-    });
+    test(
+      'stopping while connecting declines an offer that arrives late',
+      () async {
+        final repo = FakeRepository();
+        final vm = ReceiveViewModel(repository: repo);
+        vm.setInput('7-harbor-rocket');
+        unawaited(vm.connect());
+        expect(vm.stage, ReceiveStage.connecting);
+        vm.reset();
+        expect(repo.stoppers.single.stopped, isTrue);
+        final late = FakeOffer();
+        repo.connected.complete(late);
+        await pumpEventQueue();
+        expect(vm.stage, ReceiveStage.entering);
+        expect(vm.offer, isNull);
+        expect(repo.declined, [late]);
+      },
+    );
 
     test('accepting uses the same stopper as connecting', () async {
       final repo = FakeRepository();

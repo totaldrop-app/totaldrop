@@ -12,7 +12,9 @@ import '../../src/rust/api/l10n.dart' as rust;
 Locale resolveLocale(List<Locale>? preferred, Iterable<Locale> supported) {
   final tags = {for (final l in supported) l.toLanguageTag(): l};
   final chosen = rust.negotiateLocale(
-    preferences: [for (final l in preferred ?? const <Locale>[]) l.toLanguageTag()],
+    preferences: [
+      for (final l in preferred ?? const <Locale>[]) l.toLanguageTag(),
+    ],
     available: tags.keys.toList(),
   );
   return tags[chosen] ?? const Locale('en');
@@ -30,8 +32,9 @@ AppLocalizations safeL10n(BuildContext context, String key) {
 }
 
 /// Whether some text in the current language is an unreviewed draft.
-bool hasDraftTranslation(BuildContext context) =>
-    rust.hasDraftTranslation(tag: Localizations.localeOf(context).toLanguageTag());
+bool hasDraftTranslation(BuildContext context) => rust.hasDraftTranslation(
+  tag: Localizations.localeOf(context).toLanguageTag(),
+);
 
 /// A name from the other side with hidden direction and control characters
 /// shown, not obeyed.
@@ -41,7 +44,8 @@ String revealControls(String name) => rust.revealControls(name: name);
 /// device set to en-DE writes "1,5 MB"), or the app language when intl
 /// does not know the device's locale.
 String _numberLocale(AppLocalizations l) {
-  final device = WidgetsBinding.instance.platformDispatcher.locale.toLanguageTag();
+  final device = WidgetsBinding.instance.platformDispatcher.locale
+      .toLanguageTag();
   for (final candidate in [device, l.localeName]) {
     try {
       intl.NumberFormat.decimalPattern(candidate);

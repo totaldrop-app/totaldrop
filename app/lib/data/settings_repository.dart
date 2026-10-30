@@ -14,7 +14,9 @@ class SettingsRepository extends ChangeNotifier {
 
   static Future<SettingsRepository> load() async {
     final prefs = await SharedPreferencesWithCache.create(
-      cacheOptions: const SharedPreferencesWithCacheOptions(allowList: {_serverKey, _privacyKey}),
+      cacheOptions: const SharedPreferencesWithCacheOptions(
+        allowList: {_serverKey, _privacyKey},
+      ),
     );
     return SettingsRepository._(prefs);
   }
@@ -28,7 +30,10 @@ class SettingsRepository extends ChangeNotifier {
   /// Only `wss://` servers are accepted from the app.
   static bool isValidServer(String url) {
     final uri = Uri.tryParse(url.trim());
-    return uri != null && uri.scheme == 'wss' && uri.host.isNotEmpty && uri.userInfo.isEmpty;
+    return uri != null &&
+        uri.scheme == 'wss' &&
+        uri.host.isNotEmpty &&
+        uri.userInfo.isEmpty;
   }
 
   Future<void> setServer(String url) async {

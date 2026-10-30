@@ -15,7 +15,10 @@ import 'ui/send/send_view_model.dart';
 import 'ui/settings/settings_view.dart';
 
 /// Shown in Settings; kept in step with pubspec.yaml by the release script.
-const appVersion = String.fromEnvironment('TOTALDROP_VERSION', defaultValue: '0.3.0-beta.1');
+const appVersion = String.fromEnvironment(
+  'TOTALDROP_VERSION',
+  defaultValue: '0.3.0-beta.1',
+);
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -66,16 +69,21 @@ class TotalDropApp extends StatelessWidget {
             builder: (context) => HomeView(
               onSend: () => Navigator.push(
                 context,
-                MaterialPageRoute<void>(builder: (_) => SendView(viewModel: send)),
+                MaterialPageRoute<void>(
+                  builder: (_) => SendView(viewModel: send),
+                ),
               ),
               onReceive: () => Navigator.push(
                 context,
-                MaterialPageRoute<void>(builder: (_) => ReceiveView(viewModel: receive)),
+                MaterialPageRoute<void>(
+                  builder: (_) => ReceiveView(viewModel: receive),
+                ),
               ),
               onSettings: () => Navigator.push(
                 context,
                 MaterialPageRoute<void>(
-                  builder: (_) => SettingsView(settings: settings, version: appVersion),
+                  builder: (_) =>
+                      SettingsView(settings: settings, version: appVersion),
                 ),
               ),
             ),
