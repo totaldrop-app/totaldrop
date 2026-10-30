@@ -290,7 +290,8 @@ async fn receive(
     let yes_words = s.get("cliYes", &[]);
     let accepted = yes || {
         let answer = tokio::task::spawn_blocking(move || {
-            let typed = std::io::stdin().is_terminal();
+            // The answer shows in the log only when both are terminals.
+            let typed = std::io::stdin().is_terminal() && std::io::stderr().is_terminal();
             let line = ask(
                 &prompt,
                 &mut std::io::stdin().lock(),
@@ -332,10 +333,11 @@ async fn receive(
     Ok(())
 }
 
-/// Asks `prompt` on `out` and reads one line of answer from `input`, or
-/// `None` if it cannot be read. A terminal echoes what is `typed`, Enter
-/// included; an answer from a pipe or a file is not echoed, so the line is
-/// ended here and what comes next does not follow the question (#163).
+/// Asks `prompt` on `out` and reads one line of answer from `input`:
+/// `None` on a read error, empty at the end of input. A terminal echoes what
+/// is `typed`, Enter included; an answer from a pipe or a file is not
+/// echoed, and Ctrl-D echoes no Enter, so then the line is ended here and
+/// what comes next does not follow the question (#163).
 fn ask(
     prompt: &str,
     input: &mut impl std::io::BufRead,
@@ -346,7 +348,7 @@ fn ask(
     let _ = out.flush();
     let mut line = String::new();
     let read = input.read_line(&mut line);
-    if !typed {
+    if !typed || !line.ends_with('\n') {
         let _ = writeln!(out);
     }
     read.ok().map(|_| line)
@@ -508,6 +510,13 @@ mod tests {
         let mut out = Vec::new();
         assert_eq!(
             ask("Save? ", &mut &b""[..], &mut out, false).as_deref(),
+            Some("")
+        );
+        assert_eq!(out, b"Save? \n");
+        // Ctrl-D at a terminal: no Enter is echoed, so the line ends here.
+        let mut out = Vec::new();
+        assert_eq!(
+            ask("Save? ", &mut &b""[..], &mut out, true).as_deref(),
             Some("")
         );
         assert_eq!(out, b"Save? \n");
