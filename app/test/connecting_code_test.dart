@@ -16,8 +16,9 @@ class _Repository implements TransferRepository {
   final connected = Completer<Offer>();
   final codes = <String>[];
 
-  // Stands in for the Rust parser: the person sees the words reversed by
-  // a right-to-left override, the parser reads them in logical order.
+  // Stands in for the Rust parser. What it returns differs from the typed
+  // text on purpose: the screen must show the parser's output, whatever
+  // the input looks like.
   @override
   String? normalizeCode(String input) =>
       input.contains('rocket') ? '7-harbor-rocket' : null;
@@ -42,7 +43,7 @@ void main() {
   test('connecting shows the code that is used, not the typed text', () {
     final repo = _Repository();
     final vm = ReceiveViewModel(repository: repo);
-    vm.setInput('‮7-rocket-harbor');
+    vm.setInput('\u202E7-rocket-harbor');
     expect(vm.connectingCode, isNull);
     unawaited(vm.connect());
     expect(vm.stage, ReceiveStage.connecting);
