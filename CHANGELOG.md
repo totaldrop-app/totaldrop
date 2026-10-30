@@ -19,11 +19,14 @@ All notable changes to TotalDrop are recorded here. The format follows
 
 - **CLI, translations:** The translation check rejected only the English
   no-words (n, no, not) among a language's yes answers (`cliYes`), so a
-  draft could make the save prompt's own "no", such as н or ل, mean yes.
-  The check now also rejects the answer for no from the language's save
-  prompt (`[д/Н]`, `[ن/ل]`), and from the prompts of its fallbacks and
-  English, folded exactly as the command line folds answers, and a save
-  prompt must show its `[yes/no]` answers (#129).
+  draft could make a word for no, such as нет, nein or لا, mean yes. Each
+  language now lists its words for no in `l10n/status.json` (`noWords`),
+  and the check rejects a yes answer that is one of them, or the answer
+  for no in a save prompt it can be shown with (`[д/Н]`, `[ن/ل]`). A save
+  prompt must show ASCII `[yes/no]` answers, and `cliYes` must accept its
+  answer for yes. Answers are compared exactly as the command line
+  compares them: `fold_answer`, `is_yes` and `ALWAYS_YES` are now public
+  in `totaldrop-l10n`, and the command line uses them (#129).
 
 ## [android-0.3.0-beta.1] and [linux-0.3.0-beta.1] - 2026-10-30
 

@@ -118,13 +118,17 @@ fn parse_file(domain: &'static str, json: &str) -> Result<File, String> {
 }
 
 /// `l10n/status.json`: which languages were reviewed, which keys are still
-/// drafts, and which keys must never be shown as a draft. One status per
-/// language covers its app and command-line strings.
+/// drafts, which keys must never be shown as a draft, and the answers that
+/// mean no in each language. One status per language covers its app and
+/// command-line strings.
 #[derive(Debug, Default)]
 pub(crate) struct Status {
     pub(crate) critical: BTreeSet<String>,
     pub(crate) reviewed: HashMap<String, bool>,
     pub(crate) draft: HashMap<String, BTreeSet<String>>,
+    /// Per language, the answers that mean no (`noWords`, separated by
+    /// `|`), as written; a translation's `cliYes` may not be one.
+    pub(crate) no_words: HashMap<String, Vec<String>>,
 }
 
 impl Status {
@@ -166,6 +170,11 @@ pub(crate) fn status() -> &'static Status {
                     .unwrap_or(false);
                 status.reviewed.insert(tag.clone(), reviewed);
                 status.draft.insert(tag.clone(), strings(info.get("draft")));
+                if let Some(words) = info.get("noWords").and_then(serde_json::Value::as_str) {
+                    status
+                        .no_words
+                        .insert(tag.clone(), words.split('|').map(str::to_owned).collect());
+                }
             }
         }
         status
@@ -814,6 +823,7 @@ mod tests {
             critical: BTreeSet::from(["verificationTitle".to_owned()]),
             reviewed: HashMap::from([("pt-PT".to_owned(), true), ("pt".to_owned(), false)]),
             draft: HashMap::from([("pt-PT".to_owned(), BTreeSet::from(["newKey".to_owned()]))]),
+            no_words: HashMap::new(),
         };
         // A reviewed variant does not make its unreviewed base reviewed.
         assert!(status.is_draft("pt", "verificationTitle"));
