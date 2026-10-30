@@ -72,13 +72,15 @@ TotalDrop [Semantic Versioning 2.0](https://semver.org/) kullanır.
 
 - [`CHANGELOG.md`](../CHANGELOG.md) [Keep a Changelog](https://keepachangelog.com/)
   biçimindedir. Her girdi platformunu söyler; güvenlik düzeltmeleri
-  "Security" başlığı altında durur.
+  "Security" başlığı altında durur. Yayınlanmamış girdiler her değişiklik
+  için ayrı bir dosyada, [`changelog.d/`](../changelog.d/README.md)
+  altında bekler; sürümde CHANGELOG.md'ye taşınır.
 
 ## Yayın yapmak
 
 Adım adım sürüm listesi [surec.md](surec.md#sürüm-listesi) içindedir. Kısaca:
-sürüm ve paket tarifleri artırılır, CHANGELOG girdileri sürüm başlığına
-taşınır, sürüm PR'ı incelenip birleştirilir, `main`'deki commit'e etiket
+sürüm ve paket tarifleri artırılır, `changelog.d/` girdileri
+`tools/changelog.mjs release` ile sürüm başlığına taşınır, sürüm PR'ı incelenip birleştirilir, `main`'deki commit'e etiket
 atılır. CI paketleri etiketten derler, derleme kaynağı kanıtı ekler ve taslak
 bir yayın açar. Kişisel bir makinede derlenen hiçbir şey yayınlanmaz.
 

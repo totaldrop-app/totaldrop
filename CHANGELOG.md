@@ -7,60 +7,8 @@ All notable changes to TotalDrop are recorded here. The format follows
 
 ## [Unreleased]
 
-### Changed
-
-- **Site, README:** The download page and the README point at Android and
-  Linux 0.3.0-beta.1 and list what is new: the Köşe mark and icon, 35
-  languages, right-to-left screens and steadier QR reading on Linux. The
-  apps are no longer described as English and Turkish only, and the
-  roadmap adds "In your language" to Done (#132, #137).
-- **Android, Linux:** The note in Settings for a language that is still a
-  draft asks for help on GitHub instead of Weblate, which is not set up yet.
-  The note is updated in all 37 language files (#131).
-- **Build:** A Linux release now checks the version of the command line it
-  ships against every earlier Linux or `cli-v*` release. A version higher
-  than all of them passes and a lower one stops the release. The same
-  version stops it if the CLI's code has changed since a release that
-  shipped it: `crates/` without its `tests/` and `benches/` directories,
-  and the strings and translation status the CLI compiles in. `Cargo.lock`
-  and the root `Cargo.toml` are not counted. The check is
-  `packaging/check-cli-version.sh`, run by `check-versions.sh` on a
-  release tag and tested in CI under bash and dash (#115).
-
-### Fixed
-
-- **Core, CLI (tests):** Two tests failed now and then on slow CI runners.
-  The end-to-end test of a receiver stopped while it connects now stops it
-  before any reply from the server can arrive, so it always ends in
-  "stopped" and no longer sometimes reads the departed sender's mailbox
-  and ends in "wrong code". The privacy-mode test now runs on a paused
-  clock and checks that the relay connection comes up before the sender's
-  own dial would start, instead of timing the connection on the wall clock
-  (#126).
-- **Android, Linux, CLI:** In a right-to-left language the shared message
-  could show the code out of order, with its number on the wrong side of
-  its words; the code is now isolated, as the version and the save folder
-  are. Both apps drop direction marks and other invisible characters, such
-  as a zero-width space, from a pasted code, and Linux also from a
-  totaldrop:// link; the command line does the same with a code given to
-  it, so a code copied with them still connects (#130).
-
-- **CLI, translations:** The translation check rejected only the English
-  no-words (n, no, not) among a language's yes answers (`cliYes`), so a
-  draft could make a word for no, such as нет, nein or لا, mean yes. Each
-  language now lists its words for no in `l10n/status.json` (`noWords`),
-  and the check rejects a yes answer that is one of them, or the answer
-  for no in a save prompt it can be shown with (`[д/Н]`, `[ن/ل]`). A save
-  prompt must show ASCII `[yes/no]` answers, and its answer for yes must
-  be in `cliYes` or be y or yes. Answers are compared exactly as the
-  command line compares them: `fold_answer`, `is_yes` and `ALWAYS_YES` are
-  now public in `totaldrop-l10n`, and the command line uses them (#129).
-- **Core, command line:** `totaldrop --version` printed 0.1.0-beta.2 in
-  the Linux 0.2.0-beta.1 and 0.3.0-beta.1 packages, although the command
-  line had since gained the relay, privacy mode (`--relay-only`),
-  translations and a clean stop with Ctrl-C. The command line and the core
-  libraries are now 0.2.0-beta.1; the self-hosted servers and the Android
-  app's Rust library share that version and move with it (#115, #146).
+Entries for the next release are in [changelog.d/](changelog.d/), one file
+per change, and move here when it is released (docs/surec.md).
 
 ## [android-0.3.0-beta.1] and [linux-0.3.0-beta.1] - 2026-10-30
 

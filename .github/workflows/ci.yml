@@ -98,12 +98,37 @@ jobs:
     if: needs.changes.outputs.site == 'true'
     uses: ./.github/workflows/site.yml
 
+  # Every change records itself in changelog.d/ (docs/surec.md). Runs on
+  # every pull request and push, whatever changed; it takes seconds.
+  changelog:
+    name: Changelog
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+      - name: The changelog tool works
+        run: node --test tools/test-changelog.mjs
+      - name: Entries follow the rules
+        run: node tools/changelog.mjs check
+      # Dependabot's updates are recorded by the release that ships them.
+      - name: The pull request records its change
+        if: github.event_name == 'pull_request' && github.event.pull_request.user.login != 'dependabot[bot]'
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.sha }}
+        run: node tools/changelog.mjs require "$BASE" "$HEAD"
+
   # The required check. Skipped areas count as passed; anything failed or
   # cancelled, including the area detection, fails it.
   gate:
     name: CI
     if: always()
-    needs: [changes, core, android, linux, server, site]
+    needs: [changes, changelog, core, android, linux, server, site]
     runs-on: ubuntu-latest
     steps:
       - env:

@@ -44,12 +44,19 @@ Bir değişiklik ancak şunların hepsi doğruysa bitmiştir:
   Omarchy'de; Android'de ekran görüntüsü PR'da.
 - Sunucuların gördüğü bilgi değiştiyse gizlilik politikası, özellik
   yayınlanmadan önce güncellendi.
-- `CHANGELOG.md`'nin "Unreleased" bölümünde girdisi var.
+- `changelog.d/` altında kendi girdi dosyası var
+  ([changelog.d/README.md](../changelog.d/README.md)); kullanıcıya bir şey
+  değiştirmeyen bir iş için `.none.md` dosyası nedenini söyler.
+  `CHANGELOG.md`'ye yalnızca sürüm sırasında yazılır. CI ikisini de denetler.
 
 ## Sürüm listesi
 
-1. Platformun sürümünü artır ve `CHANGELOG.md` girdilerini sürüm başlığına
-   taşı. Linux: `linux/Cargo.toml`, `packaging/arch/PKGBUILD`,
+1. Platformun sürümünü artır ve `changelog.d/` girdilerini sürüm başlığına
+   taşı: `node tools/changelog.mjs release "[linux-0.4.0-beta.1]"` (ortak
+   yayında `"[android-…] and [linux-…]"`). Komut girdileri Keep a
+   Changelog sırasıyla yeni bir bölüme yazar, dosyaları siler ve kurallara
+   uymayan bir dosya varsa hiçbir şeyi değiştirmeden durur. Sürüm şu
+   dosyalarda artırılır. Linux: `linux/Cargo.toml`, `packaging/arch/PKGBUILD`,
    `packaging/debian/changelog`, `packaging/rpm/totaldrop.spec` ve
    `packaging/linux/app.totaldrop.TotalDrop.metainfo.xml`. Android: `app/pubspec.yaml` içinde hem sürüm hem
    derleme numarası (`+N`); numara her yüklemede artmalıdır, CI bunu
