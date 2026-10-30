@@ -1,4 +1,4 @@
-//! QObjects exposed to QML.
+//! QObjects exposed to QML, and the Qt set-up done before they exist.
 
 pub mod surface;
 pub mod texts;
