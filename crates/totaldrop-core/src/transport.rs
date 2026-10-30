@@ -807,8 +807,15 @@ mod tests {
     /// (#126). Had the sender's link waited for its dial, the receiver's
     /// first packets would be dropped and nothing could connect before the
     /// marker.
+    ///
+    /// Stricter still, and independent of quinn's retransmission timers:
+    /// no time may pass at all. Both links open at the first instant and
+    /// every packet goes through the stand-in at once, so the connection is
+    /// up before any timer fires; a dropped packet would have to wait for a
+    /// retransmission, and a late link for its own timer.
     #[tokio::test(start_paused = true)]
     async fn privacy_mode_uses_the_relay_at_once() {
+        let start = tokio::time::Instant::now();
         let connected_first = tokio::select! {
             biased;
             () = over_relay(Vec::new()) => true,
@@ -818,6 +825,7 @@ mod tests {
             connected_first,
             "the relay link waited for the sender's own dial"
         );
+        assert_eq!(start.elapsed(), Duration::ZERO, "a timer had to fire");
     }
 
     /// When a direct path works, neither side contacts the relay (#63).
