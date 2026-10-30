@@ -15,6 +15,16 @@ All notable changes to TotalDrop are recorded here. The format follows
   apps are no longer described as English and Turkish only, and the
   roadmap adds "In your language" to Done (#132, #137).
 
+### Fixed
+
+- **CLI, translations:** The translation check rejected only the English
+  no-words (n, no, not) among a language's yes answers (`cliYes`), so a
+  draft could make the save prompt's own "no", such as н or ل, mean yes.
+  The check now also rejects the answer for no from the language's save
+  prompt (`[д/Н]`, `[ن/ل]`), and from the prompts of its fallbacks and
+  English, folded exactly as the command line folds answers, and a save
+  prompt must show its `[yes/no]` answers (#129).
+
 ## [android-0.3.0-beta.1] and [linux-0.3.0-beta.1] - 2026-10-30
 
 ### Added

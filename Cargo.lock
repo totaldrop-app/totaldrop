@@ -2846,7 +2846,6 @@ dependencies = [
  "totaldrop-proto",
  "totaldrop-relay",
  "totaldrop-rendezvous",
- "unicode-normalization",
 ]
 
 [[package]]
@@ -2892,6 +2891,7 @@ dependencies = [
  "icu_properties",
  "icu_provider",
  "serde_json",
+ "unicode-normalization",
 ]
 
 [[package]]
