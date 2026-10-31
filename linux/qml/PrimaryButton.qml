@@ -10,6 +10,9 @@ Button {
     id: b
 
     highlighted: true
+    // Breeze marks the default button from this (qqc2-desktop-style) or
+    // from `highlighted` (qqc2-breeze-style, a blue frame).
+    Accessible.defaultButton: true
     readonly property bool filled: SystemTheme.controlStyle === "Fusion"
 
     topPadding: filled ? 10 : undefined

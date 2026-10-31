@@ -40,7 +40,7 @@ Page {
     // Escape does what the back button does, but does not throw away a
     // list of files not yet sent: that takes the back button.
     Shortcut {
-        sequence: StandardKey.Cancel
+        sequences: [StandardKey.Cancel]
         enabled: page.StackView.status === StackView.Active
                  && !(page.phase === "idle" && files.count > 0)
         onActivated: page.goBack()
@@ -226,6 +226,15 @@ Page {
                 Keys.onEnterPressed: (e) => { if (!e.isAutoRepeat) click() }
                 Layout.fillWidth: true
                 Layout.topMargin: -Theme.s16
+                // Fusion shows no keyboard focus on a delegate.
+                Rectangle {
+                    visible: Theme.fusion && parent.visualFocus
+                    anchors.fill: parent
+                    radius: Theme.controlRadius
+                    color: "transparent"
+                    border.width: 2
+                    border.color: Theme.accent
+                }
             }
             Item { visible: files.count > 0; Layout.fillHeight: true }
 
@@ -278,9 +287,15 @@ Page {
 
         // 2: the code, waiting for the receiver
         Flickable {
+            id: waitFlick
             contentHeight: waiting.implicitHeight
             clip: true
-            ScrollBar.vertical: ScrollBar {}
+            // In a short window the QR code pushes Cancel out of view: show
+            // that the page scrolls, and bring Cancel into view on Tab.
+            ScrollBar.vertical: ScrollBar {
+                policy: waitFlick.contentHeight > waitFlick.height ? ScrollBar.AlwaysOn : ScrollBar.AsNeeded
+            }
+            FocusScroller { view: waitFlick; area: waiting }
             ColumnLayout {
                 id: waiting
                 width: parent.width

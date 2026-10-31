@@ -21,7 +21,7 @@ Page {
     // Escape first drops an unsaved server address, then does what the
     // back button does.
     Shortcut {
-        sequence: StandardKey.Cancel
+        sequences: [StandardKey.Cancel]
         enabled: page.StackView.status === StackView.Active
         onActivated: {
             if (server.text !== page.transfer.server) {
@@ -43,21 +43,7 @@ Page {
         }
 
         // Tab to a control out of view scrolls it into view.
-        Connections {
-            target: page.Window.window
-            function onActiveFocusItemChanged() {
-                const item = page.Window.activeFocusItem
-                let inside = false
-                for (let p = item; p && !inside; p = p.parent) inside = p === col
-                if (!inside) return
-                const top = item.mapToItem(flick.contentItem, 0, 0).y
-                const bottom = top + item.height
-                if (top < flick.contentY + Theme.s24)
-                    flick.contentY = Math.max(0, top - Theme.s24)
-                else if (bottom > flick.contentY + flick.height - Theme.s24)
-                    flick.contentY = Math.min(flick.contentHeight - flick.height, bottom - flick.height + Theme.s24)
-            }
-        }
+        FocusScroller { view: flick; area: col }
 
         ColumnLayout {
             id: col
