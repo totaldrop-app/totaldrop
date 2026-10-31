@@ -39,7 +39,7 @@ Page {
 
     // Escape does what the back button does.
     Shortcut {
-        sequence: StandardKey.Cancel
+        sequences: [StandardKey.Cancel]
         enabled: page.StackView.status === StackView.Active
         onActivated: page.goBack()
     }
@@ -270,7 +270,7 @@ Page {
                 PrimaryButton {
                     id: acceptButton
                     text: Strings.s.receiveAccept
-                                        // The default button, as in a dialog: Enter accepts.
+                    // The default button, as in a dialog: Enter accepts.
                     onClicked: page.transfer.accept()
                 }
             }
