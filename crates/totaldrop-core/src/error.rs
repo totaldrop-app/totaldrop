@@ -141,10 +141,13 @@ impl From<quinn::ReadError> for Error {
     fn from(e: quinn::ReadError) -> Self {
         match e {
             quinn::ReadError::ConnectionLost(c) => c.into(),
-            // The reset can overtake the sender's cancel message; it says
-            // the same.
+            // Only data streams are ever reset. A reset can overtake the
+            // sender's cancel message; it says the same.
             quinn::ReadError::Reset(code) if code == STREAM_STOPPED => {
                 Error::Cancelled("stopped".into())
+            }
+            quinn::ReadError::Reset(code) if code == STREAM_FAILED => {
+                Error::Cancelled("the sender could not send a file".into())
             }
             e => Error::Connect(e.to_string()),
         }

@@ -530,9 +530,9 @@ pub async fn send_files(
         tokio::select! {
             biased;
             () = stop.stopped() => {
-                // Every task hears the stop too and resets its stream, so
-                // the receiver keeps no file from data already on the way.
-                // Let them, briefly, before the cancel and the close.
+                // Every task hears the stop too and resets its stream, which
+                // drops what has not been sent or read yet. Let them,
+                // briefly, before the cancel and the close.
                 let _ = tokio::time::timeout(STOP_NOTICE, async {
                     while tasks.join_next().await.is_some() {}
                 })
@@ -576,8 +576,13 @@ pub async fn send_files(
             }
         }
     }
+    // Every file is confirmed. A stop now only cuts streams the receiver
+    // has finished, so it is not reported as one.
     while let Some(joined) = tasks.join_next().await {
-        joined.map_err(|_| Error::Protocol("send task failed"))??;
+        match joined.map_err(|_| Error::Protocol("send task failed"))? {
+            Ok(()) | Err(Error::Stopped) => {}
+            Err(e) => return Err(e),
+        }
     }
     report.bytes = done.load(Ordering::Relaxed);
     let _ = send.finish();
@@ -1217,10 +1222,14 @@ mod tests {
     /// which ends it cleanly, and the receiver read the whole file.
     #[tokio::test]
     async fn stop_cuts_a_file_still_on_the_way() {
-        // ~1.2 MB/s: three chunks take a few seconds to arrive.
+        // ~1.2 MB/s, so the file takes several seconds to arrive. It fits
+        // the stream window, so the sender hands all of it to the
+        // connection at once. What is on the way at the stop is bounded by
+        // the relay pipe's queue (path::QUEUE datagrams, about 1.3 MB),
+        // well under what is left to send.
         let (sender, receiver) =
             crate::transport::testing::over_slow_relay(Duration::from_millis(1)).await;
-        let size = 3 * limits::CHUNK_SIZE;
+        let size = 6 * limits::CHUNK_SIZE;
         let dir = std::env::temp_dir().join(format!("td-cut-{}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();
         let source = dir.join("cut.bin");
@@ -1234,6 +1243,7 @@ mod tests {
         };
         let stop = Stop::new();
         let progress: Progress = Arc::new(|_, _| {});
+        let done = Arc::new(AtomicU64::new(0));
         let task = tokio::spawn(send_entry_until_stopped(
             sender.clone(),
             stop.clone(),
@@ -1243,14 +1253,16 @@ mod tests {
             0,
             ContentKey::generate().unwrap(),
             [1; 16],
-            Arc::new(AtomicU64::new(0)),
+            done.clone(),
             size,
             progress,
         ));
         let mut stream = receiver.accept_uni().await.unwrap();
         expect_frame(&mut stream, 1024).await.unwrap();
         expect_frame(&mut stream, MAX_FRAME).await.unwrap();
-        // The first chunk is here; the rest is still on the way.
+        // The first chunk is here; the rest is still on the way, although
+        // the sender has handed all of it over.
+        assert_eq!(done.load(Ordering::Relaxed), size);
         stop.stop();
         assert!(matches!(task.await.unwrap(), Err(Error::Stopped)));
         let mut buf = vec![0u8; 64 * 1024];
