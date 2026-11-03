@@ -681,6 +681,29 @@ fn left_nothing(dest: &Path) {
     assert!(names.is_empty(), "left behind: {:?}", walk(dest));
 }
 
+/// Only files that arrived whole are left in `dest`, each identical to its
+/// source under `src`, and no folder is empty: placed files stay when the
+/// other side stops (protocol notes, item 18), partial files and empty
+/// folders do not.
+fn left_only_whole_files(dest: &Path, src: &Path) {
+    for path in walk(dest) {
+        let rel = path.strip_prefix(dest).unwrap();
+        if path.is_dir() {
+            assert!(
+                std::fs::read_dir(&path).unwrap().next().is_some(),
+                "empty folder left behind: {rel:?}"
+            );
+        } else {
+            let original =
+                std::fs::read(src.join(rel)).unwrap_or_else(|_| panic!("left behind: {rel:?}"));
+            assert!(
+                std::fs::read(&path).unwrap() == original,
+                "partial file left behind: {rel:?}"
+            );
+        }
+    }
+}
+
 /// A folder of `files` files of `size` bytes each, in a subfolder.
 fn folder(src: &Path, files: usize, size: usize) -> PathBuf {
     let dir = src.join("album");
@@ -771,7 +794,9 @@ async fn sender_stops_mid_folder() {
         sent < total / 2,
         "sent {sent} of {total} bytes after the stop"
     );
-    left_nothing(&dest);
+    // Files whose data was already on the way when the stop came may
+    // still arrive whole and be kept, more of them with larger windows.
+    left_only_whole_files(&dest, &src);
     std::fs::remove_dir_all(src).unwrap();
     std::fs::remove_dir_all(dest).unwrap();
 }
