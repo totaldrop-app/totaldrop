@@ -14,7 +14,11 @@ enum TransferDirection { sending, receiving }
 abstract class TransferKeepAlive {
   /// Start keeping the transfer alive. Call it while the app is visible.
   /// [onStop] runs when the person stops the transfer from the
-  /// notification, or the system ends it.
+  /// notification, or the system ends it. If the system refuses, the
+  /// transfer still runs, but only while the app is visible.
+  ///
+  /// One transfer at a time: the send and receive screens never run
+  /// together, so one instance serves both.
   Future<void> begin(TransferDirection direction, void Function() onStop);
 
   /// The transfer ended, for whatever reason.

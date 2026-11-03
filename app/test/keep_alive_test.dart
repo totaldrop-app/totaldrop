@@ -2,6 +2,7 @@
 // (#194): the view models ask for it when a send or a receive starts,
 // release it whenever it ends, and the notification's Stop stops it.
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:totaldrop/src/rust/api/transfer.dart';
@@ -22,6 +23,15 @@ TransferEvent finished() => TransferEvent(
     saved: [],
   ),
   error: null,
+);
+
+TransferEvent stoppedEvent() => TransferEvent(
+  kind: EventKind.failed,
+  words: const [],
+  done: 0,
+  total: 0,
+  summary: null,
+  error: const TransferError(kind: ErrorKind.stopped, detail: ''),
 );
 
 void main() {
@@ -78,6 +88,17 @@ void main() {
       await pumpEventQueue();
       keep.onStop!();
       expect(repo.stoppers.single.stopped, isTrue);
+      // The core then reports the stop, which releases the keep-alive.
+      repo.events.add(stoppedEvent());
+      await pumpEventQueue();
+      expect(vm.stage, SendStage.failed);
+      expect(keep.calls, ['begin sending', 'end']);
+    });
+
+    test('is released when the screen goes away', () async {
+      unawaited(vm.start());
+      vm.dispose();
+      expect(keep.calls, ['begin sending', 'end']);
     });
   });
 
@@ -129,6 +150,27 @@ void main() {
       unawaited(vm.connect());
       keep.onStop!();
       expect(repo.stoppers.single.stopped, isTrue);
+    });
+
+    test('Stop on the notification declines an offer', () async {
+      unawaited(vm.connect());
+      final offer = FakeOffer();
+      repo.connected.complete(offer);
+      await pumpEventQueue();
+      keep.onStop!();
+      await pumpEventQueue();
+      expect(repo.declined, [offer]);
+      expect(vm.stage, ReceiveStage.declined);
+      expect(keep.calls, ['begin receiving', 'end']);
+    });
+
+    test('is released when the folder cannot be made', () async {
+      repo.folderError = const FileSystemException('read-only');
+      unawaited(vm.connect());
+      repo.connected.complete(FakeOffer());
+      await pumpEventQueue();
+      expect(vm.stage, ReceiveStage.failed);
+      expect(keep.calls, ['begin receiving', 'end']);
     });
   });
 }

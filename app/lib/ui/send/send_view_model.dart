@@ -100,6 +100,13 @@ class SendViewModel extends ChangeNotifier {
     } on TransferError catch (e) {
       if (generation == _generation) _fail(e);
       return;
+    } catch (e) {
+      // Not from the core (a file that went away, a platform error): still
+      // a failure, so the screen and the keep-alive do not hang.
+      if (generation == _generation) {
+        _fail(TransferError(kind: ErrorKind.other, detail: '$e'));
+      }
+      return;
     }
     if (generation != _generation) {
       // Prepared just before a stop: release the code now, not at GC.

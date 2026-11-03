@@ -36,7 +36,7 @@
 
   <main id="main" class="prose">
     <article id="en" lang="en">
-      <p class="eyebrow">Privacy policy · version 4 · 29 October 2026</p>
+      <p class="eyebrow">Privacy policy · version 5 · 3 November 2026</p>
       <h1>We collect nothing about you.</h1>
       <p class="lead">TotalDrop has no accounts, no analytics, no advertising and no crash reporting. This page explains exactly what our servers can see while you transfer files, and how quickly it is gone.</p>
 
@@ -44,7 +44,7 @@
       <p>TotalDrop is a free, open-source project maintained by Ozan Özdil. It applies to the TotalDrop apps, the command-line client and the servers at <code>totaldrop.app</code>. Contact: <a href="mailto:privacy@totaldrop.app">privacy@totaldrop.app</a>.</p>
 
       <h2>What the apps collect</h2>
-      <p>Nothing. The apps do not ask for your name, email address or phone number, and they contain no tracking, analytics, advertising or crash-reporting code. The only permission the Android app needs is internet access.</p>
+      <p>Nothing. The apps do not ask for your name, email address or phone number, and they contain no tracking, analytics, advertising or crash-reporting code. Up to 0.3.0-beta.2 the Android app needs only internet access. Later versions ask only for what a transfer needs: internet access and network state, to connect; running a transfer in the background, so it continues while you switch to another app; and showing notifications, for the ongoing notification with its Stop button while a transfer runs. These permissions stay on your device: they send nothing to us or anyone else.</p>
 
       <h2>Your files</h2>
       <p>Files travel directly from one device to the other when the two can reach each other, and otherwise through our relay (below); either way they are encrypted end to end. Our servers never see your files, their names or their contents, and cannot read what passes through them: the keys exist only on the two devices.</p>
@@ -86,11 +86,11 @@
       <p>Because we hold no personal data about you, there is nothing to access, correct or delete. If you have a question or a complaint, write to us at the address above. You also have the right to complain to your data protection authority.</p>
 
       <h2>Changes</h2>
-      <p>Version 4 follows Android and Linux 0.2.0-beta.1, which changed what the relay and the other device see. In these versions devices contact the relay only when no direct connection is chosen in time or there is no direct path to try, instead of at the start of every transfer. A receiver no longer uses a relay that only the sender chose, so privacy mode now hides a receiver's address too. Privacy mode is now also in the apps' Settings and refuses direct connections. Version 4 also says what the Android app keeps in its cache. Version 3 corrected version 2, which said the apps reach the relay only when no direct path works (they then connected to it at the start of every transfer) and that privacy mode hid a receiver's address, which it then did not. It also named the Linux app's files. Version 2 added the STUN service and the relay. Features planned for later versions (links, optional anonymous accounts) will change what our servers handle. We will update this policy before any such feature ships, and keep every version in the project's public repository.</p>
+      <p>Version 5 lists the permissions that Android versions after 0.3.0-beta.2 ask for, which let a transfer continue in the background with a notification; what our servers see does not change. Version 4 follows Android and Linux 0.2.0-beta.1, which changed what the relay and the other device see. In these versions devices contact the relay only when no direct connection is chosen in time or there is no direct path to try, instead of at the start of every transfer. A receiver no longer uses a relay that only the sender chose, so privacy mode now hides a receiver's address too. Privacy mode is now also in the apps' Settings and refuses direct connections. Version 4 also says what the Android app keeps in its cache. Version 3 corrected version 2, which said the apps reach the relay only when no direct path works (they then connected to it at the start of every transfer) and that privacy mode hid a receiver's address, which it then did not. It also named the Linux app's files. Version 2 added the STUN service and the relay. Features planned for later versions (links, optional anonymous accounts) will change what our servers handle. We will update this policy before any such feature ships, and keep every version in the project's public repository.</p>
     </article>
 
     <article id="tr" lang="tr">
-      <p class="eyebrow">Gizlilik politikası · sürüm 4 · 29 Ekim 2026</p>
+      <p class="eyebrow">Gizlilik politikası · sürüm 5 · 3 Kasım 2026</p>
       <h1>Hakkınızda hiçbir şey toplamıyoruz.</h1>
       <p class="lead">TotalDrop'ta hesap, analiz, reklam ve çökme raporlaması yok. Bu sayfa, dosya gönderirken sunucularımızın tam olarak neyi görebildiğini ve bunun ne kadar çabuk silindiğini anlatır.</p>
 
@@ -98,7 +98,7 @@
       <p>TotalDrop, Ozan Özdil'in yürüttüğü ücretsiz ve açık kaynak bir projedir. Bu politika TotalDrop uygulamalarını, komut satırı istemcisini ve <code>totaldrop.app</code> sunucularını kapsar. İletişim: <a href="mailto:privacy@totaldrop.app">privacy@totaldrop.app</a>.</p>
 
       <h2>Uygulamalar ne toplar</h2>
-      <p>Hiçbir şey. Uygulamalar adınızı, e-posta adresinizi ya da telefon numaranızı istemez; izleme, analiz, reklam ya da çökme raporlama kodu içermez. Android uygulamasının istediği tek izin internet erişimidir.</p>
+      <p>Hiçbir şey. Uygulamalar adınızı, e-posta adresinizi ya da telefon numaranızı istemez; izleme, analiz, reklam ya da çökme raporlama kodu içermez. Android uygulaması 0.3.0-beta.2 sürümüne kadar yalnızca internet erişimi ister. Sonraki sürümler yalnızca aktarımın gerektirdiği izinleri ister: bağlanmak için internet erişimi ve ağ durumu; başka bir uygulamaya geçtiğinizde sürmesi için aktarımı arka planda çalıştırma; aktarım sürerken Durdur düğmeli kalıcı bildirim için bildirim gösterme. Bu izinler cihazınızda kalır, bize ya da başka birine hiçbir şey göndermez.</p>
 
       <h2>Dosyalarınız</h2>
       <p>Dosyalar, iki cihaz birbirine ulaşabiliyorsa doğrudan, ulaşamıyorsa aktarma sunucumuz üzerinden gider (aşağıda); her iki durumda da uçtan uca şifrelidir. Sunucularımız dosyalarınızı, adlarını ya da içeriklerini hiçbir zaman görmez ve üzerlerinden geçeni okuyamaz, çünkü anahtarlar yalnızca iki cihazda bulunur.</p>
@@ -140,7 +140,7 @@
       <p>Hakkınızda hiçbir kişisel veri tutmadığımız için erişilecek, düzeltilecek ya da silinecek bir şey yoktur. Bir sorunuz ya da şikâyetiniz varsa yukarıdaki adrese yazın. Kişisel Verileri Koruma Kurumu'na ya da bulunduğunuz ülkedeki veri koruma otoritesine başvurma hakkınız da vardır.</p>
 
       <h2>Değişiklikler</h2>
-      <p>4. sürüm, aktarma sunucusunun ve karşı cihazın neyi gördüğünü değiştiren Android ve Linux 0.2.0-beta.1 sürümlerini izler. Bu sürümlerde cihazlar aktarma sunucusuna her aktarımın başında değil, yalnızca doğrudan bağlantı zamanında seçilmezse ya da denenecek doğrudan yol yoksa bağlanır. Alan cihaz, gönderenin seçtiği ama kendisinin kullanmadığı bir aktarma sunucusuna artık bağlanmaz; bu yüzden gizlilik modu artık alıcının adresini de gizler. Gizlilik modu artık uygulamaların Ayarlar ekranında da var ve doğrudan bağlantıları reddeder. 4. sürüm, Android uygulamasının önbelleğinde neyi tuttuğunu da anlatır. 3. sürüm 2. sürümü düzeltmişti: 2. sürüm uygulamaların aktarma sunucusuna yalnızca doğrudan yol açılmadığında bağlandığını (o sırada her aktarımın başında bağlanıyorlardı) ve gizlilik modunun alıcının adresini gizlediğini (o sırada gizlemiyordu) söylüyordu. Linux uygulamasının dosyalarını anlatan bölüm 3. sürümde eklenmişti. 2. sürüm STUN hizmetini ve aktarma sunucusunu eklemişti. Sonraki sürümlerde planlanan özellikler (bağlantılar, isteğe bağlı anonim hesaplar) sunucularımızın işlediği bilgileri değiştirecek. Bu politikayı, böyle bir özellik yayınlanmadan önce güncelleyeceğiz ve her sürümünü projenin açık deposunda saklayacağız.</p>
+      <p>5. sürüm, 0.3.0-beta.2 sonrasındaki Android sürümlerinin istediği ve bir aktarımın bildirimle arka planda sürmesini sağlayan izinleri sıralar; sunucularımızın gördükleri değişmez. 4. sürüm, aktarma sunucusunun ve karşı cihazın neyi gördüğünü değiştiren Android ve Linux 0.2.0-beta.1 sürümlerini izler. Bu sürümlerde cihazlar aktarma sunucusuna her aktarımın başında değil, yalnızca doğrudan bağlantı zamanında seçilmezse ya da denenecek doğrudan yol yoksa bağlanır. Alan cihaz, gönderenin seçtiği ama kendisinin kullanmadığı bir aktarma sunucusuna artık bağlanmaz; bu yüzden gizlilik modu artık alıcının adresini de gizler. Gizlilik modu artık uygulamaların Ayarlar ekranında da var ve doğrudan bağlantıları reddeder. 4. sürüm, Android uygulamasının önbelleğinde neyi tuttuğunu da anlatır. 3. sürüm 2. sürümü düzeltmişti: 2. sürüm uygulamaların aktarma sunucusuna yalnızca doğrudan yol açılmadığında bağlandığını (o sırada her aktarımın başında bağlanıyorlardı) ve gizlilik modunun alıcının adresini gizlediğini (o sırada gizlemiyordu) söylüyordu. Linux uygulamasının dosyalarını anlatan bölüm 3. sürümde eklenmişti. 2. sürüm STUN hizmetini ve aktarma sunucusunu eklemişti. Sonraki sürümlerde planlanan özellikler (bağlantılar, isteğe bağlı anonim hesaplar) sunucularımızın işlediği bilgileri değiştirecek. Bu politikayı, böyle bir özellik yayınlanmadan önce güncelleyeceğiz ve her sürümünü projenin açık deposunda saklayacağız.</p>
     </article>
   </main>
 

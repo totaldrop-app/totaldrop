@@ -12,8 +12,7 @@ import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.os.Handler
-import android.os.Looper
+import android.os.PersistableBundle
 
 /**
  * Keeps a send or a receive alive while TotalDrop is in the background
@@ -40,8 +39,14 @@ object TransferJob {
         val stop: String,
     )
 
+    private const val GENERATION = "generation"
+
     private var notice: Notice? = null
     private var running: Pair<TransferJobService, JobParameters>? = null
+
+    /** Which transfer a job belongs to. The system hands each callback its
+     * own JobParameters, so they cannot be compared by identity. */
+    private var generation = 0L
 
     /** Called when the person or the system stops the transfer. */
     var onStop: (() -> Unit)? = null
@@ -53,11 +58,13 @@ object TransferJob {
         running?.let { (service, params) -> service.jobFinished(params, false) }
         running = null
         this.notice = notice
+        generation += 1
         val app = context.applicationContext
         val scheduler = app.getSystemService(JobScheduler::class.java) ?: return false
         val job = JobInfo.Builder(JOB_ID, ComponentName(app, TransferJobService::class.java))
             .setUserInitiated(true)
             .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+            .setExtras(PersistableBundle().apply { putLong(GENERATION, generation) })
             .build()
         return scheduler.schedule(job) == JobScheduler.RESULT_SUCCESS
     }
@@ -65,6 +72,7 @@ object TransferJob {
     /** The transfer ended: drop the job and its notification. */
     fun end(context: Context) {
         notice = null
+        generation += 1
         val r = running
         running = null
         if (r != null) {
@@ -76,6 +84,7 @@ object TransferJob {
 
     internal fun started(service: TransferJobService, params: JobParameters): Boolean {
         val n = notice ?: return false
+        if (params.extras.getLong(GENERATION) != generation) return false
         running = service to params
         service.setNotification(
             params,
@@ -87,15 +96,24 @@ object TransferJob {
     }
 
     internal fun stoppedBySystem(params: JobParameters) {
-        // Only the job of the transfer under way; not one that was replaced.
-        if (running?.second !== params) return
+        // Only the job of the transfer under way; not one that was replaced
+        // or ended.
+        if (params.extras.getLong(GENERATION) != generation) return
         running = null
         notice = null
+        generation += 1
         onStop?.invoke()
     }
 
-    internal fun stoppedByPerson() {
-        onStop?.invoke()
+    internal fun stoppedByPerson(context: Context) {
+        val stop = onStop
+        if (stop != null) {
+            stop()
+        } else {
+            // No app left to stop the transfer: at least end the job, so
+            // the notification does not stay behind.
+            end(context)
+        }
     }
 
     private fun build(context: Context, n: Notice): Notification {
@@ -117,7 +135,7 @@ object TransferJob {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
         return Notification.Builder(context, CHANNEL_ID)
-            .setSmallIcon(R.mipmap.ic_launcher_monochrome)
+            .setSmallIcon(R.drawable.ic_stat_transfer)
             .setContentTitle(n.title)
             .setContentText(n.text)
             .setContentIntent(open)
@@ -136,7 +154,7 @@ class TransferJobService : JobService() {
     override fun onStopJob(params: JobParameters): Boolean {
         // The person stopped it from the system's task manager, or the
         // system ended it: the transfer cannot go on in the background.
-        Handler(Looper.getMainLooper()).post { TransferJob.stoppedBySystem(params) }
+        TransferJob.stoppedBySystem(params)
         return false
     }
 }
@@ -145,6 +163,6 @@ class TransferJobService : JobService() {
  * PendingIntent reaches it. */
 class StopTransferReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action == TransferJob.ACTION_STOP) TransferJob.stoppedByPerson()
+        if (intent.action == TransferJob.ACTION_STOP) TransferJob.stoppedByPerson(context)
     }
 }

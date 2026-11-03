@@ -428,10 +428,10 @@ class AppLocalizationsHe extends AppLocalizations {
   String get transferNoticeChannel => 'העברות';
 
   @override
-  String get transferNoticeSending => 'שולח עם TotalDrop';
+  String get transferNoticeSending => 'שליחה באמצעות TotalDrop';
 
   @override
-  String get transferNoticeReceiving => 'מקבל עם TotalDrop';
+  String get transferNoticeReceiving => 'קבלה באמצעות TotalDrop';
 
   @override
   String get transferNoticeBody => 'ממשיך גם כשמשתמשים באפליקציות אחרות.';
