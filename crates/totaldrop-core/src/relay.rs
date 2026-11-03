@@ -47,14 +47,17 @@ struct Limits {
     time: Duration,
     /// Bytes sent.
     bytes: u64,
+    /// Tries in a row that did not get signed in.
+    refused: u32,
 }
 
 /// The relays' limits for one connection (protocol notes, item 23): the
-/// link keeps them over all its connections, so that connecting again does
-/// not get round them.
+/// link keeps them over all its connections, so that its own reconnects do
+/// not get round them. The relays count per connection only.
 const LIMITS: Limits = Limits {
     time: Duration::from_secs(6 * 60 * 60),
     bytes: 32 * 1024 * 1024 * 1024,
+    refused: 10,
 };
 
 /// Check a relay URL the same way as a rendezvous server address:
@@ -151,9 +154,12 @@ impl Drop for Link {
 /// Connect to the relay at `url` as `own`, and carry datagrams between the
 /// pipes and the device with endpoint key `peer` until the link is dropped.
 /// A lost or refused connection to the relay is tried again, with a growing
-/// pause (#185): the relay also ends the other side's connection when one
-/// side's drops, and QUIC rides out the gap. Failures are otherwise silent:
-/// the relay is only one of the paths.
+/// pause (#185): the Cloudflare relay ends the other side's connection when
+/// one side's closes, and QUIC rides out a short gap. A connection that
+/// dies without the relay noticing is only replaced once the relay lets the
+/// old one go. After [`Limits::refused`] tries in a row that never signed
+/// in, the link gives up. Failures are otherwise silent: the relay is only
+/// one of the paths.
 pub fn spawn(
     url: String,
     own: Arc<EndpointKey>,
@@ -181,17 +187,29 @@ fn spawn_with(
             return;
         };
         let mut sent = 0u64;
+        let mut refused = 0u32;
         let mut pause = RETRY_FIRST;
         loop {
             let started = tokio::time::Instant::now();
-            if started >= end || sent >= limits.bytes {
+            if started >= end || sent >= limits.bytes || refused >= limits.refused {
                 return;
             }
-            match tokio::time::timeout_at(end, run(&url, &own, peer, &mut pipes, &mut sent)).await {
+            let mut signed_in = false;
+            let ended = tokio::time::timeout_at(
+                end,
+                run(&url, &own, peer, &mut pipes, &mut sent, &mut signed_in),
+            )
+            .await;
+            match ended {
                 // The endpoint is gone, or the time is up.
                 Ok(Ok(Ended::Outgoing)) | Err(_) => return,
                 Ok(Ok(Ended::Relay) | Err(_)) => {}
             }
+            refused = if signed_in {
+                0
+            } else {
+                refused.saturating_add(1)
+            };
             if started.elapsed() >= RETRY_RESET {
                 pause = RETRY_FIRST;
             }
@@ -209,13 +227,15 @@ enum Ended {
     Relay,
 }
 
-/// One connection to the relay, counting the bytes it sends in `sent`.
+/// One connection to the relay, counting the bytes it sends in `sent` and
+/// setting `signed_in` once the relay accepted the endpoint key.
 async fn run(
     url: &str,
     own: &EndpointKey,
     peer: [u8; 32],
     pipes: &mut RelayPipes,
     sent: &mut u64,
+    signed_in: &mut bool,
 ) -> Result<Ended> {
     // Both sides meet under the name of their two keys.
     let url = format!(
@@ -243,6 +263,7 @@ async fn run(
     })
     .await
     .map_err(|_| Error::Connect("relay: timed out".into()))??;
+    *signed_in = true;
 
     let mut ping = tokio::time::interval(KEEPALIVE);
     ping.tick().await;
@@ -404,6 +425,7 @@ mod tests {
         let limits = Limits {
             time: Duration::from_millis(1200),
             bytes: u64::MAX,
+            refused: u32::MAX,
         };
         let _link = spawn_with(url, own, peer.public(), pipes, gate, limits);
         // Tries at 0 and 0.5 seconds; the next would be at 1.5.
@@ -433,6 +455,7 @@ mod tests {
         let limits = Limits {
             time: Duration::from_secs(3600),
             bytes: 1000,
+            refused: u32::MAX,
         };
         let _link = spawn_with(url, own, peer.public(), pipes, gate, limits);
         let mut ws = sign_in(&relay).await;
@@ -445,5 +468,36 @@ mod tests {
             after.is_err(),
             "the link connected after its bytes were spent"
         );
+    }
+
+    /// A relay that keeps refusing the link is not tried for ever: after
+    /// `refused` tries in a row that never signed in, the link gives up.
+    #[tokio::test]
+    async fn link_gives_up_on_a_relay_that_keeps_refusing() {
+        let relay = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let url = format!("ws://{}/v0/relay", relay.local_addr().unwrap());
+        let (own, peer) = (
+            Arc::new(EndpointKey::generate().unwrap()),
+            EndpointKey::generate().unwrap(),
+        );
+        let (_out, pipes) = pipes();
+        let gate = Gate::default();
+        gate.open();
+        let limits = Limits {
+            time: Duration::from_secs(3600),
+            bytes: u64::MAX,
+            refused: 3,
+        };
+        let _link = spawn_with(url, own, peer.public(), pipes, gate, limits);
+        // Tries at 0, 0.5 and 1.5 seconds; the next would be at 3.5.
+        for _ in 0..3 {
+            let (stream, _) = tokio::time::timeout(Duration::from_secs(5), relay.accept())
+                .await
+                .expect("the link did not try again")
+                .unwrap();
+            drop(stream);
+        }
+        let after = tokio::time::timeout(Duration::from_secs(4), relay.accept()).await;
+        assert!(after.is_err(), "the link kept trying a relay that refuses");
     }
 }
