@@ -159,7 +159,8 @@ treated as final.
       stream, best effort within 2 seconds, then closes the connection. The
       other side reports that the other device stopped. A stopped receiver
       removes its partial files and the empty folders this transfer created;
-      files already placed stay.
+      files already placed stay. A receiver whose sender cancels does the
+      same; files it verified before it handled the cancel stay too.
     - No entry may sit beneath a file entry.
 19. **Device keys in the command-line client.** Until keystore support
     arrives, the command-line client generates new device keys for every
