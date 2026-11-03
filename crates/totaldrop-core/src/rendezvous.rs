@@ -84,6 +84,9 @@ pub fn mailbox_path(nameplate: u32) -> String {
 /// dropped by proxies along the way.
 const KEEPALIVE: std::time::Duration = std::time::Duration::from_secs(20);
 
+/// How long `CLOSE` waits for the server to end the connection.
+const CLOSE_WAIT: std::time::Duration = std::time::Duration::from_secs(2);
+
 pub(crate) type Ws = WebSocketStream<MaybeTlsStream<TcpStream>>;
 
 fn join(server: &str, path: &str) -> String {
@@ -233,15 +236,125 @@ impl Mailbox {
     }
 
     /// `CLOSE`: leave the mailbox.
+    ///
+    /// The server ends the connection once it has handled `CLOSE`, so this
+    /// waits for that before hanging up itself; the whole call takes at
+    /// most [`CLOSE_WAIT`]. Against the production server, hanging up at
+    /// once sometimes cost both the last `ADD` and the `CLOSE`: the other
+    /// side got a `lonely` `peer_closed` without our hints (#191). Probably
+    /// the socket was dropped with unread data, so it was reset and frames
+    /// not yet forwarded were discarded; that part is not confirmed.
     pub async fn close(mut self, mood: Mood) {
-        let _ = send(&mut self.ws, ClientMessage::Close { mood }).await;
-        let _ = self.ws.close(None).await;
+        let now = tokio::time::Instant::now();
+        let deadline = now.checked_add(CLOSE_WAIT).unwrap_or(now);
+        let _ = tokio::time::timeout_at(deadline, async {
+            send(&mut self.ws, ClientMessage::Close { mood }).await?;
+            // Whatever still arrives (such as the other side's
+            // `peer_closed`) no longer matters; only the end does.
+            while let Some(Ok(frame)) = self.ws.next().await {
+                if matches!(frame, Message::Close(_)) {
+                    break;
+                }
+            }
+            Ok::<(), Error>(())
+        })
+        .await;
+        let _ = tokio::time::timeout_at(deadline, self.ws.close(None)).await;
     }
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::panic)]
 mod tests {
     use super::*;
+
+    async fn next_client(ws: &mut Ws) -> Option<ClientMessage> {
+        loop {
+            match ws.next().await {
+                Some(Ok(Message::Binary(b))) => return Some(ClientMessage::decode(&b).unwrap()),
+                Some(Ok(Message::Ping(_) | Message::Pong(_))) => {}
+                _ => return None,
+            }
+        }
+    }
+
+    /// A stand-in mailbox: grants a claim, waits for `CLOSE`, then reports
+    /// whether the client hung up within `grace` before it closes itself.
+    async fn close_server(
+        listener: tokio::net::TcpListener,
+        grace: std::time::Duration,
+        server_closes: bool,
+    ) -> bool {
+        let (stream, _) = listener.accept().await.unwrap();
+        let mut ws = tokio_tungstenite::accept_async(MaybeTlsStream::Plain(stream))
+            .await
+            .unwrap();
+        assert!(matches!(
+            next_client(&mut ws).await,
+            Some(ClientMessage::Claim { .. })
+        ));
+        let claimed = ServerMessage::Claimed { mailbox: [7; 16] };
+        ws.send(Message::Binary(claimed.encode().into()))
+            .await
+            .unwrap();
+        assert!(matches!(
+            next_client(&mut ws).await,
+            Some(ClientMessage::Close { .. })
+        ));
+        // The client must stay until the server has handled CLOSE.
+        let hung_up = match tokio::time::timeout(grace, ws.next()).await {
+            Ok(Some(Ok(Message::Close(_))) | None | Some(Err(_))) => true,
+            Ok(Some(Ok(_))) => panic!("nothing else expected after CLOSE"),
+            Err(_) => false,
+        };
+        if server_closes && !hung_up {
+            let _ = ws.close(None).await;
+        }
+        hung_up
+    }
+
+    #[tokio::test]
+    async fn close_waits_for_the_server_to_end_the_connection() {
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let server = format!("ws://{}", listener.local_addr().unwrap());
+        let stand_in = tokio::spawn(close_server(
+            listener,
+            std::time::Duration::from_millis(500),
+            true,
+        ));
+        let mailbox = Mailbox::claim(&server, 5, None).await.unwrap();
+        let started = tokio::time::Instant::now();
+        mailbox.close(Mood::Happy).await;
+        assert!(
+            !stand_in.await.unwrap(),
+            "the client hung up before the server"
+        );
+        assert!(
+            started.elapsed() < CLOSE_WAIT,
+            "close returned only at its time limit"
+        );
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn close_gives_up_on_a_server_that_never_ends_the_connection() {
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let server = format!("ws://{}", listener.local_addr().unwrap());
+        let stand_in = tokio::spawn(close_server(
+            listener,
+            CLOSE_WAIT.saturating_add(std::time::Duration::from_secs(1)),
+            false,
+        ));
+        let mailbox = Mailbox::claim(&server, 5, None).await.unwrap();
+        let started = tokio::time::Instant::now();
+        mailbox.close(Mood::Happy).await;
+        let waited = started.elapsed();
+        assert!(waited >= CLOSE_WAIT, "close did not wait for the server");
+        assert!(
+            waited < CLOSE_WAIT.saturating_add(std::time::Duration::from_secs(1)),
+            "close waited too long"
+        );
+        assert!(stand_in.await.unwrap(), "close never hung up");
+    }
 
     #[test]
     fn url_policy() {

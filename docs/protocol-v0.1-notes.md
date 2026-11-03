@@ -47,6 +47,13 @@ treated as final.
      refused. A nameplate that was never allocated cannot be claimed.
    - A connection claims once, and only the mailbox of its address.
    - A client that disconnects without `CLOSE` counts as a `lonely` close.
+   - After `CLOSE` the server ends the connection. The client waits for
+     that, at most 2 seconds in all, before it hangs up itself. Against the
+     Cloudflare server, a client that hung up at once sometimes lost both
+     its last `add` and its `close`: the other side got a `lonely`
+     `peer_closed` without the hints and gave up. That happened in 6 of
+     650 exchanges, and in none of 650 with the wait (#191). The exact
+     cause on the server side is not confirmed.
    - Every mailbox has its own random ID, so a connection whose nameplate
      expired can never act on the number's next owner. Only a side of the
      mailbox can close it.
