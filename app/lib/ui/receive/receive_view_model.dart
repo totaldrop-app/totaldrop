@@ -36,10 +36,10 @@ class ReceiveViewModel extends ChangeNotifier {
     required TransferRepository repository,
     TransferKeepAlive keepAlive = const NoKeepAlive(),
   }) : _repo = repository,
-       _keepAlive = keepAlive;
+       _keeper = keepAlive;
 
   final TransferRepository _repo;
-  final TransferKeepAlive _keepAlive;
+  final TransferKeepAlive _keeper;
   bool _keptAlive = false;
   StreamSubscription<TransferEvent>? _sub;
   Stopper? _stopper;
@@ -175,13 +175,13 @@ class ReceiveViewModel extends ChangeNotifier {
   /// The notification's Stop stops it.
   void _keepGoing() {
     _keptAlive = true;
-    unawaited(_keepAlive.begin(TransferDirection.receiving, cancel));
+    unawaited(_keeper.begin(TransferDirection.receiving, cancel));
   }
 
   void _release() {
     if (!_keptAlive) return;
     _keptAlive = false;
-    unawaited(_keepAlive.end());
+    unawaited(_keeper.end());
   }
 
   /// Stop the transfer, at whatever stage it is in. The sender is told.
