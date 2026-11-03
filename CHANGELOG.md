@@ -150,7 +150,7 @@ per change, and move here when it is released (docs/surec.md).
   instead of TotalDrop's lavender, and follows a theme change without a
   restart. Outside Plasma (GNOME, Hyprland, Omarchy) buttons, fields and
   switches take GTK's shape and rounding, and icons stay visible in a dark
-  theme (#174).
+  theme. Omarchy keeps its own theme's colours (#174).
 - **Linux:** In a short window the Send code screen shows its scroll bar
   and Tab brings Cancel into view. Under Fusion, "Add files" shows
   keyboard focus. Under Plasma, Accept is marked as the default button
