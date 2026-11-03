@@ -48,8 +48,9 @@
         <p>On GNOME and on Hyprland without a Qt theme, the window takes the colours of your GTK theme and follows a theme change at once; buttons, fields and switches take the desktop's shape. Omarchy keeps its own theme.</p>
         <p>Clearer messages: a code nobody is using, a code that expired and a server address that is not valid are each named as such.</p>
         <p>Pasting the whole share message into the receive field finds the code in it, invisible characters such as direction marks are dropped from a pasted code, and codes typed with Arabic, Persian or Urdu digits are accepted. In a right-to-left language the shared message shows the code in order.</p>
-        <p>The screens stay centred in a wide window and files in the Send list get an icon for their kind. Escape goes back from Send, Receive and Settings, Enter presses the focused button once, and Tab reaches controls it used to skip, scrolling them into view.</p>
-        <p>With some Mesa drivers (seen on Intel graphics) the window no longer falls back to 16-bit colour, so its colours are no longer a shade off. totaldrop-desktop --help and --version answer on the terminal.</p>
+        <p>The screens stay centred in a wide window and files in the Send list get an icon for their kind. Escape goes back from Send, Receive and Settings, Enter presses the focused button on the result screen, and Tab reaches controls it used to skip, scrolling them into view.</p>
+        <p>With some Mesa drivers (seen on Intel graphics) the window no longer falls back to 16-bit colour, so its colours are no longer a shade off.</p>
+        <p>totaldrop-desktop --help and --version print to the terminal instead of opening the window.</p>
       </description>
     </release>
     <release version="0.3.0~beta.1" date="2026-10-30" type="development">

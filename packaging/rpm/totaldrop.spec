@@ -91,11 +91,12 @@ cargo test --release --locked -p totaldrop-linux -p totaldrop-proto
   code in order.
 - The screens stay centred in a wide window and files in the Send list
   get an icon for their kind. Escape goes back from Send, Receive and
-  Settings, Enter presses the focused button once, and Tab reaches
-  controls it used to skip, scrolling them into view.
+  Settings, Enter presses the focused button on the result screen, and
+  Tab reaches controls it used to skip, scrolling them into view.
 - With some Mesa drivers (seen on Intel graphics) the window no longer
   falls back to 16-bit colour, so its colours are no longer a shade off.
-  totaldrop-desktop --help and --version answer on the terminal.
+- totaldrop-desktop --help and --version print to the terminal instead
+  of opening the window.
 
 * Fri Oct 30 2026 TotalDrop <hello@totaldrop.app> - 0.3.0~beta.1-1
 - New mark, Köşe, and a new icon: a circle with one square corner. It
