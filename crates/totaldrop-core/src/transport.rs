@@ -269,9 +269,10 @@ fn transport_config() -> Arc<quinn::TransportConfig> {
     t.max_concurrent_uni_streams(8u8.into());
     // Room for several megabytes in flight, so a path with a long round
     // trip is not held to window / RTT: quinn's default of 1.25 MB per
-    // stream allows only about 4 MB/s at 300 ms over the relay (#185). The
-    // relay forwards without holding anything back, so these windows also
-    // bound what it buffers for one connection.
+    // stream allows one stream only about 4 MB/s at 300 ms over the relay
+    // (#185). An honest client never has more than these windows in flight,
+    // which also bounds what the relay holds for its connection; the relays
+    // do not enforce that themselves.
     t.stream_receive_window(STREAM_WINDOW.into());
     t.receive_window(CONNECTION_WINDOW.into());
     t.send_window(u64::from(CONNECTION_WINDOW));
@@ -614,8 +615,13 @@ async fn keep_dialling(endpoint: &quinn::Endpoint, addr: SocketAddr) -> Result<q
                 });
                 next = next.checked_add(ATTEMPT).unwrap_or(next);
             }
-            Some(Ok(Some(conn))) = tries.join_next(), if !tries.is_empty() => {
-                return Ok(conn);
+            // Match inside: a pattern here that did not match would switch
+            // this branch off until the next fresh try, and a later try's
+            // success would wait for it.
+            Some(done) = tries.join_next(), if !tries.is_empty() => {
+                if let Ok(Some(conn)) = done {
+                    return Ok(conn);
+                }
             }
         }
     }
@@ -936,8 +942,8 @@ mod tests {
     /// still used, as long as it works before the receiver gives up (#185).
     /// QUIC waits longer and longer between resending a handshake packet
     /// that got no answer (about 1, 3, 7 and 15 seconds after the first),
-    /// so a single attempt would not notice a path that starts working at
-    /// 7.5 seconds before the receiver gives up; fresh attempts do.
+    /// so a single attempt limited to HANDSHAKE (10 seconds) never resends
+    /// after a path that starts working at 7.5 seconds; fresh attempts do.
     #[tokio::test(start_paused = true)]
     async fn a_relay_path_that_starts_working_late_is_still_used() {
         for after in [7_500, 12_000] {
@@ -960,7 +966,7 @@ mod tests {
 
     /// A stream may have several megabytes in flight, so a path with a long
     /// round trip, such as the relay, is not held to the window divided by
-    /// the round trip: about 3 MB/s with quinn's default 1.25 MB at 300 ms
+    /// the round trip: about 4 MB/s with quinn's default 1.25 MB at 300 ms
     /// (#185). The receiver here never reads, so the writer gets exactly as
     /// far as the receiver's flow-control window lets it.
     #[tokio::test]
@@ -987,6 +993,46 @@ mod tests {
         assert!(
             written >= goal,
             "only {written} bytes fit in the receiver's window"
+        );
+    }
+
+    /// A try that ends without a connection does not hold up a later one
+    /// that succeeds: its success is used at once, not at the next fresh
+    /// try (#185 review). The path starts working just after the first try
+    /// gives up at HANDSHAKE.
+    #[tokio::test(start_paused = true)]
+    async fn a_failed_try_does_not_delay_a_later_one() {
+        let (ka, kb) = (
+            EndpointKey::generate().unwrap(),
+            EndpointKey::generate().unwrap(),
+        );
+        let sa = UdpSocket::bind(SocketAddr::from(([127, 0, 0, 1], 0))).unwrap();
+        let sb = UdpSocket::bind(SocketAddr::from(([127, 0, 0, 1], 0))).unwrap();
+        let (dialler, pa) = endpoint(sa, &ka, &kb.public()).unwrap();
+        let (listener, pb) = endpoint(sb, &kb, &ka.public()).unwrap();
+        let (ga, gb) = (crate::relay::Gate::default(), crate::relay::Gate::default());
+        gb.open();
+        let after = HANDSHAKE.checked_add(Duration::from_millis(200)).unwrap();
+        cross_from(pa, pb, ga.clone(), gb, after);
+        let accept = tokio::spawn(async move {
+            let conn = listener.accept().await.unwrap().await.unwrap();
+            tokio::time::sleep(Duration::from_secs(60)).await;
+            drop(conn);
+        });
+        let paths = Paths {
+            direct: Vec::new(),
+            relay: Some(ga),
+            relay_only: true,
+        };
+        let start = tokio::time::Instant::now();
+        let conn = connect_any(&dialler, &paths).await.unwrap();
+        let took = start.elapsed();
+        accept.abort();
+        assert_eq!(conn.remote_address(), crate::path::RELAY_PEER);
+        // Fresh tries start at 0, 4, 8 and 12 seconds.
+        assert!(
+            took < ATTEMPT.saturating_mul(3),
+            "connected only after {took:?}"
         );
     }
 }

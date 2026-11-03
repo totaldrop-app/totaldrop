@@ -193,14 +193,17 @@ treated as final.
     (#185). Moving a connection from the relay to a direct path that opens
     later (QUIC migration) is not done yet.
     - A stream may have 8 MiB in flight and a connection 16 MiB, so a path
-      with a long round trip is not held to window / RTT (#185). The relay
-      forwards without holding anything back, so these windows also bound
-      what it buffers for one connection.
+      with a long round trip is not held to window / RTT (#185). An honest
+      client never has more than that in flight on one connection, which
+      also bounds what a relay holds for it; the Cloudflare relay does not
+      enforce a bound of its own yet (#190).
     - A relay link that loses its connection, or does not get one, connects
-      again after 0.5 seconds, doubling up to 4 seconds. It keeps the limits
-      below over all its connections together, so connecting again does not
-      get round them.
-23. **Relay limits.** Per transfer side: 32 GiB and 6 hours; ten seconds to
+      again after 0.5 seconds, doubling up to 4 seconds, and gives up after
+      10 tries in a row that did not sign in. It keeps the limits below
+      over all its own connections together. The relays count them per
+      connection, and a relay still listing a connection that died
+      unnoticed refuses the new one for that key (#190).
+23. **Relay limits.** Per connection: 32 GiB and 6 hours; ten seconds to
     sign in. Both accept only the pair path `/v0/relay/<key A>-<key B>` and
     forward only to the other key of that pair. The self-hosted relay also
     caps each connection at 8 MiB/s and closes it after 60 seconds without
