@@ -33,18 +33,26 @@ class MainActivity : FlutterActivity() {
     }
 
     override fun cleanUpFlutterEngine(flutterEngine: FlutterEngine) {
+        // Nothing would be left to end the job: end it, and its
+        // notification, with the engine.
         TransferJob.onStop = null
+        TransferJob.end(this)
         super.cleanUpFlutterEngine(flutterEngine)
     }
 
-    /** The transfer runs without it too; the notification is then hidden. */
+    /** Asked once per launch at most. The transfer runs without it too; the
+     * notification is then hidden. */
     private fun askForNotifications() {
+        if (askedForNotifications) return
+        askedForNotifications = true
         if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) !=
             PackageManager.PERMISSION_GRANTED
         ) {
             requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 0)
         }
     }
+
+    private var askedForNotifications = false
 
     companion object {
         const val CHANNEL = "app.totaldrop/transfer_job"

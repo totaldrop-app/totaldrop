@@ -83,8 +83,15 @@ class FakeRepository implements TransferRepository {
   @override
   String? normalizeCode(String input) => input;
 
+  /// Thrown by [receiveFolder] when set.
+  Object? folderError;
+
   @override
-  Future<String> receiveFolder() async => '/tmp/TotalDrop';
+  Future<String> receiveFolder() async {
+    final e = folderError;
+    if (e != null) throw e;
+    return '/tmp/TotalDrop';
+  }
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);

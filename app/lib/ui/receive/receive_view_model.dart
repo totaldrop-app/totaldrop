@@ -102,6 +102,13 @@ class ReceiveViewModel extends ChangeNotifier {
       error = e;
       stage = ReceiveStage.failed;
       _release();
+    } catch (e) {
+      // Not from the core (the folder cannot be made, a platform error):
+      // still a failure, so the screen and the keep-alive do not hang.
+      if (generation != _generation) return;
+      error = TransferError(kind: ErrorKind.other, detail: '$e');
+      stage = ReceiveStage.failed;
+      _release();
     }
     notifyListeners();
   }
@@ -175,7 +182,17 @@ class ReceiveViewModel extends ChangeNotifier {
   /// The notification's Stop stops it.
   void _keepGoing() {
     _keptAlive = true;
-    unawaited(_keeper.begin(TransferDirection.receiving, cancel));
+    unawaited(_keeper.begin(TransferDirection.receiving, _stoppedFromNotice));
+  }
+
+  /// Stop on the notification. While an offer waits for an answer no
+  /// transfer runs yet, so it is declined instead.
+  void _stoppedFromNotice() {
+    if (stage == ReceiveStage.offered) {
+      unawaited(decline());
+    } else {
+      cancel();
+    }
   }
 
   void _release() {

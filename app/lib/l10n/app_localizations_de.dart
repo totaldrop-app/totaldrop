@@ -440,5 +440,5 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get transferNoticeBody =>
-      'Läuft weiter, während du andere Apps nutzt.';
+      'Läuft weiter, während Sie andere Apps verwenden.';
 }

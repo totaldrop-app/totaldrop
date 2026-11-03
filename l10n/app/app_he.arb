@@ -114,7 +114,7 @@
   "progressPercent": "{percent}%",
 
   "transferNoticeChannel": "העברות",
-  "transferNoticeSending": "שולח עם TotalDrop",
-  "transferNoticeReceiving": "מקבל עם TotalDrop",
+  "transferNoticeSending": "שליחה באמצעות TotalDrop",
+  "transferNoticeReceiving": "קבלה באמצעות TotalDrop",
   "transferNoticeBody": "ממשיך גם כשמשתמשים באפליקציות אחרות."
 }

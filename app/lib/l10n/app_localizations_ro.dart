@@ -443,6 +443,5 @@ class AppLocalizationsRo extends AppLocalizations {
   String get transferNoticeReceiving => 'Se primește cu TotalDrop';
 
   @override
-  String get transferNoticeBody =>
-      'Continuă cât timp folosești alte aplicații.';
+  String get transferNoticeBody => 'Continuă cât timp folosiți alte aplicații.';
 }
