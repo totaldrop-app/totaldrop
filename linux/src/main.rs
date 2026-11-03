@@ -71,17 +71,6 @@ fn main() {
         }
         return;
     }
-    // One window per session: a later launch hands its files to the
-    // running window and exits (#178). The connection serves the window's
-    // D-Bus interface for as long as it runs.
-    let cwd = std::env::current_dir().unwrap_or_default();
-    let request = instance::Request::from_args(std::env::args_os().skip(1), &cwd);
-    let _bus = match runtime::RUNTIME.block_on(instance::claim(&request)) {
-        instance::Claim::Forwarded => return,
-        instance::Claim::Owner(conn) => Some(conn),
-        instance::Claim::Alone => None,
-    };
-
     let session = theme::Session::current();
     let style = choose_style(&session);
     if std::env::var_os("QT_QUICK_CONTROLS_STYLE").is_none() {
@@ -89,6 +78,18 @@ fn main() {
     }
     QQuickStyle::set_fallback_style(&QString::from("Fusion"));
     bridge::surface::use_true_colour();
+
+    // One window per session: a later launch hands its files to the
+    // running window and exits (#178). The connection serves the window's
+    // D-Bus interface for as long as it runs. This starts the runtime's
+    // threads, so it comes after the environment is set above.
+    let cwd = std::env::current_dir().unwrap_or_default();
+    let request = instance::Request::from_args(std::env::args_os().skip(1), &cwd);
+    let _bus = match runtime::RUNTIME.block_on(instance::claim(&request)) {
+        instance::Claim::Forwarded => return,
+        instance::Claim::Owner(conn) => Some(conn),
+        instance::Claim::Alone => None,
+    };
 
     let mut app = QGuiApplication::new();
     QGuiApplication::set_desktop_file_name(&QString::from(APP_ID));

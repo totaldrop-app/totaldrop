@@ -15,6 +15,8 @@ Page {
     readonly property bool running: ["preparing", "waiting", "connected", "transferring"].indexOf(phase) >= 0
     property bool strong: false
     property var initialFiles: []
+    // Files listed and not yet sent: another launch does not replace them.
+    readonly property bool hasInput: files.count > 0
     Component.onCompleted: if (initialFiles.length > 0) add(initialFiles)
     // With files listed, Enter creates the code.
     onPhaseChanged: if (phase === "idle") Qt.callLater(() => createButton.forceActiveFocus())

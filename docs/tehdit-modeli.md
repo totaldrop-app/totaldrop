@@ -33,6 +33,9 @@ Bugün korunanlar ile henüz yalnızca tasarımda olanlar ayrı yazılır.
    bilgisayarla çözmeye çalışır.
 6. **Tedarik zinciri:** bir bağımlılığa ya da derleme sürecine kötü kod
    sokar.
+7. **Oturumdaki başka bir program:** kişinin kendi hesabında çalışır
+   (Linux'ta oturum veriyoluna erişir), uygulamanın penceresine istek
+   gönderebilir.
 
 ## Güven sınırları
 
@@ -41,6 +44,10 @@ Bugün korunanlar ile henüz yalnızca tasarımda olanlar ayrı yazılır.
 - Sunucular (rendezvous, aktarma, STUN) güvenilmez sayılır: yalnızca
   ulaştırırlar.
 - Uygulamanın kendisi ve işletim sistemi güvenilir sayılır.
+- Linux'ta oturum veriyolundaki (D-Bus) her süreç, açık pencereye
+  `org.freedesktop.Application` üzerinden dosya, bağlantı ya da ekran
+  verebilir (#178). Bu süreçler kişinin kendi hesabında çalışır; onun
+  dosyalarına zaten erişebilirler.
 
 ## Tehditler ve karşılıkları
 
@@ -58,6 +65,7 @@ Bugün korunanlar ile henüz yalnızca tasarımda olanlar ayrı yazılır.
 | T10 | Aktarma sunucusuna başka bir anahtarla girmek | 2, 4 | Aktarım adresi iki anahtarı taşır; sunucu yalnızca bu iki anahtarı, imzalı bir meydan okumayla kabul eder | Bilinen yok; bağımsız denetime kadar doğrulanmadı |
 | T11 | Tedarik zinciri | 6 | `cargo-deny` (lisans, güvenlik ilanları), Dependabot, kilitli bağımlılıklar, SHA'ya sabitli CI eylemleri, CI'da derleme ve derleme kaynağı kanıtı | Sabitlenen sürümün kendisi kötü niyetliyse korumaz; her güncelleme PR olarak gelir ve incelenir. Kapsayıcı imajları (`archlinux:latest` vb.) ve çalışırken indirilen araçlar (Flutter stable, Node LTS, Rust nightly) hâlâ değişebilen etiketle çağrılıyor |
 | T12 | Sahte uygulama ya da paket | 6 | Yalnızca Google Play, GitHub sürümleri ve totaldrop.app; SHA-256 sağlama toplamları; Linux paketlerinde derleme kaynağı kanıtı | Play paketini Google yeniden imzalar, kullanıcı kanıtı doğrulayamaz; Windows ve macOS imzası bağışları bekliyor |
+| T13 | Açık pencereye istenmeyen dosya ya da kod vermek (Linux) | 7 | Hiçbir şey kendiliğinden gönderilmez ya da alınmaz: gönderme "Kod oluştur", alma teklifin kabulünü ister. Bir çağrı en çok 1.024 öğe ve 1 MiB taşıyabilir; yalnızca yerel `file://` yolları ve bilinen ekranlar alınır; etkinleştirme belirteci denetlenir; aktarım sürerken gelen istek beklemeye alınır | Gönderilecekler listesine eklenen dosya ayrıca işaretlenmez; bu süreç kişinin dosyalarını zaten okuyabilir |
 
 ## Kapsam dışı
 
