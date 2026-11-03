@@ -43,6 +43,15 @@
   </requires>
   <content_rating type="oars-1.1"/>
   <releases>
+    <release version="0.3.0~beta.2" date="2026-11-03" type="development">
+      <description>
+        <p>On GNOME and on Hyprland without a Qt theme, the window takes the colours of your GTK theme and follows a theme change at once; buttons, fields and switches take the desktop's shape.</p>
+        <p>Clearer messages: a code nobody is using, a code that expired and a server address that is not valid are each named as such.</p>
+        <p>Pasting the whole share message into the receive field finds the code in it, and codes typed with Arabic, Persian or Urdu digits are accepted.</p>
+        <p>The screens stay centred in a wide window, files in the Send list get an icon for their kind, and Escape, Enter and Tab work on every screen.</p>
+        <p>Colours match the desktop exactly on Intel graphics, and totaldrop-desktop --help and --version answer on the terminal.</p>
+      </description>
+    </release>
     <release version="0.3.0~beta.1" date="2026-10-30" type="development">
       <description>
         <p>New mark, Köşe, and a new icon: a circle with one square corner. It turns while a file is on its way.</p>

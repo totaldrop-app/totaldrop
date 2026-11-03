@@ -10,6 +10,152 @@ All notable changes to TotalDrop are recorded here. The format follows
 Entries for the next release are in [changelog.d/](changelog.d/), one file
 per change, and move here when it is released (docs/surec.md).
 
+## [android-0.3.0-beta.2] and [linux-0.3.0-beta.2] - 2026-11-03
+
+### Added
+
+- **CI:** The site and the rendezvous and relay Workers deploy from CI, from
+  main only. The commit's checks run again, then the owner approves the run
+  in the `cloudflare` environment. Only what changed is deployed. A probe
+  then opens a real WebSocket to each Worker, reaches the rendezvous
+  directory without taking a number, and loads the site's pages.
+  docs/surec.md describes the one-time setup and how to roll back (#94).
+
+### Changed
+
+- **Build:** A Linux release now checks the version of the command line it
+  ships against every earlier Linux or `cli-v*` release. A version higher
+  than all of them passes and a lower one stops the release. The same
+  version stops it if the CLI's code has changed since a release that
+  shipped it: `crates/` without its `tests/` and `benches/` directories,
+  and the strings and translation status the CLI compiles in. `Cargo.lock`
+  and the root `Cargo.toml` are not counted. The check is
+  `packaging/check-cli-version.sh`, run by `check-versions.sh` on a
+  release tag and tested in CI under bash and dash (#115).
+- **Android, Linux:** The note in Settings for a language that is still a
+  draft asks for help on GitHub instead of Weblate, which is not set up yet.
+  The note is updated in all 37 language files (#131).
+- **Site, README:** The download page and the README point at Android and
+  Linux 0.3.0-beta.1 and list what is new: the Köşe mark and icon, 35
+  languages, right-to-left screens and steadier QR reading on Linux. The
+  apps are no longer described as English and Turkish only, and the
+  roadmap adds "In your language" to Done (#132, #137).
+- **Server:** The self-hosted rendezvous and relay servers carry their own
+  version, starting at 0.1.0-beta.1, instead of the command line's; raising
+  the command line's version no longer renames them (#146).
+- **Android, Linux:** While connecting, the receive screen shows the code
+  as it was read, so the code that is used can be seen even when the
+  pasted text looks different, for example with a direction mark (#149).
+- **CLI:** `totaldrop receive` says which code it connects with, for
+  example "Connecting with 7-harbor-rocket…", so a code pasted with
+  direction marks that show it in another order can be checked before it
+  is used (#149).
+- **Process:** Every pull request records its change in a file of its own
+  in `changelog.d/` instead of editing CHANGELOG.md, so pull requests no
+  longer conflict with each other there. `tools/changelog.mjs release`
+  moves the files into CHANGELOG.md when a release is made, and CI checks
+  every file and fails a pull request that adds none (#150).
+- **Process:** A release of one platform takes only the changelog entries
+  that name it or no platform; an entry for both platforms is split, so
+  nothing has to be moved by hand before a Linux-only or Android-only
+  release (#152).
+- **Android (CI):** CI checks that the app's hand-written Dart code is
+  formatted with `dart format` (#155).
+- **Linux:** Photos, videos, music, archives and documents in the Send
+  list get an icon for their kind instead of a generic one (#169).
+
+### Fixed
+
+- **Core, command line:** `totaldrop --version` printed 0.1.0-beta.2 in
+  the Linux 0.2.0-beta.1 and 0.3.0-beta.1 packages, although the command
+  line had since gained the relay, privacy mode (`--relay-only`),
+  translations and a clean stop with Ctrl-C. The command line and the core
+  libraries are now 0.2.0-beta.1; the self-hosted servers and the Android
+  app's Rust library share that version and move with it (#115, #146).
+- **Core, CLI (tests):** Two tests failed now and then on slow CI runners.
+  The end-to-end test of a receiver stopped while it connects now stops it
+  before any reply from the server can arrive, so it always ends in
+  "stopped" and no longer sometimes reads the departed sender's mailbox
+  and ends in "wrong code". The privacy-mode test now runs on a paused
+  clock and checks that the relay connection comes up before the sender's
+  own dial would start, instead of timing the connection on the wall clock
+  (#126).
+- **CLI, translations:** The translation check rejected only the English
+  no-words (n, no, not) among a language's yes answers (`cliYes`), so a
+  draft could make a word for no, such as нет, nein or لا, mean yes. Each
+  language now lists its words for no in `l10n/status.json` (`noWords`),
+  and the check rejects a yes answer that is one of them, or the answer
+  for no in a save prompt it can be shown with (`[д/Н]`, `[ن/ل]`). A save
+  prompt must show ASCII `[yes/no]` answers, and its answer for yes must
+  be in `cliYes` or be y or yes. Answers are compared exactly as the
+  command line compares them: `fold_answer`, `is_yes` and `ALWAYS_YES` are
+  now public in `totaldrop-l10n`, and the command line uses them (#129).
+- **Android, Linux, CLI:** In a right-to-left language the shared message
+  could show the code out of order, with its number on the wrong side of
+  its words; the code is now isolated, as the version and the save folder
+  are. Both apps drop direction marks and other invisible characters, such
+  as a zero-width space, from a pasted code, and Linux also from a
+  totaldrop:// link; the command line does the same with a code given to
+  it, so a code copied with them still connects (#130).
+- **Android, Linux, CLI:** A code typed or pasted with the digits of an
+  Arabic, Persian or Urdu keyboard, such as ٧ or ۷, was rejected as
+  invalid; these digits are now read as their ASCII counterparts (#147).
+- **Android, Linux:** Pasting the whole share message, such as "Get my
+  files with TotalDrop. Code: 7-abandon-ability", into the receive field
+  gave "invalid code" on Linux, and on Android when it was pasted with the
+  system menu instead of the paste button; both apps now find the code in
+  the message, in every language (#148).
+- **Linux:** The connecting, preparing and empty send screens are
+  centred in the window instead of sitting in a narrow column on the
+  left (#159).
+- **Android, Linux:** A code that no sender is using (mistyped, expired
+  or already used) now says so, as the command line does, instead of
+  telling the person to check their internet connection (#160).
+- **Linux:** Escape goes back on Send, Receive and Settings, and on the
+  result screen it is Done; it does not drop files not yet sent or skip
+  past an unsaved server address. Enter presses the focused button on the
+  result screen, Details included, and holding it presses only once.
+  Going back from a finished or failed transfer no longer shows the same
+  result the next time Send or Receive is opened (#162).
+- **CLI:** When the answer to "save?" comes from a pipe or a file, the
+  question ends its own line, so the progress no longer follows it on the
+  same line (#163).
+- **Android, Linux, CLI:** When nobody comes for a code before it
+  expires, the sender is told so and asked to send again, instead of
+  being told to check the internet connection or to ask the sender for a
+  new code (#164).
+- **Android, Linux:** A server address that is not valid is named as
+  such, as the command line does, instead of "could not reach the
+  server" (#164).
+- **Linux:** In a wide window the home screen, Settings and the Send list
+  no longer stretch across the whole width but stay centred like the other
+  screens; the waiting screen's code card is centred too (#169).
+- **Linux:** Settings shows its scroll bar while the page is taller than
+  the window and scrolls to the control reached with Tab; the
+  totaldrop.app link and "Add files" in the Send list can be reached with
+  Tab, and a result screen puts the keyboard on Done (#169).
+- **Linux:** Opening Details on a result no longer moves the button, the
+  stop question dims the window behind it under the Fusion style, and it
+  closes by itself when the transfer ends meanwhile (#169).
+- **Linux:** With some Mesa drivers, seen on Intel graphics, the window
+  was drawn with 16-bit colour, so the background and accent were a shade
+  off from the desktop theme; the window now asks for full 24-bit colour
+  (#170).
+- **CLI:** `totaldrop --help` is now in the system language, like every
+  other message of the command line (#171).
+- **Linux:** `totaldrop-desktop --help` and `--version` print the usage or
+  the version and exit instead of opening the window (#171).
+- **Linux:** On GNOME and on Hyprland without a Qt theme, the window takes
+  the GTK theme's colours (Adwaita, your GTK theme, or your own `gtk.css`)
+  instead of TotalDrop's lavender, and follows a theme change without a
+  restart. Outside Plasma (GNOME, Hyprland, Omarchy) buttons, fields and
+  switches take GTK's shape and rounding, and icons stay visible in a dark
+  theme (#174).
+- **Linux:** In a short window the Send code screen shows its scroll bar
+  and Tab brings Cancel into view. Under Fusion, "Add files" shows
+  keyboard focus. Under Plasma, Accept is marked as the default button
+  (#175).
+
 ## [android-0.3.0-beta.1] and [linux-0.3.0-beta.1] - 2026-10-30
 
 ### Added
