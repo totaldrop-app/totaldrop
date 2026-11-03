@@ -130,10 +130,22 @@ impl From<quinn::ReadExactError> for Error {
     }
 }
 
+/// Error code on a data stream the sender cut because it stopped
+/// (`RESET_STREAM`, #193).
+pub(crate) const STREAM_STOPPED: quinn::VarInt = quinn::VarInt::from_u32(1);
+
+/// Error code on a data stream the sender cut because sending it failed.
+pub(crate) const STREAM_FAILED: quinn::VarInt = quinn::VarInt::from_u32(2);
+
 impl From<quinn::ReadError> for Error {
     fn from(e: quinn::ReadError) -> Self {
         match e {
             quinn::ReadError::ConnectionLost(c) => c.into(),
+            // The reset can overtake the sender's cancel message; it says
+            // the same.
+            quinn::ReadError::Reset(code) if code == STREAM_STOPPED => {
+                Error::Cancelled("stopped".into())
+            }
             e => Error::Connect(e.to_string()),
         }
     }

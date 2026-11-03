@@ -627,6 +627,59 @@ async fn keep_dialling(endpoint: &quinn::Endpoint, addr: SocketAddr) -> Result<q
     }
 }
 
+/// Connections for tests in other modules.
+#[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
+pub(crate) mod testing {
+    use super::*;
+
+    /// A sender's and a receiver's connection over a relay stand-in that
+    /// carries the sender's datagrams one every `gap`: a slow link, where
+    /// data sent stays on the way for a while (#193). The receiver's
+    /// datagrams (acknowledgements) go through at once.
+    pub(crate) async fn over_slow_relay(gap: Duration) -> (quinn::Connection, quinn::Connection) {
+        let (ka, kb) = (
+            EndpointKey::generate().unwrap(),
+            EndpointKey::generate().unwrap(),
+        );
+        let sa = UdpSocket::bind(SocketAddr::from(([127, 0, 0, 1], 0))).unwrap();
+        let sb = UdpSocket::bind(SocketAddr::from(([127, 0, 0, 1], 0))).unwrap();
+        let (sender, pa) = endpoint(sa, &ka, &kb.public()).unwrap();
+        let (receiver, pb) = endpoint(sb, &kb, &ka.public()).unwrap();
+        let (mut a_out, a_in, mut b_out, b_in) =
+            (pa.outgoing, pa.incoming, pb.outgoing, pb.incoming);
+        tokio::spawn(async move {
+            while let Some(d) = a_out.recv().await {
+                tokio::time::sleep(gap).await;
+                let _ = b_in.send(d).await;
+            }
+        });
+        tokio::spawn(async move {
+            while let Some(d) = b_out.recv().await {
+                let _ = a_in.send(d).await;
+            }
+        });
+        let gate = crate::relay::Gate::default();
+        gate.open();
+        let paths = Paths {
+            direct: Vec::new(),
+            relay: Some(gate),
+            relay_only: true,
+        };
+        let wait = Duration::from_secs(10);
+        let recv_side = async {
+            let conn = receiver_connection(&receiver, &paths, wait).await.unwrap();
+            let (mut send, _recv) = conn.open_bi().await.unwrap();
+            send.write_all(b"x").await.unwrap();
+            (conn, send)
+        };
+        let send_side = async { sender_connection(&sender, &paths, wait).await.unwrap() };
+        let ((receiver_conn, _ctl), (sender_conn, _send, _recv)) =
+            tokio::join!(recv_side, send_side);
+        (sender_conn, receiver_conn)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     #![allow(clippy::unwrap_used, clippy::expect_used)]

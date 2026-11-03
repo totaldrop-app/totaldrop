@@ -794,9 +794,9 @@ async fn sender_stops_mid_folder() {
         sent < total / 2,
         "sent {sent} of {total} bytes after the stop"
     );
-    // Files whose data was already on the way when the stop came may
-    // still arrive whole and be kept, more of them with larger windows
-    // (#191). Whether they should is tracked in #193.
+    // The stop resets every stream still sending, so no file is completed
+    // from data on the way (#193). A file the receiver had whole and
+    // verified before it heard the cancel may stay.
     left_only_whole_files(&dest, &src);
     std::fs::remove_dir_all(src).unwrap();
     std::fs::remove_dir_all(dest).unwrap();

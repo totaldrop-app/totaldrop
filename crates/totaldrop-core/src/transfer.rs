@@ -16,7 +16,7 @@ use totaldrop_proto::wire::{
 };
 use totaldrop_proto::{SafePath, chunk_count, limits, validate_path};
 
-use crate::error::{Error, Result};
+use crate::error::{Error, Result, STREAM_FAILED, STREAM_STOPPED};
 use crate::framing::{expect_frame, read_frame, write_frame};
 use crate::secure::{SecureChannel, recv_control, send_control};
 use crate::stop::Stop;
@@ -314,7 +314,7 @@ fn check_entries<'a>(entries: impl Iterator<Item = &'a Entry>) -> Result<Vec<Saf
 
 #[allow(clippy::too_many_arguments)]
 async fn send_entry(
-    conn: quinn::Connection,
+    stream: &mut quinn::SendStream,
     source: PathBuf,
     entry: Entry,
     index: u64,
@@ -333,13 +333,12 @@ async fn send_entry(
         ))));
     }
     let cipher = EntryCipher::new(&ck, &transfer_id, index);
-    let mut stream = conn.open_uni().await?;
     let header = DataHeader {
         transfer_id,
         entry: index,
         first_chunk: 0,
     };
-    write_frame(&mut stream, &header.encode()).await?;
+    write_frame(stream, &header.encode()).await?;
     let mut remaining = entry.size;
     let mut buf = vec![0u8; CHUNK_SIZE];
     for i in 0..chunks {
@@ -349,7 +348,7 @@ async fn send_entry(
         let last = i.saturating_add(1) == chunks;
         let idx = u32::try_from(i).map_err(|_| Error::Protocol("chunk index"))?;
         let ct = cipher.seal(idx, last, slot)?;
-        write_frame(&mut stream, &ct).await?;
+        write_frame(stream, &ct).await?;
         remaining = remaining.saturating_sub(len as u64);
         let now = done
             .fetch_add(len as u64, Ordering::Relaxed)
@@ -360,6 +359,62 @@ async fn send_entry(
         .finish()
         .map_err(|_| Error::Protocol("stream closed"))?;
     Ok(())
+}
+
+/// Send one file on its own stream, waiting for a permit first. A stop cuts
+/// the file at once: the stream is reset, so the receiver drops what it
+/// buffered instead of completing the file from data sent before or after
+/// the stop. This also holds after the last chunk, until the receiver has
+/// all of it; a file that has fully arrived stays (#193).
+#[allow(clippy::too_many_arguments)]
+async fn send_entry_until_stopped(
+    conn: quinn::Connection,
+    stop: Stop,
+    permits: Arc<Semaphore>,
+    source: PathBuf,
+    entry: Entry,
+    index: u64,
+    ck: ContentKey,
+    transfer_id: [u8; 16],
+    done: Arc<AtomicU64>,
+    total: u64,
+    progress: Progress,
+) -> Result<()> {
+    let permit = tokio::select! {
+        biased;
+        () = stop.stopped() => return Err(Error::Stopped),
+        p = permits.acquire_owned() => p.map_err(|_| Error::Protocol("semaphore closed"))?,
+    };
+    let mut stream = tokio::select! {
+        biased;
+        () = stop.stopped() => return Err(Error::Stopped),
+        s = conn.open_uni() => s?,
+    };
+    let sent = tokio::select! {
+        biased;
+        () = stop.stopped() => Err(Error::Stopped),
+        r = send_entry(&mut stream, source, entry, index, ck, transfer_id, done, total, progress) => r,
+    };
+    if let Err(e) = sent {
+        // A dropped stream would end cleanly and read as a short file.
+        let code = if matches!(e, Error::Stopped) {
+            STREAM_STOPPED
+        } else {
+            STREAM_FAILED
+        };
+        let _ = stream.reset(code);
+        return Err(e);
+    }
+    drop(permit);
+    tokio::select! {
+        biased;
+        () = stop.stopped() => {
+            let _ = stream.reset(STREAM_STOPPED);
+            Err(Error::Stopped)
+        }
+        // All of it acknowledged, or the peer or connection ended it.
+        _ = stream.stopped() => Ok(()),
+    }
 }
 
 /// Result of a finished send.
@@ -453,31 +508,19 @@ pub async fn send_files(
     let mut tasks = tokio::task::JoinSet::new();
     for (index, src) in to_send.iter().cloned() {
         let Some(path) = src.source else { continue };
-        let (conn, ck, done, progress, permits) = (
+        tasks.spawn(send_entry_until_stopped(
             conn.clone(),
-            ck.clone(),
-            done.clone(),
-            progress.clone(),
+            stop.clone(),
             permits.clone(),
-        );
-        tasks.spawn(async move {
-            let _permit = permits
-                .acquire_owned()
-                .await
-                .map_err(|_| Error::Protocol("semaphore closed"))?;
-            send_entry(
-                conn,
-                path,
-                src.entry,
-                index,
-                ck,
-                transfer_id,
-                done,
-                wanted_bytes,
-                progress,
-            )
-            .await
-        });
+            path,
+            src.entry,
+            index,
+            ck.clone(),
+            transfer_id,
+            done.clone(),
+            wanted_bytes,
+            progress.clone(),
+        ));
     }
 
     let mut report = SendReport::default();
@@ -487,8 +530,13 @@ pub async fn send_files(
         tokio::select! {
             biased;
             () = stop.stopped() => {
-                // Cancel and close first: dropping a data stream finishes it
-                // cleanly, which the receiver would read as a short file.
+                // Every task hears the stop too and resets its stream, so
+                // the receiver keeps no file from data already on the way.
+                // Let them, briefly, before the cancel and the close.
+                let _ = tokio::time::timeout(STOP_NOTICE, async {
+                    while tasks.join_next().await.is_some() {}
+                })
+                .await;
                 let e = tell_stopped(conn, &mut sealer, &mut send, transfer_id).await;
                 tasks.abort_all();
                 return Err(e);
@@ -1160,6 +1208,66 @@ mod tests {
             hash: Some([0; 32]),
             mtime: None,
         }
+    }
+
+    /// A stop cuts a file whose data is still on the way, even when the
+    /// sender has handed all of it to the connection already: the stream
+    /// is reset, so the receiver cannot complete the file from what
+    /// arrives after the stop (#193). Before, the stream was dropped,
+    /// which ends it cleanly, and the receiver read the whole file.
+    #[tokio::test]
+    async fn stop_cuts_a_file_still_on_the_way() {
+        // ~1.2 MB/s: three chunks take a few seconds to arrive.
+        let (sender, receiver) =
+            crate::transport::testing::over_slow_relay(Duration::from_millis(1)).await;
+        let size = 3 * limits::CHUNK_SIZE;
+        let dir = std::env::temp_dir().join(format!("td-cut-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let source = dir.join("cut.bin");
+        std::fs::write(&source, vec![7u8; usize::try_from(size).unwrap()]).unwrap();
+        let entry = Entry {
+            path: vec!["cut.bin".into()],
+            kind: EntryKind::File,
+            size,
+            hash: Some([0; 32]),
+            mtime: None,
+        };
+        let stop = Stop::new();
+        let progress: Progress = Arc::new(|_, _| {});
+        let task = tokio::spawn(send_entry_until_stopped(
+            sender.clone(),
+            stop.clone(),
+            Arc::new(Semaphore::new(1)),
+            source,
+            entry,
+            0,
+            ContentKey::generate().unwrap(),
+            [1; 16],
+            Arc::new(AtomicU64::new(0)),
+            size,
+            progress,
+        ));
+        let mut stream = receiver.accept_uni().await.unwrap();
+        expect_frame(&mut stream, 1024).await.unwrap();
+        expect_frame(&mut stream, MAX_FRAME).await.unwrap();
+        // The first chunk is here; the rest is still on the way.
+        stop.stop();
+        assert!(matches!(task.await.unwrap(), Err(Error::Stopped)));
+        let mut buf = vec![0u8; 64 * 1024];
+        let end = loop {
+            match stream.read(&mut buf).await {
+                Ok(Some(_)) => {}
+                other => break other,
+            }
+        };
+        assert!(
+            matches!(end, Err(quinn::ReadError::Reset(code)) if code == STREAM_STOPPED),
+            "the file was not cut: {end:?}"
+        );
+        // The receiver reports it as the sender stopping, even before the
+        // cancel message arrives.
+        assert!(matches!(Error::from(end.unwrap_err()), Error::Cancelled(r) if r == "stopped"));
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]
