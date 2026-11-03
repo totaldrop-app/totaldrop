@@ -1,4 +1,4 @@
-<!-- Translated from README.md 529368877e8d. -->
+<!-- Translated from README.md a58ae69995a9. -->
 <div align="center">
 
 <picture>
@@ -49,16 +49,16 @@ Gratis dan open source. Terenkripsi end-to-end. Tanpa email, tanpa nomor telepon
 
 | Platform | Dapatkan | Catatan |
 | --- | --- | --- |
-| **Linux** (x86-64) | [Arch / Omarchy](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop-0.3.0_beta.1-1-x86_64.pkg.tar.zst) · [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop_0.3.0.beta.1-1_amd64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop-0.3.0.beta.1-1.fc43.x86_64.rpm) | 0.3.0-beta.1, Qt 6.8 atau yang lebih baru |
-| **Linux** (ARM64) | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop_0.3.0.beta.1-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop-0.3.0.beta.1-1.fc43.aarch64.rpm) | 0.3.0-beta.1, Qt 6.8 atau yang lebih baru |
-| **Android** | [Ikut beta](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.1, Android 15 atau yang lebih baru, Google Play dengan undangan |
+| **Linux** (x86-64) | [Arch / Omarchy](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.2/totaldrop-0.3.0_beta.2-1-x86_64.pkg.tar.zst) · [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.2/totaldrop_0.3.0.beta.2-1_amd64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.2/totaldrop-0.3.0.beta.2-1.fc43.x86_64.rpm) | 0.3.0-beta.2, Qt 6.8 atau yang lebih baru |
+| **Linux** (ARM64) | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.2/totaldrop_0.3.0.beta.2-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.2/totaldrop-0.3.0.beta.2-1.fc43.aarch64.rpm) | 0.3.0-beta.2, Qt 6.8 atau yang lebih baru |
+| **Android** | [Ikut beta](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.2, Android 15 atau yang lebih baru, Google Play dengan undangan |
 | **Baris perintah** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux, macOS, Windows |
 | **Windows, macOS, iOS** | Segera hadir | Penandatanganan kode untuk platform ini adalah hal pertama yang dibiayai donasi |
 
 Setiap paket dibuat oleh CI dari commit bertag, tidak pernah di mesin pengembang. Untuk memeriksa paket sebelum memasangnya, bandingkan dengan `SHA256SUMS` milik rilis tersebut dan verifikasi di mana paket itu dibuat:
 
 ```bash
-gh attestation verify totaldrop_0.3.0.beta.1-1_amd64.deb --repo totaldrop-app/totaldrop
+gh attestation verify totaldrop_0.3.0.beta.2-1_amd64.deb --repo totaldrop-app/totaldrop
 ```
 
 > [!NOTE]

@@ -1,4 +1,4 @@
-<!-- Translated from README.md 529368877e8d. -->
+<!-- Translated from README.md a58ae69995a9. -->
 <div align="center">
 
 <picture>
@@ -49,16 +49,16 @@
 
 | پلیٹ فارم | حاصل کریں | نوٹس |
 | --- | --- | --- |
-| **Linux** (x86-64) | [Arch / Omarchy](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop-0.3.0_beta.1-1-x86_64.pkg.tar.zst) · [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop_0.3.0.beta.1-1_amd64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop-0.3.0.beta.1-1.fc43.x86_64.rpm) | 0.3.0-beta.1، Qt 6.8 یا نیا |
-| **Linux** (ARM64) | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop_0.3.0.beta.1-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.1/totaldrop-0.3.0.beta.1-1.fc43.aarch64.rpm) | 0.3.0-beta.1، Qt 6.8 یا نیا |
-| **Android** | [بیٹا میں شامل ہوں](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.1، Android 15 یا نیا، Google Play پر دعوت کے ذریعے |
+| **Linux** (x86-64) | [Arch / Omarchy](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.2/totaldrop-0.3.0_beta.2-1-x86_64.pkg.tar.zst) · [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.2/totaldrop_0.3.0.beta.2-1_amd64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.2/totaldrop-0.3.0.beta.2-1.fc43.x86_64.rpm) | 0.3.0-beta.2، Qt 6.8 یا نیا |
+| **Linux** (ARM64) | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.2/totaldrop_0.3.0.beta.2-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.2/totaldrop-0.3.0.beta.2-1.fc43.aarch64.rpm) | 0.3.0-beta.2، Qt 6.8 یا نیا |
+| **Android** | [بیٹا میں شامل ہوں](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.2، Android 15 یا نیا، Google Play پر دعوت کے ذریعے |
 | **کمانڈ لائن** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux، macOS، Windows |
 | **Windows، macOS، iOS** | جلد آ رہا ہے | ان کے لیے کوڈ سائننگ وہ پہلی چیز ہے جس کا خرچ عطیات اٹھاتے ہیں |
 
 ہر پیکیج CI ایک ٹیگ شدہ کمٹ سے بناتا ہے، کبھی کسی ڈویلپر کی مشین پر نہیں۔ انسٹال کرنے سے پہلے کسی پیکیج کو جانچنے کے لیے، اس کا موازنہ ریلیز کی `SHA256SUMS` سے کریں اور تصدیق کریں کہ یہ کہاں بنایا گیا:
 
 ```bash
-gh attestation verify totaldrop_0.3.0.beta.1-1_amd64.deb --repo totaldrop-app/totaldrop
+gh attestation verify totaldrop_0.3.0.beta.2-1_amd64.deb --repo totaldrop-app/totaldrop
 ```
 
 > [!NOTE]
