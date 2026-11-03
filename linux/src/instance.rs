@@ -481,8 +481,10 @@ mod tests {
         fn start() -> Option<Self> {
             static NEXT: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
             let n = NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-            let dir = std::env::temp_dir().join(format!("td-bus-{}-{n}", std::process::id()));
-            std::fs::create_dir_all(&dir).ok()?;
+            // /tmp, not $TMPDIR: a socket path must stay under ~108 bytes.
+            // create_dir fails on a directory someone else made first.
+            let dir = Path::new("/tmp").join(format!("td-bus-{}-{n}", std::process::id()));
+            std::fs::create_dir(&dir).ok()?;
             let daemon = Command::new("dbus-daemon")
                 .args(["--session", "--nofork", "--print-address=1"])
                 .arg(format!("--address=unix:dir={}", dir.display()))
@@ -528,7 +530,10 @@ mod tests {
         let _one = ONE_INBOX.lock().await;
         let Some(bus) = PrivateBus::start() else {
             // CI installs it, so the test cannot pass there by skipping.
-            assert!(std::env::var_os("CI").is_none(), "dbus-daemon is missing");
+            assert!(
+                std::env::var_os("CI").is_none(),
+                "no private session bus: dbus-daemon is missing or failed (see its stderr)"
+            );
             eprintln!("skipped: dbus-daemon is not installed");
             return;
         };
