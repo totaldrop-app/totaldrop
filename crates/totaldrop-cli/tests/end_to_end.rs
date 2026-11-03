@@ -682,9 +682,9 @@ fn left_nothing(dest: &Path) {
 }
 
 /// Only files that arrived whole are left in `dest`, each identical to its
-/// source under `src`, and no folder is empty: placed files stay when the
-/// other side stops (protocol notes, item 18), partial files and empty
-/// folders do not.
+/// source under `src`, and no folder is empty: placed files stay when either
+/// side stops (protocol notes, item 18), partial files and empty folders do
+/// not.
 fn left_only_whole_files(dest: &Path, src: &Path) {
     for path in walk(dest) {
         let rel = path.strip_prefix(dest).unwrap();
@@ -795,7 +795,8 @@ async fn sender_stops_mid_folder() {
         "sent {sent} of {total} bytes after the stop"
     );
     // Files whose data was already on the way when the stop came may
-    // still arrive whole and be kept, more of them with larger windows.
+    // still arrive whole and be kept, more of them with larger windows
+    // (#191). Whether they should is tracked in #193.
     left_only_whole_files(&dest, &src);
     std::fs::remove_dir_all(src).unwrap();
     std::fs::remove_dir_all(dest).unwrap();
