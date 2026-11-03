@@ -255,12 +255,26 @@ impl ClientCertVerifier for Pinned {
     }
 }
 
+/// How much one stream may have in flight: 8 MiB.
+const STREAM_WINDOW: u32 = 8 * 1024 * 1024;
+
+/// How much one connection may have in flight, all streams together: 16 MiB.
+const CONNECTION_WINDOW: u32 = 16 * 1024 * 1024;
+
 fn transport_config() -> Arc<quinn::TransportConfig> {
     let mut t = quinn::TransportConfig::default();
     // One control stream; up to four data streams at a time (spec section 8),
     // with a little room for streams that are finishing.
     t.max_concurrent_bidi_streams(1u8.into());
     t.max_concurrent_uni_streams(8u8.into());
+    // Room for several megabytes in flight, so a path with a long round
+    // trip is not held to window / RTT: quinn's default of 1.25 MB per
+    // stream allows only about 4 MB/s at 300 ms over the relay (#185). The
+    // relay forwards without holding anything back, so these windows also
+    // bound what it buffers for one connection.
+    t.stream_receive_window(STREAM_WINDOW.into());
+    t.receive_window(CONNECTION_WINDOW.into());
+    t.send_window(u64::from(CONNECTION_WINDOW));
     t.keep_alive_interval(Some(Duration::from_secs(5)));
     if let Ok(idle) = quinn::IdleTimeout::try_from(Duration::from_secs(30)) {
         t.max_idle_timeout(Some(idle));
@@ -521,8 +535,20 @@ pub async fn sender_connection(
     }
 }
 
+/// How long one handshake attempt may take.
+const HANDSHAKE: Duration = Duration::from_secs(10);
+
+/// How often a fresh handshake attempt starts on a path that has not
+/// answered yet, while the earlier ones go on.
+const ATTEMPT: Duration = Duration::from_secs(4);
+
 /// Try every path at once, a little staggered and the relay last, and keep
-/// the first connection whose handshake completes.
+/// the first connection whose handshake completes. Each path is tried again
+/// and again until the caller gives up: QUIC waits longer and longer
+/// between resending an unanswered handshake packet, so a path that starts
+/// working late (a relay link that connects on its second try, a NAT
+/// mapping that opens) would otherwise go unnoticed for many seconds
+/// (#185). A fresh attempt sends its first packet at once.
 pub async fn connect_any(endpoint: &quinn::Endpoint, paths: &Paths) -> Result<quinn::Connection> {
     if paths.is_empty() {
         return Err(Error::Connect("the other side announced no address".into()));
@@ -554,13 +580,7 @@ pub async fn connect_any(endpoint: &quinn::Endpoint, paths: &Paths) -> Result<qu
             if let Some(gate) = gate {
                 gate.open();
             }
-            let connecting = endpoint
-                .connect(addr, SERVER_NAME)
-                .map_err(|e| Error::Connect(e.to_string()))?;
-            tokio::time::timeout(Duration::from_secs(10), connecting)
-                .await
-                .map_err(|_| Error::Connect("timed out".into()))?
-                .map_err(Error::from)
+            keep_dialling(&endpoint, addr).await
         });
     }
     let mut last = Error::Connect("no address answered".into());
@@ -575,6 +595,30 @@ pub async fn connect_any(endpoint: &quinn::Endpoint, paths: &Paths) -> Result<qu
         }
     }
     Err(last)
+}
+
+/// Dial `addr`, starting a fresh attempt every [`ATTEMPT`] until one
+/// completes. Returns an error only when the address cannot be dialled at
+/// all, for example an IPv6 address on an IPv4 socket.
+async fn keep_dialling(endpoint: &quinn::Endpoint, addr: SocketAddr) -> Result<quinn::Connection> {
+    let mut tries = tokio::task::JoinSet::new();
+    let mut next = tokio::time::Instant::now();
+    loop {
+        tokio::select! {
+            () = tokio::time::sleep_until(next) => {
+                let connecting = endpoint
+                    .connect(addr, SERVER_NAME)
+                    .map_err(|e| Error::Connect(e.to_string()))?;
+                tries.spawn(async move {
+                    tokio::time::timeout(HANDSHAKE, connecting).await.ok()?.ok()
+                });
+                next = next.checked_add(ATTEMPT).unwrap_or(next);
+            }
+            Some(Ok(Some(conn))) = tries.join_next(), if !tries.is_empty() => {
+                return Ok(conn);
+            }
+        }
+    }
 }
 
 #[cfg(test)]
@@ -673,18 +717,32 @@ mod tests {
         ga: crate::relay::Gate,
         gb: crate::relay::Gate,
     ) {
+        cross_from(a, b, ga, gb, Duration::ZERO);
+    }
+
+    /// Like [`cross`], but everything sent in the first `after` is lost: a
+    /// relay that is slow to get going, or one side's link that only gets
+    /// through on a later try (#185).
+    fn cross_from(
+        a: crate::path::RelayPipes,
+        b: crate::path::RelayPipes,
+        ga: crate::relay::Gate,
+        gb: crate::relay::Gate,
+        after: Duration,
+    ) {
+        let ready = tokio::time::Instant::now().checked_add(after).unwrap();
         let (mut a_out, a_in, mut b_out, b_in) = (a.outgoing, a.incoming, b.outgoing, b.incoming);
         let (ga2, gb2) = (ga.clone(), gb.clone());
         tokio::spawn(async move {
             while let Some(d) = a_out.recv().await {
-                if ga.is_open() && gb.is_open() {
+                if ga.is_open() && gb.is_open() && tokio::time::Instant::now() >= ready {
                     let _ = b_in.send(d).await;
                 }
             }
         });
         tokio::spawn(async move {
             while let Some(d) = b_out.recv().await {
-                if ga2.is_open() && gb2.is_open() {
+                if ga2.is_open() && gb2.is_open() && tokio::time::Instant::now() >= ready {
                     let _ = a_in.send(d).await;
                 }
             }
@@ -694,6 +752,12 @@ mod tests {
     /// Connect over the relay stand-in, with `direct` as each side's direct
     /// addresses.
     async fn over_relay(direct: Vec<SocketAddr>) {
+        over_late_relay(direct, Duration::ZERO, Duration::from_secs(10)).await;
+    }
+
+    /// Connect over a relay stand-in that loses everything for `after`,
+    /// within `wait`.
+    async fn over_late_relay(direct: Vec<SocketAddr>, after: Duration, wait: Duration) {
         let (ka, kb) = (
             EndpointKey::generate().unwrap(),
             EndpointKey::generate().unwrap(),
@@ -703,7 +767,7 @@ mod tests {
         let (sender, pa) = endpoint(sa, &ka, &kb.public()).unwrap();
         let (receiver, pb) = endpoint(sb, &kb, &ka.public()).unwrap();
         let (send_gate, recv_gate) = (crate::relay::Gate::default(), crate::relay::Gate::default());
-        cross(pa, pb, send_gate.clone(), recv_gate.clone());
+        cross_from(pa, pb, send_gate.clone(), recv_gate.clone(), after);
         let to_sender = Paths {
             direct: direct.clone(),
             relay: Some(recv_gate.clone()),
@@ -714,7 +778,6 @@ mod tests {
             relay: Some(send_gate.clone()),
             relay_only: false,
         };
-        let wait = Duration::from_secs(10);
         let recv_side = async {
             let conn = receiver_connection(&receiver, &to_sender, wait).await?;
             assert_eq!(conn.remote_address(), crate::path::RELAY_PEER);
@@ -734,7 +797,7 @@ mod tests {
             Ok::<_, Error>(buf)
         };
         let (r, s) = tokio::join!(recv_side, send_side);
-        assert!(r.is_ok());
+        assert!(r.is_ok(), "receiver: {:?}", r.err());
         assert_eq!(&s.unwrap(), b"relay");
         assert!(send_gate.is_open() && recv_gate.is_open());
     }
@@ -867,5 +930,63 @@ mod tests {
         assert_eq!(&buf, b"hello");
         assert!(!recv_gate.is_open());
         assert!(!send_gate.is_open());
+    }
+
+    /// A relay path that only starts carrying packets after a while is
+    /// still used, as long as it works before the receiver gives up (#185).
+    /// QUIC waits longer and longer between resending a handshake packet
+    /// that got no answer (about 1, 3, 7 and 15 seconds after the first),
+    /// so a single attempt would not notice a path that starts working at
+    /// 7.5 seconds before the receiver gives up; fresh attempts do.
+    #[tokio::test(start_paused = true)]
+    async fn a_relay_path_that_starts_working_late_is_still_used() {
+        for after in [7_500, 12_000] {
+            let start = tokio::time::Instant::now();
+            over_late_relay(
+                Vec::new(),
+                Duration::from_millis(after),
+                crate::CONNECT_TIMEOUT,
+            )
+            .await;
+            assert!(start.elapsed() < crate::CONNECT_TIMEOUT);
+        }
+        over_late_relay(
+            vec![unreachable()],
+            Duration::from_millis(9_500),
+            crate::CONNECT_TIMEOUT,
+        )
+        .await;
+    }
+
+    /// A stream may have several megabytes in flight, so a path with a long
+    /// round trip, such as the relay, is not held to the window divided by
+    /// the round trip: about 3 MB/s with quinn's default 1.25 MB at 300 ms
+    /// (#185). The receiver here never reads, so the writer gets exactly as
+    /// far as the receiver's flow-control window lets it.
+    #[tokio::test]
+    async fn a_stream_can_have_several_megabytes_in_flight() {
+        let (a, _, b, b_addr) = pair();
+        let accept = tokio::spawn(async move {
+            let conn = b.accept().await.unwrap().await.unwrap();
+            // Hold the connection open without reading anything.
+            tokio::time::sleep(Duration::from_secs(30)).await;
+            drop(conn);
+        });
+        let conn = a.connect(b_addr, SERVER_NAME).unwrap().await.unwrap();
+        let mut send = conn.open_uni().await.unwrap();
+        let chunk = vec![0u8; 64 * 1024];
+        let mut written = 0usize;
+        let goal = 6 * 1024 * 1024;
+        while written < goal {
+            match tokio::time::timeout(Duration::from_secs(2), send.write_all(&chunk)).await {
+                Ok(Ok(())) => written += chunk.len(),
+                _ => break,
+            }
+        }
+        accept.abort();
+        assert!(
+            written >= goal,
+            "only {written} bytes fit in the receiver's window"
+        );
     }
 }
