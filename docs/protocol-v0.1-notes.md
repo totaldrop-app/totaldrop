@@ -161,6 +161,13 @@ treated as final.
       removes its partial files and the empty folders this transfer created;
       files already placed stay. A receiver whose sender cancels does the
       same; files it verified before it handled the cancel stay too.
+    - A sender that stops first resets every data stream still open with
+      error code 1 (`RESET_STREAM`), then sends `cancel`. Data still on the
+      way is dropped, so the receiver never completes a file from it. A
+      dropped stream would end cleanly instead. The receiver treats a data
+      stream reset with code 1 like the cancel (#193). A stream the sender
+      could not finish, for example because the file could not be read, is
+      reset with code 2.
     - No entry may sit beneath a file entry.
 19. **Device keys in the command-line client.** Until keystore support
     arrives, the command-line client generates new device keys for every
