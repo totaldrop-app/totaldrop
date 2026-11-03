@@ -113,22 +113,31 @@ ApplicationWindow {
         else if (page) show(page, {})
     }
 
-    // Open `page` with `props`. Files for a Send screen already open join
-    // its list. A screen with something typed or listed stays under the new
-    // one, so Back returns to it; otherwise the new screen replaces it.
+    // Open `page` with `props`. There is at most one screen of each kind:
+    // files join the Send list already open, a code goes into the Receive
+    // screen already open. Screens with something listed, typed or not yet
+    // saved are never closed: the screen asked for opens over them, so Back
+    // returns to them.
     function show(page, props) {
-        const top = stack.currentItem
-        if (page === sendPage && top instanceof SendPage) {
-            if (props.initialFiles) top.add(props.initialFiles)
+        const kinds = new Map([[sendPage, SendPage], [receivePage, ReceivePage], [settingsPage, SettingsPage]])
+        const kind = kinds.get(page)
+        let at = -1
+        for (let i = 1; i < stack.depth; i++) if (stack.get(i) instanceof kind) at = i
+        let inputAbove = false
+        for (let i = Math.max(at, 0) + 1; i < stack.depth; i++) if (stack.get(i).hasInput) inputAbove = true
+        if (at >= 0) {
+            const open = stack.get(at)
+            if (props.initialFiles) open.add(props.initialFiles)
+            if (props.initialCode) open.useCode(props.initialCode)
+            // Brought up unless that would close a screen with input; then
+            // it waits under it, filled in.
+            if (!inputAbove) stack.pop(open, StackView.Immediate)
             return
         }
-        if (page === receivePage && top instanceof ReceivePage && !props.initialCode) return
-        if (page === settingsPage && top instanceof SettingsPage) return
-        if (top && top.hasInput) {
-            stack.push(page, props, StackView.Immediate)
-            return
-        }
-        stack.pop(null, StackView.Immediate)
+        // Close what is above the last screen with input, then open.
+        let keep = 0
+        for (let i = 1; i < stack.depth; i++) if (stack.get(i).hasInput) keep = i
+        stack.pop(stack.get(keep), StackView.Immediate)
         stack.push(page, props, StackView.Immediate)
     }
 

@@ -46,6 +46,9 @@ Page {
         onActivated: page.goBack()
     }
 
+    // A code from a link opened while this screen is open.
+    function useCode(code) { field.text = code; page.notice = ""; page.tried = false }
+
     Component.onCompleted: {
         if (initialCode !== "") field.text = initialCode
         Qt.callLater(() => field.forceActiveFocus())
