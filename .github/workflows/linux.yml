@@ -23,8 +23,9 @@ jobs:
     runs-on: ubuntu-latest
     container: archlinux:latest@sha256:e82623936fa1a69700b48e98b058df6eaab18b737c27473a7234a40fdecb9413
     steps:
+      # dbus: the single-window test runs its own session bus.
       - name: Qt 6 and the toolchain
-        run: pacman -Syu --noconfirm --needed base-devel git rustup qt6-base qt6-declarative qt6-wayland qt6-svg
+        run: pacman -Syu --noconfirm --needed base-devel git rustup dbus qt6-base qt6-declarative qt6-wayland qt6-svg
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
