@@ -29,7 +29,7 @@ const SCREENS: [&str; 3] = ["send", "receive", "settings"];
 
 /// Qt's own options that take the next argument as their value; that value
 /// is not a file to send.
-const QT_VALUE_OPTIONS: [&str; 14] = [
+const QT_VALUE_OPTIONS: [&str; 16] = [
     "platform",
     "platformpluginpath",
     "platformtheme",
@@ -44,11 +44,15 @@ const QT_VALUE_OPTIONS: [&str; 14] = [
     "name",
     "qwindowgeometry",
     "qwindowtitle",
+    "qwindowicon",
+    "icon",
 ];
 
-/// Limits on what another process may hand the window.
-const MAX_ARGS: usize = 4096;
+/// Limits on what another process may hand the window: every item is
+/// looked at on the GUI thread.
+const MAX_ARGS: usize = 1024;
 const MAX_ARG_BYTES: usize = 16 * 1024;
+const MAX_CALL_BYTES: usize = 1024 * 1024;
 const MAX_TOKEN_BYTES: usize = 1024;
 /// Requests kept while the window is not yet listening.
 const MAX_PENDING: usize = 16;
@@ -127,9 +131,16 @@ impl Request {
     /// What `Open` received, checked: it may come from any process of
     /// this person's session.
     fn from_open(uris: &[String], screen: Option<&str>) -> Self {
+        let mut bytes = 0;
         let items = uris
             .iter()
             .filter(|u| !u.is_empty() && u.len() <= MAX_ARG_BYTES)
+            // Options are not items: the screen comes in platform data.
+            .filter(|u| !u.starts_with('-'))
+            .take_while(|u| {
+                bytes += u.len();
+                bytes <= MAX_CALL_BYTES
+            })
             .take(MAX_ARGS)
             .filter_map(|u| {
                 if u.starts_with("file:") {
@@ -160,22 +171,28 @@ fn item(a: &OsStr, cwd: &Path) -> Option<String> {
         Some(cwd.join(path)).filter(|p| p.exists())
     };
     match (local, a.to_str()) {
+        // A file in this folder, even one called `a:b.txt`.
+        (Some(p), _) if !path.is_absolute() => Some(p.to_string_lossy().into_owned()),
         // The desktop entry's `%U` hands files over as `file://` URLs.
         (_, Some(s)) if s.starts_with("file:") => local_path(s),
         // A link (`totaldrop:…`, `https://…`) stays as it is.
         (_, Some(s)) if has_scheme(s) => Some(s.to_owned()),
         (Some(p), _) => Some(p.to_string_lossy().into_owned()),
+        // After `--`, something that looks like an option and names no
+        // file is not one either.
+        (None, Some(s)) if s.starts_with('-') => None,
         (None, Some(s)) => Some(s.to_owned()),
         (None, None) => None,
     }
 }
 
-/// The path of a local `file://` URL. One with a host, or without `//`,
-/// names nothing here.
+/// The path of a local `file://` URL (an empty host or `localhost`). One
+/// with another host, or without `//`, names nothing here.
 fn local_path(url: &str) -> Option<String> {
-    url.strip_prefix("file://")
-        .filter(|p| p.starts_with('/'))
-        .map(crate::desktop::percent_decode)
+    let rest = url.strip_prefix("file://")?;
+    let path = rest.strip_prefix("localhost").unwrap_or(rest);
+    path.starts_with('/')
+        .then(|| crate::desktop::percent_decode(path))
 }
 
 /// `scheme:` as RFC 3986 spells it: a letter, then letters, digits, `+`,
@@ -345,10 +362,35 @@ async fn try_claim(request: &Request) -> zbus::Result<Claim> {
     {
         RequestNameReply::PrimaryOwner | RequestNameReply::AlreadyOwner => Ok(Claim::Owner(conn)),
         RequestNameReply::Exists | RequestNameReply::InQueue => {
-            forward(&conn, request).await?;
-            Ok(Claim::Forwarded)
+            match forward(&conn, request).await {
+                Ok(()) => Ok(Claim::Forwarded),
+                // The window quit in between: this launch becomes it.
+                Err(e) if gone(&e) => match conn
+                    .request_name_with_flags(crate::APP_ID, RequestNameFlags::DO_NOT_QUEUE)
+                    .await?
+                {
+                    RequestNameReply::PrimaryOwner | RequestNameReply::AlreadyOwner => {
+                        Ok(Claim::Owner(conn))
+                    }
+                    _ => {
+                        forward(&conn, request).await?;
+                        Ok(Claim::Forwarded)
+                    }
+                },
+                Err(e) => Err(e),
+            }
         }
     }
+}
+
+/// Whether a call failed because nobody owns the name any more.
+fn gone(e: &zbus::Error) -> bool {
+    matches!(
+        e,
+        zbus::Error::MethodError(name, _, _)
+            if name.as_str() == "org.freedesktop.DBus.Error.ServiceUnknown"
+                || name.as_str() == "org.freedesktop.DBus.Error.NameHasNoOwner"
+    )
 }
 
 /// Call the running window with `request` and this launch's activation
@@ -446,6 +488,11 @@ mod tests {
     #[test]
     fn relative_paths_are_made_absolute() {
         let d = tmp();
+        std::fs::write(d.join("a:b.txt"), b"x").unwrap();
+        assert_eq!(
+            req(&["a:b.txt"], &d).items,
+            [d.join("a:b.txt").display().to_string()]
+        );
         let r = req(&["photo 1.jpg", "7-abandon-ability"], &d);
         assert_eq!(
             r.items,
@@ -464,6 +511,8 @@ mod tests {
             Path::new("/"),
         );
         assert_eq!(r.items, ["/tmp/a b.jpg"]);
+        let r = req(&["file://localhost/tmp/x"], Path::new("/"));
+        assert_eq!(r.items, ["/tmp/x"]);
     }
 
     #[test]
@@ -482,9 +531,16 @@ mod tests {
         );
         assert_eq!(r.items, ["/a"]);
         assert_eq!(r.screen, None);
-        // After `--`, a file may look like an option.
-        let r = req(&["--", "--screen=send", "-platform"], Path::new("/"));
-        assert_eq!(r.items, ["--screen=send", "-platform"]);
+        assert_eq!(
+            req(&["-qwindowicon", "x.png", "-icon", "y.png"], Path::new("/")).items,
+            Vec::<String>::new()
+        );
+        // After `--`, a file may look like an option; what names no file is
+        // dropped, so it cannot pass for `--screen`.
+        let d = tmp();
+        std::fs::write(d.join("-odd"), b"x").unwrap();
+        let r = req(&["--", "--screen=send", "-odd"], &d);
+        assert_eq!(r.items, [d.join("-odd").display().to_string()]);
         assert_eq!(r.screen, None);
     }
 
@@ -511,11 +567,17 @@ mod tests {
             "file://host/etc/passwd".into(),
             "file:relative".into(),
             "file:///ok".into(),
+            "--screen=send".into(),
         ];
         uris.extend((0..MAX_ARGS + 10).map(|i| format!("/f{i}")));
         let r = Request::from_open(&uris, Some("../../etc"));
         assert_eq!(r.items[0], "/ok");
         assert_eq!(r.items.len(), MAX_ARGS - 2);
+        // And bounded in bytes: 1 MiB a call.
+        let big: Vec<String> = (0..100)
+            .map(|i| format!("/{i:05}{}", "a".repeat(16 * 1024 - 7)))
+            .collect();
+        assert_eq!(Request::from_open(&big, None).items.len(), 64);
         assert_eq!(r.screen, None);
         assert_eq!(
             Request::from_open(&[], Some("settings")).screen.as_deref(),

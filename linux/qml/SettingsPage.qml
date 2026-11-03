@@ -7,6 +7,8 @@ Page {
     id: page
 
     required property Transfer transfer
+    // A server address not yet saved: another launch does not replace it.
+    readonly property bool hasInput: server.text.trim() !== page.transfer.server
     signal close()
 
     property bool invalid: false

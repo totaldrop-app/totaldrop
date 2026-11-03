@@ -9,6 +9,8 @@ Page {
 
     required property Transfer transfer
     property string initialCode: ""
+    // A code typed in: another launch does not replace it.
+    readonly property bool hasInput: field.text.trim() !== ""
     signal close()
     signal askCancel()
 
