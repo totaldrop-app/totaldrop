@@ -423,4 +423,16 @@ class AppLocalizationsHe extends AppLocalizations {
 
     return '$percentString%';
   }
+
+  @override
+  String get transferNoticeChannel => 'העברות';
+
+  @override
+  String get transferNoticeSending => 'שולח עם TotalDrop';
+
+  @override
+  String get transferNoticeReceiving => 'מקבל עם TotalDrop';
+
+  @override
+  String get transferNoticeBody => 'ממשיך גם כשמשתמשים באפליקציות אחרות.';
 }

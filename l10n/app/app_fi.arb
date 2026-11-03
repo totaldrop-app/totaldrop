@@ -111,5 +111,10 @@
   "openFolder": "Avaa kansio",
   "back": "Takaisin",
   "codeSuggestions": "Ehdotukset",
-  "progressPercent": "{percent} %"
+  "progressPercent": "{percent} %",
+
+  "transferNoticeChannel": "Siirrot",
+  "transferNoticeSending": "Lähetetään TotalDropilla",
+  "transferNoticeReceiving": "Vastaanotetaan TotalDropilla",
+  "transferNoticeBody": "Jatkuu, kun käytät muita sovelluksia."
 }

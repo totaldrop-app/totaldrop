@@ -111,5 +111,10 @@
   "openFolder": "फ़ोल्डर खोलें",
   "back": "वापस",
   "codeSuggestions": "सुझाव",
-  "progressPercent": "{percent}%"
+  "progressPercent": "{percent}%",
+
+  "transferNoticeChannel": "स्थानांतरण",
+  "transferNoticeSending": "TotalDrop से भेजा जा रहा है",
+  "transferNoticeReceiving": "TotalDrop से प्राप्त किया जा रहा है",
+  "transferNoticeBody": "दूसरे ऐप इस्तेमाल करते समय भी चलता रहता है।"
 }

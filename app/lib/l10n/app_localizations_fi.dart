@@ -425,4 +425,16 @@ class AppLocalizationsFi extends AppLocalizations {
 
     return '$percentString %';
   }
+
+  @override
+  String get transferNoticeChannel => 'Siirrot';
+
+  @override
+  String get transferNoticeSending => 'Lähetetään TotalDropilla';
+
+  @override
+  String get transferNoticeReceiving => 'Vastaanotetaan TotalDropilla';
+
+  @override
+  String get transferNoticeBody => 'Jatkuu, kun käytät muita sovelluksia.';
 }

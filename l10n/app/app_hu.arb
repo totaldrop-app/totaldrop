@@ -111,5 +111,10 @@
   "openFolder": "Mappa megnyitása",
   "back": "Vissza",
   "codeSuggestions": "Javaslatok",
-  "progressPercent": "{percent}%"
+  "progressPercent": "{percent}%",
+
+  "transferNoticeChannel": "Átvitelek",
+  "transferNoticeSending": "Küldés TotalDroppal",
+  "transferNoticeReceiving": "Fogadás TotalDroppal",
+  "transferNoticeBody": "Akkor is folytatódik, ha más alkalmazásokat használsz."
 }

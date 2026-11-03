@@ -111,5 +111,10 @@
   "openFolder": "Відкрити папку",
   "back": "Назад",
   "codeSuggestions": "Підказки",
-  "progressPercent": "{percent}%"
+  "progressPercent": "{percent}%",
+
+  "transferNoticeChannel": "Передавання",
+  "transferNoticeSending": "Надсилання через TotalDrop",
+  "transferNoticeReceiving": "Отримання через TotalDrop",
+  "transferNoticeBody": "Триває, поки ви користуєтеся іншими застосунками."
 }

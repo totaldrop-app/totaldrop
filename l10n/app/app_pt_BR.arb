@@ -111,5 +111,10 @@
   "openFolder": "Abrir pasta",
   "back": "Voltar",
   "codeSuggestions": "Sugestões",
-  "progressPercent": "{percent}%"
+  "progressPercent": "{percent}%",
+
+  "transferNoticeChannel": "Transferências",
+  "transferNoticeSending": "Enviando com o TotalDrop",
+  "transferNoticeReceiving": "Recebendo com o TotalDrop",
+  "transferNoticeBody": "Continua enquanto você usa outros apps."
 }

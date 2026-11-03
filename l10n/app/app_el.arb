@@ -111,5 +111,10 @@
   "openFolder": "Άνοιγμα φακέλου",
   "back": "Πίσω",
   "codeSuggestions": "Προτάσεις",
-  "progressPercent": "{percent}%"
+  "progressPercent": "{percent}%",
+
+  "transferNoticeChannel": "Μεταφορές",
+  "transferNoticeSending": "Αποστολή με το TotalDrop",
+  "transferNoticeReceiving": "Λήψη με το TotalDrop",
+  "transferNoticeBody": "Συνεχίζεται ενώ χρησιμοποιείτε άλλες εφαρμογές."
 }

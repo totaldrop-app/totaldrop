@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 
+import '../../data/transfer_keep_alive.dart';
 import '../../data/transfer_repository.dart';
 import '../../src/rust/api/transfer.dart';
 
@@ -20,9 +21,15 @@ class PickedFile {
 }
 
 class SendViewModel extends ChangeNotifier {
-  SendViewModel({required TransferRepository repository}) : _repo = repository;
+  SendViewModel({
+    required TransferRepository repository,
+    TransferKeepAlive keepAlive = const NoKeepAlive(),
+  }) : _repo = repository,
+       _keepAlive = keepAlive;
 
   final TransferRepository _repo;
+  final TransferKeepAlive _keepAlive;
+  bool _keptAlive = false;
   StreamSubscription<TransferEvent>? _sub;
   Stopper? _stopper;
   // Bumped by every start and reset, so a call that returns after the
@@ -81,6 +88,7 @@ class SendViewModel extends ChangeNotifier {
     final generation = ++_generation;
     final stopper = _repo.newStopper();
     _stopper = stopper;
+    _keepGoing();
     notifyListeners();
     final SendSession session;
     try {
@@ -150,6 +158,20 @@ class SendViewModel extends ChangeNotifier {
   void _cleanUp() {
     _sub?.cancel();
     _sub = null;
+    _release();
+  }
+
+  /// Keep the send going while the person shares the code in another app
+  /// (#194). The notification's Stop stops it.
+  void _keepGoing() {
+    _keptAlive = true;
+    unawaited(_keepAlive.begin(TransferDirection.sending, cancel));
+  }
+
+  void _release() {
+    if (!_keptAlive) return;
+    _keptAlive = false;
+    unawaited(_keepAlive.end());
   }
 
   /// Stop the transfer, at whatever stage it is in. The receiver is told.
@@ -165,6 +187,7 @@ class SendViewModel extends ChangeNotifier {
     _generation++;
     _sub?.cancel();
     _sub = null;
+    _release();
     _files.clear();
     // The picker keeps copies of picked files in the app cache; drop them.
     unawaited(FilePicker.clearTemporaryFiles().catchError((_) => false));
@@ -182,6 +205,7 @@ class SendViewModel extends ChangeNotifier {
   void dispose() {
     cancel();
     _sub?.cancel();
+    _release();
     super.dispose();
   }
 }

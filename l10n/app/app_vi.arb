@@ -111,5 +111,10 @@
   "openFolder": "Mở thư mục",
   "back": "Quay lại",
   "codeSuggestions": "Gợi ý",
-  "progressPercent": "{percent}%"
+  "progressPercent": "{percent}%",
+
+  "transferNoticeChannel": "Truyền tệp",
+  "transferNoticeSending": "Đang gửi bằng TotalDrop",
+  "transferNoticeReceiving": "Đang nhận bằng TotalDrop",
+  "transferNoticeBody": "Vẫn tiếp tục khi bạn dùng ứng dụng khác."
 }

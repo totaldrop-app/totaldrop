@@ -111,5 +111,10 @@
   "openFolder": "Klasörü aç",
   "back": "Geri",
   "codeSuggestions": "Öneriler",
-  "progressPercent": "%{percent}"
+  "progressPercent": "%{percent}",
+
+  "transferNoticeChannel": "Aktarımlar",
+  "transferNoticeSending": "TotalDrop ile gönderiliyor",
+  "transferNoticeReceiving": "TotalDrop ile alınıyor",
+  "transferNoticeBody": "Başka uygulamaları kullanırken de sürer."
 }

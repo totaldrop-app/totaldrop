@@ -111,5 +111,10 @@
   "openFolder": "Deschide dosarul",
   "back": "Înapoi",
   "codeSuggestions": "Sugestii",
-  "progressPercent": "{percent}%"
+  "progressPercent": "{percent}%",
+
+  "transferNoticeChannel": "Transferuri",
+  "transferNoticeSending": "Se trimite cu TotalDrop",
+  "transferNoticeReceiving": "Se primește cu TotalDrop",
+  "transferNoticeBody": "Continuă cât timp folosești alte aplicații."
 }

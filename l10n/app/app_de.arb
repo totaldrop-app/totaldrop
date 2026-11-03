@@ -111,5 +111,10 @@
   "openFolder": "Ordner öffnen",
   "back": "Zurück",
   "codeSuggestions": "Vorschläge",
-  "progressPercent": "{percent} %"
+  "progressPercent": "{percent} %",
+
+  "transferNoticeChannel": "Übertragungen",
+  "transferNoticeSending": "Senden mit TotalDrop",
+  "transferNoticeReceiving": "Empfangen mit TotalDrop",
+  "transferNoticeBody": "Läuft weiter, während du andere Apps nutzt."
 }

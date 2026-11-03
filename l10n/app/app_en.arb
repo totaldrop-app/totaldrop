@@ -131,5 +131,14 @@
   "back": "Back",
   "codeSuggestions": "Suggestions",
   "progressPercent": "{percent}%",
-  "@progressPercent": {"description": "Transfer progress; use your language's percent style", "placeholders": {"percent": {"type": "int", "format": "decimalPattern"}}}
+  "@progressPercent": {"description": "Transfer progress; use your language's percent style", "placeholders": {"percent": {"type": "int", "format": "decimalPattern"}}},
+
+  "transferNoticeChannel": "Transfers",
+  "@transferNoticeChannel": {"description": "Android notification channel name for running transfers (shown in system settings)"},
+  "transferNoticeSending": "Sending with TotalDrop",
+  "@transferNoticeSending": {"description": "Title of the ongoing notification while a send runs in the background"},
+  "transferNoticeReceiving": "Receiving with TotalDrop",
+  "@transferNoticeReceiving": {"description": "Title of the ongoing notification while a receive runs in the background"},
+  "transferNoticeBody": "Keeps going while you use other apps.",
+  "@transferNoticeBody": {"description": "Text of the ongoing transfer notification: the transfer continues while the person uses other apps"}
 }

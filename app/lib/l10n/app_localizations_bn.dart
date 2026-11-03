@@ -413,4 +413,16 @@ class AppLocalizationsBn extends AppLocalizations {
 
     return '$percentString%';
   }
+
+  @override
+  String get transferNoticeChannel => 'স্থানান্তর';
+
+  @override
+  String get transferNoticeSending => 'TotalDrop দিয়ে পাঠানো হচ্ছে';
+
+  @override
+  String get transferNoticeReceiving => 'TotalDrop দিয়ে গ্রহণ করা হচ্ছে';
+
+  @override
+  String get transferNoticeBody => 'অন্য অ্যাপ ব্যবহার করার সময়ও চলতে থাকে।';
 }

@@ -111,5 +111,10 @@
   "openFolder": "フォルダを開く",
   "back": "戻る",
   "codeSuggestions": "候補",
-  "progressPercent": "{percent}%"
+  "progressPercent": "{percent}%",
+
+  "transferNoticeChannel": "転送",
+  "transferNoticeSending": "TotalDrop で送信中",
+  "transferNoticeReceiving": "TotalDrop で受信中",
+  "transferNoticeBody": "ほかのアプリを使っている間も続きます。"
 }

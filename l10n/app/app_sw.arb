@@ -111,5 +111,10 @@
   "openFolder": "Fungua folda",
   "back": "Rudi",
   "codeSuggestions": "Mapendekezo",
-  "progressPercent": "{percent}%"
+  "progressPercent": "{percent}%",
+
+  "transferNoticeChannel": "Uhamishaji",
+  "transferNoticeSending": "Inatuma kwa TotalDrop",
+  "transferNoticeReceiving": "Inapokea kwa TotalDrop",
+  "transferNoticeBody": "Inaendelea unapotumia programu nyingine."
 }

@@ -395,6 +395,18 @@ class AppLocalizationsZh extends AppLocalizations {
 
     return '$percentString%';
   }
+
+  @override
+  String get transferNoticeChannel => '传输';
+
+  @override
+  String get transferNoticeSending => '正在通过 TotalDrop 发送';
+
+  @override
+  String get transferNoticeReceiving => '正在通过 TotalDrop 接收';
+
+  @override
+  String get transferNoticeBody => '使用其他应用时仍会继续。';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hans`).
@@ -787,6 +799,18 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
 
     return '$percentString%';
   }
+
+  @override
+  String get transferNoticeChannel => '传输';
+
+  @override
+  String get transferNoticeSending => '正在通过 TotalDrop 发送';
+
+  @override
+  String get transferNoticeReceiving => '正在通过 TotalDrop 接收';
+
+  @override
+  String get transferNoticeBody => '使用其他应用时仍会继续。';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -1179,4 +1203,16 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
     return '$percentString%';
   }
+
+  @override
+  String get transferNoticeChannel => '傳輸';
+
+  @override
+  String get transferNoticeSending => '正在透過 TotalDrop 傳送';
+
+  @override
+  String get transferNoticeReceiving => '正在透過 TotalDrop 接收';
+
+  @override
+  String get transferNoticeBody => '使用其他應用程式時仍會繼續。';
 }

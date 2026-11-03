@@ -433,4 +433,17 @@ class AppLocalizationsRu extends AppLocalizations {
 
     return '$percentString%';
   }
+
+  @override
+  String get transferNoticeChannel => 'Передачи';
+
+  @override
+  String get transferNoticeSending => 'Отправка через TotalDrop';
+
+  @override
+  String get transferNoticeReceiving => 'Получение через TotalDrop';
+
+  @override
+  String get transferNoticeBody =>
+      'Продолжается, пока вы пользуетесь другими приложениями.';
 }

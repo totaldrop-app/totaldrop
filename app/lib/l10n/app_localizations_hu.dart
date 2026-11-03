@@ -414,4 +414,17 @@ class AppLocalizationsHu extends AppLocalizations {
 
     return '$percentString%';
   }
+
+  @override
+  String get transferNoticeChannel => 'Átvitelek';
+
+  @override
+  String get transferNoticeSending => 'Küldés TotalDroppal';
+
+  @override
+  String get transferNoticeReceiving => 'Fogadás TotalDroppal';
+
+  @override
+  String get transferNoticeBody =>
+      'Akkor is folytatódik, ha más alkalmazásokat használsz.';
 }

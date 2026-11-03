@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import '../../data/transfer_keep_alive.dart';
 import '../../data/transfer_repository.dart';
 import '../../src/rust/api/transfer.dart';
 import '../core/l10n.dart';
@@ -31,10 +32,15 @@ enum ReceiveStage {
 }
 
 class ReceiveViewModel extends ChangeNotifier {
-  ReceiveViewModel({required TransferRepository repository})
-    : _repo = repository;
+  ReceiveViewModel({
+    required TransferRepository repository,
+    TransferKeepAlive keepAlive = const NoKeepAlive(),
+  }) : _repo = repository,
+       _keepAlive = keepAlive;
 
   final TransferRepository _repo;
+  final TransferKeepAlive _keepAlive;
+  bool _keptAlive = false;
   StreamSubscription<TransferEvent>? _sub;
   Stopper? _stopper;
   // Bumped by every connect and reset, so a call that returns after the
@@ -78,6 +84,7 @@ class ReceiveViewModel extends ChangeNotifier {
     final generation = ++_generation;
     final stopper = _repo.newStopper();
     _stopper = stopper;
+    _keepGoing();
     notifyListeners();
     try {
       final o = await _repo.connect(code, stopper);
@@ -94,6 +101,7 @@ class ReceiveViewModel extends ChangeNotifier {
       if (generation != _generation) return;
       error = e;
       stage = ReceiveStage.failed;
+      _release();
     }
     notifyListeners();
   }
@@ -129,6 +137,7 @@ class ReceiveViewModel extends ChangeNotifier {
       // Declining is best effort; the sender times out either way.
     }
     stage = ReceiveStage.declined;
+    _release();
     notifyListeners();
   }
 
@@ -144,6 +153,7 @@ class ReceiveViewModel extends ChangeNotifier {
         summary = e.summary;
         stage = ReceiveStage.done;
         _sub?.cancel();
+        _release();
       case EventKind.failed:
         _fail(
           e.error ?? const TransferError(kind: ErrorKind.other, detail: ''),
@@ -157,7 +167,21 @@ class ReceiveViewModel extends ChangeNotifier {
     error = e;
     stage = ReceiveStage.failed;
     _sub?.cancel();
+    _release();
     notifyListeners();
+  }
+
+  /// Keep the receive going while the app is in the background (#194).
+  /// The notification's Stop stops it.
+  void _keepGoing() {
+    _keptAlive = true;
+    unawaited(_keepAlive.begin(TransferDirection.receiving, cancel));
+  }
+
+  void _release() {
+    if (!_keptAlive) return;
+    _keptAlive = false;
+    unawaited(_keepAlive.end());
   }
 
   /// Stop the transfer, at whatever stage it is in. The sender is told.
@@ -172,6 +196,7 @@ class ReceiveViewModel extends ChangeNotifier {
     _generation++;
     _sub?.cancel();
     _sub = null;
+    _release();
     stage = ReceiveStage.entering;
     input = '';
     showInvalid = false;
@@ -192,6 +217,7 @@ class ReceiveViewModel extends ChangeNotifier {
     }
     cancel();
     _sub?.cancel();
+    _release();
     super.dispose();
   }
 }

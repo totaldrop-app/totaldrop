@@ -111,5 +111,10 @@
   "openFolder": "فتح المجلد",
   "back": "رجوع",
   "codeSuggestions": "اقتراحات",
-  "progressPercent": "{percent}٪"
+  "progressPercent": "{percent}٪",
+
+  "transferNoticeChannel": "عمليات النقل",
+  "transferNoticeSending": "جارٍ الإرسال عبر TotalDrop",
+  "transferNoticeReceiving": "جارٍ الاستلام عبر TotalDrop",
+  "transferNoticeBody": "يستمر أثناء استخدامك تطبيقات أخرى."
 }

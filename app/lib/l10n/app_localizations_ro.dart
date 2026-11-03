@@ -432,4 +432,17 @@ class AppLocalizationsRo extends AppLocalizations {
 
     return '$percentString%';
   }
+
+  @override
+  String get transferNoticeChannel => 'Transferuri';
+
+  @override
+  String get transferNoticeSending => 'Se trimite cu TotalDrop';
+
+  @override
+  String get transferNoticeReceiving => 'Se primește cu TotalDrop';
+
+  @override
+  String get transferNoticeBody =>
+      'Continuă cât timp folosești alte aplicații.';
 }

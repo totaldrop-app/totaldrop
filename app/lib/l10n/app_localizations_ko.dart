@@ -400,4 +400,16 @@ class AppLocalizationsKo extends AppLocalizations {
 
     return '$percentString%';
   }
+
+  @override
+  String get transferNoticeChannel => '전송';
+
+  @override
+  String get transferNoticeSending => 'TotalDrop으로 보내는 중';
+
+  @override
+  String get transferNoticeReceiving => 'TotalDrop으로 받는 중';
+
+  @override
+  String get transferNoticeBody => '다른 앱을 사용하는 동안에도 계속됩니다.';
 }

@@ -111,5 +111,10 @@
   "openFolder": "فولڈر کھولیں",
   "back": "واپس",
   "codeSuggestions": "تجاویز",
-  "progressPercent": "{percent}%"
+  "progressPercent": "{percent}%",
+
+  "transferNoticeChannel": "منتقلیاں",
+  "transferNoticeSending": "TotalDrop سے بھیجا جا رہا ہے",
+  "transferNoticeReceiving": "TotalDrop سے وصول کیا جا رہا ہے",
+  "transferNoticeBody": "دوسری ایپس استعمال کرتے وقت بھی جاری رہتا ہے۔"
 }

@@ -424,4 +424,17 @@ class AppLocalizationsUr extends AppLocalizations {
 
     return '$percentString%';
   }
+
+  @override
+  String get transferNoticeChannel => 'منتقلیاں';
+
+  @override
+  String get transferNoticeSending => 'TotalDrop سے بھیجا جا رہا ہے';
+
+  @override
+  String get transferNoticeReceiving => 'TotalDrop سے وصول کیا جا رہا ہے';
+
+  @override
+  String get transferNoticeBody =>
+      'دوسری ایپس استعمال کرتے وقت بھی جاری رہتا ہے۔';
 }

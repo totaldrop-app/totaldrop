@@ -111,5 +111,10 @@
   "openFolder": "Otevřít složku",
   "back": "Zpět",
   "codeSuggestions": "Návrhy",
-  "progressPercent": "{percent} %"
+  "progressPercent": "{percent} %",
+
+  "transferNoticeChannel": "Přenosy",
+  "transferNoticeSending": "Odesílání přes TotalDrop",
+  "transferNoticeReceiving": "Příjem přes TotalDrop",
+  "transferNoticeBody": "Pokračuje, i když používáte jiné aplikace."
 }

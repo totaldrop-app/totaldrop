@@ -421,4 +421,16 @@ class AppLocalizationsSw extends AppLocalizations {
 
     return '$percentString%';
   }
+
+  @override
+  String get transferNoticeChannel => 'Uhamishaji';
+
+  @override
+  String get transferNoticeSending => 'Inatuma kwa TotalDrop';
+
+  @override
+  String get transferNoticeReceiving => 'Inapokea kwa TotalDrop';
+
+  @override
+  String get transferNoticeBody => 'Inaendelea unapotumia programu nyingine.';
 }
