@@ -156,18 +156,23 @@ treated as final.
     - A receiver gives up after 60 seconds with no data at all. A sender
       waits at most 10 minutes for the receiver to accept or decline.
     - A side that stops sends `cancel` (reason `stopped`) on the control
-      stream, best effort within 2 seconds, then closes the connection. The
+      stream, best effort within 2 seconds (a sender first waits up to 2
+      seconds more for its data streams to reset), then closes the
+      connection. The
       other side reports that the other device stopped. A stopped receiver
       removes its partial files and the empty folders this transfer created;
       files already placed stay. A receiver whose sender cancels does the
       same; files it verified before it handled the cancel stay too.
     - A sender that stops first resets every data stream still open with
-      error code 1 (`RESET_STREAM`), then sends `cancel`. Data still on the
-      way is dropped, so the receiver never completes a file from it. A
-      dropped stream would end cleanly instead. The receiver treats a data
-      stream reset with code 1 like the cancel (#193). A stream the sender
-      could not finish, for example because the file could not be read, is
-      reset with code 2.
+      error code 1 (`RESET_STREAM`), then sends `cancel`. Data not yet sent,
+      or not yet read by the receiver when the reset arrives, is dropped. A
+      dropped stream would end cleanly instead and let the file complete.
+      Data already on the wire ahead of the reset can still complete a
+      file; it then counts as verified before the cancel. The receiver
+      treats a data stream reset with code 1 like the cancel (#193). A
+      stream the sender could not finish, for example because the file
+      could not be read, is reset with code 2; the receiver stops and
+      reports that the sender could not send a file.
     - No entry may sit beneath a file entry.
 19. **Device keys in the command-line client.** Until keystore support
     arrives, the command-line client generates new device keys for every
