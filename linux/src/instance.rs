@@ -396,13 +396,18 @@ async fn take_name(conn: &zbus::Connection) -> zbus::Result<bool> {
     }
 }
 
-/// Whether a call failed because nobody owns the name any more.
+/// Whether a call failed because nobody owns the name any more, or its
+/// owner quit before answering (the bus then replies `NoReply`).
 fn gone(e: &zbus::Error) -> bool {
     matches!(
         e,
         zbus::Error::MethodError(name, _, _)
-            if name.as_str() == "org.freedesktop.DBus.Error.ServiceUnknown"
-                || name.as_str() == "org.freedesktop.DBus.Error.NameHasNoOwner"
+            if matches!(
+                name.as_str(),
+                "org.freedesktop.DBus.Error.ServiceUnknown"
+                    | "org.freedesktop.DBus.Error.NameHasNoOwner"
+                    | "org.freedesktop.DBus.Error.NoReply"
+            )
     )
 }
 
@@ -468,23 +473,38 @@ mod tests {
     struct PrivateBus {
         daemon: Child,
         address: String,
+        dir: PathBuf,
     }
 
     impl PrivateBus {
         /// `None` where `dbus-daemon` is not installed.
         fn start() -> Option<Self> {
-            let mut daemon = Command::new("dbus-daemon")
+            static NEXT: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
+            let n = NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+            let dir = std::env::temp_dir().join(format!("td-bus-{}-{n}", std::process::id()));
+            std::fs::create_dir_all(&dir).ok()?;
+            let daemon = Command::new("dbus-daemon")
                 .args(["--session", "--nofork", "--print-address=1"])
-                .arg("--address=unix:tmpdir=/tmp")
+                .arg(format!("--address=unix:dir={}", dir.display()))
                 .stdout(Stdio::piped())
-                .stderr(Stdio::null())
-                .spawn()
+                .stderr(Stdio::inherit())
+                .spawn();
+            let Ok(daemon) = daemon else {
+                let _ = std::fs::remove_dir_all(&dir);
+                return None;
+            };
+            // From here `Drop` stops the daemon and removes its socket.
+            let mut bus = Self {
+                daemon,
+                address: String::new(),
+                dir,
+            };
+            let out = bus.daemon.stdout.take()?;
+            std::io::BufReader::new(out)
+                .read_line(&mut bus.address)
                 .ok()?;
-            let mut address = String::new();
-            let out = daemon.stdout.take()?;
-            std::io::BufReader::new(out).read_line(&mut address).ok()?;
-            let address = address.trim().to_owned();
-            (!address.is_empty()).then_some(Self { daemon, address })
+            bus.address = bus.address.trim().to_owned();
+            (!bus.address.is_empty()).then_some(bus)
         }
 
         fn builder(&self) -> zbus::connection::Builder<'_> {
@@ -496,6 +516,7 @@ mod tests {
         fn drop(&mut self) {
             let _ = self.daemon.kill();
             let _ = self.daemon.wait();
+            let _ = std::fs::remove_dir_all(&self.dir);
         }
     }
 
