@@ -349,37 +349,50 @@ pub async fn claim(request: &Request) -> Claim {
 }
 
 async fn try_claim(request: &Request) -> zbus::Result<Claim> {
+    try_claim_on(zbus::connection::Builder::session(), request).await
+}
+
+async fn try_claim_on(
+    bus: zbus::connection::Builder<'_>,
+    request: &Request,
+) -> zbus::Result<Claim> {
     // The interface is served before the name is taken, so no call can
     // arrive at a name without it.
-    let conn = zbus::connection::Builder::session()
+    let conn = bus
         .serve_at(OBJECT_PATH, Application)
         .method_timeout(TIMEOUT)
         .build()
         .await?;
-    match conn
-        .request_name_with_flags(crate::APP_ID, RequestNameFlags::DO_NOT_QUEUE)
-        .await?
-    {
-        RequestNameReply::PrimaryOwner | RequestNameReply::AlreadyOwner => Ok(Claim::Owner(conn)),
-        RequestNameReply::Exists | RequestNameReply::InQueue => {
-            match forward(&conn, request).await {
-                Ok(()) => Ok(Claim::Forwarded),
-                // The window quit in between: this launch becomes it.
-                Err(e) if gone(&e) => match conn
-                    .request_name_with_flags(crate::APP_ID, RequestNameFlags::DO_NOT_QUEUE)
-                    .await?
-                {
-                    RequestNameReply::PrimaryOwner | RequestNameReply::AlreadyOwner => {
-                        Ok(Claim::Owner(conn))
-                    }
-                    _ => {
-                        forward(&conn, request).await?;
-                        Ok(Claim::Forwarded)
-                    }
-                },
-                Err(e) => Err(e),
+    if take_name(&conn).await? {
+        return Ok(Claim::Owner(conn));
+    }
+    match forward(&conn, request).await {
+        Ok(()) => Ok(Claim::Forwarded),
+        // The window quit in between: this launch becomes it.
+        Err(e) if gone(&e) => {
+            if take_name(&conn).await? {
+                Ok(Claim::Owner(conn))
+            } else {
+                forward(&conn, request).await?;
+                Ok(Claim::Forwarded)
             }
         }
+        Err(e) => Err(e),
+    }
+}
+
+/// Take the app's name: `false` when another window has it. zbus reports
+/// a taken name as `Error::NameTaken`, not as `Ok(Exists)`.
+async fn take_name(conn: &zbus::Connection) -> zbus::Result<bool> {
+    match conn
+        .request_name_with_flags(crate::APP_ID, RequestNameFlags::DO_NOT_QUEUE)
+        .await
+    {
+        Ok(RequestNameReply::PrimaryOwner | RequestNameReply::AlreadyOwner) => Ok(true),
+        Ok(RequestNameReply::Exists | RequestNameReply::InQueue) | Err(zbus::Error::NameTaken) => {
+            Ok(false)
+        }
+        Err(e) => Err(e),
     }
 }
 
@@ -443,7 +456,80 @@ pub async fn forward(conn: &zbus::Connection, request: &Request) -> zbus::Result
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::io::BufRead as _;
     use std::path::PathBuf;
+    use std::process::{Child, Command, Stdio};
+
+    /// The inbox is one per process: tests that listen take turns.
+    static ONE_INBOX: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
+
+    /// A session bus of our own, so tests neither need nor touch the
+    /// desktop's.
+    struct PrivateBus {
+        daemon: Child,
+        address: String,
+    }
+
+    impl PrivateBus {
+        /// `None` where `dbus-daemon` is not installed.
+        fn start() -> Option<Self> {
+            let mut daemon = Command::new("dbus-daemon")
+                .args(["--session", "--nofork", "--print-address=1"])
+                .arg("--address=unix:tmpdir=/tmp")
+                .stdout(Stdio::piped())
+                .stderr(Stdio::null())
+                .spawn()
+                .ok()?;
+            let mut address = String::new();
+            let out = daemon.stdout.take()?;
+            std::io::BufReader::new(out).read_line(&mut address).ok()?;
+            let address = address.trim().to_owned();
+            (!address.is_empty()).then_some(Self { daemon, address })
+        }
+
+        fn builder(&self) -> zbus::connection::Builder<'_> {
+            zbus::connection::Builder::address(self.address.as_str())
+        }
+    }
+
+    impl Drop for PrivateBus {
+        fn drop(&mut self) {
+            let _ = self.daemon.kill();
+            let _ = self.daemon.wait();
+        }
+    }
+
+    /// The hand-off as two launches make it, over a real bus: the first
+    /// owns the name, the second gives it its request and is done, and
+    /// once the first has quit the next launch owns the name again.
+    #[tokio::test]
+    async fn a_second_launch_hands_over_to_the_first() {
+        let _one = ONE_INBOX.lock().await;
+        let Some(bus) = PrivateBus::start() else {
+            // CI installs it, so the test cannot pass there by skipping.
+            assert!(std::env::var_os("CI").is_none(), "dbus-daemon is missing");
+            eprintln!("skipped: dbus-daemon is not installed");
+            return;
+        };
+        let (tx, rx) = std::sync::mpsc::channel();
+        listen(move |o| tx.send(o).unwrap());
+
+        let first = try_claim_on(bus.builder(), &Request::default()).await;
+        assert!(matches!(first, Ok(Claim::Owner(_))), "first launch");
+
+        let second = Request {
+            items: vec!["/tmp/td-a.txt".into()],
+            screen: Some("send".into()),
+        };
+        let claim = try_claim_on(bus.builder(), &second).await;
+        assert!(matches!(claim, Ok(Claim::Forwarded)), "second launch");
+        let o = rx.recv_timeout(TIMEOUT).unwrap();
+        assert_eq!(o.request, second);
+
+        drop(first);
+        let third = try_claim_on(bus.builder(), &Request::default()).await;
+        assert!(matches!(third, Ok(Claim::Owner(_))), "after the first quit");
+    }
 
     fn args(a: &[&str]) -> Vec<OsString> {
         a.iter().map(OsString::from).collect()
@@ -605,6 +691,7 @@ mod tests {
     #[tokio::test]
     async fn calls_arrive_in_the_inbox() {
         use zbus::connection::{Builder, socket::Channel};
+        let _one = ONE_INBOX.lock().await;
         let (tx, rx) = std::sync::mpsc::channel();
         listen(move |o| tx.send(o).unwrap());
 
