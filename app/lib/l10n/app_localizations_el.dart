@@ -430,4 +430,17 @@ class AppLocalizationsEl extends AppLocalizations {
 
     return '$percentString%';
   }
+
+  @override
+  String get transferNoticeChannel => 'Μεταφορές';
+
+  @override
+  String get transferNoticeSending => 'Αποστολή με το TotalDrop';
+
+  @override
+  String get transferNoticeReceiving => 'Λήψη με το TotalDrop';
+
+  @override
+  String get transferNoticeBody =>
+      'Συνεχίζεται ενώ χρησιμοποιείτε άλλες εφαρμογές.';
 }

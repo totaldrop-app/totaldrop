@@ -111,5 +111,10 @@
   "openFolder": "เปิดโฟลเดอร์",
   "back": "กลับ",
   "codeSuggestions": "คำแนะนำ",
-  "progressPercent": "{percent}%"
+  "progressPercent": "{percent}%",
+
+  "transferNoticeChannel": "การโอน",
+  "transferNoticeSending": "กำลังส่งด้วย TotalDrop",
+  "transferNoticeReceiving": "กำลังรับด้วย TotalDrop",
+  "transferNoticeBody": "ทำงานต่อไปขณะที่คุณใช้แอปอื่น"
 }

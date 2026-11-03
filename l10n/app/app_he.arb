@@ -111,5 +111,10 @@
   "openFolder": "פתיחת התיקייה",
   "back": "חזרה",
   "codeSuggestions": "הצעות",
-  "progressPercent": "{percent}%"
+  "progressPercent": "{percent}%",
+
+  "transferNoticeChannel": "העברות",
+  "transferNoticeSending": "שולח עם TotalDrop",
+  "transferNoticeReceiving": "מקבל עם TotalDrop",
+  "transferNoticeBody": "ממשיך גם כשמשתמשים באפליקציות אחרות."
 }

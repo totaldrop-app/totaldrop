@@ -111,5 +111,10 @@
   "openFolder": "Открыть папку",
   "back": "Назад",
   "codeSuggestions": "Подсказки",
-  "progressPercent": "{percent}%"
+  "progressPercent": "{percent}%",
+
+  "transferNoticeChannel": "Передачи",
+  "transferNoticeSending": "Отправка через TotalDrop",
+  "transferNoticeReceiving": "Получение через TotalDrop",
+  "transferNoticeBody": "Продолжается, пока вы пользуетесь другими приложениями."
 }

@@ -425,4 +425,16 @@ class AppLocalizationsSv extends AppLocalizations {
 
     return '$percentString %';
   }
+
+  @override
+  String get transferNoticeChannel => 'Överföringar';
+
+  @override
+  String get transferNoticeSending => 'Skickar med TotalDrop';
+
+  @override
+  String get transferNoticeReceiving => 'Tar emot med TotalDrop';
+
+  @override
+  String get transferNoticeBody => 'Fortsätter medan du använder andra appar.';
 }

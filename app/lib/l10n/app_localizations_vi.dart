@@ -410,4 +410,16 @@ class AppLocalizationsVi extends AppLocalizations {
 
     return '$percentString%';
   }
+
+  @override
+  String get transferNoticeChannel => 'Truyền tệp';
+
+  @override
+  String get transferNoticeSending => 'Đang gửi bằng TotalDrop';
+
+  @override
+  String get transferNoticeReceiving => 'Đang nhận bằng TotalDrop';
+
+  @override
+  String get transferNoticeBody => 'Vẫn tiếp tục khi bạn dùng ứng dụng khác.';
 }

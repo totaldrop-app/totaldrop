@@ -15,6 +15,7 @@ olur ve yenisine bağlanır.
 | [0007](0007-surec.md) | Issue, PR, bağımsız inceleme ve CI'da derlenen sürümler | Kabul |
 | [0008](0008-diller-ve-bolgeler.md) | Her dil ve bölge: tek kaynak ARB, ICU ve CLDR | Kabul |
 | [0009](0009-ios-macos.md) | iOS ve macOS: ücretsiz CI, Apple hesabı yalnızca yayında | Kabul |
+| [0010](0010-android-arka-plan-aktarim.md) | Android'de aktarım arka planda kullanıcının başlattığı iş olarak sürer | Kabul |
 
 Yeni bir karar için bir sonraki numarayla `NNNN-kisa-ad.md` açın ve bu
 tabloya ekleyin.

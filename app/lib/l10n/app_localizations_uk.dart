@@ -431,4 +431,17 @@ class AppLocalizationsUk extends AppLocalizations {
 
     return '$percentString%';
   }
+
+  @override
+  String get transferNoticeChannel => 'Передавання';
+
+  @override
+  String get transferNoticeSending => 'Надсилання через TotalDrop';
+
+  @override
+  String get transferNoticeReceiving => 'Отримання через TotalDrop';
+
+  @override
+  String get transferNoticeBody =>
+      'Триває, поки ви користуєтеся іншими застосунками.';
 }

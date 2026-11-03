@@ -111,5 +111,10 @@
   "openFolder": "Åpne mappe",
   "back": "Tilbake",
   "codeSuggestions": "Forslag",
-  "progressPercent": "{percent} %"
+  "progressPercent": "{percent} %",
+
+  "transferNoticeChannel": "Overføringer",
+  "transferNoticeSending": "Sender med TotalDrop",
+  "transferNoticeReceiving": "Mottar med TotalDrop",
+  "transferNoticeBody": "Fortsetter mens du bruker andre apper."
 }

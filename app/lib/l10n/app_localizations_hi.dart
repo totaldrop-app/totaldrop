@@ -424,4 +424,17 @@ class AppLocalizationsHi extends AppLocalizations {
 
     return '$percentString%';
   }
+
+  @override
+  String get transferNoticeChannel => 'स्थानांतरण';
+
+  @override
+  String get transferNoticeSending => 'TotalDrop से भेजा जा रहा है';
+
+  @override
+  String get transferNoticeReceiving => 'TotalDrop से प्राप्त किया जा रहा है';
+
+  @override
+  String get transferNoticeBody =>
+      'दूसरे ऐप इस्तेमाल करते समय भी चलता रहता है।';
 }

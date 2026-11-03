@@ -1,7 +1,10 @@
+import 'dart:io';
+
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'data/settings_repository.dart';
+import 'data/transfer_keep_alive.dart';
 import 'data/transfer_repository.dart';
 import 'l10n/app_localizations.dart';
 import 'src/rust/frb_generated.dart';
@@ -25,11 +28,23 @@ Future<void> main() async {
   await RustLib.init();
   final settings = await SettingsRepository.load();
   final transfers = TransferRepository(settings);
+  // The notification that keeps a transfer going in the background speaks
+  // the language the app shows.
+  final TransferKeepAlive keepAlive = Platform.isAndroid
+      ? AndroidTransferKeepAlive(
+          () => lookupAppLocalizations(
+            resolveLocale(
+              WidgetsBinding.instance.platformDispatcher.locales,
+              AppLocalizations.supportedLocales,
+            ),
+          ),
+        )
+      : const NoKeepAlive();
   runApp(
     TotalDropApp(
       settings: settings,
-      send: SendViewModel(repository: transfers),
-      receive: ReceiveViewModel(repository: transfers),
+      send: SendViewModel(repository: transfers, keepAlive: keepAlive),
+      receive: ReceiveViewModel(repository: transfers, keepAlive: keepAlive),
     ),
   );
 }

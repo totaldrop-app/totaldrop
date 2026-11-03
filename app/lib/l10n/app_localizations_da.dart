@@ -424,4 +424,16 @@ class AppLocalizationsDa extends AppLocalizations {
 
     return '$percentString %';
   }
+
+  @override
+  String get transferNoticeChannel => 'Overførsler';
+
+  @override
+  String get transferNoticeSending => 'Sender med TotalDrop';
+
+  @override
+  String get transferNoticeReceiving => 'Modtager med TotalDrop';
+
+  @override
+  String get transferNoticeBody => 'Fortsætter, mens du bruger andre apps.';
 }

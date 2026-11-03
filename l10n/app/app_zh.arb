@@ -111,5 +111,10 @@
   "openFolder": "打开文件夹",
   "back": "返回",
   "codeSuggestions": "建议",
-  "progressPercent": "{percent}%"
+  "progressPercent": "{percent}%",
+
+  "transferNoticeChannel": "传输",
+  "transferNoticeSending": "正在通过 TotalDrop 发送",
+  "transferNoticeReceiving": "正在通过 TotalDrop 接收",
+  "transferNoticeBody": "使用其他应用时仍会继续。"
 }

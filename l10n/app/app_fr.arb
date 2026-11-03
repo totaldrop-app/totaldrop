@@ -111,5 +111,10 @@
   "openFolder": "Ouvrir le dossier",
   "back": "Retour",
   "codeSuggestions": "Suggestions",
-  "progressPercent": "{percent} %"
+  "progressPercent": "{percent} %",
+
+  "transferNoticeChannel": "Transferts",
+  "transferNoticeSending": "Envoi avec TotalDrop",
+  "transferNoticeReceiving": "Réception avec TotalDrop",
+  "transferNoticeBody": "Continue pendant que vous utilisez d’autres apps."
 }

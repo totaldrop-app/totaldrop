@@ -422,4 +422,17 @@ class AppLocalizationsFa extends AppLocalizations {
 
     return '$percentString٪';
   }
+
+  @override
+  String get transferNoticeChannel => 'انتقال‌ها';
+
+  @override
+  String get transferNoticeSending => 'در حال ارسال با TotalDrop';
+
+  @override
+  String get transferNoticeReceiving => 'در حال دریافت با TotalDrop';
+
+  @override
+  String get transferNoticeBody =>
+      'هنگام استفاده از برنامه‌های دیگر ادامه می‌یابد.';
 }

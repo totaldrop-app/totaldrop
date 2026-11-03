@@ -432,4 +432,16 @@ class AppLocalizationsCs extends AppLocalizations {
 
     return '$percentString %';
   }
+
+  @override
+  String get transferNoticeChannel => 'Přenosy';
+
+  @override
+  String get transferNoticeSending => 'Odesílání přes TotalDrop';
+
+  @override
+  String get transferNoticeReceiving => 'Příjem přes TotalDrop';
+
+  @override
+  String get transferNoticeBody => 'Pokračuje, i když používáte jiné aplikace.';
 }

@@ -407,4 +407,16 @@ class AppLocalizationsTh extends AppLocalizations {
 
     return '$percentString%';
   }
+
+  @override
+  String get transferNoticeChannel => 'การโอน';
+
+  @override
+  String get transferNoticeSending => 'กำลังส่งด้วย TotalDrop';
+
+  @override
+  String get transferNoticeReceiving => 'กำลังรับด้วย TotalDrop';
+
+  @override
+  String get transferNoticeBody => 'ทำงานต่อไปขณะที่คุณใช้แอปอื่น';
 }

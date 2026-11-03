@@ -111,5 +111,10 @@
   "openFolder": "Buka folder",
   "back": "Kembali",
   "codeSuggestions": "Cadangan",
-  "progressPercent": "{percent}%"
+  "progressPercent": "{percent}%",
+
+  "transferNoticeChannel": "Pemindahan",
+  "transferNoticeSending": "Menghantar dengan TotalDrop",
+  "transferNoticeReceiving": "Menerima dengan TotalDrop",
+  "transferNoticeBody": "Terus berjalan semasa anda menggunakan apl lain."
 }

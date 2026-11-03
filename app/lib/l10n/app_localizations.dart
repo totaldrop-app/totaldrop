@@ -793,6 +793,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{percent}%'**
   String progressPercent(int percent);
+
+  /// Android notification channel name for running transfers (shown in system settings)
+  ///
+  /// In en, this message translates to:
+  /// **'Transfers'**
+  String get transferNoticeChannel;
+
+  /// Title of the ongoing notification while a send runs in the background
+  ///
+  /// In en, this message translates to:
+  /// **'Sending with TotalDrop'**
+  String get transferNoticeSending;
+
+  /// Title of the ongoing notification while a receive runs in the background
+  ///
+  /// In en, this message translates to:
+  /// **'Receiving with TotalDrop'**
+  String get transferNoticeReceiving;
+
+  /// Text of the ongoing transfer notification: the transfer continues while the person uses other apps
+  ///
+  /// In en, this message translates to:
+  /// **'Keeps going while you use other apps.'**
+  String get transferNoticeBody;
 }
 
 class _AppLocalizationsDelegate

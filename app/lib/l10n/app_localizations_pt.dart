@@ -433,6 +433,18 @@ class AppLocalizationsPt extends AppLocalizations {
 
     return '$percentString%';
   }
+
+  @override
+  String get transferNoticeChannel => 'Transferências';
+
+  @override
+  String get transferNoticeSending => 'Enviando com o TotalDrop';
+
+  @override
+  String get transferNoticeReceiving => 'Recebendo com o TotalDrop';
+
+  @override
+  String get transferNoticeBody => 'Continua enquanto você usa outros apps.';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -863,6 +875,18 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
     return '$percentString%';
   }
+
+  @override
+  String get transferNoticeChannel => 'Transferências';
+
+  @override
+  String get transferNoticeSending => 'Enviando com o TotalDrop';
+
+  @override
+  String get transferNoticeReceiving => 'Recebendo com o TotalDrop';
+
+  @override
+  String get transferNoticeBody => 'Continua enquanto você usa outros apps.';
 }
 
 /// The translations for Portuguese, as used in Portugal (`pt_PT`).
@@ -1293,4 +1317,16 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
 
     return '$percentString%';
   }
+
+  @override
+  String get transferNoticeChannel => 'Transferências';
+
+  @override
+  String get transferNoticeSending => 'A enviar com o TotalDrop';
+
+  @override
+  String get transferNoticeReceiving => 'A receber com o TotalDrop';
+
+  @override
+  String get transferNoticeBody => 'Continua enquanto utiliza outras apps.';
 }

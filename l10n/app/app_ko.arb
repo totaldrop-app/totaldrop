@@ -111,5 +111,10 @@
   "openFolder": "폴더 열기",
   "back": "뒤로",
   "codeSuggestions": "추천",
-  "progressPercent": "{percent}%"
+  "progressPercent": "{percent}%",
+
+  "transferNoticeChannel": "전송",
+  "transferNoticeSending": "TotalDrop으로 보내는 중",
+  "transferNoticeReceiving": "TotalDrop으로 받는 중",
+  "transferNoticeBody": "다른 앱을 사용하는 동안에도 계속됩니다."
 }
