@@ -3,12 +3,12 @@
 # The Rust toolchain comes from rustup: rust-toolchain.toml pins the newest
 # stable Rust, which distributions do not ship yet.
 
-%global upstream_version 0.3.0-beta.1
+%global upstream_version 0.3.0-beta.2
 %global srcname totaldrop-linux-v%{upstream_version}
 %global debug_package %{nil}
 
 Name:           totaldrop
-Version:        0.3.0~beta.1
+Version:        0.3.0~beta.2
 Release:        1%{?dist}
 Summary:        Send files straight to another device, end-to-end encrypted
 License:        GPL-3.0-or-later AND (MIT OR Apache-2.0)
@@ -77,6 +77,21 @@ cargo test --release --locked -p totaldrop-linux -p totaldrop-proto
 %{_datadir}/icons/hicolor/symbolic/apps/app.totaldrop.TotalDrop-symbolic.svg
 
 %changelog
+* Tue Nov 03 2026 TotalDrop <hello@totaldrop.app> - 0.3.0~beta.2-1
+- On GNOME and on Hyprland without a Qt theme, the window takes the
+  colours of your GTK theme and follows a theme change at once; buttons,
+  fields and switches take the desktop's shape.
+- Clearer messages: a code nobody is using, a code that expired and a
+  server address that is not valid are each named as such.
+- Pasting the whole share message into the receive field finds the code
+  in it, and codes typed with Arabic, Persian or Urdu digits are
+  accepted.
+- The screens stay centred in a wide window, files in the Send list get
+  an icon for their kind, and Escape, Enter and Tab work on every
+  screen.
+- Colours match the desktop exactly on Intel graphics, and
+  totaldrop-desktop --help and --version answer on the terminal.
+
 * Fri Oct 30 2026 TotalDrop <hello@totaldrop.app> - 0.3.0~beta.1-1
 - New mark, Köşe, and a new icon: a circle with one square corner. It
   turns while a file is on its way.
