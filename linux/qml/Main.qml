@@ -59,22 +59,60 @@ ApplicationWindow {
 
     Transfer { id: xfer }
 
-    // A TotalDrop link on the command line (from a QR, the browser or the
-    // file manager) opens Receive with the code filled in.
-    function codeFromArgs() {
-        for (const a of Array.from(Qt.application.arguments).slice(1)) {
-            if (a === "--screen=send") continue
-            const c = xfer.codeFromLink(a)
-            if (c !== "") return c
+    // What the command line asks for, and what a later launch hands this
+    // window (#178): a TotalDrop link (from a QR, the browser or the file
+    // manager) opens Receive with the code filled in; files ("Open with
+    // TotalDrop") open Send with them listed; otherwise --screen=… opens
+    // that screen. Launcher has already made paths absolute.
+    Launcher {
+        id: launcher
+        onOpened: (args) => {
+            win.raiseWindow()
+            win.openArgs(args)
         }
-        return ""
     }
 
-    // Files on the command line ("Open with TotalDrop" in a file manager)
-    // open Send with them listed.
-    function filesFromArgs() {
-        return Array.from(Qt.application.arguments).slice(1)
-            .filter(a => a.startsWith("/") || a.startsWith("file://"))
+    function raiseWindow() {
+        if (win.visibility === Window.Minimized || win.visibility === Window.Hidden) win.showNormal()
+        win.raise()
+        win.requestActivate()
+    }
+
+    // A transfer under way is not interrupted: the window only comes to
+    // the front.
+    readonly property bool busy: ["idle", "done", "failed", "declined"].indexOf(xfer.state) < 0
+
+    function openArgs(args) {
+        let code = ""
+        for (const a of args) {
+            if (a.startsWith("--screen=")) continue
+            code = xfer.codeFromLink(a)
+            if (code !== "") break
+        }
+        const files = args.filter(a => a.startsWith("/"))
+        const screens = { "--screen=send": sendPage, "--screen=receive": receivePage, "--screen=settings": settingsPage }
+        let page = null
+        for (const a of args) if (screens[a]) page = screens[a]
+        if (code !== "") show(receivePage, { initialCode: code })
+        else if (files.length > 0) show(sendPage, { initialFiles: files })
+        else if (page) show(page, {})
+    }
+
+    // Open `page` with `props`, unless a transfer is under way. Files for
+    // a Send screen already open join its list.
+    function show(page, props) {
+        if (busy) return
+        const top = stack.currentItem
+        const idle = xfer.state === "idle"
+        if (page === sendPage && top instanceof SendPage && idle) {
+            if (props.initialFiles) top.add(props.initialFiles)
+            return
+        }
+        if (page === receivePage && top instanceof ReceivePage && idle && !props.initialCode) return
+        if (page === settingsPage && top instanceof SettingsPage) return
+        if (xfer.state !== "idle") xfer.reset()
+        stack.pop(null, StackView.Immediate)
+        stack.push(page, props, StackView.Immediate)
     }
 
     StackView {
@@ -85,15 +123,7 @@ ApplicationWindow {
             onReceive: stack.push(receivePage)
             onSettings: stack.push(settingsPage)
         }
-        Component.onCompleted: Qt.callLater(() => {
-            const args = Array.from(Qt.application.arguments)
-            const code = win.codeFromArgs()
-            if (code !== "") stack.push(receivePage, { initialCode: code }, StackView.Immediate)
-            else if (win.filesFromArgs().length > 0) stack.push(sendPage, { initialFiles: win.filesFromArgs() }, StackView.Immediate)
-            else if (args.indexOf("--screen=send") >= 0) stack.push(sendPage, {}, StackView.Immediate)
-            else if (args.indexOf("--screen=receive") >= 0) stack.push(receivePage, {}, StackView.Immediate)
-            else if (args.indexOf("--screen=settings") >= 0) stack.push(settingsPage, {}, StackView.Immediate)
-        })
+        Component.onCompleted: Qt.callLater(() => win.openArgs(launcher.startArgs()))
     }
 
     Component {

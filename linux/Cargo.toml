@@ -29,10 +29,14 @@ dirs = "7"
 notify = "8"
 serde_json = "1"
 futures-util = "0.3"
-zbus = { version = "6", default-features = false, features = ["tokio"] }
+zbus = { version = "6", default-features = false, features = ["tokio", "service"] }
 qrcode = { version = "0.14", default-features = false }
 rqrr = "0.11"
 image = { version = "0.25", default-features = false, features = ["png", "jpeg", "webp"] }
+
+[dev-dependencies]
+# A private connection pair for the single-window hand-off test.
+zbus = { version = "6", default-features = false, features = ["tokio", "service", "p2p"] }
 
 [build-dependencies]
 cxx-qt-build = "0.10"

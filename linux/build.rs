@@ -31,6 +31,7 @@ fn main() {
         .qt_module("Quick")
         .qt_module("QuickControls2")
         .files([
+            "src/bridge/launcher.rs",
             "src/bridge/surface.rs",
             "src/bridge/texts.rs",
             "src/bridge/theme.rs",
