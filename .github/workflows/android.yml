@@ -74,3 +74,11 @@ jobs:
         run: rustup show active-toolchain || rustup toolchain install
       - run: flutter pub get --enforce-lockfile
       - run: flutter build apk --debug --target-platform android-arm64
+      # A build to try a change on a phone before it is merged. Signed with
+      # the debug key, so it installs only after the Play version is removed.
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: totaldrop-debug-arm64
+          path: app/build/app/outputs/flutter-apk/app-debug.apk
+          if-no-files-found: error
+          retention-days: 7
