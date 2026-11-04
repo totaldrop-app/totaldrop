@@ -58,7 +58,8 @@ repository:
       primary: true
   documentation:
     contributing-guide: https://github.com/totaldrop-app/totaldrop/blob/main/CONTRIBUTING.md
-    review-policy: https://github.com/totaldrop-app/totaldrop/blob/main/docs/surec.md
+    review-policy: https://github.com/totaldrop-app/totaldrop/blob/main/CONTRIBUTING.md#code-review
+    governance: https://github.com/totaldrop-app/totaldrop/blob/main/GOVERNANCE.md
     security-policy: https://github.com/totaldrop-app/totaldrop/blob/main/SECURITY.md
     dependency-management-policy: https://github.com/totaldrop-app/totaldrop/blob/main/deny.toml
   license:

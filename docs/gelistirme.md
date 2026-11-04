@@ -3,7 +3,8 @@
 Bu belge deponun nasıl düzenlendiğini, hangi branch'te ne yapıldığını ve
 platformların birbirini bozmadan nasıl güncellendiğini anlatır. Bir işin
 issue'dan yayına giden yolu, bitti tanımı ve inceleme kuralı
-[surec.md](surec.md) içindedir.
+[surec.md](surec.md), parçaların üst düzey mimarisi [mimari.md](mimari.md)
+içindedir.
 
 ## İlke: tek depo, bağımsız platformlar
 
