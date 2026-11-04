@@ -84,13 +84,15 @@ cargo test --release --locked -p totaldrop-linux -p totaldrop-proto
   goes on. Both devices must use the same relay.
 - A transfer through the relay survives a connection that dies without
   either end noticing, for example after switching Wi-Fi networks: the
-  device connects again within about 10 seconds.
+  device notices within 10 seconds and connects again.
 - The sending device's progress bar shows what has reached the other device,
   instead of running ahead and showing a file as sent while it is still on
   the way.
 - When a transfer fails, the reason is now given in your language for many
   failures, under Details. The technical message stays in English for
   problem reports and is labelled as such.
+- The licence texts are installed under their SPDX names: GPL-3.0-or-
+  later.txt, MIT.txt and Apache-2.0.txt.
 
 * Wed Nov 04 2026 TotalDrop <hello@totaldrop.app> - 0.3.0~beta.3-1
 - Opening files with TotalDrop while it is already open, for example with
