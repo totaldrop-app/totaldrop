@@ -27,17 +27,19 @@ cd app && find lib test tool -name '*.dart' -not -path 'lib/l10n/*' -not -path '
 
 ## Coding standards
 
-Each language follows one published style, and CI rejects code that does not:
+Each language follows one published style. The last column says what CI checks; where it says "review only", the reviewer checks the style by hand:
 
 | Language | Style | Enforced by |
 | --- | --- | --- |
-| Rust (`crates/`, `server/`, `linux/`, `app/rust`, `fuzz/`) | [The Rust Style Guide](https://doc.rust-lang.org/style-guide/) and the [Rust API Guidelines](https://rust-lang.github.io/api-guidelines/) | `cargo fmt --check`; `cargo clippy -- -D warnings`; `unsafe_code = "forbid"` |
+| Rust (`crates/`, `server/`, `linux/`) | [The Rust Style Guide](https://doc.rust-lang.org/style-guide/) and the [Rust API Guidelines](https://rust-lang.github.io/api-guidelines/) | `cargo fmt --check` and `cargo clippy -- -D warnings`; `unsafe_code = "forbid"` in `crates/` and `server/` |
+| Rust (`app/rust`, `fuzz/`) | The same | Review only, for now; `app/rust` contains generated bridge code |
 | Dart (`app/`) | [Effective Dart](https://dart.dev/effective-dart) | `dart format --set-exit-if-changed`; `flutter analyze` with `flutter_lints` |
-| TypeScript (`server/*-worker`) | The TypeScript compiler's `strict` mode | `tsc --noEmit` |
-| QML and C++ (`linux/qml`, `linux/src/bridge`) | [Qt's QML coding conventions](https://doc.qt.io/qt-6/qml-codingconventions.html) | Review only, for now |
-| JavaScript (`site/`, `tools/`) | Plain modern JavaScript, no build step | `node --check` |
+| TypeScript (`server/*-worker`) | The TypeScript compiler's `strict` mode | Types only: `tsc --noEmit`; no formatter yet |
+| QML (`linux/qml`) | [Qt's QML coding conventions](https://doc.qt.io/qt-6/qml-codingconventions.html) | Review only, for now |
+| C++ headers (`linux/src/bridge`) | [Qt's coding style](https://wiki.qt.io/Qt_Coding_Style) | Review only, for now |
+| JavaScript (`site/`, `tools/`) | Plain modern JavaScript, no build step | Syntax only: `node --check` on the site's scripts; the tools run in CI |
 
-Names, comments and commit messages are in English; documents in `docs/` are in Turkish.
+Names, comments and commit messages are in English. Process and design documents in `docs/` are in Turkish; the protocol notes are in English.
 
 ## Code review
 
@@ -47,7 +49,7 @@ Every pull request is reviewed before it is merged, by someone who did not write
 - it is correct at the edges: empty, maximum and malformed input, errors, timeouts, concurrency;
 - it keeps the security properties in the [threat model](docs/tehdit-modeli.md) and adds no new cryptography or `unsafe`;
 - behaviour is covered by tests, a bug fix comes with a test that failed before it, and a new parser has a fuzz target;
-- documents, the changelog entry and user-facing text in all 35 languages match the change, and nothing claims more than the code does.
+- documents, the changelog entry and user-facing text match the change, and nothing claims more than the code does. User-facing text is written in all 35 languages.
 
 A pull request is acceptable when CI is green, every finding is fixed or answered in writing on the pull request (with a follow-up issue where one is needed), and the maintainer approves the merge. The pull request records the review and what was done about each finding.
 

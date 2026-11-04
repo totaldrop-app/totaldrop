@@ -121,7 +121,7 @@ Bir değişiklik ancak şunların hepsi doğruysa bitmiştir:
    `gh attestation verify <paket> --repo totaldrop-app/totaldrop --bundle
    totaldrop-linux-<sürüm>.sigstore.json` ile ve temiz kaplarda kurulumla
    (`packaging/test-install.sh`) denenir.
-6. Yayın notları İngilizce ve Türkçe yazılır, taslak yayımlanır.
+6. Yayın notları 35 dilde yazılır, taslak yayımlanır.
 7. Site güncellenir ve indirme bağlantılarının her biri denenir.
 8. Android'de CI'ın imzaladığı paket Play Console'a yüklenir.
 

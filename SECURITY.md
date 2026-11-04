@@ -33,7 +33,7 @@ TotalDrop is meant to:
 - keep the content, names and folder structure of the files you send readable only by the device you send them to: not by our servers, Cloudflare or anyone on the network;
 - let only the person who has the code receive the files, give an attacker one guess per transfer, and show both people four words to compare;
 - protect today's transfers against someone who records them to break later with a quantum computer (ML-KEM-768);
-- never write outside the folder the receiver chose, and never overwrite an existing file;
+- never write outside the receive folder, and never overwrite an existing file;
 - work without an account, email address or phone number, and keep no logs on the servers.
 
 TotalDrop does not:
