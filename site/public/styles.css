@@ -412,6 +412,9 @@ pre.cmd { white-space: pre-wrap; overflow-wrap: break-word; margin: 0; padding: 
 .bk-donts .bk-stage > svg { width: min(100%, 6rem); }
 .bk-no { color: var(--text) !important; font-weight: 700; flex-direction: row !important; align-items: center; gap: var(--s8) !important; }
 .bk-no::before { content: "\00D7"; display: inline-flex; align-items: center; justify-content: center; width: 1.25rem; height: 1.25rem; border-radius: 50%; border: 1.5px solid currentColor; font-size: 0.875rem; line-height: 1; }
+/* Using the name and mark: the "Don't" label as in the mistakes above. */
+.bk-use-no .bk-no { display: flex; }
+@media (min-width: 48rem) { .bk-use-yes { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .bk-ring { fill: none; stroke: var(--text-2); stroke-width: 4; }
 .bk-wrong { fill: #E8590C; }
 .bk-busy { background: repeating-linear-gradient(45deg, #6D4AE0 0 6px, #A68BFF 6px 12px); }
