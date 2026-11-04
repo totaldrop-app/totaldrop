@@ -1,4 +1,4 @@
-<!-- Translated from README.md 56ed597bf0f2. -->
+<!-- Translated from README.md 98359377b108. -->
 <div align="center">
 
 <picture>
@@ -51,16 +51,16 @@ Zdarma a s otevřeným kódem. Koncové šifrování. Žádný e-mail, žádné 
 
 | Platforma | Kde získat | Poznámky |
 | --- | --- | --- |
-| **Linux** (x86-64) | [Arch / Omarchy](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.3/totaldrop-0.3.0_beta.3-1-x86_64.pkg.tar.zst) · [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.3/totaldrop_0.3.0.beta.3-1_amd64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.3/totaldrop-0.3.0.beta.3-1.fc43.x86_64.rpm) | 0.3.0-beta.3, Qt 6.8 nebo novější |
-| **Linux** (ARM64) | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.3/totaldrop_0.3.0.beta.3-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.3/totaldrop-0.3.0.beta.3-1.fc43.aarch64.rpm) | 0.3.0-beta.3, Qt 6.8 nebo novější |
-| **Android** | [Připojit se k betě](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.3, Android 15 nebo novější, Google Play na pozvání |
+| **Linux** (x86-64) | [Arch / Omarchy](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.4/totaldrop-0.3.0_beta.4-1-x86_64.pkg.tar.zst) · [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.4/totaldrop_0.3.0.beta.4-1_amd64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.4/totaldrop-0.3.0.beta.4-1.fc43.x86_64.rpm) | 0.3.0-beta.4, Qt 6.8 nebo novější |
+| **Linux** (ARM64) | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.4/totaldrop_0.3.0.beta.4-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.4/totaldrop-0.3.0.beta.4-1.fc43.aarch64.rpm) | 0.3.0-beta.4, Qt 6.8 nebo novější |
+| **Android** | [Připojit se k betě](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.4, Android 15 nebo novější, Google Play na pozvání |
 | **Příkazový řádek** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux, macOS, Windows |
 | **Windows, macOS, iOS** | Připravujeme | Podepisování kódu pro tyto systémy je první, co dary zaplatí |
 
 Každý balíček sestavuje CI z otagovaného commitu, nikdy na počítači vývojáře. Chcete-li balíček před instalací zkontrolovat, porovnejte ho se `SHA256SUMS` daného vydání a ověřte, kde byl sestaven:
 
 ```bash
-gh attestation verify totaldrop_0.3.0.beta.3-1_amd64.deb --repo totaldrop-app/totaldrop
+gh attestation verify totaldrop_0.3.0.beta.4-1_amd64.deb --repo totaldrop-app/totaldrop
 ```
 
 > [!NOTE]
