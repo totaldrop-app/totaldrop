@@ -259,6 +259,46 @@ fn paths_to(
     )
 }
 
+/// What keeps the relay at hand once a connection was chosen.
+#[derive(Debug, Default)]
+struct Standby {
+    _link: Option<relay::Link>,
+    _watch: Option<path::Watch>,
+}
+
+/// Keep what the chosen connection `conn` may still need of the relay. A
+/// connection through the relay keeps its link. A direct one keeps a link
+/// that has not contacted the relay yet, and a watch that moves the
+/// connection onto it if the direct path goes quiet (#185); the relay hears
+/// of the transfer only then. A link that was already opened before a
+/// slower direct path won is closed now.
+fn standby(
+    conn: &quinn::Connection,
+    paths: &transport::Paths,
+    link: Option<relay::Link>,
+    fallback: &path::Fallback,
+) -> Standby {
+    let remote = conn.remote_address();
+    if remote == path::RELAY_PEER {
+        return Standby {
+            _link: link,
+            _watch: None,
+        };
+    }
+    match (&paths.relay, link) {
+        (Some(gate), Some(link)) if !gate.is_open() => Standby {
+            _link: Some(link),
+            _watch: Some(path::Watch::spawn(
+                fallback,
+                remote,
+                gate.clone(),
+                path::FALLBACK_SILENCE,
+            )),
+        },
+        _ => Standby::default(),
+    }
+}
+
 /// Options for sending.
 #[derive(Debug, Clone)]
 pub struct SendOptions {
@@ -364,7 +404,7 @@ impl PreparedSend {
             .await?;
             sender_check(&paired.hints, &self.paths)?;
 
-            let (endpoint, pipes) =
+            let (endpoint, pipes, fallback) =
                 transport::endpoint(socket, &endpoint_key, &paired.hints.endpoint_key)?;
             // The sender's own relay carries the transfer when nothing else works.
             let (paths, link) = paths_to(
@@ -376,8 +416,7 @@ impl PreparedSend {
             );
             let (conn, send, recv) =
                 transport::sender_connection(&endpoint, &paths, ACCEPT_TIMEOUT).await?;
-            // A relay link opened before a slower direct path won is closed now.
-            let _link = link.filter(|_| conn.remote_address() == path::RELAY_PEER);
+            let _link = standby(&conn, &paths, link, &fallback);
             let chan = secure::handshake_on(
                 send,
                 recv,
@@ -458,7 +497,7 @@ pub struct IncomingOffer {
     offer: transfer::VerifiedOffer,
     words: Vec<String>,
     _peer: Certificate,
-    _link: Option<relay::Link>,
+    _link: Standby,
 }
 
 impl core::fmt::Debug for IncomingOffer {
@@ -510,7 +549,7 @@ impl IncomingOffer {
         // section 6).
         let relay = receiver_relay(&paired.hints, &opts.paths)?;
 
-        let (endpoint, pipes) =
+        let (endpoint, pipes, fallback) =
             transport::endpoint(socket, &endpoint_key, &paired.hints.endpoint_key)?;
         let (paths, link) = paths_to(
             &paired.hints,
@@ -520,8 +559,7 @@ impl IncomingOffer {
             pipes,
         );
         let conn = transport::receiver_connection(&endpoint, &paths, CONNECT_TIMEOUT).await?;
-        // A relay link opened before a slower direct path won is closed now.
-        let link = link.filter(|_| conn.remote_address() == path::RELAY_PEER);
+        let link = standby(&conn, &paths, link, &fallback);
         let mut chan = secure::handshake(
             &conn,
             secure::HandshakeInput {

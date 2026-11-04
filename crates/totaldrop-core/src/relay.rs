@@ -389,7 +389,8 @@ mod tests {
             EndpointKey::generate().unwrap(),
         );
         let socket = UdpSocket::bind(SocketAddr::from(([127, 0, 0, 1], 0))).unwrap();
-        let (_endpoint, pipes) = crate::transport::endpoint(socket, &own, &peer.public()).unwrap();
+        let (_endpoint, pipes, _) =
+            crate::transport::endpoint(socket, &own, &peer.public()).unwrap();
         let gate = Gate::default();
         let _link = spawn(url, own, peer.public(), pipes, gate.clone());
 
@@ -416,7 +417,8 @@ mod tests {
             EndpointKey::generate().unwrap(),
         );
         let socket = UdpSocket::bind(SocketAddr::from(([127, 0, 0, 1], 0))).unwrap();
-        let (_endpoint, pipes) = crate::transport::endpoint(socket, &own, &peer.public()).unwrap();
+        let (_endpoint, pipes, _) =
+            crate::transport::endpoint(socket, &own, &peer.public()).unwrap();
         let gate = Gate::default();
         gate.open();
         let link = spawn(url, own, peer.public(), pipes, gate);

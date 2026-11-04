@@ -276,7 +276,9 @@ fn transport_config() -> Arc<quinn::TransportConfig> {
     t.stream_receive_window(STREAM_WINDOW.into());
     t.receive_window(CONNECTION_WINDOW.into());
     t.send_window(u64::from(CONNECTION_WINDOW));
-    t.keep_alive_interval(Some(Duration::from_secs(5)));
+    // Often enough that a direct path that goes quiet stands out within
+    // FALLBACK_SILENCE even with a few keep-alives lost (#185).
+    t.keep_alive_interval(Some(Duration::from_secs(2)));
     if let Ok(idle) = quinn::IdleTimeout::try_from(Duration::from_secs(30)) {
         t.max_idle_timeout(Some(idle));
     }
@@ -314,12 +316,32 @@ pub fn local_addresses(socket: &UdpSocket) -> Result<Vec<SocketAddr>> {
 ///
 /// The endpoint can also reach the peer through a relay at
 /// [`RELAY_PEER`](crate::path::RELAY_PEER); the returned pipes connect it to a
-/// relay link (see [`crate::relay::spawn`]).
+/// relay link (see [`crate::relay::spawn`]), and the returned
+/// [`Fallback`](crate::path::Fallback) moves a direct connection onto it.
 pub fn endpoint(
     socket: UdpSocket,
     own: &EndpointKey,
     peer: &[u8; 32],
-) -> Result<(quinn::Endpoint, crate::path::RelayPipes)> {
+) -> Result<(
+    quinn::Endpoint,
+    crate::path::RelayPipes,
+    crate::path::Fallback,
+)> {
+    let runtime = quinn::default_runtime().ok_or(Error::Connect("no async runtime".into()))?;
+    let inner = runtime.wrap_udp_socket(socket)?;
+    endpoint_on(inner, own, peer)
+}
+
+/// [`endpoint`] on a socket that is already wrapped for quinn.
+fn endpoint_on(
+    inner: Arc<dyn quinn::AsyncUdpSocket>,
+    own: &EndpointKey,
+    peer: &[u8; 32],
+) -> Result<(
+    quinn::Endpoint,
+    crate::path::RelayPipes,
+    crate::path::Fallback,
+)> {
     let provider = provider();
 
     let mut server_tls = rustls::ServerConfig::builder_with_provider(provider.clone())
@@ -352,7 +374,7 @@ pub fn endpoint(
     client.transport_config(transport_config());
 
     let runtime = quinn::default_runtime().ok_or(Error::Connect("no async runtime".into()))?;
-    let (socket, pipes) = crate::path::PathSocket::new(runtime.wrap_udp_socket(socket)?);
+    let (socket, pipes, fallback) = crate::path::PathSocket::new(inner);
     let mut endpoint = quinn::Endpoint::new_with_abstract_socket(
         quinn::EndpointConfig::default(),
         Some(server),
@@ -360,7 +382,7 @@ pub fn endpoint(
         runtime,
     )?;
     endpoint.set_default_client_config(client);
-    Ok((endpoint, pipes))
+    Ok((endpoint, pipes, fallback))
 }
 
 /// The next incoming connection whose handshake completes; the pinned key
@@ -648,8 +670,8 @@ pub(crate) mod testing {
         );
         let sa = UdpSocket::bind(SocketAddr::from(([127, 0, 0, 1], 0))).unwrap();
         let sb = UdpSocket::bind(SocketAddr::from(([127, 0, 0, 1], 0))).unwrap();
-        let (sender, pa) = endpoint(sa, &ka, &kb.public()).unwrap();
-        let (receiver, pb) = endpoint(sb, &kb, &ka.public()).unwrap();
+        let (sender, pa, _) = endpoint(sa, &ka, &kb.public()).unwrap();
+        let (receiver, pb, _) = endpoint(sb, &kb, &ka.public()).unwrap();
         let (mut a_out, a_in, mut b_out, b_in) =
             (pa.outgoing, pa.incoming, pb.outgoing, pb.incoming);
         tokio::spawn(async move {
@@ -698,8 +720,8 @@ mod tests {
         let sa = UdpSocket::bind(SocketAddr::from(([127, 0, 0, 1], 0))).unwrap();
         let sb = UdpSocket::bind(SocketAddr::from(([127, 0, 0, 1], 0))).unwrap();
         let (aa, ab) = (sa.local_addr().unwrap(), sb.local_addr().unwrap());
-        let (a, _) = endpoint(sa, &ka, &kb.public()).unwrap();
-        let (b, _) = endpoint(sb, &kb, &ka.public()).unwrap();
+        let (a, _, _) = endpoint(sa, &ka, &kb.public()).unwrap();
+        let (b, _, _) = endpoint(sb, &kb, &ka.public()).unwrap();
         (a, aa, b, ab)
     }
 
@@ -827,8 +849,8 @@ mod tests {
         );
         let sa = UdpSocket::bind(SocketAddr::from(([127, 0, 0, 1], 0))).unwrap();
         let sb = UdpSocket::bind(SocketAddr::from(([127, 0, 0, 1], 0))).unwrap();
-        let (sender, pa) = endpoint(sa, &ka, &kb.public()).unwrap();
-        let (receiver, pb) = endpoint(sb, &kb, &ka.public()).unwrap();
+        let (sender, pa, _) = endpoint(sa, &ka, &kb.public()).unwrap();
+        let (receiver, pb, _) = endpoint(sb, &kb, &ka.public()).unwrap();
         let (send_gate, recv_gate) = (crate::relay::Gate::default(), crate::relay::Gate::default());
         cross_from(pa, pb, send_gate.clone(), recv_gate.clone(), after);
         let to_sender = Paths {
@@ -877,8 +899,8 @@ mod tests {
         let sa = UdpSocket::bind(SocketAddr::from(([127, 0, 0, 1], 0))).unwrap();
         let sb = UdpSocket::bind(SocketAddr::from(([127, 0, 0, 1], 0))).unwrap();
         let receiver_addr = sb.local_addr().unwrap();
-        let (sender, pa) = endpoint(sa, &ka, &kb.public()).unwrap();
-        let (receiver, pb) = endpoint(sb, &kb, &ka.public()).unwrap();
+        let (sender, pa, _) = endpoint(sa, &ka, &kb.public()).unwrap();
+        let (receiver, pb, _) = endpoint(sb, &kb, &ka.public()).unwrap();
         let (send_gate, recv_gate) = (crate::relay::Gate::default(), crate::relay::Gate::default());
         cross(pa, pb, send_gate.clone(), recv_gate.clone());
         // The receiver is in privacy mode and announced nothing; the sender
@@ -1053,6 +1075,200 @@ mod tests {
         );
     }
 
+    /// A UDP socket whose traffic can be cut off, both ways, while the
+    /// connection over it stays up: a Wi-Fi that drops, a NAT mapping that
+    /// expires, a network that lets the handshake through and then stops
+    /// carrying anything.
+    #[derive(Debug)]
+    struct Cuttable {
+        inner: Arc<dyn quinn::AsyncUdpSocket>,
+        cut: Arc<std::sync::atomic::AtomicBool>,
+    }
+
+    impl Cuttable {
+        fn is_cut(&self) -> bool {
+            self.cut.load(std::sync::atomic::Ordering::SeqCst)
+        }
+    }
+
+    impl quinn::AsyncUdpSocket for Cuttable {
+        fn create_io_poller(self: Arc<Self>) -> std::pin::Pin<Box<dyn quinn::UdpPoller>> {
+            self.inner.clone().create_io_poller()
+        }
+
+        fn try_send(&self, transmit: &quinn::udp::Transmit) -> std::io::Result<()> {
+            if self.is_cut() {
+                Ok(())
+            } else {
+                self.inner.try_send(transmit)
+            }
+        }
+
+        fn poll_recv(
+            &self,
+            cx: &mut std::task::Context,
+            bufs: &mut [std::io::IoSliceMut<'_>],
+            meta: &mut [quinn::udp::RecvMeta],
+        ) -> std::task::Poll<std::io::Result<usize>> {
+            loop {
+                match self.inner.poll_recv(cx, bufs, meta) {
+                    std::task::Poll::Ready(Ok(_)) if self.is_cut() => {}
+                    other => return other,
+                }
+            }
+        }
+
+        fn local_addr(&self) -> std::io::Result<SocketAddr> {
+            self.inner.local_addr()
+        }
+
+        fn max_transmit_segments(&self) -> usize {
+            self.inner.max_transmit_segments()
+        }
+
+        fn max_receive_segments(&self) -> usize {
+            self.inner.max_receive_segments()
+        }
+
+        fn may_fragment(&self) -> bool {
+            self.inner.may_fragment()
+        }
+    }
+
+    /// An endpoint on loopback whose direct traffic stops once `cut` is set.
+    fn cuttable_endpoint(
+        own: &EndpointKey,
+        peer: &EndpointKey,
+        cut: &Arc<std::sync::atomic::AtomicBool>,
+    ) -> (
+        quinn::Endpoint,
+        SocketAddr,
+        crate::path::RelayPipes,
+        crate::path::Fallback,
+    ) {
+        let socket = UdpSocket::bind(SocketAddr::from(([127, 0, 0, 1], 0))).unwrap();
+        let addr = socket.local_addr().unwrap();
+        let inner = quinn::default_runtime()
+            .unwrap()
+            .wrap_udp_socket(socket)
+            .unwrap();
+        let wrapped = Arc::new(Cuttable {
+            inner,
+            cut: cut.clone(),
+        });
+        let (endpoint, pipes, fallback) = endpoint_on(wrapped, own, &peer.public()).unwrap();
+        (endpoint, addr, pipes, fallback)
+    }
+
+    /// A direct connection whose path stops carrying anything after the
+    /// handshake moves onto the relay, and the transfer goes on (#185).
+    /// Before, nothing moved, and QUIC gave up after its 30-second idle
+    /// timeout ("timed out") although the relay would have worked. Here the
+    /// direct path dies both ways, as when a phone's Wi-Fi drops; the
+    /// watch on each side notices on its own and the sides meet again on
+    /// the relay.
+    #[tokio::test]
+    async fn a_direct_connection_that_goes_quiet_moves_to_the_relay() {
+        let (ka, kb) = (
+            EndpointKey::generate().unwrap(),
+            EndpointKey::generate().unwrap(),
+        );
+        let cut = Arc::new(std::sync::atomic::AtomicBool::new(false));
+        let (sender, sender_addr, pa, sender_fallback) = cuttable_endpoint(&ka, &kb, &cut);
+        let (receiver, receiver_addr, pb, receiver_fallback) = cuttable_endpoint(&kb, &ka, &cut);
+        let (send_gate, recv_gate) = (crate::relay::Gate::default(), crate::relay::Gate::default());
+        cross(pa, pb, send_gate.clone(), recv_gate.clone());
+        let wait = Duration::from_secs(8);
+        let to_sender = Paths {
+            direct: vec![sender_addr],
+            relay: Some(recv_gate.clone()),
+            relay_only: false,
+        };
+        let to_receiver = Paths {
+            direct: vec![receiver_addr],
+            relay: Some(send_gate.clone()),
+            relay_only: false,
+        };
+        let (r, s) = tokio::join!(
+            async {
+                let conn = receiver_connection(&receiver, &to_sender, wait)
+                    .await
+                    .unwrap();
+                let (mut ctl, _recv) = conn.open_bi().await.unwrap();
+                ctl.write_all(b"x").await.unwrap();
+                (conn, ctl)
+            },
+            sender_connection(&sender, &to_receiver, wait),
+        );
+        let (receiver_conn, _ctl) = r;
+        let (sender_conn, _send, _recv) = s.unwrap();
+        assert_eq!(sender_conn.remote_address(), receiver_addr);
+        assert_eq!(receiver_conn.remote_address(), sender_addr);
+        assert!(!send_gate.is_open() && !recv_gate.is_open());
+
+        // What each side does once its connection was chosen.
+        let silence = Duration::from_secs(2);
+        let _watches = (
+            crate::path::Watch::spawn(&sender_fallback, receiver_addr, send_gate.clone(), silence),
+            crate::path::Watch::spawn(&receiver_fallback, sender_addr, recv_gate.clone(), silence),
+        );
+
+        let data: Vec<u8> = (0..4 * 1024 * 1024u32).map(|i| (i % 251) as u8).collect();
+        let (first, second) = data.split_at(data.len() / 2);
+        let half = first.len();
+        let mut out = sender_conn.open_uni().await.unwrap();
+        out.write_all(first).await.unwrap();
+        let mut incoming = receiver_conn.accept_uni().await.unwrap();
+        let mut got = vec![0u8; half];
+        incoming.read_exact(&mut got).await.unwrap();
+        assert!(!send_gate.is_open() && !recv_gate.is_open());
+
+        cut.store(true, std::sync::atomic::Ordering::SeqCst);
+        let rest = second.to_vec();
+        let write = tokio::spawn(async move {
+            out.write_all(&rest).await.unwrap();
+            out.finish().unwrap();
+            out
+        });
+        let read = tokio::time::timeout(Duration::from_secs(25), incoming.read_to_end(usize::MAX))
+            .await
+            .expect("the transfer stalled once the direct path went quiet")
+            .unwrap();
+        got.extend_from_slice(&read);
+        assert!(got == data, "the data arrived changed");
+        let _out = write.await.unwrap();
+        assert!(sender_fallback.moved() && receiver_fallback.moved());
+        assert!(send_gate.is_open() && recv_gate.is_open());
+        // QUIC still sees the direct address: nothing had to migrate.
+        assert_eq!(sender_conn.remote_address(), receiver_addr);
+        assert_eq!(receiver_conn.remote_address(), sender_addr);
+    }
+
+    /// An idle direct connection stays direct: QUIC's keep-alives count as
+    /// hearing from the other side, so a pause in the transfer (a person
+    /// reading the offer, say) does not move it onto the relay (#185).
+    #[tokio::test]
+    async fn an_idle_direct_connection_stays_direct() {
+        let (ka, kb) = (
+            EndpointKey::generate().unwrap(),
+            EndpointKey::generate().unwrap(),
+        );
+        let cut = Arc::new(std::sync::atomic::AtomicBool::new(false));
+        let (a, _, _pa, a_fallback) = cuttable_endpoint(&ka, &kb, &cut);
+        let (b, b_addr, _pb, _) = cuttable_endpoint(&kb, &ka, &cut);
+        let accept = tokio::spawn(async move { b.accept().await.unwrap().await.unwrap() });
+        let conn = a.connect(b_addr, SERVER_NAME).unwrap().await.unwrap();
+        let _held = accept.await.unwrap();
+        let gate = crate::relay::Gate::default();
+        // Longer than one keep-alive interval, much shorter than the wait.
+        let silence = Duration::from_secs(4);
+        let _watch = crate::path::Watch::spawn(&a_fallback, b_addr, gate.clone(), silence);
+        tokio::time::sleep(silence.saturating_mul(2)).await;
+        assert!(!a_fallback.moved(), "an idle connection moved to the relay");
+        assert!(!gate.is_open());
+        assert!(conn.close_reason().is_none());
+    }
+
     /// A try that ends without a connection does not hold up a later one
     /// that succeeds: its success is used at once, not at the next fresh
     /// try (#185 review). The path starts working just after the first try
@@ -1065,8 +1281,8 @@ mod tests {
         );
         let sa = UdpSocket::bind(SocketAddr::from(([127, 0, 0, 1], 0))).unwrap();
         let sb = UdpSocket::bind(SocketAddr::from(([127, 0, 0, 1], 0))).unwrap();
-        let (dialler, pa) = endpoint(sa, &ka, &kb.public()).unwrap();
-        let (listener, pb) = endpoint(sb, &kb, &ka.public()).unwrap();
+        let (dialler, pa, _) = endpoint(sa, &ka, &kb.public()).unwrap();
+        let (listener, pb, _) = endpoint(sb, &kb, &ka.public()).unwrap();
         let (ga, gb) = (crate::relay::Gate::default(), crate::relay::Gate::default());
         gb.open();
         let after = HANDSHAKE.checked_add(Duration::from_millis(200)).unwrap();
