@@ -149,7 +149,7 @@ select.lang {
 .lede { font-size: 1.2rem; color: var(--text-2); max-width: 36rem; }
 
 .hero-figure { margin: 0; display: flex; flex-direction: column; gap: var(--s24); min-width: 0; }
-.hero-mark { width: min(100%, 16rem); height: auto; align-self: center; overflow: visible; }
+.hero-mark { width: min(100%, 24rem); height: auto; align-self: center; overflow: visible; }
 /* The one moving thing: the mark turns a quarter at a time, its corner
    pointing at each side in turn (docs/tasarim.md, "Hareket"; the same timing
    as the apps). With reduced motion it stays at rest. */
@@ -160,8 +160,24 @@ select.lang {
   68.75%, 75% { transform: rotate(270deg); }
   93.75%, 100% { transform: rotate(360deg); }
 }
+/* Around the mark, outside its clear space (21 units), sit four plain
+   devices, one where the corner points at the end of each quarter: desktop
+   (at rest, top right), phone, laptop, tablet. They are not part of the
+   mark and use no brand logos. The one the corner reaches lights up while
+   it is there; the delays put each icon's light on its own quarter. */
+.dv { fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; color: var(--text-2); opacity: 0.55; }
+@keyframes dv-lit {
+  0%, 12% { color: var(--text-2); opacity: 0.55; }
+  18.75%, 28% { color: var(--accent); opacity: 1; }
+  36%, 100% { color: var(--text-2); opacity: 0.55; }
+}
 @media (prefers-reduced-motion: no-preference) {
   .mk-turn { transform-box: view-box; transform-origin: 55px 57px; animation: mk-turn 3.2s cubic-bezier(0.65, 0, 0.35, 1) infinite; }
+  .dv { animation: dv-lit 3.2s linear infinite; }
+  .dv-ne { animation-delay: -0.8s; }
+  .dv-se { animation-delay: 0s; }
+  .dv-sw { animation-delay: -2.4s; }
+  .dv-nw { animation-delay: -1.6s; }
 }
 
 .code-card { border: 1px solid var(--rule); border-radius: 28px; padding: var(--s24); display: flex; flex-direction: column; gap: var(--s8); }
@@ -169,7 +185,7 @@ select.lang {
 .code { font-family: var(--display); font-weight: 800; font-size: clamp(1.6rem, 3vw, 2.25rem); line-height: 1.1; letter-spacing: -0.02em; overflow-wrap: anywhere; }
 .hero-figure figcaption { color: var(--text-2); font-size: 0.975rem; }
 
-@media (max-width: 52rem) { .hero { grid-template-columns: minmax(0, 1fr); } .hero-mark { width: 10rem; } }
+@media (max-width: 52rem) { .hero { grid-template-columns: minmax(0, 1fr); } .hero-mark { width: 14rem; } }
 
 /* Content blocks */
 .block { max-width: var(--wrap); margin: 0 auto; padding: clamp(3rem, 7vw, 5.5rem) var(--gutter); border-top: 1px solid var(--rule); display: flex; flex-direction: column; gap: var(--s40); }
