@@ -35,10 +35,24 @@ const STOP_NOTICE: Duration = Duration::from_secs(2);
 /// receiver does not report updates its estimate (#211).
 const PROGRESS_EVERY: Duration = Duration::from_millis(250);
 
-/// The most a sender's count of bytes handed to QUIC can be ahead of what
-/// the receiver has written: QUIC's send window plus the receiver's
-/// connection window (see `transport`).
+/// More than a sender's count of bytes handed to QUIC can be ahead of what
+/// the receiver has written. QUIC charges flow control when the
+/// application writes, so what it has taken is at most what the receiver
+/// has read plus the connection window (16 MiB, see `transport`); the
+/// receiver writes what it has read after at most `PARALLEL_STREAMS`
+/// chunks (4 MiB). Twice the window rounds that up.
 const MAX_IN_FLIGHT: u64 = 2 * crate::transport::CONNECTION_WINDOW as u64;
+
+/// Check a receiver's progress report against the last one: it must grow,
+/// and stay within the bytes the receiver asked for. A report that does not
+/// grow is refused too, since an honest receiver never sends one, so a peer
+/// cannot keep the sender busy with them.
+fn check_report(bytes: u64, last: Option<u64>, wanted: u64) -> Result<u64> {
+    if bytes > wanted || last.is_some_and(|l| bytes <= l) {
+        return Err(Error::Protocol("bad progress report"));
+    }
+    Ok(bytes)
+}
 
 /// What a sender can honestly show when its receiver does not report
 /// progress: the files the receiver confirmed, or what QUIC has taken less
@@ -540,7 +554,7 @@ pub async fn send_files(
     // receiver that does not send them. It never goes back.
     let mut shown = 0u64;
     let mut confirmed = 0u64;
-    let mut reported = 0u64;
+    let mut reported: Option<u64> = None;
     let mut estimate = tokio::time::interval(PROGRESS_EVERY);
     estimate.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);
     // The total is known now, even before anything has arrived.
@@ -574,10 +588,7 @@ pub async fn send_files(
                     pending = pending.saturating_sub(1);
                 }
                 Some(Ok(Control::Received { transfer_id: t, bytes })) if reports && t == transfer_id => {
-                    if bytes < reported || bytes > wanted_bytes {
-                        return Err(Error::Protocol("bad progress report"));
-                    }
-                    reported = bytes;
+                    reported = Some(check_report(bytes, reported, wanted_bytes)?);
                     if bytes > shown {
                         shown = bytes;
                         progress(shown, wanted_bytes);
@@ -1383,6 +1394,65 @@ mod tests {
     }
 
     #[test]
+    fn reports_must_grow_within_what_was_asked() {
+        assert_eq!(check_report(0, None, 10).unwrap(), 0);
+        assert_eq!(check_report(10, Some(3), 10).unwrap(), 10);
+        assert!(check_report(11, None, 10).is_err());
+        assert!(check_report(3, Some(3), 10).is_err());
+        assert!(check_report(2, Some(3), 10).is_err());
+    }
+
+    /// The receiver stops while its streams wait for data that is slow to
+    /// come: the sender hears it stopped, and nothing is left behind.
+    #[tokio::test]
+    async fn receiver_stops_while_waiting_for_data() {
+        let (sender, receiver) =
+            crate::transport::testing::over_slow_relay(Duration::from_millis(1)).await;
+        let (schan, mut rchan, skeys, scert) = secure_pair(&sender, &receiver).await;
+        let dir = std::env::temp_dir().join(format!("td-rstop-{}", std::process::id()));
+        let (src, dest) = (dir.join("src"), dir.join("dest"));
+        std::fs::create_dir_all(src.join("f")).unwrap();
+        std::fs::create_dir_all(&dest).unwrap();
+        for n in 0..2 {
+            std::fs::write(src.join("f").join(format!("{n}.bin")), vec![1u8; 4 << 20]).unwrap();
+        }
+        let (entries, _) = scan(&[src.join("f")]).unwrap();
+        let send = {
+            let sender = sender.clone();
+            tokio::spawn(async move {
+                send_files(
+                    &sender,
+                    schan,
+                    &skeys,
+                    entries,
+                    Arc::new(|_, _| {}),
+                    &Stop::new(),
+                )
+                .await
+            })
+        };
+        let offer = receive_offer(&mut rchan, &scert).await.unwrap();
+        let stop = Stop::new();
+        let on_receive: Progress = {
+            let stop = stop.clone();
+            Arc::new(move |n, _| {
+                if n >= 1 << 20 {
+                    stop.stop();
+                }
+            })
+        };
+        let r = accept(&receiver, rchan, offer, &dest, on_receive, &stop).await;
+        assert!(matches!(r, Err(Error::Stopped)), "{r:?}");
+        let s = tokio::time::timeout(Duration::from_secs(10), send)
+            .await
+            .unwrap()
+            .unwrap();
+        assert!(matches!(s, Err(Error::Cancelled(_))), "{s:?}");
+        assert_eq!(std::fs::read_dir(&dest).unwrap().count(), 0);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
     fn the_estimate_never_runs_ahead() {
         assert_eq!(lower_bound(0, MAX_IN_FLIGHT), 0);
         assert_eq!(lower_bound(0, MAX_IN_FLIGHT + 5), 5);
@@ -1409,6 +1479,7 @@ mod tests {
         let arrived = Arc::new(AtomicU64::new(0));
         let ahead = Arc::new(AtomicU64::new(0));
         let last_shown = Arc::new(AtomicU64::new(0));
+        let between = Arc::new(AtomicU64::new(0));
         let on_receive: Progress = {
             let arrived = arrived.clone();
             Arc::new(move |n, _| {
@@ -1416,9 +1487,17 @@ mod tests {
             })
         };
         let on_send: Progress = {
-            let (arrived, ahead, last_shown) = (arrived.clone(), ahead.clone(), last_shown.clone());
+            let (arrived, ahead, last_shown, between) = (
+                arrived.clone(),
+                ahead.clone(),
+                last_shown.clone(),
+                between.clone(),
+            );
             Arc::new(move |n, total| {
                 assert_eq!(total, size);
+                if n > 0 && n < size {
+                    between.fetch_add(1, Ordering::SeqCst);
+                }
                 let got = arrived.load(Ordering::SeqCst);
                 ahead.fetch_max(n.saturating_sub(got), Ordering::SeqCst);
                 last_shown.store(n, Ordering::SeqCst);
@@ -1447,8 +1526,12 @@ mod tests {
             ahead <= limits::CHUNK_SIZE,
             "the sender showed {ahead} bytes more than had arrived"
         );
-        // It still ends at everything.
+        // It still ends at everything, and with reports it moves on the
+        // way there.
         assert_eq!(last_shown.load(Ordering::SeqCst), size);
+        if reports {
+            assert!(between.load(Ordering::SeqCst) > 0, "no report was shown");
+        }
         let _ = std::fs::remove_dir_all(&dir);
     }
 

@@ -1338,6 +1338,17 @@ mod tests {
         ]);
         assert_eq!(Control::decode(&bad).unwrap_err(), WireError::Field(3));
 
+        // An explicit false reads like an absent field, and is left out
+        // again when encoded.
+        let mut fields = manifest.fields();
+        fields.push((0, text("offer")));
+        fields.push((5, bytes(&content_key)));
+        fields.push((6, bytes(&signature)));
+        fields.push((7, Value::Bool(false)));
+        let decoded = Control::decode(&encode_map(fields)).unwrap();
+        assert_eq!(decoded, old);
+        assert_eq!(decoded.encode(), bytes_old);
+
         // A report needs its byte count.
         let short = encode_map(vec![(0, text("received")), (1, bytes(&[1; 16]))]);
         assert_eq!(Control::decode(&short).unwrap_err(), WireError::Missing(2));

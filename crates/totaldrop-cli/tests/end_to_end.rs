@@ -744,17 +744,19 @@ async fn offer(server: String, code: &str) -> IncomingOffer {
     .unwrap()
 }
 
-/// The receiver stops while its streams wait for data: the sender is told,
-/// and nothing is left in the destination.
+/// The receiver stops mid-transfer: the sender is told, and nothing is
+/// left in the destination.
 #[tokio::test(flavor = "multi_thread", worker_threads = 8)]
 async fn receiver_stops_mid_transfer() {
     let server = server().await;
     let (src, dest) = (scratch("src"), scratch("dest"));
     let p = prepared(&server, folder(&src, 2, 32 << 20)).await;
     let code = p.code().to_string();
-    // The sender is the slow side, so the receiver's streams sit idle on a
-    // read when the stop comes, as they would behind a real network.
-    let sender = tokio::spawn(p.run(counting(Default::default(), true)));
+    // Streams that sit idle on a read when the stop comes, as they would
+    // behind a slow network, are covered by
+    // transfer::tests::receiver_stops_while_waiting_for_data: the sender's
+    // progress no longer runs per chunk, so it cannot slow the sender.
+    let sender = tokio::spawn(p.run(counting(Default::default(), false)));
     let o = offer(server, &code).await;
     let (stop, moved) = (totaldrop_core::Stop::new(), std::sync::Arc::default());
     stop_when(stop.clone(), std::sync::Arc::clone(&moved), 4 << 20);
