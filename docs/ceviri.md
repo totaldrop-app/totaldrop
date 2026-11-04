@@ -8,7 +8,7 @@ TotalDrop'un bütün metinleri depo kökündeki `l10n/` klasöründe durur
 | `l10n/app/` | Android ve Linux uygulamalarının ortak metinleri | ARB (`app_<dil>.arb`, ör. `app_pt_BR.arb`) |
 | `l10n/cli/` | Komut satırı istemcisi | ARB (`cli_<dil>.arb`) |
 | `site/public/i18n/` | totaldrop.app (site olduğu gibi yayınlandığı için kendi klasöründe) | JSON (`<dil>.json`) |
-| `site/privacy/` | totaldrop.app gizlilik politikası; esas metin İngilizce (`en.html`), sayfalar `site/tools/privacy.mjs --write` ile üretilir | HTML parçası (`<dil>.html`) |
+| `site/privacy/` | totaldrop.app gizlilik politikası; esas metin İngilizce (`en.html`), çeviriler ilk satırda `en.html` özetini taşır, sayfalar `site/tools/privacy.mjs --write` ile üretilir | HTML parçası (`<dil>.html`) |
 | `docs/readme/` | GitHub sayfası: `README.md`'nin çevirileri | Markdown (`README.<dil>.md`) |
 
 `README.md` değişince çevirileri eskir: her çevirinin ilk satırı hangi

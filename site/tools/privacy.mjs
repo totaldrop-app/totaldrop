@@ -12,8 +12,16 @@
 //
 // Each translation must have the same shape as English: the same headings,
 // paragraphs and list items in the same order, the same links, the same
-// <code> text and the same version numbers. A translation that drops a
-// paragraph or a server name, or keeps last version's numbers, fails.
+// <code> text, every number of the English text (versions, durations,
+// dates) and the same Linux paths. A translation that drops a paragraph or a server name, or
+// keeps last version's numbers, fails.
+//
+// Each translation starts with <!-- Translated from en.html <hash>. -->,
+// the first 12 hex digits of the SHA-256 of site/privacy/en.html. When the
+// English text changes, the hash no longer matches and every translation
+// fails until it is brought up to date and its hash renewed: a change that
+// keeps the shape (a reworded sentence) cannot leave a translation behind.
+import { createHash } from "node:crypto";
 import { readFileSync, writeFileSync, mkdirSync, readdirSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -43,16 +51,24 @@ const KEYS = ["skip", "nav.home", "nav.label", "nav.why", "nav.security", "nav.d
   "foot.line", "meta.privacy.title", "meta.privacy.desc", "privacy.langs", "privacy.official", "privacy.english"];
 for (const k of KEYS) if (typeof en[k] !== "string" || !en[k]) errors.push(`en.json: \`${k}\` is missing`);
 
-// Shape of an article: its block elements in order, its links, its code
-// and its version numbers.
+// Version numbers ("0.3.0-beta.2") and code examples ("7-harbor-rocket"):
+// checked by shape() and kept left-to-right on right-to-left pages.
+const VERSION = /\d+\.\d+\.\d+(?:-[a-z]+\.\d+)?/g;
+const LTR_RUN = /\d+\.\d+\.\d+(?:-[a-z]+\.\d+)?|\d+-[a-z]+-[a-z]+/g;
+
+// Shape of an article: its block elements in order, its links, its code,
+// its version numbers, every number in it, and its Linux paths.
 function shape(html) {
+  const text = html.replace(/<[^>]*>/g, " ");
   return {
     blocks: [...html.matchAll(/<(h1|h2|p|ul|li)\b[^>]*>/g)].map((m) => m[1]),
     classes: [...html.matchAll(/<(?:h1|h2|p|ul|li)\b[^>]*class="([^"]+)"/g)].map((m) => m[1]),
     links: [...html.matchAll(/href="([^"]*)"/g)].map((m) => m[1]),
     em: [String((html.match(/<em>/g) || []).length)],
     code: [...html.matchAll(/<code>([^<]*)<\/code>/g)].map((m) => m[1]),
-    versions: [...html.matchAll(/\d+\.\d+\.\d+(?:-[a-z]+\.\d+)?/g)].map((m) => m[0]),
+    versions: [...html.matchAll(VERSION)].map((m) => m[0]),
+    numbers: [...text.replace(VERSION, " ").matchAll(/\d+/g)].map((m) => m[0]).sort(),
+    paths: [...html.matchAll(/<em>(~\/[^<]*)<\/em>/g)].map((m) => m[1]),
   };
 }
 
@@ -64,7 +80,7 @@ function lint(tag, html) {
     if (attrs && !/^(class="(eyebrow|lead)"|href="(mailto:privacy@totaldrop\.app|https:\/\/www\.cloudflare\.com\/privacypolicy\/)")$/.test(attrs)) errors.push(`site/privacy/${tag}.html: attribute ${attrs} is not allowed`);
   }
   if (/<script|on[a-z]+=|javascript:/i.test(html)) errors.push(`site/privacy/${tag}.html: script`);
-  if (/[‪-‮⁦-⁩]/.test(html)) errors.push(`site/privacy/${tag}.html: invisible direction characters`);
+  if (/[\u200e\u200f\u061c\u202a-\u202e\u2066-\u2069]/.test(html)) errors.push(`site/privacy/${tag}.html: invisible direction characters`);
   if (/&(?!amp;|lt;|gt;|quot;|nbsp;)/.test(html)) errors.push(`site/privacy/${tag}.html: unescaped &`);
 }
 
@@ -78,7 +94,8 @@ function page(tag, body, d) {
   const alternates = tags.map((t) => `  <link rel="alternate" hreflang="${t}" href="${SITE + path(t)}">`).join("\n");
   const others = tags.map((t) => {
     const cur = t === tag ? ' aria-current="page"' : "";
-    return `        <li><a href="${path(t)}" lang="${t}" hreflang="${t}"${cur}>${esc(nameOf[t])}</a></li>`;
+    const tdir = isRtl(t) === isRtl(tag) ? "" : ` dir="${isRtl(t) ? "rtl" : "ltr"}"`;
+    return `        <li><a href="${path(t)}" lang="${t}" hreflang="${t}"${tdir}${cur}>${esc(nameOf[t])}</a></li>`;
   }).join("\n");
   let note = "";
   if (tag !== "en") {
@@ -92,7 +109,7 @@ function page(tag, body, d) {
   if (dir === "rtl") {
     body = body
       .replace(/<em>/g, '<em dir="ltr">')
-      .replace(/>([^<]*)</g, (_, t) => ">" + t.replace(/\d+(?:\.\d+){2}(?:-beta\.\d+)?|\d-[a-z]+-[a-z]+/g, '<bdi dir="ltr">$&</bdi>') + "<");
+      .replace(/>([^<]*)</g, (_, t) => ">" + t.replace(LTR_RUN, '<bdi dir="ltr">$&</bdi>') + "<");
   }
   const indented = body.trim().split("\n").map((l) => (l ? "      " + l.replace(/^ {6}/, "") : l)).join("\n");
   return `<!doctype html>
@@ -160,14 +177,29 @@ if (JSON.stringify(sources) !== JSON.stringify([...tags].sort())) errors.push(`s
 
 const enBody = existsSync(join(src, "en.html")) ? readFileSync(join(src, "en.html"), "utf8") : "";
 const want = shape(enBody);
+const enHash = createHash("sha256").update(enBody).digest("hex").slice(0, 12);
+const MARKER = /^<!-- Translated from en\.html ([0-9a-f]{12})\. -->\n/;
 const stale = [];
 for (const tag of tags) {
   const p = join(src, tag + ".html");
   if (!existsSync(p)) continue;
-  const body = readFileSync(p, "utf8");
+  let body = readFileSync(p, "utf8");
+  if (tag !== "en") {
+    const m = MARKER.exec(body);
+    if (!m) errors.push(`site/privacy/${tag}.html: first line must be <!-- Translated from en.html ${enHash}. -->`);
+    else if (m[1] !== enHash) errors.push(`site/privacy/${tag}.html: translated from en.html ${m[1]}, but en.html is now ${enHash}; update the translation, then its hash`);
+    body = body.replace(MARKER, "");
+  }
   lint(tag, body);
   const got = shape(body);
+  // Every number of the English text must be there (as often): a language
+  // may add some, writing "November" as 11 or "third" as 3, but not lose or
+  // change one.
+  const left = [...got.numbers];
+  const lost = want.numbers.filter((n) => { const i = left.indexOf(n); if (i < 0) return true; left.splice(i, 1); return false; });
+  if (lost.length) errors.push(`site/privacy/${tag}.html: numbers of the English text missing: ${lost.join(" ")}`);
   for (const k of Object.keys(want)) {
+    if (k === "numbers") continue;
     if (JSON.stringify(got[k]) !== JSON.stringify(want[k])) errors.push(`site/privacy/${tag}.html: ${k} differ from English\n  en: ${want[k].join(" | ")}\n  ${tag}: ${got[k].join(" | ")}`);
   }
   let d = {};
@@ -187,6 +219,8 @@ if (stale.length) errors.push(`out of date, run node site/tools/privacy.mjs --wr
 // Every page is in the sitemap.
 const sitemap = readFileSync(join(pub, "sitemap.xml"), "utf8");
 for (const tag of tags) if (!sitemap.includes(`<loc>${SITE + path(tag)}</loc>`)) errors.push(`sitemap.xml: ${SITE + path(tag)} missing`);
+// ...and no page that is gone.
+for (const m of sitemap.matchAll(/<loc>https:\/\/totaldrop\.app\/privacy\/([^<]*)<\/loc>/g)) if (!tags.includes(m[1])) errors.push(`sitemap.xml: /privacy/${m[1]} is no such language`);
 
 if (errors.length) {
   console.error(errors.join("\n"));
