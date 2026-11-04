@@ -236,34 +236,38 @@ treated as final.
     packet, so a path that starts working late would otherwise go unnoticed
     (#185). Moving a connection from the relay to a direct path that opens
     later (QUIC migration) is not done yet.
-    - The other way round is done: a direct connection whose path goes
-      quiet moves onto the relay (#185). Each side sends a QUIC keep-alive
-      after 2 seconds with nothing to send. A side that has received no
-      datagram at all from the connection's direct address for 8 seconds
-      opens its relay link and from then on sends what QUIC addresses to
-      that direct address through the relay; datagrams from the relay are
-      handed to QUIC as if they came from that address. QUIC therefore sees
-      no address change and neither side migrates; each side moves on its
-      own, and when only one direction dies, the side that stops hearing
-      moves first and the other follows one wait later, both inside the
-      30-second idle timeout.
+    - The other way round is done: a direct connection whose path goes quiet
+      moves onto the relay (#185). Each side sends a QUIC keep-alive after 2
+      seconds with nothing to send. A side that has received no datagram at
+      all from the connection's direct address for 8 seconds opens its relay
+      link and from then on sends what QUIC addresses to that direct address
+      through the relay. Once a side watches its connection, datagrams from
+      the relay are always handed to QUIC as if they came from that direct
+      address, moved or not. QUIC therefore sees no address change and
+      neither side migrates; each side moves on its own, and when only one
+      direction dies, the side that stops hearing moves first and the other
+      follows one wait later, both inside the 30-second idle timeout.
     - A side that moved goes back to sending directly as soon as a datagram
-      arrives from the direct address again; its relay link stays up. A
-      peer that was only paused, or that never moved, thus brings the
-      connection back. A side that finds its own clock ran late by 2
-      seconds or more (it was paused itself) starts counting afresh. While
-      the connection is direct, the watched address follows QUIC's remote
-      address, so a peer whose NAT mapping changed is not taken for a
-      silent one.
+      arrives from the direct address again, which happens only if the other
+      side still sends directly (it was paused, or never moved). Once both
+      sides moved, nothing goes to the direct address, and the connection
+      stays on the relay until it ends. A side whose own clock ran late by 2
+      seconds or more (it was paused itself) gives the other side 2 more
+      seconds before it moves. The watched address follows QUIC's remote
+      address, so a peer whose NAT mapping changed is not taken for a silent
+      one.
     - A side moves only when both use the same relay (item 21): the sender
       checks the receiver's `HINTS` field 5, and the receiver has a relay
-      path only in that case. A relay link that was already opened before a
-      slower direct path won is closed as before, and that side does not
-      move.
+      path only in that case. When a direct path wins, the relay link is
+      parked: a connection to the relay it already has is closed at once,
+      and it connects again only while the connection has moved, starting
+      with the datagram that needs it; datagrams queued for the relay
+      meanwhile are dropped. Back on the direct path, the link closes its
+      connection after 30 seconds without sending.
     - A relay link that sent datagrams and got nothing back pings the relay
-      every 2 seconds; a pong counts as an answer. The relay drops
-      datagrams while the other device is not there, so without this a link
-      waiting for a side that moves later would be taken for a dead one.
+      every 2 seconds; a pong counts as an answer. The relay drops datagrams
+      while the other device is not there, so without this a link waiting
+      for a side that moves later would be taken for a dead one.
     - A stream may have 8 MiB in flight and a connection 16 MiB, so a path
       with a long round trip is not held to window / RTT (#185). An honest
       client never has more than that in flight on one connection, which
@@ -274,15 +278,15 @@ treated as final.
       10 tries in a row that did not sign in. It keeps the limits below
       over all its own connections together; the relays count them per
       connection (#190). When datagrams went out and nothing at all (no
-      datagram, no pong to those pings) came back for 10 seconds, the link drops the
-      connection and connects again: a dead TCP connection is otherwise
-      reported only after minutes, long past QUIC's idle timeout.
+      datagram, no pong to those pings) came back for 10 seconds, the link
+      drops the connection and connects again: a dead TCP connection is
+      otherwise reported only after minutes, long past QUIC's idle timeout.
 23. **Relay limits.** Per connection: 32 GiB and 6 hours; ten seconds to
     sign in. Both accept only the pair path `/v0/relay/<key A>-<key B>` and
     forward only to the other key of that pair. The self-hosted relay also
     caps each connection at 8 MiB/s and closes it after 60 seconds without
-    datagrams (pings do not count), which ends the other side too. Neither keeps anything on disk or logs
-    client data.
+    datagrams (pings do not count), which ends the other side too. Neither
+    keeps anything on disk or logs client data.
 
 ## Section 8, continued: progress
 

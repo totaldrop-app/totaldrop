@@ -70,28 +70,32 @@ Wi-Fi kopar, NAT eşlemesi düşer ya da ağ el sıkışmayı geçirip sonra hi�
 şey taşımaz. İki taraf da boştayken her 2 saniyede bir QUIC canlı tutma
 paketi gönderir; bir cihaz bağlantının doğrudan adresinden 8 saniye boyunca
 tek bir paket almazsa aktarma bağlantısını açar ve o adrese giden paketleri
-aktarma sunucusundan yollar. Aktarma sunucusundan gelen paketler QUIC'e aynı
+aktarma sunucusundan yollar. Aktarma sunucusundan gelen paketler QUIC'e o
 doğrudan adresten gelmiş gibi verilir; bu yüzden QUIC açısından adres
 değişmez ve iki taraf ayrı ayrı, kendi saatiyle geçer. Yalnızca bir yön
 ölürse önce karşıyı duymayı kesen taraf geçer; öbürü de onu duymayı kesince
 bir bekleme sonra izler. İkisi de QUIC'in 30 saniyelik boşta kalma süresinin
 içinde kalır.
 
-Doğrudan adresten yeniden paket gelirse cihaz doğrudan yola döner; aktarma
-bağlantısı açık kalır. Böylece yalnızca bir süre duraklamış (arka planda
-dondurulmuş) ya da hiç geçmemiş bir karşı taraf bağlantıyı doğrudan yola
-geri getirir. Cihaz kendisinin durakladığını saatinin geç işlemesinden
-anlar ve o sessizliği yolun sessizliği saymaz. QUIC karşı tarafın yeni bir
-adresine geçerse (NAT eşlemesi değişti) izlenen adres de onunla değişir.
+Karşı taraf hâlâ doğrudan yoldan gönderiyorsa (yalnızca duraklamıştı ya da
+hiç geçmedi) ondan gelen ilk doğrudan paketle cihaz doğrudan yola döner. İki
+taraf da geçtiyse doğrudan adrese artık hiçbir şey gitmez; aktarım bitene
+kadar aktarma sunucusunda kalır. Cihaz kendisinin durakladığını (arka planda
+dondurulduğunu) saatinin en az 2 saniye geç işlemesinden anlar; o sessizliği
+yolun sessizliği saymaz ve geçmeden önce karşı tarafa 2 saniye daha tanır.
+QUIC karşı tarafın yeni bir adresine geçerse (NAT eşlemesi değişti) izlenen
+adres de onunla değişir.
 
-Geçiş yalnızca iki taraf aynı aktarma sunucusunu kullanıyorsa açılır:
-alanın aktarma sunucusu gönderenden farklıysa ya da hiç yoksa iki taraf da
-geçmez, çünkü öbür taraf oraya hiç gelmez. Yol seçilirken bir tarafın
-aktarma bağlantısı zaten açılmışsa o taraf bağlantıyı eskisi gibi kapatır
-ve geçmez; öbür taraf geçerse ve doğrudan yol geri gelirse yukarıdaki gibi
-döner. Aktarma sunucusu doğrudan başlamış bir aktarımı ancak bir taraf
-geçtiğinde görür. Geçişten sonra QUIC'in tıkanıklık durumu doğrudan yoldan
-kalır; ilk saniyelerde paket kaybı olur, QUIC bunu kendisi toparlar.
+Geçiş yalnızca iki taraf aynı aktarma sunucusunu kullanıyorsa vardır: alanın
+aktarma sunucusu gönderenden farklıysa ya da hiç yoksa iki taraf da geçmez,
+çünkü öbür taraf oraya hiç gelmez. Doğrudan yol kazandığında aktarma
+bağlantısı bekleme kipine alınır: kurulum sırasında açılmışsa o anda
+kapatılır, sonra yalnızca bağlantı aktarma sunucusuna geçtiğinde yeniden
+açılır. Bağlantı doğrudan yola dönerse aktarma bağlantısı 30 saniye boyunca
+hiçbir şey göndermedikten sonra kapanır. Aktarma sunucusu doğrudan başlamış
+bir aktarımı ancak bir taraf geçtiğinde görür. Geçişten sonra QUIC'in
+tıkanıklık durumu doğrudan yoldan kalır; ilk saniyelerde paket kaybı olur,
+QUIC bunu kendisi toparlar.
 
 Aktarma bağlantısı, karşı taraf henüz gelmemişken gönderdiği paketlere yanıt
 alamaz; bu sırada her 2 saniyede bir ping gönderir. Aktarma sunucusu pinge
