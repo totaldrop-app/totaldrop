@@ -18,7 +18,7 @@ numara taşıyıcı bir sırdı: numarayı bilen her şeyi yapabiliyordu.
 
 Seçenekler, Signal, Mullvad, Session, Briar, SimpleX, Keybase, passkey, MLS
 ve MLS Virtual Clients taslağıyla karşılaştırılarak değerlendirildi. Bu
-değerlendirme ve ardından yazılan tasarım dört bağımsız inceleme turundan
+değerlendirme ve ardından yazılan tasarım beş bağımsız inceleme turundan
 geçti.
 
 1. **Tanıklı halka:** imzalı cihaz zinciri ve şeffaflık günlüğü. Sunucuda
@@ -48,7 +48,8 @@ Bağlayıcı noktalar şunlardır:
   - isteğe bağlıdır ve 24 kelimeden oluşur;
   - bekleme süresi 2 ya da daha çok cihazda 72 saat, tek cihazda 7 gündür;
   - kurtarma anahtarı yalnızca cihaz ekleyebilir ve çatal çözebilir;
-  - kurtarma kutusunda yalnızca son baş bulunur, kişi listesi bulunmaz;
+  - aylık kurtarma kaydında yalnızca son baş bulunur, kişi listesi
+    bulunmaz;
   - kişiler kelimeleri yeniden karşılaştırır, otomatik kabul yoktur.
 - **Kimlik ve adlar:** hiçbir cihazda kimlik yazılmaz. Cihaz ve kişi
   listesi her cihazda aynıdır. Adları kullanıcı verir ve adlar halkanın
@@ -75,11 +76,13 @@ Bağlayıcı noktalar şunlardır:
   hesaplar, cihaz sayıları ve kişi ilişkileri anahtar olmadan çıkmaz.
 - **Güvenlik iddiaları kötü niyetli sunucuya karşı da hedefleniyor.** Bunu
   sağlayacak parçalar şeffaflık günlüğü, gönderim öncesi tazelik denetimi
-  ve kişilerin yeniden doğrulamasıdır. Dört inceleme turundaki yedi kritik
-  bulgunun hepsi "kötü sunucu + eski yetki" desenindeydi. Tasarım her
+  ve kişilerin yeniden doğrulamasıdır. Beş inceleme turundaki kritik
+  bulguların hepsi "kötü sunucu + eski yetki" desenindeydi. Tasarım her
   birine bir karşılık getiriyor; bunların yeterli olduğu ancak biçimsel
-  model ve bağımsız kripto incelemesiyle gösterilecek. Günlükte çöp yazmayla
-  bir dönemi kilitleme sorusu açıktır.
+  model ve bağımsız kripto incelemesiyle gösterilecek. Çatal ve kurtarma
+  kurallarının kalan köşe durumları elle yamanmaz, Tamarin modelinde
+  çözülür ([hesap.md](../hesap.md), "Biçimsel modelde kesinleşecek
+  kurallar").
 - **Yalnızca standart parçalar kullanılır.** Algoritmalar sürüm alanının
   arkasındadır; zayıflık bulunursa değiştirilebilir.
 

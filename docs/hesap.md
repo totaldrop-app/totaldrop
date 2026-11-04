@@ -94,7 +94,7 @@ kullanılır.
 | İşlem | Varsayılan | Sıkı mod (ayar) |
 | --- | --- | --- |
 | Cihaz ekleme | Mevcut cihazda yönetim anahtarı (biyometri ya da PIN) + doğrulama kelimeleri. Diğer cihazlara anında bildirim gider; 24 saat içinde tek dokunuşla geri alınabilir (geri alma bir `çıkar` kaydıdır) | `ekle` iki cihazın `AK` imzasını taşır. İkinci imza gelmezse (ya da halkada tek cihaz varsa) kayıt tek imzayla **bekleyen** olarak yazılır ve tanık zamanıyla 72 saat sonra yürürlüğe girer; bu sürede herhangi bir cihaz `bekleyen_reddi` yazabilir |
-| Cihaz çıkarma | Yönetim anahtarı | `ekle` ile aynı kural: iki imza ya da 72 saat bekleyen tek imza. Kişiler cihaz sayısını görmediği için kural her halka boyutunda aynıdır. Bedeli: sıkı modda çalınan cihazı tek başınıza hemen çıkaramazsınız; çalınan cihaz reddederse gerçek çatal olur ve `RK` çözer |
+| Cihaz çıkarma | Yönetim anahtarı | `ekle` ile aynı kural: iki imza ya da 72 saat bekleyen tek imza. Kişiler cihaz sayısını görmediği için kural her halka boyutunda aynıdır. Bedeli: sıkı modda çalınan cihazı tek başınıza hemen çıkaramazsınız; çalınan cihaz `bekleyen_reddi` yazarsa çıkarma iptal olur ve yol `RK`'den geçer (kesin kural biçimsel modelde, bkz. "Biçimsel modelde kesinleşecek kurallar") |
 | Sıkı modu açma ya da kapatma | Yönetim anahtarı | Kapatmak, sıkı modun istediği imza sayısını ister |
 | Kurtarma ile ekleme | 24 kelime + bekleme + kişilerle yeniden doğrulama | 24 kelimeye ek olarak YubiKey ya da 3 kişiden 2'sinin Shamir payı |
 | Kurtarma ifadesini değiştirme | Yönetim anahtarı + bekleme (`ifade_değiştir`) | İkinci cihazın imzası da gerekir |
@@ -105,7 +105,7 @@ başta bir **ilke alanı** olarak durur. Böylece kişiler de tek imzalı bir
 `ekle` ya da `çıkar`ın sıkı modda geçersiz olduğunu denetler.
 
 Sunucu tarafında ikinci etken (SMS, TOTP) yoktur ve olmayacaktır, çünkü
-sunucuda hesap yoktur. Halkada 3 ya da daha çok cihaz varsa sıkı modu
+sunucuda hesap yoktur. Halkada 2 ya da daha çok cihaz ve kurtarma ifadesi varsa sıkı modu
 açmak önerilir.
 
 ## Anahtarlar
@@ -115,7 +115,7 @@ açmak önerilir.
 | `IK_i`: Ed25519 + ML-DSA-65 | Her cihaz | `döndür` kayıtlarını ve el sıkışmadaki tek kullanımlık uç anahtarını imzalar |
 | `AK_i`: Ed25519 + ML-DSA-65, kullanıcı doğrulamasına bağlı | Her cihaz, OS anahtar deposunda | Yönetim anahtarı: üyeliği değiştiren kayıtlar, kişi defteri, kurtarmayı reddetme, ifade değişimi |
 | `KK_i`: X-Wing | Her cihaz, dönemsel yenilenir | Yeni halka sırrını almak |
-| `RK`: Ed25519 + ML-DSA-65 ve `RKK`: X-Wing | 24 kelimeden (BIP-39, 256 bit) türer, hiçbir cihazda saklanmaz; açık anahtarları zincirde | `RK` yalnızca gecikmeli cihaz ekleme ve çatal çözme; `RKK` kurtarma kutusunu açmak |
+| `RK`: Ed25519 + ML-DSA-65 ve `RKK`: X-Wing | 24 kelimeden (BIP-39, 256 bit) türer, hiçbir cihazda saklanmaz; açık anahtarları zincirde | `RK` yalnızca gecikmeli cihaz ekleme ve çatal çözme; `RKK` günlükteki aylık kurtarma kaydını açmak |
 | `r_e`: 32 bayt | Dönem e'deki bütün cihazlar | Posta kutusu adları, halka KEM anahtarı |
 | `k_AB`: 32 bayt | İki halka (siz ve bir kişi) | Kişi posta kutuları; her cihaz çıkarmada yenilenir |
 
@@ -207,8 +207,16 @@ günlüğü"). Okuyan herkes şu kuralları uygular:
 3. **Gerçek çatal:** başka her durumda (ör. iki `çıkar` birbirini çıkarıyor)
    cihazlar ve kişiler kapalı kalır. Gönderim durur ve bir uyarı gösterilir.
 4. Bir gözlemci, kendi sabitlediği başın altında kalan çatalları yok sayar.
-5. **Tartışmalı dal**, çözülmemiş gerçek bir çatalın dallarından biridir.
-   Yalnızca tartışmalı bir dalda üye olan cihazların reddi sayılmaz.
+5. **Tartışmalı dal**, iki cihaz imzalı kaydın oluşturduğu çözülmemiş
+   gerçek bir çatalın dallarından biridir. Yalnızca tartışmalı bir dalda
+   üye olan cihazların reddi sayılmaz.
+   - **Kurtarma kaydı çatal açmaz.** `kurtarma_ekle` aynı anahtar altındaki
+     bir cihaz kaydıyla (`döndür` de olsa) çatışırsa bu gerçek bir çatal
+     değildir: cihaz dalı geçerli kalır ve kurtarma, bekleyen bir öneri
+     olarak sonraki dönemlere taşınır. Halkanın herhangi bir mevcut
+     cihazının `AK` imzalı `kurtarma_reddi`'si her zaman sayılır. Kilitli
+     hâlde çalınmış bir telefon `AK` kullanamaz; `döndür` yazması
+     kurtarmayı ne iptal eder ne de bekletir.
 6. **Geç gelen çatal da çataldır.** Bir değer ne kadar geç yazılmış olursa
    olsun yok sayılmaz; aksi hâlde ilk yazan (ör. kilidi açık çalınmış bir
    cihaz, sahibinin cihazı çevrimdışıyken) kalıcı olarak kazanırdı. Madde 4
@@ -218,9 +226,13 @@ günlüğü"). Okuyan herkes şu kuralları uygular:
    riskler").
 7. Gerçek çatalı yalnızca `RK` imzalı bir `çatal_çöz` kaydı çözer. Bu kayıt
    da bekleme süresine tabidir. `çatal_çöz` madde 4'ü aşar: başını
-   kaybeden dala sabitlemiş kişiler de seçilen dala geçer ve yeniden
-   doğrulama uyarısı görür. Çatal sürerken iki dal da tartışmalıdır;
-   tartışmalı bir daldaki `kurtarma_reddi` `RK`'yi geçersiz kılmaz.
+   kaybeden dala sabitlemiş kişiler de seçilen dala geçer. Kişiler
+   `çatal_çöz`'ü kurtarma gibi ele alır: otomatik kabul yoktur, doğrulama
+   kelimeleri **yeniden karşılaştırılır**. Böylece ifadeyi ele geçiren
+   biri, çıkarılmış eski bir cihazla çatal açıp `RK` ile kendi dalını
+   seçse bile kişileri sessizce taşıyamaz. Çatal sürerken iki dal da
+   tartışmalıdır; tartışmalı bir daldaki `kurtarma_reddi` `RK`'yi
+   geçersiz kılmaz.
 8. Çatal çözülemezse (hırsızın elinde hem bir cihaz hem ifade varsa)
    kişiler sizi yeniden eşleştirir. En kötü sonuç hizmet kaybıdır, sessiz
    ele geçirme değildir.
@@ -243,7 +255,6 @@ protokol notlarına ayrı bir madde olarak yazılır.
 | Halka | `HKDF(r_e, "kutu halka" ‖ gün)` | 48 saat |
 | Kişi, yön başına | `HKDF(k_AB, "kutu A'ya" ‖ gün)` | 48 saat |
 | Yetişme | Zincirdeki, cihaza özel gizli bir değerden, dönem başına | 30 gün |
-| Kurtarma | `HKDF(RKK açık anahtarı, "kutu kurtarma" ‖ ay)` | 60 gün |
 
 - **Gün ve ay:** UTC tarihidir ve duvar saatinden gelir. Cihazlar dünün,
   bugünün ve yarının kutusunu dinler; bu, cihazlar arasında ±1 günlük saat
@@ -257,15 +268,16 @@ protokol notlarına ayrı bir madde olarak yazılır.
 - İki günden uzun çevrimdışı kalan bir cihaz yetişme kutusundan ve öteki
   cihazlarla doğrudan zincir eşitlemesinden yetişir. Uzun süre çevrimdışı
   kalan bir kişi ise "güncel başı iste" akışını kullanır.
-- **Kurtarma kutusu:** halkadaki bir cihaz her ay, `RKK`'ye HPKE ile
-  şifreli **yalnızca en son başı** bırakır. Kişi defteri, `k_AB`'ler,
-  adlar ve halka sırrı (`r_e`) kutuda bulunmaz. Böylece ifadeyi çalan
+- **Kurtarma kaydı:** halkadaki bir cihaz her ay, `RKK`'ye HPKE ile
+  şifreli **yalnızca en son başı** şeffaflık günlüğüne yazar. Anahtar
+  `H("günlük kurtarma", RKK açık anahtarı, ay)`'dır. Bu bir posta kutusu
+  değildir: günlük hiçbir değeri silmez, bu yüzden çöp yazarak gerçek baş
+  dışarı itilemez; okuyan, imzası geçersiz değerleri atar. Kişi defteri, `k_AB`'ler,
+  adlar ve halka sırrı (`r_e`) kayıtta bulunmaz. Böylece ifadeyi çalan
   biri, beklemeden kişilerinizi, adlarını ya da kişi kutularını öğrenemez.
-  Kutuya her cihaz yazabildiği için çıkarılmış bir cihaz da kutunun adını
-  hesaplayabilir; içeriği açamaz ve oradaki baş, günlükten zaten
-  izleyebildiği bilgiden fazlasını vermez (bkz. "Kalan riskler"). Kutu her
-  yazmada ARC jetonu ister ve son birkaç değeri tutar; okuyan, imzası
-  geçersiz değerleri atar.
+  Çıkarılmış bir cihaz da anahtarı hesaplayabilir; içeriği açamaz ve
+  oradaki baş, günlükten zaten izleyebildiği bilgiden fazlasını vermez
+  (bkz. "Kalan riskler").
 - Her kutu ayrı bir bağlantıyla ve rastgele zamanlarla yoklanır. Aynı
   NAT IP'sinden gelen bağlantılar yine de ilişkilendirilebilir (bkz.
   "Kalan riskler").
@@ -377,11 +389,12 @@ dışı doğrulama gerekir. TotalDrop ilk sürümde ikisini de kullanır.
   alındısı olan kendi kaydı 2 saat içinde tanıklı bir köke girmezse de
   uyarır; bu, tanıkların da iş birliği yaptığı sansür demektir.
 - **Çöp yazma:** anahtarı bilen biri (bir kişi ya da çıkarılmış bir cihaz)
-  anahtarın altına geçersiz değerler yazabilir. Bunlar yok sayılır; her
-  yazma bir ARC jetonu ister ve anahtar başına değer sayısı sınırlıdır
-  (öneri 16). Sınırı dolduran biri halkanın o dönemini geçici olarak
-  kilitleyebilir. Bu bir hizmet engelleme riskidir ve biçimsel model ile
-  kripto incelemesinde ayrıca ele alınacak açık bir sorudur.
+  anahtarın altına geçersiz değerler yazabilir. Bunlar yok sayılır ve her
+  yazma bir ARC jetonu ister. Anahtar başına değer sınırı **yoktur**:
+  sınır olsaydı ya çöp gerçek kaydı dışarıda bırakırdı ya da dahil etme
+  zorlaması günlüğü durdururdu. Okuyan değerleri sayfa sayfa alır ve
+  geçersizleri ucuzca atar (çözme başarısız olur). Kalan etki, okuyanın
+  bant genişliği ve çöpün ARC bedelidir.
 - **ARC anahtarları:** ARC düzenleyici anahtarları da aynı günlükte
   yayımlanır. Böylece sunucu her istemciye ayrı bir anahtar vererek
   istemcileri etiketleyemez (anahtar tutarlılığı).
@@ -401,8 +414,8 @@ dışı doğrulama gerekir. TotalDrop ilk sürümde ikisini de kullanır.
   bir pay yakalanır. Senkronize passkey kullanılmaz, çünkü kullanıcıyı
   Apple ya da Google hesabına bağlar.
 - **Yol (bütün cihazlar kayıpsa):**
-  1. Yeni cihaz ifadeden `RKK`'yi türetir, son iki ayın kurtarma kutusunu
-     açar ve en son başı öğrenir. Kişileri öğrenmez.
+  1. Yeni cihaz ifadeden `RKK`'yi türetir, günlükteki son kurtarma
+     kayıtlarını açar ve en son başı öğrenir. Kişileri öğrenmez.
   2. `L_{e+1}` altına `RK` imzalı bir `kurtarma_ekle` yazar. Kayıt bu başı
      ebeveyn olarak adlandırır.
   3. Bekleme başlar. Halkanın kalan cihazları (varsa) ve kişiler kaydı
@@ -533,9 +546,16 @@ da biçimsel modeldeki bir lemmayla bağlanır.
   kesmek için kişi başına baş teslimi ya da engellemede yenilenen bir
   zincir gerekir; biçimsel model aşamasında değerlendirilecek.
 - **Günlükte çöp yazma:** bir dönemin günlük anahtarını bilen biri (bir
-  kişi ya da çıkarılmış bir cihaz) değer sınırını doldurarak o dönemi
-  geçici olarak kilitleyebilir. ARC ile pahalılaştırılır; tam çözüm biçimsel
-  model ve kripto incelemesinde aranacak.
+  kişi ya da çıkarılmış bir cihaz) o anahtarın altına çok sayıda geçersiz
+  değer yazarak okuyanları yavaşlatabilir. Dönemi kilitleyemez; ARC ile
+  pahalılaştırılır.
+- **İfade ile çıkarılmış eski bir cihaz birlikte:** bu, "telefon ve ifade
+  birlikte çalınması" ile aynı sınıftadır. Çatal açıp `RK` ile kendi
+  dalını seçebilir; kişiler yeniden doğrulama yapmadıkça taşınmaz.
+- **Kişileri izleme trafiği:** her cihaz kişi başlarını günde bir kez
+  günlükte izler. Günlük sunucusu ve tanıklar bu sorguları IP ile
+  ilişkilendirebilir; sorgular sayfalı ve rastgele zamanlıdır, OHTTP
+  sonraki aşamadadır.
 - **Kilidi açık çalınan cihaz:** çıkarılmadan önce `AK` ile cihaz
   ekleyebilir ya da öteki cihazları çıkarmaya çalışabilir. Diğer cihazlar
   bildirim alır; karşılıklı çıkarma gerçek çataldır ve `RK` ile çözülür.
@@ -588,6 +608,22 @@ da biçimsel modeldeki bir lemmayla bağlanır.
   değerlendirilir.
 - **K6. Fuzz.** Zincir, baş, teklif ve günlük kanıtı ayrıştırıcıları ile
   çatal birleştirme kuralı için fuzz hedefleri vardır.
+
+## Biçimsel modelde kesinleşecek kurallar
+
+Dört inceleme turunda her yama, çatal ve kurtarma kurallarının etkileşimde
+yeni bir köşe durumu açtı. Bu kurallar elle daha fazla yamanmaz; kod
+öncesindeki Tamarin modelinde, aşağıdaki sorular lemma olarak çözülür:
+
+- Kurtarma ifadesi olmayan bir halkada, başı çatalın ötesine geçmiş
+  kişiler için geç bir çatalın tek çözümü yeniden eşleşmedir. Daha iyi bir
+  kural var mı?
+- Sıkı modda çalınan cihaz `bekleyen_reddi` ile çıkarmayı engellerse
+  sahibinin `RK` ile izleyeceği yolun kesin tanımı.
+- Bekleyen tek imzalı bir kayıt aynı anahtar altındaki öteki kayıtlarla
+  nasıl sıralanır.
+- Önceliğin (madde 1), kurtarma önerisinin ve `çatal_çöz`'ün birlikte
+  "yalnızca ifade ile sessiz ele geçirme yok" (P7) özelliğini sağladığı.
 
 ## Doğrulama ve uygulama sırası
 
