@@ -106,7 +106,7 @@
         <li>この転送のためだけに作られ、二度と使われない 2 つのランダムな鍵</li>
         <li>各デバイスが接続・切断した時刻と、通過した暗号化データの量</li>
       </ul>
-      <p>鍵によって転送どうしが結び付くことはありませんが、IP アドレスによって結び付く可能性はあります。リレーとランデブーサーバーはどちらも私たちが Cloudflare 上で運用しており、あなたの IP アドレスを数秒と違わずに見るからです。リレーはファイル、その名前、あなたが誰かを示すものを一切読めません。何もログに書き込まず、転送が終わればその転送について何も保持しません。</p>
+      <p>鍵によって転送どうしが結び付くことはありませんが、IP アドレスによって結び付く可能性はあります。リレーとランデブーサーバーはどちらも私たちが Cloudflare 上で運用しており、あなたの IP アドレスをほぼ同時に見るからです。リレーはファイル、その名前、あなたが誰かを示すものを一切読めません。何もログに書き込まず、転送が終わればその転送について何も保持しません。</p>
       <p>各デバイスのリレーのアドレスは、暗号化された状態で相手のデバイスに伝えられます。送信者が独自のリレー(コマンドラインの <code>--relay</code> オプションまたは <code>TOTALDROP_RELAY</code>)を使う場合、0.2.0-beta.1 以降の受信側デバイスは、それが受信者自身のリレー設定と同じときにだけ使い、そうでなければ一切接続しません。デバイスが接続するリレーを運用している人には、上に挙げたものが見えます。2 台のデバイスが別々のリレーを使っていて直接の経路もない場合、転送はエラーで止まります。</p>
       <p>プライバシーモード(0.2.0-beta.1 以降のアプリの設定にある「相手のデバイスに自分のアドレスを隠す」、コマンドラインでは <code>--relay-only</code>): あなたのデバイスは相手のデバイスに IP アドレスを一切知らせず、STUN サーバーにも問い合わせず、相手のデバイスに直接接続することもなく、ペアになったデバイスからの直接接続さえ拒否します。すべての転送がリレーを通るため、送信でも受信でも、相手のデバイスにあなたの IP アドレスは知られません。速度は遅くなり、リレーとランデブーサーバーには引き続きあなたの IP アドレスが見えます。送信でも受信でも、相手のデバイスはあなたと同じリレーを使う必要があります(アプリはすべて私たちのリレーを使います)。そうでなければ転送はエラーで止まります。</p>
 
@@ -129,7 +129,7 @@
     <nav class="lang-list" id="languages" aria-labelledby="languages-title">
       <h2 id="languages-title">このポリシーの他の言語版</h2>
       <ul>
-        <li><a href="/privacy/ar" lang="ar" hreflang="ar">العربية</a></li>
+        <li><a href="/privacy/ar" lang="ar" hreflang="ar" dir="rtl">العربية</a></li>
         <li><a href="/privacy/bn" lang="bn" hreflang="bn">বাংলা</a></li>
         <li><a href="/privacy/cs" lang="cs" hreflang="cs">Čeština</a></li>
         <li><a href="/privacy/da" lang="da" hreflang="da">Dansk</a></li>
@@ -137,10 +137,10 @@
         <li><a href="/privacy/el" lang="el" hreflang="el">Ελληνικά</a></li>
         <li><a href="/privacy" lang="en" hreflang="en">English</a></li>
         <li><a href="/privacy/es" lang="es" hreflang="es">Español</a></li>
-        <li><a href="/privacy/fa" lang="fa" hreflang="fa">فارسی</a></li>
+        <li><a href="/privacy/fa" lang="fa" hreflang="fa" dir="rtl">فارسی</a></li>
         <li><a href="/privacy/fi" lang="fi" hreflang="fi">Suomi</a></li>
         <li><a href="/privacy/fr" lang="fr" hreflang="fr">Français</a></li>
-        <li><a href="/privacy/he" lang="he" hreflang="he">עברית</a></li>
+        <li><a href="/privacy/he" lang="he" hreflang="he" dir="rtl">עברית</a></li>
         <li><a href="/privacy/hi" lang="hi" hreflang="hi">हिन्दी</a></li>
         <li><a href="/privacy/hu" lang="hu" hreflang="hu">Magyar</a></li>
         <li><a href="/privacy/id" lang="id" hreflang="id">Bahasa Indonesia</a></li>
@@ -160,7 +160,7 @@
         <li><a href="/privacy/th" lang="th" hreflang="th">ไทย</a></li>
         <li><a href="/privacy/tr" lang="tr" hreflang="tr">Türkçe</a></li>
         <li><a href="/privacy/uk" lang="uk" hreflang="uk">Українська</a></li>
-        <li><a href="/privacy/ur" lang="ur" hreflang="ur">اردو</a></li>
+        <li><a href="/privacy/ur" lang="ur" hreflang="ur" dir="rtl">اردو</a></li>
         <li><a href="/privacy/vi" lang="vi" hreflang="vi">Tiếng Việt</a></li>
         <li><a href="/privacy/zh-Hans" lang="zh-Hans" hreflang="zh-Hans">简体中文</a></li>
         <li><a href="/privacy/zh-Hant" lang="zh-Hant" hreflang="zh-Hant">繁體中文</a></li>

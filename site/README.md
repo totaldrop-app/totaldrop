@@ -51,7 +51,11 @@ ana sayfayı ve indirme sayfasını dener. Kurulum ve geri alma:
   zaten engeller.
 - Gizlilik politikası her dilde kendi adresindedir (`/privacy`, `/privacy/<dil>`).
   Metni `site/privacy/<dil>.html`'de değiştirin, sonra
-  `node tools/privacy.mjs --write` ile sayfaları yeniden üretin. Politika
-  değişince 35 dilin hepsi aynı PR'da güncellenir: CI, her çevirinin
-  İngilizce ile aynı yapıda olduğunu (başlıklar, paragraflar, bağlantılar,
-  `code` içerikleri, sürüm numaraları) ve sayfaların güncel olduğunu denetler.
+  `node tools/privacy.mjs --write` ile sayfaları yeniden üretin. Her çevirinin
+  ilk satırı, çevrildiği İngilizce metnin özetidir
+  (`<!-- Translated from en.html <özet>. -->`). İngilizce metin değişince
+  özet tutmaz ve CI 34 çevirinin hepsini, güncellenip özetleri yenilenene
+  kadar reddeder; böylece politika değişince 35 dil aynı PR'da güncellenir.
+  CI ayrıca her çevirinin İngilizce ile aynı yapıda olduğunu (başlıklar,
+  paragraflar, bağlantılar, `code` içerikleri, sürüm numaraları, Linux
+  yolları, İngilizcedeki her sayı) ve sayfaların güncel olduğunu denetler.
