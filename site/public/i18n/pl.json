@@ -418,7 +418,7 @@
   "rm.l1.t": "iPhone, iPad i Mac",
   "rm.l2.d": "Wyślij komuś, kto nie jest online: zaszyfrowana kopia czeka do 7 dni i otwiera ją tylko link.",
   "rm.l2.t": "Linki i dostarczanie offline",
-  "rm.l3.d": "Opcjonalne: bez e-maila, telefonu, hasła i numeru do wpisania. Konto trzymają Twoje urządzenia; Twoje urządzenia i zapisane kontakty wysyłają sobie pliki bez kodu.",
+  "rm.l3.d": "Opcjonalne: bez e-maila, telefonu, hasła i numeru do wpisania. Konto trzymają Twoje urządzenia; Twoje urządzenia wysyłają sobie nawzajem, a zapisane kontakty wysyłają Tobie, bez kodu.",
   "rm.l3.t": "Konto, którego serwer nigdy nie przechowuje",
   "rm.l4.d": "Sparuj raz, sprawdź cztery słowa i wysyłaj do tej osoby ponownie bez kodu.",
   "rm.l4.t": "Zapisane kontakty",

@@ -418,7 +418,7 @@
   "rm.l1.t": "iPhone, iPad och Mac",
   "rm.l2.d": "Skicka till någon som inte är online: en krypterad kopia väntar i upp till 7 dagar, och bara länken öppnar den.",
   "rm.l2.t": "Länkar och leverans offline",
-  "rm.l3.d": "Valfritt: ingen e-post, telefon, lösenord eller nummer att skriva. Dina enheter håller kontot själva; dina egna enheter och sparade kontakter skickar till varandra utan kod.",
+  "rm.l3.d": "Valfritt: ingen e-post, telefon, lösenord eller nummer att skriva. Dina enheter håller kontot själva; dina egna enheter skickar till varandra, och sparade kontakter skickar till dig, utan kod.",
   "rm.l3.t": "Ett konto som servern aldrig sparar",
   "rm.l4.d": "Para ihop en gång, kontrollera fyra ord och skicka till den personen igen utan kod.",
   "rm.l4.t": "Sparade kontakter",

@@ -418,7 +418,7 @@
   "rm.l1.t": "iPhone, iPad y Mac",
   "rm.l2.d": "Envía a alguien que no está en línea: una copia cifrada espera hasta 7 días y solo el enlace la abre.",
   "rm.l2.t": "Enlaces y entrega sin conexión",
-  "rm.l3.d": "Opcional: sin correo, teléfono, contraseña ni número que escribir. Tus dispositivos guardan la cuenta; tus propios dispositivos y tus contactos guardados se envían archivos sin código.",
+  "rm.l3.d": "Opcional: sin correo, teléfono, contraseña ni número que escribir. Tus dispositivos guardan la cuenta; tus propios dispositivos se envían archivos entre sí, y tus contactos guardados te los envían, sin código.",
   "rm.l3.t": "Una cuenta que el servidor nunca guarda",
   "rm.l4.d": "Vincula una vez, comprueba cuatro palabras y vuelve a enviar a esa persona sin código.",
   "rm.l4.t": "Contactos guardados",

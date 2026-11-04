@@ -418,7 +418,7 @@
   "rm.l1.t": "iPhone, iPad ja Mac",
   "rm.l2.d": "Lähetä jollekulle, joka ei ole verkossa: salattu kopio odottaa enintään 7 päivää, ja vain linkki avaa sen.",
   "rm.l2.t": "Linkit ja toimitus offline-tilaan",
-  "rm.l3.d": "Valinnainen: ei sähköpostia, puhelinta, salasanaa eikä kirjoitettavaa numeroa. Laitteesi pitävät tilin itse; omat laitteesi ja tallennetut yhteystietosi lähettävät toisilleen ilman koodia.",
+  "rm.l3.d": "Valinnainen: ei sähköpostia, puhelinta, salasanaa eikä kirjoitettavaa numeroa. Laitteesi pitävät tilin itse; omat laitteesi lähettävät toisilleen ja tallennetut yhteystiedot sinulle ilman koodia.",
   "rm.l3.t": "Tili, jota palvelin ei koskaan säilytä",
   "rm.l4.d": "Muodosta pari kerran, tarkista neljä sanaa ja lähetä samalle henkilölle uudelleen ilman koodia.",
   "rm.l4.t": "Tallennetut yhteystiedot",

@@ -418,7 +418,7 @@
   "rm.l1.t": "iPhone, iPad és Mac",
   "rm.l2.d": "Küldés olyannak, aki nincs online: egy titkosított másolat legfeljebb 7 napig vár, és csak a link nyitja meg.",
   "rm.l2.t": "Linkek és offline kézbesítés",
-  "rm.l3.d": "Opcionális: nincs e-mail, telefon, jelszó vagy beírandó szám. A fiókot az eszközeid őrzik; a saját eszközeid és a mentett partnereid kód nélkül küldenek egymásnak.",
+  "rm.l3.d": "Opcionális: nincs e-mail, telefon, jelszó vagy beírandó szám. A fiókot az eszközeid őrzik; a saját eszközeid egymásnak, a mentett partnereid pedig neked küldenek, kód nélkül.",
   "rm.l3.t": "Fiók, amelyet a szerver soha nem tárol",
   "rm.l4.d": "Párosíts egyszer, ellenőrizz négy szót, és utána kód nélkül küldhetsz annak a személynek.",
   "rm.l4.t": "Mentett névjegyek",

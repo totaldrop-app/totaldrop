@@ -418,7 +418,7 @@
   "rm.l1.t": "iPhone, iPad și Mac",
   "rm.l2.d": "Trimiteți cuiva care nu este online: o copie criptată așteaptă până la 7 zile și doar linkul o deschide.",
   "rm.l2.t": "Linkuri și livrare offline",
-  "rm.l3.d": "Opțional: fără e-mail, telefon, parolă sau număr de tastat. Contul îl țin dispozitivele dvs.; propriile dispozitive și contactele salvate își trimit fișiere fără cod.",
+  "rm.l3.d": "Opțional: fără e-mail, telefon, parolă sau număr de tastat. Contul îl țin dispozitivele dvs.; propriile dispozitive își trimit fișiere între ele, iar contactele salvate vi le trimit dvs., fără cod.",
   "rm.l3.t": "Un cont pe care serverul nu îl păstrează niciodată",
   "rm.l4.d": "Asociați o dată, verificați patru cuvinte și trimiteți din nou acelei persoane fără cod.",
   "rm.l4.t": "Contacte salvate",

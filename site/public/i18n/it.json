@@ -418,7 +418,7 @@
   "rm.l1.t": "iPhone, iPad e Mac",
   "rm.l2.d": "Invia a qualcuno che non è online: una copia crittografata attende fino a 7 giorni, e solo il link la apre.",
   "rm.l2.t": "Link e consegna offline",
-  "rm.l3.d": "Facoltativo: niente email, telefono, password o numero da digitare. L'account lo custodiscono i tuoi dispositivi; i tuoi dispositivi e i contatti salvati si inviano file senza codice.",
+  "rm.l3.d": "Facoltativo: niente email, telefono, password o numero da digitare. L'account lo custodiscono i tuoi dispositivi; i tuoi dispositivi si inviano file tra loro e i contatti salvati li inviano a te, senza codice.",
   "rm.l3.t": "Un account che il server non conserva mai",
   "rm.l4.d": "Abbina una volta, controlla quattro parole e invia di nuovo a quella persona senza codice.",
   "rm.l4.t": "Contatti salvati",

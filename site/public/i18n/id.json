@@ -418,7 +418,7 @@
   "rm.l1.t": "iPhone, iPad, dan Mac",
   "rm.l2.d": "Kirim ke seseorang yang sedang offline: salinan terenkripsi menunggu hingga 7 hari, dan hanya tautannya yang dapat membukanya.",
   "rm.l2.t": "Tautan dan pengiriman offline",
-  "rm.l3.d": "Opsional: tanpa email, telepon, kata sandi, atau nomor untuk diketik. Perangkat Anda yang menyimpan akun; perangkat Anda sendiri dan kontak tersimpan saling mengirim tanpa kode.",
+  "rm.l3.d": "Opsional: tanpa email, telepon, kata sandi, atau nomor untuk diketik. Perangkat Anda yang menyimpan akun; perangkat Anda saling mengirim, dan kontak tersimpan mengirim ke Anda, tanpa kode.",
   "rm.l3.t": "Akun yang tidak pernah disimpan server",
   "rm.l4.d": "Pasangkan sekali, periksa empat kata, lalu kirim lagi ke orang itu tanpa kode.",
   "rm.l4.t": "Kontak tersimpan",
