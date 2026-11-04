@@ -1,4 +1,4 @@
-<!-- Translated from README.md a4c25a4534d9. -->
+<!-- Translated from README.md 56ed597bf0f2. -->
 <div align="center">
 
 <picture>
@@ -100,7 +100,7 @@ TotalDrop が無料であり続けられるのは、支えてくれる人がい�
 | `crates/totaldrop-core` | クライアントエンジン：仲介、生の公開鍵を使う QUIC、Noise XXpsk3 + ML-KEM-768、転送 | MIT OR Apache-2.0 |
 | `crates/totaldrop-l10n` | Rust プログラムのインターフェース文言：言語ネゴシエーション、ICU メッセージ、複数形、地域ごとの数値 | MIT OR Apache-2.0 |
 | `crates/totaldrop-cli` | `totaldrop` コマンドラインクライアント | GPL-3.0-or-later |
-| `l10n/` | Android、Linux、CLI が共有するすべてのインターフェース文字列（[翻訳について](../../docs/ceviri.md)） | GPL-3.0-or-later |
+| `l10n/` | Android、Linux、CLI が共有するすべてのインターフェース文字列（[翻訳について](../../docs/ceviri.md)） | MIT OR Apache-2.0 |
 | `linux/` | Linux デスクトップアプリ：`totaldrop-core` の上に Qt 6 と QML、ネイティブ Wayland | GPL-3.0-or-later |
 | `packaging/` | Linux パッケージ、形式ごとに独立：Arch（`PKGBUILD`）、Debian（`debian/`）、RPM（`.spec`） | GPL-3.0-or-later |
 | `app/` | Android アプリ（Flutter）。iOS は今後 | GPL-3.0-or-later |

@@ -1,4 +1,4 @@
-<!-- Translated from README.md a4c25a4534d9. -->
+<!-- Translated from README.md 56ed597bf0f2. -->
 <div align="center">
 
 <picture>
@@ -100,7 +100,7 @@ Anda juga boleh membantu dengan [melaporkan pepijat](https://github.com/totaldro
 | `crates/totaldrop-core` | Enjin klien: pelayan pertemuan, QUIC dengan kunci awam mentah, Noise XXpsk3 + ML-KEM-768, pemindahan | MIT OR Apache-2.0 |
 | `crates/totaldrop-l10n` | Teks antara muka untuk program Rust: rundingan bahasa, mesej ICU, bentuk jamak, nombor serantau | MIT OR Apache-2.0 |
 | `crates/totaldrop-cli` | Klien baris perintah `totaldrop` | GPL-3.0-or-later |
-| `l10n/` | Setiap rentetan antara muka, dikongsi oleh Android, Linux dan CLI ([menterjemah](../../docs/ceviri.md)) | GPL-3.0-or-later |
+| `l10n/` | Setiap rentetan antara muka, dikongsi oleh Android, Linux dan CLI ([menterjemah](../../docs/ceviri.md)) | MIT OR Apache-2.0 |
 | `linux/` | Aplikasi desktop Linux: Qt 6 dan QML di atas `totaldrop-core`, Wayland asli | GPL-3.0-or-later |
 | `packaging/` | Pakej Linux, setiap format tersendiri: Arch (`PKGBUILD`), Debian (`debian/`), RPM (`.spec`) | GPL-3.0-or-later |
 | `app/` | Aplikasi Android (Flutter); iOS kemudian | GPL-3.0-or-later |

@@ -1,4 +1,4 @@
-<!-- Translated from README.md a4c25a4534d9. -->
+<!-- Translated from README.md 56ed597bf0f2. -->
 <div align="center">
 
 <picture>
@@ -100,7 +100,7 @@ Também pode ajudar [comunicando erros](https://github.com/totaldrop-app/totaldr
 | `crates/totaldrop-core` | Motor do cliente: encontro, QUIC com chaves públicas em bruto, Noise XXpsk3 + ML-KEM-768, transferência | MIT OR Apache-2.0 |
 | `crates/totaldrop-l10n` | Textos da interface para os programas em Rust: negociação de idioma, mensagens ICU, plurais, números regionais | MIT OR Apache-2.0 |
 | `crates/totaldrop-cli` | O cliente de linha de comandos `totaldrop` | GPL-3.0-or-later |
-| `l10n/` | Todos os textos da interface, partilhados pelo Android, pelo Linux e pela CLI ([tradução](../../docs/ceviri.md)) | GPL-3.0-or-later |
+| `l10n/` | Todos os textos da interface, partilhados pelo Android, pelo Linux e pela CLI ([tradução](../../docs/ceviri.md)) | MIT OR Apache-2.0 |
 | `linux/` | Aplicação de ambiente de trabalho para Linux: Qt 6 e QML sobre o `totaldrop-core`, Wayland nativo | GPL-3.0-or-later |
 | `packaging/` | Pacotes para Linux, cada formato à parte: Arch (`PKGBUILD`), Debian (`debian/`), RPM (`.spec`) | GPL-3.0-or-later |
 | `app/` | Aplicação para Android (Flutter); iOS mais tarde | GPL-3.0-or-later |

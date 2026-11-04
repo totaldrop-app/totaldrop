@@ -1,4 +1,4 @@
-<!-- Translated from README.md a4c25a4534d9. -->
+<!-- Translated from README.md 56ed597bf0f2. -->
 <div align="center">
 
 <picture>
@@ -100,7 +100,7 @@ Je kunt ook helpen door [bugs te melden](https://github.com/totaldrop-app/totald
 | `crates/totaldrop-core` | Client-engine: ontmoeting, QUIC met ruwe publieke sleutels, Noise XXpsk3 + ML-KEM-768, overdracht | MIT OR Apache-2.0 |
 | `crates/totaldrop-l10n` | Interfaceteksten voor de Rust-programma's: taalonderhandeling, ICU-berichten, meervouden, regionale getallen | MIT OR Apache-2.0 |
 | `crates/totaldrop-cli` | De opdrachtregelclient `totaldrop` | GPL-3.0-or-later |
-| `l10n/` | Alle interfaceteksten, gedeeld door Android, Linux en de CLI ([vertalen](../../docs/ceviri.md)) | GPL-3.0-or-later |
+| `l10n/` | Alle interfaceteksten, gedeeld door Android, Linux en de CLI ([vertalen](../../docs/ceviri.md)) | MIT OR Apache-2.0 |
 | `linux/` | Linux-desktopapp: Qt 6 en QML bovenop `totaldrop-core`, native Wayland | GPL-3.0-or-later |
 | `packaging/` | Linux-pakketten, elk formaat apart: Arch (`PKGBUILD`), Debian (`debian/`), RPM (`.spec`) | GPL-3.0-or-later |
 | `app/` | Android-app (Flutter); iOS later | GPL-3.0-or-later |

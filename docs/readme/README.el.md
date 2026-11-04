@@ -1,4 +1,4 @@
-<!-- Translated from README.md a4c25a4534d9. -->
+<!-- Translated from README.md 56ed597bf0f2. -->
 <div align="center">
 
 <picture>
@@ -100,7 +100,7 @@ gh attestation verify totaldrop_0.3.0.beta.3-1_amd64.deb --repo totaldrop-app/to
 | `crates/totaldrop-core` | Μηχανή πελάτη: επικοινωνία με τον διακομιστή συνάντησης, QUIC με ακατέργαστα δημόσια κλειδιά, Noise XXpsk3 + ML-KEM-768, μεταφορά | MIT OR Apache-2.0 |
 | `crates/totaldrop-l10n` | Κείμενα διεπαφής για τα προγράμματα Rust: διαπραγμάτευση γλώσσας, μηνύματα ICU, πληθυντικοί, τοπικές μορφές αριθμών | MIT OR Apache-2.0 |
 | `crates/totaldrop-cli` | Ο πελάτης γραμμής εντολών `totaldrop` | GPL-3.0-or-later |
-| `l10n/` | Όλα τα κείμενα της διεπαφής, κοινά για Android, Linux και CLI ([μετάφραση](../../docs/ceviri.md)) | GPL-3.0-or-later |
+| `l10n/` | Όλα τα κείμενα της διεπαφής, κοινά για Android, Linux και CLI ([μετάφραση](../../docs/ceviri.md)) | MIT OR Apache-2.0 |
 | `linux/` | Εφαρμογή επιφάνειας εργασίας για Linux: Qt 6 και QML πάνω από το `totaldrop-core`, εγγενές Wayland | GPL-3.0-or-later |
 | `packaging/` | Πακέτα Linux, κάθε μορφή χωριστά: Arch (`PKGBUILD`), Debian (`debian/`), RPM (`.spec`) | GPL-3.0-or-later |
 | `app/` | Εφαρμογή Android (Flutter)· iOS αργότερα | GPL-3.0-or-later |

@@ -1,4 +1,4 @@
-<!-- Translated from README.md a4c25a4534d9. -->
+<!-- Translated from README.md 56ed597bf0f2. -->
 <div align="center">
 
 <picture>
@@ -100,7 +100,7 @@ TotalDrop 能保持免费，是因为大家出手相助。捐款用于支付中�
 | `crates/totaldrop-core` | 客户端引擎：中介连接、使用原始公钥的 QUIC、Noise XXpsk3 + ML-KEM-768、传输 | MIT OR Apache-2.0 |
 | `crates/totaldrop-l10n` | Rust 程序的界面文字：语言协商、ICU 消息、复数形式、地区数字格式 | MIT OR Apache-2.0 |
 | `crates/totaldrop-cli` | `totaldrop` 命令行客户端 | GPL-3.0-or-later |
-| `l10n/` | 所有界面字符串，由 Android、Linux 和 CLI 共享（[翻译说明](../../docs/ceviri.md)） | GPL-3.0-or-later |
+| `l10n/` | 所有界面字符串，由 Android、Linux 和 CLI 共享（[翻译说明](../../docs/ceviri.md)） | MIT OR Apache-2.0 |
 | `linux/` | Linux 桌面应用：基于 `totaldrop-core` 的 Qt 6 和 QML，原生 Wayland | GPL-3.0-or-later |
 | `packaging/` | Linux 软件包，每种格式各自独立：Arch（`PKGBUILD`）、Debian（`debian/`）、RPM（`.spec`） | GPL-3.0-or-later |
 | `app/` | Android 应用（Flutter）；iOS 以后推出 | GPL-3.0-or-later |

@@ -1,4 +1,4 @@
-<!-- Translated from README.md a4c25a4534d9. -->
+<!-- Translated from README.md 56ed597bf0f2. -->
 <div align="center">
 
 <picture>
@@ -100,7 +100,7 @@ TotalDrop, insanlar katkıda bulunduğu için ücretsiz kalıyor. Bağışlar ak
 | `crates/totaldrop-core` | İstemci motoru: buluşma sunucusu, ham açık anahtarlarla QUIC, Noise XXpsk3 + ML-KEM-768, aktarım | MIT OR Apache-2.0 |
 | `crates/totaldrop-l10n` | Rust programlarının arayüz metinleri: dil eşleştirme, ICU mesajları, çoğul biçimler, bölgesel sayılar | MIT OR Apache-2.0 |
 | `crates/totaldrop-cli` | `totaldrop` komut satırı istemcisi | GPL-3.0-or-later |
-| `l10n/` | Android, Linux ve CLI'ın paylaştığı tüm arayüz metinleri ([çeviri](../../docs/ceviri.md)) | GPL-3.0-or-later |
+| `l10n/` | Android, Linux ve CLI'ın paylaştığı tüm arayüz metinleri ([çeviri](../../docs/ceviri.md)) | MIT OR Apache-2.0 |
 | `linux/` | Linux masaüstü uygulaması: `totaldrop-core` üzerinde Qt 6 ve QML, yerel Wayland | GPL-3.0-or-later |
 | `packaging/` | Linux paketleri, her biçim kendi başına: Arch (`PKGBUILD`), Debian (`debian/`), RPM (`.spec`) | GPL-3.0-or-later |
 | `app/` | Android uygulaması (Flutter); iOS daha sonra | GPL-3.0-or-later |

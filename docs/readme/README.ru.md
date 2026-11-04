@@ -1,4 +1,4 @@
-<!-- Translated from README.md a4c25a4534d9. -->
+<!-- Translated from README.md 56ed597bf0f2. -->
 <div align="center">
 
 <picture>
@@ -100,7 +100,7 @@ TotalDrop остаётся бесплатным, потому что люди п
 | `crates/totaldrop-core` | Клиентский движок: сервер встречи, QUIC с необработанными открытыми ключами, Noise XXpsk3 + ML-KEM-768, передача | MIT OR Apache-2.0 |
 | `crates/totaldrop-l10n` | Тексты интерфейса для программ на Rust: выбор языка, сообщения ICU, формы множественного числа, региональные числа | MIT OR Apache-2.0 |
 | `crates/totaldrop-cli` | Клиент командной строки `totaldrop` | GPL-3.0-or-later |
-| `l10n/` | Все строки интерфейса, общие для Android, Linux и CLI ([перевод](../../docs/ceviri.md)) | GPL-3.0-or-later |
+| `l10n/` | Все строки интерфейса, общие для Android, Linux и CLI ([перевод](../../docs/ceviri.md)) | MIT OR Apache-2.0 |
 | `linux/` | Настольное приложение для Linux: Qt 6 и QML поверх `totaldrop-core`, нативный Wayland | GPL-3.0-or-later |
 | `packaging/` | Пакеты для Linux, каждый формат отдельно: Arch (`PKGBUILD`), Debian (`debian/`), RPM (`.spec`) | GPL-3.0-or-later |
 | `app/` | Приложение для Android (Flutter); iOS позже | GPL-3.0-or-later |

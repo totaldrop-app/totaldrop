@@ -1,4 +1,4 @@
-<!-- Translated from README.md a4c25a4534d9. -->
+<!-- Translated from README.md 56ed597bf0f2. -->
 <div align="center">
 
 <picture>
@@ -100,7 +100,7 @@ Unaweza pia kusaidia kwa [kuripoti hitilafu](https://github.com/totaldrop-app/to
 | `crates/totaldrop-core` | Injini ya mteja: seva ya kukutanisha, QUIC yenye funguo ghafi za umma, Noise XXpsk3 + ML-KEM-768, uhamishaji | MIT OR Apache-2.0 |
 | `crates/totaldrop-l10n` | Maandishi ya kiolesura kwa programu za Rust: uchaguzi wa lugha, jumbe za ICU, wingi, nambari za kieneo | MIT OR Apache-2.0 |
 | `crates/totaldrop-cli` | Mteja wa mstari wa amri `totaldrop` | GPL-3.0-or-later |
-| `l10n/` | Kila mfuatano wa kiolesura, unaoshirikiwa na Android, Linux na CLI ([kutafsiri](../../docs/ceviri.md)) | GPL-3.0-or-later |
+| `l10n/` | Kila mfuatano wa kiolesura, unaoshirikiwa na Android, Linux na CLI ([kutafsiri](../../docs/ceviri.md)) | MIT OR Apache-2.0 |
 | `linux/` | Programu ya Linux ya eneo-kazi: Qt 6 na QML juu ya `totaldrop-core`, Wayland asilia | GPL-3.0-or-later |
 | `packaging/` | Vifurushi vya Linux, kila muundo peke yake: Arch (`PKGBUILD`), Debian (`debian/`), RPM (`.spec`) | GPL-3.0-or-later |
 | `app/` | Programu ya Android (Flutter); iOS baadaye | GPL-3.0-or-later |
