@@ -45,6 +45,29 @@ jobs:
         shell: bash
         run: cargo test --workspace $EXCLUDE --locked
 
+  # Line coverage of the hand-written crates and the Rust servers, measured
+  # with cargo-llvm-cov; below 90% fails (OpenSSF Best Practices
+  # test_statement_coverage90, #245). Branch coverage needs nightly and is
+  # not measured yet.
+  coverage:
+    name: Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install the pinned Rust toolchain
+        run: rustup show active-toolchain || rustup toolchain install
+      - name: Install cargo-llvm-cov
+        run: |
+          rustup component add llvm-tools-preview
+          cargo install cargo-llvm-cov --version 0.9.1 --locked
+      - name: Measure
+        run: >-
+          cargo llvm-cov --locked --summary-only --fail-under-lines 90
+          -p totaldrop-crypto -p totaldrop-proto -p totaldrop-core -p totaldrop-cli
+          -p totaldrop-l10n -p totaldrop-rendezvous -p totaldrop-relay
+
   deny:
     name: Dependencies (cargo-deny)
     runs-on: ubuntu-latest
