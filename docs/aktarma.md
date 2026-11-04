@@ -92,10 +92,12 @@ aktarma sunucusu gönderenden farklıysa ya da hiç yoksa iki taraf da geçmez,
 bağlantısı bekleme kipine alınır: kurulum sırasında açılmışsa o anda
 kapatılır, sonra yalnızca bağlantı aktarma sunucusuna geçtiğinde yeniden
 açılır. Bağlantı doğrudan yola dönerse aktarma bağlantısı 30 saniye boyunca
-hiçbir şey göndermedikten sonra kapanır. Aktarma sunucusu doğrudan başlamış
-bir aktarımı ancak bir taraf geçtiğinde görür. Geçişten sonra QUIC'in
-tıkanıklık durumu doğrudan yoldan kalır; ilk saniyelerde paket kaybı olur,
-QUIC bunu kendisi toparlar.
+hiçbir şey göndermedikten sonra kapanır. Aktarma bağlantısı vazgeçmişse
+(sunucu reddetti, ulaşılamadı ya da sınırlar doldu) cihaz geçmez, geçmişse
+doğrudan yola döner. Aktarma sunucusu doğrudan başlamış bir aktarımı ancak
+bir taraf geçtiğinde görür. Geçişten sonra QUIC'in tıkanıklık durumu
+doğrudan yoldan kalır; ilk saniyelerde paket kaybı olur, QUIC bunu kendisi
+toparlar.
 
 Aktarma bağlantısı, karşı taraf henüz gelmemişken gönderdiği paketlere yanıt
 alamaz; bu sırada her 2 saniyede bir ping gönderir. Aktarma sunucusu pinge

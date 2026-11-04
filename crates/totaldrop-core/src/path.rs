@@ -87,16 +87,20 @@ struct FallbackState {
     /// When the connection last moved onto the relay, likewise.
     moved_at: AtomicU64,
     start: tokio::time::Instant,
+    /// The queue to the relay link; closed once the link has given up
+    /// (refused, unreachable, or out of its limits) or was never started.
+    relay: mpsc::Sender<Vec<u8>>,
 }
 
 impl Fallback {
-    pub(crate) fn new() -> Self {
+    pub(crate) fn new(relay: mpsc::Sender<Vec<u8>>) -> Self {
         Self(Arc::new(FallbackState {
             direct: RwLock::new(None),
             moved: AtomicBool::new(false),
             heard: AtomicU64::new(0),
             moved_at: AtomicU64::new(0),
             start: tokio::time::Instant::now(),
+            relay,
         }))
     }
 
@@ -174,6 +178,7 @@ impl Fallback {
                 heard: self.0.heard.load(Ordering::Acquire),
                 moved: self.moved(),
                 moved_at: self.0.moved_at.load(Ordering::Acquire),
+                link: !self.0.relay.is_closed(),
             };
             last = now;
             match step(&seen, silence) {
@@ -204,6 +209,10 @@ impl Fallback {
 /// running meanwhile.
 const AFTER_PAUSE: u64 = 2_000;
 
+/// How long after a move a datagram from the direct address can still be
+/// one that was on its way before: it does not bring the side back.
+const LATE: u64 = 500;
+
 /// What [`Fallback::watch`] sees at one tick, times in milliseconds.
 #[derive(Debug, Clone, Copy)]
 struct Seen {
@@ -216,6 +225,8 @@ struct Seen {
     heard: u64,
     moved: bool,
     moved_at: u64,
+    /// Whether the relay link still runs.
+    link: bool,
 }
 
 /// What one tick decides.
@@ -235,8 +246,15 @@ fn step(s: &Seen, silence: u64) -> Step {
         return Step::Follow(s.remote);
     }
     let paused = u64::try_from(WATCH_TICK.saturating_add(PAUSED).as_millis()).unwrap_or(u64::MAX);
+    if !s.link {
+        // Nothing would carry the connection on the relay: the direct
+        // path is the only chance left.
+        return if s.moved { Step::Back } else { Step::Wait };
+    }
     if s.moved {
-        return if s.heard > s.moved_at {
+        // A datagram that was already on its way when the side moved does
+        // not show the direct path working again.
+        return if s.heard > s.moved_at.saturating_add(LATE) {
             Step::Back
         } else {
             Step::Wait
@@ -244,7 +262,8 @@ fn step(s: &Seen, silence: u64) -> Step {
     }
     if s.now.saturating_sub(s.last_tick) >= paused {
         // The quiet was this device's own, not the path's.
-        return Step::Recount(s.now.saturating_sub(silence.saturating_sub(AFTER_PAUSE)));
+        let from = s.now.saturating_sub(silence.saturating_sub(AFTER_PAUSE));
+        return Step::Recount(from.max(s.heard));
     }
     if s.now.saturating_sub(s.heard) >= silence {
         Step::Move
@@ -295,7 +314,7 @@ impl PathSocket {
     pub fn new(inner: Arc<dyn AsyncUdpSocket>) -> (Arc<Self>, RelayPipes, Fallback) {
         let (to_relay, outgoing) = mpsc::channel(QUEUE);
         let (incoming, from_relay) = mpsc::channel(QUEUE);
-        let fallback = Fallback::new();
+        let fallback = Fallback::new(to_relay.clone());
         (
             Arc::new(Self {
                 inner,
@@ -423,6 +442,7 @@ mod tests {
             heard: 19_000,
             moved: false,
             moved_at: 0,
+            link: true,
         }
     }
 
@@ -510,10 +530,47 @@ mod tests {
             ..seen()
         };
         assert_eq!(step(&moved, SILENCE), Step::Wait);
+        // A datagram already on its way when the side moved.
+        let late = Seen {
+            heard: 18_000 + LATE,
+            ..moved
+        };
+        assert_eq!(step(&late, SILENCE), Step::Wait);
         let heard = Seen {
-            heard: 18_001,
+            heard: 18_001 + LATE,
             ..moved
         };
         assert_eq!(step(&heard, SILENCE), Step::Back);
+    }
+
+    /// With the relay link gone (refused, unreachable, out of its limits)
+    /// the side does not move, and a side that moved goes back: the
+    /// direct path is the only chance left (#185 review).
+    #[test]
+    fn without_a_relay_link_it_stays_direct() {
+        let quiet = Seen {
+            heard: 0,
+            link: false,
+            ..seen()
+        };
+        assert_eq!(step(&quiet, SILENCE), Step::Wait);
+        let moved = Seen {
+            moved: true,
+            moved_at: 18_000,
+            ..quiet
+        };
+        assert_eq!(step(&moved, SILENCE), Step::Back);
+    }
+
+    /// Counting afresh after a pause never forgets a datagram heard since
+    /// (#185 review).
+    #[test]
+    fn a_pause_does_not_forget_what_was_heard() {
+        let late = Seen {
+            last_tick: 20_000 - 3_000,
+            heard: 19_900,
+            ..seen()
+        };
+        assert_eq!(step(&late, SILENCE), Step::Recount(19_900));
     }
 }
