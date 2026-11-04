@@ -1,0 +1,60 @@
+# SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+# Reproducible builds: each Linux package is built twice, from two
+# checkouts at different paths and at different times, and the two must be
+# byte for byte the same (OpenSSF Best Practices build_reproducible, #252).
+# When they differ, both builds are uploaded for diffoscope.
+name: Reproducible
+
+on:
+  schedule:
+    - cron: "41 4 * * 2"
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "packaging/**"
+      - ".github/workflows/reproducible.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: reproducible-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Twice (${{ matrix.format }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        format: [arch, deb, rpm]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: first
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: second/elsewhere
+          fetch-depth: 1
+          persist-credentials: false
+      - name: First build
+        run: first/packaging/build.sh ${{ matrix.format }}
+      - name: Second build
+        run: second/elsewhere/packaging/build.sh ${{ matrix.format }}
+      - name: Compare
+        run: |
+          cd first/dist/packages && sha256sum * | tee ../../../sums
+          cd ../../../second/elsewhere/dist/packages && sha256sum -c ../../../../sums
+      - if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: not-reproducible-${{ matrix.format }}
+          path: |
+            first/dist/packages/*
+            second/elsewhere/dist/packages/*
