@@ -559,9 +559,10 @@ mod tests {
         drop(ws);
     }
 
-    /// The link sends a relay's probe straight back, unchanged, between
-    /// datagrams, so the relay knows the device has read everything before
-    /// it (#190).
+    /// The link sends each relay probe straight back, unchanged and in
+    /// order, between datagrams, so the relay knows the device has read
+    /// everything before it (#190). A near miss is not a probe: it is
+    /// dropped and the link stays.
     #[tokio::test]
     async fn link_sends_probes_back() {
         let relay = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
@@ -575,28 +576,34 @@ mod tests {
         gate.open();
         let _link = spawn_with(url, own, peer.public(), pipes, gate, LIMITS);
         let mut ws = sign_in(&relay).await;
-        let probe = wire::probe(&[5; 16]);
-        ws.send(Message::Binary(
-            wire::frame(&peer.public(), &[1; 50]).into(),
-        ))
-        .await
-        .unwrap();
-        ws.send(Message::Binary(probe.clone().into()))
-            .await
-            .unwrap();
-        let back = tokio::time::timeout(Duration::from_secs(5), async {
-            loop {
-                match ws.next().await {
-                    Some(Ok(Message::Binary(b))) => break Some(b),
-                    Some(Ok(_)) => {}
-                    _ => break None,
+        let (first, second) = (wire::probe(&[5; 16]), wire::probe(&[6; 16]));
+        let near = [b"TDR0probX".as_slice(), &[5; 16]].concat();
+        for m in [
+            wire::frame(&peer.public(), &[1; 50]),
+            near,
+            first.clone(),
+            wire::frame(&peer.public(), &[2; 50]),
+            second.clone(),
+        ] {
+            ws.send(Message::Binary(m.into())).await.unwrap();
+        }
+        for want in [first, second] {
+            let back = tokio::time::timeout(Duration::from_secs(5), async {
+                loop {
+                    match ws.next().await {
+                        Some(Ok(Message::Binary(b))) => break Some(b),
+                        Some(Ok(_)) => {}
+                        _ => break None,
+                    }
                 }
-            }
-        })
-        .await
-        .expect("the link did not send the probe back")
-        .expect("the link went away");
-        assert_eq!(back.as_ref(), probe.as_slice());
+            })
+            .await
+            .expect("the link did not send the probe back")
+            .expect("the link went away");
+            assert_eq!(back.as_ref(), want.as_slice());
+        }
+        let again = tokio::time::timeout(Duration::from_secs(1), relay.accept()).await;
+        assert!(again.is_err(), "the link connected again");
     }
 
     /// A relay that keeps refusing the link is not tried for ever: after

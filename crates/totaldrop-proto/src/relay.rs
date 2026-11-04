@@ -31,13 +31,14 @@
 //! passes the rest through. Several datagrams share one message so a relay
 //! handles fewer, larger messages.
 //!
-//! A relay may put a probe between the datagram messages it delivers, and
-//! the device sends it back as soon as it reads it. The device sees the
-//! probe only after reading everything sent before it, so the answer tells
-//! the relay how much it still holds for the device; a relay that cannot see
-//! its own send buffer bounds it this way (#190). A probe is 25 bytes and a
-//! datagram message at least 35, so the two never mix up; devices from
-//! before probes ignore them.
+//! After `ok`, a relay may put a probe between the datagram messages it
+//! delivers, and the device sends it back as soon as it reads it. The device
+//! sees the probe only after reading everything sent before it, so the
+//! answer tells the relay how much it still holds for the device; a relay
+//! that cannot see its own send buffer bounds it this way (#190). A probe is
+//! 25 bytes and a datagram message at least 35, so the two never mix up;
+//! devices from before probes ignore them. Protocol note 20 lists what a
+//! relay that sends probes must do.
 
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
 
@@ -401,6 +402,9 @@ mod tests {
         assert!(!is_probe(&p[..24]));
         assert!(!is_probe(&[p.as_slice(), &[0]].concat()));
         assert!(!is_probe(&ok()));
+        assert!(!is_probe(&challenge(&[0u8; 32])));
+        assert!(!is_probe(&[b"TDR0probX".as_slice(), &[0; 16]].concat()));
+        assert!(!is_probe(&[b"XDR0probe".as_slice(), &[0; 16]].concat()));
         assert!(!is_probe(&frame(&[0u8; 32], b"TDR0probe")));
     }
 
