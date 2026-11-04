@@ -91,6 +91,16 @@ packaging/build.sh arch   # ya da deb, rpm
 ls dist/packages/
 ```
 
+Paketler yeniden üretilebilir olmalıdır. Aynı kaynaktan ikinci bir
+derleme bayt bayt aynı paketi verir. `Reproducible` iş akışı
+(`.github/workflows/reproducible.yml`) her formatı iki ayrı klasörden iki
+kez derleyip karşılaştırır. Haftada bir, elle ya da `packaging/` değişince
+çalışır. Paketler farklıysa ikisini de iş çıktısı olarak bırakır, fark
+`diffoscope` ile incelenir. Aynılık aynı derleme imajı için geçerlidir:
+kapta kurulan dağıtım paketleri günden güne değişir ([surec.md](surec.md),
+sürüm adımı 4). Yerelde denemek için deponun iki kopyasında aynı komut
+çalıştırılır ve `sha256sum dist/packages/*` çıktıları karşılaştırılır.
+
 ## Arayüz değişiklikleri
 
 [tasarim.md](tasarim.md) bağlayıcıdır. Arayüzü değiştiren her değişiklikten
