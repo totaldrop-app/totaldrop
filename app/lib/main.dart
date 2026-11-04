@@ -77,6 +77,7 @@ class TotalDropApp extends StatelessWidget {
           debugShowCheckedModeBanner: false,
           theme: buildTheme(lightScheme),
           darkTheme: buildTheme(darkScheme),
+          builder: (context, child) => SystemMotion(child: child!),
           localizationsDelegates: const [
             AppLocalizations.delegate,
             ...GlobalMaterialLocalizations.delegates,
