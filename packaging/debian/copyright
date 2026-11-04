@@ -15,6 +15,18 @@ Files: server/*
 Copyright: 2026 The TotalDrop Contributors
 License: AGPL-3.0-or-later
 
+Files: app/rust_builder/cargokit/*
+Copyright: 2022 Matej Knopp
+License: MIT or Apache-2.0
+
+Files: app/assets/fonts/Atkinson* app/assets/fonts/OFL-AtkinsonHyperlegible.txt site/public/fonts/atkinson-* site/public/fonts/LICENSE-atkinson-hyperlegible.txt
+Copyright: 2020 Braille Institute of America, Inc.
+License: OFL-1.1
+
+Files: app/assets/fonts/Bricolage* app/assets/fonts/OFL-BricolageGrotesque.txt site/public/fonts/bricolage-* site/public/fonts/LICENSE-bricolage-grotesque.txt
+Copyright: 2022 The Bricolage Grotesque Project Authors
+License: OFL-1.1
+
 License: GPL-3.0-or-later
  On Debian systems, the complete text of the GNU General Public License
  version 3 can be found in "/usr/share/common-licenses/GPL-3".
@@ -44,3 +56,6 @@ License: MIT
 
 License: AGPL-3.0-or-later
  See LICENSES/AGPL-3.0-or-later.txt in the source.
+
+License: OFL-1.1
+ See LICENSES/OFL-1.1.txt in the source.

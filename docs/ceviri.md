@@ -89,7 +89,7 @@ Portekiz `pt-PT`), Rumence (`ro`), Rusça (`ru`), İsveççe (`sv`), Svahili
 
 Gözden geçirilmiş: İngilizce (`en`), Türkçe (`tr`).
 
-Taslaklar Claude (Anthropic) ile üretildi ve proje lisansı altındadır.
+Taslaklar Claude (Anthropic) ile üretildi. Uygulama metinleri (`l10n/`) MIT OR Apache-2.0, sitenin metinleri (`site/public/i18n/`) GPL-3.0-or-later lisanslıdır ([LICENSING.md](../LICENSING.md)); katkınız gittiği klasörün lisansını alır.
 
 ### Yeni bir dil eklemek
 
