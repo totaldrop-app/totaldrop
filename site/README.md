@@ -22,9 +22,10 @@ public/
   app.js              Çeviriyi uygulama, taslak notu, platform algılama, /r mantığı
   i18n/<dil>.json     Her dilin metinleri (docs/ceviri.md)
   favicon.svg         Köşe işareti, koyu temada renk değiştirir
-  favicon.ico         16, 32, 48 px işaret; favicon-192.png aynısı 192 px;
-  apple-touch-icon.png iOS için mor zeminde kâğıt rengi işaret. Üçü
-                      tools/favicons.mjs --write ile üretilir (aşağıda)
+  favicon.ico         İşaret, 16, 32 ve 48 px
+  apple-touch-icon.png
+                      iOS için mor zeminde kâğıt rengi işaret, 180 px; bu
+                      ikisi tools/favicons.mjs ile üretilir (aşağıda)
   _headers            Güvenlik başlıkları (katı CSP, HSTS, no-referrer)
   _routes.json        Ara katman (functions/) yalnız sayfalarda çalışır; yazı
                       tipi, stil, betik ve çeviri dosyaları doğrudan sunulur
@@ -67,10 +68,14 @@ ana sayfayı ve indirme sayfasını dener. Kurulum ve geri alma:
   CI ayrıca her çevirinin İngilizce ile aynı yapıda olduğunu (başlıklar,
   paragraflar, bağlantılar, `code` içerikleri, sürüm numaraları, Linux
   yolları, İngilizcedeki her sayı) ve sayfaların güncel olduğunu denetler.
-- Site simgeleri işaretten üretilir. İşaret değişirse `favicon.svg`'yi
-  düzeltin, sonra `NODE_PATH=$(npm root -g) node tools/favicons.mjs --write`
-  (Playwright gerekir) ile `favicon.ico`, `favicon-192.png` ve
-  `apple-touch-icon.png`'yi yeniden üretip ekleyin. Her sayfanın `<head>`'i
-  dört simge satırını taşır; `node tools/favicons.mjs` (CI) dosyaların
-  boyutlarını ve satırları denetler. Google simgeyi yalnız kare ve 48
-  pikselin katı (ya da SVG) olarak, ana sayfadaki `rel="icon"` ile gösterir.
+- Site simgeleri işaretten üretilir. İşaretin yolu ve rengi
+  `app/assets/logo.svg`, `favicon.svg` ve `tools/favicons.mjs`'nin başındaki
+  sabitlerde aynıdır. İşaret değişirse üçünü birlikte düzeltin, sonra
+  `NODE_PATH=$(npm root -g) node tools/favicons.mjs --write` (Playwright
+  gerekir) ile `favicon.ico` ve `apple-touch-icon.png`'yi yeniden üretip
+  ekleyin. Her sayfanın `<head>`'i üç simge satırını taşır;
+  `node tools/favicons.mjs` (CI) dosyaların boyutlarını, satırları ve
+  işaretin üç yerde aynı olduğunu denetler. Google simgeyi yalnız kare ve
+  48 pikselin katı (ya da SVG) olarak, ana sayfadaki `rel="icon"` ile
+  gösterir. Büyük bir PNG `rel="icon"` olarak eklenmez: tarayıcı onu SVG'ye
+  tercih edip koyu temadaki rengi kaybedebilir.

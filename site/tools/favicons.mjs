@@ -9,17 +9,22 @@
 // rel="icon"; many crawlers and tools also ask for /favicon.ico without
 // reading the page. So the site serves, beside favicon.svg:
 //   favicon.ico           16, 32 and 48 px, the violet mark on transparent
-//   favicon-192.png       192 px (4 × 48), the same
 //   apple-touch-icon.png  180 px, the app icon: paper mark on violet, opaque
 //                         (iOS paints transparency black and rounds the corners itself)
-// The files are committed; the check fails when one is missing, has the
-// wrong size, or a page lacks the <link> lines below.
+// No large PNG is declared as rel="icon": browsers could pick it over the
+// SVG and lose the SVG's dark-theme colour (docs/tasarim.md, "Renkler");
+// the ICO's 48 px entry already meets Google's rule.
+// The files are committed; the check fails when one is missing or has the
+// wrong size, when a page lacks the <link> lines below, or when the mark
+// here no longer matches favicon.svg and app/assets/logo.svg (change the
+// mark there and here, then --write).
 import { readFileSync, writeFileSync, readdirSync, statSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
 
 const site = join(dirname(fileURLToPath(import.meta.url)), "..", "public");
+const logo = join(site, "..", "..", "app", "assets", "logo.svg");
 const MARK = "M55 15H97V57A42 42 0 1 1 55 15Z";
 const VIOLET = "#6D4AE0";
 const PAPER = "#F4F2FB";
@@ -30,8 +35,7 @@ const markSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 112 112"><
 const tileSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 112 112"><rect width="112" height="112" fill="${VIOLET}"/><g transform="translate(17.92 17.92) scale(0.68)"><path fill="${PAPER}" d="${MARK}"/></g></svg>`;
 
 export const LINKS = [
-  '<link rel="icon" href="/favicon.ico" sizes="48x48">',
-  '<link rel="icon" href="/favicon-192.png" type="image/png" sizes="192x192">',
+  '<link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">',
   '<link rel="icon" href="/favicon.svg" type="image/svg+xml">',
   '<link rel="apple-touch-icon" href="/apple-touch-icon.png">',
 ];
@@ -57,7 +61,7 @@ export function buildIco(pngs) {
   let offset = header.length + dir.length;
   pngs.forEach((png, i) => {
     const size = pngSize(png);
-    if (!size || size.width !== size.height || size.width > 256) throw new Error(`entry ${i}: not a square PNG up to 256 px`);
+    if (!size || size.width !== size.height || size.width < 1 || size.width > 256) throw new Error(`entry ${i}: not a square PNG up to 256 px`);
     const e = i * 16;
     dir.writeUInt8(size.width === 256 ? 0 : size.width, e);
     dir.writeUInt8(size.height === 256 ? 0 : size.height, e + 1);
@@ -113,7 +117,13 @@ function check() {
     if (!size) problems.push(`${file} is not a PNG`);
     else if (size.width !== side || size.height !== side) problems.push(`${file} is ${size.width}×${size.height}, expected ${side}×${side}`);
   };
-  want("favicon-192.png", 192);
+  const source = (file, needles) => {
+    let text;
+    try { text = readFileSync(file, "utf8"); } catch { problems.push(`${relative(site, file)} missing`); return; }
+    for (const n of needles) if (!text.includes(n)) problems.push(`${relative(site, file)} lacks ${n}; the mark changed, update favicons.mjs and run --write`);
+  };
+  source(join(site, "favicon.svg"), [`d="${MARK}"`, VIOLET]);
+  source(logo, [`d="${MARK}"`, VIOLET]);
   want("apple-touch-icon.png", 180);
   try {
     const sizes = icoSizes(readFileSync(join(site, "favicon.ico")));
@@ -123,7 +133,9 @@ function check() {
   }
   for (const page of pages()) {
     const html = readFileSync(page, "utf8");
-    const head = html.slice(0, html.indexOf("</head>"));
+    const end = html.indexOf("</head>");
+    if (end < 0) { problems.push(`${relative(site, page)}: no </head>`); continue; }
+    const head = html.slice(0, end);
     for (const link of LINKS) if (!head.includes(link)) problems.push(`${relative(site, page)}: <head> lacks ${link}`);
   }
   if (problems.length) {
@@ -147,12 +159,11 @@ async function write() {
     const icoPngs = [];
     for (const side of ICO_SIZES) icoPngs.push(await render(markSvg, side));
     writeFileSync(join(site, "favicon.ico"), buildIco(icoPngs));
-    writeFileSync(join(site, "favicon-192.png"), await render(markSvg, 192));
     writeFileSync(join(site, "apple-touch-icon.png"), await render(tileSvg, 180));
   } finally {
     await browser.close();
   }
-  console.log("wrote favicon.ico, favicon-192.png, apple-touch-icon.png");
+  console.log("wrote favicon.ico, apple-touch-icon.png");
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
