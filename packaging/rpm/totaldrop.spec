@@ -3,12 +3,12 @@
 # The Rust toolchain comes from rustup: rust-toolchain.toml pins the newest
 # stable Rust, which distributions do not ship yet.
 
-%global upstream_version 0.3.0-beta.2
+%global upstream_version 0.3.0-beta.3
 %global srcname totaldrop-linux-v%{upstream_version}
 %global debug_package %{nil}
 
 Name:           totaldrop
-Version:        0.3.0~beta.2
+Version:        0.3.0~beta.3
 Release:        1%{?dist}
 Summary:        Send files straight to another device, end-to-end encrypted
 License:        GPL-3.0-or-later AND (MIT OR Apache-2.0)
@@ -77,6 +77,19 @@ cargo test --release --locked -p totaldrop-linux -p totaldrop-proto
 %{_datadir}/icons/hicolor/symbolic/apps/app.totaldrop.TotalDrop-symbolic.svg
 
 %changelog
+* Wed Nov 04 2026 TotalDrop <hello@totaldrop.app> - 0.3.0~beta.3-1
+- Opening files with TotalDrop while it is already open, for example with
+  "Open with" in a file manager, adds them to the open window instead of
+  starting a second one, and the window comes to the front.
+- A transfer through the relay connects even when the relay is slow to get
+  going, instead of failing after 20 seconds, and reconnects when the
+  relay closes the connection. It is also faster when the relay is far
+  away.
+- A transfer no longer sometimes stops right after the code is entered,
+  with "the other side left" on the sending device.
+- Stop on the sending device now cuts the transfer at once; files already
+  on the way are no longer kept on the receiving device.
+
 * Tue Nov 03 2026 TotalDrop <hello@totaldrop.app> - 0.3.0~beta.2-1
 - On GNOME and on Hyprland without a Qt theme, the window takes the
   colours of your GTK theme and follows a theme change at once; buttons,
