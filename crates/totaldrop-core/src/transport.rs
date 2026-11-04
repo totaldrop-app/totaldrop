@@ -259,7 +259,7 @@ impl ClientCertVerifier for Pinned {
 const STREAM_WINDOW: u32 = 8 * 1024 * 1024;
 
 /// How much one connection may have in flight, all streams together: 16 MiB.
-const CONNECTION_WINDOW: u32 = 16 * 1024 * 1024;
+pub(crate) const CONNECTION_WINDOW: u32 = 16 * 1024 * 1024;
 
 fn transport_config() -> Arc<quinn::TransportConfig> {
     let mut t = quinn::TransportConfig::default();

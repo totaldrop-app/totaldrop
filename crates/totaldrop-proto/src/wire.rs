@@ -137,6 +137,15 @@ impl Fields {
         }
     }
 
+    /// An optional boolean; absent reads as false.
+    fn opt_bool(&self, key: u64) -> Result<bool, WireError> {
+        match self.get(key) {
+            None => Ok(false),
+            Some(Value::Bool(b)) => Ok(*b),
+            Some(_) => Err(WireError::Field(key)),
+        }
+    }
+
     fn text(&self, key: u64) -> Result<&str, WireError> {
         match self.get(key) {
             None => Err(WireError::Missing(key)),
@@ -756,6 +765,9 @@ pub enum Control {
         content_key: [u8; 32],
         /// Field 6: Ed25519 signature by the sender's device key over fields 1–4.
         signature: [u8; 64],
+        /// Field 7: the sender understands `received` reports. Not signed;
+        /// absent means false.
+        progress: bool,
     },
     /// `accept`, receiver to sender.
     Accept {
@@ -764,6 +776,9 @@ pub enum Control {
         /// Field 2: wanted entries, each with a bitmap of chunks already held
         /// (bit `n` of byte `n / 8`, least significant bit first).
         wanted: Vec<(u64, Vec<u8>)>,
+        /// Field 3: this receiver sends `received` reports. Absent means
+        /// false.
+        progress: bool,
     },
     /// `reject`, receiver to sender.
     Reject {
@@ -780,6 +795,14 @@ pub enum Control {
         index: u64,
         /// Field 3: true for `ok`, false for `hash_mismatch`.
         ok: bool,
+    },
+    /// `received`, receiver to sender, only when both said so in `offer`
+    /// and `accept` field 7 and 3.
+    Received {
+        /// Field 1.
+        transfer_id: [u8; 16],
+        /// Field 2: bytes written to disk so far, over all files.
+        bytes: u64,
     },
     /// `cancel`, either side.
     Cancel {
@@ -799,29 +822,40 @@ impl Control {
                 manifest,
                 content_key,
                 signature,
+                progress,
             } => {
                 let mut fields = manifest.fields();
                 fields.push((0, text("offer")));
                 fields.push((5, bytes(content_key)));
                 fields.push((6, bytes(signature)));
+                if *progress {
+                    fields.push((7, Value::Bool(true)));
+                }
                 encode_map(fields)
             }
             Control::Accept {
                 transfer_id,
                 wanted,
-            } => encode_map(vec![
-                (0, text("accept")),
-                (1, bytes(transfer_id)),
-                (
-                    2,
-                    Value::Array(
-                        wanted
-                            .iter()
-                            .map(|(i, bm)| Value::Array(vec![int(*i), bytes(bm)]))
-                            .collect(),
+                progress,
+            } => {
+                let mut fields = vec![
+                    (0, text("accept")),
+                    (1, bytes(transfer_id)),
+                    (
+                        2,
+                        Value::Array(
+                            wanted
+                                .iter()
+                                .map(|(i, bm)| Value::Array(vec![int(*i), bytes(bm)]))
+                                .collect(),
+                        ),
                     ),
-                ),
-            ]),
+                ];
+                if *progress {
+                    fields.push((3, Value::Bool(true)));
+                }
+                encode_map(fields)
+            }
             Control::Reject {
                 transfer_id,
                 reason,
@@ -839,6 +873,14 @@ impl Control {
                 (1, bytes(transfer_id)),
                 (2, int(*index)),
                 (3, text(if *ok { "ok" } else { "hash_mismatch" })),
+            ]),
+            Control::Received {
+                transfer_id,
+                bytes: n,
+            } => encode_map(vec![
+                (0, text("received")),
+                (1, bytes(transfer_id)),
+                (2, int(*n)),
             ]),
             Control::Cancel {
                 transfer_id,
@@ -890,6 +932,7 @@ impl Control {
                     },
                     content_key: f.array(5)?,
                     signature: f.array(6)?,
+                    progress: f.opt_bool(7)?,
                 })
             }
             "accept" => {
@@ -910,6 +953,7 @@ impl Control {
                 Ok(Control::Accept {
                     transfer_id: f.array(1)?,
                     wanted,
+                    progress: f.opt_bool(3)?,
                 })
             }
             "reject" => Ok(Control::Reject {
@@ -924,6 +968,10 @@ impl Control {
                     "hash_mismatch" => false,
                     _ => return Err(WireError::Field(3)),
                 },
+            }),
+            "received" => Ok(Control::Received {
+                transfer_id: f.array(1)?,
+                bytes: f.u64(2)?,
             }),
             "cancel" => Ok(Control::Cancel {
                 transfer_id: f.array(1)?,
@@ -1139,6 +1187,7 @@ mod tests {
             },
             content_key: [8; 32],
             signature: [9; 64],
+            progress: true,
         }
     }
 
@@ -1150,6 +1199,16 @@ mod tests {
             Control::Accept {
                 transfer_id: [1; 16],
                 wanted: vec![(0, vec![]), (1, vec![0b101])],
+                progress: true,
+            },
+            Control::Accept {
+                transfer_id: [1; 16],
+                wanted: vec![],
+                progress: false,
+            },
+            Control::Received {
+                transfer_id: [1; 16],
+                bytes: 7 << 20,
             },
             Control::Reject {
                 transfer_id: [1; 16],
@@ -1176,6 +1235,7 @@ mod tests {
             mut manifest,
             content_key,
             signature,
+            ..
         } = sample_offer()
         else {
             unreachable!()
@@ -1186,6 +1246,7 @@ mod tests {
             manifest: manifest.clone(),
             content_key,
             signature,
+            progress: false,
         };
         assert_eq!(
             Control::decode(&bad.encode()).unwrap_err(),
@@ -1198,6 +1259,7 @@ mod tests {
             manifest: manifest.clone(),
             content_key,
             signature,
+            progress: false,
         };
         assert_eq!(
             Control::decode(&bad.encode()).unwrap_err(),
@@ -1210,11 +1272,75 @@ mod tests {
             manifest,
             content_key,
             signature,
+            progress: false,
         };
         assert_eq!(
             Control::decode(&bad.encode()).unwrap_err(),
             WireError::Missing(4)
         );
+    }
+
+    /// Offers and accepts from versions before #211 have no progress
+    /// field and read as not reporting; a field that is not a boolean is
+    /// refused. The progress field is outside what the signature covers.
+    #[test]
+    fn progress_fields_are_optional() {
+        let Control::Offer {
+            manifest,
+            content_key,
+            signature,
+            ..
+        } = sample_offer()
+        else {
+            unreachable!()
+        };
+        let old = Control::Offer {
+            manifest: manifest.clone(),
+            content_key,
+            signature,
+            progress: false,
+        };
+        let bytes_old = old.encode();
+        assert!(!bytes_old.windows(2).any(|w| w == [0x07, 0xf5]));
+        assert_eq!(Control::decode(&bytes_old).unwrap(), old);
+        let new = sample_offer();
+        assert_ne!(new.encode(), bytes_old);
+        assert_eq!(Control::decode(&new.encode()).unwrap(), new);
+
+        let mut fields = manifest.fields();
+        fields.push((0, text("offer")));
+        fields.push((5, bytes(&content_key)));
+        fields.push((6, bytes(&signature)));
+        fields.push((7, int(1)));
+        assert_eq!(
+            Control::decode(&encode_map(fields)).unwrap_err(),
+            WireError::Field(7)
+        );
+
+        let accept = encode_map(vec![
+            (0, text("accept")),
+            (1, bytes(&[1; 16])),
+            (2, Value::Array(vec![])),
+        ]);
+        assert_eq!(
+            Control::decode(&accept).unwrap(),
+            Control::Accept {
+                transfer_id: [1; 16],
+                wanted: vec![],
+                progress: false,
+            }
+        );
+        let bad = encode_map(vec![
+            (0, text("accept")),
+            (1, bytes(&[1; 16])),
+            (2, Value::Array(vec![])),
+            (3, text("yes")),
+        ]);
+        assert_eq!(Control::decode(&bad).unwrap_err(), WireError::Field(3));
+
+        // A report needs its byte count.
+        let short = encode_map(vec![(0, text("received")), (1, bytes(&[1; 16]))]);
+        assert_eq!(Control::decode(&short).unwrap_err(), WireError::Missing(2));
     }
 
     #[test]

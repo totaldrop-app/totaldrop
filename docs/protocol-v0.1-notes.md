@@ -230,6 +230,35 @@ treated as final.
     datagrams (pings do not count). Neither keeps anything on disk or logs
     client data.
 
+## Section 8: progress
+
+24. **The receiver reports progress** (#211). Before, the sender counted a
+    chunk as sent once QUIC had taken it. QUIC holds up to 16 MiB the other
+    side has not acknowledged yet, and the receiver's QUIC up to 16 MiB its
+    application has not read yet, so the sender's bar could run up to
+    32 MiB ahead of what had arrived, and a small file showed as done at
+    once.
+    - A sender that understands reports sets `offer` field 7 (`true`).
+      The field is outside the signed fields 1–4; like everything on the
+      control stream, the session keys of section 6 protect it.
+    - A receiver that sees field 7 sets `accept` field 3 (`true`) and then
+      sends `{0: "received", 1: transfer ID, 2: bytes}`: the bytes it has
+      decrypted and written to disk so far, over all files. It sends one at
+      most every 250 ms, and only when the number changed.
+    - The sender shows only what `received` reports. A report for another
+      transfer, above the bytes the receiver asked for, or smaller than the
+      one before is a protocol error. When every `entry_done` has come, the
+      sender shows everything as sent.
+    - Older versions: an old receiver ignores field 7 and never sends
+      `received`, which it would not have understood either way. An old
+      sender ignores `accept` field 3, and a new receiver never sends
+      `received` to it, since an old sender would stop on the unknown
+      message. With an old receiver, the sender shows a lower bound:
+      the files the receiver confirmed with `entry_done`, or the bytes it
+      has handed to QUIC less 32 MiB, whichever is larger.
+    - Absent fields 7 and 3 mean `false`. A report reveals nothing the
+      other side does not see anyway: the data arriving.
+
 ## Known limits, to be closed before 1.0
 
 - The rendezvous server has no per-client rate limiting yet. Adding it
