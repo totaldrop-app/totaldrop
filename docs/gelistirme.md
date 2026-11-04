@@ -37,7 +37,7 @@ anda ulaşır. Her platform kendi temposunda yayınlanır.
 | `site/` | totaldrop.app, download.totaldrop.app ve QR bağlantı sayfası | `site.yml` |
 | `fuzz/` | Ayrıştırıcıların fuzz hedefleri | `fuzz.yml` (haftalık) |
 | `docs/` | Tasarım kuralları, sürümler, protokol notları, bu belge | |
-| `.github/` | İş akışları. Bunlara ek olarak her PR'da ve `main`'de CodeQL kod taraması, `main`'de ve haftalık OpenSSF Scorecard çalışır | `ci.yml`, `codeql.yml`, `scorecard.yml` |
+| `.github/` | İş akışları; ayrıca `main`'de ve haftalık OpenSSF Scorecard, her PR'da ve `main`'de CodeQL kod taraması (GitHub varsayılan kurulumu, depo ayarlarında) | `ci.yml`, `scorecard.yml` |
 
 Windows ve macOS geldiğinde kendi klasörlerini (`windows/`, `macos/`) ve
 kendi iş akışlarını alır.

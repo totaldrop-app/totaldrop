@@ -8,8 +8,9 @@ name: Scorecard
 on:
   push:
     branches: [main]
-  # Branch protection is not visible to push events; the weekly run picks
-  # up a settings change.
+  # A settings change (rulesets, security features) pushes no commit; the
+  # weekly run picks it up. With the default GITHUB_TOKEN, Scorecard reads
+  # rulesets but not classic branch protection.
   schedule:
     - cron: "41 4 * * 2"
   workflow_dispatch:
