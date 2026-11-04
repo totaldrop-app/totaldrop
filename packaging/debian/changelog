@@ -1,3 +1,19 @@
+totaldrop (0.3.0~beta.3-1) unstable; urgency=medium
+
+  * Opening files with TotalDrop while it is already open, for example with
+    "Open with" in a file manager, adds them to the open window instead of
+    starting a second one, and the window comes to the front.
+  * A transfer through the relay connects even when the relay is slow to get
+    going, instead of failing after 20 seconds, and reconnects when the
+    relay closes the connection. It is also faster when the relay is far
+    away.
+  * A transfer no longer sometimes stops right after the code is entered,
+    with "the other side left" on the sending device.
+  * Stop on the sending device now cuts the transfer at once; files already
+    on the way are no longer kept on the receiving device.
+
+ -- TotalDrop <hello@totaldrop.app>  Wed, 04 Nov 2026 08:30:00 +0300
+
 totaldrop (0.3.0~beta.2-1) unstable; urgency=medium
 
   * On GNOME and on Hyprland without a Qt theme, the window takes the

@@ -10,6 +10,44 @@ All notable changes to TotalDrop are recorded here. The format follows
 Entries for the next release are in [changelog.d/](changelog.d/), one file
 per change, and move here when it is released (docs/surec.md).
 
+## [android-0.3.0-beta.3] and [linux-0.3.0-beta.3] - 2026-11-04
+
+### Changed
+
+- **Site, README:** The download page and the README point at Android and
+  Linux 0.3.0-beta.2 and list what is new: the GTK theme on GNOME and on
+  Hyprland without a Qt theme, clearer code and server messages, pasted
+  share messages and keyboard use on Linux (#187).
+
+### Fixed
+
+- **Linux:** Opening files with TotalDrop while it is already open, for
+  example with "Open with" in a file manager, adds them to the open
+  window instead of starting a second one; a link or `--screen` does the
+  same, and the window comes to the front. During a transfer, or while
+  its result is shown, the request waits until the window is back to
+  idle; a screen with files listed, a code typed or a server address not
+  saved stays under the new one. The window owns the D-Bus name
+  `app.totaldrop.TotalDrop` and serves `org.freedesktop.Application`. A
+  relative path given on the command line now opens too (#178).
+- **Android, Linux, CLI:** A transfer through the relay connects even when
+  the relay is slow to get going, instead of failing after 20 seconds, and
+  the connection to the relay is made again when the relay closes it. It
+  is also faster when the round trip to the relay is long, because more
+  data may be on the way at once (#185).
+- **Android, Linux, CLI:** A transfer no longer sometimes stops right after
+  the code is entered, with "the other side left" on the sending device
+  while the receiving device waits. The device that finished the code
+  exchange first left the server too quickly, and its last message was
+  sometimes lost (#191).
+- **Android, Linux, CLI:** Stop on the sending device now cuts the transfer
+  at once. Before, files whose data was already on the way could still
+  arrive in full and be kept on the receiving device (#193).
+- **Android:** A send or receive now keeps going when you switch to
+  another app, for example to share the code. Before, Android cut the
+  connection and the code stopped working. While a transfer runs, a
+  notification shows it, with a Stop button (#194).
+
 ## [android-0.3.0-beta.2] and [linux-0.3.0-beta.2] - 2026-11-03
 
 ### Added
