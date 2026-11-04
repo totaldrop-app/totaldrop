@@ -10,7 +10,7 @@ Sistem temasını değiştirdiğinizde uygulama yeniden başlatılmadan yeni tem
 
 | Ortam | Renk kaynağı | Kontrol stili ve simgeler | Pencere |
 |---|---|---|---|
-| Android 12 ve üstü | Material You (dynamic_color) | Material 3 | Sistem |
+| Android 15 ve üstü | Material You (dynamic_color) | Material 3; Expressive parçaları resmî `material_ui` paketi getirdikçe ([karar 0011](kararlar/0011-android-material-3-expressive.md)) | Sistem |
 | Omarchy | `~/.local/state/omarchy/current/theme/colors.toml`; tema değişince canlı yeniden okunur | Fusion, renkler temadan | Hyprland çizer, uygulama kendi çerçevesini çizmez |
 | Hyprland (Omarchy olmadan) | Qt paleti varsa (hyprqt6engine ya da qt6ct) o; yoksa GTK teması (`gtk-theme` adıyla `gtk.css`, üstüne `~/.config/gtk-4.0/gtk.css`), açık/koyu ve vurgu portaldan (temanın kendi vurgusu varsa o kazanır) | Sistem Qt stili, yoksa GTK biçiminde Fusion | Hyprland çizer |
 | KDE Plasma | Plasma'nın Qt paleti ve `kdeglobals` (vurgu dahil) | `org.kde.desktop` (qqc2-desktop-style), Breeze simgeler | KWin çizer (sunucu tarafı çerçeve) |
