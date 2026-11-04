@@ -29,6 +29,7 @@ test("a non-PNG, a non-square image or a broken ICO is refused", () => {
   const wide = fakePng(32);
   wide.writeUInt32BE(16, 20);
   assert.throws(() => buildIco([wide]), /square/);
+  assert.throws(() => buildIco([fakePng(0)]), /square/);
   assert.throws(() => icoSizes(Buffer.from([0, 0, 2, 0, 1, 0])), /not an ICO/);
   const ico = buildIco([fakePng(16)]);
   assert.throws(() => icoSizes(ico.subarray(0, ico.length - 1)), /outside/);

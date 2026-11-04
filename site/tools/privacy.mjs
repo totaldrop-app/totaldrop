@@ -129,8 +129,7 @@ ${alternates}
   <meta property="og:description" content="${esc(s("meta.privacy.desc"))}">
   <meta property="og:url" content="${url}">
   <meta property="og:type" content="website">
-  <link rel="icon" href="/favicon.ico" sizes="48x48">
-  <link rel="icon" href="/favicon-192.png" type="image/png" sizes="192x192">
+  <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="/styles.css">
