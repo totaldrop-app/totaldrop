@@ -23,11 +23,21 @@
 //! | device → relay | `TDR0` ‖ 32-byte endpoint key ‖ 64-byte Ed25519 signature over [`AUTH_CONTEXT`] ‖ challenge |
 //! | relay → device | `TDR0` ‖ `ok` |
 //! | either | 32-byte endpoint key ‖ one or more (u16 big-endian length ‖ datagram) |
+//! | relay → device | `TDR0` ‖ `probe` ‖ 16 random bytes |
+//! | device → relay | the same probe, unchanged |
 //!
 //! In a datagram message the key is the destination when the device sends
 //! and the source when the relay delivers; a relay only swaps the key and
 //! passes the rest through. Several datagrams share one message so a relay
 //! handles fewer, larger messages.
+//!
+//! A relay may put a probe between the datagram messages it delivers, and
+//! the device sends it back as soon as it reads it. The device sees the
+//! probe only after reading everything sent before it, so the answer tells
+//! the relay how much it still holds for the device; a relay that cannot see
+//! its own send buffer bounds it this way (#190). A probe is 25 bytes and a
+//! datagram message at least 35, so the two never mix up; devices from
+//! before probes ignore them.
 
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
 
@@ -92,6 +102,19 @@ pub fn ok() -> Vec<u8> {
 /// Whether `m` is the relay's acceptance.
 pub fn is_ok(m: &[u8]) -> bool {
     m == ok().as_slice()
+}
+
+/// A probe with the relay's random `nonce`.
+pub fn probe(nonce: &[u8; 16]) -> Vec<u8> {
+    let mut m = MAGIC.to_vec();
+    m.extend_from_slice(b"probe");
+    m.extend_from_slice(nonce);
+    m
+}
+
+/// Whether `m` is a probe, which the device sends back unchanged.
+pub fn is_probe(m: &[u8]) -> bool {
+    m.len() == 25 && m.starts_with(MAGIC) && m.get(4..9) == Some(b"probe".as_slice())
 }
 
 fn hex(key: &[u8; 32]) -> String {
@@ -364,6 +387,21 @@ mod tests {
         assert_eq!(parse_hello(&challenge(&nonce)), None);
         assert!(is_ok(&ok()));
         assert!(!is_ok(b"TDR0no"));
+    }
+
+    /// A probe has a fixed layout and never reads as a datagram message,
+    /// so devices from before probes drop it (#190).
+    #[test]
+    fn probes_are_fixed_and_never_datagram_messages() {
+        let p = probe(&[3u8; 16]);
+        assert_eq!(&p[..9], b"TDR0probe");
+        assert_eq!(p.len(), 25);
+        assert!(is_probe(&p));
+        assert_eq!(parse_frame(&p), None);
+        assert!(!is_probe(&p[..24]));
+        assert!(!is_probe(&[p.as_slice(), &[0]].concat()));
+        assert!(!is_probe(&ok()));
+        assert!(!is_probe(&frame(&[0u8; 32], b"TDR0probe")));
     }
 
     #[test]
