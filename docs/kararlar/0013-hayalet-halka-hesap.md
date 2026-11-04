@@ -12,13 +12,14 @@ saatlik bekleme de sunucunun dürüstlüğüne bağlıydı. Oysa
 numara taşıyıcı bir sırdı: numarayı bilen her şeyi yapabiliyordu.
 
 30 Ekim 2026'da Ozan numara yerine "cihaz halkası" modelini seçti. 4 Kasım
-2026'da daha önce yapılmamış, daha gelişmiş ve güvenli bir sistem istedi.
+2026'da daha gelişmiş ve güvenli bir sistem istedi.
 
 ## Değerlendirilen seçenekler
 
 Seçenekler, Signal, Mullvad, Session, Briar, SimpleX, Keybase, passkey, MLS
 ve MLS Virtual Clients taslağıyla karşılaştırılarak değerlendirildi. Bu
-değerlendirme iki bağımsız inceleme turundan geçti.
+değerlendirme ve ardından yazılan tasarım dört bağımsız inceleme turundan
+geçti.
 
 1. **Tanıklı halka:** imzalı cihaz zinciri ve şeffaflık günlüğü. Sunucuda
    hesap kaydı kalır.
@@ -40,11 +41,14 @@ Bağlayıcı noktalar şunlardır:
 - **Zincir:** üyelik, cihazların imzaladığı bir zincirdir. Her değişiklikte
   halka sırrı yenilenir. Halka başlarının en çok 7 günlük süresi vardır.
 - **Şeffaflık günlüğü:** bağımsız tanıklı, anonim bir şeffaflık günlüğü
-  **ilk sürümde** vardır (Ozan, 4 Kasım 2026).
+  **ilk sürümde** vardır (Ozan, 4 Kasım 2026). Tanıklar dahil etmeyi de
+  zorlar: halkanın bildirdiği bir kaydı 1 saatten uzun süre içermeyen kökü
+  imzalamazlar. Hem gönderen hem alan taraf tazelik denetimi yapar.
 - **Kurtarma:**
   - isteğe bağlıdır ve 24 kelimeden oluşur;
   - bekleme süresi 2 ya da daha çok cihazda 72 saat, tek cihazda 7 gündür;
   - kurtarma anahtarı yalnızca cihaz ekleyebilir ve çatal çözebilir;
+  - kurtarma kutusunda yalnızca son baş bulunur, kişi listesi bulunmaz;
   - kişiler kelimeleri yeniden karşılaştırır, otomatik kabul yoktur.
 - **Kimlik ve adlar:** hiçbir cihazda kimlik yazılmaz. Cihaz ve kişi
   listesi her cihazda aynıdır. Adları kullanıcı verir ve adlar halkanın
@@ -54,7 +58,8 @@ Bağlayıcı noktalar şunlardır:
     yakındakiler.
   - Yönetim işlemleri ayrı bir yönetim anahtarı ve kullanıcı doğrulaması
     ister.
-  - Sıkı mod (iki cihaz onayı, kurtarmada ikinci etken) bir ayardır.
+  - Sıkı mod (iki cihaz onayı, kurtarmada ikinci etken) bir ayardır ve
+    zincire yazılır; kişiler de denetler.
 - **Kötüye kullanıma karşı:** ARC jetonu, iş kanıtı ve IP sınırı (Ozan,
   4 Kasım 2026).
 - **Android bildirimi:** UnifiedPush ve uygulama açıkken bağlantı.
@@ -70,7 +75,7 @@ Bağlayıcı noktalar şunlardır:
   hesaplar, cihaz sayıları ve kişi ilişkileri anahtar olmadan çıkmaz.
 - **Güvenlik iddiaları kötü niyetli sunucuya karşı da hedefleniyor.** Bunu
   sağlayacak parçalar şeffaflık günlüğü, gönderim öncesi tazelik denetimi
-  ve kişilerin yeniden doğrulamasıdır. Üç inceleme turundaki altı kritik
+  ve kişilerin yeniden doğrulamasıdır. Dört inceleme turundaki yedi kritik
   bulgunun hepsi "kötü sunucu + eski yetki" desenindeydi. Tasarım her
   birine bir karşılık getiriyor; bunların yeterli olduğu ancak biçimsel
   model ve bağımsız kripto incelemesiyle gösterilecek. Günlükte çöp yazmayla

@@ -66,8 +66,9 @@ kullanılır.
   kutusuna otomatik doldurulmaz; yoksa saldırgan kendine "Annem" diyebilir.
 - Aynı ya da benzer bir ad verilirse uyarı çıkar. Benzerlik denetimi
   homoglifleri ve yön karakterlerini de kapsar.
-- Kişinin anahtarından türeyen **8 kelimelik (88 bit)** bir işaret
-  istendiğinde gösterilir. Renk yalnızca süstür, güvenlik iddiası taşımaz.
+- Kişinin halka kimliğinden (bkz. "Üyelik zinciri") türeyen **8 kelimelik
+  (88 bit)** bir işaret istendiğinde gösterilir. Halka kimliği halkanın
+  ömrü boyunca değişmez. Renk yalnızca süstür, güvenlik iddiası taşımaz.
 
 ### Güven katmanları
 
@@ -85,17 +86,23 @@ kullanılır.
   çıkar. Bu düğme yalnızca iki tarafın da hesabı varsa görünür.
 - Engellenen kişinin kayıtları silinir ve iki taraf arasındaki gizli
   anahtar atılır. Engellenen tarafa bildirim gitmez; gönderdiği teklifler
-  cevapsız kalır.
+  cevapsız kalır. Engellenen kişi, elindeki baştan halkanın ileriki
+  başlarını günlükte izlemeyi sürdürebilir (bkz. "Kalan riskler").
 
 ### Çok katmanlı onay
 
 | İşlem | Varsayılan | Sıkı mod (ayar) |
 | --- | --- | --- |
-| Cihaz ekleme | Mevcut cihazda yönetim anahtarı (biyometri ya da PIN) + doğrulama kelimeleri. Diğer cihazlara anında bildirim gider; 24 saat içinde tek dokunuşla geri alınabilir (geri alma bir `çıkar` kaydıdır) | Halkada 2 ya da daha çok cihaz varsa `ekle` kaydı iki cihazın `AK` imzasını taşır. İkinci cihaz çevrimdışıysa 72 saat beklenir |
-| Cihaz çıkarma | Yönetim anahtarı | Aynı |
+| Cihaz ekleme | Mevcut cihazda yönetim anahtarı (biyometri ya da PIN) + doğrulama kelimeleri. Diğer cihazlara anında bildirim gider; 24 saat içinde tek dokunuşla geri alınabilir (geri alma bir `çıkar` kaydıdır) | Halkada 2 ya da daha çok cihaz varsa `ekle` kaydı iki cihazın `AK` imzasını taşır. İkinci imza gelmezse kayıt tek imzayla **bekleyen** olarak yazılır ve tanık zamanıyla 72 saat sonra yürürlüğe girer; bu sürede herhangi bir cihaz reddedebilir |
+| Cihaz çıkarma | Yönetim anahtarı | Halkada 3 ya da daha çok cihaz varsa iki cihazın `AK` imzası; iki cihazlı halkada tek imza (karşılıklı çıkarma gerçek çataldır) |
+| Sıkı modu açma ya da kapatma | Yönetim anahtarı | Kapatmak, sıkı modun istediği imza sayısını ister |
 | Kurtarma ile ekleme | 24 kelime + bekleme + kişilerle yeniden doğrulama | 24 kelimeye ek olarak YubiKey ya da 3 kişiden 2'sinin Shamir payı |
 | Kurtarma ifadesini değiştirme | Yönetim anahtarı + bekleme (`ifade_değiştir`) | İkinci cihazın imzası da gerekir |
 | Kişiye "her zaman kabul et" | Yönetim anahtarı | Aynı |
+
+Sıkı mod yalnızca bir cihaz ayarı değildir: zincirde ve kişilere giden
+başta bir **ilke alanı** olarak durur. Böylece kişiler de tek imzalı bir
+`ekle` ya da `çıkar`ın sıkı modda geçersiz olduğunu denetler.
 
 Sunucu tarafında ikinci etken (SMS, TOTP) yoktur ve olmayacaktır, çünkü
 sunucuda hesap yoktur. Halkada 3 ya da daha çok cihaz varsa sıkı modu
@@ -108,7 +115,7 @@ açmak önerilir.
 | `IK_i`: Ed25519 + ML-DSA-65 | Her cihaz | `döndür` kayıtlarını ve el sıkışmadaki tek kullanımlık uç anahtarını imzalar |
 | `AK_i`: Ed25519 + ML-DSA-65, kullanıcı doğrulamasına bağlı | Her cihaz, OS anahtar deposunda | Yönetim anahtarı: üyeliği değiştiren kayıtlar, kişi defteri, kurtarmayı reddetme, ifade değişimi |
 | `KK_i`: X-Wing | Her cihaz, dönemsel yenilenir | Yeni halka sırrını almak |
-| `RK`: Ed25519 + ML-DSA-65 ve `RKK`: X-Wing | 24 kelimeden (BIP-39, 256 bit) türer, hiçbir cihazda saklanmaz; açık anahtarları zincirde | `RK` yalnızca gecikmeli cihaz ekleme ve çatal çözme; `RKK` kurtarma kutusunu açmak |
+| `RK`: Ed25519 + ML-DSA-65 ve `RKK`: X-Wing | 24 kelimeden (BIP-39, 256 bit) türer, hiçbir cihazda saklanmaz; açık anahtarları zincirde | `RK` yalnızca gecikmeli cihaz ekleme ve çatal çözme; `RKK` kurtarma kutusunu açmak. Kurtarma kutusunun adı da ifadeden türeyen ayrı bir gizli değerden gelir |
 | `r_e`: 32 bayt | Dönem e'deki bütün cihazlar | Posta kutusu adları, halka KEM anahtarı |
 | `k_AB`: 32 bayt | İki halka (siz ve bir kişi) | Kişi posta kutuları; her cihaz çıkarmada yenilenir |
 
@@ -131,14 +138,22 @@ yapılır.
 ## Üyelik zinciri
 
 Bir kayıt şu alanları taşır: sürüm, dönem `e`, önceki kaydın kanonik
-kodlamasının özeti, işlem, yük, bir ya da iki imzalayan ve imzalar.
+kodlamasının özeti, işlem, ilke alanı (sıkı mod), yük, bir ya da iki
+imzalayan ve imzalar.
+
+**Halka kimliği**, `oluştur` kaydının kanonik özetidir:
+`H("halka", oluştur)`. Halkanın ömrü boyunca değişmez; HPKE `info`
+alanları, teklifler, el sıkışma imzaları ve ayırt edici işaret bu değere
+bağlanır.
+
 İşlemler şunlardır:
 
 | İşlem | İmzalayan | Not |
 | --- | --- | --- |
 | `oluştur` | İlk cihazın `AK`'si | `RK` ve `RKK` açık anahtarlarını içerir |
-| `ekle(IK, AK, KK)` | Mevcut bir cihazın `AK`'si (sıkı modda iki cihaz) | |
-| `çıkar(IK)` | Mevcut bir cihazın `AK`'si | Acil işlemdir, hemen yapılır |
+| `ekle(IK, AK, KK)` | Mevcut bir cihazın `AK`'si (sıkı modda iki cihaz ya da bekleyen tek imza) | |
+| `çıkar(IK)` | Mevcut bir cihazın `AK`'si (sıkı modda, 3+ cihazlı halkada iki cihaz) | Acil işlemdir, hemen yapılır |
+| `ilke(sıkı mod)` | Mevcut ilkenin istediği sayıda `AK` | Sıkı modu açar ya da kapatır |
 | `döndür` | Mevcut bir cihazın `IK`'si | Yalnızca sırrı yeniler; üye kümesi değişmez |
 | `kurtarma_ekle(IK, AK, KK)` | `RK` | Yalnızca ekler, bekler |
 | `kurtarma_reddi` | Mevcut bir cihazın `AK`'si | Bekleyen kurtarmayı iptal eder, `RK`'yi geçersiz kılar |
@@ -162,7 +177,10 @@ dönem başlatmaz.
   şifreli dolaşır.
 - **Zamanlama:**
   - Halka başlarının süresi en çok 7 gündür.
-  - Haftalık `döndür`, rastgele bir sapmayla yapılır.
+  - Haftalık `döndür`'ü dönem başına **tek bir cihaz** yapar: `r_e`'den
+    türeyen bir sırada ilk çevrimiçi cihaz, rastgele bir sapmayla. Öteki
+    cihazlar ancak başın süresinin dolmasına 24 saat kala devralır. Böylece
+    döndürme düzeni cihaz sayısını göstermez.
   - Bir başın süresini uzatmak her zaman yeni bir dönemle yapılır. Eski bir
     baş yeniden imzalanarak uzatılmaz.
   - Üyelik değişiklikleri gizlenmez: kişiler, üye kümesinin **hangi
@@ -188,10 +206,18 @@ günlüğü"). Okuyan herkes şu kuralları uygular:
 3. **Gerçek çatal:** başka her durumda (ör. iki `çıkar` birbirini çıkarıyor)
    cihazlar ve kişiler kapalı kalır. Gönderim durur ve bir uyarı gösterilir.
 4. Bir gözlemci, kendi sabitlediği başın altında kalan çatalları yok sayar.
-5. Tartışmalı dalda bulunan cihazların reddi sayılmaz.
-6. Gerçek çatalı yalnızca `RK` imzalı bir `çatal_çöz` kaydı çözer. Bu kayıt
+5. **Tartışmalı dal**, çözülmemiş gerçek bir çatalın dallarından biridir.
+   Yalnızca tartışmalı bir dalda üye olan cihazların reddi sayılmaz.
+6. **Geç gelen çatal:** bir anahtarın altındaki ilk geçerli değerden
+   (tanık zamanıyla) 24 saat sonra yazılan ve onunla çelişen değerler yok
+   sayılır. Çıkarılmış bir cihaz, eski başı sabitlemiş kişileri sonradan
+   yazdığı bir kayıtla donduramaz. Çıkarma anındaki yarışlar bu pencerenin
+   içinde kalır ve madde 1-3 ile çözülür. Pencere, dahil etme zorlamasının
+   (bkz. günlük) süresinden çok daha uzundur; dürüst bir kayıt sansürle bu
+   pencerenin dışına itilemez.
+7. Gerçek çatalı yalnızca `RK` imzalı bir `çatal_çöz` kaydı çözer. Bu kayıt
    da bekleme süresine tabidir.
-7. Çatal çözülemezse (hırsızın elinde hem bir cihaz hem ifade varsa)
+8. Çatal çözülemezse (hırsızın elinde hem bir cihaz hem ifade varsa)
    kişiler sizi yeniden eşleştirir. En kötü sonuç hizmet kaybıdır, sessiz
    ele geçirme değildir.
 
@@ -213,7 +239,7 @@ protokol notlarına ayrı bir madde olarak yazılır.
 | Halka | `HKDF(r_e, "kutu halka" ‖ gün)` | 48 saat |
 | Kişi, yön başına | `HKDF(k_AB, "kutu A'ya" ‖ gün)` | 48 saat |
 | Yetişme | Zincirdeki, cihaza özel gizli bir değerden, dönem başına | 30 gün |
-| Kurtarma | `HKDF(RKK açık anahtarı, "kutu kurtarma" ‖ ay)` | 60 gün |
+| Kurtarma | `HKDF(ifadeden türeyen kutu sırrı, "kutu kurtarma" ‖ ay)` | 60 gün |
 
 - **Gün ve ay:** UTC tarihidir ve duvar saatinden gelir. Cihazlar dünün,
   bugünün ve yarının kutusunu dinler; bu, cihazlar arasında ±1 günlük saat
@@ -228,9 +254,11 @@ protokol notlarına ayrı bir madde olarak yazılır.
   cihazlarla doğrudan zincir eşitlemesinden yetişir. Uzun süre çevrimdışı
   kalan bir kişi ise "güncel başı iste" akışını kullanır.
 - **Kurtarma kutusu:** halkadaki bir cihaz her ay, `RKK`'ye HPKE ile
-  şifreli bir özet bırakır: en son baş ve kişi defteri. İfadeyi bilen
-  ve bütün cihazlarını kaybetmiş biri buradan halkayı ve kişilerini
-  bulur. Halka sırrı (`r_e`) kutuda bulunmaz.
+  şifreli **yalnızca en son başı** bırakır. Kişi defteri, `k_AB`'ler,
+  adlar ve halka sırrı (`r_e`) kutuda bulunmaz. Böylece ifadeyi çalan
+  biri, beklemeden kişilerinizi, adlarını ya da kişi kutularını öğrenemez.
+  Kutunun adı `RKK`'nin açık anahtarından değil, ifadeden türeyen gizli
+  bir değerden gelir; çıkarılmış bir cihaz kutuyu bulup izleyemez.
 - Her kutu ayrı bir bağlantıyla ve rastgele zamanlarla yoklanır. Aynı
   NAT IP'sinden gelen bağlantılar yine de ilişkilendirilebilir (bkz.
   "Kalan riskler").
@@ -244,21 +272,27 @@ protokol notlarına ayrı bir madde olarak yazılır.
   sürümüdür ve yalnızca üye kümesi değişince artar. Yapraklar her üyelik
   sürümünde yeniden tuzlanır ve sırası rastgeledir. Boş yapraklar rastgele
   dolgudur. Ağacın kökü `C_e`'dir.
-- **Kişiye gönderilen baş:** `{e, C_e, işlem türü, önceki_baş_özeti,
-  son_kullanma}`. İşlem türü `döndür`, `üyelik` ya da `kurtarma` olabilir.
+- **Kişiye gönderilen baş:** `{halka kimliği, e, C_e, işlem türü, ilke,
+  halka KEM açık anahtarı, önceki_baş_özeti, son_kullanma}`. İşlem türü
+  `döndür`, `üyelik` ya da `kurtarma` olabilir. Halka KEM açık anahtarı
+  `r_e`'den türer; teklifler buna şifrelenir.
 - **Kişi başı nasıl denetler:**
   - `döndür`: kök değişmez (`C_e = C_{e−1}`); kişi bunu doğrudan
     karşılaştırır. Bir `IK` imzası ve imzalayanın bu kökte bulunduğunu
     gösteren Merkle kanıtı yeterlidir. Böylece `IK` ile üyelik
     değiştirilemez.
-  - `üyelik`: `C_{e−1}`'e karşı Merkle kanıtıyla bir ya da iki `AK` imzası
-    (sıkı mod).
+  - `üyelik`: `C_{e−1}`'e karşı Merkle kanıtıyla, önceki başın ilke
+    alanının istediği sayıda `AK` imzası. Sıkı modda tek imzalı bir `ekle`
+    ancak tanık zamanıyla 72 saat bekledikten sonra geçerlidir.
   - `kurtarma`: `RK` imzası; bekleme ve yeniden doğrulama kuralları uygulanır.
   - Kanıt 4 adımdır ve 128 bayt tutar.
 - **Sabitleme:** kişi ilk eşleşmede halka başını sabitler. Bu ilk güven
   (TOFU), doğrulama kelimeleriyle korunur. Kişi daha sonra yalnızca bir
   önceki başa bağlanan ve şeffaflık günlüğünde bulunan devamları kabul
   eder. Süresi dolmuş bir başa gönderim yapılmaz.
+- **Başı izleme:** kişi sabitlediği baştan başlayarak `L_{k+1}` altındaki
+  değerleri sırayla alır, her birini denetler ve yokluk kanıtı gelene kadar
+  ilerler. Bu, yılda en az 52 adımdır; kişi her bağlantıda yetişir.
 - **Cihaz sayısı:** baş, cihaz sayısını (1-16) göstermez. Kişi, üyeliğin
   hangi dönemde değiştiğini görür ve zamanla el sıkışmalarda gördüğü farklı
   cihazları sayabilir. Bunlar kabul edilen sınırlardır.
@@ -287,7 +321,8 @@ dışı doğrulama gerekir. TotalDrop ilk sürümde ikisini de kullanır.
 - **Yapı:** günlük, doğrulanabilir bir eşlemedir (verifiable map). Bir
   anahtarın altında **birden çok değer** durabilir ve hiçbiri silinmez.
   - Anahtar: `L_{e+1} = H("günlük", başın_özeti_e)`. Anahtarı yalnızca
-    e. başı bilenler (halka ve kişileri) hesaplayabilir.
+    e. başı bilenler (halka ve kişileri) hesaplayabilir. `oluştur` kaydının
+    anahtarı `L_0 = H("günlük ilk", halka kimliği)`'dir.
   - Değer: e+1. baş, `başın_özeti_e`'den türeyen bir anahtarla şifreli.
     Sunucu ve günlüğü okuyan başkaları içeriği göremez, halkaları
     birbirine bağlayamaz.
@@ -296,15 +331,30 @@ dışı doğrulama gerekir. TotalDrop ilk sürümde ikisini de kullanır.
     çatal demektir ve çatal kuralı uygulanır.
 - **Tanıklar:** bağımsız tanıklar günlüğün köklerini zaman damgasıyla
   eş-imzalar. Böylece sunucu iki kişiye iki farklı günlük gösteremez.
+- **Dahil etme zorlaması:** tanıklar yalnızca kökü imzalarsa sunucu dürüst
+  bir kaydı hiç yazmayarak (sansür) çıkarılmış bir cihazın kendi `döndür`
+  kaydını tek geçerli değer gibi gösterebilir. Bunu önlemek için halka her
+  kaydını günlüğe yazarken `H(L, değer)` özetini tanıklara da doğrudan
+  (ARC jetonuyla) bildirir. Tanık, aldığı bir özeti 1 saatten uzun süre
+  içermeyen bir kökü eş-imzalamaz ve halkaya imzalı bir alındı verir.
+  Kişiler kökü yeter sayıda tanığın imzasıyla kabul ettiği için, sansür
+  ancak tanıkların da iş birliğiyle mümkündür; bu, P2 ve P3'ün zaten
+  dayandığı varsayımdır. Tanık yalnızca rastgele görünen bir özet görür,
+  halkaları birbirine bağlayamaz.
 - **Tazelik:** kişi her gönderimden önce, tanıkların en çok 1 saat önce
   eş-imzaladığı bir kök ister ve o kökte `L_{e+1}` altında geçerli bir
   değer **bulunmadığının** kanıtını alır. Bulunuyorsa ya da taze kök
   gelmiyorsa göndermez. Bu, çıkarılmış bir cihazın eski başla dosya
   almasını (dondurma saldırısını) gönderim anında durdurur.
+- **Alırken de tazelik:** bir teklif alan halka, teklifi göstermeden önce
+  gönderen halka için aynı denetimi yapar: taze tanıklı kök ve gönderenin
+  başından sonraki dönemin yokluk kanıtı. Böylece çıkarılmış bir cihaz,
+  eski başla "Annem" adına dosya gönderemez; "her zaman kabul et" açık
+  olsa bile.
 - **Halkanın denetimi:** halka, kendi anahtarları altında bilmediği geçerli
-  bir değer görürse durumu hemen anlar ve kullanıcıyı uyarır. Kendi kaydı
-  belirli bir süre içinde günlüğe girmezse de uyarır, çünkü bu sansür
-  olabilir.
+  bir değer görürse durumu hemen anlar ve kullanıcıyı uyarır. Tanık
+  alındısı olan kendi kaydı 1 saat içinde günlüğe girmezse de uyarır; bu,
+  tanıkların da iş birliği yaptığı sansür demektir.
 - **Çöp yazma:** anahtarı bilen biri (bir kişi ya da çıkarılmış bir cihaz)
   anahtarın altına geçersiz değerler yazabilir. Bunlar yok sayılır; her
   yazma bir ARC jetonu ister ve anahtar başına değer sayısı sınırlıdır
@@ -331,7 +381,7 @@ dışı doğrulama gerekir. TotalDrop ilk sürümde ikisini de kullanır.
   Apple ya da Google hesabına bağlar.
 - **Yol (bütün cihazlar kayıpsa):**
   1. Yeni cihaz ifadeden `RKK`'yi türetir, son iki ayın kurtarma kutusunu
-     açar ve en son başı ve kişi defterini öğrenir.
+     açar ve en son başı öğrenir. Kişileri öğrenmez.
   2. `L_{e+1}` altına `RK` imzalı bir `kurtarma_ekle` yazar. Kayıt bu başı
      ebeveyn olarak adlandırır.
   3. Bekleme başlar. Halkanın kalan cihazları (varsa) ve kişiler kaydı
@@ -344,9 +394,15 @@ dışı doğrulama gerekir. TotalDrop ilk sürümde ikisini de kullanır.
   - Aynı anahtar altında bir cihazın `AK` ya da `IK` imzalı geçerli bir
     kaydı da varsa, cihaz kaydı önceliklidir ve kurtarma kaydı geçersiz
     sayılır (çatal kuralı, madde 1'in genişletilmesi).
+- **Bekleme kötü niyetli sunucuya karşı bir veto penceresi değildir:**
+  sunucu tanıklarla birlikte red kaydını sansürlerse bekleme yalnızca
+  gecikmedir. Bu durumda P7'yi kişilerin yeniden doğrulaması sağlar.
 - **Kişiler:** bekleme süresince kişiler "bu kişi hesabını kurtarıyor"
-  uyarısını görür. Kurtarılan halka her kişiyle doğrulama kelimelerini
-  **yeniden karşılaştırır**. Süre dolunca otomatik kabul yoktur. Kelimeler
+  uyarısını görür. Bekleme bitince kurtarılan halkayı yeniden bulan
+  kişilerdir: günlükte kurtarma başını gören her kişi, yeni başın KEM
+  anahtarına bir "yeniden doğrula" teklifi gönderir. Kurtarılan halka her
+  kişiyle doğrulama kelimelerini **yeniden karşılaştırır**, yeni bir
+  `k_AB` kurulur ve kişiye ad yeniden verilir. Süre dolunca otomatik kabul yoktur. Kelimeler
   yalnızca kanalın, kelimeleri gösteren cihazla kurulduğunu kanıtlar; kişi,
   karşısındakinin gerçekten siz olduğunu bant dışı (yüz yüze ya da sesli
   aramayla) doğrulamalıdır.
@@ -357,8 +413,9 @@ dışı doğrulama gerekir. TotalDrop ilk sürümde ikisini de kullanır.
 1. Gönderen, kişinin kutusuna bir **teklif** bırakır.
    - Teklif, halkanın X-Wing anahtarına (`r_e`'den türer) HPKE ile
      şifrelenir.
-   - Teklif şunları imzalar: alıcı halkanın kimliği, HPKE çıktısı ve
-     gönderenin bildiği alıcı başı (baş yankısı).
+   - Teklifi gönderen cihaz `IK`'siyle imzalar ve gönderen halkanın güncel
+     başına karşı Merkle kanıtını ekler. İmza şunları kapsar: iki halkanın
+     kimliği, HPKE çıktısı ve gönderenin bildiği alıcı başı (baş yankısı).
    - Teklifte yalnızca buluşma bilgisi bulunur, dosya anahtarı bulunmaz.
 2. Alıcı halkadaki çevrimiçi bir cihaz teklifi açar. Mevcut Noise + ML-KEM
    el sıkışmasını başlatır ([protokol notları](protocol-v0.1-notes.md),
@@ -422,7 +479,7 @@ da biçimsel modeldeki bir lemmayla bağlanır.
 | --- | --- |
 | P1 | **Üyelik bütünlüğü:** zincire yalnızca mevcut bir cihaz ya da (gecikmeli) `RK` kayıt ekler |
 | P2 | **Geri alma ve çatal tespiti:** bir dönemin her geçerli devamı günlükte görünür; birden çoğu çataldır. Tanıklar, iki farklı görünümün gösterilmesini engeller |
-| P3 | **Çıkarma sonrası gizlilik:** çıkarılan cihaz, çıkarma günlüğe girdikten sonra gönderilen içeriği okuyamaz; sunucuyla birlikte çalışsa bile, çünkü kişi her gönderimden önce taze tanıklı kökle sonraki dönemin yokluğunu denetler. Tanıklar sunucuyla iş birliği yaparsa bu güvence yoktur |
+| P3 | **Çıkarma sonrası gizlilik ve kimlik:** çıkarma kaydı tanıklara bildirildikten en geç 1 saat sonra, çıkarılan cihaz gönderilen içeriği okuyamaz ve halka adına dosya gönderemez; sunucuyla birlikte çalışsa bile. Bunu dahil etme zorlaması ile gönderirken ve alırken yapılan tazelik denetimi sağlar. Tanıklar sunucuyla iş birliği yaparsa bu güvence yoktur |
 | P4 | **İleri gizlilik:** aktarım anahtarları geçicidir |
 | P5 | **Sunucuda hesap tablosu yok:** saklanan veriden hesaplar, cihaz sayıları ve kişi ilişkileri anahtar olmadan çıkarılamaz. Canlı bağlantıdaki IP ve zamanlama bu kapsamda değildir |
 | P6 | **Kişilere karşı en az bilgi:** halka başı cihaz sayısını göstermez. Üyeliğin hangi dönemde değiştiği görünür |
@@ -439,7 +496,12 @@ da biçimsel modeldeki bir lemmayla bağlanır.
 - **ARC kimlik bilgisi alma anı:** düzenleyici IP'yi görür. Ev NAT'ında
   anonimlik kümesi tek bir hanedir.
 - **Kişilere görünenler:** bir kişi üyeliğin hangi dönemde değiştiğini
-  görür ve zamanla el sıkışmalarda gördüğü cihazları sayabilir.
+  görür ve zamanla el sıkışmalarda gördüğü cihazları sayabilir. Bir baş
+  bilen herkes (engellenmiş bir kişi ya da çıkarılmış bir cihaz da) ileriki
+  başları günlükte izleyebilir: üyelik değişim zamanlarını, işlem türünü
+  ve son kullanma tarihlerini görür, içerik ve cihaz sayısını görmez. Bunu
+  kesmek için kişi başına baş teslimi ya da engellemede yenilenen bir
+  zincir gerekir; biçimsel model aşamasında değerlendirilecek.
 - **Günlükte çöp yazma:** bir dönemin günlük anahtarını bilen biri (bir
   kişi ya da çıkarılmış bir cihaz) değer sınırını doldurarak o dönemi
   geçici olarak kilitleyebilir. ARC ile pahalılaştırılır; tam çözüm biçimsel
@@ -447,8 +509,10 @@ da biçimsel modeldeki bir lemmayla bağlanır.
 - **Kilidi açık çalınan cihaz:** çıkarılmadan önce `AK` ile cihaz
   ekleyebilir ya da öteki cihazları çıkarmaya çalışabilir. Diğer cihazlar
   bildirim alır; karşılıklı çıkarma gerçek çataldır ve `RK` ile çözülür.
-- **Tanıklar:** hepsi sunucuyla iş birliği yaparsa P2 ve P3 yoktur.
-  Tanıklar farklı kuruluşlardan seçilir.
+- **Tanıklar:** yeter sayıdaki tanık sunucuyla iş birliği yaparsa P2 ve P3
+  yoktur ve kayıtlar sansürlenebilir. Tanıklar farklı kuruluşlardan
+  seçilir. Dahil etme zorlaması standart tanık protokolünde yoktur; tanık
+  yazılımına TotalDrop'un eklemesi gerekir.
 - **Birlikte çalınma:** telefon ve ifade birlikte çalınırsa koruma yoktur.
 - **Canlı ele geçirme:** kilidi açık, aktif kullanılan bir cihazın canlı
   olarak ele geçirilmesi kapsam dışıdır.
@@ -464,11 +528,15 @@ da biçimsel modeldeki bir lemmayla bağlanır.
   - listeye cihaz ekleyemez;
   - çıkarılmış bir cihazı geri getiremez;
   - iki kişiye iki farklı liste gösteremez, ya da gösterirse fark edilir.
-- **K2. Çıkarma sonrası.** Çıkarılan cihaz, çıkarıldıktan sonra
-  gönderilen dosyaları açamaz. Sunucu ona yardım etse bile.
+- **K2. Çıkarma sonrası.** Çıkarma kaydı tanıklara bildirildikten en geç
+  1 saat sonra çıkarılan cihaz gönderilen dosyaları açamaz ve halka adına
+  dosya gönderemez. Sunucu ona yardım etse ve dürüst kaydı sansürlese bile
+  (tanıklar dürüstken).
 - **K3. Kurtarma.** Kurtarma ifadesini bilen biri, cihazlar ve kişiler fark
-  etmeden cihaz ekleyemez. Testte yerel saat, bekleme süresi, red ve
-  yeniden doğrulama sınanır.
+  etmeden cihaz ekleyemez ve beklemeden kişi listesini öğrenemez. Testte
+  yerel saat, bekleme süresi, red ve yeniden doğrulama sınanır.
+- **K3b. Sıkı mod.** Kişi, sıkı moddaki bir halkanın tek imzalı `ekle` ya
+  da `çıkar` kaydını (bekleme dışında) reddeder.
 - **K4. Sızan veritabanı.** Sunucu veritabanının tamamı sızsa bile iki kutu
   adının aynı hesaba ait olduğu anahtar olmadan bulunamaz.
 - **K5. Biçimsel model.** Protokol Tamarin ile modellenir ve P1-P8 lemma
