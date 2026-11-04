@@ -246,10 +246,24 @@ treated as final.
       no address change and neither side migrates; each side moves on its
       own, and when only one direction dies, the side that stops hearing
       moves first and the other follows one wait later, both inside the
-      30-second idle timeout. The move is not undone. It needs a relay
-      path, as above; a relay link that was already opened before a slower
-      direct path won is closed as before, and that connection does not
+      30-second idle timeout.
+    - A side that moved goes back to sending directly as soon as a datagram
+      arrives from the direct address again; its relay link stays up. A
+      peer that was only paused, or that never moved, thus brings the
+      connection back. A side that finds its own clock ran late by 2
+      seconds or more (it was paused itself) starts counting afresh. While
+      the connection is direct, the watched address follows QUIC's remote
+      address, so a peer whose NAT mapping changed is not taken for a
+      silent one.
+    - A side moves only when both use the same relay (item 21): the sender
+      checks the receiver's `HINTS` field 5, and the receiver has a relay
+      path only in that case. A relay link that was already opened before a
+      slower direct path won is closed as before, and that side does not
       move.
+    - A relay link that sent datagrams and got nothing back pings the relay
+      every 2 seconds; a pong counts as an answer. The relay drops
+      datagrams while the other device is not there, so without this a link
+      waiting for a side that moves later would be taken for a dead one.
     - A stream may have 8 MiB in flight and a connection 16 MiB, so a path
       with a long round trip is not held to window / RTT (#185). An honest
       client never has more than that in flight on one connection, which
@@ -260,7 +274,7 @@ treated as final.
       10 tries in a row that did not sign in. It keeps the limits below
       over all its own connections together; the relays count them per
       connection (#190). When datagrams went out and nothing at all (no
-      datagram, no pong) came back for 10 seconds, the link drops the
+      datagram, no pong to those pings) came back for 10 seconds, the link drops the
       connection and connects again: a dead TCP connection is otherwise
       reported only after minutes, long past QUIC's idle timeout.
 23. **Relay limits.** Per connection: 32 GiB and 6 hours; ten seconds to

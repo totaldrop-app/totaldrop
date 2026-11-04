@@ -1075,20 +1075,30 @@ mod tests {
         );
     }
 
-    /// A UDP socket whose traffic can be cut off, both ways, while the
-    /// connection over it stays up: a Wi-Fi that drops, a NAT mapping that
-    /// expires, a network that lets the handshake through and then stops
-    /// carrying anything.
+    /// Which ways a [`Cuttable`] socket's traffic is cut off.
+    #[derive(Debug, Default)]
+    struct Cut {
+        outgoing: std::sync::atomic::AtomicBool,
+        incoming: std::sync::atomic::AtomicBool,
+    }
+
+    impl Cut {
+        fn set(&self, outgoing: bool, incoming: bool) {
+            self.outgoing
+                .store(outgoing, std::sync::atomic::Ordering::SeqCst);
+            self.incoming
+                .store(incoming, std::sync::atomic::Ordering::SeqCst);
+        }
+    }
+
+    /// A UDP socket whose traffic can be cut off while the connection over
+    /// it stays up: a Wi-Fi that drops, a NAT mapping that expires, a
+    /// network that lets the handshake through and then stops carrying
+    /// anything.
     #[derive(Debug)]
     struct Cuttable {
         inner: Arc<dyn quinn::AsyncUdpSocket>,
-        cut: Arc<std::sync::atomic::AtomicBool>,
-    }
-
-    impl Cuttable {
-        fn is_cut(&self) -> bool {
-            self.cut.load(std::sync::atomic::Ordering::SeqCst)
-        }
+        cut: Arc<Cut>,
     }
 
     impl quinn::AsyncUdpSocket for Cuttable {
@@ -1097,7 +1107,7 @@ mod tests {
         }
 
         fn try_send(&self, transmit: &quinn::udp::Transmit) -> std::io::Result<()> {
-            if self.is_cut() {
+            if self.cut.outgoing.load(std::sync::atomic::Ordering::SeqCst) {
                 Ok(())
             } else {
                 self.inner.try_send(transmit)
@@ -1112,7 +1122,8 @@ mod tests {
         ) -> std::task::Poll<std::io::Result<usize>> {
             loop {
                 match self.inner.poll_recv(cx, bufs, meta) {
-                    std::task::Poll::Ready(Ok(_)) if self.is_cut() => {}
+                    std::task::Poll::Ready(Ok(_))
+                        if self.cut.incoming.load(std::sync::atomic::Ordering::SeqCst) => {}
                     other => return other,
                 }
             }
@@ -1135,11 +1146,11 @@ mod tests {
         }
     }
 
-    /// An endpoint on loopback whose direct traffic stops once `cut` is set.
+    /// An endpoint on loopback whose direct traffic is cut as `cut` says.
     fn cuttable_endpoint(
         own: &EndpointKey,
         peer: &EndpointKey,
-        cut: &Arc<std::sync::atomic::AtomicBool>,
+        cut: &Arc<Cut>,
     ) -> (
         quinn::Endpoint,
         SocketAddr,
@@ -1160,22 +1171,29 @@ mod tests {
         (endpoint, addr, pipes, fallback)
     }
 
-    /// A direct connection whose path stops carrying anything after the
-    /// handshake moves onto the relay, and the transfer goes on (#185).
-    /// Before, nothing moved, and QUIC gave up after its 30-second idle
-    /// timeout ("timed out") although the relay would have worked. Here the
-    /// direct path dies both ways, as when a phone's Wi-Fi drops; the
-    /// watch on each side notices on its own and the sides meet again on
-    /// the relay.
-    #[tokio::test]
-    async fn a_direct_connection_that_goes_quiet_moves_to_the_relay() {
+    /// Two sides connected directly over cuttable sockets, with a relay
+    /// stand-in between their pipes that is not contacted yet.
+    struct Direct {
+        sender: quinn::Connection,
+        receiver: quinn::Connection,
+        sender_fallback: crate::path::Fallback,
+        receiver_fallback: crate::path::Fallback,
+        send_gate: crate::relay::Gate,
+        recv_gate: crate::relay::Gate,
+        sender_cut: Arc<Cut>,
+        receiver_cut: Arc<Cut>,
+        _held: (quinn::Endpoint, quinn::Endpoint, quinn::SendStream),
+    }
+
+    async fn direct() -> Direct {
         let (ka, kb) = (
             EndpointKey::generate().unwrap(),
             EndpointKey::generate().unwrap(),
         );
-        let cut = Arc::new(std::sync::atomic::AtomicBool::new(false));
-        let (sender, sender_addr, pa, sender_fallback) = cuttable_endpoint(&ka, &kb, &cut);
-        let (receiver, receiver_addr, pb, receiver_fallback) = cuttable_endpoint(&kb, &ka, &cut);
+        let (sender_cut, receiver_cut) = (Arc::new(Cut::default()), Arc::new(Cut::default()));
+        let (sender, sender_addr, pa, sender_fallback) = cuttable_endpoint(&ka, &kb, &sender_cut);
+        let (receiver, receiver_addr, pb, receiver_fallback) =
+            cuttable_endpoint(&kb, &ka, &receiver_cut);
         let (send_gate, recv_gate) = (crate::relay::Gate::default(), crate::relay::Gate::default());
         cross(pa, pb, send_gate.clone(), recv_gate.clone());
         let wait = Duration::from_secs(8);
@@ -1200,48 +1218,158 @@ mod tests {
             },
             sender_connection(&sender, &to_receiver, wait),
         );
-        let (receiver_conn, _ctl) = r;
+        let (receiver_conn, ctl) = r;
         let (sender_conn, _send, _recv) = s.unwrap();
         assert_eq!(sender_conn.remote_address(), receiver_addr);
         assert_eq!(receiver_conn.remote_address(), sender_addr);
         assert!(!send_gate.is_open() && !recv_gate.is_open());
+        Direct {
+            sender: sender_conn,
+            receiver: receiver_conn,
+            sender_fallback,
+            receiver_fallback,
+            send_gate,
+            recv_gate,
+            sender_cut,
+            receiver_cut,
+            _held: (sender, receiver, ctl),
+        }
+    }
 
-        // What each side does once its connection was chosen.
-        let silence = Duration::from_secs(2);
-        let _watches = (
-            crate::path::Watch::spawn(&sender_fallback, receiver_addr, send_gate.clone(), silence),
-            crate::path::Watch::spawn(&receiver_fallback, sender_addr, recv_gate.clone(), silence),
-        );
+    impl Direct {
+        /// A watch on each side, with `silence` as the wait.
+        fn watch_both(&self, silence: Duration) -> (crate::path::Watch, crate::path::Watch) {
+            (self.watch_sender(silence), self.watch(silence, false))
+        }
 
+        fn watch_sender(&self, silence: Duration) -> crate::path::Watch {
+            self.watch(silence, true)
+        }
+
+        fn watch(&self, silence: Duration, sender: bool) -> crate::path::Watch {
+            let (fallback, conn, gate) = if sender {
+                (&self.sender_fallback, &self.sender, &self.send_gate)
+            } else {
+                (&self.receiver_fallback, &self.receiver, &self.recv_gate)
+            };
+            crate::path::Watch::spawn(fallback, conn.clone(), gate.clone(), silence)
+        }
+    }
+
+    /// Send 4 MiB from the sender: the first half while the path works,
+    /// then call `cut`, then the rest. True when everything arrived, intact,
+    /// within `within`.
+    async fn send_across(d: &Direct, cut: impl FnOnce(), within: Duration) -> bool {
         let data: Vec<u8> = (0..4 * 1024 * 1024u32).map(|i| (i % 251) as u8).collect();
         let (first, second) = data.split_at(data.len() / 2);
-        let half = first.len();
-        let mut out = sender_conn.open_uni().await.unwrap();
+        let mut out = d.sender.open_uni().await.unwrap();
         out.write_all(first).await.unwrap();
-        let mut incoming = receiver_conn.accept_uni().await.unwrap();
-        let mut got = vec![0u8; half];
+        let mut incoming = d.receiver.accept_uni().await.unwrap();
+        let mut got = vec![0u8; first.len()];
         incoming.read_exact(&mut got).await.unwrap();
-        assert!(!send_gate.is_open() && !recv_gate.is_open());
-
-        cut.store(true, std::sync::atomic::Ordering::SeqCst);
+        cut();
         let rest = second.to_vec();
         let write = tokio::spawn(async move {
-            out.write_all(&rest).await.unwrap();
-            out.finish().unwrap();
+            let _ = out.write_all(&rest).await;
+            let _ = out.finish();
             out
         });
-        let read = tokio::time::timeout(Duration::from_secs(25), incoming.read_to_end(usize::MAX))
-            .await
-            .expect("the transfer stalled once the direct path went quiet")
-            .unwrap();
+        let Ok(Ok(read)) = tokio::time::timeout(within, incoming.read_to_end(usize::MAX)).await
+        else {
+            return false;
+        };
         got.extend_from_slice(&read);
-        assert!(got == data, "the data arrived changed");
-        let _out = write.await.unwrap();
-        assert!(sender_fallback.moved() && receiver_fallback.moved());
-        assert!(send_gate.is_open() && recv_gate.is_open());
+        let _out = write.await;
+        got == data
+    }
+
+    /// A direct connection whose path stops carrying anything after the
+    /// handshake moves onto the relay, and the transfer goes on (#185).
+    /// Before, nothing moved, and QUIC gave up after its 30-second idle
+    /// timeout ("timed out") although the relay would have worked. Here the
+    /// direct path dies both ways, as when a phone's Wi-Fi drops; the
+    /// watch on each side notices on its own and the sides meet again on
+    /// the relay.
+    #[tokio::test]
+    async fn a_direct_connection_that_goes_quiet_moves_to_the_relay() {
+        let d = direct().await;
+        let _watches = d.watch_both(Duration::from_secs(2));
+        let addresses = (d.sender.remote_address(), d.receiver.remote_address());
+        let arrived = send_across(
+            &d,
+            || {
+                d.sender_cut.set(true, true);
+                d.receiver_cut.set(true, true);
+            },
+            Duration::from_secs(25),
+        )
+        .await;
+        assert!(
+            arrived,
+            "the transfer stalled once the direct path went quiet"
+        );
+        assert!(d.sender_fallback.moved() && d.receiver_fallback.moved());
+        assert!(d.send_gate.is_open() && d.recv_gate.is_open());
         // QUIC still sees the direct address: nothing had to migrate.
-        assert_eq!(sender_conn.remote_address(), receiver_addr);
-        assert_eq!(receiver_conn.remote_address(), sender_addr);
+        assert_eq!(
+            (d.sender.remote_address(), d.receiver.remote_address()),
+            addresses
+        );
+    }
+
+    /// When only one direction dies, the side that stops hearing moves
+    /// first, the other stops hearing it and follows, and the transfer
+    /// goes on (#185 review).
+    #[tokio::test]
+    async fn a_direct_path_that_dies_one_way_moves_to_the_relay() {
+        let d = direct().await;
+        let _watches = d.watch_both(Duration::from_secs(2));
+        // The sender's datagrams no longer reach the receiver.
+        let arrived = send_across(
+            &d,
+            || d.sender_cut.set(true, false),
+            Duration::from_secs(25),
+        )
+        .await;
+        assert!(arrived, "the transfer stalled once one direction died");
+        assert!(d.sender_fallback.moved() && d.receiver_fallback.moved());
+    }
+
+    /// A side that moved comes back as soon as the direct path carries
+    /// datagrams again, so a side whose peer did not move (no shared relay,
+    /// or a link closed during setup, or a peer that was only paused) does
+    /// not lose a direct path that recovers (#185 review). Here only the
+    /// sender watches; the path is gone for longer than its wait, then
+    /// comes back.
+    #[tokio::test]
+    async fn a_side_that_moved_comes_back_when_the_direct_path_returns() {
+        let d = direct().await;
+        let _watch = d.watch_sender(Duration::from_secs(2));
+        let (sender_cut, receiver_cut) = (d.sender_cut.clone(), d.receiver_cut.clone());
+        let fallback = d.sender_fallback.clone();
+        let healed = tokio::spawn(async move {
+            // The cut below lands at once; the wait is 2 seconds.
+            tokio::time::sleep(Duration::from_secs(5)).await;
+            let moved = fallback.moved();
+            sender_cut.set(false, false);
+            receiver_cut.set(false, false);
+            moved
+        });
+        let arrived = send_across(
+            &d,
+            || {
+                d.sender_cut.set(true, true);
+                d.receiver_cut.set(true, true);
+            },
+            Duration::from_secs(25),
+        )
+        .await;
+        assert!(healed.await.unwrap(), "the sender did not move");
+        assert!(
+            arrived,
+            "the transfer did not survive a direct path that came back"
+        );
+        assert!(!d.sender_fallback.moved(), "the sender stayed on the relay");
     }
 
     /// An idle direct connection stays direct: QUIC's keep-alives count as
@@ -1249,24 +1377,17 @@ mod tests {
     /// reading the offer, say) does not move it onto the relay (#185).
     #[tokio::test]
     async fn an_idle_direct_connection_stays_direct() {
-        let (ka, kb) = (
-            EndpointKey::generate().unwrap(),
-            EndpointKey::generate().unwrap(),
-        );
-        let cut = Arc::new(std::sync::atomic::AtomicBool::new(false));
-        let (a, _, _pa, a_fallback) = cuttable_endpoint(&ka, &kb, &cut);
-        let (b, b_addr, _pb, _) = cuttable_endpoint(&kb, &ka, &cut);
-        let accept = tokio::spawn(async move { b.accept().await.unwrap().await.unwrap() });
-        let conn = a.connect(b_addr, SERVER_NAME).unwrap().await.unwrap();
-        let _held = accept.await.unwrap();
-        let gate = crate::relay::Gate::default();
+        let d = direct().await;
         // Longer than one keep-alive interval, much shorter than the wait.
         let silence = Duration::from_secs(4);
-        let _watch = crate::path::Watch::spawn(&a_fallback, b_addr, gate.clone(), silence);
+        let _watch = d.watch_sender(silence);
         tokio::time::sleep(silence.saturating_mul(2)).await;
-        assert!(!a_fallback.moved(), "an idle connection moved to the relay");
-        assert!(!gate.is_open());
-        assert!(conn.close_reason().is_none());
+        assert!(
+            !d.sender_fallback.moved(),
+            "an idle connection moved to the relay"
+        );
+        assert!(!d.send_gate.is_open());
+        assert!(d.sender.close_reason().is_none());
     }
 
     /// A try that ends without a connection does not hold up a later one
