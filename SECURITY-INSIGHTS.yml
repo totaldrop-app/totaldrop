@@ -21,7 +21,7 @@ project:
     quickstart-guide: https://github.com/totaldrop-app/totaldrop#readme
     code-of-conduct: https://github.com/totaldrop-app/totaldrop/blob/main/CODE_OF_CONDUCT.md
     release-process: https://github.com/totaldrop-app/totaldrop/blob/main/docs/surec.md
-    signature-verification: https://github.com/totaldrop-app/totaldrop#readme
+    signature-verification: https://github.com/totaldrop-app/totaldrop#download
   repositories:
     - name: totaldrop
       url: https://github.com/totaldrop-app/totaldrop
@@ -63,7 +63,7 @@ repository:
     dependency-management-policy: https://github.com/totaldrop-app/totaldrop/blob/main/deny.toml
   license:
     url: https://github.com/totaldrop-app/totaldrop/blob/main/LICENSING.md
-    expression: (MIT OR Apache-2.0) AND GPL-3.0-or-later AND AGPL-3.0-or-later
+    expression: (MIT OR Apache-2.0) AND GPL-3.0-or-later AND AGPL-3.0-or-later AND OFL-1.1
   release:
     changelog: https://github.com/totaldrop-app/totaldrop/blob/main/CHANGELOG.md
     automated-pipeline: true
@@ -72,10 +72,10 @@ repository:
         predicate-uri: https://slsa.dev/provenance/v1
         location: https://github.com/totaldrop-app/totaldrop/attestations
         comment: |
-          Linux packages and the Android bundle are built only in GitHub Actions, from a tag, and carry signed build provenance. Check a Linux package with "gh attestation verify <file> --repo totaldrop-app/totaldrop".
+          Linux packages and the Android bundle are built only in GitHub Actions, from a tag, and carry signed build provenance. Check a Linux package with "gh attestation verify <file> --repo totaldrop-app/totaldrop", or offline against the attached .sigstore.json with --bundle.
     distribution-points:
       - uri: https://github.com/totaldrop-app/totaldrop/releases
-        comment: Linux packages (.deb, .rpm, Arch) and SHA256SUMS
+        comment: Linux packages (.deb, .rpm, Arch), SHA256SUMS and the .sigstore.json build provenance
       - uri: https://totaldrop.app/download/
         comment: Download page
   security:
@@ -123,7 +123,7 @@ repository:
           adhoc: true
           ci: true
           release: false
-        comment: A fuzz target for every parser; runs weekly in CI.
+        comment: Fuzz targets in fuzz/; run weekly in CI.
       - name: OpenSSF Scorecard
         type: other
         rulesets:

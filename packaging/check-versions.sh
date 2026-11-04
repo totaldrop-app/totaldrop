@@ -66,5 +66,11 @@ check=$(sed -n 's/^ *container: *\(archlinux:[^ ]*\).*/\1/p' "$root/.github/work
 [ -n "$base" ] || fail "no archlinux FROM in packaging/containers/arch.Dockerfile"
 same ".github/workflows/linux.yml (container)" "$check" "$base"
 
+# The deb and rpm images pin the same rustup-init release and checksums.
+rustup_args() { grep -E '^ARG RUSTUP_(VERSION|SHA256_[A-Z0-9_]+)=' "$root/packaging/containers/$1.Dockerfile" | sort; }
+rustup_deb=$(rustup_args debian)
+[ -n "$rustup_deb" ] || fail "packaging/containers/debian.Dockerfile: no RUSTUP_* ARGs"
+same "packaging/containers/fedora.Dockerfile (RUSTUP_* ARGs)" "$(rustup_args fedora)" "$rustup_deb"
+
 [ $status -eq 0 ] && echo "versions agree: $cargo; Rust $rust; Flutter $flutter"
 exit $status

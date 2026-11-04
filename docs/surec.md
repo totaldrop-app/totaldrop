@@ -98,8 +98,9 @@ Bir değişiklik ancak şunların hepsi doğruysa bitmiştir:
    tags"); yayın işleri `linux-release` ve `play-release` ortamlarında,
    yöneticinin onayıyla çalışır.
 4. CI paketleri etiketten derler. Linux: her pakete derleme kaynağını
-   gösteren imzalı bir kanıt (build provenance) ekler ve taslak bir GitHub
-   yayını açar. Android: `play-release` ortamında yükleme anahtarıyla
+   gösteren imzalı bir kanıt (build provenance) ekler, aynı kanıtı Sigstore
+   paketi olarak `totaldrop-linux-<sürüm>.sigstore.json` adıyla yayın
+   dosyalarına koyar ve taslak bir GitHub yayını açar. Android: `play-release` ortamında yükleme anahtarıyla
    imzalı `.aab` üretir ve iş çıktısı (artifact) olarak bırakır; GitHub
    yayını açılmaz. Kişisel bir makinede derlenen hiçbir şey yayınlanmaz.
    Derleyiciler sabittir (Rust `rust-toolchain.toml`'daki sürüm, Flutter
@@ -110,7 +111,15 @@ Bir değişiklik ancak şunların hepsi doğruysa bitmiştir:
    sürümleridir. Dependabot Arch imajının özetini yalnız
    `arch.Dockerfile`'da günceller; aynı PR'da `linux.yml`'deki `container:`
    satırı da elle aynı özete getirilir, yoksa sürüm denetimi PR'ı durdurur.
-5. İndirilen paketler sağlama toplamıyla ve temiz kaplarda kurulumla
+   deb ve rpm imajları rustup-init'i sabit bir rustup sürümünden indirir ve
+   sha256 ile doğrular. Sürüm yükseltilirken iki Dockerfile'daki
+   `RUSTUP_VERSION` ile iki `RUSTUP_SHA256_*` birlikte değiştirilir;
+   değerler `https://static.rust-lang.org/rustup/archive/<sürüm>/<hedef>/rustup-init.sha256`
+   dosyalarından alınır (`check-versions.sh` iki Dockerfile'ın aynı
+   değerleri taşıdığını denetler).
+5. İndirilen paketler sağlama toplamıyla, Linux'ta ayrıca
+   `gh attestation verify <paket> --repo totaldrop-app/totaldrop --bundle
+   totaldrop-linux-<sürüm>.sigstore.json` ile ve temiz kaplarda kurulumla
    (`packaging/test-install.sh`) denenir.
 6. Yayın notları İngilizce ve Türkçe yazılır, taslak yayımlanır.
 7. Site güncellenir ve indirme bağlantılarının her biri denenir.
