@@ -1,4 +1,4 @@
-<!-- Translated from README.md a58ae69995a9. -->
+<!-- Translated from README.md 1d3a5fc19242. -->
 <div align="center">
 
 <picture>
@@ -49,16 +49,16 @@
 
 | 플랫폼 | 받기 | 참고 |
 | --- | --- | --- |
-| **Linux** (x86-64) | [Arch / Omarchy](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.2/totaldrop-0.3.0_beta.2-1-x86_64.pkg.tar.zst) · [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.2/totaldrop_0.3.0.beta.2-1_amd64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.2/totaldrop-0.3.0.beta.2-1.fc43.x86_64.rpm) | 0.3.0-beta.2, Qt 6.8 이상 |
-| **Linux** (ARM64) | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.2/totaldrop_0.3.0.beta.2-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.2/totaldrop-0.3.0.beta.2-1.fc43.aarch64.rpm) | 0.3.0-beta.2, Qt 6.8 이상 |
-| **Android** | [베타 참여하기](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.2, Android 15 이상, Google Play 초대제 |
+| **Linux** (x86-64) | [Arch / Omarchy](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.3/totaldrop-0.3.0_beta.3-1-x86_64.pkg.tar.zst) · [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.3/totaldrop_0.3.0.beta.3-1_amd64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.3/totaldrop-0.3.0.beta.3-1.fc43.x86_64.rpm) | 0.3.0-beta.3, Qt 6.8 이상 |
+| **Linux** (ARM64) | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.3/totaldrop_0.3.0.beta.3-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.3/totaldrop-0.3.0.beta.3-1.fc43.aarch64.rpm) | 0.3.0-beta.3, Qt 6.8 이상 |
+| **Android** | [베타 참여하기](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.3, Android 15 이상, Google Play 초대제 |
 | **명령줄** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux, macOS, Windows |
 | **Windows, macOS, iOS** | 준비 중 | 후원금은 가장 먼저 이 플랫폼들의 코드 서명에 쓰입니다 |
 
 모든 패키지는 개발자의 컴퓨터가 아니라, 태그가 붙은 커밋에서 CI가 빌드합니다. 설치하기 전에 확인하려면 릴리스의 `SHA256SUMS`와 비교하고, 어디서 빌드되었는지 검증하세요.
 
 ```bash
-gh attestation verify totaldrop_0.3.0.beta.2-1_amd64.deb --repo totaldrop-app/totaldrop
+gh attestation verify totaldrop_0.3.0.beta.3-1_amd64.deb --repo totaldrop-app/totaldrop
 ```
 
 > [!NOTE]
