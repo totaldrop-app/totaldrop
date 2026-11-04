@@ -11,7 +11,8 @@ precedence = "closest"
 SPDX-FileCopyrightText = "2026 The TotalDrop Contributors"
 SPDX-License-Identifier = "GPL-3.0-or-later"
 
-# The protocol libraries and their fuzz targets.
+# The protocol libraries, their fuzz targets, and the translations that
+# totaldrop-l10n compiles into itself.
 [[annotations]]
 path = [
   "crates/totaldrop-crypto/**",
@@ -19,6 +20,7 @@ path = [
   "crates/totaldrop-core/**",
   "crates/totaldrop-l10n/**",
   "fuzz/**",
+  "l10n/**",
 ]
 precedence = "closest"
 SPDX-FileCopyrightText = "2026 The TotalDrop Contributors"

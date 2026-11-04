@@ -1,4 +1,4 @@
-<!-- Translated from README.md a4c25a4534d9. -->
+<!-- Translated from README.md 56ed597bf0f2. -->
 <div align="center">
 
 <picture>
@@ -100,7 +100,7 @@ TotalDrop 35টি ভাষায় কথা বলে এবং আপনা
 | `crates/totaldrop-core` | ক্লায়েন্ট ইঞ্জিন: সংযোগকারী সার্ভার, raw পাবলিক কী সহ QUIC, Noise XXpsk3 + ML-KEM-768, ট্রান্সফার | MIT OR Apache-2.0 |
 | `crates/totaldrop-l10n` | Rust প্রোগ্রামের ইন্টারফেস লেখা: ভাষা নির্বাচন, ICU বার্তা, বহুবচন, আঞ্চলিক সংখ্যা | MIT OR Apache-2.0 |
 | `crates/totaldrop-cli` | `totaldrop` কমান্ড-লাইন ক্লায়েন্ট | GPL-3.0-or-later |
-| `l10n/` | ইন্টারফেসের প্রতিটি স্ট্রিং, যা Android, Linux ও CLI ভাগ করে ব্যবহার করে ([অনুবাদ](../../docs/ceviri.md)) | GPL-3.0-or-later |
+| `l10n/` | ইন্টারফেসের প্রতিটি স্ট্রিং, যা Android, Linux ও CLI ভাগ করে ব্যবহার করে ([অনুবাদ](../../docs/ceviri.md)) | MIT OR Apache-2.0 |
 | `linux/` | Linux ডেস্কটপ অ্যাপ: `totaldrop-core`-এর ওপর Qt 6 ও QML, নেটিভ Wayland | GPL-3.0-or-later |
 | `packaging/` | Linux প্যাকেজ, প্রতিটি ফরম্যাট আলাদাভাবে: Arch (`PKGBUILD`), Debian (`debian/`), RPM (`.spec`) | GPL-3.0-or-later |
 | `app/` | Android অ্যাপ (Flutter); iOS পরে | GPL-3.0-or-later |

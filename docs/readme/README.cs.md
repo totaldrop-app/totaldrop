@@ -1,4 +1,4 @@
-<!-- Translated from README.md a4c25a4534d9. -->
+<!-- Translated from README.md 56ed597bf0f2. -->
 <div align="center">
 
 <picture>
@@ -100,7 +100,7 @@ Pomoci můžete také [hlášením chyb](https://github.com/totaldrop-app/totald
 | `crates/totaldrop-core` | Klientské jádro: navázání spojení, QUIC se surovými veřejnými klíči, Noise XXpsk3 + ML-KEM-768, přenos | MIT OR Apache-2.0 |
 | `crates/totaldrop-l10n` | Texty rozhraní pro programy v Rustu: výběr jazyka, zprávy ICU, množná čísla, regionální formáty čísel | MIT OR Apache-2.0 |
 | `crates/totaldrop-cli` | Klient příkazového řádku `totaldrop` | GPL-3.0-or-later |
-| `l10n/` | Všechny texty rozhraní, společné pro Android, Linux a CLI ([překlad](../../docs/ceviri.md)) | GPL-3.0-or-later |
+| `l10n/` | Všechny texty rozhraní, společné pro Android, Linux a CLI ([překlad](../../docs/ceviri.md)) | MIT OR Apache-2.0 |
 | `linux/` | Linuxová desktopová aplikace: Qt 6 a QML nad `totaldrop-core`, nativní Wayland | GPL-3.0-or-later |
 | `packaging/` | Balíčky pro Linux, každý formát zvlášť: Arch (`PKGBUILD`), Debian (`debian/`), RPM (`.spec`) | GPL-3.0-or-later |
 | `app/` | Aplikace pro Android (Flutter); iOS později | GPL-3.0-or-later |

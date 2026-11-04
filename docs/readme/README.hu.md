@@ -1,4 +1,4 @@
-<!-- Translated from README.md a4c25a4534d9. -->
+<!-- Translated from README.md 56ed597bf0f2. -->
 <div align="center">
 
 <picture>
@@ -100,7 +100,7 @@ Segíthetsz úgy is, hogy [hibákat jelentesz](https://github.com/totaldrop-app/
 | `crates/totaldrop-core` | Kliensmotor: találkozás a szerveren, QUIC nyers nyilvános kulcsokkal, Noise XXpsk3 + ML-KEM-768, átvitel | MIT OR Apache-2.0 |
 | `crates/totaldrop-l10n` | Felületi szövegek a Rust-programokhoz: nyelvválasztás, ICU-üzenetek, többes számú alakok, regionális számformátumok | MIT OR Apache-2.0 |
 | `crates/totaldrop-cli` | A `totaldrop` parancssori kliens | GPL-3.0-or-later |
-| `l10n/` | Minden felületi szöveg, amelyen az Android, a Linux és a CLI osztozik ([fordítás](../../docs/ceviri.md)) | GPL-3.0-or-later |
+| `l10n/` | Minden felületi szöveg, amelyen az Android, a Linux és a CLI osztozik ([fordítás](../../docs/ceviri.md)) | MIT OR Apache-2.0 |
 | `linux/` | Linuxos asztali alkalmazás: Qt 6 és QML a `totaldrop-core` fölött, natív Wayland | GPL-3.0-or-later |
 | `packaging/` | Linuxos csomagok, minden formátum külön: Arch (`PKGBUILD`), Debian (`debian/`), RPM (`.spec`) | GPL-3.0-or-later |
 | `app/` | Android-alkalmazás (Flutter); iOS később | GPL-3.0-or-later |

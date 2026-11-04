@@ -1,4 +1,4 @@
-<!-- Translated from README.md a4c25a4534d9. -->
+<!-- Translated from README.md 56ed597bf0f2. -->
 <div align="center">
 
 <picture>
@@ -100,7 +100,7 @@ Du kan också hjälpa till genom att [rapportera buggar](https://github.com/tota
 | `crates/totaldrop-core` | Klientmotor: kontakt med mötesservern, QUIC med råa publika nycklar, Noise XXpsk3 + ML-KEM-768, överföring | MIT OR Apache-2.0 |
 | `crates/totaldrop-l10n` | Gränssnittstext för Rust-programmen: språkförhandling, ICU-meddelanden, pluralformer, regionala talformat | MIT OR Apache-2.0 |
 | `crates/totaldrop-cli` | Kommandoradsklienten `totaldrop` | GPL-3.0-or-later |
-| `l10n/` | Alla gränssnittssträngar, delade av Android, Linux och CLI ([översättning](../../docs/ceviri.md)) | GPL-3.0-or-later |
+| `l10n/` | Alla gränssnittssträngar, delade av Android, Linux och CLI ([översättning](../../docs/ceviri.md)) | MIT OR Apache-2.0 |
 | `linux/` | Linux-skrivbordsapp: Qt 6 och QML ovanpå `totaldrop-core`, inbyggt Wayland | GPL-3.0-or-later |
 | `packaging/` | Linux-paket, varje format för sig: Arch (`PKGBUILD`), Debian (`debian/`), RPM (`.spec`) | GPL-3.0-or-later |
 | `app/` | Android-app (Flutter); iOS senare | GPL-3.0-or-later |

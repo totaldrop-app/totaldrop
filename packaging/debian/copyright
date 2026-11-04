@@ -7,7 +7,7 @@ Files: *
 Copyright: 2026 The TotalDrop Contributors
 License: GPL-3.0-or-later
 
-Files: crates/totaldrop-core/* crates/totaldrop-crypto/* crates/totaldrop-proto/* crates/totaldrop-l10n/* fuzz/*
+Files: crates/totaldrop-core/* crates/totaldrop-crypto/* crates/totaldrop-proto/* crates/totaldrop-l10n/* fuzz/* l10n/*
 Copyright: 2026 The TotalDrop Contributors
 License: MIT or Apache-2.0
 

@@ -1,4 +1,4 @@
-<!-- Translated from README.md a4c25a4534d9. -->
+<!-- Translated from README.md 56ed597bf0f2. -->
 <div align="center">
 
 <picture>
@@ -100,7 +100,7 @@ TotalDrop이 무료로 유지되는 것은 사람들이 힘을 보태 주기 때
 | `crates/totaldrop-core` | 클라이언트 엔진: 중개, 원시 공개 키를 사용하는 QUIC, Noise XXpsk3 + ML-KEM-768, 전송 | MIT OR Apache-2.0 |
 | `crates/totaldrop-l10n` | Rust 프로그램의 인터페이스 텍스트: 언어 협상, ICU 메시지, 복수형, 지역별 숫자 | MIT OR Apache-2.0 |
 | `crates/totaldrop-cli` | `totaldrop` 명령줄 클라이언트 | GPL-3.0-or-later |
-| `l10n/` | Android, Linux, CLI가 공유하는 모든 인터페이스 문자열 ([번역하기](../../docs/ceviri.md)) | GPL-3.0-or-later |
+| `l10n/` | Android, Linux, CLI가 공유하는 모든 인터페이스 문자열 ([번역하기](../../docs/ceviri.md)) | MIT OR Apache-2.0 |
 | `linux/` | Linux 데스크톱 앱: `totaldrop-core` 위의 Qt 6와 QML, 네이티브 Wayland | GPL-3.0-or-later |
 | `packaging/` | Linux 패키지, 형식마다 따로: Arch(`PKGBUILD`), Debian(`debian/`), RPM(`.spec`) | GPL-3.0-or-later |
 | `app/` | Android 앱(Flutter), iOS는 나중에 | GPL-3.0-or-later |

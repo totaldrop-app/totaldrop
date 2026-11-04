@@ -1,4 +1,4 @@
-<!-- Translated from README.md a4c25a4534d9. -->
+<!-- Translated from README.md 56ed597bf0f2. -->
 <div align="center">
 
 <picture>
@@ -100,7 +100,7 @@ gh attestation verify totaldrop_0.3.0.beta.3-1_amd64.deb --repo totaldrop-app/to
 | `crates/totaldrop-core` | محرك العميل: الالتقاء، وQUIC بمفاتيح عامة خام، وNoise XXpsk3 + ML-KEM-768، والنقل | MIT OR Apache-2.0 |
 | `crates/totaldrop-l10n` | نصوص الواجهة لبرامج Rust: التفاوض على اللغة، ورسائل ICU، وصيغ الجمع، والأرقام الإقليمية | MIT OR Apache-2.0 |
 | `crates/totaldrop-cli` | عميل سطر الأوامر `totaldrop` | GPL-3.0-or-later |
-| `l10n/` | كل نصوص الواجهة، مشتركة بين Android وLinux وسطر الأوامر ([الترجمة](../../docs/ceviri.md)) | GPL-3.0-or-later |
+| `l10n/` | كل نصوص الواجهة، مشتركة بين Android وLinux وسطر الأوامر ([الترجمة](../../docs/ceviri.md)) | MIT OR Apache-2.0 |
 | `linux/` | تطبيق Linux لسطح المكتب: Qt 6 وQML فوق `totaldrop-core`، مع Wayland أصلي | GPL-3.0-or-later |
 | `packaging/` | حزم Linux، كل تنسيق على حدة: Arch (`PKGBUILD`)، وDebian (`debian/`)، وRPM (`.spec`) | GPL-3.0-or-later |
 | `app/` | تطبيق Android (Flutter)؛ وiOS لاحقًا | GPL-3.0-or-later |

@@ -1,4 +1,4 @@
-<!-- Translated from README.md a4c25a4534d9. -->
+<!-- Translated from README.md 56ed597bf0f2. -->
 <div align="center">
 
 <picture>
@@ -100,7 +100,7 @@ TotalDrop رایگان می‌ماند چون مردم کمک می‌کنند. �
 | `crates/totaldrop-core` | موتور کلاینت: هماهنگی، QUIC با کلیدهای عمومی خام، Noise XXpsk3 + ML-KEM-768، انتقال | MIT OR Apache-2.0 |
 | `crates/totaldrop-l10n` | متن رابط کاربری برای برنامه‌های Rust: انتخاب زبان، پیام‌های ICU، صورت‌های جمع، اعداد منطقه‌ای | MIT OR Apache-2.0 |
 | `crates/totaldrop-cli` | کلاینت خط فرمان `totaldrop` | GPL-3.0-or-later |
-| `l10n/` | همه رشته‌های رابط کاربری، مشترک میان Android، Linux و خط فرمان ([ترجمه](../../docs/ceviri.md)) | GPL-3.0-or-later |
+| `l10n/` | همه رشته‌های رابط کاربری، مشترک میان Android، Linux و خط فرمان ([ترجمه](../../docs/ceviri.md)) | MIT OR Apache-2.0 |
 | `linux/` | برنامه رومیزی Linux: Qt 6 و QML روی `totaldrop-core`، با Wayland بومی | GPL-3.0-or-later |
 | `packaging/` | بسته‌های Linux، هر قالب جداگانه: Arch (`PKGBUILD`)، Debian (`debian/`)، RPM (`.spec`) | GPL-3.0-or-later |
 | `app/` | برنامه Android (Flutter)؛ iOS بعدا | GPL-3.0-or-later |

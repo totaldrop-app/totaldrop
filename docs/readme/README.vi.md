@@ -1,4 +1,4 @@
-<!-- Translated from README.md a4c25a4534d9. -->
+<!-- Translated from README.md 56ed597bf0f2. -->
 <div align="center">
 
 <picture>
@@ -100,7 +100,7 @@ Bạn cũng có thể giúp bằng cách [báo lỗi](https://github.com/totaldr
 | `crates/totaldrop-core` | Bộ máy phía máy khách: điểm hẹn, QUIC với khóa công khai thô, Noise XXpsk3 + ML-KEM-768, truyền tệp | MIT OR Apache-2.0 |
 | `crates/totaldrop-l10n` | Văn bản giao diện cho các chương trình Rust: chọn ngôn ngữ, thông điệp ICU, số nhiều, định dạng số theo khu vực | MIT OR Apache-2.0 |
 | `crates/totaldrop-cli` | Máy khách dòng lệnh `totaldrop` | GPL-3.0-or-later |
-| `l10n/` | Mọi chuỗi giao diện, dùng chung cho Android, Linux và CLI ([dịch](../../docs/ceviri.md)) | GPL-3.0-or-later |
+| `l10n/` | Mọi chuỗi giao diện, dùng chung cho Android, Linux và CLI ([dịch](../../docs/ceviri.md)) | MIT OR Apache-2.0 |
 | `linux/` | Ứng dụng máy tính Linux: Qt 6 và QML trên nền `totaldrop-core`, Wayland gốc | GPL-3.0-or-later |
 | `packaging/` | Các gói Linux, mỗi định dạng riêng: Arch (`PKGBUILD`), Debian (`debian/`), RPM (`.spec`) | GPL-3.0-or-later |
 | `app/` | Ứng dụng Android (Flutter); iOS sau | GPL-3.0-or-later |

@@ -1,4 +1,4 @@
-<!-- Translated from README.md a4c25a4534d9. -->
+<!-- Translated from README.md 56ed597bf0f2. -->
 <div align="center">
 
 <picture>
@@ -100,7 +100,7 @@ Puteți ajuta și [raportând erori](https://github.com/totaldrop-app/totaldrop/
 | `crates/totaldrop-core` | Motorul clientului: întâlnirea prin server, QUIC cu chei publice brute, Noise XXpsk3 + ML-KEM-768, transfer | MIT OR Apache-2.0 |
 | `crates/totaldrop-l10n` | Textele interfeței pentru programele Rust: alegerea limbii, mesaje ICU, forme de plural, numere regionale | MIT OR Apache-2.0 |
 | `crates/totaldrop-cli` | Clientul de linie de comandă `totaldrop` | GPL-3.0-or-later |
-| `l10n/` | Toate textele interfeței, comune pentru Android, Linux și CLI ([traducere](../../docs/ceviri.md)) | GPL-3.0-or-later |
+| `l10n/` | Toate textele interfeței, comune pentru Android, Linux și CLI ([traducere](../../docs/ceviri.md)) | MIT OR Apache-2.0 |
 | `linux/` | Aplicația desktop pentru Linux: Qt 6 și QML peste `totaldrop-core`, Wayland nativ | GPL-3.0-or-later |
 | `packaging/` | Pachete Linux, fiecare format separat: Arch (`PKGBUILD`), Debian (`debian/`), RPM (`.spec`) | GPL-3.0-or-later |
 | `app/` | Aplicația Android (Flutter); iOS mai târziu | GPL-3.0-or-later |

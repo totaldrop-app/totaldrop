@@ -1,4 +1,4 @@
-<!-- Translated from README.md a4c25a4534d9. -->
+<!-- Translated from README.md 56ed597bf0f2. -->
 <div align="center">
 
 <picture>
@@ -100,7 +100,7 @@ TotalDrop ฟรีได้เพราะมีผู้คนช่วยก�
 | `crates/totaldrop-core` | เอนจินฝั่งไคลเอนต์: เซิร์ฟเวอร์นัดพบ, QUIC กับคีย์สาธารณะแบบ raw, Noise XXpsk3 + ML-KEM-768, การโอน | MIT OR Apache-2.0 |
 | `crates/totaldrop-l10n` | ข้อความอินเทอร์เฟซของโปรแกรม Rust: การเลือกภาษา ข้อความ ICU รูปพหูพจน์ ตัวเลขตามภูมิภาค | MIT OR Apache-2.0 |
 | `crates/totaldrop-cli` | ไคลเอนต์บรรทัดคำสั่ง `totaldrop` | GPL-3.0-or-later |
-| `l10n/` | ข้อความอินเทอร์เฟซทุกข้อความ ใช้ร่วมกันโดย Android, Linux และ CLI ([การแปล](../../docs/ceviri.md)) | GPL-3.0-or-later |
+| `l10n/` | ข้อความอินเทอร์เฟซทุกข้อความ ใช้ร่วมกันโดย Android, Linux และ CLI ([การแปล](../../docs/ceviri.md)) | MIT OR Apache-2.0 |
 | `linux/` | แอปเดสก์ท็อป Linux: Qt 6 และ QML บน `totaldrop-core`, Wayland แบบเนทีฟ | GPL-3.0-or-later |
 | `packaging/` | แพ็กเกจ Linux แยกตามรูปแบบ: Arch (`PKGBUILD`), Debian (`debian/`), RPM (`.spec`) | GPL-3.0-or-later |
 | `app/` | แอป Android (Flutter); iOS ภายหลัง | GPL-3.0-or-later |

@@ -4,11 +4,11 @@ TotalDrop uses three licenses, each chosen for what the code is for.
 
 | Code | License | Why |
 | --- | --- | --- |
-| Protocol libraries (`crates/totaldrop-crypto`, `crates/totaldrop-proto`, `crates/totaldrop-core`, `crates/totaldrop-l10n`, `fuzz/`) | MIT OR Apache-2.0, at your option | Anyone, including other projects, can build a compatible client without restrictions. An open protocol only matters if it is easy to implement. |
+| Protocol libraries (`crates/totaldrop-crypto`, `crates/totaldrop-proto`, `crates/totaldrop-core`, `crates/totaldrop-l10n`, `fuzz/`) and the translations (`l10n/`), which `totaldrop-l10n` compiles into itself | MIT OR Apache-2.0, at your option | Anyone, including other projects, can build a compatible client without restrictions. An open protocol only matters if it is easy to implement. |
 | Apps (`crates/totaldrop-cli`, `app/`, `linux/`) | GPL-3.0-or-later | The TotalDrop apps, and anything derived from them, stay free software. |
 | Web site (`site/`) | GPL-3.0-or-later; the bundled fonts keep their SIL Open Font License 1.1 | Same as the apps. |
 | Servers (`server/`) | AGPL-3.0-or-later | Anyone who runs a modified server for others must publish their changes, so a hosted fork cannot quietly weaken privacy. |
-| Everything else: translations (`l10n/`), Linux packaging (`packaging/`), tools, documents, CI | GPL-3.0-or-later | Same as the apps. |
+| Everything else: Linux packaging (`packaging/`), tools, documents, CI | GPL-3.0-or-later | Same as the apps. |
 
 The full texts are in [`LICENSES/`](LICENSES/), named by their SPDX identifiers as the [REUSE](https://reuse.software/) layout does: `MIT.txt`, `Apache-2.0.txt`, `GPL-3.0-or-later.txt`, `AGPL-3.0-or-later.txt` and, for the fonts, `OFL-1.1.txt`.
 

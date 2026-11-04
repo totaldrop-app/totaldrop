@@ -1,4 +1,4 @@
-<!-- Translated from README.md a4c25a4534d9. -->
+<!-- Translated from README.md 56ed597bf0f2. -->
 <div align="center">
 
 <picture>
@@ -100,7 +100,7 @@ TotalDrop נשאר חינמי כי אנשים תורמים. התרומות מש�
 | `crates/totaldrop-core` | מנוע הלקוח: מפגש, QUIC עם מפתחות ציבוריים גולמיים, Noise XXpsk3 + ML-KEM-768, העברה | MIT OR Apache-2.0 |
 | `crates/totaldrop-l10n` | טקסטי ממשק לתוכנות Rust: בחירת שפה, הודעות ICU, צורות רבים, מספרים לפי אזור | MIT OR Apache-2.0 |
 | `crates/totaldrop-cli` | לקוח שורת הפקודה `totaldrop` | GPL-3.0-or-later |
-| `l10n/` | כל מחרוזות הממשק, משותפות ל־Android, ל־Linux ולשורת הפקודה ([תרגום](../../docs/ceviri.md)) | GPL-3.0-or-later |
+| `l10n/` | כל מחרוזות הממשק, משותפות ל־Android, ל־Linux ולשורת הפקודה ([תרגום](../../docs/ceviri.md)) | MIT OR Apache-2.0 |
 | `linux/` | אפליקציית שולחן העבודה ל־Linux: Qt 6 ו־QML מעל `totaldrop-core`, Wayland מקורי | GPL-3.0-or-later |
 | `packaging/` | חבילות Linux, כל פורמט בנפרד: Arch (`PKGBUILD`), Debian (`debian/`), RPM (`.spec`) | GPL-3.0-or-later |
 | `app/` | אפליקציית Android (Flutter); iOS בהמשך | GPL-3.0-or-later |

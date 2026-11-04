@@ -1,4 +1,4 @@
-<!-- Translated from README.md a4c25a4534d9. -->
+<!-- Translated from README.md 56ed597bf0f2. -->
 <div align="center">
 
 <picture>
@@ -100,7 +100,7 @@ TotalDrop मुफ़्त है क्योंकि लोग योगद
 | `crates/totaldrop-core` | क्लाइंट इंजन: संपर्क सर्वर, raw सार्वजनिक कुंजियों के साथ QUIC, Noise XXpsk3 + ML-KEM-768, ट्रांसफ़र | MIT OR Apache-2.0 |
 | `crates/totaldrop-l10n` | Rust प्रोग्रामों के लिए इंटरफ़ेस पाठ: भाषा चयन, ICU संदेश, बहुवचन, क्षेत्रीय संख्याएँ | MIT OR Apache-2.0 |
 | `crates/totaldrop-cli` | `totaldrop` कमांड-लाइन क्लाइंट | GPL-3.0-or-later |
-| `l10n/` | हर इंटरफ़ेस स्ट्रिंग, जिसे Android, Linux और CLI साझा करते हैं ([अनुवाद](../../docs/ceviri.md)) | GPL-3.0-or-later |
+| `l10n/` | हर इंटरफ़ेस स्ट्रिंग, जिसे Android, Linux और CLI साझा करते हैं ([अनुवाद](../../docs/ceviri.md)) | MIT OR Apache-2.0 |
 | `linux/` | Linux डेस्कटॉप ऐप: `totaldrop-core` के ऊपर Qt 6 और QML, नेटिव Wayland | GPL-3.0-or-later |
 | `packaging/` | Linux पैकेज, हर फ़ॉर्मैट अलग: Arch (`PKGBUILD`), Debian (`debian/`), RPM (`.spec`) | GPL-3.0-or-later |
 | `app/` | Android ऐप (Flutter); iOS बाद में | GPL-3.0-or-later |

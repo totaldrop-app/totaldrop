@@ -1,4 +1,4 @@
-<!-- Translated from README.md a4c25a4534d9. -->
+<!-- Translated from README.md 56ed597bf0f2. -->
 <div align="center">
 
 <picture>
@@ -100,7 +100,7 @@ Voit auttaa myös [ilmoittamalla virheistä](https://github.com/totaldrop-app/to
 | `crates/totaldrop-core` | Asiakasmoottori: kohtauspalvelinyhteys, QUIC raaoilla julkisilla avaimilla, Noise XXpsk3 + ML-KEM-768, siirto | MIT OR Apache-2.0 |
 | `crates/totaldrop-l10n` | Rust-ohjelmien käyttöliittymätekstit: kielen neuvottelu, ICU-viestit, monikkomuodot, alueelliset numeromuodot | MIT OR Apache-2.0 |
 | `crates/totaldrop-cli` | `totaldrop`-komentoriviasiakas | GPL-3.0-or-later |
-| `l10n/` | Kaikki käyttöliittymän merkkijonot, yhteiset Androidille, Linuxille ja CLI:lle ([kääntäminen](../../docs/ceviri.md)) | GPL-3.0-or-later |
+| `l10n/` | Kaikki käyttöliittymän merkkijonot, yhteiset Androidille, Linuxille ja CLI:lle ([kääntäminen](../../docs/ceviri.md)) | MIT OR Apache-2.0 |
 | `linux/` | Linuxin työpöytäsovellus: Qt 6 ja QML `totaldrop-core`-kirjaston päällä, natiivi Wayland | GPL-3.0-or-later |
 | `packaging/` | Linux-paketit, kukin muoto erikseen: Arch (`PKGBUILD`), Debian (`debian/`), RPM (`.spec`) | GPL-3.0-or-later |
 | `app/` | Android-sovellus (Flutter); iOS myöhemmin | GPL-3.0-or-later |
