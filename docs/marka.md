@@ -12,7 +12,13 @@ bölümü bu belgenin 35 dildeki kısa hâlidir.
 TotalDrop'un kodu açık lisanslıdır ([LICENSING.md](../LICENSING.md)).
 Lisanslar kodu kopyalamanıza, değiştirmenize ve dağıtmanıza izin verir. Ama
 TotalDrop adını ve işaretini kullanma izni vermez. Ad ve işaret için bu
-belge geçerlidir.
+belge geçerlidir. Bu belge kodun kullanımına hiçbir kısıt getirmez ve
+lisanslara ek şart değildir.
+
+İşaret dosyaları (`site/public/brand/files/`, uygulama simgeleri) de
+bulundukları klasörün lisansıyla dağıtılır: dosyayı kopyalamak ve
+değiştirmek lisansın verdiği haktır. Bu belge yalnızca adın ve işaretin
+bir ürünü ya da hizmeti tanıtmak için nasıl kullanılacağını söyler.
 
 Neden: TotalDrop'a şifrelemesi için güvenilir. "TotalDrop" yazan bir
 uygulamanın bu depodaki koddan geldiğini ve aynı güvenlik sözlerini
@@ -25,15 +31,23 @@ verdiğini bilmek, kullanıcının kendini korumasının bir parçasıdır.
   söz etmek, adı ve değiştirilmemiş işareti kullanmak, ekran görüntüsü
   paylaşmak.
 - **Paketlemek:** Kodu değiştirmeden derleyip bir Linux dağıtımında,
-  Flathub'da, AUR'da, F-Droid'de ya da benzer bir depoda TotalDrop adı ve
-  işaretiyle dağıtmak. Yalnızca paketleme için gereken yamalar (derleme
-  yolları, sistem kütüphaneleri, dosya yerleri) değişiklik sayılmaz.
-  Uygulamanın davranışını, şifrelemesini, bağlandığı sunucuları ya da
-  arayüzünü değiştiren yamalar değişiklik sayılır.
+  AUR'da, F-Droid'de ya da benzer bir depoda TotalDrop adı ve işaretiyle
+  dağıtmak. Yalnızca paketleme için gereken yamalar değişiklik sayılmaz:
+  derleme yolları, dosya yerleri, gömülü bir bağımlılığın yerine
+  dağıtımın aynı kütüphanesini ya da uyumlu bir sürümünü kullanmak.
+  Uygulamanın davranışını, arayüzünü, bağlandığı sunucuları ya da protokol
+  sabitlerini değiştiren, şifreleme kütüphanesini başka bir uygulamayla
+  değiştiren yamalar değişiklik sayılır.
+- **Flathub:** `app.totaldrop.TotalDrop` kimliğiyle Flathub'daki kaydı
+  proje yayımlar ya da onaylar, çünkü orada yayıncı TotalDrop olarak
+  görünür. Flathub'da paketlemek istiyorsanız önce hello@totaldrop.app
+  adresine yazın.
 - **Uyumlu yazılım:** Protokolü kendiniz uygulayan bir istemci, kütüphane
   ya da eklenti yazdıysanız "TotalDrop ile çalışır" ya da "TotalDrop ile
   uyumludur" diyebilirsiniz. Yazılımınızın adında TotalDrop geçmemeli ve
-  TotalDrop işaretini kullanmamalısınız.
+  TotalDrop işaretini kullanmamalısınız. Protokolün kendi içindeki
+  tanımlayıcılar (ör. `totaldrop/0`) uyumluluk için gereklidir ve bu
+  kurala girmez.
 - Ticari olmayan topluluk işleri: buluşma sunumu, çıkartma, afiş. Ad ve
   işaret değiştirilmeden kullanılır.
 
@@ -43,9 +57,14 @@ Kodu değiştirip dağıtabilirsiniz, lisanslar buna izin verir. Değiştirilmi�
 sürümü kendi adınızla yayımlayın:
 
 - Kendi adınızı ve işaretinizi kullanın. "TotalDrop" adı ve Köşe işareti
-  uygulamanın adında, simgesinde, mağaza sayfasında ve sitesinde yer almaz.
-- Kendi uygulama kimliğinizi kullanın: Android'de `app.totaldrop`, Linux'ta
-  `app.totaldrop.TotalDrop` dışında bir kimlik.
+  ürününüzün adı, simgesi ya da kimliği olarak uygulamada, mağaza
+  sayfasında ve sitede yer almaz. Aşağıdaki köken cümlesi bunun dışındadır.
+- Kendi uygulama kimliğinizi kullanmanızı öneririz (Android'de
+  `app.totaldrop`, Linux'ta `app.totaldrop.TotalDrop` dışında bir kimlik).
+  Bu bir şart değil, pratik bir gereklilik: mağazalar ve Flathub aynı
+  kimliği iki kez kabul etmez, Android başka anahtarla imzalanmış bir
+  güncellemeyi kurmaz, aynı masaüstü kimliğini taşıyan iki uygulama
+  birbirinin yerine geçer.
 - Kökeninizi söyleyebilirsiniz: "X, TotalDrop tabanlıdır" ya da "X,
   TotalDrop'un bir çatalıdır". Bu cümle TotalDrop'un X'i onayladığını ya da
   denetlediğini ima etmemelidir.
@@ -56,8 +75,9 @@ sürümü kendi adınızla yayımlayın:
 
 - TotalDrop'un resmî sürümü, ortağı ya da onayladığı bir ürün gibi
   görünmek.
-- İşareti değiştirmek, başka bir logoyla birleştirmek ya da görsel
-  kuralların dışında kullanmak ([/brand](https://totaldrop.app/brand),
+- Değiştirilmiş bir işareti TotalDrop'un işareti olarak kullanmak,
+  işareti başka bir logoyla birleştirmek ya da görsel kuralların dışında
+  kullanmak ([/brand](https://totaldrop.app/brand),
   "Yapılmaması gerekenler").
 - TotalDrop'a benzeyen ve onunla karıştırılabilecek ad, alan adı, kullanıcı
   adı ya da uygulama adı kullanmak (ör. "TotalDrop Pro", "totaldrop-app.net").
@@ -72,7 +92,7 @@ sürümü kendi adınızla yayımlayın:
 ## İzin gerektirenler
 
 - Adı ya da işareti taşıyan bir ürün satmak (tişört, çıkartma, kupa gibi).
-- Bu belgenin kapsamadığı her kullanım.
+- Bu belgenin kapsamadığı her ticari kullanım.
 
 İzin için hello@totaldrop.app adresine yazın: ne yapmak istediğinizi ve
 adın ya da işaretin nerede görüneceğini anlatın.
