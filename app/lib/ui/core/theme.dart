@@ -247,7 +247,7 @@ class SystemMotion extends StatelessWidget {
 /// and ListTile (leading and trailing) rebuild the icon button theme from
 /// its style alone, so a button there falls back to plain Material 3. The
 /// style those widgets set (their colours, and SystemMotion's duration) is
-/// kept. Remove once material_ui keeps the variant.
+/// kept. Remove once material_ui keeps the variant (#259).
 class KeepIconButtonVariant extends StatelessWidget {
   const KeepIconButtonVariant({super.key, required this.child});
 

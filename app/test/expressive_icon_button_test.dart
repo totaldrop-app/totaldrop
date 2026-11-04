@@ -17,8 +17,9 @@ import 'fakes.dart';
 /// rest and a rounded square while pressed, as on Android 16's own
 /// interface on Pixel. Size, tap target and label stay those of Material 3.
 /// Each of the app's icon buttons is pressed where it really sits: the
-/// app bar, the code field's suffix and a file row's trailing slot. The
-/// last two rebuild the icon button theme in material_ui 1.8.0.
+/// app bar, the code field's suffix, a file row's trailing slot and the
+/// back arrow of a pushed screen. The code field and the file row
+/// rebuild the icon button theme in material_ui 1.8.0 (#259).
 void main() {
   Widget app(Widget home, {bool reduced = false, Brightness? brightness}) =>
       MediaQuery(
@@ -44,6 +45,8 @@ void main() {
       viewModel: SendViewModel(repository: FakeRepository())
         ..addFakeFileForTest('trip.jpg'),
     ),
+    // The app bar's back arrow, on a screen pushed as the app pushes them.
+    'Back': () => const _Pushed(),
   };
 
   for (final MapEntry(key: label, value: view) in views.entries) {
@@ -87,7 +90,8 @@ void main() {
 
       final gesture = await tester.startGesture(tester.getCenter(button));
       await tester.pump(const Duration(milliseconds: 200));
-      // The shape has already arrived; there is no frame in between.
+      // With the zero duration asserted above, Material changes shape
+      // without a tween; this checks the pressed shape is still reached.
       expect(shapeOf(tester, button), pressedShape);
       await gesture.cancel(); // No tap: Remove would take the row away.
       await tester.pump();
@@ -128,3 +132,30 @@ ShapeBorder? shapeOf(WidgetTester tester, Finder button) =>
 
 StyleVariant? variantOf(WidgetTester tester, Finder button) =>
     IconButtonTheme.of(tester.element(button)).variant;
+
+/// Pushes a screen with an app bar on its first frame, so the app bar
+/// shows the back arrow.
+class _Pushed extends StatefulWidget {
+  const _Pushed();
+
+  @override
+  State<_Pushed> createState() => _PushedState();
+}
+
+class _PushedState extends State<_Pushed> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Navigator.push(
+        context,
+        MaterialPageRoute<void>(
+          builder: (_) => Scaffold(appBar: AppBar(title: const Text('Next'))),
+        ),
+      );
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => const Scaffold();
+}
