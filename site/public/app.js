@@ -54,8 +54,16 @@
     main.prepend(note);
   }
 
+  // The privacy policy has a page in every language (/privacy/<tag>, #207);
+  // its links follow the language shown.
+  const privacyLinks = Array.from(document.querySelectorAll('a[href="/privacy"], a[href="https://totaldrop.app/privacy"]'))
+    .map((a) => [a, a.getAttribute("href")]);
+
   function apply(tag, d) {
     dict = d;
+    privacyLinks.forEach(([a, base]) => {
+      if (tag === "en") { a.setAttribute("href", base); a.removeAttribute("hreflang"); } else { a.setAttribute("href", base + "/" + tag); a.hreflang = tag; }
+    });
     nodes.forEach((el) => {
       const key = el.dataset.i18n;
       const translated = tag === "en" || has(d, key);

@@ -1,0 +1,51 @@
+<p class="eyebrow">Privacybeleid · versie 5 · 3 november 2026</p>
+<h1>We verzamelen niets over je.</h1>
+<p class="lead">TotalDrop heeft geen accounts, geen analyse, geen advertenties en geen crashrapportage. Deze pagina legt precies uit wat onze servers kunnen zien terwijl je bestanden verstuurt, en hoe snel het weer weg is.</p>
+
+<h2>Wie we zijn</h2>
+<p>TotalDrop is een gratis opensourceproject dat wordt onderhouden door Ozan Özdil. Dit beleid geldt voor de TotalDrop-apps, de opdrachtregelclient en de servers op <code>totaldrop.app</code>. Contact: <a href="mailto:privacy@totaldrop.app">privacy@totaldrop.app</a>.</p>
+
+<h2>Wat de apps verzamelen</h2>
+<p>Niets. De apps vragen niet om je naam, e-mailadres of telefoonnummer en bevatten geen code voor tracking, analyse, advertenties of crashrapportage. Tot en met 0.3.0-beta.2 heeft de Android-app alleen internettoegang nodig. Latere versies vragen alleen wat een overdracht nodig heeft: internettoegang en netwerkstatus, om verbinding te maken; een overdracht op de achtergrond uitvoeren, zodat die doorgaat terwijl je naar een andere app gaat; en meldingen tonen, voor de doorlopende melding met de knop Stoppen zolang een overdracht loopt. Deze rechten blijven op je apparaat: ze sturen niets naar ons of naar iemand anders.</p>
+
+<h2>Je bestanden</h2>
+<p>Bestanden gaan rechtstreeks van het ene apparaat naar het andere als de twee elkaar kunnen bereiken, en anders via onze relay (zie hieronder); hoe dan ook zijn ze end-to-end versleuteld. Onze servers zien nooit je bestanden, hun namen of hun inhoud, en kunnen niet lezen wat er doorheen gaat: de sleutels bestaan alleen op de twee apparaten.</p>
+
+<h2>Wat de ontmoetingsserver ziet</h2>
+<p>Om een overdracht te starten maken beide apparaten verbinding met onze ontmoetingsserver op <code>rendezvous.totaldrop.app</code>, die op Cloudflare draait. Die helpt twee apparaten die een code delen elkaar te vinden. Daarbij ziet hij noodzakelijkerwijs:</p>
+<ul>
+  <li>het IP-adres van elk apparaat, zoals elke internetserver;</li>
+  <li>het getal aan het begin van de code (bijvoorbeeld de 7 in 7-harbor-rocket), maar nooit de woorden;</li>
+  <li>wanneer je verbinding maakt en hoe groot de korte berichten zijn die de twee apparaten uitwisselen. Na de eerste twee zijn deze berichten zo versleuteld dat alleen het andere apparaat ze kan lezen.</li>
+</ul>
+<p>De server legt hiervan niets vast in een logboek. Een brievenbus en alles erin wordt verwijderd zodra beide apparaten vertrekken, en uiterlijk na een uur. Na elke overdracht rust het getal van de code 10 minuten voordat het opnieuw wordt uitgegeven; na een mislukte codepoging 24 uur.</p>
+<p>Cloudflare verwerkt als onze infrastructuuraanbieder IP-adressen om de dienst te leveren en te beschermen, onder zijn eigen <a href="https://www.cloudflare.com/privacypolicy/">privacybeleid</a>. Hetzelfde geldt voor de relay. We hebben verzoeklogboeken en Workers-logging voor beide servers uitgeschakeld.</p>
+
+<h2>Een directe route vinden</h2>
+<p>Om via internet verbinding te maken, vraagt elk apparaat eerst aan een STUN-server met welk openbaar IP-adres en welke poort het zichtbaar is. Standaard is dat de gratis STUN-dienst van Cloudflare op <code>stun.cloudflare.com</code>. Die ziet je IP-adres, zoals elke internetserver, en verder niets. In de privacymodus (zie hieronder) vraagt het apparaat het niet.</p>
+
+<h2>Wat de relay ziet</h2>
+<p>Onze relay op <code>relay.totaldrop.app</code>, die op Cloudflare draait, draagt een overdracht wanneer de twee apparaten elkaar niet rechtstreeks kunnen bereiken. In Android en Linux 0.2.0-beta.1 en later, en in de opdrachtregel die sinds 29 oktober 2026 uit de repository wordt gebouwd, neemt een apparaat alleen contact op met de relay als ongeveer 1,2 seconde nadat de twee apparaten verbinding beginnen te maken nog geen directe verbinding is gekozen. Het neemt meteen contact op als een van beide apparaten in de privacymodus staat of het andere apparaat geen adres doorgeeft. Een overdracht waarvan de directe verbinding op tijd wordt gekozen, bereikt de relay nooit. Wordt een directe verbinding later gekozen, dan sluit het apparaat op dat moment zijn verbinding met de relay. Oudere versies (Android 0.1.0-beta.5, Linux 0.1.0-beta.4) maken aan het begin van elke overdracht verbinding met de relay, en een ontvangend apparaat met die versies gebruikt de relay die de afzender noemt; werk bij om dit te stoppen. Wanneer de relay wordt gebruikt, ziet hij:</p>
+<ul>
+  <li>het IP-adres van elk apparaat;</li>
+  <li>twee willekeurige sleutels die voor deze ene overdracht zijn gemaakt en nooit opnieuw worden gebruikt;</li>
+  <li>wanneer elk apparaat verbinding maakte en verbrak, en hoeveel versleutelde gegevens erdoorheen gingen.</li>
+</ul>
+<p>De sleutels koppelen de ene overdracht niet aan de andere, maar je IP-adres kan dat wel: de relay en de ontmoetingsserver, die we allebei op Cloudflare draaien, zien het vlak na elkaar. De relay kan de bestanden, hun namen of iets over wie je bent niet lezen. Hij legt niets vast en houdt niets over de overdracht bij zodra die is afgelopen.</p>
+<p>Het relay-adres van elk apparaat wordt versleuteld met het andere apparaat gedeeld. Als de afzender een eigen relay gebruikt (de optie <code>--relay</code> van de opdrachtregel of <code>TOTALDROP_RELAY</code>), gebruikt het ontvangende apparaat vanaf 0.2.0-beta.1 die alleen als het ook de eigen relay-instelling van de ontvanger is; anders neemt het er nooit contact mee op. Wie een relay draait waarmee een apparaat verbinding maakt, ziet wat hierboven staat. Als de twee apparaten verschillende relays gebruiken en geen directe route hebben, stopt de overdracht met een foutmelding.</p>
+<p>Privacymodus ('Mijn adres verbergen voor het andere apparaat' in de Instellingen van de apps sinds 0.2.0-beta.1, <code>--relay-only</code> in de opdrachtregel): je apparaat geeft het andere apparaat geen IP-adres door, vraagt het niet aan de STUN-server, belt het andere apparaat nooit rechtstreeks en weigert een directe verbinding, zelfs van het gekoppelde apparaat. Elke overdracht gaat via de relay, zodat het andere apparaat je IP-adres niet te weten komt, of je nu verstuurt of ontvangt. Het is langzamer, en de relay en de ontmoetingsserver zien je IP-adres nog steeds. Het andere apparaat moet dezelfde relay gebruiken als jij, of je nu verstuurt of ontvangt (de apps gebruiken allemaal de onze); anders stopt de overdracht met een foutmelding.</p>
+
+<h2>Wat het andere apparaat ziet</h2>
+<p>Om rechtstreeks verbinding te maken, wisselen de twee apparaten versleuteld hun netwerkadressen uit. Elk apparaat komt daardoor het lokale en openbare IP-adres van het andere te weten, zoals bij elke directe verbinding. Een apparaat in de privacymodus geeft geen adres door, dus het andere apparaat komt het niet te weten.</p>
+
+<h2>Op je apparaat</h2>
+<p>Ontvangen bestanden worden op Android opgeslagen in <em>Download/TotalDrop</em> en op Linux in <em>~/Downloads/TotalDrop</em>. Het zijn gewone gedeelde bestanden, die net zo worden behandeld als je andere downloads. Als je vanaf Android verstuurt, worden de bestanden die je kiest naar de cache van de app gekopieerd. De kopieën worden verwijderd wanneer je een voltooide verzending sluit of er een stopt. Kopieën van bestanden die je hebt gekozen maar niet hebt verstuurd (je ging terug voor het versturen, haalde ze uit de lijst of Android sloot de app) kunnen blijven staan tot een latere verzending wordt gesloten of gestopt, of tot Android de cache leegt. De apps bewaren twee instellingen: het adres van de ontmoetingsserver en of de privacymodus aan staat (op Linux in <em>~/.config/totaldrop/settings.toml</em>). De eigen gegevens van de Android-app, deze kopieën en instellingen, komen nooit in cloudback-ups of in overdrachten van apparaat naar apparaat terecht.</p>
+
+<h2>Kinderen</h2>
+<p>TotalDrop is niet gericht op kinderen en verzamelt van niemand persoonsgegevens.</p>
+
+<h2>Je rechten</h2>
+<p>Omdat we geen persoonsgegevens over je hebben, valt er niets in te zien, te corrigeren of te verwijderen. Als je een vraag of klacht hebt, schrijf ons dan op het adres hierboven. Je hebt ook het recht om een klacht in te dienen bij je toezichthouder voor gegevensbescherming.</p>
+
+<h2>Wijzigingen</h2>
+<p>Versie 5 noemt de rechten waar Android-versies na 0.3.0-beta.2 om vragen, waarmee een overdracht met een melding op de achtergrond kan doorgaan; wat onze servers zien verandert niet. Versie 4 volgt Android en Linux 0.2.0-beta.1, die veranderden wat de relay en het andere apparaat zien. In deze versies nemen apparaten alleen contact op met de relay als er niet op tijd een directe verbinding is gekozen of er geen directe route is om te proberen, in plaats van aan het begin van elke overdracht. Een ontvanger gebruikt niet langer een relay die alleen de afzender heeft gekozen, dus de privacymodus verbergt nu ook het adres van een ontvanger. De privacymodus staat nu ook in de Instellingen van de apps en weigert directe verbindingen. Versie 4 vertelt ook wat de Android-app in zijn cache bewaart. Versie 3 corrigeerde versie 2, die zei dat de apps de relay alleen bereiken als geen directe route werkt (toen maakten ze aan het begin van elke overdracht verbinding met de relay) en dat de privacymodus het adres van een ontvanger verborg, wat hij toen niet deed. Versie 3 noemde ook de bestanden van de Linux-app. Versie 2 voegde de STUN-dienst en de relay toe. Functies die voor latere versies zijn gepland (links, optionele anonieme accounts) zullen veranderen wat onze servers verwerken. We werken dit beleid bij voordat zo'n functie uitkomt, en bewaren elke versie in de openbare repository van het project.</p>

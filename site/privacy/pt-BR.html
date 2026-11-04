@@ -1,0 +1,51 @@
+<p class="eyebrow">Política de privacidade · versão 5 · 3 de novembro de 2026</p>
+<h1>Não coletamos nada sobre você.</h1>
+<p class="lead">O TotalDrop não tem contas, análises, publicidade nem relatórios de falhas. Esta página explica exatamente o que nossos servidores podem ver enquanto você transfere arquivos e com que rapidez isso desaparece.</p>
+
+<h2>Quem somos</h2>
+<p>O TotalDrop é um projeto gratuito e de código aberto mantido por Ozan Özdil. Esta política se aplica aos aplicativos TotalDrop, ao cliente de linha de comando e aos servidores em <code>totaldrop.app</code>. Contato: <a href="mailto:privacy@totaldrop.app">privacy@totaldrop.app</a>.</p>
+
+<h2>O que os aplicativos coletam</h2>
+<p>Nada. Os aplicativos não pedem seu nome, endereço de e-mail ou número de telefone e não contêm código de rastreamento, análise, publicidade ou relatório de falhas. Até a 0.3.0-beta.2, o aplicativo Android precisa apenas de acesso à internet. As versões posteriores pedem apenas o que uma transferência precisa: acesso à internet e ao estado da rede, para conectar; executar uma transferência em segundo plano, para que ela continue enquanto você muda para outro aplicativo; e mostrar notificações, para a notificação contínua com o botão Parar enquanto uma transferência está em andamento. Essas permissões ficam no seu dispositivo: não enviam nada para nós nem para ninguém.</p>
+
+<h2>Seus arquivos</h2>
+<p>Os arquivos vão diretamente de um dispositivo para o outro quando os dois conseguem se alcançar e, caso contrário, passam pelo nosso relay (abaixo); de qualquer forma, são criptografados de ponta a ponta. Nossos servidores nunca veem seus arquivos, seus nomes ou seu conteúdo, e não conseguem ler o que passa por eles: as chaves existem apenas nos dois dispositivos.</p>
+
+<h2>O que o servidor de encontro vê</h2>
+<p>Para iniciar uma transferência, os dois dispositivos se conectam ao nosso servidor de encontro, <code>rendezvous.totaldrop.app</code>, que roda na Cloudflare. Ele ajuda dois dispositivos que compartilham um código a se encontrarem. Ao fazer isso, ele necessariamente vê:</p>
+<ul>
+  <li>o endereço IP de cada dispositivo, como qualquer servidor da internet;</li>
+  <li>o número no início do código (por exemplo, o 7 em 7-harbor-rocket), mas nunca as palavras;</li>
+  <li>quando você se conecta e o tamanho das mensagens curtas que os dois dispositivos trocam. Depois das duas primeiras, essas mensagens são criptografadas de modo que só o outro dispositivo consiga lê-las.</li>
+</ul>
+<p>O servidor não registra nada disso. Uma caixa de correio e tudo o que há nela são apagados assim que os dois dispositivos saem e, no máximo, depois de uma hora. Depois de cada transferência, o número do código descansa por 10 minutos antes de ser distribuído de novo; depois de uma tentativa de código malsucedida, por 24 horas.</p>
+<p>A Cloudflare, como nossa provedora de infraestrutura, trata endereços IP para entregar e proteger o serviço, de acordo com a sua própria <a href="https://www.cloudflare.com/privacypolicy/">política de privacidade</a>. O mesmo vale para o relay. Desativamos os registros de solicitações e os logs do Workers nos dois servidores.</p>
+
+<h2>Encontrar um caminho direto</h2>
+<p>Para se conectar pela internet, cada dispositivo primeiro pergunta a um servidor STUN com qual endereço IP público e porta ele aparece. Por padrão, é o serviço STUN gratuito da Cloudflare, <code>stun.cloudflare.com</code>. Ele vê seu endereço IP, como qualquer servidor da internet, e nada mais. No modo de privacidade (abaixo), o dispositivo não pergunta a ele.</p>
+
+<h2>O que o relay vê</h2>
+<p>Nosso relay, <code>relay.totaldrop.app</code>, que roda na Cloudflare, transporta uma transferência quando os dois dispositivos não conseguem se alcançar diretamente. No Android e no Linux 0.2.0-beta.1 e posteriores, e na linha de comando compilada a partir do repositório desde 29 de outubro de 2026, um dispositivo só contata o relay se nenhuma conexão direta tiver sido escolhida cerca de 1,2 segundo depois de os dois dispositivos começarem a se conectar. Ele contata o relay imediatamente quando um dos dispositivos está no modo de privacidade ou quando o outro dispositivo não anuncia nenhum endereço. Uma transferência cuja conexão direta é escolhida a tempo nunca chega ao relay. Se uma conexão direta for escolhida depois, o dispositivo fecha a conexão com o relay nesse momento. Versões mais antigas (Android 0.1.0-beta.5, Linux 0.1.0-beta.4) se conectam ao relay no início de cada transferência, e um dispositivo receptor nessas versões usa o relay que o remetente indicar; atualize para que isso não aconteça. Quando o relay é usado, ele vê:</p>
+<ul>
+  <li>o endereço IP de cada dispositivo;</li>
+  <li>duas chaves aleatórias criadas para esta única transferência e nunca mais usadas;</li>
+  <li>quando cada dispositivo se conectou e se desconectou, e quantos dados criptografados passaram.</li>
+</ul>
+<p>As chaves não ligam uma transferência a outra, mas seu endereço IP pode ligar: o relay e o servidor de encontro, ambos operados por nós na Cloudflare, o veem com instantes de diferença. O relay não consegue ler os arquivos, seus nomes nem nada sobre quem você é. Ele não registra nada e não guarda nada sobre a transferência depois que ela termina.</p>
+<p>O endereço do relay de cada dispositivo é compartilhado com o outro dispositivo, criptografado. Se o remetente usar um relay próprio (a opção <code>--relay</code> da linha de comando ou <code>TOTALDROP_RELAY</code>), a partir da 0.2.0-beta.1 o dispositivo receptor só o usa se ele também for o relay configurado no receptor; caso contrário, nunca o contata. Quem opera um relay ao qual um dispositivo se conecta vê o que está listado acima. Quando os dois dispositivos usam relays diferentes e não têm caminho direto, a transferência para com um erro.</p>
+<p>Modo de privacidade ("Ocultar meu endereço do outro dispositivo" nas Configurações dos aplicativos desde a 0.2.0-beta.1, <code>--relay-only</code> na linha de comando): seu dispositivo não anuncia nenhum endereço IP ao outro dispositivo, não pergunta ao servidor STUN, nunca chama o outro dispositivo diretamente e recusa uma conexão direta mesmo do dispositivo pareado. Toda transferência passa pelo relay, então o outro dispositivo não fica sabendo o seu endereço IP, quer você envie ou receba. É mais lento, e o relay e o servidor de encontro continuam vendo seu endereço IP. O outro dispositivo precisa usar o mesmo relay que você, quer você envie ou receba (todos os aplicativos usam o nosso); caso contrário, a transferência para com um erro.</p>
+
+<h2>O que o outro dispositivo vê</h2>
+<p>Para se conectar diretamente, os dois dispositivos trocam entre si seus endereços de rede, criptografados. Por isso, cada dispositivo fica sabendo o endereço IP local e público do outro, como em qualquer conexão direta. Um dispositivo no modo de privacidade não anuncia nenhum endereço, então o outro dispositivo não fica sabendo dele.</p>
+
+<h2>No seu dispositivo</h2>
+<p>Os arquivos recebidos são salvos em <em>Download/TotalDrop</em> no Android e em <em>~/Downloads/TotalDrop</em> no Linux. São arquivos compartilhados comuns, tratados como seus outros downloads. Quando você envia pelo Android, os arquivos escolhidos são copiados para o cache do aplicativo. As cópias são apagadas quando você fecha um envio concluído ou interrompe um. Cópias de arquivos que você escolheu mas não enviou (você voltou antes de enviar, removeu-os da lista ou o Android fechou o aplicativo) podem ficar até que um envio posterior seja fechado ou interrompido, ou até que o Android limpe o cache. Os aplicativos guardam duas configurações: o endereço do servidor de encontro e se o modo de privacidade está ativado (no Linux, em <em>~/.config/totaldrop/settings.toml</em>). Os dados próprios do aplicativo Android, essas cópias e configurações, nunca entram em backups na nuvem nem em transferências de dispositivo para dispositivo.</p>
+
+<h2>Crianças</h2>
+<p>O TotalDrop não é direcionado a crianças e não coleta dados pessoais de ninguém.</p>
+
+<h2>Seus direitos</h2>
+<p>Como não mantemos nenhum dado pessoal sobre você, não há nada para acessar, corrigir ou excluir. Se você tiver uma pergunta ou reclamação, escreva para o endereço acima. Você também tem o direito de reclamar à autoridade de proteção de dados.</p>
+
+<h2>Alterações</h2>
+<p>A versão 5 lista as permissões que as versões do Android posteriores à 0.3.0-beta.2 pedem, que permitem que uma transferência continue em segundo plano com uma notificação; o que nossos servidores veem não muda. A versão 4 acompanha o Android e o Linux 0.2.0-beta.1, que mudaram o que o relay e o outro dispositivo veem. Nessas versões, os dispositivos contatam o relay apenas quando nenhuma conexão direta é escolhida a tempo ou não há caminho direto para tentar, em vez de no início de cada transferência. Um receptor não usa mais um relay escolhido apenas pelo remetente, então o modo de privacidade agora também oculta o endereço do receptor. O modo de privacidade agora também está nas Configurações dos aplicativos e recusa conexões diretas. A versão 4 também diz o que o aplicativo Android guarda no seu cache. A versão 3 corrigiu a versão 2, que dizia que os aplicativos só chegam ao relay quando nenhum caminho direto funciona (na época, eles se conectavam a ele no início de cada transferência) e que o modo de privacidade ocultava o endereço do receptor, o que na época não fazia. Ela também nomeou os arquivos do aplicativo Linux. A versão 2 adicionou o serviço STUN e o relay. Recursos planejados para versões futuras (links, contas anônimas opcionais) vão mudar o que nossos servidores tratam. Atualizaremos esta política antes que qualquer recurso desse tipo seja lançado e manteremos todas as versões dela no repositório público do projeto.</p>

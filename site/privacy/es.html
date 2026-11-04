@@ -1,0 +1,51 @@
+<p class="eyebrow">Política de privacidad · versión 5 · 3 de noviembre de 2026</p>
+<h1>No recopilamos nada sobre ti.</h1>
+<p class="lead">TotalDrop no tiene cuentas, ni analíticas, ni publicidad, ni informes de fallos. Esta página explica exactamente qué pueden ver nuestros servidores mientras transfieres archivos y con qué rapidez desaparece.</p>
+
+<h2>Quiénes somos</h2>
+<p>TotalDrop es un proyecto gratuito y de código abierto mantenido por Ozan Özdil. Esta política se aplica a las aplicaciones de TotalDrop, al cliente de línea de comandos y a los servidores de <code>totaldrop.app</code>. Contacto: <a href="mailto:privacy@totaldrop.app">privacy@totaldrop.app</a>.</p>
+
+<h2>Qué recopilan las aplicaciones</h2>
+<p>Nada. Las aplicaciones no piden tu nombre, tu correo electrónico ni tu número de teléfono, y no contienen código de seguimiento, analíticas, publicidad ni informes de fallos. Hasta la 0.3.0-beta.2, la aplicación de Android solo necesita acceso a internet. Las versiones posteriores solo piden lo que necesita una transferencia: acceso a internet y al estado de la red, para conectarse; ejecutar una transferencia en segundo plano, para que continúe mientras cambias a otra aplicación; y mostrar notificaciones, para la notificación permanente con su botón Detener mientras dura una transferencia. Estos permisos se quedan en tu dispositivo: no nos envían nada ni a nosotros ni a nadie.</p>
+
+<h2>Tus archivos</h2>
+<p>Los archivos viajan directamente de un dispositivo al otro cuando ambos pueden alcanzarse y, si no, a través de nuestro relé (más abajo); en ambos casos van cifrados de extremo a extremo. Nuestros servidores nunca ven tus archivos, sus nombres ni su contenido, y no pueden leer lo que pasa por ellos: las claves solo existen en los dos dispositivos.</p>
+
+<h2>Qué ve el servidor de encuentro</h2>
+<p>Para iniciar una transferencia, ambos dispositivos se conectan a nuestro servidor de encuentro, <code>rendezvous.totaldrop.app</code>, que funciona en Cloudflare. Ayuda a que dos dispositivos que comparten un código se encuentren. Mientras lo hace, ve necesariamente:</p>
+<ul>
+  <li>la dirección IP de cada dispositivo, como cualquier servidor de internet;</li>
+  <li>el número al principio del código (por ejemplo, el 7 de 7-harbor-rocket), pero nunca las palabras;</li>
+  <li>cuándo te conectas y el tamaño de los mensajes cortos que intercambian los dos dispositivos. Después de los dos primeros, estos mensajes van cifrados de forma que solo el otro dispositivo pueda leerlos.</li>
+</ul>
+<p>El servidor no registra nada de esto. Un buzón y todo lo que contiene se borra en cuanto ambos dispositivos se van y, como máximo, al cabo de una hora. Después de cada transferencia, el número del código descansa 10 minutos antes de volver a asignarse; después de un intento de código fallido, 24 horas.</p>
+<p>Cloudflare, como nuestro proveedor de infraestructura, trata las direcciones IP para prestar y proteger el servicio conforme a su propia <a href="https://www.cloudflare.com/privacypolicy/">política de privacidad</a>. Lo mismo se aplica al relé. Hemos desactivado los registros de solicitudes y el registro de Workers en ambos servidores.</p>
+
+<h2>Encontrar un camino directo</h2>
+<p>Para conectarse a través de internet, cada dispositivo pregunta primero a un servidor STUN con qué dirección IP pública y qué puerto aparece. De forma predeterminada es el servicio STUN gratuito de Cloudflare, <code>stun.cloudflare.com</code>. Ve tu dirección IP, como cualquier servidor de internet, y nada más. En el modo privado (más abajo), el dispositivo no le pregunta.</p>
+
+<h2>Qué ve el relé</h2>
+<p>Nuestro relé, <code>relay.totaldrop.app</code>, que funciona en Cloudflare, transporta una transferencia cuando los dos dispositivos no pueden alcanzarse directamente. En Android y Linux 0.2.0-beta.1 y posteriores, y en la línea de comandos compilada desde el repositorio a partir del 29 de octubre de 2026, un dispositivo solo contacta con el relé si no se ha elegido una conexión directa unos 1,2 segundos después de que los dos dispositivos empiecen a conectarse. Contacta con él de inmediato cuando cualquiera de los dos dispositivos está en modo privado o el otro dispositivo no anuncia ninguna dirección. Una transferencia cuya conexión directa se elige a tiempo nunca llega al relé. Si una conexión directa se elige más tarde, el dispositivo cierra en ese momento su conexión con el relé. Las versiones anteriores (Android 0.1.0-beta.5, Linux 0.1.0-beta.4) se conectan al relé al comienzo de cada transferencia, y un dispositivo receptor con esas versiones usa el relé que indique el emisor; actualiza para evitarlo. Cuando se usa el relé, este ve:</p>
+<ul>
+  <li>la dirección IP de cada dispositivo;</li>
+  <li>dos claves aleatorias creadas para esta única transferencia y que no se vuelven a usar;</li>
+  <li>cuándo se conectó y se desconectó cada dispositivo, y cuántos datos cifrados pasaron.</li>
+</ul>
+<p>Las claves no vinculan una transferencia con otra, pero tu dirección IP sí puede hacerlo: el relé y el servidor de encuentro, ambos gestionados por nosotros en Cloudflare, la ven con instantes de diferencia. El relé no puede leer los archivos, sus nombres ni nada sobre quién eres. No registra nada y no conserva nada de la transferencia una vez que termina.</p>
+<p>La dirección del relé de cada dispositivo se comparte con el otro dispositivo, cifrada. Si el emisor usa un relé propio (la opción <code>--relay</code> de la línea de comandos o <code>TOTALDROP_RELAY</code>), a partir de la 0.2.0-beta.1 el dispositivo receptor solo lo usa si también es el relé configurado en el receptor; si no, nunca contacta con él. Quien gestione un relé al que se conecte un dispositivo ve lo que se indica arriba. Cuando los dos dispositivos usan relés distintos y no tienen un camino directo, la transferencia se detiene con un error.</p>
+<p>Modo privado («Ocultar mi dirección al otro dispositivo» en los Ajustes de las aplicaciones desde la 0.2.0-beta.1, <code>--relay-only</code> en la línea de comandos): tu dispositivo no anuncia ninguna dirección IP al otro dispositivo, no pregunta al servidor STUN, nunca llama directamente al otro dispositivo y rechaza una conexión directa incluso del dispositivo emparejado. Cada transferencia pasa por el relé, así que el otro dispositivo no conoce tu dirección IP, tanto si envías como si recibes. Es más lento, y el relé y el servidor de encuentro siguen viendo tu dirección IP. El otro dispositivo debe usar el mismo relé que tú, tanto si envías como si recibes (todas las aplicaciones usan el nuestro); si no, la transferencia se detiene con un error.</p>
+
+<h2>Qué ve el otro dispositivo</h2>
+<p>Para conectarse directamente, los dos dispositivos se intercambian sus direcciones de red, cifradas. Por eso cada dispositivo conoce la dirección IP local y pública del otro, como en cualquier conexión directa. Un dispositivo en modo privado no anuncia ninguna dirección, así que el otro dispositivo no la conoce.</p>
+
+<h2>En tu dispositivo</h2>
+<p>Los archivos recibidos se guardan en <em>Download/TotalDrop</em> en Android y en <em>~/Downloads/TotalDrop</em> en Linux. Son archivos compartidos normales, que se tratan como tus otras descargas. Cuando envías desde Android, los archivos que eliges se copian en la caché de la aplicación. Las copias se borran cuando cierras un envío terminado o detienes uno. Las copias de archivos que elegiste pero no enviaste (volviste atrás antes de enviar, los quitaste de la lista o Android cerró la aplicación) pueden quedarse hasta que se cierre o se detenga un envío posterior, o hasta que Android vacíe la caché. Las aplicaciones guardan dos ajustes: la dirección del servidor de encuentro y si el modo privado está activado (en Linux, en <em>~/.config/totaldrop/settings.toml</em>). Los datos propios de la aplicación de Android, estas copias y ajustes, nunca entran en las copias de seguridad en la nube ni en las transferencias de dispositivo a dispositivo.</p>
+
+<h2>Menores</h2>
+<p>TotalDrop no está dirigido a menores y no recopila datos personales de nadie.</p>
+
+<h2>Tus derechos</h2>
+<p>Como no tenemos ningún dato personal sobre ti, no hay nada a lo que acceder, que rectificar o que suprimir. Si tienes una pregunta o una queja, escríbenos a la dirección de arriba. También tienes derecho a presentar una reclamación ante tu autoridad de protección de datos.</p>
+
+<h2>Cambios</h2>
+<p>La versión 5 enumera los permisos que piden las versiones de Android posteriores a la 0.3.0-beta.2, que permiten que una transferencia continúe en segundo plano con una notificación; lo que ven nuestros servidores no cambia. La versión 4 sigue a Android y Linux 0.2.0-beta.1, que cambiaron lo que ven el relé y el otro dispositivo. En estas versiones, los dispositivos contactan con el relé solo cuando no se elige una conexión directa a tiempo o no hay ningún camino directo que probar, en lugar de al comienzo de cada transferencia. Un receptor ya no usa un relé que solo eligió el emisor, así que el modo privado ahora también oculta la dirección del receptor. El modo privado está ahora también en los Ajustes de las aplicaciones y rechaza las conexiones directas. La versión 4 también indica qué guarda la aplicación de Android en su caché. La versión 3 corrigió la versión 2, que decía que las aplicaciones solo llegan al relé cuando no funciona ningún camino directo (entonces se conectaban a él al comienzo de cada transferencia) y que el modo privado ocultaba la dirección del receptor, cosa que entonces no hacía. También nombró los archivos de la aplicación de Linux. La versión 2 añadió el servicio STUN y el relé. Las funciones previstas para versiones posteriores (enlaces, cuentas anónimas opcionales) cambiarán lo que tratan nuestros servidores. Actualizaremos esta política antes de que se publique cualquiera de esas funciones y conservaremos todas sus versiones en el repositorio público del proyecto.</p>

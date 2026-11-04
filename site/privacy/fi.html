@@ -1,0 +1,51 @@
+<p class="eyebrow">Tietosuojakäytäntö · versio 5 · 3. marraskuuta 2026</p>
+<h1>Emme kerää sinusta mitään.</h1>
+<p class="lead">TotalDropissa ei ole tilejä, analytiikkaa, mainontaa eikä kaatumisraportointia. Tämä sivu kertoo tarkasti, mitä palvelimemme voivat nähdä tiedostoja siirtäessäsi ja kuinka nopeasti se katoaa.</p>
+
+<h2>Keitä olemme</h2>
+<p>TotalDrop on maksuton avoimen lähdekoodin projekti, jota ylläpitää Ozan Özdil. Käytäntö koskee TotalDrop-sovelluksia, komentoriviasiakasta ja palvelimia osoitteessa <code>totaldrop.app</code>. Yhteystiedot: <a href="mailto:privacy@totaldrop.app">privacy@totaldrop.app</a>.</p>
+
+<h2>Mitä sovellukset keräävät</h2>
+<p>Ei mitään. Sovellukset eivät kysy nimeäsi, sähköpostiosoitettasi tai puhelinnumeroasi, eivätkä ne sisällä seuranta-, analytiikka-, mainos- tai kaatumisraportointikoodia. Versioon 0.3.0-beta.2 asti Android-sovellus tarvitsee vain internetyhteyden. Myöhemmät versiot pyytävät vain sitä, mitä siirto tarvitsee: internetyhteyden ja verkon tilan yhteyden muodostamiseen; siirron suorittamisen taustalla, jotta se jatkuu, kun vaihdat toiseen sovellukseen; ja ilmoitusten näyttämisen, siirron aikana näkyvää ilmoitusta ja sen Lopeta-painiketta varten. Nämä luvat pysyvät laitteellasi: ne eivät lähetä mitään meille eivätkä kenellekään muulle.</p>
+
+<h2>Tiedostosi</h2>
+<p>Tiedostot kulkevat suoraan laitteelta toiselle, kun laitteet tavoittavat toisensa, ja muuten välityspalvelimemme kautta (ks. alla); kummassakin tapauksessa ne on salattu päästä päähän. Palvelimemme eivät koskaan näe tiedostojasi, niiden nimiä tai sisältöä eivätkä voi lukea, mitä niiden läpi kulkee: avaimet ovat olemassa vain kahdella laitteella.</p>
+
+<h2>Mitä kohtaamispalvelin näkee</h2>
+<p>Siirron aloittamiseksi molemmat laitteet ottavat yhteyden kohtaamispalvelimeemme osoitteessa <code>rendezvous.totaldrop.app</code>, joka toimii Cloudflaressa. Se auttaa kahta saman koodin jakavaa laitetta löytämään toisensa. Sitä tehdessään se väistämättä näkee:</p>
+<ul>
+  <li>kunkin laitteen IP-osoitteen, kuten mikä tahansa internetpalvelin;</li>
+  <li>koodin alussa olevan numeron (esimerkiksi 7 koodissa 7-harbor-rocket), mutta ei koskaan sanoja;</li>
+  <li>milloin muodostat yhteyden ja laitteiden vaihtamien lyhyiden viestien koon. Kahden ensimmäisen jälkeen viestit on salattu niin, että vain toinen laite voi lukea ne.</li>
+</ul>
+<p>Palvelin ei kirjaa mitään tästä lokiin. Postilaatikko ja kaikki sen sisältö poistetaan heti, kun molemmat laitteet poistuvat, ja viimeistään tunnin kuluttua. Jokaisen siirron jälkeen koodin numero lepää 10 minuuttia ennen kuin se annetaan uudelleen; epäonnistuneen koodiyrityksen jälkeen 24 tuntia.</p>
+<p>Infrastruktuuritoimittajamme Cloudflare käsittelee IP-osoitteita palvelun toimittamiseksi ja suojaamiseksi oman <a href="https://www.cloudflare.com/privacypolicy/">tietosuojakäytäntönsä</a> mukaisesti. Sama koskee välityspalvelinta. Olemme poistaneet pyyntölokit ja Workers-lokituksen käytöstä molemmilta palvelimilta.</p>
+
+<h2>Suoran reitin löytäminen</h2>
+<p>Muodostaakseen yhteyden internetin yli kukin laite kysyy ensin STUN-palvelimelta, millä julkisella IP-osoitteella ja portilla se näkyy. Oletuksena tämä on Cloudflaren maksuton STUN-palvelu osoitteessa <code>stun.cloudflare.com</code>. Se näkee IP-osoitteesi, kuten mikä tahansa internetpalvelin, eikä mitään muuta. Yksityisyystilassa (ks. alla) laite ei kysy siltä.</p>
+
+<h2>Mitä välityspalvelin näkee</h2>
+<p>Välityspalvelimemme osoitteessa <code>relay.totaldrop.app</code>, joka toimii Cloudflaressa, kuljettaa siirron, kun laitteet eivät tavoita toisiaan suoraan. Android- ja Linux-versioissa 0.2.0-beta.1 ja uudemmissa sekä 29. lokakuuta 2026 lähtien lähdekoodivarastosta käännetyssä komentorivissä laite ottaa yhteyden välityspalvelimeen vain, jos suoraa yhteyttä ei ole valittu noin 1,2 sekunnin kuluttua siitä, kun laitteet alkoivat muodostaa yhteyttä. Se ottaa yhteyden heti, kun jompikumpi laite on yksityisyystilassa tai toinen laite ei ilmoita mitään osoitetta. Siirto, jonka suora yhteys valitaan ajoissa, ei koskaan päädy välityspalvelimelle. Jos suora yhteys valitaan myöhemmin, laite sulkee välityspalvelinyhteytensä sillä hetkellä. Vanhemmat versiot (Android 0.1.0-beta.5, Linux 0.1.0-beta.4) ottavat yhteyden välityspalvelimeen jokaisen siirron alussa, ja näitä versioita käyttävä vastaanottava laite käyttää sitä välityspalvelinta, jonka lähettäjä ilmoittaa; päivitä, niin tämä loppuu. Kun välityspalvelinta käytetään, se näkee:</p>
+<ul>
+  <li>kunkin laitteen IP-osoitteen;</li>
+  <li>kaksi satunnaista avainta, jotka on luotu vain tätä siirtoa varten eikä niitä käytetä enää koskaan;</li>
+  <li>milloin kukin laite muodosti yhteyden ja katkaisi sen ja kuinka paljon salattua dataa kulki.</li>
+</ul>
+<p>Avaimet eivät yhdistä siirtoja toisiinsa, mutta IP-osoitteesi voi yhdistää: välityspalvelin ja kohtaamispalvelin, joita molempia ylläpidämme Cloudflaressa, näkevät sen hetken välein. Välityspalvelin ei voi lukea tiedostoja, niiden nimiä eikä mitään siitä, kuka olet. Se ei kirjaa mitään lokiin eikä säilytä siirrosta mitään sen päätyttyä.</p>
+<p>Kunkin laitteen välityspalvelimen osoite jaetaan toiselle laitteelle salattuna. Jos lähettäjä käyttää omaa välityspalvelintaan (komentorivin valitsin <code>--relay</code> tai <code>TOTALDROP_RELAY</code>), versiosta 0.2.0-beta.1 alkaen vastaanottava laite käyttää sitä vain, jos se on myös vastaanottajan oma välityspalvelinasetus; muuten se ei koskaan ota siihen yhteyttä. Se, joka ylläpitää välityspalvelinta, johon laite ottaa yhteyden, näkee yllä luetellut asiat. Kun laitteet käyttävät eri välityspalvelimia eikä niillä ole suoraa reittiä, siirto pysähtyy virheeseen.</p>
+<p>Yksityisyystila (”Piilota osoitteeni toiselta laitteelta” sovellusten Asetuksissa versiosta 0.2.0-beta.1 alkaen, komentorivillä <code>--relay-only</code>): laitteesi ei ilmoita toiselle laitteelle mitään IP-osoitetta, ei kysy STUN-palvelimelta, ei koskaan ota suoraan yhteyttä toiseen laitteeseen ja hylkää suoran yhteyden jopa pariksi liitetyltä laitteelta. Jokainen siirto kulkee välityspalvelimen kautta, joten toinen laite ei saa tietää IP-osoitettasi, lähetitpä tai vastaanotitpa. Tämä on hitaampaa, ja välityspalvelin ja kohtaamispalvelin näkevät edelleen IP-osoitteesi. Toisen laitteen on käytettävä samaa välityspalvelinta kuin sinä, lähetitpä tai vastaanotitpa (kaikki sovellukset käyttävät meidän palvelintamme); muuten siirto pysähtyy virheeseen.</p>
+
+<h2>Mitä toinen laite näkee</h2>
+<p>Muodostaakseen suoran yhteyden laitteet vaihtavat verkko-osoitteensa keskenään salattuina. Siksi kumpikin laite saa tietää toisen paikallisen ja julkisen IP-osoitteen, kuten missä tahansa suorassa yhteydessä. Yksityisyystilassa oleva laite ei ilmoita mitään osoitetta, joten toinen laite ei saa sitä tietää.</p>
+
+<h2>Laitteellasi</h2>
+<p>Vastaanotetut tiedostot tallennetaan Androidissa kansioon <em>Download/TotalDrop</em> ja Linuxissa kansioon <em>~/Downloads/TotalDrop</em>. Ne ovat tavallisia jaettuja tiedostoja, joita käsitellään kuten muita latauksiasi. Kun lähetät Androidista, valitsemasi tiedostot kopioidaan sovelluksen välimuistiin. Kopiot poistetaan, kun suljet valmiin lähetyksen tai pysäytät lähetyksen. Kopiot tiedostoista, jotka valitsit mutta joita et lähettänyt (palasit takaisin ennen lähettämistä, poistit ne luettelosta tai Android sulki sovelluksen), voivat jäädä, kunnes myöhempi lähetys suljetaan tai pysäytetään tai Android tyhjentää välimuistin. Sovellukset tallentavat kaksi asetusta: kohtaamispalvelimen osoitteen ja sen, onko yksityisyystila päällä (Linuxissa tiedostossa <em>~/.config/totaldrop/settings.toml</em>). Android-sovelluksen omat tiedot, nämä kopiot ja asetukset, eivät koskaan päädy pilvivarmuuskopioihin tai laitteelta laitteelle tehtäviin siirtoihin.</p>
+
+<h2>Lapset</h2>
+<p>TotalDropia ei ole suunnattu lapsille, eikä se kerää henkilötietoja keneltäkään.</p>
+
+<h2>Oikeutesi</h2>
+<p>Koska meillä ei ole sinusta mitään henkilötietoja, ei ole mitään, mihin saada pääsy, mitä oikaista tai poistaa. Jos sinulla on kysyttävää tai valitettavaa, kirjoita meille yllä olevaan osoitteeseen. Sinulla on myös oikeus tehdä valitus tietosuojaviranomaiselle.</p>
+
+<h2>Muutokset</h2>
+<p>Versio 5 luettelee luvat, joita Android-versiot 0.3.0-beta.2:n jälkeen pyytävät ja joiden avulla siirto voi jatkua taustalla ilmoituksen kanssa; palvelimiemme näkemät tiedot eivät muutu. Versio 4 seuraa Android- ja Linux-versiota 0.2.0-beta.1, jotka muuttivat sitä, mitä välityspalvelin ja toinen laite näkevät. Näissä versioissa laitteet ottavat yhteyden välityspalvelimeen vain, kun suoraa yhteyttä ei valita ajoissa tai kokeiltavaa suoraa reittiä ei ole, eivätkä jokaisen siirron alussa. Vastaanottaja ei enää käytä välityspalvelinta, jonka vain lähettäjä on valinnut, joten yksityisyystila piilottaa nyt myös vastaanottajan osoitteen. Yksityisyystila on nyt myös sovellusten Asetuksissa ja hylkää suorat yhteydet. Versio 4 kertoo myös, mitä Android-sovellus säilyttää välimuistissaan. Versio 3 korjasi version 2, jossa sanottiin, että sovellukset ottavat yhteyden välityspalvelimeen vain, kun mikään suora reitti ei toimi (silloin ne ottivat siihen yhteyden jokaisen siirron alussa), ja että yksityisyystila piilotti vastaanottajan osoitteen, mitä se silloin ei tehnyt. Se nimesi myös Linux-sovelluksen tiedostot. Versio 2 lisäsi STUN-palvelun ja välityspalvelimen. Myöhempiin versioihin suunnitellut ominaisuudet (linkit, valinnaiset anonyymit tilit) muuttavat sitä, mitä palvelimemme käsittelevät. Päivitämme tämän käytännön ennen kuin tällainen ominaisuus julkaistaan, ja säilytämme jokaisen version projektin julkisessa lähdekoodivarastossa.</p>

@@ -1,0 +1,51 @@
+<p class="eyebrow">Datenschutzerklärung · Version 5 · 3. November 2026</p>
+<h1>Wir erheben nichts über Sie.</h1>
+<p class="lead">TotalDrop hat keine Konten, keine Analyse, keine Werbung und keine Absturzberichte. Diese Seite erklärt genau, was unsere Server sehen können, während Sie Dateien übertragen, und wie schnell es wieder gelöscht ist.</p>
+
+<h2>Wer wir sind</h2>
+<p>TotalDrop ist ein kostenloses Open-Source-Projekt, das von Ozan Özdil betreut wird. Diese Erklärung gilt für die TotalDrop-Apps, das Kommandozeilenprogramm und die Server unter <code>totaldrop.app</code>. Kontakt: <a href="mailto:privacy@totaldrop.app">privacy@totaldrop.app</a>.</p>
+
+<h2>Was die Apps erheben</h2>
+<p>Nichts. Die Apps fragen nicht nach Ihrem Namen, Ihrer E-Mail-Adresse oder Telefonnummer und enthalten keinen Code für Tracking, Analyse, Werbung oder Absturzberichte. Bis einschließlich 0.3.0-beta.2 braucht die Android-App nur Internetzugriff. Spätere Versionen fragen nur nach dem, was eine Übertragung braucht: Internetzugriff und Netzwerkstatus, um sich zu verbinden; Ausführen einer Übertragung im Hintergrund, damit sie weiterläuft, während Sie zu einer anderen App wechseln; und Anzeigen von Benachrichtigungen, für die laufende Benachrichtigung mit der Schaltfläche „Beenden“, solange eine Übertragung läuft. Diese Berechtigungen bleiben auf Ihrem Gerät: Sie senden nichts an uns oder an andere.</p>
+
+<h2>Ihre Dateien</h2>
+<p>Dateien gehen direkt von einem Gerät zum anderen, wenn die beiden einander erreichen können, und sonst über unseren Relay-Server (siehe unten); in beiden Fällen sind sie Ende-zu-Ende-verschlüsselt. Unsere Server sehen nie Ihre Dateien, deren Namen oder Inhalte und können nicht lesen, was durch sie hindurchgeht: Die Schlüssel gibt es nur auf den beiden Geräten.</p>
+
+<h2>Was der Vermittlungsserver sieht</h2>
+<p>Um eine Übertragung zu beginnen, verbinden sich beide Geräte mit unserem Vermittlungsserver unter <code>rendezvous.totaldrop.app</code>, der auf Cloudflare läuft. Er hilft zwei Geräten, die denselben Code kennen, einander zu finden. Dabei sieht er zwangsläufig:</p>
+<ul>
+  <li>die IP-Adresse jedes Geräts, wie jeder Server im Internet;</li>
+  <li>die Zahl am Anfang des Codes (zum Beispiel die 7 in 7-harbor-rocket), aber nie die Wörter;</li>
+  <li>wann Sie sich verbinden und wie groß die kurzen Nachrichten sind, die die beiden Geräte austauschen. Nach den ersten beiden sind diese Nachrichten so verschlüsselt, dass nur das andere Gerät sie lesen kann.</li>
+</ul>
+<p>Der Server protokolliert nichts davon. Ein Postfach und alles darin wird gelöscht, sobald beide Geräte es verlassen, spätestens nach einer Stunde. Nach jeder Übertragung ruht die Zahl des Codes 10 Minuten, bevor sie wieder vergeben wird; nach einem fehlgeschlagenen Codeversuch 24 Stunden.</p>
+<p>Cloudflare verarbeitet als unser Infrastrukturanbieter IP-Adressen, um den Dienst bereitzustellen und zu schützen, und zwar nach seiner eigenen <a href="https://www.cloudflare.com/privacypolicy/">Datenschutzerklärung</a>. Dasselbe gilt für den Relay-Server. Für beide Server haben wir Anfrageprotokolle und das Workers-Logging abgeschaltet.</p>
+
+<h2>Einen direkten Weg finden</h2>
+<p>Um sich über das Internet zu verbinden, fragt jedes Gerät zuerst einen STUN-Server, mit welcher öffentlichen IP-Adresse und welchem Port es erscheint. Standardmäßig ist das der kostenlose STUN-Dienst von Cloudflare unter <code>stun.cloudflare.com</code>. Er sieht Ihre IP-Adresse, wie jeder Server im Internet, und sonst nichts. Im Privatsphäre-Modus (siehe unten) fragt das Gerät ihn nicht.</p>
+
+<h2>Was der Relay-Server sieht</h2>
+<p>Unser Relay-Server unter <code>relay.totaldrop.app</code>, der auf Cloudflare läuft, trägt eine Übertragung, wenn die beiden Geräte einander nicht direkt erreichen können. Unter Android und Linux ab 0.2.0-beta.1 und in der seit dem 29. Oktober 2026 aus dem Repository gebauten Kommandozeile kontaktiert ein Gerät den Relay-Server nur, wenn etwa 1,2 Sekunden nachdem die beiden Geräte begonnen haben, sich zu verbinden, noch keine direkte Verbindung gewählt ist. Sofort kontaktiert es ihn, wenn eines der Geräte im Privatsphäre-Modus ist oder das andere Gerät keine Adresse mitteilt. Eine Übertragung, deren direkte Verbindung rechtzeitig gewählt wird, erreicht den Relay-Server nie. Wird eine direkte Verbindung später gewählt, schließt das Gerät in diesem Moment seine Verbindung zum Relay-Server. Ältere Versionen (Android 0.1.0-beta.5, Linux 0.1.0-beta.4) verbinden sich zu Beginn jeder Übertragung mit dem Relay-Server, und ein empfangendes Gerät mit diesen Versionen nutzt den Relay-Server, den der Absender nennt; aktualisieren Sie, um das zu beenden. Wird der Relay-Server genutzt, sieht er:</p>
+<ul>
+  <li>die IP-Adresse jedes Geräts;</li>
+  <li>zwei zufällige Schlüssel, die nur für diese eine Übertragung erzeugt und nie wieder verwendet werden;</li>
+  <li>wann sich jedes Gerät verbunden und getrennt hat und wie viele verschlüsselte Daten durchgegangen sind.</li>
+</ul>
+<p>Die Schlüssel verknüpfen eine Übertragung nicht mit einer anderen, Ihre IP-Adresse kann es aber: Der Relay-Server und der Vermittlungsserver, beide von uns auf Cloudflare betrieben, sehen sie im Abstand weniger Augenblicke. Der Relay-Server kann weder die Dateien noch ihre Namen noch irgendetwas darüber lesen, wer Sie sind. Er protokolliert nichts und behält nach dem Ende einer Übertragung nichts über sie.</p>
+<p>Die Relay-Adresse jedes Geräts wird dem anderen Gerät verschlüsselt mitgeteilt. Nutzt der Absender einen eigenen Relay-Server (die Option <code>--relay</code> der Kommandozeile oder <code>TOTALDROP_RELAY</code>), verwendet das empfangende Gerät ab 0.2.0-beta.1 ihn nur, wenn er auch in der eigenen Relay-Einstellung des Empfängers steht; andernfalls kontaktiert es ihn nie. Wer einen Relay-Server betreibt, mit dem sich ein Gerät verbindet, sieht, was oben aufgeführt ist. Wenn die beiden Geräte verschiedene Relay-Server nutzen und keinen direkten Weg haben, bricht die Übertragung mit einem Fehler ab.</p>
+<p>Privatsphäre-Modus („Meine Adresse vor dem anderen Gerät verbergen“ in den Einstellungen der Apps seit 0.2.0-beta.1, <code>--relay-only</code> in der Kommandozeile): Ihr Gerät teilt dem anderen Gerät keine IP-Adresse mit, fragt den STUN-Server nicht, wählt das andere Gerät nie direkt an und lehnt eine direkte Verbindung ab, selbst vom gekoppelten Gerät. Jede Übertragung läuft über den Relay-Server, sodass das andere Gerät Ihre IP-Adresse nicht erfährt, ob Sie senden oder empfangen. Das ist langsamer, und der Relay-Server und der Vermittlungsserver sehen Ihre IP-Adresse weiterhin. Das andere Gerät muss denselben Relay-Server nutzen wie Sie, ob Sie senden oder empfangen (die Apps nutzen alle unseren); andernfalls bricht die Übertragung mit einem Fehler ab.</p>
+
+<h2>Was das andere Gerät sieht</h2>
+<p>Um sich direkt zu verbinden, tauschen die beiden Geräte ihre Netzwerkadressen verschlüsselt miteinander aus. Jedes Gerät erfährt daher die lokale und öffentliche IP-Adresse des anderen, wie bei jeder direkten Verbindung. Ein Gerät im Privatsphäre-Modus teilt keine Adresse mit, sodass das andere Gerät sie nicht erfährt.</p>
+
+<h2>Auf Ihrem Gerät</h2>
+<p>Empfangene Dateien werden unter Android in <em>Download/TotalDrop</em> und unter Linux in <em>~/Downloads/TotalDrop</em> gespeichert. Es sind gewöhnliche freigegebene Dateien, die wie Ihre anderen Downloads behandelt werden. Wenn Sie von Android aus senden, werden die ausgewählten Dateien in den Cache der App kopiert. Die Kopien werden gelöscht, wenn Sie einen abgeschlossenen Sendevorgang schließen oder einen abbrechen. Kopien von Dateien, die Sie ausgewählt, aber nicht gesendet haben (Sie sind vor dem Senden zurückgegangen, haben sie aus der Liste entfernt oder Android hat die App geschlossen), können bleiben, bis ein späterer Sendevorgang geschlossen oder abgebrochen wird oder Android den Cache leert. Die Apps speichern zwei Einstellungen: die Adresse des Vermittlungsservers und ob der Privatsphäre-Modus eingeschaltet ist (unter Linux in <em>~/.config/totaldrop/settings.toml</em>). Die eigenen Daten der Android-App, diese Kopien und Einstellungen, gelangen nie in Cloud-Sicherungen oder Übertragungen von Gerät zu Gerät.</p>
+
+<h2>Kinder</h2>
+<p>TotalDrop richtet sich nicht an Kinder und erhebt von niemandem personenbezogene Daten.</p>
+
+<h2>Ihre Rechte</h2>
+<p>Da wir keine personenbezogenen Daten über Sie haben, gibt es nichts, worauf Sie zugreifen, was Sie berichtigen oder löschen lassen könnten. Wenn Sie eine Frage oder Beschwerde haben, schreiben Sie uns an die oben genannte Adresse. Sie haben außerdem das Recht, sich bei Ihrer Datenschutzaufsichtsbehörde zu beschweren.</p>
+
+<h2>Änderungen</h2>
+<p>Version 5 führt die Berechtigungen auf, nach denen Android-Versionen nach 0.3.0-beta.2 fragen und mit denen eine Übertragung mit einer Benachrichtigung im Hintergrund weiterlaufen kann; was unsere Server sehen, ändert sich nicht. Version 4 folgt Android und Linux 0.2.0-beta.1, die geändert haben, was der Relay-Server und das andere Gerät sehen. In diesen Versionen kontaktieren Geräte den Relay-Server nur, wenn nicht rechtzeitig eine direkte Verbindung gewählt wird oder es keinen direkten Weg zu versuchen gibt, statt zu Beginn jeder Übertragung. Ein Empfänger nutzt keinen Relay-Server mehr, den nur der Absender gewählt hat, daher verbirgt der Privatsphäre-Modus jetzt auch die Adresse eines Empfängers. Der Privatsphäre-Modus ist jetzt auch in den Einstellungen der Apps zu finden und lehnt direkte Verbindungen ab. Version 4 sagt außerdem, was die Android-App in ihrem Cache behält. Version 3 hat Version 2 berichtigt, die sagte, dass die Apps den Relay-Server nur erreichen, wenn kein direkter Weg funktioniert (damals verbanden sie sich zu Beginn jeder Übertragung mit ihm), und dass der Privatsphäre-Modus die Adresse eines Empfängers verbirgt, was er damals nicht tat. Sie nannte auch die Dateien der Linux-App. Version 2 hat den STUN-Dienst und den Relay-Server hinzugefügt. Für spätere Versionen geplante Funktionen (Links, optionale anonyme Konten) werden ändern, was unsere Server verarbeiten. Wir werden diese Erklärung aktualisieren, bevor eine solche Funktion erscheint, und jede Version im öffentlichen Repository des Projekts aufbewahren.</p>
