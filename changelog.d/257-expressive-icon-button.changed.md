@@ -1,4 +1,4 @@
-- **Android:** Icon buttons (Settings, Paste, Remove) follow Material 3
-  Expressive, like the system on Android 16: they turn into a rounded
-  square while you press them. With "Remove animations" on, the change
-  happens at once (#257).
+- **Android:** Icon buttons (Settings, Paste, Remove and Back) follow
+  Material 3 Expressive, like Android 16's own interface on Pixel: they
+  turn into a rounded square while you press them. With "Remove
+  animations" on, the change happens at once (#257).

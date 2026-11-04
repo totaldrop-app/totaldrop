@@ -190,10 +190,12 @@ class _Picking extends StatelessWidget {
                     fontFeatures: [FontFeature.tabularFigures()],
                   ),
                 ),
-                trailing: IconButton(
-                  tooltip: l.sendRemove,
-                  icon: const Icon(Icons.close),
-                  onPressed: () => vm.remove(f),
+                trailing: KeepIconButtonVariant(
+                  child: IconButton(
+                    tooltip: l.sendRemove,
+                    icon: const Icon(Icons.close),
+                    onPressed: () => vm.remove(f),
+                  ),
                 ),
               );
             },

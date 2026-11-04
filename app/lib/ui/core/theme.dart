@@ -190,7 +190,8 @@ ThemeData buildTheme(ColorScheme scheme) {
     ),
     // Material 3 Expressive, part by part as material_ui ships it (ADR
     // 0011). Icon buttons keep their Material 3 size and turn into a
-    // rounded square while pressed.
+    // rounded square while pressed. In a text field or a list row they
+    // need KeepIconButtonVariant.
     iconButtonTheme: const IconButtonThemeData(
       variant: StyleVariant.material3Expressive,
     ),
@@ -217,7 +218,9 @@ abstract final class Gap {
 /// Lets the motion that Material 3 Expressive adds follow the system's
 /// "Remove animations" setting (ADR 0011), as the mark does: an icon
 /// button then changes shape at once instead of morphing. Wraps the app
-/// in `MaterialApp.builder`, below the theme.
+/// in `MaterialApp.builder`, below the theme. While the setting is on, its
+/// IconButtonTheme wins over a `Theme` lower in the tree that sets
+/// `iconButtonTheme`; set icon button styles here or in [buildTheme].
 class SystemMotion extends StatelessWidget {
   const SystemMotion({super.key, required this.child});
 
@@ -233,6 +236,30 @@ class SystemMotion extends StatelessWidget {
         style: (icons.style ?? const ButtonStyle()).copyWith(
           animationDuration: Duration.zero,
         ),
+      ),
+      child: child,
+    );
+  }
+}
+
+/// Gives an icon button the app theme's style variant back where
+/// material_ui 1.8.0 drops it: InputDecorator (prefix and suffix icons)
+/// and ListTile (leading and trailing) rebuild the icon button theme from
+/// its style alone, so a button there falls back to plain Material 3. The
+/// style those widgets set (their colours, and SystemMotion's duration) is
+/// kept. Remove once material_ui keeps the variant.
+class KeepIconButtonVariant extends StatelessWidget {
+  const KeepIconButtonVariant({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final here = IconButtonTheme.of(context);
+    return IconButtonTheme(
+      data: IconButtonThemeData(
+        style: here.style,
+        variant: here.variant ?? Theme.of(context).iconButtonTheme.variant,
       ),
       child: child,
     );
