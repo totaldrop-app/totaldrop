@@ -188,6 +188,12 @@ ThemeData buildTheme(ColorScheme scheme) {
         borderSide: BorderSide(color: scheme.outline),
       ),
     ),
+    // Material 3 Expressive, part by part as material_ui ships it (ADR
+    // 0011). Icon buttons keep their Material 3 size and turn into a
+    // rounded square while pressed.
+    iconButtonTheme: const IconButtonThemeData(
+      variant: StyleVariant.material3Expressive,
+    ),
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(
         textStyle: const TextStyle(
@@ -206,4 +212,29 @@ abstract final class Gap {
   static const m = SizedBox(height: 16, width: 16);
   static const l = SizedBox(height: 24, width: 24);
   static const xl = SizedBox(height: 40, width: 40);
+}
+
+/// Lets the motion that Material 3 Expressive adds follow the system's
+/// "Remove animations" setting (ADR 0011), as the mark does: an icon
+/// button then changes shape at once instead of morphing. Wraps the app
+/// in `MaterialApp.builder`, below the theme.
+class SystemMotion extends StatelessWidget {
+  const SystemMotion({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!(MediaQuery.maybeDisableAnimationsOf(context) ?? false)) return child;
+    final icons = IconButtonTheme.of(context);
+    return IconButtonTheme(
+      data: IconButtonThemeData(
+        variant: icons.variant,
+        style: (icons.style ?? const ButtonStyle()).copyWith(
+          animationDuration: Duration.zero,
+        ),
+      ),
+      child: child,
+    );
+  }
 }
