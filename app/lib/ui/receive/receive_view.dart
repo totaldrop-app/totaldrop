@@ -186,18 +186,20 @@ class _Entering extends StatelessWidget {
             errorText: vm.showInvalid ? l.receiveCodeInvalid : null,
             errorMaxLines: 3,
             prefixIcon: const Icon(Icons.key_outlined),
-            suffixIcon: IconButton(
-              tooltip: l.receivePaste,
-              icon: const Icon(Icons.content_paste),
-              onPressed: () async {
-                final data = await Clipboard.getData(Clipboard.kTextPlain);
-                final text = data?.text;
-                if (text == null) return;
-                final value = codeFromPaste(text);
-                if (value.isEmpty) return;
-                controller.text = value;
-                vm.setInput(value);
-              },
+            suffixIcon: KeepIconButtonVariant(
+              child: IconButton(
+                tooltip: l.receivePaste,
+                icon: const Icon(Icons.content_paste),
+                onPressed: () async {
+                  final data = await Clipboard.getData(Clipboard.kTextPlain);
+                  final text = data?.text;
+                  if (text == null) return;
+                  final value = codeFromPaste(text);
+                  if (value.isEmpty) return;
+                  controller.text = value;
+                  vm.setInput(value);
+                },
+              ),
             ),
           ),
           onChanged: vm.setInput,
