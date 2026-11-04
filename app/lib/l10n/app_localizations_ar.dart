@@ -307,6 +307,46 @@ class AppLocalizationsAr extends AppLocalizations {
   String get errorOther => 'حدث خطأ ما.';
 
   @override
+  String get causeTimedOut =>
+      'توقف الاتصال عن الاستجابة. ربما فقد أحد الجهازين الشبكة أو دخل في وضع السكون.';
+
+  @override
+  String get causeConnectionLost => 'انقطع الاتصال بالجهاز الآخر.';
+
+  @override
+  String get causeNoRoute =>
+      'لم تنجح أي طريقة للوصول إلى الجهاز الآخر، لا مباشرة ولا عبر خادم الترحيل.';
+
+  @override
+  String get causeRelay =>
+      'تعذر الوصول إلى خادم الترحيل، أو أن الجهازين لا يستخدمان الخادم نفسه.';
+
+  @override
+  String get causeProtocol =>
+      'أرسل الجهاز الآخر شيئًا لا يفهمه هذا الإصدار. قد يساعد تحديث TotalDrop على الجهازين.';
+
+  @override
+  String get causeDiskFull => 'لا توجد مساحة فارغة كافية على هذا الجهاز.';
+
+  @override
+  String get causeNoPermission =>
+      'لا يُسمح لـ TotalDrop بقراءة ملف أو مجلد يحتاج إليه أو الكتابة فيه.';
+
+  @override
+  String get causeNotFound => 'تعذر العثور على ملف أو مجلد. ربما نُقل أو حُذف.';
+
+  @override
+  String get causeReadOnly => 'المجلد على قرص لا تمكن الكتابة عليه.';
+
+  @override
+  String get causeFileChanged =>
+      'تغيّر ملف أثناء إرساله. أرسله مرة أخرى بعد حفظه.';
+
+  @override
+  String get technicalDetail =>
+      'رسالة تقنية بالإنجليزية، لإرفاقها عند الإبلاغ عن مشكلة:';
+
+  @override
   String get settingsServer => 'خادم الالتقاء';
 
   @override

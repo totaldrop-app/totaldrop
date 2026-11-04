@@ -29,6 +29,25 @@ String errorMessage(BuildContext context, ErrorKind kind) {
   };
 }
 
+/// Why a transfer failed, in the person's language (#212), or null when
+/// the headline says it all. [cause] is the core's name for it.
+String? causeMessage(BuildContext context, String cause) {
+  final l = AppLocalizations.of(context);
+  return switch (cause) {
+    'TimedOut' => l.causeTimedOut,
+    'ConnectionLost' => l.causeConnectionLost,
+    'NoRoute' => l.causeNoRoute,
+    'Relay' => l.causeRelay,
+    'Protocol' => l.causeProtocol,
+    'DiskFull' => l.causeDiskFull,
+    'NoPermission' => l.causeNoPermission,
+    'NotFound' => l.causeNotFound,
+    'ReadOnly' => l.causeReadOnly,
+    'FileChanged' => l.causeFileChanged,
+    _ => null,
+  };
+}
+
 /// The four verification words, with the instruction to compare them.
 class VerificationWords extends StatelessWidget {
   const VerificationWords({super.key, required this.words});
@@ -105,6 +124,7 @@ class ErrorPanel extends StatelessWidget {
     final l = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final wrongCode = error.kind == ErrorKind.wrongCode;
+    final cause = causeMessage(context, error.cause);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -123,14 +143,33 @@ class ErrorPanel extends StatelessWidget {
           Gap.s,
           ExpansionTile(
             title: Text(l.moreInfo, style: theme.textTheme.bodyMedium),
+            expandedCrossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                // May hold the other side's cancel reason: hidden
-                // characters are shown, not obeyed.
-                child: SelectableText(
-                  revealControls(error.detail),
-                  style: theme.textTheme.bodySmall,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Why, in the person's language; the technical text
+                    // below stays English, for problem reports.
+                    if (cause != null) ...[
+                      Text(cause, style: theme.textTheme.bodyMedium),
+                      Gap.m,
+                    ],
+                    Text(
+                      l.technicalDetail,
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    Gap.s,
+                    // May hold the other side's cancel reason: hidden
+                    // characters are shown, not obeyed.
+                    SelectableText(
+                      revealControls(error.detail),
+                      style: theme.textTheme.bodySmall,
+                    ),
+                  ],
                 ),
               ),
             ],

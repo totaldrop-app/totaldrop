@@ -284,6 +284,47 @@ class AppLocalizationsId extends AppLocalizations {
   String get errorOther => 'Terjadi kesalahan.';
 
   @override
+  String get causeTimedOut =>
+      'Koneksi berhenti merespons. Salah satu perangkat mungkin kehilangan jaringan atau masuk mode tidur.';
+
+  @override
+  String get causeConnectionLost => 'Koneksi ke perangkat lain terputus.';
+
+  @override
+  String get causeNoRoute =>
+      'Perangkat lain tidak dapat dijangkau, baik langsung maupun melalui server relai.';
+
+  @override
+  String get causeRelay =>
+      'Server relai tidak dapat dijangkau, atau kedua perangkat tidak memakai server yang sama.';
+
+  @override
+  String get causeProtocol =>
+      'Perangkat lain mengirim sesuatu yang tidak dipahami versi ini. Memperbarui TotalDrop di kedua perangkat mungkin membantu.';
+
+  @override
+  String get causeDiskFull => 'Ruang kosong di perangkat ini tidak cukup.';
+
+  @override
+  String get causeNoPermission =>
+      'TotalDrop tidak diizinkan membaca atau menulis file atau folder yang dibutuhkannya.';
+
+  @override
+  String get causeNotFound =>
+      'File atau folder tidak ditemukan. Mungkin sudah dipindahkan atau dihapus.';
+
+  @override
+  String get causeReadOnly => 'Folder berada di disk yang tidak bisa ditulisi.';
+
+  @override
+  String get causeFileChanged =>
+      'Sebuah file berubah saat sedang dikirim. Kirim lagi setelah file disimpan.';
+
+  @override
+  String get technicalDetail =>
+      'Pesan teknis dalam bahasa Inggris, untuk disertakan saat melaporkan masalah:';
+
+  @override
   String get settingsServer => 'Server pertemuan';
 
   @override

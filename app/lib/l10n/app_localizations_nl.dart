@@ -299,6 +299,49 @@ class AppLocalizationsNl extends AppLocalizations {
   String get errorOther => 'Er is iets misgegaan.';
 
   @override
+  String get causeTimedOut =>
+      'De verbinding reageert niet meer. Een van de apparaten is misschien zijn netwerk kwijt of in slaapstand gegaan.';
+
+  @override
+  String get causeConnectionLost =>
+      'De verbinding met het andere apparaat is verbroken.';
+
+  @override
+  String get causeNoRoute =>
+      'Het andere apparaat was niet bereikbaar, niet rechtstreeks en niet via de relayserver.';
+
+  @override
+  String get causeRelay =>
+      'De relayserver was niet bereikbaar, of de twee apparaten gebruiken niet dezelfde.';
+
+  @override
+  String get causeProtocol =>
+      'Het andere apparaat stuurde iets wat deze versie niet begrijpt. TotalDrop op beide apparaten bijwerken kan helpen.';
+
+  @override
+  String get causeDiskFull => 'Er is niet genoeg vrije ruimte op dit apparaat.';
+
+  @override
+  String get causeNoPermission =>
+      'TotalDrop mag een bestand of map die het nodig heeft niet lezen of schrijven.';
+
+  @override
+  String get causeNotFound =>
+      'Een bestand of map is niet gevonden. Misschien is die verplaatst of verwijderd.';
+
+  @override
+  String get causeReadOnly =>
+      'De map staat op een schijf waarop niet geschreven kan worden.';
+
+  @override
+  String get causeFileChanged =>
+      'Een bestand veranderde terwijl het werd verstuurd. Stuur het opnieuw zodra het is opgeslagen.';
+
+  @override
+  String get technicalDetail =>
+      'Technisch bericht in het Engels, om mee te sturen als je een probleem meldt:';
+
+  @override
   String get settingsServer => 'Ontmoetingsserver';
 
   @override

@@ -304,6 +304,47 @@ class AppLocalizationsCs extends AppLocalizations {
   String get errorOther => 'Něco se pokazilo.';
 
   @override
+  String get causeTimedOut =>
+      'Spojení přestalo odpovídat. Jedno ze zařízení možná ztratilo síť nebo přešlo do režimu spánku.';
+
+  @override
+  String get causeConnectionLost => 'Spojení s druhým zařízením se přerušilo.';
+
+  @override
+  String get causeNoRoute =>
+      'Druhé zařízení se nepodařilo zastihnout přímo ani přes zprostředkující server.';
+
+  @override
+  String get causeRelay =>
+      'Zprostředkující server není dostupný, nebo obě zařízení nepoužívají tentýž.';
+
+  @override
+  String get causeProtocol =>
+      'Druhé zařízení poslalo něco, čemu tato verze nerozumí. Pomoci může aktualizace TotalDrop na obou zařízeních.';
+
+  @override
+  String get causeDiskFull => 'Na tomto zařízení není dost volného místa.';
+
+  @override
+  String get causeNoPermission =>
+      'TotalDrop nemá oprávnění číst nebo zapisovat potřebný soubor či složku.';
+
+  @override
+  String get causeNotFound =>
+      'Soubor nebo složku se nepodařilo najít. Možná byly přesunuty nebo smazány.';
+
+  @override
+  String get causeReadOnly => 'Složka je na disku, na který nelze zapisovat.';
+
+  @override
+  String get causeFileChanged =>
+      'Soubor se během odesílání změnil. Až bude uložený, pošlete ho znovu.';
+
+  @override
+  String get technicalDetail =>
+      'Technická zpráva v angličtině, kterou přiložte při hlášení problému:';
+
+  @override
   String get settingsServer => 'Server pro navázání spojení';
 
   @override

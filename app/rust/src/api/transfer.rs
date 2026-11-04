@@ -117,6 +117,9 @@ pub struct TransferError {
     pub kind: ErrorKind,
     /// Technical detail, in English, for "more information".
     pub detail: String,
+    /// Why, as a name Dart translates (`cause` + this, e.g. `TimedOut`);
+    /// empty when the headline says it all (#212).
+    pub cause: String,
 }
 
 impl TransferError {
@@ -124,6 +127,7 @@ impl TransferError {
         Self {
             kind: ErrorKind::Other,
             detail: detail.to_owned(),
+            cause: String::new(),
         }
     }
 }
@@ -132,6 +136,7 @@ impl From<totaldrop_core::Error> for TransferError {
     fn from(e: totaldrop_core::Error) -> Self {
         use totaldrop_core::Error as E;
         let detail = e.to_string();
+        let cause = e.cause().as_str().to_owned();
         let kind = match e {
             E::WrongCode => ErrorKind::WrongCode,
             E::PeerLeft => ErrorKind::PeerLeft,
@@ -146,7 +151,11 @@ impl From<totaldrop_core::Error> for TransferError {
             E::Io(_) => ErrorKind::Storage,
             _ => ErrorKind::Other,
         };
-        Self { kind, detail }
+        Self {
+            kind,
+            detail,
+            cause,
+        }
     }
 }
 
@@ -158,7 +167,7 @@ impl TransferError {
         if e.is_code_not_in_use() {
             Self {
                 kind: ErrorKind::CodeNotInUse,
-                detail: e.to_string(),
+                ..e.into()
             }
         } else {
             e.into()
@@ -172,7 +181,7 @@ impl TransferError {
         if e.is_code_not_in_use() {
             Self {
                 kind: ErrorKind::CodeExpired,
-                detail: e.to_string(),
+                ..e.into()
             }
         } else {
             e.into()
@@ -478,10 +487,8 @@ pub async fn accept_offer(
     let stop = stopper.stop.clone();
     let result = on_runtime(async move {
         let dest = PathBuf::from(destination);
-        std::fs::create_dir_all(&dest).map_err(|e| TransferError {
-            kind: ErrorKind::Storage,
-            detail: e.to_string(),
-        })?;
+        std::fs::create_dir_all(&dest)
+            .map_err(|e| TransferError::from(totaldrop_core::Error::Io(e)))?;
         let r = incoming.accept_with(&dest, events, &stop).await?;
         Ok(TransferSummary {
             files_ok: n(r.files_ok),
@@ -539,6 +546,25 @@ mod tests {
         assert_eq!(e.kind, ErrorKind::CodeExpired);
         let e = TransferError::on_send(E::Rendezvous("connection refused".into()));
         assert_eq!(e.kind, ErrorKind::Server);
+    }
+
+    /// The explanation under Details comes in the person's language: the
+    /// error carries its cause for Dart to translate (#212).
+    #[test]
+    fn errors_carry_their_cause() {
+        use totaldrop_core::Error as E;
+        let e = TransferError::from(quinn_timed_out());
+        assert_eq!(e.kind, ErrorKind::Connect);
+        assert_eq!(e.cause, "TimedOut");
+        assert!(e.detail.contains("timed out"));
+        let full = std::io::Error::from(std::io::ErrorKind::StorageFull);
+        assert_eq!(TransferError::from(E::Io(full)).cause, "DiskFull");
+        let e = TransferError::on_connect(E::Rendezvous("unknown nameplate".into()));
+        assert_eq!((e.kind, e.cause.as_str()), (ErrorKind::CodeNotInUse, ""));
+    }
+
+    fn quinn_timed_out() -> totaldrop_core::Error {
+        totaldrop_core::Error::Connect("timed out".into())
     }
 
     #[test]

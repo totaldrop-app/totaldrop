@@ -295,6 +295,47 @@ class AppLocalizationsFa extends AppLocalizations {
   String get errorOther => 'مشکلی پیش آمد.';
 
   @override
+  String get causeTimedOut =>
+      'اتصال دیگر پاسخ نمی‌دهد. شاید یکی از دستگاه‌ها شبکه را از دست داده یا به حالت خواب رفته باشد.';
+
+  @override
+  String get causeConnectionLost => 'اتصال با دستگاه دیگر قطع شد.';
+
+  @override
+  String get causeNoRoute =>
+      'هیچ راهی برای رسیدن به دستگاه دیگر جواب نداد، نه مستقیم و نه از طریق سرور رله.';
+
+  @override
+  String get causeRelay =>
+      'دسترسی به سرور رله ممکن نشد، یا دو دستگاه از یک سرور رله استفاده نمی‌کنند.';
+
+  @override
+  String get causeProtocol =>
+      'دستگاه دیگر چیزی فرستاد که این نسخه آن را نمی‌فهمد. به‌روزرسانی TotalDrop در هر دو دستگاه ممکن است کمک کند.';
+
+  @override
+  String get causeDiskFull => 'فضای خالی کافی در این دستگاه نیست.';
+
+  @override
+  String get causeNoPermission =>
+      'TotalDrop اجازه خواندن یا نوشتن فایل یا پوشه‌ای را که لازم دارد ندارد.';
+
+  @override
+  String get causeNotFound =>
+      'یک فایل یا پوشه پیدا نشد. شاید جابه‌جا یا حذف شده باشد.';
+
+  @override
+  String get causeReadOnly => 'پوشه روی دیسکی است که نمی‌توان روی آن نوشت.';
+
+  @override
+  String get causeFileChanged =>
+      'یک فایل هنگام ارسال تغییر کرد. پس از ذخیره شدن، دوباره آن را بفرستید.';
+
+  @override
+  String get technicalDetail =>
+      'پیام فنی به انگلیسی، برای افزودن هنگام گزارش مشکل:';
+
+  @override
   String get settingsServer => 'سرور هماهنگی';
 
   @override

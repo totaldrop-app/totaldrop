@@ -303,6 +303,49 @@ class AppLocalizationsPt extends AppLocalizations {
   String get errorOther => 'Algo deu errado.';
 
   @override
+  String get causeTimedOut =>
+      'A conexão parou de responder. Um dos dispositivos pode ter perdido a rede ou entrado em suspensão.';
+
+  @override
+  String get causeConnectionLost => 'A conexão com o outro dispositivo caiu.';
+
+  @override
+  String get causeNoRoute =>
+      'Não foi possível alcançar o outro dispositivo, nem diretamente nem pelo servidor de retransmissão.';
+
+  @override
+  String get causeRelay =>
+      'Não foi possível alcançar o servidor de retransmissão, ou os dois dispositivos não usam o mesmo.';
+
+  @override
+  String get causeProtocol =>
+      'O outro dispositivo enviou algo que esta versão não entende. Atualizar o TotalDrop nos dois dispositivos pode ajudar.';
+
+  @override
+  String get causeDiskFull =>
+      'Não há espaço livre suficiente neste dispositivo.';
+
+  @override
+  String get causeNoPermission =>
+      'O TotalDrop não tem permissão para ler ou gravar um arquivo ou pasta de que precisa.';
+
+  @override
+  String get causeNotFound =>
+      'Um arquivo ou pasta não foi encontrado. Ele pode ter sido movido ou excluído.';
+
+  @override
+  String get causeReadOnly =>
+      'A pasta está em um disco em que não é possível gravar.';
+
+  @override
+  String get causeFileChanged =>
+      'Um arquivo mudou enquanto era enviado. Envie de novo depois de salvá-lo.';
+
+  @override
+  String get technicalDetail =>
+      'Mensagem técnica em inglês, para incluir ao relatar um problema:';
+
+  @override
   String get settingsServer => 'Servidor de encontro';
 
   @override
@@ -743,6 +786,49 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get errorOther => 'Algo deu errado.';
+
+  @override
+  String get causeTimedOut =>
+      'A conexão parou de responder. Um dos dispositivos pode ter perdido a rede ou entrado em suspensão.';
+
+  @override
+  String get causeConnectionLost => 'A conexão com o outro dispositivo caiu.';
+
+  @override
+  String get causeNoRoute =>
+      'Não foi possível alcançar o outro dispositivo, nem diretamente nem pelo servidor de retransmissão.';
+
+  @override
+  String get causeRelay =>
+      'Não foi possível alcançar o servidor de retransmissão, ou os dois dispositivos não usam o mesmo.';
+
+  @override
+  String get causeProtocol =>
+      'O outro dispositivo enviou algo que esta versão não entende. Atualizar o TotalDrop nos dois dispositivos pode ajudar.';
+
+  @override
+  String get causeDiskFull =>
+      'Não há espaço livre suficiente neste dispositivo.';
+
+  @override
+  String get causeNoPermission =>
+      'O TotalDrop não tem permissão para ler ou gravar um arquivo ou pasta de que precisa.';
+
+  @override
+  String get causeNotFound =>
+      'Um arquivo ou pasta não foi encontrado. Ele pode ter sido movido ou excluído.';
+
+  @override
+  String get causeReadOnly =>
+      'A pasta está em um disco em que não é possível gravar.';
+
+  @override
+  String get causeFileChanged =>
+      'Um arquivo mudou enquanto era enviado. Envie de novo depois de salvá-lo.';
+
+  @override
+  String get technicalDetail =>
+      'Mensagem técnica em inglês, para incluir ao relatar um problema:';
 
   @override
   String get settingsServer => 'Servidor de encontro';
@@ -1186,6 +1272,50 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
 
   @override
   String get errorOther => 'Ocorreu um problema.';
+
+  @override
+  String get causeTimedOut =>
+      'A ligação deixou de responder. Um dos dispositivos pode ter perdido a rede ou entrado em suspensão.';
+
+  @override
+  String get causeConnectionLost =>
+      'A ligação ao outro dispositivo foi interrompida.';
+
+  @override
+  String get causeNoRoute =>
+      'Não foi possível chegar ao outro dispositivo, nem diretamente nem pelo servidor de retransmissão.';
+
+  @override
+  String get causeRelay =>
+      'Não foi possível chegar ao servidor de retransmissão, ou os dois dispositivos não usam o mesmo.';
+
+  @override
+  String get causeProtocol =>
+      'O outro dispositivo enviou algo que esta versão não compreende. Atualizar o TotalDrop nos dois dispositivos pode ajudar.';
+
+  @override
+  String get causeDiskFull =>
+      'Não há espaço livre suficiente neste dispositivo.';
+
+  @override
+  String get causeNoPermission =>
+      'O TotalDrop não tem permissão para ler ou escrever um ficheiro ou pasta de que precisa.';
+
+  @override
+  String get causeNotFound =>
+      'Não foi encontrado um ficheiro ou pasta. Pode ter sido movido ou eliminado.';
+
+  @override
+  String get causeReadOnly =>
+      'A pasta está num disco onde não é possível escrever.';
+
+  @override
+  String get causeFileChanged =>
+      'Um ficheiro mudou enquanto era enviado. Envie-o de novo depois de o guardar.';
+
+  @override
+  String get technicalDetail =>
+      'Mensagem técnica em inglês, para incluir quando comunicar um problema:';
 
   @override
   String get settingsServer => 'Servidor de encontro';

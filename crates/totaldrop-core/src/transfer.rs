@@ -356,8 +356,9 @@ async fn send_entry(
     let mut file = tokio::fs::File::open(&source).await?;
     if file.metadata().await?.len() != entry.size {
         return Err(Error::Io(std::io::Error::other(format!(
-            "{} changed after it was scanned",
-            source.display()
+            "{} {}",
+            source.display(),
+            crate::error::CHANGED_AFTER_SCAN
         ))));
     }
     let cipher = EntryCipher::new(&ck, &transfer_id, index);

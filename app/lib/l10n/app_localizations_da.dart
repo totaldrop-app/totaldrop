@@ -297,6 +297,49 @@ class AppLocalizationsDa extends AppLocalizations {
   String get errorOther => 'Noget gik galt.';
 
   @override
+  String get causeTimedOut =>
+      'Forbindelsen holdt op med at svare. En af enhederne har måske mistet netværket eller er gået i dvale.';
+
+  @override
+  String get causeConnectionLost =>
+      'Forbindelsen til den anden enhed blev afbrudt.';
+
+  @override
+  String get causeNoRoute =>
+      'Den anden enhed kunne ikke nås, hverken direkte eller gennem relæserveren.';
+
+  @override
+  String get causeRelay =>
+      'Relæserveren kunne ikke nås, eller de to enheder bruger ikke den samme.';
+
+  @override
+  String get causeProtocol =>
+      'Den anden enhed sendte noget, som denne version ikke forstår. Det kan hjælpe at opdatere TotalDrop på begge enheder.';
+
+  @override
+  String get causeDiskFull => 'Der er ikke nok ledig plads på denne enhed.';
+
+  @override
+  String get causeNoPermission =>
+      'TotalDrop har ikke lov til at læse eller skrive en fil eller mappe, den skal bruge.';
+
+  @override
+  String get causeNotFound =>
+      'En fil eller mappe blev ikke fundet. Den er måske flyttet eller slettet.';
+
+  @override
+  String get causeReadOnly =>
+      'Mappen ligger på en disk, der ikke kan skrives til.';
+
+  @override
+  String get causeFileChanged =>
+      'En fil ændrede sig, mens den blev sendt. Send den igen, når den er gemt.';
+
+  @override
+  String get technicalDetail =>
+      'Teknisk besked på engelsk, som du kan vedlægge, når du rapporterer et problem:';
+
+  @override
   String get settingsServer => 'Mødeserver';
 
   @override

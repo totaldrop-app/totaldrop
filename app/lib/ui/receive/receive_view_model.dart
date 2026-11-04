@@ -106,7 +106,7 @@ class ReceiveViewModel extends ChangeNotifier {
       // Not from the core (the folder cannot be made, a platform error):
       // still a failure, so the screen and the keep-alive do not hang.
       if (generation != _generation) return;
-      error = TransferError(kind: ErrorKind.other, detail: '$e');
+      error = TransferError(kind: ErrorKind.other, detail: '$e', cause: '');
       stage = ReceiveStage.failed;
       _release();
     }
@@ -129,7 +129,11 @@ class ReceiveViewModel extends ChangeNotifier {
             _fail(
               e is TransferError
                   ? e
-                  : TransferError(kind: ErrorKind.other, detail: '$e'),
+                  : TransferError(
+                      kind: ErrorKind.other,
+                      detail: '$e',
+                      cause: '',
+                    ),
             );
           },
         );
@@ -163,7 +167,8 @@ class ReceiveViewModel extends ChangeNotifier {
         _release();
       case EventKind.failed:
         _fail(
-          e.error ?? const TransferError(kind: ErrorKind.other, detail: ''),
+          e.error ??
+              const TransferError(kind: ErrorKind.other, detail: '', cause: ''),
         );
         return;
     }

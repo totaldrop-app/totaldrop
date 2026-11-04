@@ -104,7 +104,7 @@ class SendViewModel extends ChangeNotifier {
       // Not from the core (a file that went away, a platform error): still
       // a failure, so the screen and the keep-alive do not hang.
       if (generation == _generation) {
-        _fail(TransferError(kind: ErrorKind.other, detail: '$e'));
+        _fail(TransferError(kind: ErrorKind.other, detail: '$e', cause: ''));
       }
       return;
     }
@@ -125,7 +125,11 @@ class SendViewModel extends ChangeNotifier {
             _fail(
               e is TransferError
                   ? e
-                  : TransferError(kind: ErrorKind.other, detail: '$e'),
+                  : TransferError(
+                      kind: ErrorKind.other,
+                      detail: '$e',
+                      cause: '',
+                    ),
             );
           },
         );
@@ -148,7 +152,8 @@ class SendViewModel extends ChangeNotifier {
         _cleanUp();
       case EventKind.failed:
         _fail(
-          e.error ?? const TransferError(kind: ErrorKind.other, detail: ''),
+          e.error ??
+              const TransferError(kind: ErrorKind.other, detail: '', cause: ''),
         );
         return;
     }

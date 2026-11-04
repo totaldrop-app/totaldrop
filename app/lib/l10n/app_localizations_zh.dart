@@ -271,6 +271,39 @@ class AppLocalizationsZh extends AppLocalizations {
   String get errorOther => '出了点问题。';
 
   @override
+  String get causeTimedOut => '连接已停止响应。其中一台设备可能断开了网络或进入了睡眠。';
+
+  @override
+  String get causeConnectionLost => '与另一台设备的连接已中断。';
+
+  @override
+  String get causeNoRoute => '无论直接连接还是经过中继服务器，都无法连接到另一台设备。';
+
+  @override
+  String get causeRelay => '无法连接到中继服务器，或两台设备使用的不是同一个中继服务器。';
+
+  @override
+  String get causeProtocol => '另一台设备发送了此版本无法理解的内容。在两台设备上更新 TotalDrop 可能会有帮助。';
+
+  @override
+  String get causeDiskFull => '此设备的可用空间不足。';
+
+  @override
+  String get causeNoPermission => 'TotalDrop 没有读取或写入所需文件或文件夹的权限。';
+
+  @override
+  String get causeNotFound => '找不到某个文件或文件夹。它可能已被移动或删除。';
+
+  @override
+  String get causeReadOnly => '该文件夹位于无法写入的磁盘上。';
+
+  @override
+  String get causeFileChanged => '文件在发送过程中发生了变化。保存后请重新发送。';
+
+  @override
+  String get technicalDetail => '英文技术信息，报告问题时可附上：';
+
+  @override
   String get settingsServer => '中介服务器';
 
   @override
@@ -675,6 +708,39 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get errorOther => '出了点问题。';
 
   @override
+  String get causeTimedOut => '连接已停止响应。其中一台设备可能断开了网络或进入了睡眠。';
+
+  @override
+  String get causeConnectionLost => '与另一台设备的连接已中断。';
+
+  @override
+  String get causeNoRoute => '无论直接连接还是经过中继服务器，都无法连接到另一台设备。';
+
+  @override
+  String get causeRelay => '无法连接到中继服务器，或两台设备使用的不是同一个中继服务器。';
+
+  @override
+  String get causeProtocol => '另一台设备发送了此版本无法理解的内容。在两台设备上更新 TotalDrop 可能会有帮助。';
+
+  @override
+  String get causeDiskFull => '此设备的可用空间不足。';
+
+  @override
+  String get causeNoPermission => 'TotalDrop 没有读取或写入所需文件或文件夹的权限。';
+
+  @override
+  String get causeNotFound => '找不到某个文件或文件夹。它可能已被移动或删除。';
+
+  @override
+  String get causeReadOnly => '该文件夹位于无法写入的磁盘上。';
+
+  @override
+  String get causeFileChanged => '文件在发送过程中发生了变化。保存后请重新发送。';
+
+  @override
+  String get technicalDetail => '英文技术信息，报告问题时可附上：';
+
+  @override
   String get settingsServer => '中介服务器';
 
   @override
@@ -1077,6 +1143,39 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get errorOther => '發生錯誤。';
+
+  @override
+  String get causeTimedOut => '連線已停止回應。其中一台裝置可能中斷了網路或進入了睡眠。';
+
+  @override
+  String get causeConnectionLost => '與另一台裝置的連線已中斷。';
+
+  @override
+  String get causeNoRoute => '無論直接連線或經過中繼伺服器，都無法連到另一台裝置。';
+
+  @override
+  String get causeRelay => '無法連到中繼伺服器，或兩台裝置使用的不是同一個中繼伺服器。';
+
+  @override
+  String get causeProtocol => '另一台裝置傳送了此版本無法理解的內容。在兩台裝置上更新 TotalDrop 可能會有幫助。';
+
+  @override
+  String get causeDiskFull => '此裝置的可用空間不足。';
+
+  @override
+  String get causeNoPermission => 'TotalDrop 沒有讀取或寫入所需檔案或資料夾的權限。';
+
+  @override
+  String get causeNotFound => '找不到某個檔案或資料夾。它可能已被移動或刪除。';
+
+  @override
+  String get causeReadOnly => '該資料夾位於無法寫入的磁碟上。';
+
+  @override
+  String get causeFileChanged => '檔案在傳送過程中發生了變化。儲存後請重新傳送。';
+
+  @override
+  String get technicalDetail => '英文技術訊息，回報問題時可附上：';
 
   @override
   String get settingsServer => '中介伺服器';

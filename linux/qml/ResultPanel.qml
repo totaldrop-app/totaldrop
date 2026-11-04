@@ -17,6 +17,9 @@ ColumnLayout {
     property string title
     property string body
     property string detail
+    // Why, as the core names it (TimedOut, DiskFull, …); its text is
+    // Strings "cause" + it, in the person's language (#212).
+    property string cause
     property string folder
     property bool canRetry: false
 
@@ -84,6 +87,20 @@ ColumnLayout {
         text: Strings.s.moreInfo
         icon.name: Theme.icon(checked ? "go-up" : "go-down")
         Layout.alignment: Qt.AlignHCenter
+    }
+    Label {
+        visible: more.visible && more.checked && text !== ""
+        text: r.cause !== "" ? (Strings.s["cause" + r.cause] || "") : ""
+        color: Theme.ink
+        wrapMode: Text.Wrap
+        Layout.fillWidth: true
+    }
+    Label {
+        visible: more.visible && more.checked
+        text: Strings.s.technicalDetail
+        color: Theme.muted
+        wrapMode: Text.Wrap
+        Layout.fillWidth: true
     }
     TextArea {
         visible: more.visible && more.checked

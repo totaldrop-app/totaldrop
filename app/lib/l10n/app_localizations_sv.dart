@@ -298,6 +298,50 @@ class AppLocalizationsSv extends AppLocalizations {
   String get errorOther => 'Något gick fel.';
 
   @override
+  String get causeTimedOut =>
+      'Anslutningen slutade svara. En av enheterna kan ha tappat nätverket eller gått i viloläge.';
+
+  @override
+  String get causeConnectionLost =>
+      'Anslutningen till den andra enheten bröts.';
+
+  @override
+  String get causeNoRoute =>
+      'Den andra enheten gick inte att nå, varken direkt eller via reläservern.';
+
+  @override
+  String get causeRelay =>
+      'Reläservern gick inte att nå, eller så använder enheterna inte samma.';
+
+  @override
+  String get causeProtocol =>
+      'Den andra enheten skickade något som den här versionen inte förstår. Det kan hjälpa att uppdatera TotalDrop på båda enheterna.';
+
+  @override
+  String get causeDiskFull =>
+      'Det finns inte tillräckligt med ledigt utrymme på den här enheten.';
+
+  @override
+  String get causeNoPermission =>
+      'TotalDrop får inte läsa eller skriva en fil eller mapp som behövs.';
+
+  @override
+  String get causeNotFound =>
+      'En fil eller mapp hittades inte. Den kan ha flyttats eller tagits bort.';
+
+  @override
+  String get causeReadOnly =>
+      'Mappen ligger på en disk som inte går att skriva till.';
+
+  @override
+  String get causeFileChanged =>
+      'En fil ändrades medan den skickades. Skicka den igen när den är sparad.';
+
+  @override
+  String get technicalDetail =>
+      'Tekniskt meddelande på engelska, att bifoga när du rapporterar ett problem:';
+
+  @override
   String get settingsServer => 'Mötesserver';
 
   @override

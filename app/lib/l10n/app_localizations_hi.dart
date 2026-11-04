@@ -297,6 +297,48 @@ class AppLocalizationsHi extends AppLocalizations {
   String get errorOther => 'कुछ गड़बड़ हो गई।';
 
   @override
+  String get causeTimedOut =>
+      'कनेक्शन ने जवाब देना बंद कर दिया। हो सकता है किसी डिवाइस का नेटवर्क चला गया हो या वह स्लीप में चला गया हो।';
+
+  @override
+  String get causeConnectionLost => 'दूसरे डिवाइस से कनेक्शन टूट गया।';
+
+  @override
+  String get causeNoRoute =>
+      'दूसरे डिवाइस तक न सीधे पहुँचा जा सका, न रिले सर्वर के ज़रिए।';
+
+  @override
+  String get causeRelay =>
+      'रिले सर्वर तक नहीं पहुँचा जा सका, या दोनों डिवाइस एक ही रिले सर्वर इस्तेमाल नहीं करते।';
+
+  @override
+  String get causeProtocol =>
+      'दूसरे डिवाइस ने कुछ ऐसा भेजा जो यह संस्करण नहीं समझता। दोनों डिवाइस पर TotalDrop अपडेट करने से मदद मिल सकती है।';
+
+  @override
+  String get causeDiskFull => 'इस डिवाइस पर पर्याप्त खाली जगह नहीं है।';
+
+  @override
+  String get causeNoPermission =>
+      'TotalDrop को किसी ज़रूरी फ़ाइल या फ़ोल्डर को पढ़ने या लिखने की अनुमति नहीं है।';
+
+  @override
+  String get causeNotFound =>
+      'कोई फ़ाइल या फ़ोल्डर नहीं मिला। हो सकता है उसे हटाया या मिटाया गया हो।';
+
+  @override
+  String get causeReadOnly =>
+      'फ़ोल्डर ऐसी डिस्क पर है जिस पर लिखा नहीं जा सकता।';
+
+  @override
+  String get causeFileChanged =>
+      'भेजते समय एक फ़ाइल बदल गई। सेव होने के बाद उसे फिर से भेजें।';
+
+  @override
+  String get technicalDetail =>
+      'अंग्रेज़ी में तकनीकी संदेश, समस्या की रिपोर्ट करते समय जोड़ने के लिए:';
+
+  @override
   String get settingsServer => 'संपर्क सर्वर';
 
   @override

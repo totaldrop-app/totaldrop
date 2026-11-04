@@ -286,6 +286,48 @@ class AppLocalizationsHu extends AppLocalizations {
   String get errorOther => 'Hiba történt.';
 
   @override
+  String get causeTimedOut =>
+      'A kapcsolat nem válaszol. Az egyik eszköz talán elvesztette a hálózatot vagy alvó módba lépett.';
+
+  @override
+  String get causeConnectionLost => 'Megszakadt a kapcsolat a másik eszközzel.';
+
+  @override
+  String get causeNoRoute =>
+      'A másik eszköz sem közvetlenül, sem a továbbító szerveren keresztül nem volt elérhető.';
+
+  @override
+  String get causeRelay =>
+      'A továbbító szerver nem érhető el, vagy a két eszköz nem ugyanazt használja.';
+
+  @override
+  String get causeProtocol =>
+      'A másik eszköz olyat küldött, amit ez a verzió nem ért. Segíthet, ha mindkét eszközön frissíti a TotalDropot.';
+
+  @override
+  String get causeDiskFull => 'Nincs elég szabad hely ezen az eszközön.';
+
+  @override
+  String get causeNoPermission =>
+      'A TotalDrop nem olvashat vagy írhat egy szükséges fájlt vagy mappát.';
+
+  @override
+  String get causeNotFound =>
+      'Egy fájl vagy mappa nem található. Lehet, hogy áthelyezték vagy törölték.';
+
+  @override
+  String get causeReadOnly =>
+      'A mappa olyan lemezen van, amelyre nem lehet írni.';
+
+  @override
+  String get causeFileChanged =>
+      'Egy fájl megváltozott küldés közben. Küldje el újra, ha már mentve van.';
+
+  @override
+  String get technicalDetail =>
+      'Angol nyelvű technikai üzenet, amelyet hibabejelentéshez csatolhat:';
+
+  @override
   String get settingsServer => 'Találkozási szerver';
 
   @override

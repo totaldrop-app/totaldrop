@@ -307,6 +307,7 @@ Page {
                   : ""
             folder: page.phase === "done" ? page.transfer.savedTo : ""
             detail: page.phase === "failed" ? page.transfer.errorDetail : ""
+            cause: page.phase === "failed" ? page.transfer.errorCause : ""
             onFinished: { page.transfer.reset(); page.close() }
         }
     }

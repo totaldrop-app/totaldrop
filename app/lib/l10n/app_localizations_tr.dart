@@ -284,6 +284,47 @@ class AppLocalizationsTr extends AppLocalizations {
   String get errorOther => 'Bir şeyler ters gitti.';
 
   @override
+  String get causeTimedOut =>
+      'Bağlantı yanıt vermez oldu. Cihazlardan biri ağ bağlantısını kaybetmiş ya da uykuya geçmiş olabilir.';
+
+  @override
+  String get causeConnectionLost => 'Diğer cihazla bağlantı koptu.';
+
+  @override
+  String get causeNoRoute =>
+      'Diğer cihaza ne doğrudan ne de aktarma sunucusu üzerinden ulaşılabildi.';
+
+  @override
+  String get causeRelay =>
+      'Aktarma sunucusuna ulaşılamadı ya da iki cihaz aynı aktarma sunucusunu kullanmıyor.';
+
+  @override
+  String get causeProtocol =>
+      'Diğer cihaz bu sürümün anlamadığı bir şey gönderdi. İki cihazda da TotalDrop\'u güncellemek işe yarayabilir.';
+
+  @override
+  String get causeDiskFull => 'Bu cihazda yeterli boş alan yok.';
+
+  @override
+  String get causeNoPermission =>
+      'TotalDrop\'un gereken bir dosyayı ya da klasörü okuma veya yazma izni yok.';
+
+  @override
+  String get causeNotFound =>
+      'Bir dosya ya da klasör bulunamadı. Taşınmış ya da silinmiş olabilir.';
+
+  @override
+  String get causeReadOnly => 'Klasör, yazılamayan bir diskte.';
+
+  @override
+  String get causeFileChanged =>
+      'Bir dosya gönderilirken değişti. Kaydettikten sonra yeniden gönderin.';
+
+  @override
+  String get technicalDetail =>
+      'Sorun bildirirken eklemeniz için İngilizce teknik ileti:';
+
+  @override
   String get settingsServer => 'Buluşma sunucusu';
 
   @override

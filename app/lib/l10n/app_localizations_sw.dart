@@ -291,6 +291,47 @@ class AppLocalizationsSw extends AppLocalizations {
   String get errorOther => 'Hitilafu fulani imetokea.';
 
   @override
+  String get causeTimedOut =>
+      'Muunganisho uliacha kujibu. Huenda mojawapo ya vifaa lilipoteza mtandao au lilienda usingizini.';
+
+  @override
+  String get causeConnectionLost => 'Muunganisho na kifaa kingine ulikatika.';
+
+  @override
+  String get causeNoRoute =>
+      'Kifaa kingine hakikufikiwa, si moja kwa moja wala kupitia seva ya kati.';
+
+  @override
+  String get causeRelay =>
+      'Seva ya kati haikufikiwa, au vifaa hivi viwili havitumii seva moja.';
+
+  @override
+  String get causeProtocol =>
+      'Kifaa kingine kilituma kitu ambacho toleo hili halikielewi. Kusasisha TotalDrop kwenye vifaa vyote viwili kunaweza kusaidia.';
+
+  @override
+  String get causeDiskFull => 'Hakuna nafasi ya kutosha kwenye kifaa hiki.';
+
+  @override
+  String get causeNoPermission =>
+      'TotalDrop hairuhusiwi kusoma au kuandika faili au folda inayohitaji.';
+
+  @override
+  String get causeNotFound =>
+      'Faili au folda haikupatikana. Huenda ilihamishwa au kufutwa.';
+
+  @override
+  String get causeReadOnly => 'Folda iko kwenye diski isiyoweza kuandikwa.';
+
+  @override
+  String get causeFileChanged =>
+      'Faili ilibadilika ilipokuwa ikitumwa. Itume tena baada ya kuihifadhi.';
+
+  @override
+  String get technicalDetail =>
+      'Ujumbe wa kiufundi kwa Kiingereza, wa kuambatisha unaporipoti tatizo:';
+
+  @override
   String get settingsServer => 'Seva ya kukutanisha';
 
   @override

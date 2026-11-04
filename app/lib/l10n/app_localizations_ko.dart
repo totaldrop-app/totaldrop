@@ -275,6 +275,41 @@ class AppLocalizationsKo extends AppLocalizations {
   String get errorOther => '문제가 발생했습니다.';
 
   @override
+  String get causeTimedOut =>
+      '연결이 응답하지 않습니다. 기기 중 하나의 네트워크가 끊겼거나 절전 모드로 전환되었을 수 있습니다.';
+
+  @override
+  String get causeConnectionLost => '상대 기기와의 연결이 끊어졌습니다.';
+
+  @override
+  String get causeNoRoute => '직접 연결로도 릴레이를 거쳐서도 상대 기기에 닿지 못했습니다.';
+
+  @override
+  String get causeRelay => '릴레이 서버에 연결할 수 없거나, 두 기기가 같은 릴레이를 쓰지 않습니다.';
+
+  @override
+  String get causeProtocol =>
+      '상대 기기가 이 버전이 이해하지 못하는 내용을 보냈습니다. 두 기기 모두 TotalDrop을 업데이트하면 해결될 수 있습니다.';
+
+  @override
+  String get causeDiskFull => '이 기기에 남은 공간이 부족합니다.';
+
+  @override
+  String get causeNoPermission => 'TotalDrop에 필요한 파일이나 폴더를 읽거나 쓸 권한이 없습니다.';
+
+  @override
+  String get causeNotFound => '파일이나 폴더를 찾을 수 없습니다. 옮겨졌거나 삭제되었을 수 있습니다.';
+
+  @override
+  String get causeReadOnly => '폴더가 쓸 수 없는 디스크에 있습니다.';
+
+  @override
+  String get causeFileChanged => '보내는 중에 파일이 바뀌었습니다. 저장한 뒤 다시 보내세요.';
+
+  @override
+  String get technicalDetail => '문제를 신고할 때 함께 보낼 영어 기술 메시지:';
+
+  @override
   String get settingsServer => '중개 서버';
 
   @override

@@ -283,6 +283,47 @@ class AppLocalizationsVi extends AppLocalizations {
   String get errorOther => 'Đã xảy ra lỗi.';
 
   @override
+  String get causeTimedOut =>
+      'Kết nối ngừng phản hồi. Một trong hai thiết bị có thể đã mất mạng hoặc chuyển sang chế độ ngủ.';
+
+  @override
+  String get causeConnectionLost => 'Kết nối với thiết bị kia đã bị ngắt.';
+
+  @override
+  String get causeNoRoute =>
+      'Không thể kết nối tới thiết bị kia, kể cả trực tiếp lẫn qua máy chủ chuyển tiếp.';
+
+  @override
+  String get causeRelay =>
+      'Không kết nối được tới máy chủ chuyển tiếp, hoặc hai thiết bị không dùng cùng một máy chủ.';
+
+  @override
+  String get causeProtocol =>
+      'Thiết bị kia đã gửi nội dung mà phiên bản này không hiểu. Cập nhật TotalDrop trên cả hai thiết bị có thể giúp ích.';
+
+  @override
+  String get causeDiskFull => 'Thiết bị này không còn đủ dung lượng trống.';
+
+  @override
+  String get causeNoPermission =>
+      'TotalDrop không được phép đọc hoặc ghi một tệp hay thư mục cần thiết.';
+
+  @override
+  String get causeNotFound =>
+      'Không tìm thấy một tệp hoặc thư mục. Có thể nó đã bị di chuyển hoặc xóa.';
+
+  @override
+  String get causeReadOnly => 'Thư mục nằm trên ổ đĩa không thể ghi.';
+
+  @override
+  String get causeFileChanged =>
+      'Một tệp đã thay đổi trong lúc gửi. Hãy gửi lại sau khi đã lưu.';
+
+  @override
+  String get technicalDetail =>
+      'Thông báo kỹ thuật bằng tiếng Anh, để đính kèm khi báo cáo sự cố:';
+
+  @override
   String get settingsServer => 'Máy chủ điểm hẹn';
 
   @override

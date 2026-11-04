@@ -275,6 +275,42 @@ class AppLocalizationsJa extends AppLocalizations {
   String get errorOther => '問題が発生しました。';
 
   @override
+  String get causeTimedOut =>
+      '接続が応答しなくなりました。どちらかのデバイスがネットワークから切断されたか、スリープした可能性があります。';
+
+  @override
+  String get causeConnectionLost => '相手のデバイスとの接続が切れました。';
+
+  @override
+  String get causeNoRoute => '直接でもリレー経由でも、相手のデバイスに届きませんでした。';
+
+  @override
+  String get causeRelay => 'リレーサーバーに接続できないか、2台のデバイスが同じリレーを使っていません。';
+
+  @override
+  String get causeProtocol =>
+      '相手のデバイスが、このバージョンでは理解できないものを送ってきました。両方のデバイスで TotalDrop を更新すると解決する場合があります。';
+
+  @override
+  String get causeDiskFull => 'このデバイスの空き容量が足りません。';
+
+  @override
+  String get causeNoPermission =>
+      'TotalDrop に、必要なファイルやフォルダーの読み取りまたは書き込みの許可がありません。';
+
+  @override
+  String get causeNotFound => 'ファイルまたはフォルダーが見つかりません。移動または削除された可能性があります。';
+
+  @override
+  String get causeReadOnly => 'フォルダーが書き込みできないディスク上にあります。';
+
+  @override
+  String get causeFileChanged => '送信中にファイルが変更されました。保存してからもう一度送信してください。';
+
+  @override
+  String get technicalDetail => '問題を報告するときに添える、英語の技術メッセージ:';
+
+  @override
   String get settingsServer => '仲介サーバー';
 
   @override
