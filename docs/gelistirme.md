@@ -97,7 +97,7 @@ derleme bayt bayt aynı paketi vermelidir. `Reproducible` iş akışı
 commit'in iki temiz kopyasından iki kez derleyip karşılaştırır. Kabın
 içindeki derleme yolu her zaman aynıdır (`build.sh` çalışma klasörünü
 `/w`'ye bağlar), yani denetim yoldan bağımsızlığı değil, zaman damgalarını,
-sıralamayı ve derleme ortamını sınar. Haftada bir, elle ya da `packaging/` değişince
+sıralamayı ve derleme ortamını sınar. Haftada bir, elle ya da `packaging/`, `linux/build.rs`, `linux/Cargo.toml` veya `Cargo.lock` değişince
 çalışır. Paketler farklıysa ikisini de iş çıktısı olarak bırakır, fark
 `diffoscope` ile incelenir. Aynılık aynı derleme imajı için geçerlidir:
 kapta kurulan dağıtım paketleri günden güne değişir ([surec.md](surec.md),
@@ -106,10 +106,15 @@ sürüm adımı 4). Yerelde denemek için aynı commit'in iki temiz kopyasında
 paketler) aynı komut çalıştırılır ve `sha256sum dist/packages/*`
 çıktıları karşılaştırılır.
 
-Bilinen fark: cxx-qt Qt kitaplıklarını rastgele sırayla bağladığı için
-`totaldrop-desktop` ikilisi derlemeden derlemeye değişebilir (#256). Bu
-düzelene kadar `Reproducible` denetimi kırmızı çıkabilir; CI kapısının bir
-parçası değildir.
+Karşılaştırmayı `packaging/compare-packages.sh` yapar: paketler aynı
+değilse içlerindeki dosyaları tek tek karşılaştırır ve her farkta başarısız
+olur. Tek istisna bilinen bir farktır: cxx-qt Qt kitaplıklarını rastgele
+sırayla bağladığı için `totaldrop-desktop` ikilisi derlemeden derlemeye
+değişebilir (#256). Bu ikilide salt okunur veri (Qt kaynakları dahil),
+bağlanan kitaplıklar ve kodun boyutu yine aynı olmalıdır; öyleyse fark yalnızca
+uyarı olarak yazılır. İkili farklıyken paket üst verisi (ikilinin sağlama
+toplamını içerir) karşılaştırılmaz. Denetim yalnızca x86_64 paketlerini
+derler; arm64 paketleri aynı betiklerden çıkar.
 
 ## Arayüz değişiklikleri
 

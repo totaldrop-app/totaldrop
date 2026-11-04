@@ -6,8 +6,11 @@
 # byte the same (OpenSSF Best Practices build_reproducible, #252). Inside
 # the build container the paths are always the same (build.sh mounts the
 # work folder at /w), so this checks timestamps, ordering and the build
-# environment, not path independence. When they differ, both builds are
-# uploaded for diffoscope.
+# environment, not path independence. packaging/compare-packages.sh compares
+# them; one known difference, the order cxx-qt links the Qt libraries (#256),
+# is only a warning. When they differ otherwise, both builds are uploaded for
+# diffoscope. Only x86_64 is built here; the arm64 packages come from the
+# same scripts.
 name: Reproducible
 
 on:
@@ -17,6 +20,9 @@ on:
   pull_request:
     paths:
       - "packaging/**"
+      - "linux/build.rs"
+      - "linux/Cargo.toml"
+      - "Cargo.lock"
       - ".github/workflows/reproducible.yml"
 
 permissions:
@@ -46,9 +52,12 @@ jobs:
           path: second/elsewhere
           fetch-depth: 1
           persist-credentials: false
-      # One timestamp for both builds, even if git could not give one.
+      # One timestamp for both builds: without it each build would take its own.
       - name: Timestamp
-        run: echo "SOURCE_DATE_EPOCH=$(git -C first log -1 --format=%ct)" >> "$GITHUB_ENV"
+        run: |
+          t=$(git -C first log -1 --format=%ct)
+          test -n "$t"
+          echo "SOURCE_DATE_EPOCH=$t" >> "$GITHUB_ENV"
       - name: First build
         run: |
           first/packaging/build.sh ${{ matrix.format }}
@@ -58,10 +67,8 @@ jobs:
         run: second/elsewhere/packaging/build.sh ${{ matrix.format }}
       - name: Compare
         run: |
-          (cd first/dist/packages && sha256sum *) > first.sums
-          (cd second/elsewhere/dist/packages && sha256sum *) > second.sums
-          cat first.sums
-          diff first.sums second.sums
+          command -v bsdtar >/dev/null || { sudo apt-get update -qq && sudo apt-get install -y -qq libarchive-tools; }
+          first/packaging/compare-packages.sh first/dist/packages second/elsewhere/dist/packages
       - if: failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
