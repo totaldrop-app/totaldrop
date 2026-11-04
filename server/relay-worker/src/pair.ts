@@ -28,6 +28,9 @@ const OPEN = 1;
 /** Sockets an object holds at most, lingering closed ones included: a
  * client that ignores close frames cannot pile them up. */
 const MAX_SOCKETS = 8;
+/** Open sockets that have not signed in yet. Not a cap on all open sockets:
+ * a side whose old socket died unnoticed must still get in to replace it. */
+const MAX_WAITING = 2;
 
 interface Attachment {
   /** Hex of the challenge sent to this socket. */
@@ -121,13 +124,14 @@ export class Pair extends DurableObject<Env> {
   async fetch(request: Request): Promise<Response> {
     const name = new URL(request.url).pathname.split("/").pop() ?? "";
     if (!parsePairName(name)) return new Response(null, { status: 400 });
-    if (this.live().length >= 2 || this.ctx.getWebSockets().length >= MAX_SOCKETS)
+    const waiting = this.live().filter((o) => attachment(o)?.key === null).length;
+    if (waiting >= MAX_WAITING || this.ctx.getWebSockets().length >= MAX_SOCKETS)
       return new Response(null, { status: 409 });
     const [client, server] = Object.values(new WebSocketPair()) as [WebSocket, WebSocket];
     const challenge = crypto.getRandomValues(new Uint8Array(32));
     this.ctx.acceptWebSocket(server, [name]);
-    const attachment: Attachment = { challenge: hex(challenge), key: null, since: Date.now() };
-    server.serializeAttachment(attachment);
+    const att: Attachment = { challenge: hex(challenge), key: null, since: Date.now() };
+    server.serializeAttachment(att);
     server.send(new Uint8Array([...MAGIC, ...challenge]));
     await this.schedule();
     return new Response(null, { status: 101, webSocket: client });
@@ -159,10 +163,13 @@ export class Pair extends DurableObject<Env> {
     if (!(await verify(key, m.slice(36), signed))) return this.shut(ws, 1008, "bad signature");
     // Other events can run during verify(); the socket may be gone by now.
     if (ws.readyState !== OPEN || attachment(ws)?.ended) return;
-    // Checked after the signature, so two sign-ins racing for one key
-    // cannot both pass.
+    // The holder of the key signed in again: its old socket died without
+    // this object noticing (a Wi-Fi switch, NAT rebinding). The new one
+    // takes over at once, before QUIC gives up (#190). Closed through
+    // shut(), the old socket takes nobody with it. Checked after the
+    // signature, so only the key's holder can do this.
     const taken = this.socketFor(keyHex);
-    if (taken && taken !== ws) return this.shut(ws, 1008, "key in use");
+    if (taken && taken !== ws) this.shut(taken, 1000, "replaced");
     att.key = keyHex;
     ws.serializeAttachment(att);
     this.byKey.set(keyHex, ws);
@@ -226,7 +233,8 @@ export class Pair extends DurableObject<Env> {
     if (cascade) {
       for (const o of this.live()) this.shut(o, 1000, "peer left");
       this.byKey.clear();
-    } else if (att?.key) {
+    } else if (att?.key && this.byKey.get(att.key) === ws) {
+      // Not when a newer socket replaced this one under its key.
       this.byKey.delete(att.key);
     }
     await this.schedule();

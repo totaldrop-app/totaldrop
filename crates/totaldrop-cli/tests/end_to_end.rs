@@ -873,3 +873,119 @@ async fn stop_while_waiting_and_while_connecting() {
     assert!(matches!(r, Err(Error::Stopped)), "{r:?}");
     std::fs::remove_dir_all(src).unwrap();
 }
+
+// --- Relay sign-in on both relays (#190) ---
+
+type RelayWs =
+    tokio_tungstenite::WebSocketStream<tokio_tungstenite::MaybeTlsStream<tokio::net::TcpStream>>;
+
+/// Connect to the pair of `own` and `peer` on `relay` and sign in with
+/// `own`; `None` when the relay refuses.
+async fn relay_sign_in(
+    relay: &str,
+    own: &totaldrop_core::transport::EndpointKey,
+    peer: &[u8; 32],
+) -> Option<RelayWs> {
+    use futures_util::{SinkExt, StreamExt};
+    use tokio_tungstenite::tungstenite::Message;
+    use totaldrop_proto::relay as wire;
+    let url = format!("{relay}/{}", wire::pair_name(&own.public(), peer));
+    let (mut ws, _) = tokio_tungstenite::connect_async(url).await.ok()?;
+    let challenge = match tokio::time::timeout(Duration::from_secs(5), ws.next()).await {
+        Ok(Some(Ok(Message::Binary(b)))) => wire::parse_challenge(&b)?,
+        _ => return None,
+    };
+    let signature = own.sign(&wire::signed_bytes(&challenge)).ok()?;
+    ws.send(Message::Binary(
+        wire::hello(&own.public(), &signature).into(),
+    ))
+    .await
+    .ok()?;
+    match tokio::time::timeout(Duration::from_secs(5), ws.next()).await {
+        Ok(Some(Ok(Message::Binary(b)))) if wire::is_ok(&b) => Some(ws),
+        _ => None,
+    }
+}
+
+/// Send one datagram to `to` and check that `at` gets it from `from`.
+async fn relay_passes(ws: &mut RelayWs, at: &mut RelayWs, from: [u8; 32], to: [u8; 32]) {
+    use futures_util::{SinkExt, StreamExt};
+    use tokio_tungstenite::tungstenite::Message;
+    use totaldrop_proto::relay as wire;
+    ws.send(Message::Binary(wire::frame(&to, b"datagram").into()))
+        .await
+        .unwrap();
+    let deadline = tokio::time::Instant::now()
+        .checked_add(Duration::from_secs(5))
+        .unwrap();
+    loop {
+        match tokio::time::timeout_at(deadline, at.next()).await {
+            Ok(Some(Ok(Message::Binary(b)))) => {
+                let (key, datagrams) = wire::parse_frame(&b).unwrap();
+                assert_eq!(key, from);
+                assert_eq!(datagrams, vec![&b"datagram"[..]]);
+                return;
+            }
+            Ok(Some(Ok(Message::Ping(_) | Message::Pong(_)))) => continue,
+            other => panic!("no datagram: {other:?}"),
+        }
+    }
+}
+
+/// Whether the relay ends `ws` within `wait`.
+async fn relay_closes(ws: &mut RelayWs, wait: Duration) -> bool {
+    use futures_util::StreamExt;
+    use tokio_tungstenite::tungstenite::Message;
+    let deadline = tokio::time::Instant::now().checked_add(wait).unwrap();
+    loop {
+        match tokio::time::timeout_at(deadline, ws.next()).await {
+            Err(_) => return false,
+            Ok(None | Some(Err(_)) | Some(Ok(Message::Close(_)))) => return true,
+            Ok(Some(Ok(_))) => continue,
+        }
+    }
+}
+
+/// A side whose WebSocket died without the relay noticing (a Wi-Fi switch,
+/// NAT rebinding) signs in again with its key. Before, both relays refused
+/// it until they dropped the old socket themselves, and QUIC's 30 s idle
+/// timeout ended the transfer first (#190, #185).
+#[tokio::test(flavor = "multi_thread")]
+async fn a_new_sign_in_replaces_the_old_socket_of_its_key() {
+    use totaldrop_core::transport::EndpointKey;
+    let (relay, _stun, _r) = relay().await;
+    let (a, b) = (
+        EndpointKey::generate().unwrap(),
+        EndpointKey::generate().unwrap(),
+    );
+    let mut old_a = relay_sign_in(&relay, &a, &b.public()).await.unwrap();
+    let mut b_ws = relay_sign_in(&relay, &b, &a.public()).await.unwrap();
+    // The old socket is still open; the relay cannot tell it is dead.
+    let mut new_a = relay_sign_in(&relay, &a, &b.public())
+        .await
+        .expect("the key's holder may sign in again");
+    assert!(
+        relay_closes(&mut old_a, Duration::from_secs(5)).await,
+        "the replaced socket is closed"
+    );
+    // The other side stays, and both directions reach the new socket.
+    relay_passes(&mut b_ws, &mut new_a, b.public(), a.public()).await;
+    relay_passes(&mut new_a, &mut b_ws, a.public(), b.public()).await;
+}
+
+/// When a signed-in side leaves, the transfer is over: the relay ends the
+/// other side too, on both relays (#190).
+#[tokio::test(flavor = "multi_thread")]
+async fn the_relay_ends_the_pair_when_one_side_leaves() {
+    use totaldrop_core::transport::EndpointKey;
+    let (relay, _stun, _r) = relay().await;
+    let (a, b) = (
+        EndpointKey::generate().unwrap(),
+        EndpointKey::generate().unwrap(),
+    );
+    let mut a_ws = relay_sign_in(&relay, &a, &b.public()).await.unwrap();
+    let mut b_ws = relay_sign_in(&relay, &b, &a.public()).await.unwrap();
+    relay_passes(&mut a_ws, &mut b_ws, a.public(), b.public()).await;
+    a_ws.close(None).await.unwrap();
+    assert!(relay_closes(&mut b_ws, Duration::from_secs(5)).await);
+}
