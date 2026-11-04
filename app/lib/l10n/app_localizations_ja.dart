@@ -285,7 +285,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get causeNoRoute => '直接でもリレー経由でも、相手のデバイスに届きませんでした。';
 
   @override
-  String get causeRelay => 'リレーサーバーに接続できないか、2台のデバイスが同じリレーを使っていません。';
+  String get causeRelay => 'リレーに接続できないか、リレーが設定されていないか、2台のデバイスが同じリレーを使っていません。';
 
   @override
   String get causeProtocol =>

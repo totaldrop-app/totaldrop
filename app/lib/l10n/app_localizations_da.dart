@@ -310,7 +310,7 @@ class AppLocalizationsDa extends AppLocalizations {
 
   @override
   String get causeRelay =>
-      'Relæserveren kunne ikke nås, eller de to enheder bruger ikke den samme.';
+      'Relæserveren kunne ikke nås eller er ikke sat op, eller de to enheder bruger ikke den samme.';
 
   @override
   String get causeProtocol =>

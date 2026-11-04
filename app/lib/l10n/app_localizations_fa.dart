@@ -307,7 +307,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get causeRelay =>
-      'دسترسی به سرور رله ممکن نشد، یا دو دستگاه از یک سرور رله استفاده نمی‌کنند.';
+      'دسترسی به سرور رله ممکن نشد یا سرور رله تنظیم نشده است، یا دو دستگاه از یک سرور رله استفاده نمی‌کنند.';
 
   @override
   String get causeProtocol =>

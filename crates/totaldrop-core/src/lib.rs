@@ -200,12 +200,12 @@ fn receiver_relay<'a>(hints: &Hints, own: &'a PathOptions) -> Result<Option<&'a 
     });
     if relay.is_none() {
         if own.relay_only && own.relay_url().is_none() {
-            return Err(Error::Connect("privacy mode needs a relay".into()));
+            return Err(Error::Connect(
+                crate::error::msg::PRIVACY_NEEDS_RELAY.into(),
+            ));
         }
         if own.relay_only || peer_addresses(hints).is_empty() {
-            return Err(Error::Connect(
-                "no usable path: the transfer needs a relay both devices use".into(),
-            ));
+            return Err(Error::Connect(crate::error::msg::NO_SHARED_RELAY.into()));
         }
     }
     Ok(relay)
@@ -221,9 +221,7 @@ fn sender_check(receiver: &Hints, own: &PathOptions) -> Result<()> {
     };
     let no_direct = own.relay_only || peer_addresses(receiver).is_empty();
     if !same && no_direct {
-        return Err(Error::Connect(
-            "no usable path: the transfer needs a relay both devices use".into(),
-        ));
+        return Err(Error::Connect(crate::error::msg::NO_SHARED_RELAY.into()));
     }
     Ok(())
 }

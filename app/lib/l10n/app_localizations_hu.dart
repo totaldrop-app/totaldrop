@@ -298,7 +298,7 @@ class AppLocalizationsHu extends AppLocalizations {
 
   @override
   String get causeRelay =>
-      'A továbbító szerver nem érhető el, vagy a két eszköz nem ugyanazt használja.';
+      'A továbbító szerver nem érhető el vagy nincs beállítva, vagy a két eszköz nem ugyanazt használja.';
 
   @override
   String get causeProtocol =>

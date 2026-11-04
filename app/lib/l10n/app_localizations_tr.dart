@@ -285,7 +285,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get causeTimedOut =>
-      'Bağlantı yanıt vermez oldu. Cihazlardan biri ağ bağlantısını kaybetmiş ya da uykuya geçmiş olabilir.';
+      'Bağlantı artık yanıt vermiyor. Cihazlardan biri ağ bağlantısını kaybetmiş ya da uykuya geçmiş olabilir.';
 
   @override
   String get causeConnectionLost => 'Diğer cihazla bağlantı koptu.';
@@ -296,7 +296,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get causeRelay =>
-      'Aktarma sunucusuna ulaşılamadı ya da iki cihaz aynı aktarma sunucusunu kullanmıyor.';
+      'Aktarma sunucusuna ulaşılamadı ya da ayarlı değil, veya iki cihaz aynı aktarma sunucusunu kullanmıyor.';
 
   @override
   String get causeProtocol =>

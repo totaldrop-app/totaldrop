@@ -316,7 +316,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get causeRelay =>
-      'Zprostředkující server není dostupný, nebo obě zařízení nepoužívají tentýž.';
+      'Zprostředkující server není dostupný nebo není nastaven, případně obě zařízení nepoužívají tentýž.';
 
   @override
   String get causeProtocol =>

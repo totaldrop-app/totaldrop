@@ -101,6 +101,9 @@ ColumnLayout {
         color: Theme.muted
         wrapMode: Text.Wrap
         Layout.fillWidth: true
+        // The label belongs to the text below it: closer than the gap
+        // between sections.
+        Layout.bottomMargin: Theme.s8 - r.spacing
     }
     TextArea {
         visible: more.visible && more.checked

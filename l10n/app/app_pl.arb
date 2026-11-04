@@ -78,7 +78,7 @@
   "causeTimedOut": "Połączenie przestało odpowiadać. Jedno z urządzeń mogło stracić sieć albo przejść w stan uśpienia.",
   "causeConnectionLost": "Połączenie z drugim urządzeniem zostało przerwane.",
   "causeNoRoute": "Nie udało się dotrzeć do drugiego urządzenia ani bezpośrednio, ani przez serwer pośredniczący.",
-  "causeRelay": "Serwer pośredniczący jest nieosiągalny albo oba urządzenia nie używają tego samego.",
+  "causeRelay": "Serwer pośredniczący jest nieosiągalny lub nie został skonfigurowany albo oba urządzenia nie używają tego samego.",
   "causeProtocol": "Drugie urządzenie wysłało coś, czego ta wersja nie rozumie. Pomóc może aktualizacja TotalDrop na obu urządzeniach.",
   "causeDiskFull": "Na tym urządzeniu brakuje wolnego miejsca.",
   "causeNoPermission": "TotalDrop nie ma uprawnień do odczytu lub zapisu potrzebnego pliku albo folderu.",

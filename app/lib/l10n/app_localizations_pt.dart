@@ -315,7 +315,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get causeRelay =>
-      'Não foi possível alcançar o servidor de retransmissão, ou os dois dispositivos não usam o mesmo.';
+      'Não foi possível alcançar o servidor de retransmissão ou ele não está configurado, ou os dois dispositivos não usam o mesmo.';
 
   @override
   String get causeProtocol =>
@@ -800,7 +800,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get causeRelay =>
-      'Não foi possível alcançar o servidor de retransmissão, ou os dois dispositivos não usam o mesmo.';
+      'Não foi possível alcançar o servidor de retransmissão ou ele não está configurado, ou os dois dispositivos não usam o mesmo.';
 
   @override
   String get causeProtocol =>
@@ -1287,7 +1287,7 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
 
   @override
   String get causeRelay =>
-      'Não foi possível chegar ao servidor de retransmissão, ou os dois dispositivos não usam o mesmo.';
+      'Não foi possível chegar ao servidor de retransmissão ou este não está configurado, ou os dois dispositivos não usam o mesmo.';
 
   @override
   String get causeProtocol =>

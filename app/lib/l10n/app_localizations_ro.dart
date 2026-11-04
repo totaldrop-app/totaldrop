@@ -315,7 +315,7 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get causeRelay =>
-      'Serverul releu nu a putut fi contactat sau cele două dispozitive nu folosesc același server.';
+      'Serverul releu nu a putut fi contactat sau nu este configurat, ori cele două dispozitive nu folosesc același server.';
 
   @override
   String get causeProtocol =>

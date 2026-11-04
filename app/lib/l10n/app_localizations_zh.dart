@@ -280,7 +280,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get causeNoRoute => '无论直接连接还是经过中继服务器，都无法连接到另一台设备。';
 
   @override
-  String get causeRelay => '无法连接到中继服务器，或两台设备使用的不是同一个中继服务器。';
+  String get causeRelay => '无法连接到中继服务器或尚未设置中继服务器，或两台设备使用的不是同一个中继服务器。';
 
   @override
   String get causeProtocol => '另一台设备发送了此版本无法理解的内容。在两台设备上更新 TotalDrop 可能会有帮助。';
@@ -717,7 +717,7 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get causeNoRoute => '无论直接连接还是经过中继服务器，都无法连接到另一台设备。';
 
   @override
-  String get causeRelay => '无法连接到中继服务器，或两台设备使用的不是同一个中继服务器。';
+  String get causeRelay => '无法连接到中继服务器或尚未设置中继服务器，或两台设备使用的不是同一个中继服务器。';
 
   @override
   String get causeProtocol => '另一台设备发送了此版本无法理解的内容。在两台设备上更新 TotalDrop 可能会有帮助。';
@@ -1154,7 +1154,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get causeNoRoute => '無論直接連線或經過中繼伺服器，都無法連到另一台裝置。';
 
   @override
-  String get causeRelay => '無法連到中繼伺服器，或兩台裝置使用的不是同一個中繼伺服器。';
+  String get causeRelay => '無法連到中繼伺服器或尚未設定中繼伺服器，或兩台裝置使用的不是同一個中繼伺服器。';
 
   @override
   String get causeProtocol => '另一台裝置傳送了此版本無法理解的內容。在兩台裝置上更新 TotalDrop 可能會有幫助。';

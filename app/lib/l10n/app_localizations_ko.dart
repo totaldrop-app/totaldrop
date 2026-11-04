@@ -285,7 +285,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get causeNoRoute => '직접 연결로도 릴레이를 거쳐서도 상대 기기에 닿지 못했습니다.';
 
   @override
-  String get causeRelay => '릴레이 서버에 연결할 수 없거나, 두 기기가 같은 릴레이를 쓰지 않습니다.';
+  String get causeRelay =>
+      '릴레이에 연결할 수 없거나 릴레이가 설정되지 않았거나, 두 기기가 같은 릴레이를 쓰지 않습니다.';
 
   @override
   String get causeProtocol =>

@@ -590,7 +590,7 @@ abstract class AppLocalizations {
   /// **'Something went wrong.'**
   String get errorOther;
 
-  /// Under Details of a failed transfer: why it failed. The connection went silent for 30 seconds (QUIC idle timeout).
+  /// Under Details of a failed transfer: why it failed. The connection went silent (QUIC idle timeout), or the sender stopped sending.
   ///
   /// In en, this message translates to:
   /// **'The connection stopped responding. One of the devices may have lost its network or gone to sleep.'**
@@ -611,7 +611,7 @@ abstract class AppLocalizations {
   /// Under Details of a failed transfer: why it failed, in plain words
   ///
   /// In en, this message translates to:
-  /// **'The relay server could not be reached, or the two devices do not use the same one.'**
+  /// **'The relay server could not be reached or is not set up, or the two devices do not use the same one.'**
   String get causeRelay;
 
   /// Under Details of a failed transfer: why it failed, in plain words

@@ -311,7 +311,7 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get causeRelay =>
-      'Reléserveren kunne ikke nås, eller de to enhetene bruker ikke den samme.';
+      'Reléserveren kunne ikke nås eller er ikke satt opp, eller de to enhetene bruker ikke den samme.';
 
   @override
   String get causeProtocol =>

@@ -78,7 +78,7 @@
   "causeTimedOut": "Muunganisho uliacha kujibu. Huenda mojawapo ya vifaa lilipoteza mtandao au lilienda usingizini.",
   "causeConnectionLost": "Muunganisho na kifaa kingine ulikatika.",
   "causeNoRoute": "Kifaa kingine hakikufikiwa, si moja kwa moja wala kupitia seva ya kati.",
-  "causeRelay": "Seva ya kati haikufikiwa, au vifaa hivi viwili havitumii seva moja.",
+  "causeRelay": "Seva ya kati haikufikiwa au haijawekwa, au vifaa hivi viwili havitumii seva moja.",
   "causeProtocol": "Kifaa kingine kilituma kitu ambacho toleo hili halikielewi. Kusasisha TotalDrop kwenye vifaa vyote viwili kunaweza kusaidia.",
   "causeDiskFull": "Hakuna nafasi ya kutosha kwenye kifaa hiki.",
   "causeNoPermission": "TotalDrop hairuhusiwi kusoma au kuandika faili au folda inayohitaji.",

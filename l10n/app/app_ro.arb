@@ -78,7 +78,7 @@
   "causeTimedOut": "Conexiunea nu mai răspunde. Unul dintre dispozitive poate a pierdut rețeaua sau a intrat în repaus.",
   "causeConnectionLost": "Conexiunea cu celălalt dispozitiv s-a întrerupt.",
   "causeNoRoute": "Celălalt dispozitiv nu a putut fi contactat nici direct, nici prin serverul releu.",
-  "causeRelay": "Serverul releu nu a putut fi contactat sau cele două dispozitive nu folosesc același server.",
+  "causeRelay": "Serverul releu nu a putut fi contactat sau nu este configurat, ori cele două dispozitive nu folosesc același server.",
   "causeProtocol": "Celălalt dispozitiv a trimis ceva ce această versiune nu înțelege. Actualizarea TotalDrop pe ambele dispozitive poate ajuta.",
   "causeDiskFull": "Nu există suficient spațiu liber pe acest dispozitiv.",
   "causeNoPermission": "TotalDrop nu are permisiunea să citească sau să scrie un fișier ori un dosar de care are nevoie.",

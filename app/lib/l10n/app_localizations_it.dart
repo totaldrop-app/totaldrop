@@ -316,7 +316,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get causeRelay =>
-      'Il server di inoltro non è raggiungibile, oppure i due dispositivi non usano lo stesso.';
+      'Il server di inoltro non è raggiungibile o non è configurato, oppure i due dispositivi non usano lo stesso.';
 
   @override
   String get causeProtocol =>
