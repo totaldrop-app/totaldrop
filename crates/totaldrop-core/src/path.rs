@@ -90,7 +90,7 @@ struct FallbackState {
 }
 
 impl Fallback {
-    fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Self(Arc::new(FallbackState {
             direct: RwLock::new(None),
             moved: AtomicBool::new(false),
@@ -113,13 +113,13 @@ impl Fallback {
         self.0.moved.load(Ordering::Acquire) && self.direct() == Some(addr)
     }
 
-    /// The address datagrams from the relay appear to come from.
+    /// The address datagrams from the relay appear to come from: the
+    /// watched direct address once a watch runs, whether or not this side
+    /// moved, so that QUIC never sees a second address for the other
+    /// device (quinn drops a client's packets from one and migrates a
+    /// server to it); otherwise the stand-in.
     fn relay_source(&self) -> SocketAddr {
-        if self.0.moved.load(Ordering::Acquire) {
-            self.direct().unwrap_or(RELAY_PEER)
-        } else {
-            RELAY_PEER
-        }
+        self.direct().unwrap_or(RELAY_PEER)
     }
 
     /// Note datagrams that came in on the real socket.
@@ -136,13 +136,20 @@ impl Fallback {
         self.0.moved.load(Ordering::Acquire)
     }
 
+    /// Say whether the connection is on the relay, as a watch would.
+    #[cfg(test)]
+    pub(crate) fn set_moved(&self, moved: bool) {
+        self.0.moved.store(moved, Ordering::Release);
+    }
+
     /// Watch the direct connection `conn` until it closes. Once nothing
     /// came from its address for `silence`, send what is addressed to it
-    /// through the relay instead and open `gate`, so the relay link
-    /// connects; as soon as something comes from the address again, send
-    /// directly again. The address follows QUIC's while the connection is
-    /// direct, so a peer whose NAT mapping changed is not taken for a
-    /// silent one.
+    /// through the relay instead and open `gate`; as soon as something
+    /// comes from the address again (the other side never moved, or was
+    /// only paused), send directly again. Once both sides moved, nothing
+    /// goes to the direct address any more, so the connection stays on the
+    /// relay. The address follows QUIC's, so a peer whose NAT mapping
+    /// changed is not taken for a silent one.
     pub async fn watch(
         &self,
         conn: quinn::Connection,
@@ -150,8 +157,6 @@ impl Fallback {
         silence: Duration,
     ) {
         let silence = u64::try_from(silence.as_millis()).unwrap_or(u64::MAX);
-        let paused =
-            u64::try_from(WATCH_TICK.saturating_add(PAUSED).as_millis()).unwrap_or(u64::MAX);
         let mut tick = tokio::time::interval(WATCH_TICK);
         tick.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);
         let mut last = self.now();
@@ -161,37 +166,90 @@ impl Fallback {
                 return;
             }
             let now = self.now();
-            let late = now.saturating_sub(last) >= paused;
+            let seen = Seen {
+                now,
+                last_tick: last,
+                remote: conn.remote_address(),
+                direct: self.direct(),
+                heard: self.0.heard.load(Ordering::Acquire),
+                moved: self.moved(),
+                moved_at: self.0.moved_at.load(Ordering::Acquire),
+            };
             last = now;
-            if !self.moved() {
-                let remote = conn.remote_address();
-                let followed = self.direct() == Some(remote);
-                if !followed || late {
-                    // A new address, or this device was paused: start
-                    // counting afresh.
-                    if !followed && let Ok(mut d) = self.0.direct.write() {
+            match step(&seen, silence) {
+                Step::Wait => {}
+                Step::Follow(remote) => {
+                    if let Ok(mut d) = self.0.direct.write() {
                         *d = Some(remote);
                     }
                     self.0.heard.store(now, Ordering::Release);
-                    continue;
                 }
-                let quiet = now.saturating_sub(self.0.heard.load(Ordering::Acquire));
-                if quiet >= silence {
-                    // Mark the move before the link can deliver anything,
-                    // so relay datagrams always appear to come from the
-                    // direct address; outgoing ones wait in the queue
-                    // until the link is up.
+                Step::Recount(heard) => self.0.heard.store(heard, Ordering::Release),
+                Step::Move => {
+                    // Mark the move before the link can deliver anything;
+                    // outgoing datagrams wait in the queue until it is up.
                     self.0.moved_at.store(now, Ordering::Release);
                     self.0.moved.store(true, Ordering::Release);
                     gate.open();
                 }
-            } else if self.0.heard.load(Ordering::Acquire) > self.0.moved_at.load(Ordering::Acquire)
-            {
-                // The direct path carries datagrams again, or the other
-                // side never moved: back to it. The relay link stays up.
-                self.0.moved.store(false, Ordering::Release);
+                // The relay link closes itself once it has been idle.
+                Step::Back => self.0.moved.store(false, Ordering::Release),
             }
         }
+    }
+}
+
+/// After this device's own pause, how long it waits for the other side
+/// before moving: short, since the other side's QUIC idle timer kept
+/// running meanwhile.
+const AFTER_PAUSE: u64 = 2_000;
+
+/// What [`Fallback::watch`] sees at one tick, times in milliseconds.
+#[derive(Debug, Clone, Copy)]
+struct Seen {
+    now: u64,
+    last_tick: u64,
+    /// QUIC's remote address for the connection.
+    remote: SocketAddr,
+    /// The address watched so far.
+    direct: Option<SocketAddr>,
+    heard: u64,
+    moved: bool,
+    moved_at: u64,
+}
+
+/// What one tick decides.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Step {
+    Wait,
+    /// Watch this address from now on (the first tick, or QUIC moved).
+    Follow(SocketAddr),
+    /// This device was paused: count the silence from this time instead.
+    Recount(u64),
+    Move,
+    Back,
+}
+
+fn step(s: &Seen, silence: u64) -> Step {
+    if s.direct != Some(s.remote) && s.remote != RELAY_PEER {
+        return Step::Follow(s.remote);
+    }
+    let paused = u64::try_from(WATCH_TICK.saturating_add(PAUSED).as_millis()).unwrap_or(u64::MAX);
+    if s.moved {
+        return if s.heard > s.moved_at {
+            Step::Back
+        } else {
+            Step::Wait
+        };
+    }
+    if s.now.saturating_sub(s.last_tick) >= paused {
+        // The quiet was this device's own, not the path's.
+        return Step::Recount(s.now.saturating_sub(silence.saturating_sub(AFTER_PAUSE)));
+    }
+    if s.now.saturating_sub(s.heard) >= silence {
+        Step::Move
+    } else {
+        Step::Wait
     }
 }
 
@@ -344,5 +402,118 @@ impl AsyncUdpSocket for PathSocket {
 
     fn may_fragment(&self) -> bool {
         self.inner.may_fragment()
+    }
+}
+
+#[cfg(test)]
+#[allow(clippy::panic)]
+mod tests {
+    use super::*;
+
+    const A: SocketAddr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(192, 0, 2, 7), 4000));
+    const B: SocketAddr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(192, 0, 2, 8), 4001));
+    const SILENCE: u64 = 8_000;
+
+    fn seen() -> Seen {
+        Seen {
+            now: 20_000,
+            last_tick: 19_500,
+            remote: A,
+            direct: Some(A),
+            heard: 19_000,
+            moved: false,
+            moved_at: 0,
+        }
+    }
+
+    #[test]
+    fn the_first_tick_follows_quic() {
+        let s = Seen {
+            direct: None,
+            ..seen()
+        };
+        assert_eq!(step(&s, SILENCE), Step::Follow(A));
+    }
+
+    /// A peer whose NAT mapping changed is followed, not taken for a
+    /// silent one (#185 review); also while moved.
+    #[test]
+    fn a_new_address_is_followed() {
+        for moved in [false, true] {
+            let s = Seen {
+                remote: B,
+                heard: 0,
+                moved,
+                ..seen()
+            };
+            assert_eq!(step(&s, SILENCE), Step::Follow(B));
+        }
+        // QUIC never sees the stand-in once a watch runs; if it did, the
+        // watched address stays.
+        let s = Seen {
+            remote: RELAY_PEER,
+            ..seen()
+        };
+        assert_eq!(step(&s, SILENCE), Step::Wait);
+    }
+
+    #[test]
+    fn it_moves_only_after_the_whole_silence() {
+        let just_short = Seen {
+            heard: 20_000 - SILENCE + 1,
+            ..seen()
+        };
+        assert_eq!(step(&just_short, SILENCE), Step::Wait);
+        let quiet = Seen {
+            heard: 20_000 - SILENCE,
+            ..seen()
+        };
+        assert_eq!(step(&quiet, SILENCE), Step::Move);
+    }
+
+    /// A late tick means this device was paused: its silence is not the
+    /// path's, so it waits a little more instead of moving at once
+    /// (#185 review).
+    #[test]
+    fn a_pause_of_its_own_is_not_silence() {
+        let late = Seen {
+            last_tick: 20_000 - 2_500,
+            heard: 0,
+            ..seen()
+        };
+        let Step::Recount(heard) = step(&late, SILENCE) else {
+            panic!("a late tick moved");
+        };
+        assert_eq!(heard, 20_000 - SILENCE + AFTER_PAUSE);
+        let later = Seen {
+            now: 20_000 + AFTER_PAUSE,
+            last_tick: 20_000 + AFTER_PAUSE - 500,
+            heard,
+            ..seen()
+        };
+        assert_eq!(step(&later, SILENCE), Step::Move);
+        // A tick just under the bound is not late.
+        let on_time = Seen {
+            last_tick: 20_000 - 2_499,
+            heard: 0,
+            ..seen()
+        };
+        assert_eq!(step(&on_time, SILENCE), Step::Move);
+    }
+
+    #[test]
+    fn it_comes_back_only_when_heard_after_moving() {
+        let moved = Seen {
+            moved: true,
+            moved_at: 18_000,
+            heard: 18_000,
+            ..seen()
+        };
+        assert_eq!(step(&moved, SILENCE), Step::Wait);
+        let heard = Seen {
+            heard: 18_001,
+            ..moved
+        };
+        assert_eq!(step(&heard, SILENCE), Step::Back);
     }
 }

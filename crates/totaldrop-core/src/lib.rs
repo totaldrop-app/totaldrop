@@ -272,14 +272,37 @@ struct Standby {
     _watch: Option<path::Watch>,
 }
 
-/// Keep what the chosen connection `conn` may still need of the relay. A
-/// connection through the relay keeps its link. A direct one keeps a link
-/// that has not contacted the relay yet, and a watch that moves the
-/// connection onto it if the direct path goes quiet (#185); the relay hears
-/// of the transfer only then. That needs both sides on the same relay
-/// (`shared`): otherwise the other side never arrives there, and moving
-/// would only lose a direct path that may come back. A link that was
-/// already opened before a slower direct path won is closed now.
+/// What the chosen connection keeps of the relay.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Keep {
+    /// The connection goes through the relay: keep the link as it is.
+    Link,
+    /// A direct connection that can fall back: park the link and watch.
+    Fallback,
+    /// Nothing: close the link, if any.
+    Nothing,
+}
+
+/// Decide [`Keep`] for a connection to `remote`. A direct connection can
+/// move onto the relay only if this side has a link (`linked`) and both
+/// sides use the same relay (`shared`); otherwise the other side never
+/// arrives there, and moving would only lose a direct path that may come
+/// back.
+fn keep(remote: std::net::SocketAddr, linked: bool, shared: bool) -> Keep {
+    if remote == path::RELAY_PEER {
+        Keep::Link
+    } else if linked && shared {
+        Keep::Fallback
+    } else {
+        Keep::Nothing
+    }
+}
+
+/// Keep what the chosen connection `conn` may still need of the relay
+/// (#185). A direct connection that can fall back keeps its link, parked:
+/// a connection to the relay opened before the direct path won is closed
+/// now, and the link connects again only if the watch moves the connection
+/// onto the relay because its direct path went quiet.
 fn standby(
     conn: &quinn::Connection,
     paths: &transport::Paths,
@@ -287,23 +310,28 @@ fn standby(
     fallback: &path::Fallback,
     shared: bool,
 ) -> Standby {
-    let remote = conn.remote_address();
-    if remote == path::RELAY_PEER {
-        return Standby {
+    let gate = paths.relay.clone();
+    match (
+        keep(conn.remote_address(), link.is_some(), shared),
+        link,
+        gate,
+    ) {
+        (Keep::Link, link, _) => Standby {
             _link: link,
             _watch: None,
-        };
-    }
-    match (&paths.relay, link) {
-        (Some(gate), Some(link)) if shared && !gate.is_open() => Standby {
-            _link: Some(link),
-            _watch: Some(path::Watch::spawn(
-                fallback,
-                conn.clone(),
-                gate.clone(),
-                path::FALLBACK_SILENCE,
-            )),
         },
+        (Keep::Fallback, Some(link), Some(gate)) => {
+            link.park(fallback);
+            Standby {
+                _link: Some(link),
+                _watch: Some(path::Watch::spawn(
+                    fallback,
+                    conn.clone(),
+                    gate,
+                    path::FALLBACK_SILENCE,
+                )),
+            }
+        }
         _ => Standby::default(),
     }
 }
@@ -673,6 +701,44 @@ mod tests {
             4000,
         )))];
         h
+    }
+
+    /// Which connections keep the relay, and how (#185 review). A
+    /// connection through the relay keeps its link; a direct one falls back
+    /// only with a link and a relay both sides use; otherwise the link
+    /// goes.
+    #[test]
+    fn what_a_chosen_connection_keeps_of_the_relay() {
+        let direct = std::net::SocketAddr::from(([192, 0, 2, 1], 4000));
+        assert_eq!(keep(path::RELAY_PEER, true, true), Keep::Link);
+        assert_eq!(keep(path::RELAY_PEER, true, false), Keep::Link);
+        assert_eq!(keep(direct, true, true), Keep::Fallback);
+        assert_eq!(keep(direct, true, false), Keep::Nothing);
+        assert_eq!(keep(direct, false, true), Keep::Nothing);
+    }
+
+    /// The sender falls back only when the receiver will use its relay
+    /// too, exactly when the receiver's own check gives it a relay path.
+    #[test]
+    fn sender_and_receiver_agree_on_a_shared_relay() {
+        let ours = options("wss://relay.example/v0/relay", false);
+        for (theirs, shared) in [
+            (Some("wss://RELAY.example:443/v0/relay/"), true),
+            (Some("wss://other.example/v0/relay"), false),
+            (None, false),
+        ] {
+            let receiver = with_address(hints(theirs));
+            assert_eq!(shares_relay(&receiver, &ours), shared, "{theirs:?}");
+            if let Some(url) = theirs {
+                let sender = with_address(hints(Some("wss://relay.example/v0/relay")));
+                let mine = options(url, false);
+                assert_eq!(
+                    receiver_relay(&sender, &mine).unwrap().is_some(),
+                    shared,
+                    "{url}"
+                );
+            }
+        }
     }
 
     #[test]

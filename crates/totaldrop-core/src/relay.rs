@@ -10,7 +10,7 @@ use tokio_tungstenite::tungstenite::Message;
 use totaldrop_proto::relay as wire;
 
 use crate::error::{Error, Result};
-use crate::path::RelayPipes;
+use crate::path::{Fallback, RelayPipes};
 use crate::transport::EndpointKey;
 
 /// The project's relay.
@@ -157,14 +157,50 @@ impl Gate {
     }
 }
 
+/// How long a parked link keeps a connection that carries nothing,
+/// because its connection moved back to the direct path: then it closes
+/// it, and connects again only if the connection moves once more.
+const PARKED_IDLE: Duration = Duration::from_secs(30);
+
 /// A relay link. It connects only once its [`Gate`] opens, and stops when
 /// dropped.
 #[derive(Debug)]
-pub struct Link(tokio::task::JoinHandle<()>);
+pub struct Link {
+    task: tokio::task::JoinHandle<()>,
+    park: Arc<Park>,
+}
+
+/// What [`Link::park`] tells the link's task.
+#[derive(Debug, Default)]
+struct Park {
+    fallback: std::sync::OnceLock<Fallback>,
+    notify: tokio::sync::Notify,
+}
+
+impl Park {
+    /// Whether the link may carry datagrams now: always, unless it was
+    /// parked for a direct connection that is on its direct path.
+    fn carries(&self) -> bool {
+        self.fallback.get().is_none_or(Fallback::moved)
+    }
+}
+
+impl Link {
+    /// Keep the link for `fallback`'s direct connection (#185): close any
+    /// connection to the relay now, and from then on connect only while
+    /// that connection has moved onto the relay. Datagrams queued
+    /// meanwhile (such as the closing of a connection that lost the race)
+    /// are dropped. Calling it again does nothing.
+    pub fn park(&self, fallback: &Fallback) {
+        if self.park.fallback.set(fallback.clone()).is_ok() {
+            self.park.notify.notify_one();
+        }
+    }
+}
 
 impl Drop for Link {
     fn drop(&mut self) {
-        self.0.abort();
+        self.task.abort();
     }
 }
 
@@ -197,7 +233,10 @@ fn spawn_with(
     gate: Gate,
     limits: Limits,
 ) -> Link {
-    Link(tokio::spawn(async move {
+    let park = Arc::new(Park::default());
+    let parked = park.clone();
+    let task = tokio::spawn(async move {
+        let park = parked;
         gate.opened().await;
         if check_url(&url).is_err() {
             return;
@@ -213,6 +252,25 @@ fn spawn_with(
             if started >= end || sent >= limits.bytes || refused >= limits.refused {
                 return;
             }
+            // A parked link waits for a datagram that has to go through the
+            // relay before it connects.
+            let first = if park.fallback.get().is_some() {
+                let wanted = tokio::time::timeout_at(end, async {
+                    while let Some(d) = pipes.outgoing.recv().await {
+                        if park.carries() {
+                            return Some(d);
+                        }
+                    }
+                    None
+                })
+                .await;
+                match wanted {
+                    Ok(Some(d)) => Some(d),
+                    _ => return,
+                }
+            } else {
+                None
+            };
             let mut signed_in = false;
             let ended = tokio::time::timeout_at(
                 end,
@@ -220,10 +278,14 @@ fn spawn_with(
                     &url,
                     &own,
                     peer,
-                    &mut pipes,
-                    &mut sent,
-                    &mut signed_in,
-                    limits.silence,
+                    Conn {
+                        pipes: &mut pipes,
+                        sent: &mut sent,
+                        signed_in: &mut signed_in,
+                        silence: limits.silence,
+                        first,
+                        park: &park,
+                    },
                 ),
             )
             .await;
@@ -243,7 +305,8 @@ fn spawn_with(
             tokio::time::sleep(pause).await;
             pause = pause.saturating_mul(2).min(RETRY_MAX);
         }
-    }))
+    });
+    Link { task, park }
 }
 
 /// Why a connection to the relay ended without an error.
@@ -254,18 +317,32 @@ enum Ended {
     Relay,
 }
 
-/// One connection to the relay, counting the bytes it sends in `sent` and
-/// setting `signed_in` once the relay accepted the endpoint key. It ends
-/// when datagrams went out and nothing came back for `silence`.
-async fn run(
-    url: &str,
-    own: &EndpointKey,
-    peer: [u8; 32],
-    pipes: &mut RelayPipes,
-    sent: &mut u64,
-    signed_in: &mut bool,
+/// The state one connection to the relay works with.
+struct Conn<'a> {
+    pipes: &'a mut RelayPipes,
+    /// Bytes sent over all connections.
+    sent: &'a mut u64,
+    /// Set once the relay accepted the endpoint key.
+    signed_in: &'a mut bool,
     silence: Duration,
-) -> Result<Ended> {
+    /// A datagram to send as soon as the connection is up.
+    first: Option<Vec<u8>>,
+    park: &'a Park,
+}
+
+/// One connection to the relay. It ends when datagrams went out and
+/// nothing came back for `silence`, and, once parked, when its connection
+/// is on its direct path again: at once when parked, and after
+/// [`PARKED_IDLE`] without sending later.
+async fn run(url: &str, own: &EndpointKey, peer: [u8; 32], c: Conn<'_>) -> Result<Ended> {
+    let Conn {
+        pipes,
+        sent,
+        signed_in,
+        silence,
+        first,
+        park,
+    } = c;
     // Both sides meet under the name of their two keys.
     let url = format!(
         "{}/{}",
@@ -293,6 +370,15 @@ async fn run(
     .await
     .map_err(|_| Error::Connect("relay: timed out".into()))??;
     *signed_in = true;
+    if let Some(d) = first {
+        let message = wire::frame(&peer, &d);
+        *sent = sent.saturating_add(u64::try_from(message.len()).unwrap_or(u64::MAX));
+        match tokio::time::timeout(silence, ws.send(Message::Binary(message.into()))).await {
+            Ok(written) => written.map_err(|e| Error::Connect(format!("relay: {e}")))?,
+            Err(_) => return Ok(Ended::Relay),
+        }
+    }
+    let mut last_out = tokio::time::Instant::now();
 
     let mut ping = tokio::time::interval(KEEPALIVE);
     ping.tick().await;
@@ -327,6 +413,7 @@ async fn run(
                     }
                 }
                 unanswered.get_or_insert_with(tokio::time::Instant::now);
+                last_out = tokio::time::Instant::now();
                 // A dead socket whose send buffer is full blocks the write.
                 let write = async {
                     for message in [Some(batch.finish()), carry.map(|d| wire::frame(&peer, &d))]
@@ -378,7 +465,17 @@ async fn run(
                     Err(_) => return Ok(Ended::Relay),
                 }
             }
+            () = park.notify.notified() => {
+                if !park.carries() {
+                    let _ = ws.close(None).await;
+                    return Ok(Ended::Relay);
+                }
+            }
             _ = ping.tick() => {
+                if !park.carries() && last_out.elapsed() >= PARKED_IDLE {
+                    let _ = ws.close(None).await;
+                    return Ok(Ended::Relay);
+                }
                 ws.send(Message::Ping(Vec::new().into()))
                     .await
                     .map_err(|e| Error::Connect(format!("relay: {e}")))?;
@@ -389,7 +486,7 @@ async fn run(
 
 #[cfg(test)]
 mod tests {
-    #![allow(clippy::unwrap_used, clippy::expect_used)]
+    #![allow(clippy::unwrap_used, clippy::expect_used, clippy::panic)]
 
     use super::*;
 
@@ -616,6 +713,64 @@ mod tests {
             again.is_err(),
             "a link that the relay answers connected again"
         );
+    }
+
+    /// A parked link (#185) closes the connection it has at once, sends
+    /// nothing to the relay while its connection is direct, and connects
+    /// again, with the waiting datagram, as soon as the connection moves
+    /// onto the relay.
+    #[tokio::test]
+    async fn a_parked_link_connects_only_while_moved() {
+        let relay = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let url = format!("ws://{}/v0/relay", relay.local_addr().unwrap());
+        let (own, peer) = (
+            Arc::new(EndpointKey::generate().unwrap()),
+            EndpointKey::generate().unwrap(),
+        );
+        let (out, pipes) = pipes();
+        let gate = Gate::default();
+        gate.open();
+        let link = spawn_with(url, own, peer.public(), pipes, gate, LIMITS);
+        let mut ws = sign_in(&relay).await;
+
+        let fallback = Fallback::new();
+        link.park(&fallback);
+        let closed = tokio::time::timeout(Duration::from_secs(5), async {
+            loop {
+                match ws.next().await {
+                    Some(Ok(Message::Close(_))) | None | Some(Err(_)) => break,
+                    Some(Ok(_)) => {}
+                }
+            }
+        })
+        .await;
+        assert!(closed.is_ok(), "parking left the connection open");
+
+        // On the direct path: what is queued goes nowhere.
+        out.send(vec![1; 100]).await.unwrap();
+        let early = tokio::time::timeout(Duration::from_secs(3), relay.accept()).await;
+        assert!(
+            early.is_err(),
+            "a parked link connected for a direct connection"
+        );
+
+        fallback.set_moved(true);
+        out.send(vec![2; 100]).await.unwrap();
+        let mut ws = sign_in(&relay).await;
+        let frame = tokio::time::timeout(Duration::from_secs(5), async {
+            loop {
+                match ws.next().await {
+                    Some(Ok(Message::Binary(b))) => break b,
+                    Some(Ok(_)) => {}
+                    other => panic!("no datagram: {other:?}"),
+                }
+            }
+        })
+        .await
+        .expect("the waiting datagram was not sent");
+        let (to, datagrams) = wire::parse_frame(&frame).unwrap();
+        assert_eq!(to, peer.public());
+        assert_eq!(datagrams, vec![&[2u8; 100][..]]);
     }
 
     /// The link sends each relay probe straight back, unchanged and in
