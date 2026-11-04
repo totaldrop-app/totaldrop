@@ -263,7 +263,11 @@ treated as final.
       and it connects again only while the connection has moved, starting
       with the datagram that needs it; datagrams queued for the relay
       meanwhile are dropped. Back on the direct path, the link closes its
-      connection after 30 seconds without sending.
+      connection after 30 seconds without sending. A side whose relay link
+      has given up (refused, unreachable, or out of the limits below) does
+      not move, and goes back to the direct path if it had moved. A direct
+      datagram that arrives within 0.5 seconds of the move does not bring
+      the side back: it may have been on its way already.
     - A relay link that sent datagrams and got nothing back pings the relay
       every 2 seconds; a pong counts as an answer. The relay drops datagrams
       while the other device is not there, so without this a link waiting

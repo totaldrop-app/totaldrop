@@ -162,6 +162,9 @@ impl Gate {
 /// it, and connects again only if the connection moves once more.
 const PARKED_IDLE: Duration = Duration::from_secs(30);
 
+/// How often a parked link checks for [`PARKED_IDLE`].
+const IDLE_CHECK: Duration = Duration::from_secs(1);
+
 /// A relay link. It connects only once its [`Gate`] opens, and stops when
 /// dropped.
 #[derive(Debug)]
@@ -238,6 +241,15 @@ fn spawn_with(
     let task = tokio::spawn(async move {
         let park = parked;
         gate.opened().await;
+        if park.fallback.get().is_some() {
+            // The gate opened because a parked link's connection moved:
+            // what waited behind it belongs to the race that connection
+            // won (such as the closing of the attempt that lost), not to
+            // the connection, so it must not reach the other device under
+            // the connection's address. A datagram the connection queued
+            // in the meantime may go too; QUIC sends it again.
+            while pipes.outgoing.try_recv().is_ok() {}
+        }
         if check_url(&url).is_err() {
             return;
         }
@@ -382,6 +394,9 @@ async fn run(url: &str, own: &EndpointKey, peer: [u8; 32], c: Conn<'_>) -> Resul
 
     let mut ping = tokio::time::interval(KEEPALIVE);
     ping.tick().await;
+    let mut idle = tokio::time::interval(IDLE_CHECK);
+    idle.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);
+    idle.tick().await;
     let mut liveness = tokio::time::interval(LIVENESS);
     liveness.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);
     liveness.tick().await;
@@ -471,11 +486,13 @@ async fn run(url: &str, own: &EndpointKey, peer: [u8; 32], c: Conn<'_>) -> Resul
                     return Ok(Ended::Relay);
                 }
             }
-            _ = ping.tick() => {
+            _ = idle.tick(), if park.fallback.get().is_some() => {
                 if !park.carries() && last_out.elapsed() >= PARKED_IDLE {
                     let _ = ws.close(None).await;
                     return Ok(Ended::Relay);
                 }
+            }
+            _ = ping.tick() => {
                 ws.send(Message::Ping(Vec::new().into()))
                     .await
                     .map_err(|e| Error::Connect(format!("relay: {e}")))?;
@@ -733,7 +750,7 @@ mod tests {
         let link = spawn_with(url, own, peer.public(), pipes, gate, LIMITS);
         let mut ws = sign_in(&relay).await;
 
-        let fallback = Fallback::new();
+        let fallback = Fallback::new(tokio::sync::mpsc::channel(1).0);
         link.park(&fallback);
         let closed = tokio::time::timeout(Duration::from_secs(5), async {
             loop {
@@ -770,6 +787,61 @@ mod tests {
         .expect("the waiting datagram was not sent");
         let (to, datagrams) = wire::parse_frame(&frame).unwrap();
         assert_eq!(to, peer.public());
+        assert_eq!(datagrams, vec![&[2u8; 100][..]]);
+
+        // Back on the direct path, the idle connection closes after
+        // PARKED_IDLE, not a keep-alive later (#185 review).
+        fallback.set_moved(false);
+        let started = tokio::time::Instant::now();
+        let closed = tokio::time::timeout(PARKED_IDLE + Duration::from_secs(5), async {
+            loop {
+                match ws.next().await {
+                    Some(Ok(Message::Close(_))) | None | Some(Err(_)) => break,
+                    Some(Ok(_)) => {}
+                }
+            }
+        })
+        .await;
+        assert!(closed.is_ok(), "an idle parked link stayed connected");
+        assert!(started.elapsed() < PARKED_IDLE + IDLE_CHECK + Duration::from_secs(2));
+    }
+
+    /// What waited behind a parked link's shut gate belongs to the race
+    /// its connection won; when the connection moves, it is dropped, not
+    /// sent to the other device under the connection's address (#185
+    /// review).
+    #[tokio::test]
+    async fn a_parked_link_drops_what_waited_behind_its_gate() {
+        let relay = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let url = format!("ws://{}/v0/relay", relay.local_addr().unwrap());
+        let (own, peer) = (
+            Arc::new(EndpointKey::generate().unwrap()),
+            EndpointKey::generate().unwrap(),
+        );
+        let (out, pipes) = pipes();
+        let gate = Gate::default();
+        let link = spawn_with(url, own, peer.public(), pipes, gate.clone(), LIMITS);
+        let fallback = Fallback::new(tokio::sync::mpsc::channel(1).0);
+        link.park(&fallback);
+        out.send(vec![1; 100]).await.unwrap();
+
+        fallback.set_moved(true);
+        gate.open();
+        tokio::time::sleep(Duration::from_millis(200)).await;
+        out.send(vec![2; 100]).await.unwrap();
+        let mut ws = sign_in(&relay).await;
+        let frame = tokio::time::timeout(Duration::from_secs(5), async {
+            loop {
+                match ws.next().await {
+                    Some(Ok(Message::Binary(b))) => break b,
+                    Some(Ok(_)) => {}
+                    other => panic!("no datagram: {other:?}"),
+                }
+            }
+        })
+        .await
+        .expect("the connection's datagram was not sent");
+        let (_, datagrams) = wire::parse_frame(&frame).unwrap();
         assert_eq!(datagrams, vec![&[2u8; 100][..]]);
     }
 
