@@ -231,7 +231,7 @@
   "dl.macos": "macOS",
   "dl.macos.d": "Apple wymaga płatnego konta deweloperskiego (99 USD rocznie), aby podpisywać i notaryzować aplikacje. Zapłacą za nie darowizny.",
   "dl.new.fallback": "Przesyłanie rozpoczęte przez połączenie bezpośrednie nie zatrzymuje się już, gdy ta droga milknie, na przykład po utracie Wi-Fi: przechodzi na przekaźnik i trwa dalej. Oba urządzenia muszą mieć tę wersję i ten sam przekaźnik.",
-  "dl.new.reconnect": "Przesyłanie przez przekaźnik przetrwa połączenie, które zrywa się bez wiedzy obu urządzeń, na przykład po zmianie sieci Wi-Fi: w ciągu 10 sekund łączy się ponownie.",
+  "dl.new.reconnect": "Przesyłanie przez przekaźnik przetrwa połączenie, które zrywa się bez wiedzy obu urządzeń, na przykład po zmianie sieci Wi-Fi: urządzenie zauważa to w ciągu 10 sekund i łączy się ponownie.",
   "dl.new.progress": "Pasek postępu na urządzeniu wysyłającym pokazuje to, co dotarło do drugiego urządzenia, a nie tylko to, co zostało wysłane.",
   "dl.new.reasons": "Gdy przesyłanie się nie powiedzie, przyczyna jest teraz podawana w Twoim języku przy wielu błędach, w sekcji Szczegóły.",
   "dl.new.title": "Co nowego",

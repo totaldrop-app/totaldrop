@@ -231,7 +231,7 @@
   "dl.macos": "macOS",
   "dl.macos.d": "Apple memerlukan akaun pembangun berbayar (99 USD setahun) untuk menandatangani dan mengenotari aplikasi. Derma akan membiayainya.",
   "dl.new.fallback": "Pemindahan yang bermula melalui sambungan terus tidak lagi berhenti apabila laluan itu senyap, contohnya apabila Wi-Fi terputus: ia beralih ke geganti dan diteruskan. Kedua-dua peranti memerlukan versi ini dan geganti yang sama.",
-  "dl.new.reconnect": "Pemindahan melalui geganti tahan terhadap sambungan yang putus tanpa disedari oleh kedua-dua peranti, contohnya selepas menukar rangkaian Wi-Fi: ia bersambung semula dalam 10 saat.",
+  "dl.new.reconnect": "Pemindahan melalui geganti tahan terhadap sambungan yang putus tanpa disedari oleh kedua-dua peranti, contohnya selepas menukar rangkaian Wi-Fi: peranti menyedarinya dalam 10 saat dan bersambung semula.",
   "dl.new.progress": "Bar kemajuan pada peranti penghantar menunjukkan apa yang telah sampai ke peranti lain, bukan sekadar apa yang telah dihantar.",
   "dl.new.reasons": "Apabila pemindahan gagal, sebabnya kini dipaparkan dalam bahasa anda untuk banyak kegagalan, di bawah Butiran.",
   "dl.new.title": "Apa yang baharu",

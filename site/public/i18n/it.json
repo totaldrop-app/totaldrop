@@ -231,7 +231,7 @@
   "dl.macos": "macOS",
   "dl.macos.d": "Apple richiede un account sviluppatore a pagamento (99 USD all'anno) per firmare e autenticare le app. Lo pagheranno le donazioni.",
   "dl.new.fallback": "Un trasferimento iniziato con una connessione diretta non si ferma più quando quel percorso tace, per esempio se cade il Wi-Fi: passa al relay e continua. Entrambi i dispositivi devono avere questa versione e lo stesso relay.",
-  "dl.new.reconnect": "Un trasferimento tramite relay sopravvive a una connessione che cade senza che nessuno dei due dispositivi se ne accorga, per esempio cambiando rete Wi-Fi: si riconnette entro 10 secondi.",
+  "dl.new.reconnect": "Un trasferimento tramite relay sopravvive a una connessione che cade senza che nessuno dei due dispositivi se ne accorga, per esempio cambiando rete Wi-Fi: il dispositivo se ne accorge entro 10 secondi e si riconnette.",
   "dl.new.progress": "La barra di avanzamento del dispositivo che invia mostra ciò che è arrivato all’altro dispositivo, non solo ciò che è partito.",
   "dl.new.reasons": "Quando un trasferimento non riesce, il motivo ora è indicato nella tua lingua per molti errori, in Dettagli.",
   "dl.new.title": "Novità",

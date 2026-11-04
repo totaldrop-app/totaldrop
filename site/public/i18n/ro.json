@@ -231,7 +231,7 @@
   "dl.macos": "macOS",
   "dl.macos.d": "Apple cere un cont de dezvoltator plătit (99 USD pe an) pentru a semna și notariza aplicațiile. Donațiile îl vor plăti.",
   "dl.new.fallback": "Un transfer început pe o conexiune directă nu se mai oprește când acea cale tace, de exemplu când cade Wi-Fi-ul: trece pe releu și continuă. Ambele dispozitive au nevoie de această versiune și de același releu.",
-  "dl.new.reconnect": "Un transfer prin releu supraviețuiește unei conexiuni care cade fără ca vreunul dintre dispozitive să observe, de exemplu la schimbarea rețelei Wi-Fi: se reconectează în cel mult 10 secunde.",
+  "dl.new.reconnect": "Un transfer prin releu supraviețuiește unei conexiuni care cade fără ca vreunul dintre dispozitive să observe, de exemplu la schimbarea rețelei Wi-Fi: dispozitivul observă în cel mult 10 secunde și se reconectează.",
   "dl.new.progress": "Bara de progres a dispozitivului care trimite arată ce a ajuns pe celălalt dispozitiv, nu doar ce a plecat.",
   "dl.new.reasons": "Când un transfer eșuează, motivul este acum afișat în limba dvs. pentru multe erori, la Detalii.",
   "dl.new.title": "Noutăți",

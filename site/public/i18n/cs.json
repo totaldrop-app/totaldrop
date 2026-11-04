@@ -231,7 +231,7 @@
   "dl.macos": "macOS",
   "dl.macos.d": "Apple vyžaduje k podepisování a notarizaci aplikací placený vývojářský účet (99 USD ročně). Zaplatí ho dary.",
   "dl.new.fallback": "Přenos zahájený přímým spojením se už nezastaví, když tato cesta utichne, například při výpadku Wi-Fi: přejde na přenosový server a pokračuje. Obě zařízení potřebují tuto verzi a stejný přenosový server.",
-  "dl.new.reconnect": "Přenos přes přenosový server přežije spojení, které zanikne, aniž by si toho kterékoli zařízení všimlo, například po změně sítě Wi-Fi: do 10 sekund se připojí znovu.",
+  "dl.new.reconnect": "Přenos přes přenosový server přežije spojení, které zanikne, aniž by si toho kterékoli zařízení všimlo, například po změně sítě Wi-Fi: zařízení to do 10 sekund pozná a připojí se znovu.",
   "dl.new.progress": "Ukazatel průběhu na odesílajícím zařízení ukazuje, co dorazilo do druhého zařízení, ne jen to, co bylo odesláno.",
   "dl.new.reasons": "Když přenos selže, je u mnoha chyb důvod nyní uveden ve vašem jazyce v části Podrobnosti.",
   "dl.new.title": "Co je nového",

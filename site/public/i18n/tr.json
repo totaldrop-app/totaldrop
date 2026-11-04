@@ -231,7 +231,7 @@
   "dl.macos": "macOS",
   "dl.macos.d": "Apple, uygulamaları imzalamak ve onaylatmak için ücretli bir geliştirici hesabı (yılda 99 USD) istiyor. Bunu bağışlar karşılayacak.",
   "dl.new.fallback": "Doğrudan bağlantıyla başlayan bir aktarım, o yol sustuğunda (örneğin Wi-Fi koptuğunda) artık durmuyor: aktarma sunucusuna geçip sürüyor. İki cihazda da bu sürüm ve aynı aktarma sunucusu gerekir.",
-  "dl.new.reconnect": "Aktarma sunucusu üzerinden giden bir aktarım, iki cihazın da fark etmediği bir kopmaya (örneğin Wi-Fi ağı değiştirince) dayanıyor: 10 saniye içinde yeniden bağlanıyor.",
+  "dl.new.reconnect": "Aktarma sunucusu üzerinden giden bir aktarım, iki cihazın da fark etmediği bir kopmaya (örneğin Wi-Fi ağı değiştirince) dayanıyor: cihaz 10 saniye içinde fark edip yeniden bağlanıyor.",
   "dl.new.progress": "Gönderen cihazdaki ilerleme çubuğu, yalnızca yola çıkanı değil, karşı cihaza ulaşanı gösteriyor.",
   "dl.new.reasons": "Aktarım başarısız olduğunda birçok hatada neden artık kendi dilinizde, Ayrıntılar altında yazıyor.",
   "dl.new.title": "Yenilikler",

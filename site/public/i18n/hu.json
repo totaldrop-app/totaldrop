@@ -231,7 +231,7 @@
   "dl.macos": "macOS",
   "dl.macos.d": "Az Apple fizetős fejlesztői fiókot (évi 99 USD) követel meg az alkalmazások aláírásához és hitelesíttetéséhez. Ezt az adományok fogják fedezni.",
   "dl.new.fallback": "A közvetlen kapcsolaton indult átvitel már nem áll le, ha ez az út elnémul, például amikor megszakad a Wi-Fi: átvált a közvetítőszerverre, és folytatódik. Mindkét eszköznek ez a verzió és ugyanaz a közvetítőszerver kell.",
-  "dl.new.reconnect": "A közvetítőszerveren át zajló átvitel túléli azt a kapcsolatot, amely úgy szakad meg, hogy egyik eszköz sem veszi észre, például Wi-Fi-hálózat váltásakor: 10 másodpercen belül újra csatlakozik.",
+  "dl.new.reconnect": "A közvetítőszerveren át zajló átvitel túléli azt a kapcsolatot, amely úgy szakad meg, hogy egyik eszköz sem veszi észre, például Wi-Fi-hálózat váltásakor: az eszköz 10 másodpercen belül észleli, és újra csatlakozik.",
   "dl.new.progress": "A küldő eszköz folyamatjelzője azt mutatja, ami a másik eszközre megérkezett, nem csak azt, ami elindult.",
   "dl.new.reasons": "Ha egy átvitel sikertelen, sok hibánál az ok most már az Ön nyelvén olvasható a Részletek alatt.",
   "dl.new.title": "Újdonságok",
