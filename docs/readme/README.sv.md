@@ -1,4 +1,4 @@
-<!-- Translated from README.md 9197d4d09cf1. -->
+<!-- Translated from README.md a4c25a4534d9. -->
 <div align="center">
 
 <picture>
@@ -37,7 +37,7 @@ Gratis och öppen källkod. End-to-end-krypterat. Ingen e-post, inget telefonnum
 
 - **En kort kod är allt som behövs.** Välj filer och få en kod som `7-harbor-rocket`. Läs upp den eller visa QR-koden; den andra personen skriver in den och filerna kommer fram.
 - **Krypterat end-to-end, och du kan kontrollera det.** Båda skärmarna visar samma fyra ord innan något överförs. Om de skiljer sig åt, avbryt.
-- **Inget att registrera sig för.** Inget konto, ingen e-post, inget telefonnummer. Valfria konton kommer bara att vara nummer, som hos Mullvad ([utformning](../../docs/hesap.md)).
+- **Inget att registrera sig för.** Inget konto, ingen e-post, inget telefonnummer. Valfria konton planeras så att servern inte sparar något konto alls: dina enheter håller det själva, och du skriver aldrig in något id ([utformning](../../docs/hesap.md)).
 - **Direkt från enhet till enhet, var som helst.** Mötesservern presenterar bara de två enheterna för varandra och sparar inga loggar; som alla servrar ser den deras IP-adresser. Enheterna ansluter direkt över internet där det går. När en router eller brandvägg står i vägen bär en reläserver trafiken, utan att kunna läsa den.
 - **Hemma i ditt system.** Apparna följer systemets ljusa eller mörka tema, accentfärg, språk och inställning för reducerad rörelse. Linux-appen är inbyggd Qt 6 på Wayland och hämtar dessutom typsnitt, hörn och ikoner från teman i KDE Plasma, Hyprland och Omarchy direkt.
 - **Gratis, för gott.** Öppen källkod, finansierat av donationer. Inga annonser, ingen spårning, ingen betalnivå för grunderna.

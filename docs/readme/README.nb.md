@@ -1,4 +1,4 @@
-<!-- Translated from README.md 9197d4d09cf1. -->
+<!-- Translated from README.md a4c25a4534d9. -->
 <div align="center">
 
 <picture>
@@ -37,7 +37,7 @@ Gratis og åpen kildekode. Ende-til-ende-kryptert. Ingen e-post, intet telefonnu
 
 - **En kort kode er alt som trengs.** Velg filer og få en kode som `7-harbor-rocket`. Les den høyt eller vis QR-koden; den andre personen skriver den inn, og filene kommer fram.
 - **Kryptert ende-til-ende, og du kan sjekke det.** Begge skjermene viser de samme fire ordene før noe overføres. Hvis de er ulike, stopp.
-- **Ingenting å registrere seg for.** Ingen konto, e-post eller telefonnummer. Valgfrie kontoer vil bare være numre, slik som hos Mullvad ([utforming](../../docs/hesap.md)).
+- **Ingenting å registrere seg for.** Ingen konto, e-post eller telefonnummer. Valgfrie kontoer planlegges slik at serveren ikke lagrer noen konto i det hele tatt: enhetene dine holder den selv, og du skriver aldri inn en ID ([utforming](../../docs/hesap.md)).
 - **Rett fra enhet til enhet, hvor som helst.** Møteserveren bare introduserer de to enhetene for hverandre og lagrer ingen logger; som enhver server ser den IP-adressene deres. Enhetene kobler direkte over internett der det er mulig. Når en ruter eller brannmur står i veien, bærer en reléserver trafikken uten å kunne lese den.
 - **Hjemme på systemet ditt.** Appene følger systemets lyse eller mørke tema, aksentfarge, språk og innstilling for redusert bevegelse. Linux-appen er native Qt 6 på Wayland og henter også skrifter, hjørner og ikoner fra temaer i KDE Plasma, Hyprland og Omarchy fortløpende.
 - **Gratis, for godt.** Åpen kildekode, finansiert av donasjoner. Ingen reklame, ingen sporing, ikke noe betalt nivå for det grunnleggende.

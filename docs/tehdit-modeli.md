@@ -5,7 +5,7 @@ durduğunu ve neyi korumadığını yazar. 1.0 öncesi bağımsız denetimin
 başlangıç noktasıdır. Protokolün kendisi v0 taslağında, uygulamadaki
 kararlar [protocol-v0.1-notes.md](protocol-v0.1-notes.md) içindedir.
 
-Son gözden geçirme: 4 Kasım 2026.
+Son gözden geçirme: 4 Kasım 2026 (hesap bölümü, #243).
 
 ## Korunan varlıklar
 
@@ -15,7 +15,7 @@ Bugün korunanlar ile henüz yalnızca tasarımda olanlar ayrı yazılır.
 | --- | --- | --- |
 | Dosyaların içeriği, adları ve klasör yapısı | Sunucular, ağdaki herkes, kodu bilmeyen herkes | Var |
 | Dosya boyutları | Sunucular ve ağ gözlemcisi şifreli trafiğin toplam boyutunu görür; tek tek dosya boyutları gizli kalır | Kısmen |
-| Kullanıcının kimliği | Herkes: hesap gerekmez | Var; isteğe bağlı numara hesapları [tasarımda](hesap.md) |
+| Kullanıcının kimliği | Herkes: hesap gerekmez | Var; isteğe bağlı, sunucuda tutulmayan hesap (Hayalet halka) [tasarımda](hesap.md) |
 | Kim kime gönderdi | Sunucular iki cihazın IP adreslerini aynı anda görür | Yok; gizlilik modu ve Tor ile azaltılacak |
 | IP adresi | Gizlilik modunda karşı cihaz | Var: komut satırında `--relay-only`, uygulamalarda Ayarlar → "Adresimi karşı cihazdan gizle" |
 | Alıcının diski | Kötü niyetli gönderen (yol dışına yazma, üzerine yazma) | Var |
@@ -119,6 +119,33 @@ durduğu [mimari.md](mimari.md) içinde.
 tarar; OpenSSF Scorecard sonucu herkese açıktır (README'deki rozet). Kalan
 riskler yukarıdaki tabloda; issue'su olanlar bağlantılıdır, hepsi 1.0
 öncesi bağımsız denetimde ayrıca incelenir.
+
+## Hesap (tasarımda, kod yok)
+
+İsteğe bağlı hesap henüz yalnızca tasarımdır ([hesap.md](hesap.md),
+[karar 0013](kararlar/0013-hayalet-halka-hesap.md)). Kod yazılmadan önce bu
+iddialar Tamarin modelinde lemma, kodda test olur.
+
+Ek saldırganlar:
+
+8. **Çalınan ya da çıkarılmış cihaz:** bir zamanlar halkanın üyesiydi.
+9. **Kurtarma ifadesini ele geçiren.**
+10. **Kötü niyetli bilinen kişi:** sizinle eşleşmiş, cihazlarınızı ya da
+    öteki kişilerinizi öğrenmek ister.
+
+| # | Tehdit | Saldırgan | Karşılık | Kalan risk |
+| --- | --- | --- | --- | --- |
+| H1 | Halkaya sahte cihaz eklemek | 2 | Zincire yalnızca mevcut cihazın yönetim anahtarı ya da (gecikmeli) kurtarma anahtarı yazar; zincir uçtan uca şifreli (P1) | Kurtarma yolu: bkz. H4 |
+| H2 | Kişiye eski ya da farklı cihaz listesi göstermek (geri alma, çatal, dondurma) | 2 + 8 | Bağımsız tanıklı anonim şeffaflık günlüğü, dönem başına tek değer; 7 günlük süreli halka başları; teklifte baş yankısı (P2, P3) | Tanıkların hepsi sunucuyla iş birliği yaparsa korumaz; günlük sansürü yalnızca fark edilir, engellenmez |
+| H3 | Çıkarılan cihazın yeni dosyaları alması | 8 | Çıkarmada halka sırrı, kişi anahtarları ve günlük anahtarı yenilenir (P3) | Çıkarmaya kadar geçen süre |
+| H4 | İfadeyle sessizce cihaz eklemek | 9, 2 + 9 | Bekleme (2+ cihazda 72 saat, tek cihazda 7 gün) her cihazın ve kişinin kendi saatiyle; cihazların reddi; kişilerle doğrulama kelimelerini yeniden karşılaştırma, otomatik kabul yok; günlükte iki dal görünür (P7) | Telefon ve ifade birlikte çalınırsa korumaz |
+| H5 | Kişi listesini zehirlemek (bir kişinin anahtarını değiştirmek) | 8 | Kişi defteri imzalı ve yalnızca eklenebilir; değişiklik eşleşme dökümüne bağlı; çıkarılan cihazın dokunduğu kişiler yeniden doğrulanır | Çıkarılmadan önceki değişiklikler, yeniden doğrulamaya kadar |
+| H6 | Hesapları, cihazları ya da kişi ilişkilerini çıkarmak | 2 | Sunucuda hesap tablosu yok; günlük dönen kutu adları; yön başına kutular; günlükte körleştirilmiş etiketler (P5) | IP ve zamanlama: aynı NAT'tan bağlanan cihazlar ve kutular ilişkilendirilebilir; OHTTP/Tor sonraki aşamada |
+| H7 | Cihaz sayınızı öğrenmek | 10 | Halka başı 16'ya dolgulu, tuzlu Merkle ağacı (P6) | Kişi zamanla el sıkışmalarda gördüğü cihazları sayabilir |
+| H8 | Bir kişiyi adla taklit etmek | 10 | Ad yerel; önerilen ad otomatik dolmaz; benzer ad uyarısı; 66 bitlik işaret | Kullanıcı uyarıyı ve işareti yok sayarsa |
+| H9 | Kutu açma ile kaynak tüketmek | 2, 3 | ARC jetonu, iş kanıtı, IP sınırı, kutu boyutu ve ömrü | Botnet; operatör NAT'ı arkasındaki kullanıcılar sınıra takılabilir |
+| H10 | Her istemciye ayrı ARC anahtarı vererek etiketlemek | 2 | ARC anahtarları şeffaflık günlüğünde yayımlanır (anahtar tutarlılığı) | Kimlik bilgisi alma anında IP görülür |
+| H11 | Yeni cihaz eklerken araya girmek | 1 | QR ya da kod (CPace) zorunlu; yerel ağ yalnızca bulma için; kelime seçme | Kullanıcı yanlış kelimeyi seçerse |
 
 ## Kapsam dışı
 

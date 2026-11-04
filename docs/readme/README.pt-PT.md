@@ -1,4 +1,4 @@
-<!-- Translated from README.md 9197d4d09cf1. -->
+<!-- Translated from README.md a4c25a4534d9. -->
 <div align="center">
 
 <picture>
@@ -37,7 +37,7 @@ Gratuito e de código aberto. Encriptação ponto a ponto. Sem e-mail, sem núme
 
 - **Basta um código curto.** Escolha os ficheiros e obtenha um código como `7-harbor-rocket`. Leia-o em voz alta ou mostre o código QR; a outra pessoa introduz o código e os ficheiros chegam.
 - **Encriptação ponto a ponto, e pode confirmá-la.** Os dois ecrãs mostram as mesmas quatro palavras antes de qualquer coisa ser enviada. Se forem diferentes, pare.
-- **Sem qualquer registo.** Sem conta, e-mail ou número de telefone. As contas opcionais serão apenas um número, ao estilo da Mullvad ([conceção](../../docs/hesap.md)).
+- **Sem qualquer registo.** Sem conta, e-mail ou número de telefone. As contas opcionais estão a ser planeadas para que o servidor não guarde conta nenhuma: os seus dispositivos guardam-na e nunca escreve um identificador ([conceção](../../docs/hesap.md)).
 - **Diretamente de dispositivo para dispositivo, em qualquer lugar.** O servidor de encontro apenas apresenta os dois dispositivos e não guarda registos; como qualquer servidor, vê os respetivos endereços IP. Os dispositivos ligam-se diretamente através da Internet sempre que possível. Quando um router ou uma firewall o impede, um servidor de retransmissão transporta o tráfego sem o conseguir ler.
 - **Em casa no seu sistema.** As aplicações seguem o tema claro ou escuro do sistema, a cor de destaque, o idioma e a definição de movimento reduzido. A aplicação para Linux é Qt 6 nativo no Wayland e também usa em tempo real os tipos de letra, os cantos e os ícones dos temas do KDE Plasma, Hyprland e Omarchy.
 - **Gratuito, para sempre.** Código aberto e financiado por donativos. Sem anúncios, sem rastreio, sem plano pago para o essencial.

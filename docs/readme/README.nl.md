@@ -1,4 +1,4 @@
-<!-- Translated from README.md 9197d4d09cf1. -->
+<!-- Translated from README.md a4c25a4534d9. -->
 <div align="center">
 
 <picture>
@@ -37,7 +37,7 @@ Gratis en open source. End-to-end versleuteld. Geen e-mail, geen telefoonnummer,
 
 - **Een korte code is genoeg.** Kies bestanden en je krijgt een code zoals `7-harbor-rocket`. Lees hem voor of laat de QR-code zien; de ander typt hem in en de bestanden komen aan.
 - **End-to-end versleuteld, en je kunt het controleren.** Beide schermen tonen dezelfde vier woorden voordat er iets wordt verstuurd. Verschillen ze, stop dan.
-- **Nergens voor aanmelden.** Geen account, e-mail of telefoonnummer. Optionele accounts worden alleen een nummer, in de stijl van Mullvad ([ontwerp](../../docs/hesap.md)).
+- **Nergens voor aanmelden.** Geen account, e-mail of telefoonnummer. Optionele accounts worden zo ontworpen dat de server helemaal geen account bijhoudt: je apparaten bewaren het zelf en je typt nooit een ID ([ontwerp](../../docs/hesap.md)).
 - **Rechtstreeks van apparaat naar apparaat, overal.** De ontmoetingsserver stelt de twee apparaten alleen aan elkaar voor en houdt geen logboeken bij; zoals elke server ziet hij hun IP-adressen. Apparaten verbinden waar mogelijk rechtstreeks via het internet. Als een router of firewall in de weg zit, vervoert een relayserver het verkeer zonder het te kunnen lezen.
 - **Thuis op je systeem.** De apps volgen het lichte of donkere thema van het systeem, de accentkleur, de taal en de instelling voor minder beweging. De Linux-app is native Qt 6 op Wayland en neemt daarnaast live de lettertypen, hoeken en pictogrammen over van de thema's van KDE Plasma, Hyprland en Omarchy.
 - **Gratis, voorgoed.** Open source en betaald met donaties. Geen advertenties, geen tracking, geen betaald abonnement voor de basis.
