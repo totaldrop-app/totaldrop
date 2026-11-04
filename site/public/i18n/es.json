@@ -231,7 +231,7 @@
   "dl.macos": "macOS",
   "dl.macos.d": "Apple exige una cuenta de desarrollador de pago (99 USD al año) para firmar y notarizar aplicaciones. Las donaciones la pagarán.",
   "dl.new.fallback": "Una transferencia que empezó por conexión directa ya no se detiene cuando esa vía se queda en silencio, por ejemplo si se cae el Wi-Fi: pasa al relé y sigue. Ambos dispositivos necesitan esta versión y el mismo relé.",
-  "dl.new.reconnect": "Una transferencia por el relé sobrevive a una conexión que muere sin que ninguno de los dos dispositivos lo note, por ejemplo al cambiar de red Wi-Fi: se vuelve a conectar en 10 segundos.",
+  "dl.new.reconnect": "Una transferencia por el relé sobrevive a una conexión que muere sin que ninguno de los dos dispositivos lo note, por ejemplo al cambiar de red Wi-Fi: el dispositivo lo detecta en 10 segundos y vuelve a conectarse.",
   "dl.new.progress": "La barra de progreso del dispositivo que envía muestra lo que ha llegado al otro dispositivo, no solo lo que ha salido.",
   "dl.new.reasons": "Cuando una transferencia falla, el motivo aparece ahora en tu idioma para muchos errores, en Detalles.",
   "dl.new.title": "Novedades",

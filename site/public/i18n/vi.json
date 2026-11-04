@@ -231,7 +231,7 @@
   "dl.macos": "macOS",
   "dl.macos.d": "Apple yêu cầu tài khoản nhà phát triển trả phí (99 USD mỗi năm) để ký và công chứng ứng dụng. Tiền quyên góp sẽ chi trả khoản này.",
   "dl.new.fallback": "Lần truyền bắt đầu qua kết nối trực tiếp không còn dừng lại khi đường đó im lặng, ví dụ khi mất Wi-Fi: nó chuyển sang máy chủ chuyển tiếp và tiếp tục. Cả hai thiết bị cần phiên bản này và cùng một máy chủ chuyển tiếp.",
-  "dl.new.reconnect": "Lần truyền qua máy chủ chuyển tiếp chịu được kết nối bị đứt mà không thiết bị nào nhận ra, ví dụ sau khi đổi mạng Wi-Fi: nó kết nối lại trong vòng 10 giây.",
+  "dl.new.reconnect": "Lần truyền qua máy chủ chuyển tiếp chịu được kết nối bị đứt mà không thiết bị nào nhận ra, ví dụ sau khi đổi mạng Wi-Fi: thiết bị nhận ra trong vòng 10 giây rồi kết nối lại.",
   "dl.new.progress": "Thanh tiến trình trên thiết bị gửi cho thấy những gì đã đến thiết bị kia, không chỉ những gì đã được gửi đi.",
   "dl.new.reasons": "Khi lần truyền thất bại, lý do giờ được ghi bằng ngôn ngữ của bạn cho nhiều lỗi, trong phần Chi tiết.",
   "dl.new.title": "Có gì mới",

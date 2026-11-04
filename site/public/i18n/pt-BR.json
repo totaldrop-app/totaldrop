@@ -231,7 +231,7 @@
   "dl.macos": "macOS",
   "dl.macos.d": "A Apple exige uma conta de desenvolvedor paga (99 USD por ano) para assinar e autenticar apps. As doações vão pagar por ela.",
   "dl.new.fallback": "Uma transferência que começou por conexão direta não para mais quando esse caminho fica em silêncio, por exemplo quando o Wi-Fi cai: ela passa para o relay e continua. Os dois dispositivos precisam desta versão e do mesmo relay.",
-  "dl.new.reconnect": "Uma transferência pelo relay sobrevive a uma conexão que cai sem que nenhum dos dois dispositivos perceba, por exemplo ao trocar de rede Wi-Fi: ela se reconecta em até 10 segundos.",
+  "dl.new.reconnect": "Uma transferência pelo relay sobrevive a uma conexão que cai sem que nenhum dos dois dispositivos perceba, por exemplo ao trocar de rede Wi-Fi: o dispositivo percebe em até 10 segundos e se reconecta.",
   "dl.new.progress": "A barra de progresso do dispositivo que envia mostra o que chegou ao outro dispositivo, não só o que saiu.",
   "dl.new.reasons": "Quando uma transferência falha, o motivo agora aparece no seu idioma para muitas falhas, em Detalhes.",
   "dl.new.title": "Novidades",

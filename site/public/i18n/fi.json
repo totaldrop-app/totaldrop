@@ -231,7 +231,7 @@
   "dl.macos": "macOS",
   "dl.macos.d": "Apple vaatii maksullisen kehittäjätilin (99 USD vuodessa) sovellusten allekirjoittamiseen ja notarointiin. Lahjoitukset maksavat sen.",
   "dl.new.fallback": "Suoralla yhteydellä alkanut siirto ei enää pysähdy, kun tuo reitti hiljenee, esimerkiksi Wi-Fin katketessa: se siirtyy välityspalvelimelle ja jatkuu. Molemmissa laitteissa on oltava tämä versio ja sama välityspalvelin.",
-  "dl.new.reconnect": "Välityspalvelimen kautta kulkeva siirto kestää yhteyden, joka katkeaa kummankaan laitteen huomaamatta, esimerkiksi Wi-Fi-verkon vaihtuessa: se yhdistää uudelleen 10 sekunnin kuluessa.",
+  "dl.new.reconnect": "Välityspalvelimen kautta kulkeva siirto kestää yhteyden, joka katkeaa kummankaan laitteen huomaamatta, esimerkiksi Wi-Fi-verkon vaihtuessa: laite huomaa sen 10 sekunnin kuluessa ja yhdistää uudelleen.",
   "dl.new.progress": "Lähettävän laitteen edistymispalkki näyttää, mitä on saapunut toiseen laitteeseen, ei vain sitä, mitä on lähetetty matkaan.",
   "dl.new.reasons": "Kun siirto epäonnistuu, syy kerrotaan nyt monissa virheissä omalla kielelläsi kohdassa Lisätiedot.",
   "dl.new.title": "Uutta",

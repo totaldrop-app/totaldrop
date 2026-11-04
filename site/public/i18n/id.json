@@ -231,7 +231,7 @@
   "dl.macos": "macOS",
   "dl.macos.d": "Apple mewajibkan akun developer berbayar (99 USD per tahun) untuk menandatangani dan menotarisasi aplikasi. Donasi akan membiayainya.",
   "dl.new.fallback": "Transfer yang dimulai lewat koneksi langsung tidak lagi berhenti saat jalur itu senyap, misalnya saat Wi-Fi terputus: transfer pindah ke relay dan berlanjut. Kedua perangkat perlu versi ini dan relay yang sama.",
-  "dl.new.reconnect": "Transfer lewat relay tahan terhadap koneksi yang putus tanpa disadari kedua perangkat, misalnya setelah berganti jaringan Wi-Fi: transfer tersambung lagi dalam 10 detik.",
+  "dl.new.reconnect": "Transfer lewat relay tahan terhadap koneksi yang putus tanpa disadari kedua perangkat, misalnya setelah berganti jaringan Wi-Fi: perangkat menyadarinya dalam 10 detik lalu tersambung lagi.",
   "dl.new.progress": "Bilah kemajuan di perangkat pengirim menunjukkan apa yang sudah sampai di perangkat lain, bukan hanya apa yang sudah dikirim.",
   "dl.new.reasons": "Saat transfer gagal, alasannya kini ditampilkan dalam bahasa Anda untuk banyak kegagalan, di bagian Detail.",
   "dl.new.title": "Yang baru",

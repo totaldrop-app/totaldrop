@@ -231,7 +231,7 @@
   "dl.macos": "macOS",
   "dl.macos.d": "Apple krever en betalt utviklerkonto (99 USD i året) for å signere og notarisere apper. Donasjoner skal betale for den.",
   "dl.new.fallback": "En overføring som startet på en direkte tilkobling, stopper ikke lenger når den veien blir stille, for eksempel når wifi faller ut: den går over til reléet og fortsetter. Begge enhetene trenger denne versjonen og samme relé.",
-  "dl.new.reconnect": "En overføring via reléet tåler en tilkobling som dør uten at noen av enhetene merker det, for eksempel etter bytte av wifi-nett: den kobler til igjen innen 10 sekunder.",
+  "dl.new.reconnect": "En overføring via reléet tåler en tilkobling som dør uten at noen av enhetene merker det, for eksempel etter bytte av wifi-nett: enheten merker det innen 10 sekunder og kobler til igjen.",
   "dl.new.progress": "Fremdriftslinjen på enheten som sender, viser hva som har nådd den andre enheten, ikke bare hva som er sendt av gårde.",
   "dl.new.reasons": "Når en overføring mislykkes, står årsaken nå på ditt språk for mange feil, under Detaljer.",
   "dl.new.title": "Nytt",
