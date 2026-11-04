@@ -1,4 +1,4 @@
-<!-- Translated from README.md 9197d4d09cf1. -->
+<!-- Translated from README.md a4c25a4534d9. -->
 <div align="center">
 
 <picture>
@@ -37,7 +37,7 @@ Ingyenes és nyílt forráskódú. Végpontok közötti titkosítás. Nincs e-ma
 
 - **Csak egy rövid kód kell.** Válaszd ki a fájlokat, és kapsz egy kódot, például `7-harbor-rocket`. Mondd ki hangosan, vagy mutasd meg a QR-kódot; a másik fél beírja, és a fájlok megérkeznek.
 - **Végpontok közötti titkosítás, amelyet ellenőrizni is tudsz.** Mielőtt bármi elindulna, mindkét képernyő ugyanazt a négy szót mutatja. Ha eltérnek, állj meg.
-- **Nincs hová regisztrálni.** Nincs fiók, e-mail-cím vagy telefonszám. Az opcionális fiókok csak számok lesznek, Mullvad-stílusban ([terv](../../docs/hesap.md)).
+- **Nincs hová regisztrálni.** Nincs fiók, e-mail-cím vagy telefonszám. Az opcionális fiókokat úgy tervezzük, hogy a szerver egyáltalán ne tároljon fiókot: az eszközeid őrzik, és soha nem kell azonosítót beírnod ([terv](../../docs/hesap.md)).
 - **Közvetlenül eszközről eszközre, bárhol.** A találkozási szerver csak bemutatja egymásnak a két eszközt, és nem naplóz; mint bármely szerver, látja az IP-címüket. Az eszközök az interneten keresztül mindenhol közvetlenül kapcsolódnak, ahol csak lehet. Ha router vagy tűzfal áll az útban, a forgalmat egy továbbító szerver viszi, amely nem tudja elolvasni.
 - **Otthon érzi magát a rendszereden.** Az alkalmazások követik a rendszer világos vagy sötét témáját, kiemelőszínét, nyelvét és a csökkentett mozgás beállítását. A linuxos alkalmazás natív Qt 6 Waylandön, és a betűtípusokat, a sarkokat és az ikonokat is élőben veszi át a KDE Plasma, a Hyprland és az Omarchy témáiból.
 - **Ingyenes, végleg.** Nyílt forráskódú, adományokból fenntartva. Nincs reklám, nincs követés, nincs fizetős csomag az alapfunkciókhoz.
