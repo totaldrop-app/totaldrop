@@ -1,6 +1,6 @@
 # 0012: Tarayıcıdan gönderme, web.totaldrop.app
 
-- **Durum:** Önerilen, 4 Kasım 2026 (#221)
+- **Durum:** Kabul, 4 Kasım 2026 (#221); ilk sürüm yalnızca gönderme
 - **Bağlam:** Uygulaması olmayan biri bugün TotalDrop ile dosya
   gönderemez. Ozan, `web.totaldrop.app` adresinde tarayıcıdan gönderme
   sayfası istiyor. Sayfa güvenlikten taviz vermemeli: aynı kod, aynı
