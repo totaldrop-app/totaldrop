@@ -73,7 +73,8 @@ Bir değişiklik ancak şunların hepsi doğruysa bitmiştir:
    iki sunucuya olan geliştirme bağımlılığı sürümleri ve `Cargo.lock`
    (`tools/check-component-versions.sh` hepsini denetler). CLI ve çekirdek: kök
    `Cargo.toml`'daki `[workspace.package]` sürümü, iç bağımlılıkların
-   (`totaldrop-core = { version = … }`) sürümleri ve `Cargo.lock`. CLI,
+   (`totaldrop-core = { version = … }`) sürümleri, `Cargo.lock` ve çalışma alanı dışındaki
+   `fuzz/Cargo.lock` (denetimler onu görmez). CLI,
    Linux paketleriyle yayınlanır; CLI kodu son Linux yayınından bu yana
    değiştiyse ve sürüm henüz artırılmadıysa Linux yayını bu sürümü de
    artırır.

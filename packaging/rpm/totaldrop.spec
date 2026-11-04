@@ -87,8 +87,9 @@ cargo test --release --locked -p totaldrop-linux -p totaldrop-proto
   away.
 - A transfer no longer sometimes stops right after the code is entered,
   with "the other side left" on the sending device.
-- Stop on the sending device now cuts the transfer at once; files already
-  on the way are no longer kept on the receiving device.
+- Stop on the sending device now cuts the transfer at once; files still
+  being sent when you press Stop are no longer completed and kept on the
+  receiving device.
 
 * Tue Nov 03 2026 TotalDrop <hello@totaldrop.app> - 0.3.0~beta.2-1
 - On GNOME and on Hyprland without a Qt theme, the window takes the
