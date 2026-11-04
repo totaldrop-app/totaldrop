@@ -37,13 +37,13 @@ anda ulaşır. Her platform kendi temposunda yayınlanır.
 | `site/` | totaldrop.app, download.totaldrop.app ve QR bağlantı sayfası | `site.yml` |
 | `fuzz/` | Ayrıştırıcıların fuzz hedefleri | `fuzz.yml` (haftalık) |
 | `docs/` | Tasarım kuralları, sürümler, protokol notları, bu belge | |
-| `tools/` | Depo araçları: changelog, bileşen sürümleri, `deny.toml` ile `osv-scanner.toml`'un aynı açıkları yok saydığı denetim | `ci.yml` |
+| `tools/` | Depo araçları: changelog, bileşen sürümleri, `deny.toml` ile `osv-scanner.toml`'un aynı danışma kayıtlarını yok saydığının denetimi | `ci.yml` |
 | `.github/` | İş akışları; ayrıca `main`'de ve haftalık OpenSSF Scorecard, her PR'da ve `main`'de CodeQL kod taraması (GitHub varsayılan kurulumu, depo ayarlarında) | `ci.yml`, `scorecard.yml` |
 
 Kökteki `deny.toml` (cargo-deny) ve `osv-scanner.toml` (OpenSSF Scorecard'ın
 kullandığı OSV-Scanner) aynı danışma kayıtlarını, aynı gerekçeyle yok sayar.
 `SECURITY-INSIGHTS.yml` güvenlik bilgilerini araçların okuyabileceği
-biçimde özetler; anlattığı şey değişen PR onu da günceller.
+biçimde özetler. Anlattığı bir şeyi değiştiren PR onu da günceller.
 
 Windows ve macOS geldiğinde kendi klasörlerini (`windows/`, `macos/`) ve
 kendi iş akışlarını alır.

@@ -6,8 +6,11 @@
 #   tools/check-advisory-ignores.sh
 set -eu
 root=$(cd "$(dirname "$0")/.." && pwd)
-deny=$(sed -n '/^\[advisories\]/,/^\[/p' "$root/deny.toml" | grep -E '^\s*\{ *id *=' | grep -oE '(RUSTSEC|GHSA|CVE)-[0-9A-Za-z-]+' | sort -u)
-osv=$(grep -E '^\s*id *=' "$root/osv-scanner.toml" | grep -oE '(RUSTSEC|GHSA|CVE)-[0-9A-Za-z-]+' | sort -u)
+# Only the value of each id = "…" key, so an ID named in a reason or a
+# comment does not count.
+id_values() { sed -nE 's/^[[:space:]]*\{?[[:space:]]*id[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' | sort -u; }
+deny=$(sed -n '/^\[advisories\]/,/^\[/p' "$root/deny.toml" | id_values)
+osv=$(id_values < "$root/osv-scanner.toml")
 if [ "$deny" != "$osv" ]; then
   echo "deny.toml and osv-scanner.toml ignore different advisories:" >&2
   echo "deny.toml:" >&2; echo "$deny" >&2
