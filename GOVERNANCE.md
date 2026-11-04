@@ -17,7 +17,7 @@ Anyone can propose a change by opening an issue or a pull request. Proposals are
 
 | Role | Responsibilities | Who |
 | --- | --- | --- |
-| **Maintainer** | Sets the roadmap; reviews and merges pull requests; approves every release and deployment (the `linux-release`, `play-release` and `cloudflare` environments); pushes release tags; owns the GitHub organization, the Cloudflare account, the Google Play account and the signing keys; answers security reports | [@ozdil](https://github.com/ozdil) |
+| **Maintainer** | Sets the roadmap; reviews and merges pull requests; approves every release and deployment (the `linux-release`, `play-release` and `cloudflare` environments); pushes release tags; owns the GitHub organization, the Cloudflare account, the Google Play account and the Play upload key; answers security reports | [@ozdil](https://github.com/ozdil) |
 | **Security contact** | Reads security@totaldrop.app and private vulnerability reports; replies within 72 hours; coordinates the fix and the advisory | [@ozdil](https://github.com/ozdil) |
 | **Contributor** | Proposes changes through issues and pull requests, following [CONTRIBUTING.md](CONTRIBUTING.md) and the [code of conduct](CODE_OF_CONDUCT.md) | Anyone |
 | **Translator** | Writes and reviews interface text in one of the 35 languages ([docs/ceviri.md](docs/ceviri.md), in Turkish) | Anyone; reviewed languages are listed in the README |
@@ -31,11 +31,11 @@ TotalDrop has one maintainer today, so its bus factor is 1. This is the project'
 
 - Everything needed to rebuild and release the software is public: the source, the build and release workflows, the build images and the process documents. Releases are built only in GitHub Actions, never on a personal machine.
 - The servers are deployed from this repository by CI, so a new account can run them from the same code.
-- Secrets (signing keys, the Play upload key, the Cloudflare deploy token) live only in protected GitHub environments and with the maintainer.
+- The secrets (the Google Play upload key and its password, the Cloudflare API token) live only in protected GitHub environments and with the maintainer. Linux build provenance is signed without a long-lived key (Sigstore).
 
 What is still missing, and needed before the project can say it continues without interruption if the maintainer is gone:
 
 - a second trusted person with owner access to the GitHub organization, the Cloudflare account and the Google Play account;
-- a copy of the signing keys and recovery codes that this person can reach.
+- a copy of the Play upload key, its password and the account recovery codes that this person can reach.
 
 When the project gains a second maintainer, this page will name them and the roles they take on.

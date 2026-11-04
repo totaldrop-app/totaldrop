@@ -18,7 +18,7 @@ güven sınırları [tehdit-modeli.md](tehdit-modeli.md), kararların nedenleri
 │ totaldrop-proto      │   (doğrudan ya da     │ totaldrop-proto      │
 │ totaldrop-crypto     │    aktarma üzerinden) │ totaldrop-crypto     │
 └──────────┬───────────┘                       └───────────┬──────────┘
-           │ WebSocket (TLS)                               │
+           │ WebSocket (TLS); STUN için UDP                │
            ▼                                               ▼
      ┌──────────────────┐   ┌──────────────────┐   ┌──────────────┐
      │ Rendezvous       │   │ Aktarma (relay)  │   │ STUN         │
@@ -32,9 +32,10 @@ yüzden protokol ve kriptografi tek bir yerde durur:
 
 - `totaldrop-crypto`: CPace, anahtar türetme, posta kutusu ve oturum
   şifrelemesi, cihaz anahtarları, STREAM parça şifrelemesi.
-- `totaldrop-proto`: aktarım kodları, sınırlar, yol güvenliği ve her kablo
-  mesajı (CBOR). Dışarıdan gelen her veri burada ayrıştırılır; her
-  ayrıştırıcının `fuzz/` altında bir fuzz hedefi vardır.
+- `totaldrop-proto`: aktarım kodları, sınırlar, yol güvenliği ve kablo
+  mesajları (CBOR; aktarma çerçeveleri kendi ikili biçiminde). İstemcide
+  karşı cihazdan ve sunuculardan gelen veri burada ayrıştırılır; bu
+  ayrıştırıcıların `fuzz/` altında fuzz hedefleri vardır.
 - `totaldrop-core`: istemci motoru. Rendezvous ile konuşur, ham açık
   anahtarlı QUIC bağlantısını kurar, Noise XXpsk3 + ML-KEM-768 el
   sıkışmasını yapar, dosyaları gönderir ve alır, gerekirse aktarma
@@ -51,39 +52,46 @@ yüzden protokol ve kriptografi tek bir yerde durur:
   sürer ([0010](kararlar/0010-android-arka-plan-aktarim.md)).
 - Komut satırı (`crates/totaldrop-cli`): çekirdeğin ince bir kabuğu.
 
-**Sunucular (`server/`).** Hiçbiri dosya içeriğini göremez ve kayıt
-tutmaz. Her birinin iki uygulaması vardır: kendi sunucusunu kurmak ve
+**Sunucular (`server/`).** Projenin iki sunucusu vardır. İkisi de dosya
+içeriğini göremez ve kayıt tutmaz. Her birinin iki uygulaması vardır: kendi sunucusunu kurmak ve
 testler için Rust, `totaldrop.app` için Cloudflare Workers ve Durable
 Objects ([0003](kararlar/0003-cloudflare-altyapi.md)). İki uygulama aynı
 uçtan uca test takımından geçer.
 
-- Rendezvous (`totaldrop-rendezvous`, `rendezvous-worker`): kısa kodu
-  ayırır ve iki cihaz bulununcaya kadar şifreli mesajları taşıyan posta
-  kutusunu tutar.
-- Aktarma (`totaldrop-relay`, `relay-worker`): iki cihaz doğrudan
-  bağlanamazsa şifreli QUIC trafiğini iletir. Yalnızca o aktarımın iki
+- Rendezvous (`totaldrop-rendezvous`, `rendezvous-worker`): kodun numara
+  kısmını (nameplate) ayırır ve iki cihaz buluşana kadar şifreli
+  mesajları taşıyan posta kutusunu tutar. Kodun geri kalanını cihaz üretir;
+  sunucu onu görmez.
+- Aktarma (`totaldrop-relay`, `relay-worker`): şifreli QUIC trafiğini iki
+  cihaz arasında iletir. Yalnızca o aktarımın iki
   anahtarını, imzalı bir meydan okumayla kabul eder.
-- STUN: cihazlar dış adreslerini `stun.cloudflare.com` ya da kendi kurulan
-  aktarma sunucusu üzerinden öğrenir.
+
+STUN projenin sunucusu değildir: cihazlar dış adreslerini varsayılan
+olarak Cloudflare'in STUN sunucusundan (`stun.cloudflare.com`, UDP) ya da
+kişinin kendi kurduğu aktarma sunucusundan öğrenir. Ayrıntılar
+[aktarma.md](aktarma.md) içinde.
 
 **Site (`site/`).** totaldrop.app, indirme sayfası ve QR bağlantılarının
-açtığı sayfa; Cloudflare Pages'te, dışarıdan hiçbir şey yüklemeden.
+açtığı sayfa Cloudflare Pages'te durur ve dışarıdan hiçbir şey yüklemez.
 Gönderme yalnızca uygulamalardan yapılır, tarayıcıdan yapılmaz.
 
 ## Bir aktarım
 
-1. Gönderen rendezvous'tan bir kod ister ve kodu karşı tarafa söyler.
+1. Gönderen rendezvous'tan bir numara (nameplate) ayırır, kodun geri
+   kalanını cihazında üretir ve kodu karşı tarafa söyler.
 2. İki cihaz posta kutusunda buluşur ve koddan CPace ile ortak bir anahtar
    türetir. Sunucu kodu ve anahtarı bilmez; posta kutusundaki mesajlar bu
    anahtarla şifrelidir.
 3. Cihazlar posta kutusu üzerinden adreslerini ve tek kullanımlık uç nokta
-   anahtarlarını değiş tokuş eder, doğrudan QUIC bağlantısı dener; olmazsa
-   aktarma sunucusuna geçer.
+   anahtarlarını değiş tokuş eder. Doğrudan yol ile aktarma yolu birlikte
+   denenir, ilk yanıt veren kullanılır; bu yüzden aktarma sunucusu doğrudan
+   aktarımlarda da iki cihazın IP adresini görebilir
+   ([tehdit modeli](tehdit-modeli.md) T5, #63).
 4. QUIC içinde Noise XXpsk3 + ML-KEM-768 el sıkışması yapılır; iki taraf
    dört doğrulama kelimesini görür.
 5. Gönderen dosya listesini (manifest) yollar, alan kabul eder; dosyalar
    1 MiB'lik parçalar halinde STREAM ile şifreli akar, her parça gelince
-   doğrulanır. Dosya, BLAKE3 doğrulamasından sonra seçilen klasöre konur.
+   doğrulanır. Dosya, BLAKE3 doğrulamasından sonra alma klasörüne konur.
 
 ## Derleme ve dağıtım
 

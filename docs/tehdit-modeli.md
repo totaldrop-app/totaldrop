@@ -63,7 +63,7 @@ Bugün korunanlar ile henüz yalnızca tasarımda olanlar ayrı yazılır.
 | T8 | Bellek ya da disk tüketme | 4 | Sınırlar: 100.000 girdi, 16 MiB manifest, yol uzunlukları; reddedilen teklif | 16 MiB manifest çözülürken yaklaşık 1 GiB bellek; v0.1'de akış biçimine geçilecek |
 | T9 | Sunucuyu kötüye kullanmak | 2, 3 | Rendezvous: kutu başına mesaj ve boyut sınırları, süreler; aktarma: aktarım başına iki anahtar, 32 GiB ve 6 saat | Rendezvous'ta istemci başına hız sınırı henüz yok. Aktarma sunucuları 32 GiB / 6 saati bağlantı başına sayar; bağlantı yeniden kurulunca sayaç sıfırlanır (TotalDrop istemcisi sınırı kendi bağlantıları boyunca toplam tutar, değiştirilmiş bir istemci tutmaz); Cloudflare aktarma sunucusu iletilecek veriyi sınırsız tamponlar. Aynı anahtarla yeni bir giriş eski bağlantının yerini alır; bunu yalnızca anahtarın sahibi yapabilir. İki ortak anahtarı (aktarım adresini) bilen biri, giriş bekleyen iki yeri sürekli doldurarak bir tarafın yeniden bağlanmasını engelleyebilir; adresi yalnızca iki cihaz ve aktarma sunucusu bilir ([#190](https://github.com/totaldrop-app/totaldrop/issues/190)) |
 | T10 | Aktarma sunucusuna başka bir anahtarla girmek | 2, 4 | Aktarım adresi iki anahtarı taşır; sunucu yalnızca bu iki anahtarı, imzalı bir meydan okumayla kabul eder | Bilinen yok; bağımsız denetime kadar doğrulanmadı |
-| T11 | Tedarik zinciri | 6 | `cargo-deny` (lisans, güvenlik ilanları), Dependabot, kilitli bağımlılıklar, SHA'ya sabitli CI eylemleri, CI'da derleme ve derleme kaynağı kanıtı, CodeQL kod taraması, OpenSSF Scorecard | Sabitlenen sürümün kendisi kötü niyetliyse korumaz; her güncelleme PR olarak gelir ve incelenir. Kapsayıcı imajları (`archlinux:latest` vb.) ve çalışırken indirilen araçlar (Flutter stable, Node LTS, Rust nightly) hâlâ değişebilen etiketle çağrılıyor |
+| T11 | Tedarik zinciri | 6 | `cargo-deny` (lisans, güvenlik ilanları), Dependabot, kilitli bağımlılıklar, SHA'ya sabitli CI eylemleri, CI'da derleme ve derleme kaynağı kanıtı, CodeQL kod taraması, OpenSSF Scorecard | Sabitlenen sürümün kendisi kötü niyetliyse korumaz; her güncelleme PR olarak gelir ve incelenir. Arch kapsayıcısı özete, Flutter sürüme (3.47.8) sabit; Node (`24`, `lts/*`) ve fuzz için Rust nightly hâlâ değişebilen etiketle çağrılıyor |
 | T12 | Sahte uygulama ya da paket | 6 | Yalnızca Google Play, GitHub sürümleri ve totaldrop.app; SHA-256 sağlama toplamları; Linux paketlerinde derleme kaynağı kanıtı | Play paketini Google yeniden imzalar, kullanıcı kanıtı doğrulayamaz; Windows ve macOS imzası bağışları bekliyor |
 | T13 | Açık pencereye istenmeyen dosya ya da kod vermek (Linux) | 7 | Hiçbir şey kendiliğinden gönderilmez ya da alınmaz: gönderme "Kod oluştur", alma teklifin kabulünü ister. Bir çağrı en çok 1.024 öğe ve 1 MiB taşıyabilir; yalnızca yerel `file://` yolları ve bilinen ekranlar alınır; etkinleştirme belirteci denetlenir; aktarım sürerken gelen istek beklemeye alınır | Gönderilecekler listesine eklenen dosya ayrıca işaretlenmez; bu süreç kişinin dosyalarını zaten okuyabilir |
 
@@ -85,35 +85,39 @@ durduğu [mimari.md](mimari.md) içinde.
 - *Güven kullanıcıdan gelir, sunucudan değil:* iki cihaz yalnızca kodu
   bildikleri için birbirine güvenir (CPace), araya girme dört doğrulama
   kelimesiyle görünür olur (T2).
-- *Kapalıyken güvenli (fail closed):* yanlış kod, bozuk mesaj, sınır aşımı
+- *Hata durumunda güvenli kapanma (fail closed):* yanlış kod, bozuk mesaj, sınır aşımı
   ya da doğrulanmayan parça bağlantıyı kapatır; dosya ancak BLAKE3
   doğrulamasından sonra yerine konur (T7).
 - *Derinlemesine savunma:* QUIC/TLS 1.3 içinde Noise, onun içinde dosya
   başına STREAM şifrelemesi (T1); klasik ve kuantum sonrası anahtarların
   ikisinden birden türeyen oturum anahtarları (T4).
 - *Basitlik ve tek kaynak:* protokol ve kriptografi tek çekirdekte durur;
-  uygulamalar kriptografi yapmaz. Yeni kriptografi yazılmaz, yalnızca
-  yayımlanmış ilkeller bakımlı kütüphanelerle kullanılır.
-- *Girdiye güvenmeme:* dışarıdan gelen her veri `totaldrop-proto`'da, izin
-  listesiyle ve sınırlarla ayrıştırılır (T7, T8); her ayrıştırıcının fuzz
-  hedefi vardır.
+  uygulamalar kriptografi yapmaz. Yeni kriptografik yapı icat edilmez:
+  yayımlanmış yapılar (CPace, STREAM) bakımlı kütüphanelerin ilkelleri
+  üzerine kurulur ve taslakların test vektörleriyle sınanır.
+- *Girdiye güvenmeme:* istemcide karşı cihazdan ve sunuculardan gelen her
+  kablo mesajı `totaldrop-proto`'da, izin listesiyle ve sınırlarla
+  ayrıştırılır (T7, T8); bu ayrıştırıcıların fuzz hedefi vardır. Linux'ta
+  oturum veriyolundan gelen istekler `linux/` içinde sınırlanır (T13).
 
 **Yaygın açık sınıflarına karşı:**
 
 | Sınıf | Karşılık |
 | --- | --- |
-| Bellek güvenliği (taşma, serbest bırakılmış belleği kullanma) | Rust; çalışma alanında `unsafe_code = "forbid"`; tek istisna Linux'taki Qt köprüsü bildirimleri |
-| Yol geçişi, sembolik bağ, üzerine yazma | T7: yol denetimi, yalnızca seçilen klasörün altı, var olanın üzerine yazmama |
+| Bellek güvenliği (taşma, serbest bırakılmış belleği kullanma) | Rust; `crates/` ve `server/` içinde `unsafe_code = "forbid"`. İstisnalar: Linux uygulamasındaki Qt köprüsü bildirimleri ve Qt başlamadan önce ortam değişkeni ayarlayan tek satır, köprünün C++ başlıkları ve Android köprüsünün (`app/rust`) üretilmiş kodu |
+| Yol geçişi, sembolik bağ, üzerine yazma | T7: yol denetimi, yalnızca alma klasörünün altı, var olanın üzerine yazmama |
 | Kaynak tüketme | T8, T9: girdi, manifest, mesaj, süre ve bayt sınırları |
-| Tekrar oynatma ve sürüm düşürme | Her aktarımda yeni, tek kullanımlık anahtarlar; tek bir şifre takımı (TD0), düşürülecek eski bir takım yok ([protokol notları](protocol-v0.1-notes.md)) |
-| Zayıf ya da yanlış kullanılan kriptografi | Yalnızca CPace, Noise, ML-KEM-768, X25519, ChaCha20-Poly1305, BLAKE3; SHA-1, MD5, CBC yok; rastgelelik işletim sisteminden |
-| Web açıkları (XSS, tıklama kaçırma) | Sitede dışarıdan betik yok, sıkı CSP, `frame-ancestors 'none'`, HSTS (`site/public/_headers`) |
+| Tekrar oynatma ve sürüm düşürme | Her aktarımda yeni, tek kullanımlık anahtarlar; protokolün tek bir sürümü ve şifre takımı var (TD0; `totaldrop-core/src/pairing.rs` içinde `VERSIONS = [0]`), düşürülecek eski bir sürüm yok |
+| Zayıf ya da yanlış kullanılan kriptografi | Protokol katmanında (TD0) yalnızca CPace (ristretto255, SHA-512), Noise XXpsk3 (X25519, ChaCha20-Poly1305, BLAKE2b), ML-KEM-768, Ed25519 ve BLAKE3. Taşıma katmanında QUIC ve WebSocket için TLS 1.3 (rustls, `ring` sağlayıcısı; AES-GCM ve ChaCha20-Poly1305, X25519 ve P-256/P-384). SHA-1, MD5, CBC yok; rastgelelik işletim sisteminden |
+| Web açıkları (XSS, tıklama korsanlığı) | Sitede dışarıdan betik yok, sıkı CSP, `frame-ancestors 'none'`, HSTS (`site/public/_headers`) |
 | Tedarik zinciri | T11, T12: kilitli bağımlılıklar, `cargo-deny`, Dependabot, CodeQL, CI'da derleme ve imzalı derleme kanıtı |
-| Gizli bilgi sızması | Anahtarlar yalnızca korumalı CI ortamlarında; gizli bilgi taraması ve push koruması açık |
+| Gizli bilgi sızması | Gizli değerler (Play yükleme anahtarı ve parolası, Cloudflare API belirteci) yalnızca korumalı CI ortamlarında ve bakımcıda; Linux derleme kanıtı anahtarsız (Sigstore); gizli bilgi taraması ve push koruması açık |
 
-**Kanıt:** her güvenlik kuralının testi ve fuzz hedefi depoda, her PR'da
-çalışır; CodeQL ve OpenSSF Scorecard sonuçları depo sayfasında görünür.
-Kalan riskler yukarıdaki tabloda, her biri bir issue ile izlenir.
+**Kanıt:** güvenlik kurallarının testleri depoda durur ve her PR'da
+çalışır; ayrıştırıcıların fuzz hedefleri her hafta çalışır. CodeQL her PR'ı
+tarar; OpenSSF Scorecard sonucu herkese açıktır (README'deki rozet). Kalan
+riskler yukarıdaki tabloda; issue'su olanlar bağlantılıdır, hepsi 1.0
+öncesi bağımsız denetimde ayrıca incelenir.
 
 ## Kapsam dışı
 
