@@ -12,11 +12,13 @@ missing=$(git ls-files \
     '*.rs' '*.ts' '*.js' '*.mjs' '*.dart' '*.qml' '*.h' '*.cpp' \
     '*.kt' '*.kts' '*.gradle' '*.sh' '*.py' '*.css' |
   grep -vE '^app/lib/l10n/|^app/lib/src/rust/|frb_generated|^app/rust_builder/cargokit/' |
+  # REUSE-IgnoreStart (the patterns below are not this file's tags)
   while IFS= read -r f; do
     head -n 5 "$f" | grep -q 'SPDX-FileCopyrightText:' &&
       head -n 5 "$f" | grep -q 'SPDX-License-Identifier:' ||
       echo "$f"
   done)
+# REUSE-IgnoreEnd
 if [ -n "$missing" ]; then
   echo "These files have no SPDX lines at the top (LICENSING.md):"
   echo "$missing"
