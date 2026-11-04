@@ -49,8 +49,7 @@ check() {
 package() {
   cd "$(_srcdir)"
   packaging/linux/install.sh "$pkgdir" /usr target/release
-  install -Dm644 LICENSE-GPL-3.0 "$pkgdir/usr/share/licenses/$pkgname/LICENSE-GPL-3.0"
-  install -Dm644 LICENSE-MIT "$pkgdir/usr/share/licenses/$pkgname/LICENSE-MIT"
-  install -Dm644 LICENSE-APACHE "$pkgdir/usr/share/licenses/$pkgname/LICENSE-APACHE"
+  install -Dm644 -t "$pkgdir/usr/share/licenses/$pkgname" \
+    LICENSES/GPL-3.0-or-later.txt LICENSES/MIT.txt LICENSES/Apache-2.0.txt
   install -Dm644 LICENSING.md "$pkgdir/usr/share/licenses/$pkgname/LICENSING.md"
 }

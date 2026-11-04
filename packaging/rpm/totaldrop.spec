@@ -67,7 +67,7 @@ appstream-util validate-relax --nonet %{buildroot}%{_metainfodir}/app.totaldrop.
 cargo test --release --locked -p totaldrop-linux -p totaldrop-proto
 
 %files
-%license LICENSE-GPL-3.0 LICENSE-MIT LICENSE-APACHE LICENSING.md
+%license LICENSES/GPL-3.0-or-later.txt LICENSES/MIT.txt LICENSES/Apache-2.0.txt LICENSING.md
 %doc README.md CHANGELOG.md
 %{_bindir}/totaldrop
 %{_bindir}/totaldrop-desktop
