@@ -25,6 +25,12 @@ const PROBE_WAIT: Duration = Duration::from_millis(700);
 /// How often an idle relay link pings, so proxies keep it open.
 const KEEPALIVE: Duration = Duration::from_secs(20);
 
+/// How long a relay link may send with nothing at all coming back: no
+/// datagram, no pong. An active QUIC connection answers within a round
+/// trip, so a link that stays silent this long is dead, and QUIC gives up
+/// after 30 seconds.
+const SILENCE: Duration = Duration::from_secs(10);
+
 /// How long connecting and signing in to the relay may take.
 const CONNECT_WAIT: Duration = Duration::from_secs(10);
 
@@ -49,6 +55,9 @@ struct Limits {
     bytes: u64,
     /// Tries in a row that did not get signed in.
     refused: u32,
+    /// How long datagrams may go out with nothing at all coming back
+    /// before the connection counts as dead.
+    silence: Duration,
 }
 
 /// The relays' limits for one connection (protocol notes, item 23): the
@@ -58,6 +67,7 @@ const LIMITS: Limits = Limits {
     time: Duration::from_secs(6 * 60 * 60),
     bytes: 32 * 1024 * 1024 * 1024,
     refused: 10,
+    silence: SILENCE,
 };
 
 /// Check a relay URL the same way as a rendezvous server address:
@@ -156,11 +166,13 @@ impl Drop for Link {
 /// pipes and the device with endpoint key `peer` until the link is dropped.
 /// A lost or refused connection to the relay is tried again, with a growing
 /// pause (#185): both relays end the other side's connection when one
-/// side's closes, and QUIC rides out a short gap. A connection that dies
-/// without the relay noticing is replaced at once: a new sign-in with the
-/// same key takes over from the old socket (#190). After [`Limits::refused`] tries in a row that never signed
+/// side's closes, and QUIC rides out a short gap. The relay lets a new
+/// sign-in with the same key replace a socket that died unnoticed (#190).
+/// After [`Limits::refused`] tries in a row that never signed
 /// in, the link gives up. Failures are otherwise silent: the relay is only
-/// one of the paths.
+/// one of the paths. A connection that dies without either end noticing
+/// is given up once datagrams go out and nothing comes back for 10 seconds
+/// ([`SILENCE`]).
 pub fn spawn(
     url: String,
     own: Arc<EndpointKey>,
@@ -198,7 +210,15 @@ fn spawn_with(
             let mut signed_in = false;
             let ended = tokio::time::timeout_at(
                 end,
-                run(&url, &own, peer, &mut pipes, &mut sent, &mut signed_in),
+                run(
+                    &url,
+                    &own,
+                    peer,
+                    &mut pipes,
+                    &mut sent,
+                    &mut signed_in,
+                    limits.silence,
+                ),
             )
             .await;
             match ended {
@@ -229,7 +249,8 @@ enum Ended {
 }
 
 /// One connection to the relay, counting the bytes it sends in `sent` and
-/// setting `signed_in` once the relay accepted the endpoint key.
+/// setting `signed_in` once the relay accepted the endpoint key. It ends
+/// when datagrams went out and nothing came back for `silence`.
 async fn run(
     url: &str,
     own: &EndpointKey,
@@ -237,6 +258,7 @@ async fn run(
     pipes: &mut RelayPipes,
     sent: &mut u64,
     signed_in: &mut bool,
+    silence: Duration,
 ) -> Result<Ended> {
     // Both sides meet under the name of their two keys.
     let url = format!(
@@ -268,8 +290,18 @@ async fn run(
 
     let mut ping = tokio::time::interval(KEEPALIVE);
     ping.tick().await;
+    // Since when datagrams went out with nothing coming back. A dead TCP
+    // connection is not reported for minutes; this notices it in time.
+    let mut unanswered: Option<tokio::time::Instant> = None;
+    let far = tokio::time::Instant::now()
+        .checked_add(LIMITS.time)
+        .ok_or(Error::Connect("relay: time".into()))?;
     loop {
+        let dead = unanswered
+            .and_then(|t| t.checked_add(silence))
+            .unwrap_or(far);
         tokio::select! {
+            () = tokio::time::sleep_until(dead) => return Ok(Ended::Relay),
             out = pipes.outgoing.recv() => {
                 let Some(first) = out else {
                     let _ = ws.close(None).await;
@@ -285,23 +317,32 @@ async fn run(
                         break;
                     }
                 }
-                for message in [Some(batch.finish()), carry.map(|d| wire::frame(&peer, &d))]
-                    .into_iter()
-                    .flatten()
-                {
-                    if message.len() > 32 {
-                        *sent = sent.saturating_add(u64::try_from(message.len()).unwrap_or(u64::MAX));
-                        ws.feed(Message::Binary(message.into()))
-                            .await
-                            .map_err(|e| Error::Connect(format!("relay: {e}")))?;
+                unanswered.get_or_insert_with(tokio::time::Instant::now);
+                // A dead socket whose send buffer is full blocks the write.
+                let write = async {
+                    for message in [Some(batch.finish()), carry.map(|d| wire::frame(&peer, &d))]
+                        .into_iter()
+                        .flatten()
+                    {
+                        if message.len() > 32 {
+                            *sent = sent.saturating_add(u64::try_from(message.len()).unwrap_or(u64::MAX));
+                            ws.feed(Message::Binary(message.into()))
+                                .await
+                                .map_err(|e| Error::Connect(format!("relay: {e}")))?;
+                        }
                     }
+                    ws.flush()
+                        .await
+                        .map_err(|e| Error::Connect(format!("relay: {e}")))
+                };
+                match tokio::time::timeout(silence, write).await {
+                    Ok(written) => written?,
+                    Err(_) => return Ok(Ended::Relay),
                 }
-                ws.flush()
-                    .await
-                    .map_err(|e| Error::Connect(format!("relay: {e}")))?;
             }
             msg = ws.next() => match msg {
                 Some(Ok(Message::Binary(b))) => {
+                    unanswered = None;
                     if let Some((from, datagrams)) = wire::parse_frame(&b)
                         && from == peer
                     {
@@ -310,7 +351,7 @@ async fn run(
                         }
                     }
                 }
-                Some(Ok(Message::Ping(_) | Message::Pong(_))) => {}
+                Some(Ok(Message::Ping(_) | Message::Pong(_))) => unanswered = None,
                 _ => return Ok(Ended::Relay),
             },
             _ = ping.tick() => {
@@ -427,6 +468,7 @@ mod tests {
             time: Duration::from_millis(1200),
             bytes: u64::MAX,
             refused: u32::MAX,
+            silence: SILENCE,
         };
         let _link = spawn_with(url, own, peer.public(), pipes, gate, limits);
         // Tries at 0 and 0.5 seconds; the next would be at 1.5.
@@ -457,6 +499,7 @@ mod tests {
             time: Duration::from_secs(3600),
             bytes: 1000,
             refused: u32::MAX,
+            silence: SILENCE,
         };
         let _link = spawn_with(url, own, peer.public(), pipes, gate, limits);
         let mut ws = sign_in(&relay).await;
@@ -469,6 +512,42 @@ mod tests {
             after.is_err(),
             "the link connected after its bytes were spent"
         );
+    }
+
+    /// A connection that died without either end noticing (NAT rebinding,
+    /// a Wi-Fi switch) is dropped once datagrams go out and nothing at all
+    /// comes back for `silence`, and the link connects again; the relay
+    /// lets the new sign-in replace the dead socket (#190). Before, the
+    /// link kept writing into the dead socket past QUIC's idle timeout.
+    #[tokio::test]
+    async fn link_connects_again_when_the_relay_goes_silent() {
+        let relay = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let url = format!("ws://{}/v0/relay", relay.local_addr().unwrap());
+        let (own, peer) = (
+            Arc::new(EndpointKey::generate().unwrap()),
+            EndpointKey::generate().unwrap(),
+        );
+        let (out, pipes) = pipes();
+        let gate = Gate::default();
+        gate.open();
+        let limits = Limits {
+            silence: Duration::from_secs(1),
+            ..LIMITS
+        };
+        let _link = spawn_with(url, own, peer.public(), pipes, gate, limits);
+        let mut ws = sign_in(&relay).await;
+        // Nothing sent, nothing owed: a quiet link is not dropped.
+        let quiet = tokio::time::timeout(Duration::from_secs(2), relay.accept()).await;
+        assert!(quiet.is_err(), "an idle link connected again");
+        // Datagrams go out; the relay takes them and never answers.
+        out.send(vec![1; 100]).await.unwrap();
+        let _frame = ws.next().await.unwrap().unwrap();
+        let again = tokio::time::timeout(Duration::from_secs(4), relay.accept()).await;
+        assert!(
+            again.is_ok_and(|r| r.is_ok()),
+            "the link stayed on a silent relay"
+        );
+        drop(ws);
     }
 
     /// A relay that keeps refusing the link is not tried for ever: after
@@ -488,6 +567,7 @@ mod tests {
             time: Duration::from_secs(3600),
             bytes: u64::MAX,
             refused: 3,
+            silence: SILENCE,
         };
         let _link = spawn_with(url, own, peer.public(), pipes, gate, limits);
         // Tries at 0, 0.5 and 1.5 seconds; the next would be at 3.5.

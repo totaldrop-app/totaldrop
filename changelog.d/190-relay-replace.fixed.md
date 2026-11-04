@@ -1,5 +1,6 @@
-- **Relay:** A device whose connection to the relay dropped unnoticed, for
-  example after switching Wi-Fi networks, can now reconnect at once instead
-  of being refused until the transfer times out. The self-hosted relay now
-  also ends the other side when one side leaves, as the hosted relay does
-  (#190).
+- **Android, Linux, CLI, relay:** A transfer through the relay survives a
+  connection that dies without either end noticing, for example after
+  switching Wi-Fi networks: the device notices within 10 seconds and
+  connects again, and the relay now accepts the new connection at once
+  instead of refusing it until the transfer times out. Both relays now end
+  the other side in the same cases (#190).

@@ -968,9 +968,15 @@ async fn a_new_sign_in_replaces_the_old_socket_of_its_key() {
         relay_closes(&mut old_a, Duration::from_secs(5)).await,
         "the replaced socket is closed"
     );
+    // Its close reaches the relay too, and takes nobody with it.
+    let _ = old_a.close(None).await;
+    drop(old_a);
     // The other side stays, and both directions reach the new socket.
     relay_passes(&mut b_ws, &mut new_a, b.public(), a.public()).await;
     relay_passes(&mut new_a, &mut b_ws, a.public(), b.public()).await;
+    assert!(!relay_closes(&mut b_ws, Duration::from_secs(1)).await);
+    assert!(!relay_closes(&mut new_a, Duration::from_secs(1)).await);
+    relay_passes(&mut b_ws, &mut new_a, b.public(), a.public()).await;
 }
 
 /// When a signed-in side leaves, the transfer is over: the relay ends the
