@@ -1,3 +1,4 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //
 // Rendezvous messages (spec section 5), matching `ClientMessage` and

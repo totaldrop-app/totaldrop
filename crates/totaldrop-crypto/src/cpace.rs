@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: MIT OR Apache-2.0
+//
 //! CPace over ristretto255 with SHA-512 (spec section 5).
 //!
 //! This follows draft-irtf-cfrg-cpace exactly, for the initiator/responder

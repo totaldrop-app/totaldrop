@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
 //! Tests of the `totaldrop` program itself: its commands, answers and exit
 //! codes, against a rendezvous server on this machine. The end-to-end tests
 //! next to this file drive the core library; these start the real binary,

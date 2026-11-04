@@ -1,4 +1,7 @@
 #!/bin/sh
+# SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # Check that every place naming a version names the same one.
 #
 # The Linux app: linux/Cargo.toml, the Arch PKGBUILD, the RPM spec, the

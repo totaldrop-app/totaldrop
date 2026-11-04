@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: MIT OR Apache-2.0
+//
 //! The secure handshake on the first QUIC stream (spec section 6):
 //! Noise XXpsk3 with the PSK from CPace, then the ML-KEM-768 hybrid step,
 //! then key confirmation under the new keys.

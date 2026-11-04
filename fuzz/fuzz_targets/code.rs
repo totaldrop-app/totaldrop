@@ -1,4 +1,7 @@
 #![no_main]
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: MIT OR Apache-2.0
+//
 //! Any input must parse or fail cleanly, and every parsed code must survive a
 //! round trip through both its canonical and its English form. Invisible
 //! format characters and Arabic-Indic digits never change the result. A

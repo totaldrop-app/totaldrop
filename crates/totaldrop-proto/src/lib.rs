@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: MIT OR Apache-2.0
+//
 //! Protocol rules of TotalDrop version 0 that do not involve cryptography:
 //! transfer codes (spec section 5), limits and path safety (spec section 11).
 

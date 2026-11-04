@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
 //! Hyprland.
 //!
 //! The compositor draws the window frame, so the app has no decoration of

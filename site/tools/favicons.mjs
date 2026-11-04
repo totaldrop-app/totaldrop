@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
 // The site's icons, drawn from the mark (docs/tasarim.md, "İşaret") (#227):
 //   node site/tools/favicons.mjs           check (CI): files in shape, every page declares them
 //   NODE_PATH=$(npm root -g) node site/tools/favicons.mjs --write

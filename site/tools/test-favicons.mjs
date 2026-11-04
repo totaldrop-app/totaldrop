@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
 // node --test site/tools/test-favicons.mjs
 import test from "node:test";
 import assert from "node:assert/strict";

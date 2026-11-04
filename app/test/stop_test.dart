@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
 // Stopping a transfer from the view models, at every stage, with a fake
 // repository in place of the Rust bridge.
 import 'dart:async';

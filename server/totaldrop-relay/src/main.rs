@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: AGPL-3.0-or-later
+//
 //! `totaldrop-relay`: run the relay.
 //!
 //! Usage: `totaldrop-relay [WEBSOCKET_ADDRESS] [DISCOVERY_ADDRESS]`, default

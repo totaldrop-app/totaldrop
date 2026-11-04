@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: MIT OR Apache-2.0
+//
 //! TotalDrop's interface text for the Rust programs (the Linux app and the
 //! command line): the strings in `l10n/`, the language the system asks
 //! for, and numbers, sizes and plurals in that language and region.

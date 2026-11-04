@@ -1,3 +1,4 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //
 // The nameplate directory: which small numbers are in use, retired after a

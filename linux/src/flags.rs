@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
 //! `--help` and `--version`, answered on the terminal before Qt starts.
 //!
 //! Everything else on the command line goes to the window: files to send,

@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
 //! Omarchy themes.
 //!
 //! Omarchy keeps the active theme as a folder of per-application files. Its

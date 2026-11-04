@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: MIT OR Apache-2.0
+//
 //! A small, strict parser and formatter for the subset of ICU MessageFormat
 //! that TotalDrop's ARB files use: `{name}`, `{n, plural, =1{…} one{…}
 //! other{…}}` and `{x, select, a{…} other{…}}`.

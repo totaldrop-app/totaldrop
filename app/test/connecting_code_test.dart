@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
 // While connecting, the receive screen shows the code as Rust read it,
 // not the text that was typed or pasted (#149).
 import 'dart:async';

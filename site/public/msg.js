@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
 // The site's formatter for the ICU message subset TotalDrop uses (ADR 0008):
 // {name}, {n, plural, =0/=1/=2/zero/one/two/few/many/other{…}} and
 // {x, select, …, other{…}}. It follows Flutter's gen_l10n and the Rust

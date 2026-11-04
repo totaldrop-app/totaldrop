@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
 //! xdg-desktop-portal appearance settings: colour scheme, accent colour and
 //! reduced motion. Every desktop that ships a portal backend answers these
 //! (GNOME, Hyprland through the GTK backend, KDE, COSMIC and others).

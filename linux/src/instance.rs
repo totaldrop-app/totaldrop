@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
 //! One window per session (#178).
 //!
 //! The first `totaldrop-desktop` owns the session-bus name

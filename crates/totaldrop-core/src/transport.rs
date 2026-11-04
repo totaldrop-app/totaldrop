@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: MIT OR Apache-2.0
+//
 //! QUIC with raw public keys (spec section 6).
 //!
 //! Every transfer uses a fresh, single-use Ed25519 endpoint key on each side.

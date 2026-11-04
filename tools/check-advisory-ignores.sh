@@ -1,4 +1,7 @@
 #!/bin/sh
+# SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # cargo-deny (deny.toml) and OSV-Scanner (osv-scanner.toml, read by OpenSSF
 # Scorecard) must ignore the same advisories, so that an advisory hidden
 # from one is never silently hidden from only the other.

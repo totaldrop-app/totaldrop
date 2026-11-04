@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: MIT OR Apache-2.0
+//
 //! The TotalDrop client engine: everything between "here are some files"
 //! and "they arrived intact", for a transfer by code.
 //!

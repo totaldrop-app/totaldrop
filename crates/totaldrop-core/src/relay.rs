@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: MIT OR Apache-2.0
+//
 //! Client side of the relay (spec section 6): address discovery and the
 //! link that carries QUIC datagrams when no direct path works.
 

@@ -1,4 +1,7 @@
 #!/bin/sh
+# SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # Install a built package in a clean container of its distribution and
 # check that it runs: binaries resolve, the QML interface loads, and the
 # desktop entry and AppStream data are valid.

@@ -1,4 +1,7 @@
 #!/bin/sh
+# SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
 # Set up or update the relay on a fresh Debian 13 server. Run as root:
 #   scp target/release/totaldrop-relay deploy/* root@HOST:/tmp/relay/
 #   ssh root@HOST sh /tmp/relay/install.sh relay.example.org

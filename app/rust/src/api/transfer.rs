@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
 //! The Dart-facing API of TotalDrop, generated into Dart by
 //! flutter_rust_bridge. Everything here is a thin layer over
 //! `totaldrop-core`; no protocol logic lives in this file.

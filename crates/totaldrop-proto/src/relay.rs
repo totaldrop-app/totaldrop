@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: MIT OR Apache-2.0
+//
 //! The relay's wire format (spec section 6, "Relay").
 //!
 //! Two services help two devices find a path to each other:

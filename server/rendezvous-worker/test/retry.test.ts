@@ -1,3 +1,4 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //
 // Unit tests for src/retry.ts (#119). Run with `npm test` (node --test).

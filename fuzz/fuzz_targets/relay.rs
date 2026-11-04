@@ -1,4 +1,7 @@
 #![no_main]
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: MIT OR Apache-2.0
+//
 //! Every relay message parser must accept or refuse any input without
 //! panicking, and what it accepts must encode back to the same bytes.
 

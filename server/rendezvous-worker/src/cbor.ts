@@ -1,3 +1,4 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //
 // The small part of CBOR (RFC 8949) the rendezvous protocol needs, written

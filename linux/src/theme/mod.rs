@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
 //! Where the interface takes its look from.
 //!
 //! TotalDrop has no look of its own on Linux: colours, light or dark,

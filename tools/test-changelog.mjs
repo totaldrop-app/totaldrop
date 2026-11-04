@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
 // Tests for tools/changelog.mjs: node --test tools/test-changelog.mjs
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";

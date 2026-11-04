@@ -1,4 +1,7 @@
 #!/bin/sh
+# SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # Tests for check-cli-version.sh, each in a throwaway git repository, and
 # for check-versions.sh calling it on a release tag.
 #

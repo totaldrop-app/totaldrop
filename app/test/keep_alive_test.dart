@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
 // A transfer keeps going in the background for exactly as long as it runs
 // (#194): the view models ask for it when a send or a receive starts,
 // release it whenever it ends, and the notification's Stop stops it.
