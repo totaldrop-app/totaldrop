@@ -27,4 +27,9 @@ fuzz_target!(|data: &[u8]| {
     let _ = relay::parse_stun_request(data);
     let _ = relay::parse_stun_response(data, &[0u8; 12]);
     let _ = relay::is_ok(data);
+    if relay::is_probe(data) {
+        let nonce: [u8; 16] = data.get(9..).and_then(|n| n.try_into().ok()).unwrap();
+        assert_eq!(relay::probe(&nonce), data);
+        assert!(relay::parse_frame(data).is_none());
+    }
 });
