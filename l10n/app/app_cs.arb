@@ -78,7 +78,7 @@
   "causeTimedOut": "Spojení přestalo odpovídat. Jedno ze zařízení možná ztratilo síť nebo přešlo do režimu spánku.",
   "causeConnectionLost": "Spojení s druhým zařízením se přerušilo.",
   "causeNoRoute": "Druhé zařízení se nepodařilo zastihnout přímo ani přes zprostředkující server.",
-  "causeRelay": "Zprostředkující server není dostupný, nebo obě zařízení nepoužívají tentýž.",
+  "causeRelay": "Zprostředkující server není dostupný nebo není nastaven, případně obě zařízení nepoužívají tentýž.",
   "causeProtocol": "Druhé zařízení poslalo něco, čemu tato verze nerozumí. Pomoci může aktualizace TotalDrop na obou zařízeních.",
   "causeDiskFull": "Na tomto zařízení není dost volného místa.",
   "causeNoPermission": "TotalDrop nemá oprávnění číst nebo zapisovat potřebný soubor či složku.",

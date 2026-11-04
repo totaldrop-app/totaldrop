@@ -73,6 +73,8 @@ void main() {
   });
 
   test('every cause the core names has a text in every language', () async {
+    // The names of Cause::ALL in the core; the core's own tests check that
+    // each has an English text.
     const causes = [
       'TimedOut',
       'ConnectionLost',
@@ -89,26 +91,16 @@ void main() {
     for (final locale in AppLocalizations.supportedLocales) {
       final l = await AppLocalizations.delegate.load(locale);
       for (final c in causes) {
-        final text = _cause(l, c);
+        final text = causeText(l, c);
         expect(text, isNotEmpty, reason: '$locale $c');
         if (locale.languageCode != 'en') {
-          expect(text, isNot(_cause(en, c)), reason: '$locale $c untranslated');
+          expect(
+            text,
+            isNot(causeText(en, c)),
+            reason: '$locale $c untranslated',
+          );
         }
       }
     }
   });
 }
-
-String _cause(AppLocalizations l, String c) => switch (c) {
-  'TimedOut' => l.causeTimedOut,
-  'ConnectionLost' => l.causeConnectionLost,
-  'NoRoute' => l.causeNoRoute,
-  'Relay' => l.causeRelay,
-  'Protocol' => l.causeProtocol,
-  'DiskFull' => l.causeDiskFull,
-  'NoPermission' => l.causeNoPermission,
-  'NotFound' => l.causeNotFound,
-  'ReadOnly' => l.causeReadOnly,
-  'FileChanged' => l.causeFileChanged,
-  _ => '',
-};

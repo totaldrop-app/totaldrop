@@ -291,11 +291,11 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get causeNoRoute =>
-      'Không thể kết nối tới thiết bị kia, kể cả trực tiếp lẫn qua máy chủ chuyển tiếp.';
+      'Không thể kết nối tới thiết bị kia, dù trực tiếp hay qua máy chủ chuyển tiếp.';
 
   @override
   String get causeRelay =>
-      'Không kết nối được tới máy chủ chuyển tiếp, hoặc hai thiết bị không dùng cùng một máy chủ.';
+      'Không kết nối được tới máy chủ chuyển tiếp hoặc máy chủ chưa được thiết lập, hoặc hai thiết bị không dùng cùng một máy chủ.';
 
   @override
   String get causeProtocol =>

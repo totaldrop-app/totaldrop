@@ -305,11 +305,11 @@ class AppLocalizationsHe extends AppLocalizations {
 
   @override
   String get causeNoRoute =>
-      'לא הצלחנו להגיע למכשיר השני, לא ישירות ולא דרך שרת הממסר.';
+      'לא ניתן היה להגיע למכשיר השני, לא ישירות ולא דרך שרת הממסר.';
 
   @override
   String get causeRelay =>
-      'לא הצלחנו להגיע לשרת הממסר, או ששני המכשירים לא משתמשים באותו שרת.';
+      'לא ניתן היה להגיע לשרת הממסר או שהוא לא מוגדר, או ששני המכשירים לא משתמשים באותו שרת.';
 
   @override
   String get causeProtocol =>
@@ -331,7 +331,7 @@ class AppLocalizationsHe extends AppLocalizations {
 
   @override
   String get causeFileChanged =>
-      'קובץ השתנה בזמן השליחה. שלחו אותו שוב אחרי שיישמר.';
+      'קובץ השתנה בזמן השליחה. יש לשלוח אותו שוב אחרי שיישמר.';
 
   @override
   String get technicalDetail =>

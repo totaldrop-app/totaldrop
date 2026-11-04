@@ -553,7 +553,8 @@ mod tests {
     #[test]
     fn errors_carry_their_cause() {
         use totaldrop_core::Error as E;
-        let e = TransferError::from(quinn_timed_out());
+        // What quinn's idle timeout becomes.
+        let e = TransferError::from(E::Connect("timed out".into()));
         assert_eq!(e.kind, ErrorKind::Connect);
         assert_eq!(e.cause, "TimedOut");
         assert!(e.detail.contains("timed out"));
@@ -561,10 +562,6 @@ mod tests {
         assert_eq!(TransferError::from(E::Io(full)).cause, "DiskFull");
         let e = TransferError::on_connect(E::Rendezvous("unknown nameplate".into()));
         assert_eq!((e.kind, e.cause.as_str()), (ErrorKind::CodeNotInUse, ""));
-    }
-
-    fn quinn_timed_out() -> totaldrop_core::Error {
-        totaldrop_core::Error::Connect("timed out".into())
     }
 
     #[test]

@@ -312,7 +312,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get causeRelay =>
-      'Der Relay-Server war nicht erreichbar, oder die beiden Geräte nutzen nicht denselben.';
+      'Der Relay-Server war nicht erreichbar oder ist nicht eingerichtet, oder die beiden Geräte nutzen nicht denselben.';
 
   @override
   String get causeProtocol =>
@@ -336,11 +336,11 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get causeFileChanged =>
-      'Eine Datei hat sich während des Sendens geändert. Sende sie erneut, sobald sie gespeichert ist.';
+      'Eine Datei hat sich während des Sendens geändert. Senden Sie sie erneut, sobald sie gespeichert ist.';
 
   @override
   String get technicalDetail =>
-      'Technische Meldung auf Englisch, zum Beifügen, wenn du ein Problem meldest:';
+      'Technische Meldung auf Englisch, zum Beifügen, wenn Sie ein Problem melden:';
 
   @override
   String get settingsServer => 'Vermittlungsserver';

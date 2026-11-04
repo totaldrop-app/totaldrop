@@ -78,7 +78,7 @@
   "causeTimedOut": "連線已停止回應。其中一台裝置可能中斷了網路或進入了睡眠。",
   "causeConnectionLost": "與另一台裝置的連線已中斷。",
   "causeNoRoute": "無論直接連線或經過中繼伺服器，都無法連到另一台裝置。",
-  "causeRelay": "無法連到中繼伺服器，或兩台裝置使用的不是同一個中繼伺服器。",
+  "causeRelay": "無法連到中繼伺服器或尚未設定中繼伺服器，或兩台裝置使用的不是同一個中繼伺服器。",
   "causeProtocol": "另一台裝置傳送了此版本無法理解的內容。在兩台裝置上更新 TotalDrop 可能會有幫助。",
   "causeDiskFull": "此裝置的可用空間不足。",
   "causeNoPermission": "TotalDrop 沒有讀取或寫入所需檔案或資料夾的權限。",

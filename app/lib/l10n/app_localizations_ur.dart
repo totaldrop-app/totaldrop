@@ -309,7 +309,7 @@ class AppLocalizationsUr extends AppLocalizations {
 
   @override
   String get causeRelay =>
-      'ریلے سرور تک نہیں پہنچا جا سکا، یا دونوں آلات ایک ہی ریلے استعمال نہیں کرتے۔';
+      'ریلے تک نہیں پہنچا جا سکا یا وہ سیٹ نہیں ہے، یا دونوں آلات ایک ہی ریلے استعمال نہیں کرتے۔';
 
   @override
   String get causeProtocol =>

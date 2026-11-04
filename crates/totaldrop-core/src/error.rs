@@ -86,9 +86,23 @@ pub enum Cause {
 }
 
 impl Cause {
-    /// A stable name for the apps: `timedOut`, `connectionLost`, … The
-    /// translated sentence is the text `cause` + the name with a capital
-    /// first letter (`causeTimedOut`).
+    /// Every cause with something to say, for tests that each has a text.
+    pub const ALL: [Cause; 10] = [
+        Cause::TimedOut,
+        Cause::ConnectionLost,
+        Cause::NoRoute,
+        Cause::Relay,
+        Cause::Protocol,
+        Cause::DiskFull,
+        Cause::NoPermission,
+        Cause::NotFound,
+        Cause::ReadOnly,
+        Cause::FileChanged,
+    ];
+
+    /// A stable name for the apps: `TimedOut`, `ConnectionLost`, … The
+    /// translated sentence is the text `cause` + the name
+    /// (`causeTimedOut`). Empty for [`Cause::Unknown`].
     #[must_use]
     pub fn as_str(self) -> &'static str {
         match self {
@@ -107,35 +121,78 @@ impl Cause {
     }
 }
 
-/// Messages of [`Error::Connect`] that mean no path worked.
-const NO_ROUTE: [&str; 6] = [
-    "no connection to the other device",
-    "the receiver did not connect",
-    "the receiver did not answer",
-    "the other side announced no address",
-    "no address answered",
-    "no usable path: the transfer needs a relay both devices use",
-];
+/// Messages of [`Error::Connect`] that this crate gives, shared with
+/// [`Error::cause`] so a reworded message cannot lose its cause unnoticed.
+pub(crate) mod msg {
+    pub(crate) const NO_CONNECTION: &str = "no connection to the other device";
+    pub(crate) const RECEIVER_DID_NOT_CONNECT: &str = "the receiver did not connect";
+    pub(crate) const NO_ADDRESS_ANNOUNCED: &str = "the other side announced no address";
+    pub(crate) const NO_ADDRESS_ANSWERED: &str = "no address answered";
+    pub(crate) const NO_SHARED_RELAY: &str =
+        "no usable path: the transfer needs a relay both devices use";
+    pub(crate) const PRIVACY_NEEDS_RELAY: &str = "privacy mode needs a relay";
+    pub(crate) const INVALID_RELAY: &str = "invalid relay address";
+    pub(crate) const RECEIVER_DID_NOT_ANSWER: &str = "the receiver did not answer";
+    pub(crate) const SENDER_STOPPED_SENDING: &str = "the sender stopped sending";
+    pub(crate) const ENDPOINT_CLOSED: &str = "endpoint closed";
+}
 
-/// The cause of an [`Error::Connect`] from its message. The messages are
-/// this crate's own and quinn's connection errors (`timed out`, `reset by
-/// peer`, `closed by peer: …`, `closed`).
+/// The cause of an [`Error::Connect`] from its message: this crate's own
+/// ([`msg`], and `relay…` from the relay link) and quinn's connection
+/// errors (`timed out`, `reset by peer`, `closed by peer: …`).
 fn connect_cause(m: &str) -> Cause {
-    if m.starts_with("relay") || m == "invalid relay address" || m == "privacy mode needs a relay" {
-        Cause::Relay
-    } else if m == "timed out" || m == "the sender stopped sending" {
-        Cause::TimedOut
-    } else if m == "reset by peer"
-        || m == "closed"
-        || m == "endpoint closed"
-        || m == "connection lost"
-        || m.starts_with("closed by peer")
+    use msg::*;
+    if m.starts_with("relay") || [INVALID_RELAY, PRIVACY_NEEDS_RELAY, NO_SHARED_RELAY].contains(&m)
     {
+        Cause::Relay
+    } else if m == "timed out" || m == SENDER_STOPPED_SENDING {
+        Cause::TimedOut
+    } else if m == "reset by peer" || m == ENDPOINT_CLOSED || m.starts_with("closed by peer") {
         Cause::ConnectionLost
-    } else if NO_ROUTE.contains(&m) {
+    } else if [
+        NO_CONNECTION,
+        RECEIVER_DID_NOT_CONNECT,
+        NO_ADDRESS_ANNOUNCED,
+        NO_ADDRESS_ANSWERED,
+    ]
+    .contains(&m)
+    {
         Cause::NoRoute
     } else {
+        // Among others RECEIVER_DID_NOT_ANSWER: the connection was up, the
+        // person just did not decide in time.
         Cause::Unknown
+    }
+}
+
+/// The cause of an [`Error::Protocol`]: most say the other side broke the
+/// protocol, but a few are this side's own limits or a stream that ended.
+fn protocol_cause(m: &str) -> Cause {
+    const CUT: [&str; 3] = [
+        "stream ended early",
+        "control stream ended",
+        "stream closed",
+    ];
+    // Local failures and limits, and a message that failed authentication,
+    // which may be an attack (docs/tehdit-modeli.md): an update would not
+    // help, so nothing is suggested.
+    const OWN: [&str; 9] = [
+        "message failed authentication",
+        "internal lock",
+        "file too large",
+        "chunk index",
+        "chunk size",
+        "bad file name",
+        "no parent directory",
+        "semaphore closed",
+        "noise parameters",
+    ];
+    if CUT.contains(&m) {
+        Cause::ConnectionLost
+    } else if OWN.contains(&m) || m.ends_with("task failed") {
+        Cause::Unknown
+    } else {
+        Cause::Protocol
     }
 }
 
@@ -147,7 +204,7 @@ impl Error {
         use std::io::ErrorKind as K;
         match self {
             Error::Connect(m) => connect_cause(m),
-            Error::Protocol(_) => Cause::Protocol,
+            Error::Protocol(m) => protocol_cause(m),
             Error::Io(e) => match e.kind() {
                 K::StorageFull | K::QuotaExceeded => Cause::DiskFull,
                 K::PermissionDenied => Cause::NoPermission,
@@ -282,30 +339,42 @@ mod tests {
         use quinn::ConnectionError as C;
         assert_eq!(Error::from(C::TimedOut).cause(), Cause::TimedOut);
         assert_eq!(Error::from(C::Reset).cause(), Cause::ConnectionLost);
-        assert_eq!(Error::from(C::LocallyClosed).cause(), Cause::ConnectionLost);
+        // This side closed it: nothing was cut.
+        assert_eq!(Error::from(C::LocallyClosed).cause(), Cause::Unknown);
         let closed = C::ApplicationClosed(quinn::ApplicationClose {
             error_code: quinn::VarInt::from_u32(0),
             reason: b"failed"[..].into(),
         });
         assert_eq!(Error::from(closed).cause(), Cause::ConnectionLost);
-        for m in NO_ROUTE {
+        for m in [
+            msg::NO_CONNECTION,
+            msg::RECEIVER_DID_NOT_CONNECT,
+            msg::NO_ADDRESS_ANNOUNCED,
+            msg::NO_ADDRESS_ANSWERED,
+        ] {
             assert_eq!(Error::Connect(m.into()).cause(), Cause::NoRoute, "{m}");
         }
         for m in [
             "relay: timed out",
             "relay refused the endpoint key",
-            "invalid relay address",
-            "privacy mode needs a relay",
+            msg::INVALID_RELAY,
+            msg::PRIVACY_NEEDS_RELAY,
+            msg::NO_SHARED_RELAY,
         ] {
             assert_eq!(Error::Connect(m.into()).cause(), Cause::Relay, "{m}");
         }
         assert_eq!(
-            Error::Connect("the sender stopped sending".into()).cause(),
+            Error::Connect(msg::SENDER_STOPPED_SENDING.into()).cause(),
             Cause::TimedOut
         );
         assert_eq!(
-            Error::Connect("endpoint closed".into()).cause(),
+            Error::Connect(msg::ENDPOINT_CLOSED.into()).cause(),
             Cause::ConnectionLost
+        );
+        // The receiver may simply not have accepted yet.
+        assert_eq!(
+            Error::Connect(msg::RECEIVER_DID_NOT_ANSWER.into()).cause(),
+            Cause::Unknown
         );
         assert_eq!(
             Error::Connect("something new".into()).cause(),
@@ -329,7 +398,27 @@ mod tests {
             Error::Rendezvous("connection refused".into()).cause(),
             Cause::Unknown
         );
-        assert_eq!(Error::Protocol("bad").cause(), Cause::Protocol);
+        assert_eq!(
+            Error::Protocol("undecodable message").cause(),
+            Cause::Protocol
+        );
+        assert_eq!(
+            Error::Protocol("bad progress report").cause(),
+            Cause::Protocol
+        );
+        assert_eq!(
+            Error::Protocol("stream ended early").cause(),
+            Cause::ConnectionLost
+        );
+        assert_eq!(
+            Error::Protocol("control stream ended").cause(),
+            Cause::ConnectionLost
+        );
+        assert_eq!(Error::Protocol("send task failed").cause(), Cause::Unknown);
+        assert_eq!(Error::Protocol("file too large").cause(), Cause::Unknown);
+        // Possibly an attack: no "update" advice.
+        let forged = Error::from(totaldrop_crypto::Error::Inauthentic);
+        assert_eq!(forged.cause(), Cause::Unknown);
         assert_eq!(Error::WrongCode.cause(), Cause::Unknown);
         assert_eq!(Cause::Unknown.as_str(), "");
         assert_eq!(Cause::TimedOut.as_str(), "TimedOut");

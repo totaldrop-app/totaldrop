@@ -63,7 +63,8 @@ const LIMITS: Limits = Limits {
 /// Check a relay URL the same way as a rendezvous server address:
 /// `wss://`, or `ws://` only on this machine.
 pub fn check_url(url: &str) -> Result<()> {
-    crate::rendezvous::check_url(url).map_err(|_| Error::Connect("invalid relay address".into()))
+    crate::rendezvous::check_url(url)
+        .map_err(|_| Error::Connect(crate::error::msg::INVALID_RELAY.into()))
 }
 
 /// The address of the STUN server `host:port`, in the socket's family.

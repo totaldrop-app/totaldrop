@@ -315,7 +315,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get causeRelay =>
-      'No se pudo llegar al servidor de retransmisión, o los dos dispositivos no usan el mismo.';
+      'No se pudo llegar al servidor de retransmisión o no está configurado, o los dos dispositivos no usan el mismo.';
 
   @override
   String get causeProtocol =>

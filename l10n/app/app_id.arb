@@ -78,7 +78,7 @@
   "causeTimedOut": "Koneksi berhenti merespons. Salah satu perangkat mungkin kehilangan jaringan atau masuk mode tidur.",
   "causeConnectionLost": "Koneksi ke perangkat lain terputus.",
   "causeNoRoute": "Perangkat lain tidak dapat dijangkau, baik langsung maupun melalui server relai.",
-  "causeRelay": "Server relai tidak dapat dijangkau, atau kedua perangkat tidak memakai server yang sama.",
+  "causeRelay": "Server relai tidak dapat dijangkau atau belum diatur, atau kedua perangkat tidak memakai server yang sama.",
   "causeProtocol": "Perangkat lain mengirim sesuatu yang tidak dipahami versi ini. Memperbarui TotalDrop di kedua perangkat mungkin membantu.",
   "causeDiskFull": "Ruang kosong di perangkat ini tidak cukup.",
   "causeNoPermission": "TotalDrop tidak diizinkan membaca atau menulis file atau folder yang dibutuhkannya.",

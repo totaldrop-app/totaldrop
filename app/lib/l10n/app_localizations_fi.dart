@@ -310,7 +310,7 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String get causeRelay =>
-      'Välityspalvelinta ei tavoitettu, tai laitteet eivät käytä samaa välityspalvelinta.';
+      'Välityspalvelinta ei tavoitettu tai sitä ei ole määritetty, tai laitteet eivät käytä samaa välityspalvelinta.';
 
   @override
   String get causeProtocol =>

@@ -318,7 +318,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get causeRelay =>
-      'Le serveur relais est injoignable, ou les deux appareils n\'utilisent pas le même.';
+      'Le serveur relais est injoignable ou n\'est pas configuré, ou les deux appareils n\'utilisent pas le même.';
 
   @override
   String get causeProtocol =>

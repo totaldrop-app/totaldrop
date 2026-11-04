@@ -312,7 +312,7 @@ class AppLocalizationsEl extends AppLocalizations {
 
   @override
   String get causeRelay =>
-      'Ο διακομιστής αναμετάδοσης δεν ήταν προσβάσιμος ή οι δύο συσκευές δεν χρησιμοποιούν τον ίδιο.';
+      'Ο διακομιστής αναμετάδοσης δεν ήταν προσβάσιμος ή δεν έχει ρυθμιστεί, ή οι δύο συσκευές δεν χρησιμοποιούν τον ίδιο.';
 
   @override
   String get causeProtocol =>

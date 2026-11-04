@@ -303,7 +303,7 @@ class AppLocalizationsSw extends AppLocalizations {
 
   @override
   String get causeRelay =>
-      'Seva ya kati haikufikiwa, au vifaa hivi viwili havitumii seva moja.';
+      'Seva ya kati haikufikiwa au haijawekwa, au vifaa hivi viwili havitumii seva moja.';
 
   @override
   String get causeProtocol =>

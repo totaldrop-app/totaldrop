@@ -78,7 +78,7 @@
   "causeTimedOut": "De verbinding reageert niet meer. Een van de apparaten is misschien zijn netwerk kwijt of in slaapstand gegaan.",
   "causeConnectionLost": "De verbinding met het andere apparaat is verbroken.",
   "causeNoRoute": "Het andere apparaat was niet bereikbaar, niet rechtstreeks en niet via de relayserver.",
-  "causeRelay": "De relayserver was niet bereikbaar, of de twee apparaten gebruiken niet dezelfde.",
+  "causeRelay": "De relayserver was niet bereikbaar of is niet ingesteld, of de twee apparaten gebruiken niet dezelfde.",
   "causeProtocol": "Het andere apparaat stuurde iets wat deze versie niet begrijpt. TotalDrop op beide apparaten bijwerken kan helpen.",
   "causeDiskFull": "Er is niet genoeg vrije ruimte op dit apparaat.",
   "causeNoPermission": "TotalDrop mag een bestand of map die het nodig heeft niet lezen of schrijven.",

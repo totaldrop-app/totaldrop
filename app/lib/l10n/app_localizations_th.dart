@@ -293,7 +293,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get causeRelay =>
-      'เข้าถึงเซิร์ฟเวอร์รีเลย์ไม่ได้ หรืออุปกรณ์ทั้งสองไม่ได้ใช้รีเลย์เดียวกัน';
+      'เข้าถึงเซิร์ฟเวอร์รีเลย์ไม่ได้หรือยังไม่ได้ตั้งค่า หรืออุปกรณ์ทั้งสองไม่ได้ใช้รีเลย์เดียวกัน';
 
   @override
   String get causeProtocol =>

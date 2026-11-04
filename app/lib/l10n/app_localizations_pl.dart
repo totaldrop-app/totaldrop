@@ -318,7 +318,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get causeRelay =>
-      'Serwer pośredniczący jest nieosiągalny albo oba urządzenia nie używają tego samego.';
+      'Serwer pośredniczący jest nieosiągalny lub nie został skonfigurowany albo oba urządzenia nie używają tego samego.';
 
   @override
   String get causeProtocol =>

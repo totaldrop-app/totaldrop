@@ -316,7 +316,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get causeRelay =>
-      'Ретранслятор недоступний, або пристрої використовують різні ретранслятори.';
+      'Ретранслятор недоступний або не налаштований, або пристрої використовують різні ретранслятори.';
 
   @override
   String get causeProtocol =>

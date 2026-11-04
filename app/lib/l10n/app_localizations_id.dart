@@ -296,7 +296,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get causeRelay =>
-      'Server relai tidak dapat dijangkau, atau kedua perangkat tidak memakai server yang sama.';
+      'Server relai tidak dapat dijangkau atau belum diatur, atau kedua perangkat tidak memakai server yang sama.';
 
   @override
   String get causeProtocol =>

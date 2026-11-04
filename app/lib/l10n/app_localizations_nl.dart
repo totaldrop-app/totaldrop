@@ -312,7 +312,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get causeRelay =>
-      'De relayserver was niet bereikbaar, of de twee apparaten gebruiken niet dezelfde.';
+      'De relayserver was niet bereikbaar of is niet ingesteld, of de twee apparaten gebruiken niet dezelfde.';
 
   @override
   String get causeProtocol =>

@@ -519,7 +519,7 @@ fn main() -> ExitCode {
             // Why, also in the person's language (#212).
             let cause = e.cause().as_str();
             if !cause.is_empty() {
-                eprintln!("{}", strings_for_exit.get(&format!("cause{cause}"), &[]));
+                eprintln!("  {}", strings_for_exit.get(&format!("cause{cause}"), &[]));
             }
             eprintln!("  ({e})");
             ExitCode::FAILURE
@@ -732,14 +732,18 @@ mod tests {
         }
         // The cause line the command line adds (#212) comes from the app
         // strings, in the person's language too.
+        // Every cause the core can name has one, so the apps have it too.
+        for cause in totaldrop_core::Cause::ALL {
+            let key = format!("cause{}", cause.as_str());
+            assert!(en.keys().contains(key.as_str()), "{key}");
+            assert_ne!(
+                en.get(&key, &[]),
+                tr.get(&key, &[]),
+                "{key} is not in Turkish"
+            );
+        }
         let timed_out = Error::Connect("timed out".into());
-        let key = format!("cause{}", timed_out.cause().as_str());
-        assert!(en.keys().contains(key.as_str()), "{key}");
-        assert_ne!(
-            en.get(&key, &[]),
-            tr.get(&key, &[]),
-            "{key} is not in Turkish"
-        );
+        assert_eq!(timed_out.cause(), totaldrop_core::Cause::TimedOut);
         assert_eq!(error_key(&errors[3], false), "cliErrCodeNotInUse");
         assert_eq!(error_key(&errors[4], false), "cliErrBadServer");
         assert_eq!(error_key(&errors[2], false), "cliErrServer");

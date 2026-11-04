@@ -373,7 +373,7 @@ async fn accept_one(endpoint: &quinn::Endpoint, relay_only: bool) -> Result<quin
         let incoming = endpoint
             .accept()
             .await
-            .ok_or(Error::Connect("endpoint closed".into()))?;
+            .ok_or(Error::Connect(crate::error::msg::ENDPOINT_CLOSED.into()))?;
         if relay_only && incoming.remote_address() != crate::path::RELAY_PEER {
             incoming.refuse();
             continue;
@@ -438,7 +438,7 @@ pub async fn receiver_connection(
     .await;
     match result {
         Ok(r) => r,
-        Err(_) => Err(Error::Connect("no connection to the other device".into())),
+        Err(_) => Err(Error::Connect(crate::error::msg::NO_CONNECTION.into())),
     }
 }
 
@@ -532,7 +532,9 @@ pub async fn sender_connection(
             }
             Ok((conn, send, recv))
         }
-        _ => Err(Error::Connect("the receiver did not connect".into())),
+        _ => Err(Error::Connect(
+            crate::error::msg::RECEIVER_DID_NOT_CONNECT.into(),
+        )),
     }
 }
 
@@ -552,7 +554,9 @@ const ATTEMPT: Duration = Duration::from_secs(4);
 /// (#185). A fresh attempt sends its first packet at once.
 pub async fn connect_any(endpoint: &quinn::Endpoint, paths: &Paths) -> Result<quinn::Connection> {
     if paths.is_empty() {
-        return Err(Error::Connect("the other side announced no address".into()));
+        return Err(Error::Connect(
+            crate::error::msg::NO_ADDRESS_ANNOUNCED.into(),
+        ));
     }
     let mut targets: Vec<(SocketAddr, Duration, Option<crate::relay::Gate>)> = paths
         .direct
@@ -584,7 +588,7 @@ pub async fn connect_any(endpoint: &quinn::Endpoint, paths: &Paths) -> Result<qu
             keep_dialling(&endpoint, addr).await
         });
     }
-    let mut last = Error::Connect("no address answered".into());
+    let mut last = Error::Connect(crate::error::msg::NO_ADDRESS_ANSWERED.into());
     while let Some(joined) = attempts.join_next().await {
         match joined {
             Ok(Ok(conn)) => {

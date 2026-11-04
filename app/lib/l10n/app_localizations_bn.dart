@@ -298,7 +298,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get causeRelay =>
-      'রিলে সার্ভারে পৌঁছানো যায়নি, অথবা দুটি ডিভাইস একই রিলে সার্ভার ব্যবহার করছে না।';
+      'রিলে সার্ভারে পৌঁছানো যায়নি বা সেটি সেট করা নেই, অথবা দুটি ডিভাইস একই রিলে সার্ভার ব্যবহার করছে না।';
 
   @override
   String get causeProtocol =>

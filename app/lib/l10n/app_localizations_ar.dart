@@ -319,7 +319,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get causeRelay =>
-      'تعذر الوصول إلى خادم الترحيل، أو أن الجهازين لا يستخدمان الخادم نفسه.';
+      'تعذر الوصول إلى خادم الترحيل أو أنه غير مُعدّ، أو أن الجهازين لا يستخدمان الخادم نفسه.';
 
   @override
   String get causeProtocol =>

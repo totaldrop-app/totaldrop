@@ -310,7 +310,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get causeRelay =>
-      'The relay server could not be reached, or the two devices do not use the same one.';
+      'The relay server could not be reached or is not set up, or the two devices do not use the same one.';
 
   @override
   String get causeProtocol =>

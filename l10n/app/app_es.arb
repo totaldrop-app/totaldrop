@@ -78,7 +78,7 @@
   "causeTimedOut": "La conexión dejó de responder. Puede que uno de los dispositivos haya perdido la red o se haya suspendido.",
   "causeConnectionLost": "Se cortó la conexión con el otro dispositivo.",
   "causeNoRoute": "No se pudo llegar al otro dispositivo, ni directamente ni a través del servidor de retransmisión.",
-  "causeRelay": "No se pudo llegar al servidor de retransmisión, o los dos dispositivos no usan el mismo.",
+  "causeRelay": "No se pudo llegar al servidor de retransmisión o no está configurado, o los dos dispositivos no usan el mismo.",
   "causeProtocol": "El otro dispositivo envió algo que esta versión no entiende. Actualizar TotalDrop en ambos dispositivos puede ayudar.",
   "causeDiskFull": "No hay suficiente espacio libre en este dispositivo.",
   "causeNoPermission": "TotalDrop no tiene permiso para leer o escribir un archivo o una carpeta que necesita.",

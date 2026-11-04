@@ -500,7 +500,7 @@ pub async fn send_files(
         },
         () = tokio::time::sleep(DECISION_TIMEOUT) => {
             conn.close(0u32.into(), b"no answer");
-            return Err(Error::Connect("the receiver did not answer".into()));
+            return Err(Error::Connect(crate::error::msg::RECEIVER_DID_NOT_ANSWER.into()));
         }
     };
     let (wanted, reports) = match decision {
@@ -1191,7 +1191,7 @@ pub async fn accept(
             tokio::select! {
                 () = tokio::time::sleep_until(deadline) => {
                     if done_at_check.load(Ordering::Relaxed) == seen_bytes {
-                        return Err(Error::Connect("the sender stopped sending".into()));
+                        return Err(Error::Connect(crate::error::msg::SENDER_STOPPED_SENDING.into()));
                     }
                 }
                 stream = conn.accept_uni() => {

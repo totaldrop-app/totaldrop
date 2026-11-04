@@ -311,7 +311,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get causeRelay =>
-      'Reläservern gick inte att nå, eller så använder enheterna inte samma.';
+      'Reläservern gick inte att nå eller är inte inställd, eller så använder enheterna inte samma reläserver.';
 
   @override
   String get causeProtocol =>

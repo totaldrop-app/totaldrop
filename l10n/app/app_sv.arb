@@ -78,7 +78,7 @@
   "causeTimedOut": "Anslutningen slutade svara. En av enheterna kan ha tappat nätverket eller gått i viloläge.",
   "causeConnectionLost": "Anslutningen till den andra enheten bröts.",
   "causeNoRoute": "Den andra enheten gick inte att nå, varken direkt eller via reläservern.",
-  "causeRelay": "Reläservern gick inte att nå, eller så använder enheterna inte samma.",
+  "causeRelay": "Reläservern gick inte att nå eller är inte inställd, eller så använder enheterna inte samma reläserver.",
   "causeProtocol": "Den andra enheten skickade något som den här versionen inte förstår. Det kan hjälpa att uppdatera TotalDrop på båda enheterna.",
   "causeDiskFull": "Det finns inte tillräckligt med ledigt utrymme på den här enheten.",
   "causeNoPermission": "TotalDrop får inte läsa eller skriva en fil eller mapp som behövs.",

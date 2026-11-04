@@ -309,7 +309,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get causeRelay =>
-      'रिले सर्वर तक नहीं पहुँचा जा सका, या दोनों डिवाइस एक ही रिले सर्वर इस्तेमाल नहीं करते।';
+      'रिले सर्वर तक नहीं पहुँचा जा सका या वह सेट नहीं है, या दोनों डिवाइस एक ही रिले सर्वर इस्तेमाल नहीं करते।';
 
   @override
   String get causeProtocol =>

@@ -78,7 +78,7 @@
   "causeTimedOut": "A kapcsolat nem válaszol. Az egyik eszköz talán elvesztette a hálózatot vagy alvó módba lépett.",
   "causeConnectionLost": "Megszakadt a kapcsolat a másik eszközzel.",
   "causeNoRoute": "A másik eszköz sem közvetlenül, sem a továbbító szerveren keresztül nem volt elérhető.",
-  "causeRelay": "A továbbító szerver nem érhető el, vagy a két eszköz nem ugyanazt használja.",
+  "causeRelay": "A továbbító szerver nem érhető el vagy nincs beállítva, vagy a két eszköz nem ugyanazt használja.",
   "causeProtocol": "A másik eszköz olyat küldött, amit ez a verzió nem ért. Segíthet, ha mindkét eszközön frissíti a TotalDropot.",
   "causeDiskFull": "Nincs elég szabad hely ezen az eszközön.",
   "causeNoPermission": "A TotalDrop nem olvashat vagy írhat egy szükséges fájlt vagy mappát.",

@@ -31,8 +31,12 @@ String errorMessage(BuildContext context, ErrorKind kind) {
 
 /// Why a transfer failed, in the person's language (#212), or null when
 /// the headline says it all. [cause] is the core's name for it.
-String? causeMessage(BuildContext context, String cause) {
-  final l = AppLocalizations.of(context);
+String? causeMessage(BuildContext context, String cause) =>
+    causeText(AppLocalizations.of(context), cause);
+
+/// The sentence for a cause name from the core (`Cause::as_str`), or null
+/// when there is nothing more to say than the technical text.
+String? causeText(AppLocalizations l, String cause) {
   return switch (cause) {
     'TimedOut' => l.causeTimedOut,
     'ConnectionLost' => l.causeConnectionLost,
@@ -165,9 +169,11 @@ class ErrorPanel extends StatelessWidget {
                     Gap.s,
                     // May hold the other side's cancel reason: hidden
                     // characters are shown, not obeyed.
+                    // English, so left to right even in Arabic or Hebrew.
                     SelectableText(
                       revealControls(error.detail),
                       style: theme.textTheme.bodySmall,
+                      textDirection: TextDirection.ltr,
                     ),
                   ],
                 ),

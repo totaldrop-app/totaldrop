@@ -297,7 +297,7 @@ class AppLocalizationsMs extends AppLocalizations {
 
   @override
   String get causeRelay =>
-      'Pelayan geganti tidak dapat dicapai, atau kedua-dua peranti tidak menggunakan pelayan yang sama.';
+      'Pelayan geganti tidak dapat dicapai atau belum ditetapkan, atau kedua-dua peranti tidak menggunakan pelayan yang sama.';
 
   @override
   String get causeProtocol =>
