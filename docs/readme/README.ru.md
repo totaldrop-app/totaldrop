@@ -1,4 +1,4 @@
-<!-- Translated from README.md 56ed597bf0f2. -->
+<!-- Translated from README.md 98359377b108. -->
 <div align="center">
 
 <picture>
@@ -51,16 +51,16 @@
 
 | Платформа | Где взять | Примечания |
 | --- | --- | --- |
-| **Linux** (x86-64) | [Arch / Omarchy](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.3/totaldrop-0.3.0_beta.3-1-x86_64.pkg.tar.zst) · [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.3/totaldrop_0.3.0.beta.3-1_amd64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.3/totaldrop-0.3.0.beta.3-1.fc43.x86_64.rpm) | 0.3.0-beta.3, Qt 6.8 или новее |
-| **Linux** (ARM64) | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.3/totaldrop_0.3.0.beta.3-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.3/totaldrop-0.3.0.beta.3-1.fc43.aarch64.rpm) | 0.3.0-beta.3, Qt 6.8 или новее |
-| **Android** | [Присоединиться к бете](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.3, Android 15 или новее, Google Play по приглашению |
+| **Linux** (x86-64) | [Arch / Omarchy](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.4/totaldrop-0.3.0_beta.4-1-x86_64.pkg.tar.zst) · [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.4/totaldrop_0.3.0.beta.4-1_amd64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.4/totaldrop-0.3.0.beta.4-1.fc43.x86_64.rpm) | 0.3.0-beta.4, Qt 6.8 или новее |
+| **Linux** (ARM64) | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.4/totaldrop_0.3.0.beta.4-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.4/totaldrop-0.3.0.beta.4-1.fc43.aarch64.rpm) | 0.3.0-beta.4, Qt 6.8 или новее |
+| **Android** | [Присоединиться к бете](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.4, Android 15 или новее, Google Play по приглашению |
 | **Командная строка** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux, macOS, Windows |
 | **Windows, macOS, iOS** | Скоро | Подпись кода для этих систем — первое, на что пойдут пожертвования |
 
 Каждый пакет собирается в CI из коммита с тегом, никогда на машине разработчика. Чтобы проверить пакет перед установкой, сверьте его с `SHA256SUMS` выпуска и убедитесь, где он был собран:
 
 ```bash
-gh attestation verify totaldrop_0.3.0.beta.3-1_amd64.deb --repo totaldrop-app/totaldrop
+gh attestation verify totaldrop_0.3.0.beta.4-1_amd64.deb --repo totaldrop-app/totaldrop
 ```
 
 > [!NOTE]

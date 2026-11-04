@@ -37,7 +37,7 @@
 
   <main id="main">
     <section class="dl-hero" aria-labelledby="dl-title">
-      <p class="eyebrow"><span data-i18n="dl.version">Android 0.3.0-beta.3 · Linux 0.3.0-beta.3</span> · <time datetime="2026-11-04" data-i18n="dl.date">4 November 2026</time></p>
+      <p class="eyebrow"><span data-i18n="dl.version">Android 0.3.0-beta.4 · Linux 0.3.0-beta.4</span> · <time datetime="2026-11-04" data-i18n="dl.date">4 November 2026</time></p>
       <h1 id="dl-title" data-i18n="dl.title">Download TotalDrop</h1>
       <p class="lede" data-i18n="dl.lede">Free, open source, no account. Pick your device; the one you are using now is marked.</p>
     </section>
@@ -75,10 +75,10 @@ totaldrop receive 7-harbor-rocket</code></pre>
             <li data-i18n="dl.linux.r2">Also installs the totaldrop command</li>
           </ul>
           <div class="actions">
-            <a class="btn btn-primary" href="https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.3/totaldrop-0.3.0_beta.3-1-x86_64.pkg.tar.zst" aria-label="Arch, Omarchy, Manjaro, x86-64" data-i18n-label="dl.linux.arch.label" data-i18n="dl.linux.arch">Arch, Omarchy, Manjaro</a>
-            <a class="btn btn-quiet" href="https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.3/totaldrop_0.3.0.beta.3-1_amd64.deb" aria-label="Debian, Ubuntu (.deb), x86-64" data-i18n-label="dl.linux.deb.label" data-i18n="dl.linux.deb">Debian, Ubuntu (.deb)</a>
-            <a class="btn btn-quiet" href="https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.3/totaldrop-0.3.0.beta.3-1.fc43.x86_64.rpm" aria-label="Fedora (.rpm), x86-64" data-i18n-label="dl.linux.rpm.label" data-i18n="dl.linux.rpm">Fedora (.rpm)</a>
-            <p class="arch-alt"><span data-i18n="dl.linux.arm">The buttons above are for x86-64. For ARM64:</span> <a href="https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.3/totaldrop_0.3.0.beta.3-1_arm64.deb" data-i18n="dl.linux.deb.arm">Debian, Ubuntu (.deb, ARM64)</a> · <a href="https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.3/totaldrop-0.3.0.beta.3-1.fc43.aarch64.rpm" data-i18n="dl.linux.rpm.arm">Fedora (.rpm, ARM64)</a></p>
+            <a class="btn btn-primary" href="https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.4/totaldrop-0.3.0_beta.4-1-x86_64.pkg.tar.zst" aria-label="Arch, Omarchy, Manjaro, x86-64" data-i18n-label="dl.linux.arch.label" data-i18n="dl.linux.arch">Arch, Omarchy, Manjaro</a>
+            <a class="btn btn-quiet" href="https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.4/totaldrop_0.3.0.beta.4-1_amd64.deb" aria-label="Debian, Ubuntu (.deb), x86-64" data-i18n-label="dl.linux.deb.label" data-i18n="dl.linux.deb">Debian, Ubuntu (.deb)</a>
+            <a class="btn btn-quiet" href="https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.4/totaldrop-0.3.0.beta.4-1.fc43.x86_64.rpm" aria-label="Fedora (.rpm), x86-64" data-i18n-label="dl.linux.rpm.label" data-i18n="dl.linux.rpm">Fedora (.rpm)</a>
+            <p class="arch-alt"><span data-i18n="dl.linux.arm">The buttons above are for x86-64. For ARM64:</span> <a href="https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.4/totaldrop_0.3.0.beta.4-1_arm64.deb" data-i18n="dl.linux.deb.arm">Debian, Ubuntu (.deb, ARM64)</a> · <a href="https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.4/totaldrop-0.3.0.beta.4-1.fc43.aarch64.rpm" data-i18n="dl.linux.rpm.arm">Fedora (.rpm, ARM64)</a></p>
           </div>
         </li>
       </ul>
@@ -113,10 +113,10 @@ totaldrop receive 7-harbor-rocket</code></pre>
     <section class="block" aria-labelledby="dl-new">
       <h2 id="dl-new" data-i18n="dl.new.title">What's new</h2>
       <ul class="notes">
-        <li data-i18n="dl.new.window">On Linux, opening files with TotalDrop while it is open adds them to the open window instead of starting a second one.</li>
-        <li data-i18n="dl.new.relay">A transfer through the relay connects even when the relay is slow to start, and connects again if the relay drops it.</li>
-        <li data-i18n="dl.new.stop">A transfer no longer sometimes stops right after the code is entered, and Stop on the sending device ends it at once, with no files arriving after it.</li>
-        <li data-i18n="dl.new.android">On Android, a transfer keeps going when you switch to another app, for example to share the code.</li>
+        <li data-i18n="dl.new.fallback">A transfer that started on a direct connection no longer stops with "timed out" when that path goes quiet, for example when Wi-Fi drops: after 8 seconds without anything from the other device, it moves onto the relay and goes on. It goes back to the direct connection only if the other device is still sending over it. Both devices must use the same relay (the apps all use ours).</li>
+        <li data-i18n="dl.new.reconnect">A transfer through the relay survives a connection that dies without either end noticing, for example after switching Wi-Fi networks: the device notices within 10 seconds and connects again.</li>
+        <li data-i18n="dl.new.progress">The sending device's progress bar shows what has reached the other device, instead of running ahead and showing a file as sent while it is still on the way.</li>
+        <li data-i18n="dl.new.reasons">When a transfer fails, the reason is now given in your language for many failures, under Details. The technical message stays in English for problem reports and is labelled as such.</li>
       </ul>
       <p class="note"><a href="https://github.com/totaldrop-app/totaldrop/releases" data-i18n="dl.all">All versions and release notes</a></p>
     </section>
