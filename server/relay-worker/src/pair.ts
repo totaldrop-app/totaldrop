@@ -26,8 +26,10 @@ const SENT_STEP = 1024 * 1024;
 /** WebSocket readyState OPEN. */
 const OPEN = 1;
 /** Sockets an object holds at most, lingering closed ones included: a
- * client that ignores close frames cannot pile them up. */
-const MAX_SOCKETS = 8;
+ * client that ignores close frames cannot pile them up. Each replaced
+ * socket of a long transfer may linger too (its client is gone and never
+ * answers the close frame), so this leaves room for many reconnects. */
+const MAX_SOCKETS = 32;
 /** Open sockets that have not signed in yet. Not a cap on all open sockets:
  * a side whose old socket died unnoticed must still get in to replace it. */
 const MAX_WAITING = 2;
@@ -146,8 +148,8 @@ export class Pair extends DurableObject<Env> {
     // A socket this object closed may still send while CLOSING: ignore it.
     if (ws.readyState !== OPEN || attachment(ws)?.ended) return;
     const m = await bytes(data);
-    if (!m || m.length > MAX_MESSAGE) return this.shut(ws, 1008, "bad message");
     const own = this.keyOf(ws);
+    if (!m || m.length > MAX_MESSAGE) return this.fail(ws, own, "bad message");
     if (own !== null) return this.forward(ws, own, m);
 
     const att = ws.deserializeAttachment() as Attachment | null;
@@ -189,12 +191,12 @@ export class Pair extends DurableObject<Env> {
    * of the pair is a valid destination; the rest passes through. */
   private forward(ws: WebSocket, own: string, m: Uint8Array): void {
     const pair = this.pairOf(ws);
-    if (!pair || m.length <= 32 + 2) return this.shut(ws, 1008, "bad frame");
+    if (!pair || m.length <= 32 + 2) return this.fail(ws, own, "bad frame");
     const other = own === pair[0] ? pair[1] : pair[0];
-    if (hex(m.subarray(0, 32)) !== other) return this.shut(ws, 1008, "bad destination");
+    if (hex(m.subarray(0, 32)) !== other) return this.fail(ws, own, "bad destination");
     const before = this.sent.get(ws) ?? attachment(ws)?.sent ?? 0;
     const total = before + m.length;
-    if (total > SESSION_BYTES) return this.shut(ws, 1008, "limit reached");
+    if (total > SESSION_BYTES) return this.fail(ws, own, "limit reached");
     this.sent.set(ws, total);
     if (Math.floor(total / SENT_STEP) > Math.floor(before / SENT_STEP)) {
       const att = attachment(ws);
@@ -222,8 +224,27 @@ export class Pair extends DurableObject<Env> {
     await this.end(ws);
   }
 
+  /** This object ends `ws` for breaking a rule. A signed-in socket takes
+   * the other side with it, as when it leaves (see end()). */
+  private fail(ws: WebSocket, own: string | null, reason: string): void {
+    this.shut(ws, 1008, reason);
+    if (own !== null) this.endOthers(ws);
+  }
+
+  /** Close the other signed-in socket; sockets still signing in stay (one
+   * may be the other side's reconnect), as on the Rust relay. */
+  private endOthers(ws: WebSocket): void {
+    for (const o of this.live()) {
+      const key = attachment(o)?.key ?? null;
+      if (o === ws || key === null) continue;
+      this.shut(o, 1000, "peer left");
+      this.byKey.delete(key);
+    }
+  }
+
   /** When a signed-in side leaves, the transfer is over: close the other
-   * too. A socket that never signed in, or one this object already closed,
+   * too. A socket that never signed in, or one this object already closed
+   * (replaced, or ended through fail(), which closes the other itself),
    * takes nobody with it. Afterwards the alarm follows whatever is left,
    * and is deleted when nothing is. */
   private async end(ws: WebSocket): Promise<void> {
@@ -231,8 +252,8 @@ export class Pair extends DurableObject<Env> {
     const cascade = att !== null && att.key !== null && !att.ended;
     this.shut(ws, 1000, "closed");
     if (cascade) {
-      for (const o of this.live()) this.shut(o, 1000, "peer left");
-      this.byKey.clear();
+      this.endOthers(ws);
+      if (att.key && this.byKey.get(att.key) === ws) this.byKey.delete(att.key);
     } else if (att?.key && this.byKey.get(att.key) === ws) {
       // Not when a newer socket replaced this one under its key.
       this.byKey.delete(att.key);
@@ -266,7 +287,8 @@ export class Pair extends DurableObject<Env> {
       if (!att) continue;
       const deadline = Pair.deadline(att);
       if (now >= deadline) {
-        this.shut(ws, 1008, att.key === null ? "sign-in timeout" : "session over");
+        if (att.key === null) this.shut(ws, 1008, "sign-in timeout");
+        else this.fail(ws, att.key, "session over");
       } else {
         next = Math.min(next, deadline);
       }

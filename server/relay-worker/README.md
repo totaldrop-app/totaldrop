@@ -9,7 +9,7 @@ This is the production relay for `relay.totaldrop.app`. It speaks the same proto
 How it is built:
 
 - The Worker keeps no state and logs nothing. Observability is turned off in `wrangler.jsonc`.
-- Each transfer is its own `Pair` Durable Object, named by its two keys. It admits only those two keys, one socket each, after checking an Ed25519 signature over a fresh challenge; a new sign-in with a key replaces that key's old socket. It forwards datagram messages from one to the other, swapping the destination key for the source key, and closes both sockets when either leaves, after 6 hours, or after 32 GiB.
+- Each transfer is its own `Pair` Durable Object, named by its two keys. It admits only those two keys, one socket each, after checking an Ed25519 signature over a fresh challenge; a new sign-in with a key replaces that key's old socket. It forwards datagram messages from one to the other, swapping the destination key for the source key, and closes both sockets when either leaves or breaks a rule, or when a connection reaches 6 hours or 32 GiB (counted per connection).
 - It uses the WebSocket Hibernation API, so a pair that waits costs nothing.
 - Address discovery is not part of this Worker: clients use Cloudflare's STUN server, `stun.cloudflare.com:3478`.
 

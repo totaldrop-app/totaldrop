@@ -191,12 +191,14 @@ treated as final.
       destination key when the device sends, the source key when the relay
       delivers. Several datagrams share a message, at most 64 KiB. One
       connection per key; datagrams for a key that is not there are dropped.
-    - A new sign-in with a key that already has a connection replaces it:
-      the old socket is closed and the other side stays. A socket can die
-      without the relay noticing (a Wi-Fi switch, NAT rebinding), and only
-      the key's holder can sign in. When a side leaves otherwise, the
-      relay closes the other side too; both clients then connect again
-      (#190).
+    - A new sign-in with a key that already has a connection on the same
+      pair replaces it: the old socket is closed and the other side stays.
+      A socket can die without the relay noticing (a Wi-Fi switch, NAT
+      rebinding), and only the key's holder can sign in. When a signed-in
+      connection ends any other way (the device leaves, or the relay closes
+      it for a limit or a bad message), the relay closes the other
+      signed-in side too; both clients then connect again. Sockets still
+      signing in are left alone (#190).
     - Address discovery is plain STUN (RFC 8489), Binding with
       XOR-MAPPED-ADDRESS, sent from the QUIC socket. The default server is
       `stun.cloudflare.com:3478`; the self-hosted relay answers STUN too.
@@ -226,14 +228,16 @@ treated as final.
     - A relay link that loses its connection, or does not get one, connects
       again after 0.5 seconds, doubling up to 4 seconds, and gives up after
       10 tries in a row that did not sign in. It keeps the limits below
-      over all its own connections together. The relays count them per
-      connection, and a relay still listing a connection that died
-      unnoticed refuses the new one for that key (#190).
+      over all its own connections together; the relays count them per
+      connection (#190). When datagrams went out and nothing at all (no
+      datagram, no pong) came back for 10 seconds, the link drops the
+      connection and connects again: a dead TCP connection is otherwise
+      reported only after minutes, long past QUIC's idle timeout.
 23. **Relay limits.** Per connection: 32 GiB and 6 hours; ten seconds to
     sign in. Both accept only the pair path `/v0/relay/<key A>-<key B>` and
     forward only to the other key of that pair. The self-hosted relay also
     caps each connection at 8 MiB/s and closes it after 60 seconds without
-    datagrams (pings do not count). Neither keeps anything on disk or logs
+    datagrams (pings do not count), which ends the other side too. Neither keeps anything on disk or logs
     client data.
 
 ## Section 8, continued: progress

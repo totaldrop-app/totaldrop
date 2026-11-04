@@ -222,7 +222,9 @@ impl Relay {
             let mut clients = self.clients.lock().await;
             match clients.get(&key) {
                 // One pair per key: keys are single-use, so a key on a
-                // second pair is a bug or a replayed sign-in.
+                // second pair is a bug or a key reused on purpose. (The
+                // Cloudflare relay has one object per pair and cannot see
+                // this.)
                 Some(old) if old.pair != pair => return,
                 // The holder of the key signed in again on its pair: its old
                 // socket died without this relay noticing (a Wi-Fi switch,
@@ -336,8 +338,9 @@ impl Relay {
     }
 
     /// Remove the connection `id` of `key`. When it was still the key's
-    /// connection (not replaced), the transfer is over: the other side of
-    /// its pair is ended too, as on the Cloudflare relay.
+    /// connection (not replaced), the transfer is over, however it ended:
+    /// the other signed-in side of its pair is ended too, as on the
+    /// Cloudflare relay (protocol notes, item 20).
     async fn leave(&self, key: &[u8; 32], id: u64) {
         let mut clients = self.clients.lock().await;
         if !clients.get(key).is_some_and(|c| c.id == id) {
