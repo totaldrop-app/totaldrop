@@ -5,6 +5,7 @@
   ],
   "exclude": [
     "/fonts/*",
+    "/brand/files/*",
     "/i18n/*",
     "/styles.css",
     "/app.js",

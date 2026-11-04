@@ -1,6 +1,6 @@
 # Tasarım kuralları
 
-Tam marka kitabı TotalDrop tasarım sisteminde durur. Bu dosyada kod yazarken uyulması gereken bağlayıcı kurallar var.
+Tam marka kitabı TotalDrop tasarım sisteminde durur. Bu dosyada kod yazarken uyulması gereken bağlayıcı kurallar var. Herkese açık özeti sitenin marka sayfasıdır (`site/public/brand/`, totaldrop.app/brand); işaret, renk, yazı ya da düğme kuralı değişince o sayfa ve indirilen dosyaları (`site/tools/brand-files.mjs --png`) aynı PR'da güncellenir.
 
 ## 1. Sisteme yüzde yüz uyum
 

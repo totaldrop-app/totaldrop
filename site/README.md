@@ -11,6 +11,8 @@ public/
   download/index.html İndirme sayfası; ziyaretçinin cihazına uyan kart öne gelir
   r/index.html        QR ve paylaşım bağlantıları: kodu # işaretinden sonra okur,
                       uygulamayı totaldrop://r/kod ile açar; kod sunucuya gitmez
+  brand/index.html    Marka sayfası: işaret, hareket, renk, yazı, düğmeler, dosyalar
+  brand/files/        İndirilen logo dosyaları; site/tools/brand-files.mjs üretir
   privacy.html        Gizlilik politikası, İngilizce (esas metin)
   privacy/<dil>.html  Aynı politika diğer 34 dilde; ikisi de üretilir (aşağıda)
   404.html            Bulunamayan her adres için; o olmadan Pages her adrese
@@ -27,6 +29,9 @@ public/
   fonts/              Bricolage Grotesque ve Atkinson Hyperlegible (SIL OFL 1.1)
 privacy/<dil>.html    Gizlilik politikasının her dildeki metni (yalnızca <article> içi)
 tools/privacy.mjs     Gizlilik sayfalarını bu metinlerden üretir (--write) ve denetler
+tools/brand-files.mjs Marka dosyalarını işaretin geometrisinden üretir (--write, --png)
+                      ve CI'da güncel olduklarını denetler
+tools/wordmark.py     "TotalDrop" yazısının çizgilerini sitenin yazı tipinden çıkarır
 functions/
   _middleware.js      www → kök yönlendirmesi; download alt alan adı → /download/
 wrangler.toml         Cloudflare Pages projesi "totaldrop"
