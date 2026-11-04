@@ -302,6 +302,50 @@ class AppLocalizationsRo extends AppLocalizations {
   String get errorOther => 'Ceva nu a mers bine.';
 
   @override
+  String get causeTimedOut =>
+      'Conexiunea nu mai răspunde. Unul dintre dispozitive poate a pierdut rețeaua sau a intrat în repaus.';
+
+  @override
+  String get causeConnectionLost =>
+      'Conexiunea cu celălalt dispozitiv s-a întrerupt.';
+
+  @override
+  String get causeNoRoute =>
+      'Celălalt dispozitiv nu a putut fi contactat nici direct, nici prin serverul releu.';
+
+  @override
+  String get causeRelay =>
+      'Serverul releu nu a putut fi contactat sau cele două dispozitive nu folosesc același server.';
+
+  @override
+  String get causeProtocol =>
+      'Celălalt dispozitiv a trimis ceva ce această versiune nu înțelege. Actualizarea TotalDrop pe ambele dispozitive poate ajuta.';
+
+  @override
+  String get causeDiskFull =>
+      'Nu există suficient spațiu liber pe acest dispozitiv.';
+
+  @override
+  String get causeNoPermission =>
+      'TotalDrop nu are permisiunea să citească sau să scrie un fișier ori un dosar de care are nevoie.';
+
+  @override
+  String get causeNotFound =>
+      'Un fișier sau un dosar nu a fost găsit. Poate a fost mutat sau șters.';
+
+  @override
+  String get causeReadOnly =>
+      'Dosarul se află pe un disc pe care nu se poate scrie.';
+
+  @override
+  String get causeFileChanged =>
+      'Un fișier s-a schimbat în timp ce era trimis. Trimite-l din nou după ce este salvat.';
+
+  @override
+  String get technicalDetail =>
+      'Mesaj tehnic în engleză, de inclus când raportezi o problemă:';
+
+  @override
   String get settingsServer => 'Server de întâlnire';
 
   @override

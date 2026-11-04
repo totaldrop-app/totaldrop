@@ -190,10 +190,18 @@ class TransferError {
   /// Technical detail, in English, for "more information".
   final String detail;
 
-  const TransferError({required this.kind, required this.detail});
+  /// Why, as a name Dart translates (`cause` + this, e.g. `TimedOut`);
+  /// empty when the headline says it all (#212).
+  final String cause;
+
+  const TransferError({
+    required this.kind,
+    required this.detail,
+    required this.cause,
+  });
 
   @override
-  int get hashCode => kind.hashCode ^ detail.hashCode;
+  int get hashCode => kind.hashCode ^ detail.hashCode ^ cause.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -201,7 +209,8 @@ class TransferError {
       other is TransferError &&
           runtimeType == other.runtimeType &&
           kind == other.kind &&
-          detail == other.detail;
+          detail == other.detail &&
+          cause == other.cause;
 }
 
 /// Something that happened during a transfer.

@@ -31,7 +31,7 @@ TransferEvent stoppedEvent() => TransferEvent(
   done: 0,
   total: 0,
   summary: null,
-  error: const TransferError(kind: ErrorKind.stopped, detail: ''),
+  error: const TransferError(kind: ErrorKind.stopped, detail: '', cause: ''),
 );
 
 void main() {
@@ -69,7 +69,7 @@ void main() {
     test('is released when the send fails', () async {
       unawaited(vm.start());
       repo.prepared.completeError(
-        const TransferError(kind: ErrorKind.other, detail: 'x'),
+        const TransferError(kind: ErrorKind.other, detail: 'x', cause: ''),
       );
       await pumpEventQueue();
       expect(vm.stage, SendStage.failed);
@@ -139,7 +139,7 @@ void main() {
     test('is released when connecting fails', () async {
       unawaited(vm.connect());
       repo.connected.completeError(
-        const TransferError(kind: ErrorKind.other, detail: 'x'),
+        const TransferError(kind: ErrorKind.other, detail: 'x', cause: ''),
       );
       await pumpEventQueue();
       expect(vm.stage, ReceiveStage.failed);

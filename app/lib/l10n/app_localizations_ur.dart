@@ -297,6 +297,47 @@ class AppLocalizationsUr extends AppLocalizations {
   String get errorOther => 'کچھ غلط ہو گیا۔';
 
   @override
+  String get causeTimedOut =>
+      'کنکشن نے جواب دینا بند کر دیا۔ ہو سکتا ہے کسی آلے کا نیٹ ورک چلا گیا ہو یا وہ سلیپ میں چلا گیا ہو۔';
+
+  @override
+  String get causeConnectionLost => 'دوسرے آلے سے کنکشن ٹوٹ گیا۔';
+
+  @override
+  String get causeNoRoute =>
+      'دوسرے آلے تک نہ براہ راست پہنچا جا سکا، نہ ریلے کے ذریعے۔';
+
+  @override
+  String get causeRelay =>
+      'ریلے سرور تک نہیں پہنچا جا سکا، یا دونوں آلات ایک ہی ریلے استعمال نہیں کرتے۔';
+
+  @override
+  String get causeProtocol =>
+      'دوسرے آلے نے ایسا کچھ بھیجا جو یہ ورژن نہیں سمجھتا۔ دونوں آلات پر TotalDrop اپ ڈیٹ کرنے سے مدد مل سکتی ہے۔';
+
+  @override
+  String get causeDiskFull => 'اس آلے پر کافی خالی جگہ نہیں ہے۔';
+
+  @override
+  String get causeNoPermission =>
+      'TotalDrop کو کسی ضروری فائل یا فولڈر کو پڑھنے یا لکھنے کی اجازت نہیں ہے۔';
+
+  @override
+  String get causeNotFound =>
+      'کوئی فائل یا فولڈر نہیں ملا۔ ہو سکتا ہے اسے منتقل یا حذف کر دیا گیا ہو۔';
+
+  @override
+  String get causeReadOnly => 'فولڈر ایسی ڈسک پر ہے جس پر لکھا نہیں جا سکتا۔';
+
+  @override
+  String get causeFileChanged =>
+      'بھیجتے وقت ایک فائل بدل گئی۔ محفوظ کرنے کے بعد اسے دوبارہ بھیجیں۔';
+
+  @override
+  String get technicalDetail =>
+      'انگریزی میں تکنیکی پیغام، مسئلے کی اطلاع دیتے وقت شامل کرنے کے لیے:';
+
+  @override
   String get settingsServer => 'رابطہ سرور';
 
   @override

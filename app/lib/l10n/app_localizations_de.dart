@@ -299,6 +299,50 @@ class AppLocalizationsDe extends AppLocalizations {
   String get errorOther => 'Etwas ist schiefgelaufen.';
 
   @override
+  String get causeTimedOut =>
+      'Die Verbindung reagiert nicht mehr. Eines der Geräte hat vielleicht das Netzwerk verloren oder ist in den Ruhezustand gegangen.';
+
+  @override
+  String get causeConnectionLost =>
+      'Die Verbindung zum anderen Gerät wurde getrennt.';
+
+  @override
+  String get causeNoRoute =>
+      'Das andere Gerät war weder direkt noch über den Relay-Server erreichbar.';
+
+  @override
+  String get causeRelay =>
+      'Der Relay-Server war nicht erreichbar, oder die beiden Geräte nutzen nicht denselben.';
+
+  @override
+  String get causeProtocol =>
+      'Das andere Gerät hat etwas gesendet, das diese Version nicht versteht. Ein Update von TotalDrop auf beiden Geräten kann helfen.';
+
+  @override
+  String get causeDiskFull =>
+      'Auf diesem Gerät ist nicht genug Speicherplatz frei.';
+
+  @override
+  String get causeNoPermission =>
+      'TotalDrop darf eine benötigte Datei oder einen Ordner nicht lesen oder schreiben.';
+
+  @override
+  String get causeNotFound =>
+      'Eine Datei oder ein Ordner wurde nicht gefunden. Vielleicht wurde sie verschoben oder gelöscht.';
+
+  @override
+  String get causeReadOnly =>
+      'Der Ordner liegt auf einem Datenträger, auf den nicht geschrieben werden kann.';
+
+  @override
+  String get causeFileChanged =>
+      'Eine Datei hat sich während des Sendens geändert. Sende sie erneut, sobald sie gespeichert ist.';
+
+  @override
+  String get technicalDetail =>
+      'Technische Meldung auf Englisch, zum Beifügen, wenn du ein Problem meldest:';
+
+  @override
   String get settingsServer => 'Vermittlungsserver';
 
   @override

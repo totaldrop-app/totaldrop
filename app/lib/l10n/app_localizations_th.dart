@@ -281,6 +281,46 @@ class AppLocalizationsTh extends AppLocalizations {
   String get errorOther => 'เกิดข้อผิดพลาด';
 
   @override
+  String get causeTimedOut =>
+      'การเชื่อมต่อหยุดตอบสนอง อุปกรณ์เครื่องหนึ่งอาจขาดการเชื่อมต่อเครือข่ายหรือเข้าสู่โหมดสลีป';
+
+  @override
+  String get causeConnectionLost => 'การเชื่อมต่อกับอุปกรณ์อีกเครื่องถูกตัด';
+
+  @override
+  String get causeNoRoute =>
+      'เข้าถึงอุปกรณ์อีกเครื่องไม่ได้ ทั้งโดยตรงและผ่านเซิร์ฟเวอร์รีเลย์';
+
+  @override
+  String get causeRelay =>
+      'เข้าถึงเซิร์ฟเวอร์รีเลย์ไม่ได้ หรืออุปกรณ์ทั้งสองไม่ได้ใช้รีเลย์เดียวกัน';
+
+  @override
+  String get causeProtocol =>
+      'อุปกรณ์อีกเครื่องส่งสิ่งที่เวอร์ชันนี้ไม่เข้าใจ การอัปเดต TotalDrop บนอุปกรณ์ทั้งสองอาจช่วยได้';
+
+  @override
+  String get causeDiskFull => 'พื้นที่ว่างในอุปกรณ์นี้ไม่พอ';
+
+  @override
+  String get causeNoPermission =>
+      'TotalDrop ไม่ได้รับอนุญาตให้อ่านหรือเขียนไฟล์หรือโฟลเดอร์ที่ต้องใช้';
+
+  @override
+  String get causeNotFound => 'ไม่พบไฟล์หรือโฟลเดอร์ อาจถูกย้ายหรือลบไปแล้ว';
+
+  @override
+  String get causeReadOnly => 'โฟลเดอร์อยู่บนดิสก์ที่เขียนไม่ได้';
+
+  @override
+  String get causeFileChanged =>
+      'ไฟล์เปลี่ยนไประหว่างที่กำลังส่ง โปรดส่งใหม่หลังบันทึกแล้ว';
+
+  @override
+  String get technicalDetail =>
+      'ข้อความทางเทคนิคเป็นภาษาอังกฤษ สำหรับแนบเมื่อรายงานปัญหา:';
+
+  @override
   String get settingsServer => 'เซิร์ฟเวอร์นัดพบ';
 
   @override

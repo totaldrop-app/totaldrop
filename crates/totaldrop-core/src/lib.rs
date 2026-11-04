@@ -35,7 +35,7 @@ use totaldrop_crypto::identity::DeviceKeys;
 use totaldrop_proto::TransferCode;
 use totaldrop_proto::wire::{Certificate, Hints};
 
-pub use error::{Error, Result};
+pub use error::{Cause, Error, Result};
 pub use stop::Stop;
 pub use transfer::{OfferSummary, ReceiveReport, SendReport, check_destination};
 

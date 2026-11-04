@@ -285,6 +285,48 @@ class AppLocalizationsMs extends AppLocalizations {
   String get errorOther => 'Ada sesuatu yang tidak kena.';
 
   @override
+  String get causeTimedOut =>
+      'Sambungan berhenti memberi respons. Salah satu peranti mungkin kehilangan rangkaian atau masuk mod tidur.';
+
+  @override
+  String get causeConnectionLost => 'Sambungan ke peranti lain terputus.';
+
+  @override
+  String get causeNoRoute =>
+      'Peranti lain tidak dapat dicapai, sama ada secara terus atau melalui pelayan geganti.';
+
+  @override
+  String get causeRelay =>
+      'Pelayan geganti tidak dapat dicapai, atau kedua-dua peranti tidak menggunakan pelayan yang sama.';
+
+  @override
+  String get causeProtocol =>
+      'Peranti lain menghantar sesuatu yang tidak difahami oleh versi ini. Mengemas kini TotalDrop pada kedua-dua peranti mungkin membantu.';
+
+  @override
+  String get causeDiskFull => 'Ruang kosong pada peranti ini tidak mencukupi.';
+
+  @override
+  String get causeNoPermission =>
+      'TotalDrop tidak dibenarkan membaca atau menulis fail atau folder yang diperlukannya.';
+
+  @override
+  String get causeNotFound =>
+      'Fail atau folder tidak ditemui. Ia mungkin telah dialihkan atau dipadam.';
+
+  @override
+  String get causeReadOnly =>
+      'Folder berada pada cakera yang tidak boleh ditulis.';
+
+  @override
+  String get causeFileChanged =>
+      'Satu fail berubah semasa dihantar. Hantar semula selepas fail disimpan.';
+
+  @override
+  String get technicalDetail =>
+      'Mesej teknikal dalam bahasa Inggeris, untuk disertakan semasa melaporkan masalah:';
+
+  @override
   String get settingsServer => 'Pelayan pertemuan';
 
   @override

@@ -304,6 +304,48 @@ class AppLocalizationsUk extends AppLocalizations {
   String get errorOther => 'Щось пішло не так.';
 
   @override
+  String get causeTimedOut =>
+      'З\'єднання перестало відповідати. Можливо, один із пристроїв втратив мережу або перейшов у режим сну.';
+
+  @override
+  String get causeConnectionLost => 'З\'єднання з іншим пристроєм обірвалося.';
+
+  @override
+  String get causeNoRoute =>
+      'До іншого пристрою не вдалося дістатися ні напряму, ні через ретранслятор.';
+
+  @override
+  String get causeRelay =>
+      'Ретранслятор недоступний, або пристрої використовують різні ретранслятори.';
+
+  @override
+  String get causeProtocol =>
+      'Інший пристрій надіслав те, чого ця версія не розуміє. Може допомогти оновлення TotalDrop на обох пристроях.';
+
+  @override
+  String get causeDiskFull => 'На цьому пристрої бракує вільного місця.';
+
+  @override
+  String get causeNoPermission =>
+      'TotalDrop не має дозволу читати або записувати потрібний файл чи теку.';
+
+  @override
+  String get causeNotFound =>
+      'Файл або теку не знайдено. Можливо, їх перемістили або видалили.';
+
+  @override
+  String get causeReadOnly =>
+      'Тека розташована на диску, на який не можна записувати.';
+
+  @override
+  String get causeFileChanged =>
+      'Файл змінився під час надсилання. Надішліть його знову після збереження.';
+
+  @override
+  String get technicalDetail =>
+      'Технічне повідомлення англійською, щоб додати його, коли повідомляєте про проблему:';
+
+  @override
   String get settingsServer => 'Сервер зустрічі';
 
   @override

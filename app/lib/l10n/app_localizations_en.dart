@@ -297,6 +297,49 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorOther => 'Something went wrong.';
 
   @override
+  String get causeTimedOut =>
+      'The connection stopped responding. One of the devices may have lost its network or gone to sleep.';
+
+  @override
+  String get causeConnectionLost =>
+      'The connection to the other device was cut.';
+
+  @override
+  String get causeNoRoute =>
+      'No way of reaching the other device worked, directly or through the relay.';
+
+  @override
+  String get causeRelay =>
+      'The relay server could not be reached, or the two devices do not use the same one.';
+
+  @override
+  String get causeProtocol =>
+      'The other device sent something this version does not understand. Updating TotalDrop on both devices may help.';
+
+  @override
+  String get causeDiskFull => 'There is not enough free space on this device.';
+
+  @override
+  String get causeNoPermission =>
+      'TotalDrop is not allowed to read or write a file or folder it needs.';
+
+  @override
+  String get causeNotFound =>
+      'A file or folder could not be found. It may have been moved or deleted.';
+
+  @override
+  String get causeReadOnly =>
+      'The folder is on a disk that cannot be written to.';
+
+  @override
+  String get causeFileChanged =>
+      'A file changed while it was being sent. Send it again once it is saved.';
+
+  @override
+  String get technicalDetail =>
+      'Technical message in English, to include when you report a problem:';
+
+  @override
   String get settingsServer => 'Rendezvous server';
 
   @override

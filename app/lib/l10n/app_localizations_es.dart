@@ -302,6 +302,50 @@ class AppLocalizationsEs extends AppLocalizations {
   String get errorOther => 'Algo salió mal.';
 
   @override
+  String get causeTimedOut =>
+      'La conexión dejó de responder. Puede que uno de los dispositivos haya perdido la red o se haya suspendido.';
+
+  @override
+  String get causeConnectionLost =>
+      'Se cortó la conexión con el otro dispositivo.';
+
+  @override
+  String get causeNoRoute =>
+      'No se pudo llegar al otro dispositivo, ni directamente ni a través del servidor de retransmisión.';
+
+  @override
+  String get causeRelay =>
+      'No se pudo llegar al servidor de retransmisión, o los dos dispositivos no usan el mismo.';
+
+  @override
+  String get causeProtocol =>
+      'El otro dispositivo envió algo que esta versión no entiende. Actualizar TotalDrop en ambos dispositivos puede ayudar.';
+
+  @override
+  String get causeDiskFull =>
+      'No hay suficiente espacio libre en este dispositivo.';
+
+  @override
+  String get causeNoPermission =>
+      'TotalDrop no tiene permiso para leer o escribir un archivo o una carpeta que necesita.';
+
+  @override
+  String get causeNotFound =>
+      'No se encontró un archivo o una carpeta. Puede que se haya movido o eliminado.';
+
+  @override
+  String get causeReadOnly =>
+      'La carpeta está en un disco en el que no se puede escribir.';
+
+  @override
+  String get causeFileChanged =>
+      'Un archivo cambió mientras se enviaba. Vuelve a enviarlo cuando esté guardado.';
+
+  @override
+  String get technicalDetail =>
+      'Mensaje técnico en inglés, para incluirlo al informar de un problema:';
+
+  @override
   String get settingsServer => 'Servidor de encuentro';
 
   @override

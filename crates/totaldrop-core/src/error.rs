@@ -55,6 +55,115 @@ impl core::fmt::Display for Error {
 
 impl std::error::Error for Error {}
 
+/// Why an error happened, in words the apps translate (#212). The
+/// [`Display`](core::fmt::Display) text stays English and technical, for
+/// problem reports; the cause is what a person reads in their language.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Cause {
+    /// The connection stopped answering: a device lost its network or
+    /// went to sleep.
+    TimedOut,
+    /// The connection to the other device was cut.
+    ConnectionLost,
+    /// No way to reach the other device worked.
+    NoRoute,
+    /// The relay could not be reached, refused, or is not set up.
+    Relay,
+    /// The other device sent something this version does not understand.
+    Protocol,
+    /// No space left on this device.
+    DiskFull,
+    /// TotalDrop may not read or write a file or folder.
+    NoPermission,
+    /// A file or folder is not there any more.
+    NotFound,
+    /// The folder is on a disk that cannot be written to.
+    ReadOnly,
+    /// A file changed while it was being sent.
+    FileChanged,
+    /// Nothing more to say than the error's own message.
+    Unknown,
+}
+
+impl Cause {
+    /// A stable name for the apps: `timedOut`, `connectionLost`, … The
+    /// translated sentence is the text `cause` + the name with a capital
+    /// first letter (`causeTimedOut`).
+    #[must_use]
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Cause::TimedOut => "TimedOut",
+            Cause::ConnectionLost => "ConnectionLost",
+            Cause::NoRoute => "NoRoute",
+            Cause::Relay => "Relay",
+            Cause::Protocol => "Protocol",
+            Cause::DiskFull => "DiskFull",
+            Cause::NoPermission => "NoPermission",
+            Cause::NotFound => "NotFound",
+            Cause::ReadOnly => "ReadOnly",
+            Cause::FileChanged => "FileChanged",
+            Cause::Unknown => "",
+        }
+    }
+}
+
+/// Messages of [`Error::Connect`] that mean no path worked.
+const NO_ROUTE: [&str; 6] = [
+    "no connection to the other device",
+    "the receiver did not connect",
+    "the receiver did not answer",
+    "the other side announced no address",
+    "no address answered",
+    "no usable path: the transfer needs a relay both devices use",
+];
+
+/// The cause of an [`Error::Connect`] from its message. The messages are
+/// this crate's own and quinn's connection errors (`timed out`, `reset by
+/// peer`, `closed by peer: …`, `closed`).
+fn connect_cause(m: &str) -> Cause {
+    if m.starts_with("relay") || m == "invalid relay address" || m == "privacy mode needs a relay" {
+        Cause::Relay
+    } else if m == "timed out" || m == "the sender stopped sending" {
+        Cause::TimedOut
+    } else if m == "reset by peer"
+        || m == "closed"
+        || m == "endpoint closed"
+        || m == "connection lost"
+        || m.starts_with("closed by peer")
+    {
+        Cause::ConnectionLost
+    } else if NO_ROUTE.contains(&m) {
+        Cause::NoRoute
+    } else {
+        Cause::Unknown
+    }
+}
+
+impl Error {
+    /// Why this happened, for a translated explanation. Errors whose
+    /// headline already says everything give [`Cause::Unknown`].
+    #[must_use]
+    pub fn cause(&self) -> Cause {
+        use std::io::ErrorKind as K;
+        match self {
+            Error::Connect(m) => connect_cause(m),
+            Error::Protocol(_) => Cause::Protocol,
+            Error::Io(e) => match e.kind() {
+                K::StorageFull | K::QuotaExceeded => Cause::DiskFull,
+                K::PermissionDenied => Cause::NoPermission,
+                K::NotFound => Cause::NotFound,
+                K::ReadOnlyFilesystem => Cause::ReadOnly,
+                _ if e.to_string().ends_with(CHANGED_AFTER_SCAN) => Cause::FileChanged,
+                _ => Cause::Unknown,
+            },
+            _ => Cause::Unknown,
+        }
+    }
+}
+
+/// The end of the message for a file that changed after it was scanned.
+pub(crate) const CHANGED_AFTER_SCAN: &str = "changed after it was scanned";
+
 impl Error {
     /// The rendezvous server says the code's number is not in use: it was
     /// mistyped, has expired or was already used.
@@ -156,3 +265,73 @@ impl From<quinn::ReadError> for Error {
 
 /// Short for `Result<T, Error>`.
 pub type Result<T> = core::result::Result<T, Error>;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn io(kind: std::io::ErrorKind) -> Error {
+        Error::Io(std::io::Error::from(kind))
+    }
+
+    /// Every message this crate and quinn give a connection error has a
+    /// cause the apps can translate (#212): before, a person read only
+    /// "could not connect to the other device: timed out", in English.
+    #[test]
+    fn connection_errors_have_a_cause() {
+        use quinn::ConnectionError as C;
+        assert_eq!(Error::from(C::TimedOut).cause(), Cause::TimedOut);
+        assert_eq!(Error::from(C::Reset).cause(), Cause::ConnectionLost);
+        assert_eq!(Error::from(C::LocallyClosed).cause(), Cause::ConnectionLost);
+        let closed = C::ApplicationClosed(quinn::ApplicationClose {
+            error_code: quinn::VarInt::from_u32(0),
+            reason: b"failed"[..].into(),
+        });
+        assert_eq!(Error::from(closed).cause(), Cause::ConnectionLost);
+        for m in NO_ROUTE {
+            assert_eq!(Error::Connect(m.into()).cause(), Cause::NoRoute, "{m}");
+        }
+        for m in [
+            "relay: timed out",
+            "relay refused the endpoint key",
+            "invalid relay address",
+            "privacy mode needs a relay",
+        ] {
+            assert_eq!(Error::Connect(m.into()).cause(), Cause::Relay, "{m}");
+        }
+        assert_eq!(
+            Error::Connect("the sender stopped sending".into()).cause(),
+            Cause::TimedOut
+        );
+        assert_eq!(
+            Error::Connect("endpoint closed".into()).cause(),
+            Cause::ConnectionLost
+        );
+        assert_eq!(
+            Error::Connect("something new".into()).cause(),
+            Cause::Unknown
+        );
+    }
+
+    #[test]
+    fn file_and_other_errors_have_a_cause() {
+        use std::io::ErrorKind as K;
+        assert_eq!(io(K::StorageFull).cause(), Cause::DiskFull);
+        assert_eq!(io(K::QuotaExceeded).cause(), Cause::DiskFull);
+        assert_eq!(io(K::PermissionDenied).cause(), Cause::NoPermission);
+        assert_eq!(io(K::NotFound).cause(), Cause::NotFound);
+        assert_eq!(io(K::ReadOnlyFilesystem).cause(), Cause::ReadOnly);
+        let changed = Error::Io(std::io::Error::other(format!("a.txt {CHANGED_AFTER_SCAN}")));
+        assert_eq!(changed.cause(), Cause::FileChanged);
+        assert_eq!(io(K::Other).cause(), Cause::Unknown);
+        // The headline already says the server could not be reached.
+        assert_eq!(
+            Error::Rendezvous("connection refused".into()).cause(),
+            Cause::Unknown
+        );
+        assert_eq!(Error::Protocol("bad").cause(), Cause::Protocol);
+        assert_eq!(Error::WrongCode.cause(), Cause::Unknown);
+        assert_eq!(Cause::Unknown.as_str(), "");
+        assert_eq!(Cause::TimedOut.as_str(), "TimedOut");
+    }
+}

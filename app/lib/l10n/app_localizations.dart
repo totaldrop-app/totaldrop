@@ -590,6 +590,72 @@ abstract class AppLocalizations {
   /// **'Something went wrong.'**
   String get errorOther;
 
+  /// Under Details of a failed transfer: why it failed. The connection went silent for 30 seconds (QUIC idle timeout).
+  ///
+  /// In en, this message translates to:
+  /// **'The connection stopped responding. One of the devices may have lost its network or gone to sleep.'**
+  String get causeTimedOut;
+
+  /// Under Details of a failed transfer: why it failed, in plain words
+  ///
+  /// In en, this message translates to:
+  /// **'The connection to the other device was cut.'**
+  String get causeConnectionLost;
+
+  /// Under Details of a failed transfer: why it failed, in plain words
+  ///
+  /// In en, this message translates to:
+  /// **'No way of reaching the other device worked, directly or through the relay.'**
+  String get causeNoRoute;
+
+  /// Under Details of a failed transfer: why it failed, in plain words
+  ///
+  /// In en, this message translates to:
+  /// **'The relay server could not be reached, or the two devices do not use the same one.'**
+  String get causeRelay;
+
+  /// Under Details of a failed transfer: why it failed, in plain words
+  ///
+  /// In en, this message translates to:
+  /// **'The other device sent something this version does not understand. Updating TotalDrop on both devices may help.'**
+  String get causeProtocol;
+
+  /// Under Details of a failed transfer: why it failed, in plain words
+  ///
+  /// In en, this message translates to:
+  /// **'There is not enough free space on this device.'**
+  String get causeDiskFull;
+
+  /// Under Details of a failed transfer: why it failed, in plain words
+  ///
+  /// In en, this message translates to:
+  /// **'TotalDrop is not allowed to read or write a file or folder it needs.'**
+  String get causeNoPermission;
+
+  /// Under Details of a failed transfer: why it failed, in plain words
+  ///
+  /// In en, this message translates to:
+  /// **'A file or folder could not be found. It may have been moved or deleted.'**
+  String get causeNotFound;
+
+  /// Under Details of a failed transfer: why it failed, in plain words
+  ///
+  /// In en, this message translates to:
+  /// **'The folder is on a disk that cannot be written to.'**
+  String get causeReadOnly;
+
+  /// Under Details of a failed transfer: why it failed, in plain words
+  ///
+  /// In en, this message translates to:
+  /// **'A file changed while it was being sent. Send it again once it is saved.'**
+  String get causeFileChanged;
+
+  /// Under Details, above the error's technical text, which stays in English so it can be searched and reported
+  ///
+  /// In en, this message translates to:
+  /// **'Technical message in English, to include when you report a problem:'**
+  String get technicalDetail;
+
   /// No description provided for @settingsServer.
   ///
   /// In en, this message translates to:

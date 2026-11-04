@@ -285,6 +285,49 @@ class AppLocalizationsBn extends AppLocalizations {
   String get errorOther => 'কিছু একটা সমস্যা হয়েছে।';
 
   @override
+  String get causeTimedOut =>
+      'সংযোগ সাড়া দেওয়া বন্ধ করেছে। কোনো একটি ডিভাইস হয়তো নেটওয়ার্ক হারিয়েছে বা ঘুমিয়ে পড়েছে।';
+
+  @override
+  String get causeConnectionLost =>
+      'অন্য ডিভাইসের সঙ্গে সংযোগ বিচ্ছিন্ন হয়েছে।';
+
+  @override
+  String get causeNoRoute =>
+      'সরাসরি বা রিলে সার্ভারের মাধ্যমে, কোনো উপায়েই অন্য ডিভাইসে পৌঁছানো যায়নি।';
+
+  @override
+  String get causeRelay =>
+      'রিলে সার্ভারে পৌঁছানো যায়নি, অথবা দুটি ডিভাইস একই রিলে সার্ভার ব্যবহার করছে না।';
+
+  @override
+  String get causeProtocol =>
+      'অন্য ডিভাইস এমন কিছু পাঠিয়েছে যা এই সংস্করণ বোঝে না। দুটি ডিভাইসেই TotalDrop আপডেট করলে সাহায্য হতে পারে।';
+
+  @override
+  String get causeDiskFull => 'এই ডিভাইসে যথেষ্ট খালি জায়গা নেই।';
+
+  @override
+  String get causeNoPermission =>
+      'TotalDrop-এর প্রয়োজনীয় একটি ফাইল বা ফোল্ডার পড়ার বা লেখার অনুমতি নেই।';
+
+  @override
+  String get causeNotFound =>
+      'একটি ফাইল বা ফোল্ডার পাওয়া যায়নি। হয়তো সরানো বা মুছে ফেলা হয়েছে।';
+
+  @override
+  String get causeReadOnly =>
+      'ফোল্ডারটি এমন একটি ডিস্কে আছে যেখানে লেখা যায় না।';
+
+  @override
+  String get causeFileChanged =>
+      'পাঠানোর সময় একটি ফাইল বদলে গেছে। সেভ করার পর আবার পাঠান।';
+
+  @override
+  String get technicalDetail =>
+      'ইংরেজিতে প্রযুক্তিগত বার্তা, সমস্যা জানানোর সময় যোগ করার জন্য:';
+
+  @override
   String get settingsServer => 'সংযোগকারী সার্ভার';
 
   @override

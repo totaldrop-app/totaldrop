@@ -300,6 +300,49 @@ class AppLocalizationsEl extends AppLocalizations {
   String get errorOther => 'Κάτι πήγε στραβά.';
 
   @override
+  String get causeTimedOut =>
+      'Η σύνδεση σταμάτησε να αποκρίνεται. Μία από τις συσκευές ίσως έχασε το δίκτυο ή μπήκε σε αναστολή.';
+
+  @override
+  String get causeConnectionLost => 'Η σύνδεση με την άλλη συσκευή διακόπηκε.';
+
+  @override
+  String get causeNoRoute =>
+      'Η άλλη συσκευή δεν ήταν προσβάσιμη ούτε απευθείας ούτε μέσω του διακομιστή αναμετάδοσης.';
+
+  @override
+  String get causeRelay =>
+      'Ο διακομιστής αναμετάδοσης δεν ήταν προσβάσιμος ή οι δύο συσκευές δεν χρησιμοποιούν τον ίδιο.';
+
+  @override
+  String get causeProtocol =>
+      'Η άλλη συσκευή έστειλε κάτι που αυτή η έκδοση δεν καταλαβαίνει. Μπορεί να βοηθήσει η ενημέρωση του TotalDrop και στις δύο συσκευές.';
+
+  @override
+  String get causeDiskFull =>
+      'Δεν υπάρχει αρκετός ελεύθερος χώρος σε αυτή τη συσκευή.';
+
+  @override
+  String get causeNoPermission =>
+      'Το TotalDrop δεν έχει άδεια να διαβάσει ή να γράψει ένα αρχείο ή φάκελο που χρειάζεται.';
+
+  @override
+  String get causeNotFound =>
+      'Ένα αρχείο ή φάκελος δεν βρέθηκε. Ίσως μετακινήθηκε ή διαγράφηκε.';
+
+  @override
+  String get causeReadOnly =>
+      'Ο φάκελος βρίσκεται σε δίσκο όπου δεν μπορεί να γίνει εγγραφή.';
+
+  @override
+  String get causeFileChanged =>
+      'Ένα αρχείο άλλαξε ενώ στελνόταν. Στείλτε το ξανά αφού αποθηκευτεί.';
+
+  @override
+  String get technicalDetail =>
+      'Τεχνικό μήνυμα στα αγγλικά, για να το επισυνάψετε όταν αναφέρετε ένα πρόβλημα:';
+
+  @override
   String get settingsServer => 'Διακομιστής συνάντησης';
 
   @override

@@ -61,6 +61,7 @@ pub mod qobject {
         #[qproperty(QString, saved_to, cxx_name = "savedTo")]
         #[qproperty(QString, error_kind, cxx_name = "errorKind")]
         #[qproperty(QString, error_detail, cxx_name = "errorDetail")]
+        #[qproperty(QString, error_cause, cxx_name = "errorCause")]
         #[qproperty(QString, server)]
         #[qproperty(QString, default_server, cxx_name = "defaultServer")]
         #[qproperty(bool, privacy_mode, cxx_name = "privacyMode")]
@@ -210,6 +211,7 @@ pub struct TransferRust {
     saved_to: QString,
     error_kind: QString,
     error_detail: QString,
+    error_cause: QString,
     server: QString,
     default_server: QString,
     privacy_mode: bool,
@@ -332,6 +334,7 @@ impl qobject::Transfer {
         self.as_mut().set_saved_to(QString::default());
         self.as_mut().set_error_kind(QString::default());
         self.as_mut().set_error_detail(QString::default());
+        self.as_mut().set_error_cause(QString::default());
         self.as_mut().set_state(QString::from(state));
         g
     }
@@ -340,9 +343,12 @@ impl qobject::Transfer {
         self.rust().session.generation.load(Ordering::SeqCst) == g
     }
 
-    fn fail(mut self: Pin<&mut Self>, kind: &str, detail: &str) {
+    /// `cause` names the explanation QML shows in the person's language
+    /// (`cause` + it in Strings), next to the English `detail` (#212).
+    fn fail(mut self: Pin<&mut Self>, kind: &str, detail: &str, cause: &str) {
         self.as_mut().set_error_kind(QString::from(kind));
         self.as_mut().set_error_detail(QString::from(detail));
+        self.as_mut().set_error_cause(QString::from(cause));
         let state = if kind == "Declined" && self.role().to_string() == "send" {
             "declined"
         } else {
@@ -441,10 +447,10 @@ impl qobject::Transfer {
             let prepared = match prepared {
                 Ok(p) => p,
                 Err(e) => {
-                    let (k, d) = (kind(&e), e.to_string());
+                    let (k, d, c) = (kind(&e), e.to_string(), e.cause().as_str());
                     let _ = thread.queue(move |obj| {
                         if obj.current(g) {
-                            obj.fail(k, &d);
+                            obj.fail(k, &d, c);
                         }
                     });
                     return;
@@ -479,7 +485,7 @@ impl qobject::Transfer {
                         obj.as_mut().set_files_failed(count(r.files_failed));
                         obj.as_mut().set_state(QString::from("done"));
                     }
-                    Err(e) => obj.fail(send_kind(&e), &e.to_string()),
+                    Err(e) => obj.fail(send_kind(&e), &e.to_string(), e.cause().as_str()),
                 }
             });
         });
@@ -528,10 +534,10 @@ impl qobject::Transfer {
                     });
                 }
                 Err(e) => {
-                    let (k, d) = (connect_kind(&e), e.to_string());
+                    let (k, d, c) = (connect_kind(&e), e.to_string(), e.cause().as_str());
                     let _ = thread.queue(move |obj| {
                         if obj.current(g) {
-                            obj.fail(k, &d);
+                            obj.fail(k, &d, c);
                         }
                     });
                 }
@@ -576,7 +582,7 @@ impl qobject::Transfer {
                         obj.as_mut().set_saved_to(QString::from(&saved));
                         obj.as_mut().set_state(QString::from("done"));
                     }
-                    Err(e) => obj.fail(kind(&e), &e.to_string()),
+                    Err(e) => obj.fail(kind(&e), &e.to_string(), e.cause().as_str()),
                 }
             });
         });

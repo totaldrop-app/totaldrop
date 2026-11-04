@@ -305,6 +305,50 @@ class AppLocalizationsFr extends AppLocalizations {
   String get errorOther => 'Un problème est survenu.';
 
   @override
+  String get causeTimedOut =>
+      'La connexion ne répond plus. L\'un des appareils a peut-être perdu le réseau ou s\'est mis en veille.';
+
+  @override
+  String get causeConnectionLost =>
+      'La connexion avec l\'autre appareil a été coupée.';
+
+  @override
+  String get causeNoRoute =>
+      'Impossible de joindre l\'autre appareil, ni directement ni par le serveur relais.';
+
+  @override
+  String get causeRelay =>
+      'Le serveur relais est injoignable, ou les deux appareils n\'utilisent pas le même.';
+
+  @override
+  String get causeProtocol =>
+      'L\'autre appareil a envoyé quelque chose que cette version ne comprend pas. Mettre à jour TotalDrop sur les deux appareils peut aider.';
+
+  @override
+  String get causeDiskFull =>
+      'Il n\'y a pas assez d\'espace libre sur cet appareil.';
+
+  @override
+  String get causeNoPermission =>
+      'TotalDrop n\'a pas le droit de lire ou d\'écrire un fichier ou un dossier dont il a besoin.';
+
+  @override
+  String get causeNotFound =>
+      'Un fichier ou un dossier est introuvable. Il a peut-être été déplacé ou supprimé.';
+
+  @override
+  String get causeReadOnly =>
+      'Le dossier se trouve sur un disque où l\'on ne peut pas écrire.';
+
+  @override
+  String get causeFileChanged =>
+      'Un fichier a changé pendant son envoi. Renvoyez-le une fois enregistré.';
+
+  @override
+  String get technicalDetail =>
+      'Message technique en anglais, à joindre quand vous signalez un problème :';
+
+  @override
   String get settingsServer => 'Serveur de rendez-vous';
 
   @override

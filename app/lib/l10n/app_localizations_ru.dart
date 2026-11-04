@@ -305,6 +305,49 @@ class AppLocalizationsRu extends AppLocalizations {
   String get errorOther => 'Что-то пошло не так.';
 
   @override
+  String get causeTimedOut =>
+      'Соединение перестало отвечать. Возможно, одно из устройств потеряло сеть или ушло в спящий режим.';
+
+  @override
+  String get causeConnectionLost =>
+      'Соединение с другим устройством прервалось.';
+
+  @override
+  String get causeNoRoute =>
+      'До другого устройства не удалось достучаться ни напрямую, ни через ретранслятор.';
+
+  @override
+  String get causeRelay =>
+      'Ретранслятор недоступен, или устройства используют разные ретрансляторы.';
+
+  @override
+  String get causeProtocol =>
+      'Другое устройство прислало то, что эта версия не понимает. Может помочь обновление TotalDrop на обоих устройствах.';
+
+  @override
+  String get causeDiskFull => 'На этом устройстве не хватает свободного места.';
+
+  @override
+  String get causeNoPermission =>
+      'У TotalDrop нет разрешения читать или записывать нужный файл или папку.';
+
+  @override
+  String get causeNotFound =>
+      'Файл или папка не найдены. Возможно, их переместили или удалили.';
+
+  @override
+  String get causeReadOnly =>
+      'Папка находится на диске, на который нельзя записывать.';
+
+  @override
+  String get causeFileChanged =>
+      'Файл изменился во время отправки. Отправьте его снова после сохранения.';
+
+  @override
+  String get technicalDetail =>
+      'Техническое сообщение на английском, чтобы приложить его к сообщению о проблеме:';
+
+  @override
   String get settingsServer => 'Сервер встречи';
 
   @override

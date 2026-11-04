@@ -298,6 +298,48 @@ class AppLocalizationsFi extends AppLocalizations {
   String get errorOther => 'Jokin meni vikaan.';
 
   @override
+  String get causeTimedOut =>
+      'Yhteys lakkasi vastaamasta. Toinen laitteista on ehkä menettänyt verkon tai mennyt lepotilaan.';
+
+  @override
+  String get causeConnectionLost => 'Yhteys toiseen laitteeseen katkesi.';
+
+  @override
+  String get causeNoRoute =>
+      'Toista laitetta ei tavoitettu suoraan eikä välityspalvelimen kautta.';
+
+  @override
+  String get causeRelay =>
+      'Välityspalvelinta ei tavoitettu, tai laitteet eivät käytä samaa välityspalvelinta.';
+
+  @override
+  String get causeProtocol =>
+      'Toinen laite lähetti jotain, mitä tämä versio ei ymmärrä. TotalDropin päivittäminen molemmissa laitteissa voi auttaa.';
+
+  @override
+  String get causeDiskFull =>
+      'Tässä laitteessa ei ole tarpeeksi vapaata tilaa.';
+
+  @override
+  String get causeNoPermission =>
+      'TotalDropilla ei ole lupaa lukea tai kirjoittaa tarvitsemaansa tiedostoa tai kansiota.';
+
+  @override
+  String get causeNotFound =>
+      'Tiedostoa tai kansiota ei löytynyt. Se on ehkä siirretty tai poistettu.';
+
+  @override
+  String get causeReadOnly => 'Kansio on levyllä, jolle ei voi kirjoittaa.';
+
+  @override
+  String get causeFileChanged =>
+      'Tiedosto muuttui lähetyksen aikana. Lähetä se uudelleen, kun se on tallennettu.';
+
+  @override
+  String get technicalDetail =>
+      'Tekninen viesti englanniksi, liitettäväksi ongelmasta ilmoittaessa:';
+
+  @override
   String get settingsServer => 'Kohtauspalvelin';
 
   @override

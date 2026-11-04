@@ -432,6 +432,7 @@ Page {
                     + (page.transfer.filesFailed > 0 ? " " + Strings.f("sendSomeFailed", { count: page.transfer.filesFailed }) : "")
                   : ""
             detail: page.phase === "done" ? "" : page.transfer.errorDetail
+            cause: page.phase === "done" ? "" : page.transfer.errorCause
             canRetry: page.phase === "failed"
             onRetry: page.transfer.send(page.paths(), page.strong)
             onFinished: { page.transfer.reset(); files.clear(); page.recalc(); page.close() }

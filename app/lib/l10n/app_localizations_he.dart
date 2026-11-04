@@ -297,6 +297,47 @@ class AppLocalizationsHe extends AppLocalizations {
   String get errorOther => 'משהו השתבש.';
 
   @override
+  String get causeTimedOut =>
+      'החיבור הפסיק להגיב. ייתכן שאחד המכשירים איבד את הרשת או נכנס למצב שינה.';
+
+  @override
+  String get causeConnectionLost => 'החיבור למכשיר השני נותק.';
+
+  @override
+  String get causeNoRoute =>
+      'לא הצלחנו להגיע למכשיר השני, לא ישירות ולא דרך שרת הממסר.';
+
+  @override
+  String get causeRelay =>
+      'לא הצלחנו להגיע לשרת הממסר, או ששני המכשירים לא משתמשים באותו שרת.';
+
+  @override
+  String get causeProtocol =>
+      'המכשיר השני שלח משהו שהגרסה הזו לא מבינה. עדכון TotalDrop בשני המכשירים עשוי לעזור.';
+
+  @override
+  String get causeDiskFull => 'אין מספיק מקום פנוי במכשיר הזה.';
+
+  @override
+  String get causeNoPermission =>
+      'ל-TotalDrop אין הרשאה לקרוא או לכתוב קובץ או תיקייה שהוא צריך.';
+
+  @override
+  String get causeNotFound =>
+      'קובץ או תיקייה לא נמצאו. ייתכן שהם הועברו או נמחקו.';
+
+  @override
+  String get causeReadOnly => 'התיקייה נמצאת בדיסק שאי אפשר לכתוב אליו.';
+
+  @override
+  String get causeFileChanged =>
+      'קובץ השתנה בזמן השליחה. שלחו אותו שוב אחרי שיישמר.';
+
+  @override
+  String get technicalDetail =>
+      'הודעה טכנית באנגלית, לצירוף כשמדווחים על בעיה:';
+
+  @override
   String get settingsServer => 'שרת מפגש';
 
   @override

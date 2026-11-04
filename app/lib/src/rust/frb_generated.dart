@@ -1026,11 +1026,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TransferError dco_decode_transfer_error(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 2)
-      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    if (arr.length != 3)
+      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
     return TransferError(
       kind: dco_decode_error_kind(arr[0]),
       detail: dco_decode_String(arr[1]),
+      cause: dco_decode_String(arr[2]),
     );
   }
 
@@ -1321,7 +1322,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var var_kind = sse_decode_error_kind(deserializer);
     var var_detail = sse_decode_String(deserializer);
-    return TransferError(kind: var_kind, detail: var_detail);
+    var var_cause = sse_decode_String(deserializer);
+    return TransferError(kind: var_kind, detail: var_detail, cause: var_cause);
   }
 
   @protected
@@ -1632,6 +1634,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_error_kind(self.kind, serializer);
     sse_encode_String(self.detail, serializer);
+    sse_encode_String(self.cause, serializer);
   }
 
   @protected

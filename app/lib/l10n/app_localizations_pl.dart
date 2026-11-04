@@ -305,6 +305,49 @@ class AppLocalizationsPl extends AppLocalizations {
   String get errorOther => 'Coś poszło nie tak.';
 
   @override
+  String get causeTimedOut =>
+      'Połączenie przestało odpowiadać. Jedno z urządzeń mogło stracić sieć albo przejść w stan uśpienia.';
+
+  @override
+  String get causeConnectionLost =>
+      'Połączenie z drugim urządzeniem zostało przerwane.';
+
+  @override
+  String get causeNoRoute =>
+      'Nie udało się dotrzeć do drugiego urządzenia ani bezpośrednio, ani przez serwer pośredniczący.';
+
+  @override
+  String get causeRelay =>
+      'Serwer pośredniczący jest nieosiągalny albo oba urządzenia nie używają tego samego.';
+
+  @override
+  String get causeProtocol =>
+      'Drugie urządzenie wysłało coś, czego ta wersja nie rozumie. Pomóc może aktualizacja TotalDrop na obu urządzeniach.';
+
+  @override
+  String get causeDiskFull => 'Na tym urządzeniu brakuje wolnego miejsca.';
+
+  @override
+  String get causeNoPermission =>
+      'TotalDrop nie ma uprawnień do odczytu lub zapisu potrzebnego pliku albo folderu.';
+
+  @override
+  String get causeNotFound =>
+      'Nie znaleziono pliku lub folderu. Mógł zostać przeniesiony albo usunięty.';
+
+  @override
+  String get causeReadOnly =>
+      'Folder znajduje się na dysku, na którym nie można zapisywać.';
+
+  @override
+  String get causeFileChanged =>
+      'Plik zmienił się podczas wysyłania. Wyślij go ponownie po zapisaniu.';
+
+  @override
+  String get technicalDetail =>
+      'Komunikat techniczny po angielsku, do dołączenia przy zgłaszaniu problemu:';
+
+  @override
   String get settingsServer => 'Serwer spotkań';
 
   @override
