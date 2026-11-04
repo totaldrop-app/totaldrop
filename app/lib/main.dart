@@ -20,7 +20,7 @@ import 'ui/settings/settings_view.dart';
 /// Shown in Settings; kept in step with pubspec.yaml by the release script.
 const appVersion = String.fromEnvironment(
   'TOTALDROP_VERSION',
-  defaultValue: '0.3.0-beta.3',
+  defaultValue: '0.3.0-beta.4',
 );
 
 Future<void> main() async {

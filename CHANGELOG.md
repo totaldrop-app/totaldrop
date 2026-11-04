@@ -10,6 +10,101 @@ All notable changes to TotalDrop are recorded here. The format follows
 Entries for the next release are in [changelog.d/](changelog.d/), one file
 per change, and move here when it is released (docs/surec.md).
 
+## [android-0.3.0-beta.4] and [linux-0.3.0-beta.4] - 2026-11-04
+
+### Added
+
+- **Site:** The privacy policy is now in all 35 languages of the site, each
+  at its own address (`/privacy/de`, `/privacy/ja`…). Every translation says
+  that the English text is the authoritative one, and the site's Privacy
+  links open the policy in the language you chose (#207).
+- **Site:** A brand page at totaldrop.app/brand shows the mark and how it
+  turns, the logo and app icon, the colours, type, buttons and other
+  components, spacing, icons and voice, with what not to do, and offers
+  the logo files to download, in all 35 languages (#220).
+- **CI:** The OpenSSF Scorecard rates the repository's supply-chain
+  practices on main and every week and publishes the result; the README
+  shows its badge in every language. CodeQL code scanning, on in GitHub's
+  default setup, reads the Rust, C++, JavaScript and TypeScript code and
+  the workflows (#225).
+- **README:** The README shows the OpenSSF Best Practices badge, at the
+  passing level, in every language (#232).
+- **Site:** The brand page at totaldrop.app/brand says how others may use
+  the TotalDrop name and mark: writing about it, packaging it unchanged,
+  building compatible software and publishing a changed version under its
+  own name, with what is not allowed, in all 35 languages (#234).
+- **Site:** The footer of the site's main pages links to the project's
+  OpenSSF Best Practices page (#236).
+- **Linux:** Each release also carries its signed build provenance as a
+  `.sigstore.json` file, so the packages can be checked without GitHub's
+  attestation API (#238).
+- **Security:** A `SECURITY-INSIGHTS.yml` file describes, in a form tools
+  can read, how to report a vulnerability, how releases are built and
+  which security checks run (#238).
+- **Docs:** GOVERNANCE.md describes how decisions are made, who holds
+  which role and what is still missing for the project to carry on
+  without its single maintainer (#241).
+- **Docs:** CONTRIBUTING.md names the coding standard for each language
+  and the tool that enforces it, the code review checklist, and where new
+  contributors can start (#241).
+- **Docs:** SECURITY.md describes how a vulnerability report is handled,
+  step by step, and what TotalDrop does and does not protect (#241).
+- **Docs:** docs/mimari.md describes the architecture, and the threat
+  model gains an assurance case: why the security requirements hold
+  (#241).
+
+### Changed
+
+- **Site:** The turning mark on the home page now has a desktop, a phone,
+  a laptop and a tablet around it, and the one its corner points at
+  lights up: every device to every device. With reduced motion everything
+  stays still (#209).
+- **Android, Linux, CLI:** When a transfer fails, the reason is now given in
+  the device's language for many failures, for example that the connection
+  stopped responding or that the disk is full; on Android and Linux it is
+  under Details. The technical message stays in English for problem
+  reports, and on Android and Linux it is labelled as such (#212).
+- **Site, README:** The download page and the README point at Android and
+  Linux 0.3.0-beta.3 and list what is new: one window on Linux, relay
+  transfers that connect and reconnect, transfers that no longer stop right
+  after the code, Stop that ends the transfer at once, and Android
+  transfers that keep going in the background (#213).
+- **Linux:** The licence texts moved to `LICENSES/`, named by their SPDX
+  identifiers. The Arch and Fedora packages install them as
+  `GPL-3.0-or-later.txt`, `MIT.txt` and `Apache-2.0.txt` under
+  `/usr/share/licenses/totaldrop/` (#229).
+- **Build:** The Linux build images check rustup-init against a fixed
+  sha256 before running it, instead of piping an install script to the
+  shell (#238).
+- **CI:** OSV-Scanner, which OpenSSF Scorecard uses, ignores the same
+  three unmaintained-crate advisories as cargo-deny, and CI checks that
+  the two lists agree (#238).
+
+### Fixed
+
+- **Android, Linux, CLI:** A transfer that started on a direct connection
+  no longer stops with "timed out" when that path goes quiet, for example
+  when a phone's Wi-Fi drops: after 8 seconds without anything from the
+  other device, it moves onto the relay and goes on. It goes back to the
+  direct connection only if the other device is still sending over it;
+  otherwise it stays on the relay until it ends. Both devices must use
+  the same relay (#185).
+- **Android, Linux, CLI, relay:** A transfer through the relay survives a
+  connection that dies without either end noticing, for example after
+  switching Wi-Fi networks: the device notices within 10 seconds and
+  connects again, and the relay now accepts the new connection at once
+  instead of refusing it until the transfer times out. Both relays now end
+  the other side in the same cases (#190).
+- **Android, Linux, CLI:** The sending device's progress bar shows what has
+  reached the other device, instead of running ahead and showing a file as
+  sent while it is still on the way. When the other device runs an older
+  version, the bar shows only what has surely arrived, so it may stay
+  still until a file has arrived whole (#211).
+- **Site:** totaldrop.app now has a site icon that search engines and
+  older browsers can read, `/favicon.ico` beside the SVG, and an icon for
+  the iPhone and iPad home screen. Google showed a plain globe next to the
+  site in its results (#227).
+
 ## [android-0.3.0-beta.3] and [linux-0.3.0-beta.3] - 2026-11-04
 
 ### Changed

@@ -494,7 +494,7 @@ dependencies = [
 
 [[package]]
 name = "totaldrop-l10n"
-version = "0.2.0-beta.2"
+version = "0.2.0-beta.3"
 dependencies = [
  "icu_decimal",
  "icu_locale",
@@ -506,7 +506,7 @@ dependencies = [
 
 [[package]]
 name = "totaldrop-proto"
-version = "0.2.0-beta.2"
+version = "0.2.0-beta.3"
 dependencies = [
  "bip39",
  "ciborium",
