@@ -1,6 +1,6 @@
 # 0013: Hesap sunucuda tutulmaz: Hayalet halka
 
-- **Durum:** Önerilen, 4 Kasım 2026 (#243). Kabul edilirse
+- **Durum:** Kabul, 4 Kasım 2026 (Ozan, #243).
   [0004](0004-mullvad-tarzi-hesap.md)'ün yerini alır.
 
 ## Bağlam
@@ -42,8 +42,8 @@ Bağlayıcı noktalar şunlardır:
   halka sırrı yenilenir. Halka başlarının en çok 7 günlük süresi vardır.
 - **Şeffaflık günlüğü:** bağımsız tanıklı, anonim bir şeffaflık günlüğü
   **ilk sürümde** vardır (Ozan, 4 Kasım 2026). Tanıklar dahil etmeyi de
-  zorlar: halkanın bildirdiği bir kaydı 1 saatten uzun süre içermeyen kökü
-  imzalamazlar. Hem gönderen hem alan taraf tazelik denetimi yapar.
+  zorlar: halkanın kendilerine gönderdiği bir kaydı 1 saatten uzun süre
+  içermeyen kökü imzalamazlar (Ozan, 4 Kasım 2026). Hem gönderen hem alan taraf tazelik denetimi yapar.
 - **Kurtarma:**
   - isteğe bağlıdır ve 24 kelimeden oluşur;
   - bekleme süresi 2 ya da daha çok cihazda 72 saat, tek cihazda 7 gündür;
@@ -85,8 +85,8 @@ Bağlayıcı noktalar şunlardır:
 
 ## Sonuçlar
 
-- **Belgeler:** [hesap.md](../hesap.md) yeniden yazıldı. Kabul edildiğinde
-  0004'ün durumu "yerini aldı" olur. [Tehdit modeline](../tehdit-modeli.md) hesap
+- **Belgeler:** [hesap.md](../hesap.md) yeniden yazıldı. 0004'ün durumu
+  "yerini aldı" oldu. [Tehdit modeline](../tehdit-modeli.md) hesap
   bölümü eklendi.
 - **Doğrulama ve kod sırası:** kod yazılmadan önce Tamarin modeli ve
   bağımsız bir insan kripto incelemesi yapılır. Ardından protokol notları,
