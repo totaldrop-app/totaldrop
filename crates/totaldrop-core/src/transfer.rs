@@ -31,6 +31,22 @@ const DECISION_TIMEOUT: Duration = Duration::from_secs(10 * 60);
 /// How long telling the other side about a stop may take.
 const STOP_NOTICE: Duration = Duration::from_secs(2);
 
+/// How often a receiver reports its progress, and how often a sender whose
+/// receiver does not report updates its estimate (#211).
+const PROGRESS_EVERY: Duration = Duration::from_millis(250);
+
+/// The most a sender's count of bytes handed to QUIC can be ahead of what
+/// the receiver has written: QUIC's send window plus the receiver's
+/// connection window (see `transport`).
+const MAX_IN_FLIGHT: u64 = 2 * crate::transport::CONNECTION_WINDOW as u64;
+
+/// What a sender can honestly show when its receiver does not report
+/// progress: the files the receiver confirmed, or what QUIC has taken less
+/// what may still be on the way, whichever is larger.
+fn lower_bound(confirmed: u64, handed_over: u64) -> u64 {
+    confirmed.max(handed_over.saturating_sub(MAX_IN_FLIGHT))
+}
+
 /// Tell the other side this one stopped, best effort and briefly, and close
 /// the connection. Returns the error the stopped side reports.
 pub(crate) async fn tell_stopped(
@@ -321,8 +337,6 @@ async fn send_entry(
     ck: ContentKey,
     transfer_id: [u8; 16],
     done: Arc<AtomicU64>,
-    total: u64,
-    progress: Progress,
 ) -> Result<()> {
     let chunks = chunk_count(entry.size).ok_or(Error::Protocol("file too large"))?;
     let mut file = tokio::fs::File::open(&source).await?;
@@ -350,10 +364,8 @@ async fn send_entry(
         let ct = cipher.seal(idx, last, slot)?;
         write_frame(stream, &ct).await?;
         remaining = remaining.saturating_sub(len as u64);
-        let now = done
-            .fetch_add(len as u64, Ordering::Relaxed)
-            .saturating_add(len as u64);
-        progress(now, total);
+        // Taken by QUIC, not arrived: progress comes from the receiver.
+        done.fetch_add(len as u64, Ordering::Relaxed);
     }
     stream
         .finish()
@@ -377,8 +389,6 @@ async fn send_entry_until_stopped(
     ck: ContentKey,
     transfer_id: [u8; 16],
     done: Arc<AtomicU64>,
-    total: u64,
-    progress: Progress,
 ) -> Result<()> {
     let permit = tokio::select! {
         biased;
@@ -393,7 +403,7 @@ async fn send_entry_until_stopped(
     let sent = tokio::select! {
         biased;
         () = stop.stopped() => Err(Error::Stopped),
-        r = send_entry(&mut stream, source, entry, index, ck, transfer_id, done, total, progress) => r,
+        r = send_entry(&mut stream, source, entry, index, ck, transfer_id, done) => r,
     };
     if let Err(e) = sent {
         // A dropped stream would end cleanly and read as a short file.
@@ -451,6 +461,7 @@ pub async fn send_files(
         manifest,
         content_key: *ck.as_bytes(),
         signature,
+        progress: true,
     };
     send_control(&mut chan.sealer, &mut chan.send, &offer).await?;
 
@@ -477,11 +488,12 @@ pub async fn send_files(
             return Err(Error::Connect("the receiver did not answer".into()));
         }
     };
-    let wanted = match decision {
+    let (wanted, reports) = match decision {
         Control::Accept {
             transfer_id: t,
             wanted,
-        } if t == transfer_id => wanted,
+            progress,
+        } if t == transfer_id => (wanted, progress),
         Control::Reject { reason, .. } => return Err(Error::Rejected(reason)),
         Control::Cancel { reason, .. } => return Err(Error::Cancelled(reason)),
         _ => return Err(Error::Protocol("expected accept")),
@@ -518,14 +530,21 @@ pub async fn send_files(
             ck.clone(),
             transfer_id,
             done.clone(),
-            wanted_bytes,
-            progress.clone(),
         ));
     }
 
     let mut report = SendReport::default();
     let mut pending = to_send.len();
     let mut finished = HashSet::new();
+    // What the bar shows: the receiver's reports, or a lower bound for a
+    // receiver that does not send them. It never goes back.
+    let mut shown = 0u64;
+    let mut confirmed = 0u64;
+    let mut reported = 0u64;
+    let mut estimate = tokio::time::interval(PROGRESS_EVERY);
+    estimate.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);
+    // The total is known now, even before anything has arrived.
+    progress(0, wanted_bytes);
     while pending > 0 {
         tokio::select! {
             biased;
@@ -543,18 +562,39 @@ pub async fn send_files(
             }
             msg = ctl_rx.recv() => match msg {
                 Some(Ok(Control::EntryDone { transfer_id: t, index, ok })) if t == transfer_id => {
-                    if !to_send.iter().any(|(i, _)| *i == index) || !finished.insert(index) {
+                    let Some((_, src)) = to_send.iter().find(|(i, _)| *i == index) else {
+                        return Err(Error::Protocol("unexpected entry_done"));
+                    };
+                    if !finished.insert(index) {
                         return Err(Error::Protocol("unexpected entry_done"));
                     }
+                    confirmed = confirmed.saturating_add(src.entry.size);
                     if ok { report.files_ok = report.files_ok.saturating_add(1); }
                     else { report.files_failed = report.files_failed.saturating_add(1); }
                     pending = pending.saturating_sub(1);
+                }
+                Some(Ok(Control::Received { transfer_id: t, bytes })) if reports && t == transfer_id => {
+                    if bytes < reported || bytes > wanted_bytes {
+                        return Err(Error::Protocol("bad progress report"));
+                    }
+                    reported = bytes;
+                    if bytes > shown {
+                        shown = bytes;
+                        progress(shown, wanted_bytes);
+                    }
                 }
                 Some(Ok(Control::Cancel { reason, .. })) => return Err(Error::Cancelled(reason)),
                 Some(Ok(_)) => return Err(Error::Protocol("unexpected control message")),
                 Some(Err(e)) => return Err(e),
                 None => return Err(control_ended(conn)),
             },
+            _ = estimate.tick(), if !reports => {
+                let now = lower_bound(confirmed, done.load(Ordering::Relaxed)).min(wanted_bytes);
+                if now > shown {
+                    shown = now;
+                    progress(shown, wanted_bytes);
+                }
+            }
             joined = tasks.join_next(), if !tasks.is_empty() => {
                 match joined {
                     Some(Ok(Ok(()))) | None => {}
@@ -584,6 +624,9 @@ pub async fn send_files(
             Err(e) => return Err(e),
         }
     }
+    if shown < wanted_bytes {
+        progress(wanted_bytes, wanted_bytes);
+    }
     report.bytes = done.load(Ordering::Relaxed);
     let _ = send.finish();
     conn.close(0u32.into(), b"done");
@@ -611,6 +654,8 @@ pub struct VerifiedOffer {
     manifest: Manifest,
     content_key: ContentKey,
     paths: Vec<SafePath>,
+    /// The sender wants `received` reports (offer field 7).
+    reports: bool,
     /// What to show the person.
     pub summary: OfferSummary,
 }
@@ -653,6 +698,7 @@ pub async fn receive_offer(chan: &mut SecureChannel, peer: &Certificate) -> Resu
         manifest,
         content_key,
         signature,
+        progress: reports,
     } = msg
     else {
         return Err(Error::Protocol("expected offer"));
@@ -689,6 +735,7 @@ pub async fn receive_offer(chan: &mut SecureChannel, peer: &Certificate) -> Resu
         manifest,
         content_key: ContentKey::from_bytes(content_key),
         paths,
+        reports,
         summary,
     })
 }
@@ -1079,6 +1126,7 @@ pub async fn accept(
         &Control::Accept {
             transfer_id,
             wanted: wanted.clone(),
+            progress: offer.reports,
         },
     )
     .await?;
@@ -1112,6 +1160,10 @@ pub async fn accept(
     let mut last_activity = tokio::time::Instant::now();
     let done_at_check = Arc::clone(&done);
     let mut seen_bytes = 0u64;
+    // Tell a sender that asked for it how much has arrived (#211).
+    let mut told = 0u64;
+    let mut report_tick = tokio::time::interval(PROGRESS_EVERY);
+    report_tick.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);
     let outcome: Result<()> = async {
         while pending > 0 {
             // Give up if nothing at all moves for a while: keep-alives alone
@@ -1171,6 +1223,14 @@ pub async fn accept(
                     Some(Err(e)) => return Err(e),
                     None => return Err(control_ended(conn)),
                 },
+                _ = report_tick.tick(), if offer.reports => {
+                    let bytes = done_at_check.load(Ordering::Relaxed);
+                    if bytes != told {
+                        send_control(&mut sealer, &mut send,
+                            &Control::Received { transfer_id, bytes }).await?;
+                        told = bytes;
+                    }
+                }
                 () = stop.stopped() => {
                     // Cancel and close first: dropping a stream that is still
                     // reading tells the sender to stop sending, which would
@@ -1242,7 +1302,6 @@ mod tests {
             mtime: None,
         };
         let stop = Stop::new();
-        let progress: Progress = Arc::new(|_, _| {});
         let done = Arc::new(AtomicU64::new(0));
         let task = tokio::spawn(send_entry_until_stopped(
             sender.clone(),
@@ -1254,8 +1313,6 @@ mod tests {
             ContentKey::generate().unwrap(),
             [1; 16],
             done.clone(),
-            size,
-            progress,
         ));
         let mut stream = receiver.accept_uni().await.unwrap();
         expect_frame(&mut stream, 1024).await.unwrap();
@@ -1279,6 +1336,119 @@ mod tests {
         // The receiver reports it as the sender stopping, even before the
         // cancel message arrives.
         assert!(matches!(Error::from(end.unwrap_err()), Error::Cancelled(r) if r == "stopped"));
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// Both ends of a transfer over `over_slow_relay`, with a secure
+    /// channel between them.
+    async fn secure_pair(
+        sender: &quinn::Connection,
+        receiver: &quinn::Connection,
+    ) -> (SecureChannel, SecureChannel, DeviceKeys, Certificate) {
+        let (sk, rk) = (
+            DeviceKeys::generate().unwrap(),
+            DeviceKeys::generate().unwrap(),
+        );
+        let (sc, rc) = (
+            crate::pairing::issue_certificate(&sk),
+            crate::pairing::issue_certificate(&rk),
+        );
+        let input = |keys, peer| crate::secure::HandshakeInput {
+            keys,
+            peer,
+            psk: [3; 32],
+            mailbox_id: [4; 16],
+        };
+        let (s, r) = tokio::join!(
+            crate::secure::handshake(sender, input(&sk, &rc), false),
+            crate::secure::handshake(receiver, input(&rk, &sc), true),
+        );
+        (s.unwrap(), r.unwrap(), sk, sc)
+    }
+
+    /// The sender's bar shows what has arrived, not what QUIC has taken
+    /// (#211). Over a slow path the whole file fits QUIC's buffers, so
+    /// before, the sender showed it all sent while most of it was still on
+    /// the way.
+    #[tokio::test]
+    async fn sender_progress_follows_what_arrived() {
+        progress_over_a_slow_path(true).await;
+    }
+
+    /// A receiver that does not report (as before #211) gets no reports
+    /// asked of it, and its sender shows only a lower bound.
+    #[tokio::test]
+    async fn sender_estimates_progress_without_reports() {
+        progress_over_a_slow_path(false).await;
+    }
+
+    #[test]
+    fn the_estimate_never_runs_ahead() {
+        assert_eq!(lower_bound(0, MAX_IN_FLIGHT), 0);
+        assert_eq!(lower_bound(0, MAX_IN_FLIGHT + 5), 5);
+        assert_eq!(lower_bound(9, MAX_IN_FLIGHT + 5), 9);
+        assert_eq!(MAX_IN_FLIGHT, 32 << 20);
+    }
+
+    /// Send one file over a slow path and check the sender's bar never
+    /// shows more than had arrived. One chunk of slack covers a report
+    /// racing the receiver's own progress callback.
+    async fn progress_over_a_slow_path(reports: bool) {
+        let (sender, receiver) =
+            crate::transport::testing::over_slow_relay(Duration::from_millis(1)).await;
+        let (schan, rchan, skeys, scert) = secure_pair(&sender, &receiver).await;
+        let size = 6 * limits::CHUNK_SIZE;
+        let dir =
+            std::env::temp_dir().join(format!("td-progress-{reports}-{}", std::process::id()));
+        let (src, dest) = (dir.join("src"), dir.join("dest"));
+        std::fs::create_dir_all(&src).unwrap();
+        std::fs::create_dir_all(&dest).unwrap();
+        std::fs::write(src.join("p.bin"), vec![5u8; usize::try_from(size).unwrap()]).unwrap();
+        let (entries, _) = scan(&[src.join("p.bin")]).unwrap();
+
+        let arrived = Arc::new(AtomicU64::new(0));
+        let ahead = Arc::new(AtomicU64::new(0));
+        let last_shown = Arc::new(AtomicU64::new(0));
+        let on_receive: Progress = {
+            let arrived = arrived.clone();
+            Arc::new(move |n, _| {
+                arrived.fetch_max(n, Ordering::SeqCst);
+            })
+        };
+        let on_send: Progress = {
+            let (arrived, ahead, last_shown) = (arrived.clone(), ahead.clone(), last_shown.clone());
+            Arc::new(move |n, total| {
+                assert_eq!(total, size);
+                let got = arrived.load(Ordering::SeqCst);
+                ahead.fetch_max(n.saturating_sub(got), Ordering::SeqCst);
+                last_shown.store(n, Ordering::SeqCst);
+            })
+        };
+        let stop = Stop::new();
+        let send = {
+            let (sender, stop) = (sender.clone(), stop.clone());
+            tokio::spawn(async move {
+                send_files(&sender, schan, &skeys, entries, on_send, &stop).await
+            })
+        };
+        let mut rchan = rchan;
+        let mut offer = receive_offer(&mut rchan, &scert).await.unwrap();
+        assert!(offer.reports);
+        // As an old receiver: it ignores the field, so it never reports. A
+        // report sent anyway would fail the sender.
+        offer.reports = reports;
+        let received = accept(&receiver, rchan, offer, &dest, on_receive, &stop)
+            .await
+            .unwrap();
+        let sent = send.await.unwrap().unwrap();
+        assert_eq!((sent.files_ok, received.files_ok), (1, 1));
+        let ahead = ahead.load(Ordering::SeqCst);
+        assert!(
+            ahead <= limits::CHUNK_SIZE,
+            "the sender showed {ahead} bytes more than had arrived"
+        );
+        // It still ends at everything.
+        assert_eq!(last_shown.load(Ordering::SeqCst), size);
         let _ = std::fs::remove_dir_all(&dir);
     }
 
