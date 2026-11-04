@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
 // Checks the README and its translations in docs/readme/, run in CI:
 //   node site/tools/check-readmes.mjs          check
 //   node site/tools/check-readmes.mjs --write  rewrite the language lists

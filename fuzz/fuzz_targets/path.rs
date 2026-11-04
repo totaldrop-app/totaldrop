@@ -1,4 +1,7 @@
 #![no_main]
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: MIT OR Apache-2.0
+//
 //! Arbitrary bytes, split into segments, must never panic the path validator,
 //! and anything it accepts must satisfy the rules again after normalization.
 

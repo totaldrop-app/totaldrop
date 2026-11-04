@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
 //! `Launcher`, what the command line and later launches ask the window to
 //! show (#178). See [`crate::instance`].
 

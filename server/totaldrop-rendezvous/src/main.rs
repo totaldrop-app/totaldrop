@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: AGPL-3.0-or-later
+//
 //! `totaldrop-rendezvous`: run the rendezvous server.
 //!
 //! Usage: `totaldrop-rendezvous [ADDRESS]`, default `127.0.0.1:4000`.

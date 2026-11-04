@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: MIT OR Apache-2.0
+//
 //! Which language to show, from the system's preferences.
 //!
 //! Matching walks CLDR fallback chains (ICU4X `LocaleFallbacker`, so

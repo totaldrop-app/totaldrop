@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: AGPL-3.0-or-later
+//
 //! TotalDrop rendezvous server (spec section 5).
 //!
 //! Helps two devices that share a transfer code meet in a mailbox and pass

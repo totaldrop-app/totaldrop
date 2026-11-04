@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: MIT OR Apache-2.0
+//
 //! Wire formats: every protocol message is a CBOR map with small integer
 //! keys in deterministic encoding (spec section 2). Receivers ignore unknown
 //! keys, reject duplicate keys, and reject trailing bytes.

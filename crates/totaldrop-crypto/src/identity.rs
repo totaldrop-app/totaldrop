@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: MIT OR Apache-2.0
+//
 //! Device keys (spec section 4) and the ML-KEM-768 half of the hybrid
 //! handshake (spec section 6).
 

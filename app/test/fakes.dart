@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
 // Stand-ins for the Rust bridge, shared by the view model tests.
 import 'dart:async';
 

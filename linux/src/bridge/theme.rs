@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
 //! `SystemTheme`, the QML singleton that carries the desktop's look.
 //!
 //! It is filled once without waiting and then kept current by watchers on a

@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
 // A failed transfer says why in the person's language; the technical text
 // under Details stays English for problem reports, and says so (#212).
 import 'package:material_ui/material_ui.dart';

@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: MIT OR Apache-2.0
+//
 //! Errors a person may need to act on, kept free of secrets.
 
 use totaldrop_proto::wire::RejectReason;

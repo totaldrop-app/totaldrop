@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
 //! Desktop services: the portal file chooser, notifications, QR codes,
 //! TotalDrop links and code entry helpers.
 //!

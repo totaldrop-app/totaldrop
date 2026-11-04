@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # Creates the Google Play upload key for TotalDrop and android/key.properties.
 # Run it yourself, once. The password is typed here and never leaves this
 # computer; keep it and the .jks file in your password manager and backups.

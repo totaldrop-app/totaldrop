@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
 //! End-to-end tests: a real rendezvous server and two real clients on this
 //! machine, talking over WebSocket and QUIC exactly as they would over the
 //! internet.

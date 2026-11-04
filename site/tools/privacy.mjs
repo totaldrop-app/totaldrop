@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
 // Builds the privacy policy pages, one per site language (#207):
 //   node site/tools/privacy.mjs           check (CI): pages up to date, translations in shape
 //   node site/tools/privacy.mjs --write   rewrite site/public/privacy.html and privacy/<tag>.html

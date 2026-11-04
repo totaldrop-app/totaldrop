@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
 // Checks the site's translations (ADR 0008), run in CI:
 //   node site/tools/check-i18n.mjs
 // - every site/public/i18n/<tag>.json is valid, names its own @@locale and

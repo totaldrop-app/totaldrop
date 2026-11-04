@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: MIT OR Apache-2.0
+//
 //! Compiles the ARB files under `l10n/` and `l10n/status.json` into the
 //! crate, so programs never read translations from disk at run time.
 

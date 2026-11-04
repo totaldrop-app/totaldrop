@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
 //! The parts of `totaldrop-l10n` that Flutter's generated localizations do
 //! not cover: choosing the language the same way as the Rust programs,
 //! revealing hidden characters in names from the other side, and which

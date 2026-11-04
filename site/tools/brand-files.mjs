@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
 // The brand page's downloads (site/public/brand/files/), made from the
 // mark's geometry (docs/tasarim.md, "İşaret: Köşe") and the wordmark's
 // outline, so no file is drawn by hand:

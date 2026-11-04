@@ -1,3 +1,4 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //
 // Calls from the Worker to a Durable Object that may be tried again. Kept

@@ -1,4 +1,7 @@
 #!/bin/sh
+# SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # Every component has its own version (docs/versioning.md). Check that the
 # places naming one component's version agree, and that the servers and the
 # Android app's Rust library do not inherit the workspace version shared by

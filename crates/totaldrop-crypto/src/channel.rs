@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: MIT OR Apache-2.0
+//
 //! Message encryption for the mailbox (spec section 5) and for the secure
 //! session after the post-quantum hybrid step (spec section 6).
 

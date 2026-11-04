@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
 // The site's languages and how one is chosen (ADR 0008). Kept apart from
 // app.js so CI can load it without a page (site/tools/check-i18n.mjs) and
 // check it against l10n/status.json and l10n/tests/negotiation.json, the

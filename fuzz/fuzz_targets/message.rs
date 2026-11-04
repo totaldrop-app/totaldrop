@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: MIT OR Apache-2.0
+//
 //! Translations come from outside contributors: the message parser must
 //! never panic, and formatting what it accepts must not either.
 #![no_main]

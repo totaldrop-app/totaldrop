@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: MIT OR Apache-2.0
+//
 //! Cryptographic building blocks of the TotalDrop protocol, suite `TD0`.
 //!
 //! This crate implements only what the protocol specification fixes exactly:

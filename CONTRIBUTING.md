@@ -9,6 +9,7 @@ Thank you for helping. A few rules keep a security project safe:
 5. **Every pull request must pass CI**: formatting, Clippy with warnings as errors, tests on Linux, macOS and Windows, and `cargo deny`.
 6. **New dependencies need a reason.** Say in the pull request why it is needed, who maintains it, and what it pulls in.
 7. **Every pull request records its change** in a file of its own under [changelog.d/](changelog.d/README.md), never in CHANGELOG.md. CI fails a pull request without one.
+8. **Every file says its copyright and license.** A new source file starts with the two SPDX lines of its directory; other files are covered by `REUSE.toml` ([LICENSING.md](LICENSING.md)). CI runs `reuse lint`.
 
 Before opening a pull request:
 

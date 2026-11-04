@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: MIT OR Apache-2.0
+//
 //! One QUIC socket, two kinds of path.
 //!
 //! [`PathSocket`] is what the QUIC endpoint sends and receives through. It

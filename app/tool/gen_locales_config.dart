@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
 // Writes android/app/src/main/res/xml/locales_config.xml from the ARB files
 // in l10n/app, so Android 13+ offers exactly the languages the app has in
 // its per-app language settings (ADR 0008). CI runs this and fails if the

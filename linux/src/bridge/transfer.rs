@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
 //! `Transfer`, the QML object that sends and receives.
 //!
 //! A thin layer over `totaldrop-core`, like the Android bridge

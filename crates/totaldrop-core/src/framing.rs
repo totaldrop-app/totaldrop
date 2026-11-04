@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: MIT OR Apache-2.0
+//
 //! Length-framed messages on QUIC streams (spec section 2).
 
 use totaldrop_proto::wire::{LengthDecoder, encode_length};

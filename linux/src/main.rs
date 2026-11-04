@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
 //! TotalDrop for Linux: a Qt 6 Quick interface over `totaldrop-core`.
 //!
 //! The window is a native Wayland client (X11 still works through Qt's xcb

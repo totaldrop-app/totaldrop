@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
 //! `totaldrop`: the command-line client.
 
 use std::io::{IsTerminal as _, Write as _};

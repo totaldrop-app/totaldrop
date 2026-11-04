@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
 //! GTK colours, for desktops whose look is GTK's: GNOME, and Hyprland or
 //! others without a Qt platform theme.
 //!

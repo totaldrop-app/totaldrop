@@ -1,4 +1,7 @@
 #![no_main]
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: MIT OR Apache-2.0
+//
 //! Every wire decoder must accept or reject any input without panicking, and
 //! anything it accepts must re-encode to bytes that decode to the same value.
 

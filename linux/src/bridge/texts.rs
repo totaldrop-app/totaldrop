@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
 //! `Texts`, the QML singleton with the interface text in the desktop's
 //! language and region, from `totaldrop-l10n` (ADR 0008).
 //!

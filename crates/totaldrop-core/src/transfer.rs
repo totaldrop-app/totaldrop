@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: MIT OR Apache-2.0
+//
 //! The transfer protocol (spec section 8): offer, accept, encrypted chunks
 //! on data streams, verification and atomic placement.
 

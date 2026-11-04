@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
 // One Pages project serves three host names:
 //   totaldrop.app           the site
 //   www.totaldrop.app       redirects to totaldrop.app, path kept

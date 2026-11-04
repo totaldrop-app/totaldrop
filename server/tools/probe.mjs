@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: AGPL-3.0-or-later
+//
 // Health probe after a deploy: node server/tools/probe.mjs rendezvous|relay|site
 //
 // rendezvous  1. opens a WebSocket to /v0/allocate and closes it before

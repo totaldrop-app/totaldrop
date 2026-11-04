@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
 // Changelog entries live in changelog.d/, one file per change, and are moved
 // into CHANGELOG.md when a release is made (docs/surec.md). Pull requests
 // never edit the same lines, so they do not conflict with each other.

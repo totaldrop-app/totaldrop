@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: AGPL-3.0-or-later
+//
 //! The TotalDrop relay (spec section 6).
 //!
 //! It does two jobs, both described in [`totaldrop_proto::relay`]:

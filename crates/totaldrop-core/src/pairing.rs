@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: MIT OR Apache-2.0
+//
 //! The mailbox phase of a code transfer (spec section 5): CPace, key
 //! confirmation with the device certificates, and encrypted `HINTS`.
 
