@@ -4,16 +4,19 @@
 //   node site/tools/brand-files.mjs           check the files are up to date (CI)
 //   node site/tools/brand-files.mjs --write   write the SVG files
 //   node site/tools/brand-files.mjs --png     also render the PNG files (Playwright)
+// Each PNG's source SVG hash is kept in png-sources.json beside this script,
+// so a changed SVG without fresh PNGs fails the check.
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
+import { createHash } from "node:crypto";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const out = join(root, "site", "public", "brand", "files");
 
 // The mark on its 112-unit canvas, and its colours.
-export const MARK = "M55 15H97V57A42 42 0 1 1 55 15Z";
+const MARK = "M55 15H97V57A42 42 0 1 1 55 15Z";
 const VIOLET = "#6D4AE0", GLOW = "#A68BFF", PAPER = "#F4F2FB", INK = "#22184F";
 
 // "TotalDrop" in Bricolage Grotesque 800, from site/tools/wordmark.py:
@@ -38,7 +41,7 @@ const logo = (markFill, nameFill) => {
 // mark at 0.68 on a violet square.
 const icon = svg("0 0 128 128", `<rect x="8" y="8" width="112" height="112" rx="28" fill="${VIOLET}"/><g transform="translate(25.92 25.92) scale(0.68)"><path fill="${PAPER}" d="${MARK}"/></g>`);
 
-export const FILES = {
+const FILES = {
   "totaldrop-mark.svg": mark(VIOLET),
   "totaldrop-mark-dark.svg": mark(GLOW),
   "totaldrop-mark-black.svg": mark("#000000"),
@@ -83,7 +86,22 @@ if (args.includes("--png")) {
   await browser.close();
 }
 
-for (const [, png] of PNGS) if (!existsSync(join(out, png))) errors.push(`${png} is missing: run node site/tools/brand-files.mjs --png`);
+const sources = join(dirname(fileURLToPath(import.meta.url)), "png-sources.json");
+const hash = (text) => createHash("sha256").update(text).digest("hex");
+if (args.includes("--png")) {
+  const record = Object.fromEntries(PNGS.map(([from, to]) => [to, hash(FILES[from])]));
+  writeFileSync(sources, JSON.stringify(record, null, 2) + "\n");
+}
+const recorded = existsSync(sources) ? JSON.parse(readFileSync(sources, "utf8")) : {};
+for (const [from, png, width] of PNGS) {
+  const path = join(out, png);
+  if (!existsSync(path)) { errors.push(`${png} is missing: run node site/tools/brand-files.mjs --png`); continue; }
+  if (recorded[png] !== hash(FILES[from])) { errors.push(`${png} was rendered from an older ${from}: run node site/tools/brand-files.mjs --png`); continue; }
+  // The PNG header: width and height at bytes 16 and 20.
+  const head = readFileSync(path).subarray(0, 24);
+  const [, , w, h] = /viewBox="([^"]+)"/.exec(FILES[from])[1].split(" ").map(Number);
+  if (head.readUInt32BE(16) !== width || head.readUInt32BE(20) !== Math.round((width * h) / w)) errors.push(`${png} has the wrong size`);
+}
 
 if (errors.length) { console.error(errors.join("\n")); process.exit(1); }
 console.log(`brand files ok: ${Object.keys(FILES).length} SVG, ${PNGS.length} PNG`);

@@ -67,7 +67,7 @@
       <ul class="reasons">
         <li>
           <h3 data-i18n="bk.p1.t">Part of the system</h3>
-          <p data-i18n="bk.p1.d">The apps take their colours, light or dark theme, fonts, icons and windows from the system. Only the mark and its colours stay the same everywhere.</p>
+          <p data-i18n="bk.p1.d">The apps take their colours, light or dark theme, icons and windows from the system, and on Linux the fonts too. Only the mark and its colours stay the same everywhere.</p>
         </li>
         <li>
           <h3 data-i18n="bk.p2.t">One accent per view</h3>
@@ -294,7 +294,7 @@
 
     <section class="block" id="colour" aria-labelledby="colour-title">
       <h2 id="colour-title" data-i18n="bk.col.title">Colour</h2>
-      <p data-i18n="bk.col.lede">The apps use the colours of the system they run on: Material You on Android, the desktop theme on Linux. The Aurora palette below is used when the system gives no colours, and on this website. Every text pair passes 4.5:1 in both themes.</p>
+      <p data-i18n="bk.col.lede">The apps use the colours of the system they run on: Material You on Android, the desktop theme on Linux. The Aurora palette below is used when the system gives no colours, and on this website. Text on the page ground passes 4.5:1 in both themes.</p>
       <div class="bk-swatches bk-brand">
         <div class="bk-sw"><span class="bk-chip bk-c-violet"></span><span class="bk-sw-name">Violet</span><code>#6D4AE0</code><span class="bk-sw-use" data-i18n="bk.col.violet">The mark and the accent on light grounds.</span></div>
         <div class="bk-sw"><span class="bk-chip bk-c-glow"></span><span class="bk-sw-name">Glow</span><code>#A68BFF</code><span class="bk-sw-use" data-i18n="bk.col.glow">The mark and the accent on dark grounds.</span></div>
@@ -325,7 +325,7 @@
       </div>
       <dl class="facts bk-contrast">
         <div><dt data-i18n="bk.col.c1">Text on the ground</dt><dd data-i18n="bk.col.c1.d">Ink on paper 14.4:1, paper on night 16.6:1.</dd></div>
-        <div><dt data-i18n="bk.col.c2">Accent as text</dt><dd data-i18n="bk.col.c2.d">Violet on paper 5.1:1, glow on night 6.8:1. On the raised surface the accent is only for large text and icons.</dd></div>
+        <div><dt data-i18n="bk.col.c2">Accent as text</dt><dd data-i18n="bk.col.c2.d">Violet on paper 5.1:1, glow on night 6.8:1. On the raised surface the accent and success colours are only for large text and icons.</dd></div>
       </dl>
     </section>
 
@@ -334,14 +334,14 @@
       <p data-i18n="bk.type.lede">Two open typefaces under the SIL Open Font License, served from this site. Where a script is not covered, the system's own font takes over.</p>
       <div class="bk-grid bk-grid-2">
         <div class="bk-face">
-          <p class="bk-face-sample bk-display">Aa</p>
+          <p class="bk-face-sample bk-display" aria-hidden="true">Aa</p>
           <h3>Bricolage Grotesque</h3>
-          <p data-i18n="bk.type.display">Headings only, bold and extra bold, never under 20 pixels. Large headings are set tight.</p>
+          <p data-i18n="bk.type.display">Headings, codes, step numbers and the wordmark, in bold and extra bold, never under 18 pixels. Large headings are set tight.</p>
         </div>
         <div class="bk-face">
-          <p class="bk-face-sample bk-body">Aa</p>
+          <p class="bk-face-sample bk-body" aria-hidden="true">Aa</p>
           <h3>Atkinson Hyperlegible</h3>
-          <p data-i18n="bk.type.body">Everything else. Made by the Braille Institute so that similar letters such as I, l and 1 stay apart, which is why codes and check words are set in it.</p>
+          <p data-i18n="bk.type.body">Everything else: running text, buttons and fields. Made by the Braille Institute so that similar letters such as I, l and 1 stay apart.</p>
         </div>
       </div>
       <ol class="bk-scale">
@@ -384,11 +384,11 @@
       <h3 data-i18n="bk.btn.states">States</h3>
       <div class="bk-grid bk-grid-3">
         <figure class="bk-fig">
-          <div class="bk-stage bk-stage-ui"><span class="btn btn-primary" aria-hidden="true" data-i18n="bk.btn.rest">Rest</span></div>
+          <div class="bk-stage bk-stage-ui"><span class="btn btn-quiet" aria-hidden="true" data-i18n="bk.btn.rest">Rest</span></div>
           <figcaption><span class="bk-cap-t" data-i18n="bk.btn.rest">Rest</span><span data-i18n="bk.btn.rest.d">As drawn above.</span></figcaption>
         </figure>
         <figure class="bk-fig">
-          <div class="bk-stage bk-stage-ui"><span class="btn btn-primary bk-hover" aria-hidden="true" data-i18n="bk.btn.hover">Pointer over it</span></div>
+          <div class="bk-stage bk-stage-ui"><span class="btn btn-quiet bk-hover" aria-hidden="true" data-i18n="bk.btn.hover">Pointer over it</span></div>
           <figcaption><span class="bk-cap-t" data-i18n="bk.btn.hover">Pointer over it</span><span data-i18n="bk.btn.hover.d">The label is underlined. The colours stay the same, so nothing flashes.</span></figcaption>
         </figure>
         <figure class="bk-fig">
@@ -399,7 +399,7 @@
       <div class="bk-grid bk-grid-2">
         <dl class="bk-dl">
           <div><dt data-i18n="bk.btn.size">Size</dt><dd data-i18n="bk.btn.size.d">56 pixels tall, 24 pixels of space at each side; as wide as the label, or the full width of a phone screen for the main action in the apps.</dd></div>
-          <div><dt data-i18n="bk.btn.shape">Shape</dt><dd data-i18n="bk.btn.shape.d">Fully rounded ends. No shadow, gradient or glow.</dd></div>
+          <div><dt data-i18n="bk.btn.shape">Shape</dt><dd data-i18n="bk.btn.shape.d">On this website, fully rounded ends. No shadow, gradient or glow.</dd></div>
           <div><dt data-i18n="bk.btn.label">Label</dt><dd data-i18n="bk.btn.label.d">Atkinson Hyperlegible Bold, 16 pixels, in sentence case. A verb first: "Choose files", "Download the beta".</dd></div>
           <div><dt data-i18n="bk.btn.group">Side by side</dt><dd data-i18n="bk.btn.group.d">A small gap apart, the main action first; on a narrow screen they wrap onto the next line.</dd></div>
         </dl>
@@ -439,7 +439,7 @@
         </figure>
         <figure class="bk-fig">
           <div class="bk-stage bk-stage-ui">
-            <select class="lang" tabindex="-1" aria-hidden="true"><option>English</option></select>
+            <select class="lang" disabled aria-hidden="true"><option>English</option></select>
           </div>
           <figcaption>
             <span class="bk-cap-t" data-i18n="bk.cmp.lang">Language picker</span>
@@ -457,10 +457,10 @@
           <ul class="bk-bars">
             <li><span class="bk-bar bk-w8"></span><code>8</code><span data-i18n="bk.sp.8">Icon to label, heading to text</span></li>
             <li><span class="bk-bar bk-w16"></span><code>16</code><span data-i18n="bk.sp.16">Between cards, inside a block</span></li>
-            <li><span class="bk-bar bk-w24"></span><code>24</code><span data-i18n="bk.sp.24">Screen edge, inside a card</span></li>
+            <li><span class="bk-bar bk-w24"></span><code>24</code><span data-i18n="bk.sp.24">Inside a card, screen edge (16 on phones)</span></li>
             <li><span class="bk-bar bk-w40"></span><code>40</code><span data-i18n="bk.sp.40">Between groups and sections</span></li>
           </ul>
-          <p class="note" data-i18n="bk.sp.note">Use only these steps; do not make up values in between.</p>
+          <p class="note" data-i18n="bk.sp.note">Start from these steps. Gaps inside one component, such as between two buttons, may be smaller.</p>
         </div>
         <div class="bk-col">
           <h3 data-i18n="bk.sp.radius">Corners</h3>
@@ -470,7 +470,7 @@
             <li><span class="bk-rad bk-r28"></span><code>28</code><span data-i18n="bk.sp.r28">Cards</span></li>
             <li><span class="bk-rad bk-rfull"></span><code>999</code><span data-i18n="bk.sp.rfull">Buttons and chips</span></li>
           </ul>
-          <p class="note" data-i18n="bk.sp.rnote">On Linux, buttons and fields follow the desktop's rounding.</p>
+          <p class="note" data-i18n="bk.sp.rnote">These are the corners of this website. In the apps, buttons, fields and cards follow the platform; on Linux, the desktop's rounding.</p>
         </div>
       </div>
     </section>
@@ -522,39 +522,38 @@
       <ul class="platforms bk-files">
         <li class="platform">
           <div class="bk-stage bk-on-light bk-file-prev"><img src="/brand/files/totaldrop-mark.svg" alt="" width="96" height="96"></div>
-          <h3 data-i18n="bk.f.mark">Mark for light grounds</h3>
-          <p class="actions"><a class="btn btn-quiet" href="/brand/files/totaldrop-mark.svg" download>SVG</a><a class="btn btn-quiet" href="/brand/files/totaldrop-mark.png" download>PNG · 1024</a></p>
+          <h3 id="f-mark" data-i18n="bk.f.mark">Mark for light grounds</h3>
+          <p class="actions"><a class="btn btn-quiet" aria-describedby="f-mark" href="/brand/files/totaldrop-mark.svg" download>SVG</a><a class="btn btn-quiet" aria-describedby="f-mark" href="/brand/files/totaldrop-mark.png" download>PNG · 1024</a></p>
         </li>
         <li class="platform">
           <div class="bk-stage bk-on-dark bk-file-prev"><img src="/brand/files/totaldrop-mark-dark.svg" alt="" width="96" height="96"></div>
-          <h3 data-i18n="bk.f.markdark">Mark for dark grounds</h3>
-          <p class="actions"><a class="btn btn-quiet" href="/brand/files/totaldrop-mark-dark.svg" download>SVG</a><a class="btn btn-quiet" href="/brand/files/totaldrop-mark-dark.png" download>PNG · 1024</a></p>
+          <h3 id="f-markdark" data-i18n="bk.f.markdark">Mark for dark grounds</h3>
+          <p class="actions"><a class="btn btn-quiet" aria-describedby="f-markdark" href="/brand/files/totaldrop-mark-dark.svg" download>SVG</a><a class="btn btn-quiet" aria-describedby="f-markdark" href="/brand/files/totaldrop-mark-dark.png" download>PNG · 1024</a></p>
         </li>
         <li class="platform">
           <div class="bk-stage bk-on-light bk-file-prev"><img src="/brand/files/totaldrop-logo.svg" alt="" width="226" height="48"></div>
-          <h3 data-i18n="bk.f.logo">Logo for light grounds</h3>
-          <p class="actions"><a class="btn btn-quiet" href="/brand/files/totaldrop-logo.svg" download>SVG</a><a class="btn btn-quiet" href="/brand/files/totaldrop-logo.png" download>PNG · 2400</a></p>
+          <h3 id="f-logo" data-i18n="bk.f.logo">Logo for light grounds</h3>
+          <p class="actions"><a class="btn btn-quiet" aria-describedby="f-logo" href="/brand/files/totaldrop-logo.svg" download>SVG</a><a class="btn btn-quiet" aria-describedby="f-logo" href="/brand/files/totaldrop-logo.png" download>PNG · 2400</a></p>
         </li>
         <li class="platform">
           <div class="bk-stage bk-on-dark bk-file-prev"><img src="/brand/files/totaldrop-logo-dark.svg" alt="" width="226" height="48"></div>
-          <h3 data-i18n="bk.f.logodark">Logo for dark grounds</h3>
-          <p class="actions"><a class="btn btn-quiet" href="/brand/files/totaldrop-logo-dark.svg" download>SVG</a><a class="btn btn-quiet" href="/brand/files/totaldrop-logo-dark.png" download>PNG · 2400</a></p>
+          <h3 id="f-logodark" data-i18n="bk.f.logodark">Logo for dark grounds</h3>
+          <p class="actions"><a class="btn btn-quiet" aria-describedby="f-logodark" href="/brand/files/totaldrop-logo-dark.svg" download>SVG</a><a class="btn btn-quiet" aria-describedby="f-logodark" href="/brand/files/totaldrop-logo-dark.png" download>PNG · 2400</a></p>
         </li>
         <li class="platform">
           <div class="bk-stage bk-file-prev"><img src="/brand/files/totaldrop-icon.svg" alt="" width="96" height="96"></div>
-          <h3 data-i18n="bk.f.icon">App icon</h3>
-          <p class="actions"><a class="btn btn-quiet" href="/brand/files/totaldrop-icon.svg" download>SVG</a><a class="btn btn-quiet" href="/brand/files/totaldrop-icon.png" download>PNG · 1024</a></p>
+          <h3 id="f-icon" data-i18n="bk.f.icon">App icon</h3>
+          <p class="actions"><a class="btn btn-quiet" aria-describedby="f-icon" href="/brand/files/totaldrop-icon.svg" download>SVG</a><a class="btn btn-quiet" aria-describedby="f-icon" href="/brand/files/totaldrop-icon.png" download>PNG · 1024</a></p>
         </li>
         <li class="platform">
           <div class="bk-stage bk-mono bk-file-prev"><img src="/brand/files/totaldrop-mark-black.svg" alt="" width="48" height="48"><img class="bk-on-black" src="/brand/files/totaldrop-mark-white.svg" alt="" width="48" height="48"></div>
-          <h3 data-i18n="bk.f.mono">One colour, black or white</h3>
+          <h3 id="f-mono" data-i18n="bk.f.mono">One colour, black or white</h3>
           <p data-i18n="bk.f.mono.d">Only where colour cannot be printed, such as stamps or engraving.</p>
-          <p class="actions"><a class="btn btn-quiet" href="/brand/files/totaldrop-mark-black.svg" download data-i18n="bk.f.black">Black SVG</a><a class="btn btn-quiet" href="/brand/files/totaldrop-mark-white.svg" download data-i18n="bk.f.white">White SVG</a></p>
+          <p class="actions"><a class="btn btn-quiet" aria-describedby="f-mono" href="/brand/files/totaldrop-mark-black.svg" download data-i18n="bk.f.black">Black SVG</a><a class="btn btn-quiet" aria-describedby="f-mono" href="/brand/files/totaldrop-mark-white.svg" download data-i18n="bk.f.white">White SVG</a></p>
         </li>
       </ul>
       <dl class="facts">
         <div><dt data-i18n="bk.f.fonts">Fonts</dt><dd data-i18n="bk.f.fonts.d">Bricolage Grotesque and Atkinson Hyperlegible are free under the SIL Open Font License; get them from their makers or from Google Fonts.</dd></div>
-        <div><dt data-i18n="bk.f.use">Using the name and mark</dt><dd data-i18n="bk.f.use.d">You may use them to write about TotalDrop or link to it. Do not use them for another app or service, or in a way that suggests TotalDrop made or endorses something it did not.</dd></div>
       </dl>
     </section>
   </main>
