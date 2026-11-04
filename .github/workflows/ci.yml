@@ -146,7 +146,8 @@ jobs:
       - run: tools/check-advisory-ignores.sh
 
   # Every file carries its copyright and license, in its own SPDX lines or
-  # in REUSE.toml (REUSE 3.3, #249). Cheap, so it runs on every change.
+  # in REUSE.toml (REUSE 3.3, #249), and every source file in its own lines.
+  # Cheap, so it runs on every change.
   reuse:
     name: Licenses (REUSE)
     runs-on: ubuntu-latest
@@ -154,7 +155,14 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: fsfe/reuse-action@676e2d560c9a403aa252096d99fcab3e1132b0f5 # v6.0.0
+      - name: Source files carry SPDX lines
+        run: tools/check-spdx.sh
+      # The REUSE tool's own image, pinned by digest (reuse 6.2.0).
+      - name: reuse lint
+        run: >-
+          docker run --rm --volume "$PWD:/data"
+          fsfe/reuse:6.2.0@sha256:85462a75c0f8efda09ddd190b92816b70e7662577c8427429e11e1b9f25a992e
+          lint
 
   # The required check. Skipped areas count as passed; anything failed or
   # cancelled, including the area detection, fails it.
