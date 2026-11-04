@@ -1,10 +1,13 @@
 # SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-# Reproducible builds: each Linux package is built twice, from two
-# checkouts at different paths and at different times, and the two must be
-# byte for byte the same (OpenSSF Best Practices build_reproducible, #252).
-# When they differ, both builds are uploaded for diffoscope.
+# Reproducible builds: each Linux package is built twice, from two clean
+# checkouts of the same commit, minutes apart, and the two must be byte for
+# byte the same (OpenSSF Best Practices build_reproducible, #252). Inside
+# the build container the paths are always the same (build.sh mounts the
+# work folder at /w), so this checks timestamps, ordering and the build
+# environment, not path independence. When they differ, both builds are
+# uploaded for diffoscope.
 name: Reproducible
 
 on:
@@ -20,7 +23,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: reproducible-${{ github.event.pull_request.number || github.sha }}
+  group: reproducible-${{ github.event.pull_request.number || github.run_id }}
   cancel-in-progress: true
 
 jobs:
@@ -43,18 +46,28 @@ jobs:
           path: second/elsewhere
           fetch-depth: 1
           persist-credentials: false
+      # One timestamp for both builds, even if git could not give one.
+      - name: Timestamp
+        run: echo "SOURCE_DATE_EPOCH=$(git -C first log -1 --format=%ct)" >> "$GITHUB_ENV"
       - name: First build
-        run: first/packaging/build.sh ${{ matrix.format }}
+        run: |
+          first/packaging/build.sh ${{ matrix.format }}
+          # Only the packages are compared; the build tree would fill the disk.
+          rm -rf first/dist/work-*
       - name: Second build
         run: second/elsewhere/packaging/build.sh ${{ matrix.format }}
       - name: Compare
         run: |
-          cd first/dist/packages && sha256sum * | tee ../../../sums
-          cd ../../../second/elsewhere/dist/packages && sha256sum -c ../../../../sums
+          (cd first/dist/packages && sha256sum *) > first.sums
+          (cd second/elsewhere/dist/packages && sha256sum *) > second.sums
+          cat first.sums
+          diff first.sums second.sums
       - if: failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: not-reproducible-${{ matrix.format }}
+          if-no-files-found: ignore
+          retention-days: 14
           path: |
             first/dist/packages/*
             second/elsewhere/dist/packages/*

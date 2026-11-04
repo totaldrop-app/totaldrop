@@ -17,6 +17,11 @@ ver=$(sed -n 's/^version = "\(.*\)"/\1/p' "$root/linux/Cargo.toml" | head -1)
 # One timestamp for the source tarball and every packager: the last commit's.
 SOURCE_DATE_EPOCH=${SOURCE_DATE_EPOCH:-$(git -C "$root" log -1 --format=%ct 2>/dev/null || date +%s)}
 export SOURCE_DATE_EPOCH
+# Qt's resource compiler stores each file's modification time; the files
+# cxx-qt writes during the build (qmldir) would otherwise carry the build's
+# own time into the binary (#252).
+QT_RCC_SOURCE_DATE_OVERRIDE=$SOURCE_DATE_EPOCH
+export QT_RCC_SOURCE_DATE_OVERRIDE
 src=totaldrop-linux-v$ver
 out=$root/dist/packages; mkdir -p "$out"
 work=$root/dist/work-$format; rm -rf "$work"; mkdir -p "$work"
@@ -32,14 +37,14 @@ gzip -n "$work/$src.tar"
 
 case $format in
 deb)
-  docker run --rm -u "$(id -u):$(id -g)" -e HOME=/tmp -e SOURCE_DATE_EPOCH -v "$work:/w" "$image" sh -ec "
+  docker run --rm -u "$(id -u):$(id -g)" -e HOME=/tmp -e SOURCE_DATE_EPOCH -e QT_RCC_SOURCE_DATE_OVERRIDE -v "$work:/w" "$image" sh -ec "
     cd /w && tar xzf $src.tar.gz && cd $src && cp -r packaging/debian debian
     export RUSTUP_TOOLCHAIN=1.99.1
     dpkg-buildpackage -b -us -uc
     lintian --no-tag-display-limit ../*.deb || true"
   cp "$work"/*.deb "$out/" ;;
 rpm)
-  docker run --rm -u "$(id -u):$(id -g)" -e HOME=/tmp -e SOURCE_DATE_EPOCH -v "$work:/w" "$image" sh -ec "
+  docker run --rm -u "$(id -u):$(id -g)" -e HOME=/tmp -e SOURCE_DATE_EPOCH -e QT_RCC_SOURCE_DATE_OVERRIDE -v "$work:/w" "$image" sh -ec "
     mkdir -p /tmp/rpm/SOURCES && cp /w/$src.tar.gz /tmp/rpm/SOURCES/
     tar xzf /w/$src.tar.gz -C /tmp $src/packaging/rpm/totaldrop.spec
     export RUSTUP_TOOLCHAIN=1.99.1
@@ -51,10 +56,11 @@ rpm)
 arch)
   cp "$root/packaging/arch/PKGBUILD" "$work/"
   mv "$work/$src.tar.gz" "$work/totaldrop-$ver.tar.gz"
-  docker run --rm -e SOURCE_DATE_EPOCH -v "$work:/w" "$image" sh -ec "
+  docker run --rm -e SOURCE_DATE_EPOCH -e QT_RCC_SOURCE_DATE_OVERRIDE -v "$work:/w" "$image" sh -ec "
     chown -R builder /w && cd /w
     sudo -u builder env TOTALDROP_RUST=1.99.1 RUSTUP_HOME=/opt/rustup CARGO_HOME=/opt/cargo \
-      PATH=/opt/cargo/bin:\$PATH SOURCE_DATE_EPOCH=\$SOURCE_DATE_EPOCH makepkg -sf --noconfirm
+      PATH=/opt/cargo/bin:\$PATH SOURCE_DATE_EPOCH=\$SOURCE_DATE_EPOCH \
+      QT_RCC_SOURCE_DATE_OVERRIDE=\$QT_RCC_SOURCE_DATE_OVERRIDE makepkg -sf --noconfirm
     chown -R $(id -u):$(id -g) /w"
   cp "$work"/*.pkg.tar.zst "$out/" ;;
 esac
