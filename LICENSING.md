@@ -9,6 +9,6 @@ TotalDrop uses three licenses, each chosen for what the code is for.
 | Web site (`site/`) | GPL-3.0-or-later; the bundled fonts keep their SIL Open Font License 1.1 | Same as the apps. |
 | Servers (`server/`) | AGPL-3.0-or-later | Anyone who runs a modified server for others must publish their changes, so a hosted fork cannot quietly weaken privacy. |
 
-The full texts are in `LICENSE-MIT`, `LICENSE-APACHE`, `LICENSE-GPL-3.0` and `LICENSE-AGPL-3.0`.
+The full texts are in [`LICENSES/`](LICENSES/), named by their SPDX identifiers as the [REUSE](https://reuse.software/) layout does: `MIT.txt`, `Apache-2.0.txt`, `GPL-3.0-or-later.txt` and `AGPL-3.0-or-later.txt`.
 
 Unless you state otherwise, any contribution you submit is licensed under the license of the directory it goes into, without additional terms.
