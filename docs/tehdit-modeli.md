@@ -5,7 +5,7 @@ durduğunu ve neyi korumadığını yazar. 1.0 öncesi bağımsız denetimin
 başlangıç noktasıdır. Protokolün kendisi v0 taslağında, uygulamadaki
 kararlar [protocol-v0.1-notes.md](protocol-v0.1-notes.md) içindedir.
 
-Son gözden geçirme: 28 Ekim 2026.
+Son gözden geçirme: 4 Kasım 2026.
 
 ## Korunan varlıklar
 
@@ -66,6 +66,54 @@ Bugün korunanlar ile henüz yalnızca tasarımda olanlar ayrı yazılır.
 | T11 | Tedarik zinciri | 6 | `cargo-deny` (lisans, güvenlik ilanları), Dependabot, kilitli bağımlılıklar, SHA'ya sabitli CI eylemleri, CI'da derleme ve derleme kaynağı kanıtı, CodeQL kod taraması, OpenSSF Scorecard | Sabitlenen sürümün kendisi kötü niyetliyse korumaz; her güncelleme PR olarak gelir ve incelenir. Kapsayıcı imajları (`archlinux:latest` vb.) ve çalışırken indirilen araçlar (Flutter stable, Node LTS, Rust nightly) hâlâ değişebilen etiketle çağrılıyor |
 | T12 | Sahte uygulama ya da paket | 6 | Yalnızca Google Play, GitHub sürümleri ve totaldrop.app; SHA-256 sağlama toplamları; Linux paketlerinde derleme kaynağı kanıtı | Play paketini Google yeniden imzalar, kullanıcı kanıtı doğrulayamaz; Windows ve macOS imzası bağışları bekliyor |
 | T13 | Açık pencereye istenmeyen dosya ya da kod vermek (Linux) | 7 | Hiçbir şey kendiliğinden gönderilmez ya da alınmaz: gönderme "Kod oluştur", alma teklifin kabulünü ister. Bir çağrı en çok 1.024 öğe ve 1 MiB taşıyabilir; yalnızca yerel `file://` yolları ve bilinen ekranlar alınır; etkinleştirme belirteci denetlenir; aktarım sürerken gelen istek beklemeye alınır | Gönderilecekler listesine eklenen dosya ayrıca işaretlenmez; bu süreç kişinin dosyalarını zaten okuyabilir |
+
+## Güvence gerekçesi
+
+Bu bölüm, [SECURITY.md](../SECURITY.md)'deki güvenlik gereksinimlerinin
+neden karşılandığını savunur. Bağımsız bir denetimin yerini tutmaz; denetçi
+için başlangıç noktasıdır.
+
+**Tehdit modeli ve güven sınırları** yukarıda: korunan varlıklar,
+saldırganlar, güven sınırları ve T1–T13. Mimari ve sınırların nerede
+durduğu [mimari.md](mimari.md) içinde.
+
+**Güvenli tasarım ilkeleri nasıl uygulanıyor:**
+
+- *En az yetki ve en az bilgi:* sunucular yalnızca ulaştırır; içeriği,
+  kodu ve anahtarları görmez, kayıt tutmaz. Hesap yoktur. CI iş akışları
+  en az yetkiyle çalışır, eylemler SHA'ya sabitlidir.
+- *Güven kullanıcıdan gelir, sunucudan değil:* iki cihaz yalnızca kodu
+  bildikleri için birbirine güvenir (CPace), araya girme dört doğrulama
+  kelimesiyle görünür olur (T2).
+- *Kapalıyken güvenli (fail closed):* yanlış kod, bozuk mesaj, sınır aşımı
+  ya da doğrulanmayan parça bağlantıyı kapatır; dosya ancak BLAKE3
+  doğrulamasından sonra yerine konur (T7).
+- *Derinlemesine savunma:* QUIC/TLS 1.3 içinde Noise, onun içinde dosya
+  başına STREAM şifrelemesi (T1); klasik ve kuantum sonrası anahtarların
+  ikisinden birden türeyen oturum anahtarları (T4).
+- *Basitlik ve tek kaynak:* protokol ve kriptografi tek çekirdekte durur;
+  uygulamalar kriptografi yapmaz. Yeni kriptografi yazılmaz, yalnızca
+  yayımlanmış ilkeller bakımlı kütüphanelerle kullanılır.
+- *Girdiye güvenmeme:* dışarıdan gelen her veri `totaldrop-proto`'da, izin
+  listesiyle ve sınırlarla ayrıştırılır (T7, T8); her ayrıştırıcının fuzz
+  hedefi vardır.
+
+**Yaygın açık sınıflarına karşı:**
+
+| Sınıf | Karşılık |
+| --- | --- |
+| Bellek güvenliği (taşma, serbest bırakılmış belleği kullanma) | Rust; çalışma alanında `unsafe_code = "forbid"`; tek istisna Linux'taki Qt köprüsü bildirimleri |
+| Yol geçişi, sembolik bağ, üzerine yazma | T7: yol denetimi, yalnızca seçilen klasörün altı, var olanın üzerine yazmama |
+| Kaynak tüketme | T8, T9: girdi, manifest, mesaj, süre ve bayt sınırları |
+| Tekrar oynatma ve sürüm düşürme | Her aktarımda yeni, tek kullanımlık anahtarlar; tek bir şifre takımı (TD0), düşürülecek eski bir takım yok ([protokol notları](protocol-v0.1-notes.md)) |
+| Zayıf ya da yanlış kullanılan kriptografi | Yalnızca CPace, Noise, ML-KEM-768, X25519, ChaCha20-Poly1305, BLAKE3; SHA-1, MD5, CBC yok; rastgelelik işletim sisteminden |
+| Web açıkları (XSS, tıklama kaçırma) | Sitede dışarıdan betik yok, sıkı CSP, `frame-ancestors 'none'`, HSTS (`site/public/_headers`) |
+| Tedarik zinciri | T11, T12: kilitli bağımlılıklar, `cargo-deny`, Dependabot, CodeQL, CI'da derleme ve imzalı derleme kanıtı |
+| Gizli bilgi sızması | Anahtarlar yalnızca korumalı CI ortamlarında; gizli bilgi taraması ve push koruması açık |
+
+**Kanıt:** her güvenlik kuralının testi ve fuzz hedefi depoda, her PR'da
+çalışır; CodeQL ve OpenSSF Scorecard sonuçları depo sayfasında görünür.
+Kalan riskler yukarıdaki tabloda, her biri bir issue ile izlenir.
 
 ## Kapsam dışı
 
