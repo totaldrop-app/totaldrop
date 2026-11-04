@@ -89,7 +89,10 @@ void main() {
     );
     expect(qml, contains('[0.65, 0, 0.35, 1, 1, 1]'));
     final css = File('../site/public/styles.css').readAsStringSync();
-    expect(css, contains('transform-origin: 55px 57px'));
+    // The site turns the mark around its own box centre, which for this
+    // path (a three-quarter circle around (55, 57) and the corner square)
+    // is (55, 57), whatever the viewBox (#209).
+    expect(css, contains('transform-box: fill-box; transform-origin: 50% 50%'));
     expect(
       css,
       contains(
