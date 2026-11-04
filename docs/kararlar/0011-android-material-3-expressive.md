@@ -1,6 +1,6 @@
 # 0011: Android Material 3 Expressive'e resmî paketle, adım adım geçer
 
-- **Durum:** Önerilen, 4 Kasım 2026 (#215)
+- **Durum:** Kabul, 4 Kasım 2026 (#215)
 - **Bağlam:** Android uygulaması standart Material 3 kullanıyor
   (`useMaterial3: true`, `app/lib/ui/core/theme.dart`). Renkler Material
   You'dan geliyor (`dynamic_color`, `app/lib/main.dart`). Android 16'nın
