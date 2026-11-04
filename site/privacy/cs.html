@@ -1,0 +1,51 @@
+<p class="eyebrow">Zásady ochrany soukromí · verze 5 · 3. listopadu 2026</p>
+<h1>Nic o vás neshromažďujeme.</h1>
+<p class="lead">TotalDrop nemá účty, analytiku, reklamy ani hlášení pádů. Tato stránka přesně vysvětluje, co mohou naše servery vidět, zatímco přenášíte soubory, a jak rychle to zmizí.</p>
+
+<h2>Kdo jsme</h2>
+<p>TotalDrop je bezplatný open source projekt, který spravuje Ozan Özdil. Tyto zásady platí pro aplikace TotalDrop, klienta pro příkazový řádek a servery na <code>totaldrop.app</code>. Kontakt: <a href="mailto:privacy@totaldrop.app">privacy@totaldrop.app</a>.</p>
+
+<h2>Co aplikace shromažďují</h2>
+<p>Nic. Aplikace se neptají na vaše jméno, e-mailovou adresu ani telefonní číslo a neobsahují žádný kód pro sledování, analytiku, reklamy ani hlášení pádů. Až do verze 0.3.0-beta.2 potřebuje aplikace pro Android jen přístup k internetu. Pozdější verze žádají jen o to, co přenos potřebuje: přístup k internetu a stavu sítě, aby se mohly připojit; spouštění přenosu na pozadí, aby pokračoval, když přepnete do jiné aplikace; a zobrazování oznámení, kvůli trvalému oznámení s tlačítkem Zastavit během přenosu. Tato oprávnění zůstávají ve vašem zařízení: nic neposílají nám ani nikomu jinému.</p>
+
+<h2>Vaše soubory</h2>
+<p>Soubory putují přímo z jednoho zařízení do druhého, když se zařízení navzájem dosáhnou, a jinak přes náš přenosový server (viz níže); v obou případech jsou šifrované end-to-end. Naše servery nikdy nevidí vaše soubory, jejich názvy ani obsah a nemohou číst, co jimi prochází: klíče existují jen na obou zařízeních.</p>
+
+<h2>Co vidí zprostředkující server</h2>
+<p>Pro zahájení přenosu se obě zařízení připojí k našemu zprostředkujícímu serveru na <code>rendezvous.totaldrop.app</code>, který běží na Cloudflare. Pomáhá dvěma zařízením se stejným kódem, aby se našla. Přitom nutně vidí:</p>
+<ul>
+  <li>IP adresu každého zařízení, jako každý server na internetu;</li>
+  <li>číslo na začátku kódu (například 7 v 7-harbor-rocket), ale nikdy slova;</li>
+  <li>kdy se připojíte a velikost krátkých zpráv, které si zařízení vymění. Po prvních dvou jsou tyto zprávy šifrované tak, aby je mohlo přečíst jen druhé zařízení.</li>
+</ul>
+<p>Server nic z toho nezapisuje do protokolu. Schránka i vše v ní se smaže, jakmile ji obě zařízení opustí, nejpozději po jedné hodině. Po každém přenosu číslo kódu 10 minut odpočívá, než je znovu přiděleno; po neúspěšném pokusu o kód 24 hodin.</p>
+<p>Cloudflare jako náš poskytovatel infrastruktury zpracovává IP adresy, aby službu doručil a ochránil, podle svých vlastních <a href="https://www.cloudflare.com/privacypolicy/">zásad ochrany soukromí</a>. Totéž platí pro přenosový server. Pro oba servery jsme vypnuli protokoly požadavků a protokolování Workers.</p>
+
+<h2>Hledání přímé cesty</h2>
+<p>Aby se zařízení mohlo připojit přes internet, nejprve se zeptá serveru STUN, pod jakou veřejnou IP adresou a portem je vidět. Ve výchozím nastavení je to bezplatná služba STUN od Cloudflare na <code>stun.cloudflare.com</code>. Vidí vaši IP adresu, jako každý server na internetu, a nic jiného. V režimu soukromí (viz níže) se jí zařízení neptá.</p>
+
+<h2>Co vidí přenosový server</h2>
+<p>Náš přenosový server na <code>relay.totaldrop.app</code>, který běží na Cloudflare, nese přenos, když se obě zařízení nemohou dosáhnout přímo. V Androidu a Linuxu 0.2.0-beta.1 a novějších a v příkazovém řádku sestaveném z repozitáře od 29. října 2026 kontaktuje zařízení přenosový server jen tehdy, když přibližně 1,2 sekundy poté, co se obě zařízení začala připojovat, ještě nebylo zvoleno přímé spojení. Okamžitě ho kontaktuje, když je některé ze zařízení v režimu soukromí nebo když druhé zařízení neoznámí žádnou adresu. Přenos, jehož přímé spojení je zvoleno včas, se k přenosovému serveru nikdy nedostane. Pokud je přímé spojení zvoleno později, zařízení v tu chvíli spojení s přenosovým serverem zavře. Starší verze (Android 0.1.0-beta.5, Linux 0.1.0-beta.4) se k přenosovému serveru připojují na začátku každého přenosu a přijímající zařízení s těmito verzemi použije ten přenosový server, který uvede odesílatel; aktualizujte, abyste tomu zabránili. Když se přenosový server použije, vidí:</p>
+<ul>
+  <li>IP adresu každého zařízení;</li>
+  <li>dva náhodné klíče vytvořené jen pro tento jeden přenos a už nikdy nepoužité;</li>
+  <li>kdy se každé zařízení připojilo a odpojilo a kolik šifrovaných dat prošlo.</li>
+</ul>
+<p>Klíče nespojují jeden přenos s jiným, ale vaše IP adresa může: přenosový server i zprostředkující server, které oba provozujeme na Cloudflare, ji vidí s odstupem několika okamžiků. Přenosový server nemůže číst soubory, jejich názvy ani nic o tom, kdo jste. Nic nezapisuje do protokolu a po skončení přenosu o něm nic neuchovává.</p>
+<p>Adresa přenosového serveru každého zařízení se druhému zařízení sdílí šifrovaně. Pokud odesílatel používá vlastní přenosový server (volba <code>--relay</code> příkazového řádku nebo <code>TOTALDROP_RELAY</code>), od verze 0.2.0-beta.1 ho přijímající zařízení použije jen tehdy, když je to také přenosový server nastavený u příjemce; jinak ho nikdy nekontaktuje. Kdo provozuje přenosový server, ke kterému se zařízení připojí, vidí to, co je uvedeno výše. Když obě zařízení používají různé přenosové servery a nemají přímou cestu, přenos se zastaví s chybou.</p>
+<p>Režim soukromí („Skrýt mou adresu před druhým zařízením“ v Nastavení aplikací od verze 0.2.0-beta.1, <code>--relay-only</code> v příkazovém řádku): vaše zařízení neoznámí druhému zařízení žádnou IP adresu, neptá se serveru STUN, nikdy se k druhému zařízení nepřipojuje přímo a odmítne přímé spojení i od spárovaného zařízení. Každý přenos jde přes přenosový server, takže druhé zařízení se vaši IP adresu nedozví, ať odesíláte, nebo přijímáte. Je to pomalejší a přenosový server i zprostředkující server vaši IP adresu stále vidí. Druhé zařízení musí používat stejný přenosový server jako vy, ať odesíláte, nebo přijímáte (všechny aplikace používají náš); jinak se přenos zastaví s chybou.</p>
+
+<h2>Co vidí druhé zařízení</h2>
+<p>Aby se mohla připojit přímo, obě zařízení si šifrovaně vymění své síťové adresy. Každé zařízení se proto dozví místní a veřejnou IP adresu druhého, jako u každého přímého spojení. Zařízení v režimu soukromí žádnou adresu neoznámí, takže ji druhé zařízení nezjistí.</p>
+
+<h2>Ve vašem zařízení</h2>
+<p>Přijaté soubory se ukládají do <em>Download/TotalDrop</em> v Androidu a do <em>~/Downloads/TotalDrop</em> v Linuxu. Jsou to běžné sdílené soubory, se kterými se zachází jako s vašimi ostatními staženými soubory. Když odesíláte z Androidu, vybrané soubory se zkopírují do mezipaměti aplikace. Kopie se smažou, když zavřete dokončené odesílání nebo nějaké zastavíte. Kopie souborů, které jste vybrali, ale neodeslali (vrátili jste se před odesláním, odebrali jste je ze seznamu nebo Android aplikaci zavřel), mohou zůstat, dokud se pozdější odesílání nezavře nebo nezastaví, nebo dokud Android mezipaměť nevyčistí. Aplikace uchovávají dvě nastavení: adresu zprostředkujícího serveru a to, zda je zapnutý režim soukromí (v Linuxu v <em>~/.config/totaldrop/settings.toml</em>). Vlastní data aplikace pro Android, tyto kopie a nastavení, se nikdy nedostanou do cloudových záloh ani do přenosů mezi zařízeními.</p>
+
+<h2>Děti</h2>
+<p>TotalDrop není určen dětem a od nikoho neshromažďuje osobní údaje.</p>
+
+<h2>Vaše práva</h2>
+<p>Protože o vás neuchováváme žádné osobní údaje, není k čemu získat přístup, co opravit ani co vymazat. Máte-li otázku nebo stížnost, napište nám na adresu uvedenou výše. Máte také právo podat stížnost u svého úřadu pro ochranu osobních údajů.</p>
+
+<h2>Změny</h2>
+<p>Verze 5 uvádí oprávnění, o která žádají verze Androidu po 0.3.0-beta.2 a díky nimž může přenos pokračovat na pozadí s oznámením; co vidí naše servery, se nemění. Verze 4 odpovídá Androidu a Linuxu 0.2.0-beta.1, které změnily, co vidí přenosový server a druhé zařízení. V těchto verzích zařízení kontaktují přenosový server jen tehdy, když přímé spojení není zvoleno včas nebo není žádná přímá cesta k vyzkoušení, a ne na začátku každého přenosu. Příjemce už nepoužívá přenosový server, který zvolil jen odesílatel, takže režim soukromí teď skrývá i adresu příjemce. Režim soukromí je teď také v Nastavení aplikací a odmítá přímá spojení. Verze 4 také říká, co si aplikace pro Android uchovává v mezipaměti. Verze 3 opravila verzi 2, která tvrdila, že se aplikace k přenosovému serveru připojí jen tehdy, když nefunguje žádná přímá cesta (tehdy se k němu připojovaly na začátku každého přenosu), a že režim soukromí skrývá adresu příjemce, což tehdy nedělal. Uvedla také soubory aplikace pro Linux. Verze 2 přidala službu STUN a přenosový server. Funkce plánované pro pozdější verze (odkazy, volitelné anonymní účty) změní, co naše servery zpracovávají. Tyto zásady aktualizujeme dříve, než taková funkce vyjde, a každou jejich verzi uchováme ve veřejném repozitáři projektu.</p>

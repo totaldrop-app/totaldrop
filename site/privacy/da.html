@@ -1,0 +1,51 @@
+<p class="eyebrow">Privatlivspolitik · version 5 · 3. november 2026</p>
+<h1>Vi indsamler intet om dig.</h1>
+<p class="lead">TotalDrop har ingen konti, ingen analyse, ingen reklamer og ingen nedbrudsrapporter. Denne side forklarer præcis, hvad vores servere kan se, mens du overfører filer, og hvor hurtigt det er væk igen.</p>
+
+<h2>Hvem vi er</h2>
+<p>TotalDrop er et gratis open source-projekt, som Ozan Özdil vedligeholder. Politikken gælder for TotalDrop-apps, kommandolinjeklienten og serverne på <code>totaldrop.app</code>. Kontakt: <a href="mailto:privacy@totaldrop.app">privacy@totaldrop.app</a>.</p>
+
+<h2>Hvad apps indsamler</h2>
+<p>Intet. Apps beder ikke om dit navn, din e-mailadresse eller dit telefonnummer og indeholder ingen kode til sporing, analyse, reklamer eller nedbrudsrapporter. Til og med 0.3.0-beta.2 har Android-appen kun brug for internetadgang. Senere versioner beder kun om det, en overførsel har brug for: internetadgang og netværksstatus for at oprette forbindelse; at køre en overførsel i baggrunden, så den fortsætter, mens du skifter til en anden app; og at vise notifikationer, til den løbende notifikation med knappen Stop, mens en overførsel kører. Disse tilladelser bliver på din enhed: de sender intet til os eller til andre.</p>
+
+<h2>Dine filer</h2>
+<p>Filer går direkte fra den ene enhed til den anden, når de to kan nå hinanden, og ellers gennem vores relæ (se nedenfor); uanset hvad er de end-to-end-krypteret. Vores servere ser aldrig dine filer, deres navne eller indhold og kan ikke læse, hvad der passerer igennem dem: nøglerne findes kun på de to enheder.</p>
+
+<h2>Hvad mødeserveren ser</h2>
+<p>For at starte en overførsel opretter begge enheder forbindelse til vores mødeserver på <code>rendezvous.totaldrop.app</code>, som kører på Cloudflare. Den hjælper to enheder, der deler en kode, med at finde hinanden. Mens den gør det, ser den nødvendigvis:</p>
+<ul>
+  <li>hver enheds IP-adresse, som enhver server på internettet gør;</li>
+  <li>tallet i starten af koden (for eksempel 7-tallet i 7-harbor-rocket), men aldrig ordene;</li>
+  <li>hvornår du opretter forbindelse, og størrelsen af de korte beskeder, de to enheder udveksler. Efter de to første er beskederne krypteret, så kun den anden enhed kan læse dem.</li>
+</ul>
+<p>Serveren skriver intet af dette i en log. En postkasse og alt i den slettes, så snart begge enheder forlader den, og senest efter en time. Efter hver overførsel hviler kodens tal i 10 minutter, før det bliver givet ud igen; efter et mislykket kodeforsøg i 24 timer.</p>
+<p>Cloudflare behandler som vores infrastrukturudbyder IP-adresser for at levere og beskytte tjenesten under sin egen <a href="https://www.cloudflare.com/privacypolicy/">privatlivspolitik</a>. Det samme gælder relæet. Vi har slået anmodningslogge og Workers-logning fra for begge servere.</p>
+
+<h2>At finde en direkte vej</h2>
+<p>For at oprette forbindelse over internettet spørger hver enhed først en STUN-server, hvilken offentlig IP-adresse og port den ser ud til at have. Som standard er det Cloudflares gratis STUN-tjeneste på <code>stun.cloudflare.com</code>. Den ser din IP-adresse, som enhver server på internettet gør, og intet andet. I privatlivstilstand (se nedenfor) spørger enheden den ikke.</p>
+
+<h2>Hvad relæet ser</h2>
+<p>Vores relæ på <code>relay.totaldrop.app</code>, som kører på Cloudflare, bærer en overførsel, når de to enheder ikke kan nå hinanden direkte. I Android og Linux 0.2.0-beta.1 og senere, og i kommandolinjen bygget fra repositoriet siden 29. oktober 2026, kontakter en enhed kun relæet, hvis der ikke er valgt en direkte forbindelse cirka 1,2 sekunder efter, at de to enheder er begyndt at forbinde. Den kontakter relæet med det samme, når en af enhederne er i privatlivstilstand, eller den anden enhed ikke oplyser nogen adresse. En overførsel, hvis direkte forbindelse vælges i tide, når aldrig relæet. Hvis en direkte forbindelse vælges senere, lukker enheden sin relæforbindelse i det øjeblik. Ældre versioner (Android 0.1.0-beta.5, Linux 0.1.0-beta.4) forbinder til relæet i starten af hver overførsel, og en modtagende enhed med disse versioner bruger det relæ, afsenderen angiver; opdater for at stoppe det. Når relæet bruges, ser det:</p>
+<ul>
+  <li>hver enheds IP-adresse;</li>
+  <li>to tilfældige nøgler, der er lavet til netop denne overførsel og aldrig bruges igen;</li>
+  <li>hvornår hver enhed forbandt og afbrød, og hvor meget krypteret data der passerede.</li>
+</ul>
+<p>Nøglerne forbinder ikke én overførsel med en anden, men det kan din IP-adresse: relæet og mødeserveren, som vi begge kører på Cloudflare, ser den med få øjeblikkes mellemrum. Relæet kan ikke læse filerne, deres navne eller noget om, hvem du er. Det skriver intet i en log og gemmer intet om overførslen, når den er slut.</p>
+<p>Hver enheds relæadresse deles krypteret med den anden enhed. Hvis afsenderen bruger sit eget relæ (kommandolinjens tilvalg <code>--relay</code> eller <code>TOTALDROP_RELAY</code>), bruger den modtagende enhed i 0.2.0-beta.1 og senere det kun, hvis det også er modtagerens egen relæindstilling; ellers kontakter den det aldrig. Den, der driver et relæ, som en enhed forbinder til, ser det, der står ovenfor. Når de to enheder bruger forskellige relæer og ikke har nogen direkte vej, stopper overførslen med en fejl.</p>
+<p>Privatlivstilstand ("Skjul min adresse for den anden enhed" i appenes Indstillinger siden 0.2.0-beta.1, <code>--relay-only</code> i kommandolinjen): din enhed oplyser ingen IP-adresse til den anden enhed, spørger ikke STUN-serveren, ringer aldrig direkte op til den anden enhed og afviser en direkte forbindelse, selv fra den parrede enhed. Hver overførsel går gennem relæet, så den anden enhed ikke får din IP-adresse at vide, uanset om du sender eller modtager. Det er langsommere, og relæet og mødeserveren ser stadig din IP-adresse. Den anden enhed skal bruge samme relæ som dig, uanset om du sender eller modtager (alle apps bruger vores); ellers stopper overførslen med en fejl.</p>
+
+<h2>Hvad den anden enhed ser</h2>
+<p>For at forbinde direkte udveksler de to enheder deres netværksadresser med hinanden, krypteret. Hver enhed får derfor den andens lokale og offentlige IP-adresse at vide, som ved enhver direkte forbindelse. En enhed i privatlivstilstand oplyser ingen adresse, så den anden enhed får den ikke at vide.</p>
+
+<h2>På din enhed</h2>
+<p>Modtagne filer gemmes i <em>Download/TotalDrop</em> på Android og i <em>~/Downloads/TotalDrop</em> på Linux. Det er almindelige delte filer, der behandles som dine andre downloads. Når du sender fra Android, kopieres de filer, du vælger, til appens cache. Kopierne slettes, når du lukker en færdig afsendelse eller stopper en. Kopier af filer, du valgte, men ikke sendte (du gik tilbage før afsendelse, fjernede dem fra listen, eller Android lukkede appen), kan blive liggende, indtil en senere afsendelse lukkes eller stoppes, eller indtil Android rydder cachen. Apps gemmer to indstillinger: mødeserverens adresse, og om privatlivstilstand er slået til (på Linux i <em>~/.config/totaldrop/settings.toml</em>). Android-appens egne data, disse kopier og indstillinger, kommer aldrig med i sikkerhedskopier i skyen eller i overførsler fra enhed til enhed.</p>
+
+<h2>Børn</h2>
+<p>TotalDrop er ikke rettet mod børn og indsamler ingen personoplysninger fra nogen.</p>
+
+<h2>Dine rettigheder</h2>
+<p>Da vi ikke har nogen personoplysninger om dig, er der intet at få indsigt i, rette eller slette. Har du et spørgsmål eller en klage, så skriv til os på adressen ovenfor. Du har også ret til at klage til din databeskyttelsesmyndighed.</p>
+
+<h2>Ændringer</h2>
+<p>Version 5 nævner de tilladelser, som Android-versioner efter 0.3.0-beta.2 beder om, og som lader en overførsel fortsætte i baggrunden med en notifikation; hvad vores servere ser, ændrer sig ikke. Version 4 følger Android og Linux 0.2.0-beta.1, som ændrede, hvad relæet og den anden enhed ser. I disse versioner kontakter enheder kun relæet, når der ikke vælges en direkte forbindelse i tide, eller der ikke er nogen direkte vej at prøve, i stedet for i starten af hver overførsel. En modtager bruger ikke længere et relæ, som kun afsenderen har valgt, så privatlivstilstand skjuler nu også en modtagers adresse. Privatlivstilstand findes nu også i appenes Indstillinger og afviser direkte forbindelser. Version 4 fortæller også, hvad Android-appen gemmer i sin cache. Version 3 rettede version 2, som sagde, at apps kun når relæet, når ingen direkte vej virker (dengang forbandt de til det i starten af hver overførsel), og at privatlivstilstand skjulte en modtagers adresse, hvilket den dengang ikke gjorde. Den nævnte også Linux-appens filer. Version 2 tilføjede STUN-tjenesten og relæet. Funktioner, der er planlagt til senere versioner (links, valgfrie anonyme konti), vil ændre, hvad vores servere behandler. Vi opdaterer denne politik, før en sådan funktion udkommer, og gemmer hver version i projektets offentlige repositorium.</p>

@@ -11,7 +11,8 @@ public/
   download/index.html İndirme sayfası; ziyaretçinin cihazına uyan kart öne gelir
   r/index.html        QR ve paylaşım bağlantıları: kodu # işaretinden sonra okur,
                       uygulamayı totaldrop://r/kod ile açar; kod sunucuya gitmez
-  privacy.html        Gizlilik
+  privacy.html        Gizlilik politikası, İngilizce (esas metin)
+  privacy/<dil>.html  Aynı politika diğer 34 dilde; ikisi de üretilir (aşağıda)
   404.html            Bulunamayan her adres için; o olmadan Pages her adrese
                       ana sayfayı 200 ile döner
   styles.css          Aurora tokenları, açık ve koyu tema, dönen işaret
@@ -24,6 +25,8 @@ public/
                       tipi, stil, betik ve çeviri dosyaları doğrudan sunulur
                       (www'de de yönlendirmesiz; sayfalar yine yönlenir)
   fonts/              Bricolage Grotesque ve Atkinson Hyperlegible (SIL OFL 1.1)
+privacy/<dil>.html    Gizlilik politikasının her dildeki metni (yalnızca <article> içi)
+tools/privacy.mjs     Gizlilik sayfalarını bu metinlerden üretir (--write) ve denetler
 functions/
   _middleware.js      www → kök yönlendirmesi; download alt alan adı → /download/
 wrangler.toml         Cloudflare Pages projesi "totaldrop"
@@ -46,3 +49,9 @@ ana sayfayı ve indirme sayfasını dener. Kurulum ve geri alma:
   göre doldurulur. `node tools/check-i18n.mjs` hepsini denetler.
 - Üçüncü taraf kaynak (CDN, analiz, yazı tipi servisi) eklenmez. CSP bunu
   zaten engeller.
+- Gizlilik politikası her dilde kendi adresindedir (`/privacy`, `/privacy/<dil>`).
+  Metni `site/privacy/<dil>.html`'de değiştirin, sonra
+  `node tools/privacy.mjs --write` ile sayfaları yeniden üretin. Politika
+  değişince 35 dilin hepsi aynı PR'da güncellenir: CI, her çevirinin
+  İngilizce ile aynı yapıda olduğunu (başlıklar, paragraflar, bağlantılar,
+  `code` içerikleri, sürüm numaraları) ve sayfaların güncel olduğunu denetler.

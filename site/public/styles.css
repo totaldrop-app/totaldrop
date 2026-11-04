@@ -342,3 +342,10 @@ pre.cmd { white-space: pre-wrap; overflow-wrap: break-word; margin: 0; padding: 
 .rm-phase.is-now .road-state { color: var(--accent); }
 .rm-phase.is-now .road-state::before { background: var(--accent); border-color: var(--accent); }
 @media (max-width: 44rem) { .rm-items { grid-template-columns: minmax(0, 1fr); } }
+/* Privacy policy in every language: the note on a translation, and the
+   list of the other languages under the text (#207). */
+.prose .lang-note { padding: 0; }
+.lang-list { display: grid; gap: var(--s16); border-top: 1px solid var(--rule); padding-top: 3rem; }
+.prose .lang-list ul { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: var(--s8) var(--s24); }
+.lang-list a { display: inline-block; padding-block: 0.6rem; }
+.lang-list a[aria-current="page"] { color: var(--text); font-weight: 700; text-decoration: none; }
