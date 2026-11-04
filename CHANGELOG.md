@@ -52,6 +52,10 @@ per change, and move here when it is released (docs/surec.md).
 - **Docs:** docs/mimari.md describes the architecture, and the threat
   model gains an assurance case: why the security requirements hold
   (#241).
+- **CI:** Line coverage of the protocol crates, the command line and the
+  Rust servers is measured with cargo-llvm-cov, and CI fails below 90%.
+  New tests run the `totaldrop` program itself: sending a folder,
+  answering the question, declining, and its error exits (#245).
 
 ### Changed
 
@@ -79,6 +83,9 @@ per change, and move here when it is released (docs/surec.md).
 - **CI:** OSV-Scanner, which OpenSSF Scorecard uses, ignores the same
   three unmaintained-crate advisories as cargo-deny, and CI checks that
   the two lists agree (#238).
+- **Site:** The roadmap now describes the planned optional account as one
+  the server never keeps, held by your own devices, instead of a random
+  number (#243).
 
 ### Fixed
 
