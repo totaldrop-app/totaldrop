@@ -12,7 +12,7 @@
 
 use std::io::{BufRead as _, BufReader, Write as _};
 use std::path::{Path, PathBuf};
-use std::process::{Child, Command, Output, Stdio};
+use std::process::{Child, ChildStdout, Command, Output, Stdio};
 
 /// The program under test, with no setting from the person's environment:
 /// English, the given server, and no relay or STUN, so that nothing leaves
@@ -43,18 +43,43 @@ async fn server() -> String {
     format!("ws://{addr}")
 }
 
-fn scratch(name: &str) -> PathBuf {
-    let mut rnd = [0u8; 6];
-    getrandom::fill(&mut rnd).unwrap();
-    let hex: String = rnd.iter().map(|b| format!("{b:02x}")).collect();
-    let dir = std::env::temp_dir().join(format!("totaldrop-program-{name}-{hex}"));
-    std::fs::create_dir_all(&dir).unwrap();
-    dir
+/// A folder of its own under the temporary folder, removed when dropped.
+struct Scratch(PathBuf);
+
+impl Scratch {
+    fn new(name: &str) -> Self {
+        let mut rnd = [0u8; 6];
+        getrandom::fill(&mut rnd).unwrap();
+        let hex: String = rnd.iter().map(|b| format!("{b:02x}")).collect();
+        let dir = std::env::temp_dir().join(format!("totaldrop-program-{name}-{hex}"));
+        std::fs::create_dir_all(&dir).unwrap();
+        Self(dir)
+    }
+}
+
+impl std::ops::Deref for Scratch {
+    type Target = Path;
+    fn deref(&self) -> &Path {
+        &self.0
+    }
+}
+
+impl AsRef<std::ffi::OsStr> for Scratch {
+    fn as_ref(&self) -> &std::ffi::OsStr {
+        self.0.as_os_str()
+    }
+}
+
+impl Drop for Scratch {
+    fn drop(&mut self) {
+        let _ = std::fs::remove_dir_all(&self.0);
+    }
 }
 
 /// Starts `totaldrop send` on `what` and returns it with the code it
-/// printed. The code is the only thing on stdout.
-fn start_send(server: &str, what: &Path) -> (Child, String) {
+/// printed. The code is the only thing on stdout; the reader is kept open
+/// with the child, so that the program never writes to a closed pipe.
+fn start_send(server: &str, what: &Path) -> (Child, BufReader<ChildStdout>, String) {
     let mut child = totaldrop(server)
         .arg("send")
         .arg(what)
@@ -63,16 +88,15 @@ fn start_send(server: &str, what: &Path) -> (Child, String) {
         .stderr(Stdio::piped())
         .spawn()
         .unwrap();
+    let mut stdout = BufReader::new(child.stdout.take().unwrap());
     let mut line = String::new();
-    BufReader::new(child.stdout.take().unwrap())
-        .read_line(&mut line)
-        .unwrap();
-    let code = line
-        .trim()
-        .strip_prefix("totaldrop receive ")
-        .unwrap_or_else(|| panic!("no receive line on stdout: {line:?}"))
-        .to_owned();
-    (child, code)
+    stdout.read_line(&mut line).unwrap();
+    let Some(code) = line.trim().strip_prefix("totaldrop receive ") else {
+        let out = child.wait_with_output().unwrap();
+        panic!("no receive line on stdout: {line:?}\n{}", stderr(&out));
+    };
+    let code = code.to_owned();
+    (child, stdout, code)
 }
 
 /// Waits for `child` to end on a thread of its own, so that the server on
@@ -95,9 +119,12 @@ fn code_shows_the_canonical_form() {
         .unwrap();
     assert!(out.status.success(), "{}", stderr(&out));
     let stdout = String::from_utf8(out.stdout).unwrap();
-    assert!(stdout.contains("code:"), "{stdout}");
-    assert!(stdout.contains("canonical:"), "{stdout}");
-    assert!(stdout.contains("harbor"), "{stdout}");
+    let lines: Vec<&str> = stdout.lines().collect();
+    assert_eq!(
+        lines,
+        ["code:      7-harbor-rocket", "canonical: 7-840-1499"],
+        "{stdout}"
+    );
 }
 
 #[test]
@@ -122,7 +149,8 @@ fn relay_only_without_a_relay_exits_with_2() {
 
 #[test]
 fn receiving_into_a_missing_folder_fails_before_connecting() {
-    let missing = scratch("missing").join("not-here");
+    let dir = Scratch::new("missing");
+    let missing = dir.join("not-here");
     // No server listens on port 1: the folder is checked first, so the
     // program never gets as far as connecting.
     let out = totaldrop("ws://127.0.0.1:1")
@@ -136,7 +164,8 @@ fn receiving_into_a_missing_folder_fails_before_connecting() {
 
 #[test]
 fn a_failed_connection_says_why_and_exits_with_1() {
-    let file = scratch("noserver").join("a.txt");
+    let dir = Scratch::new("noserver");
+    let file = dir.join("a.txt");
     std::fs::write(&file, b"x").unwrap();
     let out = totaldrop("ws://127.0.0.1:1")
         .arg("send")
@@ -145,20 +174,26 @@ fn a_failed_connection_says_why_and_exits_with_1() {
         .output()
         .unwrap();
     assert_eq!(out.status.code(), Some(1), "{}", stderr(&out));
-    // The English detail for a bug report is always the last line.
-    assert!(stderr(&out).trim_end().ends_with(')'), "{}", stderr(&out));
+    // One sentence on what failed, then the English detail for a bug report.
+    let err = stderr(&out);
+    assert!(
+        err.contains("totaldrop: Could not reach the TotalDrop server."),
+        "{err}"
+    );
+    assert!(err.trim_end().ends_with(')'), "{err}");
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn a_folder_sent_with_the_program_arrives() {
     let server = server().await;
-    let src = scratch("send-src").join("photos");
+    let src_dir = Scratch::new("send-src");
+    let src = src_dir.join("photos");
     std::fs::create_dir_all(src.join("beach")).unwrap();
     std::fs::write(src.join("beach/sea.txt"), b"blue").unwrap();
     std::fs::write(src.join("list.txt"), vec![7u8; 300_000]).unwrap();
-    let dest = scratch("send-dest");
+    let dest = Scratch::new("send-dest");
 
-    let (sender, code) = start_send(&server, &src);
+    let (sender, _stdout, code) = start_send(&server, &src);
     let receiver = totaldrop(&server)
         .args(["receive", &code, "--yes", "--out"])
         .arg(&dest)
@@ -189,14 +224,16 @@ async fn a_folder_sent_with_the_program_arrives() {
     assert_eq!(words(&stderr(&got)), words(&stderr(&sent)));
 }
 
-/// Answers the question on stdin with `answer` and returns both sides.
-async fn answer_with(answer: &'static [u8]) -> (Output, Output, PathBuf) {
+/// Answers the question on stdin with `answer` and returns both sides and
+/// the folder received into.
+async fn answer_with(answer: &'static [u8]) -> (Output, Output, Scratch) {
     let server = server().await;
-    let file = scratch("ask-src").join("note.txt");
+    let src = Scratch::new("ask-src");
+    let file = src.join("note.txt");
     std::fs::write(&file, b"hello").unwrap();
-    let dest = scratch("ask-dest");
+    let dest = Scratch::new("ask-dest");
 
-    let (sender, code) = start_send(&server, &file);
+    let (sender, _stdout, code) = start_send(&server, &file);
     let mut receiver = totaldrop(&server)
         .args(["receive", &code, "--out"])
         .arg(&dest)
@@ -227,5 +264,10 @@ async fn no_answer_declines_and_the_sender_is_told() {
     assert!(got.status.success(), "receiver: {}", stderr(&got));
     assert!(stderr(&got).contains("Declined"), "{}", stderr(&got));
     assert_eq!(sent.status.code(), Some(1), "sender: {}", stderr(&sent));
+    assert!(
+        stderr(&sent).contains("The receiver declined the files."),
+        "sender: {}",
+        stderr(&sent)
+    );
     assert!(!dest.join("note.txt").exists());
 }

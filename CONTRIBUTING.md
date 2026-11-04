@@ -19,10 +19,10 @@ cargo test
 node tools/changelog.mjs check
 ```
 
-CI also measures line coverage and fails below 90%. To measure it yourself (needs `cargo install cargo-llvm-cov` and `rustup component add llvm-tools-preview`):
+CI also measures line coverage and fails below 90%. To measure it yourself the same way (needs `cargo install cargo-llvm-cov --version 0.9.1 --locked` and `rustup component add llvm-tools-preview`):
 
 ```bash
-cargo llvm-cov --summary-only -p totaldrop-crypto -p totaldrop-proto -p totaldrop-core -p totaldrop-cli -p totaldrop-l10n -p totaldrop-rendezvous -p totaldrop-relay
+cargo llvm-cov --locked --summary-only --fail-under-lines 90 -p totaldrop-crypto -p totaldrop-proto -p totaldrop-core -p totaldrop-cli -p totaldrop-l10n -p totaldrop-rendezvous -p totaldrop-relay
 ```
 
 If you changed the Android app's Dart code, also run the format check CI runs (it leaves out the generated `lib/l10n` and `lib/src/rust`):
