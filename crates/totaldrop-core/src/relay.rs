@@ -341,6 +341,15 @@ async fn run(
                 }
             }
             msg = ws.next() => match msg {
+                // The relay reads the answer to learn how much it still
+                // holds for this device (#190); it goes back at once.
+                Some(Ok(Message::Binary(b))) if wire::is_probe(&b) => {
+                    unanswered = None;
+                    match tokio::time::timeout(silence, ws.send(Message::Binary(b))).await {
+                        Ok(written) => written.map_err(|e| Error::Connect(format!("relay: {e}")))?,
+                        Err(_) => return Ok(Ended::Relay),
+                    }
+                }
                 Some(Ok(Message::Binary(b))) => {
                     unanswered = None;
                     if let Some((from, datagrams)) = wire::parse_frame(&b)
@@ -548,6 +557,46 @@ mod tests {
             "the link stayed on a silent relay"
         );
         drop(ws);
+    }
+
+    /// The link sends a relay's probe straight back, unchanged, between
+    /// datagrams, so the relay knows the device has read everything before
+    /// it (#190).
+    #[tokio::test]
+    async fn link_sends_probes_back() {
+        let relay = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let url = format!("ws://{}/v0/relay", relay.local_addr().unwrap());
+        let (own, peer) = (
+            Arc::new(EndpointKey::generate().unwrap()),
+            EndpointKey::generate().unwrap(),
+        );
+        let (_out, pipes) = pipes();
+        let gate = Gate::default();
+        gate.open();
+        let _link = spawn_with(url, own, peer.public(), pipes, gate, LIMITS);
+        let mut ws = sign_in(&relay).await;
+        let probe = wire::probe(&[5; 16]);
+        ws.send(Message::Binary(
+            wire::frame(&peer.public(), &[1; 50]).into(),
+        ))
+        .await
+        .unwrap();
+        ws.send(Message::Binary(probe.clone().into()))
+            .await
+            .unwrap();
+        let back = tokio::time::timeout(Duration::from_secs(5), async {
+            loop {
+                match ws.next().await {
+                    Some(Ok(Message::Binary(b))) => break Some(b),
+                    Some(Ok(_)) => {}
+                    _ => break None,
+                }
+            }
+        })
+        .await
+        .expect("the link did not send the probe back")
+        .expect("the link went away");
+        assert_eq!(back.as_ref(), probe.as_slice());
     }
 
     /// A relay that keeps refusing the link is not tried for ever: after
