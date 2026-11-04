@@ -1,7 +1,7 @@
 # 0013: Hesap sunucuda tutulmaz: Hayalet halka
 
-- **Durum:** Önerilen, 4 Kasım 2026 (#243). [0004](0004-mullvad-tarzi-hesap.md)'ün
-  yerini alır.
+- **Durum:** Önerilen, 4 Kasım 2026 (#243). Kabul edilirse
+  [0004](0004-mullvad-tarzi-hesap.md)'ün yerini alır.
 
 ## Bağlam
 
@@ -60,22 +60,28 @@ Bağlayıcı noktalar şunlardır:
 - **Android bildirimi:** UnifiedPush ve uygulama açıkken bağlantı.
   İçeriksiz FCM uyandırma isteğe bağlıdır (Ozan, 4 Kasım 2026).
 - **Sınırlar:** en çok 16 cihaz. OHTTP ve Tor sonraki aşamadadır.
+- **Gizlilik ile denetim arasındaki seçim:** kişiler üyeliğin hangi dönemde
+  değiştiğini görür (cihaz sayısını görmez). Bu, kişilerin ekleme ve
+  çıkarma kurallarını denetleyebilmesi için bilinçli olarak kabul edildi.
 
 ## Neden
 
 - **Saklanmayan veri sızamaz.** Sunucu veritabanı sızsa bile içinden
   hesaplar, cihaz sayıları ve kişi ilişkileri anahtar olmadan çıkmaz.
-- **Güvenlik iddiaları kötü niyetli sunucuya karşı da geçerli.** Bunu
-  sağlayan şeffaflık günlüğü ve kişilerin yeniden doğrulamasıdır. İki
-  inceleme turundaki dört kritik bulgunun hepsi "kötü sunucu + eski yetki"
-  desenindeydi ve hepsi bu iki parçayla kapandı.
+- **Güvenlik iddiaları kötü niyetli sunucuya karşı da hedefleniyor.** Bunu
+  sağlayacak parçalar şeffaflık günlüğü, gönderim öncesi tazelik denetimi
+  ve kişilerin yeniden doğrulamasıdır. Üç inceleme turundaki altı kritik
+  bulgunun hepsi "kötü sunucu + eski yetki" desenindeydi. Tasarım her
+  birine bir karşılık getiriyor; bunların yeterli olduğu ancak biçimsel
+  model ve bağımsız kripto incelemesiyle gösterilecek. Günlükte çöp yazmayla
+  bir dönemi kilitleme sorusu açıktır.
 - **Yalnızca standart parçalar kullanılır.** Algoritmalar sürüm alanının
   arkasındadır; zayıflık bulunursa değiştirilebilir.
 
 ## Sonuçlar
 
-- **Belgeler:** [hesap.md](../hesap.md) yeniden yazıldı. 0004'ün durumu
-  "yerini aldı" oldu. [Tehdit modeline](../tehdit-modeli.md) hesap
+- **Belgeler:** [hesap.md](../hesap.md) yeniden yazıldı. Kabul edildiğinde
+  0004'ün durumu "yerini aldı" olur. [Tehdit modeline](../tehdit-modeli.md) hesap
   bölümü eklendi.
 - **Doğrulama ve kod sırası:** kod yazılmadan önce Tamarin modeli ve
   bağımsız bir insan kripto incelemesi yapılır. Ardından protokol notları,

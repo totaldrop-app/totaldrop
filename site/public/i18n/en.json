@@ -418,7 +418,7 @@
   "rm.l1.t": "iPhone, iPad and Mac",
   "rm.l2.d": "Send to someone who is not online: an encrypted copy waits up to 7 days, and only the link opens it.",
   "rm.l2.t": "Links and offline delivery",
-  "rm.l3.d": "Optional: no email, phone, password or number to type. Your devices hold the account; your own devices and saved contacts send to each other without a code.",
+  "rm.l3.d": "Optional: no email, phone, password or number to type. Your devices hold the account; your own devices send to each other, and saved contacts send to you, without a code.",
   "rm.l3.t": "An account the server never keeps",
   "rm.l4.d": "Pair once, check four words, and send to that person again without a code.",
   "rm.l4.t": "Saved contacts",

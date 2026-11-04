@@ -418,7 +418,7 @@
   "rm.l1.t": "iPhone, iPad und Mac",
   "rm.l2.d": "An jemanden senden, der nicht online ist: Eine verschlüsselte Kopie wartet bis zu 7 Tage, und nur der Link öffnet sie.",
   "rm.l2.t": "Links und Zustellung offline",
-  "rm.l3.d": "Optional: keine E-Mail, kein Telefon, kein Passwort, keine Nummer zum Eintippen. Ihre Geräte halten das Konto selbst; Ihre eigenen Geräte und gespeicherten Kontakte senden einander ohne Code.",
+  "rm.l3.d": "Optional: keine E-Mail, kein Telefon, kein Passwort, keine Nummer zum Eintippen. Ihre Geräte halten das Konto selbst; Ihre eigenen Geräte senden einander und gespeicherte Kontakte senden Ihnen ohne Code.",
   "rm.l3.t": "Ein Konto, das der Server nie speichert",
   "rm.l4.d": "Einmal koppeln, vier Wörter prüfen und dieser Person später ohne Code senden.",
   "rm.l4.t": "Gespeicherte Kontakte",
