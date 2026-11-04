@@ -106,6 +106,11 @@ sürüm adımı 4). Yerelde denemek için aynı commit'in iki temiz kopyasında
 paketler) aynı komut çalıştırılır ve `sha256sum dist/packages/*`
 çıktıları karşılaştırılır.
 
+Bilinen fark: cxx-qt Qt kitaplıklarını rastgele sırayla bağladığı için
+`totaldrop-desktop` ikilisi derlemeden derlemeye değişebilir (#256). Bu
+düzelene kadar `Reproducible` denetimi kırmızı çıkabilir; CI kapısının bir
+parçası değildir.
+
 ## Arayüz değişiklikleri
 
 [tasarim.md](tasarim.md) bağlayıcıdır. Arayüzü değiştiren her değişiklikten
