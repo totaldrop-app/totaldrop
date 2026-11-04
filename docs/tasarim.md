@@ -33,7 +33,7 @@ Arayüz değişiklikleri açık ve koyu temaya ek olarak en az bir sağdan sola 
 
 ## 2. İşaret: Köşe
 
-Tek köşesi kare olan bir daire. Daire bütünlüktür (*Total*), kare köşe onu damlaya (*Drop*) çevirir ve dosyanın gittiği yönü gösterir. Köşe aynı zamanda bir dosyanın ve bir cihaz ekranının köşesidir. Aktarım sürerken işaret çeyrek çeyrek döner, köşe sırayla her yönü gösterir: her cihazdan her cihaza. Ana dosya `app/assets/logo.svg`; Android simgeleri `packaging/render-icons.sh` ile ondan üretilir.
+Tek köşesi kare olan bir daire. Daire bütünlüktür (*Total*), kare köşe onu damlaya (*Drop*) çevirir ve dosyanın gittiği yönü gösterir. Köşe aynı zamanda bir dosyanın ve bir cihaz ekranının köşesidir. Aktarım sürerken işaret çeyrek çeyrek döner, köşe sırayla her yönü gösterir: her cihazdan her cihaza. Ana dosya `app/assets/logo.svg`; Android simgeleri `packaging/render-icons.sh`, sitenin `favicon.ico`, `favicon-192.png` ve `apple-touch-icon.png` dosyaları `site/tools/favicons.mjs` ile ondan üretilir.
 
 - **Yapı (112 birimlik tuval):** merkezi (55, 57), yarıçapı 42 olan daire; sağ üst çeyreği kare köşeyle doldurulur (köşe 97, 15). Yol: `M55 15H97V57A42 42 0 1 1 55 15Z`. Daire, tuvalin merkezinden bir birim sola ve aşağı kaydırılmıştır: köşe tarafı ağır olduğu için şekil böyle ortada görünür.
 - **Renkler:** açık zeminde mor (#6D4AE0), koyu zeminde parlak mor (#A68BFF). Tek renktir; gölge, degrade ya da kontur yoktur.
