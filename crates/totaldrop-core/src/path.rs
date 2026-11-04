@@ -15,13 +15,13 @@
 //! ([`Fallback`]): from then on, datagrams for its address go through the
 //! relay, and datagrams from the relay appear to come from that address. QUIC
 //! sees the same address throughout, so neither side has to migrate, and
-//! each side can move on its own clock (#185).
+//! each side can move on its own clock, and back (#185).
 
 use std::io::{self, IoSliceMut};
 use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4};
 use std::pin::Pin;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
-use std::sync::{Arc, Mutex, OnceLock};
+use std::sync::{Arc, Mutex, RwLock};
 use std::task::{Context, Poll};
 use std::time::Duration;
 
@@ -60,32 +60,42 @@ pub const FALLBACK_SILENCE: Duration = Duration::from_secs(8);
 /// How often [`Fallback::watch`] looks at the clock.
 const WATCH_TICK: Duration = Duration::from_millis(500);
 
+/// A tick this much later than due means this device itself was paused
+/// (an app frozen in the background): the quiet was its own, not the
+/// path's.
+const PAUSED: Duration = Duration::from_secs(2);
+
 /// Moves a direct connection onto the relay when its path goes quiet: a
 /// Wi-Fi that drops, a NAT mapping that expires, a network that lets the
-/// handshake through and then stops carrying anything (#185). Cloning
-/// shares the state.
+/// handshake through and then stops carrying anything (#185). It moves
+/// back as soon as a datagram comes from the direct address again, so a
+/// peer that was only paused, or did not move itself, brings the
+/// connection back. Cloning shares the state.
 #[derive(Debug, Clone)]
 pub struct Fallback(Arc<FallbackState>);
 
 #[derive(Debug)]
 struct FallbackState {
-    /// The direct address being watched, set once by [`Fallback::watch`].
-    direct: OnceLock<SocketAddr>,
-    /// Whether the connection to `direct` now goes through the relay. It
-    /// never moves back.
+    /// The direct address being watched: the connection's remote address,
+    /// followed while the connection is direct.
+    direct: RwLock<Option<SocketAddr>>,
+    /// Whether datagrams for `direct` now go through the relay.
     moved: AtomicBool,
     /// When a datagram from `direct` last arrived, in milliseconds after
     /// `start`.
     heard: AtomicU64,
+    /// When the connection last moved onto the relay, likewise.
+    moved_at: AtomicU64,
     start: tokio::time::Instant,
 }
 
 impl Fallback {
     fn new() -> Self {
         Self(Arc::new(FallbackState {
-            direct: OnceLock::new(),
+            direct: RwLock::new(None),
             moved: AtomicBool::new(false),
             heard: AtomicU64::new(0),
+            moved_at: AtomicU64::new(0),
             start: tokio::time::Instant::now(),
         }))
     }
@@ -94,15 +104,19 @@ impl Fallback {
         u64::try_from(self.0.start.elapsed().as_millis()).unwrap_or(u64::MAX)
     }
 
+    fn direct(&self) -> Option<SocketAddr> {
+        self.0.direct.read().ok().and_then(|d| *d)
+    }
+
     /// Whether datagrams for `addr` go through the relay instead.
     fn reroutes(&self, addr: SocketAddr) -> bool {
-        self.0.moved.load(Ordering::Acquire) && self.0.direct.get() == Some(&addr)
+        self.0.moved.load(Ordering::Acquire) && self.direct() == Some(addr)
     }
 
     /// The address datagrams from the relay appear to come from.
     fn relay_source(&self) -> SocketAddr {
         if self.0.moved.load(Ordering::Acquire) {
-            self.0.direct.get().copied().unwrap_or(RELAY_PEER)
+            self.direct().unwrap_or(RELAY_PEER)
         } else {
             RELAY_PEER
         }
@@ -110,40 +124,72 @@ impl Fallback {
 
     /// Note datagrams that came in on the real socket.
     fn heard_from(&self, meta: &[RecvMeta]) {
-        if let Some(direct) = self.0.direct.get()
-            && meta.iter().any(|m| m.addr == *direct)
+        if let Some(direct) = self.direct()
+            && meta.iter().any(|m| m.addr == direct)
         {
             self.0.heard.store(self.now(), Ordering::Release);
         }
     }
 
-    /// Whether the connection moved onto the relay.
+    /// Whether the connection currently goes through the relay.
     pub fn moved(&self) -> bool {
         self.0.moved.load(Ordering::Acquire)
     }
 
-    /// Watch the direct connection to `direct` and, once nothing came from
-    /// it for `silence`, send it through the relay instead and open `gate`
-    /// so the relay link connects. Returns once it moved; a watch on
-    /// another address than the first one returns at once.
-    pub async fn watch(&self, direct: SocketAddr, gate: crate::relay::Gate, silence: Duration) {
-        self.0.heard.store(self.now(), Ordering::Release);
-        if *self.0.direct.get_or_init(|| direct) != direct {
-            return;
-        }
+    /// Watch the direct connection `conn` until it closes. Once nothing
+    /// came from its address for `silence`, send what is addressed to it
+    /// through the relay instead and open `gate`, so the relay link
+    /// connects; as soon as something comes from the address again, send
+    /// directly again. The address follows QUIC's while the connection is
+    /// direct, so a peer whose NAT mapping changed is not taken for a
+    /// silent one.
+    pub async fn watch(
+        &self,
+        conn: quinn::Connection,
+        gate: crate::relay::Gate,
+        silence: Duration,
+    ) {
         let silence = u64::try_from(silence.as_millis()).unwrap_or(u64::MAX);
+        let paused =
+            u64::try_from(WATCH_TICK.saturating_add(PAUSED).as_millis()).unwrap_or(u64::MAX);
         let mut tick = tokio::time::interval(WATCH_TICK);
+        tick.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);
+        let mut last = self.now();
         loop {
             tick.tick().await;
-            let quiet = self
-                .now()
-                .saturating_sub(self.0.heard.load(Ordering::Acquire));
-            if quiet >= silence {
-                // Open the gate first: datagrams wait in the queue until the
-                // link is up.
-                gate.open();
-                self.0.moved.store(true, Ordering::Release);
+            if conn.close_reason().is_some() {
                 return;
+            }
+            let now = self.now();
+            let late = now.saturating_sub(last) >= paused;
+            last = now;
+            if !self.moved() {
+                let remote = conn.remote_address();
+                let followed = self.direct() == Some(remote);
+                if !followed || late {
+                    // A new address, or this device was paused: start
+                    // counting afresh.
+                    if !followed && let Ok(mut d) = self.0.direct.write() {
+                        *d = Some(remote);
+                    }
+                    self.0.heard.store(now, Ordering::Release);
+                    continue;
+                }
+                let quiet = now.saturating_sub(self.0.heard.load(Ordering::Acquire));
+                if quiet >= silence {
+                    // Mark the move before the link can deliver anything,
+                    // so relay datagrams always appear to come from the
+                    // direct address; outgoing ones wait in the queue
+                    // until the link is up.
+                    self.0.moved_at.store(now, Ordering::Release);
+                    self.0.moved.store(true, Ordering::Release);
+                    gate.open();
+                }
+            } else if self.0.heard.load(Ordering::Acquire) > self.0.moved_at.load(Ordering::Acquire)
+            {
+                // The direct path carries datagrams again, or the other
+                // side never moved: back to it. The relay link stays up.
+                self.0.moved.store(false, Ordering::Release);
             }
         }
     }
@@ -154,16 +200,16 @@ impl Fallback {
 pub struct Watch(tokio::task::JoinHandle<()>);
 
 impl Watch {
-    /// Run `fallback.watch(direct, gate, silence)` in the background.
+    /// Run `fallback.watch(conn, gate, silence)` in the background.
     pub fn spawn(
         fallback: &Fallback,
-        direct: SocketAddr,
+        conn: quinn::Connection,
         gate: crate::relay::Gate,
         silence: Duration,
     ) -> Self {
         let fallback = fallback.clone();
         Self(tokio::spawn(async move {
-            fallback.watch(direct, gate, silence).await;
+            fallback.watch(conn, gate, silence).await;
         }))
     }
 }

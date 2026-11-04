@@ -215,15 +215,21 @@ fn receiver_relay<'a>(hints: &Hints, own: &'a PathOptions) -> Result<Option<&'a 
 /// the two relays differ and one side announces no address. The receiver
 /// stops at once in that case; the sender says why instead of timing out.
 fn sender_check(receiver: &Hints, own: &PathOptions) -> Result<()> {
-    let same = match (own.relay_url(), receiver.relay.as_deref()) {
-        (Some(mine), Some(theirs)) => relay::check_url(mine).is_ok() && same_relay(mine, theirs),
-        _ => false,
-    };
+    let same = shares_relay(receiver, own);
     let no_direct = own.relay_only || peer_addresses(receiver).is_empty();
     if !same && no_direct {
         return Err(Error::Connect(crate::error::msg::NO_SHARED_RELAY.into()));
     }
     Ok(())
+}
+
+/// Whether the receiver will use the sender's relay too, as
+/// [`receiver_relay`] decides on its side.
+fn shares_relay(receiver: &Hints, own: &PathOptions) -> bool {
+    match (own.relay_url(), receiver.relay.as_deref()) {
+        (Some(mine), Some(theirs)) => relay::check_url(mine).is_ok() && same_relay(mine, theirs),
+        _ => false,
+    }
 }
 
 /// Start the relay link at `url`, if any, and say which paths to try.
@@ -270,13 +276,16 @@ struct Standby {
 /// connection through the relay keeps its link. A direct one keeps a link
 /// that has not contacted the relay yet, and a watch that moves the
 /// connection onto it if the direct path goes quiet (#185); the relay hears
-/// of the transfer only then. A link that was already opened before a
-/// slower direct path won is closed now.
+/// of the transfer only then. That needs both sides on the same relay
+/// (`shared`): otherwise the other side never arrives there, and moving
+/// would only lose a direct path that may come back. A link that was
+/// already opened before a slower direct path won is closed now.
 fn standby(
     conn: &quinn::Connection,
     paths: &transport::Paths,
     link: Option<relay::Link>,
     fallback: &path::Fallback,
+    shared: bool,
 ) -> Standby {
     let remote = conn.remote_address();
     if remote == path::RELAY_PEER {
@@ -286,11 +295,11 @@ fn standby(
         };
     }
     match (&paths.relay, link) {
-        (Some(gate), Some(link)) if !gate.is_open() => Standby {
+        (Some(gate), Some(link)) if shared && !gate.is_open() => Standby {
             _link: Some(link),
             _watch: Some(path::Watch::spawn(
                 fallback,
-                remote,
+                conn.clone(),
                 gate.clone(),
                 path::FALLBACK_SILENCE,
             )),
@@ -416,7 +425,9 @@ impl PreparedSend {
             );
             let (conn, send, recv) =
                 transport::sender_connection(&endpoint, &paths, ACCEPT_TIMEOUT).await?;
-            let _link = standby(&conn, &paths, link, &fallback);
+            // The receiver meets us on the relay only if it is also its own.
+            let shared = shares_relay(&paired.hints, &self.paths);
+            let _link = standby(&conn, &paths, link, &fallback, shared);
             let chan = secure::handshake_on(
                 send,
                 recv,
@@ -559,7 +570,8 @@ impl IncomingOffer {
             pipes,
         );
         let conn = transport::receiver_connection(&endpoint, &paths, CONNECT_TIMEOUT).await?;
-        let link = standby(&conn, &paths, link, &fallback);
+        // `relay` is set only when it is the sender's relay too.
+        let link = standby(&conn, &paths, link, &fallback, relay.is_some());
         let mut chan = secure::handshake(
             &conn,
             secure::HandshakeInput {

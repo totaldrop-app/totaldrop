@@ -26,10 +26,16 @@ const PROBE_WAIT: Duration = Duration::from_millis(700);
 const KEEPALIVE: Duration = Duration::from_secs(20);
 
 /// How long a relay link may send with nothing at all coming back: no
-/// datagram, no pong. An active QUIC connection answers within a round
+/// datagram, no pong to the pings it sends meanwhile ([`LIVENESS`]). An active QUIC connection answers within a round
 /// trip, so a link that stays silent this long is dead, and QUIC gives up
 /// after 30 seconds.
 const SILENCE: Duration = Duration::from_secs(10);
+
+/// How often the link pings the relay while datagrams went out with nothing
+/// back. The relay answers even when the other device is not there yet, so
+/// a link that waits for it is not taken for a dead one (#185); a dead
+/// socket answers nothing.
+const LIVENESS: Duration = Duration::from_secs(2);
 
 /// How long connecting and signing in to the relay may take.
 const CONNECT_WAIT: Duration = Duration::from_secs(10);
@@ -290,6 +296,9 @@ async fn run(
 
     let mut ping = tokio::time::interval(KEEPALIVE);
     ping.tick().await;
+    let mut liveness = tokio::time::interval(LIVENESS);
+    liveness.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);
+    liveness.tick().await;
     // Since when datagrams went out with nothing coming back. A dead TCP
     // connection is not reported for minutes; this notices it in time.
     let mut unanswered: Option<tokio::time::Instant> = None;
@@ -363,6 +372,12 @@ async fn run(
                 Some(Ok(Message::Ping(_) | Message::Pong(_))) => unanswered = None,
                 _ => return Ok(Ended::Relay),
             },
+            _ = liveness.tick(), if unanswered.is_some() => {
+                match tokio::time::timeout(silence, ws.send(Message::Ping(Vec::new().into()))).await {
+                    Ok(written) => written.map_err(|e| Error::Connect(format!("relay: {e}")))?,
+                    Err(_) => return Ok(Ended::Relay),
+                }
+            }
             _ = ping.tick() => {
                 ws.send(Message::Ping(Vec::new().into()))
                     .await
@@ -559,6 +574,48 @@ mod tests {
             "the link stayed on a silent relay"
         );
         drop(ws);
+    }
+
+    /// A link that waits on the relay for the other device stays: the relay
+    /// drops its datagrams while the other device is not there, but answers
+    /// its pings (#185 review). Before, the link took the missing answers
+    /// for a dead socket and connected again after `silence`, and the
+    /// relay then also ended the other device's fresh connection.
+    #[tokio::test]
+    async fn link_waiting_for_the_other_device_stays() {
+        let relay = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let url = format!("ws://{}/v0/relay", relay.local_addr().unwrap());
+        let (own, peer) = (
+            Arc::new(EndpointKey::generate().unwrap()),
+            EndpointKey::generate().unwrap(),
+        );
+        let (out, pipes) = pipes();
+        let gate = Gate::default();
+        gate.open();
+        let limits = Limits {
+            silence: Duration::from_secs(3),
+            ..LIMITS
+        };
+        let _link = spawn_with(url, own, peer.public(), pipes, gate, limits);
+        let mut ws = sign_in(&relay).await;
+        // The relay reads everything, so it answers pings, and forwards
+        // nothing.
+        let reader = tokio::spawn(async move { while let Some(Ok(_)) = ws.next().await {} });
+        let sending = tokio::spawn(async move {
+            loop {
+                if out.send(vec![1; 100]).await.is_err() {
+                    break;
+                }
+                tokio::time::sleep(Duration::from_millis(200)).await;
+            }
+        });
+        let again = tokio::time::timeout(Duration::from_secs(8), relay.accept()).await;
+        sending.abort();
+        reader.abort();
+        assert!(
+            again.is_err(),
+            "a link that the relay answers connected again"
+        );
     }
 
     /// The link sends each relay probe straight back, unchanged and in
