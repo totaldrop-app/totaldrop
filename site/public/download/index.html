@@ -113,10 +113,10 @@ totaldrop receive 7-harbor-rocket</code></pre>
     <section class="block" aria-labelledby="dl-new">
       <h2 id="dl-new" data-i18n="dl.new.title">What's new</h2>
       <ul class="notes">
-        <li data-i18n="dl.new.fallback">A transfer that started on a direct connection no longer stops with "timed out" when that path goes quiet, for example when Wi-Fi drops: after 8 seconds without anything from the other device, it moves onto the relay and goes on. It goes back to the direct connection only if the other device is still sending over it. Both devices must use the same relay (the apps all use ours).</li>
-        <li data-i18n="dl.new.reconnect">A transfer through the relay survives a connection that dies without either end noticing, for example after switching Wi-Fi networks: the device notices within 10 seconds and connects again.</li>
-        <li data-i18n="dl.new.progress">The sending device's progress bar shows what has reached the other device, instead of running ahead and showing a file as sent while it is still on the way.</li>
-        <li data-i18n="dl.new.reasons">When a transfer fails, the reason is now given in your language for many failures, under Details. The technical message stays in English for problem reports and is labelled as such.</li>
+        <li data-i18n="dl.new.fallback">A transfer that started on a direct connection no longer stops when that path goes quiet, for example when Wi-Fi drops: it moves onto the relay and goes on. Both devices need this version and the same relay.</li>
+        <li data-i18n="dl.new.reconnect">A transfer through the relay survives a connection that dies without either device noticing, for example after switching Wi-Fi networks: it connects again within 10 seconds.</li>
+        <li data-i18n="dl.new.progress">The sending device's progress bar shows what has reached the other device, not just what has been sent off.</li>
+        <li data-i18n="dl.new.reasons">When a transfer fails, the reason is now given in your language for many failures, under Details.</li>
       </ul>
       <p class="note"><a href="https://github.com/totaldrop-app/totaldrop/releases" data-i18n="dl.all">All versions and release notes</a></p>
     </section>
