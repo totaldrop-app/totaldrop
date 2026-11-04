@@ -191,6 +191,12 @@ treated as final.
       destination key when the device sends, the source key when the relay
       delivers. Several datagrams share a message, at most 64 KiB. One
       connection per key; datagrams for a key that is not there are dropped.
+    - A new sign-in with a key that already has a connection replaces it:
+      the old socket is closed and the other side stays. A socket can die
+      without the relay noticing (a Wi-Fi switch, NAT rebinding), and only
+      the key's holder can sign in. When a side leaves otherwise, the
+      relay closes the other side too; both clients then connect again
+      (#190).
     - Address discovery is plain STUN (RFC 8489), Binding with
       XOR-MAPPED-ADDRESS, sent from the QUIC socket. The default server is
       `stun.cloudflare.com:3478`; the self-hosted relay answers STUN too.

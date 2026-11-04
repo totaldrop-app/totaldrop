@@ -155,10 +155,10 @@ impl Drop for Link {
 /// Connect to the relay at `url` as `own`, and carry datagrams between the
 /// pipes and the device with endpoint key `peer` until the link is dropped.
 /// A lost or refused connection to the relay is tried again, with a growing
-/// pause (#185): the Cloudflare relay ends the other side's connection when
-/// one side's closes, and QUIC rides out a short gap. A connection that
-/// dies without the relay noticing is only replaced once the relay lets the
-/// old one go. After [`Limits::refused`] tries in a row that never signed
+/// pause (#185): both relays end the other side's connection when one
+/// side's closes, and QUIC rides out a short gap. A connection that dies
+/// without the relay noticing is replaced at once: a new sign-in with the
+/// same key takes over from the old socket (#190). After [`Limits::refused`] tries in a row that never signed
 /// in, the link gives up. Failures are otherwise silent: the relay is only
 /// one of the paths.
 pub fn spawn(

@@ -19,7 +19,7 @@ use std::time::Duration;
 
 use futures_util::{SinkExt, StreamExt};
 use tokio::net::{TcpListener, TcpStream, UdpSocket};
-use tokio::sync::{Mutex, Semaphore, mpsc};
+use tokio::sync::{Mutex, Notify, Semaphore, mpsc};
 use tokio::time::Instant;
 use tokio_tungstenite::tungstenite::Message;
 use tokio_tungstenite::tungstenite::handshake::server::{Request, Response};
@@ -68,9 +68,21 @@ type Outbox = mpsc::Sender<Vec<u8>>;
 /// The two endpoint keys a pair path names.
 type Pair = ([u8; 32], [u8; 32]);
 
-/// Signed-in devices: endpoint key, connection number, the pair it signed in
-/// on, outbox. A datagram reaches a key only on the same pair.
-type Clients = HashMap<[u8; 32], (u64, Pair, Outbox)>;
+/// One signed-in connection.
+#[derive(Debug)]
+struct Client {
+    /// Connection number, so a connection removes only its own entry.
+    id: u64,
+    /// The pair it signed in on: a datagram reaches a key only on the same
+    /// pair.
+    pair: Pair,
+    outbox: Outbox,
+    /// Ends the connection: it was replaced, or the other side left.
+    end: Arc<Notify>,
+}
+
+/// Signed-in devices by endpoint key.
+type Clients = HashMap<[u8; 32], Client>;
 
 /// A running relay.
 #[derive(Debug, Clone)]
@@ -205,14 +217,29 @@ impl Relay {
 
         let (outbox, mut inbox) = mpsc::channel::<Vec<u8>>(self.config.queue);
         let id = self.next.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        let end = Arc::new(Notify::new());
         {
             let mut clients = self.clients.lock().await;
-            // One connection per key: keys are single-use, so a second one is
-            // either a bug or someone replaying a sign-in.
-            if clients.contains_key(&key) {
-                return;
+            match clients.get(&key) {
+                // One pair per key: keys are single-use, so a key on a
+                // second pair is a bug or a replayed sign-in.
+                Some(old) if old.pair != pair => return,
+                // The holder of the key signed in again on its pair: its old
+                // socket died without this relay noticing (a Wi-Fi switch,
+                // NAT rebinding). The new one takes over at once, before
+                // QUIC gives up (#190). Only the key's holder can sign in.
+                Some(old) => old.end.notify_one(),
+                None => {}
             }
-            clients.insert(key, (id, pair, outbox));
+            clients.insert(
+                key,
+                Client {
+                    id,
+                    pair,
+                    outbox,
+                    end: end.clone(),
+                },
+            );
         }
         if !matches!(
             tokio::time::timeout(IO_TIMEOUT, ws.send(Message::Binary(wire::ok().into()))).await,
@@ -253,9 +280,12 @@ impl Relay {
             else {
                 break;
             };
-            let next = match tokio::time::timeout(wait, source.next()).await {
-                Ok(Some(Ok(m))) => m,
-                _ => break,
+            let next = tokio::select! {
+                () = end.notified() => break,
+                next = tokio::time::timeout(wait, source.next()) => match next {
+                    Ok(Some(Ok(m))) => m,
+                    _ => break,
+                },
             };
             let frame = match next {
                 Message::Binary(b) => b,
@@ -285,8 +315,8 @@ impl Relay {
                 .lock()
                 .await
                 .get(&to)
-                .filter(|(_, p, _)| *p == pair)
-                .map(|(_, _, o)| o.clone());
+                .filter(|c| c.pair == pair)
+                .map(|c| c.outbox.clone());
             if let Some(target) = target {
                 // A full queue drops, like a busy network; QUIC recovers.
                 // Same message with the source key in place of the target's.
@@ -305,10 +335,24 @@ impl Relay {
         self.leave(&key, id).await;
     }
 
+    /// Remove the connection `id` of `key`. When it was still the key's
+    /// connection (not replaced), the transfer is over: the other side of
+    /// its pair is ended too, as on the Cloudflare relay.
     async fn leave(&self, key: &[u8; 32], id: u64) {
         let mut clients = self.clients.lock().await;
-        if clients.get(key).is_some_and(|(i, _, _)| *i == id) {
-            clients.remove(key);
+        if !clients.get(key).is_some_and(|c| c.id == id) {
+            return;
+        }
+        let Some(gone) = clients.remove(key) else {
+            return;
+        };
+        let other = if *key == gone.pair.0 {
+            gone.pair.1
+        } else {
+            gone.pair.0
+        };
+        if let Some(peer) = clients.get(&other).filter(|c| c.pair == gone.pair) {
+            peer.end.notify_one();
         }
     }
 }
