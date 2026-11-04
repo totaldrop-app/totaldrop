@@ -64,9 +64,24 @@ modunda da ([#68](https://github.com/totaldrop-app/totaldrop/issues/68)).
 `--relay-only`, uygulamalarda Ayarlar → "Adresimi karşı cihazdan gizle") cihaz
 hiçbir IP adresi bildirmez ve yalnızca aktarma sunucusunu kullanır.
 
-Bu sürümde bağlantı, kurulduğu yolda kalır: aktarma üzerinden başlayan bir
-aktarım sonradan doğrudan yola geçmez. Bu geçiş (QUIC bağlantı göçü) sonraki
-adımdır.
+Doğrudan kurulan bir bağlantı, yolu sonradan susarsa aktarma sunucusuna
+taşınır ([#185](https://github.com/totaldrop-app/totaldrop/issues/185)):
+Wi-Fi kopar, NAT eşlemesi düşer ya da ağ el sıkışmayı geçirip sonra hiçbir
+şey taşımaz. İki taraf da boştayken her 2 saniyede bir QUIC canlı tutma
+paketi gönderir; bir cihaz karşı taraftan 8 saniye boyunca tek bir paket
+almazsa aktarma bağlantısını açar ve o adrese giden paketleri aktarma
+sunucusundan yollar. Aktarma sunucusundan gelen paketler QUIC'e aynı
+doğrudan adresten gelmiş gibi verilir; bu yüzden QUIC açısından adres
+değişmez ve iki taraf ayrı ayrı, kendi saatiyle geçer. Yalnızca bir yön
+ölürse önce susan taraf geçer, öbürü de onu duymayı kesince bir bekleme
+sonra izler; ikisi de QUIC'in 30 saniyelik boşta kalma süresinin içinde
+kalır. Geçiş geri alınmaz. Aktarma sunucusu aktarımı ancak bu geçişte
+görür; alanın aktarma sunucusu gönderenden farklıysa ya da hiç yoksa geçiş
+olmaz. Yol seçilirken aktarma bağlantısı zaten açılmışsa bağlantı eskisi
+gibi kapatılır ve bu aktarımda geçiş olmaz.
+
+Aktarma üzerinden başlayan bir aktarım ise sonradan doğrudan yola geçmez.
+Bu geçiş (QUIC bağlantı göçü) sonraki adımdır.
 
 ## Uygulama
 

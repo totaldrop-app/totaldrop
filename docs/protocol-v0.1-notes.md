@@ -236,6 +236,20 @@ treated as final.
     packet, so a path that starts working late would otherwise go unnoticed
     (#185). Moving a connection from the relay to a direct path that opens
     later (QUIC migration) is not done yet.
+    - The other way round is done: a direct connection whose path goes
+      quiet moves onto the relay (#185). Each side sends a QUIC keep-alive
+      after 2 seconds with nothing to send. A side that has received no
+      datagram at all from the connection's direct address for 8 seconds
+      opens its relay link and from then on sends what QUIC addresses to
+      that direct address through the relay; datagrams from the relay are
+      handed to QUIC as if they came from that address. QUIC therefore sees
+      no address change and neither side migrates; each side moves on its
+      own, and when only one direction dies, the side that stops hearing
+      moves first and the other follows one wait later, both inside the
+      30-second idle timeout. The move is not undone. It needs a relay
+      path, as above; a relay link that was already opened before a slower
+      direct path won is closed as before, and that connection does not
+      move.
     - A stream may have 8 MiB in flight and a connection 16 MiB, so a path
       with a long round trip is not held to window / RTT (#185). An honest
       client never has more than that in flight on one connection, which
