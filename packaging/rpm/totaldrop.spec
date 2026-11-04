@@ -3,12 +3,12 @@
 # The Rust toolchain comes from rustup: rust-toolchain.toml pins the newest
 # stable Rust, which distributions do not ship yet.
 
-%global upstream_version 0.3.0-beta.3
+%global upstream_version 0.3.0-beta.4
 %global srcname totaldrop-linux-v%{upstream_version}
 %global debug_package %{nil}
 
 Name:           totaldrop
-Version:        0.3.0~beta.3
+Version:        0.3.0~beta.4
 Release:        1%{?dist}
 Summary:        Send files straight to another device, end-to-end encrypted
 License:        GPL-3.0-or-later AND (MIT OR Apache-2.0)
@@ -77,6 +77,21 @@ cargo test --release --locked -p totaldrop-linux -p totaldrop-proto
 %{_datadir}/icons/hicolor/symbolic/apps/app.totaldrop.TotalDrop-symbolic.svg
 
 %changelog
+* Wed Nov 04 2026 TotalDrop <hello@totaldrop.app> - 0.3.0~beta.4-1
+- A transfer that started on a direct connection no longer stops with "timed
+  out" when that path goes quiet, for example when Wi-Fi drops: after 8
+  seconds without anything from the other device it moves onto the relay and
+  goes on. Both devices must use the same relay.
+- A transfer through the relay survives a connection that dies without
+  either end noticing, for example after switching Wi-Fi networks: the
+  device connects again within about 10 seconds.
+- The sending device's progress bar shows what has reached the other device,
+  instead of running ahead and showing a file as sent while it is still on
+  the way.
+- When a transfer fails, the reason is now given in your language for many
+  failures, under Details. The technical message stays in English for
+  problem reports and is labelled as such.
+
 * Wed Nov 04 2026 TotalDrop <hello@totaldrop.app> - 0.3.0~beta.3-1
 - Opening files with TotalDrop while it is already open, for example with
   "Open with" in a file manager, adds them to the open window instead of
