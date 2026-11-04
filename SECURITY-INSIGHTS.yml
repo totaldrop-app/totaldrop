@@ -1,0 +1,135 @@
+# OpenSSF Security Insights (https://github.com/ossf/security-insights):
+# how this project handles security, in a form tools can read. Keep it
+# true: update it in the same pull request as the change it describes, and
+# move last-reviewed forward when you check it against the repository.
+header:
+  schema-version: 2.2.0
+  last-updated: '2026-11-04'
+  last-reviewed: '2026-11-04'
+  url: https://raw.githubusercontent.com/totaldrop-app/totaldrop/main/SECURITY-INSIGHTS.yml
+
+project:
+  name: TotalDrop
+  homepage: https://totaldrop.app
+  funding: https://totaldrop.app/donate/
+  roadmap: https://totaldrop.app/roadmap/
+  administrators:
+    - name: Ozan
+      social: https://github.com/ozdil
+      primary: true
+  documentation:
+    quickstart-guide: https://github.com/totaldrop-app/totaldrop#readme
+    code-of-conduct: https://github.com/totaldrop-app/totaldrop/blob/main/CODE_OF_CONDUCT.md
+    release-process: https://github.com/totaldrop-app/totaldrop/blob/main/docs/surec.md
+    signature-verification: https://github.com/totaldrop-app/totaldrop#readme
+  repositories:
+    - name: totaldrop
+      url: https://github.com/totaldrop-app/totaldrop
+      comment: |
+        Everything: the protocol libraries, the apps, the servers and the web site.
+  vulnerability-reporting:
+    reports-accepted: true
+    bug-bounty-available: false
+    contact:
+      name: TotalDrop security
+      email: security@totaldrop.app
+      primary: true
+    policy: https://github.com/totaldrop-app/totaldrop/blob/main/SECURITY.md
+    in-scope:
+      - the protocol specification
+      - everything in this repository
+      - the servers and the web site at totaldrop.app
+    out-of-scope:
+      - denial of service by traffic volume
+      - social engineering
+      - findings that need an already compromised device
+    comment: |
+      GitHub private vulnerability reporting is open on the repository. Reports get a reply within 72 hours.
+
+repository:
+  url: https://github.com/totaldrop-app/totaldrop
+  status: active
+  bug-fixes-only: false
+  accepts-change-request: true
+  accepts-automated-change-request: true
+  core-team:
+    - name: Ozan
+      social: https://github.com/ozdil
+      primary: true
+  documentation:
+    contributing-guide: https://github.com/totaldrop-app/totaldrop/blob/main/CONTRIBUTING.md
+    review-policy: https://github.com/totaldrop-app/totaldrop/blob/main/docs/surec.md
+    security-policy: https://github.com/totaldrop-app/totaldrop/blob/main/SECURITY.md
+    dependency-management-policy: https://github.com/totaldrop-app/totaldrop/blob/main/deny.toml
+  license:
+    url: https://github.com/totaldrop-app/totaldrop/blob/main/LICENSING.md
+    expression: (MIT OR Apache-2.0) AND GPL-3.0-or-later AND AGPL-3.0-or-later
+  release:
+    changelog: https://github.com/totaldrop-app/totaldrop/blob/main/CHANGELOG.md
+    automated-pipeline: true
+    attestations:
+      - name: Build provenance
+        predicate-uri: https://slsa.dev/provenance/v1
+        location: https://github.com/totaldrop-app/totaldrop/attestations
+        comment: |
+          Linux packages and the Android bundle are built only in GitHub Actions, from a tag, and carry signed build provenance. Check a Linux package with "gh attestation verify <file> --repo totaldrop-app/totaldrop".
+    distribution-points:
+      - uri: https://github.com/totaldrop-app/totaldrop/releases
+        comment: Linux packages (.deb, .rpm, Arch) and SHA256SUMS
+      - uri: https://totaldrop.app/download/
+        comment: Download page
+  security:
+    assessments:
+      self:
+        evidence: https://github.com/totaldrop-app/totaldrop/blob/main/docs/tehdit-modeli.md
+        date: '2026-11-04'
+        comment: |
+          Threat model. TotalDrop has not had an independent security audit yet; version 1.0 will only be released after one.
+    tools:
+      - name: CodeQL
+        type: SAST
+        rulesets:
+          - default
+        results: {}
+        integration:
+          adhoc: false
+          ci: true
+          release: false
+        comment: GitHub code scanning, default setup.
+      - name: cargo-deny
+        type: SCA
+        rulesets:
+          - deny.toml
+        results: {}
+        integration:
+          adhoc: false
+          ci: true
+          release: false
+      - name: Dependabot
+        type: SCA
+        rulesets:
+          - default
+        results: {}
+        integration:
+          adhoc: true
+          ci: false
+          release: false
+      - name: cargo-fuzz
+        type: fuzzing
+        rulesets:
+          - fuzz/
+        results: {}
+        integration:
+          adhoc: true
+          ci: true
+          release: false
+        comment: A fuzz target for every parser; runs weekly in CI.
+      - name: OpenSSF Scorecard
+        type: other
+        rulesets:
+          - default
+        results: {}
+        integration:
+          adhoc: true
+          ci: true
+          release: false

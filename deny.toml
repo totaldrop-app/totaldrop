@@ -10,6 +10,8 @@ yanked = "deny"
 # only through ashpd (Linux app, desktop portals), whose newest release
 # (0.13) still uses zbus 5. Remove these once ashpd moves to zbus 6, or
 # when the Linux app talks to the portals through zbus 6 directly.
+# osv-scanner.toml (OpenSSF Scorecard) lists the same advisories; CI checks
+# that the two agree (tools/check-advisory-ignores.sh).
 ignore = [
     { id = "RUSTSEC-2026-0370", reason = "zvariant: merged into zbus 6; via ashpd 0.13 only" },
     { id = "RUSTSEC-2026-0371", reason = "zbus_names: merged into zbus 6; via ashpd 0.13 only" },
