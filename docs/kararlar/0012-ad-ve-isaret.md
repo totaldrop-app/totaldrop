@@ -1,13 +1,15 @@
 # 0012: Kod serbest, ad ve işaret yalnızca TotalDrop'un kendi sürümleri için
 
-- **Durum:** Önerilen, 4 Kasım 2026 (#234)
+- **Durum:** Kabul, 4 Kasım 2026 (#234)
 - **Bağlam:** TotalDrop'un kodu açık lisanslıdır
   ([LICENSING.md](../../LICENSING.md)): protokol kütüphaneleri MIT veya
   Apache-2.0, uygulamalar ve site GPL-3.0-or-later, sunucular
   AGPL-3.0-or-later. Bu lisanslar kodu kopyalama, değiştirme ve dağıtma
   izni verir. Ama TotalDrop adını ve işaretini kullanma izni vermez.
-  Apache-2.0 bunu 6. maddesinde açıkça söyler. GPL ise konuya hiç
-  değinmez. Bugüne kadar adın ve işaretin başkalarınca nasıl
+  Apache-2.0 bunu 6. maddesinde açıkça söyler. GPL-3.0 ad ve işarete
+  izin vermez; 7. maddesi isteyen projenin bunu ek şart olarak lisans
+  bildirimine yazmasına (e) ve değiştirilmiş sürümlerin farklı olduğunun
+  belirtilmesini istemesine (c) izin verir. Bugüne kadar adın ve işaretin başkalarınca nasıl
   kullanılabileceği hiçbir yerde yazmıyordu. [/brand](https://totaldrop.app/brand)
   sayfası (#220) logo dosyalarını indirtiyor ama bu dosyaları kimin,
   hangi koşulla kullanabileceğini söylemiyor.
@@ -40,17 +42,24 @@
   3. **Serbest bırakmak.** Fork'lar adı ve işareti kullanabilir. Kullanıcı
      zayıflatılmış bir sürümü resmî uygulama sanabilir.
 
-- **Karar:** 1. seçenek (Ozan, 4 Kasım 2026, karar kartı). Kurallar
-  [docs/marka.md](../marka.md) belgesindedir. Özetle:
+- **Karar:** 1. seçenek (Ozan, 4 Kasım 2026, karar kartı). Aşağıdaki
+  diğer maddeleri ve mağaza kuralını Ozan aynı gün başlıkta onayladı.
+  Kurallar [docs/marka.md](../marka.md) belgesindedir. Özetle:
   - Kod lisansları ne izin veriyorsa o serbesttir. Ad ve işaret için ayrı
-    kural geçerlidir.
+    kural geçerlidir. Lisans metinlerine GPL'nin 7. maddesine göre ek şart
+    eklenmez: kural lisansın değil, adın ve işaretin kuralıdır, ve kodun
+    kullanımına hiçbir kısıt getirmez.
+  - İşaret dosyaları (SVG, PNG, simgeler) bulundukları klasörün lisansıyla
+    dağıtılır; dosyayı değiştirmek lisansın verdiği haktır. Kural yalnızca
+    adın ve işaretin bir ürünü tanıtmak için kullanılmasını düzenler.
   - Bağlantı vermek, haberde, yazıda ve eğitimde adı ve değiştirilmemiş
     işareti kullanmak serbesttir.
   - Kodu değiştirmeden, yalnızca paketleme için gereken yamalarla derleyen
-    paketleyiciler (Linux dağıtımları, Flathub, AUR, F-Droid) adı ve
-    işareti kullanabilir.
-  - Kodu değiştiren sürümler kendi adını, işaretini ve uygulama
-    kimliğini kullanır. "TotalDrop tabanlıdır" diyebilir.
+    paketleyiciler (Linux dağıtımları, AUR, F-Droid) adı ve işareti
+    kullanabilir. Flathub'daki `app.totaldrop.TotalDrop` kaydını proje
+    yayımlar ya da onaylar.
+  - Kodu değiştiren sürümler kendi adını ve işaretini kullanır. "TotalDrop
+    tabanlıdır" diyebilir.
   - Protokolü uygulayan başka istemciler "TotalDrop ile çalışır" diyebilir.
     Adlarında TotalDrop geçemez, işareti kullanamazlar.
   - Resmî ya da onaylı gibi görünmek, işareti değiştirmek, benzer ad ve
@@ -68,9 +77,12 @@
 - **Sonuçlar:**
   - `docs/marka.md` kuralların tam metnidir. `LICENSING.md` ona bağlanır.
   - /brand sayfasına 35 dilde "Ad ve işaretin kullanımı" bölümü eklenir.
-  - Bir fork Android'de `app.totaldrop` dışında bir uygulama kimliği,
-    Linux'ta `app.totaldrop.TotalDrop` dışında bir masaüstü kimliği
-    kullanır. Mağazalar ve Flathub zaten aynı kimliği iki kez kabul etmez.
+  - Bir fork'un Android'de `app.totaldrop`, Linux'ta
+    `app.totaldrop.TotalDrop` dışında bir uygulama kimliği kullanması
+    önerilir, şart koşulmaz. Nedenleri teknik: mağazalar ve Flathub aynı
+    kimliği iki kez kabul etmez, Android başka anahtarla imzalanmış bir
+    güncellemeyi kurmaz, aynı masaüstü kimliğini taşıyan iki uygulama
+    birbirinin yerine geçer.
   - Ad tescil edilmedi. Metinler "tescilli marka" demez. Ad tescil
     ettirilirse belgeler güncellenir.
   - İzin istekleri hello@totaldrop.app adresine gelir.
