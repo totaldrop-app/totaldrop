@@ -74,3 +74,7 @@ jobs:
         run: rustup show active-toolchain || rustup toolchain install
       - run: flutter pub get --enforce-lockfile
       - run: flutter build apk --debug --target-platform android-arm64
+      # The build writes the Gradle wrapper script (android/gradlew).
+      - name: Kotlin unit tests
+        working-directory: app/android
+        run: ./gradlew --no-daemon :app:testDebugUnitTest
