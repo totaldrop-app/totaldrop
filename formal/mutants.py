@@ -7,7 +7,9 @@
 A proof only means something if the model would fail without the rule it
 relies on. Each mutant below breaks one check in a copy of the model and
 adds an attack lemma; Tamarin must find the attack trace in the mutant.
-The same scenario is a proved lemma in the real model (check.sh).
+The same scenario is a proved lemma in the real model (check.sh). The
+model's own lemmas are dropped from the mutant: a [reuse] helper that the
+mutation makes false would otherwise be assumed and hide the attack.
 
 Usage: formal/mutants.py [tamarin-prover command]
 """
@@ -21,6 +23,7 @@ import tempfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 CHAIN = os.path.join(HERE, "hayalet-halka-zincir.spthy")
+LOG = os.path.join(HERE, "hayalet-halka-gunluk.spthy")
 TIMEOUT = int(os.environ.get("LEMMA_TIMEOUT", "600"))
 
 BOUND_ONE_STEP = """
@@ -28,6 +31,22 @@ BOUND_ONE_STEP = """
     & not (Ex #x. Step('MT') @ x) & not (Ex #x. Step('AT') @ x)
     & not (Ex #x. Step('MR') @ x) & not (Ex #x. Step('AR') @ x)
     & not (Ex #x. Step('MA') @ x)"
+"""
+
+# Part 2: once a member removed n from h1, a reader still accepts a rotate
+# signed by n on h1. n's IK leaks; the honest remove is in the log.
+LOCKOUT_ATTACK = """
+lemma attack:
+  exists-trace
+  "Ex c r h0 h1 n d nr #p #i #t #j.
+      Pin(c, r, h0) @ p
+    & Accept(c, r, h0, 'add', n, d) @ i
+    & h1 = h(<'rec', r, h0, 'add', n, d>)
+    & Signed(d, r, h1, 'remove', h(n)) @ t
+    & Accept(c, r, h1, 'rotate', nr, n) @ j
+    & #t < #j
+    & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)
+    & not (Ex #x. Step('MT') @ x) & not (Ex #x. Step('AR') @ x)"
 """
 
 MUTANTS = [
@@ -162,6 +181,68 @@ lemma attack:
     & not (Ex #x. Step('MR') @ x)"
 """,
     },
+    {
+        "name": "honest_remove_not_logged",
+        "why": "witnesses do not enforce inclusion: the server censors an honest remove",
+        "model": LOG,
+        "edits": [
+            ("remove LogValid",
+             r"(rule Member_Remove_[12]:(?:(?!\nrule ).)*?)LogValid\(h\(<'log', h\(hb\)>\), body, 'ak'\), ",
+             r"\1", 2),
+            ("remove LogEntry",
+             r"(rule Member_Remove_[12]:(?:(?!\nrule ).)*?),\n      !LogEntry\([^\n]*\) \]",
+             r"\1 ]", 2),
+        ],
+        "lemma": LOCKOUT_ATTACK,
+    },
+    {
+        "name": "reader_accepts_rotate_despite_fork",
+        "why": "a reader accepts a rotate although an AK record under the same head was logged",
+        "model": LOG,
+        "edits": [
+            ("restriction Log_Read_IK",
+             r"restriction Log_Read_IK:\n  \"[^\"]*\"\n", "", 1),
+        ],
+        "lemma": LOCKOUT_ATTACK,
+    },
+    {
+        "name": "reader_ignores_ak_fork",
+        "why": "a reader does not look for a second AK record under the same head",
+        "model": LOG,
+        "edits": [
+            ("restriction Log_Read_AK",
+             r"restriction Log_Read_AK:\n  \"[^\"]*\"\n", "", 1),
+        ],
+        "lemma": """
+lemma attack:
+  exists-trace
+  "Ex c1 c2 r h0 n1 n2 s #p #q #i #j.
+      Pin(c1, r, h0) @ p & Pin(c2, r, h0) @ q
+    & Accept(c1, r, h0, 'add', n1, s) @ i
+    & Accept(c2, r, h0, 'add', n2, s) @ j
+    & not (n1 = n2)
+    & (All t #x #y. Step(t) @ x & Step(t) @ y & not (t = 'AA') ==> #x = #y)
+    & not (Ex #x. Step('MT') @ x) & not (Ex #x. Step('AT') @ x)
+    & not (Ex #x. Step('MR') @ x) & not (Ex #x. Step('AR') @ x)"
+""",
+    },
+    {
+        "name": "accept_from_network_not_log",
+        "why": "a contact takes an add record from the network instead of the log",
+        "model": LOG,
+        "edits": [
+            ("rule Accept_Add_1:",
+             r"(rule Accept_Add_1:(?:(?!\nrule ).)*?)!LogEntry\(h\(<'log', hh>\), <body, sig1, sig2>\)",
+             r"\1In(<body, sig1, sig2>)", 1),
+        ],
+        "lemma": """
+lemma attack:
+  exists-trace
+  "Ex c r h0 n s #p #i.
+      Pin(c, r, h0) @ p
+    & Accept(c, r, h0, 'add', n, s) @ i
+    & not (Ex k #t. LogValid(h(<'log', h0>), <'rec', r, h0, 'add', n, s>, k) @ t)""" + BOUND_ONE_STEP,
+    },
 ]
 
 
@@ -171,8 +252,10 @@ def mutate(text, mutant):
         if count != expected:
             sys.exit(f"{mutant['name']}: edit '{label}' applied {count} times, "
                      f"expected {expected}; update mutants.py")
-    end = text.rindex("\nend")
-    return text[:end] + "\n" + mutant["lemma"] + "\nend\n"
+    cut = text.find("\nlemma ")
+    if cut < 0 or "\nrestriction " in text[cut:]:
+        sys.exit(f"{mutant['name']}: expected all lemmas after the rules and restrictions")
+    return text[:cut] + "\n" + mutant["lemma"] + "\nend\n"
 
 
 def main():
