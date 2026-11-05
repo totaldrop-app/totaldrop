@@ -233,7 +233,7 @@
   "dl.new.prepare": "Als je een groot bestand kiest, zegt het verzendscherm meteen dat je bestanden worden voorbereid, in plaats van een paar seconden stil te staan.",
   "dl.new.addfail": "Kunnen de gekozen bestanden niet worden toegevoegd, dan zegt het verzendscherm dat nu, en wat je kunt proberen.",
   "dl.new.talkback": "TalkBack leest elke nieuwe stap van verzenden of ontvangen voor.",
-  "dl.new.linux": "Deze wijzigingen gelden voor Android. Linux is sinds 0.3.0-beta.5 niet veranderd.",
+  "dl.new.linux": "De wijzigingen hieronder gelden voor Android. De Linux-app is sinds 0.3.0-beta.5 niet veranderd.",
   "dl.new.title": "Nieuw",
   "dl.platforms": "Platforms",
   "dl.ready": "Beschikbaar",

@@ -233,7 +233,7 @@
   "dl.new.prepare": "Kun valitset suuren tiedoston, lähetysnäkymä kertoo heti valmistelevansa tiedostojasi sen sijaan, että se seisoisi paikallaan muutaman sekunnin.",
   "dl.new.addfail": "Jos valittuja tiedostoja ei voi lisätä, lähetysnäkymä kertoo nyt sen ja mitä voit kokeilla.",
   "dl.new.talkback": "TalkBack lukee ääneen lähetyksen ja vastaanoton jokaisen uuden vaiheen.",
-  "dl.new.linux": "Nämä muutokset koskevat Androidia. Linux ei ole muuttunut versiosta 0.3.0-beta.5.",
+  "dl.new.linux": "Alla olevat muutokset koskevat Androidia. Linux-sovellus ei ole muuttunut versiosta 0.3.0-beta.5.",
   "dl.new.title": "Uutta",
   "dl.platforms": "Alustat",
   "dl.ready": "Saatavilla",

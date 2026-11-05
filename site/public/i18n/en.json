@@ -233,7 +233,7 @@
   "dl.new.prepare": "After you choose a large file, the send screen says at once that it is preparing your files, instead of standing still for a few seconds.",
   "dl.new.addfail": "If the chosen files cannot be added, the send screen now says so and suggests what to try.",
   "dl.new.talkback": "TalkBack reads out each new step of a send or receive.",
-  "dl.new.linux": "These changes are on Android. Linux has not changed since 0.3.0-beta.5.",
+  "dl.new.linux": "The changes below are on Android. The Linux app has not changed since 0.3.0-beta.5.",
   "dl.new.title": "What's new",
   "dl.platforms": "Platforms",
   "dl.ready": "Available",

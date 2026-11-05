@@ -233,7 +233,7 @@
   "dl.new.prepare": "Når du velger en stor fil, sier sendeskjermen med en gang at den forbereder filene dine, i stedet for å stå stille i noen sekunder.",
   "dl.new.addfail": "Hvis de valgte filene ikke kan legges til, sier sendeskjermen nå fra om det, og hva du kan prøve.",
   "dl.new.talkback": "TalkBack leser opp hvert nye trinn når du sender eller mottar.",
-  "dl.new.linux": "Disse endringene gjelder Android. Linux er ikke endret siden 0.3.0-beta.5.",
+  "dl.new.linux": "Endringene nedenfor gjelder Android. Linux-appen er ikke endret siden 0.3.0-beta.5.",
   "dl.new.title": "Nytt",
   "dl.platforms": "Plattformer",
   "dl.ready": "Tilgjengelig",

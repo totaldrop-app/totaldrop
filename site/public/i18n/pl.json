@@ -233,7 +233,7 @@
   "dl.new.prepare": "Po wybraniu dużego pliku ekran wysyłania od razu informuje, że przygotowuje pliki, zamiast zastygać na kilka sekund.",
   "dl.new.addfail": "Jeśli wybranych plików nie da się dodać, ekran wysyłania teraz o tym mówi i podpowiada, co spróbować.",
   "dl.new.talkback": "TalkBack odczytuje każdy nowy krok wysyłania i odbierania.",
-  "dl.new.linux": "Te zmiany dotyczą Androida. Linux nie zmienił się od wersji 0.3.0-beta.5.",
+  "dl.new.linux": "Poniższe zmiany dotyczą Androida. Aplikacja na Linuksa nie zmieniła się od wersji 0.3.0-beta.5.",
   "dl.new.title": "Co nowego",
   "dl.platforms": "Platformy",
   "dl.ready": "Dostępne",

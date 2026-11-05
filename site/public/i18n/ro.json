@@ -233,7 +233,7 @@
   "dl.new.prepare": "După ce alegeți un fișier mare, ecranul de trimitere spune imediat că vă pregătește fișierele, în loc să stea nemișcat câteva secunde.",
   "dl.new.addfail": "Dacă fișierele alese nu pot fi adăugate, ecranul de trimitere spune acum acest lucru și ce puteți încerca.",
   "dl.new.talkback": "TalkBack citește cu voce tare fiecare pas nou al unei trimiteri sau primiri.",
-  "dl.new.linux": "Aceste schimbări sunt pe Android. Linux nu s-a schimbat de la 0.3.0-beta.5.",
+  "dl.new.linux": "Schimbările de mai jos privesc Android. Aplicația pentru Linux nu s-a schimbat de la 0.3.0-beta.5.",
   "dl.new.title": "Noutăți",
   "dl.platforms": "Platforme",
   "dl.ready": "Disponibil",

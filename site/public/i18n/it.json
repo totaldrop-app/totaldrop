@@ -233,7 +233,7 @@
   "dl.new.prepare": "Dopo aver scelto un file grande, la schermata di invio dice subito che sta preparando i tuoi file, invece di restare ferma per qualche secondo.",
   "dl.new.addfail": "Se i file scelti non si possono aggiungere, ora la schermata di invio lo dice e spiega cosa provare.",
   "dl.new.talkback": "TalkBack legge ad alta voce ogni nuovo passaggio di un invio o di una ricezione.",
-  "dl.new.linux": "Queste modifiche riguardano Android. Linux non è cambiato dalla 0.3.0-beta.5.",
+  "dl.new.linux": "Le modifiche qui sotto riguardano Android. L’app per Linux non è cambiata dalla 0.3.0-beta.5.",
   "dl.new.title": "Novità",
   "dl.platforms": "Piattaforme",
   "dl.ready": "Disponibile",

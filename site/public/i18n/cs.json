@@ -233,7 +233,7 @@
   "dl.new.prepare": "Po výběru velkého souboru obrazovka odesílání hned řekne, že soubory připravuje, místo aby se na pár sekund zasekla.",
   "dl.new.addfail": "Pokud vybrané soubory nejde přidat, obrazovka odesílání to teď řekne a poradí, co zkusit.",
   "dl.new.talkback": "TalkBack přečte každý nový krok odesílání i příjmu.",
-  "dl.new.linux": "Tyto změny se týkají Androidu. Linux se od verze 0.3.0-beta.5 nezměnil.",
+  "dl.new.linux": "Níže uvedené změny se týkají Androidu. Aplikace pro Linux se od verze 0.3.0-beta.5 nezměnila.",
   "dl.new.title": "Co je nového",
   "dl.platforms": "Platformy",
   "dl.ready": "K dispozici",

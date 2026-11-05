@@ -233,7 +233,7 @@
   "dl.new.prepare": "Nachdem Sie eine große Datei gewählt haben, zeigt der Sendebildschirm sofort, dass Ihre Dateien vorbereitet werden, statt einige Sekunden stillzustehen.",
   "dl.new.addfail": "Können die gewählten Dateien nicht hinzugefügt werden, zeigt der Sendebildschirm das jetzt an und sagt, was Sie tun können.",
   "dl.new.talkback": "TalkBack liest jeden neuen Schritt beim Senden und Empfangen vor.",
-  "dl.new.linux": "Diese Änderungen betreffen Android. Linux hat sich seit 0.3.0-beta.5 nicht geändert.",
+  "dl.new.linux": "Die folgenden Änderungen betreffen Android. Die Linux-App hat sich seit 0.3.0-beta.5 nicht geändert.",
   "dl.new.title": "Neuigkeiten",
   "dl.platforms": "Plattformen",
   "dl.ready": "Verfügbar",
