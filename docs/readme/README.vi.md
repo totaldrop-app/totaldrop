@@ -1,4 +1,4 @@
-<!-- Translated from README.md 98359377b108. -->
+<!-- Translated from README.md e31a62d5101d. -->
 <div align="center">
 
 <picture>
@@ -51,16 +51,16 @@ Miễn phí và mã nguồn mở. Mã hóa đầu cuối. Không cần email, s�
 
 | Nền tảng | Tải về | Ghi chú |
 | --- | --- | --- |
-| **Linux** (x86-64) | [Arch / Omarchy](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.4/totaldrop-0.3.0_beta.4-1-x86_64.pkg.tar.zst) · [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.4/totaldrop_0.3.0.beta.4-1_amd64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.4/totaldrop-0.3.0.beta.4-1.fc43.x86_64.rpm) | 0.3.0-beta.4, Qt 6.8 trở lên |
-| **Linux** (ARM64) | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.4/totaldrop_0.3.0.beta.4-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.4/totaldrop-0.3.0.beta.4-1.fc43.aarch64.rpm) | 0.3.0-beta.4, Qt 6.8 trở lên |
-| **Android** | [Tham gia bản beta](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.4, Android 15 trở lên, Google Play theo lời mời |
+| **Linux** (x86-64) | [Arch / Omarchy](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.5/totaldrop-0.3.0_beta.5-1-x86_64.pkg.tar.zst) · [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.5/totaldrop_0.3.0.beta.5-1_amd64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.5/totaldrop-0.3.0.beta.5-1.fc43.x86_64.rpm) | 0.3.0-beta.5, Qt 6.8 trở lên |
+| **Linux** (ARM64) | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.5/totaldrop_0.3.0.beta.5-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.5/totaldrop-0.3.0.beta.5-1.fc43.aarch64.rpm) | 0.3.0-beta.5, Qt 6.8 trở lên |
+| **Android** | [Tham gia bản beta](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.5, Android 15 trở lên, Google Play theo lời mời |
 | **Dòng lệnh** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux, macOS, Windows |
 | **Windows, macOS, iOS** | Sắp có | Ký mã cho các nền tảng này là khoản đầu tiên tiền quyên góp sẽ chi trả |
 
 Mọi gói đều được CI xây dựng từ một commit có gắn thẻ, không bao giờ trên máy của nhà phát triển. Để kiểm tra một gói trước khi cài đặt, hãy so sánh nó với `SHA256SUMS` của bản phát hành và xác minh nơi nó được xây dựng:
 
 ```bash
-gh attestation verify totaldrop_0.3.0.beta.4-1_amd64.deb --repo totaldrop-app/totaldrop
+gh attestation verify totaldrop_0.3.0.beta.5-1_amd64.deb --repo totaldrop-app/totaldrop
 ```
 
 > [!NOTE]

@@ -1,4 +1,4 @@
-<!-- Translated from README.md 98359377b108. -->
+<!-- Translated from README.md e31a62d5101d. -->
 <div align="center">
 
 <picture>
@@ -51,16 +51,16 @@ Gratuit și open source. Criptat end-to-end. Fără e-mail, fără număr de tel
 
 | Platformă | De unde | Note |
 | --- | --- | --- |
-| **Linux** (x86-64) | [Arch / Omarchy](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.4/totaldrop-0.3.0_beta.4-1-x86_64.pkg.tar.zst) · [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.4/totaldrop_0.3.0.beta.4-1_amd64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.4/totaldrop-0.3.0.beta.4-1.fc43.x86_64.rpm) | 0.3.0-beta.4, Qt 6.8 sau mai nou |
-| **Linux** (ARM64) | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.4/totaldrop_0.3.0.beta.4-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.4/totaldrop-0.3.0.beta.4-1.fc43.aarch64.rpm) | 0.3.0-beta.4, Qt 6.8 sau mai nou |
-| **Android** | [Intrați în beta](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.4, Android 15 sau mai nou, Google Play pe bază de invitație |
+| **Linux** (x86-64) | [Arch / Omarchy](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.5/totaldrop-0.3.0_beta.5-1-x86_64.pkg.tar.zst) · [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.5/totaldrop_0.3.0.beta.5-1_amd64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.5/totaldrop-0.3.0.beta.5-1.fc43.x86_64.rpm) | 0.3.0-beta.5, Qt 6.8 sau mai nou |
+| **Linux** (ARM64) | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.5/totaldrop_0.3.0.beta.5-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.5/totaldrop-0.3.0.beta.5-1.fc43.aarch64.rpm) | 0.3.0-beta.5, Qt 6.8 sau mai nou |
+| **Android** | [Intrați în beta](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.5, Android 15 sau mai nou, Google Play pe bază de invitație |
 | **Linie de comandă** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux, macOS, Windows |
 | **Windows, macOS, iOS** | În curând | Semnarea codului pentru acestea este primul lucru pe care îl plătesc donațiile |
 
 Fiecare pachet este compilat de CI dintr-un commit etichetat, niciodată pe calculatorul unui dezvoltator. Ca să verificați un pachet înainte de instalare, comparați-l cu `SHA256SUMS` din versiunea respectivă și verificați unde a fost compilat:
 
 ```bash
-gh attestation verify totaldrop_0.3.0.beta.4-1_amd64.deb --repo totaldrop-app/totaldrop
+gh attestation verify totaldrop_0.3.0.beta.5-1_amd64.deb --repo totaldrop-app/totaldrop
 ```
 
 > [!NOTE]
