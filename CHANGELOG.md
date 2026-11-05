@@ -31,8 +31,8 @@ per change, and move here when it is released (docs/surec.md).
   send screen now says so instead of quietly going back to an empty
   selection. TalkBack now also reads out the main headline of each step
   of a send (preparing, waiting, sending, sent, failed) and of a receive
-  (connecting, incoming files, receiving, received, declined), and the
-  selection once the picker has copied the files (#271).
+  (connecting, incoming files, receiving, received, declined, failed),
+  and the selection once the picker has copied the files (#271).
 
 ## [android-0.3.0-beta.5] and [linux-0.3.0-beta.5] - 2026-11-05
 
