@@ -1,0 +1,316 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+/*
+ * Ghost ring (docs/hesap.md, decision 0013), part 2 of the formal model
+ * (#251): the membership chain of part 1 with the transparency log.
+ *
+ * Same chain, keys and attacker as hayalet-halka-zincir.spthy. New:
+ *  - records are read from a log keyed by the previous head, not taken
+ *    from the network; anyone may log a value;
+ *  - readers apply the fork rule over all values under the key;
+ *  - honest devices log their own records when they write them (the
+ *    witnesses' inclusion enforcement), so the server cannot censor them.
+ *
+ * Abstractions beyond part 1 (README.md lists them with their reasons):
+ *  - Time is not modelled: an honest record is in the log from the moment
+ *    it is written. The real bound is one hour to inclusion plus one hour
+ *    of root freshness (P3: two hours); A5 checks the timing.
+ *  - The log is one global set: witnesses are an honest majority, so no
+ *    reader sees a different log. Values are not encrypted here; that the
+ *    server cannot read them is P5, not P2.
+ *  - Rotates that fork with each other are not merged by smallest hash;
+ *    readers stop (stricter than the design).
+ */
+
+theory HayaletHalkaGunluk
+begin
+
+builtins: signing, hashing
+
+restriction Eq: "All x y #i. Eq(x, y) @ i ==> x = y"
+
+/* A device: identity key IK and the two halves of the admin key AK. */
+rule Device_New:
+    let d = <pk(~ik), pk(~a1), pk(~a2)>
+    in
+    [ Fr(~ik), Fr(~a1), Fr(~a2) ]
+  --[ DeviceNew(d) ]->
+    [ !DevKey(d, ~ik, ~a1, ~a2), Unused(d), Out(d) ]
+
+/* Key leaks: a stolen, removed or broken device. Each half separately, so
+   a break of one algorithm alone is modelled too. */
+rule Reveal_IK:
+    [ !DevKey(d, ik, a1, a2) ] --[ RevIK(d) ]-> [ Out(ik) ]
+rule Reveal_A1:
+    [ !DevKey(d, ik, a1, a2) ] --[ RevA1(d) ]-> [ Out(a1) ]
+rule Reveal_A2:
+    [ !DevKey(d, ik, a1, a2) ] --[ RevA2(d) ]-> [ Out(a2) ]
+
+rule Ring_Create:
+    let d = <pk(~ik), pk(~a1), pk(~a2)>
+        r = h(<'ring', d>)
+        body = <'rec', r, 'genesis', 'create', d, d>
+    in
+    [ Unused(d), !DevKey(d, ~ik, ~a1, ~a2) ]
+  --[ Created(r, d), Signed(d, r, 'genesis', 'create', d) ]->
+    [ View(d, r, h(body), d, 'empty'), !Genesis(r, h(body), d), !Head(r, h(body), d, 'empty'),
+      Out(<body, sign(<'ed', body>, ~a1), sign(<'ml', body>, ~a2)>) ]
+
+/* A contact pins the genesis head (trust on first use, checked by words). */
+rule Contact_Pin:
+    [ !Genesis(r, hh, d), Fr(~c) ] --[ Pin(~c, r, hh) ]-> [ View(~c, r, hh, d, 'empty') ]
+
+/* A new device asks to join over QR or CPace (authentic, single use). */
+rule Device_Join_Request:
+    [ Unused(n) ] --[ JoinRequest(n) ]-> [ AddReq(n) ]
+
+/* Honest device in slot 1 adds into empty slot 2 (and the mirror). */
+rule Member_Add_1:
+    let d = <pk(~ik), pk(~a1), pk(~a2)>
+        body = <'rec', h(rb), h(hb), 'add', n, d>
+    in
+    [ View(d, h(rb), h(hb), d, 'empty'), AddReq(n), !DevKey(d, ~ik, ~a1, ~a2) ]
+  --[ LogValid(h(<'log', h(hb)>), body, 'ak'), ReadL(h(<'log', h(hb)>), body, 'ak'), Step('MA'), Signed(d, h(rb), h(hb), 'add', n) ]->
+    [ View(d, h(rb), h(body), d, n), View(n, h(rb), h(body), d, n),
+      Out(<body, sign(<'ed', body>, ~a1), sign(<'ml', body>, ~a2)>), !Head(h(rb), h(body), d, n),
+      !LogEntry(h(<'log', h(hb)>), <body, sign(<'ed', body>, ~a1), sign(<'ml', body>, ~a2)>) ]
+
+rule Member_Add_2:
+    let d = <pk(~ik), pk(~a1), pk(~a2)>
+        body = <'rec', h(rb), h(hb), 'add', n, d>
+    in
+    [ View(d, h(rb), h(hb), 'empty', d), AddReq(n), !DevKey(d, ~ik, ~a1, ~a2) ]
+  --[ LogValid(h(<'log', h(hb)>), body, 'ak'), ReadL(h(<'log', h(hb)>), body, 'ak'), Step('MA'), Signed(d, h(rb), h(hb), 'add', n) ]->
+    [ View(d, h(rb), h(body), n, d), View(n, h(rb), h(body), n, d),
+      Out(<body, sign(<'ed', body>, ~a1), sign(<'ml', body>, ~a2)>), !Head(h(rb), h(body), n, d),
+      !LogEntry(h(<'log', h(hb)>), <body, sign(<'ed', body>, ~a1), sign(<'ml', body>, ~a2)>) ]
+
+rule Member_Remove_1:
+    let d = <pk(~ik), pk(~a1), pk(~a2)>
+        body = <'rec', h(rb), h(hb), 'remove', h(x), d>
+    in
+    [ View(d, h(rb), h(hb), d, x), !DevKey(d, ~ik, ~a1, ~a2) ]
+  --[ LogValid(h(<'log', h(hb)>), body, 'ak'), ReadL(h(<'log', h(hb)>), body, 'ak'), Step('MR'), Signed(d, h(rb), h(hb), 'remove', h(x)), NotEmpty(x) ]->
+    [ View(d, h(rb), h(body), d, 'empty'),
+      Out(<body, sign(<'ed', body>, ~a1), sign(<'ml', body>, ~a2)>), !Head(h(rb), h(body), d, 'empty'),
+      !LogEntry(h(<'log', h(hb)>), <body, sign(<'ed', body>, ~a1), sign(<'ml', body>, ~a2)>) ]
+
+rule Member_Remove_2:
+    let d = <pk(~ik), pk(~a1), pk(~a2)>
+        body = <'rec', h(rb), h(hb), 'remove', h(x), d>
+    in
+    [ View(d, h(rb), h(hb), x, d), !DevKey(d, ~ik, ~a1, ~a2) ]
+  --[ LogValid(h(<'log', h(hb)>), body, 'ak'), ReadL(h(<'log', h(hb)>), body, 'ak'), Step('MR'), Signed(d, h(rb), h(hb), 'remove', h(x)), NotEmpty(x) ]->
+    [ View(d, h(rb), h(body), 'empty', d),
+      Out(<body, sign(<'ed', body>, ~a1), sign(<'ml', body>, ~a2)>), !Head(h(rb), h(body), 'empty', d),
+      !LogEntry(h(<'log', h(hb)>), <body, sign(<'ed', body>, ~a1), sign(<'ml', body>, ~a2)>) ]
+
+restriction NotEmpty: "All x #i. NotEmpty(x) @ i ==> not (x = 'empty')"
+
+rule Member_Rotate_1:
+    let d = <pk(~ik), pk(~a1), pk(~a2)>
+        body = <'rec', h(rb), h(hb), 'rotate', ~nr, d>
+    in
+    [ View(d, h(rb), h(hb), d, y), !DevKey(d, ~ik, ~a1, ~a2), Fr(~nr) ]
+  --[ LogValid(h(<'log', h(hb)>), body, 'ik'), ReadL(h(<'log', h(hb)>), body, 'ik'), Step('MT'), Signed(d, h(rb), h(hb), 'rotate', ~nr) ]->
+    [ View(d, h(rb), h(body), d, y), Out(<body, sign(<'ik', body>, ~ik)>), !Head(h(rb), h(body), d, y),
+      !LogEntry(h(<'log', h(hb)>), <body, sign(<'ik', body>, ~ik)>) ]
+
+rule Member_Rotate_2:
+    let d = <pk(~ik), pk(~a1), pk(~a2)>
+        body = <'rec', h(rb), h(hb), 'rotate', ~nr, d>
+    in
+    [ View(d, h(rb), h(hb), y, d), !DevKey(d, ~ik, ~a1, ~a2), Fr(~nr) ]
+  --[ LogValid(h(<'log', h(hb)>), body, 'ik'), ReadL(h(<'log', h(hb)>), body, 'ik'), Step('MT'), Signed(d, h(rb), h(hb), 'rotate', ~nr) ]->
+    [ View(d, h(rb), h(body), y, d), Out(<body, sign(<'ik', body>, ~ik)>), !Head(h(rb), h(body), y, d),
+      !LogEntry(h(<'log', h(hb)>), <body, sign(<'ik', body>, ~ik)>) ]
+
+/* Any view owner (device or contact) follows records from the log. */
+rule Accept_Add_1:
+    let s = <sik, sa1, sa2>
+        body = <'rec', r, hh, 'add', n, s>
+    in
+    [ View(o, r, hh, s, 'empty'), !LogEntry(h(<'log', hh>), <body, sig1, sig2>) ]
+  --[ ReadL(h(<'log', hh>), body, 'ak'), Step('AA'), Eq(verify(sig1, <'ed', body>, sa1), true),
+      Eq(verify(sig2, <'ml', body>, sa2), true),
+      NotEmpty(n),
+      Accept(o, r, hh, 'add', n, s) ]->
+    [ View(o, r, h(body), s, n), !Head(r, h(body), s, n) ]
+
+rule Accept_Add_2:
+    let s = <sik, sa1, sa2>
+        body = <'rec', r, hh, 'add', n, s>
+    in
+    [ View(o, r, hh, 'empty', s), !LogEntry(h(<'log', hh>), <body, sig1, sig2>) ]
+  --[ ReadL(h(<'log', hh>), body, 'ak'), Step('AA'), Eq(verify(sig1, <'ed', body>, sa1), true),
+      Eq(verify(sig2, <'ml', body>, sa2), true),
+      NotEmpty(n),
+      Accept(o, r, hh, 'add', n, s) ]->
+    [ View(o, r, h(body), n, s), !Head(r, h(body), n, s) ]
+
+rule Accept_Remove_1:
+    let s = <sik, sa1, sa2>
+        body = <'rec', r, hh, 'remove', h(x), s>
+    in
+    [ View(o, r, hh, s, x), !LogEntry(h(<'log', hh>), <body, sig1, sig2>) ]
+  --[ ReadL(h(<'log', hh>), body, 'ak'), Step('AR'), Eq(verify(sig1, <'ed', body>, sa1), true),
+      Eq(verify(sig2, <'ml', body>, sa2), true),
+      NotEmpty(x),
+      Accept(o, r, hh, 'remove', h(x), s) ]->
+    [ View(o, r, h(body), s, 'empty'), !Head(r, h(body), s, 'empty') ]
+
+rule Accept_Remove_2:
+    let s = <sik, sa1, sa2>
+        body = <'rec', r, hh, 'remove', h(x), s>
+    in
+    [ View(o, r, hh, x, s), !LogEntry(h(<'log', hh>), <body, sig1, sig2>) ]
+  --[ ReadL(h(<'log', hh>), body, 'ak'), Step('AR'), Eq(verify(sig1, <'ed', body>, sa1), true),
+      Eq(verify(sig2, <'ml', body>, sa2), true),
+      NotEmpty(x),
+      Accept(o, r, hh, 'remove', h(x), s) ]->
+    [ View(o, r, h(body), 'empty', s), !Head(r, h(body), 'empty', s) ]
+
+rule Accept_Rotate_1:
+    let s = <sik, sa1, sa2>
+        body = <'rec', r, hh, 'rotate', nr, s>
+    in
+    [ View(o, r, hh, s, y), !LogEntry(h(<'log', hh>), <body, sig>) ]
+  --[ ReadL(h(<'log', hh>), body, 'ik'), Step('AT'), Eq(verify(sig, <'ik', body>, sik), true),
+      Accept(o, r, hh, 'rotate', nr, s) ]->
+    [ View(o, r, h(body), s, y), !Head(r, h(body), s, y) ]
+
+rule Accept_Rotate_2:
+    let s = <sik, sa1, sa2>
+        body = <'rec', r, hh, 'rotate', nr, s>
+    in
+    [ View(o, r, hh, y, s), !LogEntry(h(<'log', hh>), <body, sig>) ]
+  --[ ReadL(h(<'log', hh>), body, 'ik'), Step('AT'), Eq(verify(sig, <'ik', body>, sik), true),
+      Accept(o, r, hh, 'rotate', nr, s) ]->
+    [ View(o, r, h(body), y, s), !Head(r, h(body), y, s) ]
+
+/* The transparency log. A value is logged under L = h('log', head) and is
+   never deleted. The log keeps only values that are valid for that head:
+   readers drop every other value (hesap.md, "Anonim şeffaflık günlüğü"),
+   so a logged invalid value changes nothing and is left out. Anyone may
+   log a value (with an ARC token, not modelled). Honest devices log their
+   own records in the same step that writes them: this is the witnesses'
+   inclusion enforcement, with its one-hour bound abstracted away. */
+rule Log_Write_AK_1:
+    let s = <sik, sa1, sa2>
+        body = <'rec', r, hh, op, x, s>
+    in
+    [ In(<body, sig1, sig2>), !Head(r, hh, s, y) ]
+  --[ Eq(verify(sig1, <'ed', body>, sa1), true),
+      Eq(verify(sig2, <'ml', body>, sa2), true),
+      LogValid(h(<'log', hh>), body, 'ak') ]->
+    [ !LogEntry(h(<'log', hh>), <body, sig1, sig2>) ]
+
+rule Log_Write_AK_2:
+    let s = <sik, sa1, sa2>
+        body = <'rec', r, hh, op, x, s>
+    in
+    [ In(<body, sig1, sig2>), !Head(r, hh, y, s) ]
+  --[ Eq(verify(sig1, <'ed', body>, sa1), true),
+      Eq(verify(sig2, <'ml', body>, sa2), true),
+      LogValid(h(<'log', hh>), body, 'ak') ]->
+    [ !LogEntry(h(<'log', hh>), <body, sig1, sig2>) ]
+
+rule Log_Write_IK_1:
+    let s = <sik, sa1, sa2>
+        body = <'rec', r, hh, op, x, s>
+    in
+    [ In(<body, sig>), !Head(r, hh, s, y) ]
+  --[ Eq(verify(sig, <'ik', body>, sik), true),
+      LogValid(h(<'log', hh>), body, 'ik') ]->
+    [ !LogEntry(h(<'log', hh>), <body, sig>) ]
+
+rule Log_Write_IK_2:
+    let s = <sik, sa1, sa2>
+        body = <'rec', r, hh, op, x, s>
+    in
+    [ In(<body, sig>), !Head(r, hh, y, s) ]
+  --[ Eq(verify(sig, <'ik', body>, sik), true),
+      LogValid(h(<'log', hh>), body, 'ik') ]->
+    [ !LogEntry(h(<'log', hh>), <body, sig>) ]
+
+/* Reading the log. Every reader (device or contact) reads every value under
+   the key and stops on a fork (hesap.md, "Çatal kuralı"): an AK record is
+   accepted only if no other valid AK record was logged under the same key
+   before; it wins over a rotate (priority, rule 1). A rotate is accepted
+   only if no other valid value of any kind was logged before. Witnesses
+   (k > n/2 honest) give every reader the same log; that is why the log is
+   one global set of facts here. */
+restriction Log_Read_AK:
+  "All L v v2 #i #t. ReadL(L, v, 'ak') @ i & LogValid(L, v2, 'ak') @ t & #t < #i ==> v = v2"
+
+restriction Log_Read_IK:
+  "All L v v2 k #i #t. ReadL(L, v, 'ik') @ i & LogValid(L, v2, k) @ t & #t < #i ==> v = v2"
+
+
+/* Executability. Step() bounds keep the search for a witness trace finite. */
+lemma sanity_contact_follows_add_via_log:
+  exists-trace
+  "Ex c r h0 n s #p #i.
+      Pin(c, r, h0) @ p
+    & Accept(c, r, h0, 'add', n, s) @ i
+    & not (Ex d #x. RevA1(d) @ x)
+    & not (Ex d #x. RevA2(d) @ x)
+    & (All t #x #y. Step(t) @ x & Step(t) @ y ==> #x = #y)
+    & not (Ex #x. Step('MT') @ x) & not (Ex #x. Step('AT') @ x)
+    & not (Ex #x. Step('MR') @ x) & not (Ex #x. Step('AR') @ x)"
+
+/* Non-vacuity of the lock-out below: before the removal is logged, a device
+   whose IK leaked can still have a rotate accepted on the head it will be
+   removed from. The window the lemma closes is real. */
+lemma sanity_leaked_device_rotates_before_removal:
+  exists-trace
+  "Ex c r h0 h1 n s nr #p #i #k #j.
+      Pin(c, r, h0) @ p
+    & Accept(c, r, h0, 'add', n, s) @ i
+    & h1 = h(<'rec', r, h0, 'add', n, s>)
+    & RevIK(n) @ k
+    & Accept(c, r, h1, 'rotate', nr, n) @ j
+    & not (Ex #x. Signed(n, r, h1, 'rotate', nr) @ x)
+    & (All t #x #y. Step(t) @ x & Step(t) @ y ==> #x = #y)
+    & not (Ex #x. Step('MT') @ x) & not (Ex #x. Step('MR') @ x)
+    & not (Ex #x. Step('AR') @ x)"
+
+/* P2, visibility: every record any reader accepts is in the log. */
+lemma accepted_records_are_logged:
+  "All o r hh op x s #i.
+      Accept(o, r, hh, op, x, s) @ i
+    ==> Ex k #t. LogValid(h(<'log', hh>), <'rec', r, hh, op, x, s>, k) @ t & #t < #i"
+
+/* Helper: an AK read is of a value logged as AK no later than the read. */
+lemma ak_read_was_logged [reuse]:
+  "All L v #i. ReadL(L, v, 'ak') @ i
+    ==> Ex #t. LogValid(L, v, 'ak') @ t & (#t < #i | #t = #i)"
+
+/* Helper: two AK reads under one key read the same value. */
+lemma ak_reads_agree [reuse]:
+  "All L v1 v2 #i #j. ReadL(L, v1, 'ak') @ i & ReadL(L, v2, 'ak') @ j ==> v1 = v2"
+
+/* P2, no split view: two readers (devices or contacts) never accept two
+   different membership changes of the same head. Holds with any key
+   leaked: the honest-majority witnesses are the only assumption. */
+lemma no_split_view_membership:
+  "All o1 o2 r hh op1 op2 x1 x2 s1 s2 #i #j.
+      Accept(o1, r, hh, op1, x1, s1) @ i & (op1 = 'add' | op1 = 'remove')
+    & Accept(o2, r, hh, op2, x2, s2) @ j & (op2 = 'add' | op2 = 'remove')
+    ==> op1 = op2 & x1 = x2 & s1 = s2"
+
+/* H3 core (old authority): once a member has removed device x, no reader
+   accepts any record signed by x on the head it was removed from, even if
+   all of x's keys leaked and the server helps. The case x = d is the
+   remove record itself. That x stays out on later heads is not proven yet
+   (README.md, "Henüz kanıtlanmayanlar"). */
+lemma removed_device_locked_out_of_old_head:
+  "All d r h0 x c op y #t #j.
+      Signed(d, r, h0, 'remove', h(x)) @ t
+    & Accept(c, r, h0, op, y, x) @ j
+    & #t < #j
+    & not (x = d)
+    ==> F"
+
+end

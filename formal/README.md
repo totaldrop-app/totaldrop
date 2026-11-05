@@ -10,7 +10,7 @@ Model parça parça büyür. Her parça ayrı bir PR'dır:
 | Parça | İçerik | Durum |
 | --- | --- | --- |
 | A1 | Üyelik zinciri: `oluştur`, `ekle`, `çıkar`, `döndür` | Bu klasörde |
-| A2 | Çok değerli şeffaflık günlüğü, tanıklar, dahil etme zorlaması (P2) | Sırada |
+| A2 | Çok değerli şeffaflık günlüğü, tanıklar, dahil etme zorlaması (P2) | Bu klasörde |
 | A3 | Kişi başı, sabitleme, gönderirken ve alırken tazelik (P3) | Sırada |
 | A4 | Kurtarma, sıkı mod, `çatal_çöz` (P7) | Sırada |
 | A5 | Bekleme süreleri için TLA+ değerlendirmesi | Sırada |
@@ -54,8 +54,8 @@ söyler; bunlar sonraki parçalarda kapatılır.
 
 | Soyutlama | Neden | Ne zaman genişler |
 | --- | --- | --- |
-| Halkada iki cihaz yeri var | Çok kümeli (multiset) üyelik, Tamarin aramasını sonlandırmıyordu; iki yer, üyelik değişikliğini ve eski kaydı yeniden oynatmayı kapsıyor | A2: çatallar için üç yer gerekecek |
-| Her cihaz tek bir halkadadır | Bir cihaz yalnızca bir halka kurar ya da bir halkaya katılır. Bu yüzden P1'deki "aynı halkada" kısmı bu modelde kendiliğinden doğrudur; halka kimliğinin kayıtta bulunması burada sınanmaz | A2: iki halkalı senaryo |
+| Halkada iki cihaz yeri var | Çok kümeli (multiset) üyelik, Tamarin aramasını sonlandırmıyordu; iki yer, üyelik değişikliğini ve eski kaydı yeniden oynatmayı kapsıyor | A4: çatal çözme için üç yer gerekebilir |
+| Her cihaz tek bir halkadadır | Bir cihaz yalnızca bir halka kurar ya da bir halkaya katılır. Bu yüzden P1'deki "aynı halkada" kısmı bu modelde kendiliğinden doğrudur; halka kimliğinin kayıtta bulunması burada sınanmaz | A3: iki halkalı senaryo, kişi başıyla birlikte |
 | Halka kimliği `h('ring', ilk cihaz)` | Tasarımda `H("halka", oluştur)`; ikisi de ilk kayda bağlı ve değişmez, bu parçada fark etmez | A3: kişi sabitlemesiyle birlikte |
 | Karma `AK` imzası iki ayrı imzadır, ikisi de aynı gövdeyi kendi etiketiyle (`'ed'`, `'ml'`) imzalar | Gövde imzalayanı iki açık anahtarıyla birlikte adlandırdığı için her yarı öbürünün anahtarına bağlıdır (hesap.md, "Anahtarlar") | Değişmez |
 | `IK` tek bir anahtardır | Tasarımda `IK` de Ed25519 + ML-DSA-65'tir; `döndür` için iki yarı ayrımı bu parçada sınanmaz | A3 |
@@ -109,7 +109,76 @@ uygulanacağı yazılıdır; sayı tutmazsa betik durur.
   imzalayanı olarak kabul etmemesi. Kişinin görünümü çıkarılan cihazı artık
   içermediği için böyle olması beklenir, ama bunu gösteren lemma (sınırlı
   biçimi de) Tamarin'de sonlanmadı. Bir sahibin birden çok görünümü
-  olamayacağını gösteren bir değişmez gerekiyor; A2'de, her başın üye
-  kümesini tek bir değere bağlayan günlükle birlikte denenecek. Bu, tasarımın
-  "eski yetki" tehdidinin (H3) çekirdeğidir.
+  olamayacağını gösteren bir değişmez gerekiyor. Bu, tasarımın "eski yetki"
+  tehdidinin (H3) çekirdeğidir. A2 bunun, çıkarıldığı baştaki kısmını
+  günlükle kanıtlar (`removed_device_locked_out_of_old_head`); sonraki
+  başlar hâlâ açık (aşağıda, A2).
 - Çatallar, günlük, tazelik, kurtarma ve sıkı mod: A2-A4.
+
+## A2: şeffaflık günlüğü (`hayalet-halka-gunluk.spthy`)
+
+A1'in zinciri, anahtarları ve saldırganı aynen kalır. Değişen, kayıtların
+nereden okunduğudur.
+
+### Modelde olanlar
+
+- Kayıtlar ağdan değil günlükten okunur. Günlük anahtarı uzatılan başa
+  bağlıdır: `L = h('log', baş)`. Bir anahtarın altında birden çok değer
+  durabilir ve hiçbiri silinmez.
+- Herkes günlüğe yazabilir (gerçekte ARC jetonuyla). Günlük yalnızca o baş
+  için geçerli değerleri tutar; okuyanlar geçersiz değerleri zaten yok
+  saydığı için geçersiz bir değerin yazılması hiçbir şeyi değiştirmez.
+- Dürüst cihazlar kendi kayıtlarını yazdıkları adımda günlüğe de yazar.
+  Bu, tanıkların dahil etme zorlamasıdır: sunucu dürüst bir kaydı
+  sansürleyemez.
+- Okuyan (cihaz ya da kişi) çatal kuralını uygular. Bir `AK` kaydı, aynı
+  anahtar altında daha önce başka bir geçerli `AK` kaydı yazılmamışsa kabul
+  edilir; `döndür`'ün önüne geçer (çatal kuralı 1). Bir `döndür`, aynı
+  anahtar altında daha önce başka hiçbir geçerli değer yazılmamışsa kabul
+  edilir.
+- Saldırgan yine ağın tamamıdır ve her anahtar her an sızabilir.
+
+### Soyutlamalar ve nedenleri
+
+| Soyutlama | Neden | Ne zaman genişler |
+| --- | --- | --- |
+| Zaman yok: dürüst bir kayıt yazıldığı anda günlüktedir | Gerçek sınır 1 saat dahil etme + 1 saat kök tazeliğidir (P3: 2 saat). Burada yalnızca sıra sınanır | A3 (tazelik), A5 (süreler) |
+| Günlük tek bir küresel kümedir | Tanıkların çoğunluğu (k > n/2) dürüstse hiçbir okuyan farklı bir günlük görmez; bu varsayım modelin kendisidir. Tanıklar sunucuyla iş birliği yaparsa P2 ve P3 güvencesi yoktur (hesap.md) | Değişmez |
+| Değerler şifresiz | Sunucunun içeriği okuyamaması P5'tir, P2 değil | A3 |
+| `oluştur` günlüğe yazılmaz | Kişi ilk kaydı A1'deki gibi doğrulanmış kanaldan sabitler (`L_0` anahtarı burada kullanılmaz) | A3 |
+| **Daha katı:** birbiriyle çatallanan `döndür`'ler en küçük özetle birleşmez; okuyan durur | Zararsız çatal birleşmesi (çatal kuralı 2) güvenliği değil kullanılabilirliği etkiler; kanıtlanan özellikler bu katı kuralla geçerlidir, birleşme A4'te `çatal_çöz` ile birlikte modellenir | A4 |
+| Bir `döndür`'ü izlemiş okuyan, sonra aynı anahtar altında yazılan `AK` kaydına geçmez | Tasarımda `AK` kaydı kazanır ve okuyan ona geçer. Burada `AK` kaydının, yazıldıktan sonra okuyan herkes için kazandığı gösterilir (`removed_device_locked_out_of_old_head`); geçiş A4'te | A4 |
+
+### Lemmalar
+
+| Lemma | Tür | Ne söyler |
+| --- | --- | --- |
+| `sanity_contact_follows_add_via_log` | iz var | Kişi günlükten bir `ekle` kabul edebilir |
+| `sanity_leaked_device_rotates_before_removal` | iz var | `IK`'si sızmış bir cihazın `döndür`'ü, çıkarma günlüğe yazılmadan önce o başta kabul edilebilir. Aşağıdaki kilit lemmasının kapattığı pencere gerçektir |
+| `accepted_records_are_logged` | her iz | **P2, görünürlük:** herhangi bir okuyanın kabul ettiği her kayıt, kabulden önce günlükte geçerli bir değer olarak vardır |
+| `ak_read_was_logged`, `ak_reads_agree` | her iz, yardımcı | Bir `AK` okuması günlükteki bir değeri okur; aynı anahtar altındaki iki `AK` okuması aynı değeri okur |
+| `no_split_view_membership` | her iz | **P2, tek görünüm:** iki okuyan (cihaz ya da kişi) aynı başın iki farklı üyelik değişikliğini kabul etmez. Hangi anahtar sızarsa sızsın geçerlidir; tek varsayım dürüst tanık çoğunluğudur |
+| `removed_device_locked_out_of_old_head` | her iz | **H3 çekirdeği:** bir üye `x`'i bir baştan çıkardıktan sonra hiçbir okuyan o başta `x`'in imzaladığı bir kaydı kabul etmez; `x`'in bütün anahtarları sızmış ve sunucu yardım ediyor olsa bile |
+
+### Mutant sınamaları
+
+Mutantlar bozuk modele modelin kendi lemmalarını almaz: bozulmanın yanlış
+çıkardığı bir `[reuse]` yardımcısı varsayılsaydı saldırıyı gizlerdi.
+
+| Mutant | Bozulan denetim | Beklenen saldırı |
+| --- | --- | --- |
+| `honest_remove_not_logged` | Tanıklar dahil etmeyi zorlamaz; sunucu dürüst `çıkar`'ı sansürler | Çıkarılmış cihazın `döndür`'ü eski başta kabul edilir |
+| `reader_accepts_rotate_despite_fork` | Okuyan, aynı anahtar altında `AK` kaydı varken `döndür` kabul eder | Aynı saldırı, `çıkar` günlükte olsa bile |
+| `reader_ignores_ak_fork` | Okuyan, aynı anahtar altında ikinci bir `AK` kaydı aramaz | İki kişi aynı başın iki farklı `ekle`'sini kabul eder (bölünmüş görünüm) |
+| `accept_from_network_not_log` | Kişi `ekle` kaydını günlükten değil ağdan alır | Günlükte olmayan bir kayıt kabul edilir |
+
+### Henüz kanıtlanmayanlar
+
+- **Çıkarılmış cihaz sonraki başlarda:** `x` çıkarıldığı baştan kilitli
+  kalır (yukarıda), ama sonraki başlarda da hiçbir kaydın imzalayanı
+  olarak kabul edilmediğini gösteren sınırsız lemma (`x` yeniden
+  eklenmedikçe) Tamarin'de sonlanmadı. Geçmişi yakalayan bir kişi `x`'in
+  çıkarılmadan önceki kayıtlarını meşru olarak kabul edebildiği için lemma
+  "çıkarmadan önce imzalanmış" istisnasını taşır; bu da bir yardımcı
+  değişmez ya da hayalet durum gerektiriyor. A3'te kişi başıyla birlikte
+  yeniden denenecek.
