@@ -45,8 +45,9 @@ class TransferJobTest {
         assertTrue("the job that runs again was refused", TransferJob.accepts(generation))
     }
 
-    /** Every other stop still ends the transfer: the person in the task
-     * manager, the system's own limits. */
+    /** Every other stop still ends the transfer, such as the system's own
+     * limits. (Stop in the system's task manager kills the process without
+     * calling onStopJob.) */
     @Test
     fun anyOtherStopStillStopsTheTransfer() {
         val reasons = listOf(
