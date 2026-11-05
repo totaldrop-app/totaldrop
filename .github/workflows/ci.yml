@@ -30,6 +30,7 @@ jobs:
       linux: ${{ steps.areas.outputs.linux }}
       server: ${{ steps.areas.outputs.server }}
       site: ${{ steps.areas.outputs.site }}
+      formal: ${{ steps.areas.outputs.formal }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -47,6 +48,7 @@ jobs:
             [android]="^(app/|l10n/|crates/totaldrop-(core|crypto|proto|l10n)/|$shared|\.github/workflows/android(-release)?\.yml$)"
             [linux]="^(linux/|packaging/|l10n/|crates/totaldrop-(core|crypto|proto|cli|l10n)/|$shared|\.github/workflows/linux(-release)?\.yml$)"
             [server]="^(server/(rendezvous|relay)-worker/|server/tools/|server/totaldrop-(rendezvous|relay)/|crates/totaldrop-(core|crypto|proto|cli|l10n)/|l10n/|$shared|\.github/workflows/server\.yml$)"
+            [formal]="^(formal/|\.github/workflows/formal\.yml$)"
             [site]="^(site/|app/assets/logo\.svg$|l10n/tests/|[^/]+\.md$|docs/|packaging/linux/app\.totaldrop\.TotalDrop\.svg$|\.github/workflows/site\.yml$)"
           )
           # Every changed path, unquoted (non-ASCII names stay as they are)
@@ -97,6 +99,11 @@ jobs:
     needs: changes
     if: needs.changes.outputs.site == 'true'
     uses: ./.github/workflows/site.yml
+  formal:
+    name: Formal
+    needs: changes
+    if: needs.changes.outputs.formal == 'true'
+    uses: ./.github/workflows/formal.yml
 
   # Every change records itself in changelog.d/ (docs/surec.md). Runs on
   # every pull request and push, whatever changed; it takes seconds.
@@ -169,7 +176,7 @@ jobs:
   gate:
     name: CI
     if: always()
-    needs: [changes, changelog, versions, advisories, reuse, core, android, linux, server, site]
+    needs: [changes, changelog, versions, advisories, reuse, core, android, linux, server, site, formal]
     runs-on: ubuntu-latest
     steps:
       - env:

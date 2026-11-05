@@ -37,6 +37,7 @@ anda ulaşır. Her platform kendi temposunda yayınlanır.
 | `server/` | Rendezvous sunucusu: Rust sürümü ve Cloudflare Workers sürümü | `core.yml`, `server.yml` |
 | `site/` | totaldrop.app, download.totaldrop.app ve QR bağlantı sayfası | `site.yml` |
 | `fuzz/` | Ayrıştırıcıların fuzz hedefleri | `fuzz.yml` (haftalık) |
+| `formal/` | Hesap tasarımının Tamarin modeli ve mutant sınamaları (#251) | `formal.yml` |
 | `docs/` | Tasarım kuralları, sürümler, protokol notları, bu belge | |
 | `tools/` | Depo araçları: changelog, bileşen sürümleri, `deny.toml` ile `osv-scanner.toml`'un aynı danışma kayıtlarını yok saydığının denetimi | `ci.yml` |
 | `.github/` | İş akışları; ayrıca `main`'de ve haftalık OpenSSF Scorecard, her PR'da ve `main`'de CodeQL kod taraması (GitHub varsayılan kurulumu, depo ayarlarında) | `ci.yml`, `scorecard.yml` |
