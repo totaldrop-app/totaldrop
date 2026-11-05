@@ -65,7 +65,7 @@ class AppLocalizationsMs extends AppLocalizations {
 
   @override
   String get sendAddFailed =>
-      'Fail tidak dapat ditambah. Pastikan ruang kosong pada peranti ini mencukupi, kemudian cuba lagi.';
+      'Fail tidak dapat ditambah. Cuba lagi. Jika berlaku lagi, pastikan ruang kosong pada peranti ini mencukupi, atau pilih fail dari tempat lain.';
 
   @override
   String get sendYourCode => 'Kod anda';

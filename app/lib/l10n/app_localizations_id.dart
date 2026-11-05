@@ -65,7 +65,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get sendAddFailed =>
-      'File tidak dapat ditambahkan. Pastikan ruang kosong di perangkat ini cukup, lalu coba lagi.';
+      'File tidak dapat ditambahkan. Coba lagi. Jika terjadi lagi, pastikan ruang kosong di perangkat ini cukup, atau pilih file dari tempat lain.';
 
   @override
   String get sendYourCode => 'Kode Anda';

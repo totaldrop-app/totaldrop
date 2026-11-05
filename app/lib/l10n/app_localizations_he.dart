@@ -64,7 +64,7 @@ class AppLocalizationsHe extends AppLocalizations {
 
   @override
   String get sendAddFailed =>
-      'לא ניתן היה להוסיף את הקבצים. יש לוודא שיש מספיק מקום פנוי במכשיר הזה ולנסות שוב.';
+      'לא ניתן היה להוסיף את הקבצים. יש לנסות שוב. אם זה קורה שוב, יש לוודא שיש מספיק מקום פנוי במכשיר הזה, או לבחור את הקבצים ממקום אחר.';
 
   @override
   String get sendYourCode => 'הקוד שלך';

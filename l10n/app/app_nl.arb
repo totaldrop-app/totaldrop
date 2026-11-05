@@ -18,7 +18,7 @@
   "sendCounting": "Tellen…",
   "sendRemove": "Verwijderen",
   "sendPreparing": "Je bestanden worden voorbereid…",
-  "sendAddFailed": "De bestanden konden niet worden toegevoegd. Zorg dat er genoeg vrije ruimte op dit apparaat is en probeer het opnieuw.",
+  "sendAddFailed": "De bestanden konden niet worden toegevoegd. Probeer het opnieuw. Gebeurt het weer, controleer dan of er genoeg vrije ruimte op dit apparaat is, of kies de bestanden op een andere plek.",
   "sendYourCode": "Je code",
   "sendCodeHint": "Open TotalDrop op het andere apparaat, tik op Ontvangen en voer deze code in.",
   "sendWaiting": "Wachten op de ontvanger…",

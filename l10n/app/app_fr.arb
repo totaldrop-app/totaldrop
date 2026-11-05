@@ -18,7 +18,7 @@
   "sendCounting": "Calcul en cours…",
   "sendRemove": "Retirer",
   "sendPreparing": "Préparation de vos fichiers…",
-  "sendAddFailed": "Impossible d'ajouter les fichiers. Vérifiez qu'il reste assez d'espace libre sur cet appareil, puis réessayez.",
+  "sendAddFailed": "Impossible d'ajouter les fichiers. Réessayez. Si cela se reproduit, vérifiez qu'il reste assez d'espace libre sur cet appareil, ou choisissez les fichiers à un autre emplacement.",
   "sendYourCode": "Votre code",
   "sendCodeHint": "Sur l'autre appareil, ouvrez TotalDrop, appuyez sur Recevoir et saisissez ce code.",
   "sendWaiting": "En attente du destinataire…",

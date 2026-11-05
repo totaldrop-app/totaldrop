@@ -18,7 +18,7 @@
   "sendCounting": "Se numără…",
   "sendRemove": "Elimină",
   "sendPreparing": "Se pregătesc fișierele…",
-  "sendAddFailed": "Fișierele nu au putut fi adăugate. Asigurați-vă că pe acest dispozitiv este destul spațiu liber și încercați din nou.",
+  "sendAddFailed": "Fișierele nu au putut fi adăugate. Încercați din nou. Dacă se întâmplă iar, verificați dacă pe acest dispozitiv este destul spațiu liber sau alegeți fișierele din alt loc.",
   "sendYourCode": "Codul dvs.",
   "sendCodeHint": "Pe celălalt dispozitiv, deschideți TotalDrop, atingeți Primește și introduceți acest cod.",
   "sendWaiting": "Se așteaptă destinatarul…",

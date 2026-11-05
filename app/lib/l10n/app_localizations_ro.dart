@@ -65,7 +65,7 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get sendAddFailed =>
-      'Fișierele nu au putut fi adăugate. Asigurați-vă că pe acest dispozitiv este destul spațiu liber și încercați din nou.';
+      'Fișierele nu au putut fi adăugate. Încercați din nou. Dacă se întâmplă iar, verificați dacă pe acest dispozitiv este destul spațiu liber sau alegeți fișierele din alt loc.';
 
   @override
   String get sendYourCode => 'Codul dvs.';

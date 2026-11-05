@@ -18,7 +18,7 @@
   "sendCounting": "Počítání…",
   "sendRemove": "Odebrat",
   "sendPreparing": "Příprava souborů…",
-  "sendAddFailed": "Soubory se nepodařilo přidat. Ujistěte se, že je v tomto zařízení dost volného místa, a zkuste to znovu.",
+  "sendAddFailed": "Soubory se nepodařilo přidat. Zkuste to znovu. Pokud se to stane znovu, zkontrolujte, zda je v tomto zařízení dost volného místa, nebo vyberte soubory z jiného místa.",
   "sendYourCode": "Váš kód",
   "sendCodeHint": "Na druhém zařízení otevřete TotalDrop, klepněte na Přijmout a zadejte tento kód.",
   "sendWaiting": "Čekání na příjemce…",

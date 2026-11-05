@@ -24,8 +24,9 @@ final l = lookupAppLocalizations(const Locale('en'));
 
 /// The English text of the new message; the key is added with it.
 const addFailed =
-    'The files could not be added. Make sure there is enough free space '
-    'on this device and try again.';
+    'The files could not be added. Try again. If it happens again, check '
+    'that this device has enough free space, or choose the files from '
+    'another place.';
 
 Widget app(Widget home) => MaterialApp(
   theme: buildTheme(fallbackScheme(Brightness.light)),
@@ -164,6 +165,25 @@ void main() {
       await added;
       expect(vm.addFailed, isFalse);
     });
+
+    test('is cleared once the selection changes', () async {
+      vm.addFakeFileForTest('a.txt');
+      final added = vm.addFiles();
+      source.fail(Exception('unknown_path'));
+      await added;
+      expect(vm.addFailed, isTrue);
+      vm.remove(vm.files.single);
+      expect(vm.addFailed, isFalse, reason: 'it was about the old selection');
+    });
+
+    // A bug is not a full disk: it is not dressed up as one.
+    test('a programming error is not caught', () async {
+      final added = vm.addFiles();
+      source.fail(StateError('bug'));
+      await expectLater(added, throwsStateError);
+      expect(vm.addFailed, isFalse);
+      expect(vm.copying, isFalse);
+    });
   });
 
   // The fakes are made inside each test: a future made in setUp
@@ -189,6 +209,15 @@ void main() {
       expectAnnounced(tester, l.sendPreparing);
       source.finish([pickedFile('film.mkv')]);
       await settle(tester);
+      // "Add files" went away under the person; the list that replaces the
+      // copy says what is now selected.
+      final create = find.textContaining(l.sendCreateCode);
+      expect(create, findsOneWidget);
+      expect(
+        tester.getSemantics(create),
+        isSemantics(isLiveRegion: true),
+        reason: 'the selection is read out when the copy ends',
+      );
       semantics.dispose();
     });
 

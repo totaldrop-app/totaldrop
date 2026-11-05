@@ -65,7 +65,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get sendAddFailed =>
-      'Dosyalar eklenemedi. Bu cihazda yeterli boş alan olduğundan emin olup yeniden deneyin.';
+      'Dosyalar eklenemedi. Yeniden deneyin. Yine olursa bu cihazda yeterli boş alan olduğuna bakın ya da dosyaları başka bir yerden seçin.';
 
   @override
   String get sendYourCode => 'Kodunuz';

@@ -65,7 +65,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get sendAddFailed =>
-      'Soubory se nepodařilo přidat. Ujistěte se, že je v tomto zařízení dost volného místa, a zkuste to znovu.';
+      'Soubory se nepodařilo přidat. Zkuste to znovu. Pokud se to stane znovu, zkontrolujte, zda je v tomto zařízení dost volného místa, nebo vyberte soubory z jiného místa.';
 
   @override
   String get sendYourCode => 'Váš kód';

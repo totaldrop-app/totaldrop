@@ -64,7 +64,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get sendAddFailed =>
-      'Không thể thêm tệp. Hãy kiểm tra xem thiết bị này còn đủ dung lượng trống rồi thử lại.';
+      'Không thể thêm tệp. Hãy thử lại. Nếu vẫn xảy ra, hãy kiểm tra xem thiết bị này còn đủ dung lượng trống, hoặc chọn tệp từ nơi khác.';
 
   @override
   String get sendYourCode => 'Mã của bạn';

@@ -66,7 +66,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get sendAddFailed =>
-      'افزودن فایل‌ها ممکن نشد. مطمئن شوید که روی این دستگاه فضای خالی کافی هست و دوباره امتحان کنید.';
+      'افزودن فایل‌ها ممکن نشد. دوباره امتحان کنید. اگر باز هم پیش آمد، بررسی کنید که روی این دستگاه فضای خالی کافی هست، یا فایل‌ها را از جای دیگری انتخاب کنید.';
 
   @override
   String get sendYourCode => 'کد شما';

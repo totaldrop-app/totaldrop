@@ -18,7 +18,7 @@
   "sendCounting": "Đang đếm…",
   "sendRemove": "Xóa",
   "sendPreparing": "Đang chuẩn bị tệp của bạn…",
-  "sendAddFailed": "Không thể thêm tệp. Hãy kiểm tra xem thiết bị này còn đủ dung lượng trống rồi thử lại.",
+  "sendAddFailed": "Không thể thêm tệp. Hãy thử lại. Nếu vẫn xảy ra, hãy kiểm tra xem thiết bị này còn đủ dung lượng trống, hoặc chọn tệp từ nơi khác.",
   "sendYourCode": "Mã của bạn",
   "sendCodeHint": "Trên thiết bị kia, mở TotalDrop, nhấn Nhận và nhập mã này.",
   "sendWaiting": "Đang chờ người nhận…",

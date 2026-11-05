@@ -66,7 +66,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get sendAddFailed =>
-      'Não foi possível adicionar os arquivos. Verifique se há espaço livre suficiente neste dispositivo e tente novamente.';
+      'Não foi possível adicionar os arquivos. Tente novamente. Se acontecer de novo, verifique se há espaço livre suficiente neste dispositivo ou escolha os arquivos em outro lugar.';
 
   @override
   String get sendYourCode => 'Seu código';
@@ -555,7 +555,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get sendAddFailed =>
-      'Não foi possível adicionar os arquivos. Verifique se há espaço livre suficiente neste dispositivo e tente novamente.';
+      'Não foi possível adicionar os arquivos. Tente novamente. Se acontecer de novo, verifique se há espaço livre suficiente neste dispositivo ou escolha os arquivos em outro lugar.';
 
   @override
   String get sendYourCode => 'Seu código';
@@ -1044,7 +1044,7 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
 
   @override
   String get sendAddFailed =>
-      'Não foi possível adicionar os ficheiros. Verifique se há espaço livre suficiente neste dispositivo e tente novamente.';
+      'Não foi possível adicionar os ficheiros. Tente novamente. Se voltar a acontecer, verifique se há espaço livre suficiente neste dispositivo ou escolha os ficheiros noutro local.';
 
   @override
   String get sendYourCode => 'O seu código';

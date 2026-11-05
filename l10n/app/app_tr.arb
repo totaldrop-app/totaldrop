@@ -18,7 +18,7 @@
   "sendCounting": "Hesaplanıyor…",
   "sendRemove": "Kaldır",
   "sendPreparing": "Dosyalarınız hazırlanıyor…",
-  "sendAddFailed": "Dosyalar eklenemedi. Bu cihazda yeterli boş alan olduğundan emin olup yeniden deneyin.",
+  "sendAddFailed": "Dosyalar eklenemedi. Yeniden deneyin. Yine olursa bu cihazda yeterli boş alan olduğuna bakın ya da dosyaları başka bir yerden seçin.",
   "sendYourCode": "Kodunuz",
   "sendCodeHint": "Diğer cihazda TotalDrop'u açın, Al'a dokunun ve bu kodu girin.",
   "sendWaiting": "Alıcı bekleniyor…",

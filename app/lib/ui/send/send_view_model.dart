@@ -90,11 +90,14 @@ class SendViewModel extends ChangeNotifier {
         if (_files.any((e) => e.path == f.path)) continue;
         _files.add(f);
       }
-    } catch (_) {
+    } on Exception catch (e) {
       // The picker could not hand the files over: a path it cannot read,
       // too little memory, or no space left for its copy. The screen
       // says so; a pick that returns after a reset belongs to no
-      // selection and says nothing (#271).
+      // selection and says nothing (#271). A copy cut short by a full
+      // disk may leave a partial file in the cache; clearing it here
+      // would also delete the files already chosen, so a reset does it.
+      debugPrint('file picker failed: $e');
       if (resets == _resets) addFailed = true;
     } finally {
       // The plugin says the copy ended just before it returns, but only
@@ -111,6 +114,8 @@ class SendViewModel extends ChangeNotifier {
 
   void remove(PickedFile f) {
     _files.remove(f);
+    // The message was about the selection as it was.
+    addFailed = false;
     notifyListeners();
   }
 
@@ -124,6 +129,7 @@ class SendViewModel extends ChangeNotifier {
     if (_files.isEmpty || busy || _picking) return;
     stage = SendStage.preparing;
     error = null;
+    addFailed = false;
     final generation = ++_generation;
     final stopper = _repo.newStopper();
     _stopper = stopper;

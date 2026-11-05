@@ -66,7 +66,7 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String get sendAddFailed =>
-      'Tiedostoja ei voitu lisätä. Varmista, että tällä laitteella on tarpeeksi vapaata tilaa, ja yritä uudelleen.';
+      'Tiedostoja ei voitu lisätä. Yritä uudelleen. Jos näin käy taas, tarkista, että tällä laitteella on tarpeeksi vapaata tilaa, tai valitse tiedostot toisesta paikasta.';
 
   @override
   String get sendYourCode => 'Koodisi';

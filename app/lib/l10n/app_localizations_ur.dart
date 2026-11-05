@@ -65,7 +65,7 @@ class AppLocalizationsUr extends AppLocalizations {
 
   @override
   String get sendAddFailed =>
-      'فائلیں شامل نہیں ہو سکیں۔ یقینی بنائیں کہ اس ڈیوائس پر کافی خالی جگہ ہے، پھر دوبارہ کوشش کریں۔';
+      'فائلیں شامل نہیں ہو سکیں۔ دوبارہ کوشش کریں۔ اگر پھر ایسا ہو تو دیکھیں کہ اس ڈیوائس پر کافی خالی جگہ ہے، یا فائلیں کسی اور جگہ سے منتخب کریں۔';
 
   @override
   String get sendYourCode => 'آپ کا کوڈ';
