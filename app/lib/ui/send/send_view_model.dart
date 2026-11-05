@@ -59,6 +59,9 @@ class SendViewModel extends ChangeNotifier {
   bool copying = false;
   bool _picking = false;
 
+  /// Whether the last pick failed, so the screen can say so (#271).
+  bool addFailed = false;
+
   Future<void> addFiles() async {
     // One picker at a time: the plugin refuses a second one anyway.
     if (_picking) return;
