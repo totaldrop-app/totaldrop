@@ -217,9 +217,8 @@ treated as final.
       version that starts sending probes. Devices from before 0.3.0-beta.4
       never answer, so a connection of theirs through the Cloudflare relay
       gets at most 32 MiB: a receiver loses it after 32 MiB of a file, a
-      sender after 32 MiB of acknowledgements (an estimated 1 GiB of file),
-      and
-      the transfer then ends at QUIC's idle timeout.
+      sender after 32 MiB of acknowledgements (an estimated 1 GiB of
+      file), and the transfer then ends at QUIC's idle timeout.
       The self-hosted relay bounds its queue itself, sends no probes and
       closes a pair on an unexpected 25-byte message.
     - Address discovery is plain STUN (RFC 8489), Binding with
