@@ -65,8 +65,14 @@ class SendView extends StatelessWidget {
               child: AnimatedSwitcher(
                 duration: const Duration(milliseconds: 250),
                 child: KeyedSubtree(
-                  key: ValueKey(vm.stage),
+                  key: ValueKey((vm.stage, vm.copying)),
                   child: switch (vm.stage) {
+                    // The picker copies the chosen files into the app
+                    // cache before it hands them over (#269).
+                    SendStage.picking when vm.copying => _Centered(
+                      logo: const TotalDropMark(size: 120, sending: true),
+                      text: l.sendPreparing,
+                    ),
                     SendStage.picking => _Picking(vm: vm),
                     SendStage.preparing => _Centered(
                       logo: const TotalDropMark(size: 120, sending: true),

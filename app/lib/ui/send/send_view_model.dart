@@ -51,13 +51,40 @@ class SendViewModel extends ChangeNotifier {
       stage == SendStage.waiting ||
       stage == SendStage.transferring;
 
+  /// Whether the picker is copying the chosen files into the app cache.
+  /// For a large file that takes seconds, and the screen says so (#269).
+  bool copying = false;
+  bool _picking = false;
+
   Future<void> addFiles() async {
-    final picked = await _source.pick(onCopying: (_) {});
-    for (final f in picked) {
-      if (_files.any((e) => e.path == f.path)) continue;
-      _files.add(f);
+    // One picker at a time: the plugin refuses a second one anyway.
+    if (_picking) return;
+    _picking = true;
+    final generation = _generation;
+    try {
+      final picked = await _source.pick(
+        onCopying: (c) {
+          if (copying == c) return;
+          copying = c;
+          notifyListeners();
+        },
+      );
+      if (generation != _generation) {
+        // The person left while the picker copied: these copies belong to
+        // no selection, and the reset's clean-up may have missed them.
+        unawaited(_source.clearCopies());
+        return;
+      }
+      for (final f in picked) {
+        if (_files.any((e) => e.path == f.path)) continue;
+        _files.add(f);
+      }
+    } finally {
+      // The plugin stops listening before it says the copy ended.
+      _picking = false;
+      copying = false;
+      notifyListeners();
     }
-    notifyListeners();
   }
 
   @visibleForTesting
