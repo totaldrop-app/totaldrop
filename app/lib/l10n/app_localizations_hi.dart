@@ -64,6 +64,10 @@ class AppLocalizationsHi extends AppLocalizations {
   String get sendPreparing => 'आपकी फ़ाइलें तैयार की जा रही हैं…';
 
   @override
+  String get sendAddFailed =>
+      'फ़ाइलें जोड़ी नहीं जा सकीं। पक्का करें कि इस डिवाइस पर पर्याप्त खाली जगह है, फिर दोबारा कोशिश करें।';
+
+  @override
   String get sendYourCode => 'आपका कोड';
 
   @override

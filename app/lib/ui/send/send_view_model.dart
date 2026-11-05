@@ -67,6 +67,10 @@ class SendViewModel extends ChangeNotifier {
     if (_picking) return;
     _picking = true;
     final resets = _resets;
+    if (addFailed) {
+      addFailed = false;
+      notifyListeners();
+    }
     try {
       final picked = await _source.pick(
         onCopying: (c) {
@@ -86,6 +90,12 @@ class SendViewModel extends ChangeNotifier {
         if (_files.any((e) => e.path == f.path)) continue;
         _files.add(f);
       }
+    } catch (_) {
+      // The picker could not hand the files over: a path it cannot read,
+      // too little memory, or no space left for its copy. The screen
+      // says so; a pick that returns after a reset belongs to no
+      // selection and says nothing (#271).
+      if (resets == _resets) addFailed = true;
     } finally {
       // The plugin says the copy ended just before it returns, but only
       // while someone listens; end it here too.
@@ -231,6 +241,7 @@ class SendViewModel extends ChangeNotifier {
     _sub = null;
     _release();
     _files.clear();
+    addFailed = false;
     // The picker keeps copies of picked files in the app cache; drop them.
     unawaited(_source.clearCopies());
     stage = SendStage.picking;

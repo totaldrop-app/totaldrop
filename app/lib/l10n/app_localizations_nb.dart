@@ -65,6 +65,10 @@ class AppLocalizationsNb extends AppLocalizations {
   String get sendPreparing => 'Klargjør filene dine …';
 
   @override
+  String get sendAddFailed =>
+      'Filene kunne ikke legges til. Sørg for at det er nok ledig plass på denne enheten, og prøv igjen.';
+
+  @override
   String get sendYourCode => 'Koden din';
 
   @override

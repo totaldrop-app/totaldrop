@@ -65,6 +65,10 @@ class AppLocalizationsPt extends AppLocalizations {
   String get sendPreparing => 'Preparando seus arquivos…';
 
   @override
+  String get sendAddFailed =>
+      'Não foi possível adicionar os arquivos. Verifique se há espaço livre suficiente neste dispositivo e tente novamente.';
+
+  @override
   String get sendYourCode => 'Seu código';
 
   @override
@@ -550,6 +554,10 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get sendPreparing => 'Preparando seus arquivos…';
 
   @override
+  String get sendAddFailed =>
+      'Não foi possível adicionar os arquivos. Verifique se há espaço livre suficiente neste dispositivo e tente novamente.';
+
+  @override
   String get sendYourCode => 'Seu código';
 
   @override
@@ -1033,6 +1041,10 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
 
   @override
   String get sendPreparing => 'A preparar os seus ficheiros…';
+
+  @override
+  String get sendAddFailed =>
+      'Não foi possível adicionar os ficheiros. Verifique se há espaço livre suficiente neste dispositivo e tente novamente.';
 
   @override
   String get sendYourCode => 'O seu código';

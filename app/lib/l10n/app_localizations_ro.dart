@@ -64,6 +64,10 @@ class AppLocalizationsRo extends AppLocalizations {
   String get sendPreparing => 'Se pregătesc fișierele…';
 
   @override
+  String get sendAddFailed =>
+      'Fișierele nu au putut fi adăugate. Asigurați-vă că pe acest dispozitiv este destul spațiu liber și încercați din nou.';
+
+  @override
   String get sendYourCode => 'Codul dvs.';
 
   @override

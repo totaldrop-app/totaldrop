@@ -63,6 +63,10 @@ class AppLocalizationsTh extends AppLocalizations {
   String get sendPreparing => 'กำลังเตรียมไฟล์ของคุณ…';
 
   @override
+  String get sendAddFailed =>
+      'เพิ่มไฟล์ไม่ได้ ตรวจสอบว่าอุปกรณ์นี้มีพื้นที่ว่างเพียงพอ แล้วลองอีกครั้ง';
+
+  @override
   String get sendYourCode => 'รหัสของคุณ';
 
   @override

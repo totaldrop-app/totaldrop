@@ -18,6 +18,7 @@
   "sendCounting": "Räknar…",
   "sendRemove": "Ta bort",
   "sendPreparing": "Förbereder dina filer…",
+  "sendAddFailed": "Filerna kunde inte läggas till. Se till att det finns tillräckligt med ledigt utrymme på den här enheten och försök igen.",
   "sendYourCode": "Din kod",
   "sendCodeHint": "Öppna TotalDrop på den andra enheten, tryck på Ta emot och ange den här koden.",
   "sendWaiting": "Väntar på mottagaren…",

@@ -97,9 +97,11 @@ class _ReceiveViewState extends State<ReceiveView> {
                           children: [
                             const TotalDropMark(size: 120, sending: true),
                             Gap.l,
-                            Text(
-                              l.receiveConnecting,
-                              style: Theme.of(context).textTheme.titleMedium,
+                            Announced(
+                              Text(
+                                l.receiveConnecting,
+                                style: Theme.of(context).textTheme.titleMedium,
+                              ),
                             ),
                             if (vm.connectingCode case final code?) ...[
                               Gap.s,
@@ -231,7 +233,7 @@ class _Offered extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
-        Text(l.receiveOffer, style: theme.textTheme.headlineSmall),
+        Announced(Text(l.receiveOffer, style: theme.textTheme.headlineSmall)),
         Gap.s,
         Text(
           l.receiveOfferSummary(o.files, formatBytes(l, o.totalBytes)),
@@ -311,10 +313,12 @@ class _Transferring extends StatelessWidget {
       children: [
         const Center(child: TotalDropMark(size: 140, sending: true)),
         Gap.l,
-        Text(
-          l.receiveReceiving,
-          textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.headlineSmall,
+        Announced(
+          Text(
+            l.receiveReceiving,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.headlineSmall,
+          ),
         ),
         Gap.m,
         TransferProgress(done: vm.done, total: vm.total),
@@ -339,10 +343,12 @@ class _Done extends StatelessWidget {
       children: [
         const Center(child: DoneBadge()),
         Gap.l,
-        Text(
-          l.receiveDone,
-          textAlign: TextAlign.center,
-          style: theme.textTheme.headlineSmall,
+        Announced(
+          Text(
+            l.receiveDone,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.headlineSmall,
+          ),
         ),
         Gap.s,
         if (vm.folder != null)
@@ -411,10 +417,12 @@ class _Message extends StatelessWidget {
             color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
           Gap.m,
-          Text(
-            text,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.titleMedium,
+          Announced(
+            Text(
+              text,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
           ),
           Gap.l,
           FilledButton(

@@ -266,6 +266,12 @@ abstract class AppLocalizations {
   /// **'Preparing your files…'**
   String get sendPreparing;
 
+  /// Shown on the send screen when the system file picker could not hand over the chosen files (a path it cannot read, too little memory, or no space left for its copy).
+  ///
+  /// In en, this message translates to:
+  /// **'The files could not be added. Make sure there is enough free space on this device and try again.'**
+  String get sendAddFailed;
+
   /// No description provided for @sendYourCode.
   ///
   /// In en, this message translates to:

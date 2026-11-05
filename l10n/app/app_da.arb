@@ -18,6 +18,7 @@
   "sendCounting": "Tæller…",
   "sendRemove": "Fjern",
   "sendPreparing": "Forbereder dine filer…",
+  "sendAddFailed": "Filerne kunne ikke tilføjes. Sørg for, at der er nok ledig plads på denne enhed, og prøv igen.",
   "sendYourCode": "Din kode",
   "sendCodeHint": "Åbn TotalDrop på den anden enhed, tryk på Modtag, og indtast denne kode.",
   "sendWaiting": "Venter på modtageren…",

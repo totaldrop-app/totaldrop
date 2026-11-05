@@ -64,6 +64,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get sendPreparing => 'Dosyalarınız hazırlanıyor…';
 
   @override
+  String get sendAddFailed =>
+      'Dosyalar eklenemedi. Bu cihazda yeterli boş alan olduğundan emin olup yeniden deneyin.';
+
+  @override
   String get sendYourCode => 'Kodunuz';
 
   @override

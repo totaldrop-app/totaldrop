@@ -18,6 +18,7 @@
   "sendCounting": "Contando…",
   "sendRemove": "Quitar",
   "sendPreparing": "Preparando tus archivos…",
+  "sendAddFailed": "No se pudieron añadir los archivos. Asegúrate de que haya suficiente espacio libre en este dispositivo y vuelve a intentarlo.",
   "sendYourCode": "Tu código",
   "sendCodeHint": "En el otro dispositivo, abre TotalDrop, toca Recibir e introduce este código.",
   "sendWaiting": "Esperando al destinatario…",

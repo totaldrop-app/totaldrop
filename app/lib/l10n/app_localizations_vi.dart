@@ -63,6 +63,10 @@ class AppLocalizationsVi extends AppLocalizations {
   String get sendPreparing => 'Đang chuẩn bị tệp của bạn…';
 
   @override
+  String get sendAddFailed =>
+      'Không thể thêm tệp. Hãy kiểm tra xem thiết bị này còn đủ dung lượng trống rồi thử lại.';
+
+  @override
   String get sendYourCode => 'Mã của bạn';
 
   @override

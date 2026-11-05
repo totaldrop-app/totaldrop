@@ -18,6 +18,7 @@
   "sendCounting": "正在計算…",
   "sendRemove": "移除",
   "sendPreparing": "正在準備檔案…",
+  "sendAddFailed": "無法新增檔案。請確認這部裝置有足夠的可用空間，然後再試一次。",
   "sendYourCode": "你的代碼",
   "sendCodeHint": "在另一部裝置上開啟 TotalDrop，輕觸「接收」，然後輸入這組代碼。",
   "sendWaiting": "正在等待接收者…",
