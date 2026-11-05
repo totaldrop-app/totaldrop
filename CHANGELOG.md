@@ -10,6 +10,30 @@ All notable changes to TotalDrop are recorded here. The format follows
 Entries for the next release are in [changelog.d/](changelog.d/), one file
 per change, and move here when it is released (docs/surec.md).
 
+## [android-0.3.0-beta.6] - 2026-11-05
+
+### Changed
+
+- **Site, README:** The download page and the README point at Android and
+  Linux 0.3.0-beta.5 and list what is new: on Android, transfers that
+  survive a short network drop, Material 3 Expressive icon buttons and a
+  smaller mark on the home screen icon; on Linux, packages that are easier
+  to check. The brand page describes the smaller mark and the Expressive
+  icon buttons (#267).
+
+### Fixed
+
+- **Android:** After you choose a large file, the send screen now says
+  at once that it is preparing your files, instead of standing still for
+  a few seconds while the app copies the file it was given (#269).
+- **Android:** When the file picker cannot hand over the files you chose,
+  for example because there is not enough free space for its copy, the
+  send screen now says so instead of quietly going back to an empty
+  selection. TalkBack now also reads out the main headline of each step
+  of a send (preparing, waiting, sending, sent, failed) and of a receive
+  (connecting, incoming files, receiving, received, declined), and the
+  selection once the picker has copied the files (#271).
+
 ## [android-0.3.0-beta.5] and [linux-0.3.0-beta.5] - 2026-11-05
 
 ### Added
