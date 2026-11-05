@@ -45,7 +45,8 @@
   <releases>
     <release version="0.3.0~beta.5" date="2026-11-05" type="development">
       <description>
-        <p>The app's built-in Qt resources no longer carry the time they were built, so two builds of the same source come out the same there. The Debian package's copyright file gives the right licence for the translations library.</p>
+        <p>The translations built into the app are now under MIT OR Apache-2.0.</p>
+        <p>In the packages the project builds, the app's built-in Qt resources no longer carry the time they were built, so two builds of the same source come out the same there.</p>
       </description>
     </release>
     <release version="0.3.0~beta.4" date="2026-11-04" type="development">
