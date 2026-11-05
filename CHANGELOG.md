@@ -10,6 +10,50 @@ All notable changes to TotalDrop are recorded here. The format follows
 Entries for the next release are in [changelog.d/](changelog.d/), one file
 per change, and move here when it is released (docs/surec.md).
 
+## [android-0.3.0-beta.5] and [linux-0.3.0-beta.5] - 2026-11-05
+
+### Added
+
+- **Licensing:** Every file states its copyright and license, following
+  REUSE 3.3: source files carry two SPDX lines, everything else
+  (documents, build and configuration files, images, translations,
+  generated and copied files) is covered by `REUSE.toml`, and CI checks
+  both (#249).
+- **CI:** A workflow builds each Linux package twice, from two clean
+  checkouts, and fails if the two differ. It runs weekly, by hand, and on
+  pull requests that change the packaging. The one known difference, the
+  order cxx-qt links the Qt libraries, is reported as a warning
+  (#252, #256).
+
+### Changed
+
+- **Licensing:** The translations in `l10n/` are now MIT OR Apache-2.0,
+  like `totaldrop-l10n`, which compiles them into itself (#249).
+- **Site, README:** The download page and the README point at Android and
+  Linux 0.3.0-beta.4 and list what is new: the move to the relay when a
+  direct connection goes quiet, relay transfers that reconnect, sender
+  progress that shows what has arrived, and failure reasons in your
+  language (#254).
+- **Android:** Icon buttons (Settings, Paste, Remove and Back) follow
+  Material 3 Expressive, like Android 16's own interface on Pixel: they
+  turn into a rounded square while you press them. With "Remove
+  animations" on, the change happens at once (#257).
+- **Android:** The mark on the home screen icon is smaller, so its corner
+  no longer seems to touch the edge of the icon's shape (#261).
+
+### Fixed
+
+- **Linux:** The Debian package's copyright file lists `totaldrop-l10n`
+  and the fuzz targets under MIT OR Apache-2.0 and no longer repeats its
+  license paragraphs (#231, #249).
+- **Linux:** The desktop app's embedded Qt resources no longer carry the
+  build time of the files cxx-qt generates, so they are the same on every
+  build of the same source. One difference remains, the order in which
+  cxx-qt links the Qt libraries (#252, #256).
+- **Android:** A transfer no longer ends at once when the phone loses its
+  network, for example in airplane mode or a tunnel: if the network comes
+  back within about half a minute, the transfer carries on (#260).
+
 ## [android-0.3.0-beta.4] and [linux-0.3.0-beta.4] - 2026-11-04
 
 ### Added

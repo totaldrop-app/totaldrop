@@ -1,3 +1,12 @@
+totaldrop (0.3.0~beta.5-1) unstable; urgency=medium
+
+  * The package's copyright file now gives the right licence for the
+    translations library and no longer repeats its licence paragraphs.
+  * The app's built-in Qt resources no longer carry the time they were
+    built, so two builds of the same source come out the same there.
+
+ -- TotalDrop <hello@totaldrop.app>  Thu, 05 Nov 2026 10:30:00 +0300
+
 totaldrop (0.3.0~beta.4-1) unstable; urgency=medium
 
   * A transfer that started on a direct connection no longer stops with
