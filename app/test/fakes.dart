@@ -153,10 +153,12 @@ class FakeFileSource implements FileSource {
 
   void startCopy() => _onCopying!(true);
 
-  /// Ends the pick with [files]. Like the plugin, which posts its last
-  /// status after the result and stops listening first, it never says
-  /// that the copy ended.
-  void finish(List<PickedFile> files) => _result!.complete(files);
+  /// Ends the pick with [files]. Like the plugin, it says that the copy
+  /// ended just before it returns.
+  void finish(List<PickedFile> files) {
+    _onCopying!(false);
+    _result!.complete(files);
+  }
 
   void fail(Object error) => _result!.completeError(error);
 

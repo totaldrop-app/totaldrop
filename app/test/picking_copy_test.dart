@@ -46,7 +46,9 @@ void main() {
       expect(vm.files, hasLength(1));
     });
 
-    test('drops files that arrive after the person left', () async {
+    // Back keeps the selection, so only a reset clears it; a pick that
+    // returns after one must not bring files back.
+    test('drops files that arrive after the selection was cleared', () async {
       unawaited(vm.addFiles());
       source.startCopy();
       vm.reset();
@@ -60,6 +62,27 @@ void main() {
         greaterThan(clearsAtReset),
         reason: 'the late copy is deleted from the cache too',
       );
+    });
+
+    test('cannot create a code while the picker copies', () async {
+      vm.addFakeFileForTest('a.txt');
+      unawaited(vm.addFiles());
+      source.startCopy();
+      await vm.start();
+      expect(vm.stage, SendStage.picking);
+      source.finish([pickedFile('film.mkv')]);
+      await pumpEventQueue();
+      expect(vm.files, hasLength(2));
+    });
+
+    test('keeps files picked before Back once the copy ends', () async {
+      unawaited(vm.addFiles());
+      source.startCopy();
+      // Back from the screen leaves the view model as it is.
+      source.finish([pickedFile('film.mkv')]);
+      await pumpEventQueue();
+      expect(vm.files.single.name, 'film.mkv');
+      expect(source.clears, 0);
     });
 
     test('stops copying when the picker fails', () async {
