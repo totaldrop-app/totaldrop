@@ -16,9 +16,13 @@
  *  - Time is not modelled: an honest record is in the log from the moment
  *    it is written. The real bound is one hour to inclusion plus one hour
  *    of root freshness (P3: two hours); A5 checks the timing.
- *  - The log is one global set: witnesses are an honest majority, so no
- *    reader sees a different log. Values are not encrypted here; that the
- *    server cannot read them is P5, not P2.
+ *  - The log is one global set. This stands for the witness assumption:
+ *    with n witnesses, a root needing k signatures and f colluding
+ *    witnesses, no censorship needs f < k and a single view needs
+ *    f < 2k - n (an honest majority alone is not enough). Values are not
+ *    encrypted here; that the server cannot read them is P5, not P2.
+ *  - A reader never leaves a branch it has followed (hesap.md, fork rule
+ *    4). This leaves a real gap: removed_device_survives_on_rotate_branch.
  *  - Rotates that fork with each other are not merged by smallest hash;
  *    readers stop (stricter than the design).
  */
@@ -71,7 +75,7 @@ rule Member_Add_1:
         body = <'rec', h(rb), h(hb), 'add', n, d>
     in
     [ View(d, h(rb), h(hb), d, 'empty'), AddReq(n), !DevKey(d, ~ik, ~a1, ~a2) ]
-  --[ LogValid(h(<'log', h(hb)>), body, 'ak'), ReadL(h(<'log', h(hb)>), body, 'ak'), Step('MA'), Signed(d, h(rb), h(hb), 'add', n) ]->
+  --[ LogValid(h(<'log', h(hb)>), body, 'ak'), Step('MA'), Signed(d, h(rb), h(hb), 'add', n) ]->
     [ View(d, h(rb), h(body), d, n), View(n, h(rb), h(body), d, n),
       Out(<body, sign(<'ed', body>, ~a1), sign(<'ml', body>, ~a2)>), !Head(h(rb), h(body), d, n),
       !LogEntry(h(<'log', h(hb)>), <body, sign(<'ed', body>, ~a1), sign(<'ml', body>, ~a2)>) ]
@@ -81,7 +85,7 @@ rule Member_Add_2:
         body = <'rec', h(rb), h(hb), 'add', n, d>
     in
     [ View(d, h(rb), h(hb), 'empty', d), AddReq(n), !DevKey(d, ~ik, ~a1, ~a2) ]
-  --[ LogValid(h(<'log', h(hb)>), body, 'ak'), ReadL(h(<'log', h(hb)>), body, 'ak'), Step('MA'), Signed(d, h(rb), h(hb), 'add', n) ]->
+  --[ LogValid(h(<'log', h(hb)>), body, 'ak'), Step('MA'), Signed(d, h(rb), h(hb), 'add', n) ]->
     [ View(d, h(rb), h(body), n, d), View(n, h(rb), h(body), n, d),
       Out(<body, sign(<'ed', body>, ~a1), sign(<'ml', body>, ~a2)>), !Head(h(rb), h(body), n, d),
       !LogEntry(h(<'log', h(hb)>), <body, sign(<'ed', body>, ~a1), sign(<'ml', body>, ~a2)>) ]
@@ -91,7 +95,7 @@ rule Member_Remove_1:
         body = <'rec', h(rb), h(hb), 'remove', h(x), d>
     in
     [ View(d, h(rb), h(hb), d, x), !DevKey(d, ~ik, ~a1, ~a2) ]
-  --[ LogValid(h(<'log', h(hb)>), body, 'ak'), ReadL(h(<'log', h(hb)>), body, 'ak'), Step('MR'), Signed(d, h(rb), h(hb), 'remove', h(x)), NotEmpty(x) ]->
+  --[ LogValid(h(<'log', h(hb)>), body, 'ak'), Step('MR'), Signed(d, h(rb), h(hb), 'remove', h(x)), NotEmpty(x) ]->
     [ View(d, h(rb), h(body), d, 'empty'),
       Out(<body, sign(<'ed', body>, ~a1), sign(<'ml', body>, ~a2)>), !Head(h(rb), h(body), d, 'empty'),
       !LogEntry(h(<'log', h(hb)>), <body, sign(<'ed', body>, ~a1), sign(<'ml', body>, ~a2)>) ]
@@ -101,7 +105,7 @@ rule Member_Remove_2:
         body = <'rec', h(rb), h(hb), 'remove', h(x), d>
     in
     [ View(d, h(rb), h(hb), x, d), !DevKey(d, ~ik, ~a1, ~a2) ]
-  --[ LogValid(h(<'log', h(hb)>), body, 'ak'), ReadL(h(<'log', h(hb)>), body, 'ak'), Step('MR'), Signed(d, h(rb), h(hb), 'remove', h(x)), NotEmpty(x) ]->
+  --[ LogValid(h(<'log', h(hb)>), body, 'ak'), Step('MR'), Signed(d, h(rb), h(hb), 'remove', h(x)), NotEmpty(x) ]->
     [ View(d, h(rb), h(body), 'empty', d),
       Out(<body, sign(<'ed', body>, ~a1), sign(<'ml', body>, ~a2)>), !Head(h(rb), h(body), 'empty', d),
       !LogEntry(h(<'log', h(hb)>), <body, sign(<'ed', body>, ~a1), sign(<'ml', body>, ~a2)>) ]
@@ -113,7 +117,7 @@ rule Member_Rotate_1:
         body = <'rec', h(rb), h(hb), 'rotate', ~nr, d>
     in
     [ View(d, h(rb), h(hb), d, y), !DevKey(d, ~ik, ~a1, ~a2), Fr(~nr) ]
-  --[ LogValid(h(<'log', h(hb)>), body, 'ik'), ReadL(h(<'log', h(hb)>), body, 'ik'), Step('MT'), Signed(d, h(rb), h(hb), 'rotate', ~nr) ]->
+  --[ LogValid(h(<'log', h(hb)>), body, 'ik'), Step('MT'), Signed(d, h(rb), h(hb), 'rotate', ~nr) ]->
     [ View(d, h(rb), h(body), d, y), Out(<body, sign(<'ik', body>, ~ik)>), !Head(h(rb), h(body), d, y),
       !LogEntry(h(<'log', h(hb)>), <body, sign(<'ik', body>, ~ik)>) ]
 
@@ -122,7 +126,7 @@ rule Member_Rotate_2:
         body = <'rec', h(rb), h(hb), 'rotate', ~nr, d>
     in
     [ View(d, h(rb), h(hb), y, d), !DevKey(d, ~ik, ~a1, ~a2), Fr(~nr) ]
-  --[ LogValid(h(<'log', h(hb)>), body, 'ik'), ReadL(h(<'log', h(hb)>), body, 'ik'), Step('MT'), Signed(d, h(rb), h(hb), 'rotate', ~nr) ]->
+  --[ LogValid(h(<'log', h(hb)>), body, 'ik'), Step('MT'), Signed(d, h(rb), h(hb), 'rotate', ~nr) ]->
     [ View(d, h(rb), h(body), y, d), Out(<body, sign(<'ik', body>, ~ik)>), !Head(h(rb), h(body), y, d),
       !LogEntry(h(<'log', h(hb)>), <body, sign(<'ik', body>, ~ik)>) ]
 
@@ -238,9 +242,11 @@ rule Log_Write_IK_2:
    the key and stops on a fork (hesap.md, "Çatal kuralı"): an AK record is
    accepted only if no other valid AK record was logged under the same key
    before; it wins over a rotate (priority, rule 1). A rotate is accepted
-   only if no other valid value of any kind was logged before. Witnesses
-   (k > n/2 honest) give every reader the same log; that is why the log is
-   one global set of facts here. */
+   only if no other valid value of any kind was logged before. The
+   witnesses give every reader the same log (f < 2k - n, see the header);
+   that is why the log is one global set of facts here. Writers do not
+   read: an honest member writes its record even if another value is
+   already logged under the key, and the fork then stops the readers. */
 restriction Log_Read_AK:
   "All L v v2 #i #t. ReadL(L, v, 'ak') @ i & LogValid(L, v2, 'ak') @ t & #t < #i ==> v = v2"
 
@@ -276,6 +282,30 @@ lemma sanity_leaked_device_rotates_before_removal:
     & not (Ex #x. Step('MT') @ x) & not (Ex #x. Step('MR') @ x)
     & not (Ex #x. Step('AR') @ x)"
 
+
+/* Gap found by the model (feeds A4): a device whose IK leaked rotates
+   before its removal is logged; a contact follows the rotate and, by fork
+   rule 4, never looks back at the head the remove extends. The removed
+   device keeps extending that contact's branch after the removal. */
+lemma removed_device_survives_on_rotate_branch:
+  exists-trace
+  "Ex c r h0 h1 h2 n d nr nr2 #p #i #k #t #j.
+      Pin(c, r, h0) @ p
+    & Accept(c, r, h0, 'add', n, d) @ i
+    & h1 = h(<'rec', r, h0, 'add', n, d>)
+    & Accept(c, r, h1, 'rotate', nr, n) @ k
+    & h2 = h(<'rec', r, h1, 'rotate', nr, n>)
+    & Signed(d, r, h1, 'remove', h(n)) @ t
+    & Accept(c, r, h2, 'rotate', nr2, n) @ j
+    & #k < #t & #t < #j
+    & (All u #x #y. Step(u) @ x & Step(u) @ y & not (u = 'AT') ==> #x = #y)
+    & (All #x #y #z. Step('AT') @ x & Step('AT') @ y & Step('AT') @ z
+         ==> #x = #y | #y = #z | #x = #z)
+    & not (Ex #x. Step('MT') @ x) & not (Ex #x. Step('AR') @ x)
+    & not (Ex e #x. RevA1(e) @ x) & not (Ex e #x. RevA2(e) @ x)
+    & (All e #x. RevIK(e) @ x ==> e = n)
+    & (All c2 r2 h #x. Pin(c2, r2, h) @ x ==> #x = #p)"
+
 /* P2, visibility: every record any reader accepts is in the log. */
 lemma accepted_records_are_logged:
   "All o r hh op x s #i.
@@ -302,15 +332,15 @@ lemma no_split_view_membership:
 
 /* H3 core (old authority): once a member has removed device x, no reader
    accepts any record signed by x on the head it was removed from, even if
-   all of x's keys leaked and the server helps. The case x = d is the
-   remove record itself. That x stays out on later heads is not proven yet
+   all of x's keys leaked and the server helps, and even if x logged a
+   record of its own on that head first (the race of H3). The one record
+   by x = d is the remove itself. That x stays out on later heads is not proven yet
    (README.md, "Henüz kanıtlanmayanlar"). */
 lemma removed_device_locked_out_of_old_head:
   "All d r h0 x c op y #t #j.
       Signed(d, r, h0, 'remove', h(x)) @ t
     & Accept(c, r, h0, op, y, x) @ j
     & #t < #j
-    & not (x = d)
-    ==> F"
+    ==> x = d & op = 'remove' & y = h(x)"
 
 end
