@@ -32,6 +32,9 @@ class SendViewModel extends ChangeNotifier {
   // Bumped by every start and reset, so a call that returns after the
   // person moved on changes nothing.
   int _generation = 0;
+  // Bumped by every reset only: a pick that returns after one belongs to
+  // no selection.
+  int _resets = 0;
 
   final List<PickedFile> _files = [];
   List<PickedFile> get files => List.unmodifiable(_files);
@@ -60,7 +63,7 @@ class SendViewModel extends ChangeNotifier {
     // One picker at a time: the plugin refuses a second one anyway.
     if (_picking) return;
     _picking = true;
-    final generation = _generation;
+    final resets = _resets;
     try {
       final picked = await _source.pick(
         onCopying: (c) {
@@ -69,9 +72,10 @@ class SendViewModel extends ChangeNotifier {
           notifyListeners();
         },
       );
-      if (generation != _generation) {
-        // The person left while the picker copied: these copies belong to
-        // no selection, and the reset's clean-up may have missed them.
+      if (resets != _resets) {
+        // The selection was cleared while the picker copied: these copies
+        // belong to no selection, and the reset's clean-up may have missed
+        // them. Nothing else is in the cache after a reset.
         unawaited(_source.clearCopies());
         return;
       }
@@ -80,7 +84,8 @@ class SendViewModel extends ChangeNotifier {
         _files.add(f);
       }
     } finally {
-      // The plugin stops listening before it says the copy ended.
+      // The plugin says the copy ended just before it returns, but only
+      // while someone listens; end it here too.
       _picking = false;
       copying = false;
       notifyListeners();
@@ -102,7 +107,8 @@ class SendViewModel extends ChangeNotifier {
   }
 
   Future<void> start() async {
-    if (_files.isEmpty || busy) return;
+    // Not while the picker copies: the list is about to change (#269).
+    if (_files.isEmpty || busy || _picking) return;
     stage = SendStage.preparing;
     error = null;
     final generation = ++_generation;
@@ -217,6 +223,7 @@ class SendViewModel extends ChangeNotifier {
   void reset() {
     cancel();
     _generation++;
+    _resets++;
     _sub?.cancel();
     _sub = null;
     _release();
