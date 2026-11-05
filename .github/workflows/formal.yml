@@ -1,0 +1,48 @@
+# Formal model: the Tamarin model of the account design (formal/, #251).
+# Every lemma must be proved, and every mutant must show its attack.
+name: Formal
+
+# Runs from ci.yml when formal/ or this file changes, or by hand.
+on:
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  TAMARIN_VERSION: "1.12.0"
+  TAMARIN_SHA256: 201be06f469e47cff554df6ca93db8366fc2c69d70c61fcbd1370a1074b469c6
+  MAUDE_VERSION: "3.5.1"
+  MAUDE_SHA256: 72ed1ca87e3b3d0dfc6ee1436baf154bf04c45ff97d521bec040c5e8dfc8f92c
+
+jobs:
+  tamarin:
+    name: Tamarin
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # Upstream release builds, checked against the hashes above.
+      - name: Install Tamarin and Maude
+        run: |
+          set -eu
+          dir="$RUNNER_TEMP/tamarin"
+          mkdir -p "$dir"
+          cd "$dir"
+          curl --proto '=https' --tlsv1.2 -fsSL -o tamarin.tar.gz "https://github.com/tamarin-prover/tamarin-prover/releases/download/${TAMARIN_VERSION}/tamarin-prover-${TAMARIN_VERSION}-linux64-ubuntu.tar.gz"
+          curl --proto '=https' --tlsv1.2 -fsSL -o maude.zip "https://github.com/maude-lang/Maude/releases/download/Maude${MAUDE_VERSION}/Maude-${MAUDE_VERSION}-linux-x86_64.zip"
+          printf '%s  tamarin.tar.gz\n%s  maude.zip\n' "$TAMARIN_SHA256" "$MAUDE_SHA256" | sha256sum -c -
+          tar xzf tamarin.tar.gz
+          unzip -q maude.zip
+          chmod +x tamarin-prover maude
+          echo "$dir" >> "$GITHUB_PATH"
+          echo "MAUDE_LIB=$dir" >> "$GITHUB_ENV"
+      - name: Versions
+        run: tamarin-prover --version
+      - name: Prove every lemma
+        run: formal/check.sh
+      - name: Every mutant shows its attack
+        run: python3 formal/mutants.py

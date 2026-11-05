@@ -1,0 +1,282 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+/*
+ * Ghost ring (docs/hesap.md, decision 0013), part 1 of the formal model
+ * (#251): the membership chain without the log.
+ *
+ * Modelled: create, add, remove and rotate records; every device and every
+ * contact keeps its own view of the chain and follows records from the
+ * network. The network, and so the mailbox server, is the Dolev-Yao
+ * attacker. Any device key can leak at any time: a removed or stolen
+ * device is a device whose keys leaked.
+ *
+ * Abstractions (README.md lists them with their reasons):
+ *  - A ring has two device slots; larger rings and forks come with the
+ *    log (A2).
+ *  - Contacts here see plain records and compute the member set; a real
+ *    contact sees only heads and Merkle proofs (A3). So the contact-side
+ *    results are stronger than what a real contact can check.
+ *  - The hybrid signature is two signatures under two keys, each over the
+ *    same body with its own label ('ed', 'ml'). The body names the signer
+ *    by both public keys, so each half is bound to the other's key.
+ *  - A record names a removed device by the hash of its keys, as the real
+ *    record names it by its IK. It carries no ring secret: secrecy is A3.
+ *  - The contact pins the genesis head over an authentic channel, which
+ *    stands for the comparison of verification words.
+ */
+
+theory HayaletHalkaZincir
+begin
+
+builtins: signing, hashing
+
+restriction Eq: "All x y #i. Eq(x, y) @ i ==> x = y"
+
+/* A device: identity key IK and the two halves of the admin key AK. */
+rule Device_New:
+    let d = <pk(~ik), pk(~a1), pk(~a2)>
+    in
+    [ Fr(~ik), Fr(~a1), Fr(~a2) ]
+  --[ DeviceNew(d) ]->
+    [ !DevKey(d, ~ik, ~a1, ~a2), Unused(d), Out(d) ]
+
+/* Key leaks: a stolen, removed or broken device. Each half separately, so
+   a break of one algorithm alone is modelled too. */
+rule Reveal_IK:
+    [ !DevKey(d, ik, a1, a2) ] --[ RevIK(d) ]-> [ Out(ik) ]
+rule Reveal_A1:
+    [ !DevKey(d, ik, a1, a2) ] --[ RevA1(d) ]-> [ Out(a1) ]
+rule Reveal_A2:
+    [ !DevKey(d, ik, a1, a2) ] --[ RevA2(d) ]-> [ Out(a2) ]
+
+rule Ring_Create:
+    let d = <pk(~ik), pk(~a1), pk(~a2)>
+        r = h(<'ring', d>)
+        body = <'rec', r, 'genesis', 'create', d, d>
+    in
+    [ Unused(d), !DevKey(d, ~ik, ~a1, ~a2) ]
+  --[ Created(r, d), Signed(d, r, 'genesis', 'create', d) ]->
+    [ View(d, r, h(body), d, 'empty'), !Genesis(r, h(body), d),
+      Out(<body, sign(<'ed', body>, ~a1), sign(<'ml', body>, ~a2)>) ]
+
+/* A contact pins the genesis head (trust on first use, checked by words). */
+rule Contact_Pin:
+    [ !Genesis(r, hh, d), Fr(~c) ] --[ Pin(~c, r, hh) ]-> [ View(~c, r, hh, d, 'empty') ]
+
+/* A new device asks to join over QR or CPace (authentic, single use). */
+rule Device_Join_Request:
+    [ Unused(n) ] --[ JoinRequest(n) ]-> [ AddReq(n) ]
+
+/* Honest device in slot 1 adds into empty slot 2 (and the mirror). */
+rule Member_Add_1:
+    let d = <pk(~ik), pk(~a1), pk(~a2)>
+        body = <'rec', h(rb), h(hb), 'add', n, d>
+    in
+    [ View(d, h(rb), h(hb), d, 'empty'), AddReq(n), !DevKey(d, ~ik, ~a1, ~a2) ]
+  --[ Step('MA'), Signed(d, h(rb), h(hb), 'add', n) ]->
+    [ View(d, h(rb), h(body), d, n), View(n, h(rb), h(body), d, n),
+      Out(<body, sign(<'ed', body>, ~a1), sign(<'ml', body>, ~a2)>) ]
+
+rule Member_Add_2:
+    let d = <pk(~ik), pk(~a1), pk(~a2)>
+        body = <'rec', h(rb), h(hb), 'add', n, d>
+    in
+    [ View(d, h(rb), h(hb), 'empty', d), AddReq(n), !DevKey(d, ~ik, ~a1, ~a2) ]
+  --[ Step('MA'), Signed(d, h(rb), h(hb), 'add', n) ]->
+    [ View(d, h(rb), h(body), n, d), View(n, h(rb), h(body), n, d),
+      Out(<body, sign(<'ed', body>, ~a1), sign(<'ml', body>, ~a2)>) ]
+
+rule Member_Remove_1:
+    let d = <pk(~ik), pk(~a1), pk(~a2)>
+        body = <'rec', h(rb), h(hb), 'remove', h(x), d>
+    in
+    [ View(d, h(rb), h(hb), d, x), !DevKey(d, ~ik, ~a1, ~a2) ]
+  --[ Step('MR'), Signed(d, h(rb), h(hb), 'remove', h(x)), NotEmpty(x) ]->
+    [ View(d, h(rb), h(body), d, 'empty'),
+      Out(<body, sign(<'ed', body>, ~a1), sign(<'ml', body>, ~a2)>) ]
+
+rule Member_Remove_2:
+    let d = <pk(~ik), pk(~a1), pk(~a2)>
+        body = <'rec', h(rb), h(hb), 'remove', h(x), d>
+    in
+    [ View(d, h(rb), h(hb), x, d), !DevKey(d, ~ik, ~a1, ~a2) ]
+  --[ Step('MR'), Signed(d, h(rb), h(hb), 'remove', h(x)), NotEmpty(x) ]->
+    [ View(d, h(rb), h(body), 'empty', d),
+      Out(<body, sign(<'ed', body>, ~a1), sign(<'ml', body>, ~a2)>) ]
+
+restriction NotEmpty: "All x #i. NotEmpty(x) @ i ==> not (x = 'empty')"
+
+rule Member_Rotate_1:
+    let d = <pk(~ik), pk(~a1), pk(~a2)>
+        body = <'rec', h(rb), h(hb), 'rotate', ~nr, d>
+    in
+    [ View(d, h(rb), h(hb), d, y), !DevKey(d, ~ik, ~a1, ~a2), Fr(~nr) ]
+  --[ Step('MT'), Signed(d, h(rb), h(hb), 'rotate', ~nr) ]->
+    [ View(d, h(rb), h(body), d, y), Out(<body, sign(<'ik', body>, ~ik)>) ]
+
+rule Member_Rotate_2:
+    let d = <pk(~ik), pk(~a1), pk(~a2)>
+        body = <'rec', h(rb), h(hb), 'rotate', ~nr, d>
+    in
+    [ View(d, h(rb), h(hb), y, d), !DevKey(d, ~ik, ~a1, ~a2), Fr(~nr) ]
+  --[ Step('MT'), Signed(d, h(rb), h(hb), 'rotate', ~nr) ]->
+    [ View(d, h(rb), h(body), y, d), Out(<body, sign(<'ik', body>, ~ik)>) ]
+
+/* Any view owner (device or contact) follows records from the network. */
+rule Accept_Add_1:
+    let s = <sik, sa1, sa2>
+        body = <'rec', r, hh, 'add', n, s>
+    in
+    [ View(o, r, hh, s, 'empty'), In(<body, sig1, sig2>) ]
+  --[ Step('AA'), Eq(verify(sig1, <'ed', body>, sa1), true),
+      Eq(verify(sig2, <'ml', body>, sa2), true),
+      NotEmpty(n),
+      Accept(o, r, hh, 'add', n, s) ]->
+    [ View(o, r, h(body), s, n) ]
+
+rule Accept_Add_2:
+    let s = <sik, sa1, sa2>
+        body = <'rec', r, hh, 'add', n, s>
+    in
+    [ View(o, r, hh, 'empty', s), In(<body, sig1, sig2>) ]
+  --[ Step('AA'), Eq(verify(sig1, <'ed', body>, sa1), true),
+      Eq(verify(sig2, <'ml', body>, sa2), true),
+      NotEmpty(n),
+      Accept(o, r, hh, 'add', n, s) ]->
+    [ View(o, r, h(body), n, s) ]
+
+rule Accept_Remove_1:
+    let s = <sik, sa1, sa2>
+        body = <'rec', r, hh, 'remove', h(x), s>
+    in
+    [ View(o, r, hh, s, x), In(<body, sig1, sig2>) ]
+  --[ Step('AR'), Eq(verify(sig1, <'ed', body>, sa1), true),
+      Eq(verify(sig2, <'ml', body>, sa2), true),
+      NotEmpty(x),
+      Accept(o, r, hh, 'remove', h(x), s) ]->
+    [ View(o, r, h(body), s, 'empty') ]
+
+rule Accept_Remove_2:
+    let s = <sik, sa1, sa2>
+        body = <'rec', r, hh, 'remove', h(x), s>
+    in
+    [ View(o, r, hh, x, s), In(<body, sig1, sig2>) ]
+  --[ Step('AR'), Eq(verify(sig1, <'ed', body>, sa1), true),
+      Eq(verify(sig2, <'ml', body>, sa2), true),
+      NotEmpty(x),
+      Accept(o, r, hh, 'remove', h(x), s) ]->
+    [ View(o, r, h(body), 'empty', s) ]
+
+rule Accept_Rotate_1:
+    let s = <sik, sa1, sa2>
+        body = <'rec', r, hh, 'rotate', nr, s>
+    in
+    [ View(o, r, hh, s, y), In(<body, sig>) ]
+  --[ Step('AT'), Eq(verify(sig, <'ik', body>, sik), true),
+      Accept(o, r, hh, 'rotate', nr, s) ]->
+    [ View(o, r, h(body), s, y) ]
+
+rule Accept_Rotate_2:
+    let s = <sik, sa1, sa2>
+        body = <'rec', r, hh, 'rotate', nr, s>
+    in
+    [ View(o, r, hh, y, s), In(<body, sig>) ]
+  --[ Step('AT'), Eq(verify(sig, <'ik', body>, sik), true),
+      Accept(o, r, hh, 'rotate', nr, s) ]->
+    [ View(o, r, h(body), y, s) ]
+
+/* Executability. Step() bounds keep the search for a witness trace finite. */
+lemma sanity_contact_follows_add:
+  exists-trace
+  "Ex c r h0 n s #p #i.
+      Pin(c, r, h0) @ p
+    & Accept(c, r, h0, 'add', n, s) @ i
+    & not (Ex d #x. RevA1(d) @ x)
+    & not (Ex d #x. RevA2(d) @ x)
+    & (All t #x #y. Step(t) @ x & Step(t) @ y ==> #x = #y)
+    & not (Ex #x. Step('MT') @ x) & not (Ex #x. Step('AT') @ x)
+    & not (Ex #x. Step('MR') @ x) & not (Ex #x. Step('AR') @ x)"
+
+lemma sanity_contact_follows_add_remove:
+  exists-trace
+  "Ex c r h0 h1 n s #p #i #j.
+      Pin(c, r, h0) @ p
+    & Accept(c, r, h0, 'add', n, s) @ i
+    & h1 = h(<'rec', r, h0, 'add', n, s>)
+    & Accept(c, r, h1, 'remove', h(n), s) @ j
+    & not (Ex d #x. RevA1(d) @ x)
+    & not (Ex d #x. RevA2(d) @ x)
+    & (All t #x #y. Step(t) @ x & Step(t) @ y ==> #x = #y)
+    & not (Ex #x. Step('MT') @ x) & not (Ex #x. Step('AT') @ x)"
+
+/* Non-vacuity: once both halves of a member's AK leak, the attacker can
+   add a device that no honest device ever signed. Without this trace the
+   integrity lemma below could hold for a wrong reason. */
+lemma compromised_member_can_add:
+  exists-trace
+  "Ex c r h0 n s #p #i #k #l.
+      Pin(c, r, h0) @ p
+    & Accept(c, r, h0, 'add', n, s) @ i
+    & RevA1(s) @ k & RevA2(s) @ l
+    & not (Ex #j. Signed(s, r, h0, 'add', n) @ j)
+    & (All t #x #y. Step(t) @ x & Step(t) @ y ==> #x = #y)
+    & not (Ex #x. Step('MT') @ x) & not (Ex #x. Step('AT') @ x)
+    & not (Ex #x. Step('MR') @ x) & not (Ex #x. Step('AR') @ x)
+    & not (Ex #x. Step('MA') @ x)"
+
+/* P1, membership: an accepted add or remove was signed by the named member
+   in the same ring and on the same previous head, unless both halves of
+   that member's AK (Ed25519 and ML-DSA-65) leaked first, or the signer is
+   a key the attacker made. That a made-up key cannot become a member
+   without a leak is signer_must_be_member below (bounded). One leaked half
+   is not enough; the IK is never enough. */
+lemma membership_change_needs_member_ak:
+  "All o r hh op x s #i.
+      Accept(o, r, hh, op, x, s) @ i & (op = 'add' | op = 'remove')
+    ==> (Ex #j. Signed(s, r, hh, op, x) @ j & j < i)
+      | (Ex #k #l. RevA1(s) @ k & RevA2(s) @ l & k < i & l < i)
+      | not (Ex #n. DeviceNew(s) @ n)"
+
+/* A rotate was signed by the named member's IK on the same head, unless
+   that IK leaked. Rotate cannot change membership by construction: its
+   accept rules copy both slots. */
+lemma rotate_needs_member_ik:
+  "All o r hh x s #i.
+      Accept(o, r, hh, 'rotate', x, s) @ i
+    ==> (Ex #j. Signed(s, r, hh, 'rotate', x) @ j & j < i)
+      | (Ex #k. RevIK(s) @ k & k < i)
+      | not (Ex #n. DeviceNew(s) @ n)"
+
+/* Only a member writes records: with no AK leaked anywhere, a contact
+   never accepts a record signed by a key that is not a device's. This is
+   the case the last disjunct of P1 above leaves open. Bounded to one step
+   of each kind so the search ends; the unbounded form needs an invariant
+   (README.md, "Henüz kanıtlanmayanlar"). mutants.py shows the attack once
+   acceptors stop taking the signer from their own view. */
+lemma signer_must_be_member:
+  "not (Ex c r h0 n s #p #i.
+      Pin(c, r, h0) @ p
+    & Accept(c, r, h0, 'add', n, s) @ i
+    & not (Ex #x. DeviceNew(s) @ x)
+    & not (Ex d #x. RevA1(d) @ x) & not (Ex d #x. RevA2(d) @ x)
+    & (All t #x #y. Step(t) @ x & Step(t) @ y ==> #x = #y)
+    & not (Ex #x. Step('MT') @ x) & not (Ex #x. Step('AT') @ x)
+    & not (Ex #x. Step('MR') @ x) & not (Ex #x. Step('AR') @ x)
+    & not (Ex #x. Step('MA') @ x))"
+
+/* Non-vacuity for the remove path: a contact can follow a remove that the
+   member at slot 2 signs (the mirror rules fire). */
+lemma sanity_contact_follows_remove_by_slot_2:
+  exists-trace
+  "Ex c r h0 h1 n d #p #i #j.
+      Pin(c, r, h0) @ p
+    & Accept(c, r, h0, 'add', n, d) @ i
+    & h1 = h(<'rec', r, h0, 'add', n, d>)
+    & Accept(c, r, h1, 'remove', h(d), n) @ j
+    & not (Ex e #x. RevA1(e) @ x)
+    & not (Ex e #x. RevA2(e) @ x)
+    & (All t #x #y. Step(t) @ x & Step(t) @ y ==> #x = #y)
+    & not (Ex #x. Step('MT') @ x) & not (Ex #x. Step('AT') @ x)"
+
+end

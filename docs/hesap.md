@@ -8,6 +8,8 @@
   yazılmadan önce [protokol notlarına](protocol-v0.1-notes.md) eklenir.
 - **İnceleme:** tasarım, kod yazılmadan önce biçimsel modelle (Tamarin) ve
   bağımsız bir insan kripto incelemesiyle sınanacak (bkz. "Doğrulama").
+  Model [formal/](../formal/README.md) klasöründe parça parça yazılıyor
+  (#251); ilk parça üyelik zinciridir.
 
 TotalDrop'ta hesap isteğe bağlıdır. Kodla gönderme ve alma hesapsız
 çalışmaya devam eder. Hesap iki şey sağlar:
