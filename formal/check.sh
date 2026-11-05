@@ -8,9 +8,11 @@
 # Usage: formal/check.sh [tamarin-prover command]; default: tamarin-prover.
 set -eu
 tamarin=${1:-tamarin-prover}
-# A relative path to the prover still works after the cd below.
-case $tamarin in
-  */*) tamarin=$(cd "$(dirname "$tamarin")" && pwd)/$(basename "$tamarin") ;;
+# The command may carry arguments; a relative path to its program still
+# works after the cd below.
+prog=${tamarin%% *}
+case $prog in
+  */*) tamarin="$(cd "$(dirname "$prog")" && pwd)/$(basename "$prog")${tamarin#"$prog"}" ;;
 esac
 cd "$(dirname "$0")"
 limit=${LEMMA_TIMEOUT:-600}
@@ -19,7 +21,9 @@ status=0
 proved=0
 for model in *.spthy; do
   [ -f "$model" ] || { echo "no models in formal/"; exit 1; }
-  for lemma in $(sed -n 's/^lemma \([A-Za-z0-9_]*\).*/\1/p' "$model"); do
+  lemmas=$(sed -n 's/^lemma \([A-Za-z0-9_]*\).*/\1/p' "$model")
+  [ -n "$lemmas" ] || { echo "$model: no lemmas"; status=1; }
+  for lemma in $lemmas; do
     out=$(mktemp)
     if timeout "$limit" $tamarin --derivcheck-timeout=0 --prove="$lemma" "$model" \
         +RTS -M8G -RTS >"$out" 2>&1; then
