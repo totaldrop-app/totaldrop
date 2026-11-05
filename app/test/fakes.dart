@@ -6,6 +6,7 @@ import 'dart:async';
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart'
     show PlatformInt64;
+import 'package:totaldrop/data/file_source.dart';
 import 'package:totaldrop/data/transfer_keep_alive.dart';
 import 'package:totaldrop/data/transfer_repository.dart';
 import 'package:totaldrop/src/rust/api/transfer.dart';
@@ -131,3 +132,40 @@ class FakeKeepAlive implements TransferKeepAlive {
     return Future.value();
   }
 }
+
+/// The system picker, held open by the test: [startCopy] plays the copy
+/// into the app cache that Android's picker does before it returns (#269),
+/// [finish] closes it.
+class FakeFileSource implements FileSource {
+  int picks = 0;
+  int clears = 0;
+  void Function(bool copying)? _onCopying;
+  Completer<List<PickedFile>>? _result;
+
+  @override
+  Future<List<PickedFile>> pick({
+    required void Function(bool copying) onCopying,
+  }) {
+    picks++;
+    _onCopying = onCopying;
+    return (_result = Completer()).future;
+  }
+
+  void startCopy() => _onCopying!(true);
+
+  /// Ends the pick with [files]. Like the plugin, which posts its last
+  /// status after the result and stops listening first, it never says
+  /// that the copy ended.
+  void finish(List<PickedFile> files) => _result!.complete(files);
+
+  void fail(Object error) => _result!.completeError(error);
+
+  @override
+  Future<void> clearCopies() {
+    clears++;
+    return Future.value();
+  }
+}
+
+PickedFile pickedFile(String name, {int size = 1 << 30}) =>
+    PickedFile(name: name, path: '/cache/file_picker/1/$name', size: size);

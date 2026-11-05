@@ -3,34 +3,28 @@
 
 import 'dart:async';
 
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 
+import '../../data/file_source.dart';
 import '../../data/transfer_keep_alive.dart';
 import '../../data/transfer_repository.dart';
 import '../../src/rust/api/transfer.dart';
 
-enum SendStage { picking, preparing, waiting, transferring, done, failed }
+export '../../data/file_source.dart' show PickedFile;
 
-class PickedFile {
-  const PickedFile({
-    required this.name,
-    required this.path,
-    required this.size,
-  });
-  final String name;
-  final String path;
-  final int size;
-}
+enum SendStage { picking, preparing, waiting, transferring, done, failed }
 
 class SendViewModel extends ChangeNotifier {
   SendViewModel({
     required TransferRepository repository,
     TransferKeepAlive keepAlive = const NoKeepAlive(),
+    FileSource fileSource = const PlatformFileSource(),
   }) : _repo = repository,
-       _keeper = keepAlive;
+       _keeper = keepAlive,
+       _source = fileSource;
 
   final TransferRepository _repo;
+  final FileSource _source;
   final TransferKeepAlive _keeper;
   bool _keptAlive = false;
   StreamSubscription<TransferEvent>? _sub;
@@ -58,14 +52,10 @@ class SendViewModel extends ChangeNotifier {
       stage == SendStage.transferring;
 
   Future<void> addFiles() async {
-    // Multiple selection; files are copied to the app cache, never loaded
-    // into memory.
-    final picked = await FilePicker.pickFiles();
+    final picked = await _source.pick(onCopying: (_) {});
     for (final f in picked) {
-      final path = f.path;
-      if (path == null || _files.any((e) => e.path == path)) continue;
-      final size = f.lengthSync() ?? await f.length() ?? 0;
-      _files.add(PickedFile(name: f.name, path: path, size: size));
+      if (_files.any((e) => e.path == f.path)) continue;
+      _files.add(f);
     }
     notifyListeners();
   }
@@ -205,7 +195,7 @@ class SendViewModel extends ChangeNotifier {
     _release();
     _files.clear();
     // The picker keeps copies of picked files in the app cache; drop them.
-    unawaited(FilePicker.clearTemporaryFiles().catchError((_) => false));
+    unawaited(_source.clearCopies());
     stage = SendStage.picking;
     code = null;
     words = const [];
