@@ -66,6 +66,10 @@ class AppLocalizationsEl extends AppLocalizations {
   String get sendPreparing => 'Προετοιμασία αρχείων…';
 
   @override
+  String get sendAddFailed =>
+      'Δεν ήταν δυνατή η προσθήκη των αρχείων. Βεβαιωθείτε ότι υπάρχει αρκετός ελεύθερος χώρος σε αυτή τη συσκευή και δοκιμάστε ξανά.';
+
+  @override
   String get sendYourCode => 'Ο κωδικός σας';
 
   @override

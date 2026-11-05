@@ -64,6 +64,10 @@ class AppLocalizationsHu extends AppLocalizations {
   String get sendPreparing => 'Fájlok előkészítése…';
 
   @override
+  String get sendAddFailed =>
+      'A fájlokat nem sikerült hozzáadni. Ellenőrizd, hogy van-e elég szabad hely ezen az eszközön, majd próbáld újra.';
+
+  @override
   String get sendYourCode => 'A kódod';
 
   @override

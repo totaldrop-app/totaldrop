@@ -110,7 +110,7 @@ class _Centered extends StatelessWidget {
       children: [
         logo,
         Gap.l,
-        Text(text, style: Theme.of(context).textTheme.titleMedium),
+        Announced(Text(text, style: Theme.of(context).textTheme.titleMedium)),
       ],
     ),
   );
@@ -152,6 +152,7 @@ class _Picking extends StatelessWidget {
               ),
             ),
             const Spacer(),
+            if (vm.addFailed) ...[const _AddFailed(), Gap.m],
             FilledButton.icon(
               onPressed: vm.addFiles,
               icon: const Icon(Icons.attach_file),
@@ -213,6 +214,7 @@ class _Picking extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              if (vm.addFailed) ...[const _AddFailed(), Gap.s],
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
                 title: Text(l.sendStrongCode),
@@ -236,6 +238,25 @@ class _Picking extends StatelessWidget {
   }
 }
 
+/// Why the picker came back with nothing (#271).
+class _AddFailed extends StatelessWidget {
+  const _AddFailed();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Announced(
+      Text(
+        AppLocalizations.of(context).sendAddFailed,
+        textAlign: TextAlign.center,
+        style: theme.textTheme.bodyMedium?.copyWith(
+          color: theme.colorScheme.error,
+        ),
+      ),
+    );
+  }
+}
+
 class _Waiting extends StatelessWidget {
   const _Waiting({required this.vm});
   final SendViewModel vm;
@@ -250,11 +271,13 @@ class _Waiting extends StatelessWidget {
       children: [
         const Center(child: TotalDropMark(size: 120, sending: true)),
         Gap.s,
-        Text(
-          l.sendWaiting,
-          textAlign: TextAlign.center,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
+        Announced(
+          Text(
+            l.sendWaiting,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
           ),
         ),
         Gap.l,
@@ -358,10 +381,12 @@ class _Transferring extends StatelessWidget {
       children: [
         const Center(child: TotalDropMark(size: 140, sending: true)),
         Gap.l,
-        Text(
-          l.sendSending,
-          textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.headlineSmall,
+        Announced(
+          Text(
+            l.sendSending,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.headlineSmall,
+          ),
         ),
         Gap.m,
         TransferProgress(done: vm.done, total: vm.total),
@@ -389,10 +414,12 @@ class _Done extends StatelessWidget {
         children: [
           const Center(child: DoneBadge()),
           Gap.l,
-          Text(
-            l.sendDone,
-            textAlign: TextAlign.center,
-            style: theme.textTheme.headlineSmall,
+          Announced(
+            Text(
+              l.sendDone,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.headlineSmall,
+            ),
           ),
           Gap.s,
           if (s != null) ...[

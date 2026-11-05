@@ -18,6 +18,7 @@
   "sendCounting": "Inahesabu…",
   "sendRemove": "Ondoa",
   "sendPreparing": "Inaandaa faili zako…",
+  "sendAddFailed": "Faili hazikuweza kuongezwa. Hakikisha kuna nafasi ya kutosha kwenye kifaa hiki, kisha ujaribu tena.",
   "sendYourCode": "Msimbo wako",
   "sendCodeHint": "Kwenye kifaa kingine, fungua TotalDrop, gusa Pokea kisha uweke msimbo huu.",
   "sendWaiting": "Inamsubiri mpokeaji…",

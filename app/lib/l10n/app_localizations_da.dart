@@ -64,6 +64,10 @@ class AppLocalizationsDa extends AppLocalizations {
   String get sendPreparing => 'Forbereder dine filer…';
 
   @override
+  String get sendAddFailed =>
+      'Filerne kunne ikke tilføjes. Sørg for, at der er nok ledig plads på denne enhed, og prøv igen.';
+
+  @override
   String get sendYourCode => 'Din kode';
 
   @override

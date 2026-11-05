@@ -64,6 +64,10 @@ class AppLocalizationsSw extends AppLocalizations {
   String get sendPreparing => 'Inaandaa faili zako…';
 
   @override
+  String get sendAddFailed =>
+      'Faili hazikuweza kuongezwa. Hakikisha kuna nafasi ya kutosha kwenye kifaa hiki, kisha ujaribu tena.';
+
+  @override
   String get sendYourCode => 'Msimbo wako';
 
   @override

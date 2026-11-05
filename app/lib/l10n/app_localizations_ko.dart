@@ -61,6 +61,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get sendPreparing => '파일을 준비하는 중…';
 
   @override
+  String get sendAddFailed =>
+      '파일을 추가하지 못했습니다. 이 기기에 여유 공간이 충분한지 확인한 다음 다시 시도하세요.';
+
+  @override
   String get sendYourCode => '내 코드';
 
   @override

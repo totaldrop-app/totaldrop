@@ -89,8 +89,10 @@ void main() {
       final added = vm.addFiles();
       source.startCopy();
       source.fail(Exception('read error'));
-      await expectLater(added, throwsException);
+      // The failure is shown on the screen, not thrown at the button (#271).
+      await added;
       expect(vm.copying, isFalse);
+      expect(vm.addFailed, isTrue);
       expect(vm.files, isEmpty);
     });
   });

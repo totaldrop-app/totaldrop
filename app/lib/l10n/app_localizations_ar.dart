@@ -64,6 +64,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get sendPreparing => 'جارٍ تجهيز ملفاتك…';
 
   @override
+  String get sendAddFailed =>
+      'تعذّرت إضافة الملفات. تأكد من وجود مساحة فارغة كافية على هذا الجهاز ثم حاول مرة أخرى.';
+
+  @override
   String get sendYourCode => 'رمزك';
 
   @override

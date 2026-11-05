@@ -61,6 +61,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sendPreparing => '正在准备文件…';
 
   @override
+  String get sendAddFailed => '无法添加文件。请确认此设备有足够的可用空间，然后重试。';
+
+  @override
   String get sendYourCode => '你的代码';
 
   @override
@@ -498,6 +501,9 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get sendPreparing => '正在准备文件…';
 
   @override
+  String get sendAddFailed => '无法添加文件。请确认此设备有足够的可用空间，然后重试。';
+
+  @override
   String get sendYourCode => '你的代码';
 
   @override
@@ -933,6 +939,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get sendPreparing => '正在準備檔案…';
+
+  @override
+  String get sendAddFailed => '無法新增檔案。請確認這部裝置有足夠的可用空間，然後再試一次。';
 
   @override
   String get sendYourCode => '你的代碼';

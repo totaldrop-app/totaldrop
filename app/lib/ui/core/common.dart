@@ -55,6 +55,21 @@ String? causeText(AppLocalizations l, String cause) {
   };
 }
 
+/// A stage headline that a screen reader reads out when it appears.
+///
+/// When a screen changes stage, the button that had focus goes away and
+/// TalkBack says nothing; a live region makes it read the new headline
+/// (#271). Only for text that changes with the stage, never for text that
+/// changes by itself, such as progress, or it would talk without pause.
+class Announced extends StatelessWidget {
+  const Announced(this.child, {super.key});
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) =>
+      Semantics(liveRegion: true, child: child);
+}
+
 /// The four verification words, with the instruction to compare them.
 class VerificationWords extends StatelessWidget {
   const VerificationWords({super.key, required this.words});
@@ -141,10 +156,12 @@ class ErrorPanel extends StatelessWidget {
           color: theme.colorScheme.error,
         ),
         Gap.m,
-        Text(
-          errorMessage(context, error.kind),
-          textAlign: TextAlign.center,
-          style: theme.textTheme.titleMedium,
+        Announced(
+          Text(
+            errorMessage(context, error.kind),
+            textAlign: TextAlign.center,
+            style: theme.textTheme.titleMedium,
+          ),
         ),
         if (error.detail.isNotEmpty) ...[
           Gap.s,

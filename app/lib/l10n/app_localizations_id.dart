@@ -64,6 +64,10 @@ class AppLocalizationsId extends AppLocalizations {
   String get sendPreparing => 'Menyiapkan file Anda…';
 
   @override
+  String get sendAddFailed =>
+      'File tidak dapat ditambahkan. Pastikan ruang kosong di perangkat ini cukup, lalu coba lagi.';
+
+  @override
   String get sendYourCode => 'Kode Anda';
 
   @override

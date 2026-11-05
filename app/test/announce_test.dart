@@ -11,6 +11,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:totaldrop/l10n/app_localizations.dart';
 import 'package:totaldrop/src/rust/api/transfer.dart';
+import 'package:totaldrop/src/rust/frb_generated.dart';
 import 'package:totaldrop/ui/core/theme.dart';
 import 'package:totaldrop/ui/receive/receive_view.dart';
 import 'package:totaldrop/ui/receive/receive_view_model.dart';
@@ -47,7 +48,7 @@ void expectAnnounced(WidgetTester tester, String text) {
   expect(find.text(text), findsOneWidget);
   expect(
     tester.getSemantics(find.text(text)),
-    containsSemantics(label: text, isLiveRegion: true),
+    isSemantics(label: text, isLiveRegion: true),
     reason: '"$text" is read out when it appears',
   );
 }
@@ -70,7 +71,24 @@ TransferEvent failed() => const TransferEvent(
   error: TransferError(kind: ErrorKind.other, detail: '', cause: ''),
 );
 
+/// Stands in for the Rust library: the offer asks it to make hidden
+/// characters in file names visible, which test names have none of, and
+/// whether a security text must stay English, which it need not in English.
+class _Rust implements RustLibApi {
+  @override
+  String crateApiL10NRevealControls({required String name}) => name;
+
+  @override
+  bool crateApiL10NNeedsEnglish({required String tag, required String key}) =>
+      false;
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
 void main() {
+  setUpAll(() => RustLib.initMock(api: _Rust()));
+
   group('a failed pick', () {
     late FakeFileSource source;
     late SendViewModel vm;
@@ -148,19 +166,22 @@ void main() {
     });
   });
 
+  // The fakes are made inside each test: a future made in setUp
+  // completes outside the test's fake clock, and pump never sees it.
   group('the send screen reads out', () {
     late FakeFileSource source;
     late FakeRepository repo;
     late SendViewModel vm;
 
-    setUp(() {
+    void make() {
       source = FakeFileSource();
       repo = FakeRepository();
       vm = SendViewModel(repository: repo, fileSource: source);
-    });
+    }
 
     testWidgets('the copy of the chosen files', (tester) async {
       final semantics = tester.ensureSemantics();
+      make();
       await tester.pumpWidget(app(SendView(viewModel: vm)));
       await tester.tap(find.text(l.sendAddFiles));
       source.startCopy();
@@ -173,6 +194,7 @@ void main() {
 
     testWidgets('each stage of a send', (tester) async {
       final semantics = tester.ensureSemantics();
+      make();
       vm.addFakeFileForTest('a.txt');
       await tester.pumpWidget(app(SendView(viewModel: vm)));
       unawaited(vm.start());
@@ -195,6 +217,7 @@ void main() {
 
     testWidgets('a failed send', (tester) async {
       final semantics = tester.ensureSemantics();
+      make();
       vm.addFakeFileForTest('a.txt');
       await tester.pumpWidget(app(SendView(viewModel: vm)));
       unawaited(vm.start());
@@ -211,14 +234,15 @@ void main() {
     late FakeRepository repo;
     late ReceiveViewModel vm;
 
-    setUp(() {
+    void make() {
       repo = FakeRepository();
       vm = ReceiveViewModel(repository: repo);
       vm.setInput('7-harbor-rocket');
-    });
+    }
 
     testWidgets('each stage of a receive', (tester) async {
       final semantics = tester.ensureSemantics();
+      make();
       await tester.pumpWidget(app(ReceiveView(viewModel: vm)));
       unawaited(vm.connect());
       await settle(tester);
@@ -240,6 +264,7 @@ void main() {
 
     testWidgets('a declined offer', (tester) async {
       final semantics = tester.ensureSemantics();
+      make();
       await tester.pumpWidget(app(ReceiveView(viewModel: vm)));
       unawaited(vm.connect());
       repo.connected.complete(FakeOffer());
@@ -252,6 +277,7 @@ void main() {
 
     testWidgets('a failed receive', (tester) async {
       final semantics = tester.ensureSemantics();
+      make();
       await tester.pumpWidget(app(ReceiveView(viewModel: vm)));
       unawaited(vm.connect());
       repo.connected.completeError(

@@ -18,6 +18,7 @@
   "sendCounting": "Menghitung…",
   "sendRemove": "Hapus",
   "sendPreparing": "Menyiapkan file Anda…",
+  "sendAddFailed": "File tidak dapat ditambahkan. Pastikan ruang kosong di perangkat ini cukup, lalu coba lagi.",
   "sendYourCode": "Kode Anda",
   "sendCodeHint": "Di perangkat lain, buka TotalDrop, ketuk Terima, lalu masukkan kode ini.",
   "sendWaiting": "Menunggu penerima…",

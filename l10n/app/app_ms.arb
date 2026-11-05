@@ -18,6 +18,7 @@
   "sendCounting": "Mengira…",
   "sendRemove": "Alih keluar",
   "sendPreparing": "Menyediakan fail anda…",
+  "sendAddFailed": "Fail tidak dapat ditambah. Pastikan ruang kosong pada peranti ini mencukupi, kemudian cuba lagi.",
   "sendYourCode": "Kod anda",
   "sendCodeHint": "Pada peranti lain, buka TotalDrop, ketik Terima dan masukkan kod ini.",
   "sendWaiting": "Menunggu penerima…",

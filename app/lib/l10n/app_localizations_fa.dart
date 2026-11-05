@@ -65,6 +65,10 @@ class AppLocalizationsFa extends AppLocalizations {
   String get sendPreparing => 'در حال آماده‌سازی فایل‌ها…';
 
   @override
+  String get sendAddFailed =>
+      'افزودن فایل‌ها ممکن نشد. مطمئن شوید که روی این دستگاه فضای خالی کافی هست و دوباره امتحان کنید.';
+
+  @override
   String get sendYourCode => 'کد شما';
 
   @override

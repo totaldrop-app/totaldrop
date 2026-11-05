@@ -64,6 +64,10 @@ class AppLocalizationsBn extends AppLocalizations {
   String get sendPreparing => 'আপনার ফাইলগুলো প্রস্তুত করা হচ্ছে…';
 
   @override
+  String get sendAddFailed =>
+      'ফাইলগুলো যোগ করা যায়নি। এই ডিভাইসে যথেষ্ট খালি জায়গা আছে কি না দেখে নিয়ে আবার চেষ্টা করুন।';
+
+  @override
   String get sendYourCode => 'আপনার কোড';
 
   @override
