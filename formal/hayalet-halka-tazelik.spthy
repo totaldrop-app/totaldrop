@@ -239,7 +239,10 @@ rule Log_Write_IK_2:
    check). Together they close the rotate-branch gap of part 2: a remove
    written while a rotate is still unsettled is in the log before the rotate
    settles, and then wins (fork rule 1). A5 sets D against the one-hour
-   inclusion and freshness bounds. */
+   inclusion and freshness bounds.
+   Honest records are still logged in the step that writes them. Here that
+   is load-bearing: the freshness check must still hold when the record is
+   included. The design must enforce it (README.md, A3). */
 rule Log_Age:
     [ !LogEntry(L, v) ] --[ Old(L, v) ]-> [ ]
 
@@ -296,7 +299,9 @@ lemma sanity_leaked_device_rotates_before_removal:
 
 /* The all-traces lemmas of part 2 hold here unchanged and are not proved
    again: this model only adds a rule without conclusions (Log_Age), new
-   actions and restrictions, so every trace of it is a trace of part 2.
+   actions and restrictions. Dropping the Log_Age steps from a trace of
+   this model gives a trace of part 2, and no lemma or restriction of part
+   2 mentions Old, WriteFresh or Settled.
    The exists-trace lemmas above are proved again, because restrictions
    could remove their traces. */
 
@@ -311,6 +316,28 @@ lemma sanity_contact_follows_settled_rotate:
     & not (Ex #x. Step('MR') @ x) & not (Ex #x. Step('AR') @ x)
     & not (Ex e #x. RevA1(e) @ x) & not (Ex e #x. RevA2(e) @ x)
     & not (Ex e #x. RevIK(e) @ x)"
+
+/* Non-vacuity of the fix: while a leaked device's rotate is still
+   unsettled, a member's remove on the same head still goes through and a
+   contact follows it. A pending rotate cannot delay a removal. */
+lemma sanity_remove_beats_unsettled_rotate:
+  exists-trace
+  "Ex c r h0 h1 n d nr #p #i #l #t #a.
+      Pin(c, r, h0) @ p
+    & Accept(c, r, h0, 'add', n, d) @ i
+    & h1 = h(<'rec', r, h0, 'add', n, d>)
+    & LogValid(h(<'log', h1>), <'rec', r, h1, 'rotate', nr, n>, 'ik') @ l
+    & Signed(d, r, h1, 'remove', h(n)) @ t
+    & Accept(c, r, h1, 'remove', h(n), d) @ a
+    & #l < #t
+    & not (Ex #x. Signed(n, r, h1, 'rotate', nr) @ x)
+    & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)
+    & not (Ex #x. Step('MT') @ x) & not (Ex #x. Step('AT') @ x)
+    & not (Ex e #x. RevA1(e) @ x) & not (Ex e #x. RevA2(e) @ x)
+    & (All c2 r2 h #x. Pin(c2, r2, h) @ x ==> #x = #p)
+    & not (Ex L v #x. Old(L, v) @ x)
+    & (All e #x. RevIK(e) @ x ==> e = n)
+    & (All L v #x. LogValid(L, v, 'ik') @ x ==> #x = #l)"
 
 /* The rotate-branch gap of part 2 is closed: no reader follows a rotate
    by x on a head from which a member removes x, whichever comes first. */
