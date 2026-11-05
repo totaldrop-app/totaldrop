@@ -65,7 +65,7 @@ class AppLocalizationsDa extends AppLocalizations {
 
   @override
   String get sendAddFailed =>
-      'Filerne kunne ikke tilføjes. Sørg for, at der er nok ledig plads på denne enhed, og prøv igen.';
+      'Filerne kunne ikke tilføjes. Prøv igen. Hvis det sker igen, så tjek, at der er nok ledig plads på denne enhed, eller vælg filerne et andet sted fra.';
 
   @override
   String get sendYourCode => 'Din kode';

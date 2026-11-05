@@ -152,7 +152,10 @@ class _Picking extends StatelessWidget {
               ),
             ),
             const Spacer(),
-            if (vm.addFailed) ...[const _AddFailed(), Gap.m],
+            if (vm.addFailed) ...[
+              const _AddFailed(textAlign: TextAlign.center),
+              Gap.m,
+            ],
             FilledButton.icon(
               onPressed: vm.addFiles,
               icon: const Icon(Icons.attach_file),
@@ -171,13 +174,20 @@ class _Picking extends StatelessWidget {
             separatorBuilder: (_, _) => const Divider(),
             itemBuilder: (context, i) {
               if (i == vm.files.length) {
-                return Align(
-                  alignment: AlignmentDirectional.centerStart,
-                  child: TextButton.icon(
-                    onPressed: vm.addFiles,
-                    icon: const Icon(Icons.add),
-                    label: Text(l.sendAddFiles),
-                  ),
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TextButton.icon(
+                      onPressed: vm.addFiles,
+                      icon: const Icon(Icons.add),
+                      label: Text(l.sendAddFiles),
+                    ),
+                    if (vm.addFailed)
+                      const Padding(
+                        padding: EdgeInsetsDirectional.fromSTEB(12, 0, 12, 8),
+                        child: _AddFailed(textAlign: TextAlign.start),
+                      ),
+                  ],
                 );
               }
               final f = vm.files[i];
@@ -214,7 +224,6 @@ class _Picking extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              if (vm.addFailed) ...[const _AddFailed(), Gap.s],
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
                 title: Text(l.sendStrongCode),
@@ -226,8 +235,13 @@ class _Picking extends StatelessWidget {
               FilledButton.icon(
                 onPressed: vm.start,
                 icon: const Icon(Icons.key_outlined),
-                label: Text(
-                  '${l.sendCreateCode} · ${l.itemsAndSize(vm.files.length, formatBytes(l, vm.totalSize))}',
+                // Read out when the list appears after the picker's copy
+                // and when it changes, so a screen reader is not left
+                // silent where "Add files" was (#271).
+                label: Announced(
+                  Text(
+                    '${l.sendCreateCode} · ${l.itemsAndSize(vm.files.length, formatBytes(l, vm.totalSize))}',
+                  ),
                 ),
               ),
             ],
@@ -240,7 +254,8 @@ class _Picking extends StatelessWidget {
 
 /// Why the picker came back with nothing (#271).
 class _AddFailed extends StatelessWidget {
-  const _AddFailed();
+  const _AddFailed({required this.textAlign});
+  final TextAlign textAlign;
 
   @override
   Widget build(BuildContext context) {
@@ -248,7 +263,7 @@ class _AddFailed extends StatelessWidget {
     return Announced(
       Text(
         AppLocalizations.of(context).sendAddFailed,
-        textAlign: TextAlign.center,
+        textAlign: textAlign,
         style: theme.textTheme.bodyMedium?.copyWith(
           color: theme.colorScheme.error,
         ),

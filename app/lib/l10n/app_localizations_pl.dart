@@ -65,7 +65,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get sendAddFailed =>
-      'Nie udało się dodać plików. Upewnij się, że na tym urządzeniu jest dość wolnego miejsca, i spróbuj ponownie.';
+      'Nie udało się dodać plików. Spróbuj ponownie. Jeśli to się powtórzy, sprawdź, czy na tym urządzeniu jest dość wolnego miejsca, albo wybierz pliki z innego miejsca.';
 
   @override
   String get sendYourCode => 'Twój kod';

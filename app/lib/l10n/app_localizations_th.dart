@@ -64,7 +64,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get sendAddFailed =>
-      'เพิ่มไฟล์ไม่ได้ ตรวจสอบว่าอุปกรณ์นี้มีพื้นที่ว่างเพียงพอ แล้วลองอีกครั้ง';
+      'เพิ่มไฟล์ไม่ได้ โปรดลองอีกครั้ง หากยังเกิดขึ้นอีก ให้ตรวจสอบว่าอุปกรณ์นี้มีพื้นที่ว่างเพียงพอ หรือเลือกไฟล์จากที่อื่น';
 
   @override
   String get sendYourCode => 'รหัสของคุณ';

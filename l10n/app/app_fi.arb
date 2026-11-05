@@ -18,7 +18,7 @@
   "sendCounting": "Lasketaan…",
   "sendRemove": "Poista",
   "sendPreparing": "Valmistellaan tiedostoja…",
-  "sendAddFailed": "Tiedostoja ei voitu lisätä. Varmista, että tällä laitteella on tarpeeksi vapaata tilaa, ja yritä uudelleen.",
+  "sendAddFailed": "Tiedostoja ei voitu lisätä. Yritä uudelleen. Jos näin käy taas, tarkista, että tällä laitteella on tarpeeksi vapaata tilaa, tai valitse tiedostot toisesta paikasta.",
   "sendYourCode": "Koodisi",
   "sendCodeHint": "Avaa toisella laitteella TotalDrop, napauta Vastaanota ja anna tämä koodi.",
   "sendWaiting": "Odotetaan vastaanottajaa…",

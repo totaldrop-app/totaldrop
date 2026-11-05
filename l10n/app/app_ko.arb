@@ -18,7 +18,7 @@
   "sendCounting": "계산 중…",
   "sendRemove": "제거",
   "sendPreparing": "파일을 준비하는 중…",
-  "sendAddFailed": "파일을 추가하지 못했습니다. 이 기기에 여유 공간이 충분한지 확인한 다음 다시 시도하세요.",
+  "sendAddFailed": "파일을 추가하지 못했습니다. 다시 시도하세요. 또 그러면 이 기기에 여유 공간이 충분한지 확인하거나 다른 위치에서 파일을 선택하세요.",
   "sendYourCode": "내 코드",
   "sendCodeHint": "다른 기기에서 TotalDrop을 열고 받기를 누른 다음 이 코드를 입력하세요.",
   "sendWaiting": "받는 사람을 기다리는 중…",

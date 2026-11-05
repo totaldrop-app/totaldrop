@@ -269,7 +269,7 @@ abstract class AppLocalizations {
   /// Shown on the send screen when the system file picker could not hand over the chosen files (a path it cannot read, too little memory, or no space left for its copy).
   ///
   /// In en, this message translates to:
-  /// **'The files could not be added. Make sure there is enough free space on this device and try again.'**
+  /// **'The files could not be added. Try again. If it happens again, check that this device has enough free space, or choose the files from another place.'**
   String get sendAddFailed;
 
   /// No description provided for @sendYourCode.

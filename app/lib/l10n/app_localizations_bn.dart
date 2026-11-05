@@ -65,7 +65,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get sendAddFailed =>
-      'ফাইলগুলো যোগ করা যায়নি। এই ডিভাইসে যথেষ্ট খালি জায়গা আছে কি না দেখে নিয়ে আবার চেষ্টা করুন।';
+      'ফাইলগুলো যোগ করা যায়নি। আবার চেষ্টা করুন। আবারও এমন হলে দেখুন এই ডিভাইসে যথেষ্ট খালি জায়গা আছে কি না, অথবা অন্য কোনো জায়গা থেকে ফাইলগুলো বেছে নিন।';
 
   @override
   String get sendYourCode => 'আপনার কোড';

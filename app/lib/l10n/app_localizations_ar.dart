@@ -65,7 +65,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get sendAddFailed =>
-      'تعذّرت إضافة الملفات. تأكد من وجود مساحة فارغة كافية على هذا الجهاز ثم حاول مرة أخرى.';
+      'تعذّرت إضافة الملفات. حاول مرة أخرى. إذا تكرر ذلك، فتأكد من وجود مساحة فارغة كافية على هذا الجهاز، أو اختر الملفات من مكان آخر.';
 
   @override
   String get sendYourCode => 'رمزك';

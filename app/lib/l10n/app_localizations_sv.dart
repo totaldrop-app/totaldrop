@@ -66,7 +66,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get sendAddFailed =>
-      'Filerna kunde inte läggas till. Se till att det finns tillräckligt med ledigt utrymme på den här enheten och försök igen.';
+      'Filerna kunde inte läggas till. Försök igen. Om det händer igen, kontrollera att det finns tillräckligt med ledigt utrymme på den här enheten, eller välj filerna från en annan plats.';
 
   @override
   String get sendYourCode => 'Din kod';

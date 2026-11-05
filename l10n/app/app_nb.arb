@@ -18,7 +18,7 @@
   "sendCounting": "Teller …",
   "sendRemove": "Fjern",
   "sendPreparing": "Klargjør filene dine …",
-  "sendAddFailed": "Filene kunne ikke legges til. Sørg for at det er nok ledig plass på denne enheten, og prøv igjen.",
+  "sendAddFailed": "Filene kunne ikke legges til. Prøv igjen. Hvis det skjer igjen, sjekk at det er nok ledig plass på denne enheten, eller velg filene fra et annet sted.",
   "sendYourCode": "Koden din",
   "sendCodeHint": "Åpne TotalDrop på den andre enheten, trykk på Motta og skriv inn denne koden.",
   "sendWaiting": "Venter på mottakeren …",

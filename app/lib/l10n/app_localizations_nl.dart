@@ -65,7 +65,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get sendAddFailed =>
-      'De bestanden konden niet worden toegevoegd. Zorg dat er genoeg vrije ruimte op dit apparaat is en probeer het opnieuw.';
+      'De bestanden konden niet worden toegevoegd. Probeer het opnieuw. Gebeurt het weer, controleer dan of er genoeg vrije ruimte op dit apparaat is, of kies de bestanden op een andere plek.';
 
   @override
   String get sendYourCode => 'Je code';

@@ -67,7 +67,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get sendAddFailed =>
-      'Impossible d\'ajouter les fichiers. Vérifiez qu\'il reste assez d\'espace libre sur cet appareil, puis réessayez.';
+      'Impossible d\'ajouter les fichiers. Réessayez. Si cela se reproduit, vérifiez qu\'il reste assez d\'espace libre sur cet appareil, ou choisissez les fichiers à un autre emplacement.';
 
   @override
   String get sendYourCode => 'Votre code';

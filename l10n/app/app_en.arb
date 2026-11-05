@@ -19,7 +19,7 @@
   "sendCounting": "Counting…",
   "sendRemove": "Remove",
   "sendPreparing": "Preparing your files…",
-  "sendAddFailed": "The files could not be added. Make sure there is enough free space on this device and try again.",
+  "sendAddFailed": "The files could not be added. Try again. If it happens again, check that this device has enough free space, or choose the files from another place.",
   "@sendAddFailed": {"description": "Shown on the send screen when the system file picker could not hand over the chosen files (a path it cannot read, too little memory, or no space left for its copy)."},
   "sendYourCode": "Your code",
   "sendCodeHint": "On the other device, open TotalDrop, tap Receive and enter this code.",
