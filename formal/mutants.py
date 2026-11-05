@@ -9,7 +9,10 @@ relies on. Each mutant below breaks one check in a copy of the model and
 adds an attack lemma; Tamarin must find the attack trace in the mutant.
 The same scenario is a proved lemma in the real model (check.sh). The
 model's own lemmas are dropped from the mutant: a [reuse] helper that the
-mutation makes false would otherwise be assumed and hide the attack.
+mutation makes false would otherwise be assumed and hide the attack. Every
+lemma must therefore come after all rules and restrictions; a [sources]
+lemma would be dropped too, which is sound but may keep a mutant search
+from ending.
 
 Usage: formal/mutants.py [tamarin-prover command]
 """
@@ -197,11 +200,12 @@ lemma attack:
     },
     {
         "name": "reader_accepts_rotate_despite_fork",
-        "why": "a reader accepts a rotate although an AK record under the same head was logged",
+        "why": "a reader lets a rotate win over an AK record under the same head (fork rule 1)",
         "model": LOG,
         "edits": [
-            ("restriction Log_Read_IK",
-             r"restriction Log_Read_IK:\n  \"[^\"]*\"\n", "", 1),
+            ("Log_Read_IK looks at rotates only",
+             r"(restriction Log_Read_IK:\n  \"All L v v2) k( #i #t\.[^\"]*)LogValid\(L, v2, k\)",
+             r"\1\2LogValid(L, v2, 'ik')", 1),
         ],
         "lemma": LOCKOUT_ATTACK,
     },
@@ -252,7 +256,8 @@ def mutate(text, mutant):
         if count != expected:
             sys.exit(f"{mutant['name']}: edit '{label}' applied {count} times, "
                      f"expected {expected}; update mutants.py")
-    cut = text.find("\nlemma ")
+    first = re.search(r"^lemma ", text, re.M)
+    cut = first.start() - 1 if first else -1
     if cut < 0 or "\nrestriction " in text[cut:]:
         sys.exit(f"{mutant['name']}: expected all lemmas after the rules and restrictions")
     return text[:cut] + "\n" + mutant["lemma"] + "\nend\n"
