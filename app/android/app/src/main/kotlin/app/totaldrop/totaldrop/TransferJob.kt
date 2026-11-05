@@ -89,11 +89,15 @@ object TransferJob {
         generation += 1
         val r = running
         running = null
+        val app = context.applicationContext
         if (r != null) {
             r.first.jobFinished(r.second, false)
         } else {
-            context.applicationContext.getSystemService(JobScheduler::class.java)?.cancel(JOB_ID)
+            // Also a job waiting to run again after the network went away.
+            app.getSystemService(JobScheduler::class.java)?.cancel(JOB_ID)
         }
+        // The job leaves its notification behind (see [started]).
+        app.getSystemService(NotificationManager::class.java)?.cancel(NOTIFICATION_ID)
     }
 
     internal fun started(service: TransferJobService, params: JobParameters): Boolean {
@@ -104,14 +108,22 @@ object TransferJob {
             params,
             NOTIFICATION_ID,
             build(service, n),
-            JobService.JOB_END_NOTIFICATION_POLICY_REMOVE,
+            // Kept when the job stops, so that while the network is away
+            // the transfer stays visible and can still be stopped (#260);
+            // [end] and [stoppedBySystem] remove it.
+            JobService.JOB_END_NOTIFICATION_POLICY_DETACH,
         )
         return true
     }
 
     /** The system stopped the job; see [stoppedBySystem]. */
-    internal fun stoppedBySystem(params: JobParameters): Boolean =
-        stoppedBySystem(params.extras.getLong(GENERATION), params.stopReason)
+    internal fun stoppedBySystem(context: Context, params: JobParameters): Boolean {
+        val again = stoppedBySystem(params.extras.getLong(GENERATION), params.stopReason)
+        if (!again && notice == null) {
+            context.getSystemService(NotificationManager::class.java)?.cancel(NOTIFICATION_ID)
+        }
+        return again
+    }
 
     /** The system stopped a job of [generation] for [stopReason] (one of
      * `JobParameters.STOP_REASON_*`). Returns whether the system should
@@ -121,6 +133,13 @@ object TransferJob {
         // or ended.
         if (!accepts(generation)) return false
         running = null
+        if (stopReason == JobParameters.STOP_REASON_CONSTRAINT_CONNECTIVITY) {
+            // The network went away (airplane mode, a tunnel, a Wi-Fi that
+            // drops): the transfer goes on, and the core can ride out a gap
+            // shorter than QUIC's 30-second idle timeout (#185). The same
+            // job runs again once there is a network (#260).
+            return true
+        }
         notice = null
         this.generation += 1
         onStop?.invoke()
@@ -174,7 +193,7 @@ class TransferJobService : JobService() {
     override fun onStartJob(params: JobParameters): Boolean = TransferJob.started(this, params)
 
     override fun onStopJob(params: JobParameters): Boolean =
-        TransferJob.stoppedBySystem(params)
+        TransferJob.stoppedBySystem(this, params)
 }
 
 /** The Stop action on the notification. Not exported: only our own
