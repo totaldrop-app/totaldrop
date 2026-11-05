@@ -233,7 +233,7 @@
   "dl.new.prepare": "Büyük bir dosya seçince gönderme ekranı birkaç saniye donup kalmıyor, dosyalarınızın hazırlandığını hemen söylüyor.",
   "dl.new.addfail": "Seçilen dosyalar eklenemezse gönderme ekranı artık bunu ve ne yapılabileceğini söylüyor.",
   "dl.new.talkback": "TalkBack, gönderme ve almanın her yeni adımını okuyor.",
-  "dl.new.linux": "Bu değişiklikler Android'de. Linux 0.3.0-beta.5'ten beri değişmedi.",
+  "dl.new.linux": "Aşağıdaki değişiklikler Android'de. Linux uygulaması 0.3.0-beta.5'ten beri değişmedi.",
   "dl.new.title": "Yenilikler",
   "dl.platforms": "Platformlar",
   "dl.ready": "Hazır",

@@ -233,7 +233,7 @@
   "dl.new.prepare": "Selepas anda memilih fail besar, skrin hantar terus memberitahu bahawa fail anda sedang disediakan, bukannya tidak bergerak selama beberapa saat.",
   "dl.new.addfail": "Jika fail yang dipilih tidak dapat ditambah, skrin hantar kini memberitahu perkara itu dan apa yang boleh dicuba.",
   "dl.new.talkback": "TalkBack membacakan setiap langkah baharu semasa menghantar atau menerima.",
-  "dl.new.linux": "Perubahan ini pada Android. Linux tidak berubah sejak 0.3.0-beta.5.",
+  "dl.new.linux": "Perubahan di bawah adalah untuk Android. Aplikasi Linux tidak berubah sejak 0.3.0-beta.5.",
   "dl.new.title": "Apa yang baharu",
   "dl.platforms": "Platform",
   "dl.ready": "Tersedia",

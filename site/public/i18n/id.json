@@ -233,7 +233,7 @@
   "dl.new.prepare": "Setelah Anda memilih file besar, layar kirim langsung memberi tahu bahwa file Anda sedang disiapkan, bukan diam selama beberapa detik.",
   "dl.new.addfail": "Jika file yang dipilih tidak dapat ditambahkan, layar kirim kini memberi tahu hal itu dan apa yang bisa dicoba.",
   "dl.new.talkback": "TalkBack membacakan setiap langkah baru saat mengirim atau menerima.",
-  "dl.new.linux": "Perubahan ini ada di Android. Linux tidak berubah sejak 0.3.0-beta.5.",
+  "dl.new.linux": "Perubahan di bawah ini ada di Android. Aplikasi Linux tidak berubah sejak 0.3.0-beta.5.",
   "dl.new.title": "Yang baru",
   "dl.platforms": "Platform",
   "dl.ready": "Tersedia",

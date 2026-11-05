@@ -233,7 +233,7 @@
   "dl.new.prepare": "选择大文件后，发送界面会立即显示正在准备文件，不会卡住几秒。",
   "dl.new.addfail": "如果无法添加所选文件，发送界面现在会说明这一点，并给出可以尝试的办法。",
   "dl.new.talkback": "TalkBack 会朗读发送和接收的每个新步骤。",
-  "dl.new.linux": "这些变化适用于 Android。Linux 自 0.3.0-beta.5 以来没有变化。",
+  "dl.new.linux": "以下变化适用于 Android。Linux 应用自 0.3.0-beta.5 以来没有变化。",
   "dl.new.title": "新功能",
   "dl.platforms": "平台",
   "dl.ready": "已推出",

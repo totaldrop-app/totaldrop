@@ -233,7 +233,7 @@
   "dl.new.prepare": "Sau khi bạn chọn một tệp lớn, màn hình gửi cho biết ngay là đang chuẩn bị tệp của bạn, thay vì đứng yên vài giây.",
   "dl.new.addfail": "Nếu không thể thêm các tệp đã chọn, màn hình gửi giờ sẽ báo điều đó và gợi ý cách thử.",
   "dl.new.talkback": "TalkBack đọc to từng bước mới khi gửi hoặc nhận.",
-  "dl.new.linux": "Những thay đổi này dành cho Android. Linux không thay đổi kể từ 0.3.0-beta.5.",
+  "dl.new.linux": "Những thay đổi dưới đây dành cho Android. Ứng dụng Linux không thay đổi kể từ 0.3.0-beta.5.",
   "dl.new.title": "Có gì mới",
   "dl.platforms": "Nền tảng",
   "dl.ready": "Đã có",

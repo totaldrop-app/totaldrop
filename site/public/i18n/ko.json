@@ -233,7 +233,7 @@
   "dl.new.prepare": "큰 파일을 선택하면 보내기 화면이 몇 초 동안 멈춰 있지 않고 파일을 준비하고 있다고 바로 알려 줍니다.",
   "dl.new.addfail": "선택한 파일을 추가할 수 없으면 이제 보내기 화면이 이를 알리고 시도해 볼 방법을 안내합니다.",
   "dl.new.talkback": "TalkBack이 보내기와 받기의 새 단계를 하나하나 읽어 줍니다.",
-  "dl.new.linux": "이번 변경 사항은 Android에 적용됩니다. Linux는 0.3.0-beta.5 이후 바뀌지 않았습니다.",
+  "dl.new.linux": "아래 변경 사항은 Android에 적용됩니다. Linux 앱은 0.3.0-beta.5 이후 바뀌지 않았습니다.",
   "dl.new.title": "새로운 기능",
   "dl.platforms": "플랫폼",
   "dl.ready": "사용 가능",

@@ -233,7 +233,7 @@
   "dl.new.prepare": "Ha nagy fájlt választasz, a küldési képernyő azonnal jelzi, hogy előkészíti a fájljaidat, ahelyett hogy néhány másodpercig mozdulatlan maradna.",
   "dl.new.addfail": "Ha a kiválasztott fájlokat nem lehet hozzáadni, a küldési képernyő ezt most jelzi, és azt is, mit próbálhatsz.",
   "dl.new.talkback": "A TalkBack felolvassa a küldés és a fogadás minden új lépését.",
-  "dl.new.linux": "Ezek a változások az Androidot érintik. A Linux a 0.3.0-beta.5 óta nem változott.",
+  "dl.new.linux": "Az alábbi változások az Androidot érintik. A Linux-alkalmazás a 0.3.0-beta.5 óta nem változott.",
   "dl.new.title": "Újdonságok",
   "dl.platforms": "Platformok",
   "dl.ready": "Elérhető",
