@@ -1,4 +1,4 @@
-<!-- Translated from README.md e31a62d5101d. -->
+<!-- Translated from README.md 754881b78081. -->
 <div align="center">
 
 <picture>
@@ -53,7 +53,7 @@
 | --- | --- | --- |
 | **Linux** (x86-64) | [Arch / Omarchy](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.5/totaldrop-0.3.0_beta.5-1-x86_64.pkg.tar.zst) · [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.5/totaldrop_0.3.0.beta.5-1_amd64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.5/totaldrop-0.3.0.beta.5-1.fc43.x86_64.rpm) | 0.3.0-beta.5, Qt 6.8 이상 |
 | **Linux** (ARM64) | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.5/totaldrop_0.3.0.beta.5-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.5/totaldrop-0.3.0.beta.5-1.fc43.aarch64.rpm) | 0.3.0-beta.5, Qt 6.8 이상 |
-| **Android** | [베타 참여하기](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.5, Android 15 이상, Google Play 초대제 |
+| **Android** | [베타 참여하기](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.6, Android 15 이상, Google Play 초대제 |
 | **명령줄** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux, macOS, Windows |
 | **Windows, macOS, iOS** | 준비 중 | 후원금은 가장 먼저 이 플랫폼들의 코드 서명에 쓰입니다 |
 

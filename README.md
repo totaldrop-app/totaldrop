@@ -49,7 +49,7 @@ Free and open source. End-to-end encrypted. No email, no phone number, no accoun
 | --- | --- | --- |
 | **Linux** (x86-64) | [Arch / Omarchy](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.5/totaldrop-0.3.0_beta.5-1-x86_64.pkg.tar.zst) · [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.5/totaldrop_0.3.0.beta.5-1_amd64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.5/totaldrop-0.3.0.beta.5-1.fc43.x86_64.rpm) | 0.3.0-beta.5, Qt 6.8 or newer |
 | **Linux** (ARM64) | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.5/totaldrop_0.3.0.beta.5-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.5/totaldrop-0.3.0.beta.5-1.fc43.aarch64.rpm) | 0.3.0-beta.5, Qt 6.8 or newer |
-| **Android** | [Join the beta](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.5, Android 15 or newer, Google Play by invitation |
+| **Android** | [Join the beta](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.6, Android 15 or newer, Google Play by invitation |
 | **Command line** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux, macOS, Windows |
 | **Windows, macOS, iOS** | Coming | Code signing for these is what donations pay for first |
 
