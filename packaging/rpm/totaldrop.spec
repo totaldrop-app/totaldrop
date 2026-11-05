@@ -78,8 +78,11 @@ cargo test --release --locked -p totaldrop-linux -p totaldrop-proto
 
 %changelog
 * Thu Nov 05 2026 TotalDrop <hello@totaldrop.app> - 0.3.0~beta.5-1
-- The app's built-in Qt resources no longer carry the time they were built,
-  so two builds of the same source come out the same there.
+- The translations built into the app are now under MIT OR Apache-2.0, as
+  LICENSING.md says.
+- In the packages the project builds, the app's built-in Qt resources no
+  longer carry the time they were built, so two builds of the same source
+  come out the same there.
 
 * Wed Nov 04 2026 TotalDrop <hello@totaldrop.app> - 0.3.0~beta.4-1
 - A transfer that started on a direct connection no longer stops with "timed
