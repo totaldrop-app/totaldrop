@@ -1006,12 +1006,14 @@ async fn the_relay_ends_the_pair_when_one_side_leaves() {
 /// probes it saw. `at` answers each probe when `answer` is set. Like QUIC,
 /// `at` reports through the relay what it got, each MiB, and the sender
 /// keeps at most 16 MiB (QUIC's connection window) beyond the last report.
+/// It ends once `at` has everything, or got nothing for `idle`.
 async fn relay_flood(
     ws: &mut RelayWs,
     at: &mut RelayWs,
     (from, to): ([u8; 32], [u8; 32]),
     total: usize,
     answer: bool,
+    idle: Duration,
 ) -> (usize, usize) {
     use futures_util::{SinkExt, StreamExt};
     use std::cell::Cell;
@@ -1034,7 +1036,10 @@ async fn relay_flood(
     let receiver = async {
         let mut told = 0usize;
         loop {
-            match tokio::time::timeout(Duration::from_secs(3), at_stream.next()).await {
+            if got.get() >= total {
+                break;
+            }
+            match tokio::time::timeout(idle, at_stream.next()).await {
                 Ok(Some(Ok(Message::Binary(b)))) if wire::is_probe(&b) => {
                     probes.set(probes.get().checked_add(1).unwrap());
                     if answer {
@@ -1090,16 +1095,21 @@ async fn relay_flood(
     (got.get(), probes.get())
 }
 
+/// Whether the relay under test is a Worker, which bounds its buffer with
+/// probes; the self-hosted relay bounds its queue itself and sends none.
+fn relay_probes() -> bool {
+    std::env::var("TOTALDROP_TEST_RELAY").is_ok()
+}
+
 /// The Cloudflare relay cannot see its send buffer, so it bounds it with
-/// probes: a receiver that never answers gets at most 32 MiB, plus what is
-/// already on its way, then the relay drops what is meant for it, like a
-/// lossy network. Before, it kept everything in memory (512 MiB in a local
-/// test) for a receiver that did not read (#190). The self-hosted relay
-/// bounds its queue itself and sends no probes.
+/// probes: a receiver that never answers gets at most 32 MiB, then the
+/// relay drops what is meant for it, like a lossy network. Before, it kept
+/// everything in memory (512 MiB in a local test) for a receiver that did
+/// not read (#190).
 #[tokio::test(flavor = "multi_thread")]
 async fn the_cloudflare_relay_drops_for_a_receiver_that_never_answers() {
     use totaldrop_core::transport::EndpointKey;
-    if std::env::var("TOTALDROP_TEST_RELAY").is_err() {
+    if !relay_probes() {
         return;
     }
     let (relay, _stun, _r) = relay().await;
@@ -1109,18 +1119,49 @@ async fn the_cloudflare_relay_drops_for_a_receiver_that_never_answers() {
     );
     let mut a_ws = relay_sign_in(&relay, &a, &b.public()).await.unwrap();
     let mut b_ws = relay_sign_in(&relay, &b, &a.public()).await.unwrap();
-    let total = 48 * 1024 * 1024;
-    let (got, probes) =
-        relay_flood(&mut a_ws, &mut b_ws, (a.public(), b.public()), total, false).await;
+    let keys = (a.public(), b.public());
+    let idle = Duration::from_secs(3);
+    let (got, probes) = relay_flood(&mut a_ws, &mut b_ws, keys, 48 << 20, false, idle).await;
     assert!(probes > 0, "the relay sent no probes");
     assert!(
-        got <= 34 * 1024 * 1024,
+        got <= 32 << 20,
         "{got} bytes reached a receiver that never answered"
     );
-    assert!(
-        got >= 16 * 1024 * 1024,
-        "only {got} bytes reached the receiver"
+    assert!(got >= 16 << 20, "only {got} bytes reached the receiver");
+}
+
+/// Signing in again does not get round the bound: what a replaced socket
+/// was given and never answered for still counts for its key, at most
+/// 64 MiB over all its sockets, until that socket is gone (#190).
+#[tokio::test(flavor = "multi_thread")]
+async fn signing_in_again_does_not_get_round_the_bound() {
+    use totaldrop_core::transport::EndpointKey;
+    if !relay_probes() {
+        return;
+    }
+    let (relay, _stun, _r) = relay().await;
+    let (a, b) = (
+        EndpointKey::generate().unwrap(),
+        EndpointKey::generate().unwrap(),
     );
+    let mut a_ws = relay_sign_in(&relay, &a, &b.public()).await.unwrap();
+    let keys = (a.public(), b.public());
+    let idle = Duration::from_secs(3);
+    // Each replaced socket stays open on the client and is never read again.
+    let mut kept = Vec::new();
+    let mut got = Vec::new();
+    for _ in 0..3 {
+        let mut b_ws = relay_sign_in(&relay, &b, &a.public()).await.unwrap();
+        got.push(
+            relay_flood(&mut a_ws, &mut b_ws, keys, 48 << 20, false, idle)
+                .await
+                .0,
+        );
+        kept.push(b_ws);
+    }
+    assert!(got[0] >= 16 << 20, "{got:?}");
+    assert!(got[0].saturating_add(got[1]) <= 64 << 20, "{got:?}");
+    assert!(got[2] <= 4 << 20, "the third socket got {} bytes", got[2]);
 }
 
 /// A receiver that answers its probes gets everything (#190).
@@ -1134,7 +1175,10 @@ async fn the_relay_passes_everything_to_a_receiver_that_answers() {
     );
     let mut a_ws = relay_sign_in(&relay, &a, &b.public()).await.unwrap();
     let mut b_ws = relay_sign_in(&relay, &b, &a.public()).await.unwrap();
-    let total = 40 * 1024 * 1024;
-    let (got, _) = relay_flood(&mut a_ws, &mut b_ws, (a.public(), b.public()), total, true).await;
+    let total = 40 << 20;
+    let keys = (a.public(), b.public());
+    let idle = Duration::from_secs(15);
+    let (got, probes) = relay_flood(&mut a_ws, &mut b_ws, keys, total, true, idle).await;
     assert!(got >= total, "only {got} of {total} bytes arrived");
+    assert_eq!(probes > 0, relay_probes(), "{probes} probes");
 }
