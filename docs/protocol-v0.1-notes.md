@@ -205,15 +205,21 @@ treated as final.
       before it, so the answer tells the relay how much it still holds for
       that device. The Cloudflare relay cannot see its send buffer and
       bounds it this way: a probe every 4 MiB it gives a device, and
-      datagrams for a device with more than 32 MiB after its last answered
-      probe are dropped (#190). A relay that sends probes must:
+      datagrams for a connection with more than 32 MiB after its last
+      answered probe, or for a key with more than 64 MiB over all its
+      connections (a replaced one counts until it is gone), are dropped
+      (#190). A relay that sends probes must:
       recognise an answer (exactly those 25 bytes) before its datagram
       check, and neither forward it nor count it against the byte limit;
-      accept only a nonce it has outstanding; bound by bytes sent since the
-      oldest unanswered probe, not by how long an answer takes (a device
-      with a congested upload answers late); and accept answers in the same
+      accept only a nonce it has outstanding; bound by bytes given since the
+      last answered probe, not by how long an answer takes (a device with a
+      congested upload answers late); and accept answers in the same
       version that starts sending probes. Devices from before 0.3.0-beta.4
-      never answer, so through the Cloudflare relay they get at most 32 MiB.
+      never answer, so a connection of theirs through the Cloudflare relay
+      gets at most 32 MiB: a receiver loses it after 32 MiB of a file, a
+      sender after 32 MiB of acknowledgements (an estimated 1 GiB of file),
+      and
+      the transfer then ends at QUIC's idle timeout.
       The self-hosted relay bounds its queue itself, sends no probes and
       closes a pair on an unexpected 25-byte message.
     - Address discovery is plain STUN (RFC 8489), Binding with
@@ -276,8 +282,8 @@ treated as final.
     - A stream may have 8 MiB in flight and a connection 16 MiB, so a path
       with a long round trip is not held to window / RTT (#185). An honest
       client never has more than that in flight on one connection, which
-      also bounds what a relay holds for it; the Cloudflare relay does not
-      enforce a bound of its own yet (#190).
+      also bounds what a relay holds for it. The Cloudflare relay also
+      enforces a bound of its own with probes (item 20, #190).
     - A relay link that loses its connection, or does not get one, connects
       again after 0.5 seconds, doubling up to 4 seconds, and gives up after
       10 tries in a row that did not sign in. It keeps the limits below
@@ -290,8 +296,10 @@ treated as final.
     sign in. Both accept only the pair path `/v0/relay/<key A>-<key B>` and
     forward only to the other key of that pair. The self-hosted relay also
     caps each connection at 8 MiB/s and closes it after 60 seconds without
-    datagrams (pings do not count), which ends the other side too. Neither
-    keeps anything on disk or logs client data.
+    datagrams (pings do not count), which ends the other side too. The
+    Cloudflare relay drops datagrams for a connection with 32 MiB
+    unanswered (item 20). Neither keeps anything on disk or logs client
+    data.
 
 ## Section 8, continued: progress
 

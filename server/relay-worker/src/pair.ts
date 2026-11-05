@@ -35,9 +35,15 @@ const SENT_STEP = 1024 * 1024;
  * UNANSWERED bytes after its last answered probe are dropped, like a lossy
  * network; QUIC sends them again. A TotalDrop device keeps at most 16 MiB
  * in flight (QUIC's connection window); in a local test under that window
- * no socket went past 18 MiB unanswered. */
+ * no socket went past 18 MiB unanswered.
+ *
+ * A key's replaced sockets keep what they were given until they are gone
+ * (a client can hold TCP open and never read), so it counts against the
+ * key too: at most KEY_UNANSWERED over all its sockets. An honest key whose
+ * old socket died with up to 16 MiB queued still gets its full window. */
 const PROBE_STEP = 4 * 1024 * 1024;
 const UNANSWERED = 32 * 1024 * 1024;
+const KEY_UNANSWERED = 2 * UNANSWERED;
 
 /** WebSocket readyState OPEN. */
 const OPEN = 1;
@@ -66,7 +72,7 @@ interface Attachment {
   /** Bytes given to it when its last answered probe went out. */
   answered?: number;
   /** Probes not answered yet, oldest first: nonce hex and bytes given when
-   * it went out. At most UNANSWERED / PROBE_STEP + 1, a few hundred bytes. */
+   * it went out. At most UNANSWERED / PROBE_STEP, a few hundred bytes. */
   probes?: [string, number][];
 }
 
@@ -113,9 +119,15 @@ export class Pair extends DurableObject<Env> {
    * relay. Read from the attachment after the object wakes (a woken object
    * sees new socket objects), then counted here. */
   private sent = new WeakMap<WebSocket, number>();
-  /** Bytes given to each socket, read from its attachment after the object
-   * wakes (which loses less than one PROBE_STEP), then counted here. */
+  /** Bytes given to each socket, then given at its last answered probe.
+   * After the object wakes (a woken object sees new socket objects), read
+   * from the attachment; fewer than PROBE_STEP bytes follow the last probe,
+   * so adding one step counts high, never low. */
   private given = new WeakMap<WebSocket, number>();
+  private answeredAt = new WeakMap<WebSocket, number>();
+  /** Unanswered bytes on the closed (replaced) sockets of each key, which
+   * no longer change; dropped when one of them goes. */
+  private stale = new Map<string, number>();
   /** Signed-in sockets by key, rebuilt after the object wakes. */
   private byKey = new Map<string, WebSocket>();
 
@@ -199,6 +211,7 @@ export class Pair extends DurableObject<Env> {
     // signature, so only the key's holder can do this.
     const taken = this.socketFor(keyHex);
     if (taken && taken !== ws) this.shut(taken, 1000, "replaced");
+    this.stale.delete(keyHex);
     att.key = keyHex;
     ws.serializeAttachment(att);
     this.byKey.set(keyHex, ws);
@@ -236,9 +249,9 @@ export class Pair extends DurableObject<Env> {
     // Nobody there yet: drop, like a lossy network. QUIC retransmits.
     if (!peer) return;
     // The other side holds too much it has not read: drop, as above.
-    const given = this.given.get(peer) ?? attachment(peer)?.given ?? 0;
-    const answered = attachment(peer)?.answered ?? 0;
-    if (given + m.length - answered > UNANSWERED) return;
+    const [given, answered] = this.counts(peer);
+    const unanswered = given + m.length - answered;
+    if (unanswered > UNANSWERED || unanswered + this.staleFor(other, peer) > KEY_UNANSWERED) return;
     m.set(unhex(own), 0);
     try {
       peer.send(m);
@@ -246,6 +259,34 @@ export class Pair extends DurableObject<Env> {
     } catch {
       // The other side is gone; its close handler tidies up.
     }
+  }
+
+  /** Bytes given to `ws`, and given at its last answered probe. */
+  private counts(ws: WebSocket): [number, number] {
+    let given = this.given.get(ws);
+    let answered = this.answeredAt.get(ws);
+    if (given === undefined || answered === undefined) {
+      const att = attachment(ws);
+      given = att?.given === undefined ? 0 : att.given + PROBE_STEP;
+      answered = att?.answered ?? 0;
+      this.given.set(ws, given);
+      this.answeredAt.set(ws, answered);
+    }
+    return [given, answered];
+  }
+
+  /** Unanswered bytes on the other sockets of `key` than `live`. */
+  private staleFor(key: string, live: WebSocket): number {
+    const known = this.stale.get(key);
+    if (known !== undefined) return known;
+    let sum = 0;
+    for (const o of this.ctx.getWebSockets()) {
+      if (o === live || attachment(o)?.key !== key) continue;
+      const [given, answered] = this.counts(o);
+      sum += given - answered;
+    }
+    this.stale.set(key, sum);
+    return sum;
   }
 
   /** Count `before` to `after` bytes given to `ws`; each PROBE_STEP passed
@@ -273,6 +314,7 @@ export class Pair extends DurableObject<Env> {
     const probe = probes[at];
     if (!att || !probe) return;
     att.answered = probe[1];
+    this.answeredAt.set(ws, probe[1]);
     att.probes = probes.slice(at + 1);
     ws.serializeAttachment(att);
   }
@@ -312,6 +354,7 @@ export class Pair extends DurableObject<Env> {
     const att = attachment(ws);
     const cascade = att !== null && att.key !== null && !att.ended;
     this.shut(ws, 1000, "closed");
+    if (att?.key) this.stale.delete(att.key);
     if (cascade) {
       this.endOthers(ws);
       if (att.key && this.byKey.get(att.key) === ws) this.byKey.delete(att.key);

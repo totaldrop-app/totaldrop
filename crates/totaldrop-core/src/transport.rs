@@ -274,8 +274,8 @@ fn transport_config() -> Arc<quinn::TransportConfig> {
     // trip is not held to window / RTT: quinn's default of 1.25 MB per
     // stream allows one stream only about 4 MB/s at 300 ms over the relay
     // (#185). An honest client never has more than these windows in flight,
-    // which also bounds what the relay holds for its connection; the relays
-    // do not enforce that themselves.
+    // which also bounds what the relay holds for its connection; the
+    // Cloudflare relay enforces a bound of its own with probes (#190).
     t.stream_receive_window(STREAM_WINDOW.into());
     t.receive_window(CONNECTION_WINDOW.into());
     t.send_window(u64::from(CONNECTION_WINDOW));
