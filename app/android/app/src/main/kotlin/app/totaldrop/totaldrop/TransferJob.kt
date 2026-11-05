@@ -56,12 +56,7 @@ object TransferJob {
 
     /** Start holding the process up. Must be called while the app is visible. */
     fun begin(context: Context, notice: Notice): Boolean {
-        // A job still running from the transfer before ends quietly:
-        // replacing it would stop it, and that reads as a stop of this one.
-        running?.let { (service, params) -> service.jobFinished(params, false) }
-        running = null
-        this.notice = notice
-        generation += 1
+        val generation = prepare(notice)
         val app = context.applicationContext
         val scheduler = app.getSystemService(JobScheduler::class.java) ?: return false
         val job = JobInfo.Builder(JOB_ID, ComponentName(app, TransferJobService::class.java))
@@ -71,6 +66,22 @@ object TransferJob {
             .build()
         return scheduler.schedule(job) == JobScheduler.RESULT_SUCCESS
     }
+
+    /** Make [notice]'s transfer the one under way, and return its
+     * generation. */
+    internal fun prepare(notice: Notice): Long {
+        // A job still running from the transfer before ends quietly:
+        // replacing it would stop it, and that reads as a stop of this one.
+        running?.let { (service, params) -> service.jobFinished(params, false) }
+        running = null
+        this.notice = notice
+        generation += 1
+        return generation
+    }
+
+    /** Whether a job of [generation] belongs to the transfer under way. */
+    internal fun accepts(generation: Long): Boolean =
+        notice != null && generation == this.generation
 
     /** The transfer ended: drop the job and its notification. */
     fun end(context: Context) {
@@ -87,7 +98,7 @@ object TransferJob {
 
     internal fun started(service: TransferJobService, params: JobParameters): Boolean {
         val n = notice ?: return false
-        if (params.extras.getLong(GENERATION) != generation) return false
+        if (!accepts(params.extras.getLong(GENERATION))) return false
         running = service to params
         service.setNotification(
             params,
@@ -98,14 +109,22 @@ object TransferJob {
         return true
     }
 
-    internal fun stoppedBySystem(params: JobParameters) {
+    /** The system stopped the job; see [stoppedBySystem]. */
+    internal fun stoppedBySystem(params: JobParameters): Boolean =
+        stoppedBySystem(params.extras.getLong(GENERATION), params.stopReason)
+
+    /** The system stopped a job of [generation] for [stopReason] (one of
+     * `JobParameters.STOP_REASON_*`). Returns whether the system should
+     * run the job again. */
+    internal fun stoppedBySystem(generation: Long, stopReason: Int): Boolean {
         // Only the job of the transfer under way; not one that was replaced
         // or ended.
-        if (params.extras.getLong(GENERATION) != generation) return
+        if (!accepts(generation)) return false
         running = null
         notice = null
-        generation += 1
+        this.generation += 1
         onStop?.invoke()
+        return false
     }
 
     internal fun stoppedByPerson(context: Context) {
@@ -154,12 +173,8 @@ object TransferJob {
 class TransferJobService : JobService() {
     override fun onStartJob(params: JobParameters): Boolean = TransferJob.started(this, params)
 
-    override fun onStopJob(params: JobParameters): Boolean {
-        // The person stopped it from the system's task manager, or the
-        // system ended it: the transfer cannot go on in the background.
+    override fun onStopJob(params: JobParameters): Boolean =
         TransferJob.stoppedBySystem(params)
-        return false
-    }
 }
 
 /** The Stop action on the notification. Not exported: only our own

@@ -86,3 +86,8 @@ kotlin {
 flutter {
     source = "../.."
 }
+
+dependencies {
+    // JVM unit tests of the Kotlin code (#260); test only, not shipped.
+    testImplementation("junit:junit:4.13.2")
+}
