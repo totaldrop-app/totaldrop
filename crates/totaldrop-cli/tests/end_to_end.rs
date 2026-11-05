@@ -998,3 +998,143 @@ async fn the_relay_ends_the_pair_when_one_side_leaves() {
     a_ws.close(None).await.unwrap();
     assert!(relay_closes(&mut b_ws, Duration::from_secs(5)).await);
 }
+
+// --- Cloudflare relay buffer bound (#190) ---
+
+/// Send `total` bytes of datagram messages from `from` to `to` on `ws`
+/// while `at` reads: returns the datagram bytes `at` got and how many
+/// probes it saw. `at` answers each probe when `answer` is set. Like QUIC,
+/// `at` reports through the relay what it got, each MiB, and the sender
+/// keeps at most 16 MiB (QUIC's connection window) beyond the last report.
+async fn relay_flood(
+    ws: &mut RelayWs,
+    at: &mut RelayWs,
+    (from, to): ([u8; 32], [u8; 32]),
+    total: usize,
+    answer: bool,
+) -> (usize, usize) {
+    use futures_util::{SinkExt, StreamExt};
+    use std::cell::Cell;
+    use tokio_tungstenite::tungstenite::Message;
+    use totaldrop_proto::relay as wire;
+    const MIB: usize = 1024 * 1024;
+    let mut batch = wire::Batch::new(&to);
+    while batch.push(&[7u8; 1200]) {}
+    let message = batch.finish();
+    let per: usize = wire::parse_frame(&message)
+        .unwrap()
+        .1
+        .iter()
+        .map(|d| d.len())
+        .sum();
+    let (got, probes, done) = (Cell::new(0usize), Cell::new(0usize), Cell::new(false));
+    let reported = Cell::new(0usize);
+    let (mut at_sink, mut at_stream) = at.split();
+    let (mut sink, mut stream) = ws.split();
+    let receiver = async {
+        let mut told = 0usize;
+        loop {
+            match tokio::time::timeout(Duration::from_secs(3), at_stream.next()).await {
+                Ok(Some(Ok(Message::Binary(b)))) if wire::is_probe(&b) => {
+                    probes.set(probes.get().checked_add(1).unwrap());
+                    if answer {
+                        at_sink.send(Message::Binary(b)).await.unwrap();
+                    }
+                }
+                Ok(Some(Ok(Message::Binary(b)))) => {
+                    let n: usize = wire::parse_frame(&b)
+                        .unwrap()
+                        .1
+                        .iter()
+                        .map(|d| d.len())
+                        .sum();
+                    got.set(got.get().checked_add(n).unwrap());
+                    if got.get().saturating_sub(told) >= MIB {
+                        told = got.get();
+                        let report = u64::try_from(told).unwrap().to_be_bytes();
+                        let m = wire::frame(&from, &report);
+                        at_sink.send(Message::Binary(m.into())).await.unwrap();
+                    }
+                }
+                Ok(Some(Ok(_))) => {}
+                _ => break,
+            }
+        }
+        done.set(true);
+    };
+    let reports = async {
+        while !done.get() {
+            if let Ok(Some(Ok(Message::Binary(b)))) =
+                tokio::time::timeout(Duration::from_millis(100), stream.next()).await
+                && let Some((_, d)) = wire::parse_frame(&b)
+                && let Some(n) = d.first().and_then(|r| <[u8; 8]>::try_from(*r).ok())
+            {
+                reported.set(usize::try_from(u64::from_be_bytes(n)).unwrap());
+            }
+        }
+    };
+    let sender = async {
+        let mut sent = 0usize;
+        while sent < total && !done.get() {
+            if sent.saturating_sub(reported.get()) >= 16 * MIB {
+                tokio::time::sleep(Duration::from_millis(5)).await;
+                continue;
+            }
+            sink.send(Message::Binary(message.clone().into()))
+                .await
+                .unwrap();
+            sent = sent.checked_add(per).unwrap();
+        }
+    };
+    tokio::join!(receiver, reports, sender);
+    (got.get(), probes.get())
+}
+
+/// The Cloudflare relay cannot see its send buffer, so it bounds it with
+/// probes: a receiver that never answers gets at most 32 MiB, plus what is
+/// already on its way, then the relay drops what is meant for it, like a
+/// lossy network. Before, it kept everything in memory (512 MiB in a local
+/// test) for a receiver that did not read (#190). The self-hosted relay
+/// bounds its queue itself and sends no probes.
+#[tokio::test(flavor = "multi_thread")]
+async fn the_cloudflare_relay_drops_for_a_receiver_that_never_answers() {
+    use totaldrop_core::transport::EndpointKey;
+    if std::env::var("TOTALDROP_TEST_RELAY").is_err() {
+        return;
+    }
+    let (relay, _stun, _r) = relay().await;
+    let (a, b) = (
+        EndpointKey::generate().unwrap(),
+        EndpointKey::generate().unwrap(),
+    );
+    let mut a_ws = relay_sign_in(&relay, &a, &b.public()).await.unwrap();
+    let mut b_ws = relay_sign_in(&relay, &b, &a.public()).await.unwrap();
+    let total = 48 * 1024 * 1024;
+    let (got, probes) =
+        relay_flood(&mut a_ws, &mut b_ws, (a.public(), b.public()), total, false).await;
+    assert!(probes > 0, "the relay sent no probes");
+    assert!(
+        got <= 34 * 1024 * 1024,
+        "{got} bytes reached a receiver that never answered"
+    );
+    assert!(
+        got >= 16 * 1024 * 1024,
+        "only {got} bytes reached the receiver"
+    );
+}
+
+/// A receiver that answers its probes gets everything (#190).
+#[tokio::test(flavor = "multi_thread")]
+async fn the_relay_passes_everything_to_a_receiver_that_answers() {
+    use totaldrop_core::transport::EndpointKey;
+    let (relay, _stun, _r) = relay().await;
+    let (a, b) = (
+        EndpointKey::generate().unwrap(),
+        EndpointKey::generate().unwrap(),
+    );
+    let mut a_ws = relay_sign_in(&relay, &a, &b.public()).await.unwrap();
+    let mut b_ws = relay_sign_in(&relay, &b, &a.public()).await.unwrap();
+    let total = 40 * 1024 * 1024;
+    let (got, _) = relay_flood(&mut a_ws, &mut b_ws, (a.public(), b.public()), total, true).await;
+    assert!(got >= total, "only {got} of {total} bytes arrived");
+}
