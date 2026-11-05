@@ -43,6 +43,11 @@
   </requires>
   <content_rating type="oars-1.1"/>
   <releases>
+    <release version="0.3.0~beta.5" date="2026-11-05" type="development">
+      <description>
+        <p>The app's built-in Qt resources no longer carry the time they were built, so two builds of the same source come out the same there. The Debian package's copyright file gives the right licence for the translations library.</p>
+      </description>
+    </release>
     <release version="0.3.0~beta.4" date="2026-11-04" type="development">
       <description>
         <p>A transfer that started on a direct connection no longer stops with "timed out" when that path goes quiet, for example when Wi-Fi drops: after 8 seconds without anything from the other device it moves onto the relay and goes on. Both devices must use the same relay.</p>

@@ -3,12 +3,12 @@
 # The Rust toolchain comes from rustup: rust-toolchain.toml pins the newest
 # stable Rust, which distributions do not ship yet.
 
-%global upstream_version 0.3.0-beta.4
+%global upstream_version 0.3.0-beta.5
 %global srcname totaldrop-linux-v%{upstream_version}
 %global debug_package %{nil}
 
 Name:           totaldrop
-Version:        0.3.0~beta.4
+Version:        0.3.0~beta.5
 Release:        1%{?dist}
 Summary:        Send files straight to another device, end-to-end encrypted
 License:        GPL-3.0-or-later AND (MIT OR Apache-2.0)
@@ -77,6 +77,10 @@ cargo test --release --locked -p totaldrop-linux -p totaldrop-proto
 %{_datadir}/icons/hicolor/symbolic/apps/app.totaldrop.TotalDrop-symbolic.svg
 
 %changelog
+* Thu Nov 05 2026 TotalDrop <hello@totaldrop.app> - 0.3.0~beta.5-1
+- The app's built-in Qt resources no longer carry the time they were built,
+  so two builds of the same source come out the same there.
+
 * Wed Nov 04 2026 TotalDrop <hello@totaldrop.app> - 0.3.0~beta.4-1
 - A transfer that started on a direct connection no longer stops with "timed
   out" when that path goes quiet, for example when Wi-Fi drops: after 8
