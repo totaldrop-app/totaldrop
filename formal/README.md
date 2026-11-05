@@ -11,7 +11,7 @@ Model parça parça büyür. Her parça ayrı bir PR'dır:
 | --- | --- | --- |
 | A1 | Üyelik zinciri: `oluştur`, `ekle`, `çıkar`, `döndür` | Bu klasörde |
 | A2 | Çok değerli şeffaflık günlüğü, tanıklar, dahil etme zorlaması (P2) | Bu klasörde |
-| A3 | Döndürmenin oturması ve yazanın tazeliği (A2'deki açığın düzeltmesi); ardından kişi başı, sabitleme, gönderirken ve alırken tazelik (P3) | İlk kısmı bu klasörde |
+| A3 | Döndürmenin oturması ve yazanın tazeliği (A2'deki açığın düzeltmesi); halka sırrı, teklifler, gönderirken ve alırken tazelik (P3) | Bu klasörde |
 | A4 | Kurtarma, sıkı mod, `çatal_çöz` (P7) | Sırada |
 | A5 | Bekleme süreleri için TLA+ değerlendirmesi | Sırada |
 
@@ -306,6 +306,62 @@ Yeni olanlar:
   lemması tümevarımla 450 saniyede sonlanmadı. Bilinen saldırı
   (`döndür` dalı) kapalıdır; genel biçim için bir yardımcı değişmez
   gerekiyor.
-- Halka sırrı, teklifler, gönderirken ve alırken tazelik (P3): A3'ün ikinci
-  kısmı.
+
+## A3b: çıkarılan cihazın yapamadıkları, P3 (`hayalet-halka-gizlilik.spthy`)
+
+A3'ün zinciri, günlüğü, oturma ve yazanın tazeliği aynen kalır. Eklenenler:
+
+- Her kayıt başlattığı dönemin halka KEM anahtarını (`pk(r_e)`) taşır;
+  yazan, `r_e`'yi yeni başın üyelerine verir (gerçekte üyelerin `KK`
+  anahtarlarına HPKE ile).
+- Durumu sızan bir cihaz, üyesi olduğu her başın `r_e`'sini saldırgana
+  verir. Çıkarılmış ya da çalınmış cihaz böyle bir cihazdır.
+- Kişi teklifi başının KEM anahtarına şifreler. Halkadaki bir cihaz kişiye
+  halka adına, `IK`'siyle imzalı teklif gönderir.
+- Kişi göndermeden ve bir teklifi almadan önce tazelik denetimi yapar:
+  kullandığı başın anahtarı altında `AK` kaydı da, oturmuş bir değer de
+  yoktur. Henüz oturmamış bir `döndür` göndermeyi engellemez; o sırada
+  eski baş hâlâ günceldir.
+
+Kayıt gövdesi değiştiği için (KEM anahtarı eklendi) bu yeni bir modeldir:
+A1-A3'ün lemmaları buraya taşınmaz ve burada P1 ile P2 iddia edilmez.
+
+### Soyutlamalar
+
+| Soyutlama | Neden | Ne zaman genişler |
+| --- | --- | --- |
+| `r_e` üyelere güvenli bir olguyla verilir | HPKE ve anahtar onayı (MAC) burada değil, protokol notlarında ve test vektörlerinde sınanır | Aşama C |
+| Teklif gizliliği halka anahtarının gizliliğiyle ifade edilir | Teklifin KEM anahtarına şifrelenmesi standart açık anahtarlı şifrelemedir; bu adımı lemma olarak eklemek aramayı bitirmiyordu. Kanıtlanan: kişinin şifrelediği anahtar, yalnızca o başın üyesi bir cihaz sızınca ya da başı yalnızca saldırgan yazmışsa bilinir | Değişmez |
+| Kusursuz tazelik: kişi göndermeden önce yazılmış her değeri görür | P3'teki 2 saatlik sınır (1 saat dahil etme + 1 saat kök tazeliği) A5'te | A5 |
+| Kişi ile halka arasındaki el sıkışma (Noise + ML-KEM) ve kişi anahtarı `k_AB` yok | El sıkışma mevcut protokolde sınanıyor; `k_AB` yenilemesi kişi defteriyle birlikte ele alınacak | A4 ya da ayrı bir parça |
+
+### Lemmalar
+
+| Lemma | Tür | Ne söyler |
+| --- | --- | --- |
+| `ring_secret_secret`, `kem_origin` | her iz, yardımcı | Bir `r_e`, yalnızca o başın sızmış bir üyesi üzerinden bilinir; bir başın KEM anahtarı ya bir üyenin `pk(r_e)`'sidir ya da günlüğe ağdan yazılmıştır |
+| `sanity_contact_sends`, `sanity_contact_receives` | iz var | Kişi gönderebilir ve bir üyeden teklif alabilir |
+| `sent_head_key_secret` | her iz | **P3, gizlilik:** kişinin teklifi şifrelediği anahtar, yalnızca o başın bir üyesi durumunu sızdırdıysa ya da başı hiçbir üye yazmadıysa (ağdan günlüğe yazılmış sahte bir baş) bilinir |
+| `no_offer_to_head_after_removal` | her iz | **P3, gönderirken tazelik:** bir üye `x`'i bir baştan çıkardıktan sonra hiçbir kişi o başa göndermez. A3'ün `no_rotate_branch_past_removal`'ıyla birlikte kişi `x`'in `döndür` dalında da değildir |
+| `received_offer_authentic` | her iz | Kişinin halka üyesi `s`'den geldiğini kabul ettiği teklif `s`'nindir; `s`'nin `IK`'si sızmadıysa ve `s` saldırganın anahtarı değilse |
+| `no_offer_from_removed_device` | her iz | **P3, alırken tazelik:** bir üye `x`'i bir baştan çıkardıktan sonra hiçbir kişi o başta `x`'ten teklif kabul etmez; `x`'in bütün anahtarları sızmış olsa bile |
+
+### Mutant sınamaları
+
+| Mutant | Bozulan denetim | Beklenen saldırı |
+| --- | --- | --- |
+| `contact_sends_without_freshness` | Kişi göndermeden önce günlüğe bakmaz | Kişi, `x`'in çıkarıldığı başa gönderir (eski başla dosya alma, dondurma saldırısı) |
+| `receive_signature_not_checked` | Kişi teklifin `IK` imzasını denetlemez | Hiçbir anahtar sızmadan sahte bir teklif üyeden gelmiş sayılır |
+
+### Henüz kanıtlanmayanlar
+
+- **Sonraki başlar:** P3'ün iki tazelik lemması çıkarmanın yapıldığı başı
+  ve A3'teki `döndür` dalını kapsar. "Çıkarmadan sonra kişinin gönderdiği
+  her baş `x`'i içermez" biçimindeki sınırsız lemma, A3'teki sınırsız kilit
+  lemmasına dayanır ve henüz yok.
+- **`AK`'si çıkarmadan önce sızmış cihaz:** böyle bir cihaz çıkarmadan önce
+  kendi dalını (ör. öbür üyeyi çıkaran bir kayıt) yazıp kişileri oraya
+  geçirebilir. Bu, tasarımın kabul ettiği "geç çatal, yeniden eşleşme"
+  sınırıdır (`hesap.md`, "Biçimsel modelde kesinleşecek kurallar", madde 1)
+  ve A4'te ele alınır.
 

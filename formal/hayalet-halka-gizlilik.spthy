@@ -1,0 +1,418 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+/*
+ * Ghost ring (docs/hesap.md, decision 0013), part 3b of the formal model
+ * (#251): P3, what a removed device can no longer do.
+ *
+ * The chain, log, settling and writer freshness of part 3
+ * (hayalet-halka-tazelik.spthy), plus:
+ *  - every record carries the ring KEM key pk(r_e) of the period it starts,
+ *    and the writer gives r_e to the members of the new head;
+ *  - a device whose state leaks gives away r_e of every head it is a member
+ *    of (a removed or stolen device is such a device);
+ *  - a contact encrypts offers to the KEM key of its head, and a ring device
+ *    offers files to a contact signed with its IK;
+ *  - a contact sends and receives only after its freshness check: no AK
+ *    record and nothing settled under the key of the head it uses.
+ *
+ * The record body changes (it carries the KEM key), so this is a new model:
+ * the lemmas of parts 1 to 3 are not carried over and P1/P2 are not claimed
+ * here. The witness assumption is the same as in part 2: no censorship
+ * needs f < k, a single view needs f < 2k - n.
+ */
+
+theory HayaletHalkaGizlilik
+begin
+
+builtins: signing, hashing, asymmetric-encryption
+
+restriction Eq: "All x y #i. Eq(x, y) @ i ==> x = y"
+
+/* A device: identity key IK and the two halves of the admin key AK. */
+rule Device_New:
+    let d = <pk(~ik), pk(~a1), pk(~a2)>
+    in
+    [ Fr(~ik), Fr(~a1), Fr(~a2) ]
+  --[ DeviceNew(d) ]->
+    [ !DevKey(d, ~ik, ~a1, ~a2), Unused(d), Out(d) ]
+
+/* Key leaks: a stolen, removed or broken device. Each half separately, so
+   a break of one algorithm alone is modelled too. */
+rule Reveal_IK:
+    [ !DevKey(d, ik, a1, a2) ] --[ RevIK(d) ]-> [ Out(ik) ]
+rule Reveal_A1:
+    [ !DevKey(d, ik, a1, a2) ] --[ RevA1(d) ]-> [ Out(a1) ]
+rule Reveal_A2:
+    [ !DevKey(d, ik, a1, a2) ] --[ RevA2(d) ]-> [ Out(a2) ]
+
+rule Ring_Create:
+    let d = <pk(~ik), pk(~a1), pk(~a2)>
+        r = h(<'ring', d>)
+        body = <'rec', r, 'genesis', 'create', d, d, pk(~re)>
+    in
+    [ Unused(d), Fr(~re), !DevKey(d, ~ik, ~a1, ~a2) ]
+  --[ RingSecret(h(body), ~re), Created(r, d), Signed(d, r, 'genesis', 'create', d) ]->
+    [ View(d, r, h(body), d, 'empty'), !Genesis(r, h(body), d), !Head(r, h(body), d, 'empty'),
+      Out(<body, sign(<'ed', body>, ~a1), sign(<'ml', body>, ~a2)>),
+      !RingSec(h(body), ~re), !HeadKem(h(body), pk(~re)) ]
+
+/* A contact pins the genesis head (trust on first use, checked by words). */
+rule Contact_Pin:
+    [ !Genesis(r, hh, d), Fr(~c) ] --[ Pin(~c, r, hh) ]-> [ View(~c, r, hh, d, 'empty'), !Contact(~c) ]
+
+/* A new device asks to join over QR or CPace (authentic, single use). */
+rule Device_Join_Request:
+    [ Unused(n) ] --[ JoinRequest(n) ]-> [ AddReq(n) ]
+
+/* Honest device in slot 1 adds into empty slot 2 (and the mirror). */
+rule Member_Add_1:
+    let d = <pk(~ik), pk(~a1), pk(~a2)>
+        body = <'rec', h(rb), h(hb), 'add', n, d, pk(~re)>
+    in
+    [ Fr(~re), View(d, h(rb), h(hb), d, 'empty'), AddReq(n), !DevKey(d, ~ik, ~a1, ~a2) ]
+  --[ RingSecret(h(body), ~re), WriteFresh(h(<'log', h(hb)>)), LogValid(h(<'log', h(hb)>), body, 'ak'), Step('MA'), Signed(d, h(rb), h(hb), 'add', n) ]->
+    [ View(d, h(rb), h(body), d, n), View(n, h(rb), h(body), d, n),
+      Out(<body, sign(<'ed', body>, ~a1), sign(<'ml', body>, ~a2)>), !Head(h(rb), h(body), d, n),
+      !LogEntry(h(<'log', h(hb)>), <body, sign(<'ed', body>, ~a1), sign(<'ml', body>, ~a2)>),
+      !RingSec(h(body), ~re), !HeadKem(h(body), pk(~re)) ]
+
+rule Member_Add_2:
+    let d = <pk(~ik), pk(~a1), pk(~a2)>
+        body = <'rec', h(rb), h(hb), 'add', n, d, pk(~re)>
+    in
+    [ Fr(~re), View(d, h(rb), h(hb), 'empty', d), AddReq(n), !DevKey(d, ~ik, ~a1, ~a2) ]
+  --[ RingSecret(h(body), ~re), WriteFresh(h(<'log', h(hb)>)), LogValid(h(<'log', h(hb)>), body, 'ak'), Step('MA'), Signed(d, h(rb), h(hb), 'add', n) ]->
+    [ View(d, h(rb), h(body), n, d), View(n, h(rb), h(body), n, d),
+      Out(<body, sign(<'ed', body>, ~a1), sign(<'ml', body>, ~a2)>), !Head(h(rb), h(body), n, d),
+      !LogEntry(h(<'log', h(hb)>), <body, sign(<'ed', body>, ~a1), sign(<'ml', body>, ~a2)>),
+      !RingSec(h(body), ~re), !HeadKem(h(body), pk(~re)) ]
+
+rule Member_Remove_1:
+    let d = <pk(~ik), pk(~a1), pk(~a2)>
+        body = <'rec', h(rb), h(hb), 'remove', h(x), d, pk(~re)>
+    in
+    [ Fr(~re), View(d, h(rb), h(hb), d, x), !DevKey(d, ~ik, ~a1, ~a2) ]
+  --[ RingSecret(h(body), ~re), WriteFresh(h(<'log', h(hb)>)), LogValid(h(<'log', h(hb)>), body, 'ak'), Step('MR'), Signed(d, h(rb), h(hb), 'remove', h(x)), NotEmpty(x) ]->
+    [ View(d, h(rb), h(body), d, 'empty'),
+      Out(<body, sign(<'ed', body>, ~a1), sign(<'ml', body>, ~a2)>), !Head(h(rb), h(body), d, 'empty'),
+      !LogEntry(h(<'log', h(hb)>), <body, sign(<'ed', body>, ~a1), sign(<'ml', body>, ~a2)>),
+      !RingSec(h(body), ~re), !HeadKem(h(body), pk(~re)) ]
+
+rule Member_Remove_2:
+    let d = <pk(~ik), pk(~a1), pk(~a2)>
+        body = <'rec', h(rb), h(hb), 'remove', h(x), d, pk(~re)>
+    in
+    [ Fr(~re), View(d, h(rb), h(hb), x, d), !DevKey(d, ~ik, ~a1, ~a2) ]
+  --[ RingSecret(h(body), ~re), WriteFresh(h(<'log', h(hb)>)), LogValid(h(<'log', h(hb)>), body, 'ak'), Step('MR'), Signed(d, h(rb), h(hb), 'remove', h(x)), NotEmpty(x) ]->
+    [ View(d, h(rb), h(body), 'empty', d),
+      Out(<body, sign(<'ed', body>, ~a1), sign(<'ml', body>, ~a2)>), !Head(h(rb), h(body), 'empty', d),
+      !LogEntry(h(<'log', h(hb)>), <body, sign(<'ed', body>, ~a1), sign(<'ml', body>, ~a2)>),
+      !RingSec(h(body), ~re), !HeadKem(h(body), pk(~re)) ]
+
+restriction NotEmpty: "All x #i. NotEmpty(x) @ i ==> not (x = 'empty')"
+
+rule Member_Rotate_1:
+    let d = <pk(~ik), pk(~a1), pk(~a2)>
+        body = <'rec', h(rb), h(hb), 'rotate', ~nr, d, pk(~re)>
+    in
+    [ Fr(~re), View(d, h(rb), h(hb), d, y), !DevKey(d, ~ik, ~a1, ~a2), Fr(~nr) ]
+  --[ RingSecret(h(body), ~re), WriteFresh(h(<'log', h(hb)>)), LogValid(h(<'log', h(hb)>), body, 'ik'), Step('MT'), Signed(d, h(rb), h(hb), 'rotate', ~nr) ]->
+    [ View(d, h(rb), h(body), d, y), Out(<body, sign(<'ik', body>, ~ik)>), !Head(h(rb), h(body), d, y),
+      !LogEntry(h(<'log', h(hb)>), <body, sign(<'ik', body>, ~ik)>),
+      !RingSec(h(body), ~re), !HeadKem(h(body), pk(~re)) ]
+
+rule Member_Rotate_2:
+    let d = <pk(~ik), pk(~a1), pk(~a2)>
+        body = <'rec', h(rb), h(hb), 'rotate', ~nr, d, pk(~re)>
+    in
+    [ Fr(~re), View(d, h(rb), h(hb), y, d), !DevKey(d, ~ik, ~a1, ~a2), Fr(~nr) ]
+  --[ RingSecret(h(body), ~re), WriteFresh(h(<'log', h(hb)>)), LogValid(h(<'log', h(hb)>), body, 'ik'), Step('MT'), Signed(d, h(rb), h(hb), 'rotate', ~nr) ]->
+    [ View(d, h(rb), h(body), y, d), Out(<body, sign(<'ik', body>, ~ik)>), !Head(h(rb), h(body), y, d),
+      !LogEntry(h(<'log', h(hb)>), <body, sign(<'ik', body>, ~ik)>),
+      !RingSec(h(body), ~re), !HeadKem(h(body), pk(~re)) ]
+
+/* Any view owner (device or contact) follows records from the log. */
+rule Accept_Add_1:
+    let s = <sik, sa1, sa2>
+        body = <'rec', r, hh, 'add', n, s, k>
+    in
+    [ View(o, r, hh, s, 'empty'), !LogEntry(h(<'log', hh>), <body, sig1, sig2>) ]
+  --[ ReadL(h(<'log', hh>), body, 'ak'), Step('AA'), Eq(verify(sig1, <'ed', body>, sa1), true),
+      Eq(verify(sig2, <'ml', body>, sa2), true),
+      NotEmpty(n),
+      Accept(o, r, hh, 'add', n, s) ]->
+    [ View(o, r, h(body), s, n), !Head(r, h(body), s, n) ]
+
+rule Accept_Add_2:
+    let s = <sik, sa1, sa2>
+        body = <'rec', r, hh, 'add', n, s, k>
+    in
+    [ View(o, r, hh, 'empty', s), !LogEntry(h(<'log', hh>), <body, sig1, sig2>) ]
+  --[ ReadL(h(<'log', hh>), body, 'ak'), Step('AA'), Eq(verify(sig1, <'ed', body>, sa1), true),
+      Eq(verify(sig2, <'ml', body>, sa2), true),
+      NotEmpty(n),
+      Accept(o, r, hh, 'add', n, s) ]->
+    [ View(o, r, h(body), n, s), !Head(r, h(body), n, s) ]
+
+rule Accept_Remove_1:
+    let s = <sik, sa1, sa2>
+        body = <'rec', r, hh, 'remove', h(x), s, k>
+    in
+    [ View(o, r, hh, s, x), !LogEntry(h(<'log', hh>), <body, sig1, sig2>) ]
+  --[ ReadL(h(<'log', hh>), body, 'ak'), Step('AR'), Eq(verify(sig1, <'ed', body>, sa1), true),
+      Eq(verify(sig2, <'ml', body>, sa2), true),
+      NotEmpty(x),
+      Accept(o, r, hh, 'remove', h(x), s) ]->
+    [ View(o, r, h(body), s, 'empty'), !Head(r, h(body), s, 'empty') ]
+
+rule Accept_Remove_2:
+    let s = <sik, sa1, sa2>
+        body = <'rec', r, hh, 'remove', h(x), s, k>
+    in
+    [ View(o, r, hh, x, s), !LogEntry(h(<'log', hh>), <body, sig1, sig2>) ]
+  --[ ReadL(h(<'log', hh>), body, 'ak'), Step('AR'), Eq(verify(sig1, <'ed', body>, sa1), true),
+      Eq(verify(sig2, <'ml', body>, sa2), true),
+      NotEmpty(x),
+      Accept(o, r, hh, 'remove', h(x), s) ]->
+    [ View(o, r, h(body), 'empty', s), !Head(r, h(body), 'empty', s) ]
+
+rule Accept_Rotate_1:
+    let s = <sik, sa1, sa2>
+        body = <'rec', r, hh, 'rotate', nr, s, k>
+    in
+    [ View(o, r, hh, s, y), !LogEntry(h(<'log', hh>), <body, sig>) ]
+  --[ ReadL(h(<'log', hh>), body, 'ik'), Settled(h(<'log', hh>), <body, sig>), Step('AT'), Eq(verify(sig, <'ik', body>, sik), true),
+      Accept(o, r, hh, 'rotate', nr, s) ]->
+    [ View(o, r, h(body), s, y), !Head(r, h(body), s, y) ]
+
+rule Accept_Rotate_2:
+    let s = <sik, sa1, sa2>
+        body = <'rec', r, hh, 'rotate', nr, s, k>
+    in
+    [ View(o, r, hh, y, s), !LogEntry(h(<'log', hh>), <body, sig>) ]
+  --[ ReadL(h(<'log', hh>), body, 'ik'), Settled(h(<'log', hh>), <body, sig>), Step('AT'), Eq(verify(sig, <'ik', body>, sik), true),
+      Accept(o, r, hh, 'rotate', nr, s) ]->
+    [ View(o, r, h(body), y, s), !Head(r, h(body), y, s) ]
+
+/* The transparency log. A value is logged under L = h('log', head) and is
+   never deleted. The log keeps only values that are valid for that head:
+   readers drop every other value (hesap.md, "Anonim şeffaflık günlüğü"),
+   so a logged invalid value changes nothing and is left out. Anyone may
+   log a value (with an ARC token, not modelled). Honest devices log their
+   own records in the same step that writes them: this is the witnesses'
+   inclusion enforcement, with its one-hour bound abstracted away. */
+rule Log_Write_AK_1:
+    let s = <sik, sa1, sa2>
+        body = <'rec', r, hh, op, x, s, k>
+    in
+    [ In(<body, sig1, sig2>), !Head(r, hh, s, y) ]
+  --[ ExtWrite(h(body), k), Eq(verify(sig1, <'ed', body>, sa1), true),
+      Eq(verify(sig2, <'ml', body>, sa2), true),
+      LogValid(h(<'log', hh>), body, 'ak') ]->
+    [ !LogEntry(h(<'log', hh>), <body, sig1, sig2>), !HeadKem(h(body), k) ]
+
+rule Log_Write_AK_2:
+    let s = <sik, sa1, sa2>
+        body = <'rec', r, hh, op, x, s, k>
+    in
+    [ In(<body, sig1, sig2>), !Head(r, hh, y, s) ]
+  --[ ExtWrite(h(body), k), Eq(verify(sig1, <'ed', body>, sa1), true),
+      Eq(verify(sig2, <'ml', body>, sa2), true),
+      LogValid(h(<'log', hh>), body, 'ak') ]->
+    [ !LogEntry(h(<'log', hh>), <body, sig1, sig2>), !HeadKem(h(body), k) ]
+
+rule Log_Write_IK_1:
+    let s = <sik, sa1, sa2>
+        body = <'rec', r, hh, op, x, s, k>
+    in
+    [ In(<body, sig>), !Head(r, hh, s, y) ]
+  --[ ExtWrite(h(body), k), Eq(verify(sig, <'ik', body>, sik), true),
+      LogValid(h(<'log', hh>), body, 'ik') ]->
+    [ !LogEntry(h(<'log', hh>), <body, sig>), !HeadKem(h(body), k) ]
+
+rule Log_Write_IK_2:
+    let s = <sik, sa1, sa2>
+        body = <'rec', r, hh, op, x, s, k>
+    in
+    [ In(<body, sig>), !Head(r, hh, y, s) ]
+  --[ ExtWrite(h(body), k), Eq(verify(sig, <'ik', body>, sik), true),
+      LogValid(h(<'log', hh>), body, 'ik') ]->
+    [ !LogEntry(h(<'log', hh>), <body, sig>), !HeadKem(h(body), k) ]
+
+/* Time passing, without a clock (A3): Old(L, v) marks that value v under L
+   has been in the log for longer than the settling delay D. A reader
+   follows a rotate only once it has settled; an honest writer writes only
+   from a head under whose key nothing has settled yet (its freshness
+   check). Together they close the rotate-branch gap of part 2: a remove
+   written while a rotate is still unsettled is in the log before the rotate
+   settles, and then wins (fork rule 1). A5 sets D against the one-hour
+   inclusion and freshness bounds.
+   Honest records are still logged in the step that writes them. Here that
+   is load-bearing: the freshness check must still hold when the record is
+   included. The design must enforce it (README.md, A3). */
+rule Log_Age:
+    [ !LogEntry(L, v) ] --[ Old(L, v) ]-> [ ]
+
+restriction Rotate_Settled:
+  "All L v #i. Settled(L, v) @ i ==> Ex #t. Old(L, v) @ t & #t < #i"
+
+restriction Writer_Fresh:
+  "All L #i. WriteFresh(L) @ i ==> not (Ex v #t. Old(L, v) @ t & #t < #i)"
+
+/* Ring secrets (A3, part 2). Every record starts a period with a fresh
+   secret r_e; the writer sends it to the members of the new head (HPKE to
+   their KK keys, modelled as a secure fact). The head carries the ring KEM
+   key pk(r_e) that contacts encrypt offers to. A device whose state leaks
+   gives the attacker the secret of every head it is a member of; a removed
+   or stolen device is such a device. */
+rule Reveal_State:
+    [ !DevKey(d, ik, a1, a2) ] --[ RevState(d) ]-> [ !Leaked(d) ]
+
+rule Reveal_Ring_1:
+    [ !RingSec(hh, re), !Head(r, hh, d, y), !Leaked(d) ] --[ RevRing(hh, d) ]-> [ Out(re) ]
+
+rule Reveal_Ring_2:
+    [ !RingSec(hh, re), !Head(r, hh, y, d), !Leaked(d) ] --[ RevRing(hh, d) ]-> [ Out(re) ]
+
+/* A contact sends an offer to the ring at its head: encrypted to the head's
+   KEM key, and only after its freshness check (hesap.md, "Tazelik"): no AK
+   record and nothing settled under the key of its head. An unsettled
+   rotate does not stop it; the old head is still the current one then. */
+rule Contact_Send:
+    [ View(c, r, hh, a, b), !Contact(c), !HeadKem(hh, k) ]
+  --[ Fresh(h(<'log', hh>)), Kem(hh, k) ]->
+    [ View(c, r, hh, a, b), SendTo(c, r, hh, a, b, k) ]
+
+rule Contact_Send_Offer:
+    [ SendTo(c, r, hh, a, b, k), Fr(~f) ]
+  --[ SentOffer(c, r, hh, ~f, a, b), OfferKem(~f, k) ]->
+    [ Out(aenc(<'offer', ~f>, k)) ]
+
+restriction Contact_Fresh:
+  "All L #i. Fresh(L) @ i
+    ==> not (Ex v #t. LogValid(L, v, 'ak') @ t & #t < #i)
+      & not (Ex v #t. Old(L, v) @ t & #t < #i)"
+
+
+/* A ring device offers a file to a contact, as the ring: the offer names
+   the ring and the device's current head and is signed with its IK
+   (hesap.md, "Gönderim"). The receiving contact checks that the signer is
+   a member of the head it holds for that ring, and the same freshness as
+   when sending ("Alırken de tazelik"). */
+rule Device_Offer_1:
+    let d = <pk(~ik), pk(~a1), pk(~a2)>
+    in
+    [ View(d, h(rb), h(hb), d, y), !DevKey(d, ~ik, ~a1, ~a2), Fr(~g) ]
+  --[ OfferedBy(d, h(rb), h(hb), ~g) ]->
+    [ View(d, h(rb), h(hb), d, y),
+      Out(<<'from', h(rb), h(hb), ~g>, sign(<'offer', h(rb), h(hb), ~g>, ~ik)>) ]
+
+rule Device_Offer_2:
+    let d = <pk(~ik), pk(~a1), pk(~a2)>
+    in
+    [ View(d, h(rb), h(hb), y, d), !DevKey(d, ~ik, ~a1, ~a2), Fr(~g) ]
+  --[ OfferedBy(d, h(rb), h(hb), ~g) ]->
+    [ View(d, h(rb), h(hb), y, d),
+      Out(<<'from', h(rb), h(hb), ~g>, sign(<'offer', h(rb), h(hb), ~g>, ~ik)>) ]
+
+rule Contact_Receive_1:
+    let s = <sik, sa1, sa2>
+    in
+    [ View(c, r, hh, s, y), !Contact(c), In(<<'from', r, hh, g>, sig>) ]
+  --[ Fresh(h(<'log', hh>)), Eq(verify(sig, <'offer', r, hh, g>, sik), true),
+      Received(c, r, hh, g, s) ]->
+    [ View(c, r, hh, s, y) ]
+
+rule Contact_Receive_2:
+    let s = <sik, sa1, sa2>
+    in
+    [ View(c, r, hh, y, s), !Contact(c), In(<<'from', r, hh, g>, sig>) ]
+  --[ Fresh(h(<'log', hh>)), Eq(verify(sig, <'offer', r, hh, g>, sik), true),
+      Received(c, r, hh, g, s) ]->
+    [ View(c, r, hh, y, s) ]
+
+/* Reading the log. Every reader (device or contact) reads every value under
+   the key and stops on a fork (hesap.md, "Çatal kuralı"): an AK record is
+   accepted only if no other valid AK record was logged under the same key
+   before; it wins over a rotate (priority, rule 1). A rotate is accepted
+   only if no other valid value of any kind was logged before. The
+   witnesses give every reader the same log (f < 2k - n, see the header);
+   that is why the log is one global set of facts here. Writers do not
+   read: an honest member writes its record even if another value is
+   already logged under the key, and the fork then stops the readers. */
+restriction Log_Read_AK:
+  "All L v v2 #i #t. ReadL(L, v, 'ak') @ i & LogValid(L, v2, 'ak') @ t & #t < #i ==> v = v2"
+
+restriction Log_Read_IK:
+  "All L v v2 k #i #t. ReadL(L, v, 'ik') @ i & LogValid(L, v2, k) @ t & #t < #i ==> v = v2"
+
+
+
+/* Helpers: a ring secret is known only through a leaked member of its
+   head; a head's KEM key is either a member's pk(r_e) or was logged from
+   the network. */
+lemma ring_secret_secret [reuse]:
+  "All hh re #i #j. RingSecret(hh, re) @ i & K(re) @ j
+    ==> Ex d #l. RevRing(hh, d) @ l"
+
+lemma kem_origin [reuse]:
+  "All hh k #i. Kem(hh, k) @ i
+    ==> (Ex re #t. RingSecret(hh, re) @ t & k = pk(re))
+      | (Ex #t. ExtWrite(hh, k) @ t)"
+
+/* Executability: a contact can send, and can receive from a member. */
+lemma sanity_contact_sends:
+  exists-trace
+  "Ex c r hh f a b #i. SentOffer(c, r, hh, f, a, b) @ i
+    & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)"
+
+
+/* P3, secrecy: the key a contact encrypts an offer to is known to the
+   attacker only if a member of that head leaked its state, or the head was
+   written by the attacker alone (no member wrote it). Encrypting the offer
+   to it is then standard public-key encryption. */
+lemma sent_head_key_secret [heuristic=c]:
+  "All hh sk #i #j. Kem(hh, pk(sk)) @ i & K(sk) @ j
+    ==> (Ex d #l. RevRing(hh, d) @ l)
+      | ((Ex #t. ExtWrite(hh, pk(sk)) @ t) & not (Ex re #u. RingSecret(hh, re) @ u))"
+
+/* P3, freshness when sending: once a member has removed x from a head, no
+   contact sends to that head any more (the remove is under its key). With
+   no_rotate_branch_past_removal of part 3, the contact is not on a rotate
+   branch of x either. */
+lemma no_offer_to_head_after_removal [heuristic=c]:
+  "All r hh k d x #t #i.
+      Signed(d, r, hh, 'remove', h(x)) @ t
+    & Kem(hh, k) @ i
+    & #t < #i
+    ==> F"
+
+
+lemma sanity_contact_receives:
+  exists-trace
+  "Ex c r hh g s #p #i #o. Pin(c, r, hh) @ p & Received(c, r, hh, g, s) @ i
+    & OfferedBy(s, r, hh, g) @ o
+    & not (Ex u #x. Step(u) @ x)
+    & not (Ex e #x. RevIK(e) @ x)"
+
+/* P3, authenticity when receiving: an offer a contact takes as coming from
+   ring member s was made by s, unless s's IK leaked or s is a key the
+   attacker made. */
+lemma received_offer_authentic [heuristic=c]:
+  "All c r hh g s #i. Received(c, r, hh, g, s) @ i
+    ==> (Ex #o. OfferedBy(s, r, hh, g) @ o & #o < #i)
+      | (Ex #l. RevIK(s) @ l & #l < #i)
+      | not (Ex #l. DeviceNew(s) @ l)"
+
+/* P3, freshness when receiving: once a member has removed x from a head, no
+   contact takes an offer from x as a member of that head, even if all of
+   x's keys leaked. */
+lemma no_offer_from_removed_device [heuristic=c]:
+  "All c r hh g d x #t #i.
+      Signed(d, r, hh, 'remove', h(x)) @ t
+    & Received(c, r, hh, g, x) @ i
+    & #t < #i
+    ==> F"
+
+end
