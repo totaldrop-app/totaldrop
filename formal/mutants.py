@@ -27,6 +27,7 @@ import tempfile
 HERE = os.path.dirname(os.path.abspath(__file__))
 CHAIN = os.path.join(HERE, "hayalet-halka-zincir.spthy")
 LOG = os.path.join(HERE, "hayalet-halka-gunluk.spthy")
+FRESH = os.path.join(HERE, "hayalet-halka-tazelik.spthy")
 TIMEOUT = int(os.environ.get("LEMMA_TIMEOUT", "600"))
 
 BOUND_ONE_STEP = """
@@ -50,6 +51,49 @@ lemma attack:
     & #t < #j
     & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)
     & not (Ex #x. Step('MT') @ x) & not (Ex #x. Step('AR') @ x)"
+"""
+
+# Part 3: the rotate-branch attack of part 2. A contact follows a rotate by
+# n, a member then removes n from that head, and n extends the contact's
+# branch after the removal.
+ROTATE_BRANCH_ATTACK = """
+lemma attack [heuristic=c]:
+  exists-trace
+  "Ex c r h0 h1 h2 n d nr nr2 #p #i #k #t #j.
+      Pin(c, r, h0) @ p
+    & Accept(c, r, h0, 'add', n, d) @ i
+    & h1 = h(<'rec', r, h0, 'add', n, d>)
+    & Accept(c, r, h1, 'rotate', nr, n) @ k
+    & h2 = h(<'rec', r, h1, 'rotate', nr, n>)
+    & Signed(d, r, h1, 'remove', h(n)) @ t
+    & Accept(c, r, h2, 'rotate', nr2, n) @ j
+    & #k < #t & #t < #j
+    & (All u #x #y. Step(u) @ x & Step(u) @ y & not (u = 'AT') ==> #x = #y)
+    & (All #x. Step('AT') @ x ==> #x = #k | #x = #j)
+    & not (Ex #x. Step('MT') @ x) & not (Ex #x. Step('AR') @ x)
+    & not (Ex e #x. RevA1(e) @ x) & not (Ex e #x. RevA2(e) @ x)
+    & (All e #x. RevIK(e) @ x ==> e = n)
+    & (All c2 r2 h #x. Pin(c2, r2, h) @ x ==> #x = #p)
+    & (All L v #x #y. Old(L, v) @ x & Old(L, v) @ y ==> #x = #y)"
+"""
+
+# Part 3, smaller: a contact follows n's rotate on the head from which a
+# member removes n (the negation of no_rotate_branch_past_removal).
+ROTATE_AND_REMOVE_ATTACK = """
+lemma attack [heuristic=c]:
+  exists-trace
+  "Ex c r h0 h1 n d nr #p #i #k #t.
+      Pin(c, r, h0) @ p
+    & Accept(c, r, h0, 'add', n, d) @ i
+    & h1 = h(<'rec', r, h0, 'add', n, d>)
+    & Accept(c, r, h1, 'rotate', nr, n) @ k
+    & Signed(d, r, h1, 'remove', h(n)) @ t
+    & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)
+    & not (Ex #x. Step('MT') @ x) & not (Ex #x. Step('AR') @ x)
+    & not (Ex e #x. RevA1(e) @ x) & not (Ex e #x. RevA2(e) @ x)
+    & (All e #x. RevIK(e) @ x ==> e = n)
+    & (All c2 r2 h #x. Pin(c2, r2, h) @ x ==> #x = #p)
+    & (All L v #x #y. Old(L, v) @ x & Old(L, v) @ y ==> #x = #y)"
 """
 
 MUTANTS = [
@@ -246,6 +290,26 @@ lemma attack:
       Pin(c, r, h0) @ p
     & Accept(c, r, h0, 'add', n, s) @ i
     & not (Ex k #t. LogValid(h(<'log', h0>), <'rec', r, h0, 'add', n, s>, k) @ t)""" + BOUND_ONE_STEP,
+    },
+    {
+        "name": "rotate_followed_before_settled",
+        "why": "a reader follows a rotate as soon as it is logged (part 2's rule)",
+        "model": FRESH,
+        "edits": [
+            ("restriction Rotate_Settled",
+             r"restriction Rotate_Settled:\n  \"[^\"]*\"\n", "", 1),
+        ],
+        "lemma": ROTATE_BRANCH_ATTACK,
+    },
+    {
+        "name": "writer_not_fresh",
+        "why": "an honest device writes from a head under which a rotate has settled",
+        "model": FRESH,
+        "edits": [
+            ("restriction Writer_Fresh",
+             r"restriction Writer_Fresh:\n  \"[^\"]*\"\n", "", 1),
+        ],
+        "lemma": ROTATE_AND_REMOVE_ATTACK,
     },
 ]
 
