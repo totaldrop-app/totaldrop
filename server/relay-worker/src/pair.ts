@@ -10,6 +10,9 @@ import type { Env } from "./index";
 const MAGIC = new TextEncoder().encode("TDR0");
 const AUTH_CONTEXT = new TextEncoder().encode("totaldrop relay v0 auth");
 const OK = new Uint8Array([...MAGIC, ...new TextEncoder().encode("ok")]);
+const PROBE = new Uint8Array([...MAGIC, ...new TextEncoder().encode("probe")]);
+/** A probe: TDR0 || "probe" || 16 random bytes (protocol note 20). */
+const PROBE_LENGTH = PROBE.length + 16;
 
 /** Largest message either side may send (relay.rs MAX_MESSAGE). */
 const MAX_MESSAGE = 64 * 1024;
@@ -23,6 +26,18 @@ const SESSION_BYTES = 32 * 1024 * 1024 * 1024;
  * survives hibernation, each time it passes another step of this size; a
  * datagram costs no extra write, and waking loses less than one step. */
 const SENT_STEP = 1024 * 1024;
+
+/** A Workers WebSocket does not say how much it still holds to send, and
+ * holds all of it in memory: in a local test, 512 MiB for a receiver that
+ * did not read (#190). So the object puts a probe in the stream every
+ * PROBE_STEP bytes it gives a socket; the device sends it back once it has
+ * read everything before it. Datagrams for a socket that has more than
+ * UNANSWERED bytes after its last answered probe are dropped, like a lossy
+ * network; QUIC sends them again. A TotalDrop device keeps at most 16 MiB
+ * in flight (QUIC's connection window); in a local test under that window
+ * no socket went past 18 MiB unanswered. */
+const PROBE_STEP = 4 * 1024 * 1024;
+const UNANSWERED = 32 * 1024 * 1024;
 
 /** WebSocket readyState OPEN. */
 const OPEN = 1;
@@ -46,6 +61,13 @@ interface Attachment {
   ended?: boolean;
   /** Bytes this socket had sent, at the last SENT_STEP passed. */
   sent?: number;
+  /** Bytes given to this socket when its last probe went out. */
+  given?: number;
+  /** Bytes given to it when its last answered probe went out. */
+  answered?: number;
+  /** Probes not answered yet, oldest first: nonce hex and bytes given when
+   * it went out. At most UNANSWERED / PROBE_STEP + 1, a few hundred bytes. */
+  probes?: [string, number][];
 }
 
 function attachment(ws: WebSocket): Attachment | null {
@@ -91,6 +113,9 @@ export class Pair extends DurableObject<Env> {
    * relay. Read from the attachment after the object wakes (a woken object
    * sees new socket objects), then counted here. */
   private sent = new WeakMap<WebSocket, number>();
+  /** Bytes given to each socket, read from its attachment after the object
+   * wakes (which loses less than one PROBE_STEP), then counted here. */
+  private given = new WeakMap<WebSocket, number>();
   /** Signed-in sockets by key, rebuilt after the object wakes. */
   private byKey = new Map<string, WebSocket>();
 
@@ -151,6 +176,7 @@ export class Pair extends DurableObject<Env> {
     const m = await bytes(data);
     const own = this.keyOf(ws);
     if (!m || m.length > MAX_MESSAGE) return this.fail(ws, own, "bad message");
+    if (own !== null && m.length === PROBE_LENGTH && startsWith(m, PROBE)) return this.answered(ws, m);
     if (own !== null) return this.forward(ws, own, m);
 
     const att = ws.deserializeAttachment() as Attachment | null;
@@ -209,12 +235,46 @@ export class Pair extends DurableObject<Env> {
     const peer = this.socketFor(other);
     // Nobody there yet: drop, like a lossy network. QUIC retransmits.
     if (!peer) return;
+    // The other side holds too much it has not read: drop, as above.
+    const given = this.given.get(peer) ?? attachment(peer)?.given ?? 0;
+    const answered = attachment(peer)?.answered ?? 0;
+    if (given + m.length - answered > UNANSWERED) return;
     m.set(unhex(own), 0);
     try {
       peer.send(m);
+      this.gave(peer, given, given + m.length);
     } catch {
       // The other side is gone; its close handler tidies up.
     }
+  }
+
+  /** Count `before` to `after` bytes given to `ws`; each PROBE_STEP passed
+   * sends a probe after them. */
+  private gave(ws: WebSocket, before: number, after: number): void {
+    this.given.set(ws, after);
+    if (Math.floor(after / PROBE_STEP) <= Math.floor(before / PROBE_STEP)) return;
+    const att = attachment(ws);
+    if (!att) return;
+    const nonce = crypto.getRandomValues(new Uint8Array(16));
+    ws.send(new Uint8Array([...PROBE, ...nonce]));
+    att.given = after;
+    att.probes = [...(att.probes ?? []), [hex(nonce), after]];
+    ws.serializeAttachment(att);
+  }
+
+  /** A probe came back: everything given before it was read. Only a nonce
+   * this object sent counts; any other answer is ignored, and none is
+   * forwarded or counted against SESSION_BYTES. */
+  private answered(ws: WebSocket, m: Uint8Array): void {
+    const att = attachment(ws);
+    const probes = att?.probes ?? [];
+    const nonce = hex(m.subarray(PROBE.length));
+    const at = probes.findIndex(([n]) => n === nonce);
+    const probe = probes[at];
+    if (!att || !probe) return;
+    att.answered = probe[1];
+    att.probes = probes.slice(at + 1);
+    ws.serializeAttachment(att);
   }
 
   async webSocketClose(ws: WebSocket): Promise<void> {

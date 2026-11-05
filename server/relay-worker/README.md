@@ -10,6 +10,7 @@ How it is built:
 
 - The Worker keeps no state and logs nothing. Observability is turned off in `wrangler.jsonc`.
 - Each transfer is its own `Pair` Durable Object, named by its two keys. It admits only those two keys, one socket each, after checking an Ed25519 signature over a fresh challenge; a new sign-in with a key replaces that key's old socket. It forwards datagram messages from one to the other, swapping the destination key for the source key, and closes both sockets when either leaves or breaks a rule, or when a connection reaches 6 hours or 32 GiB (counted per connection).
+- A Workers WebSocket does not say how much it still holds to send, so the object bounds it with probes (protocol note 20): every 4 MiB it gives a socket, it sends a probe that the device sends back once it has read everything before it. Datagrams for a socket with more than 32 MiB after its last answered probe are dropped, like a lossy network. Devices from before 0.3.0-beta.4 never answer, so through this relay they get at most 32 MiB.
 - It uses the WebSocket Hibernation API, so a pair that waits costs nothing.
 - Address discovery is not part of this Worker: clients use Cloudflare's STUN server, `stun.cloudflare.com:3478`.
 

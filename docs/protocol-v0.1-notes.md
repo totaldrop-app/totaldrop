@@ -203,18 +203,19 @@ treated as final.
       bytes`, between the messages it delivers; the device sends it straight
       back, unchanged. The device reads the probe only after everything sent
       before it, so the answer tells the relay how much it still holds for
-      that device. The Cloudflare relay cannot see its send buffer and is to
-      use this to bound it (#190). A relay that sends probes must:
+      that device. The Cloudflare relay cannot see its send buffer and
+      bounds it this way: a probe every 4 MiB it gives a device, and
+      datagrams for a device with more than 32 MiB after its last answered
+      probe are dropped (#190). A relay that sends probes must:
       recognise an answer (exactly those 25 bytes) before its datagram
       check, and neither forward it nor count it against the byte limit;
       accept only a nonce it has outstanding; bound by bytes sent since the
       oldest unanswered probe, not by how long an answer takes (a device
       with a congested upload answers late); and accept answers in the same
-      version that starts sending probes. Devices without probe support
-      never answer, so a relay that bounds this way cuts them off after the
-      bound; the Cloudflare relay starts only once testers run a release
-      that answers. Today no relay sends probes, and both close a pair on an
-      unexpected 25-byte message.
+      version that starts sending probes. Devices from before 0.3.0-beta.4
+      never answer, so through the Cloudflare relay they get at most 32 MiB.
+      The self-hosted relay bounds its queue itself, sends no probes and
+      closes a pair on an unexpected 25-byte message.
     - Address discovery is plain STUN (RFC 8489), Binding with
       XOR-MAPPED-ADDRESS, sent from the QUIC socket. The default server is
       `stun.cloudflare.com:3478`; the self-hosted relay answers STUN too.
