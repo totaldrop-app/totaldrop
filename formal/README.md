@@ -11,7 +11,7 @@ Model parça parça büyür. Her parça ayrı bir PR'dır:
 | --- | --- | --- |
 | A1 | Üyelik zinciri: `oluştur`, `ekle`, `çıkar`, `döndür` | Bu klasörde |
 | A2 | Çok değerli şeffaflık günlüğü, tanıklar, dahil etme zorlaması (P2) | Bu klasörde |
-| A3 | Kişi başı, sabitleme, gönderirken ve alırken tazelik (P3) | Sırada |
+| A3 | Döndürmenin oturması ve yazanın tazeliği (A2'deki açığın düzeltmesi); ardından kişi başı, sabitleme, gönderirken ve alırken tazelik (P3) | İlk kısmı bu klasörde |
 | A4 | Kurtarma, sıkı mod, `çatal_çöz` (P7) | Sırada |
 | A5 | Bekleme süreleri için TLA+ değerlendirmesi | Sırada |
 
@@ -194,18 +194,74 @@ izi verir (`removed_device_survives_on_rotate_branch`):
 Böylece çıkarılmış bir cihaz, çıkarmadan önce kendi dalına geçirdiği
 kişiler için halkanın tek yetkilisi olarak kalır. Bu, H3'ün tam
 konusudur. Halka (`d`) kendi anahtarı altındaki yabancı `döndür`'ü görüp
-uyarır, ama kişi tarafında bir kural gerekir. Önerilen düzeltme A4'te
-modellenecek: `döndür` ile uzayan bir dal, son `AK` kaydına kadar geçicidir;
-okuyan her tazelik denetiminde son `AK` başının anahtarını da okur ve orada
-bir `AK` kaydı görürse o dala geçer (ya da durur). Bu kural gelene kadar
-"çıkarılmış cihaz sonraki başlarda da kilitlidir" iddiası bu modelde
-**yanlıştır**, yalnızca kanıtlanmamış değil.
+uyarır, ama kişi tarafında bir kural gerekir. Bu modelde (A2)
+"çıkarılmış cihaz sonraki başlarda da kilitlidir" iddiası **yanlıştır**,
+yalnızca kanıtlanmamış değil. Düzeltme A3'te (aşağıda).
 
 ### Tasarıma geri bildirim (A4'te `hesap.md`'ye işlenecek)
 
-- Çatal kuralı 1 ile 4 arasındaki çelişki (yukarıdaki açık) ve `döndür`
-  dalının geçiciliği kuralı.
+- Çatal kuralı 1 ile 4 arasındaki çelişki (yukarıdaki açık) ve A3'teki
+  düzeltme kuralı (oturma süresi ve yazanın tazeliği).
 - Tanık eşiği: `hesap.md` "k > n/2" diyor. Tek görünüm için `k`, iş birliği
   yapabilecek tanık sayısı `f` ile birlikte `2k − n > f` olacak şekilde
   seçilmeli (ör. n = 5, k = 4 iken en çok f = 2 kötü tanık tolere edilir;
   k = 3 iken yalnızca f = 0).
+
+## A3: döndürmenin oturması (`hayalet-halka-tazelik.spthy`)
+
+A2'nin modeli aynen kalır; A2'nin bulduğu açığı kapatan iki kural eklenir.
+Saat yine yoktur: "süre geçti" bir olaydır (`Old`).
+
+### Eklenen kurallar
+
+- **Oturma:** okuyan (cihaz ya da kişi) bir `döndür`'ü ancak o kayıt
+  günlükte oturma süresi `D` kadar durduktan sonra izler.
+- **Yazanın tazeliği:** dürüst bir cihaz, bir kaydı yalnızca anahtarı
+  altında henüz hiçbir değerin oturmadığı bir baştan yazar. Bu, yazmadan
+  önceki tazelik denetimidir: taze bir kök, o başın anahtarı altında çoktan
+  yazılmış bir değer göstermiyor olmalı.
+
+İkisi birlikte şunu sağlar: bir `döndür` henüz otururken yazılan bir
+`çıkar`, `döndür` oturmadan önce günlüktedir ve çatal kuralı 1 gereği onu
+yener. `döndür` oturduktan sonra ise dürüst cihaz o eski baştan yazamaz;
+önce `döndür`'ü izler ve çıkarmayı yeni baştan yazar.
+
+`D`'nin değeri A5'te süre sınırlarıyla (1 saat dahil etme, 1 saat kök
+tazeliği, yazanın denetimi) birlikte belirlenir. Kabaca bir hesap: bir
+`döndür`'den en çok 2 saat sonra yazılan bir kayıt, ondan en geç 3 saat
+sonra köke girer ve en çok 1 saat eski kök gören okuyan onu görür. Bu
+yüzden `D` en az 4 saat olmalıdır. Haftalık döndürmede bu gecikmenin
+kullanıcıya etkisi yoktur.
+
+### Lemmalar
+
+A2'nin "her iz" lemmaları bu modelde de geçerlidir ve yeniden kanıtlanmaz:
+model yalnızca sonucu olmayan bir kural (`Log_Age`), yeni olaylar ve
+kısıtlar ekler, bu yüzden bu modelin her izi A2'nin de bir izidir. ("Her
+iz" lemmalarını burada yeniden kanıtlamak, yeni kısıtlar aramayı
+büyüttüğü için 10 dakikada bitmiyordu.) A2'nin iki "iz var" lemması
+burada yeniden kanıtlanır, çünkü kısıtlar bir izi ortadan kaldırabilir.
+Yeni olanlar:
+
+| Lemma | Tür | Ne söyler |
+| --- | --- | --- |
+| `sanity_contact_follows_settled_rotate` | iz var | Oturmuş bir `döndür` yine izlenebilir; kural döndürmeyi engellemez |
+| `no_rotate_branch_past_removal` | her iz | **H3, A2'deki açık kapandı:** bir üye `x`'i bir baştan çıkarıyorsa hiçbir okuyan o başta `x`'in `döndür`'ünü izlemez; hangisi önce yazılmış olursa olsun. A2'deki saldırı izinin ikinci adımı bu yüzden imkânsızdır |
+
+### Mutant sınamaları
+
+| Mutant | Bozulan denetim | Beklenen saldırı |
+| --- | --- | --- |
+| `rotate_followed_before_settled` | Okuyan `döndür`'ü günlüğe girer girmez izler (A2'nin kuralı) | A2'deki `döndür` dalı saldırısı |
+| `writer_not_fresh` | Dürüst cihaz, altında bir `döndür`'ün oturduğu eski baştan yazar | Kişi `n`'nin `döndür`'ünü, bir üyenin `n`'yi çıkardığı başta izler |
+
+### Henüz kanıtlanmayanlar
+
+- **Sınırsız biçim:** "çıkarmadan sonra okuyan, `x`'in yalnızca çıkarmadan
+  önce günlüğe girmiş kayıtlarını kabul eder (ya da `x` yeniden eklenmiştir)"
+  lemması tümevarımla 450 saniyede sonlanmadı. Bilinen saldırı
+  (`döndür` dalı) kapalıdır; genel biçim için bir yardımcı değişmez
+  gerekiyor.
+- Halka sırrı, teklifler, gönderirken ve alırken tazelik (P3): A3'ün ikinci
+  kısmı.
+
