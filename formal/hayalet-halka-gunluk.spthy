@@ -299,8 +299,7 @@ lemma removed_device_survives_on_rotate_branch:
     & Accept(c, r, h2, 'rotate', nr2, n) @ j
     & #k < #t & #t < #j
     & (All u #x #y. Step(u) @ x & Step(u) @ y & not (u = 'AT') ==> #x = #y)
-    & (All #x #y #z. Step('AT') @ x & Step('AT') @ y & Step('AT') @ z
-         ==> #x = #y | #y = #z | #x = #z)
+    & (All #x. Step('AT') @ x ==> #x = #k | #x = #j)
     & not (Ex #x. Step('MT') @ x) & not (Ex #x. Step('AR') @ x)
     & not (Ex e #x. RevA1(e) @ x) & not (Ex e #x. RevA2(e) @ x)
     & (All e #x. RevIK(e) @ x ==> e = n)
