@@ -20,10 +20,13 @@ mark() {
 }
 
 # Adaptive icon layers: a 108-unit canvas on the violet background
-# (values/ic_launcher_background.xml). The corner is the point furthest from
-# the centre (58 units), so at 0.55 it stays inside the 66-unit safe circle.
+# (values/ic_launcher_background.xml), the mark's box centred on it. The
+# corner is the point furthest from the centre (58 units in the mark's box).
+# At 0.44 it sits 25.5 units from the centre: 10.5 inside the 72-unit
+# circle a launcher shows, so it never looks as if it touches the mask's
+# edge (at 0.55 it was 4 units away, #261).
 layer() {
-  printf '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108"><g transform="translate(23.2 23.2) scale(0.55)">%s</g></svg>' "$(mark "$1")"
+  printf '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108"><g transform="translate(29.36 29.36) scale(0.44)">%s</g></svg>' "$(mark "$1")"
 }
 layer '#F4F2FB' > "$tmp/foreground.svg"
 layer '#FFFFFF' > "$tmp/monochrome.svg"
