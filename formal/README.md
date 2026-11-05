@@ -202,6 +202,8 @@ yalnızca kanıtlanmamış değil. Düzeltme A3'te (aşağıda).
 
 - Çatal kuralı 1 ile 4 arasındaki çelişki (yukarıdaki açık) ve A3'teki
   düzeltme kuralı (oturma süresi ve yazanın tazeliği).
+- `AK` kaydının denetlendiği tanıklı köke bağlanması ve geç köke giren
+  kaydın geçersiz sayılması (A3, "Modelin dayandığı varsayım").
 - Tanık eşiği: `hesap.md` "k > n/2" diyor. Tek görünüm için `k`, iş birliği
   yapabilecek tanık sayısı `f` ile birlikte `2k − n > f` olacak şekilde
   seçilmeli (ör. n = 5, k = 4 iken en çok f = 2 kötü tanık tolere edilir;
@@ -217,27 +219,68 @@ Saat yine yoktur: "süre geçti" bir olaydır (`Old`).
 - **Oturma:** okuyan (cihaz ya da kişi) bir `döndür`'ü ancak o kayıt
   günlükte oturma süresi `D` kadar durduktan sonra izler.
 - **Yazanın tazeliği:** dürüst bir cihaz, bir kaydı yalnızca anahtarı
-  altında henüz hiçbir değerin oturmadığı bir baştan yazar. Bu, yazmadan
-  önceki tazelik denetimidir: taze bir kök, o başın anahtarı altında çoktan
-  yazılmış bir değer göstermiyor olmalı.
+  altında henüz hiçbir değerin oturmadığı bir baştan yazar. Gerçek kural:
+  yazanın taze kökü, o başın anahtarı altında `D_w`'den eski bir değer
+  göstermemelidir. Daha yeni bir değer (ör. henüz oturmamış bir `döndür`)
+  yazmayı **engellemez**: `AK` kaydı yazılır ve çatal kuralı 1 gereği
+  kazanır. "Anahtar altında hiç değer olmamalı" diye okunursa, `IK`'si
+  sızmış bir cihaz her `D` süresinde bir `döndür` yazarak (birer ARC
+  jetonuyla) kendi çıkarılmasını süresiz erteleyebilirdi.
 
 İkisi birlikte şunu sağlar: bir `döndür` henüz otururken yazılan bir
 `çıkar`, `döndür` oturmadan önce günlüktedir ve çatal kuralı 1 gereği onu
-yener. `döndür` oturduktan sonra ise dürüst cihaz o eski baştan yazamaz;
-önce `döndür`'ü izler ve çıkarmayı yeni baştan yazar.
+yener (`sanity_remove_beats_unsettled_rotate`). `döndür` oturduktan sonra
+ise dürüst cihaz o eski baştan yazamaz; önce `döndür`'ü izler ve çıkarmayı
+yeni baştan yazar.
 
-`D`'nin değeri A5'te süre sınırlarıyla (1 saat dahil etme, 1 saat kök
-tazeliği, yazanın denetimi) birlikte belirlenir. Kabaca bir hesap: bir
-`döndür`'den en çok 2 saat sonra yazılan bir kayıt, ondan en geç 3 saat
-sonra köke girer ve en çok 1 saat eski kök gören okuyan onu görür. Bu
-yüzden `D` en az 4 saat olmalıdır. Haftalık döndürmede bu gecikmenin
-kullanıcıya etkisi yoktur.
+### Sürelerin hesabı (A5'te kesinleşecek)
+
+Süreler, saldırganın seçtiği yazma anından değil, `döndür`'ün tanıklı bir
+köke **ilk girdiği** andan (`T_giriş`) ölçülür. Yazanın kökü en çok 1 saat
+eskidir ve `döndür`'ü `D_w`'den eski göstermiyordur; bu yüzden yazanın
+kaydı `T_giriş + D_w + 1 saat`'ten önce yazılır ve en geç 1 saat sonra
+köke girer, yani `T_giriş + D_w + 2 saat`'ten önce. Okuyan yaşı kendi
+kökünün zaman damgasıyla ölçüyorsa `D > D_w + 2 saat + tanık saat farkı`
+yeter; yerel saatiyle ölçüyorsa kökün eskiliği için 1 saat daha eklenir.
+`D_w = 0` (yazanın kökü değeri hiç göstermiyor) ve birkaç dakikalık saat
+farkıyla `D = 4 saat` güvenlidir.
+
+### Modelin dayandığı varsayım: kayıt zamanında günlüğe girer
+
+Model dürüst bir kaydı, yazıldığı adımda günlüğe koyar. A2'de bu yalnızca
+sıra içindi; burada yük taşır, çünkü yazanın tazelik denetimi kayıt
+**köke girdiğinde** de geçerli olmalıdır. Gerçekte tanıklar 1 saatlik
+sınırı kaydı **aldıkları** andan sayar. Ağdaki bir saldırgan dürüst bir
+`çıkar`'ın yüklenmesini düşürüp `döndür` oturduktan sonra günlüğe
+yazarsa, `döndür`'ü izlemiş okuyanlar onda kalır, sonra gelenler `çıkar`'ı
+izler: bölünmüş görünüm (`no_split_view_membership` yalnızca iki üyelik
+değişikliğini karşılaştırdığı için bunu yakalamaz). Tasarımın bunu
+önlemesi gerekir; A4'te `hesap.md`'ye yazılacak öneri:
+
+- Bir `AK` kaydı, denetlendiği tanıklı kökü (özeti ya da zaman damgası)
+  taşır. Okuyanlar ve tanıklar, o kökten `1 saat + saat farkı`'ndan sonra
+  köke giren kaydı geçersiz sayar.
+- Yazan, kayıt zamanında köke girmezse tazeliği yeniden denetler ve kaydı
+  yeniden imzalar.
+
+### Dürüst döndürmeye etkisi
+
+Döndüren cihaz kendi `döndür`'ünü `D` boyunca bekleyen sayar ve eski
+`IK`'sini kullanmayı sürdürür. Bu sürede aynı başa bir `AK` kaydı yazılırsa
+`döndür` düşer (kural 1) ve cihaz yeni baştan yeniden döndürür. Haftalık
+döndürmede bunun kullanıcıya etkisi yoktur. `IK`'sinin sızdığından
+şüphelenilen bir cihaz için döndürme 4 saate kadar sürer; o durumda doğru
+işlem çıkarmadır.
 
 ### Lemmalar
 
 A2'nin "her iz" lemmaları bu modelde de geçerlidir ve yeniden kanıtlanmaz:
 model yalnızca sonucu olmayan bir kural (`Log_Age`), yeni olaylar ve
-kısıtlar ekler, bu yüzden bu modelin her izi A2'nin de bir izidir. ("Her
+kısıtlar ekler. Bu modelin bir izinden `Log_Age` adımları çıkarılınca
+A2'nin bir izi kalır ve A2'nin hiçbir lemması ya da kısıtı `Old`,
+`WriteFresh` ya da `Settled`'dan söz etmez. Bu gerekçe iki dosyanın aynı
+kalmasına dayanır: A2'de bir kural değişirse A3'te de aynı değişiklik
+yapılmalıdır (ileride A3'ü A2'den betikle üretmek bunu güvenceye alır). ("Her
 iz" lemmalarını burada yeniden kanıtlamak, yeni kısıtlar aramayı
 büyüttüğü için 10 dakikada bitmiyordu.) A2'nin iki "iz var" lemması
 burada yeniden kanıtlanır, çünkü kısıtlar bir izi ortadan kaldırabilir.
@@ -246,7 +289,8 @@ Yeni olanlar:
 | Lemma | Tür | Ne söyler |
 | --- | --- | --- |
 | `sanity_contact_follows_settled_rotate` | iz var | Oturmuş bir `döndür` yine izlenebilir; kural döndürmeyi engellemez |
-| `no_rotate_branch_past_removal` | her iz | **H3, A2'deki açık kapandı:** bir üye `x`'i bir baştan çıkarıyorsa hiçbir okuyan o başta `x`'in `döndür`'ünü izlemez; hangisi önce yazılmış olursa olsun. A2'deki saldırı izinin ikinci adımı bu yüzden imkânsızdır |
+| `sanity_remove_beats_unsettled_rotate` | iz var | `IK`'si sızmış cihazın `döndür`'ü henüz otururken aynı baştan yazılan `çıkar` geçer ve kişi onu izler; bekleyen bir `döndür` çıkarmayı geciktiremez |
+| `no_rotate_branch_past_removal` | her iz | **H3, A2'deki açık kapandı:** bir üye `x`'i bir baştan çıkarıyorsa hiçbir okuyan o başta `x`'in `döndür`'ünü izlemez; hangisi önce yazılmış olursa olsun. Yalnızca çıkarmanın yapıldığı başı kapsar; A2'deki saldırı izinin ikinci adımını engellemeye bu yeter, genel biçim aşağıda açık |
 
 ### Mutant sınamaları
 
