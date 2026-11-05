@@ -28,6 +28,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 CHAIN = os.path.join(HERE, "hayalet-halka-zincir.spthy")
 LOG = os.path.join(HERE, "hayalet-halka-gunluk.spthy")
 FRESH = os.path.join(HERE, "hayalet-halka-tazelik.spthy")
+SECRET = os.path.join(HERE, "hayalet-halka-gizlilik.spthy")
 TIMEOUT = int(os.environ.get("LEMMA_TIMEOUT", "600"))
 
 BOUND_ONE_STEP = """
@@ -310,6 +311,48 @@ lemma attack:
              r"restriction Writer_Fresh:\n  \"[^\"]*\"\n", "", 1),
         ],
         "lemma": ROTATE_AND_REMOVE_ATTACK,
+    },
+    {
+        "name": "contact_sends_without_freshness",
+        "why": "a contact sends without checking the log under its head",
+        "model": SECRET,
+        "edits": [
+            ("restriction Contact_Fresh",
+             r"restriction Contact_Fresh:\n(?:  [^\n]*\n)+?(?=\n)", "", 1),
+        ],
+        "lemma": """
+lemma attack:
+  exists-trace
+  "Ex r hh k d x #t #i.
+      Signed(d, r, hh, 'remove', h(x)) @ t
+    & Kem(hh, k) @ i
+    & #t < #i
+    & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)
+    & not (Ex #x. Step('MT') @ x) & not (Ex #x. Step('AT') @ x)
+    & not (Ex #x. Step('AR') @ x)
+    & not (Ex y z #x. ExtWrite(y, z) @ x)"
+""",
+    },
+    {
+        "name": "receive_signature_not_checked",
+        "why": "a contact takes an offer as the ring's without checking its IK signature",
+        "model": SECRET,
+        "edits": [
+            ("rule Contact_Receive_1:",
+             r"(rule Contact_Receive_1:(?:(?!\nrule ).)*?)Eq\(verify\(sig, <'offer', r, hh, g>, sik\), true\),\n      ",
+             r"\1", 1),
+        ],
+        "lemma": """
+lemma attack:
+  exists-trace
+  "Ex c r hh g s #p #i.
+      Pin(c, r, hh) @ p
+    & Received(c, r, hh, g, s) @ i
+    & not (Ex a b e f #o. OfferedBy(a, b, e, f) @ o)
+    & not (Ex e #x. RevIK(e) @ x)
+    & not (Ex u #x. Step(u) @ x)
+    & not (Ex y z #x. ExtWrite(y, z) @ x)"
+""",
     },
 ]
 
