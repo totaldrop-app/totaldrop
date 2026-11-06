@@ -156,12 +156,15 @@ function entryLines(catalog, field, key, render) {
 const text = (t) => escapeValue(t);
 const words = (t, where) => escapeList(keywords(t, where));
 
+// The generated files' own copyright lines; not this file's.
+// REUSE-IgnoreStart
 const HEADER =
   "# SPDX-FileCopyrightText: 2026 The TotalDrop Contributors\n" +
   "# SPDX-License-Identifier: GPL-3.0-or-later\n" +
   "#\n" +
   "# Written by tools/desktop-entries.mjs from l10n/app: change the text\n" +
   "# there and run `node tools/desktop-entries.mjs write`.\n";
+// REUSE-IgnoreEnd
 
 export function appEntry(catalog) {
   return [
