@@ -465,8 +465,8 @@ class AppLocalizationsJa extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '共有された$count個の項目を読み取れなかったため、除外しました。',
-      one: '共有された1個の項目を読み取れなかったため、除外しました。',
+      other: '共有された$count件の項目を読み取れなかったため、除外しました。',
+      one: '共有された1件の項目を読み取れなかったため、除外しました。',
     );
     return '$_temp0';
   }

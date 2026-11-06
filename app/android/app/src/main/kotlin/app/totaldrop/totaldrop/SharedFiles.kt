@@ -11,6 +11,8 @@ import android.os.Process
 import android.provider.OpenableColumns
 import java.io.File
 import java.io.IOException
+import java.io.InputStream
+import java.io.OutputStream
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 
@@ -41,7 +43,8 @@ object SharedFiles {
     /** Longest file name a copy keeps, in UTF-8 bytes (ext4's limit). */
     const val MAX_NAME_BYTES = 255
 
-    /** At most this many files from one share. */
+    /** At most this many files from one share; the rest count as
+     * skipped. */
     const val MAX_FILES = 10_000
 
     /** Room left on the disk after the copy, so the phone does not fill up. */
@@ -62,7 +65,7 @@ object SharedFiles {
         intent.clipData?.let { clip ->
             for (i in 0 until clip.itemCount) clip.getItemAt(i).uri?.let(out::add)
         }
-        return out.take(MAX_FILES)
+        return out.toList()
     }
 
     /** Whether a share intent carries text and no file. */
@@ -134,14 +137,46 @@ object SharedFiles {
      */
     fun uniqueNames(names: List<String>): List<String> {
         val taken = HashSet<String>()
+        // The next number to try for a name, so many copies of one name
+        // do not try every number again.
+        val next = HashMap<String, Int>()
         return names.map { name ->
             var candidate = name
-            var n = 2
+            val key = name.lowercase()
+            var n = next[key] ?: 2
             while (!taken.add(candidate.lowercase())) {
                 candidate = fit(name, " ($n)")
                 n += 1
             }
+            if (candidate != name) next[key] = n
             candidate
+        }
+    }
+
+    /** Copying stopped: the share was dropped, or the disk is full. */
+    class Stopped(val noSpace: Boolean) : IOException(if (noSpace) "no space" else "dropped")
+
+    /**
+     * Copies [input] to [output] in blocks of [buffer]. Before each block it
+     * asks [dropped] whether to stop, and [spaceLeft] how much room the disk
+     * has: below [SPARE_BYTES] it stops, so a size a provider got wrong or
+     * did not say cannot fill the phone. Returns the bytes copied.
+     */
+    fun copyStream(
+        input: InputStream,
+        output: OutputStream,
+        buffer: ByteArray,
+        dropped: () -> Boolean,
+        spaceLeft: () -> Long,
+    ): Long {
+        var total = 0L
+        while (true) {
+            if (dropped()) throw Stopped(noSpace = false)
+            if (spaceLeft() < SPARE_BYTES + buffer.size) throw Stopped(noSpace = true)
+            val n = input.read(buffer)
+            if (n < 0) return total
+            output.write(buffer, 0, n)
+            total += n
         }
     }
 }
@@ -149,7 +184,9 @@ object SharedFiles {
 /**
  * Copies shares into their own folders under [root], one at a time, and
  * deletes them: every copy and delete runs on one thread, so a delete never
- * meets a copy half way. A dropped share stops copying at the next block.
+ * meets a copy half way. A dropped share stops copying at the next block;
+ * its open stream is closed too, so a provider that stops sending cannot
+ * hold the thread.
  */
 class ShareCopier(
     private val root: File,
@@ -159,6 +196,9 @@ class ShareCopier(
 ) {
     private val worker = Executors.newSingleThreadExecutor { r -> Thread(r, "share-copy") }
     private val dropped = ConcurrentHashMap.newKeySet<Long>()
+    // The stream each share is reading now, closed from outside to end a
+    // read that waits.
+    private val reading = ConcurrentHashMap<Long, InputStream>()
 
     /** Copies [uris] as share [id]; [done] gets the result, or null when
      * nothing could be copied, on the worker. A dropped share gets no
@@ -186,14 +226,28 @@ class ShareCopier(
     fun drop(ids: Collection<Long>) {
         if (ids.isEmpty()) return
         dropped.addAll(ids)
+        for (id in ids) reading[id]?.let(::closeQuietly)
         worker.execute {
             for (id in ids) File(root, id.toString()).deleteRecursively()
         }
     }
 
-    /** Deletes every copy, left from an earlier run. */
+    /** Deletes every copy, left from an earlier run; one still copying
+     * stops. */
     fun clearAll() {
+        for ((id, stream) in reading) {
+            dropped.add(id)
+            closeQuietly(stream)
+        }
         worker.execute { root.deleteRecursively() }
+    }
+
+    private fun closeQuietly(stream: InputStream) {
+        try {
+            stream.close()
+        } catch (_: Exception) {
+            // Already closed, or the provider is gone: either way it ends.
+        }
     }
 
     private fun readable(uri: Uri): Boolean {
@@ -213,7 +267,7 @@ class ShareCopier(
 
     private fun copyNow(id: Long, uris: List<Uri>, dir: File): SharedFiles.Copied? {
         if (id in dropped) return null
-        val usable = uris.filter(::readable)
+        val usable = uris.take(SharedFiles.MAX_FILES).filter(::readable)
         if (usable.isEmpty()) return null
         val meta = usable.mapIndexed { i, uri -> query(uri, i) }
         val names = SharedFiles.uniqueNames(meta.map { it.first })
@@ -238,19 +292,31 @@ class ShareCopier(
                 skipped += 1
                 continue
             }
-            input.use { i ->
-                target.outputStream().use { o ->
-                    while (true) {
-                        if (id in dropped) return null
-                        val n = i.read(buffer)
-                        if (n < 0) break
-                        o.write(buffer, 0, n)
+            reading[id] = input
+            try {
+                input.use { i ->
+                    target.outputStream().use { o ->
+                        SharedFiles.copyStream(i, o, buffer, { id in dropped }, { dir.usableSpace })
                     }
                 }
+            } catch (e: SharedFiles.Stopped) {
+                // Dropped, or the disk is full: the whole share ends.
+                throw e
+            } catch (e: Exception) {
+                // This file could not be read to the end: it is left out.
+                if (id in dropped) throw e
+                target.delete()
+                skipped += 1
+                continue
+            } finally {
+                reading.remove(id)
             }
             items.add(SharedFiles.Item(name, target.path, target.length()))
         }
-        if (items.isEmpty()) return null
+        if (items.isEmpty()) {
+            dir.deleteRecursively()
+            return null
+        }
         return SharedFiles.Copied(items, skipped)
     }
 

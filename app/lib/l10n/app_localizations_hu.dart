@@ -487,8 +487,7 @@ class AppLocalizationsHu extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other:
-          '$count megosztott elemet nem sikerült beolvasni, ezért kimaradtak.',
+      other: '$count megosztott elemet nem sikerült beolvasni, ezért kimaradt.',
       one: 'Egy megosztott elemet nem sikerült beolvasni, ezért kimaradt.',
     );
     return '$_temp0';

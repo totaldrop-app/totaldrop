@@ -109,6 +109,15 @@ class SendViewModel extends ChangeNotifier {
     return true;
   }
 
+  /// The person stopped waiting for the shares being copied: they stop
+  /// and their copies are deleted. What was chosen before stays.
+  void cancelShares() {
+    if (_pendingShares.isEmpty) return;
+    unawaited(_shares.drop(_pendingShares.toList()));
+    _pendingShares.clear();
+    notifyListeners();
+  }
+
   /// The files of share [id] could not be copied: the screen says so as it
   /// does for the picker (#271).
   void shareFailed(int id) {

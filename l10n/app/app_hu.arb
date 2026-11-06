@@ -131,5 +131,5 @@
   "transferNoticeBody": "Akkor is folytatódik, ha más alkalmazásokat használsz.",
   "shareTextSoon": "A TotalDrop még nem küld szöveget, csak fájlokat. Ossz meg inkább egy fájlt.",
   "shareBusy": "Még folyamatban van egy átvitel. Várd meg, amíg befejeződik, vagy állítsd le, aztán oszd meg újra.",
-  "shareSkipped": "{count, plural, one{Egy megosztott elemet nem sikerült beolvasni, ezért kimaradt.} other{{count} megosztott elemet nem sikerült beolvasni, ezért kimaradtak.}}"
+  "shareSkipped": "{count, plural, one{Egy megosztott elemet nem sikerült beolvasni, ezért kimaradt.} other{{count} megosztott elemet nem sikerült beolvasni, ezért kimaradt.}}"
 }

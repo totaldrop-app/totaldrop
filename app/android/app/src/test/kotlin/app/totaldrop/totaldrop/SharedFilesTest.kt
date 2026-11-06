@@ -6,7 +6,10 @@ package app.totaldrop.totaldrop
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Assert.assertThrows
 import org.junit.Test
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 
 /** Which shared URIs are read, and the names their copies get (#53). */
 class SharedFilesTest {
@@ -100,6 +103,55 @@ class SharedFilesTest {
             assertTrue(n.toByteArray(Charsets.UTF_8).size <= SharedFiles.MAX_NAME_BYTES)
         }
         assertTrue(names[1].endsWith(" (2).txt"))
+    }
+
+    private val roomy = { Long.MAX_VALUE }
+
+    @Test
+    fun aStreamIsCopiedWhole() {
+        val data = ByteArray(10_000) { it.toByte() }
+        val out = ByteArrayOutputStream()
+        val n = SharedFiles.copyStream(ByteArrayInputStream(data), out, ByteArray(4096), { false }, roomy)
+        assertEquals(10_000L, n)
+        assertTrue(data.contentEquals(out.toByteArray()))
+    }
+
+    /** A share dropped while it copies stops at the next block. */
+    @Test
+    fun aDroppedShareStops() {
+        var blocks = 0
+        val out = ByteArrayOutputStream()
+        val e = assertThrows(SharedFiles.Stopped::class.java) {
+            SharedFiles.copyStream(
+                ByteArrayInputStream(ByteArray(10_000)), out, ByteArray(1000),
+                { ++blocks > 3 }, roomy,
+            )
+        }
+        assertFalse(e.noSpace)
+        assertEquals(3000, out.size())
+    }
+
+    /** A provider that says nothing, or too little, about the size cannot
+     * fill the disk: the copy stops with room to spare. */
+    @Test
+    fun aFullDiskStopsTheCopy() {
+        var free = SharedFiles.SPARE_BYTES + 3000
+        val out = ByteArrayOutputStream()
+        val e = assertThrows(SharedFiles.Stopped::class.java) {
+            SharedFiles.copyStream(
+                ByteArrayInputStream(ByteArray(10_000)), out, ByteArray(1000),
+                { false }, { free.also { free -= 1000 } },
+            )
+        }
+        assertTrue(e.noSpace)
+        assertTrue(out.size() <= 3000)
+    }
+
+    @Test
+    fun manySameNamesStayUnique() {
+        val names = SharedFiles.uniqueNames(List(5000) { "IMG.jpg" })
+        assertEquals(5000, names.map { it.lowercase() }.toSet().size)
+        assertEquals("IMG (5000).jpg", names.last())
     }
 
     @Test
