@@ -40,13 +40,18 @@ export const LOGIN = /^[A-Za-z0-9](?:[A-Za-z0-9]|-(?=[A-Za-z0-9])){0,38}(?:\[bot
 const KINDS = ["person", "ai", "bot"];
 // Roles with a translated label (tm.role.<role>); add the key in all 35
 // languages before adding a role here.
-const ROLES = ["maintainer", "contributor"];
+const ROLES = ["maintainer", "contributor", "tester"];
 // Disciplines, in page order, with their English text (translations:
 // site/public/i18n/<tag>.json, keys tm.a.<key> and tm.a.<key>.d).
 const AREAS = {
   core: ["Core and cryptography", "The Rust library every app shares: the transfer protocol, encryption and the code that reads untrusted input, with its fuzz tests."],
   formal: ["Formal verification", "Tamarin models that check the security of the account design before it is built."],
   android: ["Android", "The Flutter app for phones and tablets, in Material 3 and in the system's colours."],
+  // iOS and macOS have no code in the repository yet (#309): for now they
+  // only tag people. Their descriptions get translations when they become
+  // disciplines with paths.
+  ios: ["iOS", "The app for iPhone and iPad."],
+  macos: ["macOS", "The app for Mac."],
   linux: ["Linux desktop", "The Qt 6 app for KDE, GNOME, Hyprland and Omarchy, and its deb, rpm and Arch packages."],
   cli: ["Command line", "The totaldrop command, for terminals and scripts."],
   site: ["Web site", "totaldrop.app in 35 languages, without trackers or third-party requests."],
@@ -259,7 +264,7 @@ const stat = (n) => (n ? `<dl class="stat"><dt data-i18n="tm.col.changes">Change
 
 function personCard(c, s, p) {
   const pr = s.profiles[p.login];
-  const role = { maintainer: "Founder and maintainer", contributor: "Contributor" }[p.role];
+  const role = { maintainer: "Founder and maintainer", contributor: "Contributor", tester: "Tester" }[p.role];
   const areas = (p.areas || []).map((a) => `<li data-i18n="tm.a.${a}">${esc(AREAS[a][0])}</li>`).join("");
   const links = [githubLink(`https://github.com/${p.login}`, p.login)];
   if (pr.website) links.push(webLink(pr.website));
