@@ -440,27 +440,6 @@ class AppLocalizationsDa extends AppLocalizations {
   String get sendDropHint => 'Du kan også trække filer over i dette vindue.';
 
   @override
-  String get editUndo => 'Fortryd';
-
-  @override
-  String get editRedo => 'Annuller fortryd';
-
-  @override
-  String get editCut => 'Klip';
-
-  @override
-  String get editCopy => 'Kopiér';
-
-  @override
-  String get editPaste => 'Indsæt';
-
-  @override
-  String get editDelete => 'Slet';
-
-  @override
-  String get editSelectAll => 'Markér alt';
-
-  @override
   String get sendQrHint => 'Eller scan koden med den anden enheds kamera.';
 
   @override
@@ -496,6 +475,27 @@ class AppLocalizationsDa extends AppLocalizations {
 
     return '$percentString %';
   }
+
+  @override
+  String get editUndo => 'Fortryd';
+
+  @override
+  String get editRedo => 'Annuller fortryd';
+
+  @override
+  String get editCut => 'Klip';
+
+  @override
+  String get editCopy => 'Kopiér';
+
+  @override
+  String get editPaste => 'Indsæt';
+
+  @override
+  String get editDelete => 'Slet';
+
+  @override
+  String get editSelectAll => 'Markér alt';
 
   @override
   String get transferNoticeChannel => 'Overførsler';

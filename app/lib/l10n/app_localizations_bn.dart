@@ -428,27 +428,6 @@ class AppLocalizationsBn extends AppLocalizations {
   String get sendDropHint => 'আপনি ফাইলগুলো এই উইন্ডোতে টেনেও আনতে পারেন।';
 
   @override
-  String get editUndo => 'পূর্বাবস্থায় ফেরান';
-
-  @override
-  String get editRedo => 'পুনরায় করুন';
-
-  @override
-  String get editCut => 'কাটুন';
-
-  @override
-  String get editCopy => 'কপি করুন';
-
-  @override
-  String get editPaste => 'পেস্ট করুন';
-
-  @override
-  String get editDelete => 'মুছুন';
-
-  @override
-  String get editSelectAll => 'সব নির্বাচন করুন';
-
-  @override
   String get sendQrHint =>
       'অথবা অন্য ডিভাইসের ক্যামেরা দিয়ে এই কোডটি স্ক্যান করুন।';
 
@@ -485,6 +464,27 @@ class AppLocalizationsBn extends AppLocalizations {
 
     return '$percentString%';
   }
+
+  @override
+  String get editUndo => 'পূর্বাবস্থায় ফেরান';
+
+  @override
+  String get editRedo => 'পুনরায় করুন';
+
+  @override
+  String get editCut => 'কাটুন';
+
+  @override
+  String get editCopy => 'কপি করুন';
+
+  @override
+  String get editPaste => 'পেস্ট করুন';
+
+  @override
+  String get editDelete => 'মুছুন';
+
+  @override
+  String get editSelectAll => 'সব নির্বাচন করুন';
 
   @override
   String get transferNoticeChannel => 'স্থানান্তর';

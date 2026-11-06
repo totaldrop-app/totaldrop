@@ -115,13 +115,6 @@
 
   "sendDropHere": "วางไฟล์ที่นี่",
   "sendDropHint": "คุณลากไฟล์มาวางบนหน้าต่างนี้ได้ด้วย",
-  "editUndo": "เลิกทำ",
-  "editRedo": "ทำซ้ำ",
-  "editCut": "ตัด",
-  "editCopy": "คัดลอก",
-  "editPaste": "วาง",
-  "editDelete": "ลบ",
-  "editSelectAll": "เลือกทั้งหมด",
   "sendQrHint": "หรือสแกนรหัสนี้ด้วยกล้องของอุปกรณ์อีกเครื่อง",
   "sendWaitingAccept": "ตรวจสอบคำ แล้วรอให้ผู้รับยอมรับ",
   "receiveFromImage": "อ่าน QR จากรูปภาพ",
@@ -132,6 +125,14 @@
   "back": "กลับ",
   "codeSuggestions": "คำแนะนำ",
   "progressPercent": "{percent}%",
+
+  "editUndo": "เลิกทำ",
+  "editRedo": "ทำซ้ำ",
+  "editCut": "ตัด",
+  "editCopy": "คัดลอก",
+  "editPaste": "วาง",
+  "editDelete": "ลบ",
+  "editSelectAll": "เลือกทั้งหมด",
 
   "transferNoticeChannel": "การโอน",
   "transferNoticeSending": "กำลังส่งด้วย TotalDrop",

@@ -444,27 +444,6 @@ class AppLocalizationsEl extends AppLocalizations {
       'Μπορείτε επίσης να σύρετε αρχεία σε αυτό το παράθυρο.';
 
   @override
-  String get editUndo => 'Αναίρεση';
-
-  @override
-  String get editRedo => 'Επανάληψη';
-
-  @override
-  String get editCut => 'Αποκοπή';
-
-  @override
-  String get editCopy => 'Αντιγραφή';
-
-  @override
-  String get editPaste => 'Επικόλληση';
-
-  @override
-  String get editDelete => 'Διαγραφή';
-
-  @override
-  String get editSelectAll => 'Επιλογή όλων';
-
-  @override
   String get sendQrHint =>
       'Ή σαρώστε αυτόν τον κωδικό με την κάμερα της άλλης συσκευής.';
 
@@ -502,6 +481,27 @@ class AppLocalizationsEl extends AppLocalizations {
 
     return '$percentString%';
   }
+
+  @override
+  String get editUndo => 'Αναίρεση';
+
+  @override
+  String get editRedo => 'Επανάληψη';
+
+  @override
+  String get editCut => 'Αποκοπή';
+
+  @override
+  String get editCopy => 'Αντιγραφή';
+
+  @override
+  String get editPaste => 'Επικόλληση';
+
+  @override
+  String get editDelete => 'Διαγραφή';
+
+  @override
+  String get editSelectAll => 'Επιλογή όλων';
 
   @override
   String get transferNoticeChannel => 'Μεταφορές';

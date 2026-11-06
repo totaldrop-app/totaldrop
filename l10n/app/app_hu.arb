@@ -115,13 +115,6 @@
 
   "sendDropHere": "Húzd ide a fájlokat",
   "sendDropHint": "A fájlokat erre az ablakra is ráhúzhatod.",
-  "editUndo": "Visszavonás",
-  "editRedo": "Újra",
-  "editCut": "Kivágás",
-  "editCopy": "Másolás",
-  "editPaste": "Beillesztés",
-  "editDelete": "Törlés",
-  "editSelectAll": "Az összes kijelölése",
   "sendQrHint": "Vagy olvasd be ezt a kódot a másik eszköz kamerájával.",
   "sendWaitingAccept": "Ellenőrizd a szavakat, aztán várd meg, hogy a címzett elfogadja.",
   "receiveFromImage": "QR-kód beolvasása képről",
@@ -132,6 +125,14 @@
   "back": "Vissza",
   "codeSuggestions": "Javaslatok",
   "progressPercent": "{percent}%",
+
+  "editUndo": "Visszavonás",
+  "editRedo": "Újra",
+  "editCut": "Kivágás",
+  "editCopy": "Másolás",
+  "editPaste": "Beillesztés",
+  "editDelete": "Törlés",
+  "editSelectAll": "Az összes kijelölése",
 
   "transferNoticeChannel": "Átvitelek",
   "transferNoticeSending": "Küldés TotalDroppal",

@@ -72,12 +72,16 @@
   Bölgenin rakam sistemi (ör. Arap-Hint rakamları) Linux ve CLI'da
   korunur; Android'de ve sitede bu ayrıca test edilmeden iddia edilmez.
 - **Yazı yönü:** Dilden çıkarılır (Arapça, Farsça, İbranice, Urduca sağdan
-  sola). Linux'ta `QGuiApplication::setLayoutDirection` seçilen dilden
-  ayarlanır. Qt'nin ve masaüstü stilinin kendi çizdiği metinler (metin
-  alanlarının sağ tık menüsü) uygulamanın kendi `QTranslator`'ıyla
-  `l10n/app`'ten çevrilir: Qt'nin `qtdeclarative_*.qm` dosyalarında bu
-  metinler yalnızca birkaç dilde var (#307, 6 Kasım 2026'da bu yol
-  `qtbase_*.qm` yüklemenin yerini aldı).
+  sola). Linux'ta arayüz QML'de `LayoutMirroring` ile aynalanır; Qt'nin
+  kendi pencereleri (ör. menü) için uygulamanın çevirmeni
+  `QT_LAYOUT_DIRECTION`'ı seçilen dilden verir. Qt'nin ve masaüstü
+  stilinin kendi çizdiği metinler (metin alanlarının sağ tık menüsü) de bu
+  çevirmenle `l10n/app`'ten gelir; Qt'nin `qtdeclarative_*.qm`
+  dosyalarında bu metinler yalnızca birkaç dilde var. KDE'nin
+  `org.kde.desktop` stili kendi çevirisini sonra yükler ve onun olduğu
+  dillerde o görünür (#307, 6 Kasım 2026; önceki metin `qtbase_*.qm`
+  yüklemeyi ve `setLayoutDirection`'ı öngörüyordu, ikisi de
+  uygulanmamıştı).
 - **CLI:** Terminaller iki yönlü metni güvenilir göstermediği için sağdan
   sola diller komut satırında şimdilik İngilizce'ye düşer. Makineye yönelik
   çıktı (kodun kendisi, ileride `--json`) hiçbir dilde çevrilmez, ASCII

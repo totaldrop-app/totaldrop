@@ -441,27 +441,6 @@ class AppLocalizationsNb extends AppLocalizations {
   String get sendDropHint => 'Du kan også dra filer inn i dette vinduet.';
 
   @override
-  String get editUndo => 'Angre';
-
-  @override
-  String get editRedo => 'Gjør om';
-
-  @override
-  String get editCut => 'Klipp ut';
-
-  @override
-  String get editCopy => 'Kopier';
-
-  @override
-  String get editPaste => 'Lim inn';
-
-  @override
-  String get editDelete => 'Slett';
-
-  @override
-  String get editSelectAll => 'Merk alt';
-
-  @override
   String get sendQrHint =>
       'Eller skann koden med kameraet på den andre enheten.';
 
@@ -498,6 +477,27 @@ class AppLocalizationsNb extends AppLocalizations {
 
     return '$percentString %';
   }
+
+  @override
+  String get editUndo => 'Angre';
+
+  @override
+  String get editRedo => 'Gjør om';
+
+  @override
+  String get editCut => 'Klipp ut';
+
+  @override
+  String get editCopy => 'Kopier';
+
+  @override
+  String get editPaste => 'Lim inn';
+
+  @override
+  String get editDelete => 'Slett';
+
+  @override
+  String get editSelectAll => 'Merk alt';
 
   @override
   String get transferNoticeChannel => 'Overføringer';

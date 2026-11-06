@@ -115,13 +115,6 @@
 
   "sendDropHere": "Déposez les fichiers ici",
   "sendDropHint": "Vous pouvez aussi faire glisser des fichiers sur cette fenêtre.",
-  "editUndo": "Annuler",
-  "editRedo": "Rétablir",
-  "editCut": "Couper",
-  "editCopy": "Copier",
-  "editPaste": "Coller",
-  "editDelete": "Supprimer",
-  "editSelectAll": "Tout sélectionner",
   "sendQrHint": "Ou scannez ce code avec l'appareil photo de l'autre appareil.",
   "sendWaitingAccept": "Vérifiez les mots, puis attendez que le destinataire accepte.",
   "receiveFromImage": "Lire un QR code depuis une image",
@@ -132,6 +125,14 @@
   "back": "Retour",
   "codeSuggestions": "Suggestions",
   "progressPercent": "{percent} %",
+
+  "editUndo": "Annuler",
+  "editRedo": "Rétablir",
+  "editCut": "Couper",
+  "editCopy": "Copier",
+  "editPaste": "Coller",
+  "editDelete": "Supprimer",
+  "editSelectAll": "Tout sélectionner",
 
   "transferNoticeChannel": "Transferts",
   "transferNoticeSending": "Envoi avec TotalDrop",

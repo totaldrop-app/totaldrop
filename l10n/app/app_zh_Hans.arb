@@ -115,13 +115,6 @@
 
   "sendDropHere": "将文件拖放到此处",
   "sendDropHint": "也可以将文件拖到此窗口中。",
-  "editUndo": "撤销",
-  "editRedo": "重做",
-  "editCut": "剪切",
-  "editCopy": "复制",
-  "editPaste": "粘贴",
-  "editDelete": "删除",
-  "editSelectAll": "全选",
   "sendQrHint": "或者用另一台设备的相机扫描此二维码。",
   "sendWaitingAccept": "核对单词，然后等待接收方接受。",
   "receiveFromImage": "从图片读取二维码",
@@ -132,6 +125,14 @@
   "back": "返回",
   "codeSuggestions": "建议",
   "progressPercent": "{percent}%",
+
+  "editUndo": "撤销",
+  "editRedo": "重做",
+  "editCut": "剪切",
+  "editCopy": "复制",
+  "editPaste": "粘贴",
+  "editDelete": "删除",
+  "editSelectAll": "全选",
 
   "transferNoticeChannel": "传输",
   "transferNoticeSending": "正在通过 TotalDrop 发送",

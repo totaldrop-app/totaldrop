@@ -115,13 +115,6 @@
 
   "sendDropHere": "אפשר לשחרר כאן קבצים",
   "sendDropHint": "אפשר גם לגרור קבצים אל החלון הזה.",
-  "editUndo": "ביטול",
-  "editRedo": "ביצוע חוזר",
-  "editCut": "גזירה",
-  "editCopy": "העתקה",
-  "editPaste": "הדבקה",
-  "editDelete": "מחיקה",
-  "editSelectAll": "בחירת הכול",
   "sendQrHint": "או לסרוק את הקוד הזה במצלמה של המכשיר השני.",
   "sendWaitingAccept": "יש לבדוק את המילים, ואז להמתין שהנמען יאשר.",
   "receiveFromImage": "קריאת QR מתמונה",
@@ -132,6 +125,14 @@
   "back": "חזרה",
   "codeSuggestions": "הצעות",
   "progressPercent": "{percent}%",
+
+  "editUndo": "ביטול",
+  "editRedo": "ביצוע חוזר",
+  "editCut": "גזירה",
+  "editCopy": "העתקה",
+  "editPaste": "הדבקה",
+  "editDelete": "מחיקה",
+  "editSelectAll": "בחירת הכול",
 
   "transferNoticeChannel": "העברות",
   "transferNoticeSending": "שליחה באמצעות TotalDrop",

@@ -115,13 +115,6 @@
 
   "sendDropHere": "فایل‌ها را اینجا رها کنید",
   "sendDropHint": "می‌توانید فایل‌ها را به این پنجره هم بکشید.",
-  "editUndo": "واگرد",
-  "editRedo": "ازنو",
-  "editCut": "برش",
-  "editCopy": "رونوشت",
-  "editPaste": "چسباندن",
-  "editDelete": "حذف",
-  "editSelectAll": "انتخاب همه",
   "sendQrHint": "یا این کد را با دوربین دستگاه دیگر اسکن کنید.",
   "sendWaitingAccept": "کلمات را بررسی کنید، سپس منتظر بمانید تا گیرنده بپذیرد.",
   "receiveFromImage": "خواندن QR از تصویر",
@@ -132,6 +125,14 @@
   "back": "برگشت",
   "codeSuggestions": "پیشنهادها",
   "progressPercent": "{percent}٪",
+
+  "editUndo": "واگرد",
+  "editRedo": "ازنو",
+  "editCut": "برش",
+  "editCopy": "کپی",
+  "editPaste": "چسباندن",
+  "editDelete": "حذف",
+  "editSelectAll": "انتخاب همه",
 
   "transferNoticeChannel": "انتقال‌ها",
   "transferNoticeSending": "در حال ارسال با TotalDrop",

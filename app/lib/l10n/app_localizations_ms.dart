@@ -427,27 +427,6 @@ class AppLocalizationsMs extends AppLocalizations {
   String get sendDropHint => 'Anda juga boleh seret fail ke tetingkap ini.';
 
   @override
-  String get editUndo => 'Buat asal';
-
-  @override
-  String get editRedo => 'Buat semula';
-
-  @override
-  String get editCut => 'Potong';
-
-  @override
-  String get editCopy => 'Salin';
-
-  @override
-  String get editPaste => 'Tampal';
-
-  @override
-  String get editDelete => 'Padam';
-
-  @override
-  String get editSelectAll => 'Pilih semua';
-
-  @override
   String get sendQrHint => 'Atau imbas kod ini dengan kamera peranti lain.';
 
   @override
@@ -483,6 +462,27 @@ class AppLocalizationsMs extends AppLocalizations {
 
     return '$percentString%';
   }
+
+  @override
+  String get editUndo => 'Buat asal';
+
+  @override
+  String get editRedo => 'Buat semula';
+
+  @override
+  String get editCut => 'Potong';
+
+  @override
+  String get editCopy => 'Salin';
+
+  @override
+  String get editPaste => 'Tampal';
+
+  @override
+  String get editDelete => 'Padam';
+
+  @override
+  String get editSelectAll => 'Pilih semua';
 
   @override
   String get transferNoticeChannel => 'Pemindahan';

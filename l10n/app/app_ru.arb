@@ -115,13 +115,6 @@
 
   "sendDropHere": "Перетащите файлы сюда",
   "sendDropHint": "Файлы также можно перетащить в это окно.",
-  "editUndo": "Отменить",
-  "editRedo": "Повторить",
-  "editCut": "Вырезать",
-  "editCopy": "Копировать",
-  "editPaste": "Вставить",
-  "editDelete": "Удалить",
-  "editSelectAll": "Выделить всё",
   "sendQrHint": "Или отсканируйте этот код камерой другого устройства.",
   "sendWaitingAccept": "Сверьте слова и дождитесь, пока получатель примет файлы.",
   "receiveFromImage": "Считать QR-код с изображения",
@@ -132,6 +125,14 @@
   "back": "Назад",
   "codeSuggestions": "Подсказки",
   "progressPercent": "{percent}%",
+
+  "editUndo": "Отменить",
+  "editRedo": "Повторить",
+  "editCut": "Вырезать",
+  "editCopy": "Копировать",
+  "editPaste": "Вставить",
+  "editDelete": "Удалить",
+  "editSelectAll": "Выделить всё",
 
   "transferNoticeChannel": "Передачи",
   "transferNoticeSending": "Отправка через TotalDrop",

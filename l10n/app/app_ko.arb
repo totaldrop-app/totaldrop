@@ -115,13 +115,6 @@
 
   "sendDropHere": "여기에 파일을 놓으세요",
   "sendDropHint": "이 창으로 파일을 끌어다 놓아도 됩니다.",
-  "editUndo": "실행 취소",
-  "editRedo": "다시 실행",
-  "editCut": "잘라내기",
-  "editCopy": "복사",
-  "editPaste": "붙여넣기",
-  "editDelete": "삭제",
-  "editSelectAll": "모두 선택",
   "sendQrHint": "또는 다른 기기의 카메라로 이 코드를 스캔하세요.",
   "sendWaitingAccept": "단어를 확인한 다음 받는 사람이 수락할 때까지 기다리세요.",
   "receiveFromImage": "이미지에서 QR 코드 읽기",
@@ -132,6 +125,14 @@
   "back": "뒤로",
   "codeSuggestions": "추천",
   "progressPercent": "{percent}%",
+
+  "editUndo": "실행 취소",
+  "editRedo": "다시 실행",
+  "editCut": "잘라내기",
+  "editCopy": "복사",
+  "editPaste": "붙여넣기",
+  "editDelete": "삭제",
+  "editSelectAll": "모두 선택",
 
   "transferNoticeChannel": "전송",
   "transferNoticeSending": "TotalDrop으로 보내는 중",

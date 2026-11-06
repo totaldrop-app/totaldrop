@@ -115,13 +115,6 @@
 
   "sendDropHere": "Släpp filer här",
   "sendDropHint": "Du kan också dra filer till det här fönstret.",
-  "editUndo": "Ångra",
-  "editRedo": "Gör om",
-  "editCut": "Klipp ut",
-  "editCopy": "Kopiera",
-  "editPaste": "Klistra in",
-  "editDelete": "Ta bort",
-  "editSelectAll": "Markera allt",
   "sendQrHint": "Eller skanna koden med den andra enhetens kamera.",
   "sendWaitingAccept": "Kontrollera orden och vänta sedan på att mottagaren accepterar.",
   "receiveFromImage": "Läs QR-kod från bild",
@@ -132,6 +125,14 @@
   "back": "Tillbaka",
   "codeSuggestions": "Förslag",
   "progressPercent": "{percent} %",
+
+  "editUndo": "Ångra",
+  "editRedo": "Gör om",
+  "editCut": "Klipp ut",
+  "editCopy": "Kopiera",
+  "editPaste": "Klistra in",
+  "editDelete": "Ta bort",
+  "editSelectAll": "Markera allt",
 
   "transferNoticeChannel": "Överföringar",
   "transferNoticeSending": "Skickar med TotalDrop",

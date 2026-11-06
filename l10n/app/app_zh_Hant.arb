@@ -115,13 +115,6 @@
 
   "sendDropHere": "將檔案拖放到這裡",
   "sendDropHint": "也可以將檔案拖曳到這個視窗中。",
-  "editUndo": "復原",
-  "editRedo": "重做",
-  "editCut": "剪下",
-  "editCopy": "複製",
-  "editPaste": "貼上",
-  "editDelete": "刪除",
-  "editSelectAll": "全選",
   "sendQrHint": "或者用另一部裝置的相機掃描這個 QR 碼。",
   "sendWaitingAccept": "核對單字，然後等待接收者接受。",
   "receiveFromImage": "從圖片讀取 QR 碼",
@@ -132,6 +125,14 @@
   "back": "返回",
   "codeSuggestions": "建議",
   "progressPercent": "{percent}%",
+
+  "editUndo": "復原",
+  "editRedo": "重做",
+  "editCut": "剪下",
+  "editCopy": "複製",
+  "editPaste": "貼上",
+  "editDelete": "刪除",
+  "editSelectAll": "全選",
 
   "transferNoticeChannel": "傳輸",
   "transferNoticeSending": "正在透過 TotalDrop 傳送",

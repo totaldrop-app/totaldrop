@@ -115,13 +115,6 @@
 
   "sendDropHere": "Plasați fișierele aici",
   "sendDropHint": "Puteți și să trageți fișiere în această fereastră.",
-  "editUndo": "Anulează",
-  "editRedo": "Refă",
-  "editCut": "Decupează",
-  "editCopy": "Copiază",
-  "editPaste": "Lipește",
-  "editDelete": "Șterge",
-  "editSelectAll": "Selectează tot",
   "sendQrHint": "Sau scanați acest cod cu camera celuilalt dispozitiv.",
   "sendWaitingAccept": "Verificați cuvintele, apoi așteptați ca destinatarul să accepte.",
   "receiveFromImage": "Citește codul QR din imagine",
@@ -132,6 +125,14 @@
   "back": "Înapoi",
   "codeSuggestions": "Sugestii",
   "progressPercent": "{percent}%",
+
+  "editUndo": "Anulează",
+  "editRedo": "Refă",
+  "editCut": "Decupează",
+  "editCopy": "Copiază",
+  "editPaste": "Lipește",
+  "editDelete": "Șterge",
+  "editSelectAll": "Selectează tot",
 
   "transferNoticeChannel": "Transferuri",
   "transferNoticeSending": "Se trimite cu TotalDrop",

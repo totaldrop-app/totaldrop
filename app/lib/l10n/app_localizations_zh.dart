@@ -401,27 +401,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sendDropHint => '也可以将文件拖到此窗口中。';
 
   @override
-  String get editUndo => '撤销';
-
-  @override
-  String get editRedo => '重做';
-
-  @override
-  String get editCut => '剪切';
-
-  @override
-  String get editCopy => '复制';
-
-  @override
-  String get editPaste => '粘贴';
-
-  @override
-  String get editDelete => '删除';
-
-  @override
-  String get editSelectAll => '全选';
-
-  @override
   String get sendQrHint => '或者用另一台设备的相机扫描此二维码。';
 
   @override
@@ -456,6 +435,27 @@ class AppLocalizationsZh extends AppLocalizations {
 
     return '$percentString%';
   }
+
+  @override
+  String get editUndo => '撤销';
+
+  @override
+  String get editRedo => '重做';
+
+  @override
+  String get editCut => '剪切';
+
+  @override
+  String get editCopy => '复制';
+
+  @override
+  String get editPaste => '粘贴';
+
+  @override
+  String get editDelete => '删除';
+
+  @override
+  String get editSelectAll => '全选';
 
   @override
   String get transferNoticeChannel => '传输';
@@ -883,27 +883,6 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get sendDropHint => '也可以将文件拖到此窗口中。';
 
   @override
-  String get editUndo => '撤销';
-
-  @override
-  String get editRedo => '重做';
-
-  @override
-  String get editCut => '剪切';
-
-  @override
-  String get editCopy => '复制';
-
-  @override
-  String get editPaste => '粘贴';
-
-  @override
-  String get editDelete => '删除';
-
-  @override
-  String get editSelectAll => '全选';
-
-  @override
   String get sendQrHint => '或者用另一台设备的相机扫描此二维码。';
 
   @override
@@ -938,6 +917,27 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
 
     return '$percentString%';
   }
+
+  @override
+  String get editUndo => '撤销';
+
+  @override
+  String get editRedo => '重做';
+
+  @override
+  String get editCut => '剪切';
+
+  @override
+  String get editCopy => '复制';
+
+  @override
+  String get editPaste => '粘贴';
+
+  @override
+  String get editDelete => '删除';
+
+  @override
+  String get editSelectAll => '全选';
 
   @override
   String get transferNoticeChannel => '传输';
@@ -1364,27 +1364,6 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get sendDropHint => '也可以將檔案拖曳到這個視窗中。';
 
   @override
-  String get editUndo => '復原';
-
-  @override
-  String get editRedo => '重做';
-
-  @override
-  String get editCut => '剪下';
-
-  @override
-  String get editCopy => '複製';
-
-  @override
-  String get editPaste => '貼上';
-
-  @override
-  String get editDelete => '刪除';
-
-  @override
-  String get editSelectAll => '全選';
-
-  @override
   String get sendQrHint => '或者用另一部裝置的相機掃描這個 QR 碼。';
 
   @override
@@ -1419,6 +1398,27 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
     return '$percentString%';
   }
+
+  @override
+  String get editUndo => '復原';
+
+  @override
+  String get editRedo => '重做';
+
+  @override
+  String get editCut => '剪下';
+
+  @override
+  String get editCopy => '複製';
+
+  @override
+  String get editPaste => '貼上';
+
+  @override
+  String get editDelete => '刪除';
+
+  @override
+  String get editSelectAll => '全選';
 
   @override
   String get transferNoticeChannel => '傳輸';

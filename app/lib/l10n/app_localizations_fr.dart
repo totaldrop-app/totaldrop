@@ -450,27 +450,6 @@ class AppLocalizationsFr extends AppLocalizations {
       'Vous pouvez aussi faire glisser des fichiers sur cette fenêtre.';
 
   @override
-  String get editUndo => 'Annuler';
-
-  @override
-  String get editRedo => 'Rétablir';
-
-  @override
-  String get editCut => 'Couper';
-
-  @override
-  String get editCopy => 'Copier';
-
-  @override
-  String get editPaste => 'Coller';
-
-  @override
-  String get editDelete => 'Supprimer';
-
-  @override
-  String get editSelectAll => 'Tout sélectionner';
-
-  @override
   String get sendQrHint =>
       'Ou scannez ce code avec l\'appareil photo de l\'autre appareil.';
 
@@ -508,6 +487,27 @@ class AppLocalizationsFr extends AppLocalizations {
 
     return '$percentString %';
   }
+
+  @override
+  String get editUndo => 'Annuler';
+
+  @override
+  String get editRedo => 'Rétablir';
+
+  @override
+  String get editCut => 'Couper';
+
+  @override
+  String get editCopy => 'Copier';
+
+  @override
+  String get editPaste => 'Coller';
+
+  @override
+  String get editDelete => 'Supprimer';
+
+  @override
+  String get editSelectAll => 'Tout sélectionner';
 
   @override
   String get transferNoticeChannel => 'Transferts';
