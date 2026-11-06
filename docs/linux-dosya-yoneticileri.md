@@ -81,5 +81,12 @@ Her sürümden önce, paket kurulu bir sistemde:
 3. Sistem dili Türkçe ve Arapça iken menü metnine bakın.
 4. Görev çubuğunda ya da başlatıcıda TotalDrop'a sağ tıklayıp "Dosya
    gönder" ve "Dosya al"ı deneyin.
+5. Dolphin'de yerel dosyaya başka görünümlerden de bakın: masaüstü
+   (`desktop:/`), son kullanılanlar (`recentlyused:/`) ve Baloo araması.
+   Menü çıkıyorsa doğru dosyayı gönderdiğini, çıkmıyorsa bunu buraya
+   bilinen sınır olarak yazın (KF6'nın `X-KDE-Protocols=file` için
+   `url()` mi `mostLocalUrl()` mi denetlediğine bağlı).
+6. Nautilus'ta menü çalışmazsa nedeni günlüktedir:
+   `journalctl --user -b | grep TotalDrop`.
 
 Nautilus menüyü yalnızca yeniden başlayınca okur: `nautilus -q`.

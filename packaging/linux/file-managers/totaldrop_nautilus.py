@@ -17,6 +17,8 @@
 # The menu text comes from l10n/app (desktopSendWith); the block between
 # the GENERATED lines is written by `node tools/desktop-entries.mjs write`.
 
+import sys
+
 import gi
 
 try:
@@ -96,15 +98,24 @@ def local_uris(files):
     return uris or None
 
 
+def _app_info():
+    """TotalDrop's desktop entry, or None when it is not installed (or is
+    hidden) for this session."""
+    return Gio.DesktopAppInfo.new(APP_ID + ".desktop")
+
+
 def launch(uris, context=None):
     """Open TotalDrop with `uris`. False when TotalDrop is not installed
-    for this session or did not start."""
-    info = Gio.DesktopAppInfo.new(APP_ID + ".desktop")
+    for this session or did not start; the reason goes to stderr, which
+    Nautilus leaves in the journal (journalctl --user)."""
+    info = _app_info()
     if info is None:
+        print(f"TotalDrop: {APP_ID}.desktop was not found", file=sys.stderr)
         return False
     try:
         return info.launch_uris(uris, context)
-    except GLib.Error:
+    except GLib.Error as e:
+        print(f"TotalDrop: could not start: {e}", file=sys.stderr)
         return False
 
 
@@ -120,11 +131,11 @@ def _launch_context():
 
 
 class TotalDropMenu(GObject.GObject, Nautilus.MenuProvider):
-    # Nautilus 43 and later call get_file_items(files); older API versions
-    # passed the window first.
-    def get_file_items(self, *args):
-        uris = local_uris(args[-1])
-        if uris is None:
+    # API 4.0 (Nautilus 43 and later) passes only the selection.
+    def get_file_items(self, files):
+        uris = local_uris(files)
+        # No menu when TotalDrop is not installed, as Nemo's Dependencies=.
+        if uris is None or _app_info() is None:
             return []
         item = Nautilus.MenuItem(
             name="TotalDrop::send",

@@ -6,7 +6,9 @@
 #
 #   python3 -I packaging/linux/file-managers/test_totaldrop_nautilus.py
 
+import contextlib
 import importlib.util
+import io
 import pathlib
 import sys
 import types
@@ -141,10 +143,10 @@ class Extension(unittest.TestCase):
         items[0].activate()
         self.assertEqual(FakeAppInfo.launched, [(["file:///home/a/x.pdf"], None)])
 
-    def test_old_api_passes_the_window_first(self):
+    def test_no_menu_when_totaldrop_is_not_installed(self):
         m = load()
-        items = m.TotalDropMenu().get_file_items(object(), [FakeFile("file:///a")])
-        self.assertEqual(len(items), 1)
+        m.APP_ID = "missing"
+        self.assertEqual(m.TotalDropMenu().get_file_items([FakeFile("file:///a")]), [])
 
     def test_nothing_is_offered_for_remote_or_empty_selections(self):
         m = load()
@@ -156,10 +158,18 @@ class Extension(unittest.TestCase):
     def test_launch_failures_are_reported_not_raised(self):
         m = load()
         FakeAppInfo.fail = True
-        self.assertFalse(m.launch(["file:///a"]))
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            self.assertFalse(m.launch(["file:///a"]))
+        # Said on stderr, so it shows in the journal (journalctl --user).
+        self.assertIn("TotalDrop", err.getvalue())
+        self.assertIn("no", err.getvalue())
         FakeAppInfo.fail = False
         m.APP_ID = "missing"
-        self.assertFalse(m.launch(["file:///a"]))
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            self.assertFalse(m.launch(["file:///a"]))
+        self.assertIn("missing.desktop", err.getvalue())
 
 
 if __name__ == "__main__":
