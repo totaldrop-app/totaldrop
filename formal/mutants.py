@@ -97,6 +97,17 @@ lemma attack [heuristic=c]:
     & (All L v #x #y. Old(L, v) @ x & Old(L, v) @ y ==> #x = #y)"
 """
 
+# Rules a mutant's attack does not need, dropped so that the search ends.
+# Dropping rules only removes traces, so an attack found in the smaller
+# model is an attack on the mutant too.
+SECRET_UNUSED = [
+    "Log_Write_AK_1", "Log_Write_AK_2", "Log_Write_IK_1", "Log_Write_IK_2",
+    "Reveal_IK", "Reveal_A1", "Reveal_A2", "Reveal_State", "Reveal_Ring_1",
+    "Reveal_Ring_2", "Accept_Rotate_1", "Accept_Rotate_2", "Accept_Remove_1",
+    "Accept_Remove_2", "Log_Age", "Member_Add_2", "Member_Remove_2",
+]
+
+
 MUTANTS = [
     {
         "name": "accept_checks_ed_half_only",
@@ -317,8 +328,8 @@ lemma attack:
         "why": "a contact sends without checking the log under its head",
         "model": SECRET,
         "edits": [
-            ("restriction Contact_Fresh",
-             r"restriction Contact_Fresh:\n(?:  [^\n]*\n)+?(?=\n)", "", 1),
+            ("restriction Contact_Fresh_Send",
+             r"restriction Contact_Fresh_Send:\n(?:  [^\n]*\n)+?(?=\n)", "", 1),
         ],
         "lemma": """
 lemma attack:
@@ -330,6 +341,55 @@ lemma attack:
     & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)
     & not (Ex #x. Step('MT') @ x) & not (Ex #x. Step('AT') @ x)
     & not (Ex #x. Step('AR') @ x)
+    & not (Ex y z #x. ExtWrite(y, z) @ x)"
+""",
+    },
+    {
+        "name": "receive_without_freshness",
+        "why": "a contact takes an offer without checking the log under the sender's head",
+        "model": SECRET,
+        "edits": [
+            ("restriction Contact_Fresh_Receive",
+             r"restriction Contact_Fresh_Receive:\n(?:  [^\n]*\n)+?(?=\n)", "", 1),
+        ],
+        "drop": SECRET_UNUSED + ["Member_Rotate_1", "Member_Rotate_2", "Contact_Send",
+                                 "Contact_Send_Offer", "Device_Offer_1", "Contact_Receive_1"],
+        "lemma": """
+lemma attack:
+  exists-trace
+  "Ex c r hh g d x #t #i.
+      Signed(d, r, hh, 'remove', h(x)) @ t
+    & Received(c, r, hh, g, x) @ i
+    & #t < #i
+    & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)
+    & not (Ex #x. Step('MT') @ x) & not (Ex #x. Step('AT') @ x)
+    & not (Ex #x. Step('AR') @ x)
+    & not (Ex y z #x. ExtWrite(y, z) @ x)"
+""",
+    },
+    {
+        "name": "rotator_follows_own_rotate_at_once",
+        "why": "a device moves to the head of its own rotate before it settles",
+        "model": SECRET,
+        "edits": [
+            ("Member_Rotate_1 view",
+             r"\[ View\(d, h\(rb\), h\(hb\), d, y\), Out\(<body, sign\(<'ik'",
+             "[ View(d, h(rb), h(body), d, y), Out(<body, sign(<'ik'", 1),
+            ("Member_Rotate_2 view",
+             r"\[ View\(d, h\(rb\), h\(hb\), y, d\), Out\(<body, sign\(<'ik'",
+             "[ View(d, h(rb), h(body), y, d), Out(<body, sign(<'ik'", 1),
+        ],
+        "drop": SECRET_UNUSED + ["Member_Rotate_2", "Device_Offer_1", "Device_Offer_2",
+                                 "Contact_Receive_1", "Contact_Receive_2"],
+        "lemma": """
+lemma attack [heuristic=c]:
+  exists-trace
+  "Ex r h1 nr s k d x #t #i.
+      Signed(d, r, h(<'rec', r, h1, 'rotate', nr, s, k>), 'remove', h(x)) @ t
+    & Fresh(h(<'log', h1>)) @ i
+    & #t < #i
+    & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)
+    & not (Ex #x. Step('AT') @ x) & not (Ex #x. Step('AR') @ x)
     & not (Ex y z #x. ExtWrite(y, z) @ x)"
 """,
     },
@@ -363,6 +423,10 @@ def mutate(text, mutant):
         if count != expected:
             sys.exit(f"{mutant['name']}: edit '{label}' applied {count} times, "
                      f"expected {expected}; update mutants.py")
+    for rule in mutant.get("drop", []):
+        text, count = re.subn(r"\nrule %s:\n.*?(?=\n\n|\nrule )" % re.escape(rule), "", text, flags=re.S)
+        if count != 1:
+            sys.exit(f"{mutant['name']}: rule {rule} found {count} times; update mutants.py")
     first = re.search(r"^lemma ", text, re.M)
     cut = first.start() - 1 if first else -1
     if cut < 0 or "\nrestriction " in text[cut:]:

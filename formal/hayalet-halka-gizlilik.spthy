@@ -14,7 +14,10 @@
  *  - a contact encrypts offers to the KEM key of its head, and a ring device
  *    offers files to a contact signed with its IK;
  *  - a contact sends and receives only after its freshness check: no AK
- *    record and nothing settled under the key of the head it uses.
+ *    record and nothing settled under the key of the head it uses;
+ *  - a device follows its own rotate only once it has settled, like every
+ *    reader (found by the review of #282: otherwise a remove written from
+ *    the new head leaves contacts sending to the old one).
  *
  * The record body changes (it carries the KEM key), so this is a new model:
  * the lemmas of parts 1 to 3 are not carried over and P1/P2 are not claimed
@@ -71,7 +74,7 @@ rule Member_Add_1:
         body = <'rec', h(rb), h(hb), 'add', n, d, pk(~re)>
     in
     [ Fr(~re), View(d, h(rb), h(hb), d, 'empty'), AddReq(n), !DevKey(d, ~ik, ~a1, ~a2) ]
-  --[ RingSecret(h(body), ~re), WriteFresh(h(<'log', h(hb)>)), LogValid(h(<'log', h(hb)>), body, 'ak'), Step('MA'), Signed(d, h(rb), h(hb), 'add', n) ]->
+  --[ Holds(d, h(rb), h(hb)), RingSecret(h(body), ~re), WriteFresh(h(<'log', h(hb)>)), LogValid(h(<'log', h(hb)>), body, 'ak'), Step('MA'), Signed(d, h(rb), h(hb), 'add', n) ]->
     [ View(d, h(rb), h(body), d, n), View(n, h(rb), h(body), d, n),
       Out(<body, sign(<'ed', body>, ~a1), sign(<'ml', body>, ~a2)>), !Head(h(rb), h(body), d, n),
       !LogEntry(h(<'log', h(hb)>), <body, sign(<'ed', body>, ~a1), sign(<'ml', body>, ~a2)>),
@@ -82,7 +85,7 @@ rule Member_Add_2:
         body = <'rec', h(rb), h(hb), 'add', n, d, pk(~re)>
     in
     [ Fr(~re), View(d, h(rb), h(hb), 'empty', d), AddReq(n), !DevKey(d, ~ik, ~a1, ~a2) ]
-  --[ RingSecret(h(body), ~re), WriteFresh(h(<'log', h(hb)>)), LogValid(h(<'log', h(hb)>), body, 'ak'), Step('MA'), Signed(d, h(rb), h(hb), 'add', n) ]->
+  --[ Holds(d, h(rb), h(hb)), RingSecret(h(body), ~re), WriteFresh(h(<'log', h(hb)>)), LogValid(h(<'log', h(hb)>), body, 'ak'), Step('MA'), Signed(d, h(rb), h(hb), 'add', n) ]->
     [ View(d, h(rb), h(body), n, d), View(n, h(rb), h(body), n, d),
       Out(<body, sign(<'ed', body>, ~a1), sign(<'ml', body>, ~a2)>), !Head(h(rb), h(body), n, d),
       !LogEntry(h(<'log', h(hb)>), <body, sign(<'ed', body>, ~a1), sign(<'ml', body>, ~a2)>),
@@ -93,7 +96,7 @@ rule Member_Remove_1:
         body = <'rec', h(rb), h(hb), 'remove', h(x), d, pk(~re)>
     in
     [ Fr(~re), View(d, h(rb), h(hb), d, x), !DevKey(d, ~ik, ~a1, ~a2) ]
-  --[ RingSecret(h(body), ~re), WriteFresh(h(<'log', h(hb)>)), LogValid(h(<'log', h(hb)>), body, 'ak'), Step('MR'), Signed(d, h(rb), h(hb), 'remove', h(x)), NotEmpty(x) ]->
+  --[ Holds(d, h(rb), h(hb)), RingSecret(h(body), ~re), WriteFresh(h(<'log', h(hb)>)), LogValid(h(<'log', h(hb)>), body, 'ak'), Step('MR'), Signed(d, h(rb), h(hb), 'remove', h(x)), NotEmpty(x) ]->
     [ View(d, h(rb), h(body), d, 'empty'),
       Out(<body, sign(<'ed', body>, ~a1), sign(<'ml', body>, ~a2)>), !Head(h(rb), h(body), d, 'empty'),
       !LogEntry(h(<'log', h(hb)>), <body, sign(<'ed', body>, ~a1), sign(<'ml', body>, ~a2)>),
@@ -104,7 +107,7 @@ rule Member_Remove_2:
         body = <'rec', h(rb), h(hb), 'remove', h(x), d, pk(~re)>
     in
     [ Fr(~re), View(d, h(rb), h(hb), x, d), !DevKey(d, ~ik, ~a1, ~a2) ]
-  --[ RingSecret(h(body), ~re), WriteFresh(h(<'log', h(hb)>)), LogValid(h(<'log', h(hb)>), body, 'ak'), Step('MR'), Signed(d, h(rb), h(hb), 'remove', h(x)), NotEmpty(x) ]->
+  --[ Holds(d, h(rb), h(hb)), RingSecret(h(body), ~re), WriteFresh(h(<'log', h(hb)>)), LogValid(h(<'log', h(hb)>), body, 'ak'), Step('MR'), Signed(d, h(rb), h(hb), 'remove', h(x)), NotEmpty(x) ]->
     [ View(d, h(rb), h(body), 'empty', d),
       Out(<body, sign(<'ed', body>, ~a1), sign(<'ml', body>, ~a2)>), !Head(h(rb), h(body), 'empty', d),
       !LogEntry(h(<'log', h(hb)>), <body, sign(<'ed', body>, ~a1), sign(<'ml', body>, ~a2)>),
@@ -112,13 +115,19 @@ rule Member_Remove_2:
 
 restriction NotEmpty: "All x #i. NotEmpty(x) @ i ==> not (x = 'empty')"
 
+/* A device that writes a rotate stays at the old head: it follows its own
+   rotate only once it has settled, like every reader (Accept_Rotate).
+   Until then it writes AK records from the old head, where they win over
+   its rotate (fork rule 1). Following the own rotate at once would let a
+   remove be written from the new head while contacts still send to the
+   old one, which the removed device is a member of (review of #282). */
 rule Member_Rotate_1:
     let d = <pk(~ik), pk(~a1), pk(~a2)>
         body = <'rec', h(rb), h(hb), 'rotate', ~nr, d, pk(~re)>
     in
     [ Fr(~re), View(d, h(rb), h(hb), d, y), !DevKey(d, ~ik, ~a1, ~a2), Fr(~nr) ]
-  --[ RingSecret(h(body), ~re), WriteFresh(h(<'log', h(hb)>)), LogValid(h(<'log', h(hb)>), body, 'ik'), Step('MT'), Signed(d, h(rb), h(hb), 'rotate', ~nr) ]->
-    [ View(d, h(rb), h(body), d, y), Out(<body, sign(<'ik', body>, ~ik)>), !Head(h(rb), h(body), d, y),
+  --[ Holds(d, h(rb), h(hb)), RingSecret(h(body), ~re), WriteFresh(h(<'log', h(hb)>)), LogValid(h(<'log', h(hb)>), body, 'ik'), Step('MT'), Signed(d, h(rb), h(hb), 'rotate', ~nr) ]->
+    [ View(d, h(rb), h(hb), d, y), Out(<body, sign(<'ik', body>, ~ik)>), !Head(h(rb), h(body), d, y),
       !LogEntry(h(<'log', h(hb)>), <body, sign(<'ik', body>, ~ik)>),
       !RingSec(h(body), ~re), !HeadKem(h(body), pk(~re)) ]
 
@@ -127,8 +136,8 @@ rule Member_Rotate_2:
         body = <'rec', h(rb), h(hb), 'rotate', ~nr, d, pk(~re)>
     in
     [ Fr(~re), View(d, h(rb), h(hb), y, d), !DevKey(d, ~ik, ~a1, ~a2), Fr(~nr) ]
-  --[ RingSecret(h(body), ~re), WriteFresh(h(<'log', h(hb)>)), LogValid(h(<'log', h(hb)>), body, 'ik'), Step('MT'), Signed(d, h(rb), h(hb), 'rotate', ~nr) ]->
-    [ View(d, h(rb), h(body), y, d), Out(<body, sign(<'ik', body>, ~ik)>), !Head(h(rb), h(body), y, d),
+  --[ Holds(d, h(rb), h(hb)), RingSecret(h(body), ~re), WriteFresh(h(<'log', h(hb)>)), LogValid(h(<'log', h(hb)>), body, 'ik'), Step('MT'), Signed(d, h(rb), h(hb), 'rotate', ~nr) ]->
+    [ View(d, h(rb), h(hb), y, d), Out(<body, sign(<'ik', body>, ~ik)>), !Head(h(rb), h(body), y, d),
       !LogEntry(h(<'log', h(hb)>), <body, sign(<'ik', body>, ~ik)>),
       !RingSec(h(body), ~re), !HeadKem(h(body), pk(~re)) ]
 
@@ -138,7 +147,7 @@ rule Accept_Add_1:
         body = <'rec', r, hh, 'add', n, s, k>
     in
     [ View(o, r, hh, s, 'empty'), !LogEntry(h(<'log', hh>), <body, sig1, sig2>) ]
-  --[ ReadL(h(<'log', hh>), body, 'ak'), Step('AA'), Eq(verify(sig1, <'ed', body>, sa1), true),
+  --[ Holds(o, r, hh), ReadL(h(<'log', hh>), body, 'ak'), Step('AA'), Eq(verify(sig1, <'ed', body>, sa1), true),
       Eq(verify(sig2, <'ml', body>, sa2), true),
       NotEmpty(n),
       Accept(o, r, hh, 'add', n, s) ]->
@@ -149,7 +158,7 @@ rule Accept_Add_2:
         body = <'rec', r, hh, 'add', n, s, k>
     in
     [ View(o, r, hh, 'empty', s), !LogEntry(h(<'log', hh>), <body, sig1, sig2>) ]
-  --[ ReadL(h(<'log', hh>), body, 'ak'), Step('AA'), Eq(verify(sig1, <'ed', body>, sa1), true),
+  --[ Holds(o, r, hh), ReadL(h(<'log', hh>), body, 'ak'), Step('AA'), Eq(verify(sig1, <'ed', body>, sa1), true),
       Eq(verify(sig2, <'ml', body>, sa2), true),
       NotEmpty(n),
       Accept(o, r, hh, 'add', n, s) ]->
@@ -160,7 +169,7 @@ rule Accept_Remove_1:
         body = <'rec', r, hh, 'remove', h(x), s, k>
     in
     [ View(o, r, hh, s, x), !LogEntry(h(<'log', hh>), <body, sig1, sig2>) ]
-  --[ ReadL(h(<'log', hh>), body, 'ak'), Step('AR'), Eq(verify(sig1, <'ed', body>, sa1), true),
+  --[ Holds(o, r, hh), ReadL(h(<'log', hh>), body, 'ak'), Step('AR'), Eq(verify(sig1, <'ed', body>, sa1), true),
       Eq(verify(sig2, <'ml', body>, sa2), true),
       NotEmpty(x),
       Accept(o, r, hh, 'remove', h(x), s) ]->
@@ -171,7 +180,7 @@ rule Accept_Remove_2:
         body = <'rec', r, hh, 'remove', h(x), s, k>
     in
     [ View(o, r, hh, x, s), !LogEntry(h(<'log', hh>), <body, sig1, sig2>) ]
-  --[ ReadL(h(<'log', hh>), body, 'ak'), Step('AR'), Eq(verify(sig1, <'ed', body>, sa1), true),
+  --[ Holds(o, r, hh), ReadL(h(<'log', hh>), body, 'ak'), Step('AR'), Eq(verify(sig1, <'ed', body>, sa1), true),
       Eq(verify(sig2, <'ml', body>, sa2), true),
       NotEmpty(x),
       Accept(o, r, hh, 'remove', h(x), s) ]->
@@ -182,7 +191,7 @@ rule Accept_Rotate_1:
         body = <'rec', r, hh, 'rotate', nr, s, k>
     in
     [ View(o, r, hh, s, y), !LogEntry(h(<'log', hh>), <body, sig>) ]
-  --[ ReadL(h(<'log', hh>), body, 'ik'), Settled(h(<'log', hh>), <body, sig>), Step('AT'), Eq(verify(sig, <'ik', body>, sik), true),
+  --[ Holds(o, r, hh), ReadL(h(<'log', hh>), body, 'ik'), Settled(h(<'log', hh>), <body, sig>), Step('AT'), Eq(verify(sig, <'ik', body>, sik), true),
       Accept(o, r, hh, 'rotate', nr, s) ]->
     [ View(o, r, h(body), s, y), !Head(r, h(body), s, y) ]
 
@@ -191,7 +200,7 @@ rule Accept_Rotate_2:
         body = <'rec', r, hh, 'rotate', nr, s, k>
     in
     [ View(o, r, hh, y, s), !LogEntry(h(<'log', hh>), <body, sig>) ]
-  --[ ReadL(h(<'log', hh>), body, 'ik'), Settled(h(<'log', hh>), <body, sig>), Step('AT'), Eq(verify(sig, <'ik', body>, sik), true),
+  --[ Holds(o, r, hh), ReadL(h(<'log', hh>), body, 'ik'), Settled(h(<'log', hh>), <body, sig>), Step('AT'), Eq(verify(sig, <'ik', body>, sik), true),
       Accept(o, r, hh, 'rotate', nr, s) ]->
     [ View(o, r, h(body), y, s), !Head(r, h(body), y, s) ]
 
@@ -278,19 +287,31 @@ rule Reveal_Ring_2:
 /* A contact sends an offer to the ring at its head: encrypted to the head's
    KEM key, and only after its freshness check (hesap.md, "Tazelik"): no AK
    record and nothing settled under the key of its head. An unsettled
-   rotate does not stop it; the old head is still the current one then. */
+   rotate does not stop it; the old head is still the current one then,
+   for the ring's devices too (they follow a rotate only once settled, see
+   Member_Rotate_1). This is looser than hesap.md, where any valid value
+   under the key stops sending; A4 writes the looser rule into hesap.md.
+   Holds(o, r, hh) in every rule that uses a view marks that o is at hh. */
 rule Contact_Send:
     [ View(c, r, hh, a, b), !Contact(c), !HeadKem(hh, k) ]
-  --[ Fresh(h(<'log', hh>)), Kem(hh, k) ]->
+  --[ Holds(c, r, hh), Fresh(h(<'log', hh>)), FreshSend(h(<'log', hh>)), Kem(hh, k) ]->
     [ View(c, r, hh, a, b), SendTo(c, r, hh, a, b, k) ]
 
+/* The offer goes out in a later step (this keeps the search finishing);
+   the freshness check is made again then, so it holds when the offer is
+   sent and not only when the head's key was looked up. */
 rule Contact_Send_Offer:
     [ SendTo(c, r, hh, a, b, k), Fr(~f) ]
-  --[ SentOffer(c, r, hh, ~f, a, b), OfferKem(~f, k) ]->
+  --[ Fresh(h(<'log', hh>)), FreshSend(h(<'log', hh>)), SentOffer(c, r, hh, ~f, a, b) ]->
     [ Out(aenc(<'offer', ~f>, k)) ]
 
-restriction Contact_Fresh:
-  "All L #i. Fresh(L) @ i
+restriction Contact_Fresh_Send:
+  "All L #i. FreshSend(L) @ i
+    ==> not (Ex v #t. LogValid(L, v, 'ak') @ t & #t < #i)
+      & not (Ex v #t. Old(L, v) @ t & #t < #i)"
+
+restriction Contact_Fresh_Receive:
+  "All L #i. FreshRecv(L) @ i
     ==> not (Ex v #t. LogValid(L, v, 'ak') @ t & #t < #i)
       & not (Ex v #t. Old(L, v) @ t & #t < #i)"
 
@@ -304,7 +325,7 @@ rule Device_Offer_1:
     let d = <pk(~ik), pk(~a1), pk(~a2)>
     in
     [ View(d, h(rb), h(hb), d, y), !DevKey(d, ~ik, ~a1, ~a2), Fr(~g) ]
-  --[ OfferedBy(d, h(rb), h(hb), ~g) ]->
+  --[ Holds(d, h(rb), h(hb)), OfferedBy(d, h(rb), h(hb), ~g) ]->
     [ View(d, h(rb), h(hb), d, y),
       Out(<<'from', h(rb), h(hb), ~g>, sign(<'offer', h(rb), h(hb), ~g>, ~ik)>) ]
 
@@ -312,7 +333,7 @@ rule Device_Offer_2:
     let d = <pk(~ik), pk(~a1), pk(~a2)>
     in
     [ View(d, h(rb), h(hb), y, d), !DevKey(d, ~ik, ~a1, ~a2), Fr(~g) ]
-  --[ OfferedBy(d, h(rb), h(hb), ~g) ]->
+  --[ Holds(d, h(rb), h(hb)), OfferedBy(d, h(rb), h(hb), ~g) ]->
     [ View(d, h(rb), h(hb), y, d),
       Out(<<'from', h(rb), h(hb), ~g>, sign(<'offer', h(rb), h(hb), ~g>, ~ik)>) ]
 
@@ -320,7 +341,7 @@ rule Contact_Receive_1:
     let s = <sik, sa1, sa2>
     in
     [ View(c, r, hh, s, y), !Contact(c), In(<<'from', r, hh, g>, sig>) ]
-  --[ Fresh(h(<'log', hh>)), Eq(verify(sig, <'offer', r, hh, g>, sik), true),
+  --[ Holds(c, r, hh), Fresh(h(<'log', hh>)), FreshRecv(h(<'log', hh>)), Eq(verify(sig, <'offer', r, hh, g>, sik), true),
       Received(c, r, hh, g, s) ]->
     [ View(c, r, hh, s, y) ]
 
@@ -328,7 +349,7 @@ rule Contact_Receive_2:
     let s = <sik, sa1, sa2>
     in
     [ View(c, r, hh, y, s), !Contact(c), In(<<'from', r, hh, g>, sig>) ]
-  --[ Fresh(h(<'log', hh>)), Eq(verify(sig, <'offer', r, hh, g>, sik), true),
+  --[ Holds(c, r, hh), Fresh(h(<'log', hh>)), FreshRecv(h(<'log', hh>)), Eq(verify(sig, <'offer', r, hh, g>, sik), true),
       Received(c, r, hh, g, s) ]->
     [ View(c, r, hh, y, s) ]
 
@@ -382,9 +403,9 @@ lemma sent_head_key_secret [heuristic=c]:
    no_rotate_branch_past_removal of part 3, the contact is not on a rotate
    branch of x either. */
 lemma no_offer_to_head_after_removal [heuristic=c]:
-  "All r hh k d x #t #i.
+  "All c r hh f a b d x #t #i.
       Signed(d, r, hh, 'remove', h(x)) @ t
-    & Kem(hh, k) @ i
+    & SentOffer(c, r, hh, f, a, b) @ i
     & #t < #i
     ==> F"
 
@@ -414,5 +435,50 @@ lemma no_offer_from_removed_device [heuristic=c]:
     & Received(c, r, hh, g, x) @ i
     & #t < #i
     ==> F"
+
+/* P3 at the head before an unsettled rotate. A member that removes x from
+   the head h2 that a rotate started (h1 to h2) has followed that rotate,
+   so it had settled: no contact passes its freshness check at h1 any more,
+   neither to send nor to receive. Without the rule that a device follows
+   its own rotate only once settled, this fails: the remover writes from h2
+   at once, contacts still send to h1, and x is a member of h1. */
+/* Helper: anyone at a head that a rotate started has followed that
+   rotate, so it had settled. */
+lemma at_rotate_head_settled [use_induction, reuse, heuristic=C]:
+  "All o r h1 nr s k #t. Holds(o, r, h(<'rec', r, h1, 'rotate', nr, s, k>)) @ t
+    ==> Ex v #x. Old(h(<'log', h1>), v) @ x & #x < #t"
+
+lemma no_fresh_check_before_rotate_after_removal [heuristic=c]:
+  "All r h1 nr s k d x L #t #i.
+      Signed(d, r, h(<'rec', r, h1, 'rotate', nr, s, k>), 'remove', h(x)) @ t
+    & Fresh(L) @ i
+    & L = h(<'log', h1>)
+    & #t < #i
+    ==> F"
+
+/* Part 3's closing of the rotate-branch gap, proved again for this model:
+   no reader follows a rotate by x on a head from which a member removes x. */
+lemma no_rotate_branch_past_removal [heuristic=c]:
+  "All c r hh nr x d #k #t.
+      Accept(c, r, hh, 'rotate', nr, x) @ k
+    & Signed(d, r, hh, 'remove', h(x)) @ t
+    & not (x = d)
+    ==> F"
+
+/* Executability after a removal: a contact that has followed a remove
+   still sends, to the new head. */
+lemma sanity_contact_sends_after_removal [heuristic=c]:
+  exists-trace
+  "Ex c r h0 x s k1 k2 f #p #a #b #i.
+      Pin(c, r, h0) @ p
+    & Accept(c, r, h0, 'add', x, s) @ a
+    & Accept(c, r, h(<'rec', r, h0, 'add', x, s, k1>), 'remove', h(x), s) @ b
+    & SentOffer(c, r, h(<'rec', r, h(<'rec', r, h0, 'add', x, s, k1>), 'remove', h(x), s, k2>), f, s, 'empty') @ i
+    & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)
+    & not (Ex #x. Step('MT') @ x) & not (Ex #x. Step('AT') @ x)
+    & not (Ex y z #x. ExtWrite(y, z) @ x)
+    & not (Ex e #x. RevState(e) @ x)
+    & not (Ex L v #x. Old(L, v) @ x)
+    & not (Ex a b e g #x. OfferedBy(a, b, e, g) @ x)"
 
 end
