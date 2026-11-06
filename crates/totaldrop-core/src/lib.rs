@@ -227,10 +227,15 @@ fn sender_check(receiver: &Hints, own: &PathOptions) -> Result<()> {
 }
 
 /// Whether the receiver will use the sender's relay too, as
-/// [`receiver_relay`] decides on its side.
+/// [`receiver_relay`] decides on its side. The receiver announces its own
+/// setting as it is, so its `check_url` runs here on that spelling too.
 fn shares_relay(receiver: &Hints, own: &PathOptions) -> bool {
     match (own.relay_url(), receiver.relay.as_deref()) {
-        (Some(mine), Some(theirs)) => relay::check_url(mine).is_ok() && same_relay(mine, theirs),
+        (Some(mine), Some(theirs)) => {
+            relay::check_url(mine).is_ok()
+                && relay::check_url(theirs).is_ok()
+                && same_relay(mine, theirs)
+        }
         _ => false,
     }
 }
@@ -750,6 +755,36 @@ mod tests {
                     "{url}"
                 );
             }
+        }
+    }
+
+    /// Two spellings of one relay that only one side's `check_url`
+    /// accepts: the sender links only if the receiver will come (#301
+    /// review). The receiver checks its own spelling, which is the one it
+    /// announces.
+    #[test]
+    fn sender_links_only_to_a_relay_the_receiver_accepts() {
+        for (mine, theirs) in [
+            (
+                "wss://relay.example/v0/relay",
+                "WSS://relay.example/v0/relay",
+            ),
+            (
+                "wss://relay.example/v0/relay",
+                "wss://u@relay.example/v0/relay",
+            ),
+            (
+                "ws://localhost:4000/v0/relay",
+                "ws://LOCALHOST:4000/v0/relay",
+            ),
+        ] {
+            let receiver_uses =
+                receiver_relay(&with_address(hints(Some(mine))), &options(theirs, false))
+                    .unwrap()
+                    .is_some();
+            let sender_links =
+                shares_relay(&with_address(hints(Some(theirs))), &options(mine, false));
+            assert_eq!(sender_links, receiver_uses, "{mine} / {theirs}");
         }
     }
 
