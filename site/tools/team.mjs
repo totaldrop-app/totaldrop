@@ -40,8 +40,8 @@ const ROLES = ["maintainer", "contributor", "designer", "tester", "translator"];
 // site/public/i18n/<tag>.json, keys tm.a.<key> and tm.a.<key>.d).
 const AREAS = {
   core: ["Core and cryptography", "The Rust library every app shares: the transfer protocol, encryption and the code that reads untrusted input, with its fuzz tests."],
-  formal: ["Formal verification", "Tamarin models that prove the account design keeps its promises before any of it is written."],
-  android: ["Android", "The Flutter app for phones and tablets, in Material 3 and following the system's colours."],
+  formal: ["Formal verification", "Tamarin models that check the security of the account design before it is built."],
+  android: ["Android", "The Flutter app for phones and tablets, in Material 3 and in the system's colours."],
   linux: ["Linux desktop", "The Qt 6 app for KDE, GNOME, Hyprland and Omarchy, and its deb, rpm and Arch packages."],
   cli: ["Command line", "The totaldrop command, for terminals and scripts."],
   site: ["Web site", "totaldrop.app in 35 languages, without trackers or third-party requests."],
@@ -85,6 +85,9 @@ function loadConfig() {
     if (!KINDS.includes(p.kind)) fail(`team.json: ${p.login}: kind must be one of ${KINDS.join(", ")}`);
     if (p.kind === "person" && !ROLES.includes(p.role)) fail(`team.json: ${p.login}: role must be one of ${ROLES.join(", ")}`);
     for (const a of p.areas || []) if (!(a in AREAS)) fail(`team.json: ${p.login}: unknown area ${a}`);
+    // A display name, when the person prefers another spelling than their
+    // GitHub profile's (for example the profile is in capitals).
+    if (p.name !== undefined && (typeof p.name !== "string" || p.name !== clean(p.name, 80) || p.name === "")) fail(`team.json: ${p.login}: bad name`);
   }
   for (const d of c.disciplines) {
     if (!(d.key in AREAS)) fail(`team.json: unknown discipline ${d.key}`);
@@ -205,7 +208,7 @@ function who(c, s, login) {
   if (login === "") return `<span data-i18n="tm.others">Others without a linked GitHub account</span>`;
   if (p && p.kind === "ai") return "Claude";
   if (p && p.kind === "bot") return "Dependabot";
-  if (p && s.profiles[login]) return esc(s.profiles[login].name);
+  if (p && s.profiles[login]) return esc(p.name || s.profiles[login].name);
   return `<a href="https://github.com/${esc(login)}">${esc(login)}</a>`;
 }
 
@@ -236,7 +239,7 @@ function personCard(c, s, p) {
   if (pr.website) links.push(`<a href="${esc(pr.website)}">${esc(shown(pr.website))}</a>`);
   return `        <li class="person">
           <img class="avatar" src="/team/avatars/${esc(pr.avatar)}" alt="" width="96" height="96" decoding="async">
-          <h3>${esc(pr.name)}</h3>
+          <h3>${esc(p.name || pr.name)}</h3>
           <p class="role" data-i18n="tm.role.${p.role}">${role}</p>${pr.bio ? `\n          <p class="bio" dir="auto">${esc(pr.bio)}</p>` : ""}${areas ? `\n          <ul class="tags">${areas}</ul>` : ""}${stat}
           <p class="links">${links.join(" ")}</p>
         </li>`;

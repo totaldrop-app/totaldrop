@@ -505,3 +505,29 @@ pre.cmd { white-space: pre-wrap; overflow-wrap: break-word; margin: 0; padding: 
   .bk-tokens td:nth-child(2), .bk-tokens td:nth-child(3) { display: inline-block; margin-inline-end: var(--s24); }
   .bk-mode { display: inline; color: var(--text-2); margin-inline-end: var(--s8); }
 }
+
+/* Team page (/team/, #288): people, then the work by discipline. Pictures
+   are copied from GitHub at build time; the page loads nothing from there. */
+.people { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr)); gap: var(--s24); }
+.person { display: flex; flex-direction: column; gap: var(--s8); padding: var(--s24); border: 1px solid var(--rule); border-radius: 28px; }
+.person h3 { font-size: 1.5rem; margin-top: var(--s8); }
+.person p { margin: 0; color: var(--text-2); font-size: 0.975rem; }
+.person .role { color: var(--accent); font-weight: 700; font-size: 0.875rem; letter-spacing: 0.06em; text-transform: uppercase; }
+.avatar { width: 96px; height: 96px; border-radius: 50%; object-fit: cover; background: var(--bg-raised); }
+.avatar-sign { display: grid; place-items: center; font-family: var(--display); font-weight: 800; font-size: 1.5rem; color: var(--text-2); border: 1.5px solid var(--outline); background: none; }
+.person .stat { display: flex; gap: var(--s8); align-items: baseline; margin: var(--s8) 0 0; }
+.person .stat dt { color: var(--text-2); font-size: 0.875rem; }
+.person .stat dd { margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; }
+.person .links { margin-top: auto; padding-top: var(--s8); display: flex; flex-wrap: wrap; gap: var(--s8) var(--s16); overflow-wrap: anywhere; }
+.tags { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--s8); }
+.tags li { font-size: 0.8125rem; padding: 0.15rem 0.6rem; border: 1px solid var(--rule); border-radius: 999px; color: var(--text-2); }
+.areas { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr)); gap: var(--s24); }
+.area { display: flex; flex-direction: column; gap: var(--s8); padding: var(--s24); background: var(--bg-raised); border-radius: 28px; scroll-margin-top: var(--s24); }
+.area h3 { font-size: 1.25rem; }
+.area p { margin: 0; color: var(--text-2); font-size: 0.975rem; }
+.area-table { width: 100%; border-collapse: collapse; margin-top: auto; font-size: 0.975rem; }
+.area-table th, .area-table td { text-align: start; padding-block: 0.5rem; border-bottom: 1px solid color-mix(in srgb, var(--outline) 30%, transparent); font-weight: 400; }
+.area-table thead th { color: var(--text-2); font-size: 0.875rem; border-bottom-color: var(--outline); }
+.area-table tbody th { color: var(--text); }
+.area-table td { text-align: end; font-weight: 700; font-variant-numeric: tabular-nums; width: 5rem; }
+.area-table thead th:last-child { text-align: end; }

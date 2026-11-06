@@ -6,11 +6,11 @@ TotalDrop uses three licenses, each chosen for what the code is for.
 | --- | --- | --- |
 | Protocol libraries (`crates/totaldrop-crypto`, `crates/totaldrop-proto`, `crates/totaldrop-core`, `crates/totaldrop-l10n`, `fuzz/`) and the translations (`l10n/`), which `totaldrop-l10n` compiles into itself | MIT OR Apache-2.0, at your option | Anyone, including other projects, can build a compatible client without restrictions. An open protocol only matters if it is easy to implement. |
 | Apps (`crates/totaldrop-cli`, `app/`, `linux/`) | GPL-3.0-or-later; in `app/`, the bundled fonts keep their SIL Open Font License 1.1 and Cargokit (`app/rust_builder/cargokit/`) its MIT OR Apache-2.0 | The TotalDrop apps, and anything derived from them, stay free software. |
-| Web site (`site/`) | GPL-3.0-or-later; the bundled fonts keep their SIL Open Font License 1.1 | Same as the apps. |
+| Web site (`site/`) | GPL-3.0-or-later; the bundled fonts keep their SIL Open Font License 1.1, and the team page's profile pictures (`site/public/team/avatars/`) belong to the people they show (`LicenseRef-TotalDrop-Team-Avatars`) | Same as the apps. |
 | Servers (`server/`) | AGPL-3.0-or-later | Anyone who runs a modified server for others must publish their changes, so a hosted fork cannot quietly weaken privacy. |
 | Everything else: Linux packaging (`packaging/`), tools, documents, CI | GPL-3.0-or-later | Same as the apps. |
 
-The full texts are in [`LICENSES/`](LICENSES/), named by their SPDX identifiers as the [REUSE](https://reuse.software/) layout does: `MIT.txt`, `Apache-2.0.txt`, `GPL-3.0-or-later.txt`, `AGPL-3.0-or-later.txt` and, for the fonts, `OFL-1.1.txt`.
+The full texts are in [`LICENSES/`](LICENSES/), named by their SPDX identifiers as the [REUSE](https://reuse.software/) layout does: `MIT.txt`, `Apache-2.0.txt`, `GPL-3.0-or-later.txt`, `AGPL-3.0-or-later.txt` and, for the fonts, `OFL-1.1.txt`; the team page's pictures: `LicenseRef-TotalDrop-Team-Avatars.txt`.
 
 Every file says its copyright and license. Source files start with two lines:
 
