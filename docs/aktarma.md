@@ -54,11 +54,16 @@ sunucusuna bağlanıp öbürü bağlanmayabilir. Doğrudan yol bu süre içinde
 kazanırsa aktarma sunucusuna hiç bağlanılmaz ve sunucu o aktarımı görmez.
 Doğrudan yol daha geç gelip kazanırsa açılmış aktarma bağlantısı, yol seçilir
 seçilmez kapatılır; sunucu o kısa sürede cihazın IP adresini görmüş olur.
-Bu davranış bir sonraki sürümle gelir
+Bu davranış Android ve Linux 0.2.0-beta.1 ile geldi
 ([#63](https://github.com/totaldrop-app/totaldrop/issues/63)); daha önceki
 sürümler bağlantıyı her aktarımın başında açar.
-Alan cihaz, gönderenin bildirdiği aktarma sunucusunu kullanır; gizlilik
-modunda da ([#68](https://github.com/totaldrop-app/totaldrop/issues/68)).
+
+Aktarma yolu gönderenin aktarma sunucusundan geçer. Alan cihaz onu yalnızca
+kendi ayarındaki sunucuyla aynıysa kullanır; değilse yalnızca doğrudan
+yolları dener, gizlilik modundaysa hata verip durur
+([#68](https://github.com/totaldrop-app/totaldrop/issues/68)). Gönderen de
+aynı kuralla, alan cihaz aynı sunucuyu kullanmayacaksa kendi sunucusuna hiç
+bağlanmaz ([#301](https://github.com/totaldrop-app/totaldrop/issues/301)).
 
 İlk açılan bağlantı kullanılır. Gizlilik modunda (komut satırında
 `--relay-only`, uygulamalarda Ayarlar → "Adresimi karşı cihazdan gizle") cihaz
