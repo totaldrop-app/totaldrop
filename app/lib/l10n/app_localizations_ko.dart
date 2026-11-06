@@ -400,6 +400,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get draftTranslation => '이 번역은 검토 중입니다. GitHub에서 개선을 도와주세요.';
 
   @override
+  String get settingsWordsEnglish =>
+      '코드와 확인 단어는 어떤 언어에서도 영어로 표시됩니다. 언어가 다른 두 기기에서도 같은 단어가 보입니다.';
+
+  @override
   String get sendDropHere => '여기에 파일을 놓으세요';
 
   @override

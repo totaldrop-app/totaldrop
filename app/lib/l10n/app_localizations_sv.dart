@@ -432,6 +432,10 @@ class AppLocalizationsSv extends AppLocalizations {
       'Den här översättningen granskas. Hjälp till att förbättra den på GitHub.';
 
   @override
+  String get settingsWordsEnglish =>
+      'Koder och verifieringsord är alltid på engelska, så att två enheter med olika språk visar samma ord.';
+
+  @override
   String get sendDropHere => 'Släpp filer här';
 
   @override

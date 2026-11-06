@@ -411,6 +411,10 @@ class AppLocalizationsTh extends AppLocalizations {
       'คำแปลนี้อยู่ระหว่างการตรวจทาน ช่วยปรับปรุงได้ที่ GitHub';
 
   @override
+  String get settingsWordsEnglish =>
+      'รหัสและคำยืนยันเป็นภาษาอังกฤษเสมอในทุกภาษา เพื่อให้อุปกรณ์สองเครื่องที่ใช้ภาษาต่างกันแสดงคำเดียวกัน';
+
+  @override
   String get sendDropHere => 'วางไฟล์ที่นี่';
 
   @override

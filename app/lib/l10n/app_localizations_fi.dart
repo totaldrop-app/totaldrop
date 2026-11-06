@@ -430,6 +430,10 @@ class AppLocalizationsFi extends AppLocalizations {
       'Tätä käännöstä tarkistetaan. Auta parantamaan sitä GitHubissa.';
 
   @override
+  String get settingsWordsEnglish =>
+      'Koodit ja tarkistussanat ovat aina englanniksi, jotta eri kielille asetetut laitteet näyttävät samat sanat.';
+
+  @override
   String get sendDropHere => 'Pudota tiedostot tähän';
 
   @override

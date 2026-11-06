@@ -417,6 +417,10 @@ class AppLocalizationsMs extends AppLocalizations {
       'Terjemahan ini sedang disemak. Bantu memperbaikinya di GitHub.';
 
   @override
+  String get settingsWordsEnglish =>
+      'Kod dan perkataan pengesahan sentiasa dalam bahasa Inggeris, supaya dua peranti dalam bahasa berbeza menunjukkan perkataan yang sama.';
+
+  @override
   String get sendDropHere => 'Lepaskan fail di sini';
 
   @override

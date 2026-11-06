@@ -428,6 +428,10 @@ class AppLocalizationsUr extends AppLocalizations {
       'اس ترجمے کا جائزہ لیا جا رہا ہے۔ GitHub پر اسے بہتر بنانے میں مدد کریں۔';
 
   @override
+  String get settingsWordsEnglish =>
+      'کوڈ اور تصدیقی الفاظ ہر زبان میں انگریزی میں رہتے ہیں، تاکہ مختلف زبانوں والے دو آلات ایک جیسے الفاظ دکھائیں۔';
+
+  @override
   String get sendDropHere => 'فائلیں یہاں چھوڑیں';
 
   @override

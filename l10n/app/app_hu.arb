@@ -111,6 +111,7 @@
   "sizeTB": "{value} TB",
   "sizePB": "{value} PB",
   "draftTranslation": "Ez a fordítás ellenőrzés alatt áll. Segíts javítani a GitHubon.",
+  "settingsWordsEnglish": "A kódok és az ellenőrző szavak minden nyelven angolul jelennek meg, hogy a különböző nyelvű eszközök ugyanazokat a szavakat mutassák.",
 
   "sendDropHere": "Húzd ide a fájlokat",
   "sendDropHint": "A fájlokat erre az ablakra is ráhúzhatod.",

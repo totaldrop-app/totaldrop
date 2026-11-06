@@ -432,6 +432,10 @@ class AppLocalizationsNl extends AppLocalizations {
       'Deze vertaling wordt nagekeken. Help haar te verbeteren op GitHub.';
 
   @override
+  String get settingsWordsEnglish =>
+      'Codes en verificatiewoorden zijn in elke taal Engels, zodat twee apparaten in verschillende talen dezelfde woorden tonen.';
+
+  @override
   String get sendDropHere => 'Zet bestanden hier neer';
 
   @override

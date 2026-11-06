@@ -111,6 +111,7 @@
   "sizeTB": "{value} TB",
   "sizePB": "{value} PB",
   "draftTranslation": "Această traducere este în curs de revizuire. Ajutați la îmbunătățirea ei pe GitHub.",
+  "settingsWordsEnglish": "Codurile și cuvintele de verificare sunt mereu în engleză, ca două dispozitive în limbi diferite să arate aceleași cuvinte.",
 
   "sendDropHere": "Plasați fișierele aici",
   "sendDropHint": "Puteți și să trageți fișiere în această fereastră.",

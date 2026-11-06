@@ -111,6 +111,7 @@
   "sizeTB": "{value} TB",
   "sizePB": "{value} PB",
   "draftTranslation": "Bản dịch này đang được xem xét. Hãy giúp cải thiện trên GitHub.",
+  "settingsWordsEnglish": "Mã và từ xác minh luôn bằng tiếng Anh, để hai thiết bị dùng ngôn ngữ khác nhau hiển thị cùng các từ.",
 
   "sendDropHere": "Thả tệp vào đây",
   "sendDropHint": "Bạn cũng có thể kéo tệp vào cửa sổ này.",

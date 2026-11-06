@@ -392,6 +392,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get draftTranslation => '此翻译正在审核中。欢迎在 GitHub 上帮助改进。';
 
   @override
+  String get settingsWordsEnglish => '代码和验证词在任何语言下都使用英文，这样两台语言不同的设备会显示相同的单词。';
+
+  @override
   String get sendDropHere => '将文件拖放到此处';
 
   @override
@@ -833,6 +836,9 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get draftTranslation => '此翻译正在审核中。欢迎在 GitHub 上帮助改进。';
 
   @override
+  String get settingsWordsEnglish => '代码和验证词在任何语言下都使用英文，这样两台语言不同的设备会显示相同的单词。';
+
+  @override
   String get sendDropHere => '将文件拖放到此处';
 
   @override
@@ -1271,6 +1277,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get draftTranslation => '這份翻譯正在審閱中。歡迎到 GitHub 協助改進。';
+
+  @override
+  String get settingsWordsEnglish => '代碼和驗證單字在任何語言下都使用英文，這樣兩台語言不同的裝置會顯示相同的單字。';
 
   @override
   String get sendDropHere => '將檔案拖放到這裡';

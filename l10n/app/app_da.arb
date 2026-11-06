@@ -111,6 +111,7 @@
   "sizeTB": "{value} TB",
   "sizePB": "{value} PB",
   "draftTranslation": "Denne oversættelse er ved at blive gennemgået. Hjælp med at forbedre den på GitHub.",
+  "settingsWordsEnglish": "Koder og bekræftelsesord er altid på engelsk, så to enheder på forskellige sprog viser de samme ord.",
 
   "sendDropHere": "Slip filer her",
   "sendDropHint": "Du kan også trække filer over i dette vindue.",

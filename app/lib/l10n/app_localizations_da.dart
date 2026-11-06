@@ -430,6 +430,10 @@ class AppLocalizationsDa extends AppLocalizations {
       'Denne oversættelse er ved at blive gennemgået. Hjælp med at forbedre den på GitHub.';
 
   @override
+  String get settingsWordsEnglish =>
+      'Koder og bekræftelsesord er altid på engelsk, så to enheder på forskellige sprog viser de samme ord.';
+
+  @override
   String get sendDropHere => 'Slip filer her';
 
   @override

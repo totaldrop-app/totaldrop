@@ -430,6 +430,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'This translation is being reviewed. Help improve it on GitHub.';
 
   @override
+  String get settingsWordsEnglish =>
+      'Codes and verification words are in English in every language, so two devices set to different languages show the same words.';
+
+  @override
   String get sendDropHere => 'Drop files here';
 
   @override

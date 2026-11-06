@@ -436,6 +436,10 @@ class AppLocalizationsEs extends AppLocalizations {
       'Esta traducción se está revisando. Ayuda a mejorarla en GitHub.';
 
   @override
+  String get settingsWordsEnglish =>
+      'Los códigos y las palabras de verificación están siempre en inglés, para que dos dispositivos en idiomas distintos muestren las mismas palabras.';
+
+  @override
   String get sendDropHere => 'Suelta los archivos aquí';
 
   @override

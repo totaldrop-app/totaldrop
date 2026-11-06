@@ -415,6 +415,10 @@ class AppLocalizationsTr extends AppLocalizations {
       'Bu çeviri gözden geçiriliyor. GitHub\'da iyileştirmeye yardım edin.';
 
   @override
+  String get settingsWordsEnglish =>
+      'Kodlar ve doğrulama kelimeleri her dilde İngilizcedir; böylece farklı dillerdeki iki cihaz aynı kelimeleri gösterir.';
+
+  @override
   String get sendDropHere => 'Dosyaları buraya bırakın';
 
   @override

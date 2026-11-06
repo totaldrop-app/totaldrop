@@ -794,6 +794,12 @@ abstract class AppLocalizations {
   /// **'This translation is being reviewed. Help improve it on GitHub.'**
   String get draftTranslation;
 
+  /// Shown in Settings under About. Explains why the transfer code and the verification words stay in English: they come from one English word list so that both devices show the same ones
+  ///
+  /// In en, this message translates to:
+  /// **'Codes and verification words are in English in every language, so two devices set to different languages show the same words.'**
+  String get settingsWordsEnglish;
+
   /// No description provided for @sendDropHere.
   ///
   /// In en, this message translates to:

@@ -111,6 +111,7 @@
   "sizeTB": "{value} TB",
   "sizePB": "{value} PB",
   "draftTranslation": "Esta traducción se está revisando. Ayuda a mejorarla en GitHub.",
+  "settingsWordsEnglish": "Los códigos y las palabras de verificación están siempre en inglés, para que dos dispositivos en idiomas distintos muestren las mismas palabras.",
 
   "sendDropHere": "Suelta los archivos aquí",
   "sendDropHint": "También puedes arrastrar archivos a esta ventana.",

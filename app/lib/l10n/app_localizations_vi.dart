@@ -414,6 +414,10 @@ class AppLocalizationsVi extends AppLocalizations {
       'Bản dịch này đang được xem xét. Hãy giúp cải thiện trên GitHub.';
 
   @override
+  String get settingsWordsEnglish =>
+      'Mã và từ xác minh luôn bằng tiếng Anh, để hai thiết bị dùng ngôn ngữ khác nhau hiển thị cùng các từ.';
+
+  @override
   String get sendDropHere => 'Thả tệp vào đây';
 
   @override

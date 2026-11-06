@@ -429,6 +429,10 @@ class AppLocalizationsHi extends AppLocalizations {
       'इस अनुवाद की समीक्षा हो रही है। GitHub पर इसे बेहतर बनाने में मदद करें।';
 
   @override
+  String get settingsWordsEnglish =>
+      'कोड और सत्यापन शब्द हर भाषा में अंग्रेज़ी में रहते हैं, ताकि अलग-अलग भाषाओं वाले दो डिवाइस एक जैसे शब्द दिखाएँ।';
+
+  @override
   String get sendDropHere => 'फ़ाइलें यहाँ छोड़ें';
 
   @override

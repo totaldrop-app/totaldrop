@@ -111,6 +111,7 @@
   "sizeTB": "{value} Tt",
   "sizePB": "{value} Pt",
   "draftTranslation": "Tätä käännöstä tarkistetaan. Auta parantamaan sitä GitHubissa.",
+  "settingsWordsEnglish": "Koodit ja tarkistussanat ovat aina englanniksi, jotta eri kielille asetetut laitteet näyttävät samat sanat.",
 
   "sendDropHere": "Pudota tiedostot tähän",
   "sendDropHint": "Voit myös vetää tiedostoja tähän ikkunaan.",
