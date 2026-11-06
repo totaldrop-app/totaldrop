@@ -1,4 +1,4 @@
-<!-- Translated from README.md 8e5bfcf3724c. -->
+<!-- Translated from README.md f4c5b95e97ce. -->
 <div align="center">
 
 <picture>
@@ -18,7 +18,7 @@ Bure na chanzo huria. Imesimbwa fiche kutoka mwanzo hadi mwisho. Hakuna barua pe
 [![License](https://img.shields.io/badge/license-GPL--3.0%20%C2%B7%20MIT%2FApache--2.0-22184F)](../../LICENSING.md)
 [![Sponsor](https://img.shields.io/github/sponsors/ozdil?label=Sponsor&logo=githubsponsors&color=EA4AAA)](https://github.com/sponsors/ozdil)
 
-**[Tovuti](https://totaldrop.app)** · **[Pakua](https://totaldrop.app/download/)** · [Ramani ya maendeleo](https://totaldrop.app/roadmap/) · [Changia](https://totaldrop.app/donate/) · [Matoleo](https://github.com/totaldrop-app/totaldrop/releases) · [X](https://x.com/totaldropapp) · [Instagram](https://www.instagram.com/totaldropapp/)
+**[Tovuti](https://totaldrop.app)** · **[Pakua](https://totaldrop.app/download/)** · [Ramani ya maendeleo](https://totaldrop.app/roadmap/) · [Changia](https://totaldrop.app/donate/) · [Matoleo](https://github.com/totaldrop-app/totaldrop/releases) · [X](https://x.com/totaldropapp) · [Instagram](https://www.instagram.com/totaldropapp/) · [Threads](https://www.threads.com/@totaldropapp)
 
 <!-- languages -->
 <sub>[العربية](README.ar.md) · [বাংলা](README.bn.md) · [Čeština](README.cs.md) · [Dansk](README.da.md) · [Deutsch](README.de.md) · [Ελληνικά](README.el.md) · [English](../../README.md) · [Español](README.es.md) · [فارسی](README.fa.md) · [Suomi](README.fi.md) · [Français](README.fr.md) · [עברית](README.he.md) · [हिन्दी](README.hi.md) · [Magyar](README.hu.md) · [Bahasa Indonesia](README.id.md) · [Italiano](README.it.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Bahasa Melayu](README.ms.md) · [Norsk bokmål](README.nb.md) · [Nederlands](README.nl.md) · [Polski](README.pl.md) · [Português (Brasil)](README.pt-BR.md) · [Português (Portugal)](README.pt-PT.md) · [Română](README.ro.md) · [Русский](README.ru.md) · [Svenska](README.sv.md) · **Kiswahili** · [ไทย](README.th.md) · [Türkçe](README.tr.md) · [Українська](README.uk.md) · [اردو](README.ur.md) · [Tiếng Việt](README.vi.md) · [简体中文](README.zh-Hans.md) · [繁體中文](README.zh-Hant.md)</sub>
