@@ -4,8 +4,10 @@
 # Written by tools/desktop-entries.mjs from l10n/app: change the text
 # there and run `node tools/desktop-entries.mjs write`.
 #
-# Nemo's right-click menu, for any selection of files and folders. %U
-# hands them over as URIs, so no file name is split or unquoted.
+# Nemo's right-click menu, for any selection of local files and folders.
+# Nemo pastes the URIs into a command line that GLib splits like a shell,
+# and GLib leaves ' $ & ( ) raw in a file URI: each URI is quoted, and
+# no " or \ is left raw in one.
 [Nemo Action]
 Active=true
 Name=Send with TotalDrop
@@ -66,15 +68,15 @@ Comment[ms]=Hantar fail terus ke peranti lain, disulitkan hujung ke hujung
 Comment[nb]=Send filer rett til en annen enhet, ende-til-ende-kryptert
 Comment[nl]=Stuur bestanden rechtstreeks naar een ander apparaat, end-to-end versleuteld
 Comment[pl]=Wysyłaj pliki prosto na inne urządzenie, z szyfrowaniem end-to-end
-Comment[pt]=Envie ficheiros diretamente para outro dispositivo, com encriptação ponto a ponto
-Comment[pt_BR]=Envie arquivos direto para outro dispositivo, com criptografia de ponta a ponta
+Comment[pt]=Envie arquivos direto para outro dispositivo, com criptografia de ponta a ponta
+Comment[pt_PT]=Envie ficheiros diretamente para outro dispositivo, com encriptação ponto a ponto
 Comment[ro]=Trimite fișiere direct pe alt dispozitiv, criptate integral
 Comment[ru]=Отправляйте файлы прямо на другое устройство со сквозным шифрованием
 Comment[sv]=Skicka filer direkt till en annan enhet, end-to-end-krypterat
 Comment[sw]=Tuma faili moja kwa moja kwenye kifaa kingine, zimesimbwa mwanzo hadi mwisho
 Comment[th]=ส่งไฟล์ตรงไปยังอุปกรณ์อื่น เข้ารหัสตั้งแต่ต้นทางถึงปลายทาง
 Comment[tr]=Dosyaları başka bir cihaza doğrudan ve uçtan uca şifreli gönderin
-Comment[uk]=Надсилайте файли просто на інший пристрій з наскрізним шифруванням
+Comment[uk]=Надсилайте файли безпосередньо на інший пристрій з наскрізним шифруванням
 Comment[ur]=فائلیں براہِ راست دوسرے آلے پر بھیجیں، اینڈ ٹو اینڈ انکرپٹڈ
 Comment[vi]=Gửi tệp thẳng tới thiết bị khác, mã hóa đầu cuối
 Comment[zh]=将文件直接发送到另一台设备，端到端加密
@@ -82,7 +84,9 @@ Comment[zh_HK]=將檔案直接傳送到另一台裝置，端對端加密
 Comment[zh_MO]=將檔案直接傳送到另一台裝置，端對端加密
 Comment[zh_TW]=將檔案直接傳送到另一台裝置，端對端加密
 Exec=totaldrop-desktop %U
+Quote=double
 Icon-Name=app.totaldrop.TotalDrop
 Selection=notnone
+UriScheme=file
 Extensions=any;
 Dependencies=totaldrop-desktop;

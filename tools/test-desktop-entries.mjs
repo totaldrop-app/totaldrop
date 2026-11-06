@@ -120,6 +120,12 @@ test("the menus open the app with URIs, not with paths in a shell", () => {
     for (const l of exec) assert.match(l, /^Exec=totaldrop-desktop( %U| --screen=(send|receive))$/);
   }
   assert.match(dolphinMenu(c), /^X-KDE-Protocols=file$/m);
+  assert.match(dolphinMenu(c), /^X-KDE-Priority=TopLevel$/m);
+  // Nemo pastes the URIs into a command line that GLib splits like a
+  // shell: GLib leaves ' $ & ( ) raw in file URIs, so each one is quoted,
+  // and only local files are offered.
+  assert.match(nemoAction(c), /^Quote=double$/m);
+  assert.match(nemoAction(c), /^UriScheme=file$/m);
   assert.match(appEntry(c), /^MimeType=x-scheme-handler\/totaldrop;$/m);
 });
 

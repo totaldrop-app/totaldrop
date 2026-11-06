@@ -85,12 +85,14 @@ def label(language_names):
 def local_uris(files):
     """The file:// URIs of the selection, or None when any item is not a
     local file: the item is then not offered at all, rather than sending
-    part of what was selected."""
+    part of what was selected. An item in Recent (recent:///) stands for a
+    local file, its activation URI."""
     uris = []
     for f in files:
-        if f.get_uri_scheme() != "file":
+        uri = f.get_activation_uri()
+        if not uri or not uri.startswith("file://"):
             return None
-        uris.append(f.get_uri())
+        uris.append(uri)
     return uris or None
 
 

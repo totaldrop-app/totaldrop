@@ -496,7 +496,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get desktopComment =>
-      'Надсилайте файли просто на інший пристрій з наскрізним шифруванням';
+      'Надсилайте файли безпосередньо на інший пристрій з наскрізним шифруванням';
 
   @override
   String get desktopKeywords => 'надіслати;отримати;поділитися;передати;файли;';

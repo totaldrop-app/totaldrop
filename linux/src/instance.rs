@@ -640,13 +640,20 @@ mod tests {
                 "file:///home/a/-rf%20%22x%22.txt",
                 "file:///home/a/a%3Bb%27c",
                 "file:///home/a/%C3%A7i%C3%A7ek",
+                // GLib leaves these raw in a file URI.
+                "file:///home/a/Bob's$(x)&y.txt",
                 "--screen=send",
             ],
             Path::new("/"),
         );
         assert_eq!(
             r.items,
-            ["/home/a/-rf \"x\".txt", "/home/a/a;b'c", "/home/a/çiçek"]
+            [
+                "/home/a/-rf \"x\".txt",
+                "/home/a/a;b'c",
+                "/home/a/çiçek",
+                "/home/a/Bob's$(x)&y.txt"
+            ]
         );
         assert_eq!(r.screen.as_deref(), Some("send"));
     }

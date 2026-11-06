@@ -10,6 +10,7 @@
 Type=Service
 MimeType=all/all;
 X-KDE-Protocols=file
+X-KDE-Priority=TopLevel
 Actions=send;
 
 [Desktop Action send]

@@ -17,9 +17,15 @@ açıksa ikinci bir pencere açılmaz, seçim açık pencereye eklenir
 Menüler yalnızca yerel dosyalarda görünür; ağ konumları (SFTP, SMB) ve Çöp
 Kutusu'ndaki öğeler için görünmez, çünkü TotalDrop dosyayı diskten okur.
 
-Seçim uygulamaya her zaman `file://` adresleri olarak, kabuk kullanılmadan
-geçer (`Exec=totaldrop-desktop %U`). Adı `-` ile başlayan, boşluk, tırnak ya
-da `;` içeren dosyalar bölünmez ve seçenek sanılmaz.
+Seçim uygulamaya kabuk çalıştırılmadan geçer: Dolphin ve Nautilus
+masaüstü girdisinin yolunu kullanır (`%U`), Nemo her adresi çift tırnak
+içinde verir (`Quote=double`; GLib dosya adreslerinde `'`, `$`, `&`, `(`,
+`)` karakterlerini kodlamaz). Adı `-` ile başlayan ya da boşluk, tırnak,
+`;` içeren dosyalar bölünmez ve seçenek sanılmaz; bunu
+`linux/src/instance.rs` testleri ve Nemo dosyasının üreticideki testi
+denetler. Dolphin'de öğe "Eylemler" alt menüsünde değil, menünün kendisinde
+görünür (`X-KDE-Priority=TopLevel`). Nautilus'ta "Son Kullanılanlar"
+görünümündeki öğeler de gönderilebilir.
 
 ## Neden "her dosya türü" kaydedilmedi
 
@@ -66,10 +72,12 @@ yalnızca `GENERATED` satırları arasındaki metin tablosu üretilir.
 
 Her sürümden önce, paket kurulu bir sistemde:
 
-1. KDE Plasma (Dolphin), Hyprland/Omarchy (Nautilus) ve GNOME (Nautilus):
+1. KDE Plasma (Dolphin), Hyprland/Omarchy (Nautilus), GNOME (Nautilus) ve
+   imkân varsa Cinnamon (Nemo):
    bir dosya, birden çok dosya ve bir klasör seçip sağ tıklayın, "TotalDrop
    ile gönder"e basın. TotalDrop kapalıyken ve açıkken ayrı ayrı deneyin.
-2. Adı `-a "b".txt` olan bir dosya ve Türkçe karakterli bir klasör deneyin.
+2. Adı `-a "b".txt` ve `Bob's (1) & $x.txt` olan dosyaları ve Türkçe
+   karakterli bir klasörü deneyin.
 3. Sistem dili Türkçe ve Arapça iken menü metnine bakın.
 4. Görev çubuğunda ya da başlatıcıda TotalDrop'a sağ tıklayıp "Dosya
    gönder" ve "Dosya al"ı deneyin.

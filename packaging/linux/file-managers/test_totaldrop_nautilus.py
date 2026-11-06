@@ -80,14 +80,21 @@ def load(language_names=("C",)):
 
 
 class FakeFile:
-    def __init__(self, uri):
+    """A NautilusFileInfo: `uri` is where it is shown, `activation` the
+    file it stands for (a file:// URI for items in Recent)."""
+
+    def __init__(self, uri, activation=None):
         self.uri = uri
+        self.activation = activation or uri
 
     def get_uri_scheme(self):
         return self.uri.split(":", 1)[0]
 
     def get_uri(self):
         return self.uri
+
+    def get_activation_uri(self):
+        return self.activation
 
 
 class Extension(unittest.TestCase):
@@ -126,6 +133,13 @@ class Extension(unittest.TestCase):
         items[0].activate()
         self.assertEqual(FakeAppInfo.desktop_id, "app.totaldrop.TotalDrop.desktop")
         self.assertEqual(FakeAppInfo.launched, [(uris, None)])
+
+    def test_recent_items_send_the_file_they_stand_for(self):
+        m = load()
+        items = m.TotalDropMenu().get_file_items([FakeFile("recent:///abc", "file:///home/a/x.pdf")])
+        self.assertEqual(len(items), 1)
+        items[0].activate()
+        self.assertEqual(FakeAppInfo.launched, [(["file:///home/a/x.pdf"], None)])
 
     def test_old_api_passes_the_window_first(self):
         m = load()
