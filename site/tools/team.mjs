@@ -1,8 +1,10 @@
 // SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-// The team page (site/public/team/, #288), made from GitHub data so that
-// nobody's name, picture or share of the work is typed by hand:
+// The team page (site/public/team/, #288). Who is listed, with which role
+// and areas, is curated in site/team/team.json; profile names, bios,
+// websites, pictures and every figure come from GitHub, so no share of the
+// work is typed by hand:
 //   node site/tools/team.mjs           check the page and the avatars match
 //                                      the snapshot (CI, offline)
 //   node site/tools/team.mjs --write   rewrite the page from the snapshot
@@ -35,7 +37,9 @@ const fail = (msg) => { errors.push(msg); };
 
 export const LOGIN = /^[A-Za-z0-9](?:[A-Za-z0-9]|-(?=[A-Za-z0-9])){0,38}(?:\[bot\])?$/;
 const KINDS = ["person", "ai", "bot"];
-const ROLES = ["maintainer", "contributor", "designer", "tester", "translator"];
+// Roles with a translated label (tm.role.<role>); add the key in all 35
+// languages before adding a role here.
+const ROLES = ["maintainer", "contributor"];
 // Disciplines, in page order, with their English text (translations:
 // site/public/i18n/<tag>.json, keys tm.a.<key> and tm.a.<key>.d).
 const AREAS = {
@@ -55,7 +59,7 @@ const AREAS = {
 // separators. Then collapse spaces and cut to length.
 export function clean(s, max) {
   if (typeof s !== "string") return "";
-  const t = s.replace(/[\u0000-\u001f\u007f-\u009f\u061c\u200b-\u200f\u2028-\u202e\u2066-\u2069\ufeff]/gu, " ")
+  const t = s.replace(/[\u0000-\u001f\u007f-\u009f\u061c\u200b-\u200f\u2028-\u202e\u2060-\u2069\ufeff\u{e0000}-\u{e007f}]/gu, " ")
     .replace(/\s+/gu, " ").trim();
   const chars = Array.from(t);
   return chars.length > max ? chars.slice(0, max - 1).join("").trimEnd() + "\u2026" : t;
@@ -153,6 +157,8 @@ async function fetchSnapshot(c) {
     const list = await api(`repos/${c.repo}/contributors?per_page=100&page=${page}`);
     if (!Array.isArray(list) || list.length === 0) break;
     for (const x of list) if (LOGIN.test(x.login) && Number.isSafeInteger(x.contributions)) snap.totals[x.login] = x.contributions;
+    if (list.length < 100) break;
+    if (page === PAGES_MAX) throw new Error(`more than ${PAGES_MAX * 100} contributors, raise PAGES_MAX`);
   }
 
   for (const d of c.disciplines) {
@@ -165,6 +171,7 @@ async function fetchSnapshot(c) {
           const login = x.author && LOGIN.test(x.author.login) ? x.author.login : "";
           commits.set(x.sha, login);
         }
+        if (list.length < 100) break;
         if (page === PAGES_MAX) throw new Error(`${path}: more than ${PAGES_MAX * 100} commits, raise PAGES_MAX`);
       }
     }
@@ -199,6 +206,9 @@ function checkSnapshot(c, s) {
     if (bytes.length > AVATAR_MAX || !magicOk(bytes, pr.avatar.slice(-3))) fail(`avatar ${pr.avatar}: wrong size or type`);
   }
   if (existsSync(AVATARS)) for (const f of readdirSync(AVATARS)) if (!Object.values(s.profiles).some((p) => p.avatar === f)) fail(`avatar not in the snapshot: ${f}`);
+  for (const d of c.disciplines) if (!(d.key in s.areas)) fail(`github.json: no figures for ${d.key}, run --fetch`);
+  for (const k of Object.keys(s.areas)) if (!c.disciplines.some((d) => d.key === k)) fail(`github.json: ${k} is not in team.json, run --fetch`);
+  for (const [login, n] of Object.entries(s.totals || {})) if (!LOGIN.test(login) || !Number.isSafeInteger(n) || n < 1) fail(`github.json: totals: bad entry ${login}`);
   for (const [k, counts] of Object.entries(s.areas)) {
     if (!(k in AREAS)) fail(`github.json: unknown area ${k}`);
     for (const [login, n] of Object.entries(counts)) if ((login !== "" && !LOGIN.test(login)) || !Number.isSafeInteger(n) || n < 1) fail(`github.json: ${k}: bad entry ${login}`);
@@ -211,13 +221,15 @@ function who(c, s, login) {
   if (login === "") return `<span data-i18n="tm.others">Others without a linked GitHub account</span>`;
   if (p && p.kind === "ai") return "Claude";
   if (p && p.kind === "bot") return "Dependabot";
-  if (p && s.profiles[login]) return esc(p.name || s.profiles[login].name);
-  return `<a href="https://github.com/${esc(login)}">${esc(login)}</a>`;
+  if (p && s.profiles[login]) return `<bdi>${esc(p.name || s.profiles[login].name)}</bdi>`;
+  const bot = /^(.+)\[bot\]$/.exec(login);
+  const href = bot ? `https://github.com/apps/${bot[1]}` : `https://github.com/${login}`;
+  return `<a href="${esc(href)}"><bdi>${esc(login)}</bdi></a>`;
 }
 
 function personCard(c, s, p) {
   const total = s.totals[p.login];
-  const stat = total ? `\n          <dl class="stat"><dt data-i18n="tm.col.changes">Changes</dt><dd>${total}</dd></dl>` : "";
+  const stat = total ? `\n          <dl class="stat"><dt data-i18n="tm.col.changes">Changes</dt><dd>${esc(String(total))}</dd></dl>` : "";
   if (p.kind === "ai") {
     return `        <li class="person is-ai">
           <span class="avatar avatar-sign" aria-hidden="true">AI</span>
@@ -239,10 +251,10 @@ function personCard(c, s, p) {
   const role = { maintainer: "Founder and maintainer", contributor: "Contributor", designer: "Designer", tester: "Tester", translator: "Translator" }[p.role];
   const areas = (p.areas || []).map((a) => `<li data-i18n="tm.a.${a}">${esc(AREAS[a][0])}</li>`).join("");
   const links = [`<a href="https://github.com/${esc(p.login)}">github.com/${esc(p.login)}</a>`];
-  if (pr.website) links.push(`<a href="${esc(pr.website)}">${esc(shown(pr.website))}</a>`);
+  if (pr.website) links.push(`<a href="${esc(pr.website)}" rel="nofollow ugc">${esc(shown(pr.website))}</a>`);
   return `        <li class="person">
           <img class="avatar" src="/team/avatars/${esc(pr.avatar)}" alt="" width="96" height="96" decoding="async">
-          <h3>${esc(p.name || pr.name)}</h3>
+          <h3 dir="auto">${esc(p.name || pr.name)}</h3>
           <p class="role" data-i18n="tm.role.${p.role}">${role}</p>${pr.bio ? `\n          <p class="bio" dir="auto">${esc(pr.bio)}</p>` : ""}${areas ? `\n          <ul class="tags">${areas}</ul>` : ""}${stat}
           <p class="links">${links.join(" ")}</p>
         </li>`;
@@ -250,7 +262,7 @@ function personCard(c, s, p) {
 
 function areaCard(c, s, d) {
   const counts = Object.entries(s.areas[d.key] || {}).sort(([a, x], [b, y]) => y - x || (a < b ? -1 : 1));
-  const rows = counts.map(([login, n]) => `              <tr><th scope="row">${who(c, s, login)}</th><td>${n}</td></tr>`).join("\n");
+  const rows = counts.map(([login, n]) => `              <tr><th scope="row">${who(c, s, login)}</th><td>${esc(String(n))}</td></tr>`).join("\n");
   const table = counts.length
     ? `
           <table class="area-table">
@@ -259,7 +271,7 @@ function areaCard(c, s, d) {
 ${rows}
             </tbody>
           </table>`
-    : `\n          <p class="note" data-i18n="tm.none">No changes yet.</p>`;
+    : "";
   return `        <li class="area" id="${d.key}">
           <h3 data-i18n="tm.a.${d.key}">${esc(AREAS[d.key][0])}</h3>
           <p data-i18n="tm.a.${d.key}.d">${esc(AREAS[d.key][1])}</p>${table}

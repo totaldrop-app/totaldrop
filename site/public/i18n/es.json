@@ -540,7 +540,7 @@
   "tm.data": "Cifras de GitHub. Última actualización:",
   "tm.donate": "Apoya con una donación",
   "tm.eyebrow": "Equipo",
-  "tm.how.h1": "Cada cambio empieza como una issue pública y llega a la aplicación solo mediante una pull request.",
+  "tm.how.h1": "Los cambios del día a día empiezan como una issue pública y llegan a la aplicación solo mediante una pull request.",
   "tm.how.h2": "Cada pull request pasa las comprobaciones automáticas y la revisión de una persona o un agente de IA que no la escribió.",
   "tm.how.h3": "Solo el mantenedor fusiona, publica y despliega. Las versiones se compilan en GitHub Actions, nunca en un ordenador personal.",
   "tm.how.title": "Cómo se revisa el trabajo",

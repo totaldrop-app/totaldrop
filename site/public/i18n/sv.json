@@ -540,7 +540,7 @@
   "tm.data": "Siffror från GitHub. Senast uppdaterad:",
   "tm.donate": "Stöd med en gåva",
   "tm.eyebrow": "Team",
-  "tm.how.h1": "Varje ändring börjar som ett öppet ärende och når appen bara genom en pull request.",
+  "tm.how.h1": "Vardagliga ändringar börjar som ett öppet ärende och når appen bara genom en pull request.",
   "tm.how.h2": "Varje pull request går igenom de automatiska kontrollerna och en granskning av en person eller en AI-agent som inte skrev den.",
   "tm.how.h3": "Bara förvaltaren slår samman, släpper och driftsätter. Versioner byggs av GitHub Actions, aldrig på en privat dator.",
   "tm.how.title": "Hur arbetet granskas",

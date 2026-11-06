@@ -540,7 +540,7 @@
   "tm.data": "Számok a GitHubról. Utolsó frissítés:",
   "tm.donate": "Támogassa adománnyal",
   "tm.eyebrow": "Csapat",
-  "tm.how.h1": "Minden változtatás nyilvános issue-ként indul, és csak pull requesten keresztül kerül az alkalmazásba.",
+  "tm.how.h1": "A mindennapi változtatások nyilvános issue-ként indulnak, és csak pull requesten keresztül kerülnek az alkalmazásba.",
   "tm.how.h2": "Minden pull request átmegy az automatikus ellenőrzéseken, és egy olyan személy vagy MI-ügynök ellenőrzésén, aki nem ő írta.",
   "tm.how.h3": "Csak a karbantartó von össze, ad ki és telepít. A kiadásokat a GitHub Actions készíti, soha nem személyes számítógépen.",
   "tm.how.title": "Hogyan ellenőrzik a munkát",

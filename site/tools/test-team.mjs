@@ -10,6 +10,7 @@ import { clean, website, esc, LOGIN } from "./team.mjs";
 
 test("clean removes control, direction and invisible characters", () => {
   assert.equal(clean("A‮B⁦C​D\u0000E F", 80), "A B C D E F");
+  assert.equal(clean("a\u2060b\u{e0041}c", 80), "a b c");
   assert.equal(clean("  many   spaces\n\tand lines ", 80), "many spaces and lines");
   assert.equal(clean(null, 80), "");
   assert.equal(clean(42, 80), "");

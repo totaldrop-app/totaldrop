@@ -540,7 +540,7 @@
   "tm.data": "Liczby z GitHuba. Ostatnia aktualizacja:",
   "tm.donate": "Wesprzyj darowizną",
   "tm.eyebrow": "Zespół",
-  "tm.how.h1": "Każda zmiana zaczyna się jako publiczne zgłoszenie i trafia do aplikacji wyłącznie przez pull request.",
+  "tm.how.h1": "Codzienne zmiany zaczynają się jako publiczne zgłoszenie i trafiają do aplikacji wyłącznie przez pull request.",
   "tm.how.h2": "Każdy pull request przechodzi automatyczne testy i przegląd przez osobę lub agenta AI, który go nie napisał.",
   "tm.how.h3": "Tylko opiekun scala, wydaje i wdraża. Wydania są budowane przez GitHub Actions, nigdy na prywatnym komputerze.",
   "tm.how.title": "Jak sprawdzana jest praca",

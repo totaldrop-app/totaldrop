@@ -540,7 +540,7 @@
   "tm.data": "Sayılar GitHub'dan. Son güncelleme:",
   "tm.donate": "Bağışla destekleyin",
   "tm.eyebrow": "Ekip",
-  "tm.how.h1": "Her değişiklik herkese açık bir issue ile başlar ve uygulamaya yalnızca bir çekme isteğiyle girer.",
+  "tm.how.h1": "Günlük değişiklikler herkese açık bir issue ile başlar ve uygulamaya yalnızca bir çekme isteğiyle girer.",
   "tm.how.h2": "Her çekme isteği otomatik denetimlerden ve onu yazmamış bir kişinin ya da yapay zekâ ajanının incelemesinden geçer.",
   "tm.how.h3": "Birleştirmeyi, sürümü ve dağıtımı yalnızca bakımcı yapar. Sürümler kişisel bir bilgisayarda değil, GitHub Actions'ta derlenir.",
   "tm.how.title": "İş nasıl denetlenir",

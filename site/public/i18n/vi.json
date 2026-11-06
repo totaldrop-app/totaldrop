@@ -540,7 +540,7 @@
   "tm.data": "Số liệu từ GitHub. Cập nhật lần cuối:",
   "tm.donate": "Ủng hộ bằng quyên góp",
   "tm.eyebrow": "Đội ngũ",
-  "tm.how.h1": "Mọi thay đổi bắt đầu bằng một issue công khai và chỉ vào ứng dụng qua một pull request.",
+  "tm.how.h1": "Các thay đổi thường ngày bắt đầu bằng một issue công khai và chỉ vào ứng dụng qua một pull request.",
   "tm.how.h2": "Mỗi pull request phải qua các bước kiểm tra tự động và được đánh giá bởi một người hoặc một tác tử AI không viết ra nó.",
   "tm.how.h3": "Chỉ người duy trì mới hợp nhất, phát hành và triển khai. Các bản phát hành được build bởi GitHub Actions, không bao giờ trên máy tính cá nhân.",
   "tm.how.title": "Công việc được kiểm tra thế nào",

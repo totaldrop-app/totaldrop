@@ -540,7 +540,7 @@
   "tm.data": "Figures from GitHub. Last updated:",
   "tm.donate": "Support with a donation",
   "tm.eyebrow": "Team",
-  "tm.how.h1": "Every change starts as a public issue and reaches the app only through a pull request.",
+  "tm.how.h1": "Everyday changes start as a public issue and reach the app only through a pull request.",
   "tm.how.h2": "Each pull request passes the automated checks and a review by a person or an AI agent that did not write it.",
   "tm.how.h3": "Only the maintainer merges, releases and deploys. Releases are built by GitHub Actions, never on a personal computer.",
   "tm.how.title": "How the work is checked",

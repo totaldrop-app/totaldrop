@@ -540,7 +540,7 @@
   "tm.data": "Luvut GitHubista. Päivitetty viimeksi:",
   "tm.donate": "Tue lahjoituksella",
   "tm.eyebrow": "Tiimi",
-  "tm.how.h1": "Jokainen muutos alkaa julkisena tikettinä ja päätyy sovellukseen vain pull requestin kautta.",
+  "tm.how.h1": "Tavalliset muutokset alkavat julkisena tikettinä ja päätyvät sovellukseen vain pull requestin kautta.",
   "tm.how.h2": "Jokainen pull request läpäisee automaattiset tarkistukset ja tarkistuksen, jonka tekee ihminen tai tekoälyagentti, joka ei kirjoittanut sitä.",
   "tm.how.h3": "Vain ylläpitäjä yhdistää, julkaisee ja ottaa käyttöön. Julkaisut rakennetaan GitHub Actionsissa, ei koskaan omalla tietokoneella.",
   "tm.how.title": "Miten työ tarkistetaan",
