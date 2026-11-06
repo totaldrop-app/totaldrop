@@ -488,4 +488,16 @@ class AppLocalizationsHe extends AppLocalizations {
   @override
   String get shareBusy =>
       'העברה עדיין מתבצעת. המתינו לסיומה או עצרו אותה, ואז שתפו שוב.';
+
+  @override
+  String shareSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'לא ניתן היה לקרוא $count פריטים משותפים, והם הושמטו.',
+      two: 'לא ניתן היה לקרוא שני פריטים משותפים, והם הושמטו.',
+      one: 'לא ניתן היה לקרוא פריט משותף אחד, והוא הושמט.',
+    );
+    return '$_temp0';
+  }
 }

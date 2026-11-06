@@ -490,4 +490,15 @@ class AppLocalizationsUr extends AppLocalizations {
   @override
   String get shareBusy =>
       'ایک منتقلی ابھی جاری ہے۔ اس کے ختم ہونے کا انتظار کریں یا اسے روکیں، پھر دوبارہ شیئر کریں۔';
+
+  @override
+  String shareSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'شیئر کی گئی $count چیزیں پڑھی نہیں جا سکیں، اس لیے چھوڑ دی گئیں۔',
+      one: 'شیئر کی گئی ایک چیز پڑھی نہیں جا سکی، اس لیے چھوڑ دی گئی۔',
+    );
+    return '$_temp0';
+  }
 }

@@ -130,5 +130,6 @@
   "transferNoticeReceiving": "Příjem přes TotalDrop",
   "transferNoticeBody": "Pokračuje, i když používáte jiné aplikace.",
   "shareTextSoon": "TotalDrop zatím neposílá text, jen soubory. Sdílejte raději soubor.",
-  "shareBusy": "Přenos stále probíhá. Počkejte, až skončí, nebo ho zastavte, a pak sdílejte znovu."
+  "shareBusy": "Přenos stále probíhá. Počkejte, až skončí, nebo ho zastavte, a pak sdílejte znovu.",
+  "shareSkipped": "{count, plural, one{Jednu sdílenou položku nebylo možné přečíst, proto byla vynechána.} few{{count} sdílené položky nebylo možné přečíst, proto byly vynechány.} many{{count} sdílené položky nebylo možné přečíst, proto bylo vynecháno.} other{{count} sdílených položek nebylo možné přečíst, proto byly vynechány.}}"
 }

@@ -130,5 +130,6 @@
   "transferNoticeReceiving": "Ontvangen met TotalDrop",
   "transferNoticeBody": "Gaat door terwijl je andere apps gebruikt.",
   "shareTextSoon": "TotalDrop verstuurt nog geen tekst, alleen bestanden. Deel in plaats daarvan een bestand.",
-  "shareBusy": "Er loopt nog een overdracht. Wacht tot die klaar is of stop hem, en deel dan opnieuw."
+  "shareBusy": "Er loopt nog een overdracht. Wacht tot die klaar is of stop hem, en deel dan opnieuw.",
+  "shareSkipped": "{count, plural, =1{Eén gedeeld item kon niet worden gelezen en is weggelaten.} other{{count} gedeelde items konden niet worden gelezen en zijn weggelaten.}}"
 }

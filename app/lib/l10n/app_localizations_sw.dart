@@ -486,4 +486,16 @@ class AppLocalizationsSw extends AppLocalizations {
   @override
   String get shareBusy =>
       'Uhamishaji bado unaendelea. Subiri umalizike au uusimamishe, kisha shiriki tena.';
+
+  @override
+  String shareSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'Vipengee $count vilivyoshirikiwa havikuweza kusomwa na vimeachwa.',
+      one: 'Kipengee kimoja kilichoshirikiwa hakikuweza kusomwa na kimeachwa.',
+    );
+    return '$_temp0';
+  }
 }

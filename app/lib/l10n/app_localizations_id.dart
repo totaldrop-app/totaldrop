@@ -477,4 +477,15 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get shareBusy =>
       'Masih ada transfer yang berjalan. Tunggu sampai selesai atau hentikan, lalu bagikan lagi.';
+
+  @override
+  String shareSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count item yang dibagikan tidak dapat dibaca dan dilewati.',
+      one: 'Satu item yang dibagikan tidak dapat dibaca dan dilewati.',
+    );
+    return '$_temp0';
+  }
 }

@@ -500,4 +500,17 @@ class AppLocalizationsRo extends AppLocalizations {
   @override
   String get shareBusy =>
       'Un transfer este încă în desfășurare. Așteaptă să se termine sau oprește-l, apoi partajează din nou.';
+
+  @override
+  String shareSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count de elemente partajate nu au putut fi citite și au fost omise.',
+      few: '$count elemente partajate nu au putut fi citite și au fost omise.',
+      one: 'Un element partajat nu a putut fi citit și a fost omis.',
+    );
+    return '$_temp0';
+  }
 }

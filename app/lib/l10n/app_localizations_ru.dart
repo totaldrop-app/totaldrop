@@ -501,4 +501,17 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get shareBusy =>
       'Передача ещё идёт. Дождитесь её окончания или остановите её, затем поделитесь снова.';
+
+  @override
+  String shareSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count общего элемента не удалось прочитать, они пропущены.',
+      many: '$count общих элементов не удалось прочитать, они пропущены.',
+      few: '$count общих элемента не удалось прочитать, они пропущены.',
+      one: '$count общий элемент не удалось прочитать, он пропущен.',
+    );
+    return '$_temp0';
+  }
 }

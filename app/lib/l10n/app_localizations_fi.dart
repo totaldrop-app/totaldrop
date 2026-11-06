@@ -491,4 +491,15 @@ class AppLocalizationsFi extends AppLocalizations {
   @override
   String get shareBusy =>
       'Siirto on yhä käynnissä. Odota, että se valmistuu, tai pysäytä se ja jaa sitten uudelleen.';
+
+  @override
+  String shareSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count jaettua kohdetta ei voitu lukea, joten ne jätettiin pois.',
+      one: 'Yhtä jaettua kohdetta ei voitu lukea, joten se jätettiin pois.',
+    );
+    return '$_temp0';
+  }
 }

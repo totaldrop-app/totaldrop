@@ -495,4 +495,16 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get shareBusy =>
       'Er loopt nog een overdracht. Wacht tot die klaar is of stop hem, en deel dan opnieuw.';
+
+  @override
+  String shareSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count gedeelde items konden niet worden gelezen en zijn weggelaten.',
+      one: 'Eén gedeeld item kon niet worden gelezen en is weggelaten.',
+    );
+    return '$_temp0';
+  }
 }

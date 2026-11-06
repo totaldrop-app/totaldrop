@@ -481,4 +481,16 @@ class AppLocalizationsHu extends AppLocalizations {
   @override
   String get shareBusy =>
       'Még folyamatban van egy átvitel. Várd meg, amíg befejeződik, vagy állítsd le, aztán oszd meg újra.';
+
+  @override
+  String shareSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count megosztott elemet nem sikerült beolvasni, ezért kimaradtak.',
+      one: 'Egy megosztott elemet nem sikerült beolvasni, ezért kimaradt.',
+    );
+    return '$_temp0';
+  }
 }

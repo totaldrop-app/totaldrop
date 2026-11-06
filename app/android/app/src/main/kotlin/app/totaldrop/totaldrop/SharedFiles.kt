@@ -5,34 +5,47 @@ package app.totaldrop.totaldrop
 
 import android.content.ContentResolver
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Process
 import android.provider.OpenableColumns
 import java.io.File
 import java.io.IOException
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.Executors
 
 /**
- * Files shared to TotalDrop from another app (#53): Gallery, Files, any app
- * with a Share button.
+ * Files shared to TotalDrop from another app (#53, #308): Gallery, Files,
+ * any app with a Share button.
  *
  * Another app hands over `content://` URIs with a read grant that lasts as
  * long as this activity. The core reads files by path, so each one is copied
- * into the app cache first, as the system picker's plugin does for picked
- * files (#269). The grant is never made persistent.
+ * first, as the system picker's plugin does for picked files (#269). The
+ * grant is never made persistent.
  *
- * Only `content://` URIs from other apps are taken. A `file://` URI, or a
- * content URI of this app's own provider, could name TotalDrop's private
- * files (its device key among them), and sending them would leak them: any
- * app can put any URI into a share intent.
+ * Only `content://` URIs served by another app are read. Any app can put any
+ * URI into a share intent; a `file://` URI, or a content URI of a provider in
+ * TotalDrop's own process (share_plus has one), could name TotalDrop's
+ * private files, its device key among them, and sending them would leak
+ * them. The provider is looked up the way the system resolves it, so a
+ * `user@` prefix in the authority does not hide it.
  */
 object SharedFiles {
     /** A copied file, ready for the core. */
     data class Item(val name: String, val path: String, val size: Long)
 
-    /** Longest file name the copy keeps, in UTF-8 bytes (ext4's limit). */
+    /** What a share became: its files, and how many of its items were left
+     * out because they may not or cannot be read. */
+    data class Copied(val items: List<Item>, val skipped: Int)
+
+    /** Longest file name a copy keeps, in UTF-8 bytes (ext4's limit). */
     const val MAX_NAME_BYTES = 255
 
     /** At most this many files from one share. */
     const val MAX_FILES = 10_000
+
+    /** Room left on the disk after the copy, so the phone does not fill up. */
+    const val SPARE_BYTES = 256L shl 20
 
     /** The streams of a share intent, in order, each once. */
     fun urisOf(intent: Intent): List<Uri> {
@@ -57,12 +70,26 @@ object SharedFiles {
         uris.isEmpty() && intent.action == Intent.ACTION_SEND &&
             !intent.getCharSequenceExtra(Intent.EXTRA_TEXT).isNullOrEmpty()
 
-    /** Whether a URI may be read for sending: see the class comment. */
-    fun acceptable(scheme: String?, authority: String?, ownAuthorityPrefix: String): Boolean =
+    /**
+     * Whether a URI may be read for sending: see the class comment.
+     * [providerPackage] and [providerUid] are what the system resolves the
+     * authority to, null when nothing serves it.
+     */
+    fun acceptable(
+        scheme: String?,
+        authority: String?,
+        providerPackage: String?,
+        providerUid: Int?,
+        ownPackage: String,
+        ownUid: Int,
+    ): Boolean =
         scheme == ContentResolver.SCHEME_CONTENT &&
             !authority.isNullOrEmpty() &&
-            authority != ownAuthorityPrefix &&
-            !authority.startsWith("$ownAuthorityPrefix.")
+            // content://0@authority/… reaches the same provider.
+            '@' !in authority &&
+            providerPackage != null && providerUid != null &&
+            providerPackage != ownPackage &&
+            providerUid != ownUid
 
     /**
      * A file name that is safe to create in a folder: no folder separators,
@@ -85,20 +112,25 @@ object SharedFiles {
             }
         }.trim().trimStart('.')
         if (name.isEmpty()) return fallback
-        if (name.toByteArray(Charsets.UTF_8).size <= MAX_NAME_BYTES) return name
+        return fit(name, "").ifEmpty { fallback }
+    }
+
+    /** [name] with [suffix] before its extension, cut to [MAX_NAME_BYTES]. */
+    private fun fit(name: String, suffix: String): String {
         val dot = name.lastIndexOf('.')
         val ext = if (dot > 0 && name.length - dot <= 16) name.substring(dot) else ""
         var stem = name.substring(0, name.length - ext.length)
-        while ((stem + ext).toByteArray(Charsets.UTF_8).size > MAX_NAME_BYTES && stem.isNotEmpty()) {
-            stem = stem.dropLast(if (Character.isLowSurrogate(stem.last())) 2 else 1)
+        fun bytes() = (stem + suffix + ext).toByteArray(Charsets.UTF_8).size
+        while (bytes() > MAX_NAME_BYTES && stem.isNotEmpty()) {
+            stem = stem.dropLast(if (stem.length > 1 && Character.isLowSurrogate(stem.last())) 2 else 1)
         }
-        return (stem + ext).ifEmpty { fallback }
+        return stem + suffix + ext
     }
 
     /**
      * Names for a share's files, made unique the way a file manager does:
      * `a.jpg`, `a (2).jpg`. Case is ignored, since the receiver may be on
-     * a file system that ignores it.
+     * a file system that ignores it. A number never makes a name too long.
      */
     fun uniqueNames(names: List<String>): List<String> {
         val taken = HashSet<String>()
@@ -106,55 +138,137 @@ object SharedFiles {
             var candidate = name
             var n = 2
             while (!taken.add(candidate.lowercase())) {
-                val dot = name.lastIndexOf('.')
-                candidate = if (dot > 0) {
-                    "${name.substring(0, dot)} ($n)${name.substring(dot)}"
-                } else {
-                    "$name ($n)"
-                }
+                candidate = fit(name, " ($n)")
                 n += 1
             }
             candidate
         }
     }
+}
 
-    /** The folder the copies go into. Emptied by [clear]. */
-    fun folder(cacheDir: File): File = File(cacheDir, "shared")
+/**
+ * Copies shares into their own folders under [root], one at a time, and
+ * deletes them: every copy and delete runs on one thread, so a delete never
+ * meets a copy half way. A dropped share stops copying at the next block.
+ */
+class ShareCopier(
+    private val root: File,
+    private val resolver: ContentResolver,
+    private val packages: PackageManager,
+    private val ownPackage: String,
+) {
+    private val worker = Executors.newSingleThreadExecutor { r -> Thread(r, "share-copy") }
+    private val dropped = ConcurrentHashMap.newKeySet<Long>()
 
-    /**
-     * Copies the shared files into a fresh folder under [folder]. Throws
-     * [IOException] (or [SecurityException], for a grant that is gone)
-     * when a file cannot be read or written; nothing is kept then.
-     */
-    fun copy(resolver: ContentResolver, uris: List<Uri>, cacheDir: File, ownAuthorityPrefix: String): List<Item> {
-        val usable = uris.filter { acceptable(it.scheme, it.authority, ownAuthorityPrefix) }
-        if (usable.isEmpty()) throw IOException("no file that can be read")
-        val names = uniqueNames(usable.mapIndexed { i, uri -> safeName(displayName(resolver, uri), i) })
-        val dir = File(folder(cacheDir), System.nanoTime().toString())
-        if (!dir.mkdirs()) throw IOException("cannot create the share folder")
-        try {
-            return usable.zip(names).map { (uri, name) ->
-                val target = File(dir, name)
-                val input = resolver.openInputStream(uri) ?: throw IOException("no stream")
-                input.use { i -> target.outputStream().use { o -> i.copyTo(o, 1 shl 20) } }
-                Item(name, target.path, target.length())
+    /** Copies [uris] as share [id]; [done] gets the result, or null when
+     * nothing could be copied, on the worker. A dropped share gets no
+     * result: no one waits for it. */
+    fun copy(id: Long, uris: List<Uri>, done: (SharedFiles.Copied?) -> Unit) {
+        worker.execute {
+            val dir = File(root, id.toString())
+            val result = try {
+                copyNow(id, uris, dir)
+            } catch (e: Exception) {
+                android.util.Log.w("TotalDrop", "shared files could not be copied: ${e.javaClass.simpleName}")
+                dir.deleteRecursively()
+                null
             }
-        } catch (e: Exception) {
-            dir.deleteRecursively()
-            throw e
+            if (id in dropped) {
+                dir.deleteRecursively()
+            } else {
+                done(result)
+            }
         }
     }
 
-    /** Deletes every copy. */
-    fun clear(cacheDir: File) {
-        folder(cacheDir).deleteRecursively()
+    /** The person cannot take these shares, or cleared them: stop and
+     * delete their copies. */
+    fun drop(ids: Collection<Long>) {
+        if (ids.isEmpty()) return
+        dropped.addAll(ids)
+        worker.execute {
+            for (id in ids) File(root, id.toString()).deleteRecursively()
+        }
     }
 
-    private fun displayName(resolver: ContentResolver, uri: Uri): String? = try {
-        resolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { c ->
-            if (c.moveToFirst() && !c.isNull(0)) c.getString(0) else null
+    /** Deletes every copy, left from an earlier run. */
+    fun clearAll() {
+        worker.execute { root.deleteRecursively() }
+    }
+
+    private fun readable(uri: Uri): Boolean {
+        val authority = uri.authority
+        val info = authority?.takeIf { '@' !in it }?.let {
+            try {
+                packages.resolveContentProvider(it, PackageManager.ComponentInfoFlags.of(0))
+            } catch (_: Exception) {
+                null
+            }
         }
-    } catch (_: Exception) {
-        null
-    } ?: uri.lastPathSegment
+        return SharedFiles.acceptable(
+            uri.scheme, authority, info?.packageName, info?.applicationInfo?.uid,
+            ownPackage, Process.myUid(),
+        )
+    }
+
+    private fun copyNow(id: Long, uris: List<Uri>, dir: File): SharedFiles.Copied? {
+        if (id in dropped) return null
+        val usable = uris.filter(::readable)
+        if (usable.isEmpty()) return null
+        val meta = usable.mapIndexed { i, uri -> query(uri, i) }
+        val names = SharedFiles.uniqueNames(meta.map { it.first })
+        // A folder of the same number from an earlier run goes first.
+        dir.deleteRecursively()
+        if (!dir.mkdirs()) throw IOException("cannot create the share folder")
+        // Known sizes must fit with room to spare; an unknown size is
+        // found out while copying, and a full disk fails the copy.
+        val known = meta.sumOf { it.second ?: 0L }
+        if (known > dir.usableSpace - SharedFiles.SPARE_BYTES) throw IOException("no space")
+        val items = ArrayList<SharedFiles.Item>()
+        var skipped = uris.size - usable.size
+        val buffer = ByteArray(1 shl 20)
+        for ((uri, name) in usable.zip(names)) {
+            val target = File(dir, name)
+            val input = try {
+                resolver.openInputStream(uri)
+            } catch (_: Exception) {
+                null
+            }
+            if (input == null) {
+                skipped += 1
+                continue
+            }
+            input.use { i ->
+                target.outputStream().use { o ->
+                    while (true) {
+                        if (id in dropped) return null
+                        val n = i.read(buffer)
+                        if (n < 0) break
+                        o.write(buffer, 0, n)
+                    }
+                }
+            }
+            items.add(SharedFiles.Item(name, target.path, target.length()))
+        }
+        if (items.isEmpty()) return null
+        return SharedFiles.Copied(items, skipped)
+    }
+
+    /** The display name (made safe) and the size, if the provider says. */
+    private fun query(uri: Uri, index: Int): Pair<String, Long?> {
+        var name: String? = null
+        var size: Long? = null
+        try {
+            resolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE), null, null, null)
+                ?.use { c ->
+                    if (c.moveToFirst()) {
+                        if (!c.isNull(0)) name = c.getString(0)
+                        if (!c.isNull(1)) size = c.getLong(1).takeIf { it >= 0 }
+                    }
+                }
+        } catch (_: Exception) {
+            // Name and size stay unknown; the copy finds out the size.
+        }
+        return SharedFiles.safeName(name ?: uri.lastPathSegment, index) to size
+    }
 }

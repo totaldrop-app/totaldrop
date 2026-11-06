@@ -20,21 +20,28 @@ final class OpenScreen extends Launch {
   final String screen;
 }
 
-/// Files were shared; their copy into the app cache has started.
+/// Files were shared; their copy into the app's storage has started. [id]
+/// names the share in the events that follow, and in
+/// [LaunchSource.drop].
 final class ShareCopying extends Launch {
-  const ShareCopying();
+  const ShareCopying(this.id);
+  final int id;
 }
 
-/// The shared files, copied and ready to send.
+/// The shared files of share [id], copied and ready to send. [skipped]
+/// items were left out: they could not, or may not, be read.
 final class SharedFiles extends Launch {
-  const SharedFiles(this.files);
+  const SharedFiles(this.id, this.files, {this.skipped = 0});
+  final int id;
   final List<PickedFile> files;
+  final int skipped;
 }
 
-/// The shared files could not be copied (no space, a grant that is gone,
-/// nothing that may be read).
+/// The files of share [id] could not be copied (no space, a grant that is
+/// gone, nothing that may be read).
 final class ShareFailed extends Launch {
-  const ShareFailed();
+  const ShareFailed(this.id);
+  final int id;
 }
 
 /// Only text was shared, which TotalDrop does not send yet.
@@ -47,12 +54,13 @@ final class SharedTextOnly extends Launch {
 @visibleForTesting
 List<Launch> parseLaunch(Object? event) {
   if (event is! Map) return const [];
-  final out = <Launch>[];
   if (event['textOnly'] == true) return const [SharedTextOnly()];
-  if (event['copying'] == true) out.add(const ShareCopying());
-  if (event['failed'] == true) out.add(const ShareFailed());
-  final files = event['files'];
-  if (files is List) {
+  final id = event['id'];
+  if (id is int) {
+    if (event['copying'] == true) return [ShareCopying(id)];
+    if (event['failed'] == true) return [ShareFailed(id)];
+    final files = event['files'];
+    if (files is! List) return const [];
     final picked = <PickedFile>[
       for (final f in files)
         if (f is Map &&
@@ -66,13 +74,24 @@ List<Launch> parseLaunch(Object? event) {
             size: f['size'] as int,
           ),
     ];
-    out.add(picked.isEmpty ? const ShareFailed() : SharedFiles(picked));
+    if (picked.isEmpty) return [ShareFailed(id)];
+    final skipped = event['skipped'];
+    return [
+      SharedFiles(
+        id,
+        picked,
+        skipped:
+            (skipped is int && skipped > 0 ? skipped : 0) +
+            files.length -
+            picked.length,
+      ),
+    ];
   }
   final screen = event['screen'];
-  if (out.isEmpty && (screen == 'send' || screen == 'receive')) {
-    out.add(OpenScreen(screen as String));
+  if (screen == 'send' || screen == 'receive') {
+    return [OpenScreen(screen as String)];
   }
-  return out;
+  return const [];
 }
 
 /// Where launches come from: the Android activity, nothing elsewhere.
@@ -80,8 +99,9 @@ abstract interface class LaunchSource {
   /// Every launch, those from before the app listened first.
   Stream<Launch> get launches;
 
-  /// Deletes the copies of shared files.
-  Future<void> clearShared();
+  /// Stops the copies of these shares and deletes them: the person cannot
+  /// take them, or cleared them.
+  Future<void> drop(Iterable<int> ids);
 }
 
 class NoLaunches implements LaunchSource {
@@ -89,7 +109,7 @@ class NoLaunches implements LaunchSource {
   @override
   Stream<Launch> get launches => const Stream.empty();
   @override
-  Future<void> clearShared() async {}
+  Future<void> drop(Iterable<int> ids) async {}
 }
 
 class AndroidLaunchSource implements LaunchSource {
@@ -135,6 +155,10 @@ class AndroidLaunchSource implements LaunchSource {
   }
 
   @override
-  Future<void> clearShared() =>
-      _channel.invokeMethod<void>('clear').then((_) {}, onError: (_) {});
+  Future<void> drop(Iterable<int> ids) {
+    if (ids.isEmpty) return Future.value();
+    return _channel
+        .invokeMethod<void>('drop', ids.toList())
+        .then((_) {}, onError: (Object e) => debugPrint('launches: $e'));
+  }
 }

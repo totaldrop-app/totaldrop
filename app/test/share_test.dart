@@ -22,14 +22,14 @@ import 'fakes.dart';
 
 class FakeLaunches implements LaunchSource {
   final controller = StreamController<Launch>.broadcast();
-  int clears = 0;
+  final dropped = <int>[];
 
   @override
   Stream<Launch> get launches => controller.stream;
 
   @override
-  Future<void> clearShared() {
-    clears++;
+  Future<void> drop(Iterable<int> ids) {
+    dropped.addAll(ids);
     return Future.value();
   }
 
@@ -43,22 +43,31 @@ void main() {
   group('platform events', () {
     test('a copied share becomes its files', () {
       final l = parseLaunch({
+        'id': 7,
         'files': [
           {'name': 'a.jpg', 'path': '/c/a.jpg', 'size': 3},
           {'name': 'b.pdf', 'path': '/c/b.pdf', 'size': 4},
         ],
+        'skipped': 2,
       });
-      final files = (l.single as SharedFiles).files;
-      expect(files.map((f) => f.name), ['a.jpg', 'b.pdf']);
-      expect(files.first.size, 3);
+      final share = l.single as SharedFiles;
+      expect(share.id, 7);
+      expect(share.files.map((f) => f.name), ['a.jpg', 'b.pdf']);
+      expect(share.files.first.size, 3);
+      expect(share.skipped, 2);
     });
 
     test('a share and a shortcut', () {
       expect(
-        parseLaunch({'screen': 'send', 'copying': true}).single,
-        isA<ShareCopying>(),
+        (parseLaunch({'id': 3, 'screen': 'send', 'copying': true}).single
+                as ShareCopying)
+            .id,
+        3,
       );
-      expect(parseLaunch({'failed': true}).single, isA<ShareFailed>());
+      expect(
+        (parseLaunch({'id': 3, 'failed': true}).single as ShareFailed).id,
+        3,
+      );
       expect(
         parseLaunch({'screen': 'send', 'textOnly': true}).single,
         isA<SharedTextOnly>(),
@@ -73,9 +82,12 @@ void main() {
       expect(parseLaunch(null), isEmpty);
       expect(parseLaunch('send'), isEmpty);
       expect(parseLaunch({'screen': 'settings'}), isEmpty);
+      // A share without its number cannot be matched to its copy.
+      expect(parseLaunch({'copying': true}), isEmpty);
       // A relative path, a missing size: not a file the core may read.
       expect(
         parseLaunch({
+          'id': 1,
           'files': [
             {'name': 'a', 'path': 'rel/a', 'size': 1},
             {'name': 'b', 'path': '/c/b'},
@@ -83,6 +95,19 @@ void main() {
         }).single,
         isA<ShareFailed>(),
       );
+      // Those that are left out count as skipped.
+      final some =
+          parseLaunch({
+                'id': 1,
+                'files': [
+                  {'name': 'a', 'path': '/c/a', 'size': 1},
+                  {'name': 'b', 'path': 'rel/b', 'size': 1},
+                ],
+                'skipped': 1,
+              }).single
+              as SharedFiles;
+      expect(some.files.single.name, 'a');
+      expect(some.skipped, 2);
     });
   });
 
@@ -104,23 +129,35 @@ void main() {
     });
 
     test('a share waits for its copy, then lists the files', () {
-      expect(vm.beginShare(), isTrue);
+      expect(vm.beginShare(1), isTrue);
       expect(vm.sharing, isTrue);
-      vm.addShared([shared('a.jpg'), shared('b.jpg')]);
+      expect(vm.addShared(1, [shared('a.jpg'), shared('b.jpg')]), isTrue);
       expect(vm.sharing, isFalse);
       expect(vm.files.map((f) => f.name), ['a.jpg', 'b.jpg']);
+      expect(launches.dropped, isEmpty);
     });
 
     test('a share adds to what is already selected', () {
       vm.addFakeFileForTest('mine.txt');
-      vm.beginShare();
-      vm.addShared([shared('a.jpg')]);
+      vm.beginShare(1);
+      vm.addShared(1, [shared('a.jpg')]);
       expect(vm.files, hasLength(2));
+    });
+
+    test('two shares at once: the wait ends with the last copy', () {
+      vm.beginShare(1);
+      vm.beginShare(2);
+      vm.addShared(2, [shared('b.jpg')]);
+      expect(vm.sharing, isTrue, reason: 'the first share still copies');
+      vm.shareFailed(1);
+      expect(vm.sharing, isFalse);
+      expect(vm.addFailed, isTrue);
+      expect(vm.files.single.name, 'b.jpg');
     });
 
     test('cannot create a code while a share copies', () async {
       vm.addFakeFileForTest('mine.txt');
-      vm.beginShare();
+      vm.beginShare(1);
       await vm.start();
       expect(vm.stage, SendStage.picking);
     });
@@ -131,15 +168,18 @@ void main() {
         vm.addFakeFileForTest('mine.txt');
         unawaited(vm.start());
         expect(vm.busy, isTrue);
-        expect(vm.beginShare(), isFalse);
-        vm.addShared([shared('a.jpg')]);
+        expect(vm.beginShare(1), isFalse);
+        expect(vm.addShared(1, [shared('a.jpg')]), isFalse);
         expect(vm.files.single.name, 'mine.txt');
+        expect(launches.dropped, [1], reason: 'its copy is deleted');
       },
     );
 
-    test('is refused while the picker is open', () {
+    test('is taken while the picker is open', () async {
       unawaited(vm.addFiles());
-      expect(vm.beginShare(), isFalse);
+      expect(vm.beginShare(1), isTrue);
+      vm.addShared(1, [shared('a.jpg')]);
+      expect(vm.files.single.name, 'a.jpg');
     });
 
     test(
@@ -152,33 +192,35 @@ void main() {
         repo.events.add(event(EventKind.finished));
         await pumpEventQueue();
         expect(vm.stage, isNot(SendStage.picking));
-        final clears = launches.clears;
-        expect(vm.beginShare(), isTrue);
+        expect(vm.beginShare(4), isTrue);
         expect(vm.stage, SendStage.picking);
-        expect(launches.clears, clears, reason: 'the copy is being written');
-        vm.addShared([shared('a.jpg')]);
+        expect(launches.dropped, isNot(contains(4)));
+        vm.addShared(4, [shared('a.jpg')]);
         expect(vm.files.single.name, 'a.jpg');
       },
     );
 
-    test('files that arrive after a reset are dropped', () {
-      vm.beginShare();
+    test('a reset deletes the copies, done and still copying', () {
+      vm.beginShare(1);
+      vm.addShared(1, [shared('a.jpg')]);
+      vm.beginShare(2);
       vm.reset();
-      expect(launches.clears, 1, reason: 'the copies are deleted');
-      vm.addShared([shared('a.jpg')]);
-      expect(vm.files, isEmpty);
+      expect(launches.dropped, unorderedEquals([1, 2]));
       expect(vm.sharing, isFalse);
+      // The copy that was still running arrives after all: not added.
+      expect(vm.addShared(2, [shared('b.jpg')]), isFalse);
+      expect(vm.files, isEmpty);
     });
 
     test('a failed copy says so, like a failed pick', () {
-      vm.beginShare();
-      vm.shareFailed();
+      vm.beginShare(1);
+      vm.shareFailed(1);
       expect(vm.sharing, isFalse);
       expect(vm.addFailed, isTrue);
     });
 
     test('the picker waits while a share copies', () async {
-      vm.beginShare();
+      vm.beginShare(1);
       await vm.addFiles();
       expect(picker.picks, 0);
     });
@@ -242,10 +284,10 @@ void main() {
 
     testWidgets('a share opens Send with the shared files', (tester) async {
       await pumpApp(tester);
-      launches.add(const ShareCopying());
+      launches.add(const ShareCopying(1));
       await settle(tester);
       expect(find.text('Preparing your files…'), findsOneWidget);
-      launches.add(SharedFiles([shared('holiday.jpg')]));
+      launches.add(SharedFiles(1, [shared('holiday.jpg')]));
       await settle(tester);
       expect(find.text('holiday.jpg'), findsOneWidget);
     });
@@ -254,15 +296,27 @@ void main() {
       tester,
     ) async {
       await pumpApp(tester);
-      launches.add(const ShareCopying());
-      launches.add(SharedFiles([shared('a.jpg')]));
+      launches.add(const ShareCopying(1));
+      launches.add(SharedFiles(1, [shared('a.jpg')]));
       await settle(tester);
-      launches.add(const ShareCopying());
-      launches.add(SharedFiles([shared('b.jpg')]));
+      launches.add(const ShareCopying(2));
+      launches.add(SharedFiles(2, [shared('b.jpg')]));
       await settle(tester);
       expect(find.text('a.jpg'), findsOneWidget);
       expect(find.text('b.jpg'), findsOneWidget);
       expect(find.byType(SendView), findsOneWidget);
+    });
+
+    testWidgets('items that could not be read are counted', (tester) async {
+      await pumpApp(tester);
+      launches.add(const ShareCopying(1));
+      launches.add(SharedFiles(1, [shared('a.jpg')], skipped: 2));
+      await settle(tester);
+      expect(find.text('a.jpg'), findsOneWidget);
+      expect(
+        find.text('2 shared items could not be read and were left out.'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('a share during a transfer is refused with a message', (
@@ -272,9 +326,8 @@ void main() {
       send.addFakeFileForTest('mine.txt');
       unawaited(send.start());
       await settle(tester);
-      launches.add(const ShareCopying());
+      launches.add(const ShareCopying(5));
       await settle(tester);
-      expect(find.text('home'), findsOneWidget);
       expect(
         find.text(
           'A transfer is still running. Wait for it to finish or stop it, '
@@ -283,6 +336,23 @@ void main() {
         findsOneWidget,
       );
       expect(send.stage, SendStage.preparing, reason: 'not cut short');
+      expect(launches.dropped, [5], reason: 'its copy is deleted');
+      expect(find.byType(SendView), findsOneWidget, reason: 'the running one');
+    });
+
+    testWidgets('a shortcut during a transfer shows that transfer', (
+      tester,
+    ) async {
+      await pumpApp(tester);
+      send.addFakeFileForTest('mine.txt');
+      unawaited(send.start());
+      await settle(tester);
+      expect(find.text('home'), findsOneWidget);
+      launches.add(const OpenScreen('receive'));
+      await settle(tester);
+      expect(find.byType(ReceiveView), findsNothing);
+      expect(find.byType(SendView), findsOneWidget);
+      expect(send.stage, SendStage.preparing);
     });
 
     testWidgets('shared text opens Send and says it is not sent yet', (

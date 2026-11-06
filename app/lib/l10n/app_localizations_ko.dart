@@ -459,4 +459,15 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get shareBusy => '아직 전송이 진행 중입니다. 끝날 때까지 기다리거나 중지한 다음 다시 공유하세요.';
+
+  @override
+  String shareSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '공유된 항목 $count개를 읽을 수 없어 제외했습니다.',
+      one: '공유된 항목 1개를 읽을 수 없어 제외했습니다.',
+    );
+    return '$_temp0';
+  }
 }

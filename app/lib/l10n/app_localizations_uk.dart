@@ -498,4 +498,17 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get shareBusy =>
       'Передавання ще триває. Дочекайтеся його завершення або зупиніть його, а потім поділіться знову.';
+
+  @override
+  String shareSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count спільного елемента не вдалося прочитати, їх пропущено.',
+      many: '$count спільних елементів не вдалося прочитати, їх пропущено.',
+      few: '$count спільні елементи не вдалося прочитати, їх пропущено.',
+      one: '$count спільний елемент не вдалося прочитати, його пропущено.',
+    );
+    return '$_temp0';
+  }
 }
