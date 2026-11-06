@@ -49,7 +49,7 @@
   "cliHelpStun": "Seva ya STUN (host:port) inayokiambia kifaa hiki anwani yake ya umma. Thamani tupu huizima.",
   "cliHelpRelayOnly": "Usiunganishe moja kwa moja kamwe na usitangaze anwani ya IP: kila kitu hupita kupitia seva ya kati. Ni polepole zaidi, lakini upande mwingine haujui kamwe anwani yako. Unapopokea, mtumaji lazima atumie seva ya kati ile ile.",
   "cliHelpSend": "Tuma faili na folda, na uchapishe msimbo wa uhamisho kwa mpokeaji.",
-  "cliHelpSendPaths": "Faili au folda za kutuma.",
+  "cliHelpSendPaths": "Faili au folda za kutuma; - hutuma maandishi yaliyosomwa kutoka ingizo la kawaida.",
   "cliHelpSendStrong": "Tumia msimbo wa maneno matatu (biti 33) badala ya mawili.",
   "cliHelpReceive": "Pokea faili kwa msimbo wa uhamisho, kwa mfano 7-harbor-rocket.",
   "cliHelpReceiveCode": "Msimbo wa uhamisho uliopewa.",
@@ -60,5 +60,12 @@
   "cliHelpHelpCommand": "Onyesha ujumbe huu au msaada wa amri iliyotajwa",
   "cliDesktopAbout": "Fungua dirisha la TotalDrop.",
   "cliDesktopArgs": "Faili au folda za kutuma, au kiungo cha TotalDrop cha kupokea.",
-  "cliDesktopScreen": "Fungua kwenye skrini ya Tuma (send), Pokea (receive) au Mipangilio (settings)."
+  "cliDesktopScreen": "Fungua kwenye skrini ya Tuma (send), Pokea (receive) au Mipangilio (settings).",
+  "cliHelpSendText": "Tuma maandishi haya badala ya faili: mpokeaji huyaona kama maandishi, si faili.",
+  "cliSendingText": "Inatuma maandishi, {size}.",
+  "cliOfferedText": "Yaliyotolewa: maandishi, {size}. Yanaonyeshwa hapa, hayahifadhiwi.",
+  "cliPromptShow": "Yaonyeshwe? [y/N] ",
+  "cliTextNotUtf8": "Maandishi ya ingizo la kawaida si UTF-8.",
+  "cliTextEmpty": "Hakuna maandishi ya kutuma.",
+  "cliTextTooLong": "Maandishi ni marefu kuliko {size}. Yatume kama faili."
 }

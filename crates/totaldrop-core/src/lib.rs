@@ -40,7 +40,7 @@ use totaldrop_proto::wire::{Certificate, Hints};
 
 pub use error::{Cause, Error, Result};
 pub use stop::Stop;
-pub use transfer::{OfferSummary, ReceiveReport, SendReport, check_destination};
+pub use transfer::{MAX_TEXT, OfferSummary, ReceiveReport, SendReport, check_destination};
 
 /// Something worth telling the person while a transfer runs.
 #[derive(Debug, Clone)]
@@ -382,6 +382,7 @@ pub struct PreparedSend {
     entries: Vec<transfer::SourceEntry>,
     skipped: usize,
     paths: PathOptions,
+    text: bool,
 }
 
 impl core::fmt::Debug for PreparedSend {
@@ -396,6 +397,24 @@ impl PreparedSend {
         let (entries, skipped) = tokio::task::spawn_blocking(move || transfer::scan(&paths))
             .await
             .map_err(|_| Error::Protocol("scan task failed"))??;
+        Self::ready(opts, entries, skipped, false).await
+    }
+
+    /// Like [`PreparedSend::new`], for a text (#313): the receiver shows it
+    /// instead of saving it. A receiver that does not know texts saves it
+    /// as a file called `name`, which should end in `.txt`. At most
+    /// [`MAX_TEXT`] bytes.
+    pub async fn text(opts: &SendOptions, text: &str, name: &str) -> Result<Self> {
+        let entry = transfer::text_entry(text, name)?;
+        Self::ready(opts, vec![entry], 0, true).await
+    }
+
+    async fn ready(
+        opts: &SendOptions,
+        entries: Vec<transfer::SourceEntry>,
+        skipped: usize,
+        text: bool,
+    ) -> Result<Self> {
         let keys = DeviceKeys::generate()?;
         let allocation = rendezvous::allocate(&opts.server).await?;
         let nameplate = allocation.nameplate;
@@ -411,6 +430,7 @@ impl PreparedSend {
             entries,
             skipped,
             paths: opts.paths.clone(),
+            text,
         })
     }
 
@@ -502,6 +522,7 @@ impl PreparedSend {
             chan,
             &self.keys,
             self.entries,
+            self.text,
             progress_from(&events),
             &stop,
         )

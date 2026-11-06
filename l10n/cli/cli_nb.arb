@@ -49,7 +49,7 @@
   "cliHelpStun": "STUN-server (host:port) som forteller denne enheten hvilken offentlig adresse den har. En tom verdi slår den av.",
   "cliHelpRelayOnly": "Koble aldri til direkte, og oppgi ingen IP-adresse: alt går gjennom reléserveren. Tregere, men den andre siden får aldri vite adressen din. Ved mottak må avsenderen bruke samme reléserver.",
   "cliHelpSend": "Send filer og mapper, og skriv ut en overføringskode til mottakeren.",
-  "cliHelpSendPaths": "Filer eller mapper som skal sendes.",
+  "cliHelpSendPaths": "Filer eller mapper som skal sendes; - sender teksten som leses fra standard inn.",
   "cliHelpSendStrong": "Bruk en kode på tre ord (33 bit) i stedet for to.",
   "cliHelpReceive": "Motta filer med en overføringskode, for eksempel 7-harbor-rocket.",
   "cliHelpReceiveCode": "Overføringskoden du har fått.",
@@ -60,5 +60,12 @@
   "cliHelpHelpCommand": "Vis denne meldingen eller hjelpen for den angitte kommandoen",
   "cliDesktopAbout": "Åpne TotalDrop-vinduet.",
   "cliDesktopArgs": "Filer eller mapper som skal sendes, eller en TotalDrop-lenke å motta med.",
-  "cliDesktopScreen": "Åpne på skjermen Send (send), Motta (receive) eller Innstillinger (settings)."
+  "cliDesktopScreen": "Åpne på skjermen Send (send), Motta (receive) eller Innstillinger (settings).",
+  "cliHelpSendText": "Send denne teksten i stedet for filer: mottakeren ser den som tekst, ikke som en fil.",
+  "cliSendingText": "Sender en tekst, {size}.",
+  "cliOfferedText": "Tilbudt: en tekst, {size}. Den vises her og lagres ikke.",
+  "cliPromptShow": "Vise den? [j/N] ",
+  "cliTextNotUtf8": "Teksten på standard inn er ikke UTF-8.",
+  "cliTextEmpty": "Det er ingen tekst å sende.",
+  "cliTextTooLong": "Teksten er lengre enn {size}. Send den som en fil i stedet."
 }

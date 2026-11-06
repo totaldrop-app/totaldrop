@@ -335,6 +335,32 @@ treated as final.
     - Absent fields 7 and 3 mean `false`. A report reveals nothing the
       other side does not see anyway: the data arriving.
 
+## Section 8, continued: texts
+
+25. **A text is a file marked to be shown** (#313). A person can send a
+    short text, such as a link, instead of files.
+    - The sender offers it as one file entry (UTF-8, at most one chunk,
+      1 MiB), with the same content key, chunk encryption and hash as any
+      file, and sets `offer` field 8 (`true`).
+    - Like field 7, field 8 is outside the signed fields 1–4 and is
+      protected by the session keys. It changes only how the receiver
+      shows what the signed manifest holds, so the signed bytes of a text
+      offer are those of the same file offer, and an old receiver's
+      signature check is unchanged.
+    - A receiver shows a text only when field 8 is set, the offer has
+      exactly one entry, a file of at most 1 MiB, its hash matches, and its
+      content is UTF-8. It receives the file into a hidden folder of its
+      own inside the destination, reads it and removes the folder: nothing
+      stays on disk. When the content is not UTF-8, the file is placed in
+      the destination as usual. Anything else marked as a text is received
+      as files.
+    - Older versions: an old receiver ignores field 8 and saves the text
+      as the file it also is; the sender names it so (`text.txt` from the
+      command line). An old sender never sets it. Absent means `false`.
+    - The receiver shows a text as data: it never opens a link on its own,
+      and it shows control and invisible direction characters instead of
+      acting on them.
+
 ## Known limits, to be closed before 1.0
 
 - The rendezvous server has no per-client rate limiting yet. Adding it

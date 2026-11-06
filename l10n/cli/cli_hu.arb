@@ -49,7 +49,7 @@
   "cliHelpStun": "STUN-szerver (host:port), amely megmondja ennek az eszköznek a nyilvános címét. Üres érték kikapcsolja.",
   "cliHelpRelayOnly": "Soha ne kapcsolódjon közvetlenül, és ne tegyen közzé IP-címet: minden a továbbító szerveren megy át. Lassabb, de a másik fél sosem tudja meg a címedet. Fogadáskor a küldőnek ugyanazt a továbbító szervert kell használnia.",
   "cliHelpSend": "Fájlok és mappák küldése, és átviteli kód kiírása a fogadónak.",
-  "cliHelpSendPaths": "Küldendő fájlok vagy mappák.",
+  "cliHelpSendPaths": "Küldendő fájlok vagy mappák; a - a szabványos bemenetről olvasott szöveget küldi.",
   "cliHelpSendStrong": "Háromszavas kód (33 bit) használata kettő helyett.",
   "cliHelpReceive": "Fájlok fogadása átviteli kóddal, például 7-harbor-rocket.",
   "cliHelpReceiveCode": "A kapott átviteli kód.",
@@ -60,5 +60,12 @@
   "cliHelpHelpCommand": "Ennek az üzenetnek vagy a megadott parancs súgójának megjelenítése",
   "cliDesktopAbout": "A TotalDrop ablak megnyitása.",
   "cliDesktopArgs": "Küldendő fájlok vagy mappák, vagy egy TotalDrop-hivatkozás a fogadáshoz.",
-  "cliDesktopScreen": "Megnyitás a Küldés (send), Fogadás (receive) vagy Beállítások (settings) képernyőn."
+  "cliDesktopScreen": "Megnyitás a Küldés (send), Fogadás (receive) vagy Beállítások (settings) képernyőn.",
+  "cliHelpSendText": "Ezt a szöveget küldi fájlok helyett: a fogadó szövegként látja, nem fájlként.",
+  "cliSendingText": "Szöveg küldése, {size}.",
+  "cliOfferedText": "Felkínálva: egy szöveg, {size}. Itt jelenik meg, nem lesz mentve.",
+  "cliPromptShow": "Megjelenjen? [i/N] ",
+  "cliTextNotUtf8": "A szabványos bemeneten lévő szöveg nem UTF-8.",
+  "cliTextEmpty": "Nincs küldendő szöveg.",
+  "cliTextTooLong": "A szöveg hosszabb, mint {size}. Küldd inkább fájlként."
 }

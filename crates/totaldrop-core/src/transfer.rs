@@ -192,13 +192,56 @@ pub type Progress = Arc<dyn Fn(u64, u64) + Send + Sync>;
 // ---------------------------------------------------------------------------
 // Sender side
 
+/// Where a file's bytes come from.
+#[derive(Debug, Clone)]
+pub enum Source {
+    /// A file on disk, read when it is sent.
+    Path(PathBuf),
+    /// Bytes held in memory: a text (#313).
+    Bytes(Arc<[u8]>),
+}
+
 /// A file or directory ready to be offered.
 #[derive(Debug, Clone)]
 pub struct SourceEntry {
     /// The manifest entry.
     pub entry: Entry,
     /// Where the bytes come from; `None` for directories.
-    pub source: Option<PathBuf>,
+    pub source: Option<Source>,
+}
+
+/// The largest text sent and shown as a text (#313): one chunk. A longer
+/// one is better read as a file.
+pub const MAX_TEXT: u64 = limits::CHUNK_SIZE;
+
+/// A text to send (#313), as the one file of an offer: a receiver that
+/// does not know texts saves it as `name`, which should end in `.txt`.
+pub fn text_entry(text: &str, name: &str) -> Result<SourceEntry> {
+    let bytes: Arc<[u8]> = Arc::from(text.as_bytes());
+    let size = bytes.len() as u64;
+    if size == 0 {
+        return Err(Error::InvalidOffer("nothing to send".into()));
+    }
+    if size > MAX_TEXT {
+        return Err(Error::InvalidOffer(format!(
+            "the text is longer than {MAX_TEXT} bytes; send it as a file"
+        )));
+    }
+    let entry = Entry {
+        path: vec![name.to_owned()],
+        kind: EntryKind::File,
+        size,
+        hash: Some(*blake3::hash(&bytes).as_bytes()),
+        mtime: SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .ok()
+            .map(|d| d.as_secs()),
+    };
+    check_entries(std::iter::once(&entry))?;
+    Ok(SourceEntry {
+        entry,
+        source: Some(Source::Bytes(bytes)),
+    })
 }
 
 fn utf8_name(path: &Path) -> Result<String> {
@@ -255,7 +298,7 @@ fn walk(
                 hash: Some(hash_file(path)?),
                 mtime: mtime(&meta),
             },
-            source: Some(path.to_path_buf()),
+            source: Some(Source::Path(path.to_path_buf())),
         });
     } else if ft.is_dir() {
         out.push(SourceEntry {
@@ -348,7 +391,7 @@ fn check_entries<'a>(entries: impl Iterator<Item = &'a Entry>) -> Result<Vec<Saf
 #[allow(clippy::too_many_arguments)]
 async fn send_entry(
     stream: &mut quinn::SendStream,
-    source: PathBuf,
+    source: Source,
     entry: Entry,
     index: u64,
     ck: ContentKey,
@@ -356,14 +399,25 @@ async fn send_entry(
     done: Arc<AtomicU64>,
 ) -> Result<()> {
     let chunks = chunk_count(entry.size).ok_or(Error::Protocol("file too large"))?;
-    let mut file = tokio::fs::File::open(&source).await?;
-    if file.metadata().await?.len() != entry.size {
-        return Err(Error::Io(std::io::Error::other(format!(
-            "{} {}",
-            source.display(),
-            crate::error::CHANGED_AFTER_SCAN
-        ))));
-    }
+    let mut file: Box<dyn tokio::io::AsyncRead + Send + Unpin> = match source {
+        Source::Path(path) => {
+            let file = tokio::fs::File::open(&path).await?;
+            if file.metadata().await?.len() != entry.size {
+                return Err(Error::Io(std::io::Error::other(format!(
+                    "{} {}",
+                    path.display(),
+                    crate::error::CHANGED_AFTER_SCAN
+                ))));
+            }
+            Box::new(file)
+        }
+        Source::Bytes(bytes) => {
+            if bytes.len() as u64 != entry.size {
+                return Err(Error::Protocol("text size"));
+            }
+            Box::new(std::io::Cursor::new(bytes))
+        }
+    };
     let cipher = EntryCipher::new(&ck, &transfer_id, index);
     let header = DataHeader {
         transfer_id,
@@ -401,7 +455,7 @@ async fn send_entry_until_stopped(
     conn: quinn::Connection,
     stop: Stop,
     permits: Arc<Semaphore>,
-    source: PathBuf,
+    source: Source,
     entry: Entry,
     index: u64,
     ck: ContentKey,
@@ -462,6 +516,7 @@ pub async fn send_files(
     mut chan: SecureChannel,
     keys: &DeviceKeys,
     entries: Vec<SourceEntry>,
+    text: bool,
     progress: Progress,
     stop: &Stop,
 ) -> Result<SendReport> {
@@ -480,6 +535,7 @@ pub async fn send_files(
         content_key: *ck.as_bytes(),
         signature,
         progress: true,
+        text,
     };
     send_control(&mut chan.sealer, &mut chan.send, &offer).await?;
 
@@ -662,6 +718,9 @@ pub struct OfferSummary {
     pub total_size: u64,
     /// Top-level names, normalized.
     pub top_level: Vec<String>,
+    /// A text (#313): the one file is shown, not saved. Its length in
+    /// bytes is `total_size`.
+    pub text: bool,
 }
 
 /// A verified offer waiting for a decision.
@@ -714,6 +773,7 @@ pub async fn receive_offer(chan: &mut SecureChannel, peer: &Certificate) -> Resu
         content_key,
         signature,
         progress: reports,
+        text,
     } = msg
     else {
         return Err(Error::Protocol("expected offer"));
@@ -740,11 +800,15 @@ pub async fn receive_offer(chan: &mut SecureChannel, peer: &Certificate) -> Resu
         .iter()
         .filter(|e| e.kind == EntryKind::File)
         .count();
+    // Shown as a text only when it can be: one file, small enough to
+    // show. Anything else marked as a text is received as files.
+    let text = text && files == 1 && manifest.entries.len() == 1 && manifest.total_size <= MAX_TEXT;
     let summary = OfferSummary {
         files,
         dirs: manifest.entries.len().saturating_sub(files),
         total_size: manifest.total_size,
         top_level,
+        text,
     };
     Ok(VerifiedOffer {
         manifest,
@@ -872,6 +936,10 @@ pub struct ReceiveReport {
     /// Top-level items as they were named on disk (after renaming any that
     /// already existed).
     pub placed: Vec<PathBuf>,
+    /// The text, for an offer shown as a text (#313). Nothing is then
+    /// left on disk, and `placed` is empty. A text that turns out not to
+    /// be UTF-8 is placed as a file instead.
+    pub text: Option<String>,
 }
 
 struct Target {
@@ -1051,8 +1119,64 @@ pub fn check_destination(dest: &Path) -> Result<PathBuf> {
     Ok(dest.to_path_buf())
 }
 
-/// Accept an offer and write everything beneath `dest`.
+/// Accept an offer and write everything beneath `dest`. A text (#313) is
+/// received into a hidden folder of its own in `dest`, read, and removed;
+/// the report holds it.
 pub async fn accept(
+    conn: &quinn::Connection,
+    chan: SecureChannel,
+    offer: VerifiedOffer,
+    dest: &Path,
+    progress: Progress,
+    stop: &Stop,
+) -> Result<ReceiveReport> {
+    if !offer.summary.text {
+        return accept_into(conn, chan, offer, dest, progress, stop).await;
+    }
+    let resolved = check_destination(dest)?;
+    let mut tag = [0u8; 8];
+    getrandom::fill(&mut tag).map_err(|_| Error::Random)?;
+    let folder = resolved.join(format!(
+        ".totaldrop-text-{}",
+        tag.iter().map(|b| format!("{b:02x}")).collect::<String>()
+    ));
+    std::fs::create_dir(&folder)?;
+    // Gone whatever happens below, also when this task is aborted.
+    let _guard = TextFolder(folder.clone());
+    let mut report = accept_into(conn, chan, offer, &folder, progress, stop).await?;
+    let Some(file) = report.placed.pop() else {
+        return Ok(report);
+    };
+    let bytes = std::fs::read(&file)?;
+    match String::from_utf8(bytes) {
+        Ok(text) => {
+            report.text = Some(text);
+        }
+        Err(_) => {
+            // Not a text after all: kept as the file it also is.
+            let name = file
+                .file_name()
+                .and_then(|n| n.to_str())
+                .ok_or(Error::Protocol("bad file name"))?
+                .to_owned();
+            report
+                .placed
+                .push(place_no_clobber(&file, &resolved, &name)?);
+        }
+    }
+    Ok(report)
+}
+
+/// The hidden folder a text is received into, removed when dropped.
+struct TextFolder(PathBuf);
+
+impl Drop for TextFolder {
+    fn drop(&mut self) {
+        let _ = std::fs::remove_dir_all(&self.0);
+    }
+}
+
+async fn accept_into(
     conn: &quinn::Connection,
     mut chan: SecureChannel,
     offer: VerifiedOffer,
@@ -1322,7 +1446,7 @@ mod tests {
             sender.clone(),
             stop.clone(),
             Arc::new(Semaphore::new(1)),
-            source,
+            Source::Path(source),
             entry,
             0,
             ContentKey::generate().unwrap(),
@@ -1429,6 +1553,7 @@ mod tests {
                     schan,
                     &skeys,
                     entries,
+                    false,
                     Arc::new(|_, _| {}),
                     &Stop::new(),
                 )
@@ -1454,6 +1579,133 @@ mod tests {
         assert!(matches!(s, Err(Error::Cancelled(_))), "{s:?}");
         assert_eq!(std::fs::read_dir(&dest).unwrap().count(), 0);
         let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// Sends `entries` (as a text when `text`) and receives them into a
+    /// fresh folder; `old` receives like a version before #313. Returns
+    /// whether the receiver saw a text, its report, and the folder.
+    async fn send_text(
+        entries: Vec<SourceEntry>,
+        text: bool,
+        old: bool,
+        tag: &str,
+    ) -> (bool, ReceiveReport, PathBuf) {
+        let (sender, receiver) =
+            crate::transport::testing::over_slow_relay(Duration::from_millis(1)).await;
+        let (schan, mut rchan, skeys, scert) = secure_pair(&sender, &receiver).await;
+        let dest = std::env::temp_dir().join(format!("td-text-{tag}-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dest);
+        std::fs::create_dir_all(&dest).unwrap();
+        let send = {
+            let sender = sender.clone();
+            tokio::spawn(async move {
+                send_files(
+                    &sender,
+                    schan,
+                    &skeys,
+                    entries,
+                    text,
+                    Arc::new(|_, _| {}),
+                    &Stop::new(),
+                )
+                .await
+            })
+        };
+        let mut offer = receive_offer(&mut rchan, &scert).await.unwrap();
+        let shown = offer.summary.text;
+        if old {
+            offer.summary.text = false;
+        }
+        let report = accept(
+            &receiver,
+            rchan,
+            offer,
+            &dest,
+            Arc::new(|_, _| {}),
+            &Stop::new(),
+        )
+        .await
+        .unwrap();
+        send.await.unwrap().unwrap();
+        (shown, report, dest)
+    }
+
+    fn names(dir: &Path) -> Vec<String> {
+        let mut n: Vec<String> = std::fs::read_dir(dir)
+            .unwrap()
+            .map(|e| e.unwrap().file_name().to_string_lossy().into_owned())
+            .collect();
+        n.sort();
+        n
+    }
+
+    /// A text arrives as a text: shown, with nothing left on disk (#313).
+    #[tokio::test]
+    async fn a_text_is_shown_not_saved() {
+        let words = "Merhaba 🌸\nhttps://totaldrop.app";
+        let entry = text_entry(words, "text.txt").unwrap();
+        let (shown, report, dest) = send_text(vec![entry], true, false, "new").await;
+        assert!(shown);
+        assert_eq!(report.text.as_deref(), Some(words));
+        assert!(report.placed.is_empty());
+        assert!(names(&dest).is_empty(), "{:?}", names(&dest));
+        let _ = std::fs::remove_dir_all(&dest);
+    }
+
+    /// A receiver from before #313 ignores the mark and saves the file.
+    #[tokio::test]
+    async fn an_older_receiver_saves_a_text_as_a_file() {
+        let entry = text_entry("hello", "text.txt").unwrap();
+        let (_, report, dest) = send_text(vec![entry], true, true, "old").await;
+        assert_eq!(report.text, None);
+        assert_eq!(names(&dest), ["text.txt"]);
+        assert_eq!(std::fs::read(dest.join("text.txt")).unwrap(), b"hello");
+        let _ = std::fs::remove_dir_all(&dest);
+    }
+
+    /// The mark on anything but one small file is ignored: files are
+    /// saved as files.
+    #[tokio::test]
+    async fn only_one_small_file_can_be_a_text() {
+        let two = vec![
+            text_entry("a", "a.txt").unwrap(),
+            text_entry("b", "b.txt").unwrap(),
+        ];
+        let (shown, report, dest) = send_text(two, true, false, "two").await;
+        assert!(!shown);
+        assert_eq!(report.text, None);
+        assert_eq!(names(&dest), ["a.txt", "b.txt"]);
+        let _ = std::fs::remove_dir_all(&dest);
+    }
+
+    /// Bytes that are not UTF-8 are not shown: they are saved as the file
+    /// they also are, and the hidden folder goes.
+    #[tokio::test]
+    async fn a_text_that_is_not_utf8_is_saved() {
+        let bytes: Arc<[u8]> = Arc::from(&[0xff_u8, 0xfe, 0x00, 0x41][..]);
+        let entry = SourceEntry {
+            entry: Entry {
+                path: vec!["odd.txt".into()],
+                kind: EntryKind::File,
+                size: 4,
+                hash: Some(*blake3::hash(&bytes).as_bytes()),
+                mtime: None,
+            },
+            source: Some(Source::Bytes(bytes)),
+        };
+        let (shown, report, dest) = send_text(vec![entry], true, false, "odd").await;
+        assert!(shown);
+        assert_eq!(report.text, None);
+        assert_eq!(names(&dest), ["odd.txt"]);
+        let _ = std::fs::remove_dir_all(&dest);
+    }
+
+    #[test]
+    fn text_limits() {
+        assert!(text_entry("", "t.txt").is_err());
+        assert!(text_entry(&"a".repeat(usize::try_from(MAX_TEXT).unwrap()), "t.txt").is_ok());
+        assert!(text_entry(&"a".repeat(usize::try_from(MAX_TEXT).unwrap() + 1), "t.txt").is_err());
+        assert!(text_entry("x", "../t.txt").is_err());
     }
 
     #[test]
@@ -1511,7 +1763,7 @@ mod tests {
         let send = {
             let (sender, stop) = (sender.clone(), stop.clone());
             tokio::spawn(async move {
-                send_files(&sender, schan, &skeys, entries, on_send, &stop).await
+                send_files(&sender, schan, &skeys, entries, false, on_send, &stop).await
             })
         };
         let mut rchan = rchan;
