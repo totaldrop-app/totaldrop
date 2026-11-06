@@ -527,6 +527,7 @@ saymaktır. `sanity_reject_after_settled_rotate` ilk izin artık reddedilebildi�
 | `sanity_reject_after_settled_rotate` | iz var | Üye, kendi `döndür`'ü oturup izlendikten sonra da bekleyen kurtarmayı reddedebilir |
 | `ak_record_stops_recovery` | her iz | **P7, cihazlar:** dürüst bir üye `m` döneminin bir başından `AK` kaydı (`kurtarma_reddi`, `ekle`, `çıkar`) yazdıktan sonra kimse `m`'ye karşı kurtarmayı izlemez. Üye o anki başından yazdığı için bunu beklemenin her anında yapabilir |
 | `recovery_was_pending` | her iz | **P7, cihazlar:** izlenen her kurtarmanın kendisi önce bekleme boyunca günlükte, her üyenin görebileceği yerdeydi |
+| `read_rec_was_logged` | her iz, yardımcı | İzlenen her kurtarma önce günlüğe yazılmıştır (`no_split_recovery` için) |
 | `no_split_recovery` | her iz | Aynı döneme karşı iki kurtarmadan farklılarını iki okuyucu izlemez |
 | `contact_not_moved_by_phrase_alone` | her iz | **P7, kişiler:** yalnızca ifadeyle kişi taşınmaz; kişi bir kurtarmayı yalnızca sahibinin eklediği cihaza, o kayıt için kimliği denetledikten sonra izler. Bu lemma yukarıdaki kimlik denetimi varsayımının yeniden ifadesidir |
 
