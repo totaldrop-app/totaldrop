@@ -150,7 +150,7 @@ IMMEDIATE_REMOVE = r"""rule Accept_Immediate_Remove_1:
     in
     [ View(o, r, m, s, x), In(<body, sig1, sig2>) ]
   --[ Eq(verify(sig1, <'ed', body>, sa1), true), Eq(verify(sig2, <'ml', body>, sa2), true),
-      NotEmpty(x), Accept(o, r, m, 'remove', h(x), s) ]->
+      NotEmpty(x), ReadChange(r, m, body, 'none'), Accept(o, r, m, 'premove', h(x), s) ]->
     [ View(o, r, h(body), s, 'empty'), !Head(r, h(body), s, 'empty') ]
 """
 
@@ -574,7 +574,8 @@ lemma attack:
   "Ex c r m d e #p #q #k.
       Pin(c, r, m) @ p
     & Created(r, d, e) @ q
-    & Accept(c, r, m, 'remove', h(e), d) @ k
+    & ReadChange(r, m, <'prop', r, m, 'remove', h(e), d>, 'none') @ k
+    & Accept(c, r, m, 'premove', h(e), d) @ k
     & not (Ex L v #t. Old(L, v) @ t & #t < #k)
     & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)
     & (All c2 r2 m2 #y. Pin(c2, r2, m2) @ y ==> #y = #p)"
@@ -647,6 +648,40 @@ lemma attack [heuristic=c]:
     & not (Ex y #y. RevA1(y) @ y) & not (Ex y #y. RevA2(y) @ y)
     & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)
     & (All c2 r2 m2 #y. Pin(c2, r2, m2) @ y ==> #y = #p)"
+""",
+    },
+    {
+        "name": "exemption_only_in_veto",
+        "why": "Change_Single counts x's own reject of rk_çıkar(x) while Not_Rejected exempts it, so readers split",
+        "model": STRICT,
+        "edits": [
+            ("Change_Single exemption",
+             r"(restriction Change_Single:(?:(?!\nrestriction ).)*?) & not \(h\(w\) = x2\)",
+             r"\1", 1),
+        ],
+        "drop": STRICT_RECOVERY + STRICT_ADD + [
+            "Member_Reject_1", "Member_Reject_2", "Log_Write_Prop_1",
+            "Log_Write_Prop_2", "Log_Write_RKR",
+        ],
+        "lemma": """
+lemma attack:
+  exists-trace
+  "Ex c r m d e o L sg #p #q #ow #w #a #v #i #j.
+      Pin(c, r, m) @ p
+    & Created(r, d, e) @ q
+    & OwnerRKRemoved(r, m, e) @ ow
+    & Rejects(r, m, h(<'rkprop', r, m, 'rkremove', h(e), d>), e) @ w
+    & Old(L, <<'rkprop', r, m, 'rkremove', h(e), d>, sg>) @ a
+    & HonestProp(d, r, m, <'prop', r, m, 'remove', h(e), d>) @ v
+    & #ow < #w & #w < #a & #a < #v
+    & Accept(o, r, m, 'premove', h(e), d) @ i
+    & Accept(c, r, m, 'rkremove', h(e), d) @ j
+    & not (Ex r2 #y. RevPhrase(r2) @ y)
+    & not (Ex #y. RevA1(d) @ y) & not (Ex #y. RevA2(d) @ y)
+    & (All c2 r2 m2 #y. Pin(c2, r2, m2) @ y ==> #y = #p)
+    & (All r2 m2 v2 x2 #y. Logged(r2, m2, v2, x2) @ y ==> #y = #ow | #y = #v)
+    & (All r2 m2 hv w3 #y. Rejects(r2, m2, hv, w3) @ y ==> #y = #w)
+    & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)"
 """,
     },
     {
