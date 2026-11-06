@@ -455,16 +455,16 @@ lemma attack:
         "model": RECOVERY,
         "edits": [
             ("Device_Accept_Recover_1 wait",
-             r"(rule Device_Accept_Recover_1:(?:(?!\nrule ).)*?)Settled\(h\(<'log', hh>\), <body, sig>\), ",
+             r"(rule Device_Accept_Recover_1:(?:(?!\nrule ).)*?)Settled\(h\(<'rlog', m>\), <body, sig>\), ",
              r"\1", 1),
         ],
         "drop": RECOVERY_UNUSED,
         "lemma": """
 lemma attack:
   exists-trace
-  "Ex o r hh n #k.
-      Accept(o, r, hh, 'recover', n, 'rk') @ k
-    & not (Ex v #x. Old(h(<'log', hh>), v) @ x & #x < #k)
+  "Ex o r m n #k.
+      Accept(o, r, m, 'recover', n, 'rk') @ k
+    & not (Ex v #x. Old(h(<'rlog', m>), v) @ x & #x < #k)
     & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)"
 """,
     },
@@ -473,16 +473,17 @@ lemma attack:
         "why": "a reader follows a recovery although a member wrote an AK record under the same key",
         "model": RECOVERY,
         "edits": [
-            ("restriction Log_Read_RK",
-             r"restriction Log_Read_RK:\n(?:  [^\n]*\n)+?(?=\n)", "", 1),
+            ("restriction Rec_Priority",
+             r"restriction Rec_Priority:\n(?:  [^\n]*\n)+?(?=\n)", "", 1),
         ],
         "drop": RECOVERY_UNUSED,
         "lemma": """
 lemma attack [heuristic=c]:
   exists-trace
-  "Ex d r hh x o n #t #k.
-      Signed(d, r, hh, 'reject', x) @ t
-    & Accept(o, r, hh, 'recover', n, 'rk') @ k
+  "Ex d r m o n #t #k.
+      HonestAK(d, r, m) @ t
+    & Accept(o, r, m, 'recover', n, 'rk') @ k
+    & #t < #k
     & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)"
 """,
     },
@@ -492,7 +493,7 @@ lemma attack [heuristic=c]:
         "model": RECOVERY,
         "edits": [
             ("Contact_Accept_Recover_1 words",
-             r"(rule Contact_Accept_Recover_1:(?:(?!\nrule ).)*?)!Words\(r, n\), ",
+             r"(rule Contact_Accept_Recover_1:(?:(?!\nrule ).)*?)!Words\(r, h\(body\)\), ",
              r"\1", 1),
         ],
         "drop": RECOVERY_UNUSED,
@@ -502,6 +503,25 @@ lemma attack:
   "Ex c r n #k.
       ContactRecovered(c, r, n) @ k
     & not (Ex #o. OwnerRecovered(r, n) @ o)
+    & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)"
+""",
+    },
+    {
+        "name": "recoveries_not_a_fork",
+        "why": "readers follow one of two recoveries against the same period without stopping",
+        "model": RECOVERY,
+        "edits": [
+            ("restriction Rec_Single",
+             r"restriction Rec_Single:\n(?:  [^\n]*\n)+?(?=\n)", "", 1),
+        ],
+        "drop": RECOVERY_UNUSED,
+        "lemma": """
+lemma attack:
+  exists-trace
+  "Ex r m v v2 #i #j.
+      ReadRec(r, m, v) @ i
+    & ReadRec(r, m, v2) @ j
+    & not (v = v2)
     & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)"
 """,
     },
