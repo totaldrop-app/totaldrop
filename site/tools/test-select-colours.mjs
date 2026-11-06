@@ -5,8 +5,8 @@
 //
 // The list a <select> opens is drawn by the browser and the system, not by the
 // page. Its options inherit the page's text colour, but the list's background
-// falls back to the system's (white on most Linux and Windows setups) while
-// the select itself is transparent. In the dark theme that gave light text on
+// falls back to the system's (white in Chromium on Linux) while the select
+// itself is transparent. In the dark theme that gave light text on
 // white (#293). Every option therefore names both colours itself.
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -33,6 +33,9 @@ test("the language list's options set their own background and text colour", () 
   const d = declarations(".lang option");
   assert.equal(d["background-color"], "var(--bg)");
   assert.equal(d["color"], "var(--text)");
+  const checked = declarations(".lang option:checked");
+  assert.equal(checked["background-color"], "var(--accent)");
+  assert.equal(checked["color"], "var(--on-accent)");
 });
 
 test("every select on the site is a .lang select, so the rule reaches it", () => {
