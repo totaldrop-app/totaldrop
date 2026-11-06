@@ -547,7 +547,7 @@
   "tm.how.h3": "Birleştirmeyi, sürümü ve dağıtımı yalnızca proje lideri yapar. Sürümler kişisel bir bilgisayarda değil, GitHub Actions'ta derlenir.",
   "tm.how.title": "İş nasıl denetlenir",
   "tm.join": "Katkıda bulunun",
-  "tm.lede": "TotalDrop, proje lideri ve ekibi tarafından açıkta geliştirilir; kodun büyük kısmını bir yapay zekâ yardımcısı yazar. Her değişiklik GitHub'da herkese açıktır ve bu sayfadaki her sayı oradan gelir.",
+  "tm.lede": "TotalDrop, proje lideri ve ekibi tarafından açık olarak geliştirilir; kodun büyük kısmını bir yapay zekâ yardımcısı yazar. Her değişiklik GitHub'da herkese açıktır ve bu sayfadaki her sayı oradan gelir.",
   "tm.others": "GitHub hesabına bağlı olmayan diğerleri",
   "tm.people.title": "Kimler çalışıyor",
   "tm.role.ai": "Yapay zekâ geliştirme yardımcısı",
