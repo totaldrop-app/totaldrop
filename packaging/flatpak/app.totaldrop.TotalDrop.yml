@@ -86,6 +86,11 @@ modules:
           - target
           - dist
           - app/build
+          # Not needed, and the Android signing settings must never be
+          # copied anywhere (CLAUDE.md).
+          - app/android
+          - app/ios
+          - site
           - app/.dart_tool
           - fuzz/target
           - .flatpak-builder

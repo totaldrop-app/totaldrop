@@ -1,5 +1,5 @@
-# Linux desktop app: checks, and the three packages (Arch, .deb, .rpm;
-# .deb and .rpm also for ARM64) built separately, each in its own
+# Linux desktop app: checks, and the packages (Arch, .deb, .rpm and the
+# Flatpak; all but Arch also for ARM64) built separately, each in its own
 # container. linux-release.yml turns them into a release from a `linux-v*`
 # tag.
 name: Linux
