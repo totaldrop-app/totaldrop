@@ -115,6 +115,13 @@
 
   "sendDropHere": "ここにファイルをドロップ",
   "sendDropHint": "このウィンドウにファイルをドラッグして追加することもできます。",
+  "editUndo": "元に戻す",
+  "editRedo": "やり直す",
+  "editCut": "切り取り",
+  "editCopy": "コピー",
+  "editPaste": "貼り付け",
+  "editDelete": "削除",
+  "editSelectAll": "すべて選択",
   "sendQrHint": "または、相手のデバイスのカメラでこのコードを読み取ってください。",
   "sendWaitingAccept": "単語を確認してから、受信者が受け取るのを待ってください。",
   "receiveFromImage": "画像から QR コードを読み取る",

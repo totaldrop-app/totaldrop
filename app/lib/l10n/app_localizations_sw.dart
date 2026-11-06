@@ -433,6 +433,27 @@ class AppLocalizationsSw extends AppLocalizations {
       'Unaweza pia kuburuta faili hadi kwenye dirisha hili.';
 
   @override
+  String get editUndo => 'Tendua';
+
+  @override
+  String get editRedo => 'Rudia';
+
+  @override
+  String get editCut => 'Kata';
+
+  @override
+  String get editCopy => 'Nakili';
+
+  @override
+  String get editPaste => 'Bandika';
+
+  @override
+  String get editDelete => 'Futa';
+
+  @override
+  String get editSelectAll => 'Chagua zote';
+
+  @override
   String get sendQrHint =>
       'Au changanua msimbo huu kwa kamera ya kifaa kingine.';
 

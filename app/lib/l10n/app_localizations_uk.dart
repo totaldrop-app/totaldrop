@@ -446,6 +446,27 @@ class AppLocalizationsUk extends AppLocalizations {
   String get sendDropHint => 'Файли також можна перетягнути в це вікно.';
 
   @override
+  String get editUndo => 'Скасувати';
+
+  @override
+  String get editRedo => 'Повторити';
+
+  @override
+  String get editCut => 'Вирізати';
+
+  @override
+  String get editCopy => 'Копіювати';
+
+  @override
+  String get editPaste => 'Вставити';
+
+  @override
+  String get editDelete => 'Видалити';
+
+  @override
+  String get editSelectAll => 'Виділити все';
+
+  @override
   String get sendQrHint => 'Або відскануйте цей код камерою іншого пристрою.';
 
   @override

@@ -115,6 +115,13 @@
 
   "sendDropHere": "Suelta los archivos aquí",
   "sendDropHint": "También puedes arrastrar archivos a esta ventana.",
+  "editUndo": "Deshacer",
+  "editRedo": "Rehacer",
+  "editCut": "Cortar",
+  "editCopy": "Copiar",
+  "editPaste": "Pegar",
+  "editDelete": "Eliminar",
+  "editSelectAll": "Seleccionar todo",
   "sendQrHint": "O escanea este código con la cámara del otro dispositivo.",
   "sendWaitingAccept": "Comprueba las palabras y espera a que el destinatario acepte.",
   "receiveFromImage": "Leer QR de una imagen",

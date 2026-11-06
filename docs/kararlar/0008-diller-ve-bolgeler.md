@@ -73,8 +73,11 @@
   korunur; Android'de ve sitede bu ayrıca test edilmeden iddia edilmez.
 - **Yazı yönü:** Dilden çıkarılır (Arapça, Farsça, İbranice, Urduca sağdan
   sola). Linux'ta `QGuiApplication::setLayoutDirection` seçilen dilden
-  ayarlanır; Qt'nin kendi iletişim kutusu çevirileri (`qtbase_*.qm`)
-  yüklenir.
+  ayarlanır. Qt'nin ve masaüstü stilinin kendi çizdiği metinler (metin
+  alanlarının sağ tık menüsü) uygulamanın kendi `QTranslator`'ıyla
+  `l10n/app`'ten çevrilir: Qt'nin `qtdeclarative_*.qm` dosyalarında bu
+  metinler yalnızca birkaç dilde var (#307, 6 Kasım 2026'da bu yol
+  `qtbase_*.qm` yüklemenin yerini aldı).
 - **CLI:** Terminaller iki yönlü metni güvenilir göstermediği için sağdan
   sola diller komut satırında şimdilik İngilizce'ye düşer. Makineye yönelik
   çıktı (kodun kendisi, ileride `--json`) hiçbir dilde çevrilmez, ASCII

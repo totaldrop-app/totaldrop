@@ -115,6 +115,13 @@
 
   "sendDropHere": "Lepaskan fail di sini",
   "sendDropHint": "Anda juga boleh seret fail ke tetingkap ini.",
+  "editUndo": "Buat asal",
+  "editRedo": "Buat semula",
+  "editCut": "Potong",
+  "editCopy": "Salin",
+  "editPaste": "Tampal",
+  "editDelete": "Padam",
+  "editSelectAll": "Pilih semua",
   "sendQrHint": "Atau imbas kod ini dengan kamera peranti lain.",
   "sendWaitingAccept": "Semak perkataan, kemudian tunggu penerima menerimanya.",
   "receiveFromImage": "Baca QR daripada imej",

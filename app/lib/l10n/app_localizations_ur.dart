@@ -438,6 +438,27 @@ class AppLocalizationsUr extends AppLocalizations {
   String get sendDropHint => 'آپ فائلیں اس ونڈو پر گھسیٹ کر بھی لا سکتے ہیں۔';
 
   @override
+  String get editUndo => 'کالعدم کریں';
+
+  @override
+  String get editRedo => 'دوبارہ کریں';
+
+  @override
+  String get editCut => 'کاٹیں';
+
+  @override
+  String get editCopy => 'کاپی کریں';
+
+  @override
+  String get editPaste => 'چسپاں کریں';
+
+  @override
+  String get editDelete => 'حذف کریں';
+
+  @override
+  String get editSelectAll => 'سب منتخب کریں';
+
+  @override
   String get sendQrHint => 'یا یہ کوڈ دوسرے آلے کے کیمرے سے اسکین کریں۔';
 
   @override

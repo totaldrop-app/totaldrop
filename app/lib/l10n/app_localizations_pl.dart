@@ -448,6 +448,27 @@ class AppLocalizationsPl extends AppLocalizations {
   String get sendDropHint => 'Możesz też przeciągnąć pliki na to okno.';
 
   @override
+  String get editUndo => 'Cofnij';
+
+  @override
+  String get editRedo => 'Ponów';
+
+  @override
+  String get editCut => 'Wytnij';
+
+  @override
+  String get editCopy => 'Kopiuj';
+
+  @override
+  String get editPaste => 'Wklej';
+
+  @override
+  String get editDelete => 'Usuń';
+
+  @override
+  String get editSelectAll => 'Zaznacz wszystko';
+
+  @override
   String get sendQrHint =>
       'Albo zeskanuj ten kod aparatem drugiego urządzenia.';
 

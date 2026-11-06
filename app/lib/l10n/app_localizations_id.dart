@@ -425,6 +425,27 @@ class AppLocalizationsId extends AppLocalizations {
   String get sendDropHint => 'Anda juga bisa menyeret file ke jendela ini.';
 
   @override
+  String get editUndo => 'Urungkan';
+
+  @override
+  String get editRedo => 'Ulangi';
+
+  @override
+  String get editCut => 'Potong';
+
+  @override
+  String get editCopy => 'Salin';
+
+  @override
+  String get editPaste => 'Tempel';
+
+  @override
+  String get editDelete => 'Hapus';
+
+  @override
+  String get editSelectAll => 'Pilih semua';
+
+  @override
   String get sendQrHint => 'Atau pindai kode ini dengan kamera perangkat lain.';
 
   @override

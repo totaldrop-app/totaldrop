@@ -115,6 +115,13 @@
 
   "sendDropHere": "Pudota tiedostot tähän",
   "sendDropHint": "Voit myös vetää tiedostoja tähän ikkunaan.",
+  "editUndo": "Kumoa",
+  "editRedo": "Tee uudelleen",
+  "editCut": "Leikkaa",
+  "editCopy": "Kopioi",
+  "editPaste": "Liitä",
+  "editDelete": "Poista",
+  "editSelectAll": "Valitse kaikki",
   "sendQrHint": "Tai skannaa koodi toisen laitteen kameralla.",
   "sendWaitingAccept": "Tarkista sanat ja odota, että vastaanottaja hyväksyy.",
   "receiveFromImage": "Lue QR-koodi kuvasta",

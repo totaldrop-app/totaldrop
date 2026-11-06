@@ -447,6 +447,27 @@ class AppLocalizationsPt extends AppLocalizations {
       'Você também pode arrastar arquivos para esta janela.';
 
   @override
+  String get editUndo => 'Desfazer';
+
+  @override
+  String get editRedo => 'Refazer';
+
+  @override
+  String get editCut => 'Recortar';
+
+  @override
+  String get editCopy => 'Copiar';
+
+  @override
+  String get editPaste => 'Colar';
+
+  @override
+  String get editDelete => 'Excluir';
+
+  @override
+  String get editSelectAll => 'Selecionar tudo';
+
+  @override
   String get sendQrHint =>
       'Ou escaneie este código com a câmera do outro dispositivo.';
 
@@ -960,6 +981,27 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String get sendDropHint =>
       'Você também pode arrastar arquivos para esta janela.';
+
+  @override
+  String get editUndo => 'Desfazer';
+
+  @override
+  String get editRedo => 'Refazer';
+
+  @override
+  String get editCut => 'Recortar';
+
+  @override
+  String get editCopy => 'Copiar';
+
+  @override
+  String get editPaste => 'Colar';
+
+  @override
+  String get editDelete => 'Excluir';
+
+  @override
+  String get editSelectAll => 'Selecionar tudo';
 
   @override
   String get sendQrHint =>
@@ -1476,6 +1518,27 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
 
   @override
   String get sendDropHint => 'Também pode arrastar ficheiros para esta janela.';
+
+  @override
+  String get editUndo => 'Anular';
+
+  @override
+  String get editRedo => 'Refazer';
+
+  @override
+  String get editCut => 'Cortar';
+
+  @override
+  String get editCopy => 'Copiar';
+
+  @override
+  String get editPaste => 'Colar';
+
+  @override
+  String get editDelete => 'Eliminar';
+
+  @override
+  String get editSelectAll => 'Selecionar tudo';
 
   @override
   String get sendQrHint =>
