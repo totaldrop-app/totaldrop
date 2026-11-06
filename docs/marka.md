@@ -99,16 +99,22 @@ adın ya da işaretin nerede görüneceğini anlatın.
 
 ## Resmî hesaplar
 
-TotalDrop yalnızca şu hesaplardan konuşur:
+TotalDrop'un web'deki ve sosyal medyadaki resmî hesapları şunlardır:
 
 - Site: [totaldrop.app](https://totaldrop.app)
 - GitHub: [github.com/totaldrop-app](https://github.com/totaldrop-app)
 - X: [x.com/totaldropapp](https://x.com/totaldropapp) (@totaldropapp)
 
-Başka platformlarda hesap açılırsa aynı kullanıcı adı (`totaldropapp`)
-kullanılır ve bu liste, [/brand](https://totaldrop.app/brand#use)
-sayfasındaki liste ve sitenin altbilgisi aynı PR'da güncellenir. Bu adı
-kullanan başka bir hesap projeye ait değildir; böyle bir hesabı
+Bunların dışında proje yalnızca şu kanalları kullanır: uygulamalar Google
+Play'den ve GitHub sürümlerinden dağıtılır, bağışlar GitHub Sponsors
+üzerinden alınır ([github.com/sponsors/ozdil](https://github.com/sponsors/ozdil)),
+e-postalar yalnızca `@totaldrop.app` adreslerinden gelir.
+
+Yeni bir platformda hesap açılırsa mümkünse `totaldropapp` adı kullanılır
+(GitHub'da ad `totaldrop-app`). Bu liste, [/brand](https://totaldrop.app/brand#use)
+sayfasındaki liste, sitenin altbilgisi, README'ler ve org profili
+(`totaldrop-app/.github`) aynı PR'larda güncellenir. Bu adı kullanan ama
+burada listelenmeyen bir hesap projeye ait değildir; böyle bir hesabı
 hello@totaldrop.app adresine bildirin.
 
 ## Notlar
