@@ -551,5 +551,6 @@
   "tm.role.ai": "AI 开发助手",
   "tm.role.bot": "自动化",
   "tm.role.maintainer": "创始人兼维护者",
-  "tm.title": "TotalDrop 背后的人"
+  "tm.title": "TotalDrop 背后的人",
+  "tm.role.contributor": "贡献者"
 }

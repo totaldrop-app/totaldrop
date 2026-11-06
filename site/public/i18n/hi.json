@@ -551,5 +551,6 @@
   "tm.role.ai": "AI विकास सहायक",
   "tm.role.bot": "स्वचालन",
   "tm.role.maintainer": "संस्थापक और अनुरक्षक",
-  "tm.title": "TotalDrop के पीछे के लोग"
+  "tm.title": "TotalDrop के पीछे के लोग",
+  "tm.role.contributor": "योगदानकर्ता"
 }

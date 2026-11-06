@@ -551,5 +551,6 @@
   "tm.role.ai": "Asisten pengembangan AI",
   "tm.role.bot": "Otomatisasi",
   "tm.role.maintainer": "Pendiri dan pengelola",
-  "tm.title": "Orang-orang di balik TotalDrop"
+  "tm.title": "Orang-orang di balik TotalDrop",
+  "tm.role.contributor": "Kontributor"
 }

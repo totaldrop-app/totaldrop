@@ -551,5 +551,6 @@
   "tm.role.ai": "MI fejlesztési asszisztens",
   "tm.role.bot": "Automatizálás",
   "tm.role.maintainer": "Alapító és karbantartó",
-  "tm.title": "A TotalDrop mögött álló emberek"
+  "tm.title": "A TotalDrop mögött álló emberek",
+  "tm.role.contributor": "Közreműködő"
 }

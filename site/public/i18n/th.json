@@ -551,5 +551,6 @@
   "tm.role.ai": "ผู้ช่วยพัฒนา AI",
   "tm.role.bot": "ระบบอัตโนมัติ",
   "tm.role.maintainer": "ผู้ก่อตั้งและผู้ดูแล",
-  "tm.title": "ผู้คนเบื้องหลัง TotalDrop"
+  "tm.title": "ผู้คนเบื้องหลัง TotalDrop",
+  "tm.role.contributor": "ผู้ร่วมพัฒนา"
 }

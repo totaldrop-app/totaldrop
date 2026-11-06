@@ -551,5 +551,6 @@
   "tm.role.ai": "Tekoälykehitysavustaja",
   "tm.role.bot": "Automaatio",
   "tm.role.maintainer": "Perustaja ja ylläpitäjä",
-  "tm.title": "TotalDropin takana olevat ihmiset"
+  "tm.title": "TotalDropin takana olevat ihmiset",
+  "tm.role.contributor": "Avustaja"
 }

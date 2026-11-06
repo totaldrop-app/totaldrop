@@ -551,5 +551,6 @@
   "tm.role.ai": "KI-Entwicklungsassistent",
   "tm.role.bot": "Automatisierung",
   "tm.role.maintainer": "Gründer und Maintainer",
-  "tm.title": "Die Menschen hinter TotalDrop"
+  "tm.title": "Die Menschen hinter TotalDrop",
+  "tm.role.contributor": "Mitwirkender"
 }

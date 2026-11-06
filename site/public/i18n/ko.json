@@ -551,5 +551,6 @@
   "tm.role.ai": "AI 개발 어시스턴트",
   "tm.role.bot": "자동화",
   "tm.role.maintainer": "창립자 겸 관리자",
-  "tm.title": "TotalDrop을 만드는 사람들"
+  "tm.title": "TotalDrop을 만드는 사람들",
+  "tm.role.contributor": "기여자"
 }

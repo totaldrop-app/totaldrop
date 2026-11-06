@@ -551,5 +551,6 @@
   "tm.role.ai": "Trợ lý phát triển AI",
   "tm.role.bot": "Tự động hóa",
   "tm.role.maintainer": "Người sáng lập và duy trì",
-  "tm.title": "Những người đứng sau TotalDrop"
+  "tm.title": "Những người đứng sau TotalDrop",
+  "tm.role.contributor": "Người đóng góp"
 }

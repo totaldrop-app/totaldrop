@@ -551,5 +551,6 @@
   "tm.role.ai": "دستیار توسعهٔ هوش مصنوعی",
   "tm.role.bot": "خودکارسازی",
   "tm.role.maintainer": "بنیان‌گذار و نگه‌دارنده",
-  "tm.title": "آدم‌های پشت TotalDrop"
+  "tm.title": "آدم‌های پشت TotalDrop",
+  "tm.role.contributor": "مشارکت‌کننده"
 }

@@ -551,5 +551,6 @@
   "tm.role.ai": "Βοηθός ανάπτυξης ΤΝ",
   "tm.role.bot": "Αυτοματοποίηση",
   "tm.role.maintainer": "Ιδρυτής και συντηρητής",
-  "tm.title": "Οι άνθρωποι πίσω από το TotalDrop"
+  "tm.title": "Οι άνθρωποι πίσω από το TotalDrop",
+  "tm.role.contributor": "Συνεισφέρων"
 }

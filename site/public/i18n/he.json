@@ -551,5 +551,6 @@
   "tm.role.ai": "עוזר פיתוח מבוסס בינה מלאכותית",
   "tm.role.bot": "אוטומציה",
   "tm.role.maintainer": "מייסד ומתחזק",
-  "tm.title": "האנשים שמאחורי TotalDrop"
+  "tm.title": "האנשים שמאחורי TotalDrop",
+  "tm.role.contributor": "תורם"
 }

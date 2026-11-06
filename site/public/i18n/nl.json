@@ -551,5 +551,6 @@
   "tm.role.ai": "AI-ontwikkelassistent",
   "tm.role.bot": "Automatisering",
   "tm.role.maintainer": "Oprichter en beheerder",
-  "tm.title": "De mensen achter TotalDrop"
+  "tm.title": "De mensen achter TotalDrop",
+  "tm.role.contributor": "Bijdrager"
 }

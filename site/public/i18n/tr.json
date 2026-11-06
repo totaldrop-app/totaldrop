@@ -551,5 +551,6 @@
   "tm.role.ai": "Yapay zekâ geliştirme yardımcısı",
   "tm.role.bot": "Otomasyon",
   "tm.role.maintainer": "Kurucu ve bakımcı",
-  "tm.title": "TotalDrop'un arkasındaki ekip"
+  "tm.title": "TotalDrop'un arkasındaki ekip",
+  "tm.role.contributor": "Katkıcı"
 }
