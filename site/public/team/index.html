@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The people behind TotalDrop</title>
+  <meta name="description" content="Who builds TotalDrop and which parts of the work each of them does, with every figure taken from the project's public history on GitHub.">
+  <meta name="theme-color" content="#F4F2FB" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#140E33" media="(prefers-color-scheme: dark)">
+  <link rel="canonical" href="https://totaldrop.app/team/">
+  <meta property="og:title" content="The people behind TotalDrop">
+  <meta property="og:description" content="Who builds TotalDrop and which parts of the work each of them does, with every figure taken from the project's public history on GitHub.">
+  <meta property="og:url" content="https://totaldrop.app/team/">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="preload" href="/fonts/bricolage-grotesque-latin-800-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body data-page="team">
+  <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
+
+  <header class="top">
+    <a class="brand" href="https://totaldrop.app/" aria-label="TotalDrop home" data-i18n-label="nav.home">
+      <svg class="mark" viewBox="0 0 112 112" aria-hidden="true"><path class="mk" d="M55 15H97V57A42 42 0 1 1 55 15Z"/></svg>
+      <span>TotalDrop</span>
+    </a>
+    <nav class="top-nav" aria-label="Main" data-i18n-label="nav.label">
+      <a href="https://totaldrop.app/#why" data-i18n="nav.why">Why TotalDrop</a>
+      <a href="https://totaldrop.app/#how" data-i18n="nav.how">How it works</a>
+      <a href="https://totaldrop.app/#security" data-i18n="nav.security">Security</a>
+      <a href="https://download.totaldrop.app/" data-i18n="nav.download">Download</a>
+      <select class="lang" id="lang-select" aria-label="Language" data-i18n-label="lang.label" hidden></select>
+    </nav>
+  </header>
+
+  <main id="main">
+    <section class="dl-hero" aria-labelledby="tm-title">
+      <p class="eyebrow" data-i18n="tm.eyebrow">Team</p>
+      <h1 id="tm-title" data-i18n="tm.title">The people behind TotalDrop</h1>
+      <p class="lede" data-i18n="tm.lede">TotalDrop is built in the open by a small team, with an AI assistant doing much of the coding. Every change is public on GitHub, and every figure on this page comes from there.</p>
+    </section>
+
+    <section class="block" aria-labelledby="tm-people">
+      <h2 id="tm-people" data-i18n="tm.people.title">Who works on it</h2>
+      <!-- team:people -->
+      <!-- /team:people -->
+    </section>
+
+    <section class="block" aria-labelledby="tm-areas">
+      <h2 id="tm-areas" data-i18n="tm.areas.title">The work, by discipline</h2>
+      <p data-i18n="tm.areas.lede">Each discipline is a part of the repository. The figures count the changes (commits) that touched it.</p>
+      <!-- team:areas -->
+      <!-- /team:areas -->
+      <p class="note"><span data-i18n="tm.data">Figures from GitHub. Last updated:</span> <!-- team:date --><!-- /team:date --></p>
+    </section>
+
+    <section class="block" aria-labelledby="tm-how">
+      <h2 id="tm-how" data-i18n="tm.how.title">How the work is checked</h2>
+      <ul class="notes">
+        <li data-i18n="tm.how.h1">Every change starts as a public issue and reaches the app only through a pull request.</li>
+        <li data-i18n="tm.how.h2">Each pull request passes the automated checks and a review by someone, or an AI agent, that did not write it.</li>
+        <li data-i18n="tm.how.h3">Only the maintainer merges, releases and deploys. Releases are built by GitHub Actions, never on a personal computer.</li>
+      </ul>
+      <div class="actions">
+        <a class="btn btn-primary" href="https://github.com/totaldrop-app/totaldrop/blob/main/CONTRIBUTING.md" data-i18n="tm.join">Join in</a>
+        <a class="btn btn-quiet" href="https://totaldrop.app/donate/" data-i18n="tm.donate">Support with a donation</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <p data-i18n="foot.line">TotalDrop is open source and built in the open.</p>
+    <p class="foot-links">
+      <a href="https://github.com/totaldrop-app">GitHub</a>
+      <a href="https://x.com/totaldropapp" rel="me" aria-label="X: @totaldropapp">X</a>
+      <a href="https://www.instagram.com/totaldropapp/" rel="me" aria-label="Instagram: @totaldropapp">Instagram</a>
+      <a href="https://www.threads.com/@totaldropapp" rel="me" aria-label="Threads: @totaldropapp">Threads</a>
+      <a href="https://www.bestpractices.dev/projects/16332">OpenSSF Best Practices</a>
+      <a href="https://github.com/totaldrop-app/totaldrop/releases.atom" data-i18n="foot.rss">RSS</a>
+      <a href="https://totaldrop.app/roadmap/" data-i18n="foot.roadmap">Roadmap</a>
+      <a href="https://totaldrop.app/team/" data-i18n="foot.team" aria-current="page">Team</a>
+      <a href="https://totaldrop.app/donate/" data-i18n="foot.donate">Donate</a>
+      <a href="https://totaldrop.app/brand/" data-i18n="foot.brand">Brand</a>
+      <a href="https://totaldrop.app/privacy" data-i18n="foot.privacy">Privacy</a>
+      <a href="mailto:hello@totaldrop.app">hello@totaldrop.app</a>
+    </p>
+  </footer>
+
+  <script src="/lang.js" defer></script>
+  <script src="/app.js" defer></script>
+</body>
+</html>
