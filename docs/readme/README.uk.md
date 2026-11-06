@@ -1,4 +1,4 @@
-<!-- Translated from README.md 754881b78081. -->
+<!-- Translated from README.md 942b3af54f01. -->
 <div align="center">
 
 <picture>
@@ -18,7 +18,7 @@
 [![License](https://img.shields.io/badge/license-GPL--3.0%20%C2%B7%20MIT%2FApache--2.0-22184F)](../../LICENSING.md)
 [![Sponsor](https://img.shields.io/github/sponsors/ozdil?label=Sponsor&logo=githubsponsors&color=EA4AAA)](https://github.com/sponsors/ozdil)
 
-**[Сайт](https://totaldrop.app)** · **[Завантажити](https://totaldrop.app/download/)** · [Плани](https://totaldrop.app/roadmap/) · [Підтримати](https://totaldrop.app/donate/) · [Випуски](https://github.com/totaldrop-app/totaldrop/releases)
+**[Сайт](https://totaldrop.app)** · **[Завантажити](https://totaldrop.app/download/)** · [Плани](https://totaldrop.app/roadmap/) · [Підтримати](https://totaldrop.app/donate/) · [Випуски](https://github.com/totaldrop-app/totaldrop/releases) · [X](https://x.com/totaldropapp)
 
 <!-- languages -->
 <sub>[العربية](README.ar.md) · [বাংলা](README.bn.md) · [Čeština](README.cs.md) · [Dansk](README.da.md) · [Deutsch](README.de.md) · [Ελληνικά](README.el.md) · [English](../../README.md) · [Español](README.es.md) · [فارسی](README.fa.md) · [Suomi](README.fi.md) · [Français](README.fr.md) · [עברית](README.he.md) · [हिन्दी](README.hi.md) · [Magyar](README.hu.md) · [Bahasa Indonesia](README.id.md) · [Italiano](README.it.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Bahasa Melayu](README.ms.md) · [Norsk bokmål](README.nb.md) · [Nederlands](README.nl.md) · [Polski](README.pl.md) · [Português (Brasil)](README.pt-BR.md) · [Português (Portugal)](README.pt-PT.md) · [Română](README.ro.md) · [Русский](README.ru.md) · [Svenska](README.sv.md) · [Kiswahili](README.sw.md) · [ไทย](README.th.md) · [Türkçe](README.tr.md) · **Українська** · [اردو](README.ur.md) · [Tiếng Việt](README.vi.md) · [简体中文](README.zh-Hans.md) · [繁體中文](README.zh-Hant.md)</sub>

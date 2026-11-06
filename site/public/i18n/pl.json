@@ -189,6 +189,7 @@
   "bk.use.no2": "Używać nazwy lub domeny, którą można pomylić z TotalDrop.",
   "bk.use.no3": "Publikować aplikacji o nazwie TotalDrop w Google Play, App Store, Microsoft Store ani Snap Store.",
   "bk.use.ask": "Sprzedaż towarów z nazwą lub znakiem oraz każde inne użycie komercyjne nieopisane tutaj wymaga pisemnej zgody: napisz na hello@totaldrop.app. TotalDrop nie jest zarejestrowanym znakiem towarowym; te zasady mówią, jak projekt dba o swoją nazwę.",
+  "bk.use.accounts": "To jedyne oficjalne konta TotalDrop. Żadne inne konto używające tej nazwy nie należy do projektu.",
   "bk.use.rules": "Pełne zasady w repozytorium (po turecku)",
   "cmp.family": "W obrębie jednego ekosystemu",
   "cmp.no": "Nie",

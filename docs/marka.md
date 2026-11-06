@@ -97,6 +97,20 @@ sürümü kendi adınızla yayımlayın:
 İzin için hello@totaldrop.app adresine yazın: ne yapmak istediğinizi ve
 adın ya da işaretin nerede görüneceğini anlatın.
 
+## Resmî hesaplar
+
+TotalDrop yalnızca şu hesaplardan konuşur:
+
+- Site: [totaldrop.app](https://totaldrop.app)
+- GitHub: [github.com/totaldrop-app](https://github.com/totaldrop-app)
+- X: [x.com/totaldropapp](https://x.com/totaldropapp) (@totaldropapp)
+
+Başka platformlarda hesap açılırsa aynı kullanıcı adı (`totaldropapp`)
+kullanılır ve bu liste, [/brand](https://totaldrop.app/brand#use)
+sayfasındaki liste ve sitenin altbilgisi aynı PR'da güncellenir. Bu adı
+kullanan başka bir hesap projeye ait değildir; böyle bir hesabı
+hello@totaldrop.app adresine bildirin.
+
 ## Notlar
 
 - TotalDrop adı tescil ettirilmedi. Bu belge tescilli bir marka iddiası

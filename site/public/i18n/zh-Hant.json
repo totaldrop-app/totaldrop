@@ -189,6 +189,7 @@
   "bk.use.no2": "使用可能與 TotalDrop 混淆的名稱或網域。",
   "bk.use.no3": "在 Google Play、App Store、Microsoft Store 或 Snap Store 上發布名為 TotalDrop 的應用程式。",
   "bk.use.ask": "販售帶有名稱或標誌的商品，以及此處未說明的其他任何商業用途，都需要書面許可：請寫信至 hello@totaldrop.app。TotalDrop 不是註冊商標；這些規則說明本專案如何維護自己的名稱。",
+  "bk.use.accounts": "以上是 TotalDrop 僅有的官方帳號。其他使用這個名稱的帳號都不屬於本專案。",
   "bk.use.rules": "完整規則見程式碼儲存庫（土耳其文）",
   "cmp.family": "僅限同一品牌內",
   "cmp.no": "否",
