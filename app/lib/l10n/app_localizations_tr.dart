@@ -416,7 +416,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get settingsWordsEnglish =>
-      'Kodlar ve doğrulama kelimeleri her dilde İngilizcedir; böylece farklı dillerdeki iki cihaz aynı kelimeleri gösterir.';
+      'Kodlar ve doğrulama kelimeleri her dilde İngilizcedir; böylece farklı dillere ayarlı iki cihaz aynı kelimeleri gösterir.';
 
   @override
   String get sendDropHere => 'Dosyaları buraya bırakın';

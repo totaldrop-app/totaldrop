@@ -412,7 +412,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get settingsWordsEnglish =>
-      'รหัสและคำยืนยันเป็นภาษาอังกฤษเสมอในทุกภาษา เพื่อให้อุปกรณ์สองเครื่องที่ใช้ภาษาต่างกันแสดงคำเดียวกัน';
+      'รหัสและคำยืนยันเป็นภาษาอังกฤษในทุกภาษา เพื่อให้อุปกรณ์สองเครื่องที่ใช้ภาษาต่างกันแสดงคำเดียวกัน';
 
   @override
   String get sendDropHere => 'วางไฟล์ที่นี่';

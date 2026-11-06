@@ -434,7 +434,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get settingsWordsEnglish =>
-      'Codes und Prüfwörter sind in jeder Sprache englisch, damit zwei Geräte mit unterschiedlicher Sprache dieselben Wörter zeigen.';
+      'Codes und Prüfwörter sind in jeder Sprache auf Englisch, damit zwei Geräte mit unterschiedlicher Sprache dieselben Wörter anzeigen.';
 
   @override
   String get sendDropHere => 'Dateien hier ablegen';
