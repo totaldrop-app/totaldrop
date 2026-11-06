@@ -6,12 +6,14 @@ import 'dart:io';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:material_ui/material_ui.dart';
 
+import 'data/launch_source.dart';
 import 'data/settings_repository.dart';
 import 'data/transfer_keep_alive.dart';
 import 'data/transfer_repository.dart';
 import 'l10n/app_localizations.dart';
 import 'src/rust/frb_generated.dart';
 import 'ui/core/l10n.dart';
+import 'ui/core/launch_router.dart';
 import 'ui/core/theme.dart';
 import 'ui/home/home_view.dart';
 import 'ui/receive/receive_view.dart';
@@ -43,26 +45,49 @@ Future<void> main() async {
           ),
         )
       : const NoKeepAlive();
+  // Shares and launcher shortcuts (#53).
+  final LaunchSource launches = Platform.isAndroid
+      ? AndroidLaunchSource()
+      : const NoLaunches();
   runApp(
     TotalDropApp(
       settings: settings,
-      send: SendViewModel(repository: transfers, keepAlive: keepAlive),
+      launches: launches,
+      send: SendViewModel(
+        repository: transfers,
+        keepAlive: keepAlive,
+        launches: launches,
+      ),
       receive: ReceiveViewModel(repository: transfers, keepAlive: keepAlive),
     ),
   );
 }
 
 class TotalDropApp extends StatelessWidget {
-  const TotalDropApp({
+  TotalDropApp({
     super.key,
     required this.settings,
     required this.send,
     required this.receive,
+    this.launches = const NoLaunches(),
   });
 
   final SettingsRepository settings;
   final SendViewModel send;
   final ReceiveViewModel receive;
+  final LaunchSource launches;
+  final _navigator = GlobalKey<NavigatorState>();
+  final _messenger = GlobalKey<ScaffoldMessengerState>();
+
+  Route<void> _sendRoute() => MaterialPageRoute<void>(
+    settings: const RouteSettings(name: sendRoute),
+    builder: (_) => SendView(viewModel: send),
+  );
+
+  Route<void> _receiveRoute() => MaterialPageRoute<void>(
+    settings: const RouteSettings(name: receiveRoute),
+    builder: (_) => ReceiveView(viewModel: receive),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -77,7 +102,18 @@ class TotalDropApp extends StatelessWidget {
           debugShowCheckedModeBanner: false,
           theme: buildTheme(lightScheme),
           darkTheme: buildTheme(darkScheme),
-          builder: (context, child) => SystemMotion(child: child!),
+          navigatorKey: _navigator,
+          scaffoldMessengerKey: _messenger,
+          builder: (context, child) => LaunchRouter(
+            launches: launches,
+            navigator: _navigator,
+            messenger: _messenger,
+            send: send,
+            receive: receive,
+            openSend: _sendRoute,
+            openReceive: _receiveRoute,
+            child: SystemMotion(child: child!),
+          ),
           localizationsDelegates: const [
             AppLocalizations.delegate,
             ...GlobalMaterialLocalizations.delegates,
@@ -86,18 +122,8 @@ class TotalDropApp extends StatelessWidget {
           localeListResolutionCallback: resolveLocale,
           home: Builder(
             builder: (context) => HomeView(
-              onSend: () => Navigator.push(
-                context,
-                MaterialPageRoute<void>(
-                  builder: (_) => SendView(viewModel: send),
-                ),
-              ),
-              onReceive: () => Navigator.push(
-                context,
-                MaterialPageRoute<void>(
-                  builder: (_) => ReceiveView(viewModel: receive),
-                ),
-              ),
+              onSend: () => Navigator.push(context, _sendRoute()),
+              onReceive: () => Navigator.push(context, _receiveRoute()),
               onSettings: () => Navigator.push(
                 context,
                 MaterialPageRoute<void>(
