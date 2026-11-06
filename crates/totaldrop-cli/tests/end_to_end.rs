@@ -222,10 +222,11 @@ async fn a_text_arrives_as_a_text() {
     .await
     .unwrap();
     assert!(offer.summary().text);
-    let received = offer.accept(&dest, no_events()).await.unwrap();
+    let received = offer.accept_text().await.unwrap();
     let sent = sender.await.unwrap().unwrap();
     assert_eq!((sent.files_ok, received.files_ok), (1, 1));
     assert_eq!(received.text.as_deref(), Some(words));
+    // Received in memory: nothing was written anywhere.
     assert!(walk(&dest).is_empty(), "{:?}", walk(&dest));
     std::fs::remove_dir_all(dest).unwrap();
 }

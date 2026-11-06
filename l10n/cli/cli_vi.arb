@@ -49,7 +49,7 @@
   "cliHelpStun": "Máy chủ STUN (host:port) cho thiết bị này biết địa chỉ công khai của nó. Giá trị trống sẽ tắt nó.",
   "cliHelpRelayOnly": "Không bao giờ kết nối trực tiếp và không công bố địa chỉ IP: mọi thứ đi qua máy chủ chuyển tiếp. Chậm hơn, nhưng bên kia không bao giờ biết địa chỉ của bạn. Khi nhận, người gửi phải dùng cùng máy chủ chuyển tiếp.",
   "cliHelpSend": "Gửi tệp và thư mục, rồi in mã truyền cho người nhận.",
-  "cliHelpSendPaths": "Tệp hoặc thư mục cần gửi; - gửi văn bản đọc từ đầu vào chuẩn.",
+  "cliHelpSendPaths": "Các tệp hoặc thư mục cần gửi. Chỉ dùng - sẽ đọc một văn bản từ đầu vào chuẩn; với tệp tên là -, hãy viết ./-.",
   "cliHelpSendStrong": "Dùng mã ba từ (33 bit) thay vì hai.",
   "cliHelpReceive": "Nhận tệp bằng mã truyền, ví dụ 7-harbor-rocket.",
   "cliHelpReceiveCode": "Mã truyền bạn được cung cấp.",
@@ -61,11 +61,13 @@
   "cliDesktopAbout": "Mở cửa sổ TotalDrop.",
   "cliDesktopArgs": "Các tệp hoặc thư mục cần gửi, hoặc một liên kết TotalDrop để nhận.",
   "cliDesktopScreen": "Mở ở màn hình Gửi (send), Nhận (receive) hoặc Cài đặt (settings).",
-  "cliHelpSendText": "Gửi văn bản này thay vì tệp: người nhận thấy nó dưới dạng văn bản, không phải tệp.",
+  "cliHelpSendText": "Gửi văn bản này thay cho tệp: người nhận thấy nó dưới dạng văn bản, không phải tệp. Người khác trên máy tính này có thể thấy nó trong danh sách tiến trình; hãy dùng - cho văn bản riêng tư.",
   "cliSendingText": "Đang gửi một văn bản, {size}.",
   "cliOfferedText": "Được gửi tới: một văn bản, {size}. Văn bản hiển thị ở đây, không được lưu.",
   "cliPromptShow": "Hiển thị? [c/K] ",
   "cliTextNotUtf8": "Văn bản ở đầu vào chuẩn không phải UTF-8.",
   "cliTextEmpty": "Không có văn bản để gửi.",
-  "cliTextTooLong": "Văn bản dài hơn {size}. Hãy gửi nó dưới dạng tệp."
+  "cliTextTooLong": "Văn bản dài hơn {size}. Hãy gửi nó dưới dạng tệp.",
+  "cliDashAlone": "- đọc một văn bản từ đầu vào chuẩn và không thể dùng chung với tệp. Với tệp tên là -, hãy viết ./-.",
+  "cliTypeText": "Hãy nhập văn bản, rồi nhấn Ctrl-D trên một dòng mới."
 }

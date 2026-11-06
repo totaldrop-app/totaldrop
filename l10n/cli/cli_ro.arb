@@ -49,7 +49,7 @@
   "cliHelpStun": "Server STUN (host:port) care îi spune acestui dispozitiv adresa sa publică. O valoare goală îl dezactivează.",
   "cliHelpRelayOnly": "Nu vă conectați niciodată direct și nu anunțați nicio adresă IP: totul trece prin serverul releu. Mai lent, dar cealaltă parte nu vă află niciodată adresa. La primire, expeditorul trebuie să folosească același server releu.",
   "cliHelpSend": "Trimite fișiere și dosare și afișează un cod de transfer pentru destinatar.",
-  "cliHelpSendPaths": "Fișiere sau dosare de trimis; - trimite textul citit de la intrarea standard.",
+  "cliHelpSendPaths": "Fișiere sau dosare de trimis. - singur citește un text de la intrarea standard; scrieți ./- pentru un fișier numit -.",
   "cliHelpSendStrong": "Folosește un cod din trei cuvinte (33 de biți) în loc de două.",
   "cliHelpReceive": "Primește fișiere cu un cod de transfer, de exemplu 7-harbor-rocket.",
   "cliHelpReceiveCode": "Codul de transfer pe care l-ați primit.",
@@ -61,11 +61,13 @@
   "cliDesktopAbout": "Deschide fereastra TotalDrop.",
   "cliDesktopArgs": "Fișiere sau dosare de trimis, ori un link TotalDrop pentru primire.",
   "cliDesktopScreen": "Deschide pe ecranul Trimite (send), Primește (receive) sau Setări (settings).",
-  "cliHelpSendText": "Trimite acest text în loc de fișiere: destinatarul îl vede ca text, nu ca fișier.",
+  "cliHelpSendText": "Trimite acest text în loc de fișiere: destinatarul îl vede ca text, nu ca fișier. Alții de pe acest computer îl pot vedea în lista de procese; folosiți - pentru un text privat.",
   "cliSendingText": "Se trimite un text, {size}.",
   "cliOfferedText": "Oferit: un text, {size}. Este afișat aici, nu salvat.",
   "cliPromptShow": "Îl afișezi? [d/N] ",
   "cliTextNotUtf8": "Textul de la intrarea standard nu este UTF-8.",
   "cliTextEmpty": "Nu există niciun text de trimis.",
-  "cliTextTooLong": "Textul depășește {size}. Trimite-l ca fișier."
+  "cliTextTooLong": "Textul depășește {size}. Trimiteți-l ca fișier.",
+  "cliDashAlone": "- citește un text de la intrarea standard și nu poate fi amestecat cu fișiere. Pentru un fișier numit -, scrieți ./-.",
+  "cliTypeText": "Tastați textul, apoi apăsați Ctrl-D pe un rând nou."
 }
