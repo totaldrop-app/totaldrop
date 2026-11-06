@@ -547,7 +547,7 @@
   "tm.how.h3": "Chỉ trưởng dự án mới hợp nhất, phát hành và triển khai. Các bản phát hành được build bởi GitHub Actions, không bao giờ trên máy tính cá nhân.",
   "tm.how.title": "Công việc được kiểm tra thế nào",
   "tm.join": "Tham gia",
-  "tm.lede": "TotalDrop được trưởng dự án và nhóm phát triển công khai, với một trợ lý AI viết phần lớn mã. Mọi thay đổi đều công khai trên GitHub, và mọi con số trên trang này đều lấy từ đó.",
+  "tm.lede": "TotalDrop được phát triển công khai bởi trưởng dự án và nhóm của dự án, với một trợ lý AI viết phần lớn mã. Mọi thay đổi đều công khai trên GitHub, và mọi con số trên trang này đều lấy từ đó.",
   "tm.others": "Người khác không liên kết tài khoản GitHub",
   "tm.people.title": "Ai đang làm",
   "tm.role.ai": "Trợ lý phát triển AI",

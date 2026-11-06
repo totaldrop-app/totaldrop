@@ -547,7 +547,7 @@
   "tm.how.h3": "Doar coordonatorul de proiect îmbină, publică și implementează. Versiunile sunt compilate de GitHub Actions, niciodată pe un calculator personal.",
   "tm.how.title": "Cum este verificată munca",
   "tm.join": "Implică-te",
-  "tm.lede": "TotalDrop este dezvoltat la vedere de coordonatorul său de proiect și de echipă, iar un asistent AI scrie o mare parte din cod. Fiecare modificare este publică pe GitHub, iar fiecare cifră de pe această pagină vine de acolo.",
+  "tm.lede": "TotalDrop este dezvoltat la vedere de coordonatorul de proiect și de echipa sa, iar un asistent AI scrie o mare parte din cod. Fiecare modificare este publică pe GitHub, iar fiecare cifră de pe această pagină vine de acolo.",
   "tm.others": "Alții fără cont GitHub asociat",
   "tm.people.title": "Cine lucrează la el",
   "tm.role.ai": "Asistent de dezvoltare AI",

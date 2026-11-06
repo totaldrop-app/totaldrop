@@ -547,7 +547,7 @@
   "tm.how.h3": "Solo il responsabile del progetto unisce, rilascia e distribuisce. I rilasci sono compilati da GitHub Actions, mai su un computer personale.",
   "tm.how.title": "Come viene verificato il lavoro",
   "tm.join": "Partecipa",
-  "tm.lede": "TotalDrop è sviluppato apertamente dal suo responsabile del progetto e dal suo team, con un assistente di IA che scrive gran parte del codice. Ogni modifica è pubblica su GitHub, e ogni numero di questa pagina viene da lì.",
+  "tm.lede": "TotalDrop è sviluppato apertamente dal responsabile del progetto e dal suo team, con un assistente di IA che scrive gran parte del codice. Ogni modifica è pubblica su GitHub, e ogni numero di questa pagina viene da lì.",
   "tm.others": "Altri senza un account GitHub collegato",
   "tm.people.title": "Chi ci lavora",
   "tm.role.ai": "Assistente di sviluppo IA",
