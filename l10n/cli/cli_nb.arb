@@ -69,5 +69,6 @@
   "cliTextEmpty": "Det er ingen tekst å sende.",
   "cliTextTooLong": "Teksten er lengre enn {size}. Send den som en fil i stedet.",
   "cliDashAlone": "- leser en tekst fra standard inndata og kan ikke blandes med filer. Skriv ./- for en fil som heter -.",
-  "cliTypeText": "Skriv teksten, og trykk deretter Ctrl-D på en ny linje."
+  "cliTypeText": "Skriv teksten, og trykk deretter Ctrl-D på en ny linje.",
+  "cliTypeTextWindows": "Skriv teksten, og trykk deretter Ctrl-Z og Enter på en ny linje."
 }

@@ -69,5 +69,6 @@
   "cliTextEmpty": "보낼 텍스트가 없습니다.",
   "cliTextTooLong": "텍스트가 {size}보다 깁니다. 파일로 보내세요.",
   "cliDashAlone": "-는 표준 입력에서 텍스트를 읽으므로 파일과 함께 쓸 수 없습니다. 이름이 -인 파일은 ./-로 쓰세요.",
-  "cliTypeText": "텍스트를 입력한 다음 새 줄에서 Ctrl-D를 누르세요."
+  "cliTypeText": "텍스트를 입력한 다음 새 줄에서 Ctrl-D를 누르세요.",
+  "cliTypeTextWindows": "텍스트를 입력한 다음 새 줄에서 Ctrl-Z를 누르고 Enter를 누르세요."
 }

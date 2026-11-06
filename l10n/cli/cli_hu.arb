@@ -69,5 +69,6 @@
   "cliTextEmpty": "Nincs küldendő szöveg.",
   "cliTextTooLong": "A szöveg hosszabb, mint {size}. Küldd inkább fájlként.",
   "cliDashAlone": "A - szöveget olvas a szabványos bemenetről, és nem keverhető fájlokkal. A - nevű fájlhoz írd ezt: ./-.",
-  "cliTypeText": "Írd be a szöveget, majd egy új sorban nyomd meg a Ctrl-D billentyűt."
+  "cliTypeText": "Írd be a szöveget, majd egy új sorban nyomd meg a Ctrl-D billentyűt.",
+  "cliTypeTextWindows": "Írd be a szöveget, majd egy új sorban nyomd meg a Ctrl-Z, aztán az Enter billentyűt."
 }

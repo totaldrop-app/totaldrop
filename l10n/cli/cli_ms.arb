@@ -69,5 +69,6 @@
   "cliTextEmpty": "Tiada teks untuk dihantar.",
   "cliTextTooLong": "Teks lebih panjang daripada {size}. Hantar sebagai fail.",
   "cliDashAlone": "- membaca teks daripada input standard dan tidak boleh dicampur dengan fail. Untuk fail bernama -, tulis ./-.",
-  "cliTypeText": "Taip teks itu, kemudian tekan Ctrl-D pada baris baharu."
+  "cliTypeText": "Taip teks itu, kemudian tekan Ctrl-D pada baris baharu.",
+  "cliTypeTextWindows": "Taip teks itu, kemudian tekan Ctrl-Z dan Enter pada baris baharu."
 }

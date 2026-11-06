@@ -69,5 +69,6 @@
   "cliTextEmpty": "Hakuna maandishi ya kutuma.",
   "cliTextTooLong": "Maandishi ni marefu kuliko {size}. Yatume kama faili.",
   "cliDashAlone": "- husoma maandishi kutoka kwenye ingizo la kawaida na haiwezi kuchanganywa na faili. Kwa faili inayoitwa -, andika ./-.",
-  "cliTypeText": "Andika maandishi, kisha bonyeza Ctrl-D kwenye mstari mpya."
+  "cliTypeText": "Andika maandishi, kisha bonyeza Ctrl-D kwenye mstari mpya.",
+  "cliTypeTextWindows": "Andika maandishi, kisha bonyeza Ctrl-Z na Enter kwenye mstari mpya."
 }

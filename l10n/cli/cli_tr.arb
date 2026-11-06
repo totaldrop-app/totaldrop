@@ -69,5 +69,6 @@
   "cliTextEmpty": "Gönderilecek metin yok.",
   "cliTextTooLong": "Metin {size} sınırını aşıyor. Bunun yerine dosya olarak gönderin.",
   "cliDashAlone": "- standart girdiden bir metin okur ve dosyalarla birlikte kullanılamaz. Adı - olan bir dosya için ./- yazın.",
-  "cliTypeText": "Metni yazın, sonra yeni bir satırda Ctrl-D'ye basın."
+  "cliTypeText": "Metni yazın, sonra yeni bir satırda Ctrl-D'ye basın.",
+  "cliTypeTextWindows": "Metni yazın, sonra yeni bir satırda Ctrl-Z'ye ve Enter'a basın."
 }

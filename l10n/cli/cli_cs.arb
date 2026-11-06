@@ -69,5 +69,6 @@
   "cliTextEmpty": "Není co odeslat, text je prázdný.",
   "cliTextTooLong": "Text je delší než {size}. Odešlete ho raději jako soubor.",
   "cliDashAlone": "- načítá text ze standardního vstupu a nelze ho kombinovat se soubory. Pro soubor s názvem - napište ./-.",
-  "cliTypeText": "Napište text a pak na novém řádku stiskněte Ctrl-D."
+  "cliTypeText": "Napište text a pak na novém řádku stiskněte Ctrl-D.",
+  "cliTypeTextWindows": "Napište text a pak na novém řádku stiskněte Ctrl-Z a Enter."
 }

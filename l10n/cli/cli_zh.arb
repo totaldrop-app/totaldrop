@@ -69,5 +69,6 @@
   "cliTextEmpty": "没有要发送的文本。",
   "cliTextTooLong": "文本超过 {size}。请改为以文件发送。",
   "cliDashAlone": "- 从标准输入读取文本，不能与文件混用。名为 - 的文件请写成 ./-。",
-  "cliTypeText": "输入文本，然后在新的一行按 Ctrl-D。"
+  "cliTypeText": "输入文本，然后在新的一行按 Ctrl-D。",
+  "cliTypeTextWindows": "输入文本，然后在新的一行按 Ctrl-Z 再按 Enter。"
 }
