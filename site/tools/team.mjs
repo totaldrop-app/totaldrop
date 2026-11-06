@@ -55,10 +55,10 @@ const AREAS = {
 // separators. Then collapse spaces and cut to length.
 function clean(s, max) {
   if (typeof s !== "string") return "";
-  const t = s.replace(/[\u0000-\u001f\u007f-\u009f؜​-‏ -‮⁦-⁩﻿]/gu, " ")
+  const t = s.replace(/[\u0000-\u001f\u007f-\u009f\u061c\u200b-\u200f\u2028-\u202e\u2066-\u2069\ufeff]/gu, " ")
     .replace(/\s+/gu, " ").trim();
   const chars = Array.from(t);
-  return chars.length > max ? chars.slice(0, max - 1).join("").trimEnd() + "…" : t;
+  return chars.length > max ? chars.slice(0, max - 1).join("").trimEnd() + "\u2026" : t;
 }
 
 // A profile's website: https only, no user name or password, no port.
@@ -289,7 +289,7 @@ if (args.includes("--fetch") && errors.length === 0) {
 }
 checkSnapshot(config, snapshot);
 const html = readFileSync(PAGE, "utf8");
-const want = render(config, snapshot, html);
+const want = errors.length ? html : render(config, snapshot, html);
 if (errors.length === 0) {
   if (args.includes("--write") || args.includes("--fetch")) {
     if (want !== html) writeFileSync(PAGE, want);
