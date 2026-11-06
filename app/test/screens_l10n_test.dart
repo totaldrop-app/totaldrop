@@ -47,6 +47,14 @@ class _Rust implements RustLibApi {
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
+const _longName = 'Rapport annuel 2026 (version finale).pdf';
+
+/// An offer of one file with a long name.
+class _LongOffer extends FakeOffer {
+  @override
+  List<String> get names => const [_longName];
+}
+
 /// Settings as on a new install, without the device's storage.
 class _Settings extends ChangeNotifier implements SettingsRepository {
   @override
@@ -67,9 +75,10 @@ class _Settings extends ChangeNotifier implements SettingsRepository {
 
 /// Text each screen shows once it reaches its state.
 const _shows = {
+  'send with files': 'Rapport annuel',
   'send with the code': '7-harbor-rocket',
   'sending with the words': 'abstract',
-  'receive an offer': 'a.txt',
+  'receive an offer': 'Rapport annuel',
 };
 
 const _rtl = {'ar', 'fa', 'he', 'ur'};
@@ -114,12 +123,21 @@ void main() {
           ),
           (_) async {},
         ),
+        'send with files': () => (
+          SendView(
+            viewModel: SendViewModel(
+              repository: FakeRepository(),
+              fileSource: FakeFileSource(),
+            )..addFakeFileForTest(_longName),
+          ),
+          (_) async {},
+        ),
         'send with the code': () {
           final repo = FakeRepository();
           final vm = SendViewModel(
             repository: repo,
             fileSource: FakeFileSource(),
-          )..addFakeFileForTest('Rapport annuel 2026 (version finale).pdf');
+          )..addFakeFileForTest(_longName);
           return (
             SendView(viewModel: vm),
             (tester) async {
@@ -133,7 +151,7 @@ void main() {
           final vm = SendViewModel(
             repository: repo,
             fileSource: FakeFileSource(),
-          )..addFakeFileForTest('Rapport annuel 2026 (version finale).pdf');
+          )..addFakeFileForTest(_longName);
           return (
             SendView(viewModel: vm),
             (tester) async {
@@ -167,7 +185,7 @@ void main() {
             ReceiveView(viewModel: vm),
             (tester) async {
               unawaited(vm.connect());
-              repo.connected.complete(FakeOffer());
+              repo.connected.complete(_LongOffer());
             },
           );
         },
@@ -185,7 +203,14 @@ void main() {
     await reach(tester);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
-    expect(tester.takeException(), isNotNull);
+    expect(
+      tester.takeException(),
+      isA<FlutterError>().having(
+        (e) => e.toString(),
+        'message',
+        contains('overflowed'),
+      ),
+    );
   });
 
   for (final locale in AppLocalizations.supportedLocales) {
@@ -209,7 +234,8 @@ void main() {
             );
           }
 
-          // An overflow is reported as an exception.
+          // A horizontal overflow is reported as an exception. Every screen
+          // scrolls, so nothing can overflow vertically.
           expect(tester.takeException(), isNull);
           final direction = Directionality.of(
             tester.element(find.byType(Scaffold).first),

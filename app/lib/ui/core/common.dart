@@ -91,7 +91,9 @@ class VerificationWords extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // A heading on two lines keeps the icon beside its first line.
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Icon(
                   Icons.verified_user_outlined,
