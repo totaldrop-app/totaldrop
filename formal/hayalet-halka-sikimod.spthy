@@ -21,9 +21,10 @@
  * names the proposal by hash and counts only if it is in the log before
  * the proposal has settled. A counted reject voids that proposal and
  * nothing else; it does not start a new period.
- * One change per period: a reader follows a proposal only if every other
- * proposal against the same period logged before it was voided by a
- * counted reject. Two live proposals are a fork; nobody follows either.
+ * One change per period, first writer wins: a reader follows a proposal
+ * only if every other proposal against the same period logged before it
+ * was voided by a counted reject. An earlier live proposal blocks later
+ * ones until it is rejected, or settles and wins itself.
  *
  * Rotates are left out: proposals are written against the period, which
  * rotates do not change, and part 4a shows that a rotate neither blocks
@@ -421,14 +422,24 @@ restriction Not_Rejected:
 restriction Old_Once:
   "All L v #i #j. Old(L, v) @ i & Old(L, v) @ j ==> #i = #j"
 
-/* One change per period: every other proposal against m that settled
-   before v did was voided by a counted reject that the reader saw. All
-   proposals wait the same time, so "settled before v" is "logged before
-   v" in the real log, and the reader can check it from witness time.
-   Proposals that settle after v do not count against v (they lose to v
-   instead): otherwise anyone who can still write against an old period
-   (a thief with a removed device's AK) could keep late readers from ever
-   following v (second review, M1). */
+/* Every proposal waits the same time, so proposals against a period
+   settle in the order they were logged: one logged earlier has settled
+   by the time a later one settles. The model would otherwise let an
+   earlier proposal settle late or never (third look at the review). */
+restriction Settle_In_Order:
+  "All r m v x v2 x2 L s #t #t2 #o.
+      Logged(r, m, v, x) @ t & Logged(r, m, v2, x2) @ t2 & #t2 < #t & not (v = v2)
+    & Old(L, <v, s>) @ o
+    ==> Ex L2 s2 #o2. Old(L2, <v2, s2>) @ o2 & #o2 < #o"
+
+/* One change per period, first writer wins: a reader follows v only if
+   every other proposal against m that settled before v did (with
+   Settle_In_Order: every one logged before v) was voided by a counted
+   reject that the reader saw. An earlier live proposal therefore blocks
+   v until it is rejected or wins itself; proposals logged after v do
+   not count against v. Otherwise anyone who can still write against an
+   old period (a thief with a removed device's AK) could keep late
+   readers from ever following v (second review, M1). */
 restriction Change_Single:
   "All r m v x v2 x2 L s L2 s2 #i #o #t #o2.
       ReadChange(r, m, v, x) @ i & Old(L, <v, s>) @ o & #o < #i
@@ -521,19 +532,27 @@ lemma sanity_late_proposal_does_not_block [heuristic=c]:
     & (All r2 m2 v2 x2 #y. Logged(r2, m2, v2, x2) @ y ==> #y = #o | #y = #t)"
 
 /* The reverse order: the thief proposes first to remove d, d rejects it
-   in time, and the owner still removes e with rk_çıkar. */
-lemma sanity_thief_proposes_first [heuristic=c]:
+   in time, and the owner still removes e with rk_çıkar. The thief's
+   proposal settles first (Settle_In_Order), so the rejected earlier
+   proposal does not block the later rk_çıkar. The settle points and the
+   reveals of e are named, which ends the search (heuristic S, about
+   4 minutes; c and C did not end). */
+lemma sanity_thief_proposes_first [heuristic=S]:
   exists-trace
-  "Ex c r m d e #p #q #v #w #o #k.
+  "Ex c r m d e L1 s1 L2 s2 #p #q #v #w #o #ov #oa #k #y1 #y2.
       Pin(c, r, m) @ p
     & Created(r, d, e) @ q
     & Logged(r, m, <'prop', r, m, 'remove', h(d), e>, 'none') @ v
     & HonestReject(d, r, m, <'prop', r, m, 'remove', h(d), e>) @ w
     & OwnerRKRemoved(r, m, e) @ o
     & #v < #w & #w < #o
+    & Old(L1, <<'prop', r, m, 'remove', h(d), e>, s1>) @ ov & #w < #ov
+    & Old(L2, <<'rkprop', r, m, 'rkremove', h(e), d>, s2>) @ oa & #ov < #oa & #o < #oa & #oa < #k
     & Accept(c, r, m, 'rkremove', h(e), d) @ k
     & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)
     & not (Ex #y. RevA1(d) @ y) & not (Ex #y. RevA2(d) @ y)
+    & RevA1(e) @ y1 & RevA2(e) @ y2 & #y2 < #v & #y1 < #v
+    & (All x #y. RevA1(x) @ y ==> #y = #y1) & (All x #y. RevA2(x) @ y ==> #y = #y2)
     & not (Ex r2 #y. RevPhrase(r2) @ y)
     & (All r2 d2 e2 #y. Created(r2, d2, e2) @ y ==> #y = #q)
     & (All c2 r2 m2 #y. Pin(c2, r2, m2) @ y ==> #y = #p)
@@ -593,6 +612,16 @@ lemma read_change_settled [reuse, heuristic=c]:
 lemma no_split_change:
   "All r m v v2 x x2 #i #j.
       ReadChange(r, m, v, x) @ i & ReadChange(r, m, v2, x2) @ j & #i < #j ==> v = v2"
+
+/* First writer wins: a reader follows v only if every proposal logged
+   against the same period before v was voided by a counted reject. A
+   live earlier proposal (the thief's, say) is never skipped. */
+lemma earlier_proposal_must_be_rejected:
+  "All r m v x v2 x2 #i #t #t2.
+      ReadChange(r, m, v, x) @ i & Logged(r, m, v, x) @ t
+    & Logged(r, m, v2, x2) @ t2 & #t2 < #t & not (v = v2)
+    ==> Ex w #j. Rejects(r, m, h(v2), w) @ j & #j < #i & not (h(w) = x2)
+      & not (Ex L s #o. Old(L, <v2, s>) @ o & #o < #j)"
 
 /* P7 for rk_çıkar: the phrase alone cannot remove a device. If the
    staying member b is an honest device, a reader follows rk_çıkar(x)
