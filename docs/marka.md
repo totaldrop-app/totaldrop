@@ -104,6 +104,7 @@ TotalDrop'un web'deki ve sosyal medyadaki resmî hesapları şunlardır:
 - Site: [totaldrop.app](https://totaldrop.app)
 - GitHub: [github.com/totaldrop-app](https://github.com/totaldrop-app)
 - X: [x.com/totaldropapp](https://x.com/totaldropapp) (@totaldropapp)
+- Instagram: [instagram.com/totaldropapp](https://www.instagram.com/totaldropapp/) (@totaldropapp)
 
 Bunların dışında proje yalnızca şu kanalları kullanır: uygulamalar Google
 Play'den ve GitHub sürümlerinden dağıtılır, bağışlar GitHub Sponsors
