@@ -30,6 +30,8 @@ class _Rust implements RustLibApi {
   @override
   String crateApiL10NRevealControls({required String name}) => name;
 
+  // Every text in its own language: the English fallback for unreviewed
+  // critical keys is shorter than most translations.
   @override
   bool crateApiL10NNeedsEnglish({required String tag, required String key}) =>
       false;
@@ -65,7 +67,8 @@ class _Settings extends ChangeNotifier implements SettingsRepository {
 
 /// Text each screen shows once it reaches its state.
 const _shows = {
-  'send with the code and words': 'abstract',
+  'send with the code': '7-harbor-rocket',
+  'sending with the words': 'abstract',
   'receive an offer': 'a.txt',
 };
 
@@ -111,7 +114,21 @@ void main() {
           ),
           (_) async {},
         ),
-        'send with the code and words': () {
+        'send with the code': () {
+          final repo = FakeRepository();
+          final vm = SendViewModel(
+            repository: repo,
+            fileSource: FakeFileSource(),
+          )..addFakeFileForTest('Rapport annuel 2026 (version finale).pdf');
+          return (
+            SendView(viewModel: vm),
+            (tester) async {
+              unawaited(vm.start());
+              repo.prepared.complete(FakeSession());
+            },
+          );
+        },
+        'sending with the words': () {
           final repo = FakeRepository();
           final vm = SendViewModel(
             repository: repo,
@@ -157,6 +174,19 @@ void main() {
         'settings': () =>
             (SettingsView(settings: settings, version: '0.3.0'), (_) async {}),
       };
+
+  // The check itself: on a screen too narrow for the code, the same steps
+  // report an overflow.
+  testWidgets('an overflow fails the check', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(160, 740));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final (widget, reach) = screens['send with the code']!();
+    await tester.pumpWidget(_app(const Locale('en'), 1.0, widget));
+    await reach(tester);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(tester.takeException(), isNotNull);
+  });
 
   for (final locale in AppLocalizations.supportedLocales) {
     for (final scale in [1.0, 1.3]) {
