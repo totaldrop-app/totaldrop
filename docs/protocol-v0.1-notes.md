@@ -232,7 +232,9 @@ treated as final.
     aside); otherwise the receiver tries direct paths only. When that
     leaves no path, or in privacy mode, it stops with an error at once; a
     sender that can see the mismatch in the receiver's `HINTS` does too. A
-    receiver with no relay set uses none.
+    receiver with no relay set uses none. The sender, by the same rule,
+    links to its relay only when the receiver will use it too; otherwise
+    it tries direct paths only and never contacts the relay (#301).
 22. **Paths.** Direct addresses are tried at once; the relay path 1.2
     seconds later, or at once when no address was announced. The first
     connection whose handshake completes is used. A path that has not
