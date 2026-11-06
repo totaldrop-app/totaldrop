@@ -1,4 +1,4 @@
-<!-- Translated from README.md 942b3af54f01. -->
+<!-- Translated from README.md 8e5bfcf3724c. -->
 <div align="center">
 
 <picture>
@@ -18,7 +18,7 @@ Gratuito e de código aberto. Criptografia de ponta a ponta. Sem e-mail, sem nú
 [![License](https://img.shields.io/badge/license-GPL--3.0%20%C2%B7%20MIT%2FApache--2.0-22184F)](../../LICENSING.md)
 [![Sponsor](https://img.shields.io/github/sponsors/ozdil?label=Sponsor&logo=githubsponsors&color=EA4AAA)](https://github.com/sponsors/ozdil)
 
-**[Site](https://totaldrop.app)** · **[Baixar](https://totaldrop.app/download/)** · [Planejamento](https://totaldrop.app/roadmap/) · [Doar](https://totaldrop.app/donate/) · [Versões](https://github.com/totaldrop-app/totaldrop/releases) · [X](https://x.com/totaldropapp)
+**[Site](https://totaldrop.app)** · **[Baixar](https://totaldrop.app/download/)** · [Planejamento](https://totaldrop.app/roadmap/) · [Doar](https://totaldrop.app/donate/) · [Versões](https://github.com/totaldrop-app/totaldrop/releases) · [X](https://x.com/totaldropapp) · [Instagram](https://www.instagram.com/totaldropapp/)
 
 <!-- languages -->
 <sub>[العربية](README.ar.md) · [বাংলা](README.bn.md) · [Čeština](README.cs.md) · [Dansk](README.da.md) · [Deutsch](README.de.md) · [Ελληνικά](README.el.md) · [English](../../README.md) · [Español](README.es.md) · [فارسی](README.fa.md) · [Suomi](README.fi.md) · [Français](README.fr.md) · [עברית](README.he.md) · [हिन्दी](README.hi.md) · [Magyar](README.hu.md) · [Bahasa Indonesia](README.id.md) · [Italiano](README.it.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Bahasa Melayu](README.ms.md) · [Norsk bokmål](README.nb.md) · [Nederlands](README.nl.md) · [Polski](README.pl.md) · **Português (Brasil)** · [Português (Portugal)](README.pt-PT.md) · [Română](README.ro.md) · [Русский](README.ru.md) · [Svenska](README.sv.md) · [Kiswahili](README.sw.md) · [ไทย](README.th.md) · [Türkçe](README.tr.md) · [Українська](README.uk.md) · [اردو](README.ur.md) · [Tiếng Việt](README.vi.md) · [简体中文](README.zh-Hans.md) · [繁體中文](README.zh-Hant.md)</sub>
