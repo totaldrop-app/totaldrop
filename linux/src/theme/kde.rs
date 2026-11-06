@@ -14,7 +14,7 @@ use super::color::Rgb;
 
 /// `~/.config/kdeglobals`.
 pub fn kdeglobals() -> Option<PathBuf> {
-    dirs::config_dir().map(|d| d.join("kdeglobals"))
+    super::host::config_dir().map(|d| d.join("kdeglobals"))
 }
 
 /// What TotalDrop takes from `kdeglobals`.

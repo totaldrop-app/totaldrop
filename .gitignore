@@ -13,3 +13,10 @@ linux/.qmlls.ini
 # Python bytecode (formal/mutants.py)
 __pycache__/
 *.pyc
+
+# Flatpak: written from Cargo.lock before each build
+# (tools/flatpak-cargo-sources.mjs), and flatpak-builder's own folders.
+/packaging/flatpak/cargo-sources.json
+.flatpak-builder/
+/flatpak-build/
+/flatpak-repo/

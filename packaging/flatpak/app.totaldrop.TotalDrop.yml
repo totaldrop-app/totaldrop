@@ -1,0 +1,95 @@
+# SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# TotalDrop for Linux as a Flatpak (docs/kararlar/0014-steam-deck.md): the
+# supported way to install it on SteamOS (Steam Deck, Steam Machine, Steam
+# Frame) and on any other distribution. CI builds it from this file on every
+# pull request (.github/workflows/linux.yml); Flathub will build its own copy
+# from this recipe with a git source in place of the working tree.
+#
+# Permissions are the least the app needs (docs/tehdit-modeli.md, "Flatpak"):
+# files to send come through the file chooser portal and need none.
+app-id: app.totaldrop.TotalDrop
+runtime: org.kde.Platform
+runtime-version: "6.11"
+sdk: org.kde.Sdk
+command: totaldrop-desktop
+finish-args:
+  # Transfers, the rendezvous and the relay.
+  - --share=network
+  - --share=ipc
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --device=dri
+  # Received files go to ~/Downloads/TotalDrop and nowhere else.
+  - --filesystem=xdg-download/TotalDrop:create
+  # Desktop notifications when a transfer ends (linux/src/desktop.rs).
+  - --talk-name=org.freedesktop.Notifications
+  # The desktop's theme, read only (linux/src/theme): Plasma's kdeglobals,
+  # Omarchy's theme folder, the person's GTK settings and themes, and
+  # Hyprland's socket for its corner rounding. Flathub's linter calls the
+  # GTK and Omarchy ones unnecessary, because GTK apps theme themselves
+  # through the runtime; TotalDrop is a Qt app that copies the desktop's
+  # colours (docs/tasarim.md), so it reads them. The reasons are in
+  # lint-exceptions.json. Legacy ~/.themes is not read in the sandbox.
+  - --filesystem=xdg-config/kdeglobals:ro
+  - --filesystem=xdg-config/omarchy:ro
+  - --filesystem=xdg-data/omarchy:ro
+  # Flatpak has no xdg-state location: the XDG default.
+  - --filesystem=~/.local/state/omarchy:ro
+  - --filesystem=xdg-config/gtk-3.0:ro
+  - --filesystem=xdg-config/gtk-4.0:ro
+  - --filesystem=xdg-data/themes:ro
+  - --filesystem=xdg-run/hypr:ro
+modules:
+  # The same Rust as every other build (rust-toolchain.toml, linux.yml), not
+  # the SDK extension's: the workspace needs 1.99. Only the compiler is
+  # kept during the build; none of it ships in the app.
+  - name: rust
+    buildsystem: simple
+    # Taken as it is: stripping breaks libLLVM, and nothing of it ships.
+    build-options:
+      strip: false
+      no-debuginfo: true
+    build-commands:
+      - ./install.sh --prefix=/app/rust --disable-ldconfig --components=rustc,cargo,rust-std-$(uname -m)-unknown-linux-gnu
+    cleanup:
+      - "*"
+    sources:
+      - type: archive
+        only-arches: [x86_64]
+        url: https://static.rust-lang.org/dist/rust-1.99.1-x86_64-unknown-linux-gnu.tar.xz
+        sha256: 231fcae47ee950621374725b5fc3b5441d2fbda2955ac45dd7dc816d8876cfe7
+      - type: archive
+        only-arches: [aarch64]
+        url: https://static.rust-lang.org/dist/rust-1.99.1-aarch64-unknown-linux-gnu.tar.xz
+        sha256: a48fb1e853be56ce9b8e2751f5464dbd5e16440cd81e237920f3a5e7e806333e
+
+  - name: totaldrop
+    buildsystem: simple
+    build-options:
+      append-path: /app/rust/bin
+      env:
+        CARGO_HOME: /run/build/totaldrop/cargo
+        CARGO_NET_OFFLINE: "true"
+        QMAKE: /usr/bin/qmake
+        # As in packaging/build.sh: no build times in the Qt resources (#252).
+        CXX_QT_AUTORCC_OPTIONS: --format-version:1:--no-zstd
+    build-commands:
+      - cargo build --release --locked --offline -p totaldrop-linux -p totaldrop-cli
+      - sh packaging/linux/install.sh "" /app target/release
+    sources:
+      - type: dir
+        path: ../..
+        skip:
+          - .git
+          - target
+          - dist
+          - app/build
+          - app/.dart_tool
+          - fuzz/target
+          - .flatpak-builder
+          - flatpak-build
+          - flatpak-repo
+      # Every crate in Cargo.lock: tools/flatpak-cargo-sources.mjs.
+      - cargo-sources.json

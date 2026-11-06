@@ -13,9 +13,10 @@
 # code (check-cli-version.sh; it needs the full history, which the release
 # workflow fetches).
 #
-# The tools: every pinned Rust version equals rust-toolchain.toml, every
-# pinned Flutter version is the same, and the Arch check container uses the
-# same base image as the Arch package (Dependabot updates only the latter).
+# The tools: every pinned Rust version (the Flatpak's too) equals
+# rust-toolchain.toml, every pinned Flutter version is the same, and the
+# Arch check container uses the same base image as the Arch package
+# (Dependabot updates only the latter).
 #
 #   packaging/check-versions.sh [linux-vX.Y.Z[-pre]]
 set -eu
@@ -59,6 +60,13 @@ for f in .github/workflows/core.yml .github/workflows/linux.yml packaging/build.
   for v in $vs; do
     same "$f (Rust)" "$v" "$rust"
   done
+done
+
+# The Flatpak builds the same Rust from its release archive.
+fp_rust=$(grep -oE 'static\.rust-lang\.org/dist/rust-[0-9]+\.[0-9]+\.[0-9]+-' "$root/packaging/flatpak/app.totaldrop.TotalDrop.yml" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | sort -u || true)
+[ -n "$fp_rust" ] || fail "packaging/flatpak/app.totaldrop.TotalDrop.yml: no Rust pin found"
+for v in $fp_rust; do
+  same "packaging/flatpak/app.totaldrop.TotalDrop.yml (Rust)" "$v" "$rust"
 done
 
 flutter=$(grep -hoE "flutter-version: *[\"']?[0-9.]+" "$root"/.github/workflows/*.yml | grep -oE '[0-9.]+$' | sort -u || true)

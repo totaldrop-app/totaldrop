@@ -92,6 +92,17 @@ packaging/build.sh arch   # ya da deb, rpm
 ls dist/packages/
 ```
 
+Flatpak tarifi `packaging/flatpak/` altındadır ([karar 0014](kararlar/0014-steam-deck.md)).
+Derleme ağsız çalışır: `Cargo.lock`taki her crate tarifin bir kaynağıdır.
+Bu liste depoda tutulmaz, derlemeden önce yazılır. Yerelde denemek için
+`flatpak-builder` ve Flathub deposu gerekir:
+
+```bash
+node tools/flatpak-cargo-sources.mjs write
+flatpak-builder --user --force-clean --install-deps-from=flathub \
+  flatpak-build packaging/flatpak/app.totaldrop.TotalDrop.yml
+```
+
 Paketler yeniden üretilebilir olmalıdır: aynı kaynaktan ikinci bir
 derleme bayt bayt aynı paketi vermelidir. `Reproducible` iş akışı
 (`.github/workflows/reproducible.yml`) bunu denetler: her formatı aynı

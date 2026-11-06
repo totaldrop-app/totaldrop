@@ -51,6 +51,8 @@ jobs:
         with:
           persist-credentials: false
       - run: dash packaging/test-check-cli-version.sh
+      - name: Flatpak crate list
+        run: node --test tools/test-flatpak-cargo-sources.mjs
 
   # ARM64 (Snapdragon X, RTX Spark) on GitHub's free ARM runner, #86. Arch
   # has no official ARM64 Docker image; the PKGBUILD lists aarch64 for
@@ -76,5 +78,69 @@ jobs:
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: totaldrop-linux-${{ matrix.format }}-${{ matrix.arch }}
+          path: dist/packages/*
+          if-no-files-found: error
+
+  # The Flatpak (docs/kararlar/0014-steam-deck.md): the supported install on
+  # SteamOS. Built from packaging/flatpak with the same Rust as above and
+  # every crate fetched by flatpak-builder against Cargo.lock's checksums,
+  # then installed and started inside its sandbox. The bundle goes into a release with the
+  # other packages; Flathub builds its own copy from the same recipe.
+  flatpak:
+    name: Flatpak (${{ matrix.arch }})
+    needs: check
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { arch: x86_64, runner: ubuntu-latest }
+          - { arch: aarch64, runner: ubuntu-24.04-arm }
+    # Flathub's own build image, with the KDE 6.11 runtime and SDK. bwrap
+    # needs the privileges inside the container.
+    container:
+      image: ghcr.io/flathub-infra/flatpak-github-actions:kde-6.11@sha256:b0a8a2acb9e420dd0e3e083ff552bea5a817e17e41532f1d2287ff49ef9aae0e
+      options: --privileged
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Versions agree
+        run: packaging/check-versions.sh
+      - name: Crate sources from Cargo.lock
+        run: node tools/flatpak-cargo-sources.mjs write
+      # Flathub's own linter, with the exceptions this app needs and why
+      # (packaging/flatpak/lint-exceptions.json).
+      - name: Lint the manifest
+        run: >-
+          flatpak-builder-lint --exceptions
+          --user-exceptions packaging/flatpak/lint-exceptions.json
+          manifest packaging/flatpak/app.totaldrop.TotalDrop.yml
+      - name: Build
+        run: >-
+          flatpak-builder --disable-rofiles-fuse --install-deps-from=flathub
+          --force-clean --repo=flatpak-repo flatpak-build
+          packaging/flatpak/app.totaldrop.TotalDrop.yml
+      - name: Bundle
+        run: |
+          ver=$(sed -n 's/^version = "\(.*\)"/\1/p' linux/Cargo.toml | head -1)
+          mkdir -p dist/packages
+          flatpak build-bundle --arch=${{ matrix.arch }} \
+            --runtime-repo=https://dl.flathub.org/repo/flathub.flatpakrepo \
+            flatpak-repo "dist/packages/totaldrop-$ver-${{ matrix.arch }}.flatpak" app.totaldrop.TotalDrop
+      # The bundle installs and both programs start inside the sandbox, so
+      # every shared library they link (Qt from the runtime among them) is
+      # found. --version stops before any window or QML, so it needs no
+      # display; flatpak run needs a machine id, which the container lacks.
+      - name: Installs and starts in the sandbox
+        run: |
+          dbus-uuidgen --ensure=/etc/machine-id
+          flatpak install --user -y --noninteractive dist/packages/*.flatpak
+          flatpak info --user --show-permissions app.totaldrop.TotalDrop
+          flatpak run --user --command=totaldrop app.totaldrop.TotalDrop --version
+          QT_QPA_PLATFORM=offscreen flatpak run --user app.totaldrop.TotalDrop --version
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: totaldrop-linux-flatpak-${{ matrix.arch }}
           path: dist/packages/*
           if-no-files-found: error
