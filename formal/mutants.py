@@ -29,6 +29,7 @@ CHAIN = os.path.join(HERE, "hayalet-halka-zincir.spthy")
 LOG = os.path.join(HERE, "hayalet-halka-gunluk.spthy")
 FRESH = os.path.join(HERE, "hayalet-halka-tazelik.spthy")
 SECRET = os.path.join(HERE, "hayalet-halka-gizlilik.spthy")
+RECOVERY = os.path.join(HERE, "hayalet-halka-kurtarma.spthy")
 TIMEOUT = int(os.environ.get("LEMMA_TIMEOUT", "600"))
 
 BOUND_ONE_STEP = """
@@ -106,6 +107,16 @@ SECRET_UNUSED = [
     "Reveal_IK", "Reveal_A1", "Reveal_A2", "Reveal_State", "Reveal_Ring_1",
     "Reveal_Ring_2", "Accept_Rotate_1", "Accept_Rotate_2", "Accept_Remove_1",
     "Accept_Remove_2", "Log_Age", "Member_Add_2", "Member_Remove_2",
+]
+
+RECOVERY_UNUSED = [
+    "Device_Join_Request", "Member_Add_1", "Member_Add_2", "Member_Remove_1",
+    "Member_Remove_2", "Member_Rotate_1", "Member_Rotate_2", "Accept_Add_1",
+    "Accept_Add_2", "Accept_Remove_1", "Accept_Remove_2", "Accept_Rotate_1",
+    "Accept_Rotate_2", "Log_Write_AK_1", "Log_Write_AK_2", "Log_Write_IK_1",
+    "Log_Write_IK_2", "Reveal_IK", "Reveal_A1", "Reveal_A2", "Owner_Recover_2",
+    "Log_Write_RK_2", "Device_Accept_Recover_2", "Contact_Accept_Recover_2",
+    "Member_Reject_2",
 ]
 
 
@@ -436,6 +447,62 @@ lemma attack:
     & not (Ex e #x. RevIK(e) @ x)
     & not (Ex u #x. Step(u) @ x)
     & not (Ex y z #x. ExtWrite(y, z) @ x)"
+""",
+    },
+    {
+        "name": "recovery_without_wait",
+        "why": "a device follows a recovery before it has settled",
+        "model": RECOVERY,
+        "edits": [
+            ("Device_Accept_Recover_1 wait",
+             r"(rule Device_Accept_Recover_1:(?:(?!\nrule ).)*?)Settled\(h\(<'log', hh>\), <body, sig>\), ",
+             r"\1", 1),
+        ],
+        "drop": RECOVERY_UNUSED,
+        "lemma": """
+lemma attack:
+  exists-trace
+  "Ex o r hh n #k.
+      Accept(o, r, hh, 'recover', n, 'rk') @ k
+    & not (Ex v #x. Old(h(<'log', hh>), v) @ x & #x < #k)
+    & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)"
+""",
+    },
+    {
+        "name": "recovery_beats_ak_record",
+        "why": "a reader follows a recovery although a member wrote an AK record under the same key",
+        "model": RECOVERY,
+        "edits": [
+            ("restriction Log_Read_RK",
+             r"restriction Log_Read_RK:\n(?:  [^\n]*\n)+?(?=\n)", "", 1),
+        ],
+        "drop": RECOVERY_UNUSED,
+        "lemma": """
+lemma attack [heuristic=c]:
+  exists-trace
+  "Ex d r hh x o n #t #k.
+      Signed(d, r, hh, 'reject', x) @ t
+    & Accept(o, r, hh, 'recover', n, 'rk') @ k
+    & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)"
+""",
+    },
+    {
+        "name": "contact_skips_words",
+        "why": "a contact follows a recovery without comparing the words again",
+        "model": RECOVERY,
+        "edits": [
+            ("Contact_Accept_Recover_1 words",
+             r"(rule Contact_Accept_Recover_1:(?:(?!\nrule ).)*?)!Words\(r, n\), ",
+             r"\1", 1),
+        ],
+        "drop": RECOVERY_UNUSED,
+        "lemma": """
+lemma attack:
+  exists-trace
+  "Ex c r n #k.
+      ContactRecovered(c, r, n) @ k
+    & not (Ex #o. OwnerRecovered(r, n) @ o)
+    & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)"
 """,
     },
 ]

@@ -12,7 +12,7 @@ Model parça parça büyür. Her parça ayrı bir PR'dır:
 | A1 | Üyelik zinciri: `oluştur`, `ekle`, `çıkar`, `döndür` | Bu klasörde |
 | A2 | Çok değerli şeffaflık günlüğü, tanıklar, dahil etme zorlaması (P2) | Bu klasörde |
 | A3 | Döndürmenin oturması ve yazanın tazeliği (A2'deki açığın düzeltmesi); halka sırrı, teklifler, gönderirken ve alırken tazelik (P3) | Bu klasörde |
-| A4 | Kurtarma, sıkı mod, `çatal_çöz` (P7) | Sırada |
+| A4 | Kurtarma ve P7'nin kurtarma kısmı (A4a); sıkı mod (A4b), `çatal_çöz` (A4c), tasarım kurallarının `hesap.md`'ye yazılması (A4d) | A4a bu klasörde, gerisi sırada |
 | A5 | Bekleme süreleri için TLA+ değerlendirmesi | Sırada |
 
 ## Çalıştırmak
@@ -450,4 +450,79 @@ mutantta da vardır.
   sayısal olarak kesinleşir.
 - **Teklif imzası:** alıcı kişiyi (ya da kişiyle paylaşılan bağlamı) ve
   alıcının başını bağlamalı; `hesap.md` neyin bağlandığını açıkça yazmalı.
+
+## A4a: kurtarma (`hayalet-halka-kurtarma.spthy`)
+
+A3'ün zinciri, günlüğü, oturma ve yazanın tazeliği; A3b'nin `döndür`
+kuralıyla (döndüren cihaz kendi `döndür`'ünü oturunca izler). Eklenenler:
+
+- Halkanın ilk kaydı kurtarma anahtarının (`RK`) açık yarısını taşır. Gizli
+  yarı 24 kelimelik ifadedir; sahibindedir, hiçbir cihazda değildir.
+  `Reveal_Phrase` ifadenin çalınmasıdır.
+- `kurtarma_ekle`: `RK` imzalı, boş yere bir cihaz ekleyen kayıt. Sahibi
+  bunu ifade ve yeni bir cihazla yazar (`Owner_Recover`); ifadeyi çalan
+  biri aynı kaydı ağdan yazar (`Log_Write_RK`).
+- **Bekleme:** okuyucular (cihazlar ve kişiler) bir kurtarmayı ancak
+  oturunca izler. Gerçekte bu 72 saat ya da 7 gündür; modelde A3'ün
+  "oturdu" olayıdır.
+- **Öncelik:** aynı anahtar altında daha önce yazılmış bir `AK` kaydı varsa
+  kurtarma izlenmez (çatal kuralı, madde 1'in genişletilmesi). `döndür`
+  kurtarmayı durdurmaz.
+- `kurtarma_reddi`: bir üyenin `AK` imzalı kaydı; aynı anahtar altındaki
+  kurtarmayı bu öncelikle durdurur.
+- **Kişiler** bir kurtarmayı ancak yeni cihazın sahibiyle doğrulama
+  kelimelerini yeniden karşılaştırdıktan sonra izler. Bu, kişi ile sahip
+  arasındaki güvenilir bant dışı kanaldır (`!Words`); ifadeyi çalan biri
+  bu kanala sahip değildir.
+
+Kayıt gövdesi değiştiği için (ilk kayıt `RK`'yi taşır) bu yeni bir
+modeldir; A3'ün çalıştırılabilirlik izleri ve `no_rotate_branch_past_removal`
+burada yeniden kanıtlandı.
+
+### Soyutlamalar
+
+| Soyutlama | Neden | Ne zaman genişler |
+| --- | --- | --- |
+| Kurtarma yalnızca boş yere ekler | İki cihaz yeri; bütün cihazlar kayıpsa halkada bir yer boştur | Değişmez |
+| Kurtarılan cihaz bu parçada yeni kayıt yazmaz | P7'nin kurtarma kısmı için gerekmiyor; kurtarmadan sonraki çatallar A4c'de | A4c |
+| `kurtarma_reddi`'nin izlenmesi modellenmedi | Red yalnızca kurtarmayı durdurmak için var; okuyucuların reddi izleyip yeni başa geçmesi bu parçanın sonucunu değiştirmez | A4c |
+| Reddedilen `RK`'nin sonraki başlarda geçersiz kalması yok | Burada red, yalnızca aynı anahtar altındaki kurtarmayı durdurur | A4c (`ifade_değiştir` ile) |
+| Bekleme süresi, A3'ün oturma olayıdır | Süreler A5'te | A5 |
+| Kelime karşılaştırması güvenilir bir kanaldır | Kelimelerin gücü (yanlış eşleşme olasılığı) eşleştirme protokolünde ele alınır | Aşama C |
+
+### Lemmalar
+
+| Lemma | Tür | Ne söyler |
+| --- | --- | --- |
+| A3'ün dört çalıştırılabilirlik izi, `no_rotate_branch_past_removal` | iz var / her iz | Yeni kurallarla da geçerli |
+| `sanity_owner_recovers` | iz var | Sahip kurtarır, bir kişi kelimeleri karşılaştırıp izler |
+| `sanity_recovery_despite_rotate` | iz var | Kilitli çalınmış bir telefon (`IK`'si sızmış, `AK`'si sızmamış) aynı anahtar altına önce `döndür` yazsa da kurtarma geçer |
+| `ak_record_stops_recovery` | her iz | **P7, cihazlar:** dürüst bir üyenin aynı anahtar altına yazdığı `AK` kaydı (`kurtarma_reddi`, `ekle`, `çıkar`), bekleme sırasında ne zaman yazılırsa yazılsın, kurtarmayı durdurur. Bekleme bitince üye o anahtar altına artık yazmaz (yazanın tazeliği); kurtarma yalnızca beklemede hiçbir üye bir şey yapmadıysa geçer |
+| `recovery_was_pending` | her iz | **P7, cihazlar:** izlenen her kurtarma önce bekleme boyunca günlükte, her üyenin görebileceği yerdeydi |
+| `contact_not_moved_by_phrase_alone` | her iz | **P7, kişiler:** yalnızca ifadeyle kişi taşınmaz: kişi bir kurtarmayı yalnızca sahibinin kelimeleri karşılaştırdığı cihaza izler |
+
+Son iki lemma kuralların doğrudan sonucudur (6 ve 10 adım). İçerikleri,
+modelin tasarımla aynı kuralı uyguladığını gösterir; asıl iş
+`ak_record_stops_recovery`'dedir (151 adım): yazanın tazeliği, bekleme ve
+öncelik birlikte kurtarmayı her sırada durdurur.
+
+### Mutant sınamaları
+
+| Mutant | Bozulan denetim | Beklenen saldırı |
+| --- | --- | --- |
+| `recovery_without_wait` | Cihaz kurtarmayı beklemeden izler | Kurtarma, günlükte hiç beklemeden izlenir |
+| `recovery_beats_ak_record` | Okuyucu öncelik kuralını uygulamaz | Bir üyenin reddine rağmen kurtarma izlenir |
+| `contact_skips_words` | Kişi kelimeleri yeniden karşılaştırmaz | Kişi, ifadeyi çalanın cihazına taşınır |
+
+Üçü de aramanın bitmesi için kullanılmayan kuralları düşürür (`drop`).
+
+### Henüz kanıtlanmayanlar
+
+- **Telefon ve ifade birlikte çalınırsa** P7 güvence vermez (`hesap.md`,
+  P7); model bunu iddia etmez.
+- **Sansür:** tanıklar sunucuyla birlikte red kaydını sansürlerse bekleme
+  yalnızca gecikmedir; P7'yi o zaman kişilerin kelime karşılaştırması
+  sağlar (`contact_not_moved_by_phrase_alone` bu durumda da geçerlidir).
+  Modelin günlüğü tek ve sansürsüzdür (A2 varsayımı).
+- Kurtarmadan sonraki çatallar, `çatal_çöz` ve reddedilen `RK`: A4c.
 
