@@ -73,3 +73,11 @@ test("a name that could leave the vendor folder is refused", () => {
     /unexpected characters/,
   );
 });
+
+test("a version with build metadata is encoded in the URL", () => {
+  const [archive] = sources([
+    { name: "toml", version: "1.1.8+spec-1.1.0", source: io, checksum: sum },
+  ]);
+  assert.equal(archive.url, "https://static.crates.io/crates/toml/toml-1.1.8%2Bspec-1.1.0.crate");
+  assert.equal(archive.dest, "cargo/vendor/toml-1.1.8+spec-1.1.0");
+});

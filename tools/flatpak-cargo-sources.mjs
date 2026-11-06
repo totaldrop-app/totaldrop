@@ -75,7 +75,7 @@ export function sources(pkgs) {
     list.push({
       type: "archive",
       "archive-type": "tar-gzip",
-      url: `https://static.crates.io/crates/${p.name}/${id}.crate`,
+      url: `https://static.crates.io/crates/${p.name}/${encodeURIComponent(id)}.crate`,
       sha256: p.checksum,
       dest,
     });

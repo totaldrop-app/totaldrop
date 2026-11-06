@@ -145,7 +145,9 @@
     klasörleri `:ro`, `--filesystem=xdg-run/hypr:ro`), ya da tema okumanın
     tamamı portala taşınır. Tek bir dosyanın bağlanması, KConfig'in
     kaydederken dosyayı yeniden adlandırması yüzünden canlı tema
-    değişikliğini kaçırabilir; adım 1'de denenecek.
+    değişikliğini kaçırır; adım 1'de doğrulandı, sistem GTK temalarıyla
+    birlikte [#299](https://github.com/totaldrop-app/totaldrop/issues/299)
+    ile ele alınacak.
   - Steam klasörlerine ya da `/run/media`'ya kalıcı erişim
     (`--filesystem=home`, `--filesystem=/run/media`) istemek kolaylık
     sağlar ama Flathub incelemesinde gerekçe ister ve en az yetki ilkesine

@@ -1,5 +1,6 @@
 # Linux release: from a `linux-v*` tag, the Linux checks and the packages
-# a PR builds (Arch; .deb and .rpm for x86-64 and ARM64), then a draft
+# a PR builds (Arch; .deb, .rpm and the Flatpak for x86-64 and ARM64),
+# then a draft
 # GitHub release with checksums and build provenance (docs/surec.md).
 name: Linux release
 
@@ -60,7 +61,7 @@ jobs:
       - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         id: attest
         with:
-          subject-path: "packages/*.pkg.tar.zst, packages/*.deb, packages/*.rpm"
+          subject-path: "packages/*.pkg.tar.zst, packages/*.deb, packages/*.rpm, packages/*.flatpak"
       # The same signed provenance as a release file, so a package can be
       # checked without GitHub's attestation API:
       #   gh attestation verify <package> --repo totaldrop-app/totaldrop \

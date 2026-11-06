@@ -44,10 +44,14 @@ pub fn data_dir() -> Option<PathBuf> {
 }
 
 /// The desktop's state folder, usually `~/.local/state`.
+///
+/// Flatpak has no `xdg-state` location, so the manifest grants the
+/// default `~/.local/state/omarchy`: inside the sandbox the host's
+/// `XDG_STATE_HOME` is not followed, since that folder would not be visible.
 pub fn state_dir() -> Option<PathBuf> {
     pick(
         sandboxed(),
-        std::env::var_os("HOST_XDG_STATE_HOME"),
+        None,
         dirs::home_dir(),
         ".local/state",
         dirs::state_dir,
