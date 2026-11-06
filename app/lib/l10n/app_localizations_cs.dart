@@ -436,7 +436,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get settingsWordsEnglish =>
-      'Kódy a ověřovací slova jsou v každém jazyce anglicky, aby dvě zařízení v různých jazycích ukazovala stejná slova.';
+      'Kódy a ověřovací slova jsou v každém jazyce v angličtině, aby dvě zařízení v různých jazycích zobrazovala stejná slova.';
 
   @override
   String get sendDropHere => 'Přetáhněte soubory sem';

@@ -401,7 +401,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get settingsWordsEnglish =>
-      'コードと確認用の単語はどの言語でも英語のままです。言語の異なる2台の端末でも同じ単語が表示されます。';
+      'コードと確認用の単語はどの言語でも英語のままです。言語の異なるデバイス同士でも同じ単語が表示されるようにするためです。';
 
   @override
   String get sendDropHere => 'ここにファイルをドロップ';

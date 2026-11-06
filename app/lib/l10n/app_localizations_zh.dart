@@ -1279,7 +1279,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get draftTranslation => '這份翻譯正在審閱中。歡迎到 GitHub 協助改進。';
 
   @override
-  String get settingsWordsEnglish => '代碼和驗證單字在任何語言下都使用英文，這樣兩台語言不同的裝置會顯示相同的單字。';
+  String get settingsWordsEnglish => '代碼和驗證單字在任何語言下都使用英文，這樣兩部語言不同的裝置會顯示相同的單字。';
 
   @override
   String get sendDropHere => '將檔案拖放到這裡';

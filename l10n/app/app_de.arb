@@ -111,7 +111,7 @@
   "sizeTB": "{value} TB",
   "sizePB": "{value} PB",
   "draftTranslation": "Diese Übersetzung wird noch geprüft. Helfen Sie auf GitHub, sie zu verbessern.",
-  "settingsWordsEnglish": "Codes und Prüfwörter sind in jeder Sprache englisch, damit zwei Geräte mit unterschiedlicher Sprache dieselben Wörter zeigen.",
+  "settingsWordsEnglish": "Codes und Prüfwörter sind in jeder Sprache auf Englisch, damit zwei Geräte mit unterschiedlicher Sprache dieselben Wörter anzeigen.",
 
   "sendDropHere": "Dateien hier ablegen",
   "sendDropHint": "Sie können Dateien auch auf dieses Fenster ziehen.",

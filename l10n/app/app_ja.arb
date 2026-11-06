@@ -111,7 +111,7 @@
   "sizeTB": "{value} TB",
   "sizePB": "{value} PB",
   "draftTranslation": "この翻訳はレビュー中です。GitHub で改善にご協力ください。",
-  "settingsWordsEnglish": "コードと確認用の単語はどの言語でも英語のままです。言語の異なる2台の端末でも同じ単語が表示されます。",
+  "settingsWordsEnglish": "コードと確認用の単語はどの言語でも英語のままです。言語の異なるデバイス同士でも同じ単語が表示されるようにするためです。",
 
   "sendDropHere": "ここにファイルをドロップ",
   "sendDropHint": "このウィンドウにファイルをドラッグして追加することもできます。",

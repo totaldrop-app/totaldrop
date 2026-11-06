@@ -415,7 +415,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get settingsWordsEnglish =>
-      'Mã và từ xác minh luôn bằng tiếng Anh, để hai thiết bị dùng ngôn ngữ khác nhau hiển thị cùng các từ.';
+      'Mã và từ xác minh luôn bằng tiếng Anh, để hai thiết bị dùng ngôn ngữ khác nhau hiển thị các từ giống nhau.';
 
   @override
   String get sendDropHere => 'Thả tệp vào đây';
