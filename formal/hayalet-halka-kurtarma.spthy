@@ -1,0 +1,522 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+/*
+ * Ghost ring (docs/hesap.md, decision 0013), part 4a of the formal model
+ * (#251): recovery with the 24-word phrase, and P7 for it.
+ *
+ * The chain, log, settling and writer freshness of part 3
+ * (hayalet-halka-tazelik.spthy), with the rotate rule of part 3b: a device
+ * follows its own rotate only once it has settled. Added:
+ *  - the ring's genesis carries the recovery key RK; its secret is the
+ *    phrase, held by the owner and never on a device;
+ *  - kurtarma_ekle: an RK-signed record that adds a device into an empty
+ *    slot. It waits: readers follow it only once it has settled;
+ *  - priority (fork rule 1, extended): an AK record under the same key
+ *    wins over a recovery; a rotate does not stop it;
+ *  - kurtarma_reddi: any member writes an AK record that rejects the
+ *    recovery;
+ *  - contacts follow a recovery only after comparing the words again with
+ *    the new device's owner (an authentic out-of-band channel).
+ * The record body changes (genesis carries RK), so the lemmas of parts 1
+ * to 3 are not carried over; the ones this part relies on are proved again.
+ */
+
+theory HayaletHalkaKurtarma
+begin
+
+builtins: signing, hashing
+
+restriction Eq: "All x y #i. Eq(x, y) @ i ==> x = y"
+
+/* A device: identity key IK and the two halves of the admin key AK. */
+rule Device_New:
+    let d = <pk(~ik), pk(~a1), pk(~a2)>
+    in
+    [ Fr(~ik), Fr(~a1), Fr(~a2) ]
+  --[ DeviceNew(d) ]->
+    [ !DevKey(d, ~ik, ~a1, ~a2), Unused(d), Out(d) ]
+
+/* Key leaks: a stolen, removed or broken device. Each half separately, so
+   a break of one algorithm alone is modelled too. */
+rule Reveal_IK:
+    [ !DevKey(d, ik, a1, a2) ] --[ RevIK(d) ]-> [ Out(ik) ]
+rule Reveal_A1:
+    [ !DevKey(d, ik, a1, a2) ] --[ RevA1(d) ]-> [ Out(a1) ]
+rule Reveal_A2:
+    [ !DevKey(d, ik, a1, a2) ] --[ RevA2(d) ]-> [ Out(a2) ]
+
+rule Ring_Create:
+    let d = <pk(~ik), pk(~a1), pk(~a2)>
+        r = h(<'ring', d, pk(~rk)>)
+        body = <'rec', r, 'genesis', 'create', <d, pk(~rk)>, d>
+    in
+    [ Unused(d), !DevKey(d, ~ik, ~a1, ~a2), Fr(~rk) ]
+  --[ Created(r, d), Signed(d, r, 'genesis', 'create', d) ]->
+    [ View(d, r, h(body), d, 'empty'), !Genesis(r, h(body), d), !Head(r, h(body), d, 'empty'),
+      !RK(r, pk(~rk)), !Phrase(r, ~rk),
+      Out(<body, sign(<'ed', body>, ~a1), sign(<'ml', body>, ~a2)>) ]
+
+/* A contact pins the genesis head (trust on first use, checked by words). */
+rule Contact_Pin:
+    [ !Genesis(r, hh, d), Fr(~c) ] --[ Pin(~c, r, hh) ]-> [ View(~c, r, hh, d, 'empty'), !Contact(~c) ]
+
+/* The phrase leaks (written down, photographed, or a share holder lies). */
+rule Reveal_Phrase:
+    [ !Phrase(r, rk) ] --[ RevPhrase(r) ]-> [ Out(rk) ]
+
+/* A new device asks to join over QR or CPace (authentic, single use). */
+rule Device_Join_Request:
+    [ Unused(n) ] --[ JoinRequest(n) ]-> [ AddReq(n) ]
+
+/* Honest device in slot 1 adds into empty slot 2 (and the mirror). */
+rule Member_Add_1:
+    let d = <pk(~ik), pk(~a1), pk(~a2)>
+        body = <'rec', h(rb), h(hb), 'add', n, d>
+    in
+    [ View(d, h(rb), h(hb), d, 'empty'), AddReq(n), !DevKey(d, ~ik, ~a1, ~a2) ]
+  --[ WriteFresh(h(<'log', h(hb)>)), LogValid(h(<'log', h(hb)>), body, 'ak'), Step('MA'), Signed(d, h(rb), h(hb), 'add', n) ]->
+    [ View(d, h(rb), h(body), d, n), View(n, h(rb), h(body), d, n),
+      Out(<body, sign(<'ed', body>, ~a1), sign(<'ml', body>, ~a2)>), !Head(h(rb), h(body), d, n),
+      !LogEntry(h(<'log', h(hb)>), <body, sign(<'ed', body>, ~a1), sign(<'ml', body>, ~a2)>) ]
+
+rule Member_Add_2:
+    let d = <pk(~ik), pk(~a1), pk(~a2)>
+        body = <'rec', h(rb), h(hb), 'add', n, d>
+    in
+    [ View(d, h(rb), h(hb), 'empty', d), AddReq(n), !DevKey(d, ~ik, ~a1, ~a2) ]
+  --[ WriteFresh(h(<'log', h(hb)>)), LogValid(h(<'log', h(hb)>), body, 'ak'), Step('MA'), Signed(d, h(rb), h(hb), 'add', n) ]->
+    [ View(d, h(rb), h(body), n, d), View(n, h(rb), h(body), n, d),
+      Out(<body, sign(<'ed', body>, ~a1), sign(<'ml', body>, ~a2)>), !Head(h(rb), h(body), n, d),
+      !LogEntry(h(<'log', h(hb)>), <body, sign(<'ed', body>, ~a1), sign(<'ml', body>, ~a2)>) ]
+
+rule Member_Remove_1:
+    let d = <pk(~ik), pk(~a1), pk(~a2)>
+        body = <'rec', h(rb), h(hb), 'remove', h(x), d>
+    in
+    [ View(d, h(rb), h(hb), d, x), !DevKey(d, ~ik, ~a1, ~a2) ]
+  --[ WriteFresh(h(<'log', h(hb)>)), LogValid(h(<'log', h(hb)>), body, 'ak'), Step('MR'), Signed(d, h(rb), h(hb), 'remove', h(x)), NotEmpty(x) ]->
+    [ View(d, h(rb), h(body), d, 'empty'),
+      Out(<body, sign(<'ed', body>, ~a1), sign(<'ml', body>, ~a2)>), !Head(h(rb), h(body), d, 'empty'),
+      !LogEntry(h(<'log', h(hb)>), <body, sign(<'ed', body>, ~a1), sign(<'ml', body>, ~a2)>) ]
+
+rule Member_Remove_2:
+    let d = <pk(~ik), pk(~a1), pk(~a2)>
+        body = <'rec', h(rb), h(hb), 'remove', h(x), d>
+    in
+    [ View(d, h(rb), h(hb), x, d), !DevKey(d, ~ik, ~a1, ~a2) ]
+  --[ WriteFresh(h(<'log', h(hb)>)), LogValid(h(<'log', h(hb)>), body, 'ak'), Step('MR'), Signed(d, h(rb), h(hb), 'remove', h(x)), NotEmpty(x) ]->
+    [ View(d, h(rb), h(body), 'empty', d),
+      Out(<body, sign(<'ed', body>, ~a1), sign(<'ml', body>, ~a2)>), !Head(h(rb), h(body), 'empty', d),
+      !LogEntry(h(<'log', h(hb)>), <body, sign(<'ed', body>, ~a1), sign(<'ml', body>, ~a2)>) ]
+
+restriction NotEmpty: "All x #i. NotEmpty(x) @ i ==> not (x = 'empty')"
+
+/* A device that writes a rotate stays at the old head until the rotate
+   settles (part 3b); until then it writes AK records from the old head. */
+rule Member_Rotate_1:
+    let d = <pk(~ik), pk(~a1), pk(~a2)>
+        body = <'rec', h(rb), h(hb), 'rotate', ~nr, d>
+    in
+    [ View(d, h(rb), h(hb), d, y), !DevKey(d, ~ik, ~a1, ~a2), Fr(~nr) ]
+  --[ WriteFresh(h(<'log', h(hb)>)), LogValid(h(<'log', h(hb)>), body, 'ik'), Step('MT'), Signed(d, h(rb), h(hb), 'rotate', ~nr) ]->
+    [ View(d, h(rb), h(hb), d, y), Out(<body, sign(<'ik', body>, ~ik)>), !Head(h(rb), h(body), d, y),
+      !LogEntry(h(<'log', h(hb)>), <body, sign(<'ik', body>, ~ik)>) ]
+
+rule Member_Rotate_2:
+    let d = <pk(~ik), pk(~a1), pk(~a2)>
+        body = <'rec', h(rb), h(hb), 'rotate', ~nr, d>
+    in
+    [ View(d, h(rb), h(hb), y, d), !DevKey(d, ~ik, ~a1, ~a2), Fr(~nr) ]
+  --[ WriteFresh(h(<'log', h(hb)>)), LogValid(h(<'log', h(hb)>), body, 'ik'), Step('MT'), Signed(d, h(rb), h(hb), 'rotate', ~nr) ]->
+    [ View(d, h(rb), h(hb), y, d), Out(<body, sign(<'ik', body>, ~ik)>), !Head(h(rb), h(body), y, d),
+      !LogEntry(h(<'log', h(hb)>), <body, sign(<'ik', body>, ~ik)>) ]
+
+/* Recovery (hesap.md, "Kurtarma"). The owner, with the phrase and a new
+   device n, writes an RK-signed kurtarma_ekle under the key of the newest
+   head it learned from the log, adding n into the empty slot. The owner
+   can then compare the words with each contact: Words(n) is that
+   authentic channel. An attacker with the phrase writes the same record
+   from the network (Log_Write_RK) but gets no Words for its device. */
+rule Owner_Recover_1:
+    let body = <'rec', r, h(hb), 'recover', n, 'rk'>
+    in
+    [ !Phrase(r, ~rk), Unused(n), !Head(r, h(hb), a, 'empty') ]
+  --[ WriteFresh(h(<'log', h(hb)>)), LogValid(h(<'log', h(hb)>), body, 'rk'), Step('OR'),
+      OwnerRecovered(r, n) ]->
+    [ Out(<body, sign(<'rk', body>, ~rk)>), !Head(r, h(body), a, n), !Words(r, n),
+      !LogEntry(h(<'log', h(hb)>), <body, sign(<'rk', body>, ~rk)>) ]
+
+rule Owner_Recover_2:
+    let body = <'rec', r, h(hb), 'recover', n, 'rk'>
+    in
+    [ !Phrase(r, ~rk), Unused(n), !Head(r, h(hb), 'empty', a) ]
+  --[ WriteFresh(h(<'log', h(hb)>)), LogValid(h(<'log', h(hb)>), body, 'rk'), Step('OR'),
+      OwnerRecovered(r, n) ]->
+    [ Out(<body, sign(<'rk', body>, ~rk)>), !Head(r, h(body), n, a), !Words(r, n),
+      !LogEntry(h(<'log', h(hb)>), <body, sign(<'rk', body>, ~rk)>) ]
+
+rule Log_Write_RK_1:
+    let body = <'rec', r, hh, 'recover', n, 'rk'>
+    in
+    [ In(<body, sig>), !Head(r, hh, a, 'empty'), !RK(r, rkp) ]
+  --[ Eq(verify(sig, <'rk', body>, rkp), true), LogValid(h(<'log', hh>), body, 'rk') ]->
+    [ !LogEntry(h(<'log', hh>), <body, sig>), !Head(r, h(body), a, n) ]
+
+rule Log_Write_RK_2:
+    let body = <'rec', r, hh, 'recover', n, 'rk'>
+    in
+    [ In(<body, sig>), !Head(r, hh, 'empty', a), !RK(r, rkp) ]
+  --[ Eq(verify(sig, <'rk', body>, rkp), true), LogValid(h(<'log', hh>), body, 'rk') ]->
+    [ !LogEntry(h(<'log', hh>), <body, sig>), !Head(r, h(body), n, a) ]
+
+/* A member rejects a pending recovery: an AK record under the same key
+   (kurtarma_reddi). It starts a period with the same members. */
+rule Member_Reject_1:
+    let d = <pk(~ik), pk(~a1), pk(~a2)>
+        body = <'rec', h(rb), h(hb), 'reject', 'rk', d>
+    in
+    [ View(d, h(rb), h(hb), d, y), !DevKey(d, ~ik, ~a1, ~a2) ]
+  --[ WriteFresh(h(<'log', h(hb)>)), LogValid(h(<'log', h(hb)>), body, 'ak'), Step('MJ'), Signed(d, h(rb), h(hb), 'reject', 'rk') ]->
+    [ View(d, h(rb), h(body), d, y),
+      Out(<body, sign(<'ed', body>, ~a1), sign(<'ml', body>, ~a2)>), !Head(h(rb), h(body), d, y),
+      !LogEntry(h(<'log', h(hb)>), <body, sign(<'ed', body>, ~a1), sign(<'ml', body>, ~a2)>) ]
+
+rule Member_Reject_2:
+    let d = <pk(~ik), pk(~a1), pk(~a2)>
+        body = <'rec', h(rb), h(hb), 'reject', 'rk', d>
+    in
+    [ View(d, h(rb), h(hb), y, d), !DevKey(d, ~ik, ~a1, ~a2) ]
+  --[ WriteFresh(h(<'log', h(hb)>)), LogValid(h(<'log', h(hb)>), body, 'ak'), Step('MJ'), Signed(d, h(rb), h(hb), 'reject', 'rk') ]->
+    [ View(d, h(rb), h(body), y, d),
+      Out(<body, sign(<'ed', body>, ~a1), sign(<'ml', body>, ~a2)>), !Head(h(rb), h(body), y, d),
+      !LogEntry(h(<'log', h(hb)>), <body, sign(<'ed', body>, ~a1), sign(<'ml', body>, ~a2)>) ]
+
+/* Following a recovery: only once it has settled (the wait, 72 hours or 7
+   days), and only if no AK record was logged under the key before (the
+   restriction Log_Read_RK). A device follows it and so sees it (and its
+   user can reject it during the wait); a contact also needs Words(n). */
+rule Device_Accept_Recover_1:
+    let body = <'rec', r, hh, 'recover', n, 'rk'>
+    in
+    [ View(o, r, hh, a, 'empty'), !DevKey(o, ik, a1, a2), !LogEntry(h(<'log', hh>), <body, sig>), !RK(r, rkp) ]
+  --[ ReadL(h(<'log', hh>), body, 'rk'), Settled(h(<'log', hh>), <body, sig>), Step('DK'),
+      Eq(verify(sig, <'rk', body>, rkp), true), Accept(o, r, hh, 'recover', n, 'rk') ]->
+    [ View(o, r, h(body), a, n), !Head(r, h(body), a, n) ]
+
+rule Device_Accept_Recover_2:
+    let body = <'rec', r, hh, 'recover', n, 'rk'>
+    in
+    [ View(o, r, hh, 'empty', a), !DevKey(o, ik, a1, a2), !LogEntry(h(<'log', hh>), <body, sig>), !RK(r, rkp) ]
+  --[ ReadL(h(<'log', hh>), body, 'rk'), Settled(h(<'log', hh>), <body, sig>), Step('DK'),
+      Eq(verify(sig, <'rk', body>, rkp), true), Accept(o, r, hh, 'recover', n, 'rk') ]->
+    [ View(o, r, h(body), n, a), !Head(r, h(body), n, a) ]
+
+rule Contact_Accept_Recover_1:
+    let body = <'rec', r, hh, 'recover', n, 'rk'>
+    in
+    [ View(o, r, hh, a, 'empty'), !Contact(o), !Words(r, n), !LogEntry(h(<'log', hh>), <body, sig>), !RK(r, rkp) ]
+  --[ ReadL(h(<'log', hh>), body, 'rk'), Settled(h(<'log', hh>), <body, sig>), Step('CK'),
+      Eq(verify(sig, <'rk', body>, rkp), true), Accept(o, r, hh, 'recover', n, 'rk'), ContactRecovered(o, r, n) ]->
+    [ View(o, r, h(body), a, n) ]
+
+rule Contact_Accept_Recover_2:
+    let body = <'rec', r, hh, 'recover', n, 'rk'>
+    in
+    [ View(o, r, hh, 'empty', a), !Contact(o), !Words(r, n), !LogEntry(h(<'log', hh>), <body, sig>), !RK(r, rkp) ]
+  --[ ReadL(h(<'log', hh>), body, 'rk'), Settled(h(<'log', hh>), <body, sig>), Step('CK'),
+      Eq(verify(sig, <'rk', body>, rkp), true), Accept(o, r, hh, 'recover', n, 'rk'), ContactRecovered(o, r, n) ]->
+    [ View(o, r, h(body), n, a) ]
+
+restriction Log_Read_RK:
+  "All L v v2 #i #t. ReadL(L, v, 'rk') @ i & LogValid(L, v2, 'ak') @ t & #t < #i ==> F"
+
+/* Any view owner (device or contact) follows records from the log. */
+rule Accept_Add_1:
+    let s = <sik, sa1, sa2>
+        body = <'rec', r, hh, 'add', n, s>
+    in
+    [ View(o, r, hh, s, 'empty'), !LogEntry(h(<'log', hh>), <body, sig1, sig2>) ]
+  --[ ReadL(h(<'log', hh>), body, 'ak'), Step('AA'), Eq(verify(sig1, <'ed', body>, sa1), true),
+      Eq(verify(sig2, <'ml', body>, sa2), true),
+      NotEmpty(n),
+      Accept(o, r, hh, 'add', n, s) ]->
+    [ View(o, r, h(body), s, n), !Head(r, h(body), s, n) ]
+
+rule Accept_Add_2:
+    let s = <sik, sa1, sa2>
+        body = <'rec', r, hh, 'add', n, s>
+    in
+    [ View(o, r, hh, 'empty', s), !LogEntry(h(<'log', hh>), <body, sig1, sig2>) ]
+  --[ ReadL(h(<'log', hh>), body, 'ak'), Step('AA'), Eq(verify(sig1, <'ed', body>, sa1), true),
+      Eq(verify(sig2, <'ml', body>, sa2), true),
+      NotEmpty(n),
+      Accept(o, r, hh, 'add', n, s) ]->
+    [ View(o, r, h(body), n, s), !Head(r, h(body), n, s) ]
+
+rule Accept_Remove_1:
+    let s = <sik, sa1, sa2>
+        body = <'rec', r, hh, 'remove', h(x), s>
+    in
+    [ View(o, r, hh, s, x), !LogEntry(h(<'log', hh>), <body, sig1, sig2>) ]
+  --[ ReadL(h(<'log', hh>), body, 'ak'), Step('AR'), Eq(verify(sig1, <'ed', body>, sa1), true),
+      Eq(verify(sig2, <'ml', body>, sa2), true),
+      NotEmpty(x),
+      Accept(o, r, hh, 'remove', h(x), s) ]->
+    [ View(o, r, h(body), s, 'empty'), !Head(r, h(body), s, 'empty') ]
+
+rule Accept_Remove_2:
+    let s = <sik, sa1, sa2>
+        body = <'rec', r, hh, 'remove', h(x), s>
+    in
+    [ View(o, r, hh, x, s), !LogEntry(h(<'log', hh>), <body, sig1, sig2>) ]
+  --[ ReadL(h(<'log', hh>), body, 'ak'), Step('AR'), Eq(verify(sig1, <'ed', body>, sa1), true),
+      Eq(verify(sig2, <'ml', body>, sa2), true),
+      NotEmpty(x),
+      Accept(o, r, hh, 'remove', h(x), s) ]->
+    [ View(o, r, h(body), 'empty', s), !Head(r, h(body), 'empty', s) ]
+
+rule Accept_Rotate_1:
+    let s = <sik, sa1, sa2>
+        body = <'rec', r, hh, 'rotate', nr, s>
+    in
+    [ View(o, r, hh, s, y), !LogEntry(h(<'log', hh>), <body, sig>) ]
+  --[ ReadL(h(<'log', hh>), body, 'ik'), Settled(h(<'log', hh>), <body, sig>), Step('AT'), Eq(verify(sig, <'ik', body>, sik), true),
+      Accept(o, r, hh, 'rotate', nr, s) ]->
+    [ View(o, r, h(body), s, y), !Head(r, h(body), s, y) ]
+
+rule Accept_Rotate_2:
+    let s = <sik, sa1, sa2>
+        body = <'rec', r, hh, 'rotate', nr, s>
+    in
+    [ View(o, r, hh, y, s), !LogEntry(h(<'log', hh>), <body, sig>) ]
+  --[ ReadL(h(<'log', hh>), body, 'ik'), Settled(h(<'log', hh>), <body, sig>), Step('AT'), Eq(verify(sig, <'ik', body>, sik), true),
+      Accept(o, r, hh, 'rotate', nr, s) ]->
+    [ View(o, r, h(body), y, s), !Head(r, h(body), y, s) ]
+
+/* The transparency log. A value is logged under L = h('log', head) and is
+   never deleted. The log keeps only values that are valid for that head:
+   readers drop every other value (hesap.md, "Anonim şeffaflık günlüğü"),
+   so a logged invalid value changes nothing and is left out. Anyone may
+   log a value (with an ARC token, not modelled). Honest devices log their
+   own records in the same step that writes them: this is the witnesses'
+   inclusion enforcement, with its one-hour bound abstracted away. */
+rule Log_Write_AK_1:
+    let s = <sik, sa1, sa2>
+        body = <'rec', r, hh, op, x, s>
+    in
+    [ In(<body, sig1, sig2>), !Head(r, hh, s, y) ]
+  --[ Eq(verify(sig1, <'ed', body>, sa1), true),
+      Eq(verify(sig2, <'ml', body>, sa2), true),
+      LogValid(h(<'log', hh>), body, 'ak') ]->
+    [ !LogEntry(h(<'log', hh>), <body, sig1, sig2>) ]
+
+rule Log_Write_AK_2:
+    let s = <sik, sa1, sa2>
+        body = <'rec', r, hh, op, x, s>
+    in
+    [ In(<body, sig1, sig2>), !Head(r, hh, y, s) ]
+  --[ Eq(verify(sig1, <'ed', body>, sa1), true),
+      Eq(verify(sig2, <'ml', body>, sa2), true),
+      LogValid(h(<'log', hh>), body, 'ak') ]->
+    [ !LogEntry(h(<'log', hh>), <body, sig1, sig2>) ]
+
+rule Log_Write_IK_1:
+    let s = <sik, sa1, sa2>
+        body = <'rec', r, hh, op, x, s>
+    in
+    [ In(<body, sig>), !Head(r, hh, s, y) ]
+  --[ Eq(verify(sig, <'ik', body>, sik), true),
+      LogValid(h(<'log', hh>), body, 'ik') ]->
+    [ !LogEntry(h(<'log', hh>), <body, sig>) ]
+
+rule Log_Write_IK_2:
+    let s = <sik, sa1, sa2>
+        body = <'rec', r, hh, op, x, s>
+    in
+    [ In(<body, sig>), !Head(r, hh, y, s) ]
+  --[ Eq(verify(sig, <'ik', body>, sik), true),
+      LogValid(h(<'log', hh>), body, 'ik') ]->
+    [ !LogEntry(h(<'log', hh>), <body, sig>) ]
+
+/* Time passing, without a clock (A3): Old(L, v) marks that value v under L
+   has been in the log for longer than the settling delay D. A reader
+   follows a rotate only once it has settled; an honest writer writes only
+   from a head under whose key nothing has settled yet (its freshness
+   check). Together they close the rotate-branch gap of part 2: a remove
+   written while a rotate is still unsettled is in the log before the rotate
+   settles, and then wins (fork rule 1). A5 sets D against the one-hour
+   inclusion and freshness bounds.
+   Honest records are still logged in the step that writes them. Here that
+   is load-bearing: the freshness check must still hold when the record is
+   included. The design must enforce it (README.md, A3). */
+rule Log_Age:
+    [ !LogEntry(L, v) ] --[ Old(L, v) ]-> [ ]
+
+restriction Rotate_Settled:
+  "All L v #i. Settled(L, v) @ i ==> Ex #t. Old(L, v) @ t & #t < #i"
+
+restriction Writer_Fresh:
+  "All L #i. WriteFresh(L) @ i ==> not (Ex v #t. Old(L, v) @ t & #t < #i)"
+
+/* Reading the log. Every reader (device or contact) reads every value under
+   the key and stops on a fork (hesap.md, "Çatal kuralı"): an AK record is
+   accepted only if no other valid AK record was logged under the same key
+   before; it wins over a rotate (priority, rule 1). A rotate is accepted
+   only if no other valid value of any kind was logged before. The
+   witnesses give every reader the same log (f < 2k - n, see the header);
+   that is why the log is one global set of facts here. Writers do not
+   read: an honest member writes its record even if another value is
+   already logged under the key, and the fork then stops the readers. */
+restriction Log_Read_AK:
+  "All L v v2 #i #t. ReadL(L, v, 'ak') @ i & LogValid(L, v2, 'ak') @ t & #t < #i ==> v = v2"
+
+restriction Log_Read_IK:
+  "All L v v2 k #i #t. ReadL(L, v, 'ik') @ i & LogValid(L, v2, k) @ t & #t < #i ==> v = v2"
+
+
+/* Executability. Step() bounds keep the search for a witness trace finite. */
+lemma sanity_contact_follows_add_via_log:
+  exists-trace
+  "Ex c r h0 n s #p #i.
+      Pin(c, r, h0) @ p
+    & Accept(c, r, h0, 'add', n, s) @ i
+    & not (Ex d #x. RevA1(d) @ x)
+    & not (Ex d #x. RevA2(d) @ x)
+    & (All t #x #y. Step(t) @ x & Step(t) @ y ==> #x = #y)
+    & not (Ex #x. Step('MT') @ x) & not (Ex #x. Step('AT') @ x)
+    & not (Ex #x. Step('MR') @ x) & not (Ex #x. Step('AR') @ x)
+    & not (Ex #x. Step('OR') @ x) & not (Ex #x. Step('MJ') @ x)
+    & not (Ex L v #x. LogValid(L, v, 'rk') @ x)"
+
+/* Non-vacuity of the lock-out below: before the removal is logged, a device
+   whose IK leaked can still have a rotate accepted on the head it will be
+   removed from. The window the lemma closes is real. */
+lemma sanity_leaked_device_rotates_before_removal:
+  exists-trace
+  "Ex c r h0 h1 n s nr #p #i #k #j.
+      Pin(c, r, h0) @ p
+    & Accept(c, r, h0, 'add', n, s) @ i
+    & h1 = h(<'rec', r, h0, 'add', n, s>)
+    & RevIK(n) @ k
+    & Accept(c, r, h1, 'rotate', nr, n) @ j
+    & not (Ex #x. Signed(n, r, h1, 'rotate', nr) @ x)
+    & (All t #x #y. Step(t) @ x & Step(t) @ y ==> #x = #y)
+    & not (Ex #x. Step('MT') @ x) & not (Ex #x. Step('MR') @ x)
+    & not (Ex #x. Step('AR') @ x)
+    & not (Ex #x. Step('OR') @ x) & not (Ex #x. Step('MJ') @ x)
+    & not (Ex L v #x. LogValid(L, v, 'rk') @ x)
+    & (All c2 r2 h #x. Pin(c2, r2, h) @ x ==> #x = #p)"
+
+
+/* Part 3's sanity traces and its closing of the rotate-branch gap, proved
+   again with the rotate rule of part 3b and the recovery rules. */
+
+/* A settled rotate can still be followed (the delay does not block it). */
+lemma sanity_contact_follows_settled_rotate:
+  exists-trace
+  "Ex c r h0 n s nr #p #i #t #j.
+      Pin(c, r, h0) @ p
+    & Accept(c, r, h0, 'add', n, s) @ i
+    & Signed(n, r, h(<'rec', r, h0, 'add', n, s>), 'rotate', nr) @ t
+    & Accept(c, r, h(<'rec', r, h0, 'add', n, s>), 'rotate', nr, n) @ j
+    & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)
+    & not (Ex #x. Step('MR') @ x) & not (Ex #x. Step('AR') @ x)
+    & not (Ex e #x. RevA1(e) @ x) & not (Ex e #x. RevA2(e) @ x)
+    & not (Ex e #x. RevIK(e) @ x)
+    & not (Ex #x. Step('OR') @ x) & not (Ex #x. Step('MJ') @ x)
+    & not (Ex L v #x. LogValid(L, v, 'rk') @ x)
+    & (All c2 r2 h #x. Pin(c2, r2, h) @ x ==> #x = #p)"
+
+/* Non-vacuity of the fix: while a leaked device's rotate is still
+   unsettled, a member's remove on the same head still goes through and a
+   contact follows it. A pending rotate cannot delay a removal. */
+lemma sanity_remove_beats_unsettled_rotate:
+  exists-trace
+  "Ex c r h0 h1 n d nr #p #i #l #t #a.
+      Pin(c, r, h0) @ p
+    & Accept(c, r, h0, 'add', n, d) @ i
+    & h1 = h(<'rec', r, h0, 'add', n, d>)
+    & LogValid(h(<'log', h1>), <'rec', r, h1, 'rotate', nr, n>, 'ik') @ l
+    & Signed(d, r, h1, 'remove', h(n)) @ t
+    & Accept(c, r, h1, 'remove', h(n), d) @ a
+    & #l < #t
+    & not (Ex #x. Signed(n, r, h1, 'rotate', nr) @ x)
+    & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)
+    & not (Ex #x. Step('MT') @ x) & not (Ex #x. Step('AT') @ x)
+    & not (Ex e #x. RevA1(e) @ x) & not (Ex e #x. RevA2(e) @ x)
+    & (All c2 r2 h #x. Pin(c2, r2, h) @ x ==> #x = #p)
+    & not (Ex L v #x. Old(L, v) @ x)
+    & (All e #x. RevIK(e) @ x ==> e = n)
+    & (All L v #x. LogValid(L, v, 'ik') @ x ==> #x = #l)
+    & not (Ex #x. Step('OR') @ x) & not (Ex #x. Step('MJ') @ x)
+    & not (Ex L v #x. LogValid(L, v, 'rk') @ x)"
+
+/* The rotate-branch gap of part 2 is closed: no reader follows a rotate
+   by x on a head from which a member removes x, whichever comes first. */
+lemma no_rotate_branch_past_removal [heuristic=c]:
+  "All c r hh nr x d #k #t.
+      Accept(c, r, hh, 'rotate', nr, x) @ k
+    & Signed(d, r, hh, 'remove', h(x)) @ t
+    & not (x = d)
+    ==> F"
+
+/* Executability of recovery: the owner recovers and a contact follows the
+   recovery after comparing the words. */
+lemma sanity_owner_recovers:
+  exists-trace
+  "Ex c r h0 n #p #o #k.
+      Pin(c, r, h0) @ p
+    & OwnerRecovered(r, n) @ o
+    & ContactRecovered(c, r, n) @ k
+    & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)
+    & not (Ex #x. Step('MT') @ x) & not (Ex #x. Step('AT') @ x)
+    & not (Ex #x. Step('MR') @ x) & not (Ex #x. Step('AR') @ x)
+    & not (Ex #x. Step('MA') @ x) & not (Ex #x. Step('AA') @ x)"
+
+/* A locked, stolen phone (its IK leaked, its AK not) cannot stop a
+   recovery by writing a rotate under the same key first. */
+lemma sanity_recovery_despite_rotate [heuristic=c]:
+  exists-trace
+  "Ex c r h0 d n nr #p #q #l #o #k.
+      Pin(c, r, h0) @ p
+    & Created(r, d) @ q
+    & LogValid(h(<'log', h0>), <'rec', r, h0, 'rotate', nr, d>, 'ik') @ l
+    & OwnerRecovered(r, n) @ o
+    & Accept(c, r, h0, 'recover', n, 'rk') @ k
+    & #l < #o
+    & not (Ex #x. Signed(d, r, h0, 'rotate', nr) @ x)
+    & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)
+    & not (Ex #x. Step('MT') @ x) & not (Ex #x. Step('AT') @ x)
+    & not (Ex e #x. RevA1(e) @ x) & not (Ex e #x. RevA2(e) @ x)
+    & not (Ex #x. Step('MA') @ x) & not (Ex #x. Step('AA') @ x)
+    & not (Ex #x. Step('MR') @ x) & not (Ex #x. Step('AR') @ x)
+    & not (Ex #x. Step('MJ') @ x)
+    & (All c2 r2 h #x. Pin(c2, r2, h) @ x ==> #x = #p)"
+
+/* P7, devices: an AK record that an honest member writes under a key
+   (a kurtarma_reddi, or any add or remove) stops every recovery under that
+   key, whenever it is written during the wait. After the wait the member
+   no longer writes under that key (writer freshness), so the recovery
+   wins only if no member acted while it was pending in the log. */
+lemma ak_record_stops_recovery [heuristic=c]:
+  "All d r hh op x o n #t #k.
+      Signed(d, r, hh, op, x) @ t
+    & Accept(o, r, hh, 'recover', n, 'rk') @ k
+    & not (op = 'rotate')
+    ==> F"
+
+/* P7, devices: a recovery that anyone follows was in the log, visible to
+   every member, for the whole wait first. */
+lemma recovery_was_pending [heuristic=c]:
+  "All o r hh n #k. Accept(o, r, hh, 'recover', n, 'rk') @ k
+    ==> Ex v #x. Old(h(<'log', hh>), v) @ x & #x < #k"
+
+/* P7, contacts: with only the phrase, the attacker cannot move a contact to
+   its device: a contact follows a recovery only to a device whose owner
+   compared the words with it. */
+lemma contact_not_moved_by_phrase_alone [heuristic=c]:
+  "All c r n #k. ContactRecovered(c, r, n) @ k
+    ==> Ex #o. OwnerRecovered(r, n) @ o & #o < #k"
+
+end
