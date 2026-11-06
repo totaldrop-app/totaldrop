@@ -428,6 +428,10 @@ class AppLocalizationsHe extends AppLocalizations {
       'התרגום הזה נמצא בבדיקה. אפשר לעזור לשפר אותו ב־GitHub.';
 
   @override
+  String get settingsWordsEnglish =>
+      'קודים ומילות אימות נשארים באנגלית בכל שפה, כדי ששני מכשירים בשפות שונות יציגו את אותן מילים.';
+
+  @override
   String get sendDropHere => 'אפשר לשחרר כאן קבצים';
 
   @override
@@ -480,6 +484,26 @@ class AppLocalizationsHe extends AppLocalizations {
 
   @override
   String get transferNoticeBody => 'ממשיך גם כשמשתמשים באפליקציות אחרות.';
+
+  @override
+  String get shareTextSoon =>
+      'TotalDrop עדיין לא שולח טקסט, רק קבצים. שתפו קובץ במקום.';
+
+  @override
+  String get shareBusy =>
+      'העברה עדיין מתבצעת. המתינו לסיומה או עצרו אותה, ואז שתפו שוב.';
+
+  @override
+  String shareSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'לא ניתן היה לקרוא $count פריטים משותפים, והם הושמטו.',
+      two: 'לא ניתן היה לקרוא שני פריטים משותפים, והם הושמטו.',
+      one: 'לא ניתן היה לקרוא פריט משותף אחד, והוא הושמט.',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get desktopGenericName => 'העברת קבצים';

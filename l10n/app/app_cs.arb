@@ -111,6 +111,7 @@
   "sizeTB": "{value} TB",
   "sizePB": "{value} PB",
   "draftTranslation": "Tento překlad se kontroluje. Pomozte ho vylepšit na GitHubu.",
+  "settingsWordsEnglish": "Kódy a ověřovací slova jsou v každém jazyce v angličtině, aby dvě zařízení v různých jazycích zobrazovala stejná slova.",
 
   "sendDropHere": "Přetáhněte soubory sem",
   "sendDropHint": "Soubory můžete také přetáhnout do tohoto okna.",
@@ -129,6 +130,9 @@
   "transferNoticeSending": "Odesílání přes TotalDrop",
   "transferNoticeReceiving": "Příjem přes TotalDrop",
   "transferNoticeBody": "Pokračuje, i když používáte jiné aplikace.",
+  "shareTextSoon": "TotalDrop zatím neposílá text, jen soubory. Sdílejte raději soubor.",
+  "shareBusy": "Přenos stále probíhá. Počkejte, až skončí, nebo ho zastavte, a pak sdílejte znovu.",
+  "shareSkipped": "{count, plural, one{Jednu sdílenou položku nebylo možné přečíst, proto byla vynechána.} few{{count} sdílené položky nebylo možné přečíst, proto byly vynechány.} many{{count} sdílené položky nebylo možné přečíst, proto byly vynechány.} other{{count} sdílených položek nebylo možné přečíst, proto byly vynechány.}}",
   "desktopGenericName": "Přenos souborů",
   "desktopComment": "Posílejte soubory přímo do jiného zařízení, koncově šifrované",
   "desktopKeywords": "poslat;přijmout;sdílet;přenos;soubory;",

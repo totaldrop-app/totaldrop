@@ -38,4 +38,17 @@ void main() {
     expect(en.itemsAndSize(1234, '2 MB'), '1,234 items · 2 MB');
     expect(tr.itemsAndSize(1234, '2 MB'), '1.234 öğe · 2 MB');
   });
+
+  // Settings says, in the person's own language, why the code and the
+  // verification words stay English (#305, ADR 0008): a note left in
+  // English would not reach the people it is for.
+  test('every language explains that codes and words stay English', () {
+    final english = en.settingsWordsEnglish;
+    for (final locale in AppLocalizations.supportedLocales) {
+      if (locale.languageCode == 'en') continue;
+      final note = lookupAppLocalizations(locale).settingsWordsEnglish;
+      expect(note, isNot(english), reason: '$locale');
+      expect(note.trim(), isNotEmpty, reason: '$locale');
+    }
+  });
 }

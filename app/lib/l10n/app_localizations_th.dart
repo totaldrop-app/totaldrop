@@ -411,6 +411,10 @@ class AppLocalizationsTh extends AppLocalizations {
       'คำแปลนี้อยู่ระหว่างการตรวจทาน ช่วยปรับปรุงได้ที่ GitHub';
 
   @override
+  String get settingsWordsEnglish =>
+      'รหัสและคำยืนยันเป็นภาษาอังกฤษในทุกภาษา เพื่อให้อุปกรณ์สองเครื่องที่ใช้ภาษาต่างกันแสดงคำเดียวกัน';
+
+  @override
   String get sendDropHere => 'วางไฟล์ที่นี่';
 
   @override
@@ -463,6 +467,25 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get transferNoticeBody => 'ทำงานต่อไปขณะที่คุณใช้แอปอื่น';
+
+  @override
+  String get shareTextSoon =>
+      'TotalDrop ยังส่งข้อความไม่ได้ ส่งได้เฉพาะไฟล์ โปรดแชร์ไฟล์แทน';
+
+  @override
+  String get shareBusy =>
+      'ยังมีการโอนที่กำลังดำเนินอยู่ รอให้เสร็จหรือหยุดก่อน แล้วแชร์อีกครั้ง';
+
+  @override
+  String shareSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'อ่านรายการที่แชร์มา $count รายการไม่ได้ จึงไม่ได้รวมไว้',
+      one: 'อ่านรายการที่แชร์มาหนึ่งรายการไม่ได้ จึงไม่ได้รวมไว้',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get desktopGenericName => 'การโอนไฟล์';

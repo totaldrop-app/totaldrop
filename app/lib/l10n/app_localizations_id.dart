@@ -415,6 +415,10 @@ class AppLocalizationsId extends AppLocalizations {
       'Terjemahan ini sedang ditinjau. Bantu perbaiki di GitHub.';
 
   @override
+  String get settingsWordsEnglish =>
+      'Kode dan kata verifikasi selalu dalam bahasa Inggris, agar dua perangkat dengan bahasa berbeda menampilkan kata yang sama.';
+
+  @override
   String get sendDropHere => 'Letakkan file di sini';
 
   @override
@@ -469,6 +473,25 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get transferNoticeBody =>
       'Tetap berjalan saat Anda memakai aplikasi lain.';
+
+  @override
+  String get shareTextSoon =>
+      'TotalDrop belum bisa mengirim teks, hanya file. Bagikan file saja.';
+
+  @override
+  String get shareBusy =>
+      'Masih ada transfer yang berjalan. Tunggu sampai selesai atau hentikan, lalu bagikan lagi.';
+
+  @override
+  String shareSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count item yang dibagikan tidak dapat dibaca dan dilewati.',
+      one: 'Satu item yang dibagikan tidak dapat dibaca dan dilewati.',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get desktopGenericName => 'Transfer file';

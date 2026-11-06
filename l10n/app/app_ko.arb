@@ -111,6 +111,7 @@
   "sizeTB": "{value} TB",
   "sizePB": "{value} PB",
   "draftTranslation": "이 번역은 검토 중입니다. GitHub에서 개선을 도와주세요.",
+  "settingsWordsEnglish": "코드와 확인 단어는 어떤 언어에서도 영어로 표시됩니다. 언어가 다른 두 기기에서도 같은 단어가 보입니다.",
 
   "sendDropHere": "여기에 파일을 놓으세요",
   "sendDropHint": "이 창으로 파일을 끌어다 놓아도 됩니다.",
@@ -129,6 +130,9 @@
   "transferNoticeSending": "TotalDrop으로 보내는 중",
   "transferNoticeReceiving": "TotalDrop으로 받는 중",
   "transferNoticeBody": "다른 앱을 사용하는 동안에도 계속됩니다.",
+  "shareTextSoon": "TotalDrop은 아직 텍스트를 보낼 수 없고 파일만 보낼 수 있습니다. 대신 파일을 공유하세요.",
+  "shareBusy": "아직 전송이 진행 중입니다. 끝날 때까지 기다리거나 중지한 다음 다시 공유하세요.",
+  "shareSkipped": "{count, plural, =1{공유된 항목 1개를 읽을 수 없어 제외했습니다.} other{공유된 항목 {count}개를 읽을 수 없어 제외했습니다.}}",
   "desktopGenericName": "파일 전송",
   "desktopComment": "다른 기기로 파일을 바로 보내세요. 종단 간 암호화",
   "desktopKeywords": "보내기;받기;공유;전송;파일;",

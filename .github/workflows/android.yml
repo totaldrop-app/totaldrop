@@ -32,7 +32,9 @@ jobs:
         run: |
           flutter gen-l10n
           dart run tool/gen_locales_config.dart
-          git diff --exit-code -- lib/l10n android/app/src/main/res/xml/locales_config.xml
+          dart run tool/gen_android_strings.dart
+          git add -N android/app/src/main/res
+          git diff --exit-code -- lib/l10n android/app/src/main/res/xml/locales_config.xml 'android/app/src/main/res/values*/l10n.xml'
       - run: flutter analyze
       # Hand-written code only. lib/l10n is written by gen-l10n and checked
       # above; lib/src/rust is written by flutter_rust_bridge and not

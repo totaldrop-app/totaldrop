@@ -433,6 +433,10 @@ class AppLocalizationsDe extends AppLocalizations {
       'Diese Übersetzung wird noch geprüft. Helfen Sie auf GitHub, sie zu verbessern.';
 
   @override
+  String get settingsWordsEnglish =>
+      'Codes und Prüfwörter sind in jeder Sprache auf Englisch, damit zwei Geräte mit unterschiedlicher Sprache dieselben Wörter anzeigen.';
+
+  @override
   String get sendDropHere => 'Dateien hier ablegen';
 
   @override
@@ -489,6 +493,26 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get transferNoticeBody =>
       'Läuft weiter, während Sie andere Apps verwenden.';
+
+  @override
+  String get shareTextSoon =>
+      'TotalDrop sendet noch keinen Text, nur Dateien. Teile stattdessen eine Datei.';
+
+  @override
+  String get shareBusy =>
+      'Eine Übertragung läuft noch. Warte, bis sie fertig ist, oder stoppe sie, und teile dann erneut.';
+
+  @override
+  String shareSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count geteilte Elemente konnten nicht gelesen werden und wurden ausgelassen.',
+      one: 'Ein geteiltes Element konnte nicht gelesen werden und wurde ausgelassen.',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get desktopGenericName => 'Dateiübertragung';

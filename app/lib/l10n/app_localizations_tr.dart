@@ -415,6 +415,10 @@ class AppLocalizationsTr extends AppLocalizations {
       'Bu çeviri gözden geçiriliyor. GitHub\'da iyileştirmeye yardım edin.';
 
   @override
+  String get settingsWordsEnglish =>
+      'Kodlar ve doğrulama kelimeleri her dilde İngilizcedir; böylece farklı dillere ayarlı iki cihaz aynı kelimeleri gösterir.';
+
+  @override
   String get sendDropHere => 'Dosyaları buraya bırakın';
 
   @override
@@ -469,6 +473,25 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get transferNoticeBody => 'Başka uygulamaları kullanırken de sürer.';
+
+  @override
+  String get shareTextSoon =>
+      'TotalDrop henüz metin göndermiyor, yalnızca dosya. Bunun yerine bir dosya paylaşın.';
+
+  @override
+  String get shareBusy =>
+      'Bir aktarım hâlâ sürüyor. Bitmesini bekleyin ya da durdurun, sonra yeniden paylaşın.';
+
+  @override
+  String shareSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Paylaşılan $count öğe okunamadı ve dışarıda bırakıldı.',
+      one: 'Paylaşılan bir öğe okunamadı ve dışarıda bırakıldı.',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get desktopGenericName => 'Dosya aktarımı';

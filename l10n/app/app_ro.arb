@@ -111,6 +111,7 @@
   "sizeTB": "{value} TB",
   "sizePB": "{value} PB",
   "draftTranslation": "Această traducere este în curs de revizuire. Ajutați la îmbunătățirea ei pe GitHub.",
+  "settingsWordsEnglish": "Codurile și cuvintele de verificare sunt mereu în engleză, ca două dispozitive în limbi diferite să arate aceleași cuvinte.",
 
   "sendDropHere": "Plasați fișierele aici",
   "sendDropHint": "Puteți și să trageți fișiere în această fereastră.",
@@ -129,6 +130,9 @@
   "transferNoticeSending": "Se trimite cu TotalDrop",
   "transferNoticeReceiving": "Se primește cu TotalDrop",
   "transferNoticeBody": "Continuă cât timp folosiți alte aplicații.",
+  "shareTextSoon": "TotalDrop nu trimite încă text, doar fișiere. Partajează în schimb un fișier.",
+  "shareBusy": "Un transfer este încă în desfășurare. Așteaptă să se termine sau oprește-l, apoi partajează din nou.",
+  "shareSkipped": "{count, plural, one{Un element partajat nu a putut fi citit și a fost omis.} few{{count} elemente partajate nu au putut fi citite și au fost omise.} other{{count} de elemente partajate nu au putut fi citite și au fost omise.}}",
   "desktopGenericName": "Transfer de fișiere",
   "desktopComment": "Trimite fișiere direct pe alt dispozitiv, criptate integral",
   "desktopKeywords": "trimite;primește;partajează;transfer;fișiere;",

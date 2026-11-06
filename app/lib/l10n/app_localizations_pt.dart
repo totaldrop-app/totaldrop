@@ -436,6 +436,10 @@ class AppLocalizationsPt extends AppLocalizations {
       'Esta tradução está em revisão. Ajude a melhorá-la no GitHub.';
 
   @override
+  String get settingsWordsEnglish =>
+      'Códigos e palavras de verificação ficam sempre em inglês, para que dois dispositivos em idiomas diferentes mostrem as mesmas palavras.';
+
+  @override
   String get sendDropHere => 'Solte os arquivos aqui';
 
   @override
@@ -492,6 +496,28 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get transferNoticeBody => 'Continua enquanto você usa outros apps.';
+
+  @override
+  String get shareTextSoon =>
+      'O TotalDrop ainda não envia texto, apenas arquivos. Compartilhe um arquivo.';
+
+  @override
+  String get shareBusy =>
+      'Uma transferência ainda está em andamento. Espere terminar ou pare-a e compartilhe de novo.';
+
+  @override
+  String shareSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count itens compartilhados não puderam ser lidos e foram deixados de fora.',
+      many:
+          '$count de itens compartilhados não puderam ser lidos e foram deixados de fora.',
+      one: '$count item compartilhado não pôde ser lido e foi deixado de fora.',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get desktopGenericName => 'Transferência de arquivos';
@@ -939,6 +965,10 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
       'Esta tradução está em revisão. Ajude a melhorá-la no GitHub.';
 
   @override
+  String get settingsWordsEnglish =>
+      'Códigos e palavras de verificação ficam sempre em inglês, para que dois dispositivos em idiomas diferentes mostrem as mesmas palavras.';
+
+  @override
   String get sendDropHere => 'Solte os arquivos aqui';
 
   @override
@@ -995,6 +1025,28 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get transferNoticeBody => 'Continua enquanto você usa outros apps.';
+
+  @override
+  String get shareTextSoon =>
+      'O TotalDrop ainda não envia texto, apenas arquivos. Compartilhe um arquivo.';
+
+  @override
+  String get shareBusy =>
+      'Uma transferência ainda está em andamento. Espere terminar ou pare-a e compartilhe de novo.';
+
+  @override
+  String shareSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count itens compartilhados não puderam ser lidos e foram deixados de fora.',
+      many:
+          '$count de itens compartilhados não puderam ser lidos e foram deixados de fora.',
+      one: '$count item compartilhado não pôde ser lido e foi deixado de fora.',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get desktopGenericName => 'Transferência de arquivos';
@@ -1444,6 +1496,10 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
       'Esta tradução está em revisão. Ajude a melhorá-la no GitHub.';
 
   @override
+  String get settingsWordsEnglish =>
+      'Os códigos e as palavras de verificação estão sempre em inglês, para que dois dispositivos em idiomas diferentes mostrem as mesmas palavras.';
+
+  @override
   String get sendDropHere => 'Largue os ficheiros aqui';
 
   @override
@@ -1499,6 +1555,28 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
 
   @override
   String get transferNoticeBody => 'Continua enquanto utiliza outras apps.';
+
+  @override
+  String get shareTextSoon =>
+      'O TotalDrop ainda não envia texto, apenas ficheiros. Partilhe um ficheiro.';
+
+  @override
+  String get shareBusy =>
+      'Ainda está a decorrer uma transferência. Aguarde que termine ou pare-a e partilhe novamente.';
+
+  @override
+  String shareSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count itens partilhados não puderam ser lidos e foram deixados de fora.',
+      many:
+          '$count de itens partilhados não puderam ser lidos e foram deixados de fora.',
+      one: 'Um item partilhado não pôde ser lido e foi deixado de fora.',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get desktopGenericName => 'Transferência de ficheiros';

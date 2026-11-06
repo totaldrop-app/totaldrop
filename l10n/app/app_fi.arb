@@ -111,6 +111,7 @@
   "sizeTB": "{value} Tt",
   "sizePB": "{value} Pt",
   "draftTranslation": "Tätä käännöstä tarkistetaan. Auta parantamaan sitä GitHubissa.",
+  "settingsWordsEnglish": "Koodit ja tarkistussanat ovat aina englanniksi, jotta eri kielille asetetut laitteet näyttävät samat sanat.",
 
   "sendDropHere": "Pudota tiedostot tähän",
   "sendDropHint": "Voit myös vetää tiedostoja tähän ikkunaan.",
@@ -129,6 +130,9 @@
   "transferNoticeSending": "Lähetetään TotalDropilla",
   "transferNoticeReceiving": "Vastaanotetaan TotalDropilla",
   "transferNoticeBody": "Jatkuu, kun käytät muita sovelluksia.",
+  "shareTextSoon": "TotalDrop ei vielä lähetä tekstiä, vain tiedostoja. Jaa sen sijaan tiedosto.",
+  "shareBusy": "Siirto on yhä käynnissä. Odota, että se valmistuu, tai pysäytä se ja jaa sitten uudelleen.",
+  "shareSkipped": "{count, plural, =1{Yhtä jaettua kohdetta ei voitu lukea, joten se jätettiin pois.} other{{count} jaettua kohdetta ei voitu lukea, joten ne jätettiin pois.}}",
   "desktopGenericName": "Tiedostonsiirto",
   "desktopComment": "Lähetä tiedostot suoraan toiseen laitteeseen päästä päähän salattuina",
   "desktopKeywords": "lähetä;vastaanota;jaa;siirrä;tiedostot;",

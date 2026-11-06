@@ -435,6 +435,10 @@ class AppLocalizationsCs extends AppLocalizations {
       'Tento překlad se kontroluje. Pomozte ho vylepšit na GitHubu.';
 
   @override
+  String get settingsWordsEnglish =>
+      'Kódy a ověřovací slova jsou v každém jazyce v angličtině, aby dvě zařízení v různých jazycích zobrazovala stejná slova.';
+
+  @override
   String get sendDropHere => 'Přetáhněte soubory sem';
 
   @override
@@ -489,6 +493,29 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get transferNoticeBody => 'Pokračuje, i když používáte jiné aplikace.';
+
+  @override
+  String get shareTextSoon =>
+      'TotalDrop zatím neposílá text, jen soubory. Sdílejte raději soubor.';
+
+  @override
+  String get shareBusy =>
+      'Přenos stále probíhá. Počkejte, až skončí, nebo ho zastavte, a pak sdílejte znovu.';
+
+  @override
+  String shareSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count sdílených položek nebylo možné přečíst, proto byly vynechány.',
+      many:
+          '$count sdílené položky nebylo možné přečíst, proto byly vynechány.',
+      few: '$count sdílené položky nebylo možné přečíst, proto byly vynechány.',
+      one: 'Jednu sdílenou položku nebylo možné přečíst, proto byla vynechána.',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get desktopGenericName => 'Přenos souborů';

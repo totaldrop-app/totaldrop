@@ -436,6 +436,10 @@ class AppLocalizationsUk extends AppLocalizations {
       'Цей переклад перевіряється. Допоможіть покращити його на GitHub.';
 
   @override
+  String get settingsWordsEnglish =>
+      'Коди та слова перевірки завжди англійською, щоб два пристрої з різними мовами показували однакові слова.';
+
+  @override
   String get sendDropHere => 'Перетягніть файли сюди';
 
   @override
@@ -490,6 +494,27 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get transferNoticeBody =>
       'Триває, поки ви користуєтеся іншими застосунками.';
+
+  @override
+  String get shareTextSoon =>
+      'TotalDrop поки не надсилає текст, лише файли. Поділіться файлом.';
+
+  @override
+  String get shareBusy =>
+      'Передавання ще триває. Дочекайтеся його завершення або зупиніть його, а потім поділіться знову.';
+
+  @override
+  String shareSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count переданого елемента не вдалося прочитати, їх пропущено.',
+      many: '$count переданих елементів не вдалося прочитати, їх пропущено.',
+      few: '$count передані елементи не вдалося прочитати, їх пропущено.',
+      one: '$count переданий елемент не вдалося прочитати, його пропущено.',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get desktopGenericName => 'Передавання файлів';

@@ -392,6 +392,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get draftTranslation => '此翻译正在审核中。欢迎在 GitHub 上帮助改进。';
 
   @override
+  String get settingsWordsEnglish => '代码和验证词在任何语言下都使用英文，这样两台语言不同的设备会显示相同的单词。';
+
+  @override
   String get sendDropHere => '将文件拖放到此处';
 
   @override
@@ -444,6 +447,23 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get transferNoticeBody => '使用其他应用时仍会继续。';
+
+  @override
+  String get shareTextSoon => 'TotalDrop 暂不支持发送文本，只能发送文件。请改为分享文件。';
+
+  @override
+  String get shareBusy => '仍有传输正在进行。请等待其完成或将其停止，然后再分享。';
+
+  @override
+  String shareSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '有 $count 个分享的项目无法读取，已略过。',
+      one: '有 1 个分享的项目无法读取，已略过。',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get desktopGenericName => '文件传输';
@@ -845,6 +865,9 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get draftTranslation => '此翻译正在审核中。欢迎在 GitHub 上帮助改进。';
 
   @override
+  String get settingsWordsEnglish => '代码和验证词在任何语言下都使用英文，这样两台语言不同的设备会显示相同的单词。';
+
+  @override
   String get sendDropHere => '将文件拖放到此处';
 
   @override
@@ -897,6 +920,23 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
 
   @override
   String get transferNoticeBody => '使用其他应用时仍会继续。';
+
+  @override
+  String get shareTextSoon => 'TotalDrop 暂不支持发送文本，只能发送文件。请改为分享文件。';
+
+  @override
+  String get shareBusy => '仍有传输正在进行。请等待其完成或将其停止，然后再分享。';
+
+  @override
+  String shareSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '有 $count 个分享的项目无法读取，已略过。',
+      one: '有 1 个分享的项目无法读取，已略过。',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get desktopGenericName => '文件传输';
@@ -1297,6 +1337,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get draftTranslation => '這份翻譯正在審閱中。歡迎到 GitHub 協助改進。';
 
   @override
+  String get settingsWordsEnglish => '代碼和驗證單字在任何語言下都使用英文，這樣兩部語言不同的裝置會顯示相同的單字。';
+
+  @override
   String get sendDropHere => '將檔案拖放到這裡';
 
   @override
@@ -1349,6 +1392,23 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get transferNoticeBody => '使用其他應用程式時仍會繼續。';
+
+  @override
+  String get shareTextSoon => 'TotalDrop 暫不支援傳送文字，只能傳送檔案。請改為分享檔案。';
+
+  @override
+  String get shareBusy => '仍有傳輸正在進行。請等待其完成或將其停止，然後再分享。';
+
+  @override
+  String shareSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '有 $count 個分享的項目無法讀取，已略過。',
+      one: '有 1 個分享的項目無法讀取，已略過。',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get desktopGenericName => '檔案傳輸';

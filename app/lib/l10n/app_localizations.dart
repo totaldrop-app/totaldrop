@@ -794,6 +794,12 @@ abstract class AppLocalizations {
   /// **'This translation is being reviewed. Help improve it on GitHub.'**
   String get draftTranslation;
 
+  /// Shown in Settings under About. Explains why the transfer code and the verification words stay in English: they come from one English word list so that both devices show the same ones
+  ///
+  /// In en, this message translates to:
+  /// **'Codes and verification words are in English in every language, so two devices set to different languages show the same words.'**
+  String get settingsWordsEnglish;
+
   /// No description provided for @sendDropHere.
   ///
   /// In en, this message translates to:
@@ -889,6 +895,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Keeps going while you use other apps.'**
   String get transferNoticeBody;
+
+  /// Android: shown on the send screen when another app shared only text (no file) to TotalDrop; sending text comes in a later version
+  ///
+  /// In en, this message translates to:
+  /// **'TotalDrop does not send text yet, only files. Share a file instead.'**
+  String get shareTextSoon;
+
+  /// Android: shown when files are shared to TotalDrop while a send or receive is still running; the shared files are not added
+  ///
+  /// In en, this message translates to:
+  /// **'A transfer is still running. Wait for it to finish or stop it, then share again.'**
+  String get shareBusy;
+
+  /// Android: shown when some of the items another app shared to TotalDrop could not be read (no read permission, or the app's own files) and were left out; the rest were added
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{One shared item could not be read and was left out.} other{{count} shared items could not be read and were left out.}}'**
+  String shareSkipped(int count);
 
   /// Linux desktop entry: what kind of app TotalDrop is, shown under its name in app menus and launchers
   ///

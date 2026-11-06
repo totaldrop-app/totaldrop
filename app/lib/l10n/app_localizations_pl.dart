@@ -438,6 +438,10 @@ class AppLocalizationsPl extends AppLocalizations {
       'To tłumaczenie jest w trakcie sprawdzania. Pomóż je ulepszyć na GitHubie.';
 
   @override
+  String get settingsWordsEnglish =>
+      'Kody i słowa weryfikacyjne są zawsze po angielsku, aby dwa urządzenia w różnych językach pokazywały te same słowa.';
+
+  @override
   String get sendDropHere => 'Upuść pliki tutaj';
 
   @override
@@ -493,6 +497,30 @@ class AppLocalizationsPl extends AppLocalizations {
   @override
   String get transferNoticeBody =>
       'Trwa nadal, gdy korzystasz z innych aplikacji.';
+
+  @override
+  String get shareTextSoon =>
+      'TotalDrop nie wysyła jeszcze tekstu, tylko pliki. Udostępnij zamiast tego plik.';
+
+  @override
+  String get shareBusy =>
+      'Przesyłanie wciąż trwa. Poczekaj, aż się skończy, lub je zatrzymaj, a potem udostępnij ponownie.';
+
+  @override
+  String shareSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'Nie udało się odczytać $count udostępnionego elementu, więc je pominięto.',
+      many:
+          'Nie udało się odczytać $count udostępnionych elementów, więc je pominięto.',
+      few:
+          'Nie udało się odczytać $count udostępnionych elementów, więc je pominięto.',
+      one: 'Nie udało się odczytać jednego udostępnionego elementu, więc go pominięto.',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get desktopGenericName => 'Przesyłanie plików';

@@ -227,12 +227,25 @@ fn sender_check(receiver: &Hints, own: &PathOptions) -> Result<()> {
 }
 
 /// Whether the receiver will use the sender's relay too, as
-/// [`receiver_relay`] decides on its side.
+/// [`receiver_relay`] decides on its side. The receiver announces its own
+/// setting as it is, so its `check_url` runs here on that spelling too.
 fn shares_relay(receiver: &Hints, own: &PathOptions) -> bool {
     match (own.relay_url(), receiver.relay.as_deref()) {
-        (Some(mine), Some(theirs)) => relay::check_url(mine).is_ok() && same_relay(mine, theirs),
+        (Some(mine), Some(theirs)) => {
+            relay::check_url(mine).is_ok()
+                && relay::check_url(theirs).is_ok()
+                && same_relay(mine, theirs)
+        }
         _ => false,
     }
+}
+
+/// The relay the sender links to: its own, and only when the receiver
+/// will use it too ([`shares_relay`]). Otherwise the receiver never
+/// arrives there, and a link would only show the relay this side's
+/// address for nothing (#301).
+fn sender_relay<'a>(receiver: &Hints, own: &'a PathOptions) -> Option<&'a str> {
+    own.relay_url().filter(|_| shares_relay(receiver, own))
 }
 
 /// Start the relay link at `url`, if any, and say which paths to try.
@@ -446,10 +459,11 @@ impl PreparedSend {
 
             let (endpoint, pipes, fallback) =
                 transport::endpoint(socket, &endpoint_key, &paired.hints.endpoint_key)?;
-            // The sender's own relay carries the transfer when nothing else works.
+            // The sender's own relay carries the transfer when nothing else
+            // works, if the receiver uses it too.
             let (paths, link) = paths_to(
                 &paired.hints,
-                self.paths.relay_url(),
+                sender_relay(&paired.hints, &self.paths),
                 self.paths.relay_only,
                 &endpoint_key,
                 pipes,
@@ -744,6 +758,36 @@ mod tests {
         }
     }
 
+    /// Two spellings of one relay that only one side's `check_url`
+    /// accepts: the sender links only if the receiver will come (#301
+    /// review). The receiver checks its own spelling, which is the one it
+    /// announces.
+    #[test]
+    fn sender_links_only_to_a_relay_the_receiver_accepts() {
+        for (mine, theirs) in [
+            (
+                "wss://relay.example/v0/relay",
+                "WSS://relay.example/v0/relay",
+            ),
+            (
+                "wss://relay.example/v0/relay",
+                "wss://u@relay.example/v0/relay",
+            ),
+            (
+                "ws://localhost:4000/v0/relay",
+                "ws://LOCALHOST:4000/v0/relay",
+            ),
+        ] {
+            let receiver_uses =
+                receiver_relay(&with_address(hints(Some(mine))), &options(theirs, false))
+                    .unwrap()
+                    .is_some();
+            let sender_links =
+                shares_relay(&with_address(hints(Some(theirs))), &options(mine, false));
+            assert_eq!(sender_links, receiver_uses, "{mine} / {theirs}");
+        }
+    }
+
     #[test]
     fn receiver_uses_its_own_spelling_of_the_same_relay() {
         let own = options("wss://relay.totaldrop.app/v0/relay", false);
@@ -763,6 +807,29 @@ mod tests {
             receiver_relay(&h, &own_slash).unwrap(),
             Some("wss://relay.totaldrop.app/v0/relay/")
         );
+    }
+
+    /// A sender whose receiver uses another relay, or none, never links to
+    /// its own: the receiver would not come (#301).
+    #[test]
+    fn sender_links_to_its_relay_only_when_the_receiver_uses_it() {
+        let own = options("wss://relay.example/v0/relay", false);
+        for (theirs, expected) in [
+            (Some("wss://RELAY.example:443/v0/relay/"), true),
+            (Some("wss://other.example/v0/relay"), false),
+            (None, false),
+        ] {
+            let receiver = with_address(hints(theirs));
+            assert_eq!(
+                sender_relay(&receiver, &own),
+                expected.then_some("wss://relay.example/v0/relay"),
+                "{theirs:?}"
+            );
+        }
+        let unsafe_relay = options("ws://relay.example.org/v0/relay", false);
+        let receiver = with_address(hints(Some("ws://relay.example.org/v0/relay")));
+        assert_eq!(sender_relay(&receiver, &unsafe_relay), None);
+        assert_eq!(sender_relay(&receiver, &options("", false)), None);
     }
 
     /// A sender that names a relay of its own does not get the receiver to

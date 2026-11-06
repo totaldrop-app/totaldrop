@@ -430,6 +430,10 @@ class AppLocalizationsDa extends AppLocalizations {
       'Denne oversættelse er ved at blive gennemgået. Hjælp med at forbedre den på GitHub.';
 
   @override
+  String get settingsWordsEnglish =>
+      'Koder og bekræftelsesord er altid på engelsk, så to enheder på forskellige sprog viser de samme ord.';
+
+  @override
   String get sendDropHere => 'Slip filer her';
 
   @override
@@ -483,6 +487,25 @@ class AppLocalizationsDa extends AppLocalizations {
 
   @override
   String get transferNoticeBody => 'Fortsætter, mens du bruger andre apps.';
+
+  @override
+  String get shareTextSoon =>
+      'TotalDrop sender endnu ikke tekst, kun filer. Del en fil i stedet.';
+
+  @override
+  String get shareBusy =>
+      'En overførsel kører stadig. Vent, til den er færdig, eller stop den, og del så igen.';
+
+  @override
+  String shareSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count delte elementer kunne ikke læses og blev udeladt.',
+      one: 'Ét delt element kunne ikke læses og blev udeladt.',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get desktopGenericName => 'Filoverførsel';

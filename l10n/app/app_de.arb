@@ -111,6 +111,7 @@
   "sizeTB": "{value} TB",
   "sizePB": "{value} PB",
   "draftTranslation": "Diese Übersetzung wird noch geprüft. Helfen Sie auf GitHub, sie zu verbessern.",
+  "settingsWordsEnglish": "Codes und Prüfwörter sind in jeder Sprache auf Englisch, damit zwei Geräte mit unterschiedlicher Sprache dieselben Wörter anzeigen.",
 
   "sendDropHere": "Dateien hier ablegen",
   "sendDropHint": "Sie können Dateien auch auf dieses Fenster ziehen.",
@@ -129,6 +130,9 @@
   "transferNoticeSending": "Senden mit TotalDrop",
   "transferNoticeReceiving": "Empfangen mit TotalDrop",
   "transferNoticeBody": "Läuft weiter, während Sie andere Apps verwenden.",
+  "shareTextSoon": "TotalDrop sendet noch keinen Text, nur Dateien. Teile stattdessen eine Datei.",
+  "shareBusy": "Eine Übertragung läuft noch. Warte, bis sie fertig ist, oder stoppe sie, und teile dann erneut.",
+  "shareSkipped": "{count, plural, =1{Ein geteiltes Element konnte nicht gelesen werden und wurde ausgelassen.} other{{count} geteilte Elemente konnten nicht gelesen werden und wurden ausgelassen.}}",
   "desktopGenericName": "Dateiübertragung",
   "desktopComment": "Dateien direkt an ein anderes Gerät senden, Ende-zu-Ende-verschlüsselt",
   "desktopKeywords": "senden;empfangen;teilen;übertragen;Dateien;",

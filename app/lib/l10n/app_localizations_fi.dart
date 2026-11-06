@@ -430,6 +430,10 @@ class AppLocalizationsFi extends AppLocalizations {
       'Tätä käännöstä tarkistetaan. Auta parantamaan sitä GitHubissa.';
 
   @override
+  String get settingsWordsEnglish =>
+      'Koodit ja tarkistussanat ovat aina englanniksi, jotta eri kielille asetetut laitteet näyttävät samat sanat.';
+
+  @override
   String get sendDropHere => 'Pudota tiedostot tähän';
 
   @override
@@ -483,6 +487,25 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String get transferNoticeBody => 'Jatkuu, kun käytät muita sovelluksia.';
+
+  @override
+  String get shareTextSoon =>
+      'TotalDrop ei vielä lähetä tekstiä, vain tiedostoja. Jaa sen sijaan tiedosto.';
+
+  @override
+  String get shareBusy =>
+      'Siirto on yhä käynnissä. Odota, että se valmistuu, tai pysäytä se ja jaa sitten uudelleen.';
+
+  @override
+  String shareSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count jaettua kohdetta ei voitu lukea, joten ne jätettiin pois.',
+      one: 'Yhtä jaettua kohdetta ei voitu lukea, joten se jätettiin pois.',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get desktopGenericName => 'Tiedostonsiirto';

@@ -51,7 +51,13 @@ class SendView extends StatelessWidget {
           canPop: !vm.busy,
           onPopInvokedWithResult: (didPop, _) async {
             if (didPop) {
-              if (vm.stage != SendStage.picking) vm.reset();
+              if (vm.stage != SendStage.picking) {
+                vm.reset();
+              } else {
+                // Leaving the wait ends it: the shares stop, and what
+                // was chosen before stays.
+                vm.cancelShares();
+              }
               return;
             }
             if (await _confirmStop(context)) {
@@ -65,14 +71,23 @@ class SendView extends StatelessWidget {
               child: AnimatedSwitcher(
                 duration: const Duration(milliseconds: 250),
                 child: KeyedSubtree(
-                  key: ValueKey((vm.stage, vm.copying)),
+                  key: ValueKey((vm.stage, vm.copying || vm.sharing)),
                   child: switch (vm.stage) {
                     // The picker copies the chosen files into the app
                     // cache before it hands them over (#269).
-                    SendStage.picking when vm.copying => _Centered(
-                      logo: const TotalDropMark(size: 120, sending: true),
-                      text: l.sendPreparing,
-                    ),
+                    SendStage.picking when vm.copying || vm.sharing =>
+                      _Centered(
+                        logo: const TotalDropMark(size: 120, sending: true),
+                        text: l.sendPreparing,
+                        // A share's copy can be stopped; the picker's
+                        // belongs to the picker.
+                        action: vm.sharing && !vm.copying
+                            ? TextButton(
+                                onPressed: vm.cancelShares,
+                                child: Text(l.cancel),
+                              )
+                            : null,
+                      ),
                     SendStage.picking => _Picking(vm: vm),
                     SendStage.preparing => _Centered(
                       logo: const TotalDropMark(size: 120, sending: true),
@@ -99,9 +114,10 @@ class SendView extends StatelessWidget {
 }
 
 class _Centered extends StatelessWidget {
-  const _Centered({required this.logo, required this.text});
+  const _Centered({required this.logo, required this.text, this.action});
   final Widget logo;
   final String text;
+  final Widget? action;
 
   @override
   Widget build(BuildContext context) => Center(
@@ -111,6 +127,7 @@ class _Centered extends StatelessWidget {
         logo,
         Gap.l,
         Announced(Text(text, style: Theme.of(context).textTheme.titleMedium)),
+        if (action case final a?) ...[Gap.l, a],
       ],
     ),
   );

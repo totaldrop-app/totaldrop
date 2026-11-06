@@ -418,6 +418,10 @@ class AppLocalizationsHu extends AppLocalizations {
       'Ez a fordítás ellenőrzés alatt áll. Segíts javítani a GitHubon.';
 
   @override
+  String get settingsWordsEnglish =>
+      'A kódok és az ellenőrző szavak minden nyelven angolul jelennek meg, hogy a különböző nyelvű eszközök ugyanazokat a szavakat mutassák.';
+
+  @override
   String get sendDropHere => 'Húzd ide a fájlokat';
 
   @override
@@ -473,6 +477,25 @@ class AppLocalizationsHu extends AppLocalizations {
   @override
   String get transferNoticeBody =>
       'Akkor is folytatódik, ha más alkalmazásokat használsz.';
+
+  @override
+  String get shareTextSoon =>
+      'A TotalDrop még nem küld szöveget, csak fájlokat. Ossz meg inkább egy fájlt.';
+
+  @override
+  String get shareBusy =>
+      'Még folyamatban van egy átvitel. Várd meg, amíg befejeződik, vagy állítsd le, aztán oszd meg újra.';
+
+  @override
+  String shareSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count megosztott elemet nem sikerült beolvasni, ezért kimaradt.',
+      one: 'Egy megosztott elemet nem sikerült beolvasni, ezért kimaradt.',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get desktopGenericName => 'Fájlátvitel';

@@ -111,6 +111,7 @@
   "sizeTB": "{value} TB",
   "sizePB": "{value} PB",
   "draftTranslation": "Terjemahan ini sedang disemak. Bantu memperbaikinya di GitHub.",
+  "settingsWordsEnglish": "Kod dan perkataan pengesahan sentiasa dalam bahasa Inggeris, supaya dua peranti dalam bahasa berbeza menunjukkan perkataan yang sama.",
 
   "sendDropHere": "Lepaskan fail di sini",
   "sendDropHint": "Anda juga boleh seret fail ke tetingkap ini.",
@@ -129,6 +130,9 @@
   "transferNoticeSending": "Menghantar dengan TotalDrop",
   "transferNoticeReceiving": "Menerima dengan TotalDrop",
   "transferNoticeBody": "Terus berjalan semasa anda menggunakan apl lain.",
+  "shareTextSoon": "TotalDrop belum menghantar teks, hanya fail. Kongsi fail sebaliknya.",
+  "shareBusy": "Pemindahan masih berjalan. Tunggu sehingga selesai atau hentikannya, kemudian kongsi semula.",
+  "shareSkipped": "{count, plural, =1{Satu item yang dikongsi tidak dapat dibaca dan telah ditinggalkan.} other{{count} item yang dikongsi tidak dapat dibaca dan telah ditinggalkan.}}",
   "desktopGenericName": "Pemindahan fail",
   "desktopComment": "Hantar fail terus ke peranti lain, disulitkan hujung ke hujung",
   "desktopKeywords": "hantar;terima;kongsi;pindah;fail;",

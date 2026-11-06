@@ -111,6 +111,7 @@
   "sizeTB": "{value} TB",
   "sizePB": "{value} PB",
   "draftTranslation": "Denne oversættelse er ved at blive gennemgået. Hjælp med at forbedre den på GitHub.",
+  "settingsWordsEnglish": "Koder og bekræftelsesord er altid på engelsk, så to enheder på forskellige sprog viser de samme ord.",
 
   "sendDropHere": "Slip filer her",
   "sendDropHint": "Du kan også trække filer over i dette vindue.",
@@ -129,6 +130,9 @@
   "transferNoticeSending": "Sender med TotalDrop",
   "transferNoticeReceiving": "Modtager med TotalDrop",
   "transferNoticeBody": "Fortsætter, mens du bruger andre apps.",
+  "shareTextSoon": "TotalDrop sender endnu ikke tekst, kun filer. Del en fil i stedet.",
+  "shareBusy": "En overførsel kører stadig. Vent, til den er færdig, eller stop den, og del så igen.",
+  "shareSkipped": "{count, plural, =1{Ét delt element kunne ikke læses og blev udeladt.} other{{count} delte elementer kunne ikke læses og blev udeladt.}}",
   "desktopGenericName": "Filoverførsel",
   "desktopComment": "Send filer direkte til en anden enhed, end-to-end-krypteret",
   "desktopKeywords": "send;modtag;del;overfør;filer;",

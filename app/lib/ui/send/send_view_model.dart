@@ -6,6 +6,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 
 import '../../data/file_source.dart';
+import '../../data/launch_source.dart';
 import '../../data/transfer_keep_alive.dart';
 import '../../data/transfer_repository.dart';
 import '../../src/rust/api/transfer.dart';
@@ -19,9 +20,13 @@ class SendViewModel extends ChangeNotifier {
     required TransferRepository repository,
     TransferKeepAlive keepAlive = const NoKeepAlive(),
     FileSource fileSource = const PlatformFileSource(),
+    LaunchSource launches = const NoLaunches(),
   }) : _repo = repository,
        _keeper = keepAlive,
-       _source = fileSource;
+       _source = fileSource,
+       _shares = launches;
+
+  final LaunchSource _shares;
 
   final TransferRepository _repo;
   final FileSource _source;
@@ -62,9 +67,69 @@ class SendViewModel extends ChangeNotifier {
   /// Whether the last pick failed, so the screen can say so (#271).
   bool addFailed = false;
 
+  /// Whether files shared from another app are being copied into the
+  /// app's storage (#53). The screen shows the same wait as for the picker.
+  bool get sharing => _pendingShares.isNotEmpty;
+  // Shares taken whose copy is still being written, and shares whose files
+  // were added: their copies are dropped when the selection is cleared.
+  final Set<int> _pendingShares = {};
+  final Set<int> _addedShares = {};
+
+  /// Files shared from another app (#53) start copying as share [id].
+  /// False while a transfer runs: then the share is not taken, and the
+  /// caller says so and calls [refuseShare]. A share may come while the
+  /// picker is open, or while another share copies: all their files are
+  /// added.
+  bool beginShare(int id) {
+    if (busy) return false;
+    // The last transfer's result gives way to the new selection.
+    if (stage != SendStage.picking) reset();
+    _pendingShares.add(id);
+    addFailed = false;
+    notifyListeners();
+    return true;
+  }
+
+  /// Share [id] is not taken: its copy stops and is deleted.
+  void refuseShare(int id) => unawaited(_shares.drop([id]));
+
+  /// The files of share [id], copied. False, and the copy is deleted, unless
+  /// [beginShare] took the share and no reset came since.
+  bool addShared(int id, List<PickedFile> files) {
+    if (!_pendingShares.remove(id)) {
+      refuseShare(id);
+      return false;
+    }
+    _addedShares.add(id);
+    for (final f in files) {
+      if (_files.any((e) => e.path == f.path)) continue;
+      _files.add(f);
+    }
+    notifyListeners();
+    return true;
+  }
+
+  /// The person stopped waiting for the shares being copied: they stop
+  /// and their copies are deleted. What was chosen before stays.
+  void cancelShares() {
+    if (_pendingShares.isEmpty) return;
+    unawaited(_shares.drop(_pendingShares.toList()));
+    _pendingShares.clear();
+    notifyListeners();
+  }
+
+  /// The files of share [id] could not be copied: the screen says so as it
+  /// does for the picker (#271).
+  void shareFailed(int id) {
+    if (!_pendingShares.remove(id)) return;
+    addFailed = true;
+    notifyListeners();
+  }
+
   Future<void> addFiles() async {
-    // One picker at a time: the plugin refuses a second one anyway.
-    if (_picking) return;
+    // One picker at a time: the plugin refuses a second one anyway. Not
+    // while a share copies either.
+    if (_picking || sharing) return;
     _picking = true;
     final resets = _resets;
     if (addFailed) {
@@ -125,8 +190,9 @@ class SendViewModel extends ChangeNotifier {
   }
 
   Future<void> start() async {
-    // Not while the picker copies: the list is about to change (#269).
-    if (_files.isEmpty || busy || _picking) return;
+    // Not while the picker or a share copies: the list is about to change
+    // (#269).
+    if (_files.isEmpty || busy || _picking || sharing) return;
     stage = SendStage.preparing;
     error = null;
     addFailed = false;
@@ -248,8 +314,12 @@ class SendViewModel extends ChangeNotifier {
     _release();
     _files.clear();
     addFailed = false;
-    // The picker keeps copies of picked files in the app cache; drop them.
+    // The picker keeps copies of picked files in the app cache, and shares
+    // in the app's storage; drop them. A share still copying stops.
     unawaited(_source.clearCopies());
+    unawaited(_shares.drop({..._pendingShares, ..._addedShares}));
+    _pendingShares.clear();
+    _addedShares.clear();
     stage = SendStage.picking;
     code = null;
     words = const [];

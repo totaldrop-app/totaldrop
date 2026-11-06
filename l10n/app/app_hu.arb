@@ -111,6 +111,7 @@
   "sizeTB": "{value} TB",
   "sizePB": "{value} PB",
   "draftTranslation": "Ez a fordítás ellenőrzés alatt áll. Segíts javítani a GitHubon.",
+  "settingsWordsEnglish": "A kódok és az ellenőrző szavak minden nyelven angolul jelennek meg, hogy a különböző nyelvű eszközök ugyanazokat a szavakat mutassák.",
 
   "sendDropHere": "Húzd ide a fájlokat",
   "sendDropHint": "A fájlokat erre az ablakra is ráhúzhatod.",
@@ -129,6 +130,9 @@
   "transferNoticeSending": "Küldés TotalDroppal",
   "transferNoticeReceiving": "Fogadás TotalDroppal",
   "transferNoticeBody": "Akkor is folytatódik, ha más alkalmazásokat használsz.",
+  "shareTextSoon": "A TotalDrop még nem küld szöveget, csak fájlokat. Ossz meg inkább egy fájlt.",
+  "shareBusy": "Még folyamatban van egy átvitel. Várd meg, amíg befejeződik, vagy állítsd le, aztán oszd meg újra.",
+  "shareSkipped": "{count, plural, one{Egy megosztott elemet nem sikerült beolvasni, ezért kimaradt.} other{{count} megosztott elemet nem sikerült beolvasni, ezért kimaradt.}}",
   "desktopGenericName": "Fájlátvitel",
   "desktopComment": "Fájlok küldése közvetlenül egy másik eszközre, végpontok közötti titkosítással",
   "desktopKeywords": "küldés;fogadás;megosztás;átvitel;fájlok;",

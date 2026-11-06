@@ -111,6 +111,7 @@
   "sizeTB": "{value} TB",
   "sizePB": "{value} PB",
   "draftTranslation": "Terjemahan ini sedang ditinjau. Bantu perbaiki di GitHub.",
+  "settingsWordsEnglish": "Kode dan kata verifikasi selalu dalam bahasa Inggris, agar dua perangkat dengan bahasa berbeda menampilkan kata yang sama.",
 
   "sendDropHere": "Letakkan file di sini",
   "sendDropHint": "Anda juga bisa menyeret file ke jendela ini.",
@@ -129,6 +130,9 @@
   "transferNoticeSending": "Mengirim dengan TotalDrop",
   "transferNoticeReceiving": "Menerima dengan TotalDrop",
   "transferNoticeBody": "Tetap berjalan saat Anda memakai aplikasi lain.",
+  "shareTextSoon": "TotalDrop belum bisa mengirim teks, hanya file. Bagikan file saja.",
+  "shareBusy": "Masih ada transfer yang berjalan. Tunggu sampai selesai atau hentikan, lalu bagikan lagi.",
+  "shareSkipped": "{count, plural, =1{Satu item yang dibagikan tidak dapat dibaca dan dilewati.} other{{count} item yang dibagikan tidak dapat dibaca dan dilewati.}}",
   "desktopGenericName": "Transfer file",
   "desktopComment": "Kirim file langsung ke perangkat lain, terenkripsi end-to-end",
   "desktopKeywords": "kirim;terima;bagikan;transfer;file;",

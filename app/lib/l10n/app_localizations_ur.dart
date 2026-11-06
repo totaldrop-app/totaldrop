@@ -428,6 +428,10 @@ class AppLocalizationsUr extends AppLocalizations {
       'اس ترجمے کا جائزہ لیا جا رہا ہے۔ GitHub پر اسے بہتر بنانے میں مدد کریں۔';
 
   @override
+  String get settingsWordsEnglish =>
+      'کوڈ اور تصدیقی الفاظ ہر زبان میں انگریزی میں رہتے ہیں، تاکہ مختلف زبانوں والے دو آلات ایک جیسے الفاظ دکھائیں۔';
+
+  @override
   String get sendDropHere => 'فائلیں یہاں چھوڑیں';
 
   @override
@@ -482,6 +486,25 @@ class AppLocalizationsUr extends AppLocalizations {
   @override
   String get transferNoticeBody =>
       'دوسری ایپس استعمال کرتے وقت بھی جاری رہتا ہے۔';
+
+  @override
+  String get shareTextSoon =>
+      'TotalDrop ابھی متن نہیں بھیجتا، صرف فائلیں۔ اس کے بجائے کوئی فائل شیئر کریں۔';
+
+  @override
+  String get shareBusy =>
+      'ایک منتقلی ابھی جاری ہے۔ اس کے ختم ہونے کا انتظار کریں یا اسے روکیں، پھر دوبارہ شیئر کریں۔';
+
+  @override
+  String shareSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'شیئر کی گئی $count چیزیں پڑھی نہیں جا سکیں، اس لیے چھوڑ دی گئیں۔',
+      one: 'شیئر کی گئی ایک چیز پڑھی نہیں جا سکی، اس لیے چھوڑ دی گئی۔',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get desktopGenericName => 'فائل کی منتقلی';

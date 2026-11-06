@@ -400,6 +400,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get draftTranslation => '이 번역은 검토 중입니다. GitHub에서 개선을 도와주세요.';
 
   @override
+  String get settingsWordsEnglish =>
+      '코드와 확인 단어는 어떤 언어에서도 영어로 표시됩니다. 언어가 다른 두 기기에서도 같은 단어가 보입니다.';
+
+  @override
   String get sendDropHere => '여기에 파일을 놓으세요';
 
   @override
@@ -452,6 +456,24 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get transferNoticeBody => '다른 앱을 사용하는 동안에도 계속됩니다.';
+
+  @override
+  String get shareTextSoon =>
+      'TotalDrop은 아직 텍스트를 보낼 수 없고 파일만 보낼 수 있습니다. 대신 파일을 공유하세요.';
+
+  @override
+  String get shareBusy => '아직 전송이 진행 중입니다. 끝날 때까지 기다리거나 중지한 다음 다시 공유하세요.';
+
+  @override
+  String shareSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '공유된 항목 $count개를 읽을 수 없어 제외했습니다.',
+      one: '공유된 항목 1개를 읽을 수 없어 제외했습니다.',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get desktopGenericName => '파일 전송';

@@ -422,6 +422,10 @@ class AppLocalizationsSw extends AppLocalizations {
       'Tafsiri hii inakaguliwa. Saidia kuiboresha kwenye GitHub.';
 
   @override
+  String get settingsWordsEnglish =>
+      'Misimbo na maneno ya uthibitisho huwa kwa Kiingereza katika kila lugha, ili vifaa viwili vyenye lugha tofauti vionyeshe maneno yale yale.';
+
+  @override
   String get sendDropHere => 'Dondosha faili hapa';
 
   @override
@@ -478,6 +482,26 @@ class AppLocalizationsSw extends AppLocalizations {
 
   @override
   String get transferNoticeBody => 'Inaendelea unapotumia programu nyingine.';
+
+  @override
+  String get shareTextSoon =>
+      'TotalDrop bado haitumi maandishi, ni faili tu. Shiriki faili badala yake.';
+
+  @override
+  String get shareBusy =>
+      'Uhamishaji bado unaendelea. Subiri umalizike au uusimamishe, kisha shiriki tena.';
+
+  @override
+  String shareSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'Vipengee $count vilivyoshirikiwa havikuweza kusomwa na vimeachwa.',
+      one: 'Kipengee kimoja kilichoshirikiwa hakikuweza kusomwa na kimeachwa.',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get desktopGenericName => 'Uhamishaji wa faili';

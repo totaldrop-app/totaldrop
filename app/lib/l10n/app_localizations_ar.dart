@@ -437,6 +437,10 @@ class AppLocalizationsAr extends AppLocalizations {
       'هذه الترجمة قيد المراجعة. ساعد في تحسينها على GitHub.';
 
   @override
+  String get settingsWordsEnglish =>
+      'تبقى الرموز وكلمات التحقق بالإنجليزية في كل اللغات، حتى يعرض جهازان بلغتين مختلفتين الكلمات نفسها.';
+
+  @override
   String get sendDropHere => 'أفلت الملفات هنا';
 
   @override
@@ -489,6 +493,28 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get transferNoticeBody => 'يستمر أثناء استخدامك تطبيقات أخرى.';
+
+  @override
+  String get shareTextSoon =>
+      'لا يرسل TotalDrop النصوص بعد، بل الملفات فقط. شارك ملفًا بدلًا من ذلك.';
+
+  @override
+  String get shareBusy =>
+      'لا يزال هناك نقل جارٍ. انتظر حتى ينتهي أو أوقفه، ثم شارك مرة أخرى.';
+
+  @override
+  String shareSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'تعذّرت قراءة $count عنصر مشترك، فتم استبعادها.',
+      many: 'تعذّرت قراءة $count عنصرًا مشتركًا، فتم استبعادها.',
+      few: 'تعذّرت قراءة $count عناصر مشتركة، فتم استبعادها.',
+      two: 'تعذّرت قراءة عنصرين مشتركين، فتم استبعادهما.',
+      one: 'تعذّرت قراءة عنصر مشترك واحد، فتم استبعاده.',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get desktopGenericName => 'نقل الملفات';

@@ -137,6 +137,15 @@ class _SettingsViewState extends State<SettingsView> {
           Text(l.settingsAbout, style: theme.textTheme.titleLarge),
           Gap.s,
           Text(l.settingsAboutBody, style: theme.textTheme.bodyMedium),
+          // The code and the verification words come from one English
+          // word list, so devices in different languages match (ADR 0008).
+          Gap.s,
+          Text(
+            l.settingsWordsEnglish,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
           if (hasDraftTranslation(context)) ...[
             Gap.s,
             Text(

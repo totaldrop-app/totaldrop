@@ -414,6 +414,10 @@ class AppLocalizationsVi extends AppLocalizations {
       'Bản dịch này đang được xem xét. Hãy giúp cải thiện trên GitHub.';
 
   @override
+  String get settingsWordsEnglish =>
+      'Mã và từ xác minh luôn bằng tiếng Anh, để hai thiết bị dùng ngôn ngữ khác nhau hiển thị các từ giống nhau.';
+
+  @override
   String get sendDropHere => 'Thả tệp vào đây';
 
   @override
@@ -467,6 +471,25 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get transferNoticeBody => 'Vẫn tiếp tục khi bạn dùng ứng dụng khác.';
+
+  @override
+  String get shareTextSoon =>
+      'TotalDrop chưa gửi được văn bản, chỉ gửi tệp. Hãy chia sẻ một tệp.';
+
+  @override
+  String get shareBusy =>
+      'Vẫn còn một lần truyền đang chạy. Hãy chờ nó xong hoặc dừng nó, rồi chia sẻ lại.';
+
+  @override
+  String shareSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Không đọc được $count mục được chia sẻ nên đã bỏ qua.',
+      one: 'Không đọc được một mục được chia sẻ nên đã bỏ qua.',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get desktopGenericName => 'Truyền tệp';
