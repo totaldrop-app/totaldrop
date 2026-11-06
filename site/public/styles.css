@@ -134,6 +134,9 @@ select.lang {
    inherit the text colour, but its background falls back to the system's (often
    white) because the pill is transparent. Name both, so the theme holds (#293). */
 .lang option { background-color: var(--bg); color: var(--text); }
+/* Firefox colours the chosen and hovered option from its own sheet, which the rule
+   above would override; keep that highlight in the theme's accent. */
+.lang option:checked { background-color: var(--accent); color: var(--on-accent); }
 @media (max-width: 40rem) { .top-nav a { display: none; } .top-nav-links { display: none; } }
 
 /* Buttons: one filled per view, the rest outlined */
