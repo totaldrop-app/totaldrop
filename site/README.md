@@ -44,6 +44,8 @@ team/github.json      GitHub'dan alınan anlık görüntü (profil, katkı sayı
 tools/team.mjs        Ekip sayfasını anlık görüntüden üretir (--write), yenisini
                       GitHub'ın herkese açık API'sinden alır (--fetch) ve CI'da
                       denetler; yeni kişi yalnızca kendi izniyle eklenir
+tools/asset-versions.mjs Sayfalardaki stil ve betik adreslerine dosyanın özetini
+                      ekler (`/styles.css?v=…`, --write) ve CI'da denetler
 tools/wordmark.py     "TotalDrop" yazısının çizgilerini sitenin yazı tipinden çıkarır
 functions/
   _middleware.js      www → kök yönlendirmesi; download alt alan adı → /download/
@@ -65,6 +67,11 @@ ana sayfayı ve indirme sayfasını dener. Kurulum ve geri alma:
 - Yeni bir metin sayfaya (İngilizce, `data-i18n` anahtarıyla) ve
   `i18n/en.json`'a eklenir; diğer diller [docs/ceviri.md](../docs/ceviri.md)'ye
   göre doldurulur. `node tools/check-i18n.mjs` hepsini denetler.
+- `styles.css`, `app.js`, `lang.js` ya da `msg.js` değişince
+  `node tools/asset-versions.mjs --write` ve `node tools/privacy.mjs --write`
+  çalıştırın. Sayfalar bu dosyaları özetli adresle ister; Cloudflare `.css`
+  ve `.js` dosyalarını tarayıcıda 4 saat tuttuğu için özet değişmezse
+  ziyaretçi yeni sayfayı eski stille görür (#291).
 - Üçüncü taraf kaynak (CDN, analiz, yazı tipi servisi) eklenmez. CSP bunu
   zaten engeller.
 - Gizlilik politikası her dilde kendi adresindedir (`/privacy`, `/privacy/<dil>`).

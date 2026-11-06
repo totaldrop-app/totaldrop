@@ -552,5 +552,11 @@
   "tm.role.bot": "Automatyzacja",
   "tm.role.maintainer": "Założyciel i opiekun",
   "tm.title": "Ludzie stojący za TotalDrop",
-  "tm.role.contributor": "Współtwórca"
+  "tm.role.contributor": "Współtwórca",
+  "tm.s.areas": "Dziedziny",
+  "tm.s.langs": "Języki",
+  "tm.s.people": "Osoby",
+  "tm.tools.lede": "Tu zmiany pisze także oprogramowanie. Jego praca przechodzi te same kontrole i przeglądy co praca każdego, a scalić ją może tylko opiekun projektu.",
+  "tm.tools.title": "AI i automatyzacja",
+  "tm.web": "Strona internetowa"
 }

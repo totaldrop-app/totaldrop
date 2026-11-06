@@ -552,5 +552,11 @@
   "tm.role.bot": "Otomasyon",
   "tm.role.maintainer": "Kurucu ve bakımcı",
   "tm.title": "TotalDrop'un arkasındaki ekip",
-  "tm.role.contributor": "Katkıcı"
+  "tm.role.contributor": "Katkıcı",
+  "tm.s.areas": "Disiplin",
+  "tm.s.langs": "Dil",
+  "tm.s.people": "Kişi",
+  "tm.tools.lede": "Burada değişiklikleri yazılım da yazar. Bu işler herkesinki gibi aynı denetimlerden ve incelemelerden geçer; yalnızca bakımcı birleştirebilir.",
+  "tm.tools.title": "Yapay zekâ ve otomasyon",
+  "tm.web": "Web sitesi"
 }

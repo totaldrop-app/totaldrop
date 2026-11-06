@@ -552,5 +552,11 @@
   "tm.role.bot": "Automaatio",
   "tm.role.maintainer": "Perustaja ja ylläpitäjä",
   "tm.title": "TotalDropin takana olevat ihmiset",
-  "tm.role.contributor": "Avustaja"
+  "tm.role.contributor": "Avustaja",
+  "tm.s.areas": "Osa-alueet",
+  "tm.s.langs": "Kielet",
+  "tm.s.people": "Ihmiset",
+  "tm.tools.lede": "Myös ohjelmistot kirjoittavat täällä muutoksia. Niiden työ käy läpi samat tarkistukset ja katselmoinnit kuin kenen tahansa, ja vain ylläpitäjä voi yhdistää sen.",
+  "tm.tools.title": "Tekoäly ja automaatio",
+  "tm.web": "Verkkosivusto"
 }

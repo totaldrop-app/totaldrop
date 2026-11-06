@@ -552,5 +552,11 @@
   "tm.role.bot": "Automatisering",
   "tm.role.maintainer": "Grunnlegger og vedlikeholder",
   "tm.title": "Menneskene bak TotalDrop",
-  "tm.role.contributor": "Bidragsyter"
+  "tm.role.contributor": "Bidragsyter",
+  "tm.s.areas": "Disipliner",
+  "tm.s.langs": "Språk",
+  "tm.s.people": "Personer",
+  "tm.tools.lede": "Her skriver også programvare endringer. Arbeidet går gjennom de samme kontrollene og gjennomgangene som alle andres, og bare vedlikeholderen kan flette det inn.",
+  "tm.tools.title": "KI og automatisering",
+  "tm.web": "Nettsted"
 }

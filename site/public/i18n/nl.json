@@ -552,5 +552,11 @@
   "tm.role.bot": "Automatisering",
   "tm.role.maintainer": "Oprichter en beheerder",
   "tm.title": "De mensen achter TotalDrop",
-  "tm.role.contributor": "Bijdrager"
+  "tm.role.contributor": "Bijdrager",
+  "tm.s.areas": "Disciplines",
+  "tm.s.langs": "Talen",
+  "tm.s.people": "Mensen",
+  "tm.tools.lede": "Ook software schrijft hier wijzigingen. Dat werk gaat door dezelfde controles en reviews als dat van ieder ander, en alleen de maintainer kan het samenvoegen.",
+  "tm.tools.title": "AI en automatisering",
+  "tm.web": "Website"
 }

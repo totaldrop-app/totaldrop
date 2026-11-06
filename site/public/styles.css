@@ -506,28 +506,78 @@ pre.cmd { white-space: pre-wrap; overflow-wrap: break-word; margin: 0; padding: 
   .bk-mode { display: inline; color: var(--text-2); margin-inline-end: var(--s8); }
 }
 
-/* Team page (/team/, #288): people, then the work by discipline. Pictures
-   are copied from GitHub at build time; the page loads nothing from there. */
-.people { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr)); gap: var(--s24); }
-.person { display: flex; flex-direction: column; gap: var(--s8); padding: var(--s24); border: 1px solid var(--rule); border-radius: 28px; }
-.person h3 { font-size: 1.5rem; margin-top: var(--s8); }
-.person p { margin: 0; color: var(--text-2); font-size: 0.975rem; }
-.person .role { color: var(--accent); font-weight: 700; font-size: 0.875rem; letter-spacing: 0.06em; text-transform: uppercase; }
-.avatar { width: 96px; height: 96px; border-radius: 50%; object-fit: cover; background: var(--bg-raised); }
-.avatar-sign { display: grid; place-items: center; font-family: var(--display); font-weight: 800; font-size: 1.5rem; color: var(--text-2); border: 1.5px solid var(--outline); background: none; }
-.person .stat { display: flex; gap: var(--s8); align-items: baseline; margin: var(--s8) 0 0; }
-.person .stat dt { color: var(--text-2); font-size: 0.875rem; }
-.person .stat dd { margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; }
-.person .links { margin-top: auto; padding-top: var(--s8); display: flex; flex-wrap: wrap; gap: var(--s8) var(--s16); overflow-wrap: anywhere; }
-.tags { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--s8); }
-.tags li { font-size: 0.8125rem; padding: 0.15rem 0.6rem; border: 1px solid var(--rule); border-radius: 999px; color: var(--text-2); }
+/* Team page (/team/, #288, #291): figures, people, AI and automation, the
+   work by discipline. Pictures are copied from GitHub at build time; the
+   page loads nothing from there. One accent: the maintainer's share in the
+   bars; everyone else in quieter tints of the same hue, with the figure
+   always written beside the colour. */
+.block-lede { margin-top: calc(-1 * var(--s24)); }
+
+/* A figure: the number large, its label small beneath it. */
+.stat, .tm-stats > div { display: flex; flex-direction: column-reverse; }
+.stat dt, .tm-stats dt { color: var(--text-2); font-size: 0.8125rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+.stat dd, .tm-stats dd { margin: 0; font-family: var(--display); font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.1; color: var(--text); }
+.stat dd { font-size: 1.5rem; }
+:is(:lang(ar), :lang(fa), :lang(ur), :lang(ps)) :is(.stat dt, .tm-stats dt, .person .role, .helper .role) { text-transform: none; letter-spacing: 0; }
+
+.tm-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s16); margin-top: var(--s16); padding-top: var(--s24); border-top: 1px solid var(--rule); max-width: 44rem; }
+.tm-stats dd { font-size: clamp(2rem, 5vw, 2.75rem); letter-spacing: -0.02em; }
+@media (max-width: 30rem) { .tm-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: var(--s24); } }
+
+/* People: picture beside the text, two to a row on wide screens. */
+.people, .helpers { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s24); grid-template-columns: repeat(auto-fit, minmax(min(100%, 26rem), 1fr)); }
+.person, .helper { display: flex; gap: var(--s24); align-items: flex-start; padding: clamp(1.25rem, 3vw, 2rem); border: 1px solid var(--rule); border-radius: 28px; }
+.person-body { display: flex; flex-direction: column; gap: var(--s8); min-width: 0; flex: 1; align-self: stretch; }
+.person h3, .helper h3 { font-size: 1.5rem; }
+.person p, .helper p { color: var(--text-2); font-size: 0.975rem; }
+.person .role, .helper .role { color: var(--accent); font-weight: 700; font-size: 0.8125rem; letter-spacing: 0.06em; text-transform: uppercase; margin-top: -0.25rem; }
+.person-foot { margin-top: auto; padding-top: var(--s16); display: flex; align-items: flex-end; justify-content: space-between; gap: var(--s16); flex-wrap: wrap; }
+.person-foot .links:only-child { margin-inline-start: auto; }
+
+.avatar { width: 88px; height: 88px; flex: none; border-radius: 50%; object-fit: cover; background: var(--bg-raised); box-shadow: 0 0 0 1px var(--rule); }
+.avatar-sign { display: grid; place-items: center; width: 64px; height: 64px; font-family: var(--display); font-weight: 800; font-size: 1.125rem; letter-spacing: 0.02em; color: var(--accent); border: 1.5px solid var(--accent); background: none; box-shadow: none; }
+@media (max-width: 30rem) { .person, .helper { flex-direction: column; gap: var(--s16); } }
+
+.tags { list-style: none; margin: var(--s8) 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--s8); }
+.tags li { font-size: 0.875rem; padding: 0.25rem 0.75rem; background: var(--bg-raised); border-radius: 999px; color: var(--text); }
+
+/* Profile links: icons, each a 44px target, named by hidden text. */
+.links { list-style: none; margin: 0 -0.625rem -0.625rem 0; padding: 0; display: flex; gap: 0.25rem; }
+[dir="rtl"] .links { margin: 0 0 -0.625rem -0.625rem; }
+.icon-link { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; color: var(--text-2); transition: color 0.15s, background-color 0.15s; }
+.icon-link:hover { color: var(--accent); background: var(--bg-raised); }
+.icon-link:focus-visible { border-radius: 50%; outline-offset: 0; }
+.icon { width: 22px; height: 22px; }
+@media (prefers-reduced-motion: reduce) { .icon-link { transition: none; } }
+
+/* AI and automation: the same card, quieter. */
+.helper { background: none; border-style: dashed; border-color: color-mix(in srgb, var(--outline) 45%, transparent); }
+
+/* Disciplines: a share bar, then the figures it shows. */
 .areas { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr)); gap: var(--s24); }
-.area { display: flex; flex-direction: column; gap: var(--s8); padding: var(--s24); background: var(--bg-raised); border-radius: 28px; scroll-margin-top: var(--s24); }
-.area h3 { font-size: 1.25rem; }
-.area p { margin: 0; color: var(--text-2); font-size: 0.975rem; }
-.area-table { width: 100%; border-collapse: collapse; margin-top: auto; font-size: 0.975rem; }
-.area-table th, .area-table td { text-align: start; padding-block: 0.5rem; border-bottom: 1px solid color-mix(in srgb, var(--outline) 30%, transparent); font-weight: 400; }
-.area-table thead th { color: var(--text-2); font-size: 0.875rem; border-bottom-color: var(--outline); }
-.area-table tbody th { color: var(--text); }
-.area-table td { text-align: end; font-weight: 700; font-variant-numeric: tabular-nums; width: 5rem; }
-.area-table thead th:last-child { text-align: end; }
+.area { display: flex; flex-direction: column; gap: var(--s16); padding: var(--s24); background: var(--bg-raised); border-radius: 28px; scroll-margin-top: var(--s24); }
+.area-head { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--s16); }
+.area-head h3 { font-size: 1.25rem; padding-top: 0.2rem; }
+.area-head .stat { align-items: flex-end; flex: none; }
+.area > p { color: var(--text-2); font-size: 0.975rem; }
+.share { display: block; width: 100%; height: 8px; margin-top: auto; border-radius: 999px; overflow: hidden; background: var(--bg); }
+[dir="rtl"] .share { transform: scaleX(-1); }
+.share rect { stroke: var(--bg-raised); stroke-width: 2px; vector-effect: non-scaling-stroke; }
+.s1 { --c: var(--accent); }
+.s2 { --c: color-mix(in srgb, var(--accent) 70%, var(--text)); }
+.s3 { --c: color-mix(in srgb, var(--accent) 45%, var(--bg)); }
+.s4, .s5, .s6 { --c: color-mix(in srgb, var(--outline) 70%, var(--bg)); }
+.s0 { --c: color-mix(in srgb, var(--text-2) 35%, var(--bg)); }
+.share rect { fill: var(--c); }
+
+.area-table { width: 100%; border-collapse: collapse; font-size: 0.975rem; }
+.area-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.area-table th, .area-table td { padding-block: 0.4rem; border-bottom: 1px solid color-mix(in srgb, var(--outline) 22%, transparent); font-weight: 400; text-align: start; vertical-align: baseline; }
+.area-table tr:last-child > * { border-bottom: 0; }
+.area-table tbody th { color: var(--text); padding-inline-start: 1.25rem; position: relative; }
+.area-table tbody th::before { content: ""; position: absolute; inset-inline-start: 0; top: 0.85em; width: 10px; height: 10px; border-radius: 50%; background: var(--c); }
+.area-table td { text-align: end; font-weight: 700; font-variant-numeric: tabular-nums; width: 4rem; }
+
+/* How the work is checked: the home page's steps, without the moving dot. */
+.tm-steps::after { display: none; }
+@media (forced-colors: active) { .share { display: none; } .area-table tbody th::before { forced-color-adjust: none; } }

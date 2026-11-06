@@ -552,5 +552,11 @@
   "tm.role.bot": "Automatizálás",
   "tm.role.maintainer": "Alapító és karbantartó",
   "tm.title": "A TotalDrop mögött álló emberek",
-  "tm.role.contributor": "Közreműködő"
+  "tm.role.contributor": "Közreműködő",
+  "tm.s.areas": "Szakterületek",
+  "tm.s.langs": "Nyelvek",
+  "tm.s.people": "Emberek",
+  "tm.tools.lede": "Itt szoftver is ír módosításokat. A munkája ugyanazokon az ellenőrzéseken és átnézéseken megy át, mint bárki másé, és csak a karbantartó olvaszthatja be.",
+  "tm.tools.title": "MI és automatizálás",
+  "tm.web": "Webhely"
 }

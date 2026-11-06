@@ -552,5 +552,11 @@
   "tm.role.bot": "אוטומציה",
   "tm.role.maintainer": "מייסד ומתחזק",
   "tm.title": "האנשים שמאחורי TotalDrop",
-  "tm.role.contributor": "תורם"
+  "tm.role.contributor": "תורם",
+  "tm.s.areas": "תחומים",
+  "tm.s.langs": "שפות",
+  "tm.s.people": "אנשים",
+  "tm.tools.lede": "גם תוכנה כותבת כאן שינויים. העבודה שלה עוברת את אותן בדיקות וסקירות כמו של כל אחד, ורק המתחזק יכול למזג אותה.",
+  "tm.tools.title": "בינה מלאכותית ואוטומציה",
+  "tm.web": "אתר אינטרנט"
 }

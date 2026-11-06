@@ -552,5 +552,11 @@
   "tm.role.bot": "Automasi",
   "tm.role.maintainer": "Pengasas dan penyelenggara",
   "tm.title": "Orang di sebalik TotalDrop",
-  "tm.role.contributor": "Penyumbang"
+  "tm.role.contributor": "Penyumbang",
+  "tm.s.areas": "Bidang",
+  "tm.s.langs": "Bahasa",
+  "tm.s.people": "Orang",
+  "tm.tools.lede": "Di sini perisian juga menulis perubahan. Kerjanya melalui semakan dan ulasan yang sama seperti kerja sesiapa pun, dan hanya penyelenggara boleh menggabungkannya.",
+  "tm.tools.title": "AI dan automasi",
+  "tm.web": "Laman web"
 }
