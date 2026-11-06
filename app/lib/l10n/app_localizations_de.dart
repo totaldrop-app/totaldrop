@@ -501,4 +501,16 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get shareBusy =>
       'Eine Übertragung läuft noch. Warte, bis sie fertig ist, oder stoppe sie, und teile dann erneut.';
+
+  @override
+  String shareSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count geteilte Elemente konnten nicht gelesen werden und wurden ausgelassen.',
+      one: 'Ein geteiltes Element konnte nicht gelesen werden und wurde ausgelassen.',
+    );
+    return '$_temp0';
+  }
 }

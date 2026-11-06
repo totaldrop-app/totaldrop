@@ -508,4 +508,18 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get shareBusy =>
       'Un transfert est encore en cours. Attendez qu’il se termine ou arrêtez-le, puis partagez à nouveau.';
+
+  @override
+  String shareSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count éléments partagés n\'ont pas pu être lus et ont été ignorés.',
+      many:
+          '$count d\'éléments partagés n\'ont pas pu être lus et ont été ignorés.',
+      one: '$count élément partagé n\'a pas pu être lu et a été ignoré.',
+    );
+    return '$_temp0';
+  }
 }

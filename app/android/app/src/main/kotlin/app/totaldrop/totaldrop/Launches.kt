@@ -35,6 +35,8 @@ class Launches {
     }
 
     companion object {
-        const val MAX_WAITING = 16
+        // Far more than a person shares before the app listens, a second at
+        // most; a share is two events.
+        const val MAX_WAITING = 256
     }
 }

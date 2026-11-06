@@ -131,5 +131,6 @@
   "transferNoticeReceiving": "Modtager med TotalDrop",
   "transferNoticeBody": "Fortsætter, mens du bruger andre apps.",
   "shareTextSoon": "TotalDrop sender endnu ikke tekst, kun filer. Del en fil i stedet.",
-  "shareBusy": "En overførsel kører stadig. Vent, til den er færdig, eller stop den, og del så igen."
+  "shareBusy": "En overførsel kører stadig. Vent, til den er færdig, eller stop den, og del så igen.",
+  "shareSkipped": "{count, plural, =1{Ét delt element kunne ikke læses og blev udeladt.} other{{count} delte elementer kunne ikke læses og blev udeladt.}}"
 }

@@ -502,4 +502,16 @@ class AppLocalizationsEl extends AppLocalizations {
   @override
   String get shareBusy =>
       'Μια μεταφορά είναι ακόμη σε εξέλιξη. Περιμένετε να τελειώσει ή σταματήστε την και μοιραστείτε ξανά.';
+
+  @override
+  String shareSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count κοινόχρηστα στοιχεία δεν ήταν δυνατό να διαβαστούν και παραλείφθηκαν.',
+      one: 'Ένα κοινόχρηστο στοιχείο δεν ήταν δυνατό να διαβαστεί και παραλείφθηκε.',
+    );
+    return '$_temp0';
+  }
 }

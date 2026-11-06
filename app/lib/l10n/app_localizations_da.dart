@@ -495,4 +495,15 @@ class AppLocalizationsDa extends AppLocalizations {
   @override
   String get shareBusy =>
       'En overførsel kører stadig. Vent, til den er færdig, eller stop den, og del så igen.';
+
+  @override
+  String shareSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count delte elementer kunne ikke læses og blev udeladt.',
+      one: 'Ét delt element kunne ikke læses og blev udeladt.',
+    );
+    return '$_temp0';
+  }
 }

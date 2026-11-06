@@ -453,6 +453,17 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get shareBusy => '仍有传输正在进行。请等待其完成或将其停止，然后再分享。';
+
+  @override
+  String shareSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '有 $count 个分享的项目无法读取，已略过。',
+      one: '有 1 个分享的项目无法读取，已略过。',
+    );
+    return '$_temp0';
+  }
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hans`).
@@ -903,6 +914,17 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
 
   @override
   String get shareBusy => '仍有传输正在进行。请等待其完成或将其停止，然后再分享。';
+
+  @override
+  String shareSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '有 $count 个分享的项目无法读取，已略过。',
+      one: '有 1 个分享的项目无法读取，已略过。',
+    );
+    return '$_temp0';
+  }
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -1352,4 +1374,15 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get shareBusy => '仍有傳輸正在進行。請等待其完成或將其停止，然後再分享。';
+
+  @override
+  String shareSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '有 $count 個分享的項目無法讀取，已略過。',
+      one: '有 1 個分享的項目無法讀取，已略過。',
+    );
+    return '$_temp0';
+  }
 }

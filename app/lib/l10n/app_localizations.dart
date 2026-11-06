@@ -907,6 +907,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'A transfer is still running. Wait for it to finish or stop it, then share again.'**
   String get shareBusy;
+
+  /// Android: shown when some of the items another app shared to TotalDrop could not be read (no read permission, or the app's own files) and were left out; the rest were added
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{One shared item could not be read and was left out.} other{{count} shared items could not be read and were left out.}}'**
+  String shareSkipped(int count);
 }
 
 class _AppLocalizationsDelegate

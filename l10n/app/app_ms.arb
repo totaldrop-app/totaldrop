@@ -131,5 +131,6 @@
   "transferNoticeReceiving": "Menerima dengan TotalDrop",
   "transferNoticeBody": "Terus berjalan semasa anda menggunakan apl lain.",
   "shareTextSoon": "TotalDrop belum menghantar teks, hanya fail. Kongsi fail sebaliknya.",
-  "shareBusy": "Pemindahan masih berjalan. Tunggu sehingga selesai atau hentikannya, kemudian kongsi semula."
+  "shareBusy": "Pemindahan masih berjalan. Tunggu sehingga selesai atau hentikannya, kemudian kongsi semula.",
+  "shareSkipped": "{count, plural, =1{Satu item yang dikongsi tidak dapat dibaca dan telah ditinggalkan.} other{{count} item yang dikongsi tidak dapat dibaca dan telah ditinggalkan.}}"
 }

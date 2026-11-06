@@ -12,26 +12,50 @@ import org.junit.Test
 class SharedFilesTest {
     private val own = "app.totaldrop"
 
+    private val ownUid = 10_123
+    private val media = "com.android.providers.media.module"
+
+    private fun ok(
+        scheme: String?,
+        authority: String?,
+        pkg: String? = media,
+        uid: Int? = 10_050,
+    ) = SharedFiles.acceptable(scheme, authority, pkg, uid, own, ownUid)
+
     @Test
     fun otherAppsContentUrisAreRead() {
-        assertTrue(SharedFiles.acceptable("content", "com.android.providers.media.documents", own))
-        assertTrue(SharedFiles.acceptable("content", "media", own))
+        assertTrue(ok("content", "com.android.providers.media.documents"))
+        assertTrue(ok("content", "media"))
         // Another app whose name merely starts like ours.
-        assertTrue(SharedFiles.acceptable("content", "app.totaldropper.files", own))
+        assertTrue(ok("content", "app.totaldropper.files", "app.totaldropper"))
     }
 
     /** Any app can put any URI into a share intent: one naming TotalDrop's
      * own files (its device key among them) must not be sent. */
     @Test
     fun ownFilesAndFileUrisAreNot() {
-        assertFalse(SharedFiles.acceptable("file", "", own))
-        assertFalse(SharedFiles.acceptable("file", null, own))
-        assertFalse(SharedFiles.acceptable("content", own, own))
-        assertFalse(SharedFiles.acceptable("content", "$own.flutter.share_provider", own))
-        assertFalse(SharedFiles.acceptable("content", "$own.fileprovider", own))
-        assertFalse(SharedFiles.acceptable("content", null, own))
-        assertFalse(SharedFiles.acceptable("CONTENT", "media", own))
-        assertFalse(SharedFiles.acceptable("android.resource", "com.x", own))
+        assertFalse(ok("file", ""))
+        assertFalse(ok("file", null))
+        assertFalse(ok("content", null))
+        assertFalse(ok("CONTENT", "media"))
+        assertFalse(ok("android.resource", "com.x"))
+        // Served by TotalDrop itself, whatever the authority is called.
+        assertFalse(ok("content", "$own.flutter.share_provider", own, ownUid))
+        assertFalse(ok("content", "$own.fileprovider", own, ownUid))
+        assertFalse(ok("content", "dev.fluttercommunity.plus.share", own, ownUid))
+        // Same process, another package name (a shared UID).
+        assertFalse(ok("content", "x.files", "x", ownUid))
+        // Nothing serves it: nothing to read.
+        assertFalse(ok("content", "gone.provider", null, null))
+    }
+
+    /** content://0@authority reaches the provider of authority for user 0:
+     * the prefix must not hide TotalDrop's own provider. */
+    @Test
+    fun aUserPrefixIsRefused() {
+        assertFalse(ok("content", "0@$own.fileprovider"))
+        assertFalse(ok("content", "0@media"))
+        assertFalse(ok("content", "@media"))
     }
 
     @Test
@@ -64,6 +88,18 @@ class SharedFilesTest {
         val emoji = SharedFiles.safeName("😀".repeat(100), 0)
         assertTrue(emoji.toByteArray(Charsets.UTF_8).size <= SharedFiles.MAX_NAME_BYTES)
         assertEquals(emoji, String(emoji.toByteArray(Charsets.UTF_8), Charsets.UTF_8))
+    }
+
+    @Test
+    fun numbersNeverMakeANameTooLong() {
+        val long = SharedFiles.safeName("a".repeat(400) + ".txt", 0)
+        val names = SharedFiles.uniqueNames(listOf(long, long, long))
+        assertEquals(3, names.toSet().size)
+        for (n in names) {
+            assertTrue(n.endsWith(".txt"))
+            assertTrue(n.toByteArray(Charsets.UTF_8).size <= SharedFiles.MAX_NAME_BYTES)
+        }
+        assertTrue(names[1].endsWith(" (2).txt"))
     }
 
     @Test

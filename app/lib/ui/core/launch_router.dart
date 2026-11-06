@@ -68,25 +68,49 @@ class _LaunchRouterState extends State<LaunchRouter> {
   void _on(Launch launch) {
     switch (launch) {
       case OpenScreen(screen: final s):
-        if (!_blocked) _show(s == receiveRoute ? receiveRoute : sendRoute);
-      case ShareCopying():
-        if (!_blocked && widget.send.beginShare()) {
+        // Not away from a running transfer: its screen comes up instead.
+        if (_blocked) {
+          _showRunning();
+        } else {
+          _show(s == receiveRoute ? receiveRoute : sendRoute);
+        }
+      case ShareCopying(id: final id):
+        if (!_blocked && widget.send.beginShare(id)) {
           _show(sendRoute);
         } else {
+          widget.send.refuseShare(id);
+          _showRunning();
           _tell((l) => l.shareBusy);
         }
-      case SharedFiles(files: final files):
-        widget.send.addShared(files);
-      case ShareFailed():
-        widget.send.shareFailed();
+      case SharedFiles(id: final id, files: final files, skipped: final n):
+        if (widget.send.addShared(id, files) && n > 0) {
+          _tell((l) => l.shareSkipped(n));
+        }
+      case ShareFailed(id: final id):
+        widget.send.shareFailed(id);
       case SharedTextOnly():
-        if (!_blocked) _show(sendRoute);
+        if (_blocked) {
+          _showRunning();
+        } else {
+          _show(sendRoute);
+        }
         _tell((l) => l.shareTextSoon);
     }
   }
 
+  /// The screen of the transfer that blocks a launch.
+  void _showRunning() {
+    if (widget.send.busy) {
+      _show(sendRoute);
+    } else {
+      _show(receiveRoute);
+    }
+  }
+
   /// Brings [name] to the top: closes the screens above it, or above the
-  /// home screen and then opens it.
+  /// home screen and then opens it. A screen closed this way loses what
+  /// was typed into it, such as a receive code not yet sent; a screen with
+  /// a running transfer is never closed (see [_blocked]).
   void _show(String name) {
     final nav = widget.navigator.currentState;
     if (nav == null) return;

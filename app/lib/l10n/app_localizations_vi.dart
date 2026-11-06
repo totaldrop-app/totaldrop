@@ -479,4 +479,15 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String get shareBusy =>
       'Vẫn còn một lần truyền đang chạy. Hãy chờ nó xong hoặc dừng nó, rồi chia sẻ lại.';
+
+  @override
+  String shareSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Không đọc được $count mục được chia sẻ nên đã bỏ qua.',
+      one: 'Không đọc được một mục được chia sẻ nên đã bỏ qua.',
+    );
+    return '$_temp0';
+  }
 }

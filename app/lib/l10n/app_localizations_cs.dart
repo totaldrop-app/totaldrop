@@ -501,4 +501,19 @@ class AppLocalizationsCs extends AppLocalizations {
   @override
   String get shareBusy =>
       'Přenos stále probíhá. Počkejte, až skončí, nebo ho zastavte, a pak sdílejte znovu.';
+
+  @override
+  String shareSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count sdílených položek nebylo možné přečíst, proto byly vynechány.',
+      many:
+          '$count sdílené položky nebylo možné přečíst, proto bylo vynecháno.',
+      few: '$count sdílené položky nebylo možné přečíst, proto byly vynechány.',
+      one: 'Jednu sdílenou položku nebylo možné přečíst, proto byla vynechána.',
+    );
+    return '$_temp0';
+  }
 }

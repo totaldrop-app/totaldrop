@@ -131,5 +131,6 @@
   "transferNoticeReceiving": "Se primește cu TotalDrop",
   "transferNoticeBody": "Continuă cât timp folosiți alte aplicații.",
   "shareTextSoon": "TotalDrop nu trimite încă text, doar fișiere. Partajează în schimb un fișier.",
-  "shareBusy": "Un transfer este încă în desfășurare. Așteaptă să se termine sau oprește-l, apoi partajează din nou."
+  "shareBusy": "Un transfer este încă în desfășurare. Așteaptă să se termine sau oprește-l, apoi partajează din nou.",
+  "shareSkipped": "{count, plural, one{Un element partajat nu a putut fi citit și a fost omis.} few{{count} elemente partajate nu au putut fi citite și au fost omise.} other{{count} de elemente partajate nu au putut fi citite și au fost omise.}}"
 }

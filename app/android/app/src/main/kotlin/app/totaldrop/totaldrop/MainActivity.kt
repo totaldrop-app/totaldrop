@@ -4,6 +4,7 @@
 package app.totaldrop.totaldrop
 
 import android.Manifest
+import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
@@ -12,6 +13,8 @@ import android.os.Looper
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
+import java.io.File
+import java.util.concurrent.atomic.AtomicLong
 
 class MainActivity : FlutterActivity() {
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
@@ -21,9 +24,10 @@ class MainActivity : FlutterActivity() {
             when (call.method) {
                 // The Dart side listens: everything that came before it.
                 "ready" -> result.success(launches.attach { share.invokeMethod("launch", it) })
-                "clear" -> {
-                    val cache = cacheDir
-                    Thread { SharedFiles.clear(cache) }.start()
+                // Shares the person cannot take, or cleared: their copies go.
+                "drop" -> {
+                    val ids = (call.arguments as? List<*>)?.mapNotNull { (it as? Number)?.toLong() }
+                    copier.drop(ids.orEmpty())
                     result.success(null)
                 }
                 else -> result.notImplemented()
@@ -54,6 +58,9 @@ class MainActivity : FlutterActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // A new activity has a new Flutter engine, which knows no copy from
+        // before: they all go, before any new one is written.
+        copier.clearAll()
         // A share or a shortcut that started the app. Not when the activity
         // comes back after the system ended it: that intent was handled.
         if (savedInstanceState == null) take(intent)
@@ -83,24 +90,22 @@ class MainActivity : FlutterActivity() {
             launches.send(mapOf("screen" to "send", "textOnly" to true))
             return
         }
-        launches.send(mapOf("screen" to "send", "copying" to true))
-        val resolver = contentResolver
-        val cache = cacheDir
-        val own = packageName
+        val id = nextShare.incrementAndGet()
+        launches.send(mapOf("id" to id, "screen" to "send", "copying" to true))
         // The read grant lasts while this activity does, so the copy starts
         // at once, off the main thread.
-        Thread {
-            val event = try {
-                val items = SharedFiles.copy(resolver, uris, cache, own)
+        copier.copy(id, uris) { copied ->
+            val event: Map<String, Any> = if (copied == null) {
+                mapOf("id" to id, "failed" to true)
+            } else {
                 mapOf(
-                    "files" to items.map { mapOf("name" to it.name, "path" to it.path, "size" to it.size) },
+                    "id" to id,
+                    "files" to copied.items.map { mapOf("name" to it.name, "path" to it.path, "size" to it.size) },
+                    "skipped" to copied.skipped,
                 )
-            } catch (e: Exception) {
-                android.util.Log.w("TotalDrop", "shared files could not be copied: ${e.javaClass.simpleName}")
-                mapOf("failed" to true)
             }
             main.post { launches.send(event) }
-        }.apply { name = "share-copy" }.start()
+        }
     }
 
     override fun cleanUpFlutterEngine(flutterEngine: FlutterEngine) {
@@ -127,8 +132,22 @@ class MainActivity : FlutterActivity() {
     private var askedForNotifications = false
     private val launches = Launches()
     private val main = Handler(Looper.getMainLooper())
+    private val copier by lazy { copierFor(this) }
 
     companion object {
+        // One for the process: a copy of an activity that went away still
+        // runs on its thread, before the next activity's clear-up.
+        private var sharedCopier: ShareCopier? = null
+        private val nextShare = AtomicLong()
+
+        @Synchronized
+        private fun copierFor(activity: Activity): ShareCopier = sharedCopier ?: ShareCopier(
+            File(activity.noBackupFilesDir, "shared"),
+            activity.applicationContext.contentResolver,
+            activity.applicationContext.packageManager,
+            activity.packageName,
+        ).also { sharedCopier = it }
+
         const val CHANNEL = "app.totaldrop/transfer_job"
         const val SHARE_CHANNEL = "app.totaldrop/launch"
         // The launcher shortcuts (res/xml/shortcuts.xml).

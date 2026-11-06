@@ -475,4 +475,15 @@ class AppLocalizationsTh extends AppLocalizations {
   @override
   String get shareBusy =>
       'ยังมีการโอนที่กำลังดำเนินอยู่ รอให้เสร็จหรือหยุดก่อน แล้วแชร์อีกครั้ง';
+
+  @override
+  String shareSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'อ่านรายการที่แชร์มา $count รายการไม่ได้ จึงไม่ได้รวมไว้',
+      one: 'อ่านรายการที่แชร์มาหนึ่งรายการไม่ได้ จึงไม่ได้รวมไว้',
+    );
+    return '$_temp0';
+  }
 }

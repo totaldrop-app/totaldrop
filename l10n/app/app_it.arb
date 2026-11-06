@@ -131,5 +131,6 @@
   "transferNoticeReceiving": "Ricezione con TotalDrop",
   "transferNoticeBody": "Continua mentre usi altre app.",
   "shareTextSoon": "TotalDrop non invia ancora testo, solo file. Condividi invece un file.",
-  "shareBusy": "Un trasferimento è ancora in corso. Attendi che finisca o interrompilo, poi condividi di nuovo."
+  "shareBusy": "Un trasferimento è ancora in corso. Attendi che finisca o interrompilo, poi condividi di nuovo.",
+  "shareSkipped": "{count, plural, =1{Un elemento condiviso non è stato letto ed è stato escluso.} many{{count} di elementi condivisi non sono stati letti e sono stati esclusi.} other{{count} elementi condivisi non sono stati letti e sono stati esclusi.}}"
 }

@@ -504,6 +504,20 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get shareBusy =>
       'Uma transferência ainda está em andamento. Espere terminar ou pare-a e compartilhe de novo.';
+
+  @override
+  String shareSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count itens compartilhados não puderam ser lidos e foram deixados de fora.',
+      many:
+          '$count de itens compartilhados não puderam ser lidos e foram deixados de fora.',
+      one: '$count item compartilhado não pôde ser lido e foi deixado de fora.',
+    );
+    return '$_temp0';
+  }
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -1005,6 +1019,20 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String get shareBusy =>
       'Uma transferência ainda está em andamento. Espere terminar ou pare-a e compartilhe de novo.';
+
+  @override
+  String shareSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count itens compartilhados não puderam ser lidos e foram deixados de fora.',
+      many:
+          '$count de itens compartilhados não puderam ser lidos e foram deixados de fora.',
+      one: '$count item compartilhado não pôde ser lido e foi deixado de fora.',
+    );
+    return '$_temp0';
+  }
 }
 
 /// The translations for Portuguese, as used in Portugal (`pt_PT`).
@@ -1507,4 +1535,18 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
   @override
   String get shareBusy =>
       'Ainda está a decorrer uma transferência. Aguarde que termine ou pare-a e partilhe novamente.';
+
+  @override
+  String shareSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count itens partilhados não puderam ser lidos e foram deixados de fora.',
+      many:
+          '$count de itens partilhados não puderam ser lidos e foram deixados de fora.',
+      one: 'Um item partilhado não pôde ser lido e foi deixado de fora.',
+    );
+    return '$_temp0';
+  }
 }

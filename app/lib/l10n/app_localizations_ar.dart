@@ -501,4 +501,18 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get shareBusy =>
       'لا يزال هناك نقل جارٍ. انتظر حتى ينتهي أو أوقفه، ثم شارك مرة أخرى.';
+
+  @override
+  String shareSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'تعذّرت قراءة $count عنصر مشترك، فتم استبعادها.',
+      many: 'تعذّرت قراءة $count عنصرًا مشتركًا، فتم استبعادها.',
+      few: 'تعذّرت قراءة $count عناصر مشتركة، فتم استبعادها.',
+      two: 'تعذّرت قراءة عنصرين مشتركين، فتم استبعادهما.',
+      one: 'تعذّرت قراءة عنصر مشترك واحد، فتم استبعاده.',
+    );
+    return '$_temp0';
+  }
 }
