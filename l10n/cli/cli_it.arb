@@ -49,7 +49,7 @@
   "cliHelpStun": "Server STUN (host:port) che comunica a questo dispositivo il suo indirizzo pubblico. Un valore vuoto lo disattiva.",
   "cliHelpRelayOnly": "Non connetterti mai direttamente e non comunicare alcun indirizzo IP: tutto passa dal server di inoltro. Più lento, ma l'altra parte non conosce mai il tuo indirizzo. In ricezione, il mittente deve usare lo stesso server di inoltro.",
   "cliHelpSend": "Invia file e cartelle e mostra un codice di trasferimento per il destinatario.",
-  "cliHelpSendPaths": "File o cartelle da inviare.",
+  "cliHelpSendPaths": "File o cartelle da inviare; - invia il testo letto dallo standard input.",
   "cliHelpSendStrong": "Usa un codice di tre parole (33 bit) invece di due.",
   "cliHelpReceive": "Ricevi file con un codice di trasferimento, per esempio 7-harbor-rocket.",
   "cliHelpReceiveCode": "Il codice di trasferimento che hai ricevuto.",
@@ -60,5 +60,12 @@
   "cliHelpHelpCommand": "Mostra questo messaggio o la guida del comando indicato",
   "cliDesktopAbout": "Apri la finestra di TotalDrop.",
   "cliDesktopArgs": "File o cartelle da inviare, oppure un link TotalDrop con cui ricevere.",
-  "cliDesktopScreen": "Apri sulla schermata Invia (send), Ricevi (receive) o Impostazioni (settings)."
+  "cliDesktopScreen": "Apri sulla schermata Invia (send), Ricevi (receive) o Impostazioni (settings).",
+  "cliHelpSendText": "Invia questo testo invece dei file: il destinatario lo vede come testo, non come file.",
+  "cliSendingText": "Invio di un testo, {size}.",
+  "cliOfferedText": "Offerto: un testo, {size}. Viene mostrato qui, non salvato.",
+  "cliPromptShow": "Mostrarlo? [s/N] ",
+  "cliTextNotUtf8": "Il testo sullo standard input non è UTF-8.",
+  "cliTextEmpty": "Non c’è alcun testo da inviare.",
+  "cliTextTooLong": "Il testo supera {size}. Invialo come file."
 }

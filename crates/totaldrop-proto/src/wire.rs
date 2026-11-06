@@ -771,6 +771,11 @@ pub enum Control {
         /// Field 7: the sender understands `received` reports. Not signed;
         /// absent means false.
         progress: bool,
+        /// Field 8: the one file of this offer is a text to show, not to
+        /// save (protocol notes, item 25). Not signed, like field 7: it
+        /// only says how to show what the signed manifest holds. Absent
+        /// means false; a receiver that does not know it saves the file.
+        text: bool,
     },
     /// `accept`, receiver to sender.
     Accept {
@@ -826,6 +831,7 @@ impl Control {
                 content_key,
                 signature,
                 progress,
+                text: is_text,
             } => {
                 let mut fields = manifest.fields();
                 fields.push((0, text("offer")));
@@ -833,6 +839,9 @@ impl Control {
                 fields.push((6, bytes(signature)));
                 if *progress {
                     fields.push((7, Value::Bool(true)));
+                }
+                if *is_text {
+                    fields.push((8, Value::Bool(true)));
                 }
                 encode_map(fields)
             }
@@ -936,6 +945,7 @@ impl Control {
                     content_key: f.array(5)?,
                     signature: f.array(6)?,
                     progress: f.opt_bool(7)?,
+                    text: f.opt_bool(8)?,
                 })
             }
             "accept" => {
@@ -1191,6 +1201,7 @@ mod tests {
             content_key: [8; 32],
             signature: [9; 64],
             progress: true,
+            text: false,
         }
     }
 
@@ -1250,6 +1261,7 @@ mod tests {
             content_key,
             signature,
             progress: false,
+            text: false,
         };
         assert_eq!(
             Control::decode(&bad.encode()).unwrap_err(),
@@ -1263,6 +1275,7 @@ mod tests {
             content_key,
             signature,
             progress: false,
+            text: false,
         };
         assert_eq!(
             Control::decode(&bad.encode()).unwrap_err(),
@@ -1276,6 +1289,7 @@ mod tests {
             content_key,
             signature,
             progress: false,
+            text: false,
         };
         assert_eq!(
             Control::decode(&bad.encode()).unwrap_err(),
@@ -1302,6 +1316,7 @@ mod tests {
             content_key,
             signature,
             progress: false,
+            text: false,
         };
         let bytes_old = old.encode();
         assert!(!bytes_old.windows(2).any(|w| w == [0x07, 0xf5]));
@@ -1355,6 +1370,55 @@ mod tests {
         // A report needs its byte count.
         let short = encode_map(vec![(0, text("received")), (1, bytes(&[1; 16]))]);
         assert_eq!(Control::decode(&short).unwrap_err(), WireError::Missing(2));
+    }
+
+    /// Field 8 marks a text (#313). An offer without it reads as files, so
+    /// an older sender's offers mean what they did; an older receiver
+    /// ignores it and saves the file. It is outside the signature, so the
+    /// signed bytes of a text offer are those of the same file offer.
+    #[test]
+    fn the_text_field_is_optional_and_unsigned() {
+        let Control::Offer {
+            manifest,
+            content_key,
+            signature,
+            ..
+        } = sample_offer()
+        else {
+            unreachable!()
+        };
+        let file = Control::Offer {
+            manifest: manifest.clone(),
+            content_key,
+            signature,
+            progress: true,
+            text: false,
+        };
+        let marked = Control::Offer {
+            manifest: manifest.clone(),
+            content_key,
+            signature,
+            progress: true,
+            text: true,
+        };
+        assert!(!file.encode().windows(2).any(|w| w == [0x08, 0xf5]));
+        assert!(marked.encode().windows(2).any(|w| w == [0x08, 0xf5]));
+        assert_eq!(Control::decode(&marked.encode()).unwrap(), marked);
+        assert_eq!(Control::decode(&file.encode()).unwrap(), file);
+        let Control::Offer { manifest: m, .. } = Control::decode(&marked.encode()).unwrap() else {
+            unreachable!()
+        };
+        assert_eq!(m.signed_bytes(), manifest.signed_bytes());
+
+        let mut fields = manifest.fields();
+        fields.push((0, text("offer")));
+        fields.push((5, bytes(&content_key)));
+        fields.push((6, bytes(&signature)));
+        fields.push((8, text("yes")));
+        assert_eq!(
+            Control::decode(&encode_map(fields)).unwrap_err(),
+            WireError::Field(8)
+        );
     }
 
     #[test]

@@ -49,7 +49,7 @@
   "cliHelpStun": "STUN-palvelin (host:port), joka kertoo tälle laitteelle sen julkisen osoitteen. Tyhjä arvo poistaa sen käytöstä.",
   "cliHelpRelayOnly": "Älä koskaan yhdistä suoraan äläkä ilmoita IP-osoitetta: kaikki kulkee välityspalvelimen kautta. Hitaampi, mutta toinen osapuoli ei koskaan saa tietää osoitettasi. Vastaanotettaessa lähettäjän on käytettävä samaa välityspalvelinta.",
   "cliHelpSend": "Lähetä tiedostoja ja kansioita ja tulosta siirtokoodi vastaanottajalle.",
-  "cliHelpSendPaths": "Lähetettävät tiedostot tai kansiot.",
+  "cliHelpSendPaths": "Lähetettävät tiedostot tai kansiot; - lähettää vakiosyötteestä luetun tekstin.",
   "cliHelpSendStrong": "Käytä kolmen sanan koodia (33 bittiä) kahden sijaan.",
   "cliHelpReceive": "Vastaanota tiedostoja siirtokoodilla, esimerkiksi 7-harbor-rocket.",
   "cliHelpReceiveCode": "Sinulle annettu siirtokoodi.",
@@ -60,5 +60,12 @@
   "cliHelpHelpCommand": "Näytä tämä viesti tai annetun komennon ohje",
   "cliDesktopAbout": "Avaa TotalDrop-ikkuna.",
   "cliDesktopArgs": "Lähetettävät tiedostot tai kansiot tai TotalDrop-linkki, jolla vastaanotetaan.",
-  "cliDesktopScreen": "Avaa näkymä: Lähetä (send), Vastaanota (receive) tai Asetukset (settings)."
+  "cliDesktopScreen": "Avaa näkymä: Lähetä (send), Vastaanota (receive) tai Asetukset (settings).",
+  "cliHelpSendText": "Lähetä tämä teksti tiedostojen sijaan: vastaanottaja näkee sen tekstinä, ei tiedostona.",
+  "cliSendingText": "Lähetetään tekstiä, {size}.",
+  "cliOfferedText": "Tarjottu: teksti, {size}. Se näytetään tässä eikä sitä tallenneta.",
+  "cliPromptShow": "Näytetäänkö? [k/E] ",
+  "cliTextNotUtf8": "Vakiosyötteen teksti ei ole UTF-8-muotoista.",
+  "cliTextEmpty": "Lähetettävää tekstiä ei ole.",
+  "cliTextTooLong": "Teksti on pidempi kuin {size}. Lähetä se tiedostona."
 }

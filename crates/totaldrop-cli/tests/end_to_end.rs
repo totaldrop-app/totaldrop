@@ -191,6 +191,45 @@ async fn folder_with_large_empty_and_nested_files_arrives_intact() {
     std::fs::remove_dir_all(dest).unwrap();
 }
 
+/// A text goes through the real servers and arrives as a text, with
+/// nothing on disk (#313).
+#[tokio::test(flavor = "multi_thread")]
+async fn a_text_arrives_as_a_text() {
+    let server = server().await;
+    let dest = scratch("dest");
+    let words = "Bağlantı: https://totaldrop.app\n\tikinci satır";
+    let prepared = PreparedSend::text(
+        &SendOptions {
+            server: server.clone(),
+            words: 2,
+            paths: no_relay(),
+        },
+        words,
+        "text.txt",
+    )
+    .await
+    .unwrap();
+    assert_eq!(prepared.totals(), (1, words.len() as u64));
+    let code = prepared.code().to_string();
+    let sender = tokio::spawn(prepared.run(no_events()));
+    let offer = IncomingOffer::connect(
+        &ReceiveOptions {
+            server,
+            paths: no_relay(),
+        },
+        &code,
+    )
+    .await
+    .unwrap();
+    assert!(offer.summary().text);
+    let received = offer.accept(&dest, no_events()).await.unwrap();
+    let sent = sender.await.unwrap().unwrap();
+    assert_eq!((sent.files_ok, received.files_ok), (1, 1));
+    assert_eq!(received.text.as_deref(), Some(words));
+    assert!(walk(&dest).is_empty(), "{:?}", walk(&dest));
+    std::fs::remove_dir_all(dest).unwrap();
+}
+
 #[tokio::test(flavor = "multi_thread")]
 async fn existing_files_are_never_overwritten() {
     let server = server().await;

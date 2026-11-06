@@ -49,7 +49,7 @@
   "cliHelpStun": "STUN-Server (host:port), der diesem Gerät seine öffentliche Adresse mitteilt. Ein leerer Wert schaltet ihn ab.",
   "cliHelpRelayOnly": "Nie direkt verbinden und keine IP-Adresse bekanntgeben: Alles läuft über den Relay-Server. Langsamer, aber die Gegenseite erfährt Ihre Adresse nie. Beim Empfangen muss der Absender denselben Relay-Server verwenden.",
   "cliHelpSend": "Dateien und Ordner senden und einen Übertragungscode für den Empfänger ausgeben.",
-  "cliHelpSendPaths": "Zu sendende Dateien oder Ordner.",
+  "cliHelpSendPaths": "Zu sendende Dateien oder Ordner; - sendet den von der Standardeingabe gelesenen Text.",
   "cliHelpSendStrong": "Einen Code aus drei Wörtern (33 Bit) statt zwei verwenden.",
   "cliHelpReceive": "Dateien mit einem Übertragungscode empfangen, zum Beispiel 7-harbor-rocket.",
   "cliHelpReceiveCode": "Der Übertragungscode, den Sie erhalten haben.",
@@ -60,5 +60,12 @@
   "cliHelpHelpCommand": "Diese Hilfe oder die Hilfe des angegebenen Befehls anzeigen",
   "cliDesktopAbout": "Das TotalDrop-Fenster öffnen.",
   "cliDesktopArgs": "Zu sendende Dateien oder Ordner oder ein TotalDrop-Link zum Empfangen.",
-  "cliDesktopScreen": "Auf dem Bildschirm Senden (send), Empfangen (receive) oder Einstellungen (settings) öffnen."
+  "cliDesktopScreen": "Auf dem Bildschirm Senden (send), Empfangen (receive) oder Einstellungen (settings) öffnen.",
+  "cliHelpSendText": "Diesen Text statt Dateien senden: Der Empfänger sieht ihn als Text, nicht als Datei.",
+  "cliSendingText": "Ein Text wird gesendet, {size}.",
+  "cliOfferedText": "Angeboten: ein Text, {size}. Er wird hier angezeigt, nicht gespeichert.",
+  "cliPromptShow": "Anzeigen? [j/N] ",
+  "cliTextNotUtf8": "Der Text auf der Standardeingabe ist kein UTF-8.",
+  "cliTextEmpty": "Es gibt keinen Text zum Senden.",
+  "cliTextTooLong": "Der Text ist länger als {size}. Sende ihn stattdessen als Datei."
 }
