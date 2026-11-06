@@ -30,6 +30,7 @@ LOG = os.path.join(HERE, "hayalet-halka-gunluk.spthy")
 FRESH = os.path.join(HERE, "hayalet-halka-tazelik.spthy")
 SECRET = os.path.join(HERE, "hayalet-halka-gizlilik.spthy")
 RECOVERY = os.path.join(HERE, "hayalet-halka-kurtarma.spthy")
+STRICT = os.path.join(HERE, "hayalet-halka-sikimod.spthy")
 TIMEOUT = int(os.environ.get("LEMMA_TIMEOUT", "600"))
 
 BOUND_ONE_STEP = """
@@ -118,6 +119,34 @@ RECOVERY_UNUSED = [
     "Log_Write_RK_2", "Device_Accept_Recover_2", "Contact_Accept_Recover_2",
     "Member_Reject_2",
 ]
+
+# Part 4b: rules a mutant's attack does not need, dropped so that its
+# search ends (sound for an exists-trace attack: fewer rules, fewer traces).
+STRICT_RECOVERY = [
+    "Owner_Recover_1", "Owner_Recover_2", "Log_Write_RK_1", "Log_Write_RK_2",
+    "Device_Accept_Recover_1", "Device_Accept_Recover_2",
+    "Contact_Accept_Recover_1", "Contact_Accept_Recover_2",
+]
+STRICT_RK_REMOVE = [
+    "Owner_RK_Remove_1", "Owner_RK_Remove_2", "Log_Write_RKR_1", "Log_Write_RKR_2",
+    "Accept_RK_Remove_1", "Accept_RK_Remove_2",
+]
+STRICT_ADD = [
+    "Device_Join_Request", "Propose_Add_1", "Propose_Add_2",
+    "Accept_Prop_Add_1", "Accept_Prop_Add_2",
+]
+
+# Part 4b, strict_immediate_accept: the reader follows a single-signature
+# remove from the head's log at once, as in the default mode.
+IMMEDIATE_REMOVE = r"""rule Accept_Immediate_Remove_1:
+    let s = <sik, sa1, sa2>
+        body = <'rec', r, m, 'remove', h(x), s>
+    in
+    [ View(o, r, m, s, x), !LogEntry(h(<'log', m>), <body, sig1, sig2>) ]
+  --[ Eq(verify(sig1, <'ed', body>, sa1), true), Eq(verify(sig2, <'ml', body>, sa2), true),
+      NotEmpty(x), Accept(o, r, m, 'remove', h(x), s) ]->
+    [ View(o, r, h(body), s, 'empty'), !Head(r, h(body), s, 'empty') ]
+"""
 
 
 MUTANTS = [
@@ -522,6 +551,101 @@ lemma attack:
       ReadRec(r, m, v) @ i
     & ReadRec(r, m, v2) @ j
     & not (v = v2)
+    & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)"
+""",
+    },
+    {
+        "name": "strict_immediate_accept",
+        "why": "a reader of a strict ring follows a single-signature remove at once",
+        "model": STRICT,
+        "edits": [
+            ("immediate accept", r"//STRICT_IMMEDIATE_ACCEPT\n", IMMEDIATE_REMOVE.replace("\\", "\\\\"), 1),
+        ],
+        "drop": STRICT_RECOVERY + STRICT_RK_REMOVE + STRICT_ADD,
+        "lemma": """
+lemma attack:
+  exists-trace
+  "Ex o r m op x y #k.
+      Accept(o, r, m, op, x, y) @ k
+    & not (Ex L v #t. Old(L, v) @ t & #t < #k)
+    & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)"
+""",
+    },
+    {
+        "name": "proposal_without_wait",
+        "why": "a reader follows a pending remove before it has settled",
+        "model": STRICT,
+        "edits": [
+            ("Accept_Prop_Remove_1 wait",
+             r"(rule Accept_Prop_Remove_1:(?:(?!\nrule ).)*?)Settled\(h\(<'plog', m>\), <body, sig1, sig2>\), ",
+             r"\1", 1),
+        ],
+        "drop": STRICT_RECOVERY + STRICT_RK_REMOVE + STRICT_ADD,
+        "lemma": """
+lemma attack:
+  exists-trace
+  "Ex o r m x s #k.
+      Accept(o, r, m, 'premove', x, s) @ k
+    & not (Ex L v #t. Old(L, v) @ t & #t < #k)
+    & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)"
+""",
+    },
+    {
+        "name": "veto_ignored",
+        "why": "a reader follows a pending remove although a member rejected it",
+        "model": STRICT,
+        "edits": [
+            ("restriction Prop_Priority",
+             r"restriction Prop_Priority:\n(?:  [^\n]*\n)+?(?=\n)", "", 1),
+        ],
+        "drop": STRICT_RECOVERY + STRICT_RK_REMOVE + STRICT_ADD,
+        "lemma": """
+lemma attack [heuristic=c]:
+  exists-trace
+  "Ex d r m o x s #t #k.
+      HonestAK(d, r, m) @ t
+    & Accept(o, r, m, 'premove', x, s) @ k
+    & #t < #k
+    & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)"
+""",
+    },
+    {
+        "name": "rk_remove_ignores_others",
+        "why": "a reader follows an rk_çıkar although another member rejected it",
+        "model": STRICT,
+        "edits": [
+            ("restriction RKR_Priority",
+             r"restriction RKR_Priority:\n(?:  [^\n]*\n)+?(?=\n)", "", 1),
+        ],
+        "drop": STRICT_RECOVERY + STRICT_ADD,
+        "lemma": """
+lemma attack [heuristic=c]:
+  exists-trace
+  "Ex d r m o x b #t #k.
+      HonestAK(d, r, m) @ t
+    & Accept(o, r, m, 'rkremove', h(x), b) @ k
+    & #t < #k & not (d = x)
+    & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)"
+""",
+    },
+    {
+        "name": "rk_remove_lone_device",
+        "why": "RK removes a ring's only device, which then cannot reject",
+        "model": STRICT,
+        "edits": [
+            ("Owner_RK_Remove_1 other member",
+             r"(rule Owner_RK_Remove_1:(?:(?!\nrule ).)*?)NotEmpty\(b\), ",
+             r"\1", 1),
+            ("Accept_RK_Remove_1 other member",
+             r"(rule Accept_RK_Remove_1:(?:(?!\nrule ).)*?)NotEmpty\(b\), ",
+             r"\1", 1),
+        ],
+        "drop": STRICT_RECOVERY + STRICT_ADD,
+        "lemma": """
+lemma attack [heuristic=c]:
+  exists-trace
+  "Ex o r m x #k.
+      Accept(o, r, m, 'rkremove', h(x), 'empty') @ k
     & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)"
 """,
     },

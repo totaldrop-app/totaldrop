@@ -12,7 +12,7 @@ Model parça parça büyür. Her parça ayrı bir PR'dır:
 | A1 | Üyelik zinciri: `oluştur`, `ekle`, `çıkar`, `döndür` | Bu klasörde |
 | A2 | Çok değerli şeffaflık günlüğü, tanıklar, dahil etme zorlaması (P2) | Bu klasörde |
 | A3 | Döndürmenin oturması ve yazanın tazeliği (A2'deki açığın düzeltmesi); halka sırrı, teklifler, gönderirken ve alırken tazelik (P3) | Bu klasörde |
-| A4 | Kurtarma ve P7'nin kurtarma kısmı (A4a); sıkı mod (A4b), `çatal_çöz` (A4c), tasarım kurallarının `hesap.md`'ye yazılması (A4d) | A4a bu klasörde, gerisi sırada |
+| A4 | Kurtarma ve P7'nin kurtarma kısmı (A4a); sıkı mod (A4b), `çatal_çöz` (A4c), tasarım kurallarının `hesap.md`'ye yazılması (A4d) | A4a ve A4b bu klasörde, gerisi sırada |
 | A5 | Bekleme süreleri için TLA+ değerlendirmesi | Sırada |
 
 ## Çalıştırmak
@@ -603,3 +603,94 @@ ifade edilmedi.
 - P7'nin kişiler yarısı kelimelere değil, kişinin karşısındakini bant
   dışında tanımasına dayanır; `hesap.md` ve kullanıcı metinleri bunu açık
   söylemeli.
+
+## A4b: sıkı mod (`hayalet-halka-sikimod.spthy`)
+
+A4a'nın üyelik dönemleri, kurtarması ve öncelik kuralı üzerine kurulur.
+Sıkı modda tek bir `AK` imzası üyeliği hemen değiştiremez (`hesap.md`,
+"Çok katmanlı onay", K3b). Modelin cevapladığı açık tasarım soruları
+(`hesap.md`, "Biçimsel modelde kesinleşecek kurallar"):
+
+- **Bekleyen kayıt nasıl sıralanır:** bekleyen tek imzalı bir `ekle` ya da
+  `çıkar`, kurtarma gibi bir başa değil üyelik dönemi `m`'ye karşı yazılan
+  bir **öneridir** ve kendi anahtarı `h('plog', m)` altında günlüğe girer.
+  Başın anahtarıyla yarışmaz; `döndür` onu durdurmaz. Aynı döneme karşı iki
+  `AK` önerisi çataldır, hiçbiri izlenmez.
+- **`bekleyen_reddi`:** `kurtarma_reddi` ile aynı kayıttır: bir üyenin
+  `m`'den yazdığı `AK` kaydı. `m`'ye karşı bütün önerileri durdurur;
+  önerinin hedefi olan cihazınki de dahil. Yani kilidi açık çalınmış bir
+  telefon kendi çıkarılmasını veto edebilir.
+- **Çalınan cihaz veto ederse `RK` yolu:** `rk_çıkar(x)`, `m`'ye karşı
+  `RK` imzalı bir öneridir. Kurtarma gibi bekler; `x` dışındaki her üye onu
+  reddedebilir, `x`'in kendi kayıtları ona karşı sayılmaz. Okuyucu onu
+  ancak görünümünde `x`'ten başka bir üye varsa izler: `RK` hiçbir zaman
+  halkanın tek cihazını çıkaramaz, çünkü o zaman reddedebilecek kimse
+  kalmaz. Aynı döneme karşı iki `RK` önerisi (kurtarma ya da `rk_çıkar`)
+  çataldır.
+
+### Soyutlamalar
+
+| Soyutlama | Neden | Ne zaman genişler |
+| --- | --- | --- |
+| Halka ilk kayıttan beri sıkıdır (ilke alanı ilk kayıtta); `ilke` kaydıyla açıp kapatma yok | Kapatmak sıkı modun istediği imza sayısını ister, yani bir öneridir; aynı kurala tabidir | A4c ya da aşama C |
+| İlk kayıt iki cihaz taşır | Sıkı mod iki ve daha çok cihaz için önerilir. İki yerle iki imzalı `ekle` olamaz (boş yer ancak tek üyeli halkada vardır), iki imzalı `çıkar` çıkarılan cihazın da imzasını ister; bu yüzden burada her sıkı değişiklik bekleyen öneridir | Değişmez |
+| `döndür` yok | Öneriler döneme karşı yazılır ve `döndür` dönemi değiştirmez; A4a, `döndür`'ün ne kurtarmayı ne de reddi engellediğini gösterdi | Değişmez |
+| Okuyucular reddi izlemez, öneri izlenince eklenen cihaz görünüm almaz | Bu parçanın özellikleri için gerekmiyor (A4a ile aynı) | A4c |
+| Sıkı modda kurtarmanın ek etkeni (YubiKey, Shamir payı) yok | Kurtarma kuralları A4a ile aynı; ek etken yalnızca ifadenin çalınmasını zorlaştırır | Aşama C |
+
+### Lemmalar
+
+| Lemma | Tür | Ne söyler |
+| --- | --- | --- |
+| `sanity_strict_remove` | iz var | Üye öbürünü çıkarmayı önerir, öneri bekler, kişi izler |
+| `sanity_stolen_device_removed_with_rk` | iz var | Kilidi açık çalınmış cihaz kendi çıkarılmasını veto eder; sahip `rk_çıkar` yazar ve kişi, çalınan cihazın vetosuna rağmen onu izler |
+| `no_change_without_wait` | her iz | **K3b:** sıkı halkanın okuyucusu üyeliği hiçbir zaman hemen değiştirmez; izlediği her değişiklik (öneri, kurtarma, `rk_çıkar`) önce günlükte bekledi. Kilidi açık çalınmış bir telefon tek başına kimseyi taşıyamaz |
+| `reject_stops_proposal` | her iz | **K3b:** bir üye dönemden `AK` kaydı yazdıktan sonra o döneme karşı öneri izlenmez (`Prop_Priority`'nin yeniden ifadesi) |
+| `rk_remove_stopped_by_other_member` | her iz | **P7, `rk_çıkar`:** `x` dışındaki bir üyenin reddinden sonra `rk_çıkar(x)` izlenmez; yalnızca ifadeyle dürüst bir cihaz, öbür dürüst üye reddedebildiği sürece çıkarılamaz |
+| `rk_remove_keeps_a_member` | her iz | `rk_çıkar` hiçbir zaman halkayı boşaltmaz (okuyucu denetimi) |
+| `ak_record_stops_recovery`, `contact_not_moved_by_phrase_alone` | her iz | A4a'nın P7 lemmaları yeni kurallarla da geçerli |
+
+Tablodaki "yeniden ifade" uyarısı A4a'daki gibidir: asıl içerik kuralların
+biçimindedir. Reddin tek ön koşulu üyenin görünümüdür, bu yüzden üye onu
+beklemenin her anında yazabilir; `rk_çıkar`'ın hedefin vetosunu saymaması
+ve tek cihazı çıkaramaması, `sanity_stolen_device_removed_with_rk` ve
+`rk_remove_keeps_a_member` ile birlikte okunmalıdır.
+
+### Mutant sınamaları
+
+| Mutant | Bozulan denetim | Beklenen saldırı |
+| --- | --- | --- |
+| `strict_immediate_accept` | Okuyucu tek imzalı `çıkar`ı varsayılan moddaki gibi hemen izler | Değişiklik beklemeden izlenir |
+| `proposal_without_wait` | Okuyucu öneriyi oturmadan izler | Bekleyen `çıkar` beklemeden izlenir |
+| `veto_ignored` | Okuyucu öncelik kuralını uygulamaz | Bir üyenin reddinden sonra öneri izlenir |
+| `rk_remove_ignores_others` | Okuyucu `rk_çıkar` için reddi saymaz | Öbür üyenin reddine rağmen `rk_çıkar` izlenir |
+| `rk_remove_lone_device` | Okuyucu ve sahip kalan üyeyi denetlemez | `RK`, halkanın tek cihazını çıkarır |
+
+### Henüz kanıtlanmayanlar
+
+- **Telefon ve ifade birlikte çalınırsa** sıkı mod da güvence vermez:
+  hırsız `rk_çıkar` ile sahibin cihazını çıkarabilir (hedef olan sahibin
+  cihazının reddi sayılmaz), sahibin karşı `rk_çıkar`'ını ise elindeki
+  cihazla reddeder. Bu durum `hesap.md`'nin P7 dışı bıraktığı durumdur;
+  çıkış yolu yeniden eşleşmedir.
+- **Hizmet engelleme:** kilidi açık çalınmış bir cihaz her öneriyi ve her
+  kurtarmayı reddedebilir; ifadeyi çalan biri ikinci bir `RK` önerisiyle
+  sahibin `rk_çıkar`'ını durdurabilir. Güvenliği bozmaz, sahibi bekletir:
+  A4c (`çatal_çöz`) ve A5 (süreler).
+- **Geç red:** öneriyi izlemiş bir okuyucu, ardından yazılan bir reddi
+  görmez (A4a'daki gibi): A4c.
+- İki ve daha çok üyeli halkalar, `ilke` değişikliği ve öneri izlendikten
+  sonraki halka: A4c ve aşama C.
+
+### Tasarıma geri bildirim (A4d'de `hesap.md`'ye işlenecek)
+
+- Bekleyen tek imzalı kayıt bir öneridir: üyelik dönemine karşı yazılır,
+  kendi günlük anahtarı vardır, başın anahtarıyla yarışmaz. Aynı döneme
+  karşı iki öneri çataldır.
+- `bekleyen_reddi` ve `kurtarma_reddi` tek kayıttır: üyenin dönemden yazdığı
+  `AK` kaydı.
+- "Çalınan cihaz `bekleyen_reddi` yazarsa yol `RK`'den geçer"in kesin
+  tanımı: `rk_çıkar(x)`, `RK` imzalı, bekleyen, `x` dışındaki üyelerin
+  reddedebildiği, okuyucunun ancak başka bir üye kalıyorsa izlediği öneri.
+- K3b'ye "okuyucu, kalan üye olmadan `rk_çıkar`'ı reddeder" eklenmeli.
+
