@@ -115,6 +115,13 @@
 
   "sendDropHere": "Letakkan file di sini",
   "sendDropHint": "Anda juga bisa menyeret file ke jendela ini.",
+  "editUndo": "Urungkan",
+  "editRedo": "Ulangi",
+  "editCut": "Potong",
+  "editCopy": "Salin",
+  "editPaste": "Tempel",
+  "editDelete": "Hapus",
+  "editSelectAll": "Pilih semua",
   "sendQrHint": "Atau pindai kode ini dengan kamera perangkat lain.",
   "sendWaitingAccept": "Periksa kata-katanya, lalu tunggu penerima menerima.",
   "receiveFromImage": "Baca QR dari gambar",

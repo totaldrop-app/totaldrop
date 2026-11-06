@@ -115,6 +115,13 @@
 
   "sendDropHere": "Dateien hier ablegen",
   "sendDropHint": "Sie können Dateien auch auf dieses Fenster ziehen.",
+  "editUndo": "Rückgängig",
+  "editRedo": "Wiederherstellen",
+  "editCut": "Ausschneiden",
+  "editCopy": "Kopieren",
+  "editPaste": "Einfügen",
+  "editDelete": "Löschen",
+  "editSelectAll": "Alles auswählen",
   "sendQrHint": "Oder scannen Sie diesen Code mit der Kamera des anderen Geräts.",
   "sendWaitingAccept": "Prüfen Sie die Wörter und warten Sie, bis der Empfänger annimmt.",
   "receiveFromImage": "QR-Code aus Bild lesen",

@@ -444,6 +444,27 @@ class AppLocalizationsDe extends AppLocalizations {
       'Sie können Dateien auch auf dieses Fenster ziehen.';
 
   @override
+  String get editUndo => 'Rückgängig';
+
+  @override
+  String get editRedo => 'Wiederherstellen';
+
+  @override
+  String get editCut => 'Ausschneiden';
+
+  @override
+  String get editCopy => 'Kopieren';
+
+  @override
+  String get editPaste => 'Einfügen';
+
+  @override
+  String get editDelete => 'Löschen';
+
+  @override
+  String get editSelectAll => 'Alles auswählen';
+
+  @override
   String get sendQrHint =>
       'Oder scannen Sie diesen Code mit der Kamera des anderen Geräts.';
 

@@ -115,6 +115,13 @@
 
   "sendDropHere": "أفلت الملفات هنا",
   "sendDropHint": "يمكنك أيضًا سحب الملفات إلى هذه النافذة.",
+  "editUndo": "تراجع",
+  "editRedo": "إعادة",
+  "editCut": "قص",
+  "editCopy": "نسخ",
+  "editPaste": "لصق",
+  "editDelete": "حذف",
+  "editSelectAll": "تحديد الكل",
   "sendQrHint": "أو امسح رمز QR هذا بكاميرا الجهاز الآخر.",
   "sendWaitingAccept": "تحقق من الكلمات، ثم انتظر حتى يقبل المستلم.",
   "receiveFromImage": "قراءة رمز QR من صورة",

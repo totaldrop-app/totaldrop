@@ -115,6 +115,13 @@
 
   "sendDropHere": "Dondosha faili hapa",
   "sendDropHint": "Unaweza pia kuburuta faili hadi kwenye dirisha hili.",
+  "editUndo": "Tendua",
+  "editRedo": "Rudia",
+  "editCut": "Kata",
+  "editCopy": "Nakili",
+  "editPaste": "Bandika",
+  "editDelete": "Futa",
+  "editSelectAll": "Chagua zote",
   "sendQrHint": "Au changanua msimbo huu kwa kamera ya kifaa kingine.",
   "sendWaitingAccept": "Linganisha maneno, kisha subiri mpokeaji akubali.",
   "receiveFromImage": "Soma QR kutoka kwenye picha",

@@ -442,6 +442,27 @@ class AppLocalizationsSv extends AppLocalizations {
   String get sendDropHint => 'Du kan också dra filer till det här fönstret.';
 
   @override
+  String get editUndo => 'Ångra';
+
+  @override
+  String get editRedo => 'Gör om';
+
+  @override
+  String get editCut => 'Klipp ut';
+
+  @override
+  String get editCopy => 'Kopiera';
+
+  @override
+  String get editPaste => 'Klistra in';
+
+  @override
+  String get editDelete => 'Ta bort';
+
+  @override
+  String get editSelectAll => 'Markera allt';
+
+  @override
   String get sendQrHint => 'Eller skanna koden med den andra enhetens kamera.';
 
   @override

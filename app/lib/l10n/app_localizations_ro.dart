@@ -447,6 +447,27 @@ class AppLocalizationsRo extends AppLocalizations {
       'Puteți și să trageți fișiere în această fereastră.';
 
   @override
+  String get editUndo => 'Anulează';
+
+  @override
+  String get editRedo => 'Refă';
+
+  @override
+  String get editCut => 'Decupează';
+
+  @override
+  String get editCopy => 'Copiază';
+
+  @override
+  String get editPaste => 'Lipește';
+
+  @override
+  String get editDelete => 'Șterge';
+
+  @override
+  String get editSelectAll => 'Selectează tot';
+
+  @override
   String get sendQrHint =>
       'Sau scanați acest cod cu camera celuilalt dispozitiv.';
 

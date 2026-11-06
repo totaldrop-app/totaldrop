@@ -59,7 +59,8 @@ pub struct TextsRust {
     strings: QString,
 }
 
-fn strings() -> &'static Strings {
+/// The interface text, chosen once from the environment.
+pub fn strings() -> &'static Strings {
     static STRINGS: OnceLock<Strings> = OnceLock::new();
     STRINGS.get_or_init(|| Strings::system(Domain::App))
 }

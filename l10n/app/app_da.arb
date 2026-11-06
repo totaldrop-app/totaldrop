@@ -115,6 +115,13 @@
 
   "sendDropHere": "Slip filer her",
   "sendDropHint": "Du kan også trække filer over i dette vindue.",
+  "editUndo": "Fortryd",
+  "editRedo": "Annuller fortryd",
+  "editCut": "Klip",
+  "editCopy": "Kopiér",
+  "editPaste": "Indsæt",
+  "editDelete": "Slet",
+  "editSelectAll": "Markér alt",
   "sendQrHint": "Eller scan koden med den anden enheds kamera.",
   "sendWaitingAccept": "Tjek ordene, og vent så på, at modtageren accepterer.",
   "receiveFromImage": "Læs QR-kode fra billede",

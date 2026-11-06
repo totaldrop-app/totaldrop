@@ -115,6 +115,13 @@
 
   "sendDropHere": "فائلیں یہاں چھوڑیں",
   "sendDropHint": "آپ فائلیں اس ونڈو پر گھسیٹ کر بھی لا سکتے ہیں۔",
+  "editUndo": "کالعدم کریں",
+  "editRedo": "دوبارہ کریں",
+  "editCut": "کاٹیں",
+  "editCopy": "کاپی کریں",
+  "editPaste": "چسپاں کریں",
+  "editDelete": "حذف کریں",
+  "editSelectAll": "سب منتخب کریں",
   "sendQrHint": "یا یہ کوڈ دوسرے آلے کے کیمرے سے اسکین کریں۔",
   "sendWaitingAccept": "الفاظ چیک کریں، پھر وصول کنندہ کے قبول کرنے کا انتظار کریں۔",
   "receiveFromImage": "تصویر سے QR پڑھیں",

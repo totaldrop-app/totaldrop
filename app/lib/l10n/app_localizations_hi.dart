@@ -439,6 +439,27 @@ class AppLocalizationsHi extends AppLocalizations {
   String get sendDropHint => 'आप फ़ाइलों को इस विंडो पर खींचकर भी ला सकते हैं।';
 
   @override
+  String get editUndo => 'पूर्ववत करें';
+
+  @override
+  String get editRedo => 'फिर से करें';
+
+  @override
+  String get editCut => 'काटें';
+
+  @override
+  String get editCopy => 'कॉपी करें';
+
+  @override
+  String get editPaste => 'चिपकाएँ';
+
+  @override
+  String get editDelete => 'हटाएँ';
+
+  @override
+  String get editSelectAll => 'सभी चुनें';
+
+  @override
   String get sendQrHint => 'या दूसरे डिवाइस के कैमरे से यह कोड स्कैन करें।';
 
   @override

@@ -447,6 +447,27 @@ class AppLocalizationsAr extends AppLocalizations {
   String get sendDropHint => 'يمكنك أيضًا سحب الملفات إلى هذه النافذة.';
 
   @override
+  String get editUndo => 'تراجع';
+
+  @override
+  String get editRedo => 'إعادة';
+
+  @override
+  String get editCut => 'قص';
+
+  @override
+  String get editCopy => 'نسخ';
+
+  @override
+  String get editPaste => 'لصق';
+
+  @override
+  String get editDelete => 'حذف';
+
+  @override
+  String get editSelectAll => 'تحديد الكل';
+
+  @override
   String get sendQrHint => 'أو امسح رمز QR هذا بكاميرا الجهاز الآخر.';
 
   @override

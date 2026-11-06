@@ -107,6 +107,10 @@ fn main() {
             .set_organization_domain(&QString::from("totaldrop.app"));
     }
 
+    // Qt's own text (the right-click menu of text fields) in the same
+    // language as the rest of the window (#307).
+    bridge::qt_texts::install(bridge::texts::strings());
+
     let mut engine = QQmlApplicationEngine::new();
     if let Some(engine) = engine.as_mut() {
         engine.load(&QUrl::from("qrc:/qt/qml/app/totaldrop/qml/Main.qml"));

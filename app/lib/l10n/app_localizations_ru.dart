@@ -448,6 +448,27 @@ class AppLocalizationsRu extends AppLocalizations {
   String get sendDropHint => 'Файлы также можно перетащить в это окно.';
 
   @override
+  String get editUndo => 'Отменить';
+
+  @override
+  String get editRedo => 'Повторить';
+
+  @override
+  String get editCut => 'Вырезать';
+
+  @override
+  String get editCopy => 'Копировать';
+
+  @override
+  String get editPaste => 'Вставить';
+
+  @override
+  String get editDelete => 'Удалить';
+
+  @override
+  String get editSelectAll => 'Выделить всё';
+
+  @override
   String get sendQrHint =>
       'Или отсканируйте этот код камерой другого устройства.';
 

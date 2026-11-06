@@ -426,6 +426,27 @@ class AppLocalizationsTr extends AppLocalizations {
       'Dosyaları bu pencereye sürükleyip de ekleyebilirsiniz.';
 
   @override
+  String get editUndo => 'Geri al';
+
+  @override
+  String get editRedo => 'Yinele';
+
+  @override
+  String get editCut => 'Kes';
+
+  @override
+  String get editCopy => 'Kopyala';
+
+  @override
+  String get editPaste => 'Yapıştır';
+
+  @override
+  String get editDelete => 'Sil';
+
+  @override
+  String get editSelectAll => 'Tümünü seç';
+
+  @override
   String get sendQrHint => 'Ya da bu kodu diğer cihazın kamerasıyla okutun.';
 
   @override
