@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+     SPDX-License-Identifier: GPL-3.0-or-later
+
+     Held icon: Send and Receive (#53). The labels come from l10n/app
+     (values*/l10n.xml, written by tool/gen_android_strings.dart). The
+     intents are handled in MainActivity.take. -->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="send"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_send"
+        android:shortcutShortLabel="@string/shortcut_send_short"
+        android:shortcutLongLabel="@string/shortcut_send_long">
+        <intent
+            android:action="app.totaldrop.action.SEND"
+            android:targetPackage="app.totaldrop"
+            android:targetClass="app.totaldrop.totaldrop.MainActivity"/>
+    </shortcut>
+    <shortcut
+        android:shortcutId="receive"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_receive"
+        android:shortcutShortLabel="@string/shortcut_receive_short"
+        android:shortcutLongLabel="@string/shortcut_receive_long">
+        <intent
+            android:action="app.totaldrop.action.RECEIVE"
+            android:targetPackage="app.totaldrop"
+            android:targetClass="app.totaldrop.totaldrop.MainActivity"/>
+    </shortcut>
+</shortcuts>

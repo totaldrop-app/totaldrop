@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+     SPDX-License-Identifier: GPL-3.0-or-later
+
+     Shortcut icon (#53): the south-west arrow, as on the home screen (Material Symbols),
+     in the 72dp safe zone of a 108dp adaptive icon. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group
+        android:translateX="36"
+        android:translateY="36"
+        android:scaleX="1.5"
+        android:scaleY="1.5">
+        <path
+            android:fillColor="#FFFFFFFF"
+            android:pathData="M15,19v-2H8.41L20,5.41 18.59,4 7,15.59V9H5v10h10z"/>
+    </group>
+</vector>
