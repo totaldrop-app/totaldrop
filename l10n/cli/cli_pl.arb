@@ -49,7 +49,7 @@
   "cliHelpStun": "Serwer STUN (host:port), który podaje temu urządzeniu jego publiczny adres. Pusta wartość go wyłącza.",
   "cliHelpRelayOnly": "Nigdy nie łącz się bezpośrednio i nie ujawniaj adresu IP: wszystko przechodzi przez serwer pośredniczący. Wolniej, ale druga strona nigdy nie pozna twojego adresu. Przy odbieraniu nadawca musi używać tego samego serwera pośredniczącego.",
   "cliHelpSend": "Wyślij pliki i foldery oraz wypisz kod transferu dla odbiorcy.",
-  "cliHelpSendPaths": "Pliki lub foldery do wysłania; - wysyła tekst odczytany ze standardowego wejścia.",
+  "cliHelpSendPaths": "Pliki lub foldery do wysłania. Samo - odczytuje tekst ze standardowego wejścia; dla pliku o nazwie - napisz ./-.",
   "cliHelpSendStrong": "Użyj kodu z trzech słów (33 bity) zamiast dwóch.",
   "cliHelpReceive": "Odbierz pliki za pomocą kodu transferu, na przykład 7-harbor-rocket.",
   "cliHelpReceiveCode": "Otrzymany kod transferu.",
@@ -61,11 +61,13 @@
   "cliDesktopAbout": "Otwórz okno TotalDrop.",
   "cliDesktopArgs": "Pliki lub foldery do wysłania albo link TotalDrop do odbioru.",
   "cliDesktopScreen": "Otwórz na ekranie Wyślij (send), Odbierz (receive) lub Ustawienia (settings).",
-  "cliHelpSendText": "Wyślij ten tekst zamiast plików: odbiorca zobaczy go jako tekst, a nie plik.",
+  "cliHelpSendText": "Wyślij ten tekst zamiast plików: odbiorca zobaczy go jako tekst, a nie plik. Inni użytkownicy tego komputera mogą go zobaczyć na liście procesów; dla prywatnego tekstu użyj -.",
   "cliSendingText": "Wysyłanie tekstu, {size}.",
   "cliOfferedText": "Oferowane: tekst, {size}. Zostanie pokazany tutaj, nie zapisany.",
   "cliPromptShow": "Pokazać? [t/N] ",
   "cliTextNotUtf8": "Tekst ze standardowego wejścia nie jest w UTF-8.",
   "cliTextEmpty": "Nie ma tekstu do wysłania.",
-  "cliTextTooLong": "Tekst jest dłuższy niż {size}. Wyślij go jako plik."
+  "cliTextTooLong": "Tekst jest dłuższy niż {size}. Wyślij go jako plik.",
+  "cliDashAlone": "- odczytuje tekst ze standardowego wejścia i nie można go łączyć z plikami. Dla pliku o nazwie - napisz ./-.",
+  "cliTypeText": "Wpisz tekst, a potem w nowym wierszu naciśnij Ctrl-D."
 }

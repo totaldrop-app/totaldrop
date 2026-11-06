@@ -49,7 +49,7 @@
   "cliHelpStun": "STUN-server (host:port), der fortæller denne enhed dens offentlige adresse. En tom værdi slår den fra.",
   "cliHelpRelayOnly": "Forbind aldrig direkte, og oplys ingen IP-adresse: alt går gennem relæserveren. Langsommere, men den anden side får aldrig din adresse at vide. Ved modtagelse skal afsenderen bruge samme relæserver.",
   "cliHelpSend": "Send filer og mapper, og vis en overførselskode til modtageren.",
-  "cliHelpSendPaths": "Filer eller mapper, der skal sendes; - sender teksten, der læses fra standardinput.",
+  "cliHelpSendPaths": "Filer eller mapper, der skal sendes. - alene læser en tekst fra standardinput; skriv ./- for en fil med navnet -.",
   "cliHelpSendStrong": "Brug en kode på tre ord (33 bit) i stedet for to.",
   "cliHelpReceive": "Modtag filer med en overførselskode, for eksempel 7-harbor-rocket.",
   "cliHelpReceiveCode": "Den overførselskode, du har fået.",
@@ -61,11 +61,13 @@
   "cliDesktopAbout": "Åbn TotalDrop-vinduet.",
   "cliDesktopArgs": "Filer eller mapper, der skal sendes, eller et TotalDrop-link at modtage med.",
   "cliDesktopScreen": "Åbn på skærmen Send (send), Modtag (receive) eller Indstillinger (settings).",
-  "cliHelpSendText": "Send denne tekst i stedet for filer: modtageren ser den som tekst, ikke som en fil.",
+  "cliHelpSendText": "Send denne tekst i stedet for filer: modtageren ser den som tekst, ikke som en fil. Andre på denne computer kan se den i proceslisten; brug - til en privat tekst.",
   "cliSendingText": "Sender en tekst, {size}.",
   "cliOfferedText": "Tilbudt: en tekst, {size}. Den vises her og gemmes ikke.",
   "cliPromptShow": "Vis den? [j/N] ",
   "cliTextNotUtf8": "Teksten på standardinput er ikke UTF-8.",
   "cliTextEmpty": "Der er ingen tekst at sende.",
-  "cliTextTooLong": "Teksten er længere end {size}. Send den som en fil i stedet."
+  "cliTextTooLong": "Teksten er længere end {size}. Send den som en fil i stedet.",
+  "cliDashAlone": "- læser en tekst fra standardinput og kan ikke blandes med filer. Skriv ./- for en fil med navnet -.",
+  "cliTypeText": "Skriv teksten, og tryk derefter på Ctrl-D på en ny linje."
 }

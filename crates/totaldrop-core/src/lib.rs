@@ -700,6 +700,21 @@ impl IncomingOffer {
         report
     }
 
+    /// Accept a text offer ([`OfferSummary::text`]) and keep it in memory:
+    /// nothing is written to disk. The text is in [`ReceiveReport::text`];
+    /// a text that fails its hash or is not UTF-8 is counted as failed.
+    pub async fn accept_text(self) -> Result<ReceiveReport> {
+        self.accept_text_with(&Stop::new()).await
+    }
+
+    /// Like [`IncomingOffer::accept_text`], until `stop` is stopped.
+    pub async fn accept_text_with(self, stop: &Stop) -> Result<ReceiveReport> {
+        let report = transfer::accept_text(&self.conn, self.chan, self.offer, stop).await;
+        self.conn.close(0u32.into(), b"done");
+        let _ = tokio::time::timeout(Duration::from_secs(2), self.endpoint.wait_idle()).await;
+        report
+    }
+
     /// Decline the offer.
     pub async fn decline(mut self) -> Result<()> {
         transfer::decline(&mut self.chan, &self.offer).await?;

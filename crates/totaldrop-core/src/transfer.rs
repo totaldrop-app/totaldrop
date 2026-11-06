@@ -718,8 +718,9 @@ pub struct OfferSummary {
     pub total_size: u64,
     /// Top-level names, normalized.
     pub top_level: Vec<String>,
-    /// A text (#313): the one file is shown, not saved. Its length in
-    /// bytes is `total_size`.
+    /// A text (#313): one file, small enough to show instead of saving
+    /// it; its length in bytes is `total_size`. A caller that shows texts
+    /// accepts it as a text; any other accept saves it as a file.
     pub text: bool,
 }
 
@@ -802,7 +803,11 @@ pub async fn receive_offer(chan: &mut SecureChannel, peer: &Certificate) -> Resu
         .count();
     // Shown as a text only when it can be: one file, small enough to
     // show. Anything else marked as a text is received as files.
-    let text = text && files == 1 && manifest.entries.len() == 1 && manifest.total_size <= MAX_TEXT;
+    // A text is one small file at the top level, nothing else (#313).
+    let text = text
+        && files == 1
+        && manifest.total_size <= MAX_TEXT
+        && matches!(manifest.entries.as_slice(), [e] if e.kind == EntryKind::File && e.path.len() == 1);
     let summary = OfferSummary {
         files,
         dirs: manifest.entries.len().saturating_sub(files),
@@ -936,9 +941,8 @@ pub struct ReceiveReport {
     /// Top-level items as they were named on disk (after renaming any that
     /// already existed).
     pub placed: Vec<PathBuf>,
-    /// The text, for an offer shown as a text (#313). Nothing is then
-    /// left on disk, and `placed` is empty. A text that turns out not to
-    /// be UTF-8 is placed as a file instead.
+    /// The text, when a text was accepted as one (#313). Nothing is then
+    /// written to disk, and `placed` is empty.
     pub text: Option<String>,
 }
 
@@ -1119,64 +1123,138 @@ pub fn check_destination(dest: &Path) -> Result<PathBuf> {
     Ok(dest.to_path_buf())
 }
 
-/// Accept an offer and write everything beneath `dest`. A text (#313) is
-/// received into a hidden folder of its own in `dest`, read, and removed;
-/// the report holds it.
-pub async fn accept(
+/// Accept a text (#313) and receive it in memory: nothing is written to
+/// disk. Only for an offer whose summary says it is a text; the caller
+/// shows it. A text whose hash does not match, or that is not UTF-8, is
+/// dropped: the report then counts a failed file and holds no text.
+pub async fn accept_text(
     conn: &quinn::Connection,
-    chan: SecureChannel,
+    mut chan: SecureChannel,
     offer: VerifiedOffer,
-    dest: &Path,
-    progress: Progress,
     stop: &Stop,
 ) -> Result<ReceiveReport> {
-    if !offer.summary.text {
-        return accept_into(conn, chan, offer, dest, progress, stop).await;
-    }
-    let resolved = check_destination(dest)?;
-    let mut tag = [0u8; 8];
-    getrandom::fill(&mut tag).map_err(|_| Error::Random)?;
-    let folder = resolved.join(format!(
-        ".totaldrop-text-{}",
-        tag.iter().map(|b| format!("{b:02x}")).collect::<String>()
-    ));
-    std::fs::create_dir(&folder)?;
-    // Gone whatever happens below, also when this task is aborted.
-    let _guard = TextFolder(folder.clone());
-    let mut report = accept_into(conn, chan, offer, &folder, progress, stop).await?;
-    let Some(file) = report.placed.pop() else {
-        return Ok(report);
+    let transfer_id = offer.manifest.transfer_id;
+    let entry = match offer.manifest.entries.first() {
+        Some(e) if offer.summary.text => e.clone(),
+        _ => return Err(Error::Protocol("not a text")),
     };
-    let bytes = std::fs::read(&file)?;
-    match String::from_utf8(bytes) {
-        Ok(text) => {
-            report.text = Some(text);
-        }
-        Err(_) => {
-            // Not a text after all: kept as the file it also is.
-            let name = file
-                .file_name()
-                .and_then(|n| n.to_str())
-                .ok_or(Error::Protocol("bad file name"))?
-                .to_owned();
-            report
-                .placed
-                .push(place_no_clobber(&file, &resolved, &name)?);
-        }
+    if stop.is_stopped() {
+        return Err(tell_stopped(conn, &mut chan.sealer, &mut chan.send, transfer_id).await);
     }
+    // One chunk at most: no progress reports are needed.
+    send_control(
+        &mut chan.sealer,
+        &mut chan.send,
+        &Control::Accept {
+            transfer_id,
+            wanted: vec![(0, Vec::new())],
+            progress: false,
+        },
+    )
+    .await?;
+    let SecureChannel {
+        mut sealer,
+        opener,
+        mut send,
+        recv,
+        ..
+    } = chan;
+    let (_reader, mut ctl_rx) = control_reader(opener, recv);
+    let ck = offer.content_key.clone();
+    let read = async {
+        let mut stream = conn.accept_uni().await?;
+        read_text(&mut stream, &entry, &ck, transfer_id).await
+    };
+    let got = tokio::select! {
+        biased;
+        () = stop.stopped() => {
+            return Err(tell_stopped(conn, &mut sealer, &mut send, transfer_id).await);
+        }
+        msg = ctl_rx.recv() => match msg {
+            Some(Ok(Control::Cancel { reason, .. })) => return Err(Error::Cancelled(reason)),
+            Some(Ok(_)) => return Err(Error::Protocol("unexpected control message")),
+            Some(Err(e)) => return Err(e),
+            None => return Err(control_ended(conn)),
+        },
+        r = tokio::time::timeout(INACTIVITY_TIMEOUT, read) => match r {
+            Err(_) => {
+                return Err(Error::Connect(crate::error::msg::SENDER_STOPPED_SENDING.into()));
+            }
+            Ok(Err(e)) => return Err(cancel_or(e, &mut ctl_rx).await),
+            Ok(Ok(bytes)) => bytes,
+        },
+    };
+    let text = got.and_then(|b| String::from_utf8(b).ok());
+    send_control(
+        &mut sealer,
+        &mut send,
+        &Control::EntryDone {
+            transfer_id,
+            index: 0,
+            ok: text.is_some(),
+        },
+    )
+    .await?;
+    let mut report = ReceiveReport {
+        bytes: entry.size,
+        ..ReceiveReport::default()
+    };
+    if text.is_some() {
+        report.files_ok = 1;
+    } else {
+        report.files_failed = 1;
+    }
+    report.text = text;
+    let _ = send.finish();
+    let _ = tokio::time::timeout(Duration::from_secs(5), conn.closed()).await;
     Ok(report)
 }
 
-/// The hidden folder a text is received into, removed when dropped.
-struct TextFolder(PathBuf);
-
-impl Drop for TextFolder {
-    fn drop(&mut self) {
-        let _ = std::fs::remove_dir_all(&self.0);
+/// The one data stream of a text: its plaintext, or `None` when the hash
+/// does not match.
+async fn read_text(
+    stream: &mut quinn::RecvStream,
+    entry: &Entry,
+    ck: &ContentKey,
+    transfer_id: [u8; 16],
+) -> Result<Option<Vec<u8>>> {
+    let header = DataHeader::decode(&expect_frame(stream, 1024).await?)?;
+    if header.transfer_id != transfer_id || header.entry != 0 || header.first_chunk != 0 {
+        return Err(Error::Protocol("bad data stream header"));
     }
+    let size = entry.size;
+    if size > MAX_TEXT {
+        return Err(Error::Protocol("text too large"));
+    }
+    let expected = entry.hash.ok_or(Error::Protocol("file without hash"))?;
+    let chunks = chunk_count(size).ok_or(Error::Protocol("file too large"))?;
+    let cipher = EntryCipher::new(ck, &transfer_id, 0);
+    let mut out = Vec::with_capacity(usize::try_from(size).unwrap_or(0));
+    let mut remaining = size;
+    for i in 0..chunks {
+        let ct = expect_frame(stream, MAX_FRAME).await?;
+        if ct.len() > CHUNK_SIZE.saturating_add(TAG_SIZE) {
+            return Err(Error::Protocol("chunk too large"));
+        }
+        let last = i.saturating_add(1) == chunks;
+        let idx = u32::try_from(i).map_err(|_| Error::Protocol("chunk index"))?;
+        let plain = cipher.open(idx, last, &ct)?;
+        let want = remaining.min(limits::CHUNK_SIZE);
+        if plain.len() as u64 != want {
+            return Err(Error::Protocol("chunk has the wrong length"));
+        }
+        out.extend_from_slice(&plain);
+        remaining = remaining.saturating_sub(want);
+    }
+    if read_frame(stream, MAX_FRAME).await?.is_some() {
+        return Err(Error::Protocol("data after the final chunk"));
+    }
+    Ok((blake3::hash(&out).as_bytes() == &expected).then_some(out))
 }
 
-async fn accept_into(
+/// Accept an offer and write everything beneath `dest`. A text (#313)
+/// offered this way is saved as the file it also is.
+pub async fn accept(
     conn: &quinn::Connection,
     mut chan: SecureChannel,
     offer: VerifiedOffer,
@@ -1581,15 +1659,24 @@ mod tests {
         let _ = std::fs::remove_dir_all(&dir);
     }
 
+    /// How the test receiver takes an offer.
+    #[derive(Clone, Copy, PartialEq)]
+    enum Take {
+        /// Like the CLI after #313: a text in memory, files on disk.
+        AsShown,
+        /// Always on disk, like a receiver before #313 or one that saves.
+        Saved,
+    }
+
     /// Sends `entries` (as a text when `text`) and receives them into a
-    /// fresh folder; `old` receives like a version before #313. Returns
-    /// whether the receiver saw a text, its report, and the folder.
+    /// fresh folder as `take` says. Returns whether the receiver saw a
+    /// text, its report, what the sender heard, and the folder.
     async fn send_text(
         entries: Vec<SourceEntry>,
         text: bool,
-        old: bool,
+        take: Take,
         tag: &str,
-    ) -> (bool, ReceiveReport, PathBuf) {
+    ) -> (bool, ReceiveReport, Result<SendReport>, PathBuf) {
         let (sender, receiver) =
             crate::transport::testing::over_slow_relay(Duration::from_millis(1)).await;
         let (schan, mut rchan, skeys, scert) = secure_pair(&sender, &receiver).await;
@@ -1611,23 +1698,24 @@ mod tests {
                 .await
             })
         };
-        let mut offer = receive_offer(&mut rchan, &scert).await.unwrap();
+        let offer = receive_offer(&mut rchan, &scert).await.unwrap();
         let shown = offer.summary.text;
-        if old {
-            offer.summary.text = false;
+        let report = if shown && take == Take::AsShown {
+            accept_text(&receiver, rchan, offer, &Stop::new()).await
+        } else {
+            accept(
+                &receiver,
+                rchan,
+                offer,
+                &dest,
+                Arc::new(|_, _| {}),
+                &Stop::new(),
+            )
+            .await
         }
-        let report = accept(
-            &receiver,
-            rchan,
-            offer,
-            &dest,
-            Arc::new(|_, _| {}),
-            &Stop::new(),
-        )
-        .await
         .unwrap();
-        send.await.unwrap().unwrap();
-        (shown, report, dest)
+        let sent = send.await.unwrap();
+        (shown, report, sent, dest)
     }
 
     fn names(dir: &Path) -> Vec<String> {
@@ -1639,64 +1727,114 @@ mod tests {
         n
     }
 
-    /// A text arrives as a text: shown, with nothing left on disk (#313).
+    /// One file entry holding `bytes` under `path`, with `hash`.
+    fn bytes_entry(path: &[&str], bytes: &[u8], hash: [u8; 32]) -> SourceEntry {
+        SourceEntry {
+            entry: Entry {
+                path: path.iter().map(|p| (*p).to_owned()).collect(),
+                kind: EntryKind::File,
+                size: bytes.len() as u64,
+                hash: Some(hash),
+                mtime: None,
+            },
+            source: Some(Source::Bytes(Arc::from(bytes))),
+        }
+    }
+
+    /// A text arrives as a text: shown, with nothing written to disk (#313).
     #[tokio::test]
     async fn a_text_is_shown_not_saved() {
         let words = "Merhaba 🌸\nhttps://totaldrop.app";
         let entry = text_entry(words, "text.txt").unwrap();
-        let (shown, report, dest) = send_text(vec![entry], true, false, "new").await;
+        let (shown, report, sent, dest) = send_text(vec![entry], true, Take::AsShown, "new").await;
         assert!(shown);
         assert_eq!(report.text.as_deref(), Some(words));
+        assert_eq!((report.files_ok, report.files_failed), (1, 0));
         assert!(report.placed.is_empty());
         assert!(names(&dest).is_empty(), "{:?}", names(&dest));
+        assert!(sent.is_ok(), "{sent:?}");
         let _ = std::fs::remove_dir_all(&dest);
     }
 
-    /// A receiver from before #313 ignores the mark and saves the file.
+    /// A receiver that saves (or one from before #313, which ignores the
+    /// mark) gets the text as the file it also is.
     #[tokio::test]
-    async fn an_older_receiver_saves_a_text_as_a_file() {
+    async fn a_saved_text_is_a_file() {
         let entry = text_entry("hello", "text.txt").unwrap();
-        let (_, report, dest) = send_text(vec![entry], true, true, "old").await;
+        let (shown, report, _, dest) = send_text(vec![entry], true, Take::Saved, "old").await;
+        assert!(shown);
         assert_eq!(report.text, None);
         assert_eq!(names(&dest), ["text.txt"]);
         assert_eq!(std::fs::read(dest.join("text.txt")).unwrap(), b"hello");
         let _ = std::fs::remove_dir_all(&dest);
     }
 
-    /// The mark on anything but one small file is ignored: files are
-    /// saved as files.
+    /// The mark on anything but one small top-level file is ignored:
+    /// files are saved as files.
     #[tokio::test]
     async fn only_one_small_file_can_be_a_text() {
         let two = vec![
             text_entry("a", "a.txt").unwrap(),
             text_entry("b", "b.txt").unwrap(),
         ];
-        let (shown, report, dest) = send_text(two, true, false, "two").await;
+        let (shown, report, _, dest) = send_text(two, true, Take::AsShown, "two").await;
         assert!(!shown);
         assert_eq!(report.text, None);
         assert_eq!(names(&dest), ["a.txt", "b.txt"]);
         let _ = std::fs::remove_dir_all(&dest);
+
+        let big = vec![0x41_u8; usize::try_from(MAX_TEXT).unwrap() + 1];
+        let entry = bytes_entry(&["big.txt"], &big, *blake3::hash(&big).as_bytes());
+        let (shown, _, _, dest) = send_text(vec![entry], true, Take::AsShown, "big").await;
+        assert!(!shown);
+        assert_eq!(names(&dest), ["big.txt"]);
+        let _ = std::fs::remove_dir_all(&dest);
     }
 
-    /// Bytes that are not UTF-8 are not shown: they are saved as the file
-    /// they also are, and the hidden folder goes.
+    /// A single file below a folder is not a text either.
     #[tokio::test]
-    async fn a_text_that_is_not_utf8_is_saved() {
-        let bytes: Arc<[u8]> = Arc::from(&[0xff_u8, 0xfe, 0x00, 0x41][..]);
-        let entry = SourceEntry {
-            entry: Entry {
-                path: vec!["odd.txt".into()],
-                kind: EntryKind::File,
-                size: 4,
-                hash: Some(*blake3::hash(&bytes).as_bytes()),
-                mtime: None,
-            },
-            source: Some(Source::Bytes(bytes)),
-        };
-        let (shown, report, dest) = send_text(vec![entry], true, false, "odd").await;
+    async fn a_nested_file_is_not_a_text() {
+        let entry = bytes_entry(&["d", "t.txt"], b"x", *blake3::hash(b"x").as_bytes());
+        let (shown, report, _, dest) = send_text(vec![entry], true, Take::AsShown, "nest").await;
+        assert!(!shown);
+        assert_eq!(report.text, None);
+        assert_eq!(std::fs::read(dest.join("d").join("t.txt")).unwrap(), b"x");
+        let _ = std::fs::remove_dir_all(&dest);
+    }
+
+    /// Bytes that are not UTF-8 are not shown, and nothing is saved: the
+    /// file is counted as failed and the sender hears so.
+    #[tokio::test]
+    async fn a_text_that_is_not_utf8_is_dropped() {
+        let bytes = [0xff_u8, 0xfe, 0x00, 0x41];
+        let entry = bytes_entry(&["odd.txt"], &bytes, *blake3::hash(&bytes).as_bytes());
+        let (shown, report, sent, dest) = send_text(vec![entry], true, Take::AsShown, "odd").await;
         assert!(shown);
         assert_eq!(report.text, None);
-        assert_eq!(names(&dest), ["odd.txt"]);
+        assert_eq!((report.files_ok, report.files_failed), (0, 1));
+        assert!(names(&dest).is_empty());
+        assert!(
+            !matches!(
+                sent,
+                Ok(SendReport {
+                    files_failed: 0,
+                    ..
+                })
+            ),
+            "{sent:?}"
+        );
+        let _ = std::fs::remove_dir_all(&dest);
+    }
+
+    /// A text whose hash does not match is not shown.
+    #[tokio::test]
+    async fn a_text_with_the_wrong_hash_is_dropped() {
+        let entry = bytes_entry(&["t.txt"], b"hello", *blake3::hash(b"other").as_bytes());
+        let (shown, report, _, dest) = send_text(vec![entry], true, Take::AsShown, "hash").await;
+        assert!(shown);
+        assert_eq!(report.text, None);
+        assert_eq!((report.files_ok, report.files_failed), (0, 1));
+        assert!(names(&dest).is_empty());
         let _ = std::fs::remove_dir_all(&dest);
     }
 

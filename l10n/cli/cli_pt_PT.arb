@@ -49,7 +49,7 @@
   "cliHelpStun": "Servidor STUN (host:port) que indica a este dispositivo o seu endereço público. Um valor vazio desativa-o.",
   "cliHelpRelayOnly": "Nunca ligar diretamente nem anunciar endereço IP: tudo passa pelo servidor de retransmissão. Mais lento, mas o outro lado nunca fica a saber o seu endereço. Ao receber, o remetente tem de usar o mesmo servidor de retransmissão.",
   "cliHelpSend": "Enviar ficheiros e pastas e mostrar um código de transferência para o destinatário.",
-  "cliHelpSendPaths": "Ficheiros ou pastas a enviar; - envia o texto lido da entrada padrão.",
+  "cliHelpSendPaths": "Ficheiros ou pastas a enviar. - sozinho lê um texto da entrada padrão; escreva ./- para um ficheiro chamado -.",
   "cliHelpSendStrong": "Usar um código de três palavras (33 bits) em vez de duas.",
   "cliHelpReceive": "Receber ficheiros com um código de transferência, por exemplo 7-harbor-rocket.",
   "cliHelpReceiveCode": "O código de transferência que lhe foi dado.",
@@ -61,11 +61,13 @@
   "cliDesktopAbout": "Abrir a janela do TotalDrop.",
   "cliDesktopArgs": "Ficheiros ou pastas a enviar, ou uma ligação do TotalDrop para receber.",
   "cliDesktopScreen": "Abrir no ecrã Enviar (send), Receber (receive) ou Definições (settings).",
-  "cliHelpSendText": "Enviar este texto em vez de ficheiros: o destinatário vê-o como texto, não como ficheiro.",
+  "cliHelpSendText": "Enviar este texto em vez de ficheiros: o destinatário vê-o como texto, não como ficheiro. Outras pessoas neste computador podem vê-lo na lista de processos; use - para um texto privado.",
   "cliSendingText": "A enviar um texto, {size}.",
   "cliOfferedText": "Oferecido: um texto, {size}. É mostrado aqui, não guardado.",
   "cliPromptShow": "Mostrar? [s/N] ",
   "cliTextNotUtf8": "O texto da entrada padrão não está em UTF-8.",
   "cliTextEmpty": "Não há texto para enviar.",
-  "cliTextTooLong": "O texto excede {size}. Envie-o como ficheiro."
+  "cliTextTooLong": "O texto excede {size}. Envie-o como ficheiro.",
+  "cliDashAlone": "- lê um texto da entrada padrão e não pode ser misturado com ficheiros. Para um ficheiro chamado -, escreva ./-.",
+  "cliTypeText": "Escreva o texto e depois prima Ctrl-D numa nova linha."
 }

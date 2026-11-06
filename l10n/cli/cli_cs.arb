@@ -49,7 +49,7 @@
   "cliHelpStun": "Server STUN (host:port), který tomuto zařízení sdělí jeho veřejnou adresu. Prázdná hodnota ho vypne.",
   "cliHelpRelayOnly": "Nikdy se nepřipojovat přímo a neoznamovat žádnou IP adresu: vše jde přes zprostředkující server. Pomalejší, ale druhá strana se vaši adresu nikdy nedozví. Při přijímání musí odesílatel používat stejný zprostředkující server.",
   "cliHelpSend": "Odeslat soubory a složky a vypsat kód přenosu pro příjemce.",
-  "cliHelpSendPaths": "Soubory nebo složky k odeslání; - odešle text načtený ze standardního vstupu.",
+  "cliHelpSendPaths": "Soubory nebo složky k odeslání. Samotné - načte text ze standardního vstupu; pro soubor s názvem - napište ./-.",
   "cliHelpSendStrong": "Použít kód ze tří slov (33 bitů) místo dvou.",
   "cliHelpReceive": "Přijmout soubory pomocí kódu přenosu, například 7-harbor-rocket.",
   "cliHelpReceiveCode": "Kód přenosu, který jste dostali.",
@@ -61,11 +61,13 @@
   "cliDesktopAbout": "Otevřít okno TotalDrop.",
   "cliDesktopArgs": "Soubory nebo složky k odeslání, nebo odkaz TotalDrop k přijetí.",
   "cliDesktopScreen": "Otevřít na obrazovce Odeslat (send), Přijmout (receive) nebo Nastavení (settings).",
-  "cliHelpSendText": "Odeslat tento text místo souborů: příjemce ho uvidí jako text, ne jako soubor.",
+  "cliHelpSendText": "Odeslat tento text místo souborů: příjemce ho uvidí jako text, ne jako soubor. Ostatní na tomto počítači ho mohou vidět v seznamu procesů; pro soukromý text použijte -.",
   "cliSendingText": "Odesílá se text, {size}.",
   "cliOfferedText": "Nabídnuto: text, {size}. Zobrazí se zde, neuloží se.",
   "cliPromptShow": "Zobrazit? [a/N] ",
   "cliTextNotUtf8": "Text na standardním vstupu není v UTF-8.",
   "cliTextEmpty": "Není co odeslat, text je prázdný.",
-  "cliTextTooLong": "Text je delší než {size}. Odešlete ho raději jako soubor."
+  "cliTextTooLong": "Text je delší než {size}. Odešlete ho raději jako soubor.",
+  "cliDashAlone": "- načítá text ze standardního vstupu a nelze ho kombinovat se soubory. Pro soubor s názvem - napište ./-.",
+  "cliTypeText": "Napište text a pak na novém řádku stiskněte Ctrl-D."
 }

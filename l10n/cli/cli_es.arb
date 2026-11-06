@@ -49,7 +49,7 @@
   "cliHelpStun": "Servidor STUN (host:port) que indica a este dispositivo su dirección pública. Un valor vacío lo desactiva.",
   "cliHelpRelayOnly": "No conectarse nunca directamente ni anunciar ninguna dirección IP: todo pasa por el servidor de retransmisión. Es más lento, pero el otro lado nunca conoce tu dirección. Al recibir, el remitente debe usar el mismo servidor de retransmisión.",
   "cliHelpSend": "Enviar archivos y carpetas, y mostrar un código de transferencia para el destinatario.",
-  "cliHelpSendPaths": "Archivos o carpetas que enviar; - envía el texto leído de la entrada estándar.",
+  "cliHelpSendPaths": "Archivos o carpetas que enviar. - por sí solo lee un texto de la entrada estándar; escribe ./- para un archivo llamado -.",
   "cliHelpSendStrong": "Usar un código de tres palabras (33 bits) en lugar de dos.",
   "cliHelpReceive": "Recibir archivos con un código de transferencia, por ejemplo 7-harbor-rocket.",
   "cliHelpReceiveCode": "El código de transferencia que te dieron.",
@@ -61,11 +61,13 @@
   "cliDesktopAbout": "Abrir la ventana de TotalDrop.",
   "cliDesktopArgs": "Archivos o carpetas que enviar, o un enlace de TotalDrop con el que recibir.",
   "cliDesktopScreen": "Abrir en la pantalla Enviar (send), Recibir (receive) o Ajustes (settings).",
-  "cliHelpSendText": "Enviar este texto en lugar de archivos: el destinatario lo ve como texto, no como archivo.",
+  "cliHelpSendText": "Enviar este texto en lugar de archivos: el destinatario lo ve como texto, no como archivo. Otras personas en este equipo pueden verlo en la lista de procesos; usa - para un texto privado.",
   "cliSendingText": "Enviando un texto, {size}.",
   "cliOfferedText": "Ofrecido: un texto, {size}. Se muestra aquí, no se guarda.",
   "cliPromptShow": "¿Mostrarlo? [s/N] ",
   "cliTextNotUtf8": "El texto de la entrada estándar no está en UTF-8.",
   "cliTextEmpty": "No hay texto que enviar.",
-  "cliTextTooLong": "El texto supera {size}. Envíalo como archivo."
+  "cliTextTooLong": "El texto supera {size}. Envíalo como archivo.",
+  "cliDashAlone": "- lee un texto de la entrada estándar y no se puede mezclar con archivos. Para un archivo llamado -, escribe ./-.",
+  "cliTypeText": "Escribe el texto y luego pulsa Ctrl-D en una línea nueva."
 }

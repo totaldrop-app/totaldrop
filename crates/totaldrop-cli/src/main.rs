@@ -277,18 +277,24 @@ enum What {
 /// The name a receiver from before #313 saves a text under.
 const TEXT_FILE: &str = "text.txt";
 
-/// What `send` was asked to send: `--text`, `-` for the text on standard
-/// input, or files. A text must be UTF-8, not empty, and at most
-/// [`totaldrop_core::MAX_TEXT`] bytes; the person is told otherwise.
+/// What `send` was asked to send: `--text`, `-` alone for the text on
+/// standard input, or files (`./-` for a file named `-`). A text must be
+/// UTF-8, not empty, and at most [`totaldrop_core::MAX_TEXT`] bytes; the
+/// person is told otherwise. Reading from a `terminal`, they are told how
+/// to end the text.
 fn what_to_send(
     s: &Strings,
     paths: Vec<PathBuf>,
     text: Option<String>,
     stdin: &mut impl std::io::Read,
+    terminal: bool,
 ) -> Result<What, Failure> {
     let text = match (text, paths.as_slice()) {
         (Some(t), _) => t,
         (None, [one]) if one.as_os_str() == "-" => {
+            if terminal {
+                eprintln!("{}", s.get("cliTypeText", &[]));
+            }
             let mut bytes = Vec::new();
             // One byte more than allowed is enough to know it is too long.
             let limit = totaldrop_core::MAX_TEXT.saturating_add(1);
@@ -303,6 +309,10 @@ fn what_to_send(
                     return Err(Failure::Shown);
                 }
             }
+        }
+        (None, _) if paths.iter().any(|p| p.as_os_str() == "-") => {
+            eprintln!("totaldrop: {}", s.get("cliDashAlone", &[]));
+            return Err(Failure::Shown);
         }
         _ => return Ok(What::Files(paths)),
     };
@@ -326,16 +336,19 @@ fn too_long(s: &Strings) -> Failure {
 }
 
 /// A received text as the terminal should show it: hidden and control
-/// characters are named instead of acted on, line breaks and tabs stay.
-/// Into a pipe or a file it goes as it came.
+/// characters are named instead of acted on; line breaks (`\n` or `\r\n`)
+/// and tabs stay. A `\r` anywhere else is named too: it would send the
+/// cursor back over the line. Into a pipe or a file it goes as it came.
 fn shown_text(text: &str, terminal: bool) -> String {
     if !terminal {
         return text.to_owned();
     }
     text.split('\n')
         .map(|line| {
-            line.split('\t')
-                .map(|part| visible(part.strip_suffix('\r').unwrap_or(part)))
+            line.strip_suffix('\r')
+                .unwrap_or(line)
+                .split('\t')
+                .map(visible)
                 .collect::<Vec<_>>()
                 .join("\t")
         })
@@ -517,9 +530,14 @@ async fn receive(
         eprintln!("{}", s.get("cliDeclined", &[]));
         return Ok(());
     }
-    let report = offer
-        .accept_with(&dest, printer(Arc::clone(&s)), &stop)
-        .await?;
+    let report = if summary.text {
+        // In memory: nothing of a text is written to disk (#313).
+        offer.accept_text_with(&stop).await?
+    } else {
+        offer
+            .accept_with(&dest, printer(Arc::clone(&s)), &stop)
+            .await?
+    };
     if let Some(text) = &report.text {
         let terminal = std::io::stdout().is_terminal();
         let mut out = std::io::stdout().lock();
@@ -605,7 +623,13 @@ fn main() -> ExitCode {
             paths,
             text,
             strong,
-        } => match what_to_send(&strings, paths, text, &mut std::io::stdin().lock()) {
+        } => match what_to_send(
+            &strings,
+            paths,
+            text,
+            &mut std::io::stdin().lock(),
+            std::io::stdin().is_terminal(),
+        ) {
             Ok(what) => runtime.block_on(send(strings, server(cli.server), route, what, strong)),
             Err(e) => Err(e),
         },
@@ -779,10 +803,8 @@ mod tests {
         assert!(connecting_line(&en, "7-harbor").is_err());
     }
 
-    /// An answer that is not typed (a pipe or a file) is not echoed, so the
-    /// question ends its own line: what comes next starts on a new one (#163).
-    /// `-` reads the text from standard input; `--text` takes it as given;
-    /// anything else is files (#313).
+    /// `-` alone reads the text from standard input; `--text` takes it as
+    /// given; anything else is files, and `-` among files is refused (#313).
     #[test]
     fn what_send_sends() {
         let s = Strings::new(
@@ -791,33 +813,44 @@ mod tests {
             None,
         );
         let none = &mut std::io::empty();
-        let what = what_to_send(&s, vec!["-".into()], None, &mut &b"hi there\n"[..]).unwrap();
+        let what =
+            what_to_send(&s, vec!["-".into()], None, &mut &b"hi there\n"[..], false).unwrap();
         assert!(matches!(what, What::Text(t) if t == "hi there\n"));
-        let what = what_to_send(&s, vec![], Some("note".into()), none).unwrap();
+        let what = what_to_send(&s, vec![], Some("note".into()), none, false).unwrap();
         assert!(matches!(what, What::Text(t) if t == "note"));
-        let what = what_to_send(&s, vec!["a".into(), "-".into()], None, none).unwrap();
+        let what = what_to_send(&s, vec!["a".into(), "./-".into()], None, none, false).unwrap();
         assert!(matches!(what, What::Files(f) if f.len() == 2));
+        assert!(what_to_send(&s, vec!["a".into(), "-".into()], None, none, false).is_err());
         // Empty, not UTF-8, too long: said, and nothing is sent.
-        assert!(what_to_send(&s, vec!["-".into()], None, none).is_err());
-        assert!(what_to_send(&s, vec!["-".into()], None, &mut &[0xff_u8, 0xfe][..]).is_err());
+        assert!(what_to_send(&s, vec!["-".into()], None, none, false).is_err());
+        assert!(
+            what_to_send(&s, vec!["-".into()], None, &mut &[0xff_u8, 0xfe][..], false).is_err()
+        );
         let long = vec![b'a'; usize::try_from(totaldrop_core::MAX_TEXT).unwrap() + 1];
-        assert!(what_to_send(&s, vec!["-".into()], None, &mut &long[..]).is_err());
+        assert!(what_to_send(&s, vec!["-".into()], None, &mut &long[..], false).is_err());
         let exact = vec![b'a'; usize::try_from(totaldrop_core::MAX_TEXT).unwrap()];
-        assert!(what_to_send(&s, vec!["-".into()], None, &mut &exact[..]).is_ok());
+        assert!(what_to_send(&s, vec!["-".into()], None, &mut &exact[..], false).is_ok());
     }
 
     /// A received text cannot move the cursor or hide its words in a
     /// terminal; into a pipe it goes unchanged.
     #[test]
     fn a_received_text_shows_its_hidden_characters() {
-        let text = "one\ttwo\r\nred\u{1b}[31m \u{202e}evil\n";
+        let text = "one\ttwo\r\nred\u{1b}[31m \u{202e}evil\nfake\rreal\r\t\n";
         let shown = shown_text(text, true);
         assert!(!shown.contains('\u{1b}') && !shown.contains('\u{202e}'));
         assert!(shown.contains("<U+001B>") && shown.contains("<U+202E>"));
         assert!(shown.starts_with("one\ttwo\nred"));
+        // Only a \r that ends a line goes; one inside a line is named.
+        assert!(
+            shown.ends_with("\nfake<U+000D>real<U+000D>\t\n"),
+            "{shown:?}"
+        );
         assert_eq!(shown_text(text, false), text);
     }
 
+    /// An answer that is not typed (a pipe or a file) is not echoed, so the
+    /// question ends its own line: what comes next starts on a new one (#163).
     #[test]
     fn an_answer_from_a_pipe_ends_the_line() {
         for (typed, shown) in [(false, "Save? \n"), (true, "Save? ")] {

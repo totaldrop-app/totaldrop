@@ -347,19 +347,26 @@ treated as final.
       shows what the signed manifest holds, so the signed bytes of a text
       offer are those of the same file offer, and an old receiver's
       signature check is unchanged.
-    - A receiver shows a text only when field 8 is set, the offer has
-      exactly one entry, a file of at most 1 MiB, its hash matches, and its
-      content is UTF-8. It receives the file into a hidden folder of its
-      own inside the destination, reads it and removes the folder: nothing
-      stays on disk. When the content is not UTF-8, the file is placed in
-      the destination as usual. Anything else marked as a text is received
-      as files.
+    - A receiver takes an offer as a text only when field 8 is set and
+      the manifest holds exactly one entry: a file at the top level (a
+      path of one name) of at most 1 MiB. Anything else marked as a text
+      is received as files.
+    - A receiver that shows texts receives it in memory and writes nothing
+      to disk. It accepts entry 0, reads its one data stream, checks the
+      hash and that the content is UTF-8, and reports the entry with
+      `entry_done`. A hash that does not match, or content that is not
+      UTF-8, is reported as failed (`ok = false`) and nothing is shown or
+      saved; the sender says that one file failed.
+    - A receiver may also save a text like any file (the core's default
+      `accept` does): then it is placed in the destination under its name.
     - Older versions: an old receiver ignores field 8 and saves the text
       as the file it also is; the sender names it so (`text.txt` from the
       command line). An old sender never sets it. Absent means `false`.
-    - The receiver shows a text as data: it never opens a link on its own,
-      and it shows control and invisible direction characters instead of
-      acting on them.
+    - The receiver shows a text as data: it never opens a link on its own.
+      The command line names control, format and separator characters
+      (`U+202E`, `U+001B`, a `\r` inside a line) instead of letting a
+      terminal act on them; the joiners `U+200C`/`U+200D` stay, since
+      scripts need them. Look-alike letters are not caught.
 
 ## Known limits, to be closed before 1.0
 
