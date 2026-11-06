@@ -293,7 +293,13 @@ fn what_to_send(
         (Some(t), _) => t,
         (None, [one]) if one.as_os_str() == "-" => {
             if terminal {
-                eprintln!("{}", s.get("cliTypeText", &[]));
+                // A Windows console ends input with Ctrl-Z, then Enter.
+                let key = if cfg!(windows) {
+                    "cliTypeTextWindows"
+                } else {
+                    "cliTypeText"
+                };
+                eprintln!("{}", s.get(key, &[]));
             }
             let mut bytes = Vec::new();
             // One byte more than allowed is enough to know it is too long.
@@ -343,14 +349,19 @@ fn shown_text(text: &str, terminal: bool) -> String {
     if !terminal {
         return text.to_owned();
     }
-    text.split('\n')
-        .map(|line| {
-            line.strip_suffix('\r')
-                .unwrap_or(line)
-                .split('\t')
-                .map(visible)
-                .collect::<Vec<_>>()
-                .join("\t")
+    let lines: Vec<&str> = text.split('\n').collect();
+    let last = lines.len().saturating_sub(1);
+    lines
+        .iter()
+        .enumerate()
+        .map(|(i, line)| {
+            // Only a \r that a \n follows ends a line.
+            let line = if i < last {
+                line.strip_suffix('\r').unwrap_or(line)
+            } else {
+                line
+            };
+            line.split('\t').map(visible).collect::<Vec<_>>().join("\t")
         })
         .collect::<Vec<_>>()
         .join("\n")
@@ -846,6 +857,7 @@ mod tests {
             shown.ends_with("\nfake<U+000D>real<U+000D>\t\n"),
             "{shown:?}"
         );
+        assert_eq!(shown_text("end\r", true), "end<U+000D>");
         assert_eq!(shown_text(text, false), text);
     }
 

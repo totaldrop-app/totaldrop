@@ -69,5 +69,6 @@
   "cliTextEmpty": "Er is geen tekst om te verzenden.",
   "cliTextTooLong": "De tekst is langer dan {size}. Verzend hem als bestand.",
   "cliDashAlone": "- leest een tekst van de standaardinvoer en kan niet met bestanden worden gecombineerd. Schrijf ./- voor een bestand met de naam -.",
-  "cliTypeText": "Typ de tekst en druk daarna op een nieuwe regel op Ctrl-D."
+  "cliTypeText": "Typ de tekst en druk daarna op een nieuwe regel op Ctrl-D.",
+  "cliTypeTextWindows": "Typ de tekst en druk daarna op een nieuwe regel op Ctrl-Z en Enter."
 }

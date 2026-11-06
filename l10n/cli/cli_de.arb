@@ -69,5 +69,6 @@
   "cliTextEmpty": "Es gibt keinen Text zum Senden.",
   "cliTextTooLong": "Der Text ist länger als {size}. Senden Sie ihn stattdessen als Datei.",
   "cliDashAlone": "- liest einen Text von der Standardeingabe und kann nicht mit Dateien gemischt werden. Für eine Datei namens - schreiben Sie ./-.",
-  "cliTypeText": "Geben Sie den Text ein und drücken Sie dann in einer neuen Zeile Strg-D."
+  "cliTypeText": "Geben Sie den Text ein und drücken Sie dann in einer neuen Zeile Strg-D.",
+  "cliTypeTextWindows": "Geben Sie den Text ein und drücken Sie dann in einer neuen Zeile Strg-Z und die Eingabetaste."
 }

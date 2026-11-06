@@ -69,5 +69,6 @@
   "cliTextEmpty": "Il n’y a aucun texte à envoyer.",
   "cliTextTooLong": "Le texte dépasse {size}. Envoyez-le plutôt comme fichier.",
   "cliDashAlone": "- lit un texte depuis l'entrée standard et ne peut pas être mélangé avec des fichiers. Pour un fichier nommé -, écrivez ./-.",
-  "cliTypeText": "Tapez le texte, puis appuyez sur Ctrl-D sur une nouvelle ligne."
+  "cliTypeText": "Tapez le texte, puis appuyez sur Ctrl-D sur une nouvelle ligne.",
+  "cliTypeTextWindows": "Tapez le texte, puis appuyez sur Ctrl-Z et Entrée sur une nouvelle ligne."
 }

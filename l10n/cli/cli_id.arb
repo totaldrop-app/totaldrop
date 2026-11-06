@@ -69,5 +69,6 @@
   "cliTextEmpty": "Tidak ada teks untuk dikirim.",
   "cliTextTooLong": "Teks lebih panjang dari {size}. Kirim sebagai file.",
   "cliDashAlone": "- membaca teks dari input standar dan tidak dapat dicampur dengan file. Untuk file bernama -, tulis ./-.",
-  "cliTypeText": "Ketik teksnya, lalu tekan Ctrl-D di baris baru."
+  "cliTypeText": "Ketik teksnya, lalu tekan Ctrl-D di baris baru.",
+  "cliTypeTextWindows": "Ketik teksnya, lalu tekan Ctrl-Z dan Enter di baris baru."
 }

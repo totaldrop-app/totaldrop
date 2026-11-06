@@ -69,5 +69,6 @@
   "cliTextEmpty": "Lähetettävää tekstiä ei ole.",
   "cliTextTooLong": "Teksti on pidempi kuin {size}. Lähetä se tiedostona.",
   "cliDashAlone": "- lukee tekstin vakiosyötteestä, eikä sitä voi yhdistää tiedostoihin. Kirjoita ./- tiedostolle, jonka nimi on -.",
-  "cliTypeText": "Kirjoita teksti ja paina sitten uudella rivillä Ctrl-D."
+  "cliTypeText": "Kirjoita teksti ja paina sitten uudella rivillä Ctrl-D.",
+  "cliTypeTextWindows": "Kirjoita teksti ja paina sitten uudella rivillä Ctrl-Z ja Enter."
 }

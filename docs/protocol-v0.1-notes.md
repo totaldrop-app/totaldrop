@@ -349,7 +349,7 @@ treated as final.
       signature check is unchanged.
     - A receiver takes an offer as a text only when field 8 is set and
       the manifest holds exactly one entry: a file at the top level (a
-      path of one name) of at most 1 MiB. Anything else marked as a text
+      path of one name) of 1 byte to 1 MiB. Anything else marked as a text
       is received as files.
     - A receiver that shows texts receives it in memory and writes nothing
       to disk. It accepts entry 0, reads its one data stream, checks the
@@ -359,6 +359,9 @@ treated as final.
       saved; the sender says that one file failed.
     - A receiver may also save a text like any file (the core's default
       `accept` does): then it is placed in the destination under its name.
+    - The command line checks the destination folder before it connects,
+      when it does not yet know that a text will come; a text then goes to
+      standard output and the folder is not used.
     - Older versions: an old receiver ignores field 8 and saves the text
       as the file it also is; the sender names it so (`text.txt` from the
       command line). An old sender never sets it. Absent means `false`.

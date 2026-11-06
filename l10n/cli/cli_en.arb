@@ -121,5 +121,7 @@
   "cliDashAlone": "- reads a text from standard input and cannot be mixed with files. For a file named -, write ./-.",
   "@cliDashAlone": {"description": "Said when - (read the text from standard input) is given together with files. ./- is how a file named - is written"},
   "cliTypeText": "Type the text, then press Ctrl-D on a new line.",
-  "@cliTypeText": {"description": "Said when send - reads the text from a terminal: how to end it"}
+  "@cliTypeText": {"description": "Said when send - reads the text from a terminal: how to end it; cliTypeTextWindows is the same on Windows"},
+  "cliTypeTextWindows": "Type the text, then press Ctrl-Z and Enter on a new line.",
+  "@cliTypeTextWindows": {"description": "cliTypeText on Windows, where a console ends input with Ctrl-Z then Enter"}
 }

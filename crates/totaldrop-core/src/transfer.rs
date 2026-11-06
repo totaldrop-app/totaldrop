@@ -803,10 +803,11 @@ pub async fn receive_offer(chan: &mut SecureChannel, peer: &Certificate) -> Resu
         .count();
     // Shown as a text only when it can be: one file, small enough to
     // show. Anything else marked as a text is received as files.
-    // A text is one small file at the top level, nothing else (#313).
+    // A text is one small, non-empty file at the top level, nothing else
+    // (#313).
     let text = text
         && files == 1
-        && manifest.total_size <= MAX_TEXT
+        && (1..=MAX_TEXT).contains(&manifest.total_size)
         && matches!(manifest.entries.as_slice(), [e] if e.kind == EntryKind::File && e.path.len() == 1);
     let summary = OfferSummary {
         files,
@@ -1788,6 +1789,18 @@ mod tests {
         let (shown, _, _, dest) = send_text(vec![entry], true, Take::AsShown, "big").await;
         assert!(!shown);
         assert_eq!(names(&dest), ["big.txt"]);
+        let _ = std::fs::remove_dir_all(&dest);
+    }
+
+    /// An empty file is not a text: a sender never marks one, and a
+    /// receiver does not take one as a text either.
+    #[tokio::test]
+    async fn an_empty_file_is_not_a_text() {
+        let entry = bytes_entry(&["t.txt"], b"", *blake3::hash(b"").as_bytes());
+        let (shown, report, _, dest) = send_text(vec![entry], true, Take::AsShown, "empty").await;
+        assert!(!shown);
+        assert_eq!(report.text, None);
+        assert_eq!(names(&dest), ["t.txt"]);
         let _ = std::fs::remove_dir_all(&dest);
     }
 

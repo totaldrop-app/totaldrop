@@ -69,5 +69,6 @@
   "cliTextEmpty": "Nie ma tekstu do wysłania.",
   "cliTextTooLong": "Tekst jest dłuższy niż {size}. Wyślij go jako plik.",
   "cliDashAlone": "- odczytuje tekst ze standardowego wejścia i nie można go łączyć z plikami. Dla pliku o nazwie - napisz ./-.",
-  "cliTypeText": "Wpisz tekst, a potem w nowym wierszu naciśnij Ctrl-D."
+  "cliTypeText": "Wpisz tekst, a potem w nowym wierszu naciśnij Ctrl-D.",
+  "cliTypeTextWindows": "Wpisz tekst, a potem w nowym wierszu naciśnij Ctrl-Z i Enter."
 }

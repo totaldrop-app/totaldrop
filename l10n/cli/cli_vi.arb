@@ -69,5 +69,6 @@
   "cliTextEmpty": "Không có văn bản để gửi.",
   "cliTextTooLong": "Văn bản dài hơn {size}. Hãy gửi nó dưới dạng tệp.",
   "cliDashAlone": "- đọc một văn bản từ đầu vào chuẩn và không thể dùng chung với tệp. Với tệp tên là -, hãy viết ./-.",
-  "cliTypeText": "Hãy nhập văn bản, rồi nhấn Ctrl-D trên một dòng mới."
+  "cliTypeText": "Hãy nhập văn bản, rồi nhấn Ctrl-D trên một dòng mới.",
+  "cliTypeTextWindows": "Hãy nhập văn bản, rồi nhấn Ctrl-Z và Enter trên một dòng mới."
 }

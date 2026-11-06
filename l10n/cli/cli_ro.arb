@@ -69,5 +69,6 @@
   "cliTextEmpty": "Nu există niciun text de trimis.",
   "cliTextTooLong": "Textul depășește {size}. Trimiteți-l ca fișier.",
   "cliDashAlone": "- citește un text de la intrarea standard și nu poate fi amestecat cu fișiere. Pentru un fișier numit -, scrieți ./-.",
-  "cliTypeText": "Tastați textul, apoi apăsați Ctrl-D pe un rând nou."
+  "cliTypeText": "Tastați textul, apoi apăsați Ctrl-D pe un rând nou.",
+  "cliTypeTextWindows": "Tastați textul, apoi apăsați Ctrl-Z și Enter pe un rând nou."
 }
