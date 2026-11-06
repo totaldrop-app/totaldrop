@@ -293,7 +293,7 @@ function helperCard(c, s, p) {
     `          <div class="person-body">`,
     `            <h3>${ai ? "Claude" : "Dependabot"}</h3>`,
     ai ? `            <p class="role" data-i18n="tm.role.ai">AI development assistant</p>` : `            <p class="role" data-i18n="tm.role.bot">Automation</p>`,
-    ai ? `            <p data-i18n="tm.ai.d">Writes much of the code and runs the independent review of each pull request. It holds no role in the project: the maintainer approves every merge, release and deployment.</p>`
+    ai ? `            <p data-i18n="tm.ai.d">Writes much of the code and runs the independent review of each pull request. It holds no role in the project: the project lead approves every merge, release and deployment.</p>`
        : `            <p data-i18n="tm.bot.d">Opens a pull request when a dependency has a new version. Each one is reviewed like any other change.</p>`,
     `            <div class="person-foot">`,
   ];
