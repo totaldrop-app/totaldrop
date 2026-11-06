@@ -2,6 +2,7 @@
   "repo": "totaldrop-app/totaldrop",
   "people": [
     { "login": "ozdil", "kind": "person", "role": "maintainer" },
+    { "login": "sadikkuzu", "kind": "person", "role": "contributor", "areas": ["core", "cli"], "name": "Sadık Kuzu" },
     { "login": "claude", "kind": "ai" },
     { "login": "dependabot[bot]", "kind": "bot" }
   ],

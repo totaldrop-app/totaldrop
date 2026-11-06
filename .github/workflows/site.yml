@@ -32,6 +32,8 @@ jobs:
         run: node site/tools/privacy.mjs
       - name: Brand page downloads made from the mark and up to date
         run: node site/tools/brand-files.mjs
+      - name: Team page made from the GitHub snapshot and up to date
+        run: node site/tools/team.mjs
       - name: README and its translations
         run: node site/tools/check-readmes.mjs
       - name: Every page links only to files that exist

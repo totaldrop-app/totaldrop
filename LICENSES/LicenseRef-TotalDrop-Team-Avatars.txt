@@ -1,0 +1,7 @@
+The pictures in site/public/team/avatars/ are the GitHub profile pictures
+of the people shown on the TotalDrop team page. Each belongs to the person
+it shows (or to whoever holds its rights) and is used on totaldrop.app with
+that person's permission. They are not covered by the project's licenses
+and may not be reused outside this repository and its web site without the
+permission of the person concerned. A person who no longer wants to be
+shown can ask the maintainer, and the picture is removed.

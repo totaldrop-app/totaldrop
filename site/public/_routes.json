@@ -6,6 +6,7 @@
   "exclude": [
     "/fonts/*",
     "/brand/files/*",
+    "/team/avatars/*",
     "/i18n/*",
     "/styles.css",
     "/app.js",

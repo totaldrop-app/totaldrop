@@ -1,1 +1,62 @@
-{"fetched":"2026-11-06","profiles":{},"totals":{},"areas":{}}
+{
+  "fetched": "2026-11-06",
+  "profiles": {
+    "ozdil": {
+      "name": "Ozan Özdil",
+      "bio": "Native Linux tools for Omarchy (OmaStudio, PolyCodex, QuickNews), the FOSSWire news site, and medium-format photography from Kastamonu.",
+      "website": "https://ozanozdil.com/",
+      "avatar": "ozdil.jpg",
+      "sha256": "ff0acfca28dcda7c70cc8978dac2e60b48ec0ff0f528a8fdcf1aab8bf781afd7"
+    }
+  },
+  "totals": {
+    "claude": 195,
+    "dependabot[bot]": 9,
+    "ozdil": 158
+  },
+  "areas": {
+    "core": {
+      "": 1,
+      "claude": 31,
+      "ozdil": 22
+    },
+    "formal": {
+      "claude": 14
+    },
+    "android": {
+      "": 1,
+      "claude": 40,
+      "dependabot[bot]": 1,
+      "ozdil": 38
+    },
+    "linux": {
+      "claude": 59,
+      "dependabot[bot]": 1,
+      "ozdil": 30
+    },
+    "cli": {
+      "": 1,
+      "claude": 26,
+      "ozdil": 25
+    },
+    "site": {
+      "claude": 37,
+      "ozdil": 31
+    },
+    "servers": {
+      "": 2,
+      "claude": 38,
+      "dependabot[bot]": 7,
+      "ozdil": 55
+    },
+    "l10n": {
+      "claude": 18,
+      "ozdil": 26
+    },
+    "docs": {
+      "": 2,
+      "claude": 83,
+      "ozdil": 62
+    }
+  }
+}
