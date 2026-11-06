@@ -447,6 +447,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get transferNoticeBody => '使用其他应用时仍会继续。';
+
+  @override
+  String get shareTextSoon => 'TotalDrop 暂不支持发送文本，只能发送文件。请改为分享文件。';
+
+  @override
+  String get shareBusy => '仍有传输正在进行。请等待其完成或将其停止，然后再分享。';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hans`).
@@ -891,6 +897,12 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
 
   @override
   String get transferNoticeBody => '使用其他应用时仍会继续。';
+
+  @override
+  String get shareTextSoon => 'TotalDrop 暂不支持发送文本，只能发送文件。请改为分享文件。';
+
+  @override
+  String get shareBusy => '仍有传输正在进行。请等待其完成或将其停止，然后再分享。';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -1334,4 +1346,10 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get transferNoticeBody => '使用其他應用程式時仍會繼續。';
+
+  @override
+  String get shareTextSoon => 'TotalDrop 暫不支援傳送文字，只能傳送檔案。請改為分享檔案。';
+
+  @override
+  String get shareBusy => '仍有傳輸正在進行。請等待其完成或將其停止，然後再分享。';
 }

@@ -497,4 +497,12 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get transferNoticeBody =>
       'Продолжается, пока вы пользуетесь другими приложениями.';
+
+  @override
+  String get shareTextSoon =>
+      'TotalDrop пока не отправляет текст, только файлы. Поделитесь файлом.';
+
+  @override
+  String get shareBusy =>
+      'Передача ещё идёт. Дождитесь её окончания или остановите её, затем поделитесь снова.';
 }

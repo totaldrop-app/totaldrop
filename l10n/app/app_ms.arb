@@ -129,5 +129,7 @@
   "transferNoticeChannel": "Pemindahan",
   "transferNoticeSending": "Menghantar dengan TotalDrop",
   "transferNoticeReceiving": "Menerima dengan TotalDrop",
-  "transferNoticeBody": "Terus berjalan semasa anda menggunakan apl lain."
+  "transferNoticeBody": "Terus berjalan semasa anda menggunakan apl lain.",
+  "shareTextSoon": "TotalDrop belum menghantar teks, hanya fail. Kongsi fail sebaliknya.",
+  "shareBusy": "Pemindahan masih berjalan. Tunggu sehingga selesai atau hentikannya, kemudian kongsi semula."
 }

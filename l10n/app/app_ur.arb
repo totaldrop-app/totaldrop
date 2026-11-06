@@ -129,5 +129,7 @@
   "transferNoticeChannel": "منتقلیاں",
   "transferNoticeSending": "TotalDrop سے بھیجا جا رہا ہے",
   "transferNoticeReceiving": "TotalDrop سے وصول کیا جا رہا ہے",
-  "transferNoticeBody": "دوسری ایپس استعمال کرتے وقت بھی جاری رہتا ہے۔"
+  "transferNoticeBody": "دوسری ایپس استعمال کرتے وقت بھی جاری رہتا ہے۔",
+  "shareTextSoon": "TotalDrop ابھی متن نہیں بھیجتا، صرف فائلیں۔ اس کے بجائے کوئی فائل شیئر کریں۔",
+  "shareBusy": "ایک منتقلی ابھی جاری ہے۔ اس کے ختم ہونے کا انتظار کریں یا اسے روکیں، پھر دوبارہ شیئر کریں۔"
 }

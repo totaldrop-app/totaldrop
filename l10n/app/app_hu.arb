@@ -129,5 +129,7 @@
   "transferNoticeChannel": "Átvitelek",
   "transferNoticeSending": "Küldés TotalDroppal",
   "transferNoticeReceiving": "Fogadás TotalDroppal",
-  "transferNoticeBody": "Akkor is folytatódik, ha más alkalmazásokat használsz."
+  "transferNoticeBody": "Akkor is folytatódik, ha más alkalmazásokat használsz.",
+  "shareTextSoon": "A TotalDrop még nem küld szöveget, csak fájlokat. Ossz meg inkább egy fájlt.",
+  "shareBusy": "Még folyamatban van egy átvitel. Várd meg, amíg befejeződik, vagy állítsd le, aztán oszd meg újra."
 }

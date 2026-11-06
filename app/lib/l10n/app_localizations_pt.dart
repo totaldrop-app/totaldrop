@@ -496,6 +496,14 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get transferNoticeBody => 'Continua enquanto você usa outros apps.';
+
+  @override
+  String get shareTextSoon =>
+      'O TotalDrop ainda não envia texto, apenas arquivos. Compartilhe um arquivo.';
+
+  @override
+  String get shareBusy =>
+      'Uma transferência ainda está em andamento. Espere terminar ou pare-a e compartilhe de novo.';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -989,6 +997,14 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get transferNoticeBody => 'Continua enquanto você usa outros apps.';
+
+  @override
+  String get shareTextSoon =>
+      'O TotalDrop ainda não envia texto, apenas arquivos. Compartilhe um arquivo.';
+
+  @override
+  String get shareBusy =>
+      'Uma transferência ainda está em andamento. Espere terminar ou pare-a e compartilhe de novo.';
 }
 
 /// The translations for Portuguese, as used in Portugal (`pt_PT`).
@@ -1483,4 +1499,12 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
 
   @override
   String get transferNoticeBody => 'Continua enquanto utiliza outras apps.';
+
+  @override
+  String get shareTextSoon =>
+      'O TotalDrop ainda não envia texto, apenas ficheiros. Partilhe um ficheiro.';
+
+  @override
+  String get shareBusy =>
+      'Ainda está a decorrer uma transferência. Aguarde que termine ou pare-a e partilhe novamente.';
 }

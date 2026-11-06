@@ -129,5 +129,7 @@
   "transferNoticeChannel": "Передавання",
   "transferNoticeSending": "Надсилання через TotalDrop",
   "transferNoticeReceiving": "Отримання через TotalDrop",
-  "transferNoticeBody": "Триває, поки ви користуєтеся іншими застосунками."
+  "transferNoticeBody": "Триває, поки ви користуєтеся іншими застосунками.",
+  "shareTextSoon": "TotalDrop поки не надсилає текст, лише файли. Поділіться файлом.",
+  "shareBusy": "Передавання ще триває. Дочекайтеся його завершення або зупиніть його, а потім поділіться знову."
 }

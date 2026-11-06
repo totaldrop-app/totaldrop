@@ -456,4 +456,11 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get transferNoticeBody => 'ほかのアプリを使っている間も続きます。';
+
+  @override
+  String get shareTextSoon =>
+      'TotalDrop はまだテキストを送信できません。ファイルのみです。ファイルを共有してください。';
+
+  @override
+  String get shareBusy => '転送がまだ進行中です。完了を待つか停止してから、もう一度共有してください。';
 }

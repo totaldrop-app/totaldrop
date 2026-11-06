@@ -129,5 +129,7 @@
   "transferNoticeChannel": "Μεταφορές",
   "transferNoticeSending": "Αποστολή με το TotalDrop",
   "transferNoticeReceiving": "Λήψη με το TotalDrop",
-  "transferNoticeBody": "Συνεχίζεται ενώ χρησιμοποιείτε άλλες εφαρμογές."
+  "transferNoticeBody": "Συνεχίζεται ενώ χρησιμοποιείτε άλλες εφαρμογές.",
+  "shareTextSoon": "Το TotalDrop δεν στέλνει ακόμη κείμενο, μόνο αρχεία. Μοιραστείτε ένα αρχείο.",
+  "shareBusy": "Μια μεταφορά είναι ακόμη σε εξέλιξη. Περιμένετε να τελειώσει ή σταματήστε την και μοιραστείτε ξανά."
 }

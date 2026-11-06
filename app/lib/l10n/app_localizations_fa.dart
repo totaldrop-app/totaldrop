@@ -484,4 +484,12 @@ class AppLocalizationsFa extends AppLocalizations {
   @override
   String get transferNoticeBody =>
       'هنگام استفاده از برنامه‌های دیگر ادامه می‌یابد.';
+
+  @override
+  String get shareTextSoon =>
+      'TotalDrop هنوز متن نمی‌فرستد، فقط فایل. به جای آن یک فایل هم‌رسانی کنید.';
+
+  @override
+  String get shareBusy =>
+      'یک انتقال هنوز در جریان است. صبر کنید تمام شود یا آن را متوقف کنید، سپس دوباره هم‌رسانی کنید.';
 }

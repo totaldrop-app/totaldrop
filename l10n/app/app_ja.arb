@@ -129,5 +129,7 @@
   "transferNoticeChannel": "転送",
   "transferNoticeSending": "TotalDrop で送信中",
   "transferNoticeReceiving": "TotalDrop で受信中",
-  "transferNoticeBody": "ほかのアプリを使っている間も続きます。"
+  "transferNoticeBody": "ほかのアプリを使っている間も続きます。",
+  "shareTextSoon": "TotalDrop はまだテキストを送信できません。ファイルのみです。ファイルを共有してください。",
+  "shareBusy": "転送がまだ進行中です。完了を待つか停止してから、もう一度共有してください。"
 }

@@ -473,4 +473,12 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get transferNoticeBody => 'Başka uygulamaları kullanırken de sürer.';
+
+  @override
+  String get shareTextSoon =>
+      'TotalDrop henüz metin göndermiyor, yalnızca dosya. Bunun yerine bir dosya paylaşın.';
+
+  @override
+  String get shareBusy =>
+      'Bir aktarım hâlâ sürüyor. Bitmesini bekleyin ya da durdurun, sonra yeniden paylaşın.';
 }

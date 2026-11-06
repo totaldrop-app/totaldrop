@@ -129,5 +129,7 @@
   "transferNoticeChannel": "Přenosy",
   "transferNoticeSending": "Odesílání přes TotalDrop",
   "transferNoticeReceiving": "Příjem přes TotalDrop",
-  "transferNoticeBody": "Pokračuje, i když používáte jiné aplikace."
+  "transferNoticeBody": "Pokračuje, i když používáte jiné aplikace.",
+  "shareTextSoon": "TotalDrop zatím neposílá text, jen soubory. Sdílejte raději soubor.",
+  "shareBusy": "Přenos stále probíhá. Počkejte, až skončí, nebo ho zastavte, a pak sdílejte znovu."
 }

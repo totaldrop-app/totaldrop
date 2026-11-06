@@ -471,4 +471,12 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get transferNoticeBody => 'Vẫn tiếp tục khi bạn dùng ứng dụng khác.';
+
+  @override
+  String get shareTextSoon =>
+      'TotalDrop chưa gửi được văn bản, chỉ gửi tệp. Hãy chia sẻ một tệp.';
+
+  @override
+  String get shareBusy =>
+      'Vẫn còn một lần truyền đang chạy. Hãy chờ nó xong hoặc dừng nó, rồi chia sẻ lại.';
 }

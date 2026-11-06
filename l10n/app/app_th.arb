@@ -129,5 +129,7 @@
   "transferNoticeChannel": "การโอน",
   "transferNoticeSending": "กำลังส่งด้วย TotalDrop",
   "transferNoticeReceiving": "กำลังรับด้วย TotalDrop",
-  "transferNoticeBody": "ทำงานต่อไปขณะที่คุณใช้แอปอื่น"
+  "transferNoticeBody": "ทำงานต่อไปขณะที่คุณใช้แอปอื่น",
+  "shareTextSoon": "TotalDrop ยังส่งข้อความไม่ได้ ส่งได้เฉพาะไฟล์ โปรดแชร์ไฟล์แทน",
+  "shareBusy": "ยังมีการโอนที่กำลังดำเนินอยู่ รอให้เสร็จหรือหยุดก่อน แล้วแชร์อีกครั้ง"
 }

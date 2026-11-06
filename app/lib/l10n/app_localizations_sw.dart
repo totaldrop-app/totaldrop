@@ -482,4 +482,12 @@ class AppLocalizationsSw extends AppLocalizations {
 
   @override
   String get transferNoticeBody => 'Inaendelea unapotumia programu nyingine.';
+
+  @override
+  String get shareTextSoon =>
+      'TotalDrop bado haitumi maandishi, ni faili tu. Shiriki faili badala yake.';
+
+  @override
+  String get shareBusy =>
+      'Uhamishaji bado unaendelea. Subiri umalizike au uusimamishe, kisha shiriki tena.';
 }

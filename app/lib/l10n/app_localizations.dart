@@ -895,6 +895,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Keeps going while you use other apps.'**
   String get transferNoticeBody;
+
+  /// Android: shown on the send screen when another app shared only text (no file) to TotalDrop; sending text comes in a later version
+  ///
+  /// In en, this message translates to:
+  /// **'TotalDrop does not send text yet, only files. Share a file instead.'**
+  String get shareTextSoon;
+
+  /// Android: shown when files are shared to TotalDrop while a send or receive is still running; the shared files are not added
+  ///
+  /// In en, this message translates to:
+  /// **'A transfer is still running. Wait for it to finish or stop it, then share again.'**
+  String get shareBusy;
 }
 
 class _AppLocalizationsDelegate

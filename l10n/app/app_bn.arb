@@ -129,5 +129,7 @@
   "transferNoticeChannel": "স্থানান্তর",
   "transferNoticeSending": "TotalDrop দিয়ে পাঠানো হচ্ছে",
   "transferNoticeReceiving": "TotalDrop দিয়ে গ্রহণ করা হচ্ছে",
-  "transferNoticeBody": "অন্য অ্যাপ ব্যবহার করার সময়ও চলতে থাকে।"
+  "transferNoticeBody": "অন্য অ্যাপ ব্যবহার করার সময়ও চলতে থাকে।",
+  "shareTextSoon": "TotalDrop এখনও লেখা পাঠায় না, শুধু ফাইল পাঠায়। বরং একটি ফাইল শেয়ার করুন।",
+  "shareBusy": "একটি স্থানান্তর এখনও চলছে। শেষ হওয়া পর্যন্ত অপেক্ষা করুন বা থামান, তারপর আবার শেয়ার করুন।"
 }

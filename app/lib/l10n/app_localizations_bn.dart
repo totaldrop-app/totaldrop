@@ -476,4 +476,12 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get transferNoticeBody => 'অন্য অ্যাপ ব্যবহার করার সময়ও চলতে থাকে।';
+
+  @override
+  String get shareTextSoon =>
+      'TotalDrop এখনও লেখা পাঠায় না, শুধু ফাইল পাঠায়। বরং একটি ফাইল শেয়ার করুন।';
+
+  @override
+  String get shareBusy =>
+      'একটি স্থানান্তর এখনও চলছে। শেষ হওয়া পর্যন্ত অপেক্ষা করুন বা থামান, তারপর আবার শেয়ার করুন।';
 }

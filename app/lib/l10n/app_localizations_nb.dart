@@ -489,4 +489,12 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get transferNoticeBody => 'Fortsetter mens du bruker andre apper.';
+
+  @override
+  String get shareTextSoon =>
+      'TotalDrop sender ikke tekst ennå, bare filer. Del en fil i stedet.';
+
+  @override
+  String get shareBusy =>
+      'En overføring pågår fortsatt. Vent til den er ferdig eller stopp den, og del på nytt.';
 }
