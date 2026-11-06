@@ -371,7 +371,7 @@ fn import_target(rest: &str) -> Option<PathBuf> {
 /// `~/.config/gtk-4.0/gtk.css`: the person's own overrides, which
 /// libadwaita applies too.
 pub fn user_css() -> Option<PathBuf> {
-    dirs::config_dir().map(|d| d.join("gtk-4.0/gtk.css"))
+    super::host::config_dir().map(|d| d.join("gtk-4.0/gtk.css"))
 }
 
 /// The `gtk.css` of the GTK theme called `name`, GTK 4 first, in the
@@ -386,7 +386,7 @@ pub fn theme_css(name: &str, dark: bool) -> Option<PathBuf> {
         return None;
     }
     let mut roots = Vec::new();
-    if let Some(d) = dirs::data_dir() {
+    if let Some(d) = super::host::data_dir() {
         roots.push(d.join("themes"));
     }
     if let Some(h) = dirs::home_dir() {
@@ -412,7 +412,7 @@ pub fn theme_css(name: &str, dark: bool) -> Option<PathBuf> {
 /// `~/.config/gtk-3.0/settings.ini`, where GTK settings tools write the
 /// theme's name.
 pub fn settings_ini() -> Option<PathBuf> {
-    dirs::config_dir().map(|d| d.join("gtk-3.0/settings.ini"))
+    super::host::config_dir().map(|d| d.join("gtk-3.0/settings.ini"))
 }
 
 /// The GTK theme's name from [`settings_ini`], for when the portal does

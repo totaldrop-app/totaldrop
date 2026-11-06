@@ -1,0 +1,9 @@
+{
+    "app.totaldrop.TotalDrop": {
+        "finish-args-unnecessary-xdg-config-gtk-3.0-ro-access": "Qt app that follows the desktop's colours (docs/tasarim.md): reads the GTK theme name from settings.ini under Hyprland and GNOME, read only.",
+        "finish-args-unnecessary-xdg-config-gtk-4.0-ro-access": "Qt app that follows the desktop's colours: reads the person's gtk.css colour overrides, read only.",
+        "finish-args-unnecessary-xdg-data-themes-ro-access": "Qt app that follows the desktop's colours: reads the active GTK theme's colours, read only.",
+        "finish-args-unnecessary-xdg-config-omarchy-ro-access": "Qt app that follows the desktop's colours: reads Omarchy's active theme (colors.toml), read only.",
+        "finish-args-unnecessary-xdg-data-omarchy-ro-access": "Omarchy's current theme links into its themes folder here; read only."
+    }
+}

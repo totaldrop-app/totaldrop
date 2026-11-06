@@ -103,6 +103,20 @@ Bir değişiklik ancak şunların hepsi doğruysa bitmiştir:
    dosyalarına koyar ve taslak bir GitHub yayını açar. Android: `play-release` ortamında yükleme anahtarıyla
    imzalı `.aab` üretir ve iş çıktısı (artifact) olarak bırakır; GitHub
    yayını açılmaz. Kişisel bir makinede derlenen hiçbir şey yayınlanmaz.
+   Linux yayınında Flatpak paketi (`totaldrop-<sürüm>-<mimari>.flatpak`,
+   x86_64 ve aarch64) de diğer paketlerle aynı kanıtı alır; çalışma
+   zamanını Flathub'dan indirir. Tek istisna Flathub'dır
+   ([0014](kararlar/0014-steam-deck.md)): Flathub, Flatpak'i kendi
+   altyapısında `packaging/flatpak` tarifinden ve etiketli kaynaktan
+   derler ve kendi anahtarıyla imzalar. Aynı tarif her PR'da bizim CI'ımızda
+   derlenip korumalı alanda çalıştırılır. Flatpak tarifi Rust'ı
+   `static.rust-lang.org`'un sürüm arşivinden sha256 ile alır; Rust
+   yükseltilirken iki arşivin adresi ve sha256 değeri birlikte değişir
+   (`check-versions.sh` sürümü denetler). KDE çalışma zamanı ve derleme
+   imajı (`linux.yml`, özetle sabit) birlikte yükseltilir. Crate listesi
+   (`cargo-sources.json`) depoda tutulmaz; her derlemeden önce
+   `node tools/flatpak-cargo-sources.mjs write` ile `Cargo.lock`'tan
+   yazılır.
    Derleyiciler sabittir (Rust `rust-toolchain.toml`'daki sürüm, Flutter
    iş akışındaki sürüm; `check-versions.sh` her yerde aynı olduklarını
    denetler), taban imajlar özetle (digest) sabittir ve kaynak arşivi son
@@ -120,7 +134,9 @@ Bir değişiklik ancak şunların hepsi doğruysa bitmiştir:
 5. İndirilen paketler sağlama toplamıyla, Linux'ta ayrıca
    `gh attestation verify <paket> --repo totaldrop-app/totaldrop --bundle
    totaldrop-linux-<sürüm>.sigstore.json` ile ve temiz kaplarda kurulumla
-   (`packaging/test-install.sh`) denenir.
+   (`packaging/test-install.sh`) denenir. Flatpak paketi
+   `flatpak install --user totaldrop-<sürüm>-<mimari>.flatpak` ile kurulup
+   açılır.
 6. Yayın notları 35 dilde yazılır, taslak yayımlanır.
 7. Site güncellenir ve indirme bağlantılarının her biri denenir.
 8. Android'de CI'ın imzaladığı paket Play Console'a yüklenir.

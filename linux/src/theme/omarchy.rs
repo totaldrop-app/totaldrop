@@ -18,10 +18,10 @@ use super::color::{Palette, Rgb, best_text};
 /// Folders that hold Omarchy's `current` state, newest layout first.
 pub fn roots() -> Vec<PathBuf> {
     let mut out = Vec::new();
-    if let Some(state) = dirs::state_dir() {
+    if let Some(state) = super::host::state_dir() {
         out.push(state.join("omarchy/current"));
     }
-    if let Some(config) = dirs::config_dir() {
+    if let Some(config) = super::host::config_dir() {
         out.push(config.join("omarchy/current"));
     }
     out

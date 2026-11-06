@@ -11,6 +11,7 @@
 
 pub mod color;
 pub mod gtk;
+pub mod host;
 pub mod hyprland;
 pub mod kde;
 pub mod omarchy;
