@@ -551,5 +551,6 @@
   "tm.role.ai": "Vývojový asistent AI",
   "tm.role.bot": "Automatizace",
   "tm.role.maintainer": "Zakladatel a správce",
-  "tm.title": "Lidé za TotalDropem"
+  "tm.title": "Lidé za TotalDropem",
+  "tm.role.contributor": "Přispěvatel"
 }

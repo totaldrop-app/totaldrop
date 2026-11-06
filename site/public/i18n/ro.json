@@ -551,5 +551,6 @@
   "tm.role.ai": "Asistent de dezvoltare AI",
   "tm.role.bot": "Automatizare",
   "tm.role.maintainer": "Fondator și responsabil",
-  "tm.title": "Oamenii din spatele TotalDrop"
+  "tm.title": "Oamenii din spatele TotalDrop",
+  "tm.role.contributor": "Contributor"
 }

@@ -16,7 +16,7 @@
 // --fetch reads GITHUB_TOKEN if set (a higher rate limit), never prints it.
 import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, unlinkSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { createHash } from "node:crypto";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
@@ -33,7 +33,7 @@ const fail = (msg) => { errors.push(msg); };
 
 // --- Input rules --------------------------------------------------------
 
-const LOGIN = /^[A-Za-z0-9](?:[A-Za-z0-9]|-(?=[A-Za-z0-9])){0,38}(?:\[bot\])?$/;
+export const LOGIN = /^[A-Za-z0-9](?:[A-Za-z0-9]|-(?=[A-Za-z0-9])){0,38}(?:\[bot\])?$/;
 const KINDS = ["person", "ai", "bot"];
 const ROLES = ["maintainer", "contributor", "designer", "tester", "translator"];
 // Disciplines, in page order, with their English text (translations:
@@ -53,7 +53,7 @@ const AREAS = {
 // Strip what could change how text around it is shown: control
 // characters, direction controls and isolates, line and paragraph
 // separators. Then collapse spaces and cut to length.
-function clean(s, max) {
+export function clean(s, max) {
   if (typeof s !== "string") return "";
   const t = s.replace(/[\u0000-\u001f\u007f-\u009f\u061c\u200b-\u200f\u2028-\u202e\u2066-\u2069\ufeff]/gu, " ")
     .replace(/\s+/gu, " ").trim();
@@ -62,7 +62,7 @@ function clean(s, max) {
 }
 
 // A profile's website: https only, no user name or password, no port.
-function website(s) {
+export function website(s) {
   const t = clean(s, 200);
   if (!t) return null;
   let u;
@@ -71,7 +71,7 @@ function website(s) {
   return u.href;
 }
 
-const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+export const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const shown = (href) => href.replace(/^https:\/\//, "").replace(/\/$/, "");
 
 function loadConfig() {
@@ -113,6 +113,9 @@ async function get(url, accept = "application/vnd.github+json") {
       throw new Error(`${url}: ${e.message}`);
     }
     if (res.status >= 500 && attempt < 3) { await new Promise((r) => setTimeout(r, 1000 * 2 ** attempt)); continue; }
+    if ((res.status === 403 || res.status === 429) && res.headers.get("x-ratelimit-remaining") === "0") {
+      throw new Error(`${url}: GitHub's rate limit is used up (60 requests an hour without a token); set GITHUB_TOKEN, for example GITHUB_TOKEN=$(gh auth token)`);
+    }
     if (!res.ok) throw new Error(`${url}: HTTP ${res.status}`);
     return res;
   }
@@ -281,27 +284,32 @@ function render(c, s, html) {
 
 // --- Main ---------------------------------------------------------------
 
-const args = process.argv.slice(2);
-const config = loadConfig();
-let snapshot;
-if (args.includes("--fetch") && errors.length === 0) {
-  snapshot = await fetchSnapshot(config);
-  writeFileSync(SNAPSHOT, JSON.stringify(snapshot, null, 2) + "\n");
-} else {
-  snapshot = JSON.parse(readFileSync(SNAPSHOT, "utf8"));
-}
-checkSnapshot(config, snapshot);
-const html = readFileSync(PAGE, "utf8");
-const want = errors.length ? html : render(config, snapshot, html);
-if (errors.length === 0) {
-  if (args.includes("--write") || args.includes("--fetch")) {
-    if (want !== html) writeFileSync(PAGE, want);
-  } else if (want !== html) {
-    fail("team/index.html is not up to date with site/team/github.json: run node site/tools/team.mjs --write");
+async function main() {
+
+  const args = process.argv.slice(2);
+  const config = loadConfig();
+  let snapshot;
+  if (args.includes("--fetch") && errors.length === 0) {
+    snapshot = await fetchSnapshot(config);
+    writeFileSync(SNAPSHOT, JSON.stringify(snapshot, null, 2) + "\n");
+  } else {
+    snapshot = JSON.parse(readFileSync(SNAPSHOT, "utf8"));
   }
+  checkSnapshot(config, snapshot);
+  const html = readFileSync(PAGE, "utf8");
+  const want = errors.length ? html : render(config, snapshot, html);
+  if (errors.length === 0) {
+    if (args.includes("--write") || args.includes("--fetch")) {
+      if (want !== html) writeFileSync(PAGE, want);
+    } else if (want !== html) {
+      fail("team/index.html is not up to date with site/team/github.json: run node site/tools/team.mjs --write");
+    }
+  }
+  if (errors.length) {
+    for (const e of errors) console.error("error: " + e);
+    process.exit(1);
+  }
+  console.log(`team page: ${config.people.length} people, ${config.disciplines.length} disciplines, data from ${snapshot.fetched}`);
 }
-if (errors.length) {
-  for (const e of errors) console.error("error: " + e);
-  process.exit(1);
-}
-console.log(`team page: ${config.people.length} people, ${config.disciplines.length} disciplines, data from ${snapshot.fetched}`);
+
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) await main();

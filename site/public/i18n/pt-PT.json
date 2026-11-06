@@ -551,5 +551,6 @@
   "tm.role.ai": "Assistente de desenvolvimento com IA",
   "tm.role.bot": "Automação",
   "tm.role.maintainer": "Fundador e responsável",
-  "tm.title": "As pessoas por trás do TotalDrop"
+  "tm.title": "As pessoas por trás do TotalDrop",
+  "tm.role.contributor": "Colaborador"
 }

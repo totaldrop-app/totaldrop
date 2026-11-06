@@ -551,5 +551,6 @@
   "tm.role.ai": "ШІ-асистент розробки",
   "tm.role.bot": "Автоматизація",
   "tm.role.maintainer": "Засновник і супровідник",
-  "tm.title": "Люди, які створюють TotalDrop"
+  "tm.title": "Люди, які створюють TotalDrop",
+  "tm.role.contributor": "Учасник"
 }

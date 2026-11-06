@@ -551,5 +551,6 @@
   "tm.role.ai": "AI ডেভেলপমেন্ট সহকারী",
   "tm.role.bot": "স্বয়ংক্রিয়তা",
   "tm.role.maintainer": "প্রতিষ্ঠাতা ও রক্ষণাবেক্ষণকারী",
-  "tm.title": "TotalDrop-এর পেছনের মানুষেরা"
+  "tm.title": "TotalDrop-এর পেছনের মানুষেরা",
+  "tm.role.contributor": "অবদানকারী"
 }

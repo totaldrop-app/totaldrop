@@ -551,5 +551,6 @@
   "tm.role.ai": "AI-utvecklingsassistent",
   "tm.role.bot": "Automatisering",
   "tm.role.maintainer": "Grundare och förvaltare",
-  "tm.title": "Människorna bakom TotalDrop"
+  "tm.title": "Människorna bakom TotalDrop",
+  "tm.role.contributor": "Bidragsgivare"
 }

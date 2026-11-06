@@ -1,0 +1,48 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
+// Tests for the team page's handling of GitHub profile text (#288), which
+// comes from people outside the project and ends up in the page's HTML:
+//   node --test site/tools/test-team.mjs
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { clean, website, esc, LOGIN } from "./team.mjs";
+
+test("clean removes control, direction and invisible characters", () => {
+  assert.equal(clean("A‮B⁦C​D\u0000E F", 80), "A B C D E F");
+  assert.equal(clean("  many   spaces\n\tand lines ", 80), "many spaces and lines");
+  assert.equal(clean(null, 80), "");
+  assert.equal(clean(42, 80), "");
+});
+
+test("clean cuts long text by characters, not bytes", () => {
+  assert.equal(clean("çğışöü".repeat(10), 5), "çğış…");
+  assert.equal(Array.from(clean("😀".repeat(300), 240)).length, 240);
+  assert.equal(clean("short", 5), "short");
+});
+
+test("clean is idempotent", () => {
+  const once = clean("x‮y  z".repeat(50), 80);
+  assert.equal(clean(once, 80), once);
+});
+
+test("website accepts https and bare host names only", () => {
+  assert.equal(website("ozanozdil.com"), "https://ozanozdil.com/");
+  assert.equal(website("https://sadikkuzu.com/linktree/"), "https://sadikkuzu.com/linktree/");
+  assert.equal(website("http://example.com"), null);
+  assert.equal(website("javascript:alert(1)"), null);
+  assert.equal(website("https://user:pw@example.com"), null);
+  assert.equal(website("https://example.com:8443/"), null);
+  assert.equal(website("localhost"), null);
+  assert.equal(website(""), null);
+  assert.equal(website(null), null);
+});
+
+test("esc makes text safe inside elements and quoted attributes", () => {
+  assert.equal(esc(`<img src=x onerror="a">&`), "&lt;img src=x onerror=&quot;a&quot;&gt;&amp;");
+});
+
+test("login rule matches GitHub's", () => {
+  for (const ok of ["ozdil", "sadikkuzu", "a-b", "dependabot[bot]", "x".repeat(39)]) assert.ok(LOGIN.test(ok), ok);
+  for (const bad of ["", "-a", "a-", "a--b", "a b", "a/b", "../x", "x".repeat(40), "<x>"]) assert.ok(!LOGIN.test(bad), bad);
+});

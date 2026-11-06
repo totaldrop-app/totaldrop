@@ -551,5 +551,6 @@
   "tm.role.ai": "مساعد تطوير بالذكاء الاصطناعي",
   "tm.role.bot": "أتمتة",
   "tm.role.maintainer": "المؤسس والمشرف",
-  "tm.title": "الأشخاص وراء TotalDrop"
+  "tm.title": "الأشخاص وراء TotalDrop",
+  "tm.role.contributor": "مساهم"
 }
