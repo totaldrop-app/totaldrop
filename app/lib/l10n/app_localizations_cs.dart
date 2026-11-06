@@ -435,6 +435,10 @@ class AppLocalizationsCs extends AppLocalizations {
       'Tento překlad se kontroluje. Pomozte ho vylepšit na GitHubu.';
 
   @override
+  String get settingsWordsEnglish =>
+      'Kódy a ověřovací slova jsou v každém jazyce anglicky, aby dvě zařízení v různých jazycích ukazovala stejná slova.';
+
+  @override
   String get sendDropHere => 'Přetáhněte soubory sem';
 
   @override

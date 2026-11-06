@@ -111,6 +111,7 @@
   "sizeTB": "{value} TB",
   "sizePB": "{value} PB",
   "draftTranslation": "Deze vertaling wordt nagekeken. Help haar te verbeteren op GitHub.",
+  "settingsWordsEnglish": "Codes en verificatiewoorden zijn in elke taal Engels, zodat twee apparaten in verschillende talen dezelfde woorden tonen.",
 
   "sendDropHere": "Zet bestanden hier neer",
   "sendDropHint": "Je kunt bestanden ook naar dit venster slepen.",

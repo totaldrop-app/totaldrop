@@ -142,6 +142,8 @@
   "@sizePB": {"description": "Petabytes", "placeholders": {"value": {"type": "String", "example": "1.5"}}},
   "draftTranslation": "This translation is being reviewed. Help improve it on GitHub.",
   "@draftTranslation": {"description": "Shown in Settings when some of the text in this language is an unreviewed draft"},
+  "settingsWordsEnglish": "Codes and verification words are in English in every language, so two devices set to different languages show the same words.",
+  "@settingsWordsEnglish": {"description": "Shown in Settings under About. Explains why the transfer code and the verification words stay in English: they come from one English word list so that both devices show the same ones"},
 
   "sendDropHere": "Drop files here",
   "sendDropHint": "You can also drag files onto this window.",

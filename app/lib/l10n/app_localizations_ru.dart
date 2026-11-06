@@ -438,6 +438,10 @@ class AppLocalizationsRu extends AppLocalizations {
       'Этот перевод проверяется. Помогите улучшить его на GitHub.';
 
   @override
+  String get settingsWordsEnglish =>
+      'Коды и проверочные слова всегда на английском, чтобы два устройства с разными языками показывали одинаковые слова.';
+
+  @override
   String get sendDropHere => 'Перетащите файлы сюда';
 
   @override

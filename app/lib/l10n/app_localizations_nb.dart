@@ -431,6 +431,10 @@ class AppLocalizationsNb extends AppLocalizations {
       'Denne oversettelsen blir gjennomgått. Hjelp til med å forbedre den på GitHub.';
 
   @override
+  String get settingsWordsEnglish =>
+      'Koder og bekreftelsesord er alltid på engelsk, slik at to enheter med ulike språk viser de samme ordene.';
+
+  @override
   String get sendDropHere => 'Slipp filer her';
 
   @override

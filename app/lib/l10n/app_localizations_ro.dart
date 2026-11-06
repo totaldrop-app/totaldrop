@@ -436,6 +436,10 @@ class AppLocalizationsRo extends AppLocalizations {
       'Această traducere este în curs de revizuire. Ajutați la îmbunătățirea ei pe GitHub.';
 
   @override
+  String get settingsWordsEnglish =>
+      'Codurile și cuvintele de verificare sunt mereu în engleză, ca două dispozitive în limbi diferite să arate aceleași cuvinte.';
+
+  @override
   String get sendDropHere => 'Plasați fișierele aici';
 
   @override

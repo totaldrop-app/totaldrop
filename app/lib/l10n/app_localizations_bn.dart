@@ -418,6 +418,10 @@ class AppLocalizationsBn extends AppLocalizations {
       'এই অনুবাদটি পর্যালোচনা করা হচ্ছে। GitHub-এ এটি আরও ভালো করতে সাহায্য করুন।';
 
   @override
+  String get settingsWordsEnglish =>
+      'কোড ও যাচাইয়ের শব্দ সব ভাষাতেই ইংরেজিতে থাকে, যাতে ভিন্ন ভাষার দুটি ডিভাইস একই শব্দ দেখায়।';
+
+  @override
   String get sendDropHere => 'ফাইলগুলো এখানে ছাড়ুন';
 
   @override

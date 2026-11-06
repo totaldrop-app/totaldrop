@@ -111,6 +111,7 @@
   "sizeTB": "{value} TB",
   "sizePB": "{value} PB",
   "draftTranslation": "Tento překlad se kontroluje. Pomozte ho vylepšit na GitHubu.",
+  "settingsWordsEnglish": "Kódy a ověřovací slova jsou v každém jazyce anglicky, aby dvě zařízení v různých jazycích ukazovala stejná slova.",
 
   "sendDropHere": "Přetáhněte soubory sem",
   "sendDropHint": "Soubory můžete také přetáhnout do tohoto okna.",

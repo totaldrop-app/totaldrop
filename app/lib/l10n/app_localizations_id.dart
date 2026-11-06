@@ -415,6 +415,10 @@ class AppLocalizationsId extends AppLocalizations {
       'Terjemahan ini sedang ditinjau. Bantu perbaiki di GitHub.';
 
   @override
+  String get settingsWordsEnglish =>
+      'Kode dan kata verifikasi selalu dalam bahasa Inggris, agar dua perangkat dengan bahasa berbeda menampilkan kata yang sama.';
+
+  @override
   String get sendDropHere => 'Letakkan file di sini';
 
   @override

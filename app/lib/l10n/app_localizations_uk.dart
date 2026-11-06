@@ -436,6 +436,10 @@ class AppLocalizationsUk extends AppLocalizations {
       'Цей переклад перевіряється. Допоможіть покращити його на GitHub.';
 
   @override
+  String get settingsWordsEnglish =>
+      'Коди та слова перевірки завжди англійською, щоб два пристрої з різними мовами показували однакові слова.';
+
+  @override
   String get sendDropHere => 'Перетягніть файли сюди';
 
   @override

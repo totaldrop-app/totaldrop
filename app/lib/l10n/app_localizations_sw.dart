@@ -422,6 +422,10 @@ class AppLocalizationsSw extends AppLocalizations {
       'Tafsiri hii inakaguliwa. Saidia kuiboresha kwenye GitHub.';
 
   @override
+  String get settingsWordsEnglish =>
+      'Misimbo na maneno ya uthibitisho huwa kwa Kiingereza katika kila lugha, ili vifaa viwili vyenye lugha tofauti vionyeshe maneno yale yale.';
+
+  @override
   String get sendDropHere => 'Dondosha faili hapa';
 
   @override

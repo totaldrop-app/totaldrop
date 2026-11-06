@@ -111,6 +111,7 @@
   "sizeTB": "{value} TB",
   "sizePB": "{value} PB",
   "draftTranslation": "Terjemahan ini sedang disemak. Bantu memperbaikinya di GitHub.",
+  "settingsWordsEnglish": "Kod dan perkataan pengesahan sentiasa dalam bahasa Inggeris, supaya dua peranti dalam bahasa berbeza menunjukkan perkataan yang sama.",
 
   "sendDropHere": "Lepaskan fail di sini",
   "sendDropHint": "Anda juga boleh seret fail ke tetingkap ini.",

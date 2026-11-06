@@ -428,6 +428,10 @@ class AppLocalizationsHe extends AppLocalizations {
       'התרגום הזה נמצא בבדיקה. אפשר לעזור לשפר אותו ב־GitHub.';
 
   @override
+  String get settingsWordsEnglish =>
+      'קודים ומילות אימות נשארים באנגלית בכל שפה, כדי ששני מכשירים בשפות שונות יציגו את אותן מילים.';
+
+  @override
   String get sendDropHere => 'אפשר לשחרר כאן קבצים';
 
   @override

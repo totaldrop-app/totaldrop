@@ -111,6 +111,7 @@
   "sizeTB": "{value} TB",
   "sizePB": "{value} PB",
   "draftTranslation": "Bu çeviri gözden geçiriliyor. GitHub'da iyileştirmeye yardım edin.",
+  "settingsWordsEnglish": "Kodlar ve doğrulama kelimeleri her dilde İngilizcedir; böylece farklı dillerdeki iki cihaz aynı kelimeleri gösterir.",
 
   "sendDropHere": "Dosyaları buraya bırakın",
   "sendDropHint": "Dosyaları bu pencereye sürükleyip de ekleyebilirsiniz.",

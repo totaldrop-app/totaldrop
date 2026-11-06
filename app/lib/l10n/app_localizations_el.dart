@@ -433,6 +433,10 @@ class AppLocalizationsEl extends AppLocalizations {
       'Αυτή η μετάφραση βρίσκεται υπό έλεγχο. Βοηθήστε να βελτιωθεί στο GitHub.';
 
   @override
+  String get settingsWordsEnglish =>
+      'Οι κωδικοί και οι λέξεις επαλήθευσης είναι πάντα στα αγγλικά, ώστε δύο συσκευές σε διαφορετικές γλώσσες να δείχνουν τις ίδιες λέξεις.';
+
+  @override
   String get sendDropHere => 'Αφήστε αρχεία εδώ';
 
   @override

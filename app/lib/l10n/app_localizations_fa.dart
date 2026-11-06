@@ -426,6 +426,10 @@ class AppLocalizationsFa extends AppLocalizations {
       'این ترجمه در حال بازبینی است. در GitHub به بهتر شدن آن کمک کنید.';
 
   @override
+  String get settingsWordsEnglish =>
+      'کدها و کلمات تأیید در همه زبان‌ها انگلیسی می‌مانند تا دو دستگاه با زبان‌های متفاوت همان کلمات را نشان دهند.';
+
+  @override
   String get sendDropHere => 'فایل‌ها را اینجا رها کنید';
 
   @override

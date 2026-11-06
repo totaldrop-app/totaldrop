@@ -418,6 +418,10 @@ class AppLocalizationsHu extends AppLocalizations {
       'Ez a fordítás ellenőrzés alatt áll. Segíts javítani a GitHubon.';
 
   @override
+  String get settingsWordsEnglish =>
+      'A kódok és az ellenőrző szavak minden nyelven angolul jelennek meg, hogy a különböző nyelvű eszközök ugyanazokat a szavakat mutassák.';
+
+  @override
   String get sendDropHere => 'Húzd ide a fájlokat';
 
   @override

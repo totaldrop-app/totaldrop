@@ -400,6 +400,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get draftTranslation => 'この翻訳はレビュー中です。GitHub で改善にご協力ください。';
 
   @override
+  String get settingsWordsEnglish =>
+      'コードと確認用の単語はどの言語でも英語のままです。言語の異なる2台の端末でも同じ単語が表示されます。';
+
+  @override
   String get sendDropHere => 'ここにファイルをドロップ';
 
   @override

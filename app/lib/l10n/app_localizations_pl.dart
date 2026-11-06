@@ -438,6 +438,10 @@ class AppLocalizationsPl extends AppLocalizations {
       'To tłumaczenie jest w trakcie sprawdzania. Pomóż je ulepszyć na GitHubie.';
 
   @override
+  String get settingsWordsEnglish =>
+      'Kody i słowa weryfikacyjne są zawsze po angielsku, aby dwa urządzenia w różnych językach pokazywały te same słowa.';
+
+  @override
   String get sendDropHere => 'Upuść pliki tutaj';
 
   @override

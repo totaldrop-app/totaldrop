@@ -436,6 +436,10 @@ class AppLocalizationsPt extends AppLocalizations {
       'Esta tradução está em revisão. Ajude a melhorá-la no GitHub.';
 
   @override
+  String get settingsWordsEnglish =>
+      'Códigos e palavras de verificação ficam sempre em inglês, para que dois dispositivos em idiomas diferentes mostrem as mesmas palavras.';
+
+  @override
   String get sendDropHere => 'Solte os arquivos aqui';
 
   @override
@@ -923,6 +927,10 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String get draftTranslation =>
       'Esta tradução está em revisão. Ajude a melhorá-la no GitHub.';
+
+  @override
+  String get settingsWordsEnglish =>
+      'Códigos e palavras de verificação ficam sempre em inglês, para que dois dispositivos em idiomas diferentes mostrem as mesmas palavras.';
 
   @override
   String get sendDropHere => 'Solte os arquivos aqui';
@@ -1414,6 +1422,10 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
   @override
   String get draftTranslation =>
       'Esta tradução está em revisão. Ajude a melhorá-la no GitHub.';
+
+  @override
+  String get settingsWordsEnglish =>
+      'Os códigos e as palavras de verificação estão sempre em inglês, para que dois dispositivos em idiomas diferentes mostrem as mesmas palavras.';
 
   @override
   String get sendDropHere => 'Largue os ficheiros aqui';

@@ -437,6 +437,10 @@ class AppLocalizationsAr extends AppLocalizations {
       'هذه الترجمة قيد المراجعة. ساعد في تحسينها على GitHub.';
 
   @override
+  String get settingsWordsEnglish =>
+      'تبقى الرموز وكلمات التحقق بالإنجليزية في كل اللغات، حتى يعرض جهازان بلغتين مختلفتين الكلمات نفسها.';
+
+  @override
   String get sendDropHere => 'أفلت الملفات هنا';
 
   @override

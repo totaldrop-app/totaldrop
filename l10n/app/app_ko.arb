@@ -111,6 +111,7 @@
   "sizeTB": "{value} TB",
   "sizePB": "{value} PB",
   "draftTranslation": "이 번역은 검토 중입니다. GitHub에서 개선을 도와주세요.",
+  "settingsWordsEnglish": "코드와 확인 단어는 어떤 언어에서도 영어로 표시됩니다. 언어가 다른 두 기기에서도 같은 단어가 보입니다.",
 
   "sendDropHere": "여기에 파일을 놓으세요",
   "sendDropHint": "이 창으로 파일을 끌어다 놓아도 됩니다.",
