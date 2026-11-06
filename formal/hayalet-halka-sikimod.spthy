@@ -415,13 +415,26 @@ restriction Not_Rejected:
     & not (Ex L s #o. Old(L, <v, s>) @ o & #o < #j)
     ==> F"
 
-/* One change per period: every other proposal against m logged before
-   the read was voided by a counted reject that the reader saw. */
+/* An entry settles once: Old marks the moment it has been in the log for
+   the whole wait. Every rule below depends only on that first moment, so
+   dropping later markers loses no behaviour. */
+restriction Old_Once:
+  "All L v #i #j. Old(L, v) @ i & Old(L, v) @ j ==> #i = #j"
+
+/* One change per period: every other proposal against m that settled
+   before v did was voided by a counted reject that the reader saw. All
+   proposals wait the same time, so "settled before v" is "logged before
+   v" in the real log, and the reader can check it from witness time.
+   Proposals that settle after v do not count against v (they lose to v
+   instead): otherwise anyone who can still write against an old period
+   (a thief with a removed device's AK) could keep late readers from ever
+   following v (second review, M1). */
 restriction Change_Single:
-  "All r m v x v2 x2 #i #t.
-      ReadChange(r, m, v, x) @ i & Logged(r, m, v2, x2) @ t & #t < #i & not (v = v2)
+  "All r m v x v2 x2 L s L2 s2 #i #o #t #o2.
+      ReadChange(r, m, v, x) @ i & Old(L, <v, s>) @ o & #o < #i
+    & Logged(r, m, v2, x2) @ t & Old(L2, <v2, s2>) @ o2 & #o2 < #o & not (v = v2)
     ==> Ex w #j. Rejects(r, m, h(v2), w) @ j & #j < #i & not (h(w) = x2)
-      & not (Ex L s #o. Old(L, <v2, s>) @ o & #o < #j)"
+      & not (Ex L3 s3 #o3. Old(L3, <v2, s3>) @ o3 & #o3 < #j)"
 
 
 /* --- Lemmas ----------------------------------------------------------- */
@@ -444,7 +457,8 @@ lemma sanity_strict_remove [heuristic=c]:
     & (All c2 r2 m2 #y. Pin(c2, r2, m2) @ y ==> #y = #p)"
 
 /* The thief can veto: e is stolen and unlocked, d proposes to remove
-   it, and the thief rejects the proposal with e's AK. */
+   it, and the thief rejects the proposal with e's AK before it settles,
+   so the reject counts. */
 lemma sanity_stolen_device_vetoes [heuristic=c]:
   exists-trace
   "Ex r m d e #q #v #w.
@@ -452,6 +466,7 @@ lemma sanity_stolen_device_vetoes [heuristic=c]:
     & HonestProp(d, r, m, <'prop', r, m, 'remove', h(e), d>) @ v
     & Rejects(r, m, h(<'prop', r, m, 'remove', h(e), d>), e) @ w
     & #v < #w
+    & not (Ex L sg #y. Old(L, <<'prop', r, m, 'remove', h(e), d>, sg>) @ y & #y < #w)
     & not (Ex #y. RevA1(d) @ y) & not (Ex #y. RevA2(d) @ y)
     & not (Ex #x. Step('MJ') @ x)
     & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)
@@ -460,7 +475,9 @@ lemma sanity_stolen_device_vetoes [heuristic=c]:
     & (All r2 m2 hv w3 #y. Rejects(r2, m2, hv, w3) @ y ==> #y = #w)"
 
 /* The RK way out: the owner writes rk_çıkar(e) with the phrase and d,
-   the thief rejects that too, and the contact still follows it. Together
+   the thief rejects that too before it settles (a reject that would count
+   from anyone else), and the contact still follows it. Without the
+   exemption of x in Not_Rejected this has no trace. Together
    with the lemma above this is the stolen-device story; proving both
    steps in one trace did not end (README.md, A4b). */
 lemma sanity_rk_remove_despite_thief_reject [heuristic=c]:
@@ -471,6 +488,7 @@ lemma sanity_rk_remove_despite_thief_reject [heuristic=c]:
     & OwnerRKRemoved(r, m, e) @ o
     & Rejects(r, m, h(<'rkprop', r, m, 'rkremove', h(e), d>), e) @ w2
     & #o < #w2
+    & not (Ex L sg #y. Old(L, <<'rkprop', r, m, 'rkremove', h(e), d>, sg>) @ y & #y < #w2)
     & Accept(c, r, m, 'rkremove', h(e), d) @ k
     & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)
     & not (Ex #y. RevA1(d) @ y) & not (Ex #y. RevA2(d) @ y)
@@ -480,6 +498,27 @@ lemma sanity_rk_remove_despite_thief_reject [heuristic=c]:
     & (All c2 r2 m2 #y. Pin(c2, r2, m2) @ y ==> #y = #p)
     & (All r2 m2 v2 x2 #y. Logged(r2, m2, v2, x2) @ y ==> #y = #o)
     & (All r2 m2 hv w3 #y. Rejects(r2, m2, hv, w3) @ y ==> #y = #w2)"
+
+/* A proposal logged after rk_çıkar(e) settled does not block a reader
+   that reads later: the thief, still holding e's AK, logs remove(d)
+   against the old period, and a contact still follows rk_çıkar(e). */
+lemma sanity_late_proposal_does_not_block [heuristic=c]:
+  exists-trace
+  "Ex c r m d e L sg #p #q #o #a #t #k.
+      Pin(c, r, m) @ p
+    & Created(r, d, e) @ q
+    & OwnerRKRemoved(r, m, e) @ o
+    & Old(L, <<'rkprop', r, m, 'rkremove', h(e), d>, sg>) @ a
+    & Logged(r, m, <'prop', r, m, 'remove', h(d), e>, 'none') @ t
+    & #a < #t & #t < #k
+    & Accept(c, r, m, 'rkremove', h(e), d) @ k
+    & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)
+    & not (Ex #y. RevA1(d) @ y) & not (Ex #y. RevA2(d) @ y)
+    & not (Ex r2 #y. RevPhrase(r2) @ y)
+    & not (Ex r2 m2 hv w #y. Rejects(r2, m2, hv, w) @ y)
+    & (All r2 d2 e2 #y. Created(r2, d2, e2) @ y ==> #y = #q)
+    & (All c2 r2 m2 #y. Pin(c2, r2, m2) @ y ==> #y = #p)
+    & (All r2 m2 v2 x2 #y. Logged(r2, m2, v2, x2) @ y ==> #y = #o | #y = #t)"
 
 /* The reverse order: the thief proposes first to remove d, d rejects it
    in time, and the owner still removes e with rk_çıkar. */
@@ -522,8 +561,11 @@ lemma sanity_recovery_after_strict_remove [heuristic=c]:
 
 /* K3b: no reader of a strict ring changes membership at once. The
    change it follows (an AK proposal, a recovery or an rk_çıkar) was
-   itself in the log for the whole wait first. A stolen, unlocked phone
-   alone cannot move anyone. */
+   itself in the log for the whole wait first, so a stolen, unlocked
+   phone moves no one at once, and (reject_stops_change) not against a
+   reject that counts. It restates Settled_Old; the mutants
+   strict_immediate_accept and proposal_without_wait show it catches a
+   reader that skips the wait. */
 lemma no_change_without_wait [heuristic=c]:
   "All r m v x #k. ReadChange(r, m, v, x) @ k
     ==> Ex L s #t. Old(L, <v, s>) @ t & #t < #k"
