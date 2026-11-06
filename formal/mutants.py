@@ -99,7 +99,8 @@ lemma attack [heuristic=c]:
 
 # Rules a mutant's attack does not need, dropped so that the search ends.
 # Dropping rules only removes traces, so an attack found in the smaller
-# model is an attack on the mutant too.
+# model is an attack on the mutant too. A rule ends at the first blank
+# line or the next rule, so rules must not contain blank lines.
 SECRET_UNUSED = [
     "Log_Write_AK_1", "Log_Write_AK_2", "Log_Write_IK_1", "Log_Write_IK_2",
     "Reveal_IK", "Reveal_A1", "Reveal_A2", "Reveal_State", "Reveal_Ring_1",
@@ -331,12 +332,14 @@ lemma attack:
             ("restriction Contact_Fresh_Send",
              r"restriction Contact_Fresh_Send:\n(?:  [^\n]*\n)+?(?=\n)", "", 1),
         ],
+        "drop": SECRET_UNUSED + ["Member_Rotate_1", "Member_Rotate_2", "Device_Offer_1",
+                                 "Device_Offer_2", "Contact_Receive_1", "Contact_Receive_2"],
         "lemma": """
 lemma attack:
   exists-trace
-  "Ex r hh k d x #t #i.
+  "Ex c r hh f a b d x #t #i.
       Signed(d, r, hh, 'remove', h(x)) @ t
-    & Kem(hh, k) @ i
+    & SentOffer(c, r, hh, f, a, b) @ i
     & #t < #i
     & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)
     & not (Ex #x. Step('MT') @ x) & not (Ex #x. Step('AT') @ x)
@@ -391,6 +394,27 @@ lemma attack [heuristic=c]:
     & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)
     & not (Ex #x. Step('AT') @ x) & not (Ex #x. Step('AR') @ x)
     & not (Ex y z #x. ExtWrite(y, z) @ x)"
+""",
+    },
+    {
+        "name": "send_offer_no_recheck",
+        "why": "a contact checks freshness only when it looks up the head's key, not when it sends",
+        "model": SECRET,
+        "edits": [
+            ("Contact_Send_Offer recheck",
+             r"--\[ Fresh\(h\(<'log', hh>\)\), FreshSend\(h\(<'log', hh>\)\), SentOffer",
+             "--[ SentOffer", 1),
+        ],
+        "drop": SECRET_UNUSED + ["Member_Rotate_1", "Member_Rotate_2", "Device_Offer_1",
+                                 "Device_Offer_2", "Contact_Receive_1", "Contact_Receive_2"],
+        "lemma": """
+lemma attack [heuristic=c]:
+  exists-trace
+  "Ex c r hh f a b d x #t #i.
+      Signed(d, r, hh, 'remove', h(x)) @ t
+    & SentOffer(c, r, hh, f, a, b) @ i
+    & #t < #i
+    & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)"
 """,
     },
     {

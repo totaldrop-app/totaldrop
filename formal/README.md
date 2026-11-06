@@ -348,13 +348,13 @@ A1-A3'ün lemmaları buraya taşınmaz ve burada P1 ile P2 iddia edilmez.
 | Lemma | Tür | Ne söyler |
 | --- | --- | --- |
 | `ring_secret_secret`, `kem_origin` | her iz, yardımcı | Bir `r_e`, yalnızca o başın sızmış bir üyesi üzerinden bilinir; bir başın KEM anahtarı ya bir üyenin `pk(r_e)`'sidir ya da günlüğe ağdan yazılmıştır |
-| `at_rotate_head_settled` | her iz, yardımcı (tümevarım) | Bir `döndür`'ün başlattığı başta bulunan herkes o `döndür`'ü oturduktan sonra izlemiştir |
-| `sanity_contact_sends`, `sanity_contact_receives`, `sanity_contact_sends_after_removal` | iz var | Kişi gönderebilir, bir üyeden teklif alabilir ve bir çıkarmayı izledikten sonra yeni başa gönderebilir |
+| `at_rotate_head_settled` | her iz, yardımcı (tümevarım) | Bir `döndür`'ün başlattığı başta bulunan herkesten önce, bir önceki başın anahtarı altında bir değer oturmuştur (tazelik kısıtlarına bu yeter) |
+| `sanity_contact_sends`, `sanity_contact_receives`, `sanity_contact_sends_after_removal`, `sanity_remove_from_rotate_head` | iz var | Kişi gönderebilir, bir üyeden teklif alabilir ve bir çıkarmayı izledikten sonra yeni başa gönderebilir; bir çıkarma bir `döndür`'ün başından yazılabilir (aşağıdaki lemma boş değildir) |
 | `sent_head_key_secret` | her iz | **P3, gizlilik:** kişinin teklifi şifrelediği anahtar, yalnızca o başın bir üyesi durumunu sızdırdıysa ya da başı hiçbir üye yazmadıysa bilinir. İkinci durum, ağdan günlüğe yazılmış ve kişinin izlediği bir baştır; kişinin onu izlemesi bir üyenin `IK`'sinin (`döndür`) ya da `AK`'sinin iki yarısının sızmasını ister. Bu ayrıca kanıtlanmadı (aşağıda) |
 | `no_offer_to_head_after_removal` | her iz | **P3, gönderirken tazelik:** bir üye `x`'i bir baştan çıkardıktan sonra hiçbir kişi o başa teklif göndermez |
 | `no_offer_from_removed_device` | her iz | **P3, alırken tazelik:** bir üye `x`'i bir baştan çıkardıktan sonra hiçbir kişi o başta `x`'ten teklif kabul etmez; `x`'in bütün anahtarları sızmış olsa bile |
 | `no_fresh_check_before_rotate_after_removal` | her iz | **P3, oturmamış `döndür`'den önceki baş:** çıkarma bir `döndür`'ün başlattığı baştan yazıldıysa, o `döndür`'ün önceki başında artık hiçbir kişinin tazelik denetimi geçmez; ne göndermek ne almak için |
-| `no_rotate_branch_past_removal` | her iz | A3'ün lemması bu modelde yeniden kanıtlandı: hiçbir okuyucu, `x`'in çıkarıldığı baştaki `x` imzalı `döndür`'ü izlemez |
+| `no_rotate_branch_past_removal`, `no_rotate_branch_of_remover` | her iz | A3'ün lemması bu modelde yeniden kanıtlandı: hiçbir okuyucu, `x`'in çıkarıldığı baştaki `x` imzalı `döndür`'ü izlemez; çıkaranın kendi `döndür`'ünü de izlemez |
 | `received_offer_authentic` | her iz | Kişinin halka üyesi `s`'den geldiğini kabul ettiği teklif `s`'nindir; `s`'nin `IK`'si sızmadıysa ve `s` saldırganın anahtarı değilse. Saldırganın anahtarının üye olması P1'in konusudur (A1: `AK`'nin iki yarısının sızması) |
 
 Üç tazelik lemması, kişinin denetimi (kısıt) ve dürüst kayıtların yazıldığı
@@ -362,7 +362,7 @@ adımda günlüğe girmesi soyutlamasından kısa yoldan çıkar (4-12 adım).
 İçerikleri gerçektir, ama P3'ün tamamı değildir: hangi başların kapsandığı
 yukarıda, kapsanmayanlar aşağıdadır.
 
-### Modelin bulduğu açık: oturmamış `döndür`'den önceki baş
+### Modelin bulduğu açık: çıkarma `döndür`'ün başından yazılınca önceki baş
 
 PR #282'nin ilk sürümünde döndüren cihaz kendi `döndür`'ünün başına hemen
 geçiyordu. Bağımsız inceleme şu izi buldu: `d` halkayı kurar ve `x`'i
@@ -388,9 +388,10 @@ göndermez. `no_fresh_check_before_rotate_after_removal` bunu kanıtlar;
 | `contact_sends_without_freshness` | Kişi göndermeden önce günlüğe bakmaz | Kişi, `x`'in çıkarıldığı başa gönderir (eski başla dosya alma, dondurma saldırısı) |
 | `receive_without_freshness` | Kişi bir teklifi almadan önce günlüğe bakmaz | Kişi, `x`'in çıkarıldığı başta `x`'ten teklif kabul eder |
 | `rotator_follows_own_rotate_at_once` | Döndüren cihaz kendi `döndür`'ünün başına hemen geçer | Çıkarma yeni baştan yazılır, kişi eski başta denetimi geçer (yukarıdaki açık) |
+| `send_offer_no_recheck` | Kişi tazeliği yalnızca başın anahtarına bakarken denetler, gönderirken denetlemez | Denetim geçer, sonra çıkarma yazılır, sonra teklif `x`'in üyesi olduğu başa gider |
 | `receive_signature_not_checked` | Kişi teklifin `IK` imzasını denetlemez | Hiçbir anahtar sızmadan sahte bir teklif üyeden gelmiş sayılır |
 
-`receive_without_freshness` ve `rotator_follows_own_rotate_at_once`, aramanın
+A3b mutantlarının dördü (`receive_signature_not_checked` dışındakiler), aramanın
 bitmesi için saldırının kullanmadığı kuralları da düşürür (`mutants.py`,
 `drop`). Kural düşürmek yalnızca iz eksiltir; küçük modelde bulunan saldırı
 mutantta da vardır.
@@ -398,8 +399,8 @@ mutantta da vardır.
 ### Henüz kanıtlanmayanlar
 
 - **Sonraki başlar:** P3'ün tazelik lemmaları çıkarmanın yapıldığı başı,
-  ondan önceki oturmamış `döndür`'ün başını ve A3'teki `döndür` dalını
-  kapsar. "Çıkarmadan sonra kişinin gönderdiği
+  çıkarma bir `döndür`'ün başından yazıldıysa o `döndür`'ün önceki başını
+  ve A3'teki `döndür` dalını kapsar. "Çıkarmadan sonra kişinin gönderdiği
   her baş `x`'i içermez" biçimindeki sınırsız lemma, A3'teki sınırsız kilit
   lemmasına dayanır ve henüz yok.
 - **`AK`'si çıkarmadan önce sızmış cihaz:** böyle bir cihaz çıkarmadan önce
@@ -407,6 +408,19 @@ mutantta da vardır.
   geçirebilir. Bu, tasarımın kabul ettiği "geç çatal, yeniden eşleşme"
   sınırıdır (`hesap.md`, "Biçimsel modelde kesinleşecek kurallar", madde 1)
   ve A4'te ele alınır.
+- **İki ya da daha çok adım önceki başlar:** ör. `döndür`, `döndür`, sonra
+  çıkarma. Yukarıdaki gerekçe aynen geçerlidir (her önceki başta `AK` kaydı
+  ya da oturmuş bir değer vardır) ve ikinci incelemede bu durumlar elle
+  izlendi, ama lemması 4 GB bellekte bitmedi. Genel bir "çocuk başta olan,
+  önce üst baştaydı" yardımcısı gerekiyor.
+- **Üçüncü bir üyenin `döndür`'ü:** model iki cihaz yeri kullanır; döndüren
+  ya `x`'tir ya da çıkaran. Gerekçe üçüncü bir üyeye aynen taşınır, ama
+  modelde ifade edilmez.
+- **A3'ün modeli eski kuralla:** `hayalet-halka-tazelik.spthy`'de döndüren
+  cihaz hâlâ kendi `döndür`'ünün başına hemen geçer; A3'ün lemmaları o
+  kuralla kanıtlandı. Yeni kural cihazın davranışını değiştirdiği için
+  (eski baştan yazmaya devam eder) A3'ün sonuçları A4'te yeni kuralla
+  yeniden kanıtlanacak.
 - **Saldırganın yazdığı başlar:** `sent_head_key_secret`'in ikinci durumu
   (hiçbir üyenin yazmadığı bir baş) için "kişinin bu başı izlemesi bir
   üyenin anahtar sızıntısını ister" biçimindeki güçlü lemma 8 GB bellekte
@@ -425,6 +439,15 @@ mutantta da vardır.
 - **Döndüren cihaz:** kendi `döndür`'ünü ancak oturunca izler; o zamana
   kadar `AK` kayıtlarını eski baştan yazar. Halkanın hiçbir cihazı bir
   `döndür`'ü oturmadan izlemez.
+- **"Oturdu" herkes için aynı anlama gelmeli:** modelde oturma tek bir
+  olaydır; gerçekte her cihaz ve kişi kendisi karar verir. Kişi `döndür`'ü
+  ilk gördüğü andan saymaya başlarsa (ör. 10 saat çevrimdışı kalmış bir
+  kişi), çıkaran cihaz çoktan yeni baştan çıkarmışken kişi `D` boyunca daha
+  eski başa, `x`'in üyesi olduğu başa şifreler. Kural: herkes oturmayı
+  tanıklı dahil etme zamanından ve aynı `D` ile, şimdiki zamana göre
+  ölçer; bir cihaz bir `döndür`'ü ancak her kişinin onu oturmuş saymak
+  zorunda olduğu andan sonra izler (pay: saat kayması ve kök yaşı). A5'te
+  sayısal olarak kesinleşir.
 - **Teklif imzası:** alıcı kişiyi (ya da kişiyle paylaşılan bağlamı) ve
   alıcının başını bağlamalı; `hesap.md` neyin bağlandığını açıkça yazmalı.
 
