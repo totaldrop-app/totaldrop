@@ -190,13 +190,26 @@
   | 4 | **Aktarım sırasında uykuyu erteleme** (portal `Inhibit`), bütün Linux masaüstleri için. Yeni metin 35 dilde. | 1 gün |
   | 5 | **Yalnızca klavyeyle tam kullanım:** Tab ve Esc var; eksik olan ok tuşlarıyla gezinme ve her temada açıkça görünen odak çerçevesi. KDE, Hyprland ve Omarchy'de de denenir (onlarda da erişilebilirlik kazancıdır). | 2 gün |
   | 6 | **Oyun Modu denemesi ve düzeltmeleri:** Steam'e ekleme, Gamescope altında pencere, dosya seçici (engelleyici risk), bildirim, uyku, tema hedefi ve ekran klavyesi; gerekirse Gamescope algılanınca kod alanında klavye ipucu (35 dil). Bulgulara göre ayrı issue'lar. | 1–2 gün + bulgular |
-  | 7 | **Belgeler ve site:** Deck kurulum yönergesi (Discover'dan kurulum, Steam'e ekleme, önerilen Steam Input düzeni, komut satırı), sitede Linux indirme alanında Flathub bağlantısı. 35 dil. | 1 gün |
+  | 7 | **Belgeler ve site:** "TotalDrop for Steam Deck" sayfası ve kurulum yönergesi (Discover'dan kurulum, Steam'e ekleme, önerilen Steam Input düzeni, komut satırı), sitede Linux indirme alanında Flathub bağlantısı. 35 dil. | 1 gün |
 
   Toplam kabaca 12–16 iş günü, Flathub onay süresi ve Deck'e erişim hariç.
   Deck'e erişim olmadan 1, 2, 4 ve 5 tamamlanabilir; 3 ve 6 bir cihaz
   ister. Steam'e kendi uygulama sayfasıyla (Steamworks) çıkmak bu kararın
   dışındadır: ücretli bir başvuru ve şirket bilgisi ister, bağış modeline
   ([0005](0005-bagis.md)) ve hesapsız yapıya katkısı yoktur.
+
+  **Ad: "TotalDrop for Steam Deck"** (Ozan, 6 Kasım 2026). Deck'teki
+  sürüm kullanıcıya bu adla sunulur: sitedeki Deck sayfası ve indirme
+  alanı, kurulum yönergesi, Steam kütüphanesi için hazırlanan kapak, logo
+  ve simge görselleri. Teknik olarak ayrı bir uygulama değildir: aynı
+  Flatpak, aynı uygulama kimliği (`app.totaldrop.TotalDrop`), aynı sürüm
+  numarası. Flathub kaydının adı "TotalDrop" kalır, çünkü aynı paket
+  bütün dağıtımlar içindir. "Steam Deck" Valve'ın ticari markasıdır ve
+  yalnızca uyumu anlatmak için kullanılır; Valve'ın onayı ya da
+  ortaklığı ima edilmez, Valve'ın logoları kullanılmaz. Bu ad adım 3 ve
+  6 geçmeden sitede ve mağaza metninde kullanılmaz. Ad, marka belgesine
+  ([marka.md](../marka.md)) adım 7'nin PR'ında eklenir; 35 dilde ad
+  çevrilmez, çevresindeki metin çevrilir.
 
   **Switch 2 kapsam dışıdır.** Nintendo'nun geliştirici programı şirket
   başvurusu, gizlilik sözleşmesi ve kapalı SDK ister; açık kaynak bir
