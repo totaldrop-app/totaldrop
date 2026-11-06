@@ -1,4 +1,4 @@
-# 0014: Steam Deck, Linux sürümünün bir parçası olarak desteklenir
+# 0014: Steam Deck, Steam Machine ve Steam Frame, Linux sürümünün bir parçası olarak desteklenir
 
 - **Durum:** Kabul, 6 Kasım 2026 (Ozan, #295)
 - **Bağlam:** Steam Deck kullanıcıları ekran görüntülerini, oyun
@@ -156,6 +156,32 @@
   - Tek pencere: uygulama kimliğiyle aynı D-Bus adını almak Flatpak'te
     varsayılan olarak serbesttir; `instance.rs` değişmez.
 
+  ### Diğer SteamOS cihazları: Steam Machine ve Steam Frame
+
+  Valve 2026'da SteamOS çalıştıran iki cihaz daha çıkardı. Bilgiler basın
+  haberlerinden; cihazlar elimize geçince doğrulanacak.
+
+  - **Steam Machine:** televizyona bağlanan küçük bir PC (AMD Zen 4,
+    x86_64), SteamOS 3 ve Masaüstü Modu'nda KDE Plasma. Deck'le aynı
+    x86_64 Flatpak'i kullanır. Fark kullanımdadır: dokunmatik ekran yok,
+    kullanıcı çoğunlukla Oyun Modu'nda, kumandayla ve birkaç metre
+    uzaktan kullanır. Bu yüzden adım 5 (klavyeyle tam kullanım) ve adım 6
+    (Oyun Modu) Machine'de zorunlu, Deck'te ise rahatlıktır. Metin ve
+    odak çerçevesi televizyon uzaklığından okunmalıdır. Ethernet vardır;
+    microSD yuvası vardır.
+  - **Steam Frame:** bağımsız çalışan VR gözlüğü, Snapdragon 8 Gen 3
+    (ARM, aarch64) üzerinde SteamOS. Valve'ın belgelerine göre yerel
+    `linuxarm64` uygulamalar çalışır, x86_64 Linux uygulamaları FEX ile
+    çevrilerek çalışır. Bizim Linux paketlerimizin arm64 derlemesi zaten
+    var; Flathub da aarch64 derler (adım 1). Belirsiz olanlar: Frame'de
+    Flatpak ve Discover'ın olup olmadığı, 2B bir Qt penceresinin VR
+    içinde nasıl gösterildiği, girişin (VR kumandaları, el izleme, ekran
+    klavyesi) uygulamaya nasıl ulaştığı ve dosya seçici portalının
+    çalışıp çalışmadığı. Frame'in kameraları uygulamalara açık değilse
+    QR ile alma burada da yoktur.
+
+  Üç cihaz aynı paketi kullanır; ayrı uygulama yazılmaz.
+
   ### Ağ
 
   Deck yalnızca Wi-Fi ile bağlanır (bağlantı istasyonunda Ethernet olur).
@@ -192,22 +218,26 @@
   | 6 | **Oyun Modu denemesi ve düzeltmeleri:** Steam'e ekleme, Gamescope altında pencere, dosya seçici (engelleyici risk), bildirim, uyku, tema hedefi ve ekran klavyesi; gerekirse Gamescope algılanınca kod alanında klavye ipucu (35 dil). Bulgulara göre ayrı issue'lar. | 1–2 gün + bulgular |
   | 7 | **Belgeler ve site:** "TotalDrop for Steam Deck" sayfası ve kurulum yönergesi (Discover'dan kurulum, Steam'e ekleme, önerilen Steam Input düzeni, komut satırı), sitede Linux indirme alanında Flathub bağlantısı. 35 dil. | 1 gün |
 
-  Toplam kabaca 12–16 iş günü, Flathub onay süresi ve Deck'e erişim hariç.
-  Deck'e erişim olmadan 1, 2, 4 ve 5 tamamlanabilir; 3 ve 6 bir cihaz
-  ister. Steam'e kendi uygulama sayfasıyla (Steamworks) çıkmak bu kararın
+  | 8 | **Steam Machine ve Steam Frame denemesi:** Machine'de televizyon uzaklığında okunurluk ve yalnızca kumandayla kullanım; Frame'de aarch64 Flatpak'in kurulumu, VR içinde pencere, giriş ve dosya seçici. Bulgulara göre ayrı issue'lar; Frame'de Flatpak yoksa bu karar Frame için yeniden açılır. | Machine 1 gün, Frame 2–3 gün + bulgular |
+
+  Toplam kabaca 12–16 iş günü Deck için, Machine ve Frame ile 15–20 gün, Flathub onay süresi ve Deck'e erişim hariç.
+  Cihaz olmadan 1, 2, 4 ve 5 tamamlanabilir; 3, 6 ve 8 cihaz (ya da o
+  cihazı kullanan bir testçi) ister. Steam'e kendi uygulama sayfasıyla (Steamworks) çıkmak bu kararın
   dışındadır: ücretli bir başvuru ve şirket bilgisi ister, bağış modeline
   ([0005](0005-bagis.md)) ve hesapsız yapıya katkısı yoktur.
 
-  **Ad: "TotalDrop for Steam Deck"** (Ozan, 6 Kasım 2026). Deck'teki
-  sürüm kullanıcıya bu adla sunulur: sitedeki Deck sayfası ve indirme
+  **Ad: "TotalDrop for Steam Deck", "TotalDrop for Steam Machine",
+  "TotalDrop for Steam Frame"** (Ozan, 6 Kasım 2026). Her cihazdaki
+  sürüm kullanıcıya kendi adıyla sunulur: sitedeki Deck sayfası ve indirme
   alanı, kurulum yönergesi, Steam kütüphanesi için hazırlanan kapak, logo
   ve simge görselleri. Teknik olarak ayrı bir uygulama değildir: aynı
   Flatpak, aynı uygulama kimliği (`app.totaldrop.TotalDrop`), aynı sürüm
   numarası. Flathub kaydının adı "TotalDrop" kalır, çünkü aynı paket
-  bütün dağıtımlar içindir. "Steam Deck" Valve'ın ticari markasıdır ve
+  bütün dağıtımlar içindir. "Steam Deck", "Steam Machine" ve "Steam
+  Frame" Valve'ın ticari markalarıdır ve
   yalnızca uyumu anlatmak için kullanılır; Valve'ın onayı ya da
-  ortaklığı ima edilmez, Valve'ın logoları kullanılmaz. Bu ad adım 3 ve
-  6 geçmeden sitede ve mağaza metninde kullanılmaz. Ad, marka belgesine
+  ortaklığı ima edilmez, Valve'ın logoları kullanılmaz. Bir cihazın adı, o cihazda adım 3 ve 6
+  (Frame için adım 8) geçmeden sitede ve mağaza metninde kullanılmaz. Ad, marka belgesine
   ([marka.md](../marka.md)) adım 7'nin PR'ında eklenir; 35 dilde ad
   çevrilmez, çevresindeki metin çevrilir.
 
@@ -253,3 +283,5 @@
 - SteamOS 3.9.5 sürümü: [Phoronix](https://www.phoronix.com/news/SteamOS-3.9.5)
 - Steam ekran görüntüsü klasörü: [Dexerto](https://www.dexerto.com/tech/where-to-find-steam-screenshot-folder-2619310/)
 - Steam oyun kaydı: [Shacknews](https://shacknews.com/article/142140/how-to-use-steam-game-recording)
+- Steam Machine: [Engadget](https://www.engadget.com/gaming/pc/everything-we-know-about-valves-new-steam-machine-200458817.html)
+- Steam Frame ve FEX: [GamingOnLinux](https://gamingonlinux.com/2026/01/valves-documentation-highlights-the-different-ways-standalone-games-run-on-steam-frame)
