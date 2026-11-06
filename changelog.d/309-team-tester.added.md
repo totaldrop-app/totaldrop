@@ -1,2 +1,2 @@
-- **Site:** The team page lists testers too, with the platforms they test,
-  starting with a tester for iOS and macOS (#309).
+- **Site:** The team page lists QA specialists too, with the platforms they
+  test, starting with one for iOS and macOS (#309).
