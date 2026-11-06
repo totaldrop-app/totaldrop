@@ -470,7 +470,7 @@ lemma attack:
     },
     {
         "name": "recovery_beats_ak_record",
-        "why": "a reader follows a recovery although a member wrote an AK record under the same key",
+        "why": "a reader follows a recovery although a member wrote an AK record from the same membership period",
         "model": RECOVERY,
         "edits": [
             ("restriction Rec_Priority",
@@ -500,9 +500,9 @@ lemma attack [heuristic=c]:
         "lemma": """
 lemma attack:
   exists-trace
-  "Ex c r n #k.
-      ContactRecovered(c, r, n) @ k
-    & not (Ex #o. OwnerRecovered(r, n) @ o)
+  "Ex c r m n #k.
+      ContactRecovered(c, r, m, n) @ k
+    & not (Ex #o. OwnerRecovered(r, m, n) @ o)
     & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)"
 """,
     },

@@ -476,9 +476,11 @@ kuralıyla (döndüren cihaz kendi `döndür`'ünü oturunca izler). Eklenenler:
   yazılmışsa kurtarma izlenmez (çatal kuralı, madde 1'in genişletilmesi).
 - **İki kurtarma gerçek çataldır:** `m`'ye karşı başka bir kurtarma önce
   günlüğe girmişse okuyucu hiçbirini izlemez.
-- `kurtarma_reddi`: bir üyenin, o anki başından yazdığı `AK` kaydı. Üye
-  bunu beklemenin her anında yazabilir; öncelik kuralıyla `m`'ye karşı
-  kurtarmayı durdurur.
+- `kurtarma_reddi`: bir üyenin, o anki başından yazdığı `AK` kaydı. Öbür
+  kayıtlardan farklı olarak yazanın tazeliğine bağlı değildir: red her
+  zaman sayılır (`hesap.md`, çatal kuralı 5). Kuralın tek ön koşulu üyenin
+  görünümüdür, bu yüzden üye bunu beklemenin her anında yazabilir.
+  Öncelik kuralıyla `m`'ye karşı kurtarmayı durdurur.
 - **Kişiler** bir kurtarmayı ancak sahibiyle, o kurtarma kaydı için
   kelimeleri yeniden karşılaştırdıktan sonra izler (`!Words(r, kayıt)`).
 
@@ -506,6 +508,12 @@ Düzeltme, kurtarmayı üyelik dönemine bağlamak ve iki kurtarmayı çatal
 saymaktır. `sanity_reject_after_settled_rotate` ilk izin artık reddedilebildiğini,
 `no_split_recovery` ikincisinin kapandığını gösterir.
 
+İkinci inceleme aynı açığın başka bir yoldan döndüğünü gösterdi: tek
+üyenin kendi iki `döndür`'ü çatallanıp oturursa (ya da `IK`'sini çalan biri
+başın anahtarına iki değer yazarsa) üye ne `döndür`'ü izleyebiliyor ne de
+o baştan yazabiliyordu (yazanın tazeliği). Tek hamlesi hırsızın kurtarmasını
+izlemekti. Düzeltme: red yazanın tazeliğine bağlı değildir.
+
 ### Soyutlamalar
 
 | Soyutlama | Neden | Ne zaman genişler |
@@ -523,13 +531,13 @@ saymaktır. `sanity_reject_after_settled_rotate` ilk izin artık reddedilebildi�
 | --- | --- | --- |
 | A3'ün dört çalıştırılabilirlik izi, `no_rotate_branch_past_removal` | iz var / her iz | Yeni kurallarla da geçerli |
 | `sanity_owner_recovers` | iz var | Sahip kurtarır, bir kişi kelimeleri karşılaştırıp izler |
-| `sanity_recovery_despite_rotate` | iz var | Kilitli çalınmış bir telefon (`IK`'si sızmış, `AK`'si sızmamış) önce `döndür` yazsa da kurtarma geçer |
+| `sanity_recovery_despite_rotate` | iz var | Kilitli çalınmış bir telefon (`IK`'si sızmış, `AK`'si sızmamış) `döndür` yazar, kişi bu oturmuş `döndür`'ü izler ve aynı dönemde kurtarmayı yine izler |
 | `sanity_reject_after_settled_rotate` | iz var | Üye, kendi `döndür`'ü oturup izlendikten sonra da bekleyen kurtarmayı reddedebilir |
-| `ak_record_stops_recovery` | her iz | **P7, cihazlar:** dürüst bir üye `m` döneminin bir başından `AK` kaydı (`kurtarma_reddi`, `ekle`, `çıkar`) yazdıktan sonra kimse `m`'ye karşı kurtarmayı izlemez. Üye o anki başından yazdığı için bunu beklemenin her anında yapabilir |
-| `recovery_was_pending` | her iz | **P7, cihazlar:** izlenen her kurtarmanın kendisi önce bekleme boyunca günlükte, her üyenin görebileceği yerdeydi |
+| `ak_record_stops_recovery` | her iz | **P7, cihazlar:** dürüst bir üye `m` döneminin bir başından `AK` kaydı (`kurtarma_reddi`, `ekle`, `çıkar`) yazdıktan sonra kimse `m`'ye karşı kurtarmayı izlemez. Okuyucu kuralı `Rec_Priority`'nin yeniden ifadesidir; asıl içerik, reddin her an yazılabilmesidir (kuralın tek ön koşulu görünüm, bkz. yukarı) |
+| `recovery_was_pending` | her iz | **P7, cihazlar:** izlenen her kurtarmanın kendisi önce bekleme boyunca günlükte, her üyenin görebileceği yerdeydi (okuyucunun bekleme kuralının yeniden ifadesi) |
 | `read_rec_was_logged` | her iz, yardımcı | İzlenen her kurtarma önce günlüğe yazılmıştır (`no_split_recovery` için) |
-| `no_split_recovery` | her iz | Aynı döneme karşı iki kurtarmadan farklılarını iki okuyucu izlemez |
-| `contact_not_moved_by_phrase_alone` | her iz | **P7, kişiler:** yalnızca ifadeyle kişi taşınmaz; kişi bir kurtarmayı yalnızca sahibinin eklediği cihaza, o kayıt için kimliği denetledikten sonra izler. Bu lemma yukarıdaki kimlik denetimi varsayımının yeniden ifadesidir |
+| `no_split_recovery` | her iz | Aynı döneme karşı iki kurtarmadan farklılarını iki okuyucu izlemez (`Rec_Single`'ın sonucu) |
+| `contact_not_moved_by_phrase_alone` | her iz | **P7, kişiler:** yalnızca ifadeyle kişi taşınmaz; kişi bir kurtarmayı yalnızca sahibinin aynı döneme karşı eklediği cihaza, o kayıt için kimliği denetledikten sonra izler. Bu lemma yukarıdaki kimlik denetimi varsayımının yeniden ifadesidir |
 
 ### Mutant sınamaları
 
@@ -542,6 +550,13 @@ saymaktır. `sanity_reject_after_settled_rotate` ilk izin artık reddedilebildi�
 
 Dördü de aramanın bitmesi için kullanılmayan kuralları düşürür (`drop`).
 
+Lemmaların çoğu okuyucu kurallarını yeniden ifade ettiği için bu mutantlar
+kuralların modele bağlı olduğunu sınar, tasarımın doğruluğunu değil.
+Tasarımın asıl dayanakları, gerçek bir okuyucunun öncelik kuralını
+uygulayabilmesi (aşağıda, tasarıma geri bildirim) ve üyenin her an
+reddedebilmesidir; ikincisi kuralın biçiminden okunur, bir lemma olarak
+ifade edilmedi.
+
 ### Henüz kanıtlanmayanlar
 
 - **Telefon ve ifade birlikte çalınırsa** P7 güvence vermez (`hesap.md`,
@@ -552,6 +567,18 @@ Dördü de aramanın bitmesi için kullanılmayan kuralları düşürür (`drop`
 - **Sansür:** tanıklar sunucuyla birlikte red kaydını sansürlerse bekleme
   yalnızca gecikmedir; P7'yi o zaman kişilerin kimlik denetimi sağlar.
   Modelin günlüğü tek ve sansürsüzdür (A2 varsayımı).
+- **Geç red okuyucuları sessizce böler:** okuyucu A oturmuş kurtarmayı
+  izledikten sonra çevrimdışı bir üye aynı dönemden red yazarsa A
+  kurtarma dalında, üye red dalında kalır. Modelde okuyucular reddi hiç
+  izlemez ve bu çatal algılanmaz (`hesap.md` kural 5 ve 6): A4c.
+- **Yalnızca ifadeyi çalan biri sahibin kurtarmasını kalıcı olarak
+  durdurabilir:** aynı döneme karşı ikinci bir kurtarma yazmak `Rec_Single`
+  ile ikisini de durdurur. `çatal_çöz` de `RK` ile imzalandığından bunu
+  çözmez; geriye kişilerle yeniden eşleşme kalır. Bu bir hizmet engellemedir,
+  P7'yi bozmaz: A4c ve A4d.
+- **Kurtarmadan sonrası:** kurtarılan cihazın görünümü yok; reddetmez,
+  kayıp cihazı çıkarmaz, kayıt yazmaz. Kurtarmadan sonra olanlar için lemma
+  yok.
 - Kurtarmadan sonraki çatallar, `çatal_çöz` ve reddedilen `RK`: A4c.
 
 ### Tasarıma geri bildirim (A4d'de `hesap.md`'ye işlenecek)
@@ -559,7 +586,18 @@ Dördü de aramanın bitmesi için kullanılmayan kuralları düşürür (`drop`
 - Kurtarma bir başa değil, üyelik dönemine karşı yazılan bir öneridir;
   `döndür` onu durdurmaz, ona taşınır. Üye bekleyen kurtarmayı her zaman
   o anki başından reddedebilir.
-- Aynı döneme karşı iki kurtarma gerçek çataldır.
+- Aynı döneme karşı iki kurtarma gerçek çataldır. Yalnızca ifadeyi çalan
+  biri bununla sahibin kurtarmasını durdurabilir (hizmet engelleme);
+  tasarım bunu söylemeli.
+- Red yazanın tazeliğine bağlı değildir: çatallanmış ya da doldurulmuş bir
+  başın üyesi de reddedebilmelidir.
+- Öncelik için gerçek okuyucu, `m` döneminin **her** başı altında (izlemediği
+  `döndür` dalları ve çatallı başlar dahil) `AK` kaydı aramalıdır.
+  `hesap.md` bugün yalnızca "aynı anahtar altında" diyor. Model, `op`'u ne
+  olursa olsun geçerli `AK` imzalı her değeri sayar; bu P7 için temkinlidir.
+- Model kurtarmayı ayrı bir `h('rlog', m)` anahtarı altına yazar;
+  `hesap.md:421` ise kurtarmayı `L_{e+1}` altında, en yeni başı ebeveyn
+  göstererek tarif ediyor. A4d'de biri seçilmeli.
 - Kişinin yeniden doğrulaması kurtarma kaydının özetine bağlanır (yeniden
   bulma kutusu zaten bu özetle adlandırılıyor).
 - P7'nin kişiler yarısı kelimelere değil, kişinin karşısındakini bant
