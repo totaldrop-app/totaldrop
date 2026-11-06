@@ -465,6 +465,28 @@ lemma no_rotate_branch_past_removal [heuristic=c]:
     & not (x = d)
     ==> F"
 
+/* The same for a rotate written by the remover itself, on the head it
+   removes from: it does not survive the remove either (fork rule 1). */
+lemma no_rotate_branch_of_remover [heuristic=c]:
+  "All c r hh nr x d #k #t.
+      Accept(c, r, hh, 'rotate', nr, d) @ k
+    & Signed(d, r, hh, 'remove', h(x)) @ t
+    ==> F"
+
+/* Executability: a remove can be written from a rotate's head, so
+   no_fresh_check_before_rotate_after_removal is not vacuous. */
+lemma sanity_remove_from_rotate_head [heuristic=c]:
+  exists-trace
+  "Ex r h0 d x k1 nr k2 #c #t.
+      Created(r, d) @ c
+    & Signed(d, r, h(<'rec', r, h(<'rec', r, h0, 'add', x, d, k1>), 'rotate', nr, d, k2>), 'remove', h(x)) @ t
+    & (All u #a #b. Step(u) @ a & Step(u) @ b ==> #a = #b)
+    & not (Ex y z #a. ExtWrite(y, z) @ a)
+    & not (Ex e #a. RevState(e) @ a)
+    & not (Ex e #a. RevIK(e) @ a)
+    & not (Ex a b e g #o. OfferedBy(a, b, e, g) @ o)
+    & not (Ex a b e #o. Pin(a, b, e) @ o)"
+
 /* Executability after a removal: a contact that has followed a remove
    still sends, to the new head. */
 lemma sanity_contact_sends_after_removal [heuristic=c]:
