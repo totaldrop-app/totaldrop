@@ -1,6 +1,6 @@
 # 0014: Steam Deck, Linux sürümünün bir parçası olarak desteklenir
 
-- **Durum:** Önerilen, 6 Kasım 2026 (#295)
+- **Durum:** Kabul, 6 Kasım 2026 (Ozan, #295)
 - **Bağlam:** Steam Deck kullanıcıları ekran görüntülerini, oyun
   videolarını, modları ve oyunların kayıt dosyalarını (save) Deck ile PC
   ve telefon arasında sık taşır. Bugün bunu çoğunlukla USB bellek, bulut
@@ -178,7 +178,7 @@
      işe yarar. Oyun Modu için ayrı uygulama değil, mevcut arayüzde
      klavye/kumanda, uyku ve Gamescope ayrıntıları.
 
-- **Karar (önerilen):** Seçenek 4. Steam Deck ayrı bir platform değildir;
+- **Karar:** Seçenek 4. Steam Deck ayrı bir platform değildir;
   Linux sürümünün bir hedefidir ve aşağıdaki sırayla desteklenir. Her adım
   ayrı bir issue ve PR'dır; adımlar 0.3 beta sürümlerinin yanında ilerler.
 
@@ -215,7 +215,7 @@
 - **Sonuçlar:**
   - Flatpak, Linux için dördüncü paket biçimi olur; sürüm listesi
     ([surec.md](../surec.md)) ve marka kuralı Flathub kaydını kapsar.
-  - **Kural değişikliği (Ozan'ın onayı gerekir):** CLAUDE.md'deki
+  - **Kural değişikliği (Ozan onayladı, 6 Kasım 2026):** CLAUDE.md'deki
     "paketler yalnızca CI'da derlenir" kuralına bir istisna eklenir.
     Flathub, uygulamayı kendi altyapısında, bizim depodaki tariften ve
     etiketli kaynaktan derler; o derlemeyi biz yapmayız ve imzalamayız.

@@ -21,7 +21,7 @@ birleştirmeden önce "Kabul" olur.
 | [0011](0011-android-material-3-expressive.md) | Android Material 3 Expressive'e resmî paketle, adım adım geçer | Kabul |
 | [0012](0012-ad-ve-isaret.md) | Kod serbest, ad ve işaret yalnızca TotalDrop'un kendi sürümleri için | Kabul |
 | [0013](0013-hayalet-halka-hesap.md) | Hesap sunucuda tutulmaz: Hayalet halka | Kabul |
-| [0014](0014-steam-deck.md) | Steam Deck, Linux sürümünün parçası: Flathub ve klavyeyle tam kullanım | Önerilen |
+| [0014](0014-steam-deck.md) | Steam Deck, Linux sürümünün parçası: Flathub ve klavyeyle tam kullanım | Kabul |
 
 Yeni bir karar için bir sonraki numarayla `NNNN-kisa-ad.md` açın ve bu
 tabloya ekleyin.
