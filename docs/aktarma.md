@@ -60,10 +60,16 @@ sürümler bağlantıyı her aktarımın başında açar.
 
 Aktarma yolu gönderenin aktarma sunucusundan geçer. Alan cihaz onu yalnızca
 kendi ayarındaki sunucuyla aynıysa kullanır; değilse yalnızca doğrudan
-yolları dener, gizlilik modundaysa hata verip durur
-([#68](https://github.com/totaldrop-app/totaldrop/issues/68)). Gönderen de
-aynı kuralla, alan cihaz aynı sunucuyu kullanmayacaksa kendi sunucusuna hiç
-bağlanmaz ([#301](https://github.com/totaldrop-app/totaldrop/issues/301)).
+yolları dener; gizlilik modundaysa ya da gönderen hiç adres bildirmediyse
+hata verip durur
+([#68](https://github.com/totaldrop-app/totaldrop/issues/68)). Bir sonraki
+sürümden itibaren gönderen de aynı kuralla, alan cihaz aynı sunucuyu
+kullanmayacaksa kendi sunucusuna hiç bağlanmaz
+([#301](https://github.com/totaldrop-app/totaldrop/issues/301)); daha önceki
+sürümler doğrudan yol 1,2 saniyede açılmazsa yine bağlanır. Bunun bir yan
+etkisi var: başka bir sunucu ayarlı (ya da sunucusuz) 0.1 sürümlü bir alıcı,
+eskiden gönderenin sunucusunu yine de kullanabiliyordu; artık doğrudan yol
+yoksa aktarım zaman aşımıyla biter.
 
 İlk açılan bağlantı kullanılır. Gizlilik modunda (komut satırında
 `--relay-only`, uygulamalarda Ayarlar → "Adresimi karşı cihazdan gizle") cihaz
