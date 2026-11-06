@@ -17,6 +17,7 @@
     }
   },
   "totals": {
+    "": 2,
     "claude": 195,
     "dependabot[bot]": 9,
     "ozdil": 158

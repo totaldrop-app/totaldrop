@@ -155,9 +155,16 @@ async function fetchSnapshot(c) {
   if (existsSync(AVATARS)) for (const f of readdirSync(AVATARS)) if (!Object.values(snap.profiles).some((p) => p.avatar === f)) unlinkSync(join(AVATARS, f));
 
   for (let page = 1; page <= PAGES_MAX; page++) {
-    const list = await api(`repos/${c.repo}/contributors?per_page=100&page=${page}`);
+    // anon=1 counts commits without a linked account too, under "" (their
+    // names and e-mail addresses are not kept), so the total matches the
+    // discipline tables.
+    const list = await api(`repos/${c.repo}/contributors?anon=1&per_page=100&page=${page}`);
     if (!Array.isArray(list) || list.length === 0) break;
-    for (const x of list) if (LOGIN.test(x.login) && Number.isSafeInteger(x.contributions)) snap.totals[x.login] = x.contributions;
+    for (const x of list) {
+      if (!Number.isSafeInteger(x.contributions)) continue;
+      if (x.type === "Anonymous") snap.totals[""] = (snap.totals[""] || 0) + x.contributions;
+      else if (LOGIN.test(x.login)) snap.totals[x.login] = x.contributions;
+    }
     if (list.length < 100) break;
     if (page === PAGES_MAX) throw new Error(`more than ${PAGES_MAX * 100} contributors, raise PAGES_MAX`);
   }
@@ -209,7 +216,7 @@ function checkSnapshot(c, s) {
   if (existsSync(AVATARS)) for (const f of readdirSync(AVATARS)) if (!Object.values(s.profiles).some((p) => p.avatar === f)) fail(`avatar not in the snapshot: ${f}`);
   for (const d of c.disciplines) if (!(d.key in s.areas)) fail(`github.json: no figures for ${d.key}, run --fetch`);
   for (const k of Object.keys(s.areas)) if (!c.disciplines.some((d) => d.key === k)) fail(`github.json: ${k} is not in team.json, run --fetch`);
-  for (const [login, n] of Object.entries(s.totals || {})) if (!LOGIN.test(login) || !Number.isSafeInteger(n) || n < 1) fail(`github.json: totals: bad entry ${login}`);
+  for (const [login, n] of Object.entries(s.totals || {})) if ((login !== "" && !LOGIN.test(login)) || !Number.isSafeInteger(n) || n < 1) fail(`github.json: totals: bad entry ${login}`);
   for (const [k, counts] of Object.entries(s.areas)) {
     if (!(k in AREAS)) fail(`github.json: unknown area ${k}`);
     for (const [login, n] of Object.entries(counts)) if ((login !== "" && !LOGIN.test(login)) || !Number.isSafeInteger(n) || n < 1) fail(`github.json: ${k}: bad entry ${login}`);
@@ -225,11 +232,15 @@ const ICON_WEB = `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focus
 const githubLink = (href, shownAs) => `<li><a class="icon-link" href="${esc(href)}">${ICON_GITHUB}<span class="visually-hidden">GitHub: <bdi>${esc(shownAs)}</bdi></span></a></li>`;
 const webLink = (href) => `<li><a class="icon-link" href="${esc(href)}" rel="nofollow ugc">${ICON_WEB}<span class="visually-hidden"><span data-i18n="tm.web">Web site</span>: <bdi>${esc(shown(href))}</bdi></span></a></li>`;
 
-// The colour of a login in the share bars and their legends: listed people
-// in team.json order (s1 to s6), everyone else s0.
-function series(c, login) {
-  const i = c.people.findIndex((x) => x.login === login);
-  return i < 0 ? "s0" : `s${Math.min(i + 1, 6)}`;
+// The colour of a login in the share bars and their legends, by role: the
+// maintainer in the accent, the AI assistant in ink, other people, bots and
+// everyone else in tints. Classes: s-maintainer, s-contributor, s-ai,
+// s-bot, s-other.
+export function series(c, login) {
+  const p = c.people.find((x) => x.login === login);
+  if (!p) return "s-other";
+  if (p.kind === "person") return p.role === "maintainer" ? "s-maintainer" : "s-contributor";
+  return `s-${p.kind}`;
 }
 
 // How a GitHub login is named on the page.
@@ -293,7 +304,7 @@ function areaCard(c, s, d) {
   const lines = [
     `        <li class="area" id="${d.key}">`,
     `          <div class="area-head">`,
-    `            <h3 data-i18n="tm.a.${d.key}">${esc(AREAS[d.key][0])}</h3>`,
+    `            <h3 id="${d.key}-title" data-i18n="tm.a.${d.key}">${esc(AREAS[d.key][0])}</h3>`,
   ];
   if (total) lines.push(`            ${stat(total)}`);
   lines.push(`          </div>`, `          <p data-i18n="tm.a.${d.key}.d">${esc(AREAS[d.key][1])}</p>`);
@@ -309,8 +320,8 @@ function areaCard(c, s, d) {
     }).join("");
     lines.push(
       `          <svg class="share" viewBox="0 0 100 8" preserveAspectRatio="none" aria-hidden="true" focusable="false">${rects}</svg>`,
-      `          <table class="area-table">`,
-      `            <thead><tr><th scope="col" data-i18n="tm.col.who">Who</th><th scope="col" data-i18n="tm.col.changes">Changes</th></tr></thead>`,
+      `          <table class="area-table" aria-labelledby="${d.key}-title">`,
+      `            <thead><tr><th scope="col"><span class="visually-hidden" data-i18n="tm.col.who">Who</span></th><th scope="col"><span class="visually-hidden" data-i18n="tm.col.changes">Changes</span></th></tr></thead>`,
       `            <tbody>`,
       ...counts.map(([login, n]) => `              <tr class="${series(c, login)}"><th scope="row">${who(c, s, login)}</th><td>${esc(String(n))}</td></tr>`),
       `            </tbody>`,

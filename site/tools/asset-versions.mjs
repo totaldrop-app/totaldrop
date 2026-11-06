@@ -31,6 +31,19 @@ export function assetRef(name) {
 const REF = new RegExp(`((?:href|src)=")/(${ASSETS.map((a) => a.replace(".", "\\.")).join("|")})(?:\\?v=[0-9a-f]*)?(")`, "g");
 export const versioned = (html) => html.replace(REF, (_, a, name, b) => `${a}${assetRef(name)}${b}`);
 
+// A reference the rewrite would not recognise (single quotes, a relative
+// path, another query) would ship unversioned; the check reports it.
+const ODD = new RegExp(`(?:href|src)\\s*=\\s*["']?[^"'\\s>]*?\\b(${ASSETS.map((a) => a.replace(".", "\\.")).join("|")})(?!\\?v=[0-9a-f]{10}")`, "g");
+
+// What is wrong with a page: "stale" when a reference has an old or no
+// version, the unrecognised references otherwise.
+export function problems(html) {
+  const out = [];
+  if (versioned(html) !== html) out.push("stale");
+  for (const m of versioned(html).matchAll(ODD)) out.push(`unrecognised reference: ${m[0]}`);
+  return out;
+}
+
 function pages(dir) {
   return readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
     const p = join(dir, e.name);
@@ -45,14 +58,16 @@ function main() {
   for (const p of pages(pub)) {
     const html = readFileSync(p, "utf8");
     const want = versioned(html);
-    if (want !== html) {
-      if (write) writeFileSync(p, want);
-      else stale.push(relative(pub, p));
+    if (want !== html && write) writeFileSync(p, want);
+    for (const problem of problems(write ? want : html)) {
+      stale.push(problem === "stale"
+        ? `site/public/${relative(pub, p)}: asks for an old version of a stylesheet or script; run node site/tools/asset-versions.mjs --write`
+        : `site/public/${relative(pub, p)}: ${problem}; write it as href="/<file>" or src="/<file>"`);
     }
     count += (want.match(REF) || []).length;
   }
   if (stale.length) {
-    for (const s of stale) console.error(`error: site/public/${s}: asks for an old version of a stylesheet or script; run node site/tools/asset-versions.mjs --write`);
+    for (const s of stale) console.error(`error: ${s}`);
     process.exit(1);
   }
   console.log(`asset versions: ${count} references, ${[...versions].map(([n, v]) => `${n}@${v}`).join(" ")}`);

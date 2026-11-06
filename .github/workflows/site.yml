@@ -35,7 +35,7 @@ jobs:
       - name: Team page made from the GitHub snapshot and up to date
         run: node --test site/tools/test-team.mjs && node site/tools/team.mjs
       - name: Pages ask for the current stylesheet and scripts
-        run: node site/tools/asset-versions.mjs
+        run: node --test site/tools/test-asset-versions.mjs && node site/tools/asset-versions.mjs
       - name: README and its translations
         run: node site/tools/check-readmes.mjs
       - name: Every page links only to files that exist
