@@ -128,5 +128,9 @@
   "transferNoticeChannel": "傳輸",
   "transferNoticeSending": "正在透過 TotalDrop 傳送",
   "transferNoticeReceiving": "正在透過 TotalDrop 接收",
-  "transferNoticeBody": "使用其他應用程式時仍會繼續。"
+  "transferNoticeBody": "使用其他應用程式時仍會繼續。",
+  "desktopGenericName": "檔案傳輸",
+  "desktopComment": "將檔案直接傳送到另一台裝置，端對端加密",
+  "desktopKeywords": "傳送;接收;分享;傳輸;檔案;",
+  "desktopSendWith": "用 TotalDrop 傳送"
 }

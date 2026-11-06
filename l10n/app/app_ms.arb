@@ -128,5 +128,9 @@
   "transferNoticeChannel": "Pemindahan",
   "transferNoticeSending": "Menghantar dengan TotalDrop",
   "transferNoticeReceiving": "Menerima dengan TotalDrop",
-  "transferNoticeBody": "Terus berjalan semasa anda menggunakan apl lain."
+  "transferNoticeBody": "Terus berjalan semasa anda menggunakan apl lain.",
+  "desktopGenericName": "Pemindahan fail",
+  "desktopComment": "Hantar fail terus ke peranti lain, disulitkan hujung ke hujung",
+  "desktopKeywords": "hantar;terima;kongsi;pindah;fail;",
+  "desktopSendWith": "Hantar dengan TotalDrop"
 }

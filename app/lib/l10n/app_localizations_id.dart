@@ -469,4 +469,17 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get transferNoticeBody =>
       'Tetap berjalan saat Anda memakai aplikasi lain.';
+
+  @override
+  String get desktopGenericName => 'Transfer file';
+
+  @override
+  String get desktopComment =>
+      'Kirim file langsung ke perangkat lain, terenkripsi end-to-end';
+
+  @override
+  String get desktopKeywords => 'kirim;terima;bagikan;transfer;file;';
+
+  @override
+  String get desktopSendWith => 'Kirim dengan TotalDrop';
 }

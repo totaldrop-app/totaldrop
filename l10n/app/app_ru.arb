@@ -128,5 +128,9 @@
   "transferNoticeChannel": "Передачи",
   "transferNoticeSending": "Отправка через TotalDrop",
   "transferNoticeReceiving": "Получение через TotalDrop",
-  "transferNoticeBody": "Продолжается, пока вы пользуетесь другими приложениями."
+  "transferNoticeBody": "Продолжается, пока вы пользуетесь другими приложениями.",
+  "desktopGenericName": "Передача файлов",
+  "desktopComment": "Отправляйте файлы прямо на другое устройство со сквозным шифрованием",
+  "desktopKeywords": "отправить;получить;поделиться;передать;файлы;",
+  "desktopSendWith": "Отправить через TotalDrop"
 }

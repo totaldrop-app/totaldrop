@@ -128,5 +128,9 @@
   "transferNoticeChannel": "転送",
   "transferNoticeSending": "TotalDrop で送信中",
   "transferNoticeReceiving": "TotalDrop で受信中",
-  "transferNoticeBody": "ほかのアプリを使っている間も続きます。"
+  "transferNoticeBody": "ほかのアプリを使っている間も続きます。",
+  "desktopGenericName": "ファイル転送",
+  "desktopComment": "ファイルを別のデバイスへ直接送信。エンドツーエンドで暗号化",
+  "desktopKeywords": "送信;受信;共有;転送;ファイル;",
+  "desktopSendWith": "TotalDrop で送信"
 }

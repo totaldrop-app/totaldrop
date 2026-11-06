@@ -128,5 +128,9 @@
   "transferNoticeChannel": "Přenosy",
   "transferNoticeSending": "Odesílání přes TotalDrop",
   "transferNoticeReceiving": "Příjem přes TotalDrop",
-  "transferNoticeBody": "Pokračuje, i když používáte jiné aplikace."
+  "transferNoticeBody": "Pokračuje, i když používáte jiné aplikace.",
+  "desktopGenericName": "Přenos souborů",
+  "desktopComment": "Posílejte soubory přímo do jiného zařízení, koncově šifrované",
+  "desktopKeywords": "poslat;přijmout;sdílet;přenos;soubory;",
+  "desktopSendWith": "Odeslat pomocí TotalDrop"
 }

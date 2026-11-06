@@ -128,5 +128,9 @@
   "transferNoticeChannel": "स्थानांतरण",
   "transferNoticeSending": "TotalDrop से भेजा जा रहा है",
   "transferNoticeReceiving": "TotalDrop से प्राप्त किया जा रहा है",
-  "transferNoticeBody": "दूसरे ऐप इस्तेमाल करते समय भी चलता रहता है।"
+  "transferNoticeBody": "दूसरे ऐप इस्तेमाल करते समय भी चलता रहता है।",
+  "desktopGenericName": "फ़ाइल ट्रांसफ़र",
+  "desktopComment": "फ़ाइलें सीधे दूसरे डिवाइस पर भेजें, एंड-टू-एंड एन्क्रिप्टेड",
+  "desktopKeywords": "भेजें;पाएं;शेयर;ट्रांसफ़र;फ़ाइलें;",
+  "desktopSendWith": "TotalDrop से भेजें"
 }

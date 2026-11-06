@@ -496,4 +496,18 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get transferNoticeBody =>
       'Continue pendant que vous utilisez d’autres apps.';
+
+  @override
+  String get desktopGenericName => 'Transfert de fichiers';
+
+  @override
+  String get desktopComment =>
+      'Envoyez des fichiers directement vers un autre appareil, chiffrés de bout en bout';
+
+  @override
+  String get desktopKeywords =>
+      'envoyer;recevoir;partager;transférer;fichiers;';
+
+  @override
+  String get desktopSendWith => 'Envoyer avec TotalDrop';
 }

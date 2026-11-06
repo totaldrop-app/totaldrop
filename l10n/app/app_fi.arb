@@ -128,5 +128,9 @@
   "transferNoticeChannel": "Siirrot",
   "transferNoticeSending": "Lähetetään TotalDropilla",
   "transferNoticeReceiving": "Vastaanotetaan TotalDropilla",
-  "transferNoticeBody": "Jatkuu, kun käytät muita sovelluksia."
+  "transferNoticeBody": "Jatkuu, kun käytät muita sovelluksia.",
+  "desktopGenericName": "Tiedostonsiirto",
+  "desktopComment": "Lähetä tiedostot suoraan toiseen laitteeseen päästä päähän salattuina",
+  "desktopKeywords": "lähetä;vastaanota;jaa;siirrä;tiedostot;",
+  "desktopSendWith": "Lähetä TotalDropilla"
 }

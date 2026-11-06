@@ -128,5 +128,9 @@
   "transferNoticeChannel": "전송",
   "transferNoticeSending": "TotalDrop으로 보내는 중",
   "transferNoticeReceiving": "TotalDrop으로 받는 중",
-  "transferNoticeBody": "다른 앱을 사용하는 동안에도 계속됩니다."
+  "transferNoticeBody": "다른 앱을 사용하는 동안에도 계속됩니다.",
+  "desktopGenericName": "파일 전송",
+  "desktopComment": "다른 기기로 파일을 바로 보내세요. 종단 간 암호화",
+  "desktopKeywords": "보내기;받기;공유;전송;파일;",
+  "desktopSendWith": "TotalDrop으로 보내기"
 }

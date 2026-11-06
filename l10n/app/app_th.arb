@@ -128,5 +128,9 @@
   "transferNoticeChannel": "การโอน",
   "transferNoticeSending": "กำลังส่งด้วย TotalDrop",
   "transferNoticeReceiving": "กำลังรับด้วย TotalDrop",
-  "transferNoticeBody": "ทำงานต่อไปขณะที่คุณใช้แอปอื่น"
+  "transferNoticeBody": "ทำงานต่อไปขณะที่คุณใช้แอปอื่น",
+  "desktopGenericName": "การโอนไฟล์",
+  "desktopComment": "ส่งไฟล์ตรงไปยังอุปกรณ์อื่น เข้ารหัสตั้งแต่ต้นทางถึงปลายทาง",
+  "desktopKeywords": "ส่ง;รับ;แชร์;โอน;ไฟล์;",
+  "desktopSendWith": "ส่งด้วย TotalDrop"
 }

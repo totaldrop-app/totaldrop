@@ -128,5 +128,9 @@
   "transferNoticeChannel": "Transferencias",
   "transferNoticeSending": "Enviando con TotalDrop",
   "transferNoticeReceiving": "Recibiendo con TotalDrop",
-  "transferNoticeBody": "Sigue mientras usas otras apps."
+  "transferNoticeBody": "Sigue mientras usas otras apps.",
+  "desktopGenericName": "Transferencia de archivos",
+  "desktopComment": "Envía archivos directamente a otro dispositivo, con cifrado de extremo a extremo",
+  "desktopKeywords": "enviar;recibir;compartir;transferir;archivos;",
+  "desktopSendWith": "Enviar con TotalDrop"
 }

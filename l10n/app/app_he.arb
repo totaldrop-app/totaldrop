@@ -128,5 +128,9 @@
   "transferNoticeChannel": "העברות",
   "transferNoticeSending": "שליחה באמצעות TotalDrop",
   "transferNoticeReceiving": "קבלה באמצעות TotalDrop",
-  "transferNoticeBody": "ממשיך גם כשמשתמשים באפליקציות אחרות."
+  "transferNoticeBody": "ממשיך גם כשמשתמשים באפליקציות אחרות.",
+  "desktopGenericName": "העברת קבצים",
+  "desktopComment": "שליחת קבצים ישירות למכשיר אחר, בהצפנה מקצה לקצה",
+  "desktopKeywords": "שליחה;קבלה;שיתוף;העברה;קבצים;",
+  "desktopSendWith": "שליחה עם TotalDrop"
 }

@@ -478,4 +478,17 @@ class AppLocalizationsSw extends AppLocalizations {
 
   @override
   String get transferNoticeBody => 'Inaendelea unapotumia programu nyingine.';
+
+  @override
+  String get desktopGenericName => 'Uhamishaji wa faili';
+
+  @override
+  String get desktopComment =>
+      'Tuma faili moja kwa moja kwenye kifaa kingine, zimesimbwa mwanzo hadi mwisho';
+
+  @override
+  String get desktopKeywords => 'tuma;pokea;shiriki;hamisha;faili;';
+
+  @override
+  String get desktopSendWith => 'Tuma kwa TotalDrop';
 }

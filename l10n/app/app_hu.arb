@@ -128,5 +128,9 @@
   "transferNoticeChannel": "Átvitelek",
   "transferNoticeSending": "Küldés TotalDroppal",
   "transferNoticeReceiving": "Fogadás TotalDroppal",
-  "transferNoticeBody": "Akkor is folytatódik, ha más alkalmazásokat használsz."
+  "transferNoticeBody": "Akkor is folytatódik, ha más alkalmazásokat használsz.",
+  "desktopGenericName": "Fájlátvitel",
+  "desktopComment": "Fájlok küldése közvetlenül egy másik eszközre, végpontok közötti titkosítással",
+  "desktopKeywords": "küldés;fogadás;megosztás;átvitel;fájlok;",
+  "desktopSendWith": "Küldés a TotalDroppal"
 }

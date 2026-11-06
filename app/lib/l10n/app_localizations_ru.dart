@@ -493,4 +493,17 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get transferNoticeBody =>
       'Продолжается, пока вы пользуетесь другими приложениями.';
+
+  @override
+  String get desktopGenericName => 'Передача файлов';
+
+  @override
+  String get desktopComment =>
+      'Отправляйте файлы прямо на другое устройство со сквозным шифрованием';
+
+  @override
+  String get desktopKeywords => 'отправить;получить;поделиться;передать;файлы;';
+
+  @override
+  String get desktopSendWith => 'Отправить через TotalDrop';
 }

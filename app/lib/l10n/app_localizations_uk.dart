@@ -490,4 +490,17 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get transferNoticeBody =>
       'Триває, поки ви користуєтеся іншими застосунками.';
+
+  @override
+  String get desktopGenericName => 'Передавання файлів';
+
+  @override
+  String get desktopComment =>
+      'Надсилайте файли просто на інший пристрій з наскрізним шифруванням';
+
+  @override
+  String get desktopKeywords => 'надіслати;отримати;поділитися;передати;файли;';
+
+  @override
+  String get desktopSendWith => 'Надіслати через TotalDrop';
 }

@@ -467,4 +467,17 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get transferNoticeBody => 'Vẫn tiếp tục khi bạn dùng ứng dụng khác.';
+
+  @override
+  String get desktopGenericName => 'Truyền tệp';
+
+  @override
+  String get desktopComment =>
+      'Gửi tệp thẳng tới thiết bị khác, mã hóa đầu cuối';
+
+  @override
+  String get desktopKeywords => 'gửi;nhận;chia sẻ;truyền;tệp;';
+
+  @override
+  String get desktopSendWith => 'Gửi bằng TotalDrop';
 }

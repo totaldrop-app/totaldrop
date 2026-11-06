@@ -483,4 +483,17 @@ class AppLocalizationsDa extends AppLocalizations {
 
   @override
   String get transferNoticeBody => 'Fortsætter, mens du bruger andre apps.';
+
+  @override
+  String get desktopGenericName => 'Filoverførsel';
+
+  @override
+  String get desktopComment =>
+      'Send filer direkte til en anden enhed, end-to-end-krypteret';
+
+  @override
+  String get desktopKeywords => 'send;modtag;del;overfør;filer;';
+
+  @override
+  String get desktopSendWith => 'Send med TotalDrop';
 }

@@ -480,4 +480,17 @@ class AppLocalizationsHe extends AppLocalizations {
 
   @override
   String get transferNoticeBody => 'ממשיך גם כשמשתמשים באפליקציות אחרות.';
+
+  @override
+  String get desktopGenericName => 'העברת קבצים';
+
+  @override
+  String get desktopComment =>
+      'שליחת קבצים ישירות למכשיר אחר, בהצפנה מקצה לקצה';
+
+  @override
+  String get desktopKeywords => 'שליחה;קבלה;שיתוף;העברה;קבצים;';
+
+  @override
+  String get desktopSendWith => 'שליחה עם TotalDrop';
 }

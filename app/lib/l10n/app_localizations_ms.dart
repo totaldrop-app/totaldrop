@@ -471,4 +471,17 @@ class AppLocalizationsMs extends AppLocalizations {
   @override
   String get transferNoticeBody =>
       'Terus berjalan semasa anda menggunakan apl lain.';
+
+  @override
+  String get desktopGenericName => 'Pemindahan fail';
+
+  @override
+  String get desktopComment =>
+      'Hantar fail terus ke peranti lain, disulitkan hujung ke hujung';
+
+  @override
+  String get desktopKeywords => 'hantar;terima;kongsi;pindah;fail;';
+
+  @override
+  String get desktopSendWith => 'Hantar dengan TotalDrop';
 }

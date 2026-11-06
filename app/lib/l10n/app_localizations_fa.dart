@@ -480,4 +480,17 @@ class AppLocalizationsFa extends AppLocalizations {
   @override
   String get transferNoticeBody =>
       'هنگام استفاده از برنامه‌های دیگر ادامه می‌یابد.';
+
+  @override
+  String get desktopGenericName => 'انتقال فایل';
+
+  @override
+  String get desktopComment =>
+      'فایل‌ها را مستقیم به دستگاهی دیگر بفرستید، با رمزگذاری سرتاسری';
+
+  @override
+  String get desktopKeywords => 'ارسال;دریافت;اشتراک;انتقال;فایل;';
+
+  @override
+  String get desktopSendWith => 'ارسال با TotalDrop';
 }

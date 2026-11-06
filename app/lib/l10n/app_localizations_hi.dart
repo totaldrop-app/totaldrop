@@ -483,4 +483,17 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get transferNoticeBody =>
       'दूसरे ऐप इस्तेमाल करते समय भी चलता रहता है।';
+
+  @override
+  String get desktopGenericName => 'फ़ाइल ट्रांसफ़र';
+
+  @override
+  String get desktopComment =>
+      'फ़ाइलें सीधे दूसरे डिवाइस पर भेजें, एंड-टू-एंड एन्क्रिप्टेड';
+
+  @override
+  String get desktopKeywords => 'भेजें;पाएं;शेयर;ट्रांसफ़र;फ़ाइलें;';
+
+  @override
+  String get desktopSendWith => 'TotalDrop से भेजें';
 }

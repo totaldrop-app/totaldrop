@@ -489,4 +489,17 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get transferNoticeBody =>
       'Läuft weiter, während Sie andere Apps verwenden.';
+
+  @override
+  String get desktopGenericName => 'Dateiübertragung';
+
+  @override
+  String get desktopComment =>
+      'Dateien direkt an ein anderes Gerät senden, Ende-zu-Ende-verschlüsselt';
+
+  @override
+  String get desktopKeywords => 'senden;empfangen;teilen;übertragen;Dateien;';
+
+  @override
+  String get desktopSendWith => 'Mit TotalDrop senden';
 }

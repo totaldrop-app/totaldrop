@@ -490,4 +490,17 @@ class AppLocalizationsEl extends AppLocalizations {
   @override
   String get transferNoticeBody =>
       'Συνεχίζεται ενώ χρησιμοποιείτε άλλες εφαρμογές.';
+
+  @override
+  String get desktopGenericName => 'Μεταφορά αρχείων';
+
+  @override
+  String get desktopComment =>
+      'Στείλτε αρχεία απευθείας σε άλλη συσκευή, με κρυπτογράφηση από άκρο σε άκρο';
+
+  @override
+  String get desktopKeywords => 'αποστολή;λήψη;κοινή χρήση;μεταφορά;αρχεία;';
+
+  @override
+  String get desktopSendWith => 'Αποστολή με το TotalDrop';
 }

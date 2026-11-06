@@ -128,5 +128,9 @@
   "transferNoticeChannel": "Aktarımlar",
   "transferNoticeSending": "TotalDrop ile gönderiliyor",
   "transferNoticeReceiving": "TotalDrop ile alınıyor",
-  "transferNoticeBody": "Başka uygulamaları kullanırken de sürer."
+  "transferNoticeBody": "Başka uygulamaları kullanırken de sürer.",
+  "desktopGenericName": "Dosya aktarımı",
+  "desktopComment": "Dosyaları başka bir cihaza doğrudan ve uçtan uca şifreli gönderin",
+  "desktopKeywords": "gönder;al;paylaş;aktar;dosya;",
+  "desktopSendWith": "TotalDrop ile gönder"
 }

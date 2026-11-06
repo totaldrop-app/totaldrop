@@ -128,5 +128,9 @@
   "transferNoticeChannel": "Transferuri",
   "transferNoticeSending": "Se trimite cu TotalDrop",
   "transferNoticeReceiving": "Se primește cu TotalDrop",
-  "transferNoticeBody": "Continuă cât timp folosiți alte aplicații."
+  "transferNoticeBody": "Continuă cât timp folosiți alte aplicații.",
+  "desktopGenericName": "Transfer de fișiere",
+  "desktopComment": "Trimite fișiere direct pe alt dispozitiv, criptate integral",
+  "desktopKeywords": "trimite;primește;partajează;transfer;fișiere;",
+  "desktopSendWith": "Trimite cu TotalDrop"
 }

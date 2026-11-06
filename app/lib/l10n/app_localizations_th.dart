@@ -463,4 +463,17 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get transferNoticeBody => 'ทำงานต่อไปขณะที่คุณใช้แอปอื่น';
+
+  @override
+  String get desktopGenericName => 'การโอนไฟล์';
+
+  @override
+  String get desktopComment =>
+      'ส่งไฟล์ตรงไปยังอุปกรณ์อื่น เข้ารหัสตั้งแต่ต้นทางถึงปลายทาง';
+
+  @override
+  String get desktopKeywords => 'ส่ง;รับ;แชร์;โอน;ไฟล์;';
+
+  @override
+  String get desktopSendWith => 'ส่งด้วย TotalDrop';
 }

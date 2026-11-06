@@ -128,5 +128,9 @@
   "transferNoticeChannel": "Overførsler",
   "transferNoticeSending": "Sender med TotalDrop",
   "transferNoticeReceiving": "Modtager med TotalDrop",
-  "transferNoticeBody": "Fortsætter, mens du bruger andre apps."
+  "transferNoticeBody": "Fortsætter, mens du bruger andre apps.",
+  "desktopGenericName": "Filoverførsel",
+  "desktopComment": "Send filer direkte til en anden enhed, end-to-end-krypteret",
+  "desktopKeywords": "send;modtag;del;overfør;filer;",
+  "desktopSendWith": "Send med TotalDrop"
 }

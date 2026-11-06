@@ -483,4 +483,17 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String get transferNoticeBody => 'Jatkuu, kun käytät muita sovelluksia.';
+
+  @override
+  String get desktopGenericName => 'Tiedostonsiirto';
+
+  @override
+  String get desktopComment =>
+      'Lähetä tiedostot suoraan toiseen laitteeseen päästä päähän salattuina';
+
+  @override
+  String get desktopKeywords => 'lähetä;vastaanota;jaa;siirrä;tiedostot;';
+
+  @override
+  String get desktopSendWith => 'Lähetä TotalDropilla';
 }

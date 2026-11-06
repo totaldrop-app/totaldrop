@@ -128,5 +128,9 @@
   "transferNoticeChannel": "Truyền tệp",
   "transferNoticeSending": "Đang gửi bằng TotalDrop",
   "transferNoticeReceiving": "Đang nhận bằng TotalDrop",
-  "transferNoticeBody": "Vẫn tiếp tục khi bạn dùng ứng dụng khác."
+  "transferNoticeBody": "Vẫn tiếp tục khi bạn dùng ứng dụng khác.",
+  "desktopGenericName": "Truyền tệp",
+  "desktopComment": "Gửi tệp thẳng tới thiết bị khác, mã hóa đầu cuối",
+  "desktopKeywords": "gửi;nhận;chia sẻ;truyền;tệp;",
+  "desktopSendWith": "Gửi bằng TotalDrop"
 }

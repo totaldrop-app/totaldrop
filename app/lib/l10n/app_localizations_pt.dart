@@ -492,6 +492,20 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get transferNoticeBody => 'Continua enquanto você usa outros apps.';
+
+  @override
+  String get desktopGenericName => 'Transferência de ficheiros';
+
+  @override
+  String get desktopComment =>
+      'Envie ficheiros diretamente para outro dispositivo, com encriptação ponto a ponto';
+
+  @override
+  String get desktopKeywords =>
+      'enviar;receber;partilhar;transferir;ficheiros;';
+
+  @override
+  String get desktopSendWith => 'Enviar com o TotalDrop';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -981,6 +995,20 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get transferNoticeBody => 'Continua enquanto você usa outros apps.';
+
+  @override
+  String get desktopGenericName => 'Transferência de arquivos';
+
+  @override
+  String get desktopComment =>
+      'Envie arquivos direto para outro dispositivo, com criptografia de ponta a ponta';
+
+  @override
+  String get desktopKeywords =>
+      'enviar;receber;compartilhar;transferir;arquivos;';
+
+  @override
+  String get desktopSendWith => 'Enviar com o TotalDrop';
 }
 
 /// The translations for Portuguese, as used in Portugal (`pt_PT`).
@@ -1471,4 +1499,18 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
 
   @override
   String get transferNoticeBody => 'Continua enquanto utiliza outras apps.';
+
+  @override
+  String get desktopGenericName => 'Transferência de ficheiros';
+
+  @override
+  String get desktopComment =>
+      'Envie ficheiros diretamente para outro dispositivo, com encriptação ponto a ponto';
+
+  @override
+  String get desktopKeywords =>
+      'enviar;receber;partilhar;transferir;ficheiros;';
+
+  @override
+  String get desktopSendWith => 'Enviar com o TotalDrop';
 }

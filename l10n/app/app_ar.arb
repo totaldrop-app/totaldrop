@@ -128,5 +128,9 @@
   "transferNoticeChannel": "عمليات النقل",
   "transferNoticeSending": "جارٍ الإرسال عبر TotalDrop",
   "transferNoticeReceiving": "جارٍ الاستلام عبر TotalDrop",
-  "transferNoticeBody": "يستمر أثناء استخدامك تطبيقات أخرى."
+  "transferNoticeBody": "يستمر أثناء استخدامك تطبيقات أخرى.",
+  "desktopGenericName": "نقل الملفات",
+  "desktopComment": "أرسل الملفات مباشرة إلى جهاز آخر، بتشفير تام بين الطرفين",
+  "desktopKeywords": "إرسال;استلام;مشاركة;نقل;ملفات;",
+  "desktopSendWith": "إرسال باستخدام TotalDrop"
 }

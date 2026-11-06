@@ -128,5 +128,9 @@
   "transferNoticeChannel": "Передавання",
   "transferNoticeSending": "Надсилання через TotalDrop",
   "transferNoticeReceiving": "Отримання через TotalDrop",
-  "transferNoticeBody": "Триває, поки ви користуєтеся іншими застосунками."
+  "transferNoticeBody": "Триває, поки ви користуєтеся іншими застосунками.",
+  "desktopGenericName": "Передавання файлів",
+  "desktopComment": "Надсилайте файли просто на інший пристрій з наскрізним шифруванням",
+  "desktopKeywords": "надіслати;отримати;поділитися;передати;файли;",
+  "desktopSendWith": "Надіслати через TotalDrop"
 }

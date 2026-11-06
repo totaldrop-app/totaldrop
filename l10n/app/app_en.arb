@@ -164,5 +164,13 @@
   "transferNoticeReceiving": "Receiving with TotalDrop",
   "@transferNoticeReceiving": {"description": "Title of the ongoing notification while a receive runs in the background"},
   "transferNoticeBody": "Keeps going while you use other apps.",
-  "@transferNoticeBody": {"description": "Text of the ongoing transfer notification: the transfer continues while the person uses other apps"}
+  "@transferNoticeBody": {"description": "Text of the ongoing transfer notification: the transfer continues while the person uses other apps"},
+  "desktopGenericName": "File transfer",
+  "@desktopGenericName": {"description": "Linux desktop entry: what kind of app TotalDrop is, shown under its name in app menus and launchers"},
+  "desktopComment": "Send files straight to another device, end-to-end encrypted",
+  "@desktopComment": {"description": "Linux desktop entry: one-line description shown as a tooltip in app menus"},
+  "desktopKeywords": "send;receive;share;transfer;files;",
+  "@desktopKeywords": {"description": "Linux desktop entry: search words for app launchers, separated by semicolons and ending with one. Words people type to find a file-sending app; no spaces around the semicolons"},
+  "desktopSendWith": "Send with TotalDrop",
+  "@desktopSendWith": {"description": "Linux file managers (Dolphin, Files, Nemo): right-click menu item that sends the selected files and folders with TotalDrop"}
 }

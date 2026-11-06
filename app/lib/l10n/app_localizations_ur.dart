@@ -482,4 +482,17 @@ class AppLocalizationsUr extends AppLocalizations {
   @override
   String get transferNoticeBody =>
       'دوسری ایپس استعمال کرتے وقت بھی جاری رہتا ہے۔';
+
+  @override
+  String get desktopGenericName => 'فائل کی منتقلی';
+
+  @override
+  String get desktopComment =>
+      'فائلیں براہِ راست دوسرے آلے پر بھیجیں، اینڈ ٹو اینڈ انکرپٹڈ';
+
+  @override
+  String get desktopKeywords => 'بھیجیں;وصول;شیئر;منتقلی;فائلیں;';
+
+  @override
+  String get desktopSendWith => 'TotalDrop سے بھیجیں';
 }

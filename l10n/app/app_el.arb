@@ -128,5 +128,9 @@
   "transferNoticeChannel": "Μεταφορές",
   "transferNoticeSending": "Αποστολή με το TotalDrop",
   "transferNoticeReceiving": "Λήψη με το TotalDrop",
-  "transferNoticeBody": "Συνεχίζεται ενώ χρησιμοποιείτε άλλες εφαρμογές."
+  "transferNoticeBody": "Συνεχίζεται ενώ χρησιμοποιείτε άλλες εφαρμογές.",
+  "desktopGenericName": "Μεταφορά αρχείων",
+  "desktopComment": "Στείλτε αρχεία απευθείας σε άλλη συσκευή, με κρυπτογράφηση από άκρο σε άκρο",
+  "desktopKeywords": "αποστολή;λήψη;κοινή χρήση;μεταφορά;αρχεία;",
+  "desktopSendWith": "Αποστολή με το TotalDrop"
 }

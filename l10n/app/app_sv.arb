@@ -128,5 +128,9 @@
   "transferNoticeChannel": "Överföringar",
   "transferNoticeSending": "Skickar med TotalDrop",
   "transferNoticeReceiving": "Tar emot med TotalDrop",
-  "transferNoticeBody": "Fortsätter medan du använder andra appar."
+  "transferNoticeBody": "Fortsätter medan du använder andra appar.",
+  "desktopGenericName": "Filöverföring",
+  "desktopComment": "Skicka filer direkt till en annan enhet, end-to-end-krypterat",
+  "desktopKeywords": "skicka;ta emot;dela;överför;filer;",
+  "desktopSendWith": "Skicka med TotalDrop"
 }

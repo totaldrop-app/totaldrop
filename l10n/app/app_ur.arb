@@ -128,5 +128,9 @@
   "transferNoticeChannel": "منتقلیاں",
   "transferNoticeSending": "TotalDrop سے بھیجا جا رہا ہے",
   "transferNoticeReceiving": "TotalDrop سے وصول کیا جا رہا ہے",
-  "transferNoticeBody": "دوسری ایپس استعمال کرتے وقت بھی جاری رہتا ہے۔"
+  "transferNoticeBody": "دوسری ایپس استعمال کرتے وقت بھی جاری رہتا ہے۔",
+  "desktopGenericName": "فائل کی منتقلی",
+  "desktopComment": "فائلیں براہِ راست دوسرے آلے پر بھیجیں، اینڈ ٹو اینڈ انکرپٹڈ",
+  "desktopKeywords": "بھیجیں;وصول;شیئر;منتقلی;فائلیں;",
+  "desktopSendWith": "TotalDrop سے بھیجیں"
 }

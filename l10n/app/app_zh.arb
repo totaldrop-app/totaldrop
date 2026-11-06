@@ -128,5 +128,9 @@
   "transferNoticeChannel": "传输",
   "transferNoticeSending": "正在通过 TotalDrop 发送",
   "transferNoticeReceiving": "正在通过 TotalDrop 接收",
-  "transferNoticeBody": "使用其他应用时仍会继续。"
+  "transferNoticeBody": "使用其他应用时仍会继续。",
+  "desktopGenericName": "文件传输",
+  "desktopComment": "将文件直接发送到另一台设备，端到端加密",
+  "desktopKeywords": "发送;接收;分享;传输;文件;",
+  "desktopSendWith": "用 TotalDrop 发送"
 }

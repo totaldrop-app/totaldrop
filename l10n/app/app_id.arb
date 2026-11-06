@@ -128,5 +128,9 @@
   "transferNoticeChannel": "Transfer",
   "transferNoticeSending": "Mengirim dengan TotalDrop",
   "transferNoticeReceiving": "Menerima dengan TotalDrop",
-  "transferNoticeBody": "Tetap berjalan saat Anda memakai aplikasi lain."
+  "transferNoticeBody": "Tetap berjalan saat Anda memakai aplikasi lain.",
+  "desktopGenericName": "Transfer file",
+  "desktopComment": "Kirim file langsung ke perangkat lain, terenkripsi end-to-end",
+  "desktopKeywords": "kirim;terima;bagikan;transfer;file;",
+  "desktopSendWith": "Kirim dengan TotalDrop"
 }
