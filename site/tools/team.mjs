@@ -264,7 +264,7 @@ const stat = (n) => (n ? `<dl class="stat"><dt data-i18n="tm.col.changes">Change
 
 function personCard(c, s, p) {
   const pr = s.profiles[p.login];
-  const role = { maintainer: "Founder and maintainer", contributor: "Contributor", tester: "Tester" }[p.role];
+  const role = { maintainer: "Founder and project lead", contributor: "Developer", tester: "QA specialist" }[p.role];
   const areas = (p.areas || []).map((a) => `<li data-i18n="tm.a.${a}">${esc(AREAS[a][0])}</li>`).join("");
   const links = [githubLink(`https://github.com/${p.login}`, p.login)];
   if (pr.website) links.push(webLink(pr.website));
