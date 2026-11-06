@@ -540,7 +540,7 @@
   "tm.data": "Chiffres issus de GitHub. Dernière mise à jour :",
   "tm.donate": "Soutenir par un don",
   "tm.eyebrow": "Équipe",
-  "tm.how.h1": "Chaque modification commence par une issue publique et n'entre dans l'application que par une pull request.",
+  "tm.how.h1": "Les modifications courantes commencent par une issue publique et n'entrent dans l'application que par une pull request.",
   "tm.how.h2": "Chaque pull request passe les vérifications automatiques et la revue d'une personne ou d'un agent d'IA qui ne l'a pas écrite.",
   "tm.how.h3": "Seul le mainteneur fusionne, publie et déploie. Les versions sont compilées par GitHub Actions, jamais sur un ordinateur personnel.",
   "tm.how.title": "Comment le travail est vérifié",

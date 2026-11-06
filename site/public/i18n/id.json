@@ -540,7 +540,7 @@
   "tm.data": "Angka dari GitHub. Terakhir diperbarui:",
   "tm.donate": "Dukung dengan donasi",
   "tm.eyebrow": "Tim",
-  "tm.how.h1": "Setiap perubahan dimulai sebagai issue publik dan hanya masuk ke aplikasi lewat pull request.",
+  "tm.how.h1": "Perubahan sehari-hari dimulai sebagai issue publik dan hanya masuk ke aplikasi lewat pull request.",
   "tm.how.h2": "Setiap pull request melewati pemeriksaan otomatis dan tinjauan oleh orang atau agen AI yang tidak menulisnya.",
   "tm.how.h3": "Hanya pengelola yang menggabungkan, merilis, dan menerapkan. Rilis dibangun oleh GitHub Actions, tidak pernah di komputer pribadi.",
   "tm.how.title": "Cara pekerjaan diperiksa",

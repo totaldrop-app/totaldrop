@@ -540,7 +540,7 @@
   "tm.data": "Tal fra GitHub. Sidst opdateret:",
   "tm.donate": "Støt med en donation",
   "tm.eyebrow": "Team",
-  "tm.how.h1": "Hver ændring starter som en offentlig sag og når kun appen gennem en pull request.",
+  "tm.how.h1": "Almindelige ændringer starter som en offentlig sag og når kun appen gennem en pull request.",
   "tm.how.h2": "Hver pull request går gennem de automatiske kontroller og en gennemgang af en person eller en AI-agent, der ikke har skrevet den.",
   "tm.how.h3": "Kun vedligeholderen fletter, udgiver og udruller. Udgivelser bygges af GitHub Actions, aldrig på en privat computer.",
   "tm.how.title": "Sådan kontrolleres arbejdet",

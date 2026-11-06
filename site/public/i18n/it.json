@@ -540,7 +540,7 @@
   "tm.data": "Numeri da GitHub. Ultimo aggiornamento:",
   "tm.donate": "Sostieni con una donazione",
   "tm.eyebrow": "Team",
-  "tm.how.h1": "Ogni modifica nasce come issue pubblica ed entra nell'app solo tramite una pull request.",
+  "tm.how.h1": "Le modifiche quotidiane nascono come issue pubblica ed entrano nell'app solo tramite una pull request.",
   "tm.how.h2": "Ogni pull request supera i controlli automatici e la revisione di una persona o di un agente IA che non l'ha scritta.",
   "tm.how.h3": "Solo il maintainer unisce, rilascia e distribuisce. I rilasci sono compilati da GitHub Actions, mai su un computer personale.",
   "tm.how.title": "Come viene verificato il lavoro",

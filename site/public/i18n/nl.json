@@ -540,7 +540,7 @@
   "tm.data": "Getallen van GitHub. Laatst bijgewerkt:",
   "tm.donate": "Steun met een donatie",
   "tm.eyebrow": "Team",
-  "tm.how.h1": "Elke wijziging begint als een openbare issue en komt alleen via een pull request in de app.",
+  "tm.how.h1": "Dagelijkse wijzigingen beginnen als een openbare issue en komen alleen via een pull request in de app.",
   "tm.how.h2": "Elk pull request doorloopt de automatische controles en een review door een persoon of een AI-agent die het niet heeft geschreven.",
   "tm.how.h3": "Alleen de beheerder voegt samen, brengt uit en rolt uit. Releases worden gebouwd door GitHub Actions, nooit op een eigen computer.",
   "tm.how.title": "Hoe het werk wordt gecontroleerd",

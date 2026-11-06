@@ -540,7 +540,7 @@
   "tm.data": "Angka daripada GitHub. Kemas kini terakhir:",
   "tm.donate": "Sokong dengan derma",
   "tm.eyebrow": "Pasukan",
-  "tm.how.h1": "Setiap perubahan bermula sebagai issue awam dan hanya masuk ke aplikasi melalui pull request.",
+  "tm.how.h1": "Perubahan harian bermula sebagai issue awam dan hanya masuk ke aplikasi melalui pull request.",
   "tm.how.h2": "Setiap pull request melalui semakan automatik dan semakan oleh orang atau ejen AI yang tidak menulisnya.",
   "tm.how.h3": "Hanya penyelenggara yang menggabungkan, mengeluarkan dan melaksanakan. Keluaran dibina oleh GitHub Actions, tidak pernah pada komputer peribadi.",
   "tm.how.title": "Cara kerja disemak",
