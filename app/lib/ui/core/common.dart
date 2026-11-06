@@ -98,9 +98,12 @@ class VerificationWords extends StatelessWidget {
                   color: theme.colorScheme.primary,
                 ),
                 Gap.s,
-                Text(
-                  safeL10n(context, 'verificationTitle').verificationTitle,
-                  style: theme.textTheme.titleMedium,
+                // Wraps on a narrow screen, larger text or a long language.
+                Flexible(
+                  child: Text(
+                    safeL10n(context, 'verificationTitle').verificationTitle,
+                    style: theme.textTheme.titleMedium,
+                  ),
                 ),
               ],
             ),
