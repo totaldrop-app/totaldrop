@@ -48,10 +48,10 @@ const AREAS = {
   formal: ["Formal verification", "Tamarin models that check the security of the account design before it is built."],
   android: ["Android", "The Flutter app for phones and tablets, in Material 3 and in the system's colours."],
   // iOS and macOS have no code in the repository yet (#309): for now they
-  // only tag people. Their descriptions get translations when they become
-  // disciplines with paths.
-  ios: ["iOS", "The app for iPhone and iPad."],
-  macos: ["macOS", "The app for Mac."],
+  // only tag people. They get a description, in all 35 languages, when
+  // they become disciplines with paths.
+  ios: ["iOS", ""],
+  macos: ["macOS", ""],
   linux: ["Linux desktop", "The Qt 6 app for KDE, GNOME, Hyprland and Omarchy, and its deb, rpm and Arch packages."],
   cli: ["Command line", "The totaldrop command, for terminals and scripts."],
   site: ["Web site", "totaldrop.app in 35 languages, without trackers or third-party requests."],
