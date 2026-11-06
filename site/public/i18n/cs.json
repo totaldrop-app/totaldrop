@@ -552,5 +552,11 @@
   "tm.role.bot": "Automatizace",
   "tm.role.maintainer": "Zakladatel a správce",
   "tm.title": "Lidé za TotalDropem",
-  "tm.role.contributor": "Přispěvatel"
+  "tm.role.contributor": "Přispěvatel",
+  "tm.s.areas": "Obory",
+  "tm.s.langs": "Jazyky",
+  "tm.s.people": "Lidé",
+  "tm.tools.lede": "Změny tu píše i software. Jeho práce prochází stejnými kontrolami a revizemi jako práce kohokoli jiného a sloučit ji může jen správce.",
+  "tm.tools.title": "AI a automatizace",
+  "tm.web": "Web"
 }

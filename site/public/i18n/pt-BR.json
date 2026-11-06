@@ -552,5 +552,11 @@
   "tm.role.bot": "Automação",
   "tm.role.maintainer": "Fundador e mantenedor",
   "tm.title": "As pessoas por trás do TotalDrop",
-  "tm.role.contributor": "Colaborador"
+  "tm.role.contributor": "Colaborador",
+  "tm.s.areas": "Disciplinas",
+  "tm.s.langs": "Idiomas",
+  "tm.s.people": "Pessoas",
+  "tm.tools.lede": "Aqui o software também escreve mudanças. O trabalho dele passa pelas mesmas verificações e revisões que o de qualquer pessoa, e só o mantenedor pode mesclá-lo.",
+  "tm.tools.title": "IA e automação",
+  "tm.web": "Site"
 }

@@ -552,5 +552,11 @@
   "tm.role.bot": "自動化",
   "tm.role.maintainer": "創辦人暨維護者",
   "tm.title": "TotalDrop 背後的人",
-  "tm.role.contributor": "貢獻者"
+  "tm.role.contributor": "貢獻者",
+  "tm.s.areas": "領域",
+  "tm.s.langs": "語言",
+  "tm.s.people": "人員",
+  "tm.tools.lede": "這裡也有軟體撰寫變更。它的工作與任何人的一樣經過相同的檢查和審查，只有維護者才能合併。",
+  "tm.tools.title": "AI 與自動化",
+  "tm.web": "網站"
 }

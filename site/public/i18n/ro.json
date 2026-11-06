@@ -552,5 +552,11 @@
   "tm.role.bot": "Automatizare",
   "tm.role.maintainer": "Fondator și responsabil",
   "tm.title": "Oamenii din spatele TotalDrop",
-  "tm.role.contributor": "Contributor"
+  "tm.role.contributor": "Contributor",
+  "tm.s.areas": "Discipline",
+  "tm.s.langs": "Limbi",
+  "tm.s.people": "Oameni",
+  "tm.tools.lede": "Aici și software-ul scrie modificări. Munca lui trece prin aceleași verificări și revizuiri ca a oricui, iar doar întreținătorul o poate integra.",
+  "tm.tools.title": "IA și automatizare",
+  "tm.web": "Site web"
 }

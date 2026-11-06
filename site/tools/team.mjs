@@ -26,6 +26,7 @@ const CONFIG = join(root, "site", "team", "team.json");
 const SNAPSHOT = join(root, "site", "team", "github.json");
 const PAGE = join(root, "site", "public", "team", "index.html");
 const AVATARS = join(root, "site", "public", "team", "avatars");
+const I18N = join(root, "site", "public", "i18n");
 const API = "https://api.github.com/";
 const AVATAR_MAX = 256 * 1024;
 const PAGES_MAX = 50; // 5,000 commits per path
@@ -215,6 +216,22 @@ function checkSnapshot(c, s) {
   }
 }
 
+// Icons for profile links. The GitHub mark is GitHub's octicon
+// "mark-github" (MIT); the globe is drawn for this page. Both are
+// decorative: the link's name is the visually hidden text beside them.
+const ICON_GITHUB = `<svg class="icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path fill="currentColor" d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"/></svg>`;
+const ICON_WEB = `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.75 5.6 3.75 9S14.5 18.4 12 21M12 3C9.5 5.6 8.25 8.6 8.25 12S9.5 18.4 12 21"/></svg>`;
+
+const githubLink = (href, shownAs) => `<li><a class="icon-link" href="${esc(href)}">${ICON_GITHUB}<span class="visually-hidden">GitHub: <bdi>${esc(shownAs)}</bdi></span></a></li>`;
+const webLink = (href) => `<li><a class="icon-link" href="${esc(href)}" rel="nofollow ugc">${ICON_WEB}<span class="visually-hidden"><span data-i18n="tm.web">Web site</span>: <bdi>${esc(shown(href))}</bdi></span></a></li>`;
+
+// The colour of a login in the share bars and their legends: listed people
+// in team.json order (s1 to s6), everyone else s0.
+function series(c, login) {
+  const i = c.people.findIndex((x) => x.login === login);
+  return i < 0 ? "s0" : `s${Math.min(i + 1, 6)}`;
+}
+
 // How a GitHub login is named on the page.
 function who(c, s, login) {
   const p = c.people.find((x) => x.login === login);
@@ -227,60 +244,102 @@ function who(c, s, login) {
   return `<a href="${esc(href)}"><bdi>${esc(login)}</bdi></a>`;
 }
 
+const stat = (n) => (n ? `<dl class="stat"><dt data-i18n="tm.col.changes">Changes</dt><dd>${esc(String(n))}</dd></dl>` : "");
+
 function personCard(c, s, p) {
-  const total = s.totals[p.login];
-  const stat = total ? `\n          <dl class="stat"><dt data-i18n="tm.col.changes">Changes</dt><dd>${esc(String(total))}</dd></dl>` : "";
-  if (p.kind === "ai") {
-    return `        <li class="person is-ai">
-          <span class="avatar avatar-sign" aria-hidden="true">AI</span>
-          <h3>Claude</h3>
-          <p class="role" data-i18n="tm.role.ai">AI development assistant</p>
-          <p data-i18n="tm.ai.d">Writes much of the code and runs the independent review of each pull request. It holds no role in the project: the maintainer approves every merge, release and deployment.</p>${stat}
-        </li>`;
-  }
-  if (p.kind === "bot") {
-    return `        <li class="person is-bot">
-          <span class="avatar avatar-sign" aria-hidden="true">BOT</span>
-          <h3>Dependabot</h3>
-          <p class="role" data-i18n="tm.role.bot">Automation</p>
-          <p data-i18n="tm.bot.d">Opens a pull request when a dependency has a new version. Each one is reviewed like any other change.</p>${stat}
-          <p class="links"><a href="https://github.com/apps/dependabot">github.com/apps/dependabot</a></p>
-        </li>`;
-  }
   const pr = s.profiles[p.login];
-  const role = { maintainer: "Founder and maintainer", contributor: "Contributor", designer: "Designer", tester: "Tester", translator: "Translator" }[p.role];
+  const role = { maintainer: "Founder and maintainer", contributor: "Contributor" }[p.role];
   const areas = (p.areas || []).map((a) => `<li data-i18n="tm.a.${a}">${esc(AREAS[a][0])}</li>`).join("");
-  const links = [`<a href="https://github.com/${esc(p.login)}">github.com/${esc(p.login)}</a>`];
-  if (pr.website) links.push(`<a href="${esc(pr.website)}" rel="nofollow ugc">${esc(shown(pr.website))}</a>`);
-  return `        <li class="person">
-          <img class="avatar" src="/team/avatars/${esc(pr.avatar)}" alt="" width="96" height="96" decoding="async">
-          <h3 dir="auto">${esc(p.name || pr.name)}</h3>
-          <p class="role" data-i18n="tm.role.${p.role}">${role}</p>${pr.bio ? `\n          <p class="bio" dir="auto">${esc(pr.bio)}</p>` : ""}${areas ? `\n          <ul class="tags">${areas}</ul>` : ""}${stat}
-          <p class="links">${links.join(" ")}</p>
-        </li>`;
+  const links = [githubLink(`https://github.com/${p.login}`, p.login)];
+  if (pr.website) links.push(webLink(pr.website));
+  const lines = [
+    `        <li class="person">`,
+    `          <img class="avatar" src="/team/avatars/${esc(pr.avatar)}" alt="" width="88" height="88" decoding="async">`,
+    `          <div class="person-body">`,
+    `            <h3 dir="auto">${esc(p.name || pr.name)}</h3>`,
+    `            <p class="role" data-i18n="tm.role.${p.role}">${role}</p>`,
+  ];
+  if (pr.bio) lines.push(`            <p class="bio" dir="auto">${esc(pr.bio)}</p>`);
+  if (areas) lines.push(`            <ul class="tags">${areas}</ul>`);
+  lines.push(`            <div class="person-foot">`);
+  const st = stat(s.totals[p.login]);
+  if (st) lines.push(`              ${st}`);
+  lines.push(`              <ul class="links">${links.join("")}</ul>`, `            </div>`, `          </div>`, `        </li>`);
+  return lines.join("\n");
+}
+
+function helperCard(c, s, p) {
+  const st = stat(s.totals[p.login]);
+  const ai = p.kind === "ai";
+  const lines = [
+    `        <li class="helper">`,
+    `          <span class="avatar avatar-sign" aria-hidden="true">${ai ? "AI" : "BOT"}</span>`,
+    `          <div class="person-body">`,
+    `            <h3>${ai ? "Claude" : "Dependabot"}</h3>`,
+    ai ? `            <p class="role" data-i18n="tm.role.ai">AI development assistant</p>` : `            <p class="role" data-i18n="tm.role.bot">Automation</p>`,
+    ai ? `            <p data-i18n="tm.ai.d">Writes much of the code and runs the independent review of each pull request. It holds no role in the project: the maintainer approves every merge, release and deployment.</p>`
+       : `            <p data-i18n="tm.bot.d">Opens a pull request when a dependency has a new version. Each one is reviewed like any other change.</p>`,
+    `            <div class="person-foot">`,
+  ];
+  if (st) lines.push(`              ${st}`);
+  if (!ai) lines.push(`              <ul class="links">${githubLink("https://github.com/apps/dependabot", "dependabot")}</ul>`);
+  lines.push(`            </div>`, `          </div>`, `        </li>`);
+  return lines.join("\n");
 }
 
 function areaCard(c, s, d) {
   const counts = Object.entries(s.areas[d.key] || {}).sort(([a, x], [b, y]) => y - x || (a < b ? -1 : 1));
-  const rows = counts.map(([login, n]) => `              <tr><th scope="row">${who(c, s, login)}</th><td>${esc(String(n))}</td></tr>`).join("\n");
-  const table = counts.length
-    ? `
-          <table class="area-table">
-            <thead><tr><th scope="col" data-i18n="tm.col.who">Who</th><th scope="col" data-i18n="tm.col.changes">Changes</th></tr></thead>
-            <tbody>
-${rows}
-            </tbody>
-          </table>`
-    : "";
-  return `        <li class="area" id="${d.key}">
-          <h3 data-i18n="tm.a.${d.key}">${esc(AREAS[d.key][0])}</h3>
-          <p data-i18n="tm.a.${d.key}.d">${esc(AREAS[d.key][1])}</p>${table}
-        </li>`;
+  const total = counts.reduce((t, [, n]) => t + n, 0);
+  const lines = [
+    `        <li class="area" id="${d.key}">`,
+    `          <div class="area-head">`,
+    `            <h3 data-i18n="tm.a.${d.key}">${esc(AREAS[d.key][0])}</h3>`,
+  ];
+  if (total) lines.push(`            ${stat(total)}`);
+  lines.push(`          </div>`, `          <p data-i18n="tm.a.${d.key}.d">${esc(AREAS[d.key][1])}</p>`);
+  if (total) {
+    // The bar repeats the table below it for the eye; the table is what is
+    // read out. Widths are SVG attributes, as the CSP allows no inline style.
+    let x = 0;
+    const rects = counts.map(([login, n]) => {
+      const w = (n / total) * 100;
+      const r = `<rect class="${series(c, login)}" x="${+x.toFixed(2)}" width="${+w.toFixed(2)}" height="8"/>`;
+      x += w;
+      return r;
+    }).join("");
+    lines.push(
+      `          <svg class="share" viewBox="0 0 100 8" preserveAspectRatio="none" aria-hidden="true" focusable="false">${rects}</svg>`,
+      `          <table class="area-table">`,
+      `            <thead><tr><th scope="col" data-i18n="tm.col.who">Who</th><th scope="col" data-i18n="tm.col.changes">Changes</th></tr></thead>`,
+      `            <tbody>`,
+      ...counts.map(([login, n]) => `              <tr class="${series(c, login)}"><th scope="row">${who(c, s, login)}</th><td>${esc(String(n))}</td></tr>`),
+      `            </tbody>`,
+      `          </table>`,
+    );
+  }
+  lines.push(`        </li>`);
+  return lines.join("\n");
+}
+
+function stats(c, s) {
+  const langs = readdirSync(I18N).filter((f) => /^[a-z]{2,3}(-[A-Za-z0-9]+)*\.json$/.test(f)).length;
+  const changes = Object.values(s.totals).reduce((t, n) => t + n, 0);
+  const item = (n, key, en) => `        <div><dt data-i18n="${key}">${en}</dt><dd>${esc(String(n))}</dd></div>`;
+  return [
+    `      <dl class="tm-stats">`,
+    item(changes, "tm.col.changes", "Changes"),
+    item(c.people.filter((p) => p.kind === "person").length, "tm.s.people", "People"),
+    item(c.disciplines.length, "tm.s.areas", "Disciplines"),
+    item(langs, "tm.s.langs", "Languages"),
+    `      </dl>`,
+  ].join("\n");
 }
 
 function render(c, s, html) {
   const regions = {
-    people: `      <ul class="people">\n${c.people.map((p) => personCard(c, s, p)).join("\n")}\n      </ul>`,
+    stats: stats(c, s),
+    people: `      <ul class="people">\n${c.people.filter((p) => p.kind === "person").map((p) => personCard(c, s, p)).join("\n")}\n      </ul>`,
+    helpers: `      <ul class="helpers">\n${c.people.filter((p) => p.kind !== "person").map((p) => helperCard(c, s, p)).join("\n")}\n      </ul>`,
     areas: `      <ul class="areas">\n${c.disciplines.map((d) => areaCard(c, s, d)).join("\n")}\n      </ul>`,
     date: `<time datetime="${s.fetched}">${s.fetched}</time>`,
   };

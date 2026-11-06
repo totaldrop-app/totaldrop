@@ -552,5 +552,11 @@
   "tm.role.bot": "Otomatisasi",
   "tm.role.maintainer": "Pendiri dan pengelola",
   "tm.title": "Orang-orang di balik TotalDrop",
-  "tm.role.contributor": "Kontributor"
+  "tm.role.contributor": "Kontributor",
+  "tm.s.areas": "Bidang",
+  "tm.s.langs": "Bahasa",
+  "tm.s.people": "Orang",
+  "tm.tools.lede": "Di sini perangkat lunak juga menulis perubahan. Pekerjaannya melewati pemeriksaan dan tinjauan yang sama seperti milik siapa pun, dan hanya pengelola yang dapat menggabungkannya.",
+  "tm.tools.title": "AI dan otomatisasi",
+  "tm.web": "Situs web"
 }

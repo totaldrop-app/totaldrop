@@ -552,5 +552,11 @@
   "tm.role.bot": "Automatisering",
   "tm.role.maintainer": "Grundare och förvaltare",
   "tm.title": "Människorna bakom TotalDrop",
-  "tm.role.contributor": "Bidragsgivare"
+  "tm.role.contributor": "Bidragsgivare",
+  "tm.s.areas": "Discipliner",
+  "tm.s.langs": "Språk",
+  "tm.s.people": "Personer",
+  "tm.tools.lede": "Här skriver även programvara ändringar. Arbetet går igenom samma kontroller och granskningar som allas, och bara underhållaren kan slå ihop det.",
+  "tm.tools.title": "AI och automatisering",
+  "tm.web": "Webbplats"
 }

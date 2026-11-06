@@ -552,5 +552,11 @@
   "tm.role.bot": "Uendeshaji wa kiotomatiki",
   "tm.role.maintainer": "Mwanzilishi na msimamizi",
   "tm.title": "Watu walio nyuma ya TotalDrop",
-  "tm.role.contributor": "Mchangiaji"
+  "tm.role.contributor": "Mchangiaji",
+  "tm.s.areas": "Fani",
+  "tm.s.langs": "Lugha",
+  "tm.s.people": "Watu",
+  "tm.tools.lede": "Hapa programu pia huandika mabadiliko. Kazi yake hupitia ukaguzi na mapitio yale yale kama ya mtu yeyote, na ni mtunzaji pekee anayeweza kuiunganisha.",
+  "tm.tools.title": "Akili bandia na uendeshaji otomatiki",
+  "tm.web": "Tovuti"
 }
