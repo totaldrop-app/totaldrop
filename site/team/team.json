@@ -1,0 +1,19 @@
+{
+  "repo": "totaldrop-app/totaldrop",
+  "people": [
+    { "login": "ozdil", "kind": "person", "role": "maintainer" },
+    { "login": "claude", "kind": "ai" },
+    { "login": "dependabot[bot]", "kind": "bot" }
+  ],
+  "disciplines": [
+    { "key": "core", "paths": ["crates/totaldrop-crypto", "crates/totaldrop-proto", "crates/totaldrop-core", "fuzz"] },
+    { "key": "formal", "paths": ["formal"] },
+    { "key": "android", "paths": ["app"] },
+    { "key": "linux", "paths": ["linux", "packaging"] },
+    { "key": "cli", "paths": ["crates/totaldrop-cli"] },
+    { "key": "site", "paths": ["site"] },
+    { "key": "servers", "paths": ["server", ".github"] },
+    { "key": "l10n", "paths": ["l10n", "crates/totaldrop-l10n"] },
+    { "key": "docs", "paths": ["docs", "README.md", "SECURITY.md", "GOVERNANCE.md", "CONTRIBUTING.md"] }
+  ]
+}
