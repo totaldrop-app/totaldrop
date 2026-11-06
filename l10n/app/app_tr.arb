@@ -128,5 +128,7 @@
   "transferNoticeChannel": "Aktarımlar",
   "transferNoticeSending": "TotalDrop ile gönderiliyor",
   "transferNoticeReceiving": "TotalDrop ile alınıyor",
-  "transferNoticeBody": "Başka uygulamaları kullanırken de sürer."
+  "transferNoticeBody": "Başka uygulamaları kullanırken de sürer.",
+  "shareTextSoon": "TotalDrop henüz metin göndermiyor, yalnızca dosya. Bunun yerine bir dosya paylaşın.",
+  "shareBusy": "Bir aktarım hâlâ sürüyor. Bitmesini bekleyin ya da durdurun, sonra yeniden paylaşın."
 }

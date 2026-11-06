@@ -482,4 +482,12 @@ class AppLocalizationsUr extends AppLocalizations {
   @override
   String get transferNoticeBody =>
       'دوسری ایپس استعمال کرتے وقت بھی جاری رہتا ہے۔';
+
+  @override
+  String get shareTextSoon =>
+      'TotalDrop ابھی متن نہیں بھیجتا، صرف فائلیں۔ اس کے بجائے کوئی فائل شیئر کریں۔';
+
+  @override
+  String get shareBusy =>
+      'ایک منتقلی ابھی جاری ہے۔ اس کے ختم ہونے کا انتظار کریں یا اسے روکیں، پھر دوبارہ شیئر کریں۔';
 }

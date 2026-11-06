@@ -128,5 +128,7 @@
   "transferNoticeChannel": "Truyền tệp",
   "transferNoticeSending": "Đang gửi bằng TotalDrop",
   "transferNoticeReceiving": "Đang nhận bằng TotalDrop",
-  "transferNoticeBody": "Vẫn tiếp tục khi bạn dùng ứng dụng khác."
+  "transferNoticeBody": "Vẫn tiếp tục khi bạn dùng ứng dụng khác.",
+  "shareTextSoon": "TotalDrop chưa gửi được văn bản, chỉ gửi tệp. Hãy chia sẻ một tệp.",
+  "shareBusy": "Vẫn còn một lần truyền đang chạy. Hãy chờ nó xong hoặc dừng nó, rồi chia sẻ lại."
 }

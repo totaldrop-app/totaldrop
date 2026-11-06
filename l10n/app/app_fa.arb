@@ -128,5 +128,7 @@
   "transferNoticeChannel": "انتقال‌ها",
   "transferNoticeSending": "در حال ارسال با TotalDrop",
   "transferNoticeReceiving": "در حال دریافت با TotalDrop",
-  "transferNoticeBody": "هنگام استفاده از برنامه‌های دیگر ادامه می‌یابد."
+  "transferNoticeBody": "هنگام استفاده از برنامه‌های دیگر ادامه می‌یابد.",
+  "shareTextSoon": "TotalDrop هنوز متن نمی‌فرستد، فقط فایل. به جای آن یک فایل هم‌رسانی کنید.",
+  "shareBusy": "یک انتقال هنوز در جریان است. صبر کنید تمام شود یا آن را متوقف کنید، سپس دوباره هم‌رسانی کنید."
 }

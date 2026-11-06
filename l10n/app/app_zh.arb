@@ -128,5 +128,7 @@
   "transferNoticeChannel": "传输",
   "transferNoticeSending": "正在通过 TotalDrop 发送",
   "transferNoticeReceiving": "正在通过 TotalDrop 接收",
-  "transferNoticeBody": "使用其他应用时仍会继续。"
+  "transferNoticeBody": "使用其他应用时仍会继续。",
+  "shareTextSoon": "TotalDrop 暂不支持发送文本，只能发送文件。请改为分享文件。",
+  "shareBusy": "仍有传输正在进行。请等待其完成或将其停止，然后再分享。"
 }

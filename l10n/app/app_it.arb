@@ -128,5 +128,7 @@
   "transferNoticeChannel": "Trasferimenti",
   "transferNoticeSending": "Invio con TotalDrop",
   "transferNoticeReceiving": "Ricezione con TotalDrop",
-  "transferNoticeBody": "Continua mentre usi altre app."
+  "transferNoticeBody": "Continua mentre usi altre app.",
+  "shareTextSoon": "TotalDrop non invia ancora testo, solo file. Condividi invece un file.",
+  "shareBusy": "Un trasferimento è ancora in corso. Attendi che finisca o interrompilo, poi condividi di nuovo."
 }

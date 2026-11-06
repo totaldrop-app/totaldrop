@@ -128,5 +128,7 @@
   "transferNoticeChannel": "Siirrot",
   "transferNoticeSending": "Lähetetään TotalDropilla",
   "transferNoticeReceiving": "Vastaanotetaan TotalDropilla",
-  "transferNoticeBody": "Jatkuu, kun käytät muita sovelluksia."
+  "transferNoticeBody": "Jatkuu, kun käytät muita sovelluksia.",
+  "shareTextSoon": "TotalDrop ei vielä lähetä tekstiä, vain tiedostoja. Jaa sen sijaan tiedosto.",
+  "shareBusy": "Siirto on yhä käynnissä. Odota, että se valmistuu, tai pysäytä se ja jaa sitten uudelleen."
 }

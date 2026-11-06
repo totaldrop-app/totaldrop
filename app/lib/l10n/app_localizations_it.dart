@@ -492,4 +492,12 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get transferNoticeBody => 'Continua mentre usi altre app.';
+
+  @override
+  String get shareTextSoon =>
+      'TotalDrop non invia ancora testo, solo file. Condividi invece un file.';
+
+  @override
+  String get shareBusy =>
+      'Un trasferimento è ancora in corso. Attendi che finisca o interrompilo, poi condividi di nuovo.';
 }

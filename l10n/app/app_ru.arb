@@ -128,5 +128,7 @@
   "transferNoticeChannel": "Передачи",
   "transferNoticeSending": "Отправка через TotalDrop",
   "transferNoticeReceiving": "Получение через TotalDrop",
-  "transferNoticeBody": "Продолжается, пока вы пользуетесь другими приложениями."
+  "transferNoticeBody": "Продолжается, пока вы пользуетесь другими приложениями.",
+  "shareTextSoon": "TotalDrop пока не отправляет текст, только файлы. Поделитесь файлом.",
+  "shareBusy": "Передача ещё идёт. Дождитесь её окончания или остановите её, затем поделитесь снова."
 }

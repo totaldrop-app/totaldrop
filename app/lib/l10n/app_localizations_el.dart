@@ -490,4 +490,12 @@ class AppLocalizationsEl extends AppLocalizations {
   @override
   String get transferNoticeBody =>
       'Συνεχίζεται ενώ χρησιμοποιείτε άλλες εφαρμογές.';
+
+  @override
+  String get shareTextSoon =>
+      'Το TotalDrop δεν στέλνει ακόμη κείμενο, μόνο αρχεία. Μοιραστείτε ένα αρχείο.';
+
+  @override
+  String get shareBusy =>
+      'Μια μεταφορά είναι ακόμη σε εξέλιξη. Περιμένετε να τελειώσει ή σταματήστε την και μοιραστείτε ξανά.';
 }

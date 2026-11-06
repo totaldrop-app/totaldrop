@@ -164,5 +164,9 @@
   "transferNoticeReceiving": "Receiving with TotalDrop",
   "@transferNoticeReceiving": {"description": "Title of the ongoing notification while a receive runs in the background"},
   "transferNoticeBody": "Keeps going while you use other apps.",
-  "@transferNoticeBody": {"description": "Text of the ongoing transfer notification: the transfer continues while the person uses other apps"}
+  "@transferNoticeBody": {"description": "Text of the ongoing transfer notification: the transfer continues while the person uses other apps"},
+  "shareTextSoon": "TotalDrop does not send text yet, only files. Share a file instead.",
+  "@shareTextSoon": {"description": "Android: shown on the send screen when another app shared only text (no file) to TotalDrop; sending text comes in a later version"},
+  "shareBusy": "A transfer is still running. Wait for it to finish or stop it, then share again.",
+  "@shareBusy": {"description": "Android: shown when files are shared to TotalDrop while a send or receive is still running; the shared files are not added"}
 }

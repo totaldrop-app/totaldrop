@@ -128,5 +128,7 @@
   "transferNoticeChannel": "Uhamishaji",
   "transferNoticeSending": "Inatuma kwa TotalDrop",
   "transferNoticeReceiving": "Inapokea kwa TotalDrop",
-  "transferNoticeBody": "Inaendelea unapotumia programu nyingine."
+  "transferNoticeBody": "Inaendelea unapotumia programu nyingine.",
+  "shareTextSoon": "TotalDrop bado haitumi maandishi, ni faili tu. Shiriki faili badala yake.",
+  "shareBusy": "Uhamishaji bado unaendelea. Subiri umalizike au uusimamishe, kisha shiriki tena."
 }

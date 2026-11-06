@@ -128,5 +128,7 @@
   "transferNoticeChannel": "העברות",
   "transferNoticeSending": "שליחה באמצעות TotalDrop",
   "transferNoticeReceiving": "קבלה באמצעות TotalDrop",
-  "transferNoticeBody": "ממשיך גם כשמשתמשים באפליקציות אחרות."
+  "transferNoticeBody": "ממשיך גם כשמשתמשים באפליקציות אחרות.",
+  "shareTextSoon": "TotalDrop עדיין לא שולח טקסט, רק קבצים. שתפו קובץ במקום.",
+  "shareBusy": "העברה עדיין מתבצעת. המתינו לסיומה או עצרו אותה, ואז שתפו שוב."
 }

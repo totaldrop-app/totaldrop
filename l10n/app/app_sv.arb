@@ -128,5 +128,7 @@
   "transferNoticeChannel": "Överföringar",
   "transferNoticeSending": "Skickar med TotalDrop",
   "transferNoticeReceiving": "Tar emot med TotalDrop",
-  "transferNoticeBody": "Fortsätter medan du använder andra appar."
+  "transferNoticeBody": "Fortsätter medan du använder andra appar.",
+  "shareTextSoon": "TotalDrop skickar inte text än, bara filer. Dela en fil i stället.",
+  "shareBusy": "En överföring pågår fortfarande. Vänta tills den är klar eller stoppa den och dela sedan igen."
 }

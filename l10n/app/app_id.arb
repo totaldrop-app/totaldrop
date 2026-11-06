@@ -128,5 +128,7 @@
   "transferNoticeChannel": "Transfer",
   "transferNoticeSending": "Mengirim dengan TotalDrop",
   "transferNoticeReceiving": "Menerima dengan TotalDrop",
-  "transferNoticeBody": "Tetap berjalan saat Anda memakai aplikasi lain."
+  "transferNoticeBody": "Tetap berjalan saat Anda memakai aplikasi lain.",
+  "shareTextSoon": "TotalDrop belum bisa mengirim teks, hanya file. Bagikan file saja.",
+  "shareBusy": "Masih ada transfer yang berjalan. Tunggu sampai selesai atau hentikan, lalu bagikan lagi."
 }

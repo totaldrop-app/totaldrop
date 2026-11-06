@@ -128,5 +128,7 @@
   "transferNoticeChannel": "Transferuri",
   "transferNoticeSending": "Se trimite cu TotalDrop",
   "transferNoticeReceiving": "Se primește cu TotalDrop",
-  "transferNoticeBody": "Continuă cât timp folosiți alte aplicații."
+  "transferNoticeBody": "Continuă cât timp folosiți alte aplicații.",
+  "shareTextSoon": "TotalDrop nu trimite încă text, doar fișiere. Partajează în schimb un fișier.",
+  "shareBusy": "Un transfer este încă în desfășurare. Așteaptă să se termine sau oprește-l, apoi partajează din nou."
 }
