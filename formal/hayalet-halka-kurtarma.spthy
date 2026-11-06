@@ -12,10 +12,15 @@
  *    phrase, held by the owner and never on a device;
  *  - kurtarma_ekle: an RK-signed record that adds a device into an empty
  *    slot. It waits: readers follow it only once it has settled;
- *  - priority (fork rule 1, extended): an AK record under the same key
- *    wins over a recovery; a rotate does not stop it;
- *  - kurtarma_reddi: any member writes an AK record that rejects the
- *    recovery;
+ *  - membership period m: the head of the last membership record (an AK
+ *    record, a recovery or genesis). Rotates keep m. A recovery names m
+ *    and is logged under h(<'rlog', m>);
+ *  - priority (fork rule 1, extended): an AK record written from period m
+ *    wins over a recovery against m; a rotate does not stop it. Two
+ *    recoveries against the same m are a fork and neither is followed
+ *    after the second is logged;
+ *  - kurtarma_reddi: any member writes an AK record from its current head
+ *    that rejects the recovery;
  *  - contacts follow a recovery only after comparing the words again with
  *    the new device's owner (an authentic out-of-band channel).
  * The record body changes (genesis carries RK), so the lemmas of parts 1
@@ -524,7 +529,10 @@ lemma sanity_reject_after_settled_rotate:
     & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)
     & not (Ex #x. Step('MA') @ x) & not (Ex #x. Step('AA') @ x)
     & not (Ex #x. Step('MR') @ x) & not (Ex #x. Step('AR') @ x)
-    & not (Ex #x. Step('OR') @ x)
+    & not (Ex #x. Step('DK') @ x) & not (Ex #x. Step('CK') @ x)
+    & not (Ex c2 r2 h #x. Pin(c2, r2, h) @ x)
+    & (All r2 d2 #x. Created(r2, d2) @ x ==> #x = #c)
+    & (All r2 m2 v2 #x. RecLogged(r2, m2, v2) @ x ==> #x = #l)
     & not (Ex e #x. RevIK(e) @ x) & not (Ex e #x. RevA1(e) @ x) & not (Ex e #x. RevA2(e) @ x)"
 
 /* P7, devices: once an honest member has written an AK record from a head
@@ -545,6 +553,9 @@ lemma recovery_was_pending [heuristic=c]:
 
 /* Two recoveries against the same period are a real fork: no two readers
    follow different ones. */
+lemma read_rec_was_logged [reuse, heuristic=c]:
+  "All r m v #i. ReadRec(r, m, v) @ i ==> Ex #l. RecLogged(r, m, v) @ l & #l < #i"
+
 lemma no_split_recovery [heuristic=c]:
   "All r m v v2 #i #j. ReadRec(r, m, v) @ i & ReadRec(r, m, v2) @ j ==> v = v2"
 
