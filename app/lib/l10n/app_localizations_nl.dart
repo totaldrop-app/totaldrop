@@ -442,27 +442,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get sendDropHint => 'Je kunt bestanden ook naar dit venster slepen.';
 
   @override
-  String get editUndo => 'Ongedaan maken';
-
-  @override
-  String get editRedo => 'Opnieuw';
-
-  @override
-  String get editCut => 'Knippen';
-
-  @override
-  String get editCopy => 'Kopiëren';
-
-  @override
-  String get editPaste => 'Plakken';
-
-  @override
-  String get editDelete => 'Verwijderen';
-
-  @override
-  String get editSelectAll => 'Alles selecteren';
-
-  @override
   String get sendQrHint =>
       'Of scan deze code met de camera van het andere apparaat.';
 
@@ -500,6 +479,27 @@ class AppLocalizationsNl extends AppLocalizations {
 
     return '$percentString%';
   }
+
+  @override
+  String get editUndo => 'Ongedaan maken';
+
+  @override
+  String get editRedo => 'Opnieuw';
+
+  @override
+  String get editCut => 'Knippen';
+
+  @override
+  String get editCopy => 'Kopiëren';
+
+  @override
+  String get editPaste => 'Plakken';
+
+  @override
+  String get editDelete => 'Verwijderen';
+
+  @override
+  String get editSelectAll => 'Alles selecteren';
 
   @override
   String get transferNoticeChannel => 'Overdrachten';

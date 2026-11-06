@@ -428,27 +428,6 @@ class AppLocalizationsHu extends AppLocalizations {
   String get sendDropHint => 'A fájlokat erre az ablakra is ráhúzhatod.';
 
   @override
-  String get editUndo => 'Visszavonás';
-
-  @override
-  String get editRedo => 'Újra';
-
-  @override
-  String get editCut => 'Kivágás';
-
-  @override
-  String get editCopy => 'Másolás';
-
-  @override
-  String get editPaste => 'Beillesztés';
-
-  @override
-  String get editDelete => 'Törlés';
-
-  @override
-  String get editSelectAll => 'Az összes kijelölése';
-
-  @override
   String get sendQrHint =>
       'Vagy olvasd be ezt a kódot a másik eszköz kamerájával.';
 
@@ -485,6 +464,27 @@ class AppLocalizationsHu extends AppLocalizations {
 
     return '$percentString%';
   }
+
+  @override
+  String get editUndo => 'Visszavonás';
+
+  @override
+  String get editRedo => 'Újra';
+
+  @override
+  String get editCut => 'Kivágás';
+
+  @override
+  String get editCopy => 'Másolás';
+
+  @override
+  String get editPaste => 'Beillesztés';
+
+  @override
+  String get editDelete => 'Törlés';
+
+  @override
+  String get editSelectAll => 'Az összes kijelölése';
 
   @override
   String get transferNoticeChannel => 'Átvitelek';

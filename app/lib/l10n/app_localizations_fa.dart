@@ -436,27 +436,6 @@ class AppLocalizationsFa extends AppLocalizations {
   String get sendDropHint => 'می‌توانید فایل‌ها را به این پنجره هم بکشید.';
 
   @override
-  String get editUndo => 'واگرد';
-
-  @override
-  String get editRedo => 'ازنو';
-
-  @override
-  String get editCut => 'برش';
-
-  @override
-  String get editCopy => 'رونوشت';
-
-  @override
-  String get editPaste => 'چسباندن';
-
-  @override
-  String get editDelete => 'حذف';
-
-  @override
-  String get editSelectAll => 'انتخاب همه';
-
-  @override
   String get sendQrHint => 'یا این کد را با دوربین دستگاه دیگر اسکن کنید.';
 
   @override
@@ -492,6 +471,27 @@ class AppLocalizationsFa extends AppLocalizations {
 
     return '$percentString٪';
   }
+
+  @override
+  String get editUndo => 'واگرد';
+
+  @override
+  String get editRedo => 'ازنو';
+
+  @override
+  String get editCut => 'برش';
+
+  @override
+  String get editCopy => 'کپی';
+
+  @override
+  String get editPaste => 'چسباندن';
+
+  @override
+  String get editDelete => 'حذف';
+
+  @override
+  String get editSelectAll => 'انتخاب همه';
 
   @override
   String get transferNoticeChannel => 'انتقال‌ها';

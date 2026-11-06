@@ -115,13 +115,6 @@
 
   "sendDropHere": "Solte os arquivos aqui",
   "sendDropHint": "Você também pode arrastar arquivos para esta janela.",
-  "editUndo": "Desfazer",
-  "editRedo": "Refazer",
-  "editCut": "Recortar",
-  "editCopy": "Copiar",
-  "editPaste": "Colar",
-  "editDelete": "Excluir",
-  "editSelectAll": "Selecionar tudo",
   "sendQrHint": "Ou escaneie este código com a câmera do outro dispositivo.",
   "sendWaitingAccept": "Confira as palavras e aguarde o destinatário aceitar.",
   "receiveFromImage": "Ler QR de uma imagem",
@@ -132,6 +125,14 @@
   "back": "Voltar",
   "codeSuggestions": "Sugestões",
   "progressPercent": "{percent}%",
+
+  "editUndo": "Desfazer",
+  "editRedo": "Refazer",
+  "editCut": "Recortar",
+  "editCopy": "Copiar",
+  "editPaste": "Colar",
+  "editDelete": "Excluir",
+  "editSelectAll": "Selecionar tudo",
 
   "transferNoticeChannel": "Transferências",
   "transferNoticeSending": "Enviando com o TotalDrop",

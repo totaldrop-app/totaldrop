@@ -438,27 +438,6 @@ class AppLocalizationsHe extends AppLocalizations {
   String get sendDropHint => 'אפשר גם לגרור קבצים אל החלון הזה.';
 
   @override
-  String get editUndo => 'ביטול';
-
-  @override
-  String get editRedo => 'ביצוע חוזר';
-
-  @override
-  String get editCut => 'גזירה';
-
-  @override
-  String get editCopy => 'העתקה';
-
-  @override
-  String get editPaste => 'הדבקה';
-
-  @override
-  String get editDelete => 'מחיקה';
-
-  @override
-  String get editSelectAll => 'בחירת הכול';
-
-  @override
   String get sendQrHint => 'או לסרוק את הקוד הזה במצלמה של המכשיר השני.';
 
   @override
@@ -493,6 +472,27 @@ class AppLocalizationsHe extends AppLocalizations {
 
     return '$percentString%';
   }
+
+  @override
+  String get editUndo => 'ביטול';
+
+  @override
+  String get editRedo => 'ביצוע חוזר';
+
+  @override
+  String get editCut => 'גזירה';
+
+  @override
+  String get editCopy => 'העתקה';
+
+  @override
+  String get editPaste => 'הדבקה';
+
+  @override
+  String get editDelete => 'מחיקה';
+
+  @override
+  String get editSelectAll => 'בחירת הכול';
 
   @override
   String get transferNoticeChannel => 'העברות';

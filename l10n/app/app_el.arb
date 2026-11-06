@@ -115,13 +115,6 @@
 
   "sendDropHere": "Αφήστε αρχεία εδώ",
   "sendDropHint": "Μπορείτε επίσης να σύρετε αρχεία σε αυτό το παράθυρο.",
-  "editUndo": "Αναίρεση",
-  "editRedo": "Επανάληψη",
-  "editCut": "Αποκοπή",
-  "editCopy": "Αντιγραφή",
-  "editPaste": "Επικόλληση",
-  "editDelete": "Διαγραφή",
-  "editSelectAll": "Επιλογή όλων",
   "sendQrHint": "Ή σαρώστε αυτόν τον κωδικό με την κάμερα της άλλης συσκευής.",
   "sendWaitingAccept": "Ελέγξτε τις λέξεις και περιμένετε να αποδεχτεί ο παραλήπτης.",
   "receiveFromImage": "Ανάγνωση QR από εικόνα",
@@ -132,6 +125,14 @@
   "back": "Πίσω",
   "codeSuggestions": "Προτάσεις",
   "progressPercent": "{percent}%",
+
+  "editUndo": "Αναίρεση",
+  "editRedo": "Επανάληψη",
+  "editCut": "Αποκοπή",
+  "editCopy": "Αντιγραφή",
+  "editPaste": "Επικόλληση",
+  "editDelete": "Διαγραφή",
+  "editSelectAll": "Επιλογή όλων",
 
   "transferNoticeChannel": "Μεταφορές",
   "transferNoticeSending": "Αποστολή με το TotalDrop",

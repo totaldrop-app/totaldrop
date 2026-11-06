@@ -440,27 +440,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sendDropHint => 'You can also drag files onto this window.';
 
   @override
-  String get editUndo => 'Undo';
-
-  @override
-  String get editRedo => 'Redo';
-
-  @override
-  String get editCut => 'Cut';
-
-  @override
-  String get editCopy => 'Copy';
-
-  @override
-  String get editPaste => 'Paste';
-
-  @override
-  String get editDelete => 'Delete';
-
-  @override
-  String get editSelectAll => 'Select all';
-
-  @override
   String get sendQrHint => 'Or scan this code with the other device\'s camera.';
 
   @override
@@ -496,6 +475,27 @@ class AppLocalizationsEn extends AppLocalizations {
 
     return '$percentString%';
   }
+
+  @override
+  String get editUndo => 'Undo';
+
+  @override
+  String get editRedo => 'Redo';
+
+  @override
+  String get editCut => 'Cut';
+
+  @override
+  String get editCopy => 'Copy';
+
+  @override
+  String get editPaste => 'Paste';
+
+  @override
+  String get editDelete => 'Delete';
+
+  @override
+  String get editSelectAll => 'Select All';
 
   @override
   String get transferNoticeChannel => 'Transfers';

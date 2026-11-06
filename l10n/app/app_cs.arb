@@ -115,13 +115,6 @@
 
   "sendDropHere": "Přetáhněte soubory sem",
   "sendDropHint": "Soubory můžete také přetáhnout do tohoto okna.",
-  "editUndo": "Zpět",
-  "editRedo": "Znovu",
-  "editCut": "Vyjmout",
-  "editCopy": "Kopírovat",
-  "editPaste": "Vložit",
-  "editDelete": "Smazat",
-  "editSelectAll": "Vybrat vše",
   "sendQrHint": "Nebo tento kód naskenujte fotoaparátem druhého zařízení.",
   "sendWaitingAccept": "Zkontrolujte slova a počkejte, až příjemce soubory přijme.",
   "receiveFromImage": "Načíst QR kód z obrázku",
@@ -132,6 +125,14 @@
   "back": "Zpět",
   "codeSuggestions": "Návrhy",
   "progressPercent": "{percent} %",
+
+  "editUndo": "Zpět",
+  "editRedo": "Znovu",
+  "editCut": "Vyjmout",
+  "editCopy": "Kopírovat",
+  "editPaste": "Vložit",
+  "editDelete": "Smazat",
+  "editSelectAll": "Vybrat vše",
 
   "transferNoticeChannel": "Přenosy",
   "transferNoticeSending": "Odesílání přes TotalDrop",

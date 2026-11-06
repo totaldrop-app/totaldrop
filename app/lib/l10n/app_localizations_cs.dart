@@ -445,27 +445,6 @@ class AppLocalizationsCs extends AppLocalizations {
   String get sendDropHint => 'Soubory můžete také přetáhnout do tohoto okna.';
 
   @override
-  String get editUndo => 'Zpět';
-
-  @override
-  String get editRedo => 'Znovu';
-
-  @override
-  String get editCut => 'Vyjmout';
-
-  @override
-  String get editCopy => 'Kopírovat';
-
-  @override
-  String get editPaste => 'Vložit';
-
-  @override
-  String get editDelete => 'Smazat';
-
-  @override
-  String get editSelectAll => 'Vybrat vše';
-
-  @override
   String get sendQrHint =>
       'Nebo tento kód naskenujte fotoaparátem druhého zařízení.';
 
@@ -502,6 +481,27 @@ class AppLocalizationsCs extends AppLocalizations {
 
     return '$percentString %';
   }
+
+  @override
+  String get editUndo => 'Zpět';
+
+  @override
+  String get editRedo => 'Znovu';
+
+  @override
+  String get editCut => 'Vyjmout';
+
+  @override
+  String get editCopy => 'Kopírovat';
+
+  @override
+  String get editPaste => 'Vložit';
+
+  @override
+  String get editDelete => 'Smazat';
+
+  @override
+  String get editSelectAll => 'Vybrat vše';
 
   @override
   String get transferNoticeChannel => 'Přenosy';

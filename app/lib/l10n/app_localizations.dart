@@ -812,48 +812,6 @@ abstract class AppLocalizations {
   /// **'You can also drag files onto this window.'**
   String get sendDropHint;
 
-  /// Linux: in the right-click menu of text fields, which Qt draws; the system's usual word for the command
-  ///
-  /// In en, this message translates to:
-  /// **'Undo'**
-  String get editUndo;
-
-  /// Linux: in the right-click menu of text fields, which Qt draws; the system's usual word for the command
-  ///
-  /// In en, this message translates to:
-  /// **'Redo'**
-  String get editRedo;
-
-  /// Linux: in the right-click menu of text fields, which Qt draws; the system's usual word for the command
-  ///
-  /// In en, this message translates to:
-  /// **'Cut'**
-  String get editCut;
-
-  /// Linux: in the right-click menu of text fields, which Qt draws; the system's usual word for the command
-  ///
-  /// In en, this message translates to:
-  /// **'Copy'**
-  String get editCopy;
-
-  /// Linux: in the right-click menu of text fields, which Qt draws; the system's usual word for the command
-  ///
-  /// In en, this message translates to:
-  /// **'Paste'**
-  String get editPaste;
-
-  /// Linux: in the right-click menu of text fields, which Qt draws; the system's usual word for the command
-  ///
-  /// In en, this message translates to:
-  /// **'Delete'**
-  String get editDelete;
-
-  /// Linux: in the right-click menu of text fields, which Qt draws; the system's usual word for the command
-  ///
-  /// In en, this message translates to:
-  /// **'Select all'**
-  String get editSelectAll;
-
   /// No description provided for @sendQrHint.
   ///
   /// In en, this message translates to:
@@ -913,6 +871,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{percent}%'**
   String progressPercent(int percent);
+
+  /// Linux: in the right-click menu of text fields, which Qt draws; the system's usual word for the command
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get editUndo;
+
+  /// Linux: in the right-click menu of text fields, which Qt draws; the system's usual word for the command
+  ///
+  /// In en, this message translates to:
+  /// **'Redo'**
+  String get editRedo;
+
+  /// Linux: in the right-click menu of text fields, which Qt draws; the system's usual word for the command
+  ///
+  /// In en, this message translates to:
+  /// **'Cut'**
+  String get editCut;
+
+  /// Linux: in the right-click menu of text fields, which Qt draws; the system's usual word for the command
+  ///
+  /// In en, this message translates to:
+  /// **'Copy'**
+  String get editCopy;
+
+  /// Linux: in the right-click menu of text fields, which Qt draws; the system's usual word for the command
+  ///
+  /// In en, this message translates to:
+  /// **'Paste'**
+  String get editPaste;
+
+  /// Linux: in the right-click menu of text fields, which Qt draws; the system's usual word for the command
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get editDelete;
+
+  /// Linux: in the right-click menu of text fields, which Qt draws; the system's usual word for the command
+  ///
+  /// In en, this message translates to:
+  /// **'Select All'**
+  String get editSelectAll;
 
   /// Android notification channel name for running transfers (shown in system settings)
   ///

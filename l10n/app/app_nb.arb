@@ -115,13 +115,6 @@
 
   "sendDropHere": "Slipp filer her",
   "sendDropHint": "Du kan også dra filer inn i dette vinduet.",
-  "editUndo": "Angre",
-  "editRedo": "Gjør om",
-  "editCut": "Klipp ut",
-  "editCopy": "Kopier",
-  "editPaste": "Lim inn",
-  "editDelete": "Slett",
-  "editSelectAll": "Merk alt",
   "sendQrHint": "Eller skann koden med kameraet på den andre enheten.",
   "sendWaitingAccept": "Sjekk ordene, og vent deretter på at mottakeren godtar.",
   "receiveFromImage": "Les QR-kode fra bilde",
@@ -132,6 +125,14 @@
   "back": "Tilbake",
   "codeSuggestions": "Forslag",
   "progressPercent": "{percent} %",
+
+  "editUndo": "Angre",
+  "editRedo": "Gjør om",
+  "editCut": "Klipp ut",
+  "editCopy": "Kopier",
+  "editPaste": "Lim inn",
+  "editDelete": "Slett",
+  "editSelectAll": "Merk alt",
 
   "transferNoticeChannel": "Overføringer",
   "transferNoticeSending": "Sender med TotalDrop",

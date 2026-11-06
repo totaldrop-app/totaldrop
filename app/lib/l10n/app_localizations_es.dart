@@ -447,27 +447,6 @@ class AppLocalizationsEs extends AppLocalizations {
       'También puedes arrastrar archivos a esta ventana.';
 
   @override
-  String get editUndo => 'Deshacer';
-
-  @override
-  String get editRedo => 'Rehacer';
-
-  @override
-  String get editCut => 'Cortar';
-
-  @override
-  String get editCopy => 'Copiar';
-
-  @override
-  String get editPaste => 'Pegar';
-
-  @override
-  String get editDelete => 'Eliminar';
-
-  @override
-  String get editSelectAll => 'Seleccionar todo';
-
-  @override
   String get sendQrHint =>
       'O escanea este código con la cámara del otro dispositivo.';
 
@@ -505,6 +484,27 @@ class AppLocalizationsEs extends AppLocalizations {
 
     return '$percentString %';
   }
+
+  @override
+  String get editUndo => 'Deshacer';
+
+  @override
+  String get editRedo => 'Rehacer';
+
+  @override
+  String get editCut => 'Cortar';
+
+  @override
+  String get editCopy => 'Copiar';
+
+  @override
+  String get editPaste => 'Pegar';
+
+  @override
+  String get editDelete => 'Eliminar';
+
+  @override
+  String get editSelectAll => 'Seleccionar todo';
 
   @override
   String get transferNoticeChannel => 'Transferencias';

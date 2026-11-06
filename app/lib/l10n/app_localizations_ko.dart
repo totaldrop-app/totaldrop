@@ -410,27 +410,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get sendDropHint => '이 창으로 파일을 끌어다 놓아도 됩니다.';
 
   @override
-  String get editUndo => '실행 취소';
-
-  @override
-  String get editRedo => '다시 실행';
-
-  @override
-  String get editCut => '잘라내기';
-
-  @override
-  String get editCopy => '복사';
-
-  @override
-  String get editPaste => '붙여넣기';
-
-  @override
-  String get editDelete => '삭제';
-
-  @override
-  String get editSelectAll => '모두 선택';
-
-  @override
   String get sendQrHint => '또는 다른 기기의 카메라로 이 코드를 스캔하세요.';
 
   @override
@@ -465,6 +444,27 @@ class AppLocalizationsKo extends AppLocalizations {
 
     return '$percentString%';
   }
+
+  @override
+  String get editUndo => '실행 취소';
+
+  @override
+  String get editRedo => '다시 실행';
+
+  @override
+  String get editCut => '잘라내기';
+
+  @override
+  String get editCopy => '복사';
+
+  @override
+  String get editPaste => '붙여넣기';
+
+  @override
+  String get editDelete => '삭제';
+
+  @override
+  String get editSelectAll => '모두 선택';
 
   @override
   String get transferNoticeChannel => '전송';

@@ -115,13 +115,6 @@
 
   "sendDropHere": "Thả tệp vào đây",
   "sendDropHint": "Bạn cũng có thể kéo tệp vào cửa sổ này.",
-  "editUndo": "Hoàn tác",
-  "editRedo": "Làm lại",
-  "editCut": "Cắt",
-  "editCopy": "Sao chép",
-  "editPaste": "Dán",
-  "editDelete": "Xóa",
-  "editSelectAll": "Chọn tất cả",
   "sendQrHint": "Hoặc quét mã này bằng camera của thiết bị kia.",
   "sendWaitingAccept": "Kiểm tra các từ, rồi chờ người nhận chấp nhận.",
   "receiveFromImage": "Đọc QR từ ảnh",
@@ -132,6 +125,14 @@
   "back": "Quay lại",
   "codeSuggestions": "Gợi ý",
   "progressPercent": "{percent}%",
+
+  "editUndo": "Hoàn tác",
+  "editRedo": "Làm lại",
+  "editCut": "Cắt",
+  "editCopy": "Sao chép",
+  "editPaste": "Dán",
+  "editDelete": "Xóa",
+  "editSelectAll": "Chọn tất cả",
 
   "transferNoticeChannel": "Truyền tệp",
   "transferNoticeSending": "Đang gửi bằng TotalDrop",

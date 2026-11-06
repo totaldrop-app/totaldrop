@@ -447,27 +447,6 @@ class AppLocalizationsPt extends AppLocalizations {
       'Você também pode arrastar arquivos para esta janela.';
 
   @override
-  String get editUndo => 'Desfazer';
-
-  @override
-  String get editRedo => 'Refazer';
-
-  @override
-  String get editCut => 'Recortar';
-
-  @override
-  String get editCopy => 'Copiar';
-
-  @override
-  String get editPaste => 'Colar';
-
-  @override
-  String get editDelete => 'Excluir';
-
-  @override
-  String get editSelectAll => 'Selecionar tudo';
-
-  @override
   String get sendQrHint =>
       'Ou escaneie este código com a câmera do outro dispositivo.';
 
@@ -505,6 +484,27 @@ class AppLocalizationsPt extends AppLocalizations {
 
     return '$percentString%';
   }
+
+  @override
+  String get editUndo => 'Desfazer';
+
+  @override
+  String get editRedo => 'Refazer';
+
+  @override
+  String get editCut => 'Recortar';
+
+  @override
+  String get editCopy => 'Copiar';
+
+  @override
+  String get editPaste => 'Colar';
+
+  @override
+  String get editDelete => 'Excluir';
+
+  @override
+  String get editSelectAll => 'Selecionar tudo';
 
   @override
   String get transferNoticeChannel => 'Transferências';
@@ -961,27 +961,6 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
       'Você também pode arrastar arquivos para esta janela.';
 
   @override
-  String get editUndo => 'Desfazer';
-
-  @override
-  String get editRedo => 'Refazer';
-
-  @override
-  String get editCut => 'Recortar';
-
-  @override
-  String get editCopy => 'Copiar';
-
-  @override
-  String get editPaste => 'Colar';
-
-  @override
-  String get editDelete => 'Excluir';
-
-  @override
-  String get editSelectAll => 'Selecionar tudo';
-
-  @override
   String get sendQrHint =>
       'Ou escaneie este código com a câmera do outro dispositivo.';
 
@@ -1019,6 +998,27 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
     return '$percentString%';
   }
+
+  @override
+  String get editUndo => 'Desfazer';
+
+  @override
+  String get editRedo => 'Refazer';
+
+  @override
+  String get editCut => 'Recortar';
+
+  @override
+  String get editCopy => 'Copiar';
+
+  @override
+  String get editPaste => 'Colar';
+
+  @override
+  String get editDelete => 'Excluir';
+
+  @override
+  String get editSelectAll => 'Selecionar tudo';
 
   @override
   String get transferNoticeChannel => 'Transferências';
@@ -1476,27 +1476,6 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
   String get sendDropHint => 'Também pode arrastar ficheiros para esta janela.';
 
   @override
-  String get editUndo => 'Anular';
-
-  @override
-  String get editRedo => 'Refazer';
-
-  @override
-  String get editCut => 'Cortar';
-
-  @override
-  String get editCopy => 'Copiar';
-
-  @override
-  String get editPaste => 'Colar';
-
-  @override
-  String get editDelete => 'Eliminar';
-
-  @override
-  String get editSelectAll => 'Selecionar tudo';
-
-  @override
   String get sendQrHint =>
       'Ou leia este código com a câmara do outro dispositivo.';
 
@@ -1534,6 +1513,27 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
 
     return '$percentString%';
   }
+
+  @override
+  String get editUndo => 'Anular';
+
+  @override
+  String get editRedo => 'Refazer';
+
+  @override
+  String get editCut => 'Cortar';
+
+  @override
+  String get editCopy => 'Copiar';
+
+  @override
+  String get editPaste => 'Colar';
+
+  @override
+  String get editDelete => 'Eliminar';
+
+  @override
+  String get editSelectAll => 'Selecionar tudo';
 
   @override
   String get transferNoticeChannel => 'Transferências';

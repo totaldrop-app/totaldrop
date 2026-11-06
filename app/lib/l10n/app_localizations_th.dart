@@ -421,27 +421,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get sendDropHint => 'คุณลากไฟล์มาวางบนหน้าต่างนี้ได้ด้วย';
 
   @override
-  String get editUndo => 'เลิกทำ';
-
-  @override
-  String get editRedo => 'ทำซ้ำ';
-
-  @override
-  String get editCut => 'ตัด';
-
-  @override
-  String get editCopy => 'คัดลอก';
-
-  @override
-  String get editPaste => 'วาง';
-
-  @override
-  String get editDelete => 'ลบ';
-
-  @override
-  String get editSelectAll => 'เลือกทั้งหมด';
-
-  @override
   String get sendQrHint => 'หรือสแกนรหัสนี้ด้วยกล้องของอุปกรณ์อีกเครื่อง';
 
   @override
@@ -476,6 +455,27 @@ class AppLocalizationsTh extends AppLocalizations {
 
     return '$percentString%';
   }
+
+  @override
+  String get editUndo => 'เลิกทำ';
+
+  @override
+  String get editRedo => 'ทำซ้ำ';
+
+  @override
+  String get editCut => 'ตัด';
+
+  @override
+  String get editCopy => 'คัดลอก';
+
+  @override
+  String get editPaste => 'วาง';
+
+  @override
+  String get editDelete => 'ลบ';
+
+  @override
+  String get editSelectAll => 'เลือกทั้งหมด';
 
   @override
   String get transferNoticeChannel => 'การโอน';

@@ -115,13 +115,6 @@
 
   "sendDropHere": "फ़ाइलें यहाँ छोड़ें",
   "sendDropHint": "आप फ़ाइलों को इस विंडो पर खींचकर भी ला सकते हैं।",
-  "editUndo": "पूर्ववत करें",
-  "editRedo": "फिर से करें",
-  "editCut": "काटें",
-  "editCopy": "कॉपी करें",
-  "editPaste": "चिपकाएँ",
-  "editDelete": "हटाएँ",
-  "editSelectAll": "सभी चुनें",
   "sendQrHint": "या दूसरे डिवाइस के कैमरे से यह कोड स्कैन करें।",
   "sendWaitingAccept": "शब्द जाँचें, फिर पाने वाले के स्वीकार करने का इंतज़ार करें।",
   "receiveFromImage": "इमेज से QR पढ़ें",
@@ -132,6 +125,14 @@
   "back": "वापस",
   "codeSuggestions": "सुझाव",
   "progressPercent": "{percent}%",
+
+  "editUndo": "पूर्ववत करें",
+  "editRedo": "फिर से करें",
+  "editCut": "काटें",
+  "editCopy": "कॉपी करें",
+  "editPaste": "चिपकाएँ",
+  "editDelete": "हटाएँ",
+  "editSelectAll": "सभी चुनें",
 
   "transferNoticeChannel": "स्थानांतरण",
   "transferNoticeSending": "TotalDrop से भेजा जा रहा है",
