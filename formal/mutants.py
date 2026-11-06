@@ -128,21 +128,27 @@ STRICT_RECOVERY = [
     "Contact_Accept_Recover_1", "Contact_Accept_Recover_2",
 ]
 STRICT_RK_REMOVE = [
-    "Owner_RK_Remove_1", "Owner_RK_Remove_2", "Log_Write_RKR_1", "Log_Write_RKR_2",
+    "Owner_RK_Remove_1", "Owner_RK_Remove_2", "Log_Write_RKR",
     "Accept_RK_Remove_1", "Accept_RK_Remove_2",
 ]
 STRICT_ADD = [
     "Device_Join_Request", "Propose_Add_1", "Propose_Add_2",
     "Accept_Prop_Add_1", "Accept_Prop_Add_2",
 ]
+STRICT_PROPOSE_AND_REJECT = [
+    "Propose_Remove_1", "Propose_Remove_2", "Log_Write_Prop_1",
+    "Log_Write_Prop_2", "Accept_Prop_Remove_1", "Accept_Prop_Remove_2",
+    "Member_Reject_1", "Member_Reject_2", "Log_Write_Reject_1",
+    "Log_Write_Reject_2",
+]
 
 # Part 4b, strict_immediate_accept: the reader follows a single-signature
 # remove from the head's log at once, as in the default mode.
 IMMEDIATE_REMOVE = r"""rule Accept_Immediate_Remove_1:
     let s = <sik, sa1, sa2>
-        body = <'rec', r, m, 'remove', h(x), s>
+        body = <'prop', r, m, 'remove', h(x), s>
     in
-    [ View(o, r, m, s, x), !LogEntry(h(<'log', m>), <body, sig1, sig2>) ]
+    [ View(o, r, m, s, x), In(<body, sig1, sig2>) ]
   --[ Eq(verify(sig1, <'ed', body>, sa1), true), Eq(verify(sig2, <'ml', body>, sa2), true),
       NotEmpty(x), Accept(o, r, m, 'remove', h(x), s) ]->
     [ View(o, r, h(body), s, 'empty'), !Head(r, h(body), s, 'empty') ]
@@ -565,10 +571,13 @@ lemma attack:
         "lemma": """
 lemma attack:
   exists-trace
-  "Ex o r m op x y #k.
-      Accept(o, r, m, op, x, y) @ k
+  "Ex c r m d e #p #q #k.
+      Pin(c, r, m) @ p
+    & Created(r, d, e) @ q
+    & Accept(c, r, m, 'remove', h(e), d) @ k
     & not (Ex L v #t. Old(L, v) @ t & #t < #k)
-    & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)"
+    & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)
+    & (All c2 r2 m2 #y. Pin(c2, r2, m2) @ y ==> #y = #p)"
 """,
     },
     {
@@ -577,76 +586,93 @@ lemma attack:
         "model": STRICT,
         "edits": [
             ("Accept_Prop_Remove_1 wait",
-             r"(rule Accept_Prop_Remove_1:(?:(?!\nrule ).)*?)Settled\(h\(<'plog', m>\), <body, sig1, sig2>\), ",
+             r"(rule Accept_Prop_Remove_1:(?:(?!\nrule ).)*?)Settled\(h\(<'prop', m>\), <body, sig1, sig2>\), ",
              r"\1", 1),
         ],
         "drop": STRICT_RECOVERY + STRICT_RK_REMOVE + STRICT_ADD,
         "lemma": """
 lemma attack:
   exists-trace
-  "Ex o r m x s #k.
-      Accept(o, r, m, 'premove', x, s) @ k
-    & not (Ex L v #t. Old(L, v) @ t & #t < #k)
+  "Ex r m v x #k.
+      ReadChange(r, m, v, x) @ k
+    & not (Ex L s #t. Old(L, <v, s>) @ t & #t < #k)
     & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)"
 """,
     },
     {
         "name": "veto_ignored",
-        "why": "a reader follows a pending remove although a member rejected it",
+        "why": "a reader follows a proposal although a member rejected it in time",
         "model": STRICT,
         "edits": [
-            ("restriction Prop_Priority",
-             r"restriction Prop_Priority:\n(?:  [^\n]*\n)+?(?=\n)", "", 1),
+            ("restriction Not_Rejected",
+             r"restriction Not_Rejected:\n(?:  [^\n]*\n)+?(?=\n)", "", 1),
         ],
         "drop": STRICT_RECOVERY + STRICT_RK_REMOVE + STRICT_ADD,
         "lemma": """
 lemma attack [heuristic=c]:
   exists-trace
-  "Ex d r m o x s #t #k.
-      HonestAK(d, r, m) @ t
-    & Accept(o, r, m, 'premove', x, s) @ k
-    & #t < #k
-    & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)"
+  "Ex c r m d e #p #q #v #t #k.
+      Pin(c, r, m) @ p
+    & Created(r, d, e) @ q
+    & HonestProp(d, r, m, <'prop', r, m, 'remove', h(e), d>) @ v
+    & HonestReject(e, r, m, <'prop', r, m, 'remove', h(e), d>) @ t
+    & ReadChange(r, m, <'prop', r, m, 'remove', h(e), d>, 'none') @ k
+    & not (Ex L s #o. Old(L, <<'prop', r, m, 'remove', h(e), d>, s>) @ o & #o < #t)
+    & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)
+    & (All c2 r2 m2 #y. Pin(c2, r2, m2) @ y ==> #y = #p)
+    & (All r2 m2 v2 x2 #y. Logged(r2, m2, v2, x2) @ y ==> #y = #v)"
 """,
     },
     {
-        "name": "rk_remove_ignores_others",
-        "why": "a reader follows an rk_çıkar although another member rejected it",
+        "name": "rk_remove_by_phrase_alone",
+        "why": "rk_çıkar needs only RK, so the phrase alone removes an honest device",
         "model": STRICT,
         "edits": [
-            ("restriction RKR_Priority",
-             r"restriction RKR_Priority:\n(?:  [^\n]*\n)+?(?=\n)", "", 1),
+            ("Log_Write_RKR staying member's AK",
+             r"(rule Log_Write_RKR:(?:(?!\nrule ).)*?)Eq\(verify\(sig1, <'ed', body>, ba1\), true\), Eq\(verify\(sig2, <'ml', body>, ba2\), true\),\n      ",
+             r"\1", 1),
+            ("Accept_RK_Remove_1 staying member's AK",
+             r"(rule Accept_RK_Remove_1:(?:(?!\nrule ).)*?)Eq\(verify\(sig1, <'ed', body>, ba1\), true\), Eq\(verify\(sig2, <'ml', body>, ba2\), true\),\n      ",
+             r"\1", 1),
+        ],
+        "drop": STRICT_RECOVERY + STRICT_ADD + STRICT_PROPOSE_AND_REJECT,
+        "lemma": """
+lemma attack [heuristic=c]:
+  exists-trace
+  "Ex c r m d e #p #q #k.
+      Pin(c, r, m) @ p
+    & Created(r, d, e) @ q
+    & Accept(c, r, m, 'rkremove', h(d), e) @ k
+    & not (Ex #w. OwnerRKRemoved(r, m, d) @ w)
+    & not (Ex y #y. RevA1(y) @ y) & not (Ex y #y. RevA2(y) @ y)
+    & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)
+    & (All c2 r2 m2 #y. Pin(c2, r2, m2) @ y ==> #y = #p)"
+""",
+    },
+    {
+        "name": "changes_not_a_fork",
+        "why": "two readers follow different changes from the same period",
+        "model": STRICT,
+        "edits": [
+            ("restriction Change_Single",
+             r"restriction Change_Single:\n(?:  [^\n]*\n)+?(?=\n)", "", 1),
         ],
         "drop": STRICT_RECOVERY + STRICT_ADD,
         "lemma": """
 lemma attack [heuristic=c]:
   exists-trace
-  "Ex d r m o x b #t #k.
-      HonestAK(d, r, m) @ t
-    & Accept(o, r, m, 'rkremove', h(x), b) @ k
-    & #t < #k & not (d = x)
-    & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)"
-""",
-    },
-    {
-        "name": "rk_remove_lone_device",
-        "why": "RK removes a ring's only device, which then cannot reject",
-        "model": STRICT,
-        "edits": [
-            ("Owner_RK_Remove_1 other member",
-             r"(rule Owner_RK_Remove_1:(?:(?!\nrule ).)*?)NotEmpty\(b\), ",
-             r"\1", 1),
-            ("Accept_RK_Remove_1 other member",
-             r"(rule Accept_RK_Remove_1:(?:(?!\nrule ).)*?)NotEmpty\(b\), ",
-             r"\1", 1),
-        ],
-        "drop": STRICT_RECOVERY + STRICT_ADD,
-        "lemma": """
-lemma attack [heuristic=c]:
-  exists-trace
-  "Ex o r m x #k.
-      Accept(o, r, m, 'rkremove', h(x), 'empty') @ k
-    & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)"
+  "Ex c r m d e #p #q #v1 #v2 #i #j.
+      Pin(c, r, m) @ p
+    & Created(r, d, e) @ q
+    & HonestProp(d, r, m, <'prop', r, m, 'remove', h(e), d>) @ v1
+    & HonestProp(e, r, m, <'prop', r, m, 'remove', h(d), e>) @ v2
+    & ReadChange(r, m, <'prop', r, m, 'remove', h(e), d>, 'none') @ i
+    & ReadChange(r, m, <'prop', r, m, 'remove', h(d), e>, 'none') @ j
+    & not (Ex y #y. RevA1(y) @ y) & not (Ex y #y. RevA2(y) @ y)
+    & not (Ex r2 m2 hv w #y. Rejects(r2, m2, hv, w) @ y)
+    & (All c2 r2 m2 #y. Pin(c2, r2, m2) @ y ==> #y = #p)
+    & (All r2 m2 v2 x2 #y. Logged(r2, m2, v2, x2) @ y ==> #y = #v1 | #y = #v2)
+    & (All r2 m2 v2 x2 #y. ReadChange(r2, m2, v2, x2) @ y ==> #y = #i | #y = #j)"
 """,
     },
 ]
@@ -673,7 +699,12 @@ def main():
     tamarin = shlex.split(sys.argv[1]) if len(sys.argv) > 1 else ["tamarin-prover"]
     env = dict(os.environ, LANG="C.UTF-8")
     failed = 0
+    # FORMAL_MODELS (space separated file names) limits the run, as CI does
+    # with one job per model.
+    only = os.environ.get("FORMAL_MODELS", "").split()
     for mutant in MUTANTS:
+        if only and os.path.basename(mutant["model"]) not in only:
+            continue
         with open(mutant["model"], encoding="utf-8") as f:
             text = mutate(f.read(), mutant)
         with tempfile.NamedTemporaryFile("w", suffix=".spthy", delete=False, encoding="utf-8") as f:
