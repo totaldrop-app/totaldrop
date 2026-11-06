@@ -510,7 +510,7 @@ class AppLocalizationsCs extends AppLocalizations {
       other:
           '$count sdílených položek nebylo možné přečíst, proto byly vynechány.',
       many:
-          '$count sdílené položky nebylo možné přečíst, proto bylo vynecháno.',
+          '$count sdílené položky nebylo možné přečíst, proto byly vynechány.',
       few: '$count sdílené položky nebylo možné přečíst, proto byly vynechány.',
       one: 'Jednu sdílenou položku nebylo možné přečíst, proto byla vynechána.',
     );

@@ -212,6 +212,16 @@ void main() {
       expect(vm.files, isEmpty);
     });
 
+    test('a share can be cancelled, keeping what was chosen', () {
+      vm.addFakeFileForTest('mine.txt');
+      vm.beginShare(1);
+      vm.cancelShares();
+      expect(vm.sharing, isFalse);
+      expect(launches.dropped, [1]);
+      expect(vm.addShared(1, [shared('a.jpg')]), isFalse);
+      expect(vm.files.single.name, 'mine.txt');
+    });
+
     test('a failed copy says so, like a failed pick', () {
       vm.beginShare(1);
       vm.shareFailed(1);
@@ -317,6 +327,27 @@ void main() {
         find.text('2 shared items could not be read and were left out.'),
         findsOneWidget,
       );
+    });
+
+    testWidgets('Cancel, or leaving the wait, stops the share', (tester) async {
+      await pumpApp(tester);
+      launches.add(const ShareCopying(1));
+      await settle(tester);
+      await tester.tap(find.text('Cancel'));
+      await settle(tester);
+      expect(launches.dropped, [1]);
+      expect(send.sharing, isFalse);
+      launches.add(const ShareCopying(2));
+      await settle(tester);
+      final nav = tester.state<NavigatorState>(find.byType(Navigator).first);
+      nav.pop();
+      await settle(tester);
+      expect(find.text('home'), findsOneWidget);
+      expect(launches.dropped, [1, 2]);
+      // Its files, if they come, are not added behind the person's back.
+      launches.add(SharedFiles(2, [shared('late.jpg')]));
+      await settle(tester);
+      expect(send.files, isEmpty);
     });
 
     testWidgets('a share during a transfer is refused with a message', (
