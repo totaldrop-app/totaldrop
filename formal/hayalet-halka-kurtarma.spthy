@@ -155,7 +155,7 @@ rule Owner_Recover_1:
     in
     [ !Phrase(r, ~rk), Unused(n), !Head(r, hh, m, a, 'empty') ]
   --[ LogValid(h(<'rlog', m>), body, 'rk'), RecLogged(r, m, body), Step('OR'),
-      OwnerRecovered(r, n) ]->
+      OwnerRecovered(r, m, n) ]->
     [ Out(<body, sign(<'rk', body>, ~rk)>), !Head(r, h(body), h(body), a, n), !Words(r, h(body)),
       !LogEntry(h(<'rlog', m>), <body, sign(<'rk', body>, ~rk)>) ]
 
@@ -164,7 +164,7 @@ rule Owner_Recover_2:
     in
     [ !Phrase(r, ~rk), Unused(n), !Head(r, hh, m, 'empty', a) ]
   --[ LogValid(h(<'rlog', m>), body, 'rk'), RecLogged(r, m, body), Step('OR'),
-      OwnerRecovered(r, n) ]->
+      OwnerRecovered(r, m, n) ]->
     [ Out(<body, sign(<'rk', body>, ~rk)>), !Head(r, h(body), h(body), n, a), !Words(r, h(body)),
       !LogEntry(h(<'rlog', m>), <body, sign(<'rk', body>, ~rk)>) ]
 
@@ -183,16 +183,21 @@ rule Log_Write_RK_2:
     [ !LogEntry(h(<'rlog', m>), <body, sig>), !Head(r, h(body), h(body), n, a) ]
 
 /* A member rejects a pending recovery (kurtarma_reddi): an AK record,
-   written from the member's current head like any other, so it can be
-   written at any time in the wait. It starts a membership period with the
-   same members, and by priority (Rec_Priority) stops every recovery against
-   the period it was written in. */
+   written from the member's current head. Unlike other records it does not
+   need the head key to be free of settled values (no WriteFresh): a reject
+   always counts (hesap.md, fork rule 5), so a member whose own rotates
+   forked, or whose head key a thief filled, can still reject. Its only
+   premise is the member's View, so it can be written at any time in the
+   wait. It starts a membership period with the same members, and by
+   priority (Rec_Priority) stops every recovery against the period it was
+   written in; a real reader must therefore look for AK records under every
+   head of period m, including rotate branches it did not follow. */
 rule Member_Reject_1:
     let d = <pk(~ik), pk(~a1), pk(~a2)>
         body = <'rec', h(rb), h(hb), 'reject', 'rk', d>
     in
     [ View(d, h(rb), h(hb), m, d, y), !DevKey(d, ~ik, ~a1, ~a2) ]
-  --[ WriteFresh(h(<'log', h(hb)>)), LogValid(h(<'log', h(hb)>), body, 'ak'), AKFrom(h(rb), m), HonestAK(d, h(rb), m), Step('MJ'), Signed(d, h(rb), h(hb), 'reject', 'rk') ]->
+  --[ LogValid(h(<'log', h(hb)>), body, 'ak'), AKFrom(h(rb), m), HonestAK(d, h(rb), m), Step('MJ'), Signed(d, h(rb), h(hb), 'reject', 'rk') ]->
     [ View(d, h(rb), h(body), h(body), d, y),
       Out(<body, sign(<'ed', body>, ~a1), sign(<'ml', body>, ~a2)>), !Head(h(rb), h(body), h(body), d, y),
       !LogEntry(h(<'log', h(hb)>), <body, sign(<'ed', body>, ~a1), sign(<'ml', body>, ~a2)>) ]
@@ -202,7 +207,7 @@ rule Member_Reject_2:
         body = <'rec', h(rb), h(hb), 'reject', 'rk', d>
     in
     [ View(d, h(rb), h(hb), m, y, d), !DevKey(d, ~ik, ~a1, ~a2) ]
-  --[ WriteFresh(h(<'log', h(hb)>)), LogValid(h(<'log', h(hb)>), body, 'ak'), AKFrom(h(rb), m), HonestAK(d, h(rb), m), Step('MJ'), Signed(d, h(rb), h(hb), 'reject', 'rk') ]->
+  --[ LogValid(h(<'log', h(hb)>), body, 'ak'), AKFrom(h(rb), m), HonestAK(d, h(rb), m), Step('MJ'), Signed(d, h(rb), h(hb), 'reject', 'rk') ]->
     [ View(d, h(rb), h(body), h(body), y, d),
       Out(<body, sign(<'ed', body>, ~a1), sign(<'ml', body>, ~a2)>), !Head(h(rb), h(body), h(body), y, d),
       !LogEntry(h(<'log', h(hb)>), <body, sign(<'ed', body>, ~a1), sign(<'ml', body>, ~a2)>) ]
@@ -235,7 +240,7 @@ rule Contact_Accept_Recover_1:
     in
     [ View(o, r, hh, m, a, 'empty'), !Contact(o), !Words(r, h(body)), !LogEntry(h(<'rlog', m>), <body, sig>), !RK(r, rkp) ]
   --[ ReadRec(r, m, body), Settled(h(<'rlog', m>), <body, sig>), Step('CK'),
-      Eq(verify(sig, <'rk', body>, rkp), true), Accept(o, r, m, 'recover', n, 'rk'), ContactRecovered(o, r, n) ]->
+      Eq(verify(sig, <'rk', body>, rkp), true), Accept(o, r, m, 'recover', n, 'rk'), ContactRecovered(o, r, m, n) ]->
     [ View(o, r, h(body), h(body), a, n) ]
 
 rule Contact_Accept_Recover_2:
@@ -243,7 +248,7 @@ rule Contact_Accept_Recover_2:
     in
     [ View(o, r, hh, m, 'empty', a), !Contact(o), !Words(r, h(body)), !LogEntry(h(<'rlog', m>), <body, sig>), !RK(r, rkp) ]
   --[ ReadRec(r, m, body), Settled(h(<'rlog', m>), <body, sig>), Step('CK'),
-      Eq(verify(sig, <'rk', body>, rkp), true), Accept(o, r, m, 'recover', n, 'rk'), ContactRecovered(o, r, n) ]->
+      Eq(verify(sig, <'rk', body>, rkp), true), Accept(o, r, m, 'recover', n, 'rk'), ContactRecovered(o, r, m, n) ]->
     [ View(o, r, h(body), h(body), n, a) ]
 
 restriction Rec_Priority:
@@ -488,27 +493,34 @@ lemma sanity_owner_recovers:
   exists-trace
   "Ex c r h0 n #p #o #k.
       Pin(c, r, h0) @ p
-    & OwnerRecovered(r, n) @ o
-    & ContactRecovered(c, r, n) @ k
+    & OwnerRecovered(r, h0, n) @ o
+    & ContactRecovered(c, r, h0, n) @ k
     & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)
     & not (Ex #x. Step('MT') @ x) & not (Ex #x. Step('AT') @ x)
     & not (Ex #x. Step('MR') @ x) & not (Ex #x. Step('AR') @ x)
     & not (Ex #x. Step('MA') @ x) & not (Ex #x. Step('AA') @ x)"
 
 /* A locked, stolen phone (its IK leaked, its AK not) cannot stop a
-   recovery by writing a rotate under the same key first. */
+   recovery with a rotate: the rotate settles and the contact follows it,
+   and from that rotate head (same period) the contact still follows the
+   recovery. */
 lemma sanity_recovery_despite_rotate [heuristic=c]:
   exists-trace
-  "Ex c r h0 d n nr #p #q #l #o #k.
+  "Ex c r h0 d n nr #p #q #l #j #o #k.
       Pin(c, r, h0) @ p
     & Created(r, d) @ q
     & LogValid(h(<'log', h0>), <'rec', r, h0, 'rotate', nr, d>, 'ik') @ l
-    & OwnerRecovered(r, n) @ o
+    & Accept(c, r, h0, 'rotate', nr, d) @ j
+    & OwnerRecovered(r, h0, n) @ o
     & Accept(c, r, h0, 'recover', n, 'rk') @ k
-    & #l < #o
+    & #l < #o & #j < #k
     & not (Ex #x. Signed(d, r, h0, 'rotate', nr) @ x)
     & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)
-    & not (Ex #x. Step('MT') @ x) & not (Ex #x. Step('AT') @ x)
+    & not (Ex #x. Step('MT') @ x) & not (Ex #x. Step('DK') @ x)
+    & (All r2 d2 #x. Created(r2, d2) @ x ==> #x = #q)
+    & (All L v #x. LogValid(L, v, 'ik') @ x ==> #x = #l)
+    & (All r2 m2 v2 #x. RecLogged(r2, m2, v2) @ x ==> #x = #o)
+    & (All e #x. RevIK(e) @ x ==> e = d)
     & not (Ex e #x. RevA1(e) @ x) & not (Ex e #x. RevA2(e) @ x)
     & not (Ex #x. Step('MA') @ x) & not (Ex #x. Step('AA') @ x)
     & not (Ex #x. Step('MR') @ x) & not (Ex #x. Step('AR') @ x)
@@ -563,7 +575,7 @@ lemma no_split_recovery [heuristic=c]:
    its device: a contact follows a recovery only to a device the owner
    added, after comparing the words for that record. */
 lemma contact_not_moved_by_phrase_alone [heuristic=c]:
-  "All c r n #k. ContactRecovered(c, r, n) @ k
-    ==> Ex #o. OwnerRecovered(r, n) @ o & #o < #k"
+  "All c r m n #k. ContactRecovered(c, r, m, n) @ k
+    ==> Ex #o. OwnerRecovered(r, m, n) @ o & #o < #k"
 
 end
