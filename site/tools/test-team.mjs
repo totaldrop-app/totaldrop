@@ -47,3 +47,19 @@ test("login rule matches GitHub's", () => {
   for (const ok of ["ozdil", "sadikkuzu", "a-b", "dependabot[bot]", "x".repeat(39)]) assert.ok(LOGIN.test(ok), ok);
   for (const bad of ["", "-a", "a-", "a--b", "a b", "a/b", "../x", "x".repeat(40), "<x>"]) assert.ok(!LOGIN.test(bad), bad);
 });
+
+test("bar colours follow the role, not the order in team.json", async () => {
+  const { series } = await import("./team.mjs");
+  const c = { people: [
+    { login: "b", kind: "person", role: "contributor" },
+    { login: "a", kind: "person", role: "maintainer" },
+    { login: "claude", kind: "ai" },
+    { login: "dependabot[bot]", kind: "bot" },
+  ] };
+  assert.equal(series(c, "a"), "s-maintainer");
+  assert.equal(series(c, "b"), "s-contributor");
+  assert.equal(series(c, "claude"), "s-ai");
+  assert.equal(series(c, "dependabot[bot]"), "s-bot");
+  assert.equal(series(c, ""), "s-other");
+  assert.equal(series(c, "someone"), "s-other");
+});
