@@ -130,6 +130,10 @@ select.lang {
   font: inherit; font-weight: 700; color: var(--text); background: transparent;
   border: 1px solid var(--outline); border-radius: 999px; min-height: 44px; min-width: 44px; padding: 0 0.9rem; cursor: pointer;
 }
+/* The open list is drawn by the browser and the system, not the page: its options
+   inherit the text colour, but its background falls back to the system's (often
+   white) because the pill is transparent. Name both, so the theme holds (#293). */
+.lang option { background-color: var(--bg); color: var(--text); }
 @media (max-width: 40rem) { .top-nav a { display: none; } .top-nav-links { display: none; } }
 
 /* Buttons: one filled per view, the rest outlined */
