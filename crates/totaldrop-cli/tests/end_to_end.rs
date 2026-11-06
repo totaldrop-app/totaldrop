@@ -581,13 +581,11 @@ async fn a_direct_path_wins_over_the_relay() {
     .await;
     assert_eq!((sent.files_ok, received.files_ok), (1, 1));
     same_tree(&src, &dest);
-    // At most a few handshake packets went through the relay.
+    // The direct path won before RELAY_DELAY, so neither device ever
+    // contacted the relay (#63): not a single connection, not a byte.
     if let Some(relay) = relay {
-        assert!(
-            relay.forwarded_bytes() < 256 * 1024,
-            "{}",
-            relay.forwarded_bytes()
-        );
+        assert_eq!(relay.connections_accepted(), 0);
+        assert_eq!(relay.forwarded_bytes(), 0);
     }
     std::fs::remove_dir_all(src).unwrap();
     std::fs::remove_dir_all(dest).unwrap();
