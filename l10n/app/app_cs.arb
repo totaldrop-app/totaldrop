@@ -115,6 +115,7 @@
 
   "sendDropHere": "Přetáhněte soubory sem",
   "sendDropHint": "Soubory můžete také přetáhnout do tohoto okna.",
+  "keepAwakeReason": "TotalDrop odesílá nebo přijímá soubory",
   "sendQrHint": "Nebo tento kód naskenujte fotoaparátem druhého zařízení.",
   "sendWaitingAccept": "Zkontrolujte slova a počkejte, až příjemce soubory přijme.",
   "receiveFromImage": "Načíst QR kód z obrázku",

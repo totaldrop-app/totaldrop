@@ -410,6 +410,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get sendDropHint => 'このウィンドウにファイルをドラッグして追加することもできます。';
 
   @override
+  String get keepAwakeReason => 'TotalDrop がファイルを送受信しています';
+
+  @override
   String get sendQrHint => 'または、相手のデバイスのカメラでこのコードを読み取ってください。';
 
   @override

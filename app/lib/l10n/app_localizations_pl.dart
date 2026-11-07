@@ -448,6 +448,9 @@ class AppLocalizationsPl extends AppLocalizations {
   String get sendDropHint => 'Możesz też przeciągnąć pliki na to okno.';
 
   @override
+  String get keepAwakeReason => 'TotalDrop wysyła lub odbiera pliki';
+
+  @override
   String get sendQrHint =>
       'Albo zeskanuj ten kod aparatem drugiego urządzenia.';
 

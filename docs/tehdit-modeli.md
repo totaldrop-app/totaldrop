@@ -48,6 +48,11 @@ Bugün korunanlar ile henüz yalnızca tasarımda olanlar ayrı yazılır.
   `org.freedesktop.Application` üzerinden dosya, bağlantı ya da ekran
   verebilir (#178). Bu süreçler kişinin kendi hesabında çalışır; onun
   dosyalarına zaten erişebilirler.
+- Linux'ta aktarım sürerken uygulama bilgisayarın uykuya geçmesini
+  engeller (#340): sistem paketinde systemd-logind'den `sleep` kilidi,
+  Flatpak'te masaüstü portalının `Inhibit` isteği. Kilit aktarım bitince
+  bırakılır; ekran yine kararıp kilitlenebilir. Gerekçe metni dışında
+  hiçbir bilgi gönderilmez.
 - Flatpak paketi (`packaging/flatpak`, [0014](kararlar/0014-steam-deck.md))
   korumalı alanda çalışır. Erişebildikleri: ağ, `~/Downloads/TotalDrop`,
   dosya seçici portalıyla kişinin seçtiği dosyalar, bildirim servisi ve

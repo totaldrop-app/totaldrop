@@ -115,6 +115,7 @@
 
   "sendDropHere": "Dateien hier ablegen",
   "sendDropHint": "Sie können Dateien auch auf dieses Fenster ziehen.",
+  "keepAwakeReason": "TotalDrop sendet oder empfängt Dateien",
   "sendQrHint": "Oder scannen Sie diesen Code mit der Kamera des anderen Geräts.",
   "sendWaitingAccept": "Prüfen Sie die Wörter und warten Sie, bis der Empfänger annimmt.",
   "receiveFromImage": "QR-Code aus Bild lesen",

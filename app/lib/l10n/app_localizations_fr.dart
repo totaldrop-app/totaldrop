@@ -450,6 +450,9 @@ class AppLocalizationsFr extends AppLocalizations {
       'Vous pouvez aussi faire glisser des fichiers sur cette fenêtre.';
 
   @override
+  String get keepAwakeReason => 'TotalDrop envoie ou reçoit des fichiers';
+
+  @override
   String get sendQrHint =>
       'Ou scannez ce code avec l\'appareil photo de l\'autre appareil.';
 

@@ -427,6 +427,10 @@ class AppLocalizationsMs extends AppLocalizations {
   String get sendDropHint => 'Anda juga boleh seret fail ke tetingkap ini.';
 
   @override
+  String get keepAwakeReason =>
+      'TotalDrop sedang menghantar atau menerima fail';
+
+  @override
   String get sendQrHint => 'Atau imbas kod ini dengan kamera peranti lain.';
 
   @override

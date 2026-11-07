@@ -447,6 +447,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get sendDropHint => 'يمكنك أيضًا سحب الملفات إلى هذه النافذة.';
 
   @override
+  String get keepAwakeReason => 'يرسل TotalDrop ملفات أو يستقبلها';
+
+  @override
   String get sendQrHint => 'أو امسح رمز QR هذا بكاميرا الجهاز الآخر.';
 
   @override

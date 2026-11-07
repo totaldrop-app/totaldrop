@@ -438,6 +438,9 @@ class AppLocalizationsUr extends AppLocalizations {
   String get sendDropHint => 'آپ فائلیں اس ونڈو پر گھسیٹ کر بھی لا سکتے ہیں۔';
 
   @override
+  String get keepAwakeReason => 'TotalDrop فائلیں بھیج یا وصول کر رہا ہے';
+
+  @override
   String get sendQrHint => 'یا یہ کوڈ دوسرے آلے کے کیمرے سے اسکین کریں۔';
 
   @override

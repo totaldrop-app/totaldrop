@@ -425,6 +425,9 @@ class AppLocalizationsId extends AppLocalizations {
   String get sendDropHint => 'Anda juga bisa menyeret file ke jendela ini.';
 
   @override
+  String get keepAwakeReason => 'TotalDrop sedang mengirim atau menerima file';
+
+  @override
   String get sendQrHint => 'Atau pindai kode ini dengan kamera perangkat lain.';
 
   @override

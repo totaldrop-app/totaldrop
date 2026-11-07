@@ -436,6 +436,9 @@ class AppLocalizationsFa extends AppLocalizations {
   String get sendDropHint => 'می‌توانید فایل‌ها را به این پنجره هم بکشید.';
 
   @override
+  String get keepAwakeReason => 'TotalDrop در حال ارسال یا دریافت فایل است';
+
+  @override
   String get sendQrHint => 'یا این کد را با دوربین دستگاه دیگر اسکن کنید.';
 
   @override

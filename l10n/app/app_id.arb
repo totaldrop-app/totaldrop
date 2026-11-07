@@ -115,6 +115,7 @@
 
   "sendDropHere": "Letakkan file di sini",
   "sendDropHint": "Anda juga bisa menyeret file ke jendela ini.",
+  "keepAwakeReason": "TotalDrop sedang mengirim atau menerima file",
   "sendQrHint": "Atau pindai kode ini dengan kamera perangkat lain.",
   "sendWaitingAccept": "Periksa kata-katanya, lalu tunggu penerima menerima.",
   "receiveFromImage": "Baca QR dari gambar",

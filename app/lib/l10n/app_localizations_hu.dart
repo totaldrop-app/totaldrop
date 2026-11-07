@@ -428,6 +428,9 @@ class AppLocalizationsHu extends AppLocalizations {
   String get sendDropHint => 'A fájlokat erre az ablakra is ráhúzhatod.';
 
   @override
+  String get keepAwakeReason => 'A TotalDrop fájlokat küld vagy fogad';
+
+  @override
   String get sendQrHint =>
       'Vagy olvasd be ezt a kódot a másik eszköz kamerájával.';
 

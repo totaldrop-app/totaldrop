@@ -421,6 +421,9 @@ class AppLocalizationsTh extends AppLocalizations {
   String get sendDropHint => 'คุณลากไฟล์มาวางบนหน้าต่างนี้ได้ด้วย';
 
   @override
+  String get keepAwakeReason => 'TotalDrop กำลังส่งหรือรับไฟล์';
+
+  @override
   String get sendQrHint => 'หรือสแกนรหัสนี้ด้วยกล้องของอุปกรณ์อีกเครื่อง';
 
   @override

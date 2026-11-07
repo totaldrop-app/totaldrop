@@ -147,6 +147,8 @@
 
   "sendDropHere": "Drop files here",
   "sendDropHint": "You can also drag files onto this window.",
+  "keepAwakeReason": "TotalDrop is sending or receiving files",
+  "@keepAwakeReason": {"description": "Linux: why the computer is kept from sleeping while a transfer runs; the desktop may show it in its power settings or battery menu"},
   "sendQrHint": "Or scan this code with the other device's camera.",
   "sendWaitingAccept": "Check the words, then wait for the receiver to accept.",
   "receiveFromImage": "Read QR from image",

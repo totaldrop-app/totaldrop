@@ -115,6 +115,7 @@
 
   "sendDropHere": "Upuść pliki tutaj",
   "sendDropHint": "Możesz też przeciągnąć pliki na to okno.",
+  "keepAwakeReason": "TotalDrop wysyła lub odbiera pliki",
   "sendQrHint": "Albo zeskanuj ten kod aparatem drugiego urządzenia.",
   "sendWaitingAccept": "Sprawdź słowa, a potem poczekaj, aż odbiorca zaakceptuje.",
   "receiveFromImage": "Odczytaj kod QR z obrazu",

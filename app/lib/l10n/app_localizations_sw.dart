@@ -433,6 +433,9 @@ class AppLocalizationsSw extends AppLocalizations {
       'Unaweza pia kuburuta faili hadi kwenye dirisha hili.';
 
   @override
+  String get keepAwakeReason => 'TotalDrop inatuma au kupokea faili';
+
+  @override
   String get sendQrHint =>
       'Au changanua msimbo huu kwa kamera ya kifaa kingine.';
 

@@ -410,6 +410,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get sendDropHint => '이 창으로 파일을 끌어다 놓아도 됩니다.';
 
   @override
+  String get keepAwakeReason => 'TotalDrop이 파일을 보내거나 받는 중입니다';
+
+  @override
   String get sendQrHint => '또는 다른 기기의 카메라로 이 코드를 스캔하세요.';
 
   @override

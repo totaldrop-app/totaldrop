@@ -115,6 +115,7 @@
 
   "sendDropHere": "Húzd ide a fájlokat",
   "sendDropHint": "A fájlokat erre az ablakra is ráhúzhatod.",
+  "keepAwakeReason": "A TotalDrop fájlokat küld vagy fogad",
   "sendQrHint": "Vagy olvasd be ezt a kódot a másik eszköz kamerájával.",
   "sendWaitingAccept": "Ellenőrizd a szavakat, aztán várd meg, hogy a címzett elfogadja.",
   "receiveFromImage": "QR-kód beolvasása képről",

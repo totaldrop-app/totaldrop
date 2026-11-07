@@ -428,6 +428,9 @@ class AppLocalizationsBn extends AppLocalizations {
   String get sendDropHint => 'আপনি ফাইলগুলো এই উইন্ডোতে টেনেও আনতে পারেন।';
 
   @override
+  String get keepAwakeReason => 'TotalDrop ফাইল পাঠাচ্ছে বা গ্রহণ করছে';
+
+  @override
   String get sendQrHint =>
       'অথবা অন্য ডিভাইসের ক্যামেরা দিয়ে এই কোডটি স্ক্যান করুন।';
 

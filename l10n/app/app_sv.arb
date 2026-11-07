@@ -115,6 +115,7 @@
 
   "sendDropHere": "Släpp filer här",
   "sendDropHint": "Du kan också dra filer till det här fönstret.",
+  "keepAwakeReason": "TotalDrop skickar eller tar emot filer",
   "sendQrHint": "Eller skanna koden med den andra enhetens kamera.",
   "sendWaitingAccept": "Kontrollera orden och vänta sedan på att mottagaren accepterar.",
   "receiveFromImage": "Läs QR-kod från bild",

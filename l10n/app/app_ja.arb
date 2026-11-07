@@ -115,6 +115,7 @@
 
   "sendDropHere": "ここにファイルをドロップ",
   "sendDropHint": "このウィンドウにファイルをドラッグして追加することもできます。",
+  "keepAwakeReason": "TotalDrop がファイルを送受信しています",
   "sendQrHint": "または、相手のデバイスのカメラでこのコードを読み取ってください。",
   "sendWaitingAccept": "単語を確認してから、受信者が受け取るのを待ってください。",
   "receiveFromImage": "画像から QR コードを読み取る",

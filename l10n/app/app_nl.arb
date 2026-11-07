@@ -115,6 +115,7 @@
 
   "sendDropHere": "Zet bestanden hier neer",
   "sendDropHint": "Je kunt bestanden ook naar dit venster slepen.",
+  "keepAwakeReason": "TotalDrop verstuurt of ontvangt bestanden",
   "sendQrHint": "Of scan deze code met de camera van het andere apparaat.",
   "sendWaitingAccept": "Controleer de woorden en wacht tot de ontvanger accepteert.",
   "receiveFromImage": "QR-code uit afbeelding lezen",

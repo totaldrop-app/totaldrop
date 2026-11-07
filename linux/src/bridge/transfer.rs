@@ -399,6 +399,7 @@ impl qobject::Transfer {
         let mut rust = self.as_mut().rust_mut();
         rust.stage = stage;
         rust.state = QString::from(stage.name());
+        crate::sleep::awake().set(stage.keeps_awake());
         self.state_changed();
     }
 

@@ -72,6 +72,18 @@ impl Stage {
     }
 }
 
+impl Stage {
+    /// A send or a receive is under way, from preparing to the last byte:
+    /// the computer must not go to sleep (#340). A finished, failed or
+    /// declined transfer, and the empty page, let it.
+    pub const fn keeps_awake(self) -> bool {
+        !matches!(
+            self,
+            Self::Idle | Self::Done | Self::Failed | Self::Declined
+        )
+    }
+}
+
 /// Which side this window is on.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum Role {
@@ -104,6 +116,24 @@ mod tests {
         ("SendPage.qml", include_str!("../../qml/SendPage.qml")),
         ("ReceivePage.qml", include_str!("../../qml/ReceivePage.qml")),
     ];
+
+    /// Sleep is held off from preparing to the last byte, and only then
+    /// (#340).
+    #[test]
+    fn a_running_transfer_keeps_the_computer_awake() {
+        let awake: Vec<_> = Stage::ALL.iter().filter(|s| s.keeps_awake()).collect();
+        assert_eq!(
+            awake,
+            [
+                &Stage::Preparing,
+                &Stage::Waiting,
+                &Stage::Connected,
+                &Stage::Transferring,
+                &Stage::Connecting,
+                &Stage::Offer,
+            ]
+        );
+    }
 
     #[test]
     fn no_other_qml_file_reads_the_stage() {

@@ -444,6 +444,9 @@ class AppLocalizationsEl extends AppLocalizations {
       'Μπορείτε επίσης να σύρετε αρχεία σε αυτό το παράθυρο.';
 
   @override
+  String get keepAwakeReason => 'Το TotalDrop στέλνει ή λαμβάνει αρχεία';
+
+  @override
   String get sendQrHint =>
       'Ή σαρώστε αυτόν τον κωδικό με την κάμερα της άλλης συσκευής.';
 
