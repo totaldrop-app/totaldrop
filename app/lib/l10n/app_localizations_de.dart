@@ -569,11 +569,11 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get otherPackageFlatpak =>
-      'TotalDrop ist bereits aus dem Flatpak geöffnet, daher wurde dieses Fenster nach vorn geholt. Verwenden Sie jeweils nur ein Paket: Beenden Sie dieses Fenster, um dieses Paket zu öffnen.';
+      'TotalDrop ist bereits aus dem Flatpak geöffnet, daher wurde das geöffnete Fenster nach vorn geholt. Verwenden Sie jeweils nur ein Paket: Beenden Sie das geöffnete Fenster, um dieses Paket zu öffnen.';
 
   @override
   String get otherPackageSystem =>
-      'TotalDrop ist bereits aus dem .pkg-, .deb- oder .rpm-Paket geöffnet, daher wurde dieses Fenster nach vorn geholt. Verwenden Sie jeweils nur ein Paket: Beenden Sie dieses Fenster, um dieses Paket zu öffnen.';
+      'TotalDrop ist bereits aus dem .pkg-, .deb- oder .rpm-Paket geöffnet, daher wurde das geöffnete Fenster nach vorn geholt. Verwenden Sie jeweils nur ein Paket: Beenden Sie das geöffnete Fenster, um dieses Paket zu öffnen.';
 
   @override
   String get sendText => 'Text senden';

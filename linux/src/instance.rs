@@ -403,10 +403,17 @@ pub enum Claim {
 /// How long a launch waits for the bus and the running window.
 const TIMEOUT: Duration = Duration::from_secs(5);
 
+/// How long a launch that handed its request over waits to learn the
+/// running window's package. The request is delivered by then, so a slow
+/// answer only means nothing is said (#351).
+const ASK_PACKAGE: Duration = Duration::from_secs(1);
+
 /// Take the name, or hand `request` to whoever has it.
 pub async fn claim(request: &Request) -> Claim {
-    match tokio::time::timeout(TIMEOUT, try_claim(request)).await {
-        Ok(Ok(claim)) => claim,
+    let ours = Package::current();
+    let bus = zbus::connection::Builder::session();
+    match tokio::time::timeout(TIMEOUT, hand_off(bus, request, ours)).await {
+        Ok(Ok(step)) => finish(step, ours).await,
         Ok(Err(e)) => {
             eprintln!("totaldrop-desktop: no single-window hand-off: {e}");
             Claim::Alone
@@ -420,20 +427,18 @@ pub async fn claim(request: &Request) -> Claim {
     }
 }
 
-async fn try_claim(request: &Request) -> zbus::Result<Claim> {
-    try_claim_on(
-        zbus::connection::Builder::session(),
-        request,
-        Package::current(),
-    )
-    .await
+/// Where the hand-off ended, before the running window is asked its
+/// package.
+enum Step {
+    Owner(zbus::Connection),
+    Forwarded(zbus::Connection),
 }
 
-async fn try_claim_on(
+async fn hand_off(
     bus: zbus::connection::Builder<'_>,
     request: &Request,
     ours: Package,
-) -> zbus::Result<Claim> {
+) -> zbus::Result<Step> {
     // The interfaces are served before the name is taken, so no call can
     // arrive at a name without them.
     let conn = bus
@@ -443,21 +448,45 @@ async fn try_claim_on(
         .build()
         .await?;
     if take_name(&conn).await? {
-        return Ok(Claim::Owner(conn));
+        return Ok(Step::Owner(conn));
     }
     match forward(&conn, request).await {
         Ok(()) => {}
         // The window quit in between: this launch becomes it.
         Err(e) if gone(&e) => {
             if take_name(&conn).await? {
-                return Ok(Claim::Owner(conn));
+                return Ok(Step::Owner(conn));
             }
             forward(&conn, request).await?;
         }
         Err(e) => return Err(e),
     }
-    let other = running_package(&conn).await.filter(|p| *p != ours);
-    Ok(Claim::Forwarded { other })
+    Ok(Step::Forwarded(conn))
+}
+
+/// Outside the hand-off's own timeout: once the request is delivered, a
+/// slow answer to the package question must not open a second window.
+async fn finish(step: Step, ours: Package) -> Claim {
+    match step {
+        Step::Owner(conn) => Claim::Owner(conn),
+        Step::Forwarded(conn) => {
+            let other = tokio::time::timeout(ASK_PACKAGE, running_package(&conn))
+                .await
+                .ok()
+                .flatten()
+                .filter(|p| *p != ours);
+            Claim::Forwarded { other }
+        }
+    }
+}
+
+#[cfg(test)]
+async fn try_claim_on(
+    bus: zbus::connection::Builder<'_>,
+    request: &Request,
+    ours: Package,
+) -> zbus::Result<Claim> {
+    Ok(finish(hand_off(bus, request, ours).await?, ours).await)
 }
 
 /// The running window's package; `None` when it does not say, as a window

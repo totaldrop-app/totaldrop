@@ -47,7 +47,10 @@ Bugün korunanlar ile henüz yalnızca tasarımda olanlar ayrı yazılır.
 - Linux'ta oturum veriyolundaki (D-Bus) her süreç, açık pencereye
   `org.freedesktop.Application` üzerinden dosya, bağlantı ya da ekran
   verebilir (#178). Bu süreçler kişinin kendi hesabında çalışır; onun
-  dosyalarına zaten erişebilirler.
+  dosyalarına zaten erişebilirler. Pencere aynı yolda
+  `app.totaldrop.TotalDrop.Instance.Package` ile hangi paketten
+  açıldığını da söyler (`flatpak` ya da `system`, #351); bu bilgi
+  zararsızdır ve başka bir şey açmaz.
 - Flatpak paketi (`packaging/flatpak`, [0014](kararlar/0014-steam-deck.md))
   korumalı alanda çalışır. Erişebildikleri: ağ, `~/Downloads/TotalDrop`,
   dosya seçici portalıyla kişinin seçtiği dosyalar, bildirim servisi ve

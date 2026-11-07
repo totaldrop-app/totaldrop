@@ -558,11 +558,11 @@ class AppLocalizationsHe extends AppLocalizations {
 
   @override
   String get otherPackageFlatpak =>
-      'TotalDrop כבר פתוח מ־Flatpak, ולכן החלון הזה הובא לחזית. השתמשו בחבילה אחת בכל פעם: צאו מהחלון הזה כדי לפתוח את זו.';
+      'TotalDrop כבר פתוח מ־Flatpak, ולכן החלון הפתוח הובא לחזית. השתמשו בחבילה אחת בכל פעם: צאו מהחלון הפתוח כדי לפתוח את זו.';
 
   @override
   String get otherPackageSystem =>
-      'TotalDrop כבר פתוח מחבילת .pkg, .deb או .rpm, ולכן החלון הזה הובא לחזית. השתמשו בחבילה אחת בכל פעם: צאו מהחלון הזה כדי לפתוח את זו.';
+      'TotalDrop כבר פתוח מחבילת .pkg, .deb או .rpm, ולכן החלון הפתוח הובא לחזית. השתמשו בחבילה אחת בכל פעם: צאו מהחלון הפתוח כדי לפתוח את זו.';
 
   @override
   String get sendText => 'שליחת טקסט';
