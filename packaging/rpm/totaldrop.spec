@@ -3,12 +3,12 @@
 # The Rust toolchain comes from rustup: rust-toolchain.toml pins the newest
 # stable Rust, which distributions do not ship yet.
 
-%global upstream_version 0.3.0-beta.5
+%global upstream_version 0.3.0-beta.6
 %global srcname totaldrop-linux-v%{upstream_version}
 %global debug_package %{nil}
 
 Name:           totaldrop
-Version:        0.3.0~beta.5
+Version:        0.3.0~beta.6
 Release:        1%{?dist}
 Summary:        Send files straight to another device, end-to-end encrypted
 License:        GPL-3.0-or-later AND (MIT OR Apache-2.0)
@@ -90,6 +90,21 @@ cargo test --release --locked -p totaldrop-linux -p totaldrop-proto
 %{_datadir}/nautilus-python/extensions/totaldrop_nautilus.py
 
 %changelog
+* Sat Nov 07 2026 TotalDrop <hello@totaldrop.app> - 0.3.0~beta.6-1
+- "Send with TotalDrop" in the right-click menu of Dolphin, Files (once
+  nautilus-python is installed) and Nemo; "Send files" and "Receive
+  files" when you right-click TotalDrop in the taskbar or app launcher.
+- Software centres describe TotalDrop in all 35 languages of the app.
+- The right-click menu of text fields is in the app's language where Qt
+  draws it, and Qt's own windows follow right-to-left languages.
+- Settings says that codes and verification words stay in English.
+- The command line can send a text instead of files.
+- Security: a sending device no longer connects to its relay when the
+  receiving device uses a different relay or none. A receiver on 0.1 set
+  to another relay now needs a direct path.
+- Security: the command line names control characters in an error's
+  detail instead of passing them to the terminal (GHSA-c6jh-7p7q-8gg4).
+
 * Thu Nov 05 2026 TotalDrop <hello@totaldrop.app> - 0.3.0~beta.5-1
 - The translations built into the app are now under MIT OR Apache-2.0, as
   LICENSING.md says.

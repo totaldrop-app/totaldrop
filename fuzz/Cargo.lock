@@ -494,7 +494,7 @@ dependencies = [
 
 [[package]]
 name = "totaldrop-l10n"
-version = "0.2.0-beta.4"
+version = "0.2.0-beta.5"
 dependencies = [
  "icu_decimal",
  "icu_locale",
@@ -502,11 +502,12 @@ dependencies = [
  "icu_properties",
  "icu_provider",
  "serde_json",
+ "unicode-normalization",
 ]
 
 [[package]]
 name = "totaldrop-proto"
-version = "0.2.0-beta.4"
+version = "0.2.0-beta.5"
 dependencies = [
  "bip39",
  "ciborium",
