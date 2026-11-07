@@ -126,6 +126,14 @@
   "codeSuggestions": "Gợi ý",
   "progressPercent": "{percent}%",
 
+  "editUndo": "Hoàn tác",
+  "editRedo": "Làm lại",
+  "editCut": "Cắt",
+  "editCopy": "Sao chép",
+  "editPaste": "Dán",
+  "editDelete": "Xóa",
+  "editSelectAll": "Chọn tất cả",
+
   "transferNoticeChannel": "Truyền tệp",
   "transferNoticeSending": "Đang gửi bằng TotalDrop",
   "transferNoticeReceiving": "Đang nhận bằng TotalDrop",

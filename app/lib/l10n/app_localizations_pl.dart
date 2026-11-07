@@ -486,6 +486,27 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
+  String get editUndo => 'Cofnij';
+
+  @override
+  String get editRedo => 'Ponów';
+
+  @override
+  String get editCut => 'Wytnij';
+
+  @override
+  String get editCopy => 'Kopiuj';
+
+  @override
+  String get editPaste => 'Wklej';
+
+  @override
+  String get editDelete => 'Usuń';
+
+  @override
+  String get editSelectAll => 'Zaznacz wszystko';
+
+  @override
   String get transferNoticeChannel => 'Przesyłanie';
 
   @override

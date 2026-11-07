@@ -126,6 +126,14 @@
   "codeSuggestions": "Suggestions",
   "progressPercent": "{percent} %",
 
+  "editUndo": "Annuler",
+  "editRedo": "Rétablir",
+  "editCut": "Couper",
+  "editCopy": "Copier",
+  "editPaste": "Coller",
+  "editDelete": "Supprimer",
+  "editSelectAll": "Tout sélectionner",
+
   "transferNoticeChannel": "Transferts",
   "transferNoticeSending": "Envoi avec TotalDrop",
   "transferNoticeReceiving": "Réception avec TotalDrop",

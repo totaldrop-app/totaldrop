@@ -479,6 +479,27 @@ class AppLocalizationsSv extends AppLocalizations {
   }
 
   @override
+  String get editUndo => 'Ångra';
+
+  @override
+  String get editRedo => 'Gör om';
+
+  @override
+  String get editCut => 'Klipp ut';
+
+  @override
+  String get editCopy => 'Kopiera';
+
+  @override
+  String get editPaste => 'Klistra in';
+
+  @override
+  String get editDelete => 'Ta bort';
+
+  @override
+  String get editSelectAll => 'Markera allt';
+
+  @override
   String get transferNoticeChannel => 'Överföringar';
 
   @override

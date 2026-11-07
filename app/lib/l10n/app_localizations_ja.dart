@@ -446,6 +446,27 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String get editUndo => '元に戻す';
+
+  @override
+  String get editRedo => 'やり直す';
+
+  @override
+  String get editCut => '切り取り';
+
+  @override
+  String get editCopy => 'コピー';
+
+  @override
+  String get editPaste => '貼り付け';
+
+  @override
+  String get editDelete => '削除';
+
+  @override
+  String get editSelectAll => 'すべて選択';
+
+  @override
   String get transferNoticeChannel => '転送';
 
   @override

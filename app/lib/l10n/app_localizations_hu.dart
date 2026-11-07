@@ -466,6 +466,27 @@ class AppLocalizationsHu extends AppLocalizations {
   }
 
   @override
+  String get editUndo => 'Visszavonás';
+
+  @override
+  String get editRedo => 'Újra';
+
+  @override
+  String get editCut => 'Kivágás';
+
+  @override
+  String get editCopy => 'Másolás';
+
+  @override
+  String get editPaste => 'Beillesztés';
+
+  @override
+  String get editDelete => 'Törlés';
+
+  @override
+  String get editSelectAll => 'Az összes kijelölése';
+
+  @override
   String get transferNoticeChannel => 'Átvitelek';
 
   @override

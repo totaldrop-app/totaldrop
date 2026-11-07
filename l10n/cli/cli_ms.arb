@@ -49,7 +49,7 @@
   "cliHelpStun": "Pelayan STUN (host:port) yang memberitahu peranti ini alamat awamnya. Nilai kosong mematikannya.",
   "cliHelpRelayOnly": "Jangan sekali-kali menyambung terus dan jangan umumkan alamat IP: semuanya melalui pelayan geganti. Lebih perlahan, tetapi pihak lain tidak pernah mengetahui alamat anda. Semasa menerima, penghantar mesti menggunakan pelayan geganti yang sama.",
   "cliHelpSend": "Hantar fail dan folder, dan cetak kod pemindahan untuk penerima.",
-  "cliHelpSendPaths": "Fail atau folder untuk dihantar.",
+  "cliHelpSendPaths": "Fail atau folder untuk dihantar. - sahaja membaca teks daripada input standard; tulis ./- untuk fail bernama -.",
   "cliHelpSendStrong": "Guna kod tiga perkataan (33 bit) dan bukan dua.",
   "cliHelpReceive": "Terima fail dengan kod pemindahan, contohnya 7-harbor-rocket.",
   "cliHelpReceiveCode": "Kod pemindahan yang diberikan kepada anda.",
@@ -60,5 +60,15 @@
   "cliHelpHelpCommand": "Papar mesej ini atau bantuan arahan yang diberikan",
   "cliDesktopAbout": "Buka tetingkap TotalDrop.",
   "cliDesktopArgs": "Fail atau folder untuk dihantar, atau pautan TotalDrop untuk menerima.",
-  "cliDesktopScreen": "Buka pada skrin Hantar (send), Terima (receive) atau Tetapan (settings)."
+  "cliDesktopScreen": "Buka pada skrin Hantar (send), Terima (receive) atau Tetapan (settings).",
+  "cliHelpSendText": "Hantar teks ini dan bukannya fail: penerima melihatnya sebagai teks, bukan fail. Orang lain pada komputer ini boleh melihatnya dalam senarai proses; gunakan - untuk teks peribadi.",
+  "cliSendingText": "Menghantar teks, {size}.",
+  "cliOfferedText": "Ditawarkan: satu teks, {size}. Ia dipaparkan di sini, tidak disimpan.",
+  "cliPromptShow": "Paparkan? [y/T] ",
+  "cliTextNotUtf8": "Teks pada input standard bukan UTF-8.",
+  "cliTextEmpty": "Tiada teks untuk dihantar.",
+  "cliTextTooLong": "Teks lebih panjang daripada {size}. Hantar sebagai fail.",
+  "cliDashAlone": "- membaca teks daripada input standard dan tidak boleh dicampur dengan fail. Untuk fail bernama -, tulis ./-.",
+  "cliTypeText": "Taip teks itu, kemudian tekan Ctrl-D pada baris baharu.",
+  "cliTypeTextWindows": "Taip teks itu, kemudian tekan Ctrl-Z dan Enter pada baris baharu."
 }

@@ -483,6 +483,27 @@ class AppLocalizationsEl extends AppLocalizations {
   }
 
   @override
+  String get editUndo => 'Αναίρεση';
+
+  @override
+  String get editRedo => 'Επανάληψη';
+
+  @override
+  String get editCut => 'Αποκοπή';
+
+  @override
+  String get editCopy => 'Αντιγραφή';
+
+  @override
+  String get editPaste => 'Επικόλληση';
+
+  @override
+  String get editDelete => 'Διαγραφή';
+
+  @override
+  String get editSelectAll => 'Επιλογή όλων';
+
+  @override
   String get transferNoticeChannel => 'Μεταφορές';
 
   @override

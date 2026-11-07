@@ -489,6 +489,27 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String get editUndo => 'Annuler';
+
+  @override
+  String get editRedo => 'Rétablir';
+
+  @override
+  String get editCut => 'Couper';
+
+  @override
+  String get editCopy => 'Copier';
+
+  @override
+  String get editPaste => 'Coller';
+
+  @override
+  String get editDelete => 'Supprimer';
+
+  @override
+  String get editSelectAll => 'Tout sélectionner';
+
+  @override
   String get transferNoticeChannel => 'Transferts';
 
   @override

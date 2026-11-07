@@ -126,6 +126,14 @@
   "codeSuggestions": "পরামর্শ",
   "progressPercent": "{percent}%",
 
+  "editUndo": "পূর্বাবস্থায় ফেরান",
+  "editRedo": "পুনরায় করুন",
+  "editCut": "কাটুন",
+  "editCopy": "কপি করুন",
+  "editPaste": "পেস্ট করুন",
+  "editDelete": "মুছুন",
+  "editSelectAll": "সব নির্বাচন করুন",
+
   "transferNoticeChannel": "স্থানান্তর",
   "transferNoticeSending": "TotalDrop দিয়ে পাঠানো হচ্ছে",
   "transferNoticeReceiving": "TotalDrop দিয়ে গ্রহণ করা হচ্ছে",

@@ -17,10 +17,36 @@ env:
   MAUDE_SHA256: 72ed1ca87e3b3d0dfc6ee1436baf154bf04c45ff97d521bec040c5e8dfc8f92c
 
 jobs:
-  tamarin:
-    name: Tamarin
+  # One job per model, so each stays well under the time limit and a new
+  # model is picked up without editing this file.
+  models:
+    name: Models
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: 5
+    outputs:
+      list: ${{ steps.list.outputs.list }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - id: list
+        run: |
+          set -eu
+          list=$(cd formal && ls *.spthy | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          echo "list=$list" >> "$GITHUB_OUTPUT"
+          echo "$list"
+
+  tamarin:
+    name: Tamarin (${{ matrix.model }})
+    needs: models
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        model: ${{ fromJSON(needs.models.outputs.list) }}
+    env:
+      FORMAL_MODELS: ${{ matrix.model }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

@@ -464,6 +464,27 @@ class AppLocalizationsMs extends AppLocalizations {
   }
 
   @override
+  String get editUndo => 'Buat asal';
+
+  @override
+  String get editRedo => 'Buat semula';
+
+  @override
+  String get editCut => 'Potong';
+
+  @override
+  String get editCopy => 'Salin';
+
+  @override
+  String get editPaste => 'Tampal';
+
+  @override
+  String get editDelete => 'Padam';
+
+  @override
+  String get editSelectAll => 'Pilih semua';
+
+  @override
   String get transferNoticeChannel => 'Pemindahan';
 
   @override

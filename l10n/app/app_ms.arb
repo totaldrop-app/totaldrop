@@ -126,6 +126,14 @@
   "codeSuggestions": "Cadangan",
   "progressPercent": "{percent}%",
 
+  "editUndo": "Buat asal",
+  "editRedo": "Buat semula",
+  "editCut": "Potong",
+  "editCopy": "Salin",
+  "editPaste": "Tampal",
+  "editDelete": "Padam",
+  "editSelectAll": "Pilih semua",
+
   "transferNoticeChannel": "Pemindahan",
   "transferNoticeSending": "Menghantar dengan TotalDrop",
   "transferNoticeReceiving": "Menerima dengan TotalDrop",

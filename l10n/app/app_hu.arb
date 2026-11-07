@@ -126,6 +126,14 @@
   "codeSuggestions": "Javaslatok",
   "progressPercent": "{percent}%",
 
+  "editUndo": "Visszavonás",
+  "editRedo": "Újra",
+  "editCut": "Kivágás",
+  "editCopy": "Másolás",
+  "editPaste": "Beillesztés",
+  "editDelete": "Törlés",
+  "editSelectAll": "Az összes kijelölése",
+
   "transferNoticeChannel": "Átvitelek",
   "transferNoticeSending": "Küldés TotalDroppal",
   "transferNoticeReceiving": "Fogadás TotalDroppal",

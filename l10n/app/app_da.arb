@@ -126,6 +126,14 @@
   "codeSuggestions": "Forslag",
   "progressPercent": "{percent} %",
 
+  "editUndo": "Fortryd",
+  "editRedo": "Annuller fortryd",
+  "editCut": "Klip",
+  "editCopy": "Kopiér",
+  "editPaste": "Indsæt",
+  "editDelete": "Slet",
+  "editSelectAll": "Markér alt",
+
   "transferNoticeChannel": "Overførsler",
   "transferNoticeSending": "Sender med TotalDrop",
   "transferNoticeReceiving": "Modtager med TotalDrop",

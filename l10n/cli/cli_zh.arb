@@ -49,7 +49,7 @@
   "cliHelpStun": "告知本设备其公网地址的 STUN 服务器（host:port）。留空则关闭。",
   "cliHelpRelayOnly": "从不直接连接，也不公布任何 IP 地址：所有数据都经由中继服务器。速度较慢，但对方永远不会知道你的地址。接收时，发送方必须使用同一个中继服务器。",
   "cliHelpSend": "发送文件和文件夹，并显示供接收方使用的传输代码。",
-  "cliHelpSendPaths": "要发送的文件或文件夹。",
+  "cliHelpSendPaths": "要发送的文件或文件夹。单独的 - 从标准输入读取文本；名为 - 的文件请写成 ./-。",
   "cliHelpSendStrong": "使用三个词的代码（33 位），而不是两个词。",
   "cliHelpReceive": "使用传输代码接收文件，例如 7-harbor-rocket。",
   "cliHelpReceiveCode": "你收到的传输代码。",
@@ -60,5 +60,15 @@
   "cliHelpHelpCommand": "显示此消息或指定命令的帮助",
   "cliDesktopAbout": "打开 TotalDrop 窗口。",
   "cliDesktopArgs": "要发送的文件或文件夹，或用于接收的 TotalDrop 链接。",
-  "cliDesktopScreen": "在发送（send）、接收（receive）或设置（settings）界面打开。"
+  "cliDesktopScreen": "在发送（send）、接收（receive）或设置（settings）界面打开。",
+  "cliHelpSendText": "发送这段文本而不是文件：接收方看到的是文本，而不是文件。这台电脑上的其他人可以在进程列表中看到它；私密文本请使用 -。",
+  "cliSendingText": "正在发送一段文本，{size}。",
+  "cliOfferedText": "对方发来：一段文本，{size}。将在此显示，不会保存。",
+  "cliPromptShow": "显示吗？ [y/N] ",
+  "cliTextNotUtf8": "标准输入中的文本不是 UTF-8 编码。",
+  "cliTextEmpty": "没有要发送的文本。",
+  "cliTextTooLong": "文本超过 {size}。请改为以文件发送。",
+  "cliDashAlone": "- 从标准输入读取文本，不能与文件混用。名为 - 的文件请写成 ./-。",
+  "cliTypeText": "输入文本，然后在新的一行按 Ctrl-D。",
+  "cliTypeTextWindows": "输入文本，然后在新的一行按 Ctrl-Z 再按 Enter。"
 }

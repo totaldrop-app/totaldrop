@@ -52,9 +52,14 @@ struct Cli {
 enum Command {
     /// Send files and folders, and print a transfer code for the receiver.
     Send {
-        /// Files or folders to send.
-        #[arg(required = true)]
+        /// Files or folders to send; - sends the text read from standard
+        /// input.
+        #[arg(required_unless_present = "text", conflicts_with = "text")]
         paths: Vec<PathBuf>,
+        /// Send this text instead of files: the receiver sees it rather
+        /// than a file.
+        #[arg(long)]
+        text: Option<String>,
         /// Use a three-word code (33 bits) instead of two.
         #[arg(long)]
         strong: bool,
@@ -121,13 +126,14 @@ fn printer(s: Arc<Strings>) -> Events {
 
 /// Help text keys of the arguments, by command (`""` for the top level) and
 /// argument id.
-const ARG_HELP: [(&str, &str, &str); 10] = [
+const ARG_HELP: [(&str, &str, &str); 11] = [
     ("", "server", "cliHelpServer"),
     ("", "relay", "cliHelpRelay"),
     ("", "stun", "cliHelpStun"),
     ("", "relay_only", "cliHelpRelayOnly"),
     ("send", "paths", "cliHelpSendPaths"),
     ("send", "strong", "cliHelpSendStrong"),
+    ("send", "text", "cliHelpSendText"),
     ("receive", "code", "cliHelpReceiveCode"),
     ("receive", "out", "cliHelpReceiveOut"),
     ("receive", "yes", "cliHelpReceiveYes"),
@@ -262,11 +268,110 @@ fn stop_on_ctrl_c(s: &Arc<Strings>) -> Stop {
     stop
 }
 
+/// What a send sends: files, or a text (#313).
+enum What {
+    Files(Vec<PathBuf>),
+    Text(String),
+}
+
+/// The name a receiver from before #313 saves a text under.
+const TEXT_FILE: &str = "text.txt";
+
+/// What `send` was asked to send: `--text`, `-` alone for the text on
+/// standard input, or files (`./-` for a file named `-`). A text must be
+/// UTF-8, not empty, and at most [`totaldrop_core::MAX_TEXT`] bytes; the
+/// person is told otherwise. Reading from a `terminal`, they are told how
+/// to end the text.
+fn what_to_send(
+    s: &Strings,
+    paths: Vec<PathBuf>,
+    text: Option<String>,
+    stdin: &mut impl std::io::Read,
+    terminal: bool,
+) -> Result<What, Failure> {
+    let text = match (text, paths.as_slice()) {
+        (Some(t), _) => t,
+        (None, [one]) if one.as_os_str() == "-" => {
+            if terminal {
+                // A Windows console ends input with Ctrl-Z, then Enter.
+                let key = if cfg!(windows) {
+                    "cliTypeTextWindows"
+                } else {
+                    "cliTypeText"
+                };
+                eprintln!("{}", s.get(key, &[]));
+            }
+            let mut bytes = Vec::new();
+            // One byte more than allowed is enough to know it is too long.
+            let limit = totaldrop_core::MAX_TEXT.saturating_add(1);
+            std::io::Read::read_to_end(&mut std::io::Read::take(stdin, limit), &mut bytes)?;
+            if bytes.len() as u64 > totaldrop_core::MAX_TEXT {
+                return Err(too_long(s));
+            }
+            match String::from_utf8(bytes) {
+                Ok(t) => t,
+                Err(_) => {
+                    eprintln!("totaldrop: {}", s.get("cliTextNotUtf8", &[]));
+                    return Err(Failure::Shown);
+                }
+            }
+        }
+        (None, _) if paths.iter().any(|p| p.as_os_str() == "-") => {
+            eprintln!("totaldrop: {}", s.get("cliDashAlone", &[]));
+            return Err(Failure::Shown);
+        }
+        _ => return Ok(What::Files(paths)),
+    };
+    if text.is_empty() {
+        eprintln!("totaldrop: {}", s.get("cliTextEmpty", &[]));
+        return Err(Failure::Shown);
+    }
+    if text.len() as u64 > totaldrop_core::MAX_TEXT {
+        return Err(too_long(s));
+    }
+    Ok(What::Text(text))
+}
+
+fn too_long(s: &Strings) -> Failure {
+    let size = s.bytes(totaldrop_core::MAX_TEXT);
+    eprintln!(
+        "totaldrop: {}",
+        s.get("cliTextTooLong", &[("size", Arg::Text(&size))])
+    );
+    Failure::Shown
+}
+
+/// A received text as the terminal should show it: hidden and control
+/// characters are named instead of acted on; line breaks (`\n` or `\r\n`)
+/// and tabs stay. A `\r` anywhere else is named too: it would send the
+/// cursor back over the line. Into a pipe or a file it goes as it came.
+fn shown_text(text: &str, terminal: bool) -> String {
+    if !terminal {
+        return text.to_owned();
+    }
+    let lines: Vec<&str> = text.split('\n').collect();
+    let last = lines.len().saturating_sub(1);
+    lines
+        .iter()
+        .enumerate()
+        .map(|(i, line)| {
+            // Only a \r that a \n follows ends a line.
+            let line = if i < last {
+                line.strip_suffix('\r').unwrap_or(line)
+            } else {
+                line
+            };
+            line.split('\t').map(visible).collect::<Vec<_>>().join("\t")
+        })
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
 async fn send(
     s: Arc<Strings>,
     server: String,
     paths: PathOptions,
-    files: Vec<PathBuf>,
+    what: What,
     strong: bool,
 ) -> Result<(), Failure> {
     eprintln!("{}", s.get("cliPreparing", &[]));
@@ -276,8 +381,14 @@ async fn send(
         paths,
     };
     let stop = stop_on_ctrl_c(&s);
+    let is_text = matches!(what, What::Text(_));
     let prepared = tokio::select! {
-        r = PreparedSend::new(&opts, files) => r?,
+        r = async {
+            match &what {
+                What::Files(files) => PreparedSend::new(&opts, files.clone()).await,
+                What::Text(text) => PreparedSend::text(&opts, text, TEXT_FILE).await,
+            }
+        } => r?,
         () = stop.stopped() => return Err(totaldrop_core::Error::Stopped.into()),
     };
     let (entries, total) = prepared.totals();
@@ -287,13 +398,17 @@ async fn send(
     }
     let size = s.bytes(total);
     let entries = u64::try_from(entries).unwrap_or(u64::MAX);
-    eprintln!(
-        "{}",
-        s.get(
-            "cliSending",
-            &[("count", Arg::Count(entries)), ("size", Arg::Text(&size))]
-        )
-    );
+    if is_text {
+        eprintln!("{}", s.get("cliSendingText", &[("size", Arg::Text(&size))]));
+    } else {
+        eprintln!(
+            "{}",
+            s.get(
+                "cliSending",
+                &[("count", Arg::Count(entries)), ("size", Arg::Text(&size))]
+            )
+        );
+    }
     eprintln!();
     eprintln!("{}", s.get("cliRunThis", &[]));
     // The command itself is never translated: it is what the other side types.
@@ -371,26 +486,32 @@ async fn receive(
     );
     let size = s.bytes(summary.total_size);
     let count = |n: usize| Arg::Count(u64::try_from(n).unwrap_or(u64::MAX));
-    eprintln!(
-        "{}",
-        s.get(
-            "cliOffered",
-            &[
-                ("files", count(summary.files)),
-                ("dirs", count(summary.dirs)),
-                ("size", Arg::Text(&size)),
-            ],
-        )
-    );
-    for name in summary.top_level.iter().take(10) {
-        eprintln!("  {}", visible(name));
-    }
-    if summary.top_level.len() > 10 {
-        let more = summary.top_level.len().saturating_sub(10);
-        eprintln!("  {}", s.get("cliAndMore", &[("count", count(more))]));
-    }
-    let shown = dest.display().to_string();
-    let prompt = s.get("cliPromptSave", &[("folder", Arg::Text(&shown))]);
+    let prompt = if summary.text {
+        // A text is shown here, not saved (#313).
+        eprintln!("{}", s.get("cliOfferedText", &[("size", Arg::Text(&size))]));
+        s.get("cliPromptShow", &[])
+    } else {
+        eprintln!(
+            "{}",
+            s.get(
+                "cliOffered",
+                &[
+                    ("files", count(summary.files)),
+                    ("dirs", count(summary.dirs)),
+                    ("size", Arg::Text(&size)),
+                ],
+            )
+        );
+        for name in summary.top_level.iter().take(10) {
+            eprintln!("  {}", visible(name));
+        }
+        if summary.top_level.len() > 10 {
+            let more = summary.top_level.len().saturating_sub(10);
+            eprintln!("  {}", s.get("cliAndMore", &[("count", count(more))]));
+        }
+        let shown = dest.display().to_string();
+        s.get("cliPromptSave", &[("folder", Arg::Text(&shown))])
+    };
     let yes_words = s.get("cliYes", &[]);
     let accepted = yes || {
         let answer = tokio::task::spawn_blocking(move || {
@@ -420,9 +541,23 @@ async fn receive(
         eprintln!("{}", s.get("cliDeclined", &[]));
         return Ok(());
     }
-    let report = offer
-        .accept_with(&dest, printer(Arc::clone(&s)), &stop)
-        .await?;
+    let report = if summary.text {
+        // In memory: nothing of a text is written to disk (#313).
+        offer.accept_text_with(&stop).await?
+    } else {
+        offer
+            .accept_with(&dest, printer(Arc::clone(&s)), &stop)
+            .await?
+    };
+    if let Some(text) = &report.text {
+        let terminal = std::io::stdout().is_terminal();
+        let mut out = std::io::stdout().lock();
+        write!(out, "{}", shown_text(text, terminal))?;
+        if terminal && !text.ends_with('\n') {
+            writeln!(out)?;
+        }
+        out.flush()?;
+    }
     for p in &report.placed {
         let name = visible(&p.display().to_string());
         eprintln!("{}", s.get("cliSaved", &[("name", Arg::Text(&name))]));
@@ -495,9 +630,20 @@ fn main() -> ExitCode {
                 }
             };
         }
-        Command::Send { paths, strong } => {
-            runtime.block_on(send(strings, server(cli.server), route, paths, strong))
-        }
+        Command::Send {
+            paths,
+            text,
+            strong,
+        } => match what_to_send(
+            &strings,
+            paths,
+            text,
+            &mut std::io::stdin().lock(),
+            std::io::stdin().is_terminal(),
+        ) {
+            Ok(what) => runtime.block_on(send(strings, server(cli.server), route, what, strong)),
+            Err(e) => Err(e),
+        },
         Command::Receive { code, out, yes } => {
             runtime.block_on(receive(strings, server(cli.server), route, code, out, yes))
         }
@@ -582,7 +728,10 @@ impl From<std::io::Error> for Failure {
 mod tests {
     #![allow(clippy::unwrap_used)]
 
-    use super::{ARG_HELP, COMMAND_HELP, ask, connecting_line, error_key, help};
+    use super::{
+        ARG_HELP, COMMAND_HELP, What, ask, connecting_line, error_key, help, shown_text,
+        what_to_send,
+    };
     use totaldrop_core::Error;
     use totaldrop_l10n::{Domain, Strings};
     use totaldrop_proto::wire::RejectReason;
@@ -663,6 +812,53 @@ mod tests {
         let (_, line) = connecting_line(&strings("tr"), "\u{202E}7-harbor-rocket").unwrap();
         assert_eq!(line, "7-harbor-rocket koduyla bağlanılıyor…");
         assert!(connecting_line(&en, "7-harbor").is_err());
+    }
+
+    /// `-` alone reads the text from standard input; `--text` takes it as
+    /// given; anything else is files, and `-` among files is refused (#313).
+    #[test]
+    fn what_send_sends() {
+        let s = Strings::new(
+            Domain::Cli,
+            &[totaldrop_l10n::locale::parse("en").unwrap()],
+            None,
+        );
+        let none = &mut std::io::empty();
+        let what =
+            what_to_send(&s, vec!["-".into()], None, &mut &b"hi there\n"[..], false).unwrap();
+        assert!(matches!(what, What::Text(t) if t == "hi there\n"));
+        let what = what_to_send(&s, vec![], Some("note".into()), none, false).unwrap();
+        assert!(matches!(what, What::Text(t) if t == "note"));
+        let what = what_to_send(&s, vec!["a".into(), "./-".into()], None, none, false).unwrap();
+        assert!(matches!(what, What::Files(f) if f.len() == 2));
+        assert!(what_to_send(&s, vec!["a".into(), "-".into()], None, none, false).is_err());
+        // Empty, not UTF-8, too long: said, and nothing is sent.
+        assert!(what_to_send(&s, vec!["-".into()], None, none, false).is_err());
+        assert!(
+            what_to_send(&s, vec!["-".into()], None, &mut &[0xff_u8, 0xfe][..], false).is_err()
+        );
+        let long = vec![b'a'; usize::try_from(totaldrop_core::MAX_TEXT).unwrap() + 1];
+        assert!(what_to_send(&s, vec!["-".into()], None, &mut &long[..], false).is_err());
+        let exact = vec![b'a'; usize::try_from(totaldrop_core::MAX_TEXT).unwrap()];
+        assert!(what_to_send(&s, vec!["-".into()], None, &mut &exact[..], false).is_ok());
+    }
+
+    /// A received text cannot move the cursor or hide its words in a
+    /// terminal; into a pipe it goes unchanged.
+    #[test]
+    fn a_received_text_shows_its_hidden_characters() {
+        let text = "one\ttwo\r\nred\u{1b}[31m \u{202e}evil\nfake\rreal\r\t\n";
+        let shown = shown_text(text, true);
+        assert!(!shown.contains('\u{1b}') && !shown.contains('\u{202e}'));
+        assert!(shown.contains("<U+001B>") && shown.contains("<U+202E>"));
+        assert!(shown.starts_with("one\ttwo\nred"));
+        // Only a \r that ends a line goes; one inside a line is named.
+        assert!(
+            shown.ends_with("\nfake<U+000D>real<U+000D>\t\n"),
+            "{shown:?}"
+        );
+        assert_eq!(shown_text("end\r", true), "end<U+000D>");
+        assert_eq!(shown_text(text, false), text);
     }
 
     /// An answer that is not typed (a pipe or a file) is not echoed, so the

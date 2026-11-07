@@ -335,6 +335,42 @@ treated as final.
     - Absent fields 7 and 3 mean `false`. A report reveals nothing the
       other side does not see anyway: the data arriving.
 
+## Section 8, continued: texts
+
+25. **A text is a file marked to be shown** (#313). A person can send a
+    short text, such as a link, instead of files.
+    - The sender offers it as one file entry (UTF-8, at most one chunk,
+      1 MiB), with the same content key, chunk encryption and hash as any
+      file, and sets `offer` field 8 (`true`).
+    - Like field 7, field 8 is outside the signed fields 1–4 and is
+      protected by the session keys. It changes only how the receiver
+      shows what the signed manifest holds, so the signed bytes of a text
+      offer are those of the same file offer, and an old receiver's
+      signature check is unchanged.
+    - A receiver takes an offer as a text only when field 8 is set and
+      the manifest holds exactly one entry: a file at the top level (a
+      path of one name) of 1 byte to 1 MiB. Anything else marked as a text
+      is received as files.
+    - A receiver that shows texts receives it in memory and writes nothing
+      to disk. It accepts entry 0, reads its one data stream, checks the
+      hash and that the content is UTF-8, and reports the entry with
+      `entry_done`. A hash that does not match, or content that is not
+      UTF-8, is reported as failed (`ok = false`) and nothing is shown or
+      saved; the sender says that one file failed.
+    - A receiver may also save a text like any file (the core's default
+      `accept` does): then it is placed in the destination under its name.
+    - The command line checks the destination folder before it connects,
+      when it does not yet know that a text will come; a text then goes to
+      standard output and the folder is not used.
+    - Older versions: an old receiver ignores field 8 and saves the text
+      as the file it also is; the sender names it so (`text.txt` from the
+      command line). An old sender never sets it. Absent means `false`.
+    - The receiver shows a text as data: it never opens a link on its own.
+      The command line names control, format and separator characters
+      (`U+202E`, `U+001B`, a `\r` inside a line) instead of letting a
+      terminal act on them; the joiners `U+200C`/`U+200D` stay, since
+      scripts need them. Look-alike letters are not caught.
+
 ## Known limits, to be closed before 1.0
 
 - The rendezvous server has no per-client rate limiting yet. Adding it

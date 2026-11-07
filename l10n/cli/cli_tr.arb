@@ -49,7 +49,7 @@
   "cliHelpStun": "Bu cihaza genel adresini söyleyen STUN sunucusu (host:port). Boş bırakılırsa kullanılmaz.",
   "cliHelpRelayOnly": "Asla doğrudan bağlanmaz, IP adresi bildirmez: her şey aktarma sunucusundan geçer. Daha yavaştır ama karşı taraf adresinizi hiç öğrenmez. Alırken gönderen de aynı aktarma sunucusunu kullanmalıdır.",
   "cliHelpSend": "Dosya ve klasörleri gönder, alıcı için bir aktarım kodu göster.",
-  "cliHelpSendPaths": "Gönderilecek dosyalar ya da klasörler.",
+  "cliHelpSendPaths": "Gönderilecek dosyalar ya da klasörler. Tek başına - standart girdiden bir metin okur; adı - olan bir dosya için ./- yazın.",
   "cliHelpSendStrong": "İki yerine üç kelimelik kod kullan (33 bit).",
   "cliHelpReceive": "Aktarım koduyla (örneğin 7-harbor-rocket) dosya al.",
   "cliHelpReceiveCode": "Size verilen aktarım kodu.",
@@ -60,5 +60,15 @@
   "cliHelpHelpCommand": "Bu yardımı ya da verilen komutun yardımını göster",
   "cliDesktopAbout": "TotalDrop penceresini aç.",
   "cliDesktopArgs": "Gönderilecek dosya veya klasörler, ya da almak için bir TotalDrop bağlantısı.",
-  "cliDesktopScreen": "Gönder (send), Al (receive) ya da Ayarlar (settings) ekranında aç."
+  "cliDesktopScreen": "Gönder (send), Al (receive) ya da Ayarlar (settings) ekranında aç.",
+  "cliHelpSendText": "Dosya yerine bu metni gönder: alıcı onu dosya olarak değil, metin olarak görür. Bu bilgisayardaki başkaları onu işlem listesinde görebilir; gizli bir metin için - kullanın.",
+  "cliSendingText": "Bir metin gönderiliyor, {size}.",
+  "cliOfferedText": "Gönderilen: bir metin, {size}. Kaydedilmez, burada gösterilir.",
+  "cliPromptShow": "Gösterilsin mi? [e/H] ",
+  "cliTextNotUtf8": "Standart girdideki metin UTF-8 değil.",
+  "cliTextEmpty": "Gönderilecek metin yok.",
+  "cliTextTooLong": "Metin {size} sınırını aşıyor. Bunun yerine dosya olarak gönderin.",
+  "cliDashAlone": "- standart girdiden bir metin okur ve dosyalarla birlikte kullanılamaz. Adı - olan bir dosya için ./- yazın.",
+  "cliTypeText": "Metni yazın, sonra yeni bir satırda Ctrl-D'ye basın.",
+  "cliTypeTextWindows": "Metni yazın, sonra yeni bir satırda Ctrl-Z'ye ve Enter'a basın."
 }

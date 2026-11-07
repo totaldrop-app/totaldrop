@@ -426,31 +426,18 @@ pub async fn spawn(
 }
 
 /// For tests: forwarding on `ws://127.0.0.1:<port>/v0/relay` (clients add
-/// `/<key A>-<key B>`) and STUN on UDP
-/// `127.0.0.1:<port>`. Returns both, the relay and its task.
+/// `/<key A>-<key B>`) and STUN on UDP `127.0.0.1:<other port>`. Returns
+/// both, the relay and its task.
+///
+/// Each gets its own free port from the system. Taking the TCP port's
+/// number for UDP as well kept failing on Windows runners (#320): a port
+/// free for one protocol need not be free for the other.
 pub async fn spawn_local(
     config: Config,
 ) -> std::io::Result<(String, String, Relay, tokio::task::JoinHandle<()>)> {
-    // Find a port free for both TCP and UDP.
-    for _ in 0..20 {
-        let listener = TcpListener::bind(SocketAddr::from(([127, 0, 0, 1], 0))).await?;
-        let port = listener.local_addr()?.port();
-        let Ok(socket) = UdpSocket::bind(SocketAddr::from(([127, 0, 0, 1], port))).await else {
-            continue;
-        };
-        let relay = Relay::new(config);
-        let serving = relay.clone();
-        let task = tokio::spawn(async move {
-            tokio::join!(serving.serve(listener), Relay::discovery(socket));
-        });
-        return Ok((
-            format!("ws://127.0.0.1:{port}{PATH}"),
-            format!("127.0.0.1:{port}"),
-            relay,
-            task,
-        ));
-    }
-    Err(std::io::Error::other("no free port"))
+    let any = SocketAddr::from(([127, 0, 0, 1], 0));
+    let (ws, udp, relay, task) = spawn(any, any, config).await?;
+    Ok((format!("ws://{ws}{PATH}"), udp.to_string(), relay, task))
 }
 
 #[cfg(test)]

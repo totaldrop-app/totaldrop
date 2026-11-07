@@ -466,6 +466,27 @@ class AppLocalizationsBn extends AppLocalizations {
   }
 
   @override
+  String get editUndo => 'পূর্বাবস্থায় ফেরান';
+
+  @override
+  String get editRedo => 'পুনরায় করুন';
+
+  @override
+  String get editCut => 'কাটুন';
+
+  @override
+  String get editCopy => 'কপি করুন';
+
+  @override
+  String get editPaste => 'পেস্ট করুন';
+
+  @override
+  String get editDelete => 'মুছুন';
+
+  @override
+  String get editSelectAll => 'সব নির্বাচন করুন';
+
+  @override
   String get transferNoticeChannel => 'স্থানান্তর';
 
   @override

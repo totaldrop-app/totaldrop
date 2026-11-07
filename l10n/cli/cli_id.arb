@@ -49,7 +49,7 @@
   "cliHelpStun": "Server STUN (host:port) yang memberi tahu perangkat ini alamat publiknya. Nilai kosong mematikannya.",
   "cliHelpRelayOnly": "Jangan pernah terhubung langsung dan jangan umumkan alamat IP: semuanya lewat server relai. Lebih lambat, tetapi pihak lain tidak pernah mengetahui alamat Anda. Saat menerima, pengirim harus memakai server relai yang sama.",
   "cliHelpSend": "Kirim file dan folder, lalu cetak kode transfer untuk penerima.",
-  "cliHelpSendPaths": "File atau folder yang akan dikirim.",
+  "cliHelpSendPaths": "File atau folder yang akan dikirim. - saja membaca teks dari input standar; tulis ./- untuk file bernama -.",
   "cliHelpSendStrong": "Gunakan kode tiga kata (33 bit), bukan dua.",
   "cliHelpReceive": "Terima file dengan kode transfer, misalnya 7-harbor-rocket.",
   "cliHelpReceiveCode": "Kode transfer yang Anda terima.",
@@ -60,5 +60,15 @@
   "cliHelpHelpCommand": "Tampilkan pesan ini atau bantuan perintah yang diberikan",
   "cliDesktopAbout": "Buka jendela TotalDrop.",
   "cliDesktopArgs": "File atau folder yang akan dikirim, atau tautan TotalDrop untuk menerima.",
-  "cliDesktopScreen": "Buka di layar Kirim (send), Terima (receive), atau Setelan (settings)."
+  "cliDesktopScreen": "Buka di layar Kirim (send), Terima (receive), atau Setelan (settings).",
+  "cliHelpSendText": "Kirim teks ini sebagai ganti file: penerima melihatnya sebagai teks, bukan file. Orang lain di komputer ini dapat melihatnya di daftar proses; gunakan - untuk teks pribadi.",
+  "cliSendingText": "Mengirim teks, {size}.",
+  "cliOfferedText": "Ditawarkan: sebuah teks, {size}. Teks ditampilkan di sini, tidak disimpan.",
+  "cliPromptShow": "Tampilkan? [y/T] ",
+  "cliTextNotUtf8": "Teks di input standar bukan UTF-8.",
+  "cliTextEmpty": "Tidak ada teks untuk dikirim.",
+  "cliTextTooLong": "Teks lebih panjang dari {size}. Kirim sebagai file.",
+  "cliDashAlone": "- membaca teks dari input standar dan tidak dapat dicampur dengan file. Untuk file bernama -, tulis ./-.",
+  "cliTypeText": "Ketik teksnya, lalu tekan Ctrl-D di baris baru.",
+  "cliTypeTextWindows": "Ketik teksnya, lalu tekan Ctrl-Z dan Enter di baris baru."
 }

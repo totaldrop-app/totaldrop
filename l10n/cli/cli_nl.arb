@@ -49,7 +49,7 @@
   "cliHelpStun": "STUN-server (host:port) die dit apparaat zijn openbare adres vertelt. Een lege waarde zet hem uit.",
   "cliHelpRelayOnly": "Nooit direct verbinden en geen IP-adres bekendmaken: alles gaat via de relayserver. Langzamer, maar de andere kant komt je adres nooit te weten. Bij ontvangen moet de afzender dezelfde relayserver gebruiken.",
   "cliHelpSend": "Bestanden en mappen versturen en een overdrachtscode voor de ontvanger tonen.",
-  "cliHelpSendPaths": "Te versturen bestanden of mappen.",
+  "cliHelpSendPaths": "Te verzenden bestanden of mappen. - alleen leest een tekst van de standaardinvoer; schrijf ./- voor een bestand met de naam -.",
   "cliHelpSendStrong": "Een code van drie woorden (33 bits) gebruiken in plaats van twee.",
   "cliHelpReceive": "Bestanden ontvangen met een overdrachtscode, bijvoorbeeld 7-harbor-rocket.",
   "cliHelpReceiveCode": "De overdrachtscode die je hebt gekregen.",
@@ -60,5 +60,15 @@
   "cliHelpHelpCommand": "Dit bericht of de help van de opgegeven opdracht tonen",
   "cliDesktopAbout": "Het TotalDrop-venster openen.",
   "cliDesktopArgs": "Te versturen bestanden of mappen, of een TotalDrop-link om mee te ontvangen.",
-  "cliDesktopScreen": "Openen op het scherm Versturen (send), Ontvangen (receive) of Instellingen (settings)."
+  "cliDesktopScreen": "Openen op het scherm Versturen (send), Ontvangen (receive) of Instellingen (settings).",
+  "cliHelpSendText": "Deze tekst verzenden in plaats van bestanden: de ontvanger ziet hem als tekst, niet als bestand. Anderen op deze computer kunnen hem in de proceslijst zien; gebruik - voor een privétekst.",
+  "cliSendingText": "Een tekst wordt verzonden, {size}.",
+  "cliOfferedText": "Aangeboden: een tekst, {size}. Hij wordt hier getoond, niet opgeslagen.",
+  "cliPromptShow": "Tonen? [j/N] ",
+  "cliTextNotUtf8": "De tekst op de standaardinvoer is geen UTF-8.",
+  "cliTextEmpty": "Er is geen tekst om te verzenden.",
+  "cliTextTooLong": "De tekst is langer dan {size}. Verzend hem als bestand.",
+  "cliDashAlone": "- leest een tekst van de standaardinvoer en kan niet met bestanden worden gecombineerd. Schrijf ./- voor een bestand met de naam -.",
+  "cliTypeText": "Typ de tekst en druk daarna op een nieuwe regel op Ctrl-D.",
+  "cliTypeTextWindows": "Typ de tekst en druk daarna op een nieuwe regel op Ctrl-Z en Enter."
 }

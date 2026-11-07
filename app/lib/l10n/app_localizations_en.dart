@@ -477,6 +477,27 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get editUndo => 'Undo';
+
+  @override
+  String get editRedo => 'Redo';
+
+  @override
+  String get editCut => 'Cut';
+
+  @override
+  String get editCopy => 'Copy';
+
+  @override
+  String get editPaste => 'Paste';
+
+  @override
+  String get editDelete => 'Delete';
+
+  @override
+  String get editSelectAll => 'Select All';
+
+  @override
   String get transferNoticeChannel => 'Transfers';
 
   @override

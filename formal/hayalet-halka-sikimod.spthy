@@ -1,0 +1,644 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+/*
+ * Ghost ring (docs/hesap.md, decision 0013), part 4b of the formal model
+ * (#251): strict mode (sıkı mod), and K3b.
+ *
+ * Built on the ideas of part 4a (hayalet-halka-kurtarma.spthy):
+ * membership periods and proposals against a period. In strict mode no
+ * single signature changes membership at once. Every change is a
+ * proposal against the period m that waits (72 hours of witness time)
+ * before readers follow it:
+ *  - an AK proposal (bekleyen ekle / çıkar), signed by one member's AK;
+ *  - a recovery (kurtarma_ekle), signed by RK, into a free slot;
+ *  - rk_çıkar(x), signed by RK and by the AK of the member that stays.
+ *    It is the way out when a stolen, unlocked device x vetoes its own
+ *    removal: x's reject does not count against it. Because it also
+ *    needs the staying member's AK, the phrase alone cannot create it,
+ *    and RK never removes a ring's only device.
+ * A reject (bekleyen_reddi, kurtarma_reddi) is a targeted AK record: it
+ * names the proposal by hash and counts only if it is in the log before
+ * the proposal has settled. A counted reject voids that proposal and
+ * nothing else; it does not start a new period.
+ * One change per period, first writer wins: a reader follows a proposal
+ * only if every other proposal against the same period logged before it
+ * was voided by a counted reject. An earlier live proposal blocks later
+ * ones until it is rejected, or settles and wins itself.
+ *
+ * Rotates are left out: proposals are written against the period, which
+ * rotates do not change, and part 4a shows that a rotate neither blocks
+ * a proposal nor keeps a member from rejecting it. The genesis carries
+ * two devices, the size strict mode is meant for. RK stays valid after a
+ * reject in this part (see README.md, A4b, abstractions).
+ */
+
+theory HayaletHalkaSikiMod
+begin
+
+builtins: signing, hashing
+
+restriction Eq: "All x y #i. Eq(x, y) @ i ==> x = y"
+
+restriction NotEmpty: "All x #i. NotEmpty(x) @ i ==> not (x = 'empty')"
+
+/* A device: identity key IK and the two halves of the admin key AK. */
+rule Device_New:
+    let d = <pk(~ik), pk(~a1), pk(~a2)>
+    in
+    [ Fr(~ik), Fr(~a1), Fr(~a2) ]
+  --[ DeviceNew(d) ]->
+    [ !DevKey(d, ~ik, ~a1, ~a2), Unused(d), Out(d) ]
+
+/* AK leaks: a stolen, unlocked phone. Each half separately, so a break of
+   one algorithm alone is modelled too. */
+rule Reveal_A1:
+    [ !DevKey(d, ik, a1, a2) ] --[ RevA1(d) ]-> [ Out(a1) ]
+rule Reveal_A2:
+    [ !DevKey(d, ik, a1, a2) ] --[ RevA2(d) ]-> [ Out(a2) ]
+
+/* A strict ring of two devices. The genesis names the policy; every
+   reader of the ring (devices and the contacts that pin it) applies it. */
+rule Ring_Create:
+    let d = <pk(~ik), pk(~a1), pk(~a2)>
+        e = <pk(~jk), pk(~b1), pk(~b2)>
+        r = h(<'ring', d, e, pk(~rk)>)
+        body = <'rec', r, 'genesis', 'create', <d, e, pk(~rk), 'strict'>, d>
+    in
+    [ Unused(d), Unused(e), !DevKey(d, ~ik, ~a1, ~a2), !DevKey(e, ~jk, ~b1, ~b2), Fr(~rk) ]
+  --[ Created(r, d, e) ]->
+    [ View(d, r, h(body), d, e), View(e, r, h(body), d, e),
+      !Genesis(r, h(body), d, e), !Head(r, h(body), d, e),
+      !RK(r, pk(~rk)), !Phrase(r, ~rk),
+      Out(<body, sign(<'ed', body>, ~a1), sign(<'ml', body>, ~a2)>) ]
+
+/* A contact pins the genesis head (trust on first use, checked by words). */
+rule Contact_Pin:
+    [ !Genesis(r, m, d, e), Fr(~c) ] --[ Pin(~c, r, m) ]-> [ View(~c, r, m, d, e), !Contact(~c) ]
+
+/* The phrase leaks (written down, photographed, or a share holder lies). */
+rule Reveal_Phrase:
+    [ !Phrase(r, rk) ] --[ RevPhrase(r) ]-> [ Out(rk) ]
+
+/* A new device asks to join over QR or CPace (authentic, single use). */
+rule Device_Join_Request:
+    [ Unused(n) ] --[ JoinRequest(n) ]-> [ AddReq(n) ]
+
+/* Views: View(o, r, m, a, b) is o's view of ring r in period m (the head
+   of the last membership record; without rotates it is also the head),
+   with members a and b ('empty' for a free slot).
+   Proposals against m are logged under h(<'prop', m>). Every entry is
+   <body, signatures>, so Old(L, <v, s>) names the body v. Logged(r, m,
+   v, hx) records proposal v; hx is the hash of the member whose reject
+   does not count against it ('none' unless v is rk_çıkar(x), then h(x)). */
+
+/* --- AK proposals, signed by one member ------------------------------ */
+
+rule Propose_Remove_1:
+    let r = h(rb)
+        m = h(mb)
+        d = <pk(~ik), pk(~a1), pk(~a2)>
+        body = <'prop', r, m, 'remove', h(x), d>
+        sig1 = sign(<'ed', body>, ~a1)
+        sig2 = sign(<'ml', body>, ~a2)
+    in
+    [ View(d, r, m, d, x), !DevKey(d, ~ik, ~a1, ~a2) ]
+  --[ NotEmpty(x), Logged(r, m, body, 'none'), HonestProp(d, r, m, body), Step('PR') ]->
+    [ View(d, r, m, d, x), Out(<body, sig1, sig2>), !LogEntry(h(<'prop', m>), <body, sig1, sig2>) ]
+
+rule Propose_Remove_2:
+    let r = h(rb)
+        m = h(mb)
+        d = <pk(~ik), pk(~a1), pk(~a2)>
+        body = <'prop', r, m, 'remove', h(x), d>
+        sig1 = sign(<'ed', body>, ~a1)
+        sig2 = sign(<'ml', body>, ~a2)
+    in
+    [ View(d, r, m, x, d), !DevKey(d, ~ik, ~a1, ~a2) ]
+  --[ NotEmpty(x), Logged(r, m, body, 'none'), HonestProp(d, r, m, body), Step('PR') ]->
+    [ View(d, r, m, x, d), Out(<body, sig1, sig2>), !LogEntry(h(<'prop', m>), <body, sig1, sig2>) ]
+
+rule Propose_Add_1:
+    let r = h(rb)
+        m = h(mb)
+        n = <pk(nik), pk(na1), pk(na2)>
+        d = <pk(~ik), pk(~a1), pk(~a2)>
+        body = <'prop', r, m, 'add', n, d>
+        sig1 = sign(<'ed', body>, ~a1)
+        sig2 = sign(<'ml', body>, ~a2)
+    in
+    [ View(d, r, m, d, 'empty'), AddReq(n), !DevKey(d, ~ik, ~a1, ~a2) ]
+  --[ Logged(r, m, body, 'none'), HonestProp(d, r, m, body), Step('PA') ]->
+    [ View(d, r, m, d, 'empty'), Out(<body, sig1, sig2>), !LogEntry(h(<'prop', m>), <body, sig1, sig2>) ]
+
+rule Propose_Add_2:
+    let r = h(rb)
+        m = h(mb)
+        n = <pk(nik), pk(na1), pk(na2)>
+        d = <pk(~ik), pk(~a1), pk(~a2)>
+        body = <'prop', r, m, 'add', n, d>
+        sig1 = sign(<'ed', body>, ~a1)
+        sig2 = sign(<'ml', body>, ~a2)
+    in
+    [ View(d, r, m, 'empty', d), AddReq(n), !DevKey(d, ~ik, ~a1, ~a2) ]
+  --[ Logged(r, m, body, 'none'), HonestProp(d, r, m, body), Step('PA') ]->
+    [ View(d, r, m, 'empty', d), Out(<body, sig1, sig2>), !LogEntry(h(<'prop', m>), <body, sig1, sig2>) ]
+
+/* Anyone can log an AK proposal signed by a member of the period (a
+   stolen, unlocked phone). */
+rule Log_Write_Prop_1:
+    let s = <sik, sa1, sa2>
+        body = <'prop', r, m, op, x, s>
+    in
+    [ In(<body, sig1, sig2>), !Head(r, m, s, y) ]
+  --[ Eq(verify(sig1, <'ed', body>, sa1), true), Eq(verify(sig2, <'ml', body>, sa2), true),
+      Logged(r, m, body, 'none') ]->
+    [ !LogEntry(h(<'prop', m>), <body, sig1, sig2>) ]
+
+rule Log_Write_Prop_2:
+    let s = <sik, sa1, sa2>
+        body = <'prop', r, m, op, x, s>
+    in
+    [ In(<body, sig1, sig2>), !Head(r, m, y, s) ]
+  --[ Eq(verify(sig1, <'ed', body>, sa1), true), Eq(verify(sig2, <'ml', body>, sa2), true),
+      Logged(r, m, body, 'none') ]->
+    [ !LogEntry(h(<'prop', m>), <body, sig1, sig2>) ]
+
+//STRICT_IMMEDIATE_ACCEPT
+rule Accept_Prop_Remove_1:
+    let s = <sik, sa1, sa2>
+        body = <'prop', r, m, 'remove', h(x), s>
+    in
+    [ View(o, r, m, s, x), !LogEntry(h(<'prop', m>), <body, sig1, sig2>) ]
+  --[ Eq(verify(sig1, <'ed', body>, sa1), true), Eq(verify(sig2, <'ml', body>, sa2), true),
+      NotEmpty(x), ReadChange(r, m, body, 'none'), Settled(h(<'prop', m>), <body, sig1, sig2>), Step('AR'),
+      Accept(o, r, m, 'premove', h(x), s) ]->
+    [ View(o, r, h(body), s, 'empty'), !Head(r, h(body), s, 'empty') ]
+
+rule Accept_Prop_Remove_2:
+    let s = <sik, sa1, sa2>
+        body = <'prop', r, m, 'remove', h(x), s>
+    in
+    [ View(o, r, m, x, s), !LogEntry(h(<'prop', m>), <body, sig1, sig2>) ]
+  --[ Eq(verify(sig1, <'ed', body>, sa1), true), Eq(verify(sig2, <'ml', body>, sa2), true),
+      NotEmpty(x), ReadChange(r, m, body, 'none'), Settled(h(<'prop', m>), <body, sig1, sig2>), Step('AR'),
+      Accept(o, r, m, 'premove', h(x), s) ]->
+    [ View(o, r, h(body), 'empty', s), !Head(r, h(body), 'empty', s) ]
+
+rule Accept_Prop_Add_1:
+    let s = <sik, sa1, sa2>
+        body = <'prop', r, m, 'add', n, s>
+    in
+    [ View(o, r, m, s, 'empty'), !LogEntry(h(<'prop', m>), <body, sig1, sig2>) ]
+  --[ Eq(verify(sig1, <'ed', body>, sa1), true), Eq(verify(sig2, <'ml', body>, sa2), true),
+      NotEmpty(n), ReadChange(r, m, body, 'none'), Settled(h(<'prop', m>), <body, sig1, sig2>), Step('AA'),
+      Accept(o, r, m, 'padd', n, s) ]->
+    [ View(o, r, h(body), s, n), !Head(r, h(body), s, n) ]
+
+rule Accept_Prop_Add_2:
+    let s = <sik, sa1, sa2>
+        body = <'prop', r, m, 'add', n, s>
+    in
+    [ View(o, r, m, 'empty', s), !LogEntry(h(<'prop', m>), <body, sig1, sig2>) ]
+  --[ Eq(verify(sig1, <'ed', body>, sa1), true), Eq(verify(sig2, <'ml', body>, sa2), true),
+      NotEmpty(n), ReadChange(r, m, body, 'none'), Settled(h(<'prop', m>), <body, sig1, sig2>), Step('AA'),
+      Accept(o, r, m, 'padd', n, s) ]->
+    [ View(o, r, h(body), n, s), !Head(r, h(body), n, s) ]
+
+/* --- rk_çıkar(x): RK and the staying member's AK --------------------- */
+
+/* The owner, with the phrase and its own device b, removes the other
+   member x. */
+rule Owner_RK_Remove_1:
+    let r = h(rb)
+        m = h(mb)
+        b = <pk(~ik), pk(~a1), pk(~a2)>
+        body = <'rkprop', r, m, 'rkremove', h(x), b>
+        sigr = sign(<'rk', body>, ~rk)
+        sig1 = sign(<'ed', body>, ~a1)
+        sig2 = sign(<'ml', body>, ~a2)
+    in
+    [ View(b, r, m, x, b), !DevKey(b, ~ik, ~a1, ~a2), !Phrase(r, ~rk) ]
+  --[ NotEmpty(x), Logged(r, m, body, h(x)), Step('OK'), OwnerRKRemoved(r, m, x) ]->
+    [ View(b, r, m, x, b), Out(<body, sigr, sig1, sig2>), !LogEntry(h(<'prop', m>), <body, sigr, sig1, sig2>) ]
+
+rule Owner_RK_Remove_2:
+    let r = h(rb)
+        m = h(mb)
+        b = <pk(~ik), pk(~a1), pk(~a2)>
+        body = <'rkprop', r, m, 'rkremove', h(x), b>
+        sigr = sign(<'rk', body>, ~rk)
+        sig1 = sign(<'ed', body>, ~a1)
+        sig2 = sign(<'ml', body>, ~a2)
+    in
+    [ View(b, r, m, b, x), !DevKey(b, ~ik, ~a1, ~a2), !Phrase(r, ~rk) ]
+  --[ NotEmpty(x), Logged(r, m, body, h(x)), Step('OK'), OwnerRKRemoved(r, m, x) ]->
+    [ View(b, r, m, b, x), Out(<body, sigr, sig1, sig2>), !LogEntry(h(<'prop', m>), <body, sigr, sig1, sig2>) ]
+
+/* Anyone can log an rk_çıkar that carries RK and an AK. The log does not
+   check that the AK belongs to a member (the reader does); that only adds
+   traces. Reading !Head here made the search for every lemma about
+   rk_çıkar run out of memory. */
+rule Log_Write_RKR:
+    let b = <bik, ba1, ba2>
+        body = <'rkprop', r, m, 'rkremove', hx, b>
+    in
+    [ In(<body, sigr, sig1, sig2>), !RK(r, rkp) ]
+  --[ Eq(verify(sigr, <'rk', body>, rkp), true),
+      Eq(verify(sig1, <'ed', body>, ba1), true), Eq(verify(sig2, <'ml', body>, ba2), true),
+      Logged(r, m, body, hx) ]->
+    [ !LogEntry(h(<'prop', m>), <body, sigr, sig1, sig2>) ]
+
+
+/* A reader follows rk_çıkar(x) only if its view has the staying member
+   b, the one whose AK signed it. */
+rule Accept_RK_Remove_1:
+    let b = <bik, ba1, ba2>
+        body = <'rkprop', r, m, 'rkremove', h(x), b>
+    in
+    [ View(o, r, m, x, b), !LogEntry(h(<'prop', m>), <body, sigr, sig1, sig2>), !RK(r, rkp) ]
+  --[ Eq(verify(sigr, <'rk', body>, rkp), true),
+      Eq(verify(sig1, <'ed', body>, ba1), true), Eq(verify(sig2, <'ml', body>, ba2), true),
+      NotEmpty(x), NotEmpty(b), ReadChange(r, m, body, h(x)),
+      Settled(h(<'prop', m>), <body, sigr, sig1, sig2>), Step('AK'),
+      Accept(o, r, m, 'rkremove', h(x), b) ]->
+    [ View(o, r, h(body), 'empty', b), !Head(r, h(body), 'empty', b) ]
+
+rule Accept_RK_Remove_2:
+    let b = <bik, ba1, ba2>
+        body = <'rkprop', r, m, 'rkremove', h(x), b>
+    in
+    [ View(o, r, m, b, x), !LogEntry(h(<'prop', m>), <body, sigr, sig1, sig2>), !RK(r, rkp) ]
+  --[ Eq(verify(sigr, <'rk', body>, rkp), true),
+      Eq(verify(sig1, <'ed', body>, ba1), true), Eq(verify(sig2, <'ml', body>, ba2), true),
+      NotEmpty(x), NotEmpty(b), ReadChange(r, m, body, h(x)),
+      Settled(h(<'prop', m>), <body, sigr, sig1, sig2>), Step('AK'),
+      Accept(o, r, m, 'rkremove', h(x), b) ]->
+    [ View(o, r, h(body), b, 'empty'), !Head(r, h(body), b, 'empty') ]
+
+/* --- Recovery into a free slot (part 4a), RK only --------------------- */
+
+rule Owner_Recover_1:
+    let r = h(rb)
+        m = h(mb)
+        n = <pk(nik), pk(na1), pk(na2)>
+        body = <'rec', r, m, 'recover', n, 'rk'>
+    in
+    [ !Phrase(r, ~rk), Unused(n), !Head(r, m, a, 'empty') ]
+  --[ Logged(r, m, body, 'none'), Step('OR'), OwnerRecovered(r, m, n) ]->
+    [ Out(<body, sign(<'rk', body>, ~rk)>), !Words(r, h(body)),
+      !LogEntry(h(<'prop', m>), <body, sign(<'rk', body>, ~rk)>) ]
+
+rule Owner_Recover_2:
+    let r = h(rb)
+        m = h(mb)
+        n = <pk(nik), pk(na1), pk(na2)>
+        body = <'rec', r, m, 'recover', n, 'rk'>
+    in
+    [ !Phrase(r, ~rk), Unused(n), !Head(r, m, 'empty', a) ]
+  --[ Logged(r, m, body, 'none'), Step('OR'), OwnerRecovered(r, m, n) ]->
+    [ Out(<body, sign(<'rk', body>, ~rk)>), !Words(r, h(body)),
+      !LogEntry(h(<'prop', m>), <body, sign(<'rk', body>, ~rk)>) ]
+
+rule Log_Write_RK_1:
+    let body = <'rec', r, m, 'recover', n, 'rk'>
+    in
+    [ In(<body, sig>), !Head(r, m, a, 'empty'), !RK(r, rkp) ]
+  --[ Eq(verify(sig, <'rk', body>, rkp), true), Logged(r, m, body, 'none') ]->
+    [ !LogEntry(h(<'prop', m>), <body, sig>) ]
+
+rule Log_Write_RK_2:
+    let body = <'rec', r, m, 'recover', n, 'rk'>
+    in
+    [ In(<body, sig>), !Head(r, m, 'empty', a), !RK(r, rkp) ]
+  --[ Eq(verify(sig, <'rk', body>, rkp), true), Logged(r, m, body, 'none') ]->
+    [ !LogEntry(h(<'prop', m>), <body, sig>) ]
+
+/* Devices follow a settled recovery; contacts also need the words. */
+rule Device_Accept_Recover_1:
+    let body = <'rec', r, m, 'recover', n, 'rk'>
+    in
+    [ View(o, r, m, a, 'empty'), !DevKey(o, ik, a1, a2), !LogEntry(h(<'prop', m>), <body, sig>), !RK(r, rkp) ]
+  --[ Eq(verify(sig, <'rk', body>, rkp), true), ReadChange(r, m, body, 'none'),
+      Settled(h(<'prop', m>), <body, sig>), Step('DK'), Accept(o, r, m, 'recover', n, 'rk') ]->
+    [ View(o, r, h(body), a, n), !Head(r, h(body), a, n) ]
+
+rule Device_Accept_Recover_2:
+    let body = <'rec', r, m, 'recover', n, 'rk'>
+    in
+    [ View(o, r, m, 'empty', a), !DevKey(o, ik, a1, a2), !LogEntry(h(<'prop', m>), <body, sig>), !RK(r, rkp) ]
+  --[ Eq(verify(sig, <'rk', body>, rkp), true), ReadChange(r, m, body, 'none'),
+      Settled(h(<'prop', m>), <body, sig>), Step('DK'), Accept(o, r, m, 'recover', n, 'rk') ]->
+    [ View(o, r, h(body), n, a), !Head(r, h(body), n, a) ]
+
+rule Contact_Accept_Recover_1:
+    let body = <'rec', r, m, 'recover', n, 'rk'>
+    in
+    [ View(o, r, m, a, 'empty'), !Contact(o), !Words(r, h(body)), !LogEntry(h(<'prop', m>), <body, sig>), !RK(r, rkp) ]
+  --[ Eq(verify(sig, <'rk', body>, rkp), true), ReadChange(r, m, body, 'none'),
+      Settled(h(<'prop', m>), <body, sig>), Step('CK'), Accept(o, r, m, 'recover', n, 'rk'),
+      ContactRecovered(o, r, m, n) ]->
+    [ View(o, r, h(body), a, n) ]
+
+rule Contact_Accept_Recover_2:
+    let body = <'rec', r, m, 'recover', n, 'rk'>
+    in
+    [ View(o, r, m, 'empty', a), !Contact(o), !Words(r, h(body)), !LogEntry(h(<'prop', m>), <body, sig>), !RK(r, rkp) ]
+  --[ Eq(verify(sig, <'rk', body>, rkp), true), ReadChange(r, m, body, 'none'),
+      Settled(h(<'prop', m>), <body, sig>), Step('CK'), Accept(o, r, m, 'recover', n, 'rk'),
+      ContactRecovered(o, r, m, n) ]->
+    [ View(o, r, h(body), n, a) ]
+
+/* --- Rejects ----------------------------------------------------------- */
+
+/* A member rejects a proposal against its period: an AK record that
+   names the proposal by hash. The proposal comes from the network (In),
+   an over-approximation of "seen in the log": a member may reject any
+   value at any time, which only adds traces. Reading it from !LogEntry
+   instead made the source computation run out of memory. */
+rule Member_Reject_1:
+    let r = h(rb)
+        m = h(mb)
+        d = <pk(~ik), pk(~a1), pk(~a2)>
+        body = <'rec', r, m, 'reject', h(v), d>
+    in
+    [ View(d, r, m, d, y), In(v), !DevKey(d, ~ik, ~a1, ~a2) ]
+  --[ Rejects(r, m, h(v), d), HonestReject(d, r, m, v), Step('MJ') ]->
+    [ View(d, r, m, d, y), Out(<body, sign(<'ed', body>, ~a1), sign(<'ml', body>, ~a2)>),
+      !LogEntry(h(<'log', m>), <body, sign(<'ed', body>, ~a1), sign(<'ml', body>, ~a2)>) ]
+
+rule Member_Reject_2:
+    let r = h(rb)
+        m = h(mb)
+        d = <pk(~ik), pk(~a1), pk(~a2)>
+        body = <'rec', r, m, 'reject', h(v), d>
+    in
+    [ View(d, r, m, y, d), In(v), !DevKey(d, ~ik, ~a1, ~a2) ]
+  --[ Rejects(r, m, h(v), d), HonestReject(d, r, m, v), Step('MJ') ]->
+    [ View(d, r, m, y, d), Out(<body, sign(<'ed', body>, ~a1), sign(<'ml', body>, ~a2)>),
+      !LogEntry(h(<'log', m>), <body, sign(<'ed', body>, ~a1), sign(<'ml', body>, ~a2)>) ]
+
+/* Anyone can log a reject signed by a member of the period (a stolen,
+   unlocked phone vetoes). */
+rule Log_Write_Reject_1:
+    let s = <sik, sa1, sa2>
+        body = <'rec', r, m, 'reject', hv, s>
+    in
+    [ In(<body, sig1, sig2>), !Head(r, m, s, y) ]
+  --[ Eq(verify(sig1, <'ed', body>, sa1), true), Eq(verify(sig2, <'ml', body>, sa2), true),
+      Rejects(r, m, hv, s) ]->
+    [ !LogEntry(h(<'log', m>), <body, sig1, sig2>) ]
+
+rule Log_Write_Reject_2:
+    let s = <sik, sa1, sa2>
+        body = <'rec', r, m, 'reject', hv, s>
+    in
+    [ In(<body, sig1, sig2>), !Head(r, m, y, s) ]
+  --[ Eq(verify(sig1, <'ed', body>, sa1), true), Eq(verify(sig2, <'ml', body>, sa2), true),
+      Rejects(r, m, hv, s) ]->
+    [ !LogEntry(h(<'log', m>), <body, sig1, sig2>) ]
+
+/* --- Time and the reader's rules -------------------------------------- */
+
+/* Time passing, without a clock (part 3): Old(L, v) marks that value v
+   under L has been in the log for longer than the wait. */
+rule Log_Age:
+    [ !LogEntry(L, v) ] --[ Old(L, v) ]-> [ ]
+
+restriction Settled_Old:
+  "All L v #i. Settled(L, v) @ i ==> Ex #t. Old(L, v) @ t & #t < #i"
+
+/* A reject of v counts if it was logged before v settled (no Old of v
+   before it) and does not come from v's exempt member. */
+restriction Not_Rejected:
+  "All r m v x w #i #j.
+      ReadChange(r, m, v, x) @ i & Rejects(r, m, h(v), w) @ j & not (h(w) = x)
+    & not (Ex L s #o. Old(L, <v, s>) @ o & #o < #j)
+    ==> F"
+
+/* An entry settles once: Old marks the moment it has been in the log for
+   the whole wait. Every rule below depends only on that first moment, so
+   dropping later markers loses no behaviour. */
+restriction Old_Once:
+  "All L v #i #j. Old(L, v) @ i & Old(L, v) @ j ==> #i = #j"
+
+/* Every proposal waits the same time, so proposals against a period
+   settle in the order they were logged: one logged earlier has settled
+   by the time a later one settles. The model would otherwise let an
+   earlier proposal settle late or never (third look at the review). */
+restriction Settle_In_Order:
+  "All r m v x v2 x2 L s #t #t2 #o.
+      Logged(r, m, v, x) @ t & Logged(r, m, v2, x2) @ t2 & #t2 < #t & not (v = v2)
+    & Old(L, <v, s>) @ o
+    ==> Ex L2 s2 #o2. Old(L2, <v2, s2>) @ o2 & #o2 < #o"
+
+/* One change per period, first writer wins: a reader follows v only if
+   every other proposal against m that settled before v did (with
+   Settle_In_Order: every one logged before v) was voided by a counted
+   reject that the reader saw. An earlier live proposal therefore blocks
+   v until it is rejected or wins itself; proposals logged after v do
+   not count against v. Otherwise anyone who can still write against an
+   old period (a thief with a removed device's AK) could keep late
+   readers from ever following v (second review, M1). */
+restriction Change_Single:
+  "All r m v x v2 x2 L s L2 s2 #i #o #t #o2.
+      ReadChange(r, m, v, x) @ i & Old(L, <v, s>) @ o & #o < #i
+    & Logged(r, m, v2, x2) @ t & Old(L2, <v2, s2>) @ o2 & #o2 < #o & not (v = v2)
+    ==> Ex w #j. Rejects(r, m, h(v2), w) @ j & #j < #i & not (h(w) = x2)
+      & not (Ex L3 s3 #o3. Old(L3, <v2, s3>) @ o3 & #o3 < #j)"
+
+
+/* --- Lemmas ----------------------------------------------------------- */
+
+/* Executability: a member proposes to remove the other, the proposal
+   waits, and a contact follows it. */
+lemma sanity_strict_remove [heuristic=c]:
+  exists-trace
+  "Ex c r m d e #p #q #v #k.
+      Pin(c, r, m) @ p
+    & Created(r, d, e) @ q
+    & HonestProp(d, r, m, <'prop', r, m, 'remove', h(e), d>) @ v
+    & Accept(c, r, m, 'premove', h(e), d) @ k
+    & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)
+    & not (Ex x #y. RevA1(x) @ y) & not (Ex x #y. RevA2(x) @ y)
+    & not (Ex r2 #y. RevPhrase(r2) @ y)
+    & not (Ex r2 m2 hv w #y. Rejects(r2, m2, hv, w) @ y)
+    & (All r2 m2 v2 x2 #y. Logged(r2, m2, v2, x2) @ y ==> #y = #v)
+    & (All r2 d2 e2 #y. Created(r2, d2, e2) @ y ==> #y = #q)
+    & (All c2 r2 m2 #y. Pin(c2, r2, m2) @ y ==> #y = #p)"
+
+/* The thief can veto: e is stolen and unlocked, d proposes to remove
+   it, and the thief rejects the proposal with e's AK before it settles,
+   so the reject counts. */
+lemma sanity_stolen_device_vetoes [heuristic=c]:
+  exists-trace
+  "Ex r m d e #q #v #w.
+      Created(r, d, e) @ q
+    & HonestProp(d, r, m, <'prop', r, m, 'remove', h(e), d>) @ v
+    & Rejects(r, m, h(<'prop', r, m, 'remove', h(e), d>), e) @ w
+    & #v < #w
+    & not (Ex L sg #y. Old(L, <<'prop', r, m, 'remove', h(e), d>, sg>) @ y & #y < #w)
+    & not (Ex #y. RevA1(d) @ y) & not (Ex #y. RevA2(d) @ y)
+    & not (Ex #x. Step('MJ') @ x)
+    & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)
+    & (All r2 d2 e2 #y. Created(r2, d2, e2) @ y ==> #y = #q)
+    & (All r2 m2 v2 x2 #y. Logged(r2, m2, v2, x2) @ y ==> #y = #v)
+    & (All r2 m2 hv w3 #y. Rejects(r2, m2, hv, w3) @ y ==> #y = #w)"
+
+/* The RK way out: the owner writes rk_çıkar(e) with the phrase and d,
+   the thief rejects that too before it settles (a reject that would count
+   from anyone else), and the contact still follows it. Without the
+   exemption of x in Not_Rejected this has no trace. Together
+   with the lemma above this is the stolen-device story; proving both
+   steps in one trace did not end (README.md, A4b). */
+lemma sanity_rk_remove_despite_thief_reject [heuristic=c]:
+  exists-trace
+  "Ex c r m d e #p #q #o #w2 #k.
+      Pin(c, r, m) @ p
+    & Created(r, d, e) @ q
+    & OwnerRKRemoved(r, m, e) @ o
+    & Rejects(r, m, h(<'rkprop', r, m, 'rkremove', h(e), d>), e) @ w2
+    & #o < #w2
+    & not (Ex L sg #y. Old(L, <<'rkprop', r, m, 'rkremove', h(e), d>, sg>) @ y & #y < #w2)
+    & Accept(c, r, m, 'rkremove', h(e), d) @ k
+    & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)
+    & not (Ex #y. RevA1(d) @ y) & not (Ex #y. RevA2(d) @ y)
+    & not (Ex r2 #y. RevPhrase(r2) @ y)
+    & not (Ex #x. Step('MJ') @ x)
+    & (All r2 d2 e2 #y. Created(r2, d2, e2) @ y ==> #y = #q)
+    & (All c2 r2 m2 #y. Pin(c2, r2, m2) @ y ==> #y = #p)
+    & (All r2 m2 v2 x2 #y. Logged(r2, m2, v2, x2) @ y ==> #y = #o)
+    & (All r2 m2 hv w3 #y. Rejects(r2, m2, hv, w3) @ y ==> #y = #w2)"
+
+/* A proposal logged after rk_çıkar(e) settled does not block a reader
+   that reads later: the thief, still holding e's AK, logs remove(d)
+   against the old period, and a contact still follows rk_çıkar(e). */
+lemma sanity_late_proposal_does_not_block [heuristic=c]:
+  exists-trace
+  "Ex c r m d e L sg #p #q #o #a #t #k.
+      Pin(c, r, m) @ p
+    & Created(r, d, e) @ q
+    & OwnerRKRemoved(r, m, e) @ o
+    & Old(L, <<'rkprop', r, m, 'rkremove', h(e), d>, sg>) @ a
+    & Logged(r, m, <'prop', r, m, 'remove', h(d), e>, 'none') @ t
+    & #a < #t & #t < #k
+    & Accept(c, r, m, 'rkremove', h(e), d) @ k
+    & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)
+    & not (Ex #y. RevA1(d) @ y) & not (Ex #y. RevA2(d) @ y)
+    & not (Ex r2 #y. RevPhrase(r2) @ y)
+    & not (Ex r2 m2 hv w #y. Rejects(r2, m2, hv, w) @ y)
+    & (All r2 d2 e2 #y. Created(r2, d2, e2) @ y ==> #y = #q)
+    & (All c2 r2 m2 #y. Pin(c2, r2, m2) @ y ==> #y = #p)
+    & (All r2 m2 v2 x2 #y. Logged(r2, m2, v2, x2) @ y ==> #y = #o | #y = #t)"
+
+/* The reverse order: the thief proposes first to remove d, d rejects it
+   in time, and the owner still removes e with rk_çıkar. The thief's
+   proposal settles first (Settle_In_Order), so the rejected earlier
+   proposal does not block the later rk_çıkar. The settle points and the
+   reveals of e are named, which ends the search (heuristic S, about
+   4 minutes; c and C did not end). */
+lemma sanity_thief_proposes_first [heuristic=S]:
+  exists-trace
+  "Ex c r m d e L1 s1 L2 s2 #p #q #v #w #o #ov #oa #k #y1 #y2.
+      Pin(c, r, m) @ p
+    & Created(r, d, e) @ q
+    & Logged(r, m, <'prop', r, m, 'remove', h(d), e>, 'none') @ v
+    & HonestReject(d, r, m, <'prop', r, m, 'remove', h(d), e>) @ w
+    & OwnerRKRemoved(r, m, e) @ o
+    & #v < #w & #w < #o
+    & Old(L1, <<'prop', r, m, 'remove', h(d), e>, s1>) @ ov & #w < #ov
+    & Old(L2, <<'rkprop', r, m, 'rkremove', h(e), d>, s2>) @ oa & #ov < #oa & #o < #oa & #oa < #k
+    & Accept(c, r, m, 'rkremove', h(e), d) @ k
+    & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)
+    & not (Ex #y. RevA1(d) @ y) & not (Ex #y. RevA2(d) @ y)
+    & RevA1(e) @ y1 & RevA2(e) @ y2 & #y2 < #v & #y1 < #v
+    & (All x #y. RevA1(x) @ y ==> #y = #y1) & (All x #y. RevA2(x) @ y ==> #y = #y2)
+    & not (Ex r2 #y. RevPhrase(r2) @ y)
+    & (All r2 d2 e2 #y. Created(r2, d2, e2) @ y ==> #y = #q)
+    & (All c2 r2 m2 #y. Pin(c2, r2, m2) @ y ==> #y = #p)
+    & (All r2 m2 v2 x2 #y. Logged(r2, m2, v2, x2) @ y ==> #y = #v | #y = #o)
+    & (All r2 m2 hv w3 #y. Rejects(r2, m2, hv, w3) @ y ==> #y = #w)"
+
+/* Recovery is reachable here: after d's proposal removes e, the owner
+   recovers into the free slot and a contact follows. */
+lemma sanity_recovery_after_strict_remove [heuristic=c]:
+  exists-trace
+  "Ex c r m d e n #p #q #v #a #o #k.
+      Pin(c, r, m) @ p
+    & Created(r, d, e) @ q
+    & HonestProp(d, r, m, <'prop', r, m, 'remove', h(e), d>) @ v
+    & Accept(c, r, m, 'premove', h(e), d) @ a
+    & OwnerRecovered(r, h(<'prop', r, m, 'remove', h(e), d>), n) @ o
+    & ContactRecovered(c, r, h(<'prop', r, m, 'remove', h(e), d>), n) @ k
+    & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)
+    & not (Ex x #y. RevA1(x) @ y) & not (Ex x #y. RevA2(x) @ y)
+    & not (Ex r2 #y. RevPhrase(r2) @ y)
+    & not (Ex r2 m2 hv w #y. Rejects(r2, m2, hv, w) @ y)
+    & (All r2 m2 v2 x2 #y. Logged(r2, m2, v2, x2) @ y ==> #y = #v | #y = #o)
+    & (All r2 d2 e2 #y. Created(r2, d2, e2) @ y ==> #y = #q)
+    & (All c2 r2 m2 #y. Pin(c2, r2, m2) @ y ==> #y = #p)"
+
+/* K3b: no reader of a strict ring changes membership at once. The
+   change it follows (an AK proposal, a recovery or an rk_çıkar) was
+   itself in the log for the whole wait first, so a stolen, unlocked
+   phone moves no one at once, and (reject_stops_change) not against a
+   reject that counts. It restates Settled_Old; the mutants
+   strict_immediate_accept and proposal_without_wait show it catches a
+   reader that skips the wait. */
+lemma no_change_without_wait [heuristic=c]:
+  "All r m v x #k. ReadChange(r, m, v, x) @ k
+    ==> Ex L s #t. Old(L, <v, s>) @ t & #t < #k"
+
+/* K3b: an honest member's reject, logged before the proposal settled,
+   stops it; for rk_çıkar(x) any member but x. Restates Not_Rejected. */
+lemma reject_stops_change [heuristic=c]:
+  "All d r m v x #t #k.
+      HonestReject(d, r, m, v) @ t
+    & ReadChange(r, m, v, x) @ k
+    & not (h(d) = x)
+    ==> Ex L s #o. Old(L, <v, s>) @ o & #o < #t"
+
+lemma read_change_was_logged [reuse, heuristic=c]:
+  "All r m v x #i. ReadChange(r, m, v, x) @ i ==> Ex #t. Logged(r, m, v, x) @ t & #t < #i"
+
+/* Helper: whatever a reader follows has settled first. */
+lemma read_change_settled [reuse, heuristic=c]:
+  "All r m v x #i. ReadChange(r, m, v, x) @ i ==> Ex L s #o. Old(L, <v, s>) @ o & #o < #i"
+
+/* One change per period: no two readers follow different changes from
+   the same period, whatever a stolen device or the phrase thief logs.
+   Stated for #i < #j; the other order is the same lemma with the names
+   swapped, and #i = #j is one rule, which carries one ReadChange. */
+lemma no_split_change:
+  "All r m v v2 x x2 #i #j.
+      ReadChange(r, m, v, x) @ i & ReadChange(r, m, v2, x2) @ j & #i < #j ==> v = v2"
+
+/* First writer wins: a reader follows v only if every proposal logged
+   against the same period before v was voided by a counted reject. A
+   live earlier proposal (the thief's, say) is never skipped. */
+lemma earlier_proposal_must_be_rejected:
+  "All r m v x v2 x2 #i #t #t2.
+      ReadChange(r, m, v, x) @ i & Logged(r, m, v, x) @ t
+    & Logged(r, m, v2, x2) @ t2 & #t2 < #t & not (v = v2)
+    ==> Ex w #j. Rejects(r, m, h(v2), w) @ j & #j < #i & not (h(w) = x2)
+      & not (Ex L s #o. Old(L, <v2, s>) @ o & #o < #j)"
+
+/* P7 for rk_çıkar: the phrase alone cannot remove a device. If the
+   staying member b is an honest device, a reader follows rk_çıkar(x)
+   only if the owner wrote it, or b's AK leaked too (phone and phrase
+   together, outside P7). A member that is not an honest device can only
+   have come in through an add signed with a leaked AK (genesis and
+   recovery take only honest devices); that step is argued, not proved
+   here (README.md, A4b). */
+lemma rk_remove_needs_staying_device [heuristic=c]:
+  "All o r m x b #k #n. Accept(o, r, m, 'rkremove', h(x), b) @ k & DeviceNew(b) @ n
+    ==> (Ex #w. OwnerRKRemoved(r, m, x) @ w & #w < #k)
+      | ((Ex #y. RevA1(b) @ y) & (Ex #y. RevA2(b) @ y))"
+
+/* P7 for recovery, as in part 4a: a contact follows a recovery only to
+   the owner's device. */
+lemma contact_not_moved_by_phrase_alone [heuristic=c]:
+  "All c r m n #k. ContactRecovered(c, r, m, n) @ k
+    ==> Ex #o. OwnerRecovered(r, m, n) @ o & #o < #k"
+
+end

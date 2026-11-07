@@ -126,6 +126,14 @@
   "codeSuggestions": "候補",
   "progressPercent": "{percent}%",
 
+  "editUndo": "元に戻す",
+  "editRedo": "やり直す",
+  "editCut": "切り取り",
+  "editCopy": "コピー",
+  "editPaste": "貼り付け",
+  "editDelete": "削除",
+  "editSelectAll": "すべて選択",
+
   "transferNoticeChannel": "転送",
   "transferNoticeSending": "TotalDrop で送信中",
   "transferNoticeReceiving": "TotalDrop で受信中",

@@ -473,6 +473,27 @@ class AppLocalizationsFa extends AppLocalizations {
   }
 
   @override
+  String get editUndo => 'واگرد';
+
+  @override
+  String get editRedo => 'ازنو';
+
+  @override
+  String get editCut => 'برش';
+
+  @override
+  String get editCopy => 'کپی';
+
+  @override
+  String get editPaste => 'چسباندن';
+
+  @override
+  String get editDelete => 'حذف';
+
+  @override
+  String get editSelectAll => 'انتخاب همه';
+
+  @override
   String get transferNoticeChannel => 'انتقال‌ها';
 
   @override

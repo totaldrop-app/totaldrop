@@ -49,7 +49,7 @@
   "cliHelpStun": "Servidor STUN (host:port) que informa a este dispositivo seu endereço público. Um valor vazio o desativa.",
   "cliHelpRelayOnly": "Nunca conectar diretamente nem anunciar endereço IP: tudo passa pelo servidor de retransmissão. Mais lento, mas o outro lado nunca descobre seu endereço. Ao receber, o remetente precisa usar o mesmo servidor de retransmissão.",
   "cliHelpSend": "Enviar arquivos e pastas e mostrar um código de transferência para o destinatário.",
-  "cliHelpSendPaths": "Arquivos ou pastas a enviar.",
+  "cliHelpSendPaths": "Arquivos ou pastas a enviar. - sozinho lê um texto da entrada padrão; escreva ./- para um arquivo chamado -.",
   "cliHelpSendStrong": "Usar um código de três palavras (33 bits) em vez de duas.",
   "cliHelpReceive": "Receber arquivos com um código de transferência, por exemplo 7-harbor-rocket.",
   "cliHelpReceiveCode": "O código de transferência que você recebeu.",
@@ -60,5 +60,15 @@
   "cliHelpHelpCommand": "Mostrar esta mensagem ou a ajuda do comando informado",
   "cliDesktopAbout": "Abrir a janela do TotalDrop.",
   "cliDesktopArgs": "Arquivos ou pastas a enviar, ou um link do TotalDrop para receber.",
-  "cliDesktopScreen": "Abrir na tela Enviar (send), Receber (receive) ou Configurações (settings)."
+  "cliDesktopScreen": "Abrir na tela Enviar (send), Receber (receive) ou Configurações (settings).",
+  "cliHelpSendText": "Enviar este texto em vez de arquivos: o destinatário o vê como texto, não como arquivo. Outras pessoas neste computador podem vê-lo na lista de processos; use - para um texto privado.",
+  "cliSendingText": "Enviando um texto, {size}.",
+  "cliOfferedText": "Oferecido: um texto, {size}. Ele é mostrado aqui, não salvo.",
+  "cliPromptShow": "Mostrar? [s/N] ",
+  "cliTextNotUtf8": "O texto da entrada padrão não está em UTF-8.",
+  "cliTextEmpty": "Não há texto para enviar.",
+  "cliTextTooLong": "O texto passa de {size}. Envie-o como arquivo.",
+  "cliDashAlone": "- lê um texto da entrada padrão e não pode ser misturado com arquivos. Para um arquivo chamado -, escreva ./-.",
+  "cliTypeText": "Digite o texto e depois pressione Ctrl-D em uma nova linha.",
+  "cliTypeTextWindows": "Digite o texto e depois pressione Ctrl-Z e Enter em uma nova linha."
 }

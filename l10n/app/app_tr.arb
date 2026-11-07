@@ -126,6 +126,14 @@
   "codeSuggestions": "Öneriler",
   "progressPercent": "%{percent}",
 
+  "editUndo": "Geri al",
+  "editRedo": "Yinele",
+  "editCut": "Kes",
+  "editCopy": "Kopyala",
+  "editPaste": "Yapıştır",
+  "editDelete": "Sil",
+  "editSelectAll": "Tümünü seç",
+
   "transferNoticeChannel": "Aktarımlar",
   "transferNoticeSending": "TotalDrop ile gönderiliyor",
   "transferNoticeReceiving": "TotalDrop ile alınıyor",

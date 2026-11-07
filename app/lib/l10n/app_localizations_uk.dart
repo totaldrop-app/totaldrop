@@ -483,6 +483,27 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
+  String get editUndo => 'Скасувати';
+
+  @override
+  String get editRedo => 'Повторити';
+
+  @override
+  String get editCut => 'Вирізати';
+
+  @override
+  String get editCopy => 'Копіювати';
+
+  @override
+  String get editPaste => 'Вставити';
+
+  @override
+  String get editDelete => 'Видалити';
+
+  @override
+  String get editSelectAll => 'Виділити все';
+
+  @override
   String get transferNoticeChannel => 'Передавання';
 
   @override

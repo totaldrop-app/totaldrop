@@ -126,6 +126,14 @@
   "codeSuggestions": "建議",
   "progressPercent": "{percent}%",
 
+  "editUndo": "復原",
+  "editRedo": "重做",
+  "editCut": "剪下",
+  "editCopy": "複製",
+  "editPaste": "貼上",
+  "editDelete": "刪除",
+  "editSelectAll": "全選",
+
   "transferNoticeChannel": "傳輸",
   "transferNoticeSending": "正在透過 TotalDrop 傳送",
   "transferNoticeReceiving": "正在透過 TotalDrop 接收",

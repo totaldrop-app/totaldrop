@@ -472,6 +472,27 @@ class AppLocalizationsSw extends AppLocalizations {
   }
 
   @override
+  String get editUndo => 'Tendua';
+
+  @override
+  String get editRedo => 'Rudia';
+
+  @override
+  String get editCut => 'Kata';
+
+  @override
+  String get editCopy => 'Nakili';
+
+  @override
+  String get editPaste => 'Bandika';
+
+  @override
+  String get editDelete => 'Futa';
+
+  @override
+  String get editSelectAll => 'Chagua zote';
+
+  @override
   String get transferNoticeChannel => 'Uhamishaji';
 
   @override

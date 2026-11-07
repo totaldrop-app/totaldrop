@@ -446,6 +446,27 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String get editUndo => '실행 취소';
+
+  @override
+  String get editRedo => '다시 실행';
+
+  @override
+  String get editCut => '잘라내기';
+
+  @override
+  String get editCopy => '복사';
+
+  @override
+  String get editPaste => '붙여넣기';
+
+  @override
+  String get editDelete => '삭제';
+
+  @override
+  String get editSelectAll => '모두 선택';
+
+  @override
   String get transferNoticeChannel => '전송';
 
   @override

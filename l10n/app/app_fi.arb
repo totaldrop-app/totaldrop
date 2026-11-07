@@ -126,6 +126,14 @@
   "codeSuggestions": "Ehdotukset",
   "progressPercent": "{percent} %",
 
+  "editUndo": "Kumoa",
+  "editRedo": "Tee uudelleen",
+  "editCut": "Leikkaa",
+  "editCopy": "Kopioi",
+  "editPaste": "Liitä",
+  "editDelete": "Poista",
+  "editSelectAll": "Valitse kaikki",
+
   "transferNoticeChannel": "Siirrot",
   "transferNoticeSending": "Lähetetään TotalDropilla",
   "transferNoticeReceiving": "Vastaanotetaan TotalDropilla",

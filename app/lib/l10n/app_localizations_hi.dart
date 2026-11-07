@@ -476,6 +476,27 @@ class AppLocalizationsHi extends AppLocalizations {
   }
 
   @override
+  String get editUndo => 'पूर्ववत करें';
+
+  @override
+  String get editRedo => 'फिर से करें';
+
+  @override
+  String get editCut => 'काटें';
+
+  @override
+  String get editCopy => 'कॉपी करें';
+
+  @override
+  String get editPaste => 'चिपकाएँ';
+
+  @override
+  String get editDelete => 'हटाएँ';
+
+  @override
+  String get editSelectAll => 'सभी चुनें';
+
+  @override
   String get transferNoticeChannel => 'स्थानांतरण';
 
   @override

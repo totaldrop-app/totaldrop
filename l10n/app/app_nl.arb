@@ -126,6 +126,14 @@
   "codeSuggestions": "Suggesties",
   "progressPercent": "{percent}%",
 
+  "editUndo": "Ongedaan maken",
+  "editRedo": "Opnieuw",
+  "editCut": "Knippen",
+  "editCopy": "Kopiëren",
+  "editPaste": "Plakken",
+  "editDelete": "Verwijderen",
+  "editSelectAll": "Alles selecteren",
+
   "transferNoticeChannel": "Overdrachten",
   "transferNoticeSending": "Verzenden met TotalDrop",
   "transferNoticeReceiving": "Ontvangen met TotalDrop",

@@ -49,7 +49,7 @@
   "cliHelpStun": "Serveur STUN (host:port) qui indique à cet appareil son adresse publique. Une valeur vide le désactive.",
   "cliHelpRelayOnly": "Ne jamais se connecter directement ni annoncer d'adresse IP : tout passe par le serveur relais. Plus lent, mais l'autre appareil ne connaît jamais votre adresse. À la réception, l'expéditeur doit utiliser le même serveur relais.",
   "cliHelpSend": "Envoyer des fichiers et des dossiers, et afficher un code de transfert pour le destinataire.",
-  "cliHelpSendPaths": "Fichiers ou dossiers à envoyer.",
+  "cliHelpSendPaths": "Fichiers ou dossiers à envoyer. - seul lit un texte depuis l'entrée standard ; écrivez ./- pour un fichier nommé -.",
   "cliHelpSendStrong": "Utiliser un code de trois mots (33 bits) au lieu de deux.",
   "cliHelpReceive": "Recevoir des fichiers avec un code de transfert, par exemple 7-harbor-rocket.",
   "cliHelpReceiveCode": "Le code de transfert que vous avez reçu.",
@@ -60,5 +60,15 @@
   "cliHelpHelpCommand": "Afficher ce message ou l'aide de la commande indiquée",
   "cliDesktopAbout": "Ouvrir la fenêtre de TotalDrop.",
   "cliDesktopArgs": "Fichiers ou dossiers à envoyer, ou lien TotalDrop pour recevoir.",
-  "cliDesktopScreen": "Ouvrir sur l'écran Envoyer (send), Recevoir (receive) ou Paramètres (settings)."
+  "cliDesktopScreen": "Ouvrir sur l'écran Envoyer (send), Recevoir (receive) ou Paramètres (settings).",
+  "cliHelpSendText": "Envoyer ce texte au lieu de fichiers : le destinataire le voit comme un texte, pas comme un fichier. Les autres personnes sur cet ordinateur peuvent le voir dans la liste des processus ; utilisez - pour un texte privé.",
+  "cliSendingText": "Envoi d’un texte, {size}.",
+  "cliOfferedText": "Proposé : un texte, {size}. Il est affiché ici, pas enregistré.",
+  "cliPromptShow": "L’afficher ? [o/N] ",
+  "cliTextNotUtf8": "Le texte de l’entrée standard n’est pas en UTF-8.",
+  "cliTextEmpty": "Il n’y a aucun texte à envoyer.",
+  "cliTextTooLong": "Le texte dépasse {size}. Envoyez-le plutôt comme fichier.",
+  "cliDashAlone": "- lit un texte depuis l'entrée standard et ne peut pas être mélangé avec des fichiers. Pour un fichier nommé -, écrivez ./-.",
+  "cliTypeText": "Tapez le texte, puis appuyez sur Ctrl-D sur une nouvelle ligne.",
+  "cliTypeTextWindows": "Tapez le texte, puis appuyez sur Ctrl-Z et Entrée sur une nouvelle ligne."
 }

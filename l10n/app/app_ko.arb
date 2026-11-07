@@ -126,6 +126,14 @@
   "codeSuggestions": "추천",
   "progressPercent": "{percent}%",
 
+  "editUndo": "실행 취소",
+  "editRedo": "다시 실행",
+  "editCut": "잘라내기",
+  "editCopy": "복사",
+  "editPaste": "붙여넣기",
+  "editDelete": "삭제",
+  "editSelectAll": "모두 선택",
+
   "transferNoticeChannel": "전송",
   "transferNoticeSending": "TotalDrop으로 보내는 중",
   "transferNoticeReceiving": "TotalDrop으로 받는 중",

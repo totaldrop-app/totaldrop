@@ -126,6 +126,14 @@
   "codeSuggestions": "اقتراحات",
   "progressPercent": "{percent}٪",
 
+  "editUndo": "تراجع",
+  "editRedo": "إعادة",
+  "editCut": "قص",
+  "editCopy": "نسخ",
+  "editPaste": "لصق",
+  "editDelete": "حذف",
+  "editSelectAll": "تحديد الكل",
+
   "transferNoticeChannel": "عمليات النقل",
   "transferNoticeSending": "جارٍ الإرسال عبر TotalDrop",
   "transferNoticeReceiving": "جارٍ الاستلام عبر TotalDrop",

@@ -6,6 +6,7 @@
 # "verified" (all-traces) or has a trace (exists-trace). Each lemma runs on
 # its own, with its own time limit, so one slow lemma names itself.
 # Usage: formal/check.sh [tamarin-prover command]; default: tamarin-prover.
+# FORMAL_MODELS=hayalet-halka-sikimod.spthy formal/check.sh runs one model.
 set -eu
 tamarin=${1:-tamarin-prover}
 # The command may carry arguments; a relative path to its program still
@@ -19,7 +20,9 @@ limit=${LEMMA_TIMEOUT:-600}
 export LANG=C.UTF-8
 status=0
 proved=0
-for model in *.spthy; do
+# FORMAL_MODELS (space separated file names) limits the run, as CI does
+# with one job per model.
+for model in ${FORMAL_MODELS:-*.spthy}; do
   [ -f "$model" ] || { echo "no models in formal/"; exit 1; }
   lemmas=$(sed -n 's/^lemma \([A-Za-z0-9_]*\).*/\1/p' "$model")
   [ -n "$lemmas" ] || { echo "$model: no lemmas"; status=1; }

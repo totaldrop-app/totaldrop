@@ -486,6 +486,27 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
+  String get editUndo => 'Desfazer';
+
+  @override
+  String get editRedo => 'Refazer';
+
+  @override
+  String get editCut => 'Recortar';
+
+  @override
+  String get editCopy => 'Copiar';
+
+  @override
+  String get editPaste => 'Colar';
+
+  @override
+  String get editDelete => 'Excluir';
+
+  @override
+  String get editSelectAll => 'Selecionar tudo';
+
+  @override
   String get transferNoticeChannel => 'Transferências';
 
   @override
@@ -1013,6 +1034,27 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
     return '$percentString%';
   }
+
+  @override
+  String get editUndo => 'Desfazer';
+
+  @override
+  String get editRedo => 'Refazer';
+
+  @override
+  String get editCut => 'Recortar';
+
+  @override
+  String get editCopy => 'Copiar';
+
+  @override
+  String get editPaste => 'Colar';
+
+  @override
+  String get editDelete => 'Excluir';
+
+  @override
+  String get editSelectAll => 'Selecionar tudo';
 
   @override
   String get transferNoticeChannel => 'Transferências';
@@ -1543,6 +1585,27 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
 
     return '$percentString%';
   }
+
+  @override
+  String get editUndo => 'Anular';
+
+  @override
+  String get editRedo => 'Refazer';
+
+  @override
+  String get editCut => 'Cortar';
+
+  @override
+  String get editCopy => 'Copiar';
+
+  @override
+  String get editPaste => 'Colar';
+
+  @override
+  String get editDelete => 'Eliminar';
+
+  @override
+  String get editSelectAll => 'Selecionar tudo';
 
   @override
   String get transferNoticeChannel => 'Transferências';

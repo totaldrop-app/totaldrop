@@ -481,6 +481,27 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
+  String get editUndo => 'Ongedaan maken';
+
+  @override
+  String get editRedo => 'Opnieuw';
+
+  @override
+  String get editCut => 'Knippen';
+
+  @override
+  String get editCopy => 'Kopiëren';
+
+  @override
+  String get editPaste => 'Plakken';
+
+  @override
+  String get editDelete => 'Verwijderen';
+
+  @override
+  String get editSelectAll => 'Alles selecteren';
+
+  @override
   String get transferNoticeChannel => 'Overdrachten';
 
   @override

@@ -463,6 +463,27 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
+  String get editUndo => 'Geri al';
+
+  @override
+  String get editRedo => 'Yinele';
+
+  @override
+  String get editCut => 'Kes';
+
+  @override
+  String get editCopy => 'Kopyala';
+
+  @override
+  String get editPaste => 'Yapıştır';
+
+  @override
+  String get editDelete => 'Sil';
+
+  @override
+  String get editSelectAll => 'Tümünü seç';
+
+  @override
   String get transferNoticeChannel => 'Aktarımlar';
 
   @override

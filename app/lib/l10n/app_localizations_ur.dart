@@ -475,6 +475,27 @@ class AppLocalizationsUr extends AppLocalizations {
   }
 
   @override
+  String get editUndo => 'کالعدم کریں';
+
+  @override
+  String get editRedo => 'دوبارہ کریں';
+
+  @override
+  String get editCut => 'کاٹیں';
+
+  @override
+  String get editCopy => 'کاپی کریں';
+
+  @override
+  String get editPaste => 'چسپاں کریں';
+
+  @override
+  String get editDelete => 'حذف کریں';
+
+  @override
+  String get editSelectAll => 'سب منتخب کریں';
+
+  @override
   String get transferNoticeChannel => 'منتقلیاں';
 
   @override

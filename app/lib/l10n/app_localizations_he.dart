@@ -474,6 +474,27 @@ class AppLocalizationsHe extends AppLocalizations {
   }
 
   @override
+  String get editUndo => 'ביטול';
+
+  @override
+  String get editRedo => 'ביצוע חוזר';
+
+  @override
+  String get editCut => 'גזירה';
+
+  @override
+  String get editCopy => 'העתקה';
+
+  @override
+  String get editPaste => 'הדבקה';
+
+  @override
+  String get editDelete => 'מחיקה';
+
+  @override
+  String get editSelectAll => 'בחירת הכול';
+
+  @override
   String get transferNoticeChannel => 'העברות';
 
   @override

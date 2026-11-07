@@ -461,6 +461,27 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
+  String get editUndo => 'Hoàn tác';
+
+  @override
+  String get editRedo => 'Làm lại';
+
+  @override
+  String get editCut => 'Cắt';
+
+  @override
+  String get editCopy => 'Sao chép';
+
+  @override
+  String get editPaste => 'Dán';
+
+  @override
+  String get editDelete => 'Xóa';
+
+  @override
+  String get editSelectAll => 'Chọn tất cả';
+
+  @override
   String get transferNoticeChannel => 'Truyền tệp';
 
   @override

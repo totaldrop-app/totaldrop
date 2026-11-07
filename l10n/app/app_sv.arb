@@ -126,6 +126,14 @@
   "codeSuggestions": "Förslag",
   "progressPercent": "{percent} %",
 
+  "editUndo": "Ångra",
+  "editRedo": "Gör om",
+  "editCut": "Klipp ut",
+  "editCopy": "Kopiera",
+  "editPaste": "Klistra in",
+  "editDelete": "Ta bort",
+  "editSelectAll": "Markera allt",
+
   "transferNoticeChannel": "Överföringar",
   "transferNoticeSending": "Skickar med TotalDrop",
   "transferNoticeReceiving": "Tar emot med TotalDrop",

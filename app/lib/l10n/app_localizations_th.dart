@@ -457,6 +457,27 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
+  String get editUndo => 'เลิกทำ';
+
+  @override
+  String get editRedo => 'ทำซ้ำ';
+
+  @override
+  String get editCut => 'ตัด';
+
+  @override
+  String get editCopy => 'คัดลอก';
+
+  @override
+  String get editPaste => 'วาง';
+
+  @override
+  String get editDelete => 'ลบ';
+
+  @override
+  String get editSelectAll => 'เลือกทั้งหมด';
+
+  @override
   String get transferNoticeChannel => 'การโอน';
 
   @override

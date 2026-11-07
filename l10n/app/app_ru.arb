@@ -126,6 +126,14 @@
   "codeSuggestions": "Подсказки",
   "progressPercent": "{percent}%",
 
+  "editUndo": "Отменить",
+  "editRedo": "Повторить",
+  "editCut": "Вырезать",
+  "editCopy": "Копировать",
+  "editPaste": "Вставить",
+  "editDelete": "Удалить",
+  "editSelectAll": "Выделить всё",
+
   "transferNoticeChannel": "Передачи",
   "transferNoticeSending": "Отправка через TotalDrop",
   "transferNoticeReceiving": "Получение через TotalDrop",

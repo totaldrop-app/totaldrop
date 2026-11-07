@@ -126,6 +126,14 @@
   "codeSuggestions": "הצעות",
   "progressPercent": "{percent}%",
 
+  "editUndo": "ביטול",
+  "editRedo": "ביצוע חוזר",
+  "editCut": "גזירה",
+  "editCopy": "העתקה",
+  "editPaste": "הדבקה",
+  "editDelete": "מחיקה",
+  "editSelectAll": "בחירת הכול",
+
   "transferNoticeChannel": "העברות",
   "transferNoticeSending": "שליחה באמצעות TotalDrop",
   "transferNoticeReceiving": "קבלה באמצעות TotalDrop",

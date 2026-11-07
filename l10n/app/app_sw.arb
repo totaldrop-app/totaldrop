@@ -126,6 +126,14 @@
   "codeSuggestions": "Mapendekezo",
   "progressPercent": "{percent}%",
 
+  "editUndo": "Tendua",
+  "editRedo": "Rudia",
+  "editCut": "Kata",
+  "editCopy": "Nakili",
+  "editPaste": "Bandika",
+  "editDelete": "Futa",
+  "editSelectAll": "Chagua zote",
+
   "transferNoticeChannel": "Uhamishaji",
   "transferNoticeSending": "Inatuma kwa TotalDrop",
   "transferNoticeReceiving": "Inapokea kwa TotalDrop",

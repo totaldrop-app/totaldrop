@@ -479,6 +479,27 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
+  String get editUndo => 'Angre';
+
+  @override
+  String get editRedo => 'Gjør om';
+
+  @override
+  String get editCut => 'Klipp ut';
+
+  @override
+  String get editCopy => 'Kopier';
+
+  @override
+  String get editPaste => 'Lim inn';
+
+  @override
+  String get editDelete => 'Slett';
+
+  @override
+  String get editSelectAll => 'Merk alt';
+
+  @override
   String get transferNoticeChannel => 'Overføringer';
 
   @override

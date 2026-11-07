@@ -437,6 +437,27 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get editUndo => '撤销';
+
+  @override
+  String get editRedo => '重做';
+
+  @override
+  String get editCut => '剪切';
+
+  @override
+  String get editCopy => '复制';
+
+  @override
+  String get editPaste => '粘贴';
+
+  @override
+  String get editDelete => '删除';
+
+  @override
+  String get editSelectAll => '全选';
+
+  @override
   String get transferNoticeChannel => '传输';
 
   @override
@@ -910,6 +931,27 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   }
 
   @override
+  String get editUndo => '撤销';
+
+  @override
+  String get editRedo => '重做';
+
+  @override
+  String get editCut => '剪切';
+
+  @override
+  String get editCopy => '复制';
+
+  @override
+  String get editPaste => '粘贴';
+
+  @override
+  String get editDelete => '删除';
+
+  @override
+  String get editSelectAll => '全选';
+
+  @override
   String get transferNoticeChannel => '传输';
 
   @override
@@ -1380,6 +1422,27 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
     return '$percentString%';
   }
+
+  @override
+  String get editUndo => '復原';
+
+  @override
+  String get editRedo => '重做';
+
+  @override
+  String get editCut => '剪下';
+
+  @override
+  String get editCopy => '複製';
+
+  @override
+  String get editPaste => '貼上';
+
+  @override
+  String get editDelete => '刪除';
+
+  @override
+  String get editSelectAll => '全選';
 
   @override
   String get transferNoticeChannel => '傳輸';

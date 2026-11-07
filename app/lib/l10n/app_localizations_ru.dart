@@ -486,6 +486,27 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get editUndo => 'Отменить';
+
+  @override
+  String get editRedo => 'Повторить';
+
+  @override
+  String get editCut => 'Вырезать';
+
+  @override
+  String get editCopy => 'Копировать';
+
+  @override
+  String get editPaste => 'Вставить';
+
+  @override
+  String get editDelete => 'Удалить';
+
+  @override
+  String get editSelectAll => 'Выделить всё';
+
+  @override
   String get transferNoticeChannel => 'Передачи';
 
   @override

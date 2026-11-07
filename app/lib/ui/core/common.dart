@@ -91,16 +91,21 @@ class VerificationWords extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // A heading on two lines keeps the icon beside its first line.
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Icon(
                   Icons.verified_user_outlined,
                   color: theme.colorScheme.primary,
                 ),
                 Gap.s,
-                Text(
-                  safeL10n(context, 'verificationTitle').verificationTitle,
-                  style: theme.textTheme.titleMedium,
+                // Wraps on a narrow screen, larger text or a long language.
+                Flexible(
+                  child: Text(
+                    safeL10n(context, 'verificationTitle').verificationTitle,
+                    style: theme.textTheme.titleMedium,
+                  ),
                 ),
               ],
             ),

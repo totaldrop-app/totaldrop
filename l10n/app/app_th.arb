@@ -126,6 +126,14 @@
   "codeSuggestions": "คำแนะนำ",
   "progressPercent": "{percent}%",
 
+  "editUndo": "เลิกทำ",
+  "editRedo": "ทำซ้ำ",
+  "editCut": "ตัด",
+  "editCopy": "คัดลอก",
+  "editPaste": "วาง",
+  "editDelete": "ลบ",
+  "editSelectAll": "เลือกทั้งหมด",
+
   "transferNoticeChannel": "การโอน",
   "transferNoticeSending": "กำลังส่งด้วย TotalDrop",
   "transferNoticeReceiving": "กำลังรับด้วย TotalDrop",

@@ -126,6 +126,14 @@
   "codeSuggestions": "Sugestii",
   "progressPercent": "{percent}%",
 
+  "editUndo": "Anulează",
+  "editRedo": "Refă",
+  "editCut": "Decupează",
+  "editCopy": "Copiază",
+  "editPaste": "Lipește",
+  "editDelete": "Șterge",
+  "editSelectAll": "Selectează tot",
+
   "transferNoticeChannel": "Transferuri",
   "transferNoticeSending": "Se trimite cu TotalDrop",
   "transferNoticeReceiving": "Se primește cu TotalDrop",

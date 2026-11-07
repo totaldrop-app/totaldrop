@@ -477,6 +477,27 @@ class AppLocalizationsFi extends AppLocalizations {
   }
 
   @override
+  String get editUndo => 'Kumoa';
+
+  @override
+  String get editRedo => 'Tee uudelleen';
+
+  @override
+  String get editCut => 'Leikkaa';
+
+  @override
+  String get editCopy => 'Kopioi';
+
+  @override
+  String get editPaste => 'Liitä';
+
+  @override
+  String get editDelete => 'Poista';
+
+  @override
+  String get editSelectAll => 'Valitse kaikki';
+
+  @override
   String get transferNoticeChannel => 'Siirrot';
 
   @override

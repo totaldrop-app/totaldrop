@@ -477,6 +477,27 @@ class AppLocalizationsDa extends AppLocalizations {
   }
 
   @override
+  String get editUndo => 'Fortryd';
+
+  @override
+  String get editRedo => 'Annuller fortryd';
+
+  @override
+  String get editCut => 'Klip';
+
+  @override
+  String get editCopy => 'Kopiér';
+
+  @override
+  String get editPaste => 'Indsæt';
+
+  @override
+  String get editDelete => 'Slet';
+
+  @override
+  String get editSelectAll => 'Markér alt';
+
+  @override
   String get transferNoticeChannel => 'Overførsler';
 
   @override
