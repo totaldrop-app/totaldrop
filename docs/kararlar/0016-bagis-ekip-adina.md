@@ -1,4 +1,4 @@
-# 0015: Bağışlar kişi adına değil, TotalDrop ekibi adına alınır
+# 0016: Bağışlar kişi adına değil, TotalDrop ekibi adına alınır
 
 - **Durum:** Önerildi, 7 Kasım 2026 (Ozan, #352). Organizasyonun
   sponsor profili açılınca "Kabul" olur.

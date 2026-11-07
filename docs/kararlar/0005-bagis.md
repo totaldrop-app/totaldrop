@@ -3,7 +3,7 @@
 - **Durum:** Kabul, 27 Ekim 2026
 - **Karar:** TotalDrop ücretsiz kalır: reklam, ücretli sürüm ve yatırımcı
   yok. Bağışlar yalnızca GitHub Sponsors üzerinden alınır
-  (github.com/sponsors/ozdil; adres [0015](0015-bagis-ekip-adina.md) ile
+  (github.com/sponsors/ozdil; adres [0016](0016-bagis-ekip-adina.md) ile
   github.com/sponsors/totaldrop-app olacak). Bütün maliyetler ve aylık gelir-gider
   totaldrop.app/donate sayfasında kalem kalem yayımlanır.
 - **Neden:** Kullanıcının verisini satma ya da onu ücretli sürüme itme
