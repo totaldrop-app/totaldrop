@@ -10,6 +10,84 @@ All notable changes to TotalDrop are recorded here. The format follows
 Entries for the next release are in [changelog.d/](changelog.d/), one file
 per change, and move here when it is released (docs/surec.md).
 
+## [android-0.3.0-beta.7] - 2026-11-07
+
+### Added
+
+- **Site, README:** TotalDrop is on X as @totaldropapp. The site's page
+  footers (all but the privacy policy's short one) and every README link
+  to it, and the brand page lists the project's official accounts on the
+  web and social media so that impostors are easier to spot (#284).
+- **Site, README:** TotalDrop is on Instagram and Threads as
+  @totaldropapp. The site's page footers (all but the privacy policy's
+  short one), every README and the brand page's list of official
+  accounts link to them (#286).
+- **Site:** A team page at totaldrop.app/team shows who builds TotalDrop
+  and, discipline by discipline, who worked on which part, with profile
+  pictures and figures taken from the project's public history on GitHub.
+  The AI assistant that writes much of the code is named openly. The page
+  loads nothing from GitHub; the site's page footers (all but the privacy
+  policy's short one) link to it (#288).
+- **Android:** Settings says, in every language, that codes and
+  verification words stay in English so that two devices set to different
+  languages show the same words (#305, #52).
+- **Android:** Share files to TotalDrop from any app, such as Gallery or
+  Files: one or many, of any type. TotalDrop opens Send with them listed.
+  Holding the app icon offers Send and Receive (#308).
+- **Site:** The team page lists QA specialists too, with the platforms they
+  test, starting with one for iOS and macOS (#309).
+- **Android:** Send a text instead of files: "Send text" on the Send
+  screen, a text shared from another app, "Send with TotalDrop" in the
+  menu of text selected in any app, or "Send clipboard" when the app icon
+  is held. The text opens in Send to be looked at first, with any hidden
+  characters pointed out, and is sent as it is. A text that arrives is
+  shown, not saved, with any hidden characters named, and "Copy text"
+  copies it exactly as it came. Very long texts are best pasted: another
+  app can hand over less than the 1 MiB limit (#326).
+
+### Changed
+
+- **Site, README:** The download page and the README point at Android
+  0.3.0-beta.6 and list what is new: the send screen says at once that it
+  is preparing a large file, says when the chosen files cannot be added,
+  and TalkBack reads out each new step. The Linux app stays at 0.3.0-beta.5
+  (#277).
+- **Site:** The team page is easier to read: key figures at the top, people
+  as cards with icon links to GitHub and their own sites, AI and automation
+  in their own section, and a bar showing each discipline's share of work.
+  Pages now ask for the stylesheet and scripts by version, so a browser
+  never shows a new page with an old stylesheet after an update (#291).
+
+### Fixed
+
+- **Relay (Cloudflare):** The relay now bounds what it holds for a device
+  that does not read: before, a modified client could make it keep any
+  amount in memory. Devices from before 0.3.0-beta.4 lose a transfer
+  through this relay after 32 MiB reaches them: a receiver after 32 MiB
+  of the file, a sender later (an estimated 1 GiB of file, since only
+  acknowledgements reach it). Update both devices (#190).
+- **Site:** The language menu is readable in the dark theme. Its list
+  opened on a white background with light text, so most languages could
+  not be read (#293).
+- **Android:** The heading above the verification words wraps onto a
+  second line instead of running off a narrow screen, with larger text or
+  in a language with a long heading (#315).
+
+### Security
+
+- **Android:** A sending device no longer connects to its relay
+  when the receiving device uses a different relay or none, so that relay
+  no longer sees the sender's IP address for a transfer it could never
+  carry. A receiver on 0.1 set to another relay, which used to fall back
+  to the sender's relay anyway, now needs a direct path (#301).
+- **Android:** A share reads only files that another app serves
+  (`content://`). Addresses served by TotalDrop itself, `file://`
+  addresses and addresses with a user prefix are refused, so another app
+  cannot make TotalDrop send its private data, such as its device key.
+  Copies of shared files are kept out of backups and deleted when the
+  selection is cleared, or at the latest when the app starts again
+  (#308).
+
 ## [android-0.3.0-beta.6] - 2026-11-05
 
 ### Changed

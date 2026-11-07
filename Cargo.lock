@@ -2271,7 +2271,7 @@ dependencies = [
 
 [[package]]
 name = "rust_lib_totaldrop"
-version = "0.3.0-beta.6"
+version = "0.3.0-beta.7"
 dependencies = [
  "flutter_rust_bridge",
  "tokio",
