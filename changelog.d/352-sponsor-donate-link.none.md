@@ -1,1 +1,2 @@
-Repository metadata only: the Sponsor button on GitHub, nothing in the app or on the site changes.
+Repository metadata only: the Sponsor button on GitHub changes;
+nothing in the app or on the site changes.
