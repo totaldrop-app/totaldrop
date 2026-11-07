@@ -19,8 +19,20 @@
     denir.
   - Kişisel profil yeni bağış almaz; mevcut sponsorlara organizasyon
     profili bildirilir.
+- **Neden:** Bağışçı projeye güvenerek para verir; adres bir kişiyi
+  gösterince paranın kime ve neye gittiği belirsizleşir. Organizasyon
+  profili ekibi gösterir. Mali emanetçi, organizasyona ödeme bilgisi
+  bağlamadan para almayı sağlar ve /donate sayfasındaki şeffaflık
+  sözünü bağımsız bir defterle destekler.
+- **Değerlendirilen seçenekler:**
+  - Organizasyona doğrudan banka hesabı: kesinti yok, ama organizasyona
+    ödeme ve vergi bilgisi bağlanır; bu kurala aykırı.
+  - Yalnızca Open Collective: emanetçi aynı, ama bağış GitHub'dan çıkar ve
+    tek kanal ilkesi (0005) GitHub Sponsors'tan başka bir yere taşınır.
+  - Kişisel profil kalır: ekip yapısını yansıtmaz.
 - **Sonuçlar:** README'ler, site (ana sayfa ve /donate), Linux AppStream
   dosyası, `.github/FUNDING.yml` ve [docs/marka.md](../marka.md) yeni
   adrese geçer. Bu değişiklik organizasyon profili yayında olmadan
-  birleştirilmez, yoksa bağlantılar kırık olur. Emanetçinin kesintisi
-  /donate sayfasındaki maliyet tablosuna yazılır.
+  birleştirilmez, yoksa bağlantılar kırık olur. Emanetçi kesinleşince,
+  ayrı bir PR'da ve 35 dilde, /donate sayfası paranın emanetçide durduğunu
+  söyler ve kesintisi maliyet tablosuna yazılır.
