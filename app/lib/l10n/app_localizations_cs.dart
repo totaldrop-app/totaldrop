@@ -639,4 +639,50 @@ class AppLocalizationsCs extends AppLocalizations {
   @override
   String get errorTextDamaged =>
       'Text nedorazil v pořádku, proto se nezobrazí.';
+
+  @override
+  String get setupBackgroundTitle => 'Přenosy pokračují na pozadí';
+
+  @override
+  String get setupBackgroundBody =>
+      'Aby přenos pokračoval i po přepnutí do jiné aplikace nebo zamknutí obrazovky, povolte TotalDropu běžet bez omezení baterie. TotalDrop pracuje na pozadí jen během přenosu, který jste sami spustili.';
+
+  @override
+  String get setupBackgroundAllowed =>
+      'Optimalizace baterie systému Android je pro TotalDrop vypnutá.';
+
+  @override
+  String get setupBackgroundRestricted =>
+      'Optimalizace baterie systému Android je pro TotalDrop zapnutá: po přepnutí do jiné aplikace se přenos může zastavit.';
+
+  @override
+  String get setupBackgroundBattery => 'Otevřít nastavení baterie';
+
+  @override
+  String get setupBackgroundBatteryHint =>
+      'V seznamu najděte TotalDrop a vypněte pro něj optimalizaci baterie. Názvy těchto nastavení se v různých telefonech liší.';
+
+  @override
+  String setupBackgroundMaker(String maker) {
+    return 'Telefony $maker mají vlastní spořič baterie';
+  }
+
+  @override
+  String get setupBackgroundMakerBody =>
+      'Otevřete také spořič baterie pro TotalDrop a zvolte „Bez omezení“. Pokud telefon nabízí Automatické spuštění, zapněte ho pro TotalDrop.';
+
+  @override
+  String get setupBackgroundMakerOpen => 'Otevřít spořič baterie TotalDropu';
+
+  @override
+  String get setupBackgroundAutostart => 'Otevřít Automatické spuštění';
+
+  @override
+  String get setupBackgroundSkip => 'Teď ne';
+
+  @override
+  String get settingsBackground => 'Přenosy na pozadí';
+
+  @override
+  String get settingsBackgroundOpen => 'Nastavení baterie';
 }

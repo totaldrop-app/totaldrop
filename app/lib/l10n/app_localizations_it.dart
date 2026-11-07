@@ -643,4 +643,51 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get errorTextDamaged =>
       'Il testo non è arrivato integro, quindi non viene mostrato.';
+
+  @override
+  String get setupBackgroundTitle => 'Trasferimenti attivi in background';
+
+  @override
+  String get setupBackgroundBody =>
+      'Perché un trasferimento continui quando cambi app o blocchi lo schermo, consenti a TotalDrop di funzionare senza restrizioni della batteria. TotalDrop lavora in background solo mentre è in corso un trasferimento che hai avviato tu.';
+
+  @override
+  String get setupBackgroundAllowed =>
+      'L\'ottimizzazione della batteria di Android è disattivata per TotalDrop.';
+
+  @override
+  String get setupBackgroundRestricted =>
+      'L\'ottimizzazione della batteria di Android è attiva per TotalDrop: un trasferimento può fermarsi quando cambi app.';
+
+  @override
+  String get setupBackgroundBattery => 'Apri impostazioni batteria';
+
+  @override
+  String get setupBackgroundBatteryHint =>
+      'Trova TotalDrop nell\'elenco e disattiva la sua ottimizzazione della batteria. I nomi di queste impostazioni cambiano da telefono a telefono.';
+
+  @override
+  String setupBackgroundMaker(String maker) {
+    return 'I telefoni $maker hanno un proprio risparmio batteria';
+  }
+
+  @override
+  String get setupBackgroundMakerBody =>
+      'Apri anche il risparmio batteria di TotalDrop e scegli \"Nessuna restrizione\". Se il telefono ha l\'Avvio automatico, attivalo per TotalDrop.';
+
+  @override
+  String get setupBackgroundMakerOpen =>
+      'Apri il risparmio batteria di TotalDrop';
+
+  @override
+  String get setupBackgroundAutostart => 'Apri Avvio automatico';
+
+  @override
+  String get setupBackgroundSkip => 'Non ora';
+
+  @override
+  String get settingsBackground => 'Trasferimenti in background';
+
+  @override
+  String get settingsBackgroundOpen => 'Impostazioni batteria';
 }

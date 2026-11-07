@@ -631,4 +631,50 @@ class AppLocalizationsSv extends AppLocalizations {
   @override
   String get errorTextDamaged =>
       'Texten kom inte fram oskadd, så den visas inte.';
+
+  @override
+  String get setupBackgroundTitle => 'Låt överföringar fortsätta i bakgrunden';
+
+  @override
+  String get setupBackgroundBody =>
+      'För att en överföring ska fortsätta när du byter app eller låser skärmen, låt TotalDrop köras utan batteribegränsningar. TotalDrop arbetar bara i bakgrunden medan en överföring som du har startat pågår.';
+
+  @override
+  String get setupBackgroundAllowed =>
+      'Androids batterioptimering är av för TotalDrop.';
+
+  @override
+  String get setupBackgroundRestricted =>
+      'Androids batterioptimering är på för TotalDrop: en överföring kan stanna när du byter app.';
+
+  @override
+  String get setupBackgroundBattery => 'Öppna batteriinställningar';
+
+  @override
+  String get setupBackgroundBatteryHint =>
+      'Hitta TotalDrop i listan och stäng av batterioptimering för den. Namnen på de här inställningarna skiljer sig mellan telefoner.';
+
+  @override
+  String setupBackgroundMaker(String maker) {
+    return '$maker-telefoner har en egen batterisparfunktion';
+  }
+
+  @override
+  String get setupBackgroundMakerBody =>
+      'Öppna även TotalDrops batterisparfunktion och välj ”Inga begränsningar”. Om telefonen har Autostart, slå på det för TotalDrop.';
+
+  @override
+  String get setupBackgroundMakerOpen => 'Öppna TotalDrops batterisparfunktion';
+
+  @override
+  String get setupBackgroundAutostart => 'Öppna Autostart';
+
+  @override
+  String get setupBackgroundSkip => 'Inte nu';
+
+  @override
+  String get settingsBackground => 'Överföringar i bakgrunden';
+
+  @override
+  String get settingsBackgroundOpen => 'Batteriinställningar';
 }

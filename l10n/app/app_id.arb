@@ -169,5 +169,18 @@
   "receiveTextShortened": "Hanya awal teks yang ditampilkan. Salin teks menyalin seluruhnya.",
   "copyText": "Salin teks",
   "textCopied": "Teks disalin",
-  "errorTextDamaged": "Teks tidak tiba dengan utuh, jadi tidak ditampilkan."
+  "errorTextDamaged": "Teks tidak tiba dengan utuh, jadi tidak ditampilkan.",
+  "setupBackgroundTitle": "Biarkan transfer berjalan di latar belakang",
+  "setupBackgroundBody": "Agar transfer tetap berjalan saat Anda berpindah aplikasi atau mengunci layar, izinkan TotalDrop berjalan tanpa batasan baterai. TotalDrop hanya bekerja di latar belakang selama transfer yang Anda mulai sedang berjalan.",
+  "setupBackgroundAllowed": "Pengoptimalan baterai Android nonaktif untuk TotalDrop.",
+  "setupBackgroundRestricted": "Pengoptimalan baterai Android aktif untuk TotalDrop: transfer bisa berhenti saat Anda berpindah aplikasi.",
+  "setupBackgroundBattery": "Buka setelan baterai",
+  "setupBackgroundBatteryHint": "Cari TotalDrop di daftar dan nonaktifkan pengoptimalan baterainya. Nama setelan ini berbeda di setiap ponsel.",
+  "setupBackgroundMaker": "Ponsel {maker} punya penghemat baterai sendiri",
+  "setupBackgroundMakerBody": "Buka juga penghemat baterai TotalDrop dan pilih \"Tanpa batasan\". Jika ponsel punya Mulai otomatis, aktifkan untuk TotalDrop.",
+  "setupBackgroundMakerOpen": "Buka penghemat baterai TotalDrop",
+  "setupBackgroundAutostart": "Buka Mulai otomatis",
+  "setupBackgroundSkip": "Nanti saja",
+  "settingsBackground": "Transfer di latar belakang",
+  "settingsBackgroundOpen": "Setelan baterai"
 }

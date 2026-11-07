@@ -642,6 +642,54 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get errorTextDamaged =>
       'O texto não chegou íntegro, por isso não é exibido.';
+
+  @override
+  String get setupBackgroundTitle =>
+      'Manter as transferências em segundo plano';
+
+  @override
+  String get setupBackgroundBody =>
+      'Para que uma transferência continue quando você troca de app ou bloqueia a tela, permita que o TotalDrop funcione sem restrições de bateria. O TotalDrop só trabalha em segundo plano enquanto uma transferência iniciada por você está em andamento.';
+
+  @override
+  String get setupBackgroundAllowed =>
+      'A otimização de bateria do Android está desativada para o TotalDrop.';
+
+  @override
+  String get setupBackgroundRestricted =>
+      'A otimização de bateria do Android está ativada para o TotalDrop: uma transferência pode parar quando você troca de app.';
+
+  @override
+  String get setupBackgroundBattery => 'Abrir configurações de bateria';
+
+  @override
+  String get setupBackgroundBatteryHint =>
+      'Encontre o TotalDrop na lista e desative a otimização de bateria dele. Os nomes dessas configurações mudam de um celular para outro.';
+
+  @override
+  String setupBackgroundMaker(String maker) {
+    return 'Os celulares $maker têm uma economia de bateria própria';
+  }
+
+  @override
+  String get setupBackgroundMakerBody =>
+      'Abra também a economia de bateria do TotalDrop e escolha \"Sem restrições\". Se o celular tiver Início automático, ative-o para o TotalDrop.';
+
+  @override
+  String get setupBackgroundMakerOpen =>
+      'Abrir a economia de bateria do TotalDrop';
+
+  @override
+  String get setupBackgroundAutostart => 'Abrir Início automático';
+
+  @override
+  String get setupBackgroundSkip => 'Agora não';
+
+  @override
+  String get settingsBackground => 'Transferências em segundo plano';
+
+  @override
+  String get settingsBackgroundOpen => 'Configurações de bateria';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -1281,6 +1329,54 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String get errorTextDamaged =>
       'O texto não chegou íntegro, por isso não é exibido.';
+
+  @override
+  String get setupBackgroundTitle =>
+      'Manter as transferências em segundo plano';
+
+  @override
+  String get setupBackgroundBody =>
+      'Para que uma transferência continue quando você troca de app ou bloqueia a tela, permita que o TotalDrop funcione sem restrições de bateria. O TotalDrop só trabalha em segundo plano enquanto uma transferência iniciada por você está em andamento.';
+
+  @override
+  String get setupBackgroundAllowed =>
+      'A otimização de bateria do Android está desativada para o TotalDrop.';
+
+  @override
+  String get setupBackgroundRestricted =>
+      'A otimização de bateria do Android está ativada para o TotalDrop: uma transferência pode parar quando você troca de app.';
+
+  @override
+  String get setupBackgroundBattery => 'Abrir configurações de bateria';
+
+  @override
+  String get setupBackgroundBatteryHint =>
+      'Encontre o TotalDrop na lista e desative a otimização de bateria dele. Os nomes dessas configurações mudam de um celular para outro.';
+
+  @override
+  String setupBackgroundMaker(String maker) {
+    return 'Os celulares $maker têm uma economia de bateria própria';
+  }
+
+  @override
+  String get setupBackgroundMakerBody =>
+      'Abra também a economia de bateria do TotalDrop e escolha \"Sem restrições\". Se o celular tiver Início automático, ative-o para o TotalDrop.';
+
+  @override
+  String get setupBackgroundMakerOpen =>
+      'Abrir a economia de bateria do TotalDrop';
+
+  @override
+  String get setupBackgroundAutostart => 'Abrir Início automático';
+
+  @override
+  String get setupBackgroundSkip => 'Agora não';
+
+  @override
+  String get settingsBackground => 'Transferências em segundo plano';
+
+  @override
+  String get settingsBackgroundOpen => 'Configurações de bateria';
 }
 
 /// The translations for Portuguese, as used in Portugal (`pt_PT`).
@@ -1922,4 +2018,52 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
   @override
   String get errorTextDamaged =>
       'O texto não chegou íntegro, por isso não é mostrado.';
+
+  @override
+  String get setupBackgroundTitle =>
+      'Manter as transferências em segundo plano';
+
+  @override
+  String get setupBackgroundBody =>
+      'Para que uma transferência continue quando muda de app ou bloqueia o ecrã, permita que o TotalDrop funcione sem restrições de bateria. O TotalDrop só trabalha em segundo plano enquanto decorre uma transferência que iniciou.';
+
+  @override
+  String get setupBackgroundAllowed =>
+      'A otimização da bateria do Android está desativada para o TotalDrop.';
+
+  @override
+  String get setupBackgroundRestricted =>
+      'A otimização da bateria do Android está ativada para o TotalDrop: uma transferência pode parar quando muda de app.';
+
+  @override
+  String get setupBackgroundBattery => 'Abrir definições da bateria';
+
+  @override
+  String get setupBackgroundBatteryHint =>
+      'Encontre o TotalDrop na lista e desative a otimização da bateria para ele. Os nomes destas definições variam de telemóvel para telemóvel.';
+
+  @override
+  String setupBackgroundMaker(String maker) {
+    return 'Os telemóveis $maker têm uma poupança de bateria própria';
+  }
+
+  @override
+  String get setupBackgroundMakerBody =>
+      'Abra também a poupança de bateria do TotalDrop e escolha \"Sem restrições\". Se o telemóvel tiver Arranque automático, ative-o para o TotalDrop.';
+
+  @override
+  String get setupBackgroundMakerOpen =>
+      'Abrir a poupança de bateria do TotalDrop';
+
+  @override
+  String get setupBackgroundAutostart => 'Abrir Arranque automático';
+
+  @override
+  String get setupBackgroundSkip => 'Agora não';
+
+  @override
+  String get settingsBackground => 'Transferências em segundo plano';
+
+  @override
+  String get settingsBackgroundOpen => 'Definições da bateria';
 }

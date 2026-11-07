@@ -1129,6 +1129,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The text did not arrive intact, so it is not shown.'**
   String get errorTextDamaged;
+
+  /// First-run and Settings page about background transfers (#338): heading
+  ///
+  /// In en, this message translates to:
+  /// **'Keep transfers going in the background'**
+  String get setupBackgroundTitle;
+
+  /// The same page: why TotalDrop asks to run without battery restrictions
+  ///
+  /// In en, this message translates to:
+  /// **'So that a transfer keeps going when you switch apps or lock the screen, let TotalDrop run without battery restrictions. TotalDrop works in the background only while a transfer you started is running.'**
+  String get setupBackgroundBody;
+
+  /// The same page: status when Android's battery optimisation is already off for TotalDrop
+  ///
+  /// In en, this message translates to:
+  /// **'Android\'s battery optimisation is off for TotalDrop.'**
+  String get setupBackgroundAllowed;
+
+  /// The same page: status when Android's battery optimisation is still on for TotalDrop
+  ///
+  /// In en, this message translates to:
+  /// **'Android\'s battery optimisation is on for TotalDrop: a transfer may stop when you switch apps.'**
+  String get setupBackgroundRestricted;
+
+  /// The same page: button that opens Android's battery optimisation list
+  ///
+  /// In en, this message translates to:
+  /// **'Open battery settings'**
+  String get setupBackgroundBattery;
+
+  /// The same page: what to do on the page the button opens
+  ///
+  /// In en, this message translates to:
+  /// **'Find TotalDrop in the list and turn battery optimisation off for it. The names of these settings differ from phone to phone.'**
+  String get setupBackgroundBatteryHint;
+
+  /// The same page: heading of the second step on phones whose maker adds its own battery saver (Xiaomi, Samsung…)
+  ///
+  /// In en, this message translates to:
+  /// **'{maker} phones have a battery saver of their own'**
+  String setupBackgroundMaker(String maker);
+
+  /// The same page: what to choose in the maker's battery saver; "No restrictions" is the label on Xiaomi phones, use the label those phones show in your language
+  ///
+  /// In en, this message translates to:
+  /// **'Open TotalDrop\'s battery saver too and choose \"No restrictions\". If the phone has Autostart, turn it on for TotalDrop.'**
+  String get setupBackgroundMakerBody;
+
+  /// The same page: button that opens the maker's battery saver for TotalDrop
+  ///
+  /// In en, this message translates to:
+  /// **'Open TotalDrop\'s battery saver'**
+  String get setupBackgroundMakerOpen;
+
+  /// The same page: button that opens the maker's Autostart page (Xiaomi)
+  ///
+  /// In en, this message translates to:
+  /// **'Open Autostart'**
+  String get setupBackgroundAutostart;
+
+  /// The same page at first start: skip it for now
+  ///
+  /// In en, this message translates to:
+  /// **'Not now'**
+  String get setupBackgroundSkip;
+
+  /// Settings: heading of the section about background transfers
+  ///
+  /// In en, this message translates to:
+  /// **'Background transfers'**
+  String get settingsBackground;
+
+  /// Settings: button that opens the background transfers page
+  ///
+  /// In en, this message translates to:
+  /// **'Battery settings'**
+  String get settingsBackgroundOpen;
 }
 
 class _AppLocalizationsDelegate

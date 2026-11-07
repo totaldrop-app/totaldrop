@@ -615,4 +615,50 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get errorTextDamaged =>
       'Metin eksiksiz ulaşmadı, bu yüzden gösterilmiyor.';
+
+  @override
+  String get setupBackgroundTitle => 'Aktarımlar arka planda sürsün';
+
+  @override
+  String get setupBackgroundBody =>
+      'Uygulama değiştirdiğinizde ya da ekranı kilitlediğinizde aktarımın sürmesi için TotalDrop\'un pil kısıtlaması olmadan çalışmasına izin verin. TotalDrop arka planda yalnızca sizin başlattığınız bir aktarım sürerken çalışır.';
+
+  @override
+  String get setupBackgroundAllowed =>
+      'Android\'in pil optimizasyonu TotalDrop için kapalı.';
+
+  @override
+  String get setupBackgroundRestricted =>
+      'Android\'in pil optimizasyonu TotalDrop için açık: uygulama değiştirdiğinizde aktarım durabilir.';
+
+  @override
+  String get setupBackgroundBattery => 'Pil ayarlarını aç';
+
+  @override
+  String get setupBackgroundBatteryHint =>
+      'Listede TotalDrop\'u bulun ve onun için pil optimizasyonunu kapatın. Bu ayarların adları telefondan telefona değişir.';
+
+  @override
+  String setupBackgroundMaker(String maker) {
+    return '$maker telefonlarının kendi pil tasarrufu var';
+  }
+
+  @override
+  String get setupBackgroundMakerBody =>
+      'TotalDrop\'un pil tasarrufunu da açıp \"Kısıtlama yok\"u seçin. Telefonda Otomatik başlatma varsa TotalDrop için açın.';
+
+  @override
+  String get setupBackgroundMakerOpen => 'TotalDrop\'un pil tasarrufunu aç';
+
+  @override
+  String get setupBackgroundAutostart => 'Otomatik başlatmayı aç';
+
+  @override
+  String get setupBackgroundSkip => 'Şimdi değil';
+
+  @override
+  String get settingsBackground => 'Arka planda aktarım';
+
+  @override
+  String get settingsBackgroundOpen => 'Pil ayarları';
 }

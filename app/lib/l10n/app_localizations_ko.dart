@@ -588,4 +588,49 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get errorTextDamaged => '텍스트가 손상 없이 도착하지 않아 표시하지 않습니다.';
+
+  @override
+  String get setupBackgroundTitle => '백그라운드에서도 전송 계속하기';
+
+  @override
+  String get setupBackgroundBody =>
+      '다른 앱으로 전환하거나 화면을 잠가도 전송이 계속되도록 TotalDrop이 배터리 제한 없이 실행되게 허용하세요. TotalDrop은 내가 시작한 전송이 진행되는 동안에만 백그라운드에서 작동합니다.';
+
+  @override
+  String get setupBackgroundAllowed => 'TotalDrop의 Android 배터리 최적화가 꺼져 있습니다.';
+
+  @override
+  String get setupBackgroundRestricted =>
+      'TotalDrop의 Android 배터리 최적화가 켜져 있습니다. 다른 앱으로 전환하면 전송이 멈출 수 있습니다.';
+
+  @override
+  String get setupBackgroundBattery => '배터리 설정 열기';
+
+  @override
+  String get setupBackgroundBatteryHint =>
+      '목록에서 TotalDrop을 찾아 배터리 최적화를 끄세요. 이 설정의 이름은 휴대전화마다 다릅니다.';
+
+  @override
+  String setupBackgroundMaker(String maker) {
+    return '$maker 휴대전화에는 자체 배터리 절약 기능이 있습니다';
+  }
+
+  @override
+  String get setupBackgroundMakerBody =>
+      'TotalDrop의 배터리 절약도 열어 \'제한 없음\'을 선택하세요. 자동 시작이 있으면 TotalDrop에 대해 켜세요.';
+
+  @override
+  String get setupBackgroundMakerOpen => 'TotalDrop 배터리 절약 열기';
+
+  @override
+  String get setupBackgroundAutostart => '자동 시작 열기';
+
+  @override
+  String get setupBackgroundSkip => '나중에';
+
+  @override
+  String get settingsBackground => '백그라운드 전송';
+
+  @override
+  String get settingsBackgroundOpen => '배터리 설정';
 }

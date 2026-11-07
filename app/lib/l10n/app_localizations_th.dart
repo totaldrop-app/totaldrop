@@ -606,4 +606,51 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get errorTextDamaged => 'ข้อความมาไม่ครบถ้วน จึงไม่แสดง';
+
+  @override
+  String get setupBackgroundTitle => 'ให้การโอนทำงานต่อในเบื้องหลัง';
+
+  @override
+  String get setupBackgroundBody =>
+      'เพื่อให้การโอนทำงานต่อเมื่อคุณสลับแอปหรือล็อกหน้าจอ ให้ TotalDrop ทำงานได้โดยไม่มีข้อจำกัดด้านแบตเตอรี่ TotalDrop ทำงานในเบื้องหลังเฉพาะขณะที่การโอนที่คุณเริ่มเองกำลังดำเนินอยู่เท่านั้น';
+
+  @override
+  String get setupBackgroundAllowed =>
+      'การเพิ่มประสิทธิภาพแบตเตอรี่ของ Android ปิดอยู่สำหรับ TotalDrop';
+
+  @override
+  String get setupBackgroundRestricted =>
+      'การเพิ่มประสิทธิภาพแบตเตอรี่ของ Android เปิดอยู่สำหรับ TotalDrop การโอนอาจหยุดเมื่อคุณสลับแอป';
+
+  @override
+  String get setupBackgroundBattery => 'เปิดการตั้งค่าแบตเตอรี่';
+
+  @override
+  String get setupBackgroundBatteryHint =>
+      'ค้นหา TotalDrop ในรายการแล้วปิดการเพิ่มประสิทธิภาพแบตเตอรี่ ชื่อการตั้งค่าเหล่านี้ต่างกันไปในแต่ละโทรศัพท์';
+
+  @override
+  String setupBackgroundMaker(String maker) {
+    return 'โทรศัพท์ $maker มีโหมดประหยัดแบตเตอรี่ของตัวเอง';
+  }
+
+  @override
+  String get setupBackgroundMakerBody =>
+      'เปิดโหมดประหยัดแบตเตอรี่ของ TotalDrop ด้วยแล้วเลือก \"ไม่จำกัด\" หากโทรศัพท์มีการเริ่มอัตโนมัติ ให้เปิดสำหรับ TotalDrop';
+
+  @override
+  String get setupBackgroundMakerOpen =>
+      'เปิดโหมดประหยัดแบตเตอรี่ของ TotalDrop';
+
+  @override
+  String get setupBackgroundAutostart => 'เปิดการเริ่มอัตโนมัติ';
+
+  @override
+  String get setupBackgroundSkip => 'ไว้ทีหลัง';
+
+  @override
+  String get settingsBackground => 'การโอนในเบื้องหลัง';
+
+  @override
+  String get settingsBackgroundOpen => 'การตั้งค่าแบตเตอรี่';
 }

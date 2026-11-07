@@ -639,4 +639,51 @@ class AppLocalizationsEl extends AppLocalizations {
   @override
   String get errorTextDamaged =>
       'Το κείμενο δεν έφτασε ακέραιο, γι’ αυτό δεν εμφανίζεται.';
+
+  @override
+  String get setupBackgroundTitle => 'Οι μεταφορές συνεχίζουν στο παρασκήνιο';
+
+  @override
+  String get setupBackgroundBody =>
+      'Για να συνεχίζει μια μεταφορά όταν αλλάζετε εφαρμογή ή κλειδώνετε την οθόνη, επιτρέψτε στο TotalDrop να εκτελείται χωρίς περιορισμούς μπαταρίας. Το TotalDrop λειτουργεί στο παρασκήνιο μόνο όσο τρέχει μια μεταφορά που ξεκινήσατε εσείς.';
+
+  @override
+  String get setupBackgroundAllowed =>
+      'Η βελτιστοποίηση μπαταρίας του Android είναι απενεργοποιημένη για το TotalDrop.';
+
+  @override
+  String get setupBackgroundRestricted =>
+      'Η βελτιστοποίηση μπαταρίας του Android είναι ενεργή για το TotalDrop: μια μεταφορά μπορεί να σταματήσει όταν αλλάζετε εφαρμογή.';
+
+  @override
+  String get setupBackgroundBattery => 'Άνοιγμα ρυθμίσεων μπαταρίας';
+
+  @override
+  String get setupBackgroundBatteryHint =>
+      'Βρείτε το TotalDrop στη λίστα και απενεργοποιήστε τη βελτιστοποίηση μπαταρίας του. Τα ονόματα αυτών των ρυθμίσεων διαφέρουν από τηλέφωνο σε τηλέφωνο.';
+
+  @override
+  String setupBackgroundMaker(String maker) {
+    return 'Τα τηλέφωνα $maker έχουν δική τους εξοικονόμηση μπαταρίας';
+  }
+
+  @override
+  String get setupBackgroundMakerBody =>
+      'Ανοίξτε επίσης την εξοικονόμηση μπαταρίας του TotalDrop και επιλέξτε «Χωρίς περιορισμούς». Αν το τηλέφωνο έχει Αυτόματη εκκίνηση, ενεργοποιήστε την για το TotalDrop.';
+
+  @override
+  String get setupBackgroundMakerOpen =>
+      'Άνοιγμα εξοικονόμησης μπαταρίας του TotalDrop';
+
+  @override
+  String get setupBackgroundAutostart => 'Άνοιγμα Αυτόματης εκκίνησης';
+
+  @override
+  String get setupBackgroundSkip => 'Όχι τώρα';
+
+  @override
+  String get settingsBackground => 'Μεταφορές στο παρασκήνιο';
+
+  @override
+  String get settingsBackgroundOpen => 'Ρυθμίσεις μπαταρίας';
 }

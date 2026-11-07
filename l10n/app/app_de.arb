@@ -169,5 +169,18 @@
   "receiveTextShortened": "Nur der Anfang des Textes wird angezeigt. Text kopieren kopiert den ganzen Text.",
   "copyText": "Text kopieren",
   "textCopied": "Text kopiert",
-  "errorTextDamaged": "Der Text ist nicht unversehrt angekommen und wird deshalb nicht angezeigt."
+  "errorTextDamaged": "Der Text ist nicht unversehrt angekommen und wird deshalb nicht angezeigt.",
+  "setupBackgroundTitle": "Übertragungen im Hintergrund fortsetzen",
+  "setupBackgroundBody": "Damit eine Übertragung weiterläuft, wenn Sie die App wechseln oder den Bildschirm sperren, erlauben Sie TotalDrop, ohne Akkubeschränkungen zu laufen. TotalDrop arbeitet im Hintergrund nur, solange eine von Ihnen gestartete Übertragung läuft.",
+  "setupBackgroundAllowed": "Die Akkuoptimierung von Android ist für TotalDrop aus.",
+  "setupBackgroundRestricted": "Die Akkuoptimierung von Android ist für TotalDrop an: Eine Übertragung kann anhalten, wenn Sie die App wechseln.",
+  "setupBackgroundBattery": "Akkueinstellungen öffnen",
+  "setupBackgroundBatteryHint": "Suchen Sie TotalDrop in der Liste und schalten Sie die Akkuoptimierung dafür aus. Die Namen dieser Einstellungen sind je nach Telefon verschieden.",
+  "setupBackgroundMaker": "{maker}-Telefone haben einen eigenen Energiesparmodus",
+  "setupBackgroundMakerBody": "Öffnen Sie auch den Energiesparmodus für TotalDrop und wählen Sie „Keine Einschränkungen“. Hat das Telefon Autostart, schalten Sie es für TotalDrop ein.",
+  "setupBackgroundMakerOpen": "Energiesparmodus von TotalDrop öffnen",
+  "setupBackgroundAutostart": "Autostart öffnen",
+  "setupBackgroundSkip": "Nicht jetzt",
+  "settingsBackground": "Übertragungen im Hintergrund",
+  "settingsBackgroundOpen": "Akkueinstellungen"
 }

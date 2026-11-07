@@ -3,20 +3,24 @@
 
 import 'package:material_ui/material_ui.dart';
 
+import '../../data/background_access.dart';
 import '../../data/settings_repository.dart';
 import '../../l10n/app_localizations.dart';
 import '../core/l10n.dart';
 import '../core/theme.dart';
+import '../setup/background_setup_view.dart';
 
 class SettingsView extends StatefulWidget {
   const SettingsView({
     super.key,
     required this.settings,
     required this.version,
+    this.background = const NoBackgroundLimits(),
   });
 
   final SettingsRepository settings;
   final String version;
+  final BackgroundAccess background;
 
   @override
   State<SettingsView> createState() => _SettingsViewState();
@@ -131,6 +135,30 @@ class _SettingsViewState extends State<SettingsView> {
               },
             ),
           ),
+          if (widget.background is! NoBackgroundLimits) ...[
+            Gap.l,
+            const Divider(),
+            Gap.l,
+            Text(l.settingsBackground, style: theme.textTheme.titleLarge),
+            Gap.s,
+            Text(l.setupBackgroundBody, style: theme.textTheme.bodyMedium),
+            Gap.m,
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: FilledButton.tonal(
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute<void>(
+                    builder: (context) => BackgroundSetupView(
+                      access: widget.background,
+                      onDone: ({required skipped}) => Navigator.pop(context),
+                    ),
+                  ),
+                ),
+                child: Text(l.settingsBackgroundOpen),
+              ),
+            ),
+          ],
           Gap.l,
           const Divider(),
           Gap.l,

@@ -578,6 +578,51 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get errorTextDamaged => '文本未完整送达，因此不显示。';
+
+  @override
+  String get setupBackgroundTitle => '让传输在后台继续';
+
+  @override
+  String get setupBackgroundBody =>
+      '为了在切换应用或锁定屏幕时传输仍能继续，请允许 TotalDrop 不受电池限制地运行。TotalDrop 只在您发起的传输进行时才在后台工作。';
+
+  @override
+  String get setupBackgroundAllowed => 'TotalDrop 的 Android 电池优化已关闭。';
+
+  @override
+  String get setupBackgroundRestricted =>
+      'TotalDrop 的 Android 电池优化已开启：切换应用时传输可能会停止。';
+
+  @override
+  String get setupBackgroundBattery => '打开电池设置';
+
+  @override
+  String get setupBackgroundBatteryHint =>
+      '在列表中找到 TotalDrop，并关闭它的电池优化。这些设置的名称因手机而异。';
+
+  @override
+  String setupBackgroundMaker(String maker) {
+    return '$maker 手机有自己的省电功能';
+  }
+
+  @override
+  String get setupBackgroundMakerBody =>
+      '请同时打开 TotalDrop 的省电策略并选择“无限制”。如果手机有自启动，请为 TotalDrop 开启。';
+
+  @override
+  String get setupBackgroundMakerOpen => '打开 TotalDrop 的省电策略';
+
+  @override
+  String get setupBackgroundAutostart => '打开自启动';
+
+  @override
+  String get setupBackgroundSkip => '以后再说';
+
+  @override
+  String get settingsBackground => '后台传输';
+
+  @override
+  String get settingsBackgroundOpen => '电池设置';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hans`).
@@ -1153,6 +1198,51 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
 
   @override
   String get errorTextDamaged => '文本未完整送达，因此不显示。';
+
+  @override
+  String get setupBackgroundTitle => '让传输在后台继续';
+
+  @override
+  String get setupBackgroundBody =>
+      '为了在切换应用或锁定屏幕时传输仍能继续，请允许 TotalDrop 不受电池限制地运行。TotalDrop 只在您发起的传输进行时才在后台工作。';
+
+  @override
+  String get setupBackgroundAllowed => 'TotalDrop 的 Android 电池优化已关闭。';
+
+  @override
+  String get setupBackgroundRestricted =>
+      'TotalDrop 的 Android 电池优化已开启：切换应用时传输可能会停止。';
+
+  @override
+  String get setupBackgroundBattery => '打开电池设置';
+
+  @override
+  String get setupBackgroundBatteryHint =>
+      '在列表中找到 TotalDrop，并关闭它的电池优化。这些设置的名称因手机而异。';
+
+  @override
+  String setupBackgroundMaker(String maker) {
+    return '$maker 手机有自己的省电功能';
+  }
+
+  @override
+  String get setupBackgroundMakerBody =>
+      '请同时打开 TotalDrop 的省电策略并选择“无限制”。如果手机有自启动，请为 TotalDrop 开启。';
+
+  @override
+  String get setupBackgroundMakerOpen => '打开 TotalDrop 的省电策略';
+
+  @override
+  String get setupBackgroundAutostart => '打开自启动';
+
+  @override
+  String get setupBackgroundSkip => '以后再说';
+
+  @override
+  String get settingsBackground => '后台传输';
+
+  @override
+  String get settingsBackgroundOpen => '电池设置';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -1727,4 +1817,49 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get errorTextDamaged => '文字未完整送達，因此不顯示。';
+
+  @override
+  String get setupBackgroundTitle => '讓傳輸在背景繼續';
+
+  @override
+  String get setupBackgroundBody =>
+      '為了在切換應用程式或鎖定螢幕時傳輸仍能繼續，請允許 TotalDrop 不受電池限制地執行。TotalDrop 只在您發起的傳輸進行時才在背景運作。';
+
+  @override
+  String get setupBackgroundAllowed => 'TotalDrop 的 Android 電池最佳化已關閉。';
+
+  @override
+  String get setupBackgroundRestricted =>
+      'TotalDrop 的 Android 電池最佳化已開啟：切換應用程式時傳輸可能會停止。';
+
+  @override
+  String get setupBackgroundBattery => '開啟電池設定';
+
+  @override
+  String get setupBackgroundBatteryHint =>
+      '在清單中找到 TotalDrop，並關閉它的電池最佳化。這些設定的名稱因手機而異。';
+
+  @override
+  String setupBackgroundMaker(String maker) {
+    return '$maker 手機有自己的省電功能';
+  }
+
+  @override
+  String get setupBackgroundMakerBody =>
+      '請同時開啟 TotalDrop 的省電設定並選擇「無限制」。如果手機有自動啟動，請為 TotalDrop 開啟。';
+
+  @override
+  String get setupBackgroundMakerOpen => '開啟 TotalDrop 的省電設定';
+
+  @override
+  String get setupBackgroundAutostart => '開啟自動啟動';
+
+  @override
+  String get setupBackgroundSkip => '以後再說';
+
+  @override
+  String get settingsBackground => '背景傳輸';
+
+  @override
+  String get settingsBackgroundOpen => '電池設定';
 }

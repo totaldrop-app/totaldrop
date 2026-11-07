@@ -641,4 +641,50 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get errorTextDamaged => 'Текст дошёл не целым, поэтому он не показан.';
+
+  @override
+  String get setupBackgroundTitle => 'Передача продолжается в фоне';
+
+  @override
+  String get setupBackgroundBody =>
+      'Чтобы передача продолжалась, когда вы переключаетесь на другое приложение или блокируете экран, разрешите TotalDrop работать без ограничений батареи. TotalDrop работает в фоне только во время передачи, которую вы начали сами.';
+
+  @override
+  String get setupBackgroundAllowed =>
+      'Оптимизация батареи Android для TotalDrop выключена.';
+
+  @override
+  String get setupBackgroundRestricted =>
+      'Оптимизация батареи Android для TotalDrop включена: передача может остановиться, когда вы переключаетесь на другое приложение.';
+
+  @override
+  String get setupBackgroundBattery => 'Открыть настройки батареи';
+
+  @override
+  String get setupBackgroundBatteryHint =>
+      'Найдите TotalDrop в списке и выключите для него оптимизацию батареи. Названия этих настроек на разных телефонах отличаются.';
+
+  @override
+  String setupBackgroundMaker(String maker) {
+    return 'На телефонах $maker есть собственная экономия заряда';
+  }
+
+  @override
+  String get setupBackgroundMakerBody =>
+      'Откройте также экономию заряда для TotalDrop и выберите «Нет ограничений». Если на телефоне есть автозапуск, включите его для TotalDrop.';
+
+  @override
+  String get setupBackgroundMakerOpen => 'Открыть экономию заряда TotalDrop';
+
+  @override
+  String get setupBackgroundAutostart => 'Открыть автозапуск';
+
+  @override
+  String get setupBackgroundSkip => 'Не сейчас';
+
+  @override
+  String get settingsBackground => 'Передача в фоне';
+
+  @override
+  String get settingsBackgroundOpen => 'Настройки батареи';
 }

@@ -169,5 +169,18 @@
   "receiveTextShortened": "רק תחילת הטקסט מוצגת. העתקת טקסט מעתיקה את כולו.",
   "copyText": "העתקת הטקסט",
   "textCopied": "הטקסט הועתק",
-  "errorTextDamaged": "הטקסט לא הגיע בשלמותו, ולכן אינו מוצג."
+  "errorTextDamaged": "הטקסט לא הגיע בשלמותו, ולכן אינו מוצג.",
+  "setupBackgroundTitle": "המשך העברות ברקע",
+  "setupBackgroundBody": "כדי שהעברה תמשיך כשעוברים לאפליקציה אחרת או נועלים את המסך, אפשרו ל־TotalDrop לפעול בלי הגבלות סוללה. TotalDrop פועל ברקע רק בזמן העברה שהתחלתם בעצמכם.",
+  "setupBackgroundAllowed": "אופטימיזציית הסוללה של Android כבויה עבור TotalDrop.",
+  "setupBackgroundRestricted": "אופטימיזציית הסוללה של Android פעילה עבור TotalDrop: העברה עלולה להיעצר כשעוברים לאפליקציה אחרת.",
+  "setupBackgroundBattery": "פתיחת הגדרות הסוללה",
+  "setupBackgroundBatteryHint": "מצאו את TotalDrop ברשימה וכבו עבורו את אופטימיזציית הסוללה. שמות ההגדרות האלה משתנים מטלפון לטלפון.",
+  "setupBackgroundMaker": "לטלפונים של {maker} יש חיסכון סוללה משלהם",
+  "setupBackgroundMakerBody": "פתחו גם את חיסכון הסוללה של TotalDrop ובחרו \"ללא הגבלות\". אם בטלפון יש הפעלה אוטומטית, הפעילו אותה עבור TotalDrop.",
+  "setupBackgroundMakerOpen": "פתיחת חיסכון הסוללה של TotalDrop",
+  "setupBackgroundAutostart": "פתיחת ההפעלה האוטומטית",
+  "setupBackgroundSkip": "לא עכשיו",
+  "settingsBackground": "העברות ברקע",
+  "settingsBackgroundOpen": "הגדרות סוללה"
 }

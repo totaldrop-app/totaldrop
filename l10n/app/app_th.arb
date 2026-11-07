@@ -169,5 +169,18 @@
   "receiveTextShortened": "แสดงเฉพาะตอนต้นของข้อความ คัดลอกข้อความจะคัดลอกทั้งหมด",
   "copyText": "คัดลอกข้อความ",
   "textCopied": "คัดลอกข้อความแล้ว",
-  "errorTextDamaged": "ข้อความมาไม่ครบถ้วน จึงไม่แสดง"
+  "errorTextDamaged": "ข้อความมาไม่ครบถ้วน จึงไม่แสดง",
+  "setupBackgroundTitle": "ให้การโอนทำงานต่อในเบื้องหลัง",
+  "setupBackgroundBody": "เพื่อให้การโอนทำงานต่อเมื่อคุณสลับแอปหรือล็อกหน้าจอ ให้ TotalDrop ทำงานได้โดยไม่มีข้อจำกัดด้านแบตเตอรี่ TotalDrop ทำงานในเบื้องหลังเฉพาะขณะที่การโอนที่คุณเริ่มเองกำลังดำเนินอยู่เท่านั้น",
+  "setupBackgroundAllowed": "การเพิ่มประสิทธิภาพแบตเตอรี่ของ Android ปิดอยู่สำหรับ TotalDrop",
+  "setupBackgroundRestricted": "การเพิ่มประสิทธิภาพแบตเตอรี่ของ Android เปิดอยู่สำหรับ TotalDrop การโอนอาจหยุดเมื่อคุณสลับแอป",
+  "setupBackgroundBattery": "เปิดการตั้งค่าแบตเตอรี่",
+  "setupBackgroundBatteryHint": "ค้นหา TotalDrop ในรายการแล้วปิดการเพิ่มประสิทธิภาพแบตเตอรี่ ชื่อการตั้งค่าเหล่านี้ต่างกันไปในแต่ละโทรศัพท์",
+  "setupBackgroundMaker": "โทรศัพท์ {maker} มีโหมดประหยัดแบตเตอรี่ของตัวเอง",
+  "setupBackgroundMakerBody": "เปิดโหมดประหยัดแบตเตอรี่ของ TotalDrop ด้วยแล้วเลือก \"ไม่จำกัด\" หากโทรศัพท์มีการเริ่มอัตโนมัติ ให้เปิดสำหรับ TotalDrop",
+  "setupBackgroundMakerOpen": "เปิดโหมดประหยัดแบตเตอรี่ของ TotalDrop",
+  "setupBackgroundAutostart": "เปิดการเริ่มอัตโนมัติ",
+  "setupBackgroundSkip": "ไว้ทีหลัง",
+  "settingsBackground": "การโอนในเบื้องหลัง",
+  "settingsBackgroundOpen": "การตั้งค่าแบตเตอรี่"
 }

@@ -169,5 +169,18 @@
   "receiveTextShortened": "Tekstistä näytetään vain alku. Kopioi teksti kopioi sen kokonaan.",
   "copyText": "Kopioi teksti",
   "textCopied": "Teksti kopioitu",
-  "errorTextDamaged": "Teksti ei saapunut ehjänä, joten sitä ei näytetä."
+  "errorTextDamaged": "Teksti ei saapunut ehjänä, joten sitä ei näytetä.",
+  "setupBackgroundTitle": "Siirrot jatkuvat taustalla",
+  "setupBackgroundBody": "Jotta siirto jatkuu, kun vaihdat sovellusta tai lukitset näytön, salli TotalDropin toimia ilman akkurajoituksia. TotalDrop toimii taustalla vain, kun itse aloittamasi siirto on käynnissä.",
+  "setupBackgroundAllowed": "Androidin akun optimointi on pois päältä TotalDropilta.",
+  "setupBackgroundRestricted": "Androidin akun optimointi on päällä TotalDropilla: siirto voi pysähtyä, kun vaihdat sovellusta.",
+  "setupBackgroundBattery": "Avaa akkuasetukset",
+  "setupBackgroundBatteryHint": "Etsi TotalDrop luettelosta ja poista sen akun optimointi käytöstä. Näiden asetusten nimet vaihtelevat puhelimittain.",
+  "setupBackgroundMaker": "{maker}-puhelimissa on oma virransäästö",
+  "setupBackgroundMakerBody": "Avaa myös TotalDropin virransäästö ja valitse ”Ei rajoituksia”. Jos puhelimessa on Automaattinen käynnistys, ota se käyttöön TotalDropille.",
+  "setupBackgroundMakerOpen": "Avaa TotalDropin virransäästö",
+  "setupBackgroundAutostart": "Avaa Automaattinen käynnistys",
+  "setupBackgroundSkip": "Ei nyt",
+  "settingsBackground": "Siirrot taustalla",
+  "settingsBackgroundOpen": "Akkuasetukset"
 }

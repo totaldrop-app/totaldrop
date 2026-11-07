@@ -622,4 +622,50 @@ class AppLocalizationsHe extends AppLocalizations {
 
   @override
   String get errorTextDamaged => 'הטקסט לא הגיע בשלמותו, ולכן אינו מוצג.';
+
+  @override
+  String get setupBackgroundTitle => 'המשך העברות ברקע';
+
+  @override
+  String get setupBackgroundBody =>
+      'כדי שהעברה תמשיך כשעוברים לאפליקציה אחרת או נועלים את המסך, אפשרו ל־TotalDrop לפעול בלי הגבלות סוללה. TotalDrop פועל ברקע רק בזמן העברה שהתחלתם בעצמכם.';
+
+  @override
+  String get setupBackgroundAllowed =>
+      'אופטימיזציית הסוללה של Android כבויה עבור TotalDrop.';
+
+  @override
+  String get setupBackgroundRestricted =>
+      'אופטימיזציית הסוללה של Android פעילה עבור TotalDrop: העברה עלולה להיעצר כשעוברים לאפליקציה אחרת.';
+
+  @override
+  String get setupBackgroundBattery => 'פתיחת הגדרות הסוללה';
+
+  @override
+  String get setupBackgroundBatteryHint =>
+      'מצאו את TotalDrop ברשימה וכבו עבורו את אופטימיזציית הסוללה. שמות ההגדרות האלה משתנים מטלפון לטלפון.';
+
+  @override
+  String setupBackgroundMaker(String maker) {
+    return 'לטלפונים של $maker יש חיסכון סוללה משלהם';
+  }
+
+  @override
+  String get setupBackgroundMakerBody =>
+      'פתחו גם את חיסכון הסוללה של TotalDrop ובחרו \"ללא הגבלות\". אם בטלפון יש הפעלה אוטומטית, הפעילו אותה עבור TotalDrop.';
+
+  @override
+  String get setupBackgroundMakerOpen => 'פתיחת חיסכון הסוללה של TotalDrop';
+
+  @override
+  String get setupBackgroundAutostart => 'פתיחת ההפעלה האוטומטית';
+
+  @override
+  String get setupBackgroundSkip => 'לא עכשיו';
+
+  @override
+  String get settingsBackground => 'העברות ברקע';
+
+  @override
+  String get settingsBackgroundOpen => 'הגדרות סוללה';
 }

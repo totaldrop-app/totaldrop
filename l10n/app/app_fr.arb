@@ -169,5 +169,18 @@
   "receiveTextShortened": "Seul le début du texte est affiché. Copier le texte le copie en entier.",
   "copyText": "Copier le texte",
   "textCopied": "Texte copié",
-  "errorTextDamaged": "Le texte n’est pas arrivé intact, il n’est donc pas affiché."
+  "errorTextDamaged": "Le texte n’est pas arrivé intact, il n’est donc pas affiché.",
+  "setupBackgroundTitle": "Continuer les transferts en arrière-plan",
+  "setupBackgroundBody": "Pour qu'un transfert continue quand vous changez d'appli ou verrouillez l'écran, autorisez TotalDrop à fonctionner sans restriction de batterie. TotalDrop ne travaille en arrière-plan que pendant un transfert que vous avez lancé.",
+  "setupBackgroundAllowed": "L'optimisation de la batterie d'Android est désactivée pour TotalDrop.",
+  "setupBackgroundRestricted": "L'optimisation de la batterie d'Android est activée pour TotalDrop : un transfert peut s'arrêter quand vous changez d'appli.",
+  "setupBackgroundBattery": "Ouvrir les réglages de batterie",
+  "setupBackgroundBatteryHint": "Cherchez TotalDrop dans la liste et désactivez son optimisation de la batterie. Le nom de ces réglages varie d'un téléphone à l'autre.",
+  "setupBackgroundMaker": "Les téléphones {maker} ont leur propre économiseur de batterie",
+  "setupBackgroundMakerBody": "Ouvrez aussi l'économiseur de batterie de TotalDrop et choisissez « Aucune restriction ». Si le téléphone propose le Démarrage automatique, activez-le pour TotalDrop.",
+  "setupBackgroundMakerOpen": "Ouvrir l'économiseur de batterie de TotalDrop",
+  "setupBackgroundAutostart": "Ouvrir le Démarrage automatique",
+  "setupBackgroundSkip": "Pas maintenant",
+  "settingsBackground": "Transferts en arrière-plan",
+  "settingsBackgroundOpen": "Réglages de batterie"
 }

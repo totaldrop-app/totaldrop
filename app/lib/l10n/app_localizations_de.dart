@@ -637,4 +637,51 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get errorTextDamaged =>
       'Der Text ist nicht unversehrt angekommen und wird deshalb nicht angezeigt.';
+
+  @override
+  String get setupBackgroundTitle => 'Übertragungen im Hintergrund fortsetzen';
+
+  @override
+  String get setupBackgroundBody =>
+      'Damit eine Übertragung weiterläuft, wenn Sie die App wechseln oder den Bildschirm sperren, erlauben Sie TotalDrop, ohne Akkubeschränkungen zu laufen. TotalDrop arbeitet im Hintergrund nur, solange eine von Ihnen gestartete Übertragung läuft.';
+
+  @override
+  String get setupBackgroundAllowed =>
+      'Die Akkuoptimierung von Android ist für TotalDrop aus.';
+
+  @override
+  String get setupBackgroundRestricted =>
+      'Die Akkuoptimierung von Android ist für TotalDrop an: Eine Übertragung kann anhalten, wenn Sie die App wechseln.';
+
+  @override
+  String get setupBackgroundBattery => 'Akkueinstellungen öffnen';
+
+  @override
+  String get setupBackgroundBatteryHint =>
+      'Suchen Sie TotalDrop in der Liste und schalten Sie die Akkuoptimierung dafür aus. Die Namen dieser Einstellungen sind je nach Telefon verschieden.';
+
+  @override
+  String setupBackgroundMaker(String maker) {
+    return '$maker-Telefone haben einen eigenen Energiesparmodus';
+  }
+
+  @override
+  String get setupBackgroundMakerBody =>
+      'Öffnen Sie auch den Energiesparmodus für TotalDrop und wählen Sie „Keine Einschränkungen“. Hat das Telefon Autostart, schalten Sie es für TotalDrop ein.';
+
+  @override
+  String get setupBackgroundMakerOpen =>
+      'Energiesparmodus von TotalDrop öffnen';
+
+  @override
+  String get setupBackgroundAutostart => 'Autostart öffnen';
+
+  @override
+  String get setupBackgroundSkip => 'Nicht jetzt';
+
+  @override
+  String get settingsBackground => 'Übertragungen im Hintergrund';
+
+  @override
+  String get settingsBackgroundOpen => 'Akkueinstellungen';
 }

@@ -630,4 +630,50 @@ class AppLocalizationsFi extends AppLocalizations {
   @override
   String get errorTextDamaged =>
       'Teksti ei saapunut ehjänä, joten sitä ei näytetä.';
+
+  @override
+  String get setupBackgroundTitle => 'Siirrot jatkuvat taustalla';
+
+  @override
+  String get setupBackgroundBody =>
+      'Jotta siirto jatkuu, kun vaihdat sovellusta tai lukitset näytön, salli TotalDropin toimia ilman akkurajoituksia. TotalDrop toimii taustalla vain, kun itse aloittamasi siirto on käynnissä.';
+
+  @override
+  String get setupBackgroundAllowed =>
+      'Androidin akun optimointi on pois päältä TotalDropilta.';
+
+  @override
+  String get setupBackgroundRestricted =>
+      'Androidin akun optimointi on päällä TotalDropilla: siirto voi pysähtyä, kun vaihdat sovellusta.';
+
+  @override
+  String get setupBackgroundBattery => 'Avaa akkuasetukset';
+
+  @override
+  String get setupBackgroundBatteryHint =>
+      'Etsi TotalDrop luettelosta ja poista sen akun optimointi käytöstä. Näiden asetusten nimet vaihtelevat puhelimittain.';
+
+  @override
+  String setupBackgroundMaker(String maker) {
+    return '$maker-puhelimissa on oma virransäästö';
+  }
+
+  @override
+  String get setupBackgroundMakerBody =>
+      'Avaa myös TotalDropin virransäästö ja valitse ”Ei rajoituksia”. Jos puhelimessa on Automaattinen käynnistys, ota se käyttöön TotalDropille.';
+
+  @override
+  String get setupBackgroundMakerOpen => 'Avaa TotalDropin virransäästö';
+
+  @override
+  String get setupBackgroundAutostart => 'Avaa Automaattinen käynnistys';
+
+  @override
+  String get setupBackgroundSkip => 'Ei nyt';
+
+  @override
+  String get settingsBackground => 'Siirrot taustalla';
+
+  @override
+  String get settingsBackgroundOpen => 'Akkuasetukset';
 }

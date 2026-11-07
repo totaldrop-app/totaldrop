@@ -6,6 +6,7 @@ import 'dart:io';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:material_ui/material_ui.dart';
 
+import 'data/background_access.dart';
 import 'data/launch_source.dart';
 import 'data/settings_repository.dart';
 import 'data/transfer_keep_alive.dart';
@@ -21,6 +22,7 @@ import 'ui/receive/receive_view_model.dart';
 import 'ui/send/send_view.dart';
 import 'ui/send/send_view_model.dart';
 import 'ui/settings/settings_view.dart';
+import 'ui/setup/background_reminder.dart';
 
 /// Shown in Settings; kept in step with pubspec.yaml by the release script.
 const appVersion = String.fromEnvironment(
@@ -35,16 +37,22 @@ Future<void> main() async {
   final transfers = TransferRepository(settings);
   // The notification that keeps a transfer going in the background speaks
   // the language the app shows.
-  final TransferKeepAlive keepAlive = Platform.isAndroid
-      ? AndroidTransferKeepAlive(
-          () => lookupAppLocalizations(
-            resolveLocale(
-              WidgetsBinding.instance.platformDispatcher.locales,
-              AppLocalizations.supportedLocales,
+  final keepAlive = WatchedKeepAlive(
+    Platform.isAndroid
+        ? AndroidTransferKeepAlive(
+            () => lookupAppLocalizations(
+              resolveLocale(
+                WidgetsBinding.instance.platformDispatcher.locales,
+                AppLocalizations.supportedLocales,
+              ),
             ),
-          ),
-        )
-      : const NoKeepAlive();
+          )
+        : const NoKeepAlive(),
+  );
+  // Battery restrictions that stop a transfer in the background (#338).
+  final BackgroundAccess background = Platform.isAndroid
+      ? const AndroidBackgroundAccess()
+      : const NoBackgroundLimits();
   // Shares and launcher shortcuts (#53).
   final LaunchSource launches = Platform.isAndroid
       ? AndroidLaunchSource()
@@ -53,6 +61,8 @@ Future<void> main() async {
     TotalDropApp(
       settings: settings,
       launches: launches,
+      keepAlive: keepAlive,
+      background: background,
       send: SendViewModel(
         repository: transfers,
         keepAlive: keepAlive,
@@ -70,12 +80,23 @@ class TotalDropApp extends StatelessWidget {
     required this.send,
     required this.receive,
     this.launches = const NoLaunches(),
-  });
+    WatchedKeepAlive? keepAlive,
+    this.background = const NoBackgroundLimits(),
+  }) : keepAlive = keepAlive ?? WatchedKeepAlive(const NoKeepAlive());
 
   final SettingsRepository settings;
   final SendViewModel send;
   final ReceiveViewModel receive;
   final LaunchSource launches;
+
+  /// The keep-alive the view models use, watched so that a transfer that
+  /// leaves the screen is known (#338).
+  final WatchedKeepAlive keepAlive;
+  final BackgroundAccess background;
+  late final _prompts = BackgroundPrompts(
+    settings: settings,
+    access: background,
+  );
   final _navigator = GlobalKey<NavigatorState>();
   final _messenger = GlobalKey<ScaffoldMessengerState>();
 
@@ -112,7 +133,12 @@ class TotalDropApp extends StatelessWidget {
             receive: receive,
             openSend: _sendRoute,
             openReceive: _receiveRoute,
-            child: SystemMotion(child: child!),
+            child: BackgroundReminder(
+              prompts: _prompts,
+              keepAlive: keepAlive,
+              navigator: _navigator,
+              child: SystemMotion(child: child!),
+            ),
           ),
           localizationsDelegates: const [
             AppLocalizations.delegate,
@@ -120,15 +146,21 @@ class TotalDropApp extends StatelessWidget {
           ],
           supportedLocales: AppLocalizations.supportedLocales,
           localeListResolutionCallback: resolveLocale,
-          home: Builder(
-            builder: (context) => HomeView(
-              onSend: () => Navigator.push(context, _sendRoute()),
-              onReceive: () => Navigator.push(context, _receiveRoute()),
-              onSettings: () => Navigator.push(
-                context,
-                MaterialPageRoute<void>(
-                  builder: (_) =>
-                      SettingsView(settings: settings, version: appVersion),
+          home: FirstRunGate(
+            prompts: _prompts,
+            child: Builder(
+              builder: (context) => HomeView(
+                onSend: () => Navigator.push(context, _sendRoute()),
+                onReceive: () => Navigator.push(context, _receiveRoute()),
+                onSettings: () => Navigator.push(
+                  context,
+                  MaterialPageRoute<void>(
+                    builder: (_) => SettingsView(
+                      settings: settings,
+                      version: appVersion,
+                      background: background,
+                    ),
+                  ),
                 ),
               ),
             ),

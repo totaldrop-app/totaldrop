@@ -169,5 +169,18 @@
   "receiveTextShortened": "Csak a szöveg eleje látható. A Szöveg másolása az egészet másolja.",
   "copyText": "Szöveg másolása",
   "textCopied": "Szöveg másolva",
-  "errorTextDamaged": "A szöveg nem érkezett meg hiánytalanul, ezért nem jelenik meg."
+  "errorTextDamaged": "A szöveg nem érkezett meg hiánytalanul, ezért nem jelenik meg.",
+  "setupBackgroundTitle": "Az átvitelek a háttérben is folytatódnak",
+  "setupBackgroundBody": "Hogy az átvitel akkor is folytatódjon, amikor másik alkalmazásra vált vagy lezárja a képernyőt, engedje, hogy a TotalDrop akkumulátorkorlátozás nélkül fusson. A TotalDrop csak egy Ön által indított átvitel közben dolgozik a háttérben.",
+  "setupBackgroundAllowed": "Az Android akkumulátor-optimalizálása ki van kapcsolva a TotalDrophoz.",
+  "setupBackgroundRestricted": "Az Android akkumulátor-optimalizálása be van kapcsolva a TotalDrophoz: az átvitel leállhat, amikor másik alkalmazásra vált.",
+  "setupBackgroundBattery": "Akkumulátorbeállítások megnyitása",
+  "setupBackgroundBatteryHint": "Keresse meg a TotalDropot a listában, és kapcsolja ki az akkumulátor-optimalizálását. A beállítások neve telefononként eltér.",
+  "setupBackgroundMaker": "A(z) {maker} telefonoknak saját akkumulátorkímélőjük van",
+  "setupBackgroundMakerBody": "Nyissa meg a TotalDrop akkumulátorkímélőjét is, és válassza a „Nincs korlátozás” lehetőséget. Ha a telefonon van Automatikus indítás, kapcsolja be a TotalDrophoz.",
+  "setupBackgroundMakerOpen": "A TotalDrop akkumulátorkímélőjének megnyitása",
+  "setupBackgroundAutostart": "Automatikus indítás megnyitása",
+  "setupBackgroundSkip": "Most nem",
+  "settingsBackground": "Átvitel a háttérben",
+  "settingsBackgroundOpen": "Akkumulátorbeállítások"
 }

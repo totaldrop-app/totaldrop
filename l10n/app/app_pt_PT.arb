@@ -169,5 +169,18 @@
   "receiveTextShortened": "Só é mostrado o início do texto. Copiar texto copia-o na íntegra.",
   "copyText": "Copiar texto",
   "textCopied": "Texto copiado",
-  "errorTextDamaged": "O texto não chegou íntegro, por isso não é mostrado."
+  "errorTextDamaged": "O texto não chegou íntegro, por isso não é mostrado.",
+  "setupBackgroundTitle": "Manter as transferências em segundo plano",
+  "setupBackgroundBody": "Para que uma transferência continue quando muda de app ou bloqueia o ecrã, permita que o TotalDrop funcione sem restrições de bateria. O TotalDrop só trabalha em segundo plano enquanto decorre uma transferência que iniciou.",
+  "setupBackgroundAllowed": "A otimização da bateria do Android está desativada para o TotalDrop.",
+  "setupBackgroundRestricted": "A otimização da bateria do Android está ativada para o TotalDrop: uma transferência pode parar quando muda de app.",
+  "setupBackgroundBattery": "Abrir definições da bateria",
+  "setupBackgroundBatteryHint": "Encontre o TotalDrop na lista e desative a otimização da bateria para ele. Os nomes destas definições variam de telemóvel para telemóvel.",
+  "setupBackgroundMaker": "Os telemóveis {maker} têm uma poupança de bateria própria",
+  "setupBackgroundMakerBody": "Abra também a poupança de bateria do TotalDrop e escolha \"Sem restrições\". Se o telemóvel tiver Arranque automático, ative-o para o TotalDrop.",
+  "setupBackgroundMakerOpen": "Abrir a poupança de bateria do TotalDrop",
+  "setupBackgroundAutostart": "Abrir Arranque automático",
+  "setupBackgroundSkip": "Agora não",
+  "settingsBackground": "Transferências em segundo plano",
+  "settingsBackgroundOpen": "Definições da bateria"
 }

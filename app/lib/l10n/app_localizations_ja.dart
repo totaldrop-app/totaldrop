@@ -588,4 +588,49 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get errorTextDamaged => 'テキストが欠けることなく届かなかったため、表示しません。';
+
+  @override
+  String get setupBackgroundTitle => 'バックグラウンドでも転送を続ける';
+
+  @override
+  String get setupBackgroundBody =>
+      'アプリを切り替えたり画面をロックしたりしても転送が続くように、TotalDrop をバッテリーの制限なしで動かせるようにしてください。TotalDrop がバックグラウンドで動くのは、あなたが始めた転送の間だけです。';
+
+  @override
+  String get setupBackgroundAllowed => 'TotalDrop の Android バッテリー最適化はオフです。';
+
+  @override
+  String get setupBackgroundRestricted =>
+      'TotalDrop の Android バッテリー最適化はオンです。アプリを切り替えると転送が止まることがあります。';
+
+  @override
+  String get setupBackgroundBattery => 'バッテリー設定を開く';
+
+  @override
+  String get setupBackgroundBatteryHint =>
+      '一覧から TotalDrop を探し、バッテリー最適化をオフにしてください。設定の名前は端末によって異なります。';
+
+  @override
+  String setupBackgroundMaker(String maker) {
+    return '$maker の端末には独自のバッテリーセーバーがあります';
+  }
+
+  @override
+  String get setupBackgroundMakerBody =>
+      'TotalDrop のバッテリーセーバーも開き、「制限なし」を選んでください。自動起動がある場合は、TotalDrop で有効にしてください。';
+
+  @override
+  String get setupBackgroundMakerOpen => 'TotalDrop のバッテリーセーバーを開く';
+
+  @override
+  String get setupBackgroundAutostart => '自動起動を開く';
+
+  @override
+  String get setupBackgroundSkip => '後で';
+
+  @override
+  String get settingsBackground => 'バックグラウンドでの転送';
+
+  @override
+  String get settingsBackgroundOpen => 'バッテリー設定';
 }
