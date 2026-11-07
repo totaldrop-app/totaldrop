@@ -49,8 +49,9 @@ pub mod qobject {
         /// One send or receive at a time.
         #[qobject]
         #[qml_element]
-        #[qproperty(QString, state)]
-        #[qproperty(QString, role)]
+        // Read-only for QML: set only from `Stage` and `Role` (#343).
+        #[qproperty(QString, state, READ, NOTIFY)]
+        #[qproperty(QString, role, READ, NOTIFY)]
         #[qproperty(QString, code)]
         #[qproperty(QString, link)]
         #[qproperty(QString, qr)]
@@ -393,11 +394,12 @@ fn count(v: usize) -> i32 {
 }
 
 impl qobject::Transfer {
-    /// Start a new operation; returns its generation.
     /// Move to `stage`. The only place `state` is set (#343).
     fn set_stage(mut self: Pin<&mut Self>, stage: Stage) {
-        self.as_mut().rust_mut().stage = stage;
-        self.set_state(QString::from(stage.name()));
+        let mut rust = self.as_mut().rust_mut();
+        rust.stage = stage;
+        rust.state = QString::from(stage.name());
+        self.state_changed();
     }
 
     fn stage(&self) -> Stage {
@@ -406,14 +408,17 @@ impl qobject::Transfer {
 
     /// The only place `role` is set.
     fn set_side(mut self: Pin<&mut Self>, side: Role) {
-        self.as_mut().rust_mut().side = side;
-        self.set_role(QString::from(side.name()));
+        let mut rust = self.as_mut().rust_mut();
+        rust.side = side;
+        rust.role = QString::from(side.name());
+        self.role_changed();
     }
 
     fn side(&self) -> Role {
         self.rust().side
     }
 
+    /// Start a new operation; returns its generation.
     fn begin(mut self: Pin<&mut Self>, side: Role, stage: Stage) -> u64 {
         let g = self
             .rust()

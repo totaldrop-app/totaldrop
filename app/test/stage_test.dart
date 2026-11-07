@@ -134,5 +134,20 @@ void main() {
       await pumpEventQueue();
       expect(vm.stage, SendStage.transferring);
     });
+
+    test('stopping while the receiver decides stops the core', () async {
+      final repo = FakeRepository();
+      final vm = SendViewModel(repository: repo);
+      vm.addFakeFileForTest('a.txt');
+      unawaited(vm.start());
+      repo.prepared.complete(FakeSession());
+      await pumpEventQueue();
+      repo.events.add(event(EventKind.connected));
+      await pumpEventQueue();
+      expect(vm.stage, SendStage.connected);
+      vm.reset();
+      expect(repo.stoppers.single.stopped, isTrue);
+      expect(vm.stage, SendStage.picking);
+    });
   });
 }
