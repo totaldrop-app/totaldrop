@@ -223,17 +223,20 @@ Page {
             spacing: Theme.s16
 
             Label {
-                text: Strings.s.receiveOffer
+                text: page.transfer.isText ? Strings.s.receiveOfferText : Strings.s.receiveOffer
                 color: Theme.ink
                 font.pointSize: Qt.application.font.pointSize * 1.5
                 font.weight: Font.DemiBold
             }
             Label {
-                text: Strings.f("receiveOfferSummary", { files: page.transfer.offerFiles, size: Strings.size(page.transfer.size) })
+                text: page.transfer.isText ? Strings.size(page.transfer.size)
+                    : Strings.f("receiveOfferSummary", { files: page.transfer.offerFiles, size: Strings.size(page.transfer.size) })
                 color: Theme.muted
                 font.features: { "tnum": 1 }
             }
             ColumnLayout {
+                // A text has no name worth showing (#326).
+                visible: !page.transfer.isText
                 spacing: 0
                 Layout.fillWidth: true
                 Repeater {
@@ -264,7 +267,7 @@ Page {
             }
             VerificationWords { words: page.transfer.words; Layout.fillWidth: true; Layout.topMargin: Theme.s8 }
             Label {
-                text: page.transfer.destination
+                text: page.transfer.isText ? Strings.s.receiveOfferTextNote : page.transfer.destination
                 color: Theme.muted
                 elide: Text.ElideMiddle
                 Layout.fillWidth: true
@@ -301,14 +304,18 @@ Page {
         // 4: result
         ResultPanel {
             success: page.phase === "done"
-            title: page.phase === "done" ? Strings.s.receiveDone
-                 : page.phase === "declined" ? Strings.s.receiveDeclined
+            readonly property bool isText: page.transfer.isText
+            title: page.phase === "done" ? (isText ? Strings.s.receiveTextDone : Strings.s.receiveDone)
+                 : page.phase === "declined" ? (isText ? Strings.s.receiveTextDeclined : Strings.s.receiveDeclined)
                  : Strings.s["error" + (page.transfer.errorKind || "Other")]
-            body: page.phase === "done"
+            body: page.phase === "done" && isText ? ""
+                  : page.phase === "done"
                   ? Strings.f("receiveSaveTo", { folder: page.transfer.savedTo })
                     + (page.transfer.filesFailed > 0 ? " " + Strings.f("sendSomeFailed", { count: page.transfer.filesFailed }) : "")
                   : ""
-            folder: page.phase === "done" ? page.transfer.savedTo : ""
+            folder: page.phase === "done" && !isText ? page.transfer.savedTo : ""
+            shownText: page.phase === "done" ? page.transfer.shownText : ""
+            rawText: page.phase === "done" ? page.transfer.receivedText : ""
             detail: page.phase === "failed" ? page.transfer.errorDetail : ""
             cause: page.phase === "failed" ? page.transfer.errorCause : ""
             onFinished: { page.transfer.reset(); page.close() }

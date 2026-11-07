@@ -27,8 +27,9 @@ use zbus::fdo::{RequestNameFlags, RequestNameReply};
 pub const OBJECT_PATH: &str = "/app/totaldrop/TotalDrop";
 const INTERFACE: &str = "org.freedesktop.Application";
 
-/// The screens `--screen=` opens.
-const SCREENS: [&str; 3] = ["send", "receive", "settings"];
+/// The screens `--screen=` opens; `clipboard` is Send with the
+/// clipboard's text filled in (#326).
+const SCREENS: [&str; 4] = ["send", "clipboard", "receive", "settings"];
 
 /// Qt's own options that take the next argument as their value; that value
 /// is not a file to send.
@@ -573,6 +574,17 @@ mod tests {
         std::fs::create_dir_all(&d).unwrap();
         std::fs::write(d.join("photo 1.jpg"), b"x").unwrap();
         d
+    }
+
+    /// "Send clipboard" in the desktop entry opens Send with the
+    /// clipboard's text (#326).
+    #[test]
+    fn the_clipboard_screen_is_known() {
+        let r = req(&["--screen=clipboard"], Path::new("/"));
+        assert_eq!(r.screen.as_deref(), Some("clipboard"));
+        assert_eq!(r.args(), ["--screen=clipboard"]);
+        let from_open = Request::from_open(&[], Some("clipboard"));
+        assert_eq!(from_open.screen.as_deref(), Some("clipboard"));
     }
 
     #[test]

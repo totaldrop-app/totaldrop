@@ -25,6 +25,10 @@ ColumnLayout {
     property string cause
     property string folder
     property bool canRetry: false
+    // A text received (#326): shownText with hidden characters named,
+    // rawText as it came, for Copy.
+    property string shownText
+    property string rawText
 
     signal finished()
     signal retry()
@@ -71,6 +75,43 @@ ColumnLayout {
         wrapMode: Text.Wrap
         horizontalAlignment: Text.AlignHCenter
         Layout.fillWidth: true
+    }
+    // The text, as data: plain text, never rich text or a link that
+    // opens by itself.
+    ScrollView {
+        visible: r.shownText !== ""
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.minimumHeight: 96
+        TextArea {
+            text: r.shownText
+            textFormat: TextEdit.PlainText
+            readOnly: true
+            selectByMouse: true
+            wrapMode: TextEdit.Wrap
+            Accessible.name: Strings.s.receiveOfferText
+        }
+    }
+    Label {
+        // Shown differs from what came only where characters were named
+        // (a line break \r\n is shown as \n).
+        visible: r.shownText !== "" && r.shownText !== r.rawText.replace(/\r\n/g, "\n")
+        text: Strings.s.receiveTextHidden
+        color: Theme.muted
+        wrapMode: Text.Wrap
+        Layout.fillWidth: true
+    }
+    // Hidden editor for the clipboard; plain text, as the text came.
+    TextEdit { id: clip; visible: false; textFormat: TextEdit.PlainText }
+    SecondaryButton {
+        visible: r.shownText !== ""
+        text: Strings.s.copyText
+        icon.name: Theme.icon("edit-copy")
+        onClicked: { clip.text = r.rawText; clip.selectAll(); clip.copy(); clip.clear(); textCopied.start() }
+        Timer { id: textCopied; interval: 2000 }
+        ToolTip.visible: textCopied.running
+        ToolTip.text: Strings.s.textCopied
+        Layout.alignment: Qt.AlignHCenter
     }
     SecondaryButton {
         visible: r.folder !== ""
@@ -120,7 +161,7 @@ ColumnLayout {
         Layout.fillWidth: true
     }
 
-    Item { Layout.fillHeight: true }
+    Item { visible: r.shownText === ""; Layout.fillHeight: true }
 
     RowLayout {
         Layout.fillWidth: true
