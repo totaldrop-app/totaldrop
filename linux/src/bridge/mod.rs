@@ -6,6 +6,7 @@
 pub mod clipboard;
 pub mod launcher;
 pub mod qt_texts;
+pub mod stage;
 pub mod surface;
 pub mod texts;
 pub mod theme;

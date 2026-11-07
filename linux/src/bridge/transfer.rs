@@ -21,6 +21,7 @@ use totaldrop_core::{
 
 use totaldrop_l10n::reveal_text;
 
+use crate::bridge::stage::{Role, Stage};
 use crate::desktop;
 use crate::runtime::RUNTIME;
 use crate::settings::Settings;
@@ -234,8 +235,12 @@ struct Session {
 /// Backing state of [`qobject::Transfer`].
 #[derive(Default)]
 pub struct TransferRust {
+    /// [`Self::stage`] as QML reads it; set only by `set_stage`.
     state: QString,
+    /// [`Self::side`] as QML reads it; set only by `set_side`.
     role: QString,
+    stage: Stage,
+    side: Role,
     code: QString,
     link: QString,
     qr: QString,
@@ -389,7 +394,27 @@ fn count(v: usize) -> i32 {
 
 impl qobject::Transfer {
     /// Start a new operation; returns its generation.
-    fn begin(mut self: Pin<&mut Self>, role: &str, state: &str) -> u64 {
+    /// Move to `stage`. The only place `state` is set (#343).
+    fn set_stage(mut self: Pin<&mut Self>, stage: Stage) {
+        self.as_mut().rust_mut().stage = stage;
+        self.set_state(QString::from(stage.name()));
+    }
+
+    fn stage(&self) -> Stage {
+        self.rust().stage
+    }
+
+    /// The only place `role` is set.
+    fn set_side(mut self: Pin<&mut Self>, side: Role) {
+        self.as_mut().rust_mut().side = side;
+        self.set_role(QString::from(side.name()));
+    }
+
+    fn side(&self) -> Role {
+        self.rust().side
+    }
+
+    fn begin(mut self: Pin<&mut Self>, side: Role, stage: Stage) -> u64 {
         let g = self
             .rust()
             .session
@@ -412,7 +437,7 @@ impl qobject::Transfer {
                 let _ = offer.decline().await;
             });
         }
-        self.as_mut().set_role(QString::from(role));
+        self.as_mut().set_side(side);
         self.as_mut().set_code(QString::default());
         self.as_mut().set_link(QString::default());
         self.as_mut().set_qr(QString::default());
@@ -435,7 +460,7 @@ impl qobject::Transfer {
         self.as_mut().set_shown_text(QString::default());
         self.as_mut().set_shown_short(false);
         self.as_mut().set_shown_hidden(false);
-        self.as_mut().set_state(QString::from(state));
+        self.as_mut().set_stage(stage);
         g
     }
 
@@ -449,12 +474,12 @@ impl qobject::Transfer {
         self.as_mut().set_error_kind(QString::from(kind));
         self.as_mut().set_error_detail(QString::from(detail));
         self.as_mut().set_error_cause(QString::from(cause));
-        let state = if kind == "Declined" && self.role().to_string() == "send" {
-            "declined"
+        let stage = if kind == "Declined" && self.side() == Role::Send {
+            Stage::Declined
         } else {
-            "failed"
+            Stage::Failed
         };
-        self.as_mut().set_state(QString::from(state));
+        self.as_mut().set_stage(stage);
     }
 
     /// Core events for operation `g`, queued onto the Qt thread.
@@ -467,18 +492,18 @@ impl qobject::Transfer {
                     return;
                 }
                 match event {
-                    Event::Waiting => obj.as_mut().set_state(QString::from("waiting")),
+                    Event::Waiting => obj.as_mut().set_stage(Stage::Waiting),
                     Event::Connected { words } => {
                         obj.as_mut().set_words(list(&words));
-                        if obj.role().to_string() == "send" {
-                            obj.as_mut().set_state(QString::from("connected"));
+                        if obj.side() == Role::Send {
+                            obj.as_mut().set_stage(Stage::Connected);
                         }
                     }
                     Event::Progress { done, total } => {
                         obj.as_mut().set_done(to_f64(done));
                         obj.as_mut().set_total(to_f64(total));
-                        if obj.state().to_string() != "transferring" {
-                            obj.as_mut().set_state(QString::from("transferring"));
+                        if obj.stage() != Stage::Transferring {
+                            obj.as_mut().set_stage(Stage::Transferring);
                         }
                     }
                 }
@@ -563,7 +588,7 @@ impl qobject::Transfer {
     }
 
     fn start_send(mut self: Pin<&mut Self>, source: Source, strong: bool) {
-        let g = self.as_mut().begin("send", "preparing");
+        let g = self.as_mut().begin(Role::Send, Stage::Preparing);
         self.as_mut().set_is_text(matches!(source, Source::Text(_)));
         let thread = self.qt_thread();
         let opts = SendOptions {
@@ -612,7 +637,7 @@ impl qobject::Transfer {
                 obj.as_mut().set_qr_size(qr_size);
                 obj.as_mut().set_items(count(items));
                 obj.as_mut().set_size(to_f64(bytes));
-                obj.as_mut().set_state(QString::from("waiting"));
+                obj.as_mut().set_stage(Stage::Waiting);
             });
             let result = prepared
                 .run_with(Self::events(thread.clone(), g), stop)
@@ -625,7 +650,7 @@ impl qobject::Transfer {
                     Ok(r) => {
                         obj.as_mut().set_files_ok(count(r.files_ok));
                         obj.as_mut().set_files_failed(count(r.files_failed));
-                        obj.as_mut().set_state(QString::from("done"));
+                        obj.as_mut().set_stage(Stage::Done);
                     }
                     Err(e) => obj.fail(send_kind(&e), &e.to_string(), e.cause().as_str()),
                 }
@@ -635,7 +660,7 @@ impl qobject::Transfer {
 
     fn receive(mut self: Pin<&mut Self>, code: &QString) {
         let code = code.to_string();
-        let g = self.as_mut().begin("receive", "connecting");
+        let g = self.as_mut().begin(Role::Receive, Stage::Connecting);
         let thread = self.qt_thread();
         let opts = ReceiveOptions {
             server: self.opts_server(),
@@ -673,7 +698,7 @@ impl qobject::Transfer {
                         obj.as_mut().set_offer_names(list(&s.top_level));
                         obj.as_mut().set_words(list(&words));
                         obj.as_mut().set_is_text(s.text);
-                        obj.as_mut().set_state(QString::from("offer"));
+                        obj.as_mut().set_stage(Stage::Offer);
                     });
                 }
                 Err(e) => {
@@ -689,6 +714,10 @@ impl qobject::Transfer {
     }
 
     fn accept(mut self: Pin<&mut Self>) {
+        // Only an offer waiting for an answer, as on Android.
+        if self.stage() != Stage::Offer {
+            return;
+        }
         let Some(offer) = self
             .rust()
             .session
@@ -700,7 +729,7 @@ impl qobject::Transfer {
             return;
         };
         let g = self.rust().session.generation.load(Ordering::SeqCst);
-        self.as_mut().set_state(QString::from("transferring"));
+        self.as_mut().set_stage(Stage::Transferring);
         if offer.summary().text {
             self.accept_text(offer, g);
             return;
@@ -727,7 +756,7 @@ impl qobject::Transfer {
                         obj.as_mut().set_files_ok(count(r.files_ok));
                         obj.as_mut().set_files_failed(count(r.files_failed));
                         obj.as_mut().set_saved_to(QString::from(&saved));
-                        obj.as_mut().set_state(QString::from("done"));
+                        obj.as_mut().set_stage(Stage::Done);
                     }
                     Err(e) => obj.fail(kind(&e), &e.to_string(), e.cause().as_str()),
                 }
@@ -755,7 +784,7 @@ impl qobject::Transfer {
                             obj.as_mut().set_shown_short(seen.short);
                             obj.as_mut().set_shown_hidden(seen.hidden);
                             obj.as_mut().set_received_text(QString::from(text.as_str()));
-                            obj.as_mut().set_state(QString::from("done"));
+                            obj.as_mut().set_stage(Stage::Done);
                         }
                         // It failed its hash or is not UTF-8: not shown.
                         None => obj.fail("TextDamaged", "the text failed its check", ""),
@@ -767,6 +796,9 @@ impl qobject::Transfer {
     }
 
     fn decline(mut self: Pin<&mut Self>) {
+        if self.stage() != Stage::Offer {
+            return;
+        }
         let Some(offer) = self
             .rust()
             .session
@@ -777,7 +809,7 @@ impl qobject::Transfer {
         else {
             return;
         };
-        self.as_mut().set_state(QString::from("declined"));
+        self.as_mut().set_stage(Stage::Declined);
         RUNTIME.spawn(async move {
             let _ = offer.decline().await;
         });
@@ -809,7 +841,7 @@ impl qobject::Transfer {
         self.as_mut().set_shown_short(false);
         self.as_mut().set_shown_hidden(false);
         self.as_mut().set_is_text(false);
-        self.as_mut().set_state(QString::from("idle"));
+        self.as_mut().set_stage(Stage::Idle);
     }
 
     fn reset(mut self: Pin<&mut Self>) {
@@ -944,7 +976,7 @@ impl cxx_qt::Initialize for qobject::Transfer {
         self.as_mut().set_destination(QString::from(
             desktop::downloads().display().to_string().as_str(),
         ));
-        self.as_mut().set_state(QString::from("idle"));
+        self.as_mut().set_stage(Stage::Idle);
     }
 }
 
