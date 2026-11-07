@@ -1,4 +1,4 @@
-<!-- Translated from README.md 485c125a2cb7. -->
+<!-- Translated from README.md ff425048b317. -->
 <div align="center">
 
 <picture>
@@ -16,7 +16,7 @@
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/totaldrop-app/totaldrop/badge)](https://scorecard.dev/viewer/?uri=github.com/totaldrop-app/totaldrop)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/16332/badge)](https://www.bestpractices.dev/projects/16332)
 [![License](https://img.shields.io/badge/license-GPL--3.0%20%C2%B7%20MIT%2FApache--2.0-22184F)](../../LICENSING.md)
-[![Sponsor](https://img.shields.io/github/sponsors/totaldrop-app?label=Sponsor&logo=githubsponsors&color=EA4AAA)](https://github.com/sponsors/totaldrop-app)
+[![Sponsor](https://img.shields.io/opencollective/all/totaldrop?label=Open%20Collective&logo=opencollective&color=7FADF2)](https://opencollective.com/totaldrop)
 
 **[Web sitesi](https://totaldrop.app)** · **[İndir](https://totaldrop.app/download/)** · [Yol haritası](https://totaldrop.app/roadmap/) · [Bağış](https://totaldrop.app/donate/) · [Sürümler](https://github.com/totaldrop-app/totaldrop/releases) · [X](https://x.com/totaldropapp) · [Instagram](https://www.instagram.com/totaldropapp/) · [Threads](https://www.threads.com/@totaldropapp)
 
@@ -85,7 +85,7 @@ Kulağa tuhaf gelen bir cümle mi gördünüz? [Çeviriye yardım edin](../../do
 
 TotalDrop, insanlar katkıda bulunduğu için ücretsiz kalıyor. Bağışlar aktarma sunucusunu, Windows ve macOS'un istediği kod imzalama sertifikalarını ve 1.0'dan önce bağımsız bir güvenlik denetimini karşılar. Her maliyet satır satır ve şimdiye kadar toplanan miktar: [totaldrop.app/donate](https://totaldrop.app/donate/).
 
-<a href="https://github.com/sponsors/totaldrop-app"><img src="https://img.shields.io/badge/Sponsor%20on%20GitHub-EA4AAA?logo=githubsponsors&logoColor=white&style=for-the-badge" alt="GitHub'da destek olun"></a>
+<a href="https://opencollective.com/totaldrop"><img src="https://img.shields.io/badge/Donate%20on%20Open%20Collective-7FADF2?logo=opencollective&logoColor=white&style=for-the-badge" alt="Open Collective ile bağış yapın"></a>
 
 [Hata bildirerek](https://github.com/totaldrop-app/totaldrop/issues/new/choose), çeviri yaparak ya da masaüstünüzde test ederek de yardım edebilirsiniz.
 

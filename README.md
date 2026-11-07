@@ -15,7 +15,7 @@ Free and open source. End-to-end encrypted. No email, no phone number, no accoun
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/totaldrop-app/totaldrop/badge)](https://scorecard.dev/viewer/?uri=github.com/totaldrop-app/totaldrop)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/16332/badge)](https://www.bestpractices.dev/projects/16332)
 [![License](https://img.shields.io/badge/license-GPL--3.0%20%C2%B7%20MIT%2FApache--2.0-22184F)](LICENSING.md)
-[![Sponsor](https://img.shields.io/github/sponsors/totaldrop-app?label=Sponsor&logo=githubsponsors&color=EA4AAA)](https://github.com/sponsors/totaldrop-app)
+[![Sponsor](https://img.shields.io/opencollective/all/totaldrop?label=Open%20Collective&logo=opencollective&color=7FADF2)](https://opencollective.com/totaldrop)
 
 **[Website](https://totaldrop.app)** · **[Download](https://totaldrop.app/download/)** · [Roadmap](https://totaldrop.app/roadmap/) · [Donate](https://totaldrop.app/donate/) · [Releases](https://github.com/totaldrop-app/totaldrop/releases) · [X](https://x.com/totaldropapp) · [Instagram](https://www.instagram.com/totaldropapp/) · [Threads](https://www.threads.com/@totaldropapp)
 
@@ -81,7 +81,7 @@ Spotted a clumsy sentence? [Help translate](docs/ceviri.md) (the guide is in Tur
 
 TotalDrop stays free because people chip in. Donations pay for the relay, the code-signing certificates that Windows and macOS require, and an independent security audit before 1.0. Every cost, line by line, and what has been raised so far: [totaldrop.app/donate](https://totaldrop.app/donate/).
 
-<a href="https://github.com/sponsors/totaldrop-app"><img src="https://img.shields.io/badge/Sponsor%20on%20GitHub-EA4AAA?logo=githubsponsors&logoColor=white&style=for-the-badge" alt="Sponsor on GitHub"></a>
+<a href="https://opencollective.com/totaldrop"><img src="https://img.shields.io/badge/Donate%20on%20Open%20Collective-7FADF2?logo=opencollective&logoColor=white&style=for-the-badge" alt="Donate on Open Collective"></a>
 
 You can also help by [reporting bugs](https://github.com/totaldrop-app/totaldrop/issues/new/choose), translating, or testing on your desktop.
 

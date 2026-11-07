@@ -1,4 +1,4 @@
-<!-- Translated from README.md 485c125a2cb7. -->
+<!-- Translated from README.md ff425048b317. -->
 <div align="center">
 
 <picture>
@@ -16,7 +16,7 @@ Gratuito e open source. Crittografato end-to-end. Niente email, niente numero di
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/totaldrop-app/totaldrop/badge)](https://scorecard.dev/viewer/?uri=github.com/totaldrop-app/totaldrop)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/16332/badge)](https://www.bestpractices.dev/projects/16332)
 [![License](https://img.shields.io/badge/license-GPL--3.0%20%C2%B7%20MIT%2FApache--2.0-22184F)](../../LICENSING.md)
-[![Sponsor](https://img.shields.io/github/sponsors/totaldrop-app?label=Sponsor&logo=githubsponsors&color=EA4AAA)](https://github.com/sponsors/totaldrop-app)
+[![Sponsor](https://img.shields.io/opencollective/all/totaldrop?label=Open%20Collective&logo=opencollective&color=7FADF2)](https://opencollective.com/totaldrop)
 
 **[Sito web](https://totaldrop.app)** · **[Scarica](https://totaldrop.app/download/)** · [Roadmap](https://totaldrop.app/roadmap/) · [Dona](https://totaldrop.app/donate/) · [Release](https://github.com/totaldrop-app/totaldrop/releases) · [X](https://x.com/totaldropapp) · [Instagram](https://www.instagram.com/totaldropapp/) · [Threads](https://www.threads.com/@totaldropapp)
 
@@ -85,7 +85,7 @@ Hai notato una frase goffa? [Aiuta a tradurre](../../docs/ceviri.md) (la guida �
 
 TotalDrop resta gratuito perché le persone contribuiscono. Le donazioni pagano il server di inoltro, i certificati di firma del codice richiesti da Windows e macOS e un audit di sicurezza indipendente prima della 1.0. Ogni costo, voce per voce, e quanto è stato raccolto finora: [totaldrop.app/donate](https://totaldrop.app/donate/).
 
-<a href="https://github.com/sponsors/totaldrop-app"><img src="https://img.shields.io/badge/Sponsor%20on%20GitHub-EA4AAA?logo=githubsponsors&logoColor=white&style=for-the-badge" alt="Sostieni su GitHub"></a>
+<a href="https://opencollective.com/totaldrop"><img src="https://img.shields.io/badge/Donate%20on%20Open%20Collective-7FADF2?logo=opencollective&logoColor=white&style=for-the-badge" alt="Dona su Open Collective"></a>
 
 Puoi aiutare anche [segnalando bug](https://github.com/totaldrop-app/totaldrop/issues/new/choose), traducendo o facendo test sul tuo desktop.
 

@@ -12,7 +12,7 @@ birleştirmeden önce "Kabul" olur.
 | [0002](0002-protokol-v0.md) | Protokol v0: CPace, Noise XXpsk3 + ML-KEM-768, QUIC | Kabul |
 | [0003](0003-cloudflare-altyapi.md) | Site, rendezvous ve aktarma Cloudflare'de | Kabul |
 | [0004](0004-mullvad-tarzi-hesap.md) | Hesap yalnızca rastgele bir numara | Yerini aldı: [0013](0013-hayalet-halka-hesap.md) |
-| [0005](0005-bagis.md) | Gelir yalnızca bağış, GitHub Sponsors üzerinden | Kabul; adres [0016](0016-bagis-ekip-adina.md) ile değişecek |
+| [0005](0005-bagis.md) | Gelir yalnızca bağış, GitHub Sponsors üzerinden | Kabul; kanal [0016](0016-bagis-ekip-adina.md) ile Open Collective olacak |
 | [0006](0006-linux-qt.md) | Linux uygulaması Qt 6 ve QML, sistem temasına tam uyum | Kabul |
 | [0007](0007-surec.md) | Issue, PR, bağımsız inceleme ve CI'da derlenen sürümler | Kabul |
 | [0008](0008-diller-ve-bolgeler.md) | Her dil ve bölge: tek kaynak ARB, ICU ve CLDR | Kabul |
@@ -22,7 +22,7 @@ birleştirmeden önce "Kabul" olur.
 | [0012](0012-ad-ve-isaret.md) | Kod serbest, ad ve işaret yalnızca TotalDrop'un kendi sürümleri için | Kabul |
 | [0013](0013-hayalet-halka-hesap.md) | Hesap sunucuda tutulmaz: Hayalet halka | Kabul |
 | [0014](0014-steam-deck.md) | TotalDrop for Steam Deck, Steam Machine ve Steam Frame: Linux sürümünün parçası, Flathub ve klavyeyle tam kullanım | Kabul |
-| [0016](0016-bagis-ekip-adina.md) | Bağışlar kişi adına değil, TotalDrop ekibi adına; GitHub Sponsors ve Open Source Collective | Önerildi |
+| [0016](0016-bagis-ekip-adina.md) | Bağışlar kişi adına değil, TotalDrop ekibi adına; Open Collective ve Open Source Collective | Önerildi |
 
 Yeni bir karar için bir sonraki numarayla `NNNN-kisa-ad.md` açın ve bu
 tabloya ekleyin.

@@ -1,4 +1,4 @@
-<!-- Translated from README.md 485c125a2cb7. -->
+<!-- Translated from README.md ff425048b317. -->
 <div align="center">
 
 <picture>
@@ -16,7 +16,7 @@
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/totaldrop-app/totaldrop/badge)](https://scorecard.dev/viewer/?uri=github.com/totaldrop-app/totaldrop)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/16332/badge)](https://www.bestpractices.dev/projects/16332)
 [![License](https://img.shields.io/badge/license-GPL--3.0%20%C2%B7%20MIT%2FApache--2.0-22184F)](../../LICENSING.md)
-[![Sponsor](https://img.shields.io/github/sponsors/totaldrop-app?label=Sponsor&logo=githubsponsors&color=EA4AAA)](https://github.com/sponsors/totaldrop-app)
+[![Sponsor](https://img.shields.io/opencollective/all/totaldrop?label=Open%20Collective&logo=opencollective&color=7FADF2)](https://opencollective.com/totaldrop)
 
 **[Ιστότοπος](https://totaldrop.app)** · **[Λήψη](https://totaldrop.app/download/)** · [Οδικός χάρτης](https://totaldrop.app/roadmap/) · [Δωρεά](https://totaldrop.app/donate/) · [Εκδόσεις](https://github.com/totaldrop-app/totaldrop/releases) · [X](https://x.com/totaldropapp) · [Instagram](https://www.instagram.com/totaldropapp/) · [Threads](https://www.threads.com/@totaldropapp)
 
@@ -85,7 +85,7 @@ gh attestation verify totaldrop_0.3.0.beta.6-1_amd64.deb --repo totaldrop-app/to
 
 Το TotalDrop μένει δωρεάν επειδή οι άνθρωποι συνεισφέρουν. Οι δωρεές πληρώνουν τον διακομιστή αναμετάδοσης, τα πιστοποιητικά υπογραφής κώδικα που απαιτούν τα Windows και το macOS, και έναν ανεξάρτητο έλεγχο ασφαλείας πριν από την 1.0. Κάθε κόστος, γραμμή προς γραμμή, και όσα έχουν συγκεντρωθεί μέχρι τώρα: [totaldrop.app/donate](https://totaldrop.app/donate/).
 
-<a href="https://github.com/sponsors/totaldrop-app"><img src="https://img.shields.io/badge/Sponsor%20on%20GitHub-EA4AAA?logo=githubsponsors&logoColor=white&style=for-the-badge" alt="Χορηγία στο GitHub"></a>
+<a href="https://opencollective.com/totaldrop"><img src="https://img.shields.io/badge/Donate%20on%20Open%20Collective-7FADF2?logo=opencollective&logoColor=white&style=for-the-badge" alt="Δωρεά μέσω Open Collective"></a>
 
 Μπορείτε επίσης να βοηθήσετε [αναφέροντας σφάλματα](https://github.com/totaldrop-app/totaldrop/issues/new/choose), μεταφράζοντας ή δοκιμάζοντας την εφαρμογή στον υπολογιστή σας.
 
