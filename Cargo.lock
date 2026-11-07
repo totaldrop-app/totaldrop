@@ -2859,6 +2859,7 @@ dependencies = [
  "ring",
  "rustls",
  "snow",
+ "socket2",
  "tokio",
  "tokio-tungstenite",
  "totaldrop-crypto",
