@@ -601,6 +601,10 @@ class AppLocalizationsAr extends AppLocalizations {
       'يحتوي النص على أحرف مخفية تظهر على شكل U+…. عند النسخ يُنسخ النص كما وصل تمامًا.';
 
   @override
+  String get sendTextHidden =>
+      'يحتوي النص على أحرف مخفية، مثل علامات الاتجاه. وتُرسل معه أيضًا.';
+
+  @override
   String get sendClipboardKept =>
       'تم الإبقاء على النص المكتوب، ولم تُستخدم الحافظة.';
 

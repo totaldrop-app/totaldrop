@@ -6,6 +6,8 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart'
+    show AppLifecycleListener, AppLifecycleState, WidgetsBinding;
 
 import '../../data/file_source.dart';
 import '../../data/launch_source.dart';
@@ -33,11 +35,35 @@ abstract interface class TextClipboard {
   Future<String?> read();
 }
 
+/// Android 10 and later give the clipboard only to the app whose window
+/// has focus. Opened from a launcher shortcut, the app's window may not
+/// have it yet when its screen is up: the read waits for it, for a few
+/// seconds at most (#326). Flutter reports a focused window as resumed.
 class PlatformClipboard implements TextClipboard {
-  const PlatformClipboard();
+  const PlatformClipboard({this.focusWait = const Duration(seconds: 3)});
+  final Duration focusWait;
+
   @override
-  Future<String?> read() async =>
-      (await Clipboard.getData(Clipboard.kTextPlain))?.text;
+  Future<String?> read() async {
+    await _focused();
+    return (await Clipboard.getData(Clipboard.kTextPlain))?.text;
+  }
+
+  Future<void> _focused() async {
+    final state = WidgetsBinding.instance.lifecycleState;
+    if (state == null || state == AppLifecycleState.resumed) return;
+    final focused = Completer<void>();
+    final listener = AppLifecycleListener(
+      onResume: () {
+        if (!focused.isCompleted) focused.complete();
+      },
+    );
+    try {
+      await focused.future.timeout(focusWait, onTimeout: () {});
+    } finally {
+      listener.dispose();
+    }
+  }
 }
 
 /// The most characters of a text the send screen shows in its box: one
@@ -142,6 +168,9 @@ class SendViewModel extends ChangeNotifier {
     if (busy) return false;
     // The last transfer's result gives way to the new selection.
     if (stage != SendStage.picking) reset();
+    // Shared files are what is sent, not a text being written. The text
+    // stays, for when the person goes back to it.
+    _leaveTextMode();
     _pendingShares.add(id);
     addFailed = false;
     notifyListeners();
@@ -159,6 +188,7 @@ class SendViewModel extends ChangeNotifier {
       return false;
     }
     _addedShares.add(id);
+    _leaveTextMode();
     for (final f in files) {
       if (_files.any((e) => e.path == f.path)) continue;
       _files.add(f);
@@ -249,6 +279,24 @@ class SendViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  void _leaveTextMode() {
+    textMode = false;
+    textNotice = TextNotice.none;
+  }
+
+  /// The person left the send screen while choosing: a text being written
+  /// goes with it, so that nothing comes back hidden in it later. Files
+  /// chosen stay, as they did before texts.
+  void leaveText() {
+    if (busy || stage != SendStage.picking) return;
+    _leaveTextMode();
+    if (_text.isNotEmpty) {
+      _text = '';
+      _textBytes = null;
+    }
+    notifyListeners();
+  }
+
   /// The box changed.
   void setText(String v) {
     if (v == _text) return;
@@ -263,6 +311,8 @@ class SendViewModel extends ChangeNotifier {
   Future<void> pasteClipboard() async {
     if (busy) return;
     if (stage != SendStage.picking) reset();
+    // As with a shared text: the text is what the person chose last.
+    cancelShares();
     textMode = true;
     textNotice = TextNotice.none;
     notifyListeners();
@@ -285,13 +335,17 @@ class SendViewModel extends ChangeNotifier {
   }
 
   /// A text shared from another app, or selected there and sent (#326).
-  /// False while a transfer runs: then it is not taken. Text already typed
-  /// stays, with the new text after it on a line of its own.
+  /// It is the thing the person chose last: it takes the place of a text
+  /// in the box, and of files still being copied from a share, which stop.
+  /// Files already chosen stay, for when the person goes back to them.
+  /// False while a transfer runs: then it is not taken.
   bool takeText(String t) {
     if (busy) return false;
     if (stage != SendStage.picking) reset();
+    cancelShares();
     textMode = true;
-    setText(_text.isEmpty ? t : '$_text\n$t');
+    _text = '';
+    setText(t);
     return true;
   }
 

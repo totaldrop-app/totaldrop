@@ -97,7 +97,9 @@ class ReceiveViewModel extends ChangeNotifier {
     notifyListeners();
     try {
       final o = await _repo.connect(code, stopper);
-      final f = await _repo.receiveFolder();
+      // A text is shown, not saved: it needs no folder, and a folder that
+      // cannot be made does not stand in its way.
+      final f = o.isText ? null : await _repo.receiveFolder();
       if (generation != _generation) {
         // Arrived just after a stop: tell the sender, do not keep it open.
         unawaited(_repo.decline(o).catchError((Object _) {}));
@@ -126,13 +128,14 @@ class ReceiveViewModel extends ChangeNotifier {
     final o = offer;
     final dest = folder;
     final stopper = _stopper;
-    if (o == null || dest == null || stopper == null) return;
+    if (o == null || stopper == null) return;
+    if (dest == null && !o.isText) return;
     stage = ReceiveStage.transferring;
     total = o.totalBytes;
     notifyListeners();
     final events = o.isText
         ? _repo.acceptText(o, stopper)
-        : _repo.accept(o, dest, stopper);
+        : _repo.accept(o, dest!, stopper);
     _sub = events.listen(
       _onEvent,
       onError: (Object e) {

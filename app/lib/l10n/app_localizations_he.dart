@@ -589,6 +589,10 @@ class AppLocalizationsHe extends AppLocalizations {
       'הטקסט מכיל תווים נסתרים, המוצגים כ־U+…. העתקה נותנת את הטקסט בדיוק כפי שהגיע.';
 
   @override
+  String get sendTextHidden =>
+      'הטקסט מכיל תווים נסתרים, כמו סימני כיוון. הם נשלחים יחד איתו.';
+
+  @override
   String get sendClipboardKept => 'הטקסט שכבר הוקלד נשמר; הלוח לא שימש.';
 
   @override

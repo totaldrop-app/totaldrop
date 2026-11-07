@@ -160,6 +160,7 @@
   "receiveTextDone": "Text přijat a ověřen",
   "receiveTextDeclined": "Text jste odmítli.",
   "receiveTextHidden": "Text obsahuje skryté znaky, zobrazené jako U+…. Zkopírováním získáte text přesně tak, jak dorazil.",
+  "sendTextHidden": "Text obsahuje skryté znaky, například značky směru. Odešlou se spolu s ním.",
   "sendClipboardKept": "Napsaný text zůstal, schránka nebyla použita.",
   "sendTextShortened": "Zobrazen je jen začátek textu, odešle se celý.",
   "receiveTextShortened": "Zobrazen je jen začátek textu. Kopírovat text zkopíruje celý.",

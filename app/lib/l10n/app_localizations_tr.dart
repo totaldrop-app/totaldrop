@@ -580,6 +580,10 @@ class AppLocalizationsTr extends AppLocalizations {
       'Metinde gizli karakterler var, U+… olarak gösteriliyor. Kopyalayınca metin geldiği gibi kopyalanır.';
 
   @override
+  String get sendTextHidden =>
+      'Metinde yön işareti gibi gizli karakterler var. Bunlar da metinle birlikte gönderilir.';
+
+  @override
   String get sendClipboardKept => 'Yazılmış metin korundu, pano kullanılmadı.';
 
   @override

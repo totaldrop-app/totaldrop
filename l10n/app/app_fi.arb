@@ -160,6 +160,7 @@
   "receiveTextDone": "Teksti vastaanotettu ja tarkistettu",
   "receiveTextDeclined": "Hylkäsit tekstin.",
   "receiveTextHidden": "Tekstissä on piilomerkkejä, jotka näytetään muodossa U+…. Kopioitaessa saat tekstin täsmälleen sellaisena kuin se saapui.",
+  "sendTextHidden": "Tekstissä on piilomerkkejä, kuten suuntamerkkejä. Ne lähetetään tekstin mukana.",
   "sendClipboardKept": "Jo kirjoitettu teksti säilytettiin, leikepöytää ei käytetty.",
   "sendTextShortened": "Tekstistä näytetään vain alku, koko teksti lähetetään.",
   "receiveTextShortened": "Tekstistä näytetään vain alku. Kopioi teksti kopioi sen kokonaan.",

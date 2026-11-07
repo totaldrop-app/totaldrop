@@ -64,11 +64,45 @@ void main() {
       expect(vm.canStart, isFalse);
     });
 
-    test('a shared text goes after the typed one', () {
+    test('a shared text takes the place of the text in the box', () {
       final vm = model();
       expect(vm.takeText('one'), isTrue);
       expect(vm.takeText('two'), isTrue);
-      expect(vm.text, 'one\ntwo');
+      expect(vm.text, 'two');
+    });
+
+    test('a shared text stops files still being copied from a share', () {
+      final vm = model();
+      expect(vm.beginShare(1), isTrue);
+      expect(vm.takeText('hi'), isTrue);
+      expect(vm.sharing, isFalse);
+      expect(vm.addShared(1, [pickedFile('late.jpg')]), isFalse);
+      expect(vm.textMode, isTrue);
+      expect(vm.files, isEmpty);
+    });
+
+    test('shared files are shown and sent, not the text being written', () {
+      final vm = model()..takeText('draft');
+      expect(vm.beginShare(1), isTrue);
+      expect(vm.textMode, isFalse);
+      expect(vm.addShared(1, [pickedFile('a.jpg')]), isTrue);
+      expect(vm.textMode, isFalse);
+      expect(vm.files.single.name, 'a.jpg');
+      // The text is still there for when the person goes back to it.
+      expect(vm.text, 'draft');
+    });
+
+    test('leaving the screen while choosing forgets the text only', () {
+      final vm = model()
+        ..addFakeFileForTest('a.txt')
+        ..takeText('secret');
+      vm.leaveText();
+      expect(vm.text, isEmpty);
+      expect(vm.textMode, isFalse);
+      expect(vm.files, hasLength(1));
+      // Nothing old hides in front of the next shared text.
+      vm.takeText('new');
+      expect(vm.text, 'new');
     });
 
     test('a text over the limit cannot be sent', () {
@@ -132,6 +166,18 @@ void main() {
       expect(vm.receivedText, 'hi\u202E');
       vm.reset();
       expect(vm.receivedText, isNull);
+    });
+
+    test('a text offer needs no folder', () async {
+      final repo = FakeRepository()..folderError = Exception('no folder');
+      final vm = ReceiveViewModel(repository: repo)..setInput('7-a-b');
+      final connected = vm.connect();
+      repo.connected.complete(FakeOffer(isText: true));
+      await connected;
+      expect(vm.stage, ReceiveStage.offered);
+      expect(vm.folder, isNull);
+      await vm.accept();
+      expect(repo.accepted, ['text']);
     });
 
     test('a file offer is saved as files', () async {

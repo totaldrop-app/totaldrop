@@ -226,6 +226,8 @@
   "@receiveTextDeclined": {"description": "Receive result: the person declined an incoming text"},
   "receiveTextHidden": "The text holds hidden characters, shown as U+…. Copying gives the text exactly as it came.",
   "@receiveTextHidden": {"description": "Receive result: the text holds invisible control or direction characters, shown in the text by their code, as <U+202E>; keep U+… as it is"},
+  "sendTextHidden": "The text holds hidden characters, such as direction marks. They are sent with it.",
+  "@sendTextHidden": {"description": "Send screen: the text to send holds invisible control or direction characters; they are sent as they are"},
   "sendClipboardKept": "The text already typed is kept; the clipboard was not used.",
   "@sendClipboardKept": {"description": "Send screen: Send clipboard was chosen while the text box already held typed text, so the clipboard was not pasted"},
   "sendTextShortened": "Only the beginning of the text is shown; all of it is sent.",

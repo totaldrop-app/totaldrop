@@ -606,6 +606,10 @@ class AppLocalizationsPt extends AppLocalizations {
       'O texto contém caracteres ocultos, exibidos como U+…. Ao copiar, você obtém o texto exatamente como chegou.';
 
   @override
+  String get sendTextHidden =>
+      'O texto contém caracteres ocultos, como marcas de direção. Eles são enviados junto.';
+
+  @override
   String get sendClipboardKept =>
       'O texto já digitado foi mantido; a área de transferência não foi usada.';
 
@@ -1227,6 +1231,10 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String get receiveTextHidden =>
       'O texto contém caracteres ocultos, exibidos como U+…. Ao copiar, você obtém o texto exatamente como chegou.';
+
+  @override
+  String get sendTextHidden =>
+      'O texto contém caracteres ocultos, como marcas de direção. Eles são enviados junto.';
 
   @override
   String get sendClipboardKept =>
@@ -1852,6 +1860,10 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
   @override
   String get receiveTextHidden =>
       'O texto contém caracteres ocultos, mostrados como U+…. Ao copiar, obtém o texto exatamente como chegou.';
+
+  @override
+  String get sendTextHidden =>
+      'O texto contém caracteres ocultos, como marcas de direção. São enviados juntamente com ele.';
 
   @override
   String get sendClipboardKept =>

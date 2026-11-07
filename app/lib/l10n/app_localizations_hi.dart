@@ -594,6 +594,10 @@ class AppLocalizationsHi extends AppLocalizations {
       'टेक्स्ट में छिपे हुए अक्षर हैं, जो U+… के रूप में दिखाए गए हैं। कॉपी करने पर टेक्स्ट ठीक वैसा ही मिलता है जैसा आया था।';
 
   @override
+  String get sendTextHidden =>
+      'टेक्स्ट में दिशा-चिह्न जैसे छिपे हुए अक्षर हैं। ये भी टेक्स्ट के साथ भेजे जाते हैं।';
+
+  @override
   String get sendClipboardKept =>
       'पहले से लिखा पाठ रखा गया है; क्लिपबोर्ड का उपयोग नहीं हुआ।';
 

@@ -592,6 +592,10 @@ class AppLocalizationsFa extends AppLocalizations {
       'متن نویسه‌های پنهان دارد که به‌صورت U+… نمایش داده می‌شوند. با کپی کردن، متن دقیقاً همان‌طور که رسیده کپی می‌شود.';
 
   @override
+  String get sendTextHidden =>
+      'متن نویسه‌های پنهانی مانند نشانه‌های جهت دارد. این نویسه‌ها هم همراه متن فرستاده می‌شوند.';
+
+  @override
   String get sendClipboardKept =>
       'متن نوشته‌شده حفظ شد و از کلیپ‌بورد استفاده نشد.';
 

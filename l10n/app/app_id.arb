@@ -160,6 +160,7 @@
   "receiveTextDone": "Teks diterima dan terverifikasi",
   "receiveTextDeclined": "Anda menolak teks tersebut.",
   "receiveTextHidden": "Teks berisi karakter tersembunyi yang ditampilkan sebagai U+…. Saat disalin, teks didapat persis seperti saat tiba.",
+  "sendTextHidden": "Teks berisi karakter tersembunyi, seperti tanda arah. Karakter itu ikut terkirim.",
   "sendClipboardKept": "Teks yang sudah diketik tetap disimpan; papan klip tidak digunakan.",
   "sendTextShortened": "Hanya awal teks yang ditampilkan; seluruhnya dikirim.",
   "receiveTextShortened": "Hanya awal teks yang ditampilkan. Salin teks menyalin seluruhnya.",

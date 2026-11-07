@@ -582,6 +582,10 @@ class AppLocalizationsMs extends AppLocalizations {
       'Teks mengandungi aksara tersembunyi yang dipaparkan sebagai U+…. Apabila disalin, teks diperoleh tepat seperti ia tiba.';
 
   @override
+  String get sendTextHidden =>
+      'Teks mengandungi aksara tersembunyi, seperti tanda arah. Aksara itu turut dihantar.';
+
+  @override
   String get sendClipboardKept =>
       'Teks yang sudah ditaip dikekalkan; papan keratan tidak digunakan.';
 

@@ -160,6 +160,7 @@
   "receiveTextDone": "Texto recebido e verificado",
   "receiveTextDeclined": "Recusou o texto.",
   "receiveTextHidden": "O texto contém caracteres ocultos, mostrados como U+…. Ao copiar, obtém o texto exatamente como chegou.",
+  "sendTextHidden": "O texto contém caracteres ocultos, como marcas de direção. São enviados juntamente com ele.",
   "sendClipboardKept": "O texto já escrito foi mantido; a área de transferência não foi utilizada.",
   "sendTextShortened": "Só é mostrado o início do texto; é enviado na íntegra.",
   "receiveTextShortened": "Só é mostrado o início do texto. Copiar texto copia-o na íntegra.",

@@ -557,6 +557,9 @@ class AppLocalizationsKo extends AppLocalizations {
       '텍스트에 숨겨진 문자가 있어 U+… 형태로 표시합니다. 복사하면 도착한 그대로의 텍스트가 복사됩니다.';
 
   @override
+  String get sendTextHidden => '텍스트에 방향 표시 같은 숨겨진 문자가 있습니다. 이 문자도 함께 보내집니다.';
+
+  @override
   String get sendClipboardKept => '이미 입력한 텍스트는 그대로 두었으며 클립보드는 사용하지 않았습니다.';
 
   @override

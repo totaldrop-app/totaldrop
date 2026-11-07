@@ -43,9 +43,18 @@ bool hasDraftTranslation(BuildContext context) => rust.hasDraftTranslation(
 /// shown, not obeyed.
 String revealControls(String name) => rust.revealControls(name: name);
 
-/// A received text as it is shown (#326): hidden characters named, at
-/// most `SHOWN_CHARS` characters.
-rust.ShownText shownText(String text) => rust.shownText(text: text);
+/// A text as it is shown (#326): hidden characters named, at most
+/// `SHOWN_CHARS` characters. The last answer is kept: a screen asks again
+/// on every rebuild, and a text may be a megabyte long.
+rust.ShownText shownText(String text) {
+  final last = _lastShown;
+  if (last != null && identical(last.$1, text)) return last.$2;
+  final shown = rust.shownText(text: text);
+  _lastShown = (text, shown);
+  return shown;
+}
+
+(String, rust.ShownText)? _lastShown;
 
 /// The locale for numbers: the device's region (its first locale, so a
 /// device set to en-DE writes "1,5 MB"), or the app language when intl

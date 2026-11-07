@@ -557,6 +557,9 @@ class AppLocalizationsJa extends AppLocalizations {
       'テキストに見えない文字が含まれており、U+… の形で表示しています。コピーすると、届いたとおりのテキストがコピーされます。';
 
   @override
+  String get sendTextHidden => 'テキストに方向記号などの見えない文字が含まれています。これらも一緒に送信されます。';
+
+  @override
   String get sendClipboardKept => '入力済みのテキストはそのままです。クリップボードは使われていません。';
 
   @override

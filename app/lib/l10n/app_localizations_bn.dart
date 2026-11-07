@@ -582,6 +582,10 @@ class AppLocalizationsBn extends AppLocalizations {
       'লেখায় লুকানো অক্ষর আছে, সেগুলো U+… হিসেবে দেখানো হচ্ছে। কপি করলে লেখাটি ঠিক যেমন এসেছে তেমনই কপি হয়।';
 
   @override
+  String get sendTextHidden =>
+      'লেখায় দিক-চিহ্নের মতো লুকানো অক্ষর আছে। সেগুলোও লেখার সঙ্গে পাঠানো হয়।';
+
+  @override
   String get sendClipboardKept =>
       'আগে লেখা লেখাটি রাখা হয়েছে, ক্লিপবোর্ড ব্যবহার করা হয়নি।';
 

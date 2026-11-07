@@ -160,6 +160,7 @@
   "receiveTextDone": "Teks diterima dan disahkan",
   "receiveTextDeclined": "Anda telah menolak teks tersebut.",
   "receiveTextHidden": "Teks mengandungi aksara tersembunyi yang dipaparkan sebagai U+…. Apabila disalin, teks diperoleh tepat seperti ia tiba.",
+  "sendTextHidden": "Teks mengandungi aksara tersembunyi, seperti tanda arah. Aksara itu turut dihantar.",
   "sendClipboardKept": "Teks yang sudah ditaip dikekalkan; papan keratan tidak digunakan.",
   "sendTextShortened": "Hanya permulaan teks ditunjukkan; keseluruhannya dihantar.",
   "receiveTextShortened": "Hanya permulaan teks ditunjukkan. Salin teks menyalin keseluruhannya.",

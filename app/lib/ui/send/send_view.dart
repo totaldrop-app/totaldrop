@@ -55,8 +55,9 @@ class SendView extends StatelessWidget {
                 vm.reset();
               } else {
                 // Leaving the wait ends it: the shares stop, and what
-                // was chosen before stays.
+                // was chosen before stays. A text being written goes.
                 vm.cancelShares();
+                vm.leaveText();
               }
               return;
             }
@@ -277,8 +278,8 @@ class _Picking extends StatelessWidget {
 }
 
 /// A text to send instead of files (#326): typed, pasted, shared from
-/// another app or selected there. What is sent is the text exactly as it
-/// is in the box; a text too long to edit is shown in part and sent whole.
+/// another app or selected there. What is sent is the text in the box,
+/// as UTF-8; a text too long to edit is shown in part and sent whole.
 class _TextPicking extends StatefulWidget {
   const _TextPicking({required this.vm});
   final SendViewModel vm;
@@ -340,90 +341,116 @@ class _TextPickingState extends State<_TextPicking> {
       TextNotice.none => null,
     };
     final warn = vm.textTooLong || vm.textNotice != TextNotice.none;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Expanded(
-            child: TextField(
-              controller: _controller,
-              // A long text cannot be edited, only taken away.
-              readOnly: vm.bigText,
-              autofocus: vm.text.isEmpty,
-              maxLines: null,
-              expands: true,
-              textAlignVertical: TextAlignVertical.top,
-              keyboardType: TextInputType.multiline,
-              decoration: InputDecoration(
-                hintText: l.sendTextHint,
-                border: const OutlineInputBorder(),
-              ),
-              onChanged: vm.setText,
+    // The box shows hidden characters as the system draws them, which is
+    // often not at all: the screen names them (#326).
+    final hidden = vm.text.isNotEmpty && shownText(vm.text).hidden;
+    // The box takes the room left; with the keyboard up or large type,
+    // the page scrolls instead of overflowing.
+    return CustomScrollView(
+      slivers: [
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(minHeight: 160),
+                    child: TextField(
+                      controller: _controller,
+                      // A long text cannot be edited, only taken away.
+                      readOnly: vm.bigText,
+                      autofocus: vm.text.isEmpty,
+                      maxLines: null,
+                      expands: true,
+                      textAlignVertical: TextAlignVertical.top,
+                      keyboardType: TextInputType.multiline,
+                      decoration: InputDecoration(
+                        hintText: l.sendTextHint,
+                        border: const OutlineInputBorder(),
+                      ),
+                      onChanged: vm.setText,
+                    ),
+                  ),
+                ),
+                if (notice != null) ...[
+                  Gap.s,
+                  Announced(
+                    Text(
+                      notice,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: warn
+                            ? theme.colorScheme.error
+                            : theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ],
+                if (hidden) ...[
+                  Gap.s,
+                  Announced(
+                    Text(
+                      l.sendTextHidden,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ],
+                Gap.s,
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    if (vm.text.isEmpty)
+                      OutlinedButton.icon(
+                        onPressed: vm.pasteClipboard,
+                        icon: const Icon(Icons.content_paste),
+                        label: Text(l.receivePaste),
+                      )
+                    else
+                      OutlinedButton.icon(
+                        onPressed: () => vm.setText(''),
+                        icon: const Icon(Icons.clear),
+                        label: Text(l.sendRemove),
+                      ),
+                    if (vm.text.isEmpty)
+                      OutlinedButton.icon(
+                        onPressed: () {
+                          vm.setTextMode(false);
+                          if (vm.files.isEmpty) vm.addFiles();
+                        },
+                        icon: const Icon(Icons.attach_file),
+                        label: Text(l.sendAddFiles),
+                      ),
+                  ],
+                ),
+                const Divider(height: 24),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(l.sendStrongCode),
+                  subtitle: Text(l.sendStrongCodeHint),
+                  value: vm.strong,
+                  onChanged: vm.setStrong,
+                ),
+                Gap.s,
+                FilledButton.icon(
+                  onPressed: vm.canStart ? vm.start : null,
+                  icon: const Icon(Icons.key_outlined),
+                  label: Text(
+                    vm.text.isEmpty
+                        ? l.sendCreateCode
+                        : '${l.sendCreateCode} · ${formatBytes(l, vm.textBytes)}',
+                  ),
+                ),
+              ],
             ),
           ),
-          if (notice != null) ...[
-            Gap.s,
-            Announced(
-              Text(
-                notice,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: warn
-                      ? theme.colorScheme.error
-                      : theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ),
-          ],
-          Gap.s,
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              if (vm.text.isEmpty)
-                OutlinedButton.icon(
-                  onPressed: vm.pasteClipboard,
-                  icon: const Icon(Icons.content_paste),
-                  label: Text(l.receivePaste),
-                )
-              else
-                OutlinedButton.icon(
-                  onPressed: () => vm.setText(''),
-                  icon: const Icon(Icons.clear),
-                  label: Text(l.sendRemove),
-                ),
-              if (vm.text.isEmpty)
-                OutlinedButton.icon(
-                  onPressed: () {
-                    vm.setTextMode(false);
-                    if (vm.files.isEmpty) vm.addFiles();
-                  },
-                  icon: const Icon(Icons.attach_file),
-                  label: Text(l.sendAddFiles),
-                ),
-            ],
-          ),
-          const Divider(height: 24),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text(l.sendStrongCode),
-            subtitle: Text(l.sendStrongCodeHint),
-            value: vm.strong,
-            onChanged: vm.setStrong,
-          ),
-          Gap.s,
-          FilledButton.icon(
-            onPressed: vm.canStart ? vm.start : null,
-            icon: const Icon(Icons.key_outlined),
-            label: Text(
-              vm.text.isEmpty
-                  ? l.sendCreateCode
-                  : '${l.sendCreateCode} · ${formatBytes(l, vm.textBytes)}',
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

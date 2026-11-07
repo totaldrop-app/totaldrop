@@ -160,6 +160,7 @@
   "receiveTextDone": "文本已接收并验证",
   "receiveTextDeclined": "你已拒绝该文本。",
   "receiveTextHidden": "文本中含有隐藏字符，显示为 U+…。复制时得到的是与收到时完全相同的文本。",
+  "sendTextHidden": "文本中含有隐藏字符，例如方向标记。它们会随文本一起发送。",
   "sendClipboardKept": "已输入的文本保持不变，未使用剪贴板。",
   "sendTextShortened": "只显示文本的开头，发送的是全文。",
   "receiveTextShortened": "只显示文本的开头。“复制文本”会复制全文。",

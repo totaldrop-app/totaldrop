@@ -584,6 +584,10 @@ class AppLocalizationsHu extends AppLocalizations {
       'A szövegben rejtett karakterek vannak, ezek U+… alakban látszanak. Másoláskor a szöveget pontosan úgy kapod meg, ahogy érkezett.';
 
   @override
+  String get sendTextHidden =>
+      'A szövegben rejtett karakterek vannak, például irányjelek. Ezek is elküldésre kerülnek vele.';
+
+  @override
   String get sendClipboardKept =>
       'A már beírt szöveg megmaradt, a vágólap nem lett felhasználva.';
 

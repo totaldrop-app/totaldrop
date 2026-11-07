@@ -160,6 +160,7 @@
   "receiveTextDone": "Tekst ontvangen en gecontroleerd",
   "receiveTextDeclined": "Je hebt de tekst geweigerd.",
   "receiveTextHidden": "De tekst bevat verborgen tekens, getoond als U+…. Bij kopiëren krijg je de tekst precies zoals hij aankwam.",
+  "sendTextHidden": "De tekst bevat verborgen tekens, zoals richtingstekens. Die worden meegestuurd.",
   "sendClipboardKept": "De al getypte tekst is bewaard; het klembord is niet gebruikt.",
   "sendTextShortened": "Alleen het begin van de tekst wordt getoond; de hele tekst wordt verzonden.",
   "receiveTextShortened": "Alleen het begin van de tekst wordt getoond. Tekst kopiëren kopieert alles.",

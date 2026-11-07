@@ -10,7 +10,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:totaldrop/data/launch_source.dart';
 import 'package:totaldrop/l10n/app_localizations.dart';
+import 'package:totaldrop/src/rust/api/l10n.dart' show ShownText;
 import 'package:totaldrop/src/rust/api/transfer.dart';
+import 'package:totaldrop/src/rust/frb_generated.dart';
 import 'package:totaldrop/ui/core/launch_router.dart';
 import 'package:totaldrop/ui/core/theme.dart';
 import 'package:totaldrop/ui/receive/receive_view.dart';
@@ -39,7 +41,19 @@ class FakeLaunches implements LaunchSource {
 PickedFile shared(String name) =>
     PickedFile(name: name, path: '/cache/shared/1/$name', size: 10);
 
+/// The send screen asks the core whether a text holds hidden characters.
+class _Rust implements RustLibApi {
+  @override
+  ShownText crateApiL10NShownText({required String text}) =>
+      ShownText(text: text, short: false, hidden: text.contains('\u202E'));
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
 void main() {
+  setUpAll(() => RustLib.initMock(api: _Rust()));
+
   group('platform events', () {
     test('a copied share becomes its files', () {
       final l = parseLaunch({
@@ -404,6 +418,18 @@ void main() {
       expect(find.text('https://example.org/'), findsOneWidget);
     });
 
+    testWidgets('hidden characters in a shared text are named', (tester) async {
+      await pumpApp(tester);
+      launches.add(const SharedText('plain'));
+      await settle(tester);
+      const note =
+          'The text holds hidden characters, such as direction marks. They are sent with it.';
+      expect(find.text(note), findsNothing);
+      launches.add(const SharedText('abc\u202Edef'));
+      await settle(tester);
+      expect(find.text(note), findsOneWidget);
+    });
+
     testWidgets('the clipboard shortcut opens Send with the clipboard', (
       tester,
     ) async {
@@ -435,6 +461,40 @@ void main() {
         ),
         findsOneWidget,
       );
+    });
+
+    testWidgets('the clipboard shortcut during a transfer says why', (
+      tester,
+    ) async {
+      send = SendViewModel(
+        repository: repo,
+        launches: launches,
+        textClipboard: const FakeClipboard('hello'),
+      );
+      await pumpApp(tester);
+      send.addFakeFileForTest('a.txt');
+      unawaited(send.start());
+      launches.add(const OpenScreen(clipboardScreen));
+      await settle(tester);
+      expect(send.text, isEmpty);
+      expect(
+        find.text(
+          'A transfer is still running. Wait for it to finish or stop it, then share again.',
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('leaving Send forgets a text being written', (tester) async {
+      await pumpApp(tester);
+      launches.add(const SharedText('secret'));
+      await settle(tester);
+      expect(send.textMode, isTrue);
+      await tester.pageBack();
+      await settle(tester);
+      expect(find.byType(SendView), findsNothing);
+      expect(send.text, isEmpty);
+      expect(send.textMode, isFalse);
     });
 
     testWidgets('the shortcuts open Send and Receive', (tester) async {

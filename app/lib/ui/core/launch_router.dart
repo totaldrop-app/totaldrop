@@ -70,10 +70,11 @@ class _LaunchRouterState extends State<LaunchRouter> {
       case OpenScreen(screen: clipboardScreen):
         if (_blocked) {
           _showRunning();
+          _tell((l) => l.shareBusy);
         } else {
           _show(sendRoute);
-          // Android gives the clipboard only to the app in front, which
-          // this is once its screen is up.
+          // Android gives the clipboard only to the app whose window has
+          // focus; the read waits for it (PlatformClipboard).
           WidgetsBinding.instance.addPostFrameCallback(
             (_) => unawaited(widget.send.pasteClipboard()),
           );

@@ -572,6 +572,10 @@ class AppLocalizationsTh extends AppLocalizations {
       'ข้อความมีอักขระที่ซ่อนอยู่ ซึ่งแสดงเป็น U+… เมื่อคัดลอกจะได้ข้อความตรงตามที่ได้รับมา';
 
   @override
+  String get sendTextHidden =>
+      'ข้อความมีอักขระที่ซ่อนอยู่ เช่น เครื่องหมายทิศทาง ซึ่งจะถูกส่งไปพร้อมกับข้อความด้วย';
+
+  @override
   String get sendClipboardKept =>
       'ข้อความที่พิมพ์ไว้ยังอยู่ และไม่ได้ใช้คลิปบอร์ด';
 
