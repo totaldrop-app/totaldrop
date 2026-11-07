@@ -234,7 +234,7 @@
   "dl.new.share": "Partilhe ficheiros com o TotalDrop a partir de qualquer app, como Galeria ou Ficheiros. Ao manter premido o ícone, surgem Enviar, Receber e Enviar área de transferência.",
   "dl.new.text": "Envie um texto: escreva-o, partilhe-o de outra app ou escolha \"Enviar com o TotalDrop\" no texto selecionado. O texto recebido é mostrado, não guardado, e pode ser copiado.",
   "dl.new.heading": "O título acima das palavras de verificação cabe em ecrãs estreitos.",
-  "dl.new.relay": "O telemóvel já não se liga a um relay que o outro dispositivo não vai usar.",
+  "dl.new.relay": "O telemóvel já não se liga a um servidor de retransmissão que o outro dispositivo não vai usar.",
   "dl.new.linux": "As alterações abaixo são no Android. A app para Linux não mudou desde a 0.3.0-beta.5.",
   "dl.new.title": "Novidades",
   "dl.platforms": "Plataformas",

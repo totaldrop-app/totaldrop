@@ -234,7 +234,7 @@
   "dl.new.share": "Condividi file con TotalDrop da qualsiasi app, come Galleria o File. Tenendo premuta l’icona compaiono Invia, Ricevi e Invia appunti.",
   "dl.new.text": "Invia un testo: scrivilo, condividilo da un’altra app o scegli «Invia con TotalDrop» sul testo selezionato. Il testo ricevuto viene mostrato, non salvato, e si può copiare.",
   "dl.new.heading": "Il titolo sopra le parole di verifica entra negli schermi stretti.",
-  "dl.new.relay": "Il telefono non si connette più a un relay che l’altro dispositivo non userà.",
+  "dl.new.relay": "Il telefono non si connette più a un server di inoltro che l’altro dispositivo non userà.",
   "dl.new.linux": "Le modifiche qui sotto riguardano Android. L’app per Linux non è cambiata dalla 0.3.0-beta.5.",
   "dl.new.title": "Novità",
   "dl.platforms": "Piattaforme",
