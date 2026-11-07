@@ -53,6 +53,12 @@ jobs:
       - run: dash packaging/test-check-cli-version.sh
       - name: Flatpak crate list
         run: node --test tools/test-flatpak-cargo-sources.mjs
+      # The desktop entry and the file-manager menus are written from
+      # l10n/app; this also fails when they are out of date (#303).
+      - name: Desktop entry and file-manager menus
+        run: node --test tools/test-desktop-entries.mjs
+      - name: Nautilus extension
+        run: python3 -I packaging/linux/file-managers/test_totaldrop_nautilus.py
 
   # ARM64 (Snapdragon X, RTX Spark) on GitHub's free ARM runner, #86. Arch
   # has no official ARM64 Docker image; the PKGBUILD lists aarch64 for

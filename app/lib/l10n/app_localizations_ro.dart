@@ -538,4 +538,17 @@ class AppLocalizationsRo extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get desktopGenericName => 'Transfer de fișiere';
+
+  @override
+  String get desktopComment =>
+      'Trimite fișiere direct pe alt dispozitiv, criptate integral';
+
+  @override
+  String get desktopKeywords => 'trimite;primește;partajează;transfer;fișiere;';
+
+  @override
+  String get desktopSendWith => 'Trimite cu TotalDrop';
 }

@@ -140,5 +140,9 @@
   "transferNoticeBody": "Vẫn tiếp tục khi bạn dùng ứng dụng khác.",
   "shareTextSoon": "TotalDrop chưa gửi được văn bản, chỉ gửi tệp. Hãy chia sẻ một tệp.",
   "shareBusy": "Vẫn còn một lần truyền đang chạy. Hãy chờ nó xong hoặc dừng nó, rồi chia sẻ lại.",
-  "shareSkipped": "{count, plural, =1{Không đọc được một mục được chia sẻ nên đã bỏ qua.} other{Không đọc được {count} mục được chia sẻ nên đã bỏ qua.}}"
+  "shareSkipped": "{count, plural, =1{Không đọc được một mục được chia sẻ nên đã bỏ qua.} other{Không đọc được {count} mục được chia sẻ nên đã bỏ qua.}}",
+  "desktopGenericName": "Truyền tệp",
+  "desktopComment": "Gửi tệp thẳng tới thiết bị khác, mã hóa đầu cuối",
+  "desktopKeywords": "gửi;nhận;chia sẻ;truyền;tệp;",
+  "desktopSendWith": "Gửi bằng TotalDrop"
 }

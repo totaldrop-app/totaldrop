@@ -140,5 +140,9 @@
   "transferNoticeBody": "Başka uygulamaları kullanırken de sürer.",
   "shareTextSoon": "TotalDrop henüz metin göndermiyor, yalnızca dosya. Bunun yerine bir dosya paylaşın.",
   "shareBusy": "Bir aktarım hâlâ sürüyor. Bitmesini bekleyin ya da durdurun, sonra yeniden paylaşın.",
-  "shareSkipped": "{count, plural, =1{Paylaşılan bir öğe okunamadı ve dışarıda bırakıldı.} other{Paylaşılan {count} öğe okunamadı ve dışarıda bırakıldı.}}"
+  "shareSkipped": "{count, plural, =1{Paylaşılan bir öğe okunamadı ve dışarıda bırakıldı.} other{Paylaşılan {count} öğe okunamadı ve dışarıda bırakıldı.}}",
+  "desktopGenericName": "Dosya aktarımı",
+  "desktopComment": "Dosyaları başka bir cihaza doğrudan ve uçtan uca şifreli gönderin",
+  "desktopKeywords": "gönder;al;paylaş;aktar;dosya;",
+  "desktopSendWith": "TotalDrop ile gönder"
 }

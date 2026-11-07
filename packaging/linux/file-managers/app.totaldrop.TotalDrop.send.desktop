@@ -1,0 +1,54 @@
+# SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Written by tools/desktop-entries.mjs from l10n/app: change the text
+# there and run `node tools/desktop-entries.mjs write`.
+#
+# Dolphin's right-click menu (KIO service menu, KDE Frameworks 6), for
+# any selection of local files and folders.
+[Desktop Entry]
+Type=Service
+MimeType=all/all;
+X-KDE-Protocols=file
+X-KDE-Priority=TopLevel
+Actions=send;
+
+[Desktop Action send]
+Name=Send with TotalDrop
+Name[ar]=إرسال باستخدام TotalDrop
+Name[bn]=TotalDrop দিয়ে পাঠান
+Name[cs]=Odeslat pomocí TotalDrop
+Name[da]=Send med TotalDrop
+Name[de]=Mit TotalDrop senden
+Name[el]=Αποστολή με το TotalDrop
+Name[es]=Enviar con TotalDrop
+Name[fa]=ارسال با TotalDrop
+Name[fi]=Lähetä TotalDropilla
+Name[fr]=Envoyer avec TotalDrop
+Name[he]=שליחה עם TotalDrop
+Name[hi]=TotalDrop से भेजें
+Name[hu]=Küldés a TotalDroppal
+Name[id]=Kirim dengan TotalDrop
+Name[it]=Invia con TotalDrop
+Name[ja]=TotalDrop で送信
+Name[ko]=TotalDrop으로 보내기
+Name[ms]=Hantar dengan TotalDrop
+Name[nb]=Send med TotalDrop
+Name[nl]=Versturen met TotalDrop
+Name[pl]=Wyślij przez TotalDrop
+Name[pt]=Enviar com o TotalDrop
+Name[ro]=Trimite cu TotalDrop
+Name[ru]=Отправить через TotalDrop
+Name[sv]=Skicka med TotalDrop
+Name[sw]=Tuma kwa TotalDrop
+Name[th]=ส่งด้วย TotalDrop
+Name[tr]=TotalDrop ile gönder
+Name[uk]=Надіслати через TotalDrop
+Name[ur]=TotalDrop سے بھیجیں
+Name[vi]=Gửi bằng TotalDrop
+Name[zh]=用 TotalDrop 发送
+Name[zh_HK]=用 TotalDrop 傳送
+Name[zh_MO]=用 TotalDrop 傳送
+Name[zh_TW]=用 TotalDrop 傳送
+Icon=app.totaldrop.TotalDrop
+Exec=totaldrop-desktop %U

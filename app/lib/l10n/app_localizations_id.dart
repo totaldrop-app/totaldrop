@@ -513,4 +513,17 @@ class AppLocalizationsId extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get desktopGenericName => 'Transfer file';
+
+  @override
+  String get desktopComment =>
+      'Kirim file langsung ke perangkat lain, terenkripsi end-to-end';
+
+  @override
+  String get desktopKeywords => 'kirim;terima;bagikan;transfer;file;';
+
+  @override
+  String get desktopSendWith => 'Kirim dengan TotalDrop';
 }

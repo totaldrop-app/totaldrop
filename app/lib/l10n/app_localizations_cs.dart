@@ -537,4 +537,17 @@ class AppLocalizationsCs extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get desktopGenericName => 'Přenos souborů';
+
+  @override
+  String get desktopComment =>
+      'Posílejte soubory přímo do jiného zařízení, koncově šifrované';
+
+  @override
+  String get desktopKeywords => 'poslat;přijmout;sdílet;přenos;soubory;';
+
+  @override
+  String get desktopSendWith => 'Odeslat pomocí TotalDrop';
 }

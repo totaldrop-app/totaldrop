@@ -542,4 +542,17 @@ class AppLocalizationsPl extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get desktopGenericName => 'Przesyłanie plików';
+
+  @override
+  String get desktopComment =>
+      'Wysyłaj pliki prosto na inne urządzenie, z szyfrowaniem end-to-end';
+
+  @override
+  String get desktopKeywords => 'wyślij;odbierz;udostępnij;przesyłanie;pliki;';
+
+  @override
+  String get desktopSendWith => 'Wyślij przez TotalDrop';
 }

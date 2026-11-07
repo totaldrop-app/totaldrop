@@ -495,4 +495,16 @@ class AppLocalizationsJa extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get desktopGenericName => 'ファイル転送';
+
+  @override
+  String get desktopComment => 'ファイルを別のデバイスへ直接送信。エンドツーエンドで暗号化';
+
+  @override
+  String get desktopKeywords => '送信;受信;共有;転送;ファイル;';
+
+  @override
+  String get desktopSendWith => 'TotalDrop で送信';
 }

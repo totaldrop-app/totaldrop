@@ -4,7 +4,8 @@
 
 # Install a built package in a clean container of its distribution and
 # check that it runs: binaries resolve, the QML interface loads, and the
-# desktop entry and AppStream data are valid.
+# desktop entry and AppStream data are valid, and the file-manager menus
+# are installed.
 #
 #   packaging/test-install.sh dist/packages/totaldrop-….pkg.tar.zst|.deb|.rpm [image]
 #
@@ -33,6 +34,10 @@ docker run --rm -v "$(dirname "$pkg"):/pkg:ro" $wl "$image" sh -ec "
   echo '--- versions'; totaldrop --version
   echo '--- libraries'; ! ldd /usr/bin/totaldrop-desktop | grep 'not found'
   echo '--- desktop entry'; desktop-file-validate /usr/share/applications/app.totaldrop.TotalDrop.desktop && echo valid
+  echo '--- file-manager menus'
+  for f in kio/servicemenus/app.totaldrop.TotalDrop.send.desktop nemo/actions/app.totaldrop.TotalDrop.nemo_action nautilus-python/extensions/totaldrop_nautilus.py; do
+    test -f /usr/share/\$f || { echo \"missing /usr/share/\$f\"; exit 1; }
+  done; echo installed
   echo '--- appstream'; appstreamcli validate --no-net --explain /usr/share/metainfo/app.totaldrop.TotalDrop.metainfo.xml || true
   echo '--- interface'; QT_QPA_PLATFORM=offscreen QT_FORCE_STDERR_LOGGING=1 timeout 4 totaldrop-desktop > /tmp/out.log 2>&1 || true
   if grep -E 'qrc:|module .* is not installed|Error' /tmp/out.log; then echo 'QML errors'; exit 1; else echo 'loads cleanly'; fi

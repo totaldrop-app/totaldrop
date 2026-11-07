@@ -543,4 +543,18 @@ class AppLocalizationsFr extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get desktopGenericName => 'Transfert de fichiers';
+
+  @override
+  String get desktopComment =>
+      'Envoyez des fichiers directement vers un autre appareil, chiffrés de bout en bout';
+
+  @override
+  String get desktopKeywords =>
+      'envoyer;recevoir;partager;transférer;fichiers;';
+
+  @override
+  String get desktopSendWith => 'Envoyer avec TotalDrop';
 }

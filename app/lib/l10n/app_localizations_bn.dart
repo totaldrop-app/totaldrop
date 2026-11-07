@@ -516,4 +516,17 @@ class AppLocalizationsBn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get desktopGenericName => 'ফাইল স্থানান্তর';
+
+  @override
+  String get desktopComment =>
+      'ফাইল সরাসরি অন্য ডিভাইসে পাঠান, এন্ড-টু-এন্ড এনক্রিপ্টেড';
+
+  @override
+  String get desktopKeywords => 'পাঠান;গ্রহণ;শেয়ার;স্থানান্তর;ফাইল;';
+
+  @override
+  String get desktopSendWith => 'TotalDrop দিয়ে পাঠান';
 }

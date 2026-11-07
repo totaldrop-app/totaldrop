@@ -517,4 +517,17 @@ class AppLocalizationsHu extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get desktopGenericName => 'Fájlátvitel';
+
+  @override
+  String get desktopComment =>
+      'Fájlok küldése közvetlenül egy másik eszközre, végpontok közötti titkosítással';
+
+  @override
+  String get desktopKeywords => 'küldés;fogadás;megosztás;átvitel;fájlok;';
+
+  @override
+  String get desktopSendWith => 'Küldés a TotalDroppal';
 }

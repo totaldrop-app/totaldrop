@@ -140,5 +140,9 @@
   "transferNoticeBody": "ほかのアプリを使っている間も続きます。",
   "shareTextSoon": "TotalDrop はまだテキストを送信できません。ファイルのみです。ファイルを共有してください。",
   "shareBusy": "転送がまだ進行中です。完了を待つか停止してから、もう一度共有してください。",
-  "shareSkipped": "{count, plural, =1{共有された1件の項目を読み取れなかったため、除外しました。} other{共有された{count}件の項目を読み取れなかったため、除外しました。}}"
+  "shareSkipped": "{count, plural, =1{共有された1件の項目を読み取れなかったため、除外しました。} other{共有された{count}件の項目を読み取れなかったため、除外しました。}}",
+  "desktopGenericName": "ファイル転送",
+  "desktopComment": "ファイルを別のデバイスへ直接送信。エンドツーエンドで暗号化",
+  "desktopKeywords": "送信;受信;共有;転送;ファイル;",
+  "desktopSendWith": "TotalDrop で送信"
 }

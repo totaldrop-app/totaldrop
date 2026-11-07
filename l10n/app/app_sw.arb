@@ -140,5 +140,9 @@
   "transferNoticeBody": "Inaendelea unapotumia programu nyingine.",
   "shareTextSoon": "TotalDrop bado haitumi maandishi, ni faili tu. Shiriki faili badala yake.",
   "shareBusy": "Uhamishaji bado unaendelea. Subiri umalizike au uusimamishe, kisha shiriki tena.",
-  "shareSkipped": "{count, plural, =1{Kipengee kimoja kilichoshirikiwa hakikuweza kusomwa na kimeachwa.} other{Vipengee {count} vilivyoshirikiwa havikuweza kusomwa na vimeachwa.}}"
+  "shareSkipped": "{count, plural, =1{Kipengee kimoja kilichoshirikiwa hakikuweza kusomwa na kimeachwa.} other{Vipengee {count} vilivyoshirikiwa havikuweza kusomwa na vimeachwa.}}",
+  "desktopGenericName": "Uhamishaji wa faili",
+  "desktopComment": "Tuma faili moja kwa moja kwenye kifaa kingine, zimesimbwa mwanzo hadi mwisho",
+  "desktopKeywords": "tuma;pokea;shiriki;hamisha;faili;",
+  "desktopSendWith": "Tuma kwa TotalDrop"
 }
