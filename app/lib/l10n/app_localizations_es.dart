@@ -605,6 +605,10 @@ class AppLocalizationsEs extends AppLocalizations {
       'El texto contiene caracteres ocultos, que se muestran como U+…. Al copiarlo obtienes el texto exactamente como llegó.';
 
   @override
+  String get sendTextHidden =>
+      'El texto contiene caracteres ocultos, como marcas de dirección. Se envían con él.';
+
+  @override
   String get sendClipboardKept =>
       'Se conserva el texto ya escrito; no se usó el portapapeles.';
 

@@ -595,6 +595,10 @@ class AppLocalizationsSv extends AppLocalizations {
       'Texten innehåller dolda tecken, som visas som U+…. När du kopierar får du texten exakt som den kom.';
 
   @override
+  String get sendTextHidden =>
+      'Texten innehåller dolda tecken, till exempel riktningsmarkeringar. De skickas med.';
+
+  @override
   String get sendClipboardKept =>
       'Den text som redan skrivits behölls; urklippet användes inte.';
 

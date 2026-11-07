@@ -580,6 +580,10 @@ class AppLocalizationsId extends AppLocalizations {
       'Teks berisi karakter tersembunyi yang ditampilkan sebagai U+…. Saat disalin, teks didapat persis seperti saat tiba.';
 
   @override
+  String get sendTextHidden =>
+      'Teks berisi karakter tersembunyi, seperti tanda arah. Karakter itu ikut terkirim.';
+
+  @override
   String get sendClipboardKept =>
       'Teks yang sudah diketik tetap disimpan; papan klip tidak digunakan.';
 

@@ -160,6 +160,7 @@
   "receiveTextDone": "Đã nhận và xác minh văn bản",
   "receiveTextDeclined": "Bạn đã từ chối văn bản.",
   "receiveTextHidden": "Văn bản có ký tự ẩn, được hiển thị dưới dạng U+…. Khi sao chép, bạn nhận được văn bản đúng như khi đến.",
+  "sendTextHidden": "Văn bản có ký tự ẩn, chẳng hạn dấu chỉ hướng. Các ký tự này cũng được gửi kèm.",
   "sendClipboardKept": "Văn bản đã gõ được giữ nguyên; không dùng bảng nhớ tạm.",
   "sendTextShortened": "Chỉ hiển thị phần đầu của văn bản; toàn bộ sẽ được gửi.",
   "receiveTextShortened": "Chỉ hiển thị phần đầu của văn bản. Sao chép văn bản sẽ sao chép toàn bộ.",

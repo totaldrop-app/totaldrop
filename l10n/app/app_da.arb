@@ -160,6 +160,7 @@
   "receiveTextDone": "Tekst modtaget og bekræftet",
   "receiveTextDeclined": "Du afviste teksten.",
   "receiveTextHidden": "Teksten indeholder skjulte tegn, som vises som U+…. Når du kopierer, får du teksten præcis, som den kom.",
+  "sendTextHidden": "Teksten indeholder skjulte tegn, f.eks. retningsmærker. De sendes med.",
   "sendClipboardKept": "Den skrevne tekst er bevaret; udklipsholderen blev ikke brugt.",
   "sendTextShortened": "Kun begyndelsen af teksten vises; hele teksten sendes.",
   "receiveTextShortened": "Kun begyndelsen af teksten vises. Kopiér tekst kopierer det hele.",

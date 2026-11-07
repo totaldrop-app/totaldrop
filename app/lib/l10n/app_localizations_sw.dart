@@ -590,6 +590,10 @@ class AppLocalizationsSw extends AppLocalizations {
       'Maandishi yana herufi zilizofichwa, zinazoonyeshwa kama U+…. Ukinakili, unapata maandishi kama yalivyofika.';
 
   @override
+  String get sendTextHidden =>
+      'Maandishi yana herufi zilizofichwa, kama alama za mwelekeo. Zinatumwa pamoja nayo.';
+
+  @override
   String get sendClipboardKept =>
       'Maandishi yaliyokwisha andikwa yamebaki; ubao wa kunakili haukutumika.';
 

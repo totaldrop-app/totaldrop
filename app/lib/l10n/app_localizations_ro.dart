@@ -604,6 +604,10 @@ class AppLocalizationsRo extends AppLocalizations {
       'Textul conține caractere ascunse, afișate ca U+…. La copiere obțineți textul exact așa cum a sosit.';
 
   @override
+  String get sendTextHidden =>
+      'Textul conține caractere ascunse, cum ar fi marcaje de direcție. Acestea sunt trimise împreună cu el.';
+
+  @override
   String get sendClipboardKept =>
       'Textul deja scris a fost păstrat; clipboardul nu a fost folosit.';
 

@@ -609,6 +609,10 @@ class AppLocalizationsPl extends AppLocalizations {
       'Tekst zawiera ukryte znaki, wyświetlane jako U+…. Po skopiowaniu otrzymasz tekst dokładnie taki, jaki dotarł.';
 
   @override
+  String get sendTextHidden =>
+      'Tekst zawiera ukryte znaki, na przykład znaczniki kierunku. Zostaną wysłane razem z nim.';
+
+  @override
   String get sendClipboardKept =>
       'Wpisany tekst został zachowany, schowek nie został użyty.';
 

@@ -613,6 +613,10 @@ class AppLocalizationsFr extends AppLocalizations {
       'Le texte contient des caractères cachés, affichés sous la forme U+…. La copie donne le texte exactement tel qu’il est arrivé.';
 
   @override
+  String get sendTextHidden =>
+      'Le texte contient des caractères cachés, comme des marques de direction. Ils sont envoyés avec lui.';
+
+  @override
   String get sendClipboardKept =>
       'Le texte déjà saisi est conservé ; le presse-papiers n’a pas été utilisé.';
 

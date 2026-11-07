@@ -601,6 +601,10 @@ class AppLocalizationsDe extends AppLocalizations {
       'Der Text enthält versteckte Zeichen, angezeigt als U+…. Beim Kopieren erhalten Sie den Text genau so, wie er ankam.';
 
   @override
+  String get sendTextHidden =>
+      'Der Text enthält versteckte Zeichen, etwa Richtungszeichen. Sie werden mitgesendet.';
+
+  @override
   String get sendClipboardKept =>
       'Der bereits eingegebene Text bleibt erhalten; die Zwischenablage wurde nicht verwendet.';
 

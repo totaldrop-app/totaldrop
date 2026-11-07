@@ -607,6 +607,10 @@ class AppLocalizationsIt extends AppLocalizations {
       'Il testo contiene caratteri nascosti, mostrati come U+…. Copiandolo ottieni il testo esattamente come è arrivato.';
 
   @override
+  String get sendTextHidden =>
+      'Il testo contiene caratteri nascosti, come i segni di direzione. Vengono inviati insieme al testo.';
+
+  @override
   String get sendClipboardKept =>
       'Il testo già scritto è stato mantenuto; gli appunti non sono stati usati.';
 

@@ -593,6 +593,10 @@ class AppLocalizationsUr extends AppLocalizations {
       'متن میں چھپے ہوئے حروف ہیں جو U+… کی صورت میں دکھائے گئے ہیں۔ کاپی کرنے پر متن بالکل ویسا ہی ملتا ہے جیسا آیا تھا۔';
 
   @override
+  String get sendTextHidden =>
+      'متن میں سمت کے نشان جیسے چھپے ہوئے حروف ہیں۔ یہ بھی متن کے ساتھ بھیجے جاتے ہیں۔';
+
+  @override
   String get sendClipboardKept =>
       'پہلے سے لکھا متن رکھا گیا ہے، کلپ بورڈ استعمال نہیں ہوا۔';
 

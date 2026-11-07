@@ -595,6 +595,10 @@ class AppLocalizationsNb extends AppLocalizations {
       'Teksten inneholder skjulte tegn, som vises som U+…. Når du kopierer, får du teksten nøyaktig slik den kom.';
 
   @override
+  String get sendTextHidden =>
+      'Teksten inneholder skjulte tegn, for eksempel retningsmerker. De sendes med.';
+
+  @override
   String get sendClipboardKept =>
       'Teksten som alt er skrevet, er beholdt; utklippstavlen ble ikke brukt.';
 

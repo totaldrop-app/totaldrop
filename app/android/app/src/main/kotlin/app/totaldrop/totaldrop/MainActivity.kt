@@ -84,9 +84,18 @@ class MainActivity : FlutterActivity() {
             Intent.ACTION_SEND, Intent.ACTION_SEND_MULTIPLE -> takeShare(intent)
             // Text selected in another app, sent from its selection menu
             // (#326). Nothing is given back to that app.
-            Intent.ACTION_PROCESS_TEXT ->
+            Intent.ACTION_PROCESS_TEXT -> {
                 SharedFiles.processedText(intent)?.let { launches.send(mapOf("screen" to "send", "text" to it)) }
+                forgetText(intent)
+            }
         }
+    }
+
+    /** The activity keeps its intent: the text, now handed over, need not
+     * stay in it. */
+    private fun forgetText(intent: Intent) {
+        intent.removeExtra(Intent.EXTRA_TEXT)
+        intent.removeExtra(Intent.EXTRA_PROCESS_TEXT)
     }
 
     private fun takeShare(intent: Intent) {
@@ -95,6 +104,7 @@ class MainActivity : FlutterActivity() {
             // A text shared from another app (#326): sent as a text.
             val text = intent.getCharSequenceExtra(Intent.EXTRA_TEXT)?.toString().orEmpty()
             launches.send(mapOf("screen" to "send", "text" to text))
+            forgetText(intent)
             return
         }
         val id = nextShare.incrementAndGet()

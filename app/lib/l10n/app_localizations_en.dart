@@ -593,6 +593,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'The text holds hidden characters, shown as U+…. Copying gives the text exactly as it came.';
 
   @override
+  String get sendTextHidden =>
+      'The text holds hidden characters, such as direction marks. They are sent with it.';
+
+  @override
   String get sendClipboardKept =>
       'The text already typed is kept; the clipboard was not used.';
 

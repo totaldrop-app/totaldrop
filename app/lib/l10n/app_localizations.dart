@@ -1070,6 +1070,12 @@ abstract class AppLocalizations {
   /// **'The text holds hidden characters, shown as U+…. Copying gives the text exactly as it came.'**
   String get receiveTextHidden;
 
+  /// Send screen: the text to send holds invisible control or direction characters; they are sent as they are
+  ///
+  /// In en, this message translates to:
+  /// **'The text holds hidden characters, such as direction marks. They are sent with it.'**
+  String get sendTextHidden;
+
   /// Send screen: Send clipboard was chosen while the text box already held typed text, so the clipboard was not pasted
   ///
   /// In en, this message translates to:
