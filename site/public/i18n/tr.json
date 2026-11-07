@@ -234,7 +234,7 @@
   "dl.new.share": "Galeri ya da Dosyalar gibi herhangi bir uygulamadan TotalDrop'a dosya paylaşın. Simgeye uzun basınca Gönder, Al ve Panodakini gönder çıkar.",
   "dl.new.text": "Metin gönderin: yazın, başka bir uygulamadan paylaşın ya da seçili metinde \"TotalDrop ile gönder\"i seçin. Gelen metin kaydedilmez, gösterilir ve kopyalanabilir.",
   "dl.new.heading": "Doğrulama kelimelerinin başlığı dar ekranlara sığıyor.",
-  "dl.new.relay": "Telefonunuz artık karşı cihazın kullanmayacağı bir röleye bağlanmıyor.",
+  "dl.new.relay": "Telefonunuz artık karşı cihazın kullanmayacağı bir aktarma sunucusuna bağlanmıyor.",
   "dl.new.linux": "Aşağıdaki değişiklikler Android'de. Linux uygulaması 0.3.0-beta.5'ten beri değişmedi.",
   "dl.new.title": "Yenilikler",
   "dl.platforms": "Platformlar",

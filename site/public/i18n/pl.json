@@ -234,7 +234,7 @@
   "dl.new.share": "Udostępniaj pliki do TotalDrop z dowolnej aplikacji, np. Galerii lub Plików. Przytrzymanie ikony aplikacji pokazuje Wyślij, Odbierz i Wyślij schowek.",
   "dl.new.text": "Wyślij tekst: wpisz go, udostępnij z innej aplikacji lub wybierz „Wyślij przez TotalDrop” przy zaznaczonym tekście. Odebrany tekst jest wyświetlany, nie zapisywany, i można go skopiować.",
   "dl.new.heading": "Nagłówek nad słowami weryfikacyjnymi mieści się na wąskich ekranach.",
-  "dl.new.relay": "Telefon nie łączy się już z przekaźnikiem, którego drugie urządzenie nie użyje.",
+  "dl.new.relay": "Telefon nie łączy się już z serwerem pośredniczącym, którego drugie urządzenie nie użyje.",
   "dl.new.linux": "Poniższe zmiany dotyczą Androida. Aplikacja na Linuksa nie zmieniła się od wersji 0.3.0-beta.5.",
   "dl.new.title": "Co nowego",
   "dl.platforms": "Platformy",

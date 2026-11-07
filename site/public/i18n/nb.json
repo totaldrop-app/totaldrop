@@ -231,7 +231,7 @@
   "dl.linux.rpm.label": "Fedora (.rpm), x86-64",
   "dl.macos": "macOS",
   "dl.macos.d": "Apple krever en betalt utviklerkonto (99 USD i året) for å signere og notarisere apper. Donasjoner skal betale for den.",
-  "dl.new.share": "Del filer til TotalDrop fra hvilken som helst app, for eksempel Galleri eller Filer. Hold inne appikonet for Send, Motta og Send utklippstavle.",
+  "dl.new.share": "Del filer til TotalDrop fra hvilken som helst app, for eksempel Galleri eller Filer. Hold inne appikonet for Send, Motta og Send utklippstavlen.",
   "dl.new.text": "Send en tekst: skriv den, del den fra en annen app eller velg «Send med TotalDrop» på merket tekst. En mottatt tekst vises, lagres ikke og kan kopieres.",
   "dl.new.heading": "Overskriften over bekreftelsesordene får plass på smale skjermer.",
   "dl.new.relay": "Telefonen kobler seg ikke lenger til et relé som den andre enheten ikke vil bruke.",

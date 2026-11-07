@@ -234,7 +234,7 @@
   "dl.new.share": "Bagikan file ke TotalDrop dari aplikasi apa pun, seperti Galeri atau File. Tekan lama ikon aplikasi untuk Kirim, Terima, dan Kirim papan klip.",
   "dl.new.text": "Kirim teks: ketik, bagikan dari aplikasi lain, atau pilih \"Kirim dengan TotalDrop\" pada teks yang dipilih. Teks yang tiba ditampilkan, tidak disimpan, dan dapat disalin.",
   "dl.new.heading": "Judul di atas kata verifikasi muat di layar sempit.",
-  "dl.new.relay": "Ponsel Anda tidak lagi terhubung ke relay yang tidak akan dipakai perangkat lain.",
+  "dl.new.relay": "Ponsel Anda tidak lagi terhubung ke server relai yang tidak akan dipakai perangkat lain.",
   "dl.new.linux": "Perubahan di bawah ini ada di Android. Aplikasi Linux tidak berubah sejak 0.3.0-beta.5.",
   "dl.new.title": "Yang baru",
   "dl.platforms": "Platform",

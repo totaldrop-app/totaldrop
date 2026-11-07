@@ -231,7 +231,7 @@
   "dl.linux.rpm.label": "Fedora (.rpm), x86-64",
   "dl.macos": "macOS",
   "dl.macos.d": "Apple verlangt ein kostenpflichtiges Entwicklerkonto (99 USD im Jahr), um Apps zu signieren und zu beglaubigen. Spenden werden es bezahlen.",
-  "dl.new.share": "Teilen Sie Dateien aus jeder App mit TotalDrop. Langes Drücken auf das App-Symbol bietet Senden, Empfangen und Zwischenablage senden.",
+  "dl.new.share": "Teilen Sie Dateien aus jeder App mit TotalDrop, etwa aus Galerie oder Dateien. Langes Drücken auf das App-Symbol bietet Senden, Empfangen und Zwischenablage senden.",
   "dl.new.text": "Senden Sie einen Text: tippen, aus einer anderen App teilen oder bei markiertem Text „Mit TotalDrop senden“ wählen. Ein empfangener Text wird angezeigt, nicht gespeichert, und lässt sich kopieren.",
   "dl.new.heading": "Die Überschrift über den Prüfwörtern passt auf schmale Bildschirme.",
   "dl.new.relay": "Ihr Telefon verbindet sich nicht mehr mit einem Relay, das das andere Gerät nicht nutzt.",
