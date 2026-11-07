@@ -58,7 +58,11 @@ Düzen → Özel eylemleri yapılandır → +
 Menü metinleri ve masaüstü girdisinin adı, açıklaması ve arama kelimeleri
 `l10n/app` içindeki `desktop*` anahtarlarındandır (`sendTitle` ve
 `receiveTitle` masaüstü girdisinin "Dosya gönder" ve "Dosya al"
-eylemlerinde). Bir metin değişince:
+eylemlerinde). Yazılım merkezlerinin (Discover, GNOME Yazılım, Flathub)
+gösterdiği özet, tanıtım paragrafı ve özellik maddeleri `metainfo*`
+anahtarlarındandır: metainfo dosyasında yalnızca `GENERATED` yorumları
+arasındaki blok üretilir, sürüm notları elle yazılır (#324). Bir metin
+değişince:
 
 ```sh
 node tools/desktop-entries.mjs write

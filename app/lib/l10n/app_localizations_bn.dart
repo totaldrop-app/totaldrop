@@ -529,4 +529,22 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get desktopSendWith => 'TotalDrop দিয়ে পাঠান';
+
+  @override
+  String get metainfoSummary => 'ফাইল সরাসরি অন্য ডিভাইসে পাঠান';
+
+  @override
+  String get metainfoAbout =>
+      'TotalDrop এক ডিভাইস থেকে আরেক ডিভাইসে ফাইল ও ফোল্ডার পাঠায়, এন্ড-টু-এন্ড এনক্রিপ্টেড। ফাইল বেছে নিন, একটি ছোট কোড বা QR কোড শেয়ার করুন, আর অন্য ডিভাইস সেগুলো পেয়ে যাবে। কোনো অ্যাকাউন্ট, ইমেল বা ফোন নম্বর লাগে না।';
+
+  @override
+  String get metainfoVerified =>
+      'পৌঁছানোর পর প্রতিটি ফাইল যাচাই করা হয়; নষ্ট ফাইল বাদ দেওয়া হয়';
+
+  @override
+  String get metainfoWords => 'যাচাইয়ের চারটি শব্দ দেখায় যে মাঝখানে কেউ নেই';
+
+  @override
+  String get metainfoTheme =>
+      'আপনার ডেস্কটপের থিম অনুসরণ করে: Plasma, Hyprland, Omarchy, GNOME';
 }

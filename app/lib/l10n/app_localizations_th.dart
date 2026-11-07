@@ -520,4 +520,22 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get desktopSendWith => 'ส่งด้วย TotalDrop';
+
+  @override
+  String get metainfoSummary => 'ส่งไฟล์ตรงไปยังอุปกรณ์อื่น';
+
+  @override
+  String get metainfoAbout =>
+      'TotalDrop ส่งไฟล์และโฟลเดอร์จากอุปกรณ์หนึ่งไปยังอีกอุปกรณ์ เข้ารหัสตั้งแต่ต้นทางถึงปลายทาง เลือกไฟล์ แชร์รหัสสั้นหรือรหัส QR แล้วอุปกรณ์อีกเครื่องจะได้รับไฟล์ ไม่ต้องมีบัญชี อีเมล หรือหมายเลขโทรศัพท์';
+
+  @override
+  String get metainfoVerified =>
+      'ไฟล์ทุกไฟล์จะถูกตรวจสอบเมื่อมาถึง ไฟล์ที่เสียหายจะถูกทิ้ง';
+
+  @override
+  String get metainfoWords => 'คำยืนยันสี่คำแสดงว่าไม่มีใครแทรกอยู่ตรงกลาง';
+
+  @override
+  String get metainfoTheme =>
+      'ใช้ธีมตามเดสก์ท็อปของคุณ: Plasma, Hyprland, Omarchy, GNOME';
 }

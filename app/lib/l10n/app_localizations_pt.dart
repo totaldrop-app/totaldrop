@@ -553,6 +553,25 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get desktopSendWith => 'Enviar com o TotalDrop';
+
+  @override
+  String get metainfoSummary => 'Envie arquivos direto para outro dispositivo';
+
+  @override
+  String get metainfoAbout =>
+      'O TotalDrop envia arquivos e pastas de um dispositivo para outro, com criptografia de ponta a ponta. Escolha os arquivos, compartilhe um código curto ou um QR code e o outro dispositivo os recebe. Sem conta, sem e-mail, sem número de telefone.';
+
+  @override
+  String get metainfoVerified =>
+      'Cada arquivo é verificado ao chegar; arquivos danificados são descartados';
+
+  @override
+  String get metainfoWords =>
+      'Quatro palavras de verificação mostram que ninguém está no meio';
+
+  @override
+  String get metainfoTheme =>
+      'Segue o tema da sua área de trabalho: Plasma, Hyprland, Omarchy, GNOME';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -1103,6 +1122,25 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get desktopSendWith => 'Enviar com o TotalDrop';
+
+  @override
+  String get metainfoSummary => 'Envie arquivos direto para outro dispositivo';
+
+  @override
+  String get metainfoAbout =>
+      'O TotalDrop envia arquivos e pastas de um dispositivo para outro, com criptografia de ponta a ponta. Escolha os arquivos, compartilhe um código curto ou um QR code e o outro dispositivo os recebe. Sem conta, sem e-mail, sem número de telefone.';
+
+  @override
+  String get metainfoVerified =>
+      'Cada arquivo é verificado ao chegar; arquivos danificados são descartados';
+
+  @override
+  String get metainfoWords =>
+      'Quatro palavras de verificação mostram que ninguém está no meio';
+
+  @override
+  String get metainfoTheme =>
+      'Segue o tema da sua área de trabalho: Plasma, Hyprland, Omarchy, GNOME';
 }
 
 /// The translations for Portuguese, as used in Portugal (`pt_PT`).
@@ -1654,4 +1692,24 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
 
   @override
   String get desktopSendWith => 'Enviar com o TotalDrop';
+
+  @override
+  String get metainfoSummary =>
+      'Envie ficheiros diretamente para outro dispositivo';
+
+  @override
+  String get metainfoAbout =>
+      'O TotalDrop envia ficheiros e pastas de um dispositivo para outro, com encriptação ponto a ponto. Escolha os ficheiros, partilhe um código curto ou um código QR e o outro dispositivo recebe-os. Sem conta, sem e-mail, sem número de telefone.';
+
+  @override
+  String get metainfoVerified =>
+      'Cada ficheiro é verificado à chegada; os ficheiros danificados são descartados';
+
+  @override
+  String get metainfoWords =>
+      'Quatro palavras de verificação mostram que ninguém está no meio';
+
+  @override
+  String get metainfoTheme =>
+      'Segue o tema do seu ambiente de trabalho: Plasma, Hyprland, Omarchy, GNOME';
 }

@@ -144,5 +144,10 @@
   "desktopGenericName": "نقل الملفات",
   "desktopComment": "أرسل الملفات مباشرة إلى جهاز آخر، بتشفير تام بين الطرفين",
   "desktopKeywords": "إرسال;استلام;مشاركة;نقل;ملفات;",
-  "desktopSendWith": "إرسال باستخدام TotalDrop"
+  "desktopSendWith": "إرسال باستخدام TotalDrop",
+  "metainfoSummary": "أرسل الملفات مباشرة إلى جهاز آخر",
+  "metainfoAbout": "يرسل TotalDrop الملفات والمجلدات من جهاز إلى آخر بتشفير تام بين الطرفين. اختر الملفات وشارك رمزًا قصيرًا أو رمز QR، فيستلمها الجهاز الآخر. بلا حساب ولا بريد إلكتروني ولا رقم هاتف.",
+  "metainfoVerified": "يُتحقَّق من كل ملف عند وصوله، وتُحذف الملفات التالفة",
+  "metainfoWords": "أربع كلمات تحقق تُظهر أن أحدًا لم يتدخل بينكما",
+  "metainfoTheme": "يتبع سمة سطح المكتب لديك: Plasma وHyprland وOmarchy وGNOME"
 }

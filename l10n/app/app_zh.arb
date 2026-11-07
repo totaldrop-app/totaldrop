@@ -144,5 +144,10 @@
   "desktopGenericName": "文件传输",
   "desktopComment": "将文件直接发送到另一台设备，端到端加密",
   "desktopKeywords": "发送;接收;分享;传输;文件;",
-  "desktopSendWith": "用 TotalDrop 发送"
+  "desktopSendWith": "用 TotalDrop 发送",
+  "metainfoSummary": "将文件直接发送到另一台设备",
+  "metainfoAbout": "TotalDrop 将文件和文件夹从一台设备发送到另一台设备，端到端加密。选择文件，分享一个短代码或二维码，另一台设备就会收到。无需账户、电子邮件或电话号码。",
+  "metainfoVerified": "每个文件到达时都会校验，损坏的文件会被丢弃",
+  "metainfoWords": "四个验证词表明中间没有人",
+  "metainfoTheme": "跟随桌面主题：Plasma、Hyprland、Omarchy、GNOME"
 }

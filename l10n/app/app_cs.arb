@@ -144,5 +144,10 @@
   "desktopGenericName": "Přenos souborů",
   "desktopComment": "Posílejte soubory přímo do jiného zařízení, koncově šifrované",
   "desktopKeywords": "poslat;přijmout;sdílet;přenos;soubory;",
-  "desktopSendWith": "Odeslat pomocí TotalDrop"
+  "desktopSendWith": "Odeslat pomocí TotalDrop",
+  "metainfoSummary": "Posílejte soubory přímo do jiného zařízení",
+  "metainfoAbout": "TotalDrop posílá soubory a složky z jednoho zařízení do druhého, koncově šifrované. Vyberte soubory, sdílejte krátký kód nebo QR kód a druhé zařízení je přijme. Žádný účet, e-mail ani telefonní číslo.",
+  "metainfoVerified": "Každý soubor se po doručení ověří; poškozené soubory se zahodí",
+  "metainfoWords": "Čtyři ověřovací slova ukážou, že mezi vámi nikdo není",
+  "metainfoTheme": "Řídí se motivem vašeho prostředí: Plasma, Hyprland, Omarchy, GNOME"
 }

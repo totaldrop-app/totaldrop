@@ -144,5 +144,10 @@
   "desktopGenericName": "檔案傳輸",
   "desktopComment": "將檔案直接傳送到另一台裝置，端對端加密",
   "desktopKeywords": "傳送;接收;分享;傳輸;檔案;",
-  "desktopSendWith": "用 TotalDrop 傳送"
+  "desktopSendWith": "用 TotalDrop 傳送",
+  "metainfoSummary": "將檔案直接傳送到另一台裝置",
+  "metainfoAbout": "TotalDrop 將檔案和資料夾從一台裝置傳送到另一台裝置，端對端加密。選擇檔案，分享一組短代碼或 QR 碼，另一台裝置就會收到。不需要帳號、電子郵件或電話號碼。",
+  "metainfoVerified": "每個檔案抵達時都會驗證，損壞的檔案會被捨棄",
+  "metainfoWords": "四個驗證單字表示中間沒有其他人",
+  "metainfoTheme": "跟隨桌面主題：Plasma、Hyprland、Omarchy、GNOME"
 }

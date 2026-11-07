@@ -530,4 +530,23 @@ class AppLocalizationsHu extends AppLocalizations {
 
   @override
   String get desktopSendWith => 'Küldés a TotalDroppal';
+
+  @override
+  String get metainfoSummary => 'Fájlok küldése közvetlenül egy másik eszközre';
+
+  @override
+  String get metainfoAbout =>
+      'A TotalDrop fájlokat és mappákat küld egyik eszközről a másikra, végpontok közötti titkosítással. Válaszd ki a fájlokat, oszd meg a rövid kódot vagy a QR-kódot, és a másik eszköz megkapja őket. Nincs fiók, e-mail-cím vagy telefonszám.';
+
+  @override
+  String get metainfoVerified =>
+      'Minden fájlt ellenőriz érkezéskor; a sérült fájlokat elveti';
+
+  @override
+  String get metainfoWords =>
+      'Négy ellenőrző szó mutatja, hogy senki sem áll közöttetek';
+
+  @override
+  String get metainfoTheme =>
+      'Követi az asztali környezet témáját: Plasma, Hyprland, Omarchy, GNOME';
 }

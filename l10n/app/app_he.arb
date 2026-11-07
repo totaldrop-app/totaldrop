@@ -144,5 +144,10 @@
   "desktopGenericName": "העברת קבצים",
   "desktopComment": "שליחת קבצים ישירות למכשיר אחר, בהצפנה מקצה לקצה",
   "desktopKeywords": "שליחה;קבלה;שיתוף;העברה;קבצים;",
-  "desktopSendWith": "שליחה עם TotalDrop"
+  "desktopSendWith": "שליחה עם TotalDrop",
+  "metainfoSummary": "שליחת קבצים ישירות למכשיר אחר",
+  "metainfoAbout": "TotalDrop שולח קבצים ותיקיות ממכשיר אחד לאחר, בהצפנה מקצה לקצה. בוחרים את הקבצים, משתפים קוד קצר או קוד QR, והמכשיר השני מקבל אותם. בלי חשבון, בלי דוא״ל, בלי מספר טלפון.",
+  "metainfoVerified": "כל קובץ נבדק כשהוא מגיע; קבצים פגומים נמחקים",
+  "metainfoWords": "ארבע מילות אימות מראות שאף אחד לא נמצא באמצע",
+  "metainfoTheme": "תואם לערכת הנושא של שולחן העבודה שלך: Plasma, Hyprland, Omarchy, GNOME"
 }

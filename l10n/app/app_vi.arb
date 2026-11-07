@@ -144,5 +144,10 @@
   "desktopGenericName": "Truyền tệp",
   "desktopComment": "Gửi tệp thẳng tới thiết bị khác, mã hóa đầu cuối",
   "desktopKeywords": "gửi;nhận;chia sẻ;truyền;tệp;",
-  "desktopSendWith": "Gửi bằng TotalDrop"
+  "desktopSendWith": "Gửi bằng TotalDrop",
+  "metainfoSummary": "Gửi tệp thẳng tới thiết bị khác",
+  "metainfoAbout": "TotalDrop gửi tệp và thư mục từ thiết bị này sang thiết bị khác, mã hóa đầu cuối. Chọn tệp, chia sẻ một mã ngắn hoặc mã QR, và thiết bị kia sẽ nhận được. Không cần tài khoản, email hay số điện thoại.",
+  "metainfoVerified": "Mỗi tệp được kiểm tra khi tới nơi; tệp bị hỏng sẽ bị loại bỏ",
+  "metainfoWords": "Bốn từ xác minh cho thấy không có ai đứng giữa",
+  "metainfoTheme": "Theo chủ đề màn hình nền của bạn: Plasma, Hyprland, Omarchy, GNOME"
 }

@@ -529,4 +529,23 @@ class AppLocalizationsMs extends AppLocalizations {
 
   @override
   String get desktopSendWith => 'Hantar dengan TotalDrop';
+
+  @override
+  String get metainfoSummary => 'Hantar fail terus ke peranti lain';
+
+  @override
+  String get metainfoAbout =>
+      'TotalDrop menghantar fail dan folder dari satu peranti ke peranti lain, disulitkan hujung ke hujung. Pilih fail, kongsi kod pendek atau kod QR, dan peranti lain akan menerimanya. Tiada akaun, tiada e-mel, tiada nombor telefon.';
+
+  @override
+  String get metainfoVerified =>
+      'Setiap fail disahkan apabila tiba; fail yang rosak dibuang';
+
+  @override
+  String get metainfoWords =>
+      'Empat perkataan pengesahan menunjukkan tiada sesiapa di tengah';
+
+  @override
+  String get metainfoTheme =>
+      'Mengikut tema desktop anda: Plasma, Hyprland, Omarchy, GNOME';
 }

@@ -144,5 +144,10 @@
   "desktopGenericName": "Pemindahan fail",
   "desktopComment": "Hantar fail terus ke peranti lain, disulitkan hujung ke hujung",
   "desktopKeywords": "hantar;terima;kongsi;pindah;fail;",
-  "desktopSendWith": "Hantar dengan TotalDrop"
+  "desktopSendWith": "Hantar dengan TotalDrop",
+  "metainfoSummary": "Hantar fail terus ke peranti lain",
+  "metainfoAbout": "TotalDrop menghantar fail dan folder dari satu peranti ke peranti lain, disulitkan hujung ke hujung. Pilih fail, kongsi kod pendek atau kod QR, dan peranti lain akan menerimanya. Tiada akaun, tiada e-mel, tiada nombor telefon.",
+  "metainfoVerified": "Setiap fail disahkan apabila tiba; fail yang rosak dibuang",
+  "metainfoWords": "Empat perkataan pengesahan menunjukkan tiada sesiapa di tengah",
+  "metainfoTheme": "Mengikut tema desktop anda: Plasma, Hyprland, Omarchy, GNOME"
 }

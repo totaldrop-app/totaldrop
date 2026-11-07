@@ -538,4 +538,21 @@ class AppLocalizationsHe extends AppLocalizations {
 
   @override
   String get desktopSendWith => 'שליחה עם TotalDrop';
+
+  @override
+  String get metainfoSummary => 'שליחת קבצים ישירות למכשיר אחר';
+
+  @override
+  String get metainfoAbout =>
+      'TotalDrop שולח קבצים ותיקיות ממכשיר אחד לאחר, בהצפנה מקצה לקצה. בוחרים את הקבצים, משתפים קוד קצר או קוד QR, והמכשיר השני מקבל אותם. בלי חשבון, בלי דוא״ל, בלי מספר טלפון.';
+
+  @override
+  String get metainfoVerified => 'כל קובץ נבדק כשהוא מגיע; קבצים פגומים נמחקים';
+
+  @override
+  String get metainfoWords => 'ארבע מילות אימות מראות שאף אחד לא נמצא באמצע';
+
+  @override
+  String get metainfoTheme =>
+      'תואם לערכת הנושא של שולחן העבודה שלך: Plasma, Hyprland, Omarchy, GNOME';
 }

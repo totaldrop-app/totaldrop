@@ -526,4 +526,23 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get desktopSendWith => 'TotalDrop ile gönder';
+
+  @override
+  String get metainfoSummary => 'Dosyaları doğrudan başka bir cihaza gönderin';
+
+  @override
+  String get metainfoAbout =>
+      'TotalDrop dosya ve klasörleri bir cihazdan diğerine uçtan uca şifreli gönderir. Dosyaları seçin, kısa bir kodu ya da QR kodunu paylaşın, diğer cihaz dosyaları alsın. Hesap, e-posta, telefon numarası yok.';
+
+  @override
+  String get metainfoVerified =>
+      'Her dosya ulaştığında doğrulanır; bozuk dosyalar silinir';
+
+  @override
+  String get metainfoWords =>
+      'Dört doğrulama kelimesi araya kimsenin girmediğini gösterir';
+
+  @override
+  String get metainfoTheme =>
+      'Masaüstünüzün temasını izler: Plasma, Hyprland, Omarchy, GNOME';
 }
