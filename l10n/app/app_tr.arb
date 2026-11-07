@@ -166,5 +166,18 @@
   "receiveTextShortened": "Metnin yalnızca başı gösteriliyor. Metni kopyala, tamamını kopyalar.",
   "copyText": "Metni kopyala",
   "textCopied": "Metin kopyalandı",
-  "errorTextDamaged": "Metin eksiksiz ulaşmadı, bu yüzden gösterilmiyor."
+  "errorTextDamaged": "Metin eksiksiz ulaşmadı, bu yüzden gösterilmiyor.",
+  "setupBackgroundTitle": "Aktarımlar arka planda sürsün",
+  "setupBackgroundBody": "Uygulama değiştirdiğinizde ya da ekranı kilitlediğinizde aktarımın sürmesi için TotalDrop'un pil kısıtlaması olmadan çalışmasına izin verin. TotalDrop arka planda yalnızca sizin başlattığınız bir aktarım sürerken çalışır.",
+  "setupBackgroundAllowed": "Android'in pil optimizasyonu TotalDrop için kapalı.",
+  "setupBackgroundRestricted": "Android'in pil optimizasyonu TotalDrop için açık: uygulama değiştirdiğinizde aktarım durabilir.",
+  "setupBackgroundBattery": "Pil ayarlarını aç",
+  "setupBackgroundBatteryHint": "Listede TotalDrop'u bulun ve onun için pil optimizasyonunu kapatın. Bu ayarların adları telefondan telefona değişir.",
+  "setupBackgroundMaker": "{maker} telefonlarının kendi pil tasarrufu var",
+  "setupBackgroundMakerBody": "TotalDrop'un pil tasarrufunu da açıp \"Kısıtlama yok\"u seçin. Telefonda Otomatik başlatma varsa TotalDrop için açın.",
+  "setupBackgroundMakerOpen": "TotalDrop'un pil tasarrufunu aç",
+  "setupBackgroundAutostart": "Otomatik başlatmayı aç",
+  "setupBackgroundSkip": "Şimdi değil",
+  "settingsBackground": "Arka planda aktarım",
+  "settingsBackgroundOpen": "Pil ayarları"
 }

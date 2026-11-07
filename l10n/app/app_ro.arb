@@ -166,5 +166,18 @@
   "receiveTextShortened": "Se afișează doar începutul textului. Copiază textul îl copiază pe tot.",
   "copyText": "Copiază textul",
   "textCopied": "Text copiat",
-  "errorTextDamaged": "Textul nu a ajuns întreg, așa că nu este afișat."
+  "errorTextDamaged": "Textul nu a ajuns întreg, așa că nu este afișat.",
+  "setupBackgroundTitle": "Transferurile continuă în fundal",
+  "setupBackgroundBody": "Pentru ca un transfer să continue când schimbați aplicația sau blocați ecranul, permiteți TotalDrop să ruleze fără restricții de baterie. TotalDrop lucrează în fundal doar cât timp rulează un transfer pornit de dvs.",
+  "setupBackgroundAllowed": "Optimizarea bateriei din Android este dezactivată pentru TotalDrop.",
+  "setupBackgroundRestricted": "Optimizarea bateriei din Android este activată pentru TotalDrop: un transfer se poate opri când schimbați aplicația.",
+  "setupBackgroundBattery": "Deschideți setările bateriei",
+  "setupBackgroundBatteryHint": "Găsiți TotalDrop în listă și dezactivați optimizarea bateriei pentru el. Numele acestor setări diferă de la un telefon la altul.",
+  "setupBackgroundMaker": "Telefoanele {maker} au propriul economizor de baterie",
+  "setupBackgroundMakerBody": "Deschideți și economizorul de baterie al TotalDrop și alegeți „Fără restricții”. Dacă telefonul are Pornire automată, activați-o pentru TotalDrop.",
+  "setupBackgroundMakerOpen": "Deschideți economizorul de baterie al TotalDrop",
+  "setupBackgroundAutostart": "Deschideți Pornire automată",
+  "setupBackgroundSkip": "Nu acum",
+  "settingsBackground": "Transferuri în fundal",
+  "settingsBackgroundOpen": "Setările bateriei"
 }

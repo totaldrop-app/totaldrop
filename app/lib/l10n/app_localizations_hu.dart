@@ -608,4 +608,51 @@ class AppLocalizationsHu extends AppLocalizations {
   @override
   String get errorTextDamaged =>
       'A szöveg nem érkezett meg hiánytalanul, ezért nem jelenik meg.';
+
+  @override
+  String get setupBackgroundTitle => 'Az átvitelek a háttérben is folytatódnak';
+
+  @override
+  String get setupBackgroundBody =>
+      'Hogy az átvitel akkor is folytatódjon, amikor másik alkalmazásra vált vagy lezárja a képernyőt, engedje, hogy a TotalDrop akkumulátorkorlátozás nélkül fusson. A TotalDrop csak egy Ön által indított átvitel közben dolgozik a háttérben.';
+
+  @override
+  String get setupBackgroundAllowed =>
+      'Az Android akkumulátor-optimalizálása ki van kapcsolva a TotalDrophoz.';
+
+  @override
+  String get setupBackgroundRestricted =>
+      'Az Android akkumulátor-optimalizálása be van kapcsolva a TotalDrophoz: az átvitel leállhat, amikor másik alkalmazásra vált.';
+
+  @override
+  String get setupBackgroundBattery => 'Akkumulátorbeállítások megnyitása';
+
+  @override
+  String get setupBackgroundBatteryHint =>
+      'Keresse meg a TotalDropot a listában, és kapcsolja ki az akkumulátor-optimalizálását. A beállítások neve telefononként eltér.';
+
+  @override
+  String setupBackgroundMaker(String maker) {
+    return 'A(z) $maker telefonoknak saját akkumulátorkímélőjük van';
+  }
+
+  @override
+  String get setupBackgroundMakerBody =>
+      'Nyissa meg a TotalDrop akkumulátorkímélőjét is, és válassza a „Nincs korlátozás” lehetőséget. Ha a telefonon van Automatikus indítás, kapcsolja be a TotalDrophoz.';
+
+  @override
+  String get setupBackgroundMakerOpen =>
+      'A TotalDrop akkumulátorkímélőjének megnyitása';
+
+  @override
+  String get setupBackgroundAutostart => 'Automatikus indítás megnyitása';
+
+  @override
+  String get setupBackgroundSkip => 'Most nem';
+
+  @override
+  String get settingsBackground => 'Átvitel a háttérben';
+
+  @override
+  String get settingsBackgroundOpen => 'Akkumulátorbeállítások';
 }

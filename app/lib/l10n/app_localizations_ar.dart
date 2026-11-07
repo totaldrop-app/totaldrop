@@ -623,4 +623,50 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get errorTextDamaged => 'لم يصل النص كاملًا، لذلك لا يُعرض.';
+
+  @override
+  String get setupBackgroundTitle => 'استمرار عمليات النقل في الخلفية';
+
+  @override
+  String get setupBackgroundBody =>
+      'لكي يستمر النقل عند التبديل إلى تطبيق آخر أو قفل الشاشة، اسمح لـ TotalDrop بالعمل بلا قيود على البطارية. لا يعمل TotalDrop في الخلفية إلا أثناء نقل بدأته أنت.';
+
+  @override
+  String get setupBackgroundAllowed =>
+      'تحسين البطارية في Android متوقف لـ TotalDrop.';
+
+  @override
+  String get setupBackgroundRestricted =>
+      'تحسين البطارية في Android مفعّل لـ TotalDrop: قد يتوقف النقل عند التبديل إلى تطبيق آخر.';
+
+  @override
+  String get setupBackgroundBattery => 'فتح إعدادات البطارية';
+
+  @override
+  String get setupBackgroundBatteryHint =>
+      'ابحث عن TotalDrop في القائمة وأوقف تحسين البطارية له. تختلف أسماء هذه الإعدادات من هاتف إلى آخر.';
+
+  @override
+  String setupBackgroundMaker(String maker) {
+    return 'لهواتف $maker موفّر بطارية خاص بها';
+  }
+
+  @override
+  String get setupBackgroundMakerBody =>
+      'افتح أيضًا موفّر البطارية الخاص بـ TotalDrop واختر \"بلا قيود\". وإن كان في الهاتف خيار التشغيل التلقائي، ففعّله لـ TotalDrop.';
+
+  @override
+  String get setupBackgroundMakerOpen => 'فتح موفّر البطارية لـ TotalDrop';
+
+  @override
+  String get setupBackgroundAutostart => 'فتح التشغيل التلقائي';
+
+  @override
+  String get setupBackgroundSkip => 'ليس الآن';
+
+  @override
+  String get settingsBackground => 'النقل في الخلفية';
+
+  @override
+  String get settingsBackgroundOpen => 'إعدادات البطارية';
 }

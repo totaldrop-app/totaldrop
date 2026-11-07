@@ -637,4 +637,51 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get errorTextDamaged =>
       'Le texte n’est pas arrivé intact, il n’est donc pas affiché.';
+
+  @override
+  String get setupBackgroundTitle => 'Continuer les transferts en arrière-plan';
+
+  @override
+  String get setupBackgroundBody =>
+      'Pour qu\'un transfert continue quand vous changez d\'appli ou verrouillez l\'écran, autorisez TotalDrop à fonctionner sans restriction de batterie. TotalDrop ne travaille en arrière-plan que pendant un transfert que vous avez lancé.';
+
+  @override
+  String get setupBackgroundAllowed =>
+      'L\'optimisation de la batterie d\'Android est désactivée pour TotalDrop.';
+
+  @override
+  String get setupBackgroundRestricted =>
+      'L\'optimisation de la batterie d\'Android est activée pour TotalDrop : un transfert peut s\'arrêter quand vous changez d\'appli.';
+
+  @override
+  String get setupBackgroundBattery => 'Ouvrir les réglages de batterie';
+
+  @override
+  String get setupBackgroundBatteryHint =>
+      'Cherchez TotalDrop dans la liste et désactivez son optimisation de la batterie. Le nom de ces réglages varie d\'un téléphone à l\'autre.';
+
+  @override
+  String setupBackgroundMaker(String maker) {
+    return 'Les téléphones $maker ont leur propre économiseur de batterie';
+  }
+
+  @override
+  String get setupBackgroundMakerBody =>
+      'Ouvrez aussi l\'économiseur de batterie de TotalDrop et choisissez « Aucune restriction ». Si le téléphone propose le Démarrage automatique, activez-le pour TotalDrop.';
+
+  @override
+  String get setupBackgroundMakerOpen =>
+      'Ouvrir l\'économiseur de batterie de TotalDrop';
+
+  @override
+  String get setupBackgroundAutostart => 'Ouvrir le Démarrage automatique';
+
+  @override
+  String get setupBackgroundSkip => 'Pas maintenant';
+
+  @override
+  String get settingsBackground => 'Transferts en arrière-plan';
+
+  @override
+  String get settingsBackgroundOpen => 'Réglages de batterie';
 }

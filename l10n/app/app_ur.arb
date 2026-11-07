@@ -166,5 +166,18 @@
   "receiveTextShortened": "متن کا صرف آغاز دکھایا گیا ہے۔ متن کاپی کریں پورا متن کاپی کرتا ہے۔",
   "copyText": "متن کاپی کریں",
   "textCopied": "متن کاپی ہو گیا",
-  "errorTextDamaged": "متن مکمل نہیں پہنچا، اس لیے نہیں دکھایا جا رہا۔"
+  "errorTextDamaged": "متن مکمل نہیں پہنچا، اس لیے نہیں دکھایا جا رہا۔",
+  "setupBackgroundTitle": "منتقلی پس منظر میں جاری رکھیں",
+  "setupBackgroundBody": "ایپ بدلنے یا اسکرین لاک کرنے پر بھی منتقلی جاری رہے، اس کے لیے TotalDrop کو بیٹری کی پابندیوں کے بغیر چلنے دیں۔ TotalDrop پس منظر میں صرف اسی وقت کام کرتا ہے جب آپ کی شروع کی ہوئی منتقلی جاری ہو۔",
+  "setupBackgroundAllowed": "TotalDrop کے لیے Android کی بیٹری آپٹیمائزیشن بند ہے۔",
+  "setupBackgroundRestricted": "TotalDrop کے لیے Android کی بیٹری آپٹیمائزیشن آن ہے: ایپ بدلنے پر منتقلی رک سکتی ہے۔",
+  "setupBackgroundBattery": "بیٹری کی ترتیبات کھولیں",
+  "setupBackgroundBatteryHint": "فہرست میں TotalDrop تلاش کریں اور اس کے لیے بیٹری آپٹیمائزیشن بند کریں۔ ان ترتیبات کے نام ہر فون میں مختلف ہوتے ہیں۔",
+  "setupBackgroundMaker": "{maker} فونز کا اپنا بیٹری سیور ہوتا ہے",
+  "setupBackgroundMakerBody": "TotalDrop کا بیٹری سیور بھی کھولیں اور \"کوئی پابندی نہیں\" منتخب کریں۔ اگر فون میں آٹو اسٹارٹ ہو تو اسے TotalDrop کے لیے آن کریں۔",
+  "setupBackgroundMakerOpen": "TotalDrop کا بیٹری سیور کھولیں",
+  "setupBackgroundAutostart": "آٹو اسٹارٹ کھولیں",
+  "setupBackgroundSkip": "ابھی نہیں",
+  "settingsBackground": "پس منظر میں منتقلی",
+  "settingsBackgroundOpen": "بیٹری کی ترتیبات"
 }

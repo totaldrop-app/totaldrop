@@ -33,6 +33,15 @@ class MainActivity : FlutterActivity() {
                 else -> result.notImplemented()
             }
         }
+        // Battery restrictions that stop a transfer in the background (#338).
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, BACKGROUND_CHANNEL)
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "state" -> result.success(BackgroundAccess.state(this))
+                    "open" -> result.success(BackgroundAccess.open(this, call.arguments as? String ?: ""))
+                    else -> result.notImplemented()
+                }
+            }
         val channel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL)
         TransferJob.onStop = { channel.invokeMethod("stop", null) }
         channel.setMethodCallHandler { call, result ->
@@ -167,6 +176,7 @@ class MainActivity : FlutterActivity() {
 
         const val CHANNEL = "app.totaldrop/transfer_job"
         const val SHARE_CHANNEL = "app.totaldrop/launch"
+        const val BACKGROUND_CHANNEL = "app.totaldrop/background"
         // The launcher shortcuts (res/xml/shortcuts.xml).
         const val ACTION_SHORTCUT_SEND = "app.totaldrop.action.SEND"
         const val ACTION_SHORTCUT_RECEIVE = "app.totaldrop.action.RECEIVE"

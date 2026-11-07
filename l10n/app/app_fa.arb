@@ -166,5 +166,18 @@
   "receiveTextShortened": "فقط ابتدای متن نشان داده می‌شود. «کپی متن» همهٔ آن را کپی می‌کند.",
   "copyText": "کپی متن",
   "textCopied": "متن کپی شد",
-  "errorTextDamaged": "متن سالم نرسید، برای همین نمایش داده نمی‌شود."
+  "errorTextDamaged": "متن سالم نرسید، برای همین نمایش داده نمی‌شود.",
+  "setupBackgroundTitle": "ادامه انتقال‌ها در پس‌زمینه",
+  "setupBackgroundBody": "برای اینکه انتقال هنگام رفتن به برنامه دیگر یا قفل کردن صفحه ادامه پیدا کند، اجازه دهید TotalDrop بدون محدودیت باتری اجرا شود. TotalDrop فقط هنگامی در پس‌زمینه کار می‌کند که انتقالی که خودتان شروع کرده‌اید در جریان باشد.",
+  "setupBackgroundAllowed": "بهینه‌سازی باتری Android برای TotalDrop خاموش است.",
+  "setupBackgroundRestricted": "بهینه‌سازی باتری Android برای TotalDrop روشن است: ممکن است انتقال هنگام رفتن به برنامه دیگر متوقف شود.",
+  "setupBackgroundBattery": "باز کردن تنظیمات باتری",
+  "setupBackgroundBatteryHint": "TotalDrop را در فهرست پیدا کنید و بهینه‌سازی باتری را برای آن خاموش کنید. نام این تنظیمات از گوشی به گوشی فرق دارد.",
+  "setupBackgroundMaker": "گوشی‌های {maker} صرفه‌جوی باتری خودشان را دارند",
+  "setupBackgroundMakerBody": "صرفه‌جوی باتری TotalDrop را هم باز کنید و «بدون محدودیت» را انتخاب کنید. اگر گوشی شروع خودکار دارد، آن را برای TotalDrop روشن کنید.",
+  "setupBackgroundMakerOpen": "باز کردن صرفه‌جوی باتری TotalDrop",
+  "setupBackgroundAutostart": "باز کردن شروع خودکار",
+  "setupBackgroundSkip": "اکنون نه",
+  "settingsBackground": "انتقال در پس‌زمینه",
+  "settingsBackgroundOpen": "تنظیمات باتری"
 }

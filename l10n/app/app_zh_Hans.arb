@@ -166,5 +166,18 @@
   "receiveTextShortened": "只显示文本的开头。“复制文本”会复制全文。",
   "copyText": "复制文本",
   "textCopied": "文本已复制",
-  "errorTextDamaged": "文本未完整送达，因此不显示。"
+  "errorTextDamaged": "文本未完整送达，因此不显示。",
+  "setupBackgroundTitle": "让传输在后台继续",
+  "setupBackgroundBody": "为了在切换应用或锁定屏幕时传输仍能继续，请允许 TotalDrop 不受电池限制地运行。TotalDrop 只在您发起的传输进行时才在后台工作。",
+  "setupBackgroundAllowed": "TotalDrop 的 Android 电池优化已关闭。",
+  "setupBackgroundRestricted": "TotalDrop 的 Android 电池优化已开启：切换应用时传输可能会停止。",
+  "setupBackgroundBattery": "打开电池设置",
+  "setupBackgroundBatteryHint": "在列表中找到 TotalDrop，并关闭它的电池优化。这些设置的名称因手机而异。",
+  "setupBackgroundMaker": "{maker} 手机有自己的省电功能",
+  "setupBackgroundMakerBody": "请同时打开 TotalDrop 的省电策略并选择“无限制”。如果手机有自启动，请为 TotalDrop 开启。",
+  "setupBackgroundMakerOpen": "打开 TotalDrop 的省电策略",
+  "setupBackgroundAutostart": "打开自启动",
+  "setupBackgroundSkip": "以后再说",
+  "settingsBackground": "后台传输",
+  "settingsBackgroundOpen": "电池设置"
 }

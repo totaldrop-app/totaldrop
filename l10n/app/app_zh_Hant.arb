@@ -166,5 +166,18 @@
   "receiveTextShortened": "只顯示文字的開頭。「複製文字」會複製全文。",
   "copyText": "複製文字",
   "textCopied": "文字已複製",
-  "errorTextDamaged": "文字未完整送達，因此不顯示。"
+  "errorTextDamaged": "文字未完整送達，因此不顯示。",
+  "setupBackgroundTitle": "讓傳輸在背景繼續",
+  "setupBackgroundBody": "為了在切換應用程式或鎖定螢幕時傳輸仍能繼續，請允許 TotalDrop 不受電池限制地執行。TotalDrop 只在您發起的傳輸進行時才在背景運作。",
+  "setupBackgroundAllowed": "TotalDrop 的 Android 電池最佳化已關閉。",
+  "setupBackgroundRestricted": "TotalDrop 的 Android 電池最佳化已開啟：切換應用程式時傳輸可能會停止。",
+  "setupBackgroundBattery": "開啟電池設定",
+  "setupBackgroundBatteryHint": "在清單中找到 TotalDrop，並關閉它的電池最佳化。這些設定的名稱因手機而異。",
+  "setupBackgroundMaker": "{maker} 手機有自己的省電功能",
+  "setupBackgroundMakerBody": "請同時開啟 TotalDrop 的省電設定並選擇「無限制」。如果手機有自動啟動，請為 TotalDrop 開啟。",
+  "setupBackgroundMakerOpen": "開啟 TotalDrop 的省電設定",
+  "setupBackgroundAutostart": "開啟自動啟動",
+  "setupBackgroundSkip": "以後再說",
+  "settingsBackground": "背景傳輸",
+  "settingsBackgroundOpen": "電池設定"
 }

@@ -601,4 +601,50 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String get errorTextDamaged =>
       'Văn bản không đến nguyên vẹn nên không được hiển thị.';
+
+  @override
+  String get setupBackgroundTitle => 'Tiếp tục truyền ở chế độ nền';
+
+  @override
+  String get setupBackgroundBody =>
+      'Để quá trình truyền tiếp tục khi bạn chuyển ứng dụng hoặc khóa màn hình, hãy cho phép TotalDrop chạy không bị giới hạn pin. TotalDrop chỉ hoạt động ở chế độ nền khi một lượt truyền do bạn bắt đầu đang chạy.';
+
+  @override
+  String get setupBackgroundAllowed =>
+      'Tối ưu hóa pin của Android đang tắt cho TotalDrop.';
+
+  @override
+  String get setupBackgroundRestricted =>
+      'Tối ưu hóa pin của Android đang bật cho TotalDrop: quá trình truyền có thể dừng khi bạn chuyển ứng dụng.';
+
+  @override
+  String get setupBackgroundBattery => 'Mở cài đặt pin';
+
+  @override
+  String get setupBackgroundBatteryHint =>
+      'Tìm TotalDrop trong danh sách và tắt tối ưu hóa pin cho ứng dụng. Tên các cài đặt này khác nhau tùy điện thoại.';
+
+  @override
+  String setupBackgroundMaker(String maker) {
+    return 'Điện thoại $maker có trình tiết kiệm pin riêng';
+  }
+
+  @override
+  String get setupBackgroundMakerBody =>
+      'Hãy mở cả trình tiết kiệm pin của TotalDrop và chọn \"Không hạn chế\". Nếu điện thoại có Tự khởi động, hãy bật cho TotalDrop.';
+
+  @override
+  String get setupBackgroundMakerOpen => 'Mở trình tiết kiệm pin của TotalDrop';
+
+  @override
+  String get setupBackgroundAutostart => 'Mở Tự khởi động';
+
+  @override
+  String get setupBackgroundSkip => 'Để sau';
+
+  @override
+  String get settingsBackground => 'Truyền ở chế độ nền';
+
+  @override
+  String get settingsBackgroundOpen => 'Cài đặt pin';
 }

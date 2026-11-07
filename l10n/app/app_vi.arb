@@ -166,5 +166,18 @@
   "receiveTextShortened": "Chỉ hiển thị phần đầu của văn bản. Sao chép văn bản sẽ sao chép toàn bộ.",
   "copyText": "Sao chép văn bản",
   "textCopied": "Đã sao chép văn bản",
-  "errorTextDamaged": "Văn bản không đến nguyên vẹn nên không được hiển thị."
+  "errorTextDamaged": "Văn bản không đến nguyên vẹn nên không được hiển thị.",
+  "setupBackgroundTitle": "Tiếp tục truyền ở chế độ nền",
+  "setupBackgroundBody": "Để quá trình truyền tiếp tục khi bạn chuyển ứng dụng hoặc khóa màn hình, hãy cho phép TotalDrop chạy không bị giới hạn pin. TotalDrop chỉ hoạt động ở chế độ nền khi một lượt truyền do bạn bắt đầu đang chạy.",
+  "setupBackgroundAllowed": "Tối ưu hóa pin của Android đang tắt cho TotalDrop.",
+  "setupBackgroundRestricted": "Tối ưu hóa pin của Android đang bật cho TotalDrop: quá trình truyền có thể dừng khi bạn chuyển ứng dụng.",
+  "setupBackgroundBattery": "Mở cài đặt pin",
+  "setupBackgroundBatteryHint": "Tìm TotalDrop trong danh sách và tắt tối ưu hóa pin cho ứng dụng. Tên các cài đặt này khác nhau tùy điện thoại.",
+  "setupBackgroundMaker": "Điện thoại {maker} có trình tiết kiệm pin riêng",
+  "setupBackgroundMakerBody": "Hãy mở cả trình tiết kiệm pin của TotalDrop và chọn \"Không hạn chế\". Nếu điện thoại có Tự khởi động, hãy bật cho TotalDrop.",
+  "setupBackgroundMakerOpen": "Mở trình tiết kiệm pin của TotalDrop",
+  "setupBackgroundAutostart": "Mở Tự khởi động",
+  "setupBackgroundSkip": "Để sau",
+  "settingsBackground": "Truyền ở chế độ nền",
+  "settingsBackgroundOpen": "Cài đặt pin"
 }

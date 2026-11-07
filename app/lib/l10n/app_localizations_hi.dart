@@ -618,4 +618,50 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get errorTextDamaged =>
       'टेक्स्ट पूरा नहीं पहुँचा, इसलिए दिखाया नहीं जा रहा।';
+
+  @override
+  String get setupBackgroundTitle => 'ट्रांसफ़र बैकग्राउंड में चलते रहें';
+
+  @override
+  String get setupBackgroundBody =>
+      'ऐप बदलने या स्क्रीन लॉक करने पर भी ट्रांसफ़र चलता रहे, इसके लिए TotalDrop को बिना बैटरी प्रतिबंध के चलने दें। TotalDrop बैकग्राउंड में केवल तभी काम करता है जब आपका शुरू किया हुआ ट्रांसफ़र चल रहा हो।';
+
+  @override
+  String get setupBackgroundAllowed =>
+      'TotalDrop के लिए Android का बैटरी ऑप्टिमाइज़ेशन बंद है।';
+
+  @override
+  String get setupBackgroundRestricted =>
+      'TotalDrop के लिए Android का बैटरी ऑप्टिमाइज़ेशन चालू है: ऐप बदलने पर ट्रांसफ़र रुक सकता है।';
+
+  @override
+  String get setupBackgroundBattery => 'बैटरी सेटिंग खोलें';
+
+  @override
+  String get setupBackgroundBatteryHint =>
+      'सूची में TotalDrop ढूँढें और उसके लिए बैटरी ऑप्टिमाइज़ेशन बंद करें। इन सेटिंग के नाम हर फ़ोन में अलग होते हैं।';
+
+  @override
+  String setupBackgroundMaker(String maker) {
+    return '$maker फ़ोन का अपना बैटरी सेवर होता है';
+  }
+
+  @override
+  String get setupBackgroundMakerBody =>
+      'TotalDrop का बैटरी सेवर भी खोलें और \"कोई प्रतिबंध नहीं\" चुनें। फ़ोन में ऑटोस्टार्ट हो तो उसे TotalDrop के लिए चालू करें।';
+
+  @override
+  String get setupBackgroundMakerOpen => 'TotalDrop का बैटरी सेवर खोलें';
+
+  @override
+  String get setupBackgroundAutostart => 'ऑटोस्टार्ट खोलें';
+
+  @override
+  String get setupBackgroundSkip => 'अभी नहीं';
+
+  @override
+  String get settingsBackground => 'बैकग्राउंड में ट्रांसफ़र';
+
+  @override
+  String get settingsBackgroundOpen => 'बैटरी सेटिंग';
 }

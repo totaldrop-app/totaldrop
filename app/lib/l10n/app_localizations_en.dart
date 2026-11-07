@@ -617,4 +617,50 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get errorTextDamaged =>
       'The text did not arrive intact, so it is not shown.';
+
+  @override
+  String get setupBackgroundTitle => 'Keep transfers going in the background';
+
+  @override
+  String get setupBackgroundBody =>
+      'So that a transfer keeps going when you switch apps or lock the screen, let TotalDrop run without battery restrictions. TotalDrop works in the background only while a transfer you started is running.';
+
+  @override
+  String get setupBackgroundAllowed =>
+      'Android\'s battery optimisation is off for TotalDrop.';
+
+  @override
+  String get setupBackgroundRestricted =>
+      'Android\'s battery optimisation is on for TotalDrop: a transfer may stop when you switch apps.';
+
+  @override
+  String get setupBackgroundBattery => 'Open battery settings';
+
+  @override
+  String get setupBackgroundBatteryHint =>
+      'Find TotalDrop in the list and turn battery optimisation off for it. The names of these settings differ from phone to phone.';
+
+  @override
+  String setupBackgroundMaker(String maker) {
+    return '$maker phones have a battery saver of their own';
+  }
+
+  @override
+  String get setupBackgroundMakerBody =>
+      'Open TotalDrop\'s battery saver too and choose \"No restrictions\". If the phone has Autostart, turn it on for TotalDrop.';
+
+  @override
+  String get setupBackgroundMakerOpen => 'Open TotalDrop\'s battery saver';
+
+  @override
+  String get setupBackgroundAutostart => 'Open Autostart';
+
+  @override
+  String get setupBackgroundSkip => 'Not now';
+
+  @override
+  String get settingsBackground => 'Background transfers';
+
+  @override
+  String get settingsBackgroundOpen => 'Battery settings';
 }

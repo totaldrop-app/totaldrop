@@ -166,5 +166,18 @@
   "receiveTextShortened": "Bare begynnelsen av teksten vises. Kopier tekst kopierer hele.",
   "copyText": "Kopier tekst",
   "textCopied": "Tekst kopiert",
-  "errorTextDamaged": "Teksten kom ikke fram uskadd, så den vises ikke."
+  "errorTextDamaged": "Teksten kom ikke fram uskadd, så den vises ikke.",
+  "setupBackgroundTitle": "Hold overføringer i gang i bakgrunnen",
+  "setupBackgroundBody": "For at en overføring skal fortsette når du bytter app eller låser skjermen, la TotalDrop kjøre uten batteribegrensninger. TotalDrop jobber bare i bakgrunnen mens en overføring du har startet, pågår.",
+  "setupBackgroundAllowed": "Androids batterioptimalisering er av for TotalDrop.",
+  "setupBackgroundRestricted": "Androids batterioptimalisering er på for TotalDrop: en overføring kan stoppe når du bytter app.",
+  "setupBackgroundBattery": "Åpne batteriinnstillinger",
+  "setupBackgroundBatteryHint": "Finn TotalDrop i listen og slå av batterioptimalisering for den. Navnene på disse innstillingene varierer fra telefon til telefon.",
+  "setupBackgroundMaker": "{maker}-telefoner har sin egen batterisparing",
+  "setupBackgroundMakerBody": "Åpne også TotalDrops batterisparing og velg «Ingen begrensninger». Hvis telefonen har Autostart, slår du det på for TotalDrop.",
+  "setupBackgroundMakerOpen": "Åpne TotalDrops batterisparing",
+  "setupBackgroundAutostart": "Åpne Autostart",
+  "setupBackgroundSkip": "Ikke nå",
+  "settingsBackground": "Overføringer i bakgrunnen",
+  "settingsBackgroundOpen": "Batteriinnstillinger"
 }

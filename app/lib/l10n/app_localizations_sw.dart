@@ -614,4 +614,50 @@ class AppLocalizationsSw extends AppLocalizations {
   @override
   String get errorTextDamaged =>
       'Maandishi hayakufika yakiwa kamili, kwa hiyo hayaonyeshwi.';
+
+  @override
+  String get setupBackgroundTitle => 'Uhamisho uendelee chinichini';
+
+  @override
+  String get setupBackgroundBody =>
+      'Ili uhamisho uendelee unapobadilisha programu au kufunga skrini, ruhusu TotalDrop ifanye kazi bila vikwazo vya betri. TotalDrop hufanya kazi chinichini tu wakati uhamisho ulioanzisha wewe unaendelea.';
+
+  @override
+  String get setupBackgroundAllowed =>
+      'Uboreshaji wa betri wa Android umezimwa kwa TotalDrop.';
+
+  @override
+  String get setupBackgroundRestricted =>
+      'Uboreshaji wa betri wa Android umewashwa kwa TotalDrop: uhamisho unaweza kusimama unapobadilisha programu.';
+
+  @override
+  String get setupBackgroundBattery => 'Fungua mipangilio ya betri';
+
+  @override
+  String get setupBackgroundBatteryHint =>
+      'Tafuta TotalDrop kwenye orodha na uzime uboreshaji wa betri wake. Majina ya mipangilio hii hutofautiana kati ya simu.';
+
+  @override
+  String setupBackgroundMaker(String maker) {
+    return 'Simu za $maker zina kiokoa betri chake';
+  }
+
+  @override
+  String get setupBackgroundMakerBody =>
+      'Fungua pia kiokoa betri cha TotalDrop na uchague \"Hakuna vikwazo\". Ikiwa simu ina Kuanza kiotomatiki, kiwashe kwa TotalDrop.';
+
+  @override
+  String get setupBackgroundMakerOpen => 'Fungua kiokoa betri cha TotalDrop';
+
+  @override
+  String get setupBackgroundAutostart => 'Fungua Kuanza kiotomatiki';
+
+  @override
+  String get setupBackgroundSkip => 'Si sasa';
+
+  @override
+  String get settingsBackground => 'Uhamisho chinichini';
+
+  @override
+  String get settingsBackgroundOpen => 'Mipangilio ya betri';
 }

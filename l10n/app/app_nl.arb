@@ -166,5 +166,18 @@
   "receiveTextShortened": "Alleen het begin van de tekst wordt getoond. Tekst kopiëren kopieert alles.",
   "copyText": "Tekst kopiëren",
   "textCopied": "Tekst gekopieerd",
-  "errorTextDamaged": "De tekst is niet ongeschonden aangekomen en wordt daarom niet getoond."
+  "errorTextDamaged": "De tekst is niet ongeschonden aangekomen en wordt daarom niet getoond.",
+  "setupBackgroundTitle": "Overdrachten op de achtergrond laten doorgaan",
+  "setupBackgroundBody": "Zodat een overdracht doorgaat als je van app wisselt of het scherm vergrendelt, laat je TotalDrop zonder batterijbeperkingen werken. TotalDrop werkt alleen op de achtergrond zolang een overdracht loopt die jij hebt gestart.",
+  "setupBackgroundAllowed": "De batterijoptimalisatie van Android staat uit voor TotalDrop.",
+  "setupBackgroundRestricted": "De batterijoptimalisatie van Android staat aan voor TotalDrop: een overdracht kan stoppen als je van app wisselt.",
+  "setupBackgroundBattery": "Batterij-instellingen openen",
+  "setupBackgroundBatteryHint": "Zoek TotalDrop in de lijst en zet batterijoptimalisatie ervoor uit. De namen van deze instellingen verschillen per telefoon.",
+  "setupBackgroundMaker": "{maker}-telefoons hebben een eigen batterijbesparing",
+  "setupBackgroundMakerBody": "Open ook de batterijbesparing van TotalDrop en kies 'Geen beperkingen'. Heeft de telefoon Autostart, zet het dan aan voor TotalDrop.",
+  "setupBackgroundMakerOpen": "Batterijbesparing van TotalDrop openen",
+  "setupBackgroundAutostart": "Autostart openen",
+  "setupBackgroundSkip": "Niet nu",
+  "settingsBackground": "Overdrachten op de achtergrond",
+  "settingsBackgroundOpen": "Batterij-instellingen"
 }

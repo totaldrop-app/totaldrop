@@ -616,4 +616,50 @@ class AppLocalizationsFa extends AppLocalizations {
   @override
   String get errorTextDamaged =>
       'متن سالم نرسید، برای همین نمایش داده نمی‌شود.';
+
+  @override
+  String get setupBackgroundTitle => 'ادامه انتقال‌ها در پس‌زمینه';
+
+  @override
+  String get setupBackgroundBody =>
+      'برای اینکه انتقال هنگام رفتن به برنامه دیگر یا قفل کردن صفحه ادامه پیدا کند، اجازه دهید TotalDrop بدون محدودیت باتری اجرا شود. TotalDrop فقط هنگامی در پس‌زمینه کار می‌کند که انتقالی که خودتان شروع کرده‌اید در جریان باشد.';
+
+  @override
+  String get setupBackgroundAllowed =>
+      'بهینه‌سازی باتری Android برای TotalDrop خاموش است.';
+
+  @override
+  String get setupBackgroundRestricted =>
+      'بهینه‌سازی باتری Android برای TotalDrop روشن است: ممکن است انتقال هنگام رفتن به برنامه دیگر متوقف شود.';
+
+  @override
+  String get setupBackgroundBattery => 'باز کردن تنظیمات باتری';
+
+  @override
+  String get setupBackgroundBatteryHint =>
+      'TotalDrop را در فهرست پیدا کنید و بهینه‌سازی باتری را برای آن خاموش کنید. نام این تنظیمات از گوشی به گوشی فرق دارد.';
+
+  @override
+  String setupBackgroundMaker(String maker) {
+    return 'گوشی‌های $maker صرفه‌جوی باتری خودشان را دارند';
+  }
+
+  @override
+  String get setupBackgroundMakerBody =>
+      'صرفه‌جوی باتری TotalDrop را هم باز کنید و «بدون محدودیت» را انتخاب کنید. اگر گوشی شروع خودکار دارد، آن را برای TotalDrop روشن کنید.';
+
+  @override
+  String get setupBackgroundMakerOpen => 'باز کردن صرفه‌جوی باتری TotalDrop';
+
+  @override
+  String get setupBackgroundAutostart => 'باز کردن شروع خودکار';
+
+  @override
+  String get setupBackgroundSkip => 'اکنون نه';
+
+  @override
+  String get settingsBackground => 'انتقال در پس‌زمینه';
+
+  @override
+  String get settingsBackgroundOpen => 'تنظیمات باتری';
 }

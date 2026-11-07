@@ -166,5 +166,18 @@
   "receiveTextShortened": "Zobrazen je jen začátek textu. Kopírovat text zkopíruje celý.",
   "copyText": "Kopírovat text",
   "textCopied": "Text zkopírován",
-  "errorTextDamaged": "Text nedorazil v pořádku, proto se nezobrazí."
+  "errorTextDamaged": "Text nedorazil v pořádku, proto se nezobrazí.",
+  "setupBackgroundTitle": "Přenosy pokračují na pozadí",
+  "setupBackgroundBody": "Aby přenos pokračoval i po přepnutí do jiné aplikace nebo zamknutí obrazovky, povolte TotalDropu běžet bez omezení baterie. TotalDrop pracuje na pozadí jen během přenosu, který jste sami spustili.",
+  "setupBackgroundAllowed": "Optimalizace baterie systému Android je pro TotalDrop vypnutá.",
+  "setupBackgroundRestricted": "Optimalizace baterie systému Android je pro TotalDrop zapnutá: po přepnutí do jiné aplikace se přenos může zastavit.",
+  "setupBackgroundBattery": "Otevřít nastavení baterie",
+  "setupBackgroundBatteryHint": "V seznamu najděte TotalDrop a vypněte pro něj optimalizaci baterie. Názvy těchto nastavení se v různých telefonech liší.",
+  "setupBackgroundMaker": "Telefony {maker} mají vlastní spořič baterie",
+  "setupBackgroundMakerBody": "Otevřete také spořič baterie pro TotalDrop a zvolte „Bez omezení“. Pokud telefon nabízí Automatické spuštění, zapněte ho pro TotalDrop.",
+  "setupBackgroundMakerOpen": "Otevřít spořič baterie TotalDropu",
+  "setupBackgroundAutostart": "Otevřít Automatické spuštění",
+  "setupBackgroundSkip": "Teď ne",
+  "settingsBackground": "Přenosy na pozadí",
+  "settingsBackgroundOpen": "Nastavení baterie"
 }

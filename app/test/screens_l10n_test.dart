@@ -77,6 +77,16 @@ class _Settings extends ChangeNotifier implements SettingsRepository {
   Future<void> setPrivacyMode(bool on) async {}
   @override
   Future<void> resetServer() async {}
+  @override
+  bool get backgroundSetupSeen => true;
+  @override
+  bool get backgroundSkipped => false;
+  @override
+  bool get backgroundReminded => false;
+  @override
+  Future<void> setBackgroundSetupSeen({required bool skipped}) async {}
+  @override
+  Future<void> setBackgroundReminded() async {}
 }
 
 /// Text each screen shows once it reaches its state.

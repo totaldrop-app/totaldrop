@@ -628,4 +628,51 @@ class AppLocalizationsRo extends AppLocalizations {
   @override
   String get errorTextDamaged =>
       'Textul nu a ajuns întreg, așa că nu este afișat.';
+
+  @override
+  String get setupBackgroundTitle => 'Transferurile continuă în fundal';
+
+  @override
+  String get setupBackgroundBody =>
+      'Pentru ca un transfer să continue când schimbați aplicația sau blocați ecranul, permiteți TotalDrop să ruleze fără restricții de baterie. TotalDrop lucrează în fundal doar cât timp rulează un transfer pornit de dvs.';
+
+  @override
+  String get setupBackgroundAllowed =>
+      'Optimizarea bateriei din Android este dezactivată pentru TotalDrop.';
+
+  @override
+  String get setupBackgroundRestricted =>
+      'Optimizarea bateriei din Android este activată pentru TotalDrop: un transfer se poate opri când schimbați aplicația.';
+
+  @override
+  String get setupBackgroundBattery => 'Deschideți setările bateriei';
+
+  @override
+  String get setupBackgroundBatteryHint =>
+      'Găsiți TotalDrop în listă și dezactivați optimizarea bateriei pentru el. Numele acestor setări diferă de la un telefon la altul.';
+
+  @override
+  String setupBackgroundMaker(String maker) {
+    return 'Telefoanele $maker au propriul economizor de baterie';
+  }
+
+  @override
+  String get setupBackgroundMakerBody =>
+      'Deschideți și economizorul de baterie al TotalDrop și alegeți „Fără restricții”. Dacă telefonul are Pornire automată, activați-o pentru TotalDrop.';
+
+  @override
+  String get setupBackgroundMakerOpen =>
+      'Deschideți economizorul de baterie al TotalDrop';
+
+  @override
+  String get setupBackgroundAutostart => 'Deschideți Pornire automată';
+
+  @override
+  String get setupBackgroundSkip => 'Nu acum';
+
+  @override
+  String get settingsBackground => 'Transferuri în fundal';
+
+  @override
+  String get settingsBackgroundOpen => 'Setările bateriei';
 }

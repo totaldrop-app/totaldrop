@@ -604,4 +604,51 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get errorTextDamaged =>
       'Teks tidak tiba dengan utuh, jadi tidak ditampilkan.';
+
+  @override
+  String get setupBackgroundTitle =>
+      'Biarkan transfer berjalan di latar belakang';
+
+  @override
+  String get setupBackgroundBody =>
+      'Agar transfer tetap berjalan saat Anda berpindah aplikasi atau mengunci layar, izinkan TotalDrop berjalan tanpa batasan baterai. TotalDrop hanya bekerja di latar belakang selama transfer yang Anda mulai sedang berjalan.';
+
+  @override
+  String get setupBackgroundAllowed =>
+      'Pengoptimalan baterai Android nonaktif untuk TotalDrop.';
+
+  @override
+  String get setupBackgroundRestricted =>
+      'Pengoptimalan baterai Android aktif untuk TotalDrop: transfer bisa berhenti saat Anda berpindah aplikasi.';
+
+  @override
+  String get setupBackgroundBattery => 'Buka setelan baterai';
+
+  @override
+  String get setupBackgroundBatteryHint =>
+      'Cari TotalDrop di daftar dan nonaktifkan pengoptimalan baterainya. Nama setelan ini berbeda di setiap ponsel.';
+
+  @override
+  String setupBackgroundMaker(String maker) {
+    return 'Ponsel $maker punya penghemat baterai sendiri';
+  }
+
+  @override
+  String get setupBackgroundMakerBody =>
+      'Buka juga penghemat baterai TotalDrop dan pilih \"Tanpa batasan\". Jika ponsel punya Mulai otomatis, aktifkan untuk TotalDrop.';
+
+  @override
+  String get setupBackgroundMakerOpen => 'Buka penghemat baterai TotalDrop';
+
+  @override
+  String get setupBackgroundAutostart => 'Buka Mulai otomatis';
+
+  @override
+  String get setupBackgroundSkip => 'Nanti saja';
+
+  @override
+  String get settingsBackground => 'Transfer di latar belakang';
+
+  @override
+  String get settingsBackgroundOpen => 'Setelan baterai';
 }

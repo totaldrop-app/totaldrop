@@ -633,4 +633,51 @@ class AppLocalizationsPl extends AppLocalizations {
   @override
   String get errorTextDamaged =>
       'Tekst nie dotarł w całości, dlatego nie jest wyświetlany.';
+
+  @override
+  String get setupBackgroundTitle => 'Przesyłanie w tle';
+
+  @override
+  String get setupBackgroundBody =>
+      'Aby przesyłanie trwało po przełączeniu aplikacji lub zablokowaniu ekranu, pozwól TotalDropowi działać bez ograniczeń baterii. TotalDrop działa w tle tylko wtedy, gdy trwa przesyłanie, które sam rozpocząłeś.';
+
+  @override
+  String get setupBackgroundAllowed =>
+      'Optymalizacja baterii Androida jest wyłączona dla TotalDropa.';
+
+  @override
+  String get setupBackgroundRestricted =>
+      'Optymalizacja baterii Androida jest włączona dla TotalDropa: przesyłanie może się zatrzymać po przełączeniu aplikacji.';
+
+  @override
+  String get setupBackgroundBattery => 'Otwórz ustawienia baterii';
+
+  @override
+  String get setupBackgroundBatteryHint =>
+      'Znajdź TotalDrop na liście i wyłącz dla niego optymalizację baterii. Nazwy tych ustawień różnią się w zależności od telefonu.';
+
+  @override
+  String setupBackgroundMaker(String maker) {
+    return 'Telefony $maker mają własny oszczędzacz baterii';
+  }
+
+  @override
+  String get setupBackgroundMakerBody =>
+      'Otwórz też oszczędzanie baterii dla TotalDropa i wybierz „Bez ograniczeń”. Jeśli telefon ma Autostart, włącz go dla TotalDropa.';
+
+  @override
+  String get setupBackgroundMakerOpen =>
+      'Otwórz oszczędzanie baterii TotalDropa';
+
+  @override
+  String get setupBackgroundAutostart => 'Otwórz Autostart';
+
+  @override
+  String get setupBackgroundSkip => 'Nie teraz';
+
+  @override
+  String get settingsBackground => 'Przesyłanie w tle';
+
+  @override
+  String get settingsBackgroundOpen => 'Ustawienia baterii';
 }

@@ -606,4 +606,50 @@ class AppLocalizationsMs extends AppLocalizations {
   @override
   String get errorTextDamaged =>
       'Teks tidak tiba dengan lengkap, jadi ia tidak dipaparkan.';
+
+  @override
+  String get setupBackgroundTitle => 'Teruskan pemindahan di latar belakang';
+
+  @override
+  String get setupBackgroundBody =>
+      'Supaya pemindahan diteruskan apabila anda menukar apl atau mengunci skrin, benarkan TotalDrop berjalan tanpa sekatan bateri. TotalDrop hanya berfungsi di latar belakang semasa pemindahan yang anda mulakan sedang berjalan.';
+
+  @override
+  String get setupBackgroundAllowed =>
+      'Pengoptimuman bateri Android dimatikan untuk TotalDrop.';
+
+  @override
+  String get setupBackgroundRestricted =>
+      'Pengoptimuman bateri Android dihidupkan untuk TotalDrop: pemindahan mungkin berhenti apabila anda menukar apl.';
+
+  @override
+  String get setupBackgroundBattery => 'Buka tetapan bateri';
+
+  @override
+  String get setupBackgroundBatteryHint =>
+      'Cari TotalDrop dalam senarai dan matikan pengoptimuman bateri untuknya. Nama tetapan ini berbeza antara telefon.';
+
+  @override
+  String setupBackgroundMaker(String maker) {
+    return 'Telefon $maker mempunyai penjimat bateri sendiri';
+  }
+
+  @override
+  String get setupBackgroundMakerBody =>
+      'Buka juga penjimat bateri TotalDrop dan pilih \"Tiada sekatan\". Jika telefon mempunyai Automula, hidupkannya untuk TotalDrop.';
+
+  @override
+  String get setupBackgroundMakerOpen => 'Buka penjimat bateri TotalDrop';
+
+  @override
+  String get setupBackgroundAutostart => 'Buka Automula';
+
+  @override
+  String get setupBackgroundSkip => 'Bukan sekarang';
+
+  @override
+  String get settingsBackground => 'Pemindahan di latar belakang';
+
+  @override
+  String get settingsBackgroundOpen => 'Tetapan bateri';
 }

@@ -166,5 +166,18 @@
   "receiveTextShortened": "Показано лише початок тексту. «Копіювати текст» копіює його повністю.",
   "copyText": "Копіювати текст",
   "textCopied": "Текст скопійовано",
-  "errorTextDamaged": "Текст надійшов не цілим, тому його не показано."
+  "errorTextDamaged": "Текст надійшов не цілим, тому його не показано.",
+  "setupBackgroundTitle": "Передавання триває у фоні",
+  "setupBackgroundBody": "Щоб передавання тривало, коли ви перемикаєтеся на іншу програму чи блокуєте екран, дозвольте TotalDrop працювати без обмежень батареї. TotalDrop працює у фоні лише під час передавання, яке ви почали самі.",
+  "setupBackgroundAllowed": "Оптимізацію батареї Android для TotalDrop вимкнено.",
+  "setupBackgroundRestricted": "Оптимізацію батареї Android для TotalDrop увімкнено: передавання може зупинитися, коли ви перемикаєтеся на іншу програму.",
+  "setupBackgroundBattery": "Відкрити налаштування батареї",
+  "setupBackgroundBatteryHint": "Знайдіть TotalDrop у списку й вимкніть для нього оптимізацію батареї. Назви цих налаштувань на різних телефонах різні.",
+  "setupBackgroundMaker": "Телефони {maker} мають власне енергозбереження",
+  "setupBackgroundMakerBody": "Відкрийте також енергозбереження для TotalDrop і виберіть «Без обмежень». Якщо на телефоні є автозапуск, увімкніть його для TotalDrop.",
+  "setupBackgroundMakerOpen": "Відкрити енергозбереження TotalDrop",
+  "setupBackgroundAutostart": "Відкрити автозапуск",
+  "setupBackgroundSkip": "Не зараз",
+  "settingsBackground": "Передавання у фоні",
+  "settingsBackgroundOpen": "Налаштування батареї"
 }
