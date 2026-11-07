@@ -113,8 +113,14 @@ class FakeRepository implements TransferRepository {
     return events.stream;
   }
 
+  /// Holds [decline] open while set, so a test can act before it returns.
+  Completer<void>? declining;
+
   @override
-  Future<void> decline(Offer offer) async => declined.add(offer);
+  Future<void> decline(Offer offer) async {
+    declined.add(offer);
+    await declining?.future;
+  }
 
   @override
   String? normalizeCode(String input) => input;
