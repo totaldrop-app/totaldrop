@@ -144,5 +144,10 @@
   "desktopGenericName": "파일 전송",
   "desktopComment": "다른 기기로 파일을 바로 보내세요. 종단 간 암호화",
   "desktopKeywords": "보내기;받기;공유;전송;파일;",
-  "desktopSendWith": "TotalDrop으로 보내기"
+  "desktopSendWith": "TotalDrop으로 보내기",
+  "metainfoSummary": "다른 기기로 파일을 바로 보내기",
+  "metainfoAbout": "TotalDrop은 파일과 폴더를 한 기기에서 다른 기기로 종단 간 암호화하여 보냅니다. 파일을 고르고 짧은 코드나 QR 코드를 공유하면 다른 기기가 받습니다. 계정도, 이메일도, 전화번호도 필요 없습니다.",
+  "metainfoVerified": "도착한 모든 파일을 검증하며, 손상된 파일은 버립니다",
+  "metainfoWords": "확인 단어 네 개로 중간에 아무도 없다는 것을 확인합니다",
+  "metainfoTheme": "데스크톱 테마를 따릅니다: Plasma, Hyprland, Omarchy, GNOME"
 }

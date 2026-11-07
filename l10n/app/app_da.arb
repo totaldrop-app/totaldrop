@@ -144,5 +144,10 @@
   "desktopGenericName": "Filoverførsel",
   "desktopComment": "Send filer direkte til en anden enhed, end-to-end-krypteret",
   "desktopKeywords": "send;modtag;del;overfør;filer;",
-  "desktopSendWith": "Send med TotalDrop"
+  "desktopSendWith": "Send med TotalDrop",
+  "metainfoSummary": "Send filer direkte til en anden enhed",
+  "metainfoAbout": "TotalDrop sender filer og mapper fra én enhed til en anden, end-to-end-krypteret. Vælg filerne, del en kort kode eller en QR-kode, og den anden enhed modtager dem. Ingen konto, ingen e-mail, intet telefonnummer.",
+  "metainfoVerified": "Hver fil kontrolleres ved ankomst; beskadigede filer kasseres",
+  "metainfoWords": "Fire bekræftelsesord viser, at ingen står imellem jer",
+  "metainfoTheme": "Følger dit skrivebords tema: Plasma, Hyprland, Omarchy, GNOME"
 }

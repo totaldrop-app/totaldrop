@@ -551,4 +551,23 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get desktopSendWith => 'Trimite cu TotalDrop';
+
+  @override
+  String get metainfoSummary => 'Trimite fișiere direct pe alt dispozitiv';
+
+  @override
+  String get metainfoAbout =>
+      'TotalDrop trimite fișiere și dosare de pe un dispozitiv pe altul, criptate integral. Alege fișierele, partajează un cod scurt sau un cod QR, iar celălalt dispozitiv le primește. Fără cont, fără e-mail, fără număr de telefon.';
+
+  @override
+  String get metainfoVerified =>
+      'Fiecare fișier este verificat la sosire; fișierele deteriorate sunt eliminate';
+
+  @override
+  String get metainfoWords =>
+      'Patru cuvinte de verificare arată că nimeni nu stă la mijloc';
+
+  @override
+  String get metainfoTheme =>
+      'Urmează tema desktopului tău: Plasma, Hyprland, Omarchy, GNOME';
 }

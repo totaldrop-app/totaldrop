@@ -144,5 +144,10 @@
   "desktopGenericName": "Transfer file",
   "desktopComment": "Kirim file langsung ke perangkat lain, terenkripsi end-to-end",
   "desktopKeywords": "kirim;terima;bagikan;transfer;file;",
-  "desktopSendWith": "Kirim dengan TotalDrop"
+  "desktopSendWith": "Kirim dengan TotalDrop",
+  "metainfoSummary": "Kirim file langsung ke perangkat lain",
+  "metainfoAbout": "TotalDrop mengirim file dan folder dari satu perangkat ke perangkat lain, terenkripsi end-to-end. Pilih file, bagikan kode pendek atau kode QR, dan perangkat lain akan menerimanya. Tanpa akun, tanpa email, tanpa nomor telepon.",
+  "metainfoVerified": "Setiap file diverifikasi saat tiba; file yang rusak dibuang",
+  "metainfoWords": "Empat kata verifikasi menunjukkan tidak ada pihak lain di tengah",
+  "metainfoTheme": "Mengikuti tema desktop Anda: Plasma, Hyprland, Omarchy, GNOME"
 }

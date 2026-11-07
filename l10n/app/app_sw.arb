@@ -144,5 +144,10 @@
   "desktopGenericName": "Uhamishaji wa faili",
   "desktopComment": "Tuma faili moja kwa moja kwenye kifaa kingine, zimesimbwa mwanzo hadi mwisho",
   "desktopKeywords": "tuma;pokea;shiriki;hamisha;faili;",
-  "desktopSendWith": "Tuma kwa TotalDrop"
+  "desktopSendWith": "Tuma kwa TotalDrop",
+  "metainfoSummary": "Tuma faili moja kwa moja kwenye kifaa kingine",
+  "metainfoAbout": "TotalDrop hutuma faili na folda kutoka kifaa kimoja hadi kingine, zimesimbwa mwanzo hadi mwisho. Chagua faili, shiriki msimbo mfupi au msimbo wa QR, na kifaa kingine kitazipokea. Hakuna akaunti, barua pepe wala nambari ya simu.",
+  "metainfoVerified": "Kila faili huthibitishwa inapofika; faili zilizoharibika hutupwa",
+  "metainfoWords": "Maneno manne ya uthibitisho yanaonyesha kwamba hakuna mtu katikati",
+  "metainfoTheme": "Hufuata mandhari ya eneo-kazi lako: Plasma, Hyprland, Omarchy, GNOME"
 }

@@ -526,4 +526,23 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get desktopSendWith => 'Kirim dengan TotalDrop';
+
+  @override
+  String get metainfoSummary => 'Kirim file langsung ke perangkat lain';
+
+  @override
+  String get metainfoAbout =>
+      'TotalDrop mengirim file dan folder dari satu perangkat ke perangkat lain, terenkripsi end-to-end. Pilih file, bagikan kode pendek atau kode QR, dan perangkat lain akan menerimanya. Tanpa akun, tanpa email, tanpa nomor telepon.';
+
+  @override
+  String get metainfoVerified =>
+      'Setiap file diverifikasi saat tiba; file yang rusak dibuang';
+
+  @override
+  String get metainfoWords =>
+      'Empat kata verifikasi menunjukkan tidak ada pihak lain di tengah';
+
+  @override
+  String get metainfoTheme =>
+      'Mengikuti tema desktop Anda: Plasma, Hyprland, Omarchy, GNOME';
 }

@@ -979,6 +979,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Send with TotalDrop'**
   String get desktopSendWith;
+
+  /// Linux software centres (Discover, GNOME Software, Flathub): one-line summary under the app's name. No full stop at the end
+  ///
+  /// In en, this message translates to:
+  /// **'Send files straight to another device'**
+  String get metainfoSummary;
+
+  /// Linux software centres: the paragraph that introduces TotalDrop on its page
+  ///
+  /// In en, this message translates to:
+  /// **'TotalDrop sends files and folders from one device to another, end-to-end encrypted. Pick the files, share a short code or a QR code, and the other device receives them. No account, no email, no phone number.'**
+  String get metainfoAbout;
+
+  /// Linux software centres: feature list item about every received file being checked
+  ///
+  /// In en, this message translates to:
+  /// **'Every file is verified on arrival; damaged files are discarded'**
+  String get metainfoVerified;
+
+  /// Linux software centres: feature list item about the four verification words that show no one is intercepting the transfer
+  ///
+  /// In en, this message translates to:
+  /// **'Four verification words show that nobody is in the middle'**
+  String get metainfoWords;
+
+  /// Linux software centres: feature list item; keep the desktop names Plasma, Hyprland, Omarchy and GNOME as they are
+  ///
+  /// In en, this message translates to:
+  /// **'Follows your desktop\'s theme: Plasma, Hyprland, Omarchy, GNOME'**
+  String get metainfoTheme;
 }
 
 class _AppLocalizationsDelegate

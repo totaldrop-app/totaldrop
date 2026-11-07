@@ -524,4 +524,22 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get desktopSendWith => 'Gửi bằng TotalDrop';
+
+  @override
+  String get metainfoSummary => 'Gửi tệp thẳng tới thiết bị khác';
+
+  @override
+  String get metainfoAbout =>
+      'TotalDrop gửi tệp và thư mục từ thiết bị này sang thiết bị khác, mã hóa đầu cuối. Chọn tệp, chia sẻ một mã ngắn hoặc mã QR, và thiết bị kia sẽ nhận được. Không cần tài khoản, email hay số điện thoại.';
+
+  @override
+  String get metainfoVerified =>
+      'Mỗi tệp được kiểm tra khi tới nơi; tệp bị hỏng sẽ bị loại bỏ';
+
+  @override
+  String get metainfoWords => 'Bốn từ xác minh cho thấy không có ai đứng giữa';
+
+  @override
+  String get metainfoTheme =>
+      'Theo chủ đề màn hình nền của bạn: Plasma, Hyprland, Omarchy, GNOME';
 }

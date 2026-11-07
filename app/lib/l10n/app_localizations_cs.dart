@@ -550,4 +550,23 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get desktopSendWith => 'Odeslat pomocí TotalDrop';
+
+  @override
+  String get metainfoSummary => 'Posílejte soubory přímo do jiného zařízení';
+
+  @override
+  String get metainfoAbout =>
+      'TotalDrop posílá soubory a složky z jednoho zařízení do druhého, koncově šifrované. Vyberte soubory, sdílejte krátký kód nebo QR kód a druhé zařízení je přijme. Žádný účet, e-mail ani telefonní číslo.';
+
+  @override
+  String get metainfoVerified =>
+      'Každý soubor se po doručení ověří; poškozené soubory se zahodí';
+
+  @override
+  String get metainfoWords =>
+      'Čtyři ověřovací slova ukážou, že mezi vámi nikdo není';
+
+  @override
+  String get metainfoTheme =>
+      'Řídí se motivem vašeho prostředí: Plasma, Hyprland, Omarchy, GNOME';
 }

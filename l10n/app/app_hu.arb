@@ -144,5 +144,10 @@
   "desktopGenericName": "Fájlátvitel",
   "desktopComment": "Fájlok küldése közvetlenül egy másik eszközre, végpontok közötti titkosítással",
   "desktopKeywords": "küldés;fogadás;megosztás;átvitel;fájlok;",
-  "desktopSendWith": "Küldés a TotalDroppal"
+  "desktopSendWith": "Küldés a TotalDroppal",
+  "metainfoSummary": "Fájlok küldése közvetlenül egy másik eszközre",
+  "metainfoAbout": "A TotalDrop fájlokat és mappákat küld egyik eszközről a másikra, végpontok közötti titkosítással. Válaszd ki a fájlokat, oszd meg a rövid kódot vagy a QR-kódot, és a másik eszköz megkapja őket. Nincs fiók, e-mail-cím vagy telefonszám.",
+  "metainfoVerified": "Minden fájlt ellenőriz érkezéskor; a sérült fájlokat elveti",
+  "metainfoWords": "Négy ellenőrző szó mutatja, hogy senki sem áll közöttetek",
+  "metainfoTheme": "Követi az asztali környezet témáját: Plasma, Hyprland, Omarchy, GNOME"
 }

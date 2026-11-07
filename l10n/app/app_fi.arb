@@ -144,5 +144,10 @@
   "desktopGenericName": "Tiedostonsiirto",
   "desktopComment": "Lähetä tiedostot suoraan toiseen laitteeseen päästä päähän salattuina",
   "desktopKeywords": "lähetä;vastaanota;jaa;siirrä;tiedostot;",
-  "desktopSendWith": "Lähetä TotalDropilla"
+  "desktopSendWith": "Lähetä TotalDropilla",
+  "metainfoSummary": "Lähetä tiedostot suoraan toiseen laitteeseen",
+  "metainfoAbout": "TotalDrop lähettää tiedostoja ja kansioita laitteesta toiseen päästä päähän salattuina. Valitse tiedostot, jaa lyhyt koodi tai QR-koodi, ja toinen laite vastaanottaa ne. Ei tiliä, ei sähköpostia, ei puhelinnumeroa.",
+  "metainfoVerified": "Jokainen tiedosto tarkistetaan perillä; vioittuneet tiedostot hylätään",
+  "metainfoWords": "Neljä tarkistussanaa osoittaa, ettei välissä ole ketään",
+  "metainfoTheme": "Seuraa työpöytäsi teemaa: Plasma, Hyprland, Omarchy, GNOME"
 }

@@ -540,4 +540,23 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String get desktopSendWith => 'Lähetä TotalDropilla';
+
+  @override
+  String get metainfoSummary => 'Lähetä tiedostot suoraan toiseen laitteeseen';
+
+  @override
+  String get metainfoAbout =>
+      'TotalDrop lähettää tiedostoja ja kansioita laitteesta toiseen päästä päähän salattuina. Valitse tiedostot, jaa lyhyt koodi tai QR-koodi, ja toinen laite vastaanottaa ne. Ei tiliä, ei sähköpostia, ei puhelinnumeroa.';
+
+  @override
+  String get metainfoVerified =>
+      'Jokainen tiedosto tarkistetaan perillä; vioittuneet tiedostot hylätään';
+
+  @override
+  String get metainfoWords =>
+      'Neljä tarkistussanaa osoittaa, ettei välissä ole ketään';
+
+  @override
+  String get metainfoTheme =>
+      'Seuraa työpöytäsi teemaa: Plasma, Hyprland, Omarchy, GNOME';
 }

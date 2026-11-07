@@ -144,5 +144,10 @@
   "desktopGenericName": "Dosya aktarımı",
   "desktopComment": "Dosyaları başka bir cihaza doğrudan ve uçtan uca şifreli gönderin",
   "desktopKeywords": "gönder;al;paylaş;aktar;dosya;",
-  "desktopSendWith": "TotalDrop ile gönder"
+  "desktopSendWith": "TotalDrop ile gönder",
+  "metainfoSummary": "Dosyaları doğrudan başka bir cihaza gönderin",
+  "metainfoAbout": "TotalDrop dosya ve klasörleri bir cihazdan diğerine uçtan uca şifreli gönderir. Dosyaları seçin, kısa bir kodu ya da QR kodunu paylaşın, diğer cihaz dosyaları alsın. Hesap, e-posta, telefon numarası yok.",
+  "metainfoVerified": "Her dosya ulaştığında doğrulanır; bozuk dosyalar silinir",
+  "metainfoWords": "Dört doğrulama kelimesi araya kimsenin girmediğini gösterir",
+  "metainfoTheme": "Masaüstünüzün temasını izler: Plasma, Hyprland, Omarchy, GNOME"
 }

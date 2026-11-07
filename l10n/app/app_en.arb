@@ -195,5 +195,15 @@
   "desktopKeywords": "send;receive;share;transfer;files;",
   "@desktopKeywords": {"description": "Linux desktop entry: search words for app launchers, separated by semicolons and ending with one. Words people type to find a file-sending app; no spaces around the semicolons"},
   "desktopSendWith": "Send with TotalDrop",
-  "@desktopSendWith": {"description": "Linux file managers (Dolphin, Files, Nemo): right-click menu item that sends the selected files and folders with TotalDrop"}
+  "@desktopSendWith": {"description": "Linux file managers (Dolphin, Files, Nemo): right-click menu item that sends the selected files and folders with TotalDrop"},
+  "metainfoSummary": "Send files straight to another device",
+  "@metainfoSummary": {"description": "Linux software centres (Discover, GNOME Software, Flathub): one-line summary under the app's name. No full stop at the end"},
+  "metainfoAbout": "TotalDrop sends files and folders from one device to another, end-to-end encrypted. Pick the files, share a short code or a QR code, and the other device receives them. No account, no email, no phone number.",
+  "@metainfoAbout": {"description": "Linux software centres: the paragraph that introduces TotalDrop on its page"},
+  "metainfoVerified": "Every file is verified on arrival; damaged files are discarded",
+  "@metainfoVerified": {"description": "Linux software centres: feature list item about every received file being checked"},
+  "metainfoWords": "Four verification words show that nobody is in the middle",
+  "@metainfoWords": {"description": "Linux software centres: feature list item about the four verification words that show no one is intercepting the transfer"},
+  "metainfoTheme": "Follows your desktop's theme: Plasma, Hyprland, Omarchy, GNOME",
+  "@metainfoTheme": {"description": "Linux software centres: feature list item; keep the desktop names Plasma, Hyprland, Omarchy and GNOME as they are"}
 }

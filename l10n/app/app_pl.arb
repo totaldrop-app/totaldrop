@@ -144,5 +144,10 @@
   "desktopGenericName": "Przesyłanie plików",
   "desktopComment": "Wysyłaj pliki prosto na inne urządzenie, z szyfrowaniem end-to-end",
   "desktopKeywords": "wyślij;odbierz;udostępnij;przesyłanie;pliki;",
-  "desktopSendWith": "Wyślij przez TotalDrop"
+  "desktopSendWith": "Wyślij przez TotalDrop",
+  "metainfoSummary": "Wysyłaj pliki prosto na inne urządzenie",
+  "metainfoAbout": "TotalDrop wysyła pliki i foldery z jednego urządzenia na drugie, z szyfrowaniem end-to-end. Wybierz pliki, udostępnij krótki kod lub kod QR, a drugie urządzenie je odbierze. Bez konta, bez e-maila, bez numeru telefonu.",
+  "metainfoVerified": "Każdy plik jest sprawdzany po dotarciu; uszkodzone pliki są odrzucane",
+  "metainfoWords": "Cztery słowa weryfikacyjne pokazują, że nikt nie stoi pośrodku",
+  "metainfoTheme": "Dopasowuje się do motywu pulpitu: Plasma, Hyprland, Omarchy, GNOME"
 }

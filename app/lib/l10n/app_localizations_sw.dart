@@ -536,4 +536,23 @@ class AppLocalizationsSw extends AppLocalizations {
 
   @override
   String get desktopSendWith => 'Tuma kwa TotalDrop';
+
+  @override
+  String get metainfoSummary => 'Tuma faili moja kwa moja kwenye kifaa kingine';
+
+  @override
+  String get metainfoAbout =>
+      'TotalDrop hutuma faili na folda kutoka kifaa kimoja hadi kingine, zimesimbwa mwanzo hadi mwisho. Chagua faili, shiriki msimbo mfupi au msimbo wa QR, na kifaa kingine kitazipokea. Hakuna akaunti, barua pepe wala nambari ya simu.';
+
+  @override
+  String get metainfoVerified =>
+      'Kila faili huthibitishwa inapofika; faili zilizoharibika hutupwa';
+
+  @override
+  String get metainfoWords =>
+      'Maneno manne ya uthibitisho yanaonyesha kwamba hakuna mtu katikati';
+
+  @override
+  String get metainfoTheme =>
+      'Hufuata mandhari ya eneo-kazi lako: Plasma, Hyprland, Omarchy, GNOME';
 }

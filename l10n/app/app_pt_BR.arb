@@ -144,5 +144,10 @@
   "desktopGenericName": "Transferência de arquivos",
   "desktopComment": "Envie arquivos direto para outro dispositivo, com criptografia de ponta a ponta",
   "desktopKeywords": "enviar;receber;compartilhar;transferir;arquivos;",
-  "desktopSendWith": "Enviar com o TotalDrop"
+  "desktopSendWith": "Enviar com o TotalDrop",
+  "metainfoSummary": "Envie arquivos direto para outro dispositivo",
+  "metainfoAbout": "O TotalDrop envia arquivos e pastas de um dispositivo para outro, com criptografia de ponta a ponta. Escolha os arquivos, compartilhe um código curto ou um QR code e o outro dispositivo os recebe. Sem conta, sem e-mail, sem número de telefone.",
+  "metainfoVerified": "Cada arquivo é verificado ao chegar; arquivos danificados são descartados",
+  "metainfoWords": "Quatro palavras de verificação mostram que ninguém está no meio",
+  "metainfoTheme": "Segue o tema da sua área de trabalho: Plasma, Hyprland, Omarchy, GNOME"
 }

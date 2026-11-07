@@ -497,6 +497,22 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get desktopSendWith => '用 TotalDrop 发送';
+
+  @override
+  String get metainfoSummary => '将文件直接发送到另一台设备';
+
+  @override
+  String get metainfoAbout =>
+      'TotalDrop 将文件和文件夹从一台设备发送到另一台设备，端到端加密。选择文件，分享一个短代码或二维码，另一台设备就会收到。无需账户、电子邮件或电话号码。';
+
+  @override
+  String get metainfoVerified => '每个文件到达时都会校验，损坏的文件会被丢弃';
+
+  @override
+  String get metainfoWords => '四个验证词表明中间没有人';
+
+  @override
+  String get metainfoTheme => '跟随桌面主题：Plasma、Hyprland、Omarchy、GNOME';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hans`).
@@ -991,6 +1007,22 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
 
   @override
   String get desktopSendWith => '用 TotalDrop 发送';
+
+  @override
+  String get metainfoSummary => '将文件直接发送到另一台设备';
+
+  @override
+  String get metainfoAbout =>
+      'TotalDrop 将文件和文件夹从一台设备发送到另一台设备，端到端加密。选择文件，分享一个短代码或二维码，另一台设备就会收到。无需账户、电子邮件或电话号码。';
+
+  @override
+  String get metainfoVerified => '每个文件到达时都会校验，损坏的文件会被丢弃';
+
+  @override
+  String get metainfoWords => '四个验证词表明中间没有人';
+
+  @override
+  String get metainfoTheme => '跟随桌面主题：Plasma、Hyprland、Omarchy、GNOME';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -1484,4 +1516,20 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get desktopSendWith => '用 TotalDrop 傳送';
+
+  @override
+  String get metainfoSummary => '將檔案直接傳送到另一台裝置';
+
+  @override
+  String get metainfoAbout =>
+      'TotalDrop 將檔案和資料夾從一台裝置傳送到另一台裝置，端對端加密。選擇檔案，分享一組短代碼或 QR 碼，另一台裝置就會收到。不需要帳號、電子郵件或電話號碼。';
+
+  @override
+  String get metainfoVerified => '每個檔案抵達時都會驗證，損壞的檔案會被捨棄';
+
+  @override
+  String get metainfoWords => '四個驗證單字表示中間沒有其他人';
+
+  @override
+  String get metainfoTheme => '跟隨桌面主題：Plasma、Hyprland、Omarchy、GNOME';
 }
