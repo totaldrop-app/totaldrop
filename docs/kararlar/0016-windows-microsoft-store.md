@@ -181,7 +181,12 @@
   emanetçi olacak kuruluşun tüzel kişiliği TotalDrop'unki sayılmaz.
 - Bireysel hesap sonradan şirkete çevrilemez; şirket için yeni hesap
   açılır ve uygulama ona taşınır.
-- **Hesap açılmadan önce Ozan karar verir** (yanlış ad, yeni hesap ve yeni
+- **Bugünkü durum (7 Kasım 2026, Partner Center'dan okundu):** Ozan'ın
+  daha önce açtığı bir hesap var. Türü bireysel, Ozan'ın kişisel
+  Microsoft hesabına bağlı; yayıncı adı ve Windows yayıncı kimliği kişi
+  adıdır, satıcı iletişim bilgileri de kişiseldir. Bu haliyle Store'da
+  TotalDrop'u kişi adı yayımlar.
+- **İlk gönderimden önce Ozan karar verir** (yanlış ad, yeni hesap ve yeni
   kimlik doğrulaması demektir):
   - Bireysel hesapta yayıncı adı "TotalDrop" olabilir mi. Microsoft'un
     tarifi kişinin kendi adını öngörür; "TotalDrop" reddedilebilir ya da
@@ -192,10 +197,13 @@
     hesabıdır ve Store o zamana kalır.
   - Proje bireysel hesap tarifine (ticari olmayan) uyar mı: uygulama
     ücretsiz, reklamsız, bağışla yürür.
-- **Önerilen:** Ozan yukarıdakileri onaylarsa bireysel hesap,
-  `hello@totaldrop.app` ile açılmış bir Microsoft hesabıyla. Hesabı Ozan
-  açar, kimlik doğrulamasını Ozan yapar; parola ve kimlik bilgileri
-  depoya ve Claude'a verilmez.
+- **Önerilen:** Mevcut hesapta yayıncı adını "TotalDrop", satıcı
+  iletişim e-postasını `hello@totaldrop.app` yapmayı Ozan dener. Microsoft
+  kabul etmezse Store, tüzel kişilikle açılacak şirket hesabına kalır.
+  Değişiklikleri Ozan yapar; parola ve kimlik bilgileri depoya ve
+  Claude'a verilmez. **Doğrulanacak:** bireysel hesapta yayıncı adının
+  sonradan değiştirilip değiştirilemeyeceği ve Windows yayıncı kimliğinin
+  (paketteki `Publisher`) adla birlikte değişip değişmediği.
 - **Hesabın korunması:** Store kendi imzasıyla, otomatik güncelleme
   olarak ne gönderilirse dağıtır. Partner Center hesabını ele geçiren,
   hiçbir anahtarımıza dokunmadan bütün kullanıcılara güvenilir görünen
@@ -238,9 +246,9 @@
 
 ## Sıra
 
-1. Bu kararın kabulü ve "Hesap" bölümündeki üç sorunun Ozan tarafından
-   yanıtlanması. Yanıta göre Ozan Partner Center hesabını açar (ya da
-   şirket hesabı için tüzel kişilik beklenir).
+1. Bu kararın kabulü ve "Hesap" bölümündeki soruların Ozan tarafından
+   yanıtlanması: mevcut bireysel hesabın yayıncı adı ve iletişim bilgisi
+   TotalDrop'a çevrilir ya da şirket hesabı için tüzel kişilik beklenir.
 2. `windows/` klasörü: boş WinUI 3 penceresi, çekirdek bağlaması, CI'da
    x64 ve ARM64 derlemesi, test MSIX'i, birim testleri; bağlama aracı,
    çalışma zamanı dağıtımı ve en düşük Windows sürümü seçilir.
@@ -268,8 +276,8 @@
   eklenir.
 - Windows makinesi yok: denemeler CI koşucularında ve ekran görüntüleriyle
   yapılır; elde bir Windows bilgisayarı olunca o da kullanılır.
-- Yayıncı adı sorusu hesap açılmadan çözülmezse, sonradan düzeltmek yeni
-  hesap ve yeni kimlik doğrulaması ister.
+- Yayıncı adı ilk gönderimden önce çözülmezse, uygulama kişi adıyla
+  yayımlanır; sonradan düzeltmek yeni hesap ve uygulama taşıma ister.
 
 ## Sonuçlar
 
