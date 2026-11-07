@@ -22,6 +22,7 @@ birleştirmeden önce "Kabul" olur.
 | [0012](0012-ad-ve-isaret.md) | Kod serbest, ad ve işaret yalnızca TotalDrop'un kendi sürümleri için | Kabul |
 | [0013](0013-hayalet-halka-hesap.md) | Hesap sunucuda tutulmaz: Hayalet halka | Kabul |
 | [0014](0014-steam-deck.md) | TotalDrop for Steam Deck, Steam Machine ve Steam Frame: Linux sürümünün parçası, Flathub ve klavyeyle tam kullanım | Kabul |
+| 0015 | Paket yöneticileri (öneri PR #347'de, numara ayrılı) | Önerilen |
 | [0016](0016-windows-microsoft-store.md) | Windows uygulaması WinUI 3 ile yazılır, Microsoft Store'dan dağıtılır | Önerilen |
 
 Yeni bir karar için bir sonraki numarayla `NNNN-kisa-ad.md` açın ve bu
