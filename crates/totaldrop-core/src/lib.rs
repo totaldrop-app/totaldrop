@@ -283,11 +283,21 @@ fn paths_to(
     )
 }
 
-/// What keeps the relay at hand once a connection was chosen.
-#[derive(Debug, Default)]
-struct Standby {
-    _link: Option<relay::Link>,
-    _watch: Option<path::Watch>,
+/// What keeps the relay at hand once a connection was chosen. Held only
+/// to be dropped with the connection: a watch never runs without its link.
+#[derive(Debug)]
+enum Standby {
+    /// No relay link is kept.
+    Nothing,
+    /// The connection goes through the relay on this link.
+    Link { _link: relay::Link },
+    /// A direct connection with its link parked, and the watch that moves
+    /// it onto the link if the direct path goes quiet. The link is dropped
+    /// first, as fields are dropped in order.
+    Fallback {
+        _link: relay::Link,
+        _watch: path::Watch,
+    },
 }
 
 /// What the chosen connection keeps of the relay.
@@ -334,23 +344,16 @@ fn standby(
         link,
         gate,
     ) {
-        (Keep::Link, link, _) => Standby {
-            _link: link,
-            _watch: None,
-        },
+        (Keep::Link, Some(link), _) => Standby::Link { _link: link },
         (Keep::Fallback, Some(link), Some(gate)) => {
             link.park(fallback);
-            Standby {
-                _link: Some(link),
-                _watch: Some(path::Watch::spawn(
-                    fallback,
-                    conn.clone(),
-                    gate,
-                    path::FALLBACK_SILENCE,
-                )),
+            let watch = path::Watch::spawn(fallback, conn.clone(), gate, path::FALLBACK_SILENCE);
+            Standby::Fallback {
+                _link: link,
+                _watch: watch,
             }
         }
-        _ => Standby::default(),
+        _ => Standby::Nothing,
     }
 }
 
