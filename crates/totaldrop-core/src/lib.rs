@@ -40,7 +40,9 @@ use totaldrop_proto::wire::{Certificate, Hints};
 
 pub use error::{Cause, Error, Result};
 pub use stop::Stop;
-pub use transfer::{MAX_TEXT, OfferSummary, ReceiveReport, SendReport, check_destination};
+pub use transfer::{
+    MAX_TEXT, OfferSummary, ReceiveReport, SendReport, TEXT_FILE, check_destination,
+};
 
 /// Something worth telling the person while a transfer runs.
 #[derive(Debug, Clone)]
