@@ -25,6 +25,11 @@ finish-args:
   - --filesystem=xdg-download/TotalDrop:create
   # Desktop notifications when a transfer ends (linux/src/desktop.rs).
   - --talk-name=org.freedesktop.Notifications
+  # Keeps the computer from sleeping during a transfer (linux/src/sleep.rs):
+  # logind's sleep lock, which KDE, hypridle and Omarchy all honour. The
+  # portal's Inhibit is only the fallback, as not every desktop's portal
+  # implements it (xdg-desktop-portal-hyprland does not).
+  - --system-talk-name=org.freedesktop.login1
   # The desktop's theme, read only (linux/src/theme): Plasma's kdeglobals,
   # Omarchy's theme folder, the person's GTK settings and themes, and
   # Hyprland's socket for its corner rounding. Flathub's linter calls the
