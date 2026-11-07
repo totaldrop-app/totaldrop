@@ -95,7 +95,12 @@ fn main() {
             if let Some(package) = other {
                 let text = bridge::texts::strings().get(package.running_key(), &[]);
                 eprintln!("totaldrop-desktop: {text}");
-                runtime::RUNTIME.block_on(desktop::notify("TotalDrop".to_owned(), text));
+                // A notification daemon that is activatable but does not
+                // start must not keep this launch alive.
+                runtime::RUNTIME.block_on(async {
+                    let notify = desktop::notify("TotalDrop".to_owned(), text);
+                    let _ = tokio::time::timeout(std::time::Duration::from_secs(2), notify).await;
+                });
             }
             return;
         }
