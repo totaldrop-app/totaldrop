@@ -36,7 +36,10 @@ pub fn help(s: &Strings) -> String {
     let t = |key: &str| s.get(key, &[]);
     let rows = [
         ("[FILES]... | [LINK]", t("cliDesktopArgs")),
-        ("--screen=<send|receive|settings>", t("cliDesktopScreen")),
+        (
+            "--screen=<send|clipboard|receive|settings>",
+            t("cliDesktopScreen"),
+        ),
         ("-h, --help", t("cliHelpHelp")),
         ("-V, --version", t("cliHelpVersion")),
     ];
