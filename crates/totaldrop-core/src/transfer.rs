@@ -214,6 +214,10 @@ pub struct SourceEntry {
 /// one is better read as a file.
 pub const MAX_TEXT: u64 = limits::CHUNK_SIZE;
 
+/// The name a receiver that does not know texts (before #313) saves a
+/// text under; every sender gives it this name.
+pub const TEXT_FILE: &str = "text.txt";
+
 /// A text to send (#313), as the one file of an offer: a receiver that
 /// does not know texts saves it as `name`, which should end in `.txt`.
 pub fn text_entry(text: &str, name: &str) -> Result<SourceEntry> {
