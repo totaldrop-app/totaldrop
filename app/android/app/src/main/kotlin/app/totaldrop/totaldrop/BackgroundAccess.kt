@@ -28,47 +28,41 @@ import android.provider.Settings
  * a few kinds of app, and the person decides there.
  */
 object BackgroundAccess {
-    /** Makers whose phones are known to stop background apps on their
-     * own (dontkillmyapp.com), as Build.MANUFACTURER names them. */
-    private val RESTRICTIVE = setOf(
-        "xiaomi", "redmi", "poco", "samsung", "huawei", "honor", "oppo", "realme",
-        "oneplus", "vivo", "iqoo", "meizu", "asus", "tecno", "infinix", "nothing",
-    )
-
+    /** Xiaomi's phones (MIUI, HyperOS) add a battery saver of their own,
+     * and an Autostart switch, on top of Android's battery optimisation;
+     * both have pages the app can open. Other makers' extra savers have
+     * no page to open, so only Android's own setting is offered there. */
     private val XIAOMI = setOf("xiaomi", "redmi", "poco")
 
     private fun maker(): String = Build.MANUFACTURER.orEmpty().trim().lowercase()
 
     /** What the Dart side shows: whether Android's own battery
      * optimisation is off for TotalDrop, and the maker when it has a saver
-     * of its own (null otherwise). The maker's saver cannot be read. */
+     * of its own with a page to open (null otherwise). The maker's saver
+     * cannot be read. */
     fun state(activity: Activity): Map<String, Any?> {
         val power = activity.getSystemService(PowerManager::class.java)
         val exempt = power?.isIgnoringBatteryOptimizations(activity.packageName) == true
-        val maker = maker()
+        val xiaomi = maker() in XIAOMI
         return mapOf(
             "exempt" to exempt,
-            "maker" to if (maker in RESTRICTIVE) displayName(maker) else null,
-            "autostart" to (maker in XIAOMI),
+            "maker" to if (xiaomi) "Xiaomi" else null,
+            "autostart" to xiaomi,
         )
     }
 
-    /** "Xiaomi", "Samsung": the maker as people write it. */
-    private fun displayName(maker: String): String = when (maker) {
-        "oneplus" -> "OnePlus"
-        "iqoo" -> "iQOO"
-        "poco" -> "POCO"
-        else -> maker.replaceFirstChar { it.titlecase() }
-    }
-
-    /** Opens [page]: `battery` (Android's list of battery optimisation),
+    /** Opens [page]: `battery` (TotalDrop's app info, where App battery
+     * usage is one tap away; Android's list of battery optimisation if
+     * that does not open),
      * `maker` (the maker's battery saver for TotalDrop, else its app
      * info) or `autostart` (Xiaomi). False when nothing could open. */
     fun open(activity: Activity, page: String): Boolean {
         val pkg = activity.packageName
         val details = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$pkg"))
         val candidates: List<Intent> = when (page) {
-            "battery" -> listOf(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS), details)
+            // The list opens filtered to apps already exempt, so TotalDrop is
+            // not in it until the filter is changed: app info first.
+            "battery" -> listOf(details, Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
             "maker" -> if (maker() in XIAOMI) {
                 listOf(
                     Intent().setComponent(

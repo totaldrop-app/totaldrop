@@ -172,7 +172,7 @@
   "setupBackgroundAllowed": "TotalDrop के लिए Android का बैटरी ऑप्टिमाइज़ेशन बंद है।",
   "setupBackgroundRestricted": "TotalDrop के लिए Android का बैटरी ऑप्टिमाइज़ेशन चालू है: ऐप बदलने पर ट्रांसफ़र रुक सकता है।",
   "setupBackgroundBattery": "बैटरी सेटिंग खोलें",
-  "setupBackgroundBatteryHint": "सूची में TotalDrop ढूँढें और उसके लिए बैटरी ऑप्टिमाइज़ेशन बंद करें। इन सेटिंग के नाम हर फ़ोन में अलग होते हैं।",
+  "setupBackgroundBatteryHint": "TotalDrop के ऐप जानकारी पेज पर \"बैटरी\" खोलें और बिना रोक-टोक इस्तेमाल की अनुमति दें। इन सेटिंग के नाम हर फ़ोन में अलग होते हैं।",
   "setupBackgroundMaker": "{maker} फ़ोन का अपना बैटरी सेवर होता है",
   "setupBackgroundMakerBody": "TotalDrop का बैटरी सेवर भी खोलें और \"कोई प्रतिबंध नहीं\" चुनें। फ़ोन में ऑटोस्टार्ट हो तो उसे TotalDrop के लिए चालू करें।",
   "setupBackgroundMakerOpen": "TotalDrop का बैटरी सेवर खोलें",

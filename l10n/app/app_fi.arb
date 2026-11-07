@@ -172,7 +172,7 @@
   "setupBackgroundAllowed": "Androidin akun optimointi on pois päältä TotalDropilta.",
   "setupBackgroundRestricted": "Androidin akun optimointi on päällä TotalDropilla: siirto voi pysähtyä, kun vaihdat sovellusta.",
   "setupBackgroundBattery": "Avaa akkuasetukset",
-  "setupBackgroundBatteryHint": "Etsi TotalDrop luettelosta ja poista sen akun optimointi käytöstä. Näiden asetusten nimet vaihtelevat puhelimittain.",
+  "setupBackgroundBatteryHint": "Avaa TotalDropin sovellustiedoista Akku ja salli rajoittamaton käyttö. Näiden asetusten nimet vaihtelevat puhelimittain.",
   "setupBackgroundMaker": "{maker}-puhelimissa on oma virransäästö",
   "setupBackgroundMakerBody": "Avaa myös TotalDropin virransäästö ja valitse ”Ei rajoituksia”. Jos puhelimessa on Automaattinen käynnistys, ota se käyttöön TotalDropille.",
   "setupBackgroundMakerOpen": "Avaa TotalDropin virransäästö",

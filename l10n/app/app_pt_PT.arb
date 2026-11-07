@@ -172,7 +172,7 @@
   "setupBackgroundAllowed": "A otimização da bateria do Android está desativada para o TotalDrop.",
   "setupBackgroundRestricted": "A otimização da bateria do Android está ativada para o TotalDrop: uma transferência pode parar quando muda de app.",
   "setupBackgroundBattery": "Abrir definições da bateria",
-  "setupBackgroundBatteryHint": "Encontre o TotalDrop na lista e desative a otimização da bateria para ele. Os nomes destas definições variam de telemóvel para telemóvel.",
+  "setupBackgroundBatteryHint": "Na página de informações da aplicação TotalDrop, abra Bateria e permita a utilização sem restrições. Os nomes destas definições variam de telemóvel para telemóvel.",
   "setupBackgroundMaker": "Os telemóveis {maker} têm uma poupança de bateria própria",
   "setupBackgroundMakerBody": "Abra também a poupança de bateria do TotalDrop e escolha \"Sem restrições\". Se o telemóvel tiver Arranque automático, ative-o para o TotalDrop.",
   "setupBackgroundMakerOpen": "Abrir a poupança de bateria do TotalDrop",

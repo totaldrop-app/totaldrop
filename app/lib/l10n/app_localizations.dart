@@ -1136,19 +1136,19 @@ abstract class AppLocalizations {
   /// **'Android\'s battery optimisation is on for TotalDrop: a transfer may stop when you switch apps.'**
   String get setupBackgroundRestricted;
 
-  /// The same page: button that opens Android's battery optimisation list
+  /// The same page: button that opens TotalDrop's app info, where its battery use is set
   ///
   /// In en, this message translates to:
   /// **'Open battery settings'**
   String get setupBackgroundBattery;
 
-  /// The same page: what to do on the page the button opens
+  /// The same page: under the first button, which opens TotalDrop's app info; what to do there
   ///
   /// In en, this message translates to:
-  /// **'Find TotalDrop in the list and turn battery optimisation off for it. The names of these settings differ from phone to phone.'**
+  /// **'On TotalDrop\'s app info page, open Battery and allow unrestricted use. The names of these settings differ from phone to phone.'**
   String get setupBackgroundBatteryHint;
 
-  /// The same page: heading of the second step on phones whose maker adds its own battery saver (Xiaomi, Samsung…)
+  /// The same page: heading of the second step on Xiaomi, Redmi and POCO phones, which add a battery saver of their own
   ///
   /// In en, this message translates to:
   /// **'{maker} phones have a battery saver of their own'**

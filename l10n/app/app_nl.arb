@@ -172,7 +172,7 @@
   "setupBackgroundAllowed": "De batterijoptimalisatie van Android staat uit voor TotalDrop.",
   "setupBackgroundRestricted": "De batterijoptimalisatie van Android staat aan voor TotalDrop: een overdracht kan stoppen als je van app wisselt.",
   "setupBackgroundBattery": "Batterij-instellingen openen",
-  "setupBackgroundBatteryHint": "Zoek TotalDrop in de lijst en zet batterijoptimalisatie ervoor uit. De namen van deze instellingen verschillen per telefoon.",
+  "setupBackgroundBatteryHint": "Open op de app-infopagina van TotalDrop Batterij en sta onbeperkt gebruik toe. De namen van deze instellingen verschillen per telefoon.",
   "setupBackgroundMaker": "{maker}-telefoons hebben een eigen batterijbesparing",
   "setupBackgroundMakerBody": "Open ook de batterijbesparing van TotalDrop en kies 'Geen beperkingen'. Heeft de telefoon Autostart, zet het dan aan voor TotalDrop.",
   "setupBackgroundMakerOpen": "Batterijbesparing van TotalDrop openen",

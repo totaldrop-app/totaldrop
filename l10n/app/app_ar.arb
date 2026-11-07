@@ -172,7 +172,7 @@
   "setupBackgroundAllowed": "تحسين البطارية في Android متوقف لـ TotalDrop.",
   "setupBackgroundRestricted": "تحسين البطارية في Android مفعّل لـ TotalDrop: قد يتوقف النقل عند التبديل إلى تطبيق آخر.",
   "setupBackgroundBattery": "فتح إعدادات البطارية",
-  "setupBackgroundBatteryHint": "ابحث عن TotalDrop في القائمة وأوقف تحسين البطارية له. تختلف أسماء هذه الإعدادات من هاتف إلى آخر.",
+  "setupBackgroundBatteryHint": "في صفحة معلومات تطبيق TotalDrop، افتح «البطارية» واسمح بالاستخدام دون قيود. تختلف أسماء هذه الإعدادات من هاتف إلى آخر.",
   "setupBackgroundMaker": "لهواتف {maker} موفّر بطارية خاص بها",
   "setupBackgroundMakerBody": "افتح أيضًا موفّر البطارية الخاص بـ TotalDrop واختر \"بلا قيود\". وإن كان في الهاتف خيار التشغيل التلقائي، ففعّله لـ TotalDrop.",
   "setupBackgroundMakerOpen": "فتح موفّر البطارية لـ TotalDrop",

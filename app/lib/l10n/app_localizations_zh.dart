@@ -586,7 +586,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get setupBackgroundBatteryHint =>
-      '在列表中找到 TotalDrop，并关闭它的电池优化。这些设置的名称因手机而异。';
+      '在 TotalDrop 的应用信息页面中打开“电池”，并允许无限制使用。这些设置的名称因手机而异。';
 
   @override
   String setupBackgroundMaker(String maker) {
@@ -1194,7 +1194,7 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
 
   @override
   String get setupBackgroundBatteryHint =>
-      '在列表中找到 TotalDrop，并关闭它的电池优化。这些设置的名称因手机而异。';
+      '在 TotalDrop 的应用信息页面中打开“电池”，并允许无限制使用。这些设置的名称因手机而异。';
 
   @override
   String setupBackgroundMaker(String maker) {
@@ -1801,7 +1801,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get setupBackgroundBatteryHint =>
-      '在清單中找到 TotalDrop，並關閉它的電池最佳化。這些設定的名稱因手機而異。';
+      '在 TotalDrop 的應用程式資訊頁面中開啟「電池」，並允許無限制使用。這些設定的名稱因手機而異。';
 
   @override
   String setupBackgroundMaker(String maker) {

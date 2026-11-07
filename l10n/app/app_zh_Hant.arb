@@ -172,7 +172,7 @@
   "setupBackgroundAllowed": "TotalDrop 的 Android 電池最佳化已關閉。",
   "setupBackgroundRestricted": "TotalDrop 的 Android 電池最佳化已開啟：切換應用程式時傳輸可能會停止。",
   "setupBackgroundBattery": "開啟電池設定",
-  "setupBackgroundBatteryHint": "在清單中找到 TotalDrop，並關閉它的電池最佳化。這些設定的名稱因手機而異。",
+  "setupBackgroundBatteryHint": "在 TotalDrop 的應用程式資訊頁面中開啟「電池」，並允許無限制使用。這些設定的名稱因手機而異。",
   "setupBackgroundMaker": "{maker} 手機有自己的省電功能",
   "setupBackgroundMakerBody": "請同時開啟 TotalDrop 的省電設定並選擇「無限制」。如果手機有自動啟動，請為 TotalDrop 開啟。",
   "setupBackgroundMakerOpen": "開啟 TotalDrop 的省電設定",

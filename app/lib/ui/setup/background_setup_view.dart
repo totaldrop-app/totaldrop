@@ -29,8 +29,12 @@ class BackgroundSetupView extends StatefulWidget {
   /// [skipped] is true for "Not now".
   final void Function({required bool skipped}) onDone;
 
-  /// At first start: no way back, and a "Not now" next to "Done".
+  /// At first start: no back arrow, and a "Not now" next to "Done".
   final bool firstRun;
+
+  /// How many of these pages are open, so the reminder does not open a
+  /// second one over the page opened from Settings.
+  static int shown = 0;
 
   @override
   State<BackgroundSetupView> createState() => _BackgroundSetupViewState();
@@ -43,6 +47,7 @@ class _BackgroundSetupViewState extends State<BackgroundSetupView>
   @override
   void initState() {
     super.initState();
+    BackgroundSetupView.shown++;
     WidgetsBinding.instance.addObserver(this);
     _refresh();
   }
@@ -50,6 +55,7 @@ class _BackgroundSetupViewState extends State<BackgroundSetupView>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    BackgroundSetupView.shown--;
     super.dispose();
   }
 
@@ -76,110 +82,108 @@ class _BackgroundSetupViewState extends State<BackgroundSetupView>
     final muted = theme.textTheme.bodyMedium?.copyWith(
       color: theme.colorScheme.onSurfaceVariant,
     );
-    return PopScope(
-      canPop: !widget.firstRun,
-      child: Scaffold(
-        appBar: AppBar(automaticallyImplyLeading: !widget.firstRun),
-        body: SafeArea(
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-            children: [
-              Icon(
-                Icons.battery_charging_full_rounded,
-                size: 48,
-                color: theme.colorScheme.primary,
+    // At first start the page is the first route: back leaves the app.
+    return Scaffold(
+      appBar: widget.firstRun ? null : AppBar(),
+      body: SafeArea(
+        child: ListView(
+          padding: EdgeInsets.fromLTRB(24, widget.firstRun ? 24 : 0, 24, 24),
+          children: [
+            Icon(
+              Icons.battery_charging_full_rounded,
+              size: 48,
+              color: theme.colorScheme.primary,
+            ),
+            Gap.m,
+            Semantics(
+              header: true,
+              child: Text(
+                l.setupBackgroundTitle,
+                style: theme.textTheme.headlineMedium,
+              ),
+            ),
+            Gap.s,
+            Text(l.setupBackgroundBody, style: theme.textTheme.bodyLarge),
+            Gap.l,
+            if (state != null) ...[
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    state.exempt
+                        ? Icons.check_circle_outline_rounded
+                        : Icons.info_outline_rounded,
+                    size: 20,
+                    color: state.exempt
+                        ? theme.colorScheme.primary
+                        : theme.colorScheme.onSurfaceVariant,
+                  ),
+                  Gap.s,
+                  Expanded(
+                    child: Text(
+                      state.exempt
+                          ? l.setupBackgroundAllowed
+                          : l.setupBackgroundRestricted,
+                      style: muted,
+                    ),
+                  ),
+                ],
               ),
               Gap.m,
+            ],
+            FilledButton(
+              onPressed: () => _open(BackgroundPage.battery),
+              child: Text(l.setupBackgroundBattery),
+            ),
+            Gap.s,
+            Text(l.setupBackgroundBatteryHint, style: muted),
+            if (state?.maker case final maker?) ...[
+              Gap.l,
+              const Divider(),
+              Gap.l,
               Semantics(
                 header: true,
                 child: Text(
-                  l.setupBackgroundTitle,
-                  style: theme.textTheme.headlineMedium,
+                  l.setupBackgroundMaker(maker),
+                  style: theme.textTheme.titleLarge,
                 ),
               ),
               Gap.s,
-              Text(l.setupBackgroundBody, style: theme.textTheme.bodyLarge),
-              Gap.l,
-              if (state != null) ...[
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(
-                      state.exempt
-                          ? Icons.check_circle_outline_rounded
-                          : Icons.info_outline_rounded,
-                      size: 20,
-                      color: state.exempt
-                          ? theme.colorScheme.primary
-                          : theme.colorScheme.onSurfaceVariant,
-                    ),
-                    Gap.s,
-                    Expanded(
-                      child: Text(
-                        state.exempt
-                            ? l.setupBackgroundAllowed
-                            : l.setupBackgroundRestricted,
-                        style: muted,
-                      ),
-                    ),
-                  ],
-                ),
-                Gap.m,
-              ],
-              FilledButton(
-                onPressed: () => _open(BackgroundPage.battery),
-                child: Text(l.setupBackgroundBattery),
+              Text(
+                l.setupBackgroundMakerBody,
+                style: theme.textTheme.bodyMedium,
               ),
-              Gap.s,
-              Text(l.setupBackgroundBatteryHint, style: muted),
-              if (state?.maker case final maker?) ...[
-                Gap.l,
-                const Divider(),
-                Gap.l,
-                Semantics(
-                  header: true,
-                  child: Text(
-                    l.setupBackgroundMaker(maker),
-                    style: theme.textTheme.titleLarge,
-                  ),
-                ),
+              Gap.m,
+              FilledButton.tonal(
+                onPressed: () => _open(BackgroundPage.maker),
+                child: Text(l.setupBackgroundMakerOpen),
+              ),
+              if (state?.autostart ?? false) ...[
                 Gap.s,
-                Text(
-                  l.setupBackgroundMakerBody,
-                  style: theme.textTheme.bodyMedium,
+                OutlinedButton(
+                  onPressed: () => _open(BackgroundPage.autostart),
+                  child: Text(l.setupBackgroundAutostart),
                 ),
-                Gap.m,
-                FilledButton.tonal(
-                  onPressed: () => _open(BackgroundPage.maker),
-                  child: Text(l.setupBackgroundMakerOpen),
-                ),
-                if (state?.autostart ?? false) ...[
-                  Gap.s,
-                  OutlinedButton(
-                    onPressed: () => _open(BackgroundPage.autostart),
-                    child: Text(l.setupBackgroundAutostart),
-                  ),
-                ],
               ],
-              Gap.xl,
-              Wrap(
-                alignment: WrapAlignment.end,
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  if (widget.firstRun)
-                    TextButton(
-                      onPressed: () => widget.onDone(skipped: true),
-                      child: Text(l.setupBackgroundSkip),
-                    ),
-                  FilledButton.tonal(
-                    onPressed: () => widget.onDone(skipped: false),
-                    child: Text(l.done),
-                  ),
-                ],
-              ),
             ],
-          ),
+            Gap.xl,
+            Wrap(
+              alignment: WrapAlignment.end,
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                if (widget.firstRun)
+                  TextButton(
+                    onPressed: () => widget.onDone(skipped: true),
+                    child: Text(l.setupBackgroundSkip),
+                  ),
+                FilledButton.tonal(
+                  onPressed: () => widget.onDone(skipped: false),
+                  child: Text(l.done),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );

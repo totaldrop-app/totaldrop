@@ -74,7 +74,11 @@ const _xiaomi = BackgroundState(
   maker: 'Xiaomi',
   autostart: true,
 );
-const _samsungExempt = BackgroundState(exempt: true, maker: 'Samsung');
+const _xiaomiExempt = BackgroundState(
+  exempt: true,
+  maker: 'Xiaomi',
+  autostart: true,
+);
 
 Widget _app(Widget home, {Locale locale = const Locale('en')}) => MaterialApp(
   locale: locale,
@@ -98,7 +102,7 @@ void main() {
     test('is settled only without Android or maker restrictions', () {
       expect(_exempt.settled, isTrue);
       expect(_android.settled, isFalse);
-      expect(_samsungExempt.settled, isFalse);
+      expect(_xiaomiExempt.settled, isFalse);
       expect(_xiaomi.settled, isFalse);
     });
   });
@@ -117,7 +121,7 @@ void main() {
     test('shows the page on a maker that may restrict on its own', () async {
       final prompts = BackgroundPrompts(
         settings: _Settings(),
-        access: _Access(_samsungExempt),
+        access: _Access(_xiaomiExempt),
       );
       expect(await prompts.showAtStart(), isTrue);
     });
@@ -144,46 +148,56 @@ void main() {
   });
 
   group('after a transfer went to the background', () {
-    test('reminds once while the restrictions are on', () async {
+    test('reminds while the restrictions are on, until marked', () async {
       final settings = _Settings()..backgroundSetupSeen = true;
       final prompts = BackgroundPrompts(
         settings: settings,
         access: _Access(_android),
       );
-      expect(await prompts.remindAfterBackground(), isTrue);
-      expect(settings.backgroundReminded, isTrue);
-      expect(await prompts.remindAfterBackground(), isFalse);
+      expect(await prompts.shouldRemind(), isTrue);
+      // Asking does not use the reminder up; showing it does.
+      expect(settings.backgroundReminded, isFalse);
+      await settings.setBackgroundReminded();
+      expect(await prompts.shouldRemind(), isFalse);
+    });
+
+    test('not before the first-run page was answered', () async {
+      // A share can open the app past the first-run page.
+      final prompts = BackgroundPrompts(
+        settings: _Settings(),
+        access: _Access(_android),
+      );
+      expect(await prompts.shouldRemind(), isFalse);
     });
 
     test('does not remind when nothing restricts', () async {
-      final settings = _Settings();
+      final settings = _Settings()..backgroundSetupSeen = true;
       final prompts = BackgroundPrompts(
         settings: settings,
         access: _Access(_exempt),
       );
-      expect(await prompts.remindAfterBackground(), isFalse);
-      expect(settings.backgroundReminded, isFalse);
+      expect(await prompts.shouldRemind(), isFalse);
     });
 
-    test('does not remind on an exempt maker phone after Done', () async {
+    test('does not remind on an exempt Xiaomi phone after Done', () async {
       // The maker's saver cannot be read: after Done, trust the person.
       final settings = _Settings()..backgroundSetupSeen = true;
       final prompts = BackgroundPrompts(
         settings: settings,
-        access: _Access(_samsungExempt),
+        access: _Access(_xiaomiExempt),
       );
-      expect(await prompts.remindAfterBackground(), isFalse);
+      expect(await prompts.shouldRemind(), isFalse);
     });
 
-    test('reminds on an exempt maker phone after Not now', () async {
+    test('reminds on an exempt Xiaomi phone after Not now', () async {
       final settings = _Settings()
         ..backgroundSetupSeen = true
         ..backgroundSkipped = true;
       final prompts = BackgroundPrompts(
         settings: settings,
-        access: _Access(_samsungExempt),
+        access: _Access(_xiaomiExempt),
       );
-      expect(await prompts.remindAfterBackground(), isTrue);
+      expect(await prompts.shouldRemind(), isTrue);
     });
   });
 
@@ -403,7 +417,14 @@ void main() {
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
       await tester.pumpAndSettle();
+      // The transfer is still running: its screen stays in view.
+      expect(find.text(l.setupBackgroundTitle), findsNothing);
+      expect(settings.backgroundReminded, isFalse);
+
+      await keepAlive.end();
+      await tester.pumpAndSettle();
       expect(find.text(l.setupBackgroundTitle), findsOneWidget);
+      expect(settings.backgroundReminded, isTrue);
 
       await tester.ensureVisible(find.text(l.done));
       await tester.tap(find.text(l.done));
@@ -414,6 +435,44 @@ void main() {
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
       await tester.pumpAndSettle();
       expect(find.text(l.setupBackgroundTitle), findsNothing);
+    });
+    testWidgets('does not open a second page over one already open', (
+      tester,
+    ) async {
+      _tall(tester);
+      final settings = _Settings()..backgroundSetupSeen = true;
+      final prompts = BackgroundPrompts(
+        settings: settings,
+        access: _Access(_android),
+      );
+      final keepAlive = WatchedKeepAlive(_KeepAlive());
+      final navigator = GlobalKey<NavigatorState>();
+      await tester.pumpWidget(
+        MaterialApp(
+          navigatorKey: navigator,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          builder: (context, child) => BackgroundReminder(
+            prompts: prompts,
+            keepAlive: keepAlive,
+            navigator: navigator,
+            child: child!,
+          ),
+          // As when opened from Settings.
+          home: BackgroundSetupView(
+            access: _Access(_android),
+            onDone: ({required skipped}) {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await keepAlive.begin(TransferDirection.receiving, () {});
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      await keepAlive.end();
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pumpAndSettle();
+      expect(find.byType(BackgroundSetupView), findsOneWidget);
+      expect(settings.backgroundReminded, isFalse);
     });
   });
 }

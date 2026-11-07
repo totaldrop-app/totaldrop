@@ -629,7 +629,7 @@ class AppLocalizationsHu extends AppLocalizations {
 
   @override
   String get setupBackgroundBatteryHint =>
-      'Keresse meg a TotalDropot a listában, és kapcsolja ki az akkumulátor-optimalizálását. A beállítások neve telefononként eltér.';
+      'A TotalDrop alkalmazásinformációinál nyissa meg az Akkumulátor részt, és engedélyezze a korlátlan használatot. A beállítások neve telefononként eltér.';
 
   @override
   String setupBackgroundMaker(String maker) {

@@ -646,7 +646,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get setupBackgroundBatteryHint =>
-      'Suchen Sie TotalDrop in der Liste und schalten Sie die Akkuoptimierung dafür aus. Die Namen dieser Einstellungen sind je nach Telefon verschieden.';
+      'Öffnen Sie in den App-Infos von TotalDrop „Akku“ und erlauben Sie die uneingeschränkte Nutzung. Die Namen dieser Einstellungen sind je nach Telefon verschieden.';
 
   @override
   String setupBackgroundMaker(String maker) {

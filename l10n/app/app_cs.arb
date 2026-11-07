@@ -172,7 +172,7 @@
   "setupBackgroundAllowed": "Optimalizace baterie systému Android je pro TotalDrop vypnutá.",
   "setupBackgroundRestricted": "Optimalizace baterie systému Android je pro TotalDrop zapnutá: po přepnutí do jiné aplikace se přenos může zastavit.",
   "setupBackgroundBattery": "Otevřít nastavení baterie",
-  "setupBackgroundBatteryHint": "V seznamu najděte TotalDrop a vypněte pro něj optimalizaci baterie. Názvy těchto nastavení se v různých telefonech liší.",
+  "setupBackgroundBatteryHint": "Na stránce informací o aplikaci TotalDrop otevřete Baterii a povolte neomezené používání. Názvy těchto nastavení se v různých telefonech liší.",
   "setupBackgroundMaker": "Telefony {maker} mají vlastní spořič baterie",
   "setupBackgroundMakerBody": "Otevřete také spořič baterie pro TotalDrop a zvolte „Bez omezení“. Pokud telefon nabízí Automatické spuštění, zapněte ho pro TotalDrop.",
   "setupBackgroundMakerOpen": "Otevřít spořič baterie TotalDropu",

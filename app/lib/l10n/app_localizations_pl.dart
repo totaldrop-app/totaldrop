@@ -654,7 +654,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get setupBackgroundBatteryHint =>
-      'Znajdź TotalDrop na liście i wyłącz dla niego optymalizację baterii. Nazwy tych ustawień różnią się w zależności od telefonu.';
+      'Na stronie informacji o aplikacji TotalDrop otwórz Bateria i zezwól na użycie bez ograniczeń. Nazwy tych ustawień różnią się w zależności od telefonu.';
 
   @override
   String setupBackgroundMaker(String maker) {

@@ -172,7 +172,7 @@
   "setupBackgroundAllowed": "Optymalizacja baterii Androida jest wyłączona dla TotalDropa.",
   "setupBackgroundRestricted": "Optymalizacja baterii Androida jest włączona dla TotalDropa: przesyłanie może się zatrzymać po przełączeniu aplikacji.",
   "setupBackgroundBattery": "Otwórz ustawienia baterii",
-  "setupBackgroundBatteryHint": "Znajdź TotalDrop na liście i wyłącz dla niego optymalizację baterii. Nazwy tych ustawień różnią się w zależności od telefonu.",
+  "setupBackgroundBatteryHint": "Na stronie informacji o aplikacji TotalDrop otwórz Bateria i zezwól na użycie bez ograniczeń. Nazwy tych ustawień różnią się w zależności od telefonu.",
   "setupBackgroundMaker": "Telefony {maker} mają własny oszczędzacz baterii",
   "setupBackgroundMakerBody": "Otwórz też oszczędzanie baterii dla TotalDropa i wybierz „Bez ograniczeń”. Jeśli telefon ma Autostart, włącz go dla TotalDropa.",
   "setupBackgroundMakerOpen": "Otwórz oszczędzanie baterii TotalDropa",

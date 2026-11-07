@@ -644,7 +644,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get setupBackgroundBatteryHint =>
-      'ابحث عن TotalDrop في القائمة وأوقف تحسين البطارية له. تختلف أسماء هذه الإعدادات من هاتف إلى آخر.';
+      'في صفحة معلومات تطبيق TotalDrop، افتح «البطارية» واسمح بالاستخدام دون قيود. تختلف أسماء هذه الإعدادات من هاتف إلى آخر.';
 
   @override
   String setupBackgroundMaker(String maker) {

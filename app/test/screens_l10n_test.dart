@@ -11,6 +11,7 @@ import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:totaldrop/data/background_access.dart';
 import 'package:totaldrop/data/settings_repository.dart';
 import 'package:totaldrop/l10n/app_localizations.dart';
 import 'package:totaldrop/src/rust/api/l10n.dart' show ShownText;
@@ -87,6 +88,18 @@ class _Settings extends ChangeNotifier implements SettingsRepository {
   Future<void> setBackgroundSetupSeen({required bool skipped}) async {}
   @override
   Future<void> setBackgroundReminded() async {}
+}
+
+/// An Android phone, so Settings shows its Background transfers section.
+class _Limits implements BackgroundAccess {
+  const _Limits();
+
+  @override
+  Future<BackgroundState> state() async =>
+      const BackgroundState(exempt: false, maker: 'Xiaomi', autostart: true);
+
+  @override
+  Future<bool> open(BackgroundPage page) async => true;
 }
 
 /// Text each screen shows once it reaches its state.
@@ -302,8 +315,14 @@ void main() {
             },
           );
         },
-        'settings': () =>
-            (SettingsView(settings: settings, version: '0.3.0'), (_) async {}),
+        'settings': () => (
+          SettingsView(
+            settings: settings,
+            version: '0.3.0',
+            background: const _Limits(),
+          ),
+          (_) async {},
+        ),
       };
 
   // The check itself: on a screen too narrow for the code, the same steps
