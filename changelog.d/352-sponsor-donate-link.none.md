@@ -1,2 +1,1 @@
-- **Project:** The Sponsor button on GitHub also links the donate page,
-  which lists every cost and what has been raised (#352).
+Repository metadata only: the Sponsor button on GitHub, nothing in the app or on the site changes.
