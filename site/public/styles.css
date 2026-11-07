@@ -314,6 +314,7 @@ pre.cmd { white-space: pre-wrap; overflow-wrap: break-word; margin: 0; padding: 
 .req thead th { border-bottom-color: var(--outline); font-weight: 700; }
 .req td { color: var(--text-2); }
 .notes { display: grid; gap: var(--s8); padding-inline-start: 1.1rem; color: var(--text-2); margin: 0; }
+.notes-group { display: grid; gap: var(--s16); }
 
 /* Footer */
 .foot { max-width: var(--wrap); margin: 0 auto; padding: var(--s40) var(--gutter) 3rem; border-top: 1px solid var(--rule); display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--s16); color: var(--text-2); font-size: 0.975rem; }

@@ -1,4 +1,4 @@
-<!-- Translated from README.md 8687cea85e72. -->
+<!-- Translated from README.md 38ed72b6b4a4. -->
 <div align="center">
 
 <picture>
@@ -51,8 +51,8 @@ Ilmainen ja avointa lähdekoodia. Päästä päähän salattu. Ei sähköpostia,
 
 | Alusta | Hanki | Huomiot |
 | --- | --- | --- |
-| **Linux** (x86-64) | [Arch / Omarchy](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.5/totaldrop-0.3.0_beta.5-1-x86_64.pkg.tar.zst) · [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.5/totaldrop_0.3.0.beta.5-1_amd64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.5/totaldrop-0.3.0.beta.5-1.fc43.x86_64.rpm) | 0.3.0-beta.5, Qt 6.8 tai uudempi |
-| **Linux** (ARM64) | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.5/totaldrop_0.3.0.beta.5-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.5/totaldrop-0.3.0.beta.5-1.fc43.aarch64.rpm) | 0.3.0-beta.5, Qt 6.8 tai uudempi |
+| **Linux** (x86-64) | [Arch / Omarchy](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop-0.3.0_beta.6-1-x86_64.pkg.tar.zst) · [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop_0.3.0.beta.6-1_amd64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop-0.3.0.beta.6-1.fc43.x86_64.rpm) · [Flatpak](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop-0.3.0-beta.6-x86_64.flatpak) | 0.3.0-beta.6, Qt 6.8 tai uudempi |
+| **Linux** (ARM64) | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop_0.3.0.beta.6-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop-0.3.0.beta.6-1.fc43.aarch64.rpm) · [Flatpak](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop-0.3.0-beta.6-aarch64.flatpak) | 0.3.0-beta.6, Qt 6.8 tai uudempi |
 | **Android** | [Liity betaan](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.7, Android 15 tai uudempi, Google Play kutsusta |
 | **Komentorivi** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux, macOS, Windows |
 | **Windows, macOS, iOS** | Tulossa | Näiden koodiallekirjoitus on se, mihin lahjoitukset käytetään ensimmäisenä |
@@ -60,7 +60,7 @@ Ilmainen ja avointa lähdekoodia. Päästä päähän salattu. Ei sähköpostia,
 Jokainen paketti rakennetaan CI:ssä tagatusta commitista, ei koskaan kehittäjän koneella. Jos haluat tarkistaa paketin ennen asennusta, vertaa sitä julkaisun `SHA256SUMS`-tiedostoon ja varmista, missä se on rakennettu:
 
 ```bash
-gh attestation verify totaldrop_0.3.0.beta.5-1_amd64.deb --repo totaldrop-app/totaldrop
+gh attestation verify totaldrop_0.3.0.beta.6-1_amd64.deb --repo totaldrop-app/totaldrop
 ```
 
 > [!NOTE]

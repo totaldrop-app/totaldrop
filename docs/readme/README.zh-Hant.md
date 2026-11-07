@@ -1,4 +1,4 @@
-<!-- Translated from README.md 8687cea85e72. -->
+<!-- Translated from README.md 38ed72b6b4a4. -->
 <div align="center">
 
 <picture>
@@ -51,8 +51,8 @@
 
 | 平台 | 取得 | 說明 |
 | --- | --- | --- |
-| **Linux**（x86-64） | [Arch / Omarchy](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.5/totaldrop-0.3.0_beta.5-1-x86_64.pkg.tar.zst) · [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.5/totaldrop_0.3.0.beta.5-1_amd64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.5/totaldrop-0.3.0.beta.5-1.fc43.x86_64.rpm) | 0.3.0-beta.5，Qt 6.8 或更新版本 |
-| **Linux**（ARM64） | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.5/totaldrop_0.3.0.beta.5-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.5/totaldrop-0.3.0.beta.5-1.fc43.aarch64.rpm) | 0.3.0-beta.5，Qt 6.8 或更新版本 |
+| **Linux**（x86-64） | [Arch / Omarchy](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop-0.3.0_beta.6-1-x86_64.pkg.tar.zst) · [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop_0.3.0.beta.6-1_amd64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop-0.3.0.beta.6-1.fc43.x86_64.rpm) · [Flatpak](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop-0.3.0-beta.6-x86_64.flatpak) | 0.3.0-beta.6，Qt 6.8 或更新版本 |
+| **Linux**（ARM64） | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop_0.3.0.beta.6-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop-0.3.0.beta.6-1.fc43.aarch64.rpm) · [Flatpak](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop-0.3.0-beta.6-aarch64.flatpak) | 0.3.0-beta.6，Qt 6.8 或更新版本 |
 | **Android** | [加入測試版](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.7，Android 15 或更新版本，透過邀請在 Google Play 上提供 |
 | **命令列** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux、macOS、Windows |
 | **Windows、macOS、iOS** | 即將推出 | 捐款會優先用於這些平台的程式碼簽署 |
@@ -60,7 +60,7 @@
 每個套件都由 CI 從加上標籤的提交建置，絕不在開發者的電腦上建置。若要在安裝前檢查，請將它與發行版本的 `SHA256SUMS` 比對，並驗證它的建置來源：
 
 ```bash
-gh attestation verify totaldrop_0.3.0.beta.5-1_amd64.deb --repo totaldrop-app/totaldrop
+gh attestation verify totaldrop_0.3.0.beta.6-1_amd64.deb --repo totaldrop-app/totaldrop
 ```
 
 > [!NOTE]
