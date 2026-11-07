@@ -109,6 +109,9 @@ pub enum ErrorKind {
     InvalidOffer,
     /// A local file problem.
     Storage,
+    /// A text failed its check or is not valid text, so it is not shown
+    /// (#326).
+    TextDamaged,
     /// Anything else.
     Other,
 }
@@ -203,6 +206,8 @@ pub struct TransferSummary {
     pub bytes: i64,
     /// Where the receiver saved the top-level items (empty for the sender).
     pub saved: Vec<String>,
+    /// A text received in memory, exactly as it came ([`accept_text`]).
+    pub text: Option<String>,
 }
 
 /// Kinds of progress event.
@@ -367,6 +372,45 @@ pub async fn prepare_send(
     .await
 }
 
+/// Reserve a code to send `text` (#326): the receiver shows it instead of
+/// saving it. At most 1 MiB of UTF-8; `strong` and `privacy` as for
+/// [`prepare_send`].
+pub async fn prepare_send_text(
+    server: String,
+    text: String,
+    strong: bool,
+    privacy: bool,
+    stopper: &Stopper,
+) -> Result<SendSession, TransferError> {
+    let stop = stopper.stop.clone();
+    on_runtime(async move {
+        let opts = SendOptions {
+            server,
+            words: if strong { 3 } else { 2 },
+            paths: route(privacy),
+        };
+        let prepared = tokio::select! {
+            biased;
+            () = stop.stopped() => return Err(stopped()),
+            r = PreparedSend::text(&opts, &text, totaldrop_core::TEXT_FILE) => r?,
+        };
+        let (items, total_bytes) = prepared.totals();
+        Ok(SendSession {
+            code: prepared.code().to_string(),
+            items: n(items),
+            total_bytes: b(total_bytes),
+            inner: Mutex::new(Some(prepared)),
+        })
+    })
+    .await
+}
+
+/// The most bytes a text may have ([`prepare_send_text`]).
+#[frb(sync)]
+pub fn max_text_bytes() -> i64 {
+    b(totaldrop_core::MAX_TEXT)
+}
+
 /// Wait for the receiver and send, until `stopper` is stopped. Events end
 /// with `Finished` or `Failed`.
 pub async fn run_send(session: &SendSession, stopper: &Stopper, sink: StreamSink<TransferEvent>) {
@@ -387,6 +431,7 @@ pub async fn run_send(session: &SendSession, stopper: &Stopper, sink: StreamSink
             files_failed: n(r.files_failed),
             bytes: b(r.bytes),
             saved: Vec::new(),
+            text: None,
         })
     })
     .await;
@@ -402,6 +447,7 @@ pub struct Offer {
     total_bytes: i64,
     names: Vec<String>,
     words: Vec<String>,
+    is_text: bool,
 }
 
 impl Offer {
@@ -427,6 +473,13 @@ impl Offer {
     #[frb(sync, getter)]
     pub fn names(&self) -> Vec<String> {
         self.names.clone()
+    }
+
+    /// A text to show, not files to save (#326): accept it with
+    /// [`accept_text`].
+    #[frb(sync, getter)]
+    pub fn is_text(&self) -> bool {
+        self.is_text
     }
 
     /// The four verification words; the sender sees the same.
@@ -463,6 +516,7 @@ pub async fn connect_receive(
             total_bytes: b(s.total_size),
             names: s.top_level,
             words: offer.words().to_vec(),
+            is_text: s.text,
             inner: Mutex::new(Some(offer)),
         })
     })
@@ -498,10 +552,50 @@ pub async fn accept_offer(
             files_failed: n(r.files_failed),
             bytes: b(r.bytes),
             saved: r.placed.iter().map(|p| p.display().to_string()).collect(),
+            text: None,
         })
     })
     .await;
     finish(&sink, result);
+}
+
+/// Accept a text offer ([`Offer::is_text`]): it is received in memory and
+/// nothing is written to disk. `Finished` carries it in `summary.text`; a
+/// text that fails its check or is not UTF-8 ends with `Failed`
+/// ([`ErrorKind::TextDamaged`]) and is not passed on.
+pub async fn accept_text(offer: &Offer, stopper: &Stopper, sink: StreamSink<TransferEvent>) {
+    let sink: Sink = Arc::new(Mutex::new(sink));
+    let incoming = offer.inner.lock().ok().and_then(|mut g| g.take());
+    let Some(incoming) = incoming else {
+        return finish(
+            &sink,
+            Err(TransferError::other("this offer was already answered")),
+        );
+    };
+    let stop = stopper.stop.clone();
+    let result = on_runtime(async move {
+        let r = incoming.accept_text_with(&stop).await?;
+        text_summary(r.text, r.bytes)
+    })
+    .await;
+    finish(&sink, result);
+}
+
+fn text_summary(text: Option<String>, bytes: u64) -> Result<TransferSummary, TransferError> {
+    match text {
+        Some(text) => Ok(TransferSummary {
+            files_ok: 1,
+            files_failed: 0,
+            bytes: b(bytes),
+            saved: Vec::new(),
+            text: Some(text),
+        }),
+        None => Err(TransferError {
+            kind: ErrorKind::TextDamaged,
+            detail: "the text failed its check".to_owned(),
+            cause: String::new(),
+        }),
+    }
 }
 
 /// Decline the offer.
@@ -528,6 +622,15 @@ pub fn normalize_code(input: String) -> Option<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_text_that_failed_its_check_is_not_passed_on() {
+        let e = text_summary(None, 5).unwrap_err();
+        assert_eq!(e.kind, ErrorKind::TextDamaged);
+        let ok = text_summary(Some("hi".into()), 2).unwrap();
+        assert_eq!(ok.text.as_deref(), Some("hi"));
+        assert_eq!(ok.files_ok, 1);
+    }
 
     #[test]
     fn a_code_not_in_use_is_not_a_server_problem() {
