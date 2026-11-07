@@ -32,6 +32,22 @@ class TransferRepository {
     stopper: stopper,
   );
 
+  /// A text the receiver shows instead of saving (#326).
+  Future<bridge.SendSession> prepareSendText(
+    String text, {
+    required bool strong,
+    required bridge.Stopper stopper,
+  }) => bridge.prepareSendText(
+    server: _settings.server,
+    text: text,
+    strong: strong,
+    privacy: _settings.privacyMode,
+    stopper: stopper,
+  );
+
+  /// The most UTF-8 bytes a text may have.
+  int get maxTextBytes => bridge.maxTextBytes();
+
   Stream<bridge.TransferEvent> runSend(
     bridge.SendSession session,
     bridge.Stopper stopper,
@@ -54,6 +70,12 @@ class TransferRepository {
     destination: destination,
     stopper: stopper,
   );
+
+  /// Receives a text offer in memory; nothing is written (#326).
+  Stream<bridge.TransferEvent> acceptText(
+    bridge.Offer offer,
+    bridge.Stopper stopper,
+  ) => bridge.acceptText(offer: offer, stopper: stopper);
 
   Future<void> decline(bridge.Offer offer) => bridge.declineOffer(offer: offer);
 

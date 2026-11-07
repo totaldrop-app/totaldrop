@@ -510,10 +510,6 @@ class AppLocalizationsDa extends AppLocalizations {
   String get transferNoticeBody => 'Fortsætter, mens du bruger andre apps.';
 
   @override
-  String get shareTextSoon =>
-      'TotalDrop sender endnu ikke tekst, kun filer. Del en fil i stedet.';
-
-  @override
   String get shareBusy =>
       'En overførsel kører stadig. Vent, til den er færdig, eller stop den, og del så igen.';
 

@@ -6,6 +6,9 @@
 <resources>
     <string name="shortcut_send_short">Odeslat</string>
     <string name="shortcut_send_long">Odeslat soubory</string>
+    <string name="shortcut_clipboard_short">Odeslat schránku</string>
+    <string name="shortcut_clipboard_long">Odeslat schránku</string>
+    <string name="process_text">Odeslat pomocí TotalDrop</string>
     <string name="shortcut_receive_short">Přijmout</string>
     <string name="shortcut_receive_long">Přijmout soubory</string>
 </resources>

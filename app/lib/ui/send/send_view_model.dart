@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 
 import '../../data/file_source.dart';
 import '../../data/launch_source.dart';
@@ -15,16 +17,48 @@ export '../../data/file_source.dart' show PickedFile;
 
 enum SendStage { picking, preparing, waiting, transferring, done, failed }
 
+/// What the send screen says about the text box (#326).
+enum TextNotice {
+  none,
+
+  /// Send clipboard found no text on the clipboard.
+  clipboardEmpty,
+
+  /// Send clipboard found text already typed and kept it.
+  clipboardKept,
+}
+
+/// The text on the clipboard, or null when it holds none.
+abstract interface class TextClipboard {
+  Future<String?> read();
+}
+
+class PlatformClipboard implements TextClipboard {
+  const PlatformClipboard();
+  @override
+  Future<String?> read() async =>
+      (await Clipboard.getData(Clipboard.kTextPlain))?.text;
+}
+
+/// The most characters of a text the send screen shows in its box: one
+/// very long line is slow to lay out. A longer text is shown in part and
+/// sent whole (#326).
+const shownTextChars = 16 * 1024;
+
 class SendViewModel extends ChangeNotifier {
   SendViewModel({
     required TransferRepository repository,
     TransferKeepAlive keepAlive = const NoKeepAlive(),
     FileSource fileSource = const PlatformFileSource(),
     LaunchSource launches = const NoLaunches(),
+    TextClipboard textClipboard = const PlatformClipboard(),
   }) : _repo = repository,
        _keeper = keepAlive,
        _source = fileSource,
-       _shares = launches;
+       _shares = launches,
+       _clipboard = textClipboard;
+
+  final TextClipboard _clipboard;
 
   final LaunchSource _shares;
 
@@ -46,6 +80,30 @@ class SendViewModel extends ChangeNotifier {
   int get totalSize => _files.fold(0, (a, f) => a + f.size);
 
   bool strong = false;
+
+  /// Sending a text instead of files (#326). The files chosen stay, for
+  /// when the person goes back to them.
+  bool textMode = false;
+
+  /// The text to send, exactly as typed, pasted or shared.
+  String get text => _text;
+  String _text = '';
+  int? _textBytes;
+
+  /// Its size in UTF-8 bytes, which the limit counts.
+  int get textBytes => _textBytes ??= utf8.encode(_text).length;
+  bool get textTooLong => textBytes > maxTextBytes;
+  int get maxTextBytes => _repo.maxTextBytes;
+
+  /// The text is too long to edit in the box: only its beginning is shown,
+  /// and it can only be removed.
+  bool get bigText => _text.length > shownTextChars;
+  TextNotice textNotice = TextNotice.none;
+
+  /// Whether a code can be made now.
+  bool get canStart =>
+      textMode ? _text.isNotEmpty && !textTooLong : _files.isNotEmpty;
+
   SendStage stage = SendStage.picking;
   String? code;
   List<String> words = const [];
@@ -184,6 +242,59 @@ class SendViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setTextMode(bool on) {
+    if (busy || textMode == on) return;
+    textMode = on;
+    textNotice = TextNotice.none;
+    notifyListeners();
+  }
+
+  /// The box changed.
+  void setText(String v) {
+    if (v == _text) return;
+    _text = v;
+    _textBytes = null;
+    textNotice = TextNotice.none;
+    notifyListeners();
+  }
+
+  /// Send clipboard: the clipboard's text, into an empty box. A text
+  /// already typed is kept, and the screen says so.
+  Future<void> pasteClipboard() async {
+    if (busy) return;
+    if (stage != SendStage.picking) reset();
+    textMode = true;
+    textNotice = TextNotice.none;
+    notifyListeners();
+    String? clip;
+    try {
+      clip = await _clipboard.read();
+    } on PlatformException catch (e) {
+      debugPrint('clipboard: $e');
+    }
+    if (busy || !textMode) return;
+    if (_text.isNotEmpty) {
+      textNotice = TextNotice.clipboardKept;
+    } else if (clip == null || clip.isEmpty) {
+      textNotice = TextNotice.clipboardEmpty;
+    } else {
+      setText(clip);
+      return;
+    }
+    notifyListeners();
+  }
+
+  /// A text shared from another app, or selected there and sent (#326).
+  /// False while a transfer runs: then it is not taken. Text already typed
+  /// stays, with the new text after it on a line of its own.
+  bool takeText(String t) {
+    if (busy) return false;
+    if (stage != SendStage.picking) reset();
+    textMode = true;
+    setText(_text.isEmpty ? t : '$_text\n$t');
+    return true;
+  }
+
   void setStrong(bool v) {
     strong = v;
     notifyListeners();
@@ -192,7 +303,8 @@ class SendViewModel extends ChangeNotifier {
   Future<void> start() async {
     // Not while the picker or a share copies: the list is about to change
     // (#269).
-    if (_files.isEmpty || busy || _picking || sharing) return;
+    if (!canStart || busy || _picking || sharing) return;
+    final sendText = textMode;
     stage = SendStage.preparing;
     error = null;
     addFailed = false;
@@ -203,11 +315,13 @@ class SendViewModel extends ChangeNotifier {
     notifyListeners();
     final SendSession session;
     try {
-      session = await _repo.prepareSend(
-        _files.map((f) => f.path).toList(),
-        strong: strong,
-        stopper: stopper,
-      );
+      session = sendText
+          ? await _repo.prepareSendText(_text, strong: strong, stopper: stopper)
+          : await _repo.prepareSend(
+              _files.map((f) => f.path).toList(),
+              strong: strong,
+              stopper: stopper,
+            );
     } on TransferError catch (e) {
       if (generation == _generation) _fail(e);
       return;
@@ -258,7 +372,19 @@ class SendViewModel extends ChangeNotifier {
         total = e.total;
         stage = SendStage.transferring;
       case EventKind.finished:
-        summary = e.summary;
+        final s = e.summary;
+        if (textMode && s != null && s.filesFailed > 0) {
+          // The receiver found the text damaged and did not show it.
+          _fail(
+            const TransferError(
+              kind: ErrorKind.textDamaged,
+              detail: 'the receiver found the text damaged',
+              cause: '',
+            ),
+          );
+          return;
+        }
+        summary = s;
         stage = SendStage.done;
         _cleanUp();
       case EventKind.failed:
@@ -313,6 +439,10 @@ class SendViewModel extends ChangeNotifier {
     _sub = null;
     _release();
     _files.clear();
+    textMode = false;
+    _text = '';
+    _textBytes = null;
+    textNotice = TextNotice.none;
     addFailed = false;
     // The picker keeps copies of picked files in the app cache, and shares
     // in the app's storage; drop them. A share still copying stops.

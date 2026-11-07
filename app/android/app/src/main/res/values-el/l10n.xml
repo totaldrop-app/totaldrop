@@ -6,6 +6,9 @@
 <resources>
     <string name="shortcut_send_short">Αποστολή</string>
     <string name="shortcut_send_long">Αποστολή αρχείων</string>
+    <string name="shortcut_clipboard_short">Αποστολή προχείρου</string>
+    <string name="shortcut_clipboard_long">Αποστολή προχείρου</string>
+    <string name="process_text">Αποστολή με το TotalDrop</string>
     <string name="shortcut_receive_short">Λήψη</string>
     <string name="shortcut_receive_long">Λήψη αρχείων</string>
 </resources>

@@ -6,6 +6,9 @@
 <resources>
     <string name="shortcut_send_short">Lähetä</string>
     <string name="shortcut_send_long">Lähetä tiedostoja</string>
+    <string name="shortcut_clipboard_short">Lähetä leikepöytä</string>
+    <string name="shortcut_clipboard_long">Lähetä leikepöytä</string>
+    <string name="process_text">Lähetä TotalDropilla</string>
     <string name="shortcut_receive_short">Vastaanota</string>
     <string name="shortcut_receive_long">Vastaanota tiedostoja</string>
 </resources>

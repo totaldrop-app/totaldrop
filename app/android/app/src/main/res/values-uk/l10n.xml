@@ -6,6 +6,9 @@
 <resources>
     <string name="shortcut_send_short">Надіслати</string>
     <string name="shortcut_send_long">Надсилання файлів</string>
+    <string name="shortcut_clipboard_short">Надіслати буфер обміну</string>
+    <string name="shortcut_clipboard_long">Надіслати буфер обміну</string>
+    <string name="process_text">Надіслати через TotalDrop</string>
     <string name="shortcut_receive_short">Отримати</string>
     <string name="shortcut_receive_long">Отримання файлів</string>
 </resources>

@@ -6,6 +6,9 @@
 <resources>
     <string name="shortcut_send_short">Trimite</string>
     <string name="shortcut_send_long">Trimiteți fișiere</string>
+    <string name="shortcut_clipboard_short">Trimite clipboardul</string>
+    <string name="shortcut_clipboard_long">Trimite clipboardul</string>
+    <string name="process_text">Trimite cu TotalDrop</string>
     <string name="shortcut_receive_short">Primește</string>
     <string name="shortcut_receive_long">Primiți fișiere</string>
 </resources>

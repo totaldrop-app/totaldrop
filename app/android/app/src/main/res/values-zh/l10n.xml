@@ -6,6 +6,9 @@
 <resources>
     <string name="shortcut_send_short">发送</string>
     <string name="shortcut_send_long">发送文件</string>
+    <string name="shortcut_clipboard_short">发送剪贴板</string>
+    <string name="shortcut_clipboard_long">发送剪贴板</string>
+    <string name="process_text">用 TotalDrop 发送</string>
     <string name="shortcut_receive_short">接收</string>
     <string name="shortcut_receive_long">接收文件</string>
 </resources>

@@ -6,6 +6,9 @@
 <resources>
     <string name="shortcut_send_short">Gửi</string>
     <string name="shortcut_send_long">Gửi tệp</string>
+    <string name="shortcut_clipboard_short">Gửi khay nhớ tạm</string>
+    <string name="shortcut_clipboard_long">Gửi khay nhớ tạm</string>
+    <string name="process_text">Gửi bằng TotalDrop</string>
     <string name="shortcut_receive_short">Nhận</string>
     <string name="shortcut_receive_long">Nhận tệp</string>
 </resources>

@@ -230,6 +230,7 @@ class _Offered extends StatelessWidget {
     final theme = Theme.of(context);
     final o = vm.offer!;
     final names = o.names;
+    if (vm.isText) return _OfferedText(vm: vm);
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
@@ -301,6 +302,61 @@ class _Offered extends StatelessWidget {
   }
 }
 
+/// A text offered (#326): shown once accepted, never saved.
+class _OfferedText extends StatelessWidget {
+  const _OfferedText({required this.vm});
+  final ReceiveViewModel vm;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final o = vm.offer!;
+    return ListView(
+      padding: const EdgeInsets.all(24),
+      children: [
+        Announced(
+          Text(l.receiveOfferText, style: theme.textTheme.headlineSmall),
+        ),
+        Gap.s,
+        Text(
+          formatBytes(l, o.totalBytes),
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontFeatures: const [FontFeature.tabularFigures()],
+          ),
+        ),
+        Gap.s,
+        Text(
+          l.receiveOfferTextNote,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+        Gap.l,
+        VerificationWords(words: o.words),
+        Gap.l,
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: vm.decline,
+                child: Text(safeL10n(context, 'receiveDecline').receiveDecline),
+              ),
+            ),
+            Gap.m,
+            Expanded(
+              child: FilledButton(
+                onPressed: vm.accept,
+                child: Text(safeL10n(context, 'receiveAccept').receiveAccept),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
 class _Transferring extends StatelessWidget {
   const _Transferring({required this.vm});
   final ReceiveViewModel vm;
@@ -338,6 +394,7 @@ class _Done extends StatelessWidget {
     final l = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final s = vm.summary;
+    if (vm.receivedText case final text?) return _TextDone(vm: vm, text: text);
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
@@ -381,6 +438,78 @@ class _Done extends StatelessWidget {
               ),
             ),
         Gap.l,
+        FilledButton(
+          onPressed: () {
+            vm.reset();
+            Navigator.pop(context);
+          },
+          child: Text(l.done),
+        ),
+      ],
+    );
+  }
+}
+
+/// A text received (#326): shown as plain text with hidden characters
+/// named, never saved. Copy text copies it exactly as it came.
+class _TextDone extends StatelessWidget {
+  const _TextDone({required this.vm, required this.text});
+  final ReceiveViewModel vm;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final shown = shownText(text);
+    final note = theme.textTheme.bodyMedium?.copyWith(
+      color: theme.colorScheme.onSurfaceVariant,
+    );
+    // The text scrolls in its own box, at most half the screen high, and
+    // the page scrolls when large type leaves no room.
+    final boxHeight = MediaQuery.sizeOf(context).height / 2;
+    return ListView(
+      padding: const EdgeInsets.all(24),
+      children: [
+        const Center(child: DoneBadge()),
+        Gap.l,
+        Announced(
+          Text(
+            l.receiveTextDone,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.headlineSmall,
+          ),
+        ),
+        Gap.m,
+        ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: boxHeight),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              border: Border.all(color: theme.colorScheme.outlineVariant),
+              borderRadius: const BorderRadius.all(Radius.circular(12)),
+            ),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              // Plain text: nothing in it is a link or markup.
+              child: SelectableText(shown.text),
+            ),
+          ),
+        ),
+        if (shown.short) ...[Gap.s, Text(l.receiveTextShortened, style: note)],
+        if (shown.hidden) ...[Gap.s, Text(l.receiveTextHidden, style: note)],
+        Gap.m,
+        OutlinedButton.icon(
+          onPressed: () async {
+            await Clipboard.setData(ClipboardData(text: text));
+            if (context.mounted) {
+              ScaffoldMessenger.of(context)
+                  .showSnackBar(SnackBar(content: Text(l.textCopied)));
+            }
+          },
+          icon: const Icon(Icons.copy),
+          label: Text(l.copyText),
+        ),
+        Gap.s,
         FilledButton(
           onPressed: () {
             vm.reset();

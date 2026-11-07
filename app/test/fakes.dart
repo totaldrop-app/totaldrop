@@ -10,6 +10,7 @@ import 'package:totaldrop/data/file_source.dart';
 import 'package:totaldrop/data/transfer_keep_alive.dart';
 import 'package:totaldrop/data/transfer_repository.dart';
 import 'package:totaldrop/src/rust/api/transfer.dart';
+import 'package:totaldrop/ui/send/send_view_model.dart' show TextClipboard;
 
 class _Opaque {
   bool disposed = false;
@@ -31,6 +32,9 @@ class FakeSession extends _Opaque implements SendSession {
 }
 
 class FakeOffer extends _Opaque implements Offer {
+  FakeOffer({this.isText = false});
+  @override
+  final bool isText;
   @override
   PlatformInt64 get files => 1;
   @override
@@ -67,9 +71,34 @@ class FakeRepository implements TransferRepository {
     required Stopper stopper,
   }) => prepared.future;
 
+  /// The texts [prepareSendText] was asked to send.
+  final sentTexts = <String>[];
+
+  @override
+  Future<SendSession> prepareSendText(
+    String text, {
+    required bool strong,
+    required Stopper stopper,
+  }) {
+    sentTexts.add(text);
+    return prepared.future;
+  }
+
+  @override
+  int get maxTextBytes => 1 << 20;
+
   @override
   Stream<TransferEvent> runSend(SendSession session, Stopper stopper) =>
       events.stream;
+
+  /// Which accept the receive took: 'files' or 'text'.
+  final accepted = <String>[];
+
+  @override
+  Stream<TransferEvent> acceptText(Offer offer, Stopper stopper) {
+    accepted.add('text');
+    return events.stream;
+  }
 
   @override
   Future<Offer> connect(String code, Stopper stopper) => connected.future;
@@ -79,7 +108,10 @@ class FakeRepository implements TransferRepository {
     Offer offer,
     String destination,
     Stopper stopper,
-  ) => events.stream;
+  ) {
+    accepted.add('files');
+    return events.stream;
+  }
 
   @override
   Future<void> decline(Offer offer) async => declined.add(offer);
@@ -171,3 +203,11 @@ class FakeFileSource implements FileSource {
 
 PickedFile pickedFile(String name, {int size = 1 << 30}) =>
     PickedFile(name: name, path: '/cache/file_picker/1/$name', size: size);
+
+/// A clipboard that holds [text].
+class FakeClipboard implements TextClipboard {
+  const FakeClipboard(this.text);
+  final String? text;
+  @override
+  Future<String?> read() async => text;
+}

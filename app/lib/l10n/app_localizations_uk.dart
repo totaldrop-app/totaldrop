@@ -517,10 +517,6 @@ class AppLocalizationsUk extends AppLocalizations {
       'Триває, поки ви користуєтеся іншими застосунками.';
 
   @override
-  String get shareTextSoon =>
-      'TotalDrop поки не надсилає текст, лише файли. Поділіться файлом.';
-
-  @override
   String get shareBusy =>
       'Передавання ще триває. Дочекайтеся його завершення або зупиніть його, а потім поділіться знову.';
 

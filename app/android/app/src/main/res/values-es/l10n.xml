@@ -6,6 +6,9 @@
 <resources>
     <string name="shortcut_send_short">Enviar</string>
     <string name="shortcut_send_long">Enviar archivos</string>
+    <string name="shortcut_clipboard_short">Enviar portapapeles</string>
+    <string name="shortcut_clipboard_long">Enviar portapapeles</string>
+    <string name="process_text">Enviar con TotalDrop</string>
     <string name="shortcut_receive_short">Recibir</string>
     <string name="shortcut_receive_long">Recibir archivos</string>
 </resources>

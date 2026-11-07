@@ -13,6 +13,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:totaldrop/data/settings_repository.dart';
 import 'package:totaldrop/l10n/app_localizations.dart';
+import 'package:totaldrop/src/rust/api/l10n.dart' show ShownText;
 import 'package:totaldrop/src/rust/api/transfer.dart';
 import 'package:totaldrop/src/rust/frb_generated.dart';
 import 'package:totaldrop/ui/core/theme.dart';
@@ -39,6 +40,11 @@ class _Rust implements RustLibApi {
   // Shows the draft note too, the longest version of Settings.
   @override
   bool crateApiL10NHasDraftTranslation({required String tag}) => true;
+
+  // Both notes under a received text: the longest version of the screen.
+  @override
+  ShownText crateApiL10NShownText({required String text}) =>
+      ShownText(text: text, short: true, hidden: true);
 
   @override
   String crateApiTransferDefaultServer() => 'wss://rendezvous.totaldrop.app';
@@ -79,7 +85,26 @@ const _shows = {
   'send with the code': '7-harbor-rocket',
   'sending with the words': 'abstract',
   'receive an offer': 'Rapport annuel',
+  'send a text': 'Rapport annuel',
+  'receive a text offer': 'one',
+  'receive a text': 'Rapport annuel',
 };
+
+/// A finished receive of a text.
+TransferEvent _textReceived() => const TransferEvent(
+  kind: EventKind.finished,
+  words: [],
+  done: 0,
+  total: 0,
+  summary: TransferSummary(
+    filesOk: 1,
+    filesFailed: 0,
+    bytes: 40,
+    saved: [],
+    text: _longName,
+  ),
+  error: null,
+);
 
 const _rtl = {'ar', 'fa', 'he', 'ur'};
 
@@ -186,6 +211,48 @@ void main() {
             (tester) async {
               unawaited(vm.connect());
               repo.connected.complete(_LongOffer());
+            },
+          );
+        },
+        'send a text': () {
+          final vm =
+              SendViewModel(
+                  repository: FakeRepository(),
+                  fileSource: FakeFileSource(),
+                  textClipboard: const FakeClipboard('other'),
+                )
+                ..setTextMode(true)
+                ..setText(_longName);
+          return (
+            SendView(viewModel: vm),
+            // The notice that the typed text was kept.
+            (tester) => vm.pasteClipboard(),
+          );
+        },
+        'receive a text offer': () {
+          final repo = FakeRepository();
+          final vm = ReceiveViewModel(repository: repo)
+            ..setInput('7-harbor-rocket');
+          return (
+            ReceiveView(viewModel: vm),
+            (tester) async {
+              unawaited(vm.connect());
+              repo.connected.complete(FakeOffer(isText: true));
+            },
+          );
+        },
+        'receive a text': () {
+          final repo = FakeRepository();
+          final vm = ReceiveViewModel(repository: repo)
+            ..setInput('7-harbor-rocket');
+          return (
+            ReceiveView(viewModel: vm),
+            (tester) async {
+              unawaited(vm.connect());
+              repo.connected.complete(FakeOffer(isText: true));
+              await tester.pump();
+              await vm.accept();
+              repo.events.add(_textReceived());
             },
           );
         },

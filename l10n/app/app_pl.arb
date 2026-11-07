@@ -138,7 +138,6 @@
   "transferNoticeSending": "Wysyłanie przez TotalDrop",
   "transferNoticeReceiving": "Odbieranie przez TotalDrop",
   "transferNoticeBody": "Trwa nadal, gdy korzystasz z innych aplikacji.",
-  "shareTextSoon": "TotalDrop nie wysyła jeszcze tekstu, tylko pliki. Udostępnij zamiast tego plik.",
   "shareBusy": "Przesyłanie wciąż trwa. Poczekaj, aż się skończy, lub je zatrzymaj, a potem udostępnij ponownie.",
   "shareSkipped": "{count, plural, one{Nie udało się odczytać jednego udostępnionego elementu, więc go pominięto.} few{Nie udało się odczytać {count} udostępnionych elementów, więc je pominięto.} many{Nie udało się odczytać {count} udostępnionych elementów, więc je pominięto.} other{Nie udało się odczytać {count} udostępnionego elementu, więc je pominięto.}}",
   "desktopGenericName": "Przesyłanie plików",

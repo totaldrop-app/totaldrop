@@ -6,6 +6,9 @@
 <resources>
     <string name="shortcut_send_short">ส่ง</string>
     <string name="shortcut_send_long">ส่งไฟล์</string>
+    <string name="shortcut_clipboard_short">ส่งคลิปบอร์ด</string>
+    <string name="shortcut_clipboard_long">ส่งคลิปบอร์ด</string>
+    <string name="process_text">ส่งด้วย TotalDrop</string>
     <string name="shortcut_receive_short">รับ</string>
     <string name="shortcut_receive_long">รับไฟล์</string>
 </resources>

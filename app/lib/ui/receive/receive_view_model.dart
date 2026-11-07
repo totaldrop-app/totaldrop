@@ -66,6 +66,12 @@ class ReceiveViewModel extends ChangeNotifier {
   bool get busy =>
       stage == ReceiveStage.connecting || stage == ReceiveStage.transferring;
 
+  /// The offer is a text to show, not files to save (#326).
+  bool get isText => offer?.isText ?? false;
+
+  /// The text received, exactly as it came; shown, never saved.
+  String? get receivedText => summary?.text;
+
   String? get normalized => _repo.normalizeCode(input);
 
   void setInput(String v) {
@@ -124,22 +130,19 @@ class ReceiveViewModel extends ChangeNotifier {
     stage = ReceiveStage.transferring;
     total = o.totalBytes;
     notifyListeners();
-    _sub = _repo
-        .accept(o, dest, stopper)
-        .listen(
-          _onEvent,
-          onError: (Object e) {
-            _fail(
-              e is TransferError
-                  ? e
-                  : TransferError(
-                      kind: ErrorKind.other,
-                      detail: '$e',
-                      cause: '',
-                    ),
-            );
-          },
+    final events = o.isText
+        ? _repo.acceptText(o, stopper)
+        : _repo.accept(o, dest, stopper);
+    _sub = events.listen(
+      _onEvent,
+      onError: (Object e) {
+        _fail(
+          e is TransferError
+              ? e
+              : TransferError(kind: ErrorKind.other, detail: '$e', cause: ''),
         );
+      },
+    );
   }
 
   Future<void> decline() async {
