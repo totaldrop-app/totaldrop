@@ -23,7 +23,7 @@
   "cliStopped": "Parado.",
   "cliNoFolder": "{folder} não existe ou não é uma pasta.",
   "cliFolderNotWritable": "Não é possível escrever em {folder}.",
-  "cliFolderNotKept": "{folder} não é mantida: o Flatpak apaga-a quando o comando termina. Nada foi recebido. Guarde antes em {downloads}, por exemplo com -o {downloads}.",
+  "cliFolderNotKept": "{folder} não é mantida: o Flatpak apaga-a quando o comando termina. Nada foi recebido. Guarde antes em {downloads}, por exemplo com -o \"{downloads}\".",
   "cliErrWrongCode": "O código não correspondeu. Foi mal escrito ou alguém tentou intercetar a transferência. Nada foi enviado. Comece de novo com um código novo.",
   "cliErrPeerLeft": "O outro lado saiu antes de a transferência terminar.",
   "cliErrDeclined": "O destinatário recusou os ficheiros.",

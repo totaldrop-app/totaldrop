@@ -23,7 +23,7 @@
   "cliStopped": "중단했습니다.",
   "cliNoFolder": "{folder}이(가) 없거나 폴더가 아닙니다.",
   "cliFolderNotWritable": "{folder}에 쓸 수 없습니다.",
-  "cliFolderNotKept": "{folder}은(는) 유지되지 않습니다. 명령이 끝나면 Flatpak이 삭제합니다. 아무것도 받지 않았습니다. 대신 {downloads}에 저장하세요(예: -o {downloads}).",
+  "cliFolderNotKept": "{folder}은(는) 유지되지 않습니다. 명령이 끝나면 Flatpak이 삭제합니다. 아무것도 받지 않았습니다. 대신 {downloads}에 저장하세요(예: -o \"{downloads}\").",
   "cliErrWrongCode": "코드가 일치하지 않습니다. 잘못 입력했거나 누군가 전송을 가로채려 했습니다. 아무것도 전송되지 않았습니다. 새 코드로 다시 시작하세요.",
   "cliErrPeerLeft": "전송이 끝나기 전에 상대방이 나갔습니다.",
   "cliErrDeclined": "받는 사람이 파일을 거절했습니다.",

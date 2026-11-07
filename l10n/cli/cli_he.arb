@@ -23,7 +23,7 @@
   "cliStopped": "נעצר.",
   "cliNoFolder": "{folder} לא קיים או שאינו תיקייה.",
   "cliFolderNotWritable": "לא ניתן לכתוב אל {folder}.",
-  "cliFolderNotKept": "{folder} אינה נשמרת: Flatpak מוחק אותה כשהפקודה מסתיימת. דבר לא התקבל. שמרו במקום זאת ב־{downloads}, למשל עם ‎-o {downloads}.",
+  "cliFolderNotKept": "{folder} אינה נשמרת: Flatpak מוחק אותה כשהפקודה מסתיימת. דבר לא התקבל. שמרו במקום זאת ב־{downloads}, למשל עם ‎-o \"{downloads}\".",
   "cliErrWrongCode": "הקוד לא תאם. הוא הוקלד בטעות, או שמישהו ניסה ליירט את ההעברה. דבר לא נשלח. יש להתחיל מחדש עם קוד חדש.",
   "cliErrPeerLeft": "הצד השני עזב לפני שההעברה הסתיימה.",
   "cliErrDeclined": "הנמען דחה את הקבצים.",

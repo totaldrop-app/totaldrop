@@ -23,7 +23,7 @@
   "cliStopped": "Beendet.",
   "cliNoFolder": "{folder} existiert nicht oder ist kein Ordner.",
   "cliFolderNotWritable": "In {folder} kann nicht geschrieben werden.",
-  "cliFolderNotKept": "{folder} bleibt nicht erhalten: Flatpak löscht ihn, wenn der Befehl endet. Es wurde nichts empfangen. Speichern Sie stattdessen in {downloads}, zum Beispiel mit -o {downloads}.",
+  "cliFolderNotKept": "{folder} bleibt nicht erhalten: Flatpak löscht ihn, wenn der Befehl endet. Es wurde nichts empfangen. Speichern Sie stattdessen in {downloads}, zum Beispiel mit -o \"{downloads}\".",
   "cliErrWrongCode": "Der Code stimmte nicht überein. Er wurde falsch eingegeben, oder jemand hat versucht, die Übertragung abzufangen. Es wurde nichts gesendet. Beginnen Sie neu mit einem neuen Code.",
   "cliErrPeerLeft": "Die Gegenseite hat die Verbindung getrennt, bevor die Übertragung abgeschlossen war.",
   "cliErrDeclined": "Der Empfänger hat die Dateien abgelehnt.",

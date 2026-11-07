@@ -23,7 +23,7 @@
   "cliStopped": "Arrêté.",
   "cliNoFolder": "{folder} n'existe pas ou n'est pas un dossier.",
   "cliFolderNotWritable": "Impossible d'écrire dans {folder}.",
-  "cliFolderNotKept": "{folder} n'est pas conservé : Flatpak le supprime à la fin de la commande. Rien n'a été reçu. Enregistrez plutôt dans {downloads}, par exemple avec -o {downloads}.",
+  "cliFolderNotKept": "{folder} n'est pas conservé : Flatpak le supprime à la fin de la commande. Rien n'a été reçu. Enregistrez plutôt dans {downloads}, par exemple avec -o \"{downloads}\".",
   "cliErrWrongCode": "Le code ne correspondait pas. Il a été mal saisi, ou quelqu'un a tenté d'intercepter le transfert. Rien n'a été envoyé. Recommencez avec un nouveau code.",
   "cliErrPeerLeft": "L'autre appareil s'est déconnecté avant la fin du transfert.",
   "cliErrDeclined": "Le destinataire a refusé les fichiers.",

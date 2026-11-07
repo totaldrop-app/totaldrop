@@ -23,7 +23,7 @@
   "cliStopped": "Dihentikan.",
   "cliNoFolder": "{folder} tidak wujud atau bukan folder.",
   "cliFolderNotWritable": "Tidak dapat menulis ke {folder}.",
-  "cliFolderNotKept": "{folder} tidak disimpan kekal: Flatpak memadamnya apabila arahan tamat. Tiada apa-apa diterima. Simpan ke {downloads}, contohnya dengan -o {downloads}.",
+  "cliFolderNotKept": "{folder} tidak disimpan kekal: Flatpak memadamnya apabila arahan tamat. Tiada apa-apa diterima. Simpan ke {downloads}, contohnya dengan -o \"{downloads}\".",
   "cliErrWrongCode": "Kod tidak sepadan. Kod tersalah taip, atau seseorang cuba memintas pemindahan. Tiada apa-apa yang dihantar. Mulakan semula dengan kod baharu.",
   "cliErrPeerLeft": "Pihak satu lagi keluar sebelum pemindahan selesai.",
   "cliErrDeclined": "Penerima menolak fail tersebut.",

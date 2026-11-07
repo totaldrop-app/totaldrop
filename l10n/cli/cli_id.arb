@@ -23,7 +23,7 @@
   "cliStopped": "Dihentikan.",
   "cliNoFolder": "{folder} tidak ada atau bukan folder.",
   "cliFolderNotWritable": "Tidak dapat menulis ke {folder}.",
-  "cliFolderNotKept": "{folder} tidak disimpan permanen: Flatpak menghapusnya saat perintah selesai. Tidak ada yang diterima. Simpan ke {downloads}, misalnya dengan -o {downloads}.",
+  "cliFolderNotKept": "{folder} tidak disimpan permanen: Flatpak menghapusnya saat perintah selesai. Tidak ada yang diterima. Simpan ke {downloads}, misalnya dengan -o \"{downloads}\".",
   "cliErrWrongCode": "Kode tidak cocok. Kode salah ketik, atau seseorang mencoba menyadap transfer. Tidak ada yang terkirim. Mulai lagi dengan kode baru.",
   "cliErrPeerLeft": "Pihak lain pergi sebelum transfer selesai.",
   "cliErrDeclined": "Penerima menolak file tersebut.",

@@ -23,7 +23,7 @@
   "cliStopped": "Lopetettu.",
   "cliNoFolder": "{folder} ei ole olemassa tai ei ole kansio.",
   "cliFolderNotWritable": "Kohteeseen {folder} ei voi kirjoittaa.",
-  "cliFolderNotKept": "Kohdetta {folder} ei säilytetä: Flatpak poistaa sen, kun komento päättyy. Mitään ei vastaanotettu. Tallenna sen sijaan kohteeseen {downloads}, esimerkiksi valitsimella -o {downloads}.",
+  "cliFolderNotKept": "Kohdetta {folder} ei säilytetä: Flatpak poistaa sen, kun komento päättyy. Mitään ei vastaanotettu. Tallenna sen sijaan kohteeseen {downloads}, esimerkiksi valitsimella -o \"{downloads}\".",
   "cliErrWrongCode": "Koodi ei täsmännyt. Se kirjoitettiin väärin, tai joku yritti kaapata siirron. Mitään ei lähetetty. Aloita alusta uudella koodilla.",
   "cliErrPeerLeft": "Toinen osapuoli poistui ennen kuin siirto valmistui.",
   "cliErrDeclined": "Vastaanottaja hylkäsi tiedostot.",

@@ -23,7 +23,7 @@
   "cliStopped": "Đã dừng.",
   "cliNoFolder": "{folder} không tồn tại hoặc không phải là thư mục.",
   "cliFolderNotWritable": "Không thể ghi vào {folder}.",
-  "cliFolderNotKept": "{folder} không được giữ lại: Flatpak xóa nó khi lệnh kết thúc. Chưa nhận được gì. Hãy lưu vào {downloads}, ví dụ với -o {downloads}.",
+  "cliFolderNotKept": "{folder} không được giữ lại: Flatpak xóa nó khi lệnh kết thúc. Chưa nhận được gì. Hãy lưu vào {downloads}, ví dụ với -o \"{downloads}\".",
   "cliErrWrongCode": "Mã không khớp. Có thể mã bị nhập sai, hoặc ai đó đã cố chặn lần truyền. Chưa có gì được gửi. Hãy bắt đầu lại với mã mới.",
   "cliErrPeerLeft": "Bên kia đã rời đi trước khi truyền xong.",
   "cliErrDeclined": "Người nhận đã từ chối các tệp.",

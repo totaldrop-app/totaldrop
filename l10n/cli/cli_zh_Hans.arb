@@ -23,7 +23,7 @@
   "cliStopped": "已停止。",
   "cliNoFolder": "{folder} 不存在或不是文件夹。",
   "cliFolderNotWritable": "无法写入 {folder}。",
-  "cliFolderNotKept": "{folder} 不会保留：命令结束时 Flatpak 会将其删除。未接收任何内容。请改为保存到 {downloads}，例如使用 -o {downloads}。",
+  "cliFolderNotKept": "{folder} 不会保留：命令结束时 Flatpak 会将其删除。未接收任何内容。请改为保存到 {downloads}，例如使用 -o \"{downloads}\"。",
   "cliErrWrongCode": "代码不匹配。可能是输错了，也可能有人试图拦截此次传输。没有发送任何内容。请使用新代码重新开始。",
   "cliErrPeerLeft": "对方在传输完成前离开了。",
   "cliErrDeclined": "接收方拒绝了这些文件。",
