@@ -23,8 +23,11 @@
 //       stays behind under the other platform's area for its release.
 //
 // A file is named <issue>-<slug>.<section>.md, where <section> is added,
-// changed, deprecated, removed, fixed, security, or none. It holds one or
-// more entries exactly as they will appear:
+// changed, deprecated, removed, fixed, security, or none. A security fix
+// that has no public issue before its release is named after its advisory
+// instead: ghsa-<id>-<slug>.security.md, and its entries name the advisory
+// (GHSA-<id>) where others name the issue. It holds one or more entries
+// exactly as they will appear:
 //
 //   - **Area:** What changed and why it matters to a user, wrapped at 76
 //     columns, continuation lines indented by two spaces (#123).
@@ -45,12 +48,26 @@ export const POINTER =
   "per change, and move here when it is released (docs/surec.md).";
 
 const NAME = /^([1-9][0-9]*)-([a-z0-9]+(?:-[a-z0-9]+)*)\.([a-z]+)\.md$/;
+// GitHub advisory ids are three groups of four of these 20 characters.
+const ADVISORY_NAME = /^ghsa-((?:[2-9cfghjmpqrvwx]{4}-){2}[2-9cfghjmpqrvwx]{4})-([a-z0-9]+(?:-[a-z0-9]+)*)\.([a-z]+)\.md$/;
 const UNRELEASED = "## [Unreleased]";
 
-/** Splits a file name into its issue, slug and section, or returns an error. */
+/** Splits a file name into its issue (or advisory), slug and section, or returns an error. */
 export function parseName(name) {
+  const a = ADVISORY_NAME.exec(name);
+  if (a) {
+    const [, id, slug, section] = a;
+    if (section !== "security") return { error: `${name}: a file named after an advisory is a .security.md file` };
+    return { advisory: `GHSA-${id}`, slug, section };
+  }
   const m = NAME.exec(name);
-  if (!m) return { error: `${name}: name must be <issue>-<slug>.<section>.md (e.g. 129-cli-yes.fixed.md)` };
+  if (!m) {
+    return {
+      error:
+        `${name}: name must be <issue>-<slug>.<section>.md (e.g. 129-cli-yes.fixed.md), ` +
+        "or ghsa-<id>-<slug>.security.md for an advisory",
+    };
+  }
   const [, issue, slug, section] = m;
   if (section !== "none" && !SECTIONS.includes(section)) {
     return { error: `${name}: unknown section "${section}" (${[...SECTIONS, "none"].join(", ")})` };
@@ -90,9 +107,13 @@ export function checkText(name, text) {
     const body = e.lines.map((l) => l.trim()).join(" ");
     if (!/^- \*\*[^*]+:\*\* \S/.test(body)) at(e.start, 'an entry starts with a bold area: "- **Area:** …"');
     else if (!/^- \*\*[^*]+:\*\*/.test(e.lines[0])) at(e.start, "the bold area must fit on the entry's first line");
-    const refs = /\(([^()]*#[0-9][^()]*)\)\.$/.exec(body);
+    const refs = /\(([^()]*(?:#[0-9]|GHSA-)[^()]*)\)\.$/.exec(body);
     if (!refs) at(e.start, 'an entry ends with its issue references and a full stop: "… (#123)."');
-    else if (!new RegExp(`#${parsed.issue}(?![0-9])`).test(refs[1])) {
+    else if (parsed.advisory) {
+      if (!new RegExp(`(?<![0-9A-Za-z-])${parsed.advisory}(?![0-9a-z-])`).test(refs[1])) {
+        at(e.start, `the entry's references do not name the file's advisory ${parsed.advisory}`);
+      }
+    } else if (!new RegExp(`#${parsed.issue}(?![0-9])`).test(refs[1])) {
       at(e.start, `the entry's references do not name the file's issue #${parsed.issue}`);
     }
   }
