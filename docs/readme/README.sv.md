@@ -1,4 +1,4 @@
-<!-- Translated from README.md ff425048b317. -->
+<!-- Translated from README.md ba4e2aa547ce. -->
 <div align="center">
 
 <picture>
@@ -16,7 +16,7 @@ Gratis och öppen källkod. End-to-end-krypterat. Ingen e-post, inget telefonnum
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/totaldrop-app/totaldrop/badge)](https://scorecard.dev/viewer/?uri=github.com/totaldrop-app/totaldrop)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/16332/badge)](https://www.bestpractices.dev/projects/16332)
 [![License](https://img.shields.io/badge/license-GPL--3.0%20%C2%B7%20MIT%2FApache--2.0-22184F)](../../LICENSING.md)
-[![Sponsor](https://img.shields.io/opencollective/all/totaldrop?label=Open%20Collective&logo=opencollective&color=7FADF2)](https://opencollective.com/totaldrop)
+[![Sponsor](https://img.shields.io/badge/Open%20Collective-donate-1F87FF?logo=opencollective&logoColor=white)](https://opencollective.com/totaldrop)
 
 **[Webbplats](https://totaldrop.app)** · **[Ladda ner](https://totaldrop.app/download/)** · [Färdplan](https://totaldrop.app/roadmap/) · [Donera](https://totaldrop.app/donate/) · [Versioner](https://github.com/totaldrop-app/totaldrop/releases) · [X](https://x.com/totaldropapp) · [Instagram](https://www.instagram.com/totaldropapp/) · [Threads](https://www.threads.com/@totaldropapp)
 
@@ -85,7 +85,7 @@ Har du hittat en klumpig mening? [Hjälp till att översätta](../../docs/ceviri
 
 TotalDrop förblir gratis för att folk bidrar. Donationerna betalar för reläservern, de kodsigneringscertifikat som Windows och macOS kräver, och en oberoende säkerhetsgranskning före 1.0. Varje kostnad, rad för rad, och hur mycket som har samlats in hittills: [totaldrop.app/donate](https://totaldrop.app/donate/).
 
-<a href="https://opencollective.com/totaldrop"><img src="https://img.shields.io/badge/Donate%20on%20Open%20Collective-7FADF2?logo=opencollective&logoColor=white&style=for-the-badge" alt="Donera via Open Collective"></a>
+<a href="https://opencollective.com/totaldrop"><img src="https://img.shields.io/badge/Donate%20on%20Open%20Collective-1F87FF?logo=opencollective&logoColor=white&style=for-the-badge" alt="Donera via Open Collective"></a>
 
 Du kan också hjälpa till genom att [rapportera buggar](https://github.com/totaldrop-app/totaldrop/issues/new/choose), översätta eller testa på din dator.
 

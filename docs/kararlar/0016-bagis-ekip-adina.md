@@ -1,6 +1,6 @@
 # 0016: Bağışlar kişi adına değil, TotalDrop ekibi adına alınır
 
-- **Durum:** Önerildi, 7 Kasım 2026 (Ozan, #352). Open Source Collective
+- **Durum:** Önerilen, 7 Kasım 2026 (Ozan, #352). Open Source Collective
   başvuruyu onaylayınca "Kabul" olur.
 - **Bağlam:** [0005](0005-bagis.md) bağışların GitHub Sponsors üzerinden
   alınmasını kararlaştırdı, ama adres proje liderinin kişisel profiliydi

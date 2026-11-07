@@ -1,4 +1,4 @@
-<!-- Translated from README.md ff425048b317. -->
+<!-- Translated from README.md ba4e2aa547ce. -->
 <div align="center">
 
 <picture>
@@ -16,7 +16,7 @@
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/totaldrop-app/totaldrop/badge)](https://scorecard.dev/viewer/?uri=github.com/totaldrop-app/totaldrop)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/16332/badge)](https://www.bestpractices.dev/projects/16332)
 [![רישיון](https://img.shields.io/badge/license-GPL--3.0%20%C2%B7%20MIT%2FApache--2.0-22184F)](../../LICENSING.md)
-[![חסות](https://img.shields.io/opencollective/all/totaldrop?label=Open%20Collective&logo=opencollective&color=7FADF2)](https://opencollective.com/totaldrop)
+[![חסות](https://img.shields.io/badge/Open%20Collective-donate-1F87FF?logo=opencollective&logoColor=white)](https://opencollective.com/totaldrop)
 
 **[אתר](https://totaldrop.app)** · **[הורדה](https://totaldrop.app/download/)** · [מפת דרכים](https://totaldrop.app/roadmap/) · [תרומה](https://totaldrop.app/donate/) · [גרסאות](https://github.com/totaldrop-app/totaldrop/releases) · [X](https://x.com/totaldropapp) · [Instagram](https://www.instagram.com/totaldropapp/) · [Threads](https://www.threads.com/@totaldropapp)
 
@@ -85,7 +85,7 @@ TotalDrop מדבר 35 שפות ועוקב אחר תבניות המספרים ש�
 
 TotalDrop נשאר חינמי כי אנשים תורמים. התרומות משלמות על שרת הממסר, על אישורי חתימת הקוד ש־Windows ו־macOS דורשות, ועל ביקורת אבטחה עצמאית לפני 1.0. כל עלות, שורה אחר שורה, וכמה נאסף עד כה: [totaldrop.app/donate](https://totaldrop.app/donate/).
 
-<a href="https://opencollective.com/totaldrop"><img src="https://img.shields.io/badge/Donate%20on%20Open%20Collective-7FADF2?logo=opencollective&logoColor=white&style=for-the-badge" alt="תרומה דרך Open Collective"></a>
+<a href="https://opencollective.com/totaldrop"><img src="https://img.shields.io/badge/Donate%20on%20Open%20Collective-1F87FF?logo=opencollective&logoColor=white&style=for-the-badge" alt="תרומה דרך Open Collective"></a>
 
 אפשר לעזור גם ב[דיווח על באגים](https://github.com/totaldrop-app/totaldrop/issues/new/choose), בתרגום או בבדיקה על המחשב שלכם.
 

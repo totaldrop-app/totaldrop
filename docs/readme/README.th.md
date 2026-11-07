@@ -1,4 +1,4 @@
-<!-- Translated from README.md ff425048b317. -->
+<!-- Translated from README.md ba4e2aa547ce. -->
 <div align="center">
 
 <picture>
@@ -16,7 +16,7 @@
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/totaldrop-app/totaldrop/badge)](https://scorecard.dev/viewer/?uri=github.com/totaldrop-app/totaldrop)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/16332/badge)](https://www.bestpractices.dev/projects/16332)
 [![License](https://img.shields.io/badge/license-GPL--3.0%20%C2%B7%20MIT%2FApache--2.0-22184F)](../../LICENSING.md)
-[![Sponsor](https://img.shields.io/opencollective/all/totaldrop?label=Open%20Collective&logo=opencollective&color=7FADF2)](https://opencollective.com/totaldrop)
+[![Sponsor](https://img.shields.io/badge/Open%20Collective-donate-1F87FF?logo=opencollective&logoColor=white)](https://opencollective.com/totaldrop)
 
 **[เว็บไซต์](https://totaldrop.app)** · **[ดาวน์โหลด](https://totaldrop.app/download/)** · [แผนงาน](https://totaldrop.app/roadmap/) · [บริจาค](https://totaldrop.app/donate/) · [รุ่นที่เผยแพร่](https://github.com/totaldrop-app/totaldrop/releases) · [X](https://x.com/totaldropapp) · [Instagram](https://www.instagram.com/totaldropapp/) · [Threads](https://www.threads.com/@totaldropapp)
 
@@ -85,7 +85,7 @@ TotalDrop รองรับ 35 ภาษา และใช้รูปแบ�
 
 TotalDrop ฟรีได้เพราะมีผู้คนช่วยกันสนับสนุน เงินบริจาคใช้จ่ายค่ารีเลย์ ค่าใบรับรองการเซ็นโค้ดที่ Windows และ macOS กำหนด และค่าการตรวจสอบความปลอดภัยโดยอิสระก่อนเวอร์ชัน 1.0 ดูค่าใช้จ่ายทุกรายการ ทีละบรรทัด และยอดที่ระดมได้จนถึงตอนนี้ได้ที่ [totaldrop.app/donate](https://totaldrop.app/donate/)
 
-<a href="https://opencollective.com/totaldrop"><img src="https://img.shields.io/badge/Donate%20on%20Open%20Collective-7FADF2?logo=opencollective&logoColor=white&style=for-the-badge" alt="บริจาคผ่าน Open Collective"></a>
+<a href="https://opencollective.com/totaldrop"><img src="https://img.shields.io/badge/Donate%20on%20Open%20Collective-1F87FF?logo=opencollective&logoColor=white&style=for-the-badge" alt="บริจาคผ่าน Open Collective"></a>
 
 คุณยังช่วยได้ด้วยการ[รายงานบั๊ก](https://github.com/totaldrop-app/totaldrop/issues/new/choose) แปลภาษา หรือทดสอบบนเดสก์ท็อปของคุณ
 

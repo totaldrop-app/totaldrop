@@ -1,4 +1,4 @@
-<!-- Translated from README.md ff425048b317. -->
+<!-- Translated from README.md ba4e2aa547ce. -->
 <div align="center">
 
 <picture>
@@ -16,7 +16,7 @@
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/totaldrop-app/totaldrop/badge)](https://scorecard.dev/viewer/?uri=github.com/totaldrop-app/totaldrop)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/16332/badge)](https://www.bestpractices.dev/projects/16332)
 [![License](https://img.shields.io/badge/license-GPL--3.0%20%C2%B7%20MIT%2FApache--2.0-22184F)](../../LICENSING.md)
-[![Sponsor](https://img.shields.io/opencollective/all/totaldrop?label=Open%20Collective&logo=opencollective&color=7FADF2)](https://opencollective.com/totaldrop)
+[![Sponsor](https://img.shields.io/badge/Open%20Collective-donate-1F87FF?logo=opencollective&logoColor=white)](https://opencollective.com/totaldrop)
 
 **[Сайт](https://totaldrop.app)** · **[Завантажити](https://totaldrop.app/download/)** · [Плани](https://totaldrop.app/roadmap/) · [Підтримати](https://totaldrop.app/donate/) · [Випуски](https://github.com/totaldrop-app/totaldrop/releases) · [X](https://x.com/totaldropapp) · [Instagram](https://www.instagram.com/totaldropapp/) · [Threads](https://www.threads.com/@totaldropapp)
 
@@ -85,7 +85,7 @@ TotalDrop розмовляє 35 мовами й дотримується чис�
 
 TotalDrop залишається безкоштовним, бо люди допомагають. Пожертви оплачують ретранслятор, сертифікати підпису коду, яких вимагають Windows і macOS, і незалежний аудит безпеки до версії 1.0. Усі витрати порядково й скільки вже зібрано: [totaldrop.app/donate](https://totaldrop.app/donate/).
 
-<a href="https://opencollective.com/totaldrop"><img src="https://img.shields.io/badge/Donate%20on%20Open%20Collective-7FADF2?logo=opencollective&logoColor=white&style=for-the-badge" alt="Пожертвувати через Open Collective"></a>
+<a href="https://opencollective.com/totaldrop"><img src="https://img.shields.io/badge/Donate%20on%20Open%20Collective-1F87FF?logo=opencollective&logoColor=white&style=for-the-badge" alt="Пожертвувати через Open Collective"></a>
 
 Ще можна допомогти, [повідомляючи про помилки](https://github.com/totaldrop-app/totaldrop/issues/new/choose), перекладаючи або тестуючи на своєму комп'ютері.
 
