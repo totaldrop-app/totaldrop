@@ -523,4 +523,17 @@ class AppLocalizationsSw extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get desktopGenericName => 'Uhamishaji wa faili';
+
+  @override
+  String get desktopComment =>
+      'Tuma faili moja kwa moja kwenye kifaa kingine, zimesimbwa mwanzo hadi mwisho';
+
+  @override
+  String get desktopKeywords => 'tuma;pokea;shiriki;hamisha;faili;';
+
+  @override
+  String get desktopSendWith => 'Tuma kwa TotalDrop';
 }

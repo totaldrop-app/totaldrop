@@ -1,0 +1,92 @@
+# SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Written by tools/desktop-entries.mjs from l10n/app: change the text
+# there and run `node tools/desktop-entries.mjs write`.
+#
+# Nemo's right-click menu, for any selection of local files and folders.
+# Nemo pastes the URIs into a command line that GLib splits like a shell,
+# and GLib leaves ' $ & ( ) raw in a file URI: each URI is quoted, and
+# no " or \ is left raw in one.
+[Nemo Action]
+Active=true
+Name=Send with TotalDrop
+Name[ar]=إرسال باستخدام TotalDrop
+Name[bn]=TotalDrop দিয়ে পাঠান
+Name[cs]=Odeslat pomocí TotalDrop
+Name[da]=Send med TotalDrop
+Name[de]=Mit TotalDrop senden
+Name[el]=Αποστολή με το TotalDrop
+Name[es]=Enviar con TotalDrop
+Name[fa]=ارسال با TotalDrop
+Name[fi]=Lähetä TotalDropilla
+Name[fr]=Envoyer avec TotalDrop
+Name[he]=שליחה עם TotalDrop
+Name[hi]=TotalDrop से भेजें
+Name[hu]=Küldés a TotalDroppal
+Name[id]=Kirim dengan TotalDrop
+Name[it]=Invia con TotalDrop
+Name[ja]=TotalDrop で送信
+Name[ko]=TotalDrop으로 보내기
+Name[ms]=Hantar dengan TotalDrop
+Name[nb]=Send med TotalDrop
+Name[nl]=Versturen met TotalDrop
+Name[pl]=Wyślij przez TotalDrop
+Name[pt]=Enviar com o TotalDrop
+Name[ro]=Trimite cu TotalDrop
+Name[ru]=Отправить через TotalDrop
+Name[sv]=Skicka med TotalDrop
+Name[sw]=Tuma kwa TotalDrop
+Name[th]=ส่งด้วย TotalDrop
+Name[tr]=TotalDrop ile gönder
+Name[uk]=Надіслати через TotalDrop
+Name[ur]=TotalDrop سے بھیجیں
+Name[vi]=Gửi bằng TotalDrop
+Name[zh]=用 TotalDrop 发送
+Name[zh_HK]=用 TotalDrop 傳送
+Name[zh_MO]=用 TotalDrop 傳送
+Name[zh_TW]=用 TotalDrop 傳送
+Comment=Send files straight to another device, end-to-end encrypted
+Comment[ar]=أرسل الملفات مباشرة إلى جهاز آخر، بتشفير تام بين الطرفين
+Comment[bn]=ফাইল সরাসরি অন্য ডিভাইসে পাঠান, এন্ড-টু-এন্ড এনক্রিপ্টেড
+Comment[cs]=Posílejte soubory přímo do jiného zařízení, koncově šifrované
+Comment[da]=Send filer direkte til en anden enhed, end-to-end-krypteret
+Comment[de]=Dateien direkt an ein anderes Gerät senden, Ende-zu-Ende-verschlüsselt
+Comment[el]=Στείλτε αρχεία απευθείας σε άλλη συσκευή, με κρυπτογράφηση από άκρο σε άκρο
+Comment[es]=Envía archivos directamente a otro dispositivo, con cifrado de extremo a extremo
+Comment[fa]=فایل‌ها را مستقیم به دستگاهی دیگر بفرستید، با رمزگذاری سرتاسری
+Comment[fi]=Lähetä tiedostot suoraan toiseen laitteeseen päästä päähän salattuina
+Comment[fr]=Envoyez des fichiers directement vers un autre appareil, chiffrés de bout en bout
+Comment[he]=שליחת קבצים ישירות למכשיר אחר, בהצפנה מקצה לקצה
+Comment[hi]=फ़ाइलें सीधे दूसरे डिवाइस पर भेजें, एंड-टू-एंड एन्क्रिप्टेड
+Comment[hu]=Fájlok küldése közvetlenül egy másik eszközre, végpontok közötti titkosítással
+Comment[id]=Kirim file langsung ke perangkat lain, terenkripsi end-to-end
+Comment[it]=Invia file direttamente a un altro dispositivo, con crittografia end-to-end
+Comment[ja]=ファイルを別のデバイスへ直接送信。エンドツーエンドで暗号化
+Comment[ko]=다른 기기로 파일을 바로 보내세요. 종단 간 암호화
+Comment[ms]=Hantar fail terus ke peranti lain, disulitkan hujung ke hujung
+Comment[nb]=Send filer rett til en annen enhet, ende-til-ende-kryptert
+Comment[nl]=Stuur bestanden rechtstreeks naar een ander apparaat, end-to-end versleuteld
+Comment[pl]=Wysyłaj pliki prosto na inne urządzenie, z szyfrowaniem end-to-end
+Comment[pt]=Envie arquivos direto para outro dispositivo, com criptografia de ponta a ponta
+Comment[pt_PT]=Envie ficheiros diretamente para outro dispositivo, com encriptação ponto a ponto
+Comment[ro]=Trimite fișiere direct pe alt dispozitiv, criptate integral
+Comment[ru]=Отправляйте файлы прямо на другое устройство со сквозным шифрованием
+Comment[sv]=Skicka filer direkt till en annan enhet, end-to-end-krypterat
+Comment[sw]=Tuma faili moja kwa moja kwenye kifaa kingine, zimesimbwa mwanzo hadi mwisho
+Comment[th]=ส่งไฟล์ตรงไปยังอุปกรณ์อื่น เข้ารหัสตั้งแต่ต้นทางถึงปลายทาง
+Comment[tr]=Dosyaları başka bir cihaza doğrudan ve uçtan uca şifreli gönderin
+Comment[uk]=Надсилайте файли безпосередньо на інший пристрій з наскрізним шифруванням
+Comment[ur]=فائلیں براہِ راست دوسرے آلے پر بھیجیں، اینڈ ٹو اینڈ انکرپٹڈ
+Comment[vi]=Gửi tệp thẳng tới thiết bị khác, mã hóa đầu cuối
+Comment[zh]=将文件直接发送到另一台设备，端到端加密
+Comment[zh_HK]=將檔案直接傳送到另一台裝置，端對端加密
+Comment[zh_MO]=將檔案直接傳送到另一台裝置，端對端加密
+Comment[zh_TW]=將檔案直接傳送到另一台裝置，端對端加密
+Exec=totaldrop-desktop %U
+Quote=double
+Icon-Name=app.totaldrop.TotalDrop
+Selection=notnone
+UriScheme=file
+Extensions=any;
+Dependencies=totaldrop-desktop;

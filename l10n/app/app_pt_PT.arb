@@ -140,5 +140,9 @@
   "transferNoticeBody": "Continua enquanto utiliza outras apps.",
   "shareTextSoon": "O TotalDrop ainda não envia texto, apenas ficheiros. Partilhe um ficheiro.",
   "shareBusy": "Ainda está a decorrer uma transferência. Aguarde que termine ou pare-a e partilhe novamente.",
-  "shareSkipped": "{count, plural, one{Um item partilhado não pôde ser lido e foi deixado de fora.} many{{count} de itens partilhados não puderam ser lidos e foram deixados de fora.} other{{count} itens partilhados não puderam ser lidos e foram deixados de fora.}}"
+  "shareSkipped": "{count, plural, one{Um item partilhado não pôde ser lido e foi deixado de fora.} many{{count} de itens partilhados não puderam ser lidos e foram deixados de fora.} other{{count} itens partilhados não puderam ser lidos e foram deixados de fora.}}",
+  "desktopGenericName": "Transferência de ficheiros",
+  "desktopComment": "Envie ficheiros diretamente para outro dispositivo, com encriptação ponto a ponto",
+  "desktopKeywords": "enviar;receber;partilhar;transferir;ficheiros;",
+  "desktopSendWith": "Enviar com o TotalDrop"
 }

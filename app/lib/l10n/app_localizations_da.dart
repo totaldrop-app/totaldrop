@@ -527,4 +527,17 @@ class AppLocalizationsDa extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get desktopGenericName => 'Filoverførsel';
+
+  @override
+  String get desktopComment =>
+      'Send filer direkte til en anden enhed, end-to-end-krypteret';
+
+  @override
+  String get desktopKeywords => 'send;modtag;del;overfør;filer;';
+
+  @override
+  String get desktopSendWith => 'Send med TotalDrop';
 }

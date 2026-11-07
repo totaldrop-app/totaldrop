@@ -630,6 +630,34 @@ mod tests {
         assert_eq!(r.items, ["/tmp/x"]);
     }
 
+    /// What the file-manager menus hand over (#303): a name that starts
+    /// with `-` or holds quotes, `;` or non-ASCII letters is one file, not
+    /// an option or several arguments.
+    #[test]
+    fn menu_selections_keep_odd_names() {
+        let r = req(
+            &[
+                "file:///home/a/-rf%20%22x%22.txt",
+                "file:///home/a/a%3Bb%27c",
+                "file:///home/a/%C3%A7i%C3%A7ek",
+                // GLib leaves these raw in a file URI.
+                "file:///home/a/Bob's$(x)&y.txt",
+                "--screen=send",
+            ],
+            Path::new("/"),
+        );
+        assert_eq!(
+            r.items,
+            [
+                "/home/a/-rf \"x\".txt",
+                "/home/a/a;b'c",
+                "/home/a/çiçek",
+                "/home/a/Bob's$(x)&y.txt"
+            ]
+        );
+        assert_eq!(r.screen.as_deref(), Some("send"));
+    }
+
     #[test]
     fn qt_options_and_their_values_are_skipped() {
         let r = req(

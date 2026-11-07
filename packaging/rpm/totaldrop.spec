@@ -42,6 +42,8 @@ Suggests:       google-noto-sans-cjk-fonts
 Recommends:     (kf6-qqc2-desktop-style if plasma-workspace)
 Recommends:     (xdg-desktop-portal-kde if plasma-workspace)
 Recommends:     (xdg-desktop-portal-gtk if gnome-shell)
+# "Send with TotalDrop" in Nautilus's right-click menu (#303).
+Recommends:     (nautilus-python if nautilus)
 
 %description
 TotalDrop sends files and folders from one device to another, end to end
@@ -75,6 +77,17 @@ cargo test --release --locked -p totaldrop-linux -p totaldrop-proto
 %{_metainfodir}/app.totaldrop.TotalDrop.metainfo.xml
 %{_datadir}/icons/hicolor/scalable/apps/app.totaldrop.TotalDrop.svg
 %{_datadir}/icons/hicolor/symbolic/apps/app.totaldrop.TotalDrop-symbolic.svg
+# The file managers' menus (#303); the folders are co-owned, since none of
+# these file managers needs to be installed.
+%dir %{_datadir}/kio
+%dir %{_datadir}/kio/servicemenus
+%{_datadir}/kio/servicemenus/app.totaldrop.TotalDrop.send.desktop
+%dir %{_datadir}/nemo
+%dir %{_datadir}/nemo/actions
+%{_datadir}/nemo/actions/app.totaldrop.TotalDrop.nemo_action
+%dir %{_datadir}/nautilus-python
+%dir %{_datadir}/nautilus-python/extensions
+%{_datadir}/nautilus-python/extensions/totaldrop_nautilus.py
 
 %changelog
 * Thu Nov 05 2026 TotalDrop <hello@totaldrop.app> - 0.3.0~beta.5-1

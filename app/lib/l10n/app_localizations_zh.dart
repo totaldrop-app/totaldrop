@@ -485,6 +485,18 @@ class AppLocalizationsZh extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get desktopGenericName => '文件传输';
+
+  @override
+  String get desktopComment => '将文件直接发送到另一台设备，端到端加密';
+
+  @override
+  String get desktopKeywords => '发送;接收;分享;传输;文件;';
+
+  @override
+  String get desktopSendWith => '用 TotalDrop 发送';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hans`).
@@ -967,6 +979,18 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
     );
     return '$_temp0';
   }
+
+  @override
+  String get desktopGenericName => '文件传输';
+
+  @override
+  String get desktopComment => '将文件直接发送到另一台设备，端到端加密';
+
+  @override
+  String get desktopKeywords => '发送;接收;分享;传输;文件;';
+
+  @override
+  String get desktopSendWith => '用 TotalDrop 发送';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -1448,4 +1472,16 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
     );
     return '$_temp0';
   }
+
+  @override
+  String get desktopGenericName => '檔案傳輸';
+
+  @override
+  String get desktopComment => '將檔案直接傳送到另一台裝置，端對端加密';
+
+  @override
+  String get desktopKeywords => '傳送;接收;分享;傳輸;檔案;';
+
+  @override
+  String get desktopSendWith => '用 TotalDrop 傳送';
 }

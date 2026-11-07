@@ -513,4 +513,17 @@ class AppLocalizationsTr extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get desktopGenericName => 'Dosya aktarımı';
+
+  @override
+  String get desktopComment =>
+      'Dosyaları başka bir cihaza doğrudan ve uçtan uca şifreli gönderin';
+
+  @override
+  String get desktopKeywords => 'gönder;al;paylaş;aktar;dosya;';
+
+  @override
+  String get desktopSendWith => 'TotalDrop ile gönder';
 }

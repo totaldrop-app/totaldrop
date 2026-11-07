@@ -527,4 +527,17 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get desktopGenericName => 'File transfer';
+
+  @override
+  String get desktopComment =>
+      'Send files straight to another device, end-to-end encrypted';
+
+  @override
+  String get desktopKeywords => 'send;receive;share;transfer;files;';
+
+  @override
+  String get desktopSendWith => 'Send with TotalDrop';
 }

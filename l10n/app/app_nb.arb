@@ -140,5 +140,9 @@
   "transferNoticeBody": "Fortsetter mens du bruker andre apper.",
   "shareTextSoon": "TotalDrop sender ikke tekst ennå, bare filer. Del en fil i stedet.",
   "shareBusy": "En overføring pågår fortsatt. Vent til den er ferdig eller stopp den, og del på nytt.",
-  "shareSkipped": "{count, plural, =1{Ett delt element kunne ikke leses og ble utelatt.} other{{count} delte elementer kunne ikke leses og ble utelatt.}}"
+  "shareSkipped": "{count, plural, =1{Ett delt element kunne ikke leses og ble utelatt.} other{{count} delte elementer kunne ikke leses og ble utelatt.}}",
+  "desktopGenericName": "Filoverføring",
+  "desktopComment": "Send filer rett til en annen enhet, ende-til-ende-kryptert",
+  "desktopKeywords": "send;motta;del;overfør;filer;",
+  "desktopSendWith": "Send med TotalDrop"
 }

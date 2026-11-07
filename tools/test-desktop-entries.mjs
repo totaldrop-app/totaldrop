@@ -1,0 +1,146 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
+// node --test tools/test-desktop-entries.mjs
+
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+import {
+  appEntry,
+  desktopLocales,
+  dolphinMenu,
+  escapeList,
+  escapeValue,
+  keywords,
+  nautilusBlock,
+  nemoAction,
+  readCatalog,
+  withBlock,
+} from "./desktop-entries.mjs";
+
+const here = dirname(fileURLToPath(import.meta.url));
+
+function catalog(entries) {
+  return new Map(Object.entries(entries));
+}
+
+const en = {
+  desktopGenericName: "File transfer",
+  desktopComment: "Send files",
+  desktopKeywords: "send;files;",
+  desktopSendWith: "Send with TotalDrop",
+  sendTitle: "Send files",
+  receiveTitle: "Receive files",
+};
+
+test("the files in the repository are what write would write", () => {
+  execFileSync(process.execPath, [join(here, "desktop-entries.mjs"), "check"], { stdio: "pipe" });
+});
+
+test("every language of l10n/app has the menu text", () => {
+  const all = readCatalog();
+  assert.ok(all.size >= 35);
+  for (const [arb, messages] of all) {
+    for (const key of ["desktopGenericName", "desktopComment", "desktopKeywords", "desktopSendWith"]) {
+      assert.equal(typeof messages[key], "string", `${arb}: ${key}`);
+    }
+  }
+});
+
+test("ARB locales map to desktop locales", () => {
+  assert.deepEqual(desktopLocales("tr"), ["tr"]);
+  assert.deepEqual(desktopLocales("pt_BR"), ["pt_BR"]);
+  assert.deepEqual(desktopLocales("zh_Hans"), ["zh_CN", "zh_SG"]);
+  assert.deepEqual(desktopLocales("zh_Hant"), ["zh_TW", "zh_HK", "zh_MO"]);
+  assert.throws(() => desktopLocales("sr_Latn"));
+  assert.throws(() => desktopLocales("x]=y"));
+});
+
+test("values are escaped as the Desktop Entry Specification says", () => {
+  assert.equal(escapeValue("a\\b"), "a\\\\b");
+  assert.equal(escapeValue(" lead"), "\\slead");
+  assert.equal(escapeValue("tab\there"), "tab\\there");
+  assert.equal(escapeList(["a;b", "c"]), "a\\;b;c;");
+});
+
+test("keywords are split, trimmed, deduplicated and extended", () => {
+  assert.deepEqual(keywords("send; files;;send;", "x"), [
+    "send",
+    "files",
+    "wormhole",
+    "localsend",
+    "airdrop",
+  ]);
+  assert.throws(() => keywords(";;", "x"), /no words/);
+});
+
+test("a translation with a line break or edge space is refused", () => {
+  for (const bad of ["two\nlines", "line sep", " lead", "trail ", ""]) {
+    const c = catalog({ en, tr: { ...en, desktopSendWith: bad } });
+    assert.throws(() => dolphinMenu(c), undefined, JSON.stringify(bad));
+  }
+  // A translation cannot add a key or a group of its own either: `=`, `[`
+  // and `]` stay inside the value of its line.
+  const c = catalog({ en, tr: { ...en, desktopComment: "x]\n[Desktop Entry]" } });
+  assert.throws(() => appEntry(c));
+});
+
+test("a translation that the desktop would fall back to is left out", () => {
+  const c = catalog({
+    en,
+    da: { ...en, desktopComment: "Send filer" },
+    pt: { ...en, desktopComment: "Envie ficheiros" },
+    pt_PT: { ...en, desktopComment: "Envie ficheiros" },
+    pt_BR: { ...en, desktopComment: "Envie arquivos" },
+    zh: { ...en, desktopComment: "发送文件" },
+    zh_Hans: { ...en, desktopComment: "发送文件" },
+    zh_Hant: { ...en, desktopComment: "傳送檔案" },
+  });
+  const lines = appEntry(c).split("\n").filter((l) => l.startsWith("Comment"));
+  assert.deepEqual(lines, [
+    "Comment=Send files",
+    "Comment[da]=Send filer",
+    "Comment[pt]=Envie ficheiros",
+    "Comment[pt_BR]=Envie arquivos",
+    "Comment[zh]=发送文件",
+    "Comment[zh_HK]=傳送檔案",
+    "Comment[zh_MO]=傳送檔案",
+    "Comment[zh_TW]=傳送檔案",
+  ]);
+});
+
+test("the menus open the app with URIs, not with paths in a shell", () => {
+  const c = catalog({ en });
+  for (const file of [appEntry(c), dolphinMenu(c), nemoAction(c)]) {
+    const exec = file.split("\n").filter((l) => l.startsWith("Exec="));
+    assert.ok(exec.length > 0);
+    for (const l of exec) assert.match(l, /^Exec=totaldrop-desktop( %U| --screen=(send|receive))$/);
+  }
+  assert.match(dolphinMenu(c), /^X-KDE-Protocols=file$/m);
+  assert.match(dolphinMenu(c), /^X-KDE-Priority=TopLevel$/m);
+  // Nemo pastes the URIs into a command line that GLib splits like a
+  // shell: GLib leaves ' $ & ( ) raw in file URIs, so each one is quoted,
+  // and only local files are offered.
+  assert.match(nemoAction(c), /^Quote=double$/m);
+  assert.match(nemoAction(c), /^UriScheme=file$/m);
+  assert.match(appEntry(c), /^MimeType=x-scheme-handler\/totaldrop;$/m);
+});
+
+test("the Nautilus block is a Python dict of every desktop locale", () => {
+  const c = catalog({
+    en,
+    tr: { ...en, desktopSendWith: "TotalDrop ile gönder" },
+    zh_Hant: { ...en, desktopSendWith: "用 \"TotalDrop\" 傳送" },
+  });
+  const block = nautilusBlock(c);
+  assert.match(block, /^LABEL = "Send with TotalDrop"$/m);
+  assert.match(block, /^ {4}"tr": "TotalDrop ile gönder",$/m);
+  assert.match(block, /^ {4}"zh_TW": "用 \\"TotalDrop\\" 傳送",$/m);
+  const src = `a\n# BEGIN GENERATED by tools/desktop-entries.mjs\nold\n# END GENERATED\nb\n`;
+  assert.equal(withBlock(src, "NEW\n"), "a\nNEW\nb\n");
+  assert.throws(() => withBlock("no block\n", "x"));
+  assert.throws(() => withBlock(src + src, "x"));
+});

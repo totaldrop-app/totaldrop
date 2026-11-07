@@ -525,4 +525,17 @@ class AppLocalizationsHe extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get desktopGenericName => 'העברת קבצים';
+
+  @override
+  String get desktopComment =>
+      'שליחת קבצים ישירות למכשיר אחר, בהצפנה מקצה לקצה';
+
+  @override
+  String get desktopKeywords => 'שליחה;קבלה;שיתוף;העברה;קבצים;';
+
+  @override
+  String get desktopSendWith => 'שליחה עם TotalDrop';
 }

@@ -955,6 +955,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =1{One shared item could not be read and was left out.} other{{count} shared items could not be read and were left out.}}'**
   String shareSkipped(int count);
+
+  /// Linux desktop entry: what kind of app TotalDrop is, shown under its name in app menus and launchers
+  ///
+  /// In en, this message translates to:
+  /// **'File transfer'**
+  String get desktopGenericName;
+
+  /// Linux desktop entry: one-line description shown as a tooltip in app menus
+  ///
+  /// In en, this message translates to:
+  /// **'Send files straight to another device, end-to-end encrypted'**
+  String get desktopComment;
+
+  /// Linux desktop entry: search words for app launchers, separated by semicolons and ending with one. Words people type to find a file-sending app; no spaces around the semicolons
+  ///
+  /// In en, this message translates to:
+  /// **'send;receive;share;transfer;files;'**
+  String get desktopKeywords;
+
+  /// Linux file managers (Dolphin, Files, Nemo): right-click menu item that sends the selected files and folders with TotalDrop
+  ///
+  /// In en, this message translates to:
+  /// **'Send with TotalDrop'**
+  String get desktopSendWith;
 }
 
 class _AppLocalizationsDelegate

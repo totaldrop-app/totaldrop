@@ -34,7 +34,7 @@ Depends: ${shlibs:Depends},
 Recommends: xdg-desktop-portal-gtk | xdg-desktop-portal-kde,
             adwaita-icon-theme | breeze-icon-theme,
             fonts-noto-core
-Suggests: fonts-noto-cjk, qml6-module-org-kde-desktop
+Suggests: fonts-noto-cjk, qml6-module-org-kde-desktop, python3-nautilus
 Description: send files straight to another device, end-to-end encrypted
  TotalDrop sends files and folders from one device to another, end to end
  encrypted. Pick the files, share a short code or a QR code, and the other

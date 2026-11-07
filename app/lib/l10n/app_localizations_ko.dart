@@ -495,4 +495,16 @@ class AppLocalizationsKo extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get desktopGenericName => '파일 전송';
+
+  @override
+  String get desktopComment => '다른 기기로 파일을 바로 보내세요. 종단 간 암호화';
+
+  @override
+  String get desktopKeywords => '보내기;받기;공유;전송;파일;';
+
+  @override
+  String get desktopSendWith => 'TotalDrop으로 보내기';
 }

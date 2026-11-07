@@ -532,4 +532,18 @@ class AppLocalizationsNl extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get desktopGenericName => 'Bestandsoverdracht';
+
+  @override
+  String get desktopComment =>
+      'Stuur bestanden rechtstreeks naar een ander apparaat, end-to-end versleuteld';
+
+  @override
+  String get desktopKeywords =>
+      'versturen;ontvangen;delen;overdragen;bestanden;';
+
+  @override
+  String get desktopSendWith => 'Versturen met TotalDrop';
 }

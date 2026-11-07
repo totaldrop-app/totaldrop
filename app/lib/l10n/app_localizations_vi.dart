@@ -511,4 +511,17 @@ class AppLocalizationsVi extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get desktopGenericName => 'Truyền tệp';
+
+  @override
+  String get desktopComment =>
+      'Gửi tệp thẳng tới thiết bị khác, mã hóa đầu cuối';
+
+  @override
+  String get desktopKeywords => 'gửi;nhận;chia sẻ;truyền;tệp;';
+
+  @override
+  String get desktopSendWith => 'Gửi bằng TotalDrop';
 }

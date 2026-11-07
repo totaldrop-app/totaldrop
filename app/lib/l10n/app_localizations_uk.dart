@@ -536,4 +536,17 @@ class AppLocalizationsUk extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get desktopGenericName => 'Передавання файлів';
+
+  @override
+  String get desktopComment =>
+      'Надсилайте файли безпосередньо на інший пристрій з наскрізним шифруванням';
+
+  @override
+  String get desktopKeywords => 'надіслати;отримати;поділитися;передати;файли;';
+
+  @override
+  String get desktopSendWith => 'Надіслати через TotalDrop';
 }
