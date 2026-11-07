@@ -33,6 +33,7 @@ const en = {
   desktopKeywords: "send;files;",
   desktopSendWith: "Send with TotalDrop",
   sendTitle: "Send files",
+  sendClipboard: "Send clipboard",
   receiveTitle: "Receive files",
 };
 
@@ -44,7 +45,7 @@ test("every language of l10n/app has the menu text", () => {
   const all = readCatalog();
   assert.ok(all.size >= 35);
   for (const [arb, messages] of all) {
-    for (const key of ["desktopGenericName", "desktopComment", "desktopKeywords", "desktopSendWith"]) {
+    for (const key of ["desktopGenericName", "desktopComment", "desktopKeywords", "desktopSendWith", "sendClipboard"]) {
       assert.equal(typeof messages[key], "string", `${arb}: ${key}`);
     }
   }
@@ -117,7 +118,7 @@ test("the menus open the app with URIs, not with paths in a shell", () => {
   for (const file of [appEntry(c), dolphinMenu(c), nemoAction(c)]) {
     const exec = file.split("\n").filter((l) => l.startsWith("Exec="));
     assert.ok(exec.length > 0);
-    for (const l of exec) assert.match(l, /^Exec=totaldrop-desktop( %U| --screen=(send|receive))$/);
+    for (const l of exec) assert.match(l, /^Exec=totaldrop-desktop( %U| --screen=(send|clipboard|receive))$/);
   }
   assert.match(dolphinMenu(c), /^X-KDE-Protocols=file$/m);
   assert.match(dolphinMenu(c), /^X-KDE-Priority=TopLevel$/m);

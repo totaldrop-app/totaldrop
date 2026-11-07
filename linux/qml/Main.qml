@@ -113,6 +113,8 @@ ApplicationWindow {
         for (const a of args) if (screens[a]) page = screens[a]
         if (code !== "") show(receivePage, { initialCode: code })
         else if (files.length > 0) show(sendPage, { initialFiles: files })
+        // "Send clipboard": Send with the clipboard's text filled in (#326).
+        else if (args.indexOf("--screen=clipboard") >= 0) show(sendPage, { pasteOnOpen: true })
         else if (page) show(page, {})
     }
 
@@ -132,6 +134,7 @@ ApplicationWindow {
             const open = stack.get(at)
             if (props.initialFiles) open.add(props.initialFiles)
             if (props.initialCode) open.useCode(props.initialCode)
+            if (props.pasteOnOpen) open.pasteClipboard()
             // Brought up unless that would close a screen with input; then
             // it waits under it, filled in.
             if (!inputAbove) stack.pop(open, StackView.Immediate)
@@ -198,12 +201,19 @@ ApplicationWindow {
             if (["done", "failed", "declined", "idle"].indexOf(xfer.state) >= 0) stopDialog.close()
             if (win.active) return
             const send = xfer.role === "send"
-            if (xfer.state === "done")
+            // A text itself never goes into a notification: notifications
+            // are kept and shown where others may see them.
+            if (xfer.state === "done" && xfer.isText)
+                xfer.notify(send ? Strings.s.sendDone : Strings.s.receiveTextDone,
+                                send ? Strings.s.sendTextDone : Strings.size(xfer.size))
+            else if (xfer.state === "done")
                 xfer.notify(send ? Strings.s.sendDone : Strings.s.receiveDone,
                                 send ? Strings.f("sendDoneBody", { count: xfer.filesOk })
                                      : Strings.f("receiveSaveTo", { folder: xfer.savedTo }))
             else if (xfer.state === "failed" || xfer.state === "declined")
                 xfer.notify("TotalDrop", Strings.s["error" + (xfer.errorKind || "Other")])
+            else if (xfer.state === "offer" && xfer.isText)
+                xfer.notify(Strings.s.receiveOfferText, Strings.size(xfer.size))
             else if (xfer.state === "offer")
                 xfer.notify(Strings.s.receiveOffer,
                                 Strings.f("receiveOfferSummary", { files: xfer.offerFiles, size: Strings.size(xfer.size) }))

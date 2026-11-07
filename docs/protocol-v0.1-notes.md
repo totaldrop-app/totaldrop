@@ -363,13 +363,16 @@ treated as final.
       when it does not yet know that a text will come; a text then goes to
       standard output and the folder is not used.
     - Older versions: an old receiver ignores field 8 and saves the text
-      as the file it also is; the sender names it so (`text.txt` from the
-      command line). An old sender never sets it. Absent means `false`.
+      as the file it also is; every sender names it `text.txt`
+      (`totaldrop_core::TEXT_FILE`). An old sender never sets it. Absent
+      means `false`.
     - The receiver shows a text as data: it never opens a link on its own.
       The command line names control, format and separator characters
       (`U+202E`, `U+001B`, a `\r` inside a line) instead of letting a
       terminal act on them; the joiners `U+200C`/`U+200D` stay, since
-      scripts need them. Look-alike letters are not caught.
+      scripts need them. The apps show a text the same way, as plain
+      text, and copy it as it came (#326). Look-alike letters are not
+      caught.
 
 ## Known limits, to be closed before 1.0
 

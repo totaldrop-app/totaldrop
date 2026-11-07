@@ -18,17 +18,45 @@ Page {
     readonly property bool running: ["preparing", "waiting", "connected", "transferring"].indexOf(phase) >= 0
     property bool strong: false
     property var initialFiles: []
-    // Files listed and not yet sent: another launch does not replace them.
-    readonly property bool hasInput: files.count > 0
-    Component.onCompleted: if (initialFiles.length > 0) add(initialFiles)
+    // Opened by "Send clipboard": the text on the clipboard, filled in.
+    property bool pasteOnOpen: false
+    // What is sent: the files listed, or a text the receiver shows (#326).
+    property string mode: "files"
+    readonly property bool textMode: mode === "text"
+    // Files listed or a text typed and not yet sent: another launch does
+    // not replace them.
+    readonly property bool hasInput: files.count > 0 || textBox.text !== ""
+    // The text's size as the limit counts it: UTF-8 bytes.
+    readonly property real textBytes: transfer.textBytes(textBox.text)
+    readonly property bool textTooLong: textBytes > transfer.maxText()
+    property string textNotice: ""
+    Component.onCompleted: {
+        if (initialFiles.length > 0) add(initialFiles)
+        if (pasteOnOpen) Qt.callLater(page.pasteClipboard)
+    }
     // With files listed, Enter creates the code.
-    onPhaseChanged: if (phase === "idle") Qt.callLater(() => createButton.forceActiveFocus())
-    Timer { running: true; interval: 0; onTriggered: (files.count > 0 ? createButton : addButton).forceActiveFocus() }
+    onPhaseChanged: if (phase === "idle") Qt.callLater(() => (page.textMode ? textBox : createButton).forceActiveFocus())
+    Timer { running: true; interval: 0; onTriggered: (page.textMode ? textBox : files.count > 0 ? createButton : addButton).forceActiveFocus() }
+
+    // "Send clipboard": the clipboard's text goes into the text box for
+    // the person to look at; the code is made only when they ask. A text
+    // already typed is kept.
+    function pasteClipboard() {
+        page.mode = "text"
+        page.textNotice = ""
+        if (textBox.text === "") textBox.paste()
+        if (textBox.text === "") page.textNotice = Strings.s.sendClipboardEmpty
+        textBox.forceActiveFocus()
+    }
+    function sendIt() {
+        if (page.textMode) page.transfer.sendText(textBox.text, page.strong)
+        else page.transfer.send(page.paths(), page.strong)
+    }
 
     background: null
 
     header: PageHeader {
-        title: Strings.s.sendTitle
+        title: page.textMode ? Strings.s.sendText : Strings.s.sendTitle
         onBack: page.goBack()
     }
 
@@ -43,17 +71,19 @@ Page {
     }
 
     // Escape does what the back button does, but does not throw away a
-    // list of files not yet sent: that takes the back button.
+    // list of files or a text not yet sent: that takes the back button.
     Shortcut {
         sequences: [StandardKey.Cancel]
         enabled: page.StackView.status === StackView.Active
-                 && !(page.phase === "idle" && files.count > 0)
+                 && !(page.phase === "idle" && page.hasInput)
         onActivated: page.goBack()
     }
 
     ListModel { id: files }
 
     function add(paths) {
+        // Files asked to be sent show the file list.
+        if (paths.length > 0) page.mode = "files"
         for (const p of paths) {
             let known = false
             for (let i = 0; i < files.count; i++) if (files.get(i).path === p) known = true
@@ -123,7 +153,7 @@ Page {
         width: Theme.columnWidth(parent.width)
         currentIndex: {
             switch (page.phase) {
-            case "idle": return 0
+            case "idle": return page.textMode ? 6 : 0
             case "preparing": return 1
             case "waiting": return 2
             case "connected": return 3
@@ -172,6 +202,12 @@ Page {
                     onClicked: page.transfer.pickFiles(Strings.s.pickTitle)
                     Layout.alignment: Qt.AlignHCenter
                     Layout.topMargin: Theme.s16
+                }
+                SecondaryButton {
+                    text: Strings.s.sendText
+                    icon.name: Theme.icon("insert-text")
+                    onClicked: { page.mode = "text"; Qt.callLater(() => textBox.forceActiveFocus()) }
+                    Layout.alignment: Qt.AlignHCenter
                 }
                 Item { Layout.fillHeight: true }
             }
@@ -272,7 +308,7 @@ Page {
                     id: createButton
                     text: Strings.s.sendCreateCode
                     enabled: files.count > 0
-                    onClicked: page.transfer.send(page.paths(), page.strong)
+                    onClicked: page.sendIt()
                     Layout.fillWidth: true
                     Layout.topMargin: Theme.s8
                 }
@@ -430,15 +466,93 @@ Page {
             success: page.phase === "done"
             title: page.phase === "done" ? Strings.s.sendDone
                  : Strings.s["error" + (page.transfer.errorKind || "Other")]
-            body: page.phase === "done"
+            body: page.phase === "done" && page.textMode ? Strings.s.sendTextDone
+                  : page.phase === "done"
                   ? Strings.f("sendDoneBody", { count: page.transfer.filesOk })
                     + (page.transfer.filesFailed > 0 ? " " + Strings.f("sendSomeFailed", { count: page.transfer.filesFailed }) : "")
                   : ""
             detail: page.phase === "done" ? "" : page.transfer.errorDetail
             cause: page.phase === "done" ? "" : page.transfer.errorCause
             canRetry: page.phase === "failed"
-            onRetry: page.transfer.send(page.paths(), page.strong)
-            onFinished: { page.transfer.reset(); files.clear(); page.recalc(); page.close() }
+            onRetry: page.sendIt()
+            onFinished: {
+                page.transfer.reset(); files.clear(); page.recalc()
+                textBox.clear(); page.mode = "files"; page.close()
+            }
+        }
+
+        // 6: write or paste a text (#326)
+        ColumnLayout {
+            spacing: Theme.s16
+
+            ScrollView {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                TextArea {
+                    id: textBox
+                    placeholderText: Strings.s.sendTextHint
+                    // Sent as it is typed or pasted; pasted formatting is
+                    // dropped.
+                    textFormat: TextEdit.PlainText
+                    wrapMode: TextEdit.Wrap
+                    selectByMouse: true
+                    Accessible.name: Strings.s.sendText
+                    onTextChanged: page.textNotice = ""
+                }
+            }
+            Label {
+                visible: text !== ""
+                text: page.textTooLong ? Strings.f("sendTextTooLong", { size: Strings.size(page.transfer.maxText()) })
+                                       : page.textNotice
+                color: Theme.error
+                wrapMode: Text.Wrap
+                Layout.fillWidth: true
+            }
+            RowLayout {
+                spacing: Theme.s8
+                Layout.fillWidth: true
+                SecondaryButton {
+                    text: Strings.s.receivePaste
+                    icon.name: Theme.icon("edit-paste")
+                    onClicked: { textBox.paste(); textBox.forceActiveFocus() }
+                }
+                SecondaryButton {
+                    // Back to files, while nothing is typed.
+                    visible: textBox.text === ""
+                    text: Strings.s.sendAddFiles
+                    icon.name: Theme.icon("list-add")
+                    onClicked: { page.mode = "files"; page.transfer.pickFiles(Strings.s.pickTitle) }
+                }
+                Item { Layout.fillWidth: true }
+                Label {
+                    visible: textBox.text !== ""
+                    text: Strings.size(page.textBytes)
+                    color: page.textTooLong ? Theme.error : Theme.muted
+                    font.features: { "tnum": 1 }
+                }
+            }
+            Divider { Layout.fillWidth: true; padding: 0 }
+            Toggle {
+                id: textStrongSwitch
+                text: Strings.s.sendStrongCode
+                checked: page.strong
+                onToggled: page.strong = checked
+                Layout.fillWidth: true
+            }
+            Label {
+                text: Strings.s.sendStrongCodeHint
+                color: Theme.muted
+                wrapMode: Text.Wrap
+                Layout.fillWidth: true
+                Layout.leftMargin: textStrongSwitch.indicator ? textStrongSwitch.indicator.width + textStrongSwitch.spacing : 0
+            }
+            PrimaryButton {
+                text: Strings.s.sendCreateCode
+                enabled: textBox.text !== "" && !page.textTooLong
+                onClicked: page.sendIt()
+                Layout.fillWidth: true
+                Layout.topMargin: Theme.s8
+            }
         }
     }
 
@@ -446,7 +560,8 @@ Page {
     DropArea {
         id: drop
         anchors.fill: parent
-        enabled: page.phase === "idle"
+        // A text is dropped into the text box itself.
+        enabled: page.phase === "idle" && !page.textMode
         keys: ["text/uri-list"]
         onDropped: (d) => { if (d.hasUrls) { page.add(page.transfer.localPaths(d.urls)); d.accept(Qt.CopyAction) } }
     }
