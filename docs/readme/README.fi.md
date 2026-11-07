@@ -16,7 +16,7 @@ Ilmainen ja avointa lähdekoodia. Päästä päähän salattu. Ei sähköpostia,
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/totaldrop-app/totaldrop/badge)](https://scorecard.dev/viewer/?uri=github.com/totaldrop-app/totaldrop)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/16332/badge)](https://www.bestpractices.dev/projects/16332)
 [![License](https://img.shields.io/badge/license-GPL--3.0%20%C2%B7%20MIT%2FApache--2.0-22184F)](../../LICENSING.md)
-[![Sponsor](https://img.shields.io/github/sponsors/ozdil?label=Sponsor&logo=githubsponsors&color=EA4AAA)](https://github.com/sponsors/ozdil)
+[![Sponsor](https://img.shields.io/github/sponsors/totaldrop-app?label=Sponsor&logo=githubsponsors&color=EA4AAA)](https://github.com/sponsors/totaldrop-app)
 
 **[Verkkosivusto](https://totaldrop.app)** · **[Lataa](https://totaldrop.app/download/)** · [Tiekartta](https://totaldrop.app/roadmap/) · [Lahjoita](https://totaldrop.app/donate/) · [Julkaisut](https://github.com/totaldrop-app/totaldrop/releases) · [X](https://x.com/totaldropapp) · [Instagram](https://www.instagram.com/totaldropapp/) · [Threads](https://www.threads.com/@totaldropapp)
 
@@ -85,7 +85,7 @@ Huomasitko kömpelön lauseen? [Auta kääntämisessä](../../docs/ceviri.md) (o
 
 TotalDrop pysyy ilmaisena, koska ihmiset osallistuvat kuluihin. Lahjoituksilla maksetaan välityspalvelin, Windowsin ja macOS:n vaatimat koodiallekirjoitusvarmenteet sekä riippumaton tietoturvatarkastus ennen versiota 1.0. Jokainen kulu rivi riviltä ja tähän mennessä kerätty summa: [totaldrop.app/donate](https://totaldrop.app/donate/).
 
-<a href="https://github.com/sponsors/ozdil"><img src="https://img.shields.io/badge/Sponsor%20on%20GitHub-EA4AAA?logo=githubsponsors&logoColor=white&style=for-the-badge" alt="Tue GitHubissa"></a>
+<a href="https://github.com/sponsors/totaldrop-app"><img src="https://img.shields.io/badge/Sponsor%20on%20GitHub-EA4AAA?logo=githubsponsors&logoColor=white&style=for-the-badge" alt="Tue GitHubissa"></a>
 
 Voit auttaa myös [ilmoittamalla virheistä](https://github.com/totaldrop-app/totaldrop/issues/new/choose), kääntämällä tai testaamalla työpöydälläsi.
 

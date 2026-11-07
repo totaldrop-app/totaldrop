@@ -16,7 +16,7 @@
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/totaldrop-app/totaldrop/badge)](https://scorecard.dev/viewer/?uri=github.com/totaldrop-app/totaldrop)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/16332/badge)](https://www.bestpractices.dev/projects/16332)
 [![مجوز](https://img.shields.io/badge/license-GPL--3.0%20%C2%B7%20MIT%2FApache--2.0-22184F)](../../LICENSING.md)
-[![حمایت](https://img.shields.io/github/sponsors/ozdil?label=Sponsor&logo=githubsponsors&color=EA4AAA)](https://github.com/sponsors/ozdil)
+[![حمایت](https://img.shields.io/github/sponsors/totaldrop-app?label=Sponsor&logo=githubsponsors&color=EA4AAA)](https://github.com/sponsors/totaldrop-app)
 
 **[وب‌سایت](https://totaldrop.app)** · **[دانلود](https://totaldrop.app/download/)** · [نقشه راه](https://totaldrop.app/roadmap/) · [کمک مالی](https://totaldrop.app/donate/) · [انتشارها](https://github.com/totaldrop-app/totaldrop/releases) · [X](https://x.com/totaldropapp) · [Instagram](https://www.instagram.com/totaldropapp/) · [Threads](https://www.threads.com/@totaldropapp)
 
@@ -85,7 +85,7 @@ TotalDrop به 35 زبان صحبت می‌کند و از قالب اعداد م
 
 TotalDrop رایگان می‌ماند چون مردم کمک می‌کنند. کمک‌های مالی هزینه سرور رله، گواهی‌های امضای کد که Windows و macOS لازم دارند، و یک ممیزی امنیتی مستقل پیش از نسخه 1.0 را می‌پردازند. همه هزینه‌ها، قلم به قلم، و آنچه تاکنون جمع شده است: [totaldrop.app/donate](https://totaldrop.app/donate/).
 
-<a href="https://github.com/sponsors/ozdil"><img src="https://img.shields.io/badge/Sponsor%20on%20GitHub-EA4AAA?logo=githubsponsors&logoColor=white&style=for-the-badge" alt="حمایت در GitHub"></a>
+<a href="https://github.com/sponsors/totaldrop-app"><img src="https://img.shields.io/badge/Sponsor%20on%20GitHub-EA4AAA?logo=githubsponsors&logoColor=white&style=for-the-badge" alt="حمایت در GitHub"></a>
 
 همچنین می‌توانید با [گزارش اشکال‌ها](https://github.com/totaldrop-app/totaldrop/issues/new/choose)، ترجمه یا آزمایش روی رایانه رومیزی خود کمک کنید.
 

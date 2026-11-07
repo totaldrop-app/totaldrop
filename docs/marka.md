@@ -109,7 +109,7 @@ TotalDrop'un web'deki ve sosyal medyadaki resmî hesapları şunlardır:
 
 Bunların dışında proje yalnızca şu kanalları kullanır: uygulamalar Google
 Play'den ve GitHub sürümlerinden dağıtılır, bağışlar GitHub Sponsors
-üzerinden alınır ([github.com/sponsors/ozdil](https://github.com/sponsors/ozdil)),
+üzerinden alınır ([github.com/sponsors/totaldrop-app](https://github.com/sponsors/totaldrop-app)),
 e-postalar yalnızca `@totaldrop.app` adreslerinden gelir.
 
 Yeni bir platformda hesap açılırsa mümkünse `totaldropapp` adı kullanılır

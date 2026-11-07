@@ -16,7 +16,7 @@ Gratuito e de código aberto. Encriptação ponto a ponto. Sem e-mail, sem núme
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/totaldrop-app/totaldrop/badge)](https://scorecard.dev/viewer/?uri=github.com/totaldrop-app/totaldrop)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/16332/badge)](https://www.bestpractices.dev/projects/16332)
 [![License](https://img.shields.io/badge/license-GPL--3.0%20%C2%B7%20MIT%2FApache--2.0-22184F)](../../LICENSING.md)
-[![Sponsor](https://img.shields.io/github/sponsors/ozdil?label=Sponsor&logo=githubsponsors&color=EA4AAA)](https://github.com/sponsors/ozdil)
+[![Sponsor](https://img.shields.io/github/sponsors/totaldrop-app?label=Sponsor&logo=githubsponsors&color=EA4AAA)](https://github.com/sponsors/totaldrop-app)
 
 **[Site](https://totaldrop.app)** · **[Transferir](https://totaldrop.app/download/)** · [Planeamento](https://totaldrop.app/roadmap/) · [Fazer um donativo](https://totaldrop.app/donate/) · [Versões](https://github.com/totaldrop-app/totaldrop/releases) · [X](https://x.com/totaldropapp) · [Instagram](https://www.instagram.com/totaldropapp/) · [Threads](https://www.threads.com/@totaldropapp)
 
@@ -85,7 +85,7 @@ Encontrou uma frase pouco natural? [Ajude a traduzir](../../docs/ceviri.md) (o g
 
 O TotalDrop continua gratuito porque as pessoas contribuem. Os donativos pagam o servidor de retransmissão, os certificados de assinatura de código que o Windows e o macOS exigem e uma auditoria de segurança independente antes da 1.0. Cada custo, rubrica a rubrica, e o que já foi angariado: [totaldrop.app/donate](https://totaldrop.app/donate/).
 
-<a href="https://github.com/sponsors/ozdil"><img src="https://img.shields.io/badge/Sponsor%20on%20GitHub-EA4AAA?logo=githubsponsors&logoColor=white&style=for-the-badge" alt="Patrocinar no GitHub"></a>
+<a href="https://github.com/sponsors/totaldrop-app"><img src="https://img.shields.io/badge/Sponsor%20on%20GitHub-EA4AAA?logo=githubsponsors&logoColor=white&style=for-the-badge" alt="Patrocinar no GitHub"></a>
 
 Também pode ajudar [comunicando erros](https://github.com/totaldrop-app/totaldrop/issues/new/choose), traduzindo ou testando no seu computador.
 

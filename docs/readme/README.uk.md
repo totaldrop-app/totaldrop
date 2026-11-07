@@ -16,7 +16,7 @@
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/totaldrop-app/totaldrop/badge)](https://scorecard.dev/viewer/?uri=github.com/totaldrop-app/totaldrop)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/16332/badge)](https://www.bestpractices.dev/projects/16332)
 [![License](https://img.shields.io/badge/license-GPL--3.0%20%C2%B7%20MIT%2FApache--2.0-22184F)](../../LICENSING.md)
-[![Sponsor](https://img.shields.io/github/sponsors/ozdil?label=Sponsor&logo=githubsponsors&color=EA4AAA)](https://github.com/sponsors/ozdil)
+[![Sponsor](https://img.shields.io/github/sponsors/totaldrop-app?label=Sponsor&logo=githubsponsors&color=EA4AAA)](https://github.com/sponsors/totaldrop-app)
 
 **[Сайт](https://totaldrop.app)** · **[Завантажити](https://totaldrop.app/download/)** · [Плани](https://totaldrop.app/roadmap/) · [Підтримати](https://totaldrop.app/donate/) · [Випуски](https://github.com/totaldrop-app/totaldrop/releases) · [X](https://x.com/totaldropapp) · [Instagram](https://www.instagram.com/totaldropapp/) · [Threads](https://www.threads.com/@totaldropapp)
 
@@ -85,7 +85,7 @@ TotalDrop розмовляє 35 мовами й дотримується чис�
 
 TotalDrop залишається безкоштовним, бо люди допомагають. Пожертви оплачують ретранслятор, сертифікати підпису коду, яких вимагають Windows і macOS, і незалежний аудит безпеки до версії 1.0. Усі витрати порядково й скільки вже зібрано: [totaldrop.app/donate](https://totaldrop.app/donate/).
 
-<a href="https://github.com/sponsors/ozdil"><img src="https://img.shields.io/badge/Sponsor%20on%20GitHub-EA4AAA?logo=githubsponsors&logoColor=white&style=for-the-badge" alt="Підтримати на GitHub"></a>
+<a href="https://github.com/sponsors/totaldrop-app"><img src="https://img.shields.io/badge/Sponsor%20on%20GitHub-EA4AAA?logo=githubsponsors&logoColor=white&style=for-the-badge" alt="Підтримати на GitHub"></a>
 
 Ще можна допомогти, [повідомляючи про помилки](https://github.com/totaldrop-app/totaldrop/issues/new/choose), перекладаючи або тестуючи на своєму комп'ютері.
 
