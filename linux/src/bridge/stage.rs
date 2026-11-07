@@ -8,9 +8,10 @@
 //! [`Role::name`], and a test checks that every one QML compares with is
 //! one of them, so a misspelt state fails CI instead of failing silently.
 //!
-//! The stages match Android's (`SendStage` and `ReceiveStage` in
+//! The stages follow Android's (`SendStage` and `ReceiveStage` in
 //! `app/lib/ui`): idle is Android's picking or entering, offer its
-//! offered.
+//! offered. One differs: a send the receiver declines ends as declined
+//! here and as failed there.
 
 /// One stage of a send or a receive.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -96,16 +97,51 @@ impl Role {
 mod tests {
     use super::{Role, Stage};
 
-    /// The QML files that read `state` or `role`.
+    /// The QML files that read `state` or `role`; the next test makes
+    /// sure no other one does.
     const QML: [(&str, &str); 3] = [
         ("Main.qml", include_str!("../../qml/Main.qml")),
         ("SendPage.qml", include_str!("../../qml/SendPage.qml")),
         ("ReceivePage.qml", include_str!("../../qml/ReceivePage.qml")),
     ];
 
-    /// The string literals on a line, between double quotes.
-    fn literals(line: &str) -> impl Iterator<Item = &str> {
-        line.split('"').skip(1).step_by(2)
+    #[test]
+    fn no_other_qml_file_reads_the_stage() {
+        let dir = concat!(env!("CARGO_MANIFEST_DIR"), "/qml");
+        for entry in std::fs::read_dir(dir).unwrap() {
+            let path = entry.unwrap().path();
+            let name = path.file_name().unwrap().to_string_lossy().into_owned();
+            if !name.ends_with(".qml") || QML.iter().any(|(f, _)| *f == name) {
+                continue;
+            }
+            let text = std::fs::read_to_string(&path).unwrap();
+            for needle in ["transfer.state", "xfer.state", ".phase", "transfer.role"] {
+                assert!(
+                    !text.contains(needle),
+                    "{name} reads {needle}: add it to QML"
+                );
+            }
+        }
+    }
+
+    /// The string literals on a line, between double or single quotes.
+    fn literals(line: &str) -> Vec<&str> {
+        let mut out = Vec::new();
+        let mut rest = line;
+        while let Some(at) = rest.find(['"', '\'']) {
+            let quote = &rest[at..=at];
+            let after = &rest[at + 1..];
+            let Some(end) = after.find(quote) else { break };
+            out.push(&after[..end]);
+            rest = &after[end + 1..];
+        }
+        out
+    }
+
+    /// Could `lit` be a stage or role name, rightly or misspelt? Names are
+    /// one word of letters; a sentence, a key or a path is not one.
+    fn looks_like_a_name(lit: &str) -> bool {
+        !lit.is_empty() && lit.bytes().all(|b| b.is_ascii_alphabetic())
     }
 
     /// Does `line` compare with the stage or the role? The pages read the
@@ -114,8 +150,30 @@ mod tests {
         let line = line.trim_start();
         line.contains("phase")
             || line.contains(".state")
-            || line.contains(".role ")
+            || line.contains(".role")
             || line.starts_with("case \"")
+            || line.starts_with("case '")
+    }
+
+    /// [`Stage::ALL`] has every stage: a new one fails to compile here.
+    #[test]
+    fn all_has_every_stage() {
+        for s in Stage::ALL {
+            match s {
+                Stage::Idle
+                | Stage::Preparing
+                | Stage::Waiting
+                | Stage::Connected
+                | Stage::Transferring
+                | Stage::Connecting
+                | Stage::Offer
+                | Stage::Done
+                | Stage::Failed
+                | Stage::Declined => {}
+            }
+        }
+        // Ten arms above, ten entries in ALL.
+        assert_eq!(Stage::ALL.len(), 10);
     }
 
     #[test]
@@ -144,8 +202,7 @@ mod tests {
                     continue;
                 }
                 for lit in literals(code) {
-                    // Only the names: words in a sentence are not states.
-                    if lit.is_empty() || !lit.bytes().all(|b| b.is_ascii_lowercase()) {
+                    if !looks_like_a_name(lit) {
                         continue;
                     }
                     assert!(
@@ -161,8 +218,8 @@ mod tests {
         assert!(checked > 40, "only {checked} names found");
     }
 
-    /// Every stage a page lays out is one the bridge sets, and the reverse:
-    /// a stage with no page would leave the window on the last one.
+    /// Every stage is named somewhere in the QML: a stage no page or
+    /// handler names is likely one a page forgot.
     #[test]
     fn every_stage_is_shown_by_a_page() {
         let all: String = QML.iter().map(|(_, t)| *t).collect();
@@ -178,16 +235,27 @@ mod tests {
     #[test]
     fn the_strings_are_set_only_from_the_types() {
         let bridge = include_str!("transfer.rs");
-        assert_eq!(bridge.matches(".set_state(").count(), 1);
-        assert_eq!(bridge.matches(".set_role(").count(), 1);
+        assert_eq!(bridge.matches(".state = ").count(), 1);
+        assert_eq!(bridge.matches(".role = ").count(), 1);
+        assert_eq!(bridge.matches("state_changed()").count(), 1);
+        assert_eq!(bridge.matches("role_changed()").count(), 1);
     }
 
     #[test]
     fn the_check_catches_a_misspelling() {
-        let line = r#"if (xfer.state === "trasnferring") stopDialog.close()"#;
-        assert!(reads_stage(line));
-        let lits: Vec<&str> = literals(line).collect();
-        assert_eq!(lits, ["trasnferring"]);
-        assert!(!Stage::ALL.iter().any(|s| s.name() == lits[0]));
+        for line in [
+            r#"if (xfer.state === "trasnferring") stopDialog.close()"#,
+            "case 'ofer': return 2",
+            r#"xfer.role==="sned""#,
+            r#"page.phase === "Done""#,
+        ] {
+            assert!(reads_stage(line), "{line}");
+            let lits = literals(line);
+            assert_eq!(lits.len(), 1, "{line}");
+            assert!(looks_like_a_name(lits[0]), "{line}");
+            assert!(!Stage::ALL.iter().any(|s| s.name() == lits[0]), "{line}");
+        }
+        assert!(!looks_like_a_name("Send a text"));
+        assert!(!looks_like_a_name(""));
     }
 }
