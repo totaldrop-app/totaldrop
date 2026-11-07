@@ -144,5 +144,20 @@
   "desktopGenericName": "نقل الملفات",
   "desktopComment": "أرسل الملفات مباشرة إلى جهاز آخر، بتشفير تام بين الطرفين",
   "desktopKeywords": "إرسال;استلام;مشاركة;نقل;ملفات;",
-  "desktopSendWith": "إرسال باستخدام TotalDrop"
+  "desktopSendWith": "إرسال باستخدام TotalDrop",
+
+  "sendText": "إرسال نص",
+  "sendTextHint": "اكتب النص الذي تريد إرساله أو الصقه",
+  "sendTextTooLong": "يمكن أن يصل النص إلى {size} على الأكثر. أرسل النص الأطول كملف.",
+  "sendTextDone": "وصل النص كاملًا.",
+  "sendClipboard": "إرسال محتوى الحافظة",
+  "sendClipboardEmpty": "لا يوجد نص في الحافظة.",
+  "receiveOfferText": "نص وارد",
+  "receiveOfferTextNote": "يُعرض النص هنا ولا يُحفظ.",
+  "receiveTextDone": "تم استلام النص والتحقق منه",
+  "receiveTextDeclined": "لقد رفضت النص.",
+  "receiveTextHidden": "يحتوي النص على أحرف مخفية تظهر على شكل U+…. عند النسخ يُنسخ النص كما وصل تمامًا.",
+  "copyText": "نسخ النص",
+  "textCopied": "تم نسخ النص",
+  "errorTextDamaged": "لم يصل النص كاملًا، لذلك لا يُعرض."
 }

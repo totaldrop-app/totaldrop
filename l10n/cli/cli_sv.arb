@@ -60,7 +60,7 @@
   "cliHelpHelpCommand": "Visa det här meddelandet eller hjälpen för angivet kommando",
   "cliDesktopAbout": "Öppna TotalDrop-fönstret.",
   "cliDesktopArgs": "Filer eller mappar att skicka, eller en TotalDrop-länk att ta emot med.",
-  "cliDesktopScreen": "Öppna på skärmen Skicka (send), Ta emot (receive) eller Inställningar (settings).",
+  "cliDesktopScreen": "Öppna på skärmen Skicka (send), Skicka urklipp (clipboard), Ta emot (receive) eller Inställningar (settings).",
   "cliHelpSendText": "Skicka den här texten i stället för filer: mottagaren ser den som text, inte som en fil. Andra på den här datorn kan se den i processlistan; använd - för en privat text.",
   "cliSendingText": "Skickar en text, {size}.",
   "cliOfferedText": "Erbjuden: en text, {size}. Den visas här och sparas inte.",

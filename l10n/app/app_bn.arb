@@ -144,5 +144,20 @@
   "desktopGenericName": "ফাইল স্থানান্তর",
   "desktopComment": "ফাইল সরাসরি অন্য ডিভাইসে পাঠান, এন্ড-টু-এন্ড এনক্রিপ্টেড",
   "desktopKeywords": "পাঠান;গ্রহণ;শেয়ার;স্থানান্তর;ফাইল;",
-  "desktopSendWith": "TotalDrop দিয়ে পাঠান"
+  "desktopSendWith": "TotalDrop দিয়ে পাঠান",
+
+  "sendText": "লেখা পাঠান",
+  "sendTextHint": "যে লেখা পাঠাতে চান তা লিখুন বা পেস্ট করুন",
+  "sendTextTooLong": "লেখা সর্বোচ্চ {size} হতে পারে। এর চেয়ে বড় লেখা ফাইল হিসেবে পাঠান।",
+  "sendTextDone": "লেখাটি সম্পূর্ণ অবস্থায় পৌঁছেছে।",
+  "sendClipboard": "ক্লিপবোর্ডের লেখা পাঠান",
+  "sendClipboardEmpty": "ক্লিপবোর্ডে কোনো লেখা নেই।",
+  "receiveOfferText": "আসা লেখা",
+  "receiveOfferTextNote": "লেখাটি এখানে দেখানো হয়, সংরক্ষণ করা হয় না।",
+  "receiveTextDone": "লেখা গ্রহণ ও যাচাই করা হয়েছে",
+  "receiveTextDeclined": "আপনি লেখাটি প্রত্যাখ্যান করেছেন।",
+  "receiveTextHidden": "লেখায় লুকানো অক্ষর আছে, সেগুলো U+… হিসেবে দেখানো হচ্ছে। কপি করলে লেখাটি ঠিক যেমন এসেছে তেমনই কপি হয়।",
+  "copyText": "লেখা কপি করুন",
+  "textCopied": "লেখা কপি হয়েছে",
+  "errorTextDamaged": "লেখাটি সম্পূর্ণ অবস্থায় পৌঁছায়নি, তাই দেখানো হচ্ছে না।"
 }

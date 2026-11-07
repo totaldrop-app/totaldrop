@@ -144,5 +144,20 @@
   "desktopGenericName": "Transfer de fișiere",
   "desktopComment": "Trimite fișiere direct pe alt dispozitiv, criptate integral",
   "desktopKeywords": "trimite;primește;partajează;transfer;fișiere;",
-  "desktopSendWith": "Trimite cu TotalDrop"
+  "desktopSendWith": "Trimite cu TotalDrop",
+
+  "sendText": "Trimite text",
+  "sendTextHint": "Scrieți sau lipiți textul de trimis",
+  "sendTextTooLong": "Un text poate avea cel mult {size}. Trimiteți un text mai lung ca fișier.",
+  "sendTextDone": "Textul a ajuns întreg.",
+  "sendClipboard": "Trimite clipboardul",
+  "sendClipboardEmpty": "Clipboardul nu conține text.",
+  "receiveOfferText": "Text primit",
+  "receiveOfferTextNote": "Textul este afișat aici, nu este salvat.",
+  "receiveTextDone": "Text primit și verificat",
+  "receiveTextDeclined": "Ați refuzat textul.",
+  "receiveTextHidden": "Textul conține caractere ascunse, afișate ca U+…. La copiere obțineți textul exact așa cum a sosit.",
+  "copyText": "Copiază textul",
+  "textCopied": "Text copiat",
+  "errorTextDamaged": "Textul nu a ajuns întreg, așa că nu este afișat."
 }

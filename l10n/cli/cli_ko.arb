@@ -60,7 +60,7 @@
   "cliHelpHelpCommand": "이 메시지 또는 지정한 명령의 도움말 표시",
   "cliDesktopAbout": "TotalDrop 창을 엽니다.",
   "cliDesktopArgs": "보낼 파일 또는 폴더, 또는 받을 때 쓸 TotalDrop 링크입니다.",
-  "cliDesktopScreen": "보내기(send), 받기(receive), 설정(settings) 화면 중 하나로 엽니다.",
+  "cliDesktopScreen": "보내기(send), 클립보드 보내기(clipboard), 받기(receive), 설정(settings) 화면 중 하나로 엽니다.",
   "cliHelpSendText": "파일 대신 이 텍스트를 보냅니다. 받는 사람에게는 파일이 아닌 텍스트로 보입니다. 이 컴퓨터의 다른 사용자가 프로세스 목록에서 볼 수 있으니, 비공개 텍스트에는 -를 사용하세요.",
   "cliSendingText": "텍스트를 보내는 중, {size}.",
   "cliOfferedText": "받을 내용: 텍스트, {size}. 저장하지 않고 여기에 표시합니다.",

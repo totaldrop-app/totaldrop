@@ -552,4 +552,50 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get desktopSendWith => 'Отправить через TotalDrop';
+
+  @override
+  String get sendText => 'Отправить текст';
+
+  @override
+  String get sendTextHint => 'Введите или вставьте текст для отправки';
+
+  @override
+  String sendTextTooLong(String size) {
+    return 'Текст может занимать не больше $size. Более длинный отправьте файлом.';
+  }
+
+  @override
+  String get sendTextDone => 'Текст дошёл целым.';
+
+  @override
+  String get sendClipboard => 'Отправить буфер обмена';
+
+  @override
+  String get sendClipboardEmpty => 'В буфере обмена нет текста.';
+
+  @override
+  String get receiveOfferText => 'Входящий текст';
+
+  @override
+  String get receiveOfferTextNote =>
+      'Текст показывается здесь и не сохраняется.';
+
+  @override
+  String get receiveTextDone => 'Текст получен и проверен';
+
+  @override
+  String get receiveTextDeclined => 'Вы отклонили текст.';
+
+  @override
+  String get receiveTextHidden =>
+      'В тексте есть скрытые символы, они показаны как U+…. При копировании вы получите текст точно таким, каким он пришёл.';
+
+  @override
+  String get copyText => 'Копировать текст';
+
+  @override
+  String get textCopied => 'Текст скопирован';
+
+  @override
+  String get errorTextDamaged => 'Текст дошёл не целым, поэтому он не показан.';
 }

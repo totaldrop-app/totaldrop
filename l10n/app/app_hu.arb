@@ -144,5 +144,20 @@
   "desktopGenericName": "Fájlátvitel",
   "desktopComment": "Fájlok küldése közvetlenül egy másik eszközre, végpontok közötti titkosítással",
   "desktopKeywords": "küldés;fogadás;megosztás;átvitel;fájlok;",
-  "desktopSendWith": "Küldés a TotalDroppal"
+  "desktopSendWith": "Küldés a TotalDroppal",
+
+  "sendText": "Szöveg küldése",
+  "sendTextHint": "Írd be vagy illeszd be a küldendő szöveget",
+  "sendTextTooLong": "Egy szöveg legfeljebb {size} lehet. A hosszabbat fájlként küldd.",
+  "sendTextDone": "A szöveg hiánytalanul megérkezett.",
+  "sendClipboard": "Vágólap küldése",
+  "sendClipboardEmpty": "A vágólapon nincs szöveg.",
+  "receiveOfferText": "Bejövő szöveg",
+  "receiveOfferTextNote": "A szöveg itt jelenik meg, nem kerül mentésre.",
+  "receiveTextDone": "Szöveg fogadva és ellenőrizve",
+  "receiveTextDeclined": "Elutasítottad a szöveget.",
+  "receiveTextHidden": "A szövegben rejtett karakterek vannak, ezek U+… alakban látszanak. Másoláskor a szöveget pontosan úgy kapod meg, ahogy érkezett.",
+  "copyText": "Szöveg másolása",
+  "textCopied": "Szöveg másolva",
+  "errorTextDamaged": "A szöveg nem érkezett meg hiánytalanul, ezért nem jelenik meg."
 }

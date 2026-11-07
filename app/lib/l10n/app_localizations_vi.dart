@@ -524,4 +524,51 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get desktopSendWith => 'Gửi bằng TotalDrop';
+
+  @override
+  String get sendText => 'Gửi văn bản';
+
+  @override
+  String get sendTextHint => 'Nhập hoặc dán văn bản cần gửi';
+
+  @override
+  String sendTextTooLong(String size) {
+    return 'Văn bản tối đa $size. Hãy gửi văn bản dài hơn dưới dạng tệp.';
+  }
+
+  @override
+  String get sendTextDone => 'Văn bản đã đến nguyên vẹn.';
+
+  @override
+  String get sendClipboard => 'Gửi khay nhớ tạm';
+
+  @override
+  String get sendClipboardEmpty => 'Khay nhớ tạm không có văn bản.';
+
+  @override
+  String get receiveOfferText => 'Văn bản đến';
+
+  @override
+  String get receiveOfferTextNote =>
+      'Văn bản được hiển thị ở đây, không được lưu.';
+
+  @override
+  String get receiveTextDone => 'Đã nhận và xác minh văn bản';
+
+  @override
+  String get receiveTextDeclined => 'Bạn đã từ chối văn bản.';
+
+  @override
+  String get receiveTextHidden =>
+      'Văn bản có ký tự ẩn, được hiển thị dưới dạng U+…. Khi sao chép, bạn nhận được văn bản đúng như khi đến.';
+
+  @override
+  String get copyText => 'Sao chép văn bản';
+
+  @override
+  String get textCopied => 'Đã sao chép văn bản';
+
+  @override
+  String get errorTextDamaged =>
+      'Văn bản không đến nguyên vẹn nên không được hiển thị.';
 }

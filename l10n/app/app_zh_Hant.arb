@@ -144,5 +144,20 @@
   "desktopGenericName": "檔案傳輸",
   "desktopComment": "將檔案直接傳送到另一台裝置，端對端加密",
   "desktopKeywords": "傳送;接收;分享;傳輸;檔案;",
-  "desktopSendWith": "用 TotalDrop 傳送"
+  "desktopSendWith": "用 TotalDrop 傳送",
+
+  "sendText": "傳送文字",
+  "sendTextHint": "輸入或貼上要傳送的文字",
+  "sendTextTooLong": "文字最多 {size}。較長的文字請以檔案傳送。",
+  "sendTextDone": "文字已完整送達。",
+  "sendClipboard": "傳送剪貼簿",
+  "sendClipboardEmpty": "剪貼簿中沒有文字。",
+  "receiveOfferText": "待接收的文字",
+  "receiveOfferTextNote": "文字只在此顯示，不會儲存。",
+  "receiveTextDone": "文字已接收並驗證",
+  "receiveTextDeclined": "你已拒絕這段文字。",
+  "receiveTextHidden": "文字中含有隱藏字元，顯示為 U+…。複製時得到的是與收到時完全相同的文字。",
+  "copyText": "複製文字",
+  "textCopied": "文字已複製",
+  "errorTextDamaged": "文字未完整送達，因此不顯示。"
 }

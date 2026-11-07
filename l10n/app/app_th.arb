@@ -144,5 +144,20 @@
   "desktopGenericName": "การโอนไฟล์",
   "desktopComment": "ส่งไฟล์ตรงไปยังอุปกรณ์อื่น เข้ารหัสตั้งแต่ต้นทางถึงปลายทาง",
   "desktopKeywords": "ส่ง;รับ;แชร์;โอน;ไฟล์;",
-  "desktopSendWith": "ส่งด้วย TotalDrop"
+  "desktopSendWith": "ส่งด้วย TotalDrop",
+
+  "sendText": "ส่งข้อความ",
+  "sendTextHint": "พิมพ์หรือวางข้อความที่ต้องการส่ง",
+  "sendTextTooLong": "ข้อความมีขนาดได้สูงสุด {size} หากยาวกว่านี้ให้ส่งเป็นไฟล์",
+  "sendTextDone": "ข้อความมาถึงครบถ้วน",
+  "sendClipboard": "ส่งคลิปบอร์ด",
+  "sendClipboardEmpty": "ไม่มีข้อความในคลิปบอร์ด",
+  "receiveOfferText": "ข้อความขาเข้า",
+  "receiveOfferTextNote": "ข้อความจะแสดงที่นี่ ไม่ได้บันทึกไว้",
+  "receiveTextDone": "รับข้อความและตรวจสอบแล้ว",
+  "receiveTextDeclined": "คุณปฏิเสธข้อความแล้ว",
+  "receiveTextHidden": "ข้อความมีอักขระที่ซ่อนอยู่ ซึ่งแสดงเป็น U+… เมื่อคัดลอกจะได้ข้อความตรงตามที่ได้รับมา",
+  "copyText": "คัดลอกข้อความ",
+  "textCopied": "คัดลอกข้อความแล้ว",
+  "errorTextDamaged": "ข้อความมาไม่ครบถ้วน จึงไม่แสดง"
 }

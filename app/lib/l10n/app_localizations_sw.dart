@@ -536,4 +536,51 @@ class AppLocalizationsSw extends AppLocalizations {
 
   @override
   String get desktopSendWith => 'Tuma kwa TotalDrop';
+
+  @override
+  String get sendText => 'Tuma maandishi';
+
+  @override
+  String get sendTextHint => 'Andika au bandika maandishi ya kutuma';
+
+  @override
+  String sendTextTooLong(String size) {
+    return 'Maandishi yanaweza kuwa hadi $size tu. Tuma maandishi marefu zaidi kama faili.';
+  }
+
+  @override
+  String get sendTextDone => 'Maandishi yamefika yakiwa kamili.';
+
+  @override
+  String get sendClipboard => 'Tuma ubao wa kunakili';
+
+  @override
+  String get sendClipboardEmpty => 'Ubao wa kunakili hauna maandishi.';
+
+  @override
+  String get receiveOfferText => 'Maandishi yanayoingia';
+
+  @override
+  String get receiveOfferTextNote =>
+      'Maandishi yanaonyeshwa hapa, hayahifadhiwi.';
+
+  @override
+  String get receiveTextDone => 'Maandishi yamepokelewa na kuthibitishwa';
+
+  @override
+  String get receiveTextDeclined => 'Umekataa maandishi.';
+
+  @override
+  String get receiveTextHidden =>
+      'Maandishi yana herufi zilizofichwa, zinazoonyeshwa kama U+…. Ukinakili, unapata maandishi kama yalivyofika.';
+
+  @override
+  String get copyText => 'Nakili maandishi';
+
+  @override
+  String get textCopied => 'Maandishi yamenakiliwa';
+
+  @override
+  String get errorTextDamaged =>
+      'Maandishi hayakufika yakiwa kamili, kwa hiyo hayaonyeshwi.';
 }

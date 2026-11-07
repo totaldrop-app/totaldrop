@@ -144,5 +144,20 @@
   "desktopGenericName": "Dosya aktarımı",
   "desktopComment": "Dosyaları başka bir cihaza doğrudan ve uçtan uca şifreli gönderin",
   "desktopKeywords": "gönder;al;paylaş;aktar;dosya;",
-  "desktopSendWith": "TotalDrop ile gönder"
+  "desktopSendWith": "TotalDrop ile gönder",
+
+  "sendText": "Metin gönder",
+  "sendTextHint": "Göndermek istediğiniz metni yazın ya da yapıştırın",
+  "sendTextTooLong": "Metin en çok {size} olabilir. Daha uzununu dosya olarak gönderin.",
+  "sendTextDone": "Metin eksiksiz ulaştı.",
+  "sendClipboard": "Panodakini gönder",
+  "sendClipboardEmpty": "Panoda metin yok.",
+  "receiveOfferText": "Gelen metin",
+  "receiveOfferTextNote": "Metin kaydedilmez, burada gösterilir.",
+  "receiveTextDone": "Metin alındı ve doğrulandı",
+  "receiveTextDeclined": "Metni reddettiniz.",
+  "receiveTextHidden": "Metinde gizli karakterler var, U+… olarak gösteriliyor. Kopyalayınca metin geldiği gibi kopyalanır.",
+  "copyText": "Metni kopyala",
+  "textCopied": "Metin kopyalandı",
+  "errorTextDamaged": "Metin eksiksiz ulaşmadı, bu yüzden gösterilmiyor."
 }

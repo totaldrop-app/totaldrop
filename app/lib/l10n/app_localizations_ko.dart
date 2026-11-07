@@ -507,4 +507,49 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get desktopSendWith => 'TotalDrop으로 보내기';
+
+  @override
+  String get sendText => '텍스트 보내기';
+
+  @override
+  String get sendTextHint => '보낼 텍스트를 입력하거나 붙여넣으세요';
+
+  @override
+  String sendTextTooLong(String size) {
+    return '텍스트는 최대 $size까지 보낼 수 있습니다. 더 긴 텍스트는 파일로 보내세요.';
+  }
+
+  @override
+  String get sendTextDone => '텍스트가 손상 없이 도착했습니다.';
+
+  @override
+  String get sendClipboard => '클립보드 보내기';
+
+  @override
+  String get sendClipboardEmpty => '클립보드에 텍스트가 없습니다.';
+
+  @override
+  String get receiveOfferText => '받을 텍스트';
+
+  @override
+  String get receiveOfferTextNote => '텍스트는 여기에 표시되며 저장되지 않습니다.';
+
+  @override
+  String get receiveTextDone => '텍스트 수신 및 확인 완료';
+
+  @override
+  String get receiveTextDeclined => '텍스트를 거절했습니다.';
+
+  @override
+  String get receiveTextHidden =>
+      '텍스트에 숨겨진 문자가 있어 U+… 형태로 표시합니다. 복사하면 도착한 그대로의 텍스트가 복사됩니다.';
+
+  @override
+  String get copyText => '텍스트 복사';
+
+  @override
+  String get textCopied => '텍스트를 복사했습니다';
+
+  @override
+  String get errorTextDamaged => '텍스트가 손상 없이 도착하지 않아 표시하지 않습니다.';
 }

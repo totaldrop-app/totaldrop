@@ -540,4 +540,51 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String get desktopSendWith => 'Lähetä TotalDropilla';
+
+  @override
+  String get sendText => 'Lähetä tekstiä';
+
+  @override
+  String get sendTextHint => 'Kirjoita tai liitä lähetettävä teksti';
+
+  @override
+  String sendTextTooLong(String size) {
+    return 'Teksti saa olla enintään $size. Lähetä pidempi teksti tiedostona.';
+  }
+
+  @override
+  String get sendTextDone => 'Teksti saapui ehjänä.';
+
+  @override
+  String get sendClipboard => 'Lähetä leikepöytä';
+
+  @override
+  String get sendClipboardEmpty => 'Leikepöydällä ei ole tekstiä.';
+
+  @override
+  String get receiveOfferText => 'Saapuva teksti';
+
+  @override
+  String get receiveOfferTextNote =>
+      'Teksti näytetään tässä, sitä ei tallenneta.';
+
+  @override
+  String get receiveTextDone => 'Teksti vastaanotettu ja tarkistettu';
+
+  @override
+  String get receiveTextDeclined => 'Hylkäsit tekstin.';
+
+  @override
+  String get receiveTextHidden =>
+      'Tekstissä on piilomerkkejä, jotka näytetään muodossa U+…. Kopioitaessa saat tekstin täsmälleen sellaisena kuin se saapui.';
+
+  @override
+  String get copyText => 'Kopioi teksti';
+
+  @override
+  String get textCopied => 'Teksti kopioitu';
+
+  @override
+  String get errorTextDamaged =>
+      'Teksti ei saapunut ehjänä, joten sitä ei näytetä.';
 }

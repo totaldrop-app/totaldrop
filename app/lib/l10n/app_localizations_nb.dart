@@ -542,4 +542,50 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get desktopSendWith => 'Send med TotalDrop';
+
+  @override
+  String get sendText => 'Send tekst';
+
+  @override
+  String get sendTextHint => 'Skriv eller lim inn teksten som skal sendes';
+
+  @override
+  String sendTextTooLong(String size) {
+    return 'En tekst kan være på høyst $size. Send en lengre tekst som fil.';
+  }
+
+  @override
+  String get sendTextDone => 'Teksten kom fram uskadd.';
+
+  @override
+  String get sendClipboard => 'Send utklippstavlen';
+
+  @override
+  String get sendClipboardEmpty => 'Utklippstavlen inneholder ingen tekst.';
+
+  @override
+  String get receiveOfferText => 'Innkommende tekst';
+
+  @override
+  String get receiveOfferTextNote => 'Teksten vises her og lagres ikke.';
+
+  @override
+  String get receiveTextDone => 'Tekst mottatt og bekreftet';
+
+  @override
+  String get receiveTextDeclined => 'Du avslo teksten.';
+
+  @override
+  String get receiveTextHidden =>
+      'Teksten inneholder skjulte tegn, som vises som U+…. Når du kopierer, får du teksten nøyaktig slik den kom.';
+
+  @override
+  String get copyText => 'Kopier tekst';
+
+  @override
+  String get textCopied => 'Tekst kopiert';
+
+  @override
+  String get errorTextDamaged =>
+      'Teksten kom ikke fram uskadd, så den vises ikke.';
 }

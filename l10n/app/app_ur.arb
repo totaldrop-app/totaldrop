@@ -144,5 +144,20 @@
   "desktopGenericName": "فائل کی منتقلی",
   "desktopComment": "فائلیں براہِ راست دوسرے آلے پر بھیجیں، اینڈ ٹو اینڈ انکرپٹڈ",
   "desktopKeywords": "بھیجیں;وصول;شیئر;منتقلی;فائلیں;",
-  "desktopSendWith": "TotalDrop سے بھیجیں"
+  "desktopSendWith": "TotalDrop سے بھیجیں",
+
+  "sendText": "متن بھیجیں",
+  "sendTextHint": "بھیجنے کے لیے متن لکھیں یا پیسٹ کریں",
+  "sendTextTooLong": "متن زیادہ سے زیادہ {size} کا ہو سکتا ہے۔ لمبا متن فائل کے طور پر بھیجیں۔",
+  "sendTextDone": "متن مکمل پہنچ گیا۔",
+  "sendClipboard": "کلپ بورڈ بھیجیں",
+  "sendClipboardEmpty": "کلپ بورڈ میں کوئی متن نہیں ہے۔",
+  "receiveOfferText": "آنے والا متن",
+  "receiveOfferTextNote": "متن یہاں دکھایا جاتا ہے، محفوظ نہیں کیا جاتا۔",
+  "receiveTextDone": "متن وصول ہو گیا اور تصدیق ہو گئی",
+  "receiveTextDeclined": "آپ نے متن مسترد کر دیا۔",
+  "receiveTextHidden": "متن میں چھپے ہوئے حروف ہیں جو U+… کی صورت میں دکھائے گئے ہیں۔ کاپی کرنے پر متن بالکل ویسا ہی ملتا ہے جیسا آیا تھا۔",
+  "copyText": "متن کاپی کریں",
+  "textCopied": "متن کاپی ہو گیا",
+  "errorTextDamaged": "متن مکمل نہیں پہنچا، اس لیے نہیں دکھایا جا رہا۔"
 }

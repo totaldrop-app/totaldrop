@@ -144,5 +144,20 @@
   "desktopGenericName": "Transferencia de archivos",
   "desktopComment": "Envía archivos directamente a otro dispositivo, con cifrado de extremo a extremo",
   "desktopKeywords": "enviar;recibir;compartir;transferir;archivos;",
-  "desktopSendWith": "Enviar con TotalDrop"
+  "desktopSendWith": "Enviar con TotalDrop",
+
+  "sendText": "Enviar texto",
+  "sendTextHint": "Escribe o pega el texto que quieres enviar",
+  "sendTextTooLong": "Un texto puede ocupar como máximo {size}. Envía uno más largo como archivo.",
+  "sendTextDone": "El texto ha llegado íntegro.",
+  "sendClipboard": "Enviar portapapeles",
+  "sendClipboardEmpty": "El portapapeles no contiene texto.",
+  "receiveOfferText": "Texto entrante",
+  "receiveOfferTextNote": "El texto se muestra aquí, no se guarda.",
+  "receiveTextDone": "Texto recibido y verificado",
+  "receiveTextDeclined": "Has rechazado el texto.",
+  "receiveTextHidden": "El texto contiene caracteres ocultos, que se muestran como U+…. Al copiarlo obtienes el texto exactamente como llegó.",
+  "copyText": "Copiar texto",
+  "textCopied": "Texto copiado",
+  "errorTextDamaged": "El texto no ha llegado íntegro, así que no se muestra."
 }

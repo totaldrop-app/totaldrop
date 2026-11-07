@@ -144,5 +144,20 @@
   "desktopGenericName": "Transfer file",
   "desktopComment": "Kirim file langsung ke perangkat lain, terenkripsi end-to-end",
   "desktopKeywords": "kirim;terima;bagikan;transfer;file;",
-  "desktopSendWith": "Kirim dengan TotalDrop"
+  "desktopSendWith": "Kirim dengan TotalDrop",
+
+  "sendText": "Kirim teks",
+  "sendTextHint": "Ketik atau tempel teks yang ingin dikirim",
+  "sendTextTooLong": "Teks paling besar {size}. Kirim teks yang lebih panjang sebagai file.",
+  "sendTextDone": "Teks tiba dengan utuh.",
+  "sendClipboard": "Kirim papan klip",
+  "sendClipboardEmpty": "Papan klip tidak berisi teks.",
+  "receiveOfferText": "Teks masuk",
+  "receiveOfferTextNote": "Teks ditampilkan di sini, tidak disimpan.",
+  "receiveTextDone": "Teks diterima dan terverifikasi",
+  "receiveTextDeclined": "Anda menolak teks tersebut.",
+  "receiveTextHidden": "Teks berisi karakter tersembunyi yang ditampilkan sebagai U+…. Saat disalin, teks didapat persis seperti saat tiba.",
+  "copyText": "Salin teks",
+  "textCopied": "Teks disalin",
+  "errorTextDamaged": "Teks tidak tiba dengan utuh, jadi tidak ditampilkan."
 }

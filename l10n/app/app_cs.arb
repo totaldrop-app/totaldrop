@@ -144,5 +144,20 @@
   "desktopGenericName": "Přenos souborů",
   "desktopComment": "Posílejte soubory přímo do jiného zařízení, koncově šifrované",
   "desktopKeywords": "poslat;přijmout;sdílet;přenos;soubory;",
-  "desktopSendWith": "Odeslat pomocí TotalDrop"
+  "desktopSendWith": "Odeslat pomocí TotalDrop",
+
+  "sendText": "Odeslat text",
+  "sendTextHint": "Napište nebo vložte text k odeslání",
+  "sendTextTooLong": "Text může mít nejvýše {size}. Delší text pošlete jako soubor.",
+  "sendTextDone": "Text dorazil v pořádku.",
+  "sendClipboard": "Odeslat schránku",
+  "sendClipboardEmpty": "Ve schránce není žádný text.",
+  "receiveOfferText": "Příchozí text",
+  "receiveOfferTextNote": "Text se zobrazí zde, neukládá se.",
+  "receiveTextDone": "Text přijat a ověřen",
+  "receiveTextDeclined": "Text jste odmítli.",
+  "receiveTextHidden": "Text obsahuje skryté znaky, zobrazené jako U+…. Zkopírováním získáte text přesně tak, jak dorazil.",
+  "copyText": "Kopírovat text",
+  "textCopied": "Text zkopírován",
+  "errorTextDamaged": "Text nedorazil v pořádku, proto se nezobrazí."
 }

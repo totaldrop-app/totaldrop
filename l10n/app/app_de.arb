@@ -144,5 +144,20 @@
   "desktopGenericName": "Dateiübertragung",
   "desktopComment": "Dateien direkt an ein anderes Gerät senden, Ende-zu-Ende-verschlüsselt",
   "desktopKeywords": "senden;empfangen;teilen;übertragen;Dateien;",
-  "desktopSendWith": "Mit TotalDrop senden"
+  "desktopSendWith": "Mit TotalDrop senden",
+
+  "sendText": "Text senden",
+  "sendTextHint": "Text zum Senden eingeben oder einfügen",
+  "sendTextTooLong": "Ein Text darf höchstens {size} groß sein. Senden Sie längere Texte als Datei.",
+  "sendTextDone": "Der Text ist unversehrt angekommen.",
+  "sendClipboard": "Zwischenablage senden",
+  "sendClipboardEmpty": "Die Zwischenablage enthält keinen Text.",
+  "receiveOfferText": "Eingehender Text",
+  "receiveOfferTextNote": "Der Text wird hier angezeigt, nicht gespeichert.",
+  "receiveTextDone": "Text empfangen und überprüft",
+  "receiveTextDeclined": "Sie haben den Text abgelehnt.",
+  "receiveTextHidden": "Der Text enthält versteckte Zeichen, angezeigt als U+…. Beim Kopieren erhalten Sie den Text genau so, wie er ankam.",
+  "copyText": "Text kopieren",
+  "textCopied": "Text kopiert",
+  "errorTextDamaged": "Der Text ist nicht unversehrt angekommen und wird deshalb nicht angezeigt."
 }

@@ -551,4 +551,50 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get desktopSendWith => 'Enviar con TotalDrop';
+
+  @override
+  String get sendText => 'Enviar texto';
+
+  @override
+  String get sendTextHint => 'Escribe o pega el texto que quieres enviar';
+
+  @override
+  String sendTextTooLong(String size) {
+    return 'Un texto puede ocupar como máximo $size. Envía uno más largo como archivo.';
+  }
+
+  @override
+  String get sendTextDone => 'El texto ha llegado íntegro.';
+
+  @override
+  String get sendClipboard => 'Enviar portapapeles';
+
+  @override
+  String get sendClipboardEmpty => 'El portapapeles no contiene texto.';
+
+  @override
+  String get receiveOfferText => 'Texto entrante';
+
+  @override
+  String get receiveOfferTextNote => 'El texto se muestra aquí, no se guarda.';
+
+  @override
+  String get receiveTextDone => 'Texto recibido y verificado';
+
+  @override
+  String get receiveTextDeclined => 'Has rechazado el texto.';
+
+  @override
+  String get receiveTextHidden =>
+      'El texto contiene caracteres ocultos, que se muestran como U+…. Al copiarlo obtienes el texto exactamente como llegó.';
+
+  @override
+  String get copyText => 'Copiar texto';
+
+  @override
+  String get textCopied => 'Texto copiado';
+
+  @override
+  String get errorTextDamaged =>
+      'El texto no ha llegado íntegro, así que no se muestra.';
 }

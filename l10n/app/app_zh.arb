@@ -144,5 +144,20 @@
   "desktopGenericName": "文件传输",
   "desktopComment": "将文件直接发送到另一台设备，端到端加密",
   "desktopKeywords": "发送;接收;分享;传输;文件;",
-  "desktopSendWith": "用 TotalDrop 发送"
+  "desktopSendWith": "用 TotalDrop 发送",
+
+  "sendText": "发送文本",
+  "sendTextHint": "输入或粘贴要发送的文本",
+  "sendTextTooLong": "文本最多 {size}。更长的文本请作为文件发送。",
+  "sendTextDone": "文本已完整送达。",
+  "sendClipboard": "发送剪贴板",
+  "sendClipboardEmpty": "剪贴板中没有文本。",
+  "receiveOfferText": "待接收的文本",
+  "receiveOfferTextNote": "文本仅在此显示，不会保存。",
+  "receiveTextDone": "文本已接收并验证",
+  "receiveTextDeclined": "你已拒绝该文本。",
+  "receiveTextHidden": "文本中含有隐藏字符，显示为 U+…。复制时得到的是与收到时完全相同的文本。",
+  "copyText": "复制文本",
+  "textCopied": "文本已复制",
+  "errorTextDamaged": "文本未完整送达，因此不显示。"
 }

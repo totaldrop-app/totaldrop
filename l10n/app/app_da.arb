@@ -144,5 +144,20 @@
   "desktopGenericName": "Filoverførsel",
   "desktopComment": "Send filer direkte til en anden enhed, end-to-end-krypteret",
   "desktopKeywords": "send;modtag;del;overfør;filer;",
-  "desktopSendWith": "Send med TotalDrop"
+  "desktopSendWith": "Send med TotalDrop",
+
+  "sendText": "Send tekst",
+  "sendTextHint": "Skriv eller indsæt teksten, der skal sendes",
+  "sendTextTooLong": "En tekst kan højst fylde {size}. Send en længere tekst som fil.",
+  "sendTextDone": "Teksten kom frem i god behold.",
+  "sendClipboard": "Send udklipsholder",
+  "sendClipboardEmpty": "Udklipsholderen indeholder ingen tekst.",
+  "receiveOfferText": "Indgående tekst",
+  "receiveOfferTextNote": "Teksten vises her og gemmes ikke.",
+  "receiveTextDone": "Tekst modtaget og bekræftet",
+  "receiveTextDeclined": "Du afviste teksten.",
+  "receiveTextHidden": "Teksten indeholder skjulte tegn, som vises som U+…. Når du kopierer, får du teksten præcis, som den kom.",
+  "copyText": "Kopiér tekst",
+  "textCopied": "Tekst kopieret",
+  "errorTextDamaged": "Teksten kom ikke frem i god behold, så den vises ikke."
 }

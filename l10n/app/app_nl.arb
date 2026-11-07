@@ -144,5 +144,20 @@
   "desktopGenericName": "Bestandsoverdracht",
   "desktopComment": "Stuur bestanden rechtstreeks naar een ander apparaat, end-to-end versleuteld",
   "desktopKeywords": "versturen;ontvangen;delen;overdragen;bestanden;",
-  "desktopSendWith": "Versturen met TotalDrop"
+  "desktopSendWith": "Versturen met TotalDrop",
+
+  "sendText": "Tekst versturen",
+  "sendTextHint": "Typ of plak de tekst die je wilt versturen",
+  "sendTextTooLong": "Een tekst mag hoogstens {size} zijn. Verstuur een langere tekst als bestand.",
+  "sendTextDone": "De tekst is ongeschonden aangekomen.",
+  "sendClipboard": "Klembord versturen",
+  "sendClipboardEmpty": "Het klembord bevat geen tekst.",
+  "receiveOfferText": "Inkomende tekst",
+  "receiveOfferTextNote": "De tekst wordt hier getoond, niet opgeslagen.",
+  "receiveTextDone": "Tekst ontvangen en gecontroleerd",
+  "receiveTextDeclined": "Je hebt de tekst geweigerd.",
+  "receiveTextHidden": "De tekst bevat verborgen tekens, getoond als U+…. Bij kopiëren krijg je de tekst precies zoals hij aankwam.",
+  "copyText": "Tekst kopiëren",
+  "textCopied": "Tekst gekopieerd",
+  "errorTextDamaged": "De tekst is niet ongeschonden aangekomen en wordt daarom niet getoond."
 }

@@ -144,5 +144,20 @@
   "desktopGenericName": "Filöverföring",
   "desktopComment": "Skicka filer direkt till en annan enhet, end-to-end-krypterat",
   "desktopKeywords": "skicka;ta emot;dela;överför;filer;",
-  "desktopSendWith": "Skicka med TotalDrop"
+  "desktopSendWith": "Skicka med TotalDrop",
+
+  "sendText": "Skicka text",
+  "sendTextHint": "Skriv eller klistra in texten som ska skickas",
+  "sendTextTooLong": "En text får vara högst {size}. Skicka en längre text som fil.",
+  "sendTextDone": "Texten kom fram oskadd.",
+  "sendClipboard": "Skicka urklipp",
+  "sendClipboardEmpty": "Urklipp innehåller ingen text.",
+  "receiveOfferText": "Inkommande text",
+  "receiveOfferTextNote": "Texten visas här och sparas inte.",
+  "receiveTextDone": "Text mottagen och verifierad",
+  "receiveTextDeclined": "Du avböjde texten.",
+  "receiveTextHidden": "Texten innehåller dolda tecken, som visas som U+…. När du kopierar får du texten exakt som den kom.",
+  "copyText": "Kopiera text",
+  "textCopied": "Texten kopierades",
+  "errorTextDamaged": "Texten kom inte fram oskadd, så den visas inte."
 }

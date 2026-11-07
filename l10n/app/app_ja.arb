@@ -144,5 +144,20 @@
   "desktopGenericName": "ファイル転送",
   "desktopComment": "ファイルを別のデバイスへ直接送信。エンドツーエンドで暗号化",
   "desktopKeywords": "送信;受信;共有;転送;ファイル;",
-  "desktopSendWith": "TotalDrop で送信"
+  "desktopSendWith": "TotalDrop で送信",
+
+  "sendText": "テキストを送信",
+  "sendTextHint": "送信するテキストを入力するか貼り付けてください",
+  "sendTextTooLong": "テキストは最大 {size} までです。それより長いものはファイルとして送信してください。",
+  "sendTextDone": "テキストは欠けることなく届きました。",
+  "sendClipboard": "クリップボードを送信",
+  "sendClipboardEmpty": "クリップボードにテキストがありません。",
+  "receiveOfferText": "受信するテキスト",
+  "receiveOfferTextNote": "テキストはここに表示され、保存はされません。",
+  "receiveTextDone": "テキスト受信完了・検証済み",
+  "receiveTextDeclined": "テキストの受け取りを拒否しました。",
+  "receiveTextHidden": "テキストに見えない文字が含まれており、U+… の形で表示しています。コピーすると、届いたとおりのテキストがコピーされます。",
+  "copyText": "テキストをコピー",
+  "textCopied": "テキストをコピーしました",
+  "errorTextDamaged": "テキストが欠けることなく届かなかったため、表示しません。"
 }

@@ -526,4 +526,51 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get desktopSendWith => 'TotalDrop ile gönder';
+
+  @override
+  String get sendText => 'Metin gönder';
+
+  @override
+  String get sendTextHint =>
+      'Göndermek istediğiniz metni yazın ya da yapıştırın';
+
+  @override
+  String sendTextTooLong(String size) {
+    return 'Metin en çok $size olabilir. Daha uzununu dosya olarak gönderin.';
+  }
+
+  @override
+  String get sendTextDone => 'Metin eksiksiz ulaştı.';
+
+  @override
+  String get sendClipboard => 'Panodakini gönder';
+
+  @override
+  String get sendClipboardEmpty => 'Panoda metin yok.';
+
+  @override
+  String get receiveOfferText => 'Gelen metin';
+
+  @override
+  String get receiveOfferTextNote => 'Metin kaydedilmez, burada gösterilir.';
+
+  @override
+  String get receiveTextDone => 'Metin alındı ve doğrulandı';
+
+  @override
+  String get receiveTextDeclined => 'Metni reddettiniz.';
+
+  @override
+  String get receiveTextHidden =>
+      'Metinde gizli karakterler var, U+… olarak gösteriliyor. Kopyalayınca metin geldiği gibi kopyalanır.';
+
+  @override
+  String get copyText => 'Metni kopyala';
+
+  @override
+  String get textCopied => 'Metin kopyalandı';
+
+  @override
+  String get errorTextDamaged =>
+      'Metin eksiksiz ulaşmadı, bu yüzden gösterilmiyor.';
 }

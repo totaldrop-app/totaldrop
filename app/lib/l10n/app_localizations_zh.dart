@@ -497,6 +497,50 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get desktopSendWith => '用 TotalDrop 发送';
+
+  @override
+  String get sendText => '发送文本';
+
+  @override
+  String get sendTextHint => '输入或粘贴要发送的文本';
+
+  @override
+  String sendTextTooLong(String size) {
+    return '文本最多 $size。更长的文本请作为文件发送。';
+  }
+
+  @override
+  String get sendTextDone => '文本已完整送达。';
+
+  @override
+  String get sendClipboard => '发送剪贴板';
+
+  @override
+  String get sendClipboardEmpty => '剪贴板中没有文本。';
+
+  @override
+  String get receiveOfferText => '待接收的文本';
+
+  @override
+  String get receiveOfferTextNote => '文本仅在此显示，不会保存。';
+
+  @override
+  String get receiveTextDone => '文本已接收并验证';
+
+  @override
+  String get receiveTextDeclined => '你已拒绝该文本。';
+
+  @override
+  String get receiveTextHidden => '文本中含有隐藏字符，显示为 U+…。复制时得到的是与收到时完全相同的文本。';
+
+  @override
+  String get copyText => '复制文本';
+
+  @override
+  String get textCopied => '文本已复制';
+
+  @override
+  String get errorTextDamaged => '文本未完整送达，因此不显示。';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hans`).
@@ -991,6 +1035,50 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
 
   @override
   String get desktopSendWith => '用 TotalDrop 发送';
+
+  @override
+  String get sendText => '发送文本';
+
+  @override
+  String get sendTextHint => '输入或粘贴要发送的文本';
+
+  @override
+  String sendTextTooLong(String size) {
+    return '文本最多 $size。更长的文本请作为文件发送。';
+  }
+
+  @override
+  String get sendTextDone => '文本已完整送达。';
+
+  @override
+  String get sendClipboard => '发送剪贴板';
+
+  @override
+  String get sendClipboardEmpty => '剪贴板中没有文本。';
+
+  @override
+  String get receiveOfferText => '待接收的文本';
+
+  @override
+  String get receiveOfferTextNote => '文本仅在此显示，不会保存。';
+
+  @override
+  String get receiveTextDone => '文本已接收并验证';
+
+  @override
+  String get receiveTextDeclined => '你已拒绝该文本。';
+
+  @override
+  String get receiveTextHidden => '文本中含有隐藏字符，显示为 U+…。复制时得到的是与收到时完全相同的文本。';
+
+  @override
+  String get copyText => '复制文本';
+
+  @override
+  String get textCopied => '文本已复制';
+
+  @override
+  String get errorTextDamaged => '文本未完整送达，因此不显示。';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -1484,4 +1572,48 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get desktopSendWith => '用 TotalDrop 傳送';
+
+  @override
+  String get sendText => '傳送文字';
+
+  @override
+  String get sendTextHint => '輸入或貼上要傳送的文字';
+
+  @override
+  String sendTextTooLong(String size) {
+    return '文字最多 $size。較長的文字請以檔案傳送。';
+  }
+
+  @override
+  String get sendTextDone => '文字已完整送達。';
+
+  @override
+  String get sendClipboard => '傳送剪貼簿';
+
+  @override
+  String get sendClipboardEmpty => '剪貼簿中沒有文字。';
+
+  @override
+  String get receiveOfferText => '待接收的文字';
+
+  @override
+  String get receiveOfferTextNote => '文字只在此顯示，不會儲存。';
+
+  @override
+  String get receiveTextDone => '文字已接收並驗證';
+
+  @override
+  String get receiveTextDeclined => '你已拒絕這段文字。';
+
+  @override
+  String get receiveTextHidden => '文字中含有隱藏字元，顯示為 U+…。複製時得到的是與收到時完全相同的文字。';
+
+  @override
+  String get copyText => '複製文字';
+
+  @override
+  String get textCopied => '文字已複製';
+
+  @override
+  String get errorTextDamaged => '文字未完整送達，因此不顯示。';
 }

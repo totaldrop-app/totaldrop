@@ -144,5 +144,20 @@
   "desktopGenericName": "העברת קבצים",
   "desktopComment": "שליחת קבצים ישירות למכשיר אחר, בהצפנה מקצה לקצה",
   "desktopKeywords": "שליחה;קבלה;שיתוף;העברה;קבצים;",
-  "desktopSendWith": "שליחה עם TotalDrop"
+  "desktopSendWith": "שליחה עם TotalDrop",
+
+  "sendText": "שליחת טקסט",
+  "sendTextHint": "הקלידו או הדביקו את הטקסט לשליחה",
+  "sendTextTooLong": "טקסט יכול להיות לכל היותר {size}. טקסט ארוך יותר שלחו כקובץ.",
+  "sendTextDone": "הטקסט הגיע בשלמותו.",
+  "sendClipboard": "שליחת הלוח",
+  "sendClipboardEmpty": "אין טקסט בלוח.",
+  "receiveOfferText": "טקסט נכנס",
+  "receiveOfferTextNote": "הטקסט מוצג כאן ואינו נשמר.",
+  "receiveTextDone": "הטקסט התקבל ואומת",
+  "receiveTextDeclined": "דחית את הטקסט.",
+  "receiveTextHidden": "הטקסט מכיל תווים נסתרים, המוצגים כ־U+…. העתקה נותנת את הטקסט בדיוק כפי שהגיע.",
+  "copyText": "העתקת הטקסט",
+  "textCopied": "הטקסט הועתק",
+  "errorTextDamaged": "הטקסט לא הגיע בשלמותו, ולכן אינו מוצג."
 }

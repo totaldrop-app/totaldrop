@@ -520,4 +520,49 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get desktopSendWith => 'ส่งด้วย TotalDrop';
+
+  @override
+  String get sendText => 'ส่งข้อความ';
+
+  @override
+  String get sendTextHint => 'พิมพ์หรือวางข้อความที่ต้องการส่ง';
+
+  @override
+  String sendTextTooLong(String size) {
+    return 'ข้อความมีขนาดได้สูงสุด $size หากยาวกว่านี้ให้ส่งเป็นไฟล์';
+  }
+
+  @override
+  String get sendTextDone => 'ข้อความมาถึงครบถ้วน';
+
+  @override
+  String get sendClipboard => 'ส่งคลิปบอร์ด';
+
+  @override
+  String get sendClipboardEmpty => 'ไม่มีข้อความในคลิปบอร์ด';
+
+  @override
+  String get receiveOfferText => 'ข้อความขาเข้า';
+
+  @override
+  String get receiveOfferTextNote => 'ข้อความจะแสดงที่นี่ ไม่ได้บันทึกไว้';
+
+  @override
+  String get receiveTextDone => 'รับข้อความและตรวจสอบแล้ว';
+
+  @override
+  String get receiveTextDeclined => 'คุณปฏิเสธข้อความแล้ว';
+
+  @override
+  String get receiveTextHidden =>
+      'ข้อความมีอักขระที่ซ่อนอยู่ ซึ่งแสดงเป็น U+… เมื่อคัดลอกจะได้ข้อความตรงตามที่ได้รับมา';
+
+  @override
+  String get copyText => 'คัดลอกข้อความ';
+
+  @override
+  String get textCopied => 'คัดลอกข้อความแล้ว';
+
+  @override
+  String get errorTextDamaged => 'ข้อความมาไม่ครบถ้วน จึงไม่แสดง';
 }

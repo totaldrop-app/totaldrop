@@ -144,5 +144,20 @@
   "desktopGenericName": "Tiedostonsiirto",
   "desktopComment": "Lähetä tiedostot suoraan toiseen laitteeseen päästä päähän salattuina",
   "desktopKeywords": "lähetä;vastaanota;jaa;siirrä;tiedostot;",
-  "desktopSendWith": "Lähetä TotalDropilla"
+  "desktopSendWith": "Lähetä TotalDropilla",
+
+  "sendText": "Lähetä tekstiä",
+  "sendTextHint": "Kirjoita tai liitä lähetettävä teksti",
+  "sendTextTooLong": "Teksti saa olla enintään {size}. Lähetä pidempi teksti tiedostona.",
+  "sendTextDone": "Teksti saapui ehjänä.",
+  "sendClipboard": "Lähetä leikepöytä",
+  "sendClipboardEmpty": "Leikepöydällä ei ole tekstiä.",
+  "receiveOfferText": "Saapuva teksti",
+  "receiveOfferTextNote": "Teksti näytetään tässä, sitä ei tallenneta.",
+  "receiveTextDone": "Teksti vastaanotettu ja tarkistettu",
+  "receiveTextDeclined": "Hylkäsit tekstin.",
+  "receiveTextHidden": "Tekstissä on piilomerkkejä, jotka näytetään muodossa U+…. Kopioitaessa saat tekstin täsmälleen sellaisena kuin se saapui.",
+  "copyText": "Kopioi teksti",
+  "textCopied": "Teksti kopioitu",
+  "errorTextDamaged": "Teksti ei saapunut ehjänä, joten sitä ei näytetä."
 }

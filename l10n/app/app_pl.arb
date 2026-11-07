@@ -144,5 +144,20 @@
   "desktopGenericName": "Przesyłanie plików",
   "desktopComment": "Wysyłaj pliki prosto na inne urządzenie, z szyfrowaniem end-to-end",
   "desktopKeywords": "wyślij;odbierz;udostępnij;przesyłanie;pliki;",
-  "desktopSendWith": "Wyślij przez TotalDrop"
+  "desktopSendWith": "Wyślij przez TotalDrop",
+
+  "sendText": "Wyślij tekst",
+  "sendTextHint": "Wpisz lub wklej tekst do wysłania",
+  "sendTextTooLong": "Tekst może mieć najwyżej {size}. Dłuższy wyślij jako plik.",
+  "sendTextDone": "Tekst dotarł w całości.",
+  "sendClipboard": "Wyślij schowek",
+  "sendClipboardEmpty": "Schowek nie zawiera tekstu.",
+  "receiveOfferText": "Przychodzący tekst",
+  "receiveOfferTextNote": "Tekst jest wyświetlany tutaj, nie jest zapisywany.",
+  "receiveTextDone": "Odebrano i zweryfikowano tekst",
+  "receiveTextDeclined": "Odrzucono tekst.",
+  "receiveTextHidden": "Tekst zawiera ukryte znaki, wyświetlane jako U+…. Po skopiowaniu otrzymasz tekst dokładnie taki, jaki dotarł.",
+  "copyText": "Kopiuj tekst",
+  "textCopied": "Skopiowano tekst",
+  "errorTextDamaged": "Tekst nie dotarł w całości, dlatego nie jest wyświetlany."
 }

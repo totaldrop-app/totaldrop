@@ -553,6 +553,52 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get desktopSendWith => 'Enviar com o TotalDrop';
+
+  @override
+  String get sendText => 'Enviar texto';
+
+  @override
+  String get sendTextHint => 'Digite ou cole o texto que deseja enviar';
+
+  @override
+  String sendTextTooLong(String size) {
+    return 'Um texto pode ter no máximo $size. Envie um texto maior como arquivo.';
+  }
+
+  @override
+  String get sendTextDone => 'O texto chegou íntegro.';
+
+  @override
+  String get sendClipboard => 'Enviar área de transferência';
+
+  @override
+  String get sendClipboardEmpty => 'A área de transferência não tem texto.';
+
+  @override
+  String get receiveOfferText => 'Texto recebido';
+
+  @override
+  String get receiveOfferTextNote => 'O texto é exibido aqui, não é salvo.';
+
+  @override
+  String get receiveTextDone => 'Texto recebido e verificado';
+
+  @override
+  String get receiveTextDeclined => 'Você recusou o texto.';
+
+  @override
+  String get receiveTextHidden =>
+      'O texto contém caracteres ocultos, exibidos como U+…. Ao copiar, você obtém o texto exatamente como chegou.';
+
+  @override
+  String get copyText => 'Copiar texto';
+
+  @override
+  String get textCopied => 'Texto copiado';
+
+  @override
+  String get errorTextDamaged =>
+      'O texto não chegou íntegro, por isso não é exibido.';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -1103,6 +1149,52 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get desktopSendWith => 'Enviar com o TotalDrop';
+
+  @override
+  String get sendText => 'Enviar texto';
+
+  @override
+  String get sendTextHint => 'Digite ou cole o texto que deseja enviar';
+
+  @override
+  String sendTextTooLong(String size) {
+    return 'Um texto pode ter no máximo $size. Envie um texto maior como arquivo.';
+  }
+
+  @override
+  String get sendTextDone => 'O texto chegou íntegro.';
+
+  @override
+  String get sendClipboard => 'Enviar área de transferência';
+
+  @override
+  String get sendClipboardEmpty => 'A área de transferência não tem texto.';
+
+  @override
+  String get receiveOfferText => 'Texto recebido';
+
+  @override
+  String get receiveOfferTextNote => 'O texto é exibido aqui, não é salvo.';
+
+  @override
+  String get receiveTextDone => 'Texto recebido e verificado';
+
+  @override
+  String get receiveTextDeclined => 'Você recusou o texto.';
+
+  @override
+  String get receiveTextHidden =>
+      'O texto contém caracteres ocultos, exibidos como U+…. Ao copiar, você obtém o texto exatamente como chegou.';
+
+  @override
+  String get copyText => 'Copiar texto';
+
+  @override
+  String get textCopied => 'Texto copiado';
+
+  @override
+  String get errorTextDamaged =>
+      'O texto não chegou íntegro, por isso não é exibido.';
 }
 
 /// The translations for Portuguese, as used in Portugal (`pt_PT`).
@@ -1654,4 +1746,50 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
 
   @override
   String get desktopSendWith => 'Enviar com o TotalDrop';
+
+  @override
+  String get sendText => 'Enviar texto';
+
+  @override
+  String get sendTextHint => 'Escreva ou cole o texto que pretende enviar';
+
+  @override
+  String sendTextTooLong(String size) {
+    return 'Um texto pode ter no máximo $size. Envie um texto maior como ficheiro.';
+  }
+
+  @override
+  String get sendTextDone => 'O texto chegou íntegro.';
+
+  @override
+  String get sendClipboard => 'Enviar área de transferência';
+
+  @override
+  String get sendClipboardEmpty => 'A área de transferência não tem texto.';
+
+  @override
+  String get receiveOfferText => 'Texto recebido';
+
+  @override
+  String get receiveOfferTextNote => 'O texto é mostrado aqui, não é guardado.';
+
+  @override
+  String get receiveTextDone => 'Texto recebido e verificado';
+
+  @override
+  String get receiveTextDeclined => 'Recusou o texto.';
+
+  @override
+  String get receiveTextHidden =>
+      'O texto contém caracteres ocultos, mostrados como U+…. Ao copiar, obtém o texto exatamente como chegou.';
+
+  @override
+  String get copyText => 'Copiar texto';
+
+  @override
+  String get textCopied => 'Texto copiado';
+
+  @override
+  String get errorTextDamaged =>
+      'O texto não chegou íntegro, por isso não é mostrado.';
 }

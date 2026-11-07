@@ -551,4 +551,50 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get desktopSendWith => 'Trimite cu TotalDrop';
+
+  @override
+  String get sendText => 'Trimite text';
+
+  @override
+  String get sendTextHint => 'Scrieți sau lipiți textul de trimis';
+
+  @override
+  String sendTextTooLong(String size) {
+    return 'Un text poate avea cel mult $size. Trimiteți un text mai lung ca fișier.';
+  }
+
+  @override
+  String get sendTextDone => 'Textul a ajuns întreg.';
+
+  @override
+  String get sendClipboard => 'Trimite clipboardul';
+
+  @override
+  String get sendClipboardEmpty => 'Clipboardul nu conține text.';
+
+  @override
+  String get receiveOfferText => 'Text primit';
+
+  @override
+  String get receiveOfferTextNote => 'Textul este afișat aici, nu este salvat.';
+
+  @override
+  String get receiveTextDone => 'Text primit și verificat';
+
+  @override
+  String get receiveTextDeclined => 'Ați refuzat textul.';
+
+  @override
+  String get receiveTextHidden =>
+      'Textul conține caractere ascunse, afișate ca U+…. La copiere obțineți textul exact așa cum a sosit.';
+
+  @override
+  String get copyText => 'Copiază textul';
+
+  @override
+  String get textCopied => 'Text copiat';
+
+  @override
+  String get errorTextDamaged =>
+      'Textul nu a ajuns întreg, așa că nu este afișat.';
 }

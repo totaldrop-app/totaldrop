@@ -540,4 +540,51 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get desktopSendWith => 'TotalDrop से भेजें';
+
+  @override
+  String get sendText => 'टेक्स्ट भेजें';
+
+  @override
+  String get sendTextHint => 'भेजने के लिए टेक्स्ट लिखें या पेस्ट करें';
+
+  @override
+  String sendTextTooLong(String size) {
+    return 'टेक्स्ट ज़्यादा से ज़्यादा $size का हो सकता है। लंबा टेक्स्ट फ़ाइल के रूप में भेजें।';
+  }
+
+  @override
+  String get sendTextDone => 'टेक्स्ट पूरा पहुँच गया।';
+
+  @override
+  String get sendClipboard => 'क्लिपबोर्ड भेजें';
+
+  @override
+  String get sendClipboardEmpty => 'क्लिपबोर्ड में कोई टेक्स्ट नहीं है।';
+
+  @override
+  String get receiveOfferText => 'आने वाला टेक्स्ट';
+
+  @override
+  String get receiveOfferTextNote =>
+      'टेक्स्ट यहाँ दिखाया जाता है, सहेजा नहीं जाता।';
+
+  @override
+  String get receiveTextDone => 'टेक्स्ट प्राप्त हुआ और सत्यापित हुआ';
+
+  @override
+  String get receiveTextDeclined => 'आपने टेक्स्ट अस्वीकार कर दिया।';
+
+  @override
+  String get receiveTextHidden =>
+      'टेक्स्ट में छिपे हुए अक्षर हैं, जो U+… के रूप में दिखाए गए हैं। कॉपी करने पर टेक्स्ट ठीक वैसा ही मिलता है जैसा आया था।';
+
+  @override
+  String get copyText => 'टेक्स्ट कॉपी करें';
+
+  @override
+  String get textCopied => 'टेक्स्ट कॉपी हो गया';
+
+  @override
+  String get errorTextDamaged =>
+      'टेक्स्ट पूरा नहीं पहुँचा, इसलिए दिखाया नहीं जा रहा।';
 }

@@ -538,4 +538,49 @@ class AppLocalizationsHe extends AppLocalizations {
 
   @override
   String get desktopSendWith => 'שליחה עם TotalDrop';
+
+  @override
+  String get sendText => 'שליחת טקסט';
+
+  @override
+  String get sendTextHint => 'הקלידו או הדביקו את הטקסט לשליחה';
+
+  @override
+  String sendTextTooLong(String size) {
+    return 'טקסט יכול להיות לכל היותר $size. טקסט ארוך יותר שלחו כקובץ.';
+  }
+
+  @override
+  String get sendTextDone => 'הטקסט הגיע בשלמותו.';
+
+  @override
+  String get sendClipboard => 'שליחת הלוח';
+
+  @override
+  String get sendClipboardEmpty => 'אין טקסט בלוח.';
+
+  @override
+  String get receiveOfferText => 'טקסט נכנס';
+
+  @override
+  String get receiveOfferTextNote => 'הטקסט מוצג כאן ואינו נשמר.';
+
+  @override
+  String get receiveTextDone => 'הטקסט התקבל ואומת';
+
+  @override
+  String get receiveTextDeclined => 'דחית את הטקסט.';
+
+  @override
+  String get receiveTextHidden =>
+      'הטקסט מכיל תווים נסתרים, המוצגים כ־U+…. העתקה נותנת את הטקסט בדיוק כפי שהגיע.';
+
+  @override
+  String get copyText => 'העתקת הטקסט';
+
+  @override
+  String get textCopied => 'הטקסט הועתק';
+
+  @override
+  String get errorTextDamaged => 'הטקסט לא הגיע בשלמותו, ולכן אינו מוצג.';
 }

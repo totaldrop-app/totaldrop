@@ -144,5 +144,20 @@
   "desktopGenericName": "Truyền tệp",
   "desktopComment": "Gửi tệp thẳng tới thiết bị khác, mã hóa đầu cuối",
   "desktopKeywords": "gửi;nhận;chia sẻ;truyền;tệp;",
-  "desktopSendWith": "Gửi bằng TotalDrop"
+  "desktopSendWith": "Gửi bằng TotalDrop",
+
+  "sendText": "Gửi văn bản",
+  "sendTextHint": "Nhập hoặc dán văn bản cần gửi",
+  "sendTextTooLong": "Văn bản tối đa {size}. Hãy gửi văn bản dài hơn dưới dạng tệp.",
+  "sendTextDone": "Văn bản đã đến nguyên vẹn.",
+  "sendClipboard": "Gửi khay nhớ tạm",
+  "sendClipboardEmpty": "Khay nhớ tạm không có văn bản.",
+  "receiveOfferText": "Văn bản đến",
+  "receiveOfferTextNote": "Văn bản được hiển thị ở đây, không được lưu.",
+  "receiveTextDone": "Đã nhận và xác minh văn bản",
+  "receiveTextDeclined": "Bạn đã từ chối văn bản.",
+  "receiveTextHidden": "Văn bản có ký tự ẩn, được hiển thị dưới dạng U+…. Khi sao chép, bạn nhận được văn bản đúng như khi đến.",
+  "copyText": "Sao chép văn bản",
+  "textCopied": "Đã sao chép văn bản",
+  "errorTextDamaged": "Văn bản không đến nguyên vẹn nên không được hiển thị."
 }

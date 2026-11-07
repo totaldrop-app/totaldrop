@@ -550,4 +550,50 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get desktopSendWith => 'Odeslat pomocí TotalDrop';
+
+  @override
+  String get sendText => 'Odeslat text';
+
+  @override
+  String get sendTextHint => 'Napište nebo vložte text k odeslání';
+
+  @override
+  String sendTextTooLong(String size) {
+    return 'Text může mít nejvýše $size. Delší text pošlete jako soubor.';
+  }
+
+  @override
+  String get sendTextDone => 'Text dorazil v pořádku.';
+
+  @override
+  String get sendClipboard => 'Odeslat schránku';
+
+  @override
+  String get sendClipboardEmpty => 'Ve schránce není žádný text.';
+
+  @override
+  String get receiveOfferText => 'Příchozí text';
+
+  @override
+  String get receiveOfferTextNote => 'Text se zobrazí zde, neukládá se.';
+
+  @override
+  String get receiveTextDone => 'Text přijat a ověřen';
+
+  @override
+  String get receiveTextDeclined => 'Text jste odmítli.';
+
+  @override
+  String get receiveTextHidden =>
+      'Text obsahuje skryté znaky, zobrazené jako U+…. Zkopírováním získáte text přesně tak, jak dorazil.';
+
+  @override
+  String get copyText => 'Kopírovat text';
+
+  @override
+  String get textCopied => 'Text zkopírován';
+
+  @override
+  String get errorTextDamaged =>
+      'Text nedorazil v pořádku, proto se nezobrazí.';
 }

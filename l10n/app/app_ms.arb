@@ -144,5 +144,20 @@
   "desktopGenericName": "Pemindahan fail",
   "desktopComment": "Hantar fail terus ke peranti lain, disulitkan hujung ke hujung",
   "desktopKeywords": "hantar;terima;kongsi;pindah;fail;",
-  "desktopSendWith": "Hantar dengan TotalDrop"
+  "desktopSendWith": "Hantar dengan TotalDrop",
+
+  "sendText": "Hantar teks",
+  "sendTextHint": "Taip atau tampal teks yang hendak dihantar",
+  "sendTextTooLong": "Teks boleh sebesar {size} sahaja. Hantar teks yang lebih panjang sebagai fail.",
+  "sendTextDone": "Teks tiba dengan lengkap.",
+  "sendClipboard": "Hantar papan keratan",
+  "sendClipboardEmpty": "Papan keratan tidak mengandungi teks.",
+  "receiveOfferText": "Teks masuk",
+  "receiveOfferTextNote": "Teks dipaparkan di sini, tidak disimpan.",
+  "receiveTextDone": "Teks diterima dan disahkan",
+  "receiveTextDeclined": "Anda telah menolak teks tersebut.",
+  "receiveTextHidden": "Teks mengandungi aksara tersembunyi yang dipaparkan sebagai U+…. Apabila disalin, teks diperoleh tepat seperti ia tiba.",
+  "copyText": "Salin teks",
+  "textCopied": "Teks disalin",
+  "errorTextDamaged": "Teks tidak tiba dengan lengkap, jadi ia tidak dipaparkan."
 }

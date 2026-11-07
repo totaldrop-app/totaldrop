@@ -144,5 +144,20 @@
   "desktopGenericName": "انتقال فایل",
   "desktopComment": "فایل‌ها را مستقیم به دستگاهی دیگر بفرستید، با رمزگذاری سرتاسری",
   "desktopKeywords": "ارسال;دریافت;اشتراک;انتقال;فایل;",
-  "desktopSendWith": "ارسال با TotalDrop"
+  "desktopSendWith": "ارسال با TotalDrop",
+
+  "sendText": "ارسال متن",
+  "sendTextHint": "متنی را که می‌خواهید بفرستید بنویسید یا جای‌گذاری کنید",
+  "sendTextTooLong": "متن حداکثر می‌تواند {size} باشد. متن بلندتر را به‌صورت فایل بفرستید.",
+  "sendTextDone": "متن سالم رسید.",
+  "sendClipboard": "ارسال محتوای کلیپ‌بورد",
+  "sendClipboardEmpty": "در کلیپ‌بورد متنی نیست.",
+  "receiveOfferText": "متن ورودی",
+  "receiveOfferTextNote": "متن اینجا نمایش داده می‌شود و ذخیره نمی‌شود.",
+  "receiveTextDone": "متن دریافت و تأیید شد",
+  "receiveTextDeclined": "متن را رد کردید.",
+  "receiveTextHidden": "متن نویسه‌های پنهان دارد که به‌صورت U+… نمایش داده می‌شوند. با کپی کردن، متن دقیقاً همان‌طور که رسیده کپی می‌شود.",
+  "copyText": "کپی متن",
+  "textCopied": "متن کپی شد",
+  "errorTextDamaged": "متن سالم نرسید، برای همین نمایش داده نمی‌شود."
 }

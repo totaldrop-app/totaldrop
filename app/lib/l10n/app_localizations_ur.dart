@@ -539,4 +539,51 @@ class AppLocalizationsUr extends AppLocalizations {
 
   @override
   String get desktopSendWith => 'TotalDrop سے بھیجیں';
+
+  @override
+  String get sendText => 'متن بھیجیں';
+
+  @override
+  String get sendTextHint => 'بھیجنے کے لیے متن لکھیں یا پیسٹ کریں';
+
+  @override
+  String sendTextTooLong(String size) {
+    return 'متن زیادہ سے زیادہ $size کا ہو سکتا ہے۔ لمبا متن فائل کے طور پر بھیجیں۔';
+  }
+
+  @override
+  String get sendTextDone => 'متن مکمل پہنچ گیا۔';
+
+  @override
+  String get sendClipboard => 'کلپ بورڈ بھیجیں';
+
+  @override
+  String get sendClipboardEmpty => 'کلپ بورڈ میں کوئی متن نہیں ہے۔';
+
+  @override
+  String get receiveOfferText => 'آنے والا متن';
+
+  @override
+  String get receiveOfferTextNote =>
+      'متن یہاں دکھایا جاتا ہے، محفوظ نہیں کیا جاتا۔';
+
+  @override
+  String get receiveTextDone => 'متن وصول ہو گیا اور تصدیق ہو گئی';
+
+  @override
+  String get receiveTextDeclined => 'آپ نے متن مسترد کر دیا۔';
+
+  @override
+  String get receiveTextHidden =>
+      'متن میں چھپے ہوئے حروف ہیں جو U+… کی صورت میں دکھائے گئے ہیں۔ کاپی کرنے پر متن بالکل ویسا ہی ملتا ہے جیسا آیا تھا۔';
+
+  @override
+  String get copyText => 'متن کاپی کریں';
+
+  @override
+  String get textCopied => 'متن کاپی ہو گیا';
+
+  @override
+  String get errorTextDamaged =>
+      'متن مکمل نہیں پہنچا، اس لیے نہیں دکھایا جا رہا۔';
 }

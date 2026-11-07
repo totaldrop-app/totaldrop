@@ -529,4 +529,50 @@ class AppLocalizationsMs extends AppLocalizations {
 
   @override
   String get desktopSendWith => 'Hantar dengan TotalDrop';
+
+  @override
+  String get sendText => 'Hantar teks';
+
+  @override
+  String get sendTextHint => 'Taip atau tampal teks yang hendak dihantar';
+
+  @override
+  String sendTextTooLong(String size) {
+    return 'Teks boleh sebesar $size sahaja. Hantar teks yang lebih panjang sebagai fail.';
+  }
+
+  @override
+  String get sendTextDone => 'Teks tiba dengan lengkap.';
+
+  @override
+  String get sendClipboard => 'Hantar papan keratan';
+
+  @override
+  String get sendClipboardEmpty => 'Papan keratan tidak mengandungi teks.';
+
+  @override
+  String get receiveOfferText => 'Teks masuk';
+
+  @override
+  String get receiveOfferTextNote => 'Teks dipaparkan di sini, tidak disimpan.';
+
+  @override
+  String get receiveTextDone => 'Teks diterima dan disahkan';
+
+  @override
+  String get receiveTextDeclined => 'Anda telah menolak teks tersebut.';
+
+  @override
+  String get receiveTextHidden =>
+      'Teks mengandungi aksara tersembunyi yang dipaparkan sebagai U+…. Apabila disalin, teks diperoleh tepat seperti ia tiba.';
+
+  @override
+  String get copyText => 'Salin teks';
+
+  @override
+  String get textCopied => 'Teks disalin';
+
+  @override
+  String get errorTextDamaged =>
+      'Teks tidak tiba dengan lengkap, jadi ia tidak dipaparkan.';
 }

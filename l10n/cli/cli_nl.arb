@@ -60,7 +60,7 @@
   "cliHelpHelpCommand": "Dit bericht of de help van de opgegeven opdracht tonen",
   "cliDesktopAbout": "Het TotalDrop-venster openen.",
   "cliDesktopArgs": "Te versturen bestanden of mappen, of een TotalDrop-link om mee te ontvangen.",
-  "cliDesktopScreen": "Openen op het scherm Versturen (send), Ontvangen (receive) of Instellingen (settings).",
+  "cliDesktopScreen": "Openen op het scherm Versturen (send), Klembord versturen (clipboard), Ontvangen (receive) of Instellingen (settings).",
   "cliHelpSendText": "Deze tekst verzenden in plaats van bestanden: de ontvanger ziet hem als tekst, niet als bestand. Anderen op deze computer kunnen hem in de proceslijst zien; gebruik - voor een privétekst.",
   "cliSendingText": "Een tekst wordt verzonden, {size}.",
   "cliOfferedText": "Aangeboden: een tekst, {size}. Hij wordt hier getoond, niet opgeslagen.",
