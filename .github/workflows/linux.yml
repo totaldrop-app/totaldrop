@@ -51,6 +51,8 @@ jobs:
         with:
           persist-credentials: false
       - run: dash packaging/test-check-cli-version.sh
+      - name: Package contents check works
+        run: dash packaging/test-check-package-contents.sh
       - name: Flatpak crate list
         run: node --test tools/test-flatpak-cargo-sources.mjs
       # The desktop entry and the file-manager menus are written from
@@ -81,6 +83,17 @@ jobs:
         with:
           persist-credentials: false
       - run: packaging/build.sh ${{ matrix.format }}
+      # The file-manager menus are in the package and Nautilus's Python
+      # bindings only suggested (#319), read with the distribution's own
+      # tools in the image build.sh just used.
+      - name: File-manager menus in the package
+        env:
+          FORMAT: ${{ matrix.format }}
+        run: |
+          case $FORMAT in arch) ext=pkg.tar.zst ;; *) ext=$FORMAT ;; esac
+          for p in dist/packages/*."$ext"; do
+            packaging/check-package-contents.sh "$p"
+          done
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: totaldrop-linux-${{ matrix.format }}-${{ matrix.arch }}
@@ -145,6 +158,12 @@ jobs:
           flatpak info --user --show-permissions app.totaldrop.TotalDrop
           flatpak run --user --command=totaldrop app.totaldrop.TotalDrop --version
           QT_QPA_PLATFORM=offscreen flatpak run --user app.totaldrop.TotalDrop --version
+      # The sandbox cannot add to another program's menu, so the
+      # file-manager menus must stay out of the Flatpak (#319).
+      - name: No file-manager menus in the Flatpak
+        run: >-
+          packaging/check-package-contents.sh --flatpak
+          "$(flatpak info --user --show-location app.totaldrop.TotalDrop)/files"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: totaldrop-linux-flatpak-${{ matrix.arch }}

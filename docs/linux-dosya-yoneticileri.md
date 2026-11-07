@@ -72,6 +72,19 @@ CI (`node --test tools/test-desktop-entries.mjs`) üretilen dosyalar ARB
 dosyalarıyla uyuşmazsa kırılır. Nautilus uzantısının mantığı elle yazılır;
 yalnızca `GENERATED` satırları arasındaki metin tablosu üretilir.
 
+Her PR'da CI, derlenen her pakette (Arch; x86-64 ve ARM64 için .deb ve
+.rpm) üç menü dosyasının yerinde olduğunu, Nautilus'un Python
+bağlarının (`python-nautilus`, `python3-nautilus`, `nautilus-python`)
+zorunlu değil yalnızca önerilen olarak yazıldığını, Flatpak'te de
+menülerin olmadığını denetler (`packaging/check-package-contents.sh`,
+#319). Paketin dağıtımın kendi aracıyla okunduğu kap `packaging/build.sh`
+ile derlendiği kaptır:
+
+```sh
+packaging/build.sh deb
+packaging/check-package-contents.sh dist/packages/totaldrop_*.deb
+```
+
 ## Elle deneme
 
 Her sürümden önce, paket kurulu bir sistemde:
