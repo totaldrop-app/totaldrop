@@ -10,6 +10,60 @@ All notable changes to TotalDrop are recorded here. The format follows
 Entries for the next release are in [changelog.d/](changelog.d/), one file
 per change, and move here when it is released (docs/surec.md).
 
+## [linux-0.3.0-beta.6] - 2026-11-07
+
+### Added
+
+- **Linux:** The release now also has a Flatpak package for x86_64 and
+  ARM64, which installs without touching the system, also where the
+  system is read-only. It takes the KDE runtime from Flathub and reaches
+  the network, `~/Downloads/TotalDrop`, the files you pick, desktop
+  notifications, Hyprland's socket and your desktop's theme files (read
+  only), and nothing else of your home folder (#297).
+- **Linux:** "Send with TotalDrop" in the right-click menu of Dolphin,
+  Files (Nautilus, once nautilus-python is installed) and Nemo, for any
+  selection of local files and folders; "Send files" and "Receive files"
+  when you right-click TotalDrop in the taskbar or app launcher; and the
+  app's description and search words in every language of the app (#303).
+- **Linux:** Settings says, in every language, that codes and
+  verification words stay in English so that two devices set to different
+  languages show the same words (#305, #52).
+- **Command line:** Send a text instead of files, such as a link:
+  `totaldrop send --text "…"`, or `totaldrop send -` for the text on
+  standard input (at most 1 MiB). The receiver prints it instead of
+  saving it; an older receiver saves it as `text.txt` (#313).
+- **Linux:** Software centres such as Discover, GNOME Software and
+  Flathub describe TotalDrop in all 35 languages of the app, not only in
+  English and Turkish (#324).
+- **Linux:** Send a text instead of files: "Send text" on the Send
+  screen, or "Send clipboard" in the app's launcher menu, which opens Send
+  with the clipboard's text filled in. A pasted text is sent exactly as
+  it was copied. A text that arrives is shown, not saved, with any hidden
+  characters named, and "Copy text" copies it exactly as it came. A very
+  long text shows only its beginning; all of it is sent and copied
+  (#326).
+
+### Fixed
+
+- **Linux:** The right-click menu of text fields (Undo, Cut, Copy, Paste,
+  Select All) is in the app's language where Qt draws it (Qt 6.11 and
+  later), and Qt's own windows follow right-to-left languages. KDE's style
+  keeps its own translation where it has one (#307, #52).
+
+### Security
+
+- **Command line:** When a send or receive fails, the detail of the error
+  names control and formatting characters (`<U+001B>`) instead of passing
+  them to the terminal. A reason the other device gives for cancelling or
+  for closing the connection, or a message from a server, could otherwise
+  move the cursor, rewrite earlier lines or set the window title
+  (GHSA-c6jh-7p7q-8gg4).
+- **Linux, CLI:** A sending device no longer connects to its relay
+  when the receiving device uses a different relay or none, so that relay
+  no longer sees the sender's IP address for a transfer it could never
+  carry. A receiver on 0.1 set to another relay, which used to fall back
+  to the sender's relay anyway, now needs a direct path (#301).
+
 ## [android-0.3.0-beta.7] - 2026-11-07
 
 ### Added

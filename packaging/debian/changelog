@@ -1,3 +1,30 @@
+totaldrop (0.3.0~beta.6-1) unstable; urgency=medium
+
+  * Send a text instead of files: "Send text" on the Send screen, or
+    "Send clipboard" in the app's launcher menu. A text that arrives is
+    shown, not saved, with any hidden characters named, and "Copy text"
+    copies it exactly as it came. The command line can send a text too:
+    totaldrop send --text "...", or totaldrop send - for standard input.
+  * "Send with TotalDrop" in the right-click menu of Dolphin, Files
+    (once python3-nautilus is installed) and Nemo; "Send files" and
+    "Receive files" when you right-click TotalDrop in the taskbar or app
+    launcher.
+  * Software centres describe TotalDrop in all 35 languages of the app.
+  * The right-click menu of text fields is in the app's language where Qt
+    draws it (Qt 6.11 and later), and Qt's own windows follow
+    right-to-left languages.
+  * Settings says that codes and verification words stay in English, so
+    that two devices set to different languages show the same words.
+  * Security: a sending device no longer connects to its relay when the
+    receiving device uses a different relay or none, so that relay no
+    longer sees the sender's IP address. A receiver on 0.1 set to another
+    relay now needs a direct path.
+  * Security: when a send or receive fails on the command line, control
+    characters in the error's detail are named instead of passed to the
+    terminal (GHSA-c6jh-7p7q-8gg4).
+
+ -- TotalDrop <hello@totaldrop.app>  Sat, 07 Nov 2026 12:02:49 +0300
+
 totaldrop (0.3.0~beta.5-1) unstable; urgency=medium
 
   * The translations built into the app are now under MIT OR Apache-2.0.
