@@ -161,6 +161,9 @@
   "receiveTextDone": "Texte reçu et vérifié",
   "receiveTextDeclined": "Vous avez refusé le texte.",
   "receiveTextHidden": "Le texte contient des caractères cachés, affichés sous la forme U+…. La copie donne le texte exactement tel qu’il est arrivé.",
+  "sendClipboardKept": "Le texte déjà saisi est conservé ; le presse-papiers n’a pas été utilisé.",
+  "sendTextShortened": "Seul le début du texte est affiché ; il est envoyé en entier.",
+  "receiveTextShortened": "Seul le début du texte est affiché. Copier le texte le copie en entier.",
   "copyText": "Copier le texte",
   "textCopied": "Texte copié",
   "errorTextDamaged": "Le texte n’est pas arrivé intact, il n’est donc pas affiché."

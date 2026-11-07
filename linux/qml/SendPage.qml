@@ -25,14 +25,39 @@ Page {
     readonly property bool textMode: mode === "text"
     // Files listed or a text typed and not yet sent: another launch does
     // not replace them.
-    readonly property bool hasInput: files.count > 0 || textBox.text !== ""
+    readonly property bool hasInput: files.count > 0 || textBox.text !== "" || bigText !== ""
+    // A text box holds text in a document that changes it on the way back
+    // (a no-break space becomes a space, \r\n becomes \n), and lays out a
+    // long line very slowly. A pasted text is therefore kept as it came:
+    // `pasted` is sent while the box still shows exactly what the paste
+    // put there. A paste longer than the box shows is `bigText`: the box
+    // shows its beginning, read-only, and all of it is sent.
+    property string pasted: ""
+    property string pastedShown: ""
+    property string bigText: ""
+    readonly property string outgoing: bigText !== "" ? bigText
+        : (pasted !== "" && textBox.text === pastedShown ? pasted : textBox.text)
     // The text's size as the limit counts it: UTF-8 bytes.
-    readonly property real textBytes: transfer.textBytes(textBox.text)
+    readonly property real textBytes: transfer.textBytes(outgoing)
     readonly property bool textTooLong: textBytes > transfer.maxText()
     property string textNotice: ""
+    // "Send clipboard" asked while the window had no keyboard focus: on
+    // Wayland the clipboard is readable only with it.
+    property bool pasteWhenActive: false
     Component.onCompleted: {
         if (initialFiles.length > 0) add(initialFiles)
         if (pasteOnOpen) Qt.callLater(page.pasteClipboard)
+    }
+    Connections {
+        target: page.Window.window
+        function onActiveChanged() {
+            if (page.pasteWhenActive && page.Window.window.active) {
+                page.pasteWhenActive = false
+                // The click that brought the window up may have pasted
+                // already (the Paste button); then there is nothing to say.
+                Qt.callLater(() => { if (!page.hasInput) page.pasteClipboard() })
+            }
+        }
     }
     // With files listed, Enter creates the code.
     onPhaseChanged: if (phase === "idle") Qt.callLater(() => (page.textMode ? textBox : createButton).forceActiveFocus())
@@ -44,12 +69,40 @@ Page {
     function pasteClipboard() {
         page.mode = "text"
         page.textNotice = ""
-        if (textBox.text === "") textBox.paste()
-        if (textBox.text === "") page.textNotice = Strings.s.sendClipboardEmpty
+        const w = page.Window.window
+        if (w && !w.active) { page.pasteWhenActive = true; return }
+        if (textBox.text === "" && page.bigText === "") page.pasteText()
+        else page.textNotice = Strings.s.sendClipboardKept
+        if (textBox.text === "" && page.bigText === "") page.textNotice = Strings.s.sendClipboardEmpty
         textBox.forceActiveFocus()
     }
+    // Paste, as the button, Ctrl+V and "Send clipboard" do. Into an empty
+    // box the text is kept exactly; a long one replaces what is there.
+    function pasteText() {
+        const t = page.transfer.clipboardText()
+        if (t === "") return
+        const max = page.transfer.shownChars()
+        if (t.length > max) {
+            // Not cut inside a character.
+            const end = (t.charCodeAt(max - 1) & 0xFC00) === 0xD800 ? max - 1 : max
+            page.bigText = t
+            textBox.text = t.slice(0, end)
+            page.pasted = ""
+        } else if (textBox.text === "") {
+            textBox.text = t
+            page.pasted = t
+            page.pastedShown = textBox.text
+        } else {
+            textBox.insert(textBox.cursorPosition, t)
+        }
+    }
+    function clearText() {
+        page.bigText = ""
+        page.pasted = ""
+        textBox.clear()
+    }
     function sendIt() {
-        if (page.textMode) page.transfer.sendText(textBox.text, page.strong)
+        if (page.textMode) page.transfer.sendText(page.outgoing, page.strong)
         else page.transfer.send(page.paths(), page.strong)
     }
 
@@ -463,21 +516,26 @@ Page {
 
         // 5: result
         ResultPanel {
-            success: page.phase === "done"
-            title: page.phase === "done" ? Strings.s.sendDone
+            // A text the receiver found damaged is not shown there: it did
+            // not arrive (#326).
+            readonly property bool textFailed: page.phase === "done" && page.textMode && page.transfer.filesFailed > 0
+            success: page.phase === "done" && !textFailed
+            title: textFailed ? Strings.s.errorTextDamaged
+                 : page.phase === "done" ? Strings.s.sendDone
                  : Strings.s["error" + (page.transfer.errorKind || "Other")]
-            body: page.phase === "done" && page.textMode ? Strings.s.sendTextDone
+            body: textFailed ? ""
+                  : page.phase === "done" && page.textMode ? Strings.s.sendTextDone
                   : page.phase === "done"
                   ? Strings.f("sendDoneBody", { count: page.transfer.filesOk })
                     + (page.transfer.filesFailed > 0 ? " " + Strings.f("sendSomeFailed", { count: page.transfer.filesFailed }) : "")
                   : ""
             detail: page.phase === "done" ? "" : page.transfer.errorDetail
             cause: page.phase === "done" ? "" : page.transfer.errorCause
-            canRetry: page.phase === "failed"
+            canRetry: page.phase === "failed" || textFailed
             onRetry: page.sendIt()
             onFinished: {
                 page.transfer.reset(); files.clear(); page.recalc()
-                textBox.clear(); page.mode = "files"; page.close()
+                page.clearText(); page.mode = "files"; page.close()
             }
         }
 
@@ -491,14 +549,26 @@ Page {
                 TextArea {
                     id: textBox
                     placeholderText: Strings.s.sendTextHint
-                    // Sent as it is typed or pasted; pasted formatting is
-                    // dropped.
+                    // Plain text: pasted formatting is dropped. A long
+                    // paste is shown in part and cannot be edited.
                     textFormat: TextEdit.PlainText
+                    readOnly: page.bigText !== ""
                     wrapMode: TextEdit.Wrap
                     selectByMouse: true
                     Accessible.name: Strings.s.sendText
                     onTextChanged: page.textNotice = ""
+                    // Ctrl+V pastes as the Paste button does.
+                    Keys.onPressed: (e) => {
+                        if (e.matches(StandardKey.Paste)) { page.pasteText(); e.accepted = true }
+                    }
                 }
+            }
+            Label {
+                visible: page.bigText !== ""
+                text: Strings.s.sendTextShortened
+                color: Theme.muted
+                wrapMode: Text.Wrap
+                Layout.fillWidth: true
             }
             Label {
                 visible: text !== ""
@@ -512,9 +582,17 @@ Page {
                 spacing: Theme.s8
                 Layout.fillWidth: true
                 SecondaryButton {
+                    visible: page.bigText === ""
                     text: Strings.s.receivePaste
                     icon.name: Theme.icon("edit-paste")
-                    onClicked: { textBox.paste(); textBox.forceActiveFocus() }
+                    onClicked: { page.pasteText(); textBox.forceActiveFocus() }
+                }
+                SecondaryButton {
+                    // A long paste cannot be edited, only taken away.
+                    visible: page.bigText !== ""
+                    text: Strings.s.sendRemove
+                    icon.name: Theme.icon("edit-clear")
+                    onClicked: { page.clearText(); textBox.forceActiveFocus() }
                 }
                 SecondaryButton {
                     // Back to files, while nothing is typed.
@@ -525,7 +603,7 @@ Page {
                 }
                 Item { Layout.fillWidth: true }
                 Label {
-                    visible: textBox.text !== ""
+                    visible: page.outgoing !== ""
                     text: Strings.size(page.textBytes)
                     color: page.textTooLong ? Theme.error : Theme.muted
                     font.features: { "tnum": 1 }
@@ -548,7 +626,7 @@ Page {
             }
             PrimaryButton {
                 text: Strings.s.sendCreateCode
-                enabled: textBox.text !== "" && !page.textTooLong
+                enabled: page.outgoing !== "" && !page.textTooLong
                 onClicked: page.sendIt()
                 Layout.fillWidth: true
                 Layout.topMargin: Theme.s8
@@ -560,8 +638,8 @@ Page {
     DropArea {
         id: drop
         anchors.fill: parent
-        // A text is dropped into the text box itself.
-        enabled: page.phase === "idle" && !page.textMode
+        // Files dropped while nothing is typed go back to the file list.
+        enabled: page.phase === "idle" && (!page.textMode || !page.hasInput)
         keys: ["text/uri-list"]
         onDropped: (d) => { if (d.hasUrls) { page.add(page.transfer.localPaths(d.urls)); d.accept(Qt.CopyAction) } }
     }

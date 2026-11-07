@@ -25,22 +25,29 @@ ColumnLayout {
     property string cause
     property string folder
     property bool canRetry: false
-    // A text received (#326): shownText with hidden characters named,
-    // rawText as it came, for Copy.
+    // A text received (#326), with hidden characters named. Copy text
+    // copies the text exactly as it came, not this.
     property string shownText
-    property string rawText
+    // shownText is only the text's beginning.
+    property bool shortened: false
+    // The text holds characters shown by their code.
+    property bool hidden: false
 
     signal finished()
     signal retry()
+    // Copy text: the page puts the received text on the clipboard.
+    signal copyText()
 
     spacing: Theme.s16
 
     // Shown, the panel hands Done the keyboard: focus would otherwise stay
     // on the hidden button that started the transfer. Details closes again
     // for the next result.
+    // A received text hands it to Copy instead: one Enter too many on
+    // Done would throw the text away.
     onVisibleChanged: if (visible) {
         more.checked = false
-        Qt.callLater(() => doneButton.forceActiveFocus())
+        Qt.callLater(() => (r.shownText !== "" ? copyButton : doneButton).forceActiveFocus())
     }
 
     Item {
@@ -93,21 +100,26 @@ ColumnLayout {
         }
     }
     Label {
-        // Shown differs from what came only where characters were named
-        // (a line break \r\n is shown as \n).
-        visible: r.shownText !== "" && r.shownText !== r.rawText.replace(/\r\n/g, "\n")
+        visible: r.shortened
+        text: Strings.s.receiveTextShortened
+        color: Theme.muted
+        wrapMode: Text.Wrap
+        Layout.fillWidth: true
+    }
+    Label {
+        visible: r.shownText !== "" && r.hidden
         text: Strings.s.receiveTextHidden
         color: Theme.muted
         wrapMode: Text.Wrap
         Layout.fillWidth: true
     }
-    // Hidden editor for the clipboard; plain text, as the text came.
-    TextEdit { id: clip; visible: false; textFormat: TextEdit.PlainText }
     SecondaryButton {
+        id: copyButton
         visible: r.shownText !== ""
         text: Strings.s.copyText
         icon.name: Theme.icon("edit-copy")
-        onClicked: { clip.text = r.rawText; clip.selectAll(); clip.copy(); clip.clear(); textCopied.start() }
+        // Straight to the clipboard: a text box would change the text.
+        onClicked: { r.copyText(); textCopied.start() }
         Timer { id: textCopied; interval: 2000 }
         ToolTip.visible: textCopied.running
         ToolTip.text: Strings.s.textCopied

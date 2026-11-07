@@ -161,6 +161,9 @@
   "receiveTextDone": "Odebrano i zweryfikowano tekst",
   "receiveTextDeclined": "Odrzucono tekst.",
   "receiveTextHidden": "Tekst zawiera ukryte znaki, wyświetlane jako U+…. Po skopiowaniu otrzymasz tekst dokładnie taki, jaki dotarł.",
+  "sendClipboardKept": "Wpisany tekst został zachowany, schowek nie został użyty.",
+  "sendTextShortened": "Widoczny jest tylko początek tekstu, wysłany zostanie cały.",
+  "receiveTextShortened": "Widoczny jest tylko początek tekstu. Kopiuj tekst kopiuje całość.",
   "copyText": "Kopiuj tekst",
   "textCopied": "Skopiowano tekst",
   "errorTextDamaged": "Tekst nie dotarł w całości, dlatego nie jest wyświetlany."

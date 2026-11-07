@@ -617,6 +617,18 @@ class AppLocalizationsFr extends AppLocalizations {
       'Le texte contient des caractères cachés, affichés sous la forme U+…. La copie donne le texte exactement tel qu’il est arrivé.';
 
   @override
+  String get sendClipboardKept =>
+      'Le texte déjà saisi est conservé ; le presse-papiers n’a pas été utilisé.';
+
+  @override
+  String get sendTextShortened =>
+      'Seul le début du texte est affiché ; il est envoyé en entier.';
+
+  @override
+  String get receiveTextShortened =>
+      'Seul le début du texte est affiché. Copier le texte le copie en entier.';
+
+  @override
   String get copyText => 'Copier le texte';
 
   @override

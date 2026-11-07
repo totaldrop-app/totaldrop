@@ -605,6 +605,18 @@ class AppLocalizationsNl extends AppLocalizations {
       'De tekst bevat verborgen tekens, getoond als U+…. Bij kopiëren krijg je de tekst precies zoals hij aankwam.';
 
   @override
+  String get sendClipboardKept =>
+      'De al getypte tekst is bewaard; het klembord is niet gebruikt.';
+
+  @override
+  String get sendTextShortened =>
+      'Alleen het begin van de tekst wordt getoond; de hele tekst wordt verzonden.';
+
+  @override
+  String get receiveTextShortened =>
+      'Alleen het begin van de tekst wordt getoond. Tekst kopiëren kopieert alles.';
+
+  @override
   String get copyText => 'Tekst kopiëren';
 
   @override

@@ -161,6 +161,9 @@
   "receiveTextDone": "Testo ricevuto e verificato",
   "receiveTextDeclined": "Hai rifiutato il testo.",
   "receiveTextHidden": "Il testo contiene caratteri nascosti, mostrati come U+…. Copiandolo ottieni il testo esattamente come è arrivato.",
+  "sendClipboardKept": "Il testo già scritto è stato mantenuto; gli appunti non sono stati usati.",
+  "sendTextShortened": "Viene mostrato solo l’inizio del testo; viene inviato per intero.",
+  "receiveTextShortened": "Viene mostrato solo l’inizio del testo. Copia testo lo copia per intero.",
   "copyText": "Copia testo",
   "textCopied": "Testo copiato",
   "errorTextDamaged": "Il testo non è arrivato integro, quindi non viene mostrato."
