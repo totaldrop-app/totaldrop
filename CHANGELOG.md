@@ -10,6 +10,91 @@ All notable changes to TotalDrop are recorded here. The format follows
 Entries for the next release are in [changelog.d/](changelog.d/), one file
 per change, and move here when it is released (docs/surec.md).
 
+## [linux-0.3.0-beta.6] - 2026-11-07
+
+### Added
+
+- **Site, README:** TotalDrop is on X as @totaldropapp. The site's page
+  footers (all but the privacy policy's short one) and every README link
+  to it, and the brand page lists the project's official accounts on the
+  web and social media so that impostors are easier to spot (#284).
+- **Site, README:** TotalDrop is on Instagram and Threads as
+  @totaldropapp. The site's page footers (all but the privacy policy's
+  short one), every README and the brand page's list of official
+  accounts link to them (#286).
+- **Site:** A team page at totaldrop.app/team shows who builds TotalDrop
+  and, discipline by discipline, who worked on which part, with profile
+  pictures and figures taken from the project's public history on GitHub.
+  The AI assistant that writes much of the code is named openly. The page
+  loads nothing from GitHub; the site's page footers (all but the privacy
+  policy's short one) link to it (#288).
+- **Linux:** The release now also has a Flatpak package for x86_64 and
+  ARM64, which installs without touching the system, also where the
+  system is read-only. It takes the KDE runtime from Flathub and reaches
+  the network, `~/Downloads/TotalDrop`, the files you pick, desktop
+  notifications, Hyprland's socket and your desktop's theme files (read
+  only), and nothing else of your home folder (#297).
+- **Linux:** "Send with TotalDrop" in the right-click menu of Dolphin,
+  Files (Nautilus, once nautilus-python is installed) and Nemo, for any
+  selection of local files and folders; "Send files" and "Receive files"
+  when you right-click TotalDrop in the taskbar or app launcher; and the
+  app's description and search words in every language of the app (#303).
+- **Linux:** Settings says, in every language, that codes and
+  verification words stay in English so that two devices set to different
+  languages show the same words (#305, #52).
+- **Site:** The team page lists QA specialists too, with the platforms they
+  test, starting with one for iOS and macOS (#309).
+- **Command line:** Send a text instead of files, such as a link:
+  `totaldrop send --text "…"`, or `totaldrop send -` for the text on
+  standard input (at most 1 MiB). The receiver prints it instead of
+  saving it; an older receiver saves it as `text.txt` (#313).
+- **Linux:** Software centres such as Discover, GNOME Software and
+  Flathub describe TotalDrop in all 35 languages of the app, not only in
+  English and Turkish (#324).
+
+### Changed
+
+- **Site, README:** The download page and the README point at Android
+  0.3.0-beta.6 and list what is new: the send screen says at once that it
+  is preparing a large file, says when the chosen files cannot be added,
+  and TalkBack reads out each new step. The Linux app stays at 0.3.0-beta.5
+  (#277).
+- **Site:** The team page is easier to read: key figures at the top, people
+  as cards with icon links to GitHub and their own sites, AI and automation
+  in their own section, and a bar showing each discipline's share of work.
+  Pages now ask for the stylesheet and scripts by version, so a browser
+  never shows a new page with an old stylesheet after an update (#291).
+
+### Fixed
+
+- **Relay (Cloudflare):** The relay now bounds what it holds for a device
+  that does not read: before, a modified client could make it keep any
+  amount in memory. Devices from before 0.3.0-beta.4 lose a transfer
+  through this relay after 32 MiB reaches them: a receiver after 32 MiB
+  of the file, a sender later (an estimated 1 GiB of file, since only
+  acknowledgements reach it). Update both devices (#190).
+- **Site:** The language menu is readable in the dark theme. Its list
+  opened on a white background with light text, so most languages could
+  not be read (#293).
+- **Linux:** The right-click menu of text fields (Undo, Cut, Copy, Paste,
+  Select All) is in the app's language where Qt draws it (Qt 6.11 and
+  later), and Qt's own windows follow right-to-left languages. KDE's style
+  keeps its own translation where it has one (#307, #52).
+
+### Security
+
+- **Command line:** When a send or receive fails, the detail of the error
+  names control and formatting characters (`<U+001B>`) instead of passing
+  them to the terminal. A reason the other device gives for cancelling or
+  for closing the connection, or a message from a server, could otherwise
+  move the cursor, rewrite earlier lines or set the window title
+  (GHSA-c6jh-7p7q-8gg4).
+- **Linux, CLI:** A sending device no longer connects to its relay
+  when the receiving device uses a different relay or none, so that relay
+  no longer sees the sender's IP address for a transfer it could never
+  carry. A receiver on 0.1 set to another relay, which used to fall back
+  to the sender's relay anyway, now needs a direct path (#301).
+
 ## [android-0.3.0-beta.6] - 2026-11-05
 
 ### Changed
