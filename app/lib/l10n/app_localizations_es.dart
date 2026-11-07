@@ -609,6 +609,18 @@ class AppLocalizationsEs extends AppLocalizations {
       'El texto contiene caracteres ocultos, que se muestran como U+…. Al copiarlo obtienes el texto exactamente como llegó.';
 
   @override
+  String get sendClipboardKept =>
+      'Se conserva el texto ya escrito; no se usó el portapapeles.';
+
+  @override
+  String get sendTextShortened =>
+      'Solo se muestra el comienzo del texto; se envía completo.';
+
+  @override
+  String get receiveTextShortened =>
+      'Solo se muestra el comienzo del texto. Copiar texto lo copia completo.';
+
+  @override
   String get copyText => 'Copiar texto';
 
   @override

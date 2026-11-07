@@ -74,6 +74,8 @@ pub mod qobject {
         #[qproperty(bool, is_text, cxx_name = "isText")]
         #[qproperty(QString, received_text, cxx_name = "receivedText")]
         #[qproperty(QString, shown_text, cxx_name = "shownText")]
+        #[qproperty(bool, shown_short, cxx_name = "shownShort")]
+        #[qproperty(bool, shown_hidden, cxx_name = "shownHidden")]
         type Transfer = super::TransferRust;
 
         /// Scan `paths`, reserve a code, then wait for the receiver and send.
@@ -95,6 +97,22 @@ pub mod qobject {
         #[qinvokable]
         #[cxx_name = "maxText"]
         fn max_text(self: &Transfer) -> f64;
+
+        /// The most characters of a text a text box shows: Qt lays out a
+        /// long line in a time that grows faster than its length.
+        #[qinvokable]
+        #[cxx_name = "shownChars"]
+        fn shown_chars(self: &Transfer) -> i32;
+
+        /// The clipboard's text exactly, or empty (#326).
+        #[qinvokable]
+        #[cxx_name = "clipboardText"]
+        fn clipboard_text(self: &Transfer) -> QString;
+
+        /// Put `text` on the clipboard exactly as it is.
+        #[qinvokable]
+        #[cxx_name = "copyText"]
+        fn copy_text(self: &Transfer, text: &QString);
 
         /// Connect with a code and show the offer.
         #[qinvokable]
@@ -244,9 +262,50 @@ pub struct TransferRust {
     is_text: bool,
     /// The text received, as it came: what Copy copies.
     received_text: QString,
-    /// The text received as it is shown: hidden characters named.
+    /// The text received as it is shown: hidden characters named, and at
+    /// most [`SHOWN_CHARS`] characters.
     shown_text: QString,
+    /// `shown_text` is only the beginning of the text.
+    shown_short: bool,
+    /// The text holds characters `shown_text` names by their code.
+    shown_hidden: bool,
     session: Arc<Session>,
+}
+
+/// The most characters of a text shown in a text box (#326). Qt lays out
+/// a line of n characters in a time that grows faster than n: 16 Ki take
+/// some 40 ms, 1 Mi with no line break nearly a minute, during which the
+/// window does not answer. The whole text is still sent and copied.
+const SHOWN_CHARS: usize = 16 * 1024;
+
+/// How a received text is shown.
+#[derive(Debug, PartialEq, Eq)]
+struct Shown {
+    /// Hidden characters named ([`reveal_text`], which can make the text
+    /// up to eight times longer), then cut to [`SHOWN_CHARS`] characters.
+    text: String,
+    /// It was cut.
+    short: bool,
+    /// Some characters are named by their code.
+    hidden: bool,
+}
+
+fn shown(text: &str) -> Shown {
+    let revealed = reveal_text(text);
+    // Only named characters make it differ; \r\n is shown as \n.
+    let hidden = revealed != text.replace("\r\n", "\n");
+    match revealed.char_indices().nth(SHOWN_CHARS) {
+        Some((at, _)) => Shown {
+            text: revealed[..at].to_owned(),
+            short: true,
+            hidden,
+        },
+        None => Shown {
+            text: revealed,
+            short: false,
+            hidden,
+        },
+    }
 }
 
 /// What a send sends.
@@ -374,6 +433,8 @@ impl qobject::Transfer {
         self.as_mut().set_is_text(false);
         self.as_mut().set_received_text(QString::default());
         self.as_mut().set_shown_text(QString::default());
+        self.as_mut().set_shown_short(false);
+        self.as_mut().set_shown_hidden(false);
         self.as_mut().set_state(QString::from(state));
         g
     }
@@ -487,6 +548,18 @@ impl qobject::Transfer {
 
     fn max_text(&self) -> f64 {
         to_f64(totaldrop_core::MAX_TEXT)
+    }
+
+    fn shown_chars(&self) -> i32 {
+        count(SHOWN_CHARS)
+    }
+
+    fn clipboard_text(&self) -> QString {
+        crate::bridge::clipboard::clipboard_text()
+    }
+
+    fn copy_text(&self, text: &QString) {
+        crate::bridge::clipboard::set_clipboard_text(text);
     }
 
     fn start_send(mut self: Pin<&mut Self>, source: Source, strong: bool) {
@@ -676,8 +749,11 @@ impl qobject::Transfer {
                     Ok(r) => match r.text {
                         Some(text) => {
                             obj.as_mut().set_files_ok(1);
+                            let seen = shown(&text);
                             obj.as_mut()
-                                .set_shown_text(QString::from(reveal_text(&text).as_str()));
+                                .set_shown_text(QString::from(seen.text.as_str()));
+                            obj.as_mut().set_shown_short(seen.short);
+                            obj.as_mut().set_shown_hidden(seen.hidden);
                             obj.as_mut().set_received_text(QString::from(text.as_str()));
                             obj.as_mut().set_state(QString::from("done"));
                         }
@@ -727,6 +803,12 @@ impl qobject::Transfer {
                 let _ = offer.decline().await;
             });
         }
+        // A received text is kept no longer than it is on screen.
+        self.as_mut().set_received_text(QString::default());
+        self.as_mut().set_shown_text(QString::default());
+        self.as_mut().set_shown_short(false);
+        self.as_mut().set_shown_hidden(false);
+        self.as_mut().set_is_text(false);
         self.as_mut().set_state(QString::from("idle"));
     }
 
@@ -868,7 +950,7 @@ impl cxx_qt::Initialize for qobject::Transfer {
 
 #[cfg(test)]
 mod tests {
-    use super::{connect_kind, kind, send_kind};
+    use super::{SHOWN_CHARS, connect_kind, kind, send_kind, shown};
     use totaldrop_core::Error as E;
 
     #[test]
@@ -898,6 +980,24 @@ mod tests {
             send_kind(&E::Rendezvous("connection refused".into())),
             "Server"
         );
+    }
+
+    /// 1 MiB of one line, or of control characters each shown as eight,
+    /// froze the window for minutes (#326 review): only the beginning is
+    /// shown, cut between characters.
+    #[test]
+    fn a_long_text_is_shown_in_part() {
+        let plain = shown("kısa\r\nmetin\t\n");
+        assert_eq!(plain.text, "kısa\nmetin\t\n");
+        assert!(!plain.short && !plain.hidden);
+        let full = shown(&"ğ".repeat(SHOWN_CHARS));
+        assert!(!full.short);
+        assert_eq!(full.text.chars().count(), SHOWN_CHARS);
+        let cut = shown(&"\u{1}".repeat(1 << 20));
+        assert!(cut.short && cut.hidden);
+        assert_eq!(cut.text.chars().count(), SHOWN_CHARS);
+        assert!(cut.text.starts_with("<U+0001><U+0001>"));
+        assert!(shown("a\u{202E}b").hidden);
     }
 
     #[test]

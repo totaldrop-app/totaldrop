@@ -593,6 +593,16 @@ class AppLocalizationsHe extends AppLocalizations {
       'הטקסט מכיל תווים נסתרים, המוצגים כ־U+…. העתקה נותנת את הטקסט בדיוק כפי שהגיע.';
 
   @override
+  String get sendClipboardKept => 'הטקסט שכבר הוקלד נשמר; הלוח לא שימש.';
+
+  @override
+  String get sendTextShortened => 'רק תחילת הטקסט מוצגת; הוא נשלח במלואו.';
+
+  @override
+  String get receiveTextShortened =>
+      'רק תחילת הטקסט מוצגת. העתקת טקסט מעתיקה את כולו.';
+
+  @override
   String get copyText => 'העתקת הטקסט';
 
   @override

@@ -34,6 +34,7 @@ fn main() {
         .qt_module("Quick")
         .qt_module("QuickControls2")
         .files([
+            "src/bridge/clipboard.rs",
             "src/bridge/launcher.rs",
             "src/bridge/qt_texts.rs",
             "src/bridge/surface.rs",

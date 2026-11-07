@@ -161,6 +161,9 @@
   "receiveTextDone": "Text primit și verificat",
   "receiveTextDeclined": "Ați refuzat textul.",
   "receiveTextHidden": "Textul conține caractere ascunse, afișate ca U+…. La copiere obțineți textul exact așa cum a sosit.",
+  "sendClipboardKept": "Textul deja scris a fost păstrat; clipboardul nu a fost folosit.",
+  "sendTextShortened": "Se afișează doar începutul textului; se trimite tot.",
+  "receiveTextShortened": "Se afișează doar începutul textului. Copiază textul îl copiază pe tot.",
   "copyText": "Copiază textul",
   "textCopied": "Text copiat",
   "errorTextDamaged": "Textul nu a ajuns întreg, așa că nu este afișat."

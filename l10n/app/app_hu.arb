@@ -161,6 +161,9 @@
   "receiveTextDone": "Szöveg fogadva és ellenőrizve",
   "receiveTextDeclined": "Elutasítottad a szöveget.",
   "receiveTextHidden": "A szövegben rejtett karakterek vannak, ezek U+… alakban látszanak. Másoláskor a szöveget pontosan úgy kapod meg, ahogy érkezett.",
+  "sendClipboardKept": "A már beírt szöveg megmaradt, a vágólap nem lett felhasználva.",
+  "sendTextShortened": "Csak a szöveg eleje látható, a teljes szöveg elküldésre kerül.",
+  "receiveTextShortened": "Csak a szöveg eleje látható. A Szöveg másolása az egészet másolja.",
   "copyText": "Szöveg másolása",
   "textCopied": "Szöveg másolva",
   "errorTextDamaged": "A szöveg nem érkezett meg hiánytalanul, ezért nem jelenik meg."
