@@ -100,7 +100,8 @@ cargo test --release --locked -p totaldrop-linux -p totaldrop-proto
 - Settings says that codes and verification words stay in English.
 - The command line can send a text instead of files.
 - Security: a sending device no longer connects to its relay when the
-  receiving device uses a different relay or none.
+  receiving device uses a different relay or none. A receiver on 0.1 set
+  to another relay now needs a direct path.
 - Security: the command line names control characters in an error's
   detail instead of passing them to the terminal (GHSA-c6jh-7p7q-8gg4).
 
