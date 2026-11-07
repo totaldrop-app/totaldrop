@@ -516,10 +516,6 @@ class AppLocalizationsCs extends AppLocalizations {
   String get transferNoticeBody => 'Pokračuje, i když používáte jiné aplikace.';
 
   @override
-  String get shareTextSoon =>
-      'TotalDrop zatím neposílá text, jen soubory. Sdílejte raději soubor.';
-
-  @override
   String get shareBusy =>
       'Přenos stále probíhá. Počkejte, až skončí, nebo ho zastavte, a pak sdílejte znovu.';
 

@@ -28,6 +28,7 @@ String errorMessage(BuildContext context, ErrorKind kind) {
       'errorInvalidOffer',
     ).errorInvalidOffer,
     ErrorKind.storage => l.errorStorage,
+    ErrorKind.textDamaged => l.errorTextDamaged,
     ErrorKind.other => l.errorOther,
   };
 }

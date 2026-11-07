@@ -14,6 +14,9 @@ import 'dart:io';
 const strings = {
   'shortcut_send_short': 'homeSendTitle',
   'shortcut_send_long': 'sendTitle',
+  'shortcut_clipboard_short': 'sendClipboard',
+  'shortcut_clipboard_long': 'sendClipboard',
+  'process_text': 'desktopSendWith',
   'shortcut_receive_short': 'homeReceiveTitle',
   'shortcut_receive_long': 'receiveTitle',
 };

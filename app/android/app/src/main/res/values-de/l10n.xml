@@ -6,6 +6,9 @@
 <resources>
     <string name="shortcut_send_short">Senden</string>
     <string name="shortcut_send_long">Dateien senden</string>
+    <string name="shortcut_clipboard_short">Zwischenablage senden</string>
+    <string name="shortcut_clipboard_long">Zwischenablage senden</string>
+    <string name="process_text">Mit TotalDrop senden</string>
     <string name="shortcut_receive_short">Empfangen</string>
     <string name="shortcut_receive_long">Dateien empfangen</string>
 </resources>

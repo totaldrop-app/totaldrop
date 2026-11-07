@@ -498,10 +498,6 @@ class AppLocalizationsMs extends AppLocalizations {
       'Terus berjalan semasa anda menggunakan apl lain.';
 
   @override
-  String get shareTextSoon =>
-      'TotalDrop belum menghantar teks, hanya fail. Kongsi fail sebaliknya.';
-
-  @override
   String get shareBusy =>
       'Pemindahan masih berjalan. Tunggu sehingga selesai atau hentikannya, kemudian kongsi semula.';
 

@@ -6,6 +6,9 @@
 <resources>
     <string name="shortcut_send_short">Send</string>
     <string name="shortcut_send_long">Send filer</string>
+    <string name="shortcut_clipboard_short">Send utklippstavlen</string>
+    <string name="shortcut_clipboard_long">Send utklippstavlen</string>
+    <string name="process_text">Send med TotalDrop</string>
     <string name="shortcut_receive_short">Motta</string>
     <string name="shortcut_receive_long">Motta filer</string>
 </resources>

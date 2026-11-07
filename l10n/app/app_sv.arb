@@ -138,7 +138,6 @@
   "transferNoticeSending": "Skickar med TotalDrop",
   "transferNoticeReceiving": "Tar emot med TotalDrop",
   "transferNoticeBody": "Fortsätter medan du använder andra appar.",
-  "shareTextSoon": "TotalDrop skickar inte text än, bara filer. Dela en fil i stället.",
   "shareBusy": "En överföring pågår fortfarande. Vänta tills den är klar eller stoppa den och dela sedan igen.",
   "shareSkipped": "{count, plural, =1{Ett delat objekt kunde inte läsas och utelämnades.} other{{count} delade objekt kunde inte läsas och utelämnades.}}",
   "desktopGenericName": "Filöverföring",

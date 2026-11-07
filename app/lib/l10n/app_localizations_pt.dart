@@ -519,10 +519,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String get transferNoticeBody => 'Continua enquanto você usa outros apps.';
 
   @override
-  String get shareTextSoon =>
-      'O TotalDrop ainda não envia texto, apenas arquivos. Compartilhe um arquivo.';
-
-  @override
   String get shareBusy =>
       'Uma transferência ainda está em andamento. Espere terminar ou pare-a e compartilhe de novo.';
 
@@ -1144,10 +1140,6 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get transferNoticeBody => 'Continua enquanto você usa outros apps.';
-
-  @override
-  String get shareTextSoon =>
-      'O TotalDrop ainda não envia texto, apenas arquivos. Compartilhe um arquivo.';
 
   @override
   String get shareBusy =>
@@ -1772,10 +1764,6 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
 
   @override
   String get transferNoticeBody => 'Continua enquanto utiliza outras apps.';
-
-  @override
-  String get shareTextSoon =>
-      'O TotalDrop ainda não envia texto, apenas ficheiros. Partilhe um ficheiro.';
 
   @override
   String get shareBusy =>

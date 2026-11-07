@@ -6,6 +6,9 @@
 <resources>
     <string name="shortcut_send_short">Hantar</string>
     <string name="shortcut_send_long">Hantar fail</string>
+    <string name="shortcut_clipboard_short">Hantar papan keratan</string>
+    <string name="shortcut_clipboard_long">Hantar papan keratan</string>
+    <string name="process_text">Hantar dengan TotalDrop</string>
     <string name="shortcut_receive_short">Terima</string>
     <string name="shortcut_receive_long">Terima fail</string>
 </resources>

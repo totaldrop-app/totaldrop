@@ -6,6 +6,9 @@
 <resources>
     <string name="shortcut_send_short">Versturen</string>
     <string name="shortcut_send_long">Bestanden versturen</string>
+    <string name="shortcut_clipboard_short">Klembord versturen</string>
+    <string name="shortcut_clipboard_long">Klembord versturen</string>
+    <string name="process_text">Versturen met TotalDrop</string>
     <string name="shortcut_receive_short">Ontvangen</string>
     <string name="shortcut_receive_long">Bestanden ontvangen</string>
 </resources>

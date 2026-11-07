@@ -6,6 +6,9 @@
 <resources>
     <string name="shortcut_send_short">送信</string>
     <string name="shortcut_send_long">ファイルを送信</string>
+    <string name="shortcut_clipboard_short">クリップボードを送信</string>
+    <string name="shortcut_clipboard_long">クリップボードを送信</string>
+    <string name="process_text">TotalDrop で送信</string>
     <string name="shortcut_receive_short">受信</string>
     <string name="shortcut_receive_long">ファイルを受信</string>
 </resources>

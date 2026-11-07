@@ -510,10 +510,6 @@ class AppLocalizationsHi extends AppLocalizations {
       'दूसरे ऐप इस्तेमाल करते समय भी चलता रहता है।';
 
   @override
-  String get shareTextSoon =>
-      'TotalDrop अभी टेक्स्ट नहीं भेजता, सिर्फ़ फ़ाइलें। इसकी जगह कोई फ़ाइल शेयर करें।';
-
-  @override
   String get shareBusy =>
       'एक ट्रांसफ़र अभी चल रहा है। उसके पूरा होने का इंतज़ार करें या उसे रोकें, फिर दोबारा शेयर करें।';
 

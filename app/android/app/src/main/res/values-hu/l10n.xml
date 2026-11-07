@@ -6,6 +6,9 @@
 <resources>
     <string name="shortcut_send_short">Küldés</string>
     <string name="shortcut_send_long">Fájlok küldése</string>
+    <string name="shortcut_clipboard_short">Vágólap küldése</string>
+    <string name="shortcut_clipboard_long">Vágólap küldése</string>
+    <string name="process_text">Küldés a TotalDroppal</string>
     <string name="shortcut_receive_short">Fogadás</string>
     <string name="shortcut_receive_long">Fájlok fogadása</string>
 </resources>

@@ -496,10 +496,6 @@ class AppLocalizationsId extends AppLocalizations {
       'Tetap berjalan saat Anda memakai aplikasi lain.';
 
   @override
-  String get shareTextSoon =>
-      'TotalDrop belum bisa mengirim teks, hanya file. Bagikan file saja.';
-
-  @override
   String get shareBusy =>
       'Masih ada transfer yang berjalan. Tunggu sampai selesai atau hentikan, lalu bagikan lagi.';
 

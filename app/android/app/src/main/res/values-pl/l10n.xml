@@ -6,6 +6,9 @@
 <resources>
     <string name="shortcut_send_short">Wyślij</string>
     <string name="shortcut_send_long">Wysyłanie plików</string>
+    <string name="shortcut_clipboard_short">Wyślij schowek</string>
+    <string name="shortcut_clipboard_long">Wyślij schowek</string>
+    <string name="process_text">Wyślij przez TotalDrop</string>
     <string name="shortcut_receive_short">Odbierz</string>
     <string name="shortcut_receive_long">Odbieranie plików</string>
 </resources>

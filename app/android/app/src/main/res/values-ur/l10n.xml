@@ -6,6 +6,9 @@
 <resources>
     <string name="shortcut_send_short">بھیجیں</string>
     <string name="shortcut_send_long">فائلیں بھیجیں</string>
+    <string name="shortcut_clipboard_short">کلپ بورڈ بھیجیں</string>
+    <string name="shortcut_clipboard_long">کلپ بورڈ بھیجیں</string>
+    <string name="process_text">TotalDrop سے بھیجیں</string>
     <string name="shortcut_receive_short">وصول کریں</string>
     <string name="shortcut_receive_long">فائلیں وصول کریں</string>
 </resources>

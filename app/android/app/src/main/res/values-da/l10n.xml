@@ -6,6 +6,9 @@
 <resources>
     <string name="shortcut_send_short">Send</string>
     <string name="shortcut_send_long">Send filer</string>
+    <string name="shortcut_clipboard_short">Send udklipsholder</string>
+    <string name="shortcut_clipboard_long">Send udklipsholder</string>
+    <string name="process_text">Send med TotalDrop</string>
     <string name="shortcut_receive_short">Modtag</string>
     <string name="shortcut_receive_long">Modtag filer</string>
 </resources>

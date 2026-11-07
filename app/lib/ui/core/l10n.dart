@@ -43,6 +43,10 @@ bool hasDraftTranslation(BuildContext context) => rust.hasDraftTranslation(
 /// shown, not obeyed.
 String revealControls(String name) => rust.revealControls(name: name);
 
+/// A received text as it is shown (#326): hidden characters named, at
+/// most `SHOWN_CHARS` characters.
+rust.ShownText shownText(String text) => rust.shownText(text: text);
+
 /// The locale for numbers: the device's region (its first locale, so a
 /// device set to en-DE writes "1,5 MB"), or the app language when intl
 /// does not know the device's locale.

@@ -14,8 +14,8 @@ import '../send/send_view_model.dart';
 const sendRoute = 'send';
 const receiveRoute = 'receive';
 
-/// Opens the screen a launch asks for (#53): Send with the shared files,
-/// or the screen of a launcher shortcut. A running send or receive is never
+/// Opens the screen a launch asks for (#53): Send with the shared files or
+/// text, or the screen of a launcher shortcut. A running send or receive is never
 /// cut short for it: the person is told instead.
 class LaunchRouter extends StatefulWidget {
   const LaunchRouter({
@@ -67,6 +67,17 @@ class _LaunchRouterState extends State<LaunchRouter> {
 
   void _on(Launch launch) {
     switch (launch) {
+      case OpenScreen(screen: clipboardScreen):
+        if (_blocked) {
+          _showRunning();
+        } else {
+          _show(sendRoute);
+          // Android gives the clipboard only to the app in front, which
+          // this is once its screen is up.
+          WidgetsBinding.instance.addPostFrameCallback(
+            (_) => unawaited(widget.send.pasteClipboard()),
+          );
+        }
       case OpenScreen(screen: final s):
         // Not away from a running transfer: its screen comes up instead.
         if (_blocked) {
@@ -88,13 +99,13 @@ class _LaunchRouterState extends State<LaunchRouter> {
         }
       case ShareFailed(id: final id):
         widget.send.shareFailed(id);
-      case SharedTextOnly():
-        if (_blocked) {
-          _showRunning();
-        } else {
+      case SharedText(text: final t):
+        if (!_blocked && widget.send.takeText(t)) {
           _show(sendRoute);
+        } else {
+          _showRunning();
+          _tell((l) => l.shareBusy);
         }
-        _tell((l) => l.shareTextSoon);
     }
   }
 

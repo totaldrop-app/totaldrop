@@ -138,7 +138,6 @@
   "transferNoticeSending": "TotalDrop으로 보내는 중",
   "transferNoticeReceiving": "TotalDrop으로 받는 중",
   "transferNoticeBody": "다른 앱을 사용하는 동안에도 계속됩니다.",
-  "shareTextSoon": "TotalDrop은 아직 텍스트를 보낼 수 없고 파일만 보낼 수 있습니다. 대신 파일을 공유하세요.",
   "shareBusy": "아직 전송이 진행 중입니다. 끝날 때까지 기다리거나 중지한 다음 다시 공유하세요.",
   "shareSkipped": "{count, plural, =1{공유된 항목 1개를 읽을 수 없어 제외했습니다.} other{공유된 항목 {count}개를 읽을 수 없어 제외했습니다.}}",
   "desktopGenericName": "파일 전송",

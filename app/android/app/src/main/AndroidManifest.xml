@@ -50,6 +50,14 @@
                 <category android:name="android.intent.category.DEFAULT"/>
                 <data android:mimeType="*/*"/>
             </intent-filter>
+            <!-- "Send with TotalDrop" in the menu of text selected in any
+                 app (#326): the text opens in Send, to be looked at before a
+                 code is made. Nothing is given back to that app. -->
+            <intent-filter android:label="@string/process_text">
+                <action android:name="android.intent.action.PROCESS_TEXT"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:mimeType="text/plain"/>
+            </intent-filter>
             <!-- Send and Receive when the icon is held (res/xml/shortcuts.xml). -->
             <meta-data
                 android:name="android.app.shortcuts"

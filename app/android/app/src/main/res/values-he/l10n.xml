@@ -6,6 +6,9 @@
 <resources>
     <string name="shortcut_send_short">שליחה</string>
     <string name="shortcut_send_long">שליחת קבצים</string>
+    <string name="shortcut_clipboard_short">שליחת הלוח</string>
+    <string name="shortcut_clipboard_long">שליחת הלוח</string>
+    <string name="process_text">שליחה עם TotalDrop</string>
     <string name="shortcut_receive_short">קבלה</string>
     <string name="shortcut_receive_long">קבלת קבצים</string>
 </resources>

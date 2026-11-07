@@ -6,6 +6,9 @@
 <resources>
     <string name="shortcut_send_short">Tuma</string>
     <string name="shortcut_send_long">Tuma faili</string>
+    <string name="shortcut_clipboard_short">Tuma ubao wa kunakili</string>
+    <string name="shortcut_clipboard_long">Tuma ubao wa kunakili</string>
+    <string name="process_text">Tuma kwa TotalDrop</string>
     <string name="shortcut_receive_short">Pokea</string>
     <string name="shortcut_receive_long">Pokea faili</string>
 </resources>

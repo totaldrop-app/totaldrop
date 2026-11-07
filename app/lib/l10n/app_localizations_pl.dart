@@ -520,10 +520,6 @@ class AppLocalizationsPl extends AppLocalizations {
       'Trwa nadal, gdy korzystasz z innych aplikacji.';
 
   @override
-  String get shareTextSoon =>
-      'TotalDrop nie wysyła jeszcze tekstu, tylko pliki. Udostępnij zamiast tego plik.';
-
-  @override
   String get shareBusy =>
       'Przesyłanie wciąż trwa. Poczekaj, aż się skończy, lub je zatrzymaj, a potem udostępnij ponownie.';
 
