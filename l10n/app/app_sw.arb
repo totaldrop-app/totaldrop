@@ -115,6 +115,7 @@
 
   "sendDropHere": "Dondosha faili hapa",
   "sendDropHint": "Unaweza pia kuburuta faili hadi kwenye dirisha hili.",
+  "keepAwakeReason": "TotalDrop inatuma au kupokea faili",
   "sendQrHint": "Au changanua msimbo huu kwa kamera ya kifaa kingine.",
   "sendWaitingAccept": "Linganisha maneno, kisha subiri mpokeaji akubali.",
   "receiveFromImage": "Soma QR kutoka kwenye picha",

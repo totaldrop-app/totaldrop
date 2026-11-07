@@ -445,6 +445,9 @@ class AppLocalizationsCs extends AppLocalizations {
   String get sendDropHint => 'Soubory můžete také přetáhnout do tohoto okna.';
 
   @override
+  String get keepAwakeReason => 'TotalDrop odesílá nebo přijímá soubory';
+
+  @override
   String get sendQrHint =>
       'Nebo tento kód naskenujte fotoaparátem druhého zařízení.';
 

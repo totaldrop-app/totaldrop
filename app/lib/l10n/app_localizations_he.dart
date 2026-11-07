@@ -438,6 +438,9 @@ class AppLocalizationsHe extends AppLocalizations {
   String get sendDropHint => 'אפשר גם לגרור קבצים אל החלון הזה.';
 
   @override
+  String get keepAwakeReason => 'TotalDrop שולח או מקבל קבצים';
+
+  @override
   String get sendQrHint => 'או לסרוק את הקוד הזה במצלמה של המכשיר השני.';
 
   @override

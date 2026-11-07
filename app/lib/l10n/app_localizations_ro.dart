@@ -447,6 +447,9 @@ class AppLocalizationsRo extends AppLocalizations {
       'Puteți și să trageți fișiere în această fereastră.';
 
   @override
+  String get keepAwakeReason => 'TotalDrop trimite sau primește fișiere';
+
+  @override
   String get sendQrHint =>
       'Sau scanați acest cod cu camera celuilalt dispozitiv.';
 

@@ -15,6 +15,7 @@ mod flags;
 mod instance;
 mod runtime;
 mod settings;
+mod sleep;
 mod theme;
 
 use cxx_qt_lib::{QGuiApplication, QQmlApplicationEngine, QQuickStyle, QString, QUrl};

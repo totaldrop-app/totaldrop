@@ -440,6 +440,10 @@ class AppLocalizationsFi extends AppLocalizations {
   String get sendDropHint => 'Voit myös vetää tiedostoja tähän ikkunaan.';
 
   @override
+  String get keepAwakeReason =>
+      'TotalDrop lähettää tai vastaanottaa tiedostoja';
+
+  @override
   String get sendQrHint => 'Tai skannaa koodi toisen laitteen kameralla.';
 
   @override

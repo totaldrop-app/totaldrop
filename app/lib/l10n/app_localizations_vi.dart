@@ -424,6 +424,9 @@ class AppLocalizationsVi extends AppLocalizations {
   String get sendDropHint => 'Bạn cũng có thể kéo tệp vào cửa sổ này.';
 
   @override
+  String get keepAwakeReason => 'TotalDrop đang gửi hoặc nhận tệp';
+
+  @override
   String get sendQrHint => 'Hoặc quét mã này bằng camera của thiết bị kia.';
 
   @override

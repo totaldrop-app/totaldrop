@@ -426,6 +426,9 @@ class AppLocalizationsTr extends AppLocalizations {
       'Dosyaları bu pencereye sürükleyip de ekleyebilirsiniz.';
 
   @override
+  String get keepAwakeReason => 'TotalDrop dosya gönderiyor ya da alıyor';
+
+  @override
   String get sendQrHint => 'Ya da bu kodu diğer cihazın kamerasıyla okutun.';
 
   @override

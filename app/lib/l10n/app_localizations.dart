@@ -812,6 +812,12 @@ abstract class AppLocalizations {
   /// **'You can also drag files onto this window.'**
   String get sendDropHint;
 
+  /// Linux: why the computer is kept from sleeping while a transfer runs; the desktop may show it in its power settings or battery menu
+  ///
+  /// In en, this message translates to:
+  /// **'TotalDrop is sending or receiving files'**
+  String get keepAwakeReason;
+
   /// No description provided for @sendQrHint.
   ///
   /// In en, this message translates to:

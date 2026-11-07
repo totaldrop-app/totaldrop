@@ -447,6 +447,9 @@ class AppLocalizationsEs extends AppLocalizations {
       'También puedes arrastrar archivos a esta ventana.';
 
   @override
+  String get keepAwakeReason => 'TotalDrop está enviando o recibiendo archivos';
+
+  @override
   String get sendQrHint =>
       'O escanea este código con la cámara del otro dispositivo.';
 
