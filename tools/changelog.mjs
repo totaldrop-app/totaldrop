@@ -17,7 +17,8 @@
 //   node tools/changelog.mjs release "<heading>" [YYYY-MM-DD]
 //       Moves the entries into a new "## <heading> - <date>" section under
 //       Unreleased, in Keep a Changelog order, and deletes the files. Within
-//       a section, entries are ordered by issue number, then file name.
+//       a section, entries are ordered by issue number, then file name;
+//       files named after an advisory come first.
 //       A release of one platform ("[linux-…]" or "[android-…]") takes only
 //       the entries that name it or no platform; an entry that names both
 //       stays behind under the other platform's area for its release.
@@ -110,7 +111,7 @@ export function checkText(name, text) {
     const refs = /\(([^()]*(?:#[0-9]|GHSA-)[^()]*)\)\.$/.exec(body);
     if (!refs) at(e.start, 'an entry ends with its issue references and a full stop: "… (#123)."');
     else if (parsed.advisory) {
-      if (!new RegExp(`(?<![0-9A-Za-z-])${parsed.advisory}(?![0-9a-z-])`).test(refs[1])) {
+      if (!new RegExp(`(?<![0-9A-Za-z-])${parsed.advisory}(?![0-9A-Za-z-])`).test(refs[1])) {
         at(e.start, `the entry's references do not name the file's advisory ${parsed.advisory}`);
       }
     } else if (!new RegExp(`#${parsed.issue}(?![0-9])`).test(refs[1])) {
@@ -365,7 +366,9 @@ export function main(argv) {
       console.error(
         "This pull request adds no file to changelog.d/. Add the entry as " +
           "changelog.d/<issue>-<slug>.<section>.md, or, if the change needs none, " +
-          "changelog.d/<issue>-<slug>.none.md with one sentence saying why (docs/surec.md).",
+          "changelog.d/<issue>-<slug>.none.md with one sentence saying why (docs/surec.md). " +
+          "A fix for a security advisory with no public issue is " +
+          "changelog.d/ghsa-<id>-<slug>.security.md.",
       );
       return 1;
     }

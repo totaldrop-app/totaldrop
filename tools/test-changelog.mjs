@@ -60,6 +60,7 @@ test("a security fix without a public issue is named after its advisory", () => 
   assert.deepEqual(one(name, "- **CLI:** Names the controls (GHSA-c6jh-7p7q-8gg4).\n"), []);
   assert.deepEqual(one(name, "- **CLI:** Names the controls (#7, GHSA-c6jh-7p7q-8gg4).\n"), []);
   has(one(name, "- **CLI:** Names another advisory (GHSA-r9gc-m8c8-2xqw).\n"), "advisory GHSA-c6jh-7p7q-8gg4");
+  has(one(name, "- **CLI:** Names a longer id (GHSA-c6jh-7p7q-8gg4X).\n"), "advisory GHSA-c6jh-7p7q-8gg4");
   has(one(name, "- **CLI:** Names only an issue (#7).\n"), "advisory GHSA-c6jh-7p7q-8gg4");
   has(one(name, "- **CLI:** No references.\n"), "issue references");
 });
