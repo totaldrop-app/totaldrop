@@ -146,7 +146,7 @@
   "desktopKeywords": "enviar;receber;partilhar;transferir;ficheiros;",
   "desktopSendWith": "Enviar com o TotalDrop",
   "metainfoSummary": "Envie ficheiros diretamente para outro dispositivo",
-  "metainfoAbout": "O TotalDrop envia ficheiros e pastas de um dispositivo para outro, com encriptação ponto a ponto. Escolha os ficheiros, partilhe um código curto ou um código QR e o outro dispositivo recebe-os. Sem conta, sem e-mail, sem número de telefone.",
+  "metainfoAbout": "O TotalDrop envia ficheiros e pastas de um dispositivo para outro, com encriptação de ponta a ponta. Escolha os ficheiros, partilhe um código curto ou um código QR e o outro dispositivo recebe-os. Sem conta, sem e-mail, sem número de telefone.",
   "metainfoVerified": "Cada ficheiro é verificado à chegada; os ficheiros danificados são descartados",
   "metainfoWords": "Quatro palavras de verificação mostram que ninguém está no meio",
   "metainfoTheme": "Segue o tema do seu ambiente de trabalho: Plasma, Hyprland, Omarchy, GNOME"

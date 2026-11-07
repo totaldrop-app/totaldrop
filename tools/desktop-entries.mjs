@@ -294,18 +294,43 @@ function xmlLines(catalog, indent, tag, key) {
   ];
 }
 
+/// What a desktop locale shows for `key`: its own translation, else its
+/// language's base file, else English.
+function textFor(catalog, loc, key) {
+  const lang = loc.split("_")[0];
+  for (const [arb, messages] of catalog) {
+    if (desktopLocales(arb).includes(loc) && messages[key] !== undefined) {
+      return checkText(messages[key], `${arb}: ${key}`);
+    }
+  }
+  const base = catalog.get(lang)?.[key];
+  return checkText(base ?? catalog.get("en")[key], `${lang}: ${key}`);
+}
+
+const DESCRIPTION = ["metainfoAbout", "metainfoVerified", "metainfoWords", "metainfoTheme"];
+
 /// The GENERATED block of the AppStream metainfo: summary, the paragraph
-/// and the feature list.
+/// and the feature list. A software centre builds a language's
+/// description only from the elements in that language and falls back
+/// only when there are none, so a language that differs from its
+/// fallback in any of them gets all of them (#324).
 export function metainfoBlock(catalog) {
+  const locales = [
+    ...new Set(DESCRIPTION.flatMap((key) => localized(catalog, key, escapeXml).map(([loc]) => loc))),
+  ].sort();
+  const element = (indent, tag, key) => [
+    `${indent}<${tag}>${escapeXml(checkText(catalog.get("en")[key], `en: ${key}`))}</${tag}>`,
+    ...locales.map(
+      (loc) => `${indent}<${tag} xml:lang="${loc}">${escapeXml(textFor(catalog, loc, key))}</${tag}>`,
+    ),
+  ];
   return [
     XML_BEGIN.trimEnd(),
     ...xmlLines(catalog, "  ", "summary", "metainfoSummary"),
     "  <description>",
-    ...xmlLines(catalog, "    ", "p", "metainfoAbout"),
+    ...element("    ", "p", "metainfoAbout"),
     "    <ul>",
-    ...["metainfoVerified", "metainfoWords", "metainfoTheme"].flatMap((key) =>
-      xmlLines(catalog, "      ", "li", key),
-    ),
+    ...DESCRIPTION.slice(1).flatMap((key) => element("      ", "li", key)),
     "    </ul>",
     "  </description>",
     XML_END,

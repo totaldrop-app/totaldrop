@@ -101,6 +101,9 @@
   kabul/ret soruları) `status.json`'da "kritik" listesindedir. Bu
   anahtarların taslakları gösterilmez; gözden geçirilene kadar İngilizce
   görünür.
+  Yazılım merkezlerindeki tanıtım metni (`metainfo*`) bu listede değildir:
+  bir özelliği anlatır, aktarım sırasında bir karara yol göstermez. Bu
+  yüzden taslakları da yayımlanır (#324).
 - **Düzeltmeler:** Anadili konuşanlar Hosted Weblate (açık kaynak projeler
   için başvuruyla ücretsiz) ya da PR ile düzeltir. Weblate'ten gelen her
   değişiklik de PR olarak gelir ve [0007](0007-surec.md)'deki incelemeden

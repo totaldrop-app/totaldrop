@@ -146,8 +146,8 @@
   "desktopKeywords": "senden;empfangen;teilen;übertragen;Dateien;",
   "desktopSendWith": "Mit TotalDrop senden",
   "metainfoSummary": "Dateien direkt an ein anderes Gerät senden",
-  "metainfoAbout": "TotalDrop sendet Dateien und Ordner von einem Gerät zum anderen, Ende-zu-Ende-verschlüsselt. Wähle die Dateien aus, teile einen kurzen Code oder einen QR-Code, und das andere Gerät empfängt sie. Kein Konto, keine E-Mail, keine Telefonnummer.",
+  "metainfoAbout": "TotalDrop sendet Dateien und Ordner von einem Gerät zum anderen, Ende-zu-Ende-verschlüsselt. Wählen Sie die Dateien aus, teilen Sie einen kurzen Code oder einen QR-Code, und das andere Gerät empfängt sie. Kein Konto, keine E-Mail, keine Telefonnummer.",
   "metainfoVerified": "Jede Datei wird bei der Ankunft geprüft; beschädigte Dateien werden verworfen",
   "metainfoWords": "Vier Prüfwörter zeigen, dass niemand dazwischen sitzt",
-  "metainfoTheme": "Folgt dem Design deines Desktops: Plasma, Hyprland, Omarchy, GNOME"
+  "metainfoTheme": "Folgt dem Design Ihres Desktops: Plasma, Hyprland, Omarchy, GNOME"
 }

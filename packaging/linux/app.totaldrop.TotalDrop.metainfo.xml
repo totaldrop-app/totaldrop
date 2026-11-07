@@ -48,7 +48,7 @@
     <p xml:lang="bn">TotalDrop এক ডিভাইস থেকে আরেক ডিভাইসে ফাইল ও ফোল্ডার পাঠায়, এন্ড-টু-এন্ড এনক্রিপ্টেড। ফাইল বেছে নিন, একটি ছোট কোড বা QR কোড শেয়ার করুন, আর অন্য ডিভাইস সেগুলো পেয়ে যাবে। কোনো অ্যাকাউন্ট, ইমেল বা ফোন নম্বর লাগে না।</p>
     <p xml:lang="cs">TotalDrop posílá soubory a složky z jednoho zařízení do druhého, koncově šifrované. Vyberte soubory, sdílejte krátký kód nebo QR kód a druhé zařízení je přijme. Žádný účet, e-mail ani telefonní číslo.</p>
     <p xml:lang="da">TotalDrop sender filer og mapper fra én enhed til en anden, end-to-end-krypteret. Vælg filerne, del en kort kode eller en QR-kode, og den anden enhed modtager dem. Ingen konto, ingen e-mail, intet telefonnummer.</p>
-    <p xml:lang="de">TotalDrop sendet Dateien und Ordner von einem Gerät zum anderen, Ende-zu-Ende-verschlüsselt. Wähle die Dateien aus, teile einen kurzen Code oder einen QR-Code, und das andere Gerät empfängt sie. Kein Konto, keine E-Mail, keine Telefonnummer.</p>
+    <p xml:lang="de">TotalDrop sendet Dateien und Ordner von einem Gerät zum anderen, Ende-zu-Ende-verschlüsselt. Wählen Sie die Dateien aus, teilen Sie einen kurzen Code oder einen QR-Code, und das andere Gerät empfängt sie. Kein Konto, keine E-Mail, keine Telefonnummer.</p>
     <p xml:lang="el">Το TotalDrop στέλνει αρχεία και φακέλους από μια συσκευή σε άλλη, με κρυπτογράφηση από άκρο σε άκρο. Επιλέξτε τα αρχεία, μοιραστείτε έναν σύντομο κωδικό ή έναν κωδικό QR, και η άλλη συσκευή τα λαμβάνει. Χωρίς λογαριασμό, email ή αριθμό τηλεφώνου.</p>
     <p xml:lang="es">TotalDrop envía archivos y carpetas de un dispositivo a otro, con cifrado de extremo a extremo. Elige los archivos, comparte un código corto o un código QR y el otro dispositivo los recibe. Sin cuenta, sin correo electrónico, sin número de teléfono.</p>
     <p xml:lang="fa">TotalDrop فایل‌ها و پوشه‌ها را با رمزگذاری سرتاسری از یک دستگاه به دستگاه دیگر می‌فرستد. فایل‌ها را انتخاب کنید، یک کد کوتاه یا کد QR را به اشتراک بگذارید تا دستگاه دیگر آن‌ها را دریافت کند. بدون حساب کاربری، ایمیل یا شماره تلفن.</p>
@@ -66,8 +66,8 @@
     <p xml:lang="nl">TotalDrop stuurt bestanden en mappen van het ene apparaat naar het andere, end-to-end versleuteld. Kies de bestanden, deel een korte code of een QR-code, en het andere apparaat ontvangt ze. Geen account, geen e-mail, geen telefoonnummer.</p>
     <p xml:lang="pl">TotalDrop wysyła pliki i foldery z jednego urządzenia na drugie, z szyfrowaniem end-to-end. Wybierz pliki, udostępnij krótki kod lub kod QR, a drugie urządzenie je odbierze. Bez konta, bez e-maila, bez numeru telefonu.</p>
     <p xml:lang="pt">O TotalDrop envia arquivos e pastas de um dispositivo para outro, com criptografia de ponta a ponta. Escolha os arquivos, compartilhe um código curto ou um QR code e o outro dispositivo os recebe. Sem conta, sem e-mail, sem número de telefone.</p>
-    <p xml:lang="pt_PT">O TotalDrop envia ficheiros e pastas de um dispositivo para outro, com encriptação ponto a ponto. Escolha os ficheiros, partilhe um código curto ou um código QR e o outro dispositivo recebe-os. Sem conta, sem e-mail, sem número de telefone.</p>
-    <p xml:lang="ro">TotalDrop trimite fișiere și dosare de pe un dispozitiv pe altul, criptate integral. Alege fișierele, partajează un cod scurt sau un cod QR, iar celălalt dispozitiv le primește. Fără cont, fără e-mail, fără număr de telefon.</p>
+    <p xml:lang="pt_PT">O TotalDrop envia ficheiros e pastas de um dispositivo para outro, com encriptação de ponta a ponta. Escolha os ficheiros, partilhe um código curto ou um código QR e o outro dispositivo recebe-os. Sem conta, sem e-mail, sem número de telefone.</p>
+    <p xml:lang="ro">TotalDrop trimite fișiere și dosare de pe un dispozitiv pe altul, criptate integral. Alegeți fișierele, partajați un cod scurt sau un cod QR, iar celălalt dispozitiv le primește. Fără cont, fără e-mail, fără număr de telefon.</p>
     <p xml:lang="ru">TotalDrop передаёт файлы и папки с одного устройства на другое со сквозным шифрованием. Выберите файлы, поделитесь коротким кодом или QR-кодом, и другое устройство их получит. Без учётной записи, почты и номера телефона.</p>
     <p xml:lang="sv">TotalDrop skickar filer och mappar från en enhet till en annan, end-to-end-krypterat. Välj filerna, dela en kort kod eller en QR-kod, så tar den andra enheten emot dem. Inget konto, ingen e-post, inget telefonnummer.</p>
     <p xml:lang="sw">TotalDrop hutuma faili na folda kutoka kifaa kimoja hadi kingine, zimesimbwa mwanzo hadi mwisho. Chagua faili, shiriki msimbo mfupi au msimbo wa QR, na kifaa kingine kitazipokea. Hakuna akaunti, barua pepe wala nambari ya simu.</p>
@@ -141,6 +141,7 @@
       <li xml:lang="nl">Vier verificatiewoorden laten zien dat er niemand tussen zit</li>
       <li xml:lang="pl">Cztery słowa weryfikacyjne pokazują, że nikt nie stoi pośrodku</li>
       <li xml:lang="pt">Quatro palavras de verificação mostram que ninguém está no meio</li>
+      <li xml:lang="pt_PT">Quatro palavras de verificação mostram que ninguém está no meio</li>
       <li xml:lang="ro">Patru cuvinte de verificare arată că nimeni nu stă la mijloc</li>
       <li xml:lang="ru">Четыре проверочных слова показывают, что посередине никого нет</li>
       <li xml:lang="sv">Fyra verifieringsord visar att ingen sitter emellan</li>
@@ -159,7 +160,7 @@
       <li xml:lang="bn">আপনার ডেস্কটপের থিম অনুসরণ করে: Plasma, Hyprland, Omarchy, GNOME</li>
       <li xml:lang="cs">Řídí se motivem vašeho prostředí: Plasma, Hyprland, Omarchy, GNOME</li>
       <li xml:lang="da">Følger dit skrivebords tema: Plasma, Hyprland, Omarchy, GNOME</li>
-      <li xml:lang="de">Folgt dem Design deines Desktops: Plasma, Hyprland, Omarchy, GNOME</li>
+      <li xml:lang="de">Folgt dem Design Ihres Desktops: Plasma, Hyprland, Omarchy, GNOME</li>
       <li xml:lang="el">Ακολουθεί το θέμα της επιφάνειας εργασίας σας: Plasma, Hyprland, Omarchy, GNOME</li>
       <li xml:lang="es">Sigue el tema de tu escritorio: Plasma, Hyprland, Omarchy, GNOME</li>
       <li xml:lang="fa">از پوستهٔ میزکار شما پیروی می‌کند: Plasma، Hyprland، Omarchy، GNOME</li>
@@ -178,7 +179,7 @@
       <li xml:lang="pl">Dopasowuje się do motywu pulpitu: Plasma, Hyprland, Omarchy, GNOME</li>
       <li xml:lang="pt">Segue o tema da sua área de trabalho: Plasma, Hyprland, Omarchy, GNOME</li>
       <li xml:lang="pt_PT">Segue o tema do seu ambiente de trabalho: Plasma, Hyprland, Omarchy, GNOME</li>
-      <li xml:lang="ro">Urmează tema desktopului tău: Plasma, Hyprland, Omarchy, GNOME</li>
+      <li xml:lang="ro">Urmează tema desktopului dumneavoastră: Plasma, Hyprland, Omarchy, GNOME</li>
       <li xml:lang="ru">Следует теме вашего рабочего стола: Plasma, Hyprland, Omarchy, GNOME</li>
       <li xml:lang="sv">Följer skrivbordets tema: Plasma, Hyprland, Omarchy, GNOME</li>
       <li xml:lang="sw">Hufuata mandhari ya eneo-kazi lako: Plasma, Hyprland, Omarchy, GNOME</li>

@@ -175,8 +175,15 @@ test("the metainfo block has each text in English and in xml:lang copies", () =>
   assert.doesNotMatch(block, /xml:lang="pt_BR"/);
   // No script subtag: Traditional Chinese goes by its regions.
   assert.match(block, /<li xml:lang="zh_TW">驗證單字<\/li>/);
-  // A text that is the same as English is left out.
-  assert.doesNotMatch(block, /<p xml:lang=/);
+  // A language that differs in one element gets the whole description,
+  // the rest in what it falls back to: a centre does not mix languages.
+  for (const loc of ["de", "zh_TW", "zh_HK", "zh_MO"]) {
+    assert.match(block, new RegExp(`<p xml:lang="${loc}">TotalDrop sends files\\.</p>`));
+    assert.match(block, new RegExp(`<li xml:lang="${loc}">Verified</li>`));
+  }
+  assert.match(block, /<li xml:lang="zh_TW">Theme<\/li>/);
+  // pt differs only in its summary: no description of its own.
+  assert.doesNotMatch(block, /<p xml:lang="pt">/);
   // The list is inside the description.
   assert.ok(block.indexOf("<ul>") > block.indexOf("<description>"));
   assert.ok(block.indexOf("</ul>") < block.indexOf("</description>"));

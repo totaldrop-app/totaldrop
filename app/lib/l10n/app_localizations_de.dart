@@ -553,7 +553,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get metainfoAbout =>
-      'TotalDrop sendet Dateien und Ordner von einem Gerät zum anderen, Ende-zu-Ende-verschlüsselt. Wähle die Dateien aus, teile einen kurzen Code oder einen QR-Code, und das andere Gerät empfängt sie. Kein Konto, keine E-Mail, keine Telefonnummer.';
+      'TotalDrop sendet Dateien und Ordner von einem Gerät zum anderen, Ende-zu-Ende-verschlüsselt. Wählen Sie die Dateien aus, teilen Sie einen kurzen Code oder einen QR-Code, und das andere Gerät empfängt sie. Kein Konto, keine E-Mail, keine Telefonnummer.';
 
   @override
   String get metainfoVerified =>
@@ -565,5 +565,5 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get metainfoTheme =>
-      'Folgt dem Design deines Desktops: Plasma, Hyprland, Omarchy, GNOME';
+      'Folgt dem Design Ihres Desktops: Plasma, Hyprland, Omarchy, GNOME';
 }
