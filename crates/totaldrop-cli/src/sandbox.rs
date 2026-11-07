@@ -11,8 +11,6 @@
 //! window, and refuses a folder that would not be kept rather than say
 //! "Saved" for a file that is about to vanish.
 
-use std::ffi::OsStr;
-use std::os::unix::ffi::OsStrExt as _;
 use std::path::{Path, PathBuf};
 
 /// Whether the program runs inside a Flatpak sandbox.
@@ -65,7 +63,7 @@ pub fn kept(mountinfo: &str, dir: &Path) -> bool {
         let (Some(point), Some(kind)) = (fields.nth(4), right.split(' ').next()) else {
             continue;
         };
-        if !dir.starts_with(OsStr::from_bytes(&unescape(point))) {
+        if !dir.starts_with(path_of(&unescape(point))) {
             continue;
         }
         // After the options come the optional fields, such as master:1.
@@ -75,6 +73,20 @@ pub fn kept(mountinfo: &str, dir: &Path) -> bool {
         memory = Some(matches!(kind, "tmpfs" | "ramfs") && !from_outside);
     }
     memory != Some(true)
+}
+
+/// A mount point's bytes as a path. Mount tables exist only where paths
+/// are bytes (Linux); elsewhere `kept` is never asked, as there is no
+/// Flatpak, and the bytes are read as UTF-8.
+#[cfg(unix)]
+fn path_of(bytes: &[u8]) -> PathBuf {
+    use std::os::unix::ffi::OsStrExt as _;
+    PathBuf::from(std::ffi::OsStr::from_bytes(bytes))
+}
+
+#[cfg(not(unix))]
+fn path_of(bytes: &[u8]) -> PathBuf {
+    PathBuf::from(String::from_utf8_lossy(bytes).into_owned())
 }
 
 /// Undoes the octal escapes (`\040` for a space) of a mountinfo field.
@@ -194,8 +206,12 @@ mod tests {
 3 1 0:42 / /home/ada/\\377 rw master:1 - ext4 /dev/sda1 rw
 ";
         assert!(kept(table, Path::new("/home/ada/My Files/x")));
-        let odd = OsStr::from_bytes(b"/home/ada/\xff/x");
-        assert!(kept(table, Path::new(odd)));
+        #[cfg(unix)]
+        {
+            use std::os::unix::ffi::OsStrExt as _;
+            let odd = std::ffi::OsStr::from_bytes(b"/home/ada/\xff/x");
+            assert!(kept(table, Path::new(odd)));
+        }
     }
 
     #[test]
