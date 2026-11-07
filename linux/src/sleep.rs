@@ -11,15 +11,17 @@
 //! person asks for may be refused or ask for confirmation, as logind
 //! decides.
 //!
-//! - First, systemd-logind's `Inhibit("sleep", …, "block")` on the system
-//!   bus, in the Flatpak too (`--system-talk-name=org.freedesktop.login1`).
-//!   KDE, Hyprland (hypridle) and Omarchy all suspend through logind, so
-//!   one lock covers them. It holds for as long as the file descriptor it
-//!   returns is open.
-//! - Where logind does not answer: the desktop portal's `Inhibit` with the
-//!   suspend flag. It holds until its request is closed or the connection
-//!   ends. Not every portal implements it (Hyprland's does not), which is
-//!   why it is only the fallback. Its `Response` is not awaited: the lock
+//! - Outside the Flatpak: systemd-logind's `Inhibit("sleep", …, "block")`
+//!   on the system bus. KDE, Hyprland (hypridle) and Omarchy all suspend
+//!   through logind, so one lock covers them. It holds for as long as the
+//!   file descriptor it returns is open.
+//! - In the Flatpak, or where logind does not answer: the desktop portal's
+//!   `Inhibit` with the suspend flag. It holds until its request is closed
+//!   or the connection ends. Flathub does not allow apps to talk to logind
+//!   (`finish-args-login1-system-talk-name`), so the portal is all the
+//!   Flatpak has. Whether it holds suspend depends on the desktop's portal
+//!   backend: KDE's does; on Hyprland the request falls through to another
+//!   backend and may hold nothing. Its `Response` is not awaited: the lock
 //!   is a wish, and a portal that declines it leaves the transfer as it
 //!   was without the lock.
 //!
@@ -105,10 +107,11 @@ pub async fn portal_on(conn: zbus::Connection, reason: &str) -> Option<Hold> {
     Some(Hold::Portal { conn, request })
 }
 
-/// The lock this desktop gives: logind's, or the portal's when logind does
-/// not answer.
+/// The lock this desktop gives: logind's outside the Flatpak, the portal's
+/// in it or when logind does not answer.
 async fn acquire(reason: String) -> Option<Hold> {
-    if let Ok(system) = zbus::Connection::system().await
+    if !crate::theme::host::sandboxed()
+        && let Ok(system) = zbus::Connection::system().await
         && let Some(hold) = logind_on(&system, &reason).await
     {
         return Some(hold);
