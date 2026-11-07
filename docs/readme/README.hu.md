@@ -1,4 +1,4 @@
-<!-- Translated from README.md 8687cea85e72. -->
+<!-- Translated from README.md 38ed72b6b4a4. -->
 <div align="center">
 
 <picture>
@@ -51,8 +51,8 @@ Ingyenes és nyílt forráskódú. Végpontok közötti titkosítás. Nincs e-ma
 
 | Platform | Honnan | Megjegyzések |
 | --- | --- | --- |
-| **Linux** (x86-64) | [Arch / Omarchy](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.5/totaldrop-0.3.0_beta.5-1-x86_64.pkg.tar.zst) · [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.5/totaldrop_0.3.0.beta.5-1_amd64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.5/totaldrop-0.3.0.beta.5-1.fc43.x86_64.rpm) | 0.3.0-beta.5, Qt 6.8 vagy újabb |
-| **Linux** (ARM64) | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.5/totaldrop_0.3.0.beta.5-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.5/totaldrop-0.3.0.beta.5-1.fc43.aarch64.rpm) | 0.3.0-beta.5, Qt 6.8 vagy újabb |
+| **Linux** (x86-64) | [Arch / Omarchy](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop-0.3.0_beta.6-1-x86_64.pkg.tar.zst) · [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop_0.3.0.beta.6-1_amd64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop-0.3.0.beta.6-1.fc43.x86_64.rpm) · [Flatpak](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop-0.3.0-beta.6-x86_64.flatpak) | 0.3.0-beta.6, Qt 6.8 vagy újabb |
+| **Linux** (ARM64) | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop_0.3.0.beta.6-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop-0.3.0.beta.6-1.fc43.aarch64.rpm) · [Flatpak](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop-0.3.0-beta.6-aarch64.flatpak) | 0.3.0-beta.6, Qt 6.8 vagy újabb |
 | **Android** | [Csatlakozz a bétához](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.7, Android 15 vagy újabb, Google Play meghívással |
 | **Parancssor** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux, macOS, Windows |
 | **Windows, macOS, iOS** | Úton van | Ezek kódaláírását fedezik elsőként az adományok |
@@ -60,7 +60,7 @@ Ingyenes és nyílt forráskódú. Végpontok közötti titkosítás. Nincs e-ma
 Minden csomagot a CI készít egy címkézett commitból, soha nem egy fejlesztő gépén. Ha telepítés előtt ellenőriznél egy csomagot, hasonlítsd össze a kiadás `SHA256SUMS` fájljával, és ellenőrizd, hol készült:
 
 ```bash
-gh attestation verify totaldrop_0.3.0.beta.5-1_amd64.deb --repo totaldrop-app/totaldrop
+gh attestation verify totaldrop_0.3.0.beta.6-1_amd64.deb --repo totaldrop-app/totaldrop
 ```
 
 > [!NOTE]

@@ -1,4 +1,4 @@
-<!-- Translated from README.md 8687cea85e72. -->
+<!-- Translated from README.md 38ed72b6b4a4. -->
 <div align="center">
 
 <picture>
@@ -51,8 +51,8 @@ Za darmo i na otwartych źródłach. Szyfrowanie end-to-end. Bez e-maila, bez nu
 
 | Platforma | Gdzie pobrać | Uwagi |
 | --- | --- | --- |
-| **Linux** (x86-64) | [Arch / Omarchy](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.5/totaldrop-0.3.0_beta.5-1-x86_64.pkg.tar.zst) · [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.5/totaldrop_0.3.0.beta.5-1_amd64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.5/totaldrop-0.3.0.beta.5-1.fc43.x86_64.rpm) | 0.3.0-beta.5, Qt 6.8 lub nowszy |
-| **Linux** (ARM64) | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.5/totaldrop_0.3.0.beta.5-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.5/totaldrop-0.3.0.beta.5-1.fc43.aarch64.rpm) | 0.3.0-beta.5, Qt 6.8 lub nowszy |
+| **Linux** (x86-64) | [Arch / Omarchy](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop-0.3.0_beta.6-1-x86_64.pkg.tar.zst) · [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop_0.3.0.beta.6-1_amd64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop-0.3.0.beta.6-1.fc43.x86_64.rpm) · [Flatpak](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop-0.3.0-beta.6-x86_64.flatpak) | 0.3.0-beta.6, Qt 6.8 lub nowszy |
+| **Linux** (ARM64) | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop_0.3.0.beta.6-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop-0.3.0.beta.6-1.fc43.aarch64.rpm) · [Flatpak](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop-0.3.0-beta.6-aarch64.flatpak) | 0.3.0-beta.6, Qt 6.8 lub nowszy |
 | **Android** | [Dołącz do bety](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.7, Android 15 lub nowszy, Google Play na zaproszenie |
 | **Wiersz poleceń** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux, macOS, Windows |
 | **Windows, macOS, iOS** | W drodze | Podpisywanie kodu dla tych systemów to pierwsze, na co pójdą darowizny |
@@ -60,7 +60,7 @@ Za darmo i na otwartych źródłach. Szyfrowanie end-to-end. Bez e-maila, bez nu
 Każdy pakiet jest budowany przez CI z oznaczonego tagiem commita, nigdy na komputerze dewelopera. Aby sprawdzić pakiet przed instalacją, porównaj go z plikiem `SHA256SUMS` wydania i zweryfikuj, gdzie został zbudowany:
 
 ```bash
-gh attestation verify totaldrop_0.3.0.beta.5-1_amd64.deb --repo totaldrop-app/totaldrop
+gh attestation verify totaldrop_0.3.0.beta.6-1_amd64.deb --repo totaldrop-app/totaldrop
 ```
 
 > [!NOTE]
