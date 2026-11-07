@@ -84,6 +84,7 @@ const _shows = {
   'send with files': 'Rapport annuel',
   'send with the code': '7-harbor-rocket',
   'sending with the words': 'abstract',
+  'sending, after the receiver accepted': 'abstract',
   'receive an offer': 'Rapport annuel',
   'send a text': 'Rapport annuel',
   'receive a text offer': 'one',
@@ -189,6 +190,41 @@ void main() {
                   words: ['abandon', 'ability', 'absorb', 'abstract'],
                   done: 0,
                   total: 0,
+                  summary: null,
+                  error: null,
+                ),
+              );
+            },
+          );
+        },
+        'sending, after the receiver accepted': () {
+          final repo = FakeRepository();
+          final vm = SendViewModel(
+            repository: repo,
+            fileSource: FakeFileSource(),
+          )..addFakeFileForTest(_longName);
+          return (
+            SendView(viewModel: vm),
+            (tester) async {
+              unawaited(vm.start());
+              repo.prepared.complete(FakeSession());
+              await tester.pump();
+              repo.events.add(
+                const TransferEvent(
+                  kind: EventKind.connected,
+                  words: ['abandon', 'ability', 'absorb', 'abstract'],
+                  done: 0,
+                  total: 0,
+                  summary: null,
+                  error: null,
+                ),
+              );
+              repo.events.add(
+                const TransferEvent(
+                  kind: EventKind.progress,
+                  words: [],
+                  done: 1,
+                  total: 10,
                   summary: null,
                   error: null,
                 ),

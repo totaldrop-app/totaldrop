@@ -96,6 +96,7 @@ class SendView extends StatelessWidget {
                       text: l.sendPreparing,
                     ),
                     SendStage.waiting => _Waiting(vm: vm),
+                    SendStage.connected => _Connected(vm: vm),
                     SendStage.transferring => _Transferring(vm: vm),
                     SendStage.done => _Done(vm: vm),
                     SendStage.failed => Padding(
@@ -582,6 +583,35 @@ class _Waiting extends StatelessWidget {
         ),
         Gap.xl,
         const SameNetworkNote(),
+      ],
+    );
+  }
+}
+
+/// The receiver came and decides: the words to compare, nothing sent yet.
+class _Connected extends StatelessWidget {
+  const _Connected({required this.vm});
+  final SendViewModel vm;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    return ListView(
+      padding: const EdgeInsets.all(24),
+      children: [
+        const Center(child: TotalDropMark(size: 120, sending: true)),
+        Gap.l,
+        VerificationWords(words: vm.words),
+        Gap.m,
+        Announced(
+          Text(
+            l.sendWaitingAccept,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
       ],
     );
   }
