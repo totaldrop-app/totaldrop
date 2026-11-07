@@ -222,7 +222,7 @@
   <releases>
     <release version="0.3.0~beta.6" date="2026-11-07" type="development">
       <description>
-        <p>Send a text instead of files: "Send text" on the Send screen, or "Send clipboard" in the app's launcher menu. A text that arrives is shown, not saved, with any hidden characters named, and "Copy text" copies it exactly as it came.</p>
+        <p>Send a text instead of files: "Send text" on the Send screen, or "Send clipboard" in the app's launcher menu. A text that arrives is shown, not saved, with any hidden characters named, and "Copy text" copies it exactly as it came. A receiver on 0.3.0-beta.5 or older saves the text as text.txt.</p>
         <p>"Send files" and "Receive files" appear when you right-click TotalDrop in the taskbar or app launcher. In the distribution packages, not in the Flatpak, "Send with TotalDrop" is also in the right-click menu of Dolphin, Nemo and Files (once its Python extension support is installed).</p>
         <p>The release also comes as a Flatpak package for x86_64 and ARM64. Software centres now describe TotalDrop in all 35 languages of the app.</p>
         <p>With Qt 6.11 or later, the right-click menu of text fields is in the app's language. Settings says that codes and verification words stay in English so that two devices set to different languages show the same words.</p>

@@ -5,6 +5,7 @@ totaldrop (0.3.0~beta.6-1) unstable; urgency=medium
     shown, not saved, with any hidden characters named, and "Copy text"
     copies it exactly as it came. The command line can send a text too:
     totaldrop send --text "...", or totaldrop send - for standard input.
+    A receiver on 0.3.0-beta.5 or older saves the text as text.txt.
   * "Send with TotalDrop" in the right-click menu of Dolphin, Files
     (once python3-nautilus is installed) and Nemo; "Send files" and
     "Receive files" when you right-click TotalDrop in the taskbar or app
