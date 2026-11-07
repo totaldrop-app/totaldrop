@@ -19,6 +19,8 @@ use totaldrop_core::{
     Event, IncomingOffer, PathOptions, PreparedSend, ReceiveOptions, SendOptions, Stop,
 };
 
+use totaldrop_l10n::reveal_text;
+
 use crate::desktop;
 use crate::runtime::RUNTIME;
 use crate::settings::Settings;
@@ -69,12 +71,30 @@ pub mod qobject {
         #[qproperty(QString, default_server, cxx_name = "defaultServer")]
         #[qproperty(bool, privacy_mode, cxx_name = "privacyMode")]
         #[qproperty(QString, destination)]
+        #[qproperty(bool, is_text, cxx_name = "isText")]
+        #[qproperty(QString, received_text, cxx_name = "receivedText")]
+        #[qproperty(QString, shown_text, cxx_name = "shownText")]
         type Transfer = super::TransferRust;
 
         /// Scan `paths`, reserve a code, then wait for the receiver and send.
         #[qinvokable]
         #[cxx_name = "send"]
         fn send(self: Pin<&mut Transfer>, paths: &QStringList, strong: bool);
+
+        /// Like `send`, for a text the receiver shows instead of saving.
+        #[qinvokable]
+        #[cxx_name = "sendText"]
+        fn send_text(self: Pin<&mut Transfer>, text: &QString, strong: bool);
+
+        /// The length of `text` in UTF-8 bytes, as the text limit counts.
+        #[qinvokable]
+        #[cxx_name = "textBytes"]
+        fn text_bytes(self: &Transfer, text: &QString) -> f64;
+
+        /// The largest text `sendText` sends, in bytes.
+        #[qinvokable]
+        #[cxx_name = "maxText"]
+        fn max_text(self: &Transfer) -> f64;
 
         /// Connect with a code and show the offer.
         #[qinvokable]
@@ -219,7 +239,20 @@ pub struct TransferRust {
     default_server: QString,
     privacy_mode: bool,
     destination: QString,
+    /// This transfer is a text (#326): sent with `sendText`, or an offer
+    /// that accepting shows instead of saving.
+    is_text: bool,
+    /// The text received, as it came: what Copy copies.
+    received_text: QString,
+    /// The text received as it is shown: hidden characters named.
+    shown_text: QString,
     session: Arc<Session>,
+}
+
+/// What a send sends.
+enum Source {
+    Paths(Vec<PathBuf>),
+    Text(String),
 }
 
 type Thread = cxx_qt::CxxQtThread<qobject::Transfer>;
@@ -338,6 +371,9 @@ impl qobject::Transfer {
         self.as_mut().set_error_kind(QString::default());
         self.as_mut().set_error_detail(QString::default());
         self.as_mut().set_error_cause(QString::default());
+        self.as_mut().set_is_text(false);
+        self.as_mut().set_received_text(QString::default());
+        self.as_mut().set_shown_text(QString::default());
         self.as_mut().set_state(QString::from(state));
         g
     }
@@ -427,12 +463,35 @@ impl qobject::Transfer {
         true
     }
 
-    fn send(mut self: Pin<&mut Self>, paths: &QStringList, strong: bool) {
+    fn send(self: Pin<&mut Self>, paths: &QStringList, strong: bool) {
         let paths: Vec<PathBuf> = strings(paths).iter().map(|p| path_of(p)).collect();
         if paths.is_empty() {
             return;
         }
+        self.start_send(Source::Paths(paths), strong);
+    }
+
+    fn send_text(self: Pin<&mut Self>, text: &QString, strong: bool) {
+        let text = text.to_string();
+        // QML does not offer an empty or too long text; the core refuses
+        // one too.
+        if text.is_empty() {
+            return;
+        }
+        self.start_send(Source::Text(text), strong);
+    }
+
+    fn text_bytes(&self, text: &QString) -> f64 {
+        to_f64(u64::try_from(text.to_string().len()).unwrap_or(u64::MAX))
+    }
+
+    fn max_text(&self) -> f64 {
+        to_f64(totaldrop_core::MAX_TEXT)
+    }
+
+    fn start_send(mut self: Pin<&mut Self>, source: Source, strong: bool) {
         let g = self.as_mut().begin("send", "preparing");
+        self.as_mut().set_is_text(matches!(source, Source::Text(_)));
         let thread = self.qt_thread();
         let opts = SendOptions {
             server: self.opts_server(),
@@ -445,7 +504,14 @@ impl qobject::Transfer {
             let prepared = tokio::select! {
                 biased;
                 () = stop.stopped() => Err(totaldrop_core::Error::Stopped),
-                r = PreparedSend::new(&opts, paths) => r,
+                r = async {
+                    match &source {
+                        Source::Paths(paths) => PreparedSend::new(&opts, paths.clone()).await,
+                        Source::Text(text) => {
+                            PreparedSend::text(&opts, text, totaldrop_core::TEXT_FILE).await
+                        }
+                    }
+                } => r,
             };
             let prepared = match prepared {
                 Ok(p) => p,
@@ -533,6 +599,7 @@ impl qobject::Transfer {
                         obj.as_mut().set_size(to_f64(s.total_size));
                         obj.as_mut().set_offer_names(list(&s.top_level));
                         obj.as_mut().set_words(list(&words));
+                        obj.as_mut().set_is_text(s.text);
                         obj.as_mut().set_state(QString::from("offer"));
                     });
                 }
@@ -561,6 +628,10 @@ impl qobject::Transfer {
         };
         let g = self.rust().session.generation.load(Ordering::SeqCst);
         self.as_mut().set_state(QString::from("transferring"));
+        if offer.summary().text {
+            self.accept_text(offer, g);
+            return;
+        }
         let thread = self.qt_thread();
         let dest = PathBuf::from(self.destination().to_string());
         let stop = self.stop_handle();
@@ -585,6 +656,34 @@ impl qobject::Transfer {
                         obj.as_mut().set_saved_to(QString::from(&saved));
                         obj.as_mut().set_state(QString::from("done"));
                     }
+                    Err(e) => obj.fail(kind(&e), &e.to_string(), e.cause().as_str()),
+                }
+            });
+        });
+    }
+
+    /// Accept a text offer: kept in memory and shown, nothing written.
+    fn accept_text(self: Pin<&mut Self>, offer: IncomingOffer, g: u64) {
+        let thread = self.qt_thread();
+        let stop = self.stop_handle();
+        self.spawn(async move {
+            let result = offer.accept_text_with(&stop).await;
+            let _ = thread.queue(move |mut obj| {
+                if !obj.current(g) {
+                    return;
+                }
+                match result {
+                    Ok(r) => match r.text {
+                        Some(text) => {
+                            obj.as_mut().set_files_ok(1);
+                            obj.as_mut()
+                                .set_shown_text(QString::from(reveal_text(&text).as_str()));
+                            obj.as_mut().set_received_text(QString::from(text.as_str()));
+                            obj.as_mut().set_state(QString::from("done"));
+                        }
+                        // It failed its hash or is not UTF-8: not shown.
+                        None => obj.fail("TextDamaged", "the text failed its check", ""),
+                    },
                     Err(e) => obj.fail(kind(&e), &e.to_string(), e.cause().as_str()),
                 }
             });

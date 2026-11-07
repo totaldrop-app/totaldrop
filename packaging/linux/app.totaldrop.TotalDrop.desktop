@@ -125,7 +125,7 @@ MimeType=x-scheme-handler/totaldrop;
 StartupNotify=true
 StartupWMClass=app.totaldrop.TotalDrop
 SingleMainWindow=true
-Actions=send;receive;
+Actions=send;clipboard;receive;
 
 [Desktop Action send]
 Name=Send files
@@ -166,6 +166,45 @@ Name[zh_HK]=傳送檔案
 Name[zh_MO]=傳送檔案
 Name[zh_TW]=傳送檔案
 Exec=totaldrop-desktop --screen=send
+
+[Desktop Action clipboard]
+Name=Send clipboard
+Name[ar]=إرسال محتوى الحافظة
+Name[bn]=ক্লিপবোর্ডের লেখা পাঠান
+Name[cs]=Odeslat schránku
+Name[da]=Send udklipsholder
+Name[de]=Zwischenablage senden
+Name[el]=Αποστολή προχείρου
+Name[es]=Enviar portapapeles
+Name[fa]=ارسال محتوای کلیپ‌بورد
+Name[fi]=Lähetä leikepöytä
+Name[fr]=Envoyer le presse-papiers
+Name[he]=שליחת הלוח
+Name[hi]=क्लिपबोर्ड भेजें
+Name[hu]=Vágólap küldése
+Name[id]=Kirim papan klip
+Name[it]=Invia appunti
+Name[ja]=クリップボードを送信
+Name[ko]=클립보드 보내기
+Name[ms]=Hantar papan keratan
+Name[nb]=Send utklippstavlen
+Name[nl]=Klembord versturen
+Name[pl]=Wyślij schowek
+Name[pt]=Enviar área de transferência
+Name[ro]=Trimite clipboardul
+Name[ru]=Отправить буфер обмена
+Name[sv]=Skicka urklipp
+Name[sw]=Tuma ubao wa kunakili
+Name[th]=ส่งคลิปบอร์ด
+Name[tr]=Panodakini gönder
+Name[uk]=Надіслати буфер обміну
+Name[ur]=کلپ بورڈ بھیجیں
+Name[vi]=Gửi khay nhớ tạm
+Name[zh]=发送剪贴板
+Name[zh_HK]=傳送剪貼簿
+Name[zh_MO]=傳送剪貼簿
+Name[zh_TW]=傳送剪貼簿
+Exec=totaldrop-desktop --screen=clipboard
 
 [Desktop Action receive]
 Name=Receive files
