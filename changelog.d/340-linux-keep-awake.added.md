@@ -1,5 +1,6 @@
-- **Linux:** While a send or a receive is under way, TotalDrop keeps the
-  computer from going to sleep, so that a transfer is not cut when the
-  computer would suspend on idle. The screen may still dim and lock. It
-  uses systemd-logind outside the Flatpak and the desktop portal inside
-  it (#340).
+- **Linux:** While a send or a receive is under way, TotalDrop asks the
+  system not to suspend, so that a transfer is not cut when the computer
+  would go to sleep on idle. The screen may still dim and lock. A suspend
+  you ask for yourself may be refused or ask for confirmation while a
+  transfer runs. It uses systemd-logind, in the Flatpak too, and the
+  desktop portal where logind does not answer (#340).
