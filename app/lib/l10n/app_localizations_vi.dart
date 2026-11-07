@@ -563,6 +563,18 @@ class AppLocalizationsVi extends AppLocalizations {
       'Văn bản có ký tự ẩn, được hiển thị dưới dạng U+…. Khi sao chép, bạn nhận được văn bản đúng như khi đến.';
 
   @override
+  String get sendClipboardKept =>
+      'Văn bản đã gõ được giữ nguyên; không dùng bảng nhớ tạm.';
+
+  @override
+  String get sendTextShortened =>
+      'Chỉ hiển thị phần đầu của văn bản; toàn bộ sẽ được gửi.';
+
+  @override
+  String get receiveTextShortened =>
+      'Chỉ hiển thị phần đầu của văn bản. Sao chép văn bản sẽ sao chép toàn bộ.';
+
+  @override
   String get copyText => 'Sao chép văn bản';
 
   @override

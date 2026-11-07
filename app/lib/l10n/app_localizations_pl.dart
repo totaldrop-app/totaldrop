@@ -594,6 +594,18 @@ class AppLocalizationsPl extends AppLocalizations {
       'Tekst zawiera ukryte znaki, wyświetlane jako U+…. Po skopiowaniu otrzymasz tekst dokładnie taki, jaki dotarł.';
 
   @override
+  String get sendClipboardKept =>
+      'Wpisany tekst został zachowany, schowek nie został użyty.';
+
+  @override
+  String get sendTextShortened =>
+      'Widoczny jest tylko początek tekstu, wysłany zostanie cały.';
+
+  @override
+  String get receiveTextShortened =>
+      'Widoczny jest tylko początek tekstu. Kopiuj tekst kopiuje całość.';
+
+  @override
   String get copyText => 'Kopiuj tekst';
 
   @override

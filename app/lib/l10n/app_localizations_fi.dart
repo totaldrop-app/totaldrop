@@ -579,6 +579,18 @@ class AppLocalizationsFi extends AppLocalizations {
       'Tekstissä on piilomerkkejä, jotka näytetään muodossa U+…. Kopioitaessa saat tekstin täsmälleen sellaisena kuin se saapui.';
 
   @override
+  String get sendClipboardKept =>
+      'Jo kirjoitettu teksti säilytettiin, leikepöytää ei käytetty.';
+
+  @override
+  String get sendTextShortened =>
+      'Tekstistä näytetään vain alku, koko teksti lähetetään.';
+
+  @override
+  String get receiveTextShortened =>
+      'Tekstistä näytetään vain alku. Kopioi teksti kopioi sen kokonaan.';
+
+  @override
   String get copyText => 'Kopioi teksti';
 
   @override

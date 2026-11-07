@@ -591,6 +591,18 @@ class AppLocalizationsPt extends AppLocalizations {
       'O texto contém caracteres ocultos, exibidos como U+…. Ao copiar, você obtém o texto exatamente como chegou.';
 
   @override
+  String get sendClipboardKept =>
+      'O texto já digitado foi mantido; a área de transferência não foi usada.';
+
+  @override
+  String get sendTextShortened =>
+      'Só o início do texto é mostrado; ele é enviado inteiro.';
+
+  @override
+  String get receiveTextShortened =>
+      'Só o início do texto é mostrado. Copiar texto copia tudo.';
+
+  @override
   String get copyText => 'Copiar texto';
 
   @override
@@ -1185,6 +1197,18 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String get receiveTextHidden =>
       'O texto contém caracteres ocultos, exibidos como U+…. Ao copiar, você obtém o texto exatamente como chegou.';
+
+  @override
+  String get sendClipboardKept =>
+      'O texto já digitado foi mantido; a área de transferência não foi usada.';
+
+  @override
+  String get sendTextShortened =>
+      'Só o início do texto é mostrado; ele é enviado inteiro.';
+
+  @override
+  String get receiveTextShortened =>
+      'Só o início do texto é mostrado. Copiar texto copia tudo.';
 
   @override
   String get copyText => 'Copiar texto';
@@ -1782,6 +1806,18 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
   @override
   String get receiveTextHidden =>
       'O texto contém caracteres ocultos, mostrados como U+…. Ao copiar, obtém o texto exatamente como chegou.';
+
+  @override
+  String get sendClipboardKept =>
+      'O texto já escrito foi mantido; a área de transferência não foi utilizada.';
+
+  @override
+  String get sendTextShortened =>
+      'Só é mostrado o início do texto; é enviado na íntegra.';
+
+  @override
+  String get receiveTextShortened =>
+      'Só é mostrado o início do texto. Copiar texto copia-o na íntegra.';
 
   @override
   String get copyText => 'Copiar texto';

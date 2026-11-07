@@ -534,6 +534,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get receiveTextHidden => '文本中含有隐藏字符，显示为 U+…。复制时得到的是与收到时完全相同的文本。';
 
   @override
+  String get sendClipboardKept => '已输入的文本保持不变，未使用剪贴板。';
+
+  @override
+  String get sendTextShortened => '只显示文本的开头，发送的是全文。';
+
+  @override
+  String get receiveTextShortened => '只显示文本的开头。“复制文本”会复制全文。';
+
+  @override
   String get copyText => '复制文本';
 
   @override
@@ -1072,6 +1081,15 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get receiveTextHidden => '文本中含有隐藏字符，显示为 U+…。复制时得到的是与收到时完全相同的文本。';
 
   @override
+  String get sendClipboardKept => '已输入的文本保持不变，未使用剪贴板。';
+
+  @override
+  String get sendTextShortened => '只显示文本的开头，发送的是全文。';
+
+  @override
+  String get receiveTextShortened => '只显示文本的开头。“复制文本”会复制全文。';
+
+  @override
   String get copyText => '复制文本';
 
   @override
@@ -1607,6 +1625,15 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get receiveTextHidden => '文字中含有隱藏字元，顯示為 U+…。複製時得到的是與收到時完全相同的文字。';
+
+  @override
+  String get sendClipboardKept => '已輸入的文字保持不變，未使用剪貼簿。';
+
+  @override
+  String get sendTextShortened => '只顯示文字的開頭，傳送的是全文。';
+
+  @override
+  String get receiveTextShortened => '只顯示文字的開頭。「複製文字」會複製全文。';
 
   @override
   String get copyText => '複製文字';

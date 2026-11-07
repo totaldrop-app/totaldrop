@@ -545,6 +545,15 @@ class AppLocalizationsJa extends AppLocalizations {
       'テキストに見えない文字が含まれており、U+… の形で表示しています。コピーすると、届いたとおりのテキストがコピーされます。';
 
   @override
+  String get sendClipboardKept => '入力済みのテキストはそのままです。クリップボードは使われていません。';
+
+  @override
+  String get sendTextShortened => 'テキストの冒頭だけを表示しています。送信されるのは全文です。';
+
+  @override
+  String get receiveTextShortened => 'テキストの冒頭だけを表示しています。「テキストをコピー」で全文をコピーします。';
+
+  @override
   String get copyText => 'テキストをコピー';
 
   @override

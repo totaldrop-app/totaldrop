@@ -545,6 +545,15 @@ class AppLocalizationsKo extends AppLocalizations {
       '텍스트에 숨겨진 문자가 있어 U+… 형태로 표시합니다. 복사하면 도착한 그대로의 텍스트가 복사됩니다.';
 
   @override
+  String get sendClipboardKept => '이미 입력한 텍스트는 그대로 두었으며 클립보드는 사용하지 않았습니다.';
+
+  @override
+  String get sendTextShortened => '텍스트의 앞부분만 표시됩니다. 전체가 전송됩니다.';
+
+  @override
+  String get receiveTextShortened => '텍스트의 앞부분만 표시됩니다. 텍스트 복사는 전체를 복사합니다.';
+
+  @override
   String get copyText => '텍스트 복사';
 
   @override

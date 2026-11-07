@@ -203,7 +203,9 @@ ApplicationWindow {
             const send = xfer.role === "send"
             // A text itself never goes into a notification: notifications
             // are kept and shown where others may see them.
-            if (xfer.state === "done" && xfer.isText)
+            if (xfer.state === "done" && xfer.isText && send && xfer.filesFailed > 0)
+                xfer.notify("TotalDrop", Strings.s.errorTextDamaged)
+            else if (xfer.state === "done" && xfer.isText)
                 xfer.notify(send ? Strings.s.sendDone : Strings.s.receiveTextDone,
                                 send ? Strings.s.sendTextDone : Strings.size(xfer.size))
             else if (xfer.state === "done")

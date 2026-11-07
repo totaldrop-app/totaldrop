@@ -569,6 +569,18 @@ class AppLocalizationsHu extends AppLocalizations {
       'A szövegben rejtett karakterek vannak, ezek U+… alakban látszanak. Másoláskor a szöveget pontosan úgy kapod meg, ahogy érkezett.';
 
   @override
+  String get sendClipboardKept =>
+      'A már beírt szöveg megmaradt, a vágólap nem lett felhasználva.';
+
+  @override
+  String get sendTextShortened =>
+      'Csak a szöveg eleje látható, a teljes szöveg elküldésre kerül.';
+
+  @override
+  String get receiveTextShortened =>
+      'Csak a szöveg eleje látható. A Szöveg másolása az egészet másolja.';
+
+  @override
   String get copyText => 'Szöveg másolása';
 
   @override

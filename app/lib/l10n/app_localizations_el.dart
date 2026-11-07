@@ -588,6 +588,18 @@ class AppLocalizationsEl extends AppLocalizations {
       'Το κείμενο περιέχει κρυφούς χαρακτήρες, που εμφανίζονται ως U+…. Η αντιγραφή δίνει το κείμενο ακριβώς όπως ήρθε.';
 
   @override
+  String get sendClipboardKept =>
+      'Το κείμενο που έχει ήδη γραφτεί διατηρήθηκε· το πρόχειρο δεν χρησιμοποιήθηκε.';
+
+  @override
+  String get sendTextShortened =>
+      'Εμφανίζεται μόνο η αρχή του κειμένου· αποστέλλεται ολόκληρο.';
+
+  @override
+  String get receiveTextShortened =>
+      'Εμφανίζεται μόνο η αρχή του κειμένου. Η Αντιγραφή κειμένου αντιγράφει ολόκληρο.';
+
+  @override
   String get copyText => 'Αντιγραφή κειμένου';
 
   @override

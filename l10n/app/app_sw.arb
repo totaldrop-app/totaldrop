@@ -157,6 +157,9 @@
   "receiveTextDone": "Maandishi yamepokelewa na kuthibitishwa",
   "receiveTextDeclined": "Umekataa maandishi.",
   "receiveTextHidden": "Maandishi yana herufi zilizofichwa, zinazoonyeshwa kama U+…. Ukinakili, unapata maandishi kama yalivyofika.",
+  "sendClipboardKept": "Maandishi yaliyokwisha andikwa yamebaki; ubao wa kunakili haukutumika.",
+  "sendTextShortened": "Mwanzo wa maandishi pekee unaonyeshwa; yote yanatumwa.",
+  "receiveTextShortened": "Mwanzo wa maandishi pekee unaonyeshwa. Nakili maandishi inanakili yote.",
   "copyText": "Nakili maandishi",
   "textCopied": "Maandishi yamenakiliwa",
   "errorTextDamaged": "Maandishi hayakufika yakiwa kamili, kwa hiyo hayaonyeshwi."

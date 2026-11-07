@@ -587,6 +587,17 @@ class AppLocalizationsAr extends AppLocalizations {
       'يحتوي النص على أحرف مخفية تظهر على شكل U+…. عند النسخ يُنسخ النص كما وصل تمامًا.';
 
   @override
+  String get sendClipboardKept =>
+      'تم الإبقاء على النص المكتوب، ولم تُستخدم الحافظة.';
+
+  @override
+  String get sendTextShortened => 'يظهر بداية النص فقط، ويُرسَل كله.';
+
+  @override
+  String get receiveTextShortened =>
+      'تظهر بداية النص فقط. «نسخ النص» ينسخه كله.';
+
+  @override
   String get copyText => 'نسخ النص';
 
   @override

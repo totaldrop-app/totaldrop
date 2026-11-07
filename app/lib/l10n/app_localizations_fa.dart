@@ -577,6 +577,18 @@ class AppLocalizationsFa extends AppLocalizations {
       'متن نویسه‌های پنهان دارد که به‌صورت U+… نمایش داده می‌شوند. با کپی کردن، متن دقیقاً همان‌طور که رسیده کپی می‌شود.';
 
   @override
+  String get sendClipboardKept =>
+      'متن نوشته‌شده حفظ شد و از کلیپ‌بورد استفاده نشد.';
+
+  @override
+  String get sendTextShortened =>
+      'فقط ابتدای متن نشان داده می‌شود؛ همهٔ آن فرستاده می‌شود.';
+
+  @override
+  String get receiveTextShortened =>
+      'فقط ابتدای متن نشان داده می‌شود. «کپی متن» همهٔ آن را کپی می‌کند.';
+
+  @override
   String get copyText => 'کپی متن';
 
   @override

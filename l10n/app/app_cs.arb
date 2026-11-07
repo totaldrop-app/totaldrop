@@ -157,6 +157,9 @@
   "receiveTextDone": "Text přijat a ověřen",
   "receiveTextDeclined": "Text jste odmítli.",
   "receiveTextHidden": "Text obsahuje skryté znaky, zobrazené jako U+…. Zkopírováním získáte text přesně tak, jak dorazil.",
+  "sendClipboardKept": "Napsaný text zůstal, schránka nebyla použita.",
+  "sendTextShortened": "Zobrazen je jen začátek textu, odešle se celý.",
+  "receiveTextShortened": "Zobrazen je jen začátek textu. Kopírovat text zkopíruje celý.",
   "copyText": "Kopírovat text",
   "textCopied": "Text zkopírován",
   "errorTextDamaged": "Text nedorazil v pořádku, proto se nezobrazí."

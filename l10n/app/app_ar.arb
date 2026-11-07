@@ -157,6 +157,9 @@
   "receiveTextDone": "تم استلام النص والتحقق منه",
   "receiveTextDeclined": "لقد رفضت النص.",
   "receiveTextHidden": "يحتوي النص على أحرف مخفية تظهر على شكل U+…. عند النسخ يُنسخ النص كما وصل تمامًا.",
+  "sendClipboardKept": "تم الإبقاء على النص المكتوب، ولم تُستخدم الحافظة.",
+  "sendTextShortened": "يظهر بداية النص فقط، ويُرسَل كله.",
+  "receiveTextShortened": "تظهر بداية النص فقط. «نسخ النص» ينسخه كله.",
   "copyText": "نسخ النص",
   "textCopied": "تم نسخ النص",
   "errorTextDamaged": "لم يصل النص كاملًا، لذلك لا يُعرض."

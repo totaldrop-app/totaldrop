@@ -568,6 +568,18 @@ class AppLocalizationsBn extends AppLocalizations {
       'লেখায় লুকানো অক্ষর আছে, সেগুলো U+… হিসেবে দেখানো হচ্ছে। কপি করলে লেখাটি ঠিক যেমন এসেছে তেমনই কপি হয়।';
 
   @override
+  String get sendClipboardKept =>
+      'আগে লেখা লেখাটি রাখা হয়েছে, ক্লিপবোর্ড ব্যবহার করা হয়নি।';
+
+  @override
+  String get sendTextShortened =>
+      'লেখার শুধু শুরুটা দেখানো হচ্ছে, পুরোটাই পাঠানো হবে।';
+
+  @override
+  String get receiveTextShortened =>
+      'লেখার শুধু শুরুটা দেখানো হচ্ছে। লেখা কপি করুন পুরোটাই কপি করে।';
+
+  @override
   String get copyText => 'লেখা কপি করুন';
 
   @override

@@ -565,6 +565,18 @@ class AppLocalizationsId extends AppLocalizations {
       'Teks berisi karakter tersembunyi yang ditampilkan sebagai U+…. Saat disalin, teks didapat persis seperti saat tiba.';
 
   @override
+  String get sendClipboardKept =>
+      'Teks yang sudah diketik tetap disimpan; papan klip tidak digunakan.';
+
+  @override
+  String get sendTextShortened =>
+      'Hanya awal teks yang ditampilkan; seluruhnya dikirim.';
+
+  @override
+  String get receiveTextShortened =>
+      'Hanya awal teks yang ditampilkan. Salin teks menyalin seluruhnya.';
+
+  @override
   String get copyText => 'Salin teks';
 
   @override

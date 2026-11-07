@@ -157,6 +157,9 @@
   "receiveTextDone": "Text empfangen und überprüft",
   "receiveTextDeclined": "Sie haben den Text abgelehnt.",
   "receiveTextHidden": "Der Text enthält versteckte Zeichen, angezeigt als U+…. Beim Kopieren erhalten Sie den Text genau so, wie er ankam.",
+  "sendClipboardKept": "Der bereits eingegebene Text bleibt erhalten; die Zwischenablage wurde nicht verwendet.",
+  "sendTextShortened": "Nur der Anfang des Textes wird angezeigt; gesendet wird der ganze Text.",
+  "receiveTextShortened": "Nur der Anfang des Textes wird angezeigt. Text kopieren kopiert den ganzen Text.",
   "copyText": "Text kopieren",
   "textCopied": "Text kopiert",
   "errorTextDamaged": "Der Text ist nicht unversehrt angekommen und wird deshalb nicht angezeigt."
