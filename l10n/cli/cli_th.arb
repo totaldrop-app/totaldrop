@@ -23,7 +23,7 @@
   "cliStopped": "หยุดแล้ว",
   "cliNoFolder": "ไม่มี {folder} หรือไม่ใช่โฟลเดอร์",
   "cliFolderNotWritable": "เขียนลงใน {folder} ไม่ได้",
-  "cliFolderNotKept": "{folder} ไม่ถูกเก็บไว้ Flatpak จะลบเมื่อคำสั่งจบ ยังไม่ได้รับอะไรเลย ให้บันทึกลงใน {downloads} แทน เช่น ใช้ -o {downloads}",
+  "cliFolderNotKept": "{folder} ไม่ถูกเก็บไว้ Flatpak จะลบเมื่อคำสั่งจบ ยังไม่ได้รับอะไรเลย ให้บันทึกลงใน {downloads} แทน เช่น ใช้ -o \"{downloads}\"",
   "cliErrWrongCode": "รหัสไม่ตรงกัน อาจพิมพ์ผิด หรือมีคนพยายามดักการโอน ยังไม่มีอะไรถูกส่ง เริ่มใหม่ด้วยรหัสใหม่",
   "cliErrPeerLeft": "อีกฝ่ายออกไปก่อนการโอนจะเสร็จ",
   "cliErrDeclined": "ผู้รับปฏิเสธไฟล์",

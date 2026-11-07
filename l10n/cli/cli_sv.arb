@@ -23,7 +23,7 @@
   "cliStopped": "Stoppat.",
   "cliNoFolder": "{folder} finns inte eller är inte en mapp.",
   "cliFolderNotWritable": "Kan inte skriva till {folder}.",
-  "cliFolderNotKept": "{folder} sparas inte: Flatpak tar bort den när kommandot avslutas. Inget togs emot. Spara i {downloads} i stället, till exempel med -o {downloads}.",
+  "cliFolderNotKept": "{folder} sparas inte: Flatpak tar bort den när kommandot avslutas. Inget togs emot. Spara i {downloads} i stället, till exempel med -o \"{downloads}\".",
   "cliErrWrongCode": "Koden stämde inte. Den skrevs fel, eller så försökte någon fånga upp överföringen. Inget skickades. Börja om med en ny kod.",
   "cliErrPeerLeft": "Den andra sidan lämnade innan överföringen var klar.",
   "cliErrDeclined": "Mottagaren avböjde filerna.",

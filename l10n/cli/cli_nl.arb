@@ -23,7 +23,7 @@
   "cliStopped": "Gestopt.",
   "cliNoFolder": "{folder} bestaat niet of is geen map.",
   "cliFolderNotWritable": "Kan niet schrijven naar {folder}.",
-  "cliFolderNotKept": "{folder} blijft niet bewaard: Flatpak verwijdert deze map als de opdracht eindigt. Er is niets ontvangen. Sla in plaats daarvan op in {downloads}, bijvoorbeeld met -o {downloads}.",
+  "cliFolderNotKept": "{folder} blijft niet bewaard: Flatpak verwijdert deze map als de opdracht eindigt. Er is niets ontvangen. Sla in plaats daarvan op in {downloads}, bijvoorbeeld met -o \"{downloads}\".",
   "cliErrWrongCode": "De code kwam niet overeen. Hij is verkeerd getypt, of iemand heeft geprobeerd de overdracht te onderscheppen. Er is niets verstuurd. Begin opnieuw met een nieuwe code.",
   "cliErrPeerLeft": "De andere kant is vertrokken voordat de overdracht klaar was.",
   "cliErrDeclined": "De ontvanger heeft de bestanden geweigerd.",

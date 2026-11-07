@@ -23,7 +23,7 @@
   "cliStopped": "中止しました。",
   "cliNoFolder": "{folder} は存在しないか、フォルダではありません。",
   "cliFolderNotWritable": "{folder} に書き込めません。",
-  "cliFolderNotKept": "{folder} は保持されません。コマンドが終わると Flatpak が削除します。何も受信していません。代わりに {downloads} に保存してください（例: -o {downloads}）。",
+  "cliFolderNotKept": "{folder} は保持されません。コマンドが終わると Flatpak が削除します。何も受信していません。代わりに {downloads} に保存してください（例: -o \"{downloads}\"）。",
   "cliErrWrongCode": "コードが一致しませんでした。入力を間違えたか、誰かが転送を傍受しようとしました。何も送信されていません。新しいコードでやり直してください。",
   "cliErrPeerLeft": "転送が終わる前に相手が離れました。",
   "cliErrDeclined": "受信者がファイルを拒否しました。",

@@ -23,7 +23,7 @@
   "cliStopped": "Stoppet.",
   "cliNoFolder": "{folder} findes ikke eller er ikke en mappe.",
   "cliFolderNotWritable": "Kan ikke skrive til {folder}.",
-  "cliFolderNotKept": "{folder} bevares ikke: Flatpak sletter den, når kommandoen slutter. Intet blev modtaget. Gem i {downloads} i stedet, for eksempel med -o {downloads}.",
+  "cliFolderNotKept": "{folder} bevares ikke: Flatpak sletter den, når kommandoen slutter. Intet blev modtaget. Gem i {downloads} i stedet, for eksempel med -o \"{downloads}\".",
   "cliErrWrongCode": "Koden passede ikke. Den blev skrevet forkert, eller nogen forsøgte at opsnappe overførslen. Intet blev sendt. Start forfra med en ny kode.",
   "cliErrPeerLeft": "Den anden side forlod forbindelsen, før overførslen var færdig.",
   "cliErrDeclined": "Modtageren afviste filerne.",

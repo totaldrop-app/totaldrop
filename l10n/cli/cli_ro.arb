@@ -23,7 +23,7 @@
   "cliStopped": "Oprit.",
   "cliNoFolder": "{folder} nu există sau nu este un dosar.",
   "cliFolderNotWritable": "Nu se poate scrie în {folder}.",
-  "cliFolderNotKept": "{folder} nu este păstrat: Flatpak îl șterge când comanda se termină. Nu s-a primit nimic. Salvați în schimb în {downloads}, de exemplu cu -o {downloads}.",
+  "cliFolderNotKept": "{folder} nu este păstrat: Flatpak îl șterge când comanda se termină. Nu s-a primit nimic. Salvați în schimb în {downloads}, de exemplu cu -o \"{downloads}\".",
   "cliErrWrongCode": "Codul nu s-a potrivit. A fost tastat greșit sau cineva a încercat să intercepteze transferul. Nu s-a trimis nimic. Începeți din nou cu un cod nou.",
   "cliErrPeerLeft": "Cealaltă parte a plecat înainte de terminarea transferului.",
   "cliErrDeclined": "Destinatarul a refuzat fișierele.",

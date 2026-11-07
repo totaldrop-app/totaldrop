@@ -23,7 +23,7 @@
   "cliStopped": "Detenido.",
   "cliNoFolder": "{folder} no existe o no es una carpeta.",
   "cliFolderNotWritable": "No se puede escribir en {folder}.",
-  "cliFolderNotKept": "{folder} no se conserva: Flatpak la borra cuando termina el comando. No se recibió nada. Guarde en {downloads}, por ejemplo con -o {downloads}.",
+  "cliFolderNotKept": "{folder} no se conserva: Flatpak la borra cuando termina el comando. No se recibió nada. Guarde en {downloads}, por ejemplo con -o \"{downloads}\".",
   "cliErrWrongCode": "El código no coincide. Se escribió mal o alguien intentó interceptar la transferencia. No se envió nada. Empieza de nuevo con un código nuevo.",
   "cliErrPeerLeft": "La otra parte se fue antes de que terminara la transferencia.",
   "cliErrDeclined": "El destinatario rechazó los archivos.",

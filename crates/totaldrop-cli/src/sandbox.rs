@@ -3,14 +3,16 @@
 //
 //! Where `receive` saves inside the Flatpak sandbox (#350).
 //!
-//! The Flatpak may write only to `~/Downloads/TotalDrop`
-//! (`packaging/flatpak`). Everything else the sandbox shows as writable,
-//! its home folder and `/tmp` among them, lives in memory (tmpfs) and is
-//! gone when the command ends. So inside Flatpak `receive` saves to
+//! The Flatpak may write to `~/Downloads/TotalDrop` (`packaging/flatpak`)
+//! and to its own folders on disk. The rest of what the sandbox shows,
+//! the home folder among it, lives on the sandbox's own tmpfs and is gone
+//! when the command ends. So inside Flatpak `receive` saves to
 //! `~/Downloads/TotalDrop` when no `--out` is given, the same folder as the
 //! window, and refuses a folder that would not be kept rather than say
 //! "Saved" for a file that is about to vanish.
 
+use std::ffi::OsStr;
+use std::os::unix::ffi::OsStrExt as _;
 use std::path::{Path, PathBuf};
 
 /// Whether the program runs inside a Flatpak sandbox.
@@ -19,7 +21,7 @@ pub fn sandboxed() -> bool {
 }
 
 /// `~/Downloads/TotalDrop`, localized by XDG: the folder the window saves
-/// to too (`linux/src/desktop.rs`).
+/// to too. Keep it the same as `downloads` in `linux/src/desktop.rs`.
 pub fn downloads() -> PathBuf {
     dirs::download_dir()
         .or_else(|| dirs::home_dir().map(|h| h.join("Downloads")))
@@ -42,36 +44,41 @@ pub fn default_destination(
 }
 
 /// Whether a file written into `dir` (an absolute, canonical path) is kept,
-/// judged from `mountinfo` (`/proc/self/mountinfo`): it is not when the
-/// mount that holds `dir` is a tmpfs. Inside Flatpak every tmpfs belongs to
-/// the sandbox. An unreadable table says nothing, so the folder counts as
-/// kept.
+/// judged from `mountinfo` (`/proc/self/mountinfo`). It is not when the
+/// mount that holds `dir` is the sandbox's own memory: a tmpfs or ramfs
+/// that bubblewrap made itself. Such a mount has no peer group. A memory
+/// folder of the person's own that Flatpak was allowed to see is bound in
+/// from outside and carries `master:` or `shared:`, so it is kept. An
+/// unreadable table says nothing, so the folder counts as kept.
 pub fn kept(mountinfo: &str, dir: &Path) -> bool {
-    let mut best: Option<(usize, bool)> = None;
+    // Every mount point that holds `dir` lies on its path, so a later one
+    // covers the earlier ones: the last line that holds `dir` is the mount
+    // the file lands on.
+    let mut memory = None;
     for line in mountinfo.lines() {
         // id parent major:minor root mount-point options [optional…] - type source super
         let mut halves = line.splitn(2, " - ");
         let (Some(left), Some(right)) = (halves.next(), halves.next()) else {
             continue;
         };
-        let (Some(point), Some(kind)) = (left.split(' ').nth(4), right.split(' ').next()) else {
+        let mut fields = left.split(' ');
+        let (Some(point), Some(kind)) = (fields.nth(4), right.split(' ').next()) else {
             continue;
         };
-        let point = PathBuf::from(unescape(point));
-        if !dir.starts_with(&point) {
+        if !dir.starts_with(OsStr::from_bytes(&unescape(point))) {
             continue;
         }
-        let depth = point.components().count();
-        // A later mount on the same point covers the earlier one.
-        if best.is_none_or(|(d, _)| depth >= d) {
-            best = Some((depth, kind == "tmpfs"));
-        }
+        // After the options come the optional fields, such as master:1.
+        let from_outside = fields
+            .skip(1)
+            .any(|f| f.starts_with("master:") || f.starts_with("shared:"));
+        memory = Some(matches!(kind, "tmpfs" | "ramfs") && !from_outside);
     }
-    !best.is_some_and(|(_, memory)| memory)
+    memory != Some(true)
 }
 
 /// Undoes the octal escapes (`\040` for a space) of a mountinfo field.
-fn unescape(field: &str) -> String {
+fn unescape(field: &str) -> Vec<u8> {
     let mut out = Vec::with_capacity(field.len());
     let mut rest = field.as_bytes();
     while let Some((&b, tail)) = rest.split_first() {
@@ -86,7 +93,7 @@ fn unescape(field: &str) -> String {
             rest = tail;
         }
     }
-    String::from_utf8_lossy(&out).into_owned()
+    out
 }
 
 /// Three octal digits as one byte, if they are octal and fit in it.
@@ -104,16 +111,20 @@ fn octal(digits: [u8; 3]) -> Option<u8> {
 mod tests {
     use super::*;
 
-    /// The mount table inside the beta.6 Flatpak, shortened: the sandbox's
-    /// root and home are tmpfs, the download folder is the person's disk.
+    /// The mount table inside the beta.6 Flatpak on Omarchy, shortened
+    /// (`flatpak run --command=cat app.totaldrop.TotalDrop
+    /// /proc/self/mountinfo`, 7 Nov 2026), with the user renamed. The root
+    /// is the sandbox's tmpfs; the home folder has no mount of its own.
     const FLATPAK: &str = "\
-1 0 0:40 / / rw,nosuid,nodev,relatime - tmpfs tmpfs rw,uid=1000,gid=1000
-2 1 0:30 /usr /usr ro,nosuid,nodev,relatime - overlay overlay ro
-3 1 0:41 / /tmp rw,nosuid,nodev,relatime - tmpfs tmpfs rw
-4 1 0:42 / /home/ada rw,nosuid,nodev,relatime - tmpfs tmpfs rw
-5 4 259:2 /home/ada/Downloads/TotalDrop /home/ada/Downloads/TotalDrop rw,relatime master:1 - btrfs /dev/nvme0n1p2 rw
-6 4 259:2 /home/ada/.var/app/app.totaldrop.TotalDrop /home/ada/.var/app/app.totaldrop.TotalDrop rw,relatime master:1 - btrfs /dev/nvme0n1p2 rw
-7 4 259:2 /home/ada/My\\040Files /home/ada/My\\040Files rw,relatime - ext4 /dev/sda1 rw
+708 707 0:84 / / rw,nosuid,nodev,relatime - tmpfs tmpfs rw,uid=1000,gid=1000,inode64
+709 708 0:29 /@home/ada/.local/share/flatpak/runtime/org.kde.Platform/x86_64/6.11/active/files /usr ro,nosuid,nodev,relatime master:162 - btrfs /dev/mapper/root rw,compress=zstd:3,subvol=/@home
+767 708 0:29 /@home/ada/.var/app/app.totaldrop.TotalDrop/cache/tmp /var/tmp rw,nosuid,nodev,relatime master:162 - btrfs /dev/mapper/root rw,compress=zstd:3,subvol=/@home
+779 708 0:29 /@home/ada/.cache/.flatpak/app.totaldrop.TotalDrop/xdg-run /run/user/1000 rw,nosuid,nodev,relatime master:162 - btrfs /dev/mapper/root rw,compress=zstd:3,subvol=/@home
+790 708 0:29 /@home/ada/.cache/.flatpak/app.totaldrop.TotalDrop/tmp /tmp rw,nosuid,nodev,relatime master:162 - btrfs /dev/mapper/root rw,compress=zstd:3,subvol=/@home
+797 708 0:29 /@home/ada/.var/app/app.totaldrop.TotalDrop /home/ada/.var/app/app.totaldrop.TotalDrop rw,nosuid,nodev,relatime master:162 - btrfs /dev/mapper/root rw,compress=zstd:3,subvol=/@home
+798 708 0:29 /@home/ada/Downloads/TotalDrop /home/ada/Downloads/TotalDrop rw,nosuid,nodev,relatime master:162 - btrfs /dev/mapper/root rw,compress=zstd:3,subvol=/@home
+804 797 0:85 /bindfileta5rPB//deleted /home/ada/.var/app/app.totaldrop.TotalDrop/config/user-dirs.dirs ro,nosuid,nodev,relatime - tmpfs tmpfs rw,uid=1000,gid=1000,inode64,huge=advise
+811 708 0:86 / /dev/shm rw,nosuid,nodev - tmpfs tmpfs rw
 ";
 
     #[test]
@@ -130,15 +141,16 @@ mod tests {
     }
 
     #[test]
-    fn the_sandbox_home_and_tmp_are_not_kept() {
+    fn the_sandbox_home_is_not_kept() {
+        // No mount of its own: the file lands on the tmpfs root.
         assert!(!kept(FLATPAK, Path::new("/home/ada")));
         assert!(!kept(FLATPAK, Path::new("/home/ada/Documents")));
-        assert!(!kept(FLATPAK, Path::new("/tmp/x")));
         assert!(!kept(FLATPAK, Path::new("/")));
+        assert!(!kept(FLATPAK, Path::new("/dev/shm/x")));
     }
 
     #[test]
-    fn granted_folders_are_kept() {
+    fn granted_and_disk_folders_are_kept() {
         assert!(kept(FLATPAK, Path::new("/home/ada/Downloads/TotalDrop")));
         assert!(kept(
             FLATPAK,
@@ -148,7 +160,9 @@ mod tests {
             FLATPAK,
             Path::new("/home/ada/.var/app/app.totaldrop.TotalDrop/data")
         ));
-        assert!(kept(FLATPAK, Path::new("/home/ada/My Files/x")));
+        // Flatpak keeps the app's /tmp and /run/user on disk.
+        assert!(kept(FLATPAK, Path::new("/tmp/x")));
+        assert!(kept(FLATPAK, Path::new("/run/user/1000/x")));
     }
 
     #[test]
@@ -158,13 +172,44 @@ mod tests {
     }
 
     #[test]
-    fn a_later_mount_on_the_same_point_wins() {
+    fn a_memory_folder_from_outside_is_kept() {
+        // flatpak override --filesystem=/srv/ram: the person's own tmpfs,
+        // bound in from the host, outlives the command.
+        let table = "\
+1 0 0:40 / / rw - tmpfs tmpfs rw
+2 1 0:41 / /srv/ram rw master:7 - tmpfs tmpfs rw
+3 1 0:42 / /srv/ram2 rw shared:8 - ramfs ramfs rw
+4 1 0:43 / /srv/ram3 rw - ramfs ramfs rw
+";
+        assert!(kept(table, Path::new("/srv/ram/x")));
+        assert!(kept(table, Path::new("/srv/ram2/x")));
+        assert!(!kept(table, Path::new("/srv/ram3/x")));
+    }
+
+    #[test]
+    fn escaped_and_non_utf8_mount_points_match() {
+        let table = "\
+1 0 0:40 / / rw - tmpfs tmpfs rw
+2 1 0:41 / /home/ada/My\\040Files rw master:1 - ext4 /dev/sda1 rw
+3 1 0:42 / /home/ada/\\377 rw master:1 - ext4 /dev/sda1 rw
+";
+        assert!(kept(table, Path::new("/home/ada/My Files/x")));
+        let odd = OsStr::from_bytes(b"/home/ada/\xff/x");
+        assert!(kept(table, Path::new(odd)));
+    }
+
+    #[test]
+    fn a_later_mount_covers_earlier_ones() {
         let table = "\
 1 0 0:40 / / rw - ext4 /dev/sda1 rw
 2 1 0:41 / /data rw - ext4 /dev/sdb1 rw
 3 1 0:42 / /data rw - tmpfs tmpfs rw
+4 1 0:43 / /a/b rw - ext4 /dev/sdc1 rw
+5 1 0:44 / /a rw - tmpfs tmpfs rw
 ";
         assert!(!kept(table, Path::new("/data/x")));
+        // A mount on a parent hides one made on a child before it.
+        assert!(!kept(table, Path::new("/a/b/x")));
         assert!(kept(table, Path::new("/srv")));
     }
 
@@ -176,10 +221,10 @@ mod tests {
 
     #[test]
     fn octal_escapes_are_undone() {
-        assert_eq!(unescape("/a\\040b\\011c"), "/a b\tc");
-        assert_eq!(unescape("/a\\9"), "/a\\9");
-        assert_eq!(unescape("/a\\+12"), "/a\\+12");
-        assert_eq!(unescape("/a\\777"), "/a\\777");
-        assert_eq!(unescape("/a\\"), "/a\\");
+        assert_eq!(unescape("/a\\040b\\011c"), b"/a b\tc");
+        assert_eq!(unescape("/a\\9"), b"/a\\9");
+        assert_eq!(unescape("/a\\+12"), b"/a\\+12");
+        assert_eq!(unescape("/a\\777"), b"/a\\777");
+        assert_eq!(unescape("/a\\"), b"/a\\");
     }
 }

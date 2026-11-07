@@ -23,7 +23,7 @@
   "cliStopped": "Leállítva.",
   "cliNoFolder": "{folder} nem létezik, vagy nem mappa.",
   "cliFolderNotWritable": "Nem lehet írni ide: {folder}.",
-  "cliFolderNotKept": "A(z) {folder} nem marad meg: a Flatpak törli, amikor a parancs véget ér. Semmi sem érkezett meg. Mentsen inkább ide: {downloads}, például ezzel: -o {downloads}.",
+  "cliFolderNotKept": "A(z) {folder} nem marad meg: a Flatpak törli, amikor a parancs véget ér. Semmi sem érkezett meg. Mentsen inkább ide: {downloads}, például ezzel: -o \"{downloads}\".",
   "cliErrWrongCode": "A kód nem egyezett. Vagy elgépelték, vagy valaki megpróbálta elfogni az átvitelt. Semmi sem lett elküldve. Kezdd újra egy új kóddal.",
   "cliErrPeerLeft": "A másik fél kilépett, mielőtt az átvitel befejeződött.",
   "cliErrDeclined": "A címzett elutasította a fájlokat.",

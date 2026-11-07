@@ -14,6 +14,8 @@ use std::path::{Path, PathBuf};
 use ashpd::desktop::file_chooser::{FileFilter, SelectedFiles};
 
 /// Where received files go: `~/Downloads/TotalDrop` (localized by XDG).
+/// The command line's Flatpak default is the same folder: keep it equal to
+/// `downloads` in `crates/totaldrop-cli/src/sandbox.rs`.
 pub fn downloads() -> PathBuf {
     dirs::download_dir()
         .or_else(|| dirs::home_dir().map(|h| h.join("Downloads")))

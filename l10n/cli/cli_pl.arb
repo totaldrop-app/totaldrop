@@ -23,7 +23,7 @@
   "cliStopped": "Zatrzymano.",
   "cliNoFolder": "{folder} nie istnieje lub nie jest folderem.",
   "cliFolderNotWritable": "Nie można zapisywać w {folder}.",
-  "cliFolderNotKept": "{folder} nie zostanie zachowany: Flatpak usuwa go po zakończeniu polecenia. Nic nie zostało odebrane. Zapisz zamiast tego w {downloads}, na przykład z -o {downloads}.",
+  "cliFolderNotKept": "{folder} nie zostanie zachowany: Flatpak usuwa go po zakończeniu polecenia. Nic nie zostało odebrane. Zapisz zamiast tego w {downloads}, na przykład z -o \"{downloads}\".",
   "cliErrWrongCode": "Kod się nie zgadzał. Został źle wpisany albo ktoś próbował przechwycić transfer. Nic nie zostało wysłane. Zacznij od nowa z nowym kodem.",
   "cliErrPeerLeft": "Druga strona rozłączyła się przed zakończeniem transferu.",
   "cliErrDeclined": "Odbiorca odrzucił pliki.",

@@ -23,7 +23,7 @@
   "cliStopped": "Interrotto.",
   "cliNoFolder": "{folder} non esiste o non è una cartella.",
   "cliFolderNotWritable": "Impossibile scrivere in {folder}.",
-  "cliFolderNotKept": "{folder} non viene conservata: Flatpak la elimina al termine del comando. Non è stato ricevuto nulla. Salva invece in {downloads}, ad esempio con -o {downloads}.",
+  "cliFolderNotKept": "{folder} non viene conservata: Flatpak la elimina al termine del comando. Non è stato ricevuto nulla. Salva invece in {downloads}, ad esempio con -o \"{downloads}\".",
   "cliErrWrongCode": "Il codice non corrispondeva. È stato digitato male, oppure qualcuno ha cercato di intercettare il trasferimento. Non è stato inviato nulla. Ricomincia con un nuovo codice.",
   "cliErrPeerLeft": "L'altra parte se n'è andata prima della fine del trasferimento.",
   "cliErrDeclined": "Il destinatario ha rifiutato i file.",

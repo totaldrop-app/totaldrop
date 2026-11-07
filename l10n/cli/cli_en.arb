@@ -41,7 +41,7 @@
   "@cliNoFolder": {"placeholders": {"folder": {"type": "String", "example": "/home/ada/Downloads"}}},
   "cliFolderNotWritable": "Cannot write to {folder}.",
   "@cliFolderNotWritable": {"placeholders": {"folder": {"type": "String", "example": "/home/ada/Downloads"}}},
-  "cliFolderNotKept": "{folder} is not kept: Flatpak deletes it when the command ends. Nothing was received. Save into {downloads} instead, for example with -o {downloads}.",
+  "cliFolderNotKept": "{folder} is not kept: Flatpak deletes it when the command ends. Nothing was received. Save into {downloads} instead, for example with -o \"{downloads}\".",
   "@cliFolderNotKept": {"description": "Inside the Flatpak sandbox, the chosen folder lives in memory and is deleted when the command ends; nothing was received", "placeholders": {"folder": {"type": "String", "example": "/home/ada"}, "downloads": {"type": "String", "example": "/home/ada/Downloads/TotalDrop"}}},
   "cliErrWrongCode": "The code did not match. It was mistyped, or someone tried to intercept the transfer. Nothing was sent. Start again with a new code.",
   "cliErrPeerLeft": "The other side left before the transfer finished.",
