@@ -609,6 +609,36 @@ pub fn reveal_controls(name: &str) -> String {
     out
 }
 
+/// A text from the other side (#313) as it is shown, on a terminal or in
+/// a window: [hidden](is_hidden) characters are named as
+/// [`reveal_controls`] names them, so the text cannot move a terminal's
+/// cursor, colour it, or hide its words behind direction marks. Line
+/// breaks (`\n` or `\r\n`, which becomes `\n`) and tabs stay. A `\r`
+/// anywhere else is named too: it would send the cursor back over the
+/// line.
+#[must_use]
+pub fn reveal_text(text: &str) -> String {
+    let lines: Vec<&str> = text.split('\n').collect();
+    let last = lines.len().saturating_sub(1);
+    lines
+        .iter()
+        .enumerate()
+        .map(|(i, line)| {
+            // Only a \r that a \n follows ends a line.
+            let line = if i < last {
+                line.strip_suffix('\r').unwrap_or(line)
+            } else {
+                line
+            };
+            line.split('\t')
+                .map(reveal_controls)
+                .collect::<Vec<_>>()
+                .join("\t")
+        })
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
 /// Answers the command line takes as yes in every language, besides the
 /// translation's own (`cliYes`).
 pub const ALWAYS_YES: [&str; 2] = ["y", "yes"];
@@ -842,6 +872,25 @@ mod tests {
         assert_eq!(reveal_controls("fotoğraf 1.jpg"), "fotoğraf 1.jpg");
         assert_eq!(reveal_controls("صورة.jpg"), "صورة.jpg");
         assert_eq!(reveal_controls("می\u{200C}خواهم"), "می\u{200C}خواهم");
+    }
+
+    /// A received text cannot move the cursor or hide its words; its line
+    /// breaks and tabs stay (#313).
+    #[test]
+    fn a_text_shows_its_hidden_characters() {
+        let text = "one\ttwo\r\nred\u{1b}[31m \u{202e}evil\nfake\rreal\r\t\n";
+        let shown = reveal_text(text);
+        assert!(!shown.contains('\u{1b}') && !shown.contains('\u{202e}'));
+        assert!(shown.contains("<U+001B>") && shown.contains("<U+202E>"));
+        assert!(shown.starts_with("one\ttwo\nred"));
+        // Only a \r that ends a line goes; one inside a line is named.
+        assert!(
+            shown.ends_with("\nfake<U+000D>real<U+000D>\t\n"),
+            "{shown:?}"
+        );
+        assert_eq!(reveal_text("end\r"), "end<U+000D>");
+        assert_eq!(reveal_text("می\u{200C}خواهم\n"), "می\u{200C}خواهم\n");
+        assert_eq!(reveal_text(""), "");
     }
 
     #[test]

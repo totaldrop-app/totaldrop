@@ -15,7 +15,7 @@ use clap::{
 use totaldrop_core::{
     Event, Events, IncomingOffer, PathOptions, PreparedSend, ReceiveOptions, SendOptions, Stop,
 };
-use totaldrop_l10n::{Arg, Domain, Strings, is_yes, reveal_controls as visible};
+use totaldrop_l10n::{Arg, Domain, Strings, is_yes, reveal_controls as visible, reveal_text};
 use totaldrop_proto::TransferCode;
 
 // The doc comments are the English help; `help` puts each in the person's
@@ -274,9 +274,6 @@ enum What {
     Text(String),
 }
 
-/// The name a receiver from before #313 saves a text under.
-const TEXT_FILE: &str = "text.txt";
-
 /// What `send` was asked to send: `--text`, `-` alone for the text on
 /// standard input, or files (`./-` for a file named `-`). A text must be
 /// UTF-8, not empty, and at most [`totaldrop_core::MAX_TEXT`] bytes; the
@@ -341,30 +338,14 @@ fn too_long(s: &Strings) -> Failure {
     Failure::Shown
 }
 
-/// A received text as the terminal should show it: hidden and control
-/// characters are named instead of acted on; line breaks (`\n` or `\r\n`)
-/// and tabs stay. A `\r` anywhere else is named too: it would send the
-/// cursor back over the line. Into a pipe or a file it goes as it came.
+/// A received text as the terminal should show it ([`reveal_text`]);
+/// into a pipe or a file it goes as it came.
 fn shown_text(text: &str, terminal: bool) -> String {
-    if !terminal {
-        return text.to_owned();
+    if terminal {
+        reveal_text(text)
+    } else {
+        text.to_owned()
     }
-    let lines: Vec<&str> = text.split('\n').collect();
-    let last = lines.len().saturating_sub(1);
-    lines
-        .iter()
-        .enumerate()
-        .map(|(i, line)| {
-            // Only a \r that a \n follows ends a line.
-            let line = if i < last {
-                line.strip_suffix('\r').unwrap_or(line)
-            } else {
-                line
-            };
-            line.split('\t').map(visible).collect::<Vec<_>>().join("\t")
-        })
-        .collect::<Vec<_>>()
-        .join("\n")
 }
 
 async fn send(
@@ -386,7 +367,7 @@ async fn send(
         r = async {
             match &what {
                 What::Files(files) => PreparedSend::new(&opts, files.clone()).await,
-                What::Text(text) => PreparedSend::text(&opts, text, TEXT_FILE).await,
+                What::Text(text) => PreparedSend::text(&opts, text, totaldrop_core::TEXT_FILE).await,
             }
         } => r?,
         () = stop.stopped() => return Err(totaldrop_core::Error::Stopped.into()),
