@@ -1,4 +1,4 @@
-<!-- Translated from README.md 38ed72b6b4a4. -->
+<!-- Translated from README.md 0a6bee841691. -->
 <div align="center">
 
 <picture>
@@ -56,6 +56,8 @@
 | **Android** | [پیوستن به نسخه بتا](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.7، Android 15 یا جدیدتر، Google Play با دعوت |
 | **خط فرمان** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux، macOS، Windows |
 | **Windows، macOS، iOS** | در راه | امضای کد برای این‌ها نخستین چیزی است که کمک‌های مالی هزینه‌اش را می‌پردازند |
+
+هر بار فقط از یک بسته Linux استفاده کنید. Flatpak و بسته .pkg، .deb یا .rpm یک نام مشترک دارند، پس وقتی یکی باز است، اجرای دیگری به‌جای باز کردن پنجره دوم، پنجره باز را جلو می‌آورد.
 
 هر بسته را CI از یک کامیت برچسب‌دار می‌سازد، هرگز روی دستگاه یک توسعه‌دهنده. برای بررسی یک بسته پیش از نصب، آن را با `SHA256SUMS` همان انتشار مقایسه کنید و محل ساخت آن را تأیید کنید:
 

@@ -1,4 +1,4 @@
-<!-- Translated from README.md 38ed72b6b4a4. -->
+<!-- Translated from README.md 0a6bee841691. -->
 <div align="center">
 
 <picture>
@@ -56,6 +56,8 @@
 | **Android** | [加入测试版](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.7，Android 15 或更高版本，通过邀请在 Google Play 上提供 |
 | **命令行** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux、macOS、Windows |
 | **Windows、macOS、iOS** | 即将推出 | 捐款首先用于这些平台的代码签名 |
+
+请一次只使用一个 Linux 软件包。Flatpak 与 .pkg、.deb 或 .rpm 软件包使用同一个名称，因此当其中一个已打开时，启动另一个只会把已打开的窗口带到前台，而不会再打开一个窗口。
 
 每个软件包都由 CI 从带标签的提交构建，绝不在开发者的机器上构建。如需在安装前检查，请将其与发行版的 `SHA256SUMS` 比对，并验证它的构建来源：
 

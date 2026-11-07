@@ -521,6 +521,18 @@ class AppLocalizationsKo extends AppLocalizations {
   String get metainfoTheme => '데스크톱 테마를 따릅니다: Plasma, Hyprland, Omarchy, GNOME';
 
   @override
+  String get metainfoOnePackage =>
+      'Linux 패키지는 한 번에 하나만 사용하세요. Flatpak과 .pkg, .deb 또는 .rpm 패키지는 같은 이름을 쓰기 때문에, 하나가 열려 있을 때 다른 하나를 실행하면 두 번째 창이 열리지 않고 열려 있는 창이 앞으로 나옵니다.';
+
+  @override
+  String get otherPackageFlatpak =>
+      'TotalDrop이 이미 Flatpak으로 열려 있어 그 창을 앞으로 가져왔습니다. 패키지는 한 번에 하나만 사용하세요. 이 패키지를 열려면 그 창을 종료하세요.';
+
+  @override
+  String get otherPackageSystem =>
+      'TotalDrop이 이미 .pkg, .deb 또는 .rpm 패키지로 열려 있어 그 창을 앞으로 가져왔습니다. 패키지는 한 번에 하나만 사용하세요. 이 패키지를 열려면 그 창을 종료하세요.';
+
+  @override
   String get sendText => '텍스트 보내기';
 
   @override

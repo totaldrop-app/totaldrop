@@ -536,6 +536,18 @@ class AppLocalizationsTh extends AppLocalizations {
       'ใช้ธีมตามเดสก์ท็อปของคุณ: Plasma, Hyprland, Omarchy, GNOME';
 
   @override
+  String get metainfoOnePackage =>
+      'ใช้แพ็กเกจ Linux ครั้งละหนึ่งแพ็กเกจ Flatpak กับแพ็กเกจ .pkg, .deb หรือ .rpm ใช้ชื่อเดียวกัน ขณะที่อันหนึ่งเปิดอยู่ การเปิดอีกอันจะนำหน้าต่างที่เปิดอยู่ขึ้นมาด้านหน้าแทนการเปิดหน้าต่างที่สอง';
+
+  @override
+  String get otherPackageFlatpak =>
+      'TotalDrop เปิดอยู่แล้วจาก Flatpak จึงนำหน้าต่างนั้นขึ้นมาด้านหน้า ใช้แพ็กเกจครั้งละหนึ่งแพ็กเกจ: ปิดหน้าต่างนั้นเพื่อเปิดอันนี้';
+
+  @override
+  String get otherPackageSystem =>
+      'TotalDrop เปิดอยู่แล้วจากแพ็กเกจ .pkg, .deb หรือ .rpm จึงนำหน้าต่างนั้นขึ้นมาด้านหน้า ใช้แพ็กเกจครั้งละหนึ่งแพ็กเกจ: ปิดหน้าต่างนั้นเพื่อเปิดอันนี้';
+
+  @override
   String get sendText => 'ส่งข้อความ';
 
   @override

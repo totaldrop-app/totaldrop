@@ -547,6 +547,18 @@ class AppLocalizationsHu extends AppLocalizations {
       'Követi az asztali környezet témáját: Plasma, Hyprland, Omarchy, GNOME';
 
   @override
+  String get metainfoOnePackage =>
+      'Egyszerre csak egy Linux-csomagot használjon. A Flatpak és a .pkg, .deb vagy .rpm csomag neve azonos, ezért ha az egyik nyitva van, a másik indítása nem nyit új ablakot, hanem előtérbe hozza a nyitottat.';
+
+  @override
+  String get otherPackageFlatpak =>
+      'A TotalDrop már nyitva van a Flatpakból, ezért az az ablak került előtérbe. Egyszerre csak egy csomagot használjon: ennek megnyitásához lépjen ki abból az ablakból.';
+
+  @override
+  String get otherPackageSystem =>
+      'A TotalDrop már nyitva van a .pkg, .deb vagy .rpm csomagból, ezért az az ablak került előtérbe. Egyszerre csak egy csomagot használjon: ennek megnyitásához lépjen ki abból az ablakból.';
+
+  @override
   String get sendText => 'Szöveg küldése';
 
   @override

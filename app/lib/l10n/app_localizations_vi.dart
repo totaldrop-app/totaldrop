@@ -540,6 +540,18 @@ class AppLocalizationsVi extends AppLocalizations {
       'Theo chủ đề màn hình nền của bạn: Plasma, Hyprland, Omarchy, GNOME';
 
   @override
+  String get metainfoOnePackage =>
+      'Mỗi lúc chỉ dùng một gói Linux. Bản Flatpak và gói .pkg, .deb hoặc .rpm dùng chung một tên, nên khi một bản đang mở, khởi động bản kia sẽ đưa cửa sổ đang mở lên trước thay vì mở cửa sổ thứ hai.';
+
+  @override
+  String get otherPackageFlatpak =>
+      'TotalDrop đang mở từ bản Flatpak, nên cửa sổ đó đã được đưa lên trước. Mỗi lúc chỉ dùng một gói: thoát cửa sổ đó để mở bản này.';
+
+  @override
+  String get otherPackageSystem =>
+      'TotalDrop đang mở từ gói .pkg, .deb hoặc .rpm, nên cửa sổ đó đã được đưa lên trước. Mỗi lúc chỉ dùng một gói: thoát cửa sổ đó để mở bản này.';
+
+  @override
   String get sendText => 'Gửi văn bản';
 
   @override

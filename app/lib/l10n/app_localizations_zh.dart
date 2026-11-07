@@ -512,6 +512,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get metainfoTheme => '跟随桌面主题：Plasma、Hyprland、Omarchy、GNOME';
 
   @override
+  String get metainfoOnePackage =>
+      '请一次只使用一个 Linux 软件包。Flatpak 与 .pkg、.deb 或 .rpm 软件包使用同一个名称，因此当其中一个已打开时，启动另一个只会把已打开的窗口带到前台，而不会再打开一个窗口。';
+
+  @override
+  String get otherPackageFlatpak =>
+      'TotalDrop 已从 Flatpak 打开，因此已将该窗口带到前台。请一次只使用一个软件包：要打开这个，请先退出那个窗口。';
+
+  @override
+  String get otherPackageSystem =>
+      'TotalDrop 已从 .pkg、.deb 或 .rpm 软件包打开，因此已将该窗口带到前台。请一次只使用一个软件包：要打开这个，请先退出那个窗口。';
+
+  @override
   String get sendText => '发送文本';
 
   @override
@@ -1075,6 +1087,18 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get metainfoTheme => '跟随桌面主题：Plasma、Hyprland、Omarchy、GNOME';
 
   @override
+  String get metainfoOnePackage =>
+      '请一次只使用一个 Linux 软件包。Flatpak 与 .pkg、.deb 或 .rpm 软件包使用同一个名称，因此当其中一个已打开时，启动另一个只会把已打开的窗口带到前台，而不会再打开一个窗口。';
+
+  @override
+  String get otherPackageFlatpak =>
+      'TotalDrop 已从 Flatpak 打开，因此已将该窗口带到前台。请一次只使用一个软件包：要打开这个，请先退出那个窗口。';
+
+  @override
+  String get otherPackageSystem =>
+      'TotalDrop 已从 .pkg、.deb 或 .rpm 软件包打开，因此已将该窗口带到前台。请一次只使用一个软件包：要打开这个，请先退出那个窗口。';
+
+  @override
   String get sendText => '发送文本';
 
   @override
@@ -1635,6 +1659,18 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get metainfoTheme => '跟隨桌面主題：Plasma、Hyprland、Omarchy、GNOME';
+
+  @override
+  String get metainfoOnePackage =>
+      '請一次只使用一個 Linux 套件。Flatpak 與 .pkg、.deb 或 .rpm 套件使用同一個名稱，因此當其中一個已開啟時，啟動另一個只會把已開啟的視窗帶到前景，而不會再開啟一個視窗。';
+
+  @override
+  String get otherPackageFlatpak =>
+      'TotalDrop 已從 Flatpak 開啟，因此已將該視窗帶到前景。請一次只使用一個套件：要開啟這個，請先結束那個視窗。';
+
+  @override
+  String get otherPackageSystem =>
+      'TotalDrop 已從 .pkg、.deb 或 .rpm 套件開啟，因此已將該視窗帶到前景。請一次只使用一個套件：要開啟這個，請先結束那個視窗。';
 
   @override
   String get sendText => '傳送文字';

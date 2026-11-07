@@ -1,4 +1,4 @@
-<!-- Translated from README.md 38ed72b6b4a4. -->
+<!-- Translated from README.md 0a6bee841691. -->
 <div align="center">
 
 <picture>
@@ -56,6 +56,8 @@ Kostenlos und quelloffen. Ende-zu-Ende-verschlüsselt. Keine E-Mail, keine Telef
 | **Android** | [An der Beta teilnehmen](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.7, Android 15 oder neuer, Google Play auf Einladung |
 | **Kommandozeile** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux, macOS, Windows |
 | **Windows, macOS, iOS** | In Arbeit | Die Codesignatur für diese Plattformen bezahlen Spenden als Erstes |
+
+Verwenden Sie unter Linux jeweils nur ein Paket. Das Flatpak und das .pkg-, .deb- oder .rpm-Paket teilen sich einen Namen: Ist eines geöffnet, holt der Start des anderen das offene Fenster nach vorn, statt ein zweites zu öffnen.
 
 Jedes Paket wird von der CI aus einem getaggten Commit gebaut, nie auf dem Rechner eines Entwicklers. Um ein Paket vor der Installation zu prüfen, vergleichen Sie es mit den `SHA256SUMS` des Releases und prüfen Sie, wo es gebaut wurde:
 

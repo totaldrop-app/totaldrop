@@ -1,4 +1,4 @@
-<!-- Translated from README.md 38ed72b6b4a4. -->
+<!-- Translated from README.md 0a6bee841691. -->
 <div align="center">
 
 <picture>
@@ -56,6 +56,8 @@
 | **Android** | [بیٹا میں شامل ہوں](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.7، Android 15 یا نیا، Google Play پر دعوت کے ذریعے |
 | **کمانڈ لائن** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux، macOS، Windows |
 | **Windows، macOS، iOS** | جلد آ رہا ہے | ان کے لیے کوڈ سائننگ وہ پہلی چیز ہے جس کا خرچ عطیات اٹھاتے ہیں |
+
+ایک وقت میں ایک ہی Linux پیکیج استعمال کریں۔ Flatpak اور .pkg، .deb یا .rpm پیکیج کا نام ایک ہی ہے، اس لیے جب ایک کھلا ہو تو دوسرا چلانے سے دوسری ونڈو نہیں کھلتی بلکہ کھلی ونڈو سامنے آ جاتی ہے۔
 
 ہر پیکیج CI ایک ٹیگ شدہ کمٹ سے بناتا ہے، کبھی کسی ڈویلپر کی مشین پر نہیں۔ انسٹال کرنے سے پہلے کسی پیکیج کو جانچنے کے لیے، اس کا موازنہ ریلیز کی `SHA256SUMS` سے کریں اور تصدیق کریں کہ یہ کہاں بنایا گیا:
 

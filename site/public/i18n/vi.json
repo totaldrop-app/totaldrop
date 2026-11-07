@@ -229,6 +229,7 @@
   "dl.linux.deb.label": "Debian, Ubuntu (.deb), x86-64",
   "dl.linux.r1": "Gói riêng cho từng họ bản phân phối: tất cả cho x86-64; Debian, Ubuntu và Fedora cũng có cho ARM64",
   "dl.linux.r2": "Các gói .pkg, .deb và .rpm cũng cài lệnh totaldrop",
+  "dl.linux.r3": "Mỗi lúc chỉ dùng một gói Linux. Bản Flatpak và gói .pkg, .deb hoặc .rpm dùng chung một tên, nên khi một bản đang mở, khởi động bản kia sẽ đưa cửa sổ đang mở lên trước thay vì mở cửa sổ thứ hai.",
   "dl.linux.rpm": "Fedora (.rpm)",
   "dl.linux.rpm.arm": "Fedora (.rpm, ARM64)",
   "dl.linux.rpm.label": "Fedora (.rpm), x86-64",

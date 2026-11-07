@@ -193,6 +193,43 @@
       <li xml:lang="zh_MO">跟隨桌面主題：Plasma、Hyprland、Omarchy、GNOME</li>
       <li xml:lang="zh_TW">跟隨桌面主題：Plasma、Hyprland、Omarchy、GNOME</li>
     </ul>
+    <p>Use one Linux package at a time. The Flatpak and the .pkg, .deb or .rpm package share one name, so while one of them is open, starting the other brings the open window forward instead of opening a second one.</p>
+    <p xml:lang="ar">استخدم حزمة Linux واحدة في كل مرة. تشترك حزمة Flatpak وحزمة .pkg أو .deb أو .rpm في اسم واحد، لذا عندما تكون إحداهما مفتوحة، يؤدي تشغيل الأخرى إلى إبراز النافذة المفتوحة بدلًا من فتح نافذة ثانية.</p>
+    <p xml:lang="bn">একবারে একটি Linux প্যাকেজ ব্যবহার করুন। Flatpak এবং .pkg, .deb বা .rpm প্যাকেজের নাম একই, তাই একটি খোলা থাকলে অন্যটি চালু করলে দ্বিতীয় উইন্ডো খোলে না, খোলা উইন্ডোটি সামনে আসে।</p>
+    <p xml:lang="cs">Používejte vždy jen jeden linuxový balíček. Flatpak a balíček .pkg, .deb nebo .rpm sdílejí jeden název, takže když je jeden otevřený, spuštění druhého jen přenese otevřené okno do popředí, místo aby otevřelo druhé.</p>
+    <p xml:lang="da">Brug én Linux-pakke ad gangen. Flatpak-pakken og .pkg-, .deb- eller .rpm-pakken deler ét navn, så mens den ene er åben, bringer start af den anden det åbne vindue frem i stedet for at åbne et nyt.</p>
+    <p xml:lang="de">Verwenden Sie unter Linux jeweils nur ein Paket. Das Flatpak und das .pkg-, .deb- oder .rpm-Paket teilen sich einen Namen: Ist eines geöffnet, holt der Start des anderen das offene Fenster nach vorn, statt ein zweites zu öffnen.</p>
+    <p xml:lang="el">Χρησιμοποιείτε ένα πακέτο Linux τη φορά. Το Flatpak και το πακέτο .pkg, .deb ή .rpm μοιράζονται ένα όνομα, οπότε όσο το ένα είναι ανοιχτό, η εκκίνηση του άλλου φέρνει μπροστά το ανοιχτό παράθυρο αντί να ανοίξει δεύτερο.</p>
+    <p xml:lang="es">Use un solo paquete de Linux a la vez. El Flatpak y el paquete .pkg, .deb o .rpm comparten un nombre, así que mientras uno está abierto, iniciar el otro trae al frente la ventana abierta en lugar de abrir una segunda.</p>
+    <p xml:lang="fa">هر بار فقط از یک بسته Linux استفاده کنید. Flatpak و بسته .pkg، .deb یا .rpm یک نام مشترک دارند، پس وقتی یکی باز است، اجرای دیگری به‌جای باز کردن پنجره دوم، پنجره باز را جلو می‌آورد.</p>
+    <p xml:lang="fi">Käytä vain yhtä Linux-pakettia kerrallaan. Flatpakilla ja .pkg-, .deb- tai .rpm-paketilla on sama nimi, joten kun toinen on auki, toisen käynnistäminen tuo avoimen ikkunan eteen eikä avaa toista.</p>
+    <p xml:lang="fr">Utilisez un seul paquet Linux à la fois. Le Flatpak et le paquet .pkg, .deb ou .rpm partagent un même nom : quand l'un est ouvert, lancer l'autre ramène la fenêtre ouverte au premier plan au lieu d'en ouvrir une seconde.</p>
+    <p xml:lang="he">השתמשו בחבילת Linux אחת בכל פעם. ל־Flatpak ולחבילת .pkg, .deb או .rpm יש שם משותף, ולכן כשאחת פתוחה, הפעלת השנייה מביאה לחזית את החלון הפתוח במקום לפתוח חלון שני.</p>
+    <p xml:lang="hi">एक समय में एक ही Linux पैकेज इस्तेमाल करें। Flatpak और .pkg, .deb या .rpm पैकेज का नाम एक ही है, इसलिए एक खुला हो तो दूसरा चलाने पर दूसरी विंडो नहीं खुलती, खुली विंडो सामने आ जाती है।</p>
+    <p xml:lang="hu">Egyszerre csak egy Linux-csomagot használjon. A Flatpak és a .pkg, .deb vagy .rpm csomag neve azonos, ezért ha az egyik nyitva van, a másik indítása nem nyit új ablakot, hanem előtérbe hozza a nyitottat.</p>
+    <p xml:lang="id">Gunakan satu paket Linux dalam satu waktu. Flatpak dan paket .pkg, .deb, atau .rpm memakai nama yang sama, jadi saat salah satunya terbuka, menjalankan yang lain akan memunculkan jendela yang terbuka alih-alih membuka jendela kedua.</p>
+    <p xml:lang="it">Usa un solo pacchetto Linux alla volta. Il Flatpak e il pacchetto .pkg, .deb o .rpm condividono un nome, quindi mentre uno è aperto, avviare l'altro porta in primo piano la finestra aperta invece di aprirne una seconda.</p>
+    <p xml:lang="ja">Linux のパッケージは一度に 1 つだけ使ってください。Flatpak と .pkg・.deb・.rpm パッケージは同じ名前を使うため、一方を開いている間にもう一方を起動すると、2 つ目のウィンドウは開かず、開いているウィンドウが前面に出ます。</p>
+    <p xml:lang="ko">Linux 패키지는 한 번에 하나만 사용하세요. Flatpak과 .pkg, .deb 또는 .rpm 패키지는 같은 이름을 쓰기 때문에, 하나가 열려 있을 때 다른 하나를 실행하면 두 번째 창이 열리지 않고 열려 있는 창이 앞으로 나옵니다.</p>
+    <p xml:lang="ms">Gunakan satu pakej Linux pada satu masa. Flatpak dan pakej .pkg, .deb atau .rpm berkongsi satu nama, jadi semasa salah satunya dibuka, memulakan yang lain akan membawa tetingkap yang terbuka ke hadapan dan bukannya membuka tetingkap kedua.</p>
+    <p xml:lang="nb">Bruk én Linux-pakke om gangen. Flatpak-pakken og .pkg-, .deb- eller .rpm-pakken deler ett navn, så mens den ene er åpen, henter start av den andre det åpne vinduet frem i stedet for å åpne et nytt.</p>
+    <p xml:lang="nl">Gebruik één Linux-pakket tegelijk. Het Flatpak-pakket en het .pkg-, .deb- of .rpm-pakket delen één naam, dus terwijl het ene open is, haalt het starten van het andere het open venster naar voren in plaats van een tweede te openen.</p>
+    <p xml:lang="pl">Używaj jednocześnie tylko jednego pakietu dla Linuksa. Flatpak i pakiet .pkg, .deb lub .rpm mają wspólną nazwę, więc gdy jeden jest otwarty, uruchomienie drugiego przywołuje otwarte okno zamiast otwierać drugie.</p>
+    <p xml:lang="pt">Use um pacote Linux por vez. O Flatpak e o pacote .pkg, .deb ou .rpm compartilham um nome, então enquanto um está aberto, iniciar o outro traz a janela aberta para a frente em vez de abrir uma segunda.</p>
+    <p xml:lang="pt_PT">Use um pacote Linux de cada vez. O Flatpak e o pacote .pkg, .deb ou .rpm partilham um nome, por isso, enquanto um está aberto, iniciar o outro traz a janela aberta para a frente em vez de abrir uma segunda.</p>
+    <p xml:lang="ro">Folosiți un singur pachet Linux odată. Flatpak-ul și pachetul .pkg, .deb sau .rpm au același nume, așa că, dacă unul este deschis, pornirea celuilalt aduce în față fereastra deschisă în loc să deschidă una nouă.</p>
+    <p xml:lang="ru">Используйте одновременно только один пакет для Linux. У Flatpak и пакета .pkg, .deb или .rpm одно имя, поэтому, пока один открыт, запуск другого выводит открытое окно на передний план, а не открывает второе.</p>
+    <p xml:lang="sv">Använd ett Linux-paket i taget. Flatpak-paketet och .pkg-, .deb- eller .rpm-paketet delar ett namn, så medan det ena är öppet tar en start av det andra fram det öppna fönstret i stället för att öppna ett nytt.</p>
+    <p xml:lang="sw">Tumia kifurushi kimoja cha Linux kwa wakati mmoja. Flatpak na kifurushi cha .pkg, .deb au .rpm vinashiriki jina moja, kwa hivyo kimoja kikiwa wazi, kuanzisha kingine huleta dirisha lililo wazi mbele badala ya kufungua dirisha la pili.</p>
+    <p xml:lang="th">ใช้แพ็กเกจ Linux ครั้งละหนึ่งแพ็กเกจ Flatpak กับแพ็กเกจ .pkg, .deb หรือ .rpm ใช้ชื่อเดียวกัน ขณะที่อันหนึ่งเปิดอยู่ การเปิดอีกอันจะนำหน้าต่างที่เปิดอยู่ขึ้นมาด้านหน้าแทนการเปิดหน้าต่างที่สอง</p>
+    <p xml:lang="tr">Linux'ta aynı anda tek paket kullanın. Flatpak ile .pkg, .deb ya da .rpm paketi aynı adı paylaşır; biri açıkken ötekini başlatmak ikinci bir pencere açmaz, açık pencereyi öne getirir.</p>
+    <p xml:lang="uk">Використовуйте одночасно лише один пакет для Linux. Flatpak і пакет .pkg, .deb чи .rpm мають спільне ім'я, тож поки один відкритий, запуск іншого виводить відкрите вікно на передній план, а не відкриває друге.</p>
+    <p xml:lang="ur">ایک وقت میں ایک ہی Linux پیکیج استعمال کریں۔ Flatpak اور .pkg، .deb یا .rpm پیکیج کا نام ایک ہی ہے، اس لیے جب ایک کھلا ہو تو دوسرا چلانے سے دوسری ونڈو نہیں کھلتی بلکہ کھلی ونڈو سامنے آ جاتی ہے۔</p>
+    <p xml:lang="vi">Mỗi lúc chỉ dùng một gói Linux. Bản Flatpak và gói .pkg, .deb hoặc .rpm dùng chung một tên, nên khi một bản đang mở, khởi động bản kia sẽ đưa cửa sổ đang mở lên trước thay vì mở cửa sổ thứ hai.</p>
+    <p xml:lang="zh">请一次只使用一个 Linux 软件包。Flatpak 与 .pkg、.deb 或 .rpm 软件包使用同一个名称，因此当其中一个已打开时，启动另一个只会把已打开的窗口带到前台，而不会再打开一个窗口。</p>
+    <p xml:lang="zh_HK">請一次只使用一個 Linux 套件。Flatpak 與 .pkg、.deb 或 .rpm 套件使用同一個名稱，因此當其中一個已開啟時，啟動另一個只會把已開啟的視窗帶到前景，而不會再開啟一個視窗。</p>
+    <p xml:lang="zh_MO">請一次只使用一個 Linux 套件。Flatpak 與 .pkg、.deb 或 .rpm 套件使用同一個名稱，因此當其中一個已開啟時，啟動另一個只會把已開啟的視窗帶到前景，而不會再開啟一個視窗。</p>
+    <p xml:lang="zh_TW">請一次只使用一個 Linux 套件。Flatpak 與 .pkg、.deb 或 .rpm 套件使用同一個名稱，因此當其中一個已開啟時，啟動另一個只會把已開啟的視窗帶到前景，而不會再開啟一個視窗。</p>
   </description>
   <!-- END GENERATED -->
   <launchable type="desktop-id">app.totaldrop.TotalDrop.desktop</launchable>

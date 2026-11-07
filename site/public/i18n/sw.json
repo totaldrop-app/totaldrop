@@ -229,6 +229,7 @@
   "dl.linux.deb.label": "Debian, Ubuntu (.deb), x86-64",
   "dl.linux.r1": "Kifurushi tofauti kwa kila familia ya usambazaji: vyote kwa x86-64; Debian, Ubuntu na Fedora pia kwa ARM64",
   "dl.linux.r2": "Vifurushi vya .pkg, .deb na .rpm pia husakinisha amri ya totaldrop",
+  "dl.linux.r3": "Tumia kifurushi kimoja cha Linux kwa wakati mmoja. Flatpak na kifurushi cha .pkg, .deb au .rpm vinashiriki jina moja, kwa hivyo kimoja kikiwa wazi, kuanzisha kingine huleta dirisha lililo wazi mbele badala ya kufungua dirisha la pili.",
   "dl.linux.rpm": "Fedora (.rpm)",
   "dl.linux.rpm.arm": "Fedora (.rpm, ARM64)",
   "dl.linux.rpm.label": "Fedora (.rpm), x86-64",

@@ -553,6 +553,18 @@ class AppLocalizationsSw extends AppLocalizations {
       'Hufuata mandhari ya eneo-kazi lako: Plasma, Hyprland, Omarchy, GNOME';
 
   @override
+  String get metainfoOnePackage =>
+      'Tumia kifurushi kimoja cha Linux kwa wakati mmoja. Flatpak na kifurushi cha .pkg, .deb au .rpm vinashiriki jina moja, kwa hivyo kimoja kikiwa wazi, kuanzisha kingine huleta dirisha lililo wazi mbele badala ya kufungua dirisha la pili.';
+
+  @override
+  String get otherPackageFlatpak =>
+      'TotalDrop tayari iko wazi kutoka Flatpak, kwa hivyo dirisha hilo limeletwa mbele. Tumia kifurushi kimoja kwa wakati mmoja: funga dirisha hilo ili kufungua hiki.';
+
+  @override
+  String get otherPackageSystem =>
+      'TotalDrop tayari iko wazi kutoka kifurushi cha .pkg, .deb au .rpm, kwa hivyo dirisha hilo limeletwa mbele. Tumia kifurushi kimoja kwa wakati mmoja: funga dirisha hilo ili kufungua hiki.';
+
+  @override
   String get sendText => 'Tuma maandishi';
 
   @override

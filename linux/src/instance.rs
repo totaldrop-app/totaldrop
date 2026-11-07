@@ -12,6 +12,12 @@
 //!
 //! The command line is read here for both: the first window gets the same
 //! list (`Request::args`) that a later launch sends it.
+//!
+//! The Flatpak and the distribution package (.pkg, .deb, .rpm) share the
+//! app id, so they share this name too, and only one of them runs at a
+//! time (#351). The window also says which package it is
+//! (`app.totaldrop.TotalDrop.Instance.Package`), so a launch of the other
+//! package can say why no window of its own opened.
 
 use std::collections::{HashMap, VecDeque};
 use std::ffi::{OsStr, OsString};
@@ -26,6 +32,8 @@ use zbus::fdo::{RequestNameFlags, RequestNameReply};
 /// The object path of the interface, the app id with `/` for `.`.
 pub const OBJECT_PATH: &str = "/app/totaldrop/TotalDrop";
 const INTERFACE: &str = "org.freedesktop.Application";
+/// TotalDrop's own interface next to it: which package the window is.
+const INSTANCE_INTERFACE: &str = "app.totaldrop.TotalDrop.Instance";
 
 /// The screens `--screen=` opens; `clipboard` is Send with the
 /// clipboard's text filled in (#326).
@@ -322,12 +330,72 @@ impl Application {
     }
 }
 
+/// Which package a TotalDrop window comes from (#351).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Package {
+    /// The Flatpak.
+    Flatpak,
+    /// The distribution's package: .pkg, .deb or .rpm.
+    System,
+}
+
+impl Package {
+    /// The package this program is.
+    pub fn current() -> Self {
+        if crate::theme::host::sandboxed() {
+            Self::Flatpak
+        } else {
+            Self::System
+        }
+    }
+
+    const fn name(self) -> &'static str {
+        match self {
+            Self::Flatpak => "flatpak",
+            Self::System => "system",
+        }
+    }
+
+    fn from_name(name: &str) -> Option<Self> {
+        match name {
+            "flatpak" => Some(Self::Flatpak),
+            "system" => Some(Self::System),
+            _ => None,
+        }
+    }
+
+    /// The key of the sentence that says this package's window is open
+    /// and came forward (l10n/app).
+    pub const fn running_key(self) -> &'static str {
+        match self {
+            Self::Flatpak => "otherPackageFlatpak",
+            Self::System => "otherPackageSystem",
+        }
+    }
+}
+
+/// `app.totaldrop.TotalDrop.Instance`: what a later launch may ask the
+/// window about itself.
+struct Instance {
+    package: Package,
+}
+
+#[zbus::interface(name = "app.totaldrop.TotalDrop.Instance")]
+impl Instance {
+    /// `flatpak` or `system`.
+    fn package(&self) -> String {
+        self.package.name().to_owned()
+    }
+}
+
 /// How this launch goes on.
 pub enum Claim {
     /// This is the window. Keep the connection for as long as it runs.
     Owner(zbus::Connection),
-    /// The running window has the request; exit.
-    Forwarded,
+    /// The running window has the request; exit. `other` is the window's
+    /// package when it is not this one's, so the person can be told why
+    /// no window of this package opened.
+    Forwarded { other: Option<Package> },
     /// No session bus, or no answer from it: open a window of our own.
     Alone,
 }
@@ -353,17 +421,24 @@ pub async fn claim(request: &Request) -> Claim {
 }
 
 async fn try_claim(request: &Request) -> zbus::Result<Claim> {
-    try_claim_on(zbus::connection::Builder::session(), request).await
+    try_claim_on(
+        zbus::connection::Builder::session(),
+        request,
+        Package::current(),
+    )
+    .await
 }
 
 async fn try_claim_on(
     bus: zbus::connection::Builder<'_>,
     request: &Request,
+    ours: Package,
 ) -> zbus::Result<Claim> {
-    // The interface is served before the name is taken, so no call can
-    // arrive at a name without it.
+    // The interfaces are served before the name is taken, so no call can
+    // arrive at a name without them.
     let conn = bus
         .serve_at(OBJECT_PATH, Application)
+        .serve_at(OBJECT_PATH, Instance { package: ours })
         .method_timeout(TIMEOUT)
         .build()
         .await?;
@@ -371,18 +446,35 @@ async fn try_claim_on(
         return Ok(Claim::Owner(conn));
     }
     match forward(&conn, request).await {
-        Ok(()) => Ok(Claim::Forwarded),
+        Ok(()) => {}
         // The window quit in between: this launch becomes it.
         Err(e) if gone(&e) => {
             if take_name(&conn).await? {
-                Ok(Claim::Owner(conn))
-            } else {
-                forward(&conn, request).await?;
-                Ok(Claim::Forwarded)
+                return Ok(Claim::Owner(conn));
             }
+            forward(&conn, request).await?;
         }
-        Err(e) => Err(e),
+        Err(e) => return Err(e),
     }
+    let other = running_package(&conn).await.filter(|p| *p != ours);
+    Ok(Claim::Forwarded { other })
+}
+
+/// The running window's package; `None` when it does not say, as a window
+/// of 0.3.0-beta.6 or older does not.
+async fn running_package(conn: &zbus::Connection) -> Option<Package> {
+    let reply = conn
+        .call_method(
+            Some(crate::APP_ID),
+            OBJECT_PATH,
+            Some(INSTANCE_INTERFACE),
+            "Package",
+            &(),
+        )
+        .await
+        .ok()?;
+    let name: String = reply.body().deserialize().ok()?;
+    Package::from_name(&name)
 }
 
 /// Take the app's name: `false` when another window has it. zbus reports
@@ -544,21 +636,90 @@ mod tests {
         let (tx, rx) = std::sync::mpsc::channel();
         listen(move |o| tx.send(o).unwrap());
 
-        let first = try_claim_on(bus.builder(), &Request::default()).await;
+        let first = try_claim_on(bus.builder(), &Request::default(), Package::System).await;
         assert!(matches!(first, Ok(Claim::Owner(_))), "first launch");
 
         let second = Request {
             items: vec!["/tmp/td-a.txt".into()],
             screen: Some("send".into()),
         };
-        let claim = try_claim_on(bus.builder(), &second).await;
-        assert!(matches!(claim, Ok(Claim::Forwarded)), "second launch");
+        let claim = try_claim_on(bus.builder(), &second, Package::System).await;
+        // Same package: nothing to explain.
+        assert!(
+            matches!(claim, Ok(Claim::Forwarded { other: None })),
+            "second launch"
+        );
         let o = rx.recv_timeout(TIMEOUT).unwrap();
         assert_eq!(o.request, second);
 
+        // The Flatpak started while the distribution package's window is
+        // open still hands over, and learns which package has the window
+        // (#351).
+        let flatpak = try_claim_on(bus.builder(), &Request::default(), Package::Flatpak).await;
+        assert!(
+            matches!(
+                flatpak,
+                Ok(Claim::Forwarded {
+                    other: Some(Package::System)
+                })
+            ),
+            "the other package"
+        );
+        let _ = rx.recv_timeout(TIMEOUT).unwrap();
+
         drop(first);
-        let third = try_claim_on(bus.builder(), &Request::default()).await;
+        let third = try_claim_on(bus.builder(), &Request::default(), Package::Flatpak).await;
         assert!(matches!(third, Ok(Claim::Owner(_))), "after the first quit");
+        let system = try_claim_on(bus.builder(), &Request::default(), Package::System).await;
+        assert!(
+            matches!(
+                system,
+                Ok(Claim::Forwarded {
+                    other: Some(Package::Flatpak)
+                })
+            ),
+            "the Flatpak's window"
+        );
+        let _ = rx.recv_timeout(TIMEOUT).unwrap();
+    }
+
+    /// A window of 0.3.0-beta.6 or older has no Instance interface: the
+    /// hand-off works and nothing is said about packages.
+    #[tokio::test]
+    async fn an_older_window_says_no_package() {
+        let _one = ONE_INBOX.lock().await;
+        let Some(bus) = PrivateBus::start() else {
+            assert!(
+                std::env::var_os("CI").is_none(),
+                "no private session bus: dbus-daemon is missing or failed (see its stderr)"
+            );
+            eprintln!("skipped: dbus-daemon is not installed");
+            return;
+        };
+        let (tx, rx) = std::sync::mpsc::channel();
+        listen(move |o| tx.send(o).unwrap());
+        let old = bus
+            .builder()
+            .serve_at(OBJECT_PATH, Application)
+            .build()
+            .await
+            .unwrap();
+        assert!(take_name(&old).await.unwrap());
+        let claim = try_claim_on(bus.builder(), &Request::default(), Package::Flatpak).await;
+        assert!(matches!(claim, Ok(Claim::Forwarded { other: None })));
+        let _ = rx.recv_timeout(TIMEOUT).unwrap();
+    }
+
+    #[test]
+    fn package_names_go_both_ways() {
+        for p in [Package::Flatpak, Package::System] {
+            assert_eq!(Package::from_name(p.name()), Some(p));
+        }
+        assert_eq!(Package::from_name("snap"), None);
+        assert_ne!(
+            Package::Flatpak.running_key(),
+            Package::System.running_key()
+        );
     }
 
     fn args(a: &[&str]) -> Vec<OsString> {

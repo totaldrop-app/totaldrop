@@ -1,4 +1,4 @@
-<!-- Translated from README.md 38ed72b6b4a4. -->
+<!-- Translated from README.md 0a6bee841691. -->
 <div align="center">
 
 <picture>
@@ -56,6 +56,8 @@
 | **Android** | [انضم إلى النسخة التجريبية](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.7، Android 15 أو أحدث، Google Play بدعوة |
 | **سطر الأوامر** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux، macOS، Windows |
 | **Windows، macOS، iOS** | قريبًا | توقيع الشيفرة لهذه المنصات هو أول ما تدفع التبرعات تكلفته |
+
+استخدم حزمة Linux واحدة في كل مرة. تشترك حزمة Flatpak وحزمة .pkg أو .deb أو .rpm في اسم واحد، لذا عندما تكون إحداهما مفتوحة، يؤدي تشغيل الأخرى إلى إبراز النافذة المفتوحة بدلًا من فتح نافذة ثانية.
 
 تُبنى كل حزمة بواسطة CI من إيداع موسوم، ولا تُبنى أبدًا على جهاز أحد المطورين. للتحقق من حزمة قبل تثبيتها، قارنها بملف `SHA256SUMS` الخاص بالإصدار وتحقق من مكان بنائها:
 

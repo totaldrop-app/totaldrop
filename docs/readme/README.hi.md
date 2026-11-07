@@ -1,4 +1,4 @@
-<!-- Translated from README.md 38ed72b6b4a4. -->
+<!-- Translated from README.md 0a6bee841691. -->
 <div align="center">
 
 <picture>
@@ -56,6 +56,8 @@
 | **Android** | [बीटा में शामिल हों](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.7, Android 15 या नया, Google Play पर आमंत्रण से |
 | **कमांड लाइन** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux, macOS, Windows |
 | **Windows, macOS, iOS** | जल्द आ रहा है | दान से सबसे पहले इन्हीं के लिए कोड साइनिंग का खर्च उठाया जाएगा |
+
+एक समय में एक ही Linux पैकेज इस्तेमाल करें। Flatpak और .pkg, .deb या .rpm पैकेज का नाम एक ही है, इसलिए एक खुला हो तो दूसरा चलाने पर दूसरी विंडो नहीं खुलती, खुली विंडो सामने आ जाती है।
 
 हर पैकेज CI द्वारा एक टैग किए गए कमिट से बनाया जाता है, कभी किसी डेवलपर की मशीन पर नहीं। इंस्टॉल करने से पहले किसी पैकेज को जाँचने के लिए, उसे रिलीज़ की `SHA256SUMS` से मिलाएँ और सत्यापित करें कि वह कहाँ बना था:
 

@@ -1,4 +1,4 @@
-<!-- Translated from README.md 38ed72b6b4a4. -->
+<!-- Translated from README.md 0a6bee841691. -->
 <div align="center">
 
 <picture>
@@ -56,6 +56,8 @@ Miễn phí và mã nguồn mở. Mã hóa đầu cuối. Không cần email, s�
 | **Android** | [Tham gia bản beta](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.7, Android 15 trở lên, Google Play theo lời mời |
 | **Dòng lệnh** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux, macOS, Windows |
 | **Windows, macOS, iOS** | Sắp có | Ký mã cho các nền tảng này là khoản đầu tiên tiền quyên góp sẽ chi trả |
+
+Mỗi lúc chỉ dùng một gói Linux. Bản Flatpak và gói .pkg, .deb hoặc .rpm dùng chung một tên, nên khi một bản đang mở, khởi động bản kia sẽ đưa cửa sổ đang mở lên trước thay vì mở cửa sổ thứ hai.
 
 Mọi gói đều được CI xây dựng từ một commit có gắn thẻ, không bao giờ trên máy của nhà phát triển. Để kiểm tra một gói trước khi cài đặt, hãy so sánh nó với `SHA256SUMS` của bản phát hành và xác minh nơi nó được xây dựng:
 

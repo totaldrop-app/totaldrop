@@ -565,6 +565,18 @@ class AppLocalizationsAr extends AppLocalizations {
       'يتبع سمة سطح المكتب لديك: Plasma وHyprland وOmarchy وGNOME';
 
   @override
+  String get metainfoOnePackage =>
+      'استخدم حزمة Linux واحدة في كل مرة. تشترك حزمة Flatpak وحزمة .pkg أو .deb أو .rpm في اسم واحد، لذا عندما تكون إحداهما مفتوحة، يؤدي تشغيل الأخرى إلى إبراز النافذة المفتوحة بدلًا من فتح نافذة ثانية.';
+
+  @override
+  String get otherPackageFlatpak =>
+      'TotalDrop مفتوح بالفعل من حزمة Flatpak، لذا أُبرزت تلك النافذة. استخدم حزمة واحدة في كل مرة: أغلق تلك النافذة لفتح هذه.';
+
+  @override
+  String get otherPackageSystem =>
+      'TotalDrop مفتوح بالفعل من حزمة .pkg أو .deb أو .rpm، لذا أُبرزت تلك النافذة. استخدم حزمة واحدة في كل مرة: أغلق تلك النافذة لفتح هذه.';
+
+  @override
   String get sendText => 'إرسال نص';
 
   @override

@@ -53,6 +53,8 @@ Free and open source. End-to-end encrypted. No email, no phone number, no accoun
 | **Command line** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux, macOS, Windows |
 | **Windows, macOS, iOS** | Coming | Code signing for these is what donations pay for first |
 
+Use one Linux package at a time. The Flatpak and the .pkg, .deb or .rpm package share one name, so while one of them is open, starting the other brings the open window forward instead of opening a second one.
+
 Every package is built by CI from a tagged commit, never on a developer's machine. To check one before installing it, compare it with the release's `SHA256SUMS` and verify where it was built:
 
 ```bash

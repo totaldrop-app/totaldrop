@@ -570,6 +570,18 @@ class AppLocalizationsPt extends AppLocalizations {
       'Segue o tema da sua área de trabalho: Plasma, Hyprland, Omarchy, GNOME';
 
   @override
+  String get metainfoOnePackage =>
+      'Use um pacote Linux por vez. O Flatpak e o pacote .pkg, .deb ou .rpm compartilham um nome, então enquanto um está aberto, iniciar o outro traz a janela aberta para a frente em vez de abrir uma segunda.';
+
+  @override
+  String get otherPackageFlatpak =>
+      'O TotalDrop já está aberto pelo Flatpak, então essa janela foi trazida para a frente. Use um pacote por vez: feche essa janela para abrir este.';
+
+  @override
+  String get otherPackageSystem =>
+      'O TotalDrop já está aberto pelo pacote .pkg, .deb ou .rpm, então essa janela foi trazida para a frente. Use um pacote por vez: feche essa janela para abrir este.';
+
+  @override
   String get sendText => 'Enviar texto';
 
   @override
@@ -1195,6 +1207,18 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String get metainfoTheme =>
       'Segue o tema da sua área de trabalho: Plasma, Hyprland, Omarchy, GNOME';
+
+  @override
+  String get metainfoOnePackage =>
+      'Use um pacote Linux por vez. O Flatpak e o pacote .pkg, .deb ou .rpm compartilham um nome, então enquanto um está aberto, iniciar o outro traz a janela aberta para a frente em vez de abrir uma segunda.';
+
+  @override
+  String get otherPackageFlatpak =>
+      'O TotalDrop já está aberto pelo Flatpak, então essa janela foi trazida para a frente. Use um pacote por vez: feche essa janela para abrir este.';
+
+  @override
+  String get otherPackageSystem =>
+      'O TotalDrop já está aberto pelo pacote .pkg, .deb ou .rpm, então essa janela foi trazida para a frente. Use um pacote por vez: feche essa janela para abrir este.';
 
   @override
   String get sendText => 'Enviar texto';
@@ -1824,6 +1848,18 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
   @override
   String get metainfoTheme =>
       'Segue o tema do seu ambiente de trabalho: Plasma, Hyprland, Omarchy, GNOME';
+
+  @override
+  String get metainfoOnePackage =>
+      'Use um pacote Linux de cada vez. O Flatpak e o pacote .pkg, .deb ou .rpm partilham um nome, por isso, enquanto um está aberto, iniciar o outro traz a janela aberta para a frente em vez de abrir uma segunda.';
+
+  @override
+  String get otherPackageFlatpak =>
+      'O TotalDrop já está aberto a partir do Flatpak, por isso essa janela foi trazida para a frente. Use um pacote de cada vez: feche essa janela para abrir este.';
+
+  @override
+  String get otherPackageSystem =>
+      'O TotalDrop já está aberto a partir do pacote .pkg, .deb ou .rpm, por isso essa janela foi trazida para a frente. Use um pacote de cada vez: feche essa janela para abrir este.';
 
   @override
   String get sendText => 'Enviar texto';

@@ -1,4 +1,4 @@
-<!-- Translated from README.md 38ed72b6b4a4. -->
+<!-- Translated from README.md 0a6bee841691. -->
 <div align="center">
 
 <picture>
@@ -56,6 +56,8 @@ Bure na chanzo huria. Imesimbwa fiche kutoka mwanzo hadi mwisho. Hakuna barua pe
 | **Android** | [Jiunge na beta](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.7, Android 15 au mpya zaidi, Google Play kwa mwaliko |
 | **Mstari wa amri** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux, macOS, Windows |
 | **Windows, macOS, iOS** | Inakuja | Kutia sahihi msimbo kwa mifumo hii ndicho kitu cha kwanza ambacho michango italipia |
+
+Tumia kifurushi kimoja cha Linux kwa wakati mmoja. Flatpak na kifurushi cha .pkg, .deb au .rpm vinashiriki jina moja, kwa hivyo kimoja kikiwa wazi, kuanzisha kingine huleta dirisha lililo wazi mbele badala ya kufungua dirisha la pili.
 
 Kila kifurushi hujengwa na CI kutoka kwa commit yenye tagi, kamwe si kwenye mashine ya msanidi programu. Ili kukagua kifurushi kabla ya kukisakinisha, kilinganishe na `SHA256SUMS` ya toleo hilo na uthibitishe kilipojengwa:
 

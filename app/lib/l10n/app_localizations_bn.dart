@@ -545,6 +545,18 @@ class AppLocalizationsBn extends AppLocalizations {
       'আপনার ডেস্কটপের থিম অনুসরণ করে: Plasma, Hyprland, Omarchy, GNOME';
 
   @override
+  String get metainfoOnePackage =>
+      'একবারে একটি Linux প্যাকেজ ব্যবহার করুন। Flatpak এবং .pkg, .deb বা .rpm প্যাকেজের নাম একই, তাই একটি খোলা থাকলে অন্যটি চালু করলে দ্বিতীয় উইন্ডো খোলে না, খোলা উইন্ডোটি সামনে আসে।';
+
+  @override
+  String get otherPackageFlatpak =>
+      'TotalDrop ইতিমধ্যে Flatpak থেকে খোলা আছে, তাই সেই উইন্ডোটি সামনে আনা হয়েছে। একবারে একটি প্যাকেজ ব্যবহার করুন: এটি খুলতে সেই উইন্ডোটি বন্ধ করুন।';
+
+  @override
+  String get otherPackageSystem =>
+      'TotalDrop ইতিমধ্যে .pkg, .deb বা .rpm প্যাকেজ থেকে খোলা আছে, তাই সেই উইন্ডোটি সামনে আনা হয়েছে। একবারে একটি প্যাকেজ ব্যবহার করুন: এটি খুলতে সেই উইন্ডোটি বন্ধ করুন।';
+
+  @override
   String get sendText => 'লেখা পাঠান';
 
   @override

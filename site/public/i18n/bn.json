@@ -229,6 +229,7 @@
   "dl.linux.deb.label": "Debian, Ubuntu (.deb), x86-64",
   "dl.linux.r1": "প্রতিটি ডিস্ট্রিবিউশন পরিবারের জন্য আলাদা প্যাকেজ: সবগুলো x86-64-এর জন্য; Debian, Ubuntu ও Fedora ARM64-এর জন্যও",
   "dl.linux.r2": ".pkg, .deb ও .rpm প্যাকেজ totaldrop কমান্ডও ইনস্টল করে",
+  "dl.linux.r3": "একবারে একটি Linux প্যাকেজ ব্যবহার করুন। Flatpak এবং .pkg, .deb বা .rpm প্যাকেজের নাম একই, তাই একটি খোলা থাকলে অন্যটি চালু করলে দ্বিতীয় উইন্ডো খোলে না, খোলা উইন্ডোটি সামনে আসে।",
   "dl.linux.rpm": "Fedora (.rpm)",
   "dl.linux.rpm.arm": "Fedora (.rpm, ARM64)",
   "dl.linux.rpm.label": "Fedora (.rpm), x86-64",

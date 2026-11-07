@@ -229,6 +229,7 @@
   "dl.linux.deb.label": "Debian、Ubuntu（.deb），x86-64",
   "dl.linux.r1": "每個發行版系列各有一個套件：全部支援 x86-64；Debian、Ubuntu 和 Fedora 也支援 ARM64",
   "dl.linux.r2": ".pkg、.deb 和 .rpm 套件也會安裝 totaldrop 指令",
+  "dl.linux.r3": "請一次只使用一個 Linux 套件。Flatpak 與 .pkg、.deb 或 .rpm 套件使用同一個名稱，因此當其中一個已開啟時，啟動另一個只會把已開啟的視窗帶到前景，而不會再開啟一個視窗。",
   "dl.linux.rpm": "Fedora（.rpm）",
   "dl.linux.rpm.arm": "Fedora（.rpm，ARM64）",
   "dl.linux.rpm.label": "Fedora（.rpm），x86-64",

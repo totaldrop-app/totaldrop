@@ -1,4 +1,4 @@
-<!-- Translated from README.md 38ed72b6b4a4. -->
+<!-- Translated from README.md 0a6bee841691. -->
 <div align="center">
 
 <picture>
@@ -56,6 +56,8 @@
 | **Android** | [Betaya katılın](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.7, Android 15 veya daha yenisi, Google Play'de davetle |
 | **Komut satırı** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux, macOS, Windows |
 | **Windows, macOS, iOS** | Yolda | Bağışların ilk karşılayacağı şey bunların kod imzalaması |
+
+Linux'ta aynı anda tek paket kullanın. Flatpak ile .pkg, .deb ya da .rpm paketi aynı adı paylaşır; biri açıkken ötekini başlatmak ikinci bir pencere açmaz, açık pencereyi öne getirir.
 
 Her paket, bir geliştiricinin bilgisayarında değil, etiketli bir commit'ten CI tarafından derlenir. Bir paketi kurmadan önce denetlemek için onu sürümdeki `SHA256SUMS` ile karşılaştırın ve nerede derlendiğini doğrulayın:
 

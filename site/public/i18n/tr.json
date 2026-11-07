@@ -229,6 +229,7 @@
   "dl.linux.deb.label": "Debian, Ubuntu (.deb), x86-64",
   "dl.linux.r1": "Her dağıtım ailesi için ayrı paket: hepsi x86-64 için; Debian, Ubuntu ve Fedora ARM64 için de",
   "dl.linux.r2": ".pkg, .deb ve .rpm paketleri totaldrop komutunu da kurar",
+  "dl.linux.r3": "Linux'ta aynı anda tek paket kullanın. Flatpak ile .pkg, .deb ya da .rpm paketi aynı adı paylaşır; biri açıkken ötekini başlatmak ikinci bir pencere açmaz, açık pencereyi öne getirir.",
   "dl.linux.rpm": "Fedora (.rpm)",
   "dl.linux.rpm.arm": "Fedora (.rpm, ARM64)",
   "dl.linux.rpm.label": "Fedora (.rpm), x86-64",
