@@ -93,7 +93,8 @@ cargo test --release --locked -p totaldrop-linux -p totaldrop-proto
 * Sat Nov 07 2026 TotalDrop <hello@totaldrop.app> - 0.3.0~beta.6-1
 - Send a text instead of files, from the app ("Send text", "Send
   clipboard") or the command line; a text that arrives is shown, not
-  saved, with any hidden characters named.
+  saved, with any hidden characters named. A receiver on 0.3.0-beta.5 or
+  older saves it as text.txt.
 - "Send with TotalDrop" in the right-click menu of Dolphin, Files (once
   nautilus-python is installed) and Nemo; "Send files" and "Receive
   files" when you right-click TotalDrop in the taskbar or app launcher.
