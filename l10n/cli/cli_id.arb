@@ -60,7 +60,7 @@
   "cliHelpHelpCommand": "Tampilkan pesan ini atau bantuan perintah yang diberikan",
   "cliDesktopAbout": "Buka jendela TotalDrop.",
   "cliDesktopArgs": "File atau folder yang akan dikirim, atau tautan TotalDrop untuk menerima.",
-  "cliDesktopScreen": "Buka di layar Kirim (send), Terima (receive), atau Setelan (settings).",
+  "cliDesktopScreen": "Buka di layar Kirim (send), Kirim papan klip (clipboard), Terima (receive), atau Setelan (settings).",
   "cliHelpSendText": "Kirim teks ini sebagai ganti file: penerima melihatnya sebagai teks, bukan file. Orang lain di komputer ini dapat melihatnya di daftar proses; gunakan - untuk teks pribadi.",
   "cliSendingText": "Mengirim teks, {size}.",
   "cliOfferedText": "Ditawarkan: sebuah teks, {size}. Teks ditampilkan di sini, tidak disimpan.",

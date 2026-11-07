@@ -566,4 +566,51 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get metainfoTheme =>
       'Volgt het thema van je bureaublad: Plasma, Hyprland, Omarchy, GNOME';
+
+  @override
+  String get sendText => 'Tekst versturen';
+
+  @override
+  String get sendTextHint => 'Typ of plak de tekst die je wilt versturen';
+
+  @override
+  String sendTextTooLong(String size) {
+    return 'Een tekst mag hoogstens $size zijn. Verstuur een langere tekst als bestand.';
+  }
+
+  @override
+  String get sendTextDone => 'De tekst is ongeschonden aangekomen.';
+
+  @override
+  String get sendClipboard => 'Klembord versturen';
+
+  @override
+  String get sendClipboardEmpty => 'Het klembord bevat geen tekst.';
+
+  @override
+  String get receiveOfferText => 'Inkomende tekst';
+
+  @override
+  String get receiveOfferTextNote =>
+      'De tekst wordt hier getoond, niet opgeslagen.';
+
+  @override
+  String get receiveTextDone => 'Tekst ontvangen en gecontroleerd';
+
+  @override
+  String get receiveTextDeclined => 'Je hebt de tekst geweigerd.';
+
+  @override
+  String get receiveTextHidden =>
+      'De tekst bevat verborgen tekens, getoond als U+…. Bij kopiëren krijg je de tekst precies zoals hij aankwam.';
+
+  @override
+  String get copyText => 'Tekst kopiëren';
+
+  @override
+  String get textCopied => 'Tekst gekopieerd';
+
+  @override
+  String get errorTextDamaged =>
+      'De tekst is niet ongeschonden aangekomen en wordt daarom niet getoond.';
 }

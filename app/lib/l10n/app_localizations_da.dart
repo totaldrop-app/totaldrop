@@ -559,4 +559,50 @@ class AppLocalizationsDa extends AppLocalizations {
   @override
   String get metainfoTheme =>
       'Følger dit skrivebords tema: Plasma, Hyprland, Omarchy, GNOME';
+
+  @override
+  String get sendText => 'Send tekst';
+
+  @override
+  String get sendTextHint => 'Skriv eller indsæt teksten, der skal sendes';
+
+  @override
+  String sendTextTooLong(String size) {
+    return 'En tekst kan højst fylde $size. Send en længere tekst som fil.';
+  }
+
+  @override
+  String get sendTextDone => 'Teksten kom frem i god behold.';
+
+  @override
+  String get sendClipboard => 'Send udklipsholder';
+
+  @override
+  String get sendClipboardEmpty => 'Udklipsholderen indeholder ingen tekst.';
+
+  @override
+  String get receiveOfferText => 'Indgående tekst';
+
+  @override
+  String get receiveOfferTextNote => 'Teksten vises her og gemmes ikke.';
+
+  @override
+  String get receiveTextDone => 'Tekst modtaget og bekræftet';
+
+  @override
+  String get receiveTextDeclined => 'Du afviste teksten.';
+
+  @override
+  String get receiveTextHidden =>
+      'Teksten indeholder skjulte tegn, som vises som U+…. Når du kopierer, får du teksten præcis, som den kom.';
+
+  @override
+  String get copyText => 'Kopiér tekst';
+
+  @override
+  String get textCopied => 'Tekst kopieret';
+
+  @override
+  String get errorTextDamaged =>
+      'Teksten kom ikke frem i god behold, så den vises ikke.';
 }

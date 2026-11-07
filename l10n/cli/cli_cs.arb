@@ -60,7 +60,7 @@
   "cliHelpHelpCommand": "Zobrazit tuto zprávu nebo nápovědu k zadanému příkazu",
   "cliDesktopAbout": "Otevřít okno TotalDrop.",
   "cliDesktopArgs": "Soubory nebo složky k odeslání, nebo odkaz TotalDrop k přijetí.",
-  "cliDesktopScreen": "Otevřít na obrazovce Odeslat (send), Přijmout (receive) nebo Nastavení (settings).",
+  "cliDesktopScreen": "Otevřít na obrazovce Odeslat (send), Odeslat schránku (clipboard), Přijmout (receive) nebo Nastavení (settings).",
   "cliHelpSendText": "Odeslat tento text místo souborů: příjemce ho uvidí jako text, ne jako soubor. Ostatní na tomto počítači ho mohou vidět v seznamu procesů; pro soukromý text použijte -.",
   "cliSendingText": "Odesílá se text, {size}.",
   "cliOfferedText": "Nabídnuto: text, {size}. Zobrazí se zde, neuloží se.",

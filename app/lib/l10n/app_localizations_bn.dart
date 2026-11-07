@@ -547,4 +547,51 @@ class AppLocalizationsBn extends AppLocalizations {
   @override
   String get metainfoTheme =>
       'আপনার ডেস্কটপের থিম অনুসরণ করে: Plasma, Hyprland, Omarchy, GNOME';
+
+  @override
+  String get sendText => 'লেখা পাঠান';
+
+  @override
+  String get sendTextHint => 'যে লেখা পাঠাতে চান তা লিখুন বা পেস্ট করুন';
+
+  @override
+  String sendTextTooLong(String size) {
+    return 'লেখা সর্বোচ্চ $size হতে পারে। এর চেয়ে বড় লেখা ফাইল হিসেবে পাঠান।';
+  }
+
+  @override
+  String get sendTextDone => 'লেখাটি সম্পূর্ণ অবস্থায় পৌঁছেছে।';
+
+  @override
+  String get sendClipboard => 'ক্লিপবোর্ডের লেখা পাঠান';
+
+  @override
+  String get sendClipboardEmpty => 'ক্লিপবোর্ডে কোনো লেখা নেই।';
+
+  @override
+  String get receiveOfferText => 'আসা লেখা';
+
+  @override
+  String get receiveOfferTextNote =>
+      'লেখাটি এখানে দেখানো হয়, সংরক্ষণ করা হয় না।';
+
+  @override
+  String get receiveTextDone => 'লেখা গ্রহণ ও যাচাই করা হয়েছে';
+
+  @override
+  String get receiveTextDeclined => 'আপনি লেখাটি প্রত্যাখ্যান করেছেন।';
+
+  @override
+  String get receiveTextHidden =>
+      'লেখায় লুকানো অক্ষর আছে, সেগুলো U+… হিসেবে দেখানো হচ্ছে। কপি করলে লেখাটি ঠিক যেমন এসেছে তেমনই কপি হয়।';
+
+  @override
+  String get copyText => 'লেখা কপি করুন';
+
+  @override
+  String get textCopied => 'লেখা কপি হয়েছে';
+
+  @override
+  String get errorTextDamaged =>
+      'লেখাটি সম্পূর্ণ অবস্থায় পৌঁছায়নি, তাই দেখানো হচ্ছে না।';
 }

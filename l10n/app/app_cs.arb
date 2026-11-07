@@ -149,5 +149,19 @@
   "metainfoAbout": "TotalDrop posílá soubory a složky z jednoho zařízení do druhého, koncově šifrované. Vyberte soubory, sdílejte krátký kód nebo QR kód a druhé zařízení je přijme. Žádný účet, e-mail ani telefonní číslo.",
   "metainfoVerified": "Každý soubor se po doručení ověří; poškozené soubory se zahodí",
   "metainfoWords": "Čtyři ověřovací slova ukážou, že mezi vámi nikdo není",
-  "metainfoTheme": "Řídí se motivem vašeho prostředí: Plasma, Hyprland, Omarchy, GNOME"
+  "metainfoTheme": "Řídí se motivem vašeho prostředí: Plasma, Hyprland, Omarchy, GNOME",
+  "sendText": "Odeslat text",
+  "sendTextHint": "Napište nebo vložte text k odeslání",
+  "sendTextTooLong": "Text může mít nejvýše {size}. Delší text pošlete jako soubor.",
+  "sendTextDone": "Text dorazil v pořádku.",
+  "sendClipboard": "Odeslat schránku",
+  "sendClipboardEmpty": "Ve schránce není žádný text.",
+  "receiveOfferText": "Příchozí text",
+  "receiveOfferTextNote": "Text se zobrazí zde, neukládá se.",
+  "receiveTextDone": "Text přijat a ověřen",
+  "receiveTextDeclined": "Text jste odmítli.",
+  "receiveTextHidden": "Text obsahuje skryté znaky, zobrazené jako U+…. Zkopírováním získáte text přesně tak, jak dorazil.",
+  "copyText": "Kopírovat text",
+  "textCopied": "Text zkopírován",
+  "errorTextDamaged": "Text nedorazil v pořádku, proto se nezobrazí."
 }

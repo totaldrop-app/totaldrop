@@ -149,5 +149,19 @@
   "metainfoAbout": "TotalDrop mengirim file dan folder dari satu perangkat ke perangkat lain, terenkripsi end-to-end. Pilih file, bagikan kode pendek atau kode QR, dan perangkat lain akan menerimanya. Tanpa akun, tanpa email, tanpa nomor telepon.",
   "metainfoVerified": "Setiap file diverifikasi saat tiba; file yang rusak dibuang",
   "metainfoWords": "Empat kata verifikasi menunjukkan tidak ada pihak lain di tengah",
-  "metainfoTheme": "Mengikuti tema desktop Anda: Plasma, Hyprland, Omarchy, GNOME"
+  "metainfoTheme": "Mengikuti tema desktop Anda: Plasma, Hyprland, Omarchy, GNOME",
+  "sendText": "Kirim teks",
+  "sendTextHint": "Ketik atau tempel teks yang ingin dikirim",
+  "sendTextTooLong": "Teks paling besar {size}. Kirim teks yang lebih panjang sebagai file.",
+  "sendTextDone": "Teks tiba dengan utuh.",
+  "sendClipboard": "Kirim papan klip",
+  "sendClipboardEmpty": "Papan klip tidak berisi teks.",
+  "receiveOfferText": "Teks masuk",
+  "receiveOfferTextNote": "Teks ditampilkan di sini, tidak disimpan.",
+  "receiveTextDone": "Teks diterima dan terverifikasi",
+  "receiveTextDeclined": "Anda menolak teks tersebut.",
+  "receiveTextHidden": "Teks berisi karakter tersembunyi yang ditampilkan sebagai U+…. Saat disalin, teks didapat persis seperti saat tiba.",
+  "copyText": "Salin teks",
+  "textCopied": "Teks disalin",
+  "errorTextDamaged": "Teks tidak tiba dengan utuh, jadi tidak ditampilkan."
 }

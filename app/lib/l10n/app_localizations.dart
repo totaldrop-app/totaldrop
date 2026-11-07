@@ -1009,6 +1009,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Follows your desktop\'s theme: Plasma, Hyprland, Omarchy, GNOME'**
   String get metainfoTheme;
+
+  /// Send screen: button and screen title for sending a piece of text instead of files
+  ///
+  /// In en, this message translates to:
+  /// **'Send text'**
+  String get sendText;
+
+  /// Send screen: placeholder in the box where the person types or pastes the text to send
+  ///
+  /// In en, this message translates to:
+  /// **'Type or paste the text to send'**
+  String get sendTextHint;
+
+  /// Send screen: the text is over the limit; {size} is the limit, such as 1 MB
+  ///
+  /// In en, this message translates to:
+  /// **'A text can be at most {size}. Send a longer one as a file.'**
+  String sendTextTooLong(String size);
+
+  /// Send result: the text reached the receiver and its check passed
+  ///
+  /// In en, this message translates to:
+  /// **'The text arrived intact.'**
+  String get sendTextDone;
+
+  /// Linux desktop entry action and Android shortcut: opens Send with the text on the clipboard filled in
+  ///
+  /// In en, this message translates to:
+  /// **'Send clipboard'**
+  String get sendClipboard;
+
+  /// Send screen: shown when Send clipboard finds no text on the clipboard
+  ///
+  /// In en, this message translates to:
+  /// **'The clipboard holds no text.'**
+  String get sendClipboardEmpty;
+
+  /// Receive screen: title when the other side wants to send a text, not files
+  ///
+  /// In en, this message translates to:
+  /// **'Incoming text'**
+  String get receiveOfferText;
+
+  /// Receive screen: under an incoming text, in place of the folder files are saved to
+  ///
+  /// In en, this message translates to:
+  /// **'The text is shown here, not saved.'**
+  String get receiveOfferTextNote;
+
+  /// Receive result: title when a text arrived and its check passed; the text is shown below it
+  ///
+  /// In en, this message translates to:
+  /// **'Text received and verified'**
+  String get receiveTextDone;
+
+  /// Receive result: the person declined an incoming text
+  ///
+  /// In en, this message translates to:
+  /// **'You declined the text.'**
+  String get receiveTextDeclined;
+
+  /// Receive result: the text holds invisible control or direction characters, shown in the text by their code, as <U+202E>; keep U+… as it is
+  ///
+  /// In en, this message translates to:
+  /// **'The text holds hidden characters, shown as U+…. Copying gives the text exactly as it came.'**
+  String get receiveTextHidden;
+
+  /// Receive result: button that copies the received text to the clipboard
+  ///
+  /// In en, this message translates to:
+  /// **'Copy text'**
+  String get copyText;
+
+  /// Tooltip after the received text was copied
+  ///
+  /// In en, this message translates to:
+  /// **'Text copied'**
+  String get textCopied;
+
+  /// Receive result: the text failed its integrity check or is not valid text, so it is not shown
+  ///
+  /// In en, this message translates to:
+  /// **'The text did not arrive intact, so it is not shown.'**
+  String get errorTextDamaged;
 }
 
 class _AppLocalizationsDelegate

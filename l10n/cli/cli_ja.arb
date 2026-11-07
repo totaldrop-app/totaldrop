@@ -60,7 +60,7 @@
   "cliHelpHelpCommand": "このメッセージまたは指定したコマンドのヘルプを表示",
   "cliDesktopAbout": "TotalDrop のウィンドウを開きます。",
   "cliDesktopArgs": "送信するファイルやフォルダ、または受信用の TotalDrop リンク。",
-  "cliDesktopScreen": "送信（send）、受信（receive）、設定（settings）のいずれかの画面で開きます。",
+  "cliDesktopScreen": "送信（send）、クリップボードを送信（clipboard）、受信（receive）、設定（settings）のいずれかの画面で開きます。",
   "cliHelpSendText": "ファイルの代わりにこのテキストを送信します。受信側にはファイルではなくテキストとして表示されます。このコンピューターの他のユーザーはプロセス一覧で見ることができます。非公開のテキストには - を使ってください。",
   "cliSendingText": "テキスト（{size}）を送信します。",
   "cliOfferedText": "受信内容: テキスト（{size}）。保存されず、ここに表示されます。",
