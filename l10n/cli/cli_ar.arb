@@ -60,7 +60,7 @@
   "cliHelpHelpCommand": "اعرض هذه الرسالة أو مساعدة الأمر المحدد",
   "cliDesktopAbout": "افتح نافذة TotalDrop.",
   "cliDesktopArgs": "ملفات أو مجلدات لإرسالها، أو رابط TotalDrop للاستلام به.",
-  "cliDesktopScreen": "افتح على شاشة الإرسال (send) إرسال محتوى الحافظة (clipboard) أو الاستلام (receive) أو الإعدادات (settings).",
+  "cliDesktopScreen": "افتح على شاشة الإرسال (send)، أو إرسال محتوى الحافظة (clipboard) أو الاستلام (receive) أو الإعدادات (settings).",
   "cliHelpSendText": "أرسل هذا النص بدلًا من الملفات: يراه المستلم نصًا لا ملفًا. يمكن للآخرين على هذا الحاسوب رؤيته في قائمة العمليات؛ استخدم - لنص خاص.",
   "cliSendingText": "جارٍ إرسال نص، {size}.",
   "cliOfferedText": "المعروض: نص، {size}. يُعرض هنا ولا يُحفظ.",

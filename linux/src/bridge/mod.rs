@@ -3,6 +3,7 @@
 //
 //! QObjects exposed to QML, and the Qt set-up done before they exist.
 
+pub mod clipboard;
 pub mod launcher;
 pub mod qt_texts;
 pub mod surface;

@@ -576,6 +576,17 @@ class AppLocalizationsTh extends AppLocalizations {
       'ข้อความมีอักขระที่ซ่อนอยู่ ซึ่งแสดงเป็น U+… เมื่อคัดลอกจะได้ข้อความตรงตามที่ได้รับมา';
 
   @override
+  String get sendClipboardKept =>
+      'ข้อความที่พิมพ์ไว้ยังอยู่ และไม่ได้ใช้คลิปบอร์ด';
+
+  @override
+  String get sendTextShortened => 'แสดงเฉพาะตอนต้นของข้อความ แต่จะส่งทั้งหมด';
+
+  @override
+  String get receiveTextShortened =>
+      'แสดงเฉพาะตอนต้นของข้อความ คัดลอกข้อความจะคัดลอกทั้งหมด';
+
+  @override
   String get copyText => 'คัดลอกข้อความ';
 
   @override

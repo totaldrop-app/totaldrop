@@ -607,6 +607,18 @@ class AppLocalizationsCs extends AppLocalizations {
       'Text obsahuje skryté znaky, zobrazené jako U+…. Zkopírováním získáte text přesně tak, jak dorazil.';
 
   @override
+  String get sendClipboardKept =>
+      'Napsaný text zůstal, schránka nebyla použita.';
+
+  @override
+  String get sendTextShortened =>
+      'Zobrazen je jen začátek textu, odešle se celý.';
+
+  @override
+  String get receiveTextShortened =>
+      'Zobrazen je jen začátek textu. Kopírovat text zkopíruje celý.';
+
+  @override
   String get copyText => 'Kopírovat text';
 
   @override

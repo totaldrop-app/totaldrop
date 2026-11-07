@@ -161,6 +161,9 @@
   "receiveTextDone": "Metin alındı ve doğrulandı",
   "receiveTextDeclined": "Metni reddettiniz.",
   "receiveTextHidden": "Metinde gizli karakterler var, U+… olarak gösteriliyor. Kopyalayınca metin geldiği gibi kopyalanır.",
+  "sendClipboardKept": "Yazılmış metin korundu, pano kullanılmadı.",
+  "sendTextShortened": "Metnin yalnızca başı gösteriliyor, tamamı gönderilir.",
+  "receiveTextShortened": "Metnin yalnızca başı gösteriliyor. Metni kopyala, tamamını kopyalar.",
   "copyText": "Metni kopyala",
   "textCopied": "Metin kopyalandı",
   "errorTextDamaged": "Metin eksiksiz ulaşmadı, bu yüzden gösterilmiyor."

@@ -610,6 +610,18 @@ class AppLocalizationsRu extends AppLocalizations {
       'В тексте есть скрытые символы, они показаны как U+…. При копировании вы получите текст точно таким, каким он пришёл.';
 
   @override
+  String get sendClipboardKept =>
+      'Уже набранный текст сохранён, буфер обмена не использован.';
+
+  @override
+  String get sendTextShortened =>
+      'Показано только начало текста, отправлен будет весь текст.';
+
+  @override
+  String get receiveTextShortened =>
+      'Показано только начало текста. «Копировать текст» копирует его целиком.';
+
+  @override
   String get copyText => 'Копировать текст';
 
   @override

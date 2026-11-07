@@ -161,6 +161,9 @@
   "receiveTextDone": "文字已接收並驗證",
   "receiveTextDeclined": "你已拒絕這段文字。",
   "receiveTextHidden": "文字中含有隱藏字元，顯示為 U+…。複製時得到的是與收到時完全相同的文字。",
+  "sendClipboardKept": "已輸入的文字保持不變，未使用剪貼簿。",
+  "sendTextShortened": "只顯示文字的開頭，傳送的是全文。",
+  "receiveTextShortened": "只顯示文字的開頭。「複製文字」會複製全文。",
   "copyText": "複製文字",
   "textCopied": "文字已複製",
   "errorTextDamaged": "文字未完整送達，因此不顯示。"

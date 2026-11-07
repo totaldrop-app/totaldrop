@@ -577,12 +577,18 @@ fn accented(text: &str) -> String {
 
 /// Whether a character is invisible or changes how text around it is laid
 /// out: controls (Cc), format characters (Cf) and line or paragraph
-/// separators (Zl, Zp). Zero-width joiner and non-joiner, which Persian and
-/// Indic scripts need, are allowed.
+/// separators (Zl, Zp), and noncharacters (U+FDD0–U+FDEF and the last two
+/// of every plane), which Qt's text box shows as a line break (#326).
+/// Zero-width joiner and non-joiner, which Persian and Indic scripts need,
+/// are allowed.
 #[must_use]
 pub fn is_hidden(c: char) -> bool {
     if matches!(c, '\u{200C}' | '\u{200D}') {
         return false;
+    }
+    let n = u32::from(c);
+    if (0xFDD0..=0xFDEF).contains(&n) || n & 0xFFFE == 0xFFFE {
+        return true;
     }
     matches!(
         CodePointMapData::<GeneralCategory>::new().get(c),
@@ -891,6 +897,8 @@ mod tests {
         assert_eq!(reveal_text("end\r"), "end<U+000D>");
         assert_eq!(reveal_text("می\u{200C}خواهم\n"), "می\u{200C}خواهم\n");
         assert_eq!(reveal_text(""), "");
+        // Qt shows a noncharacter as a line break.
+        assert_eq!(reveal_text("a\u{FDD0}b\u{FFFF}"), "a<U+FDD0>b<U+FFFF>");
     }
 
     #[test]

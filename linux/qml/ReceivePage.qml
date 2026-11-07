@@ -42,10 +42,12 @@ Page {
         }
     }
 
-    // Escape does what the back button does.
+    // Escape does what the back button does, but does not throw away a
+    // received text: it is nowhere else (#326). That takes Done or Back.
     Shortcut {
         sequences: [StandardKey.Cancel]
         enabled: page.StackView.status === StackView.Active
+                 && !(page.phase === "done" && page.transfer.isText)
         onActivated: page.goBack()
     }
 
@@ -315,7 +317,9 @@ Page {
                   : ""
             folder: page.phase === "done" && !isText ? page.transfer.savedTo : ""
             shownText: page.phase === "done" ? page.transfer.shownText : ""
-            rawText: page.phase === "done" ? page.transfer.receivedText : ""
+            shortened: page.phase === "done" && page.transfer.shownShort
+            hidden: page.phase === "done" && page.transfer.shownHidden
+            onCopyText: page.transfer.copyText(page.transfer.receivedText)
             detail: page.phase === "failed" ? page.transfer.errorDetail : ""
             cause: page.phase === "failed" ? page.transfer.errorCause : ""
             onFinished: { page.transfer.reset(); page.close() }

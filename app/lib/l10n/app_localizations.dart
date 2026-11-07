@@ -1076,6 +1076,24 @@ abstract class AppLocalizations {
   /// **'The text holds hidden characters, shown as U+…. Copying gives the text exactly as it came.'**
   String get receiveTextHidden;
 
+  /// Send screen: Send clipboard was chosen while the text box already held typed text, so the clipboard was not pasted
+  ///
+  /// In en, this message translates to:
+  /// **'The text already typed is kept; the clipboard was not used.'**
+  String get sendClipboardKept;
+
+  /// Send screen: a very long pasted text is shown only in part; the whole text is still sent
+  ///
+  /// In en, this message translates to:
+  /// **'Only the beginning of the text is shown; all of it is sent.'**
+  String get sendTextShortened;
+
+  /// Receive result: a very long text is shown only in part; the Copy text button copies the whole text
+  ///
+  /// In en, this message translates to:
+  /// **'Only the beginning of the text is shown. Copy text copies all of it.'**
+  String get receiveTextShortened;
+
   /// Receive result: button that copies the received text to the clipboard
   ///
   /// In en, this message translates to:
