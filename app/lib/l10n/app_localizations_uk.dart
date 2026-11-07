@@ -446,6 +446,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get sendDropHint => 'Файли також можна перетягнути в це вікно.';
 
   @override
+  String get keepAwakeReason => 'TotalDrop надсилає або отримує файли';
+
+  @override
   String get sendQrHint => 'Або відскануйте цей код камерою іншого пристрою.';
 
   @override

@@ -115,6 +115,7 @@
 
   "sendDropHere": "將檔案拖放到這裡",
   "sendDropHint": "也可以將檔案拖曳到這個視窗中。",
+  "keepAwakeReason": "TotalDrop 正在傳送或接收檔案",
   "sendQrHint": "或者用另一部裝置的相機掃描這個 QR 碼。",
   "sendWaitingAccept": "核對單字，然後等待接收者接受。",
   "receiveFromImage": "從圖片讀取 QR 碼",

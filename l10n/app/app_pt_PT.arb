@@ -115,6 +115,7 @@
 
   "sendDropHere": "Largue os ficheiros aqui",
   "sendDropHint": "Também pode arrastar ficheiros para esta janela.",
+  "keepAwakeReason": "O TotalDrop está a enviar ou a receber ficheiros",
   "sendQrHint": "Ou leia este código com a câmara do outro dispositivo.",
   "sendWaitingAccept": "Confira as palavras e aguarde que o destinatário aceite.",
   "receiveFromImage": "Ler QR de uma imagem",

@@ -442,6 +442,9 @@ class AppLocalizationsNl extends AppLocalizations {
   String get sendDropHint => 'Je kunt bestanden ook naar dit venster slepen.';
 
   @override
+  String get keepAwakeReason => 'TotalDrop verstuurt of ontvangt bestanden';
+
+  @override
   String get sendQrHint =>
       'Of scan deze code met de camera van het andere apparaat.';
 

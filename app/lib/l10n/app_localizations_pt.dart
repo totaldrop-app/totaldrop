@@ -447,6 +447,10 @@ class AppLocalizationsPt extends AppLocalizations {
       'Você também pode arrastar arquivos para esta janela.';
 
   @override
+  String get keepAwakeReason =>
+      'O TotalDrop está enviando ou recebendo arquivos';
+
+  @override
   String get sendQrHint =>
       'Ou escaneie este código com a câmera do outro dispositivo.';
 
@@ -1132,6 +1136,10 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String get sendDropHint =>
       'Você também pode arrastar arquivos para esta janela.';
+
+  @override
+  String get keepAwakeReason =>
+      'O TotalDrop está enviando ou recebendo arquivos';
 
   @override
   String get sendQrHint =>
@@ -1820,6 +1828,10 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
 
   @override
   String get sendDropHint => 'Também pode arrastar ficheiros para esta janela.';
+
+  @override
+  String get keepAwakeReason =>
+      'O TotalDrop está a enviar ou a receber ficheiros';
 
   @override
   String get sendQrHint =>

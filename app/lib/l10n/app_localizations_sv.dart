@@ -442,6 +442,9 @@ class AppLocalizationsSv extends AppLocalizations {
   String get sendDropHint => 'Du kan också dra filer till det här fönstret.';
 
   @override
+  String get keepAwakeReason => 'TotalDrop skickar eller tar emot filer';
+
+  @override
   String get sendQrHint => 'Eller skanna koden med den andra enhetens kamera.';
 
   @override

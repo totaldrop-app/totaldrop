@@ -115,6 +115,7 @@
 
   "sendDropHere": "Plasați fișierele aici",
   "sendDropHint": "Puteți și să trageți fișiere în această fereastră.",
+  "keepAwakeReason": "TotalDrop trimite sau primește fișiere",
   "sendQrHint": "Sau scanați acest cod cu camera celuilalt dispozitiv.",
   "sendWaitingAccept": "Verificați cuvintele, apoi așteptați ca destinatarul să accepte.",
   "receiveFromImage": "Citește codul QR din imagine",

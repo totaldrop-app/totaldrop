@@ -51,6 +51,11 @@ Bugün korunanlar ile henüz yalnızca tasarımda olanlar ayrı yazılır.
   `app.totaldrop.TotalDrop.Instance.Package` ile hangi paketten
   açıldığını da söyler (`flatpak` ya da `system`, #351); bu bilgi
   zararsızdır ve başka bir şey açmaz.
+- Linux'ta aktarım sürerken uygulama bilgisayarın uykuya geçmesini
+  engeller (#340): sistem paketinde systemd-logind'den `sleep` kilidi,
+  Flatpak'te masaüstü portalının `Inhibit` isteği. Kilit aktarım bitince
+  bırakılır; ekran yine kararıp kilitlenebilir. Gerekçe metni dışında
+  hiçbir bilgi gönderilmez.
 - Flatpak paketi (`packaging/flatpak`, [0014](kararlar/0014-steam-deck.md))
   korumalı alanda çalışır. Erişebildikleri: ağ, `~/Downloads/TotalDrop`,
   dosya seçici portalıyla kişinin seçtiği dosyalar, bildirim servisi ve

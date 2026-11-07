@@ -115,6 +115,7 @@
 
   "sendDropHere": "Thả tệp vào đây",
   "sendDropHint": "Bạn cũng có thể kéo tệp vào cửa sổ này.",
+  "keepAwakeReason": "TotalDrop đang gửi hoặc nhận tệp",
   "sendQrHint": "Hoặc quét mã này bằng camera của thiết bị kia.",
   "sendWaitingAccept": "Kiểm tra các từ, rồi chờ người nhận chấp nhận.",
   "receiveFromImage": "Đọc QR từ ảnh",

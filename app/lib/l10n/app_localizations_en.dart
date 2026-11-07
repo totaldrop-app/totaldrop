@@ -440,6 +440,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sendDropHint => 'You can also drag files onto this window.';
 
   @override
+  String get keepAwakeReason => 'TotalDrop is sending or receiving files';
+
+  @override
   String get sendQrHint => 'Or scan this code with the other device\'s camera.';
 
   @override

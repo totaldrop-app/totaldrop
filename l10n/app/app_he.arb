@@ -115,6 +115,7 @@
 
   "sendDropHere": "אפשר לשחרר כאן קבצים",
   "sendDropHint": "אפשר גם לגרור קבצים אל החלון הזה.",
+  "keepAwakeReason": "TotalDrop שולח או מקבל קבצים",
   "sendQrHint": "או לסרוק את הקוד הזה במצלמה של המכשיר השני.",
   "sendWaitingAccept": "יש לבדוק את המילים, ואז להמתין שהנמען יאשר.",
   "receiveFromImage": "קריאת QR מתמונה",

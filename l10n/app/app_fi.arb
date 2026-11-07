@@ -115,6 +115,7 @@
 
   "sendDropHere": "Pudota tiedostot tähän",
   "sendDropHint": "Voit myös vetää tiedostoja tähän ikkunaan.",
+  "keepAwakeReason": "TotalDrop lähettää tai vastaanottaa tiedostoja",
   "sendQrHint": "Tai skannaa koodi toisen laitteen kameralla.",
   "sendWaitingAccept": "Tarkista sanat ja odota, että vastaanottaja hyväksyy.",
   "receiveFromImage": "Lue QR-koodi kuvasta",

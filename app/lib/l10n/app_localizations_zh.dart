@@ -401,6 +401,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sendDropHint => '也可以将文件拖到此窗口中。';
 
   @override
+  String get keepAwakeReason => 'TotalDrop 正在发送或接收文件';
+
+  @override
   String get sendQrHint => '或者用另一台设备的相机扫描此二维码。';
 
   @override
@@ -1021,6 +1024,9 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get sendDropHint => '也可以将文件拖到此窗口中。';
 
   @override
+  String get keepAwakeReason => 'TotalDrop 正在发送或接收文件';
+
+  @override
   String get sendQrHint => '或者用另一台设备的相机扫描此二维码。';
 
   @override
@@ -1638,6 +1644,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get sendDropHint => '也可以將檔案拖曳到這個視窗中。';
+
+  @override
+  String get keepAwakeReason => 'TotalDrop 正在傳送或接收檔案';
 
   @override
   String get sendQrHint => '或者用另一部裝置的相機掃描這個 QR 碼。';
