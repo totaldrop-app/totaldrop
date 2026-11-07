@@ -1,4 +1,4 @@
-<!-- Translated from README.md f4c5b95e97ce. -->
+<!-- Translated from README.md 8687cea85e72. -->
 <div align="center">
 
 <picture>
@@ -53,7 +53,7 @@ Gratis og open source. End-to-end-krypteret. Ingen e-mail, intet telefonnummer, 
 | --- | --- | --- |
 | **Linux** (x86-64) | [Arch / Omarchy](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.5/totaldrop-0.3.0_beta.5-1-x86_64.pkg.tar.zst) · [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.5/totaldrop_0.3.0.beta.5-1_amd64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.5/totaldrop-0.3.0.beta.5-1.fc43.x86_64.rpm) | 0.3.0-beta.5, Qt 6.8 eller nyere |
 | **Linux** (ARM64) | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.5/totaldrop_0.3.0.beta.5-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.5/totaldrop-0.3.0.beta.5-1.fc43.aarch64.rpm) | 0.3.0-beta.5, Qt 6.8 eller nyere |
-| **Android** | [Deltag i betaen](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.6, Android 15 eller nyere, Google Play efter invitation |
+| **Android** | [Deltag i betaen](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.7, Android 15 eller nyere, Google Play efter invitation |
 | **Kommandolinje** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux, macOS, Windows |
 | **Windows, macOS, iOS** | På vej | Kodesignering til disse er det, donationerne betaler for først |
 
