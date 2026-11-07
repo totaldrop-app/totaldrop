@@ -60,7 +60,7 @@
   "cliHelpHelpCommand": "Ennek az üzenetnek vagy a megadott parancs súgójának megjelenítése",
   "cliDesktopAbout": "A TotalDrop ablak megnyitása.",
   "cliDesktopArgs": "Küldendő fájlok vagy mappák, vagy egy TotalDrop-hivatkozás a fogadáshoz.",
-  "cliDesktopScreen": "Megnyitás a Küldés (send), Fogadás (receive) vagy Beállítások (settings) képernyőn.",
+  "cliDesktopScreen": "Megnyitás a Küldés (send), Vágólap küldése (clipboard), Fogadás (receive) vagy Beállítások (settings) képernyőn.",
   "cliHelpSendText": "Ezt a szöveget küldi fájlok helyett: a címzett szövegként látja, nem fájlként. A számítógép más felhasználói láthatják a folyamatlistában; privát szöveghez használd a - jelet.",
   "cliSendingText": "Szöveg küldése, {size}.",
   "cliOfferedText": "Felkínálva: egy szöveg, {size}. Itt jelenik meg, nem lesz mentve.",

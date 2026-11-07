@@ -523,4 +523,49 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get metainfoTheme => 'デスクトップのテーマに合わせます: Plasma、Hyprland、Omarchy、GNOME';
+
+  @override
+  String get sendText => 'テキストを送信';
+
+  @override
+  String get sendTextHint => '送信するテキストを入力するか貼り付けてください';
+
+  @override
+  String sendTextTooLong(String size) {
+    return 'テキストは最大 $size までです。それより長いものはファイルとして送信してください。';
+  }
+
+  @override
+  String get sendTextDone => 'テキストは欠けることなく届きました。';
+
+  @override
+  String get sendClipboard => 'クリップボードを送信';
+
+  @override
+  String get sendClipboardEmpty => 'クリップボードにテキストがありません。';
+
+  @override
+  String get receiveOfferText => '受信するテキスト';
+
+  @override
+  String get receiveOfferTextNote => 'テキストはここに表示され、保存はされません。';
+
+  @override
+  String get receiveTextDone => 'テキスト受信完了・検証済み';
+
+  @override
+  String get receiveTextDeclined => 'テキストの受け取りを拒否しました。';
+
+  @override
+  String get receiveTextHidden =>
+      'テキストに見えない文字が含まれており、U+… の形で表示しています。コピーすると、届いたとおりのテキストがコピーされます。';
+
+  @override
+  String get copyText => 'テキストをコピー';
+
+  @override
+  String get textCopied => 'テキストをコピーしました';
+
+  @override
+  String get errorTextDamaged => 'テキストが欠けることなく届かなかったため、表示しません。';
 }

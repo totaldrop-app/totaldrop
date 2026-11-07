@@ -149,5 +149,19 @@
   "metainfoAbout": "A TotalDrop fájlokat és mappákat küld egyik eszközről a másikra, végpontok közötti titkosítással. Válaszd ki a fájlokat, oszd meg a rövid kódot vagy a QR-kódot, és a másik eszköz megkapja őket. Nincs fiók, e-mail-cím vagy telefonszám.",
   "metainfoVerified": "Minden fájlt ellenőriz érkezéskor; a sérült fájlokat elveti",
   "metainfoWords": "Négy ellenőrző szó mutatja, hogy senki sem áll közöttetek",
-  "metainfoTheme": "Követi az asztali környezet témáját: Plasma, Hyprland, Omarchy, GNOME"
+  "metainfoTheme": "Követi az asztali környezet témáját: Plasma, Hyprland, Omarchy, GNOME",
+  "sendText": "Szöveg küldése",
+  "sendTextHint": "Írd be vagy illeszd be a küldendő szöveget",
+  "sendTextTooLong": "Egy szöveg legfeljebb {size} lehet. A hosszabbat fájlként küldd.",
+  "sendTextDone": "A szöveg hiánytalanul megérkezett.",
+  "sendClipboard": "Vágólap küldése",
+  "sendClipboardEmpty": "A vágólapon nincs szöveg.",
+  "receiveOfferText": "Bejövő szöveg",
+  "receiveOfferTextNote": "A szöveg itt jelenik meg, nem kerül mentésre.",
+  "receiveTextDone": "Szöveg fogadva és ellenőrizve",
+  "receiveTextDeclined": "Elutasítottad a szöveget.",
+  "receiveTextHidden": "A szövegben rejtett karakterek vannak, ezek U+… alakban látszanak. Másoláskor a szöveget pontosan úgy kapod meg, ahogy érkezett.",
+  "copyText": "Szöveg másolása",
+  "textCopied": "Szöveg másolva",
+  "errorTextDamaged": "A szöveg nem érkezett meg hiánytalanul, ezért nem jelenik meg."
 }

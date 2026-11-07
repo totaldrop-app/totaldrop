@@ -559,4 +559,50 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get metainfoTheme =>
       'Follows your desktop\'s theme: Plasma, Hyprland, Omarchy, GNOME';
+
+  @override
+  String get sendText => 'Send text';
+
+  @override
+  String get sendTextHint => 'Type or paste the text to send';
+
+  @override
+  String sendTextTooLong(String size) {
+    return 'A text can be at most $size. Send a longer one as a file.';
+  }
+
+  @override
+  String get sendTextDone => 'The text arrived intact.';
+
+  @override
+  String get sendClipboard => 'Send clipboard';
+
+  @override
+  String get sendClipboardEmpty => 'The clipboard holds no text.';
+
+  @override
+  String get receiveOfferText => 'Incoming text';
+
+  @override
+  String get receiveOfferTextNote => 'The text is shown here, not saved.';
+
+  @override
+  String get receiveTextDone => 'Text received and verified';
+
+  @override
+  String get receiveTextDeclined => 'You declined the text.';
+
+  @override
+  String get receiveTextHidden =>
+      'The text holds hidden characters, shown as U+…. Copying gives the text exactly as it came.';
+
+  @override
+  String get copyText => 'Copy text';
+
+  @override
+  String get textCopied => 'Text copied';
+
+  @override
+  String get errorTextDamaged =>
+      'The text did not arrive intact, so it is not shown.';
 }

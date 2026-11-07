@@ -561,4 +561,50 @@ class AppLocalizationsSv extends AppLocalizations {
   @override
   String get metainfoTheme =>
       'Följer skrivbordets tema: Plasma, Hyprland, Omarchy, GNOME';
+
+  @override
+  String get sendText => 'Skicka text';
+
+  @override
+  String get sendTextHint => 'Skriv eller klistra in texten som ska skickas';
+
+  @override
+  String sendTextTooLong(String size) {
+    return 'En text får vara högst $size. Skicka en längre text som fil.';
+  }
+
+  @override
+  String get sendTextDone => 'Texten kom fram oskadd.';
+
+  @override
+  String get sendClipboard => 'Skicka urklipp';
+
+  @override
+  String get sendClipboardEmpty => 'Urklipp innehåller ingen text.';
+
+  @override
+  String get receiveOfferText => 'Inkommande text';
+
+  @override
+  String get receiveOfferTextNote => 'Texten visas här och sparas inte.';
+
+  @override
+  String get receiveTextDone => 'Text mottagen och verifierad';
+
+  @override
+  String get receiveTextDeclined => 'Du avböjde texten.';
+
+  @override
+  String get receiveTextHidden =>
+      'Texten innehåller dolda tecken, som visas som U+…. När du kopierar får du texten exakt som den kom.';
+
+  @override
+  String get copyText => 'Kopiera text';
+
+  @override
+  String get textCopied => 'Texten kopierades';
+
+  @override
+  String get errorTextDamaged =>
+      'Texten kom inte fram oskadd, så den visas inte.';
 }

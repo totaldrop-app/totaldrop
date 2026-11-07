@@ -60,7 +60,7 @@
   "cliHelpHelpCommand": "Bu yardımı ya da verilen komutun yardımını göster",
   "cliDesktopAbout": "TotalDrop penceresini aç.",
   "cliDesktopArgs": "Gönderilecek dosya veya klasörler, ya da almak için bir TotalDrop bağlantısı.",
-  "cliDesktopScreen": "Gönder (send), Al (receive) ya da Ayarlar (settings) ekranında aç.",
+  "cliDesktopScreen": "Gönder (send), Panodakini gönder (clipboard), Al (receive) ya da Ayarlar (settings) ekranında aç.",
   "cliHelpSendText": "Dosya yerine bu metni gönder: alıcı onu dosya olarak değil, metin olarak görür. Bu bilgisayardaki başkaları onu işlem listesinde görebilir; gizli bir metin için - kullanın.",
   "cliSendingText": "Bir metin gönderiliyor, {size}.",
   "cliOfferedText": "Gönderilen: bir metin, {size}. Kaydedilmez, burada gösterilir.",

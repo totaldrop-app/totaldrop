@@ -149,5 +149,19 @@
   "metainfoAbout": "TotalDrop dosya ve klasörleri bir cihazdan diğerine uçtan uca şifreli gönderir. Dosyaları seçin, kısa bir kodu ya da QR kodunu paylaşın, diğer cihaz dosyaları alsın. Hesap, e-posta, telefon numarası yok.",
   "metainfoVerified": "Her dosya ulaştığında doğrulanır; bozuk dosyalar silinir",
   "metainfoWords": "Dört doğrulama kelimesi araya kimsenin girmediğini gösterir",
-  "metainfoTheme": "Masaüstünüzün temasını izler: Plasma, Hyprland, Omarchy, GNOME"
+  "metainfoTheme": "Masaüstünüzün temasını izler: Plasma, Hyprland, Omarchy, GNOME",
+  "sendText": "Metin gönder",
+  "sendTextHint": "Göndermek istediğiniz metni yazın ya da yapıştırın",
+  "sendTextTooLong": "Metin en çok {size} olabilir. Daha uzununu dosya olarak gönderin.",
+  "sendTextDone": "Metin eksiksiz ulaştı.",
+  "sendClipboard": "Panodakini gönder",
+  "sendClipboardEmpty": "Panoda metin yok.",
+  "receiveOfferText": "Gelen metin",
+  "receiveOfferTextNote": "Metin kaydedilmez, burada gösterilir.",
+  "receiveTextDone": "Metin alındı ve doğrulandı",
+  "receiveTextDeclined": "Metni reddettiniz.",
+  "receiveTextHidden": "Metinde gizli karakterler var, U+… olarak gösteriliyor. Kopyalayınca metin geldiği gibi kopyalanır.",
+  "copyText": "Metni kopyala",
+  "textCopied": "Metin kopyalandı",
+  "errorTextDamaged": "Metin eksiksiz ulaşmadı, bu yüzden gösterilmiyor."
 }

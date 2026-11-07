@@ -566,4 +566,51 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get metainfoTheme =>
       'Folgt dem Design Ihres Desktops: Plasma, Hyprland, Omarchy, GNOME';
+
+  @override
+  String get sendText => 'Text senden';
+
+  @override
+  String get sendTextHint => 'Text zum Senden eingeben oder einfügen';
+
+  @override
+  String sendTextTooLong(String size) {
+    return 'Ein Text darf höchstens $size groß sein. Senden Sie längere Texte als Datei.';
+  }
+
+  @override
+  String get sendTextDone => 'Der Text ist unversehrt angekommen.';
+
+  @override
+  String get sendClipboard => 'Zwischenablage senden';
+
+  @override
+  String get sendClipboardEmpty => 'Die Zwischenablage enthält keinen Text.';
+
+  @override
+  String get receiveOfferText => 'Eingehender Text';
+
+  @override
+  String get receiveOfferTextNote =>
+      'Der Text wird hier angezeigt, nicht gespeichert.';
+
+  @override
+  String get receiveTextDone => 'Text empfangen und überprüft';
+
+  @override
+  String get receiveTextDeclined => 'Sie haben den Text abgelehnt.';
+
+  @override
+  String get receiveTextHidden =>
+      'Der Text enthält versteckte Zeichen, angezeigt als U+…. Beim Kopieren erhalten Sie den Text genau so, wie er ankam.';
+
+  @override
+  String get copyText => 'Text kopieren';
+
+  @override
+  String get textCopied => 'Text kopiert';
+
+  @override
+  String get errorTextDamaged =>
+      'Der Text ist nicht unversehrt angekommen und wird deshalb nicht angezeigt.';
 }

@@ -60,7 +60,7 @@
   "cliHelpHelpCommand": "Afișează acest mesaj sau ajutorul comenzii date",
   "cliDesktopAbout": "Deschide fereastra TotalDrop.",
   "cliDesktopArgs": "Fișiere sau dosare de trimis, ori un link TotalDrop pentru primire.",
-  "cliDesktopScreen": "Deschide pe ecranul Trimite (send), Primește (receive) sau Setări (settings).",
+  "cliDesktopScreen": "Deschide pe ecranul Trimite (send), Trimite clipboardul (clipboard), Primește (receive) sau Setări (settings).",
   "cliHelpSendText": "Trimite acest text în loc de fișiere: destinatarul îl vede ca text, nu ca fișier. Alții de pe acest computer îl pot vedea în lista de procese; folosiți - pentru un text privat.",
   "cliSendingText": "Se trimite un text, {size}.",
   "cliOfferedText": "Oferit: un text, {size}. Este afișat aici, nu salvat.",

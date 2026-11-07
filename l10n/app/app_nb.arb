@@ -149,5 +149,19 @@
   "metainfoAbout": "TotalDrop sender filer og mapper fra én enhet til en annen, ende-til-ende-kryptert. Velg filene, del en kort kode eller en QR-kode, så mottar den andre enheten dem. Ingen konto, ingen e-post, ikke noe telefonnummer.",
   "metainfoVerified": "Hver fil kontrolleres når den kommer frem; skadde filer forkastes",
   "metainfoWords": "Fire bekreftelsesord viser at ingen står imellom",
-  "metainfoTheme": "Følger temaet på skrivebordet ditt: Plasma, Hyprland, Omarchy, GNOME"
+  "metainfoTheme": "Følger temaet på skrivebordet ditt: Plasma, Hyprland, Omarchy, GNOME",
+  "sendText": "Send tekst",
+  "sendTextHint": "Skriv eller lim inn teksten som skal sendes",
+  "sendTextTooLong": "En tekst kan være på høyst {size}. Send en lengre tekst som fil.",
+  "sendTextDone": "Teksten kom fram uskadd.",
+  "sendClipboard": "Send utklippstavlen",
+  "sendClipboardEmpty": "Utklippstavlen inneholder ingen tekst.",
+  "receiveOfferText": "Innkommende tekst",
+  "receiveOfferTextNote": "Teksten vises her og lagres ikke.",
+  "receiveTextDone": "Tekst mottatt og bekreftet",
+  "receiveTextDeclined": "Du avslo teksten.",
+  "receiveTextHidden": "Teksten inneholder skjulte tegn, som vises som U+…. Når du kopierer, får du teksten nøyaktig slik den kom.",
+  "copyText": "Kopier tekst",
+  "textCopied": "Tekst kopiert",
+  "errorTextDamaged": "Teksten kom ikke fram uskadd, så den vises ikke."
 }

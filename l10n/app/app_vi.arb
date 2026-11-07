@@ -149,5 +149,19 @@
   "metainfoAbout": "TotalDrop gửi tệp và thư mục từ thiết bị này sang thiết bị khác, mã hóa đầu cuối. Chọn tệp, chia sẻ một mã ngắn hoặc mã QR, và thiết bị kia sẽ nhận được. Không cần tài khoản, email hay số điện thoại.",
   "metainfoVerified": "Mỗi tệp được kiểm tra khi tới nơi; tệp bị hỏng sẽ bị loại bỏ",
   "metainfoWords": "Bốn từ xác minh cho thấy không có ai đứng giữa",
-  "metainfoTheme": "Theo chủ đề màn hình nền của bạn: Plasma, Hyprland, Omarchy, GNOME"
+  "metainfoTheme": "Theo chủ đề màn hình nền của bạn: Plasma, Hyprland, Omarchy, GNOME",
+  "sendText": "Gửi văn bản",
+  "sendTextHint": "Nhập hoặc dán văn bản cần gửi",
+  "sendTextTooLong": "Văn bản tối đa {size}. Hãy gửi văn bản dài hơn dưới dạng tệp.",
+  "sendTextDone": "Văn bản đã đến nguyên vẹn.",
+  "sendClipboard": "Gửi khay nhớ tạm",
+  "sendClipboardEmpty": "Khay nhớ tạm không có văn bản.",
+  "receiveOfferText": "Văn bản đến",
+  "receiveOfferTextNote": "Văn bản được hiển thị ở đây, không được lưu.",
+  "receiveTextDone": "Đã nhận và xác minh văn bản",
+  "receiveTextDeclined": "Bạn đã từ chối văn bản.",
+  "receiveTextHidden": "Văn bản có ký tự ẩn, được hiển thị dưới dạng U+…. Khi sao chép, bạn nhận được văn bản đúng như khi đến.",
+  "copyText": "Sao chép văn bản",
+  "textCopied": "Đã sao chép văn bản",
+  "errorTextDamaged": "Văn bản không đến nguyên vẹn nên không được hiển thị."
 }

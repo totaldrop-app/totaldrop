@@ -149,5 +149,19 @@
   "metainfoAbout": "TotalDrop lähettää tiedostoja ja kansioita laitteesta toiseen päästä päähän salattuina. Valitse tiedostot, jaa lyhyt koodi tai QR-koodi, ja toinen laite vastaanottaa ne. Ei tiliä, ei sähköpostia, ei puhelinnumeroa.",
   "metainfoVerified": "Jokainen tiedosto tarkistetaan perillä; vioittuneet tiedostot hylätään",
   "metainfoWords": "Neljä tarkistussanaa osoittaa, ettei välissä ole ketään",
-  "metainfoTheme": "Seuraa työpöytäsi teemaa: Plasma, Hyprland, Omarchy, GNOME"
+  "metainfoTheme": "Seuraa työpöytäsi teemaa: Plasma, Hyprland, Omarchy, GNOME",
+  "sendText": "Lähetä tekstiä",
+  "sendTextHint": "Kirjoita tai liitä lähetettävä teksti",
+  "sendTextTooLong": "Teksti saa olla enintään {size}. Lähetä pidempi teksti tiedostona.",
+  "sendTextDone": "Teksti saapui ehjänä.",
+  "sendClipboard": "Lähetä leikepöytä",
+  "sendClipboardEmpty": "Leikepöydällä ei ole tekstiä.",
+  "receiveOfferText": "Saapuva teksti",
+  "receiveOfferTextNote": "Teksti näytetään tässä, sitä ei tallenneta.",
+  "receiveTextDone": "Teksti vastaanotettu ja tarkistettu",
+  "receiveTextDeclined": "Hylkäsit tekstin.",
+  "receiveTextHidden": "Tekstissä on piilomerkkejä, jotka näytetään muodossa U+…. Kopioitaessa saat tekstin täsmälleen sellaisena kuin se saapui.",
+  "copyText": "Kopioi teksti",
+  "textCopied": "Teksti kopioitu",
+  "errorTextDamaged": "Teksti ei saapunut ehjänä, joten sitä ei näytetä."
 }

@@ -567,4 +567,49 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get metainfoTheme =>
       'يتبع سمة سطح المكتب لديك: Plasma وHyprland وOmarchy وGNOME';
+
+  @override
+  String get sendText => 'إرسال نص';
+
+  @override
+  String get sendTextHint => 'اكتب النص الذي تريد إرساله أو الصقه';
+
+  @override
+  String sendTextTooLong(String size) {
+    return 'يمكن أن يصل النص إلى $size على الأكثر. أرسل النص الأطول كملف.';
+  }
+
+  @override
+  String get sendTextDone => 'وصل النص كاملًا.';
+
+  @override
+  String get sendClipboard => 'إرسال محتوى الحافظة';
+
+  @override
+  String get sendClipboardEmpty => 'لا يوجد نص في الحافظة.';
+
+  @override
+  String get receiveOfferText => 'نص وارد';
+
+  @override
+  String get receiveOfferTextNote => 'يُعرض النص هنا ولا يُحفظ.';
+
+  @override
+  String get receiveTextDone => 'تم استلام النص والتحقق منه';
+
+  @override
+  String get receiveTextDeclined => 'لقد رفضت النص.';
+
+  @override
+  String get receiveTextHidden =>
+      'يحتوي النص على أحرف مخفية تظهر على شكل U+…. عند النسخ يُنسخ النص كما وصل تمامًا.';
+
+  @override
+  String get copyText => 'نسخ النص';
+
+  @override
+  String get textCopied => 'تم نسخ النص';
+
+  @override
+  String get errorTextDamaged => 'لم يصل النص كاملًا، لذلك لا يُعرض.';
 }

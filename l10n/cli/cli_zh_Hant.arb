@@ -60,7 +60,7 @@
   "cliHelpHelpCommand": "顯示此訊息或指定命令的說明",
   "cliDesktopAbout": "開啟 TotalDrop 視窗。",
   "cliDesktopArgs": "要傳送的檔案或資料夾，或用於接收的 TotalDrop 連結。",
-  "cliDesktopScreen": "在傳送（send）、接收（receive）或設定（settings）畫面開啟。",
+  "cliDesktopScreen": "在傳送（send）、傳送剪貼簿（clipboard）、接收（receive）或設定（settings）畫面開啟。",
   "cliHelpSendText": "傳送這段文字而不是檔案：接收方看到的是文字，而不是檔案。這台電腦上的其他人可以在程序清單中看到它；私密文字請使用 -。",
   "cliSendingText": "正在傳送一段文字，{size}。",
   "cliOfferedText": "對方傳來：一段文字，{size}。將在此顯示，不會儲存。",

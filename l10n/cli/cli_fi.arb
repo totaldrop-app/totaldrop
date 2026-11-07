@@ -60,7 +60,7 @@
   "cliHelpHelpCommand": "Näytä tämä viesti tai annetun komennon ohje",
   "cliDesktopAbout": "Avaa TotalDrop-ikkuna.",
   "cliDesktopArgs": "Lähetettävät tiedostot tai kansiot tai TotalDrop-linkki, jolla vastaanotetaan.",
-  "cliDesktopScreen": "Avaa näkymä: Lähetä (send), Vastaanota (receive) tai Asetukset (settings).",
+  "cliDesktopScreen": "Avaa näkymä: Lähetä (send), Lähetä leikepöytä (clipboard), Vastaanota (receive) tai Asetukset (settings).",
   "cliHelpSendText": "Lähetä tämä teksti tiedostojen sijaan: vastaanottaja näkee sen tekstinä, ei tiedostona. Muut tämän tietokoneen käyttäjät voivat nähdä sen prosessiluettelossa; käytä yksityiselle tekstille -.",
   "cliSendingText": "Lähetetään tekstiä, {size}.",
   "cliOfferedText": "Tarjottu: teksti, {size}. Se näytetään tässä eikä sitä tallenneta.",
