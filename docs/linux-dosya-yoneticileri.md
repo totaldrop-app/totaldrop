@@ -72,7 +72,7 @@ CI (`node --test tools/test-desktop-entries.mjs`) üretilen dosyalar ARB
 dosyalarıyla uyuşmazsa kırılır. Nautilus uzantısının mantığı elle yazılır;
 yalnızca `GENERATED` satırları arasındaki metin tablosu üretilir.
 
-Her PR'da CI, derlenen her pakette (Arch; x86-64 ve ARM64 için .deb ve
+Linux alanına dokunan her PR'da ve her sürümde CI, derlenen her pakette (Arch; x86-64 ve ARM64 için .deb ve
 .rpm) üç menü dosyasının yerinde olduğunu, Nautilus'un Python
 bağlarının (`python-nautilus`, `python3-nautilus`, `nautilus-python`)
 zorunlu değil yalnızca önerilen olarak yazıldığını, Flatpak'te de
