@@ -231,7 +231,7 @@
   "dl.linux.rpm.label": "Fedora (.rpm), x86-64",
   "dl.macos": "macOS",
   "dl.macos.d": "Apple yêu cầu tài khoản nhà phát triển trả phí (99 USD mỗi năm) để ký và công chứng ứng dụng. Tiền quyên góp sẽ chi trả khoản này.",
-  "dl.new.share": "Chia sẻ tệp tới TotalDrop từ bất kỳ ứng dụng nào, như Thư viện hoặc Tệp. Nhấn giữ biểu tượng ứng dụng để thấy Gửi, Nhận và Gửi bảng nhớ tạm.",
+  "dl.new.share": "Chia sẻ tệp tới TotalDrop từ bất kỳ ứng dụng nào, như Thư viện hoặc Tệp. Nhấn giữ biểu tượng ứng dụng để thấy Gửi, Nhận và Gửi khay nhớ tạm.",
   "dl.new.text": "Gửi văn bản: gõ, chia sẻ từ ứng dụng khác hoặc chọn \"Gửi bằng TotalDrop\" trên văn bản đã chọn. Văn bản nhận được được hiển thị, không lưu, và có thể sao chép.",
   "dl.new.heading": "Tiêu đề phía trên các từ xác minh vừa với màn hình hẹp.",
   "dl.new.relay": "Điện thoại không còn kết nối tới máy chuyển tiếp mà thiết bị kia sẽ không dùng.",

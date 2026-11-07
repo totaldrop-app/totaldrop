@@ -231,7 +231,7 @@
   "dl.linux.rpm.label": "Fedora (.rpm), x86-64",
   "dl.macos": "macOS",
   "dl.macos.d": "Apple vaatii maksullisen kehittäjätilin (99 USD vuodessa) sovellusten allekirjoittamiseen ja notarointiin. Lahjoitukset maksavat sen.",
-  "dl.new.share": "Jaa tiedostoja TotalDropiin mistä tahansa sovelluksesta. Sovelluskuvakkeen pitkä painallus tarjoaa Lähetä, Vastaanota ja Lähetä leikepöytä.",
+  "dl.new.share": "Jaa tiedostoja TotalDropiin mistä tahansa sovelluksesta, kuten Galleriasta tai Tiedostoista. Sovelluskuvakkeen pitkä painallus tarjoaa Lähetä, Vastaanota ja Lähetä leikepöytä.",
   "dl.new.text": "Lähetä teksti: kirjoita se, jaa se toisesta sovelluksesta tai valitse valitulle tekstille ”Lähetä TotalDropilla”. Saapunut teksti näytetään, sitä ei tallenneta, ja sen voi kopioida.",
   "dl.new.heading": "Vahvistussanojen yläpuolella oleva otsikko mahtuu kapeille näytöille.",
   "dl.new.relay": "Puhelin ei enää yhdistä välityspalvelimeen, jota toinen laite ei käytä.",
