@@ -1004,6 +1004,24 @@ abstract class AppLocalizations {
   /// **'Follows your desktop\'s theme: Plasma, Hyprland, Omarchy, GNOME'**
   String get metainfoTheme;
 
+  /// Linux software centres: last paragraph of the description; the Flatpak and the distribution package (.pkg, .deb, .rpm) cannot run at the same time (#351). Keep .pkg, .deb, .rpm and Flatpak as they are
+  ///
+  /// In en, this message translates to:
+  /// **'Use one Linux package at a time. The Flatpak and the .pkg, .deb or .rpm package share one name, so while one of them is open, starting the other brings the open window forward instead of opening a second one.'**
+  String get metainfoOnePackage;
+
+  /// Linux desktop notification when TotalDrop is started from the distribution package while the Flatpak window is already open; that window comes forward instead (#351)
+  ///
+  /// In en, this message translates to:
+  /// **'TotalDrop is already open from the Flatpak, so that window was brought forward. Use one package at a time: quit that window to open this one.'**
+  String get otherPackageFlatpak;
+
+  /// Linux desktop notification when TotalDrop is started from the Flatpak while the window of the .pkg, .deb or .rpm package is already open; that window comes forward instead (#351)
+  ///
+  /// In en, this message translates to:
+  /// **'TotalDrop is already open from the .pkg, .deb or .rpm package, so that window was brought forward. Use one package at a time: quit that window to open this one.'**
+  String get otherPackageSystem;
+
   /// Send screen: button and screen title for sending a piece of text instead of files
   ///
   /// In en, this message translates to:

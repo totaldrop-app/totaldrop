@@ -229,6 +229,7 @@
   "dl.linux.deb.label": "Debian, Ubuntu (.deb), x86-64",
   "dl.linux.r1": "חבילה נפרדת לכל משפחת הפצות: כולן ל־x86-64; Debian, Ubuntu ו־Fedora גם ל־ARM64",
   "dl.linux.r2": "החבילות .pkg, .deb ו־.rpm מתקינות גם את הפקודה totaldrop",
+  "dl.linux.r3": "השתמשו בחבילת Linux אחת בכל פעם. ל־Flatpak ולחבילת .pkg, .deb או .rpm יש שם משותף, ולכן כשאחת פתוחה, הפעלת השנייה מביאה לחזית את החלון הפתוח במקום לפתוח חלון שני.",
   "dl.linux.rpm": "Fedora (.rpm)",
   "dl.linux.rpm.arm": "Fedora (.rpm, ARM64)",
   "dl.linux.rpm.label": "Fedora (.rpm), x86-64",

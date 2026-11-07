@@ -1,4 +1,4 @@
-<!-- Translated from README.md 38ed72b6b4a4. -->
+<!-- Translated from README.md 0a6bee841691. -->
 <div align="center">
 
 <picture>
@@ -56,6 +56,8 @@
 | **Android** | [เข้าร่วมเบต้า](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.7, Android 15 ขึ้นไป, Google Play ตามคำเชิญ |
 | **บรรทัดคำสั่ง** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux, macOS, Windows |
 | **Windows, macOS, iOS** | กำลังมา | การเซ็นโค้ดสำหรับแพลตฟอร์มเหล่านี้คือสิ่งแรกที่เงินบริจาคจะนำไปจ่าย |
+
+ใช้แพ็กเกจ Linux ครั้งละหนึ่งแพ็กเกจ Flatpak กับแพ็กเกจ .pkg, .deb หรือ .rpm ใช้ชื่อเดียวกัน ขณะที่อันหนึ่งเปิดอยู่ การเปิดอีกอันจะนำหน้าต่างที่เปิดอยู่ขึ้นมาด้านหน้าแทนการเปิดหน้าต่างที่สอง
 
 ทุกแพ็กเกจสร้างโดย CI จากคอมมิตที่ติดแท็ก ไม่เคยสร้างบนเครื่องของนักพัฒนา หากต้องการตรวจสอบแพ็กเกจก่อนติดตั้ง ให้เทียบกับ `SHA256SUMS` ของรุ่นนั้น และยืนยันว่าแพ็กเกจสร้างขึ้นที่ใด:
 

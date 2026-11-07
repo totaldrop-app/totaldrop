@@ -570,6 +570,18 @@ class AppLocalizationsIt extends AppLocalizations {
       'Segue il tema del tuo desktop: Plasma, Hyprland, Omarchy, GNOME';
 
   @override
+  String get metainfoOnePackage =>
+      'Usa un solo pacchetto Linux alla volta. Il Flatpak e il pacchetto .pkg, .deb o .rpm condividono un nome, quindi mentre uno è aperto, avviare l\'altro porta in primo piano la finestra aperta invece di aprirne una seconda.';
+
+  @override
+  String get otherPackageFlatpak =>
+      'TotalDrop è già aperto dal Flatpak, quindi quella finestra è stata portata in primo piano. Usa un solo pacchetto alla volta: chiudi quella finestra per aprire questo.';
+
+  @override
+  String get otherPackageSystem =>
+      'TotalDrop è già aperto dal pacchetto .pkg, .deb o .rpm, quindi quella finestra è stata portata in primo piano. Usa un solo pacchetto alla volta: chiudi quella finestra per aprire questo.';
+
+  @override
   String get sendText => 'Invia testo';
 
   @override

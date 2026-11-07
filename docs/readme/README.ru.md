@@ -1,4 +1,4 @@
-<!-- Translated from README.md 38ed72b6b4a4. -->
+<!-- Translated from README.md 0a6bee841691. -->
 <div align="center">
 
 <picture>
@@ -56,6 +56,8 @@
 | **Android** | [Присоединиться к бете](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.7, Android 15 или новее, Google Play по приглашению |
 | **Командная строка** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux, macOS, Windows |
 | **Windows, macOS, iOS** | Скоро | Подпись кода для этих систем — первое, на что пойдут пожертвования |
+
+Используйте одновременно только один пакет для Linux. У Flatpak и пакета .pkg, .deb или .rpm одно имя, поэтому, пока один открыт, запуск другого выводит открытое окно на передний план, а не открывает второе.
 
 Каждый пакет собирается в CI из коммита с тегом, никогда на машине разработчика. Чтобы проверить пакет перед установкой, сверьте его с `SHA256SUMS` выпуска и убедитесь, где он был собран:
 

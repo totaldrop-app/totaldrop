@@ -546,6 +546,18 @@ class AppLocalizationsMs extends AppLocalizations {
       'Mengikut tema desktop anda: Plasma, Hyprland, Omarchy, GNOME';
 
   @override
+  String get metainfoOnePackage =>
+      'Gunakan satu pakej Linux pada satu masa. Flatpak dan pakej .pkg, .deb atau .rpm berkongsi satu nama, jadi semasa salah satunya dibuka, memulakan yang lain akan membawa tetingkap yang terbuka ke hadapan dan bukannya membuka tetingkap kedua.';
+
+  @override
+  String get otherPackageFlatpak =>
+      'TotalDrop sudah dibuka daripada Flatpak, jadi tetingkap itu dibawa ke hadapan. Gunakan satu pakej pada satu masa: tutup tetingkap itu untuk membuka yang ini.';
+
+  @override
+  String get otherPackageSystem =>
+      'TotalDrop sudah dibuka daripada pakej .pkg, .deb atau .rpm, jadi tetingkap itu dibawa ke hadapan. Gunakan satu pakej pada satu masa: tutup tetingkap itu untuk membuka yang ini.';
+
+  @override
   String get sendText => 'Hantar teks';
 
   @override

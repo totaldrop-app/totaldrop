@@ -568,6 +568,18 @@ class AppLocalizationsRo extends AppLocalizations {
       'Urmează tema desktopului dumneavoastră: Plasma, Hyprland, Omarchy, GNOME';
 
   @override
+  String get metainfoOnePackage =>
+      'Folosiți un singur pachet Linux odată. Flatpak-ul și pachetul .pkg, .deb sau .rpm au același nume, așa că, dacă unul este deschis, pornirea celuilalt aduce în față fereastra deschisă în loc să deschidă una nouă.';
+
+  @override
+  String get otherPackageFlatpak =>
+      'TotalDrop este deja deschis din Flatpak, așa că acea fereastră a fost adusă în față. Folosiți un singur pachet odată: închideți acea fereastră pentru a-l deschide pe acesta.';
+
+  @override
+  String get otherPackageSystem =>
+      'TotalDrop este deja deschis din pachetul .pkg, .deb sau .rpm, așa că acea fereastră a fost adusă în față. Folosiți un singur pachet odată: închideți acea fereastră pentru a-l deschide pe acesta.';
+
+  @override
   String get sendText => 'Trimite text';
 
   @override

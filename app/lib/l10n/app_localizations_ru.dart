@@ -569,6 +569,18 @@ class AppLocalizationsRu extends AppLocalizations {
       'Следует теме вашего рабочего стола: Plasma, Hyprland, Omarchy, GNOME';
 
   @override
+  String get metainfoOnePackage =>
+      'Используйте одновременно только один пакет для Linux. У Flatpak и пакета .pkg, .deb или .rpm одно имя, поэтому, пока один открыт, запуск другого выводит открытое окно на передний план, а не открывает второе.';
+
+  @override
+  String get otherPackageFlatpak =>
+      'TotalDrop уже открыт из Flatpak, поэтому это окно выведено на передний план. Используйте одновременно только один пакет: закройте то окно, чтобы открыть этот.';
+
+  @override
+  String get otherPackageSystem =>
+      'TotalDrop уже открыт из пакета .pkg, .deb или .rpm, поэтому это окно выведено на передний план. Используйте одновременно только один пакет: закройте то окно, чтобы открыть этот.';
+
+  @override
   String get sendText => 'Отправить текст';
 
   @override

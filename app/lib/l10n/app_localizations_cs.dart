@@ -567,6 +567,18 @@ class AppLocalizationsCs extends AppLocalizations {
       'Řídí se motivem vašeho prostředí: Plasma, Hyprland, Omarchy, GNOME';
 
   @override
+  String get metainfoOnePackage =>
+      'Používejte vždy jen jeden linuxový balíček. Flatpak a balíček .pkg, .deb nebo .rpm sdílejí jeden název, takže když je jeden otevřený, spuštění druhého jen přenese otevřené okno do popředí, místo aby otevřelo druhé.';
+
+  @override
+  String get otherPackageFlatpak =>
+      'TotalDrop je už otevřený z Flatpaku, takže se jeho okno přeneslo do popředí. Používejte vždy jen jeden balíček: pro otevření tohoto ukončete to okno.';
+
+  @override
+  String get otherPackageSystem =>
+      'TotalDrop je už otevřený z balíčku .pkg, .deb nebo .rpm, takže se jeho okno přeneslo do popředí. Používejte vždy jen jeden balíček: pro otevření tohoto ukončete to okno.';
+
+  @override
   String get sendText => 'Odeslat text';
 
   @override

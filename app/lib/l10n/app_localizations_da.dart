@@ -557,6 +557,18 @@ class AppLocalizationsDa extends AppLocalizations {
       'Følger dit skrivebords tema: Plasma, Hyprland, Omarchy, GNOME';
 
   @override
+  String get metainfoOnePackage =>
+      'Brug én Linux-pakke ad gangen. Flatpak-pakken og .pkg-, .deb- eller .rpm-pakken deler ét navn, så mens den ene er åben, bringer start af den anden det åbne vindue frem i stedet for at åbne et nyt.';
+
+  @override
+  String get otherPackageFlatpak =>
+      'TotalDrop er allerede åben fra Flatpak, så det vindue blev bragt frem. Brug én pakke ad gangen: luk det vindue for at åbne denne.';
+
+  @override
+  String get otherPackageSystem =>
+      'TotalDrop er allerede åben fra .pkg-, .deb- eller .rpm-pakken, så det vindue blev bragt frem. Brug én pakke ad gangen: luk det vindue for at åbne denne.';
+
+  @override
   String get sendText => 'Send tekst';
 
   @override

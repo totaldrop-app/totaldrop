@@ -1,4 +1,4 @@
-<!-- Translated from README.md 38ed72b6b4a4. -->
+<!-- Translated from README.md 0a6bee841691. -->
 <div align="center">
 
 <picture>
@@ -56,6 +56,8 @@ Gratis og open source. End-to-end-krypteret. Ingen e-mail, intet telefonnummer, 
 | **Android** | [Deltag i betaen](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.7, Android 15 eller nyere, Google Play efter invitation |
 | **Kommandolinje** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux, macOS, Windows |
 | **Windows, macOS, iOS** | På vej | Kodesignering til disse er det, donationerne betaler for først |
+
+Brug én Linux-pakke ad gangen. Flatpak-pakken og .pkg-, .deb- eller .rpm-pakken deler ét navn, så mens den ene er åben, bringer start af den anden det åbne vindue frem i stedet for at åbne et nyt.
 
 Hver pakke bygges af CI fra et tagget commit, aldrig på en udviklers maskine. Hvis du vil tjekke en pakke, før du installerer den, så sammenlign den med udgivelsens `SHA256SUMS`, og bekræft, hvor den blev bygget:
 

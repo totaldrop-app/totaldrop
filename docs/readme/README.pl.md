@@ -1,4 +1,4 @@
-<!-- Translated from README.md 38ed72b6b4a4. -->
+<!-- Translated from README.md 0a6bee841691. -->
 <div align="center">
 
 <picture>
@@ -56,6 +56,8 @@ Za darmo i na otwartych źródłach. Szyfrowanie end-to-end. Bez e-maila, bez nu
 | **Android** | [Dołącz do bety](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.7, Android 15 lub nowszy, Google Play na zaproszenie |
 | **Wiersz poleceń** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux, macOS, Windows |
 | **Windows, macOS, iOS** | W drodze | Podpisywanie kodu dla tych systemów to pierwsze, na co pójdą darowizny |
+
+Używaj jednocześnie tylko jednego pakietu dla Linuksa. Flatpak i pakiet .pkg, .deb lub .rpm mają wspólną nazwę, więc gdy jeden jest otwarty, uruchomienie drugiego przywołuje otwarte okno zamiast otwierać drugie.
 
 Każdy pakiet jest budowany przez CI z oznaczonego tagiem commita, nigdy na komputerze dewelopera. Aby sprawdzić pakiet przed instalacją, porównaj go z plikiem `SHA256SUMS` wydania i zweryfikuj, gdzie został zbudowany:
 

@@ -229,6 +229,7 @@
   "dl.linux.deb.label": "Debian, Ubuntu (.deb), x86-64",
   "dl.linux.r1": "یک بسته جداگانه برای هر خانواده از توزیع‌ها: همه برای x86-64؛ Debian، Ubuntu و Fedora برای ARM64 هم",
   "dl.linux.r2": "بسته‌های .pkg، .deb و .rpm فرمان totaldrop را هم نصب می‌کنند",
+  "dl.linux.r3": "هر بار فقط از یک بسته Linux استفاده کنید. Flatpak و بسته .pkg، .deb یا .rpm یک نام مشترک دارند، پس وقتی یکی باز است، اجرای دیگری به‌جای باز کردن پنجره دوم، پنجره باز را جلو می‌آورد.",
   "dl.linux.rpm": "Fedora (.rpm)",
   "dl.linux.rpm.arm": "Fedora (.rpm, ARM64)",
   "dl.linux.rpm.label": "Fedora (.rpm), x86-64",

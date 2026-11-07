@@ -312,10 +312,19 @@ function textFor(catalog, loc, key) {
   return checkText(base ?? catalog.get("en")[key], `${lang}: ${key}`);
 }
 
-const DESCRIPTION = ["metainfoAbout", "metainfoVerified", "metainfoWords", "metainfoTheme"];
+const DESCRIPTION = [
+  "metainfoAbout",
+  "metainfoVerified",
+  "metainfoWords",
+  "metainfoTheme",
+  "metainfoOnePackage",
+];
+/// The feature list: the description's items between its two paragraphs.
+const FEATURES = ["metainfoVerified", "metainfoWords", "metainfoTheme"];
 
-/// The GENERATED block of the AppStream metainfo: summary, the paragraph
-/// and the feature list. A software centre builds a language's
+/// The GENERATED block of the AppStream metainfo: summary, the paragraph,
+/// the feature list and the note that one Linux package runs at a time
+/// (#351). A software centre builds a language's
 /// description only from the elements in that language and falls back
 /// only when there are none, so a language that differs from its
 /// fallback in any of them gets all of them (#324).
@@ -335,8 +344,9 @@ export function metainfoBlock(catalog) {
     "  <description>",
     ...element("    ", "p", "metainfoAbout"),
     "    <ul>",
-    ...DESCRIPTION.slice(1).flatMap((key) => element("      ", "li", key)),
+    ...FEATURES.flatMap((key) => element("      ", "li", key)),
     "    </ul>",
+    ...element("    ", "p", "metainfoOnePackage"),
     "  </description>",
     XML_END,
   ].join("\n");

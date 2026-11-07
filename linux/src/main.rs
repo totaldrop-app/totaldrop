@@ -89,7 +89,16 @@ fn main() {
     let cwd = std::env::current_dir().unwrap_or_default();
     let request = instance::Request::from_args(std::env::args_os().skip(1), &cwd);
     let _bus = match runtime::RUNTIME.block_on(instance::claim(&request)) {
-        instance::Claim::Forwarded => return,
+        instance::Claim::Forwarded { other } => {
+            // The other package's window has the request: say so, since
+            // no window of this one opens (#351).
+            if let Some(package) = other {
+                let text = bridge::texts::strings().get(package.running_key(), &[]);
+                eprintln!("totaldrop-desktop: {text}");
+                runtime::RUNTIME.block_on(desktop::notify("TotalDrop".to_owned(), text));
+            }
+            return;
+        }
         instance::Claim::Owner(conn) => Some(conn),
         instance::Claim::Alone => None,
     };

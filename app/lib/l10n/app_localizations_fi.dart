@@ -557,6 +557,18 @@ class AppLocalizationsFi extends AppLocalizations {
       'Seuraa työpöytäsi teemaa: Plasma, Hyprland, Omarchy, GNOME';
 
   @override
+  String get metainfoOnePackage =>
+      'Käytä vain yhtä Linux-pakettia kerrallaan. Flatpakilla ja .pkg-, .deb- tai .rpm-paketilla on sama nimi, joten kun toinen on auki, toisen käynnistäminen tuo avoimen ikkunan eteen eikä avaa toista.';
+
+  @override
+  String get otherPackageFlatpak =>
+      'TotalDrop on jo auki Flatpakista, joten sen ikkuna tuotiin eteen. Käytä vain yhtä pakettia kerrallaan: sulje se ikkuna avataksesi tämän.';
+
+  @override
+  String get otherPackageSystem =>
+      'TotalDrop on jo auki .pkg-, .deb- tai .rpm-paketista, joten sen ikkuna tuotiin eteen. Käytä vain yhtä pakettia kerrallaan: sulje se ikkuna avataksesi tämän.';
+
+  @override
   String get sendText => 'Lähetä tekstiä';
 
   @override

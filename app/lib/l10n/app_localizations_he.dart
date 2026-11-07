@@ -553,6 +553,18 @@ class AppLocalizationsHe extends AppLocalizations {
       'תואם לערכת הנושא של שולחן העבודה שלך: Plasma, Hyprland, Omarchy, GNOME';
 
   @override
+  String get metainfoOnePackage =>
+      'השתמשו בחבילת Linux אחת בכל פעם. ל־Flatpak ולחבילת .pkg, .deb או .rpm יש שם משותף, ולכן כשאחת פתוחה, הפעלת השנייה מביאה לחזית את החלון הפתוח במקום לפתוח חלון שני.';
+
+  @override
+  String get otherPackageFlatpak =>
+      'TotalDrop כבר פתוח מ־Flatpak, ולכן החלון הזה הובא לחזית. השתמשו בחבילה אחת בכל פעם: צאו מהחלון הזה כדי לפתוח את זו.';
+
+  @override
+  String get otherPackageSystem =>
+      'TotalDrop כבר פתוח מחבילת .pkg, .deb או .rpm, ולכן החלון הזה הובא לחזית. השתמשו בחבילה אחת בכל פעם: צאו מהחלון הזה כדי לפתוח את זו.';
+
+  @override
   String get sendText => 'שליחת טקסט';
 
   @override

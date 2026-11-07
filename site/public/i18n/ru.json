@@ -229,6 +229,7 @@
   "dl.linux.deb.label": "Debian, Ubuntu (.deb), x86-64",
   "dl.linux.r1": "Отдельный пакет для каждого семейства дистрибутивов: все для x86-64; Debian, Ubuntu и Fedora также для ARM64",
   "dl.linux.r2": "Пакеты .pkg, .deb и .rpm устанавливают и команду totaldrop",
+  "dl.linux.r3": "Используйте одновременно только один пакет для Linux. У Flatpak и пакета .pkg, .deb или .rpm одно имя, поэтому, пока один открыт, запуск другого выводит открытое окно на передний план, а не открывает второе.",
   "dl.linux.rpm": "Fedora (.rpm)",
   "dl.linux.rpm.arm": "Fedora (.rpm, ARM64)",
   "dl.linux.rpm.label": "Fedora (.rpm), x86-64",

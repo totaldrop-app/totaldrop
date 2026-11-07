@@ -556,6 +556,18 @@ class AppLocalizationsUr extends AppLocalizations {
       'آپ کے ڈیسک ٹاپ کی تھیم اپناتا ہے: Plasma، Hyprland، Omarchy، GNOME';
 
   @override
+  String get metainfoOnePackage =>
+      'ایک وقت میں ایک ہی Linux پیکیج استعمال کریں۔ Flatpak اور .pkg، .deb یا .rpm پیکیج کا نام ایک ہی ہے، اس لیے جب ایک کھلا ہو تو دوسرا چلانے سے دوسری ونڈو نہیں کھلتی بلکہ کھلی ونڈو سامنے آ جاتی ہے۔';
+
+  @override
+  String get otherPackageFlatpak =>
+      'TotalDrop پہلے ہی Flatpak سے کھلا ہے، اس لیے وہی ونڈو سامنے لائی گئی۔ ایک وقت میں ایک ہی پیکیج استعمال کریں: اسے کھولنے کے لیے اس ونڈو کو بند کریں۔';
+
+  @override
+  String get otherPackageSystem =>
+      'TotalDrop پہلے ہی .pkg، .deb یا .rpm پیکیج سے کھلا ہے، اس لیے وہی ونڈو سامنے لائی گئی۔ ایک وقت میں ایک ہی پیکیج استعمال کریں: اسے کھولنے کے لیے اس ونڈو کو بند کریں۔';
+
+  @override
   String get sendText => 'متن بھیجیں';
 
   @override

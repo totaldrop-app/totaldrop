@@ -1,4 +1,4 @@
-<!-- Translated from README.md 38ed72b6b4a4. -->
+<!-- Translated from README.md 0a6bee841691. -->
 <div align="center">
 
 <picture>
@@ -56,6 +56,8 @@
 | **Android** | [베타 참여하기](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.7, Android 15 이상, Google Play 초대제 |
 | **명령줄** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux, macOS, Windows |
 | **Windows, macOS, iOS** | 준비 중 | 후원금은 가장 먼저 이 플랫폼들의 코드 서명에 쓰입니다 |
+
+Linux 패키지는 한 번에 하나만 사용하세요. Flatpak과 .pkg, .deb 또는 .rpm 패키지는 같은 이름을 쓰기 때문에, 하나가 열려 있을 때 다른 하나를 실행하면 두 번째 창이 열리지 않고 열려 있는 창이 앞으로 나옵니다.
 
 모든 패키지는 개발자의 컴퓨터가 아니라, 태그가 붙은 커밋에서 CI가 빌드합니다. 설치하기 전에 확인하려면 릴리스의 `SHA256SUMS`와 비교하고, 어디서 빌드되었는지 검증하세요.
 

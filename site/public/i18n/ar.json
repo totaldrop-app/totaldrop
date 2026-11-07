@@ -229,6 +229,7 @@
   "dl.linux.deb.label": "Debian, Ubuntu (.deb), x86-64",
   "dl.linux.r1": "حزمة منفصلة لكل عائلة من التوزيعات: كلها لـ x86-64، وDebian وUbuntu وFedora لـ ARM64 أيضًا",
   "dl.linux.r2": "تثبّت حزم .pkg و.deb و.rpm الأمر totaldrop أيضًا",
+  "dl.linux.r3": "استخدم حزمة Linux واحدة في كل مرة. تشترك حزمة Flatpak وحزمة .pkg أو .deb أو .rpm في اسم واحد، لذا عندما تكون إحداهما مفتوحة، يؤدي تشغيل الأخرى إلى إبراز النافذة المفتوحة بدلًا من فتح نافذة ثانية.",
   "dl.linux.rpm": "Fedora (.rpm)",
   "dl.linux.rpm.arm": "Fedora (.rpm, ARM64)",
   "dl.linux.rpm.label": "Fedora (.rpm), x86-64",

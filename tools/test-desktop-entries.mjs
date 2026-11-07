@@ -42,6 +42,7 @@ const en = {
   metainfoVerified: "Verified",
   metainfoWords: "Words",
   metainfoTheme: "Theme",
+  metainfoOnePackage: "One package at a time.",
 };
 
 test("the files in the repository are what write would write", () => {
@@ -188,15 +189,30 @@ test("the metainfo block has each text in English and in xml:lang copies", () =>
   // The list is inside the description.
   assert.ok(block.indexOf("<ul>") > block.indexOf("<description>"));
   assert.ok(block.indexOf("</ul>") < block.indexOf("</description>"));
+  // The note on packages closes the description, after the list (#351).
+  assert.match(block, /<\/ul>\n    <p>One package at a time\.<\/p>\n/);
+  assert.match(block, /<p xml:lang="de">One package at a time\.<\/p>/);
+  assert.ok(block.indexOf("<p>One package") < block.indexOf("</description>"));
 });
 
 test("every language of l10n/app has the software-centre text", () => {
-  const keys = ["metainfoSummary", "metainfoAbout", "metainfoVerified", "metainfoWords", "metainfoTheme"];
+  const keys = [
+    "metainfoSummary",
+    "metainfoAbout",
+    "metainfoVerified",
+    "metainfoWords",
+    "metainfoTheme",
+    "metainfoOnePackage",
+  ];
   for (const [arb, messages] of readCatalog()) {
     for (const key of keys) assert.ok(messages[key], `${arb}: ${key}`);
     // The desktop names stay as they are.
     for (const name of ["Plasma", "Hyprland", "Omarchy", "GNOME"]) {
       assert.ok(messages.metainfoTheme.includes(name), `${arb}: metainfoTheme names ${name}`);
+    }
+    // The package names stay as they are.
+    for (const name of ["Flatpak", ".pkg", ".deb", ".rpm"]) {
+      assert.ok(messages.metainfoOnePackage.includes(name), `${arb}: metainfoOnePackage names ${name}`);
     }
   }
 });

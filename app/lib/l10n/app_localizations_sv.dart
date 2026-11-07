@@ -559,6 +559,18 @@ class AppLocalizationsSv extends AppLocalizations {
       'Följer skrivbordets tema: Plasma, Hyprland, Omarchy, GNOME';
 
   @override
+  String get metainfoOnePackage =>
+      'Använd ett Linux-paket i taget. Flatpak-paketet och .pkg-, .deb- eller .rpm-paketet delar ett namn, så medan det ena är öppet tar en start av det andra fram det öppna fönstret i stället för att öppna ett nytt.';
+
+  @override
+  String get otherPackageFlatpak =>
+      'TotalDrop är redan öppet från Flatpak, så det fönstret togs fram. Använd ett paket i taget: avsluta det fönstret för att öppna det här.';
+
+  @override
+  String get otherPackageSystem =>
+      'TotalDrop är redan öppet från .pkg-, .deb- eller .rpm-paketet, så det fönstret togs fram. Använd ett paket i taget: avsluta det fönstret för att öppna det här.';
+
+  @override
   String get sendText => 'Skicka text';
 
   @override

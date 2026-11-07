@@ -229,6 +229,7 @@
   "dl.linux.deb.label": "Debian, Ubuntu (.deb), x86-64",
   "dl.linux.r1": "배포판 계열마다 별도 패키지: 모두 x86-64용이 있고, Debian, Ubuntu, Fedora는 ARM64용도 있습니다",
   "dl.linux.r2": ".pkg, .deb, .rpm 패키지는 totaldrop 명령도 설치합니다",
+  "dl.linux.r3": "Linux 패키지는 한 번에 하나만 사용하세요. Flatpak과 .pkg, .deb 또는 .rpm 패키지는 같은 이름을 쓰기 때문에, 하나가 열려 있을 때 다른 하나를 실행하면 두 번째 창이 열리지 않고 열려 있는 창이 앞으로 나옵니다.",
   "dl.linux.rpm": "Fedora (.rpm)",
   "dl.linux.rpm.arm": "Fedora (.rpm, ARM64)",
   "dl.linux.rpm.label": "Fedora (.rpm), x86-64",

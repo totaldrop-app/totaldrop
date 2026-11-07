@@ -565,6 +565,18 @@ class AppLocalizationsEl extends AppLocalizations {
       'Ακολουθεί το θέμα της επιφάνειας εργασίας σας: Plasma, Hyprland, Omarchy, GNOME';
 
   @override
+  String get metainfoOnePackage =>
+      'Χρησιμοποιείτε ένα πακέτο Linux τη φορά. Το Flatpak και το πακέτο .pkg, .deb ή .rpm μοιράζονται ένα όνομα, οπότε όσο το ένα είναι ανοιχτό, η εκκίνηση του άλλου φέρνει μπροστά το ανοιχτό παράθυρο αντί να ανοίξει δεύτερο.';
+
+  @override
+  String get otherPackageFlatpak =>
+      'Το TotalDrop είναι ήδη ανοιχτό από το Flatpak, οπότε εκείνο το παράθυρο ήρθε μπροστά. Χρησιμοποιείτε ένα πακέτο τη φορά: κλείστε εκείνο το παράθυρο για να ανοίξετε αυτό.';
+
+  @override
+  String get otherPackageSystem =>
+      'Το TotalDrop είναι ήδη ανοιχτό από το πακέτο .pkg, .deb ή .rpm, οπότε εκείνο το παράθυρο ήρθε μπροστά. Χρησιμοποιείτε ένα πακέτο τη φορά: κλείστε εκείνο το παράθυρο για να ανοίξετε αυτό.';
+
+  @override
   String get sendText => 'Αποστολή κειμένου';
 
   @override

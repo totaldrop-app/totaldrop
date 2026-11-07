@@ -1,4 +1,4 @@
-<!-- Translated from README.md 38ed72b6b4a4. -->
+<!-- Translated from README.md 0a6bee841691. -->
 <div align="center">
 
 <picture>
@@ -56,6 +56,8 @@
 | **Android** | [Συμμετοχή στη beta](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.7, Android 15 ή νεότερο, Google Play με πρόσκληση |
 | **Γραμμή εντολών** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux, macOS, Windows |
 | **Windows, macOS, iOS** | Έρχεται | Η υπογραφή κώδικα για αυτά είναι το πρώτο που πληρώνουν οι δωρεές |
+
+Χρησιμοποιείτε ένα πακέτο Linux τη φορά. Το Flatpak και το πακέτο .pkg, .deb ή .rpm μοιράζονται ένα όνομα, οπότε όσο το ένα είναι ανοιχτό, η εκκίνηση του άλλου φέρνει μπροστά το ανοιχτό παράθυρο αντί να ανοίξει δεύτερο.
 
 Κάθε πακέτο κατασκευάζεται από το CI από ένα commit με ετικέτα, ποτέ στον υπολογιστή κάποιου προγραμματιστή. Για να ελέγξετε ένα πακέτο πριν το εγκαταστήσετε, συγκρίνετέ το με το `SHA256SUMS` της έκδοσης και επαληθεύστε πού κατασκευάστηκε:
 

@@ -572,6 +572,18 @@ class AppLocalizationsPl extends AppLocalizations {
       'Dopasowuje się do motywu pulpitu: Plasma, Hyprland, Omarchy, GNOME';
 
   @override
+  String get metainfoOnePackage =>
+      'Używaj jednocześnie tylko jednego pakietu dla Linuksa. Flatpak i pakiet .pkg, .deb lub .rpm mają wspólną nazwę, więc gdy jeden jest otwarty, uruchomienie drugiego przywołuje otwarte okno zamiast otwierać drugie.';
+
+  @override
+  String get otherPackageFlatpak =>
+      'TotalDrop jest już otwarty z Flatpaka, więc przywołano to okno. Używaj jednocześnie tylko jednego pakietu: zamknij tamto okno, aby otworzyć ten.';
+
+  @override
+  String get otherPackageSystem =>
+      'TotalDrop jest już otwarty z pakietu .pkg, .deb lub .rpm, więc przywołano to okno. Używaj jednocześnie tylko jednego pakietu: zamknij tamto okno, aby otworzyć ten.';
+
+  @override
   String get sendText => 'Wyślij tekst';
 
   @override

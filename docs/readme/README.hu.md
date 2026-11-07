@@ -1,4 +1,4 @@
-<!-- Translated from README.md 38ed72b6b4a4. -->
+<!-- Translated from README.md 0a6bee841691. -->
 <div align="center">
 
 <picture>
@@ -56,6 +56,8 @@ Ingyenes és nyílt forráskódú. Végpontok közötti titkosítás. Nincs e-ma
 | **Android** | [Csatlakozz a bétához](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.7, Android 15 vagy újabb, Google Play meghívással |
 | **Parancssor** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux, macOS, Windows |
 | **Windows, macOS, iOS** | Úton van | Ezek kódaláírását fedezik elsőként az adományok |
+
+Egyszerre csak egy Linux-csomagot használjon. A Flatpak és a .pkg, .deb vagy .rpm csomag neve azonos, ezért ha az egyik nyitva van, a másik indítása nem nyit új ablakot, hanem előtérbe hozza a nyitottat.
 
 Minden csomagot a CI készít egy címkézett commitból, soha nem egy fejlesztő gépén. Ha telepítés előtt ellenőriznél egy csomagot, hasonlítsd össze a kiadás `SHA256SUMS` fájljával, és ellenőrizd, hol készült:
 

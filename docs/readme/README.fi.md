@@ -1,4 +1,4 @@
-<!-- Translated from README.md 38ed72b6b4a4. -->
+<!-- Translated from README.md 0a6bee841691. -->
 <div align="center">
 
 <picture>
@@ -56,6 +56,8 @@ Ilmainen ja avointa lähdekoodia. Päästä päähän salattu. Ei sähköpostia,
 | **Android** | [Liity betaan](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.7, Android 15 tai uudempi, Google Play kutsusta |
 | **Komentorivi** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux, macOS, Windows |
 | **Windows, macOS, iOS** | Tulossa | Näiden koodiallekirjoitus on se, mihin lahjoitukset käytetään ensimmäisenä |
+
+Käytä vain yhtä Linux-pakettia kerrallaan. Flatpakilla ja .pkg-, .deb- tai .rpm-paketilla on sama nimi, joten kun toinen on auki, toisen käynnistäminen tuo avoimen ikkunan eteen eikä avaa toista.
 
 Jokainen paketti rakennetaan CI:ssä tagatusta commitista, ei koskaan kehittäjän koneella. Jos haluat tarkistaa paketin ennen asennusta, vertaa sitä julkaisun `SHA256SUMS`-tiedostoon ja varmista, missä se on rakennettu:
 

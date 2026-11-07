@@ -1,4 +1,4 @@
-<!-- Translated from README.md 38ed72b6b4a4. -->
+<!-- Translated from README.md 0a6bee841691. -->
 <div align="center">
 
 <picture>
@@ -56,6 +56,8 @@
 | **Android** | [ベータに参加する](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.7、Android 15 以降、Google Play で招待制 |
 | **コマンドライン** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux、macOS、Windows |
 | **Windows、macOS、iOS** | 準備中 | 寄付でまず賄うのは、これらのコード署名です |
+
+Linux のパッケージは一度に 1 つだけ使ってください。Flatpak と .pkg・.deb・.rpm パッケージは同じ名前を使うため、一方を開いている間にもう一方を起動すると、2 つ目のウィンドウは開かず、開いているウィンドウが前面に出ます。
 
 すべてのパッケージは、タグ付きのコミットから CI でビルドされます。開発者のマシンでビルドされることはありません。インストールする前に確認するには、リリースの `SHA256SUMS` と照合し、どこでビルドされたかを検証してください：
 

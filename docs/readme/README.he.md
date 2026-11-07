@@ -1,4 +1,4 @@
-<!-- Translated from README.md 38ed72b6b4a4. -->
+<!-- Translated from README.md 0a6bee841691. -->
 <div align="center">
 
 <picture>
@@ -56,6 +56,8 @@
 | **Android** | [הצטרפות לבטא](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.7, Android 15 ומעלה, Google Play בהזמנה |
 | **שורת פקודה** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux, macOS, Windows |
 | **Windows, macOS, iOS** | בדרך | חתימת קוד עבורן היא הדבר הראשון שהתרומות משלמות עליו |
+
+השתמשו בחבילת Linux אחת בכל פעם. ל־Flatpak ולחבילת .pkg, .deb או .rpm יש שם משותף, ולכן כשאחת פתוחה, הפעלת השנייה מביאה לחזית את החלון הפתוח במקום לפתוח חלון שני.
 
 כל חבילה נבנית על ידי CI מ־commit מתויג, אף פעם לא על המחשב של מפתח. כדי לבדוק חבילה לפני שמתקינים אותה, משווים אותה ל־`SHA256SUMS` של הגרסה ומאמתים היכן היא נבנתה:
 

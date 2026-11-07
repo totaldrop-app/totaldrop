@@ -554,6 +554,18 @@ class AppLocalizationsFa extends AppLocalizations {
       'از پوستهٔ میزکار شما پیروی می‌کند: Plasma، Hyprland، Omarchy، GNOME';
 
   @override
+  String get metainfoOnePackage =>
+      'هر بار فقط از یک بسته Linux استفاده کنید. Flatpak و بسته .pkg، .deb یا .rpm یک نام مشترک دارند، پس وقتی یکی باز است، اجرای دیگری به‌جای باز کردن پنجره دوم، پنجره باز را جلو می‌آورد.';
+
+  @override
+  String get otherPackageFlatpak =>
+      'TotalDrop از قبل از Flatpak باز است، پس همان پنجره جلو آورده شد. هر بار فقط از یک بسته استفاده کنید: برای باز کردن این یکی، از آن پنجره خارج شوید.';
+
+  @override
+  String get otherPackageSystem =>
+      'TotalDrop از قبل از بسته .pkg، .deb یا .rpm باز است، پس همان پنجره جلو آورده شد. هر بار فقط از یک بسته استفاده کنید: برای باز کردن این یکی، از آن پنجره خارج شوید.';
+
+  @override
   String get sendText => 'ارسال متن';
 
   @override

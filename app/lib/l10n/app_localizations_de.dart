@@ -564,6 +564,18 @@ class AppLocalizationsDe extends AppLocalizations {
       'Folgt dem Design Ihres Desktops: Plasma, Hyprland, Omarchy, GNOME';
 
   @override
+  String get metainfoOnePackage =>
+      'Verwenden Sie unter Linux jeweils nur ein Paket. Das Flatpak und das .pkg-, .deb- oder .rpm-Paket teilen sich einen Namen: Ist eines geöffnet, holt der Start des anderen das offene Fenster nach vorn, statt ein zweites zu öffnen.';
+
+  @override
+  String get otherPackageFlatpak =>
+      'TotalDrop ist bereits aus dem Flatpak geöffnet, daher wurde dieses Fenster nach vorn geholt. Verwenden Sie jeweils nur ein Paket: Beenden Sie dieses Fenster, um dieses Paket zu öffnen.';
+
+  @override
+  String get otherPackageSystem =>
+      'TotalDrop ist bereits aus dem .pkg-, .deb- oder .rpm-Paket geöffnet, daher wurde dieses Fenster nach vorn geholt. Verwenden Sie jeweils nur ein Paket: Beenden Sie dieses Fenster, um dieses Paket zu öffnen.';
+
+  @override
   String get sendText => 'Text senden';
 
   @override

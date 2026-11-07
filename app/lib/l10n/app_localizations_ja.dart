@@ -521,6 +521,18 @@ class AppLocalizationsJa extends AppLocalizations {
   String get metainfoTheme => 'デスクトップのテーマに合わせます: Plasma、Hyprland、Omarchy、GNOME';
 
   @override
+  String get metainfoOnePackage =>
+      'Linux のパッケージは一度に 1 つだけ使ってください。Flatpak と .pkg・.deb・.rpm パッケージは同じ名前を使うため、一方を開いている間にもう一方を起動すると、2 つ目のウィンドウは開かず、開いているウィンドウが前面に出ます。';
+
+  @override
+  String get otherPackageFlatpak =>
+      'TotalDrop はすでに Flatpak 版で開いているため、そのウィンドウを前面に出しました。パッケージは一度に 1 つだけ使ってください。こちらを開くには、そのウィンドウを終了してください。';
+
+  @override
+  String get otherPackageSystem =>
+      'TotalDrop はすでに .pkg・.deb・.rpm パッケージ版で開いているため、そのウィンドウを前面に出しました。パッケージは一度に 1 つだけ使ってください。こちらを開くには、そのウィンドウを終了してください。';
+
+  @override
   String get sendText => 'テキストを送信';
 
   @override

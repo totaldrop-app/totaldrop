@@ -1,4 +1,4 @@
-<!-- Translated from README.md 38ed72b6b4a4. -->
+<!-- Translated from README.md 0a6bee841691. -->
 <div align="center">
 
 <picture>
@@ -56,6 +56,8 @@ Percuma dan sumber terbuka. Disulitkan hujung ke hujung. Tiada e-mel, tiada nomb
 | **Android** | [Sertai beta](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.7, Android 15 atau lebih baharu, Google Play melalui jemputan |
 | **Baris perintah** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux, macOS, Windows |
 | **Windows, macOS, iOS** | Akan datang | Penandatanganan kod untuk platform ini ialah perkara pertama yang dibiayai oleh derma |
+
+Gunakan satu pakej Linux pada satu masa. Flatpak dan pakej .pkg, .deb atau .rpm berkongsi satu nama, jadi semasa salah satunya dibuka, memulakan yang lain akan membawa tetingkap yang terbuka ke hadapan dan bukannya membuka tetingkap kedua.
 
 Setiap pakej dibina oleh CI daripada commit bertag, tidak pernah pada mesin pembangun. Untuk menyemak pakej sebelum memasangnya, bandingkan dengan `SHA256SUMS` keluaran tersebut dan sahkan di mana ia dibina:
 

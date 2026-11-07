@@ -543,6 +543,18 @@ class AppLocalizationsTr extends AppLocalizations {
       'Masaüstünüzün temasını izler: Plasma, Hyprland, Omarchy, GNOME';
 
   @override
+  String get metainfoOnePackage =>
+      'Linux\'ta aynı anda tek paket kullanın. Flatpak ile .pkg, .deb ya da .rpm paketi aynı adı paylaşır; biri açıkken ötekini başlatmak ikinci bir pencere açmaz, açık pencereyi öne getirir.';
+
+  @override
+  String get otherPackageFlatpak =>
+      'TotalDrop zaten Flatpak\'ten açık, o pencere öne getirildi. Aynı anda tek paket kullanın: bunu açmak için o pencereden çıkın.';
+
+  @override
+  String get otherPackageSystem =>
+      'TotalDrop zaten .pkg, .deb ya da .rpm paketinden açık, o pencere öne getirildi. Aynı anda tek paket kullanın: bunu açmak için o pencereden çıkın.';
+
+  @override
   String get sendText => 'Metin gönder';
 
   @override

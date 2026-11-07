@@ -1,4 +1,4 @@
-<!-- Translated from README.md 38ed72b6b4a4. -->
+<!-- Translated from README.md 0a6bee841691. -->
 <div align="center">
 
 <picture>
@@ -56,6 +56,8 @@ Zdarma a s otevřeným kódem. Koncové šifrování. Žádný e-mail, žádné 
 | **Android** | [Připojit se k betě](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.7, Android 15 nebo novější, Google Play na pozvání |
 | **Příkazový řádek** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux, macOS, Windows |
 | **Windows, macOS, iOS** | Připravujeme | Podepisování kódu pro tyto systémy je první, co dary zaplatí |
+
+Používejte vždy jen jeden linuxový balíček. Flatpak a balíček .pkg, .deb nebo .rpm sdílejí jeden název, takže když je jeden otevřený, spuštění druhého jen přenese otevřené okno do popředí, místo aby otevřelo druhé.
 
 Každý balíček sestavuje CI z otagovaného commitu, nikdy na počítači vývojáře. Chcete-li balíček před instalací zkontrolovat, porovnejte ho se `SHA256SUMS` daného vydání a ověřte, kde byl sestaven:
 
