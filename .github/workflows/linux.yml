@@ -91,10 +91,10 @@ jobs:
           FORMAT: ${{ matrix.format }}
         run: |
           case $FORMAT in arch) ext=pkg.tar.zst ;; *) ext=$FORMAT ;; esac
-          for p in dist/packages/*."$ext"; do
-            packaging/check-package-contents.sh "$p"
-          done
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+          packaging/check-package-contents.sh dist/packages/*."$ext"
+      # Uploaded even when the check fails, to look inside the package.
+      - if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: totaldrop-linux-${{ matrix.format }}-${{ matrix.arch }}
           path: dist/packages/*

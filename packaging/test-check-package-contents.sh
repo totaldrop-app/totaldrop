@@ -95,6 +95,15 @@ expect fail "rpm requires the bindings" rpm "$rpm_files" \
 expect fail "arch depends on the bindings" arch "$arch_files" \
   "$(printf '%s\ndepend: python-nautilus\n' "$arch_deps")"
 
+# No hard dependency read: the fields were not read at all, and the
+# "required" check would pass on nothing.
+expect fail "deb with no Depends read" deb "$deb_files" \
+  "$(printf '%s\n' "$deb_deps" | grep -v '^Depends:')"
+expect fail "rpm with no requires read" rpm "$rpm_files" \
+  "$(printf '%s\n' "$rpm_deps" | grep -v '^depends:')"
+expect fail "arch with no depend read" arch "$arch_files" \
+  "$(printf '%s\n' "$arch_deps" | grep -v '^depend:')"
+
 # The Flatpak: its files/ folder is /app, and the menus must not be in it.
 flatpak_files='./bin/totaldrop
 ./share/applications/app.totaldrop.TotalDrop.desktop
@@ -105,9 +114,16 @@ expect fail "flatpak with a service menu" flatpak \
 expect fail "flatpak with the Nautilus extension" flatpak \
   "$(printf '%s\n./share/nautilus-python/extensions/totaldrop_nautilus.py\n' "$flatpak_files")" ""
 
-# --flatpak reads a real folder.
+# --flatpak reads a real folder, and only TotalDrop's: an empty or wrong
+# folder has no menus either, and must not pass.
 mkdir -p "$tmp/app/bin" "$tmp/app/share/nemo/actions"
-: > "$tmp/app/bin/totaldrop"
+if sh "$check" --flatpak "$tmp/app" > /dev/null 2>&1; then
+  echo "FAIL --flatpak on a folder without TotalDrop passed"; failed=1
+else
+  echo "ok   --flatpak on a folder without TotalDrop"
+fi
+: > "$tmp/app/bin/totaldrop-desktop"
+chmod +x "$tmp/app/bin/totaldrop-desktop"
 if sh "$check" --flatpak "$tmp/app" > /dev/null 2>&1; then
   echo "ok   --flatpak without menus"
 else

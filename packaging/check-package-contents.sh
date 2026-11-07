@@ -5,7 +5,7 @@
 # Check that a built package carries the file-manager menus (#303) and
 # only suggests the Nautilus Python bindings, never requires them (#319).
 #
-#   packaging/check-package-contents.sh dist/packages/totaldrop-….deb|.rpm|.pkg.tar.zst
+#   packaging/check-package-contents.sh dist/packages/totaldrop-….deb|.rpm|.pkg.tar.zst …
 #   packaging/check-package-contents.sh --flatpak DIR
 #   packaging/check-package-contents.sh --check deb|rpm|arch|flatpak FILES DEPS
 #
@@ -53,6 +53,11 @@ check() {
   if ! grep -Ei "^($weak):" "$deps" | grep -Eq "$word"; then
     echo "$bindings is not suggested ($(echo "$weak" | tr '|' '/'))" >&2; bad=1
   fi
+  # Every real package has hard dependencies (Qt at least): none read means
+  # the fields were not read, and the check below would pass on nothing.
+  if ! grep -Eqi "^($hard):" "$deps"; then
+    echo "no $hard field was read from the package" >&2; bad=1
+  fi
   if grep -Ei "^($hard):" "$deps" | grep -Eq "$word"; then
     echo "$bindings is required ($hard); it must only be suggested" >&2; bad=1
   fi
@@ -69,32 +74,50 @@ case ${1:-} in
   check "$2" "$3" "$4"; exit ;;
 --flatpak)
   [ $# = 2 ] && [ -d "$2" ] || { echo "--flatpak DIR (a Flatpak's files/ folder)" >&2; exit 2; }
+  # Only absence is checked below, so first make sure this is TotalDrop's
+  # Flatpak, not an empty or wrong folder that would pass.
+  [ -x "$2/bin/totaldrop-desktop" ] || { echo "$2 is not TotalDrop's Flatpak files/ folder" >&2; exit 2; }
   (cd "$2" && find . -type f -o -type l) > "$tmp/files"
   : > "$tmp/deps"
   check flatpak "$tmp/files" "$tmp/deps"; exit ;;
 esac
 
-[ $# = 1 ] && [ -f "$1" ] || { echo "a .deb, .rpm or .pkg.tar.zst package" >&2; exit 2; }
-pkg=$(realpath "$1")
-name=$(basename "$pkg")
-case $name in
-*.deb) format=deb
-  list="dpkg-deb --fsys-tarfile /pkg/$name | tar -t"
-  # Recommends and Suggests may be missing; dpkg-deb then prints nothing.
-  fields="for f in Depends Pre-Depends Recommends Suggests; do v=\$(dpkg-deb -f /pkg/$name \$f); [ -z \"\$v\" ] || echo \"\$f: \$v\"; done | sed 's/^Pre-Depends:/Depends:/'" ;;
-*.rpm) format=rpm
-  list="rpm -qlp /pkg/$name"
-  fields="rpm -qp --requires /pkg/$name | sed 's/^/depends: /'
-    rpm -qp --recommends /pkg/$name | sed 's/^/recommends: /'
-    rpm -qp --suggests /pkg/$name | sed 's/^/suggests: /'" ;;
-*.pkg.tar.zst) format=arch
-  list="bsdtar -tf /pkg/$name"
-  # .PKGINFO says "depend = …" and "optdepend = …: why".
-  fields="bsdtar -xOf /pkg/$name .PKGINFO | sed -n 's/^\(depend\|optdepend\) = /\1: /p'" ;;
-*) echo "unknown package type: $name" >&2; exit 2 ;;
-esac
-case $format in deb) image=totaldrop-build-deb ;; rpm) image=totaldrop-build-rpm ;; arch) image=totaldrop-build-arch ;; esac
-docker run --rm -v "$(dirname "$pkg"):/pkg:ro" "$image" sh -ec "$list" > "$tmp/files"
-docker run --rm -v "$(dirname "$pkg"):/pkg:ro" "$image" sh -ec "$fields" > "$tmp/deps"
-echo "--- $name"
-check "$format" "$tmp/files" "$tmp/deps"
+# run COMMAND: COMMAND in the image build.sh built (never a same-named one
+# from a registry), with the package as "$1", never pasted into its text.
+run() {
+  docker run --rm --pull=never \
+    --mount "type=bind,src=$(dirname "$pkg"),dst=/pkg,readonly" \
+    "$image" sh -ec "$1" sh "/pkg/$name"
+}
+
+[ $# -ge 1 ] || { echo "one or more .deb, .rpm or .pkg.tar.zst packages" >&2; exit 2; }
+failed=0
+for arg in "$@"; do
+  [ -f "$arg" ] || { echo "not a file: $arg" >&2; exit 2; }
+  pkg=$(realpath "$arg")
+  name=$(basename "$pkg")
+  # The commands are single-quoted on purpose: "$1" is the container's.
+  # shellcheck disable=SC2016
+  case $name in
+  *.deb) format=deb image=totaldrop-build-deb
+    list='dpkg-deb --fsys-tarfile "$1" | tar -t'
+    # Prints "Field: value" for each field present, nothing for the rest.
+    fields='dpkg-deb -f "$1" Depends Pre-Depends Recommends Suggests | sed "s/^Pre-Depends:/Depends:/"' ;;
+  *.rpm) format=rpm image=totaldrop-build-rpm
+    list='rpm -qlp "$1"'
+    fields='r=$(rpm -qp --requires "$1"); m=$(rpm -qp --recommends "$1"); s=$(rpm -qp --suggests "$1")
+      printf "%s\n" "$r" | sed "s/^/depends: /"
+      [ -z "$m" ] || printf "%s\n" "$m" | sed "s/^/recommends: /"
+      [ -z "$s" ] || printf "%s\n" "$s" | sed "s/^/suggests: /"' ;;
+  *.pkg.tar.zst) format=arch image=totaldrop-build-arch
+    list='bsdtar -tf "$1"'
+    # .PKGINFO says "depend = …" and "optdepend = …: why".
+    fields='bsdtar -xOf "$1" .PKGINFO | sed -n "s/^\(depend\|optdepend\) = /\1: /p"' ;;
+  *) echo "unknown package type: $name" >&2; exit 2 ;;
+  esac
+  run "$list" > "$tmp/files"
+  run "$fields" > "$tmp/deps"
+  echo "--- $name"
+  check "$format" "$tmp/files" "$tmp/deps" || failed=1
+done
+exit "$failed"
