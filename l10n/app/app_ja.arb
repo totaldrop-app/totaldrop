@@ -149,5 +149,19 @@
   "metainfoAbout": "TotalDrop は、ファイルやフォルダーをデバイスから別のデバイスへエンドツーエンドで暗号化して送ります。ファイルを選んで短いコードか QR コードを共有すれば、相手のデバイスが受け取ります。アカウントもメールアドレスも電話番号も不要です。",
   "metainfoVerified": "届いたファイルはすべて検証され、壊れたファイルは破棄されます",
   "metainfoWords": "4 つの確認用の単語で、間に誰もいないことを確かめられます",
-  "metainfoTheme": "デスクトップのテーマに合わせます: Plasma、Hyprland、Omarchy、GNOME"
+  "metainfoTheme": "デスクトップのテーマに合わせます: Plasma、Hyprland、Omarchy、GNOME",
+  "sendText": "テキストを送信",
+  "sendTextHint": "送信するテキストを入力するか貼り付けてください",
+  "sendTextTooLong": "テキストは最大 {size} までです。それより長いものはファイルとして送信してください。",
+  "sendTextDone": "テキストは欠けることなく届きました。",
+  "sendClipboard": "クリップボードを送信",
+  "sendClipboardEmpty": "クリップボードにテキストがありません。",
+  "receiveOfferText": "受信するテキスト",
+  "receiveOfferTextNote": "テキストはここに表示され、保存はされません。",
+  "receiveTextDone": "テキスト受信完了・検証済み",
+  "receiveTextDeclined": "テキストの受け取りを拒否しました。",
+  "receiveTextHidden": "テキストに見えない文字が含まれており、U+… の形で表示しています。コピーすると、届いたとおりのテキストがコピーされます。",
+  "copyText": "テキストをコピー",
+  "textCopied": "テキストをコピーしました",
+  "errorTextDamaged": "テキストが欠けることなく届かなかったため、表示しません。"
 }

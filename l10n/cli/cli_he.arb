@@ -60,7 +60,7 @@
   "cliHelpHelpCommand": "הצגת ההודעה הזו או העזרה של הפקודה שצוינה",
   "cliDesktopAbout": "פתיחת החלון של TotalDrop.",
   "cliDesktopArgs": "קבצים או תיקיות לשליחה, או קישור TotalDrop לקבלה.",
-  "cliDesktopScreen": "פתיחה במסך שליחה (send), קבלה (receive) או הגדרות (settings).",
+  "cliDesktopScreen": "פתיחה במסך שליחה (send), שליחת הלוח (clipboard), קבלה (receive) או הגדרות (settings).",
   "cliHelpSendText": "שליחת הטקסט הזה במקום קבצים: הנמען רואה אותו כטקסט ולא כקובץ. אחרים במחשב הזה יכולים לראות אותו ברשימת התהליכים; לטקסט פרטי השתמשו ב־-.",
   "cliSendingText": "שולח טקסט, {size}.",
   "cliOfferedText": "מוצע: טקסט, {size}. הוא מוצג כאן ולא נשמר.",

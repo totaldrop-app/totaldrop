@@ -549,4 +549,51 @@ class AppLocalizationsHu extends AppLocalizations {
   @override
   String get metainfoTheme =>
       'Követi az asztali környezet témáját: Plasma, Hyprland, Omarchy, GNOME';
+
+  @override
+  String get sendText => 'Szöveg küldése';
+
+  @override
+  String get sendTextHint => 'Írd be vagy illeszd be a küldendő szöveget';
+
+  @override
+  String sendTextTooLong(String size) {
+    return 'Egy szöveg legfeljebb $size lehet. A hosszabbat fájlként küldd.';
+  }
+
+  @override
+  String get sendTextDone => 'A szöveg hiánytalanul megérkezett.';
+
+  @override
+  String get sendClipboard => 'Vágólap küldése';
+
+  @override
+  String get sendClipboardEmpty => 'A vágólapon nincs szöveg.';
+
+  @override
+  String get receiveOfferText => 'Bejövő szöveg';
+
+  @override
+  String get receiveOfferTextNote =>
+      'A szöveg itt jelenik meg, nem kerül mentésre.';
+
+  @override
+  String get receiveTextDone => 'Szöveg fogadva és ellenőrizve';
+
+  @override
+  String get receiveTextDeclined => 'Elutasítottad a szöveget.';
+
+  @override
+  String get receiveTextHidden =>
+      'A szövegben rejtett karakterek vannak, ezek U+… alakban látszanak. Másoláskor a szöveget pontosan úgy kapod meg, ahogy érkezett.';
+
+  @override
+  String get copyText => 'Szöveg másolása';
+
+  @override
+  String get textCopied => 'Szöveg másolva';
+
+  @override
+  String get errorTextDamaged =>
+      'A szöveg nem érkezett meg hiánytalanul, ezért nem jelenik meg.';
 }

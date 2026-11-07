@@ -149,5 +149,19 @@
   "metainfoAbout": "TotalDrop envoie des fichiers et des dossiers d'un appareil à un autre, chiffrés de bout en bout. Choisissez les fichiers, partagez un code court ou un code QR, et l'autre appareil les reçoit. Pas de compte, pas d'e-mail, pas de numéro de téléphone.",
   "metainfoVerified": "Chaque fichier est vérifié à l'arrivée ; les fichiers endommagés sont écartés",
   "metainfoWords": "Quatre mots de vérification montrent que personne ne s'est interposé",
-  "metainfoTheme": "Suit le thème de votre bureau : Plasma, Hyprland, Omarchy, GNOME"
+  "metainfoTheme": "Suit le thème de votre bureau : Plasma, Hyprland, Omarchy, GNOME",
+  "sendText": "Envoyer du texte",
+  "sendTextHint": "Saisissez ou collez le texte à envoyer",
+  "sendTextTooLong": "Un texte peut faire au plus {size}. Envoyez un texte plus long sous forme de fichier.",
+  "sendTextDone": "Le texte est arrivé intact.",
+  "sendClipboard": "Envoyer le presse-papiers",
+  "sendClipboardEmpty": "Le presse-papiers ne contient pas de texte.",
+  "receiveOfferText": "Texte entrant",
+  "receiveOfferTextNote": "Le texte s’affiche ici, il n’est pas enregistré.",
+  "receiveTextDone": "Texte reçu et vérifié",
+  "receiveTextDeclined": "Vous avez refusé le texte.",
+  "receiveTextHidden": "Le texte contient des caractères cachés, affichés sous la forme U+…. La copie donne le texte exactement tel qu’il est arrivé.",
+  "copyText": "Copier le texte",
+  "textCopied": "Texte copié",
+  "errorTextDamaged": "Le texte n’est pas arrivé intact, il n’est donc pas affiché."
 }

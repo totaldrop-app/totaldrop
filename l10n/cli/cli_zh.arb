@@ -60,7 +60,7 @@
   "cliHelpHelpCommand": "显示此消息或指定命令的帮助",
   "cliDesktopAbout": "打开 TotalDrop 窗口。",
   "cliDesktopArgs": "要发送的文件或文件夹，或用于接收的 TotalDrop 链接。",
-  "cliDesktopScreen": "在发送（send）、接收（receive）或设置（settings）界面打开。",
+  "cliDesktopScreen": "在发送（send）、发送剪贴板（clipboard）、接收（receive）或设置（settings）界面打开。",
   "cliHelpSendText": "发送这段文本而不是文件：接收方看到的是文本，而不是文件。这台电脑上的其他人可以在进程列表中看到它；私密文本请使用 -。",
   "cliSendingText": "正在发送一段文本，{size}。",
   "cliOfferedText": "对方发来：一段文本，{size}。将在此显示，不会保存。",

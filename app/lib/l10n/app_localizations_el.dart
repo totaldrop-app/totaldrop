@@ -567,4 +567,52 @@ class AppLocalizationsEl extends AppLocalizations {
   @override
   String get metainfoTheme =>
       'Ακολουθεί το θέμα της επιφάνειας εργασίας σας: Plasma, Hyprland, Omarchy, GNOME';
+
+  @override
+  String get sendText => 'Αποστολή κειμένου';
+
+  @override
+  String get sendTextHint =>
+      'Πληκτρολογήστε ή επικολλήστε το κείμενο προς αποστολή';
+
+  @override
+  String sendTextTooLong(String size) {
+    return 'Ένα κείμενο μπορεί να είναι έως $size. Στείλτε ένα μεγαλύτερο ως αρχείο.';
+  }
+
+  @override
+  String get sendTextDone => 'Το κείμενο έφτασε ακέραιο.';
+
+  @override
+  String get sendClipboard => 'Αποστολή προχείρου';
+
+  @override
+  String get sendClipboardEmpty => 'Το πρόχειρο δεν περιέχει κείμενο.';
+
+  @override
+  String get receiveOfferText => 'Εισερχόμενο κείμενο';
+
+  @override
+  String get receiveOfferTextNote =>
+      'Το κείμενο εμφανίζεται εδώ, δεν αποθηκεύεται.';
+
+  @override
+  String get receiveTextDone => 'Το κείμενο λήφθηκε και επαληθεύτηκε';
+
+  @override
+  String get receiveTextDeclined => 'Απορρίψατε το κείμενο.';
+
+  @override
+  String get receiveTextHidden =>
+      'Το κείμενο περιέχει κρυφούς χαρακτήρες, που εμφανίζονται ως U+…. Η αντιγραφή δίνει το κείμενο ακριβώς όπως ήρθε.';
+
+  @override
+  String get copyText => 'Αντιγραφή κειμένου';
+
+  @override
+  String get textCopied => 'Το κείμενο αντιγράφηκε';
+
+  @override
+  String get errorTextDamaged =>
+      'Το κείμενο δεν έφτασε ακέραιο, γι’ αυτό δεν εμφανίζεται.';
 }

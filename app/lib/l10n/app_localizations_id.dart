@@ -545,4 +545,51 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get metainfoTheme =>
       'Mengikuti tema desktop Anda: Plasma, Hyprland, Omarchy, GNOME';
+
+  @override
+  String get sendText => 'Kirim teks';
+
+  @override
+  String get sendTextHint => 'Ketik atau tempel teks yang ingin dikirim';
+
+  @override
+  String sendTextTooLong(String size) {
+    return 'Teks paling besar $size. Kirim teks yang lebih panjang sebagai file.';
+  }
+
+  @override
+  String get sendTextDone => 'Teks tiba dengan utuh.';
+
+  @override
+  String get sendClipboard => 'Kirim papan klip';
+
+  @override
+  String get sendClipboardEmpty => 'Papan klip tidak berisi teks.';
+
+  @override
+  String get receiveOfferText => 'Teks masuk';
+
+  @override
+  String get receiveOfferTextNote =>
+      'Teks ditampilkan di sini, tidak disimpan.';
+
+  @override
+  String get receiveTextDone => 'Teks diterima dan terverifikasi';
+
+  @override
+  String get receiveTextDeclined => 'Anda menolak teks tersebut.';
+
+  @override
+  String get receiveTextHidden =>
+      'Teks berisi karakter tersembunyi yang ditampilkan sebagai U+…. Saat disalin, teks didapat persis seperti saat tiba.';
+
+  @override
+  String get copyText => 'Salin teks';
+
+  @override
+  String get textCopied => 'Teks disalin';
+
+  @override
+  String get errorTextDamaged =>
+      'Teks tidak tiba dengan utuh, jadi tidak ditampilkan.';
 }

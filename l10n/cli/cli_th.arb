@@ -60,7 +60,7 @@
   "cliHelpHelpCommand": "แสดงข้อความนี้หรือความช่วยเหลือของคำสั่งที่ระบุ",
   "cliDesktopAbout": "เปิดหน้าต่าง TotalDrop",
   "cliDesktopArgs": "ไฟล์หรือโฟลเดอร์ที่จะส่ง หรือลิงก์ TotalDrop สำหรับรับ",
-  "cliDesktopScreen": "เปิดที่หน้าจอส่ง (send) รับ (receive) หรือการตั้งค่า (settings)",
+  "cliDesktopScreen": "เปิดที่หน้าจอส่ง (send) ส่งคลิปบอร์ด (clipboard) รับ (receive) หรือการตั้งค่า (settings)",
   "cliHelpSendText": "ส่งข้อความนี้แทนไฟล์ ผู้รับจะเห็นเป็นข้อความ ไม่ใช่ไฟล์ ผู้อื่นบนคอมพิวเตอร์เครื่องนี้อาจเห็นข้อความในรายการโปรเซส สำหรับข้อความส่วนตัวให้ใช้ -",
   "cliSendingText": "กำลังส่งข้อความ {size}",
   "cliOfferedText": "ที่เสนอมา: ข้อความ {size} แสดงที่นี่ ไม่ได้บันทึก",

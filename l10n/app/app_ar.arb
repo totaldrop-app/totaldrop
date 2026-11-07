@@ -149,5 +149,19 @@
   "metainfoAbout": "يرسل TotalDrop الملفات والمجلدات من جهاز إلى آخر بتشفير تام بين الطرفين. اختر الملفات وشارك رمزًا قصيرًا أو رمز QR، فيستلمها الجهاز الآخر. بلا حساب ولا بريد إلكتروني ولا رقم هاتف.",
   "metainfoVerified": "يُتحقَّق من كل ملف عند وصوله، وتُحذف الملفات التالفة",
   "metainfoWords": "أربع كلمات تحقق تُظهر أن أحدًا لم يتدخل بينكما",
-  "metainfoTheme": "يتبع سمة سطح المكتب لديك: Plasma وHyprland وOmarchy وGNOME"
+  "metainfoTheme": "يتبع سمة سطح المكتب لديك: Plasma وHyprland وOmarchy وGNOME",
+  "sendText": "إرسال نص",
+  "sendTextHint": "اكتب النص الذي تريد إرساله أو الصقه",
+  "sendTextTooLong": "يمكن أن يصل النص إلى {size} على الأكثر. أرسل النص الأطول كملف.",
+  "sendTextDone": "وصل النص كاملًا.",
+  "sendClipboard": "إرسال محتوى الحافظة",
+  "sendClipboardEmpty": "لا يوجد نص في الحافظة.",
+  "receiveOfferText": "نص وارد",
+  "receiveOfferTextNote": "يُعرض النص هنا ولا يُحفظ.",
+  "receiveTextDone": "تم استلام النص والتحقق منه",
+  "receiveTextDeclined": "لقد رفضت النص.",
+  "receiveTextHidden": "يحتوي النص على أحرف مخفية تظهر على شكل U+…. عند النسخ يُنسخ النص كما وصل تمامًا.",
+  "copyText": "نسخ النص",
+  "textCopied": "تم نسخ النص",
+  "errorTextDamaged": "لم يصل النص كاملًا، لذلك لا يُعرض."
 }

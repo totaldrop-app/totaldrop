@@ -60,7 +60,7 @@
   "cliHelpHelpCommand": "Onyesha ujumbe huu au msaada wa amri iliyotajwa",
   "cliDesktopAbout": "Fungua dirisha la TotalDrop.",
   "cliDesktopArgs": "Faili au folda za kutuma, au kiungo cha TotalDrop cha kupokea.",
-  "cliDesktopScreen": "Fungua kwenye skrini ya Tuma (send), Pokea (receive) au Mipangilio (settings).",
+  "cliDesktopScreen": "Fungua kwenye skrini ya Tuma (send), Tuma ubao wa kunakili (clipboard), Pokea (receive) au Mipangilio (settings).",
   "cliHelpSendText": "Tuma maandishi haya badala ya faili: mpokeaji anayaona kama maandishi, si faili. Wengine kwenye kompyuta hii wanaweza kuyaona kwenye orodha ya michakato; tumia - kwa maandishi ya faragha.",
   "cliSendingText": "Inatuma maandishi, {size}.",
   "cliOfferedText": "Yaliyotolewa: maandishi, {size}. Yanaonyeshwa hapa, hayahifadhiwi.",

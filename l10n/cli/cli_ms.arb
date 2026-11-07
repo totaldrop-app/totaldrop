@@ -60,7 +60,7 @@
   "cliHelpHelpCommand": "Papar mesej ini atau bantuan arahan yang diberikan",
   "cliDesktopAbout": "Buka tetingkap TotalDrop.",
   "cliDesktopArgs": "Fail atau folder untuk dihantar, atau pautan TotalDrop untuk menerima.",
-  "cliDesktopScreen": "Buka pada skrin Hantar (send), Terima (receive) atau Tetapan (settings).",
+  "cliDesktopScreen": "Buka pada skrin Hantar (send), Hantar papan keratan (clipboard), Terima (receive) atau Tetapan (settings).",
   "cliHelpSendText": "Hantar teks ini dan bukannya fail: penerima melihatnya sebagai teks, bukan fail. Orang lain pada komputer ini boleh melihatnya dalam senarai proses; gunakan - untuk teks peribadi.",
   "cliSendingText": "Menghantar teks, {size}.",
   "cliOfferedText": "Ditawarkan: satu teks, {size}. Ia dipaparkan di sini, tidak disimpan.",

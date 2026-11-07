@@ -572,4 +572,51 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get metainfoTheme =>
       'Segue il tema del tuo desktop: Plasma, Hyprland, Omarchy, GNOME';
+
+  @override
+  String get sendText => 'Invia testo';
+
+  @override
+  String get sendTextHint => 'Scrivi o incolla il testo da inviare';
+
+  @override
+  String sendTextTooLong(String size) {
+    return 'Un testo può occupare al massimo $size. Invia un testo più lungo come file.';
+  }
+
+  @override
+  String get sendTextDone => 'Il testo è arrivato integro.';
+
+  @override
+  String get sendClipboard => 'Invia appunti';
+
+  @override
+  String get sendClipboardEmpty => 'Gli appunti non contengono testo.';
+
+  @override
+  String get receiveOfferText => 'Testo in arrivo';
+
+  @override
+  String get receiveOfferTextNote =>
+      'Il testo viene mostrato qui, non salvato.';
+
+  @override
+  String get receiveTextDone => 'Testo ricevuto e verificato';
+
+  @override
+  String get receiveTextDeclined => 'Hai rifiutato il testo.';
+
+  @override
+  String get receiveTextHidden =>
+      'Il testo contiene caratteri nascosti, mostrati come U+…. Copiandolo ottieni il testo esattamente come è arrivato.';
+
+  @override
+  String get copyText => 'Copia testo';
+
+  @override
+  String get textCopied => 'Testo copiato';
+
+  @override
+  String get errorTextDamaged =>
+      'Il testo non è arrivato integro, quindi non viene mostrato.';
 }

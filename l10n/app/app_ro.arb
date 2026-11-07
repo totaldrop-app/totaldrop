@@ -149,5 +149,19 @@
   "metainfoAbout": "TotalDrop trimite fișiere și dosare de pe un dispozitiv pe altul, criptate integral. Alegeți fișierele, partajați un cod scurt sau un cod QR, iar celălalt dispozitiv le primește. Fără cont, fără e-mail, fără număr de telefon.",
   "metainfoVerified": "Fiecare fișier este verificat la sosire; fișierele deteriorate sunt eliminate",
   "metainfoWords": "Patru cuvinte de verificare arată că nimeni nu stă la mijloc",
-  "metainfoTheme": "Urmează tema desktopului dumneavoastră: Plasma, Hyprland, Omarchy, GNOME"
+  "metainfoTheme": "Urmează tema desktopului dumneavoastră: Plasma, Hyprland, Omarchy, GNOME",
+  "sendText": "Trimite text",
+  "sendTextHint": "Scrieți sau lipiți textul de trimis",
+  "sendTextTooLong": "Un text poate avea cel mult {size}. Trimiteți un text mai lung ca fișier.",
+  "sendTextDone": "Textul a ajuns întreg.",
+  "sendClipboard": "Trimite clipboardul",
+  "sendClipboardEmpty": "Clipboardul nu conține text.",
+  "receiveOfferText": "Text primit",
+  "receiveOfferTextNote": "Textul este afișat aici, nu este salvat.",
+  "receiveTextDone": "Text primit și verificat",
+  "receiveTextDeclined": "Ați refuzat textul.",
+  "receiveTextHidden": "Textul conține caractere ascunse, afișate ca U+…. La copiere obțineți textul exact așa cum a sosit.",
+  "copyText": "Copiază textul",
+  "textCopied": "Text copiat",
+  "errorTextDamaged": "Textul nu a ajuns întreg, așa că nu este afișat."
 }

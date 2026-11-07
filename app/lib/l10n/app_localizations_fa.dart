@@ -556,4 +556,52 @@ class AppLocalizationsFa extends AppLocalizations {
   @override
   String get metainfoTheme =>
       'از پوستهٔ میزکار شما پیروی می‌کند: Plasma، Hyprland، Omarchy، GNOME';
+
+  @override
+  String get sendText => 'ارسال متن';
+
+  @override
+  String get sendTextHint =>
+      'متنی را که می‌خواهید بفرستید بنویسید یا جای‌گذاری کنید';
+
+  @override
+  String sendTextTooLong(String size) {
+    return 'متن حداکثر می‌تواند $size باشد. متن بلندتر را به‌صورت فایل بفرستید.';
+  }
+
+  @override
+  String get sendTextDone => 'متن سالم رسید.';
+
+  @override
+  String get sendClipboard => 'ارسال محتوای کلیپ‌بورد';
+
+  @override
+  String get sendClipboardEmpty => 'در کلیپ‌بورد متنی نیست.';
+
+  @override
+  String get receiveOfferText => 'متن ورودی';
+
+  @override
+  String get receiveOfferTextNote =>
+      'متن اینجا نمایش داده می‌شود و ذخیره نمی‌شود.';
+
+  @override
+  String get receiveTextDone => 'متن دریافت و تأیید شد';
+
+  @override
+  String get receiveTextDeclined => 'متن را رد کردید.';
+
+  @override
+  String get receiveTextHidden =>
+      'متن نویسه‌های پنهان دارد که به‌صورت U+… نمایش داده می‌شوند. با کپی کردن، متن دقیقاً همان‌طور که رسیده کپی می‌شود.';
+
+  @override
+  String get copyText => 'کپی متن';
+
+  @override
+  String get textCopied => 'متن کپی شد';
+
+  @override
+  String get errorTextDamaged =>
+      'متن سالم نرسید، برای همین نمایش داده نمی‌شود.';
 }

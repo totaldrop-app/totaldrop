@@ -60,7 +60,7 @@
   "cliHelpHelpCommand": "In thông báo này hoặc trợ giúp của lệnh đã cho",
   "cliDesktopAbout": "Mở cửa sổ TotalDrop.",
   "cliDesktopArgs": "Các tệp hoặc thư mục cần gửi, hoặc một liên kết TotalDrop để nhận.",
-  "cliDesktopScreen": "Mở ở màn hình Gửi (send), Nhận (receive) hoặc Cài đặt (settings).",
+  "cliDesktopScreen": "Mở ở màn hình Gửi (send), Gửi khay nhớ tạm (clipboard), Nhận (receive) hoặc Cài đặt (settings).",
   "cliHelpSendText": "Gửi văn bản này thay cho tệp: người nhận thấy nó dưới dạng văn bản, không phải tệp. Người khác trên máy tính này có thể thấy nó trong danh sách tiến trình; hãy dùng - cho văn bản riêng tư.",
   "cliSendingText": "Đang gửi một văn bản, {size}.",
   "cliOfferedText": "Được gửi tới: một văn bản, {size}. Văn bản hiển thị ở đây, không được lưu.",

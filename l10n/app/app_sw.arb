@@ -149,5 +149,19 @@
   "metainfoAbout": "TotalDrop hutuma faili na folda kutoka kifaa kimoja hadi kingine, zimesimbwa mwanzo hadi mwisho. Chagua faili, shiriki msimbo mfupi au msimbo wa QR, na kifaa kingine kitazipokea. Hakuna akaunti, barua pepe wala nambari ya simu.",
   "metainfoVerified": "Kila faili huthibitishwa inapofika; faili zilizoharibika hutupwa",
   "metainfoWords": "Maneno manne ya uthibitisho yanaonyesha kwamba hakuna mtu katikati",
-  "metainfoTheme": "Hufuata mandhari ya eneo-kazi lako: Plasma, Hyprland, Omarchy, GNOME"
+  "metainfoTheme": "Hufuata mandhari ya eneo-kazi lako: Plasma, Hyprland, Omarchy, GNOME",
+  "sendText": "Tuma maandishi",
+  "sendTextHint": "Andika au bandika maandishi ya kutuma",
+  "sendTextTooLong": "Maandishi yanaweza kuwa hadi {size} tu. Tuma maandishi marefu zaidi kama faili.",
+  "sendTextDone": "Maandishi yamefika yakiwa kamili.",
+  "sendClipboard": "Tuma ubao wa kunakili",
+  "sendClipboardEmpty": "Ubao wa kunakili hauna maandishi.",
+  "receiveOfferText": "Maandishi yanayoingia",
+  "receiveOfferTextNote": "Maandishi yanaonyeshwa hapa, hayahifadhiwi.",
+  "receiveTextDone": "Maandishi yamepokelewa na kuthibitishwa",
+  "receiveTextDeclined": "Umekataa maandishi.",
+  "receiveTextHidden": "Maandishi yana herufi zilizofichwa, zinazoonyeshwa kama U+…. Ukinakili, unapata maandishi kama yalivyofika.",
+  "copyText": "Nakili maandishi",
+  "textCopied": "Maandishi yamenakiliwa",
+  "errorTextDamaged": "Maandishi hayakufika yakiwa kamili, kwa hiyo hayaonyeshwi."
 }

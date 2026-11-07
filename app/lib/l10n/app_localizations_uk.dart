@@ -569,4 +569,50 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get metainfoTheme =>
       'Дотримується теми вашої стільниці: Plasma, Hyprland, Omarchy, GNOME';
+
+  @override
+  String get sendText => 'Надіслати текст';
+
+  @override
+  String get sendTextHint => 'Введіть або вставте текст для надсилання';
+
+  @override
+  String sendTextTooLong(String size) {
+    return 'Текст може займати щонайбільше $size. Довший надішліть файлом.';
+  }
+
+  @override
+  String get sendTextDone => 'Текст надійшов цілим.';
+
+  @override
+  String get sendClipboard => 'Надіслати буфер обміну';
+
+  @override
+  String get sendClipboardEmpty => 'У буфері обміну немає тексту.';
+
+  @override
+  String get receiveOfferText => 'Вхідний текст';
+
+  @override
+  String get receiveOfferTextNote => 'Текст показано тут, його не збережено.';
+
+  @override
+  String get receiveTextDone => 'Текст отримано й перевірено';
+
+  @override
+  String get receiveTextDeclined => 'Ви відхилили текст.';
+
+  @override
+  String get receiveTextHidden =>
+      'У тексті є приховані символи, їх показано як U+…. Під час копіювання ви отримаєте текст саме таким, яким він надійшов.';
+
+  @override
+  String get copyText => 'Копіювати текст';
+
+  @override
+  String get textCopied => 'Текст скопійовано';
+
+  @override
+  String get errorTextDamaged =>
+      'Текст надійшов не цілим, тому його не показано.';
 }
