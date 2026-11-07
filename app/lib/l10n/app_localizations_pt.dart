@@ -1699,7 +1699,7 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
 
   @override
   String get metainfoAbout =>
-      'O TotalDrop envia ficheiros e pastas de um dispositivo para outro, com encriptação ponto a ponto. Escolha os ficheiros, partilhe um código curto ou um código QR e o outro dispositivo recebe-os. Sem conta, sem e-mail, sem número de telefone.';
+      'O TotalDrop envia ficheiros e pastas de um dispositivo para outro, com encriptação de ponta a ponta. Escolha os ficheiros, partilhe um código curto ou um código QR e o outro dispositivo recebe-os. Sem conta, sem e-mail, sem número de telefone.';
 
   @override
   String get metainfoVerified =>

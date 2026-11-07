@@ -557,7 +557,7 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get metainfoAbout =>
-      'TotalDrop trimite fișiere și dosare de pe un dispozitiv pe altul, criptate integral. Alege fișierele, partajează un cod scurt sau un cod QR, iar celălalt dispozitiv le primește. Fără cont, fără e-mail, fără număr de telefon.';
+      'TotalDrop trimite fișiere și dosare de pe un dispozitiv pe altul, criptate integral. Alegeți fișierele, partajați un cod scurt sau un cod QR, iar celălalt dispozitiv le primește. Fără cont, fără e-mail, fără număr de telefon.';
 
   @override
   String get metainfoVerified =>
@@ -569,5 +569,5 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get metainfoTheme =>
-      'Urmează tema desktopului tău: Plasma, Hyprland, Omarchy, GNOME';
+      'Urmează tema desktopului dumneavoastră: Plasma, Hyprland, Omarchy, GNOME';
 }
