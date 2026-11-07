@@ -6,6 +6,9 @@
 <resources>
     <string name="shortcut_send_short">Skicka</string>
     <string name="shortcut_send_long">Skicka filer</string>
+    <string name="shortcut_clipboard_short">Skicka urklipp</string>
+    <string name="shortcut_clipboard_long">Skicka urklipp</string>
+    <string name="process_text">Skicka med TotalDrop</string>
     <string name="shortcut_receive_short">Ta emot</string>
     <string name="shortcut_receive_long">Ta emot filer</string>
 </resources>

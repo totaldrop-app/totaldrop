@@ -55,8 +55,9 @@ class SendView extends StatelessWidget {
                 vm.reset();
               } else {
                 // Leaving the wait ends it: the shares stop, and what
-                // was chosen before stays.
+                // was chosen before stays. A text being written goes.
                 vm.cancelShares();
+                vm.leaveText();
               }
               return;
             }
@@ -66,7 +67,7 @@ class SendView extends StatelessWidget {
             }
           },
           child: Scaffold(
-            appBar: AppBar(title: Text(l.sendTitle)),
+            appBar: AppBar(title: Text(vm.textMode ? l.sendText : l.sendTitle)),
             body: SafeArea(
               child: AnimatedSwitcher(
                 duration: const Duration(milliseconds: 250),
@@ -88,6 +89,7 @@ class SendView extends StatelessWidget {
                               )
                             : null,
                       ),
+                    SendStage.picking when vm.textMode => _TextPicking(vm: vm),
                     SendStage.picking => _Picking(vm: vm),
                     SendStage.preparing => _Centered(
                       logo: const TotalDropMark(size: 120, sending: true),
@@ -178,6 +180,12 @@ class _Picking extends StatelessWidget {
               icon: const Icon(Icons.attach_file),
               label: Text(l.sendAddFiles),
             ),
+            Gap.s,
+            OutlinedButton.icon(
+              onPressed: () => vm.setTextMode(true),
+              icon: const Icon(Icons.notes),
+              label: Text(l.sendText),
+            ),
           ],
         ),
       );
@@ -262,6 +270,184 @@ class _Picking extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// A text to send instead of files (#326): typed, pasted, shared from
+/// another app or selected there. What is sent is the text in the box,
+/// as UTF-8; a text too long to edit is shown in part and sent whole.
+class _TextPicking extends StatefulWidget {
+  const _TextPicking({required this.vm});
+  final SendViewModel vm;
+
+  @override
+  State<_TextPicking> createState() => _TextPickingState();
+}
+
+class _TextPickingState extends State<_TextPicking> {
+  late final _controller = TextEditingController(text: _boxText);
+
+  String get _boxText {
+    final vm = widget.vm;
+    return vm.bigText ? vm.text.substring(0, _cut(vm.text)) : vm.text;
+  }
+
+  /// Not inside a character made of two UTF-16 units.
+  static int _cut(String t) {
+    final end = shownTextChars;
+    final last = t.codeUnitAt(end - 1);
+    return last >= 0xD800 && last <= 0xDBFF ? end - 1 : end;
+  }
+
+  @override
+  void didUpdateWidget(_TextPicking old) {
+    super.didUpdateWidget(old);
+    _sync();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  /// The box follows a text that came from elsewhere (clipboard, share).
+  void _sync() {
+    final want = _boxText;
+    if (_controller.text != want) {
+      _controller.value = TextEditingValue(
+        text: want,
+        selection: TextSelection.collapsed(offset: want.length),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final vm = widget.vm;
+    final notice = switch (vm.textNotice) {
+      TextNotice.clipboardEmpty => l.sendClipboardEmpty,
+      TextNotice.clipboardKept => l.sendClipboardKept,
+      TextNotice.none when vm.textTooLong => l.sendTextTooLong(
+        formatBytes(l, vm.maxTextBytes),
+      ),
+      TextNotice.none when vm.bigText => l.sendTextShortened,
+      TextNotice.none => null,
+    };
+    final warn = vm.textTooLong || vm.textNotice != TextNotice.none;
+    // The box shows hidden characters as the system draws them, which is
+    // often not at all: the screen names them (#326).
+    final hidden = vm.text.isNotEmpty && shownText(vm.text).hidden;
+    // The box takes the room left; with the keyboard up or large type,
+    // the page scrolls instead of overflowing.
+    return CustomScrollView(
+      slivers: [
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(minHeight: 160),
+                    child: TextField(
+                      controller: _controller,
+                      // A long text cannot be edited, only taken away.
+                      readOnly: vm.bigText,
+                      autofocus: vm.text.isEmpty,
+                      maxLines: null,
+                      expands: true,
+                      textAlignVertical: TextAlignVertical.top,
+                      keyboardType: TextInputType.multiline,
+                      decoration: InputDecoration(
+                        hintText: l.sendTextHint,
+                        border: const OutlineInputBorder(),
+                      ),
+                      onChanged: vm.setText,
+                    ),
+                  ),
+                ),
+                if (notice != null) ...[
+                  Gap.s,
+                  Announced(
+                    Text(
+                      notice,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: warn
+                            ? theme.colorScheme.error
+                            : theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ],
+                if (hidden) ...[
+                  Gap.s,
+                  Announced(
+                    Text(
+                      l.sendTextHidden,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ],
+                Gap.s,
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    if (vm.text.isEmpty)
+                      OutlinedButton.icon(
+                        onPressed: vm.pasteClipboard,
+                        icon: const Icon(Icons.content_paste),
+                        label: Text(l.receivePaste),
+                      )
+                    else
+                      OutlinedButton.icon(
+                        onPressed: () => vm.setText(''),
+                        icon: const Icon(Icons.clear),
+                        label: Text(l.sendRemove),
+                      ),
+                    if (vm.text.isEmpty)
+                      OutlinedButton.icon(
+                        onPressed: () {
+                          vm.setTextMode(false);
+                          if (vm.files.isEmpty) vm.addFiles();
+                        },
+                        icon: const Icon(Icons.attach_file),
+                        label: Text(l.sendAddFiles),
+                      ),
+                  ],
+                ),
+                const Divider(height: 24),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(l.sendStrongCode),
+                  subtitle: Text(l.sendStrongCodeHint),
+                  value: vm.strong,
+                  onChanged: vm.setStrong,
+                ),
+                Gap.s,
+                FilledButton.icon(
+                  onPressed: vm.canStart ? vm.start : null,
+                  icon: const Icon(Icons.key_outlined),
+                  label: Text(
+                    vm.text.isEmpty
+                        ? l.sendCreateCode
+                        : '${l.sendCreateCode} · ${formatBytes(l, vm.textBytes)}',
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ],
@@ -454,7 +640,9 @@ class _Done extends StatelessWidget {
             ),
           ),
           Gap.s,
-          if (s != null) ...[
+          if (vm.textMode)
+            Text(l.sendTextDone, textAlign: TextAlign.center)
+          else if (s != null) ...[
             Text(l.sendDoneBody(s.filesOk), textAlign: TextAlign.center),
             if (s.filesFailed > 0) ...[
               Gap.s,

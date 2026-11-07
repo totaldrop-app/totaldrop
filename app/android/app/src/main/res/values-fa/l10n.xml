@@ -6,6 +6,9 @@
 <resources>
     <string name="shortcut_send_short">ارسال</string>
     <string name="shortcut_send_long">ارسال فایل</string>
+    <string name="shortcut_clipboard_short">ارسال محتوای کلیپ‌بورد</string>
+    <string name="shortcut_clipboard_long">ارسال محتوای کلیپ‌بورد</string>
+    <string name="process_text">ارسال با TotalDrop</string>
     <string name="shortcut_receive_short">دریافت</string>
     <string name="shortcut_receive_long">دریافت فایل</string>
 </resources>

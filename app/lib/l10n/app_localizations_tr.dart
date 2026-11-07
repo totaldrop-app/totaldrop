@@ -496,10 +496,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get transferNoticeBody => 'Başka uygulamaları kullanırken de sürer.';
 
   @override
-  String get shareTextSoon =>
-      'TotalDrop henüz metin göndermiyor, yalnızca dosya. Bunun yerine bir dosya paylaşın.';
-
-  @override
   String get shareBusy =>
       'Bir aktarım hâlâ sürüyor. Bitmesini bekleyin ya da durdurun, sonra yeniden paylaşın.';
 
@@ -582,6 +578,10 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get receiveTextHidden =>
       'Metinde gizli karakterler var, U+… olarak gösteriliyor. Kopyalayınca metin geldiği gibi kopyalanır.';
+
+  @override
+  String get sendTextHidden =>
+      'Metinde yön işareti gibi gizli karakterler var. Bunlar da metinle birlikte gönderilir.';
 
   @override
   String get sendClipboardKept => 'Yazılmış metin korundu, pano kullanılmadı.';

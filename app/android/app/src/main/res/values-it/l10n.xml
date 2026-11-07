@@ -6,6 +6,9 @@
 <resources>
     <string name="shortcut_send_short">Invia</string>
     <string name="shortcut_send_long">Invia file</string>
+    <string name="shortcut_clipboard_short">Invia appunti</string>
+    <string name="shortcut_clipboard_long">Invia appunti</string>
+    <string name="process_text">Invia con TotalDrop</string>
     <string name="shortcut_receive_short">Ricevi</string>
     <string name="shortcut_receive_long">Ricevi file</string>
 </resources>

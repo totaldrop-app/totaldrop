@@ -14,7 +14,8 @@ sealed class Launch {
   const Launch();
 }
 
-/// A launcher shortcut: open Send or Receive.
+/// A launcher shortcut: open Send or Receive, or Send with the text on
+/// the clipboard ([clipboardScreen]).
 final class OpenScreen extends Launch {
   const OpenScreen(this.screen);
   final String screen;
@@ -44,9 +45,15 @@ final class ShareFailed extends Launch {
   final int id;
 }
 
-/// Only text was shared, which TotalDrop does not send yet.
-final class SharedTextOnly extends Launch {
-  const SharedTextOnly();
+/// The launcher shortcut that opens Send with the clipboard's text
+/// (#326).
+const clipboardScreen = 'clipboard';
+
+/// A text was shared, or selected and sent from another app's text
+/// selection menu (#326): it opens Send with the text filled in.
+final class SharedText extends Launch {
+  const SharedText(this.text);
+  final String text;
 }
 
 /// The launches in one event from the platform, in order. Anything that is
@@ -54,7 +61,8 @@ final class SharedTextOnly extends Launch {
 @visibleForTesting
 List<Launch> parseLaunch(Object? event) {
   if (event is! Map) return const [];
-  if (event['textOnly'] == true) return const [SharedTextOnly()];
+  final text = event['text'];
+  if (text is String) return text.isEmpty ? const [] : [SharedText(text)];
   final id = event['id'];
   if (id is int) {
     if (event['copying'] == true) return [ShareCopying(id)];
@@ -88,7 +96,7 @@ List<Launch> parseLaunch(Object? event) {
     ];
   }
   final screen = event['screen'];
-  if (screen == 'send' || screen == 'receive') {
+  if (screen == 'send' || screen == 'receive' || screen == clipboardScreen) {
     return [OpenScreen(screen as String)];
   }
   return const [];

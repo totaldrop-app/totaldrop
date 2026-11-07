@@ -490,10 +490,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get transferNoticeBody => 'ทำงานต่อไปขณะที่คุณใช้แอปอื่น';
 
   @override
-  String get shareTextSoon =>
-      'TotalDrop ยังส่งข้อความไม่ได้ ส่งได้เฉพาะไฟล์ โปรดแชร์ไฟล์แทน';
-
-  @override
   String get shareBusy =>
       'ยังมีการโอนที่กำลังดำเนินอยู่ รอให้เสร็จหรือหยุดก่อน แล้วแชร์อีกครั้ง';
 
@@ -574,6 +570,10 @@ class AppLocalizationsTh extends AppLocalizations {
   @override
   String get receiveTextHidden =>
       'ข้อความมีอักขระที่ซ่อนอยู่ ซึ่งแสดงเป็น U+… เมื่อคัดลอกจะได้ข้อความตรงตามที่ได้รับมา';
+
+  @override
+  String get sendTextHidden =>
+      'ข้อความมีอักขระที่ซ่อนอยู่ เช่น เครื่องหมายทิศทาง ซึ่งจะถูกส่งไปพร้อมกับข้อความด้วย';
 
   @override
   String get sendClipboardKept =>

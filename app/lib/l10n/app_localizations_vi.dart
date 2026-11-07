@@ -494,10 +494,6 @@ class AppLocalizationsVi extends AppLocalizations {
   String get transferNoticeBody => 'Vẫn tiếp tục khi bạn dùng ứng dụng khác.';
 
   @override
-  String get shareTextSoon =>
-      'TotalDrop chưa gửi được văn bản, chỉ gửi tệp. Hãy chia sẻ một tệp.';
-
-  @override
   String get shareBusy =>
       'Vẫn còn một lần truyền đang chạy. Hãy chờ nó xong hoặc dừng nó, rồi chia sẻ lại.';
 
@@ -579,6 +575,10 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String get receiveTextHidden =>
       'Văn bản có ký tự ẩn, được hiển thị dưới dạng U+…. Khi sao chép, bạn nhận được văn bản đúng như khi đến.';
+
+  @override
+  String get sendTextHidden =>
+      'Văn bản có ký tự ẩn, chẳng hạn dấu chỉ hướng. Các ký tự này cũng được gửi kèm.';
 
   @override
   String get sendClipboardKept =>

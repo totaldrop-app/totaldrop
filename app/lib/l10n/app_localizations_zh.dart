@@ -470,9 +470,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get transferNoticeBody => '使用其他应用时仍会继续。';
 
   @override
-  String get shareTextSoon => 'TotalDrop 暂不支持发送文本，只能发送文件。请改为分享文件。';
-
-  @override
   String get shareBusy => '仍有传输正在进行。请等待其完成或将其停止，然后再分享。';
 
   @override
@@ -548,6 +545,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get receiveTextHidden => '文本中含有隐藏字符，显示为 U+…。复制时得到的是与收到时完全相同的文本。';
+
+  @override
+  String get sendTextHidden => '文本中含有隐藏字符，例如方向标记。它们会随文本一起发送。';
 
   @override
   String get sendClipboardKept => '已输入的文本保持不变，未使用剪贴板。';
@@ -1033,9 +1033,6 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get transferNoticeBody => '使用其他应用时仍会继续。';
 
   @override
-  String get shareTextSoon => 'TotalDrop 暂不支持发送文本，只能发送文件。请改为分享文件。';
-
-  @override
   String get shareBusy => '仍有传输正在进行。请等待其完成或将其停止，然后再分享。';
 
   @override
@@ -1111,6 +1108,9 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
 
   @override
   String get receiveTextHidden => '文本中含有隐藏字符，显示为 U+…。复制时得到的是与收到时完全相同的文本。';
+
+  @override
+  String get sendTextHidden => '文本中含有隐藏字符，例如方向标记。它们会随文本一起发送。';
 
   @override
   String get sendClipboardKept => '已输入的文本保持不变，未使用剪贴板。';
@@ -1595,9 +1595,6 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get transferNoticeBody => '使用其他應用程式時仍會繼續。';
 
   @override
-  String get shareTextSoon => 'TotalDrop 暫不支援傳送文字，只能傳送檔案。請改為分享檔案。';
-
-  @override
   String get shareBusy => '仍有傳輸正在進行。請等待其完成或將其停止，然後再分享。';
 
   @override
@@ -1673,6 +1670,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get receiveTextHidden => '文字中含有隱藏字元，顯示為 U+…。複製時得到的是與收到時完全相同的文字。';
+
+  @override
+  String get sendTextHidden => '文字中含有隱藏字元，例如方向標記。它們會隨文字一起傳送。';
 
   @override
   String get sendClipboardKept => '已輸入的文字保持不變，未使用剪貼簿。';

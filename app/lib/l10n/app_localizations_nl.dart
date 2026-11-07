@@ -514,10 +514,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get transferNoticeBody => 'Gaat door terwijl je andere apps gebruikt.';
 
   @override
-  String get shareTextSoon =>
-      'TotalDrop verstuurt nog geen tekst, alleen bestanden. Deel in plaats daarvan een bestand.';
-
-  @override
   String get shareBusy =>
       'Er loopt nog een overdracht. Wacht tot die klaar is of stop hem, en deel dan opnieuw.';
 
@@ -603,6 +599,10 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get receiveTextHidden =>
       'De tekst bevat verborgen tekens, getoond als U+…. Bij kopiëren krijg je de tekst precies zoals hij aankwam.';
+
+  @override
+  String get sendTextHidden =>
+      'De tekst bevat verborgen tekens, zoals richtingstekens. Die worden meegestuurd.';
 
   @override
   String get sendClipboardKept =>

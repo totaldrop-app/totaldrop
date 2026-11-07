@@ -7,7 +7,7 @@ import '../frb_generated.dart';
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `b`, `core_events`, `emit`, `finish`, `n`, `of`, `on_connect`, `on_runtime`, `on_send`, `other`, `route`, `stopped`
+// These functions are ignored because they are not marked as `pub`: `b`, `core_events`, `emit`, `finish`, `n`, `of`, `on_connect`, `on_runtime`, `on_send`, `other`, `route`, `stopped`, `text_summary`
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `assert_fields_are_eq`, `clone`, `clone`, `clone`, `clone`, `clone`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`
 
 /// A new, unstopped stopper.
@@ -36,6 +36,27 @@ Future<SendSession> prepareSend({
   privacy: privacy,
   stopper: stopper,
 );
+
+/// Reserve a code to send `text` (#326): the receiver shows it instead of
+/// saving it. At most 1 MiB of UTF-8; `strong` and `privacy` as for
+/// [`prepare_send`].
+Future<SendSession> prepareSendText({
+  required String server,
+  required String text,
+  required bool strong,
+  required bool privacy,
+  required Stopper stopper,
+}) => RustLib.instance.api.crateApiTransferPrepareSendText(
+  server: server,
+  text: text,
+  strong: strong,
+  privacy: privacy,
+  stopper: stopper,
+);
+
+/// The most bytes a text may have ([`prepare_send_text`]).
+PlatformInt64 maxTextBytes() =>
+    RustLib.instance.api.crateApiTransferMaxTextBytes();
 
 /// Wait for the receiver and send, until `stopper` is stopped. Events end
 /// with `Finished` or `Failed`.
@@ -74,6 +95,18 @@ Stream<TransferEvent> acceptOffer({
   stopper: stopper,
 );
 
+/// Accept a text offer ([`Offer::is_text`]): it is received in memory and
+/// nothing is written to disk. `Finished` carries it in `summary.text`; a
+/// text that fails its check or is not UTF-8 ends with `Failed`
+/// ([`ErrorKind::TextDamaged`]) and is not passed on.
+Stream<TransferEvent> acceptText({
+  required Offer offer,
+  required Stopper stopper,
+}) => RustLib.instance.api.crateApiTransferAcceptText(
+  offer: offer,
+  stopper: stopper,
+);
+
 /// Decline the offer.
 Future<void> declineOffer({required Offer offer}) =>
     RustLib.instance.api.crateApiTransferDeclineOffer(offer: offer);
@@ -93,6 +126,10 @@ abstract class Offer implements RustOpaqueInterface {
 
   /// Number of folders.
   PlatformInt64 get folders;
+
+  /// A text to show, not files to save (#326): accept it with
+  /// [`accept_text`].
+  bool get isText;
 
   /// Top-level names.
   List<String> get names;
@@ -159,6 +196,10 @@ enum ErrorKind {
 
   /// A local file problem.
   storage,
+
+  /// A text failed its check or is not valid text, so it is not shown
+  /// (#326).
+  textDamaged,
 
   /// Anything else.
   other,
@@ -278,11 +319,15 @@ class TransferSummary {
   /// Where the receiver saved the top-level items (empty for the sender).
   final List<String> saved;
 
+  /// A text received in memory, exactly as it came ([`accept_text`]).
+  final String? text;
+
   const TransferSummary({
     required this.filesOk,
     required this.filesFailed,
     required this.bytes,
     required this.saved,
+    this.text,
   });
 
   static Future<TransferSummary> default_() =>
@@ -290,7 +335,11 @@ class TransferSummary {
 
   @override
   int get hashCode =>
-      filesOk.hashCode ^ filesFailed.hashCode ^ bytes.hashCode ^ saved.hashCode;
+      filesOk.hashCode ^
+      filesFailed.hashCode ^
+      bytes.hashCode ^
+      saved.hashCode ^
+      text.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -300,5 +349,6 @@ class TransferSummary {
           filesOk == other.filesOk &&
           filesFailed == other.filesFailed &&
           bytes == other.bytes &&
-          saved == other.saved;
+          saved == other.saved &&
+          text == other.text;
 }

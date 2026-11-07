@@ -512,10 +512,6 @@ class AppLocalizationsSv extends AppLocalizations {
   String get transferNoticeBody => 'Fortsätter medan du använder andra appar.';
 
   @override
-  String get shareTextSoon =>
-      'TotalDrop skickar inte text än, bara filer. Dela en fil i stället.';
-
-  @override
   String get shareBusy =>
       'En överföring pågår fortfarande. Vänta tills den är klar eller stoppa den och dela sedan igen.';
 
@@ -597,6 +593,10 @@ class AppLocalizationsSv extends AppLocalizations {
   @override
   String get receiveTextHidden =>
       'Texten innehåller dolda tecken, som visas som U+…. När du kopierar får du texten exakt som den kom.';
+
+  @override
+  String get sendTextHidden =>
+      'Texten innehåller dolda tecken, till exempel riktningsmarkeringar. De skickas med.';
 
   @override
   String get sendClipboardKept =>

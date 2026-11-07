@@ -510,10 +510,6 @@ class AppLocalizationsHi extends AppLocalizations {
       'दूसरे ऐप इस्तेमाल करते समय भी चलता रहता है।';
 
   @override
-  String get shareTextSoon =>
-      'TotalDrop अभी टेक्स्ट नहीं भेजता, सिर्फ़ फ़ाइलें। इसकी जगह कोई फ़ाइल शेयर करें।';
-
-  @override
   String get shareBusy =>
       'एक ट्रांसफ़र अभी चल रहा है। उसके पूरा होने का इंतज़ार करें या उसे रोकें, फिर दोबारा शेयर करें।';
 
@@ -596,6 +592,10 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get receiveTextHidden =>
       'टेक्स्ट में छिपे हुए अक्षर हैं, जो U+… के रूप में दिखाए गए हैं। कॉपी करने पर टेक्स्ट ठीक वैसा ही मिलता है जैसा आया था।';
+
+  @override
+  String get sendTextHidden =>
+      'टेक्स्ट में दिशा-चिह्न जैसे छिपे हुए अक्षर हैं। ये भी टेक्स्ट के साथ भेजे जाते हैं।';
 
   @override
   String get sendClipboardKept =>

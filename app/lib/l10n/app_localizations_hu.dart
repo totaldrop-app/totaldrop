@@ -500,10 +500,6 @@ class AppLocalizationsHu extends AppLocalizations {
       'Akkor is folytatódik, ha más alkalmazásokat használsz.';
 
   @override
-  String get shareTextSoon =>
-      'A TotalDrop még nem küld szöveget, csak fájlokat. Ossz meg inkább egy fájlt.';
-
-  @override
   String get shareBusy =>
       'Még folyamatban van egy átvitel. Várd meg, amíg befejeződik, vagy állítsd le, aztán oszd meg újra.';
 
@@ -586,6 +582,10 @@ class AppLocalizationsHu extends AppLocalizations {
   @override
   String get receiveTextHidden =>
       'A szövegben rejtett karakterek vannak, ezek U+… alakban látszanak. Másoláskor a szöveget pontosan úgy kapod meg, ahogy érkezett.';
+
+  @override
+  String get sendTextHidden =>
+      'A szövegben rejtett karakterek vannak, például irányjelek. Ezek is elküldésre kerülnek vele.';
 
   @override
   String get sendClipboardKept =>

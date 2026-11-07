@@ -938,12 +938,6 @@ abstract class AppLocalizations {
   /// **'Keeps going while you use other apps.'**
   String get transferNoticeBody;
 
-  /// Android: shown on the send screen when another app shared only text (no file) to TotalDrop; sending text comes in a later version
-  ///
-  /// In en, this message translates to:
-  /// **'TotalDrop does not send text yet, only files. Share a file instead.'**
-  String get shareTextSoon;
-
   /// Android: shown when files are shared to TotalDrop while a send or receive is still running; the shared files are not added
   ///
   /// In en, this message translates to:
@@ -974,7 +968,7 @@ abstract class AppLocalizations {
   /// **'send;receive;share;transfer;files;'**
   String get desktopKeywords;
 
-  /// Linux file managers (Dolphin, Files, Nemo): right-click menu item that sends the selected files and folders with TotalDrop
+  /// Linux file managers (Dolphin, Files, Nemo): right-click menu item that sends the selected files and folders with TotalDrop. Also Android: the item in the menu of text selected in any app, which sends that text
   ///
   /// In en, this message translates to:
   /// **'Send with TotalDrop'**
@@ -1075,6 +1069,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The text holds hidden characters, shown as U+…. Copying gives the text exactly as it came.'**
   String get receiveTextHidden;
+
+  /// Send screen: the text to send holds invisible control or direction characters; they are sent as they are
+  ///
+  /// In en, this message translates to:
+  /// **'The text holds hidden characters, such as direction marks. They are sent with it.'**
+  String get sendTextHidden;
 
   /// Send screen: Send clipboard was chosen while the text box already held typed text, so the clipboard was not pasted
   ///

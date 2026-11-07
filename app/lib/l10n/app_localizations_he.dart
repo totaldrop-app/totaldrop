@@ -507,10 +507,6 @@ class AppLocalizationsHe extends AppLocalizations {
   String get transferNoticeBody => 'ממשיך גם כשמשתמשים באפליקציות אחרות.';
 
   @override
-  String get shareTextSoon =>
-      'TotalDrop עדיין לא שולח טקסט, רק קבצים. שתפו קובץ במקום.';
-
-  @override
   String get shareBusy =>
       'העברה עדיין מתבצעת. המתינו לסיומה או עצרו אותה, ואז שתפו שוב.';
 
@@ -591,6 +587,10 @@ class AppLocalizationsHe extends AppLocalizations {
   @override
   String get receiveTextHidden =>
       'הטקסט מכיל תווים נסתרים, המוצגים כ־U+…. העתקה נותנת את הטקסט בדיוק כפי שהגיע.';
+
+  @override
+  String get sendTextHidden =>
+      'הטקסט מכיל תווים נסתרים, כמו סימני כיוון. הם נשלחים יחד איתו.';
 
   @override
   String get sendClipboardKept => 'הטקסט שכבר הוקלד נשמר; הלוח לא שימש.';

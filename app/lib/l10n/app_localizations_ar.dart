@@ -516,10 +516,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get transferNoticeBody => 'يستمر أثناء استخدامك تطبيقات أخرى.';
 
   @override
-  String get shareTextSoon =>
-      'لا يرسل TotalDrop النصوص بعد، بل الملفات فقط. شارك ملفًا بدلًا من ذلك.';
-
-  @override
   String get shareBusy =>
       'لا يزال هناك نقل جارٍ. انتظر حتى ينتهي أو أوقفه، ثم شارك مرة أخرى.';
 
@@ -603,6 +599,10 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get receiveTextHidden =>
       'يحتوي النص على أحرف مخفية تظهر على شكل U+…. عند النسخ يُنسخ النص كما وصل تمامًا.';
+
+  @override
+  String get sendTextHidden =>
+      'يحتوي النص على أحرف مخفية، مثل علامات الاتجاه. وتُرسل معه أيضًا.';
 
   @override
   String get sendClipboardKept =>

@@ -6,6 +6,9 @@
 <resources>
     <string name="shortcut_send_short">পাঠান</string>
     <string name="shortcut_send_long">ফাইল পাঠান</string>
+    <string name="shortcut_clipboard_short">ক্লিপবোর্ডের লেখা পাঠান</string>
+    <string name="shortcut_clipboard_long">ক্লিপবোর্ডের লেখা পাঠান</string>
+    <string name="process_text">TotalDrop দিয়ে পাঠান</string>
     <string name="shortcut_receive_short">গ্রহণ করুন</string>
     <string name="shortcut_receive_long">ফাইল গ্রহণ করুন</string>
 </resources>

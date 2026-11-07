@@ -505,10 +505,6 @@ class AppLocalizationsSw extends AppLocalizations {
   String get transferNoticeBody => 'Inaendelea unapotumia programu nyingine.';
 
   @override
-  String get shareTextSoon =>
-      'TotalDrop bado haitumi maandishi, ni faili tu. Shiriki faili badala yake.';
-
-  @override
   String get shareBusy =>
       'Uhamishaji bado unaendelea. Subiri umalizike au uusimamishe, kisha shiriki tena.';
 
@@ -592,6 +588,10 @@ class AppLocalizationsSw extends AppLocalizations {
   @override
   String get receiveTextHidden =>
       'Maandishi yana herufi zilizofichwa, zinazoonyeshwa kama U+…. Ukinakili, unapata maandishi kama yalivyofika.';
+
+  @override
+  String get sendTextHidden =>
+      'Maandishi yana herufi zilizofichwa, kama alama za mwelekeo. Zinatumwa pamoja nayo.';
 
   @override
   String get sendClipboardKept =>

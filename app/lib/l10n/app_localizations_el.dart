@@ -517,10 +517,6 @@ class AppLocalizationsEl extends AppLocalizations {
       'Συνεχίζεται ενώ χρησιμοποιείτε άλλες εφαρμογές.';
 
   @override
-  String get shareTextSoon =>
-      'Το TotalDrop δεν στέλνει ακόμη κείμενο, μόνο αρχεία. Μοιραστείτε ένα αρχείο.';
-
-  @override
   String get shareBusy =>
       'Μια μεταφορά είναι ακόμη σε εξέλιξη. Περιμένετε να τελειώσει ή σταματήστε την και μοιραστείτε ξανά.';
 
@@ -605,6 +601,10 @@ class AppLocalizationsEl extends AppLocalizations {
   @override
   String get receiveTextHidden =>
       'Το κείμενο περιέχει κρυφούς χαρακτήρες, που εμφανίζονται ως U+…. Η αντιγραφή δίνει το κείμενο ακριβώς όπως ήρθε.';
+
+  @override
+  String get sendTextHidden =>
+      'Το κείμενο περιέχει κρυφούς χαρακτήρες, όπως σημάδια κατεύθυνσης. Αποστέλλονται μαζί του.';
 
   @override
   String get sendClipboardKept =>

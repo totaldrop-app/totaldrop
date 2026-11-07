@@ -479,10 +479,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get transferNoticeBody => 'ほかのアプリを使っている間も続きます。';
 
   @override
-  String get shareTextSoon =>
-      'TotalDrop はまだテキストを送信できません。ファイルのみです。ファイルを共有してください。';
-
-  @override
   String get shareBusy => '転送がまだ進行中です。完了を待つか停止してから、もう一度共有してください。';
 
   @override
@@ -559,6 +555,9 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get receiveTextHidden =>
       'テキストに見えない文字が含まれており、U+… の形で表示しています。コピーすると、届いたとおりのテキストがコピーされます。';
+
+  @override
+  String get sendTextHidden => 'テキストに方向記号などの見えない文字が含まれています。これらも一緒に送信されます。';
 
   @override
   String get sendClipboardKept => '入力済みのテキストはそのままです。クリップボードは使われていません。';

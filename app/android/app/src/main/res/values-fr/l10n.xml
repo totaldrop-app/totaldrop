@@ -6,6 +6,9 @@
 <resources>
     <string name="shortcut_send_short">Envoyer</string>
     <string name="shortcut_send_long">Envoyer des fichiers</string>
+    <string name="shortcut_clipboard_short">Envoyer le presse-papiers</string>
+    <string name="shortcut_clipboard_long">Envoyer le presse-papiers</string>
+    <string name="process_text">Envoyer avec TotalDrop</string>
     <string name="shortcut_receive_short">Recevoir</string>
     <string name="shortcut_receive_long">Recevoir des fichiers</string>
 </resources>

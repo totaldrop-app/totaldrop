@@ -517,10 +517,6 @@ class AppLocalizationsUk extends AppLocalizations {
       'Триває, поки ви користуєтеся іншими застосунками.';
 
   @override
-  String get shareTextSoon =>
-      'TotalDrop поки не надсилає текст, лише файли. Поділіться файлом.';
-
-  @override
   String get shareBusy =>
       'Передавання ще триває. Дочекайтеся його завершення або зупиніть його, а потім поділіться знову.';
 
@@ -605,6 +601,10 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get receiveTextHidden =>
       'У тексті є приховані символи, їх показано як U+…. Під час копіювання ви отримаєте текст саме таким, яким він надійшов.';
+
+  @override
+  String get sendTextHidden =>
+      'У тексті є приховані символи, наприклад знаки напрямку. Вони надсилаються разом із ним.';
 
   @override
   String get sendClipboardKept =>

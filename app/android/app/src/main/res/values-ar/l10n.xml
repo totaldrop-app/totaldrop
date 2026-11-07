@@ -6,6 +6,9 @@
 <resources>
     <string name="shortcut_send_short">إرسال</string>
     <string name="shortcut_send_long">إرسال الملفات</string>
+    <string name="shortcut_clipboard_short">إرسال محتوى الحافظة</string>
+    <string name="shortcut_clipboard_long">إرسال محتوى الحافظة</string>
+    <string name="process_text">إرسال باستخدام TotalDrop</string>
     <string name="shortcut_receive_short">استلام</string>
     <string name="shortcut_receive_long">استلام الملفات</string>
 </resources>

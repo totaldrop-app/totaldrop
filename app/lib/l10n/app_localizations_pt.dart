@@ -519,10 +519,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String get transferNoticeBody => 'Continua enquanto você usa outros apps.';
 
   @override
-  String get shareTextSoon =>
-      'O TotalDrop ainda não envia texto, apenas arquivos. Compartilhe um arquivo.';
-
-  @override
   String get shareBusy =>
       'Uma transferência ainda está em andamento. Espere terminar ou pare-a e compartilhe de novo.';
 
@@ -608,6 +604,10 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get receiveTextHidden =>
       'O texto contém caracteres ocultos, exibidos como U+…. Ao copiar, você obtém o texto exatamente como chegou.';
+
+  @override
+  String get sendTextHidden =>
+      'O texto contém caracteres ocultos, como marcas de direção. Eles são enviados junto.';
 
   @override
   String get sendClipboardKept =>
@@ -1146,10 +1146,6 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get transferNoticeBody => 'Continua enquanto você usa outros apps.';
 
   @override
-  String get shareTextSoon =>
-      'O TotalDrop ainda não envia texto, apenas arquivos. Compartilhe um arquivo.';
-
-  @override
   String get shareBusy =>
       'Uma transferência ainda está em andamento. Espere terminar ou pare-a e compartilhe de novo.';
 
@@ -1235,6 +1231,10 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String get receiveTextHidden =>
       'O texto contém caracteres ocultos, exibidos como U+…. Ao copiar, você obtém o texto exatamente como chegou.';
+
+  @override
+  String get sendTextHidden =>
+      'O texto contém caracteres ocultos, como marcas de direção. Eles são enviados junto.';
 
   @override
   String get sendClipboardKept =>
@@ -1774,10 +1774,6 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
   String get transferNoticeBody => 'Continua enquanto utiliza outras apps.';
 
   @override
-  String get shareTextSoon =>
-      'O TotalDrop ainda não envia texto, apenas ficheiros. Partilhe um ficheiro.';
-
-  @override
   String get shareBusy =>
       'Ainda está a decorrer uma transferência. Aguarde que termine ou pare-a e partilhe novamente.';
 
@@ -1864,6 +1860,10 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
   @override
   String get receiveTextHidden =>
       'O texto contém caracteres ocultos, mostrados como U+…. Ao copiar, obtém o texto exatamente como chegou.';
+
+  @override
+  String get sendTextHidden =>
+      'O texto contém caracteres ocultos, como marcas de direção. São enviados juntamente com ele.';
 
   @override
   String get sendClipboardKept =>

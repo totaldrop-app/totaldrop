@@ -519,10 +519,6 @@ class AppLocalizationsIt extends AppLocalizations {
   String get transferNoticeBody => 'Continua mentre usi altre app.';
 
   @override
-  String get shareTextSoon =>
-      'TotalDrop non invia ancora testo, solo file. Condividi invece un file.';
-
-  @override
   String get shareBusy =>
       'Un trasferimento è ancora in corso. Attendi che finisca o interrompilo, poi condividi di nuovo.';
 
@@ -609,6 +605,10 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get receiveTextHidden =>
       'Il testo contiene caratteri nascosti, mostrati come U+…. Copiandolo ottieni il testo esattamente come è arrivato.';
+
+  @override
+  String get sendTextHidden =>
+      'Il testo contiene caratteri nascosti, come i segni di direzione. Vengono inviati insieme al testo.';
 
   @override
   String get sendClipboardKept =>

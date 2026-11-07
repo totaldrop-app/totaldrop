@@ -66,6 +66,12 @@ class ReceiveViewModel extends ChangeNotifier {
   bool get busy =>
       stage == ReceiveStage.connecting || stage == ReceiveStage.transferring;
 
+  /// The offer is a text to show, not files to save (#326).
+  bool get isText => offer?.isText ?? false;
+
+  /// The text received, exactly as it came; shown, never saved.
+  String? get receivedText => summary?.text;
+
   String? get normalized => _repo.normalizeCode(input);
 
   void setInput(String v) {
@@ -91,7 +97,9 @@ class ReceiveViewModel extends ChangeNotifier {
     notifyListeners();
     try {
       final o = await _repo.connect(code, stopper);
-      final f = await _repo.receiveFolder();
+      // A text is shown, not saved: it needs no folder, and a folder that
+      // cannot be made does not stand in its way.
+      final f = o.isText ? null : await _repo.receiveFolder();
       if (generation != _generation) {
         // Arrived just after a stop: tell the sender, do not keep it open.
         unawaited(_repo.decline(o).catchError((Object _) {}));
@@ -120,26 +128,24 @@ class ReceiveViewModel extends ChangeNotifier {
     final o = offer;
     final dest = folder;
     final stopper = _stopper;
-    if (o == null || dest == null || stopper == null) return;
+    if (o == null || stopper == null) return;
+    if (dest == null && !o.isText) return;
     stage = ReceiveStage.transferring;
     total = o.totalBytes;
     notifyListeners();
-    _sub = _repo
-        .accept(o, dest, stopper)
-        .listen(
-          _onEvent,
-          onError: (Object e) {
-            _fail(
-              e is TransferError
-                  ? e
-                  : TransferError(
-                      kind: ErrorKind.other,
-                      detail: '$e',
-                      cause: '',
-                    ),
-            );
-          },
+    final events = o.isText
+        ? _repo.acceptText(o, stopper)
+        : _repo.accept(o, dest!, stopper);
+    _sub = events.listen(
+      _onEvent,
+      onError: (Object e) {
+        _fail(
+          e is TransferError
+              ? e
+              : TransferError(kind: ErrorKind.other, detail: '$e', cause: ''),
         );
+      },
+    );
   }
 
   Future<void> decline() async {

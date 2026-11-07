@@ -499,10 +499,6 @@ class AppLocalizationsBn extends AppLocalizations {
   String get transferNoticeBody => 'অন্য অ্যাপ ব্যবহার করার সময়ও চলতে থাকে।';
 
   @override
-  String get shareTextSoon =>
-      'TotalDrop এখনও লেখা পাঠায় না, শুধু ফাইল পাঠায়। বরং একটি ফাইল শেয়ার করুন।';
-
-  @override
   String get shareBusy =>
       'একটি স্থানান্তর এখনও চলছে। শেষ হওয়া পর্যন্ত অপেক্ষা করুন বা থামান, তারপর আবার শেয়ার করুন।';
 
@@ -584,6 +580,10 @@ class AppLocalizationsBn extends AppLocalizations {
   @override
   String get receiveTextHidden =>
       'লেখায় লুকানো অক্ষর আছে, সেগুলো U+… হিসেবে দেখানো হচ্ছে। কপি করলে লেখাটি ঠিক যেমন এসেছে তেমনই কপি হয়।';
+
+  @override
+  String get sendTextHidden =>
+      'লেখায় দিক-চিহ্নের মতো লুকানো অক্ষর আছে। সেগুলোও লেখার সঙ্গে পাঠানো হয়।';
 
   @override
   String get sendClipboardKept =>

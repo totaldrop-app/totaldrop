@@ -498,10 +498,6 @@ class AppLocalizationsMs extends AppLocalizations {
       'Terus berjalan semasa anda menggunakan apl lain.';
 
   @override
-  String get shareTextSoon =>
-      'TotalDrop belum menghantar teks, hanya fail. Kongsi fail sebaliknya.';
-
-  @override
   String get shareBusy =>
       'Pemindahan masih berjalan. Tunggu sehingga selesai atau hentikannya, kemudian kongsi semula.';
 
@@ -584,6 +580,10 @@ class AppLocalizationsMs extends AppLocalizations {
   @override
   String get receiveTextHidden =>
       'Teks mengandungi aksara tersembunyi yang dipaparkan sebagai U+…. Apabila disalin, teks diperoleh tepat seperti ia tiba.';
+
+  @override
+  String get sendTextHidden =>
+      'Teks mengandungi aksara tersembunyi, seperti tanda arah. Aksara itu turut dihantar.';
 
   @override
   String get sendClipboardKept =>

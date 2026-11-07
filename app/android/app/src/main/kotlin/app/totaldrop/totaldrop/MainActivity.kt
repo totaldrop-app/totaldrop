@@ -80,14 +80,31 @@ class MainActivity : FlutterActivity() {
         when (intent.action) {
             ACTION_SHORTCUT_SEND -> launches.send(mapOf("screen" to "send"))
             ACTION_SHORTCUT_RECEIVE -> launches.send(mapOf("screen" to "receive"))
+            ACTION_SHORTCUT_CLIPBOARD -> launches.send(mapOf("screen" to "clipboard"))
             Intent.ACTION_SEND, Intent.ACTION_SEND_MULTIPLE -> takeShare(intent)
+            // Text selected in another app, sent from its selection menu
+            // (#326). Nothing is given back to that app.
+            Intent.ACTION_PROCESS_TEXT -> {
+                SharedFiles.processedText(intent)?.let { launches.send(mapOf("screen" to "send", "text" to it)) }
+                forgetText(intent)
+            }
         }
+    }
+
+    /** The activity keeps its intent: the text, now handed over, need not
+     * stay in it. */
+    private fun forgetText(intent: Intent) {
+        intent.removeExtra(Intent.EXTRA_TEXT)
+        intent.removeExtra(Intent.EXTRA_PROCESS_TEXT)
     }
 
     private fun takeShare(intent: Intent) {
         val uris = SharedFiles.urisOf(intent)
         if (SharedFiles.isTextOnly(intent, uris)) {
-            launches.send(mapOf("screen" to "send", "textOnly" to true))
+            // A text shared from another app (#326): sent as a text.
+            val text = intent.getCharSequenceExtra(Intent.EXTRA_TEXT)?.toString().orEmpty()
+            launches.send(mapOf("screen" to "send", "text" to text))
+            forgetText(intent)
             return
         }
         val id = nextShare.incrementAndGet()
@@ -153,5 +170,6 @@ class MainActivity : FlutterActivity() {
         // The launcher shortcuts (res/xml/shortcuts.xml).
         const val ACTION_SHORTCUT_SEND = "app.totaldrop.action.SEND"
         const val ACTION_SHORTCUT_RECEIVE = "app.totaldrop.action.RECEIVE"
+        const val ACTION_SHORTCUT_CLIPBOARD = "app.totaldrop.action.SEND_CLIPBOARD"
     }
 }

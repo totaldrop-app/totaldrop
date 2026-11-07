@@ -516,10 +516,6 @@ class AppLocalizationsDe extends AppLocalizations {
       'Läuft weiter, während Sie andere Apps verwenden.';
 
   @override
-  String get shareTextSoon =>
-      'TotalDrop sendet noch keinen Text, nur Dateien. Teile stattdessen eine Datei.';
-
-  @override
   String get shareBusy =>
       'Eine Übertragung läuft noch. Warte, bis sie fertig ist, oder stoppe sie, und teile dann erneut.';
 
@@ -603,6 +599,10 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get receiveTextHidden =>
       'Der Text enthält versteckte Zeichen, angezeigt als U+…. Beim Kopieren erhalten Sie den Text genau so, wie er ankam.';
+
+  @override
+  String get sendTextHidden =>
+      'Der Text enthält versteckte Zeichen, etwa Richtungszeichen. Sie werden mitgesendet.';
 
   @override
   String get sendClipboardKept =>

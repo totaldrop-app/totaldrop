@@ -509,10 +509,6 @@ class AppLocalizationsUr extends AppLocalizations {
       'دوسری ایپس استعمال کرتے وقت بھی جاری رہتا ہے۔';
 
   @override
-  String get shareTextSoon =>
-      'TotalDrop ابھی متن نہیں بھیجتا، صرف فائلیں۔ اس کے بجائے کوئی فائل شیئر کریں۔';
-
-  @override
   String get shareBusy =>
       'ایک منتقلی ابھی جاری ہے۔ اس کے ختم ہونے کا انتظار کریں یا اسے روکیں، پھر دوبارہ شیئر کریں۔';
 
@@ -595,6 +591,10 @@ class AppLocalizationsUr extends AppLocalizations {
   @override
   String get receiveTextHidden =>
       'متن میں چھپے ہوئے حروف ہیں جو U+… کی صورت میں دکھائے گئے ہیں۔ کاپی کرنے پر متن بالکل ویسا ہی ملتا ہے جیسا آیا تھا۔';
+
+  @override
+  String get sendTextHidden =>
+      'متن میں سمت کے نشان جیسے چھپے ہوئے حروف ہیں۔ یہ بھی متن کے ساتھ بھیجے جاتے ہیں۔';
 
   @override
   String get sendClipboardKept =>

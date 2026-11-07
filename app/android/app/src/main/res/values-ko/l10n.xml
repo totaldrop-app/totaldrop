@@ -6,6 +6,9 @@
 <resources>
     <string name="shortcut_send_short">보내기</string>
     <string name="shortcut_send_long">파일 보내기</string>
+    <string name="shortcut_clipboard_short">클립보드 보내기</string>
+    <string name="shortcut_clipboard_long">클립보드 보내기</string>
+    <string name="process_text">TotalDrop으로 보내기</string>
     <string name="shortcut_receive_short">받기</string>
     <string name="shortcut_receive_long">파일 받기</string>
 </resources>

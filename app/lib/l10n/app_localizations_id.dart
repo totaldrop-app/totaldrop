@@ -496,10 +496,6 @@ class AppLocalizationsId extends AppLocalizations {
       'Tetap berjalan saat Anda memakai aplikasi lain.';
 
   @override
-  String get shareTextSoon =>
-      'TotalDrop belum bisa mengirim teks, hanya file. Bagikan file saja.';
-
-  @override
   String get shareBusy =>
       'Masih ada transfer yang berjalan. Tunggu sampai selesai atau hentikan, lalu bagikan lagi.';
 
@@ -582,6 +578,10 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get receiveTextHidden =>
       'Teks berisi karakter tersembunyi yang ditampilkan sebagai U+…. Saat disalin, teks didapat persis seperti saat tiba.';
+
+  @override
+  String get sendTextHidden =>
+      'Teks berisi karakter tersembunyi, seperti tanda arah. Karakter itu ikut terkirim.';
 
   @override
   String get sendClipboardKept =>

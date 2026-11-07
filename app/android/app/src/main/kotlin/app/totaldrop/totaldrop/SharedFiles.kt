@@ -68,6 +68,10 @@ object SharedFiles {
         return out.toList()
     }
 
+    /** The text of a PROCESS_TEXT intent (#326), or null when it has none. */
+    fun processedText(intent: Intent): String? =
+        intent.getCharSequenceExtra(Intent.EXTRA_PROCESS_TEXT)?.toString()?.takeIf { it.isNotEmpty() }
+
     /** Whether a share intent carries text and no file. */
     fun isTextOnly(intent: Intent, uris: List<Uri>): Boolean =
         uris.isEmpty() && intent.action == Intent.ACTION_SEND &&

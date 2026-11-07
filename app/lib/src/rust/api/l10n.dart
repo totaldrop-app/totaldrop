@@ -7,6 +7,8 @@ import '../frb_generated.dart';
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `clone`, `eq`, `fmt`
+
 /// The best of `available` for the device's ordered `preferences` (BCP 47
 /// tags), or `None` for the default (English).
 String? negotiateLocale({
@@ -22,6 +24,11 @@ String? negotiateLocale({
 String revealControls({required String name}) =>
     RustLib.instance.api.crateApiL10NRevealControls(name: name);
 
+/// A received text as it is shown: hidden direction, control and format
+/// characters named, the rest as it came, at most [`SHOWN_CHARS`].
+ShownText shownText({required String text}) =>
+    RustLib.instance.api.crateApiL10NShownText(text: text);
+
 /// Whether `key` must be shown in English because, in language `tag`, it
 /// is a safety-critical string nobody has reviewed yet.
 bool needsEnglish({required String tag, required String key}) =>
@@ -30,3 +37,34 @@ bool needsEnglish({required String tag, required String key}) =>
 /// Whether some text in language `tag` is an unreviewed draft.
 bool hasDraftTranslation({required String tag}) =>
     RustLib.instance.api.crateApiL10NHasDraftTranslation(tag: tag);
+
+/// How a received text is shown.
+class ShownText {
+  /// Hidden characters named (`reveal_text`), then cut to
+  /// [`SHOWN_CHARS`] characters.
+  final String text;
+
+  /// It was cut: only its beginning is shown.
+  final bool short;
+
+  /// Some characters are shown by their code (`U+202E`).
+  final bool hidden;
+
+  const ShownText({
+    required this.text,
+    required this.short,
+    required this.hidden,
+  });
+
+  @override
+  int get hashCode => text.hashCode ^ short.hashCode ^ hidden.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ShownText &&
+          runtimeType == other.runtimeType &&
+          text == other.text &&
+          short == other.short &&
+          hidden == other.hidden;
+}

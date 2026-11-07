@@ -519,10 +519,6 @@ class AppLocalizationsRo extends AppLocalizations {
   String get transferNoticeBody => 'Continuă cât timp folosiți alte aplicații.';
 
   @override
-  String get shareTextSoon =>
-      'TotalDrop nu trimite încă text, doar fișiere. Partajează în schimb un fișier.';
-
-  @override
   String get shareBusy =>
       'Un transfer este încă în desfășurare. Așteaptă să se termine sau oprește-l, apoi partajează din nou.';
 
@@ -606,6 +602,10 @@ class AppLocalizationsRo extends AppLocalizations {
   @override
   String get receiveTextHidden =>
       'Textul conține caractere ascunse, afișate ca U+…. La copiere obțineți textul exact așa cum a sosit.';
+
+  @override
+  String get sendTextHidden =>
+      'Textul conține caractere ascunse, cum ar fi marcaje de direcție. Acestea sunt trimise împreună cu el.';
 
   @override
   String get sendClipboardKept =>

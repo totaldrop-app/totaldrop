@@ -507,10 +507,6 @@ class AppLocalizationsFa extends AppLocalizations {
       'هنگام استفاده از برنامه‌های دیگر ادامه می‌یابد.';
 
   @override
-  String get shareTextSoon =>
-      'TotalDrop هنوز متن نمی‌فرستد، فقط فایل. به جای آن یک فایل هم‌رسانی کنید.';
-
-  @override
   String get shareBusy =>
       'یک انتقال هنوز در جریان است. صبر کنید تمام شود یا آن را متوقف کنید، سپس دوباره هم‌رسانی کنید.';
 
@@ -594,6 +590,10 @@ class AppLocalizationsFa extends AppLocalizations {
   @override
   String get receiveTextHidden =>
       'متن نویسه‌های پنهان دارد که به‌صورت U+… نمایش داده می‌شوند. با کپی کردن، متن دقیقاً همان‌طور که رسیده کپی می‌شود.';
+
+  @override
+  String get sendTextHidden =>
+      'متن نویسه‌های پنهانی مانند نشانه‌های جهت دارد. این نویسه‌ها هم همراه متن فرستاده می‌شوند.';
 
   @override
   String get sendClipboardKept =>

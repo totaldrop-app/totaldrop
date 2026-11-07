@@ -6,6 +6,9 @@
 <resources>
     <string name="shortcut_send_short">Kirim</string>
     <string name="shortcut_send_long">Kirim file</string>
+    <string name="shortcut_clipboard_short">Kirim papan klip</string>
+    <string name="shortcut_clipboard_long">Kirim papan klip</string>
+    <string name="process_text">Kirim dengan TotalDrop</string>
     <string name="shortcut_receive_short">Terima</string>
     <string name="shortcut_receive_long">Terima file</string>
 </resources>
