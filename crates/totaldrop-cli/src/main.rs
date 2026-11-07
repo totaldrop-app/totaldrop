@@ -18,6 +18,8 @@ use totaldrop_core::{
 use totaldrop_l10n::{Arg, Domain, Strings, is_yes, reveal_controls as visible, reveal_text};
 use totaldrop_proto::TransferCode;
 
+mod sandbox;
+
 // The doc comments are the English help; `help` puts each in the person's
 // language from l10n/cli under the key named next to it.
 #[derive(Parser)]
@@ -68,7 +70,8 @@ enum Command {
     Receive {
         /// The transfer code you were given.
         code: String,
-        /// Folder to save into (default: the current folder).
+        /// Folder to save into (default: the current folder; in Flatpak,
+        /// ~/Downloads/TotalDrop).
         #[arg(long, short)]
         out: Option<PathBuf>,
         /// Accept without asking.
@@ -430,9 +433,19 @@ async fn receive(
     out: Option<PathBuf>,
     yes: bool,
 ) -> Result<(), Failure> {
+    let sandboxed = sandbox::sandboxed();
     let dest = match out {
         Some(d) => d,
-        None => std::env::current_dir()?,
+        None => {
+            let d =
+                sandbox::default_destination(sandboxed, std::env::current_dir, sandbox::downloads)?;
+            if sandboxed {
+                // Flatpak makes it at start; if that failed, the check below
+                // names the folder.
+                let _ = std::fs::create_dir_all(&d);
+            }
+            d
+        }
     };
     // Check the destination, as the core will, before the code is used up.
     let dest = match totaldrop_core::check_destination(&dest) {
@@ -453,6 +466,28 @@ async fn receive(
         }
         Err(e) => return Err(e.into()),
     };
+    // Inside Flatpak a writable folder may still be memory only: refuse it
+    // before the code is used up, rather than say "Saved" for a file that
+    // goes with the sandbox (#350).
+    if sandboxed
+        && let Ok(table) = std::fs::read_to_string("/proc/self/mountinfo")
+        && let Ok(real) = std::fs::canonicalize(&dest)
+        && !sandbox::kept(&table, &real)
+    {
+        let shown = dest.display().to_string();
+        let kept = sandbox::downloads().display().to_string();
+        eprintln!(
+            "totaldrop: {}",
+            s.get(
+                "cliFolderNotKept",
+                &[
+                    ("folder", Arg::Text(&shown)),
+                    ("downloads", Arg::Text(&kept))
+                ],
+            )
+        );
+        return Err(Failure::Shown);
+    }
     let (code, line) = connecting_line(&s, &code).map_err(totaldrop_core::Error::Code)?;
     let stop = stop_on_ctrl_c(&s);
     eprintln!("{line}");

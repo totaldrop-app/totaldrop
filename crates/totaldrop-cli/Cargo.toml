@@ -14,6 +14,8 @@ path = "src/main.rs"
 
 [dependencies]
 clap = { version = "4.6.7", features = ["derive", "env", "string"] }
+# Where the download folder is (XDG user dirs), for Flatpak (#350).
+dirs = "7"
 tokio = { version = "1.54.1", features = ["rt-multi-thread", "signal"] }
 totaldrop-core = { version = "0.2.0-beta.5", path = "../totaldrop-core" }
 totaldrop-l10n = { version = "0.2.0-beta.5", path = "../totaldrop-l10n" }
