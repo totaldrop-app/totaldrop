@@ -74,6 +74,9 @@ void main() {
       await pumpEventQueue();
       repo.events.add(event(EventKind.connected));
       await pumpEventQueue();
+      expect(vm.stage, SendStage.connected);
+      repo.events.add(event(EventKind.progress));
+      await pumpEventQueue();
       expect(vm.stage, SendStage.transferring);
       vm.cancel();
       vm.cancel(); // twice is fine

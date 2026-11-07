@@ -236,6 +236,10 @@ void main() {
 
       repo.events.add(event(EventKind.connected));
       await settle(tester);
+      expectAnnounced(tester, l.sendWaitingAccept);
+
+      repo.events.add(event(EventKind.progress));
+      await settle(tester);
       expectAnnounced(tester, l.sendSending);
 
       repo.events.add(finished());

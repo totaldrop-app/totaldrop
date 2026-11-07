@@ -128,6 +128,9 @@ class ReceiveViewModel extends ChangeNotifier {
     final o = offer;
     final dest = folder;
     final stopper = _stopper;
+    // Only an offer waiting for an answer: a second tap, or a tap on a
+    // finished or declined transfer, accepts nothing again.
+    if (stage != ReceiveStage.offered) return;
     if (o == null || stopper == null) return;
     if (dest == null && !o.isText) return;
     stage = ReceiveStage.transferring;
@@ -148,17 +151,20 @@ class ReceiveViewModel extends ChangeNotifier {
     );
   }
 
+  /// Decline the offer shown. The screen says so at once, as on Linux,
+  /// and nothing changes when the sender has been told: by then the person
+  /// may have moved on (a reset, a new code), and that stays.
   Future<void> decline() async {
     final o = offer;
-    if (o == null) return;
+    if (stage != ReceiveStage.offered || o == null) return;
+    stage = ReceiveStage.declined;
+    _release();
+    notifyListeners();
     try {
       await _repo.decline(o);
     } on TransferError {
       // Declining is best effort; the sender times out either way.
     }
-    stage = ReceiveStage.declined;
-    _release();
-    notifyListeners();
   }
 
   void _onEvent(TransferEvent e) {

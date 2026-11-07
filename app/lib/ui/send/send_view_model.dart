@@ -17,7 +17,18 @@ import '../../src/rust/api/transfer.dart';
 
 export '../../data/file_source.dart' show PickedFile;
 
-enum SendStage { picking, preparing, waiting, transferring, done, failed }
+enum SendStage {
+  picking,
+  preparing,
+  waiting,
+
+  /// The receiver came: compare the words while it decides. Nothing is
+  /// sent until it accepts. Linux shows the same step.
+  connected,
+  transferring,
+  done,
+  failed,
+}
 
 /// What the send screen says about the text box (#326).
 enum TextNotice {
@@ -141,6 +152,7 @@ class SendViewModel extends ChangeNotifier {
   bool get busy =>
       stage == SendStage.preparing ||
       stage == SendStage.waiting ||
+      stage == SendStage.connected ||
       stage == SendStage.transferring;
 
   /// Whether the picker is copying the chosen files into the app cache.
@@ -420,7 +432,7 @@ class SendViewModel extends ChangeNotifier {
         stage = SendStage.waiting;
       case EventKind.connected:
         words = e.words;
-        stage = SendStage.transferring;
+        stage = SendStage.connected;
       case EventKind.progress:
         done = e.done;
         total = e.total;
