@@ -290,12 +290,14 @@ fn transport_config() -> Arc<quinn::TransportConfig> {
 
 /// How much the kernel may queue for the socket each way (#341).
 ///
-/// The system's default (about 200 KiB on Linux and Android) overflows when
-/// a fast sender's packets arrive in bursts faster than the receiving app
-/// drains them. Every packet dropped there counts as congestion, and the
-/// sender halves its rate: on a phone that held receiving to ~14 MB/s with
-/// 0.45 % loss on a 5 ms LAN, where sending reached 22 MB/s. The system may
-/// grant less (Linux caps it at `net.core.rmem_max`); that is fine.
+/// A socket starts with the system's default (often about 200 KiB), which
+/// can overflow when a fast sender's packets arrive in bursts faster than
+/// the receiving app drains them; each packet dropped there counts as
+/// congestion, and the sender halves its rate. This was the suspected cause
+/// when a phone received at ~14 MB/s with 0.45 % loss on a 5 ms LAN, where
+/// it sent at ~22 MB/s (7 Nov 2026). Linux grants 2 x min(request,
+/// `net.core.rmem_max`); macOS and the BSDs refuse a request above their
+/// limit, so smaller sizes are tried after it.
 pub const SOCKET_BUFFER: usize = 4 * 1024 * 1024;
 
 /// A UDP socket bound before `HINTS` are sent, so its port can be announced.
@@ -305,12 +307,14 @@ pub fn bind_socket() -> Result<UdpSocket> {
     Ok(socket)
 }
 
-/// Ask for [`SOCKET_BUFFER`] each way. A refusal leaves the default, which
-/// is slower but still works.
+/// Ask for [`SOCKET_BUFFER`] each way, then for a half and a quarter of it
+/// if the system refuses. When every size is refused the default stays,
+/// which is slower but still works.
 fn widen(socket: &UdpSocket) {
     let s = socket2::SockRef::from(socket);
-    let _ = s.set_recv_buffer_size(SOCKET_BUFFER);
-    let _ = s.set_send_buffer_size(SOCKET_BUFFER);
+    let sizes = [SOCKET_BUFFER, SOCKET_BUFFER / 2, SOCKET_BUFFER / 4];
+    let _ = sizes.iter().any(|&n| s.set_recv_buffer_size(n).is_ok());
+    let _ = sizes.iter().any(|&n| s.set_send_buffer_size(n).is_ok());
 }
 
 /// The addresses at which `socket` can likely be reached: loopback and the
@@ -1453,42 +1457,52 @@ mod tests {
         );
     }
 
-    /// #341: the socket asks for large kernel buffers, and gets more than
-    /// a plain socket's default wherever the system allows it.
+    /// #341: the socket asks for large kernel buffers. Linux grants
+    /// 2 x min(request, cap), so the exact size is checked there; elsewhere
+    /// the socket must at least get more than a plain one.
     #[test]
     fn the_socket_asks_for_large_buffers() {
         let plain = UdpSocket::bind(SocketAddr::from(([0, 0, 0, 0], 0))).unwrap();
         let plain = socket2::SockRef::from(&plain);
         let ours = bind_socket().unwrap();
         let ours = socket2::SockRef::from(&ours);
-        let (pr, or) = (
-            plain.recv_buffer_size().unwrap(),
+        let got = (
             ours.recv_buffer_size().unwrap(),
-        );
-        let (ps, os) = (
-            plain.send_buffer_size().unwrap(),
             ours.send_buffer_size().unwrap(),
         );
-        // Linux grants at most rmem_max/wmem_max; elsewhere the full size.
-        #[cfg(target_os = "linux")]
-        let cap = |f: &str| {
-            std::fs::read_to_string(f)
-                .ok()
-                .and_then(|v| v.trim().parse::<usize>().ok())
-                .unwrap_or(0)
-        };
-        #[cfg(target_os = "linux")]
-        let (rmax, wmax) = (
-            cap("/proc/sys/net/core/rmem_max"),
-            cap("/proc/sys/net/core/wmem_max"),
-        );
-        #[cfg(not(target_os = "linux"))]
-        let (rmax, wmax) = (SOCKET_BUFFER, SOCKET_BUFFER);
-        if rmax > pr {
-            assert!(or > pr, "receive buffer {or} not above the default {pr}");
+        #[cfg(any(target_os = "linux", target_os = "android"))]
+        {
+            let cap = |f: &str| {
+                std::fs::read_to_string(f)
+                    .ok()
+                    .and_then(|v| v.trim().parse::<usize>().ok())
+            };
+            let want = |max: Option<usize>, default: usize| match max {
+                Some(m) => SOCKET_BUFFER.min(m).saturating_mul(2),
+                // An unreadable cap: the kernel doubles whatever it grants.
+                None => default.saturating_add(1),
+            };
+            let pr = plain.recv_buffer_size().unwrap();
+            let ps = plain.send_buffer_size().unwrap();
+            let rmax = cap("/proc/sys/net/core/rmem_max");
+            let wmax = cap("/proc/sys/net/core/wmem_max");
+            assert!(
+                got.0 >= want(rmax, pr),
+                "receive buffer {} (cap {rmax:?})",
+                got.0
+            );
+            assert!(
+                got.1 >= want(wmax, ps),
+                "send buffer {} (cap {wmax:?})",
+                got.1
+            );
         }
-        if wmax > ps {
-            assert!(os > ps, "send buffer {os} not above the default {ps}");
+        #[cfg(not(any(target_os = "linux", target_os = "android")))]
+        {
+            let pr = plain.recv_buffer_size().unwrap();
+            let ps = plain.send_buffer_size().unwrap();
+            assert!(got.0 > pr, "receive buffer {} not above {pr}", got.0);
+            assert!(got.1 > ps, "send buffer {} not above {ps}", got.1);
         }
     }
 }
