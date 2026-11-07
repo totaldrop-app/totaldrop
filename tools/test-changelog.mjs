@@ -46,6 +46,24 @@ test("file names", () => {
   has([parseName("12-x.bugfix.md").error], 'unknown section "bugfix"');
 });
 
+test("a security fix without a public issue is named after its advisory", () => {
+  assert.deepEqual(parseName("ghsa-c6jh-7p7q-8gg4-cli-controls.security.md"), {
+    advisory: "GHSA-c6jh-7p7q-8gg4",
+    slug: "cli-controls",
+    section: "security",
+  });
+  for (const bad of ["ghsa-c6jh-7p7q-cli.security.md", "ghsa-C6JH-7p7q-8gg4-cli.security.md", "ghsa-c6jh-7p7q-8gg4.security.md", "ghsa-a6jh-7p7q-8gg4-cli.security.md"]) {
+    assert.ok(parseName(bad).error, bad);
+  }
+  has([parseName("ghsa-c6jh-7p7q-8gg4-cli.fixed.md").error], "a .security.md file");
+  const name = "ghsa-c6jh-7p7q-8gg4-cli.security.md";
+  assert.deepEqual(one(name, "- **CLI:** Names the controls (GHSA-c6jh-7p7q-8gg4).\n"), []);
+  assert.deepEqual(one(name, "- **CLI:** Names the controls (#7, GHSA-c6jh-7p7q-8gg4).\n"), []);
+  has(one(name, "- **CLI:** Names another advisory (GHSA-r9gc-m8c8-2xqw).\n"), "advisory GHSA-c6jh-7p7q-8gg4");
+  has(one(name, "- **CLI:** Names only an issue (#7).\n"), "advisory GHSA-c6jh-7p7q-8gg4");
+  has(one(name, "- **CLI:** No references.\n"), "issue references");
+});
+
 test("a good entry, and several in one file", () => {
   assert.deepEqual(one("12-x.fixed.md", ENTRY), []);
   const two =
@@ -110,17 +128,18 @@ test("release moves the entries in Keep a Changelog order and removes the files"
     "30-new.added.md": "- **Site:** Added thing (#30).\n",
     "31-quiet.none.md": "Only a test changes.\n",
     "33-safe.security.md": "- **Core:** Security fix (#33).\n",
+    "ghsa-c6jh-7p7q-8gg4-quiet.security.md": "- **CLI:** Advisory fix (GHSA-c6jh-7p7q-8gg4).\n",
   });
   try {
     const result = release(root, "[android-0.4.0-beta.1] and [linux-0.4.0-beta.1]", "2026-11-02");
-    assert.deepEqual(result, { count: 4, removed: 5 });
+    assert.deepEqual(result, { count: 5, removed: 6 });
     assert.deepEqual(readdirSync(join(root, "changelog.d")), ["README.md"]);
     const expected =
       HEADER +
       "## [android-0.4.0-beta.1] and [linux-0.4.0-beta.1] - 2026-11-02\n\n" +
       "### Added\n\n- **Site:** Added thing (#30).\n\n" +
       "### Fixed\n\n- **Core:** Fixed early issue (#12).\n- **Linux:** Fixed later issue (#40).\n\n" +
-      "### Security\n\n- **Core:** Security fix (#33).\n\n" +
+      "### Security\n\n- **CLI:** Advisory fix (GHSA-c6jh-7p7q-8gg4).\n- **Core:** Security fix (#33).\n\n" +
       OLD;
     assert.equal(readFileSync(join(root, "CHANGELOG.md"), "utf8"), expected);
     assert.deepEqual(checkRepo(root), [], "the result passes the check");

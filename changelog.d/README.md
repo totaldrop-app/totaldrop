@@ -27,6 +27,12 @@ Write the entry exactly as it will appear in CHANGELOG.md:
 - It starts with the areas in bold, followed by a colon.
 - It ends with the issue numbers in parentheses and a full stop, and names
   the file's issue.
+
+A security fix is made in private (SECURITY.md) and has no public issue
+until it is released. Name its file after the advisory instead,
+`ghsa-<id>-<slug>.security.md`, for example
+`ghsa-c6jh-7p7q-8gg4-cli-error-controls.security.md`, and end its entries
+with the advisory: `(GHSA-c6jh-7p7q-8gg4).`
 - A file may hold several entries of the same section, one after the
   other, with no blank line between them. A change that belongs to two
   sections gets two files.
