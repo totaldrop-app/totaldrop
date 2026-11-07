@@ -76,11 +76,23 @@ impl Stage {
     /// A send or a receive is under way, from preparing to the last byte:
     /// the computer must not go to sleep (#340). A finished, failed or
     /// declined transfer, and the empty page, let it.
+    ///
+    /// The stages that wait for a person (the shown code, comparing the
+    /// words, an offer to answer) hold it too: sleep there drops the code
+    /// or the connection, and the transfer is lost anyway. They end on
+    /// their own or when the person cancels: an unclaimed code after 15
+    /// minutes, a mailbox after an hour (`server/totaldrop-rendezvous`).
     pub const fn keeps_awake(self) -> bool {
-        !matches!(
-            self,
-            Self::Idle | Self::Done | Self::Failed | Self::Declined
-        )
+        // Exhaustive, so a new stage has to say whether it holds sleep.
+        match self {
+            Self::Preparing
+            | Self::Waiting
+            | Self::Connected
+            | Self::Transferring
+            | Self::Connecting
+            | Self::Offer => true,
+            Self::Idle | Self::Done | Self::Failed | Self::Declined => false,
+        }
     }
 }
 
