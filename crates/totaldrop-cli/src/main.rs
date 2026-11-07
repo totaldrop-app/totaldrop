@@ -670,10 +670,17 @@ fn main() -> ExitCode {
             if !cause.is_empty() {
                 eprintln!("  {}", strings_for_exit.get(&format!("cause{cause}"), &[]));
             }
-            eprintln!("  ({e})");
+            eprintln!("{}", detail_line(&e));
             ExitCode::FAILURE
         }
     }
+}
+
+/// The English detail of an error, for a bug report. It can carry text the
+/// other side chose (the reason of its `cancel`, its QUIC close reason), so
+/// every control and hidden character is named, as in a received name (T17).
+fn detail_line(e: &totaldrop_core::Error) -> String {
+    format!("  ({})", visible(&e.to_string()))
 }
 
 /// The message for each kind of failure, as the apps show it. Every variant
@@ -729,8 +736,8 @@ mod tests {
     #![allow(clippy::unwrap_used)]
 
     use super::{
-        ARG_HELP, COMMAND_HELP, What, ask, connecting_line, error_key, help, shown_text,
-        what_to_send,
+        ARG_HELP, COMMAND_HELP, What, ask, connecting_line, detail_line, error_key, help,
+        shown_text, what_to_send,
     };
     use totaldrop_core::Error;
     use totaldrop_l10n::{Domain, Strings};
@@ -953,5 +960,25 @@ mod tests {
         // A failed claim of the sender's own number is not that.
         let claim = Error::Rendezvous("unknown nameplate".into());
         assert_eq!(error_key(&claim, true), "cliErrCodeNotInUse");
+    }
+
+    /// The detail of an error can carry text the other side chose: the
+    /// reason of its `cancel`, or its QUIC close reason. Its control
+    /// characters are named, not acted on by the terminal (T17).
+    #[test]
+    fn the_error_detail_names_the_other_sides_controls() {
+        let hostile = "\u{1b}[2J\u{9b}31mok\u{7}";
+        for e in [
+            Error::Cancelled(hostile.into()),
+            Error::Connect(format!("closed by peer: 0: {hostile}")),
+        ] {
+            let line = detail_line(&e);
+            assert!(line.contains("<U+001B>[2J<U+009B>31mok<U+0007>"), "{line}");
+            assert!(!line.chars().any(char::is_control), "{line:?}");
+        }
+        assert_eq!(
+            detail_line(&Error::Cancelled("stopped".into())),
+            "  (cancelled by the other side: stopped)"
+        );
     }
 }
