@@ -634,7 +634,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get setupBackgroundBatteryHint =>
-      'Tìm TotalDrop trong danh sách và tắt tối ưu hóa pin cho ứng dụng. Tên các cài đặt này khác nhau tùy điện thoại.';
+      'Trong trang thông tin ứng dụng TotalDrop, mở Pin và cho phép sử dụng không hạn chế. Tên các cài đặt này khác nhau tùy điện thoại.';
 
   @override
   String setupBackgroundMaker(String maker) {

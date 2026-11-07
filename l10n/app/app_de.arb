@@ -175,7 +175,7 @@
   "setupBackgroundAllowed": "Die Akkuoptimierung von Android ist für TotalDrop aus.",
   "setupBackgroundRestricted": "Die Akkuoptimierung von Android ist für TotalDrop an: Eine Übertragung kann anhalten, wenn Sie die App wechseln.",
   "setupBackgroundBattery": "Akkueinstellungen öffnen",
-  "setupBackgroundBatteryHint": "Suchen Sie TotalDrop in der Liste und schalten Sie die Akkuoptimierung dafür aus. Die Namen dieser Einstellungen sind je nach Telefon verschieden.",
+  "setupBackgroundBatteryHint": "Öffnen Sie in den App-Infos von TotalDrop „Akku“ und erlauben Sie die uneingeschränkte Nutzung. Die Namen dieser Einstellungen sind je nach Telefon verschieden.",
   "setupBackgroundMaker": "{maker}-Telefone haben einen eigenen Energiesparmodus",
   "setupBackgroundMakerBody": "Öffnen Sie auch den Energiesparmodus für TotalDrop und wählen Sie „Keine Einschränkungen“. Hat das Telefon Autostart, schalten Sie es für TotalDrop ein.",
   "setupBackgroundMakerOpen": "Energiesparmodus von TotalDrop öffnen",

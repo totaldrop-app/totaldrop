@@ -175,7 +175,7 @@
   "setupBackgroundAllowed": "Uboreshaji wa betri wa Android umezimwa kwa TotalDrop.",
   "setupBackgroundRestricted": "Uboreshaji wa betri wa Android umewashwa kwa TotalDrop: uhamisho unaweza kusimama unapobadilisha programu.",
   "setupBackgroundBattery": "Fungua mipangilio ya betri",
-  "setupBackgroundBatteryHint": "Tafuta TotalDrop kwenye orodha na uzime uboreshaji wa betri wake. Majina ya mipangilio hii hutofautiana kati ya simu.",
+  "setupBackgroundBatteryHint": "Kwenye ukurasa wa maelezo ya programu ya TotalDrop, fungua Betri na uruhusu matumizi bila vikwazo. Majina ya mipangilio hii hutofautiana kati ya simu.",
   "setupBackgroundMaker": "Simu za {maker} zina kiokoa betri chake",
   "setupBackgroundMakerBody": "Fungua pia kiokoa betri cha TotalDrop na uchague \"Hakuna vikwazo\". Ikiwa simu ina Kuanza kiotomatiki, kiwashe kwa TotalDrop.",
   "setupBackgroundMakerOpen": "Fungua kiokoa betri cha TotalDrop",

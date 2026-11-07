@@ -175,7 +175,7 @@
   "setupBackgroundAllowed": "TotalDrop の Android バッテリー最適化はオフです。",
   "setupBackgroundRestricted": "TotalDrop の Android バッテリー最適化はオンです。アプリを切り替えると転送が止まることがあります。",
   "setupBackgroundBattery": "バッテリー設定を開く",
-  "setupBackgroundBatteryHint": "一覧から TotalDrop を探し、バッテリー最適化をオフにしてください。設定の名前は端末によって異なります。",
+  "setupBackgroundBatteryHint": "TotalDrop のアプリ情報で「バッテリー」を開き、制限なしの使用を許可してください。設定の名前は端末によって異なります。",
   "setupBackgroundMaker": "{maker} の端末には独自のバッテリーセーバーがあります",
   "setupBackgroundMakerBody": "TotalDrop のバッテリーセーバーも開き、「制限なし」を選んでください。自動起動がある場合は、TotalDrop で有効にしてください。",
   "setupBackgroundMakerOpen": "TotalDrop のバッテリーセーバーを開く",

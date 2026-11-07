@@ -175,7 +175,7 @@
   "setupBackgroundAllowed": "Az Android akkumulátor-optimalizálása ki van kapcsolva a TotalDrophoz.",
   "setupBackgroundRestricted": "Az Android akkumulátor-optimalizálása be van kapcsolva a TotalDrophoz: az átvitel leállhat, amikor másik alkalmazásra vált.",
   "setupBackgroundBattery": "Akkumulátorbeállítások megnyitása",
-  "setupBackgroundBatteryHint": "Keresse meg a TotalDropot a listában, és kapcsolja ki az akkumulátor-optimalizálását. A beállítások neve telefononként eltér.",
+  "setupBackgroundBatteryHint": "A TotalDrop alkalmazásinformációinál nyissa meg az Akkumulátor részt, és engedélyezze a korlátlan használatot. A beállítások neve telefononként eltér.",
   "setupBackgroundMaker": "A(z) {maker} telefonoknak saját akkumulátorkímélőjük van",
   "setupBackgroundMakerBody": "Nyissa meg a TotalDrop akkumulátorkímélőjét is, és válassza a „Nincs korlátozás” lehetőséget. Ha a telefonon van Automatikus indítás, kapcsolja be a TotalDrophoz.",
   "setupBackgroundMakerOpen": "A TotalDrop akkumulátorkímélőjének megnyitása",

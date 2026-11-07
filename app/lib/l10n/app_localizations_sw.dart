@@ -647,7 +647,7 @@ class AppLocalizationsSw extends AppLocalizations {
 
   @override
   String get setupBackgroundBatteryHint =>
-      'Tafuta TotalDrop kwenye orodha na uzime uboreshaji wa betri wake. Majina ya mipangilio hii hutofautiana kati ya simu.';
+      'Kwenye ukurasa wa maelezo ya programu ya TotalDrop, fungua Betri na uruhusu matumizi bila vikwazo. Majina ya mipangilio hii hutofautiana kati ya simu.';
 
   @override
   String setupBackgroundMaker(String maker) {

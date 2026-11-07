@@ -9,8 +9,8 @@ import '../../data/transfer_keep_alive.dart';
 import 'background_setup_view.dart';
 
 /// Knows whether a transfer is running: the keep-alive both screens use,
-/// passed through.
-class WatchedKeepAlive implements TransferKeepAlive {
+/// passed through. Listeners hear when a transfer starts or ends.
+class WatchedKeepAlive extends ChangeNotifier implements TransferKeepAlive {
   WatchedKeepAlive(this._inner);
 
   final TransferKeepAlive _inner;
@@ -18,18 +18,24 @@ class WatchedKeepAlive implements TransferKeepAlive {
 
   bool get active => _active;
 
+  void _set(bool on) {
+    if (_active == on) return;
+    _active = on;
+    notifyListeners();
+  }
+
   @override
   Future<void> begin(TransferDirection direction, void Function() onStop) {
-    _active = true;
+    _set(true);
     return _inner.begin(direction, () {
-      _active = false;
+      _set(false);
       onStop();
     });
   }
 
   @override
   Future<void> end() {
-    _active = false;
+    _set(false);
     return _inner.end();
   }
 }
@@ -55,14 +61,15 @@ class BackgroundPrompts {
 
   /// Back on screen after a transfer went to the background: the page once,
   /// when the person skipped it at first start or Android's battery
-  /// optimisation is still on.
-  Future<bool> remindAfterBackground() async {
-    if (settings.backgroundReminded) return false;
+  /// optimisation is still on. Not before the first-run page was answered,
+  /// which a share can open the app past. The caller marks it shown.
+  Future<bool> shouldRemind() async {
+    if (!settings.backgroundSetupSeen || settings.backgroundReminded) {
+      return false;
+    }
     final state = await access.state();
     if (state.settled) return false;
-    if (state.exempt && !settings.backgroundSkipped) return false;
-    await settings.setBackgroundReminded();
-    return true;
+    return !state.exempt || settings.backgroundSkipped;
   }
 }
 
@@ -126,16 +133,24 @@ class BackgroundReminder extends StatefulWidget {
 
 class _BackgroundReminderState extends State<BackgroundReminder>
     with WidgetsBindingObserver {
+  /// A transfer was running while the app was off screen.
   bool _left = false;
+
+  /// On screen again, waiting for that transfer to end: the page does not
+  /// cover a transfer still running.
+  bool _waiting = false;
+  bool _busy = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    widget.keepAlive.addListener(_transferChanged);
   }
 
   @override
   void dispose() {
+    widget.keepAlive.removeListener(_transferChanged);
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -145,28 +160,47 @@ class _BackgroundReminderState extends State<BackgroundReminder>
     switch (state) {
       case AppLifecycleState.hidden || AppLifecycleState.paused:
         if (widget.keepAlive.active) _left = true;
+        _waiting = false;
       case AppLifecycleState.resumed:
         if (_left) {
           _left = false;
-          _remind();
+          _waiting = true;
+          _transferChanged();
         }
       case AppLifecycleState.inactive || AppLifecycleState.detached:
         break;
     }
   }
 
+  void _transferChanged() {
+    if (_waiting && !widget.keepAlive.active) {
+      _waiting = false;
+      _remind();
+    }
+  }
+
   Future<void> _remind() async {
-    if (!await widget.prompts.remindAfterBackground()) return;
-    final navigator = widget.navigator.currentState;
-    if (navigator == null) return;
-    await navigator.push(
-      MaterialPageRoute<void>(
-        builder: (context) => BackgroundSetupView(
-          access: widget.prompts.access,
-          onDone: ({required skipped}) => Navigator.pop(context),
+    if (_busy) return;
+    _busy = true;
+    try {
+      if (!await widget.prompts.shouldRemind()) return;
+      final navigator = widget.navigator.currentState;
+      // Opened from Settings already: nothing to remind of.
+      if (!mounted || navigator == null || BackgroundSetupView.shown > 0) {
+        return;
+      }
+      await widget.prompts.settings.setBackgroundReminded();
+      await navigator.push(
+        MaterialPageRoute<void>(
+          builder: (context) => BackgroundSetupView(
+            access: widget.prompts.access,
+            onDone: ({required skipped}) => Navigator.pop(context),
+          ),
         ),
-      ),
-    );
+      );
+    } finally {
+      _busy = false;
+    }
   }
 
   @override

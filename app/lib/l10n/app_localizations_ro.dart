@@ -661,7 +661,7 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get setupBackgroundBatteryHint =>
-      'Găsiți TotalDrop în listă și dezactivați optimizarea bateriei pentru el. Numele acestor setări diferă de la un telefon la altul.';
+      'În pagina de informații despre aplicația TotalDrop, deschideți Baterie și permiteți utilizarea fără restricții. Numele acestor setări diferă de la un telefon la altul.';
 
   @override
   String setupBackgroundMaker(String maker) {

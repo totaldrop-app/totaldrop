@@ -608,7 +608,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get setupBackgroundBatteryHint =>
-      '목록에서 TotalDrop을 찾아 배터리 최적화를 끄세요. 이 설정의 이름은 휴대전화마다 다릅니다.';
+      'TotalDrop의 앱 정보에서 배터리를 열고 제한 없는 사용을 허용하세요. 이 설정의 이름은 휴대전화마다 다릅니다.';
 
   @override
   String setupBackgroundMaker(String maker) {

@@ -636,7 +636,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get setupBackgroundBatteryHint =>
-      'Listede TotalDrop\'u bulun ve onun için pil optimizasyonunu kapatın. Bu ayarların adları telefondan telefona değişir.';
+      'TotalDrop\'un uygulama bilgileri sayfasında Pil\'i açın ve kısıtlamasız kullanıma izin verin. Bu ayarların adları telefondan telefona değişir.';
 
   @override
   String setupBackgroundMaker(String maker) {

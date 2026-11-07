@@ -79,18 +79,18 @@ class TotalDropApp extends StatelessWidget {
     required this.settings,
     required this.send,
     required this.receive,
+    required this.keepAlive,
     this.launches = const NoLaunches(),
-    WatchedKeepAlive? keepAlive,
     this.background = const NoBackgroundLimits(),
-  }) : keepAlive = keepAlive ?? WatchedKeepAlive(const NoKeepAlive());
+  });
 
   final SettingsRepository settings;
   final SendViewModel send;
   final ReceiveViewModel receive;
   final LaunchSource launches;
 
-  /// The keep-alive the view models use, watched so that a transfer that
-  /// leaves the screen is known (#338).
+  /// The same keep-alive the view models use, watched so that a transfer
+  /// that leaves the screen is known (#338).
   final WatchedKeepAlive keepAlive;
   final BackgroundAccess background;
   late final _prompts = BackgroundPrompts(

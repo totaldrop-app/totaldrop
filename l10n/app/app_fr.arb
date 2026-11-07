@@ -175,7 +175,7 @@
   "setupBackgroundAllowed": "L'optimisation de la batterie d'Android est désactivée pour TotalDrop.",
   "setupBackgroundRestricted": "L'optimisation de la batterie d'Android est activée pour TotalDrop : un transfert peut s'arrêter quand vous changez d'appli.",
   "setupBackgroundBattery": "Ouvrir les réglages de batterie",
-  "setupBackgroundBatteryHint": "Cherchez TotalDrop dans la liste et désactivez son optimisation de la batterie. Le nom de ces réglages varie d'un téléphone à l'autre.",
+  "setupBackgroundBatteryHint": "Dans les infos de l'application TotalDrop, ouvrez « Batterie » et autorisez l'utilisation sans restriction. Le nom de ces réglages varie d'un téléphone à l'autre.",
   "setupBackgroundMaker": "Les téléphones {maker} ont leur propre économiseur de batterie",
   "setupBackgroundMakerBody": "Ouvrez aussi l'économiseur de batterie de TotalDrop et choisissez « Aucune restriction ». Si le téléphone propose le Démarrage automatique, activez-le pour TotalDrop.",
   "setupBackgroundMakerOpen": "Ouvrir l'économiseur de batterie de TotalDrop",

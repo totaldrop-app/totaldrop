@@ -175,7 +175,7 @@
   "setupBackgroundAllowed": "Оптимізацію батареї Android для TotalDrop вимкнено.",
   "setupBackgroundRestricted": "Оптимізацію батареї Android для TotalDrop увімкнено: передавання може зупинитися, коли ви перемикаєтеся на іншу програму.",
   "setupBackgroundBattery": "Відкрити налаштування батареї",
-  "setupBackgroundBatteryHint": "Знайдіть TotalDrop у списку й вимкніть для нього оптимізацію батареї. Назви цих налаштувань на різних телефонах різні.",
+  "setupBackgroundBatteryHint": "На сторінці інформації про застосунок TotalDrop відкрийте «Батарея» й дозвольте роботу без обмежень. Назви цих налаштувань на різних телефонах різні.",
   "setupBackgroundMaker": "Телефони {maker} мають власне енергозбереження",
   "setupBackgroundMakerBody": "Відкрийте також енергозбереження для TotalDrop і виберіть «Без обмежень». Якщо на телефоні є автозапуск, увімкніть його для TotalDrop.",
   "setupBackgroundMakerOpen": "Відкрити енергозбереження TotalDrop",

@@ -175,7 +175,7 @@
   "setupBackgroundAllowed": "Android'in pil optimizasyonu TotalDrop için kapalı.",
   "setupBackgroundRestricted": "Android'in pil optimizasyonu TotalDrop için açık: uygulama değiştirdiğinizde aktarım durabilir.",
   "setupBackgroundBattery": "Pil ayarlarını aç",
-  "setupBackgroundBatteryHint": "Listede TotalDrop'u bulun ve onun için pil optimizasyonunu kapatın. Bu ayarların adları telefondan telefona değişir.",
+  "setupBackgroundBatteryHint": "TotalDrop'un uygulama bilgileri sayfasında Pil'i açın ve kısıtlamasız kullanıma izin verin. Bu ayarların adları telefondan telefona değişir.",
   "setupBackgroundMaker": "{maker} telefonlarının kendi pil tasarrufu var",
   "setupBackgroundMakerBody": "TotalDrop'un pil tasarrufunu da açıp \"Kısıtlama yok\"u seçin. Telefonda Otomatik başlatma varsa TotalDrop için açın.",
   "setupBackgroundMakerOpen": "TotalDrop'un pil tasarrufunu aç",

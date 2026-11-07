@@ -175,7 +175,7 @@
   "setupBackgroundAllowed": "Tối ưu hóa pin của Android đang tắt cho TotalDrop.",
   "setupBackgroundRestricted": "Tối ưu hóa pin của Android đang bật cho TotalDrop: quá trình truyền có thể dừng khi bạn chuyển ứng dụng.",
   "setupBackgroundBattery": "Mở cài đặt pin",
-  "setupBackgroundBatteryHint": "Tìm TotalDrop trong danh sách và tắt tối ưu hóa pin cho ứng dụng. Tên các cài đặt này khác nhau tùy điện thoại.",
+  "setupBackgroundBatteryHint": "Trong trang thông tin ứng dụng TotalDrop, mở Pin và cho phép sử dụng không hạn chế. Tên các cài đặt này khác nhau tùy điện thoại.",
   "setupBackgroundMaker": "Điện thoại {maker} có trình tiết kiệm pin riêng",
   "setupBackgroundMakerBody": "Hãy mở cả trình tiết kiệm pin của TotalDrop và chọn \"Không hạn chế\". Nếu điện thoại có Tự khởi động, hãy bật cho TotalDrop.",
   "setupBackgroundMakerOpen": "Mở trình tiết kiệm pin của TotalDrop",

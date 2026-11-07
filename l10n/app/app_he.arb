@@ -175,7 +175,7 @@
   "setupBackgroundAllowed": "אופטימיזציית הסוללה של Android כבויה עבור TotalDrop.",
   "setupBackgroundRestricted": "אופטימיזציית הסוללה של Android פעילה עבור TotalDrop: העברה עלולה להיעצר כשעוברים לאפליקציה אחרת.",
   "setupBackgroundBattery": "פתיחת הגדרות הסוללה",
-  "setupBackgroundBatteryHint": "מצאו את TotalDrop ברשימה וכבו עבורו את אופטימיזציית הסוללה. שמות ההגדרות האלה משתנים מטלפון לטלפון.",
+  "setupBackgroundBatteryHint": "בדף פרטי האפליקציה של TotalDrop, פתחו את „סוללה” ואפשרו שימוש ללא הגבלה. שמות ההגדרות האלה משתנים מטלפון לטלפון.",
   "setupBackgroundMaker": "לטלפונים של {maker} יש חיסכון סוללה משלהם",
   "setupBackgroundMakerBody": "פתחו גם את חיסכון הסוללה של TotalDrop ובחרו \"ללא הגבלות\". אם בטלפון יש הפעלה אוטומטית, הפעילו אותה עבור TotalDrop.",
   "setupBackgroundMakerOpen": "פתיחת חיסכון הסוללה של TotalDrop",

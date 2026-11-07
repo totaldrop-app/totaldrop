@@ -660,7 +660,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get setupBackgroundBatteryHint =>
-      'V seznamu najděte TotalDrop a vypněte pro něj optimalizaci baterie. Názvy těchto nastavení se v různých telefonech liší.';
+      'Na stránce informací o aplikaci TotalDrop otevřete Baterii a povolte neomezené používání. Názvy těchto nastavení se v různých telefonech liší.';
 
   @override
   String setupBackgroundMaker(String maker) {

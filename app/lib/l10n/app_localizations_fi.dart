@@ -651,7 +651,7 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String get setupBackgroundBatteryHint =>
-      'Etsi TotalDrop luettelosta ja poista sen akun optimointi käytöstä. Näiden asetusten nimet vaihtelevat puhelimittain.';
+      'Avaa TotalDropin sovellustiedoista Akku ja salli rajoittamaton käyttö. Näiden asetusten nimet vaihtelevat puhelimittain.';
 
   @override
   String setupBackgroundMaker(String maker) {

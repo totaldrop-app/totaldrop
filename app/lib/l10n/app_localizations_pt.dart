@@ -664,7 +664,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get setupBackgroundBatteryHint =>
-      'Encontre o TotalDrop na lista e desative a otimização de bateria dele. Os nomes dessas configurações mudam de um celular para outro.';
+      'Na página de informações do app TotalDrop, abra Bateria e permita o uso sem restrições. Os nomes dessas configurações mudam de um celular para outro.';
 
   @override
   String setupBackgroundMaker(String maker) {
@@ -1351,7 +1351,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get setupBackgroundBatteryHint =>
-      'Encontre o TotalDrop na lista e desative a otimização de bateria dele. Os nomes dessas configurações mudam de um celular para outro.';
+      'Na página de informações do app TotalDrop, abra Bateria e permita o uso sem restrições. Os nomes dessas configurações mudam de um celular para outro.';
 
   @override
   String setupBackgroundMaker(String maker) {
@@ -2040,7 +2040,7 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
 
   @override
   String get setupBackgroundBatteryHint =>
-      'Encontre o TotalDrop na lista e desative a otimização da bateria para ele. Os nomes destas definições variam de telemóvel para telemóvel.';
+      'Na página de informações da aplicação TotalDrop, abra Bateria e permita a utilização sem restrições. Os nomes destas definições variam de telemóvel para telemóvel.';
 
   @override
   String setupBackgroundMaker(String maker) {

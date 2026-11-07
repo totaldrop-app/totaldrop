@@ -175,7 +175,7 @@
   "setupBackgroundAllowed": "TotalDrop 的 Android 电池优化已关闭。",
   "setupBackgroundRestricted": "TotalDrop 的 Android 电池优化已开启：切换应用时传输可能会停止。",
   "setupBackgroundBattery": "打开电池设置",
-  "setupBackgroundBatteryHint": "在列表中找到 TotalDrop，并关闭它的电池优化。这些设置的名称因手机而异。",
+  "setupBackgroundBatteryHint": "在 TotalDrop 的应用信息页面中打开“电池”，并允许无限制使用。这些设置的名称因手机而异。",
   "setupBackgroundMaker": "{maker} 手机有自己的省电功能",
   "setupBackgroundMakerBody": "请同时打开 TotalDrop 的省电策略并选择“无限制”。如果手机有自启动，请为 TotalDrop 开启。",
   "setupBackgroundMakerOpen": "打开 TotalDrop 的省电策略",

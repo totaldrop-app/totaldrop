@@ -643,7 +643,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get errorTextDamaged => 'Текст дошёл не целым, поэтому он не показан.';
 
   @override
-  String get setupBackgroundTitle => 'Передача продолжается в фоне';
+  String get setupBackgroundTitle => 'Продолжать передачу в фоне';
 
   @override
   String get setupBackgroundBody =>
@@ -662,7 +662,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get setupBackgroundBatteryHint =>
-      'Найдите TotalDrop в списке и выключите для него оптимизацию батареи. Названия этих настроек на разных телефонах отличаются.';
+      'На странице сведений о приложении TotalDrop откройте «Батарея» и разрешите работу без ограничений. Названия этих настроек на разных телефонах отличаются.';
 
   @override
   String setupBackgroundMaker(String maker) {

@@ -639,7 +639,7 @@ class AppLocalizationsMs extends AppLocalizations {
 
   @override
   String get setupBackgroundBatteryHint =>
-      'Cari TotalDrop dalam senarai dan matikan pengoptimuman bateri untuknya. Nama tetapan ini berbeza antara telefon.';
+      'Pada halaman maklumat apl TotalDrop, buka Bateri dan benarkan penggunaan tanpa had. Nama tetapan ini berbeza antara telefon.';
 
   @override
   String setupBackgroundMaker(String maker) {
