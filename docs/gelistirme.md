@@ -80,8 +80,11 @@ hatayı push'tan önce gösterir (#376). İki dosya vardır:
   aracı istemez. Birleştirme çakışması işaretlerini, YAML ve TOML
   sözdizimini, büyük dosyaları, özel anahtarları ve gizli bilgileri
   (gitleaks), dosya sonu satırını, satır sonu boşluklarını ve LF satır
-  sonlarını denetler. `key.properties` ile `.jks`, `.keystore` ve `.p12`
-  dosyalarını reddeder. Bir kez kurulur:
+  sonlarını denetler. `key.properties` ile `.jks`, `.keystore`, `.p12`,
+  `.pfx` ve `.pepk` dosyalarını reddeder. gitleaks yalnızca commit'e
+  eklenen değişikliklere bakar, bütün ağaca değil. Bu denetimlerin
+  CI'da karşılığı yoktur ve `git commit --no-verify` onları atlar. Bir
+  kez kurulur:
 
   ```sh
   pre-commit install
@@ -100,10 +103,19 @@ hatayı push'tan önce gösterir (#376). İki dosya vardır:
   SKIP=flutter-analyze,worker-tsc pre-commit run -c .pre-commit-config-extra.yaml --all-files
   ```
 
-  `cargo fmt` ve `dart format` dosyaları düzeltir; çıkan değişikliği
-  commit'e ekleyin. Worker'ların `tsc` denetiminden önce her Worker
-  klasöründe `npm ci` çalıştırın. `changelog-require` dalı son çekilen
-  `origin/main` ile karşılaştırır; girdi dosyası commit'lenmiş olmalıdır.
+  `cargo fmt` ve `dart format` dosyaları düzeltir (CI yalnızca denetler);
+  çıkan değişikliği commit'e ekleyin. Linux uygulamasının (`linux/`)
+  `clippy` ve testleri Qt 6 ister, yalnızca CI'da çalışır.
+  `flutter analyze`'dan önce `app/` içinde `flutter pub get`, Worker'ların
+  `tsc` denetiminden önce her Worker klasöründe `npm ci` çalıştırın.
+
+  Dalın `changelog.d/` girdisi eklediğini denetleyen `changelog-require`
+  yalnızca elle çalışır, çünkü `main`'de ve girdi commit'lenmeden önce
+  hata verir. Dalı son çekilen `origin/main` ile karşılaştırır:
+
+  ```sh
+  pre-commit run -c .pre-commit-config-extra.yaml changelog-require --hook-stage manual
+  ```
 
 Bir iş akışındaki denetim değişirse ek dosyadaki karşılığı da aynı PR'da
 değişir. Üretilmiş dosyalar iki dosyada da aynı `exclude` listesiyle
