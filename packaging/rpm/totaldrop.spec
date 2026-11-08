@@ -58,12 +58,17 @@ This package contains the desktop app, which follows the desktop's theme
 
 %build
 export QMAKE=%{_qt6_bindir}/qmake
+# No build times in the embedded Qt resources (#252, #266; why:
+# packaging/check-versions.sh). %check sets it too, so its tests build the
+# same Qt resources as the package.
+export CXX_QT_AUTORCC_OPTIONS=--format-version:1:--no-zstd
 cargo build --release --locked -p totaldrop-linux -p totaldrop-cli
 
 %install
 packaging/linux/install.sh %{buildroot} %{_prefix} target/release
 
 %check
+export CXX_QT_AUTORCC_OPTIONS=--format-version:1:--no-zstd
 desktop-file-validate %{buildroot}%{_datadir}/applications/app.totaldrop.TotalDrop.desktop
 appstream-util validate-relax --nonet %{buildroot}%{_metainfodir}/app.totaldrop.TotalDrop.metainfo.xml
 cargo test --release --locked -p totaldrop-linux -p totaldrop-proto

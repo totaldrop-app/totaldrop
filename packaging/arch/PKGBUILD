@@ -38,12 +38,17 @@ build() {
   cd "$(_srcdir)"
   export RUSTUP_TOOLCHAIN=${TOTALDROP_RUST:-${RUSTUP_TOOLCHAIN:-stable}}
   export CARGO_TARGET_DIR=target
+  # No build times in the embedded Qt resources (#252, #266; why:
+  # packaging/check-versions.sh). check() sets it too: cargo test may relink
+  # the binaries in target/release that package() copies.
+  export CXX_QT_AUTORCC_OPTIONS=--format-version:1:--no-zstd
   cargo build --frozen --release -p totaldrop-linux -p totaldrop-cli
 }
 
 check() {
   cd "$(_srcdir)"
   export RUSTUP_TOOLCHAIN=${TOTALDROP_RUST:-${RUSTUP_TOOLCHAIN:-stable}}
+  export CXX_QT_AUTORCC_OPTIONS=--format-version:1:--no-zstd
   cargo test --frozen --release -p totaldrop-linux -p totaldrop-proto
 }
 
