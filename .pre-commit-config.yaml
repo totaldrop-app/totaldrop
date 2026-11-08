@@ -38,7 +38,8 @@ repos:
       - id: mixed-line-ending
         args: [--fix=lf]
 
-  # Scans the staged changes only, not the whole tree.
+  # Scans the staged changes only, not the whole tree. The Secrets job in
+  # ci.yml runs the same gitleaks release; upgrade both together.
   - repo: https://github.com/gitleaks/gitleaks
     rev: 2ca41cc1372d1e939a6a879f18cdc19fc1cac1ce  # frozen: v8.30.0
     hooks:
@@ -46,9 +47,10 @@ repos:
 
   - repo: local
     hooks:
-      # Signing keys and their passwords never enter the repository.
+      # Signing keys and their passwords never enter the repository. Same
+      # names as the Secrets job in ci.yml, in any letter case.
       - id: no-signing-secrets
         name: no signing keys or key.properties
         language: fail
         entry: This file must not be committed
-        files: (^|/)key\.properties$|\.(jks|keystore|p12|pfx|pepk)$
+        files: (?i)(^|/)key\.properties$|\.(jks|keystore|p12|pfx|pepk)$

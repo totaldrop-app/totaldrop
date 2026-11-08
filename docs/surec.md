@@ -203,3 +203,17 @@ incelenmiş bir commit'tir.
 İmza anahtarları, parolalar ve API anahtarları yalnızca GitHub Actions
 gizli değerlerinde ve sahibinin bilgisayarında durur. Hiçbir oturum ya da
 araç bunları okumaz, yazdırmaz ya da depoya eklemez.
+
+CI'daki `Secrets` işi her PR'da ve `main`'e gelen her push'ta çalışır
+(#378). İzlenen dosyalar arasında `key.properties`, `.jks`, `.keystore`,
+`.p12`, `.pfx` ya da `.pepk` dosyası varsa (büyük küçük harf fark etmez)
+başarısız olur. gitleaks ile o çalıştırmanın eklediği commit'leri tarar:
+PR'da PR'ın commit'lerini, `main`'de push'un getirdiklerini, elle
+çalıştırmada bütün geçmişi. Bulgular maskelenerek yazılır. İş geçmeden
+`CI` kontrolü yeşil olmaz. gitleaks imajı sürüm ve özetle sabittir ve
+pre-commit hook'unun sürümüyle (v8.30.0) birlikte yükseltilir.
+
+Bu işin bulduğu bir gizli bilgi açığa çıkmış sayılır: değeri hemen
+değiştirilir, sonra commit PR branch'inin geçmişinden çıkarılır. Yanlış
+pozitif ancak kök dizindeki `.gitleaks.toml` dosyasına, her girdinin
+yanına nedeni yazılarak eklenir.
