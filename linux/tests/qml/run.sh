@@ -16,6 +16,9 @@ tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
 mod="$tmp/app/totaldrop"
 mkdir -p "$mod"
-cp "$here/stub/qmldir" "$here/stub/Theme.qml" "$here/../../qml/ActionCard.qml" "$mod/"
-QT_QPA_PLATFORM=offscreen QT_QUICK_BACKEND=software \
+cp "$here/stub/qmldir" "$here/stub/Theme.qml" "$mod/"
+cp "$here/../../qml/ActionCard.qml" "$mod/"
+# The platform theme decides which keys press a button; the caller's
+# (QT_QPA_PLATFORMTHEME) would make the results differ from CI's.
+QT_QPA_PLATFORM=offscreen QT_QPA_PLATFORMTHEME= QT_QUICK_BACKEND=software \
   "$runner" -import "$tmp" -input "$here"

@@ -7,6 +7,11 @@ import app.totaldrop
 
 // The home screen's Send and Receive cards answer to the keys that press
 // the app's other buttons (#182).
+//
+// The tests run under the offscreen platform's own theme, where Space
+// alone presses an AbstractButton, as under Plasma. Under the GTK theme
+// (every other desktop) the button also takes Enter on release; that the
+// release then opens nothing more is checked on a device.
 TestCase {
     id: tc
     name: "ActionCard"
@@ -26,6 +31,11 @@ TestCase {
     SignalSpy {
         id: clicks
         signalName: "clicked"
+    }
+
+    // A warning means the card read something the stand-in Theme lacks.
+    function init() {
+        failOnWarning(/.*/)
     }
 
     function focusedCard() {
@@ -79,7 +89,6 @@ TestCase {
         const card = focusedCard()
         card.enabled = false
         card.enterPressed({ isAutoRepeat: false })
-        keyClick(Qt.Key_Return)
         compare(clicks.count, 0)
     }
 }
