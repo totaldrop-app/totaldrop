@@ -17,14 +17,17 @@ için [versioning.md](versioning.md) bağlayıcıdır.
 4. **CI:** Bütün kontroller yeşil olmadan birleştirme yapılmaz. Kırmızı bir
    kontrol "sonra bakarız" diye geçilmez; ya düzeltilir ya da nedeni PR'da
    yazılır ve ayrı bir issue açılır.
-5. **Bağımsız inceleme:** Her PR'ı, kodu yazmamış biri okur. Proje tek kişiyle
-   yürüdüğü için bu, değişikliği yazan oturumdan ayrı çalışan bir inceleme
-   ajanıdır: yalnızca diff'i ve ilgili kodu görür, yazarın gerekçesini
-   görmez. Bulduğu her doğruluk ya da güvenlik sorunu birleştirmeden önce
+5. **Bağımsız inceleme:** Her PR'ı, kodu yazmamış biri okur. Bu, bir bakımcı
+   ya da değişikliği yazan oturumdan ayrı çalışan bir inceleme ajanıdır:
+   ajan yalnızca diff'i ve ilgili kodu görür, yazarın gerekçesini görmez. Bulduğu her doğruluk ya da güvenlik sorunu birleştirmeden önce
    düzeltilir; düzeltilmeyenler için gerekçe PR'a yazılır.
 6. **Birleştirme:** `main`'e yalnızca PR ile, rebase ile birleştirilir;
    geçmiş doğrusal kalır. Doğrudan push ve force push kapalıdır. `CI`
-   kontrolü yeşil olmadan kural birleştirmeye izin vermez.
+   kontrolü yeşil olmadan kural birleştirmeye izin vermez. Her dosyanın kod
+   sahibi `@totaldrop-app/maintainers` takımıdır (`.github/CODEOWNERS`);
+   takım dışından gelen bir PR, bir bakımcı onaylamadan birleşmez.
+   Bakımcılar kendi PR'larını onaysız birleştirebilir, ama CI ve bağımsız
+   inceleme onlar için de şarttır. Roller: [GOVERNANCE.md](../GOVERNANCE.md).
 7. **Yayın:** [Sürüm listesi](#sürüm-listesi) adım adım izlenir.
 
 ## Bitti tanımı
