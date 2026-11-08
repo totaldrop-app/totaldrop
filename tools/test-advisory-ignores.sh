@@ -65,11 +65,30 @@ expect "multi-line bare strings only in deny.toml" fail 'ignore = [
 expect "one-line inline table only in deny.toml" fail \
   'ignore = [{ id = "RUSTSEC-2026-0001", reason = "test" }]' "$osv_none" "$differ"
 expect "only in osv-scanner.toml" fail 'ignore = []' "$osv_one" "$differ"
+expect "different IDs on each side" fail 'ignore = ["RUSTSEC-2026-0002"]' "$osv_one" "$differ"
 
 # What the check cannot compare.
 expect "crate spec as a table" fail 'ignore = [{ crate = "zvariant", reason = "test" }]' \
   "$osv_none" "not an advisory id"
 expect "crate spec as a string" fail 'ignore = ["zvariant@5.0.0"]' "$osv_none" "not an advisory id"
+expect "crate spec as a bare name" fail 'ignore = ["zvariant"]' "$osv_none" "not an advisory id"
+expect "unknown field in a deny.toml ignore table" fail \
+  'ignore = [{ id = "RUSTSEC-2026-0001", reason = "test", expiry = "P30D" }]' "$osv_one" \
+  "ignore fields this check does not know: expiry"
+expect "ignore-expiry in deny.toml" fail 'ignore = []
+ignore-expiry = "P30D"' "$osv_none" "ignore-expiry narrows"
+expect "ignore that is not a list" fail 'ignore = ""' "$osv_none" "deny.toml: ignore: expected list"
+expect "ignore given as a table" fail 'ignore = { "RUSTSEC-2026-0001" = 1 }' "$osv_one" \
+  "deny.toml: ignore: expected list"
+expect "IgnoredVulns that is not a list" fail 'ignore = []' 'IgnoredVulns = ""' \
+  "IgnoredVulns: expected list"
+expect "IgnoredVulns given as a table" fail 'ignore = []' '[IgnoredVulns]' \
+  "IgnoredVulns: expected list"
+mkdir "$tmp/fuzz"
+printf '[[IgnoredVulns]]\nid = "RUSTSEC-2026-0009"\n' > "$tmp/fuzz/osv-scanner.toml"
+expect "osv-scanner.toml outside the root" fail 'ignore = []' "$osv_none" \
+  "osv-scanner.toml files outside the root: fuzz/osv-scanner.toml"
+rm -r "$tmp/fuzz"
 expect "PackageOverrides in osv-scanner.toml" fail 'ignore = []' '[[PackageOverrides]]
 name = "zvariant"
 ecosystem = "crates.io"
