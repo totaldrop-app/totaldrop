@@ -75,6 +75,16 @@ treated as final.
      allocation is delayed by 2 seconds.
    - The WebSocket handshake and every server write must finish within 10
      seconds.
+   - Each client may open 60 connections (allocations and mailboxes
+     together) at once and one more every second after that (threat model
+     T9). A client is an IPv4 address or an IPv6 /64. Past its rate the
+     server answers `error` with the reason `too many requests` and closes
+     the connection; the refused connection is not counted. The counters
+     are kept in memory only, under a hash keyed at random when the server
+     starts, and a client is forgotten once it is back at a full burst. The
+     Rust server counts every routed connection when it opens, the Worker
+     every allocation and every mailbox opening; a client making ordinary
+     transfers sees no difference.
 8. **Reading a typed code.** Before a code is split into its number and
    words, invisible format characters (direction marks, isolates, zero-width
    characters, the soft hyphen, the byte order mark; `INVISIBLE_FORMAT` in

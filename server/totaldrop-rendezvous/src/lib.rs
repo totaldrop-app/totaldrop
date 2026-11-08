@@ -16,12 +16,21 @@
 //!   connection whose nameplate expired cannot touch the number's next owner;
 //! - unclaimed nameplates expire after 15 minutes, and every mailbox is
 //!   deleted when both sides have left, or after one hour at the latest;
+//! - each client (an IPv4 address or an IPv6 /64) may open 60 connections
+//!   at once and one more every second; past that it is told
+//!   `too many requests`. The counters are in memory only, under a keyed
+//!   hash of the client, and are forgotten once the client is back at a
+//!   full burst (threat model T9);
 //! - nothing is logged about clients: no addresses, no nameplates, no sizes.
+//!
+//! The rate limit sees the address of the TCP peer. Behind a TLS
+//! terminator or proxy on another address, every client is that address.
 //!
 //! Serve it behind a TLS 1.3 terminator on port 443 (spec section 5).
 
 use std::collections::{HashMap, VecDeque};
-use std::net::SocketAddr;
+use std::hash::{BuildHasher, RandomState};
+use std::net::{IpAddr, SocketAddr};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
@@ -61,6 +70,14 @@ pub struct Config {
     pub wave_delay: Duration,
     /// How often expired mailboxes are swept.
     pub sweep_interval: Duration,
+    /// Connections one client may open at once.
+    pub rate_burst: u32,
+    /// After a burst, one more connection is allowed every `rate_interval`.
+    pub rate_interval: Duration,
+    /// Most clients counted at once. A client beyond this is let through
+    /// uncounted: the global limits still hold, and refusing everyone new
+    /// would let one attacker with many addresses shut the service.
+    pub max_clients: usize,
 }
 
 impl Default for Config {
@@ -78,6 +95,9 @@ impl Default for Config {
             scary_window: Duration::from_secs(10 * 60),
             wave_delay: Duration::from_secs(2),
             sweep_interval: Duration::from_secs(5),
+            rate_burst: 60,
+            rate_interval: Duration::from_secs(1),
+            max_clients: 100_000,
         }
     }
 }
@@ -95,6 +115,73 @@ const MAX_PENDING_BYTES: usize = 32 * 1024;
 const COOLDOWN: Duration = Duration::from_secs(10 * 60);
 /// How long the WebSocket handshake and each write may take.
 const IO_TIMEOUT: Duration = Duration::from_secs(10);
+/// What a client over its rate is told.
+pub const TOO_MANY: &str = "too many requests";
+
+/// The part of an address that names one client: an IPv4 address (also
+/// when it arrives as an IPv4-mapped IPv6 address) or the first 64 bits of
+/// an IPv6 address, the block one subscriber usually gets.
+fn client_of(ip: IpAddr) -> [u16; 4] {
+    match ip {
+        IpAddr::V4(v4) => client_v4(v4.octets()),
+        IpAddr::V6(v6) => match v6.to_ipv4_mapped() {
+            Some(v4) => client_v4(v4.octets()),
+            None => {
+                let [a, b, c, d, ..] = v6.segments();
+                [a, b, c, d]
+            }
+        },
+    }
+}
+
+/// An IPv4 client, kept apart from every IPv6 /64 by a marker no global
+/// IPv6 prefix starts with.
+fn client_v4([a, b, c, d]: [u8; 4]) -> [u16; 4] {
+    [
+        0,
+        0xffff,
+        u16::from_be_bytes([a, b]),
+        u16::from_be_bytes([c, d]),
+    ]
+}
+
+/// Per-client counters (threat model T9), the same rule as the Worker's
+/// (`server/rendezvous-worker/src/limit.ts`): the generic cell rate
+/// algorithm, one time per client at which its allowance is next fully
+/// spent. Clients are kept under a hash keyed at random when the server
+/// starts, never under their address, and only in memory.
+#[derive(Debug, Default)]
+struct Limiter {
+    due: HashMap<u64, Instant>,
+    key: RandomState,
+}
+
+impl Limiter {
+    /// Whether `ip` may open one more connection now. An allowed
+    /// connection is counted; a refused one is not.
+    fn admit(&mut self, ip: IpAddr, now: Instant, cfg: &Config) -> bool {
+        let id = self.key.hash_one(client_of(ip));
+        let known = self.due.get(&id).copied();
+        if known.is_none() && self.due.len() >= cfg.max_clients {
+            return true;
+        }
+        let start = known.map_or(now, |due| due.max(now));
+        let Some(next) = start.checked_add(cfg.rate_interval) else {
+            return false;
+        };
+        let window = cfg.rate_interval.saturating_mul(cfg.rate_burst);
+        if next.saturating_duration_since(now) > window {
+            return false;
+        }
+        self.due.insert(id, next);
+        true
+    }
+
+    /// Forget clients that are back at a full burst.
+    fn sweep(&mut self, now: Instant) {
+        self.due.retain(|_, due| *due > now);
+    }
+}
 
 /// Which endpoint a connection opened.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -140,6 +227,7 @@ struct State {
     cooling: HashMap<u32, Instant>,
     scary: VecDeque<Instant>,
     next_conn: ConnId,
+    limiter: Limiter,
 }
 
 impl State {
@@ -206,6 +294,7 @@ impl State {
             .retain(|_, t| now.saturating_duration_since(*t) < cfg.retire_for);
         self.cooling
             .retain(|_, t| now.saturating_duration_since(*t) < COOLDOWN);
+        self.limiter.sweep(now);
         told
     }
 
@@ -258,7 +347,7 @@ impl Server {
             }
         });
         loop {
-            let Ok((stream, _addr)) = listener.accept().await else {
+            let Ok((stream, addr)) = listener.accept().await else {
                 continue;
             };
             let Ok(permit) = self.slots.clone().try_acquire_owned() else {
@@ -268,7 +357,7 @@ impl Server {
             };
             let server = self.clone();
             tokio::spawn(async move {
-                server.handle(stream).await;
+                server.handle(stream, addr.ip()).await;
                 drop(permit);
             });
         }
@@ -276,7 +365,7 @@ impl Server {
 
     // The handshake callback's error type is fixed by tungstenite.
     #[allow(clippy::result_large_err)]
-    async fn handle(&self, stream: TcpStream) {
+    async fn handle(&self, stream: TcpStream, ip: IpAddr) {
         let _ = stream.set_nodelay(true);
         let mut ws_config = WebSocketConfig::default();
         ws_config.max_message_size = Some(MAX_MAILBOX_BODY.saturating_add(1024));
@@ -291,7 +380,7 @@ impl Server {
             tokio_tungstenite::accept_hdr_async_with_config(stream, callback, Some(ws_config)),
         )
         .await;
-        let Ok(Ok(ws)) = accepted else {
+        let Ok(Ok(mut ws)) = accepted else {
             return;
         };
         let route = match path.as_str() {
@@ -304,6 +393,25 @@ impl Server {
                 _ => return,
             },
         };
+        // Every allocation and every mailbox opening counts, as in the
+        // Worker; a client over its rate gets a reason, not a dropped socket.
+        let admitted = self
+            .state
+            .lock()
+            .await
+            .limiter
+            .admit(ip, Instant::now(), &self.config);
+        if !admitted {
+            let refusal = ServerMessage::Error {
+                reason: TOO_MANY.into(),
+            };
+            let _ = tokio::time::timeout(IO_TIMEOUT, async {
+                let _ = ws.send(Message::Binary(refusal.encode().into())).await;
+                let _ = ws.close(None).await;
+            })
+            .await;
+            return;
+        }
         let (mut sink, mut source) = ws.split();
         let (outbox, mut inbox) = mpsc::channel::<ServerMessage>(64);
 
@@ -597,4 +705,114 @@ pub async fn spawn(
     let server = Server::new(config);
     let task = tokio::spawn(server.clone().serve(listener));
     Ok((local, server, task))
+}
+
+#[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::arithmetic_side_effects)]
+mod tests {
+    // The same cases as the Worker's `test/limit.test.ts`.
+    use super::*;
+
+    fn config() -> Config {
+        Config {
+            rate_burst: 4,
+            rate_interval: Duration::from_secs(2),
+            max_clients: 3,
+            ..Config::default()
+        }
+    }
+
+    fn ip(s: &str) -> IpAddr {
+        s.parse().unwrap()
+    }
+
+    #[test]
+    fn a_burst_is_allowed_then_one_more_each_interval() {
+        let cfg = config();
+        let mut l = Limiter::default();
+        let t0 = Instant::now();
+        let a = ip("203.0.113.7");
+        for i in 0..4 {
+            assert!(l.admit(a, t0, &cfg), "request {i}");
+        }
+        assert!(!l.admit(a, t0, &cfg));
+        assert!(!l.admit(a, t0 + Duration::from_millis(1_999), &cfg));
+        assert!(l.admit(a, t0 + Duration::from_secs(2), &cfg));
+        assert!(!l.admit(a, t0 + Duration::from_secs(2), &cfg));
+    }
+
+    #[test]
+    fn refused_requests_are_not_counted() {
+        let cfg = config();
+        let mut l = Limiter::default();
+        let t0 = Instant::now();
+        let a = ip("203.0.113.7");
+        for _ in 0..4 {
+            l.admit(a, t0, &cfg);
+        }
+        for _ in 0..100 {
+            assert!(!l.admit(a, t0, &cfg));
+        }
+        assert!(l.admit(a, t0 + Duration::from_secs(2), &cfg));
+    }
+
+    #[test]
+    fn clients_are_counted_apart() {
+        let cfg = config();
+        let mut l = Limiter::default();
+        let t0 = Instant::now();
+        for _ in 0..4 {
+            l.admit(ip("203.0.113.7"), t0, &cfg);
+        }
+        assert!(!l.admit(ip("203.0.113.7"), t0, &cfg));
+        assert!(l.admit(ip("203.0.113.8"), t0, &cfg));
+    }
+
+    #[test]
+    fn a_quiet_client_is_forgotten_once_its_burst_is_full_again() {
+        let cfg = config();
+        let mut l = Limiter::default();
+        let t0 = Instant::now();
+        for _ in 0..4 {
+            l.admit(ip("203.0.113.7"), t0, &cfg);
+        }
+        l.admit(ip("203.0.113.8"), t0, &cfg);
+        l.sweep(t0 + Duration::from_secs(2));
+        assert_eq!(l.due.len(), 1);
+        l.sweep(t0 + Duration::from_secs(8));
+        assert!(l.due.is_empty());
+    }
+
+    #[test]
+    fn beyond_the_most_clients_a_new_client_is_let_through_uncounted() {
+        let cfg = config();
+        let mut l = Limiter::default();
+        let t0 = Instant::now();
+        for c in ["192.0.2.1", "192.0.2.2", "192.0.2.3"] {
+            l.admit(ip(c), t0, &cfg);
+        }
+        for _ in 0..10 {
+            assert!(l.admit(ip("192.0.2.4"), t0, &cfg));
+        }
+        assert_eq!(l.due.len(), 3);
+    }
+
+    #[test]
+    fn a_client_is_an_ipv4_address_or_an_ipv6_64() {
+        assert_eq!(
+            client_of(ip("203.0.113.7")),
+            client_of(ip("::ffff:203.0.113.7"))
+        );
+        assert_ne!(client_of(ip("203.0.113.7")), client_of(ip("203.0.113.8")));
+        assert_eq!(
+            client_of(ip("2001:db8:1:2:3:4:5:6")),
+            client_of(ip("2001:db8:1:2::9"))
+        );
+        assert_ne!(
+            client_of(ip("2001:db8:1:2::9")),
+            client_of(ip("2001:db8:1:3::9"))
+        );
+        // An IPv4 client never shares a counter with an IPv6 /64.
+        assert_ne!(client_of(ip("0.0.0.1")), client_of(ip("::1")));
+    }
 }
