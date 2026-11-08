@@ -228,10 +228,11 @@ jobs:
       # gitleaks over the commits scanned. Findings are printed redacted,
       # never the secret. The scanned commits must not be able to silence
       # it: the config is BASE's .gitleaks.toml (or gitleaks' default),
-      # never the one under review. Only .git is mounted, so no file in the
-      # tree (.gitleaksignore, .gitleaks.toml, .gitattributes) reaches
-      # gitleaks or git; gitleaks:allow comments are ignored; and --text
-      # keeps a NUL byte from hiding a text file as binary. The image is the
+      # never the one under review. Only .git is mounted, so gitleaks never
+      # sees the tree's .gitleaksignore or .gitleaks.toml. gitleaks:allow
+      # comments are ignored. git still reads .gitattributes from the index,
+      # so keep --text: it stops a -diff/binary attribute or a NUL byte
+      # from hiding a text file as binary. The image is the
       # release the pre-commit hook pins (gitleaks v8.30.0); upgrade both
       # together. It runs even when the step above failed, so one run
       # reports every finding.
