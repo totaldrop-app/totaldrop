@@ -162,9 +162,11 @@ versions" işi) şunları denetler:
 - her `setup-node` adımının kendi `node-version` satırı var;
 - her değer sabit bir ana sürüm (`24`) ya da tam sürüm (`24.11.1`) ve
   hepsi aynı ana sürüm;
-- `node`, `npm` ya da `npx` çalıştıran her işte bir `setup-node` adımı var
-  (aşağıdaki Flatpak istisnası dışında);
-- depodaki her `package.json`'da `@types/node` tek bir ana sürüme bağlı
+- `node`, `npm`, `npx` ya da `node_modules/.bin/` altından bir araç
+  çalıştıran her işte bir `setup-node` adımı var (aşağıdaki Flatpak
+  istisnası dışında);
+- git'in izlediği her `package.json`'da (`.git` yoksa bulunan her
+  `package.json`'da) `@types/node` tek bir ana sürüme bağlı
   (`24.19.2`, `^24.19.2`; `latest` ya da `>=24` değil), yanındaki
   `package-lock.json` da aynı ana sürümü kuruyor ve bu, Node'un ana
   sürümüyle aynı.

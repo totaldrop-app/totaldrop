@@ -88,6 +88,35 @@ expect fail "a node-version in another step does not cover a step with none" \
 expect fail "a job that runs node with no setup-node step" "job 'check' runs Node" \
   "edit $wf/site.yml '/uses: actions\\/setup-node@/d; /^        with:\$/d; /$nv/d'"
 
+# workflow NAME JOB-INDENT STEP-LINE...: a new workflow whose second job,
+# after one with setup-node, runs the given steps.
+workflow() {
+  name=$1 i=$2
+  shift 2
+  {
+    printf 'on: push\njobs:\n'
+    printf '%sa:\n%s  runs-on: x\n%s  steps:\n' "$i" "$i" "$i"
+    printf '%s    - uses: actions/setup-node@0 # v0\n%s      with:\n%s        %s\n' "$i" "$i" "$i" "$nv"
+    printf '%s    - run: node --version\n' "$i"
+    printf '%sb: # the second job\n%s  runs-on: x\n%s  steps:\n' "$i" "$i" "$i"
+    for l in "$@"; do printf '%s    %s\n' "$i" "$l"; done
+  } > "$wf/$name.yml"
+}
+expect pass "a second job that does not run Node" \
+  "workflow x '  ' '- name: check node modules' '  run: echo nodes npmrc'"
+expect fail "a second job, after a comment on its key, that runs node" "job 'b' runs Node" \
+  "workflow x '  ' '- run: node'"
+expect fail "jobs indented by four spaces" "job 'b' runs Node" \
+  "workflow x '    ' '- run: npm ci'"
+expect fail "node quoted" "job 'b' runs Node" \
+  "workflow x '  ' '- run: \"node tools/x.mjs\"'"
+expect fail "npm at the end of a line" "job 'b' runs Node" \
+  "workflow x '  ' '- run: cd server && npm'"
+expect fail "a tool from node_modules/.bin" "job 'b' runs Node" \
+  "workflow x '  ' '- run: ./server/relay-worker/node_modules/.bin/wrangler deploy'"
+expect fail "a quoted job key" "job 'b' runs Node" \
+  "workflow x '  ' '- run: npx wrangler' && edit $wf/x.yml 's|^  b:|  \"b\":|'"
+
 # @types/node.
 expect fail "@types/node a major ahead" "package.json (@types/node major)" \
   "edit $pkg 's|\"@types/node\": \"[^0-9\"]*$major\\.|\"@types/node\": \"^$next.|'"
