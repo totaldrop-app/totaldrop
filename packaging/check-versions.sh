@@ -73,29 +73,69 @@ done
 flutter=$(grep -hoE "flutter-version: *[\"']?[0-9.]+" "$root"/.github/workflows/*.yml | grep -oE '[0-9.]+$' | sort -u || true)
 [ "$(printf '%s\n' "$flutter" | grep -c . || true)" -eq 1 ] || fail "Flutter must be pinned to exactly one version, found: '$(echo $flutter)'"
 
-# Node: every setup-node step in the workflows names its version, each one
-# a fixed major ("24") or release ("24.11.1"), never a moving one (lts/*,
-# 24.x), all with the same major; and @types/node has that major in every
-# package.json (docs/surec.md, "Node"). The Flatpak job runs the Node in
-# Flathub's image, pinned by digest, and is not checked here.
+# Node (docs/surec.md, "Node"). In the workflows: every setup-node step
+# names its version, each one a fixed major ("24") or release ("24.11.1"),
+# never a moving one (lts/*, 24.x), all with the same major; and every job
+# that runs node, npm or npx has a setup-node step, so none runs whatever
+# Node the runner image ships. The one exception is the Flatpak job, which
+# runs the Node in Flathub's image, pinned by digest. For @types/node:
+# every tracked package.json that names it pins that major, and its
+# package-lock.json installs that major.
+#
+# One pass over a workflow prints "V value" for each node-version,
+# "M line" for a setup-node step with none, and "J job" for a job that runs
+# Node with no setup-node step. A step ends at the next list item; a job at
+# the next two-space key under jobs:.
+node_scan() {
+  awk -v q="'" '
+    function endstep() { if (pending) print "M " pline; pending = 0 }
+    function endjob() {
+      endstep()
+      if (job != "" && runs && !setup) print "J " job
+      job = ""; runs = 0; setup = 0
+    }
+    /^[[:space:]]*#/ { next }
+    /^jobs:[[:space:]]*$/ { injobs = 1; next }
+    /^[^[:space:]]/ { if (injobs) { endjob(); injobs = 0 } }
+    injobs && /^  [A-Za-z0-9_-]+:[[:space:]]*$/ {
+      endjob(); job = $1; sub(/:$/, "", job); next
+    }
+    /^[[:space:]]*-[[:space:]]/ { endstep() }
+    $0 ~ "^[[:space:]]*(-[[:space:]]+)?uses:[[:space:]]*[\"" q "]?actions/setup-node@" {
+      pending = 1; pline = NR; setup = 1; next
+    }
+    /^[[:space:]]*node-version:/ {
+      v = $0
+      sub(/^[[:space:]]*node-version:[[:space:]]*/, "", v)
+      sub(/[[:space:]]+#.*$/, "", v)
+      sub(/[[:space:]]+$/, "", v)
+      if (v ~ "^[\"" q "]") v = substr(v, 2)
+      if (v ~ "[\"" q "]$") v = substr(v, 1, length(v) - 1)
+      print "V " v; pending = 0; next
+    }
+    /(^|[[:space:];&|(])(node|npm|npx)[[:space:]]/ { runs = 1 }
+    END { endjob() }
+  ' "$1"
+}
 node_majors=
 for f in "$root"/.github/workflows/*.yml "$root"/.github/workflows/*.yaml; do
   [ -f "$f" ] || continue
   rel=${f#"$root"/}
-  steps=$(grep -cE '^[[:space:]]*(-[[:space:]]+)?uses:[[:space:]]*actions/setup-node@' "$f" || true)
-  vs=$(sed -nE "s/^[[:space:]]*node-version:[[:space:]]*//p" "$f" | sed -E "s/[[:space:]]+#.*$//; s/^[\"']//; s/[\"'][[:space:]]*$//")
-  [ "$steps" -eq "$(printf '%s' "$vs" | grep -c . || true)" ] ||
-    fail "$rel: $steps setup-node steps, but not one node-version line for each"
   # Read line by line, so a value like lts/* is never expanded as a glob.
-  while IFS= read -r v; do
-    [ -n "$v" ] || continue
-    if printf '%s' "$v" | grep -qE '^[0-9]+(\.[0-9]+\.[0-9]+)?$'; then
-      node_majors="$node_majors ${v%%.*}"
-    else
-      fail "$rel: node-version '$v' is not a fixed Node major or release"
-    fi
+  while IFS=" " read -r kind v; do
+    case $kind in
+      V)
+        if printf '%s' "$v" | grep -qE '^[0-9]+(\.[0-9]+\.[0-9]+)?$'; then
+          node_majors="$node_majors ${v%%.*}"
+        else
+          fail "$rel: node-version '$v' is not a fixed Node major or release"
+        fi ;;
+      M) fail "$rel:$v: setup-node step with no node-version" ;;
+      J) [ "$rel $v" = ".github/workflows/linux.yml flatpak" ] ||
+        fail "$rel: job '$v' runs Node with no setup-node step" ;;
+    esac
   done <<EOF
-$vs
+$(node_scan "$f")
 EOF
 done
 node=$(printf '%s\n' $node_majors | sort -u | grep . || true)
@@ -103,13 +143,34 @@ if [ "$(printf '%s\n' "$node" | grep -c . || true)" -ne 1 ]; then
   fail "Node must be pinned to exactly one major, found: '$(echo $node)'"
   node=
 fi
-# With no single major there is nothing to compare @types/node with.
+# With no single major there is nothing to compare @types/node with. Only
+# tracked files count; a copy with no .git (a source archive) is searched.
 packages=
-[ -z "$node" ] || packages=$(find "$root" \( -name node_modules -o -name .git -o -name target -o -name build -o -name .dart_tool \) -prune -o -name package.json -print)
-while IFS= read -r f; do
-  [ -n "$f" ] || continue
-  t=$(sed -nE 's/.*"@types\/node"[[:space:]]*:[[:space:]]*"[^0-9"]*([0-9]+)[^"]*".*/\1/p' "$f" | head -1)
-  [ -z "$t" ] || same "${f#"$root"/} (@types/node major)" "$t" "$node"
+if [ -n "$node" ]; then
+  if [ -e "$root/.git" ] && command -v git >/dev/null 2>&1; then
+    packages=$(git -C "$root" ls-files -- package.json '*/package.json')
+  else
+    packages=$(cd "$root" && find . \( -name node_modules -o -name .git -o -name target -o -name build -o -name .dart_tool \) -prune -o -type f -name package.json -print | sed 's|^\./||')
+  fi
+fi
+while IFS= read -r pkg; do
+  [ -n "$pkg" ] || continue
+  grep -q '"@types/node"' "$root/$pkg" || continue
+  t=$(sed -nE 's/.*"@types\/node"[[:space:]]*:[[:space:]]*"([^"]*)".*/\1/p' "$root/$pkg" | head -1)
+  if printf '%s' "$t" | grep -qE '^[~^]?[0-9]+(\.[0-9]+){0,2}$'; then
+    t=${t#[~^]}
+    same "$pkg (@types/node major)" "${t%%.*}" "$node"
+  else
+    fail "$pkg: @types/node '$t' does not pin one major"
+  fi
+  lock=$(dirname "$pkg")/package-lock.json
+  if [ -f "$root/$lock" ]; then
+    l=$(awk '/"node_modules\/@types\/node":[[:space:]]*\{/ { f = 1; next }
+      f && /"version":/ { sub(/.*"version":[[:space:]]*"/, ""); sub(/".*/, ""); print; exit }' "$root/$lock")
+    same "$lock (@types/node major)" "${l%%.*}" "$node"
+  else
+    fail "$pkg: names @types/node but has no package-lock.json"
+  fi
 done <<EOF
 $packages
 EOF
