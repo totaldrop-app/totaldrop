@@ -149,19 +149,27 @@ Wrangler ile dağıtım) aynı sabit Node ana sürümüyle (major) çalışır:
 `.github/workflows/` altındaki her `actions/setup-node` adımı aynı
 `node-version` değerini taşır. `lts/*` ya da `24.x` gibi kendiliğinden
 değişen bir değer kullanılmaz; yeni bir LTS çıktığında CI'ın Node'u
-habersiz değişmez. Ara sürüm (24.x içinde hangisi) `setup-node`'un o günkü
-seçimidir. Buluşma Worker'ının birim testleri `@types/node` ile tür
-denetiminden geçer; onun ana sürümü de aynıdır, yoksa tür denetimi
-testlerin çalıştığı Node'da olmayan API'leri kabul eder. Node çalıştıran
-yeni bir iş de aynı `setup-node` adımını alır, runner imajındaki Node'a
-güvenmez.
+habersiz değişmez. 24.x içinde hangi sürümün kurulacağını `setup-node`
+belirler; önce runner imajındaki önbelleğe bakar. Buluşma Worker'ının
+birim testleri `@types/node` ile tür denetiminden geçer; onun ana sürümü
+de aynıdır, yoksa tür denetimi testlerin çalıştığı Node'da olmayan
+API'leri kabul eder. Node çalıştıran yeni bir iş de aynı `setup-node`
+adımını alır, runner imajındaki Node'a güvenmez.
 
 `packaging/check-versions.sh` her PR'da (`CI` iş akışı, "Component
-versions" işi) şunları denetler: her `setup-node` adımının bir
-`node-version` satırı var, her değer sabit bir ana sürüm (`24`) ya da tam
-sürüm (`24.11.1`), hepsi aynı ana sürüm ve her `package.json`'daki
-`@types/node` ile aynı. `packaging/test-check-versions.sh` denetimin
-kendisini aynı işte sınar.
+versions" işi) şunları denetler:
+
+- her `setup-node` adımının kendi `node-version` satırı var;
+- her değer sabit bir ana sürüm (`24`) ya da tam sürüm (`24.11.1`) ve
+  hepsi aynı ana sürüm;
+- `node`, `npm` ya da `npx` çalıştıran her işte bir `setup-node` adımı var
+  (aşağıdaki Flatpak istisnası dışında);
+- depodaki her `package.json`'da `@types/node` tek bir ana sürüme bağlı
+  (`24.19.2`, `^24.19.2`; `latest` ya da `>=24` değil), yanındaki
+  `package-lock.json` da aynı ana sürümü kuruyor ve bu, Node'un ana
+  sürümüyle aynı.
+
+`packaging/test-check-versions.sh` denetimin kendisini aynı işte sınar.
 
 **Yükseltme:** Node ana sürüm yükseltmesi tek bir PR'dır. Bütün
 `node-version` değerleri ve `@types/node` aynı PR'da birlikte değişir.
