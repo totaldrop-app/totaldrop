@@ -388,7 +388,7 @@ test("require ignores dotfiles, bad names, renames and old-section edits", () =>
 });
 
 test("check flags dotfiles, directories, symbolic links and CRLF", () => {
-  const root = repo({ ".gitkeep": "", "12-a.fixed.md": ENTRY.replace("\n", "\r\n") });
+  const root = repo({ ".gitkeep": "", "12-a.fixed.md": ENTRY.replaceAll("\n", "\r\n") });
   mkdirSync(join(root, "changelog.d", "sub"));
   symlinkSync("missing.md", join(root, "changelog.d", "13-gone.fixed.md"));
   try {
