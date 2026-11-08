@@ -36,7 +36,7 @@ jobs:
     name: Release
     needs: verify
     runs-on: ubuntu-latest
-    # Waits for the maintainer's approval, and only linux-v* tags may
+    # Waits for the project lead's approval, and only linux-v* tags may
     # deploy here. Only an admin may create such a tag (ruleset "release
     # tags"), so the checks above cannot be skipped by tagging another commit.
     environment: linux-release

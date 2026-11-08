@@ -17,17 +17,21 @@ için [versioning.md](versioning.md) bağlayıcıdır.
 4. **CI:** Bütün kontroller yeşil olmadan birleştirme yapılmaz. Kırmızı bir
    kontrol "sonra bakarız" diye geçilmez; ya düzeltilir ya da nedeni PR'da
    yazılır ve ayrı bir issue açılır.
-5. **Bağımsız inceleme:** Her PR'ı, kodu yazmamış biri okur. Bu, bir bakımcı
-   ya da değişikliği yazan oturumdan ayrı çalışan bir inceleme ajanıdır:
-   ajan yalnızca diff'i ve ilgili kodu görür, yazarın gerekçesini görmez. Bulduğu her doğruluk ya da güvenlik sorunu birleştirmeden önce
-   düzeltilir; düzeltilmeyenler için gerekçe PR'a yazılır.
+5. **Bağımsız inceleme:** Her PR'ı, kodu yazmamış biri okur: bir bakımcı
+   ya da değişikliği yazan oturumdan ayrı çalışan bir inceleme ajanı. Ajan
+   yalnızca diff'i ve ilgili kodu görür, yazarın gerekçesini görmez.
+   Bakımcının kendi PR'ını öteki bakımcı ya da inceleme ajanı okur. Bulunan
+   her doğruluk ya da güvenlik sorunu birleştirmeden önce düzeltilir;
+   düzeltilmeyenler için gerekçe PR'a yazılır.
 6. **Birleştirme:** `main`'e yalnızca PR ile, rebase ile birleştirilir;
    geçmiş doğrusal kalır. Doğrudan push ve force push kapalıdır. `CI`
-   kontrolü yeşil olmadan kural birleştirmeye izin vermez. Her dosyanın kod
-   sahibi `@totaldrop-app/maintainers` takımıdır (`.github/CODEOWNERS`);
-   takım dışından gelen bir PR, bir bakımcı onaylamadan birleşmez.
-   Bakımcılar kendi PR'larını onaysız birleştirebilir, ama CI ve bağımsız
-   inceleme onlar için de şarttır. Roller: [GOVERNANCE.md](../GOVERNANCE.md).
+   kontrolü yeşil olmadan kural (`main`, kimse atlayamaz) birleştirmeye
+   izin vermez. Her dosyanın kod sahibi `@totaldrop-app/maintainers`
+   takımıdır (`.github/CODEOWNERS`); takım dışından gelen bir PR, bir
+   bakımcı onaylamadan birleştirilmez (kural `main review`). Bakımcılar
+   başkasının PR'ını onay vererek birleştirir. Kendi PR'larını onaysız
+   birleştirebilirler; bağımsız inceleme ise onlar için de şarttır.
+   Roller: [GOVERNANCE.md](../GOVERNANCE.md).
 7. **Yayın:** [Sürüm listesi](#sürüm-listesi) adım adım izlenir.
 
 ## Bitti tanımı
@@ -97,9 +101,10 @@ Bir değişiklik ancak şunların hepsi doğruysa bitmiştir:
    `0.MINOR.PATCH-beta.N` biçiminde olmalıdır. `Cargo.lock` ve kök
    `Cargo.toml` sayılmaz; CLI'yi etkileyen bir bağımlılık güncellemesinde
    sürümü artırmak yayınlayanın kararıdır.
-   Sürüm etiketlerini yalnızca depo yöneticisi oluşturabilir (kural "release
-   tags"); yayın işleri `linux-release` ve `play-release` ortamlarında,
-   yöneticinin onayıyla çalışır.
+   Sürüm etiketlerini yalnızca depo yöneticileri oluşturabilir (kural
+   "release tags"); etiketi proje lideri atar. Yayın işleri `linux-release`
+   ve `play-release` ortamlarında, proje liderinin (ortamların tek
+   onaylayıcısı) onayıyla çalışır.
 4. CI paketleri etiketten derler. Linux: her pakete derleme kaynağını
    gösteren imzalı bir kanıt (build provenance) ekler, aynı kanıtı Sigstore
    paketi olarak `totaldrop-linux-<sürüm>.sigstore.json` adıyla yayın

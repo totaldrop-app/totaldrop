@@ -60,7 +60,7 @@ Every pull request is reviewed before it is merged, by someone who did not write
 - behaviour is covered by tests, a bug fix comes with a test that failed before it, and a new parser has a fuzz target;
 - documents, the changelog entry and user-facing text match the change, and nothing claims more than the code does. User-facing text is written in all 35 languages.
 
-A pull request is acceptable when CI is green, every finding is fixed or answered in writing on the pull request (with a follow-up issue where one is needed), and the maintainer approves the merge. The pull request records the review and what was done about each finding.
+A pull request is acceptable when CI is green, every finding is fixed or answered in writing on the pull request (with a follow-up issue where one is needed), and a maintainer approves the merge ([GOVERNANCE.md](GOVERNANCE.md)). The pull request records the review and what was done about each finding.
 
 ## Small tasks for new contributors
 

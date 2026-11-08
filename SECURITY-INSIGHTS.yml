@@ -4,7 +4,7 @@
 # move last-reviewed forward when you check it against the repository.
 header:
   schema-version: 2.2.0
-  last-updated: '2026-11-04'
+  last-updated: '2026-11-08'
   last-reviewed: '2026-11-04'
   url: https://raw.githubusercontent.com/totaldrop-app/totaldrop/main/SECURITY-INSIGHTS.yml
 
@@ -56,6 +56,9 @@ repository:
     - name: Ozan
       social: https://github.com/ozdil
       primary: true
+    - name: Sadık Kuzu
+      social: https://github.com/sadikkuzu
+      primary: false
   documentation:
     contributing-guide: https://github.com/totaldrop-app/totaldrop/blob/main/CONTRIBUTING.md
     review-policy: https://github.com/totaldrop-app/totaldrop/blob/main/CONTRIBUTING.md#code-review
