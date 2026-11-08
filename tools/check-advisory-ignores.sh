@@ -6,18 +6,44 @@
 # Scorecard) must ignore the same advisories, so that an advisory hidden
 # from one is never silently hidden from only the other.
 #
-#   tools/check-advisory-ignores.sh
+#   tools/check-advisory-ignores.sh [root]
+#
+# Both files are read as TOML (Python's tomllib), so every form cargo-deny
+# accepts counts: bare IDs, inline tables, one line or many. An ignore by
+# crate instead of by advisory has no OSV-Scanner equivalent and fails.
+# The tests are in tools/test-advisory-ignores.sh.
 set -eu
-root=$(cd "$(dirname "$0")/.." && pwd)
-# Only the value of each id = "…" key, so an ID named in a reason or a
-# comment does not count.
-id_values() { sed -nE 's/^[[:space:]]*\{?[[:space:]]*id[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' | sort -u; }
-deny=$(sed -n '/^\[advisories\]/,/^\[/p' "$root/deny.toml" | id_values)
-osv=$(id_values < "$root/osv-scanner.toml")
-if [ "$deny" != "$osv" ]; then
-  echo "deny.toml and osv-scanner.toml ignore different advisories:" >&2
-  echo "deny.toml:" >&2; echo "$deny" >&2
-  echo "osv-scanner.toml:" >&2; echo "$osv" >&2
-  exit 1
-fi
-echo "advisory ignores agree: $(echo "$deny" | tr '\n' ' ')"
+root=${1:-$(cd "$(dirname "$0")/.." && pwd)}
+exec python3 -I - "$root" <<'EOF'
+import pathlib, sys, tomllib
+
+root = pathlib.Path(sys.argv[1])
+
+
+def load(name):
+    with open(root / name, "rb") as f:
+        return tomllib.load(f)
+
+
+deny = set()
+for entry in load("deny.toml").get("advisories", {}).get("ignore", []):
+    if isinstance(entry, str):
+        deny.add(entry)
+    elif isinstance(entry, dict) and isinstance(entry.get("id"), str):
+        deny.add(entry["id"])
+    else:
+        sys.exit(f"deny.toml: ignore entry without an advisory id: {entry!r}")
+
+osv = set()
+for entry in load("osv-scanner.toml").get("IgnoredVulns", []):
+    if not isinstance(entry.get("id"), str):
+        sys.exit(f"osv-scanner.toml: IgnoredVulns entry without an id: {entry!r}")
+    osv.add(entry["id"])
+
+if deny != osv:
+    print("deny.toml and osv-scanner.toml ignore different advisories:", file=sys.stderr)
+    print("deny.toml:", " ".join(sorted(deny)) or "(none)", file=sys.stderr)
+    print("osv-scanner.toml:", " ".join(sorted(osv)) or "(none)", file=sys.stderr)
+    sys.exit(1)
+print("advisory ignores agree:", " ".join(sorted(deny)) or "(none)")
+EOF

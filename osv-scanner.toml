@@ -2,4 +2,5 @@
 # list the same as the advisories ignored in deny.toml; CI checks that with
 # tools/check-advisory-ignores.sh.
 #
-# No advisory is ignored (the zbus 5 crates left with ashpd 0.14, #49).
+# No advisory is ignored. An ignore needs a reason and the condition for
+# removing it.

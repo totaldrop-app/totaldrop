@@ -150,6 +150,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      - run: tools/test-advisory-ignores.sh
       - run: tools/check-advisory-ignores.sh
 
   # Every file carries its copyright and license, in its own SPDX lines or
