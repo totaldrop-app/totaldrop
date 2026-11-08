@@ -184,41 +184,70 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
-      # The names the pre-commit hook `no-signing-secrets` refuses, in any
-      # letter case.
-      - name: No signing keys or key.properties are tracked
-        run: |
-          if git ls-files -z | grep -ziE '(^|/)key\.properties$|\.(jks|keystore|p12|pfx|pepk)$' | tr '\0' '\n' | grep .; then
-            echo "::error::Signing keys and key.properties must not be committed (docs/surec.md, \"Gizli bilgiler\")."
-            exit 1
-          fi
-      # gitleaks scans the commits this run adds: on a pull request the
-      # checkout is the merge commit, whose first parent is main as it is
-      # now. A manual run, or a push whose old head is unknown, scans the
-      # whole history. Findings are printed redacted, never the secret.
-      # The image is the release the pre-commit hook pins (gitleaks
-      # v8.30.0); upgrade both together. It runs even when the step above
-      # failed, so one run reports every finding.
-      - name: gitleaks
-        if: ${{ !cancelled() }}
+      # The commits this run adds: on a pull request the checkout is the
+      # merge commit, whose first parent is main as it is now. A manual
+      # run, or a push whose old head is unknown, takes the whole history.
+      # BASE is the commit before them; its config is the one trusted.
+      - name: Commits to scan
+        id: range
         env:
           EVENT: ${{ github.event_name }}
           BEFORE: ${{ github.event.before }}
           MERGE_GROUP_BASE: ${{ github.event.merge_group.base_sha }}
         run: |
           case $EVENT in
-            pull_request) range=HEAD^1..HEAD ;;
-            push) range=$BEFORE..HEAD ;;
-            merge_group) range=$MERGE_GROUP_BASE..HEAD ;;
-            *) range=HEAD ;;
+            pull_request) base=HEAD^1 ;;
+            push) base=$BEFORE ;;
+            merge_group) base=$MERGE_GROUP_BASE ;;
+            *) base= ;;
           esac
-          if [ "$range" != HEAD ] && ! git cat-file -e "${range%..HEAD}^{commit}" 2>/dev/null; then
-            range=HEAD
+          if [ -n "$base" ] && git cat-file -e "$base^{commit}" 2>/dev/null; then
+            range=$base..HEAD
+          else
+            base=HEAD range=HEAD
           fi
           echo "Scanning $range"
-          docker run --rm --volume "$PWD:/repo:ro" \
+          { echo "BASE=$base"; echo "RANGE=$range"; } >>"$GITHUB_ENV"
+      # The names the pre-commit hook `no-signing-secrets` refuses, in any
+      # letter case, in the tree and in every commit scanned: rebase merges
+      # keep every commit, so a key added and deleted again in one pull
+      # request still reaches main. A .gitleaksignore would silence
+      # gitleaks, so none is committed either.
+      - name: No signing keys, key.properties or .gitleaksignore
+        run: |
+          found=$(
+            { git ls-files -z
+              git -c core.quotePath=false log --format= --name-only -z --no-renames --diff-filter=d "$RANGE"
+            } | grep -ziE '(^|/)(key\.properties|\.gitleaksignore)$|\.(jks|keystore|p12|pfx|pepk)$' | tr '\0' '\n' | sort -u
+          )
+          if [ -n "$found" ]; then
+            printf '%s\n' "$found"
+            echo "::error::Signing keys, key.properties and .gitleaksignore must not be committed (docs/surec.md, \"Gizli bilgiler\")."
+            exit 1
+          fi
+      # gitleaks over the commits scanned. Findings are printed redacted,
+      # never the secret. The scanned commits must not be able to silence
+      # it: the config is BASE's .gitleaks.toml (or gitleaks' default),
+      # never the one under review. Only .git is mounted, so no file in the
+      # tree (.gitleaksignore, .gitleaks.toml, .gitattributes) reaches
+      # gitleaks or git; gitleaks:allow comments are ignored; and --text
+      # keeps a NUL byte from hiding a text file as binary. The image is the
+      # release the pre-commit hook pins (gitleaks v8.30.0); upgrade both
+      # together. It runs even when the step above failed, so one run
+      # reports every finding.
+      - name: gitleaks
+        if: ${{ !cancelled() && steps.range.outcome == 'success' }}
+        run: |
+          cfg=$RUNNER_TEMP/gitleaks
+          mkdir -p "$cfg"
+          if ! git show "$BASE:.gitleaks.toml" >"$cfg/gitleaks.toml" 2>/dev/null; then
+            printf '[extend]\nuseDefault = true\n' >"$cfg/gitleaks.toml"
+          fi
+          docker run --rm --volume "$PWD/.git:/repo/.git:ro" --volume "$cfg:/cfg:ro" \
             ghcr.io/gitleaks/gitleaks:v8.30.0@sha256:691af3c7c5a48b16f187ce3446d5f194838f91238f27270ed36eef6359a574d9 \
-            git --no-banner --redact --verbose --log-opts="$range" /repo
+            git --no-banner --redact --verbose --config /cfg/gitleaks.toml \
+            --gitleaks-ignore-path /cfg --ignore-gitleaks-allow \
+            --log-opts="--text $RANGE" /repo
 
   # The required check. Skipped areas count as passed; anything failed or
   # cancelled, including the area detection, fails it.
