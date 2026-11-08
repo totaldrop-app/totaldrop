@@ -54,12 +54,14 @@ test("bar colours follow the role, not the order in team.json", async () => {
     { login: "b", kind: "person", role: "contributor" },
     { login: "a", kind: "person", role: "maintainer" },
     { login: "t", kind: "person", role: "tester" },
+    { login: "s", kind: "person", role: "principal" },
     { login: "claude", kind: "ai" },
     { login: "dependabot[bot]", kind: "bot" },
   ] };
   assert.equal(series(c, "a"), "s-maintainer");
   assert.equal(series(c, "b"), "s-contributor");
   assert.equal(series(c, "t"), "s-contributor");
+  assert.equal(series(c, "s"), "s-contributor");
   assert.equal(series(c, "claude"), "s-ai");
   assert.equal(series(c, "dependabot[bot]"), "s-bot");
   assert.equal(series(c, ""), "s-other");

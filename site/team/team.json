@@ -2,7 +2,7 @@
   "repo": "totaldrop-app/totaldrop",
   "people": [
     { "login": "ozdil", "kind": "person", "role": "maintainer" },
-    { "login": "sadikkuzu", "kind": "person", "role": "contributor", "areas": ["core", "cli"], "name": "Sadık Kuzu" },
+    { "login": "sadikkuzu", "kind": "person", "role": "principal", "areas": ["core", "cli"], "name": "Sadık Kuzu" },
     { "login": "mstfyrdmc", "kind": "person", "role": "tester", "areas": ["ios", "macos"], "name": "Mustafa Yardımcı" },
     { "login": "zaforcan", "kind": "person", "role": "contributor" },
     { "login": "claude", "kind": "ai" },

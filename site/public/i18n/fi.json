@@ -565,6 +565,7 @@
   "tm.role.maintainer": "Perustaja ja projektin vetäjä",
   "tm.title": "TotalDropin takana olevat ihmiset",
   "tm.role.contributor": "Kehittäjä",
+  "tm.role.principal": "Pääinsinööri",
   "tm.role.tester": "Laadunvarmistuksen asiantuntija",
   "tm.s.areas": "Osa-alueet",
   "tm.s.langs": "Kielet",

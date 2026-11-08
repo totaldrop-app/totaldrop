@@ -565,6 +565,7 @@
   "tm.role.maintainer": "ผู้ก่อตั้งและหัวหน้าโครงการ",
   "tm.title": "ผู้คนเบื้องหลัง TotalDrop",
   "tm.role.contributor": "นักพัฒนา",
+  "tm.role.principal": "วิศวกรหลัก",
   "tm.role.tester": "ผู้เชี่ยวชาญด้านการประกันคุณภาพ",
   "tm.s.areas": "สาขา",
   "tm.s.langs": "ภาษา",
