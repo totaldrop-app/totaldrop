@@ -1,0 +1,53 @@
+# SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Fast local checks on every commit; they need no toolchain. CI stays the
+# required check (docs/surec.md). Toolchain checks (cargo, dart, flutter,
+# node): .pre-commit-config-extra.yaml.
+# Setup: pre-commit install (docs/gelistirme.md, "Yerel denetimler")
+minimum_pre_commit_version: "4.0.0"
+
+# Generated or copied files, as in CI. Keep in step with
+# .pre-commit-config-extra.yaml.
+exclude: |
+  (?x)^(
+    target/|
+    app/lib/l10n/|
+    app/lib/src/rust/|
+    app/rust/src/frb_generated\.rs$|
+    app/rust_builder/|
+    LICENSES/|
+    app/assets/fonts/.*\.txt$
+  )
+
+repos:
+  # Pinned to commit SHAs: pre-commit autoupdate --freeze
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c  # frozen: v6.0.0
+    hooks:
+      - id: check-merge-conflict
+      - id: check-yaml
+        args: [--allow-multiple-documents]
+      - id: check-toml
+      - id: check-added-large-files
+        args: [--maxkb=1024]
+      - id: detect-private-key
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+      - id: mixed-line-ending
+        args: [--fix=lf]
+
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: 2ca41cc1372d1e939a6a879f18cdc19fc1cac1ce  # frozen: v8.30.0
+    hooks:
+      - id: gitleaks
+
+  - repo: local
+    hooks:
+      # Signing keys and their passwords never enter the repository.
+      - id: no-signing-secrets
+        name: no signing keys or key.properties
+        language: fail
+        entry: This file must not be committed
+        files: (^|/)key\.properties$|\.(jks|keystore|p12)$

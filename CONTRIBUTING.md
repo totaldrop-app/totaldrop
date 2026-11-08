@@ -46,6 +46,8 @@ Each language follows one published style. The last column says what CI checks; 
 | C++ headers (`linux/src/bridge`) | [Qt's coding style](https://wiki.qt.io/Qt_Coding_Style) | Review only, for now |
 | JavaScript (`site/`, `tools/`) | Plain modern JavaScript, no build step | Syntax only: `node --check` on the site's scripts; the tools run in CI |
 
+To catch problems before you push, run `pre-commit install` once: it checks every commit for conflict markers, secrets, signing keys and whitespace, with no toolchain needed. `pre-commit run -c .pre-commit-config-extra.yaml --all-files` runs the checks above locally, using whichever toolchains you have ([docs/gelistirme.md](docs/gelistirme.md), "Yerel denetimler").
+
 Names, comments and commit messages are in English. Process and design documents in `docs/` are in Turkish; the protocol notes are in English.
 
 ## Code review
