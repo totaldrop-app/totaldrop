@@ -1,4 +1,4 @@
-<!-- Translated from README.md 0a6bee841691. -->
+<!-- Translated from README.md 2e554b8d92c2. -->
 <div align="center">
 
 <picture>
@@ -16,7 +16,7 @@ Gratuit și open source. Criptat end-to-end. Fără e-mail, fără număr de tel
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/totaldrop-app/totaldrop/badge)](https://scorecard.dev/viewer/?uri=github.com/totaldrop-app/totaldrop)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/16332/badge)](https://www.bestpractices.dev/projects/16332)
 [![License](https://img.shields.io/badge/license-GPL--3.0%20%C2%B7%20MIT%2FApache--2.0-22184F)](../../LICENSING.md)
-[![Sponsor](https://img.shields.io/github/sponsors/ozdil?label=Sponsor&logo=githubsponsors&color=EA4AAA)](https://github.com/sponsors/ozdil)
+[![Sponsor](https://img.shields.io/badge/Open%20Collective-donate-1F87FF?logo=opencollective&logoColor=white)](https://opencollective.com/totaldrop)
 
 **[Site](https://totaldrop.app)** · **[Descărcare](https://totaldrop.app/download/)** · [Foaie de parcurs](https://totaldrop.app/roadmap/) · [Donează](https://totaldrop.app/donate/) · [Versiuni](https://github.com/totaldrop-app/totaldrop/releases) · [X](https://x.com/totaldropapp) · [Instagram](https://www.instagram.com/totaldropapp/) · [Threads](https://www.threads.com/@totaldropapp)
 
@@ -87,7 +87,7 @@ Ați găsit o frază stângace? [Ajutați la traducere](../../docs/ceviri.md) (g
 
 TotalDrop rămâne gratuit pentru că oamenii contribuie. Donațiile plătesc serverul releu, certificatele de semnare a codului cerute de Windows și macOS și un audit de securitate independent înainte de 1.0. Fiecare cost, linie cu linie, și cât s-a strâns până acum: [totaldrop.app/donate](https://totaldrop.app/donate/).
 
-<a href="https://github.com/sponsors/ozdil"><img src="https://img.shields.io/badge/Sponsor%20on%20GitHub-EA4AAA?logo=githubsponsors&logoColor=white&style=for-the-badge" alt="Sponsorizați pe GitHub"></a>
+<a href="https://opencollective.com/totaldrop"><img src="https://img.shields.io/badge/Donate%20on%20Open%20Collective-1F87FF?logo=opencollective&logoColor=white&style=for-the-badge" alt="Donați pe Open Collective"></a>
 
 Puteți ajuta și [raportând erori](https://github.com/totaldrop-app/totaldrop/issues/new/choose), traducând sau testând pe desktopul dvs.
 

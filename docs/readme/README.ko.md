@@ -1,4 +1,4 @@
-<!-- Translated from README.md 0a6bee841691. -->
+<!-- Translated from README.md 2e554b8d92c2. -->
 <div align="center">
 
 <picture>
@@ -16,7 +16,7 @@
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/totaldrop-app/totaldrop/badge)](https://scorecard.dev/viewer/?uri=github.com/totaldrop-app/totaldrop)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/16332/badge)](https://www.bestpractices.dev/projects/16332)
 [![License](https://img.shields.io/badge/license-GPL--3.0%20%C2%B7%20MIT%2FApache--2.0-22184F)](../../LICENSING.md)
-[![Sponsor](https://img.shields.io/github/sponsors/ozdil?label=Sponsor&logo=githubsponsors&color=EA4AAA)](https://github.com/sponsors/ozdil)
+[![Sponsor](https://img.shields.io/badge/Open%20Collective-donate-1F87FF?logo=opencollective&logoColor=white)](https://opencollective.com/totaldrop)
 
 **[웹사이트](https://totaldrop.app)** · **[다운로드](https://totaldrop.app/download/)** · [로드맵](https://totaldrop.app/roadmap/) · [후원](https://totaldrop.app/donate/) · [릴리스](https://github.com/totaldrop-app/totaldrop/releases) · [X](https://x.com/totaldropapp) · [Instagram](https://www.instagram.com/totaldropapp/) · [Threads](https://www.threads.com/@totaldropapp)
 
@@ -87,7 +87,7 @@ TotalDrop은 35개 언어를 지원하며 사용자 지역의 숫자 형식을 �
 
 TotalDrop이 무료로 유지되는 것은 사람들이 힘을 보태 주기 때문입니다. 후원금은 릴레이, Windows와 macOS에 필요한 코드 서명 인증서, 그리고 1.0 이전의 독립 보안 감사에 쓰입니다. 모든 비용의 항목별 내역과 지금까지 모인 금액: [totaldrop.app/donate](https://totaldrop.app/donate/)
 
-<a href="https://github.com/sponsors/ozdil"><img src="https://img.shields.io/badge/Sponsor%20on%20GitHub-EA4AAA?logo=githubsponsors&logoColor=white&style=for-the-badge" alt="GitHub에서 후원하기"></a>
+<a href="https://opencollective.com/totaldrop"><img src="https://img.shields.io/badge/Donate%20on%20Open%20Collective-1F87FF?logo=opencollective&logoColor=white&style=for-the-badge" alt="Open Collective에서 후원하기"></a>
 
 [버그 신고](https://github.com/totaldrop-app/totaldrop/issues/new/choose), 번역, 데스크톱에서의 테스트로도 도울 수 있습니다.
 

@@ -1,4 +1,4 @@
-<!-- Translated from README.md 0a6bee841691. -->
+<!-- Translated from README.md 2e554b8d92c2. -->
 <div align="center">
 
 <picture>
@@ -16,7 +16,7 @@
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/totaldrop-app/totaldrop/badge)](https://scorecard.dev/viewer/?uri=github.com/totaldrop-app/totaldrop)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/16332/badge)](https://www.bestpractices.dev/projects/16332)
 [![الترخيص](https://img.shields.io/badge/license-GPL--3.0%20%C2%B7%20MIT%2FApache--2.0-22184F)](../../LICENSING.md)
-[![الرعاية](https://img.shields.io/github/sponsors/ozdil?label=Sponsor&logo=githubsponsors&color=EA4AAA)](https://github.com/sponsors/ozdil)
+[![الرعاية](https://img.shields.io/badge/Open%20Collective-donate-1F87FF?logo=opencollective&logoColor=white)](https://opencollective.com/totaldrop)
 
 **[الموقع](https://totaldrop.app)** · **[التنزيل](https://totaldrop.app/download/)** · [خارطة الطريق](https://totaldrop.app/roadmap/) · [التبرّع](https://totaldrop.app/donate/) · [الإصدارات](https://github.com/totaldrop-app/totaldrop/releases) · [X](https://x.com/totaldropapp) · [Instagram](https://www.instagram.com/totaldropapp/) · [Threads](https://www.threads.com/@totaldropapp)
 
@@ -87,7 +87,7 @@ gh attestation verify totaldrop_0.3.0.beta.6-1_amd64.deb --repo totaldrop-app/to
 
 يبقى TotalDrop مجانيًا لأن الناس يساهمون. تغطي التبرعات تكاليف خادم الترحيل، وشهادات توقيع الشيفرة التي يشترطها Windows وmacOS، وتدقيقًا أمنيًا مستقلًا قبل الإصدار 1.0. كل تكلفة، بندًا بندًا، وما جُمع حتى الآن: [totaldrop.app/donate](https://totaldrop.app/donate/).
 
-<a href="https://github.com/sponsors/ozdil"><img src="https://img.shields.io/badge/Sponsor%20on%20GitHub-EA4AAA?logo=githubsponsors&logoColor=white&style=for-the-badge" alt="ادعم عبر GitHub"></a>
+<a href="https://opencollective.com/totaldrop"><img src="https://img.shields.io/badge/Donate%20on%20Open%20Collective-1F87FF?logo=opencollective&logoColor=white&style=for-the-badge" alt="تبرّع عبر Open Collective"></a>
 
 يمكنك أيضًا المساعدة [بالإبلاغ عن الأخطاء](https://github.com/totaldrop-app/totaldrop/issues/new/choose)، أو بالترجمة، أو بالاختبار على حاسوبك المكتبي.
 

@@ -1,4 +1,4 @@
-<!-- Translated from README.md 0a6bee841691. -->
+<!-- Translated from README.md 2e554b8d92c2. -->
 <div align="center">
 
 <picture>
@@ -16,7 +16,7 @@ Gratis og åpen kildekode. Ende-til-ende-kryptert. Ingen e-post, intet telefonnu
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/totaldrop-app/totaldrop/badge)](https://scorecard.dev/viewer/?uri=github.com/totaldrop-app/totaldrop)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/16332/badge)](https://www.bestpractices.dev/projects/16332)
 [![License](https://img.shields.io/badge/license-GPL--3.0%20%C2%B7%20MIT%2FApache--2.0-22184F)](../../LICENSING.md)
-[![Sponsor](https://img.shields.io/github/sponsors/ozdil?label=Sponsor&logo=githubsponsors&color=EA4AAA)](https://github.com/sponsors/ozdil)
+[![Sponsor](https://img.shields.io/badge/Open%20Collective-donate-1F87FF?logo=opencollective&logoColor=white)](https://opencollective.com/totaldrop)
 
 **[Nettsted](https://totaldrop.app)** · **[Last ned](https://totaldrop.app/download/)** · [Veikart](https://totaldrop.app/roadmap/) · [Doner](https://totaldrop.app/donate/) · [Utgivelser](https://github.com/totaldrop-app/totaldrop/releases) · [X](https://x.com/totaldropapp) · [Instagram](https://www.instagram.com/totaldropapp/) · [Threads](https://www.threads.com/@totaldropapp)
 
@@ -87,7 +87,7 @@ Har du sett en klønete setning? [Hjelp til med å oversette](../../docs/ceviri.
 
 TotalDrop forblir gratis fordi folk bidrar. Donasjonene betaler for reléserveren, kodesigneringssertifikatene som Windows og macOS krever, og en uavhengig sikkerhetsrevisjon før 1.0. Hver kostnad, linje for linje, og hvor mye som er samlet inn så langt: [totaldrop.app/donate](https://totaldrop.app/donate/).
 
-<a href="https://github.com/sponsors/ozdil"><img src="https://img.shields.io/badge/Sponsor%20on%20GitHub-EA4AAA?logo=githubsponsors&logoColor=white&style=for-the-badge" alt="Spons på GitHub"></a>
+<a href="https://opencollective.com/totaldrop"><img src="https://img.shields.io/badge/Donate%20on%20Open%20Collective-1F87FF?logo=opencollective&logoColor=white&style=for-the-badge" alt="Doner via Open Collective"></a>
 
 Du kan også hjelpe ved å [rapportere feil](https://github.com/totaldrop-app/totaldrop/issues/new/choose), oversette eller teste på datamaskinen din.
 
