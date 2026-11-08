@@ -161,8 +161,8 @@ repos:
 
       # --- Linux (linux.yml) ---
       - id: linux-versions
-        name: Linux package versions
+        name: Linux package and tool versions (Rust, Flutter, Node)
         language: system
         entry: packaging/check-versions.sh
-        files: ^(linux/|packaging/|rust-toolchain\.toml$|\.github/workflows/)
+        files: ^(linux/|packaging/|rust-toolchain\.toml$|\.github/workflows/)|(^|/)package\.json$
         pass_filenames: false

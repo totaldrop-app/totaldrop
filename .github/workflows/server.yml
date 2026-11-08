@@ -26,8 +26,10 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      # A fixed major: the unit tests rely on Node stripping TypeScript
-      # types itself (Node 22.18 and later), and @types/node matches it.
+      # One fixed Node major in every workflow, and @types/node matches it
+      # (docs/surec.md, "Node"; packaging/check-versions.sh checks both).
+      # The unit tests rely on Node stripping TypeScript types itself
+      # (Node 22.18 and later).
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: "24"
@@ -51,9 +53,10 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      # The same Node major as every other job (docs/surec.md, "Node").
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: lts/*
+          node-version: "24"
       # rustup reads rust-toolchain.toml and installs exactly that version.
       - name: Install the pinned Rust toolchain
         run: rustup show active-toolchain || rustup toolchain install
