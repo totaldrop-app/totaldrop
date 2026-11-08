@@ -1,6 +1,6 @@
 # 0015: Paket yöneticileri önce CI'da derlenen CLI ikililerine dayanır
 
-- **Durum:** Önerilen, 7 Kasım 2026 (#344)
+- **Durum:** Kabul, 8 Kasım 2026 (Ozan, #344)
 - **Bağlam:** TotalDrop bugün iki yoldan kurulur: sürüm sayfasındaki
   Linux paketleri (Arch, Debian, Fedora; Flathub yolda,
   [0014](0014-steam-deck.md)) ve `cargo install --git`. CLI'ın hazır
@@ -344,8 +344,7 @@ tablosu aynı PR'da güncellenir.
   - homebrew-core geldiğinde Homebrew'a güven, T15'teki Flathub gibi
     yazılır.
 - **0009:** "Hesapsız Homebrew kurulumu bir yol sayılmaz" cümlesi
-  cask'lerle daraltılır. Kabulle birlikte, birleştirmeden önce 0009'a bu
-  karara bağlanan bir not eklenir.
+  cask'lerle daraltılır; 0009'a bu karara bağlanan bir not eklendi.
 - **0012 ve `marka.md`:** yayıncının geliştirici olarak göründüğü yerler
   listesine winget eklenir. Bu, 4. adımın PR'ında yapılır.
 - **Kural değişikliği:** `CLAUDE.md` ve `surec.md`'deki "tek istisna
