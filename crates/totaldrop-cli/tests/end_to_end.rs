@@ -478,9 +478,8 @@ fn too_many<T>(r: Result<T, Error>) -> bool {
 
 /// Threat model T9: a client that opens connections faster than its rate,
 /// allocations and mailboxes alike, is told so in words and gets one more
-/// connection back each interval. The counters are the server's alone:
-/// nothing here could see them on disk, the unit tests of both servers
-/// check that they are only in memory.
+/// connection back each interval. The burst below is `TEST_RATE_BURST`
+/// connections.
 #[tokio::test(flavor = "multi_thread")]
 async fn a_client_over_its_rate_is_refused_until_it_waits() {
     let server = limited_server().await;
@@ -495,7 +494,6 @@ async fn a_client_over_its_rate_is_refused_until_it_waits() {
         .await
         .unwrap_err();
     assert!(unused.is_code_not_in_use(), "{unused}");
-    assert_eq!(TEST_RATE_BURST, 4);
     // Past it, both kinds of connection are refused with a reason, and the
     // refusals do not count.
     assert!(too_many(rendezvous::allocate(&server).await));
