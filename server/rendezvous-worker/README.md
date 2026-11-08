@@ -11,6 +11,7 @@ How it is built:
 
 - The Worker keeps no state and logs nothing. Observability is turned off in `wrangler.jsonc`.
 - One `Directory` Durable Object decides which nameplates are free, in use, retired after a failed code (24 hours), or resting before reuse (10 minutes). It never sees mailbox contents.
+- The `Directory` also limits each client (an IPv4 address or an IPv6 /64, from `CF-Connecting-IP`) to 60 allocations and mailbox openings at once and one more every second (`src/limit.ts`, the same rule as the Rust server's). The counters are in its memory only, under a randomly keyed hash, and are never written to storage. `wrangler dev --var RATE_BURST:<n> --var RATE_INTERVAL_MS:<ms>` changes the limit for tests; production sets neither.
 - Each mailbox is its own `Mailbox` Durable Object, named by its random 16-byte mailbox ID. It holds at most two sides and briefly buffers messages for a side that has not arrived yet. It erases all of its storage when both sides have left, or when it expires (15 minutes unclaimed, one hour at most).
 
 ## Develop and test
@@ -21,6 +22,14 @@ npm run check                      # type check
 npx wrangler dev --local --port 8799
 # in another terminal, from the repository root:
 TOTALDROP_TEST_SERVER=ws://127.0.0.1:8799 cargo test -p totaldrop-cli --test end_to_end
+```
+
+The suite opens many codes from one address, so for a full run start the Worker with a higher burst (`--var RATE_BURST:1000`). The rate-limit test runs against a second Worker with the test's own low limit, as CI does:
+
+```bash
+npx wrangler dev --local --port 8789 --inspector-port 9231 --persist-to /tmp/limited \
+  --var RATE_BURST:4 --var RATE_INTERVAL_MS:5000
+TOTALDROP_TEST_SERVER_LIMITED=ws://127.0.0.1:8789 cargo test -p totaldrop-cli --test end_to_end rate
 ```
 
 ## Deploy

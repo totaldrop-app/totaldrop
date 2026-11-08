@@ -7,9 +7,12 @@
 //   wss://rendezvous.totaldrop.app/v0/mailbox/<n>    claim, add, close
 //
 // The Worker itself keeps no state and logs nothing. Allocation is decided
-// by the Directory object; each mailbox is its own Mailbox object.
+// by the Directory object; each mailbox is its own Mailbox object. The
+// Directory also counts each client's allocations and mailbox openings, in
+// memory only (`limit.ts`).
 
-import { Directory } from "./directory";
+import { Directory, type Lookup } from "./directory";
+import { clientOf } from "./limit";
 import { Mailbox } from "./mailbox";
 import { decodeClient, server, unhex } from "./messages";
 import { BUSY, FAILED, withRetry } from "./retry";
@@ -54,7 +57,7 @@ function refuse(reason: string): Response {
  * client, never a runtime error's text. Allocation is not tried again: a
  * call that failed after the directory handed out a number would hold a
  * second one until it expires. */
-async function answer(env: Env, data: unknown): Promise<Uint8Array> {
+async function answer(env: Env, client: string, data: unknown): Promise<Uint8Array> {
   let msg;
   try {
     msg = decodeClient(await binary(data));
@@ -64,7 +67,7 @@ async function answer(env: Env, data: unknown): Promise<Uint8Array> {
   if (msg.type !== "allocate") return server.error("only allocate here");
   let result;
   try {
-    result = await env.DIRECTORY.getByName("directory").allocate();
+    result = await env.DIRECTORY.getByName("directory").allocate(client);
   } catch (e) {
     return server.error((e as { overloaded?: unknown } | null)?.overloaded === true ? BUSY : FAILED);
   }
@@ -72,7 +75,7 @@ async function answer(env: Env, data: unknown): Promise<Uint8Array> {
   return server.allocated(result.nameplate, unhex(result.token));
 }
 
-function allocate(env: Env): Response {
+function allocate(env: Env, client: string): Response {
   const pair = new WebSocketPair();
   const socket = pair[1];
   socket.accept();
@@ -85,7 +88,7 @@ function allocate(env: Env): Response {
     answered = true;
     clearTimeout(timer);
     try {
-      socket.send(await answer(env, event.data));
+      socket.send(await answer(env, client, event.data));
     } catch {
       // The client is gone.
     } finally {
@@ -99,12 +102,15 @@ function allocate(env: Env): Response {
   return new Response(null, { status: 101, webSocket: pair[0] });
 }
 
-async function mailbox(env: Env, request: Request, nameplate: number): Promise<Response> {
-  // A lookup only reads, so it may be tried again too.
-  const found = await withRetry(() => env.DIRECTORY.getByName("directory").lookup(nameplate));
+async function mailbox(env: Env, client: string, nameplate: number): Promise<Response> {
+  // A lookup only reads and counts, so it may be tried again too.
+  const found = await withRetry<Lookup | null | { error: string }>(async () =>
+    env.DIRECTORY.getByName("directory").lookup(nameplate, client),
+  );
   if (!found.ok) return refuse(found.reason);
   const record = found.value;
   if (!record) return refuse("unknown nameplate");
+  if ("error" in record) return refuse(record.error);
   // Only these headers reach the mailbox; nothing the client sent is
   // forwarded except the upgrade itself.
   const headers = new Headers({
@@ -137,12 +143,15 @@ export default {
       });
     }
     if (!isUpgrade(request)) return new Response("WebSocket only\n", { status: 426 });
-    if (url.pathname === "/v0/allocate") return allocate(env);
+    // Cloudflare sets this header itself; a client cannot choose it. It is
+    // used only to count requests (`limit.ts`) and is not kept.
+    const client = clientOf(request.headers.get("CF-Connecting-IP"));
+    if (url.pathname === "/v0/allocate") return allocate(env, client);
     const m = /^\/v0\/mailbox\/([1-9][0-9]{0,9})$/.exec(url.pathname);
     if (m) {
       const n = Number(m[1]);
       if (n > 0xffff_ffff) return refuse("unknown nameplate");
-      return mailbox(env, request, n);
+      return mailbox(env, client, n);
     }
     return new Response("not found\n", { status: 404 });
   },

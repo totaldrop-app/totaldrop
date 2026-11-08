@@ -7,6 +7,7 @@
 
 import { DurableObject } from "cloudflare:workers";
 
+import { RateLimiter, TOO_MANY, rateConfig } from "./limit";
 import { hex, randomBytes } from "./messages";
 
 export const LIMITS = {
@@ -30,9 +31,22 @@ export const LIMITS = {
 export type Allocation = { nameplate: number; token: string; mailbox: string };
 export type Lookup = { mailbox: string; token: string; created: number };
 
-export class Directory extends DurableObject {
-  constructor(ctx: DurableObjectState, env: Cloudflare.Env) {
+/** Overrides of the per-client limit, for the end-to-end tests only
+ * (`wrangler dev --var`). Production sets neither. */
+export interface DirectoryEnv {
+  RATE_BURST?: string;
+  RATE_INTERVAL_MS?: string;
+}
+
+export class Directory extends DurableObject<DirectoryEnv> {
+  /** Per-client counters, in memory only (`limit.ts`). This object sees
+   * every allocation and every mailbox opening, so one count covers the
+   * whole service, not one Cloudflare location. */
+  private readonly limiter: RateLimiter;
+
+  constructor(ctx: DurableObjectState, env: DirectoryEnv) {
     super(ctx, env);
+    this.limiter = new RateLimiter(rateConfig(env.RATE_BURST, env.RATE_INTERVAL_MS));
     ctx.blockConcurrencyWhile(async () => this.schema());
   }
 
@@ -140,7 +154,9 @@ export class Directory extends DurableObject {
     }
   }
 
-  async allocate(): Promise<Allocation | { error: string }> {
+  /** Allocate a nameplate for `client` (`clientOf` in `limit.ts`). */
+  async allocate(client: string): Promise<Allocation | { error: string }> {
+    if (!(await this.limiter.admit(client, this.now()))) return { error: TOO_MANY };
     const sql = this.ctx.storage.sql;
     let now = this.now();
     const scary = sql
@@ -188,9 +204,12 @@ export class Directory extends DurableObject {
     return { nameplate: n, token, mailbox };
   }
 
-  /** The live mailbox of nameplate `n`. An expired row is not returned;
-   * allocation and the alarm move it to resting. */
-  async lookup(n: number): Promise<Lookup | null> {
+  /** The live mailbox of nameplate `n`, looked up for `client` when it
+   * opens that mailbox. An expired row is not returned; allocation and the
+   * alarm move it to resting. A lookup the Worker tries again after a
+   * failed call may be counted twice. */
+  async lookup(n: number, client: string): Promise<Lookup | null | { error: string }> {
+    if (!(await this.limiter.admit(client, this.now()))) return { error: TOO_MANY };
     const now = this.now();
     const row = this.ctx.storage.sql
       .exec<{ mailbox: string; token: string; created: number }>(

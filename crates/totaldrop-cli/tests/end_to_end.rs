@@ -35,6 +35,32 @@ async fn server() -> String {
     format!("ws://{addr}")
 }
 
+/// Per-client limits low enough to cross in a test: four connections at
+/// once, then one more every five seconds. CI starts a second Worker with the
+/// same values (`.github/workflows/server.yml`).
+const TEST_RATE_BURST: u32 = 4;
+const TEST_RATE_INTERVAL: Duration = Duration::from_secs(5);
+
+/// A server with the test limits: the Rust server in-process, or another
+/// implementation when `TOTALDROP_TEST_SERVER_LIMITED` names one. The
+/// shared suite opens many codes from one address, so it runs against a
+/// server with a higher limit.
+async fn limited_server() -> String {
+    if let Ok(url) = std::env::var("TOTALDROP_TEST_SERVER_LIMITED") {
+        return url;
+    }
+    let config = totaldrop_rendezvous::Config {
+        rate_burst: TEST_RATE_BURST,
+        rate_interval: TEST_RATE_INTERVAL,
+        ..Default::default()
+    };
+    let (addr, _server, _task) =
+        totaldrop_rendezvous::spawn("127.0.0.1:0".parse().unwrap(), config)
+            .await
+            .unwrap();
+    format!("ws://{addr}")
+}
+
 /// Most tests run without a relay, on loopback only.
 fn no_relay() -> PathOptions {
     PathOptions {
@@ -444,6 +470,45 @@ async fn a_failed_code_counts_once() {
     }
     tokio::time::sleep(Duration::from_millis(300)).await;
     assert_eq!(server.scary_count().await, 1);
+}
+
+fn too_many<T>(r: Result<T, Error>) -> bool {
+    matches!(r, Err(Error::Rendezvous(reason)) if reason == "too many requests")
+}
+
+/// Threat model T9: a client that opens connections faster than its rate,
+/// allocations and mailboxes alike, is told so in words and gets one more
+/// connection back each interval. The counters are the server's alone:
+/// nothing here could see them on disk, the unit tests of both servers
+/// check that they are only in memory.
+#[tokio::test(flavor = "multi_thread")]
+async fn a_client_over_its_rate_is_refused_until_it_waits() {
+    let server = limited_server().await;
+    // The whole burst: two allocations, the sender's mailbox and a code
+    // nobody uses. Each counts, whatever its answer.
+    let alloc = rendezvous::allocate(&server).await.unwrap();
+    let _sender = Mailbox::claim(&server, alloc.nameplate, Some(&alloc))
+        .await
+        .unwrap();
+    rendezvous::allocate(&server).await.unwrap();
+    let unused = Mailbox::claim(&server, 4_000_000_000, None)
+        .await
+        .unwrap_err();
+    assert!(unused.is_code_not_in_use(), "{unused}");
+    assert_eq!(TEST_RATE_BURST, 4);
+    // Past it, both kinds of connection are refused with a reason, and the
+    // refusals do not count.
+    assert!(too_many(rendezvous::allocate(&server).await));
+    assert!(too_many(
+        Mailbox::claim(&server, alloc.nameplate, None).await
+    ));
+    assert!(too_many(rendezvous::allocate(&server).await));
+    // One interval later there is room for one more, and only one.
+    tokio::time::sleep(TEST_RATE_INTERVAL + Duration::from_millis(300)).await;
+    Mailbox::claim(&server, alloc.nameplate, None)
+        .await
+        .unwrap();
+    assert!(too_many(rendezvous::allocate(&server).await));
 }
 
 /// A claimed connection keeps waiting past the claim deadline: senders
