@@ -65,5 +65,10 @@
   Bir Mac bağlanırsa o da kullanılır.
 - Hesapsız Homebrew kurulumu bir yol sayılmaz: Homebrew noter onaysız
   paketleri artık kabul etmiyor.
+  - **Not ([0015](0015-paket-yoneticileri.md)):** bu yalnızca uygulama
+    paketleri (cask) için geçerlidir. CLI, kendi tap'imizdeki bir formülle
+    hesapsız da kurulabilir: formül indirmelerinin karantinaya girmemesi
+    ve ad-hoc imzanın yetmesi beklenir. Bu, CLI'ın ilk sürümünde macOS'ta
+    denenir.
 - Yayınlar, diğer platformlarda olduğu gibi, yalnızca CI'dan çıkar
   ([0007](0007-surec.md)).
