@@ -2,7 +2,7 @@
 
 - **Durum:** Önerilen, 7 Kasım 2026 (Ozan, #352); harcama kuralı 8 Kasım
   2026'da Sadık'ın önerisiyle eklendi. Open Source Collective başvuruyu
-  onaylayınca "Kabul" olur.
+  onayladıktan sonra, birleştirmeden önce Ozan'ın onayıyla "Kabul" olur.
 - **Bağlam:** [0005](0005-bagis.md) bağışların GitHub Sponsors üzerinden
   alınmasını kararlaştırdı, ama adres proje liderinin kişisel profiliydi
   (github.com/sponsors/ozdil). Proje artık bir ekiple yürüyor
@@ -17,21 +17,26 @@
   - Para mali emanetçide (fiscal host) durur: kâr amacı gütmeyen Open
     Source Collective. Emanetçi gelen her bağıştan %10 alır. Her giriş ve
     çıkış Open Collective'in herkese açık defterinde görünür.
-  - Open Collective sayfasını en az iki ekip üyesi yönetir; hesap
-    hello@totaldrop.app adresine bağlıdır.
+  - Open Collective sayfasını en az iki ayrı kişi, kendi kişisel
+    hesaplarıyla yönetir. Collective'in iletişim adresi ve ekip hesabı
+    hello@totaldrop.app'tir; ekip hesabı bu iki kişi sayısına girmez.
   - Harcamalar:
     - Her harcama talebini, talebi açandan başka bir yönetici onaylar.
       Kimse kendi talebini onaylamaz.
-    - Öncelik sırası: sunucu, imza sertifikaları, 1.0'dan önce bağımsız
-      güvenlik denetimi. Bunların dışındaki her harcama, talep açılmadan
+    - Para yetmediğinde önce ödenecekler, sırayla: sunucular (site,
+      buluşma ve aktarma sunucusu), imza sertifikaları, 1.0'dan önce
+      bağımsız güvenlik denetimi. Bunların dışındaki her harcama, talep açılmadan
       önce bir issue'da konuşulur; talep o issue'ya bağlanır.
     - Ekip hesabı (hello@totaldrop.app) harcama talebi açmaz ve onay
       vermez. Bu kutu bugün yalnızca proje liderine gider; aynı kişi hem
       kendi hesabıyla hem ekip hesabıyla onay verebilseydi iki kişi kuralı
-      anlamını yitirirdi. Ekip hesabı yalnızca hesabın tek kişiye bağlı
-      kalmaması içindir. Kutuya kimin eriştiği değişirse bu madde aynı
-      PR'da güncellenir.
-    - Open Collective'in "talebi açan onaylayamaz" ayarı açık tutulur.
+      anlamını yitirirdi. Ekip hesabı ortak iletişim adresi ve kişisel
+      hesapların yanında bir yedek giriş olarak durur; kutu ileride
+      birden çok kişiye açılırsa da onay vermez. Kutuya kimin eriştiği
+      değişirse bu madde hemen bir PR ile güncellenir.
+    - Open Collective'in harcama politikalarında, talebi açan
+      yöneticinin kendi talebini onaylamasını engelleyen ayar açık
+      tutulur.
   - Bağış metinlerinde kişi adı geçmez; "TotalDrop" ya da "TotalDrop ekibi"
     denir.
   - Kişisel profil yeni bağış almaz; mevcut sponsorlara yeni adres
