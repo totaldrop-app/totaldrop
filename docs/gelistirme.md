@@ -71,6 +71,47 @@ kendi iş akışlarını alır.
   platformu bozan çekirdek değişikliği `main`'e giremez: `CI` kontrolü
   kırmızıyken birleştirme kapalıdır.
 
+## Yerel denetimler
+
+Zorunlu denetim CI'dır. [pre-commit](https://pre-commit.com/) yalnızca
+hatayı push'tan önce gösterir (#376). İki dosya vardır:
+
+- **`.pre-commit-config.yaml`** her commit'te çalışır ve hiçbir derleme
+  aracı istemez. Birleştirme çakışması işaretlerini, YAML ve TOML
+  sözdizimini, büyük dosyaları, özel anahtarları ve gizli bilgileri
+  (gitleaks), dosya sonu satırını, satır sonu boşluklarını ve LF satır
+  sonlarını denetler. `key.properties` ile `.jks`, `.keystore` ve `.p12`
+  dosyalarını reddeder. Bir kez kurulur:
+
+  ```sh
+  pre-commit install
+  ```
+
+- **`.pre-commit-config-extra.yaml`** CI denetimlerinin yerel kopyasıdır:
+  `cargo fmt`, `clippy` ve `test`, `dart format`, `flutter analyze`,
+  Worker'ların `tsc` denetimi, site betikleri, changelog, SPDX, REUSE ve
+  sürüm denetimleri. Git hook'u olarak kurulmaz, elle çalıştırılır. Her
+  hook kendi aracını (`cargo`, `dart`, `flutter`, `node`, `npm`) ister;
+  ortamınızda olmayanları `SKIP` ile atlayın, CI onları yine çalıştırır:
+
+  ```sh
+  pre-commit run -c .pre-commit-config-extra.yaml --all-files
+  pre-commit run -c .pre-commit-config-extra.yaml cargo-fmt --all-files
+  SKIP=flutter-analyze,worker-tsc pre-commit run -c .pre-commit-config-extra.yaml --all-files
+  ```
+
+  `cargo fmt` ve `dart format` dosyaları düzeltir; çıkan değişikliği
+  commit'e ekleyin. Worker'ların `tsc` denetiminden önce her Worker
+  klasöründe `npm ci` çalıştırın. `changelog-require` dalı son çekilen
+  `origin/main` ile karşılaştırır; girdi dosyası commit'lenmiş olmalıdır.
+
+Bir iş akışındaki denetim değişirse ek dosyadaki karşılığı da aynı PR'da
+değişir. Üretilmiş dosyalar iki dosyada da aynı `exclude` listesiyle
+dışarıda kalır. Dış hook'lar commit SHA'sıyla sabittir; ana dosyadakiler
+`pre-commit autoupdate --freeze` ile yükseltilir. Ek dosyadaki REUSE
+hook'u `ci.yml`'deki `reuse` imajıyla aynı sürümde kalır ve yalnızca o
+imajla birlikte, elle yükseltilir.
+
 ## Linux paketleri
 
 Her biçim ayrı tariften ve ayrı kaptan derlenir:

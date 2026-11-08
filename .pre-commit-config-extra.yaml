@@ -1,0 +1,155 @@
+# SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Optional local copy of the CI checks. Never installed as a git hook;
+# run it by hand. Each hook needs its own toolchain (cargo, dart, flutter,
+# node, npm) on PATH; CI runs them all whatever you skip here.
+#   All:       pre-commit run -c .pre-commit-config-extra.yaml --all-files
+#   One hook:  pre-commit run -c .pre-commit-config-extra.yaml cargo-fmt --all-files
+#   Skip some: SKIP=flutter-analyze,worker-tsc pre-commit run -c .pre-commit-config-extra.yaml --all-files
+# A hook that names a workflow mirrors that workflow's step; change both
+# together.
+minimum_pre_commit_version: "4.0.0"
+
+# Generated or copied files, as in CI. Keep in step with
+# .pre-commit-config.yaml.
+exclude: |
+  (?x)^(
+    target/|
+    app/lib/l10n/|
+    app/lib/src/rust/|
+    app/rust/src/frb_generated\.rs$|
+    app/rust_builder/|
+    LICENSES/|
+    app/assets/fonts/.*\.txt$
+  )
+
+repos:
+  # Same version as the reuse image in ci.yml.
+  - repo: https://github.com/fsfe/reuse-tool
+    rev: a1bb792acda6fd0724936b4ebbdbc8eceb9c0459  # frozen: v6.2.0
+    hooks:
+      - id: reuse
+
+  - repo: local
+    hooks:
+      # --- Rust (core.yml, linux.yml) ---
+      # Uses the toolchain from rust-toolchain.toml, like CI.
+      # Hand-written crates only.
+      - id: cargo-fmt
+        name: cargo fmt
+        language: system
+        entry: >-
+          cargo fmt -p totaldrop-crypto -p totaldrop-proto -p totaldrop-core
+          -p totaldrop-cli -p totaldrop-l10n -p totaldrop-rendezvous
+          -p totaldrop-relay -p totaldrop-linux
+        types: [rust]
+        pass_filenames: false
+        require_serial: true
+
+      # The Linux crate needs Qt 6; linux.yml checks it.
+      - id: cargo-clippy
+        name: cargo clippy
+        language: system
+        entry: >-
+          cargo clippy --workspace --exclude totaldrop-linux
+          --exclude rust_lib_totaldrop --all-targets --locked -- -D warnings
+        files: \.rs$|Cargo\.(toml|lock)$
+        pass_filenames: false
+        require_serial: true
+
+      - id: cargo-test
+        name: cargo test
+        language: system
+        entry: >-
+          cargo test --workspace --exclude totaldrop-linux
+          --exclude rust_lib_totaldrop --locked
+        files: \.rs$|Cargo\.(toml|lock)$|^l10n/
+        pass_filenames: false
+        require_serial: true
+
+      # --- Android (android.yml) ---
+      # Hand-written Dart only.
+      - id: dart-format
+        name: dart format
+        language: system
+        entry: dart format
+        files: ^app/(lib|test|tool)/.*\.dart$
+
+      - id: flutter-analyze
+        name: flutter analyze
+        language: system
+        entry: bash -c 'cd app && flutter analyze'
+        files: ^app/.*\.dart$|^app/(pubspec\.(yaml|lock)|analysis_options\.yaml)$
+        pass_filenames: false
+
+      # --- Workers (server.yml); run npm ci in each worker first ---
+      - id: worker-tsc
+        name: tsc (workers)
+        language: system
+        entry: >-
+          bash -c 'for d in server/rendezvous-worker server/relay-worker;
+          do (cd "$d" && npm run --silent check) || exit 1; done'
+        files: ^server/(rendezvous|relay)-worker/
+        pass_filenames: false
+
+      # --- Site (site.yml) ---
+      - id: site-js-syntax
+        name: site JS syntax
+        language: system
+        entry: node --check
+        files: ^site/(public|functions)/.*\.js$
+
+      - id: site-i18n
+        name: site translations
+        language: system
+        entry: node site/tools/check-i18n.mjs
+        files: ^(site/|l10n/)
+        pass_filenames: false
+
+      # --- Every change (ci.yml) ---
+      - id: changelog-check
+        name: changelog.d entries follow the rules
+        language: system
+        entry: node tools/changelog.mjs check
+        files: ^(changelog\.d/|CHANGELOG\.md$)
+        pass_filenames: false
+
+      # Compares with origin/main as last fetched; commit the entry first.
+      - id: changelog-require
+        name: this branch adds a changelog.d entry
+        language: system
+        entry: >-
+          bash -c 'node tools/changelog.mjs require
+          "$(git merge-base origin/main HEAD)" HEAD'
+        always_run: true
+        pass_filenames: false
+
+      - id: spdx
+        name: SPDX lines
+        language: system
+        entry: tools/check-spdx.sh
+        files: \.(rs|ts|js|mjs|dart|qml|h|cpp|kt|kts|gradle|sh|py|css)$
+        pass_filenames: false
+
+      - id: component-versions
+        name: component versions
+        language: system
+        entry: tools/check-component-versions.sh
+        files: Cargo\.(toml|lock)$|package(-lock)?\.json$|pubspec\.yaml$
+        pass_filenames: false
+
+      - id: advisory-ignores
+        name: cargo-deny and OSV ignores match
+        language: system
+        entry: tools/check-advisory-ignores.sh
+        files: ^(deny|osv-scanner)\.toml$
+        pass_filenames: false
+
+      # --- Linux (linux.yml) ---
+      - id: linux-versions
+        name: Linux package versions
+        language: system
+        entry: packaging/check-versions.sh
+        files: ^(linux/|packaging/|rust-toolchain\.toml$|\.github/workflows/linux)
+        pass_filenames: false
