@@ -254,6 +254,7 @@ export class Directory extends DurableObject<DirectoryEnv> {
   async alarm(): Promise<void> {
     const sql = this.ctx.storage.sql;
     const now = this.now();
+    this.limiter.prune(now);
     this.expireActive(now);
     this.freeRested(now);
     sql.exec("DELETE FROM scary WHERE t <= ?", now - LIMITS.scaryWindow);
