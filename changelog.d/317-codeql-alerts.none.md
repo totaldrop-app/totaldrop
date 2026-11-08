@@ -1,2 +1,2 @@
-The site's translation checker decodes HTML entities and comments the way
-a browser does; nothing on the site changes.
+The site's translation checker reads entities once and strips comments
+like a browser; nothing on the site changes.
