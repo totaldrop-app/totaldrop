@@ -22,7 +22,7 @@ tokio = { version = "1.54.1", features = ["rt-multi-thread", "time", "net", "io-
 totaldrop-core = { version = "0.2.0-beta.5", path = "../crates/totaldrop-core" }
 totaldrop-proto = { version = "0.2.0-beta.5", path = "../crates/totaldrop-proto" }
 totaldrop-l10n = { version = "0.2.0-beta.5", path = "../crates/totaldrop-l10n" }
-ashpd = { version = "0.13", default-features = false, features = ["tokio", "settings", "file_chooser", "notification"] }
+ashpd = { version = "0.14", default-features = false, features = ["tokio", "settings", "file_chooser", "notification"] }
 toml = "1.1"
 serde = { version = "1", features = ["derive"] }
 dirs = "7"
