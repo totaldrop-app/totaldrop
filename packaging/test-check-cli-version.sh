@@ -231,7 +231,7 @@ expect fail "shallow clone" "shallow clone"
 repo 0.1.0-beta.2
 for f in linux/Cargo.toml rust-toolchain.toml packaging/build.sh \
   packaging/arch/PKGBUILD packaging/rpm/totaldrop.spec \
-  packaging/debian/changelog packaging/containers \
+  packaging/debian/changelog packaging/debian/rules packaging/containers \
   packaging/linux/app.totaldrop.TotalDrop.metainfo.xml \
   packaging/flatpak/app.totaldrop.TotalDrop.yml .github/workflows; do
   mkdir -p "$(dirname "$r/$f")"
