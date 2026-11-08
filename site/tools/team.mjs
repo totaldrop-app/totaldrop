@@ -40,7 +40,7 @@ export const LOGIN = /^[A-Za-z0-9](?:[A-Za-z0-9]|-(?=[A-Za-z0-9])){0,38}(?:\[bot
 const KINDS = ["person", "ai", "bot"];
 // Roles with a translated label (tm.role.<role>); add the key in all 35
 // languages before adding a role here.
-const ROLES = ["maintainer", "contributor", "tester"];
+const ROLES = ["maintainer", "principal", "contributor", "tester"];
 // Disciplines, in page order, with their English text (translations:
 // site/public/i18n/<tag>.json, keys tm.a.<key> and tm.a.<key>.d).
 const AREAS = {
@@ -264,7 +264,7 @@ const stat = (n) => (n ? `<dl class="stat"><dt data-i18n="tm.col.changes">Change
 
 function personCard(c, s, p) {
   const pr = s.profiles[p.login];
-  const role = { maintainer: "Founder and project lead", contributor: "Developer", tester: "QA specialist" }[p.role];
+  const role = { maintainer: "Founder and project lead", principal: "Principal engineer", contributor: "Developer", tester: "QA specialist" }[p.role];
   const areas = (p.areas || []).map((a) => `<li data-i18n="tm.a.${a}">${esc(AREAS[a][0])}</li>`).join("");
   const links = [githubLink(`https://github.com/${p.login}`, p.login)];
   if (pr.website) links.push(webLink(pr.website));

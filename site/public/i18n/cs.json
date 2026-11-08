@@ -565,6 +565,7 @@
   "tm.role.maintainer": "Zakladatel a vedoucí projektu",
   "tm.title": "Lidé za TotalDropem",
   "tm.role.contributor": "Vývojář",
+  "tm.role.principal": "Hlavní inženýr",
   "tm.role.tester": "Specialista na zajištění kvality",
   "tm.s.areas": "Obory",
   "tm.s.langs": "Jazyky",

@@ -565,6 +565,7 @@
   "tm.role.maintainer": "창립자 겸 프로젝트 리드",
   "tm.title": "TotalDrop을 만드는 사람들",
   "tm.role.contributor": "개발자",
+  "tm.role.principal": "수석 엔지니어",
   "tm.role.tester": "QA 전문가",
   "tm.s.areas": "분야",
   "tm.s.langs": "언어",

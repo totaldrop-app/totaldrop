@@ -565,6 +565,7 @@
   "tm.role.maintainer": "Засновник і керівник проєкту",
   "tm.title": "Люди, які створюють TotalDrop",
   "tm.role.contributor": "Розробник",
+  "tm.role.principal": "Провідний інженер",
   "tm.role.tester": "Фахівець із забезпечення якості",
   "tm.s.areas": "Напрями",
   "tm.s.langs": "Мови",
