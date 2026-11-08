@@ -75,7 +75,7 @@
   <main id="main" class="prose">
     <article lang="cs">
       <p class="lang-note" role="note">Tento překlad je koncept a prochází kontrolou. Závazným textem je anglická verze: pokud se od sebe liší, platí anglická verze. <a href="/privacy" hreflang="en">Přečíst anglickou verzi</a></p>
-      <p class="eyebrow">Zásady ochrany soukromí · verze 6 · 4. listopadu 2026</p>
+      <p class="eyebrow">Zásady ochrany soukromí · verze 7 · 8. listopadu 2026</p>
       <h1>Nic o vás neshromažďujeme.</h1>
       <p class="lead">TotalDrop nemá účty, analytiku, reklamy ani hlášení pádů. Tato stránka přesně vysvětluje, co mohou naše servery vidět, zatímco přenášíte soubory, a jak rychle to zmizí.</p>
 
@@ -95,7 +95,7 @@
         <li>číslo na začátku kódu (například 7 v 7-harbor-rocket), ale nikdy slova;</li>
         <li>kdy se připojíte a velikost krátkých zpráv, které si zařízení vymění. Po prvních dvou jsou tyto zprávy šifrované tak, aby je mohlo přečíst jen druhé zařízení.</li>
       </ul>
-      <p>Server nic z toho nezapisuje do protokolu. Schránka i vše v ní se smaže, jakmile ji obě zařízení opustí, nejpozději po jedné hodině. Po každém přenosu číslo kódu 10 minut odpočívá, než je znovu přiděleno; po neúspěšném pokusu o kód 24 hodin.</p>
+      <p>Server nic z toho nezapisuje do protokolu. Schránka i vše v ní se smaže, jakmile ji obě zařízení opustí, nejpozději po jedné hodině. Po každém přenosu číslo kódu 10 minut odpočívá, než je znovu přiděleno; po neúspěšném pokusu o kód 24 hodin. Aby omezil zneužívání, server také počítá, kolik spojení otevírá každá IP adresa (u IPv6 prvních 64 bitů adresy). Tyto počty uchovává jen v paměti, pod kódem odvozeným z adresy náhodným klíčem, a ne pod adresou samotnou, každý zapomene nejpozději zhruba dvě minuty po posledním spojení a nikdy je nezapisuje na disk ani do protokolu.</p>
       <p>Cloudflare jako náš poskytovatel infrastruktury zpracovává IP adresy, aby službu doručil a ochránil, podle svých vlastních <a href="https://www.cloudflare.com/privacypolicy/">zásad ochrany soukromí</a>. Totéž platí pro přenosový server. Pro oba servery jsme vypnuli protokoly požadavků a protokolování Workers.</p>
 
       <h2>Hledání přímé cesty</h2>
@@ -122,10 +122,10 @@
       <p>TotalDrop není určen dětem a od nikoho neshromažďuje osobní údaje.</p>
 
       <h2>Vaše práva</h2>
-      <p>Protože o vás neuchováváme žádné osobní údaje, není k čemu získat přístup, co opravit ani co vymazat. Máte-li otázku nebo stížnost, napište nám na adresu uvedenou výše. Máte také právo podat stížnost u svého úřadu pro ochranu osobních údajů.</p>
+      <p>Kromě krátkodobých počtů popsaných výše, které do několika minut zmizí, o vás neuchováváme žádné osobní údaje, a proto není k čemu získat přístup, co opravit ani co vymazat. Máte-li otázku nebo stížnost, napište nám na adresu uvedenou výše. Máte také právo podat stížnost u svého úřadu pro ochranu osobních údajů.</p>
 
       <h2>Změny</h2>
-      <p>Verze 6 navazuje na verze pro Android a Linux po 0.3.0-beta.3, v nichž se přímé spojení, které utichne, přesune na přenosový server, takže přenosový server může vidět přenos, který začal přímým spojením. Verze 5 uvádí oprávnění, o která žádají verze Androidu po 0.3.0-beta.2 a díky nimž může přenos pokračovat na pozadí s oznámením; co vidí naše servery, se nemění. Verze 4 odpovídá Androidu a Linuxu 0.2.0-beta.1, které změnily, co vidí přenosový server a druhé zařízení. V těchto verzích zařízení kontaktují přenosový server jen tehdy, když přímé spojení není zvoleno včas nebo není žádná přímá cesta k vyzkoušení, a ne na začátku každého přenosu. Příjemce už nepoužívá přenosový server, který zvolil jen odesílatel, takže režim soukromí teď skrývá i adresu příjemce. Režim soukromí je teď také v Nastavení aplikací a odmítá přímá spojení. Verze 4 také říká, co si aplikace pro Android uchovává v mezipaměti. Verze 3 opravila verzi 2, která tvrdila, že se aplikace k přenosovému serveru připojí jen tehdy, když nefunguje žádná přímá cesta (tehdy se k němu připojovaly na začátku každého přenosu), a že režim soukromí skrývá adresu příjemce, což tehdy nedělal. Uvedla také soubory aplikace pro Linux. Verze 2 přidala službu STUN a přenosový server. Funkce plánované pro pozdější verze (odkazy, volitelné anonymní účty) změní, co naše servery zpracovávají. Tyto zásady aktualizujeme dříve, než taková funkce vyjde, a každou jejich verzi uchováme ve veřejném repozitáři projektu.</p>
+      <p>Verze 7 uvádí, že zprostředkující server počítá spojení každé IP adresy krátce, jen v paměti, aby omezil zneužívání; co vidí, se nemění. Verze 6 navazuje na verze pro Android a Linux po 0.3.0-beta.3, v nichž se přímé spojení, které utichne, přesune na přenosový server, takže přenosový server může vidět přenos, který začal přímým spojením. Verze 5 uvádí oprávnění, o která žádají verze Androidu po 0.3.0-beta.2 a díky nimž může přenos pokračovat na pozadí s oznámením; co vidí naše servery, se nemění. Verze 4 odpovídá Androidu a Linuxu 0.2.0-beta.1, které změnily, co vidí přenosový server a druhé zařízení. V těchto verzích zařízení kontaktují přenosový server jen tehdy, když přímé spojení není zvoleno včas nebo není žádná přímá cesta k vyzkoušení, a ne na začátku každého přenosu. Příjemce už nepoužívá přenosový server, který zvolil jen odesílatel, takže režim soukromí teď skrývá i adresu příjemce. Režim soukromí je teď také v Nastavení aplikací a odmítá přímá spojení. Verze 4 také říká, co si aplikace pro Android uchovává v mezipaměti. Verze 3 opravila verzi 2, která tvrdila, že se aplikace k přenosovému serveru připojí jen tehdy, když nefunguje žádná přímá cesta (tehdy se k němu připojovaly na začátku každého přenosu), a že režim soukromí skrývá adresu příjemce, což tehdy nedělal. Uvedla také soubory aplikace pro Linux. Verze 2 přidala službu STUN a přenosový server. Funkce plánované pro pozdější verze (odkazy, volitelné anonymní účty) změní, co naše servery zpracovávají. Tyto zásady aktualizujeme dříve, než taková funkce vyjde, a každou jejich verzi uchováme ve veřejném repozitáři projektu.</p>
     </article>
 
     <nav class="lang-list" id="languages" aria-labelledby="languages-title">
