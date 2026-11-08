@@ -82,9 +82,10 @@ hatayı push'tan önce gösterir (#376). İki dosya vardır:
   (gitleaks), dosya sonu satırını, satır sonu boşluklarını ve LF satır
   sonlarını denetler. `key.properties` ile `.jks`, `.keystore`, `.p12`,
   `.pfx` ve `.pepk` dosyalarını reddeder. gitleaks yalnızca commit'e
-  eklenen değişikliklere bakar, bütün ağaca değil. Bu denetimlerin
-  CI'da karşılığı yoktur ve `git commit --no-verify` onları atlar. Bir
-  kez kurulur:
+  eklenen değişikliklere bakar, bütün ağaca değil. `git commit
+  --no-verify` bu denetimleri atlar; gizli bilgi ve imza dosyası
+  denetimlerinin karşılığı CI'daki `Secrets` işidir ve atlanamaz (#378,
+  [surec.md](surec.md#gizli-bilgiler)). Bir kez kurulur:
 
   ```sh
   pre-commit install

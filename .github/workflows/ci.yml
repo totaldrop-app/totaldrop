@@ -172,12 +172,58 @@ jobs:
           fsfe/reuse:6.2.0@sha256:85462a75c0f8efda09ddd190b92816b70e7662577c8427429e11e1b9f25a992e
           lint
 
+  # Secrets and signing keys never enter the repository (docs/surec.md,
+  # "Gizli bilgiler"). The pre-commit hooks catch them before a commit, but
+  # they are optional and `git commit --no-verify` skips them; this job is
+  # the check nobody can skip (#378). Cheap, so it runs on every change.
+  secrets:
+    name: Secrets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      # The names the pre-commit hook `no-signing-secrets` refuses, in any
+      # letter case.
+      - name: No signing keys or key.properties are tracked
+        run: |
+          if git ls-files -z | grep -ziE '(^|/)key\.properties$|\.(jks|keystore|p12|pfx|pepk)$' | tr '\0' '\n' | grep .; then
+            echo "::error::Signing keys and key.properties must not be committed (docs/surec.md, \"Gizli bilgiler\")."
+            exit 1
+          fi
+      # gitleaks scans the commits this run adds: on a pull request the
+      # checkout is the merge commit, whose first parent is main as it is
+      # now. A manual run, or a push whose old head is unknown, scans the
+      # whole history. Findings are printed redacted, never the secret.
+      # The image is the release the pre-commit hook pins (gitleaks
+      # v8.30.0); upgrade both together.
+      - name: gitleaks
+        env:
+          EVENT: ${{ github.event_name }}
+          BEFORE: ${{ github.event.before }}
+          MERGE_GROUP_BASE: ${{ github.event.merge_group.base_sha }}
+        run: |
+          case $EVENT in
+            pull_request) range=HEAD^1..HEAD ;;
+            push) range=$BEFORE..HEAD ;;
+            merge_group) range=$MERGE_GROUP_BASE..HEAD ;;
+            *) range=HEAD ;;
+          esac
+          if [ "$range" != HEAD ] && ! git cat-file -e "${range%..HEAD}^{commit}" 2>/dev/null; then
+            range=HEAD
+          fi
+          echo "Scanning $range"
+          docker run --rm --volume "$PWD:/repo:ro" \
+            ghcr.io/gitleaks/gitleaks:v8.30.0@sha256:691af3c7c5a48b16f187ce3446d5f194838f91238f27270ed36eef6359a574d9 \
+            git --no-banner --redact --verbose --log-opts="$range" /repo
+
   # The required check. Skipped areas count as passed; anything failed or
   # cancelled, including the area detection, fails it.
   gate:
     name: CI
     if: always()
-    needs: [changes, changelog, versions, advisories, reuse, core, android, linux, server, site, formal]
+    needs: [changes, changelog, versions, advisories, secrets, reuse, core, android, linux, server, site, formal]
     runs-on: ubuntu-latest
     steps:
       - env:
