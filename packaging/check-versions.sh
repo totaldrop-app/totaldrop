@@ -19,6 +19,10 @@
 # check container uses the same base image as the Arch package (Dependabot
 # updates only the latter).
 #
+# The recipes: every Linux package recipe and the Flatpak keep build times
+# out of the Qt resources in the same way, and the AppStream metainfo names
+# the same license as the RPM spec and the PKGBUILD.
+#
 #   packaging/check-versions.sh [linux-vX.Y.Z[-pre]]
 set -eu
 root=$(cd "$(dirname "$0")/.." && pwd)
@@ -195,6 +199,75 @@ rustup_args() { grep -E '^ARG RUSTUP_(VERSION|SHA256_[A-Z0-9_]+)=' "$root/packag
 rustup_deb=$(rustup_args debian)
 [ -n "$rustup_deb" ] || fail "packaging/containers/debian.Dockerfile: no RUSTUP_* ARGs"
 same "packaging/containers/fedora.Dockerfile (RUSTUP_* ARGs)" "$(rustup_args fedora)" "$rustup_deb"
+
+# Qt's resource compiler stores each file's modification time, and the
+# qmldir that cxx-qt writes during the build carries the build's own time
+# into the binary (#252). cxx-qt starts rcc with an empty environment, so
+# neither SOURCE_DATE_EPOCH nor QT_RCC_SOURCE_DATE_OVERRIDE reaches it;
+# format 1 has no timestamps (and no zstd). The QML files are compiled
+# ahead of time by qmlcachegen, so nothing reads these timestamps at run
+# time. Each recipe sets CXX_QT_AUTORCC_OPTIONS itself, so a build straight
+# from dpkg-buildpackage, rpmbuild or makepkg is reproducible too (#266);
+# build.sh does not set it, so the reproducible builds check the recipes.
+# The RPM spec and the PKGBUILD set it in the test step as well, so the
+# tests build the same Qt resources; and where the tests run before the
+# install step (the PKGBUILD, like debian/rules), cargo test may relink the
+# binaries that step copies.
+#
+# One pass prints "SECTION VALUE" for each line that sets it, outside
+# comments: SECTION is the RPM section (%build) or the shell function
+# (build()) the line is in, or "-" before any.
+rcc=--format-version:1:--no-zstd
+rcc_values() {
+  awk -v q="'" '
+    /^[[:space:]]*#/ { next }
+    /^%(prep|build|install|check|files|description|package|changelog|pre|post|preun|postun)([[:space:]]|$)/ { sec = $1 }
+    /^[A-Za-z_][A-Za-z0-9_]*\(\)/ { sec = $1 }
+    /CXX_QT_AUTORCC_OPTIONS[[:space:]]*[=:]/ {
+      v = $0
+      sub(/.*CXX_QT_AUTORCC_OPTIONS[[:space:]]*[=:][[:space:]]*/, "", v)
+      sub(/[[:space:]]+#.*$/, "", v)
+      gsub("[\"" q "]", "", v)
+      sub(/[[:space:]]+$/, "", v)
+      print (sec == "" ? "-" : sec) " " v
+    }
+  ' "$1"
+}
+# check_rcc FILE SECTIONS: FILE sets it to $rcc, in exactly SECTIONS.
+check_rcc() {
+  f=$1 want=$2
+  got=$(rcc_values "$root/$f")
+  [ -n "$got" ] || { fail "$f: CXX_QT_AUTORCC_OPTIONS not set"; return; }
+  secs=$(printf '%s\n' "$got" | cut -d' ' -f1 | sort -u | tr '\n' ' ' | sed 's/ $//')
+  same "$f (CXX_QT_AUTORCC_OPTIONS set in)" "$secs" "$want"
+  while read -r _ v; do
+    same "$f (CXX_QT_AUTORCC_OPTIONS)" "$v" "$rcc"
+  done <<EOF
+$got
+EOF
+}
+check_rcc packaging/debian/rules "-"
+check_rcc packaging/rpm/totaldrop.spec "%build %check"
+check_rcc packaging/arch/PKGBUILD "build() check()"
+check_rcc packaging/flatpak/app.totaldrop.TotalDrop.yml "-"
+
+# One license, written the SPDX way: the PKGBUILD's list joined with AND.
+license=$(sed -n 's/^License:[[:space:]]*//p' "$root/packaging/rpm/totaldrop.spec" | head -1)
+[ -n "$license" ] || fail "packaging/rpm/totaldrop.spec: no License"
+meta_license=$(sed -n 's/.*<project_license>\(.*\)<\/project_license>.*/\1/p' \
+  "$root/packaging/linux/app.totaldrop.TotalDrop.metainfo.xml" | head -1)
+same "packaging/linux/app.totaldrop.TotalDrop.metainfo.xml (project_license)" "$meta_license" "$license"
+arch_license=$(sed -n 's/^license=(\(.*\))[[:space:]]*$/\1/p' "$root/packaging/arch/PKGBUILD" | head -1 |
+  awk -v q="'" '{
+    n = split($0, a, q)
+    for (i = 2; i <= n; i += 2) {
+      it = a[i]
+      if (it ~ / /) it = "(" it ")"
+      out = out (out == "" ? "" : " AND ") it
+    }
+    print out
+  }')
+same "packaging/arch/PKGBUILD (license)" "$arch_license" "$license"
 
 [ $status -eq 0 ] && echo "versions agree: $cargo; Rust $rust; Flutter $flutter; Node $node"
 exit $status

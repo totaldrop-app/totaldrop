@@ -73,7 +73,8 @@ modules:
         CARGO_HOME: /run/build/totaldrop/cargo
         CARGO_NET_OFFLINE: "true"
         QMAKE: /usr/bin/qmake
-        # As in packaging/build.sh: no build times in the Qt resources (#252).
+        # No build times in the Qt resources (#252, #266; why:
+        # packaging/check-versions.sh).
         CXX_QT_AUTORCC_OPTIONS: --format-version:1:--no-zstd
     build-commands:
       - cargo build --release --locked --offline -p totaldrop-linux -p totaldrop-cli
