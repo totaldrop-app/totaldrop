@@ -13,8 +13,8 @@ Button {
     id: b
 
     highlighted: true
-    // Breeze marks the default button from this (qqc2-desktop-style) or
-    // from `highlighted` (qqc2-breeze-style, a blue frame).
+    // Under Plasma the app uses the org.kde.desktop style, which draws
+    // Breeze's default-button frame from this.
     Accessible.defaultButton: true
     readonly property bool filled: SystemTheme.controlStyle === "Fusion"
 

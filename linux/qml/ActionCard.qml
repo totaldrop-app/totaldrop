@@ -26,6 +26,15 @@ AbstractButton {
     Accessible.name: title
     Accessible.description: body
 
+    // AbstractButton answers only to Space; Enter and Return open the card
+    // too, as they press the app's other buttons. Held down, Enter
+    // repeats; only the first press counts.
+    function enterPressed(event) {
+        if (enabled && !event.isAutoRepeat) click()
+    }
+    Keys.onReturnPressed: (e) => enterPressed(e)
+    Keys.onEnterPressed: (e) => enterPressed(e)
+
     background: Rectangle {
         radius: Theme.radius
         color: {
