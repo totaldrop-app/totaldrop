@@ -84,21 +84,30 @@ flutter=$(grep -hoE "flutter-version: *[\"']?[0-9.]+" "$root"/.github/workflows/
 #
 # One pass over a workflow prints "V value" for each node-version,
 # "M line" for a setup-node step with none, and "J job" for a job that runs
-# Node with no setup-node step. A step ends at the next list item; a job at
-# the next two-space key under jobs:.
+# Node with no setup-node step. A step ends at the next list item. A job
+# ends at the next key under jobs: with the first job's indent; Node run
+# before any job key counts as a job named "?". A line runs Node when it
+# names node, npm or npx as a word, or node_modules/.bin/; step names do
+# not count.
 node_scan() {
   awk -v q="'" '
     function endstep() { if (pending) print "M " pline; pending = 0 }
     function endjob() {
       endstep()
-      if (job != "" && runs && !setup) print "J " job
+      if (runs && !setup) print "J " (job == "" ? "?" : job)
       job = ""; runs = 0; setup = 0
     }
-    /^[[:space:]]*#/ { next }
-    /^jobs:[[:space:]]*$/ { injobs = 1; next }
+    /^[[:space:]]*(#.*)?$/ { next }
+    /^jobs:[[:space:]]*(#.*)?$/ { injobs = 1; jind = -1; next }
     /^[^[:space:]]/ { if (injobs) { endjob(); injobs = 0 } }
-    injobs && /^  [A-Za-z0-9_-]+:[[:space:]]*$/ {
-      endjob(); job = $1; sub(/:$/, "", job); next
+    injobs {
+      match($0, /^ */); ind = RLENGTH
+      if (jind < 0) jind = ind
+      if (ind == jind && $0 ~ "^ *[\"" q "]?[A-Za-z0-9_-]+[\"" q "]?:[[:space:]]*(#.*)?$") {
+        endjob(); job = $0
+        sub(/^ */, "", job); sub(/:.*$/, "", job); gsub("[\"" q "]", "", job)
+        next
+      }
     }
     /^[[:space:]]*-[[:space:]]/ { endstep() }
     $0 ~ "^[[:space:]]*(-[[:space:]]+)?uses:[[:space:]]*[\"" q "]?actions/setup-node@" {
@@ -113,7 +122,8 @@ node_scan() {
       if (v ~ "[\"" q "]$") v = substr(v, 1, length(v) - 1)
       print "V " v; pending = 0; next
     }
-    /(^|[[:space:];&|(])(node|npm|npx)[[:space:]]/ { runs = 1 }
+    /^[[:space:]]*(-[[:space:]]+)?name:/ { next }
+    /(^|[^A-Za-z0-9_.\/-])(node|npm|npx)([^A-Za-z0-9_.-]|$)/ || /node_modules\/\.bin\// { runs = 1 }
     END { endjob() }
   ' "$1"
 }
@@ -147,9 +157,9 @@ fi
 # tracked files count; a copy with no .git (a source archive) is searched.
 packages=
 if [ -n "$node" ]; then
-  if [ -e "$root/.git" ] && command -v git >/dev/null 2>&1; then
-    packages=$(git -C "$root" ls-files -- package.json '*/package.json')
-  else
+  # git can refuse a checkout owned by another user (a container); then
+  # the search is the fallback too.
+  if ! { [ -e "$root/.git" ] && packages=$(git -C "$root" ls-files -- package.json '*/package.json' 2>/dev/null); }; then
     packages=$(cd "$root" && find . \( -name node_modules -o -name .git -o -name target -o -name build -o -name .dart_tool \) -prune -o -type f -name package.json -print | sed 's|^\./||')
   fi
 fi
