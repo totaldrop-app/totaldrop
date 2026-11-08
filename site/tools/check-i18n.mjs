@@ -16,6 +16,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import vm from "node:vm";
+import { decodeEntities, stripComments } from "./html-text.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const pub = join(root, "site", "public");
@@ -41,15 +42,9 @@ for (const bad of vectors.invalid) {
 // English from the pages: textContent of every data-i18n element.
 const pages = ["index.html", "download/index.html", "donate/index.html", "roadmap/index.html", "brand/index.html", "team/index.html", "r/index.html", "404.html"];
 const fromHtml = {};
-const NAMED = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: "\u00a0", rsquo: "\u2019", lsquo: "\u2018", rdquo: "\u201d", ldquo: "\u201c", mdash: "\u2014", ndash: "\u2013", hellip: "\u2026", middot: "\u00b7", copy: "\u00a9" };
-const decode = (s) => s.replace(/&([a-z]+);/gi, (all, n) => {
-  if (!(n in NAMED)) { errors.push(`unknown entity ${all}`); return all; }
-  return "\u0000" + n + ";";
-}).replace(/&#x([0-9a-f]+);/gi, (_, h) => String.fromCodePoint(parseInt(h, 16)))
-  .replace(/&#([0-9]+);/g, (_, d) => String.fromCodePoint(Number(d)))
-  .replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&nbsp;/g, " ");
+const decode = (s) => decodeEntities(s, (bad) => errors.push(`unknown entity ${bad}`));
 for (const page of pages) {
-  const html = read("site/public/" + page).replace(/<!--[\s\S]*?-->/g, "");
+  const html = stripComments(read("site/public/" + page), (bad) => errors.push(`${page}: ${bad}`));
   if (/data-i18n=\'|<[A-Z]+[^>]*data-i18n/.test(html)) errors.push(`${page}: data-i18n must be a double-quoted attribute on a lowercase tag`);
   const re = /<([a-z0-9]+)\b[^>]*\bdata-i18n="([^"]+)"[^>]*>([\s\S]*?)<\/\1>/g;
   let m;
