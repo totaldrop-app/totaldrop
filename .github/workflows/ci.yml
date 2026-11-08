@@ -197,8 +197,10 @@ jobs:
       # now. A manual run, or a push whose old head is unknown, scans the
       # whole history. Findings are printed redacted, never the secret.
       # The image is the release the pre-commit hook pins (gitleaks
-      # v8.30.0); upgrade both together.
+      # v8.30.0); upgrade both together. It runs even when the step above
+      # failed, so one run reports every finding.
       - name: gitleaks
+        if: ${{ !cancelled() }}
         env:
           EVENT: ${{ github.event_name }}
           BEFORE: ${{ github.event.before }}
