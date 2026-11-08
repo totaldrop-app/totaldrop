@@ -7,6 +7,8 @@
 #   All:       pre-commit run -c .pre-commit-config-extra.yaml --all-files
 #   One hook:  pre-commit run -c .pre-commit-config-extra.yaml cargo-fmt --all-files
 #   Skip some: SKIP=flutter-analyze,worker-tsc pre-commit run -c .pre-commit-config-extra.yaml --all-files
+#   Changelog: pre-commit run -c .pre-commit-config-extra.yaml changelog-require --hook-stage manual
+# The formatters fix files where CI only checks them; commit what they change.
 # A hook that names a workflow mirrors that workflow's step; change both
 # together.
 minimum_pre_commit_version: "4.0.0"
@@ -25,7 +27,8 @@ exclude: |
   )
 
 repos:
-  # Same version as the reuse image in ci.yml.
+  # Same reuse version as the image in ci.yml, but installed with pip, so
+  # its dependencies are not pinned the way the image's digest pins them.
   - repo: https://github.com/fsfe/reuse-tool
     rev: a1bb792acda6fd0724936b4ebbdbc8eceb9c0459  # frozen: v6.2.0
     hooks:
@@ -54,7 +57,7 @@ repos:
         entry: >-
           cargo clippy --workspace --exclude totaldrop-linux
           --exclude rust_lib_totaldrop --all-targets --locked -- -D warnings
-        files: \.rs$|Cargo\.(toml|lock)$
+        files: \.rs$|Cargo\.(toml|lock)$|^rust-toolchain\.toml$
         pass_filenames: false
         require_serial: true
 
@@ -64,11 +67,11 @@ repos:
         entry: >-
           cargo test --workspace --exclude totaldrop-linux
           --exclude rust_lib_totaldrop --locked
-        files: \.rs$|Cargo\.(toml|lock)$|^l10n/
+        files: \.rs$|Cargo\.(toml|lock)$|^rust-toolchain\.toml$|^l10n/
         pass_filenames: false
         require_serial: true
 
-      # --- Android (android.yml) ---
+      # --- Android (android.yml); run flutter pub get in app/ first ---
       # Hand-written Dart only.
       - id: dart-format
         name: dart format
@@ -108,14 +111,23 @@ repos:
         pass_filenames: false
 
       # --- Every change (ci.yml) ---
+      - id: changelog-tool
+        name: the changelog tool works
+        language: system
+        entry: node --test tools/test-changelog.mjs
+        files: ^tools/(test-)?changelog\.mjs$
+        pass_filenames: false
+
       - id: changelog-check
         name: changelog.d entries follow the rules
         language: system
         entry: node tools/changelog.mjs check
-        files: ^(changelog\.d/|CHANGELOG\.md$)
+        files: ^(changelog\.d/|CHANGELOG\.md$|tools/changelog\.mjs$)
         pass_filenames: false
 
-      # Compares with origin/main as last fetched; commit the entry first.
+      # Manual only: it fails on main and before the entry is committed.
+      # Compares with origin/main as last fetched; a fork whose upstream
+      # remote has another name runs the tool by hand instead.
       - id: changelog-require
         name: this branch adds a changelog.d entry
         language: system
@@ -124,6 +136,7 @@ repos:
           "$(git merge-base origin/main HEAD)" HEAD'
         always_run: true
         pass_filenames: false
+        stages: [manual]
 
       - id: spdx
         name: SPDX lines
@@ -151,5 +164,5 @@ repos:
         name: Linux package versions
         language: system
         entry: packaging/check-versions.sh
-        files: ^(linux/|packaging/|rust-toolchain\.toml$|\.github/workflows/linux)
+        files: ^(linux/|packaging/|rust-toolchain\.toml$|\.github/workflows/)
         pass_filenames: false
