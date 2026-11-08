@@ -42,7 +42,6 @@ for (const bad of vectors.invalid) {
 // English from the pages: textContent of every data-i18n element.
 const pages = ["index.html", "download/index.html", "donate/index.html", "roadmap/index.html", "brand/index.html", "team/index.html", "r/index.html", "404.html"];
 const fromHtml = {};
-const decode = (s) => decodeEntities(s, (bad) => errors.push(`unknown entity ${bad}`));
 for (const page of pages) {
   const html = stripComments(read("site/public/" + page), (bad) => errors.push(`${page}: ${bad}`));
   if (/data-i18n=\'|<[A-Z]+[^>]*data-i18n/.test(html)) errors.push(`${page}: data-i18n must be a double-quoted attribute on a lowercase tag`);
@@ -52,14 +51,14 @@ for (const page of pages) {
     // apply() replaces textContent, so a translated element may hold no
     // other elements (they would be lost in every other language).
     if (/<[a-z]/i.test(m[3])) errors.push(`${page} \`${m[2]}\`: a translated element has child elements`);
-    const text = decode(m[3]).replace(/\s+/g, " ").trim();
+    const text = decodeEntities(m[3], (bad) => errors.push(`${page}: unknown or unusual entity ${bad}`)).replace(/\s+/g, " ").trim();
     if (!(m[2] in fromHtml)) fromHtml[m[2]] = text;
   }
   // Accessible names: a tag with data-i18n-label="key" and an aria-label.
   for (const tagm of html.matchAll(/<[a-z0-9]+\b[^>]*\bdata-i18n-label="([^"]+)"[^>]*>/g)) {
     const label = /\baria-label="([^"]*)"/.exec(tagm[0]);
     if (!label) { errors.push(`${page} \`${tagm[1]}\`: data-i18n-label without aria-label`); continue; }
-    if (!(tagm[1] in fromHtml)) fromHtml[tagm[1]] = decode(label[1]);
+    if (!(tagm[1] in fromHtml)) fromHtml[tagm[1]] = decodeEntities(label[1], (bad) => errors.push(`${page}: unknown or unusual entity ${bad}`));
   }
 }
 
