@@ -162,8 +162,28 @@ expect fail "the PKGBUILD sets them in package() as well" "$arch (CXX_QT_AUTORCC
   export CXX_QT_AUTORCC_OPTIONS=--format-version:1:--no-zstd|'"
 expect fail "another value in one place" "$spec (CXX_QT_AUTORCC_OPTIONS)" \
   "edit $spec '/^%check/,/^%files/s|--no-zstd|--no-compress|'"
+expect fail "a PKGBUILD variable that is not exported" "$arch: CXX_QT_AUTORCC_OPTIONS not set" \
+  "edit $arch 's|export CXX_QT_AUTORCC_OPTIONS|CXX_QT_AUTORCC_OPTIONS|'"
+expect fail "a make variable that is not exported" "$deb: CXX_QT_AUTORCC_OPTIONS not set" \
+  "edit $deb 's|^export CXX_QT_AUTORCC_OPTIONS|CXX_QT_AUTORCC_OPTIONS|'"
+expect fail "the spec's %build sets a variable it does not export" "$spec (CXX_QT_AUTORCC_OPTIONS set in)" \
+  "edit $spec '/^%build/,/^%install/s|export CXX_QT_AUTORCC_OPTIONS|CXX_QT_AUTORCC_OPTIONS|'"
+expect fail "the Flatpak sets them for the rust module only" "$fp: CXX_QT_AUTORCC_OPTIONS not set" \
+  "edit $fp '/CXX_QT_AUTORCC_OPTIONS/d'
+   edit $fp 's|^  - name: rust$|&\\
+    build-options:\\
+      env:\\
+        CXX_QT_AUTORCC_OPTIONS: --format-version:1:--no-zstd|'"
+expect fail "another value in the Flatpak" "$fp (CXX_QT_AUTORCC_OPTIONS)" \
+  "edit $fp 's|CXX_QT_AUTORCC_OPTIONS: .*|CXX_QT_AUTORCC_OPTIONS: --no-zstd|'"
 expect pass "a quoted value" \
   "edit $arch 's|=--format-version:1:--no-zstd|=\"--format-version:1:--no-zstd\"|'"
+expect pass "a single-quoted value with a comment after it" \
+  "edit $arch \"s|=--format-version:1:--no-zstd|='--format-version:1:--no-zstd' # #252|\""
+expect pass "make's ?= and :=" \
+  "edit $deb 's|^export CXX_QT_AUTORCC_OPTIONS =|export CXX_QT_AUTORCC_OPTIONS ?=|'
+   edit $deb 's|^export CARGO_TARGET_DIR|export CXX_QT_AUTORCC_OPTIONS := --format-version:1:--no-zstd\\
+&|'"
 
 # One license.
 expect fail "the metainfo with only the GPL" "$meta (project_license)" \
