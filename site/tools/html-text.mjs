@@ -33,6 +33,7 @@ export function decodeEntities(s, onBad = () => {}) {
 // next "-->" or "--!>" ("<!-->" and "<!--->" are empty comments). Text on
 // either side of a comment is joined, so the result must not form a new
 // "<!--"; that, and a comment that never ends, go to onBad.
+const COMMENT_END = /--!?>/g;
 export function stripComments(html, onBad = () => {}) {
   let out = "";
   let at = 0;
@@ -44,12 +45,10 @@ export function stripComments(html, onBad = () => {}) {
     if (html.startsWith(">", open + 4)) end = open + 5;
     else if (html.startsWith("->", open + 4)) end = open + 6;
     else {
-      const ends = [["-->", 3], ["--!>", 4]]
-        .map(([mark, len]) => [html.indexOf(mark, open + 4), len])
-        .filter(([i]) => i >= 0);
-      if (ends.length === 0) { onBad("a comment that never ends"); return out; }
-      const [close, len] = ends.reduce((a, b) => (b[0] < a[0] ? b : a));
-      end = close + len;
+      COMMENT_END.lastIndex = open + 4;
+      const close = COMMENT_END.exec(html);
+      if (close === null) { onBad("a comment that never ends"); return out; }
+      end = close.index + close[0].length;
     }
     at = end;
   }
