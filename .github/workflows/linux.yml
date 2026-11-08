@@ -50,6 +50,11 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      # The tests below run Node; the same major as every other job
+      # (docs/surec.md, "Node"), not whatever the runner image ships.
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
       - run: dash packaging/test-check-cli-version.sh
       - name: Package contents check works
         run: dash packaging/test-check-package-contents.sh

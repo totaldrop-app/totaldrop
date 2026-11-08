@@ -141,6 +141,57 @@ Bir değişiklik ancak şunların hepsi doğruysa bitmiştir:
 7. Site güncellenir ve indirme bağlantılarının her biri denenir.
 8. Android'de CI'ın imzaladığı paket Play Console'a yüklenir.
 
+## Node
+
+CI'da Node çalıştıran her iş (Worker denetimleri, birim ve uçtan uca
+testler, site betikleri, değişiklik günlüğü aracı, Linux betik testleri,
+Wrangler ile dağıtım) aynı sabit Node ana sürümüyle (major) çalışır:
+`.github/workflows/` altındaki her `actions/setup-node` adımı aynı
+`node-version` değerini taşır. `lts/*` ya da `24.x` gibi kendiliğinden
+değişen bir değer kullanılmaz; yeni bir LTS çıktığında CI'ın Node'u
+habersiz değişmez. Ara sürüm (24.x içinde hangisi) `setup-node`'un o günkü
+seçimidir. Buluşma Worker'ının birim testleri `@types/node` ile tür
+denetiminden geçer; onun ana sürümü de aynıdır, yoksa tür denetimi
+testlerin çalıştığı Node'da olmayan API'leri kabul eder. Node çalıştıran
+yeni bir iş de aynı `setup-node` adımını alır, runner imajındaki Node'a
+güvenmez.
+
+`packaging/check-versions.sh` her PR'da (`CI` iş akışı, "Component
+versions" işi) şunları denetler: her `setup-node` adımının bir
+`node-version` satırı var, her değer sabit bir ana sürüm (`24`) ya da tam
+sürüm (`24.11.1`), hepsi aynı ana sürüm ve her `package.json`'daki
+`@types/node` ile aynı. `packaging/test-check-versions.sh` denetimin
+kendisini aynı işte sınar.
+
+**Yükseltme:** Node ana sürüm yükseltmesi tek bir PR'dır. Bütün
+`node-version` değerleri ve `@types/node` aynı PR'da birlikte değişir.
+Yalnızca LTS olan (çift numaralı) bir ana sürüme geçilir. PR'dan önce
+şunlara bakılır:
+
+- Wrangler yeni sürümü destekliyor mu: iki Worker'ın `package-lock.json`
+  dosyasında `node_modules/wrangler` ve `node_modules/miniflare`
+  altındaki `engines.node` aralığı yeni ana sürümü kapsamalıdır.
+- Workers ne istiyor: Worker'lar Node'da değil, Cloudflare'in workerd
+  çalışma zamanında çalışır; Node'un sürümü onları yalnızca Wrangler,
+  yerel `wrangler dev` ve testler üzerinden etkiler. Node API'leri
+  Worker'a yalnızca `nodejs_compat` bayrağıyla gelir; bugün iki Worker'da
+  ve sitede de kapalıdır. Bayrak açılırsa, yükseltmede Cloudflare'in
+  "Node.js compatibility" belgesindeki desteklenen API'lere karşı da
+  bakılır ve bu madde güncellenir.
+- PR'da Server, Site, Linux ve değişiklik günlüğü denetimleri yeni sürümle
+  yeşil olmalıdır (`ci.yml` değiştiği için bütün alanlar çalışır).
+
+Dependabot `actions/setup-node`'un SHA'sını günceller ama `node-version`'a
+dokunmaz. `@types/node`'un ana sürüm güncellemelerini de önermez
+(`.github/dependabot.yml`): tek başına gelen bir ana sürüm (#200, 24 → 26)
+CI'dan geçer ama tür denetimine Node 24'te olmayan API'leri kabul ettirir.
+Aynı ana sürüm içindeki `@types/node` güncellemeleri Dependabot'tan gelir.
+
+**İstisna:** Flatpak işi (`linux.yml`, `flatpak`) Node'u Flathub'ın
+özetle (digest) sabitlenmiş derleme imajından alır. O Node yalnızca imaj
+yükseltilince değişir ve bu denetimin dışındadır; yalnızca
+`tools/flatpak-cargo-sources.mjs`'i çalıştırır.
+
 ## Dağıtım
 
 Site (totaldrop.app) ile buluşma ve aktarma sunucuları (rendezvous ve
