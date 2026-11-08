@@ -107,7 +107,7 @@ bilgiler"). Bir kanal başarısız olursa iş elle yeniden çalıştırılır.
 | 3 | AUR | `totaldrop` (kaynaktan) ve `totaldrop-bin`; Linux yayınıyla |
 | 4 | winget | `TotalDrop.CLI` |
 | 5 | crates.io ve `cargo binstall` | `totaldrop-cli` ve bağımlı olduğu dört crate; engeller kalkınca |
-| 6 | Microsoft Store, winget `TotalDrop.TotalDrop` | Windows uygulaması (#33) |
+| 6 | Microsoft Store | Windows uygulaması: [0016](0016-windows-microsoft-store.md) |
 | 6 | Homebrew cask | macOS uygulaması; Apple hesabı ve noter onayıyla (0009, adım 5) |
 | 6 | homebrew-core | 1.0'dan sonra |
 | — | Flathub | 0014 |
@@ -197,38 +197,38 @@ adını alabilir; `brew install totaldrop` belirsiz kalmaz. AUR'da
 - **CLI:** `TotalDrop.CLI` kimliği. Kurulum türü `zip`, içindeki kurulum
   türü `portable`. winget ikiliyi kendi klasörüne açar ve `totaldrop`
   komutunu PATH'e bağlar.
-- **Uygulama:** `TotalDrop.TotalDrop` kimliği, Windows uygulaması (#33)
-  geldiğinde. Store'da yayımlanırsa winget onu `msstore` kaynağından da
-  kurar.
+- **Uygulama:** Windows uygulaması yalnızca Microsoft Store'dan dağıtılır
+  ([0016](0016-windows-microsoft-store.md)). winget onu `msstore`
+  kaynağından, Store ürün kimliğiyle kurar. Topluluk deposundaki
+  `TotalDrop.TotalDrop` kimliği bir kurulum adresi ister; Store dışında
+  paket olmadığı için yayımlanmaz (0016).
 - winget'te bildirimin `Publisher` alanı ve kimliğin öneki TotalDrop'u
   yayıncı olarak gösterir. Bu yüzden winget, yayıncının geliştirici
   olarak göründüğü yerler arasına girer. Orada TotalDrop'u yalnızca
   TotalDrop yayımlar; 0012 ve `marka.md`'deki liste buna göre güncellenir
-  (Sonuçlar). Kimlikleri başkası almadan proje alır.
+  (Sonuçlar). `TotalDrop.CLI` kimliğini başkası almadan proje alır.
 - İlk bildirim elle, `komac` ya da `wingetcreate` ile gönderilir. Sonraki
   sürümleri `channels.yml` gönderir.
 - İmza: winget imzasız ikili kabul eder, ama Windows SmartScreen ve
-  Defender uyarı verebilir. Ücretsiz yol SignPath Foundation'ın açık kaynak
-  imza programıdır. Koşulları: OSI lisansı, açık depo, kaynağı doğrulanan
-  CI derlemesi, ekipte iki aşamalı doğrulama. Sertifikada yayıncı
-  "SignPath Foundation" görünür, TotalDrop değil. Bunun marka kuralıyla
-  (0012) uyumu ayrı değerlendirilir. Ücretli imza hizmetleri 0005 gereği
-  seçenek değildir.
+  Defender uyarı verebilir. CLI ikilisi Store'dan geçmediği için Store'un
+  imzası (0016) onu kapsamaz. Ücretsiz yol SignPath Foundation'ın açık
+  kaynak imza programıdır. Koşulları: OSI lisansı, açık depo, kaynağı
+  doğrulanan CI derlemesi, ekipte iki aşamalı doğrulama. Sertifikada
+  yayıncı "SignPath Foundation" görünür, TotalDrop değil. Bunun marka
+  kuralıyla (0012) uyumu ayrı değerlendirilir. Ücretli imza hizmetleri
+  0005 gereği seçenek değildir. CLI ilk sürümlerde imzasız çıkar.
 - **Doğrulanacak:** winget'in `1.0.0-beta.1` gibi bir sürüm dizesini
   `1.0.0`'dan önce sıralayıp sıralamadığı. Bugünkü `0.x-beta` sürümlerde
   sıralama sorun çıkarmaz; soru 1.0'ın betalarında önem kazanır.
 
 ### Microsoft Store
 
-- Microsoft, Eylül 2025'ten beri bireysel geliştirici kaydını ücretsiz
-  yaptı. Store MSIX paketini kendisi imzalar. Bu, Windows uygulamasının
-  imza sorununu parasız çözebilir.
-- **Doğrulanacak:** bireysel hesapta Store'da yayıncı olarak kişinin adı
-  mı görünür. Marka kuralı Store'da yayıncının TotalDrop görünmesini ister
-  (0012). Görünmüyorsa şirket hesabı gerekir; şirket hesabının tek
-  seferlik bir ücreti vardır.
-- Karar #33'ün karar kaydında verilir: Store, MSIX ya da imzalı kurulum
-  paketi.
+- Windows uygulamasının dağıtımı, Store hesabı, yayıncı adı ve imzası
+  [0016](0016-windows-microsoft-store.md)'nın konusudur. Bu karar orada
+  verilenleri tekrarlamaz.
+- Bu kararı ilgilendiren tek sonuç: Windows uygulaması için ayrı bir
+  winget bildirimi ya da Scoop paketi olmaz. Scoop ve winget'te yalnızca
+  CLI vardır.
 
 ### AUR
 
@@ -310,8 +310,8 @@ adını alabilir; `brew install totaldrop` belirsiz kalmaz. AUR'da
 3. AUR: `totaldrop` ve `totaldrop-bin`.
 4. winget: `TotalDrop.CLI`.
 5. crates.io ve `cargo binstall`, üç engel kalkınca.
-6. Windows uygulaması: Store, winget `TotalDrop.TotalDrop` (#33).
-   macOS uygulaması: cask (0009). 1.0'dan sonra homebrew-core.
+6. Windows uygulaması: Store (0016). macOS uygulaması: cask (0009).
+   1.0'dan sonra homebrew-core.
 
 Her adım kendi issue'su ve PR'ıyla gelir. README'deki ve sitedeki indirme
 tablosu aynı PR'da güncellenir.
