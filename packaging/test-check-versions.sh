@@ -193,6 +193,13 @@ expect fail "the Flatpak key in an env: on the module, not under build-options" 
    edit $fp 's|^    build-commands:|    env:\\
       CXX_QT_AUTORCC_OPTIONS: --format-version:1:--no-zstd\\
 &|'"
+expect fail "the Flatpak key for one architecture only" "$fp: CXX_QT_AUTORCC_OPTIONS not set" \
+  "edit $fp '/CXX_QT_AUTORCC_OPTIONS/d'
+   edit $fp 's|^      env:$|      arch:\\
+        x86_64:\\
+          env:\\
+            CXX_QT_AUTORCC_OPTIONS: --format-version:1:--no-zstd\\
+&|'"
 expect fail "the Flatpak key in a module nested in totaldrop" "$fp: CXX_QT_AUTORCC_OPTIONS not set" \
   "edit $fp '/CXX_QT_AUTORCC_OPTIONS/d'
    edit $fp 's|^    build-commands:|    modules:\\
