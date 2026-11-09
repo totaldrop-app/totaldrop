@@ -180,9 +180,21 @@ expect pass "a quoted value" \
   "edit $arch 's|=--format-version:1:--no-zstd|=\"--format-version:1:--no-zstd\"|'"
 expect pass "a single-quoted value with a comment after it" \
   "edit $arch \"s|=--format-version:1:--no-zstd|='--format-version:1:--no-zstd' # #252|\""
-expect pass "make's ?= and :=" \
-  "edit $deb 's|^export CXX_QT_AUTORCC_OPTIONS =|export CXX_QT_AUTORCC_OPTIONS ?=|'
-   edit $deb 's|^export CARGO_TARGET_DIR|export CXX_QT_AUTORCC_OPTIONS := --format-version:1:--no-zstd\\
+expect pass "make's :=" \
+  "edit $deb 's|^export CXX_QT_AUTORCC_OPTIONS =|export CXX_QT_AUTORCC_OPTIONS :=|'"
+expect fail "make's ?=, which lets the environment win" "$deb: CXX_QT_AUTORCC_OPTIONS not set" \
+  "edit $deb 's|^export CXX_QT_AUTORCC_OPTIONS =|export CXX_QT_AUTORCC_OPTIONS ?=|'"
+expect fail "make's spaced form in the PKGBUILD" "$arch: CXX_QT_AUTORCC_OPTIONS not set" \
+  "edit $arch 's|export CXX_QT_AUTORCC_OPTIONS=|export CXX_QT_AUTORCC_OPTIONS = |'"
+expect fail "the Flatpak key under build-options, not env" "$fp: CXX_QT_AUTORCC_OPTIONS not set" \
+  "edit $fp 's|^        CXX_QT_AUTORCC_OPTIONS:|      CXX_QT_AUTORCC_OPTIONS:|'"
+expect fail "the Flatpak key in a module nested in totaldrop" "$fp: CXX_QT_AUTORCC_OPTIONS not set" \
+  "edit $fp '/CXX_QT_AUTORCC_OPTIONS/d'
+   edit $fp 's|^    build-commands:|    modules:\\
+      - name: nested\\
+        build-options:\\
+          env:\\
+            CXX_QT_AUTORCC_OPTIONS: --format-version:1:--no-zstd\\
 &|'"
 
 # One license.

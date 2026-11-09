@@ -216,22 +216,31 @@ same "packaging/containers/fedora.Dockerfile (RUSTUP_* ARGs)" "$(rustup_args fed
 #
 # One pass prints "SECTION VALUE" for each line that sets it, outside
 # comments: SECTION is the RPM section (%build) or the shell function
-# (build()) the line is in, or "-" before any. In a recipe only an export
-# counts (a plain variable never reaches cargo; make's := and ?= are
-# fine); in the Flatpak, only a key of the totaldrop module.
+# (build()) the line is in, or "-" before any. Only an export counts: a
+# plain variable never reaches cargo. In debian/rules, a make export at
+# the top, with = or := (not ?=, which lets the environment win); in the
+# spec and the PKGBUILD, a shell export (make's spaced form would fail
+# there and set nothing). In the Flatpak, only a key of an env: mapping
+# of the totaldrop module itself, not of a module nested in it.
 rcc=--format-version:1:--no-zstd
 rcc_values() {
+  yml=0
   case $1 in
-    *.yml) set_re='^[[:space:]]+CXX_QT_AUTORCC_OPTIONS:' ;;
-    *) set_re='^[[:space:]]*export[[:space:]]+CXX_QT_AUTORCC_OPTIONS[[:space:]]*[:?]?=' ;;
+    *.yml) yml=1 set_re='^[[:space:]]+CXX_QT_AUTORCC_OPTIONS:' ;;
+    */rules) set_re='^export[[:space:]]+CXX_QT_AUTORCC_OPTIONS[[:space:]]*:?=' ;;
+    *) set_re='^[[:space:]]*export[[:space:]]+CXX_QT_AUTORCC_OPTIONS=' ;;
   esac
-  case $1 in *.yml) yml=1 ;; *) yml=0 ;; esac
-  awk -v q="'" -v set_re="$set_re" -v yml="$yml" '
+  awk -v q="'" -v envind=-1 -v set_re="$set_re" -v yml="$yml" '
     /^[[:space:]]*#/ { next }
     /^%(prep|build|install|check|files|description|package|changelog|pre|post|preun|postun)([[:space:]]|$)/ { sec = $1 }
     /^[A-Za-z_][A-Za-z0-9_]*\(\)/ { sec = $1 }
-    yml && /^  - name:/ { mod = $3 }
-    $0 ~ set_re && (!yml || mod == "totaldrop") {
+    yml && !/^[[:space:]]*$/ {
+      match($0, /^ */); ind = RLENGTH
+      if (/^ *- name:/) { mod = (ind == 2 ? $3 : "") }
+      if (envind >= 0 && ind <= envind) envind = -1
+      if (/^ +env:[[:space:]]*$/) { envind = ind; next }
+    }
+    $0 ~ set_re && (!yml || (mod == "totaldrop" && envind >= 0)) {
       v = $0
       sub(/.*CXX_QT_AUTORCC_OPTIONS[[:space:]]*(:|[:?]?=)[[:space:]]*/, "", v)
       sub(/[[:space:]]+#.*$/, "", v)
