@@ -230,12 +230,9 @@ expect fail "shallow clone" "shallow clone"
 # check-versions.sh reads come from this checkout.
 repo 0.1.0-beta.2
 # All of packaging/, so a file check-versions.sh starts reading is never
-# missing here (#266).
-for f in linux/Cargo.toml rust-toolchain.toml packaging .github/workflows; do
-  mkdir -p "$(dirname "$r/$f")"
-  rm -rf "${r:?}/$f"
-  cp -R "$src/$f" "$r/$f"
-done
+# missing here (#266); only tracked files, so no build cache comes along.
+git -C "$src" ls-files -- linux/Cargo.toml rust-toolchain.toml packaging .github/workflows |
+  tar -C "$src" -cf - -T - | tar -C "$r" -xf -
 commit "packaging"
 linux=$(sed -n 's/^version = "\(.*\)"/\1/p' "$r/linux/Cargo.toml" | head -1)
 release linux-v0.0.1-beta.1

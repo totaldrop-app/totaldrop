@@ -220,8 +220,10 @@ same "packaging/containers/fedora.Dockerfile (RUSTUP_* ARGs)" "$(rustup_args fed
 # plain variable never reaches cargo. In debian/rules, a make export at
 # the top, with = or := (not ?=, which lets the environment win); in the
 # spec and the PKGBUILD, a shell export (make's spaced form would fail
-# there and set nothing). In the Flatpak, only a key of an env: mapping
-# of the totaldrop module itself, not of a module nested in it.
+# there and set nothing). In the Flatpak, only a key of the env: mapping
+# under build-options: of the totaldrop module itself, not of a module
+# nested in it (a module nested before build-options: makes the check
+# fail, loudly).
 rcc=--format-version:1:--no-zstd
 rcc_values() {
   yml=0
@@ -230,7 +232,7 @@ rcc_values() {
     */rules) set_re='^export[[:space:]]+CXX_QT_AUTORCC_OPTIONS[[:space:]]*:?=' ;;
     *) set_re='^[[:space:]]*export[[:space:]]+CXX_QT_AUTORCC_OPTIONS=' ;;
   esac
-  awk -v q="'" -v envind=-1 -v set_re="$set_re" -v yml="$yml" '
+  awk -v q="'" -v envind=-1 -v bind=-1 -v set_re="$set_re" -v yml="$yml" '
     /^[[:space:]]*#/ { next }
     /^%(prep|build|install|check|files|description|package|changelog|pre|post|preun|postun)([[:space:]]|$)/ { sec = $1 }
     /^[A-Za-z_][A-Za-z0-9_]*\(\)/ { sec = $1 }
@@ -238,7 +240,9 @@ rcc_values() {
       match($0, /^ */); ind = RLENGTH
       if (/^ *- name:/) { mod = (ind == 2 ? $3 : "") }
       if (envind >= 0 && ind <= envind) envind = -1
-      if (/^ +env:[[:space:]]*$/) { envind = ind; next }
+      if (bind >= 0 && ind <= bind) bind = -1
+      if (/^ +build-options:[[:space:]]*$/) { bind = ind; next }
+      if (bind >= 0 && /^ +env:[[:space:]]*$/) { envind = ind; next }
     }
     $0 ~ set_re && (!yml || (mod == "totaldrop" && envind >= 0)) {
       v = $0
