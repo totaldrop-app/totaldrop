@@ -229,12 +229,11 @@ expect fail "shallow clone" "shallow clone"
 # is skipped, so the release before it is the baseline. The packaging files
 # check-versions.sh reads come from this checkout.
 repo 0.1.0-beta.2
-for f in linux/Cargo.toml rust-toolchain.toml packaging/build.sh \
-  packaging/arch/PKGBUILD packaging/rpm/totaldrop.spec \
-  packaging/debian/changelog packaging/debian/rules packaging/containers \
-  packaging/linux/app.totaldrop.TotalDrop.metainfo.xml \
-  packaging/flatpak/app.totaldrop.TotalDrop.yml .github/workflows; do
+# All of packaging/, so a file check-versions.sh starts reading is never
+# missing here (#266).
+for f in linux/Cargo.toml rust-toolchain.toml packaging .github/workflows; do
   mkdir -p "$(dirname "$r/$f")"
+  rm -rf "${r:?}/$f"
   cp -R "$src/$f" "$r/$f"
 done
 commit "packaging"
