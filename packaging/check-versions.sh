@@ -224,7 +224,9 @@ same "packaging/containers/fedora.Dockerfile (RUSTUP_* ARGs)" "$(rustup_args fed
 # right under build-options: (not a per-arch one, which leaves the other
 # architecture without it) of the totaldrop module itself, not of a module
 # nested in it (a module nested before build-options: makes the check
-# fail, loudly).
+# fail, loudly). Any other line that sets it, such as a per-arch env that
+# overrides the common one, prints "+ VALUE": it does not count, but its
+# value must be right too.
 rcc=--format-version:1:--no-zstd
 rcc_values() {
   yml=0
@@ -246,23 +248,30 @@ rcc_values() {
       if (bind >= 0 && bchild < 0) bchild = ind
       if (bind >= 0 && ind == bchild && /^ +env:[[:space:]]*$/) { envind = ind; next }
     }
-    $0 ~ set_re && (!yml || (mod == "totaldrop" && envind >= 0)) {
+    /CXX_QT_AUTORCC_OPTIONS[[:space:]]*(:|[:?]?=)/ {
+      counts = $0 ~ set_re && (!yml || (mod == "totaldrop" && envind >= 0))
       v = $0
       sub(/.*CXX_QT_AUTORCC_OPTIONS[[:space:]]*(:|[:?]?=)[[:space:]]*/, "", v)
       sub(/[[:space:]]+#.*$/, "", v)
       gsub("[\"" q "]", "", v)
       sub(/[[:space:]]+$/, "", v)
-      print (sec == "" ? "-" : sec) " " v
+      print (!counts ? "+" : sec == "" ? "-" : sec) " " v
     }
   ' "$1"
 }
-# check_rcc FILE SECTIONS: FILE sets it to $rcc, in exactly SECTIONS.
+# check_rcc FILE SECTIONS: FILE sets it to $rcc, in exactly SECTIONS, and
+# sets it to nothing else anywhere.
 check_rcc() {
   f=$1 want=$2
   got=$(rcc_values "$root/$f")
-  [ -n "$got" ] || { fail "$f: CXX_QT_AUTORCC_OPTIONS not set"; return; }
-  secs=$(printf '%s\n' "$got" | cut -d' ' -f1 | sort -u | tr '\n' ' ' | sed 's/ $//')
-  same "$f (CXX_QT_AUTORCC_OPTIONS set in)" "$secs" "$want"
+  secs=$(printf '%s\n' "$got" | cut -d' ' -f1 | grep -v '^+$' | sort -u | tr '\n' ' ' | sed 's/ $//' || true)
+  if [ -n "$secs" ]; then
+    same "$f (CXX_QT_AUTORCC_OPTIONS set in)" "$secs" "$want"
+  else
+    fail "$f: CXX_QT_AUTORCC_OPTIONS not set"
+  fi
+  [ -n "$got" ] || return 0
+  # Every value, counted or not ("+").
   while read -r _ v; do
     same "$f (CXX_QT_AUTORCC_OPTIONS)" "$v" "$rcc"
   done <<EOF
