@@ -188,6 +188,11 @@ expect fail "make's spaced form in the PKGBUILD" "$arch: CXX_QT_AUTORCC_OPTIONS 
   "edit $arch 's|export CXX_QT_AUTORCC_OPTIONS=|export CXX_QT_AUTORCC_OPTIONS = |'"
 expect fail "the Flatpak key under build-options, not env" "$fp: CXX_QT_AUTORCC_OPTIONS not set" \
   "edit $fp 's|^        CXX_QT_AUTORCC_OPTIONS:|      CXX_QT_AUTORCC_OPTIONS:|'"
+expect fail "the Flatpak key in an env: on the module, not under build-options" "$fp: CXX_QT_AUTORCC_OPTIONS not set" \
+  "edit $fp '/CXX_QT_AUTORCC_OPTIONS/d'
+   edit $fp 's|^    build-commands:|    env:\\
+      CXX_QT_AUTORCC_OPTIONS: --format-version:1:--no-zstd\\
+&|'"
 expect fail "the Flatpak key in a module nested in totaldrop" "$fp: CXX_QT_AUTORCC_OPTIONS not set" \
   "edit $fp '/CXX_QT_AUTORCC_OPTIONS/d'
    edit $fp 's|^    build-commands:|    modules:\\
