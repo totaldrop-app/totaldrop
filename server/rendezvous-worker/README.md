@@ -10,6 +10,7 @@ This is the production rendezvous server for `rendezvous.totaldrop.app`. It spea
 How it is built:
 
 - The Worker keeps no state and logs nothing. Observability is turned off in `wrangler.jsonc`.
+- A WebSocket that carries an `Origin` header, which every browser sends and the apps never do, gets 403 before anything is counted (#450), as on the Rust server.
 - One `Directory` Durable Object decides which nameplates are free, in use, retired after a failed code (24 hours), or resting before reuse (10 minutes). It never sees mailbox contents.
 - The `Directory` also limits each client (an IPv4 address or an IPv6 /64, from `CF-Connecting-IP`) to 60 allocations and mailbox openings at once and one more every second (`src/limit.ts`, the same rule as the Rust server's). The counters are in its memory only, under a randomly keyed hash, and are never written to storage. While any client is counted the Directory's minute alarm stays set (`src/alarm.ts`), so a counter is forgotten within about two minutes of its client's last request even when no code is in use. `wrangler dev --var RATE_BURST:<n> --var RATE_INTERVAL_MS:<ms>` changes the limit for tests; production sets neither.
 - Each mailbox is its own `Mailbox` Durable Object, named by its random 16-byte mailbox ID. It holds at most two sides and briefly buffers messages for a side that has not arrived yet. It erases all of its storage when both sides have left, or when it expires (15 minutes unclaimed, one hour at most).

@@ -500,6 +500,20 @@ fn assert_too_many<T: std::fmt::Debug>(r: Result<T, Error>) {
 #[tokio::test(flavor = "multi_thread")]
 async fn a_client_over_its_rate_is_refused_until_it_waits() {
     let server = limited_server().await;
+    // A web page's WebSockets are refused before they are counted (#450):
+    // more of them than the burst still leave the whole burst.
+    for _ in 0..=TEST_RATE_BURST {
+        use tokio_tungstenite::tungstenite::client::IntoClientRequest;
+        let mut req = format!("{server}/v0/allocate")
+            .into_client_request()
+            .unwrap();
+        req.headers_mut()
+            .insert("Origin", "https://example.com".parse().unwrap());
+        assert!(matches!(
+            tokio_tungstenite::connect_async(req).await,
+            Err(tokio_tungstenite::tungstenite::Error::Http(r)) if r.status() == 403
+        ));
+    }
     // The whole burst: two allocations, the sender's mailbox and a code
     // nobody uses. Each counts, whatever its answer.
     let alloc = rendezvous::allocate(&server).await.unwrap();
