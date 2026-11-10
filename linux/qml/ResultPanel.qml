@@ -129,7 +129,7 @@ ColumnLayout {
         Layout.alignment: Qt.AlignHCenter
     }
     SecondaryButton {
-        visible: r.folder !== ""
+        visible: r.folderUrl !== ""
         text: Strings.s.openFolder
         icon.name: Theme.icon("folder-open", "folder-open")
         onClicked: Qt.openUrlExternally(r.folderUrl)
