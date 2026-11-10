@@ -12,13 +12,13 @@ import { type Counted, PROBE_STEP, mayChange, noteGiven, restore } from "../src/
 const S = PROBE_STEP;
 
 /** One socket as pair.ts keeps it: the attachment, which survives a wake,
- * and the object's memory (`counts` and `gave`), which does not. */
+ * and the object's memory (`counts`, `gave` and `answered`), which does
+ * not. */
 class Socket {
   att: Counted = {};
   /** Bytes really given. */
   truly = 0;
   probes = 0;
-  writes = 0;
   /** Counts at the probes not answered yet (the attachment's `probes`). */
   pending: number[] = [];
   private mem: { given: number; answered: number; written: number | undefined } | null = null;
@@ -38,6 +38,20 @@ class Socket {
     return this.mem!.given - this.mem!.answered;
   }
 
+  /** Forward a datagram of `n` bytes: `counts()`, then `gave()`. */
+  give(n: number): void {
+    const after = this.count() + n;
+    this.truly += n;
+    const mem = this.mem!;
+    mem.given = after;
+    if (!mayChange(mem.written, after)) return;
+    const probe = noteGiven(this.att, after);
+    if (this.att.given !== undefined) mem.written = this.att.given;
+    if (!probe) return;
+    this.probes++;
+    this.pending.push(after);
+  }
+
   /** The device read everything: it answers every probe (`answered()`). */
   answerAll(): void {
     const last = this.pending.at(-1);
@@ -48,55 +62,25 @@ class Socket {
     this.mem!.answered = last;
   }
 
-  /** Forward a datagram of `n` bytes: `counts()`, then `gave()`. */
-  give(n: number): void {
-    const before = this.count();
-    const after = before + n;
-    this.truly += n;
-    const mem = this.mem!;
-    mem.given = after;
-    if (!mayChange(mem.written, before, after)) return;
-    const step = noteGiven(this.att, before, after);
-    if (this.att.given !== undefined) mem.written = this.att.given;
-    if (step === "none") return;
-    if (step === "probe") {
-      this.probes++;
-      this.pending.push(after);
-    }
-    this.writes++;
-  }
-
   /** Hibernate and wake: memory is lost, the attachment stays. */
   wake(): void {
     this.mem = null;
   }
 }
 
-test("bytes given before the first probe still count after waking (#426)", () => {
-  // Before #426 the attachment had nothing until the first probe, and a
-  // woken object counted up to PROBE_STEP - 1 such bytes as 0.
+test("bytes given before the first full step still count after waking (#426)", () => {
+  // Before #426 the attachment had nothing until the first probe at
+  // 4 MiB, and a woken object counted up to PROBE_STEP - 1 such bytes as 0.
   const s = new Socket();
   for (const n of [1200, 1200, 64 * 1024]) s.give(n);
-  assert.equal(s.probes, 0);
   s.wake();
   assert.ok(s.count() >= s.truly, `counted ${s.count()} for ${s.truly} given`);
 });
 
-test("waking again and again never counts low (#426 review)", () => {
-  // Just under a step between wakes: with a count written only at probes
-  // (or only at the first bytes), each wake lost up to one more step.
-  const s = new Socket();
-  for (let wake = 0; wake < 20; wake++) {
-    s.give(S - 1);
-    s.wake();
-    assert.ok(s.count() >= s.truly, `wake ${wake}: counted ${s.count()} for ${s.truly}`);
-  }
-});
-
-test("bytes given after a wake, short of the next probe, still count at the next wake (#426 review)", () => {
-  // After a wake the count is a step above the last write; the next probe
-  // can be almost two steps above it. Without a write a full step past
-  // the last one, the bytes in between were lost at the next wake.
+test("bytes given after a wake, short of a step, still count at the next wake (#426 review)", () => {
+  // After a wake the count is a step above the last write. With writes
+  // only at multiples of the step, the next one could be almost two steps
+  // above it, and the bytes in between were lost at the next wake.
   const s = new Socket();
   s.give(1);
   s.give(S - 2);
@@ -106,23 +90,31 @@ test("bytes given after a wake, short of the next probe, still count at the next
   assert.ok(s.count() >= s.truly, `counted ${s.count()} for ${s.truly} given`);
 });
 
-test("a device that reads everything is held to about a step, however often the relay wakes", () => {
-  // Counting high costs a step per wake that had bytes given after it,
-  // until the next answered probe: the answers are counted in the same
-  // (high) terms, so they take the excess away again.
+test("waking again and again never counts low (#426 review)", () => {
   const s = new Socket();
-  for (let wake = 0; wake < 40; wake++) {
-    for (let i = 0; i < 70; i++) s.give(64 * 1024);
-    s.answerAll();
-    assert.ok(s.unanswered() <= 2 * S, `wake ${wake}: ${s.unanswered()} unanswered`);
+  for (let wake = 0; wake < 20; wake++) {
+    s.give(S - 1);
     s.wake();
-    assert.ok(s.unanswered() <= 3 * S, `wake ${wake}, woken: ${s.unanswered()} unanswered`);
+    assert.ok(s.count() >= s.truly, `wake ${wake}: counted ${s.count()} for ${s.truly}`);
+  }
+});
+
+test("datagrams of every size, with wakes in between, never count low", () => {
+  for (const size of [40, 1200, 64 * 1024, S - 1, S, S + 1]) {
+    for (const every of [1, 3, 17]) {
+      const s = new Socket();
+      for (let i = 0; i < 60; i++) {
+        s.give(size);
+        if (i % every === 0) s.wake();
+        assert.ok(s.count() >= s.truly, `${size}/${every}/${i}: ${s.count()} for ${s.truly}`);
+      }
+    }
   }
 });
 
 test("waking with nothing given since adds nothing", () => {
   // A socket that sits idle across many wakes must not drift up to its
-  // UNANSWERED limit (no probe would then ever bring it back down).
+  // UNANSWERED limit.
   const s = new Socket();
   s.give(1200);
   s.wake();
@@ -130,6 +122,25 @@ test("waking with nothing given since adds nothing", () => {
   for (let i = 0; i < 50; i++) {
     s.wake();
     assert.equal(s.count(), once);
+  }
+});
+
+test("a device that reads everything is not held back by wakes, even with little traffic (#426 review)", () => {
+  // Counting high after a wake must not add up: the next datagram writes
+  // the count with a probe, whose answer takes the excess away again.
+  // Before, with a write that sent no probe, each wake followed by a
+  // little traffic added a step for good, and after eight the device got
+  // nothing at all.
+  for (const burst of [1, 70]) {
+    const s = new Socket();
+    for (let i = 0; i < 80; i++) s.give(64 * 1024);
+    s.answerAll();
+    for (let wake = 0; wake < 40; wake++) {
+      s.wake();
+      for (let i = 0; i < burst; i++) s.give(burst === 1 ? 1200 : 64 * 1024);
+      s.answerAll();
+      assert.ok(s.unanswered() < S, `${burst}/${wake}: ${s.unanswered()} unanswered`);
+    }
   }
 });
 
@@ -142,25 +153,10 @@ test("a socket that was given nothing counts nothing after waking", () => {
   assert.deepEqual(restore(null), { given: 0, answered: 0, written: undefined });
 });
 
-test("datagrams of every size, with wakes in between, never count low", () => {
-  const sizes = [40, 1200, 64 * 1024, S - 1, S, S + 1];
-  for (const size of sizes) {
-    for (const every of [1, 3, 17]) {
-      const s = new Socket();
-      for (let i = 0; i < 60; i++) {
-        s.give(size);
-        if (i % every === 0) s.wake();
-        assert.ok(s.count() >= s.truly, `${size}/${every}/${i}: ${s.count()} for ${s.truly}`);
-      }
-    }
-  }
-});
-
-test("the attachment is written about once a step, not per datagram", () => {
+test("probes, and writes to the attachment, come about once a step", () => {
   const s = new Socket();
   for (let i = 0; i < 1000; i++) s.give(64 * 1024);
-  // 1000 datagrams of 64 KiB are about 15.6 steps: the first bytes, then
-  // one write per step.
-  assert.ok(s.writes <= 17, `${s.writes} writes`);
-  assert.equal(s.probes, 15);
+  // 1000 datagrams of 64 KiB are about 15.6 steps: one probe at the first
+  // bytes, then one per step.
+  assert.equal(s.probes, 16);
 });

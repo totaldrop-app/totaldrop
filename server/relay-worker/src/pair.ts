@@ -67,8 +67,8 @@ interface Attachment {
   ended?: boolean;
   /** Bytes this socket had sent, at the last SENT_STEP passed. */
   sent?: number;
-  /** Bytes given to this socket, as last written (count.ts): never a full
-   * PROBE_STEP below the count. */
+  /** Bytes given to this socket when its last probe went out (count.ts):
+   * never a full PROBE_STEP below the count. */
   given?: number;
   /** Bytes given to it when its last answered probe went out. */
   answered?: number;
@@ -260,7 +260,7 @@ export class Pair extends DurableObject<Env> {
     m.set(unhex(own), 0);
     try {
       peer.send(m);
-      this.gave(peer, given, given + m.length);
+      this.gave(peer, given + m.length);
     } catch {
       // The other side is gone; its close handler tidies up.
     }
@@ -295,22 +295,20 @@ export class Pair extends DurableObject<Env> {
     return sum;
   }
 
-  /** Count `before` to `after` bytes given to `ws`; each PROBE_STEP passed
-   * sends a probe after them. */
-  private gave(ws: WebSocket, before: number, after: number): void {
+  /** Count `after` bytes given to `ws` in all; at its first bytes and then
+   * every PROBE_STEP, a probe goes out after them (count.ts). */
+  private gave(ws: WebSocket, after: number): void {
     this.given.set(ws, after);
-    // The attachment is read only when it may change (count.ts).
-    if (!mayChange(this.written.get(ws), before, after)) return;
+    // The attachment is read only when it may change.
+    if (!mayChange(this.written.get(ws), after)) return;
     const att = attachment(ws);
     if (!att) return;
-    const step = noteGiven(att, before, after);
+    const probe = noteGiven(att, after);
     if (att.given !== undefined) this.written.set(ws, att.given);
-    if (step === "none") return;
-    if (step === "probe") {
-      const nonce = crypto.getRandomValues(new Uint8Array(16));
-      ws.send(new Uint8Array([...PROBE, ...nonce]));
-      att.probes = [...(att.probes ?? []), [hex(nonce), after]];
-    }
+    if (!probe) return;
+    const nonce = crypto.getRandomValues(new Uint8Array(16));
+    ws.send(new Uint8Array([...PROBE, ...nonce]));
+    att.probes = [...(att.probes ?? []), [hex(nonce), after]];
     ws.serializeAttachment(att);
   }
 
