@@ -86,7 +86,7 @@ pub fn check_url(url: &str) -> Result<()> {
         .map_err(|_| Error::Connect(crate::error::msg::INVALID_RELAY.into()))
 }
 
-/// The address of the STUN server `host:port`, in the socket's family.
+/// The address of the STUN server `host:port` in one family.
 async fn stun_address(server: &str, ipv4: bool) -> Option<SocketAddr> {
     tokio::net::lookup_host(server)
         .await
@@ -94,13 +94,34 @@ async fn stun_address(server: &str, ipv4: bool) -> Option<SocketAddr> {
         .find(|a| a.is_ipv4() == ipv4)
 }
 
-/// Ask the STUN server `server` (`host:port`) which public address `socket`
-/// has: two requests at most, sent from the socket QUIC will use, so the
-/// answer is the mapping the other device must aim at. `None` when nothing
-/// answers (for example when UDP is blocked).
-pub async fn discover(socket: &UdpSocket, server: &str) -> Option<SocketAddr> {
+/// Ask the STUN server `server` (`host:port`) which public addresses
+/// `socket` has: over IPv4, and over IPv6 too when the socket is
+/// dual-stack (#403), both at once. Two requests per family at most, sent
+/// from the socket QUIC will use, so each answer is the mapping the other
+/// device must aim at. Empty when nothing answers (for example when UDP is
+/// blocked).
+pub async fn discover(socket: &UdpSocket, server: &str) -> Vec<SocketAddr> {
+    let ipv6 = socket.local_addr().is_ok_and(|a| a.is_ipv6());
+    let (v4, v6) = tokio::join!(discover_in(socket, server, true), async {
+        if ipv6 {
+            discover_in(socket, server, false).await
+        } else {
+            None
+        }
+    });
+    v4.into_iter().chain(v6).collect()
+}
+
+/// [`discover`] in one family: IPv4 (`ipv4`) or IPv6.
+async fn discover_in(socket: &UdpSocket, server: &str, ipv4: bool) -> Option<SocketAddr> {
     let local = socket.local_addr().ok()?;
-    let target = stun_address(server, local.is_ipv4()).await?;
+    if !ipv4 && !local.is_ipv6() {
+        return None;
+    }
+    let server_addr = stun_address(server, ipv4).await?;
+    // A dual-stack socket sends to IPv4 through IPv4-mapped addresses and
+    // reports them as such.
+    let target = crate::path::in_family(server_addr, local.is_ipv6());
     // A second handle on the same socket; QUIC gets the original.
     let clone = socket.try_clone().ok()?;
     clone.set_nonblocking(true).ok()?;
@@ -114,10 +135,10 @@ pub async fn discover(socket: &UdpSocket, server: &str) -> Option<SocketAddr> {
         while let Ok(Ok((n, from))) =
             tokio::time::timeout_at(deadline, udp.recv_from(&mut buf)).await
         {
-            if from == target
+            if crate::path::canonical(from) == crate::path::canonical(target)
                 && let Some(addr) = buf.get(..n).and_then(|a| wire::parse_stun_response(a, &id))
             {
-                return Some(addr);
+                return Some(crate::path::canonical(addr));
             }
         }
     }

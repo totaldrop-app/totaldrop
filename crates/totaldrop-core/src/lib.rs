@@ -111,11 +111,20 @@ async fn own_hints(
         .into_iter()
         .map(totaldrop_proto::wire::Address)
         .collect();
-    if !paths.stun.is_empty()
-        && let Some(seen) = relay::discover(socket, &paths.stun).await
-        && !hints.local.iter().any(|a| a.0 == seen)
-    {
-        hints.public.push(totaldrop_proto::wire::Address(seen));
+    if !paths.stun.is_empty() {
+        for seen in relay::discover(socket, &paths.stun).await {
+            let hidden =
+                matches!(seen.ip(), std::net::IpAddr::V6(ip) if !transport::announceable_v6(ip));
+            if !hidden
+                && !hints
+                    .local
+                    .iter()
+                    .chain(hints.public.iter())
+                    .any(|a| a.0 == seen)
+            {
+                hints.public.push(totaldrop_proto::wire::Address(seen));
+            }
+        }
     }
     Ok(hints)
 }
@@ -317,7 +326,7 @@ enum Keep {
 /// arrives there, and moving would only lose a direct path that may come
 /// back.
 fn keep(remote: std::net::SocketAddr, linked: bool, shared: bool) -> Keep {
-    if remote == path::RELAY_PEER {
+    if path::is_relay(remote) {
         Keep::Link
     } else if linked && shared {
         Keep::Fallback

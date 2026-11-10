@@ -128,6 +128,19 @@ treated as final.
 
     Each address is `[ip bytes (4 or 16), port]`. At most 8 addresses are
     accepted per list.
+    - Since #403 the QUIC socket is dual-stack where the system has IPv6:
+      one port for both families. Local addresses are loopback, the IPv4
+      address of the default-route interface and the IPv6 address the
+      system would send from; public addresses are what STUN answers over
+      IPv4 and, on a dual-stack socket, over IPv6. An IPv6 address is
+      announced only if another device can reach it (not loopback,
+      unspecified, link-local or IPv4-mapped) and its interface part is
+      not built from the network card's hardware address (modified
+      EUI-64), which would stay the same on every network. A side whose
+      socket is IPv4 only fails just the dial to an IPv6 address; the
+      other paths race on. On a dual-stack socket QUIC sees IPv4
+      addresses, the relay stand-in among them, as IPv4-mapped IPv6
+      ones.
 11. **Session after the hybrid step.**
     - Each direction has its own ChaCha20-Poly1305 key (`k_i2r`, `k_r2i`).
     - Nonces follow Noise: four zero bytes, then a 64-bit little-endian
@@ -232,8 +245,10 @@ treated as final.
       The self-hosted relay bounds its queue itself, sends no probes and
       closes a pair on an unexpected 25-byte message.
     - Address discovery is plain STUN (RFC 8489), Binding with
-      XOR-MAPPED-ADDRESS, sent from the QUIC socket. The default server is
-      `stun.cloudflare.com:3478`; the self-hosted relay answers STUN too.
+      XOR-MAPPED-ADDRESS, sent from the QUIC socket, over IPv4 and, from a
+      dual-stack socket, over IPv6 at the same time (#403). The default
+      server is `stun.cloudflare.com:3478`; the self-hosted relay answers
+      STUN too.
 21. **Which relay.** Each side announces its relay in `HINTS` field 5.
     The relay path runs over the sender's relay. A receiver uses it only if
     it is `wss://` (or
