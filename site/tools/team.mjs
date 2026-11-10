@@ -19,7 +19,7 @@
 // visitors' browsers talk only to totaldrop.app.
 // --fetch reads GITHUB_TOKEN if set (a higher rate limit), never prints it.
 import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, unlinkSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname, join, relative } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { createHash } from "node:crypto";
 
@@ -94,12 +94,12 @@ const langFiles = (dir) => readdirSync(dir).filter((f) => /^[a-z]{2,3}(-[A-Za-z0
 
 // The languages in an i18n folder whose file lacks a non-empty
 // tm.bio.<login>: a bio is shown only once all 35 have it. A file that is
-// not valid JSON counts as lacking it and is reported.
+// not valid JSON is reported as such instead.
 export function missingBio(dir, login) {
   return langFiles(dir).filter((f) => {
     let v;
     try { v = JSON.parse(readFileSync(join(dir, f), "utf8"))[`tm.bio.${login}`]; }
-    catch (e) { fail(`${f}: not valid JSON`); return true; }
+    catch { fail(`${relative(root, join(dir, f))}: not valid JSON`); return false; }
     return typeof v !== "string" || v.trim() === "";
   }).map((f) => f.slice(0, -5));
 }
@@ -114,9 +114,12 @@ export function bioLine(p, pr) {
 const loadConfig = () => validateConfig(JSON.parse(readFileSync(CONFIG, "utf8")));
 
 // The errors team.json's rules find in a parsed config, for the tests.
-export function configErrors(c) {
+export const configErrors = (c) => collectErrors(() => validateConfig(c));
+
+// The errors reported while fn runs, taken out of the list, for the tests.
+export function collectErrors(fn) {
   const before = errors.length;
-  validateConfig(c);
+  fn();
   return errors.splice(before);
 }
 
