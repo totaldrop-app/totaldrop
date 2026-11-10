@@ -472,11 +472,15 @@ mod tests {
         assert_eq!((last[0], last[1], lifetime_of(&last)), (0, 1, 0));
     }
 
-    #[tokio::test(start_paused = true)]
+    // The clock is paused only once the mapping is made: a paused clock
+    // jumps ahead whenever nothing is runnable, also while a real datagram
+    // is still on its way, so the attempt would time out at random.
+    #[tokio::test]
     async fn mapping_is_renewed_before_it_runs_out() {
         let (gw, mut seen) = router(Router::Pcp).await;
         let m = map(gw.clone(), 40_000).await.unwrap();
         let first = seen.recv().await.unwrap();
+        tokio::time::pause();
         tokio::time::sleep(Duration::from_secs(u64::from(LIFETIME / 2) + 1)).await;
         let again = seen.recv().await.unwrap();
         assert_eq!(lifetime_of(&again), LIFETIME);
@@ -505,11 +509,12 @@ mod tests {
         assert_eq!(lifetime_of(&release), 0);
     }
 
-    #[tokio::test(start_paused = true)]
+    #[tokio::test]
     async fn a_short_grant_is_renewed_in_time() {
         let (gw, mut seen) = router(Router::Short).await;
         let m = map(gw, 40_000).await.unwrap();
         let _ = seen.recv().await.unwrap();
+        tokio::time::pause();
         let started = Instant::now();
         let again = seen.recv().await.unwrap();
         assert_eq!(lifetime_of(&again), LIFETIME);
