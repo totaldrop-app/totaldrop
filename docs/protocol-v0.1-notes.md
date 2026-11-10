@@ -183,13 +183,16 @@ treated as final.
       the start: an SSDP search sent to the gateway's own address on port
       1900 (not to the multicast group), then its device description and
       the `WANIPConnection`/`WANPPPConnection` control URL and service
-      description. Only if neither PCP nor NAT-PMP has mapped a port 250
-      ms after the first request is it asked anything: `GetExternalIPAddress`,
-      then the mapping. A UPnP mapping takes about five requests; at home
+      description. These requests only read; they go to the gateway on
+      every transfer outside privacy mode, also where PCP answers. SOAP
+      actions follow only if neither PCP nor NAT-PMP has mapped a port 250
+      ms after the first request: `GetExternalIPAddress`, then the
+      mapping. A UPnP mapping takes about five requests; at home
       (miniupnpd) the search alone took about 85 ms, so a mapping that
       started only at 250 ms came a few milliseconds after `HINTS` and was
       released at once. Once the gateway has answered the search, `HINTS`
-      therefore wait for the mapping until the attempt ends. The description and control URLs must be on
+      therefore wait for UPnP until it gives a mapping or gives up, at
+      most until the attempt ends. The description and control URLs must be on
       the gateway's address; an answer describing a device anywhere else
       is not used (any LAN host can send an answer, but it can only point
       at the gateway). The external address must pass the same "reachable
