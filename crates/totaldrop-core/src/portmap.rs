@@ -169,27 +169,27 @@ pub fn start(gateway: Gateway, port: u16) -> Asking {
         Some(target) => start_at(target, Some(SocketAddr::new(target.ip(), SSDP_PORT)), port),
         None => Asking {
             task: tokio::spawn(async { None }),
-            found: watch::channel(false).1,
+            upnp: watch::channel(Upnp::Searching).1,
         },
     }
 }
 
 fn start_at(target: SocketAddr, ssdp: Option<SocketAddr>, port: u16) -> Asking {
-    let (found_tx, found) = watch::channel(false);
+    let (upnp_tx, upnp) = watch::channel(Upnp::Searching);
     let task = tokio::spawn(async move {
-        tokio::time::timeout(LIMIT, map_with(target, ssdp, port, found_tx))
+        tokio::time::timeout(LIMIT, map_with(target, ssdp, port, upnp_tx))
             .await
             .ok()
             .flatten()
     });
-    Asking { task, found }
+    Asking { task, upnp }
 }
 
 /// A mapping being asked for, from [`start`].
 pub struct Asking {
     task: tokio::task::JoinHandle<Option<Mapping>>,
-    /// Set once the gateway has answered over UPnP.
-    found: watch::Receiver<bool>,
+    /// How far UPnP has got.
+    upnp: watch::Receiver<Upnp>,
 }
 
 impl Asking {
@@ -203,23 +203,45 @@ impl Asking {
     pub async fn wait(mut self, grace: Duration) -> Option<Mapping> {
         match tokio::time::timeout(grace, &mut self.task).await {
             Ok(got) => got.ok().flatten(),
-            Err(_) if *self.found.borrow() => self.task.await.ok().flatten(),
+            Err(_) if *self.upnp.borrow() == Upnp::Found => {
+                let mut upnp = self.upnp;
+                // Waiting is only for UPnP: once it has given up, so does
+                // this, without waiting out PCP and NAT-PMP retries.
+                let failed = async move {
+                    if upnp.wait_for(|u| *u == Upnp::Failed).await.is_err() {
+                        std::future::pending::<()>().await;
+                    }
+                };
+                tokio::select! {
+                    got = self.task => got.ok().flatten(),
+                    () = failed => None,
+                }
+            }
             Err(_) => None,
         }
     }
 }
 
+/// How far UPnP has got, for [`Asking::wait`].
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum Upnp {
+    Searching,
+    /// The gateway answered the search.
+    Found,
+    /// It gave no mapping.
+    Failed,
+}
+
 /// PCP and NAT-PMP at `target`, and UPnP at `ssdp` when given. UPnP runs
 /// alongside: whichever gives a mapping first is used. PCP and NAT-PMP
 /// usually answer within milliseconds, while UPnP is still searching, and
-/// then UPnP asks the router nothing. `found` is set once the UPnP gateway
-/// has answered the search. A UPnP mapping that comes too late is dropped
+/// then UPnP sends no SOAP action. `upnp` tells how far UPnP has got. A UPnP mapping that comes too late is dropped
 /// with its task, and so released.
 async fn map_with(
     target: SocketAddr,
     ssdp: Option<SocketAddr>,
     port: u16,
-    found: watch::Sender<bool>,
+    upnp_state: watch::Sender<Upnp>,
 ) -> Option<Mapping> {
     if port == 0 || !target.is_ipv4() {
         return None;
@@ -233,7 +255,7 @@ async fn map_with(
     // Dropping `stop` tells the UPnP task its mapping is not wanted.
     let (stop, stopped) = oneshot::channel::<()>();
     let mut upnp =
-        ssdp.map(|at| tokio::spawn(upnp(at, SocketAddr::new(client, port), stopped, found)));
+        ssdp.map(|at| tokio::spawn(upnp(at, SocketAddr::new(client, port), stopped, upnp_state)));
     let udp = map_udp(pcp_socket, pmp_socket, client, port);
     tokio::pin!(udp);
     let result = match upnp.as_mut() {
@@ -359,9 +381,13 @@ async fn upnp(
     ssdp: SocketAddr,
     local: SocketAddr,
     stop: oneshot::Receiver<()>,
-    found: watch::Sender<bool>,
+    state: watch::Sender<Upnp>,
 ) -> Option<Mapping> {
-    upnp_with(ssdp, search_options(ssdp), local, stop, found).await
+    let got = upnp_with(ssdp, search_options(ssdp), local, stop, &state).await;
+    if got.is_none() {
+        state.send_replace(Upnp::Failed);
+    }
+    got
 }
 
 /// How the gateway at `ssdp` is searched for: unicast to it, IPv4 only,
@@ -384,7 +410,7 @@ async fn upnp_with(
     options: SearchOptions,
     local: SocketAddr,
     mut stop: oneshot::Receiver<()>,
-    found: watch::Sender<bool>,
+    state: &watch::Sender<Upnp>,
 ) -> Option<Mapping> {
     // Every request ends with the attempt, also when nobody waits for
     // this task any more.
@@ -406,7 +432,7 @@ async fn upnp_with(
     if gateway.addr.ip() != ssdp.ip() || stopped(&mut stop) {
         return None;
     }
-    found.send_replace(true);
+    state.send_replace(Upnp::Found);
     // The router is asked for something only if PCP and NAT-PMP have not
     // mapped a port by now; they usually answer within milliseconds.
     tokio::select! {
@@ -751,8 +777,8 @@ mod tests {
 
     /// A sender nobody listens to, for calls that do not need to know
     /// whether UPnP answered.
-    fn unseen() -> watch::Sender<bool> {
-        watch::channel(false).0
+    fn unseen() -> watch::Sender<Upnp> {
+        watch::channel(Upnp::Searching).0
     }
 
     /// PCP and NAT-PMP only: these tests must not reach whatever listens
@@ -1046,7 +1072,7 @@ mod tests {
     #[derive(Clone, Copy)]
     enum Igd {
         Maps,
-        /// Maps, but takes 100 ms over every HTTP answer, as a slow router
+        /// Maps, but takes 60 ms over every HTTP answer, as a slow router
         /// does.
         Slow,
         /// UPnP error 725: only permanent leases.
@@ -1133,7 +1159,7 @@ mod tests {
                         })
                         .unwrap_or_default();
                     if matches!(kind, Igd::Slow) {
-                        tokio::time::sleep(Duration::from_millis(100)).await;
+                        tokio::time::sleep(Duration::from_millis(60)).await;
                     }
                     let (status, xml) = respond(kind, &head, &action);
                     if !action.is_empty() {
@@ -1296,6 +1322,25 @@ mod tests {
         drop(m);
     }
 
+    /// A gateway that answers the search but gives no mapping, here
+    /// because it sits behind another NAT, ends the wait as soon as UPnP
+    /// gives up, not after the PCP and NAT-PMP retries.
+    #[tokio::test]
+    async fn a_upnp_gateway_that_gives_nothing_ends_the_wait() {
+        let (Gateway::At(silent), _) = router(Router::Silent).await else {
+            unreachable!()
+        };
+        let (ssdp, _seen) = igd(Igd::Private).await;
+        let started = std::time::Instant::now();
+        let got = start_at(silent, Some(ssdp), 40_000)
+            .wait(Duration::from_millis(100))
+            .await;
+        assert!(got.is_none());
+        let took = started.elapsed();
+        // UPnP gives up right after 250 ms; the retries would run to ~1 s.
+        assert!(took < Duration::from_millis(600), "{took:?}");
+    }
+
     /// A gateway that answers nothing costs only the grace.
     #[tokio::test]
     async fn a_silent_gateway_costs_only_the_grace() {
@@ -1399,7 +1444,7 @@ mod tests {
         let (_stop, stopped) = oneshot::channel();
         let local = SocketAddr::from(([127, 0, 0, 1], 40_000));
         let got =
-            tokio::time::timeout(LIMIT, upnp_with(ssdp, options, local, stopped, unseen())).await;
+            tokio::time::timeout(LIMIT, upnp_with(ssdp, options, local, stopped, &unseen())).await;
         assert!(got.unwrap().is_none());
         // The description was read, but nothing was asked of that device.
         assert!(seen.try_recv().is_err());
