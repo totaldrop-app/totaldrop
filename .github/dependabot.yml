@@ -26,6 +26,7 @@ updates:
     directories:
       - /server/rendezvous-worker
       - /server/relay-worker
+      - /server/mail-worker
     schedule:
       interval: weekly
     ignore:

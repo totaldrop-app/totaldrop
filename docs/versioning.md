@@ -15,6 +15,7 @@ TotalDrop uses [Semantic Versioning 2.0](https://semver.org/).
   | Linux app | `linux/Cargo.toml` |
   | Android app | `app/pubspec.yaml`; the Rust library `app/rust/Cargo.toml` carries the same version, without the build number |
   | Servers (rendezvous and relay) | `server/totaldrop-{rendezvous,relay}/Cargo.toml`, `server/{rendezvous,relay}-worker/package.json`; all four have the same version |
+  | Mail Worker | `server/mail-worker/package.json`; not part of the protocol, carries its own version and is only deployed, not released |
 
 - The servers and `app/rust` do not inherit the workspace's version: when
   the CLI's version goes up, they must not appear with a version that was

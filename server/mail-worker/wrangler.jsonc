@@ -1,0 +1,11 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "totaldrop-mail",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-01",
+  // Mail is personal data: the Worker logs nothing about it.
+  "observability": { "enabled": false },
+  // Only Email Routing calls it; it has no HTTP address at all.
+  "workers_dev": false,
+  "preview_urls": false
+}
