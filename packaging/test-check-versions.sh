@@ -228,10 +228,23 @@ expect pass "a license added everywhere" \
    edit $meta 's|</project_license>| AND OFL-1.1&|'
    edit $arch \"s|'MIT OR Apache-2.0')|'MIT OR Apache-2.0' 'OFL-1.1')|\""
 
-# TD-06: package install scripts never run in CI.
-expect fail "npm ci without --ignore-scripts" "npm installs without --ignore-scripts" \
+# #450: package install scripts never run in CI. Each case names the line
+# it breaks, so the check must find that very line.
+line=$(grep -n 'npm ci --ignore-scripts --prefix server/relay-worker' "$root/$wf/server.yml" | cut -d: -f1)
+last=$(($(wc -l < "$root/$wf/server.yml") + 1))
+expect fail "npm ci without --ignore-scripts" "$wf/server.yml:$line: npm installs without --ignore-scripts" \
   "edit $wf/server.yml 's|npm ci --ignore-scripts --prefix server/relay-worker|npm ci --prefix server/relay-worker|'"
-expect fail "a bare npm install" "npm installs without --ignore-scripts" \
+expect fail "a bare npm install" "$wf/server.yml:$last: npm installs without --ignore-scripts" \
   "printf '      - run: npm install\\n' >> $wf/server.yml"
+expect fail "the prefix before the command" "$wf/server.yml:$last: npm installs without --ignore-scripts" \
+  "printf '      - run: npm --prefix x ci && echo\\n' >> $wf/server.yml"
+expect fail "the flag turned off" "$wf/server.yml:$last: npm installs without --ignore-scripts" \
+  "printf '      - run: npm ci --ignore-scripts=false\\n' >> $wf/server.yml"
+expect fail "the flag only in a comment" "$wf/server.yml:$last: npm installs without --ignore-scripts" \
+  "printf '      - run: npm ci # --ignore-scripts\\n' >> $wf/server.yml"
+expect fail "yarn" "$wf/server.yml:$last: pnpm and yarn are not used here" \
+  "printf '      - run: yarn install\\n' >> $wf/server.yml"
+expect pass "a comment that mentions npm ci" \
+  "printf '      # npm ci runs above\\n' >> $wf/server.yml"
 
 exit $failed

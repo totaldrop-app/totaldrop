@@ -152,23 +152,39 @@ for f in "$root"/.github/workflows/*.yml "$root"/.github/workflows/*.yaml; do
 $(node_scan "$f")
 EOF
 done
-# No package install script runs in CI (TD-06): every npm ci or npm install
-# in a workflow takes --ignore-scripts. The deploy job installs wrangler in
-# the same runner that then gets the Cloudflare token, so a script could
-# change what runs next. esbuild and workerd work without theirs: their
-# binaries come in platform packages.
-for f in "$root"/.github/workflows/*.yml "$root"/.github/workflows/*.yaml; do
+# No package install script runs in CI (#450): every npm command that
+# installs packages (ci, install, i, it, add, install-test, rebuild, …), in
+# any argument order, takes --ignore-scripts. The deploy job installs
+# wrangler in the same runner that then gets the Cloudflare token; an
+# install script could change what that step runs. esbuild and workerd
+# work without theirs: their binaries come in platform packages. Comment
+# lines do not count. Only npm is used here; pnpm and yarn are refused
+# outright, so a new one has to come with its own rule.
+npm_scan() {
+  awk -v rel="$2" '
+    /^[[:space:]]*#/ { next }
+    {
+      line = $0
+      sub(/[[:space:]]#.*$/, "", line)
+      if (line ~ /(^|[^A-Za-z0-9_.\/-])(pnpm|yarn)([^A-Za-z0-9_.-]|$)/) {
+        print rel ":" NR ": pnpm and yarn are not used here"; next
+      }
+      if (line !~ /(^|[^A-Za-z0-9_.\/-])npm([^A-Za-z0-9_.-]|$)/) next
+      if (line !~ /(^|[[:space:];&|])(ci|install|i|it|add|install-test|install-ci-test|rebuild)([[:space:];&|]|$)/) next
+      if (line ~ /(^|[[:space:]])--ignore-scripts([[:space:];&|]|$)/) next
+      print rel ":" NR ": npm installs without --ignore-scripts"
+    }
+  ' "$1"
+}
+npm_bad=$(for f in "$root"/.github/workflows/*.yml "$root"/.github/workflows/*.yaml; do
   [ -f "$f" ] || continue
-  rel=${f#"$root"/}
-  grep -nE '(^|[^A-Za-z0-9_.-])npm[[:space:]]+(ci|install|i)([[:space:]]|$)' "$f" |
-    grep -v -- '--ignore-scripts' | while IFS=: read -r n _; do
-      echo "$rel:$n: npm installs without --ignore-scripts"
-    done
-done > "${TMPDIR:-/tmp}/npm-scripts.$$"
-if [ -s "${TMPDIR:-/tmp}/npm-scripts.$$" ]; then
-  while IFS= read -r line; do fail "$line"; done < "${TMPDIR:-/tmp}/npm-scripts.$$"
-fi
-rm -f "${TMPDIR:-/tmp}/npm-scripts.$$"
+  npm_scan "$f" "${f#"$root"/}"
+done)
+while IFS= read -r line; do
+  [ -n "$line" ] && fail "$line"
+done <<NPM
+$npm_bad
+NPM
 node=$(printf '%s\n' $node_majors | sort -u | grep . || true)
 if [ "$(printf '%s\n' "$node" | grep -c . || true)" -ne 1 ]; then
   fail "Node must be pinned to exactly one major, found: '$(echo $node)'"

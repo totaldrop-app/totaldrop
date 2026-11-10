@@ -118,10 +118,11 @@ jobs:
       # Wrangler at the version pinned in the Worker's lock file. The site
       # has no package of its own and uses the rendezvous Worker's. The
       # Cloudflare token is not in this step's environment, and no install
-      # script runs (--ignore-scripts, packaging/check-versions.sh): a
-      # script could otherwise change wrangler before the next step gets
-      # the token. esbuild and workerd come as platform packages and need
-      # none.
+      # script runs (--ignore-scripts, packaging/check-versions.sh, #450),
+      # so nothing can change wrangler before the next step gets the token.
+      # The packages' own code still runs with the token when wrangler
+      # deploys; the lock file pins it. esbuild and workerd come as
+      # platform packages and need no scripts.
       - name: Install wrangler
         env:
           TARGET: ${{ matrix.target }}
