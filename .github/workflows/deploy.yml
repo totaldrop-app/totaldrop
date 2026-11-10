@@ -117,15 +117,18 @@ jobs:
           node-version: "24"
       # Wrangler at the version pinned in the Worker's lock file. The site
       # has no package of its own and uses the rendezvous Worker's. The
-      # Cloudflare token is not in this step's environment: install scripts
-      # never see it.
+      # Cloudflare token is not in this step's environment, and no install
+      # script runs (--ignore-scripts, packaging/check-versions.sh): a
+      # script could otherwise change wrangler before the next step gets
+      # the token. esbuild and workerd come as platform packages and need
+      # none.
       - name: Install wrangler
         env:
           TARGET: ${{ matrix.target }}
         run: |
           case $TARGET in
-            relay) npm ci --prefix server/relay-worker ;;
-            *) npm ci --prefix server/rendezvous-worker ;;
+            relay) npm ci --ignore-scripts --prefix server/relay-worker ;;
+            *) npm ci --ignore-scripts --prefix server/rendezvous-worker ;;
           esac
       - name: Deploy the rendezvous Worker
         if: matrix.target == 'rendezvous'

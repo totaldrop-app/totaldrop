@@ -33,7 +33,7 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: "24"
-      - run: npm ci
+      - run: npm ci --ignore-scripts
       # Type checks the Worker and, where there are any, its unit tests.
       - run: npm run check
       # Unit tests on Node's own runner, for the Workers that have them.
@@ -62,8 +62,8 @@ jobs:
         run: rustup show active-toolchain || rustup toolchain install
       - name: Install the Workers
         run: |
-          npm ci --prefix server/rendezvous-worker
-          npm ci --prefix server/relay-worker
+          npm ci --ignore-scripts --prefix server/rendezvous-worker
+          npm ci --ignore-scripts --prefix server/relay-worker
       # Build first, so the Workers are not waiting through a compile.
       - name: Build the tests
         run: cargo test -p totaldrop-cli --test end_to_end --locked --no-run
