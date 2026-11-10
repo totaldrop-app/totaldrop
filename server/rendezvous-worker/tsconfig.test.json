@@ -7,5 +7,5 @@
     "allowImportingTsExtensions": true,
     "noEmit": true
   },
-  "include": ["src/retry.ts", "src/limit.ts", "test"]
+  "include": ["src/retry.ts", "src/limit.ts", "src/alarm.ts", "test"]
 }
