@@ -28,6 +28,10 @@ Bu dosya, bu depoda çalışan Claude Code oturumlarına yol gösterir.
   | Güvenlik ve gizlilik | `docs/tehdit-modeli.md`, `site/public/privacy.html`, `SECURITY.md` | `security-engineering-analyst` (açık raporları `SECURITY.md`'deki gizli kanaldan gelir, herkese açık issue'dan değil) |
   | Diller ve çeviriler | `l10n/`, `crates/totaldrop-l10n` | kurallar `docs/kararlar/0008-diller-ve-bolgeler.md` ve `docs/ceviri.md` |
   | macOS, Windows | ileride `macos/`, `windows/` | `macos-app-engineering`, `windows-app-engineering` |
+- Tabloda `security-engineering-analyst` istenen her işte (`site/functions/` ve `site/public/_headers` dahil) bu skill'e ek olarak `securitymaxxing` eklentisinin `/securitymaxxing:` komutları da kullanılır (`diff`, `deps`, `secrets`, `crypto` ve konuya göre diğerleri). Eklenti hesap düzeyinde kuruludur, depoya kopyalanmaz; kurulu olmayan oturumda bu adım atlanır ve PR'da belirtilir. Üç sınır:
+  1. Sızan bir anahtar ya da belirteç hiçbir zaman canlı bir çağrıyla doğrulanmaz (`redteam` ve eklentinin `PROMPTS.md`'si bunu önerir). Ajan gizli bilgi kullanmaz; yeri ve maskelenmiş hâli proje liderine ([GOVERNANCE.md](GOVERNANCE.md)) gizli kanaldan ([SECURITY.md](SECURITY.md)) bildirilir, herkese açık bir issue ya da PR'a yazılmaz; değeri proje lideri değiştirir ([docs/surec.md](docs/surec.md), "Gizli bilgiler").
+  2. `redteam` gerçek saldırı gönderir: totaldrop.app'e ve sunuculara karşı proje liderinin açık onayı olmadan çalıştırılmaz, tercihen yerel ya da deneme kopyasında çalıştırılır; üçüncü taraf sistemlere karşı hiç çalıştırılmaz.
+  3. `fix` kod yazar ama issue → branch → PR → bağımsız inceleme akışı aynen geçerlidir. `crypto` komutu `applied-cryptography-review`, Tamarin modeli ve insan kripto incelemesinin yerini tutmaz, onlara ek olarak kullanılır.
 
 ## Komutlar
 
