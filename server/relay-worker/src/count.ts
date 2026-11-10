@@ -12,35 +12,31 @@ export const PROBE_STEP = 4 * 1024 * 1024;
 
 /** What a socket's attachment keeps of the bytes given to it. */
 export interface Counted {
-  /** Bytes given to the socket, as last written. It is written at the
-   * first bytes, at each probe, and whenever the count is a full
-   * PROBE_STEP past it, so the count is always less than a step above.
-   * Unset: given nothing. */
+  /** Bytes given to the socket when its last probe went out: at its first
+   * bytes, then each time the count is a full PROBE_STEP past it, so the
+   * count is always less than a step above. Unset: given nothing. */
   given?: number;
   /** Bytes given to it when its last answered probe went out. */
   answered?: number;
 }
 
-/** Whether giving a socket `before` to `after` bytes, with `written` last
+/** Whether giving a socket bytes up to `after`, with `written` last
  * written to its attachment, may change the attachment (see
  * {@link noteGiven}); when not, pair.ts does not read it at all. */
-export function mayChange(written: number | undefined, before: number, after: number): boolean {
-  return (
-    written === undefined ||
-    after - written >= PROBE_STEP ||
-    Math.floor(after / PROBE_STEP) > Math.floor(before / PROBE_STEP)
-  );
+export function mayChange(written: number | undefined, after: number): boolean {
+  return written === undefined || after - written >= PROBE_STEP;
 }
 
-/** What `att` needs after the bytes given to a socket went from `before`
- * to `after`: a probe (each PROBE_STEP passed), a write of the count (the
- * first bytes, or a step past the last write; #426), or nothing. `att` is
- * updated; the caller writes it back unless the answer is "none". */
-export function noteGiven(att: Counted, before: number, after: number): "probe" | "write" | "none" {
-  const probe = Math.floor(after / PROBE_STEP) > Math.floor(before / PROBE_STEP);
-  if (!probe && att.given !== undefined && after - att.given < PROBE_STEP) return "none";
+/** Whether a socket that was given `after` bytes needs a probe, and with
+ * it a write of the count to `att` (which is updated): at its first bytes,
+ * then whenever the count is a full PROBE_STEP past the last write. So the
+ * count is always less than a step above what was written, and each write
+ * comes with a probe, whose answer brings the count of unanswered bytes
+ * back down also after a wake has counted a step high (#426). */
+export function noteGiven(att: Counted, after: number): boolean {
+  if (att.given !== undefined && after - att.given < PROBE_STEP) return false;
   att.given = after;
-  return probe ? "probe" : "write";
+  return true;
 }
 
 /** Bytes given to a socket and given at its last answered probe, read back
