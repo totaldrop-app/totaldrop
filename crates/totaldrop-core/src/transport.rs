@@ -301,10 +301,26 @@ fn transport_config() -> Arc<quinn::TransportConfig> {
 pub const SOCKET_BUFFER: usize = 4 * 1024 * 1024;
 
 /// A UDP socket bound before `HINTS` are sent, so its port can be announced.
+/// It is dual-stack, so the same port reaches the device over IPv4 and
+/// IPv6 (#403); on a system without IPv6 it is a plain IPv4 socket.
 pub fn bind_socket() -> Result<UdpSocket> {
-    let socket = UdpSocket::bind(SocketAddr::from(([0, 0, 0, 0], 0)))?;
+    let socket = match dual_stack() {
+        Ok(s) => s,
+        Err(_) => UdpSocket::bind(SocketAddr::from(([0, 0, 0, 0], 0)))?,
+    };
     widen(&socket);
     Ok(socket)
+}
+
+/// An IPv6 socket on every address that also takes IPv4. `IPV6_V6ONLY`
+/// is cleared explicitly: Linux defaults to dual-stack, Windows and some
+/// BSDs do not.
+fn dual_stack() -> std::io::Result<UdpSocket> {
+    use socket2::{Domain, Protocol, Socket, Type};
+    let socket = Socket::new(Domain::IPV6, Type::DGRAM, Some(Protocol::UDP))?;
+    socket.set_only_v6(false)?;
+    socket.bind(&SocketAddr::from((std::net::Ipv6Addr::UNSPECIFIED, 0)).into())?;
+    Ok(socket.into())
 }
 
 /// Ask for [`SOCKET_BUFFER`] each way, then for a half and a quarter of it
@@ -317,23 +333,61 @@ fn widen(socket: &UdpSocket) {
     let _ = sizes.iter().any(|&n| s.set_send_buffer_size(n).is_ok());
 }
 
-/// The addresses at which `socket` can likely be reached: loopback and the
-/// address of the interface that holds the default route. Finding the latter
-/// with an unconnected UDP `connect` sends no packet.
+/// The addresses at which `socket` can likely be reached: loopback, the
+/// IPv4 address of the interface that holds the default route, and on a
+/// dual-stack socket the IPv6 address the system would send from (#403).
+/// Finding these with an unconnected UDP `connect` sends no packet.
 pub fn local_addresses(socket: &UdpSocket) -> Result<Vec<SocketAddr>> {
-    let port = socket.local_addr()?.port();
+    let local = socket.local_addr()?;
+    let port = local.port();
     let mut out = vec![SocketAddr::from(([127, 0, 0, 1], port))];
-    if let Ok(probe) = UdpSocket::bind(SocketAddr::from(([0, 0, 0, 0], 0))) {
-        // 192.0.2.1 is TEST-NET-1 (RFC 5737); nothing is sent to it.
-        if probe.connect(SocketAddr::from(([192, 0, 2, 1], 9))).is_ok()
-            && let Ok(addr) = probe.local_addr()
-            && !addr.ip().is_unspecified()
-            && !addr.ip().is_loopback()
-        {
-            out.push(SocketAddr::new(addr.ip(), port));
-        }
+    // 192.0.2.1 is TEST-NET-1 (RFC 5737); nothing is sent to it.
+    if let Some(ip) = source_for(SocketAddr::from(([192, 0, 2, 1], 9)))
+        && !ip.is_unspecified()
+        && !ip.is_loopback()
+    {
+        out.push(SocketAddr::new(ip, port));
+    }
+    // 2001:db8::1 is in the documentation prefix (RFC 3849).
+    let doc = std::net::Ipv6Addr::new(0x2001, 0xdb8, 0, 0, 0, 0, 0, 1);
+    if local.is_ipv6()
+        && let Some(std::net::IpAddr::V6(ip)) = source_for(SocketAddr::from((doc, 9)))
+        && announceable_v6(ip)
+    {
+        out.push(SocketAddr::new(ip.into(), port));
     }
     Ok(out)
+}
+
+/// The address this device would send to `target` from, if it has a route.
+fn source_for(target: SocketAddr) -> Option<std::net::IpAddr> {
+    let any: SocketAddr = if target.is_ipv4() {
+        SocketAddr::from(([0, 0, 0, 0], 0))
+    } else {
+        SocketAddr::from((std::net::Ipv6Addr::UNSPECIFIED, 0))
+    };
+    let probe = UdpSocket::bind(any).ok()?;
+    probe.connect(target).ok()?;
+    Some(probe.local_addr().ok()?.ip())
+}
+
+/// Whether an IPv6 address may go into `HINTS`: one another device can
+/// reach (not loopback, unspecified, link-local, which needs an interface
+/// scope, or IPv4-mapped), and not one built from the network card's
+/// hardware address (modified EUI-64, `…:xxff:fexx:…`), which stays the
+/// same on every network and would let a peer recognise the device from
+/// one transfer to the next. Temporary addresses (RFC 8981), which the
+/// system usually prefers as a source, and stable-privacy ones (RFC 7217)
+/// pass.
+pub fn announceable_v6(ip: std::net::Ipv6Addr) -> bool {
+    let o = ip.octets();
+    let link_local = ip.segments().first().is_some_and(|s| s & 0xffc0 == 0xfe80);
+    let eui64 = o.get(11) == Some(&0xff) && o.get(12) == Some(&0xfe);
+    !(ip.is_loopback()
+        || ip.is_unspecified()
+        || link_local
+        || ip.to_ipv4_mapped().is_some()
+        || eui64)
 }
 
 /// One QUIC endpoint per side that both listens and dials. Each direction
@@ -423,7 +477,7 @@ async fn accept_one(endpoint: &quinn::Endpoint, relay_only: bool) -> Result<quin
             .accept()
             .await
             .ok_or(Error::Connect(crate::error::msg::ENDPOINT_CLOSED.into()))?;
-        if relay_only && incoming.remote_address() != crate::path::RELAY_PEER {
+        if relay_only && !crate::path::is_relay(incoming.remote_address()) {
             incoming.refuse();
             continue;
         }
@@ -739,14 +793,52 @@ mod tests {
 
     use super::*;
 
+    /// How a test side's socket is bound and dialled (#403).
+    #[derive(Debug, Clone, Copy)]
+    enum Kind {
+        /// An IPv4 socket on loopback, as before #403.
+        V4,
+        /// A dual-stack socket, dialled over IPv4 loopback.
+        DualOverV4,
+        /// A dual-stack socket, dialled over IPv6 loopback.
+        DualOverV6,
+    }
+
+    /// A socket of `kind` and the address the other side dials.
+    fn test_socket(kind: Kind) -> (UdpSocket, SocketAddr) {
+        let socket = match kind {
+            Kind::V4 => UdpSocket::bind(SocketAddr::from(([127, 0, 0, 1], 0))).unwrap(),
+            Kind::DualOverV4 | Kind::DualOverV6 => dual_stack().unwrap(),
+        };
+        let port = socket.local_addr().unwrap().port();
+        let addr = match kind {
+            Kind::V4 | Kind::DualOverV4 => SocketAddr::from(([127, 0, 0, 1], port)),
+            Kind::DualOverV6 => SocketAddr::from((std::net::Ipv6Addr::LOCALHOST, port)),
+        };
+        (socket, addr)
+    }
+
+    /// Whether this machine has IPv6 at all. Where it has none, the IPv6
+    /// tests check the IPv4 fallback instead (#403).
+    fn has_ipv6() -> bool {
+        let ok = dual_stack().is_ok();
+        if !ok {
+            eprintln!("no IPv6 on this machine: checking the IPv4 fallback only");
+            assert!(bind_socket().unwrap().local_addr().unwrap().is_ipv4());
+        }
+        ok
+    }
+
     fn pair() -> (quinn::Endpoint, SocketAddr, quinn::Endpoint, SocketAddr) {
+        pair_of(Kind::V4, Kind::V4)
+    }
+
+    fn pair_of(a: Kind, b: Kind) -> (quinn::Endpoint, SocketAddr, quinn::Endpoint, SocketAddr) {
         let (ka, kb) = (
             EndpointKey::generate().unwrap(),
             EndpointKey::generate().unwrap(),
         );
-        let sa = UdpSocket::bind(SocketAddr::from(([127, 0, 0, 1], 0))).unwrap();
-        let sb = UdpSocket::bind(SocketAddr::from(([127, 0, 0, 1], 0))).unwrap();
-        let (aa, ab) = (sa.local_addr().unwrap(), sb.local_addr().unwrap());
+        let ((sa, aa), (sb, ab)) = (test_socket(a), test_socket(b));
         let (a, _, _) = endpoint(sa, &ka, &kb.public()).unwrap();
         let (b, _, _) = endpoint(sb, &kb, &ka.public()).unwrap();
         (a, aa, b, ab)
@@ -761,7 +853,16 @@ mod tests {
     }
 
     async fn run(sender_reachable: bool, receiver_reachable: bool) -> bool {
-        let (sender, sender_addr, receiver, receiver_addr) = pair();
+        run_on(Kind::V4, Kind::V4, sender_reachable, receiver_reachable).await
+    }
+
+    async fn run_on(
+        sender_kind: Kind,
+        receiver_kind: Kind,
+        sender_reachable: bool,
+        receiver_reachable: bool,
+    ) -> bool {
+        let (sender, sender_addr, receiver, receiver_addr) = pair_of(sender_kind, receiver_kind);
         let to_sender = if sender_reachable {
             sender_addr
         } else {
@@ -820,6 +921,116 @@ mod tests {
         assert!(run(true, true).await);
     }
 
+    /// #403: two dual-stack sides connect over IPv6, either side dialling.
+    #[tokio::test]
+    async fn a_direct_path_over_ipv6() {
+        if !has_ipv6() {
+            return;
+        }
+        let d = Kind::DualOverV6;
+        assert!(run_on(d, d, true, false).await, "receiver dialled");
+        assert!(run_on(d, d, false, true).await, "sender dialled");
+    }
+
+    /// #403: an IPv4-only side (a version from before #403, or a system
+    /// without IPv6) and a dual-stack side connect over IPv4, either way.
+    #[tokio::test]
+    async fn an_ipv4_side_reaches_a_dual_stack_side() {
+        if !has_ipv6() {
+            return;
+        }
+        let (v4, dual) = (Kind::V4, Kind::DualOverV4);
+        assert!(
+            run_on(v4, dual, true, false).await,
+            "dual-stack dialled IPv4"
+        );
+        assert!(
+            run_on(v4, dual, false, true).await,
+            "IPv4 dialled dual-stack"
+        );
+        assert!(
+            run_on(dual, v4, true, false).await,
+            "IPv4 dialled dual-stack"
+        );
+        assert!(
+            run_on(dual, v4, false, true).await,
+            "dual-stack dialled IPv4"
+        );
+    }
+
+    /// #403: an IPv6 address announced to a side whose socket is IPv4
+    /// only fails that one dial; the race goes on with the others.
+    #[tokio::test]
+    async fn an_ipv6_address_does_not_stop_an_ipv4_side() {
+        let (sender, sender_addr, receiver, _) = pair();
+        let v6 = SocketAddr::from((std::net::Ipv6Addr::LOCALHOST, sender_addr.port()));
+        let paths = Paths {
+            direct: vec![v6, sender_addr],
+            relay: None,
+            relay_only: false,
+        };
+        let wait = Duration::from_secs(8);
+        let accept = async {
+            let conn = accept_one(&sender, false).await.unwrap();
+            let (mut send, _recv) = conn.open_bi().await.unwrap();
+            send.write_all(b"x").await.unwrap();
+            conn
+        };
+        let (dialled, _accepted) =
+            tokio::join!(receiver_connection(&receiver, &paths, wait), accept);
+        assert_eq!(dialled.unwrap().remote_address(), sender_addr);
+    }
+
+    /// #403: which IPv6 addresses go into `HINTS`.
+    #[test]
+    fn only_reachable_private_ipv6_addresses_are_announced() {
+        let yes = [
+            // A temporary or stable-privacy global address.
+            "2a02:4e0:2d8a:1b00:5d1c:8f3e:91a2:6b47",
+            // A unique local address (RFC 4193), usable on the LAN.
+            "fd12:3456:789a:1::1",
+        ];
+        let no = [
+            "::1",
+            "::",
+            "fe80::1c2d:3e4f:5a6b:7c8d",
+            "::ffff:192.0.2.7",
+            // Modified EUI-64 from the MAC address 00:1a:2b:3c:4d:5e.
+            "2a02:4e0:2d8a:1b00:21a:2bff:fe3c:4d5e",
+        ];
+        for a in yes {
+            assert!(
+                announceable_v6(a.parse().unwrap()),
+                "{a} should be announced"
+            );
+        }
+        for a in no {
+            assert!(
+                !announceable_v6(a.parse().unwrap()),
+                "{a} should not be announced"
+            );
+        }
+    }
+
+    /// #403: the socket is dual-stack where the system has IPv6, and the
+    /// local addresses stay within what `HINTS` accepts.
+    #[test]
+    fn the_socket_takes_both_families() {
+        let socket = bind_socket().unwrap();
+        let local = local_addresses(&socket).unwrap();
+        assert!(local.len() <= 3, "{local:?}");
+        assert!(local.iter().all(|a| match a.ip() {
+            std::net::IpAddr::V6(ip) => announceable_v6(ip),
+            std::net::IpAddr::V4(_) => true,
+        }));
+        if !has_ipv6() {
+            return;
+        }
+        let addr = socket.local_addr().unwrap();
+        assert!(addr.is_ipv6() && addr.ip().is_unspecified());
+        assert!(!socket2::SockRef::from(&socket).only_v6().unwrap());
+    }
+
     /// Carry datagrams between two endpoints' relay pipes, as a relay would:
     /// only while both sides' links are open, dropping the rest, as the relay
     /// drops frames for a peer that is not there yet.
@@ -867,15 +1078,34 @@ mod tests {
         over_late_relay(direct, Duration::ZERO, Duration::from_secs(10)).await;
     }
 
+    /// #403: the relay path works on dual-stack sockets, where QUIC sees
+    /// the stand-in as an IPv4-mapped address.
+    #[tokio::test]
+    async fn the_relay_path_on_dual_stack_sockets() {
+        if !has_ipv6() {
+            return;
+        }
+        over_relay_on(
+            Kind::DualOverV4,
+            vec![unreachable()],
+            Duration::ZERO,
+            Duration::from_secs(10),
+        )
+        .await;
+    }
+
     /// Connect over a relay stand-in that loses everything for `after`,
     /// within `wait`.
     async fn over_late_relay(direct: Vec<SocketAddr>, after: Duration, wait: Duration) {
+        over_relay_on(Kind::V4, direct, after, wait).await;
+    }
+
+    async fn over_relay_on(kind: Kind, direct: Vec<SocketAddr>, after: Duration, wait: Duration) {
         let (ka, kb) = (
             EndpointKey::generate().unwrap(),
             EndpointKey::generate().unwrap(),
         );
-        let sa = UdpSocket::bind(SocketAddr::from(([127, 0, 0, 1], 0))).unwrap();
-        let sb = UdpSocket::bind(SocketAddr::from(([127, 0, 0, 1], 0))).unwrap();
+        let ((sa, _), (sb, _)) = (test_socket(kind), test_socket(kind));
         let (sender, pa, _) = endpoint(sa, &ka, &kb.public()).unwrap();
         let (receiver, pb, _) = endpoint(sb, &kb, &ka.public()).unwrap();
         let (send_gate, recv_gate) = (crate::relay::Gate::default(), crate::relay::Gate::default());
@@ -892,7 +1122,7 @@ mod tests {
         };
         let recv_side = async {
             let conn = receiver_connection(&receiver, &to_sender, wait).await?;
-            assert_eq!(conn.remote_address(), crate::path::RELAY_PEER);
+            assert!(crate::path::is_relay(conn.remote_address()));
             let (mut send, _recv) = conn.open_bi().await?;
             send.write_all(b"relay")
                 .await
@@ -901,7 +1131,7 @@ mod tests {
         };
         let send_side = async {
             let (conn, _send, mut recv) = sender_connection(&sender, &to_receiver, wait).await?;
-            assert_eq!(conn.remote_address(), crate::path::RELAY_PEER);
+            assert!(crate::path::is_relay(conn.remote_address()));
             let mut buf = [0u8; 5];
             recv.read_exact(&mut buf)
                 .await
@@ -1178,14 +1408,14 @@ mod tests {
         own: &EndpointKey,
         peer: &EndpointKey,
         cut: &Arc<Cut>,
+        kind: Kind,
     ) -> (
         quinn::Endpoint,
         SocketAddr,
         crate::path::RelayPipes,
         crate::path::Fallback,
     ) {
-        let socket = UdpSocket::bind(SocketAddr::from(([127, 0, 0, 1], 0))).unwrap();
-        let addr = socket.local_addr().unwrap();
+        let (socket, addr) = test_socket(kind);
         let inner = quinn::default_runtime()
             .unwrap()
             .wrap_udp_socket(socket)
@@ -1213,14 +1443,19 @@ mod tests {
     }
 
     async fn direct() -> Direct {
+        direct_on(Kind::V4).await
+    }
+
+    async fn direct_on(kind: Kind) -> Direct {
         let (ka, kb) = (
             EndpointKey::generate().unwrap(),
             EndpointKey::generate().unwrap(),
         );
         let (sender_cut, receiver_cut) = (Arc::new(Cut::default()), Arc::new(Cut::default()));
-        let (sender, sender_addr, pa, sender_fallback) = cuttable_endpoint(&ka, &kb, &sender_cut);
+        let (sender, sender_addr, pa, sender_fallback) =
+            cuttable_endpoint(&ka, &kb, &sender_cut, kind);
         let (receiver, receiver_addr, pb, receiver_fallback) =
-            cuttable_endpoint(&kb, &ka, &receiver_cut);
+            cuttable_endpoint(&kb, &ka, &receiver_cut, kind);
         let (send_gate, recv_gate) = (crate::relay::Gate::default(), crate::relay::Gate::default());
         cross(pa, pb, send_gate.clone(), recv_gate.clone());
         let wait = Duration::from_secs(8);
@@ -1247,8 +1482,9 @@ mod tests {
         );
         let (receiver_conn, ctl) = r;
         let (sender_conn, _send, _recv) = s.unwrap();
-        assert_eq!(sender_conn.remote_address(), receiver_addr);
-        assert_eq!(receiver_conn.remote_address(), sender_addr);
+        let canonical = crate::path::canonical;
+        assert_eq!(canonical(sender_conn.remote_address()), receiver_addr);
+        assert_eq!(canonical(receiver_conn.remote_address()), sender_addr);
         assert!(!send_gate.is_open() && !recv_gate.is_open());
         Direct {
             sender: sender_conn,
@@ -1319,7 +1555,24 @@ mod tests {
     /// the relay.
     #[tokio::test]
     async fn a_direct_connection_that_goes_quiet_moves_to_the_relay() {
-        let d = direct().await;
+        goes_quiet_and_moves(Kind::V4).await;
+    }
+
+    /// #403: the same on dual-stack sockets, over IPv4 and over IPv6: the
+    /// watch follows QUIC's address in its own family and the relay's
+    /// datagrams arrive in that family, so QUIC never sees a second
+    /// address.
+    #[tokio::test]
+    async fn a_dual_stack_connection_that_goes_quiet_moves_to_the_relay() {
+        if !has_ipv6() {
+            return;
+        }
+        goes_quiet_and_moves(Kind::DualOverV4).await;
+        goes_quiet_and_moves(Kind::DualOverV6).await;
+    }
+
+    async fn goes_quiet_and_moves(kind: Kind) {
+        let d = direct_on(kind).await;
         let _watches = d.watch_both(Duration::from_secs(2));
         let addresses = (d.sender.remote_address(), d.receiver.remote_address());
         let arrived = send_across(

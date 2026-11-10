@@ -21,7 +21,7 @@
 //! each side can move on its own clock, and back (#185).
 
 use std::io::{self, IoSliceMut};
-use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4};
+use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4, SocketAddrV6};
 use std::pin::Pin;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, RwLock};
@@ -37,6 +37,30 @@ use tokio::sync::mpsc;
 /// address.
 pub const RELAY_PEER: SocketAddr =
     SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(240, 84, 68, 1), 1));
+
+/// Whether `addr` is [`RELAY_PEER`]. On a dual-stack socket (#403) QUIC
+/// reports IPv4 addresses as IPv4-mapped IPv6 ones (`::ffff:a.b.c.d`), the
+/// stand-in among them, so every comparison with it goes through here.
+pub fn is_relay(addr: SocketAddr) -> bool {
+    canonical(addr) == RELAY_PEER
+}
+
+/// `addr` with an IPv4-mapped IPv6 address turned back into IPv4.
+pub fn canonical(addr: SocketAddr) -> SocketAddr {
+    SocketAddr::new(addr.ip().to_canonical(), addr.port())
+}
+
+/// `addr` as a socket of the given family reports it: IPv4 addresses
+/// become IPv4-mapped IPv6 ones on an IPv6 (dual-stack) socket, as quinn
+/// does for the addresses it dials.
+pub fn in_family(addr: SocketAddr, ipv6: bool) -> SocketAddr {
+    match addr {
+        SocketAddr::V4(a) if ipv6 => {
+            SocketAddr::V6(SocketAddrV6::new(a.ip().to_ipv6_mapped(), a.port(), 0, 0))
+        }
+        _ => addr,
+    }
+}
 
 /// Datagrams waiting for the relay in each direction. QUIC handles loss, so a
 /// full queue simply drops.
@@ -245,7 +269,7 @@ enum Step {
 }
 
 fn step(s: &Seen, silence: u64) -> Step {
-    if s.direct != Some(s.remote) && s.remote != RELAY_PEER {
+    if s.direct != Some(s.remote) && !is_relay(s.remote) {
         return Step::Follow(s.remote);
     }
     let paused = u64::try_from(WATCH_TICK.saturating_add(PAUSED).as_millis()).unwrap_or(u64::MAX);
@@ -307,6 +331,9 @@ pub struct PathSocket {
     to_relay: mpsc::Sender<Vec<u8>>,
     from_relay: Mutex<mpsc::Receiver<Vec<u8>>>,
     fallback: Fallback,
+    /// Whether `inner` is an IPv6 (dual-stack) socket, so that datagrams
+    /// from the relay carry a source address in its family.
+    ipv6: bool,
 }
 
 impl PathSocket {
@@ -318,12 +345,14 @@ impl PathSocket {
         let (to_relay, outgoing) = mpsc::channel(QUEUE);
         let (incoming, from_relay) = mpsc::channel(QUEUE);
         let fallback = Fallback::new(to_relay.clone());
+        let ipv6 = inner.local_addr().is_ok_and(|a| a.is_ipv6());
         (
             Arc::new(Self {
                 inner,
                 to_relay,
                 from_relay: Mutex::new(from_relay),
                 fallback: fallback.clone(),
+                ipv6,
             }),
             RelayPipes { outgoing, incoming },
             fallback,
@@ -365,7 +394,7 @@ impl PathSocket {
                         dst.copy_from_slice(&datagram);
                     }
                     *m = RecvMeta {
-                        addr: self.fallback.relay_source(),
+                        addr: in_family(self.fallback.relay_source(), self.ipv6),
                         len: datagram.len(),
                         stride: datagram.len(),
                         ecn: None,
@@ -386,7 +415,7 @@ impl AsyncUdpSocket for PathSocket {
     }
 
     fn try_send(&self, transmit: &Transmit) -> io::Result<()> {
-        if transmit.destination == RELAY_PEER || self.fallback.reroutes(transmit.destination) {
+        if is_relay(transmit.destination) || self.fallback.reroutes(transmit.destination) {
             self.relay_send(transmit);
             Ok(())
         } else {
@@ -475,6 +504,30 @@ mod tests {
         // watched address stays.
         let s = Seen {
             remote: RELAY_PEER,
+            ..seen()
+        };
+        assert_eq!(step(&s, SILENCE), Step::Wait);
+    }
+
+    /// #403: on a dual-stack socket QUIC reports the stand-in as an
+    /// IPv4-mapped address; it is still the stand-in, not a new address.
+    #[test]
+    fn the_mapped_stand_in_is_the_relay() {
+        let mapped = in_family(RELAY_PEER, true);
+        assert!(mapped.is_ipv6());
+        assert!(is_relay(RELAY_PEER) && is_relay(mapped));
+        assert!(!is_relay(A) && !is_relay(in_family(A, true)));
+        assert_eq!(canonical(mapped), RELAY_PEER);
+        assert_eq!(in_family(RELAY_PEER, false), RELAY_PEER);
+        let v6 = SocketAddr::new(
+            std::net::Ipv6Addr::new(0x2001, 0xdb8, 0, 0, 0, 0, 0, 1).into(),
+            9,
+        );
+        assert_eq!(in_family(v6, true), v6);
+        assert_eq!(canonical(v6), v6);
+        let s = Seen {
+            remote: mapped,
+            direct: Some(in_family(A, true)),
             ..seen()
         };
         assert_eq!(step(&s, SILENCE), Step::Wait);
