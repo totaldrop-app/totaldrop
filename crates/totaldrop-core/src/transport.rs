@@ -1793,4 +1793,69 @@ mod tests {
             assert!(got.1 > ps, "send buffer {} not above {ps}", got.1);
         }
     }
+
+    /// #435: once a side that moved comes back to a direct path that
+    /// recovered, the transfer picks up at once. The path is gone for
+    /// longer than the wait, so the sender moves; the receiver does not
+    /// (it does not watch), so what the sender sends while moved is lost.
+    /// Before, QUIC had doubled its wait before each resend while the path
+    /// was gone, and the transfer could stand still for 10 seconds or more
+    /// after the sender came back; on Linux 2 runs in 10 stood still for 6
+    /// to 9 seconds, depending on where QUIC's wait happened to be. Three
+    /// lengths of cut make that likely to show.
+    #[tokio::test]
+    async fn a_transfer_picks_up_as_soon_as_the_sender_is_back() {
+        for gone in [4, 6, 8].map(Duration::from_secs) {
+            picks_up_after(gone).await;
+        }
+    }
+
+    async fn picks_up_after(gone: Duration) {
+        // From the sender's return to the last byte: loopback needs well
+        // under a second; a slow runner gets ample room, still short of
+        // the stand-still this test is about.
+        let picks_up = Duration::from_secs(4);
+        let d = direct().await;
+        let _watch = d.watch_sender(Duration::from_secs(2));
+        let (sender_cut, receiver_cut) = (d.sender_cut.clone(), d.receiver_cut.clone());
+        let fallback = d.sender_fallback.clone();
+        let (was_cut, cut_at) = tokio::sync::oneshot::channel::<()>();
+        let back = tokio::spawn(async move {
+            cut_at.await.ok()?;
+            tokio::time::sleep(gone).await;
+            let moved = fallback.moved();
+            sender_cut.set(false, false);
+            receiver_cut.set(false, false);
+            let came_back = tokio::time::timeout(Duration::from_secs(15), async {
+                while fallback.moved() {
+                    tokio::time::sleep(Duration::from_millis(10)).await;
+                }
+            })
+            .await
+            .is_ok();
+            Some((moved, came_back, tokio::time::Instant::now()))
+        });
+        let arrived = send_across(
+            &d,
+            || {
+                d.sender_cut.set(true, true);
+                d.receiver_cut.set(true, true);
+                let _ = was_cut.send(());
+            },
+            Duration::from_secs(45),
+        )
+        .await;
+        let done = tokio::time::Instant::now();
+        let (moved, came_back, back_at) = back.await.unwrap().expect("the path was never cut");
+        assert!(moved, "cut {gone:?}: the sender did not move");
+        assert!(came_back, "cut {gone:?}: the sender did not come back");
+        assert!(arrived, "cut {gone:?}: the transfer did not finish");
+        let took = done.saturating_duration_since(back_at);
+        assert!(
+            took <= picks_up,
+            "cut {gone:?}: the transfer took {took:?} after the sender came back \
+             (sender: {:?})",
+            d.sender.stats().path
+        );
+    }
 }
