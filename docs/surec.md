@@ -48,21 +48,78 @@ Bir değişiklik ancak şunların hepsi doğruysa bitmiştir:
   ([changelog.d/README.md](../changelog.d/README.md)); kullanıcıya bir şey
   değiştirmeyen bir iş için `.none.md` dosyası nedenini söyler.
   `CHANGELOG.md`'ye yalnızca sürüm sırasında yazılır. CI ikisini de denetler.
+- [İncelemeden çıkan kurallara](#incelemeden-çıkan-kurallar) uyuldu.
 
 ## İncelemeden çıkan kurallar
 
 Bağımsız incelemelerde aynı türden hatalar birden çok kez bulundu (#398).
-Her tür için kural ve onu yakalayan denetim aşağıdadır. Otomatik denetimi
-olmayan kurallar, inceleyenin ve yazarın elle baktığı maddelerdir.
+Bu kurallar bitti tanımının parçasıdır. Her türün altında onu yakalayan
+otomatik denetim yazılıdır; yazılı olmayan her şeye yazar ve inceleyen
+elle bakar.
 
-| Tür | Örnek | Kural | Denetim |
-| --- | --- | --- | --- |
-| Bitti tanımı atlanıyor | #304, #318, #368 | Elle deneme gereken PR deneme yapılana kadar taslak kalır. Zorunlu olmayan bir kontrol de kırmızıysa (ör. CodeQL) neden PR'da yazılır ve yeniden çalıştırılır. Bakımcı atlama izni yalnızca acil durum içindir; kullanılırsa nedeni PR'a yazılır. | Elle |
-| Zayıf test | #316, #395 | Hata bekleyen test hatanın türünü ve iletisini denetler, "bir hata oldu" yetmez. Ekran testleri her durumu gerçekten çizer (uzun ad, dolu liste). Zamanlama testleri sabit `sleep` yerine bir son süreyle koşulu bekler. Testin yorumu, testin gerçekte yakaladığını söyler. | Elle |
-| Örtük durum makinesi | #342, #343, #345 | Durum metin ya da bool çifti değil, adlandırılmış bir türdür (enum). `await`'ten dönen her işlem, nesil ve aşamanın hâlâ aynı olduğunu denetler. Bir işlem yalnızca geçerli olduğu aşamada çalışır. | Linux'ta QML durum adı testi (#343) |
-| Söz ile kod uyuşmuyor | #368, #393, #394 | Gizlilik politikası, tehdit modeli, site ya da README bir süre, sınır ya da maliyet söylüyorsa, PR o sözü garanti eden kodu ve testi gösterir. Canlıdaki bir sözü bozacak parça "ayrı PR"a bırakılmaz. Yeni bir hata gerekçesi, uygulamaların iletisiyle birlikte gelir ya da birleşmeden önce issue'su açılır. Bir metin değişince bütün dil dosyalarında aranır. | `privacy.mjs`, `check-i18n.mjs` (yapı ve sayılar); süre ve maliyet elle |
-| Güvenlik | #317, #329, #378 | Dışarıdan gelen metin terminale ya da arayüze yazılmadan önce kontrol karakterleri görünür hâle getirilir. Hata sessizce yutulmaz, günlüğe yazılır. Kaçış çözme ve temizleme tek geçişte yapılır. | CodeQL, `Secrets` işi, gitleaks |
-| Sürüm ve taban sürüklenmesi | #369, #390, #392 | Her araç ve taban sürümü tek yerde yazılır ve bir denetim kopyaları karşılaştırır. Derleme ayarı yalnızca betikte değil, tarifin kendisinde durur. Dependabot'un açmadığı ana sürüm geçişleri ve taban imajların destek bitiş tarihi issue'da izlenir. | `check-versions.sh` (Node dahil, #381), `check-component-versions.sh` |
+### Bitti tanımı atlanıyor (#304, #318, #368)
+
+- Elle deneme gereken bir PR, deneme yapılana kadar taslak kalır.
+- Zorunlu olmayanlar dahil her kırmızı kontrol için [Akış](#akış)'ın 4.
+  adımı geçerlidir: ya düzeltilir ya da nedeni PR'a yazılır ve ayrı bir
+  issue açılır. Koddan bağımsız bir altyapı hatası (ör. indirme zaman
+  aşımı) yeniden çalıştırılarak gösterilir.
+- Bakımcı atlama izniyle birleştirilmez.
+- Denetim: elle.
+
+### Zayıf test (#316, #395)
+
+- Hata bekleyen bir test hatanın türünü (ya da kodunu) denetler; "bir hata
+  oldu" yetmez.
+- Ekran testleri her durumu gerçekten çizer: dolu liste, uzun ad, en
+  büyük yazı boyutu.
+- Zamanlama testleri sabit bir `sleep` yerine bir son süreyle koşulu
+  bekler.
+- Testin yorumu, testin gerçekte yakaladığını söyler.
+- Denetim: elle.
+
+### Örtük durum makinesi (#342, #343, #345)
+
+- Durum bir metin ya da bool çifti değil, adlandırılmış bir türdür (enum).
+- `await`'ten dönen her işlem, neslin ve aşamanın hâlâ aynı olduğunu
+  denetler.
+- Bir işlem yalnızca geçerli olduğu aşamada çalışır.
+- Denetim: Linux'ta QML'in karşılaştırdığı durum adlarını sınayan test
+  (`linux/src/bridge/stage.rs`); geri kalanı elle.
+
+### Söz ile kod uyuşmuyor (#368, #393, #394)
+
+- Gizlilik politikası, tehdit modeli, site ya da README bir süre, sınır ya
+  da maliyet söylüyorsa, PR o sözü sağlayan kodu ve testi gösterir.
+- Canlıdaki bir sözü bozacak parça ayrı bir PR'a bırakılmaz.
+- Yeni bir hata gerekçesi, uygulamalardaki iletisiyle birlikte gelir ya da
+  birleşmeden önce iletinin issue'su açılır.
+- Bir metin değişince bütün dil dosyalarında aranır.
+- Denetim: `site/tools/privacy.mjs`, `site/tools/check-i18n.mjs` ve
+  `site/tools/check-readmes.mjs` çevirilerin yapısını ve sayılarını
+  denetler; sözün kodla uyumu elle.
+
+### Güvenlik (#304, #317, #329, #378)
+
+- Dışarıdan gelen metin terminale ya da arayüze yazılmadan önce kontrol
+  karakterleri görünür hâle getirilir.
+- Hata sessizce yutulmaz; günlüğe ya da stderr'e yazılır.
+- Kaçış çözme ve temizleme tek geçişte yapılır.
+- Gizli bilgi taraması CI'da yapılır ve atlanamaz ([Gizli
+  bilgiler](#gizli-bilgiler)).
+- Denetim: CodeQL (temizleme hataları), `Secrets` işi (gizli bilgiler),
+  `check-i18n.mjs` ve `check-readmes.mjs` (çevirilerde kontrol
+  karakterleri). Terminale yazılan dış metin elle.
+
+### Sürüm ve taban sürüklenmesi (#369, #390, #392)
+
+- Her araç ve taban sürümünün tek kaynağı vardır; başka yerde geçen her
+  kopyayı bir denetim karşılaştırır.
+- Derleme ayarı yalnızca betikte değil, paket tarifinin kendisinde durur.
+- Dependabot'un açmadığı ana sürüm geçişleri ve taban imajların destek
+  bitiş tarihi bir issue'da izlenir.
+- Denetim: `packaging/check-versions.sh` (Node dahil, #369),
+  `tools/check-component-versions.sh`; destek bitiş tarihleri elle.
 
 ## Sürüm listesi
 
