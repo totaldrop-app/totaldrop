@@ -638,6 +638,41 @@ async fn expired_nameplates_cannot_be_claimed() {
     );
 }
 
+/// #450: the servers refuse a WebSocket that a web page opens. Browsers
+/// always send `Origin`; the apps, the command line and the deploy probe
+/// never do. A page could otherwise open connections from its visitors'
+/// browsers and spend their per-client limits.
+#[tokio::test(flavor = "multi_thread")]
+async fn a_websocket_from_a_web_page_is_refused() {
+    use tokio_tungstenite::tungstenite::client::IntoClientRequest;
+
+    let server = server().await;
+    let (relay, _, _keep) = relay().await;
+    let pair = format!("{}-{}", "1".repeat(64), "2".repeat(64));
+    let urls = [
+        format!("{server}/v0/allocate"),
+        format!("{server}/v0/mailbox/7"),
+        format!("{}/{pair}", relay.trim_end_matches('/')),
+    ];
+    for url in &urls {
+        let mut req = url.as_str().into_client_request().unwrap();
+        req.headers_mut()
+            .insert("Origin", "https://example.com".parse().unwrap());
+        match tokio_tungstenite::connect_async(req).await {
+            Err(tokio_tungstenite::tungstenite::Error::Http(resp)) => {
+                assert_eq!(resp.status(), 403, "{url}");
+            }
+            other => panic!("{url}: a browser's WebSocket was not refused: {other:?}"),
+        }
+        // The same request without `Origin` is let through.
+        let req = url.as_str().into_client_request().unwrap();
+        assert!(
+            tokio_tungstenite::connect_async(req).await.is_ok(),
+            "{url}: refused without Origin"
+        );
+    }
+}
+
 #[tokio::test(flavor = "multi_thread")]
 async fn plain_websocket_to_another_host_is_refused() {
     let r = rendezvous::allocate("ws://example.com").await;
