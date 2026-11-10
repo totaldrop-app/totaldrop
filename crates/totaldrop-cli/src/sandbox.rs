@@ -21,10 +21,19 @@ pub fn sandboxed() -> bool {
 /// `~/Downloads/TotalDrop`, localized by XDG: the folder the window saves
 /// to too. Keep it the same as `downloads` in `linux/src/desktop.rs`.
 pub fn downloads() -> PathBuf {
-    dirs::download_dir()
-        .or_else(|| dirs::home_dir().map(|h| h.join("Downloads")))
+    downloads_in(dirs::download_dir(), dirs::home_dir())
+}
+
+/// The folder for what `dirs` found, made absolute against the current
+/// folder (#441): `dirs` takes a relative `$HOME` as it is, and with no
+/// download folder and no home the folder is `./TotalDrop`. Only if the
+/// current folder cannot be read does it stay relative.
+fn downloads_in(download: Option<PathBuf>, home: Option<PathBuf>) -> PathBuf {
+    let dir = download
+        .or_else(|| home.map(|h| h.join("Downloads")))
         .unwrap_or_else(|| PathBuf::from("."))
-        .join("TotalDrop")
+        .join("TotalDrop");
+    std::path::absolute(&dir).unwrap_or(dir)
 }
 
 /// The folder to save into when no `--out` is given: the `current` folder,
@@ -138,6 +147,35 @@ mod tests {
 804 797 0:85 /bindfileta5rPB//deleted /home/ada/.var/app/app.totaldrop.TotalDrop/config/user-dirs.dirs ro,nosuid,nodev,relatime - tmpfs tmpfs rw,uid=1000,gid=1000,inode64,huge=advise
 811 708 0:86 / /dev/shm rw,nosuid,nodev - tmpfs tmpfs rw
 ";
+
+    #[test]
+    fn the_downloads_folder_is_always_absolute() {
+        // #441: with no download folder and no home, or a relative `$HOME`
+        // (`dirs` takes `$HOME` as it is), the folder was relative, and a
+        // `file://` URL made from it named another place.
+        let cwd = std::env::current_dir().unwrap();
+        assert_eq!(downloads_in(None, None), cwd.join("TotalDrop"));
+        assert_eq!(
+            downloads_in(None, Some(PathBuf::from("ada"))),
+            cwd.join("ada/Downloads/TotalDrop")
+        );
+        assert_eq!(
+            downloads_in(Some(PathBuf::from("dl")), None),
+            cwd.join("dl/TotalDrop")
+        );
+        // An absolute folder is kept as it is.
+        assert_eq!(
+            downloads_in(
+                Some(PathBuf::from("/home/ada/İndirilenler")),
+                Some(PathBuf::from("/home/ada"))
+            ),
+            PathBuf::from("/home/ada/İndirilenler/TotalDrop")
+        );
+        assert_eq!(
+            downloads_in(None, Some(PathBuf::from("/home/ada"))),
+            PathBuf::from("/home/ada/Downloads/TotalDrop")
+        );
+    }
 
     #[test]
     fn without_out_the_sandbox_saves_to_downloads() {
