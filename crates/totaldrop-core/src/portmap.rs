@@ -4,7 +4,8 @@
 //! Asking the home router to forward the transfer's port (decision 0018,
 //! step 2; #406). With PCP (RFC 6887) or NAT-PMP (RFC 6886) the router
 //! opens an external UDP port to our QUIC socket, and the other device can
-//! dial it even where hole punching fails.
+//! dial it even where hole punching fails. Routers that speak neither
+//! answer UPnP IGD (`igd-next`), asked only at the same gateway's address.
 //!
 //! A mapping is short-lived: it is requested for [`LIFETIME`], renewed
 //! while the transfer runs and released when the [`Mapping`] is dropped. If
@@ -16,7 +17,10 @@ use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::sync::Arc;
 use std::time::Duration;
 
+use igd_next::aio::tokio::Tokio;
+use igd_next::{GatewayIpVersion, PortMappingProtocol, SearchOptions};
 use tokio::net::UdpSocket;
+use tokio::sync::oneshot;
 use tokio::time::Instant;
 use totaldrop_proto::portmap::{self as wire, Answer};
 
@@ -39,6 +43,14 @@ const RENEW_MAX: Duration = Duration::from_secs(30 * 60);
 
 /// Wait before trying a renewal again after one went unanswered.
 const RENEW_RETRY: Duration = Duration::from_secs(5);
+
+/// The port a UPnP gateway listens on for SSDP searches.
+const SSDP_PORT: u16 = 1900;
+
+/// How the mapping is labelled in the router's list.
+const UPNP_DESCRIPTION: &str = "TotalDrop";
+
+type Igd = igd_next::aio::Gateway<Tokio>;
 
 /// Which router to ask.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
@@ -98,10 +110,16 @@ impl Drop for Mapping {
 
 /// What it takes to ask the router to close a port.
 #[derive(Debug)]
-struct Release {
-    socket: Arc<UdpSocket>,
-    held: Held,
-    port: u16,
+enum Release {
+    Udp {
+        socket: Arc<UdpSocket>,
+        held: Held,
+        port: u16,
+    },
+    Upnp {
+        gateway: Arc<Igd>,
+        external_port: u16,
+    },
 }
 
 impl Release {
@@ -110,13 +128,33 @@ impl Release {
     /// runtime is still there. Releasing is a courtesy; the lifetime closes
     /// the port anyway.
     fn send(self) {
-        let msg = request(self.held, self.port, 0);
-        let _ = self.socket.try_send(&msg);
-        if let Ok(rt) = tokio::runtime::Handle::try_current() {
-            rt.spawn(async move {
-                tokio::time::sleep(RESEND).await;
-                let _ = self.socket.send(&msg).await;
-            });
+        match self {
+            Self::Udp { socket, held, port } => {
+                let msg = request(held, port, 0);
+                let _ = socket.try_send(&msg);
+                if let Ok(rt) = tokio::runtime::Handle::try_current() {
+                    rt.spawn(async move {
+                        tokio::time::sleep(RESEND).await;
+                        let _ = socket.send(&msg).await;
+                    });
+                }
+            }
+            // UPnP takes an HTTP request, which cannot go out without the
+            // runtime; without it the lease closes the port.
+            Self::Upnp {
+                gateway,
+                external_port,
+            } => {
+                if let Ok(rt) = tokio::runtime::Handle::try_current() {
+                    rt.spawn(async move {
+                        let _ = tokio::time::timeout(
+                            LIMIT,
+                            gateway.remove_port(PortMappingProtocol::UDP, external_port),
+                        )
+                        .await;
+                    });
+                }
+            }
         }
     }
 }
@@ -127,13 +165,19 @@ impl Release {
 /// operator's carrier-grade NAT, where the port would not help).
 pub async fn map(gateway: Gateway, port: u16) -> Option<Mapping> {
     let target = gateway.address()?;
-    tokio::time::timeout(LIMIT, map_at(target, port))
+    let ssdp = SocketAddr::new(target.ip(), SSDP_PORT);
+    tokio::time::timeout(LIMIT, map_with(target, Some(ssdp), port))
         .await
         .ok()
         .flatten()
 }
 
-async fn map_at(target: SocketAddr, port: u16) -> Option<Mapping> {
+/// PCP and NAT-PMP at `target`, and UPnP at `ssdp` when given. UPnP runs
+/// alongside: whichever gives a mapping first is used. PCP and NAT-PMP
+/// usually answer within milliseconds, before UPnP has even started, and
+/// then UPnP maps nothing. A UPnP mapping that comes too late is dropped
+/// with its task, and so released.
+async fn map_with(target: SocketAddr, ssdp: Option<SocketAddr>, port: u16) -> Option<Mapping> {
     if port == 0 || !target.is_ipv4() {
         return None;
     }
@@ -143,8 +187,53 @@ async fn map_at(target: SocketAddr, port: u16) -> Option<Mapping> {
     // exchange takes the other's answers.
     let pmp_socket = connected(target).await?;
 
+    // Dropping `stop` tells the UPnP task its mapping is not wanted.
+    let (stop, stopped) = oneshot::channel::<()>();
+    let mut upnp = ssdp.map(|at| tokio::spawn(upnp(at, SocketAddr::new(client, port), stopped)));
+    let udp = map_udp(pcp_socket, pmp_socket, client, port);
+    tokio::pin!(udp);
+    let result = match upnp.as_mut() {
+        Some(task) => tokio::select! {
+            got = &mut udp => match got {
+                Udp::Mapped(m) => Some(m),
+                Udp::Refused => None,
+                Udp::Nothing => task.await.ok().flatten(),
+            },
+            got = &mut *task => match got.ok().flatten() {
+                Some(m) => Some(m),
+                None => match udp.await {
+                    Udp::Mapped(m) => Some(m),
+                    Udp::Refused | Udp::Nothing => None,
+                },
+            },
+        },
+        None => match udp.await {
+            Udp::Mapped(m) => Some(m),
+            Udp::Refused | Udp::Nothing => None,
+        },
+    };
+    drop(stop);
+    result
+}
+
+/// What PCP and NAT-PMP gave.
+enum Udp {
+    Mapped(Mapping),
+    /// The router speaks PCP and said no; UPnP is not asked either.
+    Refused,
+    Nothing,
+}
+
+async fn map_udp(
+    pcp_socket: Arc<UdpSocket>,
+    pmp_socket: Arc<UdpSocket>,
+    client: IpAddr,
+    port: u16,
+) -> Udp {
     let mut nonce = [0u8; 12];
-    getrandom::fill(&mut nonce).ok()?;
+    if getrandom::fill(&mut nonce).is_err() {
+        return Udp::Nothing;
+    }
     let pcp = Held::Pcp { nonce, client };
     let pcp_try = {
         let socket = Arc::clone(&pcp_socket);
@@ -166,28 +255,29 @@ async fn map_at(target: SocketAddr, port: u16) -> Option<Mapping> {
     let (held, socket, external, lifetime) = tokio::select! {
         got = &mut pcp_try => match got {
             Got::Mapped(external, lifetime) => (pcp, pcp_socket, external, lifetime),
-            Got::Refused => return None,
+            Got::Refused => return Udp::Refused,
             // "Unsupported version" may come before the NAT-PMP try has
             // started; a fresh one starts now (the other is no longer
             // polled, so it reads nothing from the socket).
-            Got::OtherVersion => {
-                let (external, lifetime) = pmp_try(Duration::ZERO).await?;
-                (Held::Pmp, pmp_socket, external, lifetime)
-            }
-            Got::Silent => {
-                let (external, lifetime) = pmp_soon.await?;
-                (Held::Pmp, pmp_socket, external, lifetime)
-            }
+            Got::OtherVersion => match pmp_try(Duration::ZERO).await {
+                Some((external, lifetime)) => (Held::Pmp, pmp_socket, external, lifetime),
+                None => return Udp::Nothing,
+            },
+            Got::Silent => match pmp_soon.await {
+                Some((external, lifetime)) => (Held::Pmp, pmp_socket, external, lifetime),
+                None => return Udp::Nothing,
+            },
         },
         got = &mut pmp_soon => match got {
             Some((external, lifetime)) => (Held::Pmp, pmp_socket, external, lifetime),
             None => match pcp_try.await {
                 Got::Mapped(external, lifetime) => (pcp, pcp_socket, external, lifetime),
-                Got::Refused | Got::OtherVersion | Got::Silent => return None,
+                Got::Refused => return Udp::Refused,
+                Got::OtherVersion | Got::Silent => return Udp::Nothing,
             },
         },
     };
-    let release = Release {
+    let release = Release::Udp {
         socket: Arc::clone(&socket),
         held,
         port,
@@ -195,10 +285,10 @@ async fn map_at(target: SocketAddr, port: u16) -> Option<Mapping> {
     if lifetime == 0 || !public(external.ip()) {
         // The router may have opened a port we will not use.
         release.send();
-        return None;
+        return Udp::Nothing;
     }
     let renew = tokio::spawn(renew(socket, held, port, lifetime));
-    Some(Mapping {
+    Udp::Mapped(Mapping {
         external,
         renew,
         release: Some(release),
@@ -212,6 +302,128 @@ async fn connected(target: SocketAddr) -> Option<Arc<UdpSocket>> {
         .ok()?;
     socket.connect(target).await.ok()?;
     Some(Arc::new(socket))
+}
+
+/// UPnP IGD: search at the gateway's own address (unicast M-SEARCH), take
+/// the answer only if the device it describes is on that address, check
+/// that its external address is public, and only then map, unless `stop`
+/// says the mapping is no longer wanted. The lease is [`LIFETIME`]; a
+/// router that answers it offers only permanent leases (error 725) gets
+/// no mapping. One that silently ignores the lease keeps the port until
+/// the mapping is deleted or the router restarts.
+async fn upnp(ssdp: SocketAddr, local: SocketAddr, stop: oneshot::Receiver<()>) -> Option<Mapping> {
+    upnp_with(ssdp, search_options(ssdp), local, stop).await
+}
+
+/// How the gateway at `ssdp` is searched for: unicast to it, IPv4 only,
+/// within the attempt's time, and trusting only its own address for the
+/// description and control URLs. Naming that address explicitly also lets
+/// the tests' loopback gateway through, which `igd-next` otherwise refuses.
+fn search_options(ssdp: SocketAddr) -> SearchOptions {
+    let mut options = SearchOptions::default();
+    options.broadcast_address = ssdp;
+    // The search ends by the time `map` would give up anyway.
+    options.timeout = Some(LIMIT.saturating_sub(RESEND));
+    options.single_search_timeout = options.timeout;
+    options.gateway_ip_version = GatewayIpVersion::V4;
+    options.allowed_gateway_ips = vec![ssdp.ip()];
+    options
+}
+
+async fn upnp_with(
+    ssdp: SocketAddr,
+    options: SearchOptions,
+    local: SocketAddr,
+    mut stop: oneshot::Receiver<()>,
+) -> Option<Mapping> {
+    // Every request ends with the attempt, also when nobody waits for
+    // this task any more.
+    let deadline = Instant::now().checked_add(LIMIT)?;
+    // PCP and NAT-PMP usually answer by now; then UPnP is not asked at all.
+    tokio::select! {
+        _ = &mut stop => return None,
+        () = tokio::time::sleep(RESEND) => {}
+    }
+    let stopped = |stop: &mut oneshot::Receiver<()>| {
+        !matches!(stop.try_recv(), Err(oneshot::error::TryRecvError::Empty))
+    };
+    let gateway = tokio::time::timeout_at(deadline, igd_next::aio::tokio::search_gateway(options))
+        .await
+        .ok()?
+        .ok()?;
+    // `igd-next` checks only that the description is on a trusted address
+    // (the gateway's, see `search_options`) or on the address that
+    // answered; a LAN host describing itself is refused here.
+    if gateway.addr.ip() != ssdp.ip() || stopped(&mut stop) {
+        return None;
+    }
+    let external_ip = tokio::time::timeout_at(deadline, gateway.get_external_ip())
+        .await
+        .ok()?
+        .ok()?;
+    if !public(external_ip) || stopped(&mut stop) {
+        return None;
+    }
+    // Cut off at the deadline, a request the router has already carried
+    // out leaves a mapping we never learn of, open until its lease ends.
+    let external_port = tokio::time::timeout_at(
+        deadline,
+        gateway.add_any_port(PortMappingProtocol::UDP, local, LIFETIME, UPNP_DESCRIPTION),
+    )
+    .await
+    .ok()?
+    .ok()
+    .filter(|p| *p != 0)?;
+    let gateway = Arc::new(gateway);
+    let renew = tokio::spawn(renew_upnp(
+        Arc::clone(&gateway),
+        external_port,
+        local,
+        LIFETIME,
+    ));
+    Some(Mapping {
+        external: SocketAddr::new(external_ip, external_port),
+        renew,
+        release: Some(Release::Upnp {
+            gateway,
+            external_port,
+        }),
+    })
+}
+
+/// Keep a UPnP mapping alive: asking again for the same external port
+/// renews its lease. After a failed renewal, try again every
+/// [`RENEW_RETRY`] until the lease would have run out.
+async fn renew_upnp(gateway: Arc<Igd>, external_port: u16, local: SocketAddr, lifetime: u32) {
+    let lease = Duration::from_secs(u64::from(lifetime));
+    let half = Duration::from_secs(u64::from(lifetime / 2));
+    let mut expiry = Instant::now().checked_add(lease);
+    let mut next = Instant::now().checked_add(half);
+    loop {
+        let (Some(at), Some(end)) = (next, expiry) else {
+            return;
+        };
+        tokio::time::sleep_until(at).await;
+        let renewed = tokio::time::timeout(
+            LIMIT,
+            gateway.add_port(
+                PortMappingProtocol::UDP,
+                external_port,
+                local,
+                lifetime,
+                UPNP_DESCRIPTION,
+            ),
+        )
+        .await;
+        if matches!(renewed, Ok(Ok(()))) {
+            expiry = Instant::now().checked_add(lease);
+            next = Instant::now().checked_add(half);
+        } else if Instant::now() < end {
+            next = Instant::now().checked_add(RENEW_RETRY);
+        } else {
+            return;
+        }
+    }
 }
 
 /// What one protocol gave.
@@ -481,6 +693,16 @@ mod tests {
         (Gateway::At(at), rx)
     }
 
+    /// PCP and NAT-PMP only: these tests must not reach whatever listens
+    /// on the machine's SSDP port.
+    async fn pcp_only(gateway: Gateway, port: u16) -> Option<Mapping> {
+        let target = gateway.address()?;
+        tokio::time::timeout(LIMIT, map_with(target, None, port))
+            .await
+            .ok()
+            .flatten()
+    }
+
     fn lifetime_of(m: &[u8]) -> u32 {
         let at = if m[0] == 2 { 4 } else { 8 };
         u32::from_be_bytes(m[at..][..4].try_into().unwrap())
@@ -493,7 +715,7 @@ mod tests {
     async fn a_router_silent_to_pcp_is_asked_over_nat_pmp_soon() {
         let (gw, _seen) = router(Router::PmpOnly).await;
         let started = std::time::Instant::now();
-        let m = map(gw, 40_000).await.unwrap();
+        let m = pcp_only(gw, 40_000).await.unwrap();
         assert_eq!(m.external(), SocketAddr::from((PUBLIC, OPENED)));
         assert!(started.elapsed() < RESEND * 2, "{:?}", started.elapsed());
     }
@@ -501,7 +723,7 @@ mod tests {
     #[tokio::test]
     async fn pcp_mapping_is_announced_and_released() {
         let (gw, mut seen) = router(Router::Pcp).await;
-        let m = map(gw.clone(), 40_000).await.unwrap();
+        let m = pcp_only(gw.clone(), 40_000).await.unwrap();
         assert_eq!(m.external(), SocketAddr::from((PUBLIC, OPENED)));
         let req = seen.recv().await.unwrap();
         assert_eq!(req[0], 2);
@@ -515,7 +737,7 @@ mod tests {
     #[tokio::test]
     async fn nat_pmp_is_used_when_pcp_is_not_spoken() {
         let (gw, mut seen) = router(Router::Pmp).await;
-        let m = map(gw.clone(), 40_000).await.unwrap();
+        let m = pcp_only(gw.clone(), 40_000).await.unwrap();
         assert_eq!(m.external(), SocketAddr::from((PUBLIC, OPENED)));
         drop(m);
         // PCP, then NAT-PMP address and mapping, then the release.
@@ -535,7 +757,7 @@ mod tests {
     #[tokio::test]
     async fn mapping_is_renewed_before_it_runs_out() {
         let (gw, mut seen) = router(Router::Pcp).await;
-        let m = map(gw.clone(), 40_000).await.unwrap();
+        let m = pcp_only(gw.clone(), 40_000).await.unwrap();
         let first = seen.recv().await.unwrap();
         tokio::time::pause();
         tokio::time::sleep(Duration::from_secs(u64::from(LIFETIME / 2) + 1)).await;
@@ -550,7 +772,7 @@ mod tests {
         for kind in [Router::Silent, Router::Refuses, Router::Private] {
             let (gw, _seen) = router(kind).await;
             let started = std::time::Instant::now();
-            assert!(map(gw.clone(), 40_000).await.is_none());
+            assert!(pcp_only(gw.clone(), 40_000).await.is_none());
             assert!(started.elapsed() <= LIMIT + Duration::from_millis(300));
         }
     }
@@ -559,7 +781,7 @@ mod tests {
     #[tokio::test]
     async fn an_unusable_mapping_is_released() {
         let (gw, mut seen) = router(Router::Private).await;
-        assert!(map(gw, 40_000).await.is_none());
+        assert!(pcp_only(gw, 40_000).await.is_none());
         let first = seen.recv().await.unwrap();
         let release = seen.recv().await.unwrap();
         assert_eq!(lifetime_of(&first), LIFETIME);
@@ -569,7 +791,7 @@ mod tests {
     #[tokio::test]
     async fn a_short_grant_is_renewed_in_time() {
         let (gw, mut seen) = router(Router::Short).await;
-        let m = map(gw, 40_000).await.unwrap();
+        let m = pcp_only(gw, 40_000).await.unwrap();
         let _ = seen.recv().await.unwrap();
         tokio::time::pause();
         let started = Instant::now();
@@ -607,7 +829,7 @@ mod tests {
             .build()
             .unwrap();
         rt.block_on(async {
-            let m = map(Gateway::At(at), 40_000).await.unwrap();
+            let m = pcp_only(Gateway::At(at), 40_000).await.unwrap();
             drop(m);
         });
         drop(rt);
@@ -618,18 +840,18 @@ mod tests {
 
     #[tokio::test]
     async fn no_gateway_asks_no_one() {
-        assert!(map(Gateway::Off, 40_000).await.is_none());
+        assert!(pcp_only(Gateway::Off, 40_000).await.is_none());
         // Nothing listens there: the ICMP error ends the attempt early.
         let closed = std::net::UdpSocket::bind("127.0.0.1:0").unwrap();
         let at = closed.local_addr().unwrap();
         drop(closed);
         let started = std::time::Instant::now();
-        assert!(map(Gateway::At(at), 40_000).await.is_none());
+        assert!(pcp_only(Gateway::At(at), 40_000).await.is_none());
         assert!(started.elapsed() < LIMIT);
         let v6 = Gateway::At("[::1]:5351".parse().unwrap());
-        assert!(map(v6, 40_000).await.is_none());
+        assert!(pcp_only(v6, 40_000).await.is_none());
         assert!(
-            map(Gateway::At("127.0.0.1:5351".parse().unwrap()), 0)
+            pcp_only(Gateway::At("127.0.0.1:5351".parse().unwrap()), 0)
                 .await
                 .is_none()
         );
@@ -756,5 +978,349 @@ mod tests {
             gateway_in_route_table(after_bad),
             Some(Ipv4Addr::new(192, 168, 1, 1))
         );
+    }
+
+    /// What the fake IGD does with `AddPortMapping`.
+    #[derive(Clone, Copy)]
+    enum Igd {
+        Maps,
+        /// UPnP error 725: only permanent leases.
+        PermanentOnly,
+        /// Its external address is behind another NAT.
+        Private,
+    }
+
+    /// A UPnP gateway on loopback: an SSDP responder whose LOCATION points
+    /// to its own small HTTP server. Every SOAP action it receives is passed
+    /// on with its body.
+    async fn igd(kind: Igd) -> (SocketAddr, mpsc::UnboundedReceiver<(String, String)>) {
+        igd_at("127.0.0.1", kind).await
+    }
+
+    async fn igd_at(
+        ip: &str,
+        kind: Igd,
+    ) -> (SocketAddr, mpsc::UnboundedReceiver<(String, String)>) {
+        use tokio::io::{AsyncReadExt, AsyncWriteExt};
+        let ssdp = UdpSocket::bind((ip, 0)).await.unwrap();
+        let http = tokio::net::TcpListener::bind((ip, 0)).await.unwrap();
+        let at = ssdp.local_addr().unwrap();
+        let location = format!("http://{}/rootDesc.xml", http.local_addr().unwrap());
+        tokio::spawn(async move {
+            let mut buf = [0u8; 1500];
+            loop {
+                let (n, from) = match ssdp.recv_from(&mut buf).await {
+                    Ok(got) => got,
+                    Err(e) if e.kind() == std::io::ErrorKind::ConnectionReset => continue,
+                    Err(_) => break,
+                };
+                if buf[..n].starts_with(b"M-SEARCH") {
+                    let reply = format!(
+                        "HTTP/1.1 200 OK\r\nCACHE-CONTROL: max-age=120\r\n\
+                         ST: urn:schemas-upnp-org:device:InternetGatewayDevice:1\r\n\
+                         USN: uuid:test::urn:schemas-upnp-org:device:InternetGatewayDevice:1\r\n\
+                         LOCATION: {location}\r\n\r\n"
+                    );
+                    let _ = ssdp.send_to(reply.as_bytes(), from).await;
+                }
+            }
+        });
+        let (tx, rx) = mpsc::unbounded_channel();
+        tokio::spawn(async move {
+            while let Ok((mut c, _)) = http.accept().await {
+                let tx = tx.clone();
+                tokio::spawn(async move {
+                    let mut req = Vec::new();
+                    let mut buf = [0u8; 4096];
+                    let (head, body) = loop {
+                        let n = c.read(&mut buf).await.unwrap_or(0);
+                        if n == 0 {
+                            return;
+                        }
+                        req.extend_from_slice(&buf[..n]);
+                        let text = String::from_utf8_lossy(&req).to_string();
+                        if let Some((head, rest)) = text.split_once("\r\n\r\n") {
+                            let length = head
+                                .lines()
+                                .find_map(|l| {
+                                    let (k, v) = l.split_once(':')?;
+                                    k.eq_ignore_ascii_case("content-length")
+                                        .then(|| v.trim().parse::<usize>().ok())?
+                                })
+                                .unwrap_or(0);
+                            if rest.len() >= length {
+                                break (head.to_string(), rest.to_string());
+                            }
+                        }
+                    };
+                    let action = head
+                        .lines()
+                        .find_map(|l| {
+                            let (k, v) = l.split_once(':')?;
+                            k.eq_ignore_ascii_case("soapaction").then(|| {
+                                v.trim()
+                                    .trim_matches('"')
+                                    .rsplit('#')
+                                    .next()
+                                    .unwrap()
+                                    .to_string()
+                            })
+                        })
+                        .unwrap_or_default();
+                    let (status, xml) = respond(kind, &head, &action);
+                    if !action.is_empty() {
+                        let _ = tx.send((action, body));
+                    }
+                    let reply = format!(
+                        "HTTP/1.1 {status}\r\nContent-Type: text/xml\r\nContent-Length: {}\r\n\
+                         Connection: close\r\n\r\n{xml}",
+                        xml.len()
+                    );
+                    let _ = c.write_all(reply.as_bytes()).await;
+                    let _ = c.shutdown().await;
+                });
+            }
+        });
+        (at, rx)
+    }
+
+    const WANIP: &str = "urn:schemas-upnp-org:service:WANIPConnection:1";
+
+    fn respond(kind: Igd, head: &str, action: &str) -> (&'static str, String) {
+        let envelope = |inner: String| {
+            format!(
+                "<?xml version=\"1.0\"?><s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\" \
+                 s:encodingStyle=\"http://schemas.xmlsoap.org/soap/encoding/\"><s:Body>{inner}</s:Body></s:Envelope>"
+            )
+        };
+        let ok = |name: &str, args: &str| {
+            envelope(format!(
+                "<u:{name}Response xmlns:u=\"{WANIP}\">{args}</u:{name}Response>"
+            ))
+        };
+        if head.starts_with("GET /rootDesc.xml") {
+            return (
+                "200 OK",
+                format!(
+                    "<?xml version=\"1.0\"?><root xmlns=\"urn:schemas-upnp-org:device-1-0\"><device>\
+                 <deviceType>urn:schemas-upnp-org:device:InternetGatewayDevice:1</deviceType>\
+                 <deviceList><device><deviceType>urn:schemas-upnp-org:device:WANDevice:1</deviceType>\
+                 <deviceList><device><deviceType>urn:schemas-upnp-org:device:WANConnectionDevice:1</deviceType>\
+                 <serviceList><service><serviceType>{WANIP}</serviceType><serviceId>urn:upnp-org:serviceId:WANIPConn1</serviceId>\
+                 <SCPDURL>/scpd.xml</SCPDURL><controlURL>/ctl</controlURL><eventSubURL>/evt</eventSubURL></service></serviceList>\
+                 </device></deviceList></device></deviceList></device></root>"
+                ),
+            );
+        }
+        if head.starts_with("GET /scpd.xml") {
+            let action = |name: &str, args: &[&str]| {
+                let args: String = args
+                    .iter()
+                    .map(|a| {
+                        format!("<argument><name>{a}</name><direction>in</direction></argument>")
+                    })
+                    .collect();
+                format!("<action><name>{name}</name><argumentList>{args}</argumentList></action>")
+            };
+            return (
+                "200 OK",
+                format!(
+                    "<?xml version=\"1.0\"?><scpd xmlns=\"urn:schemas-upnp-org:service-1-0\"><actionList>{}{}{}</actionList></scpd>",
+                    action("GetExternalIPAddress", &[]),
+                    action(
+                        "AddPortMapping",
+                        &[
+                            "NewRemoteHost",
+                            "NewExternalPort",
+                            "NewProtocol",
+                            "NewInternalPort",
+                            "NewInternalClient",
+                            "NewEnabled",
+                            "NewPortMappingDescription",
+                            "NewLeaseDuration"
+                        ]
+                    ),
+                    action(
+                        "DeletePortMapping",
+                        &["NewRemoteHost", "NewExternalPort", "NewProtocol"]
+                    ),
+                ),
+            );
+        }
+        match (action, kind) {
+            ("GetExternalIPAddress", Igd::Private) => ("200 OK", ok(action, "<NewExternalIPAddress>192.168.100.2</NewExternalIPAddress>")),
+            ("GetExternalIPAddress", _) => ("200 OK", ok(action, &format!("<NewExternalIPAddress>{PUBLIC}</NewExternalIPAddress>"))),
+            ("AddPortMapping", Igd::PermanentOnly) => ("500 Internal Server Error", envelope(
+                "<s:Fault><faultcode>s:Client</faultcode><faultstring>UPnPError</faultstring><detail>\
+                 <UPnPError xmlns=\"urn:schemas-upnp-org:control-1-0\"><errorCode>725</errorCode>\
+                 <errorDescription>OnlyPermanentLeasesSupported</errorDescription></UPnPError></detail></s:Fault>".to_string(),
+            )),
+            ("AddPortMapping" | "DeletePortMapping", _) => ("200 OK", ok(action, "")),
+            _ => ("404 Not Found", String::new()),
+        }
+    }
+
+    /// The value of one SOAP argument.
+    fn arg(body: &str, name: &str) -> Option<String> {
+        let (_, after) = body.split_once(&format!("<{name}>"))?;
+        let (value, _) = after.split_once(&format!("</{name}>"))?;
+        Some(value.to_string())
+    }
+
+    /// PCP and NAT-PMP get no answer; the UPnP gateway maps the port for
+    /// [`LIFETIME`] and the mapping is deleted when dropped.
+    #[tokio::test]
+    async fn upnp_maps_when_pcp_and_nat_pmp_are_silent() {
+        let (Gateway::At(silent), _) = router(Router::Silent).await else {
+            unreachable!()
+        };
+        let (ssdp, mut seen) = igd(Igd::Maps).await;
+        let started = std::time::Instant::now();
+        let m = tokio::time::timeout(LIMIT, map_with(silent, Some(ssdp), 40_000))
+            .await
+            .unwrap()
+            .unwrap();
+        assert!(started.elapsed() < LIMIT);
+        assert_eq!(m.external().ip(), IpAddr::V4(PUBLIC));
+        let (action, _) = seen.recv().await.unwrap();
+        assert_eq!(action, "GetExternalIPAddress");
+        let (action, body) = seen.recv().await.unwrap();
+        assert_eq!(action, "AddPortMapping");
+        assert_eq!(arg(&body, "NewProtocol").as_deref(), Some("UDP"));
+        assert_eq!(arg(&body, "NewInternalPort").as_deref(), Some("40000"));
+        assert_eq!(arg(&body, "NewLeaseDuration"), Some(LIFETIME.to_string()));
+        assert_eq!(
+            arg(&body, "NewInternalClient").as_deref(),
+            Some("127.0.0.1")
+        );
+        assert_eq!(
+            arg(&body, "NewExternalPort"),
+            Some(m.external().port().to_string())
+        );
+        let port = m.external().port().to_string();
+        drop(m);
+        let (action, body) = seen.recv().await.unwrap();
+        assert_eq!(action, "DeletePortMapping");
+        assert_eq!(arg(&body, "NewExternalPort"), Some(port));
+    }
+
+    /// When PCP answers, UPnP maps nothing.
+    #[tokio::test]
+    async fn upnp_is_not_used_when_pcp_answers() {
+        let (Gateway::At(pcp), _) = router(Router::Pcp).await else {
+            unreachable!()
+        };
+        let (ssdp, mut seen) = igd(Igd::Maps).await;
+        let m = map_with(pcp, Some(ssdp), 40_000).await.unwrap();
+        assert_eq!(m.external(), SocketAddr::from((PUBLIC, OPENED)));
+        tokio::time::sleep(RESEND * 4).await;
+        assert!(seen.try_recv().is_err(), "UPnP was asked");
+        drop(m);
+    }
+
+    /// A router that only grants permanent leases gets no mapping, and we
+    /// never fall back to one.
+    #[tokio::test]
+    async fn upnp_permanent_leases_are_refused() {
+        let (Gateway::At(silent), _) = router(Router::Silent).await else {
+            unreachable!()
+        };
+        let (ssdp, mut seen) = igd(Igd::PermanentOnly).await;
+        // As in `map`: what is not there within `LIMIT` is not there.
+        let got = tokio::time::timeout(LIMIT, map_with(silent, Some(ssdp), 40_000)).await;
+        assert!(got.ok().flatten().is_none());
+        let mut asked = false;
+        while let Ok((action, body)) = seen.try_recv() {
+            if action == "AddPortMapping" {
+                asked = true;
+                assert_eq!(arg(&body, "NewLeaseDuration"), Some(LIFETIME.to_string()));
+            }
+        }
+        // UPnP did run: the router was asked and said no.
+        assert!(asked);
+    }
+
+    /// A gateway behind another NAT is not asked to map at all.
+    #[tokio::test]
+    async fn upnp_behind_another_nat_maps_nothing() {
+        let (Gateway::At(silent), _) = router(Router::Silent).await else {
+            unreachable!()
+        };
+        let (ssdp, mut seen) = igd(Igd::Private).await;
+        // As in `map`: what is not there within `LIMIT` is not there.
+        let got = tokio::time::timeout(LIMIT, map_with(silent, Some(ssdp), 40_000)).await;
+        assert!(got.ok().flatten().is_none());
+        let mut actions = Vec::new();
+        while let Ok((action, _)) = seen.try_recv() {
+            actions.push(action);
+        }
+        // UPnP did run: it learnt the address, then asked for nothing.
+        assert_eq!(actions, ["GetExternalIPAddress"]);
+    }
+
+    /// A LAN host that answers the search and describes itself (its own
+    /// address in LOCATION) is not used, even when it is a working IGD.
+    /// `igd-next` would accept it as soon as its address is one it trusts;
+    /// the test trusts it, as `igd-next` trusts any non-loopback host that
+    /// describes itself, so only our own check stands in the way. Linux
+    /// only: 127.0.0.2 is not on loopback elsewhere.
+    #[cfg(target_os = "linux")]
+    #[tokio::test]
+    async fn upnp_ignores_a_device_that_is_not_the_gateway() {
+        // The IGD is at 127.0.0.2; the gateway we ask is at 127.0.0.1.
+        let (elsewhere, mut seen) = igd_at("127.0.0.2", Igd::Maps).await;
+        let forwarder = UdpSocket::bind("127.0.0.1:0").await.unwrap();
+        let ssdp = forwarder.local_addr().unwrap();
+        tokio::spawn(async move {
+            let mut buf = [0u8; 1500];
+            while let Ok((n, from)) = forwarder.recv_from(&mut buf).await {
+                // Pass the search on so the other host answers the client.
+                let relay = UdpSocket::bind("127.0.0.2:0").await.unwrap();
+                relay.send_to(&buf[..n], elsewhere).await.unwrap();
+                let mut answer = [0u8; 1500];
+                if let Ok((m, _)) = relay.recv_from(&mut answer).await {
+                    let _ = relay.send_to(&answer[..m], from).await;
+                }
+            }
+        });
+        let mut options = search_options(ssdp);
+        options.allowed_gateway_ips.push(elsewhere.ip());
+        let (_stop, stopped) = oneshot::channel();
+        let local = SocketAddr::from(([127, 0, 0, 1], 40_000));
+        let got = tokio::time::timeout(LIMIT, upnp_with(ssdp, options, local, stopped)).await;
+        assert!(got.unwrap().is_none());
+        // The description was read, but nothing was asked of that device.
+        assert!(seen.try_recv().is_err());
+    }
+
+    /// The lease is renewed at half its length with the same external port.
+    #[tokio::test]
+    async fn upnp_lease_is_renewed() {
+        let (Gateway::At(silent), _) = router(Router::Silent).await else {
+            unreachable!()
+        };
+        let (ssdp, mut seen) = igd(Igd::Maps).await;
+        let m = tokio::time::timeout(LIMIT, map_with(silent, Some(ssdp), 40_000))
+            .await
+            .unwrap()
+            .unwrap();
+        while seen.recv().await.unwrap().0 != "AddPortMapping" {}
+        // The mapping renews only after a minute; a 2-second lease shows the
+        // same loop in real time (a paused clock would also run out the
+        // timeouts around the real HTTP requests).
+        let gateway = igd_next::aio::tokio::search_gateway(search_options(ssdp))
+            .await
+            .unwrap();
+        let local = SocketAddr::from(([127, 0, 0, 1], 40_000));
+        let renew = tokio::spawn(renew_upnp(Arc::new(gateway), 41_000, local, 2));
+        let (action, body) = tokio::time::timeout(Duration::from_secs(5), seen.recv())
+            .await
+            .unwrap()
+            .unwrap();
+        assert_eq!(action, "AddPortMapping");
+        assert_eq!(arg(&body, "NewExternalPort").as_deref(), Some("41000"));
+        assert_eq!(arg(&body, "NewLeaseDuration").as_deref(), Some("2"));
+        renew.abort();
+        drop(m);
     }
 }
