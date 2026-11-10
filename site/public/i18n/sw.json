@@ -543,7 +543,7 @@
   "tm.a.servers.d": "Seva za kukutana na za kupeleka kwenye Cloudflare, pamoja na ujenzi, ukaguzi na usambazaji wa kiotomatiki.",
   "tm.a.site": "Tovuti",
   "tm.a.site.d": "totaldrop.app kwa lugha 35, bila vifuatiliaji wala maombi kwa wahusika wengine.",
-  "tm.ai.d": "Anaandika sehemu kubwa ya msimbo na kufanya ukaguzi huru wa kila pull request. Hana jukumu lolote katika mradi: kiongozi wa mradi anaidhinisha kila uunganishaji, toleo na usambazaji.",
+  "tm.ai.d": "Anaandika sehemu kubwa ya msimbo na kufanya ukaguzi huru wa kila pull request. Hana jukumu lolote katika mradi: kila uunganishaji hufanywa au huidhinishwa na mtunzaji, na kiongozi wa mradi anaidhinisha kila toleo na usambazaji.",
   "tm.areas.lede": "Kila fani ni sehemu ya hazina. Nambari zinahesabu mabadiliko (commits) yaliyoigusa.",
   "tm.areas.title": "Kazi, kwa fani",
   "tm.bot.d": "Hufungua pull request wakati tegemezi linapopata toleo jipya. Kila moja hukaguliwa kama badiliko jingine lolote.",

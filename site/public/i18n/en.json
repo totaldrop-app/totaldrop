@@ -543,7 +543,7 @@
   "tm.a.servers.d": "The rendezvous and relay servers on Cloudflare, and the automated builds, checks and deployments.",
   "tm.a.site": "Web site",
   "tm.a.site.d": "totaldrop.app in 35 languages, without trackers or third-party requests.",
-  "tm.ai.d": "Writes much of the code and runs the independent review of each pull request. It holds no role in the project: the project lead approves every merge, release and deployment.",
+  "tm.ai.d": "Writes much of the code and runs the independent review of each pull request. It holds no role in the project: a maintainer makes or approves every merge, and the project lead approves every release and deployment.",
   "tm.areas.lede": "Each discipline is a part of the repository. The figures count the changes (commits) that touched it.",
   "tm.areas.title": "The work, by discipline",
   "tm.bot.d": "Opens a pull request when a dependency has a new version. Each one is reviewed like any other change.",

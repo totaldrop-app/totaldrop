@@ -543,7 +543,7 @@
   "tm.a.servers.d": "Os servidores de encontro e de retransmissão na Cloudflare, e as compilações, verificações e implantações automáticas.",
   "tm.a.site": "Site",
   "tm.a.site.d": "totaldrop.app em 35 idiomas, sem rastreadores nem requisições a terceiros.",
-  "tm.ai.d": "Escreve grande parte do código e faz a revisão independente de cada pull request. Não tem nenhum papel no projeto: o líder do projeto aprova cada mesclagem, versão e implantação.",
+  "tm.ai.d": "Escreve grande parte do código e faz a revisão independente de cada pull request. Não tem nenhum papel no projeto: um mantenedor faz ou aprova cada mesclagem, e o líder do projeto aprova cada versão e implantação.",
   "tm.areas.lede": "Cada disciplina é uma parte do repositório. Os números contam as mudanças (commits) que a tocaram.",
   "tm.areas.title": "O trabalho, por disciplina",
   "tm.bot.d": "Abre um pull request quando uma dependência tem uma nova versão. Cada um é revisado como qualquer outra mudança.",

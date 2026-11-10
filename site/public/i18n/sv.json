@@ -543,7 +543,7 @@
   "tm.a.servers.d": "Mötes- och reläservrarna hos Cloudflare, och de automatiska byggena, kontrollerna och driftsättningarna.",
   "tm.a.site": "Webbplats",
   "tm.a.site.d": "totaldrop.app på 35 språk, utan spårare eller anrop till tredje part.",
-  "tm.ai.d": "Skriver en stor del av koden och gör den oberoende granskningen av varje pull request. Den har ingen roll i projektet: projektledaren godkänner varje sammanslagning, version och driftsättning.",
+  "tm.ai.d": "Skriver en stor del av koden och gör den oberoende granskningen av varje pull request. Den har ingen roll i projektet: en underhållare gör eller godkänner varje sammanslagning, och projektledaren godkänner varje version och driftsättning.",
   "tm.areas.lede": "Varje område är en del av kodförrådet. Siffrorna räknar de ändringar (commits) som berörde det.",
   "tm.areas.title": "Arbetet, per område",
   "tm.bot.d": "Öppnar en pull request när ett beroende får en ny version. Var och en granskas som vilken annan ändring som helst.",
