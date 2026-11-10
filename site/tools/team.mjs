@@ -92,16 +92,29 @@ export const badBio = (b) => b !== undefined && (typeof b !== "string" || b === 
 // The language files in an i18n folder (<tag>.json), sorted.
 const langFiles = (dir) => readdirSync(dir).filter((f) => /^[a-z]{2,3}(-[A-Za-z0-9]+)*\.json$/.test(f)).sort();
 
-// The languages in an i18n folder whose file lacks a non-empty
-// tm.bio.<login>: a bio is shown only once all 35 have it. A file that is
-// not valid JSON is reported as such instead.
-export function missingBio(dir, login) {
-  return langFiles(dir).filter((f) => {
-    let v;
-    try { v = JSON.parse(readFileSync(join(dir, f), "utf8"))[`tm.bio.${login}`]; }
-    catch { fail(`${relative(root, join(dir, f))}: not valid JSON`); return false; }
+// The language files of an i18n folder, read once, as { tag: messages }.
+// A file that cannot be read, is not valid JSON or is not an object is
+// left out and reported to the error list (see collectErrors).
+export function readLangs(dir) {
+  const langs = {};
+  for (const f of langFiles(dir)) {
+    const shownAs = relative(root, join(dir, f));
+    let text, v;
+    try { text = readFileSync(join(dir, f), "utf8"); } catch (e) { fail(`${shownAs}: cannot be read (${e.code || e.message})`); continue; }
+    try { v = JSON.parse(text); } catch { fail(`${shownAs}: not valid JSON`); continue; }
+    if (v === null || typeof v !== "object" || Array.isArray(v)) { fail(`${shownAs}: not a JSON object`); continue; }
+    langs[f.slice(0, -5)] = v;
+  }
+  return langs;
+}
+
+// The languages (from readLangs) that lack a non-empty tm.bio.<login>: a
+// bio is shown only once all 35 have it.
+export function missingBio(langs, login) {
+  return Object.keys(langs).filter((tag) => {
+    const v = langs[tag][`tm.bio.${login}`];
     return typeof v !== "string" || v.trim() === "";
-  }).map((f) => f.slice(0, -5));
+  });
 }
 
 // The bio line of a person's card: team.json's own line, translated, or
@@ -114,7 +127,7 @@ export function bioLine(p, pr) {
 const loadConfig = () => validateConfig(JSON.parse(readFileSync(CONFIG, "utf8")));
 
 // The errors team.json's rules find in a parsed config, for the tests.
-export const configErrors = (c) => collectErrors(() => validateConfig(c));
+export const configErrors = (c, i18n = I18N) => collectErrors(() => validateConfig(c, i18n));
 
 // The errors reported while fn runs, taken out of the list, for the tests.
 export function collectErrors(fn) {
@@ -123,9 +136,11 @@ export function collectErrors(fn) {
   return errors.splice(before);
 }
 
-function validateConfig(c) {
+function validateConfig(c, i18n = I18N) {
   if (!/^[A-Za-z0-9-]+\/[A-Za-z0-9._-]+$/.test(c.repo)) fail(`team.json: bad repo ${c.repo}`);
   const seen = new Set();
+  // Read once, so a broken language file is reported once, not per bio.
+  const langs = c.people.some((p) => p.bio !== undefined) ? readLangs(i18n) : {};
   for (const p of c.people) {
     if (!LOGIN.test(p.login)) fail(`team.json: bad login ${JSON.stringify(p.login)}`);
     if (seen.has(p.login)) fail(`team.json: ${p.login} listed twice`);
@@ -141,7 +156,7 @@ function validateConfig(c) {
     // site/public/i18n/<tag>.json; add the key in all 35 languages.
     if (badBio(p.bio)) fail(`team.json: ${p.login}: bad bio`);
     else if (p.bio !== undefined && p.kind !== "person") fail(`team.json: ${p.login}: only people have a bio`);
-    else if (p.bio !== undefined) for (const tag of missingBio(I18N, p.login)) fail(`team.json: ${p.login}: tm.bio.${p.login} is not translated in ${tag}.json`);
+    else if (p.bio !== undefined) for (const tag of missingBio(langs, p.login)) fail(`team.json: ${p.login}: tm.bio.${p.login} is not translated in ${tag}.json`);
   }
   for (const d of c.disciplines) {
     if (!(d.key in AREAS)) fail(`team.json: unknown discipline ${d.key}`);

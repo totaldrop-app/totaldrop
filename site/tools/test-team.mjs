@@ -89,31 +89,43 @@ test("a bio in team.json must be clean, one line and not empty (#408)", async ()
   for (const bad of ["", " padded ", "two  spaces", "a‮b", "x".repeat(241), 42, null]) assert.ok(badBio(bad), JSON.stringify(bad));
 });
 
-test("a team.json bio needs a translation in every language file (#408)", async (t) => {
-  const { missingBio } = await import("./team.mjs");
+const scratch = (t, files) => {
   const dir = mkdtempSync(join(tmpdir(), "team-i18n-"));
   t.after(() => rmSync(dir, { recursive: true, force: true }));
-  writeFileSync(join(dir, "en.json"), JSON.stringify({ "tm.bio.x": "Leads." }));
-  writeFileSync(join(dir, "tr.json"), JSON.stringify({ "tm.bio.x": " " }));
-  writeFileSync(join(dir, "pt-BR.json"), JSON.stringify({}));
-  writeFileSync(join(dir, "notes.txt"), "");
-  assert.deepEqual(missingBio(dir, "x"), ["pt-BR", "tr"]);
+  for (const [name, text] of Object.entries(files)) writeFileSync(join(dir, name), text);
+  return dir;
+};
+
+test("a team.json bio needs a translation in every language file (#408)", async (t) => {
+  const { readLangs, missingBio, collectErrors } = await import("./team.mjs");
+  const dir = scratch(t, { "en.json": JSON.stringify({ "tm.bio.x": "Leads." }), "tr.json": JSON.stringify({ "tm.bio.x": " " }), "pt-BR.json": "{}", "notes.txt": "" });
+  assert.deepEqual(collectErrors(() => assert.deepEqual(missingBio(readLangs(dir), "x"), ["pt-BR", "tr"])), []);
   // The real files: every language has the project lead's line.
-  assert.deepEqual(missingBio(fileURLToPath(new URL("../public/i18n/", import.meta.url)), "ozdil"), []);
+  const real = fileURLToPath(new URL("../public/i18n/", import.meta.url));
+  assert.deepEqual(collectErrors(() => assert.deepEqual(missingBio(readLangs(real), "ozdil"), [])), []);
 });
 
-test("a broken language file is reported as invalid, not thrown or called untranslated (#410)", async (t) => {
-  const { missingBio, collectErrors } = await import("./team.mjs");
-  const dir = mkdtempSync(join(tmpdir(), "team-i18n-"));
-  t.after(() => rmSync(dir, { recursive: true, force: true }));
-  writeFileSync(join(dir, "en.json"), JSON.stringify({ "tm.bio.x": "Leads." }));
-  writeFileSync(join(dir, "de.json"), "{ not json");
-  writeFileSync(join(dir, "fr.json"), JSON.stringify({}));
-  let missing;
-  const errs = collectErrors(() => { missing = missingBio(dir, "x"); });
-  assert.deepEqual(missing, ["fr"]);
-  assert.equal(errs.length, 1);
-  assert.match(errs[0], /(^|\/)de\.json: not valid JSON$/);
+test("a broken language file is reported by kind, not thrown or called untranslated (#410)", async (t) => {
+  const { readLangs, collectErrors } = await import("./team.mjs");
+  const dir = scratch(t, { "en.json": "{}", "de.json": "{ not json", "fr.json": "null", "it.json": "[]" });
+  let langs;
+  const errs = collectErrors(() => { langs = readLangs(dir); });
+  assert.deepEqual(Object.keys(langs), ["en"]);
+  assert.equal(errs.length, 3);
+  assert.match(errs[0], /(^|[\\/])de\.json: not valid JSON$/);
+  assert.match(errs[1], /(^|[\\/])fr\.json: not a JSON object$/);
+  assert.match(errs[2], /(^|[\\/])it\.json: not a JSON object$/);
+});
+
+test("a broken language file is reported once however many people have a bio (#410)", async (t) => {
+  const { configErrors } = await import("./team.mjs");
+  const orig = JSON.parse(readFileSync(new URL("../team/team.json", import.meta.url), "utf8"));
+  const dir = scratch(t, { "en.json": JSON.stringify({ "tm.bio.ozdil": "A.", "tm.bio.sadikkuzu": "B." }), "de.json": "{ not json" });
+  const c = structuredClone(orig);
+  c.people.find((p) => p.login === "sadikkuzu").bio = "B.";
+  const errs = configErrors(c, dir);
+  assert.equal(errs.filter((e) => /not valid JSON/.test(e)).length, 1);
+  assert.deepEqual(errs.filter((e) => /not translated/.test(e)), []);
 });
 
 test("team.json rejects a bio that is bad, untranslated or on a non-person (#408)", async () => {
