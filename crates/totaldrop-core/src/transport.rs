@@ -359,6 +359,23 @@ pub fn local_addresses(socket: &UdpSocket) -> Result<Vec<SocketAddr>> {
     Ok(out)
 }
 
+/// Whether this device should dial `target` (#403). Not unspecified
+/// addresses or IPv6 link-local ones, which need an interface scope that
+/// `HINTS` do not carry; and for IPv6, only when the system would send
+/// from an address [`announceable_v6`] accepts: dialling from a hardware
+/// (EUI-64) address would show the peer the very address this device
+/// keeps out of its own `HINTS`.
+pub fn dialable(target: SocketAddr) -> bool {
+    match target.ip() {
+        std::net::IpAddr::V4(ip) => !ip.is_unspecified(),
+        std::net::IpAddr::V6(ip) => {
+            ip.is_loopback()
+                || (announceable_v6(ip)
+                    && matches!(source_for(target), Some(std::net::IpAddr::V6(src)) if src.is_loopback() || announceable_v6(src)))
+        }
+    }
+}
+
 /// The address this device would send to `target` from, if it has a route.
 fn source_for(target: SocketAddr) -> Option<std::net::IpAddr> {
     let any: SocketAddr = if target.is_ipv4() {
@@ -376,9 +393,18 @@ fn source_for(target: SocketAddr) -> Option<std::net::IpAddr> {
 /// scope, or IPv4-mapped), and not one built from the network card's
 /// hardware address (modified EUI-64, `…:xxff:fexx:…`), which stays the
 /// same on every network and would let a peer recognise the device from
-/// one transfer to the next. Temporary addresses (RFC 8981), which the
-/// system usually prefers as a source, and stable-privacy ones (RFC 7217)
-/// pass.
+/// one transfer to the next.
+///
+/// The address is the one the system picks as its source. Android, iOS,
+/// macOS and Windows use temporary addresses (RFC 8981) by default, and so
+/// pick one that changes over time. Linux picks a temporary address only
+/// where they are turned on (`use_tempaddr` 2, as NetworkManager does on
+/// many distributions); otherwise it picks a stable-privacy address (RFC
+/// 7217), which stays the same on one network, so two transfers from the
+/// same network can be linked to each other by their address, as with a
+/// public IPv4 address. Choosing among the interface's addresses
+/// ourselves is #405. Either way the first 64 bits name the network line,
+/// as a public IPv4 address does.
 pub fn announceable_v6(ip: std::net::Ipv6Addr) -> bool {
     let o = ip.octets();
     let link_local = ip.segments().first().is_some_and(|s| s & 0xffc0 == 0xfe80);
@@ -818,13 +844,22 @@ mod tests {
         (socket, addr)
     }
 
-    /// Whether this machine has IPv6 at all. Where it has none, the IPv6
-    /// tests check the IPv4 fallback instead (#403).
+    /// Whether this machine has IPv6 loopback. Where it has none, the IPv6
+    /// tests check the IPv4 fallback instead (#403); CI sets
+    /// `TOTALDROP_REQUIRE_IPV6`, so there a missing IPv6 fails the tests
+    /// instead of passing them unseen.
     fn has_ipv6() -> bool {
-        let ok = dual_stack().is_ok();
+        let ok = UdpSocket::bind(SocketAddr::from((std::net::Ipv6Addr::LOCALHOST, 0))).is_ok()
+            && dual_stack().is_ok();
         if !ok {
+            assert!(
+                std::env::var_os("TOTALDROP_REQUIRE_IPV6").is_none(),
+                "TOTALDROP_REQUIRE_IPV6 is set but this machine has no IPv6"
+            );
             eprintln!("no IPv6 on this machine: checking the IPv4 fallback only");
-            assert!(bind_socket().unwrap().local_addr().unwrap().is_ipv4());
+            if dual_stack().is_err() {
+                assert!(bind_socket().unwrap().local_addr().unwrap().is_ipv4());
+            }
         }
         ok
     }
