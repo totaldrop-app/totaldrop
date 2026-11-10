@@ -920,11 +920,16 @@ mod tests {
         let pinging = tokio::spawn(async move {
             while ws.send(Message::Ping(vec![0; 125].into())).await.is_ok() {}
         });
+        // No event says the buffer is full. Too short a wait could only let
+        // the test pass without the fix (the close would go through), never
+        // fail with it; without the fix it failed every time with this one.
         tokio::time::sleep(Duration::from_secs(1)).await;
         let fallback = Fallback::new(tokio::sync::mpsc::channel(1).0);
         link.park(&fallback);
         // Parked on the direct path, the link closes; then the connection
-        // moves onto the relay and has a datagram for it.
+        // moves onto the relay and has a datagram for it. The pause lets
+        // the link see the park before the move (nothing to wait on here:
+        // the close never reaches the stand-in relay).
         tokio::time::sleep(Duration::from_millis(300)).await;
         fallback.set_moved(true);
         out.send(vec![2; 100]).await.unwrap();
