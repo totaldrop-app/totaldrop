@@ -381,6 +381,13 @@ async fn only_the_allocator_can_claim_first() {
         Mailbox::claim(&server, alloc.nameplate, None).await,
         Err(Error::Rendezvous(_))
     ));
+    // Nor someone with a token for another nameplate (#428).
+    let other = rendezvous::allocate(&server).await.unwrap();
+    assert_ne!(other.nameplate, alloc.nameplate);
+    assert!(matches!(
+        Mailbox::claim(&server, alloc.nameplate, Some(&other)).await,
+        Err(Error::Rendezvous(_))
+    ));
     // And nothing can be claimed that was never allocated.
     assert!(matches!(
         Mailbox::claim(&server, 4242, None).await,
