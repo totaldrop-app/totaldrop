@@ -6,7 +6,7 @@
 //   node --test site/tools/test-team.mjs
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, writeFileSync, readFileSync, rmSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -108,13 +108,15 @@ test("a team.json bio needs a translation in every language file (#408)", async 
 test("a broken language file is reported by kind, not thrown or called untranslated (#410)", async (t) => {
   const { readLangs, collectErrors } = await import("./team.mjs");
   const dir = scratch(t, { "en.json": "{}", "de.json": "{ not json", "fr.json": "null", "it.json": "[]" });
+  mkdirSync(join(dir, "es.json")); // a folder cannot be read as a file
   let langs;
   const errs = collectErrors(() => { langs = readLangs(dir); });
   assert.deepEqual(Object.keys(langs), ["en"]);
-  assert.equal(errs.length, 3);
+  assert.equal(errs.length, 4);
   assert.match(errs[0], /(^|[\\/])de\.json: not valid JSON$/);
-  assert.match(errs[1], /(^|[\\/])fr\.json: not a JSON object$/);
-  assert.match(errs[2], /(^|[\\/])it\.json: not a JSON object$/);
+  assert.match(errs[1], /(^|[\\/])es\.json: cannot be read \(EISDIR\)$/);
+  assert.match(errs[2], /(^|[\\/])fr\.json: not a JSON object$/);
+  assert.match(errs[3], /(^|[\\/])it\.json: not a JSON object$/);
 });
 
 test("a broken language file is reported once however many people have a bio (#410)", async (t) => {
