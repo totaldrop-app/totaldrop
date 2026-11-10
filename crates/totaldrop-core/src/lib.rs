@@ -21,6 +21,7 @@ pub mod error;
 pub mod framing;
 pub mod pairing;
 pub mod path;
+pub mod portmap;
 pub mod relay;
 pub mod rendezvous;
 pub mod secure;
@@ -96,7 +97,7 @@ async fn own_hints(
     socket: &std::net::UdpSocket,
     key: &transport::EndpointKey,
     paths: &PathOptions,
-) -> Result<Hints> {
+) -> Result<(Hints, Option<portmap::Mapping>)> {
     let mut hints = Hints {
         versions: pairing::VERSIONS.to_vec(),
         endpoint_key: key.public(),
@@ -105,28 +106,40 @@ async fn own_hints(
         relay: paths.relay_url().map(str::to_owned),
     };
     if paths.relay_only {
-        return Ok(hints);
+        return Ok((hints, None));
     }
     hints.local = transport::local_addresses(socket)?
         .into_iter()
         .map(totaldrop_proto::wire::Address)
         .collect();
-    if !paths.stun.is_empty() {
-        for seen in relay::discover(socket, &paths.stun).await {
-            let hidden =
-                matches!(seen.ip(), std::net::IpAddr::V6(ip) if !transport::announceable_v6(ip));
-            if !hidden
-                && !hints
-                    .local
-                    .iter()
-                    .chain(hints.public.iter())
-                    .any(|a| a.0 == seen)
-            {
-                hints.public.push(totaldrop_proto::wire::Address(seen));
-            }
+    // The router's port mapping runs alongside STUN, so asking for it adds
+    // no wait beyond `portmap::LIMIT` when STUN is quicker (#406).
+    let stun = async {
+        if paths.stun.is_empty() {
+            Vec::new()
+        } else {
+            relay::discover(socket, &paths.stun).await
+        }
+    };
+    let port = socket.local_addr()?.port();
+    let (seen, mapping) = tokio::join!(stun, portmap::map(&paths.gateway, port));
+    for seen in seen
+        .into_iter()
+        .chain(mapping.as_ref().map(portmap::Mapping::external))
+    {
+        let hidden =
+            matches!(seen.ip(), std::net::IpAddr::V6(ip) if !transport::announceable_v6(ip));
+        if !hidden
+            && !hints
+                .local
+                .iter()
+                .chain(hints.public.iter())
+                .any(|a| a.0 == seen)
+        {
+            hints.public.push(totaldrop_proto::wire::Address(seen));
         }
     }
-    Ok(hints)
+    Ok((hints, mapping))
 }
 
 /// How a transfer may reach the other device.
@@ -142,6 +155,9 @@ pub struct PathOptions {
     /// Never connect directly and announce no address: everything goes
     /// through the relay (spec section 6, privacy mode).
     pub relay_only: bool,
+    /// Router to ask for a forwarded port (PCP or NAT-PMP) while the
+    /// transfer runs; never asked in privacy mode (#406).
+    pub gateway: portmap::Gateway,
 }
 
 impl Default for PathOptions {
@@ -150,6 +166,7 @@ impl Default for PathOptions {
             relay: relay::DEFAULT_RELAY.into(),
             stun: relay::DEFAULT_STUN.into(),
             relay_only: false,
+            gateway: portmap::Gateway::Auto,
         }
     }
 }
@@ -479,7 +496,7 @@ impl PreparedSend {
         let setup = async {
             let socket = transport::bind_socket()?;
             let endpoint_key = Arc::new(transport::EndpointKey::generate()?);
-            let hints = own_hints(&socket, &endpoint_key, &self.paths).await?;
+            let (hints, mapping) = own_hints(&socket, &endpoint_key, &self.paths).await?;
             let paired = pairing::exchange(
                 self.mailbox,
                 Role::Initiator,
@@ -519,11 +536,12 @@ impl PreparedSend {
                 false,
             )
             .await?;
-            Ok::<_, Error>((endpoint, conn, chan, _link))
+            Ok::<_, Error>((endpoint, conn, chan, _link, mapping))
         };
         // A session that is already up wins over a stop at the same moment:
         // send_files then sees the stop and tells the receiver.
-        let (endpoint, conn, chan, _link) = tokio::select! {
+        // The router keeps the port open until the transfer ends.
+        let (endpoint, conn, chan, _link, _mapping) = tokio::select! {
             biased;
             r = setup => r?,
             () = stop.stopped() => return Err(Error::Stopped),
@@ -595,6 +613,7 @@ pub struct IncomingOffer {
     words: Vec<String>,
     _peer: Certificate,
     _link: Standby,
+    _mapping: Option<portmap::Mapping>,
 }
 
 impl core::fmt::Debug for IncomingOffer {
@@ -639,7 +658,7 @@ impl IncomingOffer {
         let mailbox_id = mailbox.id;
         let socket = transport::bind_socket()?;
         let endpoint_key = Arc::new(transport::EndpointKey::generate()?);
-        let hints = own_hints(&socket, &endpoint_key, &opts.paths).await?;
+        let (hints, mapping) = own_hints(&socket, &endpoint_key, &opts.paths).await?;
         let paired =
             pairing::exchange(mailbox, Role::Responder, &code, mailbox_id, &keys, &hints).await?;
         // Both sides meet on the sender's relay, if it is also ours (spec
@@ -679,6 +698,7 @@ impl IncomingOffer {
             words,
             _peer: paired.peer.clone(),
             _link: link,
+            _mapping: mapping,
         })
     }
 
@@ -827,9 +847,10 @@ mod tests {
         let key = transport::EndpointKey::generate().unwrap();
         let paths = PathOptions {
             stun: String::new(),
+            gateway: portmap::Gateway::Off,
             ..PathOptions::default()
         };
-        let h = own_hints(&socket, &key, &paths).await.unwrap();
+        let (h, _) = own_hints(&socket, &key, &paths).await.unwrap();
         assert!(h.local.len() <= 8 && h.public.len() <= 8, "{h:?}");
         assert!(
             h.local
