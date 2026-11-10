@@ -381,7 +381,15 @@ mod tests {
         let (tx, rx) = mpsc::unbounded_channel();
         tokio::spawn(async move {
             let mut buf = [0u8; 1500];
-            while let Ok((n, from)) = socket.recv_from(&mut buf).await {
+            loop {
+                // On Windows an answer to a socket that is already closed
+                // comes back as an error on the next receive (ICMP port
+                // unreachable); a real router keeps serving, so does this one.
+                let (n, from) = match socket.recv_from(&mut buf).await {
+                    Ok(got) => got,
+                    Err(e) if e.kind() == std::io::ErrorKind::ConnectionReset => continue,
+                    Err(_) => break,
+                };
                 let m = buf[..n].to_vec();
                 let _ = tx.send(m.clone());
                 let reply: Option<Vec<u8>> = match (kind, m[0]) {
