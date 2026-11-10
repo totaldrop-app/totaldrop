@@ -30,15 +30,17 @@
   (`transport::bind_socket`, `0.0.0.0`). `HINTS` 16 baytlık adresleri
   zaten taşıyor, ama IPv6 yolları hiç denenmiyor. #338'deki duraklamanın
   nedeni uygulamanın arka plana düşmesiydi, taşıma katmanı değil. #341
-  (alma yönünün gönderme yönünden yavaş olması) hâlâ açık; şüphelenilen
-  neden soket arabelleği, yani taşıma katmanıyla ilgili ama iroh ya da
-  libp2p'ye bağlı değil. Röle yolu 3 Kasım'da Ozan'ın Wi-Fi bağlantısında
-  yaklaşık 3 MB/s ölçüldü (#185).
+  (alma yönünün gönderme yönünden yavaş olması) hâlâ açık. Soket
+  arabellekleri büyütüldü (7745be5, 614f243; `SOCKET_BUFFER` 4 MiB),
+  bunun #341'e etkisi henüz ölçülmedi; konu taşıma katmanıyla ilgili ama
+  iroh ya da libp2p'ye bağlı değil. Röle yolu 3 Kasım'da Ozan'ın Wi-Fi
+  bağlantısında yaklaşık 3 MB/s ölçüldü (#185).
 
 - **Seçenekler:**
-  1. **iroh** (n0, 1.4.1, MIT veya Apache-2.0; 1.0 sürümü 15 Haziran
-     2026). Olgun NAT geçişi, yönlendiricide port açma, QUIC multipath,
-     hazır röle. Uymadığı yerler:
+  1. **iroh** (n0, [1.4.1](https://crates.io/crates/iroh/1.4.1), MIT
+     veya Apache-2.0; [1.0 sürümü](https://crates.io/crates/iroh/1.0.0)
+     15 Haziran 2026). Olgun NAT geçişi, yönlendiricide port açma, QUIC
+     multipath, hazır röle. Uymadığı yerler:
      - Rölesi (`iroh-relay`) bir Rust sunucusudur ve Cloudflare
        Workers'ta çalışmaz. Ya bir sunucu işletiriz ya da n0'ın hız
        sınırlı genel rölelerine veya ücretli barındırılan rölesine
@@ -62,11 +64,13 @@
        için 1.0 öncesi denetimden önce bu riski almayız.
      - `iroh-blobs` hâlâ deneme sürümündedir. STREAM ve BLAKE3 ile kendi
        parçalı aktarımımız aynı işi görür.
-  2. **libp2p** (`rust-libp2p` 0.57.1, MIT). 1.0 değildir ve sık sık
-     kırıcı değişiklik yapar. Circuit relay v2 yalnızca hole punching'i
+  2. **libp2p** (`rust-libp2p`
+     [0.57.1](https://crates.io/crates/libp2p/0.57.1), MIT). 1.0
+     değildir ve sık sık kırıcı değişiklik yapar. Circuit relay v2 yalnızca hole punching'i
      koordine etmek içindir; Rust uygulamasının varsayılan devre sınırları
      (2 dakika, 128 KiB) dosya taşımaya yetmez. DCUtR'ın başarı oranı
-     yaklaşık %70, simetrik NAT'ta ise küçük bir örneklemde (536 eş) yaklaşık %40'tır
+     yaklaşık %70, simetrik NAT'ta ise küçük bir örneklemde (536 eş)
+     yaklaşık %40'tır
      ([Trautwein vd., büyük ölçekli ölçüm](https://arxiv.org/html/2510.27500v1);
      simetrik NAT oranı [ProbeLab](https://probelab.io/blog/can-libp2p-punch-through-nats/)).
      Identify protokolü cihazın adreslerini ve sürümünü karşı tarafa
@@ -77,17 +81,22 @@
      düşüp geri dönme) bu parçaların iskeletidir; her biri protokolü
      geriye uyumlu biçimde büyütür.
 
-- **Karar:** Seçenek 3. Kripto, eşleşme, rendezvous ve Workers rölesi
-  olduğu gibi kalır. Aşağıdaki adımların her biri kendi issue'su, dalı,
+- **Karar:** Seçenek 3. Kripto, eşleşme (CPace), rendezvous ve Workers
+  rölesi olduğu gibi kalır. Tek istisna 6. adımdır: aynı ağda internet
+  yokken CPace mesajları rendezvous posta kutusu yerine yerel ağ
+  üzerinden taşınır; mesajlar ve CPace aynı kalır, değişen yalnızca onları
+  taşıyan kanaldır. Aşağıdaki adımların her biri kendi issue'su, dalı,
   hatayı ya da eksiği gösteren testi ve cihaz denemesiyle ayrı bir PR olarak
   gelir. Sıra kazanca ve maliyete göredir; ilk üçü "Sırada" milestone'una,
   kalanları "Sonra"ya girer. Gizlilik modunda (yalnızca röle, tehdit
-  modeli T6) bu adımların hiçbiri adres duyurmaz ve port açmaz.
+  modeli T6) bu adımların hiçbiri adres duyurmaz ve port açmaz; röle
+  yolları (Workers rölesi ve 4. adımdaki TURN) gizlilik modunda da
+  kullanılır ve IP adresini görür.
 
   1. **IPv6.** Çift yığınlı soket; IPv4 ve IPv6 yollarının yarışması
      (Happy Eyeballs, [RFC 8305](https://www.rfc-editor.org/rfc/rfc8305)).
-     IPv6'da NAT yoktur; iki cihazın da IPv6'sı olduğunda ve araya giren
-     güvenlik duvarları (operatörlerin ve ev yönlendiricilerinin) iki
+     IPv6'da çoğunlukla NAT yoktur (NPTv6 ve NAT66 var ama seyrek); iki
+     cihazın da IPv6'sı olduğunda ve araya giren güvenlik duvarları (operatörlerin ve ev yönlendiricilerinin) iki
      taraf aynı anda gönderdiğinde geçirdiğinde doğrudan yol delmeye gerek
      kalmadan açılır. Bunun ne kadar sık olduğu cihaz denemeleriyle
      ölçülür. Duyurulan IPv6 adresi, kalıcı adres yerine işletim
@@ -108,7 +117,7 @@
      `ConnectivityManager`, Linux NetworkManager) adresler yeniden
      öğrenilir ve yollar hemen yeniden denenir. Magic Wormhole'un
      "dilation" fikri ve `netwatch` crate'i (MIT veya Apache-2.0) örnek
-     alınır. #340 ve protokol notlarındaki "sonradan açılan doğrudan
+     alınır. #185 ve protokol notu 22'deki "sonradan açılan doğrudan
      yola geçme" eksiğiyle birlikte ele alınır.
   4. **Ölçüm: ikinci röle olarak TURN.** Cloudflare Realtime TURN UDP
      üzerinden çalışır ve WebSocket rölemizin hızını (#185) aşabilir.
@@ -120,6 +129,9 @@
      karşılanır. Bu adım önce bir ölçümdür: hız, beklenen trafik ve
      sunucunun gördükleri (IP adresleri, süre, bayt) yazılır; kullanıma
      almak ayrı bir karar ve gizlilik politikası güncellemesi gerektirir.
+     TURN de bir röledir: kullanıma alınırsa gizlilik modunda da
+     kullanılabilir ve Workers rölesi gibi IP adresini, süreyi ve bayt
+     sayısını görür; bu, tehdit modeli T6'ya yazılır.
   5. **Simetrik NAT için doğum günü delme.** Tailscale'in anlattığı
      yöntem: bir taraf çok sayıda port açar, öbür taraf rastgele portları
      dener. Paket sayısı ve süre sınırlıdır; röle her zaman yedekte kalır.
@@ -129,12 +141,16 @@
      denemeye yarayacak hiçbir şey içermez: koddan türetilen bir değer
      yayınlanırsa aynı ağdaki herkes kısa kodu çevrimdışı deneyip CPace'in
      verdiği tek tahmin hakkı korumasını bozar. Eşleşme yine CPace ile
-     yapılır; duyuru yalnızca buluşma yerini söyler. iOS'ta ham çok
-     noktaya yayın ücretli bir izin (entitlement) gerektirir
+     yapılır; duyuru yalnızca buluşma yerini söyler ve CPace mesajları
+     rendezvous yerine bu yerel kanaldan gider (bkz. Karar). Eşleşme
+     mesajlarının yeni bir taşıma yolu olduğu için bu adım denetim
+     kapsamına girer. iOS'ta ham çok noktaya yayın ücretli bir izin
+     (entitlement) gerektirir
      ([0009](0009-ios-macos.md)). Protokol notu ve tehdit modeli önce
      yazılır.
   7. **Gizlilik modunda Tor.** Protokol notlarında "henüz yok" olarak
-     duran Tor yolu, `arti` (MIT veya Apache-2.0) ile onion hizmeti
+     duran Tor yolu ([#39](https://github.com/totaldrop-app/totaldrop/issues/39)),
+     `arti` (MIT veya Apache-2.0) ile onion hizmeti
      üzerinden yapılır; OnionShare bunun çalışan örneğidir. Yavaştır,
      yalnızca isteğe bağlıdır.
   8. **Sonra.** QUIC'in adres bulma, NAT geçişi ve multipath taslakları
@@ -162,9 +178,10 @@
   - 1–3. adımlarda kripto, eşleşme ve röle protokolü değişmez; 1.0
     öncesi denetimin kriptografi kapsamı bu adımlardan etkilenmez
     (aktarım protokolünün bir Tamarin modeli yok; mevcut modeller hesap
-    tasarımı içindir). 6. ve 7. adımlar yeni yollar ve eşleşmeye yakın
-    yüzeyler ekler; onlar denetimin kapsamına girer. Yeni yol türleri
-    eklendikçe tehdit modeli ve protokol notları aynı PR'da güncellenir.
+    tasarımı içindir). 6. adım CPace mesajlarını yeni bir yoldan (yerel
+    ağ) taşır, 7. adım yeni bir yol (Tor) ekler; ikisi de denetimin
+    kapsamına girer. Yeni yol türleri eklendikçe tehdit modeli ve
+    protokol notları aynı PR'da güncellenir.
   - Sunucuların gördüğü bir şey değişirse (ör. TURN), gizlilik politikası
     35 dilde, yayından önce güncellenir.
   - Telemetri yoktur; her adımın etkisi elle cihaz denemeleriyle
