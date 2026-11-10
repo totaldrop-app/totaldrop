@@ -8,19 +8,20 @@
 //!
 //! A mapping is short-lived: it is requested for [`LIFETIME`], renewed
 //! while the transfer runs and released when the [`Mapping`] is dropped. If
-//! the app dies, the router closes it on its own once the lifetime ends.
-//! Only the gateway of the default route is asked; a connected socket
-//! drops answers from anyone else.
+//! the app dies, the router closes it on its own once the lifetime it
+//! granted ends. Only the gateway of the default route is asked; a
+//! connected socket drops answers from anyone else.
 
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::sync::Arc;
 use std::time::Duration;
 
 use tokio::net::UdpSocket;
+use tokio::time::Instant;
 use totaldrop_proto::portmap::{self as wire, Answer};
 
-/// Lifetime asked for, in seconds. Renewed at half of what the router
-/// grants, so a crash leaves the port open for at most about this long.
+/// Lifetime asked for, in seconds. A router may grant more or less; the
+/// mapping is renewed at half of what it grants.
 pub const LIFETIME: u32 = 120;
 
 /// How long one request waits for an answer before it is sent again.
@@ -29,12 +30,15 @@ const RESEND: Duration = Duration::from_millis(250);
 /// Sends of one request before giving up on that protocol.
 const TRIES: u32 = 3;
 
-/// Upper bound for the whole attempt; the transfer never waits longer.
+/// Upper bound for the whole attempt.
 pub const LIMIT: Duration = Duration::from_millis(1600);
 
 /// Shortest and longest wait between renewals, whatever the router grants.
-const RENEW_MIN: Duration = Duration::from_secs(20);
+const RENEW_MIN: Duration = Duration::from_secs(1);
 const RENEW_MAX: Duration = Duration::from_secs(30 * 60);
+
+/// Wait before trying a renewal again after one went unanswered.
+const RENEW_RETRY: Duration = Duration::from_secs(5);
 
 /// Which router to ask.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
@@ -73,7 +77,7 @@ enum Held {
 pub struct Mapping {
     external: SocketAddr,
     renew: tokio::task::JoinHandle<()>,
-    release: Option<(Arc<UdpSocket>, Held, u16)>,
+    release: Option<Release>,
 }
 
 impl Mapping {
@@ -86,17 +90,32 @@ impl Mapping {
 impl Drop for Mapping {
     fn drop(&mut self) {
         self.renew.abort();
-        let Some((socket, held, port)) = self.release.take() else {
-            return;
-        };
-        // Releasing is a courtesy: the lifetime closes the port anyway.
+        if let Some(r) = self.release.take() {
+            r.send();
+        }
+    }
+}
+
+/// What it takes to ask the router to close a port.
+#[derive(Debug)]
+struct Release {
+    socket: Arc<UdpSocket>,
+    held: Held,
+    port: u16,
+}
+
+impl Release {
+    /// Send the release at once, without waiting: the process may be about
+    /// to exit and take its runtime with it. A second copy follows if the
+    /// runtime is still there. Releasing is a courtesy; the lifetime closes
+    /// the port anyway.
+    fn send(self) {
+        let msg = request(self.held, self.port, 0);
+        let _ = self.socket.try_send(&msg);
         if let Ok(rt) = tokio::runtime::Handle::try_current() {
             rt.spawn(async move {
-                let msg = request(held, port, 0);
-                for _ in 0..2 {
-                    let _ = socket.send(&msg).await;
-                    tokio::time::sleep(RESEND).await;
-                }
+                tokio::time::sleep(RESEND).await;
+                let _ = self.socket.send(&msg).await;
             });
         }
     }
@@ -106,7 +125,7 @@ impl Drop for Mapping {
 /// gateway to ask, it does not answer within [`LIMIT`], refuses, or gives
 /// an address that is not public (a second NAT behind the router, or the
 /// operator's carrier-grade NAT, where the port would not help).
-pub async fn map(gateway: &Gateway, port: u16) -> Option<Mapping> {
+pub async fn map(gateway: Gateway, port: u16) -> Option<Mapping> {
     let target = gateway.address()?;
     tokio::time::timeout(LIMIT, map_at(target, port))
         .await
@@ -136,14 +155,21 @@ async fn map_at(target: SocketAddr, port: u16) -> Option<Mapping> {
         }
         Got::Refused => return None,
     };
+    let release = Release {
+        socket: Arc::clone(&socket),
+        held,
+        port,
+    };
     if lifetime == 0 || !public(external.ip()) {
+        // The router may have opened a port we will not use.
+        release.send();
         return None;
     }
-    let renew = tokio::spawn(renew(Arc::clone(&socket), held, port, lifetime));
+    let renew = tokio::spawn(renew(socket, held, port, lifetime));
     Some(Mapping {
         external,
         renew,
-        release: Some((socket, held, port)),
+        release: Some(release),
     })
 }
 
@@ -210,7 +236,7 @@ async fn exchange<T>(
     let mut buf = [0u8; wire::PCP_MAX_LEN];
     for _ in 0..TRIES {
         socket.send(msg).await.ok()?;
-        let deadline = tokio::time::Instant::now().checked_add(RESEND)?;
+        let deadline = Instant::now().checked_add(RESEND)?;
         loop {
             let n = match tokio::time::timeout_at(deadline, socket.recv(&mut buf)).await {
                 Ok(Ok(n)) => n,
@@ -227,29 +253,57 @@ async fn exchange<T>(
     None
 }
 
-/// Keep the mapping alive at half of each granted lifetime.
-async fn renew(socket: Arc<UdpSocket>, held: Held, port: u16, mut lifetime: u32) {
+/// Keep the mapping alive: renew at half of each granted lifetime, and
+/// after an unanswered renewal try again every [`RENEW_RETRY`] until the
+/// mapping would have run out (RFC 6887, section 11.2.1).
+async fn renew(socket: Arc<UdpSocket>, held: Held, port: u16, lifetime: u32) {
+    let granted_at = |lifetime: u32| {
+        let full = Duration::from_secs(u64::from(lifetime));
+        let half = Duration::from_secs(u64::from(lifetime / 2)).clamp(RENEW_MIN, RENEW_MAX);
+        let now = Instant::now();
+        (now.checked_add(half), now.checked_add(full))
+    };
+    let (mut next, mut expiry) = granted_at(lifetime);
     loop {
-        let wait = Duration::from_secs(u64::from(lifetime / 2)).clamp(RENEW_MIN, RENEW_MAX);
-        tokio::time::sleep(wait).await;
-        if let Got::Mapped(_, granted) = ask(&socket, held, port).await {
-            lifetime = granted;
+        let (Some(at), Some(end)) = (next, expiry) else {
+            return;
+        };
+        tokio::time::sleep_until(at).await;
+        if let Got::Mapped(_, granted) = ask(&socket, held, port).await
+            && granted != 0
+        {
+            (next, expiry) = granted_at(granted);
+        } else if Instant::now() < end {
+            next = Instant::now().checked_add(RENEW_RETRY);
+        } else {
+            return;
         }
     }
 }
 
-/// Whether the router's external address is one the internet can reach.
+/// Whether the router's external address is one the internet can reach:
+/// not private, shared (100.64.0.0/10), loopback, link-local, "this
+/// network" (0.0.0.0/8), IETF protocol assignments (192.0.0.0/24),
+/// benchmarking (198.18.0.0/15), reserved (240.0.0.0/4, broadcast among
+/// them) or multicast.
 fn public(ip: IpAddr) -> bool {
     let IpAddr::V4(v4) = ip else {
         return false;
     };
-    let shared = v4.octets()[0] == 100 && (v4.octets()[1] & 0xc0) == 64;
+    let [a, b, c, _] = v4.octets();
+    let shared = a == 100 && (b & 0xc0) == 64;
+    let this_network = a == 0;
+    let protocol = a == 192 && b == 0 && c == 0;
+    let benchmark = a == 198 && (b & 0xfe) == 18;
+    let reserved = a >= 240;
     !(v4.is_private()
         || shared
+        || this_network
+        || protocol
+        || benchmark
+        || reserved
         || v4.is_loopback()
         || v4.is_link_local()
-        || v4.is_unspecified()
-        || v4.is_broadcast()
         || v4.is_multicast())
 }
 
@@ -267,25 +321,34 @@ fn default_gateway() -> Option<Ipv4Addr> {
     None
 }
 
-/// The gateway of the first default route that is up in Linux's
-/// `/proc/net/route`: addresses in hexadecimal, in the machine's byte
-/// order (little-endian on every platform we build for).
+/// The gateway of the default route with the lowest metric that is up, in
+/// Linux's `/proc/net/route`: addresses in hexadecimal, in the machine's
+/// byte order (little-endian on every platform we build for).
 #[cfg_attr(not(target_os = "linux"), allow(dead_code))]
 fn gateway_in_route_table(table: &str) -> Option<Ipv4Addr> {
     const UP: u32 = 0x1;
     const GATEWAY: u32 = 0x2;
+    let mut best: Option<(u32, Ipv4Addr)> = None;
     for line in table.lines().skip(1) {
-        let mut f = line.split_whitespace().skip(1);
-        let hex = |s: Option<&str>| s.and_then(|s| u32::from_str_radix(s, 16).ok());
-        let (Some(dest), Some(gw), Some(flags)) = (hex(f.next()), hex(f.next()), hex(f.next()))
-        else {
+        // Iface Destination Gateway Flags RefCnt Use Metric ...
+        let f: Vec<&str> = line.split_whitespace().collect();
+        let hex = |i: usize| f.get(i).and_then(|s| u32::from_str_radix(s, 16).ok());
+        let metric = f
+            .get(6)
+            .and_then(|s| s.parse::<u32>().ok())
+            .unwrap_or(u32::MAX);
+        let (Some(dest), Some(gw), Some(flags)) = (hex(1), hex(2), hex(3)) else {
             continue;
         };
-        if dest == 0 && flags & (UP | GATEWAY) == UP | GATEWAY && gw != 0 {
-            return Some(Ipv4Addr::from(gw.to_le_bytes()));
+        if dest == 0
+            && flags & (UP | GATEWAY) == UP | GATEWAY
+            && gw != 0
+            && best.is_none_or(|(m, _)| metric < m)
+        {
+            best = Some((metric, Ipv4Addr::from(gw.to_le_bytes())));
         }
     }
-    None
+    best.map(|(_, gw)| gw)
 }
 
 #[cfg(test)]
@@ -306,6 +369,8 @@ mod tests {
         Silent,
         Refuses,
         Private,
+        /// Grants 4 seconds whatever is asked.
+        Short,
     }
 
     /// A router on loopback. Every request it receives is passed on, so
@@ -321,9 +386,12 @@ mod tests {
                 let _ = tx.send(m.clone());
                 let reply: Option<Vec<u8>> = match (kind, m[0]) {
                     (Router::Silent, _) => None,
-                    (Router::Pcp | Router::Refuses | Router::Private, 2) => {
+                    (Router::Pcp | Router::Refuses | Router::Private | Router::Short, 2) => {
                         let req: [u8; 60] = m[..60].try_into().unwrap();
-                        let lifetime = u32::from_be_bytes(m[4..8].try_into().unwrap());
+                        let mut lifetime = u32::from_be_bytes(m[4..8].try_into().unwrap());
+                        if matches!(kind, Router::Short) && lifetime != 0 {
+                            lifetime = 4;
+                        }
                         Some(
                             match kind {
                                 Router::Refuses => answer::pcp(&req, 2, (PUBLIC.into(), 0), 0),
@@ -368,7 +436,7 @@ mod tests {
     #[tokio::test]
     async fn pcp_mapping_is_announced_and_released() {
         let (gw, mut seen) = router(Router::Pcp).await;
-        let m = map(&gw, 40_000).await.unwrap();
+        let m = map(gw.clone(), 40_000).await.unwrap();
         assert_eq!(m.external(), SocketAddr::from((PUBLIC, OPENED)));
         let req = seen.recv().await.unwrap();
         assert_eq!(req[0], 2);
@@ -382,7 +450,7 @@ mod tests {
     #[tokio::test]
     async fn nat_pmp_is_used_when_pcp_is_not_spoken() {
         let (gw, mut seen) = router(Router::Pmp).await;
-        let m = map(&gw, 40_000).await.unwrap();
+        let m = map(gw.clone(), 40_000).await.unwrap();
         assert_eq!(m.external(), SocketAddr::from((PUBLIC, OPENED)));
         drop(m);
         // PCP, then NAT-PMP address and mapping, then the release.
@@ -399,7 +467,7 @@ mod tests {
     #[tokio::test(start_paused = true)]
     async fn mapping_is_renewed_before_it_runs_out() {
         let (gw, mut seen) = router(Router::Pcp).await;
-        let m = map(&gw, 40_000).await.unwrap();
+        let m = map(gw.clone(), 40_000).await.unwrap();
         let first = seen.recv().await.unwrap();
         tokio::time::sleep(Duration::from_secs(u64::from(LIFETIME / 2) + 1)).await;
         let again = seen.recv().await.unwrap();
@@ -413,25 +481,85 @@ mod tests {
         for kind in [Router::Silent, Router::Refuses, Router::Private] {
             let (gw, _seen) = router(kind).await;
             let started = std::time::Instant::now();
-            assert!(map(&gw, 40_000).await.is_none());
+            assert!(map(gw.clone(), 40_000).await.is_none());
             assert!(started.elapsed() <= LIMIT + Duration::from_millis(300));
         }
     }
 
+    /// A port opened on an address we do not use is closed again.
+    #[tokio::test]
+    async fn an_unusable_mapping_is_released() {
+        let (gw, mut seen) = router(Router::Private).await;
+        assert!(map(gw, 40_000).await.is_none());
+        let first = seen.recv().await.unwrap();
+        let release = seen.recv().await.unwrap();
+        assert_eq!(lifetime_of(&first), LIFETIME);
+        assert_eq!(lifetime_of(&release), 0);
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn a_short_grant_is_renewed_in_time() {
+        let (gw, mut seen) = router(Router::Short).await;
+        let m = map(gw, 40_000).await.unwrap();
+        let _ = seen.recv().await.unwrap();
+        let started = Instant::now();
+        let again = seen.recv().await.unwrap();
+        assert_eq!(lifetime_of(&again), LIFETIME);
+        assert!(
+            started.elapsed() <= Duration::from_secs(3),
+            "{:?}",
+            started.elapsed()
+        );
+        drop(m);
+    }
+
+    /// The release goes out even when the runtime ends right after the
+    /// mapping is dropped, as when the command line exits.
+    #[test]
+    fn release_is_sent_before_the_runtime_ends() {
+        let (tx, rx) = std::sync::mpsc::channel();
+        let gw = std::net::UdpSocket::bind("127.0.0.1:0").unwrap();
+        let at = gw.local_addr().unwrap();
+        std::thread::spawn(move || {
+            let mut buf = [0u8; 1500];
+            while let Ok((n, from)) = gw.recv_from(&mut buf) {
+                let m = buf[..n].to_vec();
+                if m.len() == 60 && lifetime_of(&m) != 0 {
+                    let req: [u8; 60] = m[..].try_into().unwrap();
+                    let a = answer::pcp(&req, 0, (PUBLIC.into(), OPENED), LIFETIME);
+                    let _ = gw.send_to(&a, from);
+                }
+                let _ = tx.send(m);
+            }
+        });
+        let rt = tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+            .unwrap();
+        rt.block_on(async {
+            let m = map(Gateway::At(at), 40_000).await.unwrap();
+            drop(m);
+        });
+        drop(rt);
+        let _request = rx.recv_timeout(Duration::from_secs(2)).unwrap();
+        let release = rx.recv_timeout(Duration::from_secs(2)).unwrap();
+        assert_eq!(lifetime_of(&release), 0);
+    }
+
     #[tokio::test]
     async fn no_gateway_asks_no_one() {
-        assert!(map(&Gateway::Off, 40_000).await.is_none());
+        assert!(map(Gateway::Off, 40_000).await.is_none());
         // Nothing listens there: the ICMP error ends the attempt early.
         let closed = std::net::UdpSocket::bind("127.0.0.1:0").unwrap();
         let at = closed.local_addr().unwrap();
         drop(closed);
         let started = std::time::Instant::now();
-        assert!(map(&Gateway::At(at), 40_000).await.is_none());
+        assert!(map(Gateway::At(at), 40_000).await.is_none());
         assert!(started.elapsed() < LIMIT);
         let v6 = Gateway::At("[::1]:5351".parse().unwrap());
-        assert!(map(&v6, 40_000).await.is_none());
+        assert!(map(v6, 40_000).await.is_none());
         assert!(
-            map(&Gateway::At("127.0.0.1:5351".parse().unwrap()), 0)
+            map(Gateway::At("127.0.0.1:5351".parse().unwrap()), 0)
                 .await
                 .is_none()
         );
@@ -474,6 +602,29 @@ mod tests {
         assert!(asked.is_err(), "privacy mode asked the router: {asked:?}");
     }
 
+    /// A router that never answers holds the transfer back by the grace
+    /// period at most, not by the whole attempt.
+    #[tokio::test]
+    async fn a_silent_router_barely_delays_the_hints() {
+        let (gw, _seen) = router(Router::Silent).await;
+        let socket = crate::transport::bind_socket().unwrap();
+        let key = crate::transport::EndpointKey::generate().unwrap();
+        let paths = crate::PathOptions {
+            relay: String::new(),
+            stun: String::new(),
+            relay_only: false,
+            gateway: gw,
+        };
+        let started = std::time::Instant::now();
+        let (_, mapping) = crate::own_hints(&socket, &key, &paths).await.unwrap();
+        assert!(mapping.is_none());
+        assert!(
+            started.elapsed() < Duration::from_millis(700),
+            "{:?}",
+            started.elapsed()
+        );
+    }
+
     #[test]
     fn only_public_addresses_count() {
         for ip in ["203.0.113.7", "8.8.8.8"] {
@@ -495,6 +646,16 @@ mod tests {
             assert!(!public(ip.parse().unwrap()), "{ip}");
         }
         assert!(public("100.128.0.1".parse().unwrap()));
+        for ip in [
+            "0.1.2.3",
+            "192.0.0.9",
+            "198.18.0.1",
+            "198.19.255.1",
+            "240.0.0.1",
+        ] {
+            assert!(!public(ip.parse().unwrap()), "{ip}");
+        }
+        assert!(public("198.20.0.1".parse().unwrap()));
     }
 
     #[test]
@@ -512,6 +673,14 @@ mod tests {
         let down = "h\nenp8s0\t00000000\t0101A8C0\t0002\t0\n";
         assert_eq!(gateway_in_route_table(down), None);
         assert_eq!(gateway_in_route_table("h\nbad line\n"), None);
+        let two = "h\n\
+                   wlan0\t00000000\t0101A8C0\t0003\t0\t0\t600\t00000000\n\
+                   enp8s0\t00000000\t01020A0A\t0003\t0\t0\t100\t00000000\n";
+        assert_eq!(
+            gateway_in_route_table(two),
+            Some(Ipv4Addr::new(10, 10, 2, 1)),
+            "lowest metric"
+        );
         let after_bad = "h\nbad line\nenp8s0\t00000000\t0101A8C0\t0003\t0\n";
         assert_eq!(
             gateway_in_route_table(after_bad),

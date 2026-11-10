@@ -90,9 +90,14 @@ const ACCEPT_TIMEOUT: Duration = Duration::from_secs(30);
 /// How long the receiver tries both directions before giving up.
 const CONNECT_TIMEOUT: Duration = Duration::from_secs(20);
 
+/// How long `own_hints` waits for the router's port mapping once STUN
+/// has answered (or when there is no STUN).
+const MAPPING_GRACE: Duration = Duration::from_millis(300);
+
 /// How this side can be reached, for its `HINTS`. With `relay_only`, no
 /// address at all (spec section 6, privacy mode). Otherwise the local
-/// addresses, and the public address the STUN server saw, if it answered.
+/// addresses, the public address the STUN server saw, if it answered, and
+/// the port the router opened for us, if it did (#406).
 async fn own_hints(
     socket: &std::net::UdpSocket,
     key: &transport::EndpointKey,
@@ -112,17 +117,22 @@ async fn own_hints(
         .into_iter()
         .map(totaldrop_proto::wire::Address)
         .collect();
-    // The router's port mapping runs alongside STUN, so asking for it adds
-    // no wait beyond `portmap::LIMIT` when STUN is quicker (#406).
-    let stun = async {
-        if paths.stun.is_empty() {
-            Vec::new()
-        } else {
-            relay::discover(socket, &paths.stun).await
-        }
-    };
+    // The router is asked alongside STUN (#406). Once STUN is done the
+    // mapping gets at most `MAPPING_GRACE` more, so a router that never
+    // answers costs a fraction of a second, not `portmap::LIMIT`. A mapping
+    // that comes later is dropped, which releases it.
     let port = socket.local_addr()?.port();
-    let (seen, mapping) = tokio::join!(stun, portmap::map(&paths.gateway, port));
+    let mut asking = tokio::spawn(portmap::map(paths.gateway.clone(), port));
+    let seen = if paths.stun.is_empty() {
+        Vec::new()
+    } else {
+        relay::discover(socket, &paths.stun).await
+    };
+    let mapping = tokio::time::timeout(MAPPING_GRACE, &mut asking)
+        .await
+        .ok()
+        .and_then(std::result::Result::ok)
+        .flatten();
     for seen in seen
         .into_iter()
         .chain(mapping.as_ref().map(portmap::Mapping::external))

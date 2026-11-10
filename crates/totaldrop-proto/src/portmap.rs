@@ -86,9 +86,15 @@ pub fn pcp_map(
     w.put(nonce);
     w.put(&[UDP, 0, 0, 0]);
     w.put(&internal_port.to_be_bytes());
-    // No suggested external port or address: the router picks.
+    // No suggested external port or address: the router picks. "No
+    // address" is the all-zeros address of the client's own family
+    // (RFC 6887, section 11.1), `::ffff:0.0.0.0` for IPv4.
     w.put(&0u16.to_be_bytes());
-    w.put(&[0u8; 16]);
+    let any = match client {
+        IpAddr::V4(_) => IpAddr::V4(Ipv4Addr::UNSPECIFIED),
+        IpAddr::V6(_) => IpAddr::V6(Ipv6Addr::UNSPECIFIED),
+    };
+    w.put(&pcp_address(any));
     m
 }
 
@@ -176,9 +182,10 @@ pub fn parse_pmp_map(m: &[u8], internal_port: u16) -> Option<Result<(u16, u32), 
         return None;
     }
     let result = be16(m, 2)?;
+    // Answers, refusals too, have all 16 bytes (RFC 6886, section 3.5)
+    // and name our internal port; anything else is someone else's.
     if m.len() != 16 || be16(m, 8)? != internal_port {
-        // A refusal may come without the rest of the message.
-        return (result != 0 && m.len() >= 4).then_some(Err(result));
+        return None;
     }
     if result != 0 {
         return Some(Err(result));
@@ -216,7 +223,9 @@ impl Writer<'_> {
     }
 }
 
-/// Answers as a router would send them, for tests of clients.
+/// Answers as a router would send them, for tests of clients. Not part of
+/// the protocol API.
+#[doc(hidden)]
 pub mod answer {
     use super::*;
 
@@ -300,7 +309,10 @@ mod tests {
         assert_eq!(&m[24..36], &NONCE);
         assert_eq!(&m[36..40], &[17, 0, 0, 0]);
         assert_eq!(&m[40..42], &40_000u16.to_be_bytes());
-        assert_eq!(&m[42..60], &[0u8; 18]);
+        assert_eq!(&m[42..44], &[0, 0]);
+        assert_eq!(&m[44..60], &Ipv4Addr::UNSPECIFIED.to_ipv6_mapped().octets());
+        let v6 = pcp_map(&NONCE, "2001:db8::2".parse().unwrap(), 40_000, 120);
+        assert_eq!(&v6[44..60], &[0u8; 16]);
     }
 
     #[test]
@@ -422,8 +434,16 @@ mod tests {
             None,
             "our own request"
         );
-        // A short refusal still counts as one.
-        assert_eq!(parse_pmp_map(&[0, 129, 0, 5], 40_000), Some(Err(5)));
+        // A refusal must be whole and name our port.
+        assert_eq!(
+            parse_pmp_map(&answer::pmp_map(5, 40_000, 0, 0), 40_000),
+            Some(Err(5))
+        );
+        assert_eq!(parse_pmp_map(&[0, 129, 0, 5], 40_000), None);
+        assert_eq!(
+            parse_pmp_map(&answer::pmp_map(5, 40_001, 0, 0), 40_000),
+            None
+        );
     }
 
     #[test]
