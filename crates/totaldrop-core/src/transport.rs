@@ -359,19 +359,25 @@ pub fn local_addresses(socket: &UdpSocket) -> Result<Vec<SocketAddr>> {
     Ok(out)
 }
 
-/// Whether this device should dial `target` (#403). Not unspecified,
-/// broadcast or multicast addresses (#450: a peer's `HINTS` must not make
-/// this device send to every device on the LAN), or IPv6 link-local ones, which need an interface scope that
-/// `HINTS` do not carry; and for IPv6, only when the system would send
+/// Whether this device should dial `target` (#403). Not addresses in
+/// `0.0.0.0/8` or IPv4-compatible IPv6 ones (`::a.b.c.d`), which name no
+/// peer; not broadcast or multicast ones (#450: a peer's `HINTS` must not
+/// make this device send to every device on the LAN); not IPv6 link-local
+/// ones, which need an interface scope that `HINTS` do not carry; and for IPv6, only when the system would send
 /// from an address [`announceable_v6`] accepts: dialling from a hardware
 /// (EUI-64) address would show the peer the very address this device
 /// keeps out of its own `HINTS`.
 pub fn dialable(target: SocketAddr) -> bool {
     match target.ip() {
         std::net::IpAddr::V4(ip) => {
-            !(ip.is_unspecified() || ip.is_broadcast() || ip.is_multicast())
+            !(ip.octets()[0] == 0 || ip.is_broadcast() || ip.is_multicast())
         }
-        std::net::IpAddr::V6(ip) if ip.is_multicast() => false,
+        std::net::IpAddr::V6(ip)
+            if ip.is_multicast()
+                || (!ip.is_loopback() && ip.segments()[..6].iter().all(|s| *s == 0)) =>
+        {
+            false
+        }
         std::net::IpAddr::V6(ip) => {
             ip.is_loopback()
                 || (announceable_v6(ip)
@@ -1062,13 +1068,16 @@ mod tests {
             "224.0.0.251:5353",
             "239.255.255.250:1900",
             "0.0.0.0:9",
+            "0.1.2.3:9",
             "[ff02::1]:9",
+            "[::192.168.1.20]:9",
             "[ff05::c]:1900",
         ];
         for a in no {
             assert!(!dialable(a.parse().unwrap()), "{a} should not be dialled");
         }
         assert!(dialable("127.0.0.1:9".parse().unwrap()));
+        assert!(dialable("[::1]:9".parse().unwrap()));
         assert!(dialable("192.168.1.20:9".parse().unwrap()));
     }
 

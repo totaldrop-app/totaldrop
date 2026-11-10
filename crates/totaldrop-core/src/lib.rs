@@ -578,6 +578,7 @@ impl PreparedSend {
 /// Where the other side said it can be reached, each address once and in
 /// canonical form (#403). Left out: addresses no one can dial (unspecified,
 /// or IPv6 link-local, which needs an interface scope `HINTS` do not carry),
+/// broadcast and multicast addresses (#450),
 /// and IPv6 addresses this device would dial from a source it never
 /// announces itself (see [`transport::dialable`]).
 fn peer_addresses(hints: &Hints) -> Vec<SocketAddr> {
@@ -837,6 +838,11 @@ mod tests {
             addr(path::in_family(v4, true)),
             addr(SocketAddr::from((Ipv6Addr::UNSPECIFIED, 4000))),
             addr(SocketAddr::from(([0, 0, 0, 0], 4000))),
+            // #450: broadcast and multicast, also IPv4-mapped, which
+            // `canonical` turns back into IPv4 before `dialable` sees them.
+            addr(SocketAddr::from(([255, 255, 255, 255], 4000))),
+            addr("[::ffff:255.255.255.255]:4000".parse().unwrap()),
+            addr("[::ffff:224.0.0.251]:4000".parse().unwrap()),
             addr(SocketAddr::from((
                 Ipv6Addr::new(0xfe80, 0, 0, 0, 0x1c2d, 0x3e4f, 0x5a6b, 0x7c8d),
                 4000,
