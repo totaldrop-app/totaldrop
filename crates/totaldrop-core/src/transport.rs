@@ -1835,9 +1835,12 @@ mod tests {
     /// (it does not watch), so what the sender sends while moved is lost.
     /// Before, QUIC had doubled its wait before each resend while the path
     /// was gone, and the transfer could stand still for 10 seconds or more
-    /// after the sender came back; on Linux 2 runs in 10 stood still for 6
-    /// to 9 seconds, depending on where QUIC's wait happened to be. Three
-    /// lengths of cut make that likely to show.
+    /// after the sender came back. How long depends on where QUIC's wait
+    /// happens to be, so one cut shows it only now and then (2 runs in 10
+    /// stood still for 6 to 9 seconds on Linux); with three cuts the test
+    /// failed 4 runs in 4 without the fix. That the sender sent its last
+    /// packets again is checked too, so the fix is seen working whatever
+    /// the timing.
     #[tokio::test]
     async fn a_transfer_picks_up_as_soon_as_the_sender_is_back() {
         for gone in [4, 6, 8].map(Duration::from_secs) {
@@ -1885,6 +1888,10 @@ mod tests {
         assert!(moved, "cut {gone:?}: the sender did not move");
         assert!(came_back, "cut {gone:?}: the sender did not come back");
         assert!(arrived, "cut {gone:?}: the transfer did not finish");
+        assert!(
+            d.sender_fallback.replayed() > 0,
+            "cut {gone:?}: nothing was sent again on coming back"
+        );
         let took = done.saturating_duration_since(back_at);
         assert!(
             took <= picks_up,

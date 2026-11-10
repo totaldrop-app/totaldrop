@@ -367,15 +367,18 @@ treated as final.
       address, so a peer whose NAT mapping changed is not taken for a silent
       one.
     - On going back, a side sends the last 4 datagrams it had sent through
-      the relay once more, now to the direct address (#435). They are QUIC
-      packets as QUIC built them, so a copy the other side already has is
-      dropped there as a duplicate (RFC 9000, section 12.3); no new kind
-      of message goes on the wire, only up to 4 extra copies. Without this, what went to the relay was lost when
-      the other side was not on it, and QUIC, which doubled its wait before
-      each resend while the path was gone, could leave the transfer
-      standing still for 10 seconds or more. The acknowledgement of one of
-      them resets that wait and shows everything older as lost, which QUIC
-      resends at once.
+      the relay once more, now to the direct address, with the ECN mark
+      QUIC gave them, and only if that is still the connection's address
+      (#435). They are QUIC packets as QUIC built them, so a copy the other
+      side already has is dropped there as a duplicate (RFC 9000, section
+      12.3); no new kind of message goes on the wire, only up to 4 extra
+      copies. Without this, what went to the relay was lost when the other
+      side was not on it, and QUIC, which doubled its wait before each
+      resend while the path was gone, could leave the transfer standing
+      still for 10 seconds or more. When one of them asks for an
+      acknowledgement, which the last packets of a side that was sending
+      usually do, its acknowledgement resets that wait and shows
+      everything older as lost, which QUIC resends at once.
     - A side moves only when both use the same relay (item 21): the sender
       checks the receiver's `HINTS` field 5, and the receiver has a relay
       path only in that case. When a direct path wins, the relay link is
