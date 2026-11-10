@@ -90,6 +90,9 @@ pub struct Mapping {
     external: SocketAddr,
     renew: tokio::task::JoinHandle<()>,
     release: Option<Release>,
+    /// Counted for [`released`] while the mapping lives; dropped after
+    /// `release` has started the delete, which counts itself.
+    pending: Option<Pending>,
 }
 
 impl Mapping {
@@ -112,8 +115,34 @@ impl Drop for Mapping {
 static RELEASING: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
 static RELEASED: tokio::sync::Notify = tokio::sync::Notify::const_new();
 
-/// Wait, at most [`LIMIT`], until every dropped UPnP mapping has been
-/// deleted. A process about to exit calls this before it shuts its runtime
+/// Counts, for [`released`], one UPnP attempt, mapping or delete that
+/// may still leave a port open. Dropping it, also with a future that never
+/// ran, takes it off the count.
+#[derive(Debug)]
+struct Pending;
+
+impl Pending {
+    fn new() -> Self {
+        RELEASING.fetch_add(1, std::sync::atomic::Ordering::AcqRel);
+        Self
+    }
+}
+
+impl Clone for Pending {
+    fn clone(&self) -> Self {
+        Self::new()
+    }
+}
+
+impl Drop for Pending {
+    fn drop(&mut self) {
+        RELEASING.fetch_sub(1, std::sync::atomic::Ordering::AcqRel);
+        RELEASED.notify_waiters();
+    }
+}
+
+/// Wait, at most [`LIMIT`], until no UPnP attempt is still under way and
+/// every dropped UPnP mapping has been deleted. A process about to exit calls this before it shuts its runtime
 /// down; without it the delete dies with the runtime and the port stays
 /// open until its lease runs out.
 pub async fn released() {
@@ -168,16 +197,14 @@ impl Release {
                 external_port,
             } => {
                 if let Ok(rt) = tokio::runtime::Handle::try_current() {
-                    use std::sync::atomic::Ordering;
-                    RELEASING.fetch_add(1, Ordering::AcqRel);
+                    let pending = Pending::new();
                     rt.spawn(async move {
+                        let _pending = pending;
                         let _ = tokio::time::timeout(
                             LIMIT,
                             gateway.remove_port(PortMappingProtocol::UDP, external_port),
                         )
                         .await;
-                        RELEASING.fetch_sub(1, Ordering::AcqRel);
-                        RELEASED.notify_waiters();
                     });
                 }
             }
@@ -202,11 +229,23 @@ pub fn start(gateway: Gateway, port: u16) -> Asking {
 
 fn start_at(target: SocketAddr, ssdp: Option<SocketAddr>, port: u16) -> Asking {
     let (upnp_tx, upnp) = watch::channel(Upnp::Searching);
+    // Counted from now: the task may not have run yet when the process
+    // decides to exit.
+    let pending = ssdp.map(|_| Pending::new());
     let task = tokio::spawn(async move {
-        tokio::time::timeout(LIMIT, map_with(target, ssdp, port, upnp_tx))
-            .await
-            .ok()
-            .flatten()
+        let got = tokio::time::timeout(
+            LIMIT,
+            map_with(target, ssdp, port, upnp_tx, pending.clone()),
+        )
+        .await
+        .ok()
+        .flatten();
+        got.map(|mut m| {
+            if m.pending.is_none() {
+                m.pending = pending;
+            }
+            m
+        })
     });
     Asking { task, upnp }
 }
@@ -268,6 +307,7 @@ async fn map_with(
     ssdp: Option<SocketAddr>,
     port: u16,
     upnp_state: watch::Sender<Upnp>,
+    pending: Option<Pending>,
 ) -> Option<Mapping> {
     if port == 0 || !target.is_ipv4() {
         return None;
@@ -280,8 +320,15 @@ async fn map_with(
 
     // Dropping `stop` tells the UPnP task its mapping is not wanted.
     let (stop, stopped) = oneshot::channel::<()>();
-    let mut upnp =
-        ssdp.map(|at| tokio::spawn(upnp(at, SocketAddr::new(client, port), stopped, upnp_state)));
+    let mut upnp = ssdp.map(|at| {
+        tokio::spawn(upnp(
+            at,
+            SocketAddr::new(client, port),
+            stopped,
+            upnp_state,
+            pending,
+        ))
+    });
     let udp = map_udp(pcp_socket, pmp_socket, client, port);
     tokio::pin!(udp);
     let result = match upnp.as_mut() {
@@ -384,6 +431,7 @@ async fn map_udp(
         external,
         renew,
         release: Some(release),
+        pending: None,
     })
 }
 
@@ -408,12 +456,19 @@ async fn upnp(
     local: SocketAddr,
     stop: oneshot::Receiver<()>,
     state: watch::Sender<Upnp>,
+    pending: Option<Pending>,
 ) -> Option<Mapping> {
     let got = upnp_with(ssdp, search_options(ssdp), local, stop, &state).await;
-    if got.is_none() {
-        state.send_replace(Upnp::Failed);
+    match got {
+        Some(mut m) => {
+            m.pending = pending;
+            Some(m)
+        }
+        None => {
+            state.send_replace(Upnp::Failed);
+            None
+        }
     }
-    got
 }
 
 /// How the gateway at `ssdp` is searched for: unicast to it, IPv4 only,
@@ -496,6 +551,7 @@ async fn upnp_with(
             gateway,
             external_port,
         }),
+        pending: None,
     })
 }
 
@@ -811,7 +867,7 @@ mod tests {
     /// on the machine's SSDP port.
     async fn pcp_only(gateway: Gateway, port: u16) -> Option<Mapping> {
         let target = gateway.address()?;
-        tokio::time::timeout(LIMIT, map_with(target, None, port, unseen()))
+        tokio::time::timeout(LIMIT, map_with(target, None, port, unseen(), None))
             .await
             .ok()
             .flatten()
@@ -1296,7 +1352,7 @@ mod tests {
         };
         let (ssdp, mut seen) = igd(Igd::Maps).await;
         let started = std::time::Instant::now();
-        let m = tokio::time::timeout(LIMIT, map_with(silent, Some(ssdp), 40_000, unseen()))
+        let m = tokio::time::timeout(LIMIT, map_with(silent, Some(ssdp), 40_000, unseen(), None))
             .await
             .unwrap()
             .unwrap();
@@ -1334,7 +1390,7 @@ mod tests {
             unreachable!()
         };
         let (ssdp, mut seen) = igd(Igd::Maps).await;
-        let m = tokio::time::timeout(LIMIT, map_with(silent, Some(ssdp), 40_000, unseen()))
+        let m = tokio::time::timeout(LIMIT, map_with(silent, Some(ssdp), 40_000, unseen(), None))
             .await
             .unwrap()
             .unwrap();
@@ -1343,6 +1399,35 @@ mod tests {
         drop(m);
         released().await;
         assert_eq!(seen.try_recv().unwrap().0, "DeletePortMapping");
+    }
+
+    /// An attempt nobody waits for any more still counts: a process that
+    /// gave up on the mapping and exits at once must not cut off the
+    /// router mid-mapping, which would leave the port open until its lease
+    /// ends. `released` waits for the mapping and its delete.
+    #[tokio::test]
+    async fn released_waits_for_an_attempt_nobody_waits_for() {
+        let (Gateway::At(silent), _) = router(Router::Silent).await else {
+            unreachable!()
+        };
+        let (ssdp, mut seen) = igd(Igd::Slow).await;
+        let got = start_at(silent, Some(ssdp), 40_000)
+            .wait(Duration::ZERO)
+            .await;
+        assert!(got.is_none());
+        released().await;
+        let mut actions = Vec::new();
+        while let Ok((action, _)) = seen.try_recv() {
+            actions.push(action);
+        }
+        assert_eq!(
+            actions,
+            [
+                "GetExternalIPAddress",
+                "AddPortMapping",
+                "DeletePortMapping"
+            ]
+        );
     }
 
     /// A UPnP gateway takes several requests, so its mapping comes well
@@ -1414,7 +1499,9 @@ mod tests {
             unreachable!()
         };
         let (ssdp, mut seen) = igd(Igd::Maps).await;
-        let m = map_with(pcp, Some(ssdp), 40_000, unseen()).await.unwrap();
+        let m = map_with(pcp, Some(ssdp), 40_000, unseen(), None)
+            .await
+            .unwrap();
         assert_eq!(m.external(), SocketAddr::from((PUBLIC, OPENED)));
         tokio::time::sleep(RESEND * 4).await;
         assert!(seen.try_recv().is_err(), "UPnP was asked");
@@ -1430,7 +1517,8 @@ mod tests {
         };
         let (ssdp, mut seen) = igd(Igd::PermanentOnly).await;
         // As in `map`: what is not there within `LIMIT` is not there.
-        let got = tokio::time::timeout(LIMIT, map_with(silent, Some(ssdp), 40_000, unseen())).await;
+        let got =
+            tokio::time::timeout(LIMIT, map_with(silent, Some(ssdp), 40_000, unseen(), None)).await;
         assert!(got.ok().flatten().is_none());
         let mut asked = false;
         while let Ok((action, body)) = seen.try_recv() {
@@ -1451,7 +1539,8 @@ mod tests {
         };
         let (ssdp, mut seen) = igd(Igd::Private).await;
         // As in `map`: what is not there within `LIMIT` is not there.
-        let got = tokio::time::timeout(LIMIT, map_with(silent, Some(ssdp), 40_000, unseen())).await;
+        let got =
+            tokio::time::timeout(LIMIT, map_with(silent, Some(ssdp), 40_000, unseen(), None)).await;
         assert!(got.ok().flatten().is_none());
         let mut actions = Vec::new();
         while let Ok((action, _)) = seen.try_recv() {
@@ -1504,7 +1593,7 @@ mod tests {
             unreachable!()
         };
         let (ssdp, mut seen) = igd(Igd::Maps).await;
-        let m = tokio::time::timeout(LIMIT, map_with(silent, Some(ssdp), 40_000, unseen()))
+        let m = tokio::time::timeout(LIMIT, map_with(silent, Some(ssdp), 40_000, unseen(), None))
             .await
             .unwrap()
             .unwrap();
