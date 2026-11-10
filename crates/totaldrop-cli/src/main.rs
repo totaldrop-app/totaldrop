@@ -665,6 +665,9 @@ fn main() -> ExitCode {
             runtime.block_on(receive(strings, server(cli.server), route, code, out, yes))
         }
     };
+    // A port the router opened over UPnP is closed with an HTTP request,
+    // which dies with the runtime; wait for it, briefly (#406).
+    runtime.block_on(totaldrop_core::portmap::released());
     // A question still waiting for a line on stdin, or hashing a stopped
     // send left running, must not keep the process alive.
     runtime.shutdown_background();

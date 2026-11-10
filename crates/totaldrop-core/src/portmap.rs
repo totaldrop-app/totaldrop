@@ -108,6 +108,28 @@ impl Drop for Mapping {
     }
 }
 
+/// UPnP deletes still under way, for [`released`].
+static RELEASING: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+static RELEASED: tokio::sync::Notify = tokio::sync::Notify::const_new();
+
+/// Wait, at most [`LIMIT`], until every dropped UPnP mapping has been
+/// deleted. A process about to exit calls this before it shuts its runtime
+/// down; without it the delete dies with the runtime and the port stays
+/// open until its lease runs out.
+pub async fn released() {
+    use std::sync::atomic::Ordering;
+    let _ = tokio::time::timeout(LIMIT, async {
+        loop {
+            let notified = RELEASED.notified();
+            if RELEASING.load(Ordering::Acquire) == 0 {
+                return;
+            }
+            notified.await;
+        }
+    })
+    .await;
+}
+
 /// What it takes to ask the router to close a port.
 #[derive(Debug)]
 enum Release {
@@ -146,12 +168,16 @@ impl Release {
                 external_port,
             } => {
                 if let Ok(rt) = tokio::runtime::Handle::try_current() {
+                    use std::sync::atomic::Ordering;
+                    RELEASING.fetch_add(1, Ordering::AcqRel);
                     rt.spawn(async move {
                         let _ = tokio::time::timeout(
                             LIMIT,
                             gateway.remove_port(PortMappingProtocol::UDP, external_port),
                         )
                         .await;
+                        RELEASING.fetch_sub(1, Ordering::AcqRel);
+                        RELEASED.notify_waiters();
                     });
                 }
             }
@@ -1296,6 +1322,27 @@ mod tests {
         let (action, body) = seen.recv().await.unwrap();
         assert_eq!(action, "DeletePortMapping");
         assert_eq!(arg(&body, "NewExternalPort"), Some(port));
+    }
+
+    /// A process that exits right after dropping a UPnP mapping takes its
+    /// runtime, and the spawned delete, with it: at home the port stayed
+    /// open until its lease ran out (#406). `released` waits for the
+    /// delete, so the CLI can call it before it shuts the runtime down.
+    #[tokio::test]
+    async fn released_waits_for_the_upnp_delete() {
+        let (Gateway::At(silent), _) = router(Router::Silent).await else {
+            unreachable!()
+        };
+        let (ssdp, mut seen) = igd(Igd::Maps).await;
+        let m = tokio::time::timeout(LIMIT, map_with(silent, Some(ssdp), 40_000, unseen()))
+            .await
+            .unwrap()
+            .unwrap();
+        assert_eq!(seen.recv().await.unwrap().0, "GetExternalIPAddress");
+        assert_eq!(seen.recv().await.unwrap().0, "AddPortMapping");
+        drop(m);
+        released().await;
+        assert_eq!(seen.try_recv().unwrap().0, "DeletePortMapping");
     }
 
     /// A UPnP gateway takes several requests, so its mapping comes well
