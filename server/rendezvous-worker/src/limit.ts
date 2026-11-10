@@ -140,9 +140,16 @@ export class RateLimiter {
 
   /** Forget clients that are back at a full burst. Runs at most once per
    * interval, so a request costs the same however many clients there are,
-   * except for that one pass. The Directory's alarm calls it too. */
+   * except for that one pass. */
   prune(now: number): void {
     if (now - this.lastPrune < this.config.intervalMs) return;
+    this.sweep(now);
+  }
+
+  /** Forget clients that are back at a full burst, now, whenever the last
+   * pass was. The Directory's alarm calls this: a pass skipped there would
+   * keep a counter for one more alarm interval (#393). */
+  sweep(now: number): void {
     this.lastPrune = now;
     for (const [id, due] of this.due) {
       if (due <= now) this.due.delete(id);

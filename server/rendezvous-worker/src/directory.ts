@@ -7,7 +7,7 @@
 
 import { DurableObject } from "cloudflare:workers";
 
-import { afterCounted, ensureAlarm, nextAlarm } from "./alarm";
+import { admitCounted, ensureAlarm, finishAlarm } from "./alarm";
 import { RateLimiter, TOO_MANY, rateConfig } from "./limit";
 import { hex, randomBytes } from "./messages";
 
@@ -153,10 +153,7 @@ export class Directory extends DurableObject<DirectoryEnv> {
    * client is counted the alarm stays set, so its counter is forgotten in
    * time (`alarm.ts`). */
   private async admit(client: string): Promise<boolean> {
-    const now = this.now();
-    const allowed = await this.limiter.admit(client, now);
-    await afterCounted(this.ctx.storage, this.limiter.size, now);
-    return allowed;
+    return admitCounted(this.ctx.storage, this.limiter, client, this.now());
   }
 
   /** Allocate a nameplate for `client` (`clientOf` in `limit.ts`). */
@@ -205,6 +202,8 @@ export class Directory extends DurableObject<DirectoryEnv> {
       now,
     );
     sql.exec("UPDATE state SET active = active + 1 WHERE id = 0");
+    // `admit` has set the alarm already while it counted this client; the
+    // nameplate's expiry must not depend on that, so check it here too.
     await ensureAlarm(this.ctx.storage, now);
     return { nameplate: n, token, mailbox };
   }
@@ -259,7 +258,6 @@ export class Directory extends DurableObject<DirectoryEnv> {
   async alarm(): Promise<void> {
     const sql = this.ctx.storage.sql;
     const now = this.now();
-    this.limiter.prune(now);
     this.expireActive(now);
     this.freeRested(now);
     sql.exec("DELETE FROM scary WHERE t <= ?", now - LIMITS.scaryWindow);
@@ -268,7 +266,6 @@ export class Directory extends DurableObject<DirectoryEnv> {
         "SELECT EXISTS (SELECT 1 FROM active) OR EXISTS (SELECT 1 FROM resting) AS x",
       )
       .one().x;
-    const next = nextAlarm(now, left !== 0, this.limiter.size);
-    if (next !== null) await this.ctx.storage.setAlarm(next);
+    await finishAlarm(this.ctx.storage, this.limiter, left !== 0, now);
   }
 }
