@@ -35,7 +35,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Zorunlu denetim CI'dır; aşağıdakiler aynı denetimlerin yerel karşılığıdır (ayrıntı: `docs/gelistirme.md`, "Yerel denetimler").
 
-- Rust çekirdeği, CLI ve Rust sunucuları (`core.yml` ile aynı; `linux/` Qt 6, `app/rust` Flutter ister, bu yüzden dışarıda):
+- Rust çekirdeği, CLI ve Rust sunucuları (`core.yml` ile aynı; `linux/` Qt 6 istediği için `linux.yml`'de, Android köprüsü `app/rust` `android.yml`'de derlenir, bu yüzden burada dışarıda). CI `RUSTFLAGS=-D warnings` ile derler; yerelde aynısını görmek için onu ayarla:
   ```sh
   cargo fmt --check -p totaldrop-crypto -p totaldrop-proto -p totaldrop-core -p totaldrop-cli -p totaldrop-l10n -p totaldrop-rendezvous -p totaldrop-relay
   cargo clippy --workspace --exclude totaldrop-linux --exclude rust_lib_totaldrop --all-targets --locked -- -D warnings
@@ -43,8 +43,8 @@ Zorunlu denetim CI'dır; aşağıdakiler aynı denetimlerin yerel karşılığı
   cargo test -p totaldrop-proto <test_adı>            # tek test
   cargo test -p totaldrop-cli --test end_to_end --locked   # CLI ↔ sunucu uçtan uca
   ```
-  CI'da `TOTALDROP_REQUIRE_IPV6=1` ile çalışır (çift yığın testleri IPv4'e düşmesin, #403). Kapsam eşiği: `cargo llvm-cov --fail-under-lines 90`.
-- Worker'lar (`server/rendezvous-worker`, `server/relay-worker`, her birinde): `npm ci && npm run check && npm test`.
+  CI'da `TOTALDROP_REQUIRE_IPV6=1` ile çalışır (çift yığın testleri IPv4'e düşmesin, #403). Kapsam eşiği (`core.yml`): `cargo llvm-cov --locked --summary-only --fail-under-lines 90` ve fmt satırındaki aynı yedi `-p`.
+- Worker'lar (`server/rendezvous-worker`, `server/relay-worker`, her birinde): `npm ci && npm run check && npm run --if-present test` (`relay-worker`'da `test` betiği yok).
 - Site: `node site/tools/check-i18n.mjs`, `node --test site/tools/test-*.mjs`; üretilen dosyaları denetleyen araçlar (`privacy.mjs`, `team.mjs`, `favicons.mjs`, `brand-files.mjs`, `asset-versions.mjs`, `check-readmes.mjs`) `--write` ile yeniden yazar; CI yalnızca denetler (`.github/workflows/site.yml`).
 - Android (`app/`): `flutter pub get --enforce-lockfile`, `flutter gen-l10n`, `flutter analyze`, `flutter test`; köprü crate'i `cargo test -p rust_lib_totaldrop --locked`.
 - Linux QML bileşen testleri (Rust derlemesi istemez): `linux/tests/qml/run.sh`.
@@ -56,15 +56,14 @@ Zorunlu denetim CI'dır; aşağıdakiler aynı denetimlerin yerel karşılığı
 
 - Changelog: her PR `changelog.d/<issue>-<kısa-ad>.<bölüm>.md` ekler; bölüm `added|changed|deprecated|removed|fixed|security|none`. Girdi biçimi `tools/changelog.mjs` başındaki açıklamada. `CHANGELOG.md` elle değişmez, yalnızca sürümde `node tools/changelog.mjs release "<başlık>"`.
 - Her dosya SPDX başlığı taşır (`tools/check-spdx.sh`, `REUSE.toml`).
-- Kullanıcıya görünen her yeni metin 35 dilin hepsine girer, yalnızca TR/EN'e değil: uygulama ve Linux masaüstü metinleri `l10n/app/*.arb`, CLI `l10n/cli/*.arb`, site `site/public/i18n/*.json`, gizlilik `site/privacy/`, README çevirileri `docs/readme/` (`docs/ceviri.md`). İngilizce dosya şablondur; anahtar önce oraya açıklamasıyla eklenir.
+- Kullanıcıya görünen her yeni metin 35 dilin hepsine girer, yalnızca TR/EN'e değil: uygulama ve Linux masaüstü metinleri `l10n/app/*.arb`, CLI `l10n/cli/*.arb`, site `site/public/i18n/*.json`, gizlilik `site/privacy/`, README çevirileri `docs/readme/` (`docs/ceviri.md`). İngilizce dosya şablondur; anahtar önce oraya açıklamasıyla eklenir. CI eksik çeviriyi yalnızca raporlar (İngilizce'ye düşer) ama proje kuralı çevirilerin aynı PR'da doldurulmasıdır. Dosya sayısı 35'ten fazladır, çünkü bölge varyantlarının temel dosyası da vardır (`app_pt.arb`, `app_pt_BR.arb`).
 - Her platformun kendi sürümü vardır (`docs/versioning.md`); bileşen sürümlerinin tutarlılığını `tools/check-component-versions.sh` denetler.
-- Bir iş akışındaki denetim değişirse `.pre-commit-config-extra.yaml`'daki karşılığı aynı PR'da değişir.
 
 ## Mimari (büyük resim)
 
 Ayrıntı `docs/mimari.md`; kısaca:
 
-- Tek Cargo çalışma alanı (`Cargo.toml`): `crates/*`, iki Rust sunucusu, `app/rust` (Android köprüsü), `linux`. `fuzz/` ayrı çalışma alanıdır. Çalışma alanı lint'leri `unsafe_code = forbid`, `unwrap/expect/panic/indexing_slicing/arithmetic_side_effects` uyarı; CI uyarıyı hata sayar.
+- Tek Cargo çalışma alanı (`Cargo.toml`): `crates/*`, iki Rust sunucusu, `app/rust` (Android köprüsü), `linux`. `fuzz/` ayrı çalışma alanıdır. Çalışma alanı lint'leri `unsafe_code = forbid`, `unwrap/expect/panic/indexing_slicing/arithmetic_side_effects` uyarı; CI uyarıyı hata sayar (`RUSTFLAGS=-D warnings`, clippy `-D warnings`).
 - Çekirdek bütün platformlarda aynıdır ve kriptografi yalnızca orada yapılır: `totaldrop-crypto` (CPace, anahtar türetme, STREAM parça şifrelemesi), `totaldrop-proto` (aktarım kodu, sınırlar, yol güvenliği, CBOR kablo mesajları; dışarıdan gelen her veri burada ayrıştırılır, fuzz hedefleri `fuzz/`), `totaldrop-core` (istemci motoru: rendezvous, ham açık anahtarlı QUIC, Noise XXpsk3 + ML-KEM-768, gönder/al, aktarmaya geçiş), `totaldrop-l10n`.
 - Arayüzler çekirdeği çağırır, kriptografi yapmaz: Linux Qt 6/QML + CXX-Qt (`linux/`), Android Flutter + flutter_rust_bridge (`app/`, `app/rust`; `frb_generated.rs` üretilmiş dosyadır, elle düzenlenmez), CLI (`crates/totaldrop-cli`).
 - Her sunucunun iki uygulaması vardır ve ikisi aynı uçtan uca testten geçer: Rust (`server/totaldrop-rendezvous`, `server/totaldrop-relay`; kendi sunucusunu kuranlar ve testler için) ve Cloudflare Workers + Durable Objects (`server/*-worker`; totaldrop.app). Davranış değişikliği ikisine birden yapılır. Sunucular dosya içeriğini görmez, kayıt tutmaz. STUN projenin değil, Cloudflare'in.
