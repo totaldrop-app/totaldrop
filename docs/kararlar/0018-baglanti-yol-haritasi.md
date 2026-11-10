@@ -1,6 +1,6 @@
 # 0018: Bağlantı katmanı kendi yığınımızda kalır, doğrudan yollar parça parça artırılır
 
-- **Durum:** Önerilen, 10 Kasım 2026 (#401)
+- **Durum:** Kabul, 10 Kasım 2026 (Ozan, #401)
 - **Bağlam:** Ozan, 10 Kasım 2026'da iroh'un ve libp2p'nin TotalDrop'a
   uyup uymadığını ve bu alandaki açık fikirlerden hangilerini
   birleştirebileceğimizi sordu. Bugünkü bağlantı katmanı şöyle çalışır
