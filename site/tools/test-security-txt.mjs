@@ -5,9 +5,9 @@
 //
 // /.well-known/security.txt (RFC 9116, #450) tells researchers where to
 // report a vulnerability. It must name the same channels as SECURITY.md,
-// and its Expires date must stay ahead: RFC 9116 asks for less than a year,
-// and this test fails 30 days before it passes, so the file is renewed
-// before it goes stale instead of after.
+// and its Expires date must be ahead and less than a year away (RFC 9116).
+// Renewing it in time is tracked in an issue, not here: a date guard in
+// every pull request would turn unrelated ones red.
 import test from "node:test";
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
@@ -28,8 +28,12 @@ function fields(text) {
   return out;
 }
 
-test("security.txt is published", () => {
+test("security.txt is published as UTF-8 text, without the site's Function", () => {
   assert.ok(existsSync(file), "site/public/.well-known/security.txt is missing");
+  const headers = readFileSync(new URL("../public/_headers", import.meta.url), "utf8");
+  assert.match(headers, /^\/\.well-known\/security\.txt\n  ! Content-Type\n  Content-Type: text\/plain; charset=utf-8$/m);
+  const routes = JSON.parse(readFileSync(new URL("../public/_routes.json", import.meta.url), "utf8"));
+  assert.ok(routes.exclude.includes("/.well-known/*"), "_routes.json must exclude /.well-known/*");
 });
 
 test("it names the channels SECURITY.md names, and only those", () => {
@@ -42,16 +46,19 @@ test("it names the channels SECURITY.md names, and only those", () => {
   assert.ok(policy.includes("security@totaldrop.app"), "SECURITY.md no longer names security@");
   assert.ok(policy.includes("private vulnerability reporting"), "SECURITY.md no longer names GitHub's private reporting");
   assert.deepEqual(f.get("policy"), ["https://github.com/totaldrop-app/totaldrop/blob/main/SECURITY.md"]);
-  assert.deepEqual(f.get("canonical"), ["https://totaldrop.app/.well-known/security.txt"]);
+  assert.deepEqual(f.get("canonical"), [
+    "https://totaldrop.app/.well-known/security.txt",
+    "https://download.totaldrop.app/.well-known/security.txt",
+  ]);
   assert.deepEqual(f.get("preferred-languages"), ["en, tr"]);
 });
 
-test("Expires is one RFC 3339 time, within a year and more than 30 days ahead", () => {
+test("Expires is one RFC 3339 time, ahead and less than a year away", () => {
   const f = fields(readFileSync(file, "utf8"));
   const expires = f.get("expires") ?? [];
   assert.equal(expires.length, 1, "exactly one Expires");
   assert.match(expires[0], /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/);
   const left = Date.parse(expires[0]) - Date.now();
-  assert.ok(left > 30 * DAY, `security.txt expires on ${expires[0]}: renew it (less than 30 days left)`);
-  assert.ok(left < 366 * DAY, `security.txt expires on ${expires[0]}: RFC 9116 asks for less than a year`);
+  assert.ok(left > 0, `security.txt expired on ${expires[0]}: renew it`);
+  assert.ok(left < 365 * DAY, `security.txt expires on ${expires[0]}: RFC 9116 asks for less than a year`);
 });
