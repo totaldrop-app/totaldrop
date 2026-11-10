@@ -136,11 +136,18 @@ treated as final.
       announced only if another device can reach it (not loopback,
       unspecified, link-local or IPv4-mapped) and its interface part is
       not built from the network card's hardware address (modified
-      EUI-64), which would stay the same on every network. A side whose
-      socket is IPv4 only fails just the dial to an IPv6 address; the
-      other paths race on. On a dual-stack socket QUIC sees IPv4
-      addresses, the relay stand-in among them, as IPv4-mapped IPv6
-      ones.
+      EUI-64), which would stay the same on every network. The address
+      is the system's own choice of source; where Linux has no temporary
+      addresses (RFC 8981) it is a stable-privacy one (RFC 7217), the same
+      on one network (#405). A device dials the other's addresses once
+      each, in canonical form, and leaves out unspecified and IPv6
+      link-local ones and IPv6 targets it would reach only from an address
+      it does not announce. A side whose socket is IPv4 only fails just
+      the dial to an IPv6 address; the other paths race on. IPv6 needs no
+      NAT punching, but home routers usually keep a stateful firewall that
+      drops a dial nobody asked for; it opens because both sides dial each
+      other (note 8). On a dual-stack socket QUIC sees IPv4 addresses, the
+      relay stand-in among them, as IPv4-mapped IPv6 ones.
 11. **Session after the hybrid step.**
     - Each direction has its own ChaCha20-Poly1305 key (`k_i2r`, `k_r2i`).
     - Nonces follow Noise: four zero bytes, then a 64-bit little-endian

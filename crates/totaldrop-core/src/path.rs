@@ -141,7 +141,8 @@ impl Fallback {
 
     /// Whether datagrams for `addr` go through the relay instead.
     fn reroutes(&self, addr: SocketAddr) -> bool {
-        self.0.moved.load(Ordering::Acquire) && self.direct() == Some(addr)
+        self.0.moved.load(Ordering::Acquire)
+            && self.direct().map(canonical) == Some(canonical(addr))
     }
 
     /// The address datagrams from the relay appear to come from: the
@@ -156,7 +157,7 @@ impl Fallback {
     /// Note datagrams that came in on the real socket.
     fn heard_from(&self, meta: &[RecvMeta]) {
         if let Some(direct) = self.direct()
-            && meta.iter().any(|m| m.addr == direct)
+            && meta.iter().any(|m| canonical(m.addr) == canonical(direct))
         {
             self.0.heard.store(self.now(), Ordering::Release);
         }
@@ -507,6 +508,32 @@ mod tests {
             ..seen()
         };
         assert_eq!(step(&s, SILENCE), Step::Wait);
+    }
+
+    /// #403: a moved connection's datagrams go to the relay, and the
+    /// direct address counts as heard, whichever family a platform reports
+    /// the address in.
+    #[tokio::test]
+    async fn a_moved_address_matches_in_either_family() {
+        let (tx, _rx) = mpsc::channel(1);
+        let f = Fallback::new(tx);
+        if let Ok(mut d) = f.0.direct.write() {
+            *d = Some(in_family(A, true));
+        }
+        f.set_moved(true);
+        assert!(f.reroutes(A) && f.reroutes(in_family(A, true)));
+        assert!(!f.reroutes(B));
+        let meta = RecvMeta {
+            addr: A,
+            len: 1,
+            stride: 1,
+            ecn: None,
+            dst_ip: None,
+        };
+        f.0.heard.store(0, Ordering::Release);
+        tokio::time::sleep(Duration::from_millis(5)).await;
+        f.heard_from(&[meta]);
+        assert!(f.0.heard.load(Ordering::Acquire) > 0);
     }
 
     /// #403: on a dual-stack socket QUIC reports the stand-in as an

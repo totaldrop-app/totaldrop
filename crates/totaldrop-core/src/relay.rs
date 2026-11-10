@@ -86,63 +86,90 @@ pub fn check_url(url: &str) -> Result<()> {
         .map_err(|_| Error::Connect(crate::error::msg::INVALID_RELAY.into()))
 }
 
-/// The address of the STUN server `host:port` in one family.
-async fn stun_address(server: &str, ipv4: bool) -> Option<SocketAddr> {
-    tokio::net::lookup_host(server)
-        .await
-        .ok()?
-        .find(|a| a.is_ipv4() == ipv4)
-}
-
 /// Ask the STUN server `server` (`host:port`) which public addresses
 /// `socket` has: over IPv4, and over IPv6 too when the socket is
-/// dual-stack (#403), both at once. Two requests per family at most, sent
-/// from the socket QUIC will use, so each answer is the mapping the other
-/// device must aim at. Empty when nothing answers (for example when UDP is
-/// blocked).
+/// dual-stack (#403). Both requests go out from one handle on the socket
+/// QUIC will use, so each answer is the mapping the other device must aim
+/// at, and one loop reads every answer and matches it to its request by
+/// server address and transaction id: two readers on one socket would
+/// take each other's answers. Two rounds at most. Empty when nothing
+/// answers (for example when UDP is blocked).
 pub async fn discover(socket: &UdpSocket, server: &str) -> Vec<SocketAddr> {
-    let ipv6 = socket.local_addr().is_ok_and(|a| a.is_ipv6());
-    let (v4, v6) = tokio::join!(discover_in(socket, server, true), async {
-        if ipv6 {
-            discover_in(socket, server, false).await
-        } else {
-            None
-        }
-    });
-    v4.into_iter().chain(v6).collect()
-}
-
-/// [`discover`] in one family: IPv4 (`ipv4`) or IPv6.
-async fn discover_in(socket: &UdpSocket, server: &str, ipv4: bool) -> Option<SocketAddr> {
-    let local = socket.local_addr().ok()?;
-    if !ipv4 && !local.is_ipv6() {
-        return None;
-    }
-    let server_addr = stun_address(server, ipv4).await?;
+    let Ok(local) = socket.local_addr() else {
+        return Vec::new();
+    };
+    let ipv6 = local.is_ipv6();
+    let Ok(found) = tokio::net::lookup_host(server).await else {
+        return Vec::new();
+    };
+    let found: Vec<SocketAddr> = found.collect();
     // A dual-stack socket sends to IPv4 through IPv4-mapped addresses and
-    // reports them as such.
-    let target = crate::path::in_family(server_addr, local.is_ipv6());
-    // A second handle on the same socket; QUIC gets the original.
-    let clone = socket.try_clone().ok()?;
-    clone.set_nonblocking(true).ok()?;
-    let udp = tokio::net::UdpSocket::from_std(clone).ok()?;
+    // reports them as such; compare in canonical form.
+    let mut pending: Vec<SocketAddr> = [
+        found.iter().find(|a| a.is_ipv4()).copied(),
+        found.iter().find(|a| a.is_ipv6()).copied().filter(|_| ipv6),
+    ]
+    .into_iter()
+    .flatten()
+    .collect();
+    let Some(udp) = socket
+        .try_clone()
+        .ok()
+        .filter(|c| c.set_nonblocking(true).is_ok())
+        .and_then(|c| tokio::net::UdpSocket::from_std(c).ok())
+    else {
+        return Vec::new();
+    };
+    let mut seen = Vec::new();
     for _ in 0..2 {
-        let mut id = [0u8; 12];
-        getrandom::fill(&mut id).ok()?;
-        udp.send_to(&wire::stun_request(&id), target).await.ok()?;
-        let deadline = tokio::time::Instant::now().checked_add(PROBE_WAIT)?;
-        let mut buf = [0u8; 512];
-        while let Ok(Ok((n, from))) =
-            tokio::time::timeout_at(deadline, udp.recv_from(&mut buf)).await
-        {
-            if crate::path::canonical(from) == crate::path::canonical(target)
-                && let Some(addr) = buf.get(..n).and_then(|a| wire::parse_stun_response(a, &id))
+        let mut asked: Vec<(SocketAddr, [u8; 12])> = Vec::new();
+        for server in &pending {
+            let mut id = [0u8; 12];
+            if getrandom::fill(&mut id).is_err() {
+                return seen;
+            }
+            // A family without a route fails here at once and is dropped.
+            if udp
+                .send_to(
+                    &wire::stun_request(&id),
+                    crate::path::in_family(*server, ipv6),
+                )
+                .await
+                .is_ok()
             {
-                return Some(crate::path::canonical(addr));
+                asked.push((*server, id));
             }
         }
+        pending.retain(|s| asked.iter().any(|(a, _)| a == s));
+        let Some(deadline) = tokio::time::Instant::now().checked_add(PROBE_WAIT) else {
+            return seen;
+        };
+        let mut buf = [0u8; 512];
+        while !asked.is_empty()
+            && let Ok(Ok((n, from))) =
+                tokio::time::timeout_at(deadline, udp.recv_from(&mut buf)).await
+        {
+            let from = crate::path::canonical(from);
+            let answer = asked.iter().position(|(server, id)| {
+                *server == from
+                    && buf
+                        .get(..n)
+                        .and_then(|m| wire::parse_stun_response(m, id))
+                        .is_some()
+            });
+            if let Some(i) = answer {
+                let (server, id) = asked.swap_remove(i);
+                if let Some(addr) = buf.get(..n).and_then(|m| wire::parse_stun_response(m, &id)) {
+                    seen.push(crate::path::canonical(addr));
+                }
+                pending.retain(|s| *s != server);
+            }
+        }
+        if pending.is_empty() {
+            break;
+        }
     }
-    None
+    seen
 }
 
 /// Holds a relay link back until a connection attempt needs the relay, so
@@ -530,6 +557,48 @@ mod tests {
     #![allow(clippy::unwrap_used, clippy::expect_used, clippy::panic)]
 
     use super::*;
+
+    /// A STUN server on IPv4 loopback that first sends a stray answer with
+    /// a wrong transaction id, then the real one, as `seen` (#403).
+    async fn stun_server(seen: SocketAddr) -> SocketAddr {
+        let server = tokio::net::UdpSocket::bind("127.0.0.1:0").await.unwrap();
+        let addr = server.local_addr().unwrap();
+        tokio::spawn(async move {
+            let mut buf = [0u8; 512];
+            while let Ok((n, from)) = server.recv_from(&mut buf).await {
+                if let Some(id) = buf.get(..n).and_then(wire::parse_stun_request) {
+                    let stray = wire::stun_response(&[0xee; 12], "198.51.100.9:9".parse().unwrap());
+                    let _ = server.send_to(&stray, from).await;
+                    let _ = server.send_to(&wire::stun_response(&id, seen), from).await;
+                }
+            }
+        });
+        addr
+    }
+
+    /// #403: the answer over IPv4 is found on the socket QUIC uses, also
+    /// when it is dual-stack (it sends to a mapped address and hears back
+    /// from one), and an answer to another request is not taken for it.
+    #[tokio::test]
+    async fn stun_finds_the_public_address_on_either_socket() {
+        let seen: SocketAddr = "203.0.113.5:40000".parse().unwrap();
+        let server = stun_server(seen).await;
+        let plain = std::net::UdpSocket::bind("127.0.0.1:0").unwrap();
+        assert_eq!(discover(&plain, &server.to_string()).await, vec![seen]);
+        let ours = crate::transport::bind_socket().unwrap();
+        assert_eq!(discover(&ours, &server.to_string()).await, vec![seen]);
+    }
+
+    /// #403: nothing answering gives no address, within the two rounds.
+    #[tokio::test]
+    async fn stun_without_an_answer_gives_nothing() {
+        let quiet = tokio::net::UdpSocket::bind("127.0.0.1:0").await.unwrap();
+        let server = quiet.local_addr().unwrap().to_string();
+        let ours = crate::transport::bind_socket().unwrap();
+        let start = tokio::time::Instant::now();
+        assert!(discover(&ours, &server).await.is_empty());
+        assert!(start.elapsed() < PROBE_WAIT * 3);
+    }
 
     /// A link whose gate stays shut never connects to the relay; once the
     /// gate opens, it does (#63).

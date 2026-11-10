@@ -550,14 +550,20 @@ impl PreparedSend {
     }
 }
 
-/// Where the other side said it can be reached.
+/// Where the other side said it can be reached, each address once and in
+/// canonical form (#403). Left out: addresses no one can dial (unspecified,
+/// or IPv6 link-local, which needs an interface scope `HINTS` do not carry),
+/// and IPv6 addresses this device would dial from a source it never
+/// announces itself (see [`transport::dialable`]).
 fn peer_addresses(hints: &Hints) -> Vec<SocketAddr> {
-    hints
-        .local
-        .iter()
-        .chain(hints.public.iter())
-        .map(|a| a.0)
-        .collect()
+    let mut out: Vec<SocketAddr> = Vec::new();
+    for a in hints.local.iter().chain(hints.public.iter()) {
+        let a = path::canonical(a.0);
+        if !out.contains(&a) && transport::dialable(a) {
+            out.push(a);
+        }
+    }
+    out
 }
 
 /// Options for receiving.
@@ -779,9 +785,57 @@ mod tests {
         let direct = std::net::SocketAddr::from(([192, 0, 2, 1], 4000));
         assert_eq!(keep(path::RELAY_PEER, true, true), Keep::Link);
         assert_eq!(keep(path::RELAY_PEER, true, false), Keep::Link);
+        // On a dual-stack socket QUIC reports the stand-in mapped (#403).
+        let mapped = path::in_family(path::RELAY_PEER, true);
+        assert_eq!(keep(mapped, true, false), Keep::Link);
+        assert_eq!(
+            keep(path::in_family(direct, true), true, true),
+            Keep::Fallback
+        );
         assert_eq!(keep(direct, true, true), Keep::Fallback);
         assert_eq!(keep(direct, true, false), Keep::Nothing);
         assert_eq!(keep(direct, false, true), Keep::Nothing);
+    }
+
+    /// #403: the other side's addresses are dialled once each, in
+    /// canonical form, and never at addresses no one can dial.
+    #[test]
+    fn peer_addresses_are_deduplicated_and_dialable() {
+        use std::net::Ipv6Addr;
+        let addr = |a: SocketAddr| totaldrop_proto::wire::Address(a);
+        let v4 = SocketAddr::from(([192, 0, 2, 7], 4000));
+        let mut h = hints(None);
+        h.local = vec![
+            addr(v4),
+            addr(path::in_family(v4, true)),
+            addr(SocketAddr::from((Ipv6Addr::UNSPECIFIED, 4000))),
+            addr(SocketAddr::from(([0, 0, 0, 0], 4000))),
+            addr(SocketAddr::from((
+                Ipv6Addr::new(0xfe80, 0, 0, 0, 0x1c2d, 0x3e4f, 0x5a6b, 0x7c8d),
+                4000,
+            ))),
+        ];
+        h.public = vec![addr(v4)];
+        assert_eq!(peer_addresses(&h), vec![v4]);
+    }
+
+    /// #403: what one side announces stays within the 8 addresses per
+    /// list that `HINTS` accept, here without a STUN server.
+    #[tokio::test]
+    async fn own_hints_fit_in_hints() {
+        let socket = transport::bind_socket().unwrap();
+        let key = transport::EndpointKey::generate().unwrap();
+        let paths = PathOptions {
+            stun: String::new(),
+            ..PathOptions::default()
+        };
+        let h = own_hints(&socket, &key, &paths).await.unwrap();
+        assert!(h.local.len() <= 8 && h.public.len() <= 8, "{h:?}");
+        assert!(
+            h.local
+                .iter()
+                .all(|a| transport::dialable(a.0) || a.0.ip().is_loopback())
+        );
     }
 
     /// The sender falls back only when the receiver will use its relay

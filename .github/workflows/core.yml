@@ -43,6 +43,10 @@ jobs:
         run: cargo clippy --workspace $EXCLUDE --all-targets --locked -- -D warnings
       - name: Test
         shell: bash
+        # Every runner has IPv6 loopback: the dual-stack tests must run
+        # there, not fall back to IPv4 (#403).
+        env:
+          TOTALDROP_REQUIRE_IPV6: "1"
         run: cargo test --workspace $EXCLUDE --locked
 
   # Line coverage of the hand-written crates and the Rust servers, measured
