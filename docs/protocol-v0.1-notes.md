@@ -149,22 +149,29 @@ treated as final.
       other (note 8). On a dual-stack socket QUIC sees IPv4 addresses, the
       relay stand-in among them, as IPv4-mapped IPv6 ones.
     - Since #406 a device also asks its router for a port: the gateway of
-      the default IPv4 route (read from `/proc/net/route` on Linux; other
-      systems ask no one yet) gets a PCP MAP request (RFC 6887) for UDP on
-      the QUIC socket's port, and a NAT-PMP one (RFC 6886) if it does not
-      speak PCP. The external address it grants goes into the public
-      list, unless it is not reachable from the internet (private,
-      100.64.0.0/10 shared address space, loopback, link-local), which
-      means a second NAT behind the router. The request asks for 120
-      seconds, is renewed at half of what the router grants, at least
-      every 30 minutes, and is released with lifetime 0 when the transfer
-      ends; a crash leaves the port open until the lifetime runs out.
-      Asking runs alongside STUN and gives up after 1.6 seconds. A PCP
-      answer must carry the request's random 12-byte nonce; NAT-PMP has
-      none, so only the source address (the gateway, on a connected
-      socket) and the internal port are checked. Privacy mode asks
-      nothing. The mapped port leads only to the transfer's QUIC endpoint,
-      which accepts only the endpoint key in `HINTS`.
+      the default IPv4 route with the lowest metric (read from
+      `/proc/net/route` on Linux; other systems ask no one yet) gets a PCP
+      MAP request (RFC 6887) for UDP on the QUIC socket's port, with no
+      suggested external port or address (`::ffff:0.0.0.0`), and a NAT-PMP
+      one (RFC 6886) if it does not speak PCP or does not answer. The
+      external address it grants goes into the public list, unless it is
+      not reachable from the internet (private, 100.64.0.0/10 shared
+      address space, loopback, link-local, reserved), which means a second
+      NAT behind the router; such a mapping is released at once. The
+      request asks for 120 seconds; the router may grant more or less. It
+      is renewed at half of what was granted (at most every 30 minutes),
+      tried again every 5 seconds after an unanswered renewal until the
+      grant runs out, and released with lifetime 0 when the transfer ends;
+      a crash leaves the port open until the granted lifetime runs out.
+      Asking starts with STUN; once STUN has answered, `HINTS` wait at most
+      300 ms more for the router, and the whole attempt ends after 1.6
+      seconds (a mapping that comes after `HINTS` were sent is released).
+      A PCP answer must carry the request's random 12-byte nonce; NAT-PMP
+      has none, so only the source address (the gateway, on a connected
+      socket) and the internal port are checked. The router's epoch is not
+      checked yet. Privacy mode asks nothing. The mapped port leads only to
+      the transfer's QUIC endpoint, which accepts only the endpoint key in
+      `HINTS`.
 11. **Session after the hybrid step.**
     - Each direction has its own ChaCha20-Poly1305 key (`k_i2r`, `k_r2i`).
     - Nonces follow Noise: four zero bytes, then a 64-bit little-endian

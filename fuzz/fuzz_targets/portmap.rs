@@ -5,23 +5,34 @@
 //! Router answers to port mapping requests come from the local network.
 //! Every parser must accept or refuse any input without panicking, and an
 //! accepted mapping must answer the request it was matched against.
+//! The first 14 bytes choose that request (nonce and internal port); the
+//! rest is the answer.
 
 use libfuzzer_sys::fuzz_target;
 use totaldrop_proto::portmap::{self, Answer};
 
 fuzz_target!(|data: &[u8]| {
-    let nonce: [u8; 12] = data.get(..12).and_then(|n| n.try_into().ok()).unwrap_or([0; 12]);
-    let port = data.get(40..42).map_or(0, |p| u16::from_be_bytes([p[0], p[1]]));
-    if let Some(Answer::Mapped { external, lifetime }) = portmap::parse_pcp_map(data, &nonce, port) {
-        assert_eq!(data.get(24..36), Some(&nonce[..]));
-        assert!(lifetime == 0 || (external.1 != 0 && !external.0.is_unspecified()));
+    let Some((head, m)) = data.split_at_checked(14) else {
+        return;
+    };
+    let nonce: [u8; 12] = head[..12].try_into().unwrap();
+    let port = u16::from_be_bytes([head[12], head[13]]);
+    match portmap::parse_pcp_map(m, &nonce, port) {
+        Some(Answer::Mapped { external, lifetime }) => {
+            assert_eq!(m.get(24..36), Some(&nonce[..]));
+            assert_eq!(m.get(40..42), Some(&port.to_be_bytes()[..]));
+            assert!(lifetime == 0 || (external.1 != 0 && !external.0.is_unspecified()));
+        }
+        Some(Answer::Refused(_)) => assert_eq!(m.get(24..36), Some(&nonce[..])),
+        _ => {}
     }
-    let _ = portmap::parse_pcp_map(data, &[0; 12], 0);
-    if let Some(Ok(ip)) = portmap::parse_pmp_address(data) {
+    if let Some(Ok(ip)) = portmap::parse_pmp_address(m) {
         assert!(!ip.is_unspecified());
     }
-    let internal = data.get(8..10).map_or(0, |p| u16::from_be_bytes([p[0], p[1]]));
-    if let Some(Ok((external, lifetime))) = portmap::parse_pmp_map(data, internal) {
-        assert!(lifetime == 0 || external != 0);
+    if let Some(r) = portmap::parse_pmp_map(m, port) {
+        assert_eq!((m.len(), m.get(8..10)), (16, Some(&port.to_be_bytes()[..])));
+        if let Ok((external, lifetime)) = r {
+            assert!(lifetime == 0 || external != 0);
+        }
     }
 });
