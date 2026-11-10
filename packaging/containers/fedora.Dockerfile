@@ -1,4 +1,4 @@
-# Build environment for the .rpm: Fedora 44 (Qt 6.11), the oldest supported Fedora.
+# Build environment for the .rpm: Fedora 44 (Qt 6.11) and newer.
 FROM fedora:44@sha256:15da97ed9aa94dd3d92c3925eb89520f6c80e07ea7ee24cba848d1f8b6912b3e
 RUN dnf install -y rpm-build rpmdevtools gcc-c++ lld pkgconf curl git \
       qt6-qtbase-devel qt6-qtdeclarative-devel desktop-file-utils libappstream-glib \
