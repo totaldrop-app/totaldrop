@@ -359,15 +359,19 @@ pub fn local_addresses(socket: &UdpSocket) -> Result<Vec<SocketAddr>> {
     Ok(out)
 }
 
-/// Whether this device should dial `target` (#403). Not unspecified
-/// addresses or IPv6 link-local ones, which need an interface scope that
+/// Whether this device should dial `target` (#403). Not unspecified,
+/// broadcast or multicast addresses (#450: a peer's `HINTS` must not make
+/// this device send to every device on the LAN), or IPv6 link-local ones, which need an interface scope that
 /// `HINTS` do not carry; and for IPv6, only when the system would send
 /// from an address [`announceable_v6`] accepts: dialling from a hardware
 /// (EUI-64) address would show the peer the very address this device
 /// keeps out of its own `HINTS`.
 pub fn dialable(target: SocketAddr) -> bool {
     match target.ip() {
-        std::net::IpAddr::V4(ip) => !ip.is_unspecified(),
+        std::net::IpAddr::V4(ip) => {
+            !(ip.is_unspecified() || ip.is_broadcast() || ip.is_multicast())
+        }
+        std::net::IpAddr::V6(ip) if ip.is_multicast() => false,
         std::net::IpAddr::V6(ip) => {
             ip.is_loopback()
                 || (announceable_v6(ip)
@@ -1045,6 +1049,27 @@ mod tests {
                 "{a} should not be announced"
             );
         }
+    }
+
+    /// #450: a peer's `HINTS` cannot make this device send to a broadcast
+    /// or multicast address, which would reach every device on the LAN
+    /// instead of the peer. Loopback stays dialable (two apps on one
+    /// machine, and the tests).
+    #[test]
+    fn broadcast_and_multicast_are_not_dialled() {
+        let no = [
+            "255.255.255.255:9",
+            "224.0.0.251:5353",
+            "239.255.255.250:1900",
+            "0.0.0.0:9",
+            "[ff02::1]:9",
+            "[ff05::c]:1900",
+        ];
+        for a in no {
+            assert!(!dialable(a.parse().unwrap()), "{a} should not be dialled");
+        }
+        assert!(dialable("127.0.0.1:9".parse().unwrap()));
+        assert!(dialable("192.168.1.20:9".parse().unwrap()));
     }
 
     /// #403: the socket is dual-stack where the system has IPv6, and the
