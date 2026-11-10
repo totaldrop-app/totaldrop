@@ -543,8 +543,13 @@ async fn every_refusal_reaches_the_client() {
             other.push(shown);
         }
     }
+    let count = other.len();
+    other.sort();
     other.dedup();
-    assert!(other.is_empty(), "not refused in words: {other:?}");
+    assert!(
+        other.is_empty(),
+        "{count} of {TRIES} not refused in words: {other:?}"
+    );
 }
 
 /// A claimed connection keeps waiting past the claim deadline: senders
