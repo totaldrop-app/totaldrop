@@ -234,6 +234,7 @@ fn paths(relay: Option<String>, stun: Option<String>, relay_only: bool) -> PathO
         relay: relay.unwrap_or_else(|| totaldrop_core::relay::DEFAULT_RELAY.to_owned()),
         stun: stun.unwrap_or_else(|| totaldrop_core::relay::DEFAULT_STUN.to_owned()),
         relay_only,
+        gateway: totaldrop_core::portmap::Gateway::Auto,
     }
 }
 

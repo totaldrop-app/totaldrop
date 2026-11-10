@@ -4,6 +4,7 @@
 //! Protocol rules of TotalDrop version 0 that do not involve cryptography:
 //! transfer codes (spec section 5), limits and path safety (spec section 11).
 
+pub mod portmap;
 pub mod relay;
 pub mod wire;
 

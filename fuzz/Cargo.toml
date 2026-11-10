@@ -47,3 +47,10 @@ path = "fuzz_targets/message.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "portmap"
+path = "fuzz_targets/portmap.rs"
+test = false
+doc = false
+bench = false
