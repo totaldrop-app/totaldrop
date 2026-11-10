@@ -169,20 +169,27 @@ treated as final.
       grant runs out, and released with lifetime 0 when the transfer ends;
       a crash leaves the port open until the granted lifetime runs out.
       Asking starts with STUN; once STUN has answered, `HINTS` wait at most
-      300 ms more for the router, and the whole attempt ends after 1.6
-      seconds (a mapping that comes after `HINTS` were sent is released).
+      300 ms more for the router (longer, until the attempt ends, once the
+      gateway has answered over UPnP; see below), and the whole attempt
+      ends after 1.6 seconds (a mapping that comes after `HINTS` were sent
+      is released).
       A PCP answer must carry the request's random 12-byte nonce; NAT-PMP
       has none, so only the source address (the gateway, on a connected
       socket) and the internal port are checked. The router's epoch is not
       checked yet. Privacy mode asks nothing. The mapped port leads only to
       the transfer's QUIC endpoint, which accepts only the endpoint key in
       `HINTS`.
-    - If neither PCP nor NAT-PMP has mapped a port 250 ms after the first
-      request, the same gateway is also asked over UPnP IGD (`igd-next`):
-      an SSDP search sent to the gateway's own address on port 1900 (not
-      to the multicast group), then its device description, the
-      `WANIPConnection`/`WANPPPConnection` control URL and
-      `GetExternalIPAddress`. The description and control URLs must be on
+    - The same gateway is also searched over UPnP IGD (`igd-next`) from
+      the start: an SSDP search sent to the gateway's own address on port
+      1900 (not to the multicast group), then its device description and
+      the `WANIPConnection`/`WANPPPConnection` control URL and service
+      description. Only if neither PCP nor NAT-PMP has mapped a port 250
+      ms after the first request is it asked anything: `GetExternalIPAddress`,
+      then the mapping. A UPnP mapping takes about five requests; at home
+      (miniupnpd) the search alone took about 85 ms, so a mapping that
+      started only at 250 ms came a few milliseconds after `HINTS` and was
+      released at once. Once the gateway has answered the search, `HINTS`
+      therefore wait for the mapping until the attempt ends. The description and control URLs must be on
       the gateway's address; an answer describing a device anywhere else
       is not used (any LAN host can send an answer, but it can only point
       at the gateway). The external address must pass the same "reachable
