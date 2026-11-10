@@ -177,6 +177,32 @@ treated as final.
       checked yet. Privacy mode asks nothing. The mapped port leads only to
       the transfer's QUIC endpoint, which accepts only the endpoint key in
       `HINTS`.
+    - If neither PCP nor NAT-PMP has mapped a port 250 ms after the first
+      request, the same gateway is also asked over UPnP IGD (`igd-next`):
+      an SSDP search sent to the gateway's own address on port 1900 (not
+      to the multicast group), then its device description, the
+      `WANIPConnection`/`WANPPPConnection` control URL and
+      `GetExternalIPAddress`. The description and control URLs must be on
+      the gateway's address; an answer describing a device anywhere else
+      is not used (any LAN host can send an answer, but it can only point
+      at the gateway). The external address must pass the same "reachable
+      from the internet" check. `AddAnyPortMapping` (or
+      `AddPortMapping` with a random external port) asks for UDP to the
+      QUIC socket's port for 120 seconds, described as `TotalDrop`; it is
+      renewed with `AddPortMapping` on the same external port every 60
+      seconds, tried again every 5 seconds until the lease would run out,
+      and removed with `DeletePortMapping` when the transfer ends. A
+      router that answers it offers only permanent mappings (UPnP error
+      725) gets none; one that silently ignores the lease keeps the port
+      until it is deleted or the router restarts, so a crash can leave it
+      open. The first mapping wins; a PCP refusal ends the attempt, and a
+      UPnP mapping that completes after a PCP or NAT-PMP one is deleted
+      at once. A PCP or NAT-PMP request still in flight when UPnP wins is
+      not waited for; the router keeps what it made until its lease (120
+      seconds asked) runs out. The search and the HTTP requests end with
+      the 1.6-second attempt; a mapping request cut off there may leave a
+      mapping until its 120-second lease runs out. An HTTP response is
+      read up to 1 MiB.
 11. **Session after the hybrid step.**
     - Each direction has its own ChaCha20-Poly1305 key (`k_i2r`, `k_r2i`).
     - Nonces follow Noise: four zero bytes, then a 64-bit little-endian
