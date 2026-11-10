@@ -20,11 +20,12 @@
 //! sees the same address throughout, so neither side has to migrate, and
 //! each side can move on its own clock, and back (#185).
 
+use std::collections::VecDeque;
 use std::io::{self, IoSliceMut};
 use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4, SocketAddrV6};
 use std::pin::Pin;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
-use std::sync::{Arc, Mutex, RwLock};
+use std::sync::{Arc, Mutex, OnceLock, RwLock};
 use std::task::{Context, Poll};
 use std::time::Duration;
 
@@ -84,6 +85,16 @@ pub struct RelayPipes {
 /// follows one wait later, well within QUIC's 30-second idle timeout.
 pub const FALLBACK_SILENCE: Duration = Duration::from_secs(8);
 
+/// How many of the last datagrams sent through the relay while moved a
+/// side sends again on the direct path when it comes back (#435). One that
+/// reaches the other device is enough: its acknowledgement resets QUIC's
+/// doubled wait and shows everything older as lost, which QUIC then
+/// resends at once. A few allow for one of them being lost too.
+const REPLAY: usize = 4;
+
+/// How long one datagram sent again may wait for room in the socket.
+const REPLAY_WAIT: Duration = Duration::from_millis(100);
+
 /// How often [`Fallback::watch`] looks at the clock.
 const WATCH_TICK: Duration = Duration::from_millis(500);
 
@@ -117,6 +128,11 @@ struct FallbackState {
     /// The queue to the relay link; closed once the link has given up
     /// (refused, unreachable, or out of its limits) or was never started.
     relay: mpsc::Sender<Vec<u8>>,
+    /// The last [`REPLAY`] datagrams sent through the relay while moved,
+    /// with the address QUIC gave them (#435).
+    rerouted: Mutex<VecDeque<(SocketAddr, Vec<u8>)>>,
+    /// The real UDP socket, to send `rerouted` again on coming back.
+    socket: OnceLock<Arc<dyn AsyncUdpSocket>>,
 }
 
 impl Fallback {
@@ -128,7 +144,66 @@ impl Fallback {
             moved_at: AtomicU64::new(0),
             start: tokio::time::Instant::now(),
             relay,
+            rerouted: Mutex::new(VecDeque::with_capacity(REPLAY)),
+            socket: OnceLock::new(),
         }))
+    }
+
+    /// Note a datagram sent through the relay instead of to `addr`.
+    fn rerouted(&self, addr: SocketAddr, datagram: &[u8]) {
+        if let Ok(mut kept) = self.0.rerouted.lock() {
+            if kept.len() >= REPLAY {
+                kept.pop_front();
+            }
+            kept.push_back((addr, datagram.to_vec()));
+        }
+    }
+
+    /// Back on the direct path: send the last datagrams that went to the
+    /// relay again, directly (#435). While moved, the other side may not
+    /// have been on the relay at all (it never moved), so they were lost;
+    /// and while the path was gone QUIC doubled its wait before each
+    /// resend, so without this the transfer stands still until its next
+    /// resend, 10 seconds or more. These are QUIC's own packets, already
+    /// encrypted: the other side takes a copy it has seen as a duplicate
+    /// and drops it (RFC 9000, section 12.3).
+    async fn replay(&self) {
+        let kept = match self.0.rerouted.lock() {
+            Ok(mut kept) => std::mem::take(&mut *kept),
+            Err(_) => return,
+        };
+        let Some(socket) = self.0.socket.get() else {
+            return;
+        };
+        let mut poller = None;
+        for (destination, datagram) in &kept {
+            let transmit = Transmit {
+                destination: *destination,
+                ecn: None,
+                contents: datagram,
+                segment_size: None,
+                src_ip: None,
+            };
+            // Best effort, briefly: a socket that stays full drops it, as
+            // the network could, and QUIC's own resend still follows.
+            let _ = tokio::time::timeout(REPLAY_WAIT, async {
+                loop {
+                    match socket.try_send(&transmit) {
+                        Err(e) if e.kind() == io::ErrorKind::WouldBlock => {
+                            let p = poller.get_or_insert_with(|| socket.clone().create_io_poller());
+                            if std::future::poll_fn(|cx| p.as_mut().poll_writable(cx))
+                                .await
+                                .is_err()
+                            {
+                                return;
+                            }
+                        }
+                        _ => return,
+                    }
+                }
+            })
+            .await;
+        }
     }
 
     fn now(&self) -> u64 {
@@ -219,6 +294,9 @@ impl Fallback {
                 }
                 Step::Recount(heard) => self.0.heard.store(heard, Ordering::Release),
                 Step::Move => {
+                    if let Ok(mut kept) = self.0.rerouted.lock() {
+                        kept.clear();
+                    }
                     // Mark the move before the link can deliver anything;
                     // outgoing datagrams wait in the queue until it is up.
                     self.0.moved_at.store(now, Ordering::Release);
@@ -226,7 +304,10 @@ impl Fallback {
                     gate.open();
                 }
                 // The relay link closes itself once it has been idle.
-                Step::Back => self.0.moved.store(false, Ordering::Release),
+                Step::Back => {
+                    self.0.moved.store(false, Ordering::Release);
+                    self.replay().await;
+                }
             }
         }
     }
@@ -346,6 +427,7 @@ impl PathSocket {
         let (to_relay, outgoing) = mpsc::channel(QUEUE);
         let (incoming, from_relay) = mpsc::channel(QUEUE);
         let fallback = Fallback::new(to_relay.clone());
+        let _ = fallback.0.socket.set(inner.clone());
         let ipv6 = inner.local_addr().is_ok_and(|a| a.is_ipv6());
         (
             Arc::new(Self {
@@ -416,8 +498,18 @@ impl AsyncUdpSocket for PathSocket {
     }
 
     fn try_send(&self, transmit: &Transmit) -> io::Result<()> {
-        if is_relay(transmit.destination) || self.fallback.reroutes(transmit.destination) {
+        if is_relay(transmit.destination) {
             self.relay_send(transmit);
+            Ok(())
+        } else if self.fallback.reroutes(transmit.destination) {
+            self.relay_send(transmit);
+            let size = transmit
+                .segment_size
+                .unwrap_or(transmit.contents.len())
+                .max(1);
+            for segment in transmit.contents.chunks(size) {
+                self.fallback.rerouted(transmit.destination, segment);
+            }
             Ok(())
         } else {
             self.inner.try_send(transmit)
@@ -534,6 +626,69 @@ mod tests {
         tokio::time::sleep(Duration::from_millis(5)).await;
         f.heard_from(&[meta]);
         assert!(f.0.heard.load(Ordering::Acquire) > 0);
+    }
+
+    /// #435: coming back sends the last [`REPLAY`] datagrams that went to
+    /// the relay again, directly, one segment each, and only once; what
+    /// went directly or to the stand-in is not kept.
+    #[tokio::test]
+    #[allow(clippy::unwrap_used)]
+    async fn coming_back_sends_the_last_rerouted_datagrams_again() {
+        let peer = std::net::UdpSocket::bind("127.0.0.1:0").unwrap();
+        peer.set_read_timeout(Some(Duration::from_millis(300)))
+            .unwrap();
+        let to = peer.local_addr().unwrap();
+        let own = std::net::UdpSocket::bind("127.0.0.1:0").unwrap();
+        let inner = quinn::default_runtime()
+            .unwrap()
+            .wrap_udp_socket(own)
+            .unwrap();
+        let (socket, _pipes, f) = PathSocket::new(inner);
+        // A new socket is not known to be writable until polled.
+        let mut poller = socket.clone().create_io_poller();
+        std::future::poll_fn(|cx| poller.as_mut().poll_writable(cx))
+            .await
+            .unwrap();
+        if let Ok(mut d) = f.0.direct.write() {
+            *d = Some(to);
+        }
+        let send = |contents: &[u8], segment_size: Option<usize>, destination| {
+            socket
+                .try_send(&Transmit {
+                    destination,
+                    ecn: None,
+                    contents,
+                    segment_size,
+                    src_ip: None,
+                })
+                .unwrap();
+        };
+        let mut buf = [0u8; 16];
+        let mut recv = || {
+            let n = peer.recv(&mut buf).ok()?;
+            buf.get(..n).map(<[u8]>::to_vec)
+        };
+        // Direct, before the move: sent, not kept.
+        send(b"d", None, to);
+        assert_eq!(recv().as_deref(), Some(&b"d"[..]));
+        f.set_moved(true);
+        send(b"1", None, to);
+        send(b"2", None, to);
+        send(b"r", None, RELAY_PEER);
+        // Two segments in one transmit, as with GSO.
+        send(b"3a3b", Some(2), to);
+        send(b"4", None, to);
+        send(b"5", None, to);
+        assert_eq!(recv(), None, "a moved side sent directly");
+        f.set_moved(false);
+        f.replay().await;
+        let mut again = Vec::new();
+        while let Some(d) = recv() {
+            again.push(d);
+        }
+        assert_eq!(again, [&b"3a"[..], b"3b", b"4", b"5"]);
+        f.replay().await;
+        assert_eq!(recv(), None, "sent again twice");
     }
 
     /// #403: on a dual-stack socket QUIC reports the stand-in as an
