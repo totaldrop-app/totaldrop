@@ -289,7 +289,14 @@ mod tests {
 
     use super::*;
 
-    const NONCE: [u8; 12] = [9; 12];
+    /// A fresh random nonce per run, as `core` draws one per mapping.
+    static NONCE: std::sync::LazyLock<[u8; 12]> = std::sync::LazyLock::new(fresh_nonce);
+
+    fn fresh_nonce() -> [u8; 12] {
+        let mut n = [0u8; 12];
+        getrandom::fill(&mut n).unwrap();
+        n
+    }
     const PUBLIC: Ipv4Addr = Ipv4Addr::new(203, 0, 113, 7);
 
     fn client() -> IpAddr {
@@ -306,7 +313,7 @@ mod tests {
             &m[8..24],
             &Ipv4Addr::new(192, 168, 1, 20).to_ipv6_mapped().octets()
         );
-        assert_eq!(&m[24..36], &NONCE);
+        assert_eq!(&m[24..36], &*NONCE);
         assert_eq!(&m[36..40], &[17, 0, 0, 0]);
         assert_eq!(&m[40..42], &40_000u16.to_be_bytes());
         assert_eq!(&m[42..44], &[0, 0]);
@@ -327,7 +334,7 @@ mod tests {
             })
         );
         // Another request's nonce or port, or our own request echoed back.
-        assert_eq!(parse_pcp_map(&ok, &[1; 12], 40_000), None);
+        assert_eq!(parse_pcp_map(&ok, &fresh_nonce(), 40_000), None);
         assert_eq!(parse_pcp_map(&ok, &NONCE, 40_001), None);
         assert_eq!(parse_pcp_map(&req, &NONCE, 40_000), None);
         // A refusal (NOT_AUTHORIZED is 2) and a release confirmation.
