@@ -6,6 +6,10 @@
 //   node --test site/tools/test-team.mjs
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { mkdtempSync, writeFileSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { clean, website, esc, LOGIN } from "./team.mjs";
 
 test("clean removes control, direction and invisible characters", () => {
@@ -85,28 +89,35 @@ test("a bio in team.json must be clean, one line and not empty (#408)", async ()
   for (const bad of ["", " padded ", "two  spaces", "a‮b", "x".repeat(241), 42, null]) assert.ok(badBio(bad), JSON.stringify(bad));
 });
 
-test("a team.json bio needs a translation in every language file (#408)", async () => {
+test("a team.json bio needs a translation in every language file (#408)", async (t) => {
   const { missingBio } = await import("./team.mjs");
-  const { mkdtempSync, writeFileSync } = await import("node:fs");
-  const { tmpdir } = await import("node:os");
-  const { join } = await import("node:path");
   const dir = mkdtempSync(join(tmpdir(), "team-i18n-"));
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
   writeFileSync(join(dir, "en.json"), JSON.stringify({ "tm.bio.x": "Leads." }));
   writeFileSync(join(dir, "tr.json"), JSON.stringify({ "tm.bio.x": " " }));
   writeFileSync(join(dir, "pt-BR.json"), JSON.stringify({}));
   writeFileSync(join(dir, "notes.txt"), "");
   assert.deepEqual(missingBio(dir, "x"), ["pt-BR", "tr"]);
   // The real files: every language has the project lead's line.
-  assert.deepEqual(missingBio(new URL("../public/i18n/", import.meta.url).pathname, "ozdil"), []);
+  assert.deepEqual(missingBio(fileURLToPath(new URL("../public/i18n/", import.meta.url)), "ozdil"), []);
+});
+
+test("a broken language file is reported, not thrown (#410)", async (t) => {
+  const { missingBio } = await import("./team.mjs");
+  const dir = mkdtempSync(join(tmpdir(), "team-i18n-"));
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  writeFileSync(join(dir, "en.json"), JSON.stringify({ "tm.bio.x": "Leads." }));
+  writeFileSync(join(dir, "de.json"), "{ not json");
+  assert.deepEqual(missingBio(dir, "x"), ["de"]);
 });
 
 test("team.json rejects a bio that is bad, untranslated or on a non-person (#408)", async () => {
   const { configErrors } = await import("./team.mjs");
-  const { readFileSync } = await import("node:fs");
   const orig = JSON.parse(readFileSync(new URL("../team/team.json", import.meta.url), "utf8"));
   const errs = (edit) => { const c = structuredClone(orig); edit(c); return configErrors(c).join("\n"); };
+  const person = (c, login) => c.people.find((p) => p.login === login);
   assert.equal(errs(() => {}), "");
-  assert.match(errs((c) => { c.people[0].bio = " padded"; }), /ozdil: bad bio/);
-  assert.match(errs((c) => { c.people[1].bio = "Untranslated."; }), /sadikkuzu: tm\.bio\.sadikkuzu is not translated in ar\.json/);
-  assert.match(errs((c) => { c.people.find((p) => p.kind === "ai").bio = "x"; }), /claude: only people have a bio/);
+  assert.match(errs((c) => { person(c, "ozdil").bio = " padded"; }), /ozdil: bad bio/);
+  assert.match(errs((c) => { person(c, "sadikkuzu").bio = "Untranslated."; }), /sadikkuzu: tm\.bio\.sadikkuzu is not translated in [a-z]{2,3}(-[A-Za-z0-9]+)*\.json/);
+  assert.match(errs((c) => { person(c, "claude").bio = "x"; }), /claude: only people have a bio/);
 });
