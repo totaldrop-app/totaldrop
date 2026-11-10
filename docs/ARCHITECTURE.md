@@ -40,7 +40,7 @@ flowchart TB
     LNX["totaldrop-linux<br/>linux/ (Qt 6, QML, CXX-Qt)"]
     CLI["totaldrop-cli<br/>crates/totaldrop-cli"]
   end
-  CORE["totaldrop-core (istemci motoru)<br/>rendezvous, pairing, transport, path,<br/>relay, portmap, secure, transfer"]
+  CORE["totaldrop-core (istemci motoru, MIT OR Apache-2.0)<br/>rendezvous, pairing, transport, path,<br/>relay, portmap, secure, transfer"]
   subgraph BASE["Temel kütüphaneler (MIT OR Apache-2.0)"]
     direction LR
     L10N["totaldrop-l10n<br/>35 dil metni"]
@@ -81,7 +81,7 @@ flowchart LR
   B["Alan<br/>uygulama + core"]
   RZ["rendezvous-worker<br/>Directory + Mailbox<br/>(Durable Objects, SQLite)"]
   RL["relay-worker<br/>Pair (Durable Object)"]
-  STUN["stun.cloudflare.com<br/>(projenin değil)"]
+  STUN["STUN: stun.cloudflare.com<br/>(projenin değil) ya da kendi<br/>aktarma sunucusunun UDP keşif portu"]
   GW["Her tarafın kendi yönlendiricisi<br/>PCP / NAT-PMP"]
   A -- "wss /v0/allocate, /v0/mailbox/n<br/>(şifreli kutu iletileri)" --> RZ
   B -- "wss /v0/mailbox/n" --> RZ
@@ -103,20 +103,26 @@ Kurallar ve kanıtları:
 | Kural | Kanıt |
 | --- | --- |
 | `proto` ve `crypto` hiçbir iç crate'e bağlı değildir | `crates/totaldrop-proto/Cargo.toml`, `crates/totaldrop-crypto/Cargo.toml` (`[dependencies]` içinde `totaldrop-*` yok) |
-| `l10n` hiçbir iç crate'e bağlı değildir; `proto`'yu yalnızca testinde kullanır (her dilin paylaşım metni kodu geri vermeli, #148) | `crates/totaldrop-l10n/Cargo.toml:20-22` |
+| `l10n` hiçbir iç crate'e bağlı değildir; `proto`'yu yalnızca testinde kullanır (her dilin paylaşım metni kodu geri vermeli, #148) | `crates/totaldrop-l10n/Cargo.toml:21-23` |
 | `core` yalnızca `crypto` ve `proto`'ya bağlıdır; arayüz metni bilmez | `crates/totaldrop-core/Cargo.toml:22-23` |
 | Sunucular yalnızca `proto`'yu bağlar: kriptografi ve istemci motoru sunucuya hiç girmez | `server/totaldrop-rendezvous/Cargo.toml:17`, `server/totaldrop-relay/Cargo.toml:18` |
 | Uygulamalar `core`, `proto`, `l10n` kullanır; hiçbir şey bir uygulamaya bağlı değildir | `crates/totaldrop-cli/Cargo.toml:20-22`, `linux/Cargo.toml:22-24`, `app/rust/Cargo.toml:19-21` |
 | CLI, uçtan uca testler için iki Rust sunucusunu yalnızca test bağımlılığı olarak kullanır | `crates/totaldrop-cli/Cargo.toml:28-29` |
 | `core` ile sunucular arasında kod bağı yoktur; yalnızca ağ protokolü ortaktır (`proto`) | tablo `tools/check-layers.mjs` `ALLOWED` |
 
-Bu tablo CI'da denetlenir: `tools/check-layers.mjs` her çalışma alanı
-üyesinin `Cargo.toml`'unu okur, izin verilmeyen bir iç bağımlılıkta iş
-kırmızı olur (`.github/workflows/ci.yml`, `Crate layers` işi). Denetimin
-kendisi `tools/test-check-layers.mjs` ile sınanır. Elle de denendi:
-`server/totaldrop-relay/Cargo.toml`'a geçici olarak `totaldrop-crypto`
-eklenince betik `totaldrop-relay -> totaldrop-crypto: not allowed` deyip
-1 ile çıktı (**geçti**), değişiklik geri alındı.
+Bu tablo CI'da denetlenir: `tools/check-layers.mjs` çalışma alanını
+Cargo'ya sordurur (`cargo metadata --no-deps`; derleme yapmaz), izin
+verilmeyen bir iç bağımlılıkta ya da tabloda olmayan yeni bir crate'te iş
+kırmızı olur (`.github/workflows/ci.yml`, `Crate layers` işi). Manifestleri
+Cargo okuduğu için bağımlılığın yazılış biçimi (`[dependencies.x]` tablosu,
+noktalı anahtar, hedefe özgü tablo, yeniden adlandırma) sonucu
+değiştirmez. Denetimin kendisi `tools/test-check-layers.mjs` ile sınanır;
+test bu biçimleri geçici bir çalışma alanında dener ve depodaki crate
+kümesinin tabloyla birebir aynı olduğunu doğrular. Elle de denendi:
+`server/totaldrop-relay/Cargo.toml`'a geçici olarak
+`[dependencies.totaldrop-core]` eklenince betik
+`totaldrop-relay -> totaldrop-core: not allowed` deyip 1 ile çıktı
+(**geçti**), değişiklik geri alındı.
 
 Sınırlar:
 
@@ -129,8 +135,9 @@ Sınırlar:
 - `fuzz/` çalışma alanı dışındadır (`Cargo.toml:4`), denetlenmez; yalnızca
   `proto` ve `l10n`'u kullanır (`fuzz/Cargo.toml:13-14`).
 
-Lisans katmanları da aynı çizgiyi izler: temel kütüphaneler MIT OR
-Apache-2.0, sunucular AGPL-3.0, uygulamalar GPL-3.0 (`REUSE.toml`,
+Lisanslar katmanlarla tam örtüşmez: temel kütüphaneler ve `totaldrop-core`
+MIT OR Apache-2.0 (`crates/totaldrop-core/Cargo.toml:4`), sunucular
+AGPL-3.0, uygulamalar (CLI dahil) GPL-3.0 (`REUSE.toml`,
 [LICENSING.md](../LICENSING.md)).
 
 ## 2. Akış takibi
@@ -210,8 +217,9 @@ Adım adım:
    - `transfer::send_files` (`transfer.rs:518`): manifest, 4 paralel akış
      (`transfer.rs:187`), parçalar STREAM ile şifreli
      (`crates/totaldrop-crypto/src/lib.rs:148` `EntryCipher`).
-5. Çıkış: `main` sonucu çıkış koduna çevirir (`main.rs:671-697`): başarı 0,
-   durdurma 130, hata 1 ve kişinin dilinde bir cümle + İngilizce ayrıntı
+5. Çıkış: `main` sonucu çıkış koduna çevirir (`main.rs:671-693`): başarı 0,
+   durdurma 130, hata 1, kullanım hatası 2 (geçersiz kod, aktarmasız
+   gizlilik modu `main.rs:630-633`, clap'in kendi hataları) ve kişinin dilinde bir cümle + İngilizce ayrıntı
    (`main.rs:707` `error_key`, `:699` `detail_line`).
 
 ### 2.2 `totaldrop receive <kod>`
@@ -239,7 +247,7 @@ Adım adım:
 | Giriş | Gönderme | Alma |
 | --- | --- | --- |
 | CLI | `crates/totaldrop-cli/src/main.rs:373`, `:402` | `main.rs:496`, `:566` |
-| Linux (QML → CXX-Qt) | `linux/src/bridge/transfer.rs:596` `start_send` → `:613`, `:649` | `transfer.rs:667` `receive` → `:678`, `:750` |
+| Linux (QML → CXX-Qt) | `linux/src/bridge/transfer.rs:596` `start_send` → `:613`, `:649` | `linux/src/bridge/transfer.rs:667` `receive` → `:678`, `:750` |
 | Android (Dart → flutter_rust_bridge) | `app/rust/src/api/transfer.rs:343` `prepare_send` → `:362`; `:416` `run_send` → `:426` | `app/rust/src/api/transfer.rs:494` `connect_receive` |
 
 Uygulamalar olayları (`Event`, `crates/totaldrop-core/src/lib.rs:50`) kendi
@@ -307,8 +315,8 @@ veritabanı yoktur.
 | Tablo | Sütunlar | Amaç |
 | --- | --- | --- |
 | `active` | `n` PK, `mailbox`, `token`, `created`, `full` | Kullanımdaki numaralar; dizin `(full, created)` |
-| `resting` | `n` PK, `until`, `retired` | Bırakılan numaraların bekleme süresi |
-| `scary` | `t` | Yanlış kod kapanışları (10 dk pencere, `directory.ts:26`) |
+| `resting` | `n` PK, `until`, `retired` | Bırakılan numaraların bekleme süresi: 10 dk soğuma, yanlış kodla kapanmışsa 24 saat emeklilik (`directory.ts:19-22`); dizinler `until`, `(retired, n)` |
+| `scary` | `t` | Yanlış kod kapanışları (10 dk pencere, `directory.ts:26`); dizin `t` |
 | `pool` | `n` PK | Yeniden verilebilecek numaralar, küçükten büyüğe |
 | `state` | `id = 0`, `high`, `active` | En yüksek numara ve etkin sayısı (tek satır) |
 
@@ -346,6 +354,10 @@ Doğrulama: `pair.ts` içinde `sql.exec` geçmez (grep ile bakıldı).
 
 ### 4.1 Ortam değişkenleri
 
+Projenin kendi kodunun okuduğu değişkenler. Üçüncü taraf derleme araçları
+(`app/rust_builder/cargokit`, Gradle, Cargo) ve CI'ın kendi değişkenleri
+sayılmadı.
+
 | Değişken | Kim okur | Ne yapar |
 | --- | --- | --- |
 | `TOTALDROP_SERVER`, `TOTALDROP_RELAY`, `TOTALDROP_STUN` | CLI (`crates/totaldrop-cli/src/main.rs:33`, `:38`, `:42`) | `--server`, `--relay`, `--stun` bayraklarının ortam karşılığı |
@@ -358,6 +370,11 @@ Doğrulama: `pair.ts` içinde `sql.exec` geçmez (grep ile bakıldı).
 | `CI` | Linux testleri (`linux/src/instance.rs:659`, `sleep.rs:203`) | Masaüstü oturumu gerektiren denemeleri CI'da ayarlar |
 | `ANDROID_UPLOAD_STORE_FILE`, `ANDROID_UPLOAD_PASSWORD`, `ANDROID_UPLOAD_ALIAS`, `TOTALDROP_REQUIRE_RELEASE_KEY` | Android derlemesi (`app/android/app/build.gradle.kts:22-61`) | Yükleme anahtarı yalnızca CI ortam sırrından; `REQUIRE` varken anahtarsız derleme başarısız olur |
 | `CLOUDFLARE_API_TOKEN` | Yalnızca dağıtım adımı (`.github/workflows/deploy.yml:134`) | `cloudflare` ortamı onayıyla |
+| `RATE_BURST`, `RATE_INTERVAL_MS` | Rendezvous Worker değişkeni (`server/rendezvous-worker/src/directory.ts:50`) | İstemci başına oran sınırı; üretimde tanımlı değil, varsayılanlar `limit.ts` içinde; CI `--var` ile düşük değerler verir (`server.yml:82`, `:86`) |
+| `WAYLAND_DISPLAY`, `DISPLAY`, `QT_QPA_PLATFORMTHEME`, `QT_QUICK_CONTROLS_STYLE` | Linux açılışı (`linux/src/main.rs:55-58`, `:80`) | Ekran varsa ve tema eklentisi seçilmemişse `QT_QPA_PLATFORMTHEME=gtk3` **atanır**; denetim stili yoksa atanır |
+| `XDG_RUNTIME_DIR` | Linux Hyprland algılama (`linux/src/theme/hyprland.rs:18`) | Hyprland soketini bulur |
+| `TOTALDROP_VERSION` | Dart derleme tanımı (`app/lib/main.dart:28-29`) | Ayarlar'da gösterilen sürüm |
+| `GITHUB_TOKEN` | Site aracı (`site/tools/team.mjs:175`) | `--fetch` için daha yüksek API sınırı; yazdırılmaz |
 
 ### 4.2 Ayar ve yapılandırma dosyaları
 
@@ -366,7 +383,7 @@ Doğrulama: `pair.ts` içinde `sql.exec` geçmez (grep ile bakıldı).
 | `Cargo.toml` (kök) | Çalışma alanı, ortak lint'ler (`unsafe_code = "forbid"`, `unwrap_used` vb.), sürüm profili |
 | `rust-toolchain.toml` | Sabitlenmiş Rust sürümü |
 | `deny.toml`, `osv-scanner.toml` | Bağımlılık lisans ve danışma denetimleri |
-| `server/*-worker/wrangler.jsonc` | Worker adları, özel alan adları, Durable Object bağları, SQLite göçleri, `observability: false` (günlük yok) |
+| `server/*-worker/wrangler.jsonc` | Worker adları, özel alan adları, Durable Object bağları, SQLite göçleri, `"observability": { "enabled": false }` (günlük yok). `vars` yok; oran sınırı değişkenleri varsayılanlarıyla çalışır (4.1) |
 | `site/wrangler.toml` | Pages çıktı klasörü |
 | `app/pubspec.yaml`, `app/l10n.yaml`, `app/flutter_rust_bridge.yaml` | Flutter bağımlılıkları, çeviri üretimi, köprü üretimi |
 | `packaging/` | Linux paket tarifleri (deb, rpm, Arch, Flatpak) |
@@ -377,21 +394,26 @@ Rust sunucuları yapılandırmayı yalnızca konum argümanıyla alır (dinleme
 adresi; varsayılan `127.0.0.1:4000` ve `127.0.0.1:4100`,
 `server/totaldrop-rendezvous/src/main.rs:12-14`,
 `server/totaldrop-relay/src/main.rs:20-24`). Süre ve sınırlar koddaki
-`Config::default()` ile gelir (`server/totaldrop-rendezvous/src/lib.rs:47`,
+`Config` yapısının varsayılanlarıyla gelir (`Config::default()`,
+`server/totaldrop-rendezvous/src/main.rs:20`; yapılar
+`server/totaldrop-rendezvous/src/lib.rs:47`,
 `server/totaldrop-relay/src/lib.rs:40`); dosya ya da ortam değişkeni
 okunmaz.
 
 ### 4.3 Özellik bayrakları
 
 Derleme zamanı özellik bayrağı **yoktur**: hiçbir `Cargo.toml`'da
-`[features]` tablosu, Dart'ta `fromEnvironment`, Android'de ürün çeşidi
-(flavor) bulunmadı (grep ile bakıldı). Davranışı değiştiren seçenekler
+`[features]` tablosu, Android'de ürün çeşidi (flavor) bulunmadı (grep ile
+bakıldı). Dart'taki tek derleme tanımı `TOTALDROP_VERSION`'dır
+(`app/lib/main.dart:28-29`); yalnızca Ayarlar'da gösterilen sürüm, davranışı
+değiştirmez. Davranışı değiştiren seçenekler
 çalışma zamanındadır:
 
 - **Gizlilik modu** (`PathOptions.relay_only`, `lib.rs:167`):
   adres duyurulmaz, doğrudan bağlantı ve port açma yapılmaz.
 - **Port açma ağ geçidi** `portmap::Gateway` (`crates/totaldrop-core/src/portmap.rs:45`):
-  `Auto` ya da kapalı.
+  `Auto` (varsayılan yolun ağ geçidi, bugün yalnızca Linux), `Off`, ya da
+  `At(adres)` (testler; ileride Android) (`portmap.rs:45-54`).
 - **Kod gücü** `--strong` (2 yerine 3 kelime, `main.rs:365`).
 
 ## 5. Test, derleme ve kapsam
@@ -403,7 +425,7 @@ Zorunlu denetim CI'dır; yerel kopyası `.pre-commit-config-extra.yaml`
 
 | Alan | Komut | CI işi |
 | --- | --- | --- |
-| Rust (Linux ve köprü hariç) | `cargo fmt --check`, `cargo clippy --workspace --exclude totaldrop-linux --exclude rust_lib_totaldrop --all-targets -- -D warnings`, `cargo test` aynı dışlamalarla | `.github/workflows/core.yml:40-50` |
+| Rust (Linux ve köprü hariç) | `cargo fmt --check -p` (7 crate, yalnız Linux makinesinde); `cargo clippy --workspace --exclude totaldrop-linux --exclude rust_lib_totaldrop --all-targets -- -D warnings`; `cargo test` aynı dışlamalarla | `.github/workflows/core.yml:39-50` |
 | Rust kapsamı | `cargo llvm-cov --fail-under-lines 90 -p …` (7 crate) | `core.yml:72` |
 | Linux | `cargo test -p totaldrop-linux`; QML: `linux/tests/qml/run.sh` (qmltestrunner) | `.github/workflows/linux.yml:40-45` |
 | Android | `flutter analyze`, `flutter test` (`app/test/`, 19 dosya) | `.github/workflows/android.yml:38`, `:48` |
@@ -416,15 +438,22 @@ Zorunlu denetim CI'dır; yerel kopyası `.pre-commit-config-extra.yaml`
 
 ### 5.2 Kapsamın zayıf olduğu yerler
 
-Rust için CI satır kapsamını en az %90'da tutar (`core.yml:72`). Dosya
-bazında son elimizdeki ölçüm 4 Kasım 2026 tarihli
-(`cargo llvm-cov`, toplam satır %89,5). **Emin değilim:** o günden beri
-port açma (#406), IPv6 (#403) ve oran sınırı (#46) eklendi; sayılar
-değişmiş olabilir, CI'daki son ölçüm `Coverage` işinin günlüğündedir.
+Rust için CI satır kapsamını en az %90'da tutar (`core.yml:72`); bu
+işin her çalışması geçtiğine göre bugünkü toplam %90'ın üstündedir.
+
+**Emin değilim (bütün tablo):** dosya bazındaki sayılar depoda değil, 4
+Kasım 2026'da elle alınmış bir `cargo llvm-cov` çıktısından (proje
+dosyası `best-practices/coverage-2026-11-04.txt`). O ölçümün toplamı %89,5;
+aynı gün eklenen %90 eşiğinden düşük, yani ölçüm büyük olasılıkla eşikten
+ve `tests/program.rs`'ten önce alınmış. O günden beri port açma (#406),
+IPv6 (#403) ve oran sınırı (#46) da eklendi. Güncel dosya bazında sayılar
+için `Coverage` işi `--summary-only` ile çalışıyor; tablo bir sonraki
+ölçümle yenilenmeli. Tablo yalnızca nerenin göreli olarak zayıf olduğunu
+göstermek için duruyor.
 
 | Yer | 4 Kas satır kapsamı | Not |
 | --- | --- | --- |
-| `crates/totaldrop-cli/src/main.rs` | %47 | En zayıf Rust dosyası; etkileşimli sorular ve hata yolları süreç dışından sınanıyor (`tests/program.rs`, `tests/end_to_end.rs`), bunlar llvm-cov'a tam yansımıyor olabilir (emin değilim) |
+| `crates/totaldrop-cli/src/main.rs` | %47 | En zayıf Rust dosyası; etkileşimli sorular ve hata yolları süreç dışından sınanıyor (`tests/program.rs`, `tests/end_to_end.rs`); cargo-llvm-cov bu süreçleri de ölçer, bu yüzden sayı `tests/program.rs`'ten sonra büyük olasılıkla yükseldi |
 | `server/totaldrop-*/src/main.rs` | %0 | Yalnızca argüman ayrıştırma; kütüphane kısmı %90 |
 | `crates/totaldrop-core/src/rendezvous.rs` | %83 | WebSocket hata ve kapanış yolları |
 | `crates/totaldrop-core/src/error.rs` | %86 | |
@@ -441,16 +470,17 @@ Hiç ölçülmeyenler (CI'da kapsam yok):
   ölçümüne dahil değil (`core.yml:20` `EXCLUDE`).
 - **Dart**: `flutter test` kapsam raporu üretmiyor.
 - **QML**: tek bileşen testi var (`linux/tests/qml/tst_actioncard.qml`).
-- **Ağ değişimi ve ölü TCP**: `relay.rs` %93 olsa da ping yazımının
-  süre sınırsız kaldığı yol (#424, `relay.rs:573`) testsizdir.
+- **Ağ değişimi ve ölü TCP**: `relay.rs` yüksek kapsamlı olsa da (4 Kas
+  ölçümünde %93, emin değilim) ping yazımının süre sınırsız kaldığı yol (#424, `relay.rs:573`) testsizdir.
 
 ## 6. Tarihçe: sıcak noktalar
 
 Depo 27 Ekim 2026'da başladı, 539 commit (`18ba4df`'e kadar). Sayılar
-`git log --name-only` ile çıkarıldı; çeviri, üretilmiş dosyalar, kilit
-dosyaları ve `CHANGELOG.md` dışarıda bırakıldı.
+`git log --name-only` ile çıkarıldı.
 
-En çok değişen kod dosyaları (commit sayısı):
+En çok değişen kod dosyaları (commit sayısı; yalnızca `.rs`, `.ts`,
+`.dart`, `.qml`, `.kt`, `.js`, `.mjs` ve iş akışı `.yml` dosyaları;
+çeviriler ve üretilmiş dosyalar hariç):
 
 | Dosya | Commit |
 | --- | --- |
@@ -463,7 +493,13 @@ En çok değişen kod dosyaları (commit sayısı):
 | `.github/workflows/site.yml` | 22 |
 | `linux/qml/SendPage.qml` | 21 |
 | `app/lib/ui/send/send_view_model.dart` | 21 |
-| `crates/totaldrop-core/src/relay.rs` | 19 |
+| `.github/workflows/linux.yml` | 20 |
+
+Kod dışındaki sıcak dosyalar: `site/public/download/index.html` (44),
+`site/public/styles.css` (26), `packaging/rpm/totaldrop.spec` (24),
+`packaging/linux/app.totaldrop.TotalDrop.metainfo.xml` (23); her sürümde
+indirme bağlantıları ve paket bilgisi değişiyor. Çeviri dosyaları
+(`site/public/i18n/*.json`, 36–52) ve `CHANGELOG.md` (97) sayılmadı.
 
 Belgelerde en sıcak olanlar `docs/tehdit-modeli.md` (50) ve
 `docs/protocol-v0.1-notes.md` (42): protokol ve tehdit modeli kodla
