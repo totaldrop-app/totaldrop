@@ -4,7 +4,8 @@
 // The team page (site/public/team/, #288). Who is listed, with which role
 // and areas, is curated in site/team/team.json; profile names, bios,
 // websites, pictures and every figure come from GitHub, so no share of the
-// work is typed by hand:
+// work is typed by hand (team.json may give a person's own display name or
+// a translated one-line bio instead of the profile's, #408):
 //   node site/tools/team.mjs           check the page and the avatars match
 //                                      the snapshot (CI, offline)
 //   node site/tools/team.mjs --write   rewrite the page from the snapshot
@@ -13,7 +14,7 @@
 //                                      rewrite the page
 // Who is listed and how is decided in site/team/team.json; GitHub supplies
 // only public profile fields (name, bio, website, avatar) and the commit
-// history. The snapshot is site/team/github.json. The page never loads
+// history, unless team.json gives its own name or bio. The snapshot is site/team/github.json. The page never loads
 // anything from GitHub: visitors' browsers talk only to totaldrop.app.
 // --fetch reads GITHUB_TOKEN if set (a higher rate limit), never prints it.
 import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, unlinkSync } from "node:fs";
@@ -87,6 +88,14 @@ const shown = (href) => href.replace(/^https:\/\//, "").replace(/\/$/, "");
 // True when team.json's bio for a person is set but not one clean line.
 export const badBio = (b) => b !== undefined && (typeof b !== "string" || b === "" || b !== clean(b, 240));
 
+// The languages in an i18n folder whose file lacks a non-empty
+// tm.bio.<login>: a bio is shown only once all 35 have it.
+export function missingBio(dir, login) {
+  return readdirSync(dir).filter((f) => /^[a-z]{2,3}(-[A-Za-z0-9]+)*\.json$/.test(f)).sort()
+    .filter((f) => { const v = JSON.parse(readFileSync(join(dir, f), "utf8"))[`tm.bio.${login}`]; return typeof v !== "string" || v.trim() === ""; })
+    .map((f) => f.slice(0, -5));
+}
+
 // The bio line of a person's card: team.json's own line, translated, or
 // else the GitHub bio as the person wrote it.
 export function bioLine(p, pr) {
@@ -94,8 +103,16 @@ export function bioLine(p, pr) {
   return pr.bio ? `<p class="bio" dir="auto">${esc(pr.bio)}</p>` : "";
 }
 
-function loadConfig() {
-  const c = JSON.parse(readFileSync(CONFIG, "utf8"));
+const loadConfig = () => validateConfig(JSON.parse(readFileSync(CONFIG, "utf8")));
+
+// The errors team.json's rules find in a parsed config, for the tests.
+export function configErrors(c) {
+  const before = errors.length;
+  validateConfig(c);
+  return errors.splice(before);
+}
+
+function validateConfig(c) {
   if (!/^[A-Za-z0-9-]+\/[A-Za-z0-9._-]+$/.test(c.repo)) fail(`team.json: bad repo ${c.repo}`);
   const seen = new Set();
   for (const p of c.people) {
@@ -112,6 +129,8 @@ function loadConfig() {
     // of their GitHub bio (#408). It is translated under tm.bio.<login> in
     // site/public/i18n/<tag>.json; add the key in all 35 languages.
     if (badBio(p.bio)) fail(`team.json: ${p.login}: bad bio`);
+    else if (p.bio !== undefined && p.kind !== "person") fail(`team.json: ${p.login}: only people have a bio`);
+    else if (p.bio !== undefined) for (const tag of missingBio(I18N, p.login)) fail(`team.json: ${p.login}: tm.bio.${p.login} is not translated in ${tag}.json`);
   }
   for (const d of c.disciplines) {
     if (!(d.key in AREAS)) fail(`team.json: unknown discipline ${d.key}`);
