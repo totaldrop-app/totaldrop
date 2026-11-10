@@ -157,23 +157,23 @@ mod tests {
         assert_eq!(downloads_in(None, None), cwd.join("TotalDrop"));
         assert_eq!(
             downloads_in(None, Some(PathBuf::from("ada"))),
-            cwd.join("ada/Downloads/TotalDrop")
+            cwd.join("ada").join("Downloads").join("TotalDrop")
         );
         assert_eq!(
             downloads_in(Some(PathBuf::from("dl")), None),
-            cwd.join("dl/TotalDrop")
+            cwd.join("dl").join("TotalDrop")
         );
-        // An absolute folder is kept as it is.
+        // An absolute folder is kept as it is. Built from the current
+        // folder, so that it is absolute on Windows too, where this module
+        // is compiled and tested as well.
+        let home = cwd.join("home").join("ada");
         assert_eq!(
-            downloads_in(
-                Some(PathBuf::from("/home/ada/İndirilenler")),
-                Some(PathBuf::from("/home/ada"))
-            ),
-            PathBuf::from("/home/ada/İndirilenler/TotalDrop")
+            downloads_in(Some(home.join("İndirilenler")), Some(home.clone())),
+            home.join("İndirilenler").join("TotalDrop")
         );
         assert_eq!(
-            downloads_in(None, Some(PathBuf::from("/home/ada"))),
-            PathBuf::from("/home/ada/Downloads/TotalDrop")
+            downloads_in(None, Some(home.clone())),
+            home.join("Downloads").join("TotalDrop")
         );
     }
 
