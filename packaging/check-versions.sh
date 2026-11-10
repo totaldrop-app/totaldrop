@@ -17,7 +17,7 @@
 # rust-toolchain.toml, every pinned Flutter version is the same, every
 # Node in the workflows and @types/node have the same major, and the Arch
 # check container uses the same base image as the Arch package (Dependabot
-# updates only the latter).
+# updates only the latter), and no workflow runs npm install scripts.
 #
 # The recipes: every Linux package recipe and the Flatpak keep build times
 # out of the Qt resources in the same way, and the AppStream metainfo names
@@ -152,6 +152,23 @@ for f in "$root"/.github/workflows/*.yml "$root"/.github/workflows/*.yaml; do
 $(node_scan "$f")
 EOF
 done
+# No package install script runs in CI (TD-06): every npm ci or npm install
+# in a workflow takes --ignore-scripts. The deploy job installs wrangler in
+# the same runner that then gets the Cloudflare token, so a script could
+# change what runs next. esbuild and workerd work without theirs: their
+# binaries come in platform packages.
+for f in "$root"/.github/workflows/*.yml "$root"/.github/workflows/*.yaml; do
+  [ -f "$f" ] || continue
+  rel=${f#"$root"/}
+  grep -nE '(^|[^A-Za-z0-9_.-])npm[[:space:]]+(ci|install|i)([[:space:]]|$)' "$f" |
+    grep -v -- '--ignore-scripts' | while IFS=: read -r n _; do
+      echo "$rel:$n: npm installs without --ignore-scripts"
+    done
+done > "${TMPDIR:-/tmp}/npm-scripts.$$"
+if [ -s "${TMPDIR:-/tmp}/npm-scripts.$$" ]; then
+  while IFS= read -r line; do fail "$line"; done < "${TMPDIR:-/tmp}/npm-scripts.$$"
+fi
+rm -f "${TMPDIR:-/tmp}/npm-scripts.$$"
 node=$(printf '%s\n' $node_majors | sort -u | grep . || true)
 if [ "$(printf '%s\n' "$node" | grep -c . || true)" -ne 1 ]; then
   fail "Node must be pinned to exactly one major, found: '$(echo $node)'"

@@ -228,4 +228,10 @@ expect pass "a license added everywhere" \
    edit $meta 's|</project_license>| AND OFL-1.1&|'
    edit $arch \"s|'MIT OR Apache-2.0')|'MIT OR Apache-2.0' 'OFL-1.1')|\""
 
+# TD-06: package install scripts never run in CI.
+expect fail "npm ci without --ignore-scripts" "npm installs without --ignore-scripts" \
+  "edit $wf/server.yml 's|npm ci --ignore-scripts --prefix server/relay-worker|npm ci --prefix server/relay-worker|'"
+expect fail "a bare npm install" "npm installs without --ignore-scripts" \
+  "printf '      - run: npm install\\n' >> $wf/server.yml"
+
 exit $failed
