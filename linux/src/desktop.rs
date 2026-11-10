@@ -33,6 +33,22 @@ fn downloads_in(download: Option<PathBuf>, home: Option<PathBuf>) -> PathBuf {
     std::path::absolute(&dir).unwrap_or(dir)
 }
 
+/// A `file://` URL for an absolute path, with every byte outside the
+/// unreserved set and `/` percent-encoded, so that `#`, `?` and `%` in a
+/// folder's name stay part of the path when Qt reads the URL (#427).
+pub fn file_url(path: &Path) -> String {
+    use std::os::unix::ffi::OsStrExt as _;
+    let mut out = String::from("file://");
+    for &b in path.as_os_str().as_bytes() {
+        if b.is_ascii_alphanumeric() || b"/-._~".contains(&b) {
+            out.push(char::from(b));
+        } else {
+            out.push_str(&format!("%{b:02X}"));
+        }
+    }
+    out
+}
+
 /// Decode `%XX` escapes of a file URL path.
 pub fn percent_decode(s: &str) -> String {
     let bytes = s.as_bytes();
@@ -229,6 +245,58 @@ pub async fn notify(title: String, body: String) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// #427: "Open folder" opens the folder itself, also when its name has
+    /// characters a URL gives a meaning to. Qt reads the URL; before, the
+    /// QML built `"file://" + folder`, which Qt cut at `#` and `?` and
+    /// decoded at `%`.
+    #[test]
+    fn a_folder_url_names_the_folder_for_qt() {
+        use cxx_qt_lib::{QString, QUrl};
+        let local = |url: &str| {
+            QUrl::from(&QString::from(url))
+                .to_local_file()
+                .map(|p| p.to_string())
+        };
+        for folder in [
+            "/home/o/İndirilenler/Proje #2",
+            "/home/o/a?b",
+            "/home/o/100%25 done",
+            "/home/o/50% off",
+            "/home/o/two  spaces",
+            "/home/o/plain",
+        ] {
+            assert_eq!(
+                local(&file_url(Path::new(folder))).as_deref(),
+                Some(folder),
+                "{folder}"
+            );
+        }
+        // What the QML did, for the record: Qt reads another folder.
+        assert_ne!(
+            local("file:///home/o/Proje #2").as_deref(),
+            Some("/home/o/Proje #2")
+        );
+        assert_ne!(local("file:///home/o/a?b").as_deref(), Some("/home/o/a?b"));
+        assert_ne!(
+            local("file:///home/o/100%25 done").as_deref(),
+            Some("/home/o/100%25 done")
+        );
+    }
+
+    /// The URL is plain ASCII and round-trips through the app's own reader
+    /// of `file://` URLs, for every ASCII character a file name may hold
+    /// and for letters outside ASCII.
+    #[test]
+    fn a_folder_url_round_trips() {
+        let mut name: String = (1u8..=127).filter(|&b| b != b'/').map(char::from).collect();
+        name.push_str("İçğüşö 文件 🙂");
+        let path = format!("/tmp/{name}");
+        let url = file_url(Path::new(&path));
+        assert!(url.is_ascii());
+        assert!(!url.contains(['#', '?', ' ']));
+        assert_eq!(percent_decode(url.strip_prefix("file://").unwrap()), path);
+    }
 
     #[test]
     fn the_downloads_folder_is_always_absolute() {

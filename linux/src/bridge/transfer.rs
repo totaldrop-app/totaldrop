@@ -66,6 +66,8 @@ pub mod qobject {
         #[qproperty(i32, files_ok, cxx_name = "filesOk")]
         #[qproperty(i32, files_failed, cxx_name = "filesFailed")]
         #[qproperty(QString, saved_to, cxx_name = "savedTo")]
+        // The same folder as a `file://` URL, for "Open folder" (#427).
+        #[qproperty(QString, saved_to_url, cxx_name = "savedToUrl")]
         #[qproperty(QString, error_kind, cxx_name = "errorKind")]
         #[qproperty(QString, error_detail, cxx_name = "errorDetail")]
         #[qproperty(QString, error_cause, cxx_name = "errorCause")]
@@ -256,6 +258,7 @@ pub struct TransferRust {
     files_ok: i32,
     files_failed: i32,
     saved_to: QString,
+    saved_to_url: QString,
     error_kind: QString,
     error_detail: QString,
     error_cause: QString,
@@ -458,6 +461,7 @@ impl qobject::Transfer {
         self.as_mut().set_files_ok(0);
         self.as_mut().set_files_failed(0);
         self.as_mut().set_saved_to(QString::default());
+        self.as_mut().set_saved_to_url(QString::default());
         self.as_mut().set_error_kind(QString::default());
         self.as_mut().set_error_detail(QString::default());
         self.as_mut().set_error_cause(QString::default());
@@ -753,6 +757,7 @@ impl qobject::Transfer {
                 Err(e) => Err(totaldrop_core::Error::Io(e)),
             };
             let saved = dest.display().to_string();
+            let saved_url = desktop::file_url(&dest);
             let _ = thread.queue(move |mut obj| {
                 if !obj.current(g) {
                     return;
@@ -762,6 +767,7 @@ impl qobject::Transfer {
                         obj.as_mut().set_files_ok(count(r.files_ok));
                         obj.as_mut().set_files_failed(count(r.files_failed));
                         obj.as_mut().set_saved_to(QString::from(&saved));
+                        obj.as_mut().set_saved_to_url(QString::from(&saved_url));
                         obj.as_mut().set_stage(Stage::Done);
                     }
                     Err(e) => obj.fail(kind(&e), &e.to_string(), e.cause().as_str()),

@@ -24,6 +24,9 @@ ColumnLayout {
     // Strings "cause" + it, in the person's language (#212).
     property string cause
     property string folder
+    // The folder as a file:// URL, encoded in Rust: "file://" + folder
+    // would cut a name at "#" or "?" and decode "%" (#427).
+    property string folderUrl
     property bool canRetry: false
     // A text received (#326), with hidden characters named. Copy text
     // copies the text exactly as it came, not this.
@@ -129,7 +132,7 @@ ColumnLayout {
         visible: r.folder !== ""
         text: Strings.s.openFolder
         icon.name: Theme.icon("folder-open", "folder-open")
-        onClicked: Qt.openUrlExternally("file://" + r.folder)
+        onClicked: Qt.openUrlExternally(r.folderUrl)
         Layout.alignment: Qt.AlignHCenter
     }
 
