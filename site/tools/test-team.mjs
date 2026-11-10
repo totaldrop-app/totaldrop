@@ -102,13 +102,18 @@ test("a team.json bio needs a translation in every language file (#408)", async 
   assert.deepEqual(missingBio(fileURLToPath(new URL("../public/i18n/", import.meta.url)), "ozdil"), []);
 });
 
-test("a broken language file is reported, not thrown (#410)", async (t) => {
-  const { missingBio } = await import("./team.mjs");
+test("a broken language file is reported as invalid, not thrown or called untranslated (#410)", async (t) => {
+  const { missingBio, collectErrors } = await import("./team.mjs");
   const dir = mkdtempSync(join(tmpdir(), "team-i18n-"));
   t.after(() => rmSync(dir, { recursive: true, force: true }));
   writeFileSync(join(dir, "en.json"), JSON.stringify({ "tm.bio.x": "Leads." }));
   writeFileSync(join(dir, "de.json"), "{ not json");
-  assert.deepEqual(missingBio(dir, "x"), ["de"]);
+  writeFileSync(join(dir, "fr.json"), JSON.stringify({}));
+  let missing;
+  const errs = collectErrors(() => { missing = missingBio(dir, "x"); });
+  assert.deepEqual(missing, ["fr"]);
+  assert.equal(errs.length, 1);
+  assert.match(errs[0], /(^|\/)de\.json: not valid JSON$/);
 });
 
 test("team.json rejects a bio that is bad, untranslated or on a non-person (#408)", async () => {
