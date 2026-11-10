@@ -1,5 +1,6 @@
 # Rendezvous server and relay on Cloudflare Workers: type check, then the
-# shared end-to-end suite against both, run locally with wrangler dev.
+# shared end-to-end suite against both, run locally with wrangler dev. The
+# mail Worker (#415) has its type check and unit tests only.
 # Deploys run from deploy.yml, from main only, after approval.
 name: Server
 
@@ -18,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        worker: [rendezvous-worker, relay-worker]
+        worker: [rendezvous-worker, relay-worker, mail-worker]
     defaults:
       run:
         working-directory: server/${{ matrix.worker }}
