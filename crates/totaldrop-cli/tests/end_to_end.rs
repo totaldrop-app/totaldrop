@@ -477,6 +477,15 @@ fn too_many<T>(r: Result<T, Error>) -> bool {
     matches!(r, Err(Error::Rendezvous(reason)) if reason == "too many requests")
 }
 
+/// Fails with what came back when it was not the refusal: a refusal that
+/// arrives as another error is not the same failure as a connection that
+/// was let in (#442).
+#[track_caller]
+fn assert_too_many<T: std::fmt::Debug>(r: Result<T, Error>) {
+    let shown = format!("{r:?}");
+    assert!(too_many(r), "expected \"too many requests\", got {shown}");
+}
+
 /// Threat model T9: a client that opens connections faster than its rate,
 /// allocations and mailboxes alike, is told so in words and gets one more
 /// connection back each interval. The burst below is `TEST_RATE_BURST`
@@ -497,17 +506,45 @@ async fn a_client_over_its_rate_is_refused_until_it_waits() {
     assert!(unused.is_code_not_in_use(), "{unused}");
     // Past it, both kinds of connection are refused with a reason, and the
     // refusals do not count.
-    assert!(too_many(rendezvous::allocate(&server).await));
-    assert!(too_many(
-        Mailbox::claim(&server, alloc.nameplate, None).await
-    ));
-    assert!(too_many(rendezvous::allocate(&server).await));
+    assert_too_many(rendezvous::allocate(&server).await);
+    assert_too_many(Mailbox::claim(&server, alloc.nameplate, None).await);
+    assert_too_many(rendezvous::allocate(&server).await);
     // One interval later there is room for one more, and only one.
     tokio::time::sleep(TEST_RATE_INTERVAL + Duration::from_millis(300)).await;
     Mailbox::claim(&server, alloc.nameplate, None)
         .await
         .unwrap();
-    assert!(too_many(rendezvous::allocate(&server).await));
+    assert_too_many(rendezvous::allocate(&server).await);
+}
+
+/// #442: every refused connection reads the refusal. The client sends its
+/// first message right after the handshake; a server that closes the
+/// socket with that message unread resets the connection, and Windows
+/// then drops the refusal the client had not read yet.
+#[tokio::test(flavor = "multi_thread")]
+async fn every_refusal_reaches_the_client() {
+    let config = totaldrop_rendezvous::Config {
+        rate_burst: 1,
+        rate_interval: Duration::from_secs(600),
+        ..Default::default()
+    };
+    let (addr, _server, _task) =
+        totaldrop_rendezvous::spawn("127.0.0.1:0".parse().unwrap(), config)
+            .await
+            .unwrap();
+    let url = format!("ws://{addr}");
+    rendezvous::allocate(&url).await.unwrap();
+    const TRIES: usize = 1000;
+    let mut other = Vec::new();
+    for _ in 0..TRIES {
+        let r = rendezvous::allocate(&url).await;
+        let shown = format!("{r:?}");
+        if !too_many(r) {
+            other.push(shown);
+        }
+    }
+    other.dedup();
+    assert!(other.is_empty(), "not refused in words: {other:?}");
 }
 
 /// A claimed connection keeps waiting past the claim deadline: senders
