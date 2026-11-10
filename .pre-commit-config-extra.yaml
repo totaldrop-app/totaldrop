@@ -152,6 +152,13 @@ repos:
         files: Cargo\.(toml|lock)$|package(-lock)?\.json$|pubspec\.yaml$
         pass_filenames: false
 
+      - id: crate-layers
+        name: crate layers (docs/ARCHITECTURE.md)
+        language: system
+        entry: sh -c 'node --test tools/test-check-layers.mjs && node tools/check-layers.mjs'
+        files: (^|/)Cargo\.toml$|^tools/(test-)?check-layers\.mjs$
+        pass_filenames: false
+
       - id: advisory-ignores
         name: cargo-deny and OSV ignores match
         language: system

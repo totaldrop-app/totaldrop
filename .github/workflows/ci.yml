@@ -149,7 +149,8 @@ jobs:
   # The crates depend on each other in one direction only, as the diagram
   # in docs/ARCHITECTURE.md draws it: the servers never link the
   # cryptography or the client engine, and nothing depends on an app. It
-  # reads the Cargo.toml files only, so it runs on every change.
+  # asks `cargo metadata --no-deps`, which reads the manifests and builds
+  # nothing, so it runs on every change.
   layers:
     name: Crate layers
     runs-on: ubuntu-latest
@@ -157,6 +158,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      - name: Install the pinned Rust toolchain
+        run: rustup show active-toolchain || rustup toolchain install
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: "24"

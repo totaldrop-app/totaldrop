@@ -7,11 +7,13 @@
 // (docs/ARCHITECTURE.md, "Katmanlar"): the protocol and cryptography
 // libraries know nothing above them, the servers link only the wire format
 // (never the cryptography or the client engine), and nothing depends on an
-// app. This reads each workspace member's Cargo.toml and fails when a path
-// dependency on another workspace crate is not in the table below, so the
-// diagram in the document cannot drift from the code unnoticed.
+// app. This asks Cargo for the workspace (`cargo metadata --no-deps`, which
+// reads the manifests only and builds nothing) and fails when a dependency
+// on another workspace crate is not in the table below, so the diagram in
+// the document cannot drift from the code unnoticed. Cargo, not a parser of
+// our own, reads the manifests, so every way of writing a dependency counts.
 
-import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { execFileSync } from "node:child_process";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -35,44 +37,27 @@ export const ALLOWED_DEV = {
   "totaldrop-cli": ["totaldrop-relay", "totaldrop-rendezvous"],
 };
 
-/** The package name and the workspace dependencies of one Cargo.toml.
- * Every `[…dependencies]` table counts, `target.….dependencies` included;
- * `dev` tells whether the table is `dev-dependencies`. Only names that are
- * workspace crates are kept. */
-export function parseManifest(text, workspace) {
-  let name = null;
-  let table = "";
-  const deps = [];
-  for (const raw of text.split("\n")) {
-    const line = raw.replace(/#.*$/, "").trim();
-    const header = /^\[\[?([^\]]+)\]\]?$/.exec(line);
-    if (header) {
-      table = header[1].trim();
-      continue;
-    }
-    const kv = /^("?)([A-Za-z0-9_-]+)\1\s*=\s*(.*)$/.exec(line);
-    if (!kv) continue;
-    const [, , key, value] = kv;
-    if (table === "package" && key === "name") {
-      name = JSON.parse(value);
-      continue;
-    }
-    if (!/(^|\.)(dev-|build-)?dependencies$/.test(table)) continue;
-    // `package = "…"` renames a dependency; the real crate name decides.
-    const renamed = /package\s*=\s*"([^"]+)"/.exec(value);
-    const crate = renamed ? renamed[1] : key;
-    if (workspace.has(crate)) {
-      deps.push({ crate, dev: /(^|\.)dev-dependencies$/.test(table) });
-    }
-  }
-  return { name, deps };
+/** The workspace crates and their dependencies on each other, from the
+ * output of `cargo metadata --no-deps --format-version 1`. A dependency
+ * counts whatever its kind (normal, build, dev) and target; only dev ones
+ * are marked `dev`. A renamed dependency counts by its real name. */
+export function workspaceEdges(metadata) {
+  const members = new Set(metadata.workspace_members);
+  const packages = metadata.packages.filter((p) => members.has(p.id));
+  const names = new Set(packages.map((p) => p.name));
+  return packages.map((p) => ({
+    name: p.name,
+    deps: p.dependencies
+      .filter((d) => names.has(d.name))
+      .map((d) => ({ crate: d.name, dev: d.kind === "dev" })),
+  }));
 }
 
 /** Every edge that the tables above do not allow, as readable lines. */
-export function violations(manifests) {
+export function violations(crates) {
   const out = [];
-  for (const { name, deps } of manifests) {
-    if (!(name in ALLOWED)) {
+  for (const { name, deps } of crates) {
+    if (!Object.hasOwn(ALLOWED, name)) {
       out.push(`${name}: not in tools/check-layers.mjs; add it to ALLOWED`);
       continue;
     }
@@ -85,41 +70,27 @@ export function violations(manifests) {
   return out;
 }
 
-/** The workspace members listed in the root Cargo.toml; a `dir/*` entry
- * stands for every directory under `dir` that has a Cargo.toml. */
-export function members(root) {
-  const text = readFileSync(join(root, "Cargo.toml"), "utf8");
-  const list = /members\s*=\s*\[([^\]]*)\]/.exec(text);
-  if (!list) throw new Error("no workspace members in Cargo.toml");
-  const dirs = [];
-  for (const m of list[1].matchAll(/"([^"]+)"/g)) {
-    if (m[1].endsWith("/*")) {
-      const base = m[1].slice(0, -2);
-      for (const entry of readdirSync(join(root, base), { withFileTypes: true })) {
-        if (entry.isDirectory() && existsSync(join(root, base, entry.name, "Cargo.toml"))) {
-          dirs.push(join(base, entry.name));
-        }
-      }
-    } else {
-      dirs.push(m[1]);
-    }
-  }
-  return dirs;
+/** The workspace as Cargo reads it, from the repository at `root`. */
+export function readWorkspace(root) {
+  const json = execFileSync(
+    "cargo",
+    ["metadata", "--no-deps", "--format-version", "1", "--offline"],
+    { cwd: root, encoding: "utf8", maxBuffer: 64 << 20 },
+  );
+  return workspaceEdges(JSON.parse(json));
 }
 
 function main() {
   const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-  const dirs = members(root);
-  const texts = dirs.map((d) => readFileSync(join(root, d, "Cargo.toml"), "utf8"));
-  const workspace = new Set(texts.map((t) => parseManifest(t, new Set()).name));
-  const manifests = texts.map((t) => parseManifest(t, workspace));
-  const found = violations(manifests);
+  const crates = readWorkspace(root);
+  const found = violations(crates);
   if (found.length) {
-    console.error("Crate layering broken (docs/ARCHITECTURE.md, \"Katmanlar\"):");
+    console.error('Crate layering broken (docs/ARCHITECTURE.md, "Katmanlar"):');
     for (const v of found) console.error(`  ${v}`);
     process.exit(1);
   }
-  console.log(`layers ok: ${manifests.length} crates`);
+  const names = crates.map((c) => c.name).sort();
+  console.log(`layers ok: ${names.length} crates (${names.join(", ")})`);
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) main();
