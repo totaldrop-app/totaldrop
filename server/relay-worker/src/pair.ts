@@ -5,6 +5,7 @@
 // named in the object's name. Everything else is refused.
 
 import { DurableObject } from "cloudflare:workers";
+import { PROBE_STEP, restored } from "./count";
 import type { Env } from "./index";
 
 const MAGIC = new TextEncoder().encode("TDR0");
@@ -41,7 +42,6 @@ const SENT_STEP = 1024 * 1024;
  * (a client can hold TCP open and never read), so it counts against the
  * key too: at most KEY_UNANSWERED over all its sockets. An honest key whose
  * old socket died with up to 16 MiB queued still gets its full window. */
-const PROBE_STEP = 4 * 1024 * 1024;
 const UNANSWERED = 32 * 1024 * 1024;
 const KEY_UNANSWERED = 2 * UNANSWERED;
 
@@ -121,8 +121,9 @@ export class Pair extends DurableObject<Env> {
   private sent = new WeakMap<WebSocket, number>();
   /** Bytes given to each socket, then given at its last answered probe.
    * After the object wakes (a woken object sees new socket objects), read
-   * from the attachment; fewer than PROBE_STEP bytes follow the last probe,
-   * so adding one step counts high, never low. */
+   * from the attachment ({@link restored}): fewer than PROBE_STEP bytes
+   * follow the last probe, or the start, so adding one step counts high,
+   * never low. */
   private given = new WeakMap<WebSocket, number>();
   private answeredAt = new WeakMap<WebSocket, number>();
   /** Unanswered bytes on the closed (replaced) sockets of each key, which
@@ -266,9 +267,7 @@ export class Pair extends DurableObject<Env> {
     let given = this.given.get(ws);
     let answered = this.answeredAt.get(ws);
     if (given === undefined || answered === undefined) {
-      const att = attachment(ws);
-      given = att?.given === undefined ? 0 : att.given + PROBE_STEP;
-      answered = att?.answered ?? 0;
+      [given, answered] = restored(attachment(ws));
       this.given.set(ws, given);
       this.answeredAt.set(ws, answered);
     }
