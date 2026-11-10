@@ -14,8 +14,9 @@
 //                                      rewrite the page
 // Who is listed and how is decided in site/team/team.json; GitHub supplies
 // only public profile fields (name, bio, website, avatar) and the commit
-// history, unless team.json gives its own name or bio. The snapshot is site/team/github.json. The page never loads
-// anything from GitHub: visitors' browsers talk only to totaldrop.app.
+// history, unless team.json gives its own name or bio. The snapshot is
+// site/team/github.json. The page never loads anything from GitHub:
+// visitors' browsers talk only to totaldrop.app.
 // --fetch reads GITHUB_TOKEN if set (a higher rate limit), never prints it.
 import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, unlinkSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -88,12 +89,19 @@ const shown = (href) => href.replace(/^https:\/\//, "").replace(/\/$/, "");
 // True when team.json's bio for a person is set but not one clean line.
 export const badBio = (b) => b !== undefined && (typeof b !== "string" || b === "" || b !== clean(b, 240));
 
+// The language files in an i18n folder (<tag>.json), sorted.
+const langFiles = (dir) => readdirSync(dir).filter((f) => /^[a-z]{2,3}(-[A-Za-z0-9]+)*\.json$/.test(f)).sort();
+
 // The languages in an i18n folder whose file lacks a non-empty
-// tm.bio.<login>: a bio is shown only once all 35 have it.
+// tm.bio.<login>: a bio is shown only once all 35 have it. A file that is
+// not valid JSON counts as lacking it and is reported.
 export function missingBio(dir, login) {
-  return readdirSync(dir).filter((f) => /^[a-z]{2,3}(-[A-Za-z0-9]+)*\.json$/.test(f)).sort()
-    .filter((f) => { const v = JSON.parse(readFileSync(join(dir, f), "utf8"))[`tm.bio.${login}`]; return typeof v !== "string" || v.trim() === ""; })
-    .map((f) => f.slice(0, -5));
+  return langFiles(dir).filter((f) => {
+    let v;
+    try { v = JSON.parse(readFileSync(join(dir, f), "utf8"))[`tm.bio.${login}`]; }
+    catch (e) { fail(`${f}: not valid JSON`); return true; }
+    return typeof v !== "string" || v.trim() === "";
+  }).map((f) => f.slice(0, -5));
 }
 
 // The bio line of a person's card: team.json's own line, translated, or
@@ -372,7 +380,7 @@ function areaCard(c, s, d) {
 }
 
 function stats(c, s) {
-  const langs = readdirSync(I18N).filter((f) => /^[a-z]{2,3}(-[A-Za-z0-9]+)*\.json$/.test(f)).length;
+  const langs = langFiles(I18N).length;
   const changes = Object.values(s.totals).reduce((t, n) => t + n, 0);
   const item = (n, key, en) => `        <div><dt data-i18n="${key}">${en}</dt><dd>${esc(String(n))}</dd></div>`;
   return [
