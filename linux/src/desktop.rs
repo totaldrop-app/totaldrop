@@ -17,10 +17,20 @@ use ashpd::desktop::file_chooser::{FileFilter, SelectedFiles};
 /// The command line's Flatpak default is the same folder: keep it equal to
 /// `downloads` in `crates/totaldrop-cli/src/sandbox.rs`.
 pub fn downloads() -> PathBuf {
-    dirs::download_dir()
-        .or_else(|| dirs::home_dir().map(|h| h.join("Downloads")))
+    downloads_in(dirs::download_dir(), dirs::home_dir())
+}
+
+/// The folder for what `dirs` found, made absolute against the current
+/// folder (#441): `dirs` takes a relative `$HOME` as it is, and with no
+/// download folder and no home the folder is `./TotalDrop`, which as a
+/// `file://` URL names another place. Only if the current folder cannot be
+/// read does it stay relative.
+fn downloads_in(download: Option<PathBuf>, home: Option<PathBuf>) -> PathBuf {
+    let dir = download
+        .or_else(|| home.map(|h| h.join("Downloads")))
         .unwrap_or_else(|| PathBuf::from("."))
-        .join("TotalDrop")
+        .join("TotalDrop");
+    std::path::absolute(&dir).unwrap_or(dir)
 }
 
 /// Decode `%XX` escapes of a file URL path.
@@ -219,6 +229,33 @@ pub async fn notify(title: String, body: String) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn the_downloads_folder_is_always_absolute() {
+        // #441: a relative folder became `file://./TotalDrop`, and "Open
+        // folder" asked for host `.`.
+        let cwd = std::env::current_dir().unwrap();
+        assert_eq!(downloads_in(None, None), cwd.join("TotalDrop"));
+        assert_eq!(
+            downloads_in(None, Some(PathBuf::from("ada"))),
+            cwd.join("ada/Downloads/TotalDrop")
+        );
+        assert_eq!(
+            downloads_in(Some(PathBuf::from("dl")), None),
+            cwd.join("dl/TotalDrop")
+        );
+        assert_eq!(
+            downloads_in(
+                Some(PathBuf::from("/home/ada/İndirilenler")),
+                Some(PathBuf::from("/home/ada"))
+            ),
+            PathBuf::from("/home/ada/İndirilenler/TotalDrop")
+        );
+        assert_eq!(
+            downloads_in(None, Some(PathBuf::from("/home/ada"))),
+            PathBuf::from("/home/ada/Downloads/TotalDrop")
+        );
+    }
 
     #[test]
     fn codes_from_links_and_typing() {
