@@ -14,7 +14,8 @@ public/
   brand/index.html    Marka sayfası: işaret, hareket, renk, yazı, düğmeler, dosyalar
   brand/files/        İndirilen logo dosyaları; site/tools/brand-files.mjs üretir
   team/index.html     Ekip sayfası: kişiler ve disipline göre iş; isimler,
-                      biyografiler ve sayılar GitHub'dan (tools/team.mjs üretir)
+                      biyografiler ve sayılar GitHub'dan (tools/team.mjs üretir);
+                      team.json'da `bio` verilen kişinin satırı 35 dilde çevrilir
   team/avatars/       Ekipteki kişilerin GitHub profil resimleri, kopyalanmış;
                       sayfa GitHub'dan hiçbir şey yüklemez
   privacy.html        Gizlilik politikası, İngilizce (esas metin)
@@ -39,7 +40,8 @@ privacy/<dil>.html    Gizlilik politikasının her dildeki metni (yalnızca <art
 tools/privacy.mjs     Gizlilik sayfalarını bu metinlerden üretir (--write) ve denetler
 tools/brand-files.mjs Marka dosyalarını işaretin geometrisinden üretir (--write, --png)
                       ve CI'da güncel olduklarını denetler
-team/team.json        Ekip sayfasında kim, hangi rolle; disiplinler ve depo yolları
+team/team.json        Ekip sayfasında kim, hangi rolle, isteğe bağlı kısa tanıtım
+                      (`bio`, çevirisi i18n'de tm.bio.<kullanıcı>); disiplinler ve depo yolları
 team/github.json      GitHub'dan alınan anlık görüntü (profil, katkı sayıları)
 tools/team.mjs        Ekip sayfasını anlık görüntüden üretir (--write), yenisini
                       GitHub'ın herkese açık API'sinden alır (--fetch) ve CI'da

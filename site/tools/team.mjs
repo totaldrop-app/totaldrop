@@ -84,6 +84,16 @@ export function website(s) {
 export const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const shown = (href) => href.replace(/^https:\/\//, "").replace(/\/$/, "");
 
+// True when team.json's bio for a person is set but not one clean line.
+export const badBio = (b) => b !== undefined && (typeof b !== "string" || b === "" || b !== clean(b, 240));
+
+// The bio line of a person's card: team.json's own line, translated, or
+// else the GitHub bio as the person wrote it.
+export function bioLine(p, pr) {
+  if (p.bio !== undefined) return `<p class="bio" data-i18n="tm.bio.${esc(p.login)}">${esc(p.bio)}</p>`;
+  return pr.bio ? `<p class="bio" dir="auto">${esc(pr.bio)}</p>` : "";
+}
+
 function loadConfig() {
   const c = JSON.parse(readFileSync(CONFIG, "utf8"));
   if (!/^[A-Za-z0-9-]+\/[A-Za-z0-9._-]+$/.test(c.repo)) fail(`team.json: bad repo ${c.repo}`);
@@ -98,6 +108,10 @@ function loadConfig() {
     // A display name, when the person prefers another spelling than their
     // GitHub profile's (for example the profile is in capitals).
     if (p.name !== undefined && (typeof p.name !== "string" || p.name !== clean(p.name, 80) || p.name === "")) fail(`team.json: ${p.login}: bad name`);
+    // A line about the person's work on TotalDrop, in English, used instead
+    // of their GitHub bio (#408). It is translated under tm.bio.<login> in
+    // site/public/i18n/<tag>.json; add the key in all 35 languages.
+    if (badBio(p.bio)) fail(`team.json: ${p.login}: bad bio`);
   }
   for (const d of c.disciplines) {
     if (!(d.key in AREAS)) fail(`team.json: unknown discipline ${d.key}`);
@@ -275,7 +289,8 @@ function personCard(c, s, p) {
     `            <h3 dir="auto">${esc(p.name || pr.name)}</h3>`,
     `            <p class="role" data-i18n="tm.role.${p.role}">${role}</p>`,
   ];
-  if (pr.bio) lines.push(`            <p class="bio" dir="auto">${esc(pr.bio)}</p>`);
+  const bio = bioLine(p, pr);
+  if (bio) lines.push(`            ${bio}`);
   if (areas) lines.push(`            <ul class="tags">${areas}</ul>`);
   lines.push(`            <div class="person-foot">`);
   const st = stat(s.totals[p.login]);

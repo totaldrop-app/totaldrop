@@ -67,3 +67,18 @@ test("bar colours follow the role, not the order in team.json", async () => {
   assert.equal(series(c, ""), "s-other");
   assert.equal(series(c, "someone"), "s-other");
 });
+
+test("a bio in team.json replaces the GitHub bio and is translated (#408)", async () => {
+  const { bioLine } = await import("./team.mjs");
+  const own = bioLine({ login: "ozdil", bio: "Leads product, design and releases." }, { bio: "Other projects." });
+  assert.equal(own, `<p class="bio" data-i18n="tm.bio.ozdil">Leads product, design and releases.</p>`);
+  assert.equal(bioLine({ login: "x" }, { bio: "QA <specialist>" }), `<p class="bio" dir="auto">QA &lt;specialist&gt;</p>`);
+  assert.equal(bioLine({ login: "x" }, { bio: "" }), "");
+});
+
+test("a bio in team.json must be clean, one line and not empty (#408)", async () => {
+  const { badBio } = await import("./team.mjs");
+  assert.equal(badBio(undefined), false);
+  assert.equal(badBio("Leads product, design and releases."), false);
+  for (const bad of ["", " padded ", "two  spaces", "a‮b", "x".repeat(241), 42, null]) assert.ok(badBio(bad), JSON.stringify(bad));
+});
