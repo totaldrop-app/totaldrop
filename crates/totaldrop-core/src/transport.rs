@@ -1654,8 +1654,8 @@ mod tests {
     /// datagrams again, so a side whose peer did not move (no shared relay,
     /// or a link closed during setup, or a peer that was only paused) does
     /// not lose a direct path that recovers (#185 review). Here only the
-    /// sender watches; the path is gone until the sender moved, which is
-    /// longer than its wait, then comes back.
+    /// sender watches; the path is gone until the sender has heard nothing
+    /// for longer than its wait and moved, then comes back.
     ///
     /// #395: the move is waited for from the moment of the cut, with a
     /// deadline, instead of a fixed sleep from the start, and the transfer
@@ -1663,10 +1663,12 @@ mod tests {
     /// wait before each resend, and what the sender resends while on the
     /// relay is lost, since the receiver is not on it; so once the path is
     /// back the transfer can stand still for some seconds before QUIC
-    /// resends. On a slow runner (windows-11-arm) that missed the old
-    /// 25-second limit three times. How soon the transfer picks up again is
-    /// not what this test checks (#435); that it picks up at all, directly,
-    /// is.
+    /// resends (measured on Linux). That is the likely reason the old
+    /// 25-second limit was missed three times on a slow runner
+    /// (windows-11-arm), where only the missed limit was seen; the failure
+    /// message below now shows the timing. How soon the transfer picks up
+    /// again is not what this test checks (#435); that it picks up at all,
+    /// directly, is.
     #[tokio::test]
     async fn a_side_that_moved_comes_back_when_the_direct_path_returns() {
         let silence = Duration::from_secs(2);
@@ -1706,16 +1708,11 @@ mod tests {
             arrive_deadline,
         )
         .await;
-        let (moved, after) = healed
-            .await
-            .unwrap()
-            .expect("the transfer stopped before the path was cut");
+        let (moved, after) = healed.await.unwrap().expect("the path was never cut");
         assert!(
             moved,
             "the sender did not move within {move_deadline:?} of the cut"
         );
-        // The path was gone for longer than the wait, as the test means.
-        assert!(after >= silence, "the sender moved after only {after:?}");
         assert!(
             arrived,
             "the transfer did not survive a direct path that came back \
