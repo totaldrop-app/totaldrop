@@ -394,8 +394,11 @@ Worker iletiyi `MAIL_FORWARD_TO`'daki her adrese ayrı ayrı iletir.
 4. İlk kurulumda, Worker dağıtıldıktan sonra Email Routing → Routing
    Rules altında `hello@` kuralının eylemini "Send to a Worker",
    hedefini `totaldrop-mail` yapın. Aynı Worker başka adreslerin
-   kuralına da hedef olabilir; `security@` ve `privacy@` için ayrı karar
-   verilir ve burada yazılır.
+   kuralına da hedef olabilir. Karar (10 Kas 2026): bakımcılardan
+   birine gelen her proje e-postası ötekine de gelir. Bu yüzden
+   `hello@`, `privacy@`, `security@` ve varsa catch-all kuralı da
+   `totaldrop-mail`'e yönlendirilir; tek bir bakımcıya giden kural
+   kalmaz.
 5. Proje dışındaki bir adresten `hello@totaldrop.app`'e bir deneme
    e-postası gönderin ve her kutuya geldiğini görün (önemsiz posta
    klasörüne de bakın). Email Routing → Activity log iletinin durumunu
