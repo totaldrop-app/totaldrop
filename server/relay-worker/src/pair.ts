@@ -5,7 +5,7 @@
 // named in the object's name. Everything else is refused.
 
 import { DurableObject } from "cloudflare:workers";
-import { PROBE_STEP, restored } from "./count";
+import { PROBE_STEP, noteGiven, restored } from "./count";
 import type { Env } from "./index";
 
 const MAGIC = new TextEncoder().encode("TDR0");
@@ -67,7 +67,8 @@ interface Attachment {
   ended?: boolean;
   /** Bytes this socket had sent, at the last SENT_STEP passed. */
   sent?: number;
-  /** Bytes given to this socket when its last probe went out. */
+  /** Bytes given to this socket when its last probe went out; 0 once it
+   * was given anything before its first probe (count.ts). */
   given?: number;
   /** Bytes given to it when its last answered probe went out. */
   answered?: number;
@@ -122,8 +123,7 @@ export class Pair extends DurableObject<Env> {
   /** Bytes given to each socket, then given at its last answered probe.
    * After the object wakes (a woken object sees new socket objects), read
    * from the attachment ({@link restored}): fewer than PROBE_STEP bytes
-   * follow the last probe, or the start, so adding one step counts high,
-   * never low. */
+   * follow its last write, so adding one step counts high, never low. */
   private given = new WeakMap<WebSocket, number>();
   private answeredAt = new WeakMap<WebSocket, number>();
   /** Unanswered bytes on the closed (replaced) sockets of each key, which
@@ -292,13 +292,18 @@ export class Pair extends DurableObject<Env> {
    * sends a probe after them. */
   private gave(ws: WebSocket, before: number, after: number): void {
     this.given.set(ws, after);
-    if (Math.floor(after / PROBE_STEP) <= Math.floor(before / PROBE_STEP)) return;
+    // The attachment is read only when it may change: at the first bytes
+    // given and at each step (noteGiven).
+    if (before !== 0 && Math.floor(after / PROBE_STEP) <= Math.floor(before / PROBE_STEP)) return;
     const att = attachment(ws);
     if (!att) return;
-    const nonce = crypto.getRandomValues(new Uint8Array(16));
-    ws.send(new Uint8Array([...PROBE, ...nonce]));
-    att.given = after;
-    att.probes = [...(att.probes ?? []), [hex(nonce), after]];
+    const step = noteGiven(att, before, after);
+    if (step === "none") return;
+    if (step === "probe") {
+      const nonce = crypto.getRandomValues(new Uint8Array(16));
+      ws.send(new Uint8Array([...PROBE, ...nonce]));
+      att.probes = [...(att.probes ?? []), [hex(nonce), after]];
+    }
     ws.serializeAttachment(att);
   }
 
