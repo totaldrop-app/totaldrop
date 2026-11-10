@@ -28,6 +28,11 @@ export default {
     const url = new URL(request.url);
     const upgrade = request.headers.get("Upgrade")?.toLowerCase() === "websocket";
     if (request.method !== "GET") return new Response(null, { status: 405 });
+    // A web page's WebSocket always carries Origin; the apps and the
+    // command line never send it (#450).
+    if (upgrade && request.headers.has("Origin")) {
+      return new Response("browsers are not served\n", { status: 403 });
+    }
     if (!url.pathname.startsWith(PREFIX)) {
       return new Response("TotalDrop relay", { status: upgrade ? 404 : 200 });
     }

@@ -38,7 +38,7 @@ use futures_util::{SinkExt, StreamExt};
 use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::{Mutex, Semaphore, mpsc};
 use tokio_tungstenite::tungstenite::Message;
-use tokio_tungstenite::tungstenite::handshake::server::{Request, Response};
+use tokio_tungstenite::tungstenite::handshake::server::{ErrorResponse, Request, Response};
 use tokio_tungstenite::tungstenite::protocol::WebSocketConfig;
 use totaldrop_proto::wire::{ClientMessage, MAX_MAILBOX_BODY, Mood, ServerMessage};
 
@@ -385,7 +385,7 @@ impl Server {
         let mut path = String::new();
         let callback = |req: &Request, resp: Response| {
             path = req.uri().path().to_owned();
-            Ok(resp)
+            refuse_browsers(req, resp)
         };
         let accepted = tokio::time::timeout(
             IO_TIMEOUT,
@@ -724,6 +724,19 @@ pub async fn spawn(
     let server = Server::new(config);
     let task = tokio::spawn(server.clone().serve(listener));
     Ok((local, server, task))
+}
+
+/// #450: a WebSocket opened by a web page always carries `Origin`; the
+/// apps and the command line never send it. Refusing those keeps a page
+/// from opening connections from its visitors' browsers.
+#[allow(clippy::result_large_err)] // the type tungstenite asks for
+fn refuse_browsers(req: &Request, resp: Response) -> Result<Response, ErrorResponse> {
+    if req.headers().contains_key("origin") {
+        let mut refused = ErrorResponse::new(Some("browsers are not served\n".to_owned()));
+        *refused.status_mut() = tokio_tungstenite::tungstenite::http::StatusCode::FORBIDDEN;
+        return Err(refused);
+    }
+    Ok(resp)
 }
 
 #[cfg(test)]
