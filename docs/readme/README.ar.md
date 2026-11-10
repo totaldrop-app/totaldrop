@@ -16,7 +16,7 @@
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/totaldrop-app/totaldrop/badge)](https://scorecard.dev/viewer/?uri=github.com/totaldrop-app/totaldrop)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/16332/badge)](https://www.bestpractices.dev/projects/16332)
 [![الترخيص](https://img.shields.io/badge/license-GPL--3.0%20%C2%B7%20MIT%2FApache--2.0-22184F)](../../LICENSING.md)
-[![الرعاية](https://img.shields.io/badge/Open%20Collective-donate-1F87FF?logo=opencollective&logoColor=white)](https://opencollective.com/totaldrop)
+[![Open Collective](https://img.shields.io/badge/Open%20Collective-donate-1F87FF?logo=opencollective&logoColor=white)](https://opencollective.com/totaldrop)
 
 **[الموقع](https://totaldrop.app)** · **[التنزيل](https://totaldrop.app/download/)** · [خارطة الطريق](https://totaldrop.app/roadmap/) · [التبرّع](https://totaldrop.app/donate/) · [الإصدارات](https://github.com/totaldrop-app/totaldrop/releases) · [X](https://x.com/totaldropapp) · [Instagram](https://www.instagram.com/totaldropapp/) · [Threads](https://www.threads.com/@totaldropapp)
 

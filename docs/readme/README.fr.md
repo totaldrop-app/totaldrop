@@ -16,7 +16,7 @@ Gratuit et open source. Chiffré de bout en bout. Pas d'e-mail, pas de numéro d
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/totaldrop-app/totaldrop/badge)](https://scorecard.dev/viewer/?uri=github.com/totaldrop-app/totaldrop)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/16332/badge)](https://www.bestpractices.dev/projects/16332)
 [![License](https://img.shields.io/badge/license-GPL--3.0%20%C2%B7%20MIT%2FApache--2.0-22184F)](../../LICENSING.md)
-[![Sponsor](https://img.shields.io/badge/Open%20Collective-donate-1F87FF?logo=opencollective&logoColor=white)](https://opencollective.com/totaldrop)
+[![Open Collective](https://img.shields.io/badge/Open%20Collective-donate-1F87FF?logo=opencollective&logoColor=white)](https://opencollective.com/totaldrop)
 
 **[Site web](https://totaldrop.app)** · **[Télécharger](https://totaldrop.app/download/)** · [Feuille de route](https://totaldrop.app/roadmap/) · [Faire un don](https://totaldrop.app/donate/) · [Versions](https://github.com/totaldrop-app/totaldrop/releases) · [X](https://x.com/totaldropapp) · [Instagram](https://www.instagram.com/totaldropapp/) · [Threads](https://www.threads.com/@totaldropapp)
 

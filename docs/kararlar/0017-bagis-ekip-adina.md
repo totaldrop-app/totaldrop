@@ -3,6 +3,9 @@
 - **Durum:** Önerilen, 7 Kasım 2026 (Ozan, #352); harcama kuralı 8 Kasım
   2026'da Sadık'ın önerisiyle eklendi. Open Source Collective başvuruyu
   onayladıktan sonra, birleştirmeden önce Ozan'ın onayıyla "Kabul" olur.
+  İki kişi koşulu 10 Kasım 2026'da karşılanıyor: Open Collective'de
+  ekip hesabının yanında iki kişi kendi hesabıyla yönetici. Bu koşul
+  bozulursa karar "Kabul" olamaz.
 - **Bağlam:** [0005](0005-bagis.md) bağışların GitHub Sponsors üzerinden
   alınmasını kararlaştırdı, ama adres proje liderinin kişisel profiliydi
   (github.com/sponsors/ozdil). Proje artık bir ekiple yürüyor
@@ -15,7 +18,9 @@
     Tek bağış kanalı ilkesi (0005) sürer; kanal GitHub Sponsors'tan
     Open Collective'e geçer.
   - Para mali emanetçide (fiscal host) durur: kâr amacı gütmeyen Open
-    Source Collective. Emanetçi gelen her bağıştan %10 alır. Her giriş ve
+    Source Collective. Emanetçi gelen her bağıştan %10 alır; kart ya da
+    PayPal işlemcisi bunun üstüne kendi ücretini keser (ülkeye ve ödeme
+    yöntemine göre değişir). Her giriş ve
     çıkış Open Collective'in herkese açık defterinde görünür.
   - Open Collective sayfasını en az iki ayrı kişi, kendi kişisel
     hesaplarıyla yönetir. Collective'in iletişim adresi ve ekip hesabı
@@ -57,5 +62,7 @@
 - **Sonuçlar:** README'ler, site (ana sayfa ve /donate), Linux AppStream
   dosyası, `.github/FUNDING.yml` ve [docs/marka.md](../marka.md) yeni
   adrese geçer. Bu değişiklik emanetçi onayı gelmeden birleştirilmez,
-  yoksa bağış sayfası para alamaz. Ayrı bir PR'da ve 35 dilde, /donate
-  sayfasının maliyet tablosuna emanetçi kesintisi yazılır.
+  yoksa bağış sayfası para alamaz. /donate sayfasının maliyet tablosuna
+  aynı PR'da ve 35 dilde "Bağış kesintileri" satırı eklenir (%10 emanetçi
+  payı ve işlemci ücreti); sayfa "bir maliyet eklendiğinde önce bu sayfa
+  değişir" sözünü böylece tutar.

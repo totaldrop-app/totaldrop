@@ -16,7 +16,7 @@ Za darmo i na otwartych źródłach. Szyfrowanie end-to-end. Bez e-maila, bez nu
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/totaldrop-app/totaldrop/badge)](https://scorecard.dev/viewer/?uri=github.com/totaldrop-app/totaldrop)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/16332/badge)](https://www.bestpractices.dev/projects/16332)
 [![License](https://img.shields.io/badge/license-GPL--3.0%20%C2%B7%20MIT%2FApache--2.0-22184F)](../../LICENSING.md)
-[![Sponsor](https://img.shields.io/badge/Open%20Collective-donate-1F87FF?logo=opencollective&logoColor=white)](https://opencollective.com/totaldrop)
+[![Open Collective](https://img.shields.io/badge/Open%20Collective-donate-1F87FF?logo=opencollective&logoColor=white)](https://opencollective.com/totaldrop)
 
 **[Strona](https://totaldrop.app)** · **[Pobierz](https://totaldrop.app/download/)** · [Plan rozwoju](https://totaldrop.app/roadmap/) · [Wesprzyj](https://totaldrop.app/donate/) · [Wydania](https://github.com/totaldrop-app/totaldrop/releases) · [X](https://x.com/totaldropapp) · [Instagram](https://www.instagram.com/totaldropapp/) · [Threads](https://www.threads.com/@totaldropapp)
 
