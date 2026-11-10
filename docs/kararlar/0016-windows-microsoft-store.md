@@ -1,6 +1,6 @@
 # 0016: Windows uygulaması WinUI 3 ile yazılır, Microsoft Store'dan dağıtılır
 
-- **Durum:** Önerilen, 7 Kasım 2026 (#33)
+- **Durum:** Kabul, 10 Kasım 2026 (Ozan, #33)
 - **Bağlam:** Windows uygulaması (#33) bugüne kadar iki şeyi
   bekliyordu: arayüz teknolojisinin seçilmesi ve imza sertifikasının
   bağışlarla alınması. Bağış sayfası bunu "Windows'tan önce" bir gider
