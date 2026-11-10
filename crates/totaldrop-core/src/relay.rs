@@ -433,6 +433,17 @@ async fn close(ws: &mut crate::rendezvous::Ws, wait: Duration) {
     let _ = tokio::time::timeout(wait, ws.close(None)).await;
 }
 
+/// Ping the relay, waiting at most `wait`; `false` when the write did not
+/// get through in time (#424).
+async fn ping_within(ws: &mut crate::rendezvous::Ws, wait: Duration) -> Result<bool> {
+    match tokio::time::timeout(wait, ws.send(Message::Ping(Vec::new().into()))).await {
+        Ok(written) => written
+            .map(|()| true)
+            .map_err(|e| Error::Connect(format!("relay: {e}"))),
+        Err(_) => Ok(false),
+    }
+}
+
 /// One connection to the relay. It ends when datagrams went out and
 /// nothing came back for `silence`, and, once parked, when its connection
 /// is on its direct path again: at once when parked, and after
@@ -567,9 +578,8 @@ async fn run(url: &str, own: &EndpointKey, peer: [u8; 32], c: Conn<'_>) -> Resul
                 _ => return Ok(Ended::Relay),
             },
             _ = liveness.tick(), if unanswered.is_some() => {
-                match tokio::time::timeout(silence, ws.send(Message::Ping(Vec::new().into()))).await {
-                    Ok(written) => written.map_err(|e| Error::Connect(format!("relay: {e}")))?,
-                    Err(_) => return Ok(Ended::Relay),
+                if !ping_within(&mut ws, silence).await? {
+                    return Ok(Ended::Relay);
                 }
             }
             () = park.notify.notified() => {
@@ -587,9 +597,8 @@ async fn run(url: &str, own: &EndpointKey, peer: [u8; 32], c: Conn<'_>) -> Resul
             _ = ping.tick() => {
                 // Like every other write here: a relay that stopped
                 // reading must not hold the loop past `silence` (#424).
-                match tokio::time::timeout(silence, ws.send(Message::Ping(Vec::new().into()))).await {
-                    Ok(written) => written.map_err(|e| Error::Connect(format!("relay: {e}")))?,
-                    Err(_) => return Ok(Ended::Relay),
+                if !ping_within(&mut ws, silence).await? {
+                    return Ok(Ended::Relay);
                 }
             }
         }
@@ -886,12 +895,10 @@ mod tests {
         let pinging = tokio::spawn(async move {
             while ws.send(Message::Ping(vec![0; 125].into())).await.is_ok() {}
         });
-        let again = tokio::time::timeout(Duration::from_secs(20), relay.accept()).await;
+        // Within a few `silence`s, not SILENCE (10 s): the ping waits for
+        // the link's own limit. `sign_in` gives up after 5 seconds.
+        let _again = sign_in(&relay).await;
         pinging.abort();
-        assert!(
-            again.is_ok_and(|r| r.is_ok()),
-            "the link stayed in a ping to a relay that does not read"
-        );
     }
 
     /// #424: closing a connection to a relay that stopped reading does
@@ -927,18 +934,22 @@ mod tests {
         let fallback = Fallback::new(tokio::sync::mpsc::channel(1).0);
         link.park(&fallback);
         // Parked on the direct path, the link closes; then the connection
-        // moves onto the relay and has a datagram for it. The pause lets
-        // the link see the park before the move (nothing to wait on here:
-        // the close never reaches the stand-in relay).
+        // moves onto the relay and keeps sending to it. The pause only makes
+        // the link see the park before the move, so that it closes (without
+        // the fix it then failed every time); if it sees the move first, it
+        // writes a datagram instead, which is bounded too, and the next
+        // datagram brings it back all the same.
         tokio::time::sleep(Duration::from_millis(300)).await;
         fallback.set_moved(true);
-        out.send(vec![2; 100]).await.unwrap();
-        let again = tokio::time::timeout(Duration::from_secs(20), relay.accept()).await;
+        let sending = tokio::spawn(async move {
+            while out.send(vec![2; 100]).await.is_ok() {
+                tokio::time::sleep(Duration::from_millis(100)).await;
+            }
+        });
+        // `sign_in` gives up after 5 seconds.
+        let _again = sign_in(&relay).await;
+        sending.abort();
         pinging.abort();
-        assert!(
-            again.is_ok_and(|r| r.is_ok()),
-            "the link stayed in closing a connection to a relay that does not read"
-        );
     }
 
     /// A link that waits on the relay for the other device stays: the relay
