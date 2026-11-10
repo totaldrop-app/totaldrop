@@ -5,6 +5,9 @@ nasıl ilerlediğini üst düzeyde anlatır. Ayrıntılar başka belgelerde duru
 protokol [protocol-v0.1-notes.md](protocol-v0.1-notes.md), tehditler ve
 güven sınırları [tehdit-modeli.md](tehdit-modeli.md), kararların nedenleri
 [kararlar/](kararlar/README.md), depo düzeni [gelistirme.md](gelistirme.md).
+Aynı yapının kod düzeyindeki haritası (katman diyagramı, `dosya:satır`
+ile akış takibi, veri modeli, yapılandırma, test ve sıcak noktalar)
+[ARCHITECTURE.md](ARCHITECTURE.md) içindedir.
 
 ## Parçalar
 
