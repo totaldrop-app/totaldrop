@@ -21,7 +21,6 @@
 
 use std::collections::{HashMap, VecDeque};
 use std::ffi::{OsStr, OsString};
-use std::os::unix::ffi::OsStrExt as _;
 use std::path::Path;
 use std::sync::{Mutex, PoisonError};
 use std::time::Duration;
@@ -132,7 +131,7 @@ impl Request {
             .iter()
             .map(|i| {
                 if i.starts_with('/') {
-                    file_uri(i)
+                    crate::desktop::file_url(Path::new(i))
                 } else {
                     i.clone()
                 }
@@ -216,20 +215,6 @@ fn has_scheme(s: &str) -> bool {
     let mut chars = scheme.chars();
     chars.next().is_some_and(|c| c.is_ascii_alphabetic())
         && chars.all(|c| c.is_ascii_alphanumeric() || "+-.".contains(c))
-}
-
-/// A `file://` URL for an absolute path, with every byte outside the
-/// unreserved set and `/` percent-encoded.
-fn file_uri(path: &str) -> String {
-    let mut out = String::from("file://");
-    for &b in OsStr::new(path).as_bytes() {
-        if b.is_ascii_alphanumeric() || b"/-._~".contains(&b) {
-            out.push(char::from(b));
-        } else {
-            out.push_str(&format!("%{b:02X}"));
-        }
-    }
-    out
 }
 
 /// A request the window has to show, with the launcher's activation token
