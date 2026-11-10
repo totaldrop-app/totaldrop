@@ -315,8 +315,8 @@ treated as final.
       before it, so the answer tells the relay how much it still holds for
       that device. The Cloudflare relay cannot see its send buffer and
       bounds it this way: a probe after the first bytes it gives a device
-      and then every 4 MiB, a count that survives hibernation (counted at
-      most 4 MiB high after a wake, never low; #426), and
+      and then every 4 MiB, a count that survives hibernation (never low;
+      4 MiB high for each wake until the next answered probe; #426), and
       datagrams for a connection with more than 32 MiB after its last
       answered probe, or for a key with more than 64 MiB over all its
       connections (a replaced one counts until it is gone), are dropped
