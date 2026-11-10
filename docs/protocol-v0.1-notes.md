@@ -79,7 +79,10 @@ treated as final.
      together) at once and one more every second after that (threat model
      T9). A client is an IPv4 address or an IPv6 /64. Past its rate the
      server answers `error` with the reason `too many requests` and closes
-     the connection; the refused connection is not counted. The counters
+     the connection; the refused connection is not counted. The Rust server
+     then reads what the client sent for up to 2 seconds, until the client
+     closes too, so that the client's unread first message does not turn
+     the close into a reset, in which Windows drops the refusal (#442). The counters
      are kept in memory only, under a hash keyed at random when the server
      starts, and a client is forgotten once it is back at a full burst. The
      Rust server counts every routed connection when it opens, the Worker

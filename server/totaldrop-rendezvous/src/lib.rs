@@ -115,6 +115,11 @@ const MAX_PENDING_BYTES: usize = 32 * 1024;
 const COOLDOWN: Duration = Duration::from_secs(10 * 60);
 /// How long the WebSocket handshake and each write may take.
 const IO_TIMEOUT: Duration = Duration::from_secs(10);
+/// How long a refused connection is kept open for the client to close it.
+/// The client sends its first message right after the handshake; closing
+/// the socket with it unread resets the connection, and Windows then drops
+/// the refusal before the client reads it (#442).
+const REFUSAL_LINGER: Duration = Duration::from_secs(2);
 /// What a client over its rate is told.
 pub const TOO_MANY: &str = "too many requests";
 
@@ -408,6 +413,13 @@ impl Server {
             let _ = tokio::time::timeout(IO_TIMEOUT, async {
                 let _ = ws.send(Message::Binary(refusal.encode().into())).await;
                 let _ = ws.close(None).await;
+            })
+            .await;
+            // Read what the client sent until it closes too (RFC 6455,
+            // section 7.1.1: the server closes the TCP connection after the
+            // closing handshake), so that nothing is left unread.
+            let _ = tokio::time::timeout(REFUSAL_LINGER, async {
+                while let Some(Ok(_)) = ws.next().await {}
             })
             .await;
             return;
