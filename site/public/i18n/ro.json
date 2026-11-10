@@ -543,7 +543,7 @@
   "tm.a.servers.d": "Serverele de întâlnire și de releu pe Cloudflare și compilările, verificările și implementările automate.",
   "tm.a.site": "Site web",
   "tm.a.site.d": "totaldrop.app în 35 de limbi, fără instrumente de urmărire și fără cereri către terți.",
-  "tm.ai.d": "Scrie o mare parte din cod și face revizuirea independentă a fiecărui pull request. Nu are niciun rol în proiect: coordonatorul de proiect aprobă fiecare îmbinare, versiune și implementare.",
+  "tm.ai.d": "Scrie o mare parte din cod și face revizuirea independentă a fiecărui pull request. Nu are niciun rol în proiect: fiecare îmbinare este făcută sau aprobată de un întreținător, iar coordonatorul de proiect aprobă fiecare versiune și implementare.",
   "tm.areas.lede": "Fiecare disciplină este o parte a depozitului. Cifrele numără modificările (commit-urile) care au atins-o.",
   "tm.areas.title": "Munca, pe discipline",
   "tm.bot.d": "Deschide un pull request când o dependență are o versiune nouă. Fiecare este revizuit ca orice altă modificare.",

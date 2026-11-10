@@ -543,7 +543,7 @@
   "tm.a.servers.d": "Die Vermittlungs- und Relay-Server bei Cloudflare sowie die automatischen Builds, Prüfungen und Deployments.",
   "tm.a.site": "Website",
   "tm.a.site.d": "totaldrop.app in 35 Sprachen, ohne Tracker und ohne Anfragen an Dritte.",
-  "tm.ai.d": "Schreibt einen großen Teil des Codes und übernimmt die unabhängige Prüfung jedes Pull Requests. Er hat keine Rolle im Projekt: Jede Zusammenführung, jede Veröffentlichung und jedes Deployment genehmigt der Projektleiter.",
+  "tm.ai.d": "Schreibt einen großen Teil des Codes und übernimmt die unabhängige Prüfung jedes Pull Requests. Er hat keine Rolle im Projekt: Jede Zusammenführung nimmt ein Maintainer vor oder genehmigt sie, jede Veröffentlichung und jedes Deployment genehmigt der Projektleiter.",
   "tm.areas.lede": "Jedes Fachgebiet ist ein Teil des Repositorys. Die Zahlen zählen die Änderungen (Commits), die ihn betrafen.",
   "tm.areas.title": "Die Arbeit nach Fachgebiet",
   "tm.bot.d": "Öffnet einen Pull Request, wenn es eine neue Version einer Abhängigkeit gibt. Jeder wird wie jede andere Änderung geprüft.",

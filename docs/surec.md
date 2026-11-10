@@ -30,7 +30,9 @@ için [versioning.md](versioning.md) bağlayıcıdır.
    takımıdır (`.github/CODEOWNERS`); takım dışından gelen bir PR, bir
    bakımcı onaylamadan birleştirilmez (kural `main review`). Bakımcılar
    başkasının PR'ını onay vererek birleştirir. Kendi PR'larını onaysız
-   birleştirebilirler; bağımsız inceleme ise onlar için de şarttır.
+   birleştirebilirler; bağımsız inceleme onlar için de şarttır, ama bunu
+   GitHub zorlamaz: inceleme sonucu PR'a yazılmadan birleştirmemek
+   bakımcıların aralarındaki anlaşmadır.
    Roller: [GOVERNANCE.md](../GOVERNANCE.md).
 7. **Yayın:** [Sürüm listesi](#sürüm-listesi) adım adım izlenir.
 

@@ -543,7 +543,7 @@
   "tm.a.servers.d": "Zprostředkovací a přenosové servery v Cloudflare a automatická sestavení, kontroly a nasazení.",
   "tm.a.site": "Web",
   "tm.a.site.d": "totaldrop.app v 35 jazycích, bez sledování a bez požadavků na třetí strany.",
-  "tm.ai.d": "Píše velkou část kódu a provádí nezávislou kontrolu každého pull requestu. V projektu nemá žádnou roli: každé sloučení, vydání i nasazení schvaluje vedoucí projektu.",
+  "tm.ai.d": "Píše velkou část kódu a provádí nezávislou kontrolu každého pull requestu. V projektu nemá žádnou roli: každé sloučení provede nebo schválí některý ze správců a každé vydání i nasazení schvaluje vedoucí projektu.",
   "tm.areas.lede": "Každý obor je částí repozitáře. Čísla počítají změny (commity), které se ho týkaly.",
   "tm.areas.title": "Práce podle oborů",
   "tm.bot.d": "Otevře pull request, když vyjde nová verze závislosti. Každý se kontroluje jako jakákoli jiná změna.",

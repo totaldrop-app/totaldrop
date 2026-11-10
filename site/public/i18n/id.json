@@ -543,7 +543,7 @@
   "tm.a.servers.d": "Server titik temu dan relai di Cloudflare, serta build, pemeriksaan, dan penerapan otomatis.",
   "tm.a.site": "Situs web",
   "tm.a.site.d": "totaldrop.app dalam 35 bahasa, tanpa pelacak atau permintaan ke pihak ketiga.",
-  "tm.ai.d": "Menulis sebagian besar kode dan melakukan tinjauan independen atas setiap pull request. Ia tidak memegang peran apa pun di proyek: pemimpin proyek menyetujui setiap penggabungan, rilis, dan penerapan.",
+  "tm.ai.d": "Menulis sebagian besar kode dan melakukan tinjauan independen atas setiap pull request. Ia tidak memegang peran apa pun di proyek: setiap penggabungan dilakukan atau disetujui oleh seorang pengelola, dan pemimpin proyek menyetujui setiap rilis dan penerapan.",
   "tm.areas.lede": "Setiap bidang adalah satu bagian dari repositori. Angkanya menghitung perubahan (commit) yang menyentuhnya.",
   "tm.areas.title": "Pekerjaan, menurut bidang",
   "tm.bot.d": "Membuka pull request saat sebuah dependensi punya versi baru. Masing-masing ditinjau seperti perubahan lainnya.",

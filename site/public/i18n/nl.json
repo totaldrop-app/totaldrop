@@ -543,7 +543,7 @@
   "tm.a.servers.d": "De ontmoetings- en relayservers bij Cloudflare, en de automatische builds, controles en uitrol.",
   "tm.a.site": "Website",
   "tm.a.site.d": "totaldrop.app in 35 talen, zonder trackers of verzoeken aan derden.",
-  "tm.ai.d": "Schrijft een groot deel van de code en doet de onafhankelijke review van elk pull request. Hij heeft geen rol in het project: de projectleider keurt elke samenvoeging, release en uitrol goed.",
+  "tm.ai.d": "Schrijft een groot deel van de code en doet de onafhankelijke review van elk pull request. Hij heeft geen rol in het project: een maintainer voert elke samenvoeging uit of keurt die goed, en de projectleider keurt elke release en uitrol goed.",
   "tm.areas.lede": "Elk vakgebied is een deel van de repository. De getallen tellen de wijzigingen (commits) die het raakten.",
   "tm.areas.title": "Het werk, per vakgebied",
   "tm.bot.d": "Opent een pull request als er een nieuwe versie van een afhankelijkheid is. Elk wordt beoordeeld zoals elke andere wijziging.",
