@@ -138,8 +138,10 @@ expect fail "a tracked package.json is read" "scratch/package.json (@types/node 
 
 expect pass "every node-version and @types/node upgraded together" \
   "for f in $wf/*.yml; do edit \"\$f\" 's|$nv|node-version: \"$next\"|'; done
-   edit $pkg 's|\"@types/node\": \"$major\\.|\"@types/node\": \"$next.|'
-   edit $lock 's|\"@types/node\": \"$major\\.|\"@types/node\": \"$next.|; /\"node_modules\\/@types\\/node\": {/,/\"version\"/s|\"version\": \"$major\\.|\"version\": \"$next.|'"
+   for w in rendezvous-worker relay-worker; do
+     edit server/\$w/package.json 's|\"@types/node\": \"$major\\.|\"@types/node\": \"$next.|'
+     edit server/\$w/package-lock.json 's|\"@types/node\": \"$major\\.|\"@types/node\": \"$next.|; /\"node_modules\\/@types\\/node\": {/,/\"version\"/s|\"version\": \"$major\\.|\"version\": \"$next.|'
+   done"
 
 # The recipes' Qt resource options (#266).
 deb=packaging/debian/rules
