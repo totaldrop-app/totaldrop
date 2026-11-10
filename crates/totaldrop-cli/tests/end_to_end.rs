@@ -67,6 +67,7 @@ fn no_relay() -> PathOptions {
         relay: String::new(),
         stun: String::new(),
         relay_only: false,
+        gateway: totaldrop_core::portmap::Gateway::Off,
     }
 }
 
@@ -639,6 +640,7 @@ async fn relay_only_transfer_goes_through_the_relay() {
         relay: relay_url,
         stun: String::new(),
         relay_only: true,
+        gateway: totaldrop_core::portmap::Gateway::Off,
     };
     // The receiver uses the sender's relay because it is also its own.
     let (sent, received) = transfer_with(
@@ -673,6 +675,7 @@ async fn a_direct_path_wins_over_the_relay() {
         relay: relay_url,
         stun,
         relay_only: false,
+        gateway: totaldrop_core::portmap::Gateway::Off,
     };
     let (sent, received) = transfer_with(
         &server,
@@ -716,6 +719,7 @@ async fn receiver_never_contacts_a_relay_only_the_sender_chose() {
                 relay: senders_url,
                 stun: String::new(),
                 relay_only: true,
+                gateway: totaldrop_core::portmap::Gateway::Off,
             },
         },
         vec![src.join("note.txt")],
@@ -732,6 +736,7 @@ async fn receiver_never_contacts_a_relay_only_the_sender_chose() {
                 relay: receivers_url,
                 stun: String::new(),
                 relay_only: true,
+                gateway: totaldrop_core::portmap::Gateway::Off,
             },
         },
         &code,
