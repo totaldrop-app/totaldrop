@@ -41,6 +41,8 @@ jobs:
         run: node --test site/tools/test-select-colours.mjs
       - name: README and its translations
         run: node site/tools/check-readmes.mjs
+      - name: security.txt published, names SECURITY.md's channels, not about to expire
+        run: node --test site/tools/test-security-txt.mjs
       - name: Every page links only to files that exist
         working-directory: site/public
         run: |
