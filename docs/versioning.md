@@ -15,6 +15,7 @@ TotalDrop [Semantic Versioning 2.0](https://semver.org/) kullanır.
   | Linux uygulaması | `linux/Cargo.toml` |
   | Android uygulaması | `app/pubspec.yaml`; Rust kütüphanesi `app/rust/Cargo.toml` aynı sürümü, derleme numarası olmadan taşır |
   | Sunucular (rendezvous ve aktarma) | `server/totaldrop-{rendezvous,relay}/Cargo.toml`, `server/{rendezvous,relay}-worker/package.json`; dördü aynı sürümdür |
+  | E-posta Worker'ı | `server/mail-worker/package.json`; protokolün parçası değildir, kendi sürümünü taşır ve yayınlanmaz, yalnızca dağıtılır |
 
 - Sunucular ve `app/rust` çalışma alanının (workspace) sürümünü
   devralmaz: CLI'ın sürümü yükselince yayınlanmamış bir sürümle

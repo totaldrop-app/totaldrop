@@ -295,8 +295,9 @@ yükseltilince değişir ve bu denetimin dışındadır; yalnızca
 
 ## Dağıtım
 
-Site (totaldrop.app) ile buluşma ve aktarma sunucuları (rendezvous ve
-relay Worker'ları) Cloudflare'e yalnızca CI'dan, `main`'den dağıtılır
+Site (totaldrop.app), buluşma ve aktarma sunucuları (rendezvous ve
+relay Worker'ları) ve e-posta Worker'ı (`mail`, #415) Cloudflare'e
+yalnızca CI'dan, `main`'den dağıtılır
 (`.github/workflows/deploy.yml`). Böylece üretimde çalışan şey her zaman
 incelenmiş bir commit'tir.
 
@@ -318,7 +319,11 @@ incelenmiş bir commit'tir.
   (Durable Object) "unknown nameplate" yanıtını bekler; aktarma
   sunucusunda rastgele bir çift için WebSocket açıp kapatır; sitede ana
   sayfayı ve indirme sayfasını açar. Her deneme en çok 10 saniye sürer, 12
-  deneme yapılır; en geç yaklaşık üç dakikada sonuç verir.
+  deneme yapılır; en geç yaklaşık üç dakikada sonuç verir. E-posta
+  Worker'ının HTTP adresi yoktur; dağıtım yalnızca `FORWARD_TO`
+  ayarının Worker'da durduğunu denetler. İletinin ulaştığı, aşağıdaki
+  [e-posta yönlendirmesi](#e-posta-yönlendirmesi) bölümündeki gibi bir
+  deneme e-postasıyla görülür.
 - **Geri alma:** en kolay yol, Actions'ta son sağlam Deploy çalıştırmasını
   açıp aynı işi yeniden çalıştırmaktır ("Re-run jobs"): yeniden çalıştırma
   o eski commit'i dağıtır ve yine onay ister. Bu, yerelde oturum açmayı
@@ -346,9 +351,52 @@ incelenmiş bir commit'tir.
 3. Aynı ortama gizli değer `CLOUDFLARE_API_TOKEN` (belirteç) ve değişken
    `CLOUDFLARE_ACCOUNT_ID` (hesap kimliği) ekleyin. Belirteç başka hiçbir
    yerde durmaz.
-4. Eski, geniş yetkili belirteçleri ya da yerelde kalan oturumları
+4. Aynı ortama gizli değer `MAIL_FORWARD_TO` ekleyin: e-posta
+   Worker'ının ileteceği adresler, virgülle ayrılmış (en çok 10). Bu
+   adresler kişisel veridir; depoya, issue'ya ya da PR'a yazılmaz.
+5. Eski, geniş yetkili belirteçleri ya da yerelde kalan oturumları
    (`wrangler logout`) kaldırın; elle dağıtım artık gerekmez. Acil geri
    alma için açılan geçici oturum da iş bitince kapatılır.
+
+### E-posta yönlendirmesi
+
+`hello@totaldrop.app` gibi proje adreslerine gelen e-posta Cloudflare
+Email Routing'den geçer. Bir yönlendirme kuralı yalnızca tek bir hedef
+adrese gidebilir; aynı adres için ikinci bir kural yazılırsa yalnızca ilki
+çalışır. Bir adresin birden çok bakımcıya gitmesi için kural e-posta
+Worker'ına (`server/mail-worker`, adı `totaldrop-mail`) yönlendirilir.
+Worker iletiyi `MAIL_FORWARD_TO`'daki her adrese ayrı ayrı iletir.
+
+- Worker iletiyi saklamaz ve kaydetmez (observability kapalı). Ayar
+  eksik ya da bozuksa hiçbir yere iletmez, ileti hata olarak görünür.
+  `totaldrop.app` adresleri döngü kuracağı için hedef olamaz.
+- Bir hedefe iletim başarısız olursa (ör. henüz doğrulanmamışsa) öteki
+  hedefler yine alır. Hepsi başarısızsa ileti hata olur.
+
+**Kurulum ya da yeni bir bakımcı (depo yöneticisi, panelde):**
+
+1. Cloudflare → Email Routing → Destination Addresses: yeni adresi
+   ekleyin. Cloudflare o adrese bir doğrulama e-postası gönderir; adresin
+   sahibi "Verify email address" bağlantısına tıklar. Doğrulanmamış
+   adrese iletim yapılmaz.
+2. GitHub → Settings → Environments → `cloudflare`: `MAIL_FORWARD_TO`
+   gizli değerini bütün adreslerle güncelleyin.
+3. Actions → Deploy → "Run workflow" ile `mail` hedefini dağıtın ve
+   onaylayın. Gizli değer yalnızca dağıtımda Worker'a geçer; değeri
+   değiştirmek de yeniden dağıtım ister.
+4. İlk kurulumda, Worker dağıtıldıktan sonra Email Routing → Routing
+   Rules altında `hello@` kuralının eylemini "Send to a Worker",
+   hedefini `totaldrop-mail` yapın. Aynı Worker başka adreslerin
+   kuralına da hedef olabilir.
+5. Proje dışındaki bir adresten `hello@totaldrop.app`'e bir deneme
+   e-postası gönderin ve her kutuya geldiğini görün (önemsiz posta
+   klasörüne de bakın). Email Routing → Activity log iletinin durumunu
+   gösterir.
+
+**Geri alma:** iletim bozulursa en hızlı yol, `hello@` kuralının
+eylemini yeniden "Send to an email" yapıp tek bir doğrulanmış adres
+seçmektir; posta kaybolmadan tek kutuya gider. Worker'ın kendisi öteki
+Worker'lar gibi geri alınır.
 
 ## Gizli bilgiler
 
