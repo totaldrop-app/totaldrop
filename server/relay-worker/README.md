@@ -19,6 +19,7 @@ How it is built:
 ```bash
 npm ci
 npm run check                      # type check
+npm test                           # unit tests (Node 22.18 or later)
 npx wrangler dev --local --port 8798
 # in another terminal, from the repository root:
 TOTALDROP_TEST_RELAY=ws://127.0.0.1:8798/v0/relay cargo test -p totaldrop-cli --test end_to_end relay
