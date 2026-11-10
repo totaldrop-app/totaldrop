@@ -5,7 +5,7 @@
 // named in the object's name. Everything else is refused.
 
 import { DurableObject } from "cloudflare:workers";
-import { PROBE_STEP, noteGiven, restored } from "./count";
+import { PROBE_STEP, mayChange, noteGiven, restore } from "./count";
 import type { Env } from "./index";
 
 const MAGIC = new TextEncoder().encode("TDR0");
@@ -67,8 +67,8 @@ interface Attachment {
   ended?: boolean;
   /** Bytes this socket had sent, at the last SENT_STEP passed. */
   sent?: number;
-  /** Bytes given to this socket when its last probe went out; 0 once it
-   * was given anything before its first probe (count.ts). */
+  /** Bytes given to this socket, as last written (count.ts): never a full
+   * PROBE_STEP below the count. */
   given?: number;
   /** Bytes given to it when its last answered probe went out. */
   answered?: number;
@@ -122,10 +122,14 @@ export class Pair extends DurableObject<Env> {
   private sent = new WeakMap<WebSocket, number>();
   /** Bytes given to each socket, then given at its last answered probe.
    * After the object wakes (a woken object sees new socket objects), read
-   * from the attachment ({@link restored}): fewer than PROBE_STEP bytes
-   * follow its last write, so adding one step counts high, never low. */
+   * from the attachment ({@link restore}): fewer than PROBE_STEP bytes
+   * follow its last write, so adding one step counts high, never low, over
+   * any number of wakes. */
   private given = new WeakMap<WebSocket, number>();
   private answeredAt = new WeakMap<WebSocket, number>();
+  /** What the attachment last got of `given` (count.ts); unset while the
+   * socket was given nothing. */
+  private written = new WeakMap<WebSocket, number>();
   /** Unanswered bytes on the closed (replaced) sockets of each key, which
    * no longer change; dropped when one of them goes. */
   private stale = new Map<string, number>();
@@ -267,9 +271,12 @@ export class Pair extends DurableObject<Env> {
     let given = this.given.get(ws);
     let answered = this.answeredAt.get(ws);
     if (given === undefined || answered === undefined) {
-      [given, answered] = restored(attachment(ws));
+      const r = restore(attachment(ws));
+      given = r.given;
+      answered = r.answered;
       this.given.set(ws, given);
       this.answeredAt.set(ws, answered);
+      if (r.written !== undefined) this.written.set(ws, r.written);
     }
     return [given, answered];
   }
@@ -292,12 +299,12 @@ export class Pair extends DurableObject<Env> {
    * sends a probe after them. */
   private gave(ws: WebSocket, before: number, after: number): void {
     this.given.set(ws, after);
-    // The attachment is read only when it may change: at the first bytes
-    // given and at each step (noteGiven).
-    if (before !== 0 && Math.floor(after / PROBE_STEP) <= Math.floor(before / PROBE_STEP)) return;
+    // The attachment is read only when it may change (count.ts).
+    if (!mayChange(this.written.get(ws), before, after)) return;
     const att = attachment(ws);
     if (!att) return;
     const step = noteGiven(att, before, after);
+    if (att.given !== undefined) this.written.set(ws, att.given);
     if (step === "none") return;
     if (step === "probe") {
       const nonce = crypto.getRandomValues(new Uint8Array(16));
