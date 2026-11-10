@@ -1,11 +1,12 @@
 # 0017: Bağışlar kişi adına değil, TotalDrop ekibi adına alınır
 
-- **Durum:** Önerilen, 7 Kasım 2026 (Ozan, #352); harcama kuralı 8 Kasım
-  2026'da Sadık'ın önerisiyle eklendi. Open Source Collective başvuruyu
-  onayladıktan sonra, birleştirmeden önce Ozan'ın onayıyla "Kabul" olur.
-  İki kişi koşulu 10 Kasım 2026'da karşılanıyor: Open Collective'de
-  ekip hesabının yanında iki kişi kendi hesabıyla yönetici. Bu koşul
-  bozulursa karar "Kabul" olamaz.
+- **Durum:** Kabul, 10 Kasım 2026 (Ozan, #352); harcama kuralı 8 Kasım
+  2026'da Sadık'ın önerisiyle eklendi. Ozan, Open Source Collective
+  başvurusu sonuçlanmadan kabul etti; başvuru incelemede. Onay gelene
+  kadar Open Collective sayfası bağış alamayabilir; başvuru reddedilirse
+  karar yeniden açılır. İki kişi koşulu 10 Kasım 2026'da karşılanıyor:
+  Open Collective'de ekip hesabının yanında iki kişi kendi hesabıyla
+  yönetici. Bu koşul bozulursa karar yeniden açılır.
 - **Bağlam:** [0005](0005-bagis.md) bağışların GitHub Sponsors üzerinden
   alınmasını kararlaştırdı, ama adres proje liderinin kişisel profiliydi
   (github.com/sponsors/ozdil). Proje artık bir ekiple yürüyor
@@ -61,8 +62,9 @@
   - Kişisel profil kalır: ekip yapısını yansıtmaz.
 - **Sonuçlar:** README'ler, site (ana sayfa ve /donate), Linux AppStream
   dosyası, `.github/FUNDING.yml` ve [docs/marka.md](../marka.md) yeni
-  adrese geçer. Bu değişiklik emanetçi onayı gelmeden birleştirilmez,
-  yoksa bağış sayfası para alamaz. /donate sayfasının maliyet tablosuna
+  adrese geçer. Ozan bu değişikliğin emanetçi onayından önce
+  birleşmesini istedi (10 Kasım 2026); onay gelene kadar bağış sayfası
+  para alamayabilir. /donate sayfasının maliyet tablosuna
   aynı PR'da ve 35 dilde "Bağış kesintileri" satırı eklenir (%10 emanetçi
   payı ve işlemci ücreti); sayfa "bir maliyet eklendiğinde önce bu sayfa
   değişir" sözünü böylece tutar.
