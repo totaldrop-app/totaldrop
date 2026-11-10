@@ -49,6 +49,21 @@ Bir değişiklik ancak şunların hepsi doğruysa bitmiştir:
   değiştirmeyen bir iş için `.none.md` dosyası nedenini söyler.
   `CHANGELOG.md`'ye yalnızca sürüm sırasında yazılır. CI ikisini de denetler.
 
+## İncelemeden çıkan kurallar
+
+Bağımsız incelemelerde aynı türden hatalar birden çok kez bulundu (#398).
+Her tür için kural ve onu yakalayan denetim aşağıdadır. Otomatik denetimi
+olmayan kurallar, inceleyenin ve yazarın elle baktığı maddelerdir.
+
+| Tür | Örnek | Kural | Denetim |
+| --- | --- | --- | --- |
+| Bitti tanımı atlanıyor | #304, #318, #368 | Elle deneme gereken PR deneme yapılana kadar taslak kalır. Zorunlu olmayan bir kontrol de kırmızıysa (ör. CodeQL) neden PR'da yazılır ve yeniden çalıştırılır. Bakımcı atlama izni yalnızca acil durum içindir; kullanılırsa nedeni PR'a yazılır. | Elle |
+| Zayıf test | #316, #395 | Hata bekleyen test hatanın türünü ve iletisini denetler, "bir hata oldu" yetmez. Ekran testleri her durumu gerçekten çizer (uzun ad, dolu liste). Zamanlama testleri sabit `sleep` yerine bir son süreyle koşulu bekler. Testin yorumu, testin gerçekte yakaladığını söyler. | Elle |
+| Örtük durum makinesi | #342, #343, #345 | Durum metin ya da bool çifti değil, adlandırılmış bir türdür (enum). `await`'ten dönen her işlem, nesil ve aşamanın hâlâ aynı olduğunu denetler. Bir işlem yalnızca geçerli olduğu aşamada çalışır. | Linux'ta QML durum adı testi (#343) |
+| Söz ile kod uyuşmuyor | #368, #393, #394 | Gizlilik politikası, tehdit modeli, site ya da README bir süre, sınır ya da maliyet söylüyorsa, PR o sözü garanti eden kodu ve testi gösterir. Canlıdaki bir sözü bozacak parça "ayrı PR"a bırakılmaz. Yeni bir hata gerekçesi, uygulamaların iletisiyle birlikte gelir ya da birleşmeden önce issue'su açılır. Bir metin değişince bütün dil dosyalarında aranır. | `privacy.mjs`, `check-i18n.mjs` (yapı ve sayılar); süre ve maliyet elle |
+| Güvenlik | #317, #329, #378 | Dışarıdan gelen metin terminale ya da arayüze yazılmadan önce kontrol karakterleri görünür hâle getirilir. Hata sessizce yutulmaz, günlüğe yazılır. Kaçış çözme ve temizleme tek geçişte yapılır. | CodeQL, `Secrets` işi, gitleaks |
+| Sürüm ve taban sürüklenmesi | #369, #390, #392 | Her araç ve taban sürümü tek yerde yazılır ve bir denetim kopyaları karşılaştırır. Derleme ayarı yalnızca betikte değil, tarifin kendisinde durur. Dependabot'un açmadığı ana sürüm geçişleri ve taban imajların destek bitiş tarihi issue'da izlenir. | `check-versions.sh` (Node dahil, #381), `check-component-versions.sh` |
+
 ## Sürüm listesi
 
 1. Platformun sürümünü artır ve `changelog.d/` girdilerini sürüm başlığına
