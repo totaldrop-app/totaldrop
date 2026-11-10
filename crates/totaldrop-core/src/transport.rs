@@ -1654,35 +1654,73 @@ mod tests {
     /// datagrams again, so a side whose peer did not move (no shared relay,
     /// or a link closed during setup, or a peer that was only paused) does
     /// not lose a direct path that recovers (#185 review). Here only the
-    /// sender watches; the path is gone for longer than its wait, then
-    /// comes back.
+    /// sender watches; the path is gone until the sender moved, which is
+    /// longer than its wait, then comes back.
+    ///
+    /// #395: the move is waited for from the moment of the cut, with a
+    /// deadline, instead of a fixed sleep from the start, and the transfer
+    /// gets time to pick up again. While the path is gone QUIC doubles its
+    /// wait before each resend, and what the sender resends while on the
+    /// relay is lost, since the receiver is not on it; so once the path is
+    /// back the transfer can stand still for some seconds before QUIC
+    /// resends. On a slow runner (windows-11-arm) that missed the old
+    /// 25-second limit three times. How soon the transfer picks up again is
+    /// not what this test checks (#435); that it picks up at all, directly,
+    /// is.
     #[tokio::test]
     async fn a_side_that_moved_comes_back_when_the_direct_path_returns() {
+        let silence = Duration::from_secs(2);
+        // Several times the wait plus a tick: a slow runner still moves
+        // well within it.
+        let move_deadline = Duration::from_secs(15);
+        // From the cut. A connection that is really lost ends before this,
+        // at QUIC's 30-second idle timeout, so a failure still shows; only
+        // a slow restart has to fit.
+        let arrive_deadline = Duration::from_secs(45);
         let d = direct().await;
-        let _watch = d.watch_sender(Duration::from_secs(2));
+        let _watch = d.watch_sender(silence);
         let (sender_cut, receiver_cut) = (d.sender_cut.clone(), d.receiver_cut.clone());
         let fallback = d.sender_fallback.clone();
+        let (was_cut, cut_at) = tokio::sync::oneshot::channel::<tokio::time::Instant>();
         let healed = tokio::spawn(async move {
-            // The cut below lands at once; the wait is 2 seconds.
-            tokio::time::sleep(Duration::from_secs(5)).await;
-            let moved = fallback.moved();
+            let cut = cut_at.await.ok()?;
+            let moved = tokio::time::timeout(move_deadline, async {
+                while !fallback.moved() {
+                    tokio::time::sleep(Duration::from_millis(20)).await;
+                }
+            })
+            .await
+            .is_ok();
+            let after = cut.elapsed();
             sender_cut.set(false, false);
             receiver_cut.set(false, false);
-            moved
+            Some((moved, after))
         });
         let arrived = send_across(
             &d,
             || {
                 d.sender_cut.set(true, true);
                 d.receiver_cut.set(true, true);
+                let _ = was_cut.send(tokio::time::Instant::now());
             },
-            Duration::from_secs(25),
+            arrive_deadline,
         )
         .await;
-        assert!(healed.await.unwrap(), "the sender did not move");
+        let (moved, after) = healed
+            .await
+            .unwrap()
+            .expect("the transfer stopped before the path was cut");
+        assert!(
+            moved,
+            "the sender did not move within {move_deadline:?} of the cut"
+        );
+        // The path was gone for longer than the wait, as the test means.
+        assert!(after >= silence, "the sender moved after only {after:?}");
         assert!(
             arrived,
-            "the transfer did not survive a direct path that came back"
+            "the transfer did not survive a direct path that came back \
+             (moved {after:?} after the cut; sender: {:?})",
+            d.sender.stats().path
         );
         assert!(!d.sender_fallback.moved(), "the sender stayed on the relay");
     }
