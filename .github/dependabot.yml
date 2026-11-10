@@ -32,7 +32,7 @@ updates:
       - dependency-name: "@types/node"
         update-types: ["version-update:semver-major"]
   # Base images are pinned by digest; Dependabot bumps the digests. A new
-  # major version (fedora:44) changes the oldest supported system, so it is
+  # major version (fedora:45) changes the oldest supported system, so it is
   # a decision, not an update.
   - package-ecosystem: docker
     directory: /packaging/containers
