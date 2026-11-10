@@ -12,6 +12,8 @@
 // request, is gone within about two minutes of it, as the privacy policy
 // says.
 
+import type { RateLimiter } from "./limit";
+
 /** How often the alarm runs while there is work for it. */
 export const ALARM_EVERY_MS = 60_000;
 
@@ -26,19 +28,31 @@ export async function ensureAlarm(storage: AlarmStorage, now: number): Promise<v
   if ((await storage.getAlarm()) === null) await storage.setAlarm(now + ALARM_EVERY_MS);
 }
 
-/** After a request the rate limit counted: keep the alarm set while any
- * client is counted, so its counter is forgotten in time even when no
- * nameplate is in use. */
-export async function afterCounted(
+/** Count one request of `client` at `now`; whether it is allowed. While
+ * any client is counted the alarm stays set, so its counter is forgotten
+ * in time even when no nameplate is in use. `Directory.allocate` and
+ * `Directory.lookup` count through this. */
+export async function admitCounted(
   storage: AlarmStorage,
-  counted: number,
+  limiter: RateLimiter,
+  client: string,
   now: number,
-): Promise<void> {
-  if (counted > 0) await ensureAlarm(storage, now);
+): Promise<boolean> {
+  const allowed = await limiter.admit(client, now);
+  if (limiter.size > 0) await ensureAlarm(storage, now);
+  return allowed;
 }
 
-/** When the alarm that ran at `now` should run again, or null for not at
- * all: while nameplates are active or resting, or clients are counted. */
-export function nextAlarm(now: number, nameplatesLeft: boolean, counted: number): number | null {
-  return nameplatesLeft || counted > 0 ? now + ALARM_EVERY_MS : null;
+/** The rate limit's part of the alarm that runs at `now`, after the
+ * directory has expired and freed its nameplates: forget the clients
+ * back at a full burst, then set the alarm again while nameplates are
+ * active or resting (`nameplatesLeft`) or clients are still counted. */
+export async function finishAlarm(
+  storage: AlarmStorage,
+  limiter: RateLimiter,
+  nameplatesLeft: boolean,
+  now: number,
+): Promise<void> {
+  limiter.sweep(now);
+  if (nameplatesLeft || limiter.size > 0) await storage.setAlarm(now + ALARM_EVERY_MS);
 }
