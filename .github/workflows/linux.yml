@@ -40,6 +40,9 @@ jobs:
       - run: cargo fmt -p totaldrop-linux -- --check
       - run: cargo clippy -p totaldrop-linux --all-targets --locked -- -D warnings
       - run: cargo test -p totaldrop-linux --locked
+      # The QML components, headless with qmltestrunner (qt6-declarative).
+      - name: QML tests
+        run: linux/tests/qml/run.sh
 
   # The release scripts are POSIX sh. On Ubuntu /bin/sh is dash, so the
   # scripts the test calls run under dash too.

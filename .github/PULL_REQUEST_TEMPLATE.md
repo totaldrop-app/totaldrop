@@ -22,6 +22,9 @@ Closes #
 - [ ] Kullanıcıya görünen her metin İngilizce ve Türkçe; Türkçe belgeler güncel
 - [ ] Arayüz değiştiyse: açık ve koyu temada, Linux'ta KDE Plasma, Hyprland ve Omarchy'de ekran görüntüsü (docs/tasarim.md)
 - [ ] Sunucuların gördüğü bilgi değiştiyse gizlilik politikası güncellendi
+- [ ] Belgede, politikada ya da sitede verilen her söz (süre, sınır, maliyet) kodla ve testle karşılanıyor; değişen metin bütün dil dosyalarında güncel
+- [ ] Hata bekleyen testler hatanın türünü denetliyor; zamanlama testlerinde sabit bekleme yok (docs/surec.md, "İncelemeden çıkan kurallar")
+- [ ] Zorunlu olmayanlar dahil bütün kontroller yeşil; kırmızı olanın nedeni yazıldı ve issue'su açıldı
 - [ ] Yeni bağımlılık varsa: neden gerektiği ve kimin bakımını yaptığı yazıldı
 - [ ] `changelog.d/` altına girdi dosyası eklendi (ya da nedenini söyleyen bir `.none.md`)
 

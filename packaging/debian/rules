@@ -4,6 +4,9 @@
 export DH_VERBOSE = 1
 export QMAKE = /usr/lib/qt6/bin/qmake
 export CARGO_TARGET_DIR = $(CURDIR)/target
+# No build times in the embedded Qt resources, for the build and the tests
+# alike (#252, #266; why: packaging/check-versions.sh).
+export CXX_QT_AUTORCC_OPTIONS = --format-version:1:--no-zstd
 
 %:
 	dh $@

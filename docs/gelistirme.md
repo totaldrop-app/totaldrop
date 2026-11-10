@@ -106,7 +106,14 @@ hatayı push'tan önce gösterir (#376). İki dosya vardır:
 
   `cargo fmt` ve `dart format` dosyaları düzeltir (CI yalnızca denetler);
   çıkan değişikliği commit'e ekleyin. Linux uygulamasının (`linux/`)
-  `clippy` ve testleri Qt 6 ister, yalnızca CI'da çalışır.
+  `clippy` ve testleri Qt 6 ister, yalnızca CI'da çalışır. Arayüz
+  bileşenlerinin QML testleri (`linux/tests/qml/`) Rust derlemesi
+  istemez; Qt 6 kurulu bir Linux'ta `linux/tests/qml/run.sh` ile ekransız
+  çalışır (`qmltestrunner` `/usr/lib/qt6/bin` dışındaysa, ör. Fedora'da,
+  `QMLTESTRUNNER=/usr/lib64/qt6/bin/qmltestrunner`). Bileşenler uygulamanın `app.totaldrop` modülü yerine oradaki
+  sahte modülle (`stub/`, sabit bir `Theme`) yüklenir; yeni bir bileşen
+  test edilecekse `stub/qmldir`'e ve `run.sh`'deki kopyalama satırına
+  eklenir.
   `flutter analyze`'dan önce `app/` içinde `flutter pub get`, Worker'ların
   `tsc` denetiminden önce her Worker klasöründe `npm ci` çalıştırın.
 

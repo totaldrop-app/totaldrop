@@ -229,14 +229,12 @@ expect fail "shallow clone" "shallow clone"
 # is skipped, so the release before it is the baseline. The packaging files
 # check-versions.sh reads come from this checkout.
 repo 0.1.0-beta.2
-for f in linux/Cargo.toml rust-toolchain.toml packaging/build.sh \
-  packaging/arch/PKGBUILD packaging/rpm/totaldrop.spec \
-  packaging/debian/changelog packaging/containers \
-  packaging/linux/app.totaldrop.TotalDrop.metainfo.xml \
-  packaging/flatpak/app.totaldrop.TotalDrop.yml .github/workflows; do
-  mkdir -p "$(dirname "$r/$f")"
-  cp -R "$src/$f" "$r/$f"
-done
+# All of packaging/, so a file check-versions.sh starts reading is never
+# missing here (#266); only tracked files, so no build cache comes along.
+# CI runs this in a container as another user, where git would refuse the
+# checkout.
+git -c safe.directory="$src" -C "$src" ls-files -- linux/Cargo.toml rust-toolchain.toml packaging .github/workflows |
+  tar -C "$src" -cf - -T - | tar -C "$r" -xf -
 commit "packaging"
 linux=$(sed -n 's/^version = "\(.*\)"/\1/p' "$r/linux/Cargo.toml" | head -1)
 release linux-v0.0.1-beta.1

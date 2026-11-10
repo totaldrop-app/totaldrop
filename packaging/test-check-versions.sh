@@ -2,7 +2,8 @@
 # SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-# Tests for the Node part of check-versions.sh (docs/surec.md, "Node"): each
+# Tests for check-versions.sh: its Node part (docs/surec.md, "Node"), the
+# recipes' Qt resource options and their one license (#266). Each
 # case copies the files the check reads, changes one thing and runs it. A
 # case that should fail must also print the message it names, so a failure
 # for another reason does not count. The copy sits under a path with a
@@ -139,5 +140,92 @@ expect pass "every node-version and @types/node upgraded together" \
   "for f in $wf/*.yml; do edit \"\$f\" 's|$nv|node-version: \"$next\"|'; done
    edit $pkg 's|\"@types/node\": \"$major\\.|\"@types/node\": \"$next.|'
    edit $lock 's|\"@types/node\": \"$major\\.|\"@types/node\": \"$next.|; /\"node_modules\\/@types\\/node\": {/,/\"version\"/s|\"version\": \"$major\\.|\"version\": \"$next.|'"
+
+# The recipes' Qt resource options (#266).
+deb=packaging/debian/rules
+spec=packaging/rpm/totaldrop.spec
+arch=packaging/arch/PKGBUILD
+fp=packaging/flatpak/app.totaldrop.TotalDrop.yml
+meta=packaging/linux/app.totaldrop.TotalDrop.metainfo.xml
+expect fail "debian/rules without them" "$deb: CXX_QT_AUTORCC_OPTIONS not set" \
+  "edit $deb '/CXX_QT_AUTORCC_OPTIONS/d'"
+expect fail "only a comment names them" "$deb: CXX_QT_AUTORCC_OPTIONS not set" \
+  "edit $deb 's|^export CXX_QT_AUTORCC_OPTIONS|# export CXX_QT_AUTORCC_OPTIONS|'"
+expect fail "the Flatpak without them" "$fp: CXX_QT_AUTORCC_OPTIONS not set" \
+  "edit $fp '/CXX_QT_AUTORCC_OPTIONS/d'"
+expect fail "the spec's %check without them" "$spec (CXX_QT_AUTORCC_OPTIONS set in)" \
+  "edit $spec '/^%check/,/^%files/{/CXX_QT_AUTORCC_OPTIONS/d;}'"
+expect fail "the PKGBUILD's build() without them" "$arch (CXX_QT_AUTORCC_OPTIONS set in)" \
+  "edit $arch '/^build()/,/^}/{/CXX_QT_AUTORCC_OPTIONS/d;}'"
+expect fail "the PKGBUILD sets them in package() as well" "$arch (CXX_QT_AUTORCC_OPTIONS set in)" \
+  "edit $arch 's|^package() {|&\\
+  export CXX_QT_AUTORCC_OPTIONS=--format-version:1:--no-zstd|'"
+expect fail "another value in one place" "$spec (CXX_QT_AUTORCC_OPTIONS)" \
+  "edit $spec '/^%check/,/^%files/s|--no-zstd|--no-compress|'"
+expect fail "a PKGBUILD variable that is not exported" "$arch: CXX_QT_AUTORCC_OPTIONS not set" \
+  "edit $arch 's|export CXX_QT_AUTORCC_OPTIONS|CXX_QT_AUTORCC_OPTIONS|'"
+expect fail "a make variable that is not exported" "$deb: CXX_QT_AUTORCC_OPTIONS not set" \
+  "edit $deb 's|^export CXX_QT_AUTORCC_OPTIONS|CXX_QT_AUTORCC_OPTIONS|'"
+expect fail "the spec's %build sets a variable it does not export" "$spec (CXX_QT_AUTORCC_OPTIONS set in)" \
+  "edit $spec '/^%build/,/^%install/s|export CXX_QT_AUTORCC_OPTIONS|CXX_QT_AUTORCC_OPTIONS|'"
+expect fail "the Flatpak sets them for the rust module only" "$fp: CXX_QT_AUTORCC_OPTIONS not set" \
+  "edit $fp '/CXX_QT_AUTORCC_OPTIONS/d'
+   edit $fp 's|^  - name: rust$|&\\
+    build-options:\\
+      env:\\
+        CXX_QT_AUTORCC_OPTIONS: --format-version:1:--no-zstd|'"
+expect fail "another value in the Flatpak" "$fp (CXX_QT_AUTORCC_OPTIONS)" \
+  "edit $fp 's|CXX_QT_AUTORCC_OPTIONS: .*|CXX_QT_AUTORCC_OPTIONS: --no-zstd|'"
+expect pass "a quoted value" \
+  "edit $arch 's|=--format-version:1:--no-zstd|=\"--format-version:1:--no-zstd\"|'"
+expect pass "a single-quoted value with a comment after it" \
+  "edit $arch \"s|=--format-version:1:--no-zstd|='--format-version:1:--no-zstd' # #252|\""
+expect pass "make's :=" \
+  "edit $deb 's|^export CXX_QT_AUTORCC_OPTIONS =|export CXX_QT_AUTORCC_OPTIONS :=|'"
+expect fail "make's ?=, which lets the environment win" "$deb: CXX_QT_AUTORCC_OPTIONS not set" \
+  "edit $deb 's|^export CXX_QT_AUTORCC_OPTIONS =|export CXX_QT_AUTORCC_OPTIONS ?=|'"
+expect fail "make's spaced form in the PKGBUILD" "$arch: CXX_QT_AUTORCC_OPTIONS not set" \
+  "edit $arch 's|export CXX_QT_AUTORCC_OPTIONS=|export CXX_QT_AUTORCC_OPTIONS = |'"
+expect fail "the Flatpak key under build-options, not env" "$fp: CXX_QT_AUTORCC_OPTIONS not set" \
+  "edit $fp 's|^        CXX_QT_AUTORCC_OPTIONS:|      CXX_QT_AUTORCC_OPTIONS:|'"
+expect fail "the Flatpak key in an env: on the module, not under build-options" "$fp: CXX_QT_AUTORCC_OPTIONS not set" \
+  "edit $fp '/CXX_QT_AUTORCC_OPTIONS/d'
+   edit $fp 's|^    build-commands:|    env:\\
+      CXX_QT_AUTORCC_OPTIONS: --format-version:1:--no-zstd\\
+&|'"
+expect fail "the Flatpak key for one architecture only" "$fp: CXX_QT_AUTORCC_OPTIONS not set" \
+  "edit $fp '/CXX_QT_AUTORCC_OPTIONS/d'
+   edit $fp 's|^      env:$|      arch:\\
+        x86_64:\\
+          env:\\
+            CXX_QT_AUTORCC_OPTIONS: --format-version:1:--no-zstd\\
+&|'"
+expect fail "a per-arch Flatpak value that overrides the common one" "$fp (CXX_QT_AUTORCC_OPTIONS)" \
+  "edit $fp 's|^      env:$|      arch:\\
+        x86_64:\\
+          env:\\
+            CXX_QT_AUTORCC_OPTIONS: --no-zstd\\
+&|'"
+expect fail "a plain variable with another value next to the export" "$arch (CXX_QT_AUTORCC_OPTIONS)" \
+  "edit $arch 's|^  cargo build|  CXX_QT_AUTORCC_OPTIONS=--no-zstd\\
+&|'"
+expect fail "the Flatpak key in a module nested in totaldrop" "$fp: CXX_QT_AUTORCC_OPTIONS not set" \
+  "edit $fp '/CXX_QT_AUTORCC_OPTIONS/d'
+   edit $fp 's|^    build-commands:|    modules:\\
+      - name: nested\\
+        build-options:\\
+          env:\\
+            CXX_QT_AUTORCC_OPTIONS: --format-version:1:--no-zstd\\
+&|'"
+
+# One license.
+expect fail "the metainfo with only the GPL" "$meta (project_license)" \
+  "edit $meta 's|<project_license>.*</project_license>|<project_license>GPL-3.0-or-later</project_license>|'"
+expect fail "the PKGBUILD with another license" "$arch (license)" \
+  "edit $arch \"s|'MIT OR Apache-2.0'|'MIT'|\""
+expect pass "a license added everywhere" \
+  "edit $spec 's|^License:.*|& AND OFL-1.1|'
+   edit $meta 's|</project_license>| AND OFL-1.1&|'
+   edit $arch \"s|'MIT OR Apache-2.0')|'MIT OR Apache-2.0' 'OFL-1.1')|\""
 
 exit $failed

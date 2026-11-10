@@ -26,6 +26,17 @@ AbstractButton {
     Accessible.name: title
     Accessible.description: body
 
+    // Which keys press an AbstractButton is up to the platform theme: under
+    // Plasma only Space; under the GTK theme also Enter, on release. Here
+    // Enter and Return open the card on the press, as they press the
+    // app's other buttons. Held down, Enter repeats; only the first press
+    // counts.
+    function enterPressed(event) {
+        if (enabled && !event.isAutoRepeat) click()
+    }
+    Keys.onReturnPressed: (e) => enterPressed(e)
+    Keys.onEnterPressed: (e) => enterPressed(e)
+
     background: Rectangle {
         radius: Theme.radius
         color: {

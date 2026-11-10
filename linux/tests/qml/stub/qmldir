@@ -1,0 +1,8 @@
+# SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# A stand-in for the app's QML module (linux/build.rs) for the QML tests.
+# run.sh copies the components under test next to this file.
+module app.totaldrop
+singleton Theme 1.0 Theme.qml
+ActionCard 1.0 ActionCard.qml
