@@ -1,0 +1,8 @@
+# TotalDrop: how to report a security problem (RFC 9116).
+# Please do not open a public issue for a vulnerability.
+Contact: mailto:security@totaldrop.app
+Contact: https://github.com/totaldrop-app/totaldrop/security/advisories/new
+Expires: 2027-11-01T00:00:00Z
+Policy: https://github.com/totaldrop-app/totaldrop/blob/main/SECURITY.md
+Canonical: https://totaldrop.app/.well-known/security.txt
+Preferred-Languages: en, tr
