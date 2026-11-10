@@ -23,7 +23,7 @@ birleştirmeden önce "Kabul" olur.
 | [0013](0013-hayalet-halka-hesap.md) | Hesap sunucuda tutulmaz: Hayalet halka | Kabul |
 | [0014](0014-steam-deck.md) | TotalDrop for Steam Deck, Steam Machine ve Steam Frame: Linux sürümünün parçası, Flathub ve klavyeyle tam kullanım | Kabul |
 | [0015](0015-paket-yoneticileri.md) | Paket yöneticileri önce CI'da derlenen CLI ikililerine dayanır | Kabul |
-| [0016](0016-windows-microsoft-store.md) | Windows uygulaması WinUI 3 ile yazılır, Microsoft Store'dan dağıtılır | Önerilen |
+| [0016](0016-windows-microsoft-store.md) | Windows uygulaması WinUI 3 ile yazılır, Microsoft Store'dan dağıtılır | Kabul |
 
 Yeni bir karar için bir sonraki numarayla `NNNN-kisa-ad.md` açın ve bu
 tabloya ekleyin.
