@@ -118,6 +118,13 @@ const IO_TIMEOUT: Duration = Duration::from_secs(10);
 /// What a client over its rate is told.
 pub const TOO_MANY: &str = "too many requests";
 
+/// Whether a claim carries the nameplate's allocation token, compared in
+/// constant time, as the Cloudflare Worker does (`sameBytes`; #428).
+fn token_matches(given: Option<[u8; 16]>, ours: &[u8; 16]) -> bool {
+    use subtle::ConstantTimeEq as _;
+    given.is_some_and(|t| bool::from(t.ct_eq(ours)))
+}
+
 /// The part of an address that names one client: an IPv4 address (also
 /// when it arrives as an IPv4-mapped IPv6 address) or the first 64 bits of
 /// an IPv6 address, the block one subscriber usually gets.
@@ -561,7 +568,7 @@ impl Server {
                     // The rule that limits an attacker to one guess.
                     return Err("nameplate full");
                 }
-                if np.sides.is_empty() && token != Some(np.token) {
+                if np.sides.is_empty() && !token_matches(token, &np.token) {
                     // The allocator always claims first, with its token;
                     // anyone else claiming an empty nameplate is guessing.
                     return Err("unknown nameplate");
@@ -795,6 +802,22 @@ mod tests {
             assert!(l.admit(ip("192.0.2.4"), t0, &cfg));
         }
         assert_eq!(l.due.len(), 3);
+    }
+
+    /// #428: only the very token lets a claim in, now compared in
+    /// constant time; one bit off, or none at all, does not.
+    #[test]
+    fn only_the_allocation_token_matches() {
+        let ours = [0x5a; 16];
+        assert!(token_matches(Some(ours), &ours));
+        assert!(!token_matches(None, &ours));
+        for byte in 0..ours.len() {
+            let mut near = ours;
+            if let Some(b) = near.get_mut(byte) {
+                *b ^= 1;
+            }
+            assert!(!token_matches(Some(near), &ours), "byte {byte}");
+        }
     }
 
     #[test]

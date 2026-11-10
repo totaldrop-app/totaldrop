@@ -12,6 +12,9 @@ homepage.workspace = true
 [dependencies]
 futures-util = { version = "0.3.34", default-features = false, features = ["sink", "std"] }
 getrandom = "0.4.3"
+# Constant-time comparison of the allocation token; already in the lock
+# file through the crypto crates.
+subtle = { version = "2.6.1", default-features = false }
 tokio = { version = "1.54.1", features = ["macros", "net", "rt-multi-thread", "sync", "time"] }
 tokio-tungstenite = { version = "0.30.0", default-features = false, features = ["handshake"] }
 totaldrop-proto = { version = "0.2.0-beta.5", path = "../../crates/totaldrop-proto" }
