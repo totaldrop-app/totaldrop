@@ -22,14 +22,14 @@
 
 use std::collections::VecDeque;
 use std::io::{self, IoSliceMut};
-use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4, SocketAddrV6};
+use std::net::{IpAddr, Ipv4Addr, SocketAddr, SocketAddrV4, SocketAddrV6};
 use std::pin::Pin;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, OnceLock, RwLock};
 use std::task::{Context, Poll};
 use std::time::Duration;
 
-use quinn::udp::{RecvMeta, Transmit};
+use quinn::udp::{EcnCodepoint, RecvMeta, Transmit};
 use quinn::{AsyncUdpSocket, UdpPoller};
 use tokio::sync::mpsc;
 
@@ -87,9 +87,11 @@ pub const FALLBACK_SILENCE: Duration = Duration::from_secs(8);
 
 /// How many of the last datagrams sent through the relay while moved a
 /// side sends again on the direct path when it comes back (#435). One that
-/// reaches the other device is enough: its acknowledgement resets QUIC's
-/// doubled wait and shows everything older as lost, which QUIC then
-/// resends at once. A few allow for one of them being lost too.
+/// reaches the other device and asks for an acknowledgement is enough: the
+/// acknowledgement resets QUIC's doubled wait and shows everything older as
+/// lost, which QUIC then resends at once. What a sender sends while its
+/// path is gone is mostly such probes; a few allow for one being lost, or
+/// being a bare acknowledgement.
 const REPLAY: usize = 4;
 
 /// How long one datagram sent again may wait for room in the socket.
@@ -129,8 +131,10 @@ struct FallbackState {
     /// (refused, unreachable, or out of its limits) or was never started.
     relay: mpsc::Sender<Vec<u8>>,
     /// The last [`REPLAY`] datagrams sent through the relay while moved,
-    /// with the address QUIC gave them (#435).
-    rerouted: Mutex<VecDeque<(SocketAddr, Vec<u8>)>>,
+    /// as QUIC gave them (#435).
+    rerouted: Mutex<VecDeque<Rerouted>>,
+    /// How many datagrams were sent again on coming back, for tests.
+    replayed: AtomicU64,
     /// The real UDP socket, to send `rerouted` again on coming back.
     socket: OnceLock<Arc<dyn AsyncUdpSocket>>,
 }
@@ -145,18 +149,33 @@ impl Fallback {
             start: tokio::time::Instant::now(),
             relay,
             rerouted: Mutex::new(VecDeque::with_capacity(REPLAY)),
+            replayed: AtomicU64::new(0),
             socket: OnceLock::new(),
         }))
     }
 
-    /// Note a datagram sent through the relay instead of to `addr`.
-    fn rerouted(&self, addr: SocketAddr, datagram: &[u8]) {
+    /// Note one segment of `transmit`, sent through the relay instead.
+    fn rerouted(&self, transmit: &Transmit, segment: &[u8]) {
         if let Ok(mut kept) = self.0.rerouted.lock() {
             if kept.len() >= REPLAY {
                 kept.pop_front();
             }
-            kept.push_back((addr, datagram.to_vec()));
+            kept.push_back(Rerouted {
+                destination: transmit.destination,
+                // Sent again with QUIC's own ECN mark: without it QUIC
+                // would take the acknowledged copy for a network that
+                // clears marks and turn ECN off.
+                ecn: transmit.ecn,
+                src_ip: transmit.src_ip,
+                datagram: segment.to_vec(),
+            });
         }
+    }
+
+    /// How many datagrams were sent again on coming back so far.
+    #[cfg(test)]
+    pub(crate) fn replayed(&self) -> u64 {
+        self.0.replayed.load(Ordering::Acquire)
     }
 
     /// Back on the direct path: send the last datagrams that went to the
@@ -175,14 +194,20 @@ impl Fallback {
         let Some(socket) = self.0.socket.get() else {
             return;
         };
+        let direct = self.direct().map(canonical);
         let mut poller = None;
-        for (destination, datagram) in &kept {
+        for r in &kept {
+            // Only to the address watched now: one QUIC left meanwhile may
+            // belong to someone else by now.
+            if Some(canonical(r.destination)) != direct {
+                continue;
+            }
             let transmit = Transmit {
-                destination: *destination,
-                ecn: None,
-                contents: datagram,
+                destination: r.destination,
+                ecn: r.ecn,
+                contents: &r.datagram,
                 segment_size: None,
-                src_ip: None,
+                src_ip: r.src_ip,
             };
             // Best effort, briefly: a socket that stays full drops it, as
             // the network could, and QUIC's own resend still follows.
@@ -198,12 +223,26 @@ impl Fallback {
                                 return;
                             }
                         }
-                        _ => return,
+                        Ok(()) => {
+                            self.0.replayed.fetch_add(1, Ordering::AcqRel);
+                            return;
+                        }
+                        Err(_) => return,
                     }
                 }
             })
             .await;
         }
+    }
+
+    /// Move onto the relay at `now`. What was kept from an earlier move
+    /// is not sent again after this one.
+    fn move_now(&self, now: u64) {
+        if let Ok(mut kept) = self.0.rerouted.lock() {
+            kept.clear();
+        }
+        self.0.moved_at.store(now, Ordering::Release);
+        self.0.moved.store(true, Ordering::Release);
     }
 
     fn now(&self) -> u64 {
@@ -294,13 +333,9 @@ impl Fallback {
                 }
                 Step::Recount(heard) => self.0.heard.store(heard, Ordering::Release),
                 Step::Move => {
-                    if let Ok(mut kept) = self.0.rerouted.lock() {
-                        kept.clear();
-                    }
                     // Mark the move before the link can deliver anything;
                     // outgoing datagrams wait in the queue until it is up.
-                    self.0.moved_at.store(now, Ordering::Release);
-                    self.0.moved.store(true, Ordering::Release);
+                    self.move_now(now);
                     gate.open();
                 }
                 // The relay link closes itself once it has been idle.
@@ -311,6 +346,15 @@ impl Fallback {
             }
         }
     }
+}
+
+/// A datagram sent through the relay while moved, kept to send again.
+#[derive(Debug)]
+struct Rerouted {
+    destination: SocketAddr,
+    ecn: Option<EcnCodepoint>,
+    src_ip: Option<IpAddr>,
+    datagram: Vec<u8>,
 }
 
 /// After this device's own pause, how long it waits for the other side
@@ -508,7 +552,7 @@ impl AsyncUdpSocket for PathSocket {
                 .unwrap_or(transmit.contents.len())
                 .max(1);
             for segment in transmit.contents.chunks(size) {
-                self.fallback.rerouted(transmit.destination, segment);
+                self.fallback.rerouted(transmit, segment);
             }
             Ok(())
         } else {
@@ -687,8 +731,36 @@ mod tests {
             again.push(d);
         }
         assert_eq!(again, [&b"3a"[..], b"3b", b"4", b"5"]);
+        assert_eq!(f.replayed(), 4);
         f.replay().await;
         assert_eq!(recv(), None, "sent again twice");
+
+        // A new move forgets what an earlier one kept.
+        f.move_now(1);
+        send(b"6", None, to);
+        f.move_now(2);
+        send(b"7", None, to);
+        f.set_moved(false);
+        f.replay().await;
+        assert_eq!(recv().as_deref(), Some(&b"7"[..]));
+        assert_eq!(recv(), None, "kept from an earlier move");
+
+        // Kept for an address QUIC has left since: not sent there.
+        let other = std::net::UdpSocket::bind("127.0.0.1:0").unwrap();
+        other
+            .set_read_timeout(Some(Duration::from_millis(300)))
+            .unwrap();
+        f.move_now(3);
+        send(b"8", None, to);
+        if let Ok(mut d) = f.0.direct.write() {
+            *d = Some(other.local_addr().unwrap());
+        }
+        f.set_moved(false);
+        f.replay().await;
+        assert_eq!(recv(), None, "sent again to an address left");
+        let mut b = [0u8; 4];
+        assert!(other.recv(&mut b).is_err(), "sent to the new address");
+        assert_eq!(f.replayed(), 5);
     }
 
     /// #403: on a dual-stack socket QUIC reports the stand-in as an
