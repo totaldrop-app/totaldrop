@@ -48,14 +48,6 @@ jobs:
         env:
           TOTALDROP_REQUIRE_IPV6: "1"
         run: cargo test --workspace $EXCLUDE --locked
-      # TEMPORARY (#395): removed before merge.
-      - name: Repeat the move-back test (#395)
-        if: matrix.os == 'windows-11-arm'
-        shell: bash
-        run: |
-          t=transport::tests::a_side_that_moved_comes_back_when_the_direct_path_returns
-          for i in $(seq 20); do cargo test -p totaldrop-core --lib --locked -- --exact "$t" || exit 1; done
-          for i in $(seq 5); do cargo test -p totaldrop-core --lib --locked || exit 1; done
 
   # Line coverage of the hand-written crates and the Rust servers, measured
   # with cargo-llvm-cov; below 90% fails (OpenSSF Best Practices
