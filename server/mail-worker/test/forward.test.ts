@@ -7,7 +7,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { MAX_RECIPIENTS, forwardAll, recipients } from "../src/forward.ts";
+import { MAX_RECIPIENTS, forwardAll, handle, recipients } from "../src/forward.ts";
 
 /** A message whose `forward` fails for the addresses in `failFor`. */
 function message(failFor: string[] = []) {
@@ -48,7 +48,7 @@ test("a missing or empty setting fails closed", () => {
 });
 
 test("an entry that is not an address fails, and the error does not repeat it", () => {
-  for (const bad of ["ozan", "a@b", "@example.com", "a@", "a@@example.com", "<a@example.com>", "a@example.", '"a"@example.com']) {
+  for (const bad of ["ozan", "a@b", "a@x..com", "a@.x.com", "a@-x.com", "a@x-.com", "a@x.c0m", "@example.com", "a@", "a@@example.com", "<a@example.com>", "a@example.", '"a"@example.com']) {
     assert.throws(
       () => recipients(`ok@example.com, ${bad}`),
       (e: Error) => /entry 2 is not an email address/.test(e.message) && !e.message.includes(bad),
@@ -96,4 +96,28 @@ test("when every destination fails, the message fails", async () => {
 
 test("no destination at all is an error, not a silent drop", async () => {
   await assert.rejects(forwardAll(message(), []), /no destination/);
+});
+
+test("the handler forwards to every configured address and reports nothing", async () => {
+  const m = message();
+  const lines: string[] = [];
+  await handle(m, "a@example.com, b@example.org", (l) => lines.push(l));
+  assert.deepEqual(m.sent.sort(), ["a@example.com", "b@example.org"]);
+  assert.deepEqual(lines, []);
+});
+
+test("the handler with no setting forwards nothing and fails", async () => {
+  const m = message();
+  const lines: string[] = [];
+  await assert.rejects(handle(m, undefined, (l) => lines.push(l)), /FORWARD_TO is not set/);
+  assert.deepEqual(m.sent, []);
+  assert.deepEqual(lines, []);
+});
+
+test("the handler reports a partial failure as a count, without the address", async () => {
+  const m = message(["b@example.org"]);
+  const lines: string[] = [];
+  await handle(m, "a@example.com,b@example.org", (l) => lines.push(l));
+  assert.deepEqual(m.sent, ["a@example.com"]);
+  assert.deepEqual(lines, ["forwarding failed for 1 destination(s)"]);
 });

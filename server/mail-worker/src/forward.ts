@@ -19,7 +19,7 @@ const OWN_DOMAIN = "totaldrop.app";
  * spaces, commas or angle brackets. Cloudflare checks the address again
  * (it must be a verified destination); this only rejects a mistyped
  * secret before any mail is sent. */
-const ADDRESS = /^[^\s@,<>"]+@[^\s@,<>"]+\.[^\s@,<>".]+$/;
+const ADDRESS = /^[^\s@,<>"]+@(?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,}$/;
 
 /** The destinations in `FORWARD_TO`: addresses separated by commas,
  * spaces or new lines, compared without case, each kept once, in order.
@@ -67,4 +67,21 @@ export async function forwardAll(message: Forwardable, to: readonly string[]): P
     throw new Error(`forwarding failed for all ${failed} destinations`);
   }
   return failed;
+}
+
+/** Where a partial failure is reported. Only a count goes there, never
+ * an address, sender or subject. */
+export type Report = (line: string) => void;
+
+/** What the Worker does with one message: read `FORWARD_TO` (on every
+ * message, so a Worker that somehow runs without it fails closed instead
+ * of forwarding anywhere), forward to each address, and report how many
+ * destinations failed when some did. */
+export async function handle(
+  message: Forwardable,
+  forwardTo: string | undefined,
+  report: Report,
+): Promise<void> {
+  const failed = await forwardAll(message, recipients(forwardTo));
+  if (failed > 0) report(`forwarding failed for ${failed} destination(s)`);
 }

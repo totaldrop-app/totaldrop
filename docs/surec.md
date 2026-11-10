@@ -304,7 +304,8 @@ incelenmiş bir commit'tir.
 - **Ne zaman:** `main`'e gelen bir commit `site/public/`,
   `site/functions/`, `site/wrangler.toml` ya da `server/*-worker/`
   altında bir dosyayı değiştirdiyse yalnızca değişen hedef dağıtılır;
-  `server/tools/probe.mjs` değişirse üçü de. Elle dağıtmak için Actions →
+  `server/tools/probe.mjs` değişirse site, rendezvous ve relay (e-posta
+  Worker'ı değil). Elle dağıtmak için Actions →
   Deploy → "Run workflow" ile hedef seçilir; her zaman `main`'in son hâli
   dağıtılır.
 - **Önce denetim:** dağıtılacak commit'in site ya da sunucu denetimleri
@@ -367,11 +368,17 @@ adrese gidebilir; aynı adres için ikinci bir kural yazılırsa yalnızca ilki
 Worker'ına (`server/mail-worker`, adı `totaldrop-mail`) yönlendirilir.
 Worker iletiyi `MAIL_FORWARD_TO`'daki her adrese ayrı ayrı iletir.
 
-- Worker iletiyi saklamaz ve kaydetmez (observability kapalı). Ayar
-  eksik ya da bozuksa hiçbir yere iletmez, ileti hata olarak görünür.
-  `totaldrop.app` adresleri döngü kuracağı için hedef olamaz.
+- Worker iletiyi saklamaz. Workers Logs'ta yalnızca kendi yazdığı tek
+  satır durur: kaç hedefe iletilemediği. Gönderen, alıcı ve konu
+  kaydedilmez (invocation logs kapalı). Ayar eksik ya da bozuksa hiçbir
+  yere iletmez; `totaldrop.app` adresleri döngü kuracağı için hedef
+  olamaz.
 - Bir hedefe iletim başarısız olursa (ör. henüz doğrulanmamışsa) öteki
-  hedefler yine alır. Hepsi başarısızsa ileti hata olur.
+  hedefler yine alır. Email Routing → Activity log iletiyi o zaman
+  "Handled" gösterir; başarısızlık yalnızca Workers & Pages →
+  `totaldrop-mail` → Logs altındaki sayıda görünür. Posta almayı bırakan
+  bakımcı önce oraya bakar. Hiçbir hedefe iletilemezse Activity log hata
+  gösterir; gönderen sunucuya o zaman ne döndüğü henüz denenmedi.
 
 **Kurulum ya da yeni bir bakımcı (depo yöneticisi, panelde):**
 
@@ -387,7 +394,8 @@ Worker iletiyi `MAIL_FORWARD_TO`'daki her adrese ayrı ayrı iletir.
 4. İlk kurulumda, Worker dağıtıldıktan sonra Email Routing → Routing
    Rules altında `hello@` kuralının eylemini "Send to a Worker",
    hedefini `totaldrop-mail` yapın. Aynı Worker başka adreslerin
-   kuralına da hedef olabilir.
+   kuralına da hedef olabilir; `security@` ve `privacy@` için ayrı karar
+   verilir ve burada yazılır.
 5. Proje dışındaki bir adresten `hello@totaldrop.app`'e bir deneme
    e-postası gönderin ve her kutuya geldiğini görün (önemsiz posta
    klasörüne de bakın). Email Routing → Activity log iletinin durumunu

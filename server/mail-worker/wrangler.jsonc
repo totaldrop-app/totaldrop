@@ -3,8 +3,10 @@
   "name": "totaldrop-mail",
   "main": "src/index.ts",
   "compatibility_date": "2026-10-01",
-  // Mail is personal data: the Worker logs nothing about it.
-  "observability": { "enabled": false },
+  // Mail is personal data. Workers Logs keep only what the Worker writes
+  // itself, which is the count of failed destinations; invocation logs
+  // (sender, recipient, timing) are off.
+  "observability": { "enabled": true, "logs": { "enabled": true, "invocation_logs": false } },
   // Only Email Routing calls it; it has no HTTP address at all.
   "workers_dev": false,
   "preview_urls": false
