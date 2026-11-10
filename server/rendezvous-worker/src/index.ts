@@ -143,6 +143,10 @@ export default {
       });
     }
     if (!isUpgrade(request)) return new Response("WebSocket only\n", { status: 426 });
+    // A web page's WebSocket always carries Origin; the apps and the
+    // command line never send it (#450). Refusing it keeps a page from
+    // spending its visitors' per-client limits.
+    if (request.headers.has("Origin")) return new Response("browsers are not served\n", { status: 403 });
     // Cloudflare sets this header itself; a client cannot choose it. It is
     // used only to count requests (`limit.ts`) and is not kept.
     const client = clientOf(request.headers.get("CF-Connecting-IP"));
