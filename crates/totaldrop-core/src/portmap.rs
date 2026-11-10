@@ -49,8 +49,8 @@ pub enum Gateway {
     Auto,
     /// Ask no one.
     Off,
-    /// This address, for a platform that knows its gateway (Android) and
-    /// for tests.
+    /// This address, for tests and for a platform that knows its gateway
+    /// and may pass it in (Android could; it does not yet).
     At(SocketAddr),
 }
 
@@ -137,23 +137,55 @@ async fn map_at(target: SocketAddr, port: u16) -> Option<Mapping> {
     if port == 0 || !target.is_ipv4() {
         return None;
     }
-    let socket = UdpSocket::bind(SocketAddr::from((Ipv4Addr::UNSPECIFIED, 0)))
-        .await
-        .ok()?;
-    socket.connect(target).await.ok()?;
-    let client = socket.local_addr().ok()?.ip();
-    let socket = Arc::new(socket);
+    let pcp_socket = connected(target).await?;
+    let client = pcp_socket.local_addr().ok()?.ip();
+    // NAT-PMP gets its own socket: one reader per socket, so neither
+    // exchange takes the other's answers.
+    let pmp_socket = connected(target).await?;
 
     let mut nonce = [0u8; 12];
     getrandom::fill(&mut nonce).ok()?;
     let pcp = Held::Pcp { nonce, client };
-    let (held, external, lifetime) = match ask(&socket, pcp, port).await {
-        Got::Mapped(external, lifetime) => (pcp, external, lifetime),
-        Got::OtherVersion | Got::Silent => {
-            let (external, lifetime) = ask_pmp(&socket, port).await?;
-            (Held::Pmp, external, lifetime)
+    let pcp_try = {
+        let socket = Arc::clone(&pcp_socket);
+        async move { ask(&socket, pcp, port).await }
+    };
+    // A router that speaks only NAT-PMP may not answer PCP at all; it is
+    // asked over NAT-PMP after one unanswered PCP try, not after all
+    // [`TRIES`], so its mapping still comes in time for `HINTS`.
+    let pmp_try = |wait: Duration| {
+        let socket = Arc::clone(&pmp_socket);
+        async move {
+            tokio::time::sleep(wait).await;
+            ask_pmp(&socket, port).await
         }
-        Got::Refused => return None,
+    };
+    tokio::pin!(pcp_try);
+    let pmp_soon = pmp_try(RESEND);
+    tokio::pin!(pmp_soon);
+    let (held, socket, external, lifetime) = tokio::select! {
+        got = &mut pcp_try => match got {
+            Got::Mapped(external, lifetime) => (pcp, pcp_socket, external, lifetime),
+            Got::Refused => return None,
+            // "Unsupported version" may come before the NAT-PMP try has
+            // started; a fresh one starts now (the other is no longer
+            // polled, so it reads nothing from the socket).
+            Got::OtherVersion => {
+                let (external, lifetime) = pmp_try(Duration::ZERO).await?;
+                (Held::Pmp, pmp_socket, external, lifetime)
+            }
+            Got::Silent => {
+                let (external, lifetime) = pmp_soon.await?;
+                (Held::Pmp, pmp_socket, external, lifetime)
+            }
+        },
+        got = &mut pmp_soon => match got {
+            Some((external, lifetime)) => (Held::Pmp, pmp_socket, external, lifetime),
+            None => match pcp_try.await {
+                Got::Mapped(external, lifetime) => (pcp, pcp_socket, external, lifetime),
+                Got::Refused | Got::OtherVersion | Got::Silent => return None,
+            },
+        },
     };
     let release = Release {
         socket: Arc::clone(&socket),
@@ -171,6 +203,15 @@ async fn map_at(target: SocketAddr, port: u16) -> Option<Mapping> {
         renew,
         release: Some(release),
     })
+}
+
+/// A UDP socket connected to the router, so only its datagrams arrive.
+async fn connected(target: SocketAddr) -> Option<Arc<UdpSocket>> {
+    let socket = UdpSocket::bind(SocketAddr::from((Ipv4Addr::UNSPECIFIED, 0)))
+        .await
+        .ok()?;
+    socket.connect(target).await.ok()?;
+    Some(Arc::new(socket))
 }
 
 /// What one protocol gave.
@@ -310,7 +351,8 @@ fn public(ip: IpAddr) -> bool {
 /// The gateway of the default IPv4 route.
 #[cfg(target_os = "linux")]
 fn default_gateway() -> Option<Ipv4Addr> {
-    // Android does not let apps read this file; it passes the gateway in.
+    // Android does not let apps read this file; it may pass the gateway
+    // in as `Gateway::At` (not wired up yet, so Android asks no one).
     std::fs::read_to_string("/proc/net/route")
         .ok()
         .and_then(|t| gateway_in_route_table(&t))
@@ -323,7 +365,7 @@ fn default_gateway() -> Option<Ipv4Addr> {
 
 /// The gateway of the default route with the lowest metric that is up, in
 /// Linux's `/proc/net/route`: addresses in hexadecimal, in the machine's
-/// byte order (little-endian on every platform we build for).
+/// byte order: the raw `u32` as it sits in memory.
 #[cfg_attr(not(target_os = "linux"), allow(dead_code))]
 fn gateway_in_route_table(table: &str) -> Option<Ipv4Addr> {
     const UP: u32 = 0x1;
@@ -345,7 +387,7 @@ fn gateway_in_route_table(table: &str) -> Option<Ipv4Addr> {
             && gw != 0
             && best.is_none_or(|(m, _)| metric < m)
         {
-            best = Some((metric, Ipv4Addr::from(gw.to_le_bytes())));
+            best = Some((metric, Ipv4Addr::from(gw.to_ne_bytes())));
         }
     }
     best.map(|(_, gw)| gw)
@@ -366,6 +408,8 @@ mod tests {
     enum Router {
         Pcp,
         Pmp,
+        /// NAT-PMP that does not answer PCP at all.
+        PmpOnly,
         Silent,
         Refuses,
         Private,
@@ -415,10 +459,11 @@ mod tests {
                         )
                     }
                     (Router::Pmp, 2) => Some(answer::pmp_unsupported_version().to_vec()),
-                    (Router::Pmp, 0) if m.len() == 2 => {
+                    (Router::PmpOnly, 2) => None,
+                    (Router::Pmp | Router::PmpOnly, 0) if m.len() == 2 => {
                         Some(answer::pmp_address(0, PUBLIC).to_vec())
                     }
-                    (Router::Pmp, 0) => {
+                    (Router::Pmp | Router::PmpOnly, 0) => {
                         let internal = u16::from_be_bytes(m[4..6].try_into().unwrap());
                         let lifetime = u32::from_be_bytes(m[8..12].try_into().unwrap());
                         let opened = if lifetime == 0 { 0 } else { OPENED };
@@ -439,6 +484,18 @@ mod tests {
     fn lifetime_of(m: &[u8]) -> u32 {
         let at = if m[0] == 2 { 4 } else { 8 };
         u32::from_be_bytes(m[at..][..4].try_into().unwrap())
+    }
+
+    /// A router that ignores PCP and speaks only NAT-PMP is asked over
+    /// NAT-PMP after one unanswered PCP try, so its mapping still comes
+    /// in time for `HINTS` (`MAPPING_GRACE` in `own_hints`).
+    #[tokio::test]
+    async fn a_router_silent_to_pcp_is_asked_over_nat_pmp_soon() {
+        let (gw, _seen) = router(Router::PmpOnly).await;
+        let started = std::time::Instant::now();
+        let m = map(gw, 40_000).await.unwrap();
+        assert_eq!(m.external(), SocketAddr::from((PUBLIC, OPENED)));
+        assert!(started.elapsed() < RESEND * 2, "{:?}", started.elapsed());
     }
 
     #[tokio::test]

@@ -153,7 +153,9 @@ treated as final.
       `/proc/net/route` on Linux; other systems ask no one yet) gets a PCP
       MAP request (RFC 6887) for UDP on the QUIC socket's port, with no
       suggested external port or address (`::ffff:0.0.0.0`), and a NAT-PMP
-      one (RFC 6886) if it does not speak PCP or does not answer. The
+      one (RFC 6886) if it answers "unsupported version" or has not
+      answered the first PCP request within 250 ms (PCP keeps its three
+      tries meanwhile; the first mapping either gives is used). The
       external address it grants goes into the public list, unless it is
       not reachable from the internet (private, 100.64.0.0/10 shared
       address space, loopback, link-local, reserved), which means a second
@@ -277,9 +279,13 @@ treated as final.
       closes a pair on an unexpected 25-byte message.
     - Address discovery is plain STUN (RFC 8489), Binding with
       XOR-MAPPED-ADDRESS, sent from the QUIC socket, over IPv4 and, from a
-      dual-stack socket, over IPv6 at the same time (#403). The default
-      server is `stun.cloudflare.com:3478`; the self-hosted relay answers
-      STUN too.
+      dual-stack socket, over IPv6 at the same time (#403). IPv6 is asked
+      only where a dial would go out from an address the device announces,
+      so its hardware (EUI-64) address never reaches the STUN server. A
+      round waits 700 ms; once one family has answered, the other gets
+      150 ms more, and a second round is sent only when nothing answered.
+      The default server is `stun.cloudflare.com:3478`; the self-hosted
+      relay answers STUN too.
 21. **Which relay.** Each side announces its relay in `HINTS` field 5.
     The relay path runs over the sender's relay. A receiver uses it only if
     it is `wss://` (or

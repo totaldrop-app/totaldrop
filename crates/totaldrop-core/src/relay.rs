@@ -24,6 +24,8 @@ pub const DEFAULT_STUN: &str = wire::DEFAULT_STUN;
 
 /// How long one discovery probe waits for its answer.
 const PROBE_WAIT: Duration = Duration::from_millis(700);
+/// How much longer a STUN round waits once one server has answered.
+const AFTER_ANSWER: Duration = Duration::from_millis(150);
 
 /// How often an idle relay link pings, so proxies keep it open.
 const KEEPALIVE: Duration = Duration::from_secs(20);
@@ -92,26 +94,46 @@ pub fn check_url(url: &str) -> Result<()> {
 /// QUIC will use, so each answer is the mapping the other device must aim
 /// at, and one loop reads every answer and matches it to its request by
 /// server address and transaction id: two readers on one socket would
-/// take each other's answers. Two rounds at most. Empty when nothing
-/// answers (for example when UDP is blocked).
+/// take each other's answers. Once one server has answered, the other
+/// gets [`AFTER_ANSWER`] more; a second round asks again only when
+/// nothing answered. Empty when nothing answers (for example when UDP is
+/// blocked). IPv6 is asked only where a dial would go out from an
+/// announced address, so the hardware (EUI-64) address never reaches a
+/// STUN server.
 pub async fn discover(socket: &UdpSocket, server: &str) -> Vec<SocketAddr> {
-    let Ok(local) = socket.local_addr() else {
-        return Vec::new();
-    };
-    let ipv6 = local.is_ipv6();
     let Ok(found) = tokio::net::lookup_host(server).await else {
         return Vec::new();
     };
     let found: Vec<SocketAddr> = found.collect();
-    // A dual-stack socket sends to IPv4 through IPv4-mapped addresses and
-    // reports them as such; compare in canonical form.
-    let mut pending: Vec<SocketAddr> = [
+    let ipv6 = socket.local_addr().is_ok_and(|a| a.is_ipv6());
+    discover_at(socket, stun_targets(&found, ipv6)).await
+}
+
+/// The servers to ask: the first IPv4 address, and the first IPv6 one
+/// when the socket is dual-stack and a dial there would go out from an
+/// address this device announces (never its hardware, EUI-64, address).
+fn stun_targets(found: &[SocketAddr], ipv6: bool) -> Vec<SocketAddr> {
+    [
         found.iter().find(|a| a.is_ipv4()).copied(),
-        found.iter().find(|a| a.is_ipv6()).copied().filter(|_| ipv6),
+        found
+            .iter()
+            .find(|a| a.is_ipv6())
+            .copied()
+            .filter(|a| ipv6 && crate::transport::dialable(*a)),
     ]
     .into_iter()
     .flatten()
-    .collect();
+    .collect()
+}
+
+/// [`discover`], asking each of `pending` once per round.
+async fn discover_at(socket: &UdpSocket, mut pending: Vec<SocketAddr>) -> Vec<SocketAddr> {
+    let Ok(local) = socket.local_addr() else {
+        return Vec::new();
+    };
+    let ipv6 = local.is_ipv6();
+    // A dual-stack socket sends to IPv4 through IPv4-mapped addresses and
+    // reports them as such; compare in canonical form.
     let Some(udp) = socket
         .try_clone()
         .ok()
@@ -141,7 +163,7 @@ pub async fn discover(socket: &UdpSocket, server: &str) -> Vec<SocketAddr> {
             }
         }
         pending.retain(|s| asked.iter().any(|(a, _)| a == s));
-        let Some(deadline) = tokio::time::Instant::now().checked_add(PROBE_WAIT) else {
+        let Some(mut deadline) = tokio::time::Instant::now().checked_add(PROBE_WAIT) else {
             return seen;
         };
         let mut buf = [0u8; 512];
@@ -163,9 +185,14 @@ pub async fn discover(socket: &UdpSocket, server: &str) -> Vec<SocketAddr> {
                     seen.push(crate::path::canonical(addr));
                 }
                 pending.retain(|s| *s != server);
+                // One answer is enough to go on with; the other family
+                // gets only a short while more.
+                if let Some(soon) = tokio::time::Instant::now().checked_add(AFTER_ANSWER) {
+                    deadline = deadline.min(soon);
+                }
             }
         }
-        if pending.is_empty() {
+        if pending.is_empty() || !seen.is_empty() {
             break;
         }
     }
@@ -598,6 +625,33 @@ mod tests {
         let start = tokio::time::Instant::now();
         assert!(discover(&ours, &server).await.is_empty());
         assert!(start.elapsed() < PROBE_WAIT * 3);
+    }
+
+    /// #403: STUN over IPv6 goes out only where a dial would, so a
+    /// hardware (EUI-64) source address never reaches the STUN server.
+    #[test]
+    fn stun_asks_only_where_a_dial_would() {
+        let v4: SocketAddr = "192.0.2.1:3478".parse().unwrap();
+        let link_local: SocketAddr = "[fe80::1]:3478".parse().unwrap();
+        assert_eq!(stun_targets(&[v4, link_local], true), vec![v4]);
+        let loopback: SocketAddr = "[::1]:3478".parse().unwrap();
+        assert_eq!(stun_targets(&[v4, loopback], true), vec![v4, loopback]);
+        assert_eq!(stun_targets(&[v4, loopback], false), vec![v4]);
+    }
+
+    /// #403: once one server has answered (IPv4, say), a silent one (an
+    /// IPv6 server behind a dead route) holds `HINTS` back only briefly,
+    /// not for two whole rounds.
+    #[tokio::test]
+    async fn a_silent_server_barely_delays_the_answer() {
+        let seen: SocketAddr = "203.0.113.5:40000".parse().unwrap();
+        let answers = stun_server(seen).await;
+        let quiet = tokio::net::UdpSocket::bind("127.0.0.1:0").await.unwrap();
+        let silent = quiet.local_addr().unwrap();
+        let ours = crate::transport::bind_socket().unwrap();
+        let start = tokio::time::Instant::now();
+        assert_eq!(discover_at(&ours, vec![answers, silent]).await, vec![seen]);
+        assert!(start.elapsed() < PROBE_WAIT / 2, "{:?}", start.elapsed());
     }
 
     /// A link whose gate stays shut never connects to the relay; once the
