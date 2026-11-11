@@ -19,14 +19,15 @@ proje büyüyünce TotalDrop adına bir hesaba geçilsin. Ozan bunu kabul etti.
 ## Karar
 
 1. Bağışlar, proje yöneticisinin kişisel GitHub Sponsors sayfasından
-   bir kez ya da her ay alınır. Bu, ekip adına çalışma kuralına bilerek
-   yapılmış, süreli bir istisnadır.
+   bir kez ya da her ay alınır. Bu, projenin ekip adına yürümesi
+   ilkesine (#352) bilerek yapılmış, süreli bir istisnadır.
 2. /donate sayfası bunu 35 dilde açıkça söyler: para proje yöneticisinin
    adına gelir ve proje büyüyünce TotalDrop adına bir hesaba geçilir.
-3. Bağışlar yalnızca /donate sayfasındaki maliyetlere harcanır. Her
-   harcamayı Ozan önerir, Sadık onaylar. Gelen ve giden her ay /donate
-   sayfasında ve depoda yayımlanır. Para kişisel sayfaya gelse de bu
-   kural değişmez.
+3. Bağışlar yalnızca /donate sayfasındaki maliyetlere harcanır. Bu
+   kararla şu kural konur: her harcamayı Ozan önerir, Sadık onaylar.
+   Kimse kendi önerisini onaylamaz. Gelen ve giden her ay /donate
+   sayfasındaki tabloda ve depoda [bağış dökümünde](../bagis-dokumu.md)
+   aynı satırlarla yayımlanır.
 4. Bağış gelirinin kişisel gelir olarak doğurduğu yükümlülükler hesabın
    sahibine aittir.
 
