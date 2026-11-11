@@ -239,6 +239,31 @@ Widget _app(Locale locale, double textScale, Widget home) => MaterialApp(
   home: home,
 );
 
+/// A button's label on two lines runs into the button's round ends:
+/// 受け取る at 200 % in a half-width button (#480). Checked for buttons
+/// side by side in a row; the test font draws every letter as a square,
+/// so a full-width label wraps here long before it does on a phone. A
+/// label that wraps is narrower than the same label on one line.
+void _expectButtonLabelsOnOneLine(WidgetTester tester) {
+  final labels = find.descendant(
+    of: find.descendant(
+      of: find.byType(Row),
+      matching: find.byWidgetPredicate((w) => w is ButtonStyleButton),
+    ),
+    matching: find.byType(RichText),
+  );
+  for (final element in labels.evaluate()) {
+    final box = element.renderObject! as RenderBox;
+    final oneLine = box.getMaxIntrinsicWidth(double.infinity);
+    final label = (element.widget as RichText).text.toPlainText();
+    expect(
+      box.size.width,
+      greaterThanOrEqualTo(oneLine - 0.5),
+      reason: 'the button "$label" wraps',
+    );
+  }
+}
+
 void main() {
   final settings = _Settings();
 
@@ -636,6 +661,34 @@ void main() {
     });
   }
 
+  testWidgets('a button label on two lines fails the check', (tester) async {
+    await tester.binding.setSurfaceSize(_phone);
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      _app(
+        const Locale('en'),
+        1.0,
+        Scaffold(
+          body: Row(
+            children: [
+              Expanded(
+                child: FilledButton(
+                  onPressed: () {},
+                  child: const Text('one two three four five six'),
+                ),
+              ),
+              const Spacer(),
+            ],
+          ),
+        ),
+      ),
+    );
+    expect(
+      () => _expectButtonLabelsOnOneLine(tester),
+      throwsA(isA<TestFailure>()),
+    );
+  });
+
   for (final locale in AppLocalizations.supportedLocales) {
     for (final scale in [1.0, 1.3, 2.0]) {
       for (final MapEntry(key: name, value: screen) in screens.entries) {
@@ -670,6 +723,7 @@ void main() {
           // An overflow, across or down, is reported as an exception: a
           // screen whose content can be taller than the phone scrolls.
           expect(tester.takeException(), isNull);
+          _expectButtonLabelsOnOneLine(tester);
 
           // A list lays out only what is near the screen: page through each
           // one to its end, half a screen at a time, as a person would, and
@@ -687,6 +741,7 @@ void main() {
               position.jumpTo(next.clamp(0.0, position.maxScrollExtent));
               await tester.pump();
               expect(tester.takeException(), isNull);
+              _expectButtonLabelsOnOneLine(tester);
               shownSomewhere = shownSomewhere || showing();
             }
           }
