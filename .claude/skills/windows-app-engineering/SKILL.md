@@ -1,6 +1,6 @@
 ---
 name: windows-app-engineering
-description: Use when working on TotalDrop for Windows (a future windows/ folder): WinUI 3 and C# on the core's C ABI, Fluent design, Explorer and share integration, MSIX packaging and the Microsoft Store.
+description: "Use when working on TotalDrop for Windows (a future windows/ folder): WinUI 3 and C# on the core's C ABI, Fluent design, Explorer and share integration, MSIX packaging and the Microsoft Store."
 ---
 
 # Windows (TotalDrop)
@@ -26,7 +26,9 @@ unless a new decision adds one.
 ## Integration
 
 - Explorer context menu "Send with TotalDrop" through `IExplorerCommand`
-  with package identity; share target and share source
+  with package identity: a small COM server inside `explorer.exe`, written
+  in Rust (`windows` crate), not C#; it only passes the selected paths to
+  the app and gets its own security review, because a bug crashes Explorer; share target and share source
   (`DataTransferManager`); toast notifications with actions.
 - Start at login only by user choice; single instance with activation
   forwarding.

@@ -1,6 +1,6 @@
 ---
 name: web-design-pro
-description: Use when changing the TotalDrop website (site/, totaldrop.app): pages, styles, translations of the site, the brand page, accessibility, performance and SEO. For site/functions/ and site/public/_headers also load fullstack-engineering and security-engineering-analyst.
+description: "Use when changing the TotalDrop website (site/, totaldrop.app): pages, styles, translations of the site, the brand page, accessibility, performance and SEO. For site/functions/ and site/public/_headers also load fullstack-engineering and security-engineering-analyst."
 ---
 
 # Web design (TotalDrop site)
@@ -28,6 +28,10 @@ built.
   (`script-src 'self'`, `style-src 'self'`).
 - **Claims match the code.** A size, limit, duration or price on the site is
   backed by code and a test (`docs/surec.md`, "Söz ile kod uyuşmuyor").
+- **Asset versions:** after changing `styles.css`, `app.js`, `lang.js` or
+  `msg.js`, run `node tools/asset-versions.mjs --write` and
+  `node tools/privacy.mjs --write` in `site/`, or visitors keep stale files
+  (`site/README.md`).
 - **Download links** change with every release, in every language; check
   each link after the change.
 

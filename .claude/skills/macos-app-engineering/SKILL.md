@@ -1,6 +1,6 @@
 ---
 name: macos-app-engineering
-description: Use when working on TotalDrop for the Mac (a future macos/ folder): UI toolkit choice, Mac Human Interface Guidelines, Finder and Share menu integration, sandbox, ad-hoc and notarized builds on GitHub macOS runners.
+description: "Use when working on TotalDrop for the Mac (a future macos/ folder): UI toolkit choice, Mac Human Interface Guidelines, Finder and Share menu integration, sandbox, ad-hoc and notarized builds on GitHub macOS runners."
 ---
 
 # macOS (TotalDrop)
@@ -11,6 +11,8 @@ decision 0009 (`docs/kararlar/0009-ios-macos.md`): the core is built for
 `aarch64-apple-darwin` and `x86_64-apple-darwin` (one `lipo` binary) on
 GitHub's macOS runners; until the Apple account exists, CI ships an ad-hoc
 signed, not notarized package and the download page says how to open it.
+CI uses a pinned image (for example `macos-15`) and Xcode, never
+`macos-latest`.
 
 ## Design
 
