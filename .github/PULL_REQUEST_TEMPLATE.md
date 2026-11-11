@@ -19,7 +19,7 @@ Closes #
 - [ ] `cargo fmt`, `cargo clippy -- -D warnings`, `cargo test` and the platform checks are clean
 - [ ] A new parser of outside data has a fuzz target
 - [ ] A protocol decision is in `docs/protocol-v0.1-notes.md`, an architectural decision under `docs/kararlar/`
-- [ ] Every text a user sees is in every supported language; the documents are up to date and in English (docs/kararlar/0019-english-by-default.md)
+- [ ] Every text a user sees is in English and Turkish, and in the other languages as docs/ceviri.md describes; the documents are up to date and in English (docs/kararlar/0019-english-by-default.md)
 - [ ] If the interface changed: screenshots in the light and dark theme, and on Linux in KDE Plasma, Hyprland and Omarchy (docs/tasarim.md)
 - [ ] If what the servers see changed, the privacy policy is updated
 - [ ] Every promise made in a document, a policy or on the site (a duration, a limit, a cost) is backed by code and a test; changed text is updated in every language file

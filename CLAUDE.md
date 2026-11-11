@@ -5,7 +5,7 @@
   - bütün CI kontrolleri yeşil olmadan ve kodu yazmamış bir inceleyici (ayrı bir inceleme ajanı) okumadan birleştirme yapılmaz;
   - "bitti tanımı" ve sürüm listesi adım adım izlenir; yayınlanan her paket CI'da derlenir.
 - Mimari kararlar `docs/kararlar/`, protokol kararları `docs/protocol-v0.1-notes.md`, tehdit modeli `docs/tehdit-modeli.md` içindedir.
-- The repository is written in English: documents, decision records, issues, pull requests, commits and changelog entries ([decision 0019](docs/kararlar/0019-english-by-default.md)). Text that users read stays in every supported language ([0008](docs/kararlar/0008-diller-ve-bolgeler.md)). Replies to the maintainers stay in their language (Turkish).
+- The repository is written in English: documents, decision records, issues, pull requests, commits and changelog entries ([decision 0019](docs/kararlar/0019-english-by-default.md)); the Turkish documents that remain stay binding until they are translated (#490). Text that users read stays in every supported language ([0008](docs/kararlar/0008-diller-ve-bolgeler.md)). Replies to the maintainers stay in their language (Turkish).
 - Tasarım kuralları: `docs/tasarim.md`. Bu kurallar bağlayıcıdır, özellikle şu ikisi:
   - Arayüz her platformda sistem temasına yüzde yüz uyar. Linux'ta KDE, Hyprland ve Omarchy desteklenir. Her adımda üçü de kontrol edilir.
   - Aktarım sırasında işaret, web sitesindeki animasyonun aynısını oynatır.

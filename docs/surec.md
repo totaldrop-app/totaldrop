@@ -49,7 +49,8 @@ Bir değişiklik ancak şunların hepsi doğruysa bitmiştir:
   etkileyen her karar `docs/kararlar/` altına yazıldı.
 - The documents are up to date and in English
   ([0019](kararlar/0019-english-by-default.md)); every text a user sees is
-  in every supported language ([0008](kararlar/0008-diller-ve-bolgeler.md)).
+  in English and Turkish, and in the other supported languages as
+  [ceviri.md](ceviri.md) describes.
 - Arayüz değiştiyse: açık ve koyu temada; Linux'ta KDE Plasma, Hyprland ve
   Omarchy'de; Android'de ekran görüntüsü PR'da.
 - Sunucuların gördüğü bilgi değiştiyse gizlilik politikası, özellik

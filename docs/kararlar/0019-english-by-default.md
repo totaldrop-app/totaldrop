@@ -18,8 +18,13 @@
 - **Decision:** Option 3. Everything in the repository is written in
   English: documents, decision records, templates, agent instructions and
   skills, changelog entries, and from now on every issue, pull request,
-  review comment and commit. File and folder names follow, in one change
+  review comment and commit that the maintainers and their assistants
+  write. File and folder names follow, in one change
   at the end of the move (#490).
+- **Why:** The repository is where new contributors learn how the project
+  works and why it made its choices. One language that most of them read
+  lets them take part in reviews and decisions without a translator, and
+  keeps a single version of every rule.
 - **Not affected:**
   - Text that users read in the apps, on the site, in the store listings
     and in the packages stays in every supported language
