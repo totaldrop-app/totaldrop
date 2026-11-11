@@ -572,6 +572,12 @@ void main() {
 
     testWidgets('a link leaves a received text on the screen', (tester) async {
       await pumpApp(tester);
+      // Made here, not in setUp, so that their answers run on this test's
+      // fake clock. Made in setUp, they answer outside it, and awaiting
+      // the view model below never returns.
+      repo
+        ..connected = Completer()
+        ..events = StreamController();
       receive.setInput('3-old-code');
       final connected = receive.connect();
       repo.connected.complete(FakeOffer(isText: true));
