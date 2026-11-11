@@ -24,6 +24,7 @@ pub mod path;
 pub mod portmap;
 pub mod relay;
 pub mod rendezvous;
+pub mod resume;
 pub mod secure;
 mod stop;
 pub mod transfer;
@@ -600,6 +601,11 @@ pub struct ReceiveOptions {
     /// is also the relay set here (the case of scheme and host, a default
     /// port and a trailing `/` aside).
     pub paths: PathOptions,
+    /// This device's own folder for resume records (decision 0020). With
+    /// one, a receive whose connection is lost keeps what arrived, and the
+    /// same files sent again into the same folder continue where they
+    /// stopped. Without one, partial files are always removed.
+    pub resume_dir: Option<std::path::PathBuf>,
 }
 
 impl Default for ReceiveOptions {
@@ -607,6 +613,7 @@ impl Default for ReceiveOptions {
         Self {
             server: rendezvous::DEFAULT_SERVER.into(),
             paths: PathOptions::default(),
+            resume_dir: None,
         }
     }
 }
@@ -618,6 +625,7 @@ pub struct IncomingOffer {
     chan: secure::SecureChannel,
     offer: transfer::VerifiedOffer,
     words: Vec<String>,
+    resume: Option<resume::Store>,
     _peer: Certificate,
     _link: Standby,
     _mapping: Option<portmap::Mapping>,
@@ -703,6 +711,7 @@ impl IncomingOffer {
             chan,
             offer,
             words,
+            resume: opts.resume_dir.clone().map(resume::Store::new),
             _peer: paired.peer.clone(),
             _link: link,
             _mapping: mapping,
@@ -740,6 +749,7 @@ impl IncomingOffer {
             dest,
             progress_from(&events),
             stop,
+            self.resume.as_ref(),
         )
         .await;
         self.conn.close(0u32.into(), b"done");

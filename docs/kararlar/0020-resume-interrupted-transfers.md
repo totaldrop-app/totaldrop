@@ -1,6 +1,6 @@
 # 0020: An interrupted transfer continues when the same files are sent again
 
-- **Status:** Proposed, 11 November 2026 (#31)
+- **Status:** Accepted, 11 November 2026 (Ozan, #31: option 3 on the decision card)
 - **Context:** When a connection is lost for good (QUIC's idle timeout,
   an app killed in the background, a laptop closed), everything starts
   again from the first byte. The protocol already has room for resuming,

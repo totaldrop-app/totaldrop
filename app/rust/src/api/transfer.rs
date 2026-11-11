@@ -503,6 +503,7 @@ pub async fn connect_receive(
             &ReceiveOptions {
                 server,
                 paths: route(privacy),
+                resume_dir: None,
             },
             &code,
             &stop,
