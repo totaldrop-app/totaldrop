@@ -31,8 +31,10 @@ rules in `app/README.md`.
 - Minimum Android 15 (`minSdk 35`); target the newest SDK the build uses.
 - Background: a user-initiated job keeps process and network alive while a
   transfer runs, with a notification and a Stop button (decision 0010).
-  Permissions: `RUN_USER_INITIATED_JOBS`, `POST_NOTIFICATIONS` (asked at the
-  first transfer; the transfer works without it), `ACCESS_NETWORK_STATE`.
+  Permissions for it: `RUN_USER_INITIATED_JOBS`, `POST_NOTIFICATIONS` (asked
+  at the first transfer; the transfer works without it),
+  `ACCESS_NETWORK_STATE`; the app as a whole also needs `INTERNET`
+  (`app/android/app/src/main/AndroidManifest.xml`).
 - Material You colours (`dynamic_color`) and Material 3; Expressive parts only
   as the official `material_ui` package provides them; icon buttons in text
   fields and list rows wrapped with `KeepIconButtonVariant` (#259).
@@ -64,7 +66,6 @@ rules in `app/README.md`.
 - Bump `version` with the build number (`+N`, higher on every upload) in
   `app/pubspec.yaml`, and the same version without `+N` in
   `app/rust/Cargo.toml` and `Cargo.lock` (`docs/surec.md`, "Sürüm listesi").
-
 - Built only in CI (`.github/workflows/android-release.yml`); it produces the
   `.aab` as an artifact and does not upload to Play. The maintainer uploads
   and presses "Publish".

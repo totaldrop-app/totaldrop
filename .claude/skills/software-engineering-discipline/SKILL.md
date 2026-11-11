@@ -22,7 +22,10 @@ from obra/superpowers (MIT, #469), in our own words.
 - `changelog.d/README.md`: one entry file per PR, `.none.md` when nothing
   changes for users.
 
-Do not restate these documents in code comments or PRs; link them.
+Do not restate these documents in code comments or PRs; link them. Where a
+skill quotes a value from them (an SDK level, a timing, a CSP), the cited
+document is the source and wins; a PR that changes such a value updates
+the skill too (`grep -rn` it under `.claude/skills/`).
 
 ## Before writing code
 
@@ -69,17 +72,16 @@ Do not restate these documents in code comments or PRs; link them.
 
 - PR titles follow Conventional Commits; fill in the PR template. A PR that
   needs a manual test stays a draft until it is done.
-
 - Nobody approves their own work. Before asking a maintainer, run a separate
   review agent that sees only the diff and the code, not your reasoning; ask
   it for correctness, security, contradictions with the docs, overclaims, and
-  the six error types in `docs/surec.md`. Every finding is fixed or answered
-  in the PR with a reason and a follow-up issue.
-- A review finding, from an agent, Copilot or a person, is checked against
-  the code and the docs before it is applied. If it is wrong, answer it
-  with the reason and the source (for example #464, where Copilot asked
-  for a Turkish changelog entry against `changelog.d/README.md`). Do not
-  apply a finding you cannot verify; ask.
+  the six error types in `docs/surec.md`.
+- A review finding, from an agent, Copilot or a person, is first checked
+  against the code and the docs; then it is fixed, or answered in the PR
+  with the reason, the source and, if work remains, a follow-up issue. A
+  wrong finding is answered, not applied (for example #464, where Copilot
+  asked for a Turkish changelog entry against `changelog.d/README.md`).
+  Do not apply a finding you cannot verify; ask.
 - Merging, tagging, publishing, deploying, changing repository, DNS or
   Cloudflare settings and anything that spends money need the maintainer's
   explicit approval. `main` is merged by rebase only.
@@ -93,7 +95,8 @@ Do not restate these documents in code comments or PRs; link them.
 - Say what was done, what was verified and how, what failed and what
   remains. Mark every unverified or assumed point as such.
 - No "passes", "fixed" or "works" without evidence from this session: run
-  the command that proves it and quote the result. An earlier run, a
+  the command that proves it, or read the CI run for this commit, and quote
+  the result. An earlier run, a
   subagent's report or "should work" is not evidence.
 - Cite code as `path/file.ext:line`.
 - Point out when the project breaks its own rules, and propose the fix.

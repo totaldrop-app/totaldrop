@@ -12,7 +12,7 @@
 - Gizli bilgiler (`key.properties`, imza anahtarı parolası) okunmaz ve depoya eklenmez.
 - Paketler yalnızca CI'da derlenir; CI çıktısı (ör. Play Console için `.aab`) yerelde `~/Projects/totaldrop/dist` altına indirilir.
   Tek istisna Flathub: Flathub, Flatpak'i kendi altyapısında `packaging/flatpak` tarifinden ve etiketli kaynaktan derler ve kendi anahtarıyla imzalar; aynı tarif her PR'da bizim CI'ımızda da derlenir ([karar 0014](docs/kararlar/0014-steam-deck.md)).
-- Skill'ler depoda, `.claude/skills/<ad>/SKILL.md` altındadır; Claude Code onları klondan kendiliğinden tanır (#458). Her işin başında, değişen klasörlerin alanına göre aşağıdaki skill'leri yükle (birden çok alan varsa hepsini; branch adı yalnızca ipucudur, klasörler belirler). `software-engineering-discipline` her zaman geçerlidir; tabloda karşılığı olmayan işlerde yalnızca o yüklenir:
+- Skill'ler depoda, `.claude/skills/<ad>/SKILL.md` altındadır; Claude Code onları klondan kendiliğinden tanır (#458). Skill'ler ajan yönergesidir ve İngilizce yazılır. Her işin başında, değişen klasörlerin alanına göre aşağıdaki skill'leri yükle (birden çok alan varsa hepsini; branch adı yalnızca ipucudur, klasörler belirler). `software-engineering-discipline` her zaman geçerlidir; tabloda karşılığı olmayan işlerde yalnızca o yüklenir:
 
   | Alan | Klasör (branch ipucu) | Skill |
   | --- | --- | --- |
