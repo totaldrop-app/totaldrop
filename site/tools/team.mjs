@@ -166,6 +166,9 @@ function validateConfig(c, i18n = I18N) {
     // donation channel (docs/marka.md).
     if (p.coffee !== undefined && p.kind !== "person") fail(`team.json: ${p.login}: only people have a coffee page`);
     else if (p.coffee !== undefined && (typeof p.coffee !== "string" || !COFFEE.test(p.coffee))) fail(`team.json: ${p.login}: bad coffee page`);
+    // The first draft of #486 used "donate": true; a leftover would silently
+    // drop the button, so it fails instead.
+    if (p.donate !== undefined) fail(`team.json: ${p.login}: "donate" is gone, use "coffee": <page>`);
   }
   for (const d of c.disciplines) {
     if (!(d.key in AREAS)) fail(`team.json: unknown discipline ${d.key}`);
