@@ -247,7 +247,8 @@ class TransferProgress extends StatelessWidget {
         // The sizes wrap under large text instead of running off the
         // screen (#322).
         Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
           children: [
             Text(
               fraction == null ? '' : formatPercent(l, done, total),

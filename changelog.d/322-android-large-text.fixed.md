@@ -1,4 +1,7 @@
-- **Android:** Every screen stays readable with the largest text size
-  Android offers (200 %): the progress line wraps instead of running off,
-  and the choose-files, done, declined, connecting and error screens
-  scroll when they are taller than the phone (#322).
+- **Android:** The screens no longer run off the phone with the largest
+  text size Android offers (200 %): the progress line wraps instead of
+  running off with a large file, the choose-files, preparing, done,
+  declined, connecting and error screens scroll when they are taller
+  than the phone, and the error screen no longer runs off when More
+  information is open. The error screen now sits in the middle of the
+  screen instead of at the top (#322).
