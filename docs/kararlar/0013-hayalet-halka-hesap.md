@@ -69,7 +69,7 @@ binding points are:
 - **Android notifications:** UnifiedPush and a connection while the app is
   open. A content-free FCM wake-up is optional (Ozan, 4 November 2026).
 - **Limits:** at most 16 devices. OHTTP and Tor come in a later stage.
-- **The choice between privacy and verification:** contacts see in which
+- **The choice between privacy and auditability:** contacts see in which
   epoch the membership changed (not the number of devices). This was
   accepted deliberately, so that contacts can check the rules for adding
   and removing.

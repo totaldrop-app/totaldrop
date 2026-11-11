@@ -147,8 +147,8 @@
      network find each other even without internet (LocalSend's multicast
      idea). The announcement carries no device name or permanent identity,
      and contains nothing that helps try the code offline: if a value
-     derived from the code were broadcast, anyone on the same network could
-     try the short code offline and break the single-guess protection that
+     derived from the code is broadcast, anyone on the same network can try
+     the short code offline and break the single-guess protection that
      CPace gives. Pairing is still done with CPace; the announcement only
      says where to meet, and the CPace messages travel over this local
      channel instead of rendezvous (see Decision). Because it is a new

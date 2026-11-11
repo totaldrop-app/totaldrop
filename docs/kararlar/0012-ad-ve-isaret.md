@@ -74,7 +74,7 @@
 - **Why:** The rule protects the user and is easy to apply. The answer to
   "did you change the code?" is clear; the answer to "is it small?" is not.
   It does not touch the freedom of the code: anyone can take the code and
-  change it as they like, and only publishes it under another name. The
+  change it as they like; they just publish it under another name. The
   open-protocol goal is kept too: compatible clients can say that they work
   with TotalDrop.
 
