@@ -177,8 +177,8 @@
 - **Şirket hesabı:** Ücretsiz. Kayıtlı bir tüzel kişilik ister (D-U-N-S
   numarası ya da resmî kuruluş belgesi) ve alan adıyla eşleşen bir iş
   e-postası. Ekip üyeleri rol alabilir. TotalDrop'un bugün tüzel kişiliği
-  yoktur. Bağışlar için Open Collective'e başvuru (PR #354) sürüyor; orada
-  emanetçi olacak kuruluşun tüzel kişiliği TotalDrop'unki sayılmaz.
+  yoktur. Open Collective başvurusu reddedildi; bağışlar şimdilik proje
+  yöneticisinin kişisel sayfasından alınır ([0017](0017-bagis-kisisel-sayfa.md)).
 - Bireysel hesap sonradan şirkete çevrilemez; şirket için yeni hesap
   açılır ve uygulama ona taşınır.
 - **Bugünkü durum (7 Kasım 2026, Partner Center'dan okundu):** Ozan'ın
