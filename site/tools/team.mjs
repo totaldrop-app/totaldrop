@@ -89,6 +89,10 @@ const shown = (href) => href.replace(/^https:\/\//, "").replace(/\/$/, "");
 // True when team.json's bio for a person is set but not one clean line.
 export const badBio = (b) => b !== undefined && (typeof b !== "string" || b === "" || b !== clean(b, 240));
 
+// True when team.json's Buy Me a Coffee page name is set but is not one:
+// letters, digits, "-" and "_" (#484).
+export const badCoffee = (s) => s !== undefined && (typeof s !== "string" || !/^[A-Za-z0-9_-]{1,64}$/.test(s));
+
 // The language files in an i18n folder (<tag>.json), sorted.
 const langFiles = (dir) => readdirSync(dir).filter((f) => /^[a-z]{2,3}(-[A-Za-z0-9]+)*\.json$/.test(f)).sort();
 
@@ -157,6 +161,10 @@ function validateConfig(c, i18n = I18N) {
     if (badBio(p.bio)) fail(`team.json: ${p.login}: bad bio`);
     else if (p.bio !== undefined && p.kind !== "person") fail(`team.json: ${p.login}: only people have a bio`);
     else if (p.bio !== undefined) for (const tag of missingBio(langs, p.login)) fail(`team.json: ${p.login}: tm.bio.${p.login} is not translated in ${tag}.json`);
+    // The person's Buy Me a Coffee page name, shown as the service's own
+    // button (#484).
+    if (badCoffee(p.coffee)) fail(`team.json: ${p.login}: bad coffee page`);
+    else if (p.coffee !== undefined && p.kind !== "person") fail(`team.json: ${p.login}: only people have a coffee page`);
   }
   for (const d of c.disciplines) {
     if (!(d.key in AREAS)) fail(`team.json: unknown discipline ${d.key}`);
@@ -294,6 +302,10 @@ const ICON_GITHUB = `<svg class="icon" viewBox="0 0 16 16" aria-hidden="true" fo
 const ICON_WEB = `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.75 5.6 3.75 9S14.5 18.4 12 21M12 3C9.5 5.6 8.25 8.6 8.25 12S9.5 18.4 12 21"/></svg>`;
 
 const githubLink = (href, shownAs) => `<li><a class="icon-link" href="${esc(href)}">${ICON_GITHUB}<span class="visually-hidden">GitHub: <bdi>${esc(shownAs)}</bdi></span></a></li>`;
+// Buy Me a Coffee's own button (#484), served from this site so the page
+// makes no third-party request. Its text is the picture's, in English in
+// every language, so the alt text is too.
+export const coffeeLink = (page) => `<a class="coffee" href="https://buymeacoffee.com/${esc(page)}" rel="nofollow"><img src="/team/buy-me-a-coffee.png" alt="Buy me a coffee" width="157" height="44" decoding="async"></a>`;
 const webLink = (href) => `<li><a class="icon-link" href="${esc(href)}" rel="nofollow ugc">${ICON_WEB}<span class="visually-hidden"><span data-i18n="tm.web">Web site</span>: <bdi>${esc(shown(href))}</bdi></span></a></li>`;
 
 // The colour of a login in the share bars and their legends, by role: the
@@ -337,6 +349,7 @@ function personCard(c, s, p) {
   const bio = bioLine(p, pr);
   if (bio) lines.push(`            ${bio}`);
   if (areas) lines.push(`            <ul class="tags">${areas}</ul>`);
+  if (p.coffee !== undefined) lines.push(`            <p class="coffee-row">${coffeeLink(p.coffee)}</p>`);
   lines.push(`            <div class="person-foot">`);
   const st = stat(s.totals[p.login]);
   if (st) lines.push(`              ${st}`);

@@ -1,0 +1,7 @@
+site/public/team/buy-me-a-coffee.png is the "Buy me a coffee" button that
+Buy Me a Coffee offers its creators for linking to their page, taken
+unchanged from cdn.buymeacoffee.com/buttons/v2/default-violet.png. The
+button, its logo and its name belong to Buy Me a Coffee. It is not covered
+by the project's licenses; it is used on totaldrop.app only to link to the
+project lead's Buy Me a Coffee page, and may not be reused outside this
+repository and its web site except as Buy Me a Coffee allows.

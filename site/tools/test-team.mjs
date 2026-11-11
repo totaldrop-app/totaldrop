@@ -140,3 +140,17 @@ test("team.json rejects a bio that is bad, untranslated or on a non-person (#408
   assert.match(errs((c) => { person(c, "sadikkuzu").bio = "Untranslated."; }), /sadikkuzu: tm\.bio\.sadikkuzu is not translated in [a-z]{2,3}(-[A-Za-z0-9]+)*\.json/);
   assert.match(errs((c) => { person(c, "claude").bio = "x"; }), /claude: only people have a bio/);
 });
+
+test("a coffee page in team.json becomes Buy Me a Coffee's button, served from this site (#484)", async () => {
+  const { coffeeLink, badCoffee, configErrors } = await import("./team.mjs");
+  const html = coffeeLink("ozdil");
+  assert.match(html, /href="https:\/\/buymeacoffee\.com\/ozdil"/);
+  assert.match(html, /src="\/team\/buy-me-a-coffee\.png"/);
+  assert.match(html, /alt="Buy me a coffee"/);
+  for (const bad of ["", " ozdil", "ozdil/x", "a\"b", "x".repeat(65), 7, null]) assert.equal(badCoffee(bad), true, String(bad));
+  for (const good of [undefined, "ozdil", "a_b-1"]) assert.equal(badCoffee(good), false, String(good));
+  const orig = JSON.parse(readFileSync(new URL("../team/team.json", import.meta.url), "utf8"));
+  const errs = (edit) => { const c = structuredClone(orig); edit(c); return configErrors(c).join("\n"); };
+  assert.match(errs((c) => { c.people.find((p) => p.login === "ozdil").coffee = "../x"; }), /ozdil: bad coffee page/);
+  assert.match(errs((c) => { c.people.find((p) => p.login === "claude").coffee = "x"; }), /claude: only people have a coffee page/);
+});
