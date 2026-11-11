@@ -1,37 +1,37 @@
-# 0010: Android'de aktarım arka planda kullanıcının başlattığı iş olarak sürer
+# 0010: On Android, a transfer continues in the background as a user-initiated job
 
-- **Durum:** Kabul, 3 Kasım 2026
-- **Bağlam:** Android, ekranda olmayan bir uygulamanın ağ bağlantısını
-  keser. Gönderen kodu başka bir uygulamada paylaşmak için TotalDrop'tan
-  çıkınca bağlantı kopuyordu ("Software caused connection abort"). Bunun
-  üzerine rendezvous sunucusu buluşma kutusunu kapatıyor ve kod
-  geçersiz kalıyordu (#194). Oysa kodu paylaşmanın olağan yolu tam olarak
-  budur.
-- **Seçenekler:**
-  1. `dataSync` türünde bir ön plan hizmeti. Her yerde çalışır, ama Play
-     Console'da ön plan hizmeti beyanı ve tanıtım videosu ister. Android 15
-     ve sonrasında da günde 6 saatle sınırlıdır.
-  2. Kullanıcının başlattığı veri aktarımı işi
-     (`JobInfo.Builder.setUserInitiated`, Android 14 ve sonrası). Android'in
-     kişinin başlattığı aktarımlar için önerdiği yoldur, Play beyanı
-     gerektirmez ve bildirim zorunludur.
-  3. Bağlantı koptuğunda yeniden bağlanmak. Arka planda ağ yokken işe
-     yaramaz.
-- **Karar:** Seçenek 2. Gönderme ve alma başlarken uygulama bir iş
-  kaydeder. İş sürdükçe "TotalDrop ile gönderiliyor/alınıyor" bildirimi
-  görünür ve bildirimde **Durdur** düğmesi bulunur. Aktarım ne şekilde
-  biterse bitsin iş de biter. Aktarımın kendisi yine Rust çekirdeğinde
-  çalışır; iş yalnızca süreci ve ağ bağlantısını ayakta tutar.
-  En düşük sürüm zaten Android 15 olduğu için başka bir yola gerek yok.
-- **Neden:** Kişinin başlattığı bir aktarım için doğru araç budur. Ek Play
-  beyanı istemez ve kod, paylaşıldığı süre boyunca geçerli kalır. Güvenlik
-  değişmez: kod yine tek kullanımlıktır, kullanılmazsa sunucuda 15 dakikada
-  silinir ve doğrulama kelimeleri karşılaştırılır.
-- **Sonuçlar:**
-  - Yeni izinler: `RUN_USER_INITIATED_JOBS`, `POST_NOTIFICATIONS` (ilk
-    aktarımda sorulur; verilmezse aktarım yine sürer, bildirim görünmez)
-    ve `ACCESS_NETWORK_STATE`.
-  - Bildirim metinleri 35 dilde `l10n/app/` içindedir.
-  - Sistem işi durdurursa ya da kişi görev yöneticisinden durdurursa
-    aktarım da durur.
-  - iOS'ta karşılığı ayrıca ele alınacak.
+- **Status:** Accepted, 3 November 2026
+- **Context:** Android cuts the network connection of an app that is not on
+  screen. When the sender left TotalDrop to share the code in another app,
+  the connection dropped ("Software caused connection abort"). The
+  rendezvous server then closed the mailbox and the code became invalid
+  (#194). Yet that is exactly the normal way to share the code.
+- **Options:**
+  1. A foreground service of type `dataSync`. Works everywhere, but needs a
+     foreground service declaration and a demo video in the Play Console.
+     On Android 15 and later it is also limited to 6 hours a day.
+  2. A user-initiated data transfer job
+     (`JobInfo.Builder.setUserInitiated`, Android 14 and later). This is
+     the route Android recommends for transfers that a person starts; it
+     needs no Play declaration, and a notification is mandatory.
+  3. Reconnecting when the connection drops. Useless while there is no
+     network in the background.
+- **Decision:** Option 2. When sending or receiving starts, the app
+  schedules a job. While the job runs, a "Sending/Receiving with TotalDrop"
+  notification is shown, with a **Stop** button. However the transfer ends,
+  the job ends too. The transfer itself still runs in the Rust core; the
+  job only keeps the process and its network connection alive. Since the
+  minimum version is already Android 15, no other route is needed.
+- **Why:** This is the right tool for a transfer that a person starts. It
+  needs no extra Play declaration, and the code stays valid for as long as
+  it is being shared. Security does not change: the code is still single
+  use, is deleted from the server after 15 minutes if unused, and the
+  verification words are compared.
+- **Consequences:**
+  - New permissions: `RUN_USER_INITIATED_JOBS`, `POST_NOTIFICATIONS` (asked
+    on the first transfer; if refused, the transfer still continues, only
+    without a notification) and `ACCESS_NETWORK_STATE`.
+  - The notification texts are in `l10n/app/`, in 35 languages.
+  - If the system stops the job, or the person stops it from the task
+    manager, the transfer stops too.
+  - The iOS counterpart will be dealt with separately.

@@ -1,95 +1,100 @@
-# 0012: Kod serbest, ad ve işaret yalnızca TotalDrop'un kendi sürümleri için
+# 0012: The code is free; the name and the mark are only for TotalDrop's own releases
 
-- **Durum:** Kabul, 4 Kasım 2026 (#234)
-- **Bağlam:** TotalDrop'un kodu açık lisanslıdır
-  ([LICENSING.md](../../LICENSING.md)): protokol kütüphaneleri MIT veya
-  Apache-2.0, uygulamalar ve site GPL-3.0-or-later, sunucular
-  AGPL-3.0-or-later. Bu lisanslar kodu kopyalama, değiştirme ve dağıtma
-  izni verir. Ama TotalDrop adını ve işaretini kullanma izni vermez.
-  Apache-2.0 bunu 6. maddesinde açıkça söyler. GPL-3.0 ad ve işarete
-  izin vermez; 7. maddesi isteyen projenin bunu ek şart olarak lisans
-  bildirimine yazmasına (e) ve değiştirilmiş sürümlerin farklı olduğunun
-  belirtilmesini istemesine (c) izin verir. Bugüne kadar adın ve işaretin başkalarınca nasıl
-  kullanılabileceği hiçbir yerde yazmıyordu. [/brand](https://totaldrop.app/brand)
-  sayfası (#220) logo dosyalarını indirtiyor ama bu dosyaları kimin,
-  hangi koşulla kullanabileceğini söylemiyor.
+- **Status:** Accepted, 4 November 2026 (#234)
+- **Context:** TotalDrop's code is openly licensed
+  ([LICENSING.md](../../LICENSING.md)): the protocol libraries are MIT or
+  Apache-2.0, the apps and the site GPL-3.0-or-later, the servers
+  AGPL-3.0-or-later. These licences allow copying, changing and
+  distributing the code. They do not give permission to use the TotalDrop
+  name and mark. Apache-2.0 says so explicitly in its section 6. GPL-3.0
+  does not permit the name and the mark; its section 7 lets a project
+  write this into its licence notice as an additional term (e) and require
+  modified versions to be marked as different (c). Until now, nothing said
+  anywhere how others may use the name and the mark. The
+  [/brand](https://totaldrop.app/brand) page (#220) offers the logo files
+  for download but does not say who may use them, or on what terms.
 
-  TotalDrop'a güvenmenin sebebi şifrelemedir. Kullanıcı "TotalDrop"
-  yazan bir uygulamayı kurduğunda, kodu bu depodan gelen ve aynı güvenlik
-  sözlerini veren bir uygulama kurduğunu bilmelidir. Değiştirilmiş bir
-  sürüm aynı adı ve işareti taşırsa kullanıcı onu resmî uygulamadan
-  ayıramaz. Bu sürüm kötü niyetli olmasa bile şifrelemeyi zayıflatmış
-  olabilir.
+  The reason to trust TotalDrop is its encryption. When a user installs an
+  app that says "TotalDrop", they must know that they are installing an app
+  whose code comes from this repository and that makes the same security
+  promises. If a modified version carries the same name and mark, the user
+  cannot tell it apart from the official app. Even if that version is not
+  malicious, it may have weakened the encryption.
 
-  Diğer açık kaynak projeler:
-  - **Mozilla:** Değiştirilmemiş Firefox'u dağıtan herkes adı kullanabilir.
-    Kodu değiştirip dağıtan kendi adını kullanır. Debian bu yüzden yıllarca
-    "Iceweasel" adını kullandı.
-  - **Rust Foundation:** Adı tanıtım ve topluluk işlerinde geniş ölçüde
-    serbest bırakır. Değiştirilmiş derleyicinin "Rust" adıyla dağıtılmasını
-    ve resmî görünmeyi yasaklar.
-  - **Signal:** Kod AGPL'dir ama fork'lar Signal adını ve logosunu
-    kullanamaz, kendi adlarıyla yayımlanır.
+  Other open-source projects:
+  - **Mozilla:** Anyone who distributes unmodified Firefox may use the
+    name. Whoever changes the code and distributes it uses their own name.
+    That is why Debian used the name "Iceweasel" for years.
+  - **Rust Foundation:** Leaves the name widely free for promotion and
+    community work. Forbids distributing a modified compiler under the name
+    "Rust" and appearing official.
+  - **Signal:** The code is AGPL, but forks cannot use the Signal name and
+    logo; they are published under their own names.
 
-- **Seçenekler:**
-  1. **Fork'lar kendi adıyla yayımlanır.** Kodu değiştiren her sürüm
-     kendi adını ve işaretini kullanır. Kodu değiştirmeden yalnızca
-     paketleyenler adı korur. Mozilla ve Signal böyle yapar.
-  2. **Küçük değişikliklere izin.** Hata düzeltmesi ve yerel uyarlama yapan
-     sürüm adı korur, özellik ekleyen ya da güvenliği etkileyen sürüm kendi
-     adını kullanır. "Küçük" değişikliğin sınırını çizmek zordur. Güvenliği
-     etkileyen bir değişiklik küçük görünebilir.
-  3. **Serbest bırakmak.** Fork'lar adı ve işareti kullanabilir. Kullanıcı
-     zayıflatılmış bir sürümü resmî uygulama sanabilir.
+- **Options:**
+  1. **Forks are published under their own name.** Every version that
+     changes the code uses its own name and mark. Only those who package
+     without changing the code keep the name. Mozilla and Signal do this.
+  2. **Allow small changes.** A version with bug fixes and local
+     adaptations keeps the name; a version that adds features or affects
+     security uses its own name. Drawing the line of a "small" change is
+     hard. A change that affects security can look small.
+  3. **Leave it free.** Forks may use the name and the mark. A user may
+     mistake a weakened version for the official app.
 
-- **Karar:** 1. seçenek (Ozan, 4 Kasım 2026, karar kartı). Aşağıdaki
-  diğer maddeleri ve mağaza kuralını Ozan aynı gün başlıkta onayladı.
-  Kurallar [docs/marka.md](../marka.md) belgesindedir. Özetle:
-  - Kod lisansları ne izin veriyorsa o serbesttir. Ad ve işaret için ayrı
-    kural geçerlidir. Lisans metinlerine GPL'nin 7. maddesine göre ek şart
-    eklenmez: kural lisansın değil, adın ve işaretin kuralıdır, ve kodun
-    kullanımına hiçbir kısıt getirmez.
-  - İşaret dosyaları (SVG, PNG, simgeler) bulundukları klasörün lisansıyla
-    dağıtılır; dosyayı değiştirmek lisansın verdiği haktır. Kural yalnızca
-    adın ve işaretin bir ürünü tanıtmak için kullanılmasını düzenler.
-  - Bağlantı vermek, haberde, yazıda ve eğitimde adı ve değiştirilmemiş
-    işareti kullanmak serbesttir.
-  - Kodu değiştirmeden, yalnızca paketleme için gereken yamalarla derleyen
-    paketleyiciler (Linux dağıtımları, AUR, F-Droid) adı ve işareti
-    kullanabilir. Flathub'daki `app.totaldrop.TotalDrop` kaydını proje
-    yayımlar ya da onaylar.
-  - Kodu değiştiren sürümler kendi adını ve işaretini kullanır. "TotalDrop
-    tabanlıdır" diyebilir.
-  - Protokolü uygulayan başka istemciler "TotalDrop ile çalışır" diyebilir.
-    Adlarında TotalDrop geçemez, işareti kullanamazlar.
-  - Resmî ya da onaylı gibi görünmek, işareti değiştirmek, benzer ad ve
-    alan adları kullanmak yasaktır. Yayımlayanın geliştirici olarak
-    göründüğü mağazalarda (Google Play, App Store, Microsoft Store, Snap
-    Store) TotalDrop'u yalnızca TotalDrop yayımlar.
-  - Adı veya işareti taşıyan ürün satmak için yazılı izin gerekir.
+- **Decision:** Option 1 (Ozan, 4 November 2026, decision card). Ozan
+  approved the other points below and the store rule in the thread on the
+  same day. The rules are in [docs/marka.md](../marka.md). In short:
+  - Whatever the code licences allow is free. A separate rule applies to
+    the name and the mark. No additional term under GPL section 7 is added
+    to the licence texts: the rule belongs to the name and the mark, not to
+    the licence, and puts no restriction on using the code.
+  - The mark files (SVG, PNG, icons) are distributed under the licence of
+    the folder they are in; changing a file is a right the licence gives.
+    The rule only governs using the name and the mark to present a
+    product.
+  - Linking, and using the name and the unmodified mark in news, articles
+    and teaching, is free.
+  - Packagers who build without changing the code, with only the patches
+    packaging needs (Linux distributions, the AUR, F-Droid), may use the
+    name and the mark. The `app.totaldrop.TotalDrop` entry on Flathub is
+    published or approved by the project.
+  - Versions that change the code use their own name and mark. They may say
+    "based on TotalDrop".
+  - Other clients that implement the protocol may say "works with
+    TotalDrop". Their names may not contain TotalDrop, and they may not use
+    the mark.
+  - Appearing official or endorsed, changing the mark, and using similar
+    names and domains are forbidden. In stores where the publisher appears
+    as the developer (Google Play, the App Store, the Microsoft Store, the
+    Snap Store), only TotalDrop publishes TotalDrop.
+  - Selling products that carry the name or the mark needs written
+    permission.
 
-- **Neden:** Kural kullanıcıyı korur ve uygulaması kolaydır. "Kodu
-  değiştirdin mi?" sorusunun yanıtı nettir, "küçük mü?" sorusununki değildir.
-  Kodun özgürlüğüne dokunmaz: herkes kodu alıp istediği gibi değiştirebilir,
-  yalnızca başka bir adla yayımlar. Açık protokol hedefi de korunur: uyumlu
-  istemciler TotalDrop'la çalıştıklarını söyleyebilir.
+- **Why:** The rule protects the user and is easy to apply. The answer to
+  "did you change the code?" is clear; the answer to "is it small?" is not.
+  It does not touch the freedom of the code: anyone can take the code and
+  change it as they like, and only publishes it under another name. The
+  open-protocol goal is kept too: compatible clients can say that they work
+  with TotalDrop.
 
-- **Sonuçlar:**
-  - `docs/marka.md` kuralların tam metnidir. `LICENSING.md` ona bağlanır.
-  - /brand sayfasına 35 dilde "Ad ve işaretin kullanımı" bölümü eklenir.
-  - Bir fork'un Android'de `app.totaldrop`, Linux'ta
-    `app.totaldrop.TotalDrop` dışında bir uygulama kimliği kullanması
-    önerilir, şart koşulmaz. Nedenleri teknik: mağazalar ve Flathub aynı
-    kimliği iki kez kabul etmez, Android başka anahtarla imzalanmış bir
-    güncellemeyi kurmaz, aynı masaüstü kimliğini taşıyan iki uygulama
-    birbirinin yerine geçer.
-  - Ad tescil edilmedi. Metinler "tescilli marka" demez. Ad tescil
-    ettirilirse belgeler güncellenir.
-  - İzin istekleri hello@totaldrop.app adresine gelir.
-  - Kapsam dışı: fork'ların ve uyumlu istemcilerin totaldrop.app
-    sunucularını kullanması. Bu bir hizmet kullanım kuralıdır, gerekirse ayrı
-    bir kararla yazılır.
+- **Consequences:**
+  - `docs/marka.md` is the full text of the rules. `LICENSING.md` links to
+    it.
+  - A "Use of the name and the mark" section is added to the /brand page,
+    in 35 languages.
+  - A fork is advised, not required, to use an application ID other than
+    `app.totaldrop` on Android and `app.totaldrop.TotalDrop` on Linux. The
+    reasons are technical: stores and Flathub do not accept the same ID
+    twice, Android does not install an update signed with another key, and
+    two apps with the same desktop ID replace each other.
+  - The name is not registered. The texts do not say "registered
+    trademark". If the name is registered, the documents are updated.
+  - Permission requests go to hello@totaldrop.app.
+  - Out of scope: forks and compatible clients using the totaldrop.app
+    servers. That is a rule for using a service; if needed, it is written
+    in a separate decision.
 
-- **Gözden geçirme koşulu:** Ad tescil ettirildiğinde, bir paketleyici ya
-  da fork kuralın uygulanamadığı bir durum bildirdiğinde, ya da sunucu
-  kullanım kuralı yazıldığında.
+- **Review condition:** When the name is registered, when a packager or a
+  fork reports a case where the rule cannot be applied, or when the rule for
+  using the servers is written.
