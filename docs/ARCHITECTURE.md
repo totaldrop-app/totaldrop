@@ -196,32 +196,32 @@ aşağıdaki adımlardadır.
 Adım adım:
 
 1. `main` argümanları okur, Tokio çalışma zamanını kurar, yolu seçer
-   (`crates/totaldrop-cli/src/main.rs:613`, `crates/totaldrop-cli/src/main.rs:629` → `crates/totaldrop-cli/src/main.rs:232` `paths()`), `Send`
-   dalına girer (`crates/totaldrop-cli/src/main.rs:650`) ve `send()`'i çağırır (`crates/totaldrop-cli/src/main.rs:355`).
+   (`crates/totaldrop-cli/src/main.rs:631`, `crates/totaldrop-cli/src/main.rs:647` → `crates/totaldrop-cli/src/main.rs:232` `paths()`), `Send`
+   dalına girer (`crates/totaldrop-cli/src/main.rs:668`) ve `send()`'i çağırır (`crates/totaldrop-cli/src/main.rs:355`).
 2. `PreparedSend::new` dosyaları ayrı bir iş parçacığında tarar
-   (`crates/totaldrop-core/src/lib.rs:434`,
-   `crates/totaldrop-core/src/transfer.rs:334` `scan`). Metin gönderiminde
-   `PreparedSend::text` (`crates/totaldrop-core/src/lib.rs:445`, `crates/totaldrop-core/src/transfer.rs:223` `text_entry`).
+   (`crates/totaldrop-core/src/lib.rs:435`,
+   `crates/totaldrop-core/src/transfer.rs:377` `scan`). Metin gönderiminde
+   `PreparedSend::text` (`crates/totaldrop-core/src/lib.rs:446`, `crates/totaldrop-core/src/transfer.rs:266` `text_entry`).
 3. `ready` cihaz anahtarlarını üretir, rendezvous'tan numara ayırır, kodu
-   cihazda üretir ve kutuyu tutar (`crates/totaldrop-core/src/lib.rs:450-461`;
+   cihazda üretir ve kutuyu tutar (`crates/totaldrop-core/src/lib.rs:451-462`;
    `crates/totaldrop-core/src/rendezvous.rs:175` `allocate`, `crates/totaldrop-core/src/rendezvous.rs:202`
    `Mailbox::claim`; `crates/totaldrop-proto/src/lib.rs:183`
    `TransferCode`).
-4. `run_with` (`crates/totaldrop-core/src/lib.rs:501`):
+4. `run_with` (`crates/totaldrop-core/src/lib.rs:502`):
    - UDP soketi (`crates/totaldrop-core/src/transport.rs:306`
      `bind_socket`) ve tek kullanımlık uç nokta anahtarı (`crates/totaldrop-core/src/transport.rs:73`).
-   - `own_hints` (`crates/totaldrop-core/src/lib.rs:101`): yerel adresler, STUN
+   - `own_hints` (`crates/totaldrop-core/src/lib.rs:102`): yerel adresler, STUN
      (`crates/totaldrop-core/src/relay.rs:106` `discover`) ve aynı anda
      yönlendiriciden port isteği: PCP ve NAT-PMP yarışır, ikisi de
      susarsa UPnP IGD denenir (`crates/totaldrop-core/src/portmap.rs:298`
      `start`). Bekleme en çok `MAPPING_GRACE` = 300 ms'dir
-     (`crates/totaldrop-core/src/lib.rs:95`); ağ geçidi UPnP ile yanıt
+     (`crates/totaldrop-core/src/lib.rs:96`); ağ geçidi UPnP ile yanıt
      verdiyse deneme bitene kadar sürer (`crates/totaldrop-core/src/portmap.rs:346`
      `Asking::wait`).
    - `pairing::exchange` (`crates/totaldrop-core/src/pairing.rs:73`):
      kutuda `pake` (CPace, `crates/totaldrop-core/src/pairing.rs:107-110`), `confirm` (sertifika,
      `crates/totaldrop-core/src/pairing.rs:119-129`), `hints` (`crates/totaldrop-core/src/pairing.rs:135-139`; adresler şifreli).
-   - `transport::endpoint` (`crates/totaldrop-core/src/transport.rs:438`) ve yollar (`crates/totaldrop-core/src/lib.rs:287`
+   - `transport::endpoint` (`crates/totaldrop-core/src/transport.rs:438`) ve yollar (`crates/totaldrop-core/src/lib.rs:288`
      `paths_to`): aktarma bağlantısı (`crates/totaldrop-core/src/relay.rs:302` `spawn`) ve doğrudan
      adayların hepsi birlikte denenir; `sender_connection`
      (`crates/totaldrop-core/src/transport.rs:588`) → `connect_any` (`crates/totaldrop-core/src/transport.rs:694`). Ters yön
@@ -229,48 +229,48 @@ Adım adım:
    - Doğrudan yol seçildiyse aktarma bağlantısı park edilir ve
      `path::Fallback` (`crates/totaldrop-core/src/path.rs:115`) yolu izler;
      8 sn sessizlikte aktarmaya geçer (`crates/totaldrop-core/src/path.rs:86` `FALLBACK_SILENCE`).
-     Durum adlandırılmış bir türdür: `Keep` (`crates/totaldrop-core/src/lib.rs:338`).
+     Durum adlandırılmış bir türdür: `Keep` (`crates/totaldrop-core/src/lib.rs:339`).
    - `secure::handshake_on` (`crates/totaldrop-core/src/secure.rs:112`):
      Noise XXpsk3 (`crates/totaldrop-core/src/secure.rs:16`), ardından ML-KEM-768 ve dört doğrulama
      kelimesi (`crates/totaldrop-crypto/src/channel.rs:114` `session_keys`,
      `crates/totaldrop-crypto/src/channel.rs:129` `verification_indices`).
-   - `transfer::send_files` (`crates/totaldrop-core/src/transfer.rs:518`): manifest, 4 paralel akış
-     (`crates/totaldrop-core/src/transfer.rs:187`), parçalar STREAM ile şifreli
+   - `transfer::send_files` (`crates/totaldrop-core/src/transfer.rs:605`): manifest, 4 paralel akış
+     (`crates/totaldrop-core/src/transfer.rs:230`), parçalar STREAM ile şifreli
      (`crates/totaldrop-crypto/src/lib.rs:148` `EntryCipher`).
-5. Çıkış: `main` sonucu çıkış koduna çevirir (`crates/totaldrop-cli/src/main.rs:674-696`): başarı 0,
+5. Çıkış: `main` sonucu çıkış koduna çevirir (`crates/totaldrop-cli/src/main.rs:692-714`): başarı 0,
    durdurma 130, hata 1, kullanım hatası 2 (geçersiz kod, aktarmasız
-   gizlilik modu `crates/totaldrop-cli/src/main.rs:630-633`, clap'in kendi hataları) ve kişinin dilinde bir cümle + İngilizce ayrıntı
-   (`crates/totaldrop-cli/src/main.rs:710` `error_key`, `crates/totaldrop-cli/src/main.rs:702` `detail_line`).
+   gizlilik modu `crates/totaldrop-cli/src/main.rs:648-651`, clap'in kendi hataları) ve kişinin dilinde bir cümle + İngilizce ayrıntı
+   (`crates/totaldrop-cli/src/main.rs:728` `error_key`, `crates/totaldrop-cli/src/main.rs:720` `detail_line`).
 
 ### 2.2 `totaldrop receive <kod>`
 
-1. `crates/totaldrop-cli/src/main.rs:664` → `receive()` (`crates/totaldrop-cli/src/main.rs:429`) → `IncomingOffer::connect_with`
-   (`crates/totaldrop-cli/src/main.rs:496` → `crates/totaldrop-core/src/lib.rs:639`).
-2. `IncomingOffer::connect` (`crates/totaldrop-core/src/lib.rs:662`): kodu ayrıştırır
-   (`TransferCode::parse`), kutuyu jetonsuz tutar (`crates/totaldrop-core/src/lib.rs:665`), aynı
+1. `crates/totaldrop-cli/src/main.rs:682` → `receive()` (`crates/totaldrop-cli/src/main.rs:439`) → `IncomingOffer::connect_with`
+   (`crates/totaldrop-cli/src/main.rs:505` → `crates/totaldrop-core/src/lib.rs:647`).
+2. `IncomingOffer::connect` (`crates/totaldrop-core/src/lib.rs:670`): kodu ayrıştırır
+   (`TransferCode::parse`), kutuyu jetonsuz tutar (`crates/totaldrop-core/src/lib.rs:673`), aynı
    `own_hints` ve `pairing::exchange` adımlarını yanıtlayan rolünde yapar.
 3. Aktarma yalnızca gönderenin önerdiği aktarma **kendi ayarıyla aynıysa**
-   kullanılır (`crates/totaldrop-core/src/lib.rs:231` `receiver_relay`; #68: gönderen alıcının
+   kullanılır (`crates/totaldrop-core/src/lib.rs:232` `receiver_relay`; #68: gönderen alıcının
    adresini kendi sunucusuyla öğrenemesin).
 4. `transport::receiver_connection` (`crates/totaldrop-core/src/transport.rs:556`),
    `secure::handshake` (`crates/totaldrop-core/src/secure.rs:98`), `transfer::receive_offer`
-   (`crates/totaldrop-core/src/transfer.rs:774`): manifest doğrulanır, diske hiçbir şey yazılmaz.
-5. Kişi kabul ederse `accept_with` (`crates/totaldrop-cli/src/main.rs:566` → `crates/totaldrop-core/src/lib.rs:731`) →
-   `transfer::accept` (`crates/totaldrop-core/src/transfer.rs:1262`). Yazma yolu: `check_beneath`
-   (`crates/totaldrop-core/src/transfer.rs:906`), sembolik bağlantı izlemeyen `make_dir`
-   (`crates/totaldrop-core/src/transfer.rs:923`), üzerine yazmayan `place_no_clobber`
-   (`crates/totaldrop-core/src/transfer.rs:874`). Metin için `accept_text` (`crates/totaldrop-core/src/transfer.rs:1135`),
-   ret için `decline` (`crates/totaldrop-core/src/transfer.rs:833`).
+   (`crates/totaldrop-core/src/transfer.rs:873`): manifest doğrulanır, diske hiçbir şey yazılmaz.
+5. Kişi kabul ederse `accept_with` (`crates/totaldrop-cli/src/main.rs:584` → `crates/totaldrop-core/src/lib.rs:740`) →
+   `transfer::accept` (`crates/totaldrop-core/src/transfer.rs:1555`). Yazma yolu: `check_beneath`
+   (`crates/totaldrop-core/src/transfer.rs:1005`), sembolik bağlantı izlemeyen `make_dir`
+   (`crates/totaldrop-core/src/transfer.rs:1022`), üzerine yazmayan `place_no_clobber`
+   (`crates/totaldrop-core/src/transfer.rs:973`). Metin için `accept_text` (`crates/totaldrop-core/src/transfer.rs:1297`),
+   ret için `decline` (`crates/totaldrop-core/src/transfer.rs:932`).
 
 ### 2.3 Aynı akış uygulamalarda
 
 | Giriş | Gönderme | Alma |
 | --- | --- | --- |
-| CLI | `crates/totaldrop-cli/src/main.rs:373`, `crates/totaldrop-cli/src/main.rs:402` | `crates/totaldrop-cli/src/main.rs:496`, `crates/totaldrop-cli/src/main.rs:566` |
-| Linux (QML → CXX-Qt) | `linux/src/bridge/transfer.rs:600` `start_send` → `linux/src/bridge/transfer.rs:617`, `linux/src/bridge/transfer.rs:653` | `linux/src/bridge/transfer.rs:671` `receive` → `linux/src/bridge/transfer.rs:682`, `linux/src/bridge/transfer.rs:754` |
+| CLI | `crates/totaldrop-cli/src/main.rs:373`, `crates/totaldrop-cli/src/main.rs:402` | `crates/totaldrop-cli/src/main.rs:505`, `crates/totaldrop-cli/src/main.rs:584` |
+| Linux (QML → CXX-Qt) | `linux/src/bridge/transfer.rs:600` `start_send` → `linux/src/bridge/transfer.rs:617`, `linux/src/bridge/transfer.rs:653` | `linux/src/bridge/transfer.rs:671` `receive` → `linux/src/bridge/transfer.rs:683`, `linux/src/bridge/transfer.rs:755` |
 | Android (Dart → flutter_rust_bridge) | `app/rust/src/api/transfer.rs:343` `prepare_send` → `app/rust/src/api/transfer.rs:362`; `app/rust/src/api/transfer.rs:416` `run_send` → `app/rust/src/api/transfer.rs:426` | `app/rust/src/api/transfer.rs:494` `connect_receive` |
 
-Uygulamalar olayları (`Event`, `crates/totaldrop-core/src/lib.rs:50`) kendi
+Uygulamalar olayları (`Event`, `crates/totaldrop-core/src/lib.rs:51`) kendi
 arayüz durumuna çevirir: Linux'ta Qt özellikleri
 (`linux/src/bridge/transfer.rs:53-64`), Android'de bir `StreamSink`
 (`app/rust/src/api/transfer.rs:416`).
@@ -326,9 +326,9 @@ Rust sunucuları aynı protokolün ikinci uygulamasıdır:
 | `Batch` | `crates/totaldrop-proto/src/relay.rs:157` | Aktarma çerçeveleri (kendi ikili biçimi) |
 | `DeviceKeys` | `crates/totaldrop-crypto/src/identity.rs:30` | Her aktarımda yeniden üretilen Ed25519 + X25519 + ML-KEM anahtarları |
 | `Cpace`, `MailboxCipher`, `Sealer`/`Opener`, `EntryCipher` | `crates/totaldrop-crypto/src/cpace.rs:138`, `crates/totaldrop-crypto/src/channel.rs:33`, `crates/totaldrop-crypto/src/channel.rs:164`/`crates/totaldrop-crypto/src/channel.rs:170`, `crates/totaldrop-crypto/src/lib.rs:148` | Anahtar anlaşması ve şifreleme durumları |
-| `SendOptions`, `ReceiveOptions`, `PathOptions` | `crates/totaldrop-core/src/lib.rs:395`, `crates/totaldrop-core/src/lib.rs:597`, `crates/totaldrop-core/src/lib.rs:154` | İstemci motorunun girdileri |
-| `PreparedSend`, `IncomingOffer` | `crates/totaldrop-core/src/lib.rs:415`, `crates/totaldrop-core/src/lib.rs:616` | Kamuya açık API'nin iki durumlu nesneleri |
-| `Event` | `crates/totaldrop-core/src/lib.rs:50` | Arayüze giden olaylar (`Waiting`, `Connected`, `Progress`, …) |
+| `SendOptions`, `ReceiveOptions`, `PathOptions` | `crates/totaldrop-core/src/lib.rs:396`, `crates/totaldrop-core/src/lib.rs:598`, `crates/totaldrop-core/src/lib.rs:155` | İstemci motorunun girdileri |
+| `PreparedSend`, `IncomingOffer` | `crates/totaldrop-core/src/lib.rs:416`, `crates/totaldrop-core/src/lib.rs:623` | Kamuya açık API'nin iki durumlu nesneleri |
+| `Event` | `crates/totaldrop-core/src/lib.rs:51` | Arayüze giden olaylar (`Waiting`, `Connected`, `Progress`, …) |
 
 ### 3.2 Veritabanı şemaları
 
@@ -438,7 +438,7 @@ bakıldı). Dart'taki tek derleme tanımı `TOTALDROP_VERSION`'dır
 değiştirmez. Davranışı değiştiren seçenekler
 çalışma zamanındadır:
 
-- **Gizlilik modu** (`PathOptions.relay_only`, `crates/totaldrop-core/src/lib.rs:164`):
+- **Gizlilik modu** (`PathOptions.relay_only`, `crates/totaldrop-core/src/lib.rs:165`):
   adres duyurulmaz, doğrudan bağlantı ve port açma yapılmaz.
 - **Port açma ağ geçidi** `portmap::Gateway` (`crates/totaldrop-core/src/portmap.rs:58`):
   `Auto` (varsayılan yolun ağ geçidi, bugün yalnızca Linux), `Off`, ya da
@@ -577,7 +577,7 @@ için öneri değil, yalnızca durum yazılıdır; iş gerekirse issue açılır
    oturum anahtarına dokunan bir kod yolu sunucuya kazara giremez;
    `tools/check-layers.mjs` bunu korur.
 4. **Çekirdeğin kamuya açık yüzü küçük.** Uygulamalar yalnızca
-   `PreparedSend` ve `IncomingOffer` ile konuşur (`crates/totaldrop-core/src/lib.rs:415`, `crates/totaldrop-core/src/lib.rs:616`);
+   `PreparedSend` ve `IncomingOffer` ile konuşur (`crates/totaldrop-core/src/lib.rs:416`, `crates/totaldrop-core/src/lib.rs:623`);
    bu yüzden üç uygulamanın akışı aynıdır ([2.3](#23-aynı-akış-uygulamalarda)).
    `crates/totaldrop-core/src/lib.rs` buna karşın yaklaşık 1 050 satırla yol seçimi ve aktarma kararlarını da
    taşır; en çok değişen çekirdek dosyası olması bununla tutarlıdır.
