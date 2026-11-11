@@ -275,22 +275,15 @@ class _Offered extends StatelessWidget {
         Gap.l,
         VerificationWords(words: o.words),
         Gap.l,
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton(
-                onPressed: vm.decline,
-                child: Text(safeL10n(context, 'receiveDecline').receiveDecline),
-              ),
-            ),
-            Gap.m,
-            Expanded(
-              child: FilledButton(
-                onPressed: vm.accept,
-                child: Text(safeL10n(context, 'receiveAccept').receiveAccept),
-              ),
-            ),
-          ],
+        ButtonPair(
+          outlined: PairedButton(
+            safeL10n(context, 'receiveDecline').receiveDecline,
+            vm.decline,
+          ),
+          filled: PairedButton(
+            safeL10n(context, 'receiveAccept').receiveAccept,
+            vm.accept,
+          ),
         ),
       ],
     );
@@ -330,22 +323,15 @@ class _OfferedText extends StatelessWidget {
         Gap.l,
         VerificationWords(words: o.words),
         Gap.l,
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton(
-                onPressed: vm.decline,
-                child: Text(safeL10n(context, 'receiveDecline').receiveDecline),
-              ),
-            ),
-            Gap.m,
-            Expanded(
-              child: FilledButton(
-                onPressed: vm.accept,
-                child: Text(safeL10n(context, 'receiveAccept').receiveAccept),
-              ),
-            ),
-          ],
+        ButtonPair(
+          outlined: PairedButton(
+            safeL10n(context, 'receiveDecline').receiveDecline,
+            vm.decline,
+          ),
+          filled: PairedButton(
+            safeL10n(context, 'receiveAccept').receiveAccept,
+            vm.accept,
+          ),
         ),
       ],
     );

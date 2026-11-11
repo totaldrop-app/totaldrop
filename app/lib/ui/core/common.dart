@@ -296,6 +296,102 @@ class CenteredScroll extends StatelessWidget {
   );
 }
 
+/// One button of a [ButtonPair].
+class PairedButton {
+  const PairedButton(this.label, this.onPressed, {this.icon});
+
+  final String label;
+  final VoidCallback? onPressed;
+  final IconData? icon;
+}
+
+/// An outlined and a filled button side by side, the same width; the
+/// filled one above the other when a label would not fit on one line
+/// beside the other. A label on two lines runs into the button's round
+/// ends: 受け取る at 200 % in Japanese (#480).
+class ButtonPair extends StatelessWidget {
+  const ButtonPair({
+    super.key,
+    required this.outlined,
+    required this.filled,
+    this.spacing = 16,
+  });
+
+  final PairedButton outlined;
+  final PairedButton filled;
+  final double spacing;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scaler = MediaQuery.textScalerOf(context);
+    final direction = Directionality.of(context);
+
+    // The label's width on one line, the widest padding a button takes
+    // (24 on each side) and an icon with its gap.
+    double width(PairedButton b, ButtonStyle? style) {
+      final textStyle = style?.textStyle?.resolve(const {});
+      final painter = TextPainter(
+        text: TextSpan(
+          text: b.label,
+          style: textStyle ?? theme.textTheme.labelLarge,
+        ),
+        textDirection: direction,
+        textScaler: scaler,
+        maxLines: 1,
+      )..layout();
+      final label = painter.width;
+      painter.dispose();
+      return label + 48 + (b.icon == null ? 0 : 32);
+    }
+
+    Widget button(PairedButton b, {required bool filled}) {
+      final label = Text(b.label, textAlign: TextAlign.center);
+      final icon = b.icon;
+      if (icon == null) {
+        if (filled) return FilledButton(onPressed: b.onPressed, child: label);
+        return OutlinedButton(onPressed: b.onPressed, child: label);
+      }
+      if (filled) {
+        return FilledButton.icon(
+          onPressed: b.onPressed,
+          icon: Icon(icon),
+          label: label,
+        );
+      }
+      return OutlinedButton.icon(
+        onPressed: b.onPressed,
+        icon: Icon(icon),
+        label: label,
+      );
+    }
+
+    final needed = math.max(
+      width(outlined, theme.outlinedButtonTheme.style),
+      width(filled, theme.filledButtonTheme.style),
+    );
+    final first = button(outlined, filled: false);
+    final second = button(filled, filled: true);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if ((constraints.maxWidth - spacing) / 2 >= needed) {
+          return Row(
+            children: [
+              Expanded(child: first),
+              SizedBox(width: spacing),
+              Expanded(child: second),
+            ],
+          );
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [second, Gap.s, first],
+        );
+      },
+    );
+  }
+}
+
 /// The honest note about the current limitation.
 class SameNetworkNote extends StatelessWidget {
   const SameNetworkNote({super.key});
