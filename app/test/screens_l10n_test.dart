@@ -509,25 +509,32 @@ void main() {
         ),
       };
 
-  // The check itself: on a screen too narrow for the code, the same steps
-  // report an overflow.
-  testWidgets('an overflow fails the check', (tester) async {
-    await tester.binding.setSurfaceSize(const Size(160, 740));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-    final (widget, reach) = screens['send with the code']!();
-    await tester.pumpWidget(_app(const Locale('en'), 1.0, widget));
-    await reach(tester);
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
-    expect(
-      tester.takeException(),
-      isA<FlutterError>().having(
-        (e) => e.toString(),
-        'message',
-        contains('overflowed'),
-      ),
-    );
-  });
+  // The check itself: the same steps report content that runs off the
+  // phone, across and down. The app's screens no longer do, even on a
+  // screen far too small, so a row and a column too large for the phone
+  // stand in for them.
+  for (final (name, tooLarge) in [
+    ('across', const Row(children: [SizedBox(width: 400, height: 10)])),
+    ('down', const Column(children: [SizedBox(width: 10, height: 800)])),
+  ]) {
+    testWidgets('an overflow $name fails the check', (tester) async {
+      await tester.binding.setSurfaceSize(_phone);
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(
+        _app(const Locale('en'), 1.0, Scaffold(body: tooLarge)),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(
+        tester.takeException(),
+        isA<FlutterError>().having(
+          (e) => e.toString(),
+          'message',
+          contains('overflowed'),
+        ),
+      );
+    });
+  }
 
   for (final locale in AppLocalizations.supportedLocales) {
     for (final scale in [1.0, 1.3, 2.0]) {
