@@ -41,7 +41,7 @@
 
 - ICU4X has no MessageFormat; Flutter resolves the messages itself at
   build time. So for Rust (Linux, CLI) and the site, separate resolvers are
-  written for the same small subset, checked by the same tests: `{name}`,
+  written for the same small subset, checked by the same tests: `{arg}`,
   `{n, plural, =N{…} zero/one/two/few/many/other{…}}`,
   `{x, select, …, other{…}}`. There is no `selectordinal`, no `#`
   shorthand and no escaping.
@@ -129,7 +129,7 @@
   zero-width characters in translations; URLs and HTML; a regional file
   without a base language file.
 - **Report (not an error):** missing translations. Missing text falls back
-  to English; every new English sentence does not break CI in 30
+  to English; a new English sentence does not break CI in 30
   languages.
 - Pseudo-languages: CI generates `en-XA` (accented and 40% longer) and
   `ar-XB` (right to left); the screen checks are done with these too.
