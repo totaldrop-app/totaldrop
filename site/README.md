@@ -40,8 +40,9 @@ privacy/<dil>.html    Gizlilik politikasının her dildeki metni (yalnızca <art
 tools/privacy.mjs     Gizlilik sayfalarını bu metinlerden üretir (--write) ve denetler
 tools/brand-files.mjs Marka dosyalarını işaretin geometrisinden üretir (--write, --png)
                       ve CI'da güncel olduklarını denetler
-team/team.json        Ekip sayfasında kim, hangi rolle, isteğe bağlı kısa tanıtım
-                      (`bio`, çevirisi i18n'de tm.bio.<kullanıcı>); disiplinler ve depo yolları
+team/team.json        Ekip sayfasında kim, hangi rolle; isteğe bağlı görünen ad (`name`),
+                      kısa tanıtım (`bio`, çevirisi i18n'de tm.bio.<kullanıcı>) ve kartta
+                      /donate/'a giden kahve düğmesi (`donate: true`); disiplinler ve depo yolları
 team/github.json      GitHub'dan alınan anlık görüntü (profil, katkı sayıları)
 tools/team.mjs        Ekip sayfasını anlık görüntüden üretir (--write), yenisini
                       GitHub'ın herkese açık API'sinden alır (--fetch) ve CI'da
