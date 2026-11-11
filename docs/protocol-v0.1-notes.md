@@ -241,9 +241,11 @@ treated as final.
       The command line runs a send or receive as a task, so a panic in it
       still drops the mapping, and waits for the UPnP delete (at most 1.6
       seconds) before it exits; a second Ctrl-C exits at once. The Linux
-      window, once closed, stops a running transfer as Cancel does,
-      declines an unanswered offer, and waits at most 3 seconds for that
-      work to end and for the UPnP delete. Android asks no router (it
+      window, once closed, stops a running transfer as Cancel does and
+      declines an unanswered offer. It waits at most 1.5 seconds for that
+      work to end (telling a silent peer can take longer), drops what is
+      still running, so its mapping is released, and then waits for the
+      UPnP delete: some 3.3 seconds in all. Android asks no router (it
       cannot read the gateway), so it has nothing to release.
 11. **Session after the hybrid step.**
     - Each direction has its own ChaCha20-Poly1305 key (`k_i2r`, `k_r2i`).

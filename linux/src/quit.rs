@@ -7,27 +7,35 @@
 //! is never dropped. A transfer still running when the window closes, or a
 //! UPnP delete started just before, would die with the process and leave a
 //! router port open until its lease ends. So on quit the window stops what
-//! runs and waits, briefly, for the work to end and the ports to close.
+//! runs, waits briefly for it to end, drops what has not, and then waits
+//! for the ports to close.
 
 use std::future::Future;
+use std::sync::Mutex;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::Duration;
 
 use tokio::sync::Notify;
+use tokio::task::AbortHandle;
 
-/// The longest the process waits after the window has closed: stopping a
-/// transfer (the other side is told) and the UPnP delete that follows
-/// (`totaldrop_core::portmap::LIMIT`, 1.6 s). Nothing is on screen by then.
-pub const LIMIT: Duration = Duration::from_secs(3);
+/// How long a stopped transfer may take to tell the other side and end.
+/// One still running then is dropped: its port mapping goes with it, and
+/// the release starts. Telling a silent peer can take longer (QUIC waits
+/// up to 5 s for an idle endpoint); the port matters more.
+pub const STOPPING: Duration = Duration::from_millis(1500);
+
+/// How long dropped tasks get to unwind on the runtime's threads.
+const ABORTED: Duration = Duration::from_millis(200);
 
 /// Transfers and declines, which may hold a router port.
 pub static TRANSFERS: Tasks = Tasks::new();
 
-/// Counts the tasks that run, so quitting can wait for them.
+/// The tasks that run, so quitting can wait for them and drop the rest.
 #[derive(Debug)]
 pub struct Tasks {
     running: AtomicUsize,
     idle: Notify,
+    handles: Mutex<Vec<AbortHandle>>,
 }
 
 impl Default for Tasks {
@@ -42,20 +50,29 @@ impl Tasks {
         Self {
             running: AtomicUsize::new(0),
             idle: Notify::const_new(),
+            handles: Mutex::new(Vec::new()),
         }
     }
 
-    /// `work`, counted from this call until it ends or is dropped, polled
-    /// or not, also when it panics.
-    pub fn track<F: Future>(&'static self, work: F) -> impl Future<Output = F::Output> + use<F> {
+    /// Run `work` on `runtime`, counted from this call until it ends or is
+    /// dropped, also when it panics, and droppable by [`finish`].
+    pub fn spawn(
+        &'static self,
+        runtime: &tokio::runtime::Runtime,
+        work: impl Future<Output = ()> + Send + 'static,
+    ) {
         let running = Running::new(self);
-        async move {
+        let task = runtime.spawn(async move {
             let _running = running;
-            work.await
+            work.await;
+        });
+        if let Ok(mut handles) = self.handles.lock() {
+            handles.retain(|h| !h.is_finished());
+            handles.push(task.abort_handle());
         }
     }
 
-    /// Resolves once no tracked task runs; at once if none does.
+    /// Resolves once no counted task runs; at once if none does.
     pub async fn idle(&self) {
         loop {
             // Made before the check, so an end in between is not missed:
@@ -67,9 +84,18 @@ impl Tasks {
             ended.await;
         }
     }
+
+    /// Drop every task still running.
+    fn abort_all(&self) {
+        if let Ok(handles) = self.handles.lock() {
+            for h in handles.iter() {
+                h.abort();
+            }
+        }
+    }
 }
 
-/// One tracked task, counted while it lives.
+/// One counted task, counted while it lives.
 struct Running(&'static Tasks);
 
 impl Running {
@@ -86,15 +112,18 @@ impl Drop for Running {
     }
 }
 
-/// Wait, at most `limit`, until `tasks` are idle and then until `then`
-/// (the port releases) is done. Whether it all ended in time.
-pub async fn finish(tasks: &Tasks, then: impl Future<Output = ()>, limit: Duration) -> bool {
-    tokio::time::timeout(limit, async {
-        tasks.idle().await;
-        then.await;
-    })
-    .await
-    .is_ok()
+/// Wait, at most `stopping`, until `tasks` have ended; drop the ones that
+/// have not, so what they hold is released; then wait for `release`, which
+/// bounds itself (`totaldrop_core::portmap::released`, at most 1.6 s).
+/// Whether every task ended by itself.
+pub async fn finish(tasks: &Tasks, release: impl Future<Output = ()>, stopping: Duration) -> bool {
+    let ended = tokio::time::timeout(stopping, tasks.idle()).await.is_ok();
+    if !ended {
+        tasks.abort_all();
+        let _ = tokio::time::timeout(ABORTED, tasks.idle()).await;
+    }
+    release.await;
+    ended
 }
 
 #[cfg(test)]
@@ -105,70 +134,115 @@ mod tests {
 
     use super::{Tasks, finish};
 
+    fn runtime() -> tokio::runtime::Runtime {
+        #[allow(clippy::unwrap_used)]
+        tokio::runtime::Builder::new_multi_thread()
+            .worker_threads(2)
+            .enable_all()
+            .build()
+            .unwrap()
+    }
+
+    /// Sets its flag when dropped, as a port mapping sends its release.
+    struct Held(Arc<AtomicBool>);
+
+    impl Drop for Held {
+        fn drop(&mut self) {
+            self.0.store(true, Ordering::SeqCst);
+        }
+    }
+
+    fn flag() -> Arc<AtomicBool> {
+        Arc::new(AtomicBool::new(false))
+    }
+
+    /// Wait until `f` is set, at most `limit`.
+    async fn set(f: Arc<AtomicBool>, limit: Duration) {
+        let _ = tokio::time::timeout(limit, async {
+            while !f.load(Ordering::SeqCst) {
+                tokio::time::sleep(Duration::from_millis(5)).await;
+            }
+        })
+        .await;
+    }
+
     /// The window closed during a transfer: quitting waits until the
     /// stopped transfer has ended and dropped what it held, and then for
     /// the release that drop started.
-    #[tokio::test]
-    async fn quitting_waits_for_a_stopped_transfer_and_its_release() {
+    #[test]
+    fn quitting_waits_for_a_stopped_transfer_and_its_release() {
         static TASKS: Tasks = Tasks::new();
+        let rt = runtime();
         let stop = totaldrop_core::Stop::new();
-        let (dropped, released) = (
-            Arc::new(AtomicBool::new(false)),
-            Arc::new(AtomicBool::new(false)),
+        let (dropped, released) = (flag(), flag());
+        let (held, r, s) = (
+            Held(Arc::clone(&dropped)),
+            Arc::clone(&released),
+            stop.clone(),
         );
-        let (d, r, s) = (Arc::clone(&dropped), Arc::clone(&released), stop.clone());
-        tokio::spawn(TASKS.track(async move {
+        TASKS.spawn(&rt, async move {
+            let _held = held;
             s.stopped().await;
             // Telling the other side takes a moment.
             tokio::time::sleep(Duration::from_millis(30)).await;
-            d.store(true, Ordering::SeqCst);
             tokio::spawn(async move {
                 tokio::time::sleep(Duration::from_millis(30)).await;
                 r.store(true, Ordering::SeqCst);
             });
-        }));
+        });
         stop.stop();
         let r = Arc::clone(&released);
-        let done = finish(
+        let ended = rt.block_on(finish(
             &TASKS,
-            async move {
-                while !r.load(Ordering::SeqCst) {
-                    tokio::time::sleep(Duration::from_millis(5)).await;
-                }
-            },
+            set(r, Duration::from_secs(2)),
             Duration::from_secs(2),
-        )
-        .await;
-        assert!(done);
-        assert!(dropped.load(Ordering::SeqCst), "the transfer ended first");
+        ));
+        assert!(ended, "the transfer ended by itself");
+        assert!(dropped.load(Ordering::SeqCst), "it dropped what it held");
         assert!(released.load(Ordering::SeqCst), "and its release finished");
     }
 
-    /// A task that never ends cannot keep the process alive.
-    #[tokio::test]
-    async fn quitting_is_bounded() {
+    /// A transfer that does not end in time is dropped, so what it holds
+    /// is still released before the process exits (review of #433: a
+    /// silent peer can keep a stopped send waiting for seconds).
+    #[test]
+    fn a_transfer_that_does_not_end_in_time_is_dropped() {
         static TASKS: Tasks = Tasks::new();
-        tokio::spawn(TASKS.track(std::future::pending::<()>()));
-        let started = tokio::time::Instant::now();
-        assert!(!finish(&TASKS, async {}, Duration::from_millis(100)).await);
+        let rt = runtime();
+        let dropped = flag();
+        let held = Held(Arc::clone(&dropped));
+        TASKS.spawn(&rt, async move {
+            let _held = held;
+            std::future::pending::<()>().await;
+        });
+        let started = std::time::Instant::now();
+        let ended = rt.block_on(finish(&TASKS, async {}, Duration::from_millis(50)));
+        assert!(!ended);
+        assert!(dropped.load(Ordering::SeqCst), "what it held was dropped");
         assert!(started.elapsed() < Duration::from_secs(1));
     }
 
     /// Nothing running: quitting does not wait.
-    #[tokio::test]
-    async fn nothing_running_ends_at_once() {
+    #[test]
+    fn nothing_running_ends_at_once() {
         static TASKS: Tasks = Tasks::new();
-        assert!(finish(&TASKS, async {}, Duration::from_millis(1)).await);
+        let rt = runtime();
+        assert!(rt.block_on(finish(&TASKS, async {}, Duration::from_millis(1))));
     }
 
-    /// A task is counted from the moment it is handed over, before it
-    /// first runs, and also when it is dropped without running.
-    #[tokio::test]
-    async fn a_task_counts_before_it_runs_and_until_it_is_dropped() {
+    /// A task that waits is counted, and once dropped is not; a later
+    /// task is counted again.
+    #[test]
+    fn a_waiting_task_is_counted_until_dropped() {
         static TASKS: Tasks = Tasks::new();
-        let work = TASKS.track(async {});
-        assert!(!finish(&TASKS, async {}, Duration::from_millis(20)).await);
-        drop(work);
-        assert!(finish(&TASKS, async {}, Duration::from_millis(20)).await);
+        let rt = runtime();
+        let go = Arc::new(tokio::sync::Notify::new());
+        let wait = Arc::clone(&go);
+        TASKS.spawn(&rt, async move { wait.notified().await });
+        assert!(!rt.block_on(finish(&TASKS, async {}, Duration::from_millis(20))));
+        // It was dropped by then; a new task counts again.
+        TASKS.spawn(&rt, async {});
+        assert!(rt.block_on(finish(&TASKS, async {}, Duration::from_secs(1))));
+        go.notify_waiters();
     }
 }

@@ -136,12 +136,15 @@ fn main() {
         // The window is closed. The process exits without dropping the
         // runtime, so a running transfer, or a UPnP delete just started,
         // would leave a router port open until its lease ends: stop what
-        // runs and wait for it, briefly (#433).
+        // runs, drop what has not ended within `quit::STOPPING`, and wait
+        // for the releases (#433). Until then this process still holds
+        // the single-window name, so a launch in those few seconds is
+        // handed to it and opens no window.
         bridge::transfer::stop_all();
         runtime::RUNTIME.block_on(quit::finish(
             &quit::TRANSFERS,
             totaldrop_core::portmap::released(),
-            quit::LIMIT,
+            quit::STOPPING,
         ));
         std::process::exit(code);
     }
