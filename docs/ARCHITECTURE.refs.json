@@ -1,0 +1,664 @@
+{
+  ".github/workflows/android.yml:38": [
+    "- run: flutter analyze"
+  ],
+  ".github/workflows/android.yml:48": [
+    "run: flutter test"
+  ],
+  ".github/workflows/core.yml:20": [
+    "EXCLUDE: --exclude totaldrop-linux --exclude rust_lib_totaldrop"
+  ],
+  ".github/workflows/core.yml:39-50": [
+    "if: runner.os == 'Linux'",
+    "run: cargo test --workspace $EXCLUDE --locked"
+  ],
+  ".github/workflows/core.yml:72": [
+    "cargo llvm-cov --locked --summary-only --fail-under-lines 90"
+  ],
+  ".github/workflows/deploy.yml:134": [
+    "CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}"
+  ],
+  ".github/workflows/linux.yml:40-45": [
+    "- run: cargo fmt -p totaldrop-linux -- --check",
+    "run: linux/tests/qml/run.sh"
+  ],
+  ".github/workflows/server.yml:103-105": [
+    "TOTALDROP_TEST_SERVER: ws://127.0.0.1:8787",
+    "TOTALDROP_TEST_RELAY: ws://127.0.0.1:8788/v0/relay"
+  ],
+  ".github/workflows/server.yml:38-40": [
+    "- run: npm run check",
+    "- run: npm run --if-present test"
+  ],
+  ".github/workflows/server.yml:40": [
+    "- run: npm run --if-present test"
+  ],
+  ".github/workflows/server.yml:44-106": [
+    "end-to-end:",
+    "run: cargo test -p totaldrop-cli --test end_to_end --locked"
+  ],
+  ".github/workflows/server.yml:82": [
+    "--var RATE_BURST:1000 >\"$RUNNER_TEMP/rendezvous.log\" 2>&1 &"
+  ],
+  ".github/workflows/server.yml:86": [
+    "--var RATE_BURST:4 --var RATE_INTERVAL_MS:5000 >\"$RUNNER_TEMP/rendezvous-limited.log\" 2>&1 &"
+  ],
+  ".github/workflows/site.yml:27-43": [
+    "run: node --check site/public/app.js && node --check site/public/lang.js && node --check site/public/msg.js && node --check site/functions/_middleware.js",
+    "run: node site/tools/check-readmes.mjs"
+  ],
+  "app/android/app/build.gradle.kts:22-61": [
+    "val envStoreFile: String? = System.getenv(\"ANDROID_UPLOAD_STORE_FILE\")",
+    "keyAlias = System.getenv(\"ANDROID_UPLOAD_ALIAS\") ?: \"upload\""
+  ],
+  "app/lib/data/settings_repository.dart:13-17": [
+    "static const _serverKey = 'rendezvous_server';",
+    "static const _skippedKey = 'background_skipped';"
+  ],
+  "app/lib/main.dart:28-29": [
+    "const appVersion = String.fromEnvironment(",
+    "'TOTALDROP_VERSION',"
+  ],
+  "app/lib/ui/receive/receive_view_model.dart:27": [
+    "enum ReceiveStage {"
+  ],
+  "app/lib/ui/send/send_view_model.dart:20": [
+    "enum SendStage {"
+  ],
+  "app/rust/Cargo.toml:19-21": [
+    "totaldrop-core = { version = \"0.2.0-beta.5\", path = \"../../crates/totaldrop-core\" }",
+    "totaldrop-l10n = { version = \"0.2.0-beta.5\", path = \"../../crates/totaldrop-l10n\" }"
+  ],
+  "app/rust/src/api/transfer.rs:343": [
+    "pub async fn prepare_send("
+  ],
+  "app/rust/src/api/transfer.rs:362": [
+    "r = PreparedSend::new(&opts, paths) => r?,"
+  ],
+  "app/rust/src/api/transfer.rs:416": [
+    "pub async fn run_send(session: &SendSession, stopper: &Stopper, sink: StreamSink<TransferEvent>) {"
+  ],
+  "app/rust/src/api/transfer.rs:426": [
+    ".run_with(events, stop)"
+  ],
+  "app/rust/src/api/transfer.rs:494": [
+    "pub async fn connect_receive("
+  ],
+  "Cargo.toml:4": [
+    "exclude = [\"fuzz\"]"
+  ],
+  "crates/totaldrop-cli/Cargo.toml:20-22": [
+    "totaldrop-core = { version = \"0.2.0-beta.5\", path = \"../totaldrop-core\" }",
+    "totaldrop-proto = { version = \"0.2.0-beta.5\", path = \"../totaldrop-proto\" }"
+  ],
+  "crates/totaldrop-cli/Cargo.toml:28-29": [
+    "totaldrop-relay = { version = \"0.1.0-beta.1\", path = \"../../server/totaldrop-relay\" }",
+    "totaldrop-rendezvous = { version = \"0.1.0-beta.1\", path = \"../../server/totaldrop-rendezvous\" }"
+  ],
+  "crates/totaldrop-cli/src/main.rs:232": [
+    "fn paths(relay: Option<String>, stun: Option<String>, relay_only: bool) -> PathOptions {"
+  ],
+  "crates/totaldrop-cli/src/main.rs:33": [
+    "#[arg(long, global = true, env = \"TOTALDROP_SERVER\")]"
+  ],
+  "crates/totaldrop-cli/src/main.rs:355": [
+    "async fn send("
+  ],
+  "crates/totaldrop-cli/src/main.rs:365": [
+    "words: if strong { 3 } else { 2 },"
+  ],
+  "crates/totaldrop-cli/src/main.rs:373": [
+    "What::Files(files) => PreparedSend::new(&opts, files.clone()).await,"
+  ],
+  "crates/totaldrop-cli/src/main.rs:38": [
+    "#[arg(long, global = true, env = \"TOTALDROP_RELAY\")]"
+  ],
+  "crates/totaldrop-cli/src/main.rs:402": [
+    "let report = prepared.run_with(printer(Arc::clone(&s)), stop).await?;"
+  ],
+  "crates/totaldrop-cli/src/main.rs:42": [
+    "#[arg(long, global = true, env = \"TOTALDROP_STUN\")]"
+  ],
+  "crates/totaldrop-cli/src/main.rs:429": [
+    "async fn receive("
+  ],
+  "crates/totaldrop-cli/src/main.rs:496": [
+    "IncomingOffer::connect_with(&ReceiveOptions { server, paths }, &code, &stop).await?;"
+  ],
+  "crates/totaldrop-cli/src/main.rs:566": [
+    ".accept_with(&dest, printer(Arc::clone(&s)), &stop)"
+  ],
+  "crates/totaldrop-cli/src/main.rs:613": [
+    "fn main() -> ExitCode {"
+  ],
+  "crates/totaldrop-cli/src/main.rs:629": [
+    "let route = paths(cli.relay, cli.stun, cli.relay_only);"
+  ],
+  "crates/totaldrop-cli/src/main.rs:630-633": [
+    "if route.relay_only && route.relay.is_empty() {",
+    "}"
+  ],
+  "crates/totaldrop-cli/src/main.rs:650": [
+    "Command::Send {"
+  ],
+  "crates/totaldrop-cli/src/main.rs:664": [
+    "Command::Receive { code, out, yes } => {"
+  ],
+  "crates/totaldrop-cli/src/main.rs:671-693": [
+    "match result {",
+    "}"
+  ],
+  "crates/totaldrop-cli/src/main.rs:699": [
+    "fn detail_line(e: &totaldrop_core::Error) -> String {"
+  ],
+  "crates/totaldrop-cli/src/main.rs:707": [
+    "fn error_key(e: &totaldrop_core::Error, sending: bool) -> &'static str {"
+  ],
+  "crates/totaldrop-cli/tests/end_to_end.rs:28": [
+    "if let Ok(url) = std::env::var(\"TOTALDROP_TEST_SERVER\") {"
+  ],
+  "crates/totaldrop-cli/tests/end_to_end.rs:49": [
+    "if let Ok(url) = std::env::var(\"TOTALDROP_TEST_SERVER_LIMITED\") {"
+  ],
+  "crates/totaldrop-cli/tests/end_to_end.rs:79": [
+    "if let Ok(url) = std::env::var(\"TOTALDROP_TEST_RELAY\") {"
+  ],
+  "crates/totaldrop-core/Cargo.toml:22-23": [
+    "totaldrop-crypto = { version = \"0.2.0-beta.5\", path = \"../totaldrop-crypto\" }",
+    "totaldrop-proto = { version = \"0.2.0-beta.5\", path = \"../totaldrop-proto\" }"
+  ],
+  "crates/totaldrop-core/Cargo.toml:4": [
+    "license = \"MIT OR Apache-2.0\""
+  ],
+  "crates/totaldrop-core/src/lib.rs:101": [
+    "async fn own_hints("
+  ],
+  "crates/totaldrop-core/src/lib.rs:157": [
+    "pub struct PathOptions {"
+  ],
+  "crates/totaldrop-core/src/lib.rs:167": [
+    "pub relay_only: bool,"
+  ],
+  "crates/totaldrop-core/src/lib.rs:234": [
+    "fn receiver_relay<'a>(hints: &Hints, own: &'a PathOptions) -> Result<Option<&'a str>> {"
+  ],
+  "crates/totaldrop-core/src/lib.rs:290": [
+    "fn paths_to("
+  ],
+  "crates/totaldrop-core/src/lib.rs:341": [
+    "enum Keep {"
+  ],
+  "crates/totaldrop-core/src/lib.rs:398": [
+    "pub struct SendOptions {"
+  ],
+  "crates/totaldrop-core/src/lib.rs:418": [
+    "pub struct PreparedSend {"
+  ],
+  "crates/totaldrop-core/src/lib.rs:437": [
+    "pub async fn new(opts: &SendOptions, paths: Vec<PathBuf>) -> Result<Self> {"
+  ],
+  "crates/totaldrop-core/src/lib.rs:448": [
+    "pub async fn text(opts: &SendOptions, text: &str, name: &str) -> Result<Self> {"
+  ],
+  "crates/totaldrop-core/src/lib.rs:453-464": [
+    "async fn ready(",
+    "rendezvous::Mailbox::claim(&opts.server, nameplate, Some(&allocation)).await?;"
+  ],
+  "crates/totaldrop-core/src/lib.rs:50": [
+    "pub enum Event {"
+  ],
+  "crates/totaldrop-core/src/lib.rs:504": [
+    "pub async fn run_with(self, events: Events, stop: Stop) -> Result<SendReport> {"
+  ],
+  "crates/totaldrop-core/src/lib.rs:599": [
+    "pub struct ReceiveOptions {"
+  ],
+  "crates/totaldrop-core/src/lib.rs:618": [
+    "pub struct IncomingOffer {"
+  ],
+  "crates/totaldrop-core/src/lib.rs:641": [
+    "pub async fn connect_with(opts: &ReceiveOptions, code: &str, stop: &Stop) -> Result<Self> {"
+  ],
+  "crates/totaldrop-core/src/lib.rs:664": [
+    "pub async fn connect(opts: &ReceiveOptions, code: &str) -> Result<Self> {"
+  ],
+  "crates/totaldrop-core/src/lib.rs:667": [
+    "let mailbox = rendezvous::Mailbox::claim(&opts.server, code.nameplate(), None).await?;"
+  ],
+  "crates/totaldrop-core/src/lib.rs:733": [
+    "pub async fn accept_with("
+  ],
+  "crates/totaldrop-core/src/lib.rs:95": [
+    "const MAPPING_GRACE: Duration = Duration::from_millis(300);"
+  ],
+  "crates/totaldrop-core/src/pairing.rs:107-110": [
+    "let (cpace, own_msg) = Cpace::start(role, prs.as_bytes(), &mailbox_id)?;",
+    "let isk = cpace.finish(&peer_msg).map_err(|_| Error::WrongCode)?;"
+  ],
+  "crates/totaldrop-core/src/pairing.rs:119-129": [
+    ".add(\"confirm\", cipher.seal(\"confirm\", &own_cert.encode())?)",
+    ".open(\"confirm\", &sealed)"
+  ],
+  "crates/totaldrop-core/src/pairing.rs:135-139": [
+    ".add(\"hints\", cipher.seal(\"hints\", &own_hints.encode())?)",
+    ".open(\"hints\", &sealed)"
+  ],
+  "crates/totaldrop-core/src/pairing.rs:73": [
+    "pub async fn exchange("
+  ],
+  "crates/totaldrop-core/src/path.rs:102": [
+    "pub struct Fallback(Arc<FallbackState>);"
+  ],
+  "crates/totaldrop-core/src/path.rs:85": [
+    "pub const FALLBACK_SILENCE: Duration = Duration::from_secs(8);"
+  ],
+  "crates/totaldrop-core/src/portmap.rs:128": [
+    "pub async fn map(gateway: Gateway, port: u16) -> Option<Mapping> {"
+  ],
+  "crates/totaldrop-core/src/portmap.rs:164-187": [
+    "let pmp_soon = pmp_try(RESEND);",
+    "},"
+  ],
+  "crates/totaldrop-core/src/portmap.rs:45": [
+    "pub enum Gateway {"
+  ],
+  "crates/totaldrop-core/src/portmap.rs:45-54": [
+    "pub enum Gateway {",
+    "At(SocketAddr),"
+  ],
+  "crates/totaldrop-core/src/relay.rs:103": [
+    "pub async fn discover(socket: &UdpSocket, server: &str) -> Vec<SocketAddr> {"
+  ],
+  "crates/totaldrop-core/src/relay.rs:299": [
+    "pub fn spawn("
+  ],
+  "crates/totaldrop-core/src/relay.rs:573": [
+    "_ = ping.tick() => {"
+  ],
+  "crates/totaldrop-core/src/rendezvous.rs:175": [
+    "pub async fn allocate(server: &str) -> Result<Allocation> {"
+  ],
+  "crates/totaldrop-core/src/rendezvous.rs:202": [
+    "pub async fn claim(server: &str, nameplate: u32, token: Option<&Allocation>) -> Result<Self> {"
+  ],
+  "crates/totaldrop-core/src/secure.rs:112": [
+    "pub async fn handshake_on("
+  ],
+  "crates/totaldrop-core/src/secure.rs:16": [
+    "const NOISE_XXPSK3: &str = \"Noise_XXpsk3_25519_ChaChaPoly_BLAKE2b\";"
+  ],
+  "crates/totaldrop-core/src/secure.rs:98": [
+    "pub async fn handshake("
+  ],
+  "crates/totaldrop-core/src/transfer.rs:1135": [
+    "pub async fn accept_text("
+  ],
+  "crates/totaldrop-core/src/transfer.rs:1262": [
+    "pub async fn accept("
+  ],
+  "crates/totaldrop-core/src/transfer.rs:187": [
+    "const PARALLEL_STREAMS: usize = 4;"
+  ],
+  "crates/totaldrop-core/src/transfer.rs:223": [
+    "pub fn text_entry(text: &str, name: &str) -> Result<SourceEntry> {"
+  ],
+  "crates/totaldrop-core/src/transfer.rs:334": [
+    "pub fn scan(paths: &[PathBuf]) -> Result<(Vec<SourceEntry>, usize)> {"
+  ],
+  "crates/totaldrop-core/src/transfer.rs:518": [
+    "pub async fn send_files("
+  ],
+  "crates/totaldrop-core/src/transfer.rs:774": [
+    "pub async fn receive_offer(chan: &mut SecureChannel, peer: &Certificate) -> Result<VerifiedOffer> {"
+  ],
+  "crates/totaldrop-core/src/transfer.rs:833": [
+    "pub async fn decline(chan: &mut SecureChannel, offer: &VerifiedOffer) -> Result<()> {"
+  ],
+  "crates/totaldrop-core/src/transfer.rs:874": [
+    "fn place_no_clobber(tmp: &Path, dir: &Path, name: &str) -> Result<PathBuf> {"
+  ],
+  "crates/totaldrop-core/src/transfer.rs:906": [
+    "fn check_beneath(dest: &Path, path: &Path) -> Result<()> {"
+  ],
+  "crates/totaldrop-core/src/transfer.rs:923": [
+    "fn make_dir(path: &Path) -> Result<bool> {"
+  ],
+  "crates/totaldrop-core/src/transport.rs:306": [
+    "pub fn bind_socket() -> Result<UdpSocket> {"
+  ],
+  "crates/totaldrop-core/src/transport.rs:428": [
+    "pub fn endpoint("
+  ],
+  "crates/totaldrop-core/src/transport.rs:518": [
+    "const REVERSE_DELAY: Duration = Duration::from_millis(400);"
+  ],
+  "crates/totaldrop-core/src/transport.rs:522": [
+    "const RELAY_DELAY: Duration = Duration::from_millis(1200);"
+  ],
+  "crates/totaldrop-core/src/transport.rs:546": [
+    "pub async fn receiver_connection("
+  ],
+  "crates/totaldrop-core/src/transport.rs:578": [
+    "pub async fn sender_connection("
+  ],
+  "crates/totaldrop-core/src/transport.rs:684": [
+    "pub async fn connect_any(endpoint: &quinn::Endpoint, paths: &Paths) -> Result<quinn::Connection> {"
+  ],
+  "crates/totaldrop-core/src/transport.rs:73": [
+    "pub fn generate() -> Result<Self> {"
+  ],
+  "crates/totaldrop-core/src/transport.rs:856": [
+    "std::env::var_os(\"TOTALDROP_REQUIRE_IPV6\").is_none(),"
+  ],
+  "crates/totaldrop-crypto/src/channel.rs:114": [
+    "pub fn session_keys(handshake_hash: &[u8], kem_secret: &[u8; 32]) -> ([u8; 32], [u8; 32]) {"
+  ],
+  "crates/totaldrop-crypto/src/channel.rs:129": [
+    "pub fn verification_indices(handshake_hash: &[u8], kem_secret: &[u8; 32]) -> [u16; 4] {"
+  ],
+  "crates/totaldrop-crypto/src/channel.rs:164": [
+    "pub struct Sealer {"
+  ],
+  "crates/totaldrop-crypto/src/channel.rs:170": [
+    "pub struct Opener {"
+  ],
+  "crates/totaldrop-crypto/src/channel.rs:33": [
+    "pub struct MailboxCipher {"
+  ],
+  "crates/totaldrop-crypto/src/cpace.rs:138": [
+    "pub struct Cpace {"
+  ],
+  "crates/totaldrop-crypto/src/identity.rs:30": [
+    "pub struct DeviceKeys {"
+  ],
+  "crates/totaldrop-crypto/src/lib.rs:148": [
+    "pub struct EntryCipher {"
+  ],
+  "crates/totaldrop-l10n/Cargo.toml:21-23": [
+    "[dev-dependencies]",
+    "totaldrop-proto = { version = \"0.2.0-beta.5\", path = \"../totaldrop-proto\" }"
+  ],
+  "crates/totaldrop-l10n/src/locale.rs:91-109": [
+    "/// Reads `LANGUAGE`, `LC_ALL`, `LC_MESSAGES`, `LC_NUMERIC` and `LANG`.",
+    "if !c_locale && let Some(list) = get(\"LANGUAGE\") {"
+  ],
+  "crates/totaldrop-proto/src/lib.rs:101": [
+    "pub fn validate_path<S: AsRef<str>>(segments: &[S]) -> Result<SafePath, PathError> {"
+  ],
+  "crates/totaldrop-proto/src/lib.rs:13-29": [
+    "pub mod limits {",
+    "pub const MAX_CHUNKS: u64 = 1 << 32;"
+  ],
+  "crates/totaldrop-proto/src/lib.rs:183": [
+    "pub struct TransferCode {"
+  ],
+  "crates/totaldrop-proto/src/lib.rs:66": [
+    "pub struct SafePath(Vec<String>);"
+  ],
+  "crates/totaldrop-proto/src/relay.rs:157": [
+    "pub struct Batch {"
+  ],
+  "crates/totaldrop-proto/src/wire.rs:1000": [
+    "pub struct DataHeader {"
+  ],
+  "crates/totaldrop-proto/src/wire.rs:236": [
+    "pub enum ClientMessage {"
+  ],
+  "crates/totaldrop-proto/src/wire.rs:323": [
+    "pub enum ServerMessage {"
+  ],
+  "crates/totaldrop-proto/src/wire.rs:422": [
+    "pub struct Certificate {"
+  ],
+  "crates/totaldrop-proto/src/wire.rs:533": [
+    "pub struct Hints {"
+  ],
+  "crates/totaldrop-proto/src/wire.rs:614": [
+    "pub struct Entry {"
+  ],
+  "crates/totaldrop-proto/src/wire.rs:727": [
+    "pub struct Manifest {"
+  ],
+  "crates/totaldrop-proto/src/wire.rs:760": [
+    "pub enum Control {"
+  ],
+  "fuzz/Cargo.toml:13-14": [
+    "totaldrop-proto = { path = \"../crates/totaldrop-proto\" }",
+    "totaldrop-l10n = { path = \"../crates/totaldrop-l10n\" }"
+  ],
+  "linux/Cargo.toml:22-24": [
+    "totaldrop-core = { version = \"0.2.0-beta.5\", path = \"../crates/totaldrop-core\" }",
+    "totaldrop-l10n = { version = \"0.2.0-beta.5\", path = \"../crates/totaldrop-l10n\" }"
+  ],
+  "linux/qml/ResultPanel.qml:132": [
+    "onClicked: Qt.openUrlExternally(\"file://\" + r.folder)"
+  ],
+  "linux/src/bridge/stage.rs:101": [
+    "pub enum Role {"
+  ],
+  "linux/src/bridge/stage.rs:18": [
+    "pub enum Stage {"
+  ],
+  "linux/src/bridge/transfer.rs:53-64": [
+    "#[qproperty(QString, state, READ, NOTIFY)]",
+    "#[qproperty(i32, offer_files, cxx_name = \"offerFiles\")]"
+  ],
+  "linux/src/bridge/transfer.rs:596": [
+    "fn start_send(mut self: Pin<&mut Self>, source: Source, strong: bool) {"
+  ],
+  "linux/src/bridge/transfer.rs:613": [
+    "Source::Paths(paths) => PreparedSend::new(&opts, paths.clone()).await,"
+  ],
+  "linux/src/bridge/transfer.rs:649": [
+    ".run_with(Self::events(thread.clone(), g), stop)"
+  ],
+  "linux/src/bridge/transfer.rs:667": [
+    "fn receive(mut self: Pin<&mut Self>, code: &QString) {"
+  ],
+  "linux/src/bridge/transfer.rs:678": [
+    "match IncomingOffer::connect_with(&opts, &code, &stop).await {"
+  ],
+  "linux/src/bridge/transfer.rs:750": [
+    ".accept_with(&dest, Self::events(thread.clone(), g), &stop)"
+  ],
+  "linux/src/instance.rs:543": [
+    "let token = std::env::var(\"XDG_ACTIVATION_TOKEN\").ok();"
+  ],
+  "linux/src/instance.rs:547": [
+    "let startup = std::env::var(\"DESKTOP_STARTUP_ID\").ok();"
+  ],
+  "linux/src/instance.rs:659": [
+    "std::env::var_os(\"CI\").is_none(),"
+  ],
+  "linux/src/main.rs:55-58": [
+    "std::env::var_os(\"WAYLAND_DISPLAY\").is_some() || std::env::var_os(\"DISPLAY\").is_some();",
+    "unsafe { std::env::set_var(\"QT_QPA_PLATFORMTHEME\", \"gtk3\") };"
+  ],
+  "linux/src/main.rs:80": [
+    "if std::env::var_os(\"QT_QUICK_CONTROLS_STYLE\").is_none() {"
+  ],
+  "linux/src/settings.rs:12-17": [
+    "pub struct Settings {",
+    "pub privacy_mode: bool,"
+  ],
+  "linux/src/settings.rs:4": [
+    "//! Settings kept in `~/.config/totaldrop/settings.toml`."
+  ],
+  "linux/src/sleep.rs:203": [
+    "assert!(std::env::var_os(\"CI\").is_none(), \"{why}\");"
+  ],
+  "linux/src/theme/host.rs:28": [
+    "std::env::var_os(\"HOST_XDG_CONFIG_HOME\"),"
+  ],
+  "linux/src/theme/host.rs:39": [
+    "std::env::var_os(\"HOST_XDG_DATA_HOME\"),"
+  ],
+  "linux/src/theme/hyprland.rs:17": [
+    "let sig = std::env::var_os(\"HYPRLAND_INSTANCE_SIGNATURE\")?;"
+  ],
+  "linux/src/theme/hyprland.rs:18": [
+    "let runtime = std::env::var_os(\"XDG_RUNTIME_DIR\")?;"
+  ],
+  "linux/src/theme/mod.rs:67": [
+    "forced: std::env::var(\"TOTALDROP_THEME\")"
+  ],
+  "linux/src/theme/mod.rs:70-72": [
+    "desktop: var(\"XDG_CURRENT_DESKTOP\"),",
+    "omarchy: omarchy::theme_dir().is_some(),"
+  ],
+  "server/relay-worker/src/index.ts:27": [
+    "async fetch(request: Request, env: Env): Promise<Response> {"
+  ],
+  "server/relay-worker/src/index.ts:36": [
+    "return env.PAIR.getByName(name).fetch(request);"
+  ],
+  "server/relay-worker/src/pair.ts:108-111": [
+    "async function verify(key: Uint8Array, signature: Uint8Array, message: Uint8Array): Promise<boolean> {",
+    "return await crypto.subtle.verify({ name: \"Ed25519\" }, k, signature, message);"
+  ],
+  "server/relay-worker/src/pair.ts:164": [
+    "async fetch(request: Request): Promise<Response> {"
+  ],
+  "server/relay-worker/src/pair.ts:185": [
+    "async webSocketMessage(ws: WebSocket, data: string | ArrayBuffer): Promise<void> {"
+  ],
+  "server/relay-worker/src/pair.ts:270": [
+    "given = att?.given === undefined ? 0 : att.given + PROBE_STEP;"
+  ],
+  "server/relay-worker/src/pair.ts:381-400": [
+    "if (next === Infinity) await this.ctx.storage.deleteAlarm();",
+    "if (next !== Infinity) await this.ctx.storage.setAlarm(next);"
+  ],
+  "server/relay-worker/src/pair.ts:386": [
+    "async alarm(): Promise<void> {"
+  ],
+  "server/relay-worker/src/pair.ts:59-77": [
+    "interface Attachment {",
+    "}"
+  ],
+  "server/rendezvous-worker/src/directory.ts:16": [
+    "unclaimedTtl: 15 * 60_000,"
+  ],
+  "server/rendezvous-worker/src/directory.ts:18": [
+    "mailboxTtl: 60 * 60_000,"
+  ],
+  "server/rendezvous-worker/src/directory.ts:19-22": [
+    "/** A nameplate stays retired this long after a counted scary close. */",
+    "cooldown: 10 * 60_000,"
+  ],
+  "server/rendezvous-worker/src/directory.ts:215": [
+    "async lookup(n: number, client: string): Promise<Lookup | null | { error: string }> {"
+  ],
+  "server/rendezvous-worker/src/directory.ts:26": [
+    "scaryWindow: 10 * 60_000,"
+  ],
+  "server/rendezvous-worker/src/directory.ts:50": [
+    "this.limiter = new RateLimiter(rateConfig(env.RATE_BURST, env.RATE_INTERVAL_MS));"
+  ],
+  "server/rendezvous-worker/src/directory.ts:59-100": [
+    "private schema(): void {",
+    "INSERT INTO pool (n) SELECT n FROM k"
+  ],
+  "server/rendezvous-worker/src/index.ts:105": [
+    "async function mailbox(env: Env, client: string, nameplate: number): Promise<Response> {"
+  ],
+  "server/rendezvous-worker/src/index.ts:108": [
+    "env.DIRECTORY.getByName(\"directory\").lookup(nameplate, client),"
+  ],
+  "server/rendezvous-worker/src/index.ts:117-122": [
+    "Upgrade: \"websocket\",",
+    "});"
+  ],
+  "server/rendezvous-worker/src/index.ts:130": [
+    "env.MAILBOX.getByName(record.mailbox).fetch("
+  ],
+  "server/rendezvous-worker/src/index.ts:138": [
+    "async fetch(request: Request, env: Env): Promise<Response> {"
+  ],
+  "server/rendezvous-worker/src/index.ts:145": [
+    "if (!isUpgrade(request)) return new Response(\"WebSocket only\\n\", { status: 426 });"
+  ],
+  "server/rendezvous-worker/src/index.ts:148": [
+    "const client = clientOf(request.headers.get(\"CF-Connecting-IP\"));"
+  ],
+  "server/rendezvous-worker/src/index.ts:149": [
+    "if (url.pathname === \"/v0/allocate\") return allocate(env, client);"
+  ],
+  "server/rendezvous-worker/src/index.ts:150": [
+    "const m = /^\\/v0\\/mailbox\\/([1-9][0-9]{0,9})$/.exec(url.pathname);"
+  ],
+  "server/rendezvous-worker/src/index.ts:156": [
+    "return new Response(\"not found\\n\", { status: 404 });"
+  ],
+  "server/rendezvous-worker/src/index.ts:70": [
+    "result = await env.DIRECTORY.getByName(\"directory\").allocate(client);"
+  ],
+  "server/rendezvous-worker/src/index.ts:78": [
+    "function allocate(env: Env, client: string): Response {"
+  ],
+  "server/rendezvous-worker/src/limit.ts:98": [
+    "export class RateLimiter {"
+  ],
+  "server/rendezvous-worker/src/mailbox.ts:115": [
+    "async fetch(request: Request): Promise<Response> {"
+  ],
+  "server/rendezvous-worker/src/mailbox.ts:200": [
+    "async webSocketMessage(ws: WebSocket, data: ArrayBuffer | string): Promise<void> {"
+  ],
+  "server/rendezvous-worker/src/mailbox.ts:335": [
+    "if (scary || allClosed) sql.exec(\"DELETE FROM pending\");"
+  ],
+  "server/rendezvous-worker/src/mailbox.ts:365": [
+    "async webSocketClose(ws: WebSocket): Promise<void> {"
+  ],
+  "server/rendezvous-worker/src/mailbox.ts:375": [
+    "async alarm(): Promise<void> {"
+  ],
+  "server/rendezvous-worker/src/mailbox.ts:60-81": [
+    "private schema(): void {",
+    ");"
+  ],
+  "server/totaldrop-relay/Cargo.toml:18": [
+    "totaldrop-proto = { version = \"0.2.0-beta.5\", path = \"../../crates/totaldrop-proto\" }"
+  ],
+  "server/totaldrop-relay/src/lib.rs:144": [
+    "pub async fn serve(self, listener: TcpListener) {"
+  ],
+  "server/totaldrop-relay/src/lib.rs:212-213": [
+    "ring::signature::UnparsedPublicKey::new(&ring::signature::ED25519, key)",
+    ".verify(&wire::signed_bytes(&challenge), &signature)"
+  ],
+  "server/totaldrop-relay/src/lib.rs:40": [
+    "pub struct Config {"
+  ],
+  "server/totaldrop-relay/src/lib.rs:88": [
+    "type Clients = HashMap<[u8; 32], Client>;"
+  ],
+  "server/totaldrop-relay/src/main.rs:20-24": [
+    "let mut args = std::env::args().skip(1);",
+    ") else {"
+  ],
+  "server/totaldrop-rendezvous/Cargo.toml:17": [
+    "totaldrop-proto = { version = \"0.2.0-beta.5\", path = \"../../crates/totaldrop-proto\" }"
+  ],
+  "server/totaldrop-rendezvous/src/lib.rs:224-227": [
+    "struct State {",
+    "cooling: HashMap<u32, Instant>,"
+  ],
+  "server/totaldrop-rendezvous/src/lib.rs:331": [
+    "pub async fn serve(self, listener: TcpListener) {"
+  ],
+  "server/totaldrop-rendezvous/src/lib.rs:47": [
+    "pub struct Config {"
+  ],
+  "server/totaldrop-rendezvous/src/main.rs:12-15": [
+    "async fn main() -> std::process::ExitCode {",
+    ".unwrap_or_else(|| \"127.0.0.1:4000\".into());"
+  ],
+  "server/totaldrop-rendezvous/src/main.rs:20": [
+    "match totaldrop_rendezvous::spawn(addr, totaldrop_rendezvous::Config::default()).await {"
+  ],
+  "site/tools/team.mjs:175": [
+    "if (process.env.GITHUB_TOKEN && url.startsWith(API)) headers.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`;"
+  ]
+}

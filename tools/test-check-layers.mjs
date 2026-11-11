@@ -6,11 +6,19 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { copyFileSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { ALLOWED, readWorkspace, violations, workspaceEdges } from "./check-layers.mjs";
+import {
+  ALLOWED,
+  ALLOWED_DEV,
+  diagramEdges,
+  diagramViolations,
+  readWorkspace,
+  violations,
+  workspaceEdges,
+} from "./check-layers.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = join(here, "..");
@@ -72,26 +80,52 @@ test("a server that links the cryptography or the client engine is reported", ()
   ]);
 });
 
+// The crates exactly as the table has them, to change one edge at a time.
+const asTable = () =>
+  Object.keys(ALLOWED).map((name) => ({
+    name,
+    deps: [
+      ...ALLOWED[name].map((crate) => ({ crate, dev: false })),
+      ...(ALLOWED_DEV[name] ?? []).map((crate) => ({ crate, dev: true })),
+    ],
+  }));
+const withDeps = (name, deps) => asTable().map((c) => (c.name === name ? { name, deps } : c));
+
+test("the table itself passes", () => {
+  assert.deepEqual(violations(asTable()), []);
+});
+
 test("the servers are allowed in the CLI's tests, not in the CLI itself", () => {
+  const base = ALLOWED["totaldrop-cli"].map((crate) => ({ crate, dev: false }));
   assert.deepEqual(
-    violations([{ name: "totaldrop-cli", deps: [{ crate: "totaldrop-relay", dev: true }] }]),
-    [],
-  );
-  assert.deepEqual(
-    violations([{ name: "totaldrop-cli", deps: [{ crate: "totaldrop-relay", dev: false }] }]),
-    ["totaldrop-cli -> totaldrop-relay: not allowed"],
+    violations(
+      withDeps("totaldrop-cli", [
+        ...base,
+        { crate: "totaldrop-relay", dev: false },
+        { crate: "totaldrop-rendezvous", dev: true },
+      ]),
+    ),
+    [
+      "totaldrop-cli -> totaldrop-relay: not allowed",
+      "totaldrop-cli -> totaldrop-relay (dev): in ALLOWED_DEV but not in the code; remove it from ALLOWED_DEV and the diagram",
+    ],
   );
 });
 
 test("l10n may use the code format in its tests only", () => {
   assert.deepEqual(
-    violations([{ name: "totaldrop-l10n", deps: [{ crate: "totaldrop-proto", dev: true }] }]),
-    [],
+    violations(withDeps("totaldrop-l10n", [{ crate: "totaldrop-proto", dev: false }])),
+    [
+      "totaldrop-l10n -> totaldrop-proto: not allowed",
+      "totaldrop-l10n -> totaldrop-proto (dev): in ALLOWED_DEV but not in the code; remove it from ALLOWED_DEV and the diagram",
+    ],
   );
-  assert.deepEqual(
-    violations([{ name: "totaldrop-l10n", deps: [{ crate: "totaldrop-proto", dev: false }] }]),
-    ["totaldrop-l10n -> totaldrop-proto: not allowed"],
-  );
+});
+
+test("an allowed edge the code no longer has is reported, so the table cannot go stale", () => {
+  assert.deepEqual(violations(withDeps("totaldrop-core", [{ crate: "totaldrop-proto", dev: false }])), [
+    "totaldrop-core -> totaldrop-crypto: in ALLOWED but not in the code; remove it from ALLOWED and the diagram",
+  ]);
 });
 
 test("a crate the table does not know is reported, not let through", () => {
@@ -103,12 +137,72 @@ test("a crate the table does not know is reported, not let through", () => {
   ]);
 });
 
-test("this repository has exactly the crates in the table, and they follow it", () => {
+test("this repository has exactly the crates in the table, and code, table and diagram agree", () => {
   const crates = readWorkspace(root);
   assert.deepEqual(crates.map((c) => c.name).sort(), Object.keys(ALLOWED).sort());
   assert.deepEqual(violations(crates), []);
+  const doc = readFileSync(join(root, "docs", "ARCHITECTURE.md"), "utf8");
+  assert.deepEqual(diagramViolations(diagramEdges(doc, Object.keys(ALLOWED))), []);
   const out = execFileSync("node", [join(here, "check-layers.mjs")], { encoding: "utf8" });
   assert.match(out, new RegExp(`^layers ok: ${Object.keys(ALLOWED).length} crates`, "m"));
+});
+
+const crateNames = Object.keys(ALLOWED);
+const diagram = (body) => `text\n\n\`\`\`mermaid\n%% layers\nflowchart TB\n${body}\n\`\`\`\n`;
+
+test("the diagram is read by the first word of each label, solid and dotted arrows apart", () => {
+  const got = diagramEdges(
+    diagram(
+      [
+        '  DART["Flutter arayüzü<br/>app/lib"]',
+        '  CLI["totaldrop-cli<br/>crates/totaldrop-cli"]',
+        '  RL["totaldrop-relay"]',
+        '  P["totaldrop-proto (kablo)<br/>x"]',
+        '  DART -- "flutter_rust_bridge" --> CLI',
+        "  CLI --> P",
+        '  CLI -. "test" .-> RL',
+        "  RL -.-> P",
+      ].join("\n"),
+    ),
+    crateNames,
+  );
+  assert.deepEqual(got, {
+    nodes: ["totaldrop-cli", "totaldrop-relay", "totaldrop-proto"],
+    edges: [
+      { from: "totaldrop-cli", crate: "totaldrop-proto", dev: false },
+      { from: "totaldrop-cli", crate: "totaldrop-relay", dev: true },
+      { from: "totaldrop-relay", crate: "totaldrop-proto", dev: true },
+    ],
+    errors: [],
+  });
+});
+
+test("a diagram that leaves out, adds or misdraws an arrow is reported", () => {
+  const doc = readFileSync(join(root, "docs", "ARCHITECTURE.md"), "utf8");
+  const without = doc.replace("  CORE --> CRYPTO\n", "");
+  assert.notEqual(without, doc);
+  assert.deepEqual(diagramViolations(diagramEdges(without, crateNames)), [
+    "diagram: totaldrop-core -> totaldrop-crypto is in the table but not drawn",
+  ]);
+  const extra = doc.replace("  RLR --> PROTO\n", "  RLR --> PROTO\n  RLR --> CRYPTO\n");
+  assert.deepEqual(diagramViolations(diagramEdges(extra, crateNames)), [
+    "diagram: totaldrop-relay -> totaldrop-crypto is drawn but not in the table",
+  ]);
+  const solid = doc.replace('  CLI -. "test" .-> RLR\n', "  CLI --> RLR\n");
+  assert.notEqual(solid, doc);
+  assert.deepEqual(diagramViolations(diagramEdges(solid, crateNames)), [
+    "diagram: totaldrop-cli -> totaldrop-relay is drawn but not in the table",
+    "diagram: totaldrop-cli -> totaldrop-relay (dev) is in the table but not drawn",
+  ]);
+  const odd = doc.replace("  CORE --> CRYPTO\n", "  CORE ==> CRYPTO\n");
+  assert.deepEqual(diagramViolations(diagramEdges(odd, crateNames)), [
+    "diagram: cannot read the arrow `CORE ==> CRYPTO`",
+    "diagram: totaldrop-core -> totaldrop-crypto is in the table but not drawn",
+  ]);
+  assert.deepEqual(diagramViolations(diagramEdges("no diagram", crateNames)).slice(0, 2), [
+    "diagram: no ```mermaid block starting with %% layers",
+    "diagram: totaldrop-proto is not drawn",
+  ]);
 });
 
 // Every way of writing a dependency reaches the check, because Cargo reads

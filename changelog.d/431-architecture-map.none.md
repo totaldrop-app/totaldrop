@@ -1,3 +1,1 @@
-A code-level architecture map (docs/ARCHITECTURE.md) and a CI check that
-keeps the crates' dependency direction as the map draws it; nothing changes
-for people who use TotalDrop.
+A code-level architecture map (docs/ARCHITECTURE.md) and CI checks that keep it true: the crates' dependency direction must match both the table in tools/check-layers.mjs and the map's layer diagram, and every `path:line` in the map must still land on the line it was written for; nothing changes for people who use TotalDrop.

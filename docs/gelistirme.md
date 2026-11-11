@@ -93,8 +93,11 @@ hatayı push'tan önce gösterir (#376). İki dosya vardır:
 
 - **`.pre-commit-config-extra.yaml`** CI denetimlerinin yerel kopyasıdır:
   `cargo fmt`, `clippy` ve `test`, `dart format`, `flutter analyze`,
-  Worker'ların `tsc` denetimi, site betikleri, changelog, SPDX, REUSE ve
-  sürüm denetimleri. Git hook'u olarak kurulmaz, elle çalıştırılır. Her
+  Worker'ların `tsc` denetimi, site betikleri, changelog, SPDX, REUSE,
+  sürüm denetimleri, crate katmanlarının denetimi ve
+  [ARCHITECTURE.md](ARCHITECTURE.md)'nin koda bağlantılarının denetimi
+  (`check-doc-refs` hook'u kayan satırları kendisi düzeltir, değişen
+  satırı size bırakır). Git hook'u olarak kurulmaz, elle çalıştırılır. Her
   hook kendi aracını (`cargo`, `dart`, `flutter`, `node`, `npm`) ister;
   ortamınızda olmayanları `SKIP` ile atlayın, CI onları yine çalıştırır:
 

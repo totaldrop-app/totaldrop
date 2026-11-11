@@ -146,11 +146,13 @@ jobs:
       - name: The Node version check works
         run: packaging/test-check-versions.sh
 
-  # The crates depend on each other in one direction only, as the diagram
-  # in docs/ARCHITECTURE.md draws it: the servers never link the
-  # cryptography or the client engine, and nothing depends on an app. It
-  # asks `cargo metadata --no-deps`, which reads the manifests and builds
-  # nothing, so it runs on every change.
+  # The crates depend on each other in one direction only: the servers
+  # never link the cryptography or the client engine, and nothing depends
+  # on an app. The code (as `cargo metadata --no-deps` reads it, building
+  # nothing), the table in tools/check-layers.mjs and the layer diagram in
+  # docs/ARCHITECTURE.md must say the same. The same job checks that every
+  # `path:line` in that document still lands on the line it was written
+  # for (tools/check-doc-refs.mjs). Cheap, so it runs on every change.
   layers:
     name: Crate layers
     runs-on: ubuntu-latest
@@ -166,6 +168,10 @@ jobs:
       - name: The layer check works
         run: node --test tools/test-check-layers.mjs
       - run: node tools/check-layers.mjs
+      - name: Test the line reference check
+        run: node --test tools/test-check-doc-refs.mjs
+      - name: docs/ARCHITECTURE.md points at the lines it names
+        run: node tools/check-doc-refs.mjs
 
   # cargo-deny and OSV-Scanner (OpenSSF Scorecard) ignore the same
   # advisories. Cheap, so it runs on every change.
