@@ -140,8 +140,7 @@ final _shows = <String, Object>{
   'send failed, details open': 'wss://relay.totaldrop.app',
   'receive an invalid code': (AppLocalizations l) => l.receiveCodeInvalid,
   'receive connecting': '7-harbor-rocket',
-  'receive an offer of many files': (AppLocalizations l) =>
-      l.receiveAndMore(4),
+  'receive an offer of many files': (AppLocalizations l) => l.receiveAndMore(4),
   'receiving a large file': '%',
   'receive done': (AppLocalizations l) => l.receiveDone,
   'receive declined': (AppLocalizations l) => l.receiveDeclined,
