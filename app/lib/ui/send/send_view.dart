@@ -99,11 +99,8 @@ class SendView extends StatelessWidget {
                     SendStage.connected => _Connected(vm: vm),
                     SendStage.transferring => _Transferring(vm: vm),
                     SendStage.done => _Done(vm: vm),
-                    SendStage.failed => Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Center(
-                        child: ErrorPanel(error: vm.error!, onRetry: vm.start),
-                      ),
+                    SendStage.failed => CenteredScroll(
+                      child: ErrorPanel(error: vm.error!, onRetry: vm.start),
                     ),
                   },
                 ),
@@ -123,13 +120,19 @@ class _Centered extends StatelessWidget {
   final Widget? action;
 
   @override
-  Widget build(BuildContext context) => Center(
+  Widget build(BuildContext context) => CenteredScroll(
     child: Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         logo,
         Gap.l,
-        Announced(Text(text, style: Theme.of(context).textTheme.titleMedium)),
+        Announced(
+          Text(
+            text,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+        ),
         if (action case final a?) ...[Gap.l, a],
       ],
     ),
@@ -145,50 +148,58 @@ class _Picking extends StatelessWidget {
     final l = AppLocalizations.of(context);
     final theme = Theme.of(context);
     if (vm.files.isEmpty) {
-      // One screen, one job: the only action is choosing files.
-      return Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Spacer(),
-            Icon(
-              Icons.upload_file_outlined,
-              size: 56,
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-            Gap.m,
-            Text(
-              l.sendEmpty,
-              style: theme.textTheme.headlineSmall,
-              textAlign: TextAlign.center,
-            ),
-            Gap.s,
-            Text(
-              l.sendEmptyHint,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+      // One screen, one job: the only action is choosing files. With the
+      // largest text the page scrolls instead of running off (#322).
+      return CustomScrollView(
+        slivers: [
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Spacer(),
+                  Icon(
+                    Icons.upload_file_outlined,
+                    size: 56,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                  Gap.m,
+                  Text(
+                    l.sendEmpty,
+                    style: theme.textTheme.headlineSmall,
+                    textAlign: TextAlign.center,
+                  ),
+                  Gap.s,
+                  Text(
+                    l.sendEmptyHint,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const Spacer(),
+                  if (vm.addFailed) ...[
+                    const _AddFailed(textAlign: TextAlign.center),
+                    Gap.m,
+                  ],
+                  FilledButton.icon(
+                    onPressed: vm.addFiles,
+                    icon: const Icon(Icons.attach_file),
+                    label: Text(l.sendAddFiles),
+                  ),
+                  Gap.s,
+                  OutlinedButton.icon(
+                    onPressed: () => vm.setTextMode(true),
+                    icon: const Icon(Icons.notes),
+                    label: Text(l.sendText),
+                  ),
+                ],
               ),
             ),
-            const Spacer(),
-            if (vm.addFailed) ...[
-              const _AddFailed(textAlign: TextAlign.center),
-              Gap.m,
-            ],
-            FilledButton.icon(
-              onPressed: vm.addFiles,
-              icon: const Icon(Icons.attach_file),
-              label: Text(l.sendAddFiles),
-            ),
-            Gap.s,
-            OutlinedButton.icon(
-              onPressed: () => vm.setTextMode(true),
-              icon: const Icon(Icons.notes),
-              label: Text(l.sendText),
-            ),
-          ],
-        ),
+          ),
+        ],
       );
     }
     return Column(
@@ -196,9 +207,21 @@ class _Picking extends StatelessWidget {
         Expanded(
           child: ListView.separated(
             padding: const EdgeInsets.fromLTRB(24, 8, 24, 8),
-            itemCount: vm.files.length + 1,
+            // The files, "Add files" and the strong-code switch scroll;
+            // only the button stays at the bottom, so the largest text
+            // still leaves room for the list (#322).
+            itemCount: vm.files.length + 2,
             separatorBuilder: (_, _) => const Divider(),
             itemBuilder: (context, i) {
+              if (i == vm.files.length + 1) {
+                return SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(l.sendStrongCode),
+                  subtitle: Text(l.sendStrongCodeHint),
+                  value: vm.strong,
+                  onChanged: vm.setStrong,
+                );
+              }
               if (i == vm.files.length) {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -250,14 +273,6 @@ class _Picking extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(l.sendStrongCode),
-                subtitle: Text(l.sendStrongCodeHint),
-                value: vm.strong,
-                onChanged: vm.setStrong,
-              ),
-              Gap.s,
               FilledButton.icon(
                 onPressed: vm.start,
                 icon: const Icon(Icons.key_outlined),
@@ -654,10 +669,9 @@ class _Done extends StatelessWidget {
     final l = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final s = vm.summary;
-    return Padding(
-      padding: const EdgeInsets.all(24),
+    return CenteredScroll(
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const Center(child: DoneBadge()),
