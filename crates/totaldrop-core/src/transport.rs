@@ -1891,13 +1891,15 @@ mod tests {
         let _watch = d.watch_sender(Duration::from_secs(2));
         let (sender_cut, receiver_cut) = (d.sender_cut.clone(), d.receiver_cut.clone());
         let fallback = d.sender_fallback.clone();
-        let (was_cut, cut_at) = tokio::sync::oneshot::channel::<()>();
+        // How long a slow runner may take to move, and to come back.
+        let deadline = Duration::from_secs(15);
+        let (was_cut, cut_at) = tokio::sync::oneshot::channel::<tokio::time::Instant>();
         let back = tokio::spawn(async move {
-            cut_at.await.ok()?;
-            let cut = tokio::time::Instant::now();
+            // The moment of the cut itself, not when this task woke.
+            let cut = cut_at.await.ok()?;
             // Wait for the move with a deadline rather than read it once
             // after a fixed sleep: a slow runner may move late (#395).
-            let moved = tokio::time::timeout(Duration::from_secs(15), async {
+            let moved = tokio::time::timeout(deadline, async {
                 while !fallback.moved() {
                     tokio::time::sleep(Duration::from_millis(10)).await;
                 }
@@ -1909,7 +1911,7 @@ mod tests {
             tokio::time::sleep(gone.saturating_sub(cut.elapsed())).await;
             sender_cut.set(false, false);
             receiver_cut.set(false, false);
-            let came_back = tokio::time::timeout(Duration::from_secs(15), async {
+            let came_back = tokio::time::timeout(deadline, async {
                 while fallback.moved() {
                     tokio::time::sleep(Duration::from_millis(10)).await;
                 }
@@ -1923,7 +1925,7 @@ mod tests {
             || {
                 d.sender_cut.set(true, true);
                 d.receiver_cut.set(true, true);
-                let _ = was_cut.send(());
+                let _ = was_cut.send(tokio::time::Instant::now());
             },
             Duration::from_secs(45),
         )
@@ -1933,15 +1935,23 @@ mod tests {
         assert!(moved, "cut {gone:?}: the sender did not move");
         assert!(came_back, "cut {gone:?}: the sender did not come back");
         assert!(arrived, "cut {gone:?}: the transfer did not finish");
+        // Something is sent again only if QUIC sent something while moved:
+        // in a short cut it may have been waiting for its next probe the
+        // whole time (#471). What went through the relay is sent again.
+        let (rerouted, replayed) = (
+            d.sender_fallback.rerouted_total(),
+            d.sender_fallback.replayed(),
+        );
         assert!(
-            d.sender_fallback.replayed() > 0,
-            "cut {gone:?}: nothing was sent again on coming back"
+            rerouted == 0 || replayed > 0,
+            "cut {gone:?}: {rerouted} datagrams went through the relay, \
+             none was sent again on coming back"
         );
         let took = done.saturating_duration_since(back_at);
         assert!(
             took <= picks_up,
             "cut {gone:?}: the transfer took {took:?} after the sender came back \
-             (sender: {:?})",
+             ({rerouted} through the relay, {replayed} sent again; sender: {:?})",
             d.sender.stats().path
         );
     }

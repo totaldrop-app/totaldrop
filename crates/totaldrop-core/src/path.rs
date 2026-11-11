@@ -135,6 +135,9 @@ struct FallbackState {
     rerouted: Mutex<VecDeque<Rerouted>>,
     /// How many datagrams were sent again on coming back, for tests.
     replayed: AtomicU64,
+    /// How many datagrams went through the relay while moved, for tests.
+    #[cfg(test)]
+    rerouted_total: AtomicU64,
     /// The real UDP socket, to send `rerouted` again on coming back.
     socket: OnceLock<Arc<dyn AsyncUdpSocket>>,
 }
@@ -150,12 +153,16 @@ impl Fallback {
             relay,
             rerouted: Mutex::new(VecDeque::with_capacity(REPLAY)),
             replayed: AtomicU64::new(0),
+            #[cfg(test)]
+            rerouted_total: AtomicU64::new(0),
             socket: OnceLock::new(),
         }))
     }
 
     /// Note one segment of `transmit`, sent through the relay instead.
     fn rerouted(&self, transmit: &Transmit, segment: &[u8]) {
+        #[cfg(test)]
+        self.0.rerouted_total.fetch_add(1, Ordering::AcqRel);
         if let Ok(mut kept) = self.0.rerouted.lock() {
             if kept.len() >= REPLAY {
                 kept.pop_front();
@@ -170,6 +177,12 @@ impl Fallback {
                 datagram: segment.to_vec(),
             });
         }
+    }
+
+    /// How many datagrams went through the relay while moved so far.
+    #[cfg(test)]
+    pub(crate) fn rerouted_total(&self) -> u64 {
+        self.0.rerouted_total.load(Ordering::Acquire)
     }
 
     /// How many datagrams were sent again on coming back so far.
