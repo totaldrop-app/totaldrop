@@ -306,7 +306,7 @@ export class Pair extends DurableObject<Env> {
     // The attachment is read only when it may change.
     const step = give(this.written.get(ws), after, () => attachment(ws));
     if (step.written !== undefined) this.written.set(ws, step.written);
-    const att = step.att as Attachment | null;
+    const att = step.att;
     if (!step.probe || !att) return;
     const nonce = crypto.getRandomValues(new Uint8Array(16));
     ws.send(new Uint8Array([...PROBE, ...nonce]));

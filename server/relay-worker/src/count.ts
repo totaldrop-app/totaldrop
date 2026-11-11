@@ -45,11 +45,11 @@ export function noteGiven(att: Counted, after: number): boolean {
  * note the bytes in it ({@link noteGiven}), and say what is now written
  * and whether a probe goes out. `att` is the attachment read, to send the
  * probe and write it back; null when it was not read. */
-export function give(
+export function give<T extends Counted>(
   written: number | undefined,
   after: number,
-  read: () => Counted | null,
-): { written: number | undefined; att: Counted | null; probe: boolean } {
+  read: () => T | null,
+): { written: number | undefined; att: T | null; probe: boolean } {
   if (!mayChange(written, after)) return { written, att: null, probe: false };
   const att = read();
   if (!att) return { written, att: null, probe: false };
