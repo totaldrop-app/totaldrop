@@ -25,7 +25,8 @@ from obra/superpowers (MIT, #469), in our own words.
 Do not restate these documents in code comments or PRs; link them. Where a
 skill quotes a value from them (an SDK level, a timing, a CSP), the cited
 document is the source and wins; a PR that changes such a value updates
-the skill too (`grep -rn` it under `.claude/skills/`).
+the skill too (`grep -rn` it under `.claude/skills/`). A value a skill gives
+without a source is a recommendation, not a rule.
 
 ## Before writing code
 
@@ -96,7 +97,7 @@ the skill too (`grep -rn` it under `.claude/skills/`).
   remains. Mark every unverified or assumed point as such.
 - No "passes", "fixed" or "works" without evidence from this session: run
   the command that proves it, or read the CI run for this commit, and quote
-  the result. An earlier run, a
-  subagent's report or "should work" is not evidence.
+  the result. An earlier run, a subagent's report or "should work" is not
+  evidence.
 - Cite code as `path/file.ext:line`.
 - Point out when the project breaks its own rules, and propose the fix.
