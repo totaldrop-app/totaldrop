@@ -237,7 +237,7 @@ class TransferProgress extends StatelessWidget {
         Row(
           children: [
             Text(
-              fraction == null ? '' : '${(fraction * 100).round()}%',
+              fraction == null ? '' : formatPercent(l, fraction),
               style: theme.textTheme.titleMedium,
             ),
             const Spacer(),

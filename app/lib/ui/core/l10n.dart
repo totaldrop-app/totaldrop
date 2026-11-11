@@ -105,6 +105,17 @@ String formatBytes(AppLocalizations l, int bytes, {String? numberLocale}) {
   return l.sizePB(bytes.toString());
 }
 
+/// "50%" in the region's format: "%50" in Turkish, "50 %" in German
+/// (#483). [fraction] is between 0 and 1. `numberLocale` is for tests.
+String formatPercent(
+  AppLocalizations l,
+  double fraction, {
+  String? numberLocale,
+}) {
+  final locale = numberLocale ?? _numberLocale(l);
+  return intl.NumberFormat.percentPattern(locale).format(fraction);
+}
+
 /// A value from outside the translation (a version, a folder) placed in a
 /// sentence. Isolated, it keeps its own direction in a right-to-left
 /// language: "0.2.0-beta.2" would otherwise show as "beta.2-0.2.0".
