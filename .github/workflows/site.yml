@@ -37,6 +37,8 @@ jobs:
         run: node --test site/tools/test-team.mjs && node site/tools/team.mjs
       - name: Pages ask for the current stylesheet and scripts
         run: node --test site/tools/test-asset-versions.mjs && node site/tools/asset-versions.mjs
+      - name: The site's App Links file matches the Android app
+        run: node --test site/tools/test-assetlinks.mjs
       - name: The language list stays readable in both themes
         run: node --test site/tools/test-select-colours.mjs
       - name: README and its translations

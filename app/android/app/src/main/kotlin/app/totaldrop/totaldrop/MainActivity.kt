@@ -7,6 +7,7 @@ import android.Manifest
 import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -91,12 +92,13 @@ class MainActivity : FlutterActivity() {
             ACTION_SHORTCUT_SEND -> launches.send(mapOf("screen" to "send"))
             ACTION_SHORTCUT_RECEIVE -> launches.send(mapOf("screen" to "receive"))
             ACTION_SHORTCUT_CLIPBOARD -> launches.send(mapOf("screen" to "clipboard"))
-            // A totaldrop://r/ link (#445): the Dart side reads the code out
-            // of it, strictly, through the Rust core. The activity is
-            // exported, so an explicit intent can skip the filter: only
-            // the filter's links are taken.
+            // A receive link, totaldrop://r/ or https://totaldrop.app/r
+            // (#445): the Dart side reads the code out of it, strictly,
+            // through the Rust core. The activity is exported, so an
+            // explicit intent can skip the filters: only their links are
+            // taken.
             Intent.ACTION_VIEW -> intent.data
-                ?.takeIf { it.scheme == "totaldrop" && it.host == "r" }
+                ?.takeIf { isReceiveLink(it) }
                 ?.let { launches.send(mapOf("link" to it.toString())) }
             Intent.ACTION_SEND, Intent.ACTION_SEND_MULTIPLE -> takeShare(intent)
             // Text selected in another app, sent from its selection menu
@@ -110,6 +112,13 @@ class MainActivity : FlutterActivity() {
 
     /** The activity keeps its intent: the text, now handed over, need not
      * stay in it. */
+    /** The two forms of a receive link (#445); the manifest's filters let
+     *  only these in, and an explicit intent is checked here as well. The
+     *  code itself is read in Rust (TransferCode::from_link). */
+    private fun isReceiveLink(uri: Uri): Boolean =
+        (uri.scheme == "totaldrop" && uri.host == "r") ||
+            (uri.scheme == "https" && uri.host == "totaldrop.app" && uri.path == "/r")
+
     private fun forgetText(intent: Intent) {
         intent.removeExtra(Intent.EXTRA_TEXT)
         intent.removeExtra(Intent.EXTRA_PROCESS_TEXT)

@@ -69,6 +69,18 @@
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <data android:scheme="totaldrop" android:host="r"/>
             </intent-filter>
+            <!-- The same link as a web address, https://totaldrop.app/r#<code>
+                 (#445). Android checks totaldrop.app/.well-known/assetlinks.json
+                 (site/public) against the Play signing key, so only this app
+                 opens these links; no other app can claim them as it can the
+                 totaldrop:// scheme. The code is in the fragment and never
+                 reaches the site. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="https" android:host="totaldrop.app" android:path="/r"/>
+            </intent-filter>
             <!-- Send and Receive when the icon is held (res/xml/shortcuts.xml). -->
             <meta-data
                 android:name="android.app.shortcuts"

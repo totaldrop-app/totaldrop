@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "app.totaldrop",
+      "sha256_cert_fingerprints": [
+        "45:98:7D:A4:BB:9D:1C:85:3E:29:07:95:D1:9F:C5:6D:F6:C8:A7:EE:C0:26:81:A3:21:92:EE:18:2E:37:A6:16"
+      ]
+    }
+  }
+]

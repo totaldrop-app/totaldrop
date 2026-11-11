@@ -4,6 +4,7 @@
     "/*"
   ],
   "exclude": [
+    "/.well-known/*",
     "/fonts/*",
     "/brand/files/*",
     "/team/avatars/*",
