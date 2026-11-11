@@ -207,21 +207,9 @@ class _Picking extends StatelessWidget {
         Expanded(
           child: ListView.separated(
             padding: const EdgeInsets.fromLTRB(24, 8, 24, 8),
-            // The files, "Add files" and the strong-code switch scroll;
-            // only the button stays at the bottom, so the largest text
-            // still leaves room for the list (#322).
-            itemCount: vm.files.length + 2,
+            itemCount: vm.files.length + 1,
             separatorBuilder: (_, _) => const Divider(),
             itemBuilder: (context, i) {
-              if (i == vm.files.length + 1) {
-                return SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(l.sendStrongCode),
-                  subtitle: Text(l.sendStrongCodeHint),
-                  value: vm.strong,
-                  onChanged: vm.setStrong,
-                );
-              }
               if (i == vm.files.length) {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -268,24 +256,40 @@ class _Picking extends StatelessWidget {
           ),
         ),
         const Divider(),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              FilledButton.icon(
-                onPressed: vm.start,
-                icon: const Icon(Icons.key_outlined),
-                // Read out when the list appears after the picker's copy
-                // and when it changes, so a screen reader is not left
-                // silent where "Add files" was (#271).
-                label: Announced(
-                  Text(
-                    '${l.sendCreateCode} · ${l.itemsAndSize(vm.files.length, formatBytes(l, vm.totalSize))}',
+        // Pinned under the list. With the largest text it takes at most
+        // half the screen and scrolls itself, so the list keeps its room
+        // (#322).
+        ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.sizeOf(context).height / 2,
+          ),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(l.sendStrongCode),
+                  subtitle: Text(l.sendStrongCodeHint),
+                  value: vm.strong,
+                  onChanged: vm.setStrong,
+                ),
+                Gap.s,
+                FilledButton.icon(
+                  onPressed: vm.start,
+                  icon: const Icon(Icons.key_outlined),
+                  // Read out when the list appears after the picker's copy
+                  // and when it changes, so a screen reader is not left
+                  // silent where "Add files" was (#271).
+                  label: Announced(
+                    Text(
+                      '${l.sendCreateCode} · ${l.itemsAndSize(vm.files.length, formatBytes(l, vm.totalSize))}',
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ],

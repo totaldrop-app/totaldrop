@@ -3,12 +3,15 @@
 //
 // Every screen in every language (#315, #52, ADR 0008): nothing
 // overflows on a small phone, also with the largest text Android offers
-// (200 %, #322), and right-to-left languages lay out right to left. The test font draws each letter as a
-// full square: as wide as Japanese and wider than Latin or Arabic, so a
-// line that fits here fits on a phone. How the text looks (shaping,
-// fonts) is checked by hand on a phone in Arabic and Japanese.
+// (200 %, #322), and right-to-left languages lay out right to left. The
+// test font draws each letter as a full square: as wide as Japanese and
+// wider than Latin or Arabic, so a line that fits here fits on a phone.
+// How the text looks (shaping, fonts) is checked by hand on a phone in
+// Arabic and Japanese.
 import 'dart:async';
 
+import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart'
+    show PlatformInt64;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:totaldrop/data/background_access.dart';
@@ -17,7 +20,6 @@ import 'package:totaldrop/l10n/app_localizations.dart';
 import 'package:totaldrop/src/rust/api/l10n.dart' show ShownText;
 import 'package:totaldrop/src/rust/api/transfer.dart';
 import 'package:totaldrop/src/rust/frb_generated.dart';
-import 'package:totaldrop/ui/core/common.dart' show DoneBadge;
 import 'package:totaldrop/ui/core/theme.dart';
 import 'package:totaldrop/ui/home/home_view.dart';
 import 'package:totaldrop/ui/receive/receive_view.dart';
@@ -63,6 +65,21 @@ class _LongOffer extends FakeOffer {
   List<String> get names => const [_longName];
 }
 
+/// An offer of ten files with long names: six are listed, then "and 4
+/// more".
+class _ManyOffer extends FakeOffer {
+  @override
+  PlatformInt64 get files => 10;
+  @override
+  List<String> get names => [for (var i = 0; i < 10; i++) '$i $_longName'];
+}
+
+/// A repository that reads no code in what was typed.
+class _NoCodeRepository extends FakeRepository {
+  @override
+  String? normalizeCode(String input) => null;
+}
+
 /// Settings as on a new install, without the device's storage.
 class _Settings extends ChangeNotifier implements SettingsRepository {
   @override
@@ -103,9 +120,9 @@ class _Limits implements BackgroundAccess {
   Future<bool> open(BackgroundPage page) async => true;
 }
 
-/// What each screen shows once it reaches its state: a text, or a widget
-/// type for a screen whose text is all translated.
-const _shows = <String, Object>{
+/// What each screen shows once it reaches its state: a text, or a text
+/// of the language shown.
+final _shows = <String, Object>{
   'send with files': 'Rapport annuel',
   'send with the code': '7-harbor-rocket',
   'sending with the words': 'abstract',
@@ -114,15 +131,20 @@ const _shows = <String, Object>{
   'send a text': 'Rapport annuel',
   'receive a text offer': 'one',
   'receive a text': 'Rapport annuel',
+  'send preparing': (AppLocalizations l) => l.sendPreparing,
+  'send, a pick failed': (AppLocalizations l) => l.sendAddFailed,
+  'send with files, a pick failed': (AppLocalizations l) => l.sendAddFailed,
   'sending a large file': '%',
-  'send done': DoneBadge,
-  'receive declined': FilledButton,
-  'receive connecting': '7-harbor-rocket',
-  'receiving a large file': '%',
-  // The list of saved files starts below the fold at 2.0x, where the
-  // list has not built it yet.
-  'receive done': DoneBadge,
+  'sending, asked to stop': (AppLocalizations l) => l.cancelTransferTitle,
+  'send done': (AppLocalizations l) => l.sendDone,
   'send failed, details open': 'wss://relay.totaldrop.app',
+  'receive an invalid code': (AppLocalizations l) => l.receiveCodeInvalid,
+  'receive connecting': '7-harbor-rocket',
+  'receive an offer of many files': (AppLocalizations l) =>
+      l.receiveAndMore(4),
+  'receiving a large file': '%',
+  'receive done': (AppLocalizations l) => l.receiveDone,
+  'receive declined': (AppLocalizations l) => l.receiveDeclined,
   'receive failed, details open': 'wss://relay.totaldrop.app',
 };
 
@@ -382,6 +404,85 @@ void main() {
             },
           );
         },
+        'send preparing': () {
+          final vm = SendViewModel(
+            repository: FakeRepository(),
+            fileSource: FakeFileSource(),
+          )..addFakeFileForTest(_longName);
+          return (
+            SendView(viewModel: vm),
+            (tester) async => unawaited(vm.start()),
+          );
+        },
+        'send, a pick failed': () {
+          final source = FakeFileSource();
+          final vm = SendViewModel(
+            repository: FakeRepository(),
+            fileSource: source,
+          );
+          return (
+            SendView(viewModel: vm),
+            (tester) async {
+              unawaited(vm.addFiles());
+              await tester.pump();
+              source.fail(Exception('unknown_path'));
+            },
+          );
+        },
+        'send with files, a pick failed': () {
+          final source = FakeFileSource();
+          final vm = SendViewModel(
+            repository: FakeRepository(),
+            fileSource: source,
+          )..addFakeFileForTest(_longName);
+          return (
+            SendView(viewModel: vm),
+            (tester) async {
+              unawaited(vm.addFiles());
+              await tester.pump();
+              source.fail(Exception('unknown_path'));
+            },
+          );
+        },
+        'sending, asked to stop': () {
+          final repo = FakeRepository();
+          final vm = SendViewModel(
+            repository: repo,
+            fileSource: FakeFileSource(),
+          )..addFakeFileForTest(_longName);
+          return (
+            SendView(viewModel: vm),
+            (tester) async {
+              unawaited(vm.start());
+              repo.prepared.complete(FakeSession());
+              await tester.pump();
+              repo.events.add(_halfway);
+              await tester.pump();
+              // Back during a transfer asks first.
+              final navigator = tester.state<NavigatorState>(
+                find.byType(Navigator),
+              );
+              unawaited(navigator.maybePop());
+            },
+          );
+        },
+        'receive an invalid code': () {
+          final vm = ReceiveViewModel(repository: _NoCodeRepository())
+            ..setInput('7-harbor');
+          return (ReceiveView(viewModel: vm), (tester) => vm.connect());
+        },
+        'receive an offer of many files': () {
+          final repo = FakeRepository();
+          final vm = ReceiveViewModel(repository: repo)
+            ..setInput('7-harbor-rocket');
+          return (
+            ReceiveView(viewModel: vm),
+            (tester) async {
+              unawaited(vm.connect());
+              repo.connected.complete(_ManyOffer());
+            },
+          );
+        },
         'sending a large file': () {
           final repo = FakeRepository();
           final vm = SendViewModel(
@@ -549,18 +650,39 @@ void main() {
           await tester.pump();
           await tester.pump(const Duration(milliseconds: 300));
           // The screen is in the state named.
-          switch (_shows[name]) {
-            case final String text:
-              expect(
-                find.textContaining(text, findRichText: true),
-                findsWidgets,
-              );
-            case final Type type:
-              expect(find.byType(type), findsWidgets);
+          final l = AppLocalizations.of(
+            tester.element(find.byType(Scaffold).first),
+          );
+          final shown = switch (_shows[name]) {
+            final String text => text,
+            final String Function(AppLocalizations) text => text(l),
+            _ => null,
+          };
+          if (shown != null) {
+            expect(
+              find.textContaining(shown, findRichText: true),
+              findsWidgets,
+            );
           }
 
           // An overflow, across or down, is reported as an exception: a
           // screen whose content can be taller than the phone scrolls.
+          expect(tester.takeException(), isNull);
+
+          // A list lays out only what is near the screen: scroll each one
+          // to its end, as a person would, and check what was below too.
+          for (var pass = 0; pass < 2; pass++) {
+            final lists = tester.stateList<ScrollableState>(
+              find.byType(Scrollable),
+            );
+            for (final list in lists.toList()) {
+              final position = list.position;
+              if (position.axis == Axis.vertical) {
+                position.jumpTo(position.maxScrollExtent);
+              }
+            }
+            await tester.pump();
+          }
           expect(tester.takeException(), isNull);
           final direction = Directionality.of(
             tester.element(find.byType(Scaffold).first),
