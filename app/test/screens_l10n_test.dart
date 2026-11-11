@@ -684,7 +684,7 @@ void main() {
               if (position.axis != Axis.vertical) break;
               if (position.pixels >= position.maxScrollExtent) break;
               final next = position.pixels + position.viewportDimension / 2;
-              position.jumpTo(next.clamp(0, position.maxScrollExtent));
+              position.jumpTo(next.clamp(0.0, position.maxScrollExtent));
               await tester.pump();
               expect(tester.takeException(), isNull);
               shownSomewhere = shownSomewhere || showing();
