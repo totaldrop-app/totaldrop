@@ -703,6 +703,7 @@ impl qobject::Transfer {
         let opts = ReceiveOptions {
             server: self.opts_server(),
             paths: self.route(),
+            resume_dir: None,
         };
         let session = self.rust().session.clone();
         let stop = self.stop_handle();
