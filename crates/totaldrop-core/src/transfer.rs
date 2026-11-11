@@ -2153,7 +2153,7 @@ mod tests {
         let (sender, receiver) =
             crate::transport::testing::over_slow_relay(Duration::from_millis(1)).await;
         let (schan, mut rchan, skeys, scert) = secure_pair(&sender, &receiver).await;
-        let (entries, _) = scan(&[folder.clone()]).unwrap();
+        let (entries, _) = scan(std::slice::from_ref(&folder)).unwrap();
         let send = {
             let sender = sender.clone();
             tokio::spawn(async move {
