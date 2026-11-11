@@ -29,6 +29,7 @@ In records written in English the statuses are "Proposed" (Önerilen),
 | [0017](0017-bagis-kisisel-sayfa.md) | Bağışlar şimdilik proje liderinin GitHub Sponsors ve Buy Me a Coffee sayfalarından alınır, proje büyüyünce TotalDrop adına bir hesaba geçer | Kabul |
 | [0018](0018-baglanti-yol-haritasi.md) | Bağlantı katmanı kendi yığınımızda kalır; IPv6, port açma ve ağ değişimine tepkiyle doğrudan yollar artırılır | Kabul |
 | [0019](0019-english-by-default.md) | The repository is written in English | Accepted |
+| [0020](0020-resume-interrupted-transfers.md) | An interrupted transfer continues when the same files are sent again | Proposed |
 
 Yeni bir karar için bir sonraki numarayla `NNNN-kisa-ad.md` açın ve bu
 tabloya ekleyin.
