@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # Render the Android launcher icons from the mark's geometry (docs/tasarim.md,
-# "İşaret"). Run after changing the mark; commit the PNGs it writes.
+# "The mark: Köşe"). Run after changing the mark; commit the PNGs it writes.
 #
 #   packaging/render-icons.sh
 #

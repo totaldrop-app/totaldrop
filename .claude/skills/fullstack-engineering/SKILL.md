@@ -46,7 +46,7 @@ for anything a stranger can reach.
   Hyprland and Omarchy (`docs/tasarim.md`, table in section 1). Every UI
   change is tried on all three, light and dark, and in Arabic and Japanese,
   with screenshots in the PR. The mark's motion matches the site
-  (`Mark.qml`, `docs/tasarim.md`, "Hareket").
+  (`Mark.qml`, `docs/tasarim.md`, "Motion").
 - QML component tests: `linux/tests/qml/run.sh`; a component that gets a
   test is added to `stub/qmldir` and to the copy line in `run.sh`.
 - Packages: deb, rpm, Arch and the Flatpak (`packaging/flatpak`, decision

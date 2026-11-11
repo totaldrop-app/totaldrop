@@ -92,8 +92,8 @@ server. Packets from the relay server are handed to QUIC as if they came
 from that direct address; so from QUIC's point of view the address does not
 change, and the two sides move separately, each on its own clock. If only
 one direction dies, the side that stops hearing the other first moves; the
-other follows one wait later, when it stops hearing it. Both stay within
-QUIC's 30-second idle timeout.
+other follows one wait period later, when it stops hearing it. Both stay
+within QUIC's 30-second idle timeout.
 
 If the other side is still sending on the direct path (it had only paused,
 or never moved), the device returns to the direct path with the first
