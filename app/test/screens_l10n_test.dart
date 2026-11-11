@@ -657,12 +657,15 @@ void main() {
             final String Function(AppLocalizations) text => text(l),
             _ => null,
           };
-          if (shown != null) {
-            expect(
-              find.textContaining(shown, findRichText: true),
-              findsWidgets,
-            );
+          // Found at the top, or below the fold once scrolled to (a list
+          // builds only what is near the screen).
+          bool showing() {
+            if (shown == null) return true;
+            final found = find.textContaining(shown, findRichText: true);
+            return found.evaluate().isNotEmpty;
           }
+
+          final shownBefore = showing();
 
           // An overflow, across or down, is reported as an exception: a
           // screen whose content can be taller than the phone scrolls.
@@ -683,6 +686,7 @@ void main() {
             await tester.pump();
           }
           expect(tester.takeException(), isNull);
+          expect(shownBefore || showing(), isTrue, reason: 'shows $shown');
           final direction = Directionality.of(
             tester.element(find.byType(Scaffold).first),
           );
