@@ -15,6 +15,7 @@
 
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 
 use igd_next::aio::tokio::Tokio;
@@ -93,6 +94,8 @@ pub struct Mapping {
     /// Counted for [`released`] while the mapping lives; dropped after
     /// `release` has started the delete, which counts itself.
     pending: Option<Pending>,
+    /// The race's loser, when it holds the same port (#425).
+    later: LaterSlot,
 }
 
 impl Mapping {
@@ -108,6 +111,7 @@ impl Drop for Mapping {
         if let Some(r) = self.release.take() {
             r.send();
         }
+        release_later(&self.later);
     }
 }
 
@@ -209,6 +213,70 @@ impl Release {
                 }
             }
         }
+    }
+}
+
+/// The protocol that lost the race for the mapping, still waiting for its
+/// answer (#425).
+struct Loser {
+    answer: std::pin::Pin<Box<dyn Future<Output = Option<SocketAddr>> + Send>>,
+    release: Release,
+}
+
+/// A loser's release that waits for the winner's [`Mapping`] to go.
+#[derive(Debug, Default)]
+struct Later {
+    /// The mapping was dropped (or never made): send at once.
+    now: bool,
+    release: Option<Release>,
+}
+
+type LaterSlot = Arc<std::sync::Mutex<Later>>;
+
+impl Loser {
+    /// What to do with the loser's mapping once its answer comes, if it
+    /// comes within [`LIMIT`] (a later one is not waited for, and the
+    /// router closes that mapping once its lifetime ends):
+    /// - on another external port than the winner's, `kept`, it is a
+    ///   second mapping: released at once;
+    /// - on the same port it is, in a router that keeps one table for
+    ///   both protocols, the winner's own mapping, perhaps now held under
+    ///   the loser's protocol (miniupnpd relabels a rule that NAT-PMP
+    ///   asks for again; unverified). Releasing it now would close the
+    ///   port in use, so the release waits in `later` and goes with the
+    ///   winner's when the [`Mapping`] is dropped;
+    /// - with no winner kept (`None`: its mapping was not usable), it is
+    ///   released at once.
+    async fn close(self, kept: Option<u16>, later: LaterSlot) {
+        let Ok(Some(external)) = tokio::time::timeout(LIMIT, self.answer).await else {
+            return;
+        };
+        if kept != Some(external.port()) {
+            self.release.send();
+            return;
+        }
+        let mut slot = later
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        if slot.now {
+            drop(slot);
+            self.release.send();
+        } else {
+            slot.release = Some(self.release);
+        }
+    }
+}
+
+/// Send a loser's release that waited for the mapping, or let a loser
+/// still waiting for its answer send it at once.
+fn release_later(later: &LaterSlot) {
+    let mut slot = later
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    slot.now = true;
+    if let Some(r) = slot.release.take() {
+        drop(slot);
+        r.send();
     }
 }
 
@@ -374,54 +442,96 @@ async fn map_udp(
         return Udp::Nothing;
     }
     let pcp = Held::Pcp { nonce, client };
-    let pcp_try = {
+    let mut pcp_try = Box::pin({
         let socket = Arc::clone(&pcp_socket);
         async move { ask(&socket, pcp, port).await }
-    };
+    });
+    // Set once the NAT-PMP mapping request has gone out: from then on the
+    // router may hold a NAT-PMP mapping even if PCP wins (#425).
+    let pmp_asked = Arc::new(AtomicBool::new(false));
     // A router that speaks only NAT-PMP may not answer PCP at all; it is
     // asked over NAT-PMP after one unanswered PCP try, not after all
     // [`TRIES`], so its mapping still comes in time for `HINTS`.
     let pmp_try = |wait: Duration| {
         let socket = Arc::clone(&pmp_socket);
+        let asked = Arc::clone(&pmp_asked);
         async move {
             tokio::time::sleep(wait).await;
-            ask_pmp(&socket, port).await
+            ask_pmp(&socket, port, &asked).await
         }
     };
-    tokio::pin!(pcp_try);
-    let pmp_soon = pmp_try(RESEND);
-    tokio::pin!(pmp_soon);
-    let (held, socket, external, lifetime) = tokio::select! {
+    let mut pmp_soon = Box::pin(pmp_try(RESEND));
+    let (held, socket, external, lifetime, loser) = tokio::select! {
         got = &mut pcp_try => match got {
-            Got::Mapped(external, lifetime) => (pcp, pcp_socket, external, lifetime),
+            Got::Mapped(external, lifetime) => {
+                // The NAT-PMP try lost the race. If its request is out,
+                // it keeps listening for the answer, so that a second
+                // mapping can be closed (#425); if not, it stops here and
+                // never asks.
+                let loser = pmp_asked.load(Ordering::Acquire).then(|| Loser {
+                    answer: Box::pin(async move {
+                        pmp_soon
+                            .await
+                            .and_then(|(e, l)| (l != 0 && e.port() != 0).then_some(e))
+                    }),
+                    release: Release::Udp {
+                        socket: Arc::clone(&pmp_socket),
+                        held: Held::Pmp,
+                        port,
+                    },
+                });
+                (pcp, pcp_socket, external, lifetime, loser)
+            }
             Got::Refused => return Udp::Refused,
             // "Unsupported version" may come before the NAT-PMP try has
             // started; a fresh one starts now (the other is no longer
             // polled, so it reads nothing from the socket).
             Got::OtherVersion => match pmp_try(Duration::ZERO).await {
-                Some((external, lifetime)) => (Held::Pmp, pmp_socket, external, lifetime),
+                Some((external, lifetime)) => (Held::Pmp, pmp_socket, external, lifetime, None),
                 None => return Udp::Nothing,
             },
             Got::Silent => match pmp_soon.await {
-                Some((external, lifetime)) => (Held::Pmp, pmp_socket, external, lifetime),
+                Some((external, lifetime)) => (Held::Pmp, pmp_socket, external, lifetime, None),
                 None => return Udp::Nothing,
             },
         },
         got = &mut pmp_soon => match got {
-            Some((external, lifetime)) => (Held::Pmp, pmp_socket, external, lifetime),
+            Some((external, lifetime)) => {
+                // The PCP try lost; its request went out first of all.
+                let loser = Loser {
+                    answer: Box::pin(async move {
+                        match pcp_try.await {
+                            Got::Mapped(e, l) if l != 0 => Some(e),
+                            _ => None,
+                        }
+                    }),
+                    release: Release::Udp {
+                        socket: Arc::clone(&pcp_socket),
+                        held: pcp,
+                        port,
+                    },
+                };
+                (Held::Pmp, pmp_socket, external, lifetime, Some(loser))
+            }
             None => match pcp_try.await {
-                Got::Mapped(external, lifetime) => (pcp, pcp_socket, external, lifetime),
+                Got::Mapped(external, lifetime) => (pcp, pcp_socket, external, lifetime, None),
                 Got::Refused => return Udp::Refused,
                 Got::OtherVersion | Got::Silent => return Udp::Nothing,
             },
         },
     };
+    let usable = lifetime != 0 && public(external.ip());
+    let later = LaterSlot::default();
+    if let Some(loser) = loser {
+        let kept = usable.then_some(external.port());
+        tokio::spawn(loser.close(kept, Arc::clone(&later)));
+    }
     let release = Release::Udp {
         socket: Arc::clone(&socket),
         held,
         port,
     };
-    if lifetime == 0 || !public(external.ip()) {
+    if !usable {
         // The router may have opened a port we will not use.
         release.send();
         return Udp::Nothing;
@@ -432,6 +542,7 @@ async fn map_udp(
         renew,
         release: Some(release),
         pending: None,
+        later,
     })
 }
 
@@ -552,6 +663,7 @@ async fn upnp_with(
             external_port,
         }),
         pending: None,
+        later: LaterSlot::default(),
     })
 }
 
@@ -631,10 +743,12 @@ async fn ask(socket: &UdpSocket, held: Held, port: u16) -> Got {
 }
 
 /// NAT-PMP: the public address, then the mapping.
-async fn ask_pmp(socket: &UdpSocket, port: u16) -> Option<(SocketAddr, u32)> {
+/// `asked` is set just before the mapping request goes out.
+async fn ask_pmp(socket: &UdpSocket, port: u16, asked: &AtomicBool) -> Option<(SocketAddr, u32)> {
     let ip = exchange(socket, &wire::pmp_address(), wire::parse_pmp_address)
         .await?
         .ok()?;
+    asked.store(true, Ordering::Release);
     match ask(socket, Held::Pmp, port).await {
         Got::Mapped(external, lifetime) => {
             Some((SocketAddr::from((ip, external.port())), lifetime))
@@ -791,12 +905,21 @@ mod tests {
         Private,
         /// Grants 4 seconds whatever is asked.
         Short,
+        /// Speaks both, each answering a mapping request after a wait in
+        /// milliseconds; NAT-PMP opens `pmp_port` (#425).
+        Both {
+            pcp_wait: u64,
+            pmp_wait: u64,
+            pmp_port: u16,
+            /// PCP grants a private address (a second NAT behind it).
+            pcp_private: bool,
+        },
     }
 
     /// A router on loopback. Every request it receives is passed on, so
     /// tests can see renewals and releases.
     async fn router(kind: Router) -> (Gateway, mpsc::UnboundedReceiver<Vec<u8>>) {
-        let socket = UdpSocket::bind("127.0.0.1:0").await.unwrap();
+        let socket = Arc::new(UdpSocket::bind("127.0.0.1:0").await.unwrap());
         let at = socket.local_addr().unwrap();
         let (tx, rx) = mpsc::unbounded_channel();
         tokio::spawn(async move {
@@ -845,6 +968,42 @@ mod tests {
                         let opened = if lifetime == 0 { 0 } else { OPENED };
                         Some(answer::pmp_map(0, internal, opened, lifetime).to_vec())
                     }
+                    (Router::Both { .. }, 0) if m.len() == 2 => {
+                        Some(answer::pmp_address(0, PUBLIC).to_vec())
+                    }
+                    (
+                        Router::Both {
+                            pcp_wait,
+                            pmp_wait,
+                            pmp_port,
+                            pcp_private,
+                        },
+                        version,
+                    ) => {
+                        let (wait, r) = if version == 2 {
+                            let req: [u8; 60] = m[..60].try_into().unwrap();
+                            let lifetime = lifetime_of(&m);
+                            let at = if pcp_private {
+                                Ipv4Addr::new(10, 0, 0, 2)
+                            } else {
+                                PUBLIC
+                            };
+                            let r = answer::pcp(&req, 0, (at.into(), OPENED), lifetime);
+                            (if lifetime == 0 { 0 } else { pcp_wait }, r.to_vec())
+                        } else {
+                            let internal = u16::from_be_bytes(m[4..6].try_into().unwrap());
+                            let lifetime = lifetime_of(&m);
+                            let opened = if lifetime == 0 { 0 } else { pmp_port };
+                            let r = answer::pmp_map(0, internal, opened, lifetime);
+                            (if lifetime == 0 { 0 } else { pmp_wait }, r.to_vec())
+                        };
+                        let socket = Arc::clone(&socket);
+                        tokio::spawn(async move {
+                            tokio::time::sleep(Duration::from_millis(wait)).await;
+                            let _ = socket.send_to(&r, from).await;
+                        });
+                        None
+                    }
                     _ => None,
                 };
                 if let Some(r) = reply {
@@ -888,6 +1047,243 @@ mod tests {
         let m = pcp_only(gw, 40_000).await.unwrap();
         assert_eq!(m.external(), SocketAddr::from((PUBLIC, OPENED)));
         assert!(started.elapsed() < RESEND * 2, "{:?}", started.elapsed());
+    }
+
+    /// Mapping requests and releases the router saw, until `deadline`.
+    async fn seen_until(
+        seen: &mut mpsc::UnboundedReceiver<Vec<u8>>,
+        deadline: Duration,
+    ) -> Vec<Vec<u8>> {
+        let mut all = Vec::new();
+        let _ = tokio::time::timeout(deadline, async {
+            while let Some(m) = seen.recv().await {
+                all.push(m);
+            }
+        })
+        .await;
+        all
+    }
+
+    /// Read what the router sees into `all` until `done` holds for it, at
+    /// most until `deadline`; whether it held.
+    async fn seen_when(
+        seen: &mut mpsc::UnboundedReceiver<Vec<u8>>,
+        all: &mut Vec<Vec<u8>>,
+        deadline: Duration,
+        done: impl Fn(&[Vec<u8>]) -> bool,
+    ) -> bool {
+        tokio::time::timeout(deadline, async {
+            while !done(all) {
+                match seen.recv().await {
+                    Some(m) => all.push(m),
+                    None => return false,
+                }
+            }
+            true
+        })
+        .await
+        .unwrap_or(false)
+    }
+
+    /// Release requests (lifetime 0) of `version` among `all`; each
+    /// release is sent twice ([`Release::send`]).
+    fn releases(all: &[Vec<u8>], version: u8) -> usize {
+        all.iter()
+            .filter(|m| m[0] == version && m.len() > 2 && lifetime_of(m) == 0)
+            .count()
+    }
+
+    /// #425: PCP answers late, after NAT-PMP was asked too, and wins; the
+    /// router then also opens a NAT-PMP mapping on another port. That one
+    /// is closed at once. Before, it stayed open until its lifetime ran
+    /// out, though nothing used it.
+    #[tokio::test]
+    async fn a_nat_pmp_mapping_that_lost_to_pcp_is_closed() {
+        let (gw, mut seen) = router(Router::Both {
+            pcp_wait: 400,
+            pmp_wait: 600,
+            pmp_port: OPENED + 1,
+            pcp_private: false,
+        })
+        .await;
+        let m = pcp_only(gw, 40_000).await.unwrap();
+        assert_eq!(m.external(), SocketAddr::from((PUBLIC, OPENED)));
+        let mut all = Vec::new();
+        let closed = seen_when(&mut seen, &mut all, LIMIT * 2, |a| releases(a, 0) > 0).await;
+        assert!(closed, "the NAT-PMP mapping stayed open");
+        assert_eq!(releases(&all, 2), 0, "the mapping in use was closed");
+        drop(m);
+    }
+
+    /// #425: the other way round, NAT-PMP wins and the PCP mapping that
+    /// answers after it, on another port, is closed.
+    #[tokio::test]
+    async fn a_pcp_mapping_that_lost_to_nat_pmp_is_closed() {
+        let (gw, mut seen) = router(Router::Both {
+            pcp_wait: 500,
+            pmp_wait: 0,
+            pmp_port: OPENED + 1,
+            pcp_private: false,
+        })
+        .await;
+        let m = pcp_only(gw, 40_000).await.unwrap();
+        assert_eq!(m.external(), SocketAddr::from((PUBLIC, OPENED + 1)));
+        let mut all = Vec::new();
+        let closed = seen_when(&mut seen, &mut all, LIMIT * 2, |a| releases(a, 2) > 0).await;
+        assert!(closed, "the PCP mapping stayed open");
+        assert_eq!(releases(&all, 0), 0, "the mapping in use was closed");
+        drop(m);
+    }
+
+    /// #425: a router with one table for both protocols gives the same
+    /// mapping to both requests; the loser's answer then names the
+    /// winner's port, and nothing is released while the mapping is used.
+    #[tokio::test]
+    async fn a_shared_mapping_is_not_closed_for_the_loser() {
+        let (gw, mut seen) = router(Router::Both {
+            pcp_wait: 400,
+            pmp_wait: 600,
+            pmp_port: OPENED,
+            pcp_private: false,
+        })
+        .await;
+        let m = pcp_only(gw, 40_000).await.unwrap();
+        // A window, not a condition: nothing may come while it is used.
+        let mut all = seen_until(&mut seen, LIMIT + Duration::from_secs(1)).await;
+        assert!(
+            all.iter().any(|m| m[0] == 0 && m.len() == 12),
+            "NAT-PMP was not asked, so the test shows nothing"
+        );
+        assert_eq!(releases(&all, 0) + releases(&all, 2), 0);
+        // Once it goes, both protocols release it: a router that moved the
+        // mapping to NAT-PMP's name may refuse PCP's release (#425 review).
+        drop(m);
+        let both = seen_when(&mut seen, &mut all, LIMIT, |a| {
+            releases(a, 0) > 0 && releases(a, 2) > 0
+        })
+        .await;
+        assert!(both, "the shared mapping was not released by both");
+    }
+
+    /// #425 review: the mapping goes before the loser's answer comes, on
+    /// the same port; the loser then releases it as soon as it answers.
+    #[tokio::test]
+    async fn a_shared_mapping_dropped_early_is_released_by_the_loser_too() {
+        let (gw, mut seen) = router(Router::Both {
+            pcp_wait: 400,
+            // Answered within NAT-PMP's tries (750 ms), after PCP's.
+            pmp_wait: 600,
+            pmp_port: OPENED,
+            pcp_private: false,
+        })
+        .await;
+        drop(pcp_only(gw, 40_000).await.unwrap());
+        let mut all = Vec::new();
+        let both = seen_when(&mut seen, &mut all, LIMIT * 2, |a| {
+            releases(a, 0) > 0 && releases(a, 2) > 0
+        })
+        .await;
+        assert!(both, "the loser's mapping was not released");
+    }
+
+    /// #425 review: a winner that cannot be used is released, and so is
+    /// the loser's mapping, even on the same port.
+    #[tokio::test]
+    async fn an_unusable_winner_takes_the_loser_with_it() {
+        let (gw, mut seen) = router(Router::Both {
+            pcp_wait: 400,
+            pmp_wait: 600,
+            pmp_port: OPENED,
+            pcp_private: true,
+        })
+        .await;
+        assert!(pcp_only(gw, 40_000).await.is_none());
+        let mut all = Vec::new();
+        let both = seen_when(&mut seen, &mut all, LIMIT * 2, |a| {
+            releases(a, 0) > 0 && releases(a, 2) > 0
+        })
+        .await;
+        assert!(both, "the loser's mapping stayed open");
+    }
+
+    /// #425 review: NAT-PMP wins and PCP, answering later, names the same
+    /// port; nothing is released while the mapping is used, and both
+    /// protocols release it once it goes.
+    #[tokio::test]
+    async fn a_shared_mapping_won_by_nat_pmp_is_not_closed_for_the_loser() {
+        let (gw, mut seen) = router(Router::Both {
+            pcp_wait: 500,
+            pmp_wait: 0,
+            pmp_port: OPENED,
+            pcp_private: false,
+        })
+        .await;
+        let m = pcp_only(gw, 40_000).await.unwrap();
+        assert_eq!(m.external(), SocketAddr::from((PUBLIC, OPENED)));
+        // The port is the same either way; the case is NAT-PMP winning.
+        assert!(
+            matches!(
+                m.release,
+                Some(Release::Udp {
+                    held: Held::Pmp,
+                    ..
+                })
+            ),
+            "PCP won, so the test shows the other case"
+        );
+        let mut all = seen_until(&mut seen, LIMIT + Duration::from_secs(1)).await;
+        assert_eq!(releases(&all, 0) + releases(&all, 2), 0);
+        drop(m);
+        let both = seen_when(&mut seen, &mut all, LIMIT, |a| {
+            releases(a, 0) > 0 && releases(a, 2) > 0
+        })
+        .await;
+        assert!(both, "the shared mapping was not released by both");
+    }
+
+    /// #425 review: the loser never answers within its tries; the winner
+    /// is kept and released alone, and the loser releases nothing.
+    #[tokio::test]
+    async fn a_loser_that_never_answers_releases_nothing() {
+        let (gw, mut seen) = router(Router::Both {
+            // Far past LIMIT: PCP's answers never come in time.
+            pcp_wait: 60_000,
+            pmp_wait: 0,
+            pmp_port: OPENED + 1,
+            pcp_private: false,
+        })
+        .await;
+        let m = pcp_only(gw, 40_000).await.unwrap();
+        assert_eq!(m.external(), SocketAddr::from((PUBLIC, OPENED + 1)));
+        let mut all = seen_until(&mut seen, LIMIT + Duration::from_secs(1)).await;
+        assert_eq!(releases(&all, 0) + releases(&all, 2), 0);
+        drop(m);
+        let closed = seen_when(&mut seen, &mut all, LIMIT, |a| releases(a, 0) > 0).await;
+        assert!(closed, "the mapping in use was not released");
+        all.extend(seen_until(&mut seen, Duration::from_millis(300)).await);
+        assert_eq!(
+            releases(&all, 2),
+            0,
+            "a PCP mapping that never came was released"
+        );
+    }
+
+    /// #425: when PCP answers before NAT-PMP is asked for a mapping, the
+    /// NAT-PMP try stops and never asks; nothing is released.
+    #[tokio::test]
+    async fn a_fast_pcp_answer_leaves_nat_pmp_unasked() {
+        let (gw, mut seen) = router(Router::Both {
+            pcp_wait: 0,
+            pmp_wait: 0,
+            pmp_port: OPENED + 1,
+            pcp_private: false,
+        })
+        .await;
+        let m = pcp_only(gw, 40_000).await.unwrap();
+        assert_eq!(m.external(), SocketAddr::from((PUBLIC, OPENED)));
+        let all = seen_until(&mut seen, LIMIT + Duration::from_secs(1)).await;
+        assert!(all.iter().all(|m| m[0] == 2), "NAT-PMP was asked");
+        drop(m);
     }
 
     #[tokio::test]

@@ -159,8 +159,17 @@ treated as final.
       suggested external port or address (`::ffff:0.0.0.0`), and a NAT-PMP
       one (RFC 6886) if it answers "unsupported version" or has not
       answered the first PCP request within 250 ms (PCP keeps its three
-      tries meanwhile; the first mapping either gives is used). The
-      external address it grants goes into the public list, unless it is
+      tries meanwhile; the first mapping either gives is used). Once one
+      has won, the other, if its mapping request is already out, keeps
+      listening for its answer within its own tries, for at most 1.6
+      seconds, and releases a mapping it was given on another external
+      port at once. One on the winner's port is the same mapping in a
+      router that keeps one table for both; it is released under both
+      protocols when the transfer ends, since such a router may now hold
+      it under the loser's name. If the winner's mapping cannot be used,
+      the loser's goes too. An answer that comes after the loser's tries
+      is not seen; that mapping closes when its lifetime runs out (#425).
+      The external address it grants goes into the public list, unless it is
       not reachable from the internet (private, 100.64.0.0/10 shared
       address space, loopback, link-local, reserved), which means a second
       NAT behind the router; such a mapping is released at once. The
@@ -174,6 +183,11 @@ treated as final.
       gateway has answered over UPnP; see below), and the whole attempt
       ends after 1.6 seconds (a mapping that comes after `HINTS` were sent
       is released).
+      NAT-PMP alone may need longer than that: it starts after 250 ms and
+      has up to 750 ms for the address and 750 ms for the mapping, so the
+      1.6-second end can cut off a mapping request the router already
+      got; that mapping is never seen and stays open until its lifetime
+      runs out (#425).
       A PCP answer must carry the request's random 12-byte nonce; NAT-PMP
       has none, so only the source address (the gateway, on a connected
       socket) and the internal port are checked. The router's epoch is not
