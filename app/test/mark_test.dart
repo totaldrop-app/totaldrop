@@ -8,7 +8,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:totaldrop/ui/core/mark.dart';
 
 // The mark's shape and timing must match the SVG, the website and the
-// Linux app (docs/tasarim.md, "İşaret" and "Hareket").
+// Linux app (docs/tasarim.md, "The mark: Köşe" and "Motion").
 void main() {
   test(
     'the loop lasts 3.2 s: four quarter turns of 0.6 s, each with a 0.2 s rest',

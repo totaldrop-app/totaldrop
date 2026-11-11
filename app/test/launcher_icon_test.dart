@@ -7,7 +7,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter_test/flutter_test.dart';
 
-// The adaptive launcher icon's layers (docs/tasarim.md, "Uygulama simgesi";
+// The adaptive launcher icon's layers (docs/tasarim.md, "App icon";
 // packaging/render-icons.sh). A layer is 108 dp; launchers show the middle
 // 72 dp through a mask, and the tightest common one is the 72 dp circle
 // (36 dp radius). The mark's corner, its point furthest from the centre,

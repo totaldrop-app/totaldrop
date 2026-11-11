@@ -1,99 +1,104 @@
-# Sürümler ve yayınlar
+# Versions and releases
 
-## Sürüm numaraları
+## Version numbers
 
-TotalDrop [Semantic Versioning 2.0](https://semver.org/) kullanır.
+TotalDrop uses [Semantic Versioning 2.0](https://semver.org/).
 
-- **Her platformun kendi sürümü vardır.** Linux uygulaması, Android
-  uygulaması, CLI ve sunucu ayrı ayrı yayınlanır. Bir platformun
-  güncellenmesi diğerlerini beklemez ve bozmaz.
-- Sürümün yazıldığı yer:
+- **Every platform has its own version.** The Linux app, the Android app,
+  the CLI and the server are released separately. Updating one platform
+  does not wait for the others and does not break them.
+- Where the version is written:
 
-  | Bileşen | Dosya |
+  | Component | File |
   | --- | --- |
-  | Çekirdek kütüphaneler ve CLI | `Cargo.toml`, `[workspace.package]` |
-  | Linux uygulaması | `linux/Cargo.toml` |
-  | Android uygulaması | `app/pubspec.yaml`; Rust kütüphanesi `app/rust/Cargo.toml` aynı sürümü, derleme numarası olmadan taşır |
-  | Sunucular (rendezvous ve aktarma) | `server/totaldrop-{rendezvous,relay}/Cargo.toml`, `server/{rendezvous,relay}-worker/package.json`; dördü aynı sürümdür |
+  | Core libraries and CLI | `Cargo.toml`, `[workspace.package]` |
+  | Linux app | `linux/Cargo.toml` |
+  | Android app | `app/pubspec.yaml`; the Rust library `app/rust/Cargo.toml` carries the same version, without the build number |
+  | Servers (rendezvous and relay) | `server/totaldrop-{rendezvous,relay}/Cargo.toml`, `server/{rendezvous,relay}-worker/package.json`; all four have the same version |
 
-- Sunucular ve `app/rust` çalışma alanının (workspace) sürümünü
-  devralmaz: CLI'ın sürümü yükselince yayınlanmamış bir sürümle
-  görünmesinler. `tools/check-component-versions.sh` bunu ve yukarıdaki
-  eşitlikleri her PR'da denetler; Linux paketlerini
-  `packaging/check-versions.sh` denetler. Sunucuların sürümü 0.1.0-beta.1
-  ile başladı (#146); daha önce çalışma alanından devraldıkları 0.2.0-beta.1
-  hiçbir zaman etiketlenmedi ya da paketlenmedi.
+- The servers and `app/rust` do not inherit the workspace's version: when
+  the CLI's version goes up, they must not appear with a version that was
+  never released. `tools/check-component-versions.sh` checks this and the
+  equalities above on every PR; `packaging/check-versions.sh` checks the
+  Linux packages. The servers' version started at 0.1.0-beta.1 (#146); the
+  0.2.0-beta.1 they inherited from the workspace before was never tagged or
+  packaged.
 
-- **CLI, Linux paketleriyle yayınlanır.** Her `linux-v…` etiketi aynı
-  zamanda o commit'teki CLI sürümünün yayınıdır; `cli-v…` etiketi isteğe
-  bağlıdır. Linux yayınında CLI sürümü şimdiye kadar yayınlananların en
-  yükseğinden düşük olamaz, CLI kodu değiştiyse de aynı kalamaz
-  (`packaging/check-cli-version.sh`). Bu denetim yalnızca
-  `0.MINOR.PATCH-beta.N` biçimini tanır; 1.0'da değiştirilmelidir.
+- **The CLI is released with the Linux packages.** Every `linux-v…` tag is
+  also the release of the CLI version in that commit; a `cli-v…` tag is
+  optional. In a Linux release, the CLI version cannot be lower than the
+  highest one released so far, and cannot stay the same if the CLI code
+  changed (`packaging/check-cli-version.sh`). This check only recognises
+  the `0.MINOR.PATCH-beta.N` form; it must be changed at 1.0.
 
-- **1.0'a kadar beta.** Beş platform (Linux, Windows, macOS, Android, iOS)
-  yayınlanana ve bağımsız güvenlik incelemesi bitene kadar her sürüm bir ön
-  sürümdür: `0.MINOR.PATCH-beta.N`. Uygulamalar sürüm numarasının yanında
-  "beta" gösterir.
-- Beta süresince yeni özellik ya da uyumsuz değişiklik `MINOR`'u, düzeltme
-  `PATCH`'i, aynı sürümün yeni bir derlemesi `beta.N`'i artırır.
-- **Protokolün** ayrı bir sürümü vardır (`v0`, sonra `v0.1` taslakları),
-  çünkü cihazlar bunu birbiriyle pazarlık eder (şartname bölüm 11). Her
-  uygulama sürüm notunda hangi protokol sürümlerini konuştuğunu yazar.
-  Farklı platformların birlikte çalışmasını bu sağlar, uygulama sürümlerinin
-  aynı olması gerekmez.
+- **Beta until 1.0.** Until five platforms (Linux, Windows, macOS, Android,
+  iOS) are released and the independent security review is finished, every
+  version is a pre-release: `0.MINOR.PATCH-beta.N`. The apps show "beta"
+  next to the version number.
+- During the beta, a new feature or an incompatible change raises `MINOR`,
+  a fix raises `PATCH`, and a new build of the same version raises
+  `beta.N`.
+- **The protocol** has a separate version (`v0`, then the `v0.1` drafts),
+  because devices negotiate it with each other (specification section 11).
+  Every app writes in its release notes which protocol versions it speaks.
+  This is what lets different platforms work together; the app versions do
+  not need to be the same.
 
-## Paket sürümleri
+## Package versions
 
-Ön sürüm her paket biçiminde son sürümden önce sıralanacak şekilde yazılır:
+A pre-release is written so that, in every package format, it sorts before
+the final release:
 
-| Biçim | `0.1.0-beta.2` şöyle yazılır |
+| Format | `0.1.0-beta.2` is written as |
 | --- | --- |
 | Arch (`PKGBUILD`) | `pkgver=0.1.0_beta.2` |
 | Debian (`debian/changelog`) | `0.1.0~beta.2-1` |
 | RPM (`totaldrop.spec`) | `Version: 0.1.0~beta.2` |
 | AppStream | `0.1.0~beta.2` |
 
-## Derleme numaraları
+## Build numbers
 
-- Android `versionCode` ve iOS/macOS derleme numarası, yayınlanan her
-  derlemede bir artan tek bir tam sayıdır. `app/pubspec.yaml`'da `+`'dan
-  sonra durur (örneğin `0.1.0-beta.2+2`).
-- Bir derleme numarası asla yeniden kullanılmaz; eski bir paket yenisinin
-  üstüne kurulamaz.
+- The Android `versionCode` and the iOS/macOS build number are a single
+  integer that goes up by one with every published build. It comes after
+  the `+` in `app/pubspec.yaml` (for example `0.1.0-beta.2+2`).
+- A build number is never reused; an old package cannot be installed over
+  a newer one.
 
 ## Git
 
-- Commit mesajları [Conventional Commits](https://www.conventionalcommits.org/)
-  biçimindedir ve kapsam platformu söyler: `feat(linux):`, `fix(android):`,
-  `security(core):`, `docs:`, `ci(linux):`, `build(packaging):`. Uyumsuz
-  değişiklik `!` (`feat(core)!:`) ya da `BREAKING CHANGE:` notu alır.
-- Her yayın `main` üzerinde imzalı, açıklamalı bir etikettir ve platform
-  adıyla başlar:
+- Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/),
+  and the scope names the platform: `feat(linux):`, `fix(android):`,
+  `security(core):`, `docs:`, `ci(linux):`, `build(packaging):`. An
+  incompatible change gets a `!` (`feat(core)!:`) or a `BREAKING CHANGE:`
+  note.
+- Every release is a signed, annotated tag on `main` that starts with the
+  platform's name:
 
-  | Platform | Etiket |
+  | Platform | Tag |
   | --- | --- |
   | Linux | `linux-v0.1.0-beta.2` |
   | Android | `android-v0.1.0-beta.2` |
-  | CLI (isteğe bağlı, yukarıya bakın) | `cli-v0.1.0-beta.2` |
-  | Sunucular | `server-v0.1.0-beta.2` |
+  | CLI (optional, see above) | `cli-v0.1.0-beta.2` |
+  | Servers | `server-v0.1.0-beta.2` |
 
-- [`CHANGELOG.md`](../CHANGELOG.md) [Keep a
-  Changelog](https://keepachangelog.com/) biçimindedir. Her girdi
-  platformunu söyler; güvenlik düzeltmeleri "Security" başlığı altında
-  durur. Yayınlanmamış girdiler her değişiklik için ayrı bir dosyada,
-  [`changelog.d/`](../changelog.d/README.md) altında bekler; sürümde
-  CHANGELOG.md'ye taşınır.
+- [`CHANGELOG.md`](../CHANGELOG.md) follows the [Keep a
+  Changelog](https://keepachangelog.com/) format. Every entry names its
+  platform; security fixes sit under the "Security" heading. Unreleased
+  entries wait in a separate file for each change, under
+  [`changelog.d/`](../changelog.d/README.md); at release they are moved
+  into CHANGELOG.md.
 
-## Yayın yapmak
+## Making a release
 
-Adım adım sürüm listesi [surec.md](surec.md#sürüm-listesi) içindedir.
-Kısaca: sürüm ve paket tarifleri artırılır, `changelog.d/` girdileri
-`tools/changelog.mjs release` ile sürüm başlığına taşınır, sürüm PR'ı
-incelenip birleştirilir, `main`'deki commit'e etiket atılır. CI paketleri
-etiketten derler, derleme kaynağı kanıtı ekler ve taslak bir yayın açar.
-Kişisel bir makinede derlenen hiçbir şey yayınlanmaz.
+The step-by-step release list is in [surec.md](surec.md#sürüm-listesi).
+In short: the version and the package recipes are raised, the
+`changelog.d/` entries are moved under the release heading with
+`tools/changelog.mjs release`, the release PR is reviewed and merged, and
+the commit on `main` is tagged. CI builds the packages from the tag, adds
+build provenance and opens a draft release. Nothing built on a personal
+machine is published.
 
-Android'de imzalı Play paketi `android-v*` etiketinden, yalnızca
-`play-release` ortamının gizli değerlerindeki yükleme anahtarıyla derlenir;
-paket GitHub Actions çıktısı olarak indirilir ve Play Console'a yüklenir.
+On Android, the signed Play package is built from the `android-v*` tag,
+only with the upload key in the secrets of the `play-release` environment;
+the package is downloaded as a GitHub Actions artifact and uploaded to the
+Play Console.

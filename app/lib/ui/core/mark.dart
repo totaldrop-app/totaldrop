@@ -25,7 +25,7 @@ class TotalDropMark extends StatefulWidget {
   final double size;
 
   /// Whether the transfer animation runs, exactly as on totaldrop.app (see
-  /// docs/tasarim.md, "Hareket").
+  /// docs/tasarim.md, "Motion").
   final bool sending;
 
   /// The file arrived: a check inside the circle.
