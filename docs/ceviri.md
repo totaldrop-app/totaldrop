@@ -30,9 +30,10 @@ changes only through reviewed PRs; a maintainer merges the PR.
 Each language's `noWords` field holds the answers that mean "no" in that
 language, separated by `|` (Turkish: `"hayır|h|yok"`). None of the command
 line's "yes" answers (`cliYes`) may be one of them. The second answer in
-square brackets in a prompt, such as `[e/H]`, also counts as "no". The
-prompt's first answer, however, must be in `cliYes` or be the English `y`
-or `yes`; the command line counts those two as "yes" in every language. CI
+square brackets in a prompt, such as `[e/H]` in Turkish (*evet/Hayır*),
+also counts as "no". The prompt's first answer, however, must be in
+`cliYes` or be the English `y` or `yes`; the command line counts those two
+as "yes" in every language. CI
 checks the answers the way the command line compares them: upper and lower
 case, dotted and dotless i, and full-width letters count as the same.
 Spellings with and without accents are different, though, so write both
@@ -43,15 +44,15 @@ a PR that adds it to the `noWords` field with `|`, or mention it in a PR.
 
 - The easiest route will be Weblate: correcting a text will not need any
   knowledge of the repository. (The link will be added here once the project
-  is on Hosted Weblate. Until then, the "translation under review" note in
-  the apps points to GitHub; once Weblate opens, the `draftTranslation`
-  text must be updated in every language.)
+  is on Hosted Weblate. Until then, the "This translation is being
+  reviewed" note in the apps points to GitHub; once Weblate opens, the
+  `draftTranslation` text must be updated in every language.)
 - You can also correct through a PR: change the file concerned, and CI
   checks the format.
 - If you have reviewed a language from start to finish, say so in a PR or
   an issue (and on Weblate once it opens); a maintainer updates
-  `l10n/status.json` and the "translation under review" note in the
-  interface goes away. Critical texts (verification, wrong code,
+  `l10n/status.json` and the "This translation is being reviewed" note in
+  the interface goes away. Critical texts (verification, wrong code,
   accept/decline) appear in English until they are reviewed.
 
 ### Rules

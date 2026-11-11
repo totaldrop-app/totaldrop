@@ -21,7 +21,7 @@ rules in `app/README.md`.
   an English `detail` shown only under "more information"
   (`app/rust/src/api/transfer.rs`); no other raw error text reaches the UI.
 - The mark's motion during a transfer is the site's, with the same values
-  (`mark.dart`, `MarkMotion`; `docs/tasarim.md`, "Hareket").
+  (`mark.dart`, `MarkMotion`; `docs/tasarim.md`, "Motion").
 - Transfer stages are an enum. After every `await`, check that generation and
   stage are unchanged before acting; an action runs only in the stage where
   it is valid (`docs/surec.md`, "Örtük durum makinesi").

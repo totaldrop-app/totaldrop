@@ -20,7 +20,7 @@ built.
 - **The mark's motion** is the same everywhere: `mk-turn` in
   `site/public/styles.css`, 3.2 s loop, four 0.8 s quarters (0.6 s turn with
   `cubic-bezier(0.65, 0, 0.35, 1)`, 0.2 s hold), still under
-  `prefers-reduced-motion` (`docs/tasarim.md`, "Hareket").
+  `prefers-reduced-motion` (`docs/tasarim.md`, "Motion").
 - **Brand changes** update the brand page (`site/public/brand/`) and its
   downloads (`site/tools/brand-files.mjs --png`) in the same PR.
 - **No third parties.** No trackers, external fonts, CDNs or inline
