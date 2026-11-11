@@ -49,7 +49,7 @@ jobs:
             [linux]="^(linux/|packaging/|tools/(test-)?(flatpak-cargo-sources|desktop-entries)\.mjs$|l10n/|crates/totaldrop-(core|crypto|proto|cli|l10n)/|$shared|\.github/workflows/linux(-release)?\.yml$)"
             [server]="^(server/(rendezvous|relay)-worker/|server/tools/|server/totaldrop-(rendezvous|relay)/|crates/totaldrop-(core|crypto|proto|cli|l10n)/|l10n/|$shared|\.github/workflows/server\.yml$)"
             [formal]="^(formal/|\.github/workflows/formal\.yml$)"
-            [site]="^(site/|app/assets/logo\.svg$|l10n/tests/|[^/]+\.md$|docs/|packaging/linux/app\.totaldrop\.TotalDrop\.svg$|\.github/workflows/site\.yml$)"
+            [site]="^(site/|app/assets/logo\.svg$|app/android/app/src/main/AndroidManifest\.xml$|app/android/app/build\.gradle\.kts$|l10n/tests/|[^/]+\.md$|docs/|packaging/linux/app\.totaldrop\.TotalDrop\.svg$|\.github/workflows/site\.yml$)"
           )
           # Every changed path, unquoted (non-ASCII names stay as they are)
           # and with both sides of a rename, so moving a file out of an area
