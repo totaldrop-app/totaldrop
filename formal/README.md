@@ -1,784 +1,824 @@
-# Biçimsel model (Tamarin)
+# Formal model (Tamarin)
 
-Bu klasör, hesap tasarımının ([hesap.md](../docs/hesap.md),
-[karar 0013](../docs/kararlar/0013-hayalet-halka-hesap.md)) Tamarin
-modelini tutar (#251). Kod yazılmadan önce tasarımın güvenlik iddiaları
-burada lemma olarak kanıtlanır ya da çürütülür.
+This folder holds the Tamarin model of the account design
+([hesap.md](../docs/hesap.md),
+[decision 0013](../docs/kararlar/0013-hayalet-halka-hesap.md)) (#251).
+Before any code is written, the design's security claims are proven or
+refuted here as lemmas.
 
-Model parça parça büyür. Her parça ayrı bir PR'dır:
+The model grows piece by piece. Each piece is a separate PR:
 
-| Parça | İçerik | Durum |
+| Piece | Contents | Status |
 | --- | --- | --- |
-| A1 | Üyelik zinciri: `oluştur`, `ekle`, `çıkar`, `döndür` | Bu klasörde |
-| A2 | Çok değerli şeffaflık günlüğü, tanıklar, dahil etme zorlaması (P2) | Bu klasörde |
-| A3 | Döndürmenin oturması ve yazanın tazeliği (A2'deki açığın düzeltmesi); halka sırrı, teklifler, gönderirken ve alırken tazelik (P3) | Bu klasörde |
-| A4 | Kurtarma ve P7'nin kurtarma kısmı (A4a); sıkı mod (A4b), `çatal_çöz` (A4c), tasarım kurallarının `hesap.md`'ye yazılması (A4d) | A4a ve A4b bu klasörde, gerisi sırada |
-| A5 | Bekleme süreleri için TLA+ değerlendirmesi | Sırada |
+| A1 | Membership chain: `create`, `add`, `remove`, `rotate` | In this folder |
+| A2 | Multi-valued transparency log, witnesses, enforced inclusion (P2) | In this folder |
+| A3 | Settling of a rotate and the writer's freshness (the fix for the gap found in A2); ring secret, offers, freshness when sending and when receiving (P3) | In this folder |
+| A4 | Recovery and the recovery part of P7 (A4a); strict mode (A4b), `resolve_fork` (A4c), writing the design rules into `hesap.md` (A4d) | A4a and A4b in this folder, the rest next |
+| A5 | TLA+ evaluation of the waiting times | Next |
 
-## Çalıştırmak
+## Running it
 
-Tamarin 1.12.0 ve Maude 3.5.1 gerekir. CI ikisini de sabit sürüm ve
-SHA-256 ile indirir (`.github/workflows/formal.yml`).
+It needs Tamarin 1.12.0 and Maude 3.5.1. CI downloads both at a fixed
+version and checks their SHA-256 (`.github/workflows/formal.yml`).
 
 ```sh
-formal/check.sh          # her lemmayı ayrı ayrı kanıtlar
-formal/mutants.py        # bozuk modellerde saldırının bulunduğunu sınar
+formal/check.sh          # proves each lemma separately
+formal/mutants.py        # checks that the attack is found in broken models
 ```
 
-İki komut da bir lemma kanıtlanmazsa ya da bir saldırı bulunmazsa sıfırdan
-farklı çıkış koduyla biter. Lemma başına süre sınırı `LEMMA_TIMEOUT`
-(saniye, varsayılan 600) ile değiştirilir.
+Both commands end with a non-zero exit code if a lemma is not proven or an
+attack is not found. The time limit per lemma is set with `LEMMA_TIMEOUT`
+(seconds, default 600).
 
-## A1: üyelik zinciri (`hayalet-halka-zincir.spthy`)
+## A1: membership chain (`hayalet-halka-zincir.spthy`)
 
-### Modelde olanlar
+### What the model contains
 
-- Cihaz anahtarları: `IK` ve yönetim anahtarı `AK`'nin iki yarısı
+- Device keys: `IK` and the two halves of the management key `AK`
   (Ed25519, ML-DSA-65).
-- Kayıtlar: `oluştur`, `ekle`, `çıkar`, `döndür`. Her kayıt halka kimliğini,
-  önceki başın özetini, işlemi, yükü ve imzalayanı taşır.
-- Her cihaz ve her kişi zincirin kendi görünümünü tutar. Görünümler
-  ağdan gelen kayıtları aynı kurallarla denetleyerek ilerler.
-- Saldırgan ağın tamamıdır (Dolev-Yao). Kötü niyetli posta kutusu sunucusu
-  bu yüzden ayrıca modellenmez: her iletiyi okur, düşürür, yeniden oynatır,
-  uydurur.
-- Her cihaz anahtarı her an sızabilir. Çıkarılmış ya da çalınmış bir
-  cihaz, anahtarları sızmış bir cihazdır. `AK`'nin iki yarısı ayrı ayrı
-  sızar; böylece tek bir algoritmanın kırılması da modellenir.
+- Records: `create`, `add`, `remove`, `rotate`. Every record carries the
+  ring identity, the digest of the previous head, the operation, the
+  payload and the signer.
+- Every device and every contact keeps its own view of the chain. Views
+  move forward by checking the records that come from the network with the
+  same rules.
+- The attacker is the whole network (Dolev-Yao). A malicious mailbox
+  server is therefore not modelled separately: it reads, drops, replays
+  and forges every message.
+- Every device key can leak at any time. A removed or stolen device is a
+  device whose keys have leaked. The two halves of `AK` leak separately;
+  this also models the break of a single algorithm.
 
-### Soyutlamalar ve nedenleri
+### Abstractions and why
 
-Model tasarımdan bazı yerlerde daha basit, bazı yerlerde daha güçlüdür.
-Daha güçlü olduğu yerler, kanıtın gerçek sistemde neyi göstermediğini
-söyler; bunlar sonraki parçalarda kapatılır.
+In some places the model is simpler than the design, in others stronger.
+The places where it is stronger say what the proof does not show for the
+real system; later pieces close them.
 
-| Soyutlama | Neden | Ne zaman genişler |
+| Abstraction | Why | When it widens |
 | --- | --- | --- |
-| Halkada iki cihaz yeri var | Çok kümeli (multiset) üyelik, Tamarin aramasını sonlandırmıyordu; iki yer, üyelik değişikliğini ve eski kaydı yeniden oynatmayı kapsıyor | A4: çatal çözme için üç yer gerekebilir |
-| Her cihaz tek bir halkadadır | Bir cihaz yalnızca bir halka kurar ya da bir halkaya katılır. Bu yüzden P1'deki "aynı halkada" kısmı bu modelde kendiliğinden doğrudur; halka kimliğinin kayıtta bulunması burada sınanmaz | A3: iki halkalı senaryo, kişi başıyla birlikte |
-| Halka kimliği `h('ring', ilk cihaz)` | Tasarımda `H("halka", oluştur)`; ikisi de ilk kayda bağlı ve değişmez, bu parçada fark etmez | A3: kişi sabitlemesiyle birlikte |
-| Karma `AK` imzası iki ayrı imzadır, ikisi de aynı gövdeyi kendi etiketiyle (`'ed'`, `'ml'`) imzalar | Gövde imzalayanı iki açık anahtarıyla birlikte adlandırdığı için her yarı öbürünün anahtarına bağlıdır (hesap.md, "Anahtarlar") | Değişmez |
-| `IK` tek bir anahtardır | Tasarımda `IK` de Ed25519 + ML-DSA-65'tir; `döndür` için iki yarı ayrımı bu parçada sınanmaz | A3 |
-| `çıkar` kaydı çıkarılan cihazı anahtarlarının özetiyle adlandırır | Gerçek kayıt cihazı `IK` ile adlandırır; özet, Tamarin'in saldırgan bilgisini gereksiz yere çözümlemesini önler | Değişmez |
-| Kayıtlar halka sırrı (`r_e`) taşımaz | Gizlilik (P3) A3'ün konusu | A3 |
-| **Daha güçlü:** kişi zinciri ilk kayıttan (`oluştur`) itibaren doğrulanmış bir kanaldan sabitler | Tasarımda kişi ilk eşleşmede o anki başı sabitler; doğrulama kelimeleri yalnızca halka kimliğini, yani ilk kaydı doğrular. Üyelik değiştikten sonra eşleşen kişinin sabitlediği baş bu modelde kapsanmaz | A3 |
-| **Daha güçlü:** kişi kayıtları açık görür, üyelerin açık anahtarlarını bilir ve yeni üye kümesini kendisi hesaplar | Tasarımda kişi yalnızca başı (`C_e`, işlem türü, önceki başın özeti), `AK` imzalarını ve Merkle kanıtlarını görür; bir üyenin imzaladığı bir `üyelik` başının tam olarak hangi cihazı eklediğini denetleyemez. Buradaki kişi kanıtları bu yüzden gerçek bir kişinin denetleyebileceğinden güçlüdür | A3: kişi, Merkle kökünü opak bir özet olarak gören başla modellenir |
-| Bazı lemmalar adım sayısıyla sınırlıdır (`Step`) | Aramanın bitmesi için; sınır lemmanın metninde yazılı | Gerektikçe |
+| The ring has two device slots | Multiset membership did not let the Tamarin search end; two slots cover a membership change and the replay of an old record | A4: resolving a fork may need three slots |
+| Each device is in one ring | A device creates or joins only one ring. So the "in the same ring" part of P1 holds by itself in this model; that the record carries the ring identity is not tested here | A3: a two-ring scenario, together with the contact's head |
+| Ring identity `h('ring', first device)` | In the design `H("ring", create)`; both are bound to the first record and never change, which makes no difference in this piece | A3: together with contact pinning |
+| The hybrid `AK` signature is two separate signatures, each signing the same body with its own label (`'ed'`, `'ml'`) | Because the body names the signer together with its two public keys, each half is bound to the other's key (hesap.md, "Keys") | Does not change |
+| `IK` is a single key | In the design `IK` is also Ed25519 + ML-DSA-65; the split into two halves for `rotate` is not tested in this piece | A3 |
+| A `remove` record names the removed device by the digest of its keys | The real record names the device by `IK`; the digest keeps Tamarin from needlessly analysing the attacker's knowledge | Does not change |
+| Records carry no ring secret (`r_e`) | Confidentiality (P3) is the subject of A3 | A3 |
+| **Stronger:** the contact pins the chain from the first record (`create`) over a verified channel | In the design the contact pins the head current at first pairing; the verification words verify only the ring identity, that is the first record. A head pinned by a contact that pairs after a membership change is not covered by this model | A3 |
+| **Stronger:** the contact sees records in the clear, knows the members' public keys and computes the new member set itself | In the design the contact sees only the head (`C_e`, operation type, digest of the previous head), the `AK` signatures and the Merkle proofs; it cannot check exactly which device a `membership` head signed by a member adds. The contact proofs here are therefore stronger than what a real contact can check | A3: the contact is modelled with a head that sees the Merkle root as an opaque digest |
+| Some lemmas are bounded by a number of steps (`Step`) | So the search ends; the bound is written in the lemma's text | As needed |
 
-### Lemmalar
+### Lemmas
 
-| Lemma | Tür | Ne söyler |
+| Lemma | Kind | What it says |
 | --- | --- | --- |
-| `sanity_contact_follows_add` | iz var | Kişi bir `ekle` kaydını kabul edebilir (model çalışıyor) |
-| `sanity_contact_follows_add_remove` | iz var | Kişi önce `ekle`, sonra aynı üyenin `çıkar`ını kabul edebilir |
-| `sanity_contact_follows_remove_by_slot_2` | iz var | İkinci yerdeki üye birinciyi çıkarabilir (ayna kurallar çalışıyor) |
-| `compromised_member_can_add` | iz var | Bir üyenin iki `AK` yarısı da sızarsa saldırgan cihaz ekleyebilir. Bu iz olmasaydı aşağıdaki lemma yanlış bir nedenle doğru çıkabilirdi |
-| `membership_change_needs_member_ak` | her iz | **P1:** kabul edilen her `ekle` ve `çıkar`, aynı önceki başta, adı geçen üyece imzalanmıştır. İstisnalar: o üyenin iki `AK` yarısı da önceden sızmışsa, ya da imzalayan saldırganın ürettiği bir anahtarsa. Tek yarının sızması yetmez; `IK` hiç yetmez |
-| `signer_must_be_member` | her iz, sınırlı | Hiçbir `AK` sızmadıysa kişi, ilk kayıttan sonraki `ekle`'de saldırganın ürettiği bir anahtarla imzalanmış kaydı kabul etmez. P1'in son istisnasını yalnızca bu tek adımda gösterir; dürüst adımlar sonrasındaki ve sınırsız biçimi henüz yok |
-| `rotate_needs_member_ik` | her iz | Kabul edilen her `döndür`, adı geçen üyenin `IK`'siyle aynı başta imzalanmıştır (`IK` sızmadıysa). `döndür` üye kümesini değiştiremez; bu, kabul kurallarında yapısal olarak böyledir |
+| `sanity_contact_follows_add` | exists-trace | A contact can accept an `add` record (the model works) |
+| `sanity_contact_follows_add_remove` | exists-trace | A contact can accept an `add` and then the `remove` of the same member |
+| `sanity_contact_follows_remove_by_slot_2` | exists-trace | The member in the second slot can remove the first (the mirrored rules work) |
+| `compromised_member_can_add` | exists-trace | If both `AK` halves of a member leak, the attacker can add a device. Without this trace the lemma below could hold for the wrong reason |
+| `membership_change_needs_member_ak` | all-traces | **P1:** every accepted `add` and `remove` was signed, on the same previous head, by the named member. Exceptions: both `AK` halves of that member leaked earlier, or the signer is a key the attacker generated. One half leaking is not enough; `IK` is never enough |
+| `signer_must_be_member` | all-traces, bounded | If no `AK` has leaked, a contact does not accept an `add` after the first record that is signed with a key the attacker generated. It shows the last exception of P1 only for this single step; the form after honest steps and the unbounded form do not exist yet |
+| `rotate_needs_member_ik` | all-traces | Every accepted `rotate` was signed on the same head with the named member's `IK` (if `IK` has not leaked). `rotate` cannot change the member set; this holds structurally in the acceptance rules |
 
-Eski bir `ekle` kaydının yeniden oynatılarak çıkarılmış bir cihazın geri
-getirilmesi, hiçbir anahtar sızmadığında P1'in sonucudur: kayıt yeni başı
-adlandırmadığı için kabul edilmez. `add_does_not_bind_previous_head`
-mutantı, kayıt başı adlandırmazsa bu saldırının bulunduğunu gösterir.
+Bringing back a removed device by replaying an old `add` record is ruled
+out by P1 when no key has leaked: the record does not name the new head,
+so it is not accepted. The `add_does_not_bind_previous_head` mutant shows
+that the attack is found if the record does not name the head.
 
-### Mutant sınamaları (`mutants.py`)
+### Mutant checks (`mutants.py`)
 
-Bir kanıt ancak model, dayandığı kural olmadan başarısız oluyorsa bir şey
-söyler. Her mutant modelin bir kopyasında tek bir denetimi bozar ve
-Tamarin'in saldırı izini bulmasını bekler. Her düzenlemenin kaç yere
-uygulanacağı yazılıdır; sayı tutmazsa betik durur.
+A proof says something only if the model fails without the rule it rests
+on. Each mutant breaks a single check in a copy of the model and expects
+Tamarin to find an attack trace. The number of places each edit applies to
+is written down; if the number does not match, the script stops.
 
-| Mutant | Bozulan denetim | Beklenen saldırı |
+| Mutant | Broken check | Expected attack |
 | --- | --- | --- |
-| `accept_checks_ed_half_only` | Kişi `AK` imzasının yalnızca Ed25519 yarısını denetler | Yalnızca o yarı sızınca sahte `ekle` kabul edilir |
-| `accept_checks_ml_half_only` | Kişi yalnızca ML-DSA-65 yarısını denetler | Yalnızca o yarı sızınca sahte `ekle` kabul edilir |
-| `accept_signer_not_member` | Kişi imzalayanın anahtarlarını kendi görünümünden değil kayıttan alır | Hiçbir anahtar sızmadan, saldırganın anahtarıyla `ekle` kabul edilir |
-| `add_does_not_bind_previous_head` | `ekle` kaydı uzattığı başı adlandırmaz (dört kuralın hepsinde) | Eski `ekle` yeniden oynatılarak çıkarılmış cihaz geri gelir |
-| `remove_signature_not_checked` | Kişi `çıkar` imzasını denetlemez | Hiçbir anahtar sızmadan sahte `çıkar` kabul edilir |
-| `rotate_signature_not_checked` | Kişi `döndür` imzasını denetlemez | Hiçbir anahtar sızmadan sahte `döndür` kabul edilir |
+| `accept_checks_ed_half_only` | The contact checks only the Ed25519 half of the `AK` signature | A forged `add` is accepted once only that half leaks |
+| `accept_checks_ml_half_only` | The contact checks only the ML-DSA-65 half | A forged `add` is accepted once only that half leaks |
+| `accept_signer_not_member` | The contact takes the signer's keys from the record, not from its own view | An `add` is accepted with the attacker's key, with no key leaked |
+| `add_does_not_bind_previous_head` | The `add` record does not name the head it extends (in all four rules) | A removed device comes back by replaying an old `add` |
+| `remove_signature_not_checked` | The contact does not check the `remove` signature | A forged `remove` is accepted with no key leaked |
+| `rotate_signature_not_checked` | The contact does not check the `rotate` signature | A forged `rotate` is accepted with no key leaked |
 
-### Henüz kanıtlanmayanlar
+### Not proven yet
 
-- **Saldırganın anahtarının üye olamaması, sınırsız:** "imzalayan bir
-  cihazdır ya da bir cihazın iki `AK` yarısı da sızmıştır" lemması
-  tümevarımla Tamarin'de sonlanmadı; bir yardımcı değişmez gerekiyor. Şimdilik
-  sınırlı biçimi `signer_must_be_member`'dır.
-- **Anahtarları sızmış, çıkarılmış cihaz:** cihaz çıkarıldıktan sonra
-  anahtarları sızarsa, kişinin onu yeniden eklenmeden hiçbir kaydın
-  imzalayanı olarak kabul etmemesi. Kişinin görünümü çıkarılan cihazı artık
-  içermediği için böyle olması beklenir, ama bunu gösteren lemma (sınırlı
-  biçimi de) Tamarin'de sonlanmadı. Bir sahibin birden çok görünümü
-  olamayacağını gösteren bir değişmez gerekiyor. Bu, tasarımın "eski yetki"
-  tehdidinin (H3) çekirdeğidir. A2 bunun, çıkarıldığı baştaki kısmını
-  günlükle kanıtlar (`removed_device_locked_out_of_old_head`); sonraki
-  başlar hâlâ açık (aşağıda, A2).
-- Çatallar, günlük, tazelik, kurtarma ve sıkı mod: A2-A4.
+- **The attacker's key cannot become a member, unbounded:** the lemma "the
+  signer is a device, or both `AK` halves of a device have leaked" did not
+  end in Tamarin by induction; it needs a helper invariant. For now its
+  bounded form is `signer_must_be_member`.
+- **A removed device whose keys leak:** if a device's keys leak after it
+  is removed, the contact does not accept it as the signer of any record
+  unless it is added again. This is expected, because the contact's view
+  no longer contains the removed device, but the lemma that shows it (even
+  in bounded form) did not end in Tamarin. It needs an invariant showing
+  that an owner cannot have more than one view. This is the core of the
+  design's "old authority" threat (H3). A2 proves the part of it at the
+  head the device was removed from with the log
+  (`removed_device_locked_out_of_old_head`); later heads are still open
+  (below, A2).
+- Forks, the log, freshness, recovery and strict mode: A2-A4.
 
-## A2: şeffaflık günlüğü (`hayalet-halka-gunluk.spthy`)
+## A2: transparency log (`hayalet-halka-gunluk.spthy`)
 
-A1'in zinciri, anahtarları ve saldırganı aynen kalır. Değişen, kayıtların
-nereden okunduğudur.
+A1's chain, keys and attacker stay as they are. What changes is where the
+records are read from.
 
-### Modelde olanlar
+### What the model contains
 
-- Kayıtlar ağdan değil günlükten okunur. Günlük anahtarı uzatılan başa
-  bağlıdır: `L = h('log', baş)`. Bir anahtarın altında birden çok değer
-  durabilir ve hiçbiri silinmez.
-- Herkes günlüğe yazabilir (gerçekte ARC jetonuyla). Günlük yalnızca o
-  başın bir üyesince imzalanmış değerleri tutar; okuyanlar geçersiz
-  değerleri zaten yok saydığı için başka bir değerin yazılması hiçbir şeyi
-  değiştirmez.
-- Dürüst cihazlar kendi kayıtlarını yazdıkları adımda günlüğe de yazar.
-  Bu, tanıkların dahil etme zorlamasıdır: sunucu dürüst bir kaydı
-  sansürleyemez. Yazan, anahtarın altında başka bir değer olsa da yazar;
-  çatal o zaman okuyanları durdurur.
-- Okuyan (cihaz ya da kişi) çatal kuralını uygular. Bir `AK` kaydı, aynı
-  anahtar altında daha önce başka bir geçerli `AK` kaydı yazılmamışsa kabul
-  edilir; `döndür`'ün önüne geçer (çatal kuralı 1). Bir `döndür`, aynı
-  anahtar altında daha önce başka hiçbir geçerli değer yazılmamışsa kabul
-  edilir. İzlediği bir daldan geri dönmez (çatal kuralı 4).
-- Saldırgan yine ağın tamamıdır ve her anahtar her an sızabilir.
+- Records are read from the log, not from the network. The log key is
+  bound to the head being extended: `L = h('log', head)`. More than one
+  value can stand under a key, and none is ever deleted.
+- Anyone can write to the log (in reality with an ARC token). The log
+  keeps only values signed by a member of that head; because readers
+  ignore invalid values anyway, writing another value changes nothing.
+- Honest devices write their own records to the log in the same step in
+  which they write them. This is the witnesses' enforced inclusion: the
+  server cannot censor an honest record. The writer writes even if there
+  is another value under the key; the fork then stops the readers.
+- A reader (device or contact) applies the fork rule. An `AK` record is
+  accepted if no other valid `AK` record was written under the same key
+  before; it wins over a `rotate` (fork rule 1). A `rotate` is accepted if
+  no other valid value of any kind was written under the same key before.
+  A reader never leaves a branch it has followed (fork rule 4).
+- The attacker is still the whole network, and every key can leak at any
+  time.
 
-### Soyutlamalar ve nedenleri
+### Abstractions and why
 
-| Soyutlama | Neden | Ne zaman genişler |
+| Abstraction | Why | When it widens |
 | --- | --- | --- |
-| Zaman yok: dürüst bir kayıt yazıldığı anda günlüktedir | Gerçek sınır 1 saat dahil etme + 1 saat kök tazeliğidir (P3: 2 saat). Burada yalnızca sıra sınanır | A3 (tazelik), A5 (süreler) |
-| Günlük tek bir küresel kümedir | Tanık varsayımının yerini tutar. n tanık, kök başına k imza ve sunucuyla iş birliği yapan f tanık için: sansürün olmaması `f < k`, tek görünüm `f < 2k − n` ister. Dürüst çoğunluk tek başına yetmez (n = 5, k = 3, f = 2: iki kötü tanık iki farklı kökü de imzalar, birer dürüst tanık da birini). Bu koşullar tutmazsa P2 ve P3 güvencesi yoktur | Değişmez; eşik tasarımda düzeltilecek (aşağıda) |
-| **Daha güçlü:** okuyan, okumadan önce yazılmış her değeri görür | Kusursuz tazelik. Gerçekte kişi en çok 1 saat eski bir kök görür | A3 |
-| Değerler şifresiz | Sunucunun içeriği okuyamaması P5'tir, P2 değil | A3 |
-| `oluştur` günlüğe yazılmaz | Kişi ilk kaydı A1'deki gibi doğrulanmış kanaldan sabitler (`L_0` anahtarı burada kullanılmaz) | A3 |
-| **Daha katı:** bir üyenin imzaladığı her değer, işlemi anlamsız olsa da çatal sayılır | Tasarım geçersiz değerleri yok sayar. Bu yalnızca okuyanın daha sık durmasına yol açar; güvenlik lemmalarını kolaylaştırmaz | A4 |
-| **Daha katı:** birbiriyle çatallanan `döndür`'ler en küçük özetle birleşmez; okuyan durur | Zararsız çatal birleşmesi (çatal kuralı 2) güvenliği değil kullanılabilirliği etkiler; birleşme A4'te `çatal_çöz` ile birlikte modellenir | A4 |
+| No time: an honest record is in the log the moment it is written | The real bound is 1 hour of inclusion + 1 hour of root freshness (P3: 2 hours). Only the order is tested here | A3 (freshness), A5 (durations) |
+| The log is a single global set | It stands in for the witness assumption. With n witnesses, k signatures per root and f witnesses colluding with the server: no censorship needs `f < k`, a single view needs `f < 2k − n`. An honest majority alone is not enough (n = 5, k = 3, f = 2: the two bad witnesses sign both roots, and one honest witness signs each). If these conditions do not hold, there is no P2 and P3 assurance | Does not change; the threshold is to be corrected in the design (below) |
+| **Stronger:** a reader sees every value written before it reads | Perfect freshness. In reality a contact sees a root at most 1 hour old | A3 |
+| Values are not encrypted | The server not being able to read the content is P5, not P2 | A3 |
+| `create` is not written to the log | The contact pins the first record over a verified channel as in A1 (the key `L_0` is not used here) | A3 |
+| **Stricter:** every value a member signed counts as a fork, even if its operation makes no sense | The design ignores invalid values. This only makes the reader stop more often; it does not make the security lemmas easier | A4 |
+| **Stricter:** `rotate`s that fork with each other do not merge by the smallest digest; the reader stops | Merging a harmless fork (fork rule 2) affects usability, not security; merging is modelled in A4 together with `resolve_fork` | A4 |
 
-### Lemmalar
+### Lemmas
 
-| Lemma | Tür | Ne söyler |
+| Lemma | Kind | What it says |
 | --- | --- | --- |
-| `sanity_contact_follows_add_via_log` | iz var | Kişi günlükten bir `ekle` kabul edebilir |
-| `sanity_leaked_device_rotates_before_removal` | iz var | `IK`'si sızmış bir cihazın `döndür`'ü, çıkarma günlüğe yazılmadan önce o başta kabul edilebilir |
-| `removed_device_survives_on_rotate_branch` | iz var | **Modelin bulduğu açık** (aşağıda): çıkarılmış cihaz, kendi `döndür` dalını izleyen bir kişiye çıkarmadan sonra da kayıt kabul ettirir |
-| `accepted_records_are_logged` | her iz | **P2, görünürlük:** herhangi bir okuyanın kabul ettiği her kayıt, kabulden önce günlükte geçerli bir değer olarak vardır. Kabul kuralları günlükten okuduğu için yapısal olarak doğrudur; `accept_from_network_not_log` mutantı bunun neden önemli olduğunu gösterir |
-| `ak_read_was_logged`, `ak_reads_agree` | her iz, yardımcı | Bir `AK` okuması günlükteki bir değeri okur; aynı anahtar altındaki iki `AK` okuması aynı değeri okur |
-| `no_split_view_membership` | her iz | **P2, üyelik değişikliklerinde tek görünüm:** iki okuyan aynı başın iki farklı `ekle` ya da `çıkar`'ını kabul etmez; hangi anahtar sızarsa sızsın. `döndür` ile `AK` kaydı arasındaki bölünme bu lemmanın dışındadır (aşağıdaki açık) |
-| `removed_device_locked_out_of_old_head` | her iz | **H3, çıkarıldığı başta:** bir üye `x`'i bir baştan çıkardıktan sonra hiçbir okuyan o başta `x`'in imzaladığı bir kaydı kabul etmez; `x`'in bütün anahtarları sızmış, sunucu yardım ediyor ve `x` o başa kendi kaydını önce yazmış olsa bile (yarış). Kabul edilebilen tek kayıt çıkarmanın kendisidir |
+| `sanity_contact_follows_add_via_log` | exists-trace | A contact can accept an `add` from the log |
+| `sanity_leaked_device_rotates_before_removal` | exists-trace | The `rotate` of a device whose `IK` leaked can be accepted at that head before the removal is written to the log |
+| `removed_device_survives_on_rotate_branch` | exists-trace | **The gap the model found** (below): a removed device still gets records accepted after the removal by a contact that follows its own `rotate` branch |
+| `accepted_records_are_logged` | all-traces | **P2, visibility:** every record any reader accepts is in the log as a valid value before it is accepted. It holds structurally because the acceptance rules read from the log; the `accept_from_network_not_log` mutant shows why this matters |
+| `ak_read_was_logged`, `ak_reads_agree` | all-traces, helper | An `AK` read reads a value in the log; two `AK` reads under the same key read the same value |
+| `no_split_view_membership` | all-traces | **P2, a single view of membership changes:** two readers do not accept two different `add`s or `remove`s of the same head, whichever key leaks. A split between a `rotate` and an `AK` record is outside this lemma (the gap below) |
+| `removed_device_locked_out_of_old_head` | all-traces | **H3, at the head it was removed from:** once a member has removed `x` from a head, no reader accepts a record signed by `x` at that head, even if all of `x`'s keys have leaked, the server helps, and `x` wrote its own record to that head first (a race). The only record that can be accepted is the removal itself |
 
-### Mutant sınamaları
+### Mutant checks
 
-Mutantlar bozuk modele modelin kendi lemmalarını almaz: bozulmanın yanlış
-çıkardığı bir `[reuse]` yardımcısı varsayılsaydı saldırıyı gizlerdi.
+The mutants do not give the broken model the model's own lemmas: assuming
+a `[reuse]` helper that the breakage makes false would hide the attack.
 
-| Mutant | Bozulan denetim | Beklenen saldırı |
+| Mutant | Broken check | Expected attack |
 | --- | --- | --- |
-| `honest_remove_not_logged` | Tanıklar dahil etmeyi zorlamaz; sunucu dürüst `çıkar`'ı sansürler | Çıkarılmış cihazın `döndür`'ü eski başta kabul edilir |
-| `reader_accepts_rotate_despite_fork` | Okuyan `döndür` için yalnızca başka `döndür`'lere bakar; `AK` kaydının önceliği (çatal kuralı 1) yok | Aynı saldırı, `çıkar` günlükte olsa bile |
-| `reader_ignores_ak_fork` | Okuyan, aynı anahtar altında ikinci bir `AK` kaydı aramaz | İki kişi aynı başın iki farklı `ekle`'sini kabul eder (bölünmüş görünüm) |
-| `accept_from_network_not_log` | Kişi `ekle` kaydını günlükten değil ağdan alır | Günlükte olmayan bir kayıt kabul edilir |
+| `honest_remove_not_logged` | The witnesses do not enforce inclusion; the server censors the honest `remove` | The removed device's `rotate` is accepted at the old head |
+| `reader_accepts_rotate_despite_fork` | For a `rotate`, the reader looks only at other `rotate`s; the `AK` record has no priority (fork rule 1) | The same attack, even with the `remove` in the log |
+| `reader_ignores_ak_fork` | The reader does not look for a second `AK` record under the same key | Two contacts accept two different `add`s of the same head (split view) |
+| `accept_from_network_not_log` | The contact takes the `add` record from the network, not from the log | A record that is not in the log is accepted |
 
-### Modelin bulduğu açık: `döndür` dalında kalan kişi
+### The gap the model found: a contact left on the `rotate` branch
 
-Çatal kuralı 1, "çıkarılmak üzere olan bir cihazın aynı anda yazdığı
-`döndür`, çıkarmayı engelleyemez" der. Ama kural 4'e göre bir gözlemci,
-kendi sabitlediği başın altındaki çatalları yok sayar. İkisi birlikte şu
-izi verir (`removed_device_survives_on_rotate_branch`):
+Fork rule 1 says "a `rotate` written at the same time by a device about to
+be removed cannot block the removal". But by rule 4 an observer ignores
+the forks below the head it has pinned. Together they give this trace
+(`removed_device_survives_on_rotate_branch`):
 
-1. `d`, `n`'yi ekler; kişi `c` bu `ekle`'yi kabul eder.
-2. `n`'nin `IK`'si sızar. Saldırgan `n` adına bir `döndür` yazar; `c` onu
-   kabul eder ve yeni başa geçer.
-3. `d`, `n`'yi eski baştan çıkarır. Bu baştan sonra okuyan herkes için
-   `çıkar` kazanır, ama `c` o başa bir daha bakmaz.
-4. Saldırgan `c`'nin dalını `n` adına uzatmaya devam eder. `n`'nin `AK`'si
-   de sızmışsa `d`'yi bile çıkarabilir.
+1. `d` adds `n`; contact `c` accepts this `add`.
+2. `n`'s `IK` leaks. The attacker writes a `rotate` in `n`'s name; `c`
+   accepts it and moves to the new head.
+3. `d` removes `n` from the old head. For everyone who reads that head from
+   then on, the `remove` wins, but `c` never looks at that head again.
+4. The attacker keeps extending `c`'s branch in `n`'s name. If `n`'s `AK`
+   has leaked too, it can even remove `d`.
 
-Böylece çıkarılmış bir cihaz, çıkarmadan önce kendi dalına geçirdiği
-kişiler için halkanın tek yetkilisi olarak kalır. Bu, H3'ün tam
-konusudur. Halka (`d`) kendi anahtarı altındaki yabancı `döndür`'ü görüp
-uyarır, ama kişi tarafında bir kural gerekir. Bu modelde (A2)
-"çıkarılmış cihaz sonraki başlarda da kilitlidir" iddiası **yanlıştır**,
-yalnızca kanıtlanmamış değil. Düzeltme A3'te (aşağıda).
+So a removed device stays the ring's only authority for the contacts it
+moved to its own branch before the removal. This is exactly the subject of
+H3. The ring (`d`) sees the foreign `rotate` under its own key and warns,
+but a rule is needed on the contact's side. In this model (A2) the claim
+"a removed device is locked out on later heads as well" is **false**, not
+only unproven. The fix is in A3 (below).
 
-### Tasarıma geri bildirim (A4'te `hesap.md`'ye işlenecek)
+### Feedback to the design (to be written into `hesap.md` in A4)
 
-- Çatal kuralı 1 ile 4 arasındaki çelişki (yukarıdaki açık) ve A3'teki
-  düzeltme kuralı (oturma süresi ve yazanın tazeliği).
-- `AK` kaydının denetlendiği tanıklı köke bağlanması ve geç köke giren
-  kaydın geçersiz sayılması (A3, "Modelin dayandığı varsayım").
-- Tanık eşiği: `hesap.md` "k > n/2" diyor. Tek görünüm için `k`, iş birliği
-  yapabilecek tanık sayısı `f` ile birlikte `2k − n > f` olacak şekilde
-  seçilmeli (ör. n = 5, k = 4 iken en çok f = 2 kötü tanık tolere edilir;
-  k = 3 iken yalnızca f = 0).
+- The conflict between fork rules 1 and 4 (the gap above) and the fixing
+  rule in A3 (settling time and the writer's freshness).
+- Binding an `AK` record to the witnessed root it was checked against, and
+  treating a record that enters a root late as invalid (A3, "The
+  assumption the model rests on").
+- The witness threshold: `hesap.md` says "k > n/2". For a single view, `k`
+  must be chosen together with the number `f` of witnesses that may
+  collude so that `2k − n > f` (e.g. with n = 5 and k = 4, at most f = 2
+  bad witnesses are tolerated; with k = 3, only f = 0).
 
-## A3: döndürmenin oturması (`hayalet-halka-tazelik.spthy`)
+## A3: settling of a rotate (`hayalet-halka-tazelik.spthy`)
 
-A2'nin modeli aynen kalır; A2'nin bulduğu açığı kapatan iki kural eklenir.
-Saat yine yoktur: "süre geçti" bir olaydır (`Old`).
+A2's model stays as it is; two rules are added that close the gap A2
+found. There is still no clock: "the time has passed" is an event (`Old`).
 
-### Eklenen kurallar
+### Rules added
 
-- **Oturma:** okuyan (cihaz ya da kişi) bir `döndür`'ü ancak o kayıt
-  günlükte oturma süresi `D` kadar durduktan sonra izler.
-- **Yazanın tazeliği:** dürüst bir cihaz, bir kaydı yalnızca anahtarı
-  altında henüz hiçbir değerin oturmadığı bir baştan yazar. Gerçek kural:
-  yazanın taze kökü, o başın anahtarı altında `D_w`'den eski bir değer
-  göstermemelidir. Daha yeni bir değer (ör. henüz oturmamış bir `döndür`)
-  yazmayı **engellemez**: `AK` kaydı yazılır ve çatal kuralı 1 gereği
-  kazanır. "Anahtar altında hiç değer olmamalı" diye okunursa, `IK`'si
-  sızmış bir cihaz her `D` süresinde bir `döndür` yazarak (birer ARC
-  jetonuyla) kendi çıkarılmasını süresiz erteleyebilirdi.
+- **Settling:** a reader (device or contact) follows a `rotate` only after
+  the record has stood in the log for the settling time `D`.
+- **The writer's freshness:** an honest device writes a record only from a
+  head under whose key no value has settled yet. The real rule: the
+  writer's fresh root must not show a value under that head's key older
+  than `D_w`. A newer value (e.g. a `rotate` that has not settled yet)
+  does **not** block writing: the `AK` record is written and wins by fork
+  rule 1. If this were read as "there must be no value under the key", a
+  device whose `IK` leaked could postpone its own removal for ever by
+  writing a `rotate` every `D` (with one ARC token each).
 
-İkisi birlikte şunu sağlar: bir `döndür` henüz otururken yazılan bir
-`çıkar`, `döndür` oturmadan önce günlüktedir ve çatal kuralı 1 gereği onu
-yener (`sanity_remove_beats_unsettled_rotate`). `döndür` oturduktan sonra
-ise dürüst cihaz o eski baştan yazamaz; önce `döndür`'ü izler ve çıkarmayı
-yeni baştan yazar.
+Together they ensure this: a `remove` written while a `rotate` is still
+settling is in the log before the `rotate` settles and beats it by fork
+rule 1 (`sanity_remove_beats_unsettled_rotate`). Once the `rotate` has
+settled, an honest device can no longer write from that old head; it first
+follows the `rotate` and writes the removal from the new head.
 
-### Sürelerin hesabı (A5'te kesinleşecek)
+### Working out the durations (settled in A5)
 
-Süreler, saldırganın seçtiği yazma anından değil, `döndür`'ün tanıklı bir
-köke **ilk girdiği** andan (`T_giriş`) ölçülür. Yazanın kökü en çok 1 saat
-eskidir ve `döndür`'ü `D_w`'den eski göstermiyordur; bu yüzden yazanın
-kaydı `T_giriş + D_w + 1 saat`'ten önce yazılır ve en geç 1 saat sonra
-köke girer, yani `T_giriş + D_w + 2 saat`'ten önce. Okuyan yaşı kendi
-kökünün zaman damgasıyla ölçüyorsa `D > D_w + 2 saat + tanık saat farkı`
-yeter; yerel saatiyle ölçüyorsa kökün eskiliği için 1 saat daha eklenir.
-`D_w = 0` (yazanın kökü değeri hiç göstermiyor) ve birkaç dakikalık saat
-farkıyla `D = 4 saat` güvenlidir.
+The durations are measured not from the moment of writing, which the
+attacker chooses, but from the moment the `rotate` **first enters** a
+witnessed root (`T_entry`). The writer's root is at most 1 hour old and
+does not show the `rotate` as older than `D_w`; so the writer's record is
+written before `T_entry + D_w + 1 hour` and enters a root at most 1 hour
+later, that is before `T_entry + D_w + 2 hours`. If the reader measures the
+age with its own root's timestamp, `D > D_w + 2 hours + witness clock
+skew` is enough; if it measures with its local clock, 1 more hour is added
+for the age of the root. With `D_w = 0` (the writer's root does not show
+the value at all) and a clock skew of a few minutes, `D = 4 hours` is
+safe.
 
-### Modelin dayandığı varsayım: kayıt zamanında günlüğe girer
+### The assumption the model rests on: a record enters the log on time
 
-Model dürüst bir kaydı, yazıldığı adımda günlüğe koyar. A2'de bu yalnızca
-sıra içindi; burada yük taşır, çünkü yazanın tazelik denetimi kayıt
-**köke girdiğinde** de geçerli olmalıdır. Gerçekte tanıklar 1 saatlik
-sınırı kaydı **aldıkları** andan sayar. Ağdaki bir saldırgan dürüst bir
-`çıkar`'ın yüklenmesini düşürüp `döndür` oturduktan sonra günlüğe
-yazarsa, `döndür`'ü izlemiş okuyanlar onda kalır, sonra gelenler `çıkar`'ı
-izler: bölünmüş görünüm (`no_split_view_membership` yalnızca iki üyelik
-değişikliğini karşılaştırdığı için bunu yakalamaz). Tasarımın bunu
-önlemesi gerekir; A4'te `hesap.md`'ye yazılacak öneri:
+The model puts an honest record into the log in the step in which it is
+written. In A2 this was only about order; here it carries weight, because
+the writer's freshness check must still hold when the record **enters a
+root**. In reality the witnesses count the 1-hour bound from the moment
+they **receive** the record. If an attacker on the network drops the
+upload of an honest `remove` and writes it to the log after the `rotate`
+has settled, the readers that followed the `rotate` stay on it and those
+who come later follow the `remove`: a split view
+(`no_split_view_membership` does not catch this, because it compares only
+two membership changes). The design must prevent this; the proposal to
+write into `hesap.md` in A4:
 
-- Bir `AK` kaydı, denetlendiği tanıklı kökü (özeti ya da zaman damgası)
-  taşır. Okuyanlar ve tanıklar, o kökten `1 saat + saat farkı`'ndan sonra
-  köke giren kaydı geçersiz sayar.
-- Yazan, kayıt zamanında köke girmezse tazeliği yeniden denetler ve kaydı
-  yeniden imzalar.
+- An `AK` record carries the witnessed root it was checked against (its
+  digest or timestamp). Readers and witnesses treat a record that enters a
+  root later than `1 hour + clock skew` after that root as invalid.
+- If the record does not enter a root in time, the writer checks freshness
+  again and signs the record again.
 
-### Dürüst döndürmeye etkisi
+### Effect on honest rotation
 
-Döndüren cihaz kendi `döndür`'ünü `D` boyunca bekleyen sayar ve eski
-`IK`'sini kullanmayı sürdürür. Bu sürede aynı başa bir `AK` kaydı yazılırsa
-`döndür` düşer (kural 1) ve cihaz yeni baştan yeniden döndürür. Haftalık
-döndürmede bunun kullanıcıya etkisi yoktur. `IK`'sinin sızdığından
-şüphelenilen bir cihaz için döndürme 4 saate kadar sürer; o durumda doğru
-işlem çıkarmadır.
+The rotating device counts its own `rotate` as pending for `D` and keeps
+using its old `IK`. If an `AK` record is written to the same head in this
+time, the `rotate` drops (rule 1) and the device rotates again from the
+new head. For the weekly rotation this has no effect on the user. For a
+device whose `IK` is suspected to have leaked, rotation takes up to 4
+hours; in that case the right step is removal.
 
-### Lemmalar
+### Lemmas
 
-A2'nin "her iz" lemmaları bu modelde de geçerlidir ve yeniden kanıtlanmaz:
-model yalnızca sonucu olmayan bir kural (`Log_Age`), yeni olaylar ve
-kısıtlar ekler. Bu modelin bir izinden `Log_Age` adımları çıkarılınca
-A2'nin bir izi kalır ve A2'nin hiçbir lemması ya da kısıtı `Old`,
-`WriteFresh` ya da `Settled`'dan söz etmez. Bu gerekçe iki dosyanın aynı
-kalmasına dayanır: A2'de bir kural değişirse A3'te de aynı değişiklik
-yapılmalıdır (ileride A3'ü A2'den betikle üretmek bunu güvenceye alır). ("Her
-iz" lemmalarını burada yeniden kanıtlamak, yeni kısıtlar aramayı
-büyüttüğü için 10 dakikada bitmiyordu.) A2'nin iki "iz var" lemması
-burada yeniden kanıtlanır, çünkü kısıtlar bir izi ortadan kaldırabilir.
-Yeni olanlar:
+A2's all-traces lemmas hold in this model too and are not proven again:
+the model only adds a rule with no consequences (`Log_Age`), new events
+and restrictions. Removing the `Log_Age` steps from a trace of this model
+leaves a trace of A2, and none of A2's lemmas or restrictions mentions
+`Old`, `WriteFresh` or `Settled`. This reasoning relies on the two files
+staying the same: if a rule changes in A2, the same change must be made in
+A3 (generating A3 from A2 with a script would later make sure of this).
+(Proving the all-traces lemmas again here did not finish in 10 minutes,
+because the new restrictions make the search larger.) A2's two
+exists-trace lemmas are proven again here, because the restrictions could
+remove a trace. The new ones:
 
-| Lemma | Tür | Ne söyler |
+| Lemma | Kind | What it says |
 | --- | --- | --- |
-| `sanity_contact_follows_settled_rotate` | iz var | Oturmuş bir `döndür` yine izlenebilir; kural döndürmeyi engellemez |
-| `sanity_remove_beats_unsettled_rotate` | iz var | `IK`'si sızmış cihazın `döndür`'ü henüz otururken aynı baştan yazılan `çıkar` geçer ve kişi onu izler; bekleyen bir `döndür` çıkarmayı geciktiremez |
-| `no_rotate_branch_past_removal` | her iz | **H3, A2'deki açık kapandı:** bir üye `x`'i bir baştan çıkarıyorsa hiçbir okuyan o başta `x`'in `döndür`'ünü izlemez; hangisi önce yazılmış olursa olsun. Yalnızca çıkarmanın yapıldığı başı kapsar; A2'deki saldırı izinin ikinci adımını engellemeye bu yeter, genel biçim aşağıda açık |
+| `sanity_contact_follows_settled_rotate` | exists-trace | A settled `rotate` can still be followed; the rule does not block rotation |
+| `sanity_remove_beats_unsettled_rotate` | exists-trace | While the `rotate` of a device whose `IK` leaked is still settling, a `remove` written from the same head goes through and the contact follows it; a pending `rotate` cannot delay a removal |
+| `no_rotate_branch_past_removal` | all-traces | **H3, the gap from A2 closed:** if a member removes `x` from a head, no reader follows `x`'s `rotate` at that head, whichever was written first. It covers only the head the removal was made at; this is enough to block the second step of the attack trace in A2, and the general form is open (below) |
 
-### Mutant sınamaları
+### Mutant checks
 
-| Mutant | Bozulan denetim | Beklenen saldırı |
+| Mutant | Broken check | Expected attack |
 | --- | --- | --- |
-| `rotate_followed_before_settled` | Okuyan `döndür`'ü günlüğe girer girmez izler (A2'nin kuralı) | A2'deki `döndür` dalı saldırısı |
-| `writer_not_fresh` | Dürüst cihaz, altında bir `döndür`'ün oturduğu eski baştan yazar | Kişi `n`'nin `döndür`'ünü, bir üyenin `n`'yi çıkardığı başta izler |
+| `rotate_followed_before_settled` | The reader follows a `rotate` as soon as it enters the log (A2's rule) | The `rotate` branch attack from A2 |
+| `writer_not_fresh` | An honest device writes from an old head under which a `rotate` has settled | The contact follows `n`'s `rotate` at the head where a member removed `n` |
 
-### Henüz kanıtlanmayanlar
+### Not proven yet
 
-- **Sınırsız biçim:** "çıkarmadan sonra okuyan, `x`'in yalnızca çıkarmadan
-  önce günlüğe girmiş kayıtlarını kabul eder (ya da `x` yeniden eklenmiştir)"
-  lemması tümevarımla 450 saniyede sonlanmadı. Bilinen saldırı
-  (`döndür` dalı) kapalıdır; genel biçim için bir yardımcı değişmez
-  gerekiyor.
+- **The unbounded form:** the lemma "after the removal, a reader accepts
+  only those records of `x` that entered the log before the removal (or
+  `x` was added again)" did not end by induction in 450 seconds. The known
+  attack (the `rotate` branch) is closed; the general form needs a helper
+  invariant.
 
-## A3b: çıkarılan cihazın yapamadıkları, P3 (`hayalet-halka-gizlilik.spthy`)
+## A3b: what a removed device cannot do, P3 (`hayalet-halka-gizlilik.spthy`)
 
-A3'ün zinciri, günlüğü, oturma ve yazanın tazeliği aynen kalır. Eklenenler:
+A3's chain, log, settling and writer's freshness stay as they are. Added:
 
-- Her kayıt başlattığı dönemin halka KEM anahtarını (`pk(r_e)`) taşır;
-  yazan, `r_e`'yi yeni başın üyelerine verir (gerçekte üyelerin `KK`
-  anahtarlarına HPKE ile).
-- Durumu sızan bir cihaz, üyesi olduğu her başın `r_e`'sini saldırgana
-  verir. Çıkarılmış ya da çalınmış cihaz böyle bir cihazdır.
-- Kişi teklifi başının KEM anahtarına şifreler. Halkadaki bir cihaz kişiye
-  halka adına, `IK`'siyle imzalı teklif gönderir.
-- Kişi göndermeden ve bir teklifi almadan önce tazelik denetimi yapar:
-  kullandığı başın anahtarı altında `AK` kaydı da, oturmuş bir değer de
-  yoktur. Henüz oturmamış bir `döndür` göndermeyi engellemez; o sırada
-  eski baş hâlâ günceldir. Bu, `hesap.md`'deki kuraldan gevşektir (orada
-  anahtar altındaki her geçerli değer göndermeyi durdurur); gevşek kural
-  A4'te `hesap.md`'ye yazılacak, çünkü katı kuralla kişiler her haftalık
-  `döndür`'den sonra `D` boyunca gönderemezdi.
-- Döndüren cihaz kendi `döndür`'ünü, öbür okuyucular gibi, ancak oturunca
-  izler (A3, "Dürüst döndürmeye etkisi"). O zamana kadar `AK` kayıtlarını
-  eski baştan yazar; orada `döndür`'ün önüne geçerler (kural 1).
+- Every record carries the ring KEM key of the epoch it starts
+  (`pk(r_e)`); the writer gives `r_e` to the members of the new head (in
+  reality with HPKE to the members' `KK` keys).
+- A device whose state leaks gives the attacker the `r_e` of every head it
+  is a member of. A removed or stolen device is such a device.
+- The contact encrypts an offer to its head's KEM key. A device in the
+  ring sends the contact an offer on behalf of the ring, signed with its
+  `IK`.
+- Before sending and before receiving an offer, the contact does a
+  freshness check: under the key of the head it uses there is neither an
+  `AK` record nor a settled value. A `rotate` that has not settled yet
+  does not block sending; the old head is still current then. This is
+  looser than the rule in `hesap.md` (there every valid value under the
+  key stops sending); the looser rule will be written into `hesap.md` in
+  A4, because with the strict rule contacts could not send for `D` after
+  every weekly `rotate`.
+- The rotating device follows its own `rotate`, like the other readers,
+  only once it has settled (A3, "Effect on honest rotation"). Until then it
+  writes `AK` records from the old head; there they win over the `rotate`
+  (rule 1).
 
-Kayıt gövdesi değiştiği için (KEM anahtarı eklendi) bu yeni bir modeldir:
-A1-A3'ün lemmaları buraya taşınmaz ve burada P1 ile P2 iddia edilmez.
+Because the record body changed (the KEM key was added), this is a new
+model: the lemmas of A1-A3 are not carried over here, and P1 and P2 are
+not claimed here.
 
-### Soyutlamalar
+### Abstractions
 
-| Soyutlama | Neden | Ne zaman genişler |
+| Abstraction | Why | When it widens |
 | --- | --- | --- |
-| `r_e` üyelere güvenli bir olguyla verilir | HPKE ve anahtar onayı (MAC) burada değil, protokol notlarında ve test vektörlerinde sınanır | Aşama C |
-| Teklif gizliliği halka anahtarının gizliliğiyle ifade edilir | Teklifin KEM anahtarına şifrelenmesi standart açık anahtarlı şifrelemedir; bu adımı lemma olarak eklemek aramayı bitirmiyordu. Kanıtlanan: kişinin şifrelediği anahtar, yalnızca o başın üyesi bir cihaz sızınca ya da başı yalnızca saldırgan yazmışsa bilinir | Değişmez |
-| Kusursuz tazelik: kişi göndermeden önce yazılmış her değeri görür | P3'teki 2 saatlik sınır (1 saat dahil etme + 1 saat kök tazeliği) A5'te | A5 |
-| Teklif imzası halkayı, gönderenin başını ve teklif kimliğini bağlar; alıcı kişiyi ve alıcının başını bağlamaz | Bir teklifin başka bir kişiye yeniden gönderilmesi burada dışlanmaz; `hesap.md` "Gönderim"deki alıcı başı yankısı ve kişiye bağlama protokol notlarında (aşama C) kesinleşecek | Aşama C |
-| Kişinin tazelik denetimi ile teklifin gönderilmesi iki adımdır | Tek adım aramayı bitirmiyordu; denetim gönderim adımında yeniden yapılır, bu yüzden lemmalar gönderim anı için geçerlidir | Değişmez |
-| Kişi ile halka arasındaki el sıkışma (Noise + ML-KEM) ve kişi anahtarı `k_AB` yok | El sıkışma mevcut protokolde sınanıyor; `k_AB` yenilemesi kişi defteriyle birlikte ele alınacak | A4 ya da ayrı bir parça |
+| `r_e` is given to the members with a secure fact | HPKE and key confirmation (MAC) are tested not here but in the protocol notes and the test vectors | Stage C |
+| Offer confidentiality is expressed as the confidentiality of the ring key | Encrypting the offer to the KEM key is standard public-key encryption; adding this step as a lemma did not let the search end. Proven: the key the contact encrypts to is known only if a device that is a member of that head leaks, or if only the attacker wrote the head | Does not change |
+| Perfect freshness: the contact sees every value written before it sends | The 2-hour bound in P3 (1 hour of inclusion + 1 hour of root freshness) comes in A5 | A5 |
+| The offer signature binds the ring, the sender's head and the offer identity; it does not bind the receiving contact or the receiver's head | Resending an offer to another contact is not ruled out here; the echo of the receiver's head in `hesap.md` "Sending" and the binding to the contact will be settled in the protocol notes (stage C) | Stage C |
+| The contact's freshness check and the sending of the offer are two steps | A single step did not let the search end; the check is done again in the sending step, so the lemmas hold for the moment of sending | Does not change |
+| No handshake between the contact and the ring (Noise + ML-KEM) and no contact key `k_AB` | The handshake is tested in the existing protocol; renewing `k_AB` will be handled together with the contact book | A4 or a separate piece |
 
-### Lemmalar
+### Lemmas
 
-| Lemma | Tür | Ne söyler |
+| Lemma | Kind | What it says |
 | --- | --- | --- |
-| `ring_secret_secret`, `kem_origin` | her iz, yardımcı | Bir `r_e`, yalnızca o başın sızmış bir üyesi üzerinden bilinir; bir başın KEM anahtarı ya bir üyenin `pk(r_e)`'sidir ya da günlüğe ağdan yazılmıştır |
-| `at_rotate_head_settled` | her iz, yardımcı (tümevarım) | Bir `döndür`'ün başlattığı başta bulunan herkesten önce, bir önceki başın anahtarı altında bir değer oturmuştur (tazelik kısıtlarına bu yeter) |
-| `sanity_contact_sends`, `sanity_contact_receives`, `sanity_contact_sends_after_removal`, `sanity_remove_from_rotate_head` | iz var | Kişi gönderebilir, bir üyeden teklif alabilir ve bir çıkarmayı izledikten sonra yeni başa gönderebilir; bir çıkarma bir `döndür`'ün başından yazılabilir (aşağıdaki lemma boş değildir) |
-| `sent_head_key_secret` | her iz | **P3, gizlilik:** kişinin teklifi şifrelediği anahtar, yalnızca o başın bir üyesi durumunu sızdırdıysa ya da başı hiçbir üye yazmadıysa bilinir. İkinci durum, ağdan günlüğe yazılmış ve kişinin izlediği bir baştır; kişinin onu izlemesi bir üyenin `IK`'sinin (`döndür`) ya da `AK`'sinin iki yarısının sızmasını ister. Bu ayrıca kanıtlanmadı (aşağıda) |
-| `no_offer_to_head_after_removal` | her iz | **P3, gönderirken tazelik:** bir üye `x`'i bir baştan çıkardıktan sonra hiçbir kişi o başa teklif göndermez |
-| `no_offer_from_removed_device` | her iz | **P3, alırken tazelik:** bir üye `x`'i bir baştan çıkardıktan sonra hiçbir kişi o başta `x`'ten teklif kabul etmez; `x`'in bütün anahtarları sızmış olsa bile |
-| `no_fresh_check_before_rotate_after_removal` | her iz | **P3, oturmamış `döndür`'den önceki baş:** çıkarma bir `döndür`'ün başlattığı baştan yazıldıysa, o `döndür`'ün önceki başında artık hiçbir kişinin tazelik denetimi geçmez; ne göndermek ne almak için |
-| `no_rotate_branch_past_removal`, `no_rotate_branch_of_remover` | her iz | A3'ün lemması bu modelde yeniden kanıtlandı: hiçbir okuyucu, `x`'in çıkarıldığı baştaki `x` imzalı `döndür`'ü izlemez; çıkaranın kendi `döndür`'ünü de izlemez |
-| `received_offer_authentic` | her iz | Kişinin halka üyesi `s`'den geldiğini kabul ettiği teklif `s`'nindir; `s`'nin `IK`'si sızmadıysa ve `s` saldırganın anahtarı değilse. Saldırganın anahtarının üye olması P1'in konusudur (A1: `AK`'nin iki yarısının sızması) |
+| `ring_secret_secret`, `kem_origin` | all-traces, helper | An `r_e` is known only through a leaked member of that head; a head's KEM key is either a member's `pk(r_e)` or was written to the log from the network |
+| `at_rotate_head_settled` | all-traces, helper (induction) | Before anyone is at the head a `rotate` starts, a value has settled under the key of the previous head (this is enough for the freshness restrictions) |
+| `sanity_contact_sends`, `sanity_contact_receives`, `sanity_contact_sends_after_removal`, `sanity_remove_from_rotate_head` | exists-trace | A contact can send, can receive an offer from a member, and can send to the new head after following a removal; a removal can be written from the head of a `rotate` (the lemma below is not vacuous) |
+| `sent_head_key_secret` | all-traces | **P3, confidentiality:** the key the contact encrypts an offer to is known only if a member of that head leaked its state, or if no member wrote the head. The second case is a head written to the log from the network that the contact follows; for the contact to follow it, a member's `IK` (`rotate`) or both halves of its `AK` must leak. This is not proven separately (below) |
+| `no_offer_to_head_after_removal` | all-traces | **P3, freshness when sending:** once a member has removed `x` from a head, no contact sends an offer to that head |
+| `no_offer_from_removed_device` | all-traces | **P3, freshness when receiving:** once a member has removed `x` from a head, no contact accepts an offer from `x` at that head, even if all of `x`'s keys have leaked |
+| `no_fresh_check_before_rotate_after_removal` | all-traces | **P3, the head before an unsettled `rotate`:** if the removal was written from the head a `rotate` started, no contact's freshness check passes any more at that `rotate`'s previous head, neither for sending nor for receiving |
+| `no_rotate_branch_past_removal`, `no_rotate_branch_of_remover` | all-traces | A3's lemma proven again in this model: no reader follows the `rotate` signed by `x` at the head `x` was removed from; nor does it follow the remover's own `rotate` |
+| `received_offer_authentic` | all-traces | An offer the contact accepts as coming from ring member `s` is `s`'s, if `s`'s `IK` has not leaked and `s` is not the attacker's key. The attacker's key being a member is the subject of P1 (A1: both halves of `AK` leaking) |
 
-Üç tazelik lemması, kişinin denetimi (kısıt) ve dürüst kayıtların yazıldığı
-adımda günlüğe girmesi soyutlamasından kısa yoldan çıkar (4-12 adım).
-İçerikleri gerçektir, ama P3'ün tamamı değildir: hangi başların kapsandığı
-yukarıda, kapsanmayanlar aşağıdadır.
+The three freshness lemmas follow quickly (4-12 steps) from the contact's
+check (a restriction) and from the abstraction that honest records enter
+the log in the step they are written. What they state is real, but it is
+not the whole of P3: which heads are covered is above, those not covered
+are below.
 
-### Modelin bulduğu açık: çıkarma `döndür`'ün başından yazılınca önceki baş
+### The gap the model found: the previous head when a removal is written from a `rotate`'s head
 
-PR #282'nin ilk sürümünde döndüren cihaz kendi `döndür`'ünün başına hemen
-geçiyordu. Bağımsız inceleme şu izi buldu: `d` halkayı kurar ve `x`'i
-ekler; kişi `{d, x}` başındadır. `d` haftalık `döndür`'ünü yazar ve yeni
-başa geçer; `döndür` henüz oturmamıştır. `d` sonra `x`'i yeni baştan
-çıkarır. Kişi hâlâ eski baştadır ve orada yalnızca oturmamış bir `döndür`
-vardır: denetim geçer. Kişi `x`'in üyesi olduğu başa şifreler, ve `x` (hiçbir
-anahtarı sızmadan, yazılımı çalıştırmaya devam ederek) eski başta teklif
-gönderebilir. Pencere `döndür` oturana kadar, yaklaşık 4 saat sürer; P3'ün
-2 saatini aşar.
+In the first version of PR #282 the rotating device moved to its own
+`rotate`'s head at once. The independent review found this trace: `d`
+creates the ring and adds `x`; the contact is at head `{d, x}`. `d` writes
+its weekly `rotate` and moves to the new head; the `rotate` has not settled
+yet. `d` then removes `x` from the new head. The contact is still at the
+old head, and there is only an unsettled `rotate` there: the check passes.
+The contact encrypts to a head of which `x` is a member, and `x` (with no
+key leaked, just by running the software) can send offers at the old head.
+The window lasts until the `rotate` settles, about 4 hours; it exceeds the
+2 hours of P3.
 
-Düzeltme A3'ün zaten yazdığı kuraldır: döndüren cihaz kendi `döndür`'ünü
-oturunca izler; o zamana kadar çıkarmayı eski baştan yazar ve çıkarma
-`döndür`'ün önüne geçer. `döndür` oturduktan sonra çıkarma yeni baştan
-yazılır, ama o zaman eski başta oturmuş bir değer vardır ve kişiler oradan
-göndermez. `no_fresh_check_before_rotate_after_removal` bunu kanıtlar;
-`rotator_follows_own_rotate_at_once` mutantı izi yeniden bulur.
+The fix is the rule A3 already states: the rotating device follows its own
+`rotate` once it has settled; until then it writes the removal from the
+old head, and the removal wins over the `rotate`. After the `rotate` has
+settled, the removal is written from the new head, but then there is a
+settled value at the old head and contacts do not send from there.
+`no_fresh_check_before_rotate_after_removal` proves this; the
+`rotator_follows_own_rotate_at_once` mutant finds the trace again.
 
-### Mutant sınamaları
+### Mutant checks
 
-| Mutant | Bozulan denetim | Beklenen saldırı |
+| Mutant | Broken check | Expected attack |
 | --- | --- | --- |
-| `contact_sends_without_freshness` | Kişi göndermeden önce günlüğe bakmaz | Kişi, `x`'in çıkarıldığı başa gönderir (eski başla dosya alma, dondurma saldırısı) |
-| `receive_without_freshness` | Kişi bir teklifi almadan önce günlüğe bakmaz | Kişi, `x`'in çıkarıldığı başta `x`'ten teklif kabul eder |
-| `rotator_follows_own_rotate_at_once` | Döndüren cihaz kendi `döndür`'ünün başına hemen geçer | Çıkarma yeni baştan yazılır, kişi eski başta denetimi geçer (yukarıdaki açık) |
-| `send_offer_no_recheck` | Kişi tazeliği yalnızca başın anahtarına bakarken denetler, gönderirken denetlemez | Denetim geçer, sonra çıkarma yazılır, sonra teklif `x`'in üyesi olduğu başa gider |
-| `receive_signature_not_checked` | Kişi teklifin `IK` imzasını denetlemez | Hiçbir anahtar sızmadan sahte bir teklif üyeden gelmiş sayılır |
+| `contact_sends_without_freshness` | The contact does not look at the log before sending | The contact sends to the head `x` was removed from (receiving files with an old head, a freeze attack) |
+| `receive_without_freshness` | The contact does not look at the log before receiving an offer | The contact accepts an offer from `x` at the head `x` was removed from |
+| `rotator_follows_own_rotate_at_once` | The rotating device moves to its own `rotate`'s head at once | The removal is written from the new head, and the contact passes the check at the old head (the gap above) |
+| `send_offer_no_recheck` | The contact checks freshness only when it looks up the head's key, not when sending | The check passes, then the removal is written, then the offer goes to a head of which `x` is a member |
+| `receive_signature_not_checked` | The contact does not check the offer's `IK` signature | With no key leaked, a forged offer counts as coming from a member |
 
-A3b mutantlarının dördü (`receive_signature_not_checked` dışındakiler), aramanın
-bitmesi için saldırının kullanmadığı kuralları da düşürür (`mutants.py`,
-`drop`). Kural düşürmek yalnızca iz eksiltir; küçük modelde bulunan saldırı
-mutantta da vardır.
+Four of the A3b mutants (all but `receive_signature_not_checked`) also drop
+rules the attack does not use, so the search ends (`mutants.py`, `drop`).
+Dropping rules only removes traces; an attack found in the smaller model
+exists in the mutant too.
 
-### Henüz kanıtlanmayanlar
+### Not proven yet
 
-- **Sonraki başlar:** P3'ün tazelik lemmaları çıkarmanın yapıldığı başı,
-  çıkarma bir `döndür`'ün başından yazıldıysa o `döndür`'ün önceki başını
-  ve A3'teki `döndür` dalını kapsar. "Çıkarmadan sonra kişinin gönderdiği
-  her baş `x`'i içermez" biçimindeki sınırsız lemma, A3'teki sınırsız kilit
-  lemmasına dayanır ve henüz yok.
-- **`AK`'si çıkarmadan önce sızmış cihaz:** böyle bir cihaz çıkarmadan önce
-  kendi dalını (ör. öbür üyeyi çıkaran bir kayıt) yazıp kişileri oraya
-  geçirebilir. Bu, tasarımın kabul ettiği "geç çatal, yeniden eşleşme"
-  sınırıdır (`hesap.md`, "Biçimsel modelde kesinleşecek kurallar", madde 1)
-  ve A4'te ele alınır.
-- **İki ya da daha çok adım önceki başlar:** ör. `döndür`, `döndür`, sonra
-  çıkarma. Yukarıdaki gerekçe aynen geçerlidir (her önceki başta `AK` kaydı
-  ya da oturmuş bir değer vardır) ve ikinci incelemede bu durumlar elle
-  izlendi, ama lemması 4 GB bellekte bitmedi. Genel bir "çocuk başta olan,
-  önce üst baştaydı" yardımcısı gerekiyor.
-- **Üçüncü bir üyenin `döndür`'ü:** model iki cihaz yeri kullanır; döndüren
-  ya `x`'tir ya da çıkaran. Gerekçe üçüncü bir üyeye aynen taşınır, ama
-  modelde ifade edilmez.
-- **A3'ün modeli eski kuralla:** `hayalet-halka-tazelik.spthy`'de döndüren
-  cihaz hâlâ kendi `döndür`'ünün başına hemen geçer; A3'ün lemmaları o
-  kuralla kanıtlandı. Yeni kural cihazın davranışını değiştirdiği için
-  (eski baştan yazmaya devam eder) A3'ün sonuçları A4'te yeni kuralla
-  yeniden kanıtlanacak.
-- **Saldırganın yazdığı başlar:** `sent_head_key_secret`'in ikinci durumu
-  (hiçbir üyenin yazmadığı bir baş) için "kişinin bu başı izlemesi bir
-  üyenin anahtar sızıntısını ister" biçimindeki güçlü lemma 8 GB bellekte
-  bitmedi; bir yardımcı değişmez gerekiyor.
-- **Teklifin kendisinin gizliliği:** kanıtlanan, kişinin şifrelediği
-  anahtarın gizliliğidir; teklifin gizliliği standart açık anahtarlı
-  şifrelemeden gelir ve ayrı lemma değildir.
+- **Later heads:** P3's freshness lemmas cover the head the removal was
+  made at, the previous head of a `rotate` if the removal was written from
+  that `rotate`'s head, and the `rotate` branch in A3. The unbounded lemma
+  "no head a contact sends to after the removal contains `x`" rests on
+  A3's unbounded lock-out lemma and does not exist yet.
+- **A device whose `AK` leaked before the removal:** such a device can,
+  before the removal, write its own branch (e.g. a record that removes the
+  other member) and move contacts there. This is the "late fork, pair
+  again" limit the design accepts (`hesap.md`, "Rules to settle in the
+  formal model", item 1) and is handled in A4.
+- **Heads two or more steps back:** e.g. `rotate`, `rotate`, then the
+  removal. The reasoning above holds as it is (every previous head has an
+  `AK` record or a settled value), and these cases were traced by hand in
+  the second review, but the lemma did not finish in 4 GB of memory. A
+  general helper "whoever is at the child head was at the parent head
+  before" is needed.
+- **A third member's `rotate`:** the model uses two device slots; the
+  rotating device is either `x` or the remover. The reasoning carries over
+  to a third member as it is, but it is not expressed in the model.
+- **A3's model with the old rule:** in `hayalet-halka-tazelik.spthy` the
+  rotating device still moves to its own `rotate`'s head at once; A3's
+  lemmas were proven with that rule. Because the new rule changes the
+  device's behaviour (it keeps writing from the old head), A3's results
+  will be proven again with the new rule in A4.
+- **Heads the attacker wrote:** for the second case of
+  `sent_head_key_secret` (a head no member wrote), the strong lemma "for
+  the contact to follow this head, a member's key must leak" did not
+  finish in 8 GB of memory; it needs a helper invariant.
+- **Confidentiality of the offer itself:** what is proven is the
+  confidentiality of the key the contact encrypts to; the confidentiality
+  of the offer comes from standard public-key encryption and is not a
+  separate lemma.
 
-### Tasarıma geri bildirim (A4'te `hesap.md`'ye işlenecek)
+### Feedback to the design (to be written into `hesap.md` in A4)
 
-- **Tazelik kuralı:** `hesap.md` anahtar altındaki her geçerli değerde
-  göndermeyi durdurur. Model daha gevşek kuralı kullanır: `AK` kaydı ya da
-  oturmuş bir değer durdurur, oturmamış `döndür` durdurmaz. Gevşek kural,
-  aşağıdaki maddeyle birlikte güvenlidir ve kişilerin her haftalık
-  `döndür`'den sonra `D` boyunca gönderememesini önler.
-- **Döndüren cihaz:** kendi `döndür`'ünü ancak oturunca izler; o zamana
-  kadar `AK` kayıtlarını eski baştan yazar. Halkanın hiçbir cihazı bir
-  `döndür`'ü oturmadan izlemez.
-- **"Oturdu" herkes için aynı anlama gelmeli:** modelde oturma tek bir
-  olaydır; gerçekte her cihaz ve kişi kendisi karar verir. Kişi `döndür`'ü
-  ilk gördüğü andan saymaya başlarsa (ör. 10 saat çevrimdışı kalmış bir
-  kişi), çıkaran cihaz çoktan yeni baştan çıkarmışken kişi `D` boyunca daha
-  eski başa, `x`'in üyesi olduğu başa şifreler. Kural: herkes oturmayı
-  tanıklı dahil etme zamanından ve aynı `D` ile, şimdiki zamana göre
-  ölçer; bir cihaz bir `döndür`'ü ancak her kişinin onu oturmuş saymak
-  zorunda olduğu andan sonra izler (pay: saat kayması ve kök yaşı). A5'te
-  sayısal olarak kesinleşir.
-- **Teklif imzası:** alıcı kişiyi (ya da kişiyle paylaşılan bağlamı) ve
-  alıcının başını bağlamalı; `hesap.md` neyin bağlandığını açıkça yazmalı.
+- **Freshness rule:** `hesap.md` stops sending on every valid value under
+  the key. The model uses the looser rule: an `AK` record or a settled
+  value stops it, an unsettled `rotate` does not. Together with the next
+  item the looser rule is safe, and it keeps contacts from being unable to
+  send for `D` after every weekly `rotate`.
+- **The rotating device:** follows its own `rotate` only once it has
+  settled; until then it writes `AK` records from the old head. No device
+  of the ring follows a `rotate` before it has settled.
+- **"Settled" must mean the same for everyone:** in the model settling is
+  a single event; in reality every device and contact decides it for
+  itself. If a contact starts counting from the moment it first sees the
+  `rotate` (e.g. a contact that was offline for 10 hours), it encrypts for
+  `D` to the older head, of which `x` is a member, while the removing
+  device has long since removed `x` from the new head. The rule: everyone
+  measures settling from the witnessed inclusion time, with the same `D`,
+  against the present time; a device follows a `rotate` only after the
+  moment by which every contact must count it as settled (margin: clock
+  skew and root age). It is settled numerically in A5.
+- **Offer signature:** it should bind the receiving contact (or the
+  context shared with the contact) and the receiver's head; `hesap.md`
+  should state plainly what is bound.
 
-## A4a: kurtarma (`hayalet-halka-kurtarma.spthy`)
+## A4a: recovery (`hayalet-halka-kurtarma.spthy`)
 
-A3'ün zinciri, günlüğü, oturma ve yazanın tazeliği; A3b'nin `döndür`
-kuralıyla (döndüren cihaz kendi `döndür`'ünü oturunca izler). Eklenenler:
+A3's chain, log, settling and writer's freshness, with A3b's `rotate` rule
+(the rotating device follows its own `rotate` once it has settled). Added:
 
-- Halkanın ilk kaydı kurtarma anahtarının (`RK`) açık yarısını taşır. Gizli
-  yarı 24 kelimelik ifadedir; sahibindedir, hiçbir cihazda değildir.
-  `Reveal_Phrase` ifadenin çalınmasıdır.
-- **Üyelik dönemi:** her görünüm, son üyelik kaydının (oluştur, ekle,
-  çıkar, red, kurtarma) başını `m` olarak taşır. `döndür` `m`'yi
-  değiştirmez.
-- `kurtarma_ekle`: `RK` imzalı, boş yere bir cihaz ekleyen bir öneri;
-  bir başa değil, üyelik dönemi `m`'ye karşı yazılır ve kendi anahtarı
-  `h('rlog', m)` altında günlüğe girer. Böylece bekleyen kurtarma sonraki
-  `döndür`'lere taşınır ("kurtarma çatal açmaz ... sonraki dönemlere
-  taşınır") ve `döndür` onu durdurmaz. Sahibi bunu ifade ve yeni bir
-  cihazla yazar (`Owner_Recover`); ifadeyi çalan biri ağdan yazar
-  (`Log_Write_RK`).
-- **Bekleme:** okuyucular (cihazlar ve kişiler) bir kurtarmayı ancak
-  oturunca izler. Gerçekte bu 72 saat ya da 7 gündür; modelde A3'ün
-  "oturdu" olayıdır.
-- **Öncelik:** `m` döneminin bir başından daha önce bir `AK` kaydı
-  yazılmışsa kurtarma izlenmez (çatal kuralı, madde 1'in genişletilmesi).
-- **İki kurtarma gerçek çataldır:** `m`'ye karşı başka bir kurtarma önce
-  günlüğe girmişse okuyucu hiçbirini izlemez.
-- `kurtarma_reddi`: bir üyenin, o anki başından yazdığı `AK` kaydı. Öbür
-  kayıtlardan farklı olarak yazanın tazeliğine bağlı değildir: red her
-  zaman sayılır (`hesap.md`, çatal kuralı 5). Kuralın tek ön koşulu üyenin
-  görünümüdür, bu yüzden üye bunu beklemenin her anında yazabilir.
-  Öncelik kuralıyla `m`'ye karşı kurtarmayı durdurur.
-- **Kişiler** bir kurtarmayı ancak sahibiyle, o kurtarma kaydı için
-  kelimeleri yeniden karşılaştırdıktan sonra izler (`!Words(r, kayıt)`).
+- The ring's first record carries the public half of the recovery key
+  (`RK`). The secret half is the 24-word phrase; the owner holds it, and it
+  is on no device. `Reveal_Phrase` is the theft of the phrase.
+- **Membership period:** every view carries the head of the last
+  membership record (create, add, remove, reject, recovery) as `m`.
+  `rotate` does not change `m`.
+- `recovery_add`: an `RK`-signed proposal that adds a device into an empty
+  slot; it is written not against a head but against the membership
+  period `m`, and enters the log under its own key `h('rlog', m)`. So a
+  pending recovery carries over to the following `rotate`s ("a recovery
+  record does not open a fork ... carried over to the following epochs")
+  and `rotate` does not stop it. The owner writes it with the phrase and a
+  new device (`Owner_Recover`); someone who stole the phrase writes it
+  from the network (`Log_Write_RK`).
+- **Wait:** readers (devices and contacts) follow a recovery only once it
+  has settled. In reality this is 72 hours or 7 days; in the model it is
+  A3's "settled" event.
+- **Priority:** if an `AK` record was written earlier from a head of
+  period `m`, the recovery is not followed (the fork rule, an extension of
+  item 1).
+- **Two recoveries are a real fork:** if another recovery against `m`
+  entered the log first, the reader follows neither.
+- `recovery_reject`: an `AK` record a member writes from its current head.
+  Unlike the other records it does not depend on the writer's freshness: a
+  reject always counts (`hesap.md`, fork rule 5). The rule's only
+  precondition is the member's view, so the member can write it at any
+  moment of the wait. With the priority rule it stops the recovery against
+  `m`.
+- **Contacts** follow a recovery only after comparing the words again with
+  the owner, for that recovery record (`!Words(r, record)`).
 
-Kayıt gövdesi ve görünüm değiştiği için bu yeni bir modeldir; A3'ün
-çalıştırılabilirlik izleri ve `no_rotate_branch_past_removal` burada
-yeniden kanıtlandı.
+Because the record body and the view changed, this is a new model; A3's
+executability traces and `no_rotate_branch_past_removal` were proven again
+here.
 
-### Modelin ilk sürümünde incelemenin bulduğu açıklar
+### Gaps the review found in the model's first version
 
-PR #283'ün ilk sürümünde kurtarma, bir başın anahtarı altına yazılıyordu.
-Bağımsız inceleme iki iz buldu:
+In the first version of PR #283 the recovery was written under a head's
+key. The independent review found two traces:
 
-- **Reddedilemeyen geç kurtarma:** `d` haftalık `döndür`'ünü yazar, `döndür`
-  oturur ama `d` henüz izlememiştir. İfadeyi çalan biri aynı anahtar altına
-  kurtarma yazar. Yazanın tazeliği `d`'nin o anahtar altına artık
-  yazmasını (reddetmesini) yasaklıyordu; kurtarmadan önceki değer
-  `d`'nin kendi `döndür`'ünü de engelliyordu. `d`'nin tek yolu hırsızın
-  kurtarmasını izlemekti. Bu, `hesap.md`'deki "cihaz dalı geçerli kalır"
-  kuralıyla çelişiyordu.
-- **İki kurtarma okuyucuları bölüyordu:** sahip ve hırsız aynı anahtar
-  altına iki ayrı kurtarma yazınca bir cihaz birini, bir kişi öbürünü
-  izliyordu.
+- **A late recovery that cannot be rejected:** `d` writes its weekly
+  `rotate`, the `rotate` settles but `d` has not followed it yet. Someone
+  who stole the phrase writes a recovery under the same key. The writer's
+  freshness forbade `d` from writing (rejecting) under that key any more;
+  the value before the recovery also blocked `d`'s own `rotate`. `d`'s
+  only way was to follow the thief's recovery. This contradicted the rule
+  "the device branch stays valid" in `hesap.md`.
+- **Two recoveries split the readers:** when the owner and the thief wrote
+  two separate recoveries under the same key, one device followed one and
+  one contact the other.
 
-Düzeltme, kurtarmayı üyelik dönemine bağlamak ve iki kurtarmayı çatal
-saymaktır. `sanity_reject_after_settled_rotate` ilk izin artık reddedilebildiğini,
-`no_split_recovery` ikincisinin kapandığını gösterir.
+The fix is to bind the recovery to the membership period and to count two
+recoveries as a fork. `sanity_reject_after_settled_rotate` shows that the
+first trace can now be rejected, `no_split_recovery` that the second is
+closed.
 
-İkinci inceleme aynı açığın başka bir yoldan döndüğünü gösterdi: tek
-üyenin kendi iki `döndür`'ü çatallanıp oturursa (ya da `IK`'sini çalan biri
-başın anahtarına iki değer yazarsa) üye ne `döndür`'ü izleyebiliyor ne de
-o baştan yazabiliyordu (yazanın tazeliği). Tek hamlesi hırsızın kurtarmasını
-izlemekti. Düzeltme: red yazanın tazeliğine bağlı değildir.
+The second review showed that the same gap came back by another route: if
+a single member's own two `rotate`s forked and settled (or someone who
+stole its `IK` wrote two values to the head's key), the member could
+neither follow a `rotate` nor write from that head (the writer's
+freshness). Its only move was to follow the thief's recovery. The fix: a
+reject does not depend on the writer's freshness.
 
-### Soyutlamalar
+### Abstractions
 
-| Soyutlama | Neden | Ne zaman genişler |
+| Abstraction | Why | When it widens |
 | --- | --- | --- |
-| Kurtarma yalnızca boş yere ekler | İki cihaz yeri; bütün cihazlar kayıpsa halkada bir yer boştur | Değişmez |
-| Kurtarılan cihaz bu parçada yeni kayıt yazmaz, okuyucular reddi izleyip yeni başa geçmez | P7'nin kurtarma kısmı için gerekmiyor; bu yüzden reddin ardından hizmetin sürmesi (canlılık) burada ifade edilmez | A4c |
-| Reddedilen `RK`'nin sonraki dönemlerde geçersiz kalması yok | Burada red, yalnızca reddin yazıldığı döneme karşı kurtarmayı durdurur | A4c (`ifade_değiştir` ile) |
-| Sahip kurtarmayı günlükten öğrendiği herhangi bir başın dönemine karşı yazar | Gerçekte aylık kurtarma kaydından en yeni başa ilerler; her yazışı saldırgan da yapabildiği için (`Log_Write_RK`) kanıtları etkilemez | Aşama C |
-| Bekleme süresi, A3'ün oturma olayıdır | Süreler A5'te | A5 |
-| **Kişinin kimlik denetimi güvenilir bir kanaldır** (`!Words`) | Kelimeler yalnızca onları gösteren cihaza giden kanalı kanıtlar; hırsızın cihazı da kelime gösterebilir. Asıl varsayım, kişinin karşısındakini bant dışında (yüz yüze, sesinden) tanımasıdır: insana ve sosyal mühendisliğe dayanan bir varsayım. P7'nin kişiler yarısı tamamen buna dayanır; sansür altında tek koruma budur | Değişmez; kullanıcıya anlatılır |
+| A recovery adds only into an empty slot | Two device slots; if all devices are lost, one slot in the ring is empty | Does not change |
+| The recovered device writes no new records in this piece, and readers do not follow a reject and move to a new head | Not needed for the recovery part of P7; so the service continuing after a reject (liveness) is not expressed here | A4c |
+| A rejected `RK` does not stay invalid in later periods | Here a reject stops the recovery only against the period the reject was written in | A4c (with `change_phrase`) |
+| The owner writes the recovery against the period of any head it learned from the log | In reality it moves from the monthly recovery record to the newest head; because the attacker can do every such write too (`Log_Write_RK`), it does not affect the proofs | Stage C |
+| The wait is A3's settling event | Durations in A5 | A5 |
+| **The contact's identity check is a trusted channel** (`!Words`) | The words prove only the channel to the device that shows them; the thief's device can show words too. The real assumption is that the contact recognises the other person out of band (face to face, by voice): an assumption that rests on people and on social engineering. The contacts' half of P7 rests entirely on it; under censorship it is the only protection | Does not change; it is explained to the user |
 
-### Lemmalar
+### Lemmas
 
-| Lemma | Tür | Ne söyler |
+| Lemma | Kind | What it says |
 | --- | --- | --- |
-| A3'ün dört çalıştırılabilirlik izi, `no_rotate_branch_past_removal` | iz var / her iz | Yeni kurallarla da geçerli |
-| `sanity_owner_recovers` | iz var | Sahip kurtarır, bir kişi kelimeleri karşılaştırıp izler |
-| `sanity_recovery_despite_rotate` | iz var | Kilitli çalınmış bir telefon (`IK`'si sızmış, `AK`'si sızmamış) `döndür` yazar, kişi bu oturmuş `döndür`'ü izler ve aynı dönemde kurtarmayı yine izler |
-| `sanity_reject_after_settled_rotate` | iz var | Üye, kendi `döndür`'ü oturup izlendikten sonra da bekleyen kurtarmayı reddedebilir |
-| `ak_record_stops_recovery` | her iz | **P7, cihazlar:** dürüst bir üye `m` döneminin bir başından `AK` kaydı (`kurtarma_reddi`, `ekle`, `çıkar`) yazdıktan sonra kimse `m`'ye karşı kurtarmayı izlemez. Okuyucu kuralı `Rec_Priority`'nin yeniden ifadesidir; asıl içerik, reddin her an yazılabilmesidir (kuralın tek ön koşulu görünüm, bkz. yukarı) |
-| `recovery_was_pending` | her iz | **P7, cihazlar:** izlenen her kurtarmanın kendisi önce bekleme boyunca günlükte, her üyenin görebileceği yerdeydi (okuyucunun bekleme kuralının yeniden ifadesi) |
-| `read_rec_was_logged` | her iz, yardımcı | İzlenen her kurtarma önce günlüğe yazılmıştır (`no_split_recovery` için) |
-| `no_split_recovery` | her iz | Aynı döneme karşı iki kurtarmadan farklılarını iki okuyucu izlemez (`Rec_Single`'ın sonucu) |
-| `contact_not_moved_by_phrase_alone` | her iz | **P7, kişiler:** yalnızca ifadeyle kişi taşınmaz; kişi bir kurtarmayı yalnızca sahibinin aynı döneme karşı eklediği cihaza, o kayıt için kimliği denetledikten sonra izler. Bu lemma yukarıdaki kimlik denetimi varsayımının yeniden ifadesidir |
+| A3's four executability traces, `no_rotate_branch_past_removal` | exists-trace / all-traces | Hold with the new rules too |
+| `sanity_owner_recovers` | exists-trace | The owner recovers, a contact compares the words and follows |
+| `sanity_recovery_despite_rotate` | exists-trace | A phone stolen while locked (`IK` leaked, `AK` not leaked) writes a `rotate`, the contact follows this settled `rotate`, and still follows the recovery in the same period |
+| `sanity_reject_after_settled_rotate` | exists-trace | A member can reject the pending recovery even after its own `rotate` has settled and been followed |
+| `ak_record_stops_recovery` | all-traces | **P7, devices:** once an honest member has written an `AK` record (`recovery_reject`, `add`, `remove`) from a head of period `m`, nobody follows a recovery against `m`. The reader rule restates `Rec_Priority`; the real content is that the reject can be written at any time (the rule's only precondition is the view, see above) |
+| `recovery_was_pending` | all-traces | **P7, devices:** every recovery that is followed was itself in the log for the wait beforehand, where every member could see it (a restatement of the reader's wait rule) |
+| `read_rec_was_logged` | all-traces, helper | Every recovery that is followed was written to the log first (for `no_split_recovery`) |
+| `no_split_recovery` | all-traces | Two readers do not follow different ones of two recoveries against the same period (a consequence of `Rec_Single`) |
+| `contact_not_moved_by_phrase_alone` | all-traces | **P7, contacts:** the phrase alone does not move a contact; a contact follows a recovery only to the device the owner added against the same period, after checking the identity for that record. This lemma restates the identity-check assumption above |
 
-### Mutant sınamaları
+### Mutant checks
 
-| Mutant | Bozulan denetim | Beklenen saldırı |
+| Mutant | Broken check | Expected attack |
 | --- | --- | --- |
-| `recovery_without_wait` | Cihaz kurtarmayı beklemeden izler | Kurtarma, günlükte hiç beklemeden izlenir |
-| `recovery_beats_ak_record` | Okuyucu öncelik kuralını uygulamaz | Bir üyenin reddinden sonra kurtarma izlenir |
-| `contact_skips_words` | Kişi kimliği yeniden denetlemez | Kişi, ifadeyi çalanın cihazına taşınır |
-| `recoveries_not_a_fork` | İki kurtarma çatal sayılmaz | Bir cihaz ve bir kişi farklı kurtarmaları izler |
+| `recovery_without_wait` | The device follows the recovery without waiting | The recovery is followed without waiting in the log at all |
+| `recovery_beats_ak_record` | The reader does not apply the priority rule | The recovery is followed after a member's reject |
+| `contact_skips_words` | The contact does not check the identity again | The contact is moved to the device of the one who stole the phrase |
+| `recoveries_not_a_fork` | Two recoveries do not count as a fork | A device and a contact follow different recoveries |
 
-Dördü de aramanın bitmesi için kullanılmayan kuralları düşürür (`drop`).
+All four drop unused rules so the search ends (`drop`).
 
-Lemmaların çoğu okuyucu kurallarını yeniden ifade ettiği için bu mutantlar
-kuralların modele bağlı olduğunu sınar, tasarımın doğruluğunu değil.
-Tasarımın asıl dayanakları, gerçek bir okuyucunun öncelik kuralını
-uygulayabilmesi (aşağıda, tasarıma geri bildirim) ve üyenin her an
-reddedebilmesidir; ikincisi kuralın biçiminden okunur, bir lemma olarak
-ifade edilmedi.
+Because most lemmas restate reader rules, these mutants test that the
+rules are wired into the model, not that the design is correct. The
+design's real foundations are that a real reader can apply the priority
+rule (below, feedback to the design) and that a member can reject at any
+time; the second is read from the form of the rule and was not expressed
+as a lemma.
 
-### Henüz kanıtlanmayanlar
+### Not proven yet
 
-- **Saldırganın kendi anahtarı üye olabilir mi:** `rk_remove_needs_staying_device`
-  kalan üyenin dürüst bir cihaz olduğunu varsayar. İlk kayıt ve kurtarma
-  yalnızca dürüst cihaz alır; `ekle` önerisi ancak bir üyenin imzasıyla
-  yazılır, öyleyse saldırganın kendi anahtarı ancak sızmış bir `AK` ile
-  girebilir. Bu adım burada gerekçelendirildi, kanıtlanmadı: lemması
-  (`ekle` önerisini dürüst cihaz yazdıysa yeni üye dürüst cihazdır ya da
-  önerenin `AK`'si sızmıştır) 10 dakikada bitmedi. A4c.
-- **Telefon ve ifade birlikte çalınırsa** P7 güvence vermez (`hesap.md`,
-  P7); model bunu iddia etmez.
-- **`AK`'si elinde olan hırsızın sonsuz reddi:** kilidi açık bir cihazı
-  çalan biri öncelik kuralıyla her kurtarmayı reddedebilir. Sahibin
-  çıkış yolu `çatal_çöz`'dür: A4c.
-- **Sansür:** tanıklar sunucuyla birlikte red kaydını sansürlerse bekleme
-  yalnızca gecikmedir; P7'yi o zaman kişilerin kimlik denetimi sağlar.
-  Modelin günlüğü tek ve sansürsüzdür (A2 varsayımı).
-- **Geç red okuyucuları sessizce böler:** okuyucu A oturmuş kurtarmayı
-  izledikten sonra çevrimdışı bir üye aynı dönemden red yazarsa A
-  kurtarma dalında, üye red dalında kalır. Modelde okuyucular reddi hiç
-  izlemez ve bu çatal algılanmaz (`hesap.md` kural 5 ve 6): A4c.
-- **Yalnızca ifadeyi çalan biri sahibin kurtarmasını kalıcı olarak
-  durdurabilir:** aynı döneme karşı ikinci bir kurtarma yazmak `Rec_Single`
-  ile ikisini de durdurur. `çatal_çöz` de `RK` ile imzalandığından bunu
-  çözmez; geriye kişilerle yeniden eşleşme kalır. Bu bir hizmet engellemedir,
-  P7'yi bozmaz: A4c ve A4d.
-- **Kurtarmadan sonrası:** kurtarılan cihazın görünümü yok; reddetmez,
-  kayıp cihazı çıkarmaz, kayıt yazmaz. Kurtarmadan sonra olanlar için lemma
-  yok.
-- Kurtarmadan sonraki çatallar, `çatal_çöz` ve reddedilen `RK`: A4c.
+- **Can the attacker's own key be a member:**
+  `rk_remove_needs_staying_device` assumes that the staying member is an
+  honest device. Only honest devices get the first record and recovery; an
+  `add` proposal is written only with a member's signature, so the
+  attacker's own key can get in only with a leaked `AK`. This step was
+  argued here, not proven: its lemma (if an honest device wrote the `add`
+  proposal, the new member is an honest device or the proposer's `AK`
+  leaked) did not finish in 10 minutes. A4c.
+- **If the phone and the phrase are stolen together,** P7 gives no
+  assurance (`hesap.md`, P7); the model does not claim it.
+- **Endless rejection by a thief who holds `AK`:** someone who steals an
+  unlocked device can reject every recovery with the priority rule. The
+  owner's way out is `resolve_fork`: A4c.
+- **Censorship:** if the witnesses censor the reject record together with
+  the server, the wait is only a delay; P7 is then provided by the
+  contacts' identity check. The model's log is single and uncensored (A2
+  assumption).
+- **A late reject silently splits readers:** if reader A has followed a
+  settled recovery and an offline member then writes a reject from the
+  same period, A stays on the recovery branch and the member on the reject
+  branch. In the model readers never follow a reject and this fork is not
+  detected (`hesap.md` rules 5 and 6): A4c.
+- **Someone who stole only the phrase can stop the owner's recovery for
+  good:** writing a second recovery against the same period stops both
+  with `Rec_Single`. `resolve_fork` does not solve this either, because it
+  is signed with `RK`; what remains is pairing again with the contacts.
+  This is a denial of service and does not break P7: A4c and A4d.
+- **After the recovery:** the recovered device has no view; it does not
+  reject, does not remove the lost device and writes no records. There are
+  no lemmas for what happens after a recovery.
+- Forks after a recovery, `resolve_fork` and a rejected `RK`: A4c.
 
-### Tasarıma geri bildirim (A4d'de `hesap.md`'ye işlenecek)
+### Feedback to the design (to be written into `hesap.md` in A4d)
 
-- Kurtarma bir başa değil, üyelik dönemine karşı yazılan bir öneridir;
-  `döndür` onu durdurmaz, ona taşınır. Üye bekleyen kurtarmayı her zaman
-  o anki başından reddedebilir.
-- Aynı döneme karşı iki kurtarma gerçek çataldır. Yalnızca ifadeyi çalan
-  biri bununla sahibin kurtarmasını durdurabilir (hizmet engelleme);
-  tasarım bunu söylemeli.
-- Red yazanın tazeliğine bağlı değildir: çatallanmış ya da doldurulmuş bir
-  başın üyesi de reddedebilmelidir.
-- Öncelik için gerçek okuyucu, `m` döneminin **her** başı altında (izlemediği
-  `döndür` dalları ve çatallı başlar dahil) `AK` kaydı aramalıdır.
-  `hesap.md` bugün yalnızca "aynı anahtar altında" diyor. Model, `op`'u ne
-  olursa olsun geçerli `AK` imzalı her değeri sayar; bu P7 için temkinlidir.
-- Model kurtarmayı ayrı bir `h('rlog', m)` anahtarı altına yazar;
-  `hesap.md:421` ise kurtarmayı `L_{e+1}` altında, en yeni başı ebeveyn
-  göstererek tarif ediyor. A4d'de biri seçilmeli.
-- Kişinin yeniden doğrulaması kurtarma kaydının özetine bağlanır (yeniden
-  bulma kutusu zaten bu özetle adlandırılıyor).
-- P7'nin kişiler yarısı kelimelere değil, kişinin karşısındakini bant
-  dışında tanımasına dayanır; `hesap.md` ve kullanıcı metinleri bunu açık
-  söylemeli.
+- A recovery is a proposal written not against a head but against the
+  membership period; `rotate` does not stop it, it carries over. A member
+  can always reject a pending recovery from its current head.
+- Two recoveries against the same period are a real fork. Someone who
+  stole only the phrase can use this to stop the owner's recovery (denial
+  of service); the design should say so.
+- A reject does not depend on the writer's freshness: a member of a forked
+  or filled head must also be able to reject.
+- For priority, a real reader must look for an `AK` record under **every**
+  head of period `m` (including `rotate` branches it does not follow and
+  forked heads). `hesap.md` says only "under the same key" today. The
+  model counts every value with a valid `AK` signature whatever its `op`;
+  this is cautious for P7.
+- The model writes the recovery under a separate key `h('rlog', m)`;
+  `hesap.md:447`, however, describes the recovery under `L_{e+1}`, naming
+  the newest head as its parent. One must be chosen in A4d.
+- The contact's re-verification is bound to the digest of the recovery
+  record (the re-find mailbox is already named with this digest).
+- The contacts' half of P7 rests not on the words but on the contact
+  recognising the other person out of band; `hesap.md` and the user texts
+  should say this plainly.
 
-## A4b: sıkı mod (`hayalet-halka-sikimod.spthy`)
+## A4b: strict mode (`hayalet-halka-sikimod.spthy`)
 
-A4a'nın üyelik dönemi ve öneri fikri üzerine kurulur. Sıkı modda tek bir
-imza üyeliği hemen değiştiremez (`hesap.md`, "Çok katmanlı onay", K3b).
-Her değişiklik, üyelik dönemi `m`'ye karşı yazılan ve okuyucuların ancak
-oturunca (gerçekte 72 saatlik tanık zamanı) izlediği bir **öneridir**:
+Built on A4a's idea of membership periods and proposals. In strict mode a
+single signature cannot change membership at once (`hesap.md`,
+"Multi-layer approval", K3b). Every change is a **proposal** written
+against the membership period `m` that readers follow only once it has
+settled (in reality 72 hours of witness time):
 
-- **`AK` önerisi** (bekleyen `ekle` ya da `çıkar`): bir üyenin `AK`
-  imzası.
-- **Kurtarma** (`kurtarma_ekle`): `RK` imzası, boş yere.
-- **`rk_çıkar(x)`:** `RK` imzası **ve kalan üyenin `AK` imzası**. Kilidi
-  açık çalınmış cihaz `x` kendi çıkarılmasını veto ederse yol budur:
-  `x`'in reddi ona karşı sayılmaz. Kalan üyenin `AK`'sini de istediği için
-  yalnızca ifade onu oluşturamaz ve `RK` halkanın tek cihazını hiçbir
-  zaman çıkaramaz.
+- **`AK` proposal** (a pending `add` or `remove`): one member's `AK`
+  signature.
+- **Recovery** (`recovery_add`): an `RK` signature, into an empty slot.
+- **`rk_remove(x)`:** an `RK` signature **and the staying member's `AK`
+  signature**. This is the way out if a device `x` stolen unlocked vetoes
+  its own removal: `x`'s reject does not count against it. Because it also
+  needs the staying member's `AK`, the phrase alone cannot create it, and
+  `RK` can never remove a ring's only device.
 
-**Red** (`bekleyen_reddi`, `kurtarma_reddi`) hedeflidir: öneriyi özetiyle
-adlandıran bir `AK` kaydıdır ve ancak öneri oturmadan önce günlüğe
-girmişse sayılır. Sayılan red yalnızca o öneriyi geçersiz kılar; yeni bir
-dönem başlatmaz, başka hiçbir şeyi durdurmaz.
+A **reject** (`reject_pending`, `recovery_reject`) is targeted: it is an
+`AK` record that names the proposal by its digest, and it counts only if
+it entered the log before the proposal settled. A counted reject voids only
+that proposal; it does not start a new period and stops nothing else.
 
-**Dönem başına tek değişiklik:** okuyucu bir öneriyi ancak aynı döneme
-karşı ondan önce günlüğe girmiş her öbür öneri sayılan bir redle geçersiz
-kılınmışsa izler: ilk yazan kazanır. Önceki canlı bir öneri sonrakileri,
-reddedilene ya da oturup kendisi izlenene dek durdurur; sonra yazılanlar
-önceki öneriye karşı sayılmaz.
+**One change per period:** a reader follows a proposal only if every other
+proposal that entered the log before it against the same period was voided
+by a counted reject: the first writer wins. A live earlier proposal stops
+the later ones until it is rejected, or settles and is followed itself;
+the ones written later do not count against the earlier proposal.
 
-Model, `hesap.md`'nin "Biçimsel modelde kesinleşecek kurallar" bölümündeki
-iki soruya bu kurallarla cevap önerir: bekleyen kaydın sıralanması (döneme
-karşı öneri, başın anahtarıyla yarışmaz, dönem başına tek değişiklik) ve
-çalınan cihaz veto ederse `RK` yolunun kesin tanımı (`rk_çıkar`).
+With these rules the model proposes an answer to two questions in the
+"Rules to settle in the formal model" section of `hesap.md`: the ordering
+of the pending record (a proposal against the period, which does not race
+with the head's key, one change per period) and the exact definition of
+the `RK` way when a stolen device vetoes (`rk_remove`).
 
-### İlk sürümde incelemenin bulduğu açıklar
+### Gaps the review found in the first version
 
-İlk sürümde (cbd7333) red hedefsizdi (dönemden yazılan her `AK` kaydı o
-dönemin bütün önerilerini durduruyordu), `bekleyen_reddi` ile
-`kurtarma_reddi` tek kayıttı ve `rk_çıkar` yalnızca `RK` imzası
-taşıyordu. Bağımsız inceleme şunları buldu:
+In the first version (cbd7333) a reject was untargeted (every `AK` record
+written from the period stopped all of that period's proposals),
+`reject_pending` and `recovery_reject` were a single record, and
+`rk_remove` carried only the `RK` signature. The independent review found:
 
-- **Kritik:** `hesap.md`'ye göre `kurtarma_reddi` `RK`'yi geçersiz kılar.
-  İki red tek kayıt olunca çalınan cihazın vetosu `RK`'yi de geçersiz
-  kılıyor, `RK` yolu kapanıyordu. Şimdi `bekleyen_reddi` ayrı, hedefli bir
-  kayıttır (aşağıda tasarıma geri bildirim).
-- **Okuyucuları bölme (Tamarin'de bulundu):** `AK` önerisiyle `RK`
-  önerisi arasında sıra yoktu. Hırsızın `çıkar(d)` önerisini bir kişi,
-  sahibin `rk_çıkar(e)`'sini başka bir kişi izleyebiliyordu. Şimdi dönem
-  başına tek değişiklik var (`no_split_change`).
-- **Tek red dönemi donduruyordu:** hedefsiz red o dönemin sonraki bütün
-  önerilerini de öldürüyordu. Hırsız önce önerince sahibin reddi kendi
-  `rk_çıkar`'ını da durduruyor, halka hırsız içerideyken donuyordu. Şimdi
-  red hedefli ve süreli (`sanity_thief_proposes_first`).
-- **Yalnızca ifadeyle sahibin telefonu çıkarılabiliyordu:** hedefin reddi
-  sayılmadığı için, öbür cihaz 72 saat çevrimdışıysa ifade hırsızı sahibin
-  taşıdığı telefonu çıkarabiliyordu. Şimdi `rk_çıkar` kalan üyenin `AK`
-  imzasını da ister (`rk_remove_needs_staying_device`).
+- **Critical:** according to `hesap.md`, `recovery_reject` voids `RK`. With
+  the two rejects as one record, the stolen device's veto also voided `RK`
+  and closed the `RK` way. Now `reject_pending` is a separate, targeted
+  record (below, feedback to the design).
+- **Splitting readers (found in Tamarin):** there was no order between an
+  `AK` proposal and an `RK` proposal. One contact could follow the thief's
+  `remove(d)` proposal and another the owner's `rk_remove(e)`. Now there is
+  one change per period (`no_split_change`).
+- **A single reject froze the period:** an untargeted reject also killed
+  all later proposals of that period. If the thief proposed first, the
+  owner's reject also stopped the owner's own `rk_remove`, and the ring
+  froze with the thief inside. Now a reject is targeted and time-bound
+  (`sanity_thief_proposes_first`).
+- **The owner's phone could be removed with the phrase alone:** because the
+  target's reject did not count, if the other device was offline for 72
+  hours, the phrase thief could remove the phone the owner carries. Now
+  `rk_remove` also needs the staying member's `AK` signature
+  (`rk_remove_needs_staying_device`).
 
-İkinci inceleme (b7a25cf) üç önemli bulgu verdi, hepsi düzeltildi:
-`Change_Single` okuma anından önce yazılmış bütün önerilere bakıyordu,
-öyleyse hırsız `rk_çıkar(e)` oturduktan sonra eski döneme yazdığı bir
-öneriyle geç okuyanları sonsuza dek takılı bırakabiliyordu (şimdi yalnızca
-izlenen öneriden önce oturanlar sayılır; `Old_Once` her kaydın tek bir
-oturma anı olmasını, `Settle_In_Order` önerilerin günlük sırasıyla
-oturmasını sağlar: düzeltmenin denetimi, `Settle_In_Order` olmadan önce
-yazılmış canlı bir önerinin hiç oturmayıp atlanabildiğini gösterdi); iki erişilebilirlik lemması
-reddin zamanında olduğunu istemiyordu; `strict_immediate_accept` mutantı
-modelin hiçbir lemmasını sınamıyordu (şimdi `ReadChange` taşır ve
-`no_change_without_wait`'i bozar).
+The second review (b7a25cf) gave three important findings, all fixed:
 
-### Soyutlamalar
+- `Change_Single` looked at every proposal written before the moment of
+  reading. So, after `rk_remove(e)` had settled, the thief could leave late
+  readers stuck for ever with a proposal written to the old period. Now
+  only the proposals that settled before the followed one count. `Old_Once`
+  makes sure every record has a single settling moment, and
+  `Settle_In_Order` makes proposals settle in log order. Checking the fix
+  showed that, without `Settle_In_Order`, a live proposal written earlier
+  could never settle and be skipped.
+- Two reachability lemmas did not require the reject to be on time.
+- The `strict_immediate_accept` mutant did not test any lemma of the
+  model. Now it carries `ReadChange` and breaks `no_change_without_wait`.
 
-| Soyutlama | Neden | Ne zaman genişler |
+### Abstractions
+
+| Abstraction | Why | When it widens |
 | --- | --- | --- |
-| Halka ilk kayıttan beri sıkıdır (ilke alanı ilk kayıtta); `ilke` kaydıyla açıp kapatma yok | Kapatmak sıkı modun istediği imza sayısını ister, yani bir öneridir; aynı kurala tabidir | A4c ya da aşama C |
-| İlk kayıt iki cihaz taşır | Sıkı mod iki ve daha çok cihaz için önerilir | Aşama C |
-| İki imzalı `ekle` ve `çıkar` yok | İki yerle iki imzalı `ekle` olamaz. İki imzalı `çıkar` (iki üyenin imzası, hemen) dürüst yoldur ama ikinci yerdeki cihazı çıkarırken onun da imzasını ister; çalınan cihaz senaryosunda olmaz. Öneriyle etkileşimi modellenmedi | A4c |
-| `döndür` yok | Öneriler döneme karşı yazılır ve `döndür` dönemi değiştirmez; A4a, `döndür`'ün ne kurtarmayı ne de reddi engellediğini gösterdi | Değişmez |
-| Red yeni dönem başlatmaz; okuyucular reddi izlemez | Hedefli red yalnızca kendi önerisini geçersiz kılar; dönemin üyeleri değişmez | Değişmez |
-| **Reddedilen `RK` geçersiz olmaz** | `hesap.md`'ye göre `kurtarma_reddi` `RK`'yi geçersiz kılar; burada `RK` kalıcıdır. Geçersiz kılma `rk_çıkar(x)`'in hedefi `x`'in reddiyle olmamalı (aşağıda) | A4c (`ifade_değiştir` ile) |
-| Öneri izlenince eklenen cihaz görünüm almaz | Bu parçanın özellikleri için gerekmiyor (A4a ile aynı) | A4c |
-| Her kaydın tek oturma anı vardır (`Old_Once`); bir döneme karşı öneriler günlüğe girdikleri sırayla oturur (`Settle_In_Order`) | Kuralların hepsi yalnızca ilk oturma anına bakar. Gerçekte bekleme herkes için aynıdır, öyleyse oturma sırası günlük sırasıdır | Değişmez |
-| Sıkı modda kurtarmanın ek etkeni (YubiKey, Shamir payı) yok | Ek etken yalnızca ifadenin çalınmasını zorlaştırır | Aşama C |
-| Günlük, `rk_çıkar`'ı imzalayan `AK`'nin bir üyeye ait olduğunu denetlemez; okuyucu denetler. Red, kendi görünümüyle değil ağdan aldığı herhangi bir değerle yazılabilir | İkisi de yalnızca iz ekler (güvenlik lemmaları için güvenli yöndedir). Günlüğün üye denetimini ve redde günlükten okumayı modellemek Tamarin'in aramasını bellek dışına taşıdı | A4c |
+| The ring is strict from the first record (the policy field is in the first record); no switching on and off with a `policy` record | Switching off needs the number of signatures strict mode asks for, so it is a proposal; it falls under the same rule | A4c or stage C |
+| The first record carries two devices | Strict mode is recommended for two or more devices | Stage C |
+| No two-signature `add` and `remove` | With two slots there can be no two-signature `add`. A two-signature `remove` (two members' signatures, at once) is the honest way, but removing the device in the second slot needs its signature too; that is not possible in the stolen-device scenario. Its interaction with proposals was not modelled | A4c |
+| No `rotate` | Proposals are written against the period and `rotate` does not change the period; A4a showed that `rotate` blocks neither recovery nor reject | Does not change |
+| A reject does not start a new period; readers do not follow a reject | A targeted reject voids only its own proposal; the period's members do not change | Does not change |
+| **A rejected `RK` does not become invalid** | According to `hesap.md`, `recovery_reject` voids `RK`; here `RK` is permanent. Voiding must not happen through the reject of `x`, the target of `rk_remove(x)` (below) | A4c (with `change_phrase`) |
+| The added device gets no view once the proposal is followed | Not needed for this piece's properties (as in A4a) | A4c |
+| Every record has a single settling moment (`Old_Once`); proposals against a period settle in the order they entered the log (`Settle_In_Order`) | All the rules look only at the first settling moment. In reality the wait is the same for everyone, so the settling order is the log order | Does not change |
+| No extra factor for recovery in strict mode (YubiKey, Shamir share) | An extra factor only makes stealing the phrase harder | Stage C |
+| The log does not check that the `AK` signing `rk_remove` belongs to a member; the reader does. A reject can be written with any value taken from the network, not with the writer's own view | Both only add traces (in the safe direction for security lemmas). Modelling the log's member check and reading from the log for a reject took Tamarin's search out of memory | A4c |
 
-### Lemmalar
+### Lemmas
 
-| Lemma | Tür | Ne söyler |
+| Lemma | Kind | What it says |
 | --- | --- | --- |
-| `sanity_strict_remove` | iz var | Üye öbürünü çıkarmayı önerir, öneri bekler, kişi izler |
-| `sanity_stolen_device_vetoes` | iz var | Sahip çalınan `e`'yi çıkarmayı önerir, hırsız `e`'nin `AK`'siyle öneri oturmadan (sayılan) veto eder |
-| `sanity_rk_remove_despite_thief_reject` | iz var | Sahip ifade ve kendi cihazıyla `rk_çıkar(e)` yazar, hırsız onu da oturmadan reddeder; kişi yine de izler. `x`'in muafiyeti olmadan izi yoktur (yerelde denendi). Bir önceki lemmayla birlikte çalınan cihaz senaryosudur; iki adımı tek izde kanıtlamak aramada bitmedi |
-| `sanity_late_proposal_does_not_block` | iz var | `rk_çıkar(e)` oturduktan sonra hırsız eski döneme `çıkar(d)` yazar; sonra okuyan kişi yine `rk_çıkar(e)`'yi izler. Eski `Change_Single` ile izi yoktur (yerelde denendi) |
-| `sanity_thief_proposes_first` | iz var | Ters sıra: hırsız önce `çıkar(d)` önerir, `d` zamanında reddeder, sahip `rk_çıkar(e)` ile çalınan cihazı yine çıkarır; önce yazılan red edilmiş öneri önce oturur (`Settle_In_Order`) ve sonraki `rk_çıkar`'ı engellemez |
-| `sanity_recovery_after_strict_remove` | iz var | Kurtarma bu modelde de erişilebilir: sıkı çıkarmadan sonra sahip boş yere kurtarır, kişi izler |
-| `no_change_without_wait` | her iz | **K3b:** okuyucu üyeliği hiçbir zaman hemen değiştirmez; izlediği değişikliğin kendisi önce bekleme boyunca günlükteydi. Kilidi açık çalınmış bir telefon kimseyi hemen taşıyamaz, sayılan bir redde karşı da taşıyamaz (`reject_stops_change`); kimse reddetmezse bekleme sonunda taşır (aşağıda, çevrimdışı üye). `Settled_Old`'un yeniden ifadesidir |
-| `reject_stops_change` | her iz | **K3b:** dürüst bir üyenin öneri oturmadan yazdığı red onu durdurur (`rk_çıkar(x)` için `x` dışındaki üye). `Not_Rejected`'in yeniden ifadesi |
-| `read_change_was_logged` | her iz, yardımcı | İzlenen her öneri önce günlüğe yazılmıştır |
-| `read_change_settled` | her iz, yardımcı | İzlenen her öneri önce oturmuştur (`Old`) |
-| `earlier_proposal_must_be_rejected` | her iz | İlk yazan kazanır: okuyucu bir öneriyi ancak aynı döneme karşı ondan önce yazılmış her öneri sayılan bir redle geçersiz kılındıysa izler; önceki canlı bir öneri (hırsızınki) hiç atlanmaz |
-| `no_split_change` | her iz | Bir dönemde iki okuyucu farklı değişiklikleri izlemez; çalınan cihaz ya da ifade hırsızı ne yazarsa yazsın. `#i < #j` için yazıldı: öbür sıra adların yer değiştirmesiyle aynı lemmadır, aynı an ise tek kuraldır ve tek `ReadChange` taşır |
-| `rk_remove_needs_staying_device` | her iz | **P7, `rk_çıkar`:** kalan üye `b` dürüst bir cihazsa, okuyucu `rk_çıkar(x)`'i ancak sahip yazdıysa ya da `b`'nin `AK`'si de sızdıysa (telefon ve ifade birlikte, P7 dışı) izler |
-| `contact_not_moved_by_phrase_alone` | her iz | A4a'nın P7 lemması yeni kurallarla da geçerli |
+| `sanity_strict_remove` | exists-trace | A member proposes removing the other, the proposal waits, a contact follows |
+| `sanity_stolen_device_vetoes` | exists-trace | The owner proposes removing the stolen `e`; the thief vetoes with `e`'s `AK` before the proposal settles (counted) |
+| `sanity_rk_remove_despite_thief_reject` | exists-trace | The owner writes `rk_remove(e)` with the phrase and their own device, the thief rejects it too before it settles; the contact still follows. Without `x`'s exemption there is no trace (tried locally). Together with the previous lemma it is the stolen-device scenario; proving both steps in one trace did not end in the search |
+| `sanity_late_proposal_does_not_block` | exists-trace | After `rk_remove(e)` settles, the thief writes `remove(d)` to the old period; a contact that reads afterwards still follows `rk_remove(e)`. With the old `Change_Single` there is no trace (tried locally) |
+| `sanity_thief_proposes_first` | exists-trace | The reverse order: the thief proposes `remove(d)` first, `d` rejects in time, the owner still removes the stolen device with `rk_remove(e)`; the rejected proposal written first settles first (`Settle_In_Order`) and does not block the later `rk_remove` |
+| `sanity_recovery_after_strict_remove` | exists-trace | Recovery is reachable in this model too: after a strict removal the owner recovers into the empty slot, a contact follows |
+| `no_change_without_wait` | all-traces | **K3b:** a reader never changes membership at once; the change it follows was itself in the log for the wait beforehand. A phone stolen unlocked cannot move anyone at once, nor against a counted reject (`reject_stops_change`); if nobody rejects, it moves them at the end of the wait (below, the offline member). It restates `Settled_Old` |
+| `reject_stops_change` | all-traces | **K3b:** a reject an honest member writes before the proposal settles stops it (for `rk_remove(x)`, a member other than `x`). It restates `Not_Rejected` |
+| `read_change_was_logged` | all-traces, helper | Every proposal that is followed was written to the log first |
+| `read_change_settled` | all-traces, helper | Every proposal that is followed settled first (`Old`) |
+| `earlier_proposal_must_be_rejected` | all-traces | The first writer wins: a reader follows a proposal only if every proposal written before it against the same period was voided by a counted reject; a live earlier proposal (the thief's) is never skipped |
+| `no_split_change` | all-traces | Two readers do not follow different changes in a period, whatever the stolen device or the phrase thief writes. Written for `#i < #j`: the other order is the same lemma with the names swapped, and the same moment is a single rule that carries a single `ReadChange` |
+| `rk_remove_needs_staying_device` | all-traces | **P7, `rk_remove`:** if the staying member `b` is an honest device, a reader follows `rk_remove(x)` only if the owner wrote it or `b`'s `AK` leaked too (phone and phrase together, outside P7) |
+| `contact_not_moved_by_phrase_alone` | all-traces | A4a's P7 lemma holds with the new rules too |
 
-`no_split_change` ve `rk_remove_needs_staying_device` kuralları yeniden
-ifade etmez; okuyucu kurallarının birlikte sonucudur. Ötekiler A4a'daki
-gibi okuyucu kurallarını ifade eder.
+`no_split_change` and `rk_remove_needs_staying_device` do not restate rules;
+they are the combined consequence of the reader rules. The others express
+reader rules as in A4a.
 
-### Mutant sınamaları
+### Mutant checks
 
-| Mutant | Bozulan denetim | Beklenen saldırı |
+| Mutant | Broken check | Expected attack |
 | --- | --- | --- |
-| `strict_immediate_accept` | Okuyucu tek imzalı `çıkar`ı varsayılan moddaki gibi hemen izler | Değişiklik beklemeden izlenir (`no_change_without_wait`'in değillemesi) |
-| `proposal_without_wait` | Okuyucu öneriyi oturmadan izler | Öneri beklemeden izlenir |
-| `veto_ignored` | Okuyucu zamanında yazılmış reddi saymaz | Reddedilen öneri izlenir |
-| `rk_remove_by_phrase_alone` | `rk_çıkar` yalnızca `RK` ister | Yalnızca ifadeyle bir cihaz çıkarılır |
-| `changes_not_a_fork` | Okuyucu dönemin öbür önerilerine bakmaz | İki okuyucu farklı değişiklikleri izler |
-| `exemption_only_in_veto` | `Change_Single` `x`'in kendi `rk_çıkar(x)` reddini sayar, `Not_Rejected` saymaz | İki okuyucu farklı değişiklikleri izler: iki kısıtın "sayılan red" tanımı aynı olmalı |
+| `strict_immediate_accept` | The reader follows a single-signature `remove` at once, as in the default mode | The change is followed without waiting (the negation of `no_change_without_wait`) |
+| `proposal_without_wait` | The reader follows a proposal before it settles | The proposal is followed without waiting |
+| `veto_ignored` | The reader does not count a reject written in time | The rejected proposal is followed |
+| `rk_remove_by_phrase_alone` | `rk_remove` needs only `RK` | A device is removed with the phrase alone |
+| `changes_not_a_fork` | The reader does not look at the period's other proposals | Two readers follow different changes |
+| `exemption_only_in_veto` | `Change_Single` counts `x`'s own reject of `rk_remove(x)`, `Not_Rejected` does not | Two readers follow different changes: the two restrictions must define "counted reject" the same way |
 
-### Henüz kanıtlanmayanlar
+### Not proven yet
 
-- **Telefon ve ifade birlikte çalınırsa** sıkı mod da güvence vermez:
-  hırsız elindeki cihazın `AK`'si ve ifadeyle `rk_çıkar` yazıp sahibin
-  cihazını çıkarabilir. `hesap.md` bunu P7 dışı bırakır; çıkış yolu
-  yeniden eşleşmedir.
-- **Hizmet engelleme:** kilidi açık çalınmış bir cihaz her `AK`
-  önerisini reddedebilir ve sürekli yeni öneri yazabilir; sahip her birini
-  bekleme içinde reddetmek zorundadır, yoksa ondan önce yazılmış canlı
-  bir öneri sahibin `rk_çıkar`'ını durdurur (ya da kendisi kazanır). İfade hırsızı da ikinci bir kurtarma
-  önerisiyle aynı şeyi yapabilir. Güvenliği bozmaz, sahibi bekletir:
-  A4c ve A5.
-- **Çevrimdışı üye:** bir öneriyi reddetmek için üyenin bekleme içinde
-  çevrimiçi olması gerekir. Sahibin cihazı 72 saat çevrimdışıyken hırsızın
-  `çıkar(d)` önerisi geçer; bu sıkı modun tasarımıdır (A4a'daki gibi
-  cihazlar günlüğü görür varsayımı).
-- **Sansür:** tanıklar sunucuyla birlikte sahibin reddini sansürlerse
-  kişiler 72 saat sonra hırsızın önerisini izler. Kişiler `AK` önerileri
-  için kelime karşılaştırmaz. Modelin günlüğü tek ve sansürsüzdür (A2
-  varsayımı); cihaz çıkaran öneriler için kelimeleri istemek A4d'de
-  tartışılacak.
-- **Geç red ve sonrası:** öneriyi izlemiş bir okuyucu sonradan gelen bir
-  reddi saymaz (red süreli). İki ve daha çok üyeli halkalar, `ilke`
-  değişikliği ve öneri izlendikten sonraki halka: A4c ve aşama C.
+- **If the phone and the phrase are stolen together,** strict mode gives no
+  assurance either: the thief can write `rk_remove` with the `AK` of the
+  device in hand and the phrase, and remove the owner's device. `hesap.md`
+  leaves this outside P7; the way out is pairing again.
+- **Denial of service:** a device stolen unlocked can reject every `AK`
+  proposal and keep writing new proposals; the owner has to reject each one
+  within the wait, or else a live proposal written before the owner's
+  `rk_remove` stops it (or wins itself). The phrase thief can do the same
+  with a second recovery proposal. It does not break security, it makes
+  the owner wait: A4c and A5.
+- **Offline member:** to reject a proposal, the member has to be online
+  within the wait. While the owner's device is offline for 72 hours, the
+  thief's `remove(d)` proposal goes through; this is how strict mode is
+  designed (with the assumption, as in A4a, that devices see the log).
+- **Censorship:** if the witnesses censor the owner's reject together with
+  the server, contacts follow the thief's proposal after 72 hours. Contacts
+  do not compare words for `AK` proposals. The model's log is single and
+  uncensored (A2 assumption); asking for the words for proposals that
+  remove a device will be discussed in A4d.
+- **A late reject and what follows:** a reader that has followed a
+  proposal does not count a reject that comes later (a reject is
+  time-bound). Rings with two or more members, a `policy` change and the
+  ring after a proposal is followed: A4c and stage C.
 
-### Tasarıma geri bildirim (A4d'de `hesap.md`'ye işlenecek)
+### Feedback to the design (to be written into `hesap.md` in A4d)
 
-- Sıkı modda her değişiklik üyelik dönemine karşı bir öneridir, kendi
-  günlük anahtarı vardır, başın anahtarıyla yarışmaz; dönem başına tek
-  değişiklik izlenir ve ilk yazan kazanır: izlenen öneriden **önce
-  günlüğe giren** (bekleme herkes için aynı olduğundan: önce oturan) her
-  öneri sayılan bir redle geçersiz kılınmış olmalıdır
-  (`earlier_proposal_must_be_rejected`); sonra gelenler ona karşı
-  sayılmaz, ona kaybeder. Yoksa eski bir döneme hâlâ yazabilen biri (çıkarılan
-  cihazın `AK`'si elindeki hırsız) geç okuyan kişilerin değişikliği hiç
-  izlememesini sağlar (`sanity_late_proposal_does_not_block`).
-- `hesap.md` kural 5'ten ayrılış: kural 5'e göre kurtarma kaydı çatal açmaz
-  ve cihaz kaydı önceliklidir. Sıkı modda kurtarma da bir öneridir ve aynı
-  sıraya girer: aynı dönemde ondan önce yazılmış canlı bir `AK` önerisi
-  onu durdurur, sonra yazılmış bir `AK` önerisi ona kaybeder. Kural 5 sıkı
-  mod için bu biçimde yazılmalı.
-- Red hedeflidir (öneriyi özetiyle adlandırır), ancak öneri oturmadan
-  günlüğe girmişse sayılır ve yalnızca o öneriyi geçersiz kılar.
-  `bekleyen_reddi` ile `kurtarma_reddi` ayrı tutulmalı ya da tek kayıtsa
-  `RK`'yi geçersiz kılma kuralı hedefe göre ayrılmalı: `rk_çıkar(x)`'in
-  hedefi `x`'in reddi `RK`'yi hiçbir zaman geçersiz kılmamalı.
-- "Çalınan cihaz `bekleyen_reddi` yazarsa yol `RK`'den geçer"in kesin
-  tanımı: `rk_çıkar(x)`, `RK` ve kalan üyenin `AK` imzasını taşıyan,
-  bekleyen, `x` dışındaki üyelerin reddedebildiği öneri. Yalnızca ifade
-  yetmez.
-- K3b'ye eklenmeli: kişi, `x` dışındaki bir üyenin zamanında reddettiği
-  `rk_çıkar(x)`'i izlemez; dönemin canlı iki önerisinden hiçbirini izlemez.
-- Gerçek okuyucu reddin "oturmadan önce" günlüğe girdiğini tanık
-  zamanıyla ölçer (A5).
+- In strict mode every change is a proposal against the membership period,
+  has its own log key and does not race with the head's key; one change
+  per period is followed and the first writer wins: every proposal that
+  **entered the log before** the followed proposal (because the wait is the
+  same for everyone: that settled before it) must have been voided by a
+  counted reject (`earlier_proposal_must_be_rejected`); the ones that come
+  later do not count against it and lose to it. Otherwise someone who can
+  still write to an old period (a thief holding the removed device's `AK`)
+  can make late-reading contacts never follow the change
+  (`sanity_late_proposal_does_not_block`).
+- A departure from `hesap.md` rule 5: by rule 5 a recovery record does not
+  open a fork and the device record has priority. In strict mode a
+  recovery is a proposal too and joins the same queue: a live `AK`
+  proposal written before it in the same period stops it, and an `AK`
+  proposal written after it loses to it. Rule 5 should be written this way
+  for strict mode.
+- A reject is targeted (it names the proposal by its digest), counts only
+  if it entered the log before the proposal settled, and voids only that
+  proposal. `reject_pending` and `recovery_reject` should be kept separate,
+  or, if they are one record, the rule that voids `RK` should depend on the
+  target: a reject by `x`, the target of `rk_remove(x)`, must never void
+  `RK`.
+- The exact definition of "if the stolen device writes `reject_pending`,
+  the way goes through `RK`": `rk_remove(x)` is a pending proposal that
+  carries `RK` and the staying member's `AK` signature and that members
+  other than `x` can reject. The phrase alone is not enough.
+- To add to K3b: a contact does not follow an `rk_remove(x)` that a member
+  other than `x` rejected in time; it follows neither of two live proposals
+  of the period.
+- A real reader measures that a reject entered the log "before settling"
+  with witness time (A5).

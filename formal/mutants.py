@@ -626,7 +626,7 @@ lemma attack [heuristic=c]:
     },
     {
         "name": "rk_remove_by_phrase_alone",
-        "why": "rk_çıkar needs only RK, so the phrase alone removes an honest device",
+        "why": "rk_remove needs only RK, so the phrase alone removes an honest device",
         "model": STRICT,
         "edits": [
             ("Log_Write_RKR staying member's AK",
@@ -652,7 +652,7 @@ lemma attack [heuristic=c]:
     },
     {
         "name": "exemption_only_in_veto",
-        "why": "Change_Single counts x's own reject of rk_çıkar(x) while Not_Rejected exempts it, so readers split",
+        "why": "Change_Single counts x's own reject of rk_remove(x) while Not_Rejected exempts it, so readers split",
         "model": STRICT,
         "edits": [
             ("Change_Single exemption",
