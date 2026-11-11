@@ -256,9 +256,9 @@ pub fn stop_all() {
         }
         let pending = session.offer.lock().ok().and_then(|mut o| o.take());
         if let Some(offer) = pending {
-            RUNTIME.spawn(TRANSFERS.track(async move {
+            TRANSFERS.spawn(&RUNTIME, async move {
                 let _ = offer.decline().await;
-            }));
+            });
         }
     }
 }
@@ -470,9 +470,9 @@ impl qobject::Transfer {
             .ok()
             .and_then(|mut o| o.take());
         if let Some(offer) = left {
-            RUNTIME.spawn(TRANSFERS.track(async move {
+            TRANSFERS.spawn(&RUNTIME, async move {
                 let _ = offer.decline().await;
-            }));
+            });
         }
         self.as_mut().set_side(side);
         self.as_mut().set_code(QString::default());
@@ -561,7 +561,7 @@ impl qobject::Transfer {
 
     /// Run `fut` on the runtime, counted so quitting waits for it (#433).
     fn spawn(&self, fut: impl std::future::Future<Output = ()> + Send + 'static) {
-        RUNTIME.spawn(TRANSFERS.track(fut));
+        TRANSFERS.spawn(&RUNTIME, fut);
     }
 
     fn opts_server(&self) -> String {
@@ -850,9 +850,9 @@ impl qobject::Transfer {
             return;
         };
         self.as_mut().set_stage(Stage::Declined);
-        RUNTIME.spawn(TRANSFERS.track(async move {
+        TRANSFERS.spawn(&RUNTIME, async move {
             let _ = offer.decline().await;
-        }));
+        });
     }
 
     fn cancel(mut self: Pin<&mut Self>) {
@@ -871,9 +871,9 @@ impl qobject::Transfer {
             .ok()
             .and_then(|mut o| o.take());
         if let Some(offer) = pending {
-            RUNTIME.spawn(TRANSFERS.track(async move {
+            TRANSFERS.spawn(&RUNTIME, async move {
                 let _ = offer.decline().await;
-            }));
+            });
         }
         // A received text is kept no longer than it is on screen.
         self.as_mut().set_received_text(QString::default());
