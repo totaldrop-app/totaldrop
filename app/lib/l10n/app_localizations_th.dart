@@ -498,7 +498,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get linkBusy =>
-      'ยังมีการโอนที่กำลังดำเนินอยู่ รอให้เสร็จหรือหยุดก่อน แล้วเปิดลิงก์อีกครั้ง';
+      'ทำสิ่งที่อยู่บนหน้าจอให้เสร็จหรือหยุดก่อน แล้วเปิดลิงก์อีกครั้ง';
 
   @override
   String shareSkipped(int count) {

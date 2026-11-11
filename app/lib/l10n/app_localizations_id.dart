@@ -504,7 +504,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get linkBusy =>
-      'Masih ada transfer yang berjalan. Tunggu sampai selesai atau hentikan, lalu buka tautannya lagi.';
+      'Selesaikan atau hentikan apa yang ada di layar, lalu buka tautannya lagi.';
 
   @override
   String shareSkipped(int count) {

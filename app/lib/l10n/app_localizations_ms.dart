@@ -507,7 +507,7 @@ class AppLocalizationsMs extends AppLocalizations {
 
   @override
   String get linkBusy =>
-      'Pemindahan masih berjalan. Tunggu sehingga selesai atau hentikannya, kemudian buka pautan itu semula.';
+      'Selesaikan atau hentikan apa yang ada pada skrin, kemudian buka pautan itu semula.';
 
   @override
   String shareSkipped(int count) {

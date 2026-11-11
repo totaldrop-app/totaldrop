@@ -476,7 +476,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get shareBusy => '仍有传输正在进行。请等待其完成或将其停止，然后再分享。';
 
   @override
-  String get linkBusy => '仍有传输正在进行。请等待其完成或将其停止，然后再次打开链接。';
+  String get linkBusy => '请先完成或停止屏幕上的操作，然后再次打开链接。';
 
   @override
   String shareSkipped(int count) {
@@ -1102,7 +1102,7 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get shareBusy => '仍有传输正在进行。请等待其完成或将其停止，然后再分享。';
 
   @override
-  String get linkBusy => '仍有传输正在进行。请等待其完成或将其停止，然后再次打开链接。';
+  String get linkBusy => '请先完成或停止屏幕上的操作，然后再次打开链接。';
 
   @override
   String shareSkipped(int count) {
@@ -1727,7 +1727,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get shareBusy => '仍有傳輸正在進行。請等待其完成或將其停止，然後再分享。';
 
   @override
-  String get linkBusy => '仍有傳輸正在進行。請等待其完成或將其停止，然後再次開啟連結。';
+  String get linkBusy => '請先完成或停止螢幕上的操作，然後再次開啟連結。';
 
   @override
   String shareSkipped(int count) {

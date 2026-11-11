@@ -502,7 +502,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get linkBusy =>
-      'Vẫn còn một lần truyền đang chạy. Hãy chờ nó xong hoặc dừng nó, rồi mở lại liên kết.';
+      'Hãy hoàn tất hoặc dừng nội dung trên màn hình, rồi mở lại liên kết.';
 
   @override
   String shareSkipped(int count) {

@@ -950,10 +950,10 @@ abstract class AppLocalizations {
   /// **'A transfer is still running. Wait for it to finish or stop it, then share again.'**
   String get shareBusy;
 
-  /// Android: shown when a TotalDrop link (totaldrop://r/…) opens the app while a send or receive is still running; the link's code is not filled in
+  /// Android: shown when a TotalDrop link (totaldrop://r/…) opens the app while Receive cannot take a new code: a send or receive is running, an offer waits for an answer, or a received text is shown. The screen it refers to is shown; the link's code is not filled in
   ///
   /// In en, this message translates to:
-  /// **'A transfer is still running. Wait for it to finish or stop it, then open the link again.'**
+  /// **'Finish or stop what is on the screen, then open the link again.'**
   String get linkBusy;
 
   /// Android: shown when some of the items another app shared to TotalDrop could not be read (no read permission, or the app's own files) and were left out; the rest were added

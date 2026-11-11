@@ -524,7 +524,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get linkBusy =>
-      'لا يزال هناك نقل جارٍ. انتظر حتى ينتهي أو أوقفه، ثم افتح الرابط مرة أخرى.';
+      'أنهِ ما على الشاشة أو أوقفه، ثم افتح الرابط مرة أخرى.';
 
   @override
   String shareSkipped(int count) {

@@ -528,7 +528,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get linkBusy =>
-      'Przesyłanie wciąż trwa. Poczekaj, aż się skończy, lub je zatrzymaj, a potem otwórz link ponownie.';
+      'Dokończ lub zatrzymaj to, co jest na ekranie, a potem otwórz link ponownie.';
 
   @override
   String shareSkipped(int count) {

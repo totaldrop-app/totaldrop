@@ -504,7 +504,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get linkBusy =>
-      'Bir aktarım hâlâ sürüyor. Bitmesini bekleyin ya da durdurun, sonra bağlantıyı yeniden açın.';
+      'Önce ekrandakini bitirin ya da durdurun, sonra TotalDrop bağlantısını yeniden açın.';
 
   @override
   String shareSkipped(int count) {

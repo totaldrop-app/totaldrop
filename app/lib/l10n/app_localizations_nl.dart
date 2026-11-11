@@ -522,7 +522,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get linkBusy =>
-      'Er loopt nog een overdracht. Wacht tot die klaar is of stop hem, en open de link dan opnieuw.';
+      'Rond af of stop wat op het scherm staat en open de link dan opnieuw.';
 
   @override
   String shareSkipped(int count) {

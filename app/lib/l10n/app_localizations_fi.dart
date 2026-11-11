@@ -519,7 +519,7 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String get linkBusy =>
-      'Siirto on yhä käynnissä. Odota, että se valmistuu, tai pysäytä se ja avaa linkki sitten uudelleen.';
+      'Vie loppuun tai pysäytä se, mikä on näytöllä, ja avaa linkki sitten uudelleen.';
 
   @override
   String shareSkipped(int count) {
