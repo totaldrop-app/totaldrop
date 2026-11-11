@@ -35,7 +35,11 @@ built.
 - **Download links** change with every release, in every language; check
   each link after the change.
 
-## Craft (recommended practice, not yet in `docs/tasarim.md`)
+## Craft
+
+RTL mirroring, LTR codes and light/dark come from `docs/tasarim.md`; the
+other numbers here (320 px, 44 px, Web Vitals budgets) are recommended
+practice, not yet written there.
 
 - Design tokens in `:root`; light and dark with `prefers-color-scheme`; no
   hard-coded colours in components. WCAG AA contrast; colour never the only
