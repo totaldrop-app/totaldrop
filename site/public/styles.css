@@ -137,7 +137,29 @@ select.lang {
 /* Firefox colours the chosen and hovered option from its own sheet, which the rule
    above would override; keep that highlight in the theme's accent. */
 .lang option:checked { background-color: var(--accent); color: var(--on-accent); }
-@media (max-width: 40rem) { .top-nav a { display: none; } .top-nav-links { display: none; } }
+/* On a phone the header keeps one way forward: Download, as a round icon
+   button beside the language picker, its name still read out. The page
+   already open is not offered again. Brand, button and picker stay on one
+   line; a long language name gives way first (#477). */
+.nav-dl-icon { display: none; width: 1.375rem; height: 1.375rem; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+@media (max-width: 40rem) {
+  .top { flex-wrap: nowrap; gap: 0.75rem; }
+  .brand { flex: none; font-size: 1.3rem; gap: 0.5rem; }
+  .brand .mark { width: 1.75rem; height: 1.75rem; }
+  .top-nav { flex-wrap: nowrap; gap: 0.5rem; min-width: 0; }
+  .top-nav a { display: none; }
+  .top-nav a.nav-dl:not([aria-current]) {
+    display: inline-flex; align-items: center; justify-content: center; flex: none;
+    width: 2.75rem; height: 2.75rem; min-width: 44px; min-height: 44px; padding: 0; border: 1px solid var(--outline); border-radius: 999px; color: var(--text);
+  }
+  .nav-dl-icon { display: block; }
+  .nav-dl span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  select.lang { min-width: 0; text-overflow: ellipsis; padding-inline: 0.75rem 1.75rem; background-position: right 0.95rem center, right 0.65rem center; }
+  [dir="rtl"] select.lang { background-position: left 0.65rem center, left 0.95rem center; }
+  /* The privacy pages carry the language link in a second nav; keep both together. */
+  .top-nav-links { margin-inline-start: auto; }
+}
+@media (max-width: 22rem) { .brand { font-size: 1.15rem; } .brand .mark { width: 1.5rem; height: 1.5rem; } }
 
 /* Buttons: one filled per view, the rest outlined */
 .actions { display: flex; flex-wrap: wrap; gap: 0.75rem; }
@@ -196,6 +218,9 @@ select.lang {
 .hero-figure figcaption { color: var(--text-2); font-size: 0.975rem; }
 
 @media (max-width: 52rem) { .hero { grid-template-columns: minmax(0, 1fr); } .hero-mark { width: 16rem; } }
+/* On a phone the mark is smaller, so the code card follows the buttons on the
+   first screen; its motion and timing are unchanged (#477). */
+@media (max-width: 40rem) { .hero-figure { gap: var(--s16); } .hero-mark { width: 12rem; } }
 
 /* Content blocks */
 .block { max-width: var(--wrap); margin: 0 auto; padding: clamp(3rem, 7vw, 5.5rem) var(--gutter); border-top: 1px solid var(--rule); display: flex; flex-direction: column; gap: var(--s40); }
@@ -238,18 +263,24 @@ select.lang {
 .compare .no::before { content: "\2013"; }
 .compare .soon::before { content: "\25CB"; color: var(--accent); }
 .compare .col { display: none; }
-/* On a phone, the comparison becomes one block per question: each answer
-   says whose it is, instead of a table to scroll sideways. */
+/* On a phone, the comparison stays one screen tall: the three names head the
+   columns once, each question spans the width, and its three answers sit in
+   a row beneath it. Each answer still carries whose it is for screen readers
+   (.col), since a table drawn as a grid may lose its table semantics (#477). */
 @media (max-width: 40rem) {
-  .compare.cards, .compare.cards tbody, .compare.cards tr, .compare.cards th, .compare.cards td { display: block; }
-  .compare.cards { min-width: 0; }
+  .compare.cards { display: block; min-width: 0; font-size: 0.925rem; }
   .compare.cards caption { display: block; }
-  .compare.cards thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
-  .compare.cards tr { padding-block: var(--s16); border-bottom: 1px solid var(--rule); }
-  .compare.cards th, .compare.cards td { border: 0; padding: 0.2rem 0; }
-  .compare.cards .col { display: inline; font-weight: 700; color: var(--text); }
+  .compare.cards thead, .compare.cards tbody { display: block; }
+  .compare.cards tr { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: var(--s16); row-gap: 0.25rem; padding-block: 0.75rem; border-bottom: 1px solid var(--rule); }
+  .compare.cards thead tr { border-bottom-color: var(--outline); padding-block: 0 0.5rem; }
+  .compare.cards th, .compare.cards td { display: block; border: 0; padding: 0; hyphens: auto; overflow-wrap: break-word; }
+  .compare.cards thead th:first-child { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .compare.cards thead th { font-size: 0.975rem; }
+  .compare.cards tbody th { grid-column: 1 / -1; }
+  .compare.cards span::before { width: 1.1em; text-indent: 0; }
+  .compare.cards td { padding-inline-start: 1.1em; text-indent: -1.1em; }
+  .compare.cards .col { display: inline-block; position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .compare.cards .col::after { content: ":"; }
-  .compare.cards .is-us .col { color: var(--accent); }
 }
 
 .facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s40) 3rem; }
