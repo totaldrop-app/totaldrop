@@ -24,20 +24,17 @@ için [versioning.md](versioning.md) bağlayıcıdır.
    her doğruluk ya da güvenlik sorunu birleştirmeden önce düzeltilir;
    düzeltilmeyenler için gerekçe PR'a yazılır.
 
-   Buna ek olarak her PR'da GitHub Copilot'tan kod incelemesi istenir.
-   Ozan'ın hesabından açılan PR'ları (Claude oturumlarınınkiler dahil)
-   Copilot, taslak olsalar da kendiliğinden inceler; bu Ozan'ın hesap
-   ayarıdır, yeni push'lar otomatik incelenmez. Başkasının PR'ında ve bir
-   düzeltmeden sonra inceleme elle istenir (PR'ın "Reviewers" kutusunda
-   Copilot; Claude oturumları `request_copilot_review` ile). Copilot neye
+   Yalnızca belge ya da ayar değiştiren, kod içermeyen bir PR'da inceleme
+   ajanının yerine GitHub Copilot'un kod incelemesi istenir (PR'ın
+   "Reviewers" kutusunda Copilot; Claude oturumları
+   `request_copilot_review` ile). Kod, güvenlik, kriptografi ya da
+   protokol değiştiren PR'larda (CI iş akışları ve derleme tarifleri de
+   kod sayılır) ayrı inceleme ajanı çalışır. Copilot Ozan'ın aylık
+   kotasından harcadığı için her PR'da ve kendiliğinden istenmez. Neye
    bakacağını `.github/copilot-instructions.md`'den okur. Bulguları öteki
    inceleyicilerinkiyle aynı muamele görür: ya düzeltilir ya da gerekçesi
-   yanıt olarak yazılır. Yalnızca belge ya da ayar değiştiren, kod
-   içermeyen bir PR'da Copilot'un incelemesi yukarıdaki inceleme ajanının
-   yerine sayılır; kod, güvenlik, kriptografi ya da protokol değiştiren
-   PR'larda (CI iş akışları ve derleme tarifleri de kod sayılır) ayrı
-   inceleme ajanı yine çalışır. Copilot'un incelemesi hiçbir
-   PR'da bakımcı onayının yerini tutmaz; kural setinde sayılmaz (#467).
+   yanıt olarak yazılır. Copilot'un incelemesi hiçbir PR'da bakımcı
+   onayının yerini tutmaz; kural setinde sayılmaz (#467).
 6. **Birleştirme:** `main`'e yalnızca PR ile, rebase ile birleştirilir;
    geçmiş doğrusal kalır. Doğrudan push ve force push kapalıdır. `CI`
    kontrolü yeşil olmadan kural (`main`, kimse atlayamaz) birleştirmeye
