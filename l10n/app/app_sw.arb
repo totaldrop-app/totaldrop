@@ -140,7 +140,7 @@
   "transferNoticeReceiving": "Inapokea kwa TotalDrop",
   "transferNoticeBody": "Inaendelea unapotumia programu nyingine.",
   "shareBusy": "Uhamishaji bado unaendelea. Subiri umalizike au uusimamishe, kisha shiriki tena.",
-  "linkBusy": "Uhamishaji bado unaendelea. Subiri umalizike au uusimamishe, kisha fungua kiungo tena.",
+  "linkBusy": "Maliza au simamisha kilicho kwenye skrini, kisha fungua kiungo tena.",
   "shareSkipped": "{count, plural, =1{Kipengee kimoja kilichoshirikiwa hakikuweza kusomwa na kimeachwa.} other{Vipengee {count} vilivyoshirikiwa havikuweza kusomwa na vimeachwa.}}",
   "desktopGenericName": "Uhamishaji wa faili",
   "desktopComment": "Tuma faili moja kwa moja kwenye kifaa kingine, zimesimbwa mwanzo hadi mwisho",

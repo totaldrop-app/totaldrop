@@ -140,7 +140,7 @@
   "transferNoticeReceiving": "TotalDrop で受信中",
   "transferNoticeBody": "ほかのアプリを使っている間も続きます。",
   "shareBusy": "転送がまだ進行中です。完了を待つか停止してから、もう一度共有してください。",
-  "linkBusy": "転送がまだ進行中です。完了を待つか停止してから、もう一度リンクを開いてください。",
+  "linkBusy": "画面上の操作を完了するか停止してから、もう一度リンクを開いてください。",
   "shareSkipped": "{count, plural, =1{共有された1件の項目を読み取れなかったため、除外しました。} other{共有された{count}件の項目を読み取れなかったため、除外しました。}}",
   "desktopGenericName": "ファイル転送",
   "desktopComment": "ファイルを別のデバイスへ直接送信。エンドツーエンドで暗号化",

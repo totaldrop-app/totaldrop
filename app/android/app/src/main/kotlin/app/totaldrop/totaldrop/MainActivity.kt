@@ -91,9 +91,13 @@ class MainActivity : FlutterActivity() {
             ACTION_SHORTCUT_SEND -> launches.send(mapOf("screen" to "send"))
             ACTION_SHORTCUT_RECEIVE -> launches.send(mapOf("screen" to "receive"))
             ACTION_SHORTCUT_CLIPBOARD -> launches.send(mapOf("screen" to "clipboard"))
-            // A totaldrop:// link (#445): the Dart side reads the code out
-            // of it, strictly, through the Rust core.
-            Intent.ACTION_VIEW -> intent.dataString?.let { launches.send(mapOf("link" to it)) }
+            // A totaldrop://r/ link (#445): the Dart side reads the code out
+            // of it, strictly, through the Rust core. The activity is
+            // exported, so an explicit intent can skip the filter: only
+            // the filter's links are taken.
+            Intent.ACTION_VIEW -> intent.data
+                ?.takeIf { it.scheme == "totaldrop" && it.host == "r" }
+                ?.let { launches.send(mapOf("link" to it.toString())) }
             Intent.ACTION_SEND, Intent.ACTION_SEND_MULTIPLE -> takeShare(intent)
             // Text selected in another app, sent from its selection menu
             // (#326). Nothing is given back to that app.
