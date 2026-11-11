@@ -144,14 +144,14 @@
   "crates/totaldrop-cli/src/main.rs:664": [
     "Command::Receive { code, out, yes } => {"
   ],
-  "crates/totaldrop-cli/src/main.rs:671-693": [
+  "crates/totaldrop-cli/src/main.rs:674-696": [
     "match result {",
     "}"
   ],
-  "crates/totaldrop-cli/src/main.rs:699": [
+  "crates/totaldrop-cli/src/main.rs:702": [
     "fn detail_line(e: &totaldrop_core::Error) -> String {"
   ],
-  "crates/totaldrop-cli/src/main.rs:707": [
+  "crates/totaldrop-cli/src/main.rs:710": [
     "fn error_key(e: &totaldrop_core::Error, sending: bool) -> &'static str {"
   ],
   "crates/totaldrop-cli/tests/end_to_end.rs:28": [
@@ -163,7 +163,7 @@
   "crates/totaldrop-cli/tests/end_to_end.rs:79": [
     "if let Ok(url) = std::env::var(\"TOTALDROP_TEST_RELAY\") {"
   ],
-  "crates/totaldrop-core/Cargo.toml:22-23": [
+  "crates/totaldrop-core/Cargo.toml:23-24": [
     "totaldrop-crypto = { version = \"0.2.0-beta.5\", path = \"../totaldrop-crypto\" }",
     "totaldrop-proto = { version = \"0.2.0-beta.5\", path = \"../totaldrop-proto\" }"
   ],
@@ -173,59 +173,59 @@
   "crates/totaldrop-core/src/lib.rs:101": [
     "async fn own_hints("
   ],
-  "crates/totaldrop-core/src/lib.rs:157": [
+  "crates/totaldrop-core/src/lib.rs:154": [
     "pub struct PathOptions {"
   ],
-  "crates/totaldrop-core/src/lib.rs:167": [
+  "crates/totaldrop-core/src/lib.rs:164": [
     "pub relay_only: bool,"
   ],
-  "crates/totaldrop-core/src/lib.rs:234": [
+  "crates/totaldrop-core/src/lib.rs:231": [
     "fn receiver_relay<'a>(hints: &Hints, own: &'a PathOptions) -> Result<Option<&'a str>> {"
   ],
-  "crates/totaldrop-core/src/lib.rs:290": [
+  "crates/totaldrop-core/src/lib.rs:287": [
     "fn paths_to("
   ],
-  "crates/totaldrop-core/src/lib.rs:341": [
+  "crates/totaldrop-core/src/lib.rs:338": [
     "enum Keep {"
   ],
-  "crates/totaldrop-core/src/lib.rs:398": [
+  "crates/totaldrop-core/src/lib.rs:395": [
     "pub struct SendOptions {"
   ],
-  "crates/totaldrop-core/src/lib.rs:418": [
+  "crates/totaldrop-core/src/lib.rs:415": [
     "pub struct PreparedSend {"
   ],
-  "crates/totaldrop-core/src/lib.rs:437": [
+  "crates/totaldrop-core/src/lib.rs:434": [
     "pub async fn new(opts: &SendOptions, paths: Vec<PathBuf>) -> Result<Self> {"
   ],
-  "crates/totaldrop-core/src/lib.rs:448": [
+  "crates/totaldrop-core/src/lib.rs:445": [
     "pub async fn text(opts: &SendOptions, text: &str, name: &str) -> Result<Self> {"
   ],
-  "crates/totaldrop-core/src/lib.rs:453-464": [
+  "crates/totaldrop-core/src/lib.rs:450-461": [
     "async fn ready(",
     "rendezvous::Mailbox::claim(&opts.server, nameplate, Some(&allocation)).await?;"
   ],
   "crates/totaldrop-core/src/lib.rs:50": [
     "pub enum Event {"
   ],
-  "crates/totaldrop-core/src/lib.rs:504": [
+  "crates/totaldrop-core/src/lib.rs:501": [
     "pub async fn run_with(self, events: Events, stop: Stop) -> Result<SendReport> {"
   ],
-  "crates/totaldrop-core/src/lib.rs:599": [
+  "crates/totaldrop-core/src/lib.rs:596": [
     "pub struct ReceiveOptions {"
   ],
-  "crates/totaldrop-core/src/lib.rs:618": [
+  "crates/totaldrop-core/src/lib.rs:615": [
     "pub struct IncomingOffer {"
   ],
-  "crates/totaldrop-core/src/lib.rs:641": [
+  "crates/totaldrop-core/src/lib.rs:638": [
     "pub async fn connect_with(opts: &ReceiveOptions, code: &str, stop: &Stop) -> Result<Self> {"
   ],
-  "crates/totaldrop-core/src/lib.rs:664": [
+  "crates/totaldrop-core/src/lib.rs:661": [
     "pub async fn connect(opts: &ReceiveOptions, code: &str) -> Result<Self> {"
   ],
-  "crates/totaldrop-core/src/lib.rs:667": [
+  "crates/totaldrop-core/src/lib.rs:664": [
     "let mailbox = rendezvous::Mailbox::claim(&opts.server, code.nameplate(), None).await?;"
   ],
-  "crates/totaldrop-core/src/lib.rs:733": [
+  "crates/totaldrop-core/src/lib.rs:730": [
     "pub async fn accept_with("
   ],
   "crates/totaldrop-core/src/lib.rs:95": [
@@ -246,34 +246,36 @@
   "crates/totaldrop-core/src/pairing.rs:73": [
     "pub async fn exchange("
   ],
-  "crates/totaldrop-core/src/path.rs:102": [
+  "crates/totaldrop-core/src/path.rs:115": [
     "pub struct Fallback(Arc<FallbackState>);"
   ],
-  "crates/totaldrop-core/src/path.rs:85": [
+  "crates/totaldrop-core/src/path.rs:86": [
     "pub const FALLBACK_SILENCE: Duration = Duration::from_secs(8);"
   ],
-  "crates/totaldrop-core/src/portmap.rs:128": [
-    "pub async fn map(gateway: Gateway, port: u16) -> Option<Mapping> {"
+  "crates/totaldrop-core/src/portmap.rs:220": [
+    "/// answer (#425)."
   ],
-  "crates/totaldrop-core/src/portmap.rs:164-187": [
-    "let pmp_soon = pmp_try(RESEND);",
-    "},"
+  "crates/totaldrop-core/src/portmap.rs:288": [
+    "pub fn start(gateway: Gateway, port: u16) -> Asking {"
   ],
-  "crates/totaldrop-core/src/portmap.rs:45": [
+  "crates/totaldrop-core/src/portmap.rs:336": [
+    "pub async fn wait(mut self, grace: Duration) -> Option<Mapping> {"
+  ],
+  "crates/totaldrop-core/src/portmap.rs:58": [
     "pub enum Gateway {"
   ],
-  "crates/totaldrop-core/src/portmap.rs:45-54": [
+  "crates/totaldrop-core/src/portmap.rs:58-67": [
     "pub enum Gateway {",
     "At(SocketAddr),"
   ],
-  "crates/totaldrop-core/src/relay.rs:103": [
+  "crates/totaldrop-core/src/relay.rs:106": [
     "pub async fn discover(socket: &UdpSocket, server: &str) -> Vec<SocketAddr> {"
   ],
-  "crates/totaldrop-core/src/relay.rs:299": [
+  "crates/totaldrop-core/src/relay.rs:302": [
     "pub fn spawn("
   ],
-  "crates/totaldrop-core/src/relay.rs:573": [
-    "_ = ping.tick() => {"
+  "crates/totaldrop-core/src/relay.rs:438": [
+    "async fn ping_within(ws: &mut crate::rendezvous::Ws, wait: Duration) -> Result<bool> {"
   ],
   "crates/totaldrop-core/src/rendezvous.rs:175": [
     "pub async fn allocate(server: &str) -> Result<Allocation> {"
@@ -430,8 +432,8 @@
     "totaldrop-core = { version = \"0.2.0-beta.5\", path = \"../crates/totaldrop-core\" }",
     "totaldrop-l10n = { version = \"0.2.0-beta.5\", path = \"../crates/totaldrop-l10n\" }"
   ],
-  "linux/qml/ResultPanel.qml:132": [
-    "onClicked: Qt.openUrlExternally(\"file://\" + r.folder)"
+  "linux/qml/ResultPanel.qml:135": [
+    "onClicked: Qt.openUrlExternally(r.folderUrl)"
   ],
   "linux/src/bridge/stage.rs:101": [
     "pub enum Role {"
@@ -443,31 +445,31 @@
     "#[qproperty(QString, state, READ, NOTIFY)]",
     "#[qproperty(i32, offer_files, cxx_name = \"offerFiles\")]"
   ],
-  "linux/src/bridge/transfer.rs:596": [
+  "linux/src/bridge/transfer.rs:600": [
     "fn start_send(mut self: Pin<&mut Self>, source: Source, strong: bool) {"
   ],
-  "linux/src/bridge/transfer.rs:613": [
+  "linux/src/bridge/transfer.rs:617": [
     "Source::Paths(paths) => PreparedSend::new(&opts, paths.clone()).await,"
   ],
-  "linux/src/bridge/transfer.rs:649": [
+  "linux/src/bridge/transfer.rs:653": [
     ".run_with(Self::events(thread.clone(), g), stop)"
   ],
-  "linux/src/bridge/transfer.rs:667": [
+  "linux/src/bridge/transfer.rs:671": [
     "fn receive(mut self: Pin<&mut Self>, code: &QString) {"
   ],
-  "linux/src/bridge/transfer.rs:678": [
+  "linux/src/bridge/transfer.rs:682": [
     "match IncomingOffer::connect_with(&opts, &code, &stop).await {"
   ],
-  "linux/src/bridge/transfer.rs:750": [
+  "linux/src/bridge/transfer.rs:754": [
     ".accept_with(&dest, Self::events(thread.clone(), g), &stop)"
   ],
-  "linux/src/instance.rs:543": [
+  "linux/src/instance.rs:528": [
     "let token = std::env::var(\"XDG_ACTIVATION_TOKEN\").ok();"
   ],
-  "linux/src/instance.rs:547": [
+  "linux/src/instance.rs:532": [
     "let startup = std::env::var(\"DESKTOP_STARTUP_ID\").ok();"
   ],
-  "linux/src/instance.rs:659": [
+  "linux/src/instance.rs:644": [
     "std::env::var_os(\"CI\").is_none(),"
   ],
   "linux/src/main.rs:55-58": [
@@ -506,33 +508,33 @@
     "desktop: var(\"XDG_CURRENT_DESKTOP\"),",
     "omarchy: omarchy::theme_dir().is_some(),"
   ],
+  "server/relay-worker/src/count.ts:36": [
+    "export function noteGiven(att: Counted, after: number): boolean {"
+  ],
   "server/relay-worker/src/index.ts:27": [
     "async fetch(request: Request, env: Env): Promise<Response> {"
   ],
   "server/relay-worker/src/index.ts:36": [
     "return env.PAIR.getByName(name).fetch(request);"
   ],
-  "server/relay-worker/src/pair.ts:108-111": [
+  "server/relay-worker/src/pair.ts:113-116": [
     "async function verify(key: Uint8Array, signature: Uint8Array, message: Uint8Array): Promise<boolean> {",
     "return await crypto.subtle.verify({ name: \"Ed25519\" }, k, signature, message);"
   ],
-  "server/relay-worker/src/pair.ts:164": [
+  "server/relay-worker/src/pair.ts:173": [
     "async fetch(request: Request): Promise<Response> {"
   ],
-  "server/relay-worker/src/pair.ts:185": [
+  "server/relay-worker/src/pair.ts:194": [
     "async webSocketMessage(ws: WebSocket, data: string | ArrayBuffer): Promise<void> {"
   ],
-  "server/relay-worker/src/pair.ts:270": [
-    "given = att?.given === undefined ? 0 : att.given + PROBE_STEP;"
-  ],
-  "server/relay-worker/src/pair.ts:381-400": [
+  "server/relay-worker/src/pair.ts:392-411": [
     "if (next === Infinity) await this.ctx.storage.deleteAlarm();",
     "if (next !== Infinity) await this.ctx.storage.setAlarm(next);"
   ],
-  "server/relay-worker/src/pair.ts:386": [
+  "server/relay-worker/src/pair.ts:397": [
     "async alarm(): Promise<void> {"
   ],
-  "server/relay-worker/src/pair.ts:59-77": [
+  "server/relay-worker/src/pair.ts:62-82": [
     "interface Attachment {",
     "}"
   ],
@@ -638,14 +640,14 @@
     "let mut args = std::env::args().skip(1);",
     ") else {"
   ],
-  "server/totaldrop-rendezvous/Cargo.toml:17": [
+  "server/totaldrop-rendezvous/Cargo.toml:20": [
     "totaldrop-proto = { version = \"0.2.0-beta.5\", path = \"../../crates/totaldrop-proto\" }"
   ],
-  "server/totaldrop-rendezvous/src/lib.rs:224-227": [
+  "server/totaldrop-rendezvous/src/lib.rs:236-239": [
     "struct State {",
     "cooling: HashMap<u32, Instant>,"
   ],
-  "server/totaldrop-rendezvous/src/lib.rs:331": [
+  "server/totaldrop-rendezvous/src/lib.rs:343": [
     "pub async fn serve(self, listener: TcpListener) {"
   ],
   "server/totaldrop-rendezvous/src/lib.rs:47": [
