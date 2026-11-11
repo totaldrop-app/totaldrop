@@ -285,7 +285,15 @@ fn run_then_release<T: Send + 'static>(
     work: impl std::future::Future<Output = T> + Send + 'static,
     release: impl std::future::Future<Output = ()>,
 ) -> Ran<T> {
-    let ran = Ok(runtime.block_on(work));
+    // As a task, a panic unwinds only the task: its locals drop while the
+    // runtime runs, and the panic comes back as a value.
+    let ran = runtime
+        .block_on(runtime.spawn(work))
+        .map_err(|e| match e.try_into_panic() {
+            Ok(panic) => panic,
+            // Not cancelled by anyone; kept as a panic so it is not lost.
+            Err(e) => Box::new(e.to_string()),
+        });
     runtime.block_on(release);
     ran
 }
@@ -676,16 +684,30 @@ fn main() -> ExitCode {
             &mut std::io::stdin().lock(),
             std::io::stdin().is_terminal(),
         ) {
-            Ok(what) => runtime.block_on(send(strings, server(cli.server), route, what, strong)),
-            Err(e) => Err(e),
+            // A port the router opened over UPnP is closed with an HTTP
+            // request, which dies with the runtime; wait for it, briefly
+            // (#406), also after a panic (#433).
+            Ok(what) => run_then_release(
+                &runtime,
+                send(strings, server(cli.server), route, what, strong),
+                totaldrop_core::portmap::released(),
+            ),
+            Err(e) => Ok(Err(e)),
         },
-        Command::Receive { code, out, yes } => {
-            runtime.block_on(receive(strings, server(cli.server), route, code, out, yes))
+        Command::Receive { code, out, yes } => run_then_release(
+            &runtime,
+            receive(strings, server(cli.server), route, code, out, yes),
+            totaldrop_core::portmap::released(),
+        ),
+    };
+    let result = match result {
+        Ok(result) => result,
+        Err(panic) => {
+            // The panic hook has printed the message already.
+            runtime.shutdown_background();
+            std::panic::resume_unwind(panic);
         }
     };
-    // A port the router opened over UPnP is closed with an HTTP request,
-    // which dies with the runtime; wait for it, briefly (#406).
-    runtime.block_on(totaldrop_core::portmap::released());
     // A question still waiting for a line on stdin, or hashing a stopped
     // send left running, must not keep the process alive.
     runtime.shutdown_background();
@@ -786,6 +808,7 @@ mod tests {
     /// on the runtime, as a UPnP mapping does; the release step must see
     /// it finish, and the panic comes back to the caller.
     #[test]
+    #[allow(clippy::panic)]
     fn a_panic_in_the_work_still_releases_what_it_held() {
         use std::sync::Arc;
         use std::sync::atomic::{AtomicBool, Ordering};
