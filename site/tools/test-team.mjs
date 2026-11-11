@@ -6,7 +6,7 @@
 //   node --test site/tools/test-team.mjs
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, readdirSync, rmSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -141,40 +141,30 @@ test("team.json rejects a bio that is bad, untranslated or on a non-person (#408
   assert.match(errs((c) => { person(c, "claude").bio = "x"; }), /claude: only people have a bio/);
 });
 
-test("team.json donate is true, and only on a person (#486)", async () => {
+test("team.json coffee is a page name, and only on a person (#486)", async () => {
   const { configErrors } = await import("./team.mjs");
   const orig = JSON.parse(readFileSync(new URL("../team/team.json", import.meta.url), "utf8"));
   const errs = (edit) => { const c = structuredClone(orig); edit(c); return configErrors(c).join("\n"); };
   const person = (c, login) => c.people.find((p) => p.login === login);
-  assert.equal(errs((c) => { person(c, "sadikkuzu").donate = true; }), "");
-  assert.match(errs((c) => { person(c, "ozdil").donate = "https://example.com/"; }), /ozdil: donate must be true/);
-  assert.match(errs((c) => { person(c, "ozdil").donate = false; }), /ozdil: donate must be true/);
-  assert.match(errs((c) => { person(c, "claude").donate = true; }), /claude: only people have a donate link/);
+  assert.equal(errs((c) => { person(c, "sadikkuzu").coffee = "sadik_kuzu-1"; }), "");
+  for (const bad of ["", "a/b", "x?y", "https://buymeacoffee.com/ozdil", "a".repeat(65), true])
+    assert.match(errs((c) => { person(c, "ozdil").coffee = bad; }), /ozdil: bad coffee page/, JSON.stringify(bad));
+  assert.match(errs((c) => { person(c, "claude").coffee = "x"; }), /claude: only people have a coffee page/);
 });
 
-test("the donate link is a round icon link to /donate/, named by the foot.donate key (#486)", async () => {
-  const { donateLink } = await import("./team.mjs");
-  const html = donateLink();
-  assert.match(html, /^<li><a class="icon-link" href="\/donate\/">/);
+test("the coffee link is a round icon link to the person's Buy Me a Coffee page, named like the GitHub link (#486)", async () => {
+  const { coffeeLink } = await import("./team.mjs");
+  const html = coffeeLink("ozdil");
+  assert.match(html, /^<li><a class="icon-link" href="https:\/\/buymeacoffee\.com\/ozdil">/);
   assert.match(html, /<svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"/);
-  assert.match(html, /<span class="visually-hidden" data-i18n="foot\.donate">Donate<\/span><\/a><\/li>$/);
+  assert.match(html, /<span class="visually-hidden">Buy Me a Coffee: <bdi>ozdil<\/bdi><\/span><\/a><\/li>$/);
 });
 
-test("only a person with donate: true gets the donate button on their card (#486)", async () => {
-  const { cardLinks, donateLink } = await import("./team.mjs");
+test("only a person with a coffee page gets the coffee button on their card, last (#486)", async () => {
+  const { cardLinks, coffeeLink } = await import("./team.mjs");
   const pr = { website: null };
-  assert.ok(cardLinks({ login: "a", donate: true }, pr).includes(donateLink()));
-  assert.ok(!cardLinks({ login: "b" }, pr).includes(donateLink()));
-  assert.equal(cardLinks({ login: "a", donate: true }, pr).at(-1), donateLink());
-  assert.equal(cardLinks({ login: "c", donate: true }, { website: "https://example.com" }).length, 3);
-});
-
-test("foot.donate, the donate button's name, is translated in every language file (#486)", () => {
-  const dir = new URL("../public/i18n/", import.meta.url);
-  const files = readdirSync(dir).filter((f) => f.endsWith(".json"));
-  assert.equal(files.length, 35);
-  for (const f of files) {
-    const t = JSON.parse(readFileSync(new URL(f, dir), "utf8"))["foot.donate"];
-    assert.ok(typeof t === "string" && t.trim() !== "", `${f}: foot.donate`);
-  }
+  assert.ok(cardLinks({ login: "a", coffee: "a" }, pr).includes(coffeeLink("a")));
+  assert.ok(!cardLinks({ login: "b" }, pr).some((l) => l.includes("buymeacoffee")));
+  assert.equal(cardLinks({ login: "a", coffee: "a" }, pr).at(-1), coffeeLink("a"));
+  assert.equal(cardLinks({ login: "c", coffee: "c" }, { website: "https://example.com" }).length, 3);
 });
