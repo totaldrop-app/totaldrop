@@ -272,6 +272,24 @@ fn stop_on_ctrl_c(s: &Arc<Strings>) -> Stop {
     stop
 }
 
+/// The outcome of [`run_then_release`]: the work's result, or the panic
+/// it ended with.
+type Ran<T> = Result<T, Box<dyn std::any::Any + Send>>;
+
+/// Run `work`, then `release`, on `runtime`. `release` runs also when
+/// `work` panics: what the work held (a router port, #433) is dropped and
+/// its release sent while the runtime still runs. The caller resumes the
+/// panic afterwards.
+fn run_then_release<T: Send + 'static>(
+    runtime: &tokio::runtime::Runtime,
+    work: impl std::future::Future<Output = T> + Send + 'static,
+    release: impl std::future::Future<Output = ()>,
+) -> Ran<T> {
+    let ran = Ok(runtime.block_on(work));
+    runtime.block_on(release);
+    ran
+}
+
 /// What a send sends: files, or a text (#313).
 enum What {
     Files(Vec<PathBuf>),
@@ -757,11 +775,64 @@ mod tests {
 
     use super::{
         ARG_HELP, COMMAND_HELP, What, ask, connecting_line, detail_line, error_key, help,
-        shown_text, what_to_send,
+        run_then_release, shown_text, what_to_send,
     };
     use totaldrop_core::Error;
     use totaldrop_l10n::{Domain, Strings};
     use totaldrop_proto::wire::RejectReason;
+
+    /// A panic in a send or receive must not skip the release of a router
+    /// port (#433). The work holds something whose drop starts a release
+    /// on the runtime, as a UPnP mapping does; the release step must see
+    /// it finish, and the panic comes back to the caller.
+    #[test]
+    fn a_panic_in_the_work_still_releases_what_it_held() {
+        use std::sync::Arc;
+        use std::sync::atomic::{AtomicBool, Ordering};
+        use std::time::Duration;
+
+        struct Held(Arc<AtomicBool>);
+        impl Drop for Held {
+            fn drop(&mut self) {
+                let done = Arc::clone(&self.0);
+                tokio::spawn(async move {
+                    tokio::time::sleep(Duration::from_millis(20)).await;
+                    done.store(true, Ordering::SeqCst);
+                });
+            }
+        }
+
+        let runtime = tokio::runtime::Builder::new_multi_thread()
+            .enable_all()
+            .build()
+            .unwrap();
+        let done = Arc::new(AtomicBool::new(false));
+        let held = Held(Arc::clone(&done));
+        let seen = Arc::clone(&done);
+        let ran = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            run_then_release(
+                &runtime,
+                async move {
+                    let _held = held;
+                    tokio::task::yield_now().await;
+                    panic!("a bug in the transfer");
+                },
+                async move {
+                    let _ = tokio::time::timeout(Duration::from_secs(2), async {
+                        while !seen.load(Ordering::SeqCst) {
+                            tokio::time::sleep(Duration::from_millis(5)).await;
+                        }
+                    })
+                    .await;
+                },
+            )
+        }));
+        assert!(
+            matches!(ran, Ok(Err(_))),
+            "the panic comes back as a value, after the release"
+        );
+        assert!(done.load(Ordering::SeqCst), "the release finished");
+    }
 
     /// `--help` speaks the person's language, as every other line does
     /// (#171): each description, the headings and the help flag.
