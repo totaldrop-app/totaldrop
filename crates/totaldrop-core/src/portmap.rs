@@ -1427,7 +1427,15 @@ mod tests {
         let at = gw.local_addr().unwrap();
         std::thread::spawn(move || {
             let mut buf = [0u8; 1500];
-            while let Ok((n, from)) = gw.recv_from(&mut buf) {
+            loop {
+                // On Windows an answer to a socket that is already closed
+                // (PCP's later copies) comes back as an error on the next
+                // receive; a real router keeps serving, so does this one.
+                let (n, from) = match gw.recv_from(&mut buf) {
+                    Ok(got) => got,
+                    Err(e) if e.kind() == std::io::ErrorKind::ConnectionReset => continue,
+                    Err(_) => break,
+                };
                 let m = buf[..n].to_vec();
                 let _ = tx.send(m.clone());
                 // PCP answers after NAT-PMP was asked, NAT-PMP's mapping
