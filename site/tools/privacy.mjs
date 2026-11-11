@@ -149,7 +149,7 @@ ${alternates}
     <nav class="top-nav top-nav-links" aria-label="${esc(s("nav.label"))}">
       <a href="${SITE}/#why">${text("nav.why")}</a>
       <a href="${SITE}/#security">${text("nav.security")}</a>
-      <a href="https://download.totaldrop.app/">${text("nav.download")}</a>
+      <a class="nav-dl" href="https://download.totaldrop.app/"><svg class="nav-dl-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg><span>${text("nav.download")}</span></a>
     </nav>
     <nav class="top-nav top-nav-keep" aria-label="${esc(s("lang.label"))}">
       <a href="#languages">${text("lang.label")}</a>
