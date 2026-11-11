@@ -35,7 +35,7 @@ built.
 - **Download links** change with every release, in every language; check
   each link after the change.
 
-## Craft
+## Craft (recommended practice, not yet in `docs/tasarim.md`)
 
 - Design tokens in `:root`; light and dark with `prefers-color-scheme`; no
   hard-coded colours in components. WCAG AA contrast; colour never the only
@@ -50,6 +50,7 @@ built.
 
 ## Review and delivery
 
-Screenshots in the PR at phone (390 px) and desktop (1280 px) width, light
-and dark, in at least Turkish, English, Arabic (RTL) and Japanese (CJK).
-Validate HTML and check every link and asset exists.
+Screenshots in the PR in light and dark, in at least one RTL (Arabic) and
+one CJK (Japanese) language (`docs/tasarim.md`); phone (390 px) and desktop
+(1280 px) widths are the usual choice. Validate HTML and check every link
+and asset exists.

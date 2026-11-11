@@ -28,8 +28,9 @@ unless a new decision adds one.
 - Explorer context menu "Send with TotalDrop" through `IExplorerCommand`
   with package identity: a small COM server inside `explorer.exe`, written
   in Rust (`windows` crate), not C#; it only passes the selected paths to
-  the app and gets its own security review, because a bug crashes Explorer; share target and share source
-  (`DataTransferManager`); toast notifications with actions.
+  the app and gets its own security review, because a bug crashes Explorer.
+- Share target and share source (`DataTransferManager`); toast
+  notifications with actions.
 - Start at login only by user choice; single instance with activation
   forwarding.
 
