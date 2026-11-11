@@ -507,9 +507,8 @@ class _Waiting extends StatelessWidget {
     Future<void> copy() async {
       await Clipboard.setData(ClipboardData(text: code));
       if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(l.sendCopied)));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(l.sendCopied)));
       }
     }
 
