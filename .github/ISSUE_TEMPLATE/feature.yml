@@ -1,5 +1,5 @@
-name: Öneri / Feature request
-description: Yeni bir özellik ya da iyileştirme önerin. Suggest a feature or an improvement.
+name: Feature request
+description: Suggest a feature or an improvement.
 labels: ["enhancement"]
 body:
   - type: dropdown
@@ -13,10 +13,10 @@ body:
   - type: textarea
     id: need
     attributes:
-      label: Hangi ihtiyacı karşılıyor? / What need does it meet?
+      label: What need does it meet?
     validations:
       required: true
   - type: textarea
     id: idea
     attributes:
-      label: Önerdiğiniz çözüm / Proposed solution
+      label: Proposed solution
