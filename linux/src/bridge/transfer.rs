@@ -11,7 +11,7 @@
 use std::path::PathBuf;
 use std::pin::Pin;
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::{Arc, LazyLock, Mutex};
+use std::sync::{Arc, LazyLock, Mutex, Weak};
 
 use cxx_qt::{CxxQtType, Threading};
 use cxx_qt_lib::{QList, QString, QStringList, QUrl};
@@ -23,6 +23,7 @@ use totaldrop_l10n::reveal_text;
 
 use crate::bridge::stage::{Role, Stage};
 use crate::desktop;
+use crate::quit::TRANSFERS;
 use crate::runtime::RUNTIME;
 use crate::settings::Settings;
 
@@ -235,6 +236,33 @@ struct Session {
     generation: AtomicU64,
 }
 
+/// The sessions of every `Transfer` the window made, so quitting can stop
+/// them (#433).
+static SESSIONS: Mutex<Vec<Weak<Session>>> = Mutex::new(Vec::new());
+
+/// Stop every running transfer and decline every unanswered offer, as
+/// Cancel does. The window has closed: called once its event loop ended,
+/// before the process waits for [`TRANSFERS`] and exits. What the stopped
+/// work queues for the window is never shown.
+pub fn stop_all() {
+    let sessions: Vec<Arc<Session>> = SESSIONS
+        .lock()
+        .map(|s| s.iter().filter_map(Weak::upgrade).collect())
+        .unwrap_or_default();
+    for session in sessions {
+        session.generation.fetch_add(1, Ordering::SeqCst);
+        if let Ok(s) = session.stop.lock() {
+            s.stop();
+        }
+        let pending = session.offer.lock().ok().and_then(|mut o| o.take());
+        if let Some(offer) = pending {
+            RUNTIME.spawn(TRANSFERS.track(async move {
+                let _ = offer.decline().await;
+            }));
+        }
+    }
+}
+
 /// Backing state of [`qobject::Transfer`].
 #[derive(Default)]
 pub struct TransferRust {
@@ -442,9 +470,9 @@ impl qobject::Transfer {
             .ok()
             .and_then(|mut o| o.take());
         if let Some(offer) = left {
-            RUNTIME.spawn(async move {
+            RUNTIME.spawn(TRANSFERS.track(async move {
                 let _ = offer.decline().await;
-            });
+            }));
         }
         self.as_mut().set_side(side);
         self.as_mut().set_code(QString::default());
@@ -531,9 +559,9 @@ impl qobject::Transfer {
             .unwrap_or_default()
     }
 
-    /// Run `fut` on the runtime.
+    /// Run `fut` on the runtime, counted so quitting waits for it (#433).
     fn spawn(&self, fut: impl std::future::Future<Output = ()> + Send + 'static) {
-        RUNTIME.spawn(fut);
+        RUNTIME.spawn(TRANSFERS.track(fut));
     }
 
     fn opts_server(&self) -> String {
@@ -822,9 +850,9 @@ impl qobject::Transfer {
             return;
         };
         self.as_mut().set_stage(Stage::Declined);
-        RUNTIME.spawn(async move {
+        RUNTIME.spawn(TRANSFERS.track(async move {
             let _ = offer.decline().await;
-        });
+        }));
     }
 
     fn cancel(mut self: Pin<&mut Self>) {
@@ -843,9 +871,9 @@ impl qobject::Transfer {
             .ok()
             .and_then(|mut o| o.take());
         if let Some(offer) = pending {
-            RUNTIME.spawn(async move {
+            RUNTIME.spawn(TRANSFERS.track(async move {
                 let _ = offer.decline().await;
-            });
+            }));
         }
         // A received text is kept no longer than it is on screen.
         self.as_mut().set_received_text(QString::default());
@@ -979,6 +1007,10 @@ impl qobject::Transfer {
 
 impl cxx_qt::Initialize for qobject::Transfer {
     fn initialize(mut self: Pin<&mut Self>) {
+        if let Ok(mut sessions) = SESSIONS.lock() {
+            sessions.retain(|s| s.strong_count() > 0);
+            sessions.push(Arc::downgrade(&self.rust().session));
+        }
         let s = Settings::load();
         let default = totaldrop_core::rendezvous::DEFAULT_SERVER;
         self.as_mut().set_default_server(QString::from(default));

@@ -13,6 +13,7 @@ mod bridge;
 mod desktop;
 mod flags;
 mod instance;
+mod quit;
 mod runtime;
 mod settings;
 mod sleep;
@@ -131,6 +132,17 @@ fn main() {
         engine.load(&QUrl::from("qrc:/qt/qml/app/totaldrop/qml/Main.qml"));
     }
     if let Some(app) = app.as_mut() {
-        std::process::exit(app.exec());
+        let code = app.exec();
+        // The window is closed. The process exits without dropping the
+        // runtime, so a running transfer, or a UPnP delete just started,
+        // would leave a router port open until its lease ends: stop what
+        // runs and wait for it, briefly (#433).
+        bridge::transfer::stop_all();
+        runtime::RUNTIME.block_on(quit::finish(
+            &quit::TRANSFERS,
+            totaldrop_core::portmap::released(),
+            quit::LIMIT,
+        ));
+        std::process::exit(code);
     }
 }
