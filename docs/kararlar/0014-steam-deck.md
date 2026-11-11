@@ -66,8 +66,8 @@
   - The published packages are `.deb`, `.rpm` and an Arch package. None of
     them can be installed on SteamOS in a supported way: `.deb`/`.rpm` are
     a foreign package manager, and the Arch package writes to the read-only
-    root and is removed at the next update. **So today there is no permanent,
-    supported way to install on the Deck.** The application ID for Flathub
+    root and is removed at the next update. **So today there is no
+    permanent, supported way to install on the Deck.** The application ID for Flathub
     (`app.totaldrop.TotalDrop`) and the brand rule
     ([0012](0012-ad-ve-isaret.md)) are ready, but there is no Flatpak
     recipe yet.
@@ -158,7 +158,8 @@
     is not visible in the Flatpak; the first launch starts with the
     defaults.
   - Command line: the `totaldrop` tool in the package runs in the Flatpak
-    with `flatpak run --command=totaldrop app.totaldrop.TotalDrop`; this is written into the installation guide.
+    with `flatpak run --command=totaldrop app.totaldrop.TotalDrop`; this is
+    written into the installation guide.
   - Single window: taking the D-Bus name that matches the application ID is
     allowed by default in a Flatpak; `instance.rs` does not change.
 
