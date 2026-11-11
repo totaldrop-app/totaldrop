@@ -6,7 +6,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -242,5 +242,16 @@ test("dependencies written in any Cargo form are caught", () => {
     ]);
   } finally {
     rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("the check runs when it is called through a symbolic link", () => {
+  const link = mkdtempSync(join(tmpdir(), "layers-link-"));
+  try {
+    symlinkSync(realpathSync(root), join(link, "repo"));
+    const out = execFileSync("node", [join(link, "repo", "tools", "check-layers.mjs")], { encoding: "utf8" });
+    assert.match(out, /^layers ok: /m);
+  } finally {
+    rmSync(link, { recursive: true, force: true });
   }
 });

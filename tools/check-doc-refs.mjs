@@ -21,7 +21,7 @@
 // as `lib.rs:12` included) or whose lines are past the end of the file, and
 // on a reference the record does not know.
 
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -107,6 +107,18 @@ export function applyMoves(markdown, moves) {
   );
 }
 
+/** `record` with every moved reference under its new key. Built anew, so
+ * that one move landing on a key another move leaves (neighbouring lines
+ * that shift together) never overwrites that other record. */
+export function moveRecord(record, moves) {
+  const next = {};
+  for (const [key, text] of Object.entries(record)) {
+    if (!moves.has(key)) next[key] = text;
+  }
+  for (const [from, to] of moves) next[to] = record[from];
+  return next;
+}
+
 function main() {
   const root = join(dirname(fileURLToPath(import.meta.url)), "..");
   const mode = process.argv[2] ?? "";
@@ -125,10 +137,7 @@ function main() {
   let result = check(doc, record, read);
 
   if (mode === "--fix" && result.moves.size) {
-    for (const [from, to] of result.moves) {
-      record[to] = record[from];
-      delete record[from];
-    }
+    record = moveRecord(record, result.moves);
     doc = applyMoves(doc, result.moves);
     writeFileSync(docPath, doc);
     writeFileSync(recordPath, `${JSON.stringify(sorted(record), null, 2)}\n`);
@@ -163,4 +172,6 @@ function sorted(record) {
   return Object.fromEntries(Object.entries(record).sort(([a], [b]) => a.localeCompare(b)));
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) main();
+// Both sides resolved: called through a symbolic link (macOS's /var is one),
+// argv[1] and the module URL differ and the check would silently not run.
+if (process.argv[1] && realpathSync(process.argv[1]) === realpathSync(fileURLToPath(import.meta.url))) main();
