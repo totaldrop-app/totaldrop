@@ -27,7 +27,9 @@ Future<void> _show(
         ...GlobalMaterialLocalizations.delegates,
       ],
       supportedLocales: AppLocalizations.supportedLocales,
-      home: Scaffold(body: TransferProgress(done: done, total: total)),
+      home: Scaffold(
+        body: TransferProgress(done: done, total: total),
+      ),
     ),
   );
 }
