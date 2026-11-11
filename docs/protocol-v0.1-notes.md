@@ -169,6 +169,9 @@ treated as final.
       it under the loser's name. If the winner's mapping cannot be used,
       the loser's goes too. An answer that comes after the loser's tries
       is not seen; that mapping closes when its lifetime runs out (#425).
+      A process that exits soon after the transfer waits for the loser
+      too, at most 1.6 seconds, so the second mapping is still released
+      (#461).
       The external address it grants goes into the public list, unless it is
       not reachable from the internet (private, 100.64.0.0/10 shared
       address space, loopback, link-local, reserved), which means a second

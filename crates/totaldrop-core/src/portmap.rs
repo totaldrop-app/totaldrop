@@ -115,12 +115,14 @@ impl Drop for Mapping {
     }
 }
 
-/// UPnP deletes still under way, for [`released`].
+/// UPnP attempts and deletes, and race losers, still under way, for
+/// [`released`].
 static RELEASING: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
 static RELEASED: tokio::sync::Notify = tokio::sync::Notify::const_new();
 
-/// Counts, for [`released`], one UPnP attempt, mapping or delete that
-/// may still leave a port open. Dropping it, also with a future that never
+/// Counts, for [`released`], one UPnP attempt, mapping or delete, or one
+/// PCP or NAT-PMP race loser waiting for its answer (#461), that may still
+/// leave a port open. Dropping it, also with a future that never
 /// ran, takes it off the count.
 #[derive(Debug)]
 struct Pending;
@@ -145,10 +147,12 @@ impl Drop for Pending {
     }
 }
 
-/// Wait, at most [`LIMIT`], until no UPnP attempt is still under way and
-/// every dropped UPnP mapping has been deleted. A process about to exit calls this before it shuts its runtime
-/// down; without it the delete dies with the runtime and the port stays
-/// open until its lease runs out.
+/// Wait, at most [`LIMIT`], until no UPnP attempt is still under way,
+/// every dropped UPnP mapping has been deleted, and every PCP or NAT-PMP
+/// race loser has had its answer and released a second mapping (#461). A
+/// process about to exit calls this before it shuts its runtime down;
+/// without it the delete or release dies with the runtime and the port
+/// stays open until its lease runs out.
 pub async fn released() {
     use std::sync::atomic::Ordering;
     let _ = tokio::time::timeout(LIMIT, async {
@@ -524,7 +528,14 @@ async fn map_udp(
     let later = LaterSlot::default();
     if let Some(loser) = loser {
         let kept = usable.then_some(external.port());
-        tokio::spawn(loser.close(kept, Arc::clone(&later)));
+        // Counted from now, before the task runs: the process may exit
+        // as soon as the mapping goes (#461).
+        let pending = Pending::new();
+        let later = Arc::clone(&later);
+        tokio::spawn(async move {
+            let _pending = pending;
+            loser.close(kept, later).await;
+        });
     }
     let release = Release::Udp {
         socket: Arc::clone(&socket),
@@ -1402,6 +1413,67 @@ mod tests {
         let _request = rx.recv_timeout(Duration::from_secs(2)).unwrap();
         let release = rx.recv_timeout(Duration::from_secs(2)).unwrap();
         assert_eq!(lifetime_of(&release), 0);
+    }
+
+    /// #461: PCP wins after NAT-PMP was asked, and the process exits right
+    /// after the mapping goes, as the CLI does: [`released`], then the
+    /// runtime shuts down. The loser's task must still close the NAT-PMP
+    /// mapping on the other port; before, `released` did not wait for it
+    /// and the mapping stayed open for its lifetime.
+    #[test]
+    fn released_waits_for_the_losers_release() {
+        let (tx, rx) = std::sync::mpsc::channel();
+        let gw = Arc::new(std::net::UdpSocket::bind("127.0.0.1:0").unwrap());
+        let at = gw.local_addr().unwrap();
+        std::thread::spawn(move || {
+            let mut buf = [0u8; 1500];
+            while let Ok((n, from)) = gw.recv_from(&mut buf) {
+                let m = buf[..n].to_vec();
+                let _ = tx.send(m.clone());
+                // PCP answers after NAT-PMP was asked, NAT-PMP's mapping
+                // (on another port) after that.
+                let (wait, r) = match (m[0], m.len()) {
+                    (0, 2) => (0, answer::pmp_address(0, PUBLIC).to_vec()),
+                    (0, 12) if lifetime_of(&m) != 0 => {
+                        let internal = u16::from_be_bytes(m[4..6].try_into().unwrap());
+                        let r = answer::pmp_map(0, internal, OPENED + 1, LIFETIME);
+                        (600, r.to_vec())
+                    }
+                    (2, 60) if lifetime_of(&m) != 0 => {
+                        let req: [u8; 60] = m[..].try_into().unwrap();
+                        let r = answer::pcp(&req, 0, (PUBLIC.into(), OPENED), LIFETIME);
+                        (400, r.to_vec())
+                    }
+                    _ => continue,
+                };
+                let gw = Arc::clone(&gw);
+                std::thread::spawn(move || {
+                    std::thread::sleep(Duration::from_millis(wait));
+                    let _ = gw.send_to(&r, from);
+                });
+            }
+        });
+        let rt = tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+            .unwrap();
+        rt.block_on(async {
+            let m = pcp_only(Gateway::At(at), 40_000).await.unwrap();
+            assert_eq!(m.external(), SocketAddr::from((PUBLIC, OPENED)));
+            drop(m);
+            released().await;
+        });
+        rt.shutdown_background();
+        let mut all = Vec::new();
+        while let Ok(m) = rx.recv_timeout(Duration::from_millis(500)) {
+            all.push(m);
+        }
+        assert!(
+            all.iter()
+                .any(|m| m[0] == 0 && m.len() == 12 && lifetime_of(m) != 0),
+            "NAT-PMP was not asked, so the test shows nothing"
+        );
+        assert!(releases(&all, 0) > 0, "the NAT-PMP mapping stayed open");
     }
 
     #[tokio::test]
