@@ -5,7 +5,7 @@
 // named in the object's name. Everything else is refused.
 
 import { DurableObject } from "cloudflare:workers";
-import { PROBE_STEP, mayChange, noteGiven, restore } from "./count";
+import { PROBE_STEP, give, restore } from "./count";
 import type { Env } from "./index";
 
 const MAGIC = new TextEncoder().encode("TDR0");
@@ -41,7 +41,10 @@ const SENT_STEP = 1024 * 1024;
  * A key's replaced sockets keep what they were given until they are gone
  * (a client can hold TCP open and never read), so it counts against the
  * key too: at most KEY_UNANSWERED over all its sockets. An honest key whose
- * old socket died with up to 16 MiB queued still gets its full window. */
+ * old socket died with up to 16 MiB queued still gets its full window.
+ * After a wake each replaced socket that was given bytes counts up to one
+ * PROBE_STEP high (count.ts, never low), so a key with many replaced
+ * sockets can see its window shrink until they are gone (#426). */
 const UNANSWERED = 32 * 1024 * 1024;
 const KEY_UNANSWERED = 2 * UNANSWERED;
 
@@ -73,7 +76,8 @@ interface Attachment {
   /** Bytes given to it when its last answered probe went out. */
   answered?: number;
   /** Probes not answered yet, oldest first: nonce hex and bytes given when
-   * it went out. At most UNANSWERED / PROBE_STEP, a few hundred bytes. */
+   * it went out. At most UNANSWERED / PROBE_STEP + 1 (one goes out at the
+   * first bytes), a few hundred bytes. */
   probes?: [string, number][];
 }
 
@@ -300,12 +304,10 @@ export class Pair extends DurableObject<Env> {
   private gave(ws: WebSocket, after: number): void {
     this.given.set(ws, after);
     // The attachment is read only when it may change.
-    if (!mayChange(this.written.get(ws), after)) return;
-    const att = attachment(ws);
-    if (!att) return;
-    const probe = noteGiven(att, after);
-    if (att.given !== undefined) this.written.set(ws, att.given);
-    if (!probe) return;
+    const step = give(this.written.get(ws), after, () => attachment(ws));
+    if (step.written !== undefined) this.written.set(ws, step.written);
+    const att = step.att as Attachment | null;
+    if (!step.probe || !att) return;
     const nonce = crypto.getRandomValues(new Uint8Array(16));
     ws.send(new Uint8Array([...PROBE, ...nonce]));
     att.probes = [...(att.probes ?? []), [hex(nonce), after]];
