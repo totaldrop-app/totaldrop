@@ -1,108 +1,113 @@
-# Çeviri
+# Translation
 
-TotalDrop'un bütün metinleri depo kökündeki `l10n/` klasöründe durur
-([karar 0008](kararlar/0008-diller-ve-bolgeler.md)):
+All of TotalDrop's texts live in the `l10n/` folder at the root of the
+repository ([decision 0008](kararlar/0008-diller-ve-bolgeler.md)):
 
-| Klasör | Ne | Biçim |
+| Folder | What | Format |
 | --- | --- | --- |
-| `l10n/app/` | Android ve Linux uygulamalarının ortak metinleri; Linux masaüstü girdisi, dosya yöneticisi menüleri ve yazılım merkezlerinin tanıtım metni de buradan üretilir (`tools/desktop-entries.mjs`, [ayrıntı](linux-dosya-yoneticileri.md#metinler)) | ARB (`app_<dil>.arb`, ör. `app_pt_BR.arb`) |
-| `l10n/cli/` | Komut satırı istemcisi | ARB (`cli_<dil>.arb`) |
-| `site/public/i18n/` | totaldrop.app (site olduğu gibi yayınlandığı için kendi klasöründe) | JSON (`<dil>.json`) |
-| `site/privacy/` | totaldrop.app gizlilik politikası; esas metin İngilizce (`en.html`), çeviriler ilk satırda `en.html` özetini taşır, sayfalar `site/tools/privacy.mjs --write` ile üretilir | HTML parçası (`<dil>.html`) |
-| `docs/readme/` | GitHub sayfası: `README.md`'nin çevirileri | Markdown (`README.<dil>.md`) |
+| `l10n/app/` | The texts the Android and Linux apps share; the Linux desktop entry, the file manager menus and the description in software centres are generated from here too (`tools/desktop-entries.mjs`, [details](linux-dosya-yoneticileri.md#texts)) | ARB (`app_<language>.arb`, e.g. `app_pt_BR.arb`) |
+| `l10n/cli/` | The command-line client | ARB (`cli_<language>.arb`) |
+| `site/public/i18n/` | totaldrop.app (in its own folder, because the site is published as it is) | JSON (`<language>.json`) |
+| `site/privacy/` | The totaldrop.app privacy policy; the authoritative text is English (`en.html`), each translation carries the checksum of `en.html` on its first line, and the pages are generated with `site/tools/privacy.mjs --write` | HTML fragment (`<language>.html`) |
+| `docs/readme/` | The GitHub page: translations of `README.md` | Markdown (`README.<language>.md`) |
 
-`README.md` değişince çevirileri eskir: her çevirinin ilk satırı hangi
-`README.md`'den çevrildiğini söyler, `site/tools/check-readmes.mjs` eskiyenleri
-uyarı olarak bildirir ve dil listesini `--write` ile yeniden yazar.
+When `README.md` changes, its translations go stale: the first line of each
+translation says which `README.md` it was translated from,
+`site/tools/check-readmes.mjs` reports the stale ones as warnings, and
+rewrites the language list with `--write`.
 
-İngilizce dosyalar şablondur. Yeni bir metin önce İngilizce dosyaya, bir
-açıklamayla (`@anahtar` → `description`) eklenir; diğer diller sonra
-doldurulur. Eksik bir çeviri İngilizce'ye düşer; CI eksikleri raporlar ama
-kırılmaz. Bölge ya da yazı varyantı olan dillerin temel dosyası da vardır
-(`app_pt.arb` ile `app_pt_BR.arb`, `app_pt_PT.arb`).
+The English files are the template. A new text is added to the English
+file first, with a description (`@key` → `description`); the other
+languages are filled in later. A missing translation falls back to English;
+CI reports what is missing but does not fail. Languages with a regional or
+script variant also have a base file (`app_pt.arb` alongside
+`app_pt_BR.arb` and `app_pt_PT.arb`).
 
-`l10n/status.json` hangi dilin gözden geçirildiğini, hangi anahtarların
-hâlâ taslak olduğunu ve hangi anahtarların güvenlik açısından kritik
-olduğunu tutar. Dosya yalnızca gözden geçirilmiş PR'larla değişir; PR'ı
-bakımcı birleştirir.
+`l10n/status.json` records which languages have been reviewed, which keys
+are still drafts, and which keys are critical for security. The file
+changes only through reviewed PRs; a maintainer merges the PR.
 
-Her dilin `noWords` alanı, o dilde "hayır" anlamına gelen cevapları `|`
-ile ayırarak tutar (Türkçe: `"hayır|h|yok"`). Komut satırının "evet"
-cevapları (`cliYes`) bunlardan biri olamaz. Kayıt sorusundaki `[e/H]`
-gibi köşeli parantezin ikinci cevabı da "hayır" sayılır. Sorunun ilk
-cevabı ise `cliYes` içinde bulunmalı ya da İngilizce `y` veya `yes`
-olmalıdır; bu ikisini komut satırı her dilde "evet" sayar. CI, cevapları
-komut satırının karşılaştırdığı gibi denetler: büyük-küçük harf, noktalı
-ve noktasız i ve tam genişlikli harfler aynı sayılır. Aksanlı ve aksansız
-yazımlar ise farklıdır, ikisini de yazın (`não|nao`, `όχι|οχι`,
-`không|khong`). Eksik bir "hayır" kelimesi görürseniz `noWords` alanına
-`|` ile ekleyen bir PR açın ya da PR'da belirtin.
+Each language's `noWords` field holds the answers that mean "no" in that
+language, separated by `|` (Turkish: `"hayır|h|yok"`). None of the command
+line's "yes" answers (`cliYes`) may be one of them. The second answer in
+square brackets in a prompt, such as `[e/H]`, also counts as "no". The
+prompt's first answer, however, must be in `cliYes` or be the English `y`
+or `yes`; the command line counts those two as "yes" in every language. CI
+checks the answers the way the command line compares them: upper and lower
+case, dotted and dotless i, and full-width letters count as the same.
+Spellings with and without accents are different, though, so write both
+(`não|nao`, `όχι|οχι`, `không|khong`). If you see a "no" word missing, open
+a PR that adds it to the `noWords` field with `|`, or mention it in a PR.
 
-## Çevirmenler için
+## For translators
 
-- En kolay yol Weblate olacak: bir metni düzeltmek için depoyu bilmek
-  gerekmez. (Bağlantı, proje Hosted Weblate'e alınınca buraya eklenecek.
-  O zamana kadar uygulamalardaki "çeviri gözden geçiriliyor" notu GitHub'ı
-  gösterir; Weblate açılınca `draftTranslation` metni her dilde
-  güncellenmelidir.)
-- PR ile de düzeltebilirsiniz: ilgili dosyayı değiştirin, CI biçimi denetler.
-- Bir dili baştan sona gözden geçirdiyseniz PR'da ya da bir issue'da
-  (Weblate açılınca orada da) belirtin; bakımcı `l10n/status.json`'u
-  günceller ve arayüzdeki "çeviri gözden geçiriliyor" notu kalkar. Kritik
-  metinler (doğrulama, yanlış kod, kabul/ret) gözden geçirilene kadar
-  İngilizce görünür.
+- The easiest route will be Weblate: correcting a text will not need any
+  knowledge of the repository. (The link will be added here once the project
+  is on Hosted Weblate. Until then, the "translation under review" note in
+  the apps points to GitHub; once Weblate opens, the `draftTranslation`
+  text must be updated in every language.)
+- You can also correct through a PR: change the file concerned, and CI
+  checks the format.
+- If you have reviewed a language from start to finish, say so in a PR or
+  an issue (and on Weblate once it opens); a maintainer updates
+  `l10n/status.json` and the "translation under review" note in the
+  interface goes away. Critical texts (verification, wrong code,
+  accept/decline) appear in English until they are reviewed.
 
-### Kurallar
+### Rules
 
-- `{count}`, `{size}`, `{code}` gibi yer tutucular olduğu gibi kalır;
-  sıraları cümleye göre değişebilir.
-- Çoğullar ICU biçimindedir: `{count, plural, one{…} other{…}}`. Diliniz
-  başka çoğul biçimleri istiyorsa (`zero`, `two`, `few`, `many`) ekleyin;
-  CLDR kuralları uygulanır.
-- `=0`, `=1` ve `=2`, Flutter'da `zero`, `one` ve `two` ile aynı durumdur;
-  ikisini birden yazmayın. Rusça, Ukraynaca gibi dillerde `one` 21, 31…
-  için de seçilir, bu yüzden `one` cümlesine sayıyı (`{count}`) yazın.
-  Başka tam sayılar (`=5`) kullanılamaz.
-- Güvenlik metinlerindeki yer tutucular (`{code}`, `{words}`, `{folder}`,
-  `{name}`) her durumda İngilizce'deki kadar geçer ve bir durumu seçmek
-  için kullanılamaz.
-- Kesme işareti düz metindir; kaçış gerekmez (`L'envoi`).
-- Çevirilerde bağlantı, HTML ve görünmez yön karakterleri (U+202A–U+202E,
-  U+2066–U+2069) kullanılmaz; CI reddeder.
-- Aktarım kodu (`7-harbor-rocket`) ve doğrulama kelimeleri çevrilmez:
-  iki cihaz farklı dilde olsa da aynı kelimeleri görmelidir.
-- "TotalDrop" çevrilmez ve harf değiştirilmez.
-- Ton: kısa, sade, emir kipinde düğmeler ("Gönder", "Kodu oluştur");
-  ünlem ve pazarlama dili yok.
+- Placeholders such as `{count}`, `{size}` and `{code}` stay as they are;
+  their order may change to fit the sentence.
+- Plurals use the ICU format: `{count, plural, one{…} other{…}}`. If your
+  language needs other plural forms (`zero`, `two`, `few`, `many`), add
+  them; the CLDR rules apply.
+- `=0`, `=1` and `=2` are the same cases as `zero`, `one` and `two` in
+  Flutter; do not write both. In languages such as Russian and Ukrainian,
+  `one` is also chosen for 21, 31…, so write the number (`{count}`) into the
+  `one` sentence. Other exact numbers (`=5`) cannot be used.
+- The placeholders in security texts (`{code}`, `{words}`, `{folder}`,
+  `{name}`) appear in every case as often as in English, and cannot be used
+  to choose a case.
+- The apostrophe is plain text; no escaping is needed (`L'envoi`).
+- Translations use no links, HTML or invisible directional characters
+  (U+202A–U+202E, U+2066–U+2069); CI rejects them.
+- The transfer code (`7-harbor-rocket`) and the verification words are not
+  translated: even when the two devices use different languages, they must
+  see the same words.
+- "TotalDrop" is not translated, and its letters are not changed.
+- Tone: short, plain, buttons in the imperative ("Send", "Create code"); no
+  exclamation marks and no marketing language.
 
-## Desteklenen diller
+## Supported languages
 
-Taslak çeviriyle gelenler (gözden geçirilmedikçe arayüzde belirtilir):
-Arapça (`ar`), Bengalce (`bn`), Çekçe (`cs`), Danca (`da`), Almanca (`de`),
-Yunanca (`el`), İspanyolca (`es`), Farsça (`fa`), Fince (`fi`), Fransızca
-(`fr`), İbranice (`he`), Hintçe (`hi`), Macarca (`hu`), Endonezce (`id`),
-İtalyanca (`it`), Japonca (`ja`), Korece (`ko`), Malayca (`ms`), Norveççe
-(`nb`), Felemenkçe (`nl`), Lehçe (`pl`), Portekizce (Brezilya `pt-BR`,
-Portekiz `pt-PT`), Rumence (`ro`), Rusça (`ru`), İsveççe (`sv`), Svahili
-(`sw`), Tayca (`th`), Ukraynaca (`uk`), Urduca (`ur`), Vietnamca (`vi`),
-Çince (Basitleştirilmiş `zh-Hans`, Geleneksel `zh-Hant`).
+Arriving with draft translations (marked in the interface until reviewed):
+Arabic (`ar`), Bengali (`bn`), Czech (`cs`), Danish (`da`), German (`de`),
+Greek (`el`), Spanish (`es`), Persian (`fa`), Finnish (`fi`), French
+(`fr`), Hebrew (`he`), Hindi (`hi`), Hungarian (`hu`), Indonesian (`id`),
+Italian (`it`), Japanese (`ja`), Korean (`ko`), Malay (`ms`), Norwegian
+(`nb`), Dutch (`nl`), Polish (`pl`), Portuguese (Brazil `pt-BR`, Portugal
+`pt-PT`), Romanian (`ro`), Russian (`ru`), Swedish (`sv`), Swahili
+(`sw`), Thai (`th`), Ukrainian (`uk`), Urdu (`ur`), Vietnamese (`vi`),
+Chinese (Simplified `zh-Hans`, Traditional `zh-Hant`).
 
-Gözden geçirilmiş: İngilizce (`en`), Türkçe (`tr`).
+Reviewed: English (`en`), Turkish (`tr`).
 
-Taslaklar Claude (Anthropic) ile üretildi. Uygulama metinleri (`l10n/`) MIT OR Apache-2.0, sitenin metinleri (`site/public/i18n/`) GPL-3.0-or-later lisanslıdır ([LICENSING.md](../LICENSING.md)); katkınız gittiği klasörün lisansını alır.
+The drafts were produced with Claude (Anthropic). The app texts (`l10n/`) are licensed MIT OR Apache-2.0, the site's texts (`site/public/i18n/`) GPL-3.0-or-later ([LICENSING.md](../LICENSING.md)); your contribution takes the licence of the folder it goes into.
 
-### Yeni bir dil eklemek
+### Adding a new language
 
-1. `l10n/app/`, `l10n/cli/` ve `site/public/i18n/` için şablondan
-   dosyaları kopyalayıp çevirin (varyantlı dillerde temel dosyayla birlikte).
-2. `l10n/status.json`'a dili ekleyin. Komut satırı dosyası olan bir dil
-   için "hayır" cevaplarını da (`noWords`) yazın; CI, komut satırı dosyası
-   olup `noWords` alanı olmayan dili reddeder.
-3. Android `localeConfig` bu dosyalardan üretilir; CI üretilen dosyaların
-   güncel olduğunu denetler. Site dil listesine (`site/public/lang.js`
-   `LANGUAGES`) dili kendi adıyla ekleyin; CI listenin `i18n/` dosyalarıyla,
-   `REVIEWED` listesinin de `l10n/status.json` ile aynı olduğunu denetler.
-   Gözden geçirilmemiş bir dilde site, başlığın altında kısa bir taslak
-   notu gösterir.
-4. Yazı sistemi yeni ise Linux paketlerine ilgili Noto yazı tipini ekleyin
-   ve ekran görüntüsüyle deneyin.
+1. Copy the files from the template for `l10n/app/`, `l10n/cli/` and
+   `site/public/i18n/` and translate them (for languages with variants,
+   together with the base file).
+2. Add the language to `l10n/status.json`. For a language that has a
+   command-line file, also write its "no" answers (`noWords`); CI rejects a
+   language that has a command-line file but no `noWords` field.
+3. The Android `localeConfig` is generated from these files; CI checks that
+   the generated files are up to date. Add the language, under its own
+   name, to the site's language list (`LANGUAGES` in
+   `site/public/lang.js`); CI checks that the list matches the `i18n/`
+   files, and that the `REVIEWED` list matches `l10n/status.json`. For a
+   language that has not been reviewed, the site shows a short draft note
+   under the heading.
+4. If the script is new, add the matching Noto font to the Linux packages
+   and try it with a screenshot.

@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-// The site's icons, drawn from the mark (docs/tasarim.md, "İşaret") (#227):
+// The site's icons, drawn from the mark (docs/tasarim.md, "The mark: Köşe") (#227):
 //   node site/tools/favicons.mjs           check (CI): files in shape, every page declares them
 //   NODE_PATH=$(npm root -g) node site/tools/favicons.mjs --write
 //                                          render the PNG and ICO files (needs Playwright)
@@ -15,7 +15,7 @@
 //   apple-touch-icon.png  180 px, the app icon: paper mark on violet, opaque
 //                         (iOS paints transparency black and rounds the corners itself)
 // No large PNG is declared as rel="icon": browsers could pick it over the
-// SVG and lose the SVG's dark-theme colour (docs/tasarim.md, "Renkler");
+// SVG and lose the SVG's dark-theme colour (docs/tasarim.md, "Colours");
 // the ICO's 48 px entry already meets Google's rule.
 // The files are committed; the check fails when one is missing or has the
 // wrong size, when a page lacks the <link> lines below, or when the mark

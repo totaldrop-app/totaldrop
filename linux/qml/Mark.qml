@@ -7,7 +7,7 @@ import app.totaldrop
 
 // The Köşe mark: a circle with one square corner, at top right when at rest.
 // It matches the SVG. While `sending`, it plays the website's animation
-// exactly (docs/tasarim.md, "Hareket"): four quarter turns clockwise around
+// exactly (docs/tasarim.md, "Motion"): four quarter turns clockwise around
 // the circle's centre, each 0.6 s on cubic-bezier(0.65, 0, 0.35, 1) and
 // followed by a 0.2 s rest, 3.2 s in all. `done` draws a check inside.
 Item {

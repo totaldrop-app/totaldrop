@@ -5,7 +5,7 @@
 //!
 //! TotalDrop has no look of its own on Linux: colours, light or dark,
 //! accent, corner rounding, fonts, icons and motion all come from the
-//! desktop (docs/tasarim.md, "Sisteme yüzde yüz uyum"). This module decides
+//! desktop (docs/tasarim.md, "Match the system one hundred percent"). This module decides
 //! which desktop facility to follow and combines what they report into one
 //! [`Look`]. Only the mark keeps its own colours.
 
