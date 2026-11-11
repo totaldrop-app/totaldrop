@@ -89,10 +89,11 @@ without a source is a recommendation, not a rule.
 
 ## Reporting
 
-- Reply in the user's language (Turkish for the maintainers). Project
-  documents and user-facing text follow `CLAUDE.md` (Turkish documents,
-  every supported language for users); code, commits and identifiers stay
-  in English.
+- Reply in the user's language (Turkish for the maintainers). Everything
+  that enters the repository is in English: documents, decision records,
+  issues, pull requests, review comments, commits, changelog entries, code
+  and identifiers (`docs/kararlar/0019-english-by-default.md`). User-facing
+  text is in every supported language.
 - Say what was done, what was verified and how, what failed and what
   remains. Mark every unverified or assumed point as such.
 - No "passes", "fixed" or "works" without evidence from this session: run

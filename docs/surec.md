@@ -47,8 +47,9 @@ Bir değişiklik ancak şunların hepsi doğruysa bitmiştir:
 - Dışarıdan gelen veriyi okuyan her yeni ayrıştırıcının bir fuzz hedefi var.
 - Protokolü etkileyen her karar `docs/protocol-v0.1-notes.md`'ye, mimariyi
   etkileyen her karar `docs/kararlar/` altına yazıldı.
-- Türkçe belgeler güncel; kullanıcıya görünen her metin İngilizce ve
-  Türkçe var.
+- The documents are up to date and in English
+  ([0019](kararlar/0019-english-by-default.md)); every text a user sees is
+  in every supported language ([0008](kararlar/0008-diller-ve-bolgeler.md)).
 - Arayüz değiştiyse: açık ve koyu temada; Linux'ta KDE Plasma, Hyprland ve
   Omarchy'de; Android'de ekran görüntüsü PR'da.
 - Sunucuların gördüğü bilgi değiştiyse gizlilik politikası, özellik

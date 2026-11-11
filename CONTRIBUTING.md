@@ -48,7 +48,7 @@ Each language follows one published style. The last column says what CI checks; 
 
 To catch problems before you push, run `pre-commit install` once: it checks every commit for conflict markers, secrets, signing keys and whitespace, with no toolchain needed. `pre-commit run -c .pre-commit-config-extra.yaml --all-files` runs most of the checks above locally, using whichever toolchains you have. The Linux app's Clippy and tests need Qt and stay in CI, and the formatters fix files where CI only checks them ([docs/gelistirme.md](docs/gelistirme.md), "Yerel denetimler").
 
-Names, comments and commit messages are in English. Process and design documents in `docs/` are in Turkish; the protocol notes are in English.
+Everything in the repository is written in English: names, comments, commit messages, issues, pull requests, changelog entries and the documents in `docs/` ([decision 0019](docs/kararlar/0019-english-by-default.md)). Some documents are still being translated from Turkish (#490). Text that users read is translated into every supported language ([docs/ceviri.md](docs/ceviri.md)).
 
 ## Code review
 

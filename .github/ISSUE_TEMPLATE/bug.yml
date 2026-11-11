@@ -1,5 +1,5 @@
-name: Hata / Bug
-description: Bir şey beklendiği gibi çalışmıyor. Something does not work as expected.
+name: Bug
+description: Something does not work as expected.
 labels: ["bug"]
 body:
   - type: dropdown
@@ -12,30 +12,30 @@ body:
   - type: input
     id: version
     attributes:
-      label: Sürüm / Version
-      description: Ayarlar > Hakkında, ya da `totaldrop --version`.
+      label: Version
+      description: Settings > About, or `totaldrop --version`.
       placeholder: e.g. 0.3.0-beta.1 (app), totaldrop --version for the CLI
     validations:
       required: true
   - type: input
     id: system
     attributes:
-      label: Sistem / System
-      description: Dağıtım ve masaüstü (örneğin Arch + Hyprland, Fedora + Plasma), ya da cihaz ve Android sürümü.
+      label: System
+      description: Distribution and desktop (for example Arch + Hyprland, Fedora + Plasma), or the device and its Android version.
   - type: textarea
     id: what
     attributes:
-      label: Ne oldu, ne bekliyordunuz? / What happened, what did you expect?
+      label: What happened, and what did you expect?
     validations:
       required: true
   - type: textarea
     id: steps
     attributes:
-      label: Adımlar / Steps
+      label: Steps
       placeholder: "1. ...\n2. ..."
   - type: textarea
     id: details
     attributes:
-      label: Ayrıntılar / Details
-      description: Hata ekranındaki "Ayrıntılar" metni. Aktarım kodlarını ya da dosya adlarını paylaşmayın.
+      label: Details
+      description: The "Details" text from the error screen. Do not share transfer codes or file names.
       render: text
