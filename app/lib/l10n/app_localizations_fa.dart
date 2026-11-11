@@ -515,7 +515,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get linkBusy =>
-      'یک انتقال هنوز در جریان است. صبر کنید تمام شود یا آن را متوقف کنید، سپس پیوند را دوباره باز کنید.';
+      'کاری را که روی صفحه است تمام یا متوقف کنید، سپس پیوند را دوباره باز کنید.';
 
   @override
   String shareSkipped(int count) {

@@ -520,7 +520,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get linkBusy =>
-      'En överföring pågår fortfarande. Vänta tills den är klar eller stoppa den och öppna sedan länken igen.';
+      'Slutför eller stoppa det som visas på skärmen och öppna sedan länken igen.';
 
   @override
   String shareSkipped(int count) {

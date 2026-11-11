@@ -485,7 +485,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get shareBusy => '아직 전송이 진행 중입니다. 끝날 때까지 기다리거나 중지한 다음 다시 공유하세요.';
 
   @override
-  String get linkBusy => '아직 전송이 진행 중입니다. 끝날 때까지 기다리거나 중지한 다음 링크를 다시 여세요.';
+  String get linkBusy => '화면에 있는 작업을 마치거나 중지한 다음 링크를 다시 여세요.';
 
   @override
   String shareSkipped(int count) {

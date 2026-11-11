@@ -520,7 +520,7 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get linkBusy =>
-      'En overføring pågår fortsatt. Vent til den er ferdig eller stopp den, og åpne lenken på nytt.';
+      'Fullfør eller stopp det som er på skjermen, og åpne lenken på nytt.';
 
   @override
   String shareSkipped(int count) {

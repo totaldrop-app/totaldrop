@@ -507,7 +507,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get linkBusy =>
-      'একটি স্থানান্তর এখনও চলছে। শেষ হওয়া পর্যন্ত অপেক্ষা করুন বা থামান, তারপর লিংকটি আবার খুলুন।';
+      'স্ক্রিনে যা আছে তা শেষ করুন বা থামান, তারপর লিংকটি আবার খুলুন।';
 
   @override
   String shareSkipped(int count) {

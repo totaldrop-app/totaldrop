@@ -524,7 +524,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get linkBusy =>
-      'Přenos stále probíhá. Počkejte, až skončí, nebo ho zastavte, a pak odkaz otevřete znovu.';
+      'Dokončete nebo zastavte to, co je na obrazovce, a pak odkaz otevřete znovu.';
 
   @override
   String shareSkipped(int count) {

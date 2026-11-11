@@ -528,7 +528,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get linkBusy =>
-      'Uma transferência ainda está em andamento. Espere terminar ou pare-a e abra o link de novo.';
+      'Termine ou pare o que está na tela e abra o link de novo.';
 
   @override
   String shareSkipped(int count) {
@@ -1223,7 +1223,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get linkBusy =>
-      'Uma transferência ainda está em andamento. Espere terminar ou pare-a e abra o link de novo.';
+      'Termine ou pare o que está na tela e abra o link de novo.';
 
   @override
   String shareSkipped(int count) {
@@ -1919,7 +1919,7 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
 
   @override
   String get linkBusy =>
-      'Ainda está a decorrer uma transferência. Aguarde que termine ou pare-a e abra a ligação novamente.';
+      'Termine ou pare o que está no ecrã e depois abra o link novamente.';
 
   @override
   String shareSkipped(int count) {

@@ -513,7 +513,7 @@ class AppLocalizationsSw extends AppLocalizations {
 
   @override
   String get linkBusy =>
-      'Uhamishaji bado unaendelea. Subiri umalizike au uusimamishe, kisha fungua kiungo tena.';
+      'Maliza au simamisha kilicho kwenye skrini, kisha fungua kiungo tena.';
 
   @override
   String shareSkipped(int count) {

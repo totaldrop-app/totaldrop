@@ -518,7 +518,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get linkBusy =>
-      'A transfer is still running. Wait for it to finish or stop it, then open the link again.';
+      'Finish or stop what is on the screen, then open the link again.';
 
   @override
   String shareSkipped(int count) {
