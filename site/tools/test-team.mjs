@@ -185,3 +185,22 @@ test("each AI and automation helper renders its own name, i18n text and optional
   const custom = helperCard(c, s, c.people[0], { "tm.ai.d": `A <b> & "c"` });
   assert.match(custom, /<p data-i18n="tm\.ai\.d">A &lt;b&gt; &amp; &quot;c&quot;<\/p>/);
 });
+
+test("team.json donate is true, and only on a person (#486)", async () => {
+  const { configErrors } = await import("./team.mjs");
+  const orig = JSON.parse(readFileSync(new URL("../team/team.json", import.meta.url), "utf8"));
+  const errs = (edit) => { const c = structuredClone(orig); edit(c); return configErrors(c).join("\n"); };
+  const person = (c, login) => c.people.find((p) => p.login === login);
+  assert.equal(errs((c) => { person(c, "ozdil").donate = true; }), "");
+  assert.match(errs((c) => { person(c, "ozdil").donate = "https://example.com/"; }), /ozdil: donate must be true/);
+  assert.match(errs((c) => { person(c, "ozdil").donate = false; }), /ozdil: donate must be true/);
+  assert.match(errs((c) => { person(c, "claude").donate = true; }), /claude: only people have a donate link/);
+});
+
+test("the donate link is a round icon link to the team's donation page, named in every language (#486)", async () => {
+  const { donateLink } = await import("./team.mjs");
+  const html = donateLink();
+  assert.match(html, /^<li><a class="icon-link" href="\/donate\/">/);
+  assert.match(html, /<svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"/);
+  assert.match(html, /<span class="visually-hidden" data-i18n="foot\.donate">Donate<\/span><\/a><\/li>$/);
+});
