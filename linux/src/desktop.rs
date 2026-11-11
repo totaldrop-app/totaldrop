@@ -26,8 +26,14 @@ pub fn downloads() -> PathBuf {
 /// A `file://` URL for an absolute path, with every byte outside the
 /// unreserved set and `/` percent-encoded, so that `#`, `?` and `%` in a
 /// folder's name stay part of the path when Qt reads the URL (#427).
+/// A relative path has no `file://` URL (its first part would be read as
+/// a host name), so it gives an empty string and the app shows no
+/// "Open folder" for it.
 pub fn file_url(path: &Path) -> String {
     use std::os::unix::ffi::OsStrExt as _;
+    if !path.is_absolute() {
+        return String::new();
+    }
     let mut out = String::from("file://");
     for &b in path.as_os_str().as_bytes() {
         if b.is_ascii_alphanumeric() || b"/-._~".contains(&b) {
@@ -254,6 +260,8 @@ mod tests {
             "/home/o/100%25 done",
             "/home/o/50% off",
             "/home/o/two  spaces",
+            "/home/o/a\nb",
+            "/home/o/🙂",
             "/home/o/plain",
         ] {
             assert_eq!(
@@ -262,16 +270,17 @@ mod tests {
                 "{folder}"
             );
         }
-        // What the QML did, for the record: Qt reads another folder.
-        assert_ne!(
-            local("file:///home/o/Proje #2").as_deref(),
-            Some("/home/o/Proje #2")
-        );
-        assert_ne!(local("file:///home/o/a?b").as_deref(), Some("/home/o/a?b"));
-        assert_ne!(
-            local("file:///home/o/100%25 done").as_deref(),
-            Some("/home/o/100%25 done")
-        );
+        // Before, the QML built "file://" + folder, which Qt (TolerantMode)
+        // cut at `#` and `?` and decoded at `%`. That is Qt's behaviour, not
+        // ours, so it is not pinned here.
+    }
+
+    /// A relative path has no URL: `file://TotalDrop` would name a host.
+    #[test]
+    fn a_relative_folder_has_no_url() {
+        assert_eq!(file_url(Path::new("TotalDrop")), "");
+        assert_eq!(file_url(Path::new("./TotalDrop")), "");
+        assert_eq!(file_url(Path::new("/TotalDrop")), "file:///TotalDrop");
     }
 
     /// The URL is plain ASCII and round-trips through the app's own reader

@@ -315,7 +315,6 @@ Page {
                   ? Strings.f("receiveSaveTo", { folder: page.transfer.savedTo })
                     + (page.transfer.filesFailed > 0 ? " " + Strings.f("sendSomeFailed", { count: page.transfer.filesFailed }) : "")
                   : ""
-            folder: page.phase === "done" && !isText ? page.transfer.savedTo : ""
             folderUrl: page.phase === "done" && !isText ? page.transfer.savedToUrl : ""
             shownText: page.phase === "done" ? page.transfer.shownText : ""
             shortened: page.phase === "done" && page.transfer.shownShort
