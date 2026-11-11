@@ -1,6 +1,6 @@
 ---
 name: software-engineering-discipline
-description: Use for every task in the TotalDrop repository, whatever the folder. The working method from issue to release, the definition of done, independent review, approvals and honest reporting. Load it first; the area skills build on it.
+description: "Use for every task in the TotalDrop repository, whatever the folder. The working method from issue to release, the definition of done, independent review, approvals and honest reporting. Load it first; the area skills build on it."
 ---
 
 # Software engineering discipline (TotalDrop)
@@ -28,8 +28,9 @@ Do not restate these documents in code comments or PRs; link them.
   wrong guess is expensive; otherwise state the assumption and go on.
 - Find the existing pattern and follow it. Prefer small, reversible steps.
 - An architectural choice gets a decision record in `docs/kararlar/`
-  (context, options, decision, reason, consequences). Old records are
-  superseded, never deleted.
+  (context, options, decision, reason, consequences). It opens as
+  "Önerilen" and becomes "Kabul" only with the maintainer's approval
+  (`docs/kararlar/README.md`). Old records are superseded, never deleted.
 - A security-relevant change updates `docs/tehdit-modeli.md` in the same PR.
 
 ## While writing code
@@ -57,6 +58,9 @@ Do not restate these documents in code comments or PRs; link them.
 
 ## Review and approval
 
+- PR titles follow Conventional Commits; fill in the PR template. A PR that
+  needs a manual test stays a draft until it is done.
+
 - Nobody approves their own work. Before asking a maintainer, run a separate
   review agent that sees only the diff and the code, not your reasoning; ask
   it for correctness, security, contradictions with the docs, overclaims, and
@@ -68,8 +72,10 @@ Do not restate these documents in code comments or PRs; link them.
 
 ## Reporting
 
-- Reply in the user's language (Turkish for the maintainers); code, commits
-  and identifiers stay in English.
+- Reply in the user's language (Turkish for the maintainers). Project
+  documents and user-facing text follow `CLAUDE.md` (Turkish documents,
+  every supported language for users); code, commits and identifiers stay
+  in English.
 - Say what was done, what was verified and how, what failed and what
   remains. Mark every unverified or assumed point as such.
 - Cite code as `path/file.ext:line`.

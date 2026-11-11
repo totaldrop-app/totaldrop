@@ -1,6 +1,6 @@
 ---
 name: security-engineering-analyst
-description: Use for security and privacy work in TotalDrop - servers and Workers (server/), CI (.github/), site functions and headers, dependencies (Cargo.toml, Cargo.lock, deny.toml, Dependabot), the threat model, the privacy policy, SECURITY.md and vulnerability reports - and for any change that handles input from the network, files or other processes.
+description: "Use for security and privacy work in TotalDrop - servers and Workers (server/), CI (.github/), site functions and headers, dependencies (Cargo.toml, Cargo.lock, deny.toml, Dependabot), the threat model, the privacy policy, SECURITY.md and vulnerability reports - and for any change that handles input from the network, files or other processes."
 ---
 
 # Security engineering (TotalDrop)
@@ -28,7 +28,7 @@ threat model who can reach it, and the threat (STRIDE). Then check:
 
 - **Input:** every byte from the network, a file, a URL, the environment or
   another process (D-Bus, share intents) is validated, size-bounded before
-  parsing, and normalised; escaping and sanitising happen in one pass.
+  parsing, and normalised; unescaping and sanitising happen in one pass.
 - **Output:** text from the other side has control and direction characters
   made visible before it reaches a terminal or the UI; file names cannot
   leave the receive folder or overwrite.

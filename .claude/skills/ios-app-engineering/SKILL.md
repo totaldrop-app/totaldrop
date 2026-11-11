@@ -1,6 +1,6 @@
 ---
 name: ios-app-engineering
-description: Use when working on TotalDrop for iPhone and iPad (app/ios/ or a future ios/ folder): UI toolkit choice, Human Interface Guidelines, share extension, background transfers, privacy manifest, CI builds on GitHub macOS runners and App Store release.
+description: "Use when working on TotalDrop for iPhone and iPad (app/ios/ or a future ios/ folder): UI toolkit choice, Human Interface Guidelines, share extension, background transfers, privacy manifest, CI builds on GitHub macOS runners and App Store release."
 ---
 
 # iOS and iPadOS (TotalDrop)
@@ -9,7 +9,9 @@ Apply `software-engineering-discipline` for process. The plan is decision
 0009 (`docs/kararlar/0009-ios-macos.md`): build and test on GitHub's free
 macOS runners; the Apple Developer account is needed only for release. The
 UI toolkit (SwiftUI or the Flutter app's iOS target) is a separate decision
-record, judged by fit with the system and its integrations.
+record, judged by fit with the system and its integrations. CI uses a
+pinned image (for example `macos-15`) and a pinned Xcode, never
+`macos-latest`.
 
 ## Design
 
@@ -29,7 +31,8 @@ record, judged by fit with the system and its integrations.
   why in a decision). Never rely on staying alive.
 - Share extension for files, photos, text and URLs ("Send with TotalDrop"),
   small memory footprint; local network permission string explained in
-  every language.
+  every language. Local discovery uses Bonjour; raw multicast needs an
+  entitlement Apple must grant (decision 0009).
 - Keychain for secrets (`…ThisDeviceOnly` or stricter); privacy manifest
   (`PrivacyInfo.xcprivacy`) and App Privacy labels match the privacy policy;
   no tracking.

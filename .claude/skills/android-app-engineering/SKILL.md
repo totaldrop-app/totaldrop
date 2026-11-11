@@ -1,6 +1,6 @@
 ---
 name: android-app-engineering
-description: Use when changing the TotalDrop Android app (app/, Flutter with the Rust core through flutter_rust_bridge): Material 3 and Material You, background transfers, share and "Send with TotalDrop" entry points, permissions, translations, tests and Play release builds.
+description: "Use when changing the TotalDrop Android app (app/, Flutter with the Rust core through flutter_rust_bridge): Material 3 and Material You, background transfers, share and \"Send with TotalDrop\" entry points, permissions, translations, tests and Play release builds."
 ---
 
 # Android (TotalDrop)
@@ -17,8 +17,11 @@ rules in `app/README.md`.
   (`app/rust`, `flutter_rust_bridge`). Generated glue (`app/lib/src/rust/`,
   `frb_generated.rs`) is regenerated, never edited by hand.
 - No analytics, crash reporters or advertising SDKs.
-- Errors from the core arrive as a `Cause` key plus `technicalDetail`; the
-  app shows the translated text for the key, never the raw error.
+- Errors from the core arrive with a `cause` name that Dart translates and
+  an English `detail` shown only under "more information"
+  (`app/rust/src/api/transfer.rs`); no other raw error text reaches the UI.
+- The mark's motion during a transfer is the site's, with the same values
+  (`mark.dart`, `MarkMotion`; `docs/tasarim.md`, "Hareket").
 - Transfer stages are an enum. After every `await`, check that generation and
   stage are unchanged before acting; an action runs only in the stage where
   it is valid (`docs/surec.md`, "Örtük durum makinesi").
@@ -58,9 +61,14 @@ rules in `app/README.md`.
 
 ## Release
 
+- Bump `version` with the build number (`+N`, higher on every upload) in
+  `app/pubspec.yaml`, and the same version without `+N` in
+  `app/rust/Cargo.toml` and `Cargo.lock` (`docs/surec.md`, "Sürüm listesi").
+
 - Built only in CI (`.github/workflows/android-release.yml`); it produces the
   `.aab` as an artifact and does not upload to Play. The maintainer uploads
   and presses "Publish".
-- `key.properties` and the upload key are never read or committed. A debug
-  APK does not install over the Play build.
+- `key.properties` and the upload key are never read or committed. A
+  debug APK is signed with another key, so it does not install over the
+  Play build.
 - Play release notes in every supported language.
