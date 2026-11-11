@@ -39,6 +39,24 @@ export function noteGiven(att: Counted, after: number): boolean {
   return true;
 }
 
+/** One step of giving a socket bytes, shared by pair.ts and its tests:
+ * with `written` last written to its attachment and `after` bytes given
+ * in all, read the attachment only when it may change ({@link mayChange}),
+ * note the bytes in it ({@link noteGiven}), and say what is now written
+ * and whether a probe goes out. `att` is the attachment read, to send the
+ * probe and write it back; null when it was not read. */
+export function give(
+  written: number | undefined,
+  after: number,
+  read: () => Counted | null,
+): { written: number | undefined; att: Counted | null; probe: boolean } {
+  if (!mayChange(written, after)) return { written, att: null, probe: false };
+  const att = read();
+  if (!att) return { written, att: null, probe: false };
+  const probe = noteGiven(att, after);
+  return { written: att.given, att, probe };
+}
+
 /** Bytes given to a socket and given at its last answered probe, read back
  * from its attachment after the object woke, and what was last written of
  * the first. Less than a step was given past the last write, so adding one

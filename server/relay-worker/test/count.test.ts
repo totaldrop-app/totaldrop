@@ -7,13 +7,13 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { type Counted, PROBE_STEP, mayChange, noteGiven, restore } from "../src/count.ts";
+import { type Counted, PROBE_STEP, give, restore } from "../src/count.ts";
 
 const S = PROBE_STEP;
 
 /** One socket as pair.ts keeps it: the attachment, which survives a wake,
  * and the object's memory (`counts`, `gave` and `answered`), which does
- * not. */
+ * not. Each step calls the same count.ts functions as pair.ts. */
 class Socket {
   att: Counted = {};
   /** Bytes really given. */
@@ -44,10 +44,9 @@ class Socket {
     this.truly += n;
     const mem = this.mem!;
     mem.given = after;
-    if (!mayChange(mem.written, after)) return;
-    const probe = noteGiven(this.att, after);
-    if (this.att.given !== undefined) mem.written = this.att.given;
-    if (!probe) return;
+    const step = give(mem.written, after, () => this.att);
+    mem.written = step.written;
+    if (!step.probe) return;
     this.probes++;
     this.pending.push(after);
   }
