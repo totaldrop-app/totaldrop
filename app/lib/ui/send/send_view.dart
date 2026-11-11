@@ -504,6 +504,23 @@ class _Waiting extends StatelessWidget {
     final l = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final code = vm.code ?? '';
+    Future<void> copy() async {
+      await Clipboard.setData(ClipboardData(text: code));
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l.sendCopied)),
+        );
+      }
+    }
+
+    // Isolated, the code keeps its order in a right-to-left sentence;
+    // pasted back, the receiver drops the marks.
+    Future<void> share() async {
+      await SharePlus.instance.share(
+        ShareParams(text: l.sendShareText(isolate(code))),
+      );
+    }
+
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
@@ -560,35 +577,10 @@ class _Waiting extends StatelessWidget {
                   ),
                 ),
                 Gap.m,
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () async {
-                          await Clipboard.setData(ClipboardData(text: code));
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(l.sendCopied)),
-                            );
-                          }
-                        },
-                        icon: const Icon(Icons.copy),
-                        label: Text(l.sendCopy),
-                      ),
-                    ),
-                    Gap.s,
-                    Expanded(
-                      child: FilledButton.icon(
-                        // Isolated, the code keeps its order in a right-to-left
-                        // sentence; pasted back, the receiver drops the marks.
-                        onPressed: () => SharePlus.instance.share(
-                          ShareParams(text: l.sendShareText(isolate(code))),
-                        ),
-                        icon: const Icon(Icons.share),
-                        label: Text(l.sendShare),
-                      ),
-                    ),
-                  ],
+                ButtonPair(
+                  spacing: 8,
+                  outlined: PairedButton(l.sendCopy, copy, icon: Icons.copy),
+                  filled: PairedButton(l.sendShare, share, icon: Icons.share),
                 ),
               ],
             ),
