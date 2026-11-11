@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // Every screen in every language (#315, #52, ADR 0008): nothing
-// overflows on a small phone, also with larger text, and right-to-left
-// languages lay out right to left. The test font draws each letter as a
+// overflows on a small phone, also with the largest text Android offers
+// (200 %, #322), and right-to-left languages lay out right to left. The test font draws each letter as a
 // full square: as wide as Japanese and wider than Latin or Arabic, so a
 // line that fits here fits on a phone. How the text looks (shaping,
 // fonts) is checked by hand on a phone in Arabic and Japanese.
@@ -17,6 +17,7 @@ import 'package:totaldrop/l10n/app_localizations.dart';
 import 'package:totaldrop/src/rust/api/l10n.dart' show ShownText;
 import 'package:totaldrop/src/rust/api/transfer.dart';
 import 'package:totaldrop/src/rust/frb_generated.dart';
+import 'package:totaldrop/ui/core/common.dart' show DoneBadge;
 import 'package:totaldrop/ui/core/theme.dart';
 import 'package:totaldrop/ui/home/home_view.dart';
 import 'package:totaldrop/ui/receive/receive_view.dart';
@@ -102,8 +103,9 @@ class _Limits implements BackgroundAccess {
   Future<bool> open(BackgroundPage page) async => true;
 }
 
-/// Text each screen shows once it reaches its state.
-const _shows = {
+/// What each screen shows once it reaches its state: a text, or a widget
+/// type for a screen whose text is all translated.
+const _shows = <String, Object>{
   'send with files': 'Rapport annuel',
   'send with the code': '7-harbor-rocket',
   'sending with the words': 'abstract',
@@ -112,6 +114,14 @@ const _shows = {
   'send a text': 'Rapport annuel',
   'receive a text offer': 'one',
   'receive a text': 'Rapport annuel',
+  'sending a large file': '%',
+  'send done': DoneBadge,
+  'receive declined': FilledButton,
+  'receive connecting': '7-harbor-rocket',
+  'receiving a large file': '%',
+  'receive done': 'Rapport annuel',
+  'send failed, details open': 'wss://relay.totaldrop.app',
+  'receive failed, details open': 'wss://relay.totaldrop.app',
 };
 
 /// A finished receive of a text.
@@ -129,6 +139,58 @@ TransferEvent _textReceived() => const TransferEvent(
   ),
   error: null,
 );
+
+/// A finished receive of files, one of which could not be saved.
+TransferEvent _filesReceived() => const TransferEvent(
+  kind: EventKind.finished,
+  words: [],
+  done: 0,
+  total: 0,
+  summary: TransferSummary(
+    filesOk: 1,
+    filesFailed: 1,
+    bytes: 40,
+    saved: ['/tmp/TotalDrop/$_longName'],
+    text: null,
+  ),
+  error: null,
+);
+
+/// Halfway through a large file: the longest progress line.
+const _halfway = TransferEvent(
+  kind: EventKind.progress,
+  words: [],
+  done: 1234567890,
+  total: 3456789012,
+  summary: null,
+  error: null,
+);
+
+/// A failure with a cause and a long technical text, the longest version
+/// of the error screen once "More information" is open.
+const _failed = TransferEvent(
+  kind: EventKind.failed,
+  words: [],
+  done: 0,
+  total: 0,
+  summary: null,
+  error: TransferError(
+    kind: ErrorKind.connect,
+    detail:
+        'could not connect to the other device: timed out after 30 s; '
+        'tried the local network, the direct path and the relay '
+        'wss://relay.totaldrop.app, none of them answered in time',
+    cause: 'TimedOut',
+  ),
+);
+
+/// Opens "More information" under an error.
+Future<void> _openDetails(WidgetTester tester) async {
+  await tester.pump();
+  final l = AppLocalizations.of(tester.element(find.byType(Scaffold).first));
+  await tester.tap(find.text(l.moreInfo));
+  await tester.pump();
+}
 
 const _rtl = {'ar', 'fa', 'he', 'ur'};
 
@@ -315,6 +377,123 @@ void main() {
             },
           );
         },
+        'sending a large file': () {
+          final repo = FakeRepository();
+          final vm = SendViewModel(
+            repository: repo,
+            fileSource: FakeFileSource(),
+          )..addFakeFileForTest(_longName);
+          return (
+            SendView(viewModel: vm),
+            (tester) async {
+              unawaited(vm.start());
+              repo.prepared.complete(FakeSession());
+              await tester.pump();
+              repo.events.add(_halfway);
+            },
+          );
+        },
+        'send done': () {
+          final repo = FakeRepository();
+          final vm = SendViewModel(
+            repository: repo,
+            fileSource: FakeFileSource(),
+          )..addFakeFileForTest(_longName);
+          return (
+            SendView(viewModel: vm),
+            (tester) async {
+              unawaited(vm.start());
+              repo.prepared.complete(FakeSession());
+              await tester.pump();
+              repo.events.add(_filesReceived());
+            },
+          );
+        },
+        'send failed, details open': () {
+          final repo = FakeRepository();
+          final vm = SendViewModel(
+            repository: repo,
+            fileSource: FakeFileSource(),
+          )..addFakeFileForTest(_longName);
+          return (
+            SendView(viewModel: vm),
+            (tester) async {
+              unawaited(vm.start());
+              repo.prepared.complete(FakeSession());
+              await tester.pump();
+              repo.events.add(_failed);
+              await _openDetails(tester);
+            },
+          );
+        },
+        'receive connecting': () {
+          final vm = ReceiveViewModel(repository: FakeRepository())
+            ..setInput('7-harbor-rocket');
+          return (
+            ReceiveView(viewModel: vm),
+            (tester) async => unawaited(vm.connect()),
+          );
+        },
+        'receiving a large file': () {
+          final repo = FakeRepository();
+          final vm = ReceiveViewModel(repository: repo)
+            ..setInput('7-harbor-rocket');
+          return (
+            ReceiveView(viewModel: vm),
+            (tester) async {
+              unawaited(vm.connect());
+              repo.connected.complete(_LongOffer());
+              await tester.pump();
+              await vm.accept();
+              repo.events.add(_halfway);
+            },
+          );
+        },
+        'receive done': () {
+          final repo = FakeRepository();
+          final vm = ReceiveViewModel(repository: repo)
+            ..setInput('7-harbor-rocket');
+          return (
+            ReceiveView(viewModel: vm),
+            (tester) async {
+              unawaited(vm.connect());
+              repo.connected.complete(_LongOffer());
+              await tester.pump();
+              await vm.accept();
+              repo.events.add(_filesReceived());
+            },
+          );
+        },
+        'receive declined': () {
+          final repo = FakeRepository();
+          final vm = ReceiveViewModel(repository: repo)
+            ..setInput('7-harbor-rocket');
+          return (
+            ReceiveView(viewModel: vm),
+            (tester) async {
+              unawaited(vm.connect());
+              repo.connected.complete(_LongOffer());
+              await tester.pump();
+              await vm.decline();
+            },
+          );
+        },
+        'receive failed, details open': () {
+          final repo = FakeRepository();
+          final vm = ReceiveViewModel(repository: repo)
+            ..setInput('7-harbor-rocket');
+          return (
+            ReceiveView(viewModel: vm),
+            (tester) async {
+              unawaited(vm.connect());
+              repo.connected.complete(_LongOffer());
+              await tester.pump();
+              await vm.accept();
+              repo.events.add(_failed);
+              await _openDetails(tester);
+            },
+          );
+        },
         'settings': () => (
           SettingsView(
             settings: settings,
@@ -346,7 +525,7 @@ void main() {
   });
 
   for (final locale in AppLocalizations.supportedLocales) {
-    for (final scale in [1.0, 1.3]) {
+    for (final scale in [1.0, 1.3, 2.0]) {
       for (final MapEntry(key: name, value: screen) in screens.entries) {
         testWidgets('$name in $locale at ${scale}x', (tester) async {
           await tester.binding.setSurfaceSize(_phone);
@@ -358,16 +537,18 @@ void main() {
           await tester.pump();
           await tester.pump(const Duration(milliseconds: 300));
           // The screen is in the state named.
-          final shown = _shows[name];
-          if (shown != null) {
-            expect(
-              find.textContaining(shown, findRichText: true),
-              findsWidgets,
-            );
+          switch (_shows[name]) {
+            case final String text:
+              expect(
+                find.textContaining(text, findRichText: true),
+                findsWidgets,
+              );
+            case final Type type:
+              expect(find.byType(type), findsWidgets);
           }
 
-          // A horizontal overflow is reported as an exception. Every screen
-          // scrolls, so nothing can overflow vertically.
+          // An overflow, across or down, is reported as an exception: a
+          // screen whose content can be taller than the phone scrolls.
           expect(tester.takeException(), isNull);
           final direction = Directionality.of(
             tester.element(find.byType(Scaffold).first),
