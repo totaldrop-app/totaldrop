@@ -45,7 +45,7 @@ treated as final.
    - The first claim of a nameplate must carry its allocator token. Only
      the sender has it, so anyone else claiming an empty nameplate is
      refused. A nameplate that was never allocated cannot be claimed.
-     Both servers compare the token in constant time (#428).
+     Both servers compare the token without an early exit (#428).
    - A connection claims once, and only the mailbox of its address.
    - A client that disconnects without `CLOSE` counts as a `lonely` close.
    - After `CLOSE` the server ends the connection. The client waits for
