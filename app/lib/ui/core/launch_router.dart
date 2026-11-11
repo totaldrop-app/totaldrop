@@ -102,8 +102,9 @@ class _LaunchRouterState extends State<LaunchRouter> {
       case ShareFailed(id: final id):
         widget.send.shareFailed(id);
       case OpenLink(link: final link):
-        // A link without a code still opens Receive, to type one in.
-        if (_blocked) {
+        // A link without a code still opens Receive, to type one in. Not
+        // over a received text either: it is shown, never saved.
+        if (_blocked || !widget.receive.canTakeLink) {
           _showRunning();
           _tell((l) => l.linkBusy);
         } else {

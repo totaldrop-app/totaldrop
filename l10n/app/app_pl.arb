@@ -140,7 +140,7 @@
   "transferNoticeReceiving": "Odbieranie przez TotalDrop",
   "transferNoticeBody": "Trwa nadal, gdy korzystasz z innych aplikacji.",
   "shareBusy": "Przesyłanie wciąż trwa. Poczekaj, aż się skończy, lub je zatrzymaj, a potem udostępnij ponownie.",
-  "linkBusy": "Przesyłanie wciąż trwa. Poczekaj, aż się skończy, lub je zatrzymaj, a potem otwórz link ponownie.",
+  "linkBusy": "Dokończ lub zatrzymaj to, co jest na ekranie, a potem otwórz link ponownie.",
   "shareSkipped": "{count, plural, one{Nie udało się odczytać jednego udostępnionego elementu, więc go pominięto.} few{Nie udało się odczytać {count} udostępnionych elementów, więc je pominięto.} many{Nie udało się odczytać {count} udostępnionych elementów, więc je pominięto.} other{Nie udało się odczytać {count} udostępnionego elementu, więc je pominięto.}}",
   "desktopGenericName": "Przesyłanie plików",
   "desktopComment": "Wysyłaj pliki prosto na inne urządzenie, z szyfrowaniem end-to-end",

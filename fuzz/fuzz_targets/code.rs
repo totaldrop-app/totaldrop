@@ -6,8 +6,9 @@
 //! round trip through both its canonical and its English form. Invisible
 //! format characters and Arabic-Indic digits never change the result. A
 //! code found in a longer text is a code the text holds. A link is read
-//! strictly: a bare code reads as `parse` reads it, and nothing longer
-//! than the limit is read.
+//! strictly: a bare code reads as `parse` reads it, a code behind either
+//! prefix reads as itself with its escapes decoded once (not twice), text
+//! after the code is refused, and nothing longer than the limit is read.
 
 use libfuzzer_sys::fuzz_target;
 use totaldrop_proto::{MAX_LINK_BYTES, TransferCode, ascii_digits, strip_invisible_format};
@@ -25,8 +26,24 @@ fuzz_target!(|data: &[u8]| {
         let linked = TransferCode::from_link(s);
         if s.len() > MAX_LINK_BYTES {
             assert_eq!(linked, None);
-        } else if let Ok(code) = TransferCode::parse(s) {
-            assert_eq!(linked.as_ref(), Some(&code));
+        } else {
+            if let Ok(code) = TransferCode::parse(s) {
+                assert_eq!(linked.as_ref(), Some(&code));
+            }
+            assert_eq!(TransferCode::from_link(&format!("{s}?x")), None, "{s:?}");
+        }
+        if let Ok(code) = TransferCode::parse(s) {
+            let english = code.to_english();
+            let link = |l: String| TransferCode::from_link(&l);
+            assert_eq!(link(format!("totaldrop://r/{english}")), Some(code.clone()));
+            assert_eq!(
+                link(format!("https://totaldrop.app/r#{}", escaped(&english))),
+                Some(code.clone())
+            );
+            assert_eq!(
+                link(format!("totaldrop://r/{}", escaped(&escaped(&english)))),
+                None
+            );
         }
         let found = TransferCode::find(s);
         if let Ok(code) = TransferCode::parse(s) {
@@ -58,3 +75,8 @@ fuzz_target!(|data: &[u8]| {
         }
     }
 });
+
+/// Every byte as `%XX`.
+fn escaped(s: &str) -> String {
+    s.bytes().map(|b| format!("%{b:02X}")).collect()
+}

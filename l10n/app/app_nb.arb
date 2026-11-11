@@ -140,7 +140,7 @@
   "transferNoticeReceiving": "Mottar med TotalDrop",
   "transferNoticeBody": "Fortsetter mens du bruker andre apper.",
   "shareBusy": "En overføring pågår fortsatt. Vent til den er ferdig eller stopp den, og del på nytt.",
-  "linkBusy": "En overføring pågår fortsatt. Vent til den er ferdig eller stopp den, og åpne lenken på nytt.",
+  "linkBusy": "Fullfør eller stopp det som er på skjermen, og åpne lenken på nytt.",
   "shareSkipped": "{count, plural, =1{Ett delt element kunne ikke leses og ble utelatt.} other{{count} delte elementer kunne ikke leses og ble utelatt.}}",
   "desktopGenericName": "Filoverføring",
   "desktopComment": "Send filer rett til en annen enhet, ende-til-ende-kryptert",

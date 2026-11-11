@@ -140,7 +140,7 @@
   "transferNoticeReceiving": "Vastaanotetaan TotalDropilla",
   "transferNoticeBody": "Jatkuu, kun käytät muita sovelluksia.",
   "shareBusy": "Siirto on yhä käynnissä. Odota, että se valmistuu, tai pysäytä se ja jaa sitten uudelleen.",
-  "linkBusy": "Siirto on yhä käynnissä. Odota, että se valmistuu, tai pysäytä se ja avaa linkki sitten uudelleen.",
+  "linkBusy": "Vie loppuun tai pysäytä se, mikä on näytöllä, ja avaa linkki sitten uudelleen.",
   "shareSkipped": "{count, plural, =1{Yhtä jaettua kohdetta ei voitu lukea, joten se jätettiin pois.} other{{count} jaettua kohdetta ei voitu lukea, joten ne jätettiin pois.}}",
   "desktopGenericName": "Tiedostonsiirto",
   "desktopComment": "Lähetä tiedostot suoraan toiseen laitteeseen päästä päähän salattuina",

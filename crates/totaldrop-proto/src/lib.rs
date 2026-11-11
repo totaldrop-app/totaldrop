@@ -243,15 +243,19 @@ pub const MAX_LINK_BYTES: usize = 1024;
 /// `%XX` escapes decoded once; a `%` not followed by two hex digits stays
 /// as it is, and bytes that are not UTF-8 become U+FFFD.
 fn percent_decode(s: &str) -> String {
+    let hex = |b: &u8| {
+        char::from(*b)
+            .to_digit(16)
+            .and_then(|d| u8::try_from(d).ok())
+    };
     let mut out = Vec::with_capacity(s.len());
     let mut rest = s.as_bytes();
     while let Some((&b, tail)) = rest.split_first() {
-        // Two hex digits exactly: `from_str_radix` would also take a sign.
+        // Two hex digits exactly, so a sign (`%+7`) is not read as one.
         if b == b'%'
             && let [h, l, after @ ..] = tail
-            && h.is_ascii_hexdigit()
-            && l.is_ascii_hexdigit()
-            && let Ok(v) = u8::from_str_radix(&format!("{}{}", char::from(*h), char::from(*l)), 16)
+            && let (Some(h), Some(l)) = (hex(h), hex(l))
+            && let Some(v) = h.checked_mul(16).and_then(|v| v.checked_add(l))
         {
             out.push(v);
             rest = after;

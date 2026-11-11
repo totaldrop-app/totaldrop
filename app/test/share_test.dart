@@ -561,14 +561,50 @@ void main() {
       await settle(tester);
       expect(
         find.text(
-          'A transfer is still running. Wait for it to finish or stop it, '
-          'then open the link again.',
+          'Finish or stop what is on the screen, then open the link again.',
         ),
         findsOneWidget,
       );
       expect(send.stage, SendStage.preparing, reason: 'not cut short');
       expect(receive.input, isEmpty);
       expect(find.byType(SendView), findsOneWidget, reason: 'the running one');
+    });
+
+    testWidgets('a link leaves a received text on the screen', (tester) async {
+      await pumpApp(tester);
+      receive.setInput('3-old-code');
+      final connected = receive.connect();
+      repo.connected.complete(FakeOffer(isText: true));
+      await connected;
+      await receive.accept();
+      repo.events.add(
+        TransferEvent(
+          kind: EventKind.finished,
+          words: const [],
+          done: 0,
+          total: 0,
+          summary: TransferSummary(
+            filesOk: 0,
+            filesFailed: 0,
+            bytes: 9,
+            saved: const [],
+            text: 'only here',
+          ),
+          error: null,
+        ),
+      );
+      await settle(tester);
+      expect(receive.receivedText, 'only here');
+      launches.add(const OpenLink('totaldrop://r/7-harbor-rocket'));
+      await settle(tester);
+      expect(
+        find.text(
+          'Finish or stop what is on the screen, then open the link again.',
+        ),
+        findsOneWidget,
+      );
+      expect(receive.receivedText, 'only here', reason: 'nowhere else');
+      expect(find.byType(ReceiveView), findsOneWidget);
     });
   });
 }

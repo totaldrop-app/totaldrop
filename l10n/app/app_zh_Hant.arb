@@ -140,7 +140,7 @@
   "transferNoticeReceiving": "正在透過 TotalDrop 接收",
   "transferNoticeBody": "使用其他應用程式時仍會繼續。",
   "shareBusy": "仍有傳輸正在進行。請等待其完成或將其停止，然後再分享。",
-  "linkBusy": "仍有傳輸正在進行。請等待其完成或將其停止，然後再次開啟連結。",
+  "linkBusy": "請先完成或停止螢幕上的操作，然後再次開啟連結。",
   "shareSkipped": "{count, plural, =1{有 1 個分享的項目無法讀取，已略過。} other{有 {count} 個分享的項目無法讀取，已略過。}}",
   "desktopGenericName": "檔案傳輸",
   "desktopComment": "將檔案直接傳送到另一台裝置，端對端加密",

@@ -39,7 +39,11 @@ class _ReceiveViewState extends State<ReceiveView> {
   /// A link can fill in the code from outside the field (#445).
   void _showInput() {
     final input = widget.viewModel.input;
-    if (_controller.text != input) _controller.text = input;
+    if (_controller.text == input) return;
+    _controller.value = TextEditingValue(
+      text: input,
+      selection: TextSelection.collapsed(offset: input.length),
+    );
   }
 
   Future<bool> _confirmStop(BuildContext context) async {

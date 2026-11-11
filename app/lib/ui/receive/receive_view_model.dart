@@ -80,12 +80,20 @@ class ReceiveViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Whether a link may put a new code on this screen (#445): not while
+  /// a transfer runs or an offer waits for an answer, and not while a
+  /// received text is shown, which is nowhere else.
+  bool get canTakeLink =>
+      !busy &&
+      stage != ReceiveStage.offered &&
+      !(stage == ReceiveStage.done && isText);
+
   /// Fills in the code of a link that opened the app (#445), in place of
-  /// what was typed. Not while a transfer runs or waits for an answer;
-  /// a finished one is put away first. Nothing connects until the person
-  /// does. Returns whether the link held a code.
+  /// what was typed. Only when [canTakeLink]; a finished receive of files,
+  /// a declined or a failed one is put away first. Nothing connects until
+  /// the person does. Returns whether the link held a code.
   bool takeLink(String link) {
-    if (busy || stage == ReceiveStage.offered) return false;
+    if (!canTakeLink) return false;
     final code = _repo.codeFromLink(link);
     if (code == null) return false;
     if (stage != ReceiveStage.entering) reset();

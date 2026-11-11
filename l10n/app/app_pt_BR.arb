@@ -140,7 +140,7 @@
   "transferNoticeReceiving": "Recebendo com o TotalDrop",
   "transferNoticeBody": "Continua enquanto você usa outros apps.",
   "shareBusy": "Uma transferência ainda está em andamento. Espere terminar ou pare-a e compartilhe de novo.",
-  "linkBusy": "Uma transferência ainda está em andamento. Espere terminar ou pare-a e abra o link de novo.",
+  "linkBusy": "Termine ou pare o que está na tela e abra o link de novo.",
   "shareSkipped": "{count, plural, one{{count} item compartilhado não pôde ser lido e foi deixado de fora.} many{{count} de itens compartilhados não puderam ser lidos e foram deixados de fora.} other{{count} itens compartilhados não puderam ser lidos e foram deixados de fora.}}",
   "desktopGenericName": "Transferência de arquivos",
   "desktopComment": "Envie arquivos direto para outro dispositivo, com criptografia de ponta a ponta",
