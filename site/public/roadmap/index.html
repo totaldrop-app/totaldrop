@@ -16,7 +16,7 @@
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="preload" href="/fonts/bricolage-grotesque-latin-800-normal.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="/styles.css?v=404512086c">
+  <link rel="stylesheet" href="/styles.css?v=d2b8b18fee">
 </head>
 <body data-page="roadmap">
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -37,67 +37,112 @@
 
   <main id="main">
     <section class="dl-hero" aria-labelledby="rm-title">
-      <p class="eyebrow" data-i18n="rm.eyebrow">Roadmap · updated 30 October 2026</p>
+      <p class="eyebrow" data-i18n="rm.eyebrow">Roadmap · updated 11 November 2026</p>
       <h1 id="rm-title" data-i18n="rm.title">What is coming to TotalDrop</h1>
       <p class="lede" data-i18n="rm.lede">Dates are aims, not promises: a feature ships only when it is safe. Every step can be followed in the open repository.</p>
+    </section>
+
+    <section class="block" aria-labelledby="rm-order">
+      <h2 id="rm-order" data-i18n="rm.o.title">The order we work in</h2>
+      <ol class="steps">
+        <li>
+          <h3 data-i18n="rm.o1.t">Stability</h3>
+          <p data-i18n="rm.o1.d">Every transfer arrives, on any network and through a dropped connection.</p>
+        </li>
+        <li>
+          <h3 data-i18n="rm.o2.t">The optional account</h3>
+          <p data-i18n="rm.o2.d">Your own devices and saved contacts, without codes and without accounts on our servers.</p>
+        </li>
+        <li>
+          <h3 data-i18n="rm.o3.t">More platforms</h3>
+          <p data-i18n="rm.o3.d">Windows, iPhone, iPad and Mac.</p>
+        </li>
+      </ol>
+      <p class="note" data-i18n="rm.o.note">A new idea joins this order; it does not jump ahead of it.</p>
     </section>
 
     <section class="block rm-phase is-done" aria-labelledby="rm-done">
       <header class="rm-head">
         <span class="road-state" data-i18n="rm.done.state">Done</span>
-        <h2 id="rm-done" data-i18n="rm.done.when">October 2026</h2>
+        <h2 id="rm-done" data-i18n="rm.done.when">October and November 2026</h2>
       </header>
       <ul class="rm-items">
-          <li>
-            <h3 data-i18n="rm.d1.t">An open protocol</h3>
-            <p data-i18n="rm.d1.d">TotalDrop Protocol v0: transfer codes with CPace, Noise XXpsk3 with post-quantum ML-KEM-768, QUIC with single-use keys. Written down so anyone can build a compatible app.</p>
-            <span class="rm-plat" data-i18n="rm.all">All platforms</span>
-          </li>
-          <li>
-            <h3 data-i18n="rm.d2.t">Command-line client</h3>
-            <p data-i18n="rm.d2.d">Send and receive from a terminal on Linux, macOS and Windows.</p>
+        <li>
+          <h3 data-i18n="rm.d1.t">An open protocol</h3>
+          <p data-i18n="rm.d1.d">TotalDrop Protocol v0: transfer codes with CPace, Noise XXpsk3 with post-quantum ML-KEM-768, QUIC with single-use keys. Written down so anyone can build a compatible app.</p>
+        </li>
+        <li>
+          <h3 data-i18n="rm.d2.t">Command-line client</h3>
+          <p data-i18n="rm.d2.d">Send and receive from a terminal on Linux, macOS and Windows.</p>
+          <p class="rm-meta">
             <span class="rm-plat">Linux · macOS · Windows</span>
-          </li>
-          <li>
-            <h3 data-i18n="rm.d3.t">Android beta</h3>
-            <p data-i18n="rm.d3.d">Send and receive with a code, in your language, following the phone&#x27;s colours. On Google Play by invitation.</p>
+          </p>
+        </li>
+        <li>
+          <h3 data-i18n="rm.d3.t">Android beta</h3>
+          <p data-i18n="rm.d3.d">Send and receive with a code, in your language, following the phone&#x27;s colours. On Google Play by invitation.</p>
+          <p class="rm-meta">
             <span class="rm-plat">Android</span>
-          </li>
-          <li>
-            <h3 data-i18n="rm.d4.t">Linux app</h3>
-            <p data-i18n="rm.d4.d">Qt 6 and native Wayland. Follows the theme of KDE Plasma, Hyprland and Omarchy live. Packages for Arch, Debian, Ubuntu and Fedora.</p>
+          </p>
+        </li>
+        <li>
+          <h3 data-i18n="rm.d4.t">Linux app</h3>
+          <p data-i18n="rm.d4.d">Qt 6 and native Wayland. Follows the theme of KDE Plasma, Hyprland and Omarchy live. Packages for Arch, Debian, Ubuntu and Fedora.</p>
+          <p class="rm-meta">
             <span class="rm-plat">Linux</span>
-          </li>
-          <li>
-            <h3 data-i18n="rm.d5.t">Through firewalls</h3>
-            <p data-i18n="rm.d5.d">Both devices listen and dial, so a firewall on one side no longer stops a transfer.</p>
-            <span class="rm-plat" data-i18n="rm.all">All platforms</span>
-          </li>
-          <li>
-            <h3 data-i18n="rm.n1.t">Across the internet</h3>
-            <p data-i18n="rm.n1.d">Devices find their public address with STUN and connect directly through most home routers. When that is impossible, the encrypted traffic goes through our relay on Cloudflare, which cannot read it.</p>
-            <span class="rm-plat" data-i18n="rm.all">All platforms</span>
-          </li>
-          <li>
-            <h3 data-i18n="rm.n2.t">Privacy mode in the command line</h3>
-            <p data-i18n="rm.n2.d">Relay only: the other side never learns your IP address.</p>
+          </p>
+        </li>
+        <li>
+          <h3 data-i18n="rm.d5.t">Through firewalls</h3>
+          <p data-i18n="rm.d5.d">Both devices listen and dial, so a firewall on one side no longer stops a transfer.</p>
+        </li>
+        <li>
+          <h3 data-i18n="rm.n1.t">Across the internet</h3>
+          <p data-i18n="rm.n1.d">Devices find their public address with STUN and connect directly through most home routers. When that is impossible, the encrypted traffic goes through our relay on Cloudflare, which cannot read it.</p>
+        </li>
+        <li>
+          <h3 data-i18n="rm.n2.t">Privacy mode in the command line</h3>
+          <p data-i18n="rm.n2.d">Relay only: the other side never learns your IP address.</p>
+          <p class="rm-meta">
             <span class="rm-plat">Linux · macOS · Windows</span>
-          </li>
-          <li>
-            <h3 data-i18n="rm.x7.t">Privacy mode in the apps</h3>
-            <p data-i18n="rm.x7.d">One switch in Settings: everything goes through the relay, so the other device never learns your IP address.</p>
+          </p>
+        </li>
+        <li>
+          <h3 data-i18n="rm.x7.t">Privacy mode in the apps</h3>
+          <p data-i18n="rm.x7.d">One switch in Settings: everything goes through the relay, so the other device never learns your IP address.</p>
+          <p class="rm-meta">
             <span class="rm-plat">Android · Linux</span>
-          </li>
-          <li>
-            <h3 data-i18n="rm.x8.t">Linux on ARM</h3>
-            <p data-i18n="rm.x8.d">.deb and .rpm packages for ARM64 computers such as Snapdragon X and NVIDIA RTX Spark.</p>
+          </p>
+        </li>
+        <li>
+          <h3 data-i18n="rm.x8.t">Linux on ARM</h3>
+          <p data-i18n="rm.x8.d">.deb and .rpm packages for ARM64 computers such as Snapdragon X and NVIDIA RTX Spark.</p>
+          <p class="rm-meta">
             <span class="rm-plat">Linux</span>
-          </li>
-          <li>
-            <h3 data-i18n="rm.x9.t">In your language</h3>
-            <p data-i18n="rm.x9.d">The apps and this site in 35 languages, with your region&#x27;s number formats. Native speakers are checking the drafts.</p>
+          </p>
+        </li>
+        <li>
+          <h3 data-i18n="rm.x9.t">In your language</h3>
+          <p data-i18n="rm.x9.d">The apps and this site in 35 languages, with your region&#x27;s number formats. Native speakers are checking the drafts.</p>
+        </li>
+        <li>
+          <h3 data-i18n="rm.d6.t">Send text and the clipboard</h3>
+          <p data-i18n="rm.d6.d">Send a note, a link or what you copied. It arrives as text you can copy, not as a file.</p>
+          <p class="rm-meta">
+            <span class="rm-plat">Android · Linux</span>
+            <a class="rm-issue" href="https://github.com/totaldrop-app/totaldrop/issues/313">#313</a>
+            <a class="rm-issue" href="https://github.com/totaldrop-app/totaldrop/issues/326">#326</a>
+          </p>
+        </li>
+        <li>
+          <h3 data-i18n="rm.d8.t">Direct connections more often</h3>
+          <p data-i18n="rm.d8.d">IPv6 paths, and on Linux a port opened on your home router only for the transfer and closed after it, so fewer transfers need the relay. In the code; it arrives with the next releases.</p>
+          <p class="rm-meta">
             <span class="rm-plat" data-i18n="rm.all">All platforms</span>
-          </li>
+            <a class="rm-issue" href="https://github.com/totaldrop-app/totaldrop/issues/403">#403</a>
+            <a class="rm-issue" href="https://github.com/totaldrop-app/totaldrop/issues/406">#406</a>
+          </p>
+        </li>
       </ul>
     </section>
     <section class="block rm-phase is-now" aria-labelledby="rm-now">
@@ -106,105 +151,226 @@
         <h2 id="rm-now" data-i18n="rm.now.when">November 2026</h2>
       </header>
       <ul class="rm-items">
-          <li>
-            <h3 data-i18n="rm.x1.t">Scan the QR code with the camera</h3>
-            <p data-i18n="rm.x1.d">Point the phone at the sender&#x27;s screen instead of typing the code.</p>
+        <li>
+          <h3 data-i18n="rm.s1.t">Steadier transfers</h3>
+          <p data-i18n="rm.s1.d">A transfer should keep going when the phone leaves the screen, the laptop wants to sleep or only the relay gets through.</p>
+          <p class="rm-status" data-i18n="rm.s1.s">Done: a short network drop no longer ends a transfer, and Android asks once to keep TotalDrop running in the background. Next: background and sleep on every platform, and steadier, faster relay-only transfers.</p>
+          <p class="rm-meta">
+            <span class="rm-plat" data-i18n="rm.all">All platforms</span>
+            <a class="rm-issue" href="https://github.com/totaldrop-app/totaldrop/issues/340">#340</a>
+            <a class="rm-issue" href="https://github.com/totaldrop-app/totaldrop/issues/185">#185</a>
+          </p>
+        </li>
+        <li>
+          <h3 data-i18n="rm.f1.t">Send from where you are</h3>
+          <p data-i18n="rm.f1.d">Send without opening TotalDrop first: from the share menu, a text selection or the file manager.</p>
+          <p class="rm-status" data-i18n="rm.f1.s">Done: share menu, text selection, clipboard and icon shortcuts on Android; right-click in Dolphin, Nautilus and Nemo on Linux. Next: a Quick Settings tile, receive links that open the app, and KDE&#x27;s Share menu.</p>
+          <p class="rm-meta">
+            <span class="rm-plat">Android · Linux</span>
+            <a class="rm-issue" href="https://github.com/totaldrop-app/totaldrop/issues/53">#53</a>
+            <a class="rm-issue" href="https://github.com/totaldrop-app/totaldrop/issues/54">#54</a>
+          </p>
+        </li>
+        <li>
+          <h3 data-i18n="rm.x1.t">Scan the QR code with the camera</h3>
+          <p data-i18n="rm.x1.d">Point the phone at the sender&#x27;s screen instead of typing the code.</p>
+          <p class="rm-status" data-i18n="rm.todo">Not started yet.</p>
+          <p class="rm-meta">
             <span class="rm-plat">Android</span>
-          </li>
-          <li>
-            <h3 data-i18n="rm.x2.t">Receive in the browser</h3>
-            <p data-i18n="rm.x2.d">Open a link, type the code, save the files. Nothing to install, still end-to-end encrypted.</p>
+            <a class="rm-issue" href="https://github.com/totaldrop-app/totaldrop/issues/29">#29</a>
+          </p>
+        </li>
+        <li>
+          <h3 data-i18n="rm.x2.t">Receive in the browser</h3>
+          <p data-i18n="rm.x2.d">Open a link, type the code, save the files. Nothing to install, still end-to-end encrypted.</p>
+          <p class="rm-status" data-i18n="rm.todo">Not started yet.</p>
+          <p class="rm-meta">
             <span class="rm-plat">Web</span>
-          </li>
+            <a class="rm-issue" href="https://github.com/totaldrop-app/totaldrop/issues/30">#30</a>
+          </p>
+        </li>
       </ul>
     </section>
-    <section class="block rm-phase " aria-labelledby="rm-next">
+    <section class="block rm-phase" aria-labelledby="rm-next">
       <header class="rm-head">
         <span class="road-state" data-i18n="rm.next.state">Next</span>
         <h2 id="rm-next" data-i18n="rm.next.when">Winter 2026–27</h2>
       </header>
       <ul class="rm-items">
-          <li>
-            <h3 data-i18n="rm.x3.t">Resume interrupted transfers</h3>
-            <p data-i18n="rm.x3.d">A dropped connection picks up where it stopped, without sending what already arrived.</p>
+        <li>
+          <h3 data-i18n="rm.x3.t">Resume interrupted transfers</h3>
+          <p data-i18n="rm.x3.d">A dropped connection picks up where it stopped. The receiver keeps what already arrived, so sending again sends only what is missing; later it reconnects on its own.</p>
+          <p class="rm-status" data-i18n="rm.x3.s">Started: design accepted (decision 0020).</p>
+          <p class="rm-meta">
             <span class="rm-plat" data-i18n="rm.all">All platforms</span>
-          </li>
-          <li>
-            <h3 data-i18n="rm.x4.t">Switch from relay to direct</h3>
-            <p data-i18n="rm.x4.d">A transfer that started through the relay moves to a direct path as soon as one opens.</p>
+            <a class="rm-issue" href="https://github.com/totaldrop-app/totaldrop/issues/31">#31</a>
+          </p>
+        </li>
+        <li>
+          <h3 data-i18n="rm.x4.t">Switch from relay to direct</h3>
+          <p data-i18n="rm.x4.d">A transfer that started through the relay moves to a direct path as soon as one opens, and reacts at once when the network changes instead of waiting for silence.</p>
+          <p class="rm-meta">
             <span class="rm-plat" data-i18n="rm.all">All platforms</span>
-          </li>
-          <li>
-            <h3 data-i18n="rm.x5.t">Windows app</h3>
-            <p data-i18n="rm.x5.d">A native Windows 11 app. Signed once donations cover the certificate.</p>
-            <span class="rm-plat">Windows</span>
-          </li>
-          <li>
-            <h3 data-i18n="rm.x6.t">Arch User Repository</h3>
-            <p data-i18n="rm.x6.d">Install and update with your AUR helper.</p>
-            <span class="rm-plat">Linux</span>
-          </li>
+            <a class="rm-issue" href="https://github.com/totaldrop-app/totaldrop/issues/32">#32</a>
+          </p>
+        </li>
+        <li>
+          <h3 data-i18n="rm.c1.t">Huge folders, little memory</h3>
+          <p data-i18n="rm.c1.d">The list of files is read piece by piece, so even a folder with a very long list needs little memory on the receiving side.</p>
+          <p class="rm-meta">
+            <span class="rm-plat" data-i18n="rm.all">All platforms</span>
+            <a class="rm-issue" href="https://github.com/totaldrop-app/totaldrop/issues/47">#47</a>
+          </p>
+        </li>
+        <li>
+          <h3 data-i18n="rm.f2.t">Flathub and Steam Deck</h3>
+          <p data-i18n="rm.f2.d">TotalDrop on Flathub, and tested on Steam Deck in Desktop Mode and Game Mode. The same Linux app, not a separate one.</p>
+          <p class="rm-status" data-i18n="rm.f2.s">Done: the Flatpak is built in our CI. Next: the Flathub submission.</p>
+          <p class="rm-meta">
+            <span class="rm-plat">Linux · Steam Deck</span>
+            <a class="rm-issue" href="https://github.com/totaldrop-app/totaldrop/issues/295">#295</a>
+          </p>
+        </li>
+        <li>
+          <h3 data-i18n="rm.x6.t">Package managers</h3>
+          <p data-i18n="rm.x6.d">Ready-built command-line programs from our CI, then Homebrew, Scoop, the AUR and winget.</p>
+          <p class="rm-status" data-i18n="rm.x6.s">Designed (decision 0015).</p>
+          <p class="rm-meta">
+            <span class="rm-plat">Linux · macOS · Windows</span>
+            <a class="rm-issue" href="https://github.com/totaldrop-app/totaldrop/issues/34">#34</a>
+            <a class="rm-issue" href="https://github.com/totaldrop-app/totaldrop/issues/344">#344</a>
+          </p>
+        </li>
       </ul>
     </section>
-    <section class="block rm-phase " aria-labelledby="rm-later">
+    <section class="block rm-phase" aria-labelledby="rm-later">
       <header class="rm-head">
         <span class="road-state" data-i18n="rm.later.state">Later</span>
         <h2 id="rm-later" data-i18n="rm.later.when">2027</h2>
       </header>
       <ul class="rm-items">
-          <li>
-            <h3 data-i18n="rm.l1.t">iPhone, iPad and Mac</h3>
-            <p data-i18n="rm.l1.d">Native apps, once donations cover Apple&#x27;s developer account.</p>
+        <li>
+          <h3 data-i18n="rm.l3.t">An account the server never keeps</h3>
+          <p data-i18n="rm.l3.d">Optional: no email, phone, password or number to type. Your devices hold the account; your own devices send to each other, and saved contacts send to you, without a code.</p>
+          <p class="rm-status" data-i18n="rm.l3.s">Designed (decision 0013), and six formal models of it are checked with the Tamarin prover. Next: an independent review by a cryptographer, then the server and the apps.</p>
+          <p class="rm-meta">
+            <span class="rm-plat" data-i18n="rm.all">All platforms</span>
+            <a class="rm-issue" href="https://github.com/totaldrop-app/totaldrop/issues/37">#37</a>
+            <a class="rm-issue" href="https://github.com/totaldrop-app/totaldrop/issues/251">#251</a>
+          </p>
+        </li>
+        <li>
+          <h3 data-i18n="rm.l4.t">Saved contacts</h3>
+          <p data-i18n="rm.l4.d">Pair once, check four words, and send to that person again without a code.</p>
+          <p class="rm-meta">
+            <span class="rm-plat" data-i18n="rm.all">All platforms</span>
+            <a class="rm-issue" href="https://github.com/totaldrop-app/totaldrop/issues/38">#38</a>
+          </p>
+        </li>
+        <li>
+          <h3 data-i18n="rm.x5.t">Windows app</h3>
+          <p data-i18n="rm.x5.d">A native Windows 11 app from the Microsoft Store, which signs it, so no certificate has to be bought.</p>
+          <p class="rm-status" data-i18n="rm.x5.s">Designed (decision 0016).</p>
+          <p class="rm-meta">
+            <span class="rm-plat">Windows</span>
+            <a class="rm-issue" href="https://github.com/totaldrop-app/totaldrop/issues/33">#33</a>
+          </p>
+        </li>
+        <li>
+          <h3 data-i18n="rm.l1.t">iPhone, iPad and Mac</h3>
+          <p data-i18n="rm.l1.d">Native apps, once donations cover Apple&#x27;s developer account.</p>
+          <p class="rm-meta">
             <span class="rm-plat">iOS · macOS</span>
-          </li>
-          <li>
-            <h3 data-i18n="rm.l2.t">Links and offline delivery</h3>
-            <p data-i18n="rm.l2.d">Send to someone who is not online: an encrypted copy waits up to 7 days, and only the link opens it.</p>
+            <a class="rm-issue" href="https://github.com/totaldrop-app/totaldrop/issues/35">#35</a>
+          </p>
+        </li>
+        <li>
+          <h3 data-i18n="rm.l2.t">Links and offline delivery</h3>
+          <p data-i18n="rm.l2.d">Send to someone who is not online: an encrypted copy waits up to 7 days, and only the link opens it.</p>
+          <p class="rm-meta">
             <span class="rm-plat" data-i18n="rm.all">All platforms</span>
-          </li>
-          <li>
-            <h3 data-i18n="rm.l3.t">An account the server never keeps</h3>
-            <p data-i18n="rm.l3.d">Optional: no email, phone, password or number to type. Your devices hold the account; your own devices send to each other, and saved contacts send to you, without a code.</p>
+            <a class="rm-issue" href="https://github.com/totaldrop-app/totaldrop/issues/36">#36</a>
+          </p>
+        </li>
+        <li>
+          <h3 data-i18n="rm.c2.t">Even more direct paths</h3>
+          <p data-i18n="rm.c2.d">Find a device on the same network even without internet, get through strict routers more often, and measure a second, faster relay.</p>
+          <p class="rm-meta">
             <span class="rm-plat" data-i18n="rm.all">All platforms</span>
-          </li>
-          <li>
-            <h3 data-i18n="rm.l4.t">Saved contacts</h3>
-            <p data-i18n="rm.l4.d">Pair once, check four words, and send to that person again without a code.</p>
+            <a class="rm-issue" href="https://github.com/totaldrop-app/totaldrop/issues/401">#401</a>
+          </p>
+        </li>
+        <li>
+          <h3 data-i18n="rm.l5.t">Privacy mode over Tor</h3>
+          <p data-i18n="rm.l5.d">The relay reached over Tor, with padded sizes, so not even our servers see your IP address.</p>
+          <p class="rm-meta">
             <span class="rm-plat" data-i18n="rm.all">All platforms</span>
-          </li>
-          <li>
-            <h3 data-i18n="rm.l5.t">Privacy mode over Tor</h3>
-            <p data-i18n="rm.l5.d">The relay reached over Tor, with padded sizes, so not even our servers see your IP address.</p>
-            <span class="rm-plat" data-i18n="rm.all">All platforms</span>
-          </li>
+            <a class="rm-issue" href="https://github.com/totaldrop-app/totaldrop/issues/39">#39</a>
+          </p>
+        </li>
       </ul>
     </section>
-    <section class="block rm-phase " aria-labelledby="rm-v1">
+    <section class="block rm-phase" aria-labelledby="rm-v1">
       <header class="rm-head">
         <span class="road-state" data-i18n="rm.v1.state">Version 1.0</span>
         <h2 id="rm-v1" data-i18n="rm.v1.when">After the audit</h2>
       </header>
       <ul class="rm-items">
-          <li>
-            <h3 data-i18n="rm.v1.t">Independent security audit</h3>
-            <p data-i18n="rm.v1.d">An outside firm reviews the protocol, the cryptography and the code that handles untrusted input. The full report is published.</p>
+        <li>
+          <h3 data-i18n="rm.v1.t">Independent security audit</h3>
+          <p data-i18n="rm.v1.d">An outside firm reviews the protocol, the cryptography and the code that handles untrusted input. The full report is published.</p>
+          <p class="rm-meta">
             <span class="rm-plat" data-i18n="rm.all">All platforms</span>
-          </li>
-          <li>
-            <h3 data-i18n="rm.v2.t">A formal model of the handshake</h3>
-            <p data-i18n="rm.v2.d">A ProVerif or Tamarin proof that the hybrid handshake keeps its promises.</p>
+            <a class="rm-issue" href="https://github.com/totaldrop-app/totaldrop/issues/40">#40</a>
+          </p>
+        </li>
+        <li>
+          <h3 data-i18n="rm.v2.t">A formal model of the handshake</h3>
+          <p data-i18n="rm.v2.d">A ProVerif or Tamarin proof that the hybrid handshake keeps its promises.</p>
+          <p class="rm-meta">
             <span class="rm-plat" data-i18n="rm.all">All platforms</span>
-          </li>
-          <li>
-            <h3 data-i18n="rm.v3.t">Post-quantum signatures</h3>
-            <p data-i18n="rm.v3.d">Device keys add ML-DSA-65 next to Ed25519, so even a future quantum computer cannot impersonate you.</p>
+            <a class="rm-issue" href="https://github.com/totaldrop-app/totaldrop/issues/41">#41</a>
+          </p>
+        </li>
+        <li>
+          <h3 data-i18n="rm.v3.t">Post-quantum signatures</h3>
+          <p data-i18n="rm.v3.d">Device keys add ML-DSA-65 next to Ed25519, so even a future quantum computer cannot impersonate you.</p>
+          <p class="rm-meta">
             <span class="rm-plat" data-i18n="rm.all">All platforms</span>
-          </li>
-          <li>
-            <h3 data-i18n="rm.v4.t">Community relays</h3>
-            <p data-i18n="rm.v4.d">People who opt in can use relays run by others, from a signed list.</p>
+            <a class="rm-issue" href="https://github.com/totaldrop-app/totaldrop/issues/42">#42</a>
+          </p>
+        </li>
+        <li>
+          <h3 data-i18n="rm.v4.t">Community relays</h3>
+          <p data-i18n="rm.v4.d">People who opt in can use relays run by others, from a signed list.</p>
+          <p class="rm-meta">
             <span class="rm-plat" data-i18n="rm.all">All platforms</span>
-          </li>
+            <a class="rm-issue" href="https://github.com/totaldrop-app/totaldrop/issues/43">#43</a>
+          </p>
+        </li>
+      </ul>
+    </section>
+    <section class="block rm-phase is-no" aria-labelledby="rm-no">
+      <header class="rm-head">
+        <span class="road-state" data-i18n="rm.no.state">Not planned</span>
+        <h2 id="rm-no" data-i18n="rm.no.when">What we decided not to do</h2>
+      </header>
+      <ul class="rm-items">
+        <li>
+          <h3 data-i18n="rm.no1.t">Sending from a browser</h3>
+          <p data-i18n="rm.no1.d">Sending always starts in a TotalDrop app. Receiving in the browser is still planned.</p>
+          <p class="rm-meta">
+            <a class="rm-issue" href="https://github.com/totaldrop-app/totaldrop/issues/221">#221</a>
+          </p>
+        </li>
+        <li>
+          <h3 data-i18n="rm.no2.t">Tapping phones (NFC)</h3>
+          <p data-i18n="rm.no2.d">It would only help between two phones. Scanning the QR code does the same on every device.</p>
+        </li>
+        <li>
+          <h3 data-i18n="rm.no3.t">Swarms like BitTorrent</h3>
+          <p data-i18n="rm.no3.d">They help many people share one file, not a private transfer between two devices, and they show strangers what is shared and from which IP address.</p>
+        </li>
       </ul>
     </section>
 
