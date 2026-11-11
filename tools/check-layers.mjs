@@ -21,7 +21,7 @@
 // differently fails the check.
 
 import { execFileSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { readFileSync, realpathSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -169,4 +169,6 @@ function main() {
   console.log(`layers ok: ${names.length} crates (${names.join(", ")}); code, table and diagram agree`);
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) main();
+// Both sides resolved: called through a symbolic link, argv[1] and the
+// module URL differ and the check would silently not run.
+if (process.argv[1] && realpathSync(process.argv[1]) === realpathSync(fileURLToPath(import.meta.url))) main();

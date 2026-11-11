@@ -6,7 +6,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -93,6 +93,48 @@ test("--fix rewrites the document and the record, then the check passes", () => 
     assert.equal(readFileSync(join(dir, "docs", "ARCHITECTURE.md"), "utf8"), "see `src/x.rs:7`\n");
     assert.match(run(), /doc refs ok: 1 references/);
   } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+// A throwaway repository with the checker in tools/ and `doc` as the map.
+function sandbox(doc, lines) {
+  const dir = mkdtempSync(join(tmpdir(), "doc-refs-"));
+  for (const d of ["tools", "docs", "src"]) mkdirSync(join(dir, d));
+  cpSync(join(here, "check-doc-refs.mjs"), join(dir, "tools", "check-doc-refs.mjs"));
+  writeFileSync(join(dir, "src", "x.rs"), lines.join("\n"));
+  writeFileSync(join(dir, "docs", "ARCHITECTURE.md"), doc);
+  const run = (script, ...args) =>
+    execFileSync("node", [script, ...args], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+  return { dir, run: (...args) => run(join(dir, "tools", "check-doc-refs.mjs"), ...args), runAt: run };
+}
+
+test("--fix keeps each record when neighbouring references move together", () => {
+  const { dir, run } = sandbox("`src/x.rs:2` and `src/x.rs:3`\n", ["a", "b", "c", "d"]);
+  try {
+    run("--accept");
+    writeFileSync(join(dir, "src", "x.rs"), ["new", "a", "b", "c", "d"].join("\n"));
+    assert.throws(() => run("--fix"), (e) => e.status === 1);
+    assert.equal(readFileSync(join(dir, "docs", "ARCHITECTURE.md"), "utf8"), "`src/x.rs:3` and `src/x.rs:4`\n");
+    assert.deepEqual(JSON.parse(readFileSync(join(dir, "docs", "ARCHITECTURE.refs.json"), "utf8")), {
+      "src/x.rs:3": ["b"],
+      "src/x.rs:4": ["c"],
+    });
+    assert.match(run(), /doc refs ok: 2 references/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("the check runs when it is called through a symbolic link", () => {
+  const { dir, run, runAt } = sandbox("`src/x.rs:1`\n", ["a"]);
+  const link = mkdtempSync(join(tmpdir(), "doc-refs-link-"));
+  try {
+    run("--accept");
+    symlinkSync(realpathSync(dir), join(link, "repo"));
+    assert.match(runAt(join(link, "repo", "tools", "check-doc-refs.mjs")), /doc refs ok: 1 references/);
+  } finally {
+    rmSync(link, { recursive: true, force: true });
     rmSync(dir, { recursive: true, force: true });
   }
 });
