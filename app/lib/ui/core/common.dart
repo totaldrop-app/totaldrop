@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+import 'dart:math' as math;
+
 import 'package:material_ui/material_ui.dart';
 
 import '../../l10n/app_localizations.dart';
@@ -154,6 +156,7 @@ class ErrorPanel extends StatelessWidget {
     final wrongCode = error.kind == ErrorKind.wrongCode;
     final cause = causeMessage(context, error.cause);
     return Column(
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Icon(
@@ -241,22 +244,55 @@ class TransferProgress extends StatelessWidget {
           ),
         ),
         Gap.s,
+        // The sizes wrap under large text instead of running off the
+        // screen (#322).
         Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               fraction == null ? '' : formatPercent(l, done, total),
               style: theme.textTheme.titleMedium,
             ),
-            const Spacer(),
-            Text(
-              '${formatBytes(l, done)} / ${formatBytes(l, total)}',
-              style: theme.textTheme.bodyMedium,
+            Gap.m,
+            Expanded(
+              child: Text(
+                '${formatBytes(l, done)} / ${formatBytes(l, total)}',
+                textAlign: TextAlign.end,
+                style: theme.textTheme.bodyMedium,
+              ),
             ),
           ],
         ),
       ],
     );
   }
+}
+
+/// A screen's content, centred, that scrolls when it is taller than the
+/// screen: with the largest text, a long language or "More information"
+/// open, nothing runs off the bottom (#322).
+class CenteredScroll extends StatelessWidget {
+  const CenteredScroll({
+    super.key,
+    required this.child,
+    this.padding = const EdgeInsets.all(24),
+  });
+
+  final Widget child;
+  final EdgeInsets padding;
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) => SingleChildScrollView(
+      padding: padding,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          minHeight: math.max(0, constraints.maxHeight - padding.vertical),
+        ),
+        child: Center(child: child),
+      ),
+    ),
+  );
 }
 
 /// The honest note about the current limitation.

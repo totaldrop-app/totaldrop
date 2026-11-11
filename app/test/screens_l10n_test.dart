@@ -119,7 +119,9 @@ const _shows = <String, Object>{
   'receive declined': FilledButton,
   'receive connecting': '7-harbor-rocket',
   'receiving a large file': '%',
-  'receive done': 'Rapport annuel',
+  // The list of saved files starts below the fold at 2.0x, where the
+  // list has not built it yet.
+  'receive done': DoneBadge,
   'send failed, details open': 'wss://relay.totaldrop.app',
   'receive failed, details open': 'wss://relay.totaldrop.app',
 };
@@ -188,6 +190,9 @@ const _failed = TransferEvent(
 Future<void> _openDetails(WidgetTester tester) async {
   await tester.pump();
   final l = AppLocalizations.of(tester.element(find.byType(Scaffold).first));
+  // Below the fold with the largest text: scroll to it as a person would.
+  await tester.ensureVisible(find.text(l.moreInfo));
+  await tester.pump();
   await tester.tap(find.text(l.moreInfo));
   await tester.pump();
 }

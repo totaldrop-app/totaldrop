@@ -89,33 +89,31 @@ class _ReceiveViewState extends State<ReceiveView> {
                       vm: vm,
                       controller: _controller,
                     ),
-                    ReceiveStage.connecting => Center(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 24),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const TotalDropMark(size: 120, sending: true),
-                            Gap.l,
-                            Announced(
-                              Text(
-                                l.receiveConnecting,
-                                style: Theme.of(context).textTheme.titleMedium,
-                              ),
+                    ReceiveStage.connecting => CenteredScroll(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const TotalDropMark(size: 120, sending: true),
+                          Gap.l,
+                          Announced(
+                            Text(
+                              l.receiveConnecting,
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.titleMedium,
                             ),
-                            if (vm.connectingCode case final code?) ...[
-                              Gap.s,
-                              // The code is English words, left to right in
-                              // every language.
-                              Text(
-                                code,
-                                textAlign: TextAlign.center,
-                                textDirection: TextDirection.ltr,
-                                style: Theme.of(context).textTheme.titleLarge,
-                              ),
-                            ],
+                          ),
+                          if (vm.connectingCode case final code?) ...[
+                            Gap.s,
+                            // The code is English words, left to right in
+                            // every language.
+                            Text(
+                              code,
+                              textAlign: TextAlign.center,
+                              textDirection: TextDirection.ltr,
+                              style: Theme.of(context).textTheme.titleLarge,
+                            ),
                           ],
-                        ),
+                        ],
                       ),
                     ),
                     ReceiveStage.offered => _Offered(vm: vm),
@@ -129,16 +127,13 @@ class _ReceiveViewState extends State<ReceiveView> {
                         Navigator.pop(context);
                       },
                     ),
-                    ReceiveStage.failed => Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Center(
-                        child: ErrorPanel(
-                          error: vm.error!,
-                          onRetry: () {
-                            vm.reset();
-                            _controller.clear();
-                          },
-                        ),
+                    ReceiveStage.failed => CenteredScroll(
+                      child: ErrorPanel(
+                        error: vm.error!,
+                        onRetry: () {
+                          vm.reset();
+                          _controller.clear();
+                        },
                       ),
                     ),
                   },
@@ -534,10 +529,9 @@ class _Message extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(24),
+    return CenteredScroll(
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Icon(
