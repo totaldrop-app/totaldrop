@@ -665,28 +665,32 @@ void main() {
             return found.evaluate().isNotEmpty;
           }
 
-          final shownBefore = showing();
+          var shownSomewhere = showing();
 
           // An overflow, across or down, is reported as an exception: a
           // screen whose content can be taller than the phone scrolls.
           expect(tester.takeException(), isNull);
 
-          // A list lays out only what is near the screen: scroll each one
-          // to its end, as a person would, and check what was below too.
-          for (var pass = 0; pass < 2; pass++) {
-            final lists = tester.stateList<ScrollableState>(
-              find.byType(Scrollable),
-            );
-            for (final list in lists.toList()) {
+          // A list lays out only what is near the screen: page through each
+          // one to its end, half a screen at a time, as a person would, and
+          // check everything that comes into view.
+          final lists = tester.stateList<ScrollableState>(
+            find.byType(Scrollable),
+          );
+          for (final list in lists.toList()) {
+            for (var page = 0; page < 100; page++) {
+              if (!list.mounted) break;
               final position = list.position;
-              if (position.axis == Axis.vertical) {
-                position.jumpTo(position.maxScrollExtent);
-              }
+              if (position.axis != Axis.vertical) break;
+              if (position.pixels >= position.maxScrollExtent) break;
+              final next = position.pixels + position.viewportDimension / 2;
+              position.jumpTo(next.clamp(0, position.maxScrollExtent));
+              await tester.pump();
+              expect(tester.takeException(), isNull);
+              shownSomewhere = shownSomewhere || showing();
             }
-            await tester.pump();
           }
-          expect(tester.takeException(), isNull);
-          expect(shownBefore || showing(), isTrue, reason: 'shows $shown');
+          expect(shownSomewhere, isTrue, reason: 'shows $shown');
           final direction = Directionality.of(
             tester.element(find.byType(Scaffold).first),
           );
