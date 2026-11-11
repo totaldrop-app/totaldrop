@@ -110,8 +110,6 @@ class MainActivity : FlutterActivity() {
         }
     }
 
-    /** The activity keeps its intent: the text, now handed over, need not
-     * stay in it. */
     /** The two forms of a receive link (#445); the manifest's filters let
      *  only these in, and an explicit intent is checked here as well. The
      *  code itself is read in Rust (TransferCode::from_link). */
@@ -119,6 +117,8 @@ class MainActivity : FlutterActivity() {
         (uri.scheme == "totaldrop" && uri.host == "r") ||
             (uri.scheme == "https" && uri.host == "totaldrop.app" && uri.path == "/r")
 
+    /** The activity keeps its intent: the text, now handed over, need not
+     * stay in it. */
     private fun forgetText(intent: Intent) {
         intent.removeExtra(Intent.EXTRA_TEXT)
         intent.removeExtra(Intent.EXTRA_PROCESS_TEXT)
