@@ -77,7 +77,7 @@ real system; later pieces close them.
 | `sanity_contact_follows_remove_by_slot_2` | exists-trace | The member in the second slot can remove the first (the mirrored rules work) |
 | `compromised_member_can_add` | exists-trace | If both `AK` halves of a member leak, the attacker can add a device. Without this trace the lemma below could hold for the wrong reason |
 | `membership_change_needs_member_ak` | all-traces | **P1:** every accepted `add` and `remove` was signed, on the same previous head, by the named member. Exceptions: both `AK` halves of that member leaked earlier, or the signer is a key the attacker generated. One half leaking is not enough; `IK` is never enough |
-| `signer_must_be_member` | all-traces, bounded | If no `AK` has leaked, a contact does not accept an `add` after the first record that is signed with a key the attacker generated. It shows the last exception of P1 only for this single step; the form after honest steps and the unbounded form do not exist yet |
+| `signer_must_be_member` | all-traces, bounded | If no `AK` has leaked, a contact does not accept, as the `add` right after the first record, one signed with a key the attacker generated. It shows the last exception of P1 only for this single step; the form after honest steps and the unbounded form do not exist yet |
 | `rotate_needs_member_ik` | all-traces | Every accepted `rotate` was signed on the same head with the named member's `IK` (if `IK` has not leaked). `rotate` cannot change the member set; this holds structurally in the acceptance rules |
 
 Bringing back a removed device by replaying an old `add` record is ruled
@@ -107,9 +107,9 @@ is written down; if the number does not match, the script stops.
   signer is a device, or both `AK` halves of a device have leaked" did not
   end in Tamarin by induction; it needs a helper invariant. For now its
   bounded form is `signer_must_be_member`.
-- **A removed device whose keys leak:** if a device's keys leak after it
-  is removed, the contact does not accept it as the signer of any record
-  unless it is added again. This is expected, because the contact's view
+- **A removed device whose keys leak:** that, if a device's keys leak
+  after it is removed, the contact does not accept it as the signer of any
+  record unless it is added again. This is expected, because the contact's view
   no longer contains the removed device, but the lemma that shows it (even
   in bounded form) did not end in Tamarin. It needs an invariant showing
   that an owner cannot have more than one view. This is the core of the
@@ -182,7 +182,7 @@ a `[reuse]` helper that the breakage makes false would hide the attack.
 
 ### The gap the model found: a contact left on the `rotate` branch
 
-Fork rule 1 says "a `rotate` written at the same time by a device about to
+Fork rule 1 says "a `rotate` written at the same moment by a device about to
 be removed cannot block the removal". But by rule 4 an observer ignores
 the forks below the head it has pinned. Together they give this trace
 (`removed_device_survives_on_rotate_branch`):
@@ -238,7 +238,7 @@ rule 1 (`sanity_remove_beats_unsettled_rotate`). Once the `rotate` has
 settled, an honest device can no longer write from that old head; it first
 follows the `rotate` and writes the removal from the new head.
 
-### Working out the durations (settled in A5)
+### Working out the durations (to be settled in A5)
 
 The durations are measured not from the moment of writing, which the
 attacker chooses, but from the moment the `rotate` **first enters** a
@@ -466,7 +466,7 @@ exists in the mutant too.
   measures settling from the witnessed inclusion time, with the same `D`,
   against the present time; a device follows a `rotate` only after the
   moment by which every contact must count it as settled (margin: clock
-  skew and root age). It is settled numerically in A5.
+  skew and root age). It will be settled numerically in A5.
 - **Offer signature:** it should bind the receiving contact (or the
   context shared with the contact) and the receiver's head; `hesap.md`
   should state plainly what is bound.
@@ -495,7 +495,7 @@ A3's chain, log, settling and writer's freshness, with A3b's `rotate` rule
   A3's "settled" event.
 - **Priority:** if an `AK` record was written earlier from a head of
   period `m`, the recovery is not followed (the fork rule, an extension of
-  item 1).
+  rule 1).
 - **Two recoveries are a real fork:** if another recovery against `m`
   entered the log first, the reader follows neither.
 - `recovery_reject`: an `AK` record a member writes from its current head.
@@ -548,7 +548,7 @@ reject does not depend on the writer's freshness.
 | A rejected `RK` does not stay invalid in later periods | Here a reject stops the recovery only against the period the reject was written in | A4c (with `change_phrase`) |
 | The owner writes the recovery against the period of any head it learned from the log | In reality it moves from the monthly recovery record to the newest head; because the attacker can do every such write too (`Log_Write_RK`), it does not affect the proofs | Stage C |
 | The wait is A3's settling event | Durations in A5 | A5 |
-| **The contact's identity check is a trusted channel** (`!Words`) | The words prove only the channel to the device that shows them; the thief's device can show words too. The real assumption is that the contact recognises the other person out of band (face to face, by voice): an assumption that rests on people and on social engineering. The contacts' half of P7 rests entirely on it; under censorship it is the only protection | Does not change; it is explained to the user |
+| **The contact's identity check is a trusted channel** (`!Words`) | The words prove only the channel to the device that shows them; the thief's device can show words too. The real assumption is that the contact recognises the other person out of band (face to face, by voice): an assumption about people, open to social engineering. The contacts' half of P7 rests entirely on it; under censorship it is the only protection | Does not change; it is explained to the user |
 
 ### Lemmas
 
@@ -586,8 +586,8 @@ as a lemma.
 
 - **Can the attacker's own key be a member:**
   `rk_remove_needs_staying_device` assumes that the staying member is an
-  honest device. Only honest devices get the first record and recovery; an
-  `add` proposal is written only with a member's signature, so the
+  honest device. The first record and a recovery admit only honest
+  devices; an `add` proposal is written only with a member's signature, so the
   attacker's own key can get in only with a leaked `AK`. This step was
   argued here, not proven: its lemma (if an honest device wrote the `add`
   proposal, the new member is an honest device or the proposer's `AK`
@@ -672,7 +672,7 @@ With these rules the model proposes an answer to two questions in the
 "Rules to settle in the formal model" section of `hesap.md`: the ordering
 of the pending record (a proposal against the period, which does not race
 with the head's key, one change per period) and the exact definition of
-the `RK` way when a stolen device vetoes (`rk_remove`).
+the `RK` path when a stolen device vetoes (`rk_remove`).
 
 ### Gaps the review found in the first version
 
@@ -683,7 +683,7 @@ written from the period stopped all of that period's proposals),
 
 - **Critical:** according to `hesap.md`, `recovery_reject` voids `RK`. With
   the two rejects as one record, the stolen device's veto also voided `RK`
-  and closed the `RK` way. Now `reject_pending` is a separate, targeted
+  and closed the `RK` path. Now `reject_pending` is a separate, targeted
   record (below, feedback to the design).
 - **Splitting readers (found in Tamarin):** there was no order between an
   `AK` proposal and an `RK` proposal. One contact could follow the thief's
@@ -709,7 +709,7 @@ The second review (b7a25cf) gave three important findings, all fixed:
   makes sure every record has a single settling moment, and
   `Settle_In_Order` makes proposals settle in log order. Checking the fix
   showed that, without `Settle_In_Order`, a live proposal written earlier
-  could never settle and be skipped.
+  could stay unsettled for ever and so be skipped.
 - Two reachability lemmas did not require the reject to be on time.
 - The `strict_immediate_accept` mutant did not test any lemma of the
   model. Now it carries `ReadChange` and breaks `no_change_without_wait`.
@@ -794,8 +794,8 @@ reader rules as in A4a.
 - In strict mode every change is a proposal against the membership period,
   has its own log key and does not race with the head's key; one change
   per period is followed and the first writer wins: every proposal that
-  **entered the log before** the followed proposal (because the wait is the
-  same for everyone: that settled before it) must have been voided by a
+  **entered the log before** the followed proposal (that is, since the wait is
+  the same for everyone, that settled before it) must have been voided by a
   counted reject (`earlier_proposal_must_be_rejected`); the ones that come
   later do not count against it and lose to it. Otherwise someone who can
   still write to an old period (a thief holding the removed device's `AK`)
@@ -814,7 +814,7 @@ reader rules as in A4a.
   target: a reject by `x`, the target of `rk_remove(x)`, must never void
   `RK`.
 - The exact definition of "if the stolen device writes `reject_pending`,
-  the way goes through `RK`": `rk_remove(x)` is a pending proposal that
+  the path goes through `RK`": `rk_remove(x)` is a pending proposal that
   carries `RK` and the staying member's `AK` signature and that members
   other than `x` can reject. The phrase alone is not enough.
 - To add to K3b: a contact does not follow an `rk_remove(x)` that a member
