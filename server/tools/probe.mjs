@@ -61,6 +61,19 @@ async function page(url, text) {
   if (!(await res.text()).includes(text)) throw new Error(`${url}: "${text}" missing`);
 }
 
+// Android checks this file, without following redirects, before it lets
+// TotalDrop open https://totaldrop.app/r links (#445).
+async function assetLinks(url) {
+  const res = await fetch(url, { redirect: "manual", signal: AbortSignal.timeout(timeout) });
+  if (res.status !== 200) throw new Error(`${url}: HTTP ${res.status}`);
+  const type = res.headers.get("content-type") ?? "";
+  if (!type.startsWith("application/json")) throw new Error(`${url}: content type ${type}`);
+  const statements = JSON.parse(await res.text());
+  if (!statements.some((s) => s.target?.package_name === "app.totaldrop")) {
+    throw new Error(`${url}: app.totaldrop missing`);
+  }
+}
+
 function pairName() {
   const [a, b] = [randomBytes(32).toString("hex"), randomBytes(32).toString("hex")].sort();
   return `${a}-${b}`;
@@ -75,6 +88,7 @@ const checks = {
   site: async () => {
     await page("https://totaldrop.app/", "TotalDrop");
     await page("https://totaldrop.app/download/", "releases/download/");
+    await assetLinks("https://totaldrop.app/.well-known/assetlinks.json");
   },
 };
 

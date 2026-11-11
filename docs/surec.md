@@ -221,7 +221,13 @@ elle bakar.
    açılır.
 6. Yayın notları 35 dilde yazılır, taslak yayımlanır.
 7. Site güncellenir ve indirme bağlantılarının her biri denenir.
-8. Android'de CI'ın imzaladığı paket Play Console'a yüklenir.
+8. Android'de CI'ın imzaladığı paket Play Console'a yüklenir. Bundan önce
+   `https://totaldrop.app/.well-known/assetlinks.json` yayında olmalıdır
+   (sitenin dağıtım sonrası denetimi `server/tools/probe.mjs` bunu sınar):
+   Android, `https://totaldrop.app/r` bağlantılarını uygulamaya ancak bu
+   dosyayı kurulumda okuyabilirse verir (#445). İmza anahtarı ya da paket
+   adı değişirse dosya da aynı PR'da değişir
+   (`site/tools/test-assetlinks.mjs`).
 
 ## Node
 
