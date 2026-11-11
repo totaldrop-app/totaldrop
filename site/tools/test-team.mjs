@@ -6,7 +6,7 @@
 //   node --test site/tools/test-team.mjs
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -146,16 +146,35 @@ test("team.json donate is true, and only on a person (#486)", async () => {
   const orig = JSON.parse(readFileSync(new URL("../team/team.json", import.meta.url), "utf8"));
   const errs = (edit) => { const c = structuredClone(orig); edit(c); return configErrors(c).join("\n"); };
   const person = (c, login) => c.people.find((p) => p.login === login);
-  assert.equal(errs((c) => { person(c, "ozdil").donate = true; }), "");
+  assert.equal(errs((c) => { person(c, "sadikkuzu").donate = true; }), "");
   assert.match(errs((c) => { person(c, "ozdil").donate = "https://example.com/"; }), /ozdil: donate must be true/);
   assert.match(errs((c) => { person(c, "ozdil").donate = false; }), /ozdil: donate must be true/);
   assert.match(errs((c) => { person(c, "claude").donate = true; }), /claude: only people have a donate link/);
 });
 
-test("the donate link is a round icon link to the team's donation page, named in every language (#486)", async () => {
+test("the donate link is a round icon link to /donate/, named by the foot.donate key (#486)", async () => {
   const { donateLink } = await import("./team.mjs");
   const html = donateLink();
   assert.match(html, /^<li><a class="icon-link" href="\/donate\/">/);
   assert.match(html, /<svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"/);
   assert.match(html, /<span class="visually-hidden" data-i18n="foot\.donate">Donate<\/span><\/a><\/li>$/);
+});
+
+test("only a person with donate: true gets the donate button on their card (#486)", async () => {
+  const { cardLinks, donateLink } = await import("./team.mjs");
+  const pr = { website: null };
+  assert.ok(cardLinks({ login: "a", donate: true }, pr).includes(donateLink()));
+  assert.ok(!cardLinks({ login: "b" }, pr).includes(donateLink()));
+  assert.equal(cardLinks({ login: "a", donate: true }, pr).at(-1), donateLink());
+  assert.equal(cardLinks({ login: "c", donate: true }, { website: "https://example.com" }).length, 3);
+});
+
+test("foot.donate, the donate button's name, is translated in every language file (#486)", () => {
+  const dir = new URL("../public/i18n/", import.meta.url);
+  const files = readdirSync(dir).filter((f) => f.endsWith(".json"));
+  assert.equal(files.length, 35);
+  for (const f of files) {
+    const t = JSON.parse(readFileSync(new URL(f, dir), "utf8"))["foot.donate"];
+    assert.ok(typeof t === "string" && t.trim() !== "", `${f}: foot.donate`);
+  }
 });

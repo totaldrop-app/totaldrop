@@ -5,7 +5,8 @@
 // and areas, is curated in site/team/team.json; profile names, bios,
 // websites, pictures and every figure come from GitHub, so no share of the
 // work is typed by hand (team.json may give a person's own display name or
-// a translated one-line bio instead of the profile's, #408):
+// a translated one-line bio instead of the profile's, #408, and
+// "donate": true puts a coffee button to /donate/ on a person's card, #486):
 //   node site/tools/team.mjs           check the page and the avatars match
 //                                      the snapshot (CI, offline)
 //   node site/tools/team.mjs --write   rewrite the page from the snapshot
@@ -291,15 +292,25 @@ function checkSnapshot(c, s) {
   }
 }
 
-// Icons for profile links. The GitHub mark is GitHub's octicon
-// "mark-github" (MIT); the globe is drawn for this page. Both are
-// decorative: the link's name is the visually hidden text beside them.
+// Icons for the card's links. The GitHub mark is GitHub's octicon
+// "mark-github" (MIT); the globe and the cup are drawn for this page. All
+// three are decorative: the link's name is the visually hidden text beside
+// them.
 const ICON_GITHUB = `<svg class="icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path fill="currentColor" d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"/></svg>`;
 const ICON_WEB = `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.75 5.6 3.75 9S14.5 18.4 12 21M12 3C9.5 5.6 8.25 8.6 8.25 12S9.5 18.4 12 21"/></svg>`;
 
 // A cup with a handle and steam, drawn for this page in the globe's stroke.
 const ICON_COFFEE = `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9h14v4.5a6.5 6.5 0 0 1-6.5 6.5h-1A6.5 6.5 0 0 1 3 13.5V9Z"/><path d="M17 10.5h1.25a3 3 0 0 1 0 6H16.6"/><path d="M7.5 2.5c-1 1.1-1 2.4 0 3.5M12.5 2.5c-1 1.1-1 2.4 0 3.5"/></svg>`;
 const DONATE = "/donate/";
+
+// The round links at the foot of a person's card: GitHub, then the
+// profile's web site, then the donate button when team.json asks for it.
+export function cardLinks(p, pr) {
+  const links = [githubLink(`https://github.com/${p.login}`, p.login)];
+  if (pr.website) links.push(webLink(pr.website));
+  if (p.donate) links.push(donateLink());
+  return links;
+}
 
 export const donateLink = () => `<li><a class="icon-link" href="${DONATE}">${ICON_COFFEE}<span class="visually-hidden" data-i18n="foot.donate">Donate</span></a></li>`;
 const githubLink = (href, shownAs) => `<li><a class="icon-link" href="${esc(href)}">${ICON_GITHUB}<span class="visually-hidden">GitHub: <bdi>${esc(shownAs)}</bdi></span></a></li>`;
@@ -334,9 +345,7 @@ function personCard(c, s, p) {
   const pr = s.profiles[p.login];
   const role = { maintainer: "Founder and project lead", principal: "Principal engineer", contributor: "Developer", tester: "QA specialist" }[p.role];
   const areas = (p.areas || []).map((a) => `<li data-i18n="tm.a.${a}">${esc(AREAS[a][0])}</li>`).join("");
-  const links = [githubLink(`https://github.com/${p.login}`, p.login)];
-  if (pr.website) links.push(webLink(pr.website));
-  if (p.donate) links.push(donateLink());
+  const links = cardLinks(p, pr);
   const lines = [
     `        <li class="person">`,
     `          <img class="avatar" src="/team/avatars/${esc(pr.avatar)}" alt="" width="88" height="88" decoding="async">`,
