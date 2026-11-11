@@ -58,6 +58,17 @@
                 <category android:name="android.intent.category.DEFAULT"/>
                 <data android:mimeType="text/plain"/>
             </intent-filter>
+            <!-- A link to receive (#445): totaldrop://r/<code>, from the
+                 "Open in TotalDrop" button of totaldrop.app/r. It only fills
+                 in the code on the Receive screen; nothing connects until
+                 the person does. The code is read strictly, in Rust
+                 (TransferCode::from_link). -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="totaldrop" android:host="r"/>
+            </intent-filter>
             <!-- Send and Receive when the icon is held (res/xml/shortcuts.xml). -->
             <meta-data
                 android:name="android.app.shortcuts"

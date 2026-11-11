@@ -140,6 +140,7 @@
   "transferNoticeReceiving": "Se primește cu TotalDrop",
   "transferNoticeBody": "Continuă cât timp folosiți alte aplicații.",
   "shareBusy": "Un transfer este încă în desfășurare. Așteaptă să se termine sau oprește-l, apoi partajează din nou.",
+  "linkBusy": "Un transfer este încă în desfășurare. Așteaptă să se termine sau oprește-l, apoi deschide din nou linkul.",
   "shareSkipped": "{count, plural, one{Un element partajat nu a putut fi citit și a fost omis.} few{{count} elemente partajate nu au putut fi citite și au fost omise.} other{{count} de elemente partajate nu au putut fi citite și au fost omise.}}",
   "desktopGenericName": "Transfer de fișiere",
   "desktopComment": "Trimite fișiere direct pe alt dispozitiv, criptate integral",

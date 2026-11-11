@@ -140,6 +140,7 @@
   "transferNoticeReceiving": "Ricezione con TotalDrop",
   "transferNoticeBody": "Continua mentre usi altre app.",
   "shareBusy": "Un trasferimento è ancora in corso. Attendi che finisca o interrompilo, poi condividi di nuovo.",
+  "linkBusy": "Un trasferimento è ancora in corso. Attendi che finisca o interrompilo, poi riapri il link.",
   "shareSkipped": "{count, plural, =1{Un elemento condiviso non è stato letto ed è stato escluso.} many{{count} di elementi condivisi non sono stati letti e sono stati esclusi.} other{{count} elementi condivisi non sono stati letti e sono stati esclusi.}}",
   "desktopGenericName": "Trasferimento file",
   "desktopComment": "Invia file direttamente a un altro dispositivo, con crittografia end-to-end",

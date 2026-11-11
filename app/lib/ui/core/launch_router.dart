@@ -15,7 +15,8 @@ const sendRoute = 'send';
 const receiveRoute = 'receive';
 
 /// Opens the screen a launch asks for (#53): Send with the shared files or
-/// text, or the screen of a launcher shortcut. A running send or receive is never
+/// text, Receive with the code of a link (#445), or the screen of a
+/// launcher shortcut. A running send or receive is never
 /// cut short for it: the person is told instead.
 class LaunchRouter extends StatefulWidget {
   const LaunchRouter({
@@ -100,6 +101,15 @@ class _LaunchRouterState extends State<LaunchRouter> {
         }
       case ShareFailed(id: final id):
         widget.send.shareFailed(id);
+      case OpenLink(link: final link):
+        // A link without a code still opens Receive, to type one in.
+        if (_blocked) {
+          _showRunning();
+          _tell((l) => l.linkBusy);
+        } else {
+          widget.receive.takeLink(link);
+          _show(receiveRoute);
+        }
       case SharedText(text: final t):
         if (!_blocked && widget.send.takeText(t)) {
           _show(sendRoute);

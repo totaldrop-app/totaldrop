@@ -24,9 +24,22 @@ class _ReceiveViewState extends State<ReceiveView> {
   late final _controller = TextEditingController(text: widget.viewModel.input);
 
   @override
+  void initState() {
+    super.initState();
+    widget.viewModel.addListener(_showInput);
+  }
+
+  @override
   void dispose() {
+    widget.viewModel.removeListener(_showInput);
     _controller.dispose();
     super.dispose();
+  }
+
+  /// A link can fill in the code from outside the field (#445).
+  void _showInput() {
+    final input = widget.viewModel.input;
+    if (_controller.text != input) _controller.text = input;
   }
 
   Future<bool> _confirmStop(BuildContext context) async {

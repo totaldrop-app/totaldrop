@@ -1,9 +1,9 @@
 // SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-// Files shared to TotalDrop from another app, and the launcher shortcuts
-// (#53): what the platform's events mean, what the send screen does with
-// them, and which screen opens.
+// Files shared to TotalDrop from another app, the launcher shortcuts
+// (#53) and TotalDrop links (#445): what the platform's events mean, what
+// the screens do with them, and which screen opens.
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -55,6 +55,14 @@ void main() {
   setUpAll(() => RustLib.initMock(api: _Rust()));
 
   group('platform events', () {
+    test('a link is handed on as it came', () {
+      final l = parseLaunch({'link': 'totaldrop://r/7-harbor-rocket'});
+      expect(l, hasLength(1));
+      expect((l.single as OpenLink).link, 'totaldrop://r/7-harbor-rocket');
+      expect(parseLaunch({'link': ''}), isEmpty);
+      expect(parseLaunch({'link': 7}), isEmpty);
+    });
+
     test('a copied share becomes its files', () {
       final l = parseLaunch({
         'id': 7,
@@ -506,6 +514,63 @@ void main() {
       await settle(tester);
       expect(find.byType(SendView), findsOneWidget);
       expect(find.byType(ReceiveView), findsNothing);
+    });
+
+    testWidgets('a link opens Receive with its code, not connected', (
+      tester,
+    ) async {
+      await pumpApp(tester);
+      launches.add(const OpenLink('totaldrop://r/7-harbor-rocket'));
+      await settle(tester);
+      expect(find.byType(ReceiveView), findsOneWidget);
+      final field = tester.widget<TextField>(find.byType(TextField));
+      expect(field.controller!.text, '7-harbor-rocket');
+      expect(receive.stage, ReceiveStage.entering, reason: 'not connected');
+    });
+
+    testWidgets('a link replaces what was typed on the open Receive', (
+      tester,
+    ) async {
+      await pumpApp(tester);
+      launches.add(const OpenScreen('receive'));
+      await settle(tester);
+      await tester.enterText(find.byType(TextField), '3-old');
+      launches.add(const OpenLink('totaldrop://r/7-harbor-rocket'));
+      await settle(tester);
+      final field = tester.widget<TextField>(find.byType(TextField));
+      expect(field.controller!.text, '7-harbor-rocket');
+      expect(receive.input, '7-harbor-rocket');
+    });
+
+    testWidgets('a link without a code opens an empty Receive', (
+      tester,
+    ) async {
+      await pumpApp(tester);
+      launches.add(const OpenLink('totaldrop://r/evil?c=7-harbor-rocket'));
+      await settle(tester);
+      expect(find.byType(ReceiveView), findsOneWidget);
+      expect(receive.input, isEmpty);
+    });
+
+    testWidgets('a link during a transfer is refused with a message', (
+      tester,
+    ) async {
+      await pumpApp(tester);
+      send.addFakeFileForTest('mine.txt');
+      unawaited(send.start());
+      await settle(tester);
+      launches.add(const OpenLink('totaldrop://r/7-harbor-rocket'));
+      await settle(tester);
+      expect(
+        find.text(
+          'A transfer is still running. Wait for it to finish or stop it, '
+          'then open the link again.',
+        ),
+        findsOneWidget,
+      );
+      expect(send.stage, SendStage.preparing, reason: 'not cut short');
+      expect(receive.input, isEmpty);
+      expect(find.byType(SendView), findsOneWidget, reason: 'the running one');
     });
   });
 }

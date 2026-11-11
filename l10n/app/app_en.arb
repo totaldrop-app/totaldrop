@@ -186,6 +186,8 @@
   "@transferNoticeBody": {"description": "Text of the ongoing transfer notification: the transfer continues while the person uses other apps"},
   "shareBusy": "A transfer is still running. Wait for it to finish or stop it, then share again.",
   "@shareBusy": {"description": "Android: shown when files are shared to TotalDrop while a send or receive is still running; the shared files are not added"},
+  "linkBusy": "A transfer is still running. Wait for it to finish or stop it, then open the link again.",
+  "@linkBusy": {"description": "Android: shown when a TotalDrop link (totaldrop://r/…) opens the app while a send or receive is still running; the link's code is not filled in"},
   "shareSkipped": "{count, plural, =1{One shared item could not be read and was left out.} other{{count} shared items could not be read and were left out.}}",
   "@shareSkipped": {"description": "Android: shown when some of the items another app shared to TotalDrop could not be read (no read permission, or the app's own files) and were left out; the rest were added", "placeholders": {"count": {"type": "int"}}},
   "desktopGenericName": "File transfer",

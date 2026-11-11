@@ -140,6 +140,7 @@
   "transferNoticeReceiving": "Fogadás TotalDroppal",
   "transferNoticeBody": "Akkor is folytatódik, ha más alkalmazásokat használsz.",
   "shareBusy": "Még folyamatban van egy átvitel. Várd meg, amíg befejeződik, vagy állítsd le, aztán oszd meg újra.",
+  "linkBusy": "Még folyamatban van egy átvitel. Várd meg, amíg befejeződik, vagy állítsd le, aztán nyisd meg újra a linket.",
   "shareSkipped": "{count, plural, one{Egy megosztott elemet nem sikerült beolvasni, ezért kimaradt.} other{{count} megosztott elemet nem sikerült beolvasni, ezért kimaradt.}}",
   "desktopGenericName": "Fájlátvitel",
   "desktopComment": "Fájlok küldése közvetlenül egy másik eszközre, végpontok közötti titkosítással",

@@ -140,6 +140,7 @@
   "transferNoticeReceiving": "Menerima dengan TotalDrop",
   "transferNoticeBody": "Tetap berjalan saat Anda memakai aplikasi lain.",
   "shareBusy": "Masih ada transfer yang berjalan. Tunggu sampai selesai atau hentikan, lalu bagikan lagi.",
+  "linkBusy": "Masih ada transfer yang berjalan. Tunggu sampai selesai atau hentikan, lalu buka tautannya lagi.",
   "shareSkipped": "{count, plural, =1{Satu item yang dibagikan tidak dapat dibaca dan dilewati.} other{{count} item yang dibagikan tidak dapat dibaca dan dilewati.}}",
   "desktopGenericName": "Transfer file",
   "desktopComment": "Kirim file langsung ke perangkat lain, terenkripsi end-to-end",
