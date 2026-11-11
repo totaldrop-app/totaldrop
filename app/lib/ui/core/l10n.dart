@@ -105,15 +105,19 @@ String formatBytes(AppLocalizations l, int bytes, {String? numberLocale}) {
   return l.sizePB(bytes.toString());
 }
 
-/// "50%" in the region's format: "%50" in Turkish, "50 %" in German
-/// (#483). [fraction] is between 0 and 1. `numberLocale` is for tests.
+/// "50%" in the region's format, like the sizes beside it: a Turkish
+/// region writes "%50", a German one "50 %" (#483). Rounded down, so the
+/// screen never reads 100% while bytes are still arriving, as on Linux.
+/// `numberLocale` is for tests.
 String formatPercent(
   AppLocalizations l,
-  double fraction, {
+  int done,
+  int total, {
   String? numberLocale,
 }) {
   final locale = numberLocale ?? _numberLocale(l);
-  return intl.NumberFormat.percentPattern(locale).format(fraction);
+  final whole = total <= 0 ? 0 : (done * 100 ~/ total).clamp(0, 100);
+  return intl.NumberFormat.percentPattern(locale).format(whole / 100);
 }
 
 /// A value from outside the translation (a version, a folder) placed in a

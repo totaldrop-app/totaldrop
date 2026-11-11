@@ -51,4 +51,16 @@ void main() {
       expect(note.trim(), isNotEmpty, reason: '$locale');
     }
   });
+
+  test('the percent rounds down and follows the region', () {
+    expect(formatPercent(en, 0, 0, numberLocale: 'en'), '0%');
+    expect(formatPercent(en, 0, 7, numberLocale: 'en'), '0%');
+    expect(formatPercent(en, 29, 100, numberLocale: 'en'), '29%');
+    expect(formatPercent(en, 995, 1000, numberLocale: 'en'), '99%');
+    expect(formatPercent(en, 999999, 1000000, numberLocale: 'en'), '99%');
+    expect(formatPercent(en, 7, 7, numberLocale: 'en'), '100%');
+    expect(formatPercent(en, 8, 7, numberLocale: 'en'), '100%');
+    expect(formatPercent(en, 1, 2, numberLocale: 'tr'), '%50');
+    expect(formatPercent(en, 1, 2, numberLocale: 'de'), '50\u00a0%');
+  });
 }

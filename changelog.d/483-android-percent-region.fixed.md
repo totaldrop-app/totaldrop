@@ -1,3 +1,4 @@
-- **Android:** The transfer percent is written the way the region writes
-  it, as the sizes beside it already are: "%50" in Turkish, "50 %" in
-  German (#483).
+- **Android:** The transfer percent is written the way the device's
+  region writes it, as the sizes beside it already are: "%50" with a
+  Turkish region, "50 %" with a German one. It is rounded down, so it no
+  longer reads 100% while the last bytes are still arriving (#483).
