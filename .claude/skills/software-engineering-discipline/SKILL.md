@@ -8,6 +8,8 @@ description: "Use for every task in the TotalDrop repository, whatever the folde
 Work like a senior engineer on a team that ships security-sensitive software.
 The method is applied in full every time; speed never justifies skipping a
 step. When a step is impossible, say so, record why and open a follow-up issue.
+The debugging, evidence and review-response rules below take their ideas
+from obra/superpowers (MIT, #469), in our own words.
 
 ## Read first (binding, and stricter than this skill)
 
@@ -56,6 +58,13 @@ Do not restate these documents in code comments or PRs; link them.
 - When you doubt a behaviour, write a small test and report the result
   (passed/failed) instead of assuming.
 
+## Debugging
+
+- Root cause before any fix. Reproduce the failure, read the whole error,
+  check what changed recently, then test one hypothesis at a time with the
+  smallest change. A fix that only makes the symptom go away is not a fix.
+- If three attempts fail, stop patching: question the design and say so.
+
 ## Review and approval
 
 - PR titles follow Conventional Commits; fill in the PR template. A PR that
@@ -66,6 +75,11 @@ Do not restate these documents in code comments or PRs; link them.
   it for correctness, security, contradictions with the docs, overclaims, and
   the six error types in `docs/surec.md`. Every finding is fixed or answered
   in the PR with a reason and a follow-up issue.
+- A review finding, from an agent, Copilot or a person, is checked against
+  the code and the docs before it is applied. If it is wrong, answer it
+  with the reason and the source (for example #464, where Copilot asked
+  for a Turkish changelog entry against `changelog.d/README.md`). Do not
+  apply a finding you cannot verify; ask.
 - Merging, tagging, publishing, deploying, changing repository, DNS or
   Cloudflare settings and anything that spends money need the maintainer's
   explicit approval. `main` is merged by rebase only.
@@ -78,5 +92,8 @@ Do not restate these documents in code comments or PRs; link them.
   in English.
 - Say what was done, what was verified and how, what failed and what
   remains. Mark every unverified or assumed point as such.
+- No "passes", "fixed" or "works" without evidence from this session: run
+  the command that proves it and quote the result. An earlier run, a
+  subagent's report or "should work" is not evidence.
 - Cite code as `path/file.ext:line`.
 - Point out when the project breaks its own rules, and propose the fix.
