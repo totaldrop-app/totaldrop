@@ -526,6 +526,10 @@ class AppLocalizationsRo extends AppLocalizations {
       'Un transfer este încă în desfășurare. Așteaptă să se termine sau oprește-l, apoi partajează din nou.';
 
   @override
+  String get linkBusy =>
+      'Un transfer este încă în desfășurare. Așteaptă să se termine sau oprește-l, apoi deschide din nou linkul.';
+
+  @override
   String shareSkipped(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,

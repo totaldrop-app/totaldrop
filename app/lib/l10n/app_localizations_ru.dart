@@ -527,6 +527,10 @@ class AppLocalizationsRu extends AppLocalizations {
       'Передача ещё идёт. Дождитесь её окончания или остановите её, затем поделитесь снова.';
 
   @override
+  String get linkBusy =>
+      'Передача ещё идёт. Дождитесь её окончания или остановите её, затем снова откройте ссылку.';
+
+  @override
   String shareSkipped(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,

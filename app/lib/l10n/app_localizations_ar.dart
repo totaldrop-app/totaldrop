@@ -523,6 +523,10 @@ class AppLocalizationsAr extends AppLocalizations {
       'لا يزال هناك نقل جارٍ. انتظر حتى ينتهي أو أوقفه، ثم شارك مرة أخرى.';
 
   @override
+  String get linkBusy =>
+      'لا يزال هناك نقل جارٍ. انتظر حتى ينتهي أو أوقفه، ثم افتح الرابط مرة أخرى.';
+
+  @override
   String shareSkipped(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,

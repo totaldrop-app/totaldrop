@@ -542,9 +542,7 @@ void main() {
       expect(receive.input, '7-harbor-rocket');
     });
 
-    testWidgets('a link without a code opens an empty Receive', (
-      tester,
-    ) async {
+    testWidgets('a link without a code opens an empty Receive', (tester) async {
       await pumpApp(tester);
       launches.add(const OpenLink('totaldrop://r/evil?c=7-harbor-rocket'));
       await settle(tester);

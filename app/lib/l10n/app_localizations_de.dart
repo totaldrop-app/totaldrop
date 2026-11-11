@@ -523,6 +523,10 @@ class AppLocalizationsDe extends AppLocalizations {
       'Eine Übertragung läuft noch. Warte, bis sie fertig ist, oder stoppe sie, und teile dann erneut.';
 
   @override
+  String get linkBusy =>
+      'Eine Übertragung läuft noch. Warte, bis sie fertig ist, oder stoppe sie, und öffne dann den Link erneut.';
+
+  @override
   String shareSkipped(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,

@@ -512,6 +512,10 @@ class AppLocalizationsSw extends AppLocalizations {
       'Uhamishaji bado unaendelea. Subiri umalizike au uusimamishe, kisha shiriki tena.';
 
   @override
+  String get linkBusy =>
+      'Uhamishaji bado unaendelea. Subiri umalizike au uusimamishe, kisha fungua kiungo tena.';
+
+  @override
   String shareSkipped(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,

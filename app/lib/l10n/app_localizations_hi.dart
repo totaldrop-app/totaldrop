@@ -517,6 +517,10 @@ class AppLocalizationsHi extends AppLocalizations {
       'एक ट्रांसफ़र अभी चल रहा है। उसके पूरा होने का इंतज़ार करें या उसे रोकें, फिर दोबारा शेयर करें।';
 
   @override
+  String get linkBusy =>
+      'एक ट्रांसफ़र अभी चल रहा है। उसके पूरा होने का इंतज़ार करें या उसे रोकें, फिर लिंक दोबारा खोलें।';
+
+  @override
   String shareSkipped(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,

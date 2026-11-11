@@ -521,6 +521,10 @@ class AppLocalizationsNl extends AppLocalizations {
       'Er loopt nog een overdracht. Wacht tot die klaar is of stop hem, en deel dan opnieuw.';
 
   @override
+  String get linkBusy =>
+      'Er loopt nog een overdracht. Wacht tot die klaar is of stop hem, en open de link dan opnieuw.';
+
+  @override
   String shareSkipped(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,

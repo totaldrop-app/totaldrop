@@ -524,6 +524,10 @@ class AppLocalizationsUk extends AppLocalizations {
       'Передавання ще триває. Дочекайтеся його завершення або зупиніть його, а потім поділіться знову.';
 
   @override
+  String get linkBusy =>
+      'Передавання ще триває. Дочекайтеся його завершення або зупиніть його, а потім знову відкрийте посилання.';
+
+  @override
   String shareSkipped(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,

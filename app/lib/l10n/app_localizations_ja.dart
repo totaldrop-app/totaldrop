@@ -485,6 +485,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get shareBusy => '転送がまだ進行中です。完了を待つか停止してから、もう一度共有してください。';
 
   @override
+  String get linkBusy => '転送がまだ進行中です。完了を待つか停止してから、もう一度リンクを開いてください。';
+
+  @override
   String shareSkipped(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,

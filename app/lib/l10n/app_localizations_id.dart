@@ -503,6 +503,10 @@ class AppLocalizationsId extends AppLocalizations {
       'Masih ada transfer yang berjalan. Tunggu sampai selesai atau hentikan, lalu bagikan lagi.';
 
   @override
+  String get linkBusy =>
+      'Masih ada transfer yang berjalan. Tunggu sampai selesai atau hentikan, lalu buka tautannya lagi.';
+
+  @override
   String shareSkipped(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,

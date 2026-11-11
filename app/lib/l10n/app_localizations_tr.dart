@@ -503,6 +503,10 @@ class AppLocalizationsTr extends AppLocalizations {
       'Bir aktarım hâlâ sürüyor. Bitmesini bekleyin ya da durdurun, sonra yeniden paylaşın.';
 
   @override
+  String get linkBusy =>
+      'Bir aktarım hâlâ sürüyor. Bitmesini bekleyin ya da durdurun, sonra bağlantıyı yeniden açın.';
+
+  @override
   String shareSkipped(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,

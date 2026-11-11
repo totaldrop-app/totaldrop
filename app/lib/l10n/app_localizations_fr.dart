@@ -530,6 +530,10 @@ class AppLocalizationsFr extends AppLocalizations {
       'Un transfert est encore en cours. Attendez qu’il se termine ou arrêtez-le, puis partagez à nouveau.';
 
   @override
+  String get linkBusy =>
+      'Un transfert est encore en cours. Attendez qu’il se termine ou arrêtez-le, puis rouvrez le lien.';
+
+  @override
   String shareSkipped(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
