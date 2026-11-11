@@ -24,10 +24,13 @@ için [versioning.md](versioning.md) bağlayıcıdır.
    her doğruluk ya da güvenlik sorunu birleştirmeden önce düzeltilir;
    düzeltilmeyenler için gerekçe PR'a yazılır.
 
-   Buna ek olarak her PR'da GitHub Copilot'tan kod incelemesi istenir
-   (PR'ın "Reviewers" kutusunda Copilot; Claude oturumları
-   `request_copilot_review` ile). Copilot neye bakacağını
-   `.github/copilot-instructions.md`'den okur. Bulguları öteki
+   Buna ek olarak her PR'da GitHub Copilot'tan kod incelemesi istenir.
+   Ozan'ın hesabından açılan PR'ları (Claude oturumlarınınkiler dahil)
+   Copilot, taslak olsalar da kendiliğinden inceler; bu Ozan'ın hesap
+   ayarıdır, yeni push'lar otomatik incelenmez. Başkasının PR'ında ve bir
+   düzeltmeden sonra inceleme elle istenir (PR'ın "Reviewers" kutusunda
+   Copilot; Claude oturumları `request_copilot_review` ile). Copilot neye
+   bakacağını `.github/copilot-instructions.md`'den okur. Bulguları öteki
    inceleyicilerinkiyle aynı muamele görür: ya düzeltilir ya da gerekçesi
    yanıt olarak yazılır. Copilot'un incelemesi bağımsız incelemenin ve
    bakımcı onayının yerini tutmaz; kural setinde sayılmaz (#467).
