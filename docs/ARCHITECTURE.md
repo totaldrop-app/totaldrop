@@ -7,7 +7,10 @@ olduğu [kararlar/](kararlar/README.md), protokolün kendisi
 [protocol-v0.1-notes.md](protocol-v0.1-notes.md), güven sınırları
 [tehdit-modeli.md](tehdit-modeli.md) içindedir; burada tekrar edilmez.
 
-- Durum: `main` `18ba4df` (10 Kasım 2026).
+- Durum: `main` `03235a6` (11 Kasım 2026). İlk sürüm `18ba4df`'e karşı
+  yazıldı; 11 Kasım'da UPnP, denetim düzeltmeleri (#424–#427) ve aktarma
+  Worker'ının birim testleri için güncellendi. 5.2'deki kapsam sayıları
+  ve 6. bölümün sayımları `18ba4df` dönemine aittir.
 - Koda `yol:satır` ile bağlanır, yol hep depo kökünden yazılır.
   Kayan satırları CI yakalar: `tools/check-doc-refs.mjs` her başvurunun
   gösterdiği satırın metnini `docs/ARCHITECTURE.refs.json`'daki kayıtla
@@ -88,7 +91,7 @@ flowchart LR
   RZ["rendezvous-worker<br/>Directory + Mailbox<br/>(Durable Objects, SQLite)"]
   RL["relay-worker<br/>Pair (Durable Object)"]
   STUN["STUN: stun.cloudflare.com<br/>(projenin değil) ya da kendi<br/>aktarma sunucusunun UDP keşif portu"]
-  GW["Her tarafın kendi yönlendiricisi<br/>PCP / NAT-PMP"]
+  GW["Her tarafın kendi yönlendiricisi<br/>PCP / NAT-PMP / UPnP IGD"]
   A -- "wss /v0/allocate, /v0/mailbox/n<br/>(şifreli kutu iletileri)" --> RZ
   B -- "wss /v0/mailbox/n" --> RZ
   A -. "UDP" .-> STUN
@@ -110,8 +113,8 @@ Kurallar ve kanıtları:
 | --- | --- |
 | `proto` ve `crypto` hiçbir iç crate'e bağlı değildir | `crates/totaldrop-proto/Cargo.toml`, `crates/totaldrop-crypto/Cargo.toml` (`[dependencies]` içinde `totaldrop-*` yok) |
 | `l10n` hiçbir iç crate'e bağlı değildir; `proto`'yu yalnızca testinde kullanır (her dilin paylaşım metni kodu geri vermeli, #148) | `crates/totaldrop-l10n/Cargo.toml:21-23` |
-| `core` yalnızca `crypto` ve `proto`'ya bağlıdır; arayüz metni bilmez | `crates/totaldrop-core/Cargo.toml:22-23` |
-| Sunucular yalnızca `proto`'yu bağlar: kriptografi ve istemci motoru sunucuya hiç girmez | `server/totaldrop-rendezvous/Cargo.toml:17`, `server/totaldrop-relay/Cargo.toml:18` |
+| `core` yalnızca `crypto` ve `proto`'ya bağlıdır; arayüz metni bilmez | `crates/totaldrop-core/Cargo.toml:23-24` |
+| Sunucular yalnızca `proto`'yu bağlar: kriptografi ve istemci motoru sunucuya hiç girmez | `server/totaldrop-rendezvous/Cargo.toml:20`, `server/totaldrop-relay/Cargo.toml:18` |
 | Uygulamalar `core`, `proto`, `l10n` kullanır; hiçbir şey bir uygulamaya bağlı değildir | `crates/totaldrop-cli/Cargo.toml:20-22`, `linux/Cargo.toml:22-24`, `app/rust/Cargo.toml:19-21` |
 | CLI, uçtan uca testler için iki Rust sunucusunu yalnızca test bağımlılığı olarak kullanır | `crates/totaldrop-cli/Cargo.toml:28-29` |
 | `core` ile sunucular arasında kod bağı yoktur; yalnızca ağ protokolü ortaktır (`proto`) | tablo `tools/check-layers.mjs` `ALLOWED` |
@@ -174,7 +177,7 @@ sequenceDiagram
   LIB->>RZ: Mailbox::claim (lib.rs:464)
   Note over CLI: kod ekrana yazılır
   CLI->>LIB: run_with (main.rs:402 → lib.rs:504)
-  LIB->>LIB: bind_socket, own_hints (STUN + PCP/NAT-PMP)
+  LIB->>LIB: bind_socket, own_hints (STUN + port açma)
   LIB->>RZ: pairing::exchange: pake, confirm, hints
   RZ-->>PEER: posta kutusu iletileri (şifreli)
   LIB->>PEER: transport::sender_connection (QUIC, doğrudan ya da aktarma)
@@ -190,33 +193,37 @@ Adım adım:
    (`crates/totaldrop-cli/src/main.rs:613`, `crates/totaldrop-cli/src/main.rs:629` → `crates/totaldrop-cli/src/main.rs:232` `paths()`), `Send`
    dalına girer (`crates/totaldrop-cli/src/main.rs:650`) ve `send()`'i çağırır (`crates/totaldrop-cli/src/main.rs:355`).
 2. `PreparedSend::new` dosyaları ayrı bir iş parçacığında tarar
-   (`crates/totaldrop-core/src/lib.rs:437`,
+   (`crates/totaldrop-core/src/lib.rs:434`,
    `crates/totaldrop-core/src/transfer.rs:334` `scan`). Metin gönderiminde
-   `PreparedSend::text` (`crates/totaldrop-core/src/lib.rs:448`, `crates/totaldrop-core/src/transfer.rs:223` `text_entry`).
+   `PreparedSend::text` (`crates/totaldrop-core/src/lib.rs:445`, `crates/totaldrop-core/src/transfer.rs:223` `text_entry`).
 3. `ready` cihaz anahtarlarını üretir, rendezvous'tan numara ayırır, kodu
-   cihazda üretir ve kutuyu tutar (`crates/totaldrop-core/src/lib.rs:453-464`;
+   cihazda üretir ve kutuyu tutar (`crates/totaldrop-core/src/lib.rs:450-461`;
    `crates/totaldrop-core/src/rendezvous.rs:175` `allocate`, `crates/totaldrop-core/src/rendezvous.rs:202`
    `Mailbox::claim`; `crates/totaldrop-proto/src/lib.rs:183`
    `TransferCode`).
-4. `run_with` (`crates/totaldrop-core/src/lib.rs:504`):
+4. `run_with` (`crates/totaldrop-core/src/lib.rs:501`):
    - UDP soketi (`crates/totaldrop-core/src/transport.rs:306`
      `bind_socket`) ve tek kullanımlık uç nokta anahtarı (`crates/totaldrop-core/src/transport.rs:73`).
    - `own_hints` (`crates/totaldrop-core/src/lib.rs:101`): yerel adresler, STUN
-     (`crates/totaldrop-core/src/relay.rs:103` `discover`) ve aynı anda
-     yönlendiriciden port isteği (`crates/totaldrop-core/src/portmap.rs:128`
-     `map`, en çok `MAPPING_GRACE` = 300 ms ek bekleme, `crates/totaldrop-core/src/lib.rs:95`).
+     (`crates/totaldrop-core/src/relay.rs:106` `discover`) ve aynı anda
+     yönlendiriciden port isteği: PCP ve NAT-PMP yarışır, ikisi de
+     susarsa UPnP IGD denenir (`crates/totaldrop-core/src/portmap.rs:288`
+     `start`). Bekleme en çok `MAPPING_GRACE` = 300 ms'dir
+     (`crates/totaldrop-core/src/lib.rs:95`); ağ geçidi UPnP ile yanıt
+     verdiyse deneme bitene kadar sürer (`crates/totaldrop-core/src/portmap.rs:336`
+     `Asking::wait`).
    - `pairing::exchange` (`crates/totaldrop-core/src/pairing.rs:73`):
      kutuda `pake` (CPace, `crates/totaldrop-core/src/pairing.rs:107-110`), `confirm` (sertifika,
      `crates/totaldrop-core/src/pairing.rs:119-129`), `hints` (`crates/totaldrop-core/src/pairing.rs:135-139`; adresler şifreli).
-   - `transport::endpoint` (`crates/totaldrop-core/src/transport.rs:428`) ve yollar (`crates/totaldrop-core/src/lib.rs:290`
-     `paths_to`): aktarma bağlantısı (`crates/totaldrop-core/src/relay.rs:299` `spawn`) ve doğrudan
+   - `transport::endpoint` (`crates/totaldrop-core/src/transport.rs:428`) ve yollar (`crates/totaldrop-core/src/lib.rs:287`
+     `paths_to`): aktarma bağlantısı (`crates/totaldrop-core/src/relay.rs:302` `spawn`) ve doğrudan
      adayların hepsi birlikte denenir; `sender_connection`
      (`crates/totaldrop-core/src/transport.rs:578`) → `connect_any` (`crates/totaldrop-core/src/transport.rs:684`). Ters yön
      400 ms, aktarma 1200 ms gecikmeyle başlar (`crates/totaldrop-core/src/transport.rs:518`, `crates/totaldrop-core/src/transport.rs:522`).
    - Doğrudan yol seçildiyse aktarma bağlantısı park edilir ve
-     `path::Fallback` (`crates/totaldrop-core/src/path.rs:102`) yolu izler;
-     8 sn sessizlikte aktarmaya geçer (`crates/totaldrop-core/src/path.rs:85` `FALLBACK_SILENCE`).
-     Durum adlandırılmış bir türdür: `Keep` (`crates/totaldrop-core/src/lib.rs:341`).
+     `path::Fallback` (`crates/totaldrop-core/src/path.rs:115`) yolu izler;
+     8 sn sessizlikte aktarmaya geçer (`crates/totaldrop-core/src/path.rs:86` `FALLBACK_SILENCE`).
+     Durum adlandırılmış bir türdür: `Keep` (`crates/totaldrop-core/src/lib.rs:338`).
    - `secure::handshake_on` (`crates/totaldrop-core/src/secure.rs:112`):
      Noise XXpsk3 (`crates/totaldrop-core/src/secure.rs:16`), ardından ML-KEM-768 ve dört doğrulama
      kelimesi (`crates/totaldrop-crypto/src/channel.rs:114` `session_keys`,
@@ -224,25 +231,25 @@ Adım adım:
    - `transfer::send_files` (`crates/totaldrop-core/src/transfer.rs:518`): manifest, 4 paralel akış
      (`crates/totaldrop-core/src/transfer.rs:187`), parçalar STREAM ile şifreli
      (`crates/totaldrop-crypto/src/lib.rs:148` `EntryCipher`).
-5. Çıkış: `main` sonucu çıkış koduna çevirir (`crates/totaldrop-cli/src/main.rs:671-693`): başarı 0,
+5. Çıkış: `main` sonucu çıkış koduna çevirir (`crates/totaldrop-cli/src/main.rs:674-696`): başarı 0,
    durdurma 130, hata 1, kullanım hatası 2 (geçersiz kod, aktarmasız
    gizlilik modu `crates/totaldrop-cli/src/main.rs:630-633`, clap'in kendi hataları) ve kişinin dilinde bir cümle + İngilizce ayrıntı
-   (`crates/totaldrop-cli/src/main.rs:707` `error_key`, `crates/totaldrop-cli/src/main.rs:699` `detail_line`).
+   (`crates/totaldrop-cli/src/main.rs:710` `error_key`, `crates/totaldrop-cli/src/main.rs:702` `detail_line`).
 
 ### 2.2 `totaldrop receive <kod>`
 
 1. `crates/totaldrop-cli/src/main.rs:664` → `receive()` (`crates/totaldrop-cli/src/main.rs:429`) → `IncomingOffer::connect_with`
-   (`crates/totaldrop-cli/src/main.rs:496` → `crates/totaldrop-core/src/lib.rs:641`).
-2. `IncomingOffer::connect` (`crates/totaldrop-core/src/lib.rs:664`): kodu ayrıştırır
-   (`TransferCode::parse`), kutuyu jetonsuz tutar (`crates/totaldrop-core/src/lib.rs:667`), aynı
+   (`crates/totaldrop-cli/src/main.rs:496` → `crates/totaldrop-core/src/lib.rs:638`).
+2. `IncomingOffer::connect` (`crates/totaldrop-core/src/lib.rs:661`): kodu ayrıştırır
+   (`TransferCode::parse`), kutuyu jetonsuz tutar (`crates/totaldrop-core/src/lib.rs:664`), aynı
    `own_hints` ve `pairing::exchange` adımlarını yanıtlayan rolünde yapar.
 3. Aktarma yalnızca gönderenin önerdiği aktarma **kendi ayarıyla aynıysa**
-   kullanılır (`crates/totaldrop-core/src/lib.rs:234` `receiver_relay`; #68: gönderen alıcının
+   kullanılır (`crates/totaldrop-core/src/lib.rs:231` `receiver_relay`; #68: gönderen alıcının
    adresini kendi sunucusuyla öğrenemesin).
 4. `transport::receiver_connection` (`crates/totaldrop-core/src/transport.rs:546`),
    `secure::handshake` (`crates/totaldrop-core/src/secure.rs:98`), `transfer::receive_offer`
    (`crates/totaldrop-core/src/transfer.rs:774`): manifest doğrulanır, diske hiçbir şey yazılmaz.
-5. Kişi kabul ederse `accept_with` (`crates/totaldrop-cli/src/main.rs:566` → `crates/totaldrop-core/src/lib.rs:733`) →
+5. Kişi kabul ederse `accept_with` (`crates/totaldrop-cli/src/main.rs:566` → `crates/totaldrop-core/src/lib.rs:730`) →
    `transfer::accept` (`crates/totaldrop-core/src/transfer.rs:1262`). Yazma yolu: `check_beneath`
    (`crates/totaldrop-core/src/transfer.rs:906`), sembolik bağlantı izlemeyen `make_dir`
    (`crates/totaldrop-core/src/transfer.rs:923`), üzerine yazmayan `place_no_clobber`
@@ -254,7 +261,7 @@ Adım adım:
 | Giriş | Gönderme | Alma |
 | --- | --- | --- |
 | CLI | `crates/totaldrop-cli/src/main.rs:373`, `crates/totaldrop-cli/src/main.rs:402` | `crates/totaldrop-cli/src/main.rs:496`, `crates/totaldrop-cli/src/main.rs:566` |
-| Linux (QML → CXX-Qt) | `linux/src/bridge/transfer.rs:596` `start_send` → `linux/src/bridge/transfer.rs:613`, `linux/src/bridge/transfer.rs:649` | `linux/src/bridge/transfer.rs:667` `receive` → `linux/src/bridge/transfer.rs:678`, `linux/src/bridge/transfer.rs:750` |
+| Linux (QML → CXX-Qt) | `linux/src/bridge/transfer.rs:600` `start_send` → `linux/src/bridge/transfer.rs:617`, `linux/src/bridge/transfer.rs:653` | `linux/src/bridge/transfer.rs:671` `receive` → `linux/src/bridge/transfer.rs:682`, `linux/src/bridge/transfer.rs:754` |
 | Android (Dart → flutter_rust_bridge) | `app/rust/src/api/transfer.rs:343` `prepare_send` → `app/rust/src/api/transfer.rs:362`; `app/rust/src/api/transfer.rs:416` `run_send` → `app/rust/src/api/transfer.rs:426` | `app/rust/src/api/transfer.rs:494` `connect_receive` |
 
 Uygulamalar olayları (`Event`, `crates/totaldrop-core/src/lib.rs:50`) kendi
@@ -284,11 +291,11 @@ arayüz durumuna çevirir: Linux'ta Qt özellikleri
    (`server/rendezvous-worker/src/retry.ts`, #119).
 5. Aktarma Worker'ı aynı kalıptadır: `server/relay-worker/src/index.ts:27`
    → `PAIR.getByName(name).fetch` (`server/relay-worker/src/index.ts:36`) → `Pair.fetch`
-   (`server/relay-worker/src/pair.ts:164`), `webSocketMessage` (`server/relay-worker/src/pair.ts:185`),
-   `alarm` (`server/relay-worker/src/pair.ts:386`).
+   (`server/relay-worker/src/pair.ts:173`), `webSocketMessage` (`server/relay-worker/src/pair.ts:194`),
+   `alarm` (`server/relay-worker/src/pair.ts:397`).
 
 Rust sunucuları aynı protokolün ikinci uygulamasıdır:
-`server/totaldrop-rendezvous/src/lib.rs:331` `serve`,
+`server/totaldrop-rendezvous/src/lib.rs:343` `serve`,
 `server/totaldrop-relay/src/lib.rs:144` `serve`.
 
 ## 3. Veri modeli ve durum
@@ -306,8 +313,8 @@ Rust sunucuları aynı protokolün ikinci uygulamasıdır:
 | `Batch` | `crates/totaldrop-proto/src/relay.rs:157` | Aktarma çerçeveleri (kendi ikili biçimi) |
 | `DeviceKeys` | `crates/totaldrop-crypto/src/identity.rs:30` | Her aktarımda yeniden üretilen Ed25519 + X25519 + ML-KEM anahtarları |
 | `Cpace`, `MailboxCipher`, `Sealer`/`Opener`, `EntryCipher` | `crates/totaldrop-crypto/src/cpace.rs:138`, `crates/totaldrop-crypto/src/channel.rs:33`, `crates/totaldrop-crypto/src/channel.rs:164`/`crates/totaldrop-crypto/src/channel.rs:170`, `crates/totaldrop-crypto/src/lib.rs:148` | Anahtar anlaşması ve şifreleme durumları |
-| `SendOptions`, `ReceiveOptions`, `PathOptions` | `crates/totaldrop-core/src/lib.rs:398`, `crates/totaldrop-core/src/lib.rs:599`, `crates/totaldrop-core/src/lib.rs:157` | İstemci motorunun girdileri |
-| `PreparedSend`, `IncomingOffer` | `crates/totaldrop-core/src/lib.rs:418`, `crates/totaldrop-core/src/lib.rs:618` | Kamuya açık API'nin iki durumlu nesneleri |
+| `SendOptions`, `ReceiveOptions`, `PathOptions` | `crates/totaldrop-core/src/lib.rs:395`, `crates/totaldrop-core/src/lib.rs:596`, `crates/totaldrop-core/src/lib.rs:154` | İstemci motorunun girdileri |
+| `PreparedSend`, `IncomingOffer` | `crates/totaldrop-core/src/lib.rs:415`, `crates/totaldrop-core/src/lib.rs:615` | Kamuya açık API'nin iki durumlu nesneleri |
 | `Event` | `crates/totaldrop-core/src/lib.rs:50` | Arayüze giden olaylar (`Waiting`, `Connected`, `Progress`, …) |
 
 ### 3.2 Veritabanı şemaları
@@ -342,8 +349,8 @@ kodda silinir (`server/rendezvous-worker/src/mailbox.ts:335`).
 
 **`Pair`** (aktarma; anahtar çifti başına bir örnek): SQL tablosu yoktur.
 Soket başına durum WebSocket eki olarak tutulur (`Attachment`,
-`server/relay-worker/src/pair.ts:59-77`: meydan okuma, anahtar, sayaçlar,
-yanıtsız yoklamalar); depoda yalnızca alarm vardır (`server/relay-worker/src/pair.ts:381-400`).
+`server/relay-worker/src/pair.ts:62-82`: meydan okuma, anahtar, sayaçlar,
+yanıtsız yoklamalar); depoda yalnızca alarm vardır (`server/relay-worker/src/pair.ts:392-411`).
 Doğrulama: `pair.ts` içinde `sql.exec` geçmez (grep ile bakıldı).
 
 ### 3.3 Durum nerede tutulur
@@ -355,7 +362,7 @@ Doğrulama: `pair.ts` içinde `sql.exec` geçmez (grep ile bakıldı).
 | Android | `SharedPreferencesWithCache`: `rendezvous_server`, `privacy_mode`, arka plan izni işaretleri (`app/lib/data/settings_repository.dart:13-17`); aşamalar `SendStage`, `ReceiveStage` (`app/lib/ui/send/send_view_model.dart:20`, `app/lib/ui/receive/receive_view_model.dart:27`) | Ayar kalıcı, aşama bellekte |
 | Rendezvous Worker | Yukarıdaki SQLite tabloları; hız sınırı sayaçları bellekte (`server/rendezvous-worker/src/limit.ts:98` `RateLimiter`) | Kutu en çok 60 dk; sayaçlar nesne uyuyunca düşer |
 | Aktarma Worker | WebSocket ekleri + alarm | Bağlantı süresince |
-| Rust sunucuları | Yalnızca bellekte: `HashMap` (`server/totaldrop-rendezvous/src/lib.rs:224-227`, `server/totaldrop-relay/src/lib.rs:88`) | Süreç yeniden başlayınca düşer |
+| Rust sunucuları | Yalnızca bellekte: `HashMap` (`server/totaldrop-rendezvous/src/lib.rs:236-239`, `server/totaldrop-relay/src/lib.rs:88`) | Süreç yeniden başlayınca düşer |
 
 ## 4. Yapılandırma
 
@@ -370,11 +377,11 @@ sayılmadı.
 | `TOTALDROP_SERVER`, `TOTALDROP_RELAY`, `TOTALDROP_STUN` | CLI (`crates/totaldrop-cli/src/main.rs:33`, `crates/totaldrop-cli/src/main.rs:38`, `crates/totaldrop-cli/src/main.rs:42`) | `--server`, `--relay`, `--stun` bayraklarının ortam karşılığı |
 | `TOTALDROP_THEME` | Linux (`linux/src/theme/mod.rs:67`) | Algılanan temayı geçersiz kılar |
 | `XDG_CURRENT_DESKTOP`, `QT_QPA_PLATFORMTHEME`, `HYPRLAND_INSTANCE_SIGNATURE`, `HOST_XDG_CONFIG_HOME`, `HOST_XDG_DATA_HOME` | Linux tema algılama (`linux/src/theme/mod.rs:70-72`, `linux/src/theme/hyprland.rs:17`, `linux/src/theme/host.rs:28`, `linux/src/theme/host.rs:39`) | Masaüstüne uyum; `HOST_*` Flatpak içinden ana makinenin temasını bulur |
-| `XDG_ACTIVATION_TOKEN`, `DESKTOP_STARTUP_ID` | Linux tek pencere (`linux/src/instance.rs:543`, `linux/src/instance.rs:547`) | İkinci açılışta var olan pencereyi öne getirir |
+| `XDG_ACTIVATION_TOKEN`, `DESKTOP_STARTUP_ID` | Linux tek pencere (`linux/src/instance.rs:528`, `linux/src/instance.rs:532`) | İkinci açılışta var olan pencereyi öne getirir |
 | `LANGUAGE`, `LC_ALL`, `LC_MESSAGES`, `LC_NUMERIC`, `LANG` | `totaldrop-l10n` (`crates/totaldrop-l10n/src/locale.rs:91-109`) | Arayüz dili ve sayı biçimi (gettext sırası) |
 | `TOTALDROP_TEST_SERVER`, `TOTALDROP_TEST_SERVER_LIMITED`, `TOTALDROP_TEST_RELAY` | Uçtan uca testler (`crates/totaldrop-cli/tests/end_to_end.rs:28`, `crates/totaldrop-cli/tests/end_to_end.rs:49`, `crates/totaldrop-cli/tests/end_to_end.rs:79`) | Testi Rust sunucusu yerine Worker'a (`wrangler dev`) karşı çalıştırır (`.github/workflows/server.yml:103-105`) |
 | `TOTALDROP_REQUIRE_IPV6` | Çekirdek testleri (`crates/totaldrop-core/src/transport.rs:856`) | IPv6 olmayan makinede testi geçmek yerine kırar |
-| `CI` | Linux testleri (`linux/src/instance.rs:659`, `linux/src/sleep.rs:203`) | Masaüstü oturumu gerektiren denemeleri CI'da ayarlar |
+| `CI` | Linux testleri (`linux/src/instance.rs:644`, `linux/src/sleep.rs:203`) | Masaüstü oturumu gerektiren denemeleri CI'da ayarlar |
 | `ANDROID_UPLOAD_STORE_FILE`, `ANDROID_UPLOAD_PASSWORD`, `ANDROID_UPLOAD_ALIAS`, `TOTALDROP_REQUIRE_RELEASE_KEY` | Android derlemesi (`app/android/app/build.gradle.kts:22-61`) | Yükleme anahtarı yalnızca CI ortam sırrından; `REQUIRE` varken anahtarsız derleme başarısız olur |
 | `CLOUDFLARE_API_TOKEN` | Yalnızca dağıtım adımı (`.github/workflows/deploy.yml:134`) | `cloudflare` ortamı onayıyla |
 | `RATE_BURST`, `RATE_INTERVAL_MS` | Rendezvous Worker değişkeni (`server/rendezvous-worker/src/directory.ts:50`) | İstemci başına oran sınırı; üretimde tanımlı değil, varsayılanlar `limit.ts` içinde; CI `--var` ile düşük değerler verir (`.github/workflows/server.yml:82`, `.github/workflows/server.yml:86`) |
@@ -418,11 +425,11 @@ bakıldı). Dart'taki tek derleme tanımı `TOTALDROP_VERSION`'dır
 değiştirmez. Davranışı değiştiren seçenekler
 çalışma zamanındadır:
 
-- **Gizlilik modu** (`PathOptions.relay_only`, `crates/totaldrop-core/src/lib.rs:167`):
+- **Gizlilik modu** (`PathOptions.relay_only`, `crates/totaldrop-core/src/lib.rs:164`):
   adres duyurulmaz, doğrudan bağlantı ve port açma yapılmaz.
-- **Port açma ağ geçidi** `portmap::Gateway` (`crates/totaldrop-core/src/portmap.rs:45`):
+- **Port açma ağ geçidi** `portmap::Gateway` (`crates/totaldrop-core/src/portmap.rs:58`):
   `Auto` (varsayılan yolun ağ geçidi, bugün yalnızca Linux), `Off`, ya da
-  `At(adres)` (testler; ileride Android) (`crates/totaldrop-core/src/portmap.rs:45-54`).
+  `At(adres)` (testler; ileride Android) (`crates/totaldrop-core/src/portmap.rs:58-67`).
 - **Kod gücü** `--strong` (2 yerine 3 kelime, `crates/totaldrop-cli/src/main.rs:365`).
 
 ## 5. Test, derleme ve kapsam
@@ -466,18 +473,16 @@ işinde görülür; burada yalnızca göreli olarak zayıf yerler yazılı.
 
 Hiç ölçülmeyenler (CI'da kapsam yok):
 
-- **`server/relay-worker`**: birim testi yok; `package.json`'da `test`
-  betiği yok, bu yüzden `.github/workflows/server.yml:40`'taki `--if-present` adımı hiçbir
-  şey çalıştırmaz. Davranışı yalnızca uçtan uca test sınar. 10 Kasım
-  denetiminin 3. bulgusu (#426) tam bu dosyadadır
-  (`server/relay-worker/src/pair.ts:270`). Rendezvous Worker'ın 3 test
-  dosyası var (`server/rendezvous-worker/test/`).
+- **Worker'lar**: TypeScript için kapsam ölçülmez. Testler
+  `.github/workflows/server.yml:40` adımında çalışır: rendezvous Worker'ın
+  `server/rendezvous-worker/test/` altında 3 dosyası, aktarma Worker'ının
+  yalnızca sayım mantığı için bir dosyası var
+  (`server/relay-worker/test/count.test.ts`, #426 ile geldi). `Pair`'in
+  geri kalanını yalnızca uçtan uca test sınar.
 - **`linux/` ve `app/rust`**: `cargo test` çalışır ama llvm-cov
   ölçümüne dahil değil (`.github/workflows/core.yml:20` `EXCLUDE`).
 - **Dart**: `flutter test` kapsam raporu üretmiyor.
 - **QML**: tek bileşen testi var (`linux/tests/qml/tst_actioncard.qml`).
-- **Ağ değişimi ve ölü TCP**: `crates/totaldrop-core/src/relay.rs` yüksek
-  kapsamlı olsa da (%94,2) ping yazımının süre sınırsız kaldığı yol (#424, `crates/totaldrop-core/src/relay.rs:573`) testsizdir.
 
 ## 6. Tarihçe: sıcak noktalar
 
@@ -551,7 +556,7 @@ için öneri değil, yalnızca durum yazılıdır; iş gerekirse issue açılır
 3. **Sunucular istemci kriptografisine bağlanmaz.** Sunucu crate'leri
    yalnızca `proto`'yu bağlar; aktarma sunucusu meydan okuma imzasını
    `ring` ile (`server/totaldrop-relay/src/lib.rs:212-213`), Worker Web
-   Crypto ile (`server/relay-worker/src/pair.ts:108-111`) kendisi denetler.
+   Crypto ile (`server/relay-worker/src/pair.ts:113-116`) kendisi denetler.
    "Sunucu içeriği çözemez" sözünü bu kural sağlamaz: o, anahtarların
    sunucuya hiç gitmemesinden gelir (CPace ve Noise anahtarları iki cihazda
    kalır, [tehdit-modeli.md](tehdit-modeli.md)). Buradaki kural daha dardır:
@@ -559,7 +564,7 @@ için öneri değil, yalnızca durum yazılıdır; iş gerekirse issue açılır
    oturum anahtarına dokunan bir kod yolu sunucuya kazara giremez;
    `tools/check-layers.mjs` bunu korur.
 4. **Çekirdeğin kamuya açık yüzü küçük.** Uygulamalar yalnızca
-   `PreparedSend` ve `IncomingOffer` ile konuşur (`crates/totaldrop-core/src/lib.rs:418`, `crates/totaldrop-core/src/lib.rs:618`);
+   `PreparedSend` ve `IncomingOffer` ile konuşur (`crates/totaldrop-core/src/lib.rs:415`, `crates/totaldrop-core/src/lib.rs:615`);
    bu yüzden üç uygulamanın akışı aynıdır ([2.3](#23-aynı-akış-uygulamalarda)).
    `crates/totaldrop-core/src/lib.rs` buna karşın 1 045 satırla yol seçimi ve aktarma kararlarını da
    taşır; en çok değişen çekirdek dosyası olması bununla tutarlıdır.
@@ -574,8 +579,8 @@ dokunan bulguları ve bu belgedeki yerleri:
 
 | Issue | Yer | Bu belgede |
 | --- | --- | --- |
-| #424 | `crates/totaldrop-core/src/relay.rs:573` | 2.1 (aktarma yedeği), 5.2 |
-| #425 | `crates/totaldrop-core/src/portmap.rs:164-187` | 2.1 (`own_hints`) |
-| #426 | `server/relay-worker/src/pair.ts:270` | 3.2 (`Pair`), 5.2 |
-| #427 | `linux/qml/ResultPanel.qml:132` | — (arayüz) |
+| #424 | Düzeltildi: ping süre sınırlı (`crates/totaldrop-core/src/relay.rs:438` `ping_within`) | 2.1 (aktarma yedeği) |
+| #425 | Düzeltildi: yarışı kaybeden eşleme de kapatılır (`crates/totaldrop-core/src/portmap.rs:220`) | 2.1 (`own_hints`) |
+| #426 | Düzeltildi: sayım `server/relay-worker/src/count.ts:36` `noteGiven` | 3.2 (`Pair`), 5.2 |
+| #427 | Düzeltildi: klasör URL ile açılır (`linux/qml/ResultPanel.qml:135`) | — (arayüz) |
 | #428 | STUN, Rust rendezvous jetonu, `snow` | 7.5 |
