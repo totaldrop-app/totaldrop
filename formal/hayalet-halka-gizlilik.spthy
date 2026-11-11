@@ -206,7 +206,7 @@ rule Accept_Rotate_2:
 
 /* The transparency log. A value is logged under L = h('log', head) and is
    never deleted. The log keeps only values that are valid for that head:
-   readers drop every other value (hesap.md, "Anonim şeffaflık günlüğü"),
+   readers drop every other value (hesap.md, "Anonymous transparency log"),
    so a logged invalid value changes nothing and is left out. Anyone may
    log a value (with an ARC token, not modelled). Honest devices log their
    own records in the same step that writes them: this is the witnesses'
@@ -285,7 +285,7 @@ rule Reveal_Ring_2:
     [ !RingSec(hh, re), !Head(r, hh, y, d), !Leaked(d) ] --[ RevRing(hh, d) ]-> [ Out(re) ]
 
 /* A contact sends an offer to the ring at its head: encrypted to the head's
-   KEM key, and only after its freshness check (hesap.md, "Tazelik"): no AK
+   KEM key, and only after its freshness check (hesap.md, "Freshness"): no AK
    record and nothing settled under the key of its head. An unsettled
    rotate does not stop it; the old head is still the current one then,
    for the ring's devices too (they follow a rotate only once settled, see
@@ -318,9 +318,9 @@ restriction Contact_Fresh_Receive:
 
 /* A ring device offers a file to a contact, as the ring: the offer names
    the ring and the device's current head and is signed with its IK
-   (hesap.md, "Gönderim"). The receiving contact checks that the signer is
+   (hesap.md, "Sending"). The receiving contact checks that the signer is
    a member of the head it holds for that ring, and the same freshness as
-   when sending ("Alırken de tazelik"). */
+   when sending ("Freshness when receiving too"). */
 rule Device_Offer_1:
     let d = <pk(~ik), pk(~a1), pk(~a2)>
     in
@@ -354,7 +354,7 @@ rule Contact_Receive_2:
     [ View(c, r, hh, y, s) ]
 
 /* Reading the log. Every reader (device or contact) reads every value under
-   the key and stops on a fork (hesap.md, "Çatal kuralı"): an AK record is
+   the key and stops on a fork (hesap.md, "Fork rule"): an AK record is
    accepted only if no other valid AK record was logged under the same key
    before; it wins over a rotate (priority, rule 1). A rotate is accepted
    only if no other valid value of any kind was logged before. The

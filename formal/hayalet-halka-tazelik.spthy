@@ -189,7 +189,7 @@ rule Accept_Rotate_2:
 
 /* The transparency log. A value is logged under L = h('log', head) and is
    never deleted. The log keeps only values that are valid for that head:
-   readers drop every other value (hesap.md, "Anonim şeffaflık günlüğü"),
+   readers drop every other value (hesap.md, "Anonymous transparency log"),
    so a logged invalid value changes nothing and is left out. Anyone may
    log a value (with an ARC token, not modelled). Honest devices log their
    own records in the same step that writes them: this is the witnesses'
@@ -253,7 +253,7 @@ restriction Writer_Fresh:
   "All L #i. WriteFresh(L) @ i ==> not (Ex v #t. Old(L, v) @ t & #t < #i)"
 
 /* Reading the log. Every reader (device or contact) reads every value under
-   the key and stops on a fork (hesap.md, "Çatal kuralı"): an AK record is
+   the key and stops on a fork (hesap.md, "Fork rule"): an AK record is
    accepted only if no other valid AK record was logged under the same key
    before; it wins over a rotate (priority, rule 1). A rotate is accepted
    only if no other valid value of any kind was logged before. The

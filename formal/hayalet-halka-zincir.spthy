@@ -252,7 +252,7 @@ lemma rotate_needs_member_ik:
    never accepts a record signed by a key that is not a device's. This is
    the case the last disjunct of P1 above leaves open. Bounded to one step
    of each kind so the search ends; the unbounded form needs an invariant
-   (README.md, "Henüz kanıtlanmayanlar"). mutants.py shows the attack once
+   (README.md, "Not proven yet"). mutants.py shows the attack once
    acceptors stop taking the signer from their own view. */
 lemma signer_must_be_member:
   "not (Ex c r h0 n s #p #i.

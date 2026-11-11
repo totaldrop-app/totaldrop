@@ -195,7 +195,7 @@ rule Accept_Rotate_2:
 
 /* The transparency log. A value is logged under L = h('log', head) and is
    never deleted. The log keeps only values that are valid for that head:
-   readers drop every other value (hesap.md, "Anonim şeffaflık günlüğü"),
+   readers drop every other value (hesap.md, "Anonymous transparency log"),
    so a logged invalid value changes nothing and is left out. Anyone may
    log a value (with an ARC token, not modelled). Honest devices log their
    own records in the same step that writes them: this is the witnesses'
@@ -239,7 +239,7 @@ rule Log_Write_IK_2:
     [ !LogEntry(h(<'log', hh>), <body, sig>) ]
 
 /* Reading the log. Every reader (device or contact) reads every value under
-   the key and stops on a fork (hesap.md, "Çatal kuralı"): an AK record is
+   the key and stops on a fork (hesap.md, "Fork rule"): an AK record is
    accepted only if no other valid AK record was logged under the same key
    before; it wins over a rotate (priority, rule 1). A rotate is accepted
    only if no other valid value of any kind was logged before. The
@@ -334,7 +334,7 @@ lemma no_split_view_membership:
    all of x's keys leaked and the server helps, and even if x logged a
    record of its own on that head first (the race of H3). The one record
    by x = d is the remove itself. That x stays out on later heads is not proven yet
-   (README.md, "Henüz kanıtlanmayanlar"). */
+   (README.md, "Not proven yet"). */
 lemma removed_device_locked_out_of_old_head:
   "All d r h0 x c op y #t #j.
       Signed(d, r, h0, 'remove', h(x)) @ t

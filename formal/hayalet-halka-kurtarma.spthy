@@ -10,7 +10,7 @@
  * follows its own rotate only once it has settled. Added:
  *  - the ring's genesis carries the recovery key RK; its secret is the
  *    phrase, held by the owner and never on a device;
- *  - kurtarma_ekle: an RK-signed record that adds a device into an empty
+ *  - recovery_add: an RK-signed record that adds a device into an empty
  *    slot. It waits: readers follow it only once it has settled;
  *  - membership period m: the head of the last membership record (an AK
  *    record, a recovery or genesis). Rotates keep m. A recovery names m
@@ -19,7 +19,7 @@
  *    wins over a recovery against m; a rotate does not stop it. Two
  *    recoveries against the same m are a fork and neither is followed
  *    after the second is logged;
- *  - kurtarma_reddi: any member writes an AK record from its current head
+ *  - recovery_reject: any member writes an AK record from its current head
  *    that rejects the recovery;
  *  - contacts follow a recovery only after comparing the words again with
  *    the new device's owner (an authentic out-of-band channel).
@@ -137,15 +137,15 @@ rule Member_Rotate_2:
     [ View(d, h(rb), h(hb), m, y, d), Out(<body, sign(<'ik', body>, ~ik)>), !Head(h(rb), h(body), m, y, d),
       !LogEntry(h(<'log', h(hb)>), <body, sign(<'ik', body>, ~ik)>) ]
 
-/* Recovery (hesap.md, "Kurtarma"). A recovery is a proposal against the
+/* Recovery (hesap.md, "Recovery"). A recovery is a proposal against the
    ring's membership period m: the head of its last membership record
    (create, add, remove, reject, recovery). Rotates do not change m, so a
-   pending recovery carries over the rotates that follow ("kurtarma çatal
-   açmaz ... sonraki dönemlere taşınır"), and a rotate never blocks it. It
-   is logged under its own key h('rlog', m), which every reader at a head
-   of period m watches.
+   pending recovery carries over the rotates that follow ("a recovery
+   record does not open a fork ... carried over to the following
+   epochs"), and a rotate never blocks it. It is logged under its own key
+   h('rlog', m), which every reader at a head of period m watches.
    The owner, with the phrase and a new device n, writes an RK-signed
-   kurtarma_ekle against the period of a head it learned from the log,
+   recovery_add against the period of a head it learned from the log,
    adding n into the empty slot. The owner can then compare the words with
    each contact, for this record: Words(r, h(body)) is that channel. An
    attacker with the phrase writes the same kind of record from the
@@ -182,7 +182,7 @@ rule Log_Write_RK_2:
   --[ Eq(verify(sig, <'rk', body>, rkp), true), LogValid(h(<'rlog', m>), body, 'rk'), RecLogged(r, m, body) ]->
     [ !LogEntry(h(<'rlog', m>), <body, sig>), !Head(r, h(body), h(body), n, a) ]
 
-/* A member rejects a pending recovery (kurtarma_reddi): an AK record,
+/* A member rejects a pending recovery (recovery_reject): an AK record,
    written from the member's current head. Unlike other records it does not
    need the head key to be free of settled values (no WriteFresh): a reject
    always counts (hesap.md, fork rule 5), so a member whose own rotates
@@ -322,7 +322,7 @@ rule Accept_Rotate_2:
 
 /* The transparency log. A value is logged under L = h('log', head) and is
    never deleted. The log keeps only values that are valid for that head:
-   readers drop every other value (hesap.md, "Anonim şeffaflık günlüğü"),
+   readers drop every other value (hesap.md, "Anonymous transparency log"),
    so a logged invalid value changes nothing and is left out. Anyone may
    log a value (with an ARC token, not modelled). Honest devices log their
    own records in the same step that writes them: this is the witnesses'
@@ -386,7 +386,7 @@ restriction Writer_Fresh:
   "All L #i. WriteFresh(L) @ i ==> not (Ex v #t. Old(L, v) @ t & #t < #i)"
 
 /* Reading the log. Every reader (device or contact) reads every value under
-   the key and stops on a fork (hesap.md, "Çatal kuralı"): an AK record is
+   the key and stops on a fork (hesap.md, "Fork rule"): an AK record is
    accepted only if no other valid AK record was logged under the same key
    before; it wins over a rotate (priority, rule 1). A rotate is accepted
    only if no other valid value of any kind was logged before. The
@@ -548,7 +548,7 @@ lemma sanity_reject_after_settled_rotate:
     & not (Ex e #x. RevIK(e) @ x) & not (Ex e #x. RevA1(e) @ x) & not (Ex e #x. RevA2(e) @ x)"
 
 /* P7, devices: once an honest member has written an AK record from a head
-   of period m (a kurtarma_reddi, an add or a remove), nobody follows a
+   of period m (a recovery_reject, an add or a remove), nobody follows a
    recovery against m any more. The member writes from its current head,
    so it can do this at any time during the wait. */
 lemma ak_record_stops_recovery [heuristic=c]:
