@@ -80,7 +80,7 @@ them:
   binaries. The CLI is still released together with the Linux release: if
   the CLI's version was raised, a `cli-v…` tag is also put on the same
   commit. The release list in `surec.md` and `versioning.md` are updated
-  with this step, in the PR that brings it in.
+  with this step, in the PR that brings in the implementation.
 - The workflow is set up like `linux-release.yml`. It first checks that
   the tag is on `main` and that the versions match the tag
   (`packaging/check-cli-version.sh`). Then a draft release is opened in an
@@ -374,7 +374,7 @@ and on the site is updated in the same PR.
 - **When to look again:** if Homebrew starts to require a signature or
   notarization for formulae too; if winget starts to reject unsigned
   binaries; if the SignPath programme closes or its conditions change;
-  once the Apple account is taken out.
+  once the Apple account is obtained.
 
 ## Sources
 

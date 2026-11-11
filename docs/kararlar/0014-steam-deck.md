@@ -66,7 +66,7 @@
   - The published packages are `.deb`, `.rpm` and an Arch package. None of
     them can be installed on SteamOS in a supported way: `.deb`/`.rpm` are
     a foreign package manager, and the Arch package writes to the read-only
-    root and is removed at the update. **So today there is no permanent,
+    root and is removed at the next update. **So today there is no permanent,
     supported way to install on the Deck.** The application ID for Flathub
     (`app.totaldrop.TotalDrop`) and the brand rule
     ([0012](0012-ad-ve-isaret.md)) are ready, but there is no Flatpak
@@ -158,8 +158,7 @@
     is not visible in the Flatpak; the first launch starts with the
     defaults.
   - Command line: the `totaldrop` tool in the package runs in the Flatpak
-    with `flatpak run --command=totaldrop app.totaldrop.TotalDrop`; this is
-    written into the instructions.
+    with `flatpak run --command=totaldrop app.totaldrop.TotalDrop`; this is written into the installation guide.
   - Single window: taking the D-Bus name that matches the application ID is
     allowed by default in a Flatpak; `instance.rs` does not change.
 
@@ -231,7 +230,7 @@
   | 4 | **Postponing sleep during a transfer** (portal `Inhibit`), for every Linux desktop. New text in 35 languages. | 1 day |
   | 5 | **Full use with the keyboard alone:** Tab and Esc exist; what is missing is navigation with the arrow keys and a focus frame clearly visible in every theme. Also tried on KDE, Hyprland and Omarchy (an accessibility gain there too). | 2 days |
   | 6 | **Game Mode trial and fixes** (on the Deck and on the Machine separately): adding to Steam, the window under Gamescope, the file chooser (blocking risk), notification, sleep, the theme target and the on-screen keyboard; if needed, a keyboard hint in the code field when Gamescope is detected (35 languages). Separate issues according to the findings. | 1–2 days + findings |
-  | 7 | **Documents and site:** a separate page and installation guide for each device (Deck, Machine, Frame; each once that device's name applies) (installing from Discover, adding to Steam, the recommended Steam Input layout, the command line), a Flathub link in the Linux download area of the site. 35 languages. | 1–2 days |
+  | 7 | **Documentation and site:** a separate page and installation guide for each device (Deck, Machine, Frame; each once that device's name applies) (installing from Discover, adding to Steam, the recommended Steam Input layout, the command line), a Flathub link in the Linux download area of the site. 35 languages. | 1–2 days |
   | 8 | **Trials specific to Steam Machine and Steam Frame:** on the Machine, readability at television distance and use with the controller alone; on the Frame, installing the aarch64 Flatpak, the window inside VR, input, the file chooser and the theme target. Separate issues according to the findings; if the Frame has no Flatpak, this decision is reopened for the Frame. | Machine 1 day, Frame 2–3 days + findings |
 
   In total, roughly 12–16 working days for the Deck, 15–20 together with
