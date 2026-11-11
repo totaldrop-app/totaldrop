@@ -507,6 +507,10 @@ class AppLocalizationsHu extends AppLocalizations {
       'Még folyamatban van egy átvitel. Várd meg, amíg befejeződik, vagy állítsd le, aztán oszd meg újra.';
 
   @override
+  String get linkBusy =>
+      'Még folyamatban van egy átvitel. Várd meg, amíg befejeződik, vagy állítsd le, aztán nyisd meg újra a linket.';
+
+  @override
   String shareSkipped(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,

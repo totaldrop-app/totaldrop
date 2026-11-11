@@ -516,6 +516,10 @@ class AppLocalizationsUr extends AppLocalizations {
       'ایک منتقلی ابھی جاری ہے۔ اس کے ختم ہونے کا انتظار کریں یا اسے روکیں، پھر دوبارہ شیئر کریں۔';
 
   @override
+  String get linkBusy =>
+      'ایک منتقلی ابھی جاری ہے۔ اس کے ختم ہونے کا انتظار کریں یا اسے روکیں، پھر لنک دوبارہ کھولیں۔';
+
+  @override
   String shareSkipped(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,

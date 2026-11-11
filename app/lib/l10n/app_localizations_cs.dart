@@ -523,6 +523,10 @@ class AppLocalizationsCs extends AppLocalizations {
       'Přenos stále probíhá. Počkejte, až skončí, nebo ho zastavte, a pak sdílejte znovu.';
 
   @override
+  String get linkBusy =>
+      'Přenos stále probíhá. Počkejte, až skončí, nebo ho zastavte, a pak odkaz otevřete znovu.';
+
+  @override
   String shareSkipped(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,

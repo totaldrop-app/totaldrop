@@ -514,6 +514,10 @@ class AppLocalizationsHe extends AppLocalizations {
       'העברה עדיין מתבצעת. המתינו לסיומה או עצרו אותה, ואז שתפו שוב.';
 
   @override
+  String get linkBusy =>
+      'העברה עדיין מתבצעת. המתינו לסיומה או עצרו אותה, ואז פתחו שוב את הקישור.';
+
+  @override
   String shareSkipped(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,

@@ -517,6 +517,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'A transfer is still running. Wait for it to finish or stop it, then share again.';
 
   @override
+  String get linkBusy =>
+      'A transfer is still running. Wait for it to finish or stop it, then open the link again.';
+
+  @override
   String shareSkipped(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,

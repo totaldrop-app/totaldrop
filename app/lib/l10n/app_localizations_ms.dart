@@ -506,6 +506,10 @@ class AppLocalizationsMs extends AppLocalizations {
       'Pemindahan masih berjalan. Tunggu sehingga selesai atau hentikannya, kemudian kongsi semula.';
 
   @override
+  String get linkBusy =>
+      'Pemindahan masih berjalan. Tunggu sehingga selesai atau hentikannya, kemudian buka pautan itu semula.';
+
+  @override
   String shareSkipped(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,

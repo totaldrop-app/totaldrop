@@ -497,6 +497,10 @@ class AppLocalizationsTh extends AppLocalizations {
       'ยังมีการโอนที่กำลังดำเนินอยู่ รอให้เสร็จหรือหยุดก่อน แล้วแชร์อีกครั้ง';
 
   @override
+  String get linkBusy =>
+      'ยังมีการโอนที่กำลังดำเนินอยู่ รอให้เสร็จหรือหยุดก่อน แล้วเปิดลิงก์อีกครั้ง';
+
+  @override
   String shareSkipped(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,

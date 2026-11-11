@@ -527,6 +527,10 @@ class AppLocalizationsPt extends AppLocalizations {
       'Uma transferência ainda está em andamento. Espere terminar ou pare-a e compartilhe de novo.';
 
   @override
+  String get linkBusy =>
+      'Uma transferência ainda está em andamento. Espere terminar ou pare-a e abra o link de novo.';
+
+  @override
   String shareSkipped(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -1216,6 +1220,10 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String get shareBusy =>
       'Uma transferência ainda está em andamento. Espere terminar ou pare-a e compartilhe de novo.';
+
+  @override
+  String get linkBusy =>
+      'Uma transferência ainda está em andamento. Espere terminar ou pare-a e abra o link de novo.';
 
   @override
   String shareSkipped(int count) {
@@ -1908,6 +1916,10 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
   @override
   String get shareBusy =>
       'Ainda está a decorrer uma transferência. Aguarde que termine ou pare-a e partilhe novamente.';
+
+  @override
+  String get linkBusy =>
+      'Ainda está a decorrer uma transferência. Aguarde que termine ou pare-a e abra a ligação novamente.';
 
   @override
   String shareSkipped(int count) {

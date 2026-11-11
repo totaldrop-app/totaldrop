@@ -506,6 +506,10 @@ class AppLocalizationsBn extends AppLocalizations {
       'একটি স্থানান্তর এখনও চলছে। শেষ হওয়া পর্যন্ত অপেক্ষা করুন বা থামান, তারপর আবার শেয়ার করুন।';
 
   @override
+  String get linkBusy =>
+      'একটি স্থানান্তর এখনও চলছে। শেষ হওয়া পর্যন্ত অপেক্ষা করুন বা থামান, তারপর লিংকটি আবার খুলুন।';
+
+  @override
   String shareSkipped(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,

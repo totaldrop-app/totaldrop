@@ -524,6 +524,10 @@ class AppLocalizationsEl extends AppLocalizations {
       'Μια μεταφορά είναι ακόμη σε εξέλιξη. Περιμένετε να τελειώσει ή σταματήστε την και μοιραστείτε ξανά.';
 
   @override
+  String get linkBusy =>
+      'Μια μεταφορά είναι ακόμη σε εξέλιξη. Περιμένετε να τελειώσει ή σταματήστε την και ανοίξτε ξανά τον σύνδεσμο.';
+
+  @override
   String shareSkipped(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,

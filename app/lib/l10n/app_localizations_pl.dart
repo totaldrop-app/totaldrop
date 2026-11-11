@@ -527,6 +527,10 @@ class AppLocalizationsPl extends AppLocalizations {
       'Przesyłanie wciąż trwa. Poczekaj, aż się skończy, lub je zatrzymaj, a potem udostępnij ponownie.';
 
   @override
+  String get linkBusy =>
+      'Przesyłanie wciąż trwa. Poczekaj, aż się skończy, lub je zatrzymaj, a potem otwórz link ponownie.';
+
+  @override
   String shareSkipped(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,

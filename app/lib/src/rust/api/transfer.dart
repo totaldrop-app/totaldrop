@@ -119,6 +119,13 @@ Future<void> declineOffer({required Offer offer}) =>
 String? normalizeCode({required String input}) =>
     RustLib.instance.api.crateApiTransferNormalizeCode(input: input);
 
+/// The code in a TotalDrop link another app opened TotalDrop with
+/// (`totaldrop://r/…`, `https://totaldrop.app/r#…`), in its English form.
+/// Strict, as on Linux ([`totaldrop_proto::TransferCode::from_link`]):
+/// the whole rest of the link must be the code, or this is `None`.
+String? codeFromLink({required String link}) =>
+    RustLib.instance.api.crateApiTransferCodeFromLink(link: link);
+
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<Offer>>
 abstract class Offer implements RustOpaqueInterface {
   /// Number of files.

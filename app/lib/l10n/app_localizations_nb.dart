@@ -519,6 +519,10 @@ class AppLocalizationsNb extends AppLocalizations {
       'En overføring pågår fortsatt. Vent til den er ferdig eller stopp den, og del på nytt.';
 
   @override
+  String get linkBusy =>
+      'En overføring pågår fortsatt. Vent til den er ferdig eller stopp den, og åpne lenken på nytt.';
+
+  @override
   String shareSkipped(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,

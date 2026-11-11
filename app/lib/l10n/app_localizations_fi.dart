@@ -518,6 +518,10 @@ class AppLocalizationsFi extends AppLocalizations {
       'Siirto on yhä käynnissä. Odota, että se valmistuu, tai pysäytä se ja jaa sitten uudelleen.';
 
   @override
+  String get linkBusy =>
+      'Siirto on yhä käynnissä. Odota, että se valmistuu, tai pysäytä se ja avaa linkki sitten uudelleen.';
+
+  @override
   String shareSkipped(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
