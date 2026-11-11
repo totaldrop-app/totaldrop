@@ -6,7 +6,8 @@
 // websites, pictures and every figure come from GitHub, so no share of the
 // work is typed by hand (team.json may give a person's own display name or
 // a translated one-line bio instead of the profile's, #408, and
-// "donate": true puts a coffee button to /donate/ on a person's card, #486):
+// "coffee": <page> puts a round button to buymeacoffee.com/<page> on a
+// person's card, #486):
 //   node site/tools/team.mjs           check the page and the avatars match
 //                                      the snapshot (CI, offline)
 //   node site/tools/team.mjs --write   rewrite the page from the snapshot
@@ -40,6 +41,8 @@ const fail = (msg) => { errors.push(msg); };
 // --- Input rules --------------------------------------------------------
 
 export const LOGIN = /^[A-Za-z0-9](?:[A-Za-z0-9]|-(?=[A-Za-z0-9])){0,38}(?:\[bot\])?$/;
+// A Buy Me a Coffee page name: letters, digits, "_" and "-" (#486).
+export const COFFEE = /^[A-Za-z0-9_-]{1,64}$/;
 const KINDS = ["person", "ai", "bot"];
 // Roles with a translated label (tm.role.<role>); add the key in all 35
 // languages before adding a role here.
@@ -158,10 +161,11 @@ function validateConfig(c, i18n = I18N) {
     if (badBio(p.bio)) fail(`team.json: ${p.login}: bad bio`);
     else if (p.bio !== undefined && p.kind !== "person") fail(`team.json: ${p.login}: only people have a bio`);
     else if (p.bio !== undefined) for (const tag of missingBio(langs, p.login)) fail(`team.json: ${p.login}: tm.bio.${p.login} is not translated in ${tag}.json`);
-    // A round coffee button to the team's donation page on the card (#486).
-    // Donations go to the team, not to the person, so it takes no address.
-    if (p.donate !== undefined && p.kind !== "person") fail(`team.json: ${p.login}: only people have a donate link`);
-    else if (p.donate !== undefined && p.donate !== true) fail(`team.json: ${p.login}: donate must be true`);
+    // A person's own Buy Me a Coffee page name, shown as a round coffee
+    // button on their card (#486). It is the person's page, not a project
+    // donation channel (docs/marka.md).
+    if (p.coffee !== undefined && p.kind !== "person") fail(`team.json: ${p.login}: only people have a coffee page`);
+    else if (p.coffee !== undefined && (typeof p.coffee !== "string" || !COFFEE.test(p.coffee))) fail(`team.json: ${p.login}: bad coffee page`);
   }
   for (const d of c.disciplines) {
     if (!(d.key in AREAS)) fail(`team.json: unknown discipline ${d.key}`);
@@ -301,18 +305,18 @@ const ICON_WEB = `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focus
 
 // A cup with a handle and steam, drawn for this page in the globe's stroke.
 const ICON_COFFEE = `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9h14v4.5a6.5 6.5 0 0 1-6.5 6.5h-1A6.5 6.5 0 0 1 3 13.5V9Z"/><path d="M17 10.5h1.25a3 3 0 0 1 0 6H16.6"/><path d="M7.5 2.5c-1 1.1-1 2.4 0 3.5M12.5 2.5c-1 1.1-1 2.4 0 3.5"/></svg>`;
-const DONATE = "/donate/";
 
 // The round links at the foot of a person's card: GitHub, then the
-// profile's web site, then the donate button when team.json asks for it.
+// profile's web site, then the coffee button when team.json names a page.
 export function cardLinks(p, pr) {
   const links = [githubLink(`https://github.com/${p.login}`, p.login)];
   if (pr.website) links.push(webLink(pr.website));
-  if (p.donate) links.push(donateLink());
+  if (p.coffee) links.push(coffeeLink(p.coffee));
   return links;
 }
 
-export const donateLink = () => `<li><a class="icon-link" href="${DONATE}">${ICON_COFFEE}<span class="visually-hidden" data-i18n="foot.donate">Donate</span></a></li>`;
+// Named like the GitHub link: the service, then the page, neither translated.
+export const coffeeLink = (page) => `<li><a class="icon-link" href="https://buymeacoffee.com/${esc(page)}">${ICON_COFFEE}<span class="visually-hidden">Buy Me a Coffee: <bdi>${esc(page)}</bdi></span></a></li>`;
 const githubLink = (href, shownAs) => `<li><a class="icon-link" href="${esc(href)}">${ICON_GITHUB}<span class="visually-hidden">GitHub: <bdi>${esc(shownAs)}</bdi></span></a></li>`;
 const webLink = (href) => `<li><a class="icon-link" href="${esc(href)}" rel="nofollow ugc">${ICON_WEB}<span class="visually-hidden"><span data-i18n="tm.web">Web site</span>: <bdi>${esc(shown(href))}</bdi></span></a></li>`;
 

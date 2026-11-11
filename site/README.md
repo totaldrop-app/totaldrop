@@ -42,7 +42,7 @@ tools/brand-files.mjs Marka dosyalarını işaretin geometrisinden üretir (--wr
                       ve CI'da güncel olduklarını denetler
 team/team.json        Ekip sayfasında kim, hangi rolle; isteğe bağlı görünen ad (`name`),
                       kısa tanıtım (`bio`, çevirisi i18n'de tm.bio.<kullanıcı>) ve kartta
-                      /donate/'a giden kahve düğmesi (`donate: true`); disiplinler ve depo yolları
+                      kişinin kendi Buy Me a Coffee sayfasına giden kahve düğmesi (`coffee`); disiplinler ve depo yolları
 team/github.json      GitHub'dan alınan anlık görüntü (profil, katkı sayıları)
 tools/team.mjs        Ekip sayfasını anlık görüntüden üretir (--write), yenisini
                       GitHub'ın herkese açık API'sinden alır (--fetch) ve CI'da
