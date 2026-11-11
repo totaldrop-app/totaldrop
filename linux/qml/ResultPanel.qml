@@ -23,9 +23,9 @@ ColumnLayout {
     // Why, as the core names it (TimedOut, DiskFull, …); its text is
     // Strings "cause" + it, in the person's language (#212).
     property string cause
-    property string folder
-    // The folder as a file:// URL, encoded in Rust: "file://" + folder
-    // would cut a name at "#" or "?" and decode "%" (#427).
+    // The folder the files went to, as a file:// URL encoded in Rust:
+    // "file://" + a path would cut a name at "#" or "?" and decode "%"
+    // (#427). Empty when there is no folder to open.
     property string folderUrl
     property bool canRetry: false
     // A text received (#326), with hidden characters named. Copy text
