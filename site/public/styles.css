@@ -549,11 +549,13 @@ pre.cmd { white-space: pre-wrap; overflow-wrap: break-word; margin: 0; padding: 
 .tags { list-style: none; margin: var(--s8) 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--s8); }
 .tags li { font-size: 0.875rem; padding: 0.25rem 0.75rem; background: var(--bg-raised); border-radius: 999px; color: var(--text); }
 
-/* Profile links: icons, each a 44px target, named by hidden text. */
+/* A person's Buy Me a Coffee button (#484): the service's own picture, 44px tall. */
 .coffee-row { margin: var(--s16) 0 0; }
 .coffee { display: inline-block; vertical-align: top; border-radius: 8px; line-height: 0; }
 .coffee img { display: block; width: auto; height: 44px; border-radius: 8px; }
 .coffee:focus-visible { outline-offset: 2px; }
+
+/* Profile links: icons, each a 44px target, named by hidden text. */
 .links { list-style: none; margin: 0; margin-block-end: -0.625rem; margin-inline-end: -0.625rem; padding: 0; display: flex; gap: 0.25rem; }
 .icon-link { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; color: var(--text-2); transition: color 0.15s, background-color 0.15s; }
 .icon-link:hover { color: var(--accent); background: var(--bg-raised); }

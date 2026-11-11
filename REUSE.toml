@@ -83,7 +83,8 @@ SPDX-FileCopyrightText = "The person each picture shows"
 SPDX-License-Identifier = "LicenseRef-TotalDrop-Team-Avatars"
 
 # Buy Me a Coffee's own button, as the service offers it for linking to a
-# page (cdn.buymeacoffee.com/buttons/v2/default-violet.png), served from
+# page (cdn.buymeacoffee.com/buttons/v2/default-violet.png, byte for byte,
+# sha256 e91fabd851f2a1194b4cf6f54ba4adacb585407d1c58753958599f746229c51f), served from
 # this site so the team page makes no third-party request (#484).
 [[annotations]]
 path = "site/public/team/buy-me-a-coffee.png"

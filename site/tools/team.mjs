@@ -304,8 +304,9 @@ const ICON_WEB = `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focus
 const githubLink = (href, shownAs) => `<li><a class="icon-link" href="${esc(href)}">${ICON_GITHUB}<span class="visually-hidden">GitHub: <bdi>${esc(shownAs)}</bdi></span></a></li>`;
 // Buy Me a Coffee's own button (#484), served from this site so the page
 // makes no third-party request. Its text is the picture's, in English in
-// every language, so the alt text is too.
-export const coffeeLink = (page) => `<a class="coffee" href="https://buymeacoffee.com/${esc(page)}" rel="nofollow"><img src="/team/buy-me-a-coffee.png" alt="Buy me a coffee" width="157" height="44" decoding="async"></a>`;
+// every language, so the alt text is too (lang="en"). It is the person's
+// own page, not a project donation channel (docs/marka.md).
+export const coffeeLink = (page) => `<a class="coffee" href="https://buymeacoffee.com/${esc(page)}" rel="nofollow"><img src="/team/buy-me-a-coffee.png" alt="Buy me a coffee" lang="en" width="157" height="44" decoding="async"></a>`;
 const webLink = (href) => `<li><a class="icon-link" href="${esc(href)}" rel="nofollow ugc">${ICON_WEB}<span class="visually-hidden"><span data-i18n="tm.web">Web site</span>: <bdi>${esc(shown(href))}</bdi></span></a></li>`;
 
 // The colour of a login in the share bars and their legends, by role: the
