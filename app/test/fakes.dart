@@ -125,6 +125,16 @@ class FakeRepository implements TransferRepository {
   @override
   String? normalizeCode(String input) => input;
 
+  /// Like the Rust reader for the links tests use: the whole rest after
+  /// `totaldrop://r/` is the code.
+  @override
+  String? codeFromLink(String link) {
+    const prefix = 'totaldrop://r/';
+    if (!link.startsWith(prefix)) return null;
+    final code = link.substring(prefix.length);
+    return RegExp(r'^\d+(-[a-z]+){2,3}$').hasMatch(code) ? code : null;
+  }
+
   /// Thrown by [receiveFolder] when set.
   Object? folderError;
 

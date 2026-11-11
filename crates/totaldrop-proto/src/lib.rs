@@ -236,6 +236,33 @@ pub fn ascii_digits(text: &str) -> String {
         .collect()
 }
 
+/// The longest text [`TransferCode::from_link`] reads. A link with the
+/// longest code and every character escaped is far shorter.
+pub const MAX_LINK_BYTES: usize = 1024;
+
+/// `%XX` escapes decoded once; a `%` not followed by two hex digits stays
+/// as it is, and bytes that are not UTF-8 become U+FFFD.
+fn percent_decode(s: &str) -> String {
+    let mut out = Vec::with_capacity(s.len());
+    let mut rest = s.as_bytes();
+    while let Some((&b, tail)) = rest.split_first() {
+        // Two hex digits exactly: `from_str_radix` would also take a sign.
+        if b == b'%'
+            && let [h, l, after @ ..] = tail
+            && h.is_ascii_hexdigit()
+            && l.is_ascii_hexdigit()
+            && let Ok(v) = u8::from_str_radix(&format!("{}{}", char::from(*h), char::from(*l)), 16)
+        {
+            out.push(v);
+            rest = after;
+            continue;
+        }
+        out.push(b);
+        rest = tail;
+    }
+    String::from_utf8_lossy(&out).into_owned()
+}
+
 fn english() -> &'static [&'static str; 2048] {
     bip39::Language::English.word_list()
 }
@@ -364,6 +391,29 @@ impl TransferCode {
             }
         }
         None
+    }
+
+    /// The code in a TotalDrop link (`https://totaldrop.app/r#…`,
+    /// `totaldrop://r/…`) or a bare code. Strict, unlike
+    /// [`TransferCode::find`]: after the prefix, the whole rest must be the
+    /// code, with `%XX` escapes decoded once. This reads command-line
+    /// arguments, QR codes and links that other apps hand to TotalDrop, so
+    /// a file name, a query or a text with a date in it must not become a
+    /// code. Anything longer than [`MAX_LINK_BYTES`] is refused unread.
+    pub fn from_link(text: &str) -> Option<Self> {
+        if text.len() > MAX_LINK_BYTES {
+            return None;
+        }
+        // Before the prefixes: a mark in front of the link hides them.
+        let t = strip_invisible_format(text);
+        let t = t.trim();
+        let raw = t
+            .strip_prefix("https://totaldrop.app/r#")
+            .or_else(|| t.strip_prefix("http://totaldrop.app/r#"))
+            .or_else(|| t.strip_prefix("totaldrop://r/"))
+            .or_else(|| t.strip_prefix("totaldrop:"))
+            .unwrap_or(t);
+        Self::parse(&percent_decode(raw)).ok()
     }
 
     /// The nameplate number.
@@ -674,5 +724,90 @@ mod tests {
                 "{seg}"
             );
         }
+    }
+
+    fn link(text: &str) -> Option<String> {
+        TransferCode::from_link(text).map(|c| c.to_string())
+    }
+
+    #[test]
+    fn codes_from_links() {
+        for text in [
+            "https://totaldrop.app/r#7-abandon-ability",
+            "http://totaldrop.app/r#7-abandon-ability",
+            "totaldrop://r/7-abandon-ability",
+            "totaldrop:7-abandon-ability",
+            "totaldrop://r/7%20abandon%20ability",
+            " 7-abandon-ability ",
+        ] {
+            assert_eq!(link(text), Some("7-abandon-ability".into()), "{text:?}");
+        }
+        assert_eq!(
+            link("totaldrop://r/12-zoo-zone-able"),
+            Some("12-zoo-zone-able".into())
+        );
+    }
+
+    #[test]
+    fn links_with_marks_and_escapes() {
+        // A right-to-left message isolates the link or the code, and chat
+        // apps add marks; escaped, they decode to the same marks.
+        for text in [
+            "\u{2068}totaldrop://r/7-abandon-ability\u{2069}",
+            "\u{2068}https://totaldrop.app/r#7-abandon-ability\u{2069}",
+            "totaldrop://r/\u{2068}7-abandon-ability\u{2069}",
+            "totaldrop://r/%E2%81%A87-abandon-ability%E2%81%A9",
+            "\u{FEFF}totaldrop://r/7-aban\u{200B}don-ability",
+        ] {
+            assert_eq!(link(text), Some("7-abandon-ability".into()), "{text:?}");
+        }
+    }
+
+    #[test]
+    fn links_must_hold_only_the_code() {
+        // Files opened with TotalDrop, QR codes and links from other apps
+        // are not searched: only the whole rest is read.
+        for text in [
+            "https://example.com",
+            "https://example.com/r#7-abandon-ability",
+            "https://totaldrop.app.example.com/r#7-abandon-ability",
+            "totaldrop://r/7-abandon-ability?x=1",
+            "totaldrop://r/7-abandon-ability/extra",
+            "totaldrop://r/evil?code=7-abandon-ability",
+            "totaldrop://x/7-abandon-ability",
+            "/home/u/Photos/2024-10-30/beach.jpg",
+            "IMG 7-abandon-ability.jpg",
+            "Get my files with TotalDrop. Code: 7-abandon-ability",
+            "",
+        ] {
+            assert_eq!(link(text), None, "{text:?}");
+        }
+    }
+
+    #[test]
+    fn link_escapes_are_decoded_once_and_exactly() {
+        // %2537 is "%37" after one pass; read twice it would be "7".
+        assert_eq!(link("totaldrop://r/%2537-abandon-ability"), None);
+        assert_eq!(
+            link("totaldrop://r/%37-abandon-ability"),
+            Some("7-abandon-ability".into())
+        );
+        // A sign is not a hex digit, and a lone % stays.
+        assert_eq!(percent_decode("%+7"), "%+7");
+        assert_eq!(percent_decode("100%"), "100%");
+        assert_eq!(percent_decode("%4"), "%4");
+        assert_eq!(percent_decode("%C3%A7"), "ç");
+        assert_eq!(percent_decode("%FF"), "\u{FFFD}");
+    }
+
+    #[test]
+    fn long_links_are_not_read() {
+        let pad = " ".repeat(MAX_LINK_BYTES);
+        assert_eq!(link(&format!("totaldrop://r/7-abandon-ability{pad}")), None);
+        let just = " ".repeat(MAX_LINK_BYTES - "totaldrop://r/7-abandon-ability".len());
+        assert_eq!(
+            link(&format!("totaldrop://r/7-abandon-ability{just}")),
+            Some("7-abandon-ability".into())
+        );
     }
 }

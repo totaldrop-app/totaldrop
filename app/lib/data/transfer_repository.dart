@@ -81,6 +81,9 @@ class TransferRepository {
 
   String? normalizeCode(String input) => bridge.normalizeCode(input: input);
 
+  /// The code in a TotalDrop link, read strictly (#445).
+  String? codeFromLink(String link) => bridge.codeFromLink(link: link);
+
   /// Where received files go: Download/TotalDrop on Android, so they are
   /// easy to find in the Files app. Falls back to the app's own folder if
   /// shared storage cannot be written.

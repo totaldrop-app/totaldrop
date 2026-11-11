@@ -121,23 +121,11 @@ pub fn link_for(code: &str) -> String {
     format!("https://totaldrop.app/r#{code}")
 }
 
-/// The code in a TotalDrop link (`https://totaldrop.app/r#…`,
-/// `totaldrop://r/…`) or a bare code, normalized. Strict: the whole rest
-/// must be the code. This also reads command-line arguments and QR codes,
-/// so a file name or text with a date in it must not become a code.
+/// The code in a TotalDrop link or a bare code, normalized; strict, so a
+/// file name or a text with a date in it does not become a code
+/// ([`totaldrop_proto::TransferCode::from_link`], shared with Android).
 pub fn code_from_link(text: &str) -> Option<String> {
-    // Before the prefixes: a mark in front of the link hides them.
-    let t = totaldrop_proto::strip_invisible_format(text);
-    let t = t.trim();
-    let raw = t
-        .strip_prefix("https://totaldrop.app/r#")
-        .or_else(|| t.strip_prefix("http://totaldrop.app/r#"))
-        .or_else(|| t.strip_prefix("totaldrop://r/"))
-        .or_else(|| t.strip_prefix("totaldrop:"))
-        .unwrap_or(t);
-    totaldrop_proto::TransferCode::parse(&percent_decode(raw))
-        .ok()
-        .map(|c| c.to_string())
+    totaldrop_proto::TransferCode::from_link(text).map(|c| c.to_string())
 }
 
 /// QR modules for `text` as a row-major string of `1` (dark) and `0`, and

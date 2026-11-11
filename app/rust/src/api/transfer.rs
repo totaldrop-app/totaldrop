@@ -619,6 +619,15 @@ pub fn normalize_code(input: String) -> Option<String> {
     totaldrop_proto::TransferCode::find(&input).map(|c| c.to_string())
 }
 
+/// The code in a TotalDrop link another app opened TotalDrop with
+/// (`totaldrop://r/…`, `https://totaldrop.app/r#…`), in its English form.
+/// Strict, as on Linux ([`totaldrop_proto::TransferCode::from_link`]):
+/// the whole rest of the link must be the code, or this is `None`.
+#[frb(sync)]
+pub fn code_from_link(link: String) -> Option<String> {
+    totaldrop_proto::TransferCode::from_link(&link).map(|c| c.to_string())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -677,6 +686,22 @@ mod tests {
             "the server address must start with wss://".into(),
         ));
         assert_eq!(e.kind, ErrorKind::BadServer);
+    }
+
+    #[test]
+    fn codes_from_links() {
+        assert_eq!(
+            code_from_link("totaldrop://r/7-abandon-ability".into()),
+            Some("7-abandon-ability".into())
+        );
+        assert_eq!(
+            code_from_link("https://totaldrop.app/r#7%20abandon%20ability".into()),
+            Some("7-abandon-ability".into())
+        );
+        assert_eq!(
+            code_from_link("totaldrop://r/x?c=7-abandon-ability".into()),
+            None
+        );
     }
 
     #[test]

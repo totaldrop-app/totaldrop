@@ -80,6 +80,19 @@ class ReceiveViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Fills in the code of a link that opened the app (#445), in place of
+  /// what was typed. Not while a transfer runs or waits for an answer;
+  /// a finished one is put away first. Nothing connects until the person
+  /// does. Returns whether the link held a code.
+  bool takeLink(String link) {
+    if (busy || stage == ReceiveStage.offered) return false;
+    final code = _repo.codeFromLink(link);
+    if (code == null) return false;
+    if (stage != ReceiveStage.entering) reset();
+    setInput(code);
+    return true;
+  }
+
   Future<void> connect() async {
     final code = normalized;
     if (code == null) {

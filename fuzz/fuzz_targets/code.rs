@@ -5,10 +5,12 @@
 //! Any input must parse or fail cleanly, and every parsed code must survive a
 //! round trip through both its canonical and its English form. Invisible
 //! format characters and Arabic-Indic digits never change the result. A
-//! code found in a longer text is a code the text holds.
+//! code found in a longer text is a code the text holds. A link is read
+//! strictly: a bare code reads as `parse` reads it, and nothing longer
+//! than the limit is read.
 
 use libfuzzer_sys::fuzz_target;
-use totaldrop_proto::{TransferCode, ascii_digits, strip_invisible_format};
+use totaldrop_proto::{MAX_LINK_BYTES, TransferCode, ascii_digits, strip_invisible_format};
 
 fuzz_target!(|data: &[u8]| {
     if let Ok(s) = std::str::from_utf8(data) {
@@ -20,6 +22,12 @@ fuzz_target!(|data: &[u8]| {
             TransferCode::parse(s),
             TransferCode::parse(&ascii_digits(s))
         );
+        let linked = TransferCode::from_link(s);
+        if s.len() > MAX_LINK_BYTES {
+            assert_eq!(linked, None);
+        } else if let Ok(code) = TransferCode::parse(s) {
+            assert_eq!(linked.as_ref(), Some(&code));
+        }
         let found = TransferCode::find(s);
         if let Ok(code) = TransferCode::parse(s) {
             assert_eq!(found.as_ref(), Some(&code));

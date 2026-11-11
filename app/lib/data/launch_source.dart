@@ -9,7 +9,7 @@ import 'package:flutter/services.dart';
 import 'file_source.dart';
 
 /// What the person asked for from outside the app (#53): a launcher
-/// shortcut, or files shared to TotalDrop from another app.
+/// shortcut, files shared to TotalDrop from another app, or a link.
 sealed class Launch {
   const Launch();
 }
@@ -56,11 +56,22 @@ final class SharedText extends Launch {
   final String text;
 }
 
+/// A TotalDrop link opened the app (`totaldrop://r/<code>`, #445): the
+/// Receive screen gets the code filled in, if the link holds one. [link]
+/// is as the other app gave it; the code is read out of it strictly, in
+/// Rust (`codeFromLink`).
+final class OpenLink extends Launch {
+  const OpenLink(this.link);
+  final String link;
+}
+
 /// The launches in one event from the platform, in order. Anything that is
 /// not understood is left out: the event crosses a process boundary.
 @visibleForTesting
 List<Launch> parseLaunch(Object? event) {
   if (event is! Map) return const [];
+  final link = event['link'];
+  if (link is String) return link.isEmpty ? const [] : [OpenLink(link)];
   final text = event['text'];
   if (text is String) return text.isEmpty ? const [] : [SharedText(text)];
   final id = event['id'];
