@@ -140,3 +140,22 @@ test("team.json rejects a bio that is bad, untranslated or on a non-person (#408
   assert.match(errs((c) => { person(c, "sadikkuzu").bio = "Untranslated."; }), /sadikkuzu: tm\.bio\.sadikkuzu is not translated in [a-z]{2,3}(-[A-Za-z0-9]+)*\.json/);
   assert.match(errs((c) => { person(c, "claude").bio = "x"; }), /claude: only people have a bio/);
 });
+
+test("team.json donate is true, and only on a person (#486)", async () => {
+  const { configErrors } = await import("./team.mjs");
+  const orig = JSON.parse(readFileSync(new URL("../team/team.json", import.meta.url), "utf8"));
+  const errs = (edit) => { const c = structuredClone(orig); edit(c); return configErrors(c).join("\n"); };
+  const person = (c, login) => c.people.find((p) => p.login === login);
+  assert.equal(errs((c) => { person(c, "ozdil").donate = true; }), "");
+  assert.match(errs((c) => { person(c, "ozdil").donate = "https://example.com/"; }), /ozdil: donate must be true/);
+  assert.match(errs((c) => { person(c, "ozdil").donate = false; }), /ozdil: donate must be true/);
+  assert.match(errs((c) => { person(c, "claude").donate = true; }), /claude: only people have a donate link/);
+});
+
+test("the donate link is a round icon link to the team's donation page, named in every language (#486)", async () => {
+  const { donateLink } = await import("./team.mjs");
+  const html = donateLink();
+  assert.match(html, /^<li><a class="icon-link" href="\/donate\/">/);
+  assert.match(html, /<svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"/);
+  assert.match(html, /<span class="visually-hidden" data-i18n="foot\.donate">Donate<\/span><\/a><\/li>$/);
+});
