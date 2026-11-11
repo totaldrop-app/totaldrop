@@ -1,310 +1,323 @@
-# 0014: Steam Deck, Steam Machine ve Steam Frame, Linux sürümünün bir parçası olarak desteklenir
+# 0014: Steam Deck, Steam Machine and Steam Frame are supported as part of the Linux release
 
-- **Durum:** Kabul, 6 Kasım 2026 (Ozan, #295)
-- **Bağlam:** Steam Deck kullanıcıları ekran görüntülerini, oyun
-  videolarını, modları ve oyunların kayıt dosyalarını (save) Deck ile PC
-  ve telefon arasında sık taşır; Valve'ın SteamOS çalıştıran diğer
-  cihazları (Steam Machine, Steam Frame) için de aynısı geçerlidir. Bugün
-  bunu çoğunlukla USB bellek, bulut depolama ya da Warpinator ve KDE
-  Connect gibi araçlarla yaparlar. TotalDrop'un bu işi uçtan uca şifreli
-  ve hesapsız yapabilmesi bu cihazları doğal bir hedef yapar. Bu belge
-  önce Deck'te bugün ne çalıştığını, neyin eksik olduğunu ve hangi sırayla
-  tamamlanacağını, sonra diğer iki cihazın farklarını kaydeder. Kod
-  değişikliği içermez.
+- **Status:** Accepted, 6 November 2026 (Ozan, #295)
+- **Context:** Steam Deck users often move screenshots, game videos, mods
+  and games' save files between the Deck, a PC and a phone; the same holds
+  for Valve's other devices that run SteamOS (Steam Machine, Steam Frame).
+  Today they mostly do it with a USB stick, cloud storage, or tools such as
+  Warpinator and KDE Connect. That TotalDrop can do this end-to-end
+  encrypted and without an account makes these devices a natural target.
+  This document first records what works on the Deck today, what is
+  missing and in which order it will be completed, then how the other two
+  devices differ. It contains no code change.
 
-  ### Platform (6 Kasım 2026)
+  ### Platform (6 November 2026)
 
-  Bu bölümdeki sürüm bilgileri basın haberlerinden alındı; Valve'ın kendi
-  sürüm notlarıyla adım 3'te doğrulanacak.
+  The version information in this section was taken from press reports; it
+  will be verified against Valve's own release notes in step 3.
 
-  - SteamOS 3, Arch Linux tabanlıdır. Son kararlı sürüm 3.9.5'tir (Ekim
-    2026): Linux 7.2 çekirdeği, Masaüstü Modu'nda KDE Plasma 6.7.
-  - Deck'in iki yüzü vardır:
-    - **Masaüstü Modu:** sıradan bir KDE Plasma oturumu. Dolphin, Discover,
-      xdg-desktop-portal-kde ve bildirimler çalışır.
-    - **Oyun Modu:** Steam'in tam ekran arayüzü, Valve'ın Gamescope
-      bileşikleyicisi altında. Uygulamalar tam ekran ve tek tek açılır;
-      giriş kumandadan gelir, Steam Input onu klavye ve fareye çevirebilir.
-  - Kök dosya sistemi salt okunurdur ve her SteamOS güncellemesi bütün
-    imajı değiştirir. `steamos-readonly disable` ile `pacman` kullanmak
-    mümkündür ama kurulan paketler ilk güncellemede silinir; Valve bunu
-    desteklemez. Kullanıcı yazılımı için desteklenen yol Flatpak'tir:
-    Discover Flathub'a bağlı gelir.
-  - Ev klasörü `/home/deck`, microSD kart `/run/media/…` altına bağlanır.
-  - İşlemci x86_64'tür (AMD Zen 2); bugünkü x86_64 derlemesi mimari olarak
-    uyar.
+  - SteamOS 3 is based on Arch Linux. The latest stable release is 3.9.5
+    (October 2026): Linux kernel 7.2, KDE Plasma 6.7 in Desktop Mode.
+  - The Deck has two faces:
+    - **Desktop Mode:** an ordinary KDE Plasma session. Dolphin, Discover,
+      xdg-desktop-portal-kde and notifications work.
+    - **Game Mode:** Steam's full-screen interface, under Valve's Gamescope
+      compositor. Apps open full screen, one at a time; input comes from
+      the controller, and Steam Input can turn it into keyboard and mouse.
+  - The root file system is read-only, and every SteamOS update replaces
+    the whole image. Using `pacman` after `steamos-readonly disable` is
+    possible, but the installed packages are removed at the first update;
+    Valve does not support it. The supported route for user software is
+    Flatpak: Discover comes connected to Flathub.
+  - The home folder is `/home/deck`; the microSD card is mounted under
+    `/run/media/…`.
+  - The processor is x86_64 (AMD Zen 2); today's x86_64 build fits the
+    architecture.
 
-  ### Bugünkü Linux uygulaması Deck'te
+  ### Today's Linux app on the Deck
 
-  - Uygulama Qt 6 ve QML'dir ([0006](0006-linux-qt.md)). KDE'de sistem
-    paletini ve Breeze'i izler. Sistem paketinden kurulduğunda Deck'in
-    Masaüstü Modu'nda (Plasma) tema kuralı ([tasarim.md](../tasarim.md))
-    ek iş gerektirmeden karşılanır; bu bir beklentidir, Deck'te
-    denenmedi. **Flatpak içinde ise karşılanmaz:** tema kodu dosyaları
-    doğrudan okur ve bu dosyalar korumalı alanda görünmez. `kde.rs`
-    `~/.config/kdeglobals`'ı, `omarchy.rs` Omarchy'nin `~/.config`
-    altındaki klasörünü, `gtk.rs` `~/.config/gtk-3.0`, `gtk-4.0` ve
-    `/usr/share/themes`'i, `hyprland.rs` `$XDG_RUNTIME_DIR/hypr`'ı okur
-    (hepsi `linux/src/theme/`). Flatpak'te `~/.config` uygulamanın kendi
-    `~/.var/app/…/config` klasörüne döner. Breeze denetimleri için
-    `org.kde.desktop` Qt stili de çalışma zamanında bulunmalıdır. Bu,
-    adım 1'in en büyük işidir.
-  - Dosyalar xdg-desktop-portal ile seçilir (`linux/src/desktop.rs`).
-    Bildirimler `org.freedesktop.Notifications` üzerinden gider. Tek
-    pencere oturum veriyolu adıyla sağlanır (`linux/src/instance.rs`).
-  - Alınan dosyalar `~/Downloads/TotalDrop` klasörüne yazılır; bugün
-    değiştirilemez.
-  - Klavye gezintisi var: odak Tab ile dolaşır, odaklanan denetim görünür
-    alana kaydırılır (`linux/qml/FocusScroller.qml`); gönderme, alma ve
-    ayarlar sayfalarında Esc geri döner (`Shortcut`). Ok tuşlarıyla
-    gezinme ve kumanda desteği yok.
-  - Linux'ta QR kodu yalnızca gönderme sayfasında gösterilir. Alma sayfası
-    QR'ı kameradan değil bir resim dosyasından okur (`readQrImage`);
-    Deck'in kamerası da yoktur.
-  - Aktarım sırasında sistemin uykuya geçmesini engelleyen bir kod yok.
-  - Yayınlanan paketler `.deb`, `.rpm` ve Arch paketidir. SteamOS'ta
-    hiçbiri desteklenen biçimde kurulamaz: `.deb`/`.rpm` yabancı paket
-    yöneticisidir, Arch paketi de salt okunur köke yazar ve güncellemede
-    silinir. **Yani bugün Deck'te kalıcı ve desteklenen bir kurulum yolu
-    yok.** Flathub için uygulama kimliği (`app.totaldrop.TotalDrop`) ve
-    marka kuralı ([0012](0012-ad-ve-isaret.md)) hazır, ama bir Flatpak
-    tarifi henüz yok.
+  - The app is Qt 6 and QML ([0006](0006-linux-qt.md)). On KDE it follows
+    the system palette and Breeze. When installed from a system package,
+    the theme rule ([tasarim.md](../tasarim.md)) is met in the Deck's
+    Desktop Mode (Plasma) with no extra work; this is an expectation, not
+    tried on a Deck. **Inside a Flatpak it is not met:** the theme code
+    reads files directly, and those files are not visible in the sandbox.
+    `kde.rs` reads `~/.config/kdeglobals`, `omarchy.rs` Omarchy's folder
+    under `~/.config`, `gtk.rs` `~/.config/gtk-3.0`, `gtk-4.0` and
+    `/usr/share/themes`, `hyprland.rs` `$XDG_RUNTIME_DIR/hypr` (all in
+    `linux/src/theme/`). In a Flatpak, `~/.config` turns into the app's own
+    `~/.var/app/…/config` folder. For the Breeze controls, the
+    `org.kde.desktop` Qt style must also be found at run time. This is the
+    biggest piece of work in step 1.
+  - Files are chosen through xdg-desktop-portal (`linux/src/desktop.rs`).
+    Notifications go through `org.freedesktop.Notifications`. The single
+    window is ensured by a session bus name (`linux/src/instance.rs`).
+  - Received files are written to the `~/Downloads/TotalDrop` folder; this
+    cannot be changed today.
+  - There is keyboard navigation: focus moves with Tab, the focused control
+    is scrolled into view (`linux/qml/FocusScroller.qml`); on the send,
+    receive and settings pages, Esc goes back (`Shortcut`). There is no
+    navigation with the arrow keys and no controller support.
+  - On Linux the QR code is only shown on the send page. The receive page
+    reads a QR from an image file, not from a camera (`readQrImage`); the
+    Deck has no camera anyway.
+  - There is no code that stops the system from going to sleep during a
+    transfer.
+  - The published packages are `.deb`, `.rpm` and an Arch package. None of
+    them can be installed on SteamOS in a supported way: `.deb`/`.rpm` are
+    a foreign package manager, and the Arch package writes to the read-only
+    root and is removed at the update. **So today there is no permanent,
+    supported way to install on the Deck.** The application ID for Flathub
+    (`app.totaldrop.TotalDrop`) and the brand rule
+    ([0012](0012-ad-ve-isaret.md)) are ready, but there is no Flatpak
+    recipe yet.
 
-  ### Oyun Modu'nun getirdiği sorular
+  ### Questions that Game Mode raises
 
-  1. **Steam'e ekleme:** Masaüstü Modu'nda Steam'de "Add a Non-Steam Game"
-     (Türkçe arayüzde "Steam Dışı Bir Oyun Ekle") ile Flatpak'in masaüstü
-     kaydı seçilir. Steam, `flatpak run` komutunu kısayol olarak saklar.
-     Kütüphanedeki kapak, logo ve simge görsellerini kullanıcı elle
-     verebilir; uygulamanın kendisi bunları Steam'e yazamaz.
-  2. **Pencere, odak ve tema:** Gamescope pencereleri tek tek, tam ekran
-     gösterir. Ana pencere sorun değildir. Belirsiz olanlar: portal dosya
-     seçicisinin Oyun Modu'nda açılıp açılmadığı (Oyun Modu oturumunda
-     hangi portal arka ucunun çalıştığı) ve açılırsa odağı alıp almadığı;
-     bildirimlerin nerede göründüğü. Gamescope uygulamalara genellikle
-     yalnızca Xwayland verir; Flatpak'te `fallback-x11` bu yüzden
-     gereklidir. Oyun Modu'nda `XDG_CURRENT_DESKTOP` KDE olmadığı için
-     bugünkü kod stil olarak Fusion'ı ve GTK/portal renklerini seçer.
-     Oyun Modu'nda "sistem teması"nın ne olduğuna (Steam'in koyu arayüzü
-     mü, Deck'in Plasma ayarları mı) adım 6'da karar verilir. Bunlar Deck'te
-     denenene kadar varsayım olarak kalır.
+  1. **Adding to Steam:** In Desktop Mode, the Flatpak's desktop entry is
+     chosen in Steam with "Add a Non-Steam Game" ("Steam Dışı Bir Oyun
+     Ekle" in the Turkish interface). Steam keeps the `flatpak run` command
+     as a shortcut. The user can supply the cover, logo and icon images in
+     the library by hand; the app itself cannot write them into Steam.
+  2. **Window, focus and theme:** Gamescope shows windows one at a time,
+     full screen. The main window is no problem. Unclear: whether the
+     portal file chooser opens in Game Mode (which portal back end runs in
+     the Game Mode session) and, if it opens, whether it takes the focus;
+     and where notifications appear. Gamescope usually gives apps only
+     Xwayland; that is why `fallback-x11` is needed in the Flatpak. Because
+     `XDG_CURRENT_DESKTOP` is not KDE in Game Mode, today's code picks
+     Fusion as the style and the GTK/portal colours. What the "system
+     theme" is in Game Mode (Steam's dark interface, or the Deck's Plasma
+     settings) is decided in step 6. Until tried on a Deck, these remain
+     assumptions.
 
-     **Engelleyici risk:** Oyun Modu'nda dosya seçici portalı yoksa
-     gönderme hiç yapılamaz. Bu durumda Oyun Modu'nda yalnızca alma
-     desteklenir ve gönderme için kullanıcı Masaüstü Modu'na yönlendirilir.
-     Uygulama içine ayrı bir dosya seçici yazılmaz: geniş dosya izni
-     ister (aşağıya bakın).
-  3. **Kumanda:** Steam Input'un masaüstü düzeni (sağ dokunmatik yüzey
-     fare, tetikler tıklama) uygulamayı ek iş olmadan kullanılabilir
-     yapar ama rahat değildir. Rahat kullanım için uygulamanın yön
-     tuşları ve A/B ile gezilebilmesi gerekir. Steam Input bunları
-     klavyenin ok, Enter ve Esc tuşlarına çeviren bir düzen olarak
-     sunabilir; uygulama tarafında yapılacak iş, her sayfanın yalnızca
-     klavyeyle (oklar, Enter, Esc, Tab) eksiksiz kullanılabilmesidir.
-     Odaklanan denetim de uzaktan (televizyonda) ve 7 inçlik ekranda
-     açıkça görünmelidir.
-  4. **Ekran klavyesi:** Oyun Modu'nda Steam klavyesi, Steam dışı bir
-     uygulamada metin alanına dokununca kendiliğinden açılmaz; kullanıcı
-     Steam + X ile açar (kendiliğinden açılmama davranışı adım 6'da
-     doğrulanacak). Telefondan Deck'e gönderirken Deck'te kod yazılır;
-     Deck'in kamerası olmadığından QR ile alma yolu yoktur. Bunu
-     hafifletmek için kod alanına odaklanınca kısa bir "Steam + X ile
-     klavyeyi açın" ipucu gösterilir (yalnızca Gamescope altında, 35
-     dilde). Deck'ten göndermek kod yazmayı gerektirmez: Deck kodu ve
-     QR'ı gösterir, telefon tarar.
-  5. **Uyku:** Deck, ekran kapanınca ya da güç düğmesine basılınca uyur ve
-     aktarım kesilir. Aktarım sürerken portalın `Inhibit` arayüzüyle (ya
-     da logind ile) uykuyu ertelemek gerekir. Bu Deck'e özgü değildir,
-     bütün dizüstü bilgisayarlar için de doğrudur. Steam'in güç düğmesi
-     yolunun bu engeli dikkate alıp almadığı doğrulanacak; almıyorsa
-     aktarım sürerken uyutmamasını söyleyen bir uyarı kalır.
+     **Blocking risk:** If there is no file chooser portal in Game Mode,
+     sending cannot be done at all. In that case only receiving is
+     supported in Game Mode, and for sending the user is directed to
+     Desktop Mode. No separate file chooser is written into the app: it
+     would need a broad file permission (see below).
+  3. **Controller:** Steam Input's desktop layout (right touchpad as mouse,
+     triggers as clicks) makes the app usable with no extra work, but not
+     comfortable. Comfortable use needs the app to be navigable with the
+     d-pad and A/B. Steam Input can offer a layout that turns these into the
+     keyboard's arrow, Enter and Esc keys; the work on the app side is that
+     every page can be used completely with the keyboard alone (arrows,
+     Enter, Esc, Tab). The focused control must also be clearly visible
+     from a distance (on a television) and on a 7-inch screen.
+  4. **On-screen keyboard:** In Game Mode, the Steam keyboard does not open
+     by itself when a text field in a non-Steam app is tapped; the user
+     opens it with Steam + X (that it does not open by itself will be
+     verified in step 6). When sending from a phone to the Deck, the code is
+     typed on the Deck; because the Deck has no camera, there is no way to
+     receive with a QR. To ease this, when the code field gets focus, a
+     short "Open the keyboard with Steam + X" hint is shown (only under
+     Gamescope, in 35 languages). Sending from the Deck needs no typing of
+     the code: the Deck shows the code and the QR, and the phone scans it.
+  5. **Sleep:** The Deck sleeps when the screen turns off or the power
+     button is pressed, and the transfer is cut. While a transfer runs,
+     sleep must be postponed with the portal's `Inhibit` interface (or with
+     logind). This is not specific to the Deck; it holds for every laptop
+     too. Whether Steam's power-button path respects this inhibition will
+     be verified; if not, a warning remains that says not to put the device
+     to sleep during a transfer.
 
-  ### Kullanım senaryoları ve dosya yolları
+  ### Use cases and file paths
 
-  | Senaryo | Yön | Yer |
+  | Use case | Direction | Location |
   | --- | --- | --- |
-  | Steam ekran görüntüleri | Deck → telefon/PC | `~/.local/share/Steam/userdata/<hesap>/760/remote/<uygulama>/screenshots` |
-  | Steam oyun videoları | Deck → PC | Steam'in "Oyun kaydı" ayarındaki klasör (varsayılanın `userdata/<hesap>/gamerecordings` olduğu doğrulanacak); paylaşmak için önce Steam'den video olarak dışa aktarılır |
-  | Modlar, haritalar | PC → Deck | Oyuna göre değişir; çoğunlukla `~/.local/share/Steam/steamapps/common/<oyun>` ya da Proton öneki |
-  | Kayıt dosyaları (Steam Bulut'u olmayan oyunlar, öykünücüler) | iki yön | Proton öneki `steamapps/compatdata/<uygulama>/pfx/drive_c/users/steamuser/…`, öykünücülerin kendi klasörleri |
-  | Herhangi bir dosya | iki yön | `~/Downloads`, microSD `/run/media/…` |
+  | Steam screenshots | Deck → phone/PC | `~/.local/share/Steam/userdata/<account>/760/remote/<app>/screenshots` |
+  | Steam game videos | Deck → PC | The folder in Steam's "Game Recording" setting (that the default is `userdata/<account>/gamerecordings` will be verified); to share, first exported as a video from Steam |
+  | Mods, maps | PC → Deck | Depends on the game; mostly `~/.local/share/Steam/steamapps/common/<game>` or the Proton prefix |
+  | Save files (games without Steam Cloud, emulators) | both ways | The Proton prefix `steamapps/compatdata/<app>/pfx/drive_c/users/steamuser/…`, the emulators' own folders |
+  | Any file | both ways | `~/Downloads`, microSD `/run/media/…` |
 
-  Ekran görüntüsü ve oyun videosu klasörleri derin ve sayısal adlıdır;
-  kullanıcı bunları dosya seçicide bulmakta zorlanır. Ama bu klasörleri
-  uygulamanın kendisinin taraması, Flatpak'te geniş dosya izni ister ve
-  Steam'in iç düzenine bağlılık getirir.
+  The screenshot and game video folders are deep and have numeric names;
+  users find them hard to locate in the file chooser. But having the app
+  scan these folders itself would need a broad file permission in the
+  Flatpak, and would tie it to Steam's internal layout.
 
-  ### Flatpak'te dosya ve sistem erişimi
+  ### File and system access in the Flatpak
 
-  - Gönderme: dosya seçici portalı seçilen dosyaya izin verir; geniş izin
-    gerekmez. Bugünkü kod bu yolu kullanır.
-  - Alma: `--filesystem=xdg-download` ile yalnızca İndirilenler klasörü
-    açılır; `~/Downloads/TotalDrop` yeter.
-  - Tema: masaüstünün tema dosyalarına yalnızca okuma izni gerekir
-    (`--filesystem=xdg-config/kdeglobals:ro`, Omarchy ve GTK tema
-    klasörleri `:ro`, `--filesystem=xdg-run/hypr:ro`), ya da tema okumanın
-    tamamı portala taşınır. Tek bir dosyanın bağlanması, KConfig'in
-    kaydederken dosyayı yeniden adlandırması yüzünden canlı tema
-    değişikliğini kaçırır; adım 1'de doğrulandı, sistem GTK temalarıyla
-    birlikte [#299](https://github.com/totaldrop-app/totaldrop/issues/299)
-    ile ele alınacak.
-  - Steam klasörlerine ya da `/run/media`'ya kalıcı erişim
-    (`--filesystem=home`, `--filesystem=/run/media`) istemek kolaylık
-    sağlar ama Flathub incelemesinde gerekçe ister ve en az yetki ilkesine
-    ([tehdit modeli](../tehdit-modeli.md)) aykırıdır. Önerilmez.
-  - Ayarlar: sistem paketinin `~/.config/totaldrop/settings.toml` dosyası
-    Flatpak'te görünmez; ilk açılış varsayılanlarla başlar.
-  - Komut satırı: paketteki `totaldrop` aracı Flatpak'te
-    `flatpak run --command=totaldrop app.totaldrop.TotalDrop` ile çalışır;
-    yönergeye yazılır.
-  - Tek pencere: uygulama kimliğiyle aynı D-Bus adını almak Flatpak'te
-    varsayılan olarak serbesttir; `instance.rs` değişmez.
+  - Sending: the file chooser portal grants access to the chosen file; no
+    broad permission is needed. Today's code uses this route.
+  - Receiving: `--filesystem=xdg-download` opens only the Downloads folder;
+    `~/Downloads/TotalDrop` is enough.
+  - Theme: only read access to the desktop's theme files is needed
+    (`--filesystem=xdg-config/kdeglobals:ro`, the Omarchy and GTK theme
+    folders `:ro`, `--filesystem=xdg-run/hypr:ro`), or all theme reading is
+    moved to the portal. Mounting a single file misses live theme changes,
+    because KConfig renames the file when it saves; verified in step 1, and
+    to be dealt with together with the system GTK themes in
+    [#299](https://github.com/totaldrop-app/totaldrop/issues/299).
+  - Asking for permanent access to the Steam folders or to `/run/media`
+    (`--filesystem=home`, `--filesystem=/run/media`) would be convenient,
+    but needs a justification in the Flathub review and goes against the
+    principle of least privilege ([threat model](../tehdit-modeli.md)). Not
+    recommended.
+  - Settings: the system package's `~/.config/totaldrop/settings.toml` file
+    is not visible in the Flatpak; the first launch starts with the
+    defaults.
+  - Command line: the `totaldrop` tool in the package runs in the Flatpak
+    with `flatpak run --command=totaldrop app.totaldrop.TotalDrop`; this is
+    written into the instructions.
+  - Single window: taking the D-Bus name that matches the application ID is
+    allowed by default in a Flatpak; `instance.rs` does not change.
 
-  ### Diğer SteamOS cihazları: Steam Machine ve Steam Frame
+  ### The other SteamOS devices: Steam Machine and Steam Frame
 
-  Haberlere göre Valve 2026'da SteamOS çalıştıran iki cihaz daha çıkardı.
-  Aşağıdaki donanım bilgilerinin hepsi basın haberlerinden; Valve'ın kendi
-  belgeleriyle ya da cihazın kendisiyle (adım 3, 6 ve 8) doğrulanacak.
+  According to reports, Valve released two more devices that run SteamOS in
+  2026. All the hardware information below comes from press reports; it
+  will be verified against Valve's own documentation or the device itself
+  (steps 3, 6 and 8).
 
-  - **Steam Machine:** televizyona bağlanan küçük bir PC (doğrulanacak:
-    AMD Zen 4, x86_64; SteamOS 3, Masaüstü Modu'nda KDE Plasma). Deck'le
-    aynı x86_64 Flatpak'i kullanır. Fark kullanımdadır: dokunmatik ekran
-    yoktur, kullanıcı çoğunlukla Oyun Modu'nda, kumandayla ve birkaç
-    metre uzaktan kullanır. Bu yüzden adım 5 (klavyeyle tam kullanım) ve
-    adım 6 (Oyun Modu) Machine'de zorunlu, Deck'te ise rahatlıktır. Metin
-    ve odak çerçevesi televizyon uzaklığından okunmalıdır. Ethernet ve
-    microSD yuvası olduğu bildiriliyor (doğrulanacak).
-  - **Steam Frame:** bağımsız çalışan VR gözlüğü (doğrulanacak:
-    Snapdragon 8 Gen 3, ARM, aarch64; SteamOS). Haberlere göre yerel
-    `linuxarm64` uygulamalar çalışır, x86_64 Linux uygulamaları FEX ile
-    çevrilerek çalışır. Bugün yalnızca `.deb` ve `.rpm` paketlerimizin
-    arm64 derlemesi var; Flatpak'in aarch64 derlemesi adım 1'de gelir,
-    Flathub da aarch64 derler. Belirsiz olanlar: Frame'de Flatpak ve
-    Discover'ın olup olmadığı, 2B bir Qt penceresinin VR içinde nasıl
-    gösterildiği, girişin (VR kumandaları, el izleme, ekran klavyesi)
-    uygulamaya nasıl ulaştığı, dosya seçici portalının çalışıp
-    çalışmadığı ve VR kabuğunda "sistem teması"nın ne olduğu
-    ([tasarim.md](../tasarim.md) kuralı burada da bağlayıcıdır). Frame'in
-    kameraları uygulamalara açık değilse QR ile alma burada da yoktur.
+  - **Steam Machine:** a small PC that connects to a television (to be
+    verified: AMD Zen 4, x86_64; SteamOS 3, KDE Plasma in Desktop Mode). It
+    uses the same x86_64 Flatpak as the Deck. The difference is in use:
+    there is no touch screen, and the user mostly uses it in Game Mode,
+    with a controller, from a few metres away. That is why step 5 (full
+    keyboard use) and step 6 (Game Mode) are mandatory on the Machine, and
+    a convenience on the Deck. Text and the focus frame must be readable
+    from television distance. It is reported to have Ethernet and a microSD
+    slot (to be verified).
+  - **Steam Frame:** a standalone VR headset (to be verified: Snapdragon 8
+    Gen 3, ARM, aarch64; SteamOS). According to reports, native
+    `linuxarm64` apps run, and x86_64 Linux apps run translated with FEX.
+    Today only our `.deb` and `.rpm` packages have an arm64 build; the
+    Flatpak's aarch64 build comes in step 1, and Flathub builds aarch64
+    too. Unclear: whether the Frame has Flatpak and Discover, how a 2D Qt
+    window is shown inside VR, how input (VR controllers, hand tracking,
+    the on-screen keyboard) reaches the app, whether the file chooser
+    portal works, and what the "system theme" is in the VR shell (the
+    [tasarim.md](../tasarim.md) rule is binding here too). If the Frame's
+    cameras are not open to apps, there is no receiving by QR here either.
 
-  Üç cihaz aynı paketi kullanır; ayrı uygulama yazılmaz.
+  The three devices use the same package; no separate app is written.
 
-  ### Ağ
+  ### Network
 
-  Deck yalnızca Wi-Fi ile bağlanır (bağlantı istasyonunda Ethernet olur).
-  Wi-Fi'nin kısa süre susması ya da ağ değişmesi, 0.3.0-beta.4 ile gelen
-  röleye geçişle (#185) karşılanır. Cihazın uykuya geçmesi başka bir
-  durumdur: uykuda hiçbir şey çalışmaz, aktarım durur. Bunun çözümü
-  protokol değil, adım 4'teki uyku ertelemedir.
+  The Deck connects only over Wi-Fi (the dock has Ethernet). Wi-Fi going
+  silent for a short while, or the network changing, is handled by the
+  move to the relay that came with 0.3.0-beta.4 (#185). The device going
+  to sleep is a different case: nothing runs while asleep, and the
+  transfer stops. The answer to that is not the protocol but postponing
+  sleep in step 4.
 
-- **Seçenekler:**
-  1. **Hiçbir şey yapmamak.** Kullanıcı `pacman` ile kurar; ilk güncellemede
-     uygulama silinir. Desteklenmeyen bir yolu fiilen önermek olur.
-  2. **Ayrı bir Deck uygulaması** (ör. Steam'e özel tam ekran arayüz).
-     İkinci bir arayüzün bakımı, 35 dilde ikinci bir metin kümesi; kazanç
-     küçük. Reddedildi.
-  3. **AppImage.** Salt okunur kökte çalışır, ama güncelleme, masaüstü
-     kaydı ve portal entegrasyonu kullanıcıya kalır; Discover'da görünmez;
-     Qt eklentileri ve tema uyumu ayrıca dert olur.
-  4. **Flathub'da Flatpak ve Linux uygulamasına Deck uyumu.** Deck'in
-     desteklenen tek kurulum yolu; aynı paket diğer bütün dağıtımlarda da
-     işe yarar. Oyun Modu için ayrı uygulama değil, mevcut arayüzde
-     klavye/kumanda, uyku ve Gamescope ayrıntıları.
+- **Options:**
+  1. **Do nothing.** The user installs with `pacman`; the app is removed at
+     the first update. It amounts to recommending an unsupported route.
+  2. **A separate Deck app** (e.g. a full-screen interface just for Steam).
+     The maintenance of a second interface, a second set of texts in 35
+     languages; little gain. Rejected.
+  3. **AppImage.** Runs on the read-only root, but updates, the desktop
+     entry and portal integration are left to the user; it does not show
+     in Discover; the Qt plugins and theme matching become a separate
+     headache.
+  4. **A Flatpak on Flathub, and Deck support in the Linux app.** The
+     Deck's only supported installation route; the same package is useful
+     on every other distribution too. For Game Mode, not a separate app
+     but keyboard/controller, sleep and Gamescope details in the existing
+     interface.
 
-- **Karar:** Seçenek 4. Steam Deck, Steam Machine ve Steam Frame ayrı
-  platformlar değildir; Linux sürümünün hedefleridir ve aşağıdaki sırayla
-  desteklenir. Her adım ayrı bir issue ve PR'dır; adımlar 0.3 beta
-  sürümlerinin yanında ilerler.
+- **Decision:** Option 4. Steam Deck, Steam Machine and Steam Frame are not
+  separate platforms; they are targets of the Linux release and are
+  supported in the order below. Each step is a separate issue and PR; the
+  steps proceed alongside the 0.3 beta releases.
 
-  | Adım | İş | Kabaca efor |
+  | Step | Work | Rough effort |
   | --- | --- | --- |
-  | 1 | **Flatpak tarifi** (`packaging/flatpak/`): Qt sürümü CXX-Qt'ye uyan KDE çalışma zamanı ve Rust SDK eklentisi, `flatpak-cargo-generator` ile çevrimdışı cargo kaynakları, x86_64 ve aarch64. `finish-args`: `--share=network`, `--socket=wayland`, `--socket=fallback-x11`, `--device=dri`, `--filesystem=xdg-download`, `--talk-name=org.freedesktop.Notifications` (ya da bildirim portalına geçiş) ve yukarıdaki salt okunur tema izinleri; dosya seçici ve uyku portalı izin gerektirmez. CI'da derleme ve `flatpak-builder --run` ile duman testi; Flatpak derlemesi KDE, Hyprland ve Omarchy'de, açık ve koyu temada denenir. Bizim CI'daki derlemeye diğer paketlerdeki Sigstore kanıtı eklenir; Flathub'ın dağıttığı derleme ise Flathub'ın anahtarıyla imzalanır, bizim kanıtımızı taşımaz. | 4–6 gün (belirsiz) |
-  | 2 | **Flathub başvurusu:** metainfo'nun Flathub denetimlerinden (`flatpak-builder-lint`) geçmesi, ekran görüntüleri; metainfo özeti ve açıklaması bugün yalnızca İngilizce ve Türkçe, 35 dile çevrilir. Flathub deposunun bakımı. İnceleme genellikle birkaç tur sürer. | 2 gün + bekleme |
-  | 3 | **Masaüstü Modu'nda deneme** (her cihazda ayrı; cihaz ya da onu kullanan bir testçi gerekir): kurulum, tema, dosya seçici, bildirim, alma klasörü, aktarım hızı; platform bilgilerinin doğrulanması. Sonuçlar ekran görüntüleriyle issue'ya. | 0,5 gün |
-  | 4 | **Aktarım sırasında uykuyu erteleme** (portal `Inhibit`), bütün Linux masaüstleri için. Yeni metin 35 dilde. | 1 gün |
-  | 5 | **Yalnızca klavyeyle tam kullanım:** Tab ve Esc var; eksik olan ok tuşlarıyla gezinme ve her temada açıkça görünen odak çerçevesi. KDE, Hyprland ve Omarchy'de de denenir (onlarda da erişilebilirlik kazancıdır). | 2 gün |
-  | 6 | **Oyun Modu denemesi ve düzeltmeleri** (Deck'te ve Machine'de ayrı ayrı): Steam'e ekleme, Gamescope altında pencere, dosya seçici (engelleyici risk), bildirim, uyku, tema hedefi ve ekran klavyesi; gerekirse Gamescope algılanınca kod alanında klavye ipucu (35 dil). Bulgulara göre ayrı issue'lar. | 1–2 gün + bulgular |
-  | 7 | **Belgeler ve site:** her cihaz için ayrı sayfa ve kurulum yönergesi (Deck, Machine, Frame; her biri o cihazın adı geçerli olduğunda) (Discover'dan kurulum, Steam'e ekleme, önerilen Steam Input düzeni, komut satırı), sitede Linux indirme alanında Flathub bağlantısı. 35 dil. | 1–2 gün |
-  | 8 | **Steam Machine ve Steam Frame'e özgü deneme:** Machine'de televizyon uzaklığında okunurluk ve yalnızca kumandayla kullanım; Frame'de aarch64 Flatpak'in kurulumu, VR içinde pencere, giriş, dosya seçici ve tema hedefi. Bulgulara göre ayrı issue'lar; Frame'de Flatpak yoksa bu karar Frame için yeniden açılır. | Machine 1 gün, Frame 2–3 gün + bulgular |
+  | 1 | **Flatpak recipe** (`packaging/flatpak/`): a KDE runtime whose Qt version suits CXX-Qt and the Rust SDK extension, offline cargo sources with `flatpak-cargo-generator`, x86_64 and aarch64. `finish-args`: `--share=network`, `--socket=wayland`, `--socket=fallback-x11`, `--device=dri`, `--filesystem=xdg-download`, `--talk-name=org.freedesktop.Notifications` (or a move to the notification portal) and the read-only theme permissions above; the file chooser and sleep portals need no permission. A build in CI and a smoke test with `flatpak-builder --run`; the Flatpak build is tried on KDE, Hyprland and Omarchy, in the light and the dark theme. The build in our CI gets the same Sigstore provenance as the other packages; the build that Flathub distributes is signed with Flathub's key and does not carry our provenance. | 4–6 days (uncertain) |
+  | 2 | **Flathub submission:** the metainfo passing Flathub's checks (`flatpak-builder-lint`), screenshots; the metainfo summary and description are only in English and Turkish today, and are translated into 35 languages. Maintaining the Flathub repository. The review usually takes a few rounds. | 2 days + waiting |
+  | 3 | **Trial in Desktop Mode** (separately on each device; needs the device or a tester who uses it): installation, theme, file chooser, notification, receive folder, transfer speed; verifying the platform information. Results with screenshots in the issue. | 0.5 day |
+  | 4 | **Postponing sleep during a transfer** (portal `Inhibit`), for every Linux desktop. New text in 35 languages. | 1 day |
+  | 5 | **Full use with the keyboard alone:** Tab and Esc exist; what is missing is navigation with the arrow keys and a focus frame clearly visible in every theme. Also tried on KDE, Hyprland and Omarchy (an accessibility gain there too). | 2 days |
+  | 6 | **Game Mode trial and fixes** (on the Deck and on the Machine separately): adding to Steam, the window under Gamescope, the file chooser (blocking risk), notification, sleep, the theme target and the on-screen keyboard; if needed, a keyboard hint in the code field when Gamescope is detected (35 languages). Separate issues according to the findings. | 1–2 days + findings |
+  | 7 | **Documents and site:** a separate page and installation guide for each device (Deck, Machine, Frame; each once that device's name applies) (installing from Discover, adding to Steam, the recommended Steam Input layout, the command line), a Flathub link in the Linux download area of the site. 35 languages. | 1–2 days |
+  | 8 | **Trials specific to Steam Machine and Steam Frame:** on the Machine, readability at television distance and use with the controller alone; on the Frame, installing the aarch64 Flatpak, the window inside VR, input, the file chooser and the theme target. Separate issues according to the findings; if the Frame has no Flatpak, this decision is reopened for the Frame. | Machine 1 day, Frame 2–3 days + findings |
 
-  Toplam kabaca Deck için 12–16, Machine ve Frame ile birlikte 15–20 iş
-  günü; Flathub onay süresi ve cihazlara erişim hariç. Cihaz olmadan 1, 2,
-  4 ve 5 tamamlanabilir; 3, 6 ve 8 cihaz (ya da o cihazı kullanan bir
-  testçi) ister. Steam'e kendi uygulama sayfasıyla (Steamworks) çıkmak bu
-  kararın dışındadır: ücretli bir başvuru ve şirket bilgisi ister, bağış
-  modeline ([0005](0005-bagis.md)) ve hesapsız yapıya katkısı yoktur.
+  In total, roughly 12–16 working days for the Deck, 15–20 together with
+  the Machine and the Frame; not counting Flathub's approval time and
+  access to the devices. Without a device, 1, 2, 4 and 5 can be completed;
+  3, 6 and 8 need the device (or a tester who uses it). Going to Steam with
+  our own app page (Steamworks) is outside this decision: it needs a paid
+  application and company details, and adds nothing to the donation model
+  ([0005](0005-bagis.md)) or the account-free design.
 
-  **Ad: "TotalDrop for Steam Deck", "TotalDrop for Steam Machine",
-  "TotalDrop for Steam Frame"** (Ozan, 6 Kasım 2026). Her cihazdaki sürüm
-  kullanıcıya kendi adıyla sunulur: sitedeki cihaz sayfası, kurulum
-  yönergesi ve Steam kütüphanesinde gösterilen başlık. Teknik olarak ayrı
-  bir uygulama değildir: aynı Flatpak, aynı uygulama kimliği
-  (`app.totaldrop.TotalDrop`), aynı sürüm numarası. Flathub kaydının adı
-  "TotalDrop" kalır, çünkü aynı paket bütün dağıtımlar içindir.
+  **Name: "TotalDrop for Steam Deck", "TotalDrop for Steam Machine",
+  "TotalDrop for Steam Frame"** (Ozan, 6 November 2026). The release on
+  each device is presented to users under its own name: the device page on
+  the site, the installation guide, and the title shown in the Steam
+  library. Technically it is not a separate app: the same Flatpak, the same
+  application ID (`app.totaldrop.TotalDrop`), the same version number. The
+  name of the Flathub entry stays "TotalDrop", because the same package is
+  for every distribution.
 
-  - "Steam Deck", "Steam Machine" ve "Steam Frame" Valve'ın ticari
-    markalarıdır ve yalnızca uyumu anlatmak için kullanılır. Valve'ın
-    onayı ya da ortaklığı ima edilmez. Logo, simge ve kapak görsellerinde
-    Valve'ın adları ve logoları yer almaz; görsellerde yalnızca
-    TotalDrop'un işareti ve adı olur. Her cihaz sayfasında marka sahibini
-    söyleyen bir satır ve "TotalDrop, Valve ile ilişkili değildir" cümlesi
-    bulunur. Adım 7'den önce Valve'ın kendi marka kuralları okunur ve
-    sonucu bu belgeye eklenir; adlar onlarla çelişirse adlar değişir.
-  - Bir cihazın adı, yalnızca o cihazdaki denemeler geçtikten sonra
-    sitede ve mağaza metninde kullanılır: Deck için adım 3 ve 6, Machine
-    için Machine'de yapılan adım 3 ve 6 ile adım 8'in Machine kısmı,
-    Frame için adım 3 ve adım 8'in Frame kısmı.
-  - Çeviri: ürün adındaki "TotalDrop" ve cihaz adı çevrilmez. Ad dillere
-    göre "Steam Deck için TotalDrop" gibi doğal biçimde yazılabilir; hangi
-    dilde nasıl yazılacağı [0008](0008-diller-ve-bolgeler.md) ve
-    [ceviri.md](../ceviri.md) kurallarıyla adım 7'de belirlenir.
-  - [marka.md](../marka.md)'ye adım 7'nin PR'ında eklenir: bu adlar
-    yalnızca TotalDrop'un kendi sürümleri içindir; başkalarının dağıttığı
-    paketler "TotalDrop for …" adını kullanamaz ([0012](0012-ad-ve-isaret.md)).
+  - "Steam Deck", "Steam Machine" and "Steam Frame" are Valve's trademarks
+    and are used only to describe compatibility. No endorsement by, or
+    partnership with, Valve is implied. Valve's names and logos do not
+    appear in the logo, icon and cover images; the images show only
+    TotalDrop's mark and name. Every device page has a line that names the
+    trademark owner and the sentence "TotalDrop is not affiliated with
+    Valve". Before step 7, Valve's own trademark rules are read and the
+    result is added to this document; if the names conflict with them, the
+    names change.
+  - A device's name is used on the site and in the store text only after
+    the trials on that device have passed: for the Deck steps 3 and 6, for
+    the Machine steps 3 and 6 done on the Machine and the Machine part of
+    step 8, for the Frame step 3 and the Frame part of step 8.
+  - Translation: "TotalDrop" and the device name in the product name are
+    not translated. The name may be written naturally for each language,
+    such as "Steam Deck için TotalDrop"; how it is written in which
+    language is settled in step 7 by the rules of
+    [0008](0008-diller-ve-bolgeler.md) and [ceviri.md](../ceviri.md).
+  - Added to [marka.md](../marka.md) in the PR of step 7: these names are
+    only for TotalDrop's own releases; packages that others distribute may
+    not use the name "TotalDrop for …" ([0012](0012-ad-ve-isaret.md)).
 
-  **Switch 2 kapsam dışıdır.** Nintendo'nun geliştirici programı şirket
-  başvurusu, gizlilik sözleşmesi ve kapalı SDK ister; açık kaynak bir
-  dosya aktarma uygulamasının kabul edilmesi ve kaynağının yayımlanabilmesi
-  beklenmez. Sistem uygulamalara kayıt ve medya klasörlerine serbest erişim
-  de vermez.
+  **Switch 2 is out of scope.** Nintendo's developer programme needs a
+  company application, a non-disclosure agreement and a closed SDK; an
+  open-source file transfer app is not expected to be accepted, nor its
+  source to be publishable. The system also does not give apps free access
+  to the save and media folders.
 
-- **Neden:** Flatpak, SteamOS cihazlarında desteklenen tek kalıcı
-  kurulum yoludur ve aynı paket bütün dağıtımlarda kurulum sorununu da
-  çözer. Uygulama zaten portal kullanacak biçimde yazıldığı için dosya
-  seçme ve tek pencere değişmez; asıl iş temanın korumalı alanda
-  okunmasıdır. Oyun Modu için ayrı arayüz yerine klavyeyle tam kullanım
-  hedeflenir: kumanda Steam Input ile klavyeye çevrilir ve aynı iş bütün
-  Linux kullanıcıları için erişilebilirliği artırır.
+- **Why:** Flatpak is the only supported permanent installation route on
+  SteamOS devices, and the same package also solves installation on every
+  distribution. Because the app is already written to use portals, file
+  choosing and the single window do not change; the real work is reading
+  the theme inside the sandbox. For Game Mode, the aim is full keyboard
+  use instead of a separate interface: Steam Input turns the controller
+  into a keyboard, and the same work improves accessibility for every Linux
+  user.
 
-- **Sonuçlar:**
-  - Flatpak, Linux için dördüncü paket biçimi olur; sürüm listesi
-    ([surec.md](../surec.md)) ve marka kuralı Flathub kaydını kapsar.
-  - **Kural değişikliği (Ozan onayladı, 6 Kasım 2026):** CLAUDE.md'deki
-    "paketler yalnızca CI'da derlenir" kuralına bir istisna eklenir.
-    Flathub, uygulamayı kendi altyapısında, bizim depodaki tariften ve
-    etiketli kaynaktan derler; o derlemeyi biz yapmayız ve imzalamayız.
-    Aynı tarif her PR'da bizim CI'ımızda da derlenir, böylece tarif
-    bozulursa önce biz görürüz. İstisna CLAUDE.md'ye ve
-    [surec.md](../surec.md)'ye adım 1'in PR'ında yazılır.
-  - Tehdit modeline Flatpak izinleri eklenir: uygulama ağa, İndirilenler
-    klasörüne, portal yoluyla seçilen dosyalara ve tema dosyalarına
-    (yalnızca okuma) erişir.
-  - Bir cihaz için "desteklenir" ancak yukarıdaki ad kuralındaki
-    denemeler geçince yazılır.
-  - Tasarım kuralındaki üç masaüstüne (KDE, Hyprland, Omarchy) Deck ve
-    Machine eklenmez; Masaüstü Modu KDE'dir. Oyun Modu ve Frame'in VR
-    kabuğu ayrı deneme maddeleri olarak sürüm listesine girer.
+- **Consequences:**
+  - Flatpak becomes the fourth package format for Linux; the release list
+    ([surec.md](../surec.md)) and the brand rule cover the Flathub entry.
+  - **Rule change (approved by Ozan, 6 November 2026):** an exception is
+    added to the "packages are only built in CI" rule in CLAUDE.md. Flathub
+    builds the app on its own infrastructure, from the recipe in our
+    repository and the tagged source; we do not make or sign that build.
+    The same recipe is also built in our CI on every PR, so that if the
+    recipe breaks, we see it first. The exception is written into CLAUDE.md
+    and [surec.md](../surec.md) in the PR of step 1.
+  - The Flatpak permissions are added to the threat model: the app has
+    access to the network, the Downloads folder, the files chosen through
+    the portal, and the theme files (read only).
+  - "Supported" is written for a device only once the trials in the name
+    rule above have passed.
+  - The Deck and the Machine are not added to the three desktops of the
+    design rule (KDE, Hyprland, Omarchy); Desktop Mode is KDE. Game Mode
+    and the Frame's VR shell enter the release list as separate trial
+    items.
 
-- **Yeniden bakılacak zaman:** Gamescope ya da SteamOS, Steam dışı
-  uygulamalar için yerel bir portal, bildirim ya da ekran klavyesi
-  davranışı getirdiğinde; Flathub başvurusu reddedilirse; Frame'de
-  Flatpak yoksa; donanım bilgilerinden biri yanlış çıkarsa; ya da Valve
-  adların kullanımına itiraz ederse.
+- **When to look again:** When Gamescope or SteamOS brings a native portal,
+  notification or on-screen keyboard behaviour for non-Steam apps; if the
+  Flathub submission is rejected; if the Frame has no Flatpak; if one of the
+  hardware details turns out to be wrong; or if Valve objects to the use of
+  the names.
 
-## Kaynaklar
+## Sources
 
-- SteamOS 3.9.5 sürümü: [Phoronix](https://www.phoronix.com/news/SteamOS-3.9.5)
-- Steam ekran görüntüsü klasörü: [Dexerto](https://www.dexerto.com/tech/where-to-find-steam-screenshot-folder-2619310/)
-- Steam oyun kaydı: [Shacknews](https://shacknews.com/article/142140/how-to-use-steam-game-recording)
+- The SteamOS 3.9.5 release: [Phoronix](https://www.phoronix.com/news/SteamOS-3.9.5)
+- The Steam screenshot folder: [Dexerto](https://www.dexerto.com/tech/where-to-find-steam-screenshot-folder-2619310/)
+- Steam game recording: [Shacknews](https://shacknews.com/article/142140/how-to-use-steam-game-recording)
 - Steam Machine: [Engadget](https://www.engadget.com/gaming/pc/everything-we-know-about-valves-new-steam-machine-200458817.html)
-- Steam Frame ve FEX: [GamingOnLinux](https://gamingonlinux.com/2026/01/valves-documentation-highlights-the-different-ways-standalone-games-run-on-steam-frame)
+- Steam Frame and FEX: [GamingOnLinux](https://gamingonlinux.com/2026/01/valves-documentation-highlights-the-different-ways-standalone-games-run-on-steam-frame)

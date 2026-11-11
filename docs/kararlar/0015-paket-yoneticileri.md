@@ -1,365 +1,387 @@
-# 0015: Paket yöneticileri önce CI'da derlenen CLI ikililerine dayanır
+# 0015: Package managers rest first on CLI binaries built in CI
 
-- **Durum:** Kabul, 8 Kasım 2026 (Ozan, #344)
-- **Bağlam:** TotalDrop bugün iki yoldan kurulur: sürüm sayfasındaki
-  Linux paketleri (Arch, Debian, Fedora; Flathub yolda,
-  [0014](0014-steam-deck.md)) ve `cargo install --git`. CLI'ın hazır
-  derlenmiş ikilisi yoktur; macOS ve Windows kullanıcısı CLI için Rust araç
-  zincirini kurmak zorundadır. Homebrew, winget, Scoop, AUR ve crates.io'da
-  yer almıyoruz. 7 Kasım 2026'da bu yerlerdeki adlar boştu: crates.io'da
-  `totaldrop`, `totaldrop-cli`, `-core`, `-crypto`, `-proto`, `-l10n`;
-  AUR'da `totaldrop`; winget'te `TotalDrop` yayıncı klasörü. Başkası önce
-  alırsa, kullanıcı TotalDrop'un yayımlamadığı bir paketi TotalDrop sanabilir
+- **Status:** Accepted, 8 November 2026 (Ozan, #344)
+- **Context:** Today TotalDrop is installed in two ways: the Linux packages
+  on the release page (Arch, Debian, Fedora; Flathub is on the way,
+  [0014](0014-steam-deck.md)) and `cargo install --git`. The CLI has no
+  prebuilt binary; macOS and Windows users have to install the Rust
+  toolchain for the CLI. We are not on Homebrew, winget, Scoop, the AUR or
+  crates.io. On 7 November 2026 the names in these places were free: on
+  crates.io `totaldrop`, `totaldrop-cli`, `-core`, `-crypto`, `-proto`,
+  `-l10n`; on the AUR `totaldrop`; on winget the `TotalDrop` publisher
+  folder. If someone else takes them first, users may mistake a package
+  that TotalDrop did not publish for TotalDrop
   ([0012](0012-ad-ve-isaret.md)).
 
-  Proje bağışla yürür; ücretli hizmet kullanılmaz ([0005](0005-bagis.md),
-  [0009](0009-ios-macos.md)). Paketler yalnızca CI'da, `main` üzerindeki
-  etiketli bir commit'ten derlenir ([surec.md](../surec.md), sürüm listesi;
-  [versioning.md](../versioning.md)). Tek istisna Flathub'dır: Flathub
-  paketi kendi altyapısında derler, ama aynı tarif her PR'da bizim CI'ımızda
-  da derlenir (0014).
+  The project runs on donations; no paid services are used
+  ([0005](0005-bagis.md), [0009](0009-ios-macos.md)). Packages are built
+  only in CI, from a tagged commit on `main` ([surec.md](../surec.md), the
+  release list; [versioning.md](../versioning.md)). The only exception is
+  Flathub: Flathub builds the package on its own infrastructure, but the
+  same recipe is also built in our CI on every PR (0014).
 
-- **Seçenekler:**
-  1. Paket yöneticilerini topluluğa bırakmak. Marka kuralı Linux
-     dağıtımlarına ve AUR'a izin verir, ama yayıncının geliştirici olarak
-     göründüğü yerlerde (winget, Store) kimliği başkası alır. Paketin hangi
-     ikiliyi kurduğunu denetleyemeyiz.
-  2. Her kanalın kendi altyapısında kaynaktan derlemesi (Homebrew bottle,
-     COPR, OBS). Kullanıcıya giden ikili bizim CI'ımızdan çıkmaz. Yapı
-     kaynağı kanıtı (attestation) ve yeniden üretilebilirlik denetimi bu
-     ikilileri kapsamaz.
-  3. **CI tek kaynaktır: sürüm iş akışı ikilileri, özetleri ve yapı kaynağı
-     kanıtını üretir; kanallar yalnızca bu dosyalara işaret eden bir tarif
-     tutar. Kendi altyapısında derleyen kanallar istisnadır ve burada adıyla
-     yazılır.**
-- **Karar:** Seçenek 3.
-- **Neden:** Kullanıcının kurduğu dosya, hangi kanaldan gelirse gelsin,
-  sürüm sayfasındaki dosyanın aynısıdır. `SHA256SUMS` ve
-  `gh attestation verify` her kanalda aynı sonucu verir. Yeniden
-  üretilebilirlik denetimi de bu dosyaları kapsar. Kanal tarifleri birkaç
-  satırlık adres ve özet listesidir, derleme mantığı taşımaz. Bir kanalın
-  ele geçirilmesi ikiliyi değiştiremez, yalnızca başka bir adresi
-  gösterebilir; bu da özet ve kanıtla yakalanır. Seçenek 1 kimlikleri
-  kaybettirir. Seçenek 2 ise her kanalda ayrı bir derleme zinciri ve ayrı
-  bir güven demektir.
+- **Options:**
+  1. Leave package managers to the community. The brand rule allows Linux
+     distributions and the AUR, but where the publisher appears as the
+     developer (winget, the Store), someone else takes the identity. We
+     cannot check which binary the package installs.
+  2. Each channel builds from source on its own infrastructure (Homebrew
+     bottles, COPR, OBS). The binary that reaches users does not come out
+     of our CI. Build provenance (attestation) and the reproducibility check
+     do not cover these binaries.
+  3. **CI is the single source: the release workflow produces the binaries,
+     the checksums and the build provenance; the channels only keep a
+     recipe that points to these files. Channels that build on their own
+     infrastructure are exceptions and are named here.**
+- **Decision:** Option 3.
+- **Why:** Whichever channel it comes from, the file the user installs is
+  the same as the file on the release page. `SHA256SUMS` and
+  `gh attestation verify` give the same result on every channel. The
+  reproducibility check covers these files too. The channel recipes are a
+  few lines listing addresses and checksums, with no build logic. Taking
+  over a channel cannot change the binary; it can only point to another
+  address, and the checksum and the provenance catch that. Option 1 loses
+  the identities. Option 2 means a separate build chain and a separate
+  trust on every channel.
 
-## Ortak temel: CLI ikilileri
+## The common base: CLI binaries
 
-Bütün kanallar aynı arşivlere dayanır. Bunları yeni bir sürüm iş akışı
-üretir:
+Every channel rests on the same archives. A new release workflow produces
+them:
 
-| Hedef | Koşucu | Arşiv |
+| Target | Runner | Archive |
 | --- | --- | --- |
 | `x86_64-unknown-linux-musl` | `ubuntu-24.04` | `.tar.gz` |
 | `aarch64-unknown-linux-musl` | `ubuntu-24.04-arm` | `.tar.gz` |
-| `universal-apple-darwin` (`aarch64` ve `x86_64`, `lipo` ile tek dosya) | `macos-15` | `.tar.gz` |
+| `universal-apple-darwin` (`aarch64` and `x86_64`, one file with `lipo`) | `macos-15` | `.tar.gz` |
 | `x86_64-pc-windows-msvc` | `windows-2025` | `.zip` |
 | `aarch64-pc-windows-msvc` | `windows-11-arm` | `.zip` |
 
-- Linux ikilileri musl ile statik bağlanır, dağıtımdan bağımsız çalışır.
-  Protokolün kriptografisi RustCrypto (`chacha20poly1305`,
-  `curve25519-dalek`, `ed25519-dalek`, `ml-kem`), `snow` ve `blake3`
-  üzerindendir. `ring` yalnızca TLS ve QUIC (`rustls`, `quinn`) içindir.
-  `ring` musl'ı destekler, ama C derleyicisi ister.
-- Windows ikilileri C çalışma zamanını statik bağlar
-  (`-C target-feature=+crt-static`). Yoksa ikili `vcruntime140.dll` ister
-  ve temiz bir makinede winget ya da Scoop'un açtığı zip çalışmaz.
-- macOS ikilisi `lipo` ve `strip`'ten sonra yeniden ad-hoc imzalanır. CI
-  imzayı `codesign -v` ile denetler: Apple Silicon'da imzasız ya da imzası
-  bozuk kod çalışmaz.
-- Arşiv adı `totaldrop-cli-<sürüm>-<hedef>`'tir. İçinde `totaldrop`
-  ikilisi, lisans dosyaları ve README vardır.
-- Sürüm, Linux paketlerindeki gibi `SHA256SUMS`, yapı kaynağı kanıtı ve
-  `.sigstore.json` dosyasıyla çıkar.
-- Etiket `cli-v<sürüm>`'dür (bugün `0.2.0-beta.5`). CLI'ın sürümü Linux
-  uygulamasınınkinden ayrıdır ve paket yöneticileri CLI'ın sürümünü
-  görmelidir. `cli-v…` etiketi [versioning.md](../versioning.md)'de bugün
-  isteğe bağlıdır; CLI ikilileri için zorunlu olur. CLI yine Linux
-  yayınıyla birlikte yayımlanır: CLI'ın sürümü artırıldıysa aynı commit'e
-  `cli-v…` etiketi de konur. `surec.md`'deki sürüm listesi ve
-  `versioning.md` bu adımla, uygulamayı getiren PR'da güncellenir.
-- İş akışı `linux-release.yml` gibi kurulur. Önce etiketin `main`'de
-  olduğu ve sürümlerin etiketle uyuştuğu denetlenir
-  (`packaging/check-cli-version.sh`). Sonra onaylı bir ortamda (environment)
-  taslak sürüm açılır.
-- #86'yı yalnızca kısmen karşılar. #86, `aarch64-unknown-linux-gnu` ve
-  `aarch64-pc-windows-msvc` için her PR'da CI'da derleme ve test ister. Bu
-  karar ise ARM64 ikililerini musl ile ve yalnızca sürüm etiketinde derler.
-  PR'lardaki ARM64 derleme ve testi #86'nın işi olarak kalır.
+- The Linux binaries are statically linked with musl and run independently
+  of the distribution. The protocol's cryptography is built on RustCrypto
+  (`chacha20poly1305`, `curve25519-dalek`, `ed25519-dalek`, `ml-kem`),
+  `snow` and `blake3`. `ring` is only for TLS and QUIC (`rustls`,
+  `quinn`). `ring` supports musl, but needs a C compiler.
+- The Windows binaries link the C runtime statically
+  (`-C target-feature=+crt-static`). Otherwise the binary needs
+  `vcruntime140.dll`, and the zip that winget or Scoop unpacks does not run
+  on a clean machine.
+- The macOS binary is ad-hoc signed again after `lipo` and `strip`. CI
+  checks the signature with `codesign -v`: on Apple Silicon, code with no
+  signature or a broken one does not run.
+- The archive name is `totaldrop-cli-<version>-<target>`. It holds the
+  `totaldrop` binary, the licence files and the README.
+- The release comes out with `SHA256SUMS`, build provenance and a
+  `.sigstore.json` file, as the Linux packages do.
+- The tag is `cli-v<version>` (today `0.2.0-beta.5`). The CLI's version is
+  separate from the Linux app's, and package managers must see the CLI's
+  version. The `cli-v…` tag is optional in
+  [versioning.md](../versioning.md) today; it becomes mandatory for the CLI
+  binaries. The CLI is still released together with the Linux release: if
+  the CLI's version was raised, a `cli-v…` tag is also put on the same
+  commit. The release list in `surec.md` and `versioning.md` are updated
+  with this step, in the PR that brings it in.
+- The workflow is set up like `linux-release.yml`. It first checks that
+  the tag is on `main` and that the versions match the tag
+  (`packaging/check-cli-version.sh`). Then a draft release is opened in an
+  approved environment.
+- It only partly meets #86. #86 asks for building and testing in CI on
+  every PR for `aarch64-unknown-linux-gnu` and `aarch64-pc-windows-msvc`.
+  This decision builds the ARM64 binaries with musl, and only on a release
+  tag. Building and testing ARM64 on PRs remains #86's work.
 
-## Kanallar ne zaman güncellenir
+## When the channels are updated
 
-Sürüm iş akışı sürümü taslak olarak açar. Taslağın dosyaları herkese açık
-indirilemez ve taslağı henüz kimse gözden geçirmemiştir. Bu yüzden kanal
-güncellemeleri sürüm iş akışının parçası değildir. Ayrı bir iş akışı
-(`channels.yml`) `release: published` olayıyla, yani bakımcı taslağı
-yayımladığında çalışır. Her kanal ayrı bir iştir; birinin hatası
-ötekileri durdurmaz. İşler korumalı ortamlarda çalışır (aşağıda, "Gizli
-bilgiler"). Bir kanal başarısız olursa iş elle yeniden çalıştırılır.
+The release workflow opens the release as a draft. A draft's files cannot
+be downloaded publicly, and nobody has reviewed the draft yet. That is why
+the channel updates are not part of the release workflow. A separate
+workflow (`channels.yml`) runs on the `release: published` event, that is,
+when a maintainer publishes the draft. Each channel is a separate job; the
+failure of one does not stop the others. The jobs run in protected
+environments (below, "Secrets"). If a channel fails, its job is rerun by
+hand.
 
-## Kanallar
+## Channels
 
-| Sıra | Kanal | Ne |
+| Order | Channel | What |
 | --- | --- | --- |
-| 1 | — | CLI ikilileri ve `cli-v…` etiketi (yukarıda) |
-| 2 | Homebrew tap | `totaldrop-app/homebrew-tap`, `totaldrop-cli` formülü |
+| 1 | — | The CLI binaries and the `cli-v…` tag (above) |
+| 2 | Homebrew tap | `totaldrop-app/homebrew-tap`, the `totaldrop-cli` formula |
 | 2 | Scoop | `totaldrop-app/scoop-bucket`, `totaldrop-cli` |
-| 3 | AUR | `totaldrop` (kaynaktan) ve `totaldrop-bin`; Linux yayınıyla |
+| 3 | AUR | `totaldrop` (from source) and `totaldrop-bin`; with the Linux release |
 | 4 | winget | `TotalDrop.CLI` |
-| 5 | crates.io ve `cargo binstall` | `totaldrop-cli` ve bağımlı olduğu dört crate; engeller kalkınca |
-| 6 | Microsoft Store | Windows uygulaması: [0016](0016-windows-microsoft-store.md) |
-| 6 | Homebrew cask | macOS uygulaması; Apple hesabı ve noter onayıyla (0009, adım 5) |
-| 6 | homebrew-core | 1.0'dan sonra |
+| 5 | crates.io and `cargo binstall` | `totaldrop-cli` and the four crates it depends on; once the blockers are gone |
+| 6 | Microsoft Store | The Windows app: [0016](0016-windows-microsoft-store.md) |
+| 6 | Homebrew cask | The macOS app; with an Apple account and notarization (0009, step 5) |
+| 6 | homebrew-core | After 1.0 |
 | — | Flathub | 0014 |
-| — | APT ve RPM depoları | Ayrı karar |
+| — | APT and RPM repositories | A separate decision |
 
-Adlar: CLI her kanalda `totaldrop-cli` adını taşır, komutun adı
-`totaldrop`'tur. Böylece ileride macOS uygulamasının cask'i `totaldrop`
-adını alabilir; `brew install totaldrop` belirsiz kalmaz. AUR'da
-`totaldrop` Arch paketiyle aynıdır, yani uygulama ve CLI birlikte.
+Names: the CLI is called `totaldrop-cli` on every channel, and the command
+is `totaldrop`. That way the macOS app's cask can later take the name
+`totaldrop`; `brew install totaldrop` does not stay ambiguous. On the AUR,
+`totaldrop` is the same as the Arch package, that is, the app and the CLI
+together.
 
-### crates.io ve cargo binstall
+### crates.io and cargo binstall
 
-- `cargo install totaldrop-cli` için `totaldrop-cli` ile bağımlı olduğu
-  `totaldrop-core`, `-crypto`, `-proto` ve `-l10n` crate'leri yayımlanır.
-- **İlk yayın:** crates.io'nun Trusted Publishing yolu (GitHub OIDC) yeni
-  crate oluşturamaz. Bu yüzden beş crate'in ilk yayını da CI'dan,
-  `cli-release` ortamında yapılır. Bunun için kısa ömürlü bir crates.io
-  token'ı kullanılır: kapsamı yalnızca `publish-new`, adları `totaldrop*`
-  ile sınırlı. Hemen ardından her crate için Trusted Publishing kurulur ve
-  token iptal edilir. Sonraki yayınlarda uzun ömürlü bir token tutulmaz.
-- **Engel 1:** `totaldrop-l10n/build.rs` çeviri dosyalarını crate'in
-  dışından okur (`../../l10n`). `cargo package` yalnızca crate klasörünü
-  pakete koyar; bu haliyle yayımlanan crate derlenmez. Çözüm ayrı bir işte
-  seçilir. Seçenekler: çeviri dosyalarını paketleme sırasında crate'e
-  kopyalamak ya da üretilen Rust kodunu crate'e koymak.
-- **Engel 2:** CLI'ın geliştirme bağımlılıkları (`totaldrop-relay`,
-  `totaldrop-rendezvous`) hem yol hem sürümle yazılı. Sürümlü bir
-  geliştirme bağımlılığı crates.io'da bulunmalıdır; sunucular ise
-  yayımlanmaz. Ya sürüm alanı kaldırılır ve
-  `tools/check-component-versions.sh` buna göre değişir, ya da yayın
-  bunları `cargo publish` öncesinde çıkarır.
-- **Engel 3:** Crate klasörlerinde lisans dosyası yok; metinler kökteki
-  `LICENSES/` altında. Yayımlanan her crate kendi lisans metinlerini
-  taşımalıdır: `-core`, `-crypto`, `-proto` ve `-l10n` için MIT ve Apache
-  2.0, `-cli` için GPL 3.0.
-- Adlar boş dururken yer tutucu yayımlanmaz: crates.io'nun kuralları ad
-  ayırmak için boş crate yayımlamayı istemez. Engeller kalkınca gerçek
-  crate'ler yayımlanır. Bu süreçte adların başkasınca alınması riski kabul
-  edilir.
-- `totaldrop-cli`'a `[package.metadata.binstall]` eklenir. Etiket öneki
-  `cli-v` olduğu için `pkg-url` açıkça yazılır; macOS için hedef adı
-  `universal-apple-darwin`'dir. `cargo binstall totaldrop-cli`
-  derlemeden bizim CI ikilimizi indirir.
+- For `cargo install totaldrop-cli`, `totaldrop-cli` and the crates it
+  depends on, `totaldrop-core`, `-crypto`, `-proto` and `-l10n`, are
+  published.
+- **First publication:** crates.io's Trusted Publishing route (GitHub OIDC)
+  cannot create new crates. So the first publication of the five crates is
+  also done from CI, in the `cli-release` environment. A short-lived
+  crates.io token is used for it: its scope is only `publish-new`, limited
+  to names matching `totaldrop*`. Right after, Trusted Publishing is set up
+  for every crate and the token is revoked. No long-lived token is kept for
+  later publications.
+- **Blocker 1:** `totaldrop-l10n/build.rs` reads the translation files from
+  outside the crate (`../../l10n`). `cargo package` only puts the crate
+  folder into the package; as it is, the published crate does not build.
+  The fix is chosen in a separate piece of work. Options: copying the
+  translation files into the crate while packaging, or putting the
+  generated Rust code into the crate.
+- **Blocker 2:** The CLI's development dependencies (`totaldrop-relay`,
+  `totaldrop-rendezvous`) are written with both a path and a version. A
+  versioned development dependency must exist on crates.io; the servers,
+  however, are not published. Either the version field is removed and
+  `tools/check-component-versions.sh` changes accordingly, or the release
+  removes them before `cargo publish`.
+- **Blocker 3:** The crate folders have no licence files; the texts are
+  under `LICENSES/` at the root. Every published crate must carry its own
+  licence texts: MIT and Apache 2.0 for `-core`, `-crypto`, `-proto` and
+  `-l10n`, GPL 3.0 for `-cli`.
+- No placeholder is published while the names are free: crates.io's rules
+  do not want empty crates published to reserve names. The real crates are
+  published once the blockers are gone. The risk that someone else takes
+  the names in the meantime is accepted.
+- `[package.metadata.binstall]` is added to `totaldrop-cli`. Because the
+  tag prefix is `cli-v`, `pkg-url` is written out explicitly; for macOS the
+  target name is `universal-apple-darwin`. `cargo binstall totaldrop-cli`
+  downloads our CI binary without building.
 
 ### Homebrew
 
-- **Tap:** `totaldrop-app/homebrew-tap` deposunda `totaldrop-cli`
-  formülü. `brew install totaldrop-app/tap/totaldrop-cli` macOS (Apple
-  Silicon, Intel) ve Linux'ta bizim CI arşivimizi indirir, özeti denetler
-  ve `totaldrop` ikilisini kurar. Bottle yoktur, Homebrew bir şey derlemez.
-- macOS'ta CLI ikilisi yalnızca ad-hoc imzalıdır (0009). Homebrew'un
-  formül indirmelerine karantina işareti koymadığını ve ikilinin
-  Gatekeeper'a takılmadan çalıştığını bekliyoruz. **Doğrulanacak:** ilk
-  sürümde macOS 15 ve 26'da denenir.
-- 0009 "hesapsız Homebrew kurulumu bir yol sayılmaz" der. Bu karar o
-  cümleyi uygulama paketlerine, yani cask'lere daraltır; CLI formülü
-  hesapsız da bir yoldur (Sonuçlar).
-- **Cask:** Homebrew 5.0'dan beri resmî `homebrew/cask` deposu Gatekeeper
-  denetiminden geçmeyen cask'leri kabul etmez; Eylül 2026'dan beri de
-  bunları kapatır. Kendi tap'imizdeki bir cask bu kuraldan muaf olsa bile
-  macOS onu yine karantinaya alır; kullanıcı aynı zahmetli onay adımlarıyla
-  karşılaşır. macOS uygulamasının cask'i bu yüzden Developer ID imzası ve
-  noter onayından sonra gelir (0009, adım 5).
-- **homebrew-core:** Homebrew kararlı sürüm ister; beta sürümler
-  `homebrew/core`'a giremez. 1.0'dan sonra başvurulur. Başvuru zamanında
-  Homebrew'un bilinirlik ölçütleri yeniden okunur.
-  - homebrew-core kendi altyapısında kaynaktan derler. Bu bir istisnadır
-    (aşağıda).
-  - Formül Homebrew'un deposundadır; onu Homebrew'un bakımcıları ve
-    botları değiştirir. "Aynı tarif her PR'da bizim CI'ımızda da derlenir"
-    koşulu bu yüzden Flathub'daki gibi tam karşılanamaz. Bunun yerine her
-    PR'da formülün bir aynası `brew install --build-from-source` ile
-    derlenir. Kullanıcıya giden bottle'ı ise Homebrew derler ve kendi
-    anahtarıyla imzalar; bizim kanıtımızı taşımaz. Kullanıcı Homebrew'a
-    güvenir; bu, tehdit modeline Flathub için T15'teki gibi yazılır.
+- **Tap:** the `totaldrop-cli` formula in the `totaldrop-app/homebrew-tap`
+  repository. `brew install totaldrop-app/tap/totaldrop-cli` downloads our
+  CI archive on macOS (Apple Silicon, Intel) and Linux, checks the checksum
+  and installs the `totaldrop` binary. There are no bottles; Homebrew
+  builds nothing.
+- On macOS the CLI binary is only ad-hoc signed (0009). We expect Homebrew
+  not to put the quarantine flag on formula downloads, and the binary to
+  run without being stopped by Gatekeeper. **To be verified:** tried on
+  macOS 15 and 26 with the first release.
+- 0009 says "an account-free Homebrew install does not count as a route".
+  This decision narrows that sentence to app packages, that is, casks; the
+  CLI formula is a route even without an account (Consequences).
+- **Cask:** since Homebrew 5.0, the official `homebrew/cask` repository
+  does not accept casks that fail the Gatekeeper check, and since
+  September 2026 it disables them. Even if a cask in our own tap is exempt
+  from this rule, macOS still quarantines it; the user faces the same
+  cumbersome approval steps. So the macOS app's cask comes after the
+  Developer ID signature and notarization (0009, step 5).
+- **homebrew-core:** Homebrew wants stable releases; beta releases cannot
+  enter `homebrew/core`. We apply after 1.0. At the time of applying,
+  Homebrew's notability criteria are read again.
+  - homebrew-core builds from source on its own infrastructure. This is an
+    exception (below).
+  - The formula is in Homebrew's repository; Homebrew's maintainers and
+    bots change it. So the condition "the same recipe is also built in our
+    CI on every PR" cannot be fully met as it is for Flathub. Instead, a
+    mirror of the formula is built with `brew install --build-from-source`
+    on every PR. The bottle that reaches users is built by Homebrew and
+    signed with its own key; it does not carry our provenance. The user
+    trusts Homebrew; this is written into the threat model, as for Flathub
+    in T15.
 
 ### Scoop
 
-- `totaldrop-app/scoop-bucket` deposunda `totaldrop-cli` için bir JSON
-  bildirimi. Bizim `.zip` arşivimize ve özetine işaret eder.
-- Dış inceleme yoktur; bucket bizimdir. Bildirimi `channels.yml` günceller.
+- A JSON manifest for `totaldrop-cli` in the `totaldrop-app/scoop-bucket`
+  repository. It points to our `.zip` archive and its checksum.
+- There is no outside review; the bucket is ours. `channels.yml` updates
+  the manifest.
 
 ### winget
 
-- Bildirimler `microsoft/winget-pkgs` deposuna PR ile girer; Microsoft'un
-  doğrulama hattı ve inceleyicileri birleştirir.
-- **CLI:** `TotalDrop.CLI` kimliği. Kurulum türü `zip`, içindeki kurulum
-  türü `portable`. winget ikiliyi kendi klasörüne açar ve `totaldrop`
-  komutunu PATH'e bağlar.
-- **Uygulama:** Windows uygulaması yalnızca Microsoft Store'dan dağıtılır
-  ([0016](0016-windows-microsoft-store.md)). winget onu `msstore`
-  kaynağından, Store ürün kimliğiyle kurar. Topluluk deposundaki
-  `TotalDrop.TotalDrop` kimliği bir kurulum adresi ister; Store dışında
-  paket olmadığı için yayımlanmaz (0016).
-- winget'te bildirimin `Publisher` alanı ve kimliğin öneki TotalDrop'u
-  yayıncı olarak gösterir. Bu yüzden winget, yayıncının geliştirici
-  olarak göründüğü yerler arasına girer. Orada TotalDrop'u yalnızca
-  TotalDrop yayımlar; 0012 ve `marka.md`'deki liste buna göre güncellenir
-  (Sonuçlar). `TotalDrop.CLI` kimliğini başkası almadan proje alır.
-- İlk bildirim elle, `komac` ya da `wingetcreate` ile gönderilir. Sonraki
-  sürümleri `channels.yml` gönderir.
-- İmza: winget imzasız ikili kabul eder, ama Windows SmartScreen ve
-  Defender uyarı verebilir. CLI ikilisi Store'dan geçmediği için Store'un
-  imzası (0016) onu kapsamaz. Ücretsiz yol SignPath Foundation'ın açık
-  kaynak imza programıdır. Koşulları: OSI lisansı, açık depo, kaynağı
-  doğrulanan CI derlemesi, ekipte iki aşamalı doğrulama. Sertifikada
-  yayıncı "SignPath Foundation" görünür, TotalDrop değil. Bunun marka
-  kuralıyla (0012) uyumu ayrı değerlendirilir. Ücretli imza hizmetleri
-  0005 gereği seçenek değildir. CLI ilk sürümlerde imzasız çıkar.
-- **Doğrulanacak:** winget'in `1.0.0-beta.1` gibi bir sürüm dizesini
-  `1.0.0`'dan önce sıralayıp sıralamadığı. Bugünkü `0.x-beta` sürümlerde
-  sıralama sorun çıkarmaz; soru 1.0'ın betalarında önem kazanır.
+- Manifests enter the `microsoft/winget-pkgs` repository through a PR;
+  Microsoft's validation pipeline and reviewers merge them.
+- **CLI:** the `TotalDrop.CLI` identifier. The installer type is `zip`, the
+  nested installer type `portable`. winget unpacks the binary into its own
+  folder and links the `totaldrop` command into the PATH.
+- **App:** the Windows app is distributed only through the Microsoft Store
+  ([0016](0016-windows-microsoft-store.md)). winget installs it from the
+  `msstore` source, with the Store product ID. The `TotalDrop.TotalDrop`
+  identifier in the community repository needs an installer address;
+  because there is no package outside the Store, it is not published
+  (0016).
+- On winget, the manifest's `Publisher` field and the identifier's prefix
+  show TotalDrop as the publisher. So winget joins the places where the
+  publisher appears as the developer. There, only TotalDrop publishes
+  TotalDrop; the list in 0012 and `marka.md` is updated accordingly
+  (Consequences). The project takes the `TotalDrop.CLI` identifier before
+  someone else does.
+- The first manifest is submitted by hand, with `komac` or `wingetcreate`.
+  `channels.yml` submits the later releases.
+- Signing: winget accepts unsigned binaries, but Windows SmartScreen and
+  Defender may warn. Because the CLI binary does not go through the Store,
+  the Store's signature (0016) does not cover it. The free route is the
+  SignPath Foundation's open-source signing programme. Its conditions: an
+  OSI licence, a public repository, a CI build whose source is verified,
+  two-factor authentication in the team. The certificate shows "SignPath
+  Foundation" as the publisher, not TotalDrop. Whether that fits the brand
+  rule (0012) is evaluated separately. Paid signing services are not an
+  option under 0005. The CLI comes out unsigned in its first releases.
+- **To be verified:** whether winget sorts a version string such as
+  `1.0.0-beta.1` before `1.0.0`. With today's `0.x-beta` versions the order
+  causes no problem; the question matters for the betas of 1.0.
 
 ### Microsoft Store
 
-- Windows uygulamasının dağıtımı, Store hesabı, yayıncı adı ve imzası
-  [0016](0016-windows-microsoft-store.md)'nın konusudur. Bu karar orada
-  verilenleri tekrarlamaz.
-- Bu kararı ilgilendiren tek sonuç: Windows uygulaması için ayrı bir
-  winget bildirimi ya da Scoop paketi olmaz. Scoop ve winget'te yalnızca
-  CLI vardır.
+- The Windows app's distribution, the Store account, the publisher name and
+  the signature are the subject of
+  [0016](0016-windows-microsoft-store.md). This decision does not repeat
+  what is decided there.
+- The only consequence that concerns this decision: there is no separate
+  winget manifest or Scoop package for the Windows app. Scoop and winget
+  only have the CLI.
 
 ### AUR
 
-- **`totaldrop`:** bizim `packaging/arch/PKGBUILD`'imizden kaynaktan
-  derlenir; uygulama ve CLI birlikte gelir. Depodaki PKGBUILD'de
-  `sha256sums=('SKIP')` vardır. AUR `SKIP`'i yalnızca VCS kaynaklarında
-  kabul eder. Bu yüzden `channels.yml`, AUR'a gönderirken etiket
-  arşivinin gerçek SHA-256 özetini yazar.
-- **`totaldrop-bin`:** sürümdeki, bizim CI'ımızın derlediği
-  `.pkg.tar.zst`'yi açıp kurar ve özetini denetler. Derlenmiş tek bir CLI
-  ikilisi değil, uygulamayla birlikte bütün paket kurulur. Yalnızca
-  `x86_64` içindir: Arch paketini yalnızca bu mimari için derliyoruz.
-  `provides=(totaldrop)` ve `conflicts=(totaldrop)` taşır.
-- Omarchy ve Arch kullanıcıları AUR yardımcılarıyla (`yay`, `paru`)
-  kurar.
-- `totaldrop` paketini kullanıcı kendi makinesinde derler. Bu, bizim
-  yayımladığımız bir ikili değildir; kaynak dağıtımıdır. Kurala aykırı
-  değildir.
+- **`totaldrop`:** built from source from our `packaging/arch/PKGBUILD`;
+  the app and the CLI come together. The PKGBUILD in the repository has
+  `sha256sums=('SKIP')`. The AUR accepts `SKIP` only for VCS sources. So
+  when `channels.yml` submits to the AUR, it writes the real SHA-256
+  checksum of the tag archive.
+- **`totaldrop-bin`:** unpacks and installs the `.pkg.tar.zst` from the
+  release, built by our CI, and checks its checksum. Not a single built CLI
+  binary but the whole package, with the app, is installed. It is only for
+  `x86_64`: we build the Arch package only for this architecture. It
+  carries `provides=(totaldrop)` and `conflicts=(totaldrop)`.
+- Omarchy and Arch users install with AUR helpers (`yay`, `paru`).
+- The user builds the `totaldrop` package on their own machine. It is not
+  a binary we publish; it is a source distribution. It does not break the
+  rule.
 
-### APT ve RPM depoları, diğerleri
+### APT and RPM repositories, others
 
-- `apt install` ve `dnf install` için imzalı bir depo gerekir. Seçenekler:
-  Cloudflare R2'de kendi depomuz ([0003](0003-cloudflare-altyapi.md)),
-  Fedora COPR, openSUSE OBS. Depo imza anahtarı ve güncelleme yolu ayrı bir
-  karardır.
-- Topluluğa bırakılanlar: nixpkgs, Chocolatey, MacPorts ve Linux
-  dağıtımlarının kendi depoları. Marka kuralı bunlara izin verir (0012).
-- Snap Store'da TotalDrop'u yalnızca TotalDrop yayımlar (0012). Snap şimdilik
-  planlanmıyor.
-- F-Droid Android'in işidir; ayrı bir issue'da ele alınır.
+- `apt install` and `dnf install` need a signed repository. Options: our
+  own repository on Cloudflare R2 ([0003](0003-cloudflare-altyapi.md)),
+  Fedora COPR, openSUSE OBS. The repository signing key and the update
+  route are a separate decision.
+- Left to the community: nixpkgs, Chocolatey, MacPorts and the Linux
+  distributions' own repositories. The brand rule allows them (0012).
+- On the Snap Store, only TotalDrop publishes TotalDrop (0012). Snap is not
+  planned for now.
+- F-Droid is Android's business; it is dealt with in a separate issue.
 
-## "Yalnızca CI'da derlenir" kuralının istisnaları
+## Exceptions to the "built only in CI" rule
 
-- Bizim CI çıktımızı kuranlar istisna değildir: Homebrew tap, Scoop,
-  winget, AUR `totaldrop-bin`, `cargo binstall`.
-- Kaynak dağıtanlar istisna değildir: crates.io ve AUR `totaldrop`.
-  Kullanıcı kendi makinesinde derler.
-- Kendi altyapısında derleyip ikili dağıtanlar istisnadır: Flathub (0014),
-  ileride homebrew-core, seçilirse COPR ve OBS. Her biri yalnızca etiketli
-  kaynaktan derler. Tarif bizim depomuzdaysa (Flathub, COPR, OBS) aynı
-  tarif her PR'da bizim CI'ımızda da derlenir. Tarif kanalın deposundaysa
-  (homebrew-core) her PR'da bir aynası derlenir ve kullanıcının kanala
-  güvendiği tehdit modelinde yazılır.
-- **Kural değişikliği, Ozan'ın onayını ister.** `CLAUDE.md` ve
-  `surec.md` bugün "tek istisna Flathub" der. Bu karar istisnaları bir
-  listeye çevirir. İki dosya, böyle bir kanalı ilk getiren PR'da
-  güncellenir (homebrew-core ya da COPR/OBS). Sıradaki ilk beş adımın
-  hiçbiri istisna değildir; o zamana kadar iki dosya değişmez.
+- Channels that install our CI output are not exceptions: the Homebrew
+  tap, Scoop, winget, AUR `totaldrop-bin`, `cargo binstall`.
+- Channels that distribute source are not exceptions: crates.io and AUR
+  `totaldrop`. The user builds on their own machine.
+- Channels that build on their own infrastructure and distribute binaries
+  are exceptions: Flathub (0014), later homebrew-core, and COPR and OBS if
+  chosen. Each builds only from the tagged source. If the recipe is in our
+  repository (Flathub, COPR, OBS), the same recipe is also built in our CI
+  on every PR. If the recipe is in the channel's repository
+  (homebrew-core), a mirror of it is built on every PR, and the fact that
+  the user trusts the channel is written into the threat model.
+- **Changing the rule needs Ozan's approval.** `CLAUDE.md` and `surec.md`
+  say "the only exception is Flathub" today. This decision turns the
+  exceptions into a list. The two files are updated in the PR that first
+  brings in such a channel (homebrew-core, or COPR/OBS). None of the first
+  five steps in the order is an exception; until then the two files do not
+  change.
 
-## Gizli bilgiler
+## Secrets
 
-- Kanal işleri yalnızca yayımlanmış sürümlerde ve onay isteyen bir ortamda
-  (environment) çalışır. CLI kanalları için `cli-release` ortamı açılır;
-  AUR için `linux-release` kullanılır. Çatallardan gelen PR'lar gizli
-  değişkenleri görmez.
-- **crates.io:** ilk yayında kısa ömürlü, `publish-new` kapsamlı token
-  (yukarıda), sonra Trusted Publishing.
-- **Homebrew tap ve Scoop bucket:** uzun ömürlü deploy anahtarları yerine
-  bir GitHub App. App yalnızca bu iki depoya kuruludur ve yalnızca
-  içeriğe yazma yetkisi vardır. İş, `actions/create-github-app-token` ile
-  bir saatlik bir token alır. App'in özel anahtarı ortamın gizli
-  değişkenindedir.
-- **AUR:** yalnızca AUR'a kayıtlı, başka bir yerde kullanılmayan bir SSH
-  anahtarı. AUR hesabının sahibi proje sahibidir; en az bir ortak bakımcı
-  eklenir, böylece paket tek bir kişiye bağlı kalmaz.
-- **winget:** PR açmak için `microsoft/winget-pkgs`'i çatallayabilen bir
-  GitHub token'ı gerekir. Bu token için ayrı bir bot hesabı açılır.
-  - Hesabın TotalDrop depolarında hiçbir yetkisi yoktur ve iki aşamalı
-    doğrulama açıktır.
-  - Token yalnızca `public_repo` kapsamındadır ve süresi sınırlıdır; süre
-    dolmadan yenilenir.
-  - winget-pkgs'in katkı sözleşmesini (CLA) bot hesabı bir kez imzalar.
-- Hiçbiri depoya ya da geliştirme makinesine yazılmaz.
+- The channel jobs run only for published releases and in an environment
+  that asks for approval. A `cli-release` environment is opened for the
+  CLI channels; `linux-release` is used for the AUR. Pull requests from
+  forks do not see the secrets.
+- **crates.io:** for the first publication, a short-lived token scoped to
+  `publish-new` (above), then Trusted Publishing.
+- **Homebrew tap and Scoop bucket:** a GitHub App instead of long-lived
+  deploy keys. The App is installed only on these two repositories and has
+  only permission to write contents. The job gets a one-hour token with
+  `actions/create-github-app-token`. The App's private key is in the
+  environment's secret.
+- **AUR:** an SSH key registered only with the AUR and used nowhere else.
+  The project owner owns the AUR account; at least one co-maintainer is
+  added, so that the package does not depend on a single person.
+- **winget:** opening a PR needs a GitHub token that can fork
+  `microsoft/winget-pkgs`. A separate bot account is opened for this token.
+  - The account has no permissions on the TotalDrop repositories, and
+    two-factor authentication is on.
+  - The token is scoped only to `public_repo` and has a limited lifetime;
+    it is renewed before it expires.
+  - The bot account signs winget-pkgs' contributor licence agreement (CLA)
+    once.
+- None of them is written to the repository or to a development machine.
 
-## Sıra
+## Order
 
-1. CLI ikilileri, `cli-v…` etiketi ve sürüm iş akışı.
-2. `channels.yml`, Homebrew tap ve Scoop bucket.
-3. AUR: `totaldrop` ve `totaldrop-bin`.
+1. The CLI binaries, the `cli-v…` tag and the release workflow.
+2. `channels.yml`, the Homebrew tap and the Scoop bucket.
+3. AUR: `totaldrop` and `totaldrop-bin`.
 4. winget: `TotalDrop.CLI`.
-5. crates.io ve `cargo binstall`, üç engel kalkınca.
-6. Windows uygulaması: Store (0016). macOS uygulaması: cask (0009).
-   1.0'dan sonra homebrew-core.
+5. crates.io and `cargo binstall`, once the three blockers are gone.
+6. The Windows app: the Store (0016). The macOS app: a cask (0009).
+   homebrew-core after 1.0.
 
-Her adım kendi issue'su ve PR'ıyla gelir. README'deki ve sitedeki indirme
-tablosu aynı PR'da güncellenir.
+Each step comes with its own issue and PR. The download table in the README
+and on the site is updated in the same PR.
 
-## Riskler
+## Risks
 
-- winget PR'ları Microsoft incelemesine bağlıdır; bir sürümün winget'e
-  gelmesi günler sürebilir.
-- İmzasız Windows ikilileri SmartScreen uyarısı alır. Bu, gizlilik odaklı
-  bir uygulamaya güveni azaltır.
-- Her kanal bir gizli bilgi ve bir saldırı yüzeyi ekler. Ele geçirilmiş
-  bir tap, bucket ya da AUR paketi kullanıcıyı başka bir ikiliye
-  yönlendirebilir. Bunu `SHA256SUMS` ve `gh attestation verify` yakalar,
-  ama yalnızca kullanıcı denetlerse. Tehdit modeli bunu yazar (Sonuçlar).
-- Adlar şimdi boş, ama alınmış değil. crates.io adları engeller kalkana
-  kadar açıkta kalır.
+- winget PRs depend on Microsoft's review; a release may take days to reach
+  winget.
+- Unsigned Windows binaries get a SmartScreen warning. This lowers trust in
+  a privacy-focused app.
+- Every channel adds a secret and an attack surface. A taken-over tap,
+  bucket or AUR package can direct users to another binary. `SHA256SUMS`
+  and `gh attestation verify` catch this, but only if the user checks. The
+  threat model writes this down (Consequences).
+- The names are free now, but not taken. The crates.io names stay open
+  until the blockers are gone.
 
-## Sonuçlar
+## Consequences
 
-- `surec.md`'nin sürüm listesine ve `versioning.md`'ye CLI etiketi ve
-  kanal adımları eklenir. Bu, 1. adımın PR'ında yapılır.
-- `docs/gelistirme.md`'ye kanalların tarifleri ve nasıl denendikleri
-  eklenir.
-- **Tehdit modeli:** 2. adımın PR'ında T12 güncellenir.
-  - Resmî kanallar listesine bu karardaki kanallar eklenir.
-  - Kanalların anahtarları ve hesapları varlık olarak yazılır: GitHub App
-    anahtarı, AUR SSH anahtarı, winget bot hesabı, crates.io sahipleri.
-  - Her kanalın kurduğu dosyanın `gh attestation verify` ile nasıl
-    denetleneceği yazılır.
-  - homebrew-core geldiğinde Homebrew'a güven, T15'teki Flathub gibi
-    yazılır.
-- **0009:** "Hesapsız Homebrew kurulumu bir yol sayılmaz" cümlesi
-  cask'lerle daraltılır; 0009'a bu karara bağlanan bir not eklendi.
-- **0012 ve `marka.md`:** yayıncının geliştirici olarak göründüğü yerler
-  listesine winget eklenir. Bu, 4. adımın PR'ında yapılır.
-- **Kural değişikliği:** `CLAUDE.md` ve `surec.md`'deki "tek istisna
-  Flathub" ifadesi istisnalar listesine çevrilir. Bu, Ozan'ın onayını
-  ister ve böyle bir kanalı ilk getiren PR'da yapılır (yukarıda).
-- **Yeniden bakılacak zaman:** Homebrew formüller için de imza ya da noter
-  onayı isterse; winget imzasız ikilileri reddetmeye başlarsa; SignPath
-  programı kapanır ya da koşulları değişirse; Apple hesabı alınınca.
+- The CLI tag and the channel steps are added to the release list in
+  `surec.md` and to `versioning.md`. This is done in the PR of step 1.
+- The channels' recipes, and how they are tried, are added to
+  `docs/gelistirme.md`.
+- **Threat model:** T12 is updated in the PR of step 2.
+  - The channels in this decision are added to the list of official
+    channels.
+  - The channels' keys and accounts are written down as assets: the GitHub
+    App key, the AUR SSH key, the winget bot account, the crates.io
+    owners.
+  - How to check the file each channel installs with
+    `gh attestation verify` is written down.
+  - When homebrew-core arrives, trust in Homebrew is written down like
+    Flathub in T15.
+- **0009:** the sentence "an account-free Homebrew install does not count
+  as a route" is narrowed to casks; a note pointing to this decision was
+  added to 0009.
+- **0012 and `marka.md`:** winget is added to the list of places where the
+  publisher appears as the developer. This is done in the PR of step 4.
+- **Rule change:** the phrase "the only exception is Flathub" in
+  `CLAUDE.md` and `surec.md` is turned into a list of exceptions. This
+  needs Ozan's approval and is done in the PR that first brings in such a
+  channel (above).
+- **When to look again:** if Homebrew starts to require a signature or
+  notarization for formulae too; if winget starts to reject unsigned
+  binaries; if the SignPath programme closes or its conditions change;
+  once the Apple account is taken out.
 
-## Kaynaklar
+## Sources
 
-- Homebrew, kabul edilen formüller: [docs.brew.sh](https://docs.brew.sh/Acceptable-Formulae)
-- Homebrew, kabul edilen cask'ler: [docs.brew.sh](https://docs.brew.sh/Acceptable-Casks)
-- Homebrew 5.0 ve Gatekeeper: [Workbrew](https://workbrew.com/blog/what-homebrew-5-0-0-means-for-your-mac-fleet)
+- Homebrew, acceptable formulae: [docs.brew.sh](https://docs.brew.sh/Acceptable-Formulae)
+- Homebrew, acceptable casks: [docs.brew.sh](https://docs.brew.sh/Acceptable-Casks)
+- Homebrew 5.0 and Gatekeeper: [Workbrew](https://workbrew.com/blog/what-homebrew-5-0-0-means-for-your-mac-fleet)
 - crates.io Trusted Publishing: [crates.io](https://crates.io/docs/trusted-publishing)
-- Microsoft Store'da ücretsiz bireysel kayıt: [Windows Developer Blog](https://blogs.windows.com/windowsdeveloper/2025/09/10/free-developer-registration-for-individual-developers-on-microsoft-store/)
-- SignPath Foundation koşulları: [signpath.org](https://signpath.org/terms)
-- winget bildirim türleri: [winget-types](https://docs.rs/winget-types/latest/winget_types/installer/struct.InstallerManifest.html)
+- Free individual registration on the Microsoft Store: [Windows Developer Blog](https://blogs.windows.com/windowsdeveloper/2025/09/10/free-developer-registration-for-individual-developers-on-microsoft-store/)
+- SignPath Foundation's conditions: [signpath.org](https://signpath.org/terms)
+- winget manifest types: [winget-types](https://docs.rs/winget-types/latest/winget_types/installer/struct.InstallerManifest.html)
