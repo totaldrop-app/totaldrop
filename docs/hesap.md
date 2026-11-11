@@ -1,660 +1,702 @@
-# Hesap sistemi: Hayalet halka (tasarım)
+# Account system: the Ghost ring (design)
 
-- **Durum:** Kabul, 4 Kasım 2026
-  ([karar 0013](kararlar/0013-hayalet-halka-hesap.md), #243).
-  [Karar 0004](kararlar/0004-mullvad-tarzi-hesap.md)'ün (16 haneli numara)
-  yerini alır.
-- **Kod:** yok. Bu belge davranışı bağlar. Bayt düzeyindeki biçimler, kod
-  yazılmadan önce [protokol notlarına](protocol-v0.1-notes.md) eklenir.
-- **İnceleme:** tasarım, kod yazılmadan önce biçimsel modelle (Tamarin) ve
-  bağımsız bir insan kripto incelemesiyle sınanacak (bkz. "Doğrulama").
-  Model [formal/](../formal/README.md) klasöründe parça parça yazılıyor
-  (#251); ilk parça üyelik zinciridir.
+- **Status:** Accepted, 4 November 2026
+  ([decision 0013](kararlar/0013-hayalet-halka-hesap.md), #243).
+  Supersedes [decision 0004](kararlar/0004-mullvad-tarzi-hesap.md) (the
+  16-digit number).
+- **Code:** none. This document binds the behaviour. The byte-level
+  formats are added to the [protocol notes](protocol-v0.1-notes.md) before
+  any code is written.
+- **Review:** before any code is written, the design will be tested with a
+  formal model (Tamarin) and an independent human cryptography review (see
+  "Verification"). The model is being written piece by piece in the
+  [formal/](../formal/README.md) folder (#251); the first piece is the
+  membership chain.
 
-TotalDrop'ta hesap isteğe bağlıdır. Kodla gönderme ve alma hesapsız
-çalışmaya devam eder. Hesap iki şey sağlar:
+In TotalDrop the account is optional. Sending and receiving with a code
+keeps working without an account. An account gives two things:
 
-- **Benim cihazlarım:** cihazlarınız birbirine kod girmeden gönderir.
-- **Bilinen kişiler:** bir kez eşleştiğiniz kişilere kod girmeden
-  gönderirsiniz.
+- **My devices:** your devices send to each other without entering a code.
+- **Known contacts:** you send to people you have paired with once, without
+  entering a code.
 
-## İlkeler
+## Principles
 
-1. **Sunucuda hesap yok.** Sunucu hesap tablosu, cihaz listesi ya da kişi
-   listesi tutmaz. Hesap, cihazlarınızın aralarında tuttuğu imzalı bir
-   üyelik zinciridir.
-2. **Sunucu güvenilmez.** Her güvenlik iddiası, sunucu kötü niyetliyken de
-   geçerli olmalıdır ([tehdit modeli](tehdit-modeli.md)).
-3. **Yeni şifreleme ilkeli yok.** Yalnızca standart parçalar kullanılır:
+1. **No account on the server.** The server keeps no account table, device
+   list or contact list. The account is a signed membership chain that your
+   devices keep among themselves.
+2. **The server is untrusted.** Every security claim must hold even while
+   the server is malicious ([threat model](tehdit-modeli.md)).
+3. **No new cryptographic primitives.** Only standard parts are used:
    Ed25519, ML-DSA-65, X-Wing (X25519 + ML-KEM-768), HPKE, HKDF-SHA-256,
-   CPace, Noise (mevcut el sıkışma), Privacy Pass ARC, Shamir. Bunların
-   bileşimi yine de özel bir grup üyelik protokolüdür; risk buna göre
-   yönetilir.
-4. **Kapalı kalarak başarısız ol.** Çelişki görülürse gönderim durur ve
-   kullanıcı uyarılır; sessizce bir tarafa güvenilmez.
-5. **Hiçbir hassas işlem tek bir sırrın ya da tek bir cihazın ele
-   geçirilmesiyle yapılamaz.**
+   CPace, Noise (the existing handshake), Privacy Pass ARC, Shamir. Their
+   combination is still a custom group membership protocol; the risk is
+   managed accordingly.
+4. **Fail closed.** If a contradiction is seen, sending stops and the user
+   is warned; neither side is trusted silently.
+5. **No sensitive operation can be done by compromising a single secret or
+   a single device.**
 
-## Kullanıcının gördüğü
+## What the user sees
 
-### Kimlik yazmak yok
+### No identity to type
 
-Hiçbir cihazda hesap numarası, kullanıcı adı ya da parola yazılmaz.
+No account number, user name or password is typed on any device.
 
-- İlk cihaz halkayı kendisi kurar.
-- Yeni bir cihaz eklenirken yeni cihaz bir QR gösterir. Halkadaki bir
-  cihaz QR'ı okur ve eklemeyi başlatır.
-- İki ekranda aynı doğrulama kelimeleri çıkar. Kullanıcı, birkaç seçenek
-  arasından doğru kelimeleri seçer.
-- Yerel ağ yalnızca cihazı **bulmak** için kullanılır. Ekleme her zaman QR
-  ya da kodla (CPace) yapılır.
+- The first device sets up the ring by itself.
+- When a new device is added, the new device shows a QR. A device in the
+  ring scans the QR and starts the addition.
+- The same verification words appear on both screens. The user picks the
+  right words from a few options.
+- The local network is used only to **find** the device. Adding is always
+  done with a QR or a code (CPace).
 
-### Tek liste
+### One list
 
-Halkadaki her cihaz aynı cihaz listesini ve aynı kişi listesini görür.
-Telefonda eklenen kişi PC'de de hazırdır. Listeler halka içinde uçtan uca
-şifreli eşitlenir.
+Every device in the ring sees the same device list and the same contact
+list. A contact added on the phone is ready on the PC too. The lists are
+synchronised inside the ring, end-to-end encrypted.
 
-### Adları kullanıcı verir
+### The user gives the names
 
-Kimlikler arka planda rastgele anahtarlardır. Ekranda kullanıcının verdiği
-ad görünür: "Annem", "İş PC'si". Bu yaklaşımın adı "petname"dir (Miller ve
-Stiegler); küresel ve benzersiz bir ad yerine güvenli ve yerel bir ad
-kullanılır.
+Behind the scenes, identities are random keys. On screen, the name the user
+gave appears: "Mum", "Work PC". This approach is called "petnames" (Miller
+and Stiegler): a secure, local name is used instead of a global, unique
+one.
 
-- Adlar yalnızca halkanın içinde, şifreli eşitlenir. Karşı tarafa ve
-  sunucuya gitmez.
-- Karşı tarafın önerdiği ad ayrı, soluk bir etiket olarak gösterilir. Ad
-  kutusuna otomatik doldurulmaz; yoksa saldırgan kendine "Annem" diyebilir.
-- Aynı ya da benzer bir ad verilirse uyarı çıkar. Benzerlik denetimi
-  homoglifleri ve yön karakterlerini de kapsar.
-- Kişinin halka kimliğinden (bkz. "Üyelik zinciri") türeyen **8 kelimelik
-  (88 bit)** bir işaret istendiğinde gösterilir. Halka kimliği halkanın
-  ömrü boyunca değişmez. Renk yalnızca süstür, güvenlik iddiası taşımaz.
+- Names are synchronised only inside the ring, encrypted. They do not go to
+  the other side or to the server.
+- The name the other side suggests is shown as a separate, faded label. It
+  is not filled into the name field automatically; otherwise an attacker
+  could call themselves "Mum".
+- If the same or a similar name is given, a warning appears. The
+  similarity check also covers homoglyphs and directional characters.
+- An **8-word (88-bit)** fingerprint derived from the contact's ring
+  identity (see "Membership chain") is shown on request. The ring identity
+  does not change for the ring's whole lifetime. Colour is only
+  decoration and carries no security claim.
 
-### Güven katmanları
+### Trust tiers
 
-| Katman | Nasıl eklenir | Gönderince ne olur |
+| Tier | How it is added | What happens on sending |
 | --- | --- | --- |
-| **Benim cihazlarım** | QR ya da kod + doğrulama kelimeleri, bir kez | Soru sormadan alınır (ayarla kapatılabilir) |
-| **Bilinen kişiler** | Bir kez üç kelimelik kod + doğrulama kelimeleri | Kodsuz gönderilir. Alıcıya "Annem 3 dosya gönderiyor, kabul?" sorulur. Kişi başına "her zaman kabul et" seçilebilir |
-| **Yakındakiler** | Her seferinde kodla (bugünkü sistem) | Her seferinde onay istenir |
+| **My devices** | QR or code + verification words, once | Received without asking (can be turned off in settings) |
+| **Known contacts** | A three-word code + verification words, once | Sent without a code. The receiver is asked "Mum is sending 3 files, accept?". "Always accept" can be chosen per contact |
+| **Nearby** | With a code every time (today's system) | Approval is asked every time |
 
-- Sistem "tanıdık cihaz" üzerine değil, "tanıdık kişi" üzerine kurulur.
-  Bir kişinin hangi cihazından gönderdiği önemli değildir. Kişi kendi
-  halkasına cihaz ekleyip çıkardığında karşı tarafın bir şey yapması
-  gerekmez.
-- Kodla yapılan başarılı bir aktarımdan sonra "Bu kişiyi kaydet" düğmesi
-  çıkar. Bu düğme yalnızca iki tarafın da hesabı varsa görünür.
-- Engellenen kişinin kayıtları silinir ve iki taraf arasındaki gizli
-  anahtar atılır. Engellenen tarafa bildirim gitmez; gönderdiği teklifler
-  cevapsız kalır. Engellenen kişi, elindeki baştan halkanın ileriki
-  başlarını günlükte izlemeyi sürdürebilir (bkz. "Kalan riskler").
+- The system is built on "a known person", not "a known device". Which of
+  their devices a person sends from does not matter. When a person adds a
+  device to their ring or removes one, the other side has nothing to do.
+- After a successful transfer with a code, a "Save this contact" button
+  appears. The button only appears if both sides have an account.
+- A blocked contact's records are deleted and the secret key between the
+  two sides is discarded. No notification goes to the blocked side; their
+  offers stay unanswered. The blocked contact can keep following the
+  ring's later heads in the log from the head they hold (see "Remaining
+  risks").
 
-### Çok katmanlı onay
+### Multi-layer approval
 
-| İşlem | Varsayılan | Sıkı mod (ayar) |
+| Operation | Default | Strict mode (setting) |
 | --- | --- | --- |
-| Cihaz ekleme | Mevcut cihazda yönetim anahtarı (biyometri ya da PIN) + doğrulama kelimeleri. Diğer cihazlara anında bildirim gider; 24 saat içinde tek dokunuşla geri alınabilir (geri alma bir `çıkar` kaydıdır) | `ekle` iki cihazın `AK` imzasını taşır. İkinci imza gelmezse (ya da halkada tek cihaz varsa) kayıt tek imzayla **bekleyen** olarak yazılır ve tanık zamanıyla 72 saat sonra yürürlüğe girer; bu sürede herhangi bir cihaz `bekleyen_reddi` yazabilir |
-| Cihaz çıkarma | Yönetim anahtarı | `ekle` ile aynı kural: iki imza ya da 72 saat bekleyen tek imza. Kişiler cihaz sayısını görmediği için kural her halka boyutunda aynıdır. Bedeli: sıkı modda çalınan cihazı tek başınıza hemen çıkaramazsınız; çalınan cihaz `bekleyen_reddi` yazarsa çıkarma iptal olur ve yol `RK`'den geçer (kesin kural biçimsel modelde, bkz. "Biçimsel modelde kesinleşecek kurallar") |
-| Sıkı modu açma ya da kapatma | Yönetim anahtarı | Kapatmak, sıkı modun istediği imza sayısını ister |
-| Kurtarma ile ekleme | 24 kelime + bekleme + kişilerle yeniden doğrulama | 24 kelimeye ek olarak YubiKey ya da 3 kişiden 2'sinin Shamir payı |
-| Kurtarma ifadesini değiştirme | Yönetim anahtarı + bekleme (`ifade_değiştir`) | İkinci cihazın imzası da gerekir |
-| Kişiye "her zaman kabul et" | Yönetim anahtarı | Aynı |
+| Adding a device | The management key on an existing device (biometrics or PIN) + verification words. A notification goes to the other devices at once; it can be undone with one tap within 24 hours (undoing is a `remove` record) | `add` carries the `AK` signatures of two devices. If the second signature does not come (or the ring has a single device), the record is written as **pending** with one signature and takes effect 72 hours later by witness time; during this time any device can write `reject_pending` |
+| Removing a device | The management key | The same rule as `add`: two signatures, or one signature pending for 72 hours. Because contacts do not see the number of devices, the rule is the same for every ring size. The cost: in strict mode you cannot remove a stolen device on your own at once; if the stolen device writes `reject_pending`, the removal is cancelled and the way goes through `RK` (the exact rule in the formal model, see "Rules to settle in the formal model") |
+| Turning strict mode on or off | The management key | Turning it off needs the number of signatures strict mode asks for |
+| Adding by recovery | 24 words + waiting + re-verification with contacts | Besides the 24 words, a YubiKey or the Shamir shares of 2 of 3 contacts |
+| Changing the recovery phrase | The management key + waiting (`change_phrase`) | A second device's signature is needed too |
+| "Always accept" for a contact | The management key | The same |
 
-Sıkı mod yalnızca bir cihaz ayarı değildir: zincirde ve kişilere giden
-başta bir **ilke alanı** olarak durur. Böylece kişiler de tek imzalı bir
-`ekle` ya da `çıkar`ın sıkı modda geçersiz olduğunu denetler.
+Strict mode is not just a device setting: it sits as a **policy field** in
+the chain and in the head sent to contacts. So contacts also check that a
+single-signature `add` or `remove` is invalid in strict mode.
 
-Sunucu tarafında ikinci etken (SMS, TOTP) yoktur ve olmayacaktır, çünkü
-sunucuda hesap yoktur. Halkada 2 ya da daha çok cihaz ve kurtarma ifadesi varsa sıkı modu
-açmak önerilir.
+There is no second factor on the server side (SMS, TOTP), and there will
+not be, because there is no account on the server. If the ring has 2 or
+more devices and a recovery phrase, turning on strict mode is recommended.
 
-## Anahtarlar
+## Keys
 
-| Anahtar | Sahibi | Kullanım |
+| Key | Owner | Use |
 | --- | --- | --- |
-| `IK_i`: Ed25519 + ML-DSA-65 | Her cihaz | `döndür` kayıtlarını ve el sıkışmadaki tek kullanımlık uç anahtarını imzalar |
-| `AK_i`: Ed25519 + ML-DSA-65, kullanıcı doğrulamasına bağlı | Her cihaz, OS anahtar deposunda | Yönetim anahtarı: üyeliği değiştiren kayıtlar, kişi defteri, kurtarmayı reddetme, ifade değişimi |
-| `KK_i`: X-Wing | Her cihaz, dönemsel yenilenir | Yeni halka sırrını almak |
-| `RK`: Ed25519 + ML-DSA-65 ve `RKK`: X-Wing | 24 kelimeden (BIP-39, 256 bit) türer, hiçbir cihazda saklanmaz; açık anahtarları zincirde | `RK` yalnızca gecikmeli cihaz ekleme ve çatal çözme; `RKK` günlükteki aylık kurtarma kaydını açmak |
-| `r_e`: 32 bayt | Dönem e'deki bütün cihazlar | Posta kutusu adları, halka KEM anahtarı |
-| `k_AB`: 32 bayt | İki halka (siz ve bir kişi) | Kişi posta kutuları; her cihaz çıkarmada yenilenir |
+| `IK_i`: Ed25519 + ML-DSA-65 | Every device | Signs `rotate` records and the single-use endpoint key in the handshake |
+| `AK_i`: Ed25519 + ML-DSA-65, bound to user verification | Every device, in the OS key store | Management key: records that change membership, the contact book, rejecting a recovery, changing the phrase |
+| `KK_i`: X-Wing | Every device, renewed periodically | Receiving the new ring secret |
+| `RK`: Ed25519 + ML-DSA-65 and `RKK`: X-Wing | Derived from 24 words (BIP-39, 256 bits), stored on no device; their public keys are in the chain | `RK` only for delayed device addition and fork resolution; `RKK` to open the monthly recovery record in the log |
+| `r_e`: 32 bytes | Every device in epoch e | Mailbox names, the ring KEM key |
+| `k_AB`: 32 bytes | Two rings (you and a contact) | Contact mailboxes; renewed on every device removal |
 
-Her türetme `HKDF-SHA-256` ile yapılır. Etiketler uzunluk önekli ve
-benzersizdir (alan ayrımı). `gün` gibi değerler sabit genişlikte kodlanır.
-Her kayıtta bir algoritma sürümü alanı bulunur.
+Every derivation is done with `HKDF-SHA-256`. Labels are length-prefixed
+and unique (domain separation). Values such as `day` are encoded with a
+fixed width. Every record has an algorithm version field.
 
-Karma imzada iki yarının **ikisi de** doğrulanmalıdır. İki yarı alan
-ayrımlı mesajlar imzalar ve her biri öbürünün açık anahtarına bağlanır.
-Doğrulama yolunun bir yarıyı atlayamadığı ayrı testlerle sınanır.
+In a hybrid signature, **both** halves must verify. The two halves sign
+domain-separated messages, and each is bound to the other's public key.
+That the verification path cannot skip a half is tested with separate
+tests.
 
-Anahtar deposu gerçeği: ML-DSA anahtarları Android Keystore'da ve Linux
-Secret Service'te dışa aktarılamaz biçimde tutulamaz. Ed25519 yalnızca
-yeni Android sürümlerinde donanımdadır. Bu yüzden her ML-DSA yarısı, donanım
-anahtarıyla sarılı bir blob olarak saklanır; `AK`'nin sarma anahtarı da
-kullanıcı doğrulamasına bağlıdır. `IK` her aktarımda imza attığı için
-biyometriye bağlanamaz. Bu nedenle yönetim işlemleri ayrı bir `AK` ile
-yapılır.
+The key store reality: ML-DSA keys cannot be kept non-exportable in the
+Android Keystore or the Linux Secret Service. Ed25519 is in hardware only
+on recent Android versions. So every ML-DSA half is stored as a blob
+wrapped with a hardware key; the wrapping key of `AK` is also bound to
+user verification. Because `IK` signs on every transfer, it cannot be
+bound to biometrics. That is why management operations are done with a
+separate `AK`.
 
-## Üyelik zinciri
+## Membership chain
 
-Bir kayıt şu alanları taşır: sürüm, dönem `e`, önceki kaydın kanonik
-kodlamasının özeti, işlem, ilke alanı (sıkı mod), yük, bir ya da iki
-imzalayan ve imzalar.
+A record carries these fields: version, epoch `e`, a digest of the
+previous record's canonical encoding, the operation, the policy field
+(strict mode), the payload, one or two signers, and the signatures.
 
-**Halka kimliği**, `oluştur` kaydının kanonik özetidir:
-`H("halka", oluştur)`. Halkanın ömrü boyunca değişmez; HPKE `info`
-alanları, teklifler, el sıkışma imzaları ve ayırt edici işaret bu değere
-bağlanır.
+The **ring identity** is the canonical digest of the `create` record:
+`H("ring", create)`. It does not change for the ring's whole lifetime; the
+HPKE `info` fields, offers, handshake signatures and the fingerprint are
+bound to this value.
 
-İşlemler şunlardır:
+The operations are:
 
-| İşlem | İmzalayan | Not |
+| Operation | Signer | Note |
 | --- | --- | --- |
-| `oluştur` | İlk cihazın `AK`'si | `RK` ve `RKK` açık anahtarlarını içerir |
-| `ekle(IK, AK, KK)` | Mevcut bir cihazın `AK`'si (sıkı modda iki cihaz ya da bekleyen tek imza) | |
-| `çıkar(IK)` | Mevcut bir cihazın `AK`'si (sıkı modda iki cihaz ya da bekleyen tek imza) | Varsayılan modda acil işlemdir, hemen yapılır |
-| `bekleyen_reddi` | Mevcut bir cihazın `AK`'si | Sıkı moddaki bekleyen tek imzalı kaydı iptal eder |
-| `ilke(sıkı mod)` | Mevcut ilkenin istediği sayıda `AK` | Sıkı modu açar ya da kapatır |
-| `döndür` | Mevcut bir cihazın `IK`'si | Yalnızca sırrı yeniler; üye kümesi değişmez |
-| `kurtarma_ekle(IK, AK, KK)` | `RK` | Yalnızca ekler, bekler |
-| `kurtarma_reddi` | Mevcut bir cihazın `AK`'si | Bekleyen kurtarmayı iptal eder, `RK`'yi geçersiz kılar |
-| `ifade_değiştir(RK, RKK)` | Mevcut bir cihazın `AK`'si | Yeni ifade; kendi beklemesi var |
-| `çatal_çöz` | `RK` | Bekler, reddedilebilir |
+| `create` | The first device's `AK` | Contains the `RK` and `RKK` public keys |
+| `add(IK, AK, KK)` | An existing device's `AK` (in strict mode two devices, or one signature pending) | |
+| `remove(IK)` | An existing device's `AK` (in strict mode two devices, or one signature pending) | In the default mode it is an emergency operation, done at once |
+| `reject_pending` | An existing device's `AK` | Cancels a pending single-signature record in strict mode |
+| `policy(strict mode)` | As many `AK`s as the current policy asks for | Turns strict mode on or off |
+| `rotate` | An existing device's `IK` | Only renews the secret; the member set does not change |
+| `recovery_add(IK, AK, KK)` | `RK` | Only adds, and waits |
+| `recovery_reject` | An existing device's `AK` | Cancels a pending recovery, invalidates `RK` |
+| `change_phrase(RK, RKK)` | An existing device's `AK` | A new phrase; has its own waiting period |
+| `resolve_fork` | `RK` | Waits, can be rejected |
 
-Kişi listesi ve adlar bu zincirde değil, halka içindeki ayrı bir **kişi
-defterinde** tutulur (bkz. "Kişilere karşı halka"); kişi değişiklikleri
-dönem başlatmaz.
+The contact list and names are not in this chain; they are kept in a
+separate **contact book** inside the ring (see "The ring towards
+contacts"); contact changes do not start an epoch.
 
-- **Her zincir kaydı yeni bir dönem başlatır** ve yeni bir `r_{e+1}` üretir.
-  Bu sır, kalan her cihazın `KK` anahtarına HPKE ile ayrı ayrı şifrelenir.
-  HPKE `info` alanı şunları bağlar: halka kimliği, dönem ve alıcının `IK`'si.
-- **Boyut sabittir.** Kayıt her zaman 15 HPKE şifreli metin taşır; boş
-  olanlar rastgele dolgudur. Sunucu kayıt boyutundan cihaz sayısını
-  çıkaramaz.
-- **Kaydın imzası her şifreli metni kapsar.** Her alıcı, `r_{e+1}` altında
-  bir anahtar onayı (MAC) doğrular. Bozuk bir yük alan cihaz sessizce
-  düşmez; hata bildirir.
-- **Zincir sunucuya açık değildir.** Halka posta kutusunda uçtan uca
-  şifreli dolaşır.
-- **Zamanlama:**
-  - Halka başlarının süresi en çok 7 gündür.
-  - Haftalık `döndür`'ü dönem başına **tek bir cihaz** yapar: `r_e`'den
-    türeyen bir sırada ilk çevrimiçi cihaz, rastgele bir sapmayla. Öteki
-    cihazlar ancak başın süresinin dolmasına 24 saat kala devralır. Böylece
-    döndürme düzeni cihaz sayısını göstermez.
-  - Bir başın süresini uzatmak her zaman yeni bir dönemle yapılır. Eski bir
-    baş yeniden imzalanarak uzatılmaz.
-  - Üyelik değişiklikleri gizlenmez: kişiler, üye kümesinin **hangi
-    dönemde değiştiğini** görür (kaç cihaz olduğunu görmez). Değişikliği
-    gizlemek, kişilerin ekleme ve çıkarma kurallarını denetlemesini
-    engellerdi; güvenlik bu gizliliğin önüne konuldu.
+- **Every chain record starts a new epoch** and generates a new
+  `r_{e+1}`. This secret is encrypted with HPKE separately to the `KK` key
+  of every remaining device. The HPKE `info` field binds: the ring
+  identity, the epoch and the receiver's `IK`.
+- **The size is fixed.** A record always carries 15 HPKE ciphertexts; the
+  empty ones are random padding. The server cannot infer the number of
+  devices from the record size.
+- **The record's signature covers every ciphertext.** Every receiver
+  verifies a key confirmation (MAC) under `r_{e+1}`. A device that
+  receives a broken payload does not drop silently; it reports an error.
+- **The chain is not visible to the server.** It travels end-to-end
+  encrypted in the ring mailbox.
+- **Timing:**
+  - Ring heads have a lifetime of at most 7 days.
+  - The weekly `rotate` is done by **a single device** per epoch: the first
+    device online in an order derived from `r_e`, with a random offset.
+    The other devices take over only 24 hours before the head expires. So
+    the rotation pattern does not reveal the number of devices.
+  - Extending a head is always done with a new epoch. An old head is not
+    extended by re-signing it.
+  - Membership changes are not hidden: contacts see **in which epoch** the
+    member set changed (not how many devices there are). Hiding the change
+    would stop contacts from checking the rules for adding and removing;
+    security was put ahead of this privacy.
 
-### Çatal kuralı
+### Fork rule
 
-Aynı dönemin birden çok geçerli devamı görülebilir. Örneğin iki çevrimdışı
-cihaz aynı anda döndürmüş olabilir, ya da çalınan bir cihaz kendi devamını
-yazmış olabilir. Günlük her geçerli devamı saklar (bkz. "Anonim şeffaflık
-günlüğü"). Okuyan herkes şu kuralları uygular:
+More than one valid continuation of the same epoch may be seen. For
+example, two offline devices may have rotated at the same time, or a stolen
+device may have written its own continuation. The log keeps every valid
+continuation (see "Anonymous transparency log"). Everyone who reads
+applies these rules:
 
-1. **Öncelik:** `AK` imzalı bir üyelik kaydı (`çıkar`, `ekle`),
-   aynı dönemdeki `IK` imzalı `döndür`'ün önüne geçer. Böylece çıkarılmak
-   üzere olan bir cihazın aynı anda yazdığı `döndür`, çıkarmayı engelleyemez.
-2. **Zararsız çatal:** üye kümesi aynı olan eşzamanlı `döndür` kayıtları
-   belirlenimci olarak birleşir: en küçük özete sahip olan kazanır.
-   İmzalayan `r`'yi seçtiği için hangi kaydın kazanacağını öğütebilir; bu
-   zararsızdır, çünkü üyelik aynıdır ve anahtar onayı hiçbir cihazın
-   düşürülmediğini gösterir.
-3. **Gerçek çatal:** başka her durumda (ör. iki `çıkar` birbirini çıkarıyor)
-   cihazlar ve kişiler kapalı kalır. Gönderim durur ve bir uyarı gösterilir.
-4. Bir gözlemci, kendi sabitlediği başın altında kalan çatalları yok sayar.
-5. **Tartışmalı dal**, iki cihaz imzalı kaydın oluşturduğu çözülmemiş
-   gerçek bir çatalın dallarından biridir. Yalnızca tartışmalı bir dalda
-   üye olan cihazların reddi sayılmaz.
-   - **Kurtarma kaydı çatal açmaz.** `kurtarma_ekle` aynı anahtar altındaki
-     bir cihaz kaydıyla (`döndür` de olsa) çatışırsa bu gerçek bir çatal
-     değildir: cihaz dalı geçerli kalır ve kurtarma, bekleyen bir öneri
-     olarak sonraki dönemlere taşınır. Halkanın herhangi bir mevcut
-     cihazının `AK` imzalı `kurtarma_reddi`'si her zaman sayılır. Kilitli
-     hâlde çalınmış bir telefon `AK` kullanamaz; `döndür` yazması
-     kurtarmayı ne iptal eder ne de bekletir.
-6. **Geç gelen çatal da çataldır.** Bir değer ne kadar geç yazılmış olursa
-   olsun yok sayılmaz; aksi hâlde ilk yazan (ör. kilidi açık çalınmış bir
-   cihaz, sahibinin cihazı çevrimdışıyken) kalıcı olarak kazanırdı. Madde 4
-   yalnızca halkanın kendi cihazlarını ve başı çatalın ötesine geçmiş
-   kişileri korur; eski başı sabitlemiş bir kişi geç bir çatalı görür ve
-   kapalı kalır. Bu bir hizmet kaybıdır, ele geçirme değildir (bkz. "Kalan
-   riskler").
-7. Gerçek çatalı yalnızca `RK` imzalı bir `çatal_çöz` kaydı çözer. Bu kayıt
-   da bekleme süresine tabidir. `çatal_çöz` madde 4'ü aşar: başını
-   kaybeden dala sabitlemiş kişiler de seçilen dala geçer. Kişiler
-   `çatal_çöz`'ü kurtarma gibi ele alır: otomatik kabul yoktur, doğrulama
-   kelimeleri **yeniden karşılaştırılır**. Böylece ifadeyi ele geçiren
-   biri, çıkarılmış eski bir cihazla çatal açıp `RK` ile kendi dalını
-   seçse bile kişileri sessizce taşıyamaz. Çatal sürerken iki dal da
-   tartışmalıdır; tartışmalı bir daldaki `kurtarma_reddi` `RK`'yi
-   geçersiz kılmaz.
-8. Çatal çözülemezse (hırsızın elinde hem bir cihaz hem ifade varsa)
-   kişiler sizi yeniden eşleştirir. En kötü sonuç hizmet kaybıdır, sessiz
-   ele geçirme değildir.
+1. **Precedence:** an `AK`-signed membership record (`remove`, `add`)
+   takes precedence over an `IK`-signed `rotate` in the same epoch. So a
+   `rotate` written at the same moment by a device about to be removed
+   cannot block the removal.
+2. **Harmless fork:** concurrent `rotate` records with the same member set
+   merge deterministically: the one with the smallest digest wins. Because
+   the signer chooses `r`, it can grind which record wins; this is harmless,
+   because the membership is the same and the key confirmation shows that
+   no device was dropped.
+3. **Real fork:** in every other case (e.g. two `remove`s removing each
+   other) devices and contacts fail closed. Sending stops and a warning is
+   shown.
+4. An observer ignores forks below the head it has pinned.
+5. A **disputed branch** is one of the branches of an unresolved real fork
+   made by records signed by two devices. A rejection by devices that are
+   members only on a disputed branch does not count.
+   - **A recovery record does not open a fork.** If `recovery_add` conflicts
+     with a device record under the same key (even a `rotate`), this is not
+     a real fork: the device branch stays valid, and the recovery is
+     carried over to the following epochs as a pending proposal. An
+     `AK`-signed `recovery_reject` by any current device of the ring always
+     counts. A phone stolen while locked cannot use `AK`; its writing a
+     `rotate` neither cancels nor delays the recovery.
+6. **A late fork is a fork too.** However late a value was written, it is
+   not ignored; otherwise the first writer (e.g. a device stolen unlocked,
+   while its owner's device is offline) would win for good. Rule 4 only
+   protects the ring's own devices and contacts whose head has moved past
+   the fork; a contact that pinned an old head sees a late fork and fails
+   closed. This is a loss of service, not a takeover (see "Remaining
+   risks").
+7. Only an `RK`-signed `resolve_fork` record resolves a real fork. This
+   record is also subject to the waiting period. `resolve_fork` overrides
+   rule 4: contacts pinned to the branch that loses its head also move to
+   the chosen branch. Contacts treat `resolve_fork` like a recovery: there
+   is no automatic acceptance, and the verification words are **compared
+   again**. So someone who has taken the phrase, even if they open a fork
+   with an old removed device and choose their own branch with `RK`,
+   cannot move the contacts silently. While the fork lasts, both branches
+   are disputed; a `recovery_reject` on a disputed branch does not
+   invalidate `RK`.
+8. If the fork cannot be resolved (the thief holds both a device and the
+   phrase), contacts pair with you again. The worst outcome is a loss of
+   service, not a silent takeover.
 
-## Posta kutuları
+## Mailboxes
 
-Sunucu yalnızca kısa ömürlü posta kutularını bilir. Kutular Durable
-Object'tir; 16 baytlık, rastgele görünen bir adla açılır ve boyut ile ileti
-sınırları vardır. Kutuya yazmak bir ARC jetonu ister. Sunucuda başka bir
-tablo yoktur.
+The server only knows short-lived mailboxes. The mailboxes are Durable
+Objects; each is opened under a 16-byte name that looks random, and has
+size and message limits. Writing to a mailbox needs an ARC token. There is
+no other table on the server.
 
-Bu **hesap kutuları**, kodla aktarımın buluşma kutularından ayrı bir
-türdür. [Protokol notlarındaki](protocol-v0.1-notes.md) buluşma kutusu
-kuralları (bir saat içinde silinme, taraf başına 32 ileti, 16 KiB gövde)
-değişmez; hesap kutularının ömrü ve sınırları aşağıdadır ve kod öncesinde
-protokol notlarına ayrı bir madde olarak yazılır.
+These **account mailboxes** are a different kind from the meeting mailboxes
+of a transfer with a code. The meeting mailbox rules in the
+[protocol notes](protocol-v0.1-notes.md) (deleted within an hour, 32
+messages per side, 16 KiB body) do not change; the account mailboxes'
+lifetime and limits are below, and are written into the protocol notes as
+a separate item before the code.
 
-| Kutu | Ad | Ömür |
+| Mailbox | Name | Lifetime |
 | --- | --- | --- |
-| Halka | `HKDF(r_e, "kutu halka" ‖ gün)` | 48 saat |
-| Kişi, yön başına | `HKDF(k_AB, "kutu A'ya" ‖ gün)` | 48 saat |
-| Yetişme | Zincirdeki, cihaza özel gizli bir değerden, dönem başına | 30 gün |
+| Ring | `HKDF(r_e, "mailbox ring" ‖ day)` | 48 hours |
+| Contact, per direction | `HKDF(k_AB, "mailbox to A" ‖ day)` | 48 hours |
+| Catch-up | From a device-specific secret value in the chain, per epoch | 30 days |
 
-- **Gün ve ay:** UTC tarihidir ve duvar saatinden gelir. Cihazlar dünün,
-  bugünün ve yarının kutusunu dinler; bu, cihazlar arasında ±1 günlük saat
-  farkını karşılar. Daha büyük fark, kullanıcıya "saat yanlış" uyarısı
-  olarak gösterilir.
-- **Bekleme süreleri** (kurtarma, sıkı mod) yerel saatle değil, tanıkların
-  eş-imzaladığı günlük köklerindeki zaman damgalarıyla ölçülür. Tanıklar
-  bağımsız olduğu için ağdan sahte saat (NTP, NITZ) vermek beklemeyi
-  kısaltmaz. Cihaz ayrıca gördüğü en büyük zamanı saklar ve geriye giden
-  zamanı reddeder.
-- İki günden uzun çevrimdışı kalan bir cihaz yetişme kutusundan ve öteki
-  cihazlarla doğrudan zincir eşitlemesinden yetişir. Uzun süre çevrimdışı
-  kalan bir kişi ise "güncel başı iste" akışını kullanır.
-- **Kurtarma kaydı:** halkadaki bir cihaz her ay, `RKK`'ye HPKE ile
-  şifreli **yalnızca en son başı** şeffaflık günlüğüne yazar. Anahtar
-  `H("günlük kurtarma", RKK açık anahtarı, ay)`'dır. Bu bir posta kutusu
-  değildir: günlük hiçbir değeri silmez, bu yüzden çöp yazarak gerçek baş
-  dışarı itilemez; okuyan, imzası geçersiz değerleri atar. Kişi defteri, `k_AB`'ler,
-  adlar ve halka sırrı (`r_e`) kayıtta bulunmaz. Böylece ifadeyi çalan
-  biri, beklemeden kişilerinizi, adlarını ya da kişi kutularını öğrenemez.
-  Çıkarılmış bir cihaz da anahtarı hesaplayabilir; içeriği açamaz ve
-  oradaki baş, günlükten zaten izleyebildiği bilgiden fazlasını vermez
-  (bkz. "Kalan riskler").
-- Her kutu ayrı bir bağlantıyla ve rastgele zamanlarla yoklanır. Aynı
-  NAT IP'sinden gelen bağlantılar yine de ilişkilendirilebilir (bkz.
-  "Kalan riskler").
-- Zincir kayıtları (~23 KB) buluşma kutusu gövde sınırını (16 KiB) aşar.
-  Hesap kutularında parçalı gönderim kullanılır.
+- **Day and month:** the UTC date, from the wall clock. Devices listen to
+  yesterday's, today's and tomorrow's mailbox; this covers a ±1 day clock
+  difference between devices. A larger difference is shown to the user as
+  a "clock is wrong" warning.
+- **Waiting periods** (recovery, strict mode) are measured not by the
+  local clock but by the timestamps in the log roots that the witnesses
+  co-sign. Because the witnesses are independent, a fake time from the
+  network (NTP, NITZ) does not shorten the wait. The device also keeps the
+  largest time it has seen, and rejects time going backwards.
+- A device offline for more than two days catches up from the catch-up
+  mailbox and through direct chain synchronisation with the other
+  devices. A contact offline for a long time uses the "ask for the current
+  head" flow.
+- **Recovery record:** every month, a device in the ring writes **only the
+  latest head**, encrypted with HPKE to `RKK`, into the transparency log.
+  The key is `H("log recovery", RKK public key, month)`. This is not a
+  mailbox: the log deletes no value, so the real head cannot be pushed out
+  by writing garbage; the reader discards values with invalid signatures.
+  The contact book, the `k_AB`s, the names and the ring secret (`r_e`) are
+  not in the record. So someone who steals the phrase cannot, without
+  waiting, learn your contacts, their names or the contact mailboxes. A
+  removed device can also compute the key; it cannot open the content, and
+  the head there gives no more than what it can already follow from the
+  log (see "Remaining risks").
+- Each mailbox is polled with a separate connection and at random times.
+  Connections from the same NAT IP can still be linked (see "Remaining
+  risks").
+- Chain records (~23 KB) exceed the meeting mailbox body limit (16 KiB).
+  Account mailboxes use chunked sending.
 
-## Kişilere karşı halka
+## The ring towards contacts
 
-- **Halka başı:** cihazlar 16 yapraklı bir Merkle ağacına konur. Her
-  yaprak `H("yaprak", m, nonce_i, IK_i, AK_i)` biçimindedir; `m` üyelik
-  sürümüdür ve yalnızca üye kümesi değişince artar. Yapraklar her üyelik
-  sürümünde yeniden tuzlanır ve sırası rastgeledir. Boş yapraklar rastgele
-  dolgudur. Ağacın kökü `C_e`'dir.
-- **Kişiye gönderilen baş:** `{halka kimliği, e, C_e, işlem türü, ilke,
-  halka KEM açık anahtarı, önceki_baş_özeti, son_kullanma}`. İşlem türü
-  `döndür`, `üyelik` ya da `kurtarma` olabilir. Halka KEM açık anahtarı
-  `r_e`'den türer; teklifler buna şifrelenir.
-- **Kişi başı nasıl denetler:**
-  - `döndür`: kök değişmez (`C_e = C_{e−1}`); kişi bunu doğrudan
-    karşılaştırır. Bir `IK` imzası ve imzalayanın bu kökte bulunduğunu
-    gösteren Merkle kanıtı yeterlidir. Böylece `IK` ile üyelik
-    değiştirilemez.
-  - `üyelik`: `C_{e−1}`'e karşı Merkle kanıtıyla, önceki başın ilke
-    alanının istediği sayıda `AK` imzası. Sıkı modda tek imzalı bir `ekle`
-    ya da `çıkar` ancak tanık zamanıyla 72 saat bekledikten ve
-    `bekleyen_reddi` görülmedikten sonra geçerlidir.
-  - `kurtarma`: `RK` imzası; bekleme ve yeniden doğrulama kuralları uygulanır.
-  - Kanıt 4 adımdır ve 128 bayt tutar.
-- **Sabitleme:** kişi ilk eşleşmede halka başını sabitler. Bu ilk güven
-  (TOFU), doğrulama kelimeleriyle korunur. Kişi daha sonra yalnızca bir
-  önceki başa bağlanan ve şeffaflık günlüğünde bulunan devamları kabul
-  eder. Süresi dolmuş bir başa gönderim yapılmaz.
-- **Başı izleme:** kişi sabitlediği baştan başlayarak `L_{k+1}` altındaki
-  değerleri sırayla alır, her birini denetler ve yokluk kanıtı gelene kadar
-  ilerler. Bu, yılda en az 52 adımdır; kişi her bağlantıda yetişir.
-- **Cihaz sayısı:** baş, cihaz sayısını (1-16) göstermez. Kişi, üyeliğin
-  hangi dönemde değiştiğini görür ve zamanla el sıkışmalarda gördüğü farklı
-  cihazları sayabilir. Bunlar kabul edilen sınırlardır.
-- **Kişi defteri:** bir kişinin güvenlik alanları (`k_AB`, sabitlenmiş
-  baş) ve verilen ad, halka içinde bir cihazın `AK`'siyle imzalanmış,
-  yalnızca eklenebilen kayıtlardır. Güvenlik alanlarındaki bir değişiklik
-  eşleşme dökümüne (transcript) bağlanır. Sıralama, saat sapması sınırlı
-  bir karma mantıksal saatle (HLC) yapılır. Defter, halka posta kutusunda
-  `r_e` altında şifreli eşitlenir.
-- **Kişi anahtarı yenileme:** bir cihaz çıkarılınca her kişi için yeni bir
-  `k_AB` üretilir. Yeni değer eski `k_AB` ile değil, karşı halkanın o anki
-  X-Wing anahtarına HPKE ile ve `AK` imzasıyla gönderilir; böylece eski
-  anahtarı bilen çıkarılmış cihaz yeni değeri öğrenemez.
-- **Yeniden bulma:** kurtarmadan sonra kişilerin halkayı nasıl bulduğu
-  "Kurtarma" bölümündedir.
-- **Çıkarma sonrası:** bir cihaz çıkarılınca, onun eklediği ya da
-  değiştirdiği her kişi "yeniden doğrula" diye işaretlenir.
+- **Ring head:** the devices are put into a Merkle tree with 16 leaves.
+  Each leaf has the form `H("leaf", m, nonce_i, IK_i, AK_i)`; `m` is the
+  membership version and goes up only when the member set changes. The
+  leaves are re-salted on every membership version, and their order is
+  random. Empty leaves are random padding. The tree's root is `C_e`.
+- **The head sent to a contact:** `{ring identity, e, C_e, operation type,
+  policy, ring KEM public key, previous_head_digest, expiry}`. The
+  operation type can be `rotate`, `membership` or `recovery`. The ring KEM
+  public key is derived from `r_e`; offers are encrypted to it.
+- **How a contact checks the head:**
+  - `rotate`: the root does not change (`C_e = C_{e−1}`); the contact
+    compares this directly. An `IK` signature and a Merkle proof that the
+    signer is in this root are enough. So membership cannot be changed with
+    `IK`.
+  - `membership`: with a Merkle proof against `C_{e−1}`, as many `AK`
+    signatures as the previous head's policy field asks for. In strict
+    mode, a single-signature `add` or `remove` is valid only after waiting
+    72 hours by witness time and with no `reject_pending` seen.
+  - `recovery`: an `RK` signature; the waiting and re-verification rules
+    apply.
+  - The proof is 4 steps and takes 128 bytes.
+- **Pinning:** at the first pairing, the contact pins the ring head. This
+  trust on first use (TOFU) is protected by the verification words. After
+  that, the contact accepts only continuations that link to the previous
+  head and are in the transparency log. Nothing is sent to an expired
+  head.
+- **Following the head:** starting from the head it pinned, the contact
+  fetches the values under `L_{k+1}` in order, checks each one, and moves
+  on until a proof of absence comes. This is at least 52 steps a year; the
+  contact catches up on every connection.
+- **Number of devices:** the head does not show the number of devices
+  (1–16). The contact sees in which epoch the membership changed, and over
+  time can count the different devices it sees in handshakes. These are
+  accepted limits.
+- **Contact book:** a contact's security fields (`k_AB`, the pinned head)
+  and the name given are append-only records inside the ring, signed with a
+  device's `AK`. A change in the security fields is bound to the pairing
+  transcript. Ordering uses a hybrid logical clock (HLC) with bounded clock
+  skew. The book is synchronised in the ring mailbox, encrypted under
+  `r_e`.
+- **Renewing contact keys:** when a device is removed, a new `k_AB` is
+  generated for every contact. The new value is sent not with the old
+  `k_AB` but with HPKE to the other ring's current X-Wing key, and with an
+  `AK` signature; so the removed device that knows the old key cannot learn
+  the new value.
+- **Finding again:** how contacts find the ring after a recovery is in the
+  "Recovery" section.
+- **After a removal:** when a device is removed, every contact it added or
+  changed is marked "verify again".
 
-## Anonim şeffaflık günlüğü (ilk sürümde)
+## Anonymous transparency log (in the first release)
 
-Sunucu ile eski bir yetkisi olan birinin (çıkarılmış bir cihaz ya da
-çalınmış ifade) iş birliği yaptığını düşünelim. Kişiyle halka arasındaki
-tek kanal bu sunucuysa, ikisi yalıtılmış bir kişiye kendi içinde tutarlı
-ama sahte bir geçmiş gösterebilir. Bu, çatal tutarlılığının bilinen
-sınırıdır (SUNDR). Bunu aşmak için ya tek görünümlü bir günlük ya da bant
-dışı doğrulama gerekir. TotalDrop ilk sürümde ikisini de kullanır.
+Suppose the server and someone with an old authority (a removed device or a
+stolen phrase) work together. If the server is the only channel between a
+contact and the ring, the two can show an isolated contact a history that
+is consistent in itself but fake. This is the known limit of fork
+consistency (SUNDR). Getting past it needs either a single-view log or
+out-of-band verification. TotalDrop uses both in the first release.
 
-- **Yapı:** günlük, doğrulanabilir bir eşlemedir (verifiable map). Bir
-  anahtarın altında **birden çok değer** durabilir ve hiçbiri silinmez.
-  - Anahtar: `L_{e+1} = H("günlük", başın_özeti_e)`. Anahtarı yalnızca
-    e. başı bilenler (halka ve kişileri) hesaplayabilir. `oluştur` kaydının
-    anahtarı `L_0 = H("günlük ilk", halka kimliği)`'dir.
-  - Değer: e+1. baş, `başın_özeti_e`'den türeyen bir anahtarla şifreli.
-    Sunucu ve günlüğü okuyan başkaları içeriği göremez, halkaları
-    birbirine bağlayamaz.
-  - Okuyan, bir anahtarın altındaki **her** değeri çözer ve imzasını
-    denetler. Geçersiz değerler yok sayılır. Birden çok geçerli değer
-    çatal demektir ve çatal kuralı uygulanır.
-- **Tanıklar:** bağımsız tanıklar günlüğün köklerini zaman damgasıyla
-  eş-imzalar. Böylece sunucu iki kişiye iki farklı günlük gösteremez.
-- **Dahil etme zorlaması:** tanıklar yalnızca kökü imzalarsa sunucu dürüst
-  bir kaydı hiç yazmayarak (sansür) çıkarılmış bir cihazın kendi `döndür`
-  kaydını tek geçerli değer gibi gösterebilir. Bunu önlemek için:
-  - Uygulama sabit bir tanık listesi taşır (n tanık). Kişiler bir kökü
-    ancak bu listeden en az k tanığın imzasıyla kabul eder (k > n/2).
-  - Halka her kaydını, `L` ve şifreli değerin kendisiyle birlikte,
-    listedeki **bütün** tanıklara da (ARC jetonuyla) gönderir. Tanık kaydı
-    günlüğe kendisi de iletir ve halkaya imzalı bir alındı verir.
-  - Tanık, aldığı bir `(L, değer)` çiftini 1 saatten uzun süre içermeyen
-    bir kökü eş-imzalamaz. Tanık özetle değil tam kayıtla çalıştığı için
-    sunucu her bildirilen kaydı ekleyebilir; uydurma bir özetle günlüğü
-    durdurmak mümkün değildir. Anlamsız kayıtlar rastgele bir `L` altında
-    kalır, kimseyi etkilemez ve ARC ile sınırlıdır.
-  - Her kabul edilen kök, her tanığın kaydı içerdiğini söyler; bu yüzden
-    sansür, k tanığın iş birliğini ister. Bu, P2 ve P3'ün zaten dayandığı
-    varsayımdır.
-  - Süre sınırı: kayıt en geç 1 saatte köke girer, kişinin kabul ettiği
-    kök en çok 1 saat eskidir. Çıkarmanın etkisi en geç **2 saatte** her
-    kişiye ulaşır.
-  - Tanık rastgele görünen `L` ve şifreli değer görür, içeriği okuyamaz.
-    Ama bağlantının IP'sini ve zamanını görür (bkz. "Kalan riskler").
-- **Tazelik:** kişi her gönderimden önce, tanıkların en çok 1 saat önce
-  eş-imzaladığı bir kök ister ve o kökte `L_{e+1}` altında geçerli bir
-  değer **bulunmadığının** kanıtını alır. Bulunuyorsa ya da taze kök
-  gelmiyorsa göndermez. Bu, çıkarılmış bir cihazın eski başla dosya
-  almasını (dondurma saldırısını) gönderim anında durdurur.
-- **Alırken de tazelik:** bir teklif alan halka, teklifi göstermeden önce
-  gönderen halka için aynı denetimi yapar: taze tanıklı kök ve gönderenin
-  başından sonraki dönemin yokluk kanıtı. Böylece çıkarılmış bir cihaz,
-  eski başla "Annem" adına dosya gönderemez; "her zaman kabul et" açık
-  olsa bile.
-- **Halkanın denetimi:** halka, kendi anahtarları altında bilmediği geçerli
-  bir değer görürse durumu hemen anlar ve kullanıcıyı uyarır. Tanık
-  alındısı olan kendi kaydı 2 saat içinde tanıklı bir köke girmezse de
-  uyarır; bu, tanıkların da iş birliği yaptığı sansür demektir.
-- **Çöp yazma:** anahtarı bilen biri (bir kişi ya da çıkarılmış bir cihaz)
-  anahtarın altına geçersiz değerler yazabilir. Bunlar yok sayılır ve her
-  yazma bir ARC jetonu ister. Anahtar başına değer sınırı **yoktur**:
-  sınır olsaydı ya çöp gerçek kaydı dışarıda bırakırdı ya da dahil etme
-  zorlaması günlüğü durdururdu. Okuyan değerleri sayfa sayfa alır ve
-  geçersizleri ucuzca atar (çözme başarısız olur). Kalan etki, okuyanın
-  bant genişliği ve çöpün ARC bedelidir.
-- **ARC anahtarları:** ARC düzenleyici anahtarları da aynı günlükte
-  yayımlanır. Böylece sunucu her istemciye ayrı bir anahtar vererek
-  istemcileri etiketleyemez (anahtar tutarlılığı).
-- **Adaylar (doğrulanacak):**
-  - Doğrulanabilir eşleme için Meta'nın açık kaynak `akd` kütüphanesi
-    (Parakeet, NDSS 2023). Anahtar başına çok değerli kullanıma uygunluğu
-    denetlenecek.
-  - Tanıklar için Sigsum ya da transparency.dev tanık ağı.
+- **Structure:** the log is a verifiable map. **More than one value** can
+  sit under a key, and none is ever deleted.
+  - Key: `L_{e+1} = H("log", head_digest_e)`. Only those who know the e-th
+    head (the ring and its contacts) can compute the key. The key of the
+    `create` record is `L_0 = H("log first", ring identity)`.
+  - Value: the (e+1)-th head, encrypted with a key derived from
+    `head_digest_e`. The server and others who read the log cannot see the
+    content, and cannot link rings to each other.
+  - The reader decrypts **every** value under a key and checks its
+    signature. Invalid values are ignored. More than one valid value means
+    a fork, and the fork rule applies.
+- **Witnesses:** independent witnesses co-sign the log's roots with a
+  timestamp. So the server cannot show two contacts two different logs.
+- **Enforcing inclusion:** if the witnesses only sign the root, the server
+  can, by never writing an honest record (censorship), present a removed
+  device's own `rotate` record as the only valid value. To prevent this:
+  - The app carries a fixed list of witnesses (n witnesses). Contacts
+    accept a root only with the signatures of at least k witnesses from
+    this list (k > n/2).
+  - The ring also sends every record, together with `L` and the encrypted
+    value itself, to **all** the witnesses on the list (with an ARC token).
+    The witness forwards the record to the log itself too, and gives the
+    ring a signed receipt.
+  - A witness does not co-sign a root that has left out, for more than 1
+    hour, an `(L, value)` pair it received. Because the witness works with
+    the full record and not a digest, the server can add every reported
+    record; stopping the log with a made-up digest is not possible.
+    Meaningless records stay under a random `L`, affect nobody, and are
+    limited by ARC.
+  - Every accepted root says that every witness included the record; so
+    censorship needs k witnesses to work together. This is the assumption
+    P2 and P3 already rest on.
+  - Time limit: a record enters a root within 1 hour at the latest, and the
+    root a contact accepts is at most 1 hour old. The effect of a removal
+    reaches every contact within **2 hours** at the latest.
+  - The witness sees an `L` that looks random and an encrypted value, and
+    cannot read the content. But it sees the connection's IP and time (see
+    "Remaining risks").
+- **Freshness:** before every send, the contact asks for a root that the
+  witnesses co-signed at most 1 hour ago, and gets a proof that in that
+  root there is **no** valid value under `L_{e+1}`. If there is one, or no
+  fresh root comes, it does not send. This stops, at the moment of sending,
+  a removed device from receiving files with an old head (the freeze
+  attack).
+- **Freshness when receiving too:** a ring that receives an offer does the
+  same check for the sending ring before showing the offer: a fresh
+  witnessed root and a proof of absence of the epoch after the sender's
+  head. So a removed device cannot send files in "Mum"'s name with an old
+  head, even with "always accept" on.
+- **The ring's own check:** if the ring sees a valid value it does not know
+  under its own keys, it understands the situation at once and warns the
+  user. It also warns if its own record with a witness receipt does not
+  enter a witnessed root within 2 hours; that means censorship with the
+  witnesses also working together.
+- **Writing garbage:** someone who knows the key (a contact or a removed
+  device) can write invalid values under the key. They are ignored, and
+  every write needs an ARC token. There is **no** limit on values per key:
+  with a limit, either the garbage would push the real record out, or
+  enforcing inclusion would stop the log. The reader fetches the values
+  page by page and discards the invalid ones cheaply (decryption fails).
+  The remaining effect is the reader's bandwidth and the ARC cost of the
+  garbage.
+- **ARC keys:** the ARC issuer keys are published in the same log. So the
+  server cannot tag clients by giving each one a different key (key
+  consistency).
+- **Candidates (to be verified):**
+  - For the verifiable map, Meta's open-source `akd` library (Parakeet,
+    NDSS 2023). Its fitness for several values per key will be checked.
+  - For the witnesses, Sigsum or the transparency.dev witness network.
 
-## Kurtarma
+## Recovery
 
-- **İsteğe bağlıdır.** Tek cihazlı halkada belirgin bir uyarıyla önerilir.
-- **İfade:** 24 kelime (BIP-39) `RK`'yi ve `RKK`'yi türetir.
-- **Paylaştırma:** isteğe bağlı olarak ifade Shamir ile t-of-n paylara
-  bölünebilir. Örneğin 3 bilinen kişiden 2'si, ya da bir kişi + YubiKey
-  (WebAuthn PRF). Paylar `RK`'nin açık anahtarına karşı denetlenir; bozuk
-  bir pay yakalanır. Senkronize passkey kullanılmaz, çünkü kullanıcıyı
-  Apple ya da Google hesabına bağlar.
-- **Yol (bütün cihazlar kayıpsa):**
-  1. Yeni cihaz ifadeden `RKK`'yi türetir, günlükteki son kurtarma
-     kayıtlarını açar ve en son başı öğrenir. Kişileri öğrenmez.
-  2. `L_{e+1}` altına `RK` imzalı bir `kurtarma_ekle` yazar. Kayıt bu başı
-     ebeveyn olarak adlandırır.
-  3. Bekleme başlar. Halkanın kalan cihazları (varsa) ve kişiler kaydı
-     günlükte görür.
-- **Bekleme:** halkada 2 ya da daha çok cihaz varsa 72 saat, tek cihaz
-  varsa 7 gün; tanık zamanıyla ölçülür.
-  - Bekleme sırasında herhangi bir cihaz `kurtarma_reddi` yazabilir. Red,
-    `RK`'yi geçersiz kılar; yeni ifade `ifade_değiştir` ile, kendi
-    beklemesiyle verilir.
-  - Aynı anahtar altında bir cihazın `AK` imzalı geçerli bir kaydı da
-    varsa, cihaz kaydı önceliklidir ve kurtarma kaydı geçersiz sayılır
-    (çatal kuralı, madde 1'in genişletilmesi). `IK` imzalı bir `döndür`
-    kurtarmayı durdurmaz: kilitli hâlde çalınmış ve çevrimiçi kalan bir
-    telefon, `döndür` yazarak kurtarmayı engelleyemez.
-- **Bekleme kötü niyetli sunucuya karşı bir veto penceresi değildir:**
-  sunucu tanıklarla birlikte red kaydını sansürlerse bekleme yalnızca
-  gecikmedir. Bu durumda P7'yi kişilerin yeniden doğrulaması sağlar.
-- **Kişiler:** bekleme süresince kişiler "bu kişi hesabını kurtarıyor"
-  uyarısını görür. Bekleme bitince kurtarılan halkayı yeniden bulan
-  kişilerdir:
-  - Her cihaz, sabitlediği bütün kişi başlarını günde en az bir kez
-    günlükte izler; gönderim beklemeden kurtarma başını görür.
-  - Kurtarma başını gören kişi, `HKDF(kurtarma başının özeti, "kutu yeniden
-    doğrula" ‖ gün)` adlı bir **yeniden bulma kutusuna**, başın KEM
-    anahtarına şifreli bir teklif bırakır. Yeni cihaz bu kutuyu 30 gün
-    dinler.
-  - Başı bilen başkaları (engellenmiş bir kişi gibi) de bu kutuya teklif
-    bırakabilir. Bu yüzden kurtarılan halka her teklifi yeni bir eşleşme
-    gibi ele alır: doğrulama kelimeleri **yeniden karşılaştırılır**, yeni
-    bir `k_AB` kurulur ve kişiye ad yeniden verilir. Süre dolunca otomatik kabul yoktur. Kelimeler
-  yalnızca kanalın, kelimeleri gösteren cihazla kurulduğunu kanıtlar; kişi,
-  karşısındakinin gerçekten siz olduğunu bant dışı (yüz yüze ya da sesli
-  aramayla) doğrulamalıdır.
-- **Kalan risk:** telefon ve ifade birlikte çalınırsa bu katman korumaz.
+- **It is optional.** In a single-device ring it is recommended with a
+  prominent warning.
+- **Phrase:** 24 words (BIP-39) derive `RK` and `RKK`.
+- **Splitting:** optionally, the phrase can be split into t-of-n shares
+  with Shamir. For example 2 of 3 known contacts, or one contact + a
+  YubiKey (WebAuthn PRF). The shares are checked against `RK`'s public key;
+  a broken share is caught. Synced passkeys are not used, because they tie
+  the user to an Apple or Google account.
+- **The way (if every device is lost):**
+  1. The new device derives `RKK` from the phrase, opens the latest
+     recovery records in the log and learns the latest head. It does not
+     learn the contacts.
+  2. It writes an `RK`-signed `recovery_add` under `L_{e+1}`. The record
+     names this head as its parent.
+  3. The waiting starts. The ring's remaining devices (if any) and the
+     contacts see the record in the log.
+- **Waiting:** 72 hours if the ring has 2 or more devices, 7 days with a
+  single device; measured by witness time.
+  - During the wait, any device can write `recovery_reject`. The rejection
+    invalidates `RK`; a new phrase is given with `change_phrase`, with its
+    own waiting period.
+  - If under the same key there is also a valid `AK`-signed record by a
+    device, the device record takes precedence and the recovery record is
+    considered invalid (the fork rule, an extension of rule 1). An
+    `IK`-signed `rotate` does not stop the recovery: a phone stolen while
+    locked that stays online cannot block the recovery by writing a
+    `rotate`.
+- **Against a malicious server, the wait is not a veto window:** if the
+  server, together with the witnesses, censors the rejection record, the
+  wait is only a delay. In that case P7 is provided by the contacts'
+  re-verification.
+- **Contacts:** during the wait, contacts see a "this contact is recovering
+  their account" warning. Once the wait is over, it is the contacts who
+  find the recovered ring again:
+  - Every device follows all the contact heads it has pinned in the log at
+    least once a day; it sees the recovery head without waiting for a send.
+  - A contact that sees the recovery head leaves an offer, encrypted to the
+    head's KEM key, in a **find-again mailbox** named
+    `HKDF(recovery head digest, "mailbox verify again" ‖ day)`. The new
+    device listens to this mailbox for 30 days.
+  - Others who know the head (such as a blocked contact) can also leave an
+    offer in this mailbox. So the recovered ring treats every offer like a
+    new pairing: the verification words are **compared again**, a new
+    `k_AB` is set up, and the contact is given a name again. When the time
+    runs out, there is no automatic acceptance. The words only prove that
+    the channel was set up with the device showing the words; the contact
+    must verify out of band (face to face or with a voice call) that the
+    other side really is you.
+- **Remaining risk:** if the phone and the phrase are stolen together, this
+  layer does not protect.
 
-## Gönderim
+## Sending
 
-1. Gönderen, kişinin kutusuna bir **teklif** bırakır.
-   - Teklif, halkanın X-Wing anahtarına (`r_e`'den türer) HPKE ile
-     şifrelenir.
-   - Teklifi gönderen cihaz `IK`'siyle imzalar ve gönderen halkanın güncel
-     başına karşı Merkle kanıtını ekler. İmza şunları kapsar: iki halkanın
-     kimliği, HPKE çıktısı ve gönderenin bildiği alıcı başı (baş yankısı).
-   - Teklifte yalnızca buluşma bilgisi bulunur, dosya anahtarı bulunmaz.
-2. Alıcı halkadaki çevrimiçi bir cihaz teklifi açar. Mevcut Noise + ML-KEM
-   el sıkışmasını başlatır ([protokol notları](protocol-v0.1-notes.md),
-   "Section 6: connections and the handshake").
-3. Her iki taraf da kendi halkasının o anki üyesi olduğunu kanıtlar:
-   - tek kullanımlık uç anahtarı `IK` ile imzalanır;
-   - imza, Noise el sıkışma özetini, rolü ve iki halkanın kimliğini kapsar;
-   - imzaya bir Merkle kanıtı eklenir.
-   Bu bağlamalar bilinmeyen anahtar paylaşımı ve yeniden oynatma
-   saldırılarını önler. Noise ön paylaşımlı anahtarı (psk), kodun yerine
-   iki halkanın ortak sırrından türer. Kesin tanım protokol notlarına
-   yazılacak.
-4. Oturum anahtarları geçici anahtarlardan gelir. Halka sırrı ya da bir
-   cihaz anahtarı sonradan sızsa bile kaydedilmiş bir aktarım çözülemez.
+1. The sender leaves an **offer** in the contact's mailbox.
+   - The offer is encrypted with HPKE to the ring's X-Wing key (derived
+     from `r_e`).
+   - The device that sends the offer signs it with its `IK` and adds a
+     Merkle proof against the sending ring's current head. The signature
+     covers: the identities of both rings, the HPKE output and the
+     receiver's head as the sender knows it (head echo).
+   - The offer holds only the meeting information, not the file key.
+2. An online device in the receiving ring opens the offer. It starts the
+   existing Noise + ML-KEM handshake
+   ([protocol notes](protocol-v0.1-notes.md), "Section 6: connections and
+   the handshake").
+3. Both sides prove that they are current members of their own ring:
+   - the single-use endpoint key is signed with `IK`;
+   - the signature covers the Noise handshake hash, the role and the
+     identities of both rings;
+   - a Merkle proof is added to the signature.
+   These bindings prevent unknown key-share and replay attacks. The Noise
+   pre-shared key (psk) is derived from the two rings' shared secret
+   instead of the code. The exact definition will be written into the
+   protocol notes.
+4. The session keys come from ephemeral keys. Even if the ring secret or a
+   device key leaks later, a recorded transfer cannot be decrypted.
 
-## Kötüye kullanıma karşı
+## Against abuse
 
-- **ARC jetonları** (Anonymous Rate-limited Credentials, IETF Privacy Pass
-  taslağı): bir kez alınan kimlik bilgisinden sabit sayıda, birbirine
-  bağlanamayan jeton üretilir. Böylece istemci kimliği olmadan kimlik
-  bilgisi başına kota konabilir.
-  - Düzenleyen ve doğrulayan aynı Worker'dır.
-  - İstemci tarafında da bir Rust uygulaması gerekir.
-- **Kimlik bilgisi almak:** birkaç saniyelik bir iş kanıtı (proof of work)
-  gerekir ve IP başına sınır vardır.
-- **Sahte istemci (Sybil) direnci** iş kanıtına ve IP sınırına dayanır.
-  Bunlar botnete karşı zayıftır ve operatör NAT'ı (CGNAT) arkasındaki
-  kullanıcıları zorlayabilir. Play Integrity kullanılmaz: Linux'ta yoktur
-  ve gizliliği bozar.
+- **ARC tokens** (Anonymous Rate-limited Credentials, an IETF Privacy Pass
+  draft): from a credential obtained once, a fixed number of tokens that
+  cannot be linked to each other are generated. So a quota per credential
+  can be set without a client identity.
+  - The issuer and the verifier are the same Worker.
+  - A Rust implementation is needed on the client side too.
+- **Obtaining a credential:** needs a proof of work of a few seconds, and
+  there is a limit per IP.
+- **Resistance to fake clients (Sybil)** rests on the proof of work and the
+  IP limit. These are weak against botnets and can strain users behind
+  operator NAT (CGNAT). Play Integrity is not used: it does not exist on
+  Linux and breaks privacy.
 
-## Bildirimler (Android)
+## Notifications (Android)
 
-- Varsayılan olarak UnifiedPush ve uygulama açıkken WebSocket bağlantısı
-  kullanılır.
-- **İsteğe bağlı FCM uyandırma:** Google'a yalnızca içeriksiz bir "uyan"
-  sinyali gider. Kutu adı ve kimlik gitmez.
-- Uyandırma belirteci her kutu için ayrı türetilir ve körleştirilir.
-  Sunucuda kutu ile cihaz arasında bir bağ tablosu oluşmaz.
+- By default, UnifiedPush and a WebSocket connection while the app is open
+  are used.
+- **Optional FCM wake-up:** only a content-free "wake up" signal goes to
+  Google. No mailbox name or identity goes.
+- The wake-up token is derived separately for each mailbox and blinded.
+  No table linking mailboxes and devices forms on the server.
 
-## Matematik
+## Mathematics
 
-| Konu | Değer |
+| Topic | Value |
 | --- | --- |
-| Kurtarma ifadesi | 2048²⁴ = 2²⁶⁴, sağlamadan sonra 256 bit; Grover altında ~2¹²⁸ |
-| Kutu adı çakışması | N ≈ 1,9·10¹⁰ ad/yıl için N²/2¹²⁹ ≈ 5·10⁻¹⁹ |
-| Kutu adı tahmini | ~5·10⁷ canlı ad ile deneme başına ~2⁻¹⁰² |
-| Kişi eşleşmesi | Üç kelimelik kod: çevrimiçi deneme başına 2⁻³³ (CPace, çevrimdışı deneme yok). Doğrulama kelimeleri: 2⁻⁴⁴, ama yalnızca kullanıcı karşılaştırırsa |
-| Ayırt edici işaret | 8 kelime, 88 bit; tek hedefe taklit ~2⁸⁸ işlem, N kişiden herhangi birine ~2⁸⁸/N |
-| Shamir 2-of-3 | Her pay sahibi 0,9 olasılıkla ulaşılabilirse kurtarma olasılığı 0,972. 3-of-5 için 0,991. t−1 pay sır hakkında hiç bilgi vermez |
-| Bekleme (dürüst teslim varsayımıyla) | Fark edilmeme olasılığı P = Π(1 − p_i)^T. İki cihaz, p = 0,9, T = 3 gün: 10⁻⁶. Tek cihaz, p = 0,5, T = 7 gün: 0,0078. Kötü niyetli sunucuya karşı güvence bu formülden değil, günlükten ve kişilerin yeniden doğrulamasından gelir |
-| Dönem değişim boyutu | Her zaman 15 × (1120 + 48) ≈ 17,5 KB HPKE (dolgulu); kayıt ~23 KB |
-| Yıllık trafik | En az 52 dönem × ~23 KB ≈ 1,2 MB, halka başına |
-| Neden MLS değil | n ≤ 16'da TreeKEM'in O(log n) avantajı (4'e karşı 15) anlamsız; MLS'nin karmaşıklığı büyük |
+| Recovery phrase | 2048²⁴ = 2²⁶⁴, 256 bits after the checksum; ~2¹²⁸ under Grover |
+| Mailbox name collision | N²/2¹²⁹ ≈ 5·10⁻¹⁹ for N ≈ 1.9·10¹⁰ names/year |
+| Guessing a mailbox name | ~2⁻¹⁰² per try with ~5·10⁷ live names |
+| Contact pairing | Three-word code: 2⁻³³ per online try (CPace, no offline tries). Verification words: 2⁻⁴⁴, but only if the user compares them |
+| Fingerprint | 8 words, 88 bits; imitating a single target ~2⁸⁸ operations, any one of N contacts ~2⁸⁸/N |
+| Shamir 2-of-3 | If each share holder can be reached with probability 0.9, the recovery probability is 0.972. 0.991 for 3-of-5. t−1 shares give no information at all about the secret |
+| Waiting (assuming honest delivery) | Probability of going unnoticed P = Π(1 − p_i)^T. Two devices, p = 0.9, T = 3 days: 10⁻⁶. One device, p = 0.5, T = 7 days: 0.0078. The assurance against a malicious server comes not from this formula but from the log and the contacts' re-verification |
+| Epoch change size | Always 15 × (1120 + 48) ≈ 17.5 KB of HPKE (padded); a record ~23 KB |
+| Yearly traffic | At least 52 epochs × ~23 KB ≈ 1.2 MB, per ring |
+| Why not MLS | At n ≤ 16, TreeKEM's O(log n) advantage (4 against 15) is meaningless; MLS's complexity is large |
 
-## Güvenlik özellikleri
+## Security properties
 
-Her özellik [tehdit modeline](tehdit-modeli.md) yazılır ve bir testle ya
-da biçimsel modeldeki bir lemmayla bağlanır.
+Every property is written into the [threat model](tehdit-modeli.md) and
+tied to a test or to a lemma in the formal model.
 
-| No | Özellik |
+| No | Property |
 | --- | --- |
-| P1 | **Üyelik bütünlüğü:** zincire yalnızca mevcut bir cihaz ya da (gecikmeli) `RK` kayıt ekler |
-| P2 | **Geri alma ve çatal tespiti:** bir dönemin her geçerli devamı günlükte görünür; birden çoğu çataldır. Tanıklar, iki farklı görünümün gösterilmesini engeller |
-| P3 | **Çıkarma sonrası gizlilik ve kimlik:** çıkarma kaydı tanıklara bildirildikten en geç 2 saat sonra, çıkarılan cihaz gönderilen içeriği okuyamaz ve halka adına dosya gönderemez; sunucuyla birlikte çalışsa bile. Bunu dahil etme zorlaması ile gönderirken ve alırken yapılan tazelik denetimi sağlar. Tanıklar sunucuyla iş birliği yaparsa bu güvence yoktur |
-| P4 | **İleri gizlilik:** aktarım anahtarları geçicidir |
-| P5 | **Sunucuda hesap tablosu yok:** saklanan veriden hesaplar, cihaz sayıları ve kişi ilişkileri anahtar olmadan çıkarılamaz. Canlı bağlantıdaki IP ve zamanlama bu kapsamda değildir |
-| P6 | **Kişilere karşı en az bilgi:** halka başı cihaz sayısını göstermez. Üyeliğin hangi dönemde değiştiği görünür |
-| P7 | **Sessiz ele geçirme yok:** yalnızca ifade çalınırsa ele geçirme, cihazlarda ya da kişilerde fark edilir. Telefon ve ifade birlikte çalınırsa bu güvence yoktur |
-| P8 | **Kuantum sonrası gizlilik:** anahtar dağıtımı ve aktarım X-Wing ya da ML-KEM ile yapılır |
+| P1 | **Membership integrity:** only an existing device, or (delayed) `RK`, adds records to the chain |
+| P2 | **Rollback and fork detection:** every valid continuation of an epoch appears in the log; more than one is a fork. The witnesses prevent two different views from being shown |
+| P3 | **Post-removal secrecy and authentication:** at most 2 hours after the removal record is reported to the witnesses, the removed device cannot read the content sent and cannot send files in the ring's name, even working with the server. This is provided by enforcing inclusion and the freshness check when sending and receiving. If the witnesses work with the server, this assurance does not hold |
+| P4 | **Forward secrecy:** transfer keys are ephemeral |
+| P5 | **No account table on the server:** accounts, device counts and contact relations cannot be extracted from the stored data without the keys. The IP and timing of live connections are out of this scope |
+| P6 | **Least information towards contacts:** the ring head does not show the number of devices. In which epoch the membership changed is visible |
+| P7 | **No silent takeover:** if only the phrase is stolen, a takeover is noticed on the devices or by the contacts. If the phone and the phrase are stolen together, this assurance does not hold |
+| P8 | **Post-quantum secrecy:** key distribution and transfer are done with X-Wing or ML-KEM |
 
-## Kalan riskler (kabul edilen)
+## Remaining risks (accepted)
 
-- **IP ve zamanlama:** Cloudflare bağlantı anında IP'yi görür. Aynı
-  NAT'tan bağlanan cihazlar ve kutular ilişkilendirilebilir. Bunu azaltan
-  OHTTP (ayrı bir kuruluşun aracısıyla) ve Tor sonraki aşamadadır. Site ve
-  mağaza metinlerinde "sunucu hiçbir şey bilmez" denmez; "sunucu hesap
-  tutmaz" denir.
-- **ARC kimlik bilgisi alma anı:** düzenleyici IP'yi görür. Ev NAT'ında
-  anonimlik kümesi tek bir hanedir.
-- **Kişilere görünenler:** bir kişi üyeliğin hangi dönemde değiştiğini
-  görür ve zamanla el sıkışmalarda gördüğü cihazları sayabilir. Bir baş
-  bilen herkes (engellenmiş bir kişi ya da çıkarılmış bir cihaz da) ileriki
-  başları günlükte izleyebilir: üyelik değişim zamanlarını, işlem türünü
-  ve son kullanma tarihlerini görür, içerik ve cihaz sayısını görmez. Bunu
-  kesmek için kişi başına baş teslimi ya da engellemede yenilenen bir
-  zincir gerekir; biçimsel model aşamasında değerlendirilecek.
-- **Günlükte çöp yazma:** bir dönemin günlük anahtarını bilen biri (bir
-  kişi ya da çıkarılmış bir cihaz) o anahtarın altına çok sayıda geçersiz
-  değer yazarak okuyanları yavaşlatabilir. Dönemi kilitleyemez; ARC ile
-  pahalılaştırılır.
-- **İfade ile çıkarılmış eski bir cihaz birlikte:** bu, "telefon ve ifade
-  birlikte çalınması" ile aynı sınıftadır. Çatal açıp `RK` ile kendi
-  dalını seçebilir; kişiler yeniden doğrulama yapmadıkça taşınmaz.
-- **Kişileri izleme trafiği:** her cihaz kişi başlarını günde bir kez
-  günlükte izler. Günlük sunucusu ve tanıklar bu sorguları IP ile
-  ilişkilendirebilir; sorgular sayfalı ve rastgele zamanlıdır, OHTTP
-  sonraki aşamadadır.
-- **Kilidi açık çalınan cihaz:** çıkarılmadan önce `AK` ile cihaz
-  ekleyebilir ya da öteki cihazları çıkarmaya çalışabilir. Diğer cihazlar
-  bildirim alır; karşılıklı çıkarma gerçek çataldır ve `RK` ile çözülür.
-- **Tanıklar:** yeter sayıdaki tanık sunucuyla iş birliği yaparsa P2 ve P3
-  yoktur ve kayıtlar sansürlenebilir. Tanıklar farklı kuruluşlardan
-  seçilir. Dahil etme zorlaması standart tanık protokolünde yoktur; tanık
-  yazılımına TotalDrop'un eklemesi gerekir.
-- **Birlikte çalınma:** telefon ve ifade birlikte çalınırsa koruma yoktur.
-- **Geç çatalla durdurma:** çıkarılmış bir cihaz, eski bir başın anahtarı
-  altına çelişen bir kayıt yazarak o başı hâlâ sabitlemiş kişileri kapalı
-  bırakabilir. Halkanın kendi cihazları ve güncel kişiler etkilenmez. `RK`
-  ile `çatal_çöz` ya da kişiyle yeniden eşleşme çözer. Kurtarma ifadesi
-  olmayan halka için bu, yeniden eşleşme demektir.
-- **Tanıkların gördüğü:** her kayıt bütün tanıklara doğrudan gittiği için
-  bir tanık, bir halkanın bağlantı IP'sini ve haftalık düzenini zaman içinde
-  ilişkilendirebilir; içeriği ve kişileri göremez. OHTTP bunu azaltır ve
-  sonraki aşamadadır.
-- **Canlı ele geçirme:** kilidi açık, aktif kullanılan bir cihazın canlı
-  olarak ele geçirilmesi kapsam dışıdır.
-- **Kütüphane olgunluğu:** kuantum sonrası Rust kütüphaneleri 1.0 öncesidir
-  ve bağımsız olarak denetlenmemiştir. Karma yapı klasik güvenceyi korur.
-  Algoritmalar sürüm alanının arkasında değiştirilebilir. X-Wing test
-  vektörleri tek bir taslak sürümüne sabitlenip depoya konur.
+- **IP and timing:** Cloudflare sees the IP at connection time. Devices and
+  mailboxes connecting from the same NAT can be linked. OHTTP (through a
+  separate organisation's relay) and Tor, which reduce this, come in a
+  later stage. The texts on the site and in the stores do not say "the
+  server knows nothing"; they say "the server keeps no account".
+- **The moment of obtaining an ARC credential:** the issuer sees the IP.
+  Behind a home NAT, the anonymity set is a single household.
+- **What contacts see:** a contact sees in which epoch the membership
+  changed, and over time can count the devices it sees in handshakes.
+  Anyone who knows a head (a blocked contact or a removed device too) can
+  follow the later heads in the log: they see the times of membership
+  changes, the operation type and the expiry dates, not the content or the
+  number of devices. Cutting this needs per-contact head delivery or a
+  chain renewed on blocking; to be evaluated at the formal model stage.
+- **Writing garbage into the log:** someone who knows an epoch's log key (a
+  contact or a removed device) can slow readers down by writing many
+  invalid values under that key. They cannot lock the epoch; ARC makes it
+  expensive.
+- **The phrase together with an old removed device:** this is in the same
+  class as "the phone and the phrase stolen together". It can open a fork
+  and choose its own branch with `RK`; contacts are not moved unless they
+  re-verify.
+- **Traffic for following contacts:** every device follows the contact
+  heads in the log once a day. The log server and the witnesses can link
+  these queries by IP; the queries are paged and at random times, and
+  OHTTP comes in a later stage.
+- **A device stolen unlocked:** before it is removed, it can add a device
+  with `AK` or try to remove the other devices. The other devices get a
+  notification; mutual removal is a real fork and is resolved with `RK`.
+- **Witnesses:** if enough witnesses work with the server, P2 and P3 do not
+  hold and records can be censored. The witnesses are chosen from
+  different organisations. Enforcing inclusion is not in the standard
+  witness protocol; TotalDrop needs to add it to the witness software.
+- **Stolen together:** if the phone and the phrase are stolen together,
+  there is no protection.
+- **Stopping with a late fork:** a removed device can, by writing a
+  conflicting record under an old head's key, leave the contacts that still
+  pin that head failing closed. The ring's own devices and up-to-date
+  contacts are not affected. `resolve_fork` with `RK`, or pairing with the
+  contact again, solves it. For a ring without a recovery phrase, this
+  means pairing again.
+- **What the witnesses see:** because every record goes directly to all the
+  witnesses, a witness can, over time, link a ring's connection IP and its
+  weekly pattern; it cannot see the content or the contacts. OHTTP reduces
+  this and comes in a later stage.
+- **Live takeover:** the live takeover of an unlocked device in active use
+  is out of scope.
+- **Library maturity:** the post-quantum Rust libraries are pre-1.0 and
+  have not been independently audited. The hybrid construction keeps the
+  classical assurance. The algorithms can be replaced behind the version
+  field. The X-Wing test vectors are pinned to a single draft version and
+  put into the repository.
 
-## Kabul ölçütleri (kod ve sürüm için)
+## Acceptance criteria (for the code and the release)
 
-- **K1. Kötü niyetli sunucu taklidi.** Test sunucusu her şeyi yapabilir.
-  Buna rağmen:
-  - listeye cihaz ekleyemez;
-  - çıkarılmış bir cihazı geri getiremez;
-  - iki kişiye iki farklı liste gösteremez, ya da gösterirse fark edilir.
-- **K2. Çıkarma sonrası.** Çıkarma kaydı tanıklara bildirildikten en geç
-  2 saat sonra çıkarılan cihaz gönderilen dosyaları açamaz ve halka adına
-  dosya gönderemez. Sunucu ona yardım etse ve dürüst kaydı sansürlese bile
-  (tanıklar dürüstken).
-- **K3. Kurtarma.** Kurtarma ifadesini bilen biri, cihazlar ve kişiler fark
-  etmeden cihaz ekleyemez ve beklemeden kişi listesini öğrenemez. Testte
-  yerel saat, bekleme süresi, red ve yeniden doğrulama sınanır.
-- **K3b. Sıkı mod.** Kişi, sıkı moddaki bir halkanın tek imzalı `ekle` ya
-  da `çıkar` kaydını 72 saatlik bekleme dolmadan ya da `bekleyen_reddi`
-  görüldükten sonra reddeder.
-- **K3c. Tanıklar.** Uydurma bir kayıt bildirimi günlüğü durduramaz;
-  sunucunun düşürdüğü bir kayıt, kişilerin kabul ettiği köke en geç 1 saatte
-  girer ya da kök imzalanmaz.
-- **K4. Sızan veritabanı.** Sunucu veritabanının tamamı sızsa bile iki kutu
-  adının aynı hesaba ait olduğu anahtar olmadan bulunamaz.
-- **K5. Biçimsel model.** Protokol Tamarin ile modellenir ve P1-P8 lemma
-  olarak kanıtlanır. İlk lemma "kötü sunucu + eski yetki" desenidir.
-  Bekleme süreleri için ayrıca bir model denetimi (örneğin TLA+)
-  değerlendirilir.
-- **K6. Fuzz.** Zincir, baş, teklif ve günlük kanıtı ayrıştırıcıları ile
-  çatal birleştirme kuralı için fuzz hedefleri vardır.
+- **K1. Imitating a malicious server.** The test server can do anything.
+  Even so:
+  - it cannot add a device to the list;
+  - it cannot bring back a removed device;
+  - it cannot show two contacts two different lists, or if it does, it is
+    noticed.
+- **K2. After removal.** At most 2 hours after the removal record is
+  reported to the witnesses, the removed device cannot open the files sent
+  and cannot send files in the ring's name. Even if the server helps it and
+  censors the honest record (while the witnesses are honest).
+- **K3. Recovery.** Someone who knows the recovery phrase cannot add a
+  device without the devices and the contacts noticing, and cannot learn
+  the contact list without waiting. The test exercises the local clock, the
+  waiting period, rejection and re-verification.
+- **K3b. Strict mode.** A contact rejects a single-signature `add` or
+  `remove` record of a ring in strict mode before the 72-hour wait is over,
+  or after a `reject_pending` has been seen.
+- **K3c. Witnesses.** A made-up record report cannot stop the log; a record
+  that the server dropped enters the root that contacts accept within 1
+  hour at the latest, or the root is not signed.
+- **K4. Leaked database.** Even if the whole server database leaks, that
+  two mailbox names belong to the same account cannot be found without the
+  keys.
+- **K5. Formal model.** The protocol is modelled with Tamarin and P1–P8 are
+  proved as lemmas. The first lemma is the "bad server + old authority"
+  pattern. A separate model check (for example TLA+) is considered for the
+  waiting periods.
+- **K6. Fuzz.** There are fuzz targets for the chain, head, offer and log
+  proof parsers, and for the fork merge rule.
 
-## Biçimsel modelde kesinleşecek kurallar
+## Rules to settle in the formal model
 
-Dört inceleme turunda her yama, çatal ve kurtarma kurallarının etkileşimde
-yeni bir köşe durumu açtı. Bu kurallar elle daha fazla yamanmaz; kod
-öncesindeki Tamarin modelinde, aşağıdaki sorular lemma olarak çözülür:
+In four review rounds, every patch opened a new corner case in the
+interaction of the fork and recovery rules. These rules are no longer
+patched by hand; in the Tamarin model before the code, the following
+questions are settled as lemmas:
 
-- Kurtarma ifadesi olmayan bir halkada, başı çatalın ötesine geçmiş
-  kişiler için geç bir çatalın tek çözümü yeniden eşleşmedir. Daha iyi bir
-  kural var mı?
-- Sıkı modda çalınan cihaz `bekleyen_reddi` ile çıkarmayı engellerse
-  sahibinin `RK` ile izleyeceği yolun kesin tanımı.
-- Bekleyen tek imzalı bir kayıt aynı anahtar altındaki öteki kayıtlarla
-  nasıl sıralanır.
-- Önceliğin (madde 1), kurtarma önerisinin ve `çatal_çöz`'ün birlikte
-  "yalnızca ifade ile sessiz ele geçirme yok" (P7) özelliğini sağladığı.
+- In a ring without a recovery phrase, for contacts whose head has moved
+  past the fork, the only answer to a late fork is pairing again. Is there
+  a better rule?
+- If in strict mode a stolen device blocks a removal with
+  `reject_pending`, the exact definition of the way the owner follows with
+  `RK`.
+- How a pending single-signature record is ordered with the other records
+  under the same key.
+- That precedence (rule 1), the recovery proposal and `resolve_fork`
+  together provide the property "no silent takeover with the phrase alone"
+  (P7).
 
-## Doğrulama ve uygulama sırası
+## Order of verification and implementation
 
-1. **Bu belge ve [karar 0013](kararlar/0013-hayalet-halka-hesap.md)**
-   (kod yok).
-2. **Tamarin modeli** ve bağımsız insan kripto incelemesi. İnceleme
-   kütüphane seçimini de kapsar.
-3. **Protokol notları:** bayt biçimleri ve test vektörleri.
-4. **Çekirdek:** `totaldrop-crypto` ve `totaldrop-core`. Bilinen yanıt
-   vektörleri, özellik testleri ve fuzz hedefleriyle.
-5. **Sunucu:** posta kutusu, günlük ve ARC Worker'ları. Kötü niyetli
-   sunucu taklidiyle test edilir.
-6. **Uygulamalar:** Linux (KDE, Hyprland, Omarchy) ve Android. 35 dilde
-   metinler.
-7. **Gizlilik politikası:** 35 dilde, özellik yayımlanmadan önce
-   güncellenir.
+1. **This document and [decision 0013](kararlar/0013-hayalet-halka-hesap.md)**
+   (no code).
+2. **Tamarin model** and an independent human cryptography review. The
+   review also covers the choice of libraries.
+3. **Protocol notes:** byte formats and test vectors.
+4. **Core:** `totaldrop-crypto` and `totaldrop-core`. With known-answer
+   vectors, property tests and fuzz targets.
+5. **Server:** the mailbox, log and ARC Workers. Tested by imitating a
+   malicious server.
+6. **Apps:** Linux (KDE, Hyprland, Omarchy) and Android. Texts in 35
+   languages.
+7. **Privacy policy:** updated in 35 languages before the feature is
+   released.
 
-## Kaynaklar
+## Sources
 
-- **MLS Virtual Clients** (akraba tasarım, cihaz sayısını gizler):
+- **MLS Virtual Clients** (a related design, hides the number of devices):
   https://datatracker.ietf.org/doc/draft-ietf-mls-virtual-clients/
 - **ARC:** https://datatracker.ietf.org/doc/draft-yun-privacypass-arc/
-- **Parakeet** (WhatsApp anahtar şeffaflığı): https://eprint.iacr.org/2023/081
-- **ELEKTRA** (çok cihazlı anahtar şeffaflığı): https://julialen.github.io/elektra_ccs23.pdf
-- **Signal "bad device"** (zayıf cihaz kaydı dersi): https://eprint.iacr.org/2021/626
-- **WhatsApp çok cihazlı grup analizi:** https://eprint.iacr.org/2025/794
-- **Önceki örnekler:**
-  - Keybase per-user key: cihaz iptalinde yenilenir, her cihaza ayrı
-    şifrelenir.
-  - Apple iCloud Keychain çemberi.
-  - Akıllı sözleşme cüzdanlarında sosyal kurtarma (koruyucular + zaman
-    kilidi).
+- **Parakeet** (WhatsApp key transparency): https://eprint.iacr.org/2023/081
+- **ELEKTRA** (multi-device key transparency): https://julialen.github.io/elektra_ccs23.pdf
+- **Signal "bad device"** (the lesson of weak device registration): https://eprint.iacr.org/2021/626
+- **Analysis of WhatsApp multi-device groups:** https://eprint.iacr.org/2025/794
+- **Earlier examples:**
+  - Keybase per-user key: renewed on device revocation, encrypted
+    separately to each device.
+  - The Apple iCloud Keychain circle.
+  - Social recovery in smart contract wallets (guardians + a time lock).
