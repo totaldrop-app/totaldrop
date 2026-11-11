@@ -341,6 +341,9 @@ impl Fallback {
                 // The relay link closes itself once it has been idle.
                 Step::Back => {
                     self.0.moved.store(false, Ordering::Release);
+                    // Holds this loop for at most REPLAY × REPLAY_WAIT
+                    // (0.4 s), well inside a tick's worth of slack; the
+                    // next tick checks the close and the address as usual.
                     self.replay().await;
                 }
             }

@@ -1860,8 +1860,19 @@ mod tests {
         let (was_cut, cut_at) = tokio::sync::oneshot::channel::<()>();
         let back = tokio::spawn(async move {
             cut_at.await.ok()?;
-            tokio::time::sleep(gone).await;
-            let moved = fallback.moved();
+            let cut = tokio::time::Instant::now();
+            // Wait for the move with a deadline rather than read it once
+            // after a fixed sleep: a slow runner may move late (#395).
+            let moved = tokio::time::timeout(Duration::from_secs(15), async {
+                while !fallback.moved() {
+                    tokio::time::sleep(Duration::from_millis(10)).await;
+                }
+            })
+            .await
+            .is_ok();
+            // Then keep the path gone for `gone` from the cut, if the move
+            // took less.
+            tokio::time::sleep(gone.saturating_sub(cut.elapsed())).await;
             sender_cut.set(false, false);
             receiver_cut.set(false, false);
             let came_back = tokio::time::timeout(Duration::from_secs(15), async {
