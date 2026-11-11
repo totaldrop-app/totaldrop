@@ -150,6 +150,7 @@ test("team.json coffee is a page name, and only on a person (#486)", async () =>
   for (const bad of ["", "a/b", "x?y", "https://buymeacoffee.com/ozdil", "a".repeat(65), true])
     assert.match(errs((c) => { person(c, "ozdil").coffee = bad; }), /ozdil: bad coffee page/, JSON.stringify(bad));
   assert.match(errs((c) => { person(c, "claude").coffee = "x"; }), /claude: only people have a coffee page/);
+  assert.match(errs((c) => { person(c, "ozdil").donate = true; }), /ozdil: "donate" is gone/);
 });
 
 test("the coffee link is a round icon link to the person's Buy Me a Coffee page, named like the GitHub link (#486)", async () => {
