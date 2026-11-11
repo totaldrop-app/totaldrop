@@ -67,10 +67,13 @@
   - Site: `navigator.languages`, ayrıca elle seçim (tarayıcıda saklanır).
 - **Çoğullar** gösterilen cümlenin dilinin kurallarıyla seçilir; bölge
   ayarı çoğulu değiştirmez.
-- **Sayılar ve boyutlar** bölge ayarını izler: Linux'ta `LC_ALL` >
-  `LC_NUMERIC` > `LANG` (Qt de böyle yapar), Android'de cihaz bölgesi.
-  Bölgenin rakam sistemi (ör. Arap-Hint rakamları) Linux ve CLI'da
-  korunur; Android'de ve sitede bu ayrıca test edilmeden iddia edilmez.
+- **Sayılar, boyutlar ve yüzdeler** bölge ayarını izler: Linux'ta
+  `LC_ALL` > `LC_NUMERIC` > `LANG` (Qt de böyle yapar), Android'de cihaz
+  bölgesi. Yüzde işaretinin yeri de bölgeden gelir ("%50", "50 %");
+  Android böyle yazar (#483), Linux henüz çevrilmiş kalıbı kullanıyor
+  (#491). Bölgenin rakam sistemi (ör. Arap-Hint rakamları) Linux ve
+  CLI'da korunur; Android'de ve sitede bu ayrıca test edilmeden iddia
+  edilmez.
 - **Yazı yönü:** Dilden çıkarılır (Arapça, Farsça, İbranice, Urduca sağdan
   sola). Linux'ta arayüz QML'de `LayoutMirroring` ile aynalanır; Qt'nin
   kendi pencereleri (ör. menü) için uygulamanın çevirmeni
