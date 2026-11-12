@@ -1,56 +1,73 @@
-# 0017: Bağışlar şimdilik proje yöneticisinin GitHub Sponsors sayfasından alınır
+# 0017: Donations go through the project lead's GitHub Sponsors page for now
 
-- **Durum:** Kabul, 11 Kasım 2026 (Sadık önerdi, Ozan kabul etti; #487).
-  [0005](0005-bagis.md)'in bağış kanalını kimin adına açtığını ve ne zaman
-  değişeceğini belirler.
+- **Status:** Accepted, 11 November 2026 (proposed by Sadık, accepted by
+  Ozan; #487). Amended 12 November 2026 (Ozan): the Buy Me a Coffee page,
+  payments to a maintainer, and the balance on the move. Sets in whose
+  name the donation channel of [0005](0005-bagis.md) is opened, and when
+  that changes.
 
-## Bağlam
+## Context
 
-[0005](0005-bagis.md) bağışları GitHub Sponsors'a bağladı. Bunun için
-proje yöneticisi Ozan'ın kişisel sayfası (github.com/sponsors/ozdil)
-kullanıldı. Projenin ekip olarak yürüdüğü düşünülünce bağışları ekip
-adına almak daha doğruydu. Bunun için Open Collective'e başvurduk (#352,
-PR #368). Open Source Collective başvuruyu 11 Kasım 2026'da reddetti.
-Katkıcı sayısı artınca yeniden başvurulabilir.
+[0005](0005-bagis.md) tied donations to GitHub Sponsors. The page used for
+it is the personal page of the project lead, Ozan
+(github.com/sponsors/ozdil). As the project is run by a team, taking
+donations in the team's name was the better choice, so we applied to Open
+Collective (#352, PR #368). Open Source Collective declined the
+application on 11 November 2026. We can apply again once there are more
+contributors.
 
-Sadık şunu önerdi: bağışlar şimdilik Ozan'ın kişisel sayfasından alınsın,
-proje büyüyünce TotalDrop adına bir hesaba geçilsin. Ozan bunu kabul etti.
+Sadık proposed that donations go through Ozan's personal page for now and
+move to an account in TotalDrop's name when the project grows. Ozan
+accepted.
 
-## Karar
+## Decision
 
-1. Bağışlar, proje yöneticisinin kişisel GitHub Sponsors sayfasından
-   bir kez ya da her ay alınır. Bu, projenin ekip adına yürümesi
-   ilkesine (#352) bilerek yapılmış, süreli bir istisnadır.
-2. /donate sayfası bunu 35 dilde açıkça söyler: para proje yöneticisinin
-   adına gelir ve proje büyüyünce TotalDrop adına bir hesaba geçilir.
-3. Bağışlar yalnızca /donate sayfasındaki maliyetlere harcanır. Bu
-   kararla şu kural konur: her harcamayı Ozan önerir, Sadık onaylar.
-   Kimse kendi önerisini onaylamaz. Gelen ve giden her ay /donate
-   sayfasındaki tabloda ve depoda [bağış dökümünde](../bagis-dokumu.md)
-   aynı satırlarla yayımlanır.
-4. Bağış gelirinin kişisel gelir olarak doğurduğu yükümlülükler hesabın
-   sahibine aittir.
+1. Donations are taken once or every month on the project lead's
+   personal GitHub Sponsors page. This is a deliberate, time-limited
+   exception to the rule that the project acts in the team's name (#352).
+2. The project lead's Buy Me a Coffee page (buymeacoffee.com/ozdil),
+   linked from the project lead's card on the team page (#486), is a
+   second channel under the same exception. What comes in there is a
+   donation like any other: it is spent under rule 4 and published in
+   the same ledger.
+3. The /donate page says plainly, in 35 languages, that the money arrives
+   in the project lead's name and moves to an account in TotalDrop's name
+   when the project grows.
+4. Donations pay only for the costs on the /donate page. This decision
+   sets the rule: Ozan proposes each expense and Sadık approves it, and
+   nobody approves their own proposal. A payment to a maintainer is the
+   exception: the maintainer who is paid proposes it, the other
+   maintainer approves it, and its invoice or receipt is shown in the
+   ledger. What came in and what went out are published every month, in
+   the same lines, in the table on /donate and in the
+   [donation ledger](../bagis-dokumu.md) in the repository.
+5. The obligations that donations create as personal income belong to
+   the account holder.
 
-## Ne zaman değişir
+## When this changes
 
-Aşağıdakilerden biri olunca TotalDrop adına bir hesaba (bir mali ev
-sahibi üzerinden Open Collective ya da GitHub'da bir kuruluşun Sponsors
-sayfası) geçmek için yeni bir karar açılır:
+A new decision is opened to move to an account in TotalDrop's name (Open
+Collective through a fiscal host, or the Sponsors page of an organization
+on GitHub) when one of these happens:
 
-- düzenli katkıcı sayısı artar ve bir mali ev sahibine yeniden başvurmak
-  anlamlı hâle gelir;
-- aylık bağışlar üç ay üst üste projenin aylık maliyetlerini aşar;
-- ekipten biri ya da Ozan, paranın kişisel hesapta durmasının artık
-  uygun olmadığını söyler.
+- the number of regular contributors grows and applying to a fiscal host
+  again makes sense;
+- monthly donations exceed the project's monthly costs three months in a
+  row;
+- someone on the team, or Ozan, says the money should no longer sit in a
+  personal account.
 
-Geçişte eski sayfanın bağışçılarına yeni hesap duyurulur ve kişisel
-sayfadaki aylık bağışlar kapatılır.
+On the move, the old page's sponsors are told about the new account, the
+monthly sponsorships on the personal page are closed, and so is the Buy
+Me a Coffee page. Donations not yet spent move to the new account, and
+the transfer is a line in the ledger.
 
-## Sonuçlar
+## Consequences
 
-- `.github/FUNDING.yml`, README rozeti, site düğmeleri ve Linux
-  metainfo'daki bağış adresi github.com/sponsors/ozdil olarak kalır.
-- PR #368'deki Open Collective geçişi bu karar geçerli olduğu sürece
-  uygulanmaz.
-- GitHub Sponsors profil metni, kademeler ve vergi bilgileri Ozan'ın
-  kendi hesabında tutulur; depoda değildir.
+- The donation address in `.github/FUNDING.yml`, the README badge, the
+  site buttons and the Linux metainfo stays github.com/sponsors/ozdil.
+- The move to Open Collective in PR #368 is not applied while this
+  decision stands.
+- The profile text, tiers and tax details of the GitHub Sponsors and Buy
+  Me a Coffee pages are kept in Ozan's own accounts, not in the
+  repository.
