@@ -10,7 +10,8 @@
 //                reaches the Directory Durable Object and only reads.
 // relay       opens a WebSocket to /v0/relay/<random pair> and closes it; a
 //             pair with no second side is dropped by the Worker
-// site        fetches the home page and the download page
+// site        fetches the home page, the download page and the App Links
+//             file (.well-known/assetlinks.json)
 //
 // Every attempt gives up after 10 s, and the probe tries 12 times, 5 s
 // apart, since a new deploy can take a moment to reach every location: at

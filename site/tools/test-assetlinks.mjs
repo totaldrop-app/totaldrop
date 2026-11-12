@@ -40,7 +40,11 @@ test("the manifest asks Android to verify https://totaldrop.app/r", () => {
   assert.equal(https.length, 1, "one https filter");
   const [f] = https;
   assert.match(f, /android:autoVerify="true"/);
-  assert.match(f, /android:host="totaldrop\.app"/);
-  assert.match(f, /android:path="\/r"/);
   assert.match(f, /android\.intent\.category\.BROWSABLE/);
+  // Exactly one address: another <data> in the same filter would be
+  // verified along with it, and every host in it must pass, or none does.
+  const data = f.match(/<data\b[^>]*\/>/g) ?? [];
+  assert.deepEqual(data, [
+    '<data android:scheme="https" android:host="totaldrop.app" android:path="/r"/>',
+  ]);
 });
