@@ -126,6 +126,20 @@ test("--fix keeps each record when neighbouring references move together", () =>
   }
 });
 
+test("--accept refuses while a reference has only moved, so --fix runs first", () => {
+  const { dir, run } = sandbox("`src/x.rs:2`\n", ["a", "b", "c"]);
+  try {
+    run("--accept");
+    const before = readFileSync(join(dir, "docs", "ARCHITECTURE.refs.json"), "utf8");
+    writeFileSync(join(dir, "src", "x.rs"), ["new", "a", "b", "c"].join("\n"));
+    // Accepting now would record `a`, the line that slid under the old number.
+    assert.throws(() => run("--accept"), /src\/x\.rs:2: moved to src\/x\.rs:3; run with --fix/);
+    assert.equal(readFileSync(join(dir, "docs", "ARCHITECTURE.refs.json"), "utf8"), before);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test("the check runs when it is called through a symbolic link", () => {
   const { dir, run, runAt } = sandbox("`src/x.rs:1`\n", ["a"]);
   const link = mkdtempSync(join(tmpdir(), "doc-refs-link-"));
