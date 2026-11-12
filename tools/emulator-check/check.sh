@@ -184,6 +184,9 @@ case "$PR" in
     look 498-03-https-link
     link "totaldrop://r/"
     look 498-04-empty-link-keeps-box
+    adb shell input keyevent 4
+    sleep 2
+    look 498-04b-after-back
     link "totaldrop://r/7-harbor"
     look 498-05-short-link-says-not-a-code
     # A link while a file comes in: the screen stays, linkBusy shows.
@@ -257,6 +260,8 @@ case "$PR" in
 esac
 
 adb logcat -d > "$OUT/logcat.txt" 2> /dev/null
+adb logcat -d -s flutter:V > "$OUT/logcat-flutter.txt" 2> /dev/null
+note "--- route errors: $(grep -c 'generator for route\|initial route' "$OUT/logcat-flutter.txt")"
 note "--- Flutter overflow lines in logcat: $(grep -c 'overflowed by' "$OUT/logcat.txt")"
 grep -m 20 'overflowed by\|EXCEPTION CAUGHT' "$OUT/logcat.txt" | tee -a "$NOTES"
 rm -f "$OUT"/_tap.xml "$OUT"/_wait.xml

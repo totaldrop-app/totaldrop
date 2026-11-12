@@ -16,19 +16,22 @@ permissions:
 
 jobs:
   emulator:
-    name: Emulator (#${{ matrix.pr }})
+    name: Emulator (#${{ matrix.pr }} ${{ matrix.variant }})
     runs-on: ubuntu-latest
     timeout-minutes: 75
     strategy:
       fail-fast: false
       matrix:
+        # Run 2 covered #480 and #489. This run repeats #498 as it is and
+        # with Flutter's own deep-link handling turned off: an empty
+        # totaldrop://r/ link put a second home screen on top of Receive.
         include:
-          - pr: 480
-            sha: a477acf22bf00ee470a8902cb490a52427175dcb
-          - pr: 489
-            sha: 2f1a3c96a0ed3e72206e43bdb73617b2924f6382
           - pr: 498
             sha: 8d7d63a26f2ceb7d80a28a9679aa5a57e813e8d5
+            variant: as-is
+          - pr: 498
+            sha: 8d7d63a26f2ceb7d80a28a9679aa5a57e813e8d5
+            variant: no-flutter-deeplinks
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -49,6 +52,17 @@ jobs:
       # rustup reads rust-toolchain.toml, which lists the Android targets.
       - name: Rust toolchain and Android targets
         run: rustup show active-toolchain || rustup toolchain install
+      - name: Turn off Flutter's own deep links (experiment)
+        if: matrix.variant == 'no-flutter-deeplinks'
+        run: |
+          python3 - <<'EOF'
+          p = "app/android/app/src/main/AndroidManifest.xml"
+          s = open(p).read()
+          tag = '<meta-data android:name="flutter_deeplinking_enabled" android:value="false"/>\n        </activity>'
+          assert s.count("</activity>") == 1
+          open(p, "w").write(s.replace("</activity>", tag, 1))
+          EOF
+          grep -n flutter_deeplinking_enabled app/android/app/src/main/AndroidManifest.xml
       - name: Debug APK (x86_64)
         working-directory: app
         run: |
@@ -76,6 +90,6 @@ jobs:
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
-          name: emulator-${{ matrix.pr }}
+          name: emulator-${{ matrix.pr }}-${{ matrix.variant }}
           path: shots/
           retention-days: 7
