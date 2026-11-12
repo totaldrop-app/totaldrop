@@ -180,8 +180,8 @@ treated as final.
       is renewed at half of what was granted (at most every 30 minutes),
       tried again every 5 seconds after an unanswered renewal until the
       grant runs out, and released with lifetime 0 when the transfer ends
-      (sent twice, 250 ms apart; a process that exits waits for the second
-      copy, #502); a crash leaves the port open until the granted lifetime
+      (sent twice, 250 ms apart; a process that exits waits up to 1.6
+      seconds for the second copy, #502); a crash leaves the port open until the granted lifetime
       runs out.
       Asking starts with STUN; once STUN has answered, `HINTS` wait at most
       300 ms more for the router (longer, until the attempt ends, once the
