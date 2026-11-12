@@ -226,8 +226,11 @@ elle bakar.
    (sitenin dağıtım sonrası denetimi `server/tools/probe.mjs` bunu sınar):
    Android, `https://totaldrop.app/r` bağlantılarını uygulamaya ancak bu
    dosyayı kurulumda okuyabilirse verir (#445). İmza anahtarı ya da paket
-   adı değişirse dosya da aynı PR'da değişir
-   (`site/tools/test-assetlinks.mjs`).
+   adı değişirse dosya da aynı PR'da değişir. `site/tools/test-assetlinks.mjs`
+   yalnızca paket adını ve manifestteki süzgeci sınar; parmak izinin Play
+   uygulama imza anahtarıyla aynı olduğunu hiçbir test sınamaz. Bu
+   yüzden Play'den kurulan sürümde `adb shell pm get-app-links app.totaldrop`
+   `totaldrop.app` için `verified` göstermelidir.
 
 ## Node
 
