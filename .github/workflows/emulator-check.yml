@@ -1,0 +1,81 @@
+# SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Throwaway, not for merge: tries #480, #489 and #498 on an Android
+# emulator and keeps the screenshots as an artifact. Each job checks out
+# the PR's head, builds the debug APK for x86_64 and the CLI, and runs
+# tools/emulator-check/check.sh from this branch.
+name: Emulator check
+
+on:
+  push:
+    branches: [claude/project-thread-hrak80]
+
+permissions:
+  contents: read
+
+jobs:
+  emulator:
+    name: Emulator (#${{ matrix.pr }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - pr: 480
+            sha: a477acf22bf00ee470a8902cb490a52427175dcb
+          - pr: 489
+            sha: 2f1a3c96a0ed3e72206e43bdb73617b2924f6382
+          - pr: 498
+            sha: 8d7d63a26f2ceb7d80a28a9679aa5a57e813e8d5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ matrix.sha }}
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: harness
+          persist-credentials: false
+      - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          channel: stable
+          flutter-version: 3.47.8
+      # rustup reads rust-toolchain.toml, which lists the Android targets.
+      - name: Rust toolchain and Android targets
+        run: rustup show active-toolchain || rustup toolchain install
+      - name: Debug APK (x86_64)
+        working-directory: app
+        run: |
+          flutter pub get --enforce-lockfile
+          flutter build apk --debug --target-platform android-x64
+      - name: CLI
+        run: cargo build -p totaldrop-cli --release --locked
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      # -netspeed slows the emulator's network to about 5 MB/s down, so
+      # a transfer stays on screen long enough for the screenshots.
+      - name: Emulator
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          disk-size: 6000M
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none -netspeed 20000:40000
+          script: bash harness/tools/emulator-check/check.sh ${{ matrix.pr }}
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: emulator-${{ matrix.pr }}
+          path: shots/
+          retention-days: 7
