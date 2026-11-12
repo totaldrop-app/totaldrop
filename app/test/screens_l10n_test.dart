@@ -134,6 +134,8 @@ final _shows = <String, Object>{
   'send preparing': (AppLocalizations l) => l.sendPreparing,
   'send, a pick failed': (AppLocalizations l) => l.sendAddFailed,
   'send with files, a pick failed': (AppLocalizations l) => l.sendAddFailed,
+  'send with many files': '30 Rapport annuel',
+  'send, a share being copied': (AppLocalizations l) => l.cancel,
   'sending a large file': '%',
   'sending, asked to stop': (AppLocalizations l) => l.cancelTransferTitle,
   'send done': (AppLocalizations l) => l.sendDone,
@@ -468,6 +470,29 @@ void main() {
             },
           );
         },
+        // The list scrolls above the pinned box, which takes at most half
+        // the screen; the last file is reached by scrolling.
+        'send with many files': () {
+          final vm = SendViewModel(
+            repository: FakeRepository(),
+            fileSource: FakeFileSource(),
+          );
+          for (var i = 1; i <= 30; i++) {
+            vm.addFakeFileForTest('$i $_longName');
+          }
+          return (SendView(viewModel: vm), (_) async {});
+        },
+        // Files shared from another app are copied first; that copy can be
+        // stopped, so the wait has a Cancel button.
+        'send, a share being copied': () => (
+          SendView(
+            viewModel: SendViewModel(
+              repository: FakeRepository(),
+              fileSource: FakeFileSource(),
+            )..beginShare(1),
+          ),
+          (_) async {},
+        ),
         'sending, asked to stop': () {
           final repo = FakeRepository();
           final vm = SendViewModel(
