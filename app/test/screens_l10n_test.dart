@@ -12,6 +12,7 @@ import 'dart:async';
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart'
     show PlatformInt64;
+import 'package:flutter/rendering.dart' show RenderParagraph;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:totaldrop/data/background_access.dart';
@@ -262,6 +263,23 @@ void _expectButtonLabelsOnOneLine(WidgetTester tester) {
       box.size.width,
       greaterThanOrEqualTo(oneLine - 0.5),
       reason: 'the button "$label" wraps',
+    );
+  }
+}
+
+/// A message given room for several lines must show all of it: the
+/// not-a-code message at 200 % in Japanese stopped after three lines with
+/// "…" (#480), and no overflow is reported for it. Texts kept to one line
+/// (file names, the code, titles) are cut on purpose; the test font, wider
+/// than any real one, cuts them far sooner than a phone does.
+void _expectNoTextCutShort(WidgetTester tester) {
+  final paragraphs = tester.allRenderObjects.whereType<RenderParagraph>();
+  for (final paragraph in paragraphs) {
+    if ((paragraph.maxLines ?? 0) < 2) continue;
+    expect(
+      paragraph.didExceedMaxLines,
+      isFalse,
+      reason: 'the text "${paragraph.text.toPlainText()}" is cut short',
     );
   }
 }
@@ -714,6 +732,26 @@ void main() {
     );
   });
 
+  testWidgets('a text cut short fails the check', (tester) async {
+    await tester.binding.setSurfaceSize(_phone);
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      _app(
+        const Locale('en'),
+        1.0,
+        Scaffold(
+          body: TextField(
+            decoration: InputDecoration(
+              errorText: List.filled(40, 'word').join(' '),
+              errorMaxLines: 2,
+            ),
+          ),
+        ),
+      ),
+    );
+    expect(() => _expectNoTextCutShort(tester), throwsA(isA<TestFailure>()));
+  });
+
   for (final locale in AppLocalizations.supportedLocales) {
     for (final scale in [1.0, 1.3, 2.0]) {
       for (final MapEntry(key: name, value: screen) in screens.entries) {
@@ -749,6 +787,7 @@ void main() {
           // screen whose content can be taller than the phone scrolls.
           expect(tester.takeException(), isNull);
           _expectButtonLabelsOnOneLine(tester);
+          _expectNoTextCutShort(tester);
 
           // A list lays out only what is near the screen: page through each
           // one to its end, half a screen at a time, as a person would, and
@@ -767,6 +806,7 @@ void main() {
               await tester.pump();
               expect(tester.takeException(), isNull);
               _expectButtonLabelsOnOneLine(tester);
+              _expectNoTextCutShort(tester);
               shownSomewhere = shownSomewhere || showing();
             }
           }
