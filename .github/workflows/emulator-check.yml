@@ -22,12 +22,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # #480 in Japanese and Arabic at 200 %, now with a per-app
-        # language: the system-language restarts in runs 4 and 5 lost
-        # either the language or the font size.
+        # #480 at 2f292c6, which shows the whole not-a-code message (cut
+        # with "…" in Japanese at 200 % in run 7): Japanese, Arabic,
+        # German and Russian at 200 %, with a per-app language.
         include:
           - pr: 480
-            sha: a477acf22bf00ee470a8902cb490a52427175dcb
+            sha: 2f292c62b75e4200a6c93a15560491ef858e26a8
             variant: locales
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

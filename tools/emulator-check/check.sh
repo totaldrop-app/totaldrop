@@ -270,7 +270,7 @@ case "$PR" in
     adb shell settings put system font_scale 2.0
     sleep 5
     note "font_scale $(adb shell settings get system font_scale | tr -d '\r'), $(adb shell dumpsys activity | grep -m1 -o 'mGlobalConfiguration: {[^ ]*' | tr -d '\r')"
-    for loc in ja-JP ar-EG; do
+    for loc in ja-JP ar-EG de-DE ru-RU; do
       adb shell cmd locale set-app-locales "$PKG" --locales "$loc"
       note "app locales: $(adb shell cmd locale get-app-locales "$PKG" | tr -d '\r')"
       L=${loc%%-*}
