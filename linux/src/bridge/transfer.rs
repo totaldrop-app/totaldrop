@@ -1026,8 +1026,32 @@ impl cxx_qt::Initialize for qobject::Transfer {
 
 #[cfg(test)]
 mod tests {
-    use super::{SHOWN_CHARS, connect_kind, kind, send_kind, shown};
+    use std::sync::Arc;
+    use std::sync::atomic::Ordering;
+
+    use super::{SESSIONS, SHOWN_CHARS, Session, connect_kind, kind, send_kind, shown, stop_all};
     use totaldrop_core::Error as E;
+
+    /// Quitting stops a live transfer as Cancel does: its stop is set,
+    /// and its generation moves on, so what it still queues for the
+    /// window is dropped (#433). No Qt object is needed: the window's
+    /// `Transfer` only registers its session.
+    #[test]
+    fn quitting_stops_every_live_transfer() {
+        let session = Arc::new(Session::default());
+        if let Ok(mut sessions) = SESSIONS.lock() {
+            sessions.push(Arc::downgrade(&session));
+        }
+        let stop = session.stop.lock().map(|s| s.clone()).unwrap_or_default();
+        let before = session.generation.load(Ordering::SeqCst);
+        stop_all();
+        assert!(stop.is_stopped(), "the transfer was stopped");
+        assert_ne!(
+            session.generation.load(Ordering::SeqCst),
+            before,
+            "its later events are dropped"
+        );
+    }
 
     #[test]
     fn a_code_not_in_use_is_not_a_server_problem() {
