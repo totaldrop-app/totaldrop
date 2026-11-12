@@ -319,7 +319,7 @@ export function cardLinks(p, pr) {
 }
 
 // Named like the GitHub link: the service, then the page, neither translated.
-export const coffeeLink = (page) => `<li><a class="icon-link" href="https://buymeacoffee.com/${esc(page)}">${ICON_COFFEE}<span class="visually-hidden">Buy Me a Coffee: <bdi>${esc(page)}</bdi></span></a></li>`;
+export const coffeeLink = (page) => `<li><a class="icon-link" href="https://buymeacoffee.com/${esc(page)}" rel="nofollow">${ICON_COFFEE}<span class="visually-hidden" lang="en">Buy Me a Coffee: <bdi>${esc(page)}</bdi></span></a></li>`;
 const githubLink = (href, shownAs) => `<li><a class="icon-link" href="${esc(href)}">${ICON_GITHUB}<span class="visually-hidden">GitHub: <bdi>${esc(shownAs)}</bdi></span></a></li>`;
 const webLink = (href) => `<li><a class="icon-link" href="${esc(href)}" rel="nofollow ugc">${ICON_WEB}<span class="visually-hidden"><span data-i18n="tm.web">Web site</span>: <bdi>${esc(shown(href))}</bdi></span></a></li>`;
 

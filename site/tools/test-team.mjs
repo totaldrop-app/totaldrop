@@ -147,7 +147,7 @@ test("team.json coffee is a page name, and only on a person (#486)", async () =>
   const errs = (edit) => { const c = structuredClone(orig); edit(c); return configErrors(c).join("\n"); };
   const person = (c, login) => c.people.find((p) => p.login === login);
   assert.equal(errs((c) => { person(c, "sadikkuzu").coffee = "sadik_kuzu-1"; }), "");
-  for (const bad of ["", "a/b", "x?y", "https://buymeacoffee.com/ozdil", "a".repeat(65), true])
+  for (const bad of ["", "a/b", "x?y", "https://buymeacoffee.com/ozdil", "a".repeat(65), true, null, 7, " ozdil", "a\"b", "../x"])
     assert.match(errs((c) => { person(c, "ozdil").coffee = bad; }), /ozdil: bad coffee page/, JSON.stringify(bad));
   assert.match(errs((c) => { person(c, "claude").coffee = "x"; }), /claude: only people have a coffee page/);
   assert.match(errs((c) => { person(c, "ozdil").donate = true; }), /ozdil: "donate" is gone/);
@@ -156,9 +156,10 @@ test("team.json coffee is a page name, and only on a person (#486)", async () =>
 test("the coffee link is a round icon link to the person's Buy Me a Coffee page, named like the GitHub link (#486)", async () => {
   const { coffeeLink } = await import("./team.mjs");
   const html = coffeeLink("ozdil");
-  assert.match(html, /^<li><a class="icon-link" href="https:\/\/buymeacoffee\.com\/ozdil">/);
+  assert.match(html, /^<li><a class="icon-link" href="https:\/\/buymeacoffee\.com\/ozdil" rel="nofollow">/);
   assert.match(html, /<svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"/);
-  assert.match(html, /<span class="visually-hidden">Buy Me a Coffee: <bdi>ozdil<\/bdi><\/span><\/a><\/li>$/);
+  // The name is English in every language, so a screen reader says it so.
+  assert.match(html, /<span class="visually-hidden" lang="en">Buy Me a Coffee: <bdi>ozdil<\/bdi><\/span><\/a><\/li>$/);
 });
 
 test("only a person with a coffee page gets the coffee button on their card, last (#486)", async () => {
