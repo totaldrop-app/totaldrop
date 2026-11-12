@@ -61,7 +61,9 @@ export interface Forwardable {
  * records an error instead of a delivery. Returns how many failed. */
 export async function forwardAll(message: Forwardable, to: readonly string[]): Promise<number> {
   if (to.length === 0) throw new Error("no destination to forward to");
-  const results = await Promise.allSettled(to.map((r) => message.forward(r)));
+  // The async wrapper turns a forward() that throws at once into a
+  // rejection, so that destination cannot stop the others either.
+  const results = await Promise.allSettled(to.map(async (r) => message.forward(r)));
   const failed = results.filter((r) => r.status === "rejected").length;
   if (failed === to.length) {
     throw new Error(`forwarding failed for all ${failed} destinations`);
