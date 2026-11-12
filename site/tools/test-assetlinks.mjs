@@ -48,3 +48,17 @@ test("the manifest asks Android to verify https://totaldrop.app/r", () => {
     '<data android:scheme="https" android:host="totaldrop.app" android:path="/r"/>',
   ]);
 });
+
+// Flutter also reads every VIEW intent and pushes its path as a route, so
+// totaldrop://r/ put a second Home screen over Receive. Links are handled
+// only by MainActivity.kt; Flutter's own deep linking stays off.
+test("Flutter's own deep linking is off, so links reach only MainActivity", () => {
+  const activity = manifest.match(
+    /<activity\b[^>]*android:name="\.MainActivity"[\s\S]*?<\/activity>/,
+  )?.[0];
+  assert.ok(activity, "MainActivity is declared");
+  assert.match(
+    activity,
+    /<meta-data\s+android:name="flutter_deeplinking_enabled"\s+android:value="false"\s*\/>/,
+  );
+});

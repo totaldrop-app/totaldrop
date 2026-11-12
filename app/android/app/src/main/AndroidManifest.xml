@@ -81,6 +81,12 @@
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <data android:scheme="https" android:host="totaldrop.app" android:path="/r"/>
             </intent-filter>
+            <!-- Links are read only by MainActivity.kt. Left on, Flutter also
+                 pushes each VIEW intent's path as a route, and totaldrop://r/
+                 opened a second Home screen over Receive (#445). -->
+            <meta-data
+                android:name="flutter_deeplinking_enabled"
+                android:value="false"/>
             <!-- Send and Receive when the icon is held (res/xml/shortcuts.xml). -->
             <meta-data
                 android:name="android.app.shortcuts"
