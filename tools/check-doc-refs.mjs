@@ -16,6 +16,7 @@
 //   `--fix` rewrites the numbers in the document;
 // - the text is gone or changed: the claim has to be read again against the
 //   code. Correct the document, then `--accept` records the new lines.
+//   `--accept` refuses while a reference has only moved: run `--fix` first.
 //
 // It also fails on a reference whose file does not exist (a short name such
 // as `lib.rs:12` included) or whose lines are past the end of the file, and
@@ -146,7 +147,9 @@ function main() {
     if (!result.problems.length) process.exit(1); // changed files: look, then commit
   }
   if (mode === "--accept") {
-    const unreadable = result.problems.filter((p) => /no such file|lines$/.test(p));
+    // A reference that only moved is fixed by --fix; accepting it here would
+    // record whatever line now sits under the old number.
+    const unreadable = result.problems.filter((p) => /no such file|lines$|moved to/.test(p));
     if (!unreadable.length) {
       writeFileSync(recordPath, `${JSON.stringify(sorted(result.fresh), null, 2)}\n`);
       console.log(`${RECORD}: recorded ${Object.keys(result.fresh).length} references`);

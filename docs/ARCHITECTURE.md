@@ -171,13 +171,13 @@ sequenceDiagram
   participant LIB as core lib.rs
   participant RZ as rendezvous (Worker)
   participant PEER as Alan cihaz
-  CLI->>LIB: PreparedSend::new (main.rs:373)
-  LIB->>LIB: transfer::scan (transfer.rs:334)
-  LIB->>RZ: rendezvous::allocate (lib.rs:460)
+  CLI->>LIB: PreparedSend::new
+  LIB->>LIB: transfer::scan
+  LIB->>RZ: rendezvous::allocate
   RZ-->>LIB: nameplate + jeton
-  LIB->>RZ: Mailbox::claim (lib.rs:464)
+  LIB->>RZ: Mailbox::claim
   Note over CLI: kod ekrana yazılır
-  CLI->>LIB: run_with (main.rs:402 → lib.rs:504)
+  CLI->>LIB: run_with
   LIB->>LIB: bind_socket, own_hints (STUN + port açma)
   LIB->>RZ: pairing::exchange: pake, confirm, hints
   RZ-->>PEER: posta kutusu iletileri (şifreli)
@@ -187,6 +187,9 @@ sequenceDiagram
   PEER-->>LIB: kabul / ilerleme / bitti
   LIB-->>CLI: SendReport
 ```
+
+Şemada satır numarası yok; denetlenen başvurular (`tools/check-doc-refs.mjs`)
+aşağıdaki adımlardadır.
 
 Adım adım:
 
@@ -567,7 +570,7 @@ için öneri değil, yalnızca durum yazılıdır; iş gerekirse issue açılır
 4. **Çekirdeğin kamuya açık yüzü küçük.** Uygulamalar yalnızca
    `PreparedSend` ve `IncomingOffer` ile konuşur (`crates/totaldrop-core/src/lib.rs:415`, `crates/totaldrop-core/src/lib.rs:616`);
    bu yüzden üç uygulamanın akışı aynıdır ([2.3](#23-aynı-akış-uygulamalarda)).
-   `crates/totaldrop-core/src/lib.rs` buna karşın 1 045 satırla yol seçimi ve aktarma kararlarını da
+   `crates/totaldrop-core/src/lib.rs` buna karşın yaklaşık 1 050 satırla yol seçimi ve aktarma kararlarını da
    taşır; en çok değişen çekirdek dosyası olması bununla tutarlıdır.
 5. **İki kripto yığını.** `snow 0.10` eski `chacha20poly1305` ve
    `curve25519-dalek` sürümlerini çeker (denetim B3, #428); `crypto` crate'i
