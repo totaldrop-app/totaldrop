@@ -308,7 +308,7 @@ class PairedButton {
 /// An outlined and a filled button side by side, the same width; the
 /// filled one above the other when a label would not fit on one line
 /// beside the other. A label on two lines runs into the button's round
-/// ends: 受け取る at 200 % in Japanese (#480).
+/// ends: 受け取る at 200 % in Japanese (#322).
 class ButtonPair extends StatelessWidget {
   const ButtonPair({
     super.key,
