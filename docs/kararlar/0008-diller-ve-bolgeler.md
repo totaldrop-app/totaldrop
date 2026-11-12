@@ -73,7 +73,8 @@
   Android böyle yazar (#483), Linux henüz çevrilmiş kalıbı kullanıyor
   (#491). Bölgenin rakam sistemi (ör. Arap-Hint rakamları) Linux ve
   CLI'da korunur; Android'de ve sitede bu ayrıca test edilmeden iddia
-  edilmez.
+  edilmez (#483, 11 Kasım 2026; önceki metin yüzdelerden söz etmiyordu
+  ve Android yüzdeyi uygulama dilinin kalıbıyla yazıyordu).
 - **Yazı yönü:** Dilden çıkarılır (Arapça, Farsça, İbranice, Urduca sağdan
   sola). Linux'ta arayüz QML'de `LayoutMirroring` ile aynalanır; Qt'nin
   kendi pencereleri (ör. menü) için uygulamanın çevirmeni
