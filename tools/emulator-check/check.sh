@@ -87,7 +87,9 @@ link() {
 # Restart Android with another system language and region.
 set_locale() {
   adb shell am force-stop "$PKG"
-  adb shell "setprop persist.sys.locale $1; setprop ctl.restart zygote"
+  # A settings change (font_scale) stores the locale in system_locales,
+  # which then wins over the property at start: set both.
+  adb shell "settings put system system_locales $1; setprop persist.sys.locale $1; setprop ctl.restart zygote"
   sleep 20
   adb wait-for-device
   local i
@@ -97,7 +99,7 @@ set_locale() {
   done
   sleep 10
   adb shell wm dismiss-keyguard > /dev/null 2>&1
-  note "system locale: $(adb shell getprop persist.sys.locale | tr -d '\r')"
+  note "system locale: $(adb shell getprop persist.sys.locale | tr -d '\r'), config: $(adb shell am get-config 2> /dev/null | grep -m1 '^config:' | tr -d '\r')"
 }
 
 start_send() {
@@ -125,10 +127,25 @@ stop_send() {
 # On the Receive screen with the code in the box: connect, take the offer,
 # and take screenshots while the file comes in.
 receive() {
-  local name="$1" accept
+  local name="$1" accept i found=
   accept=$(label receiveAccept)
   tap "$(label receiveConnect)" || adb shell input keyevent 66
-  if wait_for "$accept" 40; then
+  # Languages whose translation is not reviewed show Accept in English
+  # (safeL10n, l10n/status.json).
+  for i in $(seq 40); do
+    dump _wait || { sleep 2; continue; }
+    if python3 "$HERE/ui.py" find "$OUT/_wait.xml" "$accept" > /dev/null; then
+      found=1
+      break
+    fi
+    if python3 "$HERE/ui.py" find "$OUT/_wait.xml" Accept > /dev/null; then
+      accept=Accept
+      found=1
+      break
+    fi
+    sleep 2
+  done
+  if [ -n "$found" ]; then
     look "$name-offer"
     tap "$accept"
     local i
@@ -237,6 +254,29 @@ case "$PR" in
     set_locale ar-EG
     L=ar
     transfer 480-ar-light-07
+    ;;
+  480-locales)
+    adb shell settings put system font_scale 2.0
+    note "font_scale $(adb shell settings get system font_scale | tr -d '\r')"
+    for loc in ja-JP ar-EG; do
+      set_locale "$loc"
+      L=${loc%%-*}
+      launch
+      look "480-$loc-01-home"
+      tap "$(label homeReceiveTitle)" && sleep 3
+      adb shell input text 7-harbor
+      adb shell input keyevent 66
+      sleep 2
+      look "480-$loc-02-receive-not-a-code"
+      transfer "480-$loc-03"
+    done
+    ;;
+  489-locales)
+    for loc in ar-EG ja-JP de-DE; do
+      set_locale "$loc"
+      L=${loc%%-*}
+      transfer "489-$loc"
+    done
     ;;
   489)
     transfer 489-en-US

@@ -22,16 +22,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Run 2 covered #480 and #489. This run repeats #498 as it is and
-        # with Flutter's own deep-link handling turned off: an empty
-        # totaldrop://r/ link put a second home screen on top of Receive.
+        # Run 2 covered #480 and #489 in English and Turkish; this run
+        # repeats them in Japanese and Arabic (the locale change did not
+        # take in #480) and adds German for the percent.
         include:
-          - pr: 498
-            sha: 8d7d63a26f2ceb7d80a28a9679aa5a57e813e8d5
-            variant: as-is
-          - pr: 498
-            sha: 8d7d63a26f2ceb7d80a28a9679aa5a57e813e8d5
-            variant: no-flutter-deeplinks
+          - pr: 480
+            sha: a477acf22bf00ee470a8902cb490a52427175dcb
+            variant: locales
+          - pr: 489
+            sha: 2f1a3c96a0ed3e72206e43bdb73617b2924f6382
+            variant: locales
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -86,7 +86,7 @@ jobs:
           profile: pixel_6
           disk-size: 6000M
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none -netspeed 20000:40000
-          script: bash harness/tools/emulator-check/check.sh ${{ matrix.pr }}
+          script: bash harness/tools/emulator-check/check.sh ${{ matrix.pr }}${{ matrix.variant == 'locales' && '-locales' || '' }}
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
