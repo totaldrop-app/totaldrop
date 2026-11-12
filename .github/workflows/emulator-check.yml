@@ -22,13 +22,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Run 4 showed #480 in Japanese and Arabic at the normal font
-        # size: restarting Android for the language dropped font_scale.
-        # This run sets the size after each language change.
+        # Run 3 showed the empty-link fix for #498 working when the
+        # manifest was patched here; 24464e4 now carries it in the PR.
+        # Run 5 covers #480 in Japanese and Arabic at 200 %.
         include:
-          - pr: 480
-            sha: a477acf22bf00ee470a8902cb490a52427175dcb
-            variant: locales
+          - pr: 498
+            sha: 24464e46f09e512f51266395bf3a811505a4c4bb
+            variant: as-is
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
