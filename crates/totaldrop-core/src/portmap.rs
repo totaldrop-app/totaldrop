@@ -1526,7 +1526,11 @@ mod tests {
             let m = pcp_only(Gateway::At(at), 40_000).await.unwrap();
             assert_eq!(m.external(), SocketAddr::from((PUBLIC, OPENED)));
             drop(m);
+            let waited = std::time::Instant::now();
             released().await;
+            // The wait ends with the second copy, not at the cap: a
+            // Pending that is never dropped would hold it for LIMIT.
+            assert!(waited.elapsed() < LIMIT, "waited {:?}", waited.elapsed());
         });
         rt.shutdown_background();
         let mut all = Vec::new();
