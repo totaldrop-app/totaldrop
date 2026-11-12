@@ -58,4 +58,17 @@ void main() {
     await _show(tester, app: en, device: en, done: 995, total: 1000);
     expect(find.text('99%'), findsOneWidget);
   });
+
+  // The bar's own value, which TalkBack reads, rounded 99.5 up to 100
+  // while the text beside it said 99%.
+  testWidgets('the screen reader hears 99 too', (tester) async {
+    final semantics = tester.ensureSemantics();
+    addTearDown(semantics.dispose);
+    const tr = Locale('tr', 'TR');
+    await _show(tester, app: tr, device: tr, done: 995, total: 1000);
+    expect(
+      tester.getSemantics(find.byType(LinearProgressIndicator)),
+      containsSemantics(value: '99'),
+    );
+  });
 }
