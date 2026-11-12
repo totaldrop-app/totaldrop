@@ -113,8 +113,11 @@ Play'den ve GitHub sürümlerinden dağıtılır, bağışlar GitHub Sponsors
 e-postalar yalnızca `@totaldrop.app` adreslerinden gelir.
 [Ekip sayfasında](https://totaldrop.app/team/) proje liderinin kartındaki
 kahve düğmesi ([buymeacoffee.com/ozdil](https://buymeacoffee.com/ozdil))
-onun kişisel destek sayfasına gider; bu bir proje kanalı değildir ve oradan
-gelenler [bağış sayfasındaki](https://totaldrop.app/donate/) hesaba girmez (#486).
+onun kişisel Buy Me a Coffee sayfasına gider. Bu, Sponsors sayfasıyla aynı
+istisna altında ikinci bağış kanalıdır (karar 0017, #487): oradan gelenler
+de bağıştır, aynı kurala göre harcanır ve
+[bağış sayfasındaki](https://totaldrop.app/donate/) dökümde aynı satırlarda
+yayımlanır (#486).
 
 Yeni bir platformda hesap açılırsa mümkünse `totaldropapp` adı kullanılır
 (GitHub'da ad `totaldrop-app`). Bu liste, [/brand](https://totaldrop.app/brand#use)
