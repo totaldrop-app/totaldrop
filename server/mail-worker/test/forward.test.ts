@@ -89,6 +89,19 @@ test("one failed destination does not stop the other", async () => {
   assert.deepEqual(n.sent, ["b@example.org"]);
 });
 
+test("a destination whose forward throws at once does not stop the other", async () => {
+  const sent: string[] = [];
+  const m = {
+    forward(to: string): Promise<unknown> {
+      if (to === "a@example.com") throw new Error("refused before any promise");
+      sent.push(to);
+      return Promise.resolve();
+    },
+  };
+  assert.equal(await forwardAll(m, ["a@example.com", "b@example.org"]), 1);
+  assert.deepEqual(sent, ["b@example.org"]);
+});
+
 test("when every destination fails, the message fails", async () => {
   const m = message(["a@example.com", "b@example.org"]);
   await assert.rejects(forwardAll(m, ["a@example.com", "b@example.org"]), /all 2 destinations/);

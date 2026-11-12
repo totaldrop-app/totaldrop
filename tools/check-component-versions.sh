@@ -67,9 +67,17 @@ for crate in totaldrop-rendezvous totaldrop-relay; do
     "$(dep_version "$root/crates/totaldrop-cli/Cargo.toml" "$crate")" "$server"
 done
 
+# The mail Worker carries its own version and is only deployed
+# (docs/versioning.md); its lock file must still agree with it.
+mail=$(json_version "$root/server/mail-worker/package.json")
+[ -n "$mail" ] || fail "no version in server/mail-worker/package.json"
+same server/mail-worker/package-lock.json "$(json_version "$root/server/mail-worker/package-lock.json")" "$mail"
+same "server/mail-worker/package-lock.json (root package)" \
+  "$(lock_root_version "$root/server/mail-worker/package-lock.json")" "$mail"
+
 android=$(sed -n 's/^version:[[:space:]]*\([^+[:space:]]*\).*/\1/p' "$root/app/pubspec.yaml" | head -1)
 [ -n "$android" ] || fail "no version in app/pubspec.yaml"
 same app/rust/Cargo.toml "$(cargo_version "$root/app/rust/Cargo.toml")" "$android"
 
-[ "$status" -eq 0 ] && echo "component versions ok: server $server, android $android"
+[ "$status" -eq 0 ] && echo "component versions ok: server $server, mail $mail, android $android"
 exit "$status"
