@@ -126,7 +126,7 @@ durduğu [mimari.md](mimari.md) içinde.
 | Zayıf ya da yanlış kullanılan kriptografi | Protokol katmanında (TD0) yalnızca CPace (ristretto255, SHA-512), Noise XXpsk3 (X25519, ChaCha20-Poly1305, BLAKE2b), ML-KEM-768, Ed25519 ve BLAKE3. Taşıma katmanında QUIC ve WebSocket için TLS 1.3 (rustls, `ring` sağlayıcısı; AES-GCM ve ChaCha20-Poly1305, X25519 ve P-256/P-384). SHA-1, MD5, CBC yok; rastgelelik işletim sisteminden |
 | Web açıkları (XSS, tıklama korsanlığı) | Sitede dışarıdan betik yok, sıkı CSP, `frame-ancestors 'none'`, HSTS (`site/public/_headers`) |
 | Tedarik zinciri | T11, T12: kilitli bağımlılıklar, `cargo-deny`, Dependabot, CodeQL, CI'da derleme ve imzalı derleme kanıtı |
-| Gizli bilgi sızması | Gizli değerler (Play yükleme anahtarı ve parolası, Cloudflare API belirteci) yalnızca korumalı CI ortamlarında ve proje liderinde; Linux derleme kanıtı anahtarsız (Sigstore); gizli bilgi taraması ve push koruması açık |
+| Gizli bilgi sızması | Gizli değerler (Play yükleme anahtarı ve parolası, Cloudflare API belirteci, e-posta hedefleri `MAIL_FORWARD_TO`) yalnızca korumalı CI ortamlarında ve proje liderinde; Linux derleme kanıtı anahtarsız (Sigstore); gizli bilgi taraması ve push koruması açık. Cloudflare belirteci e-posta Worker'ını da dağıtabilir: belirteci ya da dağıtım işini ele geçiren biri Worker'a yönlendirilen adreslere (`hello@`, catch-all) gelen postayı okuyabilir. Bu yüzden `security@` ve `privacy@` doğrudan kuralda kalır (#415) |
 
 **Kanıt:** güvenlik kurallarının testleri depoda durur ve her PR'da
 çalışır; ayrıştırıcıların fuzz hedefleri her hafta çalışır. CodeQL her PR'ı

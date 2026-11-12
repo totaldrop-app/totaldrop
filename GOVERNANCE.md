@@ -33,7 +33,7 @@ Releases, deployments and the accounts behind them still rest on one person, the
 
 - Everything needed to rebuild and release the software is public: the source, the build and release workflows, the build images and the process documents. Releases are built only in GitHub Actions, never on a personal machine.
 - The servers are deployed from this repository by CI, so a new account can run them from the same code.
-- The secrets (the Google Play upload key and its password, the Cloudflare API token) live only in protected GitHub environments and with the project lead. Linux build provenance is signed without a long-lived key (Sigstore).
+- The secrets (the Google Play upload key and its password, the Cloudflare API token, the addresses project mail is forwarded to) live only in protected GitHub environments and with the project lead. Linux build provenance is signed without a long-lived key (Sigstore).
 
 What is still missing, and needed before the project can say it continues without interruption if the project lead is gone:
 
