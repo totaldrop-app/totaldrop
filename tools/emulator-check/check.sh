@@ -73,10 +73,18 @@ launch() {
   # First run may ask about background limits; skip it as a person would.
   local skip
   skip=$(label setupBackgroundSkip)
-  if wait_for "$skip" 2; then
-    tap "$skip"
-    sleep 2
-  fi
+  # At 200 % text the button can be below the fold: scroll for it.
+  local i
+  for i in 1 2 3; do
+    if wait_for "$skip" 1; then
+      tap "$skip"
+      sleep 2
+      return
+    fi
+    dump _wait && python3 "$HERE/ui.py" find "$OUT/_wait.xml" "$(label homeReceiveTitle)" > /dev/null && return
+    adb shell input swipe 540 1800 540 600 300
+    sleep 1
+  done
 }
 
 link() {
@@ -256,12 +264,15 @@ case "$PR" in
     transfer 480-ar-light-07
     ;;
   480-locales)
+    # Restarting Android for a system language lost either the language or
+    # the font size (runs 4 and 5). A per-app language needs no restart and
+    # gives Flutter the same language and region.
+    adb shell settings put system font_scale 2.0
+    sleep 5
+    note "font_scale $(adb shell settings get system font_scale | tr -d '\r'), $(adb shell dumpsys activity | grep -m1 -o 'mGlobalConfiguration: {[^ ]*' | tr -d '\r')"
     for loc in ja-JP ar-EG; do
-      set_locale "$loc"
-      # The restart in set_locale drops the font size: set it afterwards.
-      adb shell settings put system font_scale 2.0
-      sleep 5
-      note "font_scale $(adb shell settings get system font_scale | tr -d '\r'), $(adb shell dumpsys activity | grep -m1 -o 'mGlobalConfiguration: {[^ ]*' | tr -d '\r')"
+      adb shell cmd locale set-app-locales "$PKG" --locales "$loc"
+      note "app locales: $(adb shell cmd locale get-app-locales "$PKG" | tr -d '\r')"
       L=${loc%%-*}
       launch
       look "480-$loc-01-home"

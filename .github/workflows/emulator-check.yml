@@ -22,13 +22,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Run 3 showed the empty-link fix for #498 working when the
-        # manifest was patched here; 24464e4 now carries it in the PR.
-        # Run 5 covers #480 in Japanese and Arabic at 200 %.
+        # #480 in Japanese and Arabic at 200 %, now with a per-app
+        # language: the system-language restarts in runs 4 and 5 lost
+        # either the language or the font size.
         include:
-          - pr: 498
-            sha: 24464e46f09e512f51266395bf3a811505a4c4bb
-            variant: as-is
+          - pr: 480
+            sha: a477acf22bf00ee470a8902cb490a52427175dcb
+            variant: locales
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
