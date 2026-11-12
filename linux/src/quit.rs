@@ -167,8 +167,9 @@ mod tests {
     }
 
     /// The window closed during a transfer: quitting waits until the
-    /// stopped transfer has ended and dropped what it held, and then for
-    /// the release that drop started.
+    /// stopped transfer has ended and dropped what it held, and only then
+    /// for the release that drop started. The release records whether the
+    /// drop came first, so a `finish` that waits for both at once fails.
     #[test]
     fn quitting_waits_for_a_stopped_transfer_and_its_release() {
         static TASKS: Tasks = Tasks::new();
@@ -191,20 +192,28 @@ mod tests {
             });
         });
         stop.stop();
-        let r = Arc::clone(&released);
+        let (r, d, seen) = (Arc::clone(&released), Arc::clone(&dropped), flag());
+        let s = Arc::clone(&seen);
         let ended = rt.block_on(finish(
             &TASKS,
-            set(r, Duration::from_secs(2)),
+            async move {
+                s.store(d.load(Ordering::SeqCst), Ordering::SeqCst);
+                set(r, Duration::from_secs(2)).await;
+            },
             Duration::from_secs(2),
         ));
         assert!(ended, "the transfer ended by itself");
-        assert!(dropped.load(Ordering::SeqCst), "it dropped what it held");
+        assert!(
+            seen.load(Ordering::SeqCst),
+            "it ended before the release wait began"
+        );
         assert!(released.load(Ordering::SeqCst), "and its release finished");
     }
 
     /// A transfer that does not end in time is dropped, so what it holds
     /// is still released before the process exits (review of #433: a
-    /// silent peer can keep a stopped send waiting for seconds).
+    /// silent peer can keep a stopped send waiting for seconds). The drop
+    /// comes before the release wait begins, or that wait would miss it.
     #[test]
     fn a_transfer_that_does_not_end_in_time_is_dropped() {
         static TASKS: Tasks = Tasks::new();
@@ -216,9 +225,18 @@ mod tests {
             std::future::pending::<()>().await;
         });
         let started = std::time::Instant::now();
-        let ended = rt.block_on(finish(&TASKS, async {}, Duration::from_millis(50)));
+        let (d, seen) = (Arc::clone(&dropped), flag());
+        let s = Arc::clone(&seen);
+        let ended = rt.block_on(finish(
+            &TASKS,
+            async move { s.store(d.load(Ordering::SeqCst), Ordering::SeqCst) },
+            Duration::from_millis(50),
+        ));
         assert!(!ended);
-        assert!(dropped.load(Ordering::SeqCst), "what it held was dropped");
+        assert!(
+            seen.load(Ordering::SeqCst),
+            "dropped before the release wait began"
+        );
         assert!(started.elapsed() < Duration::from_secs(1));
     }
 

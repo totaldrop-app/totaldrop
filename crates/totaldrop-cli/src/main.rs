@@ -291,8 +291,12 @@ fn run_then_release<T: Send + 'static>(
         .block_on(runtime.spawn(work))
         .map_err(|e| match e.try_into_panic() {
             Ok(panic) => panic,
-            // Not cancelled by anyone; kept as a panic so it is not lost.
-            Err(e) => Box::new(e.to_string()),
+            // Not cancelled by anyone, and no panic hook saw it: told here,
+            // and kept as a panic so it is not lost.
+            Err(e) => {
+                eprintln!("totaldrop: {e}");
+                Box::new(e.to_string())
+            }
         });
     runtime.block_on(release);
     ran
@@ -703,7 +707,8 @@ fn main() -> ExitCode {
     let result = match result {
         Ok(result) => result,
         Err(panic) => {
-            // The panic hook has printed the message already.
+            // The panic hook, or `run_then_release` for a task that was
+            // cancelled, has printed the message already.
             runtime.shutdown_background();
             std::panic::resume_unwind(panic);
         }
