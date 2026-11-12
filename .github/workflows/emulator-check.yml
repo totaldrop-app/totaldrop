@@ -22,15 +22,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Run 2 covered #480 and #489 in English and Turkish; this run
-        # repeats them in Japanese and Arabic (the locale change did not
-        # take in #480) and adds German for the percent.
+        # Run 4 showed #480 in Japanese and Arabic at the normal font
+        # size: restarting Android for the language dropped font_scale.
+        # This run sets the size after each language change.
         include:
           - pr: 480
             sha: a477acf22bf00ee470a8902cb490a52427175dcb
-            variant: locales
-          - pr: 489
-            sha: 2f1a3c96a0ed3e72206e43bdb73617b2924f6382
             variant: locales
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

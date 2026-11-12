@@ -256,10 +256,12 @@ case "$PR" in
     transfer 480-ar-light-07
     ;;
   480-locales)
-    adb shell settings put system font_scale 2.0
-    note "font_scale $(adb shell settings get system font_scale | tr -d '\r')"
     for loc in ja-JP ar-EG; do
       set_locale "$loc"
+      # The restart in set_locale drops the font size: set it afterwards.
+      adb shell settings put system font_scale 2.0
+      sleep 5
+      note "font_scale $(adb shell settings get system font_scale | tr -d '\r'), $(adb shell dumpsys activity | grep -m1 -o 'mGlobalConfiguration: {[^ ]*' | tr -d '\r')"
       L=${loc%%-*}
       launch
       look "480-$loc-01-home"
