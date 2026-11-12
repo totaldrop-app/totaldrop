@@ -115,15 +115,16 @@ impl Drop for Mapping {
     }
 }
 
-/// UPnP attempts and deletes, and race losers, still under way, for
-/// [`released`].
+/// UPnP attempts and deletes, second release copies and race losers still
+/// under way, for [`released`].
 static RELEASING: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
 static RELEASED: tokio::sync::Notify = tokio::sync::Notify::const_new();
 
-/// Counts, for [`released`], one UPnP attempt, mapping or delete, or one
-/// PCP or NAT-PMP race loser waiting for its answer (#461), that may still
-/// leave a port open. Dropping it, also with a future that never
-/// ran, takes it off the count.
+/// Counts, for [`released`], one UPnP attempt, mapping or delete, one
+/// PCP or NAT-PMP race loser waiting for its answer (#461), or the second
+/// copy of a PCP or NAT-PMP release (#502), that may still leave a port
+/// open. Dropping it, also with a future that never ran, takes it off the
+/// count.
 #[derive(Debug)]
 struct Pending;
 
@@ -148,8 +149,9 @@ impl Drop for Pending {
 }
 
 /// Wait, at most [`LIMIT`], until no UPnP attempt is still under way,
-/// every dropped UPnP mapping has been deleted, and every PCP or NAT-PMP
-/// race loser has had its answer and released a second mapping (#461). A
+/// every dropped UPnP mapping has been deleted, every PCP or NAT-PMP
+/// release has gone out twice (#502), and every PCP or NAT-PMP race loser
+/// has had its answer and released a second mapping (#461). A
 /// process about to exit calls this before it shuts its runtime down;
 /// without it the delete or release dies with the runtime and the port
 /// stays open until its lease runs out.
@@ -192,7 +194,10 @@ impl Release {
                 let msg = request(held, port, 0);
                 let _ = socket.try_send(&msg);
                 if let Ok(rt) = tokio::runtime::Handle::try_current() {
+                    // Counted, so a process that exits waits for it (#502).
+                    let pending = Pending::new();
                     rt.spawn(async move {
+                        let _pending = pending;
                         tokio::time::sleep(RESEND).await;
                         let _ = socket.send(&msg).await;
                     });
@@ -1482,6 +1487,50 @@ mod tests {
             "NAT-PMP was not asked, so the test shows nothing"
         );
         assert!(releases(&all, 0) > 0, "the NAT-PMP mapping stayed open");
+    }
+
+    /// #502: the process exits right after the mapping goes, as the CLI
+    /// does: [`released`], then the runtime shuts down. Both copies of the
+    /// release must still reach the router; before, `released` did not
+    /// wait for the second, so a lost first copy left the port open.
+    #[test]
+    fn released_waits_for_the_second_release() {
+        let (tx, rx) = std::sync::mpsc::channel();
+        let gw = std::net::UdpSocket::bind("127.0.0.1:0").unwrap();
+        let at = gw.local_addr().unwrap();
+        std::thread::spawn(move || {
+            let mut buf = [0u8; 1500];
+            loop {
+                let (n, from) = match gw.recv_from(&mut buf) {
+                    Ok(got) => got,
+                    Err(e) if e.kind() == std::io::ErrorKind::ConnectionReset => continue,
+                    Err(_) => break,
+                };
+                let m = buf[..n].to_vec();
+                let _ = tx.send(m.clone());
+                if m[0] == 2 && m.len() == 60 && lifetime_of(&m) != 0 {
+                    let req: [u8; 60] = m[..].try_into().unwrap();
+                    let r = answer::pcp(&req, 0, (PUBLIC.into(), OPENED), LIFETIME);
+                    let _ = gw.send_to(&r, from);
+                }
+            }
+        });
+        let rt = tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+            .unwrap();
+        rt.block_on(async {
+            let m = pcp_only(Gateway::At(at), 40_000).await.unwrap();
+            assert_eq!(m.external(), SocketAddr::from((PUBLIC, OPENED)));
+            drop(m);
+            released().await;
+        });
+        rt.shutdown_background();
+        let mut all = Vec::new();
+        while let Ok(m) = rx.recv_timeout(Duration::from_millis(500)) {
+            all.push(m);
+        }
+        assert_eq!(releases(&all, 2), 2, "the second release was lost");
     }
 
     #[tokio::test]
