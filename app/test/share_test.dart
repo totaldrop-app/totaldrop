@@ -550,6 +550,33 @@ void main() {
       expect(receive.input, isEmpty);
     });
 
+    // A code cut short, or with a slash a chat app added, was dropped
+    // without a word (#445 review).
+    testWidgets('a link whose code is not a code says so', (tester) async {
+      await pumpApp(tester);
+      launches.add(const OpenLink('totaldrop://r/7-harbor'));
+      await settle(tester);
+      expect(find.byType(ReceiveView), findsOneWidget);
+      expect(receive.input, isEmpty);
+      expect(
+        find.text(
+          'That does not look like a code. It starts with a number, then '
+          'two or three words.',
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('a link with nothing where the code goes says nothing', (
+      tester,
+    ) async {
+      await pumpApp(tester);
+      launches.add(const OpenLink('totaldrop://r'));
+      await settle(tester);
+      expect(find.byType(ReceiveView), findsOneWidget);
+      expect(find.byType(SnackBar), findsNothing);
+    });
+
     testWidgets('a link during a transfer is refused with a message', (
       tester,
     ) async {
