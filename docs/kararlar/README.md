@@ -5,6 +5,8 @@ sonuçları. Bir karar değişirse eski belge silinmez; durumu "yerini aldı"
 olur ve yenisine bağlanır.
 Henüz onaylanmamış bir karar "Önerilen" durumunda açılır; Ozan onaylayınca
 birleştirmeden önce "Kabul" olur.
+In records written in English the statuses are "Proposed" (Önerilen),
+"Accepted" (Kabul) and "Superseded by" (Yerini aldı).
 
 | No | Karar | Durum |
 | --- | --- | --- |
