@@ -15,7 +15,7 @@
   ".github/workflows/core.yml:72": [
     "cargo llvm-cov --locked --summary-only --fail-under-lines 90"
   ],
-  ".github/workflows/deploy.yml:134": [
+  ".github/workflows/deploy.yml:138": [
     "CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}"
   ],
   ".github/workflows/linux.yml:40-45": [
@@ -210,22 +210,22 @@
   "crates/totaldrop-core/src/lib.rs:501": [
     "pub async fn run_with(self, events: Events, stop: Stop) -> Result<SendReport> {"
   ],
-  "crates/totaldrop-core/src/lib.rs:596": [
+  "crates/totaldrop-core/src/lib.rs:597": [
     "pub struct ReceiveOptions {"
   ],
-  "crates/totaldrop-core/src/lib.rs:615": [
+  "crates/totaldrop-core/src/lib.rs:616": [
     "pub struct IncomingOffer {"
   ],
-  "crates/totaldrop-core/src/lib.rs:638": [
+  "crates/totaldrop-core/src/lib.rs:639": [
     "pub async fn connect_with(opts: &ReceiveOptions, code: &str, stop: &Stop) -> Result<Self> {"
   ],
-  "crates/totaldrop-core/src/lib.rs:661": [
+  "crates/totaldrop-core/src/lib.rs:662": [
     "pub async fn connect(opts: &ReceiveOptions, code: &str) -> Result<Self> {"
   ],
-  "crates/totaldrop-core/src/lib.rs:664": [
+  "crates/totaldrop-core/src/lib.rs:665": [
     "let mailbox = rendezvous::Mailbox::claim(&opts.server, code.nameplate(), None).await?;"
   ],
-  "crates/totaldrop-core/src/lib.rs:730": [
+  "crates/totaldrop-core/src/lib.rs:731": [
     "pub async fn accept_with("
   ],
   "crates/totaldrop-core/src/lib.rs:95": [
@@ -252,13 +252,13 @@
   "crates/totaldrop-core/src/path.rs:86": [
     "pub const FALLBACK_SILENCE: Duration = Duration::from_secs(8);"
   ],
-  "crates/totaldrop-core/src/portmap.rs:220": [
+  "crates/totaldrop-core/src/portmap.rs:224": [
     "/// answer (#425)."
   ],
-  "crates/totaldrop-core/src/portmap.rs:288": [
+  "crates/totaldrop-core/src/portmap.rs:292": [
     "pub fn start(gateway: Gateway, port: u16) -> Asking {"
   ],
-  "crates/totaldrop-core/src/portmap.rs:336": [
+  "crates/totaldrop-core/src/portmap.rs:340": [
     "pub async fn wait(mut self, grace: Duration) -> Option<Mapping> {"
   ],
   "crates/totaldrop-core/src/portmap.rs:58": [
@@ -328,28 +328,28 @@
   "crates/totaldrop-core/src/transport.rs:306": [
     "pub fn bind_socket() -> Result<UdpSocket> {"
   ],
-  "crates/totaldrop-core/src/transport.rs:428": [
+  "crates/totaldrop-core/src/transport.rs:438": [
     "pub fn endpoint("
   ],
-  "crates/totaldrop-core/src/transport.rs:518": [
+  "crates/totaldrop-core/src/transport.rs:528": [
     "const REVERSE_DELAY: Duration = Duration::from_millis(400);"
   ],
-  "crates/totaldrop-core/src/transport.rs:522": [
+  "crates/totaldrop-core/src/transport.rs:532": [
     "const RELAY_DELAY: Duration = Duration::from_millis(1200);"
   ],
-  "crates/totaldrop-core/src/transport.rs:546": [
+  "crates/totaldrop-core/src/transport.rs:556": [
     "pub async fn receiver_connection("
   ],
-  "crates/totaldrop-core/src/transport.rs:578": [
+  "crates/totaldrop-core/src/transport.rs:588": [
     "pub async fn sender_connection("
   ],
-  "crates/totaldrop-core/src/transport.rs:684": [
+  "crates/totaldrop-core/src/transport.rs:694": [
     "pub async fn connect_any(endpoint: &quinn::Endpoint, paths: &Paths) -> Result<quinn::Connection> {"
   ],
   "crates/totaldrop-core/src/transport.rs:73": [
     "pub fn generate() -> Result<Self> {"
   ],
-  "crates/totaldrop-core/src/transport.rs:856": [
+  "crates/totaldrop-core/src/transport.rs:866": [
     "std::env::var_os(\"TOTALDROP_REQUIRE_IPV6\").is_none(),"
   ],
   "crates/totaldrop-crypto/src/channel.rs:114": [
