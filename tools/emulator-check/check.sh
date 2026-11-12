@@ -164,7 +164,7 @@ sleep 3
 adb wait-for-device
 adb install -r "$APK" > /dev/null || {
   note "install failed"
-  exit 0
+  exit 1
 }
 adb shell pm grant "$PKG" android.permission.POST_NOTIFICATIONS 2> /dev/null
 # Battery optimisation off, so the first-run page has nothing to set up.
