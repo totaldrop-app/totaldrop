@@ -231,7 +231,14 @@ class TransferProgress extends StatelessWidget {
       children: [
         ClipRRect(
           borderRadius: BorderRadius.circular(8),
-          child: LinearProgressIndicator(value: fraction, minHeight: 10),
+          child: LinearProgressIndicator(
+            value: fraction,
+            minHeight: 10,
+            // The same whole percent as the text: the bar's own rounds up.
+            semanticsValue: fraction == null
+                ? null
+                : '${wholePercent(done, total)}',
+          ),
         ),
         Gap.s,
         Row(

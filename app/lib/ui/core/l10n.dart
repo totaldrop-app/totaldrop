@@ -116,9 +116,15 @@ String formatPercent(
   String? numberLocale,
 }) {
   final locale = numberLocale ?? _numberLocale(l);
-  final whole = total <= 0 ? 0 : (done * 100 ~/ total).clamp(0, 100);
-  return intl.NumberFormat.percentPattern(locale).format(whole / 100);
+  return intl.NumberFormat.percentPattern(locale)
+      .format(wholePercent(done, total) / 100);
 }
+
+/// The whole percent of [done] in [total], rounded down so that 100 means
+/// finished. The text and the progress bar's value read by a screen reader
+/// both use it (#483).
+int wholePercent(int done, int total) =>
+    total <= 0 ? 0 : (done * 100 ~/ total).clamp(0, 100);
 
 /// A value from outside the translation (a version, a folder) placed in a
 /// sentence. Isolated, it keeps its own direction in a right-to-left
