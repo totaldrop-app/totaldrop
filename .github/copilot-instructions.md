@@ -1,65 +1,67 @@
-# Copilot kod incelemesi için talimatlar
+# Instructions for Copilot code review
 
-TotalDrop uçtan uca şifreli, her platformdan her platforma dosya gönderen
-açık kaynak bir uygulamadır. Bağlayıcı kurallar `docs/surec.md`,
-`docs/tasarim.md`, `docs/ceviri.md` ve `docs/kararlar/` altındadır; burada
-incelemede en sık gereken özetler var.
+TotalDrop is an open-source app that sends files end-to-end encrypted
+from any platform to any other. The binding rules are in `CLAUDE.md`,
+`docs/surec.md`, `docs/tasarim.md`, `docs/ceviri.md`, `docs/kararlar/`
+and `.claude/skills/`; this file sums up what a review needs most often.
 
-## İnceleme nasıl yazılır
+## How to write the review
 
-- İncelemeyi ve yorumları Türkçe yaz.
-- Koddan söz eden her bulgu `yol/dosya.ext:satır` verir.
-- Emin olmadığın bulguyu "emin değilim" diye işaretle ve nasıl
-  sınanacağını söyle.
-- Biçim ve üslup tercihlerini bulgu yazma; biçimleyiciler CI'da çalışır.
-- İncelemen ek bir okumadır, bakımcı onayının yerini tutmaz.
+- Write the review and its comments in English.
+- Every finding about code gives `path/file.ext:line`.
+- Mark a finding you are not sure of as unverified and say how to test it.
+- Do not report formatting or style; the formatters run in CI.
+- Your review is an extra reading; it never replaces a maintainer's
+  approval.
 
-## Dil: hangi dosya hangi dilde
+## Language
 
-İki dil bilerek bir arada durur. Bir dosyanın dilini o dosyanın ve
-yanındakilerin zaten kullandığı dille karşılaştır; hepsini Türkçe isteme.
+The repository is written in English (decision 0019, #490).
 
-- **Türkçe:** `docs/` altındaki belgelerin çoğu (`surec.md`, `tasarim.md`,
-  `tehdit-modeli.md`, `kararlar/`), `CLAUDE.md`, PR açıklamaları, issue'lar.
-- **İngilizce:** kod ve yorumları, commit iletileri, PR başlıkları
-  (Conventional Commits: `fix(core): …`), `CHANGELOG.md`, `changelog.d/`
-  girdileri (CHANGELOG.md'ye olduğu gibi taşınır, `changelog.d/README.md`),
-  `README.md`, `SECURITY.md`, `CONTRIBUTING.md`, `GOVERNANCE.md`,
-  `docs/protocol-v0.1-notes.md`. Bunların İngilizce olması hata değildir.
-- **35 dil:** kullanıcıya görünen her metin. İngilizce dosya şablondur
-  (`l10n/app/app_en.arb`, `l10n/cli/cli_en.arb`, `site/public/i18n/en.json`,
-  `site/privacy/en.html`). Hedef, yeni ya da değişen metnin 35 dilde
-  gelmesidir; eksik dili düşük önemde yaz. Eksik çeviri İngilizce'ye düşer
-  ve CI'ı kırmaz (`docs/ceviri.md`, karar 0008); engelleyici sayma.
-- `CHANGELOG.md`'ye yalnızca sürümde yazılır; PR'da değişmemesi doğrudur.
+- **English:** code and comments, commit messages, PR titles
+  (Conventional Commits: `fix(core): …`) and descriptions, issues,
+  `changelog.d/` entries (moved as they are into `CHANGELOG.md`), and
+  every new or translated document.
+- **Turkish, until translated:** documents in `docs/` not yet translated
+  (#490) stay binding. Editing one in Turkish, or not translating it in
+  an unrelated PR, is not a finding.
+- **35 languages:** every text users read. The English file is the
+  template (`l10n/app/app_en.arb`, `l10n/cli/cli_en.arb`,
+  `site/public/i18n/en.json`, `site/privacy/en.html`). New or changed text
+  comes in all 35 languages in the same PR (`CLAUDE.md`). A missing
+  language falls back to English and does not fail CI, but it is a
+  finding.
+- `CHANGELOG.md` changes only at a release; a PR that leaves it alone is
+  right.
 
-## Her PR'da bak
+## Check on every PR
 
-- **Bitti tanımı** (`docs/surec.md`): hata düzeltmesinde önce hatayı
-  gösteren test; `changelog.d/<issue>-<ad>.<bölüm>.md` ya da nedenini
-  söyleyen `.none.md`; PR şablonundaki liste dolu.
-- **İncelemeden çıkan kurallar** (`docs/surec.md`):
-  - Hata bekleyen test hatanın türünü ya da kodunu denetler.
-  - Zamanlama testinde sabit `sleep` yok; koşul son süreyle beklenir.
-  - Durum adlandırılmış bir türdür (metin ya da bool çifti değil);
-    `await` sonrası neslin ve aşamanın aynı kaldığı denetlenir.
-  - Belge, gizlilik politikası, site ya da README bir süre, sınır ya da
-    maliyet söylüyorsa onu sağlayan kod ve test PR'da görünür.
-  - Dış metin terminale ya da arayüze yazılmadan önce kontrol karakterleri
-    görünür yapılır; hata sessizce yutulmaz.
-  - Araç ve taban sürümünün tek kaynağı vardır; kopyaları bir denetim
-    karşılaştırır.
-- **Güvenlik ve kriptografi:** gizli değerler sabit zamanlı karşılaştırılır;
-  ağdan gelen uzunluk ve sayım okunmadan önce sınırlanır; yeni ayrıştırıcının
-  `fuzz/` altında hedefi olur. Protokol değişirse
-  `docs/protocol-v0.1-notes.md`, mimari değişirse `docs/kararlar/` güncel
-  olmalı.
-- **Gizli bilgiler:** `key.properties`, imza anahtarları, parolalar, API
-  anahtarları depoya girmez; görürsen yüksek önemde yaz.
-- **Arayüz** (`docs/tasarim.md`): sistem temasına uyar (açık ve koyu);
-  Linux'ta KDE Plasma, Hyprland ve Omarchy. Sistem temasını ya da yazı
-  ölçeğini yok sayan sabit renk ve boyut, sağdan sola dillerde kırılan
-  yerleşim bulgudur. İstisna: işaretin (Köşe) renkleri ve sistem renk
-  vermediğinde kullanılan Aurora paleti.
-- **CI:** `.github/workflows/` altında üçüncü taraf eylemler commit
-  SHA'sıyla sabitlenir, izinler en dardır, paketler yalnızca CI'da derlenir.
+- **Definition of done** (`docs/surec.md`): a bug fix starts with a test
+  that shows the bug; `changelog.d/<issue>-<slug>.<section>.md`, or a
+  `.none.md` saying why; the PR template's list filled in.
+- **Rules from past reviews** (`docs/surec.md`):
+  - A test that expects an error checks its kind or code.
+  - No fixed `sleep` in timing tests; wait for a condition with a deadline.
+  - A state is a named type, not a string or a pair of bools; after an
+    `await`, the generation and stage are checked again.
+  - When a document, the privacy policy, the site or a README promises a
+    time, a limit or a cost, the PR shows the code and test behind it.
+  - Outside text has its control characters made visible before it
+    reaches a terminal or the UI; no error is swallowed.
+  - A tool or base version has one source; a check compares the copies.
+- **Security and cryptography** (`.claude/skills/`): secrets are compared
+  in constant time; lengths and counts from the network are bounded
+  before they are read; a new parser has a target in `fuzz/`. A protocol
+  change updates `docs/protocol-v0.1-notes.md`, an architecture change
+  `docs/kararlar/`.
+- **Secrets:** `key.properties`, signing keys, passwords and API keys
+  never enter the repository. If you see one, do not repeat any part of
+  it: give only `path:line` and ask for it to be reported through the
+  private channel in `SECURITY.md`.
+- **UI** (`docs/tasarim.md`): follows the system theme (light and dark);
+  on Linux, KDE Plasma, Hyprland and Omarchy. A fixed colour or size that
+  ignores the system theme or text scale, or a layout that breaks in
+  right-to-left languages, is a finding. Exceptions: the mark's (Köşe)
+  colours and the Aurora palette used when the system gives no colour.
+- **CI** (`.github/workflows/`): third-party actions pinned to a commit
+  SHA, least permissions; packages are built only in CI.

@@ -29,7 +29,10 @@ için [versioning.md](versioning.md) bağlayıcıdır.
    "Reviewers" kutusunda Copilot; Claude oturumları
    `request_copilot_review` ile). Kod, güvenlik, kriptografi ya da
    protokol değiştiren PR'larda (CI iş akışları ve derleme tarifleri de
-   kod sayılır) ayrı inceleme ajanı çalışır. Copilot Ozan'ın aylık
+   kod sayılır) ayrı inceleme ajanı çalışır. Güvenliği ya da ajan
+   kurallarını değiştiren belge ve ayarlar da bu sınıftadır: `.github/`,
+   `.claude/`, `CLAUDE.md`, `deny.toml`, `osv-scanner.toml`,
+   `SECURITY.md`, `docs/tehdit-modeli.md` ve gizlilik politikası. Copilot Ozan'ın aylık
    kotasından harcadığı için her PR'da ve kendiliğinden istenmez. Neye
    bakacağını `.github/copilot-instructions.md`'den okur. Bulguları öteki
    inceleyicilerinkiyle aynı muamele görür: ya düzeltilir ya da gerekçesi
