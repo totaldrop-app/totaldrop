@@ -181,7 +181,12 @@ class _Entering extends StatelessWidget {
             ),
             helperText: l.receiveCodeHelp,
             errorText: vm.showInvalid ? l.receiveCodeInvalid : null,
-            errorMaxLines: 3,
+            // All of it, in every language and text size: at 200 % the
+            // Japanese message ran past three lines and lost its end
+            // (#480). errorText cannot go without a limit, so the limit is
+            // one no message reaches; errorText, not the error widget,
+            // because only it is read out with the field.
+            errorMaxLines: 99,
             prefixIcon: const Icon(Icons.key_outlined),
             suffixIcon: KeepIconButtonVariant(
               child: IconButton(
