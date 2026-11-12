@@ -1,7 +1,8 @@
 # 0005: Gelir yalnızca bağış
 
-- **Durum:** Kabul, 27 Ekim 2026. Sayfanın kimin adına açıldığı ve ne
-  zaman değişeceği: [0017](0017-bagis-kisisel-sayfa.md).
+- **Durum:** Kabul, 27 Ekim 2026. Sayfanın kimin adına açıldığı, ikinci
+  kanal (Buy Me a Coffee) ve ne zaman değişeceği:
+  [0017](0017-bagis-kisisel-sayfa.md).
 - **Karar:** TotalDrop ücretsiz kalır: reklam, ücretli sürüm ve yatırımcı
   yok. Bağışlar yalnızca GitHub Sponsors üzerinden alınır
   (github.com/sponsors/ozdil). Bütün maliyetler ve aylık gelir-gider
