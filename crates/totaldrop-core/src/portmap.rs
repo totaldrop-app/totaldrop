@@ -151,7 +151,8 @@ impl Drop for Pending {
 /// Wait, at most [`LIMIT`], until no UPnP attempt is still under way,
 /// every dropped UPnP mapping has been deleted, every PCP or NAT-PMP
 /// release has gone out twice (#502), and every PCP or NAT-PMP race loser
-/// has had its answer and released a second mapping (#461). A
+/// has had its answer and released a second mapping (#461). What is still
+/// under way when `LIMIT` runs out is not waited for. A
 /// process about to exit calls this before it shuts its runtime down;
 /// without it the delete or release dies with the runtime and the port
 /// stays open until its lease runs out.
@@ -1493,6 +1494,8 @@ mod tests {
     /// does: [`released`], then the runtime shuts down. Both copies of the
     /// release must still reach the router; before, `released` did not
     /// wait for the second, so a lost first copy left the port open.
+    /// `RELEASING` is shared with tests running alongside, which may make
+    /// this one pass without the fix, never fail with it.
     #[test]
     fn released_waits_for_the_second_release() {
         let (tx, rx) = std::sync::mpsc::channel();
