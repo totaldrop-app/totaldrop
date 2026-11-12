@@ -7,7 +7,7 @@
   AGPL-3.0-or-later. These licences allow copying, changing and
   distributing the code. They do not give permission to use the TotalDrop
   name and mark. Apache-2.0 says so explicitly in its section 6. GPL-3.0
-  does not permit the name and the mark; its section 7 lets a project
+  gives no permission for the name and the mark; its section 7 lets a project
   write this into its licence notice as an additional term (e) and require
   modified versions to be marked as different (c). Until now, nothing said
   anywhere how others may use the name and the mark. The
