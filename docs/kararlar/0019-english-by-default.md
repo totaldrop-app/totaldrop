@@ -1,6 +1,6 @@
 # 0019: The repository is written in English
 
-- **Status:** Proposed, 11 November 2026 (Ozan, #490)
+- **Status:** Accepted, 11 November 2026 (Ozan, #490)
 - **Context:** Code, comments, commit messages, `README.md`,
   `CONTRIBUTING.md` and the protocol notes were already in English, but the
   process and design documents in `docs/`, the decision records, the agent
