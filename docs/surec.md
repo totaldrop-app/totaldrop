@@ -394,8 +394,17 @@ Worker iletiyi `MAIL_FORWARD_TO`'daki her adrese ayrı ayrı iletir.
 3. Actions → Deploy → "Run workflow" ile `mail` hedefini dağıtın ve
    onaylayın. Gizli değer yalnızca dağıtımda Worker'a geçer; değeri
    değiştirmek de yeniden dağıtım ister.
-4. İlk kurulumda, Worker dağıtıldıktan sonra Email Routing → Routing
-   Rules altında `hello@` kuralının ve varsa catch-all kuralının
+4. İlk kurulumda önce bir deneme yapın, çünkü Worker yalnızca `main`'den
+   dağıtılır ve PR'da denenemez: Email Routing → Routing Rules altında
+   geçici bir `mail-test@` kuralı ekleyin, eylemi "Send to a Worker",
+   hedefi `totaldrop-mail` olsun. Proje dışındaki bir adresten
+   `mail-test@totaldrop.app`'e bir deneme e-postası gönderin ve her
+   kutuya geldiğini görün (önemsiz posta klasörüne de bakın). Email
+   Routing → Activity log iletinin durumunu gösterir. Sonra kuralı
+   silin. Deneme geçmeden asıl kurallar çevrilmez.
+5. Asıl kurallar, gizlilik politikası proje e-postasının nasıl
+   iletildiğini anlatmadan çevrilmez: #416 yayında değilse bu adım
+   bekler. Sonra `hello@` kuralının ve varsa catch-all kuralının
    eylemini "Send to a Worker", hedefini `totaldrop-mail` yapın.
    Karar (10 Kas 2026): bakımcılardan birine gelen proje e-postası
    ötekine de gelir. İstisna (12 Kas 2026, Ozan): `security@` ve
@@ -405,11 +414,10 @@ Worker iletiyi `MAIL_FORWARD_TO`'daki her adrese ayrı ayrı iletir.
    dağıtarak okuyabilir; `security@` henüz yayımlanmamış açık
    raporlarını taşır ([tehdit modeli](tehdit-modeli.md), "Gizli bilgi
    sızması").
-5. Proje dışındaki bir adresten `hello@totaldrop.app`'e bir deneme
-   e-postası gönderin ve her kutuya geldiğini görün (önemsiz posta
-   klasörüne de bakın). Catch-all da çevrildiyse tanımsız bir adrese de
-   (ör. `deneme@totaldrop.app`) bir deneme gönderin. Email Routing →
-   Activity log iletinin durumunu gösterir.
+6. Proje dışındaki bir adresten `hello@totaldrop.app`'e bir deneme
+   e-postası gönderin ve her kutuya geldiğini görün. Catch-all da
+   çevrildiyse tanımsız bir adrese de (ör. `deneme@totaldrop.app`) bir
+   deneme gönderin.
 
 **Geri alma:** iletim bozulursa en hızlı yol, Worker'a çevrilen her
 kuralın (`hello@`, catch-all) eylemini yeniden "Send to an email" yapıp
