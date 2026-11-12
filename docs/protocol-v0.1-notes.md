@@ -89,6 +89,9 @@ treated as final.
      back at a full burst. The Rust server counts every routed connection
      when it opens, the Worker every allocation and every mailbox opening;
      a client making ordinary transfers sees no difference.
+   - An upgrade that carries an `Origin` header, which every browser
+     sends, is refused with HTTP 403 before anything is counted (#450).
+     A client must not send `Origin`.
 8. **Reading a typed code.** Before a code is split into its number and
    words, invisible format characters (direction marks, isolates, zero-width
    characters, the soft hyphen, the byte order mark; `INVISIBLE_FORMAT` in
@@ -432,7 +435,8 @@ treated as final.
       relay that stopped reading would otherwise hold the link in a write
       with a full send buffer, where it cannot notice anything (#424).
 23. **Relay limits.** Per connection: 32 GiB and 6 hours; ten seconds to
-    sign in. Both accept only the pair path `/v0/relay/<key A>-<key B>` and
+    sign in. Both refuse an upgrade that carries `Origin` with HTTP 403
+    (#450), accept only the pair path `/v0/relay/<key A>-<key B>` and
     forward only to the other key of that pair. The self-hosted relay also
     caps each connection at 8 MiB/s and closes it after 60 seconds without
     datagrams (pings do not count), which ends the other side too. The
