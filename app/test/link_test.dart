@@ -53,10 +53,25 @@ void main() {
     expect(repo.stoppers, isEmpty, reason: 'nothing was started');
   });
 
-  test('a link without a code changes nothing', () {
+  test('a link whose code is not a code empties the box and says so', () {
     vm.setInput('3-old-code');
     expect(vm.takeLink('totaldrop://r/x?c=7-harbor-rocket'), isFalse);
-    expect(vm.input, '3-old-code');
+    expect(vm.input, isEmpty, reason: 'not the code typed before');
+    expect(vm.showInvalid, isTrue);
+  });
+
+  test('a link with nothing where the code goes changes nothing', () {
+    vm.setInput('3-old-code');
+    for (final link in [
+      'totaldrop://r',
+      'totaldrop://r/',
+      'https://totaldrop.app/r',
+      'https://totaldrop.app/r#',
+    ]) {
+      expect(vm.takeLink(link), isFalse, reason: link);
+      expect(vm.input, '3-old-code', reason: link);
+      expect(vm.showInvalid, isFalse, reason: link);
+    }
   });
 
   test('a link while connecting changes nothing', () async {

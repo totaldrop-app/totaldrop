@@ -91,14 +91,21 @@ class ReceiveViewModel extends ChangeNotifier {
   /// Fills in the code of a link that opened the app (#445), in place of
   /// what was typed. Only when [canTakeLink]; a finished receive of files,
   /// a declined or a failed one is put away first. Nothing connects until
-  /// the person does. Returns whether the link held a code.
+  /// the person does. A link with something that is not a code where the
+  /// code goes (cut short, or changed by the app it came through) empties
+  /// the box and says so; a link with nothing there changes nothing.
+  /// Returns whether the link held a code.
   bool takeLink(String link) {
     if (!canTakeLink) return false;
     final code = _repo.codeFromLink(link);
-    if (code == null) return false;
+    if (code == null && !linkHasCodePart(link)) return false;
     if (stage != ReceiveStage.entering) reset();
-    setInput(code);
-    return true;
+    setInput(code ?? '');
+    if (code == null) {
+      showInvalid = true;
+      notifyListeners();
+    }
+    return code != null;
   }
 
   Future<void> connect() async {
@@ -278,4 +285,14 @@ class ReceiveViewModel extends ChangeNotifier {
     _release();
     super.dispose();
   }
+}
+
+/// Whether a receive link has anything after its prefix, where the code
+/// goes (#445). The two prefixes are the only links the app is given
+/// (MainActivity.isReceiveLink); the code itself is read in Rust.
+bool linkHasCodePart(String link) {
+  for (final prefix in const ['totaldrop://r/', 'https://totaldrop.app/r#']) {
+    if (link.startsWith(prefix)) return link.length > prefix.length;
+  }
+  return false;
 }
