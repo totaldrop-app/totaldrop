@@ -47,7 +47,7 @@ Zorunlu denetim CI'dır; aşağıdakiler aynı denetimlerin yerel karşılığı
   ```
   `end_to_end` yerelde yalnızca Rust sunucularına karşı çalışır. Worker'lara karşı çalıştırmak için `wrangler dev` ile Worker'ları başlatıp `TOTALDROP_TEST_SERVER`, `TOTALDROP_TEST_SERVER_LIMITED` ve `TOTALDROP_TEST_RELAY` değişkenlerini ayarla (`.github/workflows/server.yml`, "End to end against both Workers").
   CI'da `TOTALDROP_REQUIRE_IPV6=1` ile çalışır (çift yığın testleri IPv4'e düşmesin, #403). Kapsam eşiği (`core.yml`): `cargo llvm-cov --locked --summary-only --fail-under-lines 90` ve fmt satırındaki aynı yedi `-p`.
-- Worker'lar (`server/rendezvous-worker`, `server/relay-worker`, her birinde): `npm ci && npm run check && npm run --if-present test` (`relay-worker`'da `test` betiği yok).
+- Worker'lar (`server/rendezvous-worker`, `server/relay-worker`, `server/mail-worker`, her birinde): `npm ci && npm run check && npm run --if-present test`.
 - Site: `node site/tools/check-i18n.mjs`, `node --test site/tools/test-*.mjs`; üretilen dosyaları denetleyen araçlar (`privacy.mjs`, `team.mjs`, `favicons.mjs`, `brand-files.mjs`, `asset-versions.mjs`, `check-readmes.mjs`) `--write` ile yeniden yazar; CI yalnızca denetler (`.github/workflows/site.yml`).
 - Android (`app/`): `flutter pub get --enforce-lockfile`, `flutter gen-l10n`, `flutter analyze`, `flutter test`; köprü crate'i `cargo test -p rust_lib_totaldrop --locked`.
 - Linux QML bileşen testleri (Rust derlemesi istemez): `linux/tests/qml/run.sh`.

@@ -368,11 +368,14 @@ adrese gidebilir; aynı adres için ikinci bir kural yazılırsa yalnızca ilki
 Worker'ına (`server/mail-worker`, adı `totaldrop-mail`) yönlendirilir.
 Worker iletiyi `MAIL_FORWARD_TO`'daki her adrese ayrı ayrı iletir.
 
-- Worker iletiyi saklamaz. Workers Logs'ta yalnızca kendi yazdığı tek
-  satır durur: kaç hedefe iletilemediği. Gönderen, alıcı ve konu
-  kaydedilmez (invocation logs kapalı). Ayar eksik ya da bozuksa hiçbir
-  yere iletmez; `totaldrop.app` adresleri döngü kuracağı için hedef
-  olamaz.
+- Worker iletiyi saklamaz. Workers Logs'ta yalnızca Worker'ın kendi
+  yazdıkları durur: kaç hedefe iletilemediği ve, hiçbir hedefe
+  iletilemezse, hata iletisi. İkisi de adres ya da konu taşımaz;
+  gönderen ve alıcıyı gösterecek invocation logs kapalıdır. Email
+  Routing ise her ileti için kendi kaydını tutar (Activity log); bu,
+  Worker'dan önce de böyleydi ve Cloudflare'in elindedir. Ayar eksik ya
+  da bozuksa hiçbir yere iletmez; `totaldrop.app` adresleri döngü
+  kuracağı için hedef olamaz.
 - Bir hedefe iletim başarısız olursa (ör. henüz doğrulanmamışsa) öteki
   hedefler yine alır. Email Routing → Activity log iletiyi o zaman
   "Handled" gösterir; başarısızlık yalnızca Workers & Pages →
@@ -392,22 +395,26 @@ Worker iletiyi `MAIL_FORWARD_TO`'daki her adrese ayrı ayrı iletir.
    onaylayın. Gizli değer yalnızca dağıtımda Worker'a geçer; değeri
    değiştirmek de yeniden dağıtım ister.
 4. İlk kurulumda, Worker dağıtıldıktan sonra Email Routing → Routing
-   Rules altında `hello@` kuralının eylemini "Send to a Worker",
-   hedefini `totaldrop-mail` yapın. Aynı Worker başka adreslerin
-   kuralına da hedef olabilir. Karar (10 Kas 2026): bakımcılardan
-   birine gelen her proje e-postası ötekine de gelir. Bu yüzden
-   `hello@`, `privacy@`, `security@` ve varsa catch-all kuralı da
-   `totaldrop-mail`'e yönlendirilir; tek bir bakımcıya giden kural
-   kalmaz.
+   Rules altında `hello@` kuralının ve varsa catch-all kuralının
+   eylemini "Send to a Worker", hedefini `totaldrop-mail` yapın.
+   Karar (10 Kas 2026): bakımcılardan birine gelen proje e-postası
+   ötekine de gelir. İstisna (12 Kas 2026, Ozan): `security@` ve
+   `privacy@` kuralları doğrudan proje liderine gider ve Worker'a
+   çevrilmez. Worker'a giden postayı, Cloudflare dağıtım belirtecini
+   ya da dağıtım işini ele geçiren biri kendi `totaldrop-mail`'ini
+   dağıtarak okuyabilir; `security@` henüz yayımlanmamış açık
+   raporlarını taşır ([tehdit modeli](tehdit-modeli.md), "Gizli bilgi
+   sızması").
 5. Proje dışındaki bir adresten `hello@totaldrop.app`'e bir deneme
    e-postası gönderin ve her kutuya geldiğini görün (önemsiz posta
-   klasörüne de bakın). Email Routing → Activity log iletinin durumunu
-   gösterir.
+   klasörüne de bakın). Catch-all da çevrildiyse tanımsız bir adrese de
+   (ör. `deneme@totaldrop.app`) bir deneme gönderin. Email Routing →
+   Activity log iletinin durumunu gösterir.
 
-**Geri alma:** iletim bozulursa en hızlı yol, `hello@` kuralının
-eylemini yeniden "Send to an email" yapıp tek bir doğrulanmış adres
-seçmektir; posta kaybolmadan tek kutuya gider. Worker'ın kendisi öteki
-Worker'lar gibi geri alınır.
+**Geri alma:** iletim bozulursa en hızlı yol, Worker'a çevrilen her
+kuralın (`hello@`, catch-all) eylemini yeniden "Send to an email" yapıp
+tek bir doğrulanmış adres seçmektir; posta kaybolmadan tek kutuya
+gider. Worker'ın kendisi öteki Worker'lar gibi geri alınır.
 
 ## Gizli bilgiler
 

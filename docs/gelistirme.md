@@ -34,7 +34,7 @@ anda ulaşır. Her platform kendi temposunda yayınlanır.
 | `linux/` | Linux masaüstü uygulaması (Qt 6, QML, CXX-Qt) | `linux.yml` |
 | `packaging/` | Linux paket tarifleri ve derleme kapları | `linux.yml` |
 | `app/` | Android uygulaması (Flutter); ileride iOS | `android.yml` |
-| `server/` | Rendezvous sunucusu: Rust sürümü ve Cloudflare Workers sürümü | `core.yml`, `server.yml` |
+| `server/` | Rendezvous ve aktarma sunucuları (Rust ve Cloudflare Workers sürümleri), e-posta Worker'ı | `core.yml`, `server.yml` |
 | `site/` | totaldrop.app, download.totaldrop.app ve QR bağlantı sayfası | `site.yml` |
 | `fuzz/` | Ayrıştırıcıların fuzz hedefleri | `fuzz.yml` (haftalık) |
 | `formal/` | Hesap tasarımının Tamarin modeli ve mutant sınamaları (#251) | `formal.yml` |
