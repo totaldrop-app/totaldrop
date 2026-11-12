@@ -68,7 +68,7 @@ void main() {
     await _show(tester, app: tr, device: tr, done: 995, total: 1000);
     expect(
       tester.getSemantics(find.byType(LinearProgressIndicator)),
-      containsSemantics(value: '99'),
+      isSemantics(value: '99'),
     );
   });
 }
