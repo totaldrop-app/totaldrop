@@ -22,12 +22,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # #480 at 2f292c6, which shows the whole not-a-code message (cut
-        # with "…" in Japanese at 200 % in run 7): Japanese, Arabic,
-        # German and Russian at 200 %, with a per-app language.
+        # #480 at eb27486, rebased onto main after #489 merged: the progress
+        # row now has #480's wrapping and #489's region percent together,
+        # which no run has shown. Japanese, Arabic, German and Russian at
+        # 200 %, with a per-app language.
         include:
           - pr: 480
-            sha: 2f292c62b75e4200a6c93a15560491ef858e26a8
+            sha: eb27486898a6720132a2c71a8e5246337d2efc0f
             variant: locales
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
