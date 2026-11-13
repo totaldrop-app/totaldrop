@@ -96,7 +96,7 @@
   "settingsAbout": "Tietoja",
   "settingsAboutBody": "TotalDrop on ilmainen ja avointa lähdekoodia, ja se rahoitetaan lahjoituksilla. Lisenssi: GPL-3.0-or-later.",
   "settingsPrivacy": "Yksityisyys",
-  "settingsPrivacyBody": "Kohtauspalvelin, välityspalvelin ja Cloudflaren STUN-palvelin näkevät IP-osoitteesi, ja niin näkee myös toinen laite, kun yhdistätte suoraan (ellei yksityisyystila ole käytössä). Mikään niistä ei näe tiedostojen nimiä, sisältöä tai avaimia, eivätkä palvelimemme tallenna lokeja. Tiedostot kulkevat suoraan laitteiden välillä aina kun mahdollista, muuten välityspalvelimen kautta; ne ovat päästä päähän salattuja kummassakin tapauksessa.",
+  "settingsPrivacyBody": "Kohtauspalvelin, välityspalvelin ja Cloudflaren STUN-palvelin näkevät IP-osoitteesi, ja niin näkee myös toinen laite, kun yhdistätte suoraan (ellei yksityisyystila ole käytössä). Mikään niistä ei näe tiedostojen nimiä, sisältöä tai avaimia. Palvelimemme eivät itse tallenna lokeja, mutta niitä ylläpitävä Cloudflare säilyttää otoksen pyynnöistä IP-osoitteineen 31 päivää. Tiedostot kulkevat suoraan laitteiden välillä aina kun mahdollista, muuten välityspalvelimen kautta; ne ovat päästä päähän salattuja kummassakin tapauksessa.",
   "privacyMode": "Piilota osoitteeni toiselta laitteelta",
   "privacyModeHint": "Yksityisyystila: kaikki kulkee välityspalvelimen kautta, joten toinen laite ei koskaan saa tietää IP-osoitettasi. Hitaampi, ja toisen laitteen on käytettävä samaa välityspalvelinta (oletuspalvelin käyttää).",
   "privacyModeConfirmTitle": "Otetaanko yksityisyystila käyttöön?",

@@ -96,7 +96,7 @@
   "settingsAbout": "Perihal",
   "settingsAboutBody": "TotalDrop percuma dan sumber terbuka, dibiayai oleh derma. Berlesen GPL-3.0-or-later.",
   "settingsPrivacy": "Privasi",
-  "settingsPrivacyBody": "Pelayan pertemuan, pelayan geganti dan pelayan STUN Cloudflare melihat alamat IP anda, begitu juga peranti lain apabila anda bersambung secara terus (kecuali mod privasi dihidupkan). Tiada satu pun daripadanya melihat nama fail, kandungan atau kunci, dan pelayan kami tidak menyimpan log. Fail bergerak terus antara peranti apabila boleh, jika tidak melalui pelayan geganti; kedua-duanya tetap disulitkan hujung ke hujung.",
+  "settingsPrivacyBody": "Pelayan pertemuan, pelayan geganti dan pelayan STUN Cloudflare melihat alamat IP anda, begitu juga peranti lain apabila anda bersambung secara terus (kecuali mod privasi dihidupkan). Tiada satu pun daripadanya melihat nama fail, kandungan atau kunci. Pelayan kami tidak menyimpan log sendiri, tetapi Cloudflare, yang mengendalikannya, menyimpan sampel permintaan bersama alamat IP selama 31 hari. Fail bergerak terus antara peranti apabila boleh, jika tidak melalui pelayan geganti; kedua-duanya tetap disulitkan hujung ke hujung.",
   "privacyMode": "Sembunyikan alamat saya daripada peranti lain",
   "privacyModeHint": "Mod privasi: semuanya melalui pelayan geganti, jadi peranti lain tidak pernah mengetahui alamat IP anda. Lebih perlahan, dan peranti lain mesti menggunakan geganti yang sama (geganti lalai memenuhinya).",
   "privacyModeConfirmTitle": "Hidupkan mod privasi?",

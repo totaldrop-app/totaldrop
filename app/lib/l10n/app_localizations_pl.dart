@@ -379,7 +379,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get settingsPrivacyBody =>
-      'Serwer spotkań, serwer pośredniczący i serwer STUN Cloudflare widzą twój adres IP, podobnie jak drugie urządzenie przy połączeniu bezpośrednim (chyba że włączony jest tryb prywatności). Żaden z nich nie widzi nazw plików, ich zawartości ani kluczy, a nasze serwery nie prowadzą logów. Pliki trafiają bezpośrednio między urządzeniami, gdy to możliwe, a w przeciwnym razie przez serwer pośredniczący; w obu przypadkach są szyfrowane end-to-end.';
+      'Serwer spotkań, serwer pośredniczący i serwer STUN Cloudflare widzą twój adres IP, podobnie jak drugie urządzenie przy połączeniu bezpośrednim (chyba że włączony jest tryb prywatności). Żaden z nich nie widzi nazw plików, ich zawartości ani kluczy. Nasze serwery same nie prowadzą logów, ale obsługujący je Cloudflare przechowuje próbkę żądań z adresami IP przez 31 dni. Pliki trafiają bezpośrednio między urządzeniami, gdy to możliwe, a w przeciwnym razie przez serwer pośredniczący; w obu przypadkach są szyfrowane end-to-end.';
 
   @override
   String get privacyMode => 'Ukryj mój adres przed drugim urządzeniem';

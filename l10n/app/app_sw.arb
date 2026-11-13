@@ -96,7 +96,7 @@
   "settingsAbout": "Kuhusu",
   "settingsAboutBody": "TotalDrop ni bure na ya chanzo huria, inayofadhiliwa kwa michango. Leseni GPL-3.0-or-later.",
   "settingsPrivacy": "Faragha",
-  "settingsPrivacyBody": "Seva ya kukutanisha, seva ya kati na seva ya STUN ya Cloudflare huona anwani yako ya IP, na kifaa kingine pia huiona mnapounganishwa moja kwa moja (isipokuwa hali ya faragha imewashwa). Hakuna kati yao anayeona majina ya faili, maudhui au funguo, na seva zetu hazihifadhi kumbukumbu. Faili husafiri moja kwa moja kati ya vifaa inapowezekana, vinginevyo kupitia seva ya kati; kwa njia zote mbili zimesimbwa fiche kutoka mwanzo hadi mwisho.",
+  "settingsPrivacyBody": "Seva ya kukutanisha, seva ya kati na seva ya STUN ya Cloudflare huona anwani yako ya IP, na kifaa kingine pia huiona mnapounganishwa moja kwa moja (isipokuwa hali ya faragha imewashwa). Hakuna kati yao anayeona majina ya faili, maudhui au funguo. Seva zetu hazihifadhi kumbukumbu zao zenyewe, lakini Cloudflare, inayoziendesha, huhifadhi sampuli ya maombi pamoja na anwani za IP kwa siku 31. Faili husafiri moja kwa moja kati ya vifaa inapowezekana, vinginevyo kupitia seva ya kati; kwa njia zote mbili zimesimbwa fiche kutoka mwanzo hadi mwisho.",
   "privacyMode": "Ficha anwani yangu kwa kifaa kingine",
   "privacyModeHint": "Hali ya faragha: kila kitu hupita kupitia seva ya kati, kwa hiyo kifaa kingine hakijui kamwe anwani yako ya IP. Ni polepole zaidi, na kifaa kingine lazima kitumie seva ya kati ile ile (ile ya chaguomsingi inafaa).",
   "privacyModeConfirmTitle": "Washa hali ya faragha?",
