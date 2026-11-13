@@ -1,4 +1,4 @@
-<!-- Translated from README.md 54c8c14f6c96. -->
+<!-- Translated from README.md 8c538b51ef59. -->
 <div align="center">
 
 <picture>
@@ -38,7 +38,7 @@ Percuma dan sumber terbuka. Disulitkan hujung ke hujung. Tiada e-mel, tiada nomb
 - **Cukup dengan kod pendek.** Pilih fail dan dapatkan kod seperti `7-harbor-rocket`. Bacakan kod itu atau tunjukkan kod QR; orang yang satu lagi menaipnya dan fail pun tiba.
 - **Disulitkan hujung ke hujung, dan anda boleh menyemaknya.** Kedua-dua skrin menunjukkan empat perkataan yang sama sebelum apa-apa dihantar. Jika berbeza, berhenti.
 - **Tiada apa-apa untuk didaftarkan.** Tiada akaun, e-mel atau nombor telefon. Akaun pilihan sedang dirancang supaya pelayan langsung tidak menyimpan akaun: peranti anda sendiri yang menyimpannya, dan anda tidak perlu menaip ID ([reka bentuk](../../docs/hesap.md)).
-- **Terus dari peranti ke peranti, di mana-mana.** Pelayan pertemuan hanya memperkenalkan kedua-dua peranti dan tidak menyimpan log sendiri; seperti mana-mana pelayan, ia melihat alamat IP kedua-duanya, dan Cloudflare, yang mengendalikannya, menyimpan sampel permintaan selama 31 hari. Peranti bersambung secara terus melalui internet di mana-mana yang boleh. Apabila penghala atau tembok api menghalang, pelayan geganti membawa trafik yang tidak dapat dibacanya.
+- **Terus dari peranti ke peranti, di mana-mana.** Pelayan pertemuan hanya memperkenalkan kedua-dua peranti dan tidak menyimpan log sendiri; seperti mana-mana pelayan, ia melihat alamat IP kedua-duanya, dan Cloudflare, yang mengendalikannya, menyimpan sampel permintaan selama sekurang-kurangnya 31 hari. Peranti bersambung secara terus melalui internet di mana-mana yang boleh. Apabila penghala atau tembok api menghalang, pelayan geganti membawa trafik yang tidak dapat dibacanya.
 - **Serasi dengan sistem anda.** Aplikasi mengikut tema cerah atau gelap sistem, warna aksen, bahasa dan tetapan kurangkan gerakan. Aplikasi Linux ialah Qt 6 asli pada Wayland dan juga mengambil fon, bucu dan ikon daripada tema KDE Plasma, Hyprland dan Omarchy secara langsung.
 - **Percuma, selama-lamanya.** Sumber terbuka dan dibiayai oleh derma. Tiada iklan, tiada penjejakan, tiada pakej berbayar untuk ciri asas.
 

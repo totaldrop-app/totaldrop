@@ -1,4 +1,4 @@
-<!-- Translated from README.md 54c8c14f6c96. -->
+<!-- Translated from README.md 8c538b51ef59. -->
 <div align="center">
 
 <picture>
@@ -38,7 +38,7 @@ Gratuit și open source. Criptat end-to-end. Fără e-mail, fără număr de tel
 - **Ajunge un cod scurt.** Alegeți fișierele și primiți un cod de tipul `7-harbor-rocket`. Citiți-l cu voce tare sau arătați codul QR; cealaltă persoană îl introduce și fișierele sosesc.
 - **Criptat end-to-end, iar dvs. puteți verifica.** Înainte să se transfere ceva, ambele ecrane arată aceleași patru cuvinte. Dacă diferă, opriți-vă.
 - **Nu trebuie să vă înregistrați nicăieri.** Fără cont, e-mail sau număr de telefon. Conturile opționale sunt gândite astfel încât serverul să nu păstreze niciun cont: dispozitivele dvs. îl țin, iar dvs. nu tastați niciodată un identificator ([design](../../docs/hesap.md)).
-- **Direct de pe un dispozitiv pe altul, oriunde.** Serverul de întâlnire doar face prezentările între cele două dispozitive și nu păstrează jurnale proprii; ca orice server, vede adresele lor IP, iar Cloudflare, care îl operează, păstrează un eșantion al cererilor timp de 31 de zile. Dispozitivele se conectează direct prin internet oriunde pot. Când un router sau un firewall stă în cale, traficul este transportat de un server releu care nu îl poate citi.
+- **Direct de pe un dispozitiv pe altul, oriunde.** Serverul de întâlnire doar face prezentările între cele două dispozitive și nu păstrează jurnale proprii; ca orice server, vede adresele lor IP, iar Cloudflare, care îl operează, păstrează un eșantion al cererilor timp de cel puțin 31 de zile. Dispozitivele se conectează direct prin internet oriunde pot. Când un router sau un firewall stă în cale, traficul este transportat de un server releu care nu îl poate citi.
 - **Ca acasă pe sistemul dumneavoastră.** Aplicațiile urmează tema deschisă sau întunecată a sistemului, culoarea de accent, limba și setarea de reducere a mișcării. Aplicația pentru Linux este Qt 6 nativ pe Wayland și preia în plus, în timp real, fonturile, colțurile și pictogramele din temele KDE Plasma, Hyprland și Omarchy.
 - **Gratuit, definitiv.** Open source și finanțat din donații. Fără reclame, fără urmărire, fără versiune plătită pentru funcțiile de bază.
 

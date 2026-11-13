@@ -96,7 +96,7 @@
   "settingsAbout": "Despre",
   "settingsAboutBody": "TotalDrop este gratuit și open source, finanțat din donații. Licență GPL-3.0-or-later.",
   "settingsPrivacy": "Confidențialitate",
-  "settingsPrivacyBody": "Serverul de întâlnire, serverul releu și serverul STUN al Cloudflare vă văd adresa IP, la fel și celălalt dispozitiv când vă conectați direct (dacă modul de confidențialitate nu este activat). Niciunul nu vede numele fișierelor, conținutul sau cheile. Serverele noastre nu păstrează jurnale proprii, dar Cloudflare, care le operează, păstrează un eșantion al cererilor, cu adresele IP, timp de 31 de zile. Fișierele merg direct între dispozitive când se poate, altfel prin serverul releu; în ambele cazuri sunt criptate end-to-end.",
+  "settingsPrivacyBody": "Serverul de întâlnire, serverul releu și serverul STUN al Cloudflare vă văd adresa IP, la fel și celălalt dispozitiv când vă conectați direct (dacă modul de confidențialitate nu este activat). Niciunul nu vede numele fișierelor, conținutul sau cheile. Serverele noastre nu păstrează jurnale proprii, dar Cloudflare, care le operează, păstrează un eșantion al cererilor, cu adresele IP, timp de cel puțin 31 de zile. Fișierele merg direct între dispozitive când se poate, altfel prin serverul releu; în ambele cazuri sunt criptate end-to-end.",
   "privacyMode": "Ascunde adresa mea de celălalt dispozitiv",
   "privacyModeHint": "Modul de confidențialitate: totul trece prin serverul releu, așa că celălalt dispozitiv nu vă află niciodată adresa IP. Este mai lent, iar celălalt dispozitiv trebuie să folosească același server releu (cel implicit o face).",
   "privacyModeConfirmTitle": "Activați modul de confidențialitate?",
