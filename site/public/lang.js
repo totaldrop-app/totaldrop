@@ -76,5 +76,33 @@
     return "en";
   }
 
-  root.TDLang = { LANGUAGES, REVIEWED, negotiate };
+  // Where a page lives in each language (ADR 0021, #513): English at the
+  // address it always had, every other language under /<tag>. These three
+  // are used by the pages (app.js) and by the tool that writes the
+  // translated pages (site/tools/build.mjs), so both agree.
+  const TAGS = LANGUAGES.map((l) => l[0]);
+  // "/tr/roadmap/" is { tag: "tr", rest: "/roadmap/" }; "/roadmap/" is
+  // English. A first part that is no language is part of the page's path.
+  function locate(pathname) {
+    const m = /^\/([^/]+)(\/.*)$/.exec(String(pathname));
+    if (m && m[1] !== "en" && TAGS.includes(m[1])) return { tag: m[1], rest: m[2] };
+    return { tag: "en", rest: String(pathname) };
+  }
+  // The address of the page `rest` in the language `tag`.
+  function address(tag, rest) {
+    return tag === "en" || !TAGS.includes(tag) ? rest : "/" + tag + rest;
+  }
+  // Where a visitor who opened `pathname` should be sent, or null to stay.
+  // The address decides the language, so a translated address never moves;
+  // an English one moves to the visitor's language unless they chose
+  // English. The result is built only from the language list, never from
+  // text in the address before the page's own path.
+  function redirect(pathname, saved, prefs) {
+    const here = locate(pathname);
+    if (here.tag !== "en" || !here.rest.startsWith("/") || here.rest.startsWith("//")) return null;
+    const want = TAGS.includes(saved) ? saved : negotiate(prefs || []);
+    return want === "en" ? null : address(want, here.rest);
+  }
+
+  root.TDLang = { LANGUAGES, REVIEWED, negotiate, locate, address, redirect };
 })(typeof window !== "undefined" ? window : globalThis);

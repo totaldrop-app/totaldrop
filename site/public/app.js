@@ -4,10 +4,14 @@
 (() => {
   "use strict";
 
-  // Interface language (ADR 0008). English is the page itself; other
-  // languages come from /i18n/<tag>.json on this same domain. The choice
-  // follows the browser's languages and can be changed with the picker;
-  // it is remembered only in this browser.
+  // Interface language (ADR 0008, ADR 0021). The choice follows the
+  // browser's languages and can be changed with the picker; it is
+  // remembered only in this browser.
+  // Most pages have an address in every language (/tr/, /ar/roadmap/),
+  // written by site/tools/build.mjs: there the address decides the language
+  // and the text is already in the page. /r and the 404 page keep a single
+  // address: English is the page itself and the other languages come from
+  // /i18n/<tag>.json on this same domain.
   // The languages, which are reviewed, and how one is chosen: lang.js.
   // If lang.js did not load, the page stays in English and the rest
   // (downloads, copy buttons, /r) still works.
@@ -20,6 +24,23 @@
     try { return RTL_SCRIPTS.includes(new Intl.Locale(tag).maximize().script); } catch (e) { return false; }
   };
   const PAGE = document.body.dataset.page || "home";
+  const store = {
+    get() { try { return localStorage.getItem("td-lang"); } catch (e) { return null; } },
+    set(v) { try { localStorage.setItem("td-lang", v); } catch (e) { /* storage unavailable */ } }
+  };
+  const saved = store.get();
+  const prefs = navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language];
+  // Where this page is among its languages, or null on /r and the 404 page
+  // (and when lang.js did not load: the page then stays as it was sent).
+  const ADDRESSED = ["home", "download", "roadmap", "donate", "team", "brand"].includes(PAGE) && window.TDLang;
+  const HERE = ADDRESSED ? window.TDLang.locate(location.pathname) : null;
+  // A visitor on an English address whose language is another one, and who
+  // has not chosen English, goes to that language's address. The part
+  // after "#" goes along and is never sent to the server.
+  if (HERE) {
+    const to = window.TDLang.redirect(location.pathname, saved, prefs);
+    if (to) { location.replace(to + location.search + location.hash); return; }
+  }
 
   const nodes = Array.from(document.querySelectorAll("[data-i18n]"));
   const descTag = document.querySelector('meta[name="description"]');
@@ -30,7 +51,8 @@
   labelled.forEach((el) => { EN[el.dataset.i18nLabel] = el.getAttribute("aria-label"); });
   EN["meta." + PAGE + ".title"] = document.title;
   if (descTag) EN["meta." + PAGE + ".desc"] = descTag.getAttribute("content");
-  EN["dl.copied"] = "Copied";
+  // On a translated page the build wrote this in the page's language.
+  EN["dl.copied"] = document.body.dataset.copied || "Copied";
   EN["r.copied"] = "Copied";
   EN["lang.label"] = "Language";
   EN["lang.draft"] = "This translation is a draft and is being reviewed.";
@@ -39,17 +61,13 @@
   const has = (d, key) => typeof d[key] === "string" && d[key] !== "";
   const t = (key) => (has(dict, key) ? dict[key] : EN[key]);
 
-  const store = {
-    get() { try { return localStorage.getItem("td-lang"); } catch (e) { return null; } },
-    set(v) { try { localStorage.setItem("td-lang", v); } catch (e) { /* storage unavailable */ } }
-  };
-
   const picker = document.getElementById("lang-select");
   // The draft note opens the main content, so it is read (and found by
-  // landmark navigation) before the translated text.
+  // landmark navigation) before the translated text. A page with its own
+  // address already carries it.
   let note = null;
   const main = document.getElementById("main");
-  if (main) {
+  if (main && !HERE) {
     note = document.createElement("p");
     note.className = "lang-note";
     note.setAttribute("role", "note");
@@ -130,15 +148,24 @@
       picker.append(o);
     });
     picker.hidden = false;
-    picker.addEventListener("change", () => show(picker.value, { save: true, animate: true }));
+    picker.addEventListener("change", () => {
+      if (!HERE) { show(picker.value, { save: true, animate: true }); return; }
+      // The same page, and the same part of it, in the chosen language.
+      store.set(picker.value);
+      location.assign(window.TDLang.address(picker.value, HERE.rest) + location.search + location.hash);
+    });
   }
 
-  const saved = store.get();
-  const initial = LANGUAGES.some((l) => l[0] === saved)
-    ? saved
-    : negotiate(navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language]);
-  if (picker) picker.value = initial;
-  if (initial !== "en") show(initial);
+  if (HERE) {
+    // Also when the browser brings this page back from its history.
+    const here = () => { if (picker) picker.value = HERE.tag; };
+    here();
+    window.addEventListener("pageshow", here);
+  } else {
+    const initial = LANGUAGES.some((l) => l[0] === saved) ? saved : negotiate(prefs);
+    if (picker) picker.value = initial;
+    if (initial !== "en") show(initial);
+  }
 
   // Download page: mark the card for the device in hand, and copy commands.
   const cards = document.querySelectorAll("[data-platform]");
