@@ -22,10 +22,12 @@ export async function onRequest({ request, next, env }) {
   const tagged = url.hostname === "download.totaldrop.app" ? TAGGED_ROOT.exec(url.pathname) : null;
   if (tagged) {
     // Only a language has a download page under it; anything else that
-    // looks like one (a two-letter folder) is answered as before.
+    // looks like one (a two-letter folder) is answered as before. Every
+    // other answer is the page's own, also "not modified" to a browser
+    // that asks again: falling through then would send the home page.
     url.pathname = "/" + tagged[1] + "/download/";
     const page = await env.ASSETS.fetch(new Request(url, request));
-    if (page.status === 200) return page;
+    if (page.status !== 404) return page;
   }
   return next();
 }

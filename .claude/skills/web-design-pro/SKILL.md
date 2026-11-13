@@ -20,8 +20,9 @@ built.
 - **A page per language.** `site/tools/build.mjs` writes the six pages
   once per language under `/<tag>/` (`docs/kararlar/0021-site-language-addresses.md`);
   what is published is `site/dist`, not `site/public`. Edit the English
-  page only. Do not hand-write `canonical`, `hreflang` or language links
-  on those pages, write links between them from the root (`/roadmap/`),
+  page only: it keeps its own `canonical` and `og:url` (the build reads the
+  address there), while `hreflang` and everything on the translated pages
+  is generated. Write links between those pages from the root (`/roadmap/`),
   and take screenshots of other languages at `/ar/`, `/ja/`.
 - **The mark's motion** is the same everywhere: `mk-turn` in
   `site/public/styles.css`, 3.2 s loop, four 0.8 s quarters (0.6 s turn with
