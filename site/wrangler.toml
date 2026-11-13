@@ -1,3 +1,4 @@
 name = "totaldrop"
-pages_build_output_dir = "public"
+# Written by tools/build.mjs from public/ (docs/kararlar/0021-site-language-addresses.md).
+pages_build_output_dir = "dist"
 compatibility_date = "2026-10-01"
