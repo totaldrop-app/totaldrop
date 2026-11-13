@@ -2,12 +2,21 @@
 
 TotalDrop'un web sitesi: tanıtım (`totaldrop.app`), indirme
 (`download.totaldrop.app`), QR bağlantıları (`totaldrop.app/r#kod`) ve
-gizlilik sayfası. Tamamen statiktir: derleme adımı yok, çerez yok, üçüncü
-taraf istek yok. Yazı tipleri de sitenin kendisinden gelir.
+gizlilik sayfası. Tamamen statiktir: çerez yok, üçüncü taraf istek yok.
+Yazı tipleri de sitenin kendisinden gelir.
+
+Yayınlanan klasör `public/` değil, ondan üretilen `dist/` klasörüdür
+([karar 0021](../docs/kararlar/0021-site-language-addresses.md)):
+`node tools/build.mjs`, `public/` klasörünü olduğu gibi kopyalar ve altı
+sayfayı (tanıtım, indirme, yol haritası, bağış, ekip, marka) her dil için
+`/<dil>/` altına yazar. `dist/` depoya girmez; CI ve dağıtım aynı komutu
+çalıştırır. Yerelde denemek için `dist/` klasörünü herhangi bir statik
+sunucuyla açın.
 
 ```
 public/
-  index.html          Tanıtım sayfası (metni İngilizce; diğer diller i18n/'den)
+  index.html          Tanıtım sayfası (metni İngilizce; diğer diller i18n/'den,
+                      tools/build.mjs her dil için /<dil>/ altına yazar)
   download/index.html İndirme sayfası; ziyaretçinin cihazına uyan kart öne gelir
   r/index.html        QR ve paylaşım bağlantıları: kodu # işaretinden sonra okur,
                       uygulamayı totaldrop://r/kod ile açar; kod sunucuya gitmez
@@ -74,6 +83,13 @@ ana sayfayı ve indirme sayfasını dener. Kurulum ve geri alma:
   çalıştırın. Sayfalar bu dosyaları özetli adresle ister; Cloudflare `.css`
   ve `.js` dosyalarını tarayıcıda 4 saat tuttuğu için özet değişmezse
   ziyaretçi yeni sayfayı eski stille görür (#291).
+- Her dilde adresi olan altı sayfada İngilizce `canonical` ve `og:url`
+  sayfada elle yazılı kalır (araç adresi oradan okur); `hreflang`
+  satırlarını ve çevrilmiş sayfaların `canonical`, `og:` etiketlerini
+  `tools/build.mjs` üretir, elle yazılmaz. Bu sayfalar arası
+  bağlantılar kökten yazılır (`/roadmap/` ya da `https://totaldrop.app/roadmap/`),
+  araç onlara dil önekini ekler. `data-i18n` taşıyan elemanın içinde yalnız
+  metin olur. `/r` ve 404 sayfası tek adreste kalır ve tarayıcıda çevrilir.
 - Üçüncü taraf kaynak (CDN, analiz, yazı tipi servisi) eklenmez. CSP bunu
   zaten engeller.
 - Gizlilik politikası her dilde kendi adresindedir (`/privacy`, `/privacy/<dil>`).

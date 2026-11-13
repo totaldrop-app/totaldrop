@@ -10,7 +10,7 @@
 //                reaches the Directory Durable Object and only reads.
 // relay       opens a WebSocket to /v0/relay/<random pair> and closes it; a
 //             pair with no second side is dropped by the Worker
-// site        fetches the home page and the download page
+// site        fetches the home page, the download page and pages in two other languages
 //
 // Every attempt gives up after 10 s, and the probe tries 12 times, 5 s
 // apart, since a new deploy can take a moment to reach every location: at
@@ -75,6 +75,11 @@ const checks = {
   site: async () => {
     await page("https://totaldrop.app/", "TotalDrop");
     await page("https://totaldrop.app/download/", "releases/download/");
+    // A page in another language (site/tools/build.mjs), and the download
+    // page the middleware picks for that language on its own host name.
+    await page("https://totaldrop.app/tr/", '<html lang="tr" dir="ltr">');
+    await page("https://totaldrop.app/ar/roadmap/", '<html lang="ar" dir="rtl">');
+    await page("https://download.totaldrop.app/tr/", "releases/download/");
   },
 };
 

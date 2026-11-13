@@ -292,8 +292,8 @@ relay Worker'ları) Cloudflare'e yalnızca CI'dan, `main`'den dağıtılır
 incelenmiş bir commit'tir.
 
 - **Ne zaman:** `main`'e gelen bir commit `site/public/`,
-  `site/functions/`, `site/wrangler.toml` ya da `server/*-worker/`
-  altında bir dosyayı değiştirdiyse yalnızca değişen hedef dağıtılır;
+  `site/functions/`, `site/wrangler.toml`, `site/tools/build.mjs` ya da
+  `server/*-worker/` altında bir dosyayı değiştirdiyse yalnızca değişen hedef dağıtılır;
   `server/tools/probe.mjs` değişirse üçü de. Elle dağıtmak için Actions →
   Deploy → "Run workflow" ile hedef seçilir; her zaman `main`'in son hâli
   dağıtılır.

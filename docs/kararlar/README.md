@@ -25,6 +25,7 @@ birleştirmeden önce "Kabul" olur.
 | [0015](0015-paket-yoneticileri.md) | Paket yöneticileri önce CI'da derlenen CLI ikililerine dayanır | Kabul |
 | [0016](0016-windows-microsoft-store.md) | Windows uygulaması WinUI 3 ile yazılır, Microsoft Store'dan dağıtılır | Kabul |
 | [0018](0018-baglanti-yol-haritasi.md) | Bağlantı katmanı kendi yığınımızda kalır; IPv6, port açma ve ağ değişimine tepkiyle doğrudan yollar artırılır | Kabul |
+| [0021](0021-site-language-addresses.md) | The site has an address for every page in every language, written by a build step | Kabul |
 
 Yeni bir karar için bir sonraki numarayla `NNNN-kisa-ad.md` açın ve bu
 tabloya ekleyin.
