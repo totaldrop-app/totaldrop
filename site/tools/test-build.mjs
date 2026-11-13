@@ -9,7 +9,7 @@
 // download host name follow.
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, readFileSync, existsSync, rmSync } from "node:fs";
+import { mkdtempSync, readFileSync, readdirSync, existsSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import vm from "node:vm";
@@ -77,6 +77,8 @@ test("no translated text is left in English, and what is missing is marked as En
         else assert.ok(/ lang="en" dir="ltr"/.test(m[2] + m[4]), `${tag}/${page} ${m[3]} is marked English`);
       }
       assert.ok(seen > 20, `${tag}/${page} has translated elements`);
+      // Counted another way, so an element the pattern cannot read is noticed.
+      assert.equal(seen, html.split(' data-i18n="').length - 1, `${tag}/${page}: every data-i18n element was read`);
     }
   }
 });
@@ -109,9 +111,19 @@ test("addresses that existed before answer as before", () => {
     const lines = read(out, page).split("\n").filter((l) => !l.includes('<link rel="alternate" hreflang="'));
     assert.equal(lines.join("\n"), source, `${page}: only the hreflang lines are new`);
   }
-  for (const same of ["r/index.html", "404.html", "privacy.html", "privacy/tr.html", "app.js", "lang.js", "styles.css", "_headers", "_routes.json", "robots.txt"]) {
+  // Everything else, /r, the 404 page and the privacy pages among it, is
+  // copied as it is.
+  const files = readdirSync(pub, { recursive: true, withFileTypes: true }).filter((e) => e.isFile()).map((e) => join(e.parentPath, e.name).slice(pub.length + 1));
+  assert.ok(files.includes(join("r", "index.html")) && files.includes("404.html") && files.includes(join("privacy", "tr.html")));
+  for (const same of files) {
+    if (PAGES.includes(same.split("\\").join("/")) || same === "sitemap.xml") continue;
     assert.ok(readFileSync(join(out, same)).equals(readFileSync(join(pub, same))), `${same} is copied as it is`);
   }
+});
+
+test("the build refuses to empty its own source", () => {
+  for (const bad of [pub, join(pub, ".."), join(pub, "i18n")]) assert.throws(() => build(bad), /refusing to write/);
+  assert.ok(existsSync(join(pub, "index.html")));
 });
 
 test("links between the pages follow the language; files and other sites do not", () => {
@@ -164,7 +176,13 @@ test("the sitemap lists every address once", () => {
 // The address rules, as the browser loads them.
 const box = { Intl };
 vm.runInNewContext(read(pub, "lang.js"), box);
-const { locate, address, redirect } = box.TDLang;
+const { locate, address, redirect, ADDRESSED } = box.TDLang;
+
+test("the pages the build writes are the pages the script treats as having addresses", () => {
+  const names = PAGES.map((page) => (/data-page="([^"]+)"/.exec(read(pub, page)) || [])[1] || "home");
+  assert.deepEqual(names.sort(), [...ADDRESSED].sort());
+  for (const other of ["r/index.html", "404.html"]) assert.ok(!ADDRESSED.includes(/data-page="([^"]+)"/.exec(read(pub, other))[1]), other);
+});
 
 test("an address names its language; English keeps the address it had", () => {
   assert.deepEqual({ ...locate("/tr/roadmap/") }, { tag: "tr", rest: "/roadmap/" });
@@ -177,6 +195,11 @@ test("an address names its language; English keeps the address it had", () => {
   assert.equal(address("en", "/roadmap/"), "/roadmap/");
   assert.equal(address("xx", "/"), "/");
   for (const tag of TAGS) assert.deepEqual({ ...locate(address(tag, "/team/")) }, { tag, rest: "/team/" });
+  // No part ever starts with "//", which as an address is another site.
+  for (const p of ["//evil.example/", "/tr//evil.example/", "/\\evil.example/", "///x"]) {
+    const here = locate(p);
+    for (const tag of ["en", "tr"]) assert.match(address(tag, here.rest), /^\/(?![/\\])/, `${p} → ${address(tag, here.rest)}`);
+  }
 });
 
 test("only an English address moves, and only for a visitor who did not choose English", () => {
@@ -198,14 +221,17 @@ test("only an English address moves, and only for a visitor who did not choose E
 });
 
 // The middleware, with the published folder as its assets.
-function ask(url) {
+function ask(url, headers = {}) {
   const calls = [];
   const env = { ASSETS: { fetch: async (req) => {
     const path = new URL(req.url).pathname;
     calls.push(path);
-    return existsSync(join(out, path, "index.html")) ? new Response(read(out, path, "index.html")) : new Response("not found", { status: 404 });
+    if (!existsSync(join(out, path, "index.html"))) return new Response("not found", { status: 404 });
+    // As a real asset server does for a browser that already has the page.
+    if (req.headers.get("if-none-match") === '"same"') return new Response(null, { status: 304 });
+    return new Response(read(out, path, "index.html"));
   } } };
-  return onRequest({ request: new Request(url), env, next: async () => new Response("next") }).then(async (res) => ({ res, body: await res.text(), calls }));
+  return onRequest({ request: new Request(url, { headers }), env, next: async () => new Response("next") }).then(async (res) => ({ res, body: await res.text(), calls }));
 }
 
 test("download.totaldrop.app/<tag>/ is the download page in that language", async () => {
@@ -217,7 +243,61 @@ test("download.totaldrop.app/<tag>/ is the download page in that language", asyn
   for (const url of ["https://download.totaldrop.app/xx/", "https://download.totaldrop.app/r/", "https://download.totaldrop.app/tr/roadmap/", "https://download.totaldrop.app/styles.css", "https://totaldrop.app/tr/", "https://totaldrop.app/"]) {
     assert.equal((await ask(url)).body, "next", url);
   }
+  // A browser asking again must not be handed the home page instead.
+  const again = await ask("https://download.totaldrop.app/tr/", { "if-none-match": '"same"' });
+  assert.equal(again.res.status, 304);
+  assert.equal(again.body, "");
   const www = await ask("https://www.totaldrop.app/tr/?a=1");
   assert.equal(www.res.status, 301);
   assert.equal(www.res.headers.get("location"), "https://totaldrop.app/tr/?a=1");
+});
+
+// app.js itself, with just enough of a browser around it to see where it
+// sends the visitor and what it asks the server for.
+function open(page, pathname, { languages = ["en-US"], saved = null, langJs = true, hash = "" } = {}) {
+  const calls = [];
+  const el = () => ({ dataset: {}, hidden: true, value: "", append() {}, prepend() {}, setAttribute() {}, removeAttribute() {}, getAttribute: () => "", addEventListener(type, fn) { this["on" + type] = fn; } });
+  const picker = el();
+  const w = {
+    Intl, URL, decodeURIComponent,
+    document: { body: { dataset: page === "home" ? {} : { page } }, documentElement: {}, title: "", querySelectorAll: () => [], querySelector: () => null, getElementById: (id) => (id === "lang-select" ? picker : el()), createElement: el },
+    location: { pathname, search: "?a=1", hash, replace: (u) => calls.push("replace:" + u), assign: (u) => calls.push("assign:" + u), reload() {} },
+    navigator: { languages, userAgent: "" },
+    localStorage: { getItem: () => saved, setItem: (k, v) => calls.push(`save:${v}`) },
+    fetch: async (u) => { calls.push("fetch:" + u); return { ok: true, json: async () => ({}) }; },
+    matchMedia: () => ({ matches: false }), addEventListener() {},
+  };
+  w.window = w;
+  vm.createContext(w);
+  if (langJs) vm.runInContext(read(pub, "lang.js"), w);
+  vm.runInContext(read(pub, "app.js"), w);
+  return { calls, picker };
+}
+
+test("app.js sends a visitor on an English address to their language, with the part after #", () => {
+  assert.deepEqual(open("home", "/", { languages: ["tr-TR"], hash: "#why" }).calls, ["replace:/tr/?a=1#why"]);
+  assert.deepEqual(open("download", "/", { languages: ["ar"] }).calls, ["replace:/ar/?a=1"]);
+  assert.deepEqual(open("roadmap", "/roadmap/", { languages: ["tr"], saved: "en" }).calls, [], "English was chosen");
+  assert.deepEqual(open("home", "/", { languages: ["en-US"] }).calls, [], "what a crawler sends");
+  assert.deepEqual(open("home", "/tr/", { languages: ["de"] }).calls, [], "the address decides");
+  assert.deepEqual(open("home", "/", { languages: ["tr"], langJs: false }).calls, [], "without lang.js the page stays as it was sent");
+});
+
+test("the picker goes to the same page in the chosen language and remembers the choice", () => {
+  const { calls, picker } = open("donate", "/tr/donate/", { languages: ["tr"], hash: "#x" });
+  assert.equal(picker.value, "tr");
+  picker.value = "ja";
+  picker.onchange();
+  assert.deepEqual(calls, ["save:ja", "assign:/ja/donate/?a=1#x"]);
+  const english = open("donate", "/tr/donate/", { languages: ["tr"] });
+  english.picker.value = "en";
+  english.picker.onchange();
+  assert.deepEqual(english.calls, ["save:en", "assign:/donate/?a=1"]);
+  assert.equal(open("home", "/tr/", { langJs: false }).picker.hidden, true, "no list, no picker");
+});
+
+test("/r and the 404 page keep their address and are translated in place", () => {
+  assert.deepEqual(open("receive", "/r", { languages: ["tr-TR"], hash: "#7-harbor-rocket" }).calls, ["fetch:/i18n/tr.json"]);
+  assert.deepEqual(open("notfound", "/tr/nope", { languages: ["tr-TR"] }).calls, ["fetch:/i18n/tr.json"]);
+  assert.deepEqual(open("receive", "/r", { languages: ["en-US"] }).calls, []);
 });

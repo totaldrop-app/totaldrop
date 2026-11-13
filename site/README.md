@@ -83,8 +83,10 @@ ana sayfayı ve indirme sayfasını dener. Kurulum ve geri alma:
   çalıştırın. Sayfalar bu dosyaları özetli adresle ister; Cloudflare `.css`
   ve `.js` dosyalarını tarayıcıda 4 saat tuttuğu için özet değişmezse
   ziyaretçi yeni sayfayı eski stille görür (#291).
-- Her dilde adresi olan altı sayfada `canonical`, `hreflang` ve dil
-  bağlantıları elle yazılmaz; `tools/build.mjs` üretir. Bu sayfalar arası
+- Her dilde adresi olan altı sayfada İngilizce `canonical` ve `og:url`
+  sayfada elle yazılı kalır (araç adresi oradan okur); `hreflang`
+  satırlarını ve çevrilmiş sayfaların `canonical`, `og:` etiketlerini
+  `tools/build.mjs` üretir, elle yazılmaz. Bu sayfalar arası
   bağlantılar kökten yazılır (`/roadmap/` ya da `https://totaldrop.app/roadmap/`),
   araç onlara dil önekini ekler. `data-i18n` taşıyan elemanın içinde yalnız
   metin olur. `/r` ve 404 sayfası tek adreste kalır ve tarayıcıda çevrilir.
