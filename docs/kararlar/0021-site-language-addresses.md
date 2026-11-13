@@ -67,9 +67,10 @@
   - No new user-facing text: titles and descriptions were already
     translated (`meta.<page>.title`, `meta.<page>.desc`).
 
-- **Why:** Plain files are the most robust answer a server can give and
-  need no code at request time; the content security policy stays as it
-  is. Building in CI is how every other TotalDrop package is made. One
+- **Why:** Plain files are the most robust answer a server can give. The
+  only code at request time is the middleware that was already there, with
+  one more rule for the download host name; the content security policy
+  stays as it is. Building in CI is how every other TotalDrop package is made. One
   source keeps a design change from becoming 35 changes.
 
 - **Consequences:**
@@ -88,6 +89,13 @@
     version is linked with `hreflang` and listed in the sitemap, the
     picker is on every page, and a client whose language is English is
     never redirected.
+  - The choice of language is kept per host name (the browser's storage
+    is). A visitor whose browser prefers Turkish and who chose English on
+    totaldrop.app is sent to Turkish the first time they open
+    download.totaldrop.app, and has to choose English there once too.
+    Before, that page was also shown in Turkish, but its links led back to
+    English addresses. Carrying the choice between the two host names is
+    tracked in #513.
   - Not done here, tracked in #513: language links that work without
     JavaScript, `noindex` for the raw translation files, redirects for
     `/en/` and lower-case tags, and moving the `?v=` versions and the

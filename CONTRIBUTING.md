@@ -44,7 +44,7 @@ Each language follows one published style. The last column says what CI checks; 
 | TypeScript (`server/*-worker`) | The TypeScript compiler's `strict` mode | Types only: `tsc --noEmit`; no formatter yet |
 | QML (`linux/qml`) | [Qt's QML coding conventions](https://doc.qt.io/qt-6/qml-codingconventions.html) | Review only, for now |
 | C++ headers (`linux/src/bridge`) | [Qt's coding style](https://wiki.qt.io/Qt_Coding_Style) | Review only, for now |
-| JavaScript (`site/`, `tools/`) | Plain modern JavaScript, no build step | Syntax only: `node --check` on the site's scripts; the tools run in CI |
+| JavaScript (`site/`, `tools/`) | Plain modern JavaScript, no bundler or dependencies (the site's pages per language are written by `site/tools/build.mjs`) | Syntax only: `node --check` on the site's scripts; the tools run in CI |
 
 To catch problems before you push, run `pre-commit install` once: it checks every commit for conflict markers, secrets, signing keys and whitespace, with no toolchain needed. `pre-commit run -c .pre-commit-config-extra.yaml --all-files` runs most of the checks above locally, using whichever toolchains you have. The Linux app's Clippy and tests need Qt and stay in CI, and the formatters fix files where CI only checks them ([docs/gelistirme.md](docs/gelistirme.md), "Yerel denetimler").
 

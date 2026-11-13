@@ -10,8 +10,8 @@
 // every other language at /privacy/<tag>, saying that the English version
 // applies (and, until a native speaker has reviewed it, that it is a
 // draft). The header, footer and those notes come from i18n/<tag>.json.
-// The site has no build step: the pages this writes are committed, and
-// the check fails when they are out of date.
+// The pages this writes are committed, and the check fails when they are
+// out of date (the build, build.mjs, copies them as they are).
 //
 // Each translation must have the same shape as English: the same headings,
 // paragraphs and list items in the same order, the same links, the same

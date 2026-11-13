@@ -32,8 +32,7 @@
   const prefs = navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language];
   // Where this page is among its languages, or null on /r and the 404 page
   // (and when lang.js did not load: the page then stays as it was sent).
-  const ADDRESSED = ["home", "download", "roadmap", "donate", "team", "brand"].includes(PAGE) && window.TDLang;
-  const HERE = ADDRESSED ? window.TDLang.locate(location.pathname) : null;
+  const HERE = window.TDLang && window.TDLang.ADDRESSED.includes(PAGE) ? window.TDLang.locate(location.pathname) : null;
   // A visitor on an English address whose language is another one, and who
   // has not chosen English, goes to that language's address. The part
   // after "#" goes along and is never sent to the server.
@@ -139,7 +138,7 @@
     else apply(tag, d);
   }
 
-  if (picker) {
+  if (picker && window.TDLang) {
     LANGUAGES.forEach(([tag, name]) => {
       const o = document.createElement("option");
       o.value = tag;
