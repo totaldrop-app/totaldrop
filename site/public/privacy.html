@@ -118,7 +118,7 @@
         <li>the time, the URL requested and how much data was sent back. On the rendezvous server that URL includes the code's number, and on the relay the two keys of the transfer, so the sample can show that two IP addresses took part in the same transfer;</li>
         <li>technical details of the connection, such as the name of the browser or program, when it sends one.</li>
       </ul>
-      <p>Cloudflare chooses which requests go into the sample and keeps it for at least 31 days. It does this on every plan, and there is no setting to turn it off. Requests that a security rule turns away, such as the relay's limit above, are also kept with their IP address for at least 31 days. We look at these records only to deal with abuse and faults, and we do not copy them anywhere else.</p>
+      <p>Cloudflare chooses which requests go into the sample and keeps it for at least 31 days. It does this on every plan, and we have found no setting to turn it off. Requests that a security rule turns away, such as the relay's limit above, are also kept with their IP address for at least 31 days. We look at these records only to deal with abuse and faults, and we do not copy them anywhere else.</p>
 
       <h2>What the other device sees</h2>
       <p>To connect directly, the two devices exchange their network addresses with each other, encrypted. Each device therefore learns the other's local and public IP address, as with any direct connection. A device in privacy mode announces no address, so the other device does not learn it.</p>
