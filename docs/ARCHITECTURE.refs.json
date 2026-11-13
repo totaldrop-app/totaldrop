@@ -252,13 +252,13 @@
   "crates/totaldrop-core/src/path.rs:86": [
     "pub const FALLBACK_SILENCE: Duration = Duration::from_secs(8);"
   ],
-  "crates/totaldrop-core/src/portmap.rs:224": [
+  "crates/totaldrop-core/src/portmap.rs:230": [
     "/// answer (#425)."
   ],
-  "crates/totaldrop-core/src/portmap.rs:292": [
+  "crates/totaldrop-core/src/portmap.rs:298": [
     "pub fn start(gateway: Gateway, port: u16) -> Asking {"
   ],
-  "crates/totaldrop-core/src/portmap.rs:340": [
+  "crates/totaldrop-core/src/portmap.rs:346": [
     "pub async fn wait(mut self, grace: Duration) -> Option<Mapping> {"
   ],
   "crates/totaldrop-core/src/portmap.rs:58": [
