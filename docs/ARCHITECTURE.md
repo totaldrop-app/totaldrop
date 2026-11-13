@@ -7,7 +7,7 @@ olduğu [kararlar/](kararlar/README.md), protokolün kendisi
 [protocol-v0.1-notes.md](protocol-v0.1-notes.md), güven sınırları
 [tehdit-modeli.md](tehdit-modeli.md) içindedir; burada tekrar edilmez.
 
-- Durum: `main` `88dd6ed` (13 Kasım 2026). İlk sürüm `18ba4df`'e karşı
+- Durum: `main` `80365fc` (13 Kasım 2026). İlk sürüm `18ba4df`'e karşı
   yazıldı; 11 Kasım'da UPnP, denetim düzeltmeleri (#424–#427) ve aktarma
   Worker'ının birim testleri için güncellendi; 12 Kasım'da yalnız kayan
   satırlar izlendi; 13 Kasım'da Worker'ların `Origin` reddi (#450) eklendi. 5.2'deki kapsam sayıları
@@ -211,10 +211,10 @@ Adım adım:
    - `own_hints` (`crates/totaldrop-core/src/lib.rs:101`): yerel adresler, STUN
      (`crates/totaldrop-core/src/relay.rs:106` `discover`) ve aynı anda
      yönlendiriciden port isteği: PCP ve NAT-PMP yarışır, ikisi de
-     susarsa UPnP IGD denenir (`crates/totaldrop-core/src/portmap.rs:292`
+     susarsa UPnP IGD denenir (`crates/totaldrop-core/src/portmap.rs:298`
      `start`). Bekleme en çok `MAPPING_GRACE` = 300 ms'dir
      (`crates/totaldrop-core/src/lib.rs:95`); ağ geçidi UPnP ile yanıt
-     verdiyse deneme bitene kadar sürer (`crates/totaldrop-core/src/portmap.rs:340`
+     verdiyse deneme bitene kadar sürer (`crates/totaldrop-core/src/portmap.rs:346`
      `Asking::wait`).
    - `pairing::exchange` (`crates/totaldrop-core/src/pairing.rs:73`):
      kutuda `pake` (CPace, `crates/totaldrop-core/src/pairing.rs:107-110`), `confirm` (sertifika,
@@ -591,7 +591,7 @@ dokunan bulguları ve bu belgedeki yerleri:
 | Issue | Yer | Bu belgede |
 | --- | --- | --- |
 | #424 | Düzeltildi: ping süre sınırlı (`crates/totaldrop-core/src/relay.rs:438` `ping_within`) | 2.1 (aktarma yedeği) |
-| #425 | Düzeltildi: yarışı kaybeden eşleme de kapatılır (`crates/totaldrop-core/src/portmap.rs:224`) | 2.1 (`own_hints`) |
+| #425 | Düzeltildi: yarışı kaybeden eşleme de kapatılır (`crates/totaldrop-core/src/portmap.rs:230`) | 2.1 (`own_hints`) |
 | #426 | Düzeltildi: sayım `server/relay-worker/src/count.ts:36` `noteGiven` | 3.2 (`Pair`), 5.2 |
 | #427 | Düzeltildi: klasör URL ile açılır (`linux/qml/ResultPanel.qml:135`) | — (arayüz) |
 | #428 | STUN, Rust rendezvous jetonu, `snow` | 7.5 |
