@@ -1,4 +1,4 @@
-<!-- Translated from README.md 0a6bee841691. -->
+<!-- Translated from README.md 8c538b51ef59. -->
 <div align="center">
 
 <picture>
@@ -38,7 +38,7 @@ Miễn phí và mã nguồn mở. Mã hóa đầu cuối. Không cần email, s�
 - **Chỉ cần một mã ngắn.** Chọn tệp và nhận một mã như `7-harbor-rocket`. Đọc mã cho người kia nghe hoặc cho xem mã QR; người kia nhập mã và tệp sẽ đến.
 - **Mã hóa đầu cuối, và bạn tự kiểm tra được.** Cả hai màn hình hiện cùng bốn từ trước khi bất cứ thứ gì được truyền đi. Nếu chúng khác nhau, hãy dừng lại.
 - **Không cần đăng ký gì cả.** Không tài khoản, email hay số điện thoại. Tài khoản tùy chọn đang được thiết kế để máy chủ hoàn toàn không lưu tài khoản nào: thiết bị của bạn tự giữ tài khoản, và bạn không bao giờ phải nhập ID ([thiết kế](../../docs/hesap.md)).
-- **Thẳng từ thiết bị đến thiết bị, ở bất cứ đâu.** Máy chủ điểm hẹn chỉ giới thiệu hai thiết bị với nhau và không lưu nhật ký; như mọi máy chủ khác, nó thấy địa chỉ IP của hai thiết bị. Thiết bị kết nối trực tiếp qua internet ở bất cứ nơi nào có thể. Khi bộ định tuyến hoặc tường lửa cản trở, máy chủ chuyển tiếp sẽ chuyển lưu lượng mà nó không thể đọc được.
+- **Thẳng từ thiết bị đến thiết bị, ở bất cứ đâu.** Máy chủ điểm hẹn chỉ giới thiệu hai thiết bị với nhau và bản thân nó không lưu nhật ký; như mọi máy chủ khác, nó thấy địa chỉ IP của hai thiết bị, còn Cloudflare, nơi vận hành nó, lưu giữ một mẫu các yêu cầu trong ít nhất 31 ngày. Thiết bị kết nối trực tiếp qua internet ở bất cứ nơi nào có thể. Khi bộ định tuyến hoặc tường lửa cản trở, máy chủ chuyển tiếp sẽ chuyển lưu lượng mà nó không thể đọc được.
 - **Hòa hợp với hệ thống của bạn.** Các ứng dụng theo chủ đề sáng hoặc tối, màu nhấn, ngôn ngữ và cài đặt giảm chuyển động của hệ thống. Ứng dụng Linux là Qt 6 gốc trên Wayland và còn lấy phông chữ, góc bo và biểu tượng từ chủ đề của KDE Plasma, Hyprland và Omarchy ngay lập tức.
 - **Miễn phí, mãi mãi.** Mã nguồn mở và được duy trì bằng quyên góp. Không quảng cáo, không theo dõi, không có gói trả phí cho các tính năng cơ bản.
 

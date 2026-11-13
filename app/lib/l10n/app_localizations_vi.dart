@@ -355,7 +355,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get settingsPrivacyBody =>
-      'Máy chủ điểm hẹn, máy chủ chuyển tiếp và máy chủ STUN của Cloudflare thấy địa chỉ IP của bạn, thiết bị kia cũng thấy khi kết nối trực tiếp (trừ khi bật chế độ riêng tư). Không ai trong số đó thấy tên tệp, nội dung hay khóa, và máy chủ của chúng tôi không lưu nhật ký. Tệp đi trực tiếp giữa các thiết bị khi có thể, nếu không thì qua máy chủ chuyển tiếp; dù cách nào cũng được mã hóa đầu cuối.';
+      'Máy chủ điểm hẹn, máy chủ chuyển tiếp và máy chủ STUN của Cloudflare thấy địa chỉ IP của bạn, thiết bị kia cũng thấy khi kết nối trực tiếp (trừ khi bật chế độ riêng tư). Không ai trong số đó thấy tên tệp, nội dung hay khóa. Bản thân máy chủ của chúng tôi không lưu nhật ký, nhưng Cloudflare, nơi vận hành các máy chủ này, lưu giữ một mẫu các yêu cầu kèm địa chỉ IP trong ít nhất 31 ngày. Tệp đi trực tiếp giữa các thiết bị khi có thể, nếu không thì qua máy chủ chuyển tiếp; dù cách nào cũng được mã hóa đầu cuối.';
 
   @override
   String get privacyMode => 'Ẩn địa chỉ của tôi với thiết bị kia';

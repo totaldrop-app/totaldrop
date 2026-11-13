@@ -1,4 +1,4 @@
-<!-- Translated from README.md 0a6bee841691. -->
+<!-- Translated from README.md 8c538b51ef59. -->
 <div align="center">
 
 <picture>
@@ -38,7 +38,7 @@ Kostenlos und quelloffen. Ende-zu-Ende-verschlüsselt. Keine E-Mail, keine Telef
 - **Ein kurzer Code genügt.** Wählen Sie Dateien aus und Sie erhalten einen Code wie `7-harbor-rocket`. Lesen Sie ihn vor oder zeigen Sie den QR-Code; die andere Person gibt ihn ein, und die Dateien kommen an.
 - **Ende-zu-Ende-verschlüsselt, und Sie können es prüfen.** Beide Bildschirme zeigen dieselben vier Wörter, bevor etwas übertragen wird. Stimmen sie nicht überein, brechen Sie ab.
 - **Keine Anmeldung.** Kein Konto, keine E-Mail, keine Telefonnummer. Optionale Konten sind so geplant, dass der Server überhaupt kein Konto speichert: Ihre Geräte halten es selbst, und Sie tippen nie eine Kennung ein ([Konzept](../../docs/hesap.md)).
-- **Direkt von Gerät zu Gerät, überall.** Der Vermittlungsserver stellt die beiden Geräte nur einander vor und speichert keine Protokolle; wie jeder Server sieht er ihre IP-Adressen. Die Geräte verbinden sich über das Internet direkt, wo immer es geht. Steht ein Router oder eine Firewall im Weg, transportiert ein Relay-Server den Verkehr, ohne ihn lesen zu können.
+- **Direkt von Gerät zu Gerät, überall.** Der Vermittlungsserver stellt die beiden Geräte nur einander vor und speichert selbst keine Protokolle; wie jeder Server sieht er ihre IP-Adressen, und Cloudflare, das ihn betreibt, speichert mindestens 31 Tage lang eine Stichprobe der Anfragen. Die Geräte verbinden sich über das Internet direkt, wo immer es geht. Steht ein Router oder eine Firewall im Weg, transportiert ein Relay-Server den Verkehr, ohne ihn lesen zu können.
 - **Auf Ihrem System zu Hause.** Die Apps folgen dem hellen oder dunklen Design des Systems, seiner Akzentfarbe, seiner Sprache und der Einstellung für reduzierte Bewegung. Die Linux-App ist natives Qt 6 unter Wayland und übernimmt außerdem live Schriften, Ecken und Symbole aus den Designs von KDE Plasma, Hyprland und Omarchy.
 - **Kostenlos, für immer.** Quelloffen und durch Spenden finanziert. Keine Werbung, kein Tracking, kein kostenpflichtiger Tarif für die Grundfunktionen.
 

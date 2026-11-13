@@ -377,7 +377,7 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get settingsPrivacyBody =>
-      'Serverul de întâlnire, serverul releu și serverul STUN al Cloudflare vă văd adresa IP, la fel și celălalt dispozitiv când vă conectați direct (dacă modul de confidențialitate nu este activat). Niciunul nu vede numele fișierelor, conținutul sau cheile, iar serverele noastre nu păstrează jurnale. Fișierele merg direct între dispozitive când se poate, altfel prin serverul releu; în ambele cazuri sunt criptate end-to-end.';
+      'Serverul de întâlnire, serverul releu și serverul STUN al Cloudflare vă văd adresa IP, la fel și celălalt dispozitiv când vă conectați direct (dacă modul de confidențialitate nu este activat). Niciunul nu vede numele fișierelor, conținutul sau cheile. Serverele noastre nu păstrează jurnale proprii, dar Cloudflare, care le operează, păstrează un eșantion al cererilor, cu adresele IP, timp de cel puțin 31 de zile. Fișierele merg direct între dispozitive când se poate, altfel prin serverul releu; în ambele cazuri sunt criptate end-to-end.';
 
   @override
   String get privacyMode => 'Ascunde adresa mea de celălalt dispozitiv';

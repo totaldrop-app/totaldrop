@@ -96,7 +96,7 @@
   "settingsAbout": "Acerca de",
   "settingsAboutBody": "TotalDrop es gratuito y de código abierto, financiado con donaciones. Licencia GPL-3.0-or-later.",
   "settingsPrivacy": "Privacidad",
-  "settingsPrivacyBody": "El servidor de encuentro, el servidor de retransmisión y el servidor STUN de Cloudflare ven tu dirección IP, y también el otro dispositivo cuando la conexión es directa (salvo que el modo privacidad esté activado). Ninguno ve los nombres de los archivos, su contenido ni las claves, y nuestros servidores no guardan registros. Los archivos van directamente entre los dispositivos cuando es posible y, si no, a través del servidor de retransmisión; en ambos casos están cifrados de extremo a extremo.",
+  "settingsPrivacyBody": "El servidor de encuentro, el servidor de retransmisión y el servidor STUN de Cloudflare ven tu dirección IP, y también el otro dispositivo cuando la conexión es directa (salvo que el modo privacidad esté activado). Ninguno ve los nombres de los archivos, su contenido ni las claves. Nuestros servidores no guardan registros propios, pero Cloudflare, que los opera, conserva una muestra de las solicitudes con direcciones IP durante al menos 31 días. Los archivos van directamente entre los dispositivos cuando es posible y, si no, a través del servidor de retransmisión; en ambos casos están cifrados de extremo a extremo.",
   "privacyMode": "Ocultar mi dirección al otro dispositivo",
   "privacyModeHint": "Modo privacidad: todo pasa por el servidor de retransmisión, así que el otro dispositivo nunca conoce tu dirección IP. Es más lento, y el otro dispositivo debe usar el mismo servidor de retransmisión (el predeterminado lo hace).",
   "privacyModeConfirmTitle": "¿Activar el modo privacidad?",

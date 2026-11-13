@@ -96,7 +96,7 @@
   "settingsAbout": "Over",
   "settingsAboutBody": "TotalDrop is gratis en open source, gefinancierd met donaties. Licentie: GPL-3.0-or-later.",
   "settingsPrivacy": "Privacy",
-  "settingsPrivacyBody": "De ontmoetingsserver, de relayserver en de STUN-server van Cloudflare zien je IP-adres, en het andere apparaat ook bij een rechtstreekse verbinding (tenzij de privacymodus aan staat). Geen van hen ziet bestandsnamen, inhoud of sleutels, en onze servers houden geen logboeken bij. Bestanden gaan waar mogelijk rechtstreeks tussen de apparaten, anders via de relayserver; in beide gevallen zijn ze end-to-end versleuteld.",
+  "settingsPrivacyBody": "De ontmoetingsserver, de relayserver en de STUN-server van Cloudflare zien je IP-adres, en het andere apparaat ook bij een rechtstreekse verbinding (tenzij de privacymodus aan staat). Geen van hen ziet bestandsnamen, inhoud of sleutels. Onze servers houden zelf geen logboeken bij, maar Cloudflare, dat ze draait, bewaart minstens 31 dagen een steekproef van de verzoeken met IP-adressen. Bestanden gaan waar mogelijk rechtstreeks tussen de apparaten, anders via de relayserver; in beide gevallen zijn ze end-to-end versleuteld.",
   "privacyMode": "Mijn adres verbergen voor het andere apparaat",
   "privacyModeHint": "Privacymodus: alles gaat via de relayserver, zodat het andere apparaat je IP-adres nooit te weten komt. Langzamer, en het andere apparaat moet dezelfde relayserver gebruiken (de standaardserver doet dat).",
   "privacyModeConfirmTitle": "Privacymodus aanzetten?",

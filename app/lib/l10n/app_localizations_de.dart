@@ -374,7 +374,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get settingsPrivacyBody =>
-      'Der Vermittlungsserver, der Relay-Server und der STUN-Server von Cloudflare sehen Ihre IP-Adresse, bei einer direkten Verbindung auch das andere Gerät (außer im Privatsphäre-Modus). Keiner von ihnen sieht Dateinamen, Inhalte oder Schlüssel, und unsere Server speichern keine Protokolle. Dateien gehen nach Möglichkeit direkt zwischen den Geräten, sonst über den Relay-Server; in beiden Fällen sind sie Ende-zu-Ende-verschlüsselt.';
+      'Der Vermittlungsserver, der Relay-Server und der STUN-Server von Cloudflare sehen Ihre IP-Adresse, bei einer direkten Verbindung auch das andere Gerät (außer im Privatsphäre-Modus). Keiner von ihnen sieht Dateinamen, Inhalte oder Schlüssel. Unsere Server speichern selbst keine Protokolle, aber Cloudflare, das sie betreibt, speichert mindestens 31 Tage lang eine Stichprobe der Anfragen mit IP-Adressen. Dateien gehen nach Möglichkeit direkt zwischen den Geräten, sonst über den Relay-Server; in beiden Fällen sind sie Ende-zu-Ende-verschlüsselt.';
 
   @override
   String get privacyMode => 'Meine Adresse vor dem anderen Gerät verbergen';

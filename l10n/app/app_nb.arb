@@ -96,7 +96,7 @@
   "settingsAbout": "Om",
   "settingsAboutBody": "TotalDrop er gratis og åpen kildekode, finansiert av donasjoner. Lisens: GPL-3.0-or-later.",
   "settingsPrivacy": "Personvern",
-  "settingsPrivacyBody": "Møteserveren, reléserveren og Cloudflares STUN-server ser IP-adressen din, og det gjør også den andre enheten når dere kobler direkte (med mindre personvernmodus er på). Ingen av dem ser filnavn, innhold eller nøkler, og serverne våre lagrer ingen logger. Filene går direkte mellom enhetene når det er mulig, ellers gjennom reléserveren; de er ende-til-ende-kryptert uansett.",
+  "settingsPrivacyBody": "Møteserveren, reléserveren og Cloudflares STUN-server ser IP-adressen din, og det gjør også den andre enheten når dere kobler direkte (med mindre personvernmodus er på). Ingen av dem ser filnavn, innhold eller nøkler. Serverne våre lagrer ingen egne logger, men Cloudflare, som driver dem, lagrer et utvalg av forespørslene med IP-adresser i minst 31 dager. Filene går direkte mellom enhetene når det er mulig, ellers gjennom reléserveren; de er ende-til-ende-kryptert uansett.",
   "privacyMode": "Skjul adressen min for den andre enheten",
   "privacyModeHint": "Personvernmodus: alt går gjennom reléserveren, så den andre enheten får aldri vite IP-adressen din. Tregere, og den andre enheten må bruke samme reléserver (standardserveren gjør det).",
   "privacyModeConfirmTitle": "Slå på personvernmodus?",

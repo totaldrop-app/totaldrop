@@ -1,4 +1,4 @@
-<!-- Translated from README.md 0a6bee841691. -->
+<!-- Translated from README.md 8c538b51ef59. -->
 <div align="center">
 
 <picture>
@@ -38,7 +38,7 @@ Zdarma a s otevřeným kódem. Koncové šifrování. Žádný e-mail, žádné 
 - **Stačí krátký kód.** Vyberte soubory a získáte kód jako `7-harbor-rocket`. Přečtěte ho nahlas nebo ukažte QR kód; druhá strana ho zadá a soubory dorazí.
 - **Koncově šifrované, a můžete si to ověřit.** Než se cokoli přenese, obě obrazovky ukážou stejná čtyři slova. Pokud se liší, přestaňte.
 - **Nikde se neregistrujete.** Žádný účet, e-mail ani telefonní číslo. Volitelné účty se navrhují tak, aby server neuchovával vůbec žádný účet: drží ho vaše zařízení a nikdy nezadáváte žádný identifikátor ([návrh](../../docs/hesap.md)).
-- **Přímo ze zařízení do zařízení, kdekoli.** Server pro navázání spojení obě zařízení jen seznámí a nevede žádné záznamy; jako každý server vidí jejich IP adresy. Zařízení se přes internet spojí přímo všude, kde to jde. Když překáží router nebo firewall, provoz přenáší zprostředkující server, který ho nemůže přečíst.
+- **Přímo ze zařízení do zařízení, kdekoli.** Server pro navázání spojení obě zařízení jen seznámí a sám nevede žádné záznamy; jako každý server vidí jejich IP adresy a Cloudflare, který ho provozuje, uchovává vzorek požadavků nejméně 31 dní. Zařízení se přes internet spojí přímo všude, kde to jde. Když překáží router nebo firewall, provoz přenáší zprostředkující server, který ho nemůže přečíst.
 - **Jako doma ve vašem systému.** Aplikace se řídí světlým nebo tmavým motivem systému, barvou zvýraznění, jazykem a nastavením omezení pohybu. Linuxová aplikace je nativní Qt 6 na Waylandu a navíc živě přebírá písma, rohy a ikony z motivů KDE Plasma, Hyprland a Omarchy.
 - **Zdarma, natrvalo.** Otevřený kód, financovaný z darů. Žádné reklamy, žádné sledování, žádná placená verze pro základní funkce.
 

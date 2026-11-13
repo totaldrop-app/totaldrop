@@ -1,4 +1,4 @@
-<!-- Translated from README.md 0a6bee841691. -->
+<!-- Translated from README.md 8c538b51ef59. -->
 <div align="center">
 
 <picture>
@@ -38,7 +38,7 @@ Bure na chanzo huria. Imesimbwa fiche kutoka mwanzo hadi mwisho. Hakuna barua pe
 - **Msimbo mfupi unatosha.** Chagua faili na upate msimbo kama `7-harbor-rocket`. Usome kwa sauti au uonyeshe msimbo wa QR; mtu mwingine anauandika na faili zinafika.
 - **Imesimbwa fiche kutoka mwanzo hadi mwisho, na unaweza kuikagua.** Skrini zote mbili zinaonyesha maneno manne yale yale kabla chochote hakijatumwa. Yakitofautiana, simama.
 - **Hakuna cha kujisajili.** Hakuna akaunti, barua pepe wala nambari ya simu. Akaunti za hiari zinapangwa ili seva isihifadhi akaunti yoyote: vifaa vyako ndivyo vinavyoishikilia, na hutawahi kuandika kitambulisho ([muundo](../../docs/hesap.md)).
-- **Moja kwa moja kutoka kifaa hadi kifaa, popote.** Seva ya kukutanisha hutambulisha vifaa viwili tu na haihifadhi kumbukumbu; kama seva yoyote, inaona anwani zao za IP. Vifaa huunganishwa moja kwa moja kupitia intaneti popote inapowezekana. Ruta au ngome ikiwa kizuizi, seva ya kati hubeba trafiki ambayo haiwezi kuisoma.
+- **Moja kwa moja kutoka kifaa hadi kifaa, popote.** Seva ya kukutanisha hutambulisha vifaa viwili tu na haihifadhi kumbukumbu zake yenyewe; kama seva yoyote, inaona anwani zao za IP, na Cloudflare, inayoiendesha, huhifadhi sampuli ya maombi kwa angalau siku 31. Vifaa huunganishwa moja kwa moja kupitia intaneti popote inapowezekana. Ruta au ngome ikiwa kizuizi, seva ya kati hubeba trafiki ambayo haiwezi kuisoma.
 - **Nyumbani kwenye mfumo wako.** Programu hufuata mandhari ya mwanga au giza ya mfumo, rangi ya msisitizo, lugha na mpangilio wa kupunguza mwendo. Programu ya Linux ni Qt 6 asilia kwenye Wayland na pia huchukua fonti, pembe na aikoni kutoka kwenye mandhari ya KDE Plasma, Hyprland na Omarchy papo hapo.
 - **Bure, daima.** Chanzo huria na inafadhiliwa kwa michango. Hakuna matangazo, hakuna ufuatiliaji, hakuna kiwango cha kulipia kwa mambo ya msingi.
 

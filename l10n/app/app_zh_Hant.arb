@@ -96,7 +96,7 @@
   "settingsAbout": "關於",
   "settingsAboutBody": "TotalDrop 免費且開放原始碼，依靠捐款營運。採用 GPL-3.0-or-later 授權。",
   "settingsPrivacy": "隱私權",
-  "settingsPrivacyBody": "中介伺服器、中繼伺服器和 Cloudflare 的 STUN 伺服器會看到你的 IP 位址；直接連線時，對方裝置也會看到（除非開啟了隱私模式）。它們都看不到檔案名稱、檔案內容或金鑰，我們的伺服器也不保留記錄。檔案會盡可能在裝置之間直接傳輸，否則經由中繼伺服器；無論哪種方式都是端對端加密。",
+  "settingsPrivacyBody": "中介伺服器、中繼伺服器和 Cloudflare 的 STUN 伺服器會看到你的 IP 位址；直接連線時，對方裝置也會看到（除非開啟了隱私模式）。它們都看不到檔案名稱、檔案內容或金鑰。我們的伺服器自身不保留記錄，但執行這些伺服器的 Cloudflare 會將帶有 IP 位址的要求樣本保留至少 31 天。檔案會盡可能在裝置之間直接傳輸，否則經由中繼伺服器；無論哪種方式都是端對端加密。",
   "privacyMode": "對另一部裝置隱藏我的位址",
   "privacyModeHint": "隱私模式：所有資料都經由中繼伺服器，對方裝置永遠不會知道你的 IP 位址。速度較慢，且對方裝置必須使用同一個中繼伺服器（預設的中繼伺服器即可）。",
   "privacyModeConfirmTitle": "要開啟隱私模式嗎？",

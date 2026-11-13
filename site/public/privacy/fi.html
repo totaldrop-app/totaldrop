@@ -5,7 +5,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Tietosuojakäytäntö · TotalDrop</title>
-  <meta name="description" content="Mitä TotalDrop kerää (ei mitään), mitä sen palvelimet näkevät ja kuinka kauan mitään säilytetään.">
+  <meta name="description" content="Mitä TotalDrop kerää (tuskin mitään), mitä sen palvelimet ja Cloudflare näkevät ja kuinka kauan mitään säilytetään.">
   <meta name="theme-color" content="#F4F2FB" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#140E33" media="(prefers-color-scheme: dark)">
   <link rel="canonical" href="https://totaldrop.app/privacy/fi">
@@ -46,7 +46,7 @@
   <link rel="alternate" hreflang="zh-Hant" href="https://totaldrop.app/privacy/zh-Hant">
   <link rel="alternate" hreflang="x-default" href="https://totaldrop.app/privacy">
   <meta property="og:title" content="Tietosuojakäytäntö · TotalDrop">
-  <meta property="og:description" content="Mitä TotalDrop kerää (ei mitään), mitä sen palvelimet näkevät ja kuinka kauan mitään säilytetään.">
+  <meta property="og:description" content="Mitä TotalDrop kerää (tuskin mitään), mitä sen palvelimet ja Cloudflare näkevät ja kuinka kauan mitään säilytetään.">
   <meta property="og:url" content="https://totaldrop.app/privacy/fi">
   <meta property="og:type" content="website">
   <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
@@ -75,9 +75,9 @@
   <main id="main" class="prose">
     <article lang="fi">
       <p class="lang-note" role="note">Tämä käännös on luonnos, ja sitä tarkistetaan. Sitova teksti on englanninkielinen versio: jos ne eroavat toisistaan, sovelletaan englanninkielistä versiota. <a href="/privacy" hreflang="en">Lue englanninkielinen versio</a></p>
-      <p class="eyebrow">Tietosuojakäytäntö · versio 7 · 8. marraskuuta 2026</p>
-      <h1>Emme kerää sinusta mitään.</h1>
-      <p class="lead">TotalDropissa ei ole tilejä, analytiikkaa, mainontaa eikä kaatumisraportointia. Tämä sivu kertoo tarkasti, mitä palvelimemme voivat nähdä tiedostoja siirtäessäsi ja kuinka nopeasti se katoaa.</p>
+      <p class="eyebrow">Tietosuojakäytäntö · versio 8 · 13. marraskuuta 2026</p>
+      <h1>Emme kerää sinusta juuri mitään.</h1>
+      <p class="lead">TotalDropissa ei ole tilejä, analytiikkaa tai seurantakoodia, mainontaa eikä kaatumisraportointia. Tämä sivu kertoo tarkasti, mitä palvelimemme ja niitä ylläpitävä Cloudflare voivat nähdä tiedostoja siirtäessäsi ja kuinka nopeasti se katoaa.</p>
 
       <h2>Keitä olemme</h2>
       <p>TotalDrop on maksuton avoimen lähdekoodin projekti, jota ylläpitää Ozan Özdil. Käytäntö koskee TotalDrop-sovelluksia, komentoriviasiakasta ja palvelimia osoitteessa <code>totaldrop.app</code>. Yhteystiedot: <a href="mailto:privacy@totaldrop.app">privacy@totaldrop.app</a>.</p>
@@ -96,7 +96,7 @@
         <li>milloin muodostat yhteyden ja laitteiden vaihtamien lyhyiden viestien koon. Kahden ensimmäisen jälkeen viestit on salattu niin, että vain toinen laite voi lukea ne.</li>
       </ul>
       <p>Palvelin ei kirjaa mitään tästä lokiin. Postilaatikko ja kaikki sen sisältö poistetaan heti, kun molemmat laitteet poistuvat, ja viimeistään tunnin kuluttua. Jokaisen siirron jälkeen koodin numero lepää 10 minuuttia ennen kuin se annetaan uudelleen; epäonnistuneen koodiyrityksen jälkeen 24 tuntia. Väärinkäytön rajoittamiseksi palvelin myös laskee, kuinka monta yhteyttä kukin IP-osoite avaa (IPv6:ssa osoitteen 64 ensimmäistä bittiä). Se pitää nämä laskurit vain muistissa, osoitteesta satunnaisella avaimella johdetun koodin alla eikä itse osoitteen alla, unohtaa kunkin viimeistään noin kahden minuutin kuluttua viimeisestä yhteydestä eikä koskaan kirjoita niitä levylle tai lokiin.</p>
-      <p>Infrastruktuuritoimittajamme Cloudflare käsittelee IP-osoitteita palvelun toimittamiseksi ja suojaamiseksi oman <a href="https://www.cloudflare.com/privacypolicy/">tietosuojakäytäntönsä</a> mukaisesti. Sama koskee välityspalvelinta. Olemme poistaneet pyyntölokit ja Workers-lokituksen käytöstä molemmilta palvelimilta.</p>
+      <p>Infrastruktuuritoimittajamme Cloudflare käsittelee IP-osoitteita palvelun toimittamiseksi ja suojaamiseksi oman <a href="https://www.cloudflare.com/privacypolicy/">tietosuojakäytäntönsä</a> mukaisesti. Sama koskee välityspalvelinta. Olemme poistaneet pyyntölokit ja Workers-lokituksen käytöstä molemmilta palvelimilta. Mitä Cloudflare silti säilyttää, kerrotaan alempana kohdassa ”Mitä Cloudflare säilyttää”.</p>
 
       <h2>Suoran reitin löytäminen</h2>
       <p>Muodostaakseen yhteyden internetin yli kukin laite kysyy ensin STUN-palvelimelta, millä julkisella IP-osoitteella ja portilla se näkyy. Oletuksena tämä on Cloudflaren maksuton STUN-palvelu osoitteessa <code>stun.cloudflare.com</code>. Se näkee IP-osoitteesi, kuten mikä tahansa internetpalvelin, eikä mitään muuta. Yksityisyystilassa (ks. alla) laite ei kysy siltä.</p>
@@ -108,9 +108,18 @@
         <li>kaksi satunnaista avainta, jotka on luotu vain tätä siirtoa varten eikä niitä käytetä enää koskaan;</li>
         <li>milloin kukin laite muodosti yhteyden ja katkaisi sen ja kuinka paljon salattua dataa kulki.</li>
       </ul>
-      <p>Avaimet eivät yhdistä siirtoja toisiinsa, mutta IP-osoitteesi voi yhdistää: välityspalvelin ja kohtaamispalvelin, joita molempia ylläpidämme Cloudflaressa, näkevät sen hetken välein. Välityspalvelin ei voi lukea tiedostoja, niiden nimiä eikä mitään siitä, kuka olet. Se ei kirjaa mitään lokiin eikä säilytä siirrosta mitään sen päätyttyä.</p>
+      <p>Avaimet eivät yhdistä siirtoja toisiinsa, mutta IP-osoitteesi voi yhdistää: välityspalvelin ja kohtaamispalvelin, joita molempia ylläpidämme Cloudflaressa, näkevät sen hetken välein. Välityspalvelin ei voi lukea tiedostoja, niiden nimiä eikä mitään siitä, kuka olet. Se ei kirjaa mitään lokiin eikä säilytä siirrosta mitään sen päätyttyä. Väärinkäytön rajoittamiseksi Cloudflare laskee, montako yhteyttä kukin IP-osoite avaa välityspalvelimeen: osoite, joka avaa yli 30 yhteyttä 10 sekunnissa, torjutaan 10 sekunniksi.</p>
       <p>Kunkin laitteen välityspalvelimen osoite jaetaan toiselle laitteelle salattuna. Jos lähettäjä käyttää omaa välityspalvelintaan (komentorivin valitsin <code>--relay</code> tai <code>TOTALDROP_RELAY</code>), versiosta 0.2.0-beta.1 alkaen vastaanottava laite käyttää sitä vain, jos se on myös vastaanottajan oma välityspalvelinasetus; muuten se ei koskaan ota siihen yhteyttä. Se, joka ylläpitää välityspalvelinta, johon laite ottaa yhteyden, näkee yllä luetellut asiat. Kun laitteet käyttävät eri välityspalvelimia eikä niillä ole suoraa reittiä, siirto pysähtyy virheeseen.</p>
       <p>Yksityisyystila (”Piilota osoitteeni toiselta laitteelta” sovellusten Asetuksissa versiosta 0.2.0-beta.1 alkaen, komentorivillä <code>--relay-only</code>): laitteesi ei ilmoita toiselle laitteelle mitään IP-osoitetta, ei kysy STUN-palvelimelta, ei koskaan ota suoraan yhteyttä toiseen laitteeseen ja hylkää suoran yhteyden jopa pariksi liitetyltä laitteelta. Jokainen siirto kulkee välityspalvelimen kautta, joten toinen laite ei saa tietää IP-osoitettasi, lähetitpä tai vastaanotitpa. Tämä on hitaampaa, ja välityspalvelin ja kohtaamispalvelin näkevät edelleen IP-osoitteesi. Toisen laitteen on käytettävä samaa välityspalvelinta kuin sinä, lähetitpä tai vastaanotitpa (kaikki sovellukset käyttävät meidän palvelintamme); muuten siirto pysähtyy virheeseen.</p>
+
+      <h2>Mitä Cloudflare säilyttää</h2>
+      <p>Cloudflare ylläpitää tätä verkkosivustoa ja molempia palvelimia. Vaikka lokitus on pois päältä, se säilyttää otoksen pyynnöistä, jotka kohdistuvat osoitteeseen <code>totaldrop.app</code> ja sen aliverkkotunnuksiin, mukaan lukien tämä verkkosivusto, kohtaamispalvelin ja välityspalvelin, ja näyttää otoksen meille hallintapaneelissaan. Jokaisesta otoksen pyynnöstä se tallentaa:</p>
+      <ul>
+        <li>IP-osoitteen sekä maan ja verkon, josta se tulee;</li>
+        <li>ajan, pyydetyn URL-osoitteen ja sen, kuinka paljon dataa lähetettiin takaisin. Kohtaamispalvelimella URL-osoite sisältää koodin numeron ja välityspalvelimella siirron kaksi avainta, joten otoksesta voi nähdä, että kaksi IP-osoitetta osallistui samaan siirtoon;</li>
+        <li>yhteyden teknisiä tietoja, kuten selaimen tai ohjelman nimen, jos se lähettää sen.</li>
+      </ul>
+      <p>Cloudflare valitsee, mitkä pyynnöt päätyvät otokseen, ja säilyttää otoksen vähintään 31 päivää. Se tekee näin kaikissa palvelutasoissa, emmekä ole löytäneet asetusta, joka kytkisi sen pois. Pyynnöt, jotka jokin tietoturvasääntö torjuu, kuten yllä kuvattu välityspalvelimen raja, säilytetään myös IP-osoitteineen vähintään 31 päivää. Katsomme näitä tietoja vain väärinkäytösten ja vikojen selvittämiseksi emmekä kopioi niitä minnekään muualle.</p>
 
       <h2>Mitä toinen laite näkee</h2>
       <p>Muodostaakseen suoran yhteyden laitteet vaihtavat verkko-osoitteensa keskenään salattuina. Siksi kumpikin laite saa tietää toisen paikallisen ja julkisen IP-osoitteen, kuten missä tahansa suorassa yhteydessä. Yksityisyystilassa oleva laite ei ilmoita mitään osoitetta, joten toinen laite ei saa sitä tietää.</p>
@@ -119,13 +128,13 @@
       <p>Vastaanotetut tiedostot tallennetaan Androidissa kansioon <em>Download/TotalDrop</em> ja Linuxissa kansioon <em>~/Downloads/TotalDrop</em>. Ne ovat tavallisia jaettuja tiedostoja, joita käsitellään kuten muita latauksiasi. Kun lähetät Androidista, valitsemasi tiedostot kopioidaan sovelluksen välimuistiin. Kopiot poistetaan, kun suljet valmiin lähetyksen tai pysäytät lähetyksen. Kopiot tiedostoista, jotka valitsit mutta joita et lähettänyt (palasit takaisin ennen lähettämistä, poistit ne luettelosta tai Android sulki sovelluksen), voivat jäädä, kunnes myöhempi lähetys suljetaan tai pysäytetään tai Android tyhjentää välimuistin. Sovellukset tallentavat kaksi asetusta: kohtaamispalvelimen osoitteen ja sen, onko yksityisyystila päällä (Linuxissa tiedostossa <em>~/.config/totaldrop/settings.toml</em>). Android-sovelluksen omat tiedot, nämä kopiot ja asetukset, eivät koskaan päädy pilvivarmuuskopioihin tai laitteelta laitteelle tehtäviin siirtoihin.</p>
 
       <h2>Lapset</h2>
-      <p>TotalDropia ei ole suunnattu lapsille, eikä se kerää henkilötietoja keneltäkään.</p>
+      <p>TotalDropia ei ole suunnattu lapsille, eikä se pyydä henkilötietoja keneltäkään.</p>
 
       <h2>Oikeutesi</h2>
-      <p>Edellä kuvattuja, muutamassa minuutissa katoavia lyhytikäisiä laskureita lukuun ottamatta meillä ei ole sinusta mitään henkilötietoja, joten ei ole mitään, mihin saada pääsy, mitä oikaista tai poistaa. Jos sinulla on kysyttävää tai valitettavaa, kirjoita meille yllä olevaan osoitteeseen. Sinulla on myös oikeus tehdä valitus tietosuojaviranomaiselle.</p>
+      <p>Edellä kuvattuja, muutamassa minuutissa katoavia lyhytikäisiä laskureita ja Cloudflaren tietoja lukuun ottamatta meillä ei ole sinusta mitään henkilötietoja. Näissä tiedoissa oleva IP-osoite ei kerro meille, kuka olet. Jos sinulla on kysyttävää, valitettavaa tai tietojasi koskeva pyyntö, kirjoita meille yllä olevaan osoitteeseen. Sinulla on myös oikeus tehdä valitus tietosuojaviranomaiselle.</p>
 
       <h2>Muutokset</h2>
-      <p>Versio 7 kertoo, että kohtaamispalvelin laskee kunkin IP-osoitteen yhteyksiä lyhyen aikaa vain muistissa väärinkäytön rajoittamiseksi; se, mitä palvelin näkee, ei muutu. Versio 6 seuraa 0.3.0-beta.3:a uudempia Android- ja Linux-versioita, joissa hiljentynyt suora yhteys siirtyy välityspalvelimelle, joten välityspalvelin voi nähdä siirron, joka alkoi suoralla yhteydellä. Versio 5 luettelee luvat, joita Android-versiot 0.3.0-beta.2:n jälkeen pyytävät ja joiden avulla siirto voi jatkua taustalla ilmoituksen kanssa; palvelimiemme näkemät tiedot eivät muutu. Versio 4 seuraa Android- ja Linux-versiota 0.2.0-beta.1, jotka muuttivat sitä, mitä välityspalvelin ja toinen laite näkevät. Näissä versioissa laitteet ottavat yhteyden välityspalvelimeen vain, kun suoraa yhteyttä ei valita ajoissa tai kokeiltavaa suoraa reittiä ei ole, eivätkä jokaisen siirron alussa. Vastaanottaja ei enää käytä välityspalvelinta, jonka vain lähettäjä on valinnut, joten yksityisyystila piilottaa nyt myös vastaanottajan osoitteen. Yksityisyystila on nyt myös sovellusten Asetuksissa ja hylkää suorat yhteydet. Versio 4 kertoo myös, mitä Android-sovellus säilyttää välimuistissaan. Versio 3 korjasi version 2, jossa sanottiin, että sovellukset ottavat yhteyden välityspalvelimeen vain, kun mikään suora reitti ei toimi (silloin ne ottivat siihen yhteyden jokaisen siirron alussa), ja että yksityisyystila piilotti vastaanottajan osoitteen, mitä se silloin ei tehnyt. Se nimesi myös Linux-sovelluksen tiedostot. Versio 2 lisäsi STUN-palvelun ja välityspalvelimen. Myöhempiin versioihin suunnitellut ominaisuudet (linkit, valinnaiset anonyymit tilit) muuttavat sitä, mitä palvelimemme käsittelevät. Päivitämme tämän käytännön ennen kuin tällainen ominaisuus julkaistaan, ja säilytämme jokaisen version projektin julkisessa lähdekoodivarastossa.</p>
+      <p>Versio 8 kertoo, mitä Cloudflare säilyttää: otoksen pyynnöistä IP-osoitteineen ja koodin numeroineen tai välityspalvelimen avaimineen, jonka voimme nähdä 31 päivän ajan, sekä pyynnöt, jotka sen tietoturvasäännöt torjuvat. Se kertoo myös, että välityspalvelin torjuu IP-osoitteen, joka avaa yli 30 yhteyttä 10 sekunnissa. Versio 7 kertoo, että kohtaamispalvelin laskee kunkin IP-osoitteen yhteyksiä lyhyen aikaa vain muistissa väärinkäytön rajoittamiseksi; se, mitä palvelin näkee, ei muutu. Versio 6 seuraa 0.3.0-beta.3:a uudempia Android- ja Linux-versioita, joissa hiljentynyt suora yhteys siirtyy välityspalvelimelle, joten välityspalvelin voi nähdä siirron, joka alkoi suoralla yhteydellä. Versio 5 luettelee luvat, joita Android-versiot 0.3.0-beta.2:n jälkeen pyytävät ja joiden avulla siirto voi jatkua taustalla ilmoituksen kanssa; palvelimiemme näkemät tiedot eivät muutu. Versio 4 seuraa Android- ja Linux-versiota 0.2.0-beta.1, jotka muuttivat sitä, mitä välityspalvelin ja toinen laite näkevät. Näissä versioissa laitteet ottavat yhteyden välityspalvelimeen vain, kun suoraa yhteyttä ei valita ajoissa tai kokeiltavaa suoraa reittiä ei ole, eivätkä jokaisen siirron alussa. Vastaanottaja ei enää käytä välityspalvelinta, jonka vain lähettäjä on valinnut, joten yksityisyystila piilottaa nyt myös vastaanottajan osoitteen. Yksityisyystila on nyt myös sovellusten Asetuksissa ja hylkää suorat yhteydet. Versio 4 kertoo myös, mitä Android-sovellus säilyttää välimuistissaan. Versio 3 korjasi version 2, jossa sanottiin, että sovellukset ottavat yhteyden välityspalvelimeen vain, kun mikään suora reitti ei toimi (silloin ne ottivat siihen yhteyden jokaisen siirron alussa), ja että yksityisyystila piilotti vastaanottajan osoitteen, mitä se silloin ei tehnyt. Se nimesi myös Linux-sovelluksen tiedostot. Versio 2 lisäsi STUN-palvelun ja välityspalvelimen. Myöhempiin versioihin suunnitellut ominaisuudet (linkit, valinnaiset anonyymit tilit) muuttavat sitä, mitä palvelimemme käsittelevät. Päivitämme tämän käytännön ennen kuin tällainen ominaisuus julkaistaan, ja säilytämme jokaisen version projektin julkisessa lähdekoodivarastossa.</p>
     </article>
 
     <nav class="lang-list" id="languages" aria-labelledby="languages-title">
