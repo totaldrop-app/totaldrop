@@ -22,7 +22,7 @@
 // or empty translation stays English and is marked lang="en" dir="ltr".
 // Tested by: node --test site/tools/test-build.mjs
 import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve, sep } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import vm from "node:vm";
 
@@ -88,7 +88,6 @@ export function translate(html, tag, dict) {
   const canonical = canonicalOf(html);
   const own = addressIn(canonical, tag);
   const page = (/<body[^>]*\bdata-page="([^"]+)"/.exec(html) || [])[1] || "home";
-  let missing = 0;
   const once = (re, to) => {
     if (!re.test(html)) throw new Error(`${page}: expected ${re}`);
     html = html.replace(re, to);
@@ -100,23 +99,22 @@ export function translate(html, tag, dict) {
   if (has(dict, `meta.${page}.title`)) {
     once(/<title>[^<]*<\/title>/, () => `<title>${text(title)}</title>`);
     once(/(<meta property="og:title" content=")[^"]*(">)/, (_, a, b) => a + attr(title) + b);
-  } else missing += 1;
+  }
   if (has(dict, `meta.${page}.desc`)) {
     once(/(<meta name="description" content=")[^"]*(">)/, (_, a, b) => a + attr(desc) + b);
     once(/(<meta property="og:description" content=")[^"]*(">)/, (_, a, b) => a + attr(desc) + b);
-  } else missing += 1;
+  }
   once(/(<link rel="canonical" href=")[^"]*(">)/, (_, a, b) => a + own + b);
   once(/(<meta property="og:url" content=")[^"]*(">)/, (_, a, b) => a + own + b);
 
   // Text. A translated element holds text only (check-i18n.mjs).
   html = html.replace(/<([a-z0-9]+)\b([^>]*\bdata-i18n="([^"]+)"[^>]*)>([\s\S]*?)<\/\1>/g, (all, name, attrs, key, inner) => {
     if (has(dict, key)) return `<${name}${attrs}>${text(dict[key])}</${name}>`;
-    missing += 1;
     return `<${name}${attrs} lang="en" dir="ltr">${inner}</${name}>`;
   });
   // Accessible names.
   html = html.replace(/<[a-z0-9]+\b[^>]*\bdata-i18n-label="([^"]+)"[^>]*>/g, (open, key) => {
-    if (!has(dict, key)) { missing += 1; return open; }
+    if (!has(dict, key)) return open;
     return open.replace(/(\baria-label=")[^"]*(")/, (_, a, b) => a + attr(dict[key]) + b);
   });
   // Links between the pages.
@@ -160,6 +158,10 @@ export function missingFiles(html, out) {
 }
 
 export function build(out) {
+  // The folder is emptied first, so it must not be the source or hold it.
+  const target = resolve(out);
+  const source = resolve(pub);
+  if (target === source || source.startsWith(target + sep) || target.startsWith(source + sep)) throw new Error(`refusing to write to ${out}: it is or holds site/public`);
   rmSync(out, { recursive: true, force: true });
   cpSync(pub, out, { recursive: true });
   for (const tag of TAGS) {
