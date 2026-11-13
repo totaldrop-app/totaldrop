@@ -10,8 +10,9 @@
 // new page with last week's stylesheet: unstyled. Each page therefore asks
 // for /styles.css?v=<hash>, the first 10 hex digits of the SHA-256 of the
 // file. When the file changes the address changes, and the browser fetches
-// it again. The site has no build step: the pages are committed with the
-// version in them, and the check fails when one is out of date.
+// it again. The pages are committed with the version in them, and the
+// check fails when one is out of date; the build (build.mjs) copies them
+// as they are, so the translated pages carry the same version.
 import { createHash } from "node:crypto";
 import { readFileSync, writeFileSync, readdirSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
