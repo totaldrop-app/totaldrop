@@ -62,3 +62,12 @@ test("Flutter's own deep linking is off, so links reach only MainActivity", () =
     /<meta-data\s+android:name="flutter_deeplinking_enabled"\s+android:value="false"\s*\/>/,
   );
 });
+
+// Functions must not answer for assetlinks.json. The rule came in twice
+// when this file and security.txt each added it; Cloudflare Pages checks
+// _routes.json for rules that overlap, so each rule is named once.
+test("_routes.json keeps /.well-known/* away from Functions, once", () => {
+  const { exclude } = JSON.parse(read("site/public/_routes.json"));
+  assert.equal(exclude.filter((rule) => rule === "/.well-known/*").length, 1);
+  assert.equal(new Set(exclude).size, exclude.length, "no rule twice");
+});
