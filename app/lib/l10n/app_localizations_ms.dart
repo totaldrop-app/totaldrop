@@ -358,7 +358,7 @@ class AppLocalizationsMs extends AppLocalizations {
 
   @override
   String get settingsPrivacyBody =>
-      'Pelayan pertemuan, pelayan geganti dan pelayan STUN Cloudflare melihat alamat IP anda, begitu juga peranti lain apabila anda bersambung secara terus (kecuali mod privasi dihidupkan). Tiada satu pun daripadanya melihat nama fail, kandungan atau kunci, dan pelayan kami tidak menyimpan log. Fail bergerak terus antara peranti apabila boleh, jika tidak melalui pelayan geganti; kedua-duanya tetap disulitkan hujung ke hujung.';
+      'Pelayan pertemuan, pelayan geganti dan pelayan STUN Cloudflare melihat alamat IP anda, begitu juga peranti lain apabila anda bersambung secara terus (kecuali mod privasi dihidupkan). Tiada satu pun daripadanya melihat nama fail, kandungan atau kunci. Pelayan kami tidak menyimpan log sendiri, tetapi Cloudflare, yang mengendalikannya, menyimpan sampel permintaan bersama alamat IP selama 31 hari. Fail bergerak terus antara peranti apabila boleh, jika tidak melalui pelayan geganti; kedua-duanya tetap disulitkan hujung ke hujung.';
 
   @override
   String get privacyMode => 'Sembunyikan alamat saya daripada peranti lain';
