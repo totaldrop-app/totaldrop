@@ -7,10 +7,10 @@ olduğu [kararlar/](kararlar/README.md), protokolün kendisi
 [protocol-v0.1-notes.md](protocol-v0.1-notes.md), güven sınırları
 [tehdit-modeli.md](tehdit-modeli.md) içindedir; burada tekrar edilmez.
 
-- Durum: `main` `94de53e` (12 Kasım 2026). İlk sürüm `18ba4df`'e karşı
+- Durum: `main` `88dd6ed` (13 Kasım 2026). İlk sürüm `18ba4df`'e karşı
   yazıldı; 11 Kasım'da UPnP, denetim düzeltmeleri (#424–#427) ve aktarma
   Worker'ının birim testleri için güncellendi; 12 Kasım'da yalnız kayan
-  satırlar izlendi. 5.2'deki kapsam sayıları
+  satırlar izlendi; 13 Kasım'da Worker'ların `Origin` reddi (#450) eklendi. 5.2'deki kapsam sayıları
   ve 6. bölümün sayımları `18ba4df` dönemine aittir.
 - Koda `yol:satır` ile bağlanır, yol hep depo kökünden yazılır.
   Kayan satırları CI yakalar: `tools/check-doc-refs.mjs` her başvurunun
@@ -276,12 +276,16 @@ arayüz durumuna çevirir: Linux'ta Qt özellikleri
 ### 2.4 Bir sunucu isteği: `wss://rendezvous.totaldrop.app/v0/mailbox/<n>`
 
 1. Worker girişi: `server/rendezvous-worker/src/index.ts:138` `fetch`.
-   Yalnızca WebSocket yükseltmesi kabul edilir (`server/rendezvous-worker/src/index.ts:145`, değilse 426);
-   istemci kimliği `CF-Connecting-IP`'den yalnızca hız sınırı için türetilir
-   (`server/rendezvous-worker/src/index.ts:148`).
-2. Yönlendirme: `/v0/allocate` → `allocate()` (`server/rendezvous-worker/src/index.ts:149`, `server/rendezvous-worker/src/index.ts:78`);
-   `/v0/mailbox/<n>` → `mailbox()` (`server/rendezvous-worker/src/index.ts:150`, `server/rendezvous-worker/src/index.ts:105`); geri kalan 404
-   (`server/rendezvous-worker/src/index.ts:156`).
+   Yalnızca WebSocket yükseltmesi kabul edilir (`server/rendezvous-worker/src/index.ts:145`, değilse 426).
+   Hemen ardından `Origin` başlığı taşıyan yükseltme 403 ile reddedilir
+   (`server/rendezvous-worker/src/index.ts:149`, #450): bir web sayfasının
+   WebSocket'i bu başlığı hep taşır, uygulamalar ve komut satırı hiç
+   göndermez; böylece bir sayfa ziyaretçilerinin istemci başına sınırını
+   harcayamaz. İstemci kimliği `CF-Connecting-IP`'den yalnızca hız sınırı için türetilir
+   (`server/rendezvous-worker/src/index.ts:152`).
+2. Yönlendirme: `/v0/allocate` → `allocate()` (`server/rendezvous-worker/src/index.ts:153`, `server/rendezvous-worker/src/index.ts:78`);
+   `/v0/mailbox/<n>` → `mailbox()` (`server/rendezvous-worker/src/index.ts:154`, `server/rendezvous-worker/src/index.ts:105`); geri kalan 404
+   (`server/rendezvous-worker/src/index.ts:160`).
 3. `mailbox()` tek dizin nesnesine sorar:
    `DIRECTORY.getByName("directory").lookup` (`server/rendezvous-worker/src/index.ts:108`,
    `server/rendezvous-worker/src/directory.ts:215`). İstemcinin hiçbir
@@ -293,8 +297,11 @@ arayüz durumuna çevirir: Linux'ta Qt özellikleri
    `webSocketClose` (`server/rendezvous-worker/src/mailbox.ts:365`), `alarm` (`server/rendezvous-worker/src/mailbox.ts:375`). Platformun ara sıra verdiği
    "internal error" için yeniden deneme `withRetry`
    (`server/rendezvous-worker/src/retry.ts`, #119).
-5. Aktarma Worker'ı aynı kalıptadır: `server/relay-worker/src/index.ts:27`
-   → `PAIR.getByName(name).fetch` (`server/relay-worker/src/index.ts:36`) → `Pair.fetch`
+5. Aktarma Worker'ı aynı kalıptadır: `server/relay-worker/src/index.ts:27`.
+   `Origin` başlıklı yükseltme burada da 403 alır
+   (`server/relay-worker/src/index.ts:33-35`), `PREFIX` yol denetiminden
+   (`server/relay-worker/src/index.ts:36`) önce. Sonra
+   → `PAIR.getByName(name).fetch` (`server/relay-worker/src/index.ts:41`) → `Pair.fetch`
    (`server/relay-worker/src/pair.ts:173`), `webSocketMessage` (`server/relay-worker/src/pair.ts:194`),
    `alarm` (`server/relay-worker/src/pair.ts:397`).
 

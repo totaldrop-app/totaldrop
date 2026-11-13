@@ -514,7 +514,14 @@
   "server/relay-worker/src/index.ts:27": [
     "async fetch(request: Request, env: Env): Promise<Response> {"
   ],
+  "server/relay-worker/src/index.ts:33-35": [
+    "if (upgrade && request.headers.has(\"Origin\")) {",
+    "}"
+  ],
   "server/relay-worker/src/index.ts:36": [
+    "if (!url.pathname.startsWith(PREFIX)) {"
+  ],
+  "server/relay-worker/src/index.ts:41": [
     "return env.PAIR.getByName(name).fetch(request);"
   ],
   "server/relay-worker/src/pair.ts:113-116": [
@@ -580,16 +587,19 @@
   "server/rendezvous-worker/src/index.ts:145": [
     "if (!isUpgrade(request)) return new Response(\"WebSocket only\\n\", { status: 426 });"
   ],
-  "server/rendezvous-worker/src/index.ts:148": [
+  "server/rendezvous-worker/src/index.ts:149": [
+    "if (request.headers.has(\"Origin\")) return new Response(\"browsers are not served\\n\", { status: 403 });"
+  ],
+  "server/rendezvous-worker/src/index.ts:152": [
     "const client = clientOf(request.headers.get(\"CF-Connecting-IP\"));"
   ],
-  "server/rendezvous-worker/src/index.ts:149": [
+  "server/rendezvous-worker/src/index.ts:153": [
     "if (url.pathname === \"/v0/allocate\") return allocate(env, client);"
   ],
-  "server/rendezvous-worker/src/index.ts:150": [
+  "server/rendezvous-worker/src/index.ts:154": [
     "const m = /^\\/v0\\/mailbox\\/([1-9][0-9]{0,9})$/.exec(url.pathname);"
   ],
-  "server/rendezvous-worker/src/index.ts:156": [
+  "server/rendezvous-worker/src/index.ts:160": [
     "return new Response(\"not found\\n\", { status: 404 });"
   ],
   "server/rendezvous-worker/src/index.ts:70": [
