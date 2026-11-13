@@ -1,4 +1,4 @@
-<!-- Translated from README.md 0a6bee841691. -->
+<!-- Translated from README.md 54c8c14f6c96. -->
 <div align="center">
 
 <picture>
@@ -38,7 +38,7 @@ Gratis dan open source. Terenkripsi end-to-end. Tanpa email, tanpa nomor telepon
 - **Cukup dengan kode singkat.** Pilih file dan dapatkan kode seperti `7-harbor-rocket`. Bacakan kodenya atau tunjukkan kode QR; orang lain mengetiknya dan file pun tiba.
 - **Terenkripsi end-to-end, dan Anda bisa memeriksanya.** Kedua layar menampilkan empat kata yang sama sebelum apa pun dikirim. Jika berbeda, hentikan.
 - **Tidak perlu mendaftar apa pun.** Tanpa akun, email, atau nomor telepon. Akun opsional dirancang agar server sama sekali tidak menyimpan akun: perangkat Anda yang menyimpannya, dan Anda tidak pernah mengetik ID ([desain](../../docs/hesap.md)).
-- **Langsung dari perangkat ke perangkat, di mana pun.** Server pertemuan hanya memperkenalkan kedua perangkat dan tidak menyimpan log; seperti server mana pun, server ini melihat alamat IP keduanya. Perangkat terhubung langsung melalui internet di mana pun memungkinkan. Jika router atau firewall menghalangi, server relai meneruskan lalu lintas yang tidak dapat dibacanya.
+- **Langsung dari perangkat ke perangkat, di mana pun.** Server pertemuan hanya memperkenalkan kedua perangkat dan tidak menyimpan log sendiri; seperti server mana pun, server ini melihat alamat IP keduanya, dan Cloudflare, yang menjalankannya, menyimpan sampel permintaan selama 31 hari. Perangkat terhubung langsung melalui internet di mana pun memungkinkan. Jika router atau firewall menghalangi, server relai meneruskan lalu lintas yang tidak dapat dibacanya.
 - **Menyatu dengan sistem Anda.** Aplikasi mengikuti tema terang atau gelap sistem, warna aksen, bahasa, dan setelan pengurangan gerakan. Aplikasi Linux adalah Qt 6 native di Wayland dan juga mengambil font, sudut, dan ikon dari tema KDE Plasma, Hyprland, dan Omarchy secara langsung.
 - **Gratis, selamanya.** Open source dan dibiayai oleh donasi. Tanpa iklan, tanpa pelacakan, tanpa paket berbayar untuk fitur dasar.
 

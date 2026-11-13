@@ -377,7 +377,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get settingsPrivacyBody =>
-      'O servidor de encontro, o servidor de retransmissão e o servidor STUN da Cloudflare veem seu endereço IP, e o outro dispositivo também vê quando vocês se conectam diretamente (a menos que o modo de privacidade esteja ativado). Nenhum deles vê nomes de arquivos, conteúdos ou chaves, e nossos servidores não guardam registros. Os arquivos vão diretamente entre os dispositivos quando possível; caso contrário, passam pelo servidor de retransmissão. Nos dois casos, têm criptografia de ponta a ponta.';
+      'O servidor de encontro, o servidor de retransmissão e o servidor STUN da Cloudflare veem seu endereço IP, e o outro dispositivo também vê quando vocês se conectam diretamente (a menos que o modo de privacidade esteja ativado). Nenhum deles vê nomes de arquivos, conteúdos ou chaves. Nossos servidores não guardam registros próprios, mas a Cloudflare, que os opera, guarda uma amostra das solicitações com endereços IP por 31 dias. Os arquivos vão diretamente entre os dispositivos quando possível; caso contrário, passam pelo servidor de retransmissão. Nos dois casos, têm criptografia de ponta a ponta.';
 
   @override
   String get privacyMode => 'Ocultar meu endereço do outro dispositivo';
@@ -1068,7 +1068,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get settingsPrivacyBody =>
-      'O servidor de encontro, o servidor de retransmissão e o servidor STUN da Cloudflare veem seu endereço IP, e o outro dispositivo também vê quando vocês se conectam diretamente (a menos que o modo de privacidade esteja ativado). Nenhum deles vê nomes de arquivos, conteúdos ou chaves, e nossos servidores não guardam registros. Os arquivos vão diretamente entre os dispositivos quando possível; caso contrário, passam pelo servidor de retransmissão. Nos dois casos, têm criptografia de ponta a ponta.';
+      'O servidor de encontro, o servidor de retransmissão e o servidor STUN da Cloudflare veem seu endereço IP, e o outro dispositivo também vê quando vocês se conectam diretamente (a menos que o modo de privacidade esteja ativado). Nenhum deles vê nomes de arquivos, conteúdos ou chaves. Nossos servidores não guardam registros próprios, mas a Cloudflare, que os opera, guarda uma amostra das solicitações com endereços IP por 31 dias. Os arquivos vão diretamente entre os dispositivos quando possível; caso contrário, passam pelo servidor de retransmissão. Nos dois casos, têm criptografia de ponta a ponta.';
 
   @override
   String get privacyMode => 'Ocultar meu endereço do outro dispositivo';
@@ -1761,7 +1761,7 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
 
   @override
   String get settingsPrivacyBody =>
-      'O servidor de encontro, o servidor de retransmissão e o servidor STUN da Cloudflare veem o seu endereço IP, tal como o outro dispositivo quando há uma ligação direta (a não ser que o modo de privacidade esteja ativado). Nenhum deles vê nomes de ficheiros, conteúdos ou chaves, e os nossos servidores não guardam registos. Os ficheiros vão diretamente entre os dispositivos sempre que possível; caso contrário, passam pelo servidor de retransmissão. Em ambos os casos, têm encriptação ponto a ponto.';
+      'O servidor de encontro, o servidor de retransmissão e o servidor STUN da Cloudflare veem o seu endereço IP, tal como o outro dispositivo quando há uma ligação direta (a não ser que o modo de privacidade esteja ativado). Nenhum deles vê nomes de ficheiros, conteúdos ou chaves. Os nossos servidores não guardam registos próprios, mas a Cloudflare, que os opera, guarda uma amostra dos pedidos com endereços IP durante 31 dias. Os ficheiros vão diretamente entre os dispositivos sempre que possível; caso contrário, passam pelo servidor de retransmissão. Em ambos os casos, têm encriptação ponto a ponto.';
 
   @override
   String get privacyMode => 'Ocultar o meu endereço do outro dispositivo';

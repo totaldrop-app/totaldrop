@@ -356,7 +356,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get settingsPrivacyBody =>
-      'Server pertemuan, server relai, dan server STUN Cloudflare melihat alamat IP Anda, begitu pula perangkat lain saat Anda terhubung langsung (kecuali mode privasi aktif). Tidak satu pun dari mereka melihat nama file, isi, atau kunci, dan server kami tidak menyimpan log. File dikirim langsung antarperangkat jika memungkinkan, jika tidak melalui server relai; keduanya tetap terenkripsi end-to-end.';
+      'Server pertemuan, server relai, dan server STUN Cloudflare melihat alamat IP Anda, begitu pula perangkat lain saat Anda terhubung langsung (kecuali mode privasi aktif). Tidak satu pun dari mereka melihat nama file, isi, atau kunci. Server kami tidak menyimpan log sendiri, tetapi Cloudflare, yang menjalankannya, menyimpan sampel permintaan beserta alamat IP selama 31 hari. File dikirim langsung antarperangkat jika memungkinkan, jika tidak melalui server relai; keduanya tetap terenkripsi end-to-end.';
 
   @override
   String get privacyMode => 'Sembunyikan alamat saya dari perangkat lain';

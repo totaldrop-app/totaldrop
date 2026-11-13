@@ -363,7 +363,7 @@ class AppLocalizationsSw extends AppLocalizations {
 
   @override
   String get settingsPrivacyBody =>
-      'Seva ya kukutanisha, seva ya kati na seva ya STUN ya Cloudflare huona anwani yako ya IP, na kifaa kingine pia huiona mnapounganishwa moja kwa moja (isipokuwa hali ya faragha imewashwa). Hakuna kati yao anayeona majina ya faili, maudhui au funguo, na seva zetu hazihifadhi kumbukumbu. Faili husafiri moja kwa moja kati ya vifaa inapowezekana, vinginevyo kupitia seva ya kati; kwa njia zote mbili zimesimbwa fiche kutoka mwanzo hadi mwisho.';
+      'Seva ya kukutanisha, seva ya kati na seva ya STUN ya Cloudflare huona anwani yako ya IP, na kifaa kingine pia huiona mnapounganishwa moja kwa moja (isipokuwa hali ya faragha imewashwa). Hakuna kati yao anayeona majina ya faili, maudhui au funguo. Seva zetu hazihifadhi kumbukumbu zao zenyewe, lakini Cloudflare, inayoziendesha, huhifadhi sampuli ya maombi pamoja na anwani za IP kwa siku 31. Faili husafiri moja kwa moja kati ya vifaa inapowezekana, vinginevyo kupitia seva ya kati; kwa njia zote mbili zimesimbwa fiche kutoka mwanzo hadi mwisho.';
 
   @override
   String get privacyMode => 'Ficha anwani yangu kwa kifaa kingine';

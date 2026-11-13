@@ -96,7 +96,7 @@
   "settingsAbout": "Tentang",
   "settingsAboutBody": "TotalDrop gratis dan open source, didanai oleh donasi. Berlisensi GPL-3.0-or-later.",
   "settingsPrivacy": "Privasi",
-  "settingsPrivacyBody": "Server pertemuan, server relai, dan server STUN Cloudflare melihat alamat IP Anda, begitu pula perangkat lain saat Anda terhubung langsung (kecuali mode privasi aktif). Tidak satu pun dari mereka melihat nama file, isi, atau kunci, dan server kami tidak menyimpan log. File dikirim langsung antarperangkat jika memungkinkan, jika tidak melalui server relai; keduanya tetap terenkripsi end-to-end.",
+  "settingsPrivacyBody": "Server pertemuan, server relai, dan server STUN Cloudflare melihat alamat IP Anda, begitu pula perangkat lain saat Anda terhubung langsung (kecuali mode privasi aktif). Tidak satu pun dari mereka melihat nama file, isi, atau kunci. Server kami tidak menyimpan log sendiri, tetapi Cloudflare, yang menjalankannya, menyimpan sampel permintaan beserta alamat IP selama 31 hari. File dikirim langsung antarperangkat jika memungkinkan, jika tidak melalui server relai; keduanya tetap terenkripsi end-to-end.",
   "privacyMode": "Sembunyikan alamat saya dari perangkat lain",
   "privacyModeHint": "Mode privasi: semuanya melewati server relai, jadi perangkat lain tidak pernah mengetahui alamat IP Anda. Lebih lambat, dan perangkat lain harus menggunakan relai yang sama (relai default memenuhinya).",
   "privacyModeConfirmTitle": "Aktifkan mode privasi?",

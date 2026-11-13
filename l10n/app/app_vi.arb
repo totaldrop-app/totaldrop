@@ -96,7 +96,7 @@
   "settingsAbout": "Giới thiệu",
   "settingsAboutBody": "TotalDrop miễn phí và mã nguồn mở, hoạt động nhờ quyên góp. Giấy phép GPL-3.0-or-later.",
   "settingsPrivacy": "Quyền riêng tư",
-  "settingsPrivacyBody": "Máy chủ điểm hẹn, máy chủ chuyển tiếp và máy chủ STUN của Cloudflare thấy địa chỉ IP của bạn, thiết bị kia cũng thấy khi kết nối trực tiếp (trừ khi bật chế độ riêng tư). Không ai trong số đó thấy tên tệp, nội dung hay khóa, và máy chủ của chúng tôi không lưu nhật ký. Tệp đi trực tiếp giữa các thiết bị khi có thể, nếu không thì qua máy chủ chuyển tiếp; dù cách nào cũng được mã hóa đầu cuối.",
+  "settingsPrivacyBody": "Máy chủ điểm hẹn, máy chủ chuyển tiếp và máy chủ STUN của Cloudflare thấy địa chỉ IP của bạn, thiết bị kia cũng thấy khi kết nối trực tiếp (trừ khi bật chế độ riêng tư). Không ai trong số đó thấy tên tệp, nội dung hay khóa. Bản thân máy chủ của chúng tôi không lưu nhật ký, nhưng Cloudflare, nơi vận hành các máy chủ này, lưu giữ một mẫu các yêu cầu kèm địa chỉ IP trong 31 ngày. Tệp đi trực tiếp giữa các thiết bị khi có thể, nếu không thì qua máy chủ chuyển tiếp; dù cách nào cũng được mã hóa đầu cuối.",
   "privacyMode": "Ẩn địa chỉ của tôi với thiết bị kia",
   "privacyModeHint": "Chế độ riêng tư: mọi thứ đi qua máy chủ chuyển tiếp, nên thiết bị kia không bao giờ biết địa chỉ IP của bạn. Chậm hơn, và thiết bị kia phải dùng cùng máy chủ chuyển tiếp (máy chủ mặc định đáp ứng điều này).",
   "privacyModeConfirmTitle": "Bật chế độ riêng tư?",

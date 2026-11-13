@@ -1,4 +1,4 @@
-<!-- Translated from README.md 0a6bee841691. -->
+<!-- Translated from README.md 54c8c14f6c96. -->
 <div align="center">
 
 <picture>
@@ -38,7 +38,7 @@ Gratis y de código abierto. Cifrado de extremo a extremo. Sin correo electróni
 - **Basta con un código corto.** Elige archivos y obtén un código como `7-harbor-rocket`. Léelo en voz alta o muestra el código QR; la otra persona lo escribe y los archivos llegan.
 - **Cifrado de extremo a extremo, y puedes comprobarlo.** Las dos pantallas muestran las mismas cuatro palabras antes de que se mueva nada. Si no coinciden, detente.
 - **Sin nada a lo que registrarse.** Sin cuenta, correo electrónico ni número de teléfono. Las cuentas opcionales se están diseñando para que el servidor no guarde ninguna cuenta: tus dispositivos la guardan y nunca escribes un identificador ([diseño](../../docs/hesap.md)).
-- **Directo de dispositivo a dispositivo, en cualquier lugar.** El servidor de encuentro solo presenta a los dos dispositivos y no guarda registros; como cualquier servidor, ve sus direcciones IP. Los dispositivos se conectan directamente a través de internet siempre que pueden. Cuando un router o un cortafuegos lo impide, un servidor de retransmisión transporta el tráfico sin poder leerlo.
+- **Directo de dispositivo a dispositivo, en cualquier lugar.** El servidor de encuentro solo presenta a los dos dispositivos y no guarda registros propios; como cualquier servidor, ve sus direcciones IP, y Cloudflare, que lo opera, conserva una muestra de las solicitudes durante 31 días. Los dispositivos se conectan directamente a través de internet siempre que pueden. Cuando un router o un cortafuegos lo impide, un servidor de retransmisión transporta el tráfico sin poder leerlo.
 - **Como en casa en tu sistema.** Las aplicaciones siguen el tema claro u oscuro del sistema, el color de acento, el idioma y el ajuste de movimiento reducido. La aplicación de Linux es Qt 6 nativo en Wayland y además toma en directo las fuentes, las esquinas y los iconos de los temas de KDE Plasma, Hyprland y Omarchy.
 - **Gratis, para siempre.** De código abierto y financiado con donaciones. Sin anuncios, sin rastreo, sin plan de pago para lo básico.
 

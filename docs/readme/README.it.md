@@ -1,4 +1,4 @@
-<!-- Translated from README.md 0a6bee841691. -->
+<!-- Translated from README.md 54c8c14f6c96. -->
 <div align="center">
 
 <picture>
@@ -38,7 +38,7 @@ Gratuito e open source. Crittografato end-to-end. Niente email, niente numero di
 - **Basta un codice breve.** Scegli i file e ottieni un codice come `7-harbor-rocket`. Leggilo ad alta voce o mostra il codice QR; l'altra persona lo inserisce e i file arrivano.
 - **Crittografato end-to-end, e puoi verificarlo.** Entrambi gli schermi mostrano le stesse quattro parole prima che parta qualsiasi cosa. Se sono diverse, fermati.
 - **Nessuna registrazione.** Niente account, email o numero di telefono. Gli account facoltativi sono previsti in modo che il server non conservi alcun account: lo custodiscono i tuoi dispositivi e non digiti mai un identificativo ([progetto](../../docs/hesap.md)).
-- **Direttamente da dispositivo a dispositivo, ovunque.** Il server di incontro si limita a presentare i due dispositivi e non conserva log; come qualsiasi server, vede i loro indirizzi IP. I dispositivi si connettono direttamente via internet ovunque possibile. Quando un router o un firewall si mette in mezzo, un server di inoltro trasporta il traffico senza poterlo leggere.
+- **Direttamente da dispositivo a dispositivo, ovunque.** Il server di incontro si limita a presentare i due dispositivi e non conserva log propri; come qualsiasi server, vede i loro indirizzi IP, e Cloudflare, che lo gestisce, conserva un campione delle richieste per 31 giorni. I dispositivi si connettono direttamente via internet ovunque possibile. Quando un router o un firewall si mette in mezzo, un server di inoltro trasporta il traffico senza poterlo leggere.
 - **A casa sul tuo sistema.** Le app seguono il tema chiaro o scuro del sistema, il colore di accento, la lingua e l'impostazione di riduzione del movimento. L'app Linux è Qt 6 nativa su Wayland e prende inoltre in tempo reale caratteri, angoli e icone dai temi di KDE Plasma, Hyprland e Omarchy.
 - **Gratuito, per sempre.** Open source e sostenuto dalle donazioni. Niente pubblicità, niente tracciamento, nessun piano a pagamento per le funzioni di base.
 

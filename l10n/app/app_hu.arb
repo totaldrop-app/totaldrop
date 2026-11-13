@@ -96,7 +96,7 @@
   "settingsAbout": "Névjegy",
   "settingsAboutBody": "A TotalDrop ingyenes és nyílt forráskódú, adományokból működik. Licenc: GPL-3.0-or-later.",
   "settingsPrivacy": "Adatvédelem",
-  "settingsPrivacyBody": "A találkozási szerver, a továbbító szerver és a Cloudflare STUN-szervere látja az IP-címedet, és közvetlen kapcsolatnál a másik eszköz is (hacsak nincs bekapcsolva az adatvédelmi mód). Egyikük sem látja a fájlneveket, a tartalmat vagy a kulcsokat, és a szervereink nem naplóznak. A fájlok, ha lehet, közvetlenül mennek az eszközök között, ha nem, a továbbító szerveren át; végpontok közötti titkosítással mindkét esetben.",
+  "settingsPrivacyBody": "A találkozási szerver, a továbbító szerver és a Cloudflare STUN-szervere látja az IP-címedet, és közvetlen kapcsolatnál a másik eszköz is (hacsak nincs bekapcsolva az adatvédelmi mód). Egyikük sem látja a fájlneveket, a tartalmat vagy a kulcsokat. A szervereink maguk nem naplóznak, de az őket üzemeltető Cloudflare 31 napig megőrzi a kérések egy mintáját az IP-címekkel együtt. A fájlok, ha lehet, közvetlenül mennek az eszközök között, ha nem, a továbbító szerveren át; végpontok közötti titkosítással mindkét esetben.",
   "privacyMode": "Címem elrejtése a másik eszköz elől",
   "privacyModeHint": "Adatvédelmi mód: minden a továbbító szerveren megy át, így a másik eszköz sosem tudja meg az IP-címedet. Lassabb, és a másik eszköznek ugyanazt a továbbító szervert kell használnia (az alapértelmezett ilyen).",
   "privacyModeConfirmTitle": "Bekapcsolod az adatvédelmi módot?",

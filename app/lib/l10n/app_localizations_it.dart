@@ -378,7 +378,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get settingsPrivacyBody =>
-      'Il server di incontro, il server di inoltro e il server STUN di Cloudflare vedono il tuo indirizzo IP, e così anche l\'altro dispositivo quando vi connettete direttamente (a meno che la modalità privacy sia attiva). Nessuno di loro vede i nomi dei file, i contenuti o le chiavi, e i nostri server non conservano log. I file passano direttamente tra i dispositivi quando possibile, altrimenti tramite il server di inoltro; in entrambi i casi sono crittografati end-to-end.';
+      'Il server di incontro, il server di inoltro e il server STUN di Cloudflare vedono il tuo indirizzo IP, e così anche l\'altro dispositivo quando vi connettete direttamente (a meno che la modalità privacy sia attiva). Nessuno di loro vede i nomi dei file, i contenuti o le chiavi. I nostri server non conservano log propri, ma Cloudflare, che li gestisce, conserva un campione delle richieste con gli indirizzi IP per 31 giorni. I file passano direttamente tra i dispositivi quando possibile, altrimenti tramite il server di inoltro; in entrambi i casi sono crittografati end-to-end.';
 
   @override
   String get privacyMode => 'Nascondi il mio indirizzo all\'altro dispositivo';

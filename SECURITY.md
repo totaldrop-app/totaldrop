@@ -34,7 +34,7 @@ TotalDrop is meant to:
 - let only the person who has the code receive the files, give an attacker one guess per transfer, and show both people four words to compare;
 - protect today's transfers against someone who records them to break later with a quantum computer (ML-KEM-768);
 - never write outside the receive folder, and never overwrite an existing file;
-- work without an account, email address or phone number, and keep no logs on the servers.
+- work without an account, email address or phone number, and keep no logs on our servers (Cloudflare, which runs them, keeps a sample of requests for 31 days; see the [privacy policy](https://totaldrop.app/privacy)).
 
 TotalDrop does not:
 

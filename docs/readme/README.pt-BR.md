@@ -1,4 +1,4 @@
-<!-- Translated from README.md 0a6bee841691. -->
+<!-- Translated from README.md 54c8c14f6c96. -->
 <div align="center">
 
 <picture>
@@ -38,7 +38,7 @@ Gratuito e de código aberto. Criptografia de ponta a ponta. Sem e-mail, sem nú
 - **Basta um código curto.** Escolha os arquivos e receba um código como `7-harbor-rocket`. Leia em voz alta ou mostre o QR code; a outra pessoa digita o código e os arquivos chegam.
 - **Criptografia de ponta a ponta, e você pode conferir.** As duas telas mostram as mesmas quatro palavras antes de qualquer coisa ser enviada. Se forem diferentes, pare.
 - **Nada para cadastrar.** Sem conta, e-mail ou número de telefone. As contas opcionais estão sendo planejadas para que o servidor não guarde conta nenhuma: seus dispositivos a guardam e você nunca digita um identificador ([projeto](../../docs/hesap.md)).
-- **Direto de dispositivo para dispositivo, em qualquer lugar.** O servidor de encontro só apresenta os dois dispositivos e não guarda registros; como qualquer servidor, ele vê os endereços IP deles. Os dispositivos se conectam diretamente pela internet sempre que possível. Quando um roteador ou firewall atrapalha, um servidor de retransmissão transporta o tráfego sem conseguir lê-lo.
+- **Direto de dispositivo para dispositivo, em qualquer lugar.** O servidor de encontro só apresenta os dois dispositivos e não guarda registros próprios; como qualquer servidor, ele vê os endereços IP deles, e a Cloudflare, que o opera, guarda uma amostra das solicitações por 31 dias. Os dispositivos se conectam diretamente pela internet sempre que possível. Quando um roteador ou firewall atrapalha, um servidor de retransmissão transporta o tráfego sem conseguir lê-lo.
 - **Em casa no seu sistema.** Os apps seguem o tema claro ou escuro do sistema, a cor de destaque, o idioma e a configuração de movimento reduzido. O app para Linux é Qt 6 nativo no Wayland e também usa ao vivo as fontes, os cantos e os ícones dos temas do KDE Plasma, Hyprland e Omarchy.
 - **Gratuito, para sempre.** Código aberto e mantido por doações. Sem anúncios, sem rastreamento, sem plano pago para o básico.
 

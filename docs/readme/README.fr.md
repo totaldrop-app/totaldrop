@@ -1,4 +1,4 @@
-<!-- Translated from README.md 0a6bee841691. -->
+<!-- Translated from README.md 54c8c14f6c96. -->
 <div align="center">
 
 <picture>
@@ -38,7 +38,7 @@ Gratuit et open source. Chiffré de bout en bout. Pas d'e-mail, pas de numéro d
 - **Un code court suffit.** Choisissez des fichiers et obtenez un code comme `7-harbor-rocket`. Lisez-le à voix haute ou montrez le code QR ; l'autre personne le saisit et les fichiers arrivent.
 - **Chiffré de bout en bout, et vous pouvez le vérifier.** Les deux écrans affichent les quatre mêmes mots avant que quoi que ce soit ne parte. S'ils diffèrent, arrêtez.
 - **Aucune inscription.** Pas de compte, d'e-mail ni de numéro de téléphone. Les comptes facultatifs sont prévus pour que le serveur ne conserve aucun compte : vos appareils le détiennent, et vous ne saisissez jamais d'identifiant ([conception](../../docs/hesap.md)).
-- **Directement d'appareil à appareil, partout.** Le serveur de rendez-vous ne fait que présenter les deux appareils l'un à l'autre et ne conserve aucun journal ; comme tout serveur, il voit leurs adresses IP. Les appareils se connectent directement via Internet chaque fois que c'est possible. Quand un routeur ou un pare-feu fait obstacle, un serveur relais transporte le trafic sans pouvoir le lire.
+- **Directement d'appareil à appareil, partout.** Le serveur de rendez-vous ne fait que présenter les deux appareils l'un à l'autre et ne conserve lui-même aucun journal ; comme tout serveur, il voit leurs adresses IP, et Cloudflare, qui le fait fonctionner, conserve un échantillon des requêtes pendant 31 jours. Les appareils se connectent directement via Internet chaque fois que c'est possible. Quand un routeur ou un pare-feu fait obstacle, un serveur relais transporte le trafic sans pouvoir le lire.
 - **Chez soi sur votre système.** Les applications suivent le thème clair ou sombre du système, sa couleur d'accentuation, sa langue et son réglage de réduction des animations. L'application Linux est en Qt 6 natif sous Wayland et reprend aussi en direct les polices, les coins et les icônes des thèmes de KDE Plasma, Hyprland et Omarchy.
 - **Gratuit, pour de bon.** Open source et financé par les dons. Pas de publicité, pas de pistage, pas d'offre payante pour l'essentiel.
 

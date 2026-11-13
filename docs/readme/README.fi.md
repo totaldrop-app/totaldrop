@@ -1,4 +1,4 @@
-<!-- Translated from README.md 0a6bee841691. -->
+<!-- Translated from README.md 54c8c14f6c96. -->
 <div align="center">
 
 <picture>
@@ -38,7 +38,7 @@ Ilmainen ja avointa lähdekoodia. Päästä päähän salattu. Ei sähköpostia,
 - **Lyhyt koodi riittää.** Valitse tiedostot, niin saat koodin, kuten `7-harbor-rocket`. Lue se ääneen tai näytä QR-koodi; toinen henkilö kirjoittaa sen, ja tiedostot saapuvat.
 - **Päästä päähän salattu, ja voit tarkistaa sen.** Molemmat näytöt näyttävät samat neljä sanaa ennen kuin mitään siirretään. Jos ne eroavat, keskeytä.
 - **Ei mitään, mihin rekisteröityä.** Ei tiliä, sähköpostia tai puhelinnumeroa. Valinnaiset tilit suunnitellaan niin, ettei palvelin säilytä tiliä lainkaan: laitteesi pitävät sen itse, eikä sinun tarvitse koskaan kirjoittaa tunnusta ([suunnitelma](../../docs/hesap.md)).
-- **Suoraan laitteelta laitteelle, missä tahansa.** Kohtauspalvelin vain esittelee kaksi laitetta toisilleen eikä tallenna lokeja; kuten mikä tahansa palvelin, se näkee niiden IP-osoitteet. Laitteet yhdistävät suoraan internetin yli aina kun voivat. Kun reititin tai palomuuri on tiellä, välityspalvelin kuljettaa liikenteen pystymättä lukemaan sitä.
+- **Suoraan laitteelta laitteelle, missä tahansa.** Kohtauspalvelin vain esittelee kaksi laitetta toisilleen eikä itse tallenna lokeja; kuten mikä tahansa palvelin, se näkee niiden IP-osoitteet, ja sitä ylläpitävä Cloudflare säilyttää otoksen pyynnöistä 31 päivää. Laitteet yhdistävät suoraan internetin yli aina kun voivat. Kun reititin tai palomuuri on tiellä, välityspalvelin kuljettaa liikenteen pystymättä lukemaan sitä.
 - **Kotonaan järjestelmässäsi.** Sovellukset noudattavat järjestelmän vaaleaa tai tummaa teemaa, korostusväriä, kieltä ja vähennetyn liikkeen asetusta. Linux-sovellus on natiivi Qt 6 -sovellus Waylandilla ja ottaa lisäksi fontit, kulmat ja kuvakkeet KDE Plasman, Hyprlandin ja Omarchyn teemoista reaaliajassa.
 - **Ilmainen, pysyvästi.** Avointa lähdekoodia ja lahjoituksilla rahoitettu. Ei mainoksia, ei seurantaa, ei maksullista tasoa perustoiminnoille.
 

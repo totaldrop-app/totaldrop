@@ -334,7 +334,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsPrivacyBody =>
-      '中介服务器、中继服务器和 Cloudflare 的 STUN 服务器会看到你的 IP 地址；直接连接时，对方设备也会看到（除非开启了隐私模式）。它们都看不到文件名、文件内容或密钥，我们的服务器也不保留日志。文件尽可能在设备之间直接传输，否则经由中继服务器；无论哪种方式都是端到端加密的。';
+      '中介服务器、中继服务器和 Cloudflare 的 STUN 服务器会看到你的 IP 地址；直接连接时，对方设备也会看到（除非开启了隐私模式）。它们都看不到文件名、文件内容或密钥。我们的服务器自身不保留日志，但运行这些服务器的 Cloudflare 会将带有 IP 地址的请求样本保留 31 天。文件尽可能在设备之间直接传输，否则经由中继服务器；无论哪种方式都是端到端加密的。';
 
   @override
   String get privacyMode => '向对方设备隐藏我的地址';
@@ -957,7 +957,7 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
 
   @override
   String get settingsPrivacyBody =>
-      '中介服务器、中继服务器和 Cloudflare 的 STUN 服务器会看到你的 IP 地址；直接连接时，对方设备也会看到（除非开启了隐私模式）。它们都看不到文件名、文件内容或密钥，我们的服务器也不保留日志。文件尽可能在设备之间直接传输，否则经由中继服务器；无论哪种方式都是端到端加密的。';
+      '中介服务器、中继服务器和 Cloudflare 的 STUN 服务器会看到你的 IP 地址；直接连接时，对方设备也会看到（除非开启了隐私模式）。它们都看不到文件名、文件内容或密钥。我们的服务器自身不保留日志，但运行这些服务器的 Cloudflare 会将带有 IP 地址的请求样本保留 31 天。文件尽可能在设备之间直接传输，否则经由中继服务器；无论哪种方式都是端到端加密的。';
 
   @override
   String get privacyMode => '向对方设备隐藏我的地址';
@@ -1579,7 +1579,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get settingsPrivacyBody =>
-      '中介伺服器、中繼伺服器和 Cloudflare 的 STUN 伺服器會看到你的 IP 位址；直接連線時，對方裝置也會看到（除非開啟了隱私模式）。它們都看不到檔案名稱、檔案內容或金鑰，我們的伺服器也不保留記錄。檔案會盡可能在裝置之間直接傳輸，否則經由中繼伺服器；無論哪種方式都是端對端加密。';
+      '中介伺服器、中繼伺服器和 Cloudflare 的 STUN 伺服器會看到你的 IP 位址；直接連線時，對方裝置也會看到（除非開啟了隱私模式）。它們都看不到檔案名稱、檔案內容或金鑰。我們的伺服器自身不保留記錄，但執行這些伺服器的 Cloudflare 會將帶有 IP 位址的要求樣本保留 31 天。檔案會盡可能在裝置之間直接傳輸，否則經由中繼伺服器；無論哪種方式都是端對端加密。';
 
   @override
   String get privacyMode => '對另一部裝置隱藏我的位址';

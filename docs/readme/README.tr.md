@@ -1,4 +1,4 @@
-<!-- Translated from README.md 0a6bee841691. -->
+<!-- Translated from README.md 54c8c14f6c96. -->
 <div align="center">
 
 <picture>
@@ -38,7 +38,7 @@
 - **Kısa bir kod yeter.** Dosyaları seçin ve `7-harbor-rocket` gibi bir kod alın. Kodu sesli okuyun ya da QR kodunu gösterin; karşı taraf kodu girer ve dosyalar gelir.
 - **Uçtan uca şifreli ve bunu siz de doğrulayabilirsiniz.** Hiçbir şey aktarılmadan önce iki ekran da aynı dört sözcüğü gösterir. Sözcükler farklıysa durun.
 - **Kaydolacak hiçbir şey yok.** Hesap, e-posta ya da telefon numarası yok. İsteğe bağlı hesaplar, sunucunun hiç hesap tutmayacağı biçimde planlanıyor: hesabı cihazlarınız taşır, hiçbir yere kimlik yazmazsınız ([tasarım](../../docs/hesap.md)).
-- **Doğrudan cihazdan cihaza, her yerde.** Buluşma sunucusu yalnızca iki cihazı tanıştırır ve kayıt tutmaz; her sunucu gibi, cihazların IP adreslerini görür. Cihazlar internet üzerinden mümkün olan her yerde doğrudan bağlanır. Arada bir modem ya da güvenlik duvarı varsa trafiği, içeriğini okuyamayan bir aktarma sunucusu taşır.
+- **Doğrudan cihazdan cihaza, her yerde.** Buluşma sunucusu yalnızca iki cihazı tanıştırır ve kendisi kayıt tutmaz; her sunucu gibi cihazların IP adreslerini görür, onu çalıştıran Cloudflare da isteklerden bir örneklemi 31 gün saklar. Cihazlar internet üzerinden mümkün olan her yerde doğrudan bağlanır. Arada bir modem ya da güvenlik duvarı varsa trafiği, içeriğini okuyamayan bir aktarma sunucusu taşır.
 - **Sisteminizde evindeymiş gibi.** Uygulamalar sistemin açık ya da koyu temasını, vurgu rengini, dilini ve azaltılmış hareket ayarını izler. Linux uygulaması Wayland üzerinde yerel bir Qt 6 uygulamasıdır; yazı tiplerini, köşelerini ve simgelerini de KDE Plasma, Hyprland ve Omarchy temalarından canlı alır.
 - **Ücretsiz, kalıcı olarak.** Açık kaynak, bağışlarla ayakta. Reklam yok, takip yok, temel özellikler için ücretli sürüm yok.
 

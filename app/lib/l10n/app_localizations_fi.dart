@@ -371,7 +371,7 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String get settingsPrivacyBody =>
-      'Kohtauspalvelin, välityspalvelin ja Cloudflaren STUN-palvelin näkevät IP-osoitteesi, ja niin näkee myös toinen laite, kun yhdistätte suoraan (ellei yksityisyystila ole käytössä). Mikään niistä ei näe tiedostojen nimiä, sisältöä tai avaimia, eivätkä palvelimemme tallenna lokeja. Tiedostot kulkevat suoraan laitteiden välillä aina kun mahdollista, muuten välityspalvelimen kautta; ne ovat päästä päähän salattuja kummassakin tapauksessa.';
+      'Kohtauspalvelin, välityspalvelin ja Cloudflaren STUN-palvelin näkevät IP-osoitteesi, ja niin näkee myös toinen laite, kun yhdistätte suoraan (ellei yksityisyystila ole käytössä). Mikään niistä ei näe tiedostojen nimiä, sisältöä tai avaimia. Palvelimemme eivät itse tallenna lokeja, mutta niitä ylläpitävä Cloudflare säilyttää otoksen pyynnöistä IP-osoitteineen 31 päivää. Tiedostot kulkevat suoraan laitteiden välillä aina kun mahdollista, muuten välityspalvelimen kautta; ne ovat päästä päähän salattuja kummassakin tapauksessa.';
 
   @override
   String get privacyMode => 'Piilota osoitteeni toiselta laitteelta';

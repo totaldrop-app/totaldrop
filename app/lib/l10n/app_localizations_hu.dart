@@ -359,7 +359,7 @@ class AppLocalizationsHu extends AppLocalizations {
 
   @override
   String get settingsPrivacyBody =>
-      'A találkozási szerver, a továbbító szerver és a Cloudflare STUN-szervere látja az IP-címedet, és közvetlen kapcsolatnál a másik eszköz is (hacsak nincs bekapcsolva az adatvédelmi mód). Egyikük sem látja a fájlneveket, a tartalmat vagy a kulcsokat, és a szervereink nem naplóznak. A fájlok, ha lehet, közvetlenül mennek az eszközök között, ha nem, a továbbító szerveren át; végpontok közötti titkosítással mindkét esetben.';
+      'A találkozási szerver, a továbbító szerver és a Cloudflare STUN-szervere látja az IP-címedet, és közvetlen kapcsolatnál a másik eszköz is (hacsak nincs bekapcsolva az adatvédelmi mód). Egyikük sem látja a fájlneveket, a tartalmat vagy a kulcsokat. A szervereink maguk nem naplóznak, de az őket üzemeltető Cloudflare 31 napig megőrzi a kérések egy mintáját az IP-címekkel együtt. A fájlok, ha lehet, közvetlenül mennek az eszközök között, ha nem, a továbbító szerveren át; végpontok közötti titkosítással mindkét esetben.';
 
   @override
   String get privacyMode => 'Címem elrejtése a másik eszköz elől';

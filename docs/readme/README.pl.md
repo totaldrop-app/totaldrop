@@ -1,4 +1,4 @@
-<!-- Translated from README.md 0a6bee841691. -->
+<!-- Translated from README.md 54c8c14f6c96. -->
 <div align="center">
 
 <picture>
@@ -38,7 +38,7 @@ Za darmo i na otwartych źródłach. Szyfrowanie end-to-end. Bez e-maila, bez nu
 - **Wystarczy krótki kod.** Wybierz pliki i otrzymaj kod w rodzaju `7-harbor-rocket`. Przeczytaj go na głos albo pokaż kod QR; druga osoba go wpisuje i pliki docierają.
 - **Szyfrowanie end-to-end, które możesz sprawdzić.** Zanim cokolwiek zostanie przesłane, oba ekrany pokazują te same cztery słowa. Jeśli się różnią, przerwij.
 - **Nie trzeba się nigdzie rejestrować.** Bez konta, e-maila i numeru telefonu. Opcjonalne konta są projektowane tak, by serwer nie przechowywał żadnego konta: trzymają je Twoje urządzenia, a Ty nigdy nie wpisujesz identyfikatora ([projekt](../../docs/hesap.md)).
-- **Prosto z urządzenia na urządzenie, wszędzie.** Serwer spotkań tylko przedstawia sobie dwa urządzenia i nie prowadzi logów; jak każdy serwer widzi ich adresy IP. Urządzenia łączą się bezpośrednio przez internet wszędzie, gdzie to możliwe. Gdy przeszkadza router lub zapora, ruch przenosi serwer pośredniczący, który nie może go odczytać.
+- **Prosto z urządzenia na urządzenie, wszędzie.** Serwer spotkań tylko przedstawia sobie dwa urządzenia i sam nie prowadzi logów; jak każdy serwer widzi ich adresy IP, a obsługujący go Cloudflare przechowuje próbkę żądań przez 31 dni. Urządzenia łączą się bezpośrednio przez internet wszędzie, gdzie to możliwe. Gdy przeszkadza router lub zapora, ruch przenosi serwer pośredniczący, który nie może go odczytać.
 - **Jak u siebie w twoim systemie.** Aplikacje podążają za jasnym lub ciemnym motywem systemu, kolorem akcentu, językiem i ustawieniem ograniczenia ruchu. Aplikacja na Linuksa to natywne Qt 6 na Waylandzie, które dodatkowo na bieżąco pobiera czcionki, narożniki i ikony z motywów KDE Plasma, Hyprland i Omarchy.
 - **Za darmo, na zawsze.** Otwarte źródła, finansowane z darowizn. Bez reklam, bez śledzenia, bez płatnej wersji dla podstawowych funkcji.
 
