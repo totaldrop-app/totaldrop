@@ -33,3 +33,22 @@ Deploys run from CI, from `main` only, after the owner approves them in the
 are in [docs/surec.md](../../docs/surec.md), section "Dağıtım".
 
 The route in `wrangler.jsonc` attaches the Worker to the custom domain `relay.totaldrop.app`. Cloudflare creates the DNS record itself.
+
+## Edge rate limit
+
+Anyone can sign in to the relay with any key, and nothing in the Worker limits how many pairs one address opens. So a rate limiting rule at Cloudflare's edge, on the `totaldrop.app` zone, turns away an address that opens connections too fast (#510). It lives in the dashboard (Security → Security rules → Rate limiting rules), not in `wrangler.jsonc`, so this section is its record. Change the two together.
+
+| Setting | Value |
+| --- | --- |
+| Name | TotalDrop relay: new connections per IP |
+| Expression | `(http.host eq "relay.totaldrop.app")` |
+| Counted by | IP (`ip.src`, the full address) |
+| Rate | 30 requests in 10 seconds |
+| Action | Block for 10 seconds |
+
+- It counts HTTP requests. Each WebSocket upgrade, that is each relay connection, counts once; the datagrams inside an open WebSocket do not count. A transfer opens one relay connection per device, and again only after one breaks.
+- A blocked upgrade gets HTTP 429 from Cloudflare and never reaches the Worker or a `Pair` object, so it costs nothing. The client takes it as a failed connection and tries again after 0.5, 1, 2 and then 4 seconds, giving up after 10 failures in a row (`crates/totaldrop-core/src/relay.rs`), so a client blocked once gets through on a later try.
+- The Free plan allows one such rule, periods of 10 seconds only, and Block as the only action.
+- Limits: counters are kept per Cloudflare data center and updated with a delay of up to a few seconds, so a burst can let some extra requests through. Many people behind one address (carrier-grade NAT, a large office) share one count. A client with many addresses, such as a botnet or an IPv6 range, is counted once per address.
+- Cloudflare records each blocked request in the zone's Security Events (sampled; source IP, path, time and rule), kept for up to 31 days. Requests the rule lets through are not recorded by it.
+- Checked on 13 November 2026: 300 parallel requests from a machine that sends from about six addresses got 164 × 200 and 136 × 429; a single request four seconds later got 200.
