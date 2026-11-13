@@ -373,7 +373,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get settingsPrivacyBody =>
-      'De ontmoetingsserver, de relayserver en de STUN-server van Cloudflare zien je IP-adres, en het andere apparaat ook bij een rechtstreekse verbinding (tenzij de privacymodus aan staat). Geen van hen ziet bestandsnamen, inhoud of sleutels, en onze servers houden geen logboeken bij. Bestanden gaan waar mogelijk rechtstreeks tussen de apparaten, anders via de relayserver; in beide gevallen zijn ze end-to-end versleuteld.';
+      'De ontmoetingsserver, de relayserver en de STUN-server van Cloudflare zien je IP-adres, en het andere apparaat ook bij een rechtstreekse verbinding (tenzij de privacymodus aan staat). Geen van hen ziet bestandsnamen, inhoud of sleutels. Onze servers houden zelf geen logboeken bij, maar Cloudflare, dat ze draait, bewaart 31 dagen een steekproef van de verzoeken met IP-adressen. Bestanden gaan waar mogelijk rechtstreeks tussen de apparaten, anders via de relayserver; in beide gevallen zijn ze end-to-end versleuteld.';
 
   @override
   String get privacyMode => 'Mijn adres verbergen voor het andere apparaat';

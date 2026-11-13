@@ -371,7 +371,7 @@ class AppLocalizationsDa extends AppLocalizations {
 
   @override
   String get settingsPrivacyBody =>
-      'Mødeserveren, relæserveren og Cloudflares STUN-server ser din IP-adresse, og det gør den anden enhed også, når I forbinder direkte (medmindre privatlivstilstand er slået til). Ingen af dem ser filnavne, indhold eller nøgler, og vores servere gemmer ingen logs. Filerne går direkte mellem enhederne, når det er muligt, ellers gennem relæserveren; de er end-to-end-krypterede i begge tilfælde.';
+      'Mødeserveren, relæserveren og Cloudflares STUN-server ser din IP-adresse, og det gør den anden enhed også, når I forbinder direkte (medmindre privatlivstilstand er slået til). Ingen af dem ser filnavne, indhold eller nøgler. Vores servere gemmer ingen logs selv, men Cloudflare, som driver dem, gemmer et udsnit af anmodningerne med IP-adresser i 31 dage. Filerne går direkte mellem enhederne, når det er muligt, ellers gennem relæserveren; de er end-to-end-krypterede i begge tilfælde.';
 
   @override
   String get privacyMode => 'Skjul min adresse for den anden enhed';
