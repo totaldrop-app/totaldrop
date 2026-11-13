@@ -27,6 +27,8 @@ jobs:
         run: node --check site/public/app.js && node --check site/public/lang.js && node --check site/public/msg.js && node --check site/functions/_middleware.js
       - name: Translations follow the rules
         run: node --test site/tools/test-html-text.mjs && node site/tools/check-i18n.mjs
+      - name: A page for every language, with its language in the HTML
+        run: node --test site/tools/test-build.mjs && node site/tools/build.mjs
       - name: Site icons in shape and declared on every page
         run: node --test site/tools/test-favicons.mjs && node site/tools/favicons.mjs
       - name: Privacy policy pages, one per language, up to date and in shape

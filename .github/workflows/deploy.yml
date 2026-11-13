@@ -12,6 +12,7 @@ on:
     paths:
       - site/public/**
       - site/functions/**
+      - site/tools/build.mjs
       - site/wrangler.toml
       - server/rendezvous-worker/**
       - server/relay-worker/**
@@ -62,7 +63,7 @@ jobs:
             files=$(printf '%s\n' site/public/ server/rendezvous-worker/ server/relay-worker/)
           fi
           list=$(printf '%s\n' "$files" | awk '
-            /^site\/(public|functions)\// || /^site\/wrangler\.toml$/ { t["site"] = 1 }
+            /^site\/(public|functions)\// || /^site\/wrangler\.toml$/ || /^site\/tools\/build\.mjs$/ { t["site"] = 1 }
             /^server\/rendezvous-worker\//                          { t["rendezvous"] = 1 }
             /^server\/relay-worker\//                               { t["relay"] = 1 }
             /^server\/tools\/probe\.mjs$/                           { t["site"] = t["rendezvous"] = t["relay"] = 1 }
@@ -145,6 +146,11 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
         run: npx wrangler deploy --message "$GITHUB_SHA"
+      # What is published is site/dist: site/public as it is, plus every
+      # page in every language (ADR 0021). Written here, without the token.
+      - name: Write the pages for every language
+        if: matrix.target == 'site'
+        run: node site/tools/build.mjs
       # Run from site/ so that functions/ and wrangler.toml are picked up.
       - name: Deploy the site
         if: matrix.target == 'site'
@@ -153,7 +159,7 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
         run: >
-          ../server/rendezvous-worker/node_modules/.bin/wrangler pages deploy public
+          ../server/rendezvous-worker/node_modules/.bin/wrangler pages deploy dist
           --project-name totaldrop --branch main
           --commit-hash "$GITHUB_SHA" --commit-dirty=false
       - name: Health probe

@@ -17,6 +17,12 @@ built.
   every language file for it. `site/tools/check-i18n.mjs`,
   `check-readmes.mjs` and `privacy.mjs` check structure and numbers, not
   meaning.
+- **A page per language.** `site/tools/build.mjs` writes the six pages
+  once per language under `/<tag>/` (`docs/kararlar/0021-site-language-addresses.md`);
+  what is published is `site/dist`, not `site/public`. Edit the English
+  page only. Do not hand-write `canonical`, `hreflang` or language links
+  on those pages, write links between them from the root (`/roadmap/`),
+  and take screenshots of other languages at `/ar/`, `/ja/`.
 - **The mark's motion** is the same everywhere: `mk-turn` in
   `site/public/styles.css`, 3.2 s loop, four 0.8 s quarters (0.6 s turn with
   `cubic-bezier(0.65, 0, 0.35, 1)`, 0.2 s hold), still under
