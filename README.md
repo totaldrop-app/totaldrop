@@ -34,7 +34,7 @@ Free and open source. End-to-end encrypted. No email, no phone number, no accoun
 - **A short code is all it takes.** Pick files and get a code like `7-harbor-rocket`. Read it out or show the QR code; the other person types it in and the files arrive.
 - **Encrypted end to end, and you can check it.** Both screens show the same four words before anything moves. If they differ, stop.
 - **Nothing to sign up for.** No account, email or phone number. Optional accounts are planned so that the server keeps no account at all: your devices hold it, and you never type an ID ([design](docs/hesap.md)).
-- **Straight from device to device, anywhere.** The rendezvous server only introduces the two devices and keeps no logs of its own; like any server, it sees their IP addresses, and Cloudflare, which runs it, keeps a sample of requests for 31 days. Devices connect directly across the internet wherever they can. When a router or firewall is in the way, a relay carries traffic it cannot read.
+- **Straight from device to device, anywhere.** The rendezvous server only introduces the two devices and keeps no logs of its own; like any server, it sees their IP addresses, and Cloudflare, which runs it, keeps a sample of requests for at least 31 days. Devices connect directly across the internet wherever they can. When a router or firewall is in the way, a relay carries traffic it cannot read.
 - **At home on your system.** The apps follow the system's light or dark theme, accent colour, language and reduced-motion setting. The Linux app is native Qt 6 on Wayland and also takes its fonts, corners and icons from KDE Plasma, Hyprland and Omarchy themes, live.
 - **Free, for good.** Open source and funded by donations. No ads, no tracking, no paid tier for the basics.
 

@@ -356,7 +356,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get settingsPrivacyBody =>
-      'Buluşma sunucusu, aktarma sunucusu ve Cloudflare\'in STUN sunucusu IP adresinizi görür; doğrudan bağlandığınızda (gizlilik modu kapalıysa) karşı cihaz da görür. Hiçbiri dosya adlarını, içerikleri ya da anahtarları görmez. Sunucularımız kendileri kayıt tutmaz, ama onları çalıştıran Cloudflare, IP adresleriyle birlikte isteklerden bir örneklemi 31 gün saklar. Dosyalar mümkünse cihazlar arasında doğrudan, değilse aktarma sunucusu üzerinden gider; her iki durumda da uçtan uca şifrelidir.';
+      'Buluşma sunucusu, aktarma sunucusu ve Cloudflare\'in STUN sunucusu IP adresinizi görür; doğrudan bağlandığınızda (gizlilik modu kapalıysa) karşı cihaz da görür. Hiçbiri dosya adlarını, içerikleri ya da anahtarları görmez. Sunucularımız kendileri kayıt tutmaz, ama onları çalıştıran Cloudflare, IP adresleriyle birlikte isteklerden bir örneklemi en az 31 gün saklar. Dosyalar mümkünse cihazlar arasında doğrudan, değilse aktarma sunucusu üzerinden gider; her iki durumda da uçtan uca şifrelidir.';
 
   @override
   String get privacyMode => 'Adresimi karşı cihazdan gizle';
