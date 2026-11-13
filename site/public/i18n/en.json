@@ -491,7 +491,7 @@
   "sec.f1.t": "Encrypted before it leaves",
   "sec.f2.d": "The code turns into a key through a PAKE handshake, so a wrong guess fails at once and the attempt is burned. Key exchange includes post-quantum ML-KEM.",
   "sec.f2.t": "The code cannot be guessed offline",
-  "sec.f3.d": "It sees your IP address and the code's number, never the words, the file names or the files. It keeps no logs of its own; Cloudflare, which runs it, keeps a sample of requests for 31 days.",
+  "sec.f3.d": "It sees your IP address and the code's number, never the words, the file names or the files. It keeps no logs of its own; Cloudflare, which runs it, keeps a sample of requests for at least 31 days.",
   "sec.f3.t": "Our server only introduces",
   "sec.f4.d": "Every line is public. Version 1.0 ships only after an independent security audit.",
   "sec.f4.t": "Code anyone can check",

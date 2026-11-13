@@ -491,7 +491,7 @@
   "sec.f1.t": "Krypteret, før det forlader enheden",
   "sec.f2.d": "Koden bliver til en nøgle gennem et PAKE-handshake, så et forkert gæt fejler med det samme, og forsøget er brugt. Nøgleudvekslingen omfatter post-kvante ML-KEM.",
   "sec.f2.t": "Koden kan ikke gættes offline",
-  "sec.f3.d": "Den ser din IP-adresse og kodens nummer, aldrig ordene, filnavnene eller filerne. Den gemmer ingen logs selv; Cloudflare, som driver den, gemmer et udsnit af anmodningerne i 31 dage.",
+  "sec.f3.d": "Den ser din IP-adresse og kodens nummer, aldrig ordene, filnavnene eller filerne. Den gemmer ingen logs selv; Cloudflare, som driver den, gemmer et udsnit af anmodningerne i mindst 31 dage.",
   "sec.f3.t": "Vores server præsenterer kun",
   "sec.f4.d": "Hver linje er offentlig. Version 1.0 udgives først efter en uafhængig sikkerhedsrevision.",
   "sec.f4.t": "Kode, som alle kan tjekke",

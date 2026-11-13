@@ -491,7 +491,7 @@
   "sec.f1.t": "Terenkripsi sebelum keluar",
   "sec.f2.d": "Kode diubah menjadi kunci melalui handshake PAKE, sehingga tebakan yang salah langsung gagal dan percobaan itu hangus. Pertukaran kunci menyertakan ML-KEM pascakuantum.",
   "sec.f2.t": "Kode tidak dapat ditebak secara offline",
-  "sec.f3.d": "Server melihat alamat IP Anda dan angka pada kode, tidak pernah kata-katanya, nama file, atau filenya. Server tidak menyimpan log sendiri; Cloudflare, yang menjalankannya, menyimpan sampel permintaan selama 31 hari.",
+  "sec.f3.d": "Server melihat alamat IP Anda dan angka pada kode, tidak pernah kata-katanya, nama file, atau filenya. Server tidak menyimpan log sendiri; Cloudflare, yang menjalankannya, menyimpan sampel permintaan selama sedikitnya 31 hari.",
   "sec.f3.t": "Server kami hanya memperkenalkan",
   "sec.f4.d": "Setiap baris bersifat publik. Versi 1.0 baru dirilis setelah audit keamanan independen.",
   "sec.f4.t": "Kode yang dapat diperiksa siapa pun",

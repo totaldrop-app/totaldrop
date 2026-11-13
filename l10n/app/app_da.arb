@@ -96,7 +96,7 @@
   "settingsAbout": "Om",
   "settingsAboutBody": "TotalDrop er gratis og open source og finansieres af donationer. Licens: GPL-3.0-or-later.",
   "settingsPrivacy": "Privatliv",
-  "settingsPrivacyBody": "Mødeserveren, relæserveren og Cloudflares STUN-server ser din IP-adresse, og det gør den anden enhed også, når I forbinder direkte (medmindre privatlivstilstand er slået til). Ingen af dem ser filnavne, indhold eller nøgler. Vores servere gemmer ingen logs selv, men Cloudflare, som driver dem, gemmer et udsnit af anmodningerne med IP-adresser i 31 dage. Filerne går direkte mellem enhederne, når det er muligt, ellers gennem relæserveren; de er end-to-end-krypterede i begge tilfælde.",
+  "settingsPrivacyBody": "Mødeserveren, relæserveren og Cloudflares STUN-server ser din IP-adresse, og det gør den anden enhed også, når I forbinder direkte (medmindre privatlivstilstand er slået til). Ingen af dem ser filnavne, indhold eller nøgler. Vores servere gemmer ingen logs selv, men Cloudflare, som driver dem, gemmer et udsnit af anmodningerne med IP-adresser i mindst 31 dage. Filerne går direkte mellem enhederne, når det er muligt, ellers gennem relæserveren; de er end-to-end-krypterede i begge tilfælde.",
   "privacyMode": "Skjul min adresse for den anden enhed",
   "privacyModeHint": "Privatlivstilstand: alt går gennem relæserveren, så den anden enhed aldrig får din IP-adresse at vide. Langsommere, og den anden enhed skal bruge samme relæserver (det gør standardserveren).",
   "privacyModeConfirmTitle": "Slå privatlivstilstand til?",

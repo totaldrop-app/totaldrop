@@ -491,7 +491,7 @@
   "sec.f1.t": "Verschlüsselt, bevor es losgeht",
   "sec.f2.d": "Der Code wird durch einen PAKE-Handshake zu einem Schlüssel, sodass ein falscher Versuch sofort scheitert und verbraucht ist. Der Schlüsselaustausch enthält Post-Quanten-ML-KEM.",
   "sec.f2.t": "Der Code lässt sich nicht offline erraten",
-  "sec.f3.d": "Er sieht Ihre IP-Adresse und die Zahl des Codes, nie die Wörter, die Dateinamen oder die Dateien. Er selbst speichert keine Protokolle; Cloudflare, das ihn betreibt, speichert 31 Tage lang eine Stichprobe der Anfragen.",
+  "sec.f3.d": "Er sieht Ihre IP-Adresse und die Zahl des Codes, nie die Wörter, die Dateinamen oder die Dateien. Er selbst speichert keine Protokolle; Cloudflare, das ihn betreibt, speichert mindestens 31 Tage lang eine Stichprobe der Anfragen.",
   "sec.f3.t": "Unser Server stellt nur vor",
   "sec.f4.d": "Jede Zeile ist öffentlich. Version 1.0 erscheint erst nach einem unabhängigen Sicherheitsaudit.",
   "sec.f4.t": "Code, den jeder prüfen kann",

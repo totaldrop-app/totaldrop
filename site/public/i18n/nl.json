@@ -491,7 +491,7 @@
   "sec.f1.t": "Versleuteld voordat het vertrekt",
   "sec.f2.d": "De code wordt via een PAKE-handshake een sleutel, zodat een verkeerde gok meteen mislukt en de poging verbruikt is. De sleuteluitwisseling bevat post-kwantum ML-KEM.",
   "sec.f2.t": "De code is niet offline te raden",
-  "sec.f3.d": "Hij ziet je IP-adres en het getal van de code, nooit de woorden, de bestandsnamen of de bestanden. Hij houdt zelf geen logboeken bij; Cloudflare, dat hem draait, bewaart 31 dagen een steekproef van de verzoeken.",
+  "sec.f3.d": "Hij ziet je IP-adres en het getal van de code, nooit de woorden, de bestandsnamen of de bestanden. Hij houdt zelf geen logboeken bij; Cloudflare, dat hem draait, bewaart minstens 31 dagen een steekproef van de verzoeken.",
   "sec.f3.t": "Onze server stelt alleen voor",
   "sec.f4.d": "Elke regel is openbaar. Versie 1.0 verschijnt pas na een onafhankelijke beveiligingsaudit.",
   "sec.f4.t": "Code die iedereen kan controleren",

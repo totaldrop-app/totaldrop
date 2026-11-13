@@ -491,7 +491,7 @@
   "sec.f1.t": "Chiffré avant de partir",
   "sec.f2.d": "Le code devient une clé grâce à une poignée de main PAKE : une mauvaise tentative échoue aussitôt et est grillée. L'échange de clés inclut ML-KEM post-quantique.",
   "sec.f2.t": "Le code ne peut pas être deviné hors ligne",
-  "sec.f3.d": "Il voit votre adresse IP et le nombre du code, jamais les mots, les noms de fichiers ni les fichiers. Il ne conserve lui-même aucun journal ; Cloudflare, qui le fait fonctionner, conserve un échantillon des requêtes pendant 31 jours.",
+  "sec.f3.d": "Il voit votre adresse IP et le nombre du code, jamais les mots, les noms de fichiers ni les fichiers. Il ne conserve lui-même aucun journal ; Cloudflare, qui le fait fonctionner, conserve un échantillon des requêtes pendant au moins 31 jours.",
   "sec.f3.t": "Notre serveur ne fait que présenter",
   "sec.f4.d": "Chaque ligne est publique. La version 1.0 ne sortira qu'après un audit de sécurité indépendant.",
   "sec.f4.t": "Un code que chacun peut vérifier",

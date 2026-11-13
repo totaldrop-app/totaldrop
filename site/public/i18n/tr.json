@@ -491,7 +491,7 @@
   "sec.f1.t": "Çıkmadan şifrelenir",
   "sec.f2.d": "Kod, PAKE el sıkışmasıyla bir anahtara dönüşür; yanlış bir tahmin hemen başarısız olur ve o deneme yanar. Anahtar değişimi kuantum sonrası ML-KEM'i de içerir.",
   "sec.f2.t": "Kod çevrimdışı tahmin edilemez",
-  "sec.f3.d": "IP adresinizi ve kodun sayısını görür; sözcükleri, dosya adlarını ya da dosyaları asla görmez. Kendisi kayıt tutmaz; onu çalıştıran Cloudflare, isteklerden bir örneklemi 31 gün saklar.",
+  "sec.f3.d": "IP adresinizi ve kodun sayısını görür; sözcükleri, dosya adlarını ya da dosyaları asla görmez. Kendisi kayıt tutmaz; onu çalıştıran Cloudflare, isteklerden bir örneklemi en az 31 gün saklar.",
   "sec.f3.t": "Sunucumuz yalnızca tanıştırır",
   "sec.f4.d": "Her satır herkese açık. 1.0 sürümü ancak bağımsız bir güvenlik denetiminden sonra çıkar.",
   "sec.f4.t": "Herkesin inceleyebileceği kod",

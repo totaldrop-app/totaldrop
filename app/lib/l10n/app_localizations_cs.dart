@@ -376,7 +376,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get settingsPrivacyBody =>
-      'Server pro navázání spojení, zprostředkující server a STUN server Cloudflare vidí vaši IP adresu, stejně jako druhé zařízení při přímém spojení (pokud není zapnutý režim soukromí). Žádný z nich nevidí názvy souborů, jejich obsah ani klíče. Naše servery samy nevedou záznamy, ale Cloudflare, který je provozuje, uchovává vzorek požadavků s IP adresami 31 dní. Soubory jdou přímo mezi zařízeními, když to jde, jinak přes zprostředkující server; v obou případech jsou koncově šifrované.';
+      'Server pro navázání spojení, zprostředkující server a STUN server Cloudflare vidí vaši IP adresu, stejně jako druhé zařízení při přímém spojení (pokud není zapnutý režim soukromí). Žádný z nich nevidí názvy souborů, jejich obsah ani klíče. Naše servery samy nevedou záznamy, ale Cloudflare, který je provozuje, uchovává vzorek požadavků s IP adresami nejméně 31 dní. Soubory jdou přímo mezi zařízeními, když to jde, jinak přes zprostředkující server; v obou případech jsou koncově šifrované.';
 
   @override
   String get privacyMode => 'Skrýt mou adresu před druhým zařízením';

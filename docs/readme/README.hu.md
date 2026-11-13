@@ -1,4 +1,4 @@
-<!-- Translated from README.md 54c8c14f6c96. -->
+<!-- Translated from README.md 8c538b51ef59. -->
 <div align="center">
 
 <picture>
@@ -38,7 +38,7 @@ Ingyenes és nyílt forráskódú. Végpontok közötti titkosítás. Nincs e-ma
 - **Csak egy rövid kód kell.** Válaszd ki a fájlokat, és kapsz egy kódot, például `7-harbor-rocket`. Mondd ki hangosan, vagy mutasd meg a QR-kódot; a másik fél beírja, és a fájlok megérkeznek.
 - **Végpontok közötti titkosítás, amelyet ellenőrizni is tudsz.** Mielőtt bármi elindulna, mindkét képernyő ugyanazt a négy szót mutatja. Ha eltérnek, állj meg.
 - **Nincs hová regisztrálni.** Nincs fiók, e-mail-cím vagy telefonszám. Az opcionális fiókokat úgy tervezzük, hogy a szerver egyáltalán ne tároljon fiókot: az eszközeid őrzik, és soha nem kell azonosítót beírnod ([terv](../../docs/hesap.md)).
-- **Közvetlenül eszközről eszközre, bárhol.** A találkozási szerver csak bemutatja egymásnak a két eszközt, és maga nem naplóz; mint bármely szerver, látja az IP-címüket, az őt üzemeltető Cloudflare pedig 31 napig megőrzi a kérések egy mintáját. Az eszközök az interneten keresztül mindenhol közvetlenül kapcsolódnak, ahol csak lehet. Ha router vagy tűzfal áll az útban, a forgalmat egy továbbító szerver viszi, amely nem tudja elolvasni.
+- **Közvetlenül eszközről eszközre, bárhol.** A találkozási szerver csak bemutatja egymásnak a két eszközt, és maga nem naplóz; mint bármely szerver, látja az IP-címüket, az őt üzemeltető Cloudflare pedig legalább 31 napig megőrzi a kérések egy mintáját. Az eszközök az interneten keresztül mindenhol közvetlenül kapcsolódnak, ahol csak lehet. Ha router vagy tűzfal áll az útban, a forgalmat egy továbbító szerver viszi, amely nem tudja elolvasni.
 - **Otthon érzi magát a rendszereden.** Az alkalmazások követik a rendszer világos vagy sötét témáját, kiemelőszínét, nyelvét és a csökkentett mozgás beállítását. A linuxos alkalmazás natív Qt 6 Waylandön, és a betűtípusokat, a sarkokat és az ikonokat is élőben veszi át a KDE Plasma, a Hyprland és az Omarchy témáiból.
 - **Ingyenes, végleg.** Nyílt forráskódú, adományokból fenntartva. Nincs reklám, nincs követés, nincs fizetős csomag az alapfunkciókhoz.
 

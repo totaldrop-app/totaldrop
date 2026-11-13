@@ -491,7 +491,7 @@
   "sec.f1.t": "Salattu ennen lähtöä",
   "sec.f2.d": "Koodista tulee avain PAKE-kättelyssä, joten väärä arvaus epäonnistuu heti ja yritys menee hukkaan. Avaintenvaihto sisältää kvanttiturvallisen ML-KEMin.",
   "sec.f2.t": "Koodia ei voi arvata offline-tilassa",
-  "sec.f3.d": "Se näkee IP-osoitteesi ja koodin numeron, ei koskaan sanoja, tiedostojen nimiä tai tiedostoja. Se ei itse tallenna lokeja; sitä ylläpitävä Cloudflare säilyttää otoksen pyynnöistä 31 päivää.",
+  "sec.f3.d": "Se näkee IP-osoitteesi ja koodin numeron, ei koskaan sanoja, tiedostojen nimiä tai tiedostoja. Se ei itse tallenna lokeja; sitä ylläpitävä Cloudflare säilyttää otoksen pyynnöistä vähintään 31 päivää.",
   "sec.f3.t": "Palvelimemme vain esittelee",
   "sec.f4.d": "Jokainen rivi on julkinen. Versio 1.0 julkaistaan vasta riippumattoman tietoturvatarkastuksen jälkeen.",
   "sec.f4.t": "Koodi, jonka kuka tahansa voi tarkistaa",

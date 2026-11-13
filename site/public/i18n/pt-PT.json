@@ -491,7 +491,7 @@
   "sec.f1.t": "Encriptado antes de sair",
   "sec.f2.d": "O código transforma-se numa chave através de um handshake PAKE, pelo que uma tentativa errada falha de imediato e fica gasta. A troca de chaves inclui o ML-KEM pós-quântico.",
   "sec.f2.t": "O código não pode ser adivinhado offline",
-  "sec.f3.d": "Vê o seu endereço IP e o número do código, nunca as palavras, os nomes dos ficheiros nem os ficheiros. Não guarda registos próprios; a Cloudflare, que o opera, guarda uma amostra dos pedidos durante 31 dias.",
+  "sec.f3.d": "Vê o seu endereço IP e o número do código, nunca as palavras, os nomes dos ficheiros nem os ficheiros. Não guarda registos próprios; a Cloudflare, que o opera, guarda uma amostra dos pedidos durante pelo menos 31 dias.",
   "sec.f3.t": "O nosso servidor só faz as apresentações",
   "sec.f4.d": "Cada linha é pública. A versão 1.0 só sai depois de uma auditoria de segurança independente.",
   "sec.f4.t": "Código que qualquer pessoa pode verificar",

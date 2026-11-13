@@ -491,7 +491,7 @@
   "sec.f1.t": "Zašifrováno před odesláním",
   "sec.f2.d": "Kód se mění v klíč pomocí handshaku PAKE, takže špatný tip okamžitě selže a pokus propadne. Výměna klíčů zahrnuje postkvantový ML-KEM.",
   "sec.f2.t": "Kód nelze uhodnout offline",
-  "sec.f3.d": "Vidí vaši IP adresu a číslo kódu, nikdy slova, názvy souborů ani soubory. Sám nevede žádné záznamy; Cloudflare, který ho provozuje, uchovává vzorek požadavků 31 dní.",
+  "sec.f3.d": "Vidí vaši IP adresu a číslo kódu, nikdy slova, názvy souborů ani soubory. Sám nevede žádné záznamy; Cloudflare, který ho provozuje, uchovává vzorek požadavků nejméně 31 dní.",
   "sec.f3.t": "Náš server jen seznamuje",
   "sec.f4.d": "Každý řádek je veřejný. Verze 1.0 vyjde až po nezávislém bezpečnostním auditu.",
   "sec.f4.t": "Kód, který může zkontrolovat kdokoli",

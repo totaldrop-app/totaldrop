@@ -373,7 +373,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get settingsPrivacyBody =>
-      'Mötesservern, reläservern och Cloudflares STUN-server ser din IP-adress, och det gör även den andra enheten när ni ansluter direkt (om inte integritetsläget är på). Ingen av dem ser filnamn, innehåll eller nycklar. Våra servrar sparar inga egna loggar, men Cloudflare, som driver dem, sparar ett urval av förfrågningarna med IP-adresser i 31 dagar. Filerna går direkt mellan enheterna när det går, annars via reläservern; de är end-to-end-krypterade i båda fallen.';
+      'Mötesservern, reläservern och Cloudflares STUN-server ser din IP-adress, och det gör även den andra enheten när ni ansluter direkt (om inte integritetsläget är på). Ingen av dem ser filnamn, innehåll eller nycklar. Våra servrar sparar inga egna loggar, men Cloudflare, som driver dem, sparar ett urval av förfrågningarna med IP-adresser i minst 31 dagar. Filerna går direkt mellan enheterna när det går, annars via reläservern; de är end-to-end-krypterade i båda fallen.';
 
   @override
   String get privacyMode => 'Dölj min adress för den andra enheten';

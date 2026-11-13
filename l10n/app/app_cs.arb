@@ -96,7 +96,7 @@
   "settingsAbout": "O aplikaci",
   "settingsAboutBody": "TotalDrop je zdarma a má otevřený zdrojový kód, financují ho dary. Licence GPL-3.0-or-later.",
   "settingsPrivacy": "Soukromí",
-  "settingsPrivacyBody": "Server pro navázání spojení, zprostředkující server a STUN server Cloudflare vidí vaši IP adresu, stejně jako druhé zařízení při přímém spojení (pokud není zapnutý režim soukromí). Žádný z nich nevidí názvy souborů, jejich obsah ani klíče. Naše servery samy nevedou záznamy, ale Cloudflare, který je provozuje, uchovává vzorek požadavků s IP adresami 31 dní. Soubory jdou přímo mezi zařízeními, když to jde, jinak přes zprostředkující server; v obou případech jsou koncově šifrované.",
+  "settingsPrivacyBody": "Server pro navázání spojení, zprostředkující server a STUN server Cloudflare vidí vaši IP adresu, stejně jako druhé zařízení při přímém spojení (pokud není zapnutý režim soukromí). Žádný z nich nevidí názvy souborů, jejich obsah ani klíče. Naše servery samy nevedou záznamy, ale Cloudflare, který je provozuje, uchovává vzorek požadavků s IP adresami nejméně 31 dní. Soubory jdou přímo mezi zařízeními, když to jde, jinak přes zprostředkující server; v obou případech jsou koncově šifrované.",
   "privacyMode": "Skrýt mou adresu před druhým zařízením",
   "privacyModeHint": "Režim soukromí: vše jde přes zprostředkující server, takže druhé zařízení se vaši IP adresu nikdy nedozví. Je to pomalejší a druhé zařízení musí používat stejný zprostředkující server (výchozí to splňuje).",
   "privacyModeConfirmTitle": "Zapnout režim soukromí?",
