@@ -1,10 +1,10 @@
 # 0017: Donations go through the project lead's GitHub Sponsors page for now
 
 - **Status:** Accepted, 11 November 2026 (proposed by Sadık, accepted by
-  Ozan; #487). Amended 12 November 2026 (Ozan): the Buy Me a Coffee page,
-  payments to a maintainer, and the balance on the move. Sets in whose
-  name the donation channel of [0005](0005-bagis.md) is opened, and when
-  that changes.
+  Ozan; #487). Amended 12 November 2026 (proposed by Ozan, approved by
+  Sadık on 14 November 2026): the Buy Me a Coffee page, payments to a
+  maintainer, and the balance on the move. Sets in whose name the donation
+  channel of [0005](0005-bagis.md) is opened, and when that changes.
 
 ## Context
 

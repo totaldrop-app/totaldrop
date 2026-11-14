@@ -24,7 +24,7 @@ birleştirmeden önce "Kabul" olur.
 | [0014](0014-steam-deck.md) | TotalDrop for Steam Deck, Steam Machine ve Steam Frame: Linux sürümünün parçası, Flathub ve klavyeyle tam kullanım | Kabul |
 | [0015](0015-paket-yoneticileri.md) | Paket yöneticileri önce CI'da derlenen CLI ikililerine dayanır | Kabul |
 | [0016](0016-windows-microsoft-store.md) | Windows uygulaması WinUI 3 ile yazılır, Microsoft Store'dan dağıtılır | Kabul |
-| [0017](0017-bagis-kisisel-sayfa.md) | Donations go through the project lead's GitHub Sponsors page for now, and move to an account in TotalDrop's name when the project grows | Accepted |
+| [0017](0017-bagis-kisisel-sayfa.md) | Bağışlar şimdilik proje liderinin GitHub Sponsors ve Buy Me a Coffee sayfalarından alınır, proje büyüyünce TotalDrop adına bir hesaba geçer | Kabul |
 | [0018](0018-baglanti-yol-haritasi.md) | Bağlantı katmanı kendi yığınımızda kalır; IPv6, port açma ve ağ değişimine tepkiyle doğrudan yollar artırılır | Kabul |
 
 Yeni bir karar için bir sonraki numarayla `NNNN-kisa-ad.md` açın ve bu
