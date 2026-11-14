@@ -11,7 +11,7 @@
 use std::path::PathBuf;
 use std::pin::Pin;
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::{Arc, LazyLock, Mutex};
+use std::sync::{Arc, LazyLock, Mutex, Weak};
 
 use cxx_qt::{CxxQtType, Threading};
 use cxx_qt_lib::{QList, QString, QStringList, QUrl};
@@ -23,6 +23,7 @@ use totaldrop_l10n::reveal_text;
 
 use crate::bridge::stage::{Role, Stage};
 use crate::desktop;
+use crate::quit::TRANSFERS;
 use crate::runtime::RUNTIME;
 use crate::settings::Settings;
 
@@ -235,6 +236,33 @@ struct Session {
     generation: AtomicU64,
 }
 
+/// The sessions of every `Transfer` the window made, so quitting can stop
+/// them (#433).
+static SESSIONS: Mutex<Vec<Weak<Session>>> = Mutex::new(Vec::new());
+
+/// Stop every running transfer and decline every unanswered offer, as
+/// Cancel does. The window has closed: called once its event loop ended,
+/// before the process waits for [`TRANSFERS`] and exits. What the stopped
+/// work queues for the window is never shown.
+pub fn stop_all() {
+    let sessions: Vec<Arc<Session>> = SESSIONS
+        .lock()
+        .map(|s| s.iter().filter_map(Weak::upgrade).collect())
+        .unwrap_or_default();
+    for session in sessions {
+        session.generation.fetch_add(1, Ordering::SeqCst);
+        if let Ok(s) = session.stop.lock() {
+            s.stop();
+        }
+        let pending = session.offer.lock().ok().and_then(|mut o| o.take());
+        if let Some(offer) = pending {
+            TRANSFERS.spawn(&RUNTIME, async move {
+                let _ = offer.decline().await;
+            });
+        }
+    }
+}
+
 /// Backing state of [`qobject::Transfer`].
 #[derive(Default)]
 pub struct TransferRust {
@@ -442,7 +470,7 @@ impl qobject::Transfer {
             .ok()
             .and_then(|mut o| o.take());
         if let Some(offer) = left {
-            RUNTIME.spawn(async move {
+            TRANSFERS.spawn(&RUNTIME, async move {
                 let _ = offer.decline().await;
             });
         }
@@ -531,9 +559,9 @@ impl qobject::Transfer {
             .unwrap_or_default()
     }
 
-    /// Run `fut` on the runtime.
+    /// Run `fut` on the runtime, counted so quitting waits for it (#433).
     fn spawn(&self, fut: impl std::future::Future<Output = ()> + Send + 'static) {
-        RUNTIME.spawn(fut);
+        TRANSFERS.spawn(&RUNTIME, fut);
     }
 
     fn opts_server(&self) -> String {
@@ -822,7 +850,7 @@ impl qobject::Transfer {
             return;
         };
         self.as_mut().set_stage(Stage::Declined);
-        RUNTIME.spawn(async move {
+        TRANSFERS.spawn(&RUNTIME, async move {
             let _ = offer.decline().await;
         });
     }
@@ -843,7 +871,7 @@ impl qobject::Transfer {
             .ok()
             .and_then(|mut o| o.take());
         if let Some(offer) = pending {
-            RUNTIME.spawn(async move {
+            TRANSFERS.spawn(&RUNTIME, async move {
                 let _ = offer.decline().await;
             });
         }
@@ -979,6 +1007,10 @@ impl qobject::Transfer {
 
 impl cxx_qt::Initialize for qobject::Transfer {
     fn initialize(mut self: Pin<&mut Self>) {
+        if let Ok(mut sessions) = SESSIONS.lock() {
+            sessions.retain(|s| s.strong_count() > 0);
+            sessions.push(Arc::downgrade(&self.rust().session));
+        }
         let s = Settings::load();
         let default = totaldrop_core::rendezvous::DEFAULT_SERVER;
         self.as_mut().set_default_server(QString::from(default));
@@ -994,8 +1026,32 @@ impl cxx_qt::Initialize for qobject::Transfer {
 
 #[cfg(test)]
 mod tests {
-    use super::{SHOWN_CHARS, connect_kind, kind, send_kind, shown};
+    use std::sync::Arc;
+    use std::sync::atomic::Ordering;
+
+    use super::{SESSIONS, SHOWN_CHARS, Session, connect_kind, kind, send_kind, shown, stop_all};
     use totaldrop_core::Error as E;
+
+    /// Quitting stops a live transfer as Cancel does: its stop is set,
+    /// and its generation moves on, so what it still queues for the
+    /// window is dropped (#433). No Qt object is needed: the window's
+    /// `Transfer` only registers its session.
+    #[test]
+    fn quitting_stops_every_live_transfer() {
+        let session = Arc::new(Session::default());
+        if let Ok(mut sessions) = SESSIONS.lock() {
+            sessions.push(Arc::downgrade(&session));
+        }
+        let stop = session.stop.lock().map(|s| s.clone()).unwrap_or_default();
+        let before = session.generation.load(Ordering::SeqCst);
+        stop_all();
+        assert!(stop.is_stopped(), "the transfer was stopped");
+        assert_ne!(
+            session.generation.load(Ordering::SeqCst),
+            before,
+            "its later events are dropped"
+        );
+    }
 
     #[test]
     fn a_code_not_in_use_is_not_a_server_problem() {

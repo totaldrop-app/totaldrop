@@ -183,9 +183,9 @@ treated as final.
       is renewed at half of what was granted (at most every 30 minutes),
       tried again every 5 seconds after an unanswered renewal until the
       grant runs out, and released with lifetime 0 when the transfer ends
-      (sent twice, 250 ms apart; the command line waits for the second
-      copy before it exits, within the 1.6 seconds of its release wait,
-      #502); a crash leaves the port open until the granted lifetime runs
+      (sent twice, 250 ms apart; the command line and the Linux window
+      wait for the second copy before they exit, within the 1.6 seconds
+      of their release wait, #502 and #433); a crash leaves the port open until the granted lifetime runs
       out.
       Asking starts with STUN; once STUN has answered, `HINTS` wait at most
       300 ms more for the router (longer, until the attempt ends, once the
@@ -237,6 +237,18 @@ treated as final.
       the 1.6-second attempt; a mapping request cut off there may leave a
       mapping until its 120-second lease runs out. An HTTP response is
       read up to 1 MiB.
+    - Before the process exits, the apps release what they mapped (#433).
+      The command line runs a send or receive as a task, so a panic in it
+      still drops the mapping, and waits for the UPnP delete, a PCP or
+      NAT-PMP race loser's release (#461) and the second copy of a PCP
+      or NAT-PMP release (#502), at most 1.6 seconds in all, before it
+      exits; a second Ctrl-C exits at once. The Linux
+      window, once closed, stops a running transfer as Cancel does and
+      declines an unanswered offer. It waits at most 1.5 seconds for that
+      work to end (telling a silent peer can take longer), drops what is
+      still running, so its mapping is released, and then waits for the
+      same releases: some 3.3 seconds in all. Android asks no router (it
+      cannot read the gateway), so it has nothing to release.
 11. **Session after the hybrid step.**
     - Each direction has its own ChaCha20-Poly1305 key (`k_i2r`, `k_r2i`).
     - Nonces follow Noise: four zero bytes, then a 64-bit little-endian
