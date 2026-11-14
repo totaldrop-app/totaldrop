@@ -1,4 +1,4 @@
-<!-- Translated from README.md 0a6bee841691. -->
+<!-- Translated from README.md 4cb259c278ef. -->
 <div align="center">
 
 <picture>
@@ -81,7 +81,7 @@ Giao thức được mô tả trong *TotalDrop Protocol v0*. Các quyết địn
 
 TotalDrop có 35 ngôn ngữ và theo định dạng số của khu vực bạn. Tiếng Anh và tiếng Thổ Nhĩ Kỳ đã được xem lại; 33 ngôn ngữ còn lại là bản nháp đang được người bản ngữ kiểm tra, vì vậy các ứng dụng giữ các văn bản bảo mật (xác minh, mã sai, chấp nhận và từ chối) bằng tiếng Anh cho đến khi ngôn ngữ đó được xem lại. Trang web và các ứng dụng đã có đủ tất cả, từ Android và Linux 0.3.0-beta.1.
 
-Thấy một câu vụng về? [Giúp dịch](../../docs/ceviri.md) (hướng dẫn bằng tiếng Thổ Nhĩ Kỳ).
+Thấy một câu vụng về? [Giúp dịch](../../docs/ceviri.md).
 
 ## Ủng hộ dự án
 
@@ -113,7 +113,7 @@ Bạn cũng có thể giúp bằng cách [báo lỗi](https://github.com/totaldr
 
 Các thư viện dùng giấy phép dễ dãi để bất kỳ ai cũng có thể xây dựng dựa trên giao thức; các ứng dụng dùng GPL và các máy chủ dùng AGPL. Xem [LICENSING.md](../../LICENSING.md).
 
-Mỗi nền tảng có phiên bản, thẻ (`linux-v…`, `android-v…`) và quy trình CI riêng, nên một nền tảng có thể phát hành mà không ảnh hưởng đến các nền tảng khác. Cách hoạt động của nhánh và bản phát hành: [docs/gelistirme.md](../../docs/gelistirme.md) (tiếng Thổ Nhĩ Kỳ) và [docs/versioning.md](../../docs/versioning.md). Quy tắc thiết kế: [docs/tasarim.md](../../docs/tasarim.md) và các quyết định kiến trúc: [docs/kararlar](../../docs/kararlar/README.md), cả hai đều bằng tiếng Thổ Nhĩ Kỳ.
+Mỗi nền tảng có phiên bản, thẻ (`linux-v…`, `android-v…`) và quy trình CI riêng, nên một nền tảng có thể phát hành mà không ảnh hưởng đến các nền tảng khác. Cách hoạt động của nhánh và bản phát hành: [docs/gelistirme.md](../../docs/gelistirme.md) (tiếng Thổ Nhĩ Kỳ) và [docs/versioning.md](../../docs/versioning.md). Quy tắc thiết kế: [docs/tasarim.md](../../docs/tasarim.md) và các quyết định kiến trúc: [docs/kararlar](../../docs/kararlar/README.md) (tiếng Thổ Nhĩ Kỳ).
 
 ### Xây dựng
 

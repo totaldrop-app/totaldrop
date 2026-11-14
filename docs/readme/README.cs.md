@@ -1,4 +1,4 @@
-<!-- Translated from README.md 0a6bee841691. -->
+<!-- Translated from README.md 4cb259c278ef. -->
 <div align="center">
 
 <picture>
@@ -81,7 +81,7 @@ Protokol popisuje dokument *TotalDrop Protocol v0*. Rozhodnutí učiněná při 
 
 TotalDrop mluví 35 jazyky a řídí se formáty čísel vašeho regionu. Angličtina a turečtina jsou zkontrolované; zbývajících 33 jsou koncepty, které kontrolují rodilí mluvčí, a proto aplikace ponechávají bezpečnostní texty (ověření, špatný kód, přijmout a odmítnout) v angličtině, dokud jazyk není zkontrolován. Web i aplikace je mají všechny, od verze 0.3.0-beta.1 pro Android a Linux.
 
-Narazili jste na neobratnou větu? [Pomozte s překladem](../../docs/ceviri.md) (průvodce je v turečtině).
+Narazili jste na neobratnou větu? [Pomozte s překladem](../../docs/ceviri.md).
 
 ## Podpořte projekt
 
@@ -113,7 +113,7 @@ Pomoci můžete také [hlášením chyb](https://github.com/totaldrop-app/totald
 
 Knihovny mají permisivní licence, aby na protokolu mohl stavět kdokoli; aplikace jsou pod GPL a servery pod AGPL. Viz [LICENSING.md](../../LICENSING.md).
 
-Každá platforma má vlastní verzi, tag (`linux-v…`, `android-v…`) a CI workflow, takže jednu lze vydat bez zásahu do ostatních. Jak fungují větve a vydání: [docs/gelistirme.md](../../docs/gelistirme.md) (v turečtině) a [docs/versioning.md](../../docs/versioning.md). Pravidla návrhu: [docs/tasarim.md](../../docs/tasarim.md) a architektonická rozhodnutí: [docs/kararlar](../../docs/kararlar/README.md), obojí v turečtině.
+Každá platforma má vlastní verzi, tag (`linux-v…`, `android-v…`) a CI workflow, takže jednu lze vydat bez zásahu do ostatních. Jak fungují větve a vydání: [docs/gelistirme.md](../../docs/gelistirme.md) (v turečtině) a [docs/versioning.md](../../docs/versioning.md). Pravidla návrhu: [docs/tasarim.md](../../docs/tasarim.md) a architektonická rozhodnutí: [docs/kararlar](../../docs/kararlar/README.md) (v turečtině).
 
 ### Sestavení
 

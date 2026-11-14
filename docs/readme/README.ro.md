@@ -1,4 +1,4 @@
-<!-- Translated from README.md 0a6bee841691. -->
+<!-- Translated from README.md 4cb259c278ef. -->
 <div align="center">
 
 <picture>
@@ -81,7 +81,7 @@ Protocolul este descris în *TotalDrop Protocol v0*. Deciziile luate la implemen
 
 TotalDrop vorbește 35 de limbi și urmează formatele de numere ale regiunii dvs. Engleza și turca sunt verificate; celelalte 33 sunt ciorne pe care le verifică vorbitori nativi, așa că aplicațiile păstrează textele de securitate (verificare, cod greșit, acceptare și refuz) în engleză până când o limbă este verificată. Site-ul și aplicațiile le au pe toate, începând cu Android și Linux 0.3.0-beta.1.
 
-Ați găsit o frază stângace? [Ajutați la traducere](../../docs/ceviri.md) (ghidul este în turcă).
+Ați găsit o frază stângace? [Ajutați la traducere](../../docs/ceviri.md).
 
 ## Susțineți proiectul
 
@@ -113,7 +113,7 @@ Puteți ajuta și [raportând erori](https://github.com/totaldrop-app/totaldrop/
 
 Bibliotecile au licențe permisive, ca oricine să poată construi pe protocol; aplicațiile sunt GPL, iar serverele AGPL. Vedeți [LICENSING.md](../../LICENSING.md).
 
-Fiecare platformă are propria versiune, etichetă (`linux-v…`, `android-v…`) și flux CI, așa că una poate fi lansată fără să le atingă pe celelalte. Cum funcționează ramurile și versiunile: [docs/gelistirme.md](../../docs/gelistirme.md) (în turcă) și [docs/versioning.md](../../docs/versioning.md). Reguli de design: [docs/tasarim.md](../../docs/tasarim.md) și decizii de arhitectură: [docs/kararlar](../../docs/kararlar/README.md), ambele în turcă.
+Fiecare platformă are propria versiune, etichetă (`linux-v…`, `android-v…`) și flux CI, așa că una poate fi lansată fără să le atingă pe celelalte. Cum funcționează ramurile și versiunile: [docs/gelistirme.md](../../docs/gelistirme.md) (în turcă) și [docs/versioning.md](../../docs/versioning.md). Reguli de design: [docs/tasarim.md](../../docs/tasarim.md) și decizii de arhitectură: [docs/kararlar](../../docs/kararlar/README.md) (în turcă).
 
 ### Compilare
 

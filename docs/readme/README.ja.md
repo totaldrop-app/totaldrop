@@ -1,4 +1,4 @@
-<!-- Translated from README.md 0a6bee841691. -->
+<!-- Translated from README.md 4cb259c278ef. -->
 <div align="center">
 
 <picture>
@@ -81,7 +81,7 @@ gh attestation verify totaldrop_0.3.0.beta.6-1_amd64.deb --repo totaldrop-app/to
 
 TotalDrop は35の言語に対応し、地域の数値形式に従います。英語とトルコ語は確認済みです。残りの33言語はネイティブスピーカーが確認中の下書きのため、アプリでは言語の確認が済むまで、セキュリティに関わる文言（検証、コードの誤り、承認と拒否）を英語のまま表示します。サイトとアプリは、Android と Linux の 0.3.0-beta.1 からすべての言語に対応しています。
 
-ぎこちない文を見つけましたか？[翻訳に協力する](../../docs/ceviri.md)（ガイドはトルコ語です）
+ぎこちない文を見つけましたか？[翻訳に協力する](../../docs/ceviri.md)
 
 ## プロジェクトを支援する
 
@@ -113,7 +113,7 @@ TotalDrop が無料であり続けられるのは、支えてくれる人がい�
 
 ライブラリは、誰でもプロトコルの上に構築できるよう寛容なライセンスにしています。アプリは GPL、サーバーは AGPL です。詳しくは [LICENSING.md](../../LICENSING.md) を参照してください。
 
-各プラットフォームには独自のバージョン、タグ（`linux-v…`、`android-v…`）、CI ワークフローがあるため、ほかに手を加えずに1つだけをリリースできます。ブランチとリリースの運用：[docs/gelistirme.md](../../docs/gelistirme.md)（トルコ語）と [docs/versioning.md](../../docs/versioning.md)。デザインのルール：[docs/tasarim.md](../../docs/tasarim.md)、アーキテクチャの決定：[docs/kararlar](../../docs/kararlar/README.md)（いずれもトルコ語）。
+各プラットフォームには独自のバージョン、タグ（`linux-v…`、`android-v…`）、CI ワークフローがあるため、ほかに手を加えずに1つだけをリリースできます。ブランチとリリースの運用：[docs/gelistirme.md](../../docs/gelistirme.md)（トルコ語）と [docs/versioning.md](../../docs/versioning.md)。デザインのルール：[docs/tasarim.md](../../docs/tasarim.md)、アーキテクチャの決定：[docs/kararlar](../../docs/kararlar/README.md)（トルコ語）。
 
 ### ビルド
 

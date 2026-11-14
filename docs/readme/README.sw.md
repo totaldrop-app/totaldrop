@@ -1,4 +1,4 @@
-<!-- Translated from README.md 0a6bee841691. -->
+<!-- Translated from README.md 4cb259c278ef. -->
 <div align="center">
 
 <picture>
@@ -81,7 +81,7 @@ Itifaki imeelezwa katika *TotalDrop Protocol v0*. Maamuzi yaliyofanywa wakati wa
 
 TotalDrop inapatikana katika lugha 35 na hufuata miundo ya nambari ya eneo lako. Kiingereza na Kituruki vimekaguliwa; zile 33 nyingine ni rasimu ambazo wazungumzaji asilia wanazikagua, kwa hiyo programu huacha maandishi ya usalama (uthibitishaji, msimbo usio sahihi, kukubali na kukataa) kwa Kiingereza hadi lugha ikaguliwe. Tovuti na programu zina zote, kuanzia Android na Linux 0.3.0-beta.1.
 
-Umeona sentensi isiyokaa vizuri? [Saidia kutafsiri](../../docs/ceviri.md) (mwongozo uko kwa Kituruki).
+Umeona sentensi isiyokaa vizuri? [Saidia kutafsiri](../../docs/ceviri.md).
 
 ## Saidia mradi
 
@@ -113,7 +113,7 @@ Unaweza pia kusaidia kwa [kuripoti hitilafu](https://github.com/totaldrop-app/to
 
 Maktaba zina leseni huru ili mtu yeyote aweze kujenga juu ya itifaki; programu ni GPL na seva ni AGPL. Tazama [LICENSING.md](../../LICENSING.md).
 
-Kila mfumo una toleo lake, tagi (`linux-v…`, `android-v…`) na mtiririko wa kazi wa CI, kwa hiyo mmoja unaweza kutolewa bila kugusa mingine. Jinsi matawi na matoleo yanavyofanya kazi: [docs/gelistirme.md](../../docs/gelistirme.md) (kwa Kituruki) na [docs/versioning.md](../../docs/versioning.md). Kanuni za muundo: [docs/tasarim.md](../../docs/tasarim.md) na maamuzi ya usanifu: [docs/kararlar](../../docs/kararlar/README.md), yote kwa Kituruki.
+Kila mfumo una toleo lake, tagi (`linux-v…`, `android-v…`) na mtiririko wa kazi wa CI, kwa hiyo mmoja unaweza kutolewa bila kugusa mingine. Jinsi matawi na matoleo yanavyofanya kazi: [docs/gelistirme.md](../../docs/gelistirme.md) (kwa Kituruki) na [docs/versioning.md](../../docs/versioning.md). Kanuni za muundo: [docs/tasarim.md](../../docs/tasarim.md) na maamuzi ya usanifu: [docs/kararlar](../../docs/kararlar/README.md) (kwa Kituruki).
 
 ### Kujenga
 

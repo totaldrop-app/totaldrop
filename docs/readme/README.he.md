@@ -1,4 +1,4 @@
-<!-- Translated from README.md 0a6bee841691. -->
+<!-- Translated from README.md 4cb259c278ef. -->
 <div align="center">
 
 <picture>
@@ -81,7 +81,7 @@ gh attestation verify totaldrop_0.3.0.beta.6-1_amd64.deb --repo totaldrop-app/to
 
 TotalDrop מדבר 35 שפות ועוקב אחר תבניות המספרים של האזור שלך. אנגלית וטורקית עברו בדיקה; 33 האחרות הן טיוטות שדוברים ילידיים בודקים, ולכן האפליקציות משאירות את טקסטי האבטחה (אימות, קוד שגוי, קבלה ודחייה) באנגלית עד ששפה עוברת בדיקה. האתר והאפליקציות כוללים את כולן, החל מ־Android ו־Linux 0.3.0-beta.1.
 
-נתקלתם במשפט מסורבל? [לעזור בתרגום](../../docs/ceviri.md) (המדריך בטורקית).
+נתקלתם במשפט מסורבל? [לעזור בתרגום](../../docs/ceviri.md).
 
 ## תמיכה בפרויקט
 
@@ -113,7 +113,7 @@ TotalDrop נשאר חינמי כי אנשים תורמים. התרומות מש�
 
 הספריות ברישיונות מתירניים כדי שכל אחד יוכל לבנות על הפרוטוקול; האפליקציות תחת GPL והשרתים תחת AGPL. ראו [LICENSING.md](../../LICENSING.md).
 
-לכל פלטפורמה גרסה, תג (`linux-v…`, `android-v…`) ותהליך CI משלה, כך שאפשר לשחרר אחת בלי לגעת באחרות. איך עובדים ענפים ושחרורים: [docs/gelistirme.md](../../docs/gelistirme.md) (בטורקית) ו־[docs/versioning.md](../../docs/versioning.md). כללי עיצוב: [docs/tasarim.md](../../docs/tasarim.md) והחלטות ארכיטקטורה: [docs/kararlar](../../docs/kararlar/README.md), שניהם בטורקית.
+לכל פלטפורמה גרסה, תג (`linux-v…`, `android-v…`) ותהליך CI משלה, כך שאפשר לשחרר אחת בלי לגעת באחרות. איך עובדים ענפים ושחרורים: [docs/gelistirme.md](../../docs/gelistirme.md) (בטורקית) ו־[docs/versioning.md](../../docs/versioning.md). כללי עיצוב: [docs/tasarim.md](../../docs/tasarim.md) והחלטות ארכיטקטורה: [docs/kararlar](../../docs/kararlar/README.md) (בטורקית).
 
 ### בנייה
 

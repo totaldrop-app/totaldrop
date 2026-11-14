@@ -1,4 +1,4 @@
-<!-- Translated from README.md 0a6bee841691. -->
+<!-- Translated from README.md 4cb259c278ef. -->
 <div align="center">
 
 <picture>
@@ -81,7 +81,7 @@ El protocolo se describe en *TotalDrop Protocol v0*. Las decisiones tomadas al i
 
 TotalDrop habla 35 idiomas y sigue los formatos numéricos de tu región. El inglés y el turco están revisados; los otros 33 son borradores que están comprobando hablantes nativos, así que las aplicaciones mantienen los textos de seguridad (verificación, código incorrecto, aceptar y rechazar) en inglés hasta que se revise cada idioma. El sitio y las aplicaciones los tienen todos, desde Android y Linux 0.3.0-beta.1.
 
-¿Has visto una frase torpe? [Ayuda a traducir](../../docs/ceviri.md) (la guía está en turco).
+¿Has visto una frase torpe? [Ayuda a traducir](../../docs/ceviri.md).
 
 ## Apoya el proyecto
 
@@ -113,7 +113,7 @@ También puedes ayudar [informando de errores](https://github.com/totaldrop-app/
 
 Las bibliotecas tienen licencias permisivas para que cualquiera pueda construir sobre el protocolo; las aplicaciones son GPL y los servidores, AGPL. Consulta [LICENSING.md](../../LICENSING.md).
 
-Cada plataforma tiene su propia versión, su propia etiqueta (`linux-v…`, `android-v…`) y su propio flujo de trabajo de CI, así que una puede publicarse sin tocar las demás. Cómo funcionan las ramas y las versiones: [docs/gelistirme.md](../../docs/gelistirme.md) (en turco) y [docs/versioning.md](../../docs/versioning.md). Reglas de diseño: [docs/tasarim.md](../../docs/tasarim.md) y decisiones de arquitectura: [docs/kararlar](../../docs/kararlar/README.md), ambas en turco.
+Cada plataforma tiene su propia versión, su propia etiqueta (`linux-v…`, `android-v…`) y su propio flujo de trabajo de CI, así que una puede publicarse sin tocar las demás. Cómo funcionan las ramas y las versiones: [docs/gelistirme.md](../../docs/gelistirme.md) (en turco) y [docs/versioning.md](../../docs/versioning.md). Reglas de diseño: [docs/tasarim.md](../../docs/tasarim.md) y decisiones de arquitectura: [docs/kararlar](../../docs/kararlar/README.md) (en turco).
 
 ### Compilación
 

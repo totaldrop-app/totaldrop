@@ -77,7 +77,7 @@ The protocol is described in *TotalDrop Protocol v0*. Decisions made while imple
 
 TotalDrop speaks 35 languages and follows your region's number formats. English and Turkish are reviewed; the other 33 are drafts that native speakers are checking, so the apps keep the security texts (verification, wrong code, accept and decline) in English until a language is reviewed. The site and the apps have them all, from Android and Linux 0.3.0-beta.1.
 
-Spotted a clumsy sentence? [Help translate](docs/ceviri.md) (the guide is in Turkish).
+Spotted a clumsy sentence? [Help translate](docs/ceviri.md).
 
 ## Support the project
 
@@ -109,7 +109,7 @@ You can also help by [reporting bugs](https://github.com/totaldrop-app/totaldrop
 
 The libraries are permissive so anyone can build on the protocol; the apps are GPL and the servers AGPL. See [LICENSING.md](LICENSING.md).
 
-Each platform has its own version, tag (`linux-v…`, `android-v…`) and CI workflow, so one can ship without touching the others. How branches and releases work: [docs/gelistirme.md](docs/gelistirme.md) (Turkish) and [docs/versioning.md](docs/versioning.md). Design rules: [docs/tasarim.md](docs/tasarim.md) and architecture decisions: [docs/kararlar](docs/kararlar/README.md), both in Turkish.
+Each platform has its own version, tag (`linux-v…`, `android-v…`) and CI workflow, so one can ship without touching the others. How branches and releases work: [docs/gelistirme.md](docs/gelistirme.md) (Turkish) and [docs/versioning.md](docs/versioning.md). Design rules: [docs/tasarim.md](docs/tasarim.md) and architecture decisions: [docs/kararlar](docs/kararlar/README.md) (Turkish).
 
 ### Build
 

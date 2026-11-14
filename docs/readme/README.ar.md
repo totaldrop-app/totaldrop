@@ -1,4 +1,4 @@
-<!-- Translated from README.md 0a6bee841691. -->
+<!-- Translated from README.md 4cb259c278ef. -->
 <div align="center">
 
 <picture>
@@ -81,7 +81,7 @@ gh attestation verify totaldrop_0.3.0.beta.6-1_amd64.deb --repo totaldrop-app/to
 
 يتحدث TotalDrop 35 لغة ويتبع تنسيقات الأرقام في منطقتك. الإنجليزية والتركية مراجَعتان؛ أما اللغات الـ33 الأخرى فمسودات يراجعها متحدثون أصليون، لذلك تُبقي التطبيقات نصوص الأمان (التحقق، والرمز الخاطئ، والقبول والرفض) بالإنجليزية إلى أن تُراجَع اللغة. الموقع والتطبيقات تضمها جميعًا، بدءًا من Android وLinux 0.3.0-beta.1.
 
-هل لاحظت جملة ركيكة؟ [ساعد في الترجمة](../../docs/ceviri.md) (الدليل بالتركية).
+هل لاحظت جملة ركيكة؟ [ساعد في الترجمة](../../docs/ceviri.md).
 
 ## ادعم المشروع
 
@@ -113,7 +113,7 @@ gh attestation verify totaldrop_0.3.0.beta.6-1_amd64.deb --repo totaldrop-app/to
 
 المكتبات بتراخيص متساهلة كي يتمكن أي شخص من البناء على البروتوكول؛ أما التطبيقات فبترخيص GPL والخوادم بترخيص AGPL. راجع [LICENSING.md](../../LICENSING.md).
 
-لكل منصة إصدارها ووسمها (`linux-v…`، `android-v…`) وسير عمل CI خاص بها، فيمكن إصدار إحداها دون المساس بالأخرى. كيف تعمل الفروع والإصدارات: [docs/gelistirme.md](../../docs/gelistirme.md) (بالتركية) و[docs/versioning.md](../../docs/versioning.md). قواعد التصميم: [docs/tasarim.md](../../docs/tasarim.md) وقرارات البنية المعمارية: [docs/kararlar](../../docs/kararlar/README.md)، وكلاهما بالتركية.
+لكل منصة إصدارها ووسمها (`linux-v…`، `android-v…`) وسير عمل CI خاص بها، فيمكن إصدار إحداها دون المساس بالأخرى. كيف تعمل الفروع والإصدارات: [docs/gelistirme.md](../../docs/gelistirme.md) (بالتركية) و[docs/versioning.md](../../docs/versioning.md). قواعد التصميم: [docs/tasarim.md](../../docs/tasarim.md) وقرارات البنية المعمارية: [docs/kararlar](../../docs/kararlar/README.md) (بالتركية).
 
 ### البناء
 

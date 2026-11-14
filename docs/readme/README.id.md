@@ -1,4 +1,4 @@
-<!-- Translated from README.md 0a6bee841691. -->
+<!-- Translated from README.md 4cb259c278ef. -->
 <div align="center">
 
 <picture>
@@ -81,7 +81,7 @@ Protokolnya dijelaskan dalam *TotalDrop Protocol v0*. Keputusan yang diambil saa
 
 TotalDrop tersedia dalam 35 bahasa dan mengikuti format angka wilayah Anda. Bahasa Inggris dan Turki sudah ditinjau; 33 lainnya masih draf yang sedang diperiksa penutur asli, sehingga aplikasi mempertahankan teks keamanan (verifikasi, kode salah, terima dan tolak) dalam bahasa Inggris sampai bahasa tersebut selesai ditinjau. Situs dan aplikasi sudah memiliki semuanya, mulai dari Android dan Linux 0.3.0-beta.1.
 
-Menemukan kalimat yang janggal? [Bantu terjemahkan](../../docs/ceviri.md) (panduannya dalam bahasa Turki).
+Menemukan kalimat yang janggal? [Bantu terjemahkan](../../docs/ceviri.md).
 
 ## Dukung proyek ini
 
@@ -113,7 +113,7 @@ Anda juga dapat membantu dengan [melaporkan bug](https://github.com/totaldrop-ap
 
 Pustaka-pustakanya berlisensi permisif agar siapa pun dapat membangun di atas protokol ini; aplikasinya GPL dan servernya AGPL. Lihat [LICENSING.md](../../LICENSING.md).
 
-Setiap platform memiliki versi, tag (`linux-v…`, `android-v…`), dan alur kerja CI sendiri, sehingga satu platform dapat dirilis tanpa menyentuh yang lain. Cara kerja branch dan rilis: [docs/gelistirme.md](../../docs/gelistirme.md) (bahasa Turki) dan [docs/versioning.md](../../docs/versioning.md). Aturan desain: [docs/tasarim.md](../../docs/tasarim.md) dan keputusan arsitektur: [docs/kararlar](../../docs/kararlar/README.md), keduanya dalam bahasa Turki.
+Setiap platform memiliki versi, tag (`linux-v…`, `android-v…`), dan alur kerja CI sendiri, sehingga satu platform dapat dirilis tanpa menyentuh yang lain. Cara kerja branch dan rilis: [docs/gelistirme.md](../../docs/gelistirme.md) (bahasa Turki) dan [docs/versioning.md](../../docs/versioning.md). Aturan desain: [docs/tasarim.md](../../docs/tasarim.md) dan keputusan arsitektur: [docs/kararlar](../../docs/kararlar/README.md) (bahasa Turki).
 
 ### Build
 

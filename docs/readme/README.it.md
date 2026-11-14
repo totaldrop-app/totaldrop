@@ -1,4 +1,4 @@
-<!-- Translated from README.md 0a6bee841691. -->
+<!-- Translated from README.md 4cb259c278ef. -->
 <div align="center">
 
 <picture>
@@ -81,7 +81,7 @@ Il protocollo è descritto in *TotalDrop Protocol v0*. Le decisioni prese durant
 
 TotalDrop parla 35 lingue e segue i formati numerici della tua regione. L'inglese e il turco sono revisionati; le altre 33 sono bozze che madrelingua stanno controllando, quindi le app mantengono in inglese i testi di sicurezza (verifica, codice errato, accetta e rifiuta) finché una lingua non viene revisionata. Il sito e le app le hanno tutte, a partire da Android e Linux 0.3.0-beta.1.
 
-Hai notato una frase goffa? [Aiuta a tradurre](../../docs/ceviri.md) (la guida è in turco).
+Hai notato una frase goffa? [Aiuta a tradurre](../../docs/ceviri.md).
 
 ## Sostieni il progetto
 
@@ -113,7 +113,7 @@ Puoi aiutare anche [segnalando bug](https://github.com/totaldrop-app/totaldrop/i
 
 Le librerie hanno licenze permissive, così chiunque può costruire sul protocollo; le app sono GPL e i server AGPL. Vedi [LICENSING.md](../../LICENSING.md).
 
-Ogni piattaforma ha la propria versione, il proprio tag (`linux-v…`, `android-v…`) e il proprio workflow di CI, così una può essere rilasciata senza toccare le altre. Come funzionano branch e release: [docs/gelistirme.md](../../docs/gelistirme.md) (in turco) e [docs/versioning.md](../../docs/versioning.md). Regole di design: [docs/tasarim.md](../../docs/tasarim.md) e decisioni di architettura: [docs/kararlar](../../docs/kararlar/README.md), entrambe in turco.
+Ogni piattaforma ha la propria versione, il proprio tag (`linux-v…`, `android-v…`) e il proprio workflow di CI, così una può essere rilasciata senza toccare le altre. Come funzionano branch e release: [docs/gelistirme.md](../../docs/gelistirme.md) (in turco) e [docs/versioning.md](../../docs/versioning.md). Regole di design: [docs/tasarim.md](../../docs/tasarim.md) e decisioni di architettura: [docs/kararlar](../../docs/kararlar/README.md) (in turco).
 
 ### Compilazione
 

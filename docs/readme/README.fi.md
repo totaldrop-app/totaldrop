@@ -1,4 +1,4 @@
-<!-- Translated from README.md 0a6bee841691. -->
+<!-- Translated from README.md 4cb259c278ef. -->
 <div align="center">
 
 <picture>
@@ -81,7 +81,7 @@ Protokolla on kuvattu dokumentissa *TotalDrop Protocol v0*. Toteutuksen aikana t
 
 TotalDrop puhuu 35:tä kieltä ja noudattaa alueesi numeromuotoja. Englanti ja turkki on tarkistettu; muut 33 ovat luonnoksia, joita äidinkieliset puhujat tarkistavat, joten sovellukset pitävät tietoturvatekstit (tarkistus, väärä koodi, hyväksy ja hylkää) englanniksi, kunnes kieli on tarkistettu. Sivustolla ja sovelluksissa ne kaikki ovat Androidin ja Linuxin versiosta 0.3.0-beta.1 alkaen.
 
-Huomasitko kömpelön lauseen? [Auta kääntämisessä](../../docs/ceviri.md) (opas on turkiksi).
+Huomasitko kömpelön lauseen? [Auta kääntämisessä](../../docs/ceviri.md).
 
 ## Tue projektia
 
@@ -113,7 +113,7 @@ Voit auttaa myös [ilmoittamalla virheistä](https://github.com/totaldrop-app/to
 
 Kirjastoilla on sallivat lisenssit, jotta kuka tahansa voi rakentaa protokollan päälle; sovellukset ovat GPL- ja palvelimet AGPL-lisensoituja. Katso [LICENSING.md](../../LICENSING.md).
 
-Jokaisella alustalla on oma versionsa, tagi (`linux-v…`, `android-v…`) ja CI-työnkulku, joten yhden voi julkaista koskematta muihin. Haarojen ja julkaisujen toiminta: [docs/gelistirme.md](../../docs/gelistirme.md) (turkiksi) ja [docs/versioning.md](../../docs/versioning.md). Suunnittelusäännöt: [docs/tasarim.md](../../docs/tasarim.md) ja arkkitehtuuripäätökset: [docs/kararlar](../../docs/kararlar/README.md), molemmat turkiksi.
+Jokaisella alustalla on oma versionsa, tagi (`linux-v…`, `android-v…`) ja CI-työnkulku, joten yhden voi julkaista koskematta muihin. Haarojen ja julkaisujen toiminta: [docs/gelistirme.md](../../docs/gelistirme.md) (turkiksi) ja [docs/versioning.md](../../docs/versioning.md). Suunnittelusäännöt: [docs/tasarim.md](../../docs/tasarim.md) ja arkkitehtuuripäätökset: [docs/kararlar](../../docs/kararlar/README.md) (turkiksi).
 
 ### Rakentaminen
 

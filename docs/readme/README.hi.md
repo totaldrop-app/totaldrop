@@ -1,4 +1,4 @@
-<!-- Translated from README.md 0a6bee841691. -->
+<!-- Translated from README.md 4cb259c278ef. -->
 <div align="center">
 
 <picture>
@@ -81,7 +81,7 @@ gh attestation verify totaldrop_0.3.0.beta.6-1_amd64.deb --repo totaldrop-app/to
 
 TotalDrop 35 भाषाएँ बोलता है और आपके क्षेत्र के संख्या प्रारूपों का पालन करता है। अंग्रेज़ी और तुर्की की समीक्षा हो चुकी है; बाकी 33 मसौदे हैं जिन्हें मूल भाषी जाँच रहे हैं, इसलिए जब तक किसी भाषा की समीक्षा नहीं हो जाती, ऐप सुरक्षा से जुड़े पाठ (सत्यापन, गलत कोड, स्वीकार और अस्वीकार) अंग्रेज़ी में रखते हैं। साइट और ऐप, दोनों में सभी भाषाएँ हैं, Android और Linux 0.3.0-beta.1 से।
 
-कोई अटपटा वाक्य दिखा? [अनुवाद में मदद करें](../../docs/ceviri.md) (गाइड तुर्की में है)।
+कोई अटपटा वाक्य दिखा? [अनुवाद में मदद करें](../../docs/ceviri.md)।
 
 ## प्रोजेक्ट का समर्थन करें
 
@@ -113,7 +113,7 @@ TotalDrop मुफ़्त है क्योंकि लोग योगद
 
 लाइब्रेरी उदार (permissive) लाइसेंस में हैं ताकि कोई भी प्रोटोकॉल पर आगे निर्माण कर सके; ऐप GPL में हैं और सर्वर AGPL में। देखें [LICENSING.md](../../LICENSING.md)।
 
-हर प्लैटफ़ॉर्म का अपना वर्शन, टैग (`linux-v…`, `android-v…`) और CI वर्कफ़्लो है, ताकि कोई एक बाकियों को छुए बिना रिलीज़ हो सके। ब्रांच और रिलीज़ कैसे काम करते हैं: [docs/gelistirme.md](../../docs/gelistirme.md) (तुर्की में) और [docs/versioning.md](../../docs/versioning.md)। डिज़ाइन के नियम: [docs/tasarim.md](../../docs/tasarim.md) और आर्किटेक्चर के फ़ैसले: [docs/kararlar](../../docs/kararlar/README.md), दोनों तुर्की में।
+हर प्लैटफ़ॉर्म का अपना वर्शन, टैग (`linux-v…`, `android-v…`) और CI वर्कफ़्लो है, ताकि कोई एक बाकियों को छुए बिना रिलीज़ हो सके। ब्रांच और रिलीज़ कैसे काम करते हैं: [docs/gelistirme.md](../../docs/gelistirme.md) (तुर्की में) और [docs/versioning.md](../../docs/versioning.md)। डिज़ाइन के नियम: [docs/tasarim.md](../../docs/tasarim.md) और आर्किटेक्चर के फ़ैसले: [docs/kararlar](../../docs/kararlar/README.md) (तुर्की में)।
 
 ### बिल्ड
 

@@ -1,4 +1,4 @@
-<!-- Translated from README.md 0a6bee841691. -->
+<!-- Translated from README.md 4cb259c278ef. -->
 <div align="center">
 
 <picture>
@@ -81,7 +81,7 @@ Das Protokoll ist in *TotalDrop Protocol v0* beschrieben. Entscheidungen, die be
 
 TotalDrop spricht 35 Sprachen und folgt den Zahlenformaten Ihrer Region. Englisch und Türkisch sind geprüft; die anderen 33 sind Entwürfe, die Muttersprachler gerade prüfen. Deshalb behalten die Apps die Sicherheitstexte (Prüfung, falscher Code, Annehmen und Ablehnen) auf Englisch, bis eine Sprache geprüft ist. Die Website und die Apps haben sie alle, ab Android und Linux 0.3.0-beta.1.
 
-Einen holprigen Satz entdeckt? [Beim Übersetzen helfen](../../docs/ceviri.md) (die Anleitung ist auf Türkisch).
+Einen holprigen Satz entdeckt? [Beim Übersetzen helfen](../../docs/ceviri.md).
 
 ## Das Projekt unterstützen
 
@@ -113,7 +113,7 @@ Sie können auch helfen, indem Sie [Fehler melden](https://github.com/totaldrop-
 
 Die Bibliotheken stehen unter freizügigen Lizenzen, damit jeder auf dem Protokoll aufbauen kann; die Apps stehen unter der GPL, die Server unter der AGPL. Siehe [LICENSING.md](../../LICENSING.md).
 
-Jede Plattform hat ihre eigene Version, ihren eigenen Tag (`linux-v…`, `android-v…`) und ihren eigenen CI-Workflow, sodass eine Plattform veröffentlicht werden kann, ohne die anderen anzufassen. Wie Branches und Releases funktionieren: [docs/gelistirme.md](../../docs/gelistirme.md) (auf Türkisch) und [docs/versioning.md](../../docs/versioning.md). Designregeln: [docs/tasarim.md](../../docs/tasarim.md) und Architekturentscheidungen: [docs/kararlar](../../docs/kararlar/README.md), beides auf Türkisch.
+Jede Plattform hat ihre eigene Version, ihren eigenen Tag (`linux-v…`, `android-v…`) und ihren eigenen CI-Workflow, sodass eine Plattform veröffentlicht werden kann, ohne die anderen anzufassen. Wie Branches und Releases funktionieren: [docs/gelistirme.md](../../docs/gelistirme.md) (auf Türkisch) und [docs/versioning.md](../../docs/versioning.md). Designregeln: [docs/tasarim.md](../../docs/tasarim.md) und Architekturentscheidungen: [docs/kararlar](../../docs/kararlar/README.md) (auf Türkisch).
 
 ### Bauen
 

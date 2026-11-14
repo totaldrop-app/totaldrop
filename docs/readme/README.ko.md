@@ -1,4 +1,4 @@
-<!-- Translated from README.md 0a6bee841691. -->
+<!-- Translated from README.md 4cb259c278ef. -->
 <div align="center">
 
 <picture>
@@ -81,7 +81,7 @@ gh attestation verify totaldrop_0.3.0.beta.6-1_amd64.deb --repo totaldrop-app/to
 
 TotalDrop은 35개 언어를 지원하며 사용자 지역의 숫자 형식을 따릅니다. 영어와 터키어는 검토를 마쳤고, 나머지 33개 언어는 원어민이 확인 중인 초안입니다. 그래서 앱은 해당 언어의 검토가 끝날 때까지 보안 관련 문구(검증, 잘못된 코드, 수락과 거절)를 영어로 유지합니다. 사이트와 앱 모두 Android 및 Linux 0.3.0-beta.1부터 모든 언어를 지원합니다.
 
-어색한 문장을 발견하셨나요? [번역 돕기](../../docs/ceviri.md) (안내서는 터키어로 되어 있습니다)
+어색한 문장을 발견하셨나요? [번역 돕기](../../docs/ceviri.md)
 
 ## 프로젝트 후원하기
 
@@ -113,7 +113,7 @@ TotalDrop이 무료로 유지되는 것은 사람들이 힘을 보태 주기 때
 
 라이브러리는 누구나 프로토콜 위에 무언가를 만들 수 있도록 관대한 라이선스를 쓰고, 앱은 GPL, 서버는 AGPL입니다. 자세한 내용: [LICENSING.md](../../LICENSING.md)
 
-각 플랫폼은 자체 버전, 태그(`linux-v…`, `android-v…`), CI 워크플로를 가지므로, 하나를 출시할 때 다른 플랫폼을 건드리지 않아도 됩니다. 브랜치와 릴리스 운영 방식: [docs/gelistirme.md](../../docs/gelistirme.md) (터키어), [docs/versioning.md](../../docs/versioning.md). 디자인 규칙: [docs/tasarim.md](../../docs/tasarim.md), 아키텍처 결정: [docs/kararlar](../../docs/kararlar/README.md) (둘 다 터키어).
+각 플랫폼은 자체 버전, 태그(`linux-v…`, `android-v…`), CI 워크플로를 가지므로, 하나를 출시할 때 다른 플랫폼을 건드리지 않아도 됩니다. 브랜치와 릴리스 운영 방식: [docs/gelistirme.md](../../docs/gelistirme.md) (터키어), [docs/versioning.md](../../docs/versioning.md). 디자인 규칙: [docs/tasarim.md](../../docs/tasarim.md), 아키텍처 결정: [docs/kararlar](../../docs/kararlar/README.md) (터키어).
 
 ### 빌드
 
