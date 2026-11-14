@@ -140,3 +140,33 @@ test("team.json rejects a bio that is bad, untranslated or on a non-person (#408
   assert.match(errs((c) => { person(c, "sadikkuzu").bio = "Untranslated."; }), /sadikkuzu: tm\.bio\.sadikkuzu is not translated in [a-z]{2,3}(-[A-Za-z0-9]+)*\.json/);
   assert.match(errs((c) => { person(c, "claude").bio = "x"; }), /claude: only people have a bio/);
 });
+
+test("team.json coffee is a page name, and only on a person (#486)", async () => {
+  const { configErrors } = await import("./team.mjs");
+  const orig = JSON.parse(readFileSync(new URL("../team/team.json", import.meta.url), "utf8"));
+  const errs = (edit) => { const c = structuredClone(orig); edit(c); return configErrors(c).join("\n"); };
+  const person = (c, login) => c.people.find((p) => p.login === login);
+  assert.equal(errs((c) => { person(c, "sadikkuzu").coffee = "sadik_kuzu-1"; }), "");
+  for (const bad of ["", "a/b", "x?y", "https://buymeacoffee.com/ozdil", "a".repeat(65), true, null, 7, " ozdil", "a\"b", "../x"])
+    assert.match(errs((c) => { person(c, "ozdil").coffee = bad; }), /ozdil: bad coffee page/, JSON.stringify(bad));
+  assert.match(errs((c) => { person(c, "claude").coffee = "x"; }), /claude: only people have a coffee page/);
+  assert.match(errs((c) => { person(c, "ozdil").donate = true; }), /ozdil: "donate" is gone/);
+});
+
+test("the coffee link is a round icon link to the person's Buy Me a Coffee page, named like the GitHub link (#486)", async () => {
+  const { coffeeLink } = await import("./team.mjs");
+  const html = coffeeLink("ozdil");
+  assert.match(html, /^<li><a class="icon-link" href="https:\/\/buymeacoffee\.com\/ozdil" rel="nofollow">/);
+  assert.match(html, /<svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"/);
+  // The name is English in every language, so a screen reader says it so.
+  assert.match(html, /<span class="visually-hidden" lang="en">Buy Me a Coffee: <bdi>ozdil<\/bdi><\/span><\/a><\/li>$/);
+});
+
+test("only a person with a coffee page gets the coffee button on their card, last (#486)", async () => {
+  const { cardLinks, coffeeLink } = await import("./team.mjs");
+  const pr = { website: null };
+  assert.ok(cardLinks({ login: "a", coffee: "a" }, pr).includes(coffeeLink("a")));
+  assert.ok(!cardLinks({ login: "b" }, pr).some((l) => l.includes("buymeacoffee")));
+  assert.equal(cardLinks({ login: "a", coffee: "a" }, pr).at(-1), coffeeLink("a"));
+  assert.equal(cardLinks({ login: "c", coffee: "c" }, { website: "https://example.com" }).length, 3);
+});
