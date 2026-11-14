@@ -1,22 +1,23 @@
-# 0003: Altyapı Cloudflare'de
+# 0003: Infrastructure on Cloudflare
 
-- **Durum:** Kabul, 28 Ekim 2026
-- **Bağlam:** Farklı ağlardaki cihazlar için adres bulma (STUN) ve doğrudan
-  yol açılmadığında şifreli trafiği taşıyan bir aktarma sunucusu gerekli.
-  Seçenekler: kendi sunucumuz (Hetzner), Cloudflare Workers, Cloudflare
+- **Status:** Accepted, 28 October 2026
+- **Context:** Devices on different networks need address discovery (STUN)
+  and a relay server that carries the encrypted traffic when no direct path
+  opens. Options: our own server (Hetzner), Cloudflare Workers, Cloudflare
   Realtime TURN.
-- **Karar:** Site, rendezvous ve aktarma Cloudflare'de. Adres bulma için
-  Cloudflare'in ücretsiz STUN'u; aktarma için her aktarıma bir Durable
-  Object, WebSocket üzerinden. Kendi sunucusunda çalıştırmak isteyenler için
-  aynı protokolü konuşan Rust aktarma sunucusu depoda kalır.
-- **Neden:** Her şey tek yerden yönetilir; yeni bir makineyi güncellemek ve
-  korumak gerekmez. Worker çıkış trafiği ücretsiz, maliyet neredeyse sıfır.
-  Yerel ölçümde yalnızca aktarma yoluyla 100 MB 8 saniye; gerçek
-  internette 28 saniye (iki uç aynı ev bağlantısındaydı).
-- **Gözden geçirme koşulu:** Aktarma hızı yetmezse ya da Cloudflare'in
-  kullanım koşulları sorun çıkarırsa Cloudflare Realtime TURN ikinci yol
-  olarak eklenir (ayda ilk 1.000 GB ücretsiz, sonrası GB başına 0,05 USD).
-  Bunun maliyeti bağışlardan karşılanır.
-- **Sonuçlar:** Cloudflare IP adreslerini görür; gizlilik politikasında
-  yazılı. Gizlilik modu (yalnızca aktarma, ileride Tor) IP'sini de
-  gizlemek isteyenler için.
+- **Decision:** The site, rendezvous and the relay run on Cloudflare.
+  Cloudflare's free STUN for address discovery; for the relay, one Durable
+  Object per transfer, over WebSocket. For those who want to run it on
+  their own server, a Rust relay server that speaks the same protocol stays
+  in the repository.
+- **Why:** Everything is managed in one place; there is no new machine to
+  update and protect. Worker egress is free, so the cost is close to zero.
+  Measured locally, 100 MB over the relay alone took 8 seconds; on the real
+  internet 28 seconds (both ends were on the same home connection).
+- **Review condition:** If the relay is too slow, or Cloudflare's terms of
+  use cause a problem, Cloudflare Realtime TURN is added as a second path
+  (the first 1,000 GB a month free, then USD 0.05 per GB). Its cost is
+  covered by donations.
+- **Consequences:** Cloudflare sees IP addresses; the privacy policy says
+  so. Privacy mode (relay only, Tor later) is for those who also want to
+  hide their IP.

@@ -1,74 +1,79 @@
-# 0009: iOS ve macOS, ücretsiz CI ile; Apple hesabı yalnızca yayında
+# 0009: iOS and macOS with free CI; an Apple account only for release
 
-- **Durum:** Kabul, 28 Ekim 2026
-- **Bağlam:** Proje yalnızca bağışla yürür ve para harcamak istemiyoruz.
-  iOS ve macOS uygulamaları Xcode ister; Xcode yalnızca macOS'ta çalışır,
-  geliştirme makinesi ise Linux. App Store, TestFlight ve mağaza dışı
-  dağıtımda imza ile Apple noter onayı (notarization) için yıllık 99 USD'lik
-  Apple Developer hesabı gerekir. macOS uygulaması hesapsız da dağıtılabilir,
-  ama kurulumu zahmetlidir.
-- **Seçenekler:**
-  1. Kiralık bulut Mac. Aylık ücret; gerekmiyor.
-  2. **GitHub'ın standart macOS koşucuları (açık kaynak depoda ücretsiz,
-     Xcode ve simülatörler kurulu) ile derleme, test ve paketleme; Apple
-     hesabı yalnızca yayına gelince.**
-  3. iOS ve macOS'u bağışlar hesabı karşılayana kadar hiç başlatmamak.
-- **Karar:** Seçenek 2.
+- **Status:** Accepted, 28 October 2026
+- **Context:** The project runs on donations alone and we do not want to
+  spend money. The iOS and macOS apps need Xcode; Xcode only runs on macOS,
+  while the development machine runs Linux. Signing and Apple notarization
+  for the App Store, TestFlight and distribution outside the store need an
+  Apple Developer account at USD 99 a year. The macOS app can be
+  distributed without an account, but installing it is cumbersome.
+- **Options:**
+  1. A rented cloud Mac. A monthly fee; not needed.
+  2. **Build, test and package on GitHub's standard macOS runners (free for
+     an open-source repository, with Xcode and the simulators installed);
+     the Apple account only when it comes to release.**
+  3. Not start iOS and macOS at all until donations cover the account.
+- **Decision:** Option 2.
 
-## Sıra
+## Order
 
-1. Çekirdek iOS (`aarch64-apple-ios`, `aarch64-apple-ios-sim`) ve macOS
-   (`aarch64-apple-darwin`, `x86_64-apple-darwin`; `lipo` ile tek paket)
-   için CI'da derlenir; macOS'ta testler çalışır. Hesap gerekmez.
-2. Arayüz için ayrı bir karar: SwiftUI ile yerel uygulama ya da mevcut
-   Flutter uygulamasının iOS/macOS hedefi. Ölçüt, sistem görünümüne uyum
-   (Dieter Rams ilkeleri, [tasarim.md](../tasarim.md)) ve paylaşım menüsü
-   gibi sistem tümleşmeleri.
-3. Simülatör testleri CI'da. Hesap gerekmez.
-4. macOS: CI'dan ad-hoc imzalı ama noter onaysız paket çıkar (Apple
-   Silicon'da hiç imzası olmayan kod çalışmaz; ad-hoc imzayı derleyici
-   kendisi koyar). macOS 15'ten beri sağ tık > Aç yolu yok. İndirme sayfası
-   şu adımları anlatır: uygulamayı bir kez açmayı dene, Sistem Ayarları >
-   Gizlilik ve Güvenlik > "Yine de Aç", parola ya da Touch ID ile onayla.
-   Sayfa, açmadan önce paketin sürümle yayımlanan özetinin ve imzalı yapı
-   kaynağının (`gh attestation verify`) doğrulanmasını da anlatır.
-5. Yayın: Apple Developer hesabı bu adımda alınır. Hesabı proje sahibi
-   açar; imza sertifikaları ve App Store Connect anahtarı yalnızca CI gizli
-   değişkenlerinde durur, depoya ve geliştirme makinesine yazılmaz. İmza ve
-   yayın işleri yalnızca sürüm etiketlerinde çalışır; çatallardan gelen
-   PR'lar gizli değişkenleri görmez. Hesap alınınca macOS paketi de Developer
-   ID ile imzalanır ve noter onayından geçer.
+1. The core is built in CI for iOS (`aarch64-apple-ios`,
+   `aarch64-apple-ios-sim`) and macOS (`aarch64-apple-darwin`,
+   `x86_64-apple-darwin`; one package with `lipo`); the tests run on macOS.
+   No account needed.
+2. A separate decision for the interface: a native app in SwiftUI, or the
+   iOS/macOS target of the existing Flutter app. The criteria are how well
+   it matches the system look (Dieter Rams' principles,
+   [tasarim.md](../tasarim.md)) and system integrations such as the share
+   menu.
+3. Simulator tests in CI. No account needed.
+4. macOS: CI produces an ad-hoc signed but not notarized package (on Apple
+   Silicon, code with no signature at all does not run; the compiler adds
+   the ad-hoc signature itself). Since macOS 15 there is no right-click >
+   Open route. The download page explains the steps: try to open the app
+   once, then System Settings > Privacy & Security > "Open Anyway", and
+   confirm with the password or Touch ID. Before opening, the page also
+   explains how to verify the package against the checksum published with
+   the release and its signed build provenance (`gh attestation verify`).
+5. Release: the Apple Developer account is taken out at this step. The
+   project owner opens the account; the signing certificates and the App
+   Store Connect key live only in CI secrets and are never written to the
+   repository or the development machine. The signing and release jobs run
+   only on release tags; pull requests from forks do not see the secrets.
+   Once the account exists, the macOS package is also signed with a
+   Developer ID and notarized.
 
-## CI kuralları
+## CI rules
 
-- Yalnızca standart koşucular; ücretli büyük koşucu etiketleri kullanılmaz.
-  Ücretsiz koşucular depo açık kaldıkça ücretsizdir ve bir hizmet sözü
-  yoktur.
-- `macos-latest` değil, sabit bir imaj (örneğin `macos-15`) ve sabit bir
-  Xcode sürümü kullanılır; ikisi de bilinçli olarak yükseltilir.
-- Kuyruğun uzaması bir CI hatası sayılmaz; iş yeniden çalıştırılır.
+- Standard runners only; the labels of paid larger runners are not used.
+  The free runners are free while the repository stays public, and come
+  with no service promise.
+- A fixed image (for example `macos-15`) and a fixed Xcode version are
+  used, not `macos-latest`; both are upgraded deliberately.
+- A long queue does not count as a CI failure; the job is rerun.
 
-## Riskler
+## Risks
 
-- iOS'ta yerel ağda cihaz bulma Bonjour ile ücretsizdir. Ham multicast ya
-  da broadcast ise Apple'ın yalnızca ücretli hesaplara istek üzerine verdiği
-  bir yetki ister. Bulma tasarımı bu yetkiye dayanırsa iOS işi 1–3.
-  adımlarda takılır; o zaman ayrı bir karar yazılır.
-- Hesap gelene kadar macOS'ta kurulum zahmetli olacak; bu, benimsenmeyi ve
-  gizlilik odaklı bir uygulamaya güveni azaltır.
+- On iOS, finding devices on the local network with Bonjour is free. Raw
+  multicast or broadcast, however, needs an entitlement that Apple grants
+  only to paid accounts, on request. If the discovery design depends on
+  that entitlement, the iOS work stalls at steps 1–3; a separate decision
+  is then written.
+- Until the account comes, installing on macOS will be cumbersome; this
+  slows adoption and lowers trust in a privacy-focused app.
 
-## Sonuçlar
+## Consequences
 
-- Mac olmadan simülatörü canlı görmek mümkün değil; CI günlükleri ve ekran
-  görüntüleri ile çalışılır. Gerçek iPhone'da deneme, ücretsiz bir Apple
-  ID ile yedi günlük yan yükleme dışında, hesap gelene kadar kısıtlıdır.
-  Bir Mac bağlanırsa o da kullanılır.
-- Hesapsız Homebrew kurulumu bir yol sayılmaz: Homebrew noter onaysız
-  paketleri artık kabul etmiyor.
-  - **Not ([0015](0015-paket-yoneticileri.md)):** bu yalnızca uygulama
-    paketleri (cask) için geçerlidir. CLI, kendi tap'imizdeki bir formülle
-    hesapsız da kurulabilir: formül indirmelerinin karantinaya girmemesi
-    ve ad-hoc imzanın yetmesi beklenir. Bu, CLI'ın ilk sürümünde macOS'ta
-    denenir.
-- Yayınlar, diğer platformlarda olduğu gibi, yalnızca CI'dan çıkar
+- Without a Mac, the simulator cannot be watched live; the work relies on
+  CI logs and screenshots. Trying on a real iPhone is limited until the
+  account comes, apart from seven-day sideloading with a free Apple ID. If
+  a Mac becomes available, it is used too.
+- An account-free Homebrew install does not count as a route: Homebrew no
+  longer accepts packages that are not notarized.
+  - **Note ([0015](0015-paket-yoneticileri.md)):** this only applies to app
+    packages (casks). The CLI can be installed without an account through a
+    formula in our own tap: formula downloads are expected not to be
+    quarantined, and the ad-hoc signature is expected to be enough. This is
+    tried on macOS with the CLI's first release.
+- Releases come only from CI, as on the other platforms
   ([0007](0007-surec.md)).

@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 //
-//! The rules every translation must follow (ADR 0008, "CI denetimleri").
+//! The rules every translation must follow (ADR 0008, "CI checks").
 //! `cargo test -p totaldrop-l10n` runs them on the compiled-in files, so CI
 //! fails on a broken translation; missing translations are only reported.
 

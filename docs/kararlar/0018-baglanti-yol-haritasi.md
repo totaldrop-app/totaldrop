@@ -1,197 +1,207 @@
-# 0018: Bağlantı katmanı kendi yığınımızda kalır, doğrudan yollar parça parça artırılır
+# 0018: The connection layer stays on our own stack; direct paths grow piece by piece
 
-- **Durum:** Kabul, 10 Kasım 2026 (Ozan, #401)
-- **Bağlam:** Ozan, 10 Kasım 2026'da iroh'un ve libp2p'nin TotalDrop'a
-  uyup uymadığını ve bu alandaki açık fikirlerden hangilerini
-  birleştirebileceğimizi sordu. Bugünkü bağlantı katmanı şöyle çalışır
+- **Status:** Accepted, 10 November 2026 (Ozan, #401)
+- **Context:** On 10 November 2026 Ozan asked whether iroh and libp2p suit
+  TotalDrop, and which of the open ideas in this field we could combine.
+  Today's connection layer works like this
   ([0002](0002-protokol-v0.md), [0003](0003-cloudflare-altyapi.md),
-  [protokol notları](../protocol-v0.1-notes.md) 9, 10, 20, 21):
+  [protocol notes](../protocol-v0.1-notes.md) 9, 10, 20, 21):
 
-  - İki cihaz rendezvous posta kutusunda CPace ile eşleşir ve kimliği
-    doğrulanmış `HINTS` ile yerel adreslerini, STUN ile öğrendikleri genel
-    adreslerini ve rölelerini paylaşır.
-  - Her aktarım her iki tarafta da yeni, tek kullanımlık bir Ed25519
-    anahtarıyla QUIC (quinn) açar. Güven, QUIC içindeki Noise XXpsk3 ve
-    ML-KEM-768 adımından gelir.
-  - QUIC tek bir soket sarmalayıcısı (`PathSocket`,
-    `crates/totaldrop-core/src/path.rs`) üzerinden konuşur: doğrudan
-    yollar gerçek UDP soketine, röle yolu WebSocket röle bağlantısına
-    gider. Yollar yarışır, ilk el sıkışması tamamlanan kazanır. Doğrudan
-    yol 8 saniye sessiz kalırsa bağlantı röleye geçer. Karşı taraf hâlâ
-    doğrudan gönderiyorsa geri döner; iki taraf da geçtiyse bağlantı
-    bitene kadar rölede kalır. Röleden sonradan açılan doğrudan yola
-    geçmek henüz yapılmadı (protokol notu 22, #185).
-  - Röle, Cloudflare Workers üzerinde her aktarım için bir Durable
-    Object'tir ve yalnızca o iki anahtarı kabul eder. Kendi sunucusunda
-    çalıştırmak isteyenler için aynı protokolü konuşan bir Rust rölesi de
-    vardır. Adres bulma için `stun.cloudflare.com` kullanılır.
+  - The two devices pair in a rendezvous mailbox with CPace and share their
+    local addresses, the public addresses they learned through STUN, and
+    their relays, in an authenticated `HINTS`.
+  - Every transfer opens QUIC (quinn) on both sides with a fresh, single-use
+    Ed25519 key. Trust comes from the Noise XXpsk3 and ML-KEM-768 step
+    inside QUIC.
+  - QUIC talks through a single socket wrapper (`PathSocket`,
+    `crates/totaldrop-core/src/path.rs`): direct paths go to the real UDP
+    socket, the relay path to the WebSocket relay connection. The paths
+    race, and the first one whose handshake completes wins. If the direct
+    path stays silent for 8 seconds, the connection moves to the relay. If
+    the other side is still sending directly, it moves back; if both sides
+    have moved, it stays on the relay until the connection ends. Moving
+    from the relay to a direct path that opens later is not done yet
+    (protocol note 22, #185).
+  - The relay is one Durable Object per transfer on Cloudflare Workers, and
+    accepts only those two keys. For those who want to run it on their own
+    server, there is also a Rust relay that speaks the same protocol.
+    Address discovery uses `stun.cloudflare.com`.
 
-  Kodu okurken bir eksik bulundu: QUIC soketi yalnızca IPv4'e bağlanıyor
-  (`transport::bind_socket`, `0.0.0.0`). `HINTS` 16 baytlık adresleri
-  zaten taşıyor, ama IPv6 yolları hiç denenmiyor. #338'deki duraklamanın
-  nedeni uygulamanın arka plana düşmesiydi, taşıma katmanı değil. #341
-  (alma yönünün gönderme yönünden yavaş olması) hâlâ açık. Soket
-  arabellekleri büyütüldü (7745be5, 614f243; `SOCKET_BUFFER` 4 MiB),
-  bunun #341'e etkisi henüz ölçülmedi; konu taşıma katmanıyla ilgili ama
-  iroh ya da libp2p'ye bağlı değil. Röle yolu 3 Kasım'da Ozan'ın Wi-Fi
-  bağlantısında yaklaşık 3 MB/s ölçüldü (#185).
+  Reading the code turned up a gap: the QUIC socket binds only to IPv4
+  (`transport::bind_socket`, `0.0.0.0`). `HINTS` already carries 16-byte
+  addresses, but IPv6 paths are never tried. The stall in #338 was caused
+  by the app going into the background, not by the transport layer. #341
+  (receiving being slower than sending) is still open. The socket buffers
+  were enlarged (7745be5, 614f243; `SOCKET_BUFFER` 4 MiB); their effect on
+  #341 has not been measured yet. The issue is about the transport layer,
+  but does not depend on iroh or libp2p. On 3 November the relay path was
+  measured at about 3 MB/s on Ozan's Wi-Fi connection (#185).
 
-- **Seçenekler:**
-  1. **iroh** (n0, [1.4.1](https://crates.io/crates/iroh/1.4.1), MIT
-     veya Apache-2.0; [1.0 sürümü](https://crates.io/crates/iroh/1.0.0)
-     15 Haziran 2026). Olgun NAT geçişi, yönlendiricide port açma, QUIC
-     multipath, hazır röle. Uymadığı yerler:
-     - Rölesi (`iroh-relay`) bir Rust sunucusudur ve Cloudflare
-       Workers'ta çalışmaz. Ya bir sunucu işletiriz ya da n0'ın hız
-       sınırlı genel rölelerine veya ücretli barındırılan rölesine
-       bağlanırız. 0003, rölenin Workers'ta olmasını tam olarak
-       güncellenecek ve korunacak yeni bir makine olmasın diye seçti;
-       işletilecek bir sunucu ayrıca, [0005](0005-bagis.md) gereği önce
-       bağış sayfasına yazılması gereken yeni bir giderdir.
-     - Kimlik, uzun ömürlü bir `EndpointId`'dir ve DNS (pkarr), mDNS ve
-       DHT ile yayınlanır. n0'ın kendisi bu anahtarların gizli
-       sayılmaması gerektiğini yazar; gizli adres arama yalnızca bir
-       denemedir ([Blinded address lookup](https://iroh.computer/blog/blinded-address-lookup),
-       13 Ekim 2026). Bizde anahtar her aktarımda yenidir ve keşif
-       yoktur. Keşfi kapatıp her aktarımda anahtar üretirsek iroh'un
-       kazandırdığının büyük kısmı gider.
-     - Kripto tarafında bir şey kazandırmaz: CPace, Noise ve ML-KEM yine
-       üstte kalır.
-     - Geçiş, `path.rs`, `relay.rs`, `transport.rs`, iki röle sunucusu ve
-       protokol notları 20–21'in yeniden yazılması demektir. Bağımsız
-       denetimin kapsamı değişir ve bağımlılık ağacı büyür (Flatpak cargo
-       kaynakları, `cargo-deny`). Yol haritası önce kararlılığı istediği
-       için 1.0 öncesi denetimden önce bu riski almayız.
-     - `iroh-blobs` hâlâ deneme sürümündedir. STREAM ve BLAKE3 ile kendi
-       parçalı aktarımımız aynı işi görür.
+- **Options:**
+  1. **iroh** (n0, [1.4.1](https://crates.io/crates/iroh/1.4.1), MIT or
+     Apache-2.0; [version 1.0](https://crates.io/crates/iroh/1.0.0)
+     15 June 2026). Mature NAT traversal, port mapping on the router, QUIC
+     multipath, a ready relay. Where it does not fit:
+     - Its relay (`iroh-relay`) is a Rust server and does not run on
+       Cloudflare Workers. Either we operate a server, or we connect to
+       n0's rate-limited public relays or its paid hosted relay. 0003 chose
+       to put the relay on Workers precisely so that there is no new
+       machine to update and protect; a server to operate is also a new
+       cost that, under [0005](0005-bagis.md), must first be written on the
+       donation page.
+     - The identity is a long-lived `EndpointId`, published through DNS
+       (pkarr), mDNS and the DHT. n0 itself writes that these keys should
+       not be considered secret; blinded address lookup is only an
+       experiment
+       ([Blinded address lookup](https://iroh.computer/blog/blinded-address-lookup),
+       13 October 2026). For us the key is new for every transfer and there
+       is no discovery. If we turned discovery off and generated a key per
+       transfer, most of what iroh brings would be gone.
+     - It brings nothing on the cryptography side: CPace, Noise and ML-KEM
+       still stay on top.
+     - Moving means rewriting `path.rs`, `relay.rs`, `transport.rs`, the two
+       relay servers and protocol notes 20–21. The scope of the independent
+       audit changes and the dependency tree grows (the Flatpak cargo
+       sources, `cargo-deny`). Because the roadmap asks for stability first,
+       we do not take this risk before the pre-1.0 audit.
+     - `iroh-blobs` is still experimental. Our own piecewise transfer with
+       STREAM and BLAKE3 does the same job.
   2. **libp2p** (`rust-libp2p`
-     [0.57.1](https://crates.io/crates/libp2p/0.57.1), MIT). 1.0
-     değildir ve sık sık kırıcı değişiklik yapar. Circuit relay v2 yalnızca hole punching'i
-     koordine etmek içindir; Rust uygulamasının varsayılan devre sınırları
-     (2 dakika, 128 KiB) dosya taşımaya yetmez. DCUtR'ın başarı oranı
-     yaklaşık %70, simetrik NAT'ta ise küçük bir örneklemde (536 eş)
-     yaklaşık %40'tır
-     ([Trautwein vd., büyük ölçekli ölçüm](https://arxiv.org/html/2510.27500v1);
-     simetrik NAT oranı [ProbeLab](https://probelab.io/blog/can-libp2p-punch-through-nats/)).
-     Identify protokolü cihazın adreslerini ve sürümünü karşı tarafa
-     duyurur. DHT ve gossip ağları için tasarlanmıştır; bize uyan bir
-     parçası yoktur.
-  3. **Kendi yığınımızı korumak ve açık fikirleri parça parça eklemek.**
-     Bugünkü yapı (yarışan yollar, `HINTS` ile adres paylaşımı, röleye
-     düşüp geri dönme) bu parçaların iskeletidir; her biri protokolü
-     geriye uyumlu biçimde büyütür.
+     [0.57.1](https://crates.io/crates/libp2p/0.57.1), MIT). Not 1.0, and
+     makes breaking changes often. Circuit relay v2 is only for
+     coordinating hole punching; the Rust implementation's default circuit
+     limits (2 minutes, 128 KiB) are not enough to carry files. DCUtR's
+     success rate is about 70%, and behind symmetric NAT about 40% in a
+     small sample (536 peers)
+     ([Trautwein et al., a large-scale measurement](https://arxiv.org/html/2510.27500v1);
+     the symmetric NAT rate from
+     [ProbeLab](https://probelab.io/blog/can-libp2p-punch-through-nats/)).
+     The Identify protocol announces the device's addresses and version to
+     the other side. It is designed for DHT and gossip networks; no part
+     of it fits us.
+  3. **Keep our own stack and add the open ideas piece by piece.** Today's
+     structure (racing paths, address sharing through `HINTS`, falling back
+     to the relay and returning) is the skeleton for these pieces; each one
+     grows the protocol in a backward-compatible way.
 
-- **Karar:** Seçenek 3. Kripto, eşleşme (CPace), rendezvous ve Workers
-  rölesi olduğu gibi kalır. Tek istisna 6. adımdır: aynı ağda internet
-  yokken CPace mesajları rendezvous posta kutusu yerine yerel ağ
-  üzerinden taşınır; mesajlar ve CPace aynı kalır, değişen yalnızca onları
-  taşıyan kanaldır. Aşağıdaki adımların her biri kendi issue'su, dalı,
-  hatayı ya da eksiği gösteren testi ve cihaz denemesiyle ayrı bir PR olarak
-  gelir. Sıra kazanca ve maliyete göredir; ilk üçü "Sırada" milestone'una,
-  kalanları "Sonra"ya girer. Gizlilik modunda (yalnızca röle, tehdit
-  modeli T6) bu adımların hiçbiri adres duyurmaz ve port açmaz; röle
-  yolları (Workers rölesi ve 4. adımdaki TURN) gizlilik modunda da
-  kullanılır ve IP adresini görür.
+- **Decision:** Option 3. The cryptography, pairing (CPace), rendezvous and
+  the Workers relay stay as they are. The only exception is step 6: on the
+  same network with no internet, the CPace messages are carried over the
+  local network instead of the rendezvous mailbox; the messages and CPace
+  stay the same, and only the channel that carries them changes. Each of
+  the steps below comes as a separate PR with its own issue, branch, a test
+  that shows the bug or the gap, and a device trial. The order follows the
+  gain and the cost; the first three go into the "Sırada" (next) milestone,
+  the rest into "Sonra" (later). In privacy mode (relay only, threat model
+  T6) none of these steps announces addresses or opens ports; the relay
+  paths (the Workers relay and the TURN of step 4) are used in privacy mode
+  too and see the IP address.
 
-  1. **IPv6.** Çift yığınlı soket; IPv4 ve IPv6 yollarının yarışması
-     (Happy Eyeballs, [RFC 8305](https://www.rfc-editor.org/rfc/rfc8305)).
-     IPv6'da çoğunlukla NAT yoktur (NPTv6 ve NAT66 var ama seyrek); iki
-     cihazın da IPv6'sı olduğunda ve araya giren güvenlik duvarları (operatörlerin ve ev yönlendiricilerinin) iki
-     taraf aynı anda gönderdiğinde geçirdiğinde doğrudan yol delmeye gerek
-     kalmadan açılır. Bunun ne kadar sık olduğu cihaz denemeleriyle
-     ölçülür. Duyurulan IPv6 adresi, kalıcı adres yerine işletim
-     sisteminin geçici adresi ([RFC 8981](https://www.rfc-editor.org/rfc/rfc8981))
-     olmalıdır; kalıcı adres cihazı aktarımlar arasında tanınır kılabilir.
-     Adayların sıralanması ve denenmesi için `str0m`'un ICE modülüne (MIT
-     veya Apache-2.0) bakılır; uymazsa bugünkü yarış korunur.
-  2. **Yönlendiricide port açma.** UPnP-IGD, NAT-PMP
-     ([RFC 6886](https://www.rfc-editor.org/rfc/rfc6886)) ve PCP
-     ([RFC 6887](https://www.rfc-editor.org/rfc/rfc6887)); kısa süreli
-     ve aktarım bitince geri bırakılan eşleme. Önce n0'ın tek başına
-     kullanılabilen `portmapper` crate'i (MIT veya Apache-2.0)
-     değerlendirilir. Açılan port yalnızca o aktarımın QUIC uç noktasına
-     gider ve bu uç nokta yalnızca `HINTS`'te duyurulan anahtarı kabul
-     eder; yine de tehdit modeline yazılır.
-  3. **Ağ değişimini dinlemek.** 8 saniyelik sessizliği beklemek yerine
-     işletim sistemi ağ değiştiğini söyleyince (Android
-     `ConnectivityManager`, Linux NetworkManager) adresler yeniden
-     öğrenilir ve yollar hemen yeniden denenir. Magic Wormhole'un
-     "dilation" fikri ve `netwatch` crate'i (MIT veya Apache-2.0) örnek
-     alınır. #185 ve protokol notu 22'deki "sonradan açılan doğrudan
-     yola geçme" eksiğiyle birlikte ele alınır.
-  4. **Ölçüm: ikinci röle olarak TURN.** Cloudflare Realtime TURN UDP
-     üzerinden çalışır ve WebSocket rölemizin hızını (#185) aşabilir.
-     0003 bunu zaten "aktarma hızı yetmezse" eklenecek ikinci yol olarak
-     yazar. Fiyatı ayda ilk 1.000 GB ücretsiz, sonrası Cloudflare'den
-     istemciye giden trafik için GB başına 0,05 USD'dir
+  1. **IPv6.** A dual-stack socket; IPv4 and IPv6 paths race (Happy
+     Eyeballs, [RFC 8305](https://www.rfc-editor.org/rfc/rfc8305)). IPv6
+     mostly has no NAT (NPTv6 and NAT66 exist, but are rare); when both
+     devices have IPv6, and the firewalls in between (the operators' and
+     the home routers') let traffic through when both sides send at the
+     same time, the direct path opens without any hole punching. How often
+     that happens is measured with device trials. The IPv6 address
+     announced must be the operating system's temporary address
+     ([RFC 8981](https://www.rfc-editor.org/rfc/rfc8981)) rather than the
+     permanent one; the permanent address could make the device
+     recognisable across transfers. For ordering and trying the
+     candidates, `str0m`'s ICE module (MIT or Apache-2.0) is looked at; if
+     it does not fit, today's race is kept.
+  2. **Port mapping on the router.** UPnP-IGD, NAT-PMP
+     ([RFC 6886](https://www.rfc-editor.org/rfc/rfc6886)) and PCP
+     ([RFC 6887](https://www.rfc-editor.org/rfc/rfc6887)); a short-lived
+     mapping that is released when the transfer ends. n0's standalone
+     `portmapper` crate (MIT or Apache-2.0) is evaluated first. The opened
+     port leads only to that transfer's QUIC endpoint, and that endpoint
+     only accepts the key announced in `HINTS`; it is still written into
+     the threat model.
+  3. **Listening for network changes.** Instead of waiting for 8 seconds of
+     silence, when the operating system says the network changed (Android
+     `ConnectivityManager`, Linux NetworkManager), the addresses are learned
+     again and the paths are tried again at once. Magic Wormhole's
+     "dilation" idea and the `netwatch` crate (MIT or Apache-2.0) are taken
+     as examples. It is dealt with together with the "moving to a direct
+     path that opens later" gap in #185 and protocol note 22.
+  4. **A measurement: TURN as a second relay.** Cloudflare Realtime TURN
+     works over UDP and may beat the speed of our WebSocket relay (#185).
+     0003 already writes it down as the second path to add "if the relay is
+     too slow". The price is the first 1,000 GB a month free, then USD 0.05
+     per GB for traffic from Cloudflare to the client
      ([Cloudflare Realtime TURN](https://developers.cloudflare.com/realtime/turn/));
-     ücretsiz kotayı aşan maliyet 0003 ve 0005 gereği bağışlardan
-     karşılanır. Bu adım önce bir ölçümdür: hız, beklenen trafik ve
-     sunucunun gördükleri (IP adresleri, süre, bayt) yazılır; kullanıma
-     almak ayrı bir karar ve gizlilik politikası güncellemesi gerektirir.
-     TURN de bir röledir: kullanıma alınırsa gizlilik modunda da
-     kullanılabilir ve Workers rölesi gibi IP adresini, süreyi ve bayt
-     sayısını görür; bu, tehdit modeli T6'ya yazılır.
-  5. **Simetrik NAT için doğum günü delme.** Tailscale'in anlattığı
-     yöntem: bir taraf çok sayıda port açar, öbür taraf rastgele portları
-     dener. Paket sayısı ve süre sınırlıdır; röle her zaman yedekte kalır.
-  6. **Sunucusuz yerel ağ keşfi.** Aynı ağdaki iki cihaz, internet
-     yokken de birbirini bulur (LocalSend'in çok noktaya yayın fikri).
-     Duyuru cihaz adı ya da kalıcı bir kimlik taşımaz ve kodu çevrimdışı
-     denemeye yarayacak hiçbir şey içermez: koddan türetilen bir değer
-     yayınlanırsa aynı ağdaki herkes kısa kodu çevrimdışı deneyip CPace'in
-     verdiği tek tahmin hakkı korumasını bozar. Eşleşme yine CPace ile
-     yapılır; duyuru yalnızca buluşma yerini söyler ve CPace mesajları
-     rendezvous yerine bu yerel kanaldan gider (bkz. Karar). Eşleşme
-     mesajlarının yeni bir taşıma yolu olduğu için bu adım denetim
-     kapsamına girer. iOS'ta ham çok noktaya yayın ücretli bir izin
-     (entitlement) gerektirir
-     ([0009](0009-ios-macos.md)). Protokol notu ve tehdit modeli önce
-     yazılır.
-  7. **Gizlilik modunda Tor.** Protokol notlarında "henüz yok" olarak
-     duran Tor yolu ([#39](https://github.com/totaldrop-app/totaldrop/issues/39)),
-     `arti` (MIT veya Apache-2.0) ile onion hizmeti
-     üzerinden yapılır; OnionShare bunun çalışan örneğidir. Yavaştır,
-     yalnızca isteğe bağlıdır.
-  8. **Sonra.** QUIC'in adres bulma, NAT geçişi ve multipath taslakları
-     quinn'de desteklenince STUN'un ve elle yaptığımız yol değişiminin
-     yerini alabilir. İnternetsiz yakınlık için Android'de Wi-Fi Aware ve
-     Wi-Fi Direct.
+     under 0003 and 0005, the cost beyond the free quota is covered by
+     donations. This step is first a measurement: the speed, the expected
+     traffic and what the server sees (IP addresses, duration, bytes) are
+     written down; putting it into use needs a separate decision and a
+     privacy policy update. TURN is a relay too: if it is put into use, it
+     can be used in privacy mode as well and, like the Workers relay, sees
+     the IP address, the duration and the byte count; this is written into
+     threat model T6.
+  5. **Birthday punching for symmetric NAT.** The method Tailscale
+     describes: one side opens many ports, the other side tries random
+     ports. The number of packets and the time are limited; the relay
+     always stays as the fallback.
+  6. **Serverless local network discovery.** Two devices on the same
+     network find each other even without internet (LocalSend's multicast
+     idea). The announcement carries no device name or permanent identity,
+     and contains nothing that helps try the code offline: if a value
+     derived from the code is broadcast, anyone on the same network can try
+     the short code offline and break the single-guess protection that
+     CPace gives. Pairing is still done with CPace; the announcement only
+     says where to meet, and the CPace messages travel over this local
+     channel instead of rendezvous (see Decision). Because it is a new
+     transport for the pairing messages, this step is in scope for the
+     audit. On iOS, raw multicast needs a paid entitlement
+     ([0009](0009-ios-macos.md)). The protocol note and the threat model
+     are written first.
+  7. **Tor in privacy mode.** The Tor path that stands as "not yet" in the
+     protocol notes ([#39](https://github.com/totaldrop-app/totaldrop/issues/39))
+     is built with `arti` (MIT or Apache-2.0), through an onion service;
+     OnionShare is a working example of this. It is slow, and only
+     optional.
+  8. **Later.** Once quinn supports QUIC's address discovery, NAT traversal
+     and multipath drafts, they can replace STUN and the path switching we
+     do by hand. For proximity without internet, Wi-Fi Aware and Wi-Fi
+     Direct on Android.
 
-  Bu projelerden yalnızca tasarım alınır, kodları alınmaz: Tailscale,
+  Only the design is taken from these projects, not their code: Tailscale,
   Syncthing, LocalSend, Magic Wormhole, OnionShare, Briar, rquickshare.
-  Bağlantı kodu protokol kütüphanelerinde (`totaldrop-core`, `-proto`,
-  `-crypto`) yaşar ve bunlar MIT veya Apache-2.0'dır
-  ([LICENSING.md](../../LICENSING.md)); bunlara copyleft lisanslı bir
-  bağımlılık (ör. EUPL-1.2 lisanslı `magic-wormhole` crate'i) girmez.
-  Kullanılacak her crate, eklendiği PR'da lisansı, bakım durumu ve
-  alternatifleriyle yazılır ve `deny.toml`'dan geçer.
+  The connection code lives in the protocol libraries (`totaldrop-core`,
+  `-proto`, `-crypto`), and these are MIT or Apache-2.0
+  ([LICENSING.md](../../LICENSING.md)); no copyleft-licensed dependency
+  (e.g. the EUPL-1.2 licensed `magic-wormhole` crate) enters them. Every
+  crate to be used is written up in the PR that adds it, with its licence,
+  maintenance status and alternatives, and passes `deny.toml`.
 
-- **Neden:** Gizlilik ve maliyet modelimiz (tek kullanımlık anahtarlar,
-  keşif yok, sunucusuz röle) iroh'ta ve libp2p'de baştan yoktur;
-  onları bu modele uydurmak, kazandıracaklarından daha çok iş ve risk
-  getirir. Doğrudan bağlantı kurma şansını en çok artıracak parçalar
-  (IPv6, port açma, ağ değişimine tepki) ise küçüktür ve bugünkü yapıya
-  eklenebilir.
+- **Why:** Our privacy and cost model (single-use keys, no discovery, a
+  serverless relay) is absent from iroh and libp2p from the start; fitting
+  them to this model brings more work and risk than they would bring. The
+  pieces that would most increase the chance of a direct connection (IPv6,
+  port mapping, reacting to network changes) are small, and can be added to
+  today's structure.
 
-- **Sonuçlar:**
-  - 1–3. adımlarda kripto, eşleşme ve röle protokolü değişmez; 1.0
-    öncesi denetimin kriptografi kapsamı bu adımlardan etkilenmez
-    (aktarım protokolünün bir Tamarin modeli yok; mevcut modeller hesap
-    tasarımı içindir). 6. adım CPace mesajlarını yeni bir yoldan (yerel
-    ağ) taşır, 7. adım yeni bir yol (Tor) ekler; ikisi de denetimin
-    kapsamına girer. Yeni yol türleri eklendikçe tehdit modeli ve
-    protokol notları aynı PR'da güncellenir.
-  - Sunucuların gördüğü bir şey değişirse (ör. TURN), gizlilik politikası
-    35 dilde, yayından önce güncellenir.
-  - Telemetri yoktur; her adımın etkisi elle cihaz denemeleriyle
-    ölçülür: doğrudan yol mu röle mi kullanıldığı ve hız, aynı cihazlarla
-    (Jonsbo, POCO, iş PC'si) önce ve sonra denenir.
+- **Consequences:**
+  - In steps 1–3 the cryptography, pairing and relay protocol do not
+    change; the cryptographic scope of the pre-1.0 audit is not affected by
+    these steps (there is no Tamarin model of the transfer protocol; the
+    existing models are for the account design). Step 6 carries the CPace
+    messages over a new path (the local network), and step 7 adds a new
+    path (Tor); both are in scope for the audit. As new kinds of path are
+    added, the threat model and the protocol notes are updated in the same
+    PR.
+  - If something the servers see changes (e.g. TURN), the privacy policy is
+    updated in 35 languages before the release.
+  - There is no telemetry; the effect of each step is measured by hand with
+    device trials: whether the direct path or the relay was used, and the
+    speed, are tried before and after with the same devices (Jonsbo, POCO,
+    the work PC).
 
-- **Gözden geçirme koşulu:**
-  - Cihaz denemeleri, bu adımlardan sonra da doğrudan bağlantının sık
-    kurulamadığını gösterirse.
-  - iroh rölesi sunucusuz bir ortamda (ör. Workers) çalışabilir olursa ya
-    da iroh kimliği aktarım başına anahtarla ve keşifsiz, desteklenen bir
-    yol olarak sunarsa.
-  - quinn, QUIC NAT geçişi ya da multipath taslaklarını desteklerse.
+- **Review condition:**
+  - If device trials show that, even after these steps, a direct connection
+    often cannot be made.
+  - If the iroh relay becomes able to run in a serverless environment (e.g.
+    Workers), or if iroh offers an identity with a per-transfer key and no
+    discovery as a supported route.
+  - If quinn supports the QUIC NAT traversal or multipath drafts.
