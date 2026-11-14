@@ -19,6 +19,7 @@ const strings = {
   'process_text': 'desktopSendWith',
   'shortcut_receive_short': 'homeReceiveTitle',
   'shortcut_receive_long': 'receiveTitle',
+  'tile_receive': 'receiveWith',
 };
 
 const res = 'android/app/src/main/res';

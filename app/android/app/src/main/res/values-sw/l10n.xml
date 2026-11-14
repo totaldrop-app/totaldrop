@@ -11,4 +11,5 @@
     <string name="process_text">Tuma kwa TotalDrop</string>
     <string name="shortcut_receive_short">Pokea</string>
     <string name="shortcut_receive_long">Pokea faili</string>
+    <string name="tile_receive">Pokea kwa TotalDrop</string>
 </resources>

@@ -11,4 +11,5 @@
     <string name="process_text">ส่งด้วย TotalDrop</string>
     <string name="shortcut_receive_short">รับ</string>
     <string name="shortcut_receive_long">รับไฟล์</string>
+    <string name="tile_receive">รับด้วย TotalDrop</string>
 </resources>

@@ -682,4 +682,7 @@ class AppLocalizationsDa extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'Batteriindstillinger';
+
+  @override
+  String get receiveWith => 'Modtag med TotalDrop';
 }

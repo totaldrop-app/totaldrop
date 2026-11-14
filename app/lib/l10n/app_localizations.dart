@@ -1219,6 +1219,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Battery settings'**
   String get settingsBackgroundOpen;
+
+  /// Android Quick Settings tile that opens the Receive screen directly (#53)
+  ///
+  /// In en, this message translates to:
+  /// **'Receive with TotalDrop'**
+  String get receiveWith;
 }
 
 class _AppLocalizationsDelegate

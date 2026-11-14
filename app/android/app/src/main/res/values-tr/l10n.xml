@@ -11,4 +11,5 @@
     <string name="process_text">TotalDrop ile gönder</string>
     <string name="shortcut_receive_short">Al</string>
     <string name="shortcut_receive_long">Dosya al</string>
+    <string name="tile_receive">TotalDrop ile al</string>
 </resources>

@@ -694,4 +694,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'Настройки батареи';
+
+  @override
+  String get receiveWith => 'Принять через TotalDrop';
 }

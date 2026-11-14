@@ -679,4 +679,7 @@ class AppLocalizationsSw extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'Mipangilio ya betri';
+
+  @override
+  String get receiveWith => 'Pokea kwa TotalDrop';
 }

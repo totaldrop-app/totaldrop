@@ -184,5 +184,6 @@
   "setupBackgroundAutostart": "Automatikus indítás megnyitása",
   "setupBackgroundSkip": "Most nem",
   "settingsBackground": "Átvitel a háttérben",
-  "settingsBackgroundOpen": "Akkumulátorbeállítások"
+  "settingsBackgroundOpen": "Akkumulátorbeállítások",
+  "receiveWith": "Fogadás a TotalDroppal"
 }

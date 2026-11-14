@@ -688,4 +688,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'إعدادات البطارية';
+
+  @override
+  String get receiveWith => 'الاستلام عبر TotalDrop';
 }

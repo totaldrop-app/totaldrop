@@ -11,4 +11,5 @@
     <string name="process_text">Send med TotalDrop</string>
     <string name="shortcut_receive_short">Modtag</string>
     <string name="shortcut_receive_long">Modtag filer</string>
+    <string name="tile_receive">Modtag med TotalDrop</string>
 </resources>

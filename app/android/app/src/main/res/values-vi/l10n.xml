@@ -11,4 +11,5 @@
     <string name="process_text">Gửi bằng TotalDrop</string>
     <string name="shortcut_receive_short">Nhận</string>
     <string name="shortcut_receive_long">Nhận tệp</string>
+    <string name="tile_receive">Nhận bằng TotalDrop</string>
 </resources>
