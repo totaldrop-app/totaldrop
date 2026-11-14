@@ -288,6 +288,10 @@ class AppLocalizationsFi extends AppLocalizations {
       'Palvelimen osoite ei ole kelvollinen. Sen on alettava wss://.';
 
   @override
+  String get errorRateLimited =>
+      'Liian monta yritystä peräkkäin; odota hetki ja yritä uudelleen.';
+
+  @override
   String get errorConnect =>
       'Toiseen laitteeseen ei saatu yhteyttä. Varmista, että molemmat laitteet ovat verkossa, ja yritä uudelleen.';
 

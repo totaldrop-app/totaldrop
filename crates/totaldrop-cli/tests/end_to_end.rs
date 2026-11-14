@@ -481,7 +481,7 @@ async fn a_failed_code_counts_once() {
 }
 
 fn too_many<T>(r: Result<T, Error>) -> bool {
-    matches!(r, Err(Error::Rendezvous(reason)) if reason == "too many requests")
+    matches!(r, Err(e) if e.is_rate_limited())
 }
 
 /// Fails with what came back when it was not the refusal: a refusal that

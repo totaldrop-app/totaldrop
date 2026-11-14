@@ -285,6 +285,10 @@ class AppLocalizationsFa extends AppLocalizations {
       'نشانی سرور معتبر نیست. باید با wss:// شروع شود.';
 
   @override
+  String get errorRateLimited =>
+      'تلاش‌ها بیش از حد پیاپی است؛ لحظه‌ای صبر کنید و دوباره امتحان کنید.';
+
+  @override
   String get errorConnect =>
       'اتصال به دستگاه دیگر ممکن نشد. مطمئن شوید هر دو دستگاه آنلاین هستند و دوباره تلاش کنید.';
 

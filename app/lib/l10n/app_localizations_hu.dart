@@ -276,6 +276,10 @@ class AppLocalizationsHu extends AppLocalizations {
       'A szervercím érvénytelen. wss:// előtaggal kell kezdődnie.';
 
   @override
+  String get errorRateLimited =>
+      'Túl sűrű próbálkozás; várj egy kicsit, majd próbáld újra.';
+
+  @override
   String get errorConnect =>
       'Nem sikerült kapcsolódni a másik eszközhöz. Ellenőrizd, hogy mindkét eszköz online van-e, és próbáld újra.';
 

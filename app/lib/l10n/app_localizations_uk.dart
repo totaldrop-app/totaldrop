@@ -294,6 +294,10 @@ class AppLocalizationsUk extends AppLocalizations {
       'Неправильна адреса сервера. Вона має починатися з wss://.';
 
   @override
+  String get errorRateLimited =>
+      'Занадто часті спроби; зачекайте трохи й спробуйте знову.';
+
+  @override
   String get errorConnect =>
       'Не вдалося підключитися до іншого пристрою. Переконайтеся, що обидва пристрої в мережі, і спробуйте знову.';
 

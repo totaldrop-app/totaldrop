@@ -287,6 +287,10 @@ class AppLocalizationsHi extends AppLocalizations {
       'सर्वर का पता मान्य नहीं है। यह wss:// से शुरू होना चाहिए।';
 
   @override
+  String get errorRateLimited =>
+      'बहुत जल्दी-जल्दी प्रयास किए जा रहे हैं; थोड़ा रुकें और फिर कोशिश करें।';
+
+  @override
   String get errorConnect =>
       'दूसरे डिवाइस से कनेक्ट नहीं हो सका। जाँचें कि दोनों डिवाइस ऑनलाइन हैं और फिर से कोशिश करें।';
 

@@ -274,6 +274,10 @@ class AppLocalizationsId extends AppLocalizations {
       'Alamat server tidak valid. Harus diawali wss://.';
 
   @override
+  String get errorRateLimited =>
+      'Terlalu sering mencoba; tunggu sebentar lalu coba lagi.';
+
+  @override
   String get errorConnect =>
       'Tidak dapat terhubung ke perangkat lain. Pastikan kedua perangkat online, lalu coba lagi.';
 

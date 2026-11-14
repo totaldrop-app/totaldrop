@@ -767,6 +767,7 @@ fn error_key(e: &totaldrop_core::Error, sending: bool) -> &'static str {
         E::Rendezvous(r) if sending && r == "mailbox expired" => "cliErrCodeExpired",
         E::Rendezvous(_) if e.is_code_not_in_use() => "cliErrCodeNotInUse",
         E::Rendezvous(_) if e.is_bad_server_address() => "cliErrBadServer",
+        E::Rendezvous(_) if e.is_rate_limited() => "cliErrRateLimited",
         E::Rendezvous(_) => "cliErrServer",
         E::Connect(_) => "cliErrConnect",
         E::InvalidOffer(_) => "cliErrInvalidOffer",
@@ -1023,6 +1024,7 @@ mod tests {
             Error::Rendezvous("connection closed".into()),
             Error::Rendezvous("unknown nameplate".into()),
             Error::Rendezvous("the server address must start with wss://".into()),
+            Error::Rendezvous("too many requests".into()),
             Error::Connect("x".into()),
             Error::Protocol("x"),
             Error::InvalidOffer("x".into()),
@@ -1071,6 +1073,8 @@ mod tests {
         assert_eq!(timed_out.cause(), totaldrop_core::Cause::TimedOut);
         assert_eq!(error_key(&errors[3], false), "cliErrCodeNotInUse");
         assert_eq!(error_key(&errors[4], false), "cliErrBadServer");
+        assert_eq!(error_key(&errors[5], false), "cliErrRateLimited");
+        assert_eq!(error_key(&errors[5], true), "cliErrRateLimited");
         assert_eq!(error_key(&errors[2], false), "cliErrServer");
         // The sender's own code expired with nobody coming (#164).
         let expired = Error::Rendezvous("mailbox expired".into());

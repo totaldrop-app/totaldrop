@@ -572,6 +572,12 @@ abstract class AppLocalizations {
   /// **'The server address is not valid. It must start with wss://.'**
   String get errorBadServer;
 
+  /// The rendezvous server refused because this address sent too many requests. Same text as cliErrRateLimited
+  ///
+  /// In en, this message translates to:
+  /// **'Trying too often; wait a moment and try again.'**
+  String get errorRateLimited;
+
   /// No description provided for @errorConnect.
   ///
   /// In en, this message translates to:

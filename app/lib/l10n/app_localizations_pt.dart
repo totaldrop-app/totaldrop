@@ -293,6 +293,10 @@ class AppLocalizationsPt extends AppLocalizations {
       'O endereço do servidor não é válido. Ele precisa começar com wss://.';
 
   @override
+  String get errorRateLimited =>
+      'Muitas tentativas seguidas; aguarde um instante e tente novamente.';
+
+  @override
   String get errorConnect =>
       'Não foi possível conectar ao outro dispositivo. Verifique se os dois dispositivos estão on-line e tente de novo.';
 
@@ -986,6 +990,10 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String get errorBadServer =>
       'O endereço do servidor não é válido. Ele precisa começar com wss://.';
+
+  @override
+  String get errorRateLimited =>
+      'Muitas tentativas seguidas; aguarde um instante e tente novamente.';
 
   @override
   String get errorConnect =>
@@ -1682,6 +1690,10 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
   @override
   String get errorBadServer =>
       'O endereço do servidor não é válido. Tem de começar por wss://.';
+
+  @override
+  String get errorRateLimited =>
+      'Demasiadas tentativas seguidas; aguarde um momento e tente novamente.';
 
   @override
   String get errorConnect =>

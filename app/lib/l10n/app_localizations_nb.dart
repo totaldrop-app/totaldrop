@@ -288,6 +288,10 @@ class AppLocalizationsNb extends AppLocalizations {
       'Serveradressen er ikke gyldig. Den må starte med wss://.';
 
   @override
+  String get errorRateLimited =>
+      'For mange forsøk på kort tid; vent litt og prøv igjen.';
+
+  @override
   String get errorConnect =>
       'Kunne ikke koble til den andre enheten. Sjekk at begge enhetene er på nett, og prøv igjen.';
 

@@ -72,6 +72,7 @@
   "errorCodeNotInUse": "Bu kod kullanımda değil: yanlış yazılmış, süresi dolmuş ya da zaten kullanılmış olabilir. Gönderenden yeni bir kod isteyin.",
   "errorCodeExpired": "Kodun süresi kimse kullanmadan doldu. Yeni bir kod almak için yeniden gönderin.",
   "errorBadServer": "Sunucu adresi geçerli değil. wss:// ile başlamalı.",
+  "errorRateLimited": "Çok sık denendi; biraz bekleyip yeniden deneyin.",
   "errorConnect": "Diğer cihaza bağlanılamadı. İki cihazın da internete bağlı olduğundan emin olup yeniden deneyin.",
   "errorInvalidOffer": "Teklif bir güvenlik kuralını çiğnediği için reddedildi.",
   "errorStorage": "Bir dosya okunamadı ya da kaydedilemedi.",

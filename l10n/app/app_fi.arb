@@ -72,6 +72,7 @@
   "errorCodeNotInUse": "Koodi ei ole käytössä: se kirjoitettiin väärin, on vanhentunut tai on jo käytetty. Pyydä lähettäjältä uusi.",
   "errorCodeExpired": "Koodi vanheni ennen kuin kukaan käytti sitä. Lähetä uudelleen saadaksesi uuden koodin.",
   "errorBadServer": "Palvelimen osoite ei ole kelvollinen. Sen on alettava wss://.",
+  "errorRateLimited": "Liian monta yritystä peräkkäin; odota hetki ja yritä uudelleen.",
   "errorConnect": "Toiseen laitteeseen ei saatu yhteyttä. Varmista, että molemmat laitteet ovat verkossa, ja yritä uudelleen.",
   "errorInvalidOffer": "Tarjous rikkoi turvasääntöä, joten se hylättiin.",
   "errorStorage": "Tiedostoa ei voitu lukea tai tallentaa.",
