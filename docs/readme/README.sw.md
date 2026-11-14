@@ -1,4 +1,4 @@
-<!-- Translated from README.md 0a6bee841691. -->
+<!-- Translated from README.md 2e554b8d92c2. -->
 <div align="center">
 
 <picture>
@@ -16,7 +16,7 @@ Bure na chanzo huria. Imesimbwa fiche kutoka mwanzo hadi mwisho. Hakuna barua pe
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/totaldrop-app/totaldrop/badge)](https://scorecard.dev/viewer/?uri=github.com/totaldrop-app/totaldrop)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/16332/badge)](https://www.bestpractices.dev/projects/16332)
 [![License](https://img.shields.io/badge/license-GPL--3.0%20%C2%B7%20MIT%2FApache--2.0-22184F)](../../LICENSING.md)
-[![Sponsor](https://img.shields.io/github/sponsors/ozdil?label=Sponsor&logo=githubsponsors&color=EA4AAA)](https://github.com/sponsors/ozdil)
+[![Open Collective](https://img.shields.io/badge/Open%20Collective-donate-1F87FF?logo=opencollective&logoColor=white)](https://opencollective.com/totaldrop)
 
 **[Tovuti](https://totaldrop.app)** · **[Pakua](https://totaldrop.app/download/)** · [Ramani ya maendeleo](https://totaldrop.app/roadmap/) · [Changia](https://totaldrop.app/donate/) · [Matoleo](https://github.com/totaldrop-app/totaldrop/releases) · [X](https://x.com/totaldropapp) · [Instagram](https://www.instagram.com/totaldropapp/) · [Threads](https://www.threads.com/@totaldropapp)
 
@@ -87,7 +87,7 @@ Umeona sentensi isiyokaa vizuri? [Saidia kutafsiri](../../docs/ceviri.md) (mwong
 
 TotalDrop inabaki bure kwa sababu watu wanachangia. Michango hulipia seva ya kati, vyeti vya kutia sahihi msimbo ambavyo Windows na macOS vinahitaji, na ukaguzi huru wa usalama kabla ya toleo 1.0. Kila gharama, mstari kwa mstari, na kiasi kilichopatikana hadi sasa: [totaldrop.app/donate](https://totaldrop.app/donate/).
 
-<a href="https://github.com/sponsors/ozdil"><img src="https://img.shields.io/badge/Sponsor%20on%20GitHub-EA4AAA?logo=githubsponsors&logoColor=white&style=for-the-badge" alt="Dhamini kwenye GitHub"></a>
+<a href="https://opencollective.com/totaldrop"><img src="https://img.shields.io/badge/Donate%20on%20Open%20Collective-1F87FF?logo=opencollective&logoColor=white&style=for-the-badge" alt="Changia kupitia Open Collective"></a>
 
 Unaweza pia kusaidia kwa [kuripoti hitilafu](https://github.com/totaldrop-app/totaldrop/issues/new/choose), kutafsiri, au kujaribu kwenye kompyuta yako ya mezani.
 

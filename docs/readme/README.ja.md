@@ -1,4 +1,4 @@
-<!-- Translated from README.md 0a6bee841691. -->
+<!-- Translated from README.md 2e554b8d92c2. -->
 <div align="center">
 
 <picture>
@@ -16,7 +16,7 @@
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/totaldrop-app/totaldrop/badge)](https://scorecard.dev/viewer/?uri=github.com/totaldrop-app/totaldrop)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/16332/badge)](https://www.bestpractices.dev/projects/16332)
 [![License](https://img.shields.io/badge/license-GPL--3.0%20%C2%B7%20MIT%2FApache--2.0-22184F)](../../LICENSING.md)
-[![Sponsor](https://img.shields.io/github/sponsors/ozdil?label=Sponsor&logo=githubsponsors&color=EA4AAA)](https://github.com/sponsors/ozdil)
+[![Open Collective](https://img.shields.io/badge/Open%20Collective-donate-1F87FF?logo=opencollective&logoColor=white)](https://opencollective.com/totaldrop)
 
 **[ウェブサイト](https://totaldrop.app)** · **[ダウンロード](https://totaldrop.app/download/)** · [ロードマップ](https://totaldrop.app/roadmap/) · [寄付](https://totaldrop.app/donate/) · [リリース](https://github.com/totaldrop-app/totaldrop/releases) · [X](https://x.com/totaldropapp) · [Instagram](https://www.instagram.com/totaldropapp/) · [Threads](https://www.threads.com/@totaldropapp)
 
@@ -87,7 +87,7 @@ TotalDrop は35の言語に対応し、地域の数値形式に従います。�
 
 TotalDrop が無料であり続けられるのは、支えてくれる人がいるからです。寄付は、リレー、Windows と macOS が求めるコード署名証明書、そして 1.0 の前に行う独立したセキュリティ監査に使われます。すべての費用の明細と、これまでに集まった額はこちら：[totaldrop.app/donate](https://totaldrop.app/donate/)
 
-<a href="https://github.com/sponsors/ozdil"><img src="https://img.shields.io/badge/Sponsor%20on%20GitHub-EA4AAA?logo=githubsponsors&logoColor=white&style=for-the-badge" alt="GitHub でスポンサーになる"></a>
+<a href="https://opencollective.com/totaldrop"><img src="https://img.shields.io/badge/Donate%20on%20Open%20Collective-1F87FF?logo=opencollective&logoColor=white&style=for-the-badge" alt="Open Collective で寄付する"></a>
 
 [バグの報告](https://github.com/totaldrop-app/totaldrop/issues/new/choose)、翻訳、デスクトップでのテストでも協力できます。
 

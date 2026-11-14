@@ -1,4 +1,4 @@
-<!-- Translated from README.md 0a6bee841691. -->
+<!-- Translated from README.md 2e554b8d92c2. -->
 <div align="center">
 
 <picture>
@@ -16,7 +16,7 @@
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/totaldrop-app/totaldrop/badge)](https://scorecard.dev/viewer/?uri=github.com/totaldrop-app/totaldrop)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/16332/badge)](https://www.bestpractices.dev/projects/16332)
 [![License](https://img.shields.io/badge/license-GPL--3.0%20%C2%B7%20MIT%2FApache--2.0-22184F)](../../LICENSING.md)
-[![Sponsor](https://img.shields.io/github/sponsors/ozdil?label=Sponsor&logo=githubsponsors&color=EA4AAA)](https://github.com/sponsors/ozdil)
+[![Open Collective](https://img.shields.io/badge/Open%20Collective-donate-1F87FF?logo=opencollective&logoColor=white)](https://opencollective.com/totaldrop)
 
 **[網站](https://totaldrop.app)** · **[下載](https://totaldrop.app/download/)** · [開發藍圖](https://totaldrop.app/roadmap/) · [捐款](https://totaldrop.app/donate/) · [發行版本](https://github.com/totaldrop-app/totaldrop/releases) · [X](https://x.com/totaldropapp) · [Instagram](https://www.instagram.com/totaldropapp/) · [Threads](https://www.threads.com/@totaldropapp)
 
@@ -87,7 +87,7 @@ TotalDrop 支援 35 種語言，並依照你所在地區的數字格式。英文
 
 TotalDrop 能保持免費，是因為大家出手相助。捐款用於支付中繼伺服器、Windows 和 macOS 要求的程式碼簽署憑證，以及 1.0 之前的獨立安全稽核。每一項費用的明細，以及目前已募得的金額：[totaldrop.app/donate](https://totaldrop.app/donate/)。
 
-<a href="https://github.com/sponsors/ozdil"><img src="https://img.shields.io/badge/Sponsor%20on%20GitHub-EA4AAA?logo=githubsponsors&logoColor=white&style=for-the-badge" alt="在 GitHub 上贊助"></a>
+<a href="https://opencollective.com/totaldrop"><img src="https://img.shields.io/badge/Donate%20on%20Open%20Collective-1F87FF?logo=opencollective&logoColor=white&style=for-the-badge" alt="在 Open Collective 上捐款"></a>
 
 你也可以透過 [回報錯誤](https://github.com/totaldrop-app/totaldrop/issues/new/choose)、翻譯，或在桌面上測試來提供協助。
 
