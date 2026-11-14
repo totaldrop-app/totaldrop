@@ -6,14 +6,15 @@
   "description": "Forwards mail for totaldrop.app addresses to every maintainer, on Cloudflare Email Routing",
   "type": "module",
   "scripts": {
+    "dev": "wrangler dev",
     "check": "tsc --noEmit && tsc -p tsconfig.test.json",
     "test": "node --test \"test/*.test.ts\"",
     "deploy": "wrangler deploy"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "5.20261107.1",
+    "@cloudflare/workers-types": "5.20261110.1",
     "@types/node": "24.19.2",
     "typescript": "7.0.2",
-    "wrangler": "4.158.0"
+    "wrangler": "4.160.0"
   }
 }
