@@ -161,9 +161,9 @@ function validateConfig(c, i18n = I18N) {
     if (badBio(p.bio)) fail(`team.json: ${p.login}: bad bio`);
     else if (p.bio !== undefined && p.kind !== "person") fail(`team.json: ${p.login}: only people have a bio`);
     else if (p.bio !== undefined) for (const tag of missingBio(langs, p.login)) fail(`team.json: ${p.login}: tm.bio.${p.login} is not translated in ${tag}.json`);
-    // A person's own Buy Me a Coffee page name, shown as a round coffee
-    // button on their card (#486). It is the person's page, not a project
-    // donation channel (docs/marka.md).
+    // A person's Buy Me a Coffee page name, shown as a round coffee button
+    // on their card (#486). For the project lead it is the second donation
+    // channel under decision 0017 (docs/marka.md).
     if (p.coffee !== undefined && p.kind !== "person") fail(`team.json: ${p.login}: only people have a coffee page`);
     else if (p.coffee !== undefined && (typeof p.coffee !== "string" || !COFFEE.test(p.coffee))) fail(`team.json: ${p.login}: bad coffee page`);
     // The first draft of #486 used "donate": true; a leftover would silently
