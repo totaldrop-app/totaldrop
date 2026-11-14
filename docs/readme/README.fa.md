@@ -1,4 +1,4 @@
-<!-- Translated from README.md 0a6bee841691. -->
+<!-- Translated from README.md 4cb259c278ef. -->
 <div align="center">
 
 <picture>
@@ -81,7 +81,7 @@ gh attestation verify totaldrop_0.3.0.beta.6-1_amd64.deb --repo totaldrop-app/to
 
 TotalDrop به 35 زبان صحبت می‌کند و از قالب اعداد منطقه شما پیروی می‌کند. انگلیسی و ترکی بازبینی شده‌اند؛ 33 زبان دیگر پیش‌نویس‌هایی هستند که گویشوران بومی در حال بررسی آن‌ها هستند، بنابراین برنامه‌ها متن‌های امنیتی (تأیید، کد اشتباه، پذیرفتن و رد کردن) را تا زمان بازبینی هر زبان به انگلیسی نگه می‌دارند. سایت و برنامه‌ها همه آن‌ها را دارند، از Android و Linux 0.3.0-beta.1 به بعد.
 
-جمله‌ای ناشیانه دیدید؟ [در ترجمه کمک کنید](../../docs/ceviri.md) (راهنما به ترکی است).
+جمله‌ای ناشیانه دیدید؟ [در ترجمه کمک کنید](../../docs/ceviri.md).
 
 ## حمایت از پروژه
 
@@ -113,7 +113,7 @@ TotalDrop رایگان می‌ماند چون مردم کمک می‌کنند. �
 
 کتابخانه‌ها مجوزهای آسان‌گیر دارند تا هر کسی بتواند روی پروتکل بسازد؛ برنامه‌ها GPL و سرورها AGPL هستند. [LICENSING.md](../../LICENSING.md) را ببینید.
 
-هر پلتفرم نسخه، برچسب (`linux-v…`، `android-v…`) و گردش‌کار CI خودش را دارد، تا یکی بتواند بدون دست زدن به بقیه منتشر شود. شاخه‌ها و انتشارها چگونه کار می‌کنند: [docs/gelistirme.md](../../docs/gelistirme.md) (به ترکی) و [docs/versioning.md](../../docs/versioning.md). قواعد طراحی: [docs/tasarim.md](../../docs/tasarim.md) و تصمیم‌های معماری: [docs/kararlar](../../docs/kararlar/README.md)، هر دو به ترکی.
+هر پلتفرم نسخه، برچسب (`linux-v…`، `android-v…`) و گردش‌کار CI خودش را دارد، تا یکی بتواند بدون دست زدن به بقیه منتشر شود. شاخه‌ها و انتشارها چگونه کار می‌کنند: [docs/gelistirme.md](../../docs/gelistirme.md) (به ترکی) و [docs/versioning.md](../../docs/versioning.md). قواعد طراحی: [docs/tasarim.md](../../docs/tasarim.md) و تصمیم‌های معماری: [docs/kararlar](../../docs/kararlar/README.md) (به ترکی).
 
 ### ساخت
 

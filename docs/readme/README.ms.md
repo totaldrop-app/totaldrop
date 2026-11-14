@@ -1,4 +1,4 @@
-<!-- Translated from README.md 0a6bee841691. -->
+<!-- Translated from README.md 4cb259c278ef. -->
 <div align="center">
 
 <picture>
@@ -81,7 +81,7 @@ Protokol ini diterangkan dalam *TotalDrop Protocol v0*. Keputusan yang dibuat se
 
 TotalDrop tersedia dalam 35 bahasa dan mengikut format nombor wilayah anda. Bahasa Inggeris dan Turki telah disemak; 33 yang lain ialah draf yang sedang disemak oleh penutur asli, jadi aplikasi mengekalkan teks keselamatan (pengesahan, kod salah, terima dan tolak) dalam bahasa Inggeris sehingga sesuatu bahasa selesai disemak. Laman web dan aplikasi mempunyai kesemuanya, mulai Android dan Linux 0.3.0-beta.1.
 
-Terjumpa ayat yang janggal? [Bantu menterjemah](../../docs/ceviri.md) (panduannya dalam bahasa Turki).
+Terjumpa ayat yang janggal? [Bantu menterjemah](../../docs/ceviri.md).
 
 ## Sokong projek ini
 
@@ -113,7 +113,7 @@ Anda juga boleh membantu dengan [melaporkan pepijat](https://github.com/totaldro
 
 Pustaka-pustakanya berlesen permisif supaya sesiapa sahaja boleh membina di atas protokol ini; aplikasinya GPL dan pelayannya AGPL. Lihat [LICENSING.md](../../LICENSING.md).
 
-Setiap platform mempunyai versi, tag (`linux-v…`, `android-v…`) dan aliran kerja CI tersendiri, jadi satu platform boleh dikeluarkan tanpa menyentuh yang lain. Cara cabang dan keluaran berfungsi: [docs/gelistirme.md](../../docs/gelistirme.md) (dalam bahasa Turki) dan [docs/versioning.md](../../docs/versioning.md). Peraturan reka bentuk: [docs/tasarim.md](../../docs/tasarim.md) dan keputusan seni bina: [docs/kararlar](../../docs/kararlar/README.md), kedua-duanya dalam bahasa Turki.
+Setiap platform mempunyai versi, tag (`linux-v…`, `android-v…`) dan aliran kerja CI tersendiri, jadi satu platform boleh dikeluarkan tanpa menyentuh yang lain. Cara cabang dan keluaran berfungsi: [docs/gelistirme.md](../../docs/gelistirme.md) (dalam bahasa Turki) dan [docs/versioning.md](../../docs/versioning.md). Peraturan reka bentuk: [docs/tasarim.md](../../docs/tasarim.md) dan keputusan seni bina: [docs/kararlar](../../docs/kararlar/README.md) (dalam bahasa Turki).
 
 ### Bina
 
