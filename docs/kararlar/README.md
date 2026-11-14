@@ -5,6 +5,8 @@ sonuçları. Bir karar değişirse eski belge silinmez; durumu "yerini aldı"
 olur ve yenisine bağlanır.
 Henüz onaylanmamış bir karar "Önerilen" durumunda açılır; Ozan onaylayınca
 birleştirmeden önce "Kabul" olur.
+In records written in English the statuses are "Proposed" (Önerilen),
+"Accepted" (Kabul) and "Superseded by" (Yerini aldı).
 
 | No | Karar | Durum |
 | --- | --- | --- |
@@ -25,6 +27,7 @@ birleştirmeden önce "Kabul" olur.
 | [0015](0015-paket-yoneticileri.md) | Paket yöneticileri önce CI'da derlenen CLI ikililerine dayanır | Kabul |
 | [0016](0016-windows-microsoft-store.md) | Windows uygulaması WinUI 3 ile yazılır, Microsoft Store'dan dağıtılır | Kabul |
 | [0018](0018-baglanti-yol-haritasi.md) | Bağlantı katmanı kendi yığınımızda kalır; IPv6, port açma ve ağ değişimine tepkiyle doğrudan yollar artırılır | Kabul |
+| [0019](0019-english-by-default.md) | The repository is written in English | Accepted |
 
 Yeni bir karar için bir sonraki numarayla `NNNN-kisa-ad.md` açın ve bu
 tabloya ekleyin.
