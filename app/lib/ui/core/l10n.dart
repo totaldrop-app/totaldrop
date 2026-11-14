@@ -39,9 +39,18 @@ bool hasDraftTranslation(BuildContext context) => rust.hasDraftTranslation(
   tag: Localizations.localeOf(context).toLanguageTag(),
 );
 
-/// A name from the other side with hidden direction and control characters
-/// shown, not obeyed.
-String revealControls(String name) => rust.revealControls(name: name);
+bool _isPrintableAscii(String s) {
+  for (var i = 0; i < s.length; i++) {
+    final c = s.codeUnitAt(i);
+    if (c < 0x20 || c > 0x7E) return false;
+  }
+  return true;
+}
+
+/// A file name with hidden direction and control characters shown, not obeyed.
+/// Printable ASCII (`0x20..0x7E`) holds none of them and skips the bridge.
+String revealControls(String name) =>
+    _isPrintableAscii(name) ? name : rust.revealControls(name: name);
 
 /// A text as it is shown (#326): hidden characters named, at most
 /// `SHOWN_CHARS` characters. The last answer is kept: a screen asks again
@@ -126,11 +135,47 @@ String formatPercent(
 int wholePercent(int done, int total) =>
     total <= 0 ? 0 : (done * 100 ~/ total).clamp(0, 100);
 
-/// A value from outside the translation (a version, a folder) placed in a
-/// sentence. Isolated, it keeps its own direction in a right-to-left
-/// language: "0.2.0-beta.2" would otherwise show as "beta.2-0.2.0".
-/// Translations never contain these characters; only the code adds them.
+/// A value from outside the translation (a version, a folder, a byte size)
+/// placed in a sentence or label. Isolated, it keeps its own direction in a
+/// right-to-left language: "0.2.0-beta.2" would otherwise show as
+/// "beta.2-0.2.0", and "1 B" as "B 1" (#493). Translations never contain
+/// these characters; only the code adds them.
 String isolate(String value) => '\u2068$value\u2069';
+
+final _strongLetter = RegExp(r'^\p{L}$', unicode: true);
+
+bool _isRtlScript(int rune) =>
+    (rune >= 0x0590 && rune <= 0x08FF) ||
+    (rune >= 0xFB1D && rune <= 0xFDFF) ||
+    (rune >= 0xFE70 && rune <= 0xFEFF) ||
+    (rune >= 0x10800 && rune <= 0x10FFF) ||
+    (rune >= 0x1E800 && rune <= 0x1EEFF);
+
+/// Direction of [text] from its first strong character outside isolate spans
+/// (Unicode UAX #9 rules P2–P3), defaulting to left to right when [text] has
+/// no strong character (#493). Digits, emoji, and punctuation in every script
+/// are weak or neutral, so `"0 Rapport.pdf"` and `"٠٫٥ Report.pdf"` stay left
+/// to right while `"📄 تقرير.pdf"` lays out right to left.
+TextDirection firstStrongDirection(String text) {
+  var isolateDepth = 0;
+  for (final rune in text.runes) {
+    if (rune >= 0x2066 && rune <= 0x2068) {
+      isolateDepth += 1;
+      continue;
+    }
+    if (rune == 0x2069) {
+      if (isolateDepth > 0) isolateDepth -= 1;
+      continue;
+    }
+    if (isolateDepth > 0) continue;
+    if (rune == 0x200E) return TextDirection.ltr;
+    if (rune == 0x200F || rune == 0x061C) return TextDirection.rtl;
+    if (_strongLetter.hasMatch(String.fromCharCode(rune))) {
+      return _isRtlScript(rune) ? TextDirection.rtl : TextDirection.ltr;
+    }
+  }
+  return TextDirection.ltr;
+}
 
 /// Invisible format characters a code can pick up when it is copied, as
 /// inclusive ranges: the soft hyphen, the Arabic letter mark, the zero-width

@@ -294,7 +294,13 @@ Page {
                         ColumnLayout {
                             spacing: 0
                             Layout.fillWidth: true
-                            Label { text: row.name; color: Theme.ink; elide: Text.ElideMiddle; Layout.fillWidth: true }
+                            Label {
+                                text: Strings.name(row.name)
+                                color: Theme.ink
+                                elide: Text.ElideMiddle
+                                textFormat: Text.PlainText
+                                Layout.maximumWidth: parent.width
+                            }
                             Label { text: row.bytes < 0 ? Strings.s.sendCounting : Strings.size(row.bytes); color: Theme.muted; font.features: { "tnum": 1 } }
                         }
                         IconButton {

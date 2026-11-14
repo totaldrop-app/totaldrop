@@ -254,7 +254,7 @@ class _Offered extends StatelessWidget {
         Announced(Text(l.receiveOffer, style: theme.textTheme.headlineSmall)),
         Gap.s,
         Text(
-          l.receiveOfferSummary(o.files, formatBytes(l, o.totalBytes)),
+          l.receiveOfferSummary(o.files, isolate(formatBytes(l, o.totalBytes))),
           style: theme.textTheme.titleMedium?.copyWith(
             fontFeatures: const [FontFeature.tabularFigures()],
           ),
@@ -274,13 +274,7 @@ class _Offered extends StatelessWidget {
                 Gap.s,
                 // Names come from the other side: hidden direction
                 // characters are shown, not obeyed.
-                Expanded(
-                  child: Text(
-                    revealControls(n),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
+                Expanded(child: FileNameText(revealControls(n))),
               ],
             ),
           ),
@@ -330,7 +324,7 @@ class _OfferedText extends StatelessWidget {
         ),
         Gap.s,
         Text(
-          formatBytes(l, o.totalBytes),
+          isolate(formatBytes(l, o.totalBytes)),
           style: theme.textTheme.titleMedium?.copyWith(
             fontFeatures: const [FontFeature.tabularFigures()],
           ),
@@ -434,11 +428,7 @@ class _Done extends StatelessWidget {
                 Icons.check,
                 color: theme.colorScheme.onSurfaceVariant,
               ),
-              title: Text(
-                revealControls(p.split('/').last),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
+              title: FileNameText(revealControls(p.split('/').last)),
             ),
         Gap.l,
         FilledButton(
