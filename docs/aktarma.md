@@ -1,150 +1,161 @@
-# Aktarma sunucusu (relay)
+# The relay server
 
-Bu belge, farklı ağlardaki iki cihazın birbirine nasıl ulaştığını anlatır.
-Protokoldeki karşılığı v0 taslağının 6. bölümüdür ("Relay").
+This document describes how two devices on different networks reach each
+other. Its counterpart in the protocol is section 6 of the v0 draft
+("Relay").
 
-## Amaç
+## Purpose
 
-Aynı ağdaki iki cihaz birbirini zaten bulur. İnternet üzerinden ise cihazlar
-çoğunlukla bir modemin (NAT) ya da güvenlik duvarının arkasındadır ve
-birbirlerine doğrudan ulaşamazlar. Aktarma sunucusu iki iş yapar:
+Two devices on the same network already find each other. Over the
+internet, however, devices are mostly behind a modem (NAT) or a firewall
+and cannot reach each other directly. The relay server does two jobs:
 
-1. **Adres bulma:** Cihaz, bir STUN sunucusuna (varsayılan olarak
-   Cloudflare'in ücretsiz `stun.cloudflare.com` sunucusu) küçük bir UDP
-   paketi gönderir; sunucu "seni şu adres ve portta görüyorum" diye cevap
-   verir. Cihaz bu açık
-   adresi şifreli `HINTS` mesajında karşı tarafa bildirir. İki cihaz
-   birbirinin açık adresine aynı anda paket göndererek çoğu modemi deler
-   (NAT delme) ve doğrudan bağlanır.
-2. **Aktarma:** Doğrudan yol hiç açılmazsa (ör. sıkı kurumsal ağlar, mobil
-   operatörlerin bazı NAT türleri), şifreli QUIC paketleri sunucu üzerinden
-   gider. Bağlantı TCP 443 üzerinde WebSocket'tir, bu yüzden neredeyse her
-   ağdan geçer.
+1. **Address discovery:** The device sends a small UDP packet to a STUN
+   server (by default Cloudflare's free `stun.cloudflare.com` server); the
+   server answers "I see you at this address and port". The device reports
+   this public address to the other side in the encrypted `HINTS` message.
+   By sending packets to each other's public address at the same time, the
+   two devices punch through most modems (NAT hole punching) and connect
+   directly.
+2. **Relaying:** If no direct path opens at all (e.g. strict corporate
+   networks, some kinds of NAT at mobile operators), the encrypted QUIC
+   packets go through the server. The connection is a WebSocket over TCP
+   443, so it gets through almost every network.
 
-## Güvenlik ve gizlilik
+## Security and privacy
 
-- Sunucudan geçen her şey uçtan uca şifrelidir (QUIC + Noise + ML-KEM).
-  Sunucu dosya adlarını, içeriği ya da kimlik anahtarlarını göremez.
-- Cihaz sunucuya her aktarım için yeni üretilen, tek kullanımlık bir uç nokta
-  anahtarıyla bağlanır ve anahtarı imzalayarak kanıtlar. Sunucu iki aktarımı
-  birbirine bağlayamaz.
-- İki cihaz, iki tek kullanımlık anahtarın adını taşıyan adreste buluşur
-  (`/v0/relay/<anahtar A>-<anahtar B>`). Sunucu orada yalnızca bu iki
-  anahtarı kabul eder ve paketleri yalnızca bu ikisi arasında taşır; başka
-  biri araya giremez.
-- Sunucu adres, anahtar ya da trafik kaydı tutmaz; diske hiçbir şey yazmaz.
-- Her aktarım sınırlıdır: en çok 32 GiB ve 6 saat.
-- Alıcı, gönderenin `HINTS` içinde bildirdiği aktarma sunucusunu kullanır.
-  Bu adres yalnızca `wss://` olabilir.
+- Everything that passes through the server is end-to-end encrypted (QUIC
+  + Noise + ML-KEM). The server cannot see file names, contents or identity
+  keys.
+- The device connects to the server with a fresh, single-use endpoint key
+  generated for each transfer, and proves it by signing with that key. The
+  server cannot link two transfers to each other.
+- The two devices meet at an address that carries the names of the two
+  single-use keys (`/v0/relay/<key A>-<key B>`). There the server accepts
+  only these two keys and carries packets only between them; nobody else
+  can get in between.
+- The server keeps no record of addresses, keys or traffic; it writes
+  nothing to disk.
+- Every transfer is limited: at most 32 GiB and 6 hours.
+- The receiver uses the relay server that the sender reported in `HINTS`.
+  This address can only be `wss://`.
 
-## Yol seçimi
+## Choosing the path
 
-Her iki cihaz aynı anda şunları dener:
+Both devices try these at the same time:
 
-| Yol | Ne zaman |
+| Path | When |
 | --- | --- |
-| Yerel adresler | hemen |
-| Açık adres (adres bulma ile) | hemen, NAT delme için |
-| Aktarma sunucusu | 1,2 saniye sonra, doğrudan yol açılmadıysa |
+| Local addresses | at once |
+| Public address (through address discovery) | at once, for hole punching |
+| Relay server | after 1.2 seconds, if no direct path has opened |
 
-Aktarma sunucusuna WebSocket bağlantısı da ancak bu 1,2 saniye dolup hâlâ
-doğrudan bağlantı yoksa açılır; gizlilik modunda hemen. Her cihaz bu süreyi
-kendi saatiyle, eşleşme bittiği andan sayar; bu yüzden biri aktarma
-sunucusuna bağlanıp öbürü bağlanmayabilir. Doğrudan yol bu süre içinde
-kazanırsa aktarma sunucusuna hiç bağlanılmaz ve sunucu o aktarımı görmez.
-Doğrudan yol daha geç gelip kazanırsa açılmış aktarma bağlantısı, yol seçilir
-seçilmez kapatılır; sunucu o kısa sürede cihazın IP adresini görmüş olur.
-Bu davranış Android ve Linux 0.2.0-beta.1 ile geldi
-([#63](https://github.com/totaldrop-app/totaldrop/issues/63)); daha önceki
-sürümler bağlantıyı her aktarımın başında açar.
+The WebSocket connection to the relay server is also opened only once these
+1.2 seconds have passed and there is still no direct connection; in privacy
+mode, at once. Each device counts this time on its own clock, from the
+moment pairing finishes; so one may connect to the relay server while the
+other does not. If the direct path wins within this time, no connection to
+the relay server is made at all, and the server does not see that
+transfer. If the direct path arrives later and wins, the relay connection
+that was opened is closed as soon as the path is chosen; in that short
+time the server has seen the device's IP address. This behaviour came with
+Android and Linux 0.2.0-beta.1
+([#63](https://github.com/totaldrop-app/totaldrop/issues/63)); earlier
+releases open the connection at the start of every transfer.
 
-Aktarma yolu gönderenin aktarma sunucusundan geçer. Alan cihaz onu yalnızca
-kendi ayarındaki sunucuyla aynıysa kullanır; değilse yalnızca doğrudan
-yolları dener; gizlilik modundaysa ya da gönderen hiç adres bildirmediyse
-hata verip durur
-([#68](https://github.com/totaldrop-app/totaldrop/issues/68)). Bir sonraki
-sürümden itibaren gönderen de aynı kuralla, alan cihaz aynı sunucuyu
-kullanmayacaksa kendi sunucusuna hiç bağlanmaz
-([#301](https://github.com/totaldrop-app/totaldrop/issues/301)); daha önceki
-sürümler doğrudan yol 1,2 saniyede açılmazsa yine bağlanır. Bunun bir yan
-etkisi var: başka bir sunucu ayarlı (ya da sunucusuz) 0.1 sürümlü bir alıcı,
-eskiden gönderenin sunucusunu yine de kullanabiliyordu; artık doğrudan yol
-yoksa aktarım zaman aşımıyla biter.
+The relay path goes through the sender's relay server. The receiving
+device uses it only if it is the same as the server in its own settings;
+otherwise it tries only the direct paths; in privacy mode, or if the sender
+reported no address at all, it stops with an error
+([#68](https://github.com/totaldrop-app/totaldrop/issues/68)). From the
+next release on, the sender follows the same rule and does not connect to
+its own server at all if the receiving device will not use the same server
+([#301](https://github.com/totaldrop-app/totaldrop/issues/301)); earlier
+releases still connect if the direct path does not open within 1.2 seconds.
+This has a side effect: a 0.1 receiver set to another server (or to no
+server) could still use the sender's server before; now, if there is no
+direct path, the transfer ends with a timeout.
 
-İlk açılan bağlantı kullanılır. Gizlilik modunda (komut satırında
-`--relay-only`, uygulamalarda Ayarlar → "Adresimi karşı cihazdan gizle") cihaz
-hiçbir IP adresi bildirmez ve yalnızca aktarma sunucusunu kullanır.
+The first connection that opens is used. In privacy mode (`--relay-only`
+on the command line, Settings → "Hide my address from the other device" in
+the apps) the device reports no IP address at all and uses only the relay
+server.
 
-Doğrudan kurulan bir bağlantı, yolu sonradan susarsa aktarma sunucusuna
-taşınır ([#185](https://github.com/totaldrop-app/totaldrop/issues/185)):
-Wi-Fi kopar, NAT eşlemesi düşer ya da ağ el sıkışmayı geçirip sonra hiçbir
-şey taşımaz. İki taraf da boştayken her 2 saniyede bir QUIC canlı tutma
-paketi gönderir; bir cihaz bağlantının doğrudan adresinden 8 saniye boyunca
-tek bir paket almazsa aktarma bağlantısını açar ve o adrese giden paketleri
-aktarma sunucusundan yollar. Aktarma sunucusundan gelen paketler QUIC'e o
-doğrudan adresten gelmiş gibi verilir; bu yüzden QUIC açısından adres
-değişmez ve iki taraf ayrı ayrı, kendi saatiyle geçer. Yalnızca bir yön
-ölürse önce karşıyı duymayı kesen taraf geçer; öbürü de onu duymayı kesince
-bir bekleme sonra izler. İkisi de QUIC'in 30 saniyelik boşta kalma süresinin
-içinde kalır.
+A connection made directly is moved to the relay server if its path later
+goes silent ([#185](https://github.com/totaldrop-app/totaldrop/issues/185)):
+the Wi-Fi drops, the NAT mapping expires, or the network lets the handshake
+through and then carries nothing. While idle, both sides send a QUIC
+keep-alive packet every 2 seconds; if a device receives not a single packet
+from the connection's direct address for 8 seconds, it opens the relay
+connection and sends the packets meant for that address through the relay
+server. Packets from the relay server are handed to QUIC as if they came
+from that direct address; so from QUIC's point of view the address does not
+change, and the two sides move separately, each on its own clock. If only
+one direction dies, the side that stops hearing the other first moves; the
+other follows one wait period later, when it stops hearing it. Both stay
+within QUIC's 30-second idle timeout.
 
-Karşı taraf hâlâ doğrudan yoldan gönderiyorsa (yalnızca duraklamıştı ya da
-hiç geçmedi) ondan gelen ilk doğrudan paketle cihaz doğrudan yola döner. İki
-taraf da geçtiyse doğrudan adrese artık hiçbir şey gitmez; aktarım bitene
-kadar aktarma sunucusunda kalır. Cihaz kendisinin durakladığını (arka planda
-dondurulduğunu) saatinin en az 2 saniye geç işlemesinden anlar; o sessizliği
-yolun sessizliği saymaz ve geçmeden önce karşı tarafa 2 saniye daha tanır.
-QUIC karşı tarafın yeni bir adresine geçerse (NAT eşlemesi değişti) izlenen
-adres de onunla değişir.
+If the other side is still sending on the direct path (it had only paused,
+or never moved), the device returns to the direct path with the first
+direct packet from it. If both sides have moved, nothing goes to the direct
+address any more; the transfer stays on the relay server until it ends. A
+device tells that it was itself paused (frozen in the background) from its
+clock running at least 2 seconds late; it does not count that silence as
+the path's silence, and gives the other side 2 more seconds before moving.
+If QUIC moves to a new address of the other side (the NAT mapping changed),
+the watched address changes with it.
 
-Geçiş yalnızca iki taraf aynı aktarma sunucusunu kullanıyorsa vardır: alanın
-aktarma sunucusu gönderenden farklıysa ya da hiç yoksa iki taraf da geçmez,
-çünkü öbür taraf oraya hiç gelmez. Doğrudan yol kazandığında aktarma
-bağlantısı bekleme kipine alınır: kurulum sırasında açılmışsa o anda
-kapatılır, sonra yalnızca bağlantı aktarma sunucusuna geçtiğinde yeniden
-açılır. Bağlantı doğrudan yola dönerse aktarma bağlantısı 30 saniye boyunca
-hiçbir şey göndermedikten sonra kapanır. Aktarma bağlantısı vazgeçmişse
-(sunucu reddetti, ulaşılamadı ya da sınırlar doldu) cihaz geçmez, geçmişse
-doğrudan yola döner. Aktarma sunucusu doğrudan başlamış bir aktarımı ancak
-bir taraf geçtiğinde görür. Geçişten sonra QUIC'in tıkanıklık durumu
-doğrudan yoldan kalır; ilk saniyelerde paket kaybı olur, QUIC bunu kendisi
-toparlar.
+Moving exists only if both sides use the same relay server: if the
+receiver's relay server differs from the sender's, or it has none, neither
+side moves, because the other side never comes there. When the direct path
+wins, the relay connection is put on standby: if it was opened during
+setup, it is closed at that moment, and later reopened only when the
+connection moves to the relay server. If the connection returns to the
+direct path, the relay connection closes after sending nothing for 30
+seconds. If the relay connection has given up (the server refused, could
+not be reached, or the limits were reached), the device does not move, or,
+if it has moved, returns to the direct path. The relay server sees a
+transfer that started directly only when one side moves. After the move,
+QUIC's congestion state is the one left from the direct path; there is
+packet loss in the first seconds, and QUIC recovers from it by itself.
 
-Aktarma bağlantısı, karşı taraf henüz gelmemişken gönderdiği paketlere yanıt
-alamaz; bu sırada her 2 saniyede bir ping gönderir. Aktarma sunucusu pinge
-yanıt verdikçe bağlantı ölü sayılmaz, böylece geç gelen tarafı bekleyebilir.
+The relay connection gets no answer to the packets it sends while the
+other side has not arrived yet; meanwhile it sends a ping every 2 seconds.
+As long as the relay server answers the ping, the connection is not
+considered dead, so it can wait for a side that arrives late.
 
-Aktarma üzerinden başlayan bir aktarım ise sonradan doğrudan yola geçmez.
-Bu geçiş (QUIC bağlantı göçü) sonraki adımdır.
+A transfer that starts over the relay, however, does not move to a direct
+path later. That move (QUIC connection migration) is the next step.
 
-## Uygulama
+## Implementation
 
-| Parça | Yer |
+| Part | Location |
 | --- | --- |
-| Mesaj biçimi | `crates/totaldrop-proto/src/relay.rs` |
-| İstemci: adres bulma, aktarma bağlantısı | `crates/totaldrop-core/src/relay.rs` |
-| İstemci: tek QUIC soketi, iki yol | `crates/totaldrop-core/src/path.rs` |
-| Sunucu (Cloudflare) | `server/relay-worker` |
-| Sunucu (kendi makinende) | `server/totaldrop-relay`, kurulum dosyaları `deploy/` altında |
+| Message format | `crates/totaldrop-proto/src/relay.rs` |
+| Client: address discovery, relay connection | `crates/totaldrop-core/src/relay.rs` |
+| Client: one QUIC socket, two paths | `crates/totaldrop-core/src/path.rs` |
+| Server (Cloudflare) | `server/relay-worker` |
+| Server (on your own machine) | `server/totaldrop-relay`, setup files under `deploy/` |
 
-İstemci QUIC'e kendi soketini verir (`PathSocket`). Bu soket normal paketleri
-gerçek UDP soketine, `240.84.68.1:1` adresine gidenleri ise aktarma
-sunucusuna yollar. 240.0.0.0/4 ayrılmış bir bloktur ve hiçbir yere
-yönlendirilmez. QUIC aktarma sunucusunu karşı cihazın bir adresi gibi görür.
+The client gives QUIC its own socket (`PathSocket`). This socket sends
+normal packets to the real UDP socket, and those addressed to
+`240.84.68.1:1` to the relay server. 240.0.0.0/4 is a reserved block and is
+routed nowhere. QUIC sees the relay server as one of the other device's
+addresses.
 
-## Sunucu
+## Server
 
-- **Adres:** `wss://relay.totaldrop.app/v0/relay`, Cloudflare Workers
-  üzerinde. Her aktarım kendi Durable Object'inde iki WebSocket'i birbirine
-  bağlar. Birkaç QUIC paketi tek bir WebSocket mesajında taşınır; böylece
-  hem hız artar hem istek sayısı düşer.
-- **Ölçüm:** yerel test ortamında, yalnızca aktarma yoluyla 100 MB, 8 saniye
-  (yaklaşık 12 MB/s).
-- **Adres bulma:** Cloudflare'in STUN sunucusu, `stun.cloudflare.com:3478`.
-- **Kendi sunucunda çalıştırmak isteyenler için:** `server/totaldrop-relay`
-  aynı protokolü konuşur ve STUN'u da kendisi cevaplar. `deploy/` altında
-  systemd, Caddy ve nftables dosyaları var; kurulum betiği sunucunun adını
-  ister: `sh install.sh relay.example.org`.
-- **İleride:** kullanım büyür ya da hız yetmezse Cloudflare Realtime TURN
-  ikinci bir aktarma yolu olarak eklenebilir (ayda 1.000 GB ücretsiz, sonrası
-  GB başına 0,05 $).
+- **Address:** `wss://relay.totaldrop.app/v0/relay`, on Cloudflare Workers.
+  Each transfer connects two WebSockets to each other in its own Durable
+  Object. Several QUIC packets are carried in a single WebSocket message;
+  this both raises the speed and lowers the number of requests.
+- **Measurement:** in a local test setup, 100 MB over the relay path alone
+  in 8 seconds (about 12 MB/s).
+- **Address discovery:** Cloudflare's STUN server, `stun.cloudflare.com:3478`.
+- **For those who want to run it on their own server:**
+  `server/totaldrop-relay` speaks the same protocol and also answers STUN
+  itself. There are systemd, Caddy and nftables files under `deploy/`; the
+  setup script asks for the server's name: `sh install.sh relay.example.org`.
+- **Later:** if usage grows or the speed is not enough, Cloudflare Realtime
+  TURN can be added as a second relay path (1,000 GB a month free, then
+  USD 0.05 per GB).

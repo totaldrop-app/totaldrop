@@ -1,4 +1,4 @@
-<!-- Translated from README.md 0a6bee841691. -->
+<!-- Translated from README.md 4cb259c278ef. -->
 <div align="center">
 
 <picture>
@@ -81,7 +81,7 @@ Protokollen er beskrevet i *TotalDrop Protocol v0*. Beslutninger, der blev truff
 
 TotalDrop taler 35 sprog og følger din regions talformater. Engelsk og tyrkisk er gennemgået; de øvrige 33 er udkast, som modersmålstalere er ved at tjekke, så apps beholder sikkerhedsteksterne (bekræftelse, forkert kode, accepter og afvis) på engelsk, indtil et sprog er gennemgået. Webstedet og apps har dem alle, fra Android og Linux 0.3.0-beta.1.
 
-Har du set en klodset sætning? [Hjælp med at oversætte](../../docs/ceviri.md) (vejledningen er på tyrkisk).
+Har du set en klodset sætning? [Hjælp med at oversætte](../../docs/ceviri.md).
 
 ## Støt projektet
 
@@ -113,7 +113,7 @@ Du kan også hjælpe ved at [rapportere fejl](https://github.com/totaldrop-app/t
 
 Bibliotekerne har lempelige licenser, så alle kan bygge videre på protokollen; apps er GPL og serverne AGPL. Se [LICENSING.md](../../LICENSING.md).
 
-Hver platform har sin egen version, sit eget tag (`linux-v…`, `android-v…`) og sit eget CI-workflow, så én kan udgives uden at røre de andre. Sådan fungerer branches og udgivelser: [docs/gelistirme.md](../../docs/gelistirme.md) (på tyrkisk) og [docs/versioning.md](../../docs/versioning.md). Designregler: [docs/tasarim.md](../../docs/tasarim.md) og arkitekturbeslutninger: [docs/kararlar](../../docs/kararlar/README.md), begge på tyrkisk.
+Hver platform har sin egen version, sit eget tag (`linux-v…`, `android-v…`) og sit eget CI-workflow, så én kan udgives uden at røre de andre. Sådan fungerer branches og udgivelser: [docs/gelistirme.md](../../docs/gelistirme.md) (på tyrkisk) og [docs/versioning.md](../../docs/versioning.md). Designregler: [docs/tasarim.md](../../docs/tasarim.md) og arkitekturbeslutninger: [docs/kararlar](../../docs/kararlar/README.md) (på tyrkisk).
 
 ### Byg
 

@@ -1,4 +1,4 @@
-<!-- Translated from README.md 0a6bee841691. -->
+<!-- Translated from README.md 4cb259c278ef. -->
 <div align="center">
 
 <picture>
@@ -81,7 +81,7 @@ gh attestation verify totaldrop_0.3.0.beta.6-1_amd64.deb --repo totaldrop-app/to
 
 TotalDrop 35 زبانیں بولتا ہے اور آپ کے علاقے کے نمبر فارمیٹس کی پیروی کرتا ہے۔ انگریزی اور ترکی پر نظرثانی ہو چکی ہے؛ باقی 33 مسودے ہیں جنہیں مقامی بولنے والے جانچ رہے ہیں، اس لیے جب تک کسی زبان پر نظرثانی نہ ہو جائے، ایپس سیکیورٹی کے متن (تصدیق، غلط کوڈ، قبول اور مسترد کرنا) انگریزی میں رکھتی ہیں۔ Android اور Linux 0.3.0-beta.1 سے سائٹ اور ایپس دونوں میں یہ سب موجود ہیں۔
 
-کوئی بے ڈھنگا جملہ نظر آیا؟ [ترجمے میں مدد کریں](../../docs/ceviri.md) (رہنما ترکی میں ہے)۔
+کوئی بے ڈھنگا جملہ نظر آیا؟ [ترجمے میں مدد کریں](../../docs/ceviri.md)۔
 
 ## پروجیکٹ کی مدد کریں
 
@@ -113,7 +113,7 @@ TotalDrop اس لیے مفت ہے کہ لوگ اپنا حصہ ڈالتے ہیں�
 
 لائبریریاں نرم اجازتی لائسنسوں کے تحت ہیں تاکہ کوئی بھی پروٹوکول پر تعمیر کر سکے؛ ایپس GPL اور سرورز AGPL کے تحت ہیں۔ دیکھیں [LICENSING.md](../../LICENSING.md)۔
 
-ہر پلیٹ فارم کا اپنا ورژن، ٹیگ (`linux-v…`، `android-v…`) اور CI ورک فلو ہے، تاکہ ایک کو دوسروں کو چھیڑے بغیر جاری کیا جا سکے۔ برانچز اور ریلیزز کیسے کام کرتی ہیں: [docs/gelistirme.md](../../docs/gelistirme.md) (ترکی میں) اور [docs/versioning.md](../../docs/versioning.md)۔ ڈیزائن کے اصول: [docs/tasarim.md](../../docs/tasarim.md) اور آرکیٹیکچر کے فیصلے: [docs/kararlar](../../docs/kararlar/README.md)، دونوں ترکی میں۔
+ہر پلیٹ فارم کا اپنا ورژن، ٹیگ (`linux-v…`، `android-v…`) اور CI ورک فلو ہے، تاکہ ایک کو دوسروں کو چھیڑے بغیر جاری کیا جا سکے۔ برانچز اور ریلیزز کیسے کام کرتی ہیں: [docs/gelistirme.md](../../docs/gelistirme.md) (ترکی میں) اور [docs/versioning.md](../../docs/versioning.md)۔ ڈیزائن کے اصول: [docs/tasarim.md](../../docs/tasarim.md) اور آرکیٹیکچر کے فیصلے: [docs/kararlar](../../docs/kararlar/README.md) (ترکی میں)۔
 
 ### بلڈ
 

@@ -1,4 +1,4 @@
-<!-- Translated from README.md 0a6bee841691. -->
+<!-- Translated from README.md 4cb259c278ef. -->
 <div align="center">
 
 <picture>
@@ -81,7 +81,7 @@ gh attestation verify totaldrop_0.3.0.beta.6-1_amd64.deb --repo totaldrop-app/to
 
 TotalDrop 支持 35 种语言，并遵循你所在地区的数字格式。英语和土耳其语已经过审校；其余 33 种语言是母语者正在检查的草稿，因此在某种语言审校完成之前，应用会将安全相关的文字（验证、代码错误、接受和拒绝）保留为英文。从 Android 和 Linux 0.3.0-beta.1 起，网站和应用均已提供全部语言。
 
-发现了别扭的句子？[帮助翻译](../../docs/ceviri.md)（指南为土耳其语）。
+发现了别扭的句子？[帮助翻译](../../docs/ceviri.md)。
 
 ## 支持本项目
 
@@ -113,7 +113,7 @@ TotalDrop 能保持免费，是因为大家出手相助。捐款用于支付中�
 
 这些库采用宽松许可证，让任何人都能基于该协议进行开发；应用采用 GPL，服务器采用 AGPL。详见 [LICENSING.md](../../LICENSING.md)。
 
-每个平台都有自己的版本、标签（`linux-v…`、`android-v…`）和 CI 工作流，因此一个平台可以单独发布，而不影响其他平台。分支和发布的流程：[docs/gelistirme.md](../../docs/gelistirme.md)（土耳其语）和 [docs/versioning.md](../../docs/versioning.md)。设计规则：[docs/tasarim.md](../../docs/tasarim.md)，架构决策：[docs/kararlar](../../docs/kararlar/README.md)（均为土耳其语）。
+每个平台都有自己的版本、标签（`linux-v…`、`android-v…`）和 CI 工作流，因此一个平台可以单独发布，而不影响其他平台。分支和发布的流程：[docs/gelistirme.md](../../docs/gelistirme.md)（土耳其语）和 [docs/versioning.md](../../docs/versioning.md)。设计规则：[docs/tasarim.md](../../docs/tasarim.md)，架构决策：[docs/kararlar](../../docs/kararlar/README.md)（土耳其语）。
 
 ### 构建
 

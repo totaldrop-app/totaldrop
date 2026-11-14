@@ -22,7 +22,7 @@ Anyone can propose a change by opening an issue or a pull request. Proposals are
 | **Developer** | Has write access: writes changes on branches in this repository and opens pull requests for them, which need a maintainer's approval to merge | [@zaforcan](https://github.com/zaforcan) |
 | **Security contact** | Reads security@totaldrop.app and private vulnerability reports; replies within 72 hours; coordinates the fix and the advisory | [@ozdil](https://github.com/ozdil) |
 | **Contributor** | Proposes changes through issues and pull requests, following [CONTRIBUTING.md](CONTRIBUTING.md) and the [code of conduct](CODE_OF_CONDUCT.md) | Anyone |
-| **Translator** | Writes and reviews interface text in one of the 35 languages ([docs/ceviri.md](docs/ceviri.md), in Turkish) | Anyone; reviewed languages are listed in the README |
+| **Translator** | Writes and reviews interface text in one of the 35 languages ([docs/ceviri.md](docs/ceviri.md)) | Anyone; reviewed languages are listed in the README |
 | **Tester** | Runs beta builds and reports problems; Android beta testers are invited by the project lead | [@mstfyrdmc](https://github.com/mstfyrdmc) (iOS and macOS), invited testers and anyone using the Linux beta |
 
 AI coding assistants write much of the code and run the independent review of each pull request ([docs/surec.md](docs/surec.md), step 5). They hold no role here: every merge is made or approved by a maintainer, and every release, deployment and settings change is approved by the project lead. Both maintainers are organization owners, so the second half is an agreement, not a setting.

@@ -1,4 +1,4 @@
-<!-- Translated from README.md 0a6bee841691. -->
+<!-- Translated from README.md 4cb259c278ef. -->
 <div align="center">
 
 <picture>
@@ -81,7 +81,7 @@ A protokoll leírása a *TotalDrop Protocol v0* dokumentumban található. A meg
 
 A TotalDrop 35 nyelven beszél, és a régiód számformátumait követi. Az angol és a török ellenőrzött; a többi 33 vázlat, amelyet anyanyelvi beszélők ellenőriznek, ezért az alkalmazások a biztonsági szövegeket (ellenőrzés, hibás kód, elfogadás és elutasítás) angolul hagyják, amíg egy nyelv ellenőrzése meg nem történik. A weboldalon és az alkalmazásokban mind megvan, az Android és Linux 0.3.0-beta.1 verziótól kezdve.
 
-Esetlen mondatot találtál? [Segíts a fordításban](../../docs/ceviri.md) (az útmutató törökül van).
+Esetlen mondatot találtál? [Segíts a fordításban](../../docs/ceviri.md).
 
 ## Támogasd a projektet
 
@@ -113,7 +113,7 @@ Segíthetsz úgy is, hogy [hibákat jelentesz](https://github.com/totaldrop-app/
 
 A könyvtárak megengedő licencűek, hogy bárki építhessen a protokollra; az alkalmazások GPL, a szerverek AGPL licencűek. Lásd: [LICENSING.md](../../LICENSING.md).
 
-Minden platformnak saját verziója, címkéje (`linux-v…`, `android-v…`) és CI-munkafolyamata van, így az egyik kiadható a többi érintése nélkül. Hogyan működnek az ágak és a kiadások: [docs/gelistirme.md](../../docs/gelistirme.md) (törökül) és [docs/versioning.md](../../docs/versioning.md). Tervezési szabályok: [docs/tasarim.md](../../docs/tasarim.md) és architekturális döntések: [docs/kararlar](../../docs/kararlar/README.md), mindkettő törökül.
+Minden platformnak saját verziója, címkéje (`linux-v…`, `android-v…`) és CI-munkafolyamata van, így az egyik kiadható a többi érintése nélkül. Hogyan működnek az ágak és a kiadások: [docs/gelistirme.md](../../docs/gelistirme.md) (törökül) és [docs/versioning.md](../../docs/versioning.md). Tervezési szabályok: [docs/tasarim.md](../../docs/tasarim.md) és architekturális döntések: [docs/kararlar](../../docs/kararlar/README.md) (törökül).
 
 ### Összeállítás
 

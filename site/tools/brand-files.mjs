@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // The brand page's downloads (site/public/brand/files/), made from the
-// mark's geometry (docs/tasarim.md, "İşaret: Köşe") and the wordmark's
+// mark's geometry (docs/tasarim.md, "The mark: Köşe") and the wordmark's
 // outline, so no file is drawn by hand:
 //   node site/tools/brand-files.mjs           check the files are up to date (CI)
 //   node site/tools/brand-files.mjs --write   write the SVG files
