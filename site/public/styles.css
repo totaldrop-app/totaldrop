@@ -369,6 +369,13 @@ pre.cmd { white-space: pre-wrap; overflow-wrap: break-word; margin: 0; padding: 
 .rm-phase.is-now .road-state { color: var(--accent); }
 .rm-phase.is-now .road-state::before { background: var(--accent); border-color: var(--accent); }
 @media (max-width: 44rem) { .rm-items { grid-template-columns: minmax(0, 1fr); } }
+/* Progress of an item that has started, and its platforms and issues. */
+.rm-items .rm-status { color: var(--text); padding-inline-start: var(--s16); border-inline-start: 2px solid var(--accent); }
+/* Not started: plain secondary text, no progress bar. */
+.rm-items .rm-todo { color: var(--text-2); padding-inline-start: 0; border-inline-start: 0; }
+.rm-meta { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--s8) var(--s16); margin-top: auto; }
+.rm-issue { font-size: 0.875rem; font-weight: 700; display: inline-flex; align-items: center; min-height: 44px; }
+.rm-phase.is-no .road-state::before { border-style: dashed; }
 /* Privacy policy in every language: the note on a translation, and the
    list of the other languages under the text (#207). */
 .prose .lang-note { padding: 0; }
