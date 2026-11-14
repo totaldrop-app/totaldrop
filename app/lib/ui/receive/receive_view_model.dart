@@ -98,7 +98,7 @@ class ReceiveViewModel extends ChangeNotifier {
   bool takeLink(String link) {
     if (!canTakeLink) return false;
     final code = _repo.codeFromLink(link);
-    if (code == null && !linkHasCodePart(link)) return false;
+    if (code != null && code.isEmpty) return false;
     if (stage != ReceiveStage.entering) reset();
     setInput(code ?? '');
     if (code == null) {
@@ -293,14 +293,4 @@ class ReceiveViewModel extends ChangeNotifier {
     _release();
     super.dispose();
   }
-}
-
-/// Whether a receive link has anything after its prefix, where the code
-/// goes (#445). The two prefixes are the only links the app is given
-/// (MainActivity.isReceiveLink); the code itself is read in Rust.
-bool linkHasCodePart(String link) {
-  for (final prefix in const ['totaldrop://r/', 'https://totaldrop.app/r#']) {
-    if (link.startsWith(prefix)) return link.length > prefix.length;
-  }
-  return false;
 }

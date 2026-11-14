@@ -550,21 +550,29 @@ void main() {
       expect(receive.input, isEmpty);
     });
 
-    // A code cut short, or with a slash a chat app added, was dropped
-    // without a word (#445 review).
+    // A code cut short, with a slash a chat app added (#445 review), or
+    // with a query string in front of the fragment (#516) was dropped
+    // without a word.
     testWidgets('a link whose code is not a code says so', (tester) async {
-      await pumpApp(tester);
-      launches.add(const OpenLink('totaldrop://r/7-harbor'));
-      await settle(tester);
-      expect(find.byType(ReceiveView), findsOneWidget);
-      expect(receive.input, isEmpty);
-      expect(
-        find.text(
-          'That does not look like a code. It starts with a number, then '
-          'two or three words.',
-        ),
-        findsOneWidget,
-      );
+      for (final link in [
+        'totaldrop://r/7-harbor',
+        'https://totaldrop.app/r?x#7-harbor-rocket',
+      ]) {
+        await pumpApp(tester);
+        launches.add(OpenLink(link));
+        await settle(tester);
+        expect(find.byType(ReceiveView), findsOneWidget, reason: link);
+        expect(receive.input, isEmpty, reason: link);
+        expect(
+          find.text(
+            'That does not look like a code. It starts with a number, then '
+            'two or three words.',
+          ),
+          findsOneWidget,
+          reason: link,
+        );
+        receive.reset();
+      }
     });
 
     testWidgets('a link with nothing where the code goes says nothing', (

@@ -125,14 +125,47 @@ class FakeRepository implements TransferRepository {
   @override
   String? normalizeCode(String input) => input;
 
-  /// Like the Rust reader for the links tests use: the whole rest after
-  /// `totaldrop://r/` is the code.
+  static const _emptyLinks = {
+    '',
+    'totaldrop:',
+    'totaldrop://r',
+    'totaldrop://r/',
+    'totaldrop://r?',
+    'totaldrop://r#',
+    'totaldrop://r?#',
+    'totaldrop://r/?',
+    'totaldrop://r/#',
+    'totaldrop://r/?#',
+    'https://totaldrop.app/r',
+    'https://totaldrop.app/r#',
+    'https://totaldrop.app/r?',
+    'https://totaldrop.app/r?#',
+    'http://totaldrop.app/r',
+    'http://totaldrop.app/r#',
+    'http://totaldrop.app/r?',
+    'http://totaldrop.app/r?#',
+  };
+
+  static const _linkPrefixes = [
+    'https://totaldrop.app/r#',
+    'http://totaldrop.app/r#',
+    'totaldrop://r/',
+    'totaldrop:',
+  ];
+
+  /// Mirrors the 3-state `code_from_link` bridge contract for unit tests:
+  /// non-empty normalized code, `''` for an empty receive link, or `null`
+  /// for anything invalid. The real grammar lives and is fuzzed in
+  /// `totaldrop-proto::TransferCode::classify_link`.
   @override
   String? codeFromLink(String link) {
-    const prefix = 'totaldrop://r/';
-    if (!link.startsWith(prefix)) return null;
-    final code = link.substring(prefix.length);
-    return RegExp(r'^\d+(-[a-z]+){2,3}$').hasMatch(code) ? code : null;
+    if (_emptyLinks.contains(link)) return '';
+    for (final prefix in _linkPrefixes) {
+      if (!link.startsWith(prefix)) continue;
+      final code = link.substring(prefix.length);
+      return RegExp(r'^\d+(-[a-z]+){2,3}$').hasMatch(code) ? code : null;
+    }
+    return null;
   }
 
   /// Thrown by [receiveFolder] when set.
