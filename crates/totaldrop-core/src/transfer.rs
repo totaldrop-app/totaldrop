@@ -4,13 +4,13 @@
 //! The transfer protocol (spec section 8): offer, accept, encrypted chunks
 //! on data streams, verification and atomic placement.
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tokio::io::{AsyncReadExt, AsyncSeekExt, AsyncWriteExt};
 use tokio::sync::{Semaphore, mpsc};
 use totaldrop_crypto::identity::{DeviceKeys, verify_signature};
 use totaldrop_crypto::{CHUNK_SIZE, ContentKey, EntryCipher, TAG_SIZE};
@@ -151,17 +151,60 @@ impl Drop for AbortOnDrop {
     }
 }
 
-/// A partial file that is removed unless it was placed. Dropping it (an
-/// error, a stop, an aborted task) removes the file.
-struct PartFile {
-    path: PathBuf,
-    keep: bool,
+/// Where one file entry of a receive got to, for a resume record.
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum Kept {
+    /// Placed under its final name.
+    Placed,
+    /// Being written to `path`, which holds `chunks` whole chunks.
+    Part { path: PathBuf, chunks: u64 },
 }
 
-impl Drop for PartFile {
+/// The files of one receive. When the last holder lets go, every partial
+/// file still listed is removed, unless the receive was interrupted and
+/// they were recorded to be continued (decision 0020). The stream tasks
+/// share it, so a partial file also goes when a task is aborted.
+#[derive(Debug, Default)]
+struct Partials {
+    files: std::sync::Mutex<HashMap<u64, Kept>>,
+    keep: AtomicBool,
+}
+
+impl Partials {
+    fn set(&self, index: u64, kept: Kept) {
+        if let Ok(mut f) = self.files.lock() {
+            f.insert(index, kept);
+        }
+    }
+
+    fn forget(&self, index: u64) {
+        if let Ok(mut f) = self.files.lock() {
+            f.remove(&index);
+        }
+    }
+
+    fn snapshot(&self) -> Vec<(u64, Kept)> {
+        let mut v: Vec<(u64, Kept)> = self
+            .files
+            .lock()
+            .map(|f| f.iter().map(|(i, k)| (*i, k.clone())).collect())
+            .unwrap_or_default();
+        v.sort_by_key(|(i, _)| *i);
+        v
+    }
+}
+
+impl Drop for Partials {
     fn drop(&mut self) {
-        if !self.keep {
-            let _ = std::fs::remove_file(&self.path);
+        if self.keep.load(Ordering::SeqCst) {
+            return;
+        }
+        if let Ok(files) = self.files.get_mut() {
+            for kept in files.values() {
+                if let Kept::Part { path, .. } = kept {
+                    let _ = std::fs::remove_file(path);
+                }
+            }
         }
     }
 }
@@ -393,19 +436,59 @@ fn check_entries<'a>(entries: impl Iterator<Item = &'a Entry>) -> Result<Vec<Saf
 }
 
 #[allow(clippy::too_many_arguments)]
+/// The first chunk a receiver is missing, from the bitmap of chunks it
+/// holds in `accept` (bit `n` of byte `n / 8`, least significant bit
+/// first). A receiver sets only a prefix, but any bitmap is read the same
+/// way: sending starts at the first clear bit and goes on to the end
+/// (decision 0020). A bitmap longer than the file needs, with a bit beyond
+/// its last chunk, or with every chunk held is refused: such an entry
+/// would not be wanted.
+fn first_missing(bitmap: &[u8], chunks: u64) -> Result<u64> {
+    let bad = Error::Protocol("bad chunk bitmap");
+    let longest = usize::try_from(chunks.div_ceil(8)).unwrap_or(usize::MAX);
+    if bitmap.len() > longest {
+        return Err(bad);
+    }
+    let mut first = None;
+    for (n, byte) in bitmap.iter().enumerate() {
+        for bit in 0..8u64 {
+            let chunk = (n as u64).saturating_mul(8).saturating_add(bit);
+            let held = (byte >> bit) & 1 == 1;
+            if held && chunk >= chunks {
+                return Err(bad);
+            }
+            if !held && first.is_none() {
+                first = Some(chunk);
+            }
+        }
+    }
+    let first = first.unwrap_or((bitmap.len() as u64).saturating_mul(8));
+    if first >= chunks {
+        return Err(bad);
+    }
+    Ok(first)
+}
+
+#[allow(clippy::too_many_arguments)]
 async fn send_entry(
     stream: &mut quinn::SendStream,
     source: Source,
     entry: Entry,
     index: u64,
+    first: u64,
     ck: ContentKey,
     transfer_id: [u8; 16],
     done: Arc<AtomicU64>,
 ) -> Result<()> {
     let chunks = chunk_count(entry.size).ok_or(Error::Protocol("file too large"))?;
+    if first >= chunks {
+        return Err(Error::Protocol("bad chunk bitmap"));
+    }
+    // Where the receiver's held chunks end (decision 0020).
+    let skip = first.saturating_mul(limits::CHUNK_SIZE).min(entry.size);
     let mut file: Box<dyn tokio::io::AsyncRead + Send + Unpin> = match source {
         Source::Path(path) => {
-            let file = tokio::fs::File::open(&path).await?;
+            let mut file = tokio::fs::File::open(&path).await?;
             if file.metadata().await?.len() != entry.size {
                 return Err(Error::Io(std::io::Error::other(format!(
                     "{} {}",
@@ -413,25 +496,28 @@ async fn send_entry(
                     crate::error::CHANGED_AFTER_SCAN
                 ))));
             }
+            file.seek(std::io::SeekFrom::Start(skip)).await?;
             Box::new(file)
         }
         Source::Bytes(bytes) => {
             if bytes.len() as u64 != entry.size {
                 return Err(Error::Protocol("text size"));
             }
-            Box::new(std::io::Cursor::new(bytes))
+            let mut cursor = std::io::Cursor::new(bytes);
+            cursor.set_position(skip);
+            Box::new(cursor)
         }
     };
     let cipher = EntryCipher::new(&ck, &transfer_id, index);
     let header = DataHeader {
         transfer_id,
         entry: index,
-        first_chunk: 0,
+        first_chunk: first,
     };
     write_frame(stream, &header.encode()).await?;
-    let mut remaining = entry.size;
+    let mut remaining = entry.size.saturating_sub(skip);
     let mut buf = vec![0u8; CHUNK_SIZE];
-    for i in 0..chunks {
+    for i in first..chunks {
         let len = usize::try_from(remaining.min(limits::CHUNK_SIZE)).unwrap_or(CHUNK_SIZE);
         let slot = buf.get_mut(..len).ok_or(Error::Protocol("chunk size"))?;
         file.read_exact(slot).await?;
@@ -462,6 +548,7 @@ async fn send_entry_until_stopped(
     source: Source,
     entry: Entry,
     index: u64,
+    first: u64,
     ck: ContentKey,
     transfer_id: [u8; 16],
     done: Arc<AtomicU64>,
@@ -479,7 +566,7 @@ async fn send_entry_until_stopped(
     let sent = tokio::select! {
         biased;
         () = stop.stopped() => Err(Error::Stopped),
-        r = send_entry(&mut stream, source, entry, index, ck, transfer_id, done) => r,
+        r = send_entry(&mut stream, source, entry, index, first, ck, transfer_id, done) => r,
     };
     if let Err(e) = sent {
         // A dropped stream would end cleanly and read as a short file.
@@ -580,15 +667,25 @@ pub async fn send_files(
     // Only files carry data; the receiver may not ask for anything else.
     let mut to_send = Vec::new();
     let mut seen = HashSet::new();
-    for (index, _bitmap) in wanted {
+    for (index, bitmap) in wanted {
         let i = usize::try_from(index).map_err(|_| Error::Protocol("bad entry index"))?;
         let src = entries.get(i).ok_or(Error::Protocol("bad entry index"))?;
         if src.entry.kind != EntryKind::File || !seen.insert(index) {
             return Err(Error::Protocol("bad entry index"));
         }
-        to_send.push((index, src.clone()));
+        let chunks = chunk_count(src.entry.size).ok_or(Error::Protocol("file too large"))?;
+        let first = first_missing(&bitmap, chunks)?;
+        to_send.push((index, first, src.clone()));
     }
-    let wanted_bytes: u64 = to_send.iter().map(|(_, s)| s.entry.size).sum();
+    // Only what is still missing is sent and counted.
+    let wanted_bytes: u64 = to_send
+        .iter()
+        .map(|(_, first, s)| {
+            s.entry
+                .size
+                .saturating_sub(first.saturating_mul(limits::CHUNK_SIZE))
+        })
+        .sum();
 
     // Every file gets its task at once; the semaphore lets PARALLEL_STREAMS
     // of them send at a time. Waiting happens inside the tasks, so the loop
@@ -596,7 +693,7 @@ pub async fn send_files(
     let done = Arc::new(AtomicU64::new(0));
     let permits = Arc::new(Semaphore::new(PARALLEL_STREAMS));
     let mut tasks = tokio::task::JoinSet::new();
-    for (index, src) in to_send.iter().cloned() {
+    for (index, first, src) in to_send.iter().cloned() {
         let Some(path) = src.source else { continue };
         tasks.spawn(send_entry_until_stopped(
             conn.clone(),
@@ -605,6 +702,7 @@ pub async fn send_files(
             path,
             src.entry,
             index,
+            first,
             ck.clone(),
             transfer_id,
             done.clone(),
@@ -640,13 +738,14 @@ pub async fn send_files(
             }
             msg = ctl_rx.recv() => match msg {
                 Some(Ok(Control::EntryDone { transfer_id: t, index, ok })) if t == transfer_id => {
-                    let Some((_, src)) = to_send.iter().find(|(i, _)| *i == index) else {
+                    let Some((_, first, src)) = to_send.iter().find(|(i, _, _)| *i == index) else {
                         return Err(Error::Protocol("unexpected entry_done"));
                     };
                     if !finished.insert(index) {
                         return Err(Error::Protocol("unexpected entry_done"));
                     }
-                    confirmed = confirmed.saturating_add(src.entry.size);
+                    let sent = src.entry.size.saturating_sub(first.saturating_mul(limits::CHUNK_SIZE));
+                    confirmed = confirmed.saturating_add(sent);
                     if ok { report.files_ok = report.files_ok.saturating_add(1); }
                     else { report.files_failed = report.files_failed.saturating_add(1); }
                     pending = pending.saturating_sub(1);
@@ -954,6 +1053,9 @@ pub struct ReceiveReport {
 struct Target {
     entry: Entry,
     final_path: PathBuf,
+    /// A partial file kept from an interrupted attempt, and how many whole
+    /// chunks of it this receiver asked to keep (decision 0020).
+    resume: Option<(PathBuf, u64)>,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -967,9 +1069,10 @@ async fn receive_stream(
     total: u64,
     progress: Progress,
     abandoned: Arc<std::sync::atomic::AtomicBool>,
+    partials: Arc<Partials>,
 ) -> Result<(u64, bool)> {
     let header = DataHeader::decode(&expect_frame(&mut stream, 1024).await?)?;
-    if header.transfer_id != transfer_id || header.first_chunk != 0 {
+    if header.transfer_id != transfer_id {
         return Err(Error::Protocol("bad data stream header"));
     }
     let index = header.entry;
@@ -999,33 +1102,81 @@ async fn receive_stream(
         .parent()
         .ok_or(Error::Protocol("no parent directory"))?
         .to_path_buf();
-    let mut tmp_name = [0u8; 8];
-    getrandom::fill(&mut tmp_name).map_err(|_| Error::Random)?;
-    let tmp_path = parent.join(format!(
-        ".totaldrop-{}.part",
-        tmp_name
-            .iter()
-            .map(|b| format!("{b:02x}"))
-            .collect::<String>()
-    ));
-    // Opened right here, not on a blocking thread: an abort between an
-    // asynchronous open finishing and the guard below would leave the file.
-    let std_file = std::fs::OpenOptions::new()
-        .write(true)
-        .create_new(true)
-        .open(&tmp_path)?;
-    // From here on the partial file goes away unless it is placed, also
-    // when this task is aborted.
-    let mut part = PartFile {
-        path: tmp_path.clone(),
-        keep: false,
+    // A sender starts at chunk 0, or where a kept partial file ends: the
+    // prefix this receiver asked to keep. An older sender ignores that and
+    // starts at 0; the partial file is then emptied (decision 0020).
+    let start = match (&target.resume, header.first_chunk) {
+        (_, 0) => 0,
+        (Some((_, held)), first) if first == *held => first,
+        _ => return Err(Error::Protocol("bad data stream header")),
+    };
+    let (tmp_path, std_file) = match &target.resume {
+        Some((path, held)) => {
+            // Listed before anything can fail, so it is removed or kept
+            // with the others.
+            partials.set(
+                index,
+                Kept::Part {
+                    path: path.clone(),
+                    chunks: if start == 0 { 0 } else { *held },
+                },
+            );
+            let f = std::fs::OpenOptions::new()
+                .read(true)
+                .write(true)
+                .open(path)?;
+            (path.clone(), f)
+        }
+        None => {
+            let mut tmp_name = [0u8; 8];
+            getrandom::fill(&mut tmp_name).map_err(|_| Error::Random)?;
+            let tmp_path = parent.join(format!(
+                ".totaldrop-{}.part",
+                tmp_name
+                    .iter()
+                    .map(|b| format!("{b:02x}"))
+                    .collect::<String>()
+            ));
+            // Opened right here, not on a blocking thread: an abort between
+            // an asynchronous open finishing and the listing below would
+            // leave the file.
+            let f = std::fs::OpenOptions::new()
+                .write(true)
+                .create_new(true)
+                .open(&tmp_path)?;
+            // From here on the partial file goes away unless it is placed
+            // or kept, also when this task is aborted.
+            partials.set(
+                index,
+                Kept::Part {
+                    path: tmp_path.clone(),
+                    chunks: 0,
+                },
+            );
+            (tmp_path, f)
+        }
     };
     let mut file = tokio::fs::File::from_std(std_file);
 
     let result: Result<bool> = async {
         let mut hasher = blake3::Hasher::new();
-        let mut remaining = size;
-        for i in 0..chunks {
+        // The chunks kept from before count towards the file's hash: read
+        // them back, and cut off anything after them.
+        let kept = start.saturating_mul(limits::CHUNK_SIZE).min(size);
+        file.seek(std::io::SeekFrom::Start(0)).await?;
+        let mut buf = vec![0u8; CHUNK_SIZE];
+        let mut left = kept;
+        while left > 0 {
+            let len = usize::try_from(left.min(limits::CHUNK_SIZE)).unwrap_or(CHUNK_SIZE);
+            let slot = buf.get_mut(..len).ok_or(Error::Protocol("chunk size"))?;
+            file.read_exact(slot).await?;
+            hasher.update(slot);
+            left = left.saturating_sub(len as u64);
+        }
+        file.set_len(kept).await?;
+        file.seek(std::io::SeekFrom::Start(kept)).await?;
+        let mut remaining = size.saturating_sub(kept);
+        for i in start..chunks {
             let ct = expect_frame(&mut stream, MAX_FRAME).await?;
             if ct.len() > CHUNK_SIZE.saturating_add(TAG_SIZE) {
                 return Err(Error::Protocol("chunk too large"));
@@ -1039,6 +1190,13 @@ async fn receive_stream(
             }
             hasher.update(&plain);
             file.write_all(&plain).await?;
+            partials.set(
+                index,
+                Kept::Part {
+                    path: tmp_path.clone(),
+                    chunks: i.saturating_add(1),
+                },
+            );
             remaining = remaining.saturating_sub(want);
             let now = done.fetch_add(want, Ordering::Relaxed).saturating_add(want);
             progress(now, total);
@@ -1084,13 +1242,17 @@ async fn receive_stream(
                 .map_err(|_| Error::Protocol("placement task failed"))?
             };
             // Placing moved or linked the file away; whatever is left at
-            // the temporary path is removed by the guard.
+            // the temporary path goes.
             placed?;
-            part.keep = !tmp_path.exists();
+            partials.set(index, Kept::Placed);
+            let _ = std::fs::remove_file(&tmp_path);
             Ok((index, true))
         }
         Ok(false) => {
+            // A file that does not match is not continued either.
             drop(file);
+            let _ = std::fs::remove_file(&tmp_path);
+            partials.forget(index);
             Ok((index, false))
         }
         Err(e) => {
@@ -1257,8 +1419,139 @@ async fn read_text(
     Ok((blake3::hash(&out).as_bytes() == &expected).then_some(out))
 }
 
+/// Whether a receive that ended with `e` was interrupted, rather than
+/// stopped, cancelled or broken: only then are its files kept to be
+/// continued (decision 0020).
+fn interrupted(e: &Error) -> bool {
+    matches!(e, Error::Connect(_) | Error::PeerLeft)
+}
+
+/// Whether `path` lies beneath `dest` through plain names only.
+fn plainly_beneath(dest: &Path, path: &Path) -> bool {
+    path.strip_prefix(dest).is_ok_and(|rest| {
+        rest.components().next().is_some()
+            && rest
+                .components()
+                .all(|c| matches!(c, std::path::Component::Normal(_)))
+    })
+}
+
+/// The bitmap of a held prefix of `held` chunks.
+fn prefix_bitmap(held: u64) -> Vec<u8> {
+    let full = usize::try_from(held / 8).unwrap_or(0);
+    let mut map = vec![0xffu8; full];
+    let rest = held % 8;
+    if rest > 0 {
+        map.push((1u8 << rest).wrapping_sub(1));
+    }
+    map
+}
+
+/// A partial file from a record that can be continued for `entry` placed
+/// at `final_path`: one of ours, next to the final path, a plain file.
+/// Returns it with the chunks to keep: what the record says, at most what
+/// the file holds, and never the whole file.
+fn usable_part(
+    dest: &Path,
+    final_path: &Path,
+    part: &Path,
+    chunks: u64,
+    entry: &Entry,
+) -> Option<(PathBuf, u64)> {
+    if !crate::resume::is_part_beneath(dest, part) || part.parent() != final_path.parent() {
+        return None;
+    }
+    let meta = std::fs::symlink_metadata(part).ok()?;
+    if !meta.is_file() {
+        return None;
+    }
+    let total = chunk_count(entry.size)?;
+    let held = chunks
+        .min(meta.len() / limits::CHUNK_SIZE)
+        .min(total.saturating_sub(1));
+    (held > 0).then(|| (part.to_path_buf(), held))
+}
+
+/// Whether a file placed by an interrupted attempt is still there as it
+/// was: a plain file of the entry's size and hash.
+async fn still_placed(path: &Path, entry: &Entry) -> bool {
+    let ok = std::fs::symlink_metadata(path).is_ok_and(|m| m.is_file() && m.len() == entry.size);
+    if !ok {
+        return false;
+    }
+    let path = path.to_path_buf();
+    let hash = tokio::task::spawn_blocking(move || hash_file(&path)).await;
+    matches!((hash, entry.hash), (Ok(Ok(h)), Some(want)) if h == want)
+}
+
+/// Write the resume record of an interrupted receive. Returns whether it
+/// was written; only then are its files kept.
+fn record_interrupted(
+    store: &crate::resume::Store,
+    record_path: &Path,
+    dest: &Path,
+    renames: &[(String, String)],
+    dirs: &[PathBuf],
+    partials: &Partials,
+) -> bool {
+    let utf8 = |p: &Path| p.to_str().map(str::to_owned);
+    let Some(dest_text) = utf8(dest) else {
+        return false;
+    };
+    let mut files = Vec::new();
+    for (index, kept) in partials.snapshot() {
+        match kept {
+            Kept::Placed => files.push(totaldrop_proto::wire::ResumeFile {
+                index,
+                part: None,
+                chunks: 0,
+            }),
+            // Nothing to continue: it goes.
+            Kept::Part { path, chunks: 0 } => {
+                let _ = std::fs::remove_file(&path);
+                partials.forget(index);
+            }
+            Kept::Part { path, chunks } => {
+                let Some(part) = utf8(&path) else {
+                    return false;
+                };
+                files.push(totaldrop_proto::wire::ResumeFile {
+                    index,
+                    part: Some(part),
+                    chunks,
+                });
+            }
+        }
+    }
+    if files.is_empty() {
+        return false;
+    }
+    let Some(dirs) = dirs.iter().map(|d| utf8(d)).collect::<Option<Vec<_>>>() else {
+        return false;
+    };
+    // Top-level names are kept only for folders this receive created.
+    let tops = renames
+        .iter()
+        .filter(|(_, made)| dirs.iter().any(|d| Path::new(d) == dest.join(made)))
+        .cloned()
+        .collect();
+    let record = totaldrop_proto::wire::ResumeRecord {
+        interrupted: crate::resume::now(),
+        dest: dest_text,
+        tops,
+        dirs,
+        files,
+    };
+    store.save(record_path, &record).is_ok()
+}
+
 /// Accept an offer and write everything beneath `dest`. A text (#313)
 /// offered this way is saved as the file it also is.
+///
+/// With `resume`, a receive whose connection is lost keeps its partial
+/// files and a record in that store, and the same files offered again into
+/// the same folder continue where they stopped (decision 0020).
+#[allow(clippy::too_many_lines, clippy::too_many_arguments)]
 pub async fn accept(
     conn: &quinn::Connection,
     mut chan: SecureChannel,
@@ -1266,12 +1559,44 @@ pub async fn accept(
     dest: &Path,
     progress: Progress,
     stop: &Stop,
+    resume: Option<&crate::resume::Store>,
 ) -> Result<ReceiveReport> {
     let resolved = check_destination(dest)?;
     let dest = resolved.as_path();
     let transfer_id = offer.manifest.transfer_id;
     if stop.is_stopped() {
         return Err(tell_stopped(conn, &mut chan.sealer, &mut chan.send, transfer_id).await);
+    }
+
+    // An interrupted attempt at the same files into the same folder.
+    let record_path = resume.and_then(|s| {
+        s.sweep();
+        s.path_for(&offer.manifest, dest)
+    });
+    let previous = match (resume, &record_path) {
+        (Some(s), Some(p)) => s.take(p).filter(|r| Path::new(&r.dest) == dest),
+        _ => None,
+    };
+    let mut earlier_dirs: Vec<PathBuf> = Vec::new();
+    let mut reuse: HashMap<String, String> = HashMap::new();
+    let mut earlier_files: HashMap<u64, totaldrop_proto::wire::ResumeFile> = HashMap::new();
+    if let Some(r) = previous {
+        for d in &r.dirs {
+            let d = PathBuf::from(d);
+            if plainly_beneath(dest, &d) && std::fs::symlink_metadata(&d).is_ok_and(|m| m.is_dir())
+            {
+                earlier_dirs.push(d);
+            }
+        }
+        for (top, made) in r.tops {
+            if earlier_dirs.contains(&dest.join(&made)) && plainly_beneath(dest, &dest.join(&made))
+            {
+                reuse.insert(top, made);
+            }
+        }
+        for f in r.files {
+            earlier_files.insert(f.index, f);
+        }
     }
 
     // Every top-level item gets a name that does not exist yet, so nothing
@@ -1288,7 +1613,13 @@ pub async fn accept(
     for top in &offer.summary.top_level {
         let own = top.to_lowercase();
         taken.remove(&own);
-        let free = if std::fs::symlink_metadata(dest.join(top)).is_ok() {
+        let earlier = reuse
+            .get(top)
+            .filter(|made| !taken.contains(&made.to_lowercase()));
+        let free = if let Some(made) = earlier {
+            // A folder the interrupted attempt created: continued into.
+            made.clone()
+        } else if std::fs::symlink_metadata(dest.join(top)).is_ok() {
             free_name(dest, top, &taken)?
         } else {
             top.clone()
@@ -1312,10 +1643,13 @@ pub async fn accept(
 
     let mut targets: Vec<Option<Target>> = Vec::with_capacity(offer.paths.len());
     let mut wanted = Vec::new();
+    // Folders the interrupted attempt made count as made by this one.
     let mut created = CreatedDirs {
-        dirs: Vec::new(),
+        dirs: earlier_dirs,
         keep: false,
     };
+    let partials = Arc::new(Partials::default());
+    let mut already = 0usize;
     for (i, (entry, safe)) in offer.manifest.entries.iter().zip(&offer.paths).enumerate() {
         let mut path = dest.to_path_buf();
         for (n, seg) in safe.segments().iter().enumerate() {
@@ -1332,10 +1666,35 @@ pub async fn accept(
             }
         }
         if entry.kind == EntryKind::File {
-            wanted.push((i as u64, Vec::new()));
+            let index = i as u64;
+            let mut resume_part = None;
+            match earlier_files.remove(&index) {
+                Some(f) if f.part.is_none() => {
+                    if still_placed(&path, entry).await {
+                        // Already here from the interrupted attempt.
+                        already = already.saturating_add(1);
+                        partials.set(index, Kept::Placed);
+                        targets.push(None);
+                        continue;
+                    }
+                }
+                Some(f) => {
+                    let part = PathBuf::from(f.part.unwrap_or_default());
+                    resume_part = usable_part(dest, &path, &part, f.chunks, entry);
+                    if resume_part.is_none() && crate::resume::is_part_beneath(dest, &part) {
+                        let _ = std::fs::remove_file(&part);
+                    }
+                }
+                None => {}
+            }
+            let bitmap = resume_part
+                .as_ref()
+                .map_or_else(Vec::new, |(_, held)| prefix_bitmap(*held));
+            wanted.push((index, bitmap));
             targets.push(Some(Target {
                 entry: entry.clone(),
                 final_path: path,
+                resume: resume_part,
             }));
         } else {
             targets.push(None);
@@ -1374,7 +1733,10 @@ pub async fn accept(
     // (done, an error, a stop) aborts the ones still running.
     let mut streams = tokio::task::JoinSet::new();
 
-    let mut report = ReceiveReport::default();
+    let mut report = ReceiveReport {
+        files_ok: already,
+        ..ReceiveReport::default()
+    };
     for (_, to) in &renames {
         report.placed.push(dest.join(to));
     }
@@ -1407,16 +1769,17 @@ pub async fn accept(
                 stream = conn.accept_uni() => {
                     let stream = stream?;
                     let tx = result_tx.clone();
-                    let (targets, claimed, ck, done, progress, permits, abandoned) = (
+                    let (targets, claimed, ck, done, progress, permits, abandoned, partials) = (
                         targets.clone(), claimed.clone(), offer.content_key.clone(),
                         done.clone(), progress.clone(), permits.clone(), abandoned.clone(),
+                        partials.clone(),
                     );
                     // The permit is waited for inside the task, so this loop
                     // keeps hearing stops, cancels and the inactivity timer.
                     streams.spawn(async move {
                         let r = match permits.acquire_owned().await {
                             Ok(_permit) => {
-                                receive_stream(stream, targets, claimed, ck, transfer_id, done, total, progress, abandoned).await
+                                receive_stream(stream, targets, claimed, ck, transfer_id, done, total, progress, abandoned, partials).await
                             }
                             Err(_) => Err(Error::Protocol("semaphore closed")),
                         };
@@ -1468,10 +1831,18 @@ pub async fn accept(
     }
     .await;
     if let Err(e) = outcome {
-        // No file is placed from now on; let every stream task end and drop
-        // its partial file before the folders this transfer created go.
+        // No file is placed from now on; let every stream task end before
+        // its partial file and the folders this transfer created go.
         abandoned.store(true, Ordering::SeqCst);
         streams.shutdown().await;
+        // A lost connection keeps what arrived, to be continued.
+        if interrupted(&e)
+            && let (Some(store), Some(path)) = (resume, &record_path)
+            && record_interrupted(store, path, dest, &renames, &created.dirs, &partials)
+        {
+            partials.keep.store(true, Ordering::SeqCst);
+            created.keep = true;
+        }
         return Err(e);
     }
     created.keep = true;
@@ -1531,6 +1902,7 @@ mod tests {
             Arc::new(Semaphore::new(1)),
             Source::Path(source),
             entry,
+            0,
             0,
             ContentKey::generate().unwrap(),
             [1; 16],
@@ -1653,7 +2025,7 @@ mod tests {
                 }
             })
         };
-        let r = accept(&receiver, rchan, offer, &dest, on_receive, &stop).await;
+        let r = accept(&receiver, rchan, offer, &dest, on_receive, &stop, None).await;
         assert!(matches!(r, Err(Error::Stopped)), "{r:?}");
         let s = tokio::time::timeout(Duration::from_secs(10), send)
             .await
@@ -1662,6 +2034,192 @@ mod tests {
         assert!(matches!(s, Err(Error::Cancelled(_))), "{s:?}");
         assert_eq!(std::fs::read_dir(&dest).unwrap().count(), 0);
         let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// Sends what `scan` found in `folder` and receives it into `dest`
+    /// with resume records in `store`. `cut_at` closes the sender's
+    /// connection, as a lost network would, once that many bytes arrived.
+    /// Returns the receive, and the total the sender's bar showed: what it
+    /// had to send.
+    async fn send_once(
+        folder: &Path,
+        dest: &Path,
+        store: &crate::resume::Store,
+        cut_at: Option<u64>,
+    ) -> (Result<ReceiveReport>, u64) {
+        let (sender, receiver) =
+            crate::transport::testing::over_slow_relay(Duration::from_millis(1)).await;
+        let (schan, mut rchan, skeys, scert) = secure_pair(&sender, &receiver).await;
+        let (entries, _) = scan(&[folder.to_path_buf()]).unwrap();
+        let to_send = Arc::new(AtomicU64::new(u64::MAX));
+        let send = {
+            let (sender, to_send) = (sender.clone(), to_send.clone());
+            tokio::spawn(async move {
+                let bar: Progress = Arc::new(move |_, total| {
+                    to_send.store(total, Ordering::Relaxed);
+                });
+                send_files(&sender, schan, &skeys, entries, false, bar, &Stop::new()).await
+            })
+        };
+        let offer = receive_offer(&mut rchan, &scert).await.unwrap();
+        let on_receive: Progress = {
+            let sender = sender.clone();
+            Arc::new(move |n, _| {
+                if cut_at.is_some_and(|c| n >= c) {
+                    sender.close(0u32.into(), b"lost");
+                }
+            })
+        };
+        let r = accept(
+            &receiver,
+            rchan,
+            offer,
+            dest,
+            on_receive,
+            &Stop::new(),
+            Some(store),
+        )
+        .await;
+        let _ = tokio::time::timeout(Duration::from_secs(10), send).await;
+        (r, to_send.load(Ordering::Relaxed))
+    }
+
+    fn hidden(dir: &Path) -> Vec<PathBuf> {
+        let mut found = Vec::new();
+        for e in std::fs::read_dir(dir).unwrap().flatten() {
+            let p = e.path();
+            if p.is_dir() {
+                found.extend(hidden(&p));
+            } else if p
+                .file_name()
+                .and_then(|n| n.to_str())
+                .is_some_and(crate::resume::is_part_name)
+            {
+                found.push(p);
+            }
+        }
+        found
+    }
+
+    /// A transfer whose connection is lost keeps what arrived; the same
+    /// files sent again with a new transfer continue where it stopped, into
+    /// the same folder, and arrive whole (decision 0020, #31). Before, the
+    /// partial files were removed and the second attempt sent everything.
+    #[tokio::test]
+    async fn an_interrupted_transfer_continues_where_it_stopped() {
+        let dir = std::env::temp_dir().join(format!("td-resume-e2e-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        let (folder, dest) = (dir.join("src").join("f"), dir.join("dest"));
+        std::fs::create_dir_all(&folder).unwrap();
+        std::fs::create_dir_all(&dest).unwrap();
+        let a: Vec<u8> = (0..(4u32 << 20)).map(|i| (i % 251) as u8).collect();
+        let b: Vec<u8> = (0..(2u32 << 20)).map(|i| (i % 241) as u8).collect();
+        std::fs::write(folder.join("a.bin"), &a).unwrap();
+        std::fs::write(folder.join("b.bin"), &b).unwrap();
+        let total = (a.len() + b.len()) as u64;
+        let store = crate::resume::Store::new(dir.join("state"));
+
+        let (first, _) = send_once(&folder, &dest, &store, Some(2 << 20)).await;
+        assert!(matches!(first, Err(Error::Connect(_))), "{first:?}");
+        assert_eq!(std::fs::read_dir(dir.join("state")).unwrap().count(), 1);
+        assert!(!hidden(&dest).is_empty(), "the partial files were removed");
+
+        let (second, to_send) = send_once(&folder, &dest, &store, None).await;
+        let report = second.unwrap();
+        assert_eq!(report.files_ok, 2);
+        assert!(
+            to_send < total,
+            "sent everything again: {to_send} of {total}"
+        );
+        assert_eq!(names(&dest), vec!["f".to_owned()]);
+        assert_eq!(std::fs::read(dest.join("f").join("a.bin")).unwrap(), a);
+        assert_eq!(std::fs::read(dest.join("f").join("b.bin")).unwrap(), b);
+        assert!(hidden(&dest).is_empty());
+        assert_eq!(std::fs::read_dir(dir.join("state")).unwrap().count(), 0);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// A receive that is stopped keeps nothing to continue: no record, no
+    /// partial files, as before decision 0020.
+    #[tokio::test]
+    async fn a_stopped_receive_keeps_nothing() {
+        let dir = std::env::temp_dir().join(format!("td-resume-stop-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        let (folder, dest) = (dir.join("src").join("f"), dir.join("dest"));
+        std::fs::create_dir_all(&folder).unwrap();
+        std::fs::create_dir_all(&dest).unwrap();
+        std::fs::write(folder.join("a.bin"), vec![3u8; 4 << 20]).unwrap();
+        let store = crate::resume::Store::new(dir.join("state"));
+        let (sender, receiver) =
+            crate::transport::testing::over_slow_relay(Duration::from_millis(1)).await;
+        let (schan, mut rchan, skeys, scert) = secure_pair(&sender, &receiver).await;
+        let (entries, _) = scan(std::slice::from_ref(&folder)).unwrap();
+        let send = {
+            let sender = sender.clone();
+            tokio::spawn(async move {
+                send_files(
+                    &sender,
+                    schan,
+                    &skeys,
+                    entries,
+                    false,
+                    Arc::new(|_, _| {}),
+                    &Stop::new(),
+                )
+                .await
+            })
+        };
+        let offer = receive_offer(&mut rchan, &scert).await.unwrap();
+        let stop = Stop::new();
+        let on_receive: Progress = {
+            let stop = stop.clone();
+            Arc::new(move |n, _| {
+                if n >= 1 << 20 {
+                    stop.stop();
+                }
+            })
+        };
+        let r = accept(
+            &receiver,
+            rchan,
+            offer,
+            &dest,
+            on_receive,
+            &stop,
+            Some(&store),
+        )
+        .await;
+        assert!(matches!(r, Err(Error::Stopped)), "{r:?}");
+        let _ = tokio::time::timeout(Duration::from_secs(10), send).await;
+        assert_eq!(std::fs::read_dir(&dest).unwrap().count(), 0);
+        assert!(std::fs::read_dir(dir.join("state")).map_or(true, |d| d.count() == 0));
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn bitmaps() {
+        assert_eq!(prefix_bitmap(0), Vec::<u8>::new());
+        assert_eq!(prefix_bitmap(3), vec![0b0000_0111]);
+        assert_eq!(prefix_bitmap(9), vec![0xff, 0b0000_0001]);
+        assert_eq!(first_missing(&[], 3).unwrap(), 0);
+        assert_eq!(first_missing(&prefix_bitmap(2), 3).unwrap(), 2);
+        // Not a prefix: sending starts at the first gap.
+        assert_eq!(first_missing(&[0b0000_0101], 3).unwrap(), 1);
+        // Every chunk held, a bit past the end, too long: refused.
+        for (map, chunks) in [
+            (vec![0b0000_0111], 3),
+            (vec![0b0000_1000], 3),
+            (vec![0, 0], 8),
+        ] {
+            assert!(
+                matches!(
+                    first_missing(&map, chunks),
+                    Err(Error::Protocol("bad chunk bitmap"))
+                ),
+                "{map:?} {chunks}"
+            );
+        }
+        assert_eq!(first_missing(&[0xff, 0], 9).unwrap(), 8);
     }
 
     /// How the test receiver takes an offer.
@@ -1715,6 +2273,7 @@ mod tests {
                 &dest,
                 Arc::new(|_, _| {}),
                 &Stop::new(),
+                None,
             )
             .await
         }
@@ -1927,7 +2486,7 @@ mod tests {
         // As an old receiver: it ignores the field, so it never reports. A
         // report sent anyway would fail the sender.
         offer.reports = reports;
-        let received = accept(&receiver, rchan, offer, &dest, on_receive, &stop)
+        let received = accept(&receiver, rchan, offer, &dest, on_receive, &stop, None)
             .await
             .unwrap();
         let sent = send.await.unwrap().unwrap();
