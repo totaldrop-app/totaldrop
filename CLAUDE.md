@@ -52,7 +52,7 @@ Zorunlu denetim CI'dır; aşağıdakiler aynı denetimlerin yerel karşılığı
 - Android (`app/`): `flutter pub get --enforce-lockfile`, `flutter gen-l10n`, `flutter analyze`, `flutter test`; köprü crate'i `cargo test -p rust_lib_totaldrop --locked`.
 - Linux QML bileşen testleri (Rust derlemesi istemez): `linux/tests/qml/run.sh`.
 - Tamarin modeli: `formal/check.sh`, `formal/mutants.py` (`formal/README.md`).
-- Depo denetimleri: `node tools/changelog.mjs check`, `tools/check-spdx.sh`, `tools/check-component-versions.sh`, `packaging/check-versions.sh`, `tools/check-advisory-ignores.sh`, `node tools/check-layers.mjs` (crate katmanları), `node tools/check-doc-refs.mjs` (`docs/ARCHITECTURE.md` satır referansları; kayınca `--fix`).
+- Depo denetimleri: `node tools/changelog.mjs check`, `tools/check-spdx.sh`, `tools/check-component-versions.sh`, `packaging/check-versions.sh`, `tools/check-advisory-ignores.sh`, `node tools/check-layers.mjs` (crate katmanları), `node tools/check-doc-refs.mjs` (`docs/ARCHITECTURE.md` satır referansları; kayan satır uyarır, `--fix` günceller, `--strict` kayanı da kırar).
 - Hepsi birden: `pre-commit run -c .pre-commit-config-extra.yaml --all-files` (olmayan araçları `SKIP=dart-format,flutter-analyze,worker-tsc` ile atla).
 
 ## Her PR'da unutulanlar

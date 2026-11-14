@@ -159,11 +159,11 @@ repos:
         files: (^|/)Cargo\.toml$|^tools/(test-)?check-layers\.mjs$|^docs/ARCHITECTURE\.md$
         pass_filenames: false
 
-      # Only checks; it never rewrites the map. A moved line: run
-      # `node tools/check-doc-refs.mjs --fix` and look at the diff. A changed
-      # line: read the claim again, then `--accept`.
+      # Only checks; it never rewrites the map. A moved line warns: run
+      # `node tools/check-doc-refs.mjs --fix` (`--strict` to fail on moves).
+      # A changed line fails: read the claim again, then `--accept`.
       - id: check-doc-refs
-        name: docs/ARCHITECTURE.md points at the right lines
+        name: docs/ARCHITECTURE.md references still match the code
         language: system
         entry: sh -c 'node --test tools/test-check-doc-refs.mjs && node tools/check-doc-refs.mjs'
         always_run: true
