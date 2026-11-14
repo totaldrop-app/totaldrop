@@ -394,14 +394,20 @@ Worker iletiyi `MAIL_FORWARD_TO`'daki her adrese ayrı ayrı iletir.
 3. Actions → Deploy → "Run workflow" ile `mail` hedefini dağıtın ve
    onaylayın. Gizli değer yalnızca dağıtımda Worker'a geçer; değeri
    değiştirmek de yeniden dağıtım ister.
-4. İlk kurulumda önce bir deneme yapın, çünkü Worker yalnızca `main`'den
-   dağıtılır ve PR'da denenemez: Email Routing → Routing Rules altında
-   geçici bir `mail-test@` kuralı ekleyin, eylemi "Send to a Worker",
-   hedefi `totaldrop-mail` olsun. Proje dışındaki bir adresten
-   `mail-test@totaldrop.app`'e bir deneme e-postası gönderin ve her
-   kutuya geldiğini görün (önemsiz posta klasörüne de bakın). Email
-   Routing → Activity log iletinin durumunu gösterir. Sonra kuralı
-   silin. Deneme geçmeden asıl kurallar çevrilmez.
+4. İlk kurulumda asıl kuralları çevirmeden önce canlı iletimi deneyin
+   (Worker'ın kendisi yerelde ve CI'da `wrangler dev` ve
+   `POST /cdn-cgi/handler/email` ile sınanır; gerçek posta kutusu
+   doğrulaması ve tek iletide birden çok `message.forward()` çağrısının
+   Cloudflare Email Routing üzerinden teslimi ise yalnızca dağıtımdan
+   sonra görülür): Email Routing → Routing Rules altında geçici bir
+   `mail-test@` kuralı ekleyin, eylemi "Send to a Worker", hedefi
+   `totaldrop-mail` olsun. Proje dışındaki bir adresten
+   `mail-test@totaldrop.app`'e bir deneme e-postası gönderin ve
+   `MAIL_FORWARD_TO` içindeki **her** kutuya (birden çok alıcıya aynı
+   iletiden ayrı ayrı) geldiğini doğrulayın (önemsiz posta klasörüne de
+   bakın). Email Routing → Activity log iletinin durumunu gösterir.
+   Sonra kuralı silin. Çoklu alıcı teslimi doğrulanmadan asıl kurallar
+   çevrilmez.
 5. Asıl kurallar, gizlilik politikası proje e-postasının nasıl
    iletildiğini anlatmadan çevrilmez: #416 yayında değilse bu adım
    bekler. Sonra `hello@` kuralının ve varsa catch-all kuralının
