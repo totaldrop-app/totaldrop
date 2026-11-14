@@ -1,0 +1,11 @@
+{
+  // The unit tests run on Node, so they see Node's types, not the Workers
+  // runtime's; only the module they test is included from src.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": ["node"],
+    "allowImportingTsExtensions": true,
+    "noEmit": true
+  },
+  "include": ["src/forward.ts", "test"]
+}

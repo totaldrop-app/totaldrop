@@ -20,7 +20,8 @@ base="$tmp/base copy"
 mkdir -p "$base"
 (cd "$root" && tar -cf - linux/Cargo.toml rust-toolchain.toml packaging .github \
   server/rendezvous-worker/package.json server/rendezvous-worker/package-lock.json \
-  server/relay-worker/package.json server/relay-worker/package-lock.json) |
+  server/relay-worker/package.json server/relay-worker/package-lock.json \
+  server/mail-worker/package.json server/mail-worker/package-lock.json) |
   (cd "$base" && tar -xf -)
 
 # edit FILE SED-SCRIPT: sed -i, the same under GNU and BSD sed.
@@ -138,7 +139,7 @@ expect fail "a tracked package.json is read" "scratch/package.json (@types/node 
 
 expect pass "every node-version and @types/node upgraded together" \
   "for f in $wf/*.yml; do edit \"\$f\" 's|$nv|node-version: \"$next\"|'; done
-   for w in rendezvous-worker relay-worker; do
+   for w in rendezvous-worker relay-worker mail-worker; do
      edit server/\$w/package.json 's|\"@types/node\": \"$major\\.|\"@types/node\": \"$next.|'
      edit server/\$w/package-lock.json 's|\"@types/node\": \"$major\\.|\"@types/node\": \"$next.|; /\"node_modules\\/@types\\/node\": {/,/\"version\"/s|\"version\": \"$major\\.|\"version\": \"$next.|'
    done"

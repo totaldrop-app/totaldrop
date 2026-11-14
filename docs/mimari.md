@@ -66,6 +66,11 @@ uçtan uca test takımından geçer.
   cihaz arasında iletir. Yalnızca o aktarımın iki
   anahtarını, imzalı bir meydan okumayla kabul eder.
 
+Proje adreslerine (`hello@totaldrop.app` gibi) gelen e-postayı
+bakımcılara ileten e-posta Worker'ı (`mail-worker`) da `server/`
+altındadır. Protokolün parçası değildir ve uygulamalar onu hiç kullanmaz
+([Dağıtım](surec.md#e-posta-yönlendirmesi)).
+
 STUN projenin sunucusu değildir: cihazlar dış adreslerini varsayılan
 olarak Cloudflare'in STUN sunucusundan (`stun.cloudflare.com`, UDP) ya da
 kişinin kendi kurduğu aktarma sunucusundan öğrenir. Ayrıntılar
