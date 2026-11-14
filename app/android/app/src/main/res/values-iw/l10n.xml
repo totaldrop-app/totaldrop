@@ -11,4 +11,5 @@
     <string name="process_text">שליחה עם TotalDrop</string>
     <string name="shortcut_receive_short">קבלה</string>
     <string name="shortcut_receive_long">קבלת קבצים</string>
+    <string name="tile_receive">קבלה עם TotalDrop</string>
 </resources>

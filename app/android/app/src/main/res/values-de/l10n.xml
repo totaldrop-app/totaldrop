@@ -11,4 +11,5 @@
     <string name="process_text">Mit TotalDrop senden</string>
     <string name="shortcut_receive_short">Empfangen</string>
     <string name="shortcut_receive_long">Dateien empfangen</string>
+    <string name="tile_receive">Mit TotalDrop empfangen</string>
 </resources>

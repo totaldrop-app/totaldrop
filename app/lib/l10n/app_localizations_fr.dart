@@ -703,4 +703,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'Réglages de batterie';
+
+  @override
+  String get receiveWith => 'Recevoir avec TotalDrop';
 }

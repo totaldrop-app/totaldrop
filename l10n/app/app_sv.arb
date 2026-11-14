@@ -184,5 +184,6 @@
   "setupBackgroundAutostart": "Öppna Autostart",
   "setupBackgroundSkip": "Inte nu",
   "settingsBackground": "Överföringar i bakgrunden",
-  "settingsBackgroundOpen": "Batteriinställningar"
+  "settingsBackgroundOpen": "Batteriinställningar",
+  "receiveWith": "Ta emot med TotalDrop"
 }

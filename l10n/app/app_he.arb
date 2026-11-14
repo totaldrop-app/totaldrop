@@ -184,5 +184,6 @@
   "setupBackgroundAutostart": "פתיחת ההפעלה האוטומטית",
   "setupBackgroundSkip": "לא עכשיו",
   "settingsBackground": "העברות ברקע",
-  "settingsBackgroundOpen": "הגדרות סוללה"
+  "settingsBackgroundOpen": "הגדרות סוללה",
+  "receiveWith": "קבלה עם TotalDrop"
 }

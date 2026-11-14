@@ -184,5 +184,6 @@
   "setupBackgroundAutostart": "فتح التشغيل التلقائي",
   "setupBackgroundSkip": "ليس الآن",
   "settingsBackground": "النقل في الخلفية",
-  "settingsBackgroundOpen": "إعدادات البطارية"
+  "settingsBackgroundOpen": "إعدادات البطارية",
+  "receiveWith": "الاستلام عبر TotalDrop"
 }

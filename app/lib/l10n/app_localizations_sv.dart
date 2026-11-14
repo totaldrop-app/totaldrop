@@ -684,4 +684,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'Batteriinställningar';
+
+  @override
+  String get receiveWith => 'Ta emot med TotalDrop';
 }

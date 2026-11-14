@@ -184,5 +184,6 @@
   "setupBackgroundAutostart": "Autostart openen",
   "setupBackgroundSkip": "Niet nu",
   "settingsBackground": "Overdrachten op de achtergrond",
-  "settingsBackgroundOpen": "Batterij-instellingen"
+  "settingsBackgroundOpen": "Batterij-instellingen",
+  "receiveWith": "Ontvangen met TotalDrop"
 }

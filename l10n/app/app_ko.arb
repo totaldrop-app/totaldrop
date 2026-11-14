@@ -184,5 +184,6 @@
   "setupBackgroundAutostart": "자동 시작 열기",
   "setupBackgroundSkip": "나중에",
   "settingsBackground": "백그라운드 전송",
-  "settingsBackgroundOpen": "배터리 설정"
+  "settingsBackgroundOpen": "배터리 설정",
+  "receiveWith": "TotalDrop으로 받기"
 }

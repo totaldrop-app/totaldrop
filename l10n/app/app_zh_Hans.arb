@@ -184,5 +184,6 @@
   "setupBackgroundAutostart": "打开自启动",
   "setupBackgroundSkip": "以后再说",
   "settingsBackground": "后台传输",
-  "settingsBackgroundOpen": "电池设置"
+  "settingsBackgroundOpen": "电池设置",
+  "receiveWith": "用 TotalDrop 接收"
 }

@@ -694,4 +694,7 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'Setările bateriei';
+
+  @override
+  String get receiveWith => 'Primește cu TotalDrop';
 }

@@ -11,4 +11,5 @@
     <string name="process_text">TotalDrop으로 보내기</string>
     <string name="shortcut_receive_short">받기</string>
     <string name="shortcut_receive_long">파일 받기</string>
+    <string name="tile_receive">TotalDrop으로 받기</string>
 </resources>

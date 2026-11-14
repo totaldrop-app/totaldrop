@@ -674,4 +674,7 @@ class AppLocalizationsHu extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'Akkumulátorbeállítások';
+
+  @override
+  String get receiveWith => 'Fogadás a TotalDroppal';
 }

@@ -11,4 +11,5 @@
     <string name="process_text">Send med TotalDrop</string>
     <string name="shortcut_receive_short">Motta</string>
     <string name="shortcut_receive_long">Motta filer</string>
+    <string name="tile_receive">Motta med TotalDrop</string>
 </resources>
