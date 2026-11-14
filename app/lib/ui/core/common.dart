@@ -315,14 +315,39 @@ class TransferProgress extends StatelessWidget {
             Gap.m,
             Expanded(
               child: Text(
-                '${formatBytes(l, done)} / ${formatBytes(l, total)}',
-                textAlign: TextAlign.end,
+                '${isolate(formatBytes(l, done))} / ${isolate(formatBytes(l, total))}',
+                textDirection: TextDirection.ltr,
+                textAlign: Directionality.of(context) == TextDirection.rtl
+                    ? TextAlign.start
+                    : TextAlign.end,
                 style: theme.textTheme.bodyMedium,
               ),
             ),
           ],
         ),
       ],
+    );
+  }
+}
+
+/// A single-line file name in a list row (#493): laid out in the name's own
+/// direction so a leading number stays at the beginning and the truncation
+/// ellipsis stays at the end, while aligned to the row's start edge beside
+/// its icon.
+class FileNameText extends StatelessWidget {
+  const FileNameText(this.name, {super.key});
+  final String name;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: AlignmentDirectional.centerStart,
+      child: Text(
+        name,
+        textDirection: firstStrongDirection(name),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
     );
   }
 }

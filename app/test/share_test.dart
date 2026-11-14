@@ -44,6 +44,10 @@ PickedFile shared(String name) =>
 /// The send screen asks the core whether a text holds hidden characters.
 class _Rust implements RustLibApi {
   @override
+  String crateApiL10NRevealControls({required String name}) =>
+      name.replaceAll('\u202E', '<U+202E>');
+
+  @override
   ShownText crateApiL10NShownText({required String text}) =>
       ShownText(text: text, short: false, hidden: text.contains('\u202E'));
 

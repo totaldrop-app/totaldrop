@@ -536,9 +536,9 @@ class _Picking extends StatelessWidget {
                 Icons.insert_drive_file_outlined,
                 color: theme.colorScheme.onSurfaceVariant,
               ),
-              title: Text(f.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+              title: FileNameText(revealControls(f.name)),
               subtitle: Text(
-                formatBytes(l, f.size),
+                isolate(formatBytes(l, f.size)),
                 style: const TextStyle(
                   fontFeatures: [FontFeature.tabularFigures()],
                 ),
@@ -576,7 +576,7 @@ class _Picking extends StatelessWidget {
           // silent where "Add files" was (#271).
           label: Announced(
             Text(
-              '${l.sendCreateCode} · ${l.itemsAndSize(vm.files.length, formatBytes(l, vm.totalSize))}',
+              '${l.sendCreateCode} · ${l.itemsAndSize(vm.files.length, isolate(formatBytes(l, vm.totalSize)))}',
             ),
           ),
         ),
@@ -677,7 +677,7 @@ class _TextPickingState extends State<_TextPicking> {
       TextNotice.clipboardEmpty => l.sendClipboardEmpty,
       TextNotice.clipboardKept => l.sendClipboardKept,
       TextNotice.none when vm.textTooLong => l.sendTextTooLong(
-        formatBytes(l, vm.maxTextBytes),
+        isolate(formatBytes(l, vm.maxTextBytes)),
       ),
       TextNotice.none when vm.bigText => l.sendTextShortened,
       TextNotice.none => null,
@@ -774,7 +774,7 @@ class _TextPickingState extends State<_TextPicking> {
           label: Text(
             vm.text.isEmpty
                 ? l.sendCreateCode
-                : '${l.sendCreateCode} · ${formatBytes(l, vm.textBytes)}',
+                : '${l.sendCreateCode} · ${isolate(formatBytes(l, vm.textBytes))}',
           ),
         ),
       ],

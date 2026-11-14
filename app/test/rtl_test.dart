@@ -139,12 +139,31 @@ final a = [
     // Read without whitespace, so the formatter's line breaks don't matter.
     String code(String path) =>
         File(path).readAsStringSync().replaceAll(RegExp(r'\s'), '');
+    final common = code('lib/ui/core/common.dart');
     final settings = code('lib/ui/settings/settings_view.dart');
     final receive = code('lib/ui/receive/receive_view.dart');
     final send = code('lib/ui/send/send_view.dart');
     expect(settings, contains('l.settingsVersion(isolate('));
     expect(receive, contains('l.receiveSaveTo(isolate('));
+    expect(
+      receive,
+      contains('l.receiveOfferSummary(o.files,isolate(formatBytes('),
+    );
+    expect(receive, contains('Text(isolate(formatBytes(l,o.totalBytes))'));
     expect(send, contains('l.sendShareText(isolate(code))'));
+    expect(send, contains('Text(isolate(formatBytes(l,f.size))'));
+    expect(
+      send,
+      contains('l.itemsAndSize(vm.files.length,isolate(formatBytes('),
+    );
+    expect(send, contains('l.sendTextTooLong(isolate(formatBytes('));
+    expect(send, contains('\${isolate(formatBytes(l,vm.textBytes))}'));
+    expect(
+      common,
+      contains(
+        '\${isolate(formatBytes(l,done))}/\${isolate(formatBytes(l,total))}',
+      ),
+    );
   });
 }
 
