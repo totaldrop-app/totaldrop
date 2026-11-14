@@ -33,6 +33,14 @@ için [versioning.md](versioning.md) bağlayıcıdır.
    birleştirebilirler; bağımsız inceleme onlar için de şarttır, ama bunu
    GitHub zorlamaz: inceleme sonucu PR'a yazılmadan birleştirmemek
    bakımcıların aralarındaki anlaşmadır.
+   Birleştirmeden hemen önce dal güncel `main` üstüne yeniden tabanlanır
+   ve `CI` o hâliyle yeşil beklenir. Kural `main` bunu zorlamaz (dalın
+   güncel olması şartı kapalıdır, çünkü her birleşmede açık bütün PR'ları
+   yeniden CI'a sokar), o yüzden birleştiren kişinin işidir: ayrı ayrı
+   yeşil iki PR art arda birleşince `main` kırmızıya düşebilir (#453).
+   `docs/ARCHITECTURE.md`'de yalnızca yer değiştiren satırlar CI'da uyarı
+   verir, kırmaz; numaraları güncellemek için
+   `node tools/check-doc-refs.mjs --fix` çalıştırılır.
    Roller: [GOVERNANCE.md](../GOVERNANCE.md).
 7. **Yayın:** [Sürüm listesi](#sürüm-listesi) adım adım izlenir.
 

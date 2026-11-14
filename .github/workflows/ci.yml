@@ -146,6 +146,35 @@ jobs:
       - name: The Node version check works
         run: packaging/test-check-versions.sh
 
+  # The crates depend on each other in one direction only: the servers
+  # never link the cryptography or the client engine, and nothing depends
+  # on an app. The code (as `cargo metadata --no-deps` reads it, building
+  # nothing), the table in tools/check-layers.mjs and the layer diagram in
+  # docs/ARCHITECTURE.md must say the same. The same job checks that every
+  # `path:line` in that document still finds the line it was written for
+  # (tools/check-doc-refs.mjs): a moved line only warns so unrelated PRs do
+  # not conflict on the map, while a changed or missing line fails. Cheap,
+  # so it runs on every change.
+  layers:
+    name: Crate layers
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install the pinned Rust toolchain
+        run: rustup show active-toolchain || rustup toolchain install
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+      - name: The layer check works
+        run: node --test tools/test-check-layers.mjs
+      - run: node tools/check-layers.mjs
+      - name: Test the line reference check
+        run: node --test tools/test-check-doc-refs.mjs
+      - name: docs/ARCHITECTURE.md references still match the code
+        run: node tools/check-doc-refs.mjs
+
   # cargo-deny and OSV-Scanner (OpenSSF Scorecard) ignore the same
   # advisories. Cheap, so it runs on every change.
   advisories:
@@ -260,7 +289,7 @@ jobs:
   gate:
     name: CI
     if: always()
-    needs: [changes, changelog, versions, advisories, secrets, reuse, core, android, linux, server, site, formal]
+    needs: [changes, changelog, versions, layers, advisories, secrets, reuse, core, android, linux, server, site, formal]
     runs-on: ubuntu-latest
     steps:
       - env:

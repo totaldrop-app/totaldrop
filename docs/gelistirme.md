@@ -39,7 +39,7 @@ anda ulaşır. Her platform kendi temposunda yayınlanır.
 | `fuzz/` | Ayrıştırıcıların fuzz hedefleri | `fuzz.yml` (haftalık) |
 | `formal/` | Hesap tasarımının Tamarin modeli ve mutant sınamaları (#251) | `formal.yml` |
 | `docs/` | Tasarım kuralları, sürümler, protokol notları, bu belge | |
-| `tools/` | Depo araçları: changelog, bileşen sürümleri, `deny.toml` ile `osv-scanner.toml`'un aynı danışma kayıtlarını yok saydığının denetimi | `ci.yml` |
+| `tools/` | Depo araçları: changelog, bileşen sürümleri, crate katmanlarının denetimi ([ARCHITECTURE.md](ARCHITECTURE.md#1-katmanlar-ve-bağımlılık-yönü)), `deny.toml` ile `osv-scanner.toml`'un aynı danışma kayıtlarını yok saydığının denetimi | `ci.yml` |
 | `.github/` | İş akışları; ayrıca `main`'de ve haftalık OpenSSF Scorecard, her PR'da ve `main`'de CodeQL kod taraması (GitHub varsayılan kurulumu, depo ayarlarında) | `ci.yml`, `scorecard.yml` |
 
 Kökteki `deny.toml` (cargo-deny) ve `osv-scanner.toml` (OpenSSF Scorecard'ın
@@ -93,8 +93,13 @@ hatayı push'tan önce gösterir (#376). İki dosya vardır:
 
 - **`.pre-commit-config-extra.yaml`** CI denetimlerinin yerel kopyasıdır:
   `cargo fmt`, `clippy` ve `test`, `dart format`, `flutter analyze`,
-  Worker'ların `tsc` denetimi, site betikleri, changelog, SPDX, REUSE ve
-  sürüm denetimleri. Git hook'u olarak kurulmaz, elle çalıştırılır. Her
+  Worker'ların `tsc` denetimi, site betikleri, changelog, SPDX, REUSE,
+  sürüm denetimleri, crate katmanlarının denetimi ve
+  [ARCHITECTURE.md](ARCHITECTURE.md)'nin koda bağlantılarının denetimi
+  (`check-doc-refs` hook'u yalnızca denetler: kayan satırlarda uyarır,
+  numaralar için `node tools/check-doc-refs.mjs --fix`; değişen satırda
+  kırılır, iddia yeniden okunup `--accept`). Git hook'u olarak kurulmaz,
+  elle çalıştırılır. Her
   hook kendi aracını (`cargo`, `dart`, `flutter`, `node`, `npm`) ister;
   ortamınızda olmayanları `SKIP` ile atlayın, CI onları yine çalıştırır:
 

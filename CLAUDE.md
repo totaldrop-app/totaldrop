@@ -52,7 +52,7 @@ Zorunlu denetim CI'dır; aşağıdakiler aynı denetimlerin yerel karşılığı
 - Android (`app/`): `flutter pub get --enforce-lockfile`, `flutter gen-l10n`, `flutter analyze`, `flutter test`; köprü crate'i `cargo test -p rust_lib_totaldrop --locked`.
 - Linux QML bileşen testleri (Rust derlemesi istemez): `linux/tests/qml/run.sh`.
 - Tamarin modeli: `formal/check.sh`, `formal/mutants.py` (`formal/README.md`).
-- Depo denetimleri: `node tools/changelog.mjs check`, `tools/check-spdx.sh`, `tools/check-component-versions.sh`, `packaging/check-versions.sh`, `tools/check-advisory-ignores.sh`.
+- Depo denetimleri: `node tools/changelog.mjs check`, `tools/check-spdx.sh`, `tools/check-component-versions.sh`, `packaging/check-versions.sh`, `tools/check-advisory-ignores.sh`, `node tools/check-layers.mjs` (crate katmanları), `node tools/check-doc-refs.mjs` (`docs/ARCHITECTURE.md` satır referansları; kayan satır uyarır, `--fix` günceller, `--strict` kayanı da kırar).
 - Hepsi birden: `pre-commit run -c .pre-commit-config-extra.yaml --all-files` (olmayan araçları `SKIP=dart-format,flutter-analyze,worker-tsc` ile atla).
 
 ## Her PR'da unutulanlar
@@ -64,7 +64,7 @@ Zorunlu denetim CI'dır; aşağıdakiler aynı denetimlerin yerel karşılığı
 
 ## Mimari (büyük resim)
 
-Ayrıntı `docs/mimari.md`; kısaca:
+Ayrıntı `docs/mimari.md`; dosya ve satır düzeyindeki karşılığı `docs/ARCHITECTURE.md`. Kısaca:
 
 - Tek Cargo çalışma alanı (`Cargo.toml`): `crates/*`, iki Rust sunucusu, `app/rust` (Android köprüsü), `linux`. `fuzz/` ayrı çalışma alanıdır. Çalışma alanı lint'leri `unsafe_code = forbid`; `missing_docs` ve `unwrap/expect/panic/indexing_slicing/arithmetic_side_effects` uyarı (belgesiz bir `pub` öğe de CI'ı kırar); CI uyarıyı hata sayar (`RUSTFLAGS=-D warnings`, clippy `-D warnings`).
 - Çekirdek bütün platformlarda aynıdır ve kriptografi yalnızca orada yapılır: `totaldrop-crypto` (CPace, anahtar türetme, STREAM parça şifrelemesi), `totaldrop-proto` (aktarım kodu, sınırlar, yol güvenliği, CBOR kablo mesajları; dışarıdan gelen her veri burada ayrıştırılır, fuzz hedefleri `fuzz/`), `totaldrop-core` (istemci motoru: rendezvous, ham açık anahtarlı QUIC, Noise XXpsk3 + ML-KEM-768, gönder/al, aktarmaya geçiş), `totaldrop-l10n`.
