@@ -37,10 +37,10 @@ için [versioning.md](versioning.md) bağlayıcıdır.
    ve `CI` o hâliyle yeşil beklenir. Kural `main` bunu zorlamaz (dalın
    güncel olması şartı kapalıdır, çünkü her birleşmede açık bütün PR'ları
    yeniden CI'a sokar), o yüzden birleştiren kişinin işidir: ayrı ayrı
-   yeşil iki PR art arda birleşince `main` kırmızıya düşebilir (#453'te
-   `docs/ARCHITECTURE.md` satır denetimiyle oldu). `main` arada
-   ilerlediyse yeniden tabanlanır; kayan satırlar için
-   `node tools/check-doc-refs.mjs --fix`.
+   yeşil iki PR art arda birleşince `main` kırmızıya düşebilir (#453).
+   `docs/ARCHITECTURE.md`'de yalnızca yer değiştiren satırlar CI'da uyarı
+   verir, kırmaz; numaraları güncellemek için
+   `node tools/check-doc-refs.mjs --fix` çalıştırılır.
    Roller: [GOVERNANCE.md](../GOVERNANCE.md).
 7. **Yayın:** [Sürüm listesi](#sürüm-listesi) adım adım izlenir.
 

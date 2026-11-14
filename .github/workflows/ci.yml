@@ -151,8 +151,10 @@ jobs:
   # on an app. The code (as `cargo metadata --no-deps` reads it, building
   # nothing), the table in tools/check-layers.mjs and the layer diagram in
   # docs/ARCHITECTURE.md must say the same. The same job checks that every
-  # `path:line` in that document still lands on the line it was written
-  # for (tools/check-doc-refs.mjs). Cheap, so it runs on every change.
+  # `path:line` in that document still finds the line it was written for
+  # (tools/check-doc-refs.mjs): a moved line only warns so unrelated PRs do
+  # not conflict on the map, while a changed or missing line fails. Cheap,
+  # so it runs on every change.
   layers:
     name: Crate layers
     runs-on: ubuntu-latest
@@ -170,7 +172,7 @@ jobs:
       - run: node tools/check-layers.mjs
       - name: Test the line reference check
         run: node --test tools/test-check-doc-refs.mjs
-      - name: docs/ARCHITECTURE.md points at the lines it names
+      - name: docs/ARCHITECTURE.md references still match the code
         run: node tools/check-doc-refs.mjs
 
   # cargo-deny and OSV-Scanner (OpenSSF Scorecard) ignore the same

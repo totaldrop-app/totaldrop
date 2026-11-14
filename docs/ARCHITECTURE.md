@@ -7,18 +7,20 @@ olduğu [kararlar/](kararlar/README.md), protokolün kendisi
 [protocol-v0.1-notes.md](protocol-v0.1-notes.md), güven sınırları
 [tehdit-modeli.md](tehdit-modeli.md) içindedir; burada tekrar edilmez.
 
-- Durum: `main` `80365fc` (13 Kasım 2026). İlk sürüm `18ba4df`'e karşı
+- Durum: `main` `e767b5b` (14 Kasım 2026). İlk sürüm `18ba4df`'e karşı
   yazıldı; 11 Kasım'da UPnP, denetim düzeltmeleri (#424–#427) ve aktarma
   Worker'ının birim testleri için güncellendi; 12 Kasım'da yalnız kayan
-  satırlar izlendi; 13 Kasım'da Worker'ların `Origin` reddi (#450) eklendi. 5.2'deki kapsam sayıları
-  ve 6. bölümün sayımları `18ba4df` dönemine aittir.
+  satırlar izlendi; 13 Kasım'da Worker'ların `Origin` reddi (#450), 14
+  Kasım'da site ve Android bağlantı denetimleri (#445, #509) eklendi.
+  5.2'deki kapsam sayıları ve 6. bölümün sayımları `18ba4df` dönemine aittir.
 - Koda `yol:satır` ile bağlanır, yol hep depo kökünden yazılır.
-  Kayan satırları CI yakalar: `tools/check-doc-refs.mjs` her başvurunun
+  Kopuk başvuruları CI yakalar: `tools/check-doc-refs.mjs` her başvurunun
   gösterdiği satırın metnini `docs/ARCHITECTURE.refs.json`'daki kayıtla
-  karşılaştırır. Kod yalnızca yer değiştirdiyse
-  `node tools/check-doc-refs.mjs --fix` numaraları düzeltir; satırın
-  kendisi değiştiyse iddia koda karşı yeniden okunur, düzeltilir ve
-  `--accept` ile kaydedilir.
+  karşılaştırır. Kod yalnızca yer değiştirdiyse CI uyarı verir (ilgisiz
+  PR'ların harita üzerinde çakışmaması için) ve
+  `node tools/check-doc-refs.mjs --fix` numaraları düzeltir (`--strict`
+  kayan satırda da hata verir); satırın kendisi değiştiyse CI kırılır,
+  iddia koda karşı yeniden okunur, düzeltilir ve `--accept` ile kaydedilir.
 - "**Emin değilim**" yazan yerler koddan doğrulanmamış, ölçülmemiş ya da
   eski bir ölçüme dayanır.
 - Güvenlik bulguları [10 Kasım denetimi](#ek-10-kasım-denetimiyle-ilişki)
@@ -455,12 +457,12 @@ Zorunlu denetim CI'dır; yerel kopyası `.pre-commit-config-extra.yaml`
 | Rust (Linux ve köprü hariç) | `cargo fmt --check -p` (7 crate, yalnız Linux makinesinde); `cargo clippy --workspace --exclude totaldrop-linux --exclude rust_lib_totaldrop --all-targets -- -D warnings`; `cargo test` aynı dışlamalarla | `.github/workflows/core.yml:39-50` |
 | Rust kapsamı | `cargo llvm-cov --fail-under-lines 90 -p …` (7 crate) | `.github/workflows/core.yml:72` |
 | Linux | `cargo test -p totaldrop-linux`; QML: `linux/tests/qml/run.sh` (qmltestrunner) | `.github/workflows/linux.yml:40-45` |
-| Android | `flutter analyze`, `flutter test` (`app/test/`, 19 dosya) | `.github/workflows/android.yml:38`, `.github/workflows/android.yml:48` |
+| Android | `flutter analyze`, `flutter test` (`app/test/`, 20 dosya) | `.github/workflows/android.yml:38`, `.github/workflows/android.yml:48` |
 | Worker'lar | `npm run check` (`tsc`), `npm run --if-present test` | `.github/workflows/server.yml:38-40` |
 | İki sunucu uygulaması, aynı test | `cargo test -p totaldrop-cli --test end_to_end` önce Rust sunucularına, sonra `wrangler dev` altındaki Worker'lara | `.github/workflows/server.yml:44-106` |
 | Fuzz | `cargo fuzz run <hedef>` (6 hedef: `code`, `message`, `path`, `portmap`, `relay`, `wire`) | `.github/workflows/fuzz.yml` (zamanlı) |
 | Biçimsel model | Tamarin (#251) | `.github/workflows/formal.yml` |
-| Site | `site/tools/*.mjs` denetimleri | `.github/workflows/site.yml:27-43` |
+| Site | `site/tools/*.mjs` denetimleri | `.github/workflows/site.yml:27-47` |
 | Katmanlar | `node --test tools/test-check-layers.mjs && node tools/check-layers.mjs` | `.github/workflows/ci.yml` `Crate layers` |
 
 ### 5.2 Kapsamın zayıf olduğu yerler

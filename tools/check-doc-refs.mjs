@@ -1,7 +1,8 @@
 // SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-// node tools/check-doc-refs.mjs            check
+// node tools/check-doc-refs.mjs            check (warn on moved, fail on changed)
+// node tools/check-doc-refs.mjs --strict   also fail when lines only moved
 // node tools/check-doc-refs.mjs --fix      follow lines that only moved
 // node tools/check-doc-refs.mjs --accept   record the lines as they are now
 //
@@ -10,13 +11,16 @@
 // says nothing once the code above it changes, so next to the document sits
 // docs/ARCHITECTURE.refs.json: for every reference, the text of the cited
 // line (and of the last line of a range) as it was when someone checked the
-// claim. This fails when a reference no longer lands on that text:
+// claim. When a reference no longer lands on that text:
 //
-// - the text is still in the file, elsewhere: the code only moved, and
-//   `--fix` rewrites the numbers in the document;
-// - the text is gone or changed: the claim has to be read again against the
-//   code. Correct the document, then `--accept` records the new lines.
-//   `--accept` refuses while a reference has only moved: run `--fix` first.
+// - the text is still in the file, elsewhere: the code only moved. The
+//   default check warns (`::warning::`) and exits 0 so unrelated PRs do not
+//   conflict on the map; `--strict` fails, and `--fix` rewrites the numbers
+//   in the document and the record;
+// - the text is gone or changed: the check fails so the claim is read again
+//   against the code. Correct the document, then `--accept` records the new
+//   lines. `--accept` refuses while a reference has only moved: run `--fix`
+//   first.
 //
 // It also fails on a reference whose file does not exist (a short name such
 // as `lib.rs:12` included) or whose lines are past the end of the file, and
@@ -66,39 +70,54 @@ export function locate(lines, ref, recorded) {
 }
 
 /** Checks `markdown` against `record` with `read(path)` giving a file's
- * lines or null. Returns the problems, the moves `--fix` would make, and
- * the record `--accept` would write. */
+ * lines or null. Returns hard `problems`, moved-line `warnings`, the `moves`
+ * `--fix` would make, the `fresh` record `--accept` would write, and `seen`
+ * reference keys present in the document. */
 export function check(markdown, record, read) {
   const problems = [];
+  const warnings = [];
   const moves = new Map();
   const fresh = {};
+  const seen = new Set();
   for (const ref of findRefs(markdown)) {
+    seen.add(ref.key);
     const lines = read(ref.path);
     if (!lines) {
       problems.push(`${ref.key}: no such file; write the path from the repository root`);
       continue;
     }
-    if (ref.first < 1 || ref.last < ref.first || ref.last > lines.length) {
+    if (ref.first < 1 || ref.last < ref.first) {
       problems.push(`${ref.key}: the file has ${lines.length} lines`);
       continue;
     }
-    fresh[ref.key] = snapshot(lines, ref.first, ref.last);
     const recorded = record[ref.key];
     if (!recorded) {
-      problems.push(`${ref.key}: not in ${RECORD}; check the claim, then run with --accept`);
+      if (ref.last > lines.length) {
+        problems.push(`${ref.key}: the file has ${lines.length} lines`);
+      } else {
+        fresh[ref.key] = snapshot(lines, ref.first, ref.last);
+        problems.push(`${ref.key}: not in ${RECORD}; check the claim, then run with --accept`);
+      }
       continue;
+    }
+    if (ref.last <= lines.length) {
+      fresh[ref.key] = snapshot(lines, ref.first, ref.last);
     }
     if (moves.has(ref.key)) continue;
     const now = locate(lines, ref, recorded);
     if (!now) {
-      problems.push(`${ref.key}: the cited line changed (was \`${recorded[0]}\`); read the claim again, correct it, then run with --accept`);
+      if (ref.last > lines.length) {
+        problems.push(`${ref.key}: the file has ${lines.length} lines`);
+      } else {
+        problems.push(`${ref.key}: the cited line changed (was \`${recorded[0]}\`); read the claim again, correct it, then run with --accept`);
+      }
     } else if (now.first !== ref.first) {
       const key = `${ref.path}:${now.first}${ref.first === ref.last ? "" : `-${now.last}`}`;
       moves.set(ref.key, key);
-      problems.push(`${ref.key}: moved to ${key}; run with --fix`);
+      warnings.push(`${ref.key}: moved to ${key}; run with --fix`);
     }
   }
-  return { problems, moves, fresh };
+  return { problems, warnings, moves, fresh, seen };
 }
 
 /** `markdown` with every moved reference rewritten. */
@@ -123,8 +142,8 @@ export function moveRecord(record, moves) {
 function main() {
   const root = join(dirname(fileURLToPath(import.meta.url)), "..");
   const mode = process.argv[2] ?? "";
-  if (!["", "--fix", "--accept"].includes(mode)) {
-    console.error("usage: node tools/check-doc-refs.mjs [--fix | --accept]");
+  if (!["", "--strict", "--fix", "--accept"].includes(mode)) {
+    console.error("usage: node tools/check-doc-refs.mjs [--strict | --fix | --accept]");
     process.exit(2);
   }
   const read = (path) => {
@@ -144,31 +163,44 @@ function main() {
     writeFileSync(recordPath, `${JSON.stringify(sorted(record), null, 2)}\n`);
     console.error(`${DOC}: followed ${result.moves.size} moved reference(s)`);
     result = check(doc, record, read);
-    if (!result.problems.length) process.exit(1); // changed files: look, then commit
+    if (!result.problems.length && !result.warnings.length) process.exit(1); // changed files: look, then commit
   }
   if (mode === "--accept") {
     // A reference that only moved is fixed by --fix; accepting it here would
     // record whatever line now sits under the old number.
-    const unreadable = result.problems.filter((p) => /no such file|lines$|moved to/.test(p));
+    const unreadable = [
+      ...result.problems.filter((p) => /no such file|lines$/.test(p)),
+      ...result.warnings,
+    ];
     if (!unreadable.length) {
       writeFileSync(recordPath, `${JSON.stringify(sorted(result.fresh), null, 2)}\n`);
       console.log(`${RECORD}: recorded ${Object.keys(result.fresh).length} references`);
       return;
     }
     result.problems = unreadable;
+    result.warnings = [];
   }
+  if (mode === "--strict" && result.warnings.length) {
+    result.problems = [...result.problems, ...result.warnings];
+    result.warnings = [];
+  }
+  for (const w of result.warnings) console.log(`::warning::${DOC}: ${w}`);
   if (result.problems.length) {
     console.error(`${DOC} points at code that changed:`);
     for (const p of result.problems) console.error(`  ${p}`);
     process.exit(1);
   }
-  const unused = Object.keys(record).filter((k) => !(k in result.fresh));
+  const unused = Object.keys(record).filter((k) => !result.seen.has(k));
   if (unused.length) {
     console.error(`${RECORD} has references the document no longer uses; run with --accept:`);
     for (const k of unused) console.error(`  ${k}`);
     process.exit(1);
   }
-  console.log(`doc refs ok: ${Object.keys(result.fresh).length} references in ${DOC}`);
+  console.log(
+    `doc refs ok: ${result.seen.size} references in ${DOC}${
+      result.warnings.length ? `, ${result.warnings.length} moved (run with --fix)` : ""
+    }`,
+  );
 }
 
 function sorted(record) {

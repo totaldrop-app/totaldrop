@@ -96,9 +96,10 @@ hatayı push'tan önce gösterir (#376). İki dosya vardır:
   Worker'ların `tsc` denetimi, site betikleri, changelog, SPDX, REUSE,
   sürüm denetimleri, crate katmanlarının denetimi ve
   [ARCHITECTURE.md](ARCHITECTURE.md)'nin koda bağlantılarının denetimi
-  (`check-doc-refs` hook'u yalnızca denetler; kayan satırlar için
-  `node tools/check-doc-refs.mjs --fix`, değişen satır için iddia yeniden
-  okunup `--accept`). Git hook'u olarak kurulmaz, elle çalıştırılır. Her
+  (`check-doc-refs` hook'u yalnızca denetler: kayan satırlarda uyarır,
+  numaralar için `node tools/check-doc-refs.mjs --fix`; değişen satırda
+  kırılır, iddia yeniden okunup `--accept`). Git hook'u olarak kurulmaz,
+  elle çalıştırılır. Her
   hook kendi aracını (`cargo`, `dart`, `flutter`, `node`, `npm`) ister;
   ortamınızda olmayanları `SKIP` ile atlayın, CI onları yine çalıştırır:
 
