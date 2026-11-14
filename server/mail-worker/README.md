@@ -6,7 +6,7 @@ How it is built:
 
 - Only `hello@` and the catch-all rule point here. `security@` and `privacy@` stay on direct rules: anyone holding the Cloudflare deploy token could deploy a Worker in this one's place and read what reaches it, and `security@` carries unpublished vulnerability reports.
 - It keeps nothing about the mail and has no HTTP address. Its Workers Logs hold only one line it writes itself when some destinations fail, with their count; invocation logs, which would show sender and recipient, are off (`wrangler.jsonc`).
-- `FORWARD_TO` holds the destinations, separated by commas, spaces or new lines; repeats count once, at most 10. The addresses are personal data and are never in the repository: deploys set them from the `cloudflare` environment's `MAIL_FORWARD_TO` secret (`.github/workflows/deploy.yml`).
+- `FORWARD_TO` holds the destinations, separated by commas, spaces or new lines; repeats count once, at most 10. Cloudflare's Email Workers runtime supports calling `message.forward()` for several recipients on the same `ForwardableEmailMessage` (Cloudflare Email Service docs, "Multiple forwarding"). The addresses are personal data and are never in the repository: deploys set them from the `cloudflare` environment's `MAIL_FORWARD_TO` secret (`.github/workflows/deploy.yml`).
 - A missing or malformed setting, or an address on `totaldrop.app` (it would loop), fails the message instead of sending it anywhere else. Error messages never contain an address.
 - One failed destination, for example one Cloudflare has not verified yet, does not stop the others. The message then shows as handled in Email Routing's activity log, and the failure shows only as that count in the Worker's logs, so a maintainer who stops getting mail should look there. When all destinations fail, the handler throws and the activity log shows an error; what the sending server is told then has not been tried yet.
 
@@ -15,7 +15,7 @@ How it is built:
 ```bash
 npm ci
 npm run check   # type check, Worker and tests
-npm test        # unit tests on Node's test runner
+npm test        # unit tests plus local wrangler dev (/cdn-cgi/handler/email) in workerd
 ```
 
 Setting up a destination, pointing a rule at the Worker, testing with a real message and rolling back are in `docs/surec.md`, section "E-posta yönlendirmesi" (Turkish).
