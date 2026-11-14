@@ -81,7 +81,9 @@ class TransferRepository {
 
   String? normalizeCode(String input) => bridge.normalizeCode(input: input);
 
-  /// The code in a TotalDrop link, read strictly (#445).
+  /// Classifies a TotalDrop receive link strictly in Rust (#445, #516):
+  /// returns the normalized code, an empty string when nothing sits where
+  /// the code goes, or `null` when the link is invalid.
   String? codeFromLink(String link) => bridge.codeFromLink(link: link);
 
   /// Where received files go: Download/TotalDrop on Android, so they are

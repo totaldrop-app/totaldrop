@@ -236,9 +236,23 @@ pub fn ascii_digits(text: &str) -> String {
         .collect()
 }
 
-/// The longest text [`TransferCode::from_link`] reads. A link with the
-/// longest code and every character escaped is far shorter.
+/// The longest text [`TransferCode::classify_link`] and
+/// [`TransferCode::from_link`] read. A link with the longest code and every
+/// character escaped is far shorter.
 pub const MAX_LINK_BYTES: usize = 1024;
+
+/// What a TotalDrop receive link carries when classified by
+/// [`TransferCode::classify_link`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ReceiveLink {
+    /// A valid transfer code.
+    Code(TransferCode),
+    /// Empty input, or a receive link prefix with nothing where the code goes.
+    Empty,
+    /// Input longer than [`MAX_LINK_BYTES`], or anything that fails to parse
+    /// as a valid transfer code (including query strings and malformed codes).
+    Invalid,
+}
 
 /// `%XX` escapes decoded once; a `%` not followed by two hex digits stays
 /// as it is, and bytes that are not UTF-8 become U+FFFD.
@@ -397,6 +411,55 @@ impl TransferCode {
         None
     }
 
+    /// Classify a TotalDrop receive link (`https://totaldrop.app/r#…`,
+    /// `http://totaldrop.app/r#…`, `totaldrop://r/…`, `totaldrop:…`) or a bare
+    /// code into a valid [`ReceiveLink::Code`], an empty prefix
+    /// [`ReceiveLink::Empty`], or [`ReceiveLink::Invalid`].
+    ///
+    /// Strict, unlike [`TransferCode::find`]: after the prefix, the whole rest
+    /// must be the code, with `%XX` escapes decoded once. Anything longer than
+    /// [`MAX_LINK_BYTES`] is refused unread as [`ReceiveLink::Invalid`].
+    pub fn classify_link(text: &str) -> ReceiveLink {
+        if text.len() > MAX_LINK_BYTES {
+            return ReceiveLink::Invalid;
+        }
+        // Before the prefixes: a mark in front of the link hides them.
+        let t = strip_invisible_format(text);
+        let t = t.trim();
+        if matches!(
+            t,
+            "" | "totaldrop:"
+                | "totaldrop://r"
+                | "totaldrop://r/"
+                | "totaldrop://r?"
+                | "totaldrop://r#"
+                | "totaldrop://r?#"
+                | "totaldrop://r/?"
+                | "totaldrop://r/#"
+                | "totaldrop://r/?#"
+                | "https://totaldrop.app/r"
+                | "https://totaldrop.app/r#"
+                | "https://totaldrop.app/r?"
+                | "https://totaldrop.app/r?#"
+                | "http://totaldrop.app/r"
+                | "http://totaldrop.app/r#"
+                | "http://totaldrop.app/r?"
+                | "http://totaldrop.app/r?#"
+        ) {
+            return ReceiveLink::Empty;
+        }
+        let raw = t
+            .strip_prefix("https://totaldrop.app/r#")
+            .or_else(|| t.strip_prefix("http://totaldrop.app/r#"))
+            .or_else(|| t.strip_prefix("totaldrop://r/"))
+            .or_else(|| t.strip_prefix("totaldrop:"))
+            .unwrap_or(t);
+        match Self::parse(&percent_decode(raw)) {
+            Ok(code) => ReceiveLink::Code(code),
+            Err(_) => ReceiveLink::Invalid,
+        }
+    }
+
     /// The code in a TotalDrop link (`https://totaldrop.app/r#…`,
     /// `totaldrop://r/…`) or a bare code. Strict, unlike
     /// [`TransferCode::find`]: after the prefix, the whole rest must be the
@@ -405,19 +468,10 @@ impl TransferCode {
     /// a file name, a query or a text with a date in it must not become a
     /// code. Anything longer than [`MAX_LINK_BYTES`] is refused unread.
     pub fn from_link(text: &str) -> Option<Self> {
-        if text.len() > MAX_LINK_BYTES {
-            return None;
+        match Self::classify_link(text) {
+            ReceiveLink::Code(code) => Some(code),
+            ReceiveLink::Empty | ReceiveLink::Invalid => None,
         }
-        // Before the prefixes: a mark in front of the link hides them.
-        let t = strip_invisible_format(text);
-        let t = t.trim();
-        let raw = t
-            .strip_prefix("https://totaldrop.app/r#")
-            .or_else(|| t.strip_prefix("http://totaldrop.app/r#"))
-            .or_else(|| t.strip_prefix("totaldrop://r/"))
-            .or_else(|| t.strip_prefix("totaldrop:"))
-            .unwrap_or(t);
-        Self::parse(&percent_decode(raw)).ok()
     }
 
     /// The nameplate number.
@@ -808,10 +862,92 @@ mod tests {
     fn long_links_are_not_read() {
         let pad = " ".repeat(MAX_LINK_BYTES);
         assert_eq!(link(&format!("totaldrop://r/7-abandon-ability{pad}")), None);
+        assert_eq!(
+            TransferCode::classify_link(&format!("totaldrop://r/7-abandon-ability{pad}")),
+            ReceiveLink::Invalid
+        );
+        assert_eq!(
+            TransferCode::classify_link(&format!("https://totaldrop.app/r{pad}")),
+            ReceiveLink::Invalid
+        );
         let just = " ".repeat(MAX_LINK_BYTES - "totaldrop://r/7-abandon-ability".len());
         assert_eq!(
             link(&format!("totaldrop://r/7-abandon-ability{just}")),
             Some("7-abandon-ability".into())
         );
+    }
+
+    #[test]
+    fn receive_links_are_classified_and_match_from_link() {
+        let want = TransferCode::parse("7-harbor-rocket").unwrap();
+        let valid = [
+            "https://totaldrop.app/r#7-harbor-rocket",
+            "http://totaldrop.app/r#7-harbor-rocket",
+            "totaldrop://r/7-harbor-rocket",
+            "totaldrop:7-harbor-rocket",
+            "https://totaldrop.app/r#7%20harbor%20rocket",
+            "totaldrop://r/%37-harbor-rocket",
+            " \u{2068}https://totaldrop.app/r#7-harbor-rocket\u{2069} ",
+            "\u{FEFF}totaldrop://r/7-har\u{200B}bor-rocket",
+            " 7-harbor-rocket ",
+        ];
+        for s in valid {
+            let classified = TransferCode::classify_link(s);
+            assert_eq!(classified, ReceiveLink::Code(want.clone()), "{s:?}");
+            assert_eq!(TransferCode::from_link(s), Some(want.clone()), "{s:?}");
+        }
+
+        let empty = [
+            "",
+            "   ",
+            "\u{2068}\u{2069}",
+            "totaldrop:",
+            "totaldrop://r",
+            "totaldrop://r/",
+            "totaldrop://r?",
+            "totaldrop://r#",
+            "totaldrop://r?#",
+            "totaldrop://r/?",
+            "totaldrop://r/#",
+            "totaldrop://r/?#",
+            "https://totaldrop.app/r",
+            "https://totaldrop.app/r#",
+            "https://totaldrop.app/r?",
+            "https://totaldrop.app/r?#",
+            "http://totaldrop.app/r",
+            "http://totaldrop.app/r#",
+            "http://totaldrop.app/r?",
+            "http://totaldrop.app/r?#",
+            " \u{2068}https://totaldrop.app/r#\u{2069} ",
+            "\u{FEFF}totaldrop://r/\u{200B}",
+        ];
+        for s in empty {
+            let classified = TransferCode::classify_link(s);
+            assert_eq!(classified, ReceiveLink::Empty, "{s:?}");
+            assert_eq!(TransferCode::from_link(s), None, "{s:?}");
+        }
+
+        let too_long = "a".repeat(MAX_LINK_BYTES + 1);
+        let invalid = [
+            "totaldrop://r/x?c=7-harbor-rocket",
+            "totaldrop://r?c=7-harbor-rocket",
+            "https://totaldrop.app/r?x#7-harbor-rocket",
+            "https://totaldrop.app/r?x=1",
+            "https://totaldrop.app/r#7-harbor",
+            "https://totaldrop.app/r#?",
+            "https://totaldrop.app/r#[bad]",
+            "http://totaldrop.app/r?x=1",
+            "http://totaldrop.app/r#7-harbor",
+            "totaldrop:7-harbor",
+            "totaldrop://r/7-harbor",
+            "totaldrop://r/7-harbor-rocket?x=1",
+            "https://totaldrop.app/r#%20",
+            too_long.as_str(),
+        ];
+        for s in invalid {
+            let classified = TransferCode::classify_link(s);
+            assert_eq!(classified, ReceiveLink::Invalid, "{s:?}");
+            assert_eq!(TransferCode::from_link(s), None, "{s:?}");
+        }
     }
 }
