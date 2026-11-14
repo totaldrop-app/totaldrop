@@ -109,15 +109,18 @@ TotalDrop'un web'deki ve sosyal medyadaki resmî hesapları şunlardır:
 
 Bunların dışında proje yalnızca şu kanalları kullanır: uygulamalar Google
 Play'den ve GitHub sürümlerinden dağıtılır, bağışlar GitHub Sponsors
-üzerinden alınır ([github.com/sponsors/ozdil](https://github.com/sponsors/ozdil)),
-e-postalar yalnızca `@totaldrop.app` adreslerinden gelir.
-[Ekip sayfasında](https://totaldrop.app/team/) proje liderinin kartındaki
-kahve düğmesi ([buymeacoffee.com/ozdil](https://buymeacoffee.com/ozdil))
-onun kişisel Buy Me a Coffee sayfasına gider. Bu, Sponsors sayfasıyla aynı
-istisna altında ikinci bağış kanalıdır (karar 0017, #487): oradan gelenler
-de bağıştır, aynı kurala göre harcanır ve
+([github.com/sponsors/ozdil](https://github.com/sponsors/ozdil)) ve
+Buy Me a Coffee ([buymeacoffee.com/ozdil](https://buymeacoffee.com/ozdil))
+üzerinden alınır, e-postalar yalnızca `@totaldrop.app` adreslerinden gelir.
+Buy Me a Coffee sayfası, [ekip sayfasında](https://totaldrop.app/team/)
+proje liderinin kartındaki kahve düğmesinden bağlanır ve Sponsors
+sayfasıyla aynı geçici istisna altında ikinci bağış kanalıdır (karar 0017,
+#487): oradan gelenler de bağıştır, aynı kurala göre harcanır ve
 [bağış sayfasındaki](https://totaldrop.app/donate/) dökümde aynı satırlarda
-yayımlanır (#486).
+yayımlanır (#486). Kişisel bir sayfa olduğu için yukarıdaki resmî marka
+hesapları listesinde, `/brand` sayfasında, sitenin altbilgisinde,
+README'lerde ve org profilinde yer almaz; yalnızca ekip kartında ve `/donate`
+sayfasında anılır.
 
 Yeni bir platformda hesap açılırsa mümkünse `totaldropapp` adı kullanılır
 (GitHub'da ad `totaldrop-app`). Bu liste, [/brand](https://totaldrop.app/brand#use)
