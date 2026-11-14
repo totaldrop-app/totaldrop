@@ -426,6 +426,16 @@ fn connecting_line(
     Ok((code, line))
 }
 
+/// Where `receive` keeps what it needs to continue an interrupted
+/// transfer (decision 0020): `$XDG_STATE_HOME/totaldrop/resume` on Linux
+/// (inside Flatpak, the app's own state folder), the local data folder
+/// elsewhere. With neither known, nothing is kept.
+fn resume_dir() -> Option<PathBuf> {
+    dirs::state_dir()
+        .or_else(dirs::data_local_dir)
+        .map(|d| d.join("totaldrop").join("resume"))
+}
+
 async fn receive(
     s: Arc<Strings>,
     server: String,
@@ -492,8 +502,16 @@ async fn receive(
     let (code, line) = connecting_line(&s, &code).map_err(totaldrop_core::Error::Code)?;
     let stop = stop_on_ctrl_c(&s);
     eprintln!("{line}");
-    let offer =
-        IncomingOffer::connect_with(&ReceiveOptions { server, paths }, &code, &stop).await?;
+    let offer = IncomingOffer::connect_with(
+        &ReceiveOptions {
+            server,
+            paths,
+            resume_dir: resume_dir(),
+        },
+        &code,
+        &stop,
+    )
+    .await?;
     let summary = offer.summary().clone();
     eprintln!("{}", s.get("cliConnected", &[]));
     let words = offer.words().join(" ");

@@ -1089,6 +1089,162 @@ impl LengthDecoder {
     }
 }
 
+impl Manifest {
+    /// Deterministic encoding of the entries alone, without the transfer
+    /// ID: the same files offered again encode the same, which is how a
+    /// receiver recognises a repeated offer (decision 0020).
+    pub fn entries_bytes(&self) -> Vec<u8> {
+        encode_map(vec![(
+            2,
+            Value::Array(self.entries.iter().map(Entry::to_value).collect()),
+        )])
+    }
+}
+
+/// Most bytes of a resume record a receiver reads back from disk.
+pub const MAX_RESUME_RECORD: usize = 16 * 1024 * 1024;
+
+/// Longest path a resume record holds: a destination folder followed by a
+/// path of an offer.
+const MAX_RECORD_PATH: usize = 2 * crate::limits::MAX_PATH_BYTES;
+
+/// What a receiver keeps on its own disk about an interrupted transfer, so
+/// that the same files sent again continue where they stopped (decision
+/// 0020). It never leaves the device. It holds no key, code or address.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ResumeRecord {
+    /// Field 1: when the transfer was interrupted, in seconds since the
+    /// Unix epoch.
+    pub interrupted: u64,
+    /// Field 2: the destination folder.
+    pub dest: String,
+    /// Field 3: each top-level name as offered, and the name created for
+    /// it.
+    pub tops: Vec<(String, String)>,
+    /// Field 4: folders the transfer created, deepest last.
+    pub dirs: Vec<String>,
+    /// Field 5: files placed or partly received.
+    pub files: Vec<ResumeFile>,
+}
+
+/// One file of a [`ResumeRecord`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ResumeFile {
+    /// Field 1: the entry's index in the offer.
+    pub index: u64,
+    /// Field 2: the partial file, absent when the file was placed.
+    pub part: Option<String>,
+    /// Field 3: whole chunks the partial file holds; 0 when placed.
+    pub chunks: u64,
+}
+
+fn record_text(v: Value, key: u64) -> Result<String, WireError> {
+    match v {
+        Value::Text(t) if t.len() <= MAX_RECORD_PATH => Ok(t),
+        Value::Text(_) => Err(WireError::Limit("path bytes")),
+        _ => Err(WireError::Field(key)),
+    }
+}
+
+fn record_list(f: &mut Fields, key: u64) -> Result<Vec<Value>, WireError> {
+    let l = f.list(key)?;
+    if l.len() > crate::limits::MAX_ENTRIES {
+        return Err(WireError::Limit("entries"));
+    }
+    Ok(l)
+}
+
+impl ResumeRecord {
+    /// Deterministic CBOR encoding.
+    pub fn encode(&self) -> Vec<u8> {
+        let files = self
+            .files
+            .iter()
+            .map(|r| {
+                let mut fields = vec![(1, int(r.index)), (3, int(r.chunks))];
+                if let Some(p) = &r.part {
+                    fields.push((2, text(p)));
+                }
+                fields.sort_by_key(|(k, _)| *k);
+                Value::Map(fields.into_iter().map(|(k, v)| (int(k), v)).collect())
+            })
+            .collect();
+        encode_map(vec![
+            (1, int(self.interrupted)),
+            (2, text(&self.dest)),
+            (
+                3,
+                Value::Array(
+                    self.tops
+                        .iter()
+                        .map(|(a, b)| Value::Array(vec![text(a), text(b)]))
+                        .collect(),
+                ),
+            ),
+            (4, Value::Array(self.dirs.iter().map(|d| text(d)).collect())),
+            (5, Value::Array(files)),
+        ])
+    }
+
+    /// Decode a record read from disk. Bounded like a message from the
+    /// network: the file could have been changed by anything that writes
+    /// to the receiver's state folder.
+    pub fn decode(input: &[u8]) -> Result<Self, WireError> {
+        if input.len() > MAX_RESUME_RECORD {
+            return Err(WireError::Limit("resume record"));
+        }
+        let mut f = decode_map(input)?;
+        let interrupted = f.u64(1)?;
+        let dest = f.text(2)?.to_owned();
+        if dest.len() > MAX_RECORD_PATH {
+            return Err(WireError::Limit("path bytes"));
+        }
+        let tops = record_list(&mut f, 3)?
+            .into_iter()
+            .map(|v| match v {
+                Value::Array(pair) => {
+                    let mut it = pair.into_iter();
+                    match (it.next(), it.next(), it.next()) {
+                        (Some(a), Some(b), None) => Ok((record_text(a, 3)?, record_text(b, 3)?)),
+                        _ => Err(WireError::Field(3)),
+                    }
+                }
+                _ => Err(WireError::Field(3)),
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+        let dirs = record_list(&mut f, 4)?
+            .into_iter()
+            .map(|v| record_text(v, 4))
+            .collect::<Result<Vec<_>, _>>()?;
+        let files = record_list(&mut f, 5)?
+            .into_iter()
+            .map(|v| {
+                let mut r = value_to_map(v)?;
+                let part = match r.take(2) {
+                    None => None,
+                    Some(v) => Some(record_text(v, 2)?),
+                };
+                let chunks = r.u64(3)?;
+                if chunks > crate::limits::MAX_CHUNKS {
+                    return Err(WireError::Limit("chunks per file"));
+                }
+                Ok(ResumeFile {
+                    index: r.u64(1)?,
+                    part,
+                    chunks,
+                })
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+        Ok(ResumeRecord {
+            interrupted,
+            dest,
+            tops,
+            dirs,
+            files,
+        })
+    }
+}
+
 #[cfg(test)]
 #[allow(clippy::unwrap_used, clippy::indexing_slicing)]
 mod tests {

@@ -165,6 +165,7 @@ async fn transfer(
         &ReceiveOptions {
             server: server.to_owned(),
             paths: no_relay(),
+            resume_dir: None,
         },
         &code,
     )
@@ -243,6 +244,7 @@ async fn a_text_arrives_as_a_text() {
         &ReceiveOptions {
             server,
             paths: no_relay(),
+            resume_dir: None,
         },
         &code,
     )
@@ -305,6 +307,7 @@ async fn wrong_code_fails_on_both_sides_and_burns_the_nameplate() {
     let opts = ReceiveOptions {
         server: server.clone(),
         paths: no_relay(),
+        resume_dir: None,
     };
     let attacker = IncomingOffer::connect(&opts, &guess).await;
     assert!(matches!(attacker, Err(Error::WrongCode)), "{attacker:?}");
@@ -339,6 +342,7 @@ async fn declined_offer_is_reported_to_the_sender() {
         &ReceiveOptions {
             server,
             paths: no_relay(),
+            resume_dir: None,
         },
         &code,
     )
@@ -716,6 +720,7 @@ async fn transfer_with(
         &ReceiveOptions {
             server: server.to_owned(),
             paths: recv_paths,
+            resume_dir: None,
         },
         &code,
     )
@@ -836,6 +841,7 @@ async fn receiver_never_contacts_a_relay_only_the_sender_chose() {
                 relay_only: true,
                 gateway: totaldrop_core::portmap::Gateway::Off,
             },
+            resume_dir: None,
         },
         &code,
     )
@@ -944,6 +950,7 @@ async fn offer(server: String, code: &str) -> IncomingOffer {
         &ReceiveOptions {
             server,
             paths: no_relay(),
+            resume_dir: None,
         },
         code,
     )
@@ -1068,6 +1075,7 @@ async fn stop_while_waiting_and_while_connecting() {
     let opts = ReceiveOptions {
         server,
         paths: no_relay(),
+        resume_dir: None,
     };
     let mut connecting = std::pin::pin!(IncomingOffer::connect_with(&opts, &code, &stop));
     let first =

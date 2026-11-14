@@ -25,6 +25,7 @@ birleştirmeden önce "Kabul" olur.
 | [0015](0015-paket-yoneticileri.md) | Paket yöneticileri önce CI'da derlenen CLI ikililerine dayanır | Kabul |
 | [0016](0016-windows-microsoft-store.md) | Windows uygulaması WinUI 3 ile yazılır, Microsoft Store'dan dağıtılır | Kabul |
 | [0018](0018-baglanti-yol-haritasi.md) | Bağlantı katmanı kendi yığınımızda kalır; IPv6, port açma ve ağ değişimine tepkiyle doğrudan yollar artırılır | Kabul |
+| [0020](0020-resume-interrupted-transfers.md) | An interrupted transfer continues when the same files are sent again | Accepted |
 
 Yeni bir karar için bir sonraki numarayla `NNNN-kisa-ad.md` açın ve bu
 tabloya ekleyin.
