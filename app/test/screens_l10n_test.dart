@@ -14,6 +14,7 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart'
     show PlatformInt64;
 import 'package:flutter/rendering.dart' show RenderParagraph;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/intl.dart' as intl;
 import 'package:material_ui/material_ui.dart';
 import 'package:totaldrop/data/background_access.dart';
 import 'package:totaldrop/data/settings_repository.dart';
@@ -137,14 +138,14 @@ final _shows = <String, Object>{
   'send with files, a pick failed': (AppLocalizations l) => l.sendAddFailed,
   'send with many files': '30 Rapport annuel',
   'send, a share being copied': (AppLocalizations l) => l.cancel,
-  'sending a large file': '%',
+  'sending a large file': _expectedHalfwayPercent,
   'sending, asked to stop': (AppLocalizations l) => l.cancelTransferTitle,
   'send done': (AppLocalizations l) => l.sendDone,
   'send failed, details open': 'wss://relay.totaldrop.app',
   'receive an invalid code': (AppLocalizations l) => l.receiveCodeInvalid,
   'receive connecting': '7-harbor-rocket',
   'receive an offer of many files': (AppLocalizations l) => l.receiveAndMore(4),
-  'receiving a large file': '%',
+  'receiving a large file': _expectedHalfwayPercent,
   'receive done': (AppLocalizations l) => l.receiveDone,
   'receive declined': (AppLocalizations l) => l.receiveDeclined,
   'receive failed, details open': 'wss://relay.totaldrop.app',
@@ -222,6 +223,109 @@ Future<void> _openDetails(WidgetTester tester) async {
 }
 
 const _rtl = {'ar', 'fa', 'he', 'ur'};
+
+/// Representative device region for each supported app language (#515), so
+/// region-sensitive numbers and percentages (`50 %`, `٥٠٪`, `۵۰٪`, `৫০%`)
+/// are laid out and checked at every text scale instead of `en-US` everywhere.
+Locale _regionOf(Locale locale) =>
+    switch ((locale.languageCode, locale.scriptCode, locale.countryCode)) {
+      ('ar', _, _) => const Locale('ar', 'EG'),
+      ('bn', _, _) => const Locale('bn', 'BD'),
+      ('cs', _, _) => const Locale('cs', 'CZ'),
+      ('da', _, _) => const Locale('da', 'DK'),
+      ('de', _, _) => const Locale('de', 'DE'),
+      ('el', _, _) => const Locale('el', 'GR'),
+      ('en', _, _) => const Locale('en', 'US'),
+      ('es', _, _) => const Locale('es', 'ES'),
+      ('fa', _, _) => const Locale('fa', 'IR'),
+      ('fi', _, _) => const Locale('fi', 'FI'),
+      ('fr', _, _) => const Locale('fr', 'FR'),
+      ('he', _, _) => const Locale('he', 'IL'),
+      ('hi', _, _) => const Locale('hi', 'IN'),
+      ('hu', _, _) => const Locale('hu', 'HU'),
+      ('id', _, _) => const Locale('id', 'ID'),
+      ('it', _, _) => const Locale('it', 'IT'),
+      ('ja', _, _) => const Locale('ja', 'JP'),
+      ('ko', _, _) => const Locale('ko', 'KR'),
+      ('ms', _, _) => const Locale('ms', 'MY'),
+      ('nb', _, _) => const Locale('nb', 'NO'),
+      ('nl', _, _) => const Locale('nl', 'NL'),
+      ('pl', _, _) => const Locale('pl', 'PL'),
+      ('pt', _, 'PT') => const Locale('pt', 'PT'),
+      ('pt', _, _) => const Locale('pt', 'BR'),
+      ('ro', _, _) => const Locale('ro', 'RO'),
+      ('ru', _, _) => const Locale('ru', 'RU'),
+      ('sv', _, _) => const Locale('sv', 'SE'),
+      ('sw', _, _) => const Locale('sw', 'KE'),
+      ('th', _, _) => const Locale('th', 'TH'),
+      ('tr', _, _) => const Locale('tr', 'TR'),
+      ('uk', _, _) => const Locale('uk', 'UA'),
+      ('ur', _, _) => const Locale('ur', 'PK'),
+      ('vi', _, _) => const Locale('vi', 'VN'),
+      ('zh', 'Hant', _) => const Locale('zh', 'TW'),
+      ('zh', _, _) => const Locale('zh', 'CN'),
+      _ => throw StateError('No test region configured for $locale'),
+    };
+
+/// `intl` keeps separate regional tables only where a language has distinct
+/// regional number formats (for example `ar_EG` vs `ar`, `pt_BR` vs `pt_PT`);
+/// for single-default languages such as `de_DE` or `tr_TR`, `intl` resolves
+/// the canonical tag to its language table (`de`, `tr`).
+const _regionalNumberLocales = {
+  'ar_EG',
+  'en_US',
+  'es_ES',
+  'pt_BR',
+  'pt_PT',
+  'zh_CN',
+  'zh_TW',
+};
+
+/// Expected percent text for [_halfway] (`1234567890 / 3456789012`, 35%)
+/// under each language's representative region from [_regionOf].
+///
+/// Kept as literal strings rather than calling `formatPercent` so the screen
+/// tests verify the formatted output independently of the code under test.
+String _expectedHalfwayPercent(AppLocalizations l) => switch (l.localeName) {
+  'ar' => '\u0663\u0665\u066a\u061c',
+  'bn' => '\u09e9\u09eb%',
+  'cs' => '35\u00a0%',
+  'da' => '35\u00a0%',
+  'de' => '35\u00a0%',
+  'el' => '35%',
+  'en' => '35%',
+  'es' => '35\u00a0%',
+  'fa' => '\u06f3\u06f5\u066a',
+  'fi' => '35\u00a0%',
+  'fr' => '35\u00a0%',
+  'he' => '35%',
+  'hi' => '35%',
+  'hu' => '35%',
+  'id' => '35%',
+  'it' => '35%',
+  'ja' => '35%',
+  'ko' => '35%',
+  'ms' => '35%',
+  'nb' => '35\u00a0%',
+  'nl' => '35%',
+  'pl' => '35%',
+  'pt' => '35%',
+  'pt_BR' => '35%',
+  'pt_PT' => '35%',
+  'ro' => '35\u00a0%',
+  'ru' => '35\u00a0%',
+  'sv' => '35\u00a0%',
+  'sw' => '35%',
+  'th' => '35%',
+  'tr' => '%35',
+  'uk' => '35%',
+  'ur' => '35%',
+  'vi' => '35%',
+  'zh' => '35%',
+  'zh_Hans' => '35%',
+  'zh_Hant' => '35%',
+  _ => throw StateError('No expected percent for ${l.localeName}'),
+};
 
 /// A small phone: 360 × 740 dp.
 const _phone = Size(360, 740);
@@ -752,10 +856,82 @@ void main() {
     expect(() => _expectNoTextCutShort(tester), throwsA(isA<TestFailure>()));
   });
 
+  test('every supported locale has a known regional number format', () {
+    expect(_halfway.done * 100 ~/ _halfway.total, 35);
+    for (final locale in AppLocalizations.supportedLocales) {
+      final region = _regionOf(locale);
+      expect(region.countryCode, isNotEmpty, reason: '$locale');
+      final tag = region.toLanguageTag();
+      final canonical = intl.Intl.canonicalizedLocale(tag);
+      final expectedLocale = _regionalNumberLocales.contains(canonical)
+          ? canonical
+          : region.languageCode;
+      final dec = intl.NumberFormat.decimalPattern(tag);
+      final pct = intl.NumberFormat.percentPattern(tag);
+      expect(dec.locale, expectedLocale, reason: '$locale -> $tag');
+      expect(pct.locale, expectedLocale, reason: '$locale -> $tag');
+      expect(
+        pct.format(0.35),
+        _expectedHalfwayPercent(lookupAppLocalizations(locale)),
+        reason: '$locale -> $tag',
+      );
+    }
+
+    const zhHans = Locale.fromSubtags(languageCode: 'zh', scriptCode: 'Hans');
+    const zhHant = Locale.fromSubtags(languageCode: 'zh', scriptCode: 'Hant');
+    const samples = [
+      (Locale('en'), Locale('en', 'US'), '1,234.5', '50%'),
+      (Locale('de'), Locale('de', 'DE'), '1.234,5', '50\u00a0%'),
+      (Locale('fr'), Locale('fr', 'FR'), '1\u202f234,5', '50\u00a0%'),
+      (Locale('tr'), Locale('tr', 'TR'), '1.234,5', '%50'),
+      (
+        Locale('ar'),
+        Locale('ar', 'EG'),
+        '\u0661\u066c\u0662\u0663\u0664\u066b\u0665',
+        '\u0665\u0660\u066a\u061c',
+      ),
+      (
+        Locale('fa'),
+        Locale('fa', 'IR'),
+        '\u06f1\u066c\u06f2\u06f3\u06f4\u066b\u06f5',
+        '\u06f5\u06f0\u066a',
+      ),
+      (
+        Locale('bn'),
+        Locale('bn', 'BD'),
+        '\u09e7,\u09e8\u09e9\u09ea.\u09eb',
+        '\u09eb\u09e6%',
+      ),
+      (Locale('pt'), Locale('pt', 'BR'), '1.234,5', '50%'),
+      (Locale('pt', 'BR'), Locale('pt', 'BR'), '1.234,5', '50%'),
+      (Locale('pt', 'PT'), Locale('pt', 'PT'), '1\u00a0234,5', '50%'),
+      (Locale('zh'), Locale('zh', 'CN'), '1,234.5', '50%'),
+      (zhHans, Locale('zh', 'CN'), '1,234.5', '50%'),
+      (zhHant, Locale('zh', 'TW'), '1,234.5', '50%'),
+    ];
+    for (final (locale, expectedRegion, decimal, percent) in samples) {
+      final region = _regionOf(locale);
+      expect(region, expectedRegion, reason: '$locale');
+      final tag = region.toLanguageTag();
+      expect(
+        intl.NumberFormat.decimalPattern(tag).format(1234.5),
+        decimal,
+        reason: '$locale -> $tag',
+      );
+      expect(
+        intl.NumberFormat.percentPattern(tag).format(0.5),
+        percent,
+        reason: '$locale -> $tag',
+      );
+    }
+  });
+
   for (final locale in AppLocalizations.supportedLocales) {
     for (final scale in [1.0, 1.3, 2.0]) {
       for (final MapEntry(key: name, value: screen) in screens.entries) {
         testWidgets('$name in $locale at ${scale}x', (tester) async {
+          tester.platformDispatcher.localeTestValue = _regionOf(locale);
+          addTearDown(tester.platformDispatcher.clearLocaleTestValue);
           await tester.binding.setSurfaceSize(_phone);
           addTearDown(() => tester.binding.setSurfaceSize(null));
           final (widget, reach) = screen();
