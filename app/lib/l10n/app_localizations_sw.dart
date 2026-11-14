@@ -281,6 +281,10 @@ class AppLocalizationsSw extends AppLocalizations {
       'Anwani ya seva si sahihi. Lazima ianze na wss://.';
 
   @override
+  String get errorRateLimited =>
+      'Umejaribu mara nyingi mno kwa haraka; subiri kidogo kisha ujaribu tena.';
+
+  @override
   String get errorConnect =>
       'Imeshindwa kuunganisha na kifaa kingine. Hakikisha vifaa vyote viwili viko mtandaoni kisha ujaribu tena.';
 

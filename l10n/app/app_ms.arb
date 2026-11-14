@@ -72,6 +72,7 @@
   "errorCodeNotInUse": "Kod itu tidak digunakan: tersalah taip, telah tamat tempoh atau sudah digunakan. Minta kod baharu daripada penghantar.",
   "errorCodeExpired": "Kod tamat tempoh sebelum sesiapa menggunakannya. Hantar semula untuk mendapatkan kod baharu.",
   "errorBadServer": "Alamat pelayan tidak sah. Ia mesti bermula dengan wss://.",
+  "errorRateLimited": "Terlalu kerap mencuba; tunggu sebentar dan cuba lagi.",
   "errorConnect": "Tidak dapat menyambung ke peranti lain. Pastikan kedua-dua peranti dalam talian dan cuba lagi.",
   "errorInvalidOffer": "Tawaran melanggar peraturan keselamatan, jadi ia ditolak.",
   "errorStorage": "Satu fail tidak dapat dibaca atau disimpan.",

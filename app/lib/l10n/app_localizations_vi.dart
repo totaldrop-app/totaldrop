@@ -273,6 +273,10 @@ class AppLocalizationsVi extends AppLocalizations {
       'Địa chỉ máy chủ không hợp lệ. Địa chỉ phải bắt đầu bằng wss://.';
 
   @override
+  String get errorRateLimited =>
+      'Thử quá nhiều lần liên tiếp; hãy đợi một lát rồi thử lại.';
+
+  @override
   String get errorConnect =>
       'Không thể kết nối với thiết bị kia. Hãy kiểm tra cả hai thiết bị đều đang trực tuyến rồi thử lại.';
 

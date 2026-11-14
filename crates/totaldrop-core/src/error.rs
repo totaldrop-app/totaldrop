@@ -237,6 +237,13 @@ impl Error {
     pub fn is_bad_server_address(&self) -> bool {
         matches!(self, Error::Rendezvous(r) if crate::rendezvous::BAD_ADDRESS.contains(&r.as_str()))
     }
+
+    /// The rendezvous server refused because this address sent too many
+    /// requests (#394).
+    #[must_use]
+    pub fn is_rate_limited(&self) -> bool {
+        matches!(self, Error::Rendezvous(r) if r == crate::rendezvous::RATE_LIMITED)
+    }
 }
 
 impl From<std::io::Error> for Error {
@@ -425,5 +432,16 @@ mod tests {
         assert_eq!(Error::WrongCode.cause(), Cause::Unknown);
         assert_eq!(Cause::Unknown.as_str(), "");
         assert_eq!(Cause::TimedOut.as_str(), "TimedOut");
+    }
+
+    #[test]
+    fn rate_limited_reason_is_recognised() {
+        let limited = Error::Rendezvous("too many requests".into());
+        assert!(limited.is_rate_limited());
+        assert!(!limited.is_code_not_in_use());
+        assert!(!limited.is_bad_server_address());
+        assert_eq!(limited.cause(), Cause::Unknown);
+        assert!(!Error::Rendezvous("connection refused".into()).is_rate_limited());
+        assert!(!Error::Connect("too many requests".into()).is_rate_limited());
     }
 }

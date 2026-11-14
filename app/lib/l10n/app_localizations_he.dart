@@ -288,6 +288,10 @@ class AppLocalizationsHe extends AppLocalizations {
       'כתובת השרת אינה תקפה. היא חייבת להתחיל ב־wss://.';
 
   @override
+  String get errorRateLimited =>
+      'ניסיונות תכופים מדי; יש להמתין רגע ולנסות שוב.';
+
+  @override
   String get errorConnect =>
       'לא ניתן להתחבר למכשיר השני. יש לוודא ששני המכשירים מחוברים לאינטרנט ולנסות שוב.';
 

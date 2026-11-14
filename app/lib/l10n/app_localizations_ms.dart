@@ -275,6 +275,10 @@ class AppLocalizationsMs extends AppLocalizations {
       'Alamat pelayan tidak sah. Ia mesti bermula dengan wss://.';
 
   @override
+  String get errorRateLimited =>
+      'Terlalu kerap mencuba; tunggu sebentar dan cuba lagi.';
+
+  @override
   String get errorConnect =>
       'Tidak dapat menyambung ke peranti lain. Pastikan kedua-dua peranti dalam talian dan cuba lagi.';
 

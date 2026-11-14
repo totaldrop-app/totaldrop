@@ -275,6 +275,10 @@ class AppLocalizationsBn extends AppLocalizations {
       'সার্ভারের ঠিকানাটি বৈধ নয়। এটি wss:// দিয়ে শুরু হতে হবে।';
 
   @override
+  String get errorRateLimited =>
+      'খুব ঘন ঘন চেষ্টা করা হচ্ছে; একটু অপেক্ষা করে আবার চেষ্টা করুন।';
+
+  @override
   String get errorConnect =>
       'অন্য ডিভাইসের সঙ্গে সংযোগ করা যায়নি। দুটি ডিভাইসই অনলাইনে আছে কিনা দেখে আবার চেষ্টা করুন।';
 

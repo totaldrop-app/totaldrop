@@ -288,6 +288,10 @@ class AppLocalizationsSv extends AppLocalizations {
       'Serveradressen är inte giltig. Den måste börja med wss://.';
 
   @override
+  String get errorRateLimited =>
+      'För många försök tätt inpå varandra; vänta ett ögonblick och försök igen.';
+
+  @override
   String get errorConnect =>
       'Kunde inte ansluta till den andra enheten. Kontrollera att båda enheterna är online och försök igen.';
 
