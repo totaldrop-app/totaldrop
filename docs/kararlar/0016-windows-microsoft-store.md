@@ -1,296 +1,325 @@
-# 0016: Windows uygulaması WinUI 3 ile yazılır, Microsoft Store'dan dağıtılır
+# 0016: The Windows app is written with WinUI 3 and distributed through the Microsoft Store
 
-- **Durum:** Kabul, 10 Kasım 2026 (Ozan, #33)
-- **Bağlam:** Windows uygulaması (#33) bugüne kadar iki şeyi
-  bekliyordu: arayüz teknolojisinin seçilmesi ve imza sertifikasının
-  bağışlarla alınması. Bağış sayfası bunu "Windows'tan önce" bir gider
-  olarak yazar (`don.b4`: Certum'un açık kaynak sertifikası, ilk yıl
-  69 EUR, sonra 49 EUR); tehdit modelindeki T12 de "Windows ve macOS
-  imzası bağışları bekliyor" der. İmzasız bir `.exe` ya da `.msi`
-  Windows'ta SmartScreen ve Defender uyarısıyla açılır; şifrelemeye
-  dayanan bir uygulama için bu güveni baştan zedeler.
+- **Status:** Accepted, 10 November 2026 (Ozan, #33)
+- **Context:** Until now, the Windows app (#33) was waiting on two things:
+  choosing the UI toolkit and paying for a code signing certificate from
+  donations. The donate page lists this as a cost "before Windows"
+  (`don.b4`: Certum's open-source certificate, 69 EUR for the first year,
+  then 49 EUR); T12 in the threat model also says "Windows and macOS
+  signing are waiting on donations". An unsigned `.exe` or `.msi` opens on
+  Windows behind SmartScreen and Defender warnings; for an app built on
+  encryption, that undermines trust from the start.
 
-  İki şey değişti:
-  - Microsoft Store'a geliştirici kaydı artık ücretsiz: bireysel hesapta
-    Eylül 2025'ten, şirket hesabında 2026'dan beri. Kayıt
-    `storedeveloper.microsoft.com` üzerinden yapılır; başka yollardan
-    girilirse eski akış açılır.
-  - Store'a MSIX paketi gönderilirse Microsoft paketi sertifikasyondan
-    sonra kendi sertifikasıyla yeniden imzalar; bizim sertifika almamız
-    gerekmez. Bu yalnızca MSIX için geçerlidir: Store'a `.exe` ya da `.msi`
-    gönderilirse imzayı biz atmak zorundayız.
+  Two things changed:
+  - Developer registration on the Microsoft Store is now free: since
+    September 2025 for individual accounts, and since 2026 for company
+    accounts. Registration goes through `storedeveloper.microsoft.com`;
+    entering through other paths opens the old flow.
+  - When an MSIX package is submitted to the Store, Microsoft re-signs the
+    package with its own certificate after certification; we do not need to
+    buy a certificate. This applies only to MSIX: if an `.exe` or `.msi` is
+    submitted to the Store, we must sign it ourselves.
 
-  Böylece imza sorunu parasız çözülebiliyor. Paket yöneticileri kararı
-  önerisi (#344, PR #347) Microsoft Store kanalını ve Store'un imza
-  durumunu bu karara bırakır. O öneri şirket hesabının ücretli olduğunu
-  yazar; Microsoft'un Şubat 2026 tarihli sayfasına göre artık değildir.
+  That solves the signing problem at zero cost. The package managers
+  decision proposal (#344, PR #347) leaves the Microsoft Store channel and
+  Store signing to this decision. That proposal says company accounts are
+  paid; according to Microsoft's February 2026 page, they no longer are.
 
-  Kaynaklar (7 Kasım 2026'da okundu):
-  [hesap açma](https://learn.microsoft.com/en-us/windows/apps/publish/partner-center/open-a-developer-account),
-  [şirket hesabı](https://learn.microsoft.com/en-us/windows/apps/publish/whats-new-company-developer),
-  [imza seçenekleri](https://learn.microsoft.com/en-us/windows/apps/package-and-deploy/code-signing-options),
-  [Store SSS](https://learn.microsoft.com/en-us/windows/apps/publish/faq/get-started-with-the-microsoft-store).
+  Sources (read on 7 November 2026):
+  [opening an account](https://learn.microsoft.com/en-us/windows/apps/publish/partner-center/open-a-developer-account),
+  [company account](https://learn.microsoft.com/en-us/windows/apps/publish/whats-new-company-developer),
+  [code signing options](https://learn.microsoft.com/en-us/windows/apps/package-and-deploy/code-signing-options),
+  [Store FAQ](https://learn.microsoft.com/en-us/windows/apps/publish/faq/get-started-with-the-microsoft-store).
 
-## Arayüz
+## Interface
 
-- **Seçenekler:**
-  1. **Qt 6 ve QML, Linux kodunu paylaşarak.** Qt 6.8'den beri Windows 11
-     görünümünü taklit eden bir "FluentWinUI3" stili var. En az iş bu;
-     ama Mica arka planı, başlık çubuğu tümleşmesi, sistem vurgu rengi ve
-     yüksek karşıtlık gibi ayrıntılar taklit düzeyinde kalır. Tasarım kuralı
-     ([tasarim.md](../tasarim.md)) sistem temasına yüzde yüz uyum ister.
-  2. **Flutter, Android uygulamasının Windows hedefi.** Kod paylaşılır ama
-     Material görünümü Windows'a yabancıdır; Fluent görünüm üçüncü taraf
-     paketlere kalır.
-  3. **WinUI 3 (Windows App SDK) ve C# (.NET, Native AOT), çekirdeğe C
-     ABI üzerinden bağlı.** Windows 11'in kendi arayüz takımıdır: Fluent
-     denetimleri, açık/koyu/yüksek karşıtlık temaları, sistem vurgu rengi,
-     Segoe UI Variable ve Fluent simgeleri doğrudan gelir. Mica
-     (`MicaBackdrop`) ve başlık çubuğu tümleşmesi
-     (`ExtendsContentIntoTitleBar`, başlık düğmelerinin renkleri) yerel
-     olarak vardır ama uygulama kurar; başlık düğmeleri canlı tema
-     değişikliğini kendiliğinden izlemeyebilir, bu adım 3'te denenir.
-     Native AOT ile .NET çalışma zamanı ayrıca kurulmaz, açılış hızlıdır;
-     karşılığında XAML budamaya uygun yazılır (`x:Bind`, yansımalı
-     `{Binding}` yok).
-- **Önerilen:** Seçenek 3. Linux'ta Qt seçilirken ölçüt neyse
-  ([0006](0006-linux-qt.md)) burada da odur: platformun kendi araç takımı
-  ve sisteme tam uyum.
+- **Options:**
+  1. **Qt 6 and QML, sharing the Linux code.** Since Qt 6.8 there has been
+     a "FluentWinUI3" style that imitates the Windows 11 look. This is the
+     least work, but details such as the Mica backdrop, title bar
+     integration, the system accent colour and high contrast remain an
+     imitation. The design rules ([tasarim.md](../tasarim.md)) require one
+     hundred percent fidelity to the system theme.
+  2. **Flutter, using the Windows target of the Android app.** Code is
+     shared, but the Material look is foreign to Windows; a Fluent look
+     falls to third-party packages.
+  3. **WinUI 3 (Windows App SDK) and C# (.NET, Native AOT), bound to the
+     core over a C ABI.** This is Windows 11's own UI toolkit: Fluent
+     controls, light/dark/high-contrast themes, the system accent colour,
+     Segoe UI Variable and Fluent icons come natively. Mica (`MicaBackdrop`)
+     and title bar integration (`ExtendsContentIntoTitleBar`, caption button
+     colours) are native, though the app sets them up; caption buttons may
+     not follow live theme changes automatically, which will be tested in
+     step 3. With Native AOT, the .NET runtime is not installed separately
+     and startup is fast; in return, XAML is written to be trim-safe
+     (`x:Bind`, no reflection-based `{Binding}`).
+- **Proposed:** Option 3. The criterion here is the same as when Qt was
+  chosen on Linux ([0006](0006-linux-qt.md)): the platform's own toolkit
+  and full fidelity to the system.
 
-### Kurallar
+### Rules
 
-- Çekirdek değişmez: protokol, kriptografi ve aktarım yalnızca Rust'ta
-  (`crates/`) durur; C# tarafı kriptografi yapmaz ([mimari.md](../mimari.md)).
-  Çekirdek için ince bir `windows/core-ffi` crate'i C ABI açar. Bağlama
-  aracı (uniffi ile C# üreticisi ya da csbindgen) adım 2'de seçilir;
-  ölçüt, bağımlılığın bakımı ve iptal/ilerleme olaylarının iş parçacığı
-  güvenliğidir. Arayüz iş parçacığı çekirdeği hiç beklemez.
-- Windows App SDK çalışma zamanı pakete gömülü mü (self-contained), Store
-  bağımlılığı olarak mı gelir, adım 2'de seçilir.
-- Hedefler ilk günden x64 ve ARM64'tür (#86); ikisi tek `.msixbundle`'da.
-- En düşük sürüm adım 2'de seçilir. Windows App SDK Windows 10 1809'dan
-  beri destekler; Windows 10 Ekim 2025'te genel destekten çıktı. Windows
-  10'da Mica yoktur: Windows 10 desteklenirse orada sistem arka plan rengi
-  kullanılır ve bu, tasarim.md'deki Windows satırına yazılır.
-- Diller: 35 dil, tek kaynaktan ([0008](0008-diller-ve-bolgeler.md)).
-  ARB kaynağı derlemede `.resw`'ye çevrilir; çoğul ve sayılar ICU ile
-  (Windows ICU'yu kendisi taşır). Sağdan sola diller `FlowDirection` ile;
-  kod ve doğrulama kelimeleri soldan sağa kalır.
-- İşaret aktarım sırasında web sitesindeki animasyonun aynısını oynatır
-  ([tasarim.md](../tasarim.md), "Hareket"). **Hareketi azalt** kuralı
-  Windows'ta "Animasyon efektleri" ayarına (`UISettings.AnimationsEnabled`)
-  bağlanır: kapalıysa işaret dinlenme hâlinde durur.
-- Her arayüz adımı Windows'ta açık, koyu ve yüksek karşıtlık temalarında
-  denenir, ekran görüntüleri PR'a konur (Linux'taki kural gibi, 0006).
-- Erişilebilirlik: her denetimin UI Automation adı; Narrator ve NVDA ile,
-  yalnızca klavyeyle ve yüksek karşıtlıkta denenir; metin boyutu %225'e
-  kadar taşmaz.
+- The core does not change: the protocol, cryptography and transfer stay in
+  Rust (`crates/`) alone; the C# side performs no cryptography
+  ([mimari.md](../mimari.md)). A thin `windows/core-ffi` crate exposes a C
+  ABI for the core. The binding tool (uniffi with a C# generator, or
+  csbindgen) is chosen in step 2; the criteria are maintenance of the
+  dependency and thread safety of cancellation and progress events. The UI
+  thread never blocks on the core.
+- Whether the Windows App SDK runtime is bundled in the package
+  (self-contained) or pulled as a Store dependency is chosen in step 2.
+- Targets are x64 and ARM64 from day one (#86), both in a single
+  `.msixbundle`.
+- The minimum Windows version is chosen in step 2. The Windows App SDK
+  supports Windows 10 1809 and later; Windows 10 left general support in
+  October 2025. Windows 10 has no Mica: if Windows 10 is supported, the
+  system background colour is used there and recorded in the Windows row of
+  `tasarim.md`.
+- Languages: 35 languages from a single source
+  ([0008](0008-diller-ve-bolgeler.md)). The ARB source is converted to
+  `.resw` during the build; plurals and numbers use ICU (Windows ships ICU
+  itself). Right-to-left languages use `FlowDirection`; the transfer code
+  and verification words stay left-to-right.
+- During a transfer, the mark plays the same animation as on the website
+  ([tasarim.md](../tasarim.md), "Motion"). The **Reduce motion** rule is
+  wired on Windows to the "Animation effects" setting
+  (`UISettings.AnimationsEnabled`): when off, the mark stays at rest.
+- Every UI step is tested on Windows in the light, dark and high-contrast
+  themes, with screenshots attached to the PR (like the rule on Linux,
+  0006).
+- Accessibility: every control has a UI Automation name; tested with
+  Narrator and NVDA, with the keyboard alone and in high contrast; text
+  scales up to 225% without overflow.
 
-### Sistem tümleşmesi
+### System integration
 
-- Gezgin'de sağ tık "TotalDrop ile gönder": Windows 11'in
-  `IExplorerCommand` arayüzü, MSIX paketinin kimliğiyle
-  (`desktop4`/`desktop5:FileExplorerContextMenus` ve `com:Extension`). Bu,
-  `explorer.exe` içinde çalışan küçük bir COM sunucusudur; C# Native AOT
-  buna uygun değildir. Rust (`windows` crate'i) ile yazılır, yalnızca
-  seçilen yolları uygulamaya iletir ve kendi güvenlik incelemesinden
-  geçer: bir hata Gezgin'i çökertir. Eski menü yalnızca yedek.
-- Windows paylaşım penceresinde hedef olmak (Share Target) ve uygulamadan
-  paylaşmak (`DataTransferManager`).
-- Pencereye ve görev çubuğu simgesine sürükle-bırak, tek pencere
-  (açıkken ikinci açılış dosyaları açık pencereye verir), işlemli bildirim
-  (toast).
-- Aktarım sürerken bilgisayarın uyumaması (#340) ve pencere kapatıldığında
-  aktarımın ne olacağı Linux'taki kurallarla aynıdır.
-- Güvenlik duvarı: QUIC'in UDP üzerinden dinlemesi kural yoksa ilk
-  açılışta Windows Defender Güvenlik Duvarı izin penceresini açar. Plan,
-  MSIX bildiriminde `desktop2:Extension Category="windows.firewallRules"`
-  ile kurulumda gelen bir kuraldır; yalnızca uygulamanın kendi ikilisi ve
-  mümkünse yalnızca özel ağ profili için. **Doğrulanacak:** bu uzantının
-  Store paketinde kabul edildiği ve kuralın kaldırmada silindiği.
+- Right-click "Send with TotalDrop" in File Explorer: Windows 11's
+  `IExplorerCommand` interface, using the MSIX package identity
+  (`desktop4`/`desktop5:FileExplorerContextMenus` and `com:Extension`).
+  This is a small COM server loaded inside `explorer.exe`; C# Native AOT is
+  not suitable for it. It is written in Rust (`windows` crate), forwards
+  only the selected paths to the app, and goes through its own security
+  review: a bug crashes File Explorer. The legacy context menu is a
+  fallback only.
+- Acting as a Share Target in the Windows share sheet and sharing out from
+  the app (`DataTransferManager`).
+- Drag-and-drop onto the window and the taskbar icon, single-instance
+  behaviour (when already open, a second launch hands the files to the open
+  window), and actionable toast notifications.
+- Preventing the computer from sleeping during an active transfer (#340)
+  and what happens to a transfer when the window is closed follow the same
+  rules as on Linux.
+- Firewall: listening over UDP for QUIC triggers the Windows Defender
+  Firewall prompt on first launch if no rule exists. The plan is an
+  install-time rule declared in the MSIX manifest with
+  `desktop2:Extension Category="windows.firewallRules"`, scoped only to the
+  app's own binary and, if possible, only to the private network profile.
+  **To verify:** whether this extension is accepted in a Store package and
+  whether the rule is removed on uninstall.
 
-## Dağıtım
+## Distribution
 
-- **Seçenekler:**
-  1. İmzasız `.exe`/`.msi` sürüm sayfasında. Ücretsiz ama her kurulumda
-     uyarı; güven için kabul edilemez.
-  2. Certum'un açık kaynak sertifikasıyla imzalı paket (bugünkü plan,
-     `don.b4`). Her yıl ödenir; anahtar bir akıllı kartta ya da Certum'un
-     bulut anahtarında (SimplySign) durur ve ikisi de CI'dan imzalamayı
-     zorlaştırır. Microsoft'a göre OV ve EV sertifikaları artık SmartScreen
-     itibarını kendiliğinden getirmez; uyarı itibar birikene kadar sürer.
-     Microsoft'un kendi imza hizmeti (Artifact Signing) bireylere yalnızca
-     ABD ve Kanada'da açık.
-  3. SignPath Foundation'ın ücretsiz açık kaynak imza programı. Yayıncı
-     olarak "SignPath Foundation" görünür, TotalDrop değil (PR #347).
-  4. **Microsoft Store, MSIX paketiyle; Microsoft imzalar.** winget
-     uygulamayı `msstore` kaynağından aynı paketle kurar (Store ürün
-     kimliğiyle, `9N…`).
-- **Önerilen:** Seçenek 4. Mağaza dışında indirilecek bir Windows paketi
-  olmaz. Seçenek 2 ya da 3 gerekirse ayrı bir kararla eklenir.
-- winget'in topluluk deposundaki `TotalDrop.TotalDrop` kimliği (PR #347)
-  bir kurulum adresi ister; Store dışında paket olmayınca o kimlik
-  yayımlanamaz. Önerilen: kimlik boş bırakılır ve başkasınca alınma riski
-  kabul edilir; alınırsa marka kuralıyla (0012) winget-pkgs
-  inceleyicilerine bildirilir.
+- **Options:**
+  1. Unsigned `.exe`/`.msi` on the release page. Free, but warns on every
+     install; unacceptable for trust.
+  2. Package signed with Certum's open-source certificate (today's plan,
+     `don.b4`). Paid every year; the key lives on a smart card or in
+     Certum's cloud key (SimplySign), and both make signing from CI hard.
+     According to Microsoft, OV and EV certificates no longer grant
+     immediate SmartScreen reputation; the warning persists until
+     reputation builds up. Microsoft's own signing service (Artifact
+     Signing) is open to individuals only in the US and Canada.
+  3. SignPath Foundation's free open-source signing programme. The
+     publisher appears as "SignPath Foundation", not TotalDrop (PR #347).
+  4. **Microsoft Store with an MSIX package; Microsoft signs it.** winget
+     installs the app from the `msstore` source using the same package (by
+     Store product ID, `9N…`).
+- **Proposed:** Option 4. There is no Windows package to download outside
+  the Store. If option 2 or 3 is needed later, it is added in a separate
+  decision.
+- The `TotalDrop.TotalDrop` identifier in winget's community repository
+  (PR #347) requires an installer URL; with no package outside the Store,
+  that identifier cannot be published. Proposed: leave the identifier
+  unclaimed and accept the risk of someone else taking it; if taken, report
+  it to the `winget-pkgs` reviewers under the brand rule (0012).
 
-### Kurallar
+### Rules
 
-- Paket yalnızca CI'da, etiketli commit'ten, GitHub'ın standart Windows
-  koşucularında (`windows-2025`, `windows-11-arm`) derlenir
-  ([0007](0007-surec.md), [0009](0009-ios-macos.md) CI kuralları). Her
-  PR'da paket derlenir ve testler çalışır.
-- Store paketimizi yeniden derlemez, yalnızca yeniden imzalar. Bu yüzden
-  Store bir istisna değildir. Ama kullanıcıya giden dosyanın imzası bizim
-  yapı kaynağı kanıtımızla (attestation) aynı olmaz; kanıt, CI'ın ürettiği
-  `.msixupload` ve içindeki ikililer için verilir.
-- Sürüm iş akışı (`windows-release.yml`) Android'deki gibi yalnızca
-  artifact üretir; Store'a gönderimi Ozan Partner Center'dan yapar
-  ([surec.md](../surec.md) "Sürüm listesi" ve `android-release.yml`'nin
-  baş yorumu: CI'ın ürettiği paketi Play Console'a Ozan yükler).
-  **Doğrulanacak:** Store gönderim API'si ya da `msstore` CLI bireysel
-  hesapta kullanılabiliyor mu; bu, Entra ID kiracısı ve uygulama kaydı
-  ister. Kullanılabiliyorsa sonra ayrı bir adımda `windows-release`
-  ortamına, onaylı olarak eklenir.
-- İmzasız test paketi: geliştirme ve CI denemeleri için paket CI'da her
-  çalışmada yeniden üretilen, atılan bir öz imzalı sertifikayla imzalanır
-  (ya da bildirimdeki yayıncı imzasız paket işaretini taşır ve
-  `Add-AppxPackage -AllowUnsigned` ile kurulur). Bu paket dağıtılmaz.
-- Paket kimliği (`Identity Name`, `Publisher`) Partner Center'daki ad
-  ayırmadan gelir ve depoya yazılır; gizli bilgi değildir.
-- **Korumalı alan yoktur.** WinUI 3 masaüstü uygulaması `runFullTrust`
-  ile, kullanıcının bütün haklarıyla çalışır. `internetClient`,
-  `internetClientServer` ve `privateNetworkClientServer` yetenekleri
-  yalnızca AppContainer içinde uygulanır; burada bildirilir ama bir sınır
-  çizmez. Flatpak'teki gibi bir izin sınırı (T15) Windows'ta yoktur; bu,
-  kabul edilince tehdit modeline yazılır. `runFullTrust` kısıtlı bir
-  yetenektir; gönderimde gerekçesi yazılır.
-- Güncellemeyi Store yapar; uygulamanın kendi güncelleyicisi olmaz.
+- The package is built only in CI, from a tagged commit, on GitHub's
+  standard Windows runners (`windows-2025`, `windows-11-arm`)
+  ([0007](0007-surec.md), [0009](0009-ios-macos.md) CI rules). Every PR
+  builds the package and runs the tests.
+- The Store does not rebuild our package; it only re-signs it. Because of
+  that, the Store is not an exception to CI builds. However, the signature
+  on the file delivered to users does not match our build provenance
+  (attestation); provenance is issued for the `.msixupload` produced by CI
+  and the binaries inside it.
+- Like on Android, the release workflow (`windows-release.yml`) produces
+  only an artifact; Ozan submits it to the Store through Partner Center
+  ([surec.md](../surec.md) "Release checklist" and the header comment of
+  `android-release.yml`: Ozan uploads the CI-built bundle to Play Console).
+  **To verify:** whether the Store submission API or `msstore` CLI can be
+  used on an individual account, which requires an Entra ID tenant and app
+  registration. If it works, it is added later in a separate step behind an
+  approved `windows-release` environment.
+- Unsigned test package: for development and CI runs, the package is signed
+  in CI with a throwaway self-signed certificate generated fresh on each
+  run (or carries the unsigned-package publisher marker in the manifest and
+  is installed with `Add-AppxPackage -AllowUnsigned`). This package is
+  never distributed.
+- The package identity (`Identity Name`, `Publisher`) comes from the name
+  reservation in Partner Center and is committed to the repository; it is
+  not a secret.
+- **There is no sandbox.** A WinUI 3 desktop app runs with `runFullTrust`,
+  carrying all of the user's privileges. The `internetClient`,
+  `internetClientServer` and `privateNetworkClientServer` capabilities are
+  enforced only inside an AppContainer; here they are declared but draw no
+  boundary. There is no permission boundary on Windows comparable to
+  Flatpak (T15); once accepted, this is recorded in the threat model.
+  `runFullTrust` is a restricted capability; its justification is included
+  in the Store submission.
+- Updates are handled by the Store; the app has no updater of its own.
 
-### Hesap
+### Account
 
-- **Bireysel hesap:** Ücretsiz. Kişisel Microsoft hesabıyla açılır;
-  kimlik belgesi ve özçekimle doğrulanır. Microsoft'a göre "kendi adıyla"
-  ve "işi, ticareti ya da mesleğiyle ilgili olmadan" yayımlayanlar
-  içindir. Mağazada görünen ad "yayıncı görünen adı"dır; hesap türü,
-  ülke ve bu ad hesap açıldıktan sonra değiştirilemez.
-- **Şirket hesabı:** Ücretsiz. Kayıtlı bir tüzel kişilik ister (D-U-N-S
-  numarası ya da resmî kuruluş belgesi) ve alan adıyla eşleşen bir iş
-  e-postası. Ekip üyeleri rol alabilir. TotalDrop'un bugün tüzel kişiliği
-  yoktur. Open Collective başvurusu reddedildi; bağışlar şimdilik proje
-  yöneticisinin kişisel sayfasından alınır ([0017](0017-bagis-kisisel-sayfa.md)).
-- Bireysel hesap sonradan şirkete çevrilemez; şirket için yeni hesap
-  açılır ve uygulama ona taşınır.
-- **Bugünkü durum (7 Kasım 2026, Partner Center'dan okundu):** Ozan'ın
-  daha önce açtığı bir hesap var. Türü bireysel, Ozan'ın kişisel
-  Microsoft hesabına bağlı; yayıncı adı ve Windows yayıncı kimliği kişi
-  adıdır, satıcı iletişim bilgileri de kişiseldir. Bu haliyle Store'da
-  TotalDrop'u kişi adı yayımlar.
-- **İlk gönderimden önce Ozan karar verir** (yanlış ad, yeni hesap ve yeni
-  kimlik doğrulaması demektir):
-  - Bireysel hesapta yayıncı adı "TotalDrop" olabilir mi. Microsoft'un
-    tarifi kişinin kendi adını öngörür; "TotalDrop" reddedilebilir ya da
-    şartlara aykırı sayılabilir.
-  - Yayıncı olarak kişi adı ("Ozan Özdil") görünmesi marka kuralına
-    ([0012](0012-ad-ve-isaret.md): TotalDrop'u yalnızca TotalDrop
-    yayımlar) uyar mı. Uymuyorsa yol, tüzel kişilik kurulunca şirket
-    hesabıdır ve Store o zamana kalır.
-  - Proje bireysel hesap tarifine (ticari olmayan) uyar mı: uygulama
-    ücretsiz, reklamsız, bağışla yürür.
-- **Önerilen:** Mevcut hesapta yayıncı adını "TotalDrop", satıcı
-  iletişim e-postasını `hello@totaldrop.app` yapmayı Ozan dener. Microsoft
-  kabul etmezse Store, tüzel kişilikle açılacak şirket hesabına kalır.
-  Değişiklikleri Ozan yapar; parola ve kimlik bilgileri depoya ve
-  Claude'a verilmez. **Doğrulanacak:** bireysel hesapta yayıncı adının
-  sonradan değiştirilip değiştirilemeyeceği ve Windows yayıncı kimliğinin
-  (paketteki `Publisher`) adla birlikte değişip değişmediği.
-- **Hesabın korunması:** Store kendi imzasıyla, otomatik güncelleme
-  olarak ne gönderilirse dağıtır. Partner Center hesabını ele geçiren,
-  hiçbir anahtarımıza dokunmadan bütün kullanıcılara güvenilir görünen
-  kötü niyetli bir güncelleme gönderebilir. Bu yüzden: Microsoft
-  hesabında parolasız giriş (passkey) ya da doğrulayıcı uygulama, SMS ile
-  kurtarma yok; `hello@totaldrop.app` posta kutusu da iki aşamalı
-  doğrulamalı ve erişimi sınırlı, çünkü hesabı kurtarabilir. Kimin
-  kurtarabileceği yazılı tutulur. Bireysel hesaba kullanıcı eklenemediği
-  için hesap tek kişiye bağlıdır; Ozan ulaşılamazsa yayın durur.
-- **Doğrulanacak:**
-  - Avrupa Birliği Dijital Hizmetler Yasası gereği Partner Center'ın
-    sorduğu "tacir" (trader) beyanı. Tacir beyan edilirse Ozan'ın adı,
-    adresi, e-postası ve telefonu AB'de mağazada herkese açık görünür;
-    tek kişilik bir proje için gizlilik riskidir. Yanlış bir "tacir değil"
-    beyanı ise hukuki risktir. Beyan Ozan'ındır; markası, sitesi ve
-    bağışları olan bir projenin bu teste nasıl girdiği önceden okunur.
-  - Bireysel hesaba gerçekten kullanıcı eklenemediği (ikincil kaynak).
+- **Individual account:** Free. Opened with a personal Microsoft account;
+  verified with an identity document and a selfie. According to Microsoft,
+  it is for those publishing "in their own name" and "not in connection
+  with their business, trade, or profession". The name shown in the Store
+  is the "publisher display name"; the account type, country and this name
+  cannot be changed after the account is opened.
+- **Company account:** Free. Requires a registered legal entity (a D-U-N-S
+  number or official incorporation document) and a work email matching the
+  domain. Team members can be assigned roles. TotalDrop has no legal entity
+  today. The Open Collective application was declined; donations currently
+  go through the project lead's personal page
+  ([0017](0017-bagis-kisisel-sayfa.md)).
+- An individual account cannot later be converted into a company account; a
+  new account is opened for the company and the app is transferred to it.
+- **Current state (7 November 2026, read from Partner Center):** Ozan has
+  an existing account opened earlier. It is an individual account linked to
+  Ozan's personal Microsoft account; the publisher display name and Windows
+  publisher ID are his personal name, and the seller contact details are
+  personal as well. As it stands, TotalDrop would appear in the Store under
+  a personal name.
+- **Ozan decides before the first submission** (picking the wrong name
+  means opening a new account and repeating identity verification):
+  - Whether the publisher display name on an individual account can be
+    "TotalDrop". Microsoft's wording expects the person's own name;
+    "TotalDrop" may be rejected or treated as against the terms.
+  - Whether showing a personal name ("Ozan Özdil") as the publisher fits
+    the brand rule ([0012](0012-ad-ve-isaret.md): only TotalDrop publishes
+    TotalDrop). If not, the path is a company account once a legal entity
+    exists, and the Store waits until then.
+  - Whether the project fits the individual account definition
+    (non-commercial): the app is free, ad-free and funded by donations.
+- **Proposed:** Ozan tries changing the publisher display name on the
+  existing account to "TotalDrop" and the seller contact email to
+  `hello@totaldrop.app`. If Microsoft does not allow it, the Store waits
+  for a company account opened under a legal entity. Ozan makes the
+  changes himself; passwords and identity documents are never put in the
+  repository or given to Claude. **To verify:** whether the publisher
+  display name on an individual account can be changed after creation, and
+  whether the Windows publisher ID (`Publisher` in the package) changes
+  along with it.
+- **Account protection:** The Store distributes whatever is submitted to it
+  as an automatic update signed by Microsoft. Anyone who compromises the
+  Partner Center account can push a malicious update that looks trusted to
+  every user without touching any of our keys. Therefore: passwordless
+  sign-in (passkey) or an authenticator app on the Microsoft account, with
+  no SMS recovery; two-factor authentication and restricted access on the
+  `hello@totaldrop.app` mailbox too, because it can recover the account.
+  Who can recover the account is kept in writing. Because users cannot be
+  added to an individual account, the account depends on one person; if
+  Ozan is unreachable, releases stop.
+- **To verify:**
+  - The "trader" declaration Partner Center asks for under the European
+    Union Digital Services Act. Declaring trader status makes Ozan's name,
+    address, email and phone number public on the Store in the EU, which is
+    a privacy risk for a one-person project; a false "non-trader"
+    declaration is a legal risk. The declaration is Ozan's; how a project
+    with a brand, website and donations falls under that test is read
+    beforehand.
+  - Whether users truly cannot be added to an individual account (secondary
+    source).
 
-### Ad ayırma
+### Name reservation
 
-- Microsoft'a göre bir ad, uygulama yayımlanmadan en çok üç ay ayrılı
-  kalır; sonra düşer. Adım 2–5 büyük olasılıkla üç aydan uzun sürer.
-- Önerilen: "TotalDrop" adı, ilk gönderimden yaklaşık üç ay önce, adım 4
-  civarında ayrılır. O zamana kadar adın başkasınca alınması riski kabul
-  edilir; alınırsa marka kuralıyla (0012) Microsoft'a bildirilir.
+- According to Microsoft, a reserved name is held for at most three months
+  without publishing; after that it expires. Steps 2–5 will very likely
+  take longer than three months.
+- Proposed: reserve the name "TotalDrop" roughly three months before the
+  first submission, around step 4. Until then, the risk of someone else
+  reserving the name is accepted; if taken, it is reported to Microsoft
+  under the brand rule (0012).
 
-### Mağaza sayfası
+### Store listing
 
-- 35 dilde. Ad, kısa açıklama ve açıklama, AppStream dosyasını üreten aynı
-  kaynaktan (`tools/desktop-entries.mjs`) üretilir; elle kopyalanmaz.
-  Windows'a özgü cümleler (tema, Gezgin menüsü) önce `l10n/`'a eklenir.
-  **Doğrulanacak:** Store'un 35 dilin hepsini (özellikle `sw`, `ur`,
-  `bn`, `fa`, `ms` ve `zh-HK`/`zh-MO`/`zh-TW`) kabul edip etmediği ve
-  hangi kodlarla.
-- Gizlilik politikası adresi: `https://totaldrop.app/privacy/` (35 dil).
-  Destek: `hello@totaldrop.app`. Yaş derecelendirmesi IARC anketiyle.
-- Ekran görüntüleri açık ve koyu temada, en az 1366×768, birkaç dilde
-  (biri sağdan sola). Platform ya da üretici logosu kullanılmaz
-  ([tasarim.md](../tasarim.md)).
+- In 35 languages. The name, short description and description are
+  generated from the same source that produces the AppStream file
+  (`tools/desktop-entries.mjs`), never copied by hand. Windows-specific
+  sentences (theme, File Explorer menu) are added to `l10n/` first.
+  **To verify:** whether the Store accepts all 35 languages (especially
+  `sw`, `ur`, `bn`, `fa`, `ms` and `zh-HK`/`zh-MO`/`zh-TW`) and under which
+  locale codes.
+- Privacy policy URL: `https://totaldrop.app/privacy/` (35 languages).
+  Support: `hello@totaldrop.app`. Age rating via the IARC questionnaire.
+- Screenshots in the light and dark themes, at least 1366×768, in several
+  languages (including one right-to-left). No platform or manufacturer
+  logos are used ([tasarim.md](../tasarim.md)).
 
-## Sıra
+## Order
 
-1. Bu kararın kabulü ve "Hesap" bölümündeki soruların Ozan tarafından
-   yanıtlanması: mevcut bireysel hesabın yayıncı adı ve iletişim bilgisi
-   TotalDrop'a çevrilir ya da şirket hesabı için tüzel kişilik beklenir.
-2. `windows/` klasörü: boş WinUI 3 penceresi, çekirdek bağlaması, CI'da
-   x64 ve ARM64 derlemesi, test MSIX'i, birim testleri; bağlama aracı,
-   çalışma zamanı dağıtımı ve en düşük Windows sürümü seçilir.
-3. Gönderme ve alma ekranları, tema (Mica, başlık çubuğu, yüksek
-   karşıtlık), 35 dil, erişilebilirlik; UI Automation testleri CI'da.
-4. Gezgin menüsü (Rust COM sunucusu), paylaşım hedefi, bildirimler, tek
-   pencere, güvenlik duvarı kuralı. Bu adım civarında ad ayrılır.
-5. Sürüm iş akışı, mağaza sayfası metinleri, Store'a ilk gönderim (Ozan),
-   kapalı test için Store'un paket uçuşları (package flights).
-6. İndirme sayfası, README (35 dil), bağış sayfasında `don.b4` satırı
-   ("Windows code signing certificate", 35 dil), tehdit modeli (T12 ve
-   Windows için yeni satır) ve gizlilik politikası (35 dil: Microsoft
-   Store kurulum ve kullanım verisini kendi sorumluluğunda toplar)
-   güncellenir.
+1. Acceptance of this decision and Ozan's answers to the questions under
+   "Account": either update the publisher name and contact details on the
+   existing individual account to TotalDrop, or wait for a legal entity and
+   a company account.
+2. `windows/` folder: empty WinUI 3 window, core binding, x64 and ARM64
+   builds in CI, test MSIX, unit tests; choose the binding tool, runtime
+   distribution mode and minimum Windows version.
+3. Send and receive screens, theme (Mica, title bar, high contrast), 35
+   languages, accessibility; UI Automation tests in CI.
+4. File Explorer menu (Rust COM server), share target, notifications,
+   single-instance handling, firewall rule. Reserve the app name around
+   this step.
+5. Release workflow, Store listing copy, first submission to the Store
+   (Ozan), Store package flights for closed testing.
+6. Update the download page, README (35 languages), the `don.b4` item on
+   the donate page ("Windows code signing certificate", 35 languages), the
+   threat model (T12 and a new row for Windows) and the privacy policy (35
+   languages: Microsoft Store collects install and usage data under its own
+   responsibility).
 
-## Riskler
+## Risks
 
-- Store sertifikasyonu reddedebilir ya da gecikebilir; Microsoft'a göre
-  her gönderim üç iş gününe kadar sürer. Acil güvenlik düzeltmesi de bu
-  sürede bekler.
-- Partner Center hesabının ele geçirilmesi, imzalı kötü niyetli bir
-  güncelleme demektir (yukarıda "Hesabın korunması").
-- Store dışından kurmak isteyen (Store'u kapalı kurumsal bilgisayarlar)
-  bu kararla kuramaz; talep olursa seçenek 2 ya da 3 ayrı bir kararla
-  eklenir.
-- Windows makinesi yok: denemeler CI koşucularında ve ekran görüntüleriyle
-  yapılır; elde bir Windows bilgisayarı olunca o da kullanılır.
-- Yayıncı adı ilk gönderimden önce çözülmezse, uygulama kişi adıyla
-  yayımlanır; sonradan düzeltmek yeni hesap ve uygulama taşıma ister.
+- Store certification may reject or delay a submission; according to
+  Microsoft, each submission takes up to three business days. An urgent
+  security fix waits through the same window.
+- Compromise of the Partner Center account means a signed malicious update
+  (see "Account protection" above).
+- Users who want to install outside the Store (corporate machines with the
+  Store disabled) cannot do so under this decision; if demand arises,
+  option 2 or 3 is added in a separate decision.
+- No local Windows machine: testing runs on CI runners with screenshots,
+  supplemented by a Windows machine once one is available.
+- If the publisher name is not settled before the first submission, the app
+  ships under a personal name; fixing that later requires a new account and
+  transferring the app.
 
-## Sonuçlar
+## Consequences
 
-- Windows için imza sertifikası parası gerekmez; bağış sayfasındaki
-  `don.b4` kalemi düşer (macOS için Apple hesabı kalır).
-- [tasarim.md](../tasarim.md) platform tablosuna Windows satırı eklenir:
-  renk kaynağı sistem vurgu rengi, açık/koyu/yüksek karşıtlık
-  (`UISettings`, `ThemeSettings`); denetimler WinUI 3 Fluent; pencere Mica
-  ve sistem başlık çubuğu. Windows'un işaret dosyası "Hareket" bölümündeki
-  aynı değerleri paylaşan dosyalar listesine girer.
-- Tehdit modeline: T12'ye "Store paketini Microsoft yeniden imzalar,
-  kullanıcı kanıtı doğrulayamaz; Partner Center hesabı tek nokta" notu ve
-  Windows'ta korumalı alan olmadığını söyleyen bir satır.
-- `windows/` klasörü ve `windows.yml`, `windows-release.yml` iş akışları
-  açılır; CLAUDE.md'deki alan tablosunda `windows/` için
-  `windows-app-engineering` zaten yazılı.
+- No budget is needed for a Windows code signing certificate; the `don.b4`
+  item drops off the donate page (the Apple account for macOS remains).
+- A Windows row is added to the platform table in
+  [tasarim.md](../tasarim.md): colour source is the system accent colour
+  with light/dark/high-contrast (`UISettings`, `ThemeSettings`); controls
+  are WinUI 3 Fluent; window uses Mica and the system title bar. The
+  Windows mark file joins the list of files sharing the same motion
+  constants under "Motion".
+- In the threat model: a note in T12 that "Microsoft re-signs the Store
+  package, so users cannot verify our build provenance directly; the
+  Partner Center account is a single point of trust", plus a row stating
+  that Windows has no sandbox.
+- The `windows/` folder and `windows.yml` / `windows-release.yml` workflows
+  are created; `windows-app-engineering` is already listed for `windows/`
+  in the area table in `CLAUDE.md`.
