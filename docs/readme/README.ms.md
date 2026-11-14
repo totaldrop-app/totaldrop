@@ -1,4 +1,4 @@
-<!-- Translated from README.md 8c538b51ef59. -->
+<!-- Translated from README.md a235fba5eef6. -->
 <div align="center">
 
 <picture>
