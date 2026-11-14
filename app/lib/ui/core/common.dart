@@ -35,6 +35,16 @@ String errorMessage(BuildContext context, ErrorKind kind) {
   };
 }
 
+/// Text direction for [errorMessage]: left-to-right when a safety-critical
+/// error falls back to English in an RTL language (#509).
+TextDirection? errorDirection(BuildContext context, ErrorKind kind) {
+  return switch (kind) {
+    ErrorKind.wrongCode => safeDirection(context, 'errorWrongCode'),
+    ErrorKind.invalidOffer => safeDirection(context, 'errorInvalidOffer'),
+    _ => null,
+  };
+}
+
 /// Why a transfer failed, in the person's language (#212), or null when
 /// the headline says it all. [cause] is the core's name for it.
 String? causeMessage(BuildContext context, String cause) =>
@@ -82,6 +92,7 @@ class VerificationWords extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final titleDirection = safeDirection(context, 'verificationTitle');
     // A calm outlined frame: the words are the content, not the box.
     return Card(
       color: theme.colorScheme.surface,
@@ -96,6 +107,7 @@ class VerificationWords extends StatelessWidget {
           children: [
             // A heading on two lines keeps the icon beside its first line.
             Row(
+              textDirection: titleDirection,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Icon(
@@ -107,6 +119,7 @@ class VerificationWords extends StatelessWidget {
                 Flexible(
                   child: Text(
                     safeL10n(context, 'verificationTitle').verificationTitle,
+                    textDirection: titleDirection,
                     style: theme.textTheme.titleMedium,
                   ),
                 ),
@@ -129,10 +142,14 @@ class VerificationWords extends StatelessWidget {
               ],
             ),
             Gap.m,
-            Text(
-              safeL10n(context, 'verificationHint').verificationHint,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+            SizedBox(
+              width: double.infinity,
+              child: Text(
+                safeL10n(context, 'verificationHint').verificationHint,
+                textDirection: safeDirection(context, 'verificationHint'),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
               ),
             ),
           ],
@@ -169,6 +186,7 @@ class ErrorPanel extends StatelessWidget {
           Text(
             errorMessage(context, error.kind),
             textAlign: TextAlign.center,
+            textDirection: errorDirection(context, error.kind),
             style: theme.textTheme.titleMedium,
           ),
         ),
@@ -298,11 +316,17 @@ class CenteredScroll extends StatelessWidget {
 
 /// One button of a [ButtonPair].
 class PairedButton {
-  const PairedButton(this.label, this.onPressed, {this.icon});
+  const PairedButton(
+    this.label,
+    this.onPressed, {
+    this.icon,
+    this.textDirection,
+  });
 
   final String label;
   final VoidCallback? onPressed;
   final IconData? icon;
+  final TextDirection? textDirection;
 }
 
 /// An outlined and a filled button side by side, the same width; the
@@ -336,7 +360,7 @@ class ButtonPair extends StatelessWidget {
           text: b.label,
           style: textStyle ?? theme.textTheme.labelLarge,
         ),
-        textDirection: direction,
+        textDirection: b.textDirection ?? direction,
         textScaler: scaler,
         maxLines: 1,
       )..layout();
@@ -346,7 +370,11 @@ class ButtonPair extends StatelessWidget {
     }
 
     Widget button(PairedButton b, {required bool filled}) {
-      final label = Text(b.label, textAlign: TextAlign.center);
+      final label = Text(
+        b.label,
+        textAlign: TextAlign.center,
+        textDirection: b.textDirection,
+      );
       final icon = b.icon;
       if (icon == null) {
         if (filled) return FilledButton(onPressed: b.onPressed, child: label);
