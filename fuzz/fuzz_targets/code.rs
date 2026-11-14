@@ -11,7 +11,9 @@
 //! after the code is refused, and nothing longer than the limit is read.
 
 use libfuzzer_sys::fuzz_target;
-use totaldrop_proto::{MAX_LINK_BYTES, TransferCode, ascii_digits, strip_invisible_format};
+use totaldrop_proto::{
+    MAX_LINK_BYTES, ReceiveLink, TransferCode, ascii_digits, strip_invisible_format,
+};
 
 fuzz_target!(|data: &[u8]| {
     if let Ok(s) = std::str::from_utf8(data) {
@@ -24,13 +26,35 @@ fuzz_target!(|data: &[u8]| {
             TransferCode::parse(&ascii_digits(s))
         );
         let linked = TransferCode::from_link(s);
+        let classified = TransferCode::classify_link(s);
+        assert_eq!(
+            linked.as_ref(),
+            match &classified {
+                ReceiveLink::Code(code) => Some(code),
+                ReceiveLink::Empty | ReceiveLink::Invalid => None,
+            },
+            "{s:?}"
+        );
         if s.len() > MAX_LINK_BYTES {
             assert_eq!(linked, None);
+            assert_eq!(classified, ReceiveLink::Invalid);
         } else {
+            assert_eq!(
+                classified,
+                TransferCode::classify_link(&strip_invisible_format(s)),
+                "{s:?}"
+            );
             if let Ok(code) = TransferCode::parse(s) {
                 assert_eq!(linked.as_ref(), Some(&code));
             }
             assert_eq!(TransferCode::from_link(&format!("{s}?x")), None, "{s:?}");
+            if s.len().saturating_add(2) <= MAX_LINK_BYTES {
+                assert_eq!(
+                    TransferCode::classify_link(&format!("{s}?x")),
+                    ReceiveLink::Invalid,
+                    "{s:?}"
+                );
+            }
         }
         if let Ok(code) = TransferCode::parse(s) {
             let english = code.to_english();

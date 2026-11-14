@@ -619,13 +619,23 @@ pub fn normalize_code(input: String) -> Option<String> {
     totaldrop_proto::TransferCode::find(&input).map(|c| c.to_string())
 }
 
-/// The code in a TotalDrop link another app opened TotalDrop with
-/// (`totaldrop://r/…`, `https://totaldrop.app/r#…`), in its English form.
-/// Strict, as on Linux ([`totaldrop_proto::TransferCode::from_link`]):
-/// the whole rest of the link must be the code, or this is `None`.
+/// Classify a TotalDrop receive link another app opened TotalDrop with
+/// (`totaldrop://r/…`, `https://totaldrop.app/r#…`, `http://totaldrop.app/r#…`,
+/// `totaldrop:…`), delegating strictly to
+/// [`totaldrop_proto::TransferCode::classify_link`]:
+/// - `Some(code)` (non-empty) when the link holds a valid transfer code, in its
+///   English form;
+/// - `Some("")` when the input is empty or a receive link prefix with nothing
+///   where the code goes;
+/// - `None` when the link is invalid (including a query string, bad fragment,
+///   malformed code, or longer than [`totaldrop_proto::MAX_LINK_BYTES`]).
 #[frb(sync)]
 pub fn code_from_link(link: String) -> Option<String> {
-    totaldrop_proto::TransferCode::from_link(&link).map(|c| c.to_string())
+    match totaldrop_proto::TransferCode::classify_link(&link) {
+        totaldrop_proto::ReceiveLink::Code(code) => Some(code.to_string()),
+        totaldrop_proto::ReceiveLink::Empty => Some(String::new()),
+        totaldrop_proto::ReceiveLink::Invalid => None,
+    }
 }
 
 #[cfg(test)]
@@ -690,18 +700,48 @@ mod tests {
 
     #[test]
     fn codes_from_links() {
-        assert_eq!(
-            code_from_link("totaldrop://r/7-abandon-ability".into()),
-            Some("7-abandon-ability".into())
-        );
-        assert_eq!(
-            code_from_link("https://totaldrop.app/r#7%20abandon%20ability".into()),
-            Some("7-abandon-ability".into())
-        );
-        assert_eq!(
-            code_from_link("totaldrop://r/x?c=7-abandon-ability".into()),
-            None
-        );
+        for link in [
+            "totaldrop://r/7-abandon-ability",
+            "https://totaldrop.app/r#7%20abandon%20ability",
+            "http://totaldrop.app/r#7-abandon-ability",
+            "totaldrop:7-abandon-ability",
+        ] {
+            assert_eq!(
+                code_from_link(link.into()),
+                Some("7-abandon-ability".into()),
+                "{link:?}"
+            );
+        }
+        for empty in [
+            "https://totaldrop.app/r",
+            "https://totaldrop.app/r#",
+            "https://totaldrop.app/r?",
+            "https://totaldrop.app/r?#",
+            "http://totaldrop.app/r",
+            "totaldrop://r",
+            "totaldrop://r/",
+            "totaldrop:",
+            "",
+        ] {
+            assert_eq!(
+                code_from_link(empty.into()),
+                Some(String::new()),
+                "{empty:?}"
+            );
+        }
+        let too_long = "a".repeat(totaldrop_proto::MAX_LINK_BYTES.saturating_add(1));
+        for invalid in [
+            "totaldrop://r/x?c=7-abandon-ability",
+            "totaldrop://r?c=7-abandon-ability",
+            "https://totaldrop.app/r?x#7-abandon-ability",
+            "https://totaldrop.app/r?x=1",
+            "https://totaldrop.app/r#7-harbor",
+            "https://totaldrop.app/r#?",
+            "https://totaldrop.app/r#[bad]",
+            too_long.as_str(),
+        ] {
+            assert_eq!(code_from_link(invalid.into()), None, "{invalid:?}");
+        }
     }
 
     #[test]
