@@ -436,7 +436,7 @@ export function checkRepo(root) {
     const metainfo = join(root, "packaging", "linux", "app.totaldrop.TotalDrop.metainfo.xml");
     if (existsSync(metainfo)) {
       const xml = readFileSync(metainfo, "utf8");
-      const m = /<release\s+([^>]*?)\/?>/.exec(xml);
+      const m = /<release[\t\n\r ]([^>]*)>/.exec(xml);
       const attrs = m ? m[1] : "";
       const ver = /\bversion="([^"]*)"/.exec(attrs);
       const type = /\btype="([^"]*)"/.exec(attrs);
@@ -1154,14 +1154,22 @@ export function bumpComponent(
     const metainfo = join(root, "packaging", "linux", "app.totaldrop.TotalDrop.metainfo.xml");
     if (existsSync(metainfo)) {
       const xml = readStaged(metainfo);
-      if (!new RegExp(`<release\\s+[^>]*version="${proj.appstream.replace(/\./g, "\\.")}"`).test(xml)) {
+      let hasVersion = false;
+      for (const m of xml.matchAll(/<release[\t\n\r ]([^>]*)>/g)) {
+        const ver = /\bversion="([^"]*)"/.exec(m[1]);
+        if (ver && ver[1] === proj.appstream) {
+          hasVersion = true;
+          break;
+        }
+      }
+      if (!hasVersion) {
         const entryXml =
           `    <release version="${proj.appstream}" date="${date}" type="${proj.appstreamType}">\n` +
           "      <description>\n" +
           `        <p>TotalDrop ${targetVersion}.</p>\n` +
           "      </description>\n" +
           "    </release>\n";
-        staged.set(metainfo, xml.replace("<releases>\n", `<releases>\n${entryXml}`));
+        staged.set(metainfo, xml.replace("<releases>\n", () => `<releases>\n${entryXml}`));
       }
     }
 
