@@ -15,16 +15,21 @@ import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.net.wifi.WifiManager
 import android.os.PersistableBundle
+import android.os.PowerManager
+import android.util.Log
 
 /**
  * Keeps a send or a receive alive while TotalDrop is in the background
- * (#194). Android cuts the network of an app that is not visible, which
- * drops the code at the rendezvous server. A user-initiated data transfer
- * job (Android 14+) tells the system the person started this transfer: the
- * process keeps its network and shows an ongoing notification with a Stop
- * action. The transfer itself still runs in the Rust core; the job only
- * holds the process up until [end] is called.
+ * (#194, #340). Android cuts the network of an app that is not visible,
+ * which drops the code at the rendezvous server, and puts the Wi-Fi radio
+ * into power-save sleep seconds after the screen locks. A user-initiated
+ * data transfer job (Android 14+) tells the system the person started this
+ * transfer so the process keeps its network and shows an ongoing
+ * notification with a Stop action; alongside it, [Locks] holds a Wi-Fi
+ * high-performance lock and a bounded partial CPU wake lock until [end] or
+ * a terminal system stop. The transfer itself still runs in the Rust core.
  *
  * Everything here runs on the main thread.
  */
@@ -32,7 +37,18 @@ object TransferJob {
     private const val JOB_ID = 194
     private const val NOTIFICATION_ID = 194
     private const val CHANNEL_ID = "transfers"
+    private const val LOCK_TAG = "TotalDrop:transfer"
     const val ACTION_STOP = "app.totaldrop.totaldrop.STOP_TRANSFER"
+
+    /** Upper bound on the partial wake lock (6 hours, matching Android 15's
+     * daily background data-transfer window) so a wedged session never holds
+     * the CPU awake indefinitely (#340). */
+    internal const val MAX_LOCK_MS = 6L * 60 * 60 * 1000
+
+    internal interface Locks {
+        fun acquire()
+        fun release()
+    }
 
     /** What the notification says, in the person's language (from Dart). */
     data class Notice(
@@ -46,6 +62,7 @@ object TransferJob {
 
     private var notice: Notice? = null
     private var running: Pair<TransferJobService, JobParameters>? = null
+    internal var locks: Locks? = null
 
     /** Which transfer a job belongs to. The system hands each callback its
      * own JobParameters, so they cannot be compared by identity. */
@@ -56,8 +73,9 @@ object TransferJob {
 
     /** Start holding the process up. Must be called while the app is visible. */
     fun begin(context: Context, notice: Notice): Boolean {
-        val generation = prepare(notice)
         val app = context.applicationContext
+        if (locks == null) locks = AndroidLocks(app)
+        val generation = prepare(notice)
         val scheduler = app.getSystemService(JobScheduler::class.java) ?: return false
         val job = JobInfo.Builder(JOB_ID, ComponentName(app, TransferJobService::class.java))
             .setUserInitiated(true)
@@ -67,8 +85,8 @@ object TransferJob {
         return scheduler.schedule(job) == JobScheduler.RESULT_SUCCESS
     }
 
-    /** Make [notice]'s transfer the one under way, and return its
-     * generation. */
+    /** Make [notice]'s transfer the one under way, acquire its radio/CPU
+     * locks, and return its generation. */
     internal fun prepare(notice: Notice): Long {
         // A job still running from the transfer before ends quietly:
         // replacing it would stop it, and that reads as a stop of this one.
@@ -76,6 +94,7 @@ object TransferJob {
         running = null
         this.notice = notice
         generation += 1
+        locks?.acquire()
         return generation
     }
 
@@ -83,12 +102,20 @@ object TransferJob {
     internal fun accepts(generation: Long): Boolean =
         notice != null && generation == this.generation
 
-    /** The transfer ended: drop the job and its notification. */
-    fun end(context: Context) {
+    /** Clear the active transfer state and release radio/CPU locks, returning
+     * any running job so [end] can finish it. */
+    internal fun finishTransfer(): Pair<TransferJobService, JobParameters>? {
         notice = null
         generation += 1
         val r = running
         running = null
+        locks?.release()
+        return r
+    }
+
+    /** The transfer ended: drop the job, its locks, and its notification. */
+    fun end(context: Context) {
+        val r = finishTransfer()
         val app = context.applicationContext
         if (r != null) {
             r.first.jobFinished(r.second, false)
@@ -136,12 +163,14 @@ object TransferJob {
         if (stopReason == JobParameters.STOP_REASON_CONSTRAINT_CONNECTIVITY) {
             // The network went away (airplane mode, a tunnel, a Wi-Fi that
             // drops): the transfer goes on, and the core can ride out a gap
-            // shorter than QUIC's 30-second idle timeout (#185). The same
-            // job runs again once there is a network (#260).
+            // shorter than QUIC's 30-second idle timeout (#185). Keep the
+            // CPU wake lock held across the gap while the same job waits to
+            // run again once there is a network (#260, #340).
             return true
         }
         notice = null
         this.generation += 1
+        locks?.release()
         onStop?.invoke()
         return false
     }
@@ -154,6 +183,53 @@ object TransferJob {
             // No app left to stop the transfer: at least end the job, so
             // the notification does not stay behind.
             end(context)
+        }
+    }
+
+    private class AndroidLocks(app: Context) : Locks {
+        private val wakeLock: PowerManager.WakeLock? =
+            app.getSystemService(PowerManager::class.java)
+                ?.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, LOCK_TAG)
+                ?.apply { setReferenceCounted(false) }
+
+        // WIFI_MODE_FULL_LOW_LATENCY is deactivated by Android's
+        // WifiLockManager as soon as the screen turns off or the app leaves
+        // the foreground; WIFI_MODE_FULL_HIGH_PERF keeps Wi-Fi out of
+        // power-save sleep while the screen is locked (#340).
+        @Suppress("DEPRECATION")
+        private val wifiLock: WifiManager.WifiLock? =
+            app.getSystemService(WifiManager::class.java)
+                ?.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, LOCK_TAG)
+                ?.apply { setReferenceCounted(false) }
+
+        override fun acquire() {
+            tryLock("wake acquire") { wakeLock?.acquire(MAX_LOCK_MS) }
+            tryLock("wifi acquire") {
+                if (wifiLock?.isHeld == false) {
+                    wifiLock.acquire()
+                }
+            }
+        }
+
+        override fun release() {
+            tryLock("wifi release") {
+                if (wifiLock?.isHeld == true) {
+                    wifiLock.release()
+                }
+            }
+            tryLock("wake release") {
+                if (wakeLock?.isHeld == true) {
+                    wakeLock.release()
+                }
+            }
+        }
+
+        private inline fun tryLock(action: String, block: () -> Unit) {
+            try {
+                block()
+            } catch (e: Exception) {
+                Log.w("TotalDrop", "transfer lock $action failed: ${e.javaClass.simpleName}")
+            }
         }
     }
 
