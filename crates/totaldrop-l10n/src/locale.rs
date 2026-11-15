@@ -30,7 +30,7 @@ pub fn parse(tag: &str) -> Option<Locale> {
 }
 
 /// The fallback chain of a locale, most specific first, without `und`.
-fn chain(locale: &Locale) -> Vec<String> {
+pub(crate) fn chain(locale: &Locale) -> Vec<String> {
     let fallbacker = LocaleFallbacker::new().for_config(Default::default());
     let mut it = fallbacker.fallback_for(DataLocale::from(locale));
     let mut out = Vec::new();
@@ -83,7 +83,7 @@ pub fn is_rtl(locale: &Locale) -> bool {
 pub struct System {
     /// Languages for messages, most preferred first.
     pub messages: Vec<Locale>,
-    /// The locale for numbers (`LC_ALL` > `LC_NUMERIC` > `LANG`), if set.
+    /// Number locale (`LC_ALL` > `LC_NUMERIC` > `LANG`; `und` for `C`/unset).
     pub numeric: Option<Locale>,
 }
 
@@ -110,9 +110,14 @@ impl System {
             messages.extend(list.split(':').filter_map(posix));
         }
         messages.extend(messages_locale.as_deref().and_then(posix));
-        let numeric = first(&["LC_ALL", "LC_NUMERIC", "LANG"])
-            .as_deref()
-            .and_then(posix);
+        // C, POSIX or unset resolves to Locale::UNKNOWN (und), so LC_NUMERIC=C
+        // with a translated UI keeps C/ASCII numbers instead of the UI locale.
+        let numeric = Some(
+            first(&["LC_ALL", "LC_NUMERIC", "LANG"])
+                .as_deref()
+                .and_then(posix)
+                .unwrap_or(Locale::UNKNOWN),
+        );
         Self { messages, numeric }
     }
 }
@@ -254,5 +259,9 @@ mod tests {
         assert_eq!(s.numeric.map(|l| l.to_string()).as_deref(), Some("de-DE"));
         let s = env(&[("LC_ALL", "fr_FR"), ("LC_NUMERIC", "de_DE")]);
         assert_eq!(s.numeric.map(|l| l.to_string()).as_deref(), Some("fr-FR"));
+        let s = env(&[("LANG", "tr_TR.UTF-8"), ("LC_NUMERIC", "C.UTF-8")]);
+        assert_eq!(s.numeric.map(|l| l.to_string()).as_deref(), Some("und"));
+        let s = env(&[("LC_MESSAGES", "tr_TR.UTF-8")]);
+        assert_eq!(s.numeric.map(|l| l.to_string()).as_deref(), Some("und"));
     }
 }
