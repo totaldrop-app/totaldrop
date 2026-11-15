@@ -3,6 +3,7 @@
 
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../core/adaptive.dart';
@@ -12,10 +13,17 @@ import '../core/mark.dart';
 import '../core/theme.dart';
 import 'receive_view_model.dart';
 
+const _openUrlChannel = MethodChannel('app.totaldrop/open_url');
+
+/// Maximum UTF-16 code units offered to Android's system share sheet via
+/// EXTRA_TEXT so Binder parcels stay well below the 1 MiB transaction limit.
+const maxSharedTextChars = 128 * 1024;
+
 class ReceiveView extends StatefulWidget {
-  const ReceiveView({super.key, required this.viewModel});
+  const ReceiveView({super.key, required this.viewModel, this.onShareText});
 
   final ReceiveViewModel viewModel;
+  final Future<void> Function(String text)? onShareText;
 
   @override
   State<ReceiveView> createState() => _ReceiveViewState();
@@ -136,7 +144,10 @@ class _ReceiveViewState extends State<ReceiveView> {
                     ),
                     ReceiveStage.offered => _Offered(vm: vm),
                     ReceiveStage.transferring => _Transferring(vm: vm),
-                    ReceiveStage.done => _Done(vm: vm),
+                    ReceiveStage.done => _Done(
+                      vm: vm,
+                      onShareText: widget.onShareText,
+                    ),
                     ReceiveStage.declined => _Message(
                       icon: Icons.block,
                       text: l.receiveDeclined,
@@ -504,15 +515,18 @@ class _Transferring extends StatelessWidget {
 }
 
 class _Done extends StatelessWidget {
-  const _Done({required this.vm});
+  const _Done({required this.vm, this.onShareText});
   final ReceiveViewModel vm;
+  final Future<void> Function(String text)? onShareText;
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final s = vm.summary;
-    if (vm.receivedText case final text?) return _TextDone(vm: vm, text: text);
+    if (vm.receivedText case final text?) {
+      return _TextDone(vm: vm, text: text, onShareText: onShareText);
+    }
 
     final header = <Widget>[
       const Center(child: DoneBadge()),
@@ -607,18 +621,71 @@ class _Done extends StatelessWidget {
   }
 }
 
-/// A text received (#326): shown as plain text with hidden characters
-/// named, never saved. Copy text copies it exactly as it came.
+/// A text received (#326, #53): shown as plain text with hidden characters
+/// named, never saved. Copy and Share pass it on as it came; a single web
+/// link can be opened after showing its full normalized address.
 class _TextDone extends StatelessWidget {
-  const _TextDone({required this.vm, required this.text});
+  const _TextDone({required this.vm, required this.text, this.onShareText});
   final ReceiveViewModel vm;
   final String text;
+  final Future<void> Function(String text)? onShareText;
+
+  Future<void> _confirmAndOpenLink(BuildContext context, String url) async {
+    final l = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        scrollable: true,
+        title: Text(l.openLinkTitle),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(l.openLinkBody),
+            Gap.m,
+            DecoratedBox(
+              decoration: BoxDecoration(
+                border: Border.all(color: theme.colorScheme.outlineVariant),
+                borderRadius: const BorderRadius.all(Radius.circular(12)),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: SelectableText(
+                  url,
+                  style: theme.textTheme.bodyMedium,
+                  textDirection: TextDirection.ltr,
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(l.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(l.openLinkConfirm),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    final opened = await _openUrlChannel.invokeMethod<bool>('open', url);
+    if (!(opened ?? false) && context.mounted) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l.openLinkFailed)));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final shown = shownText(text);
+    final url = singleWebUrl(text);
     final note = theme.textTheme.bodyMedium?.copyWith(
       color: theme.colorScheme.onSurfaceVariant,
     );
@@ -659,6 +726,14 @@ class _TextDone extends StatelessWidget {
     ];
 
     final actions = <Widget>[
+      if (url != null) ...[
+        OutlinedButton.icon(
+          onPressed: () => _confirmAndOpenLink(context, url),
+          icon: const Icon(Icons.open_in_new),
+          label: Text(l.openLink),
+        ),
+        Gap.s,
+      ],
       OutlinedButton.icon(
         onPressed: () async {
           await Clipboard.setData(ClipboardData(text: text));
@@ -671,6 +746,25 @@ class _TextDone extends StatelessWidget {
         label: Text(l.copyText),
       ),
       Gap.s,
+      if (text.length <= maxSharedTextChars) ...[
+        OutlinedButton.icon(
+          onPressed: () async {
+            try {
+              final share = onShareText;
+              if (share != null) {
+                await share(text);
+              } else {
+                await SharePlus.instance.share(ShareParams(text: text));
+              }
+            } on PlatformException {
+              // Keep UI responsive if the system share sheet fails.
+            }
+          },
+          icon: const Icon(Icons.share_outlined),
+          label: Text(l.shareText),
+        ),
+        Gap.s,
+      ],
       FilledButton(
         onPressed: () {
           vm.reset();

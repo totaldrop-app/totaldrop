@@ -56,6 +56,18 @@ rust.ShownText shownText(String text) {
 
 (String, rust.ShownText)? _lastShown;
 
+/// Normalized ASCII `http://` or `https://` URL when [text] is a single safe
+/// web link (#53), or `null` otherwise.
+String? singleWebUrl(String text) {
+  final last = _lastWebUrl;
+  if (last != null && identical(last.$1, text)) return last.$2;
+  final url = rust.singleWebUrl(text: text);
+  _lastWebUrl = (text, url);
+  return url;
+}
+
+(String, String?)? _lastWebUrl;
+
 /// The locale for numbers: the device's region (its first locale, so a
 /// device set to en-DE writes "1,5 MB"), or the app language when intl
 /// does not know the device's locale.

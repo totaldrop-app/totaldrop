@@ -682,4 +682,22 @@ class AppLocalizationsUr extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'بیٹری کی ترتیبات';
+
+  @override
+  String get shareText => 'متن شیئر کریں';
+
+  @override
+  String get openLink => 'لنک کھولیں';
+
+  @override
+  String get openLinkTitle => 'یہ لنک کھولیں؟';
+
+  @override
+  String get openLinkBody => 'نیچے دیا گیا پتہ آپ کے براؤزر میں کھلے گا۔';
+
+  @override
+  String get openLinkConfirm => 'کھولیں';
+
+  @override
+  String get openLinkFailed => 'اس آلے پر کوئی ایپ لنک نہیں کھول سکی۔';
 }

@@ -3025,6 +3025,7 @@ dependencies = [
  "ciborium",
  "getrandom 0.4.3",
  "unicode-normalization",
+ "url",
 ]
 
 [[package]]

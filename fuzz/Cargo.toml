@@ -54,3 +54,10 @@ path = "fuzz_targets/portmap.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "web_url"
+path = "fuzz_targets/web_url.rs"
+test = false
+doc = false
+bench = false

@@ -694,4 +694,23 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'Setările bateriei';
+
+  @override
+  String get shareText => 'Partajează textul';
+
+  @override
+  String get openLink => 'Deschide linkul';
+
+  @override
+  String get openLinkTitle => 'Deschideți acest link?';
+
+  @override
+  String get openLinkBody => 'Adresa de mai jos se va deschide în browser.';
+
+  @override
+  String get openLinkConfirm => 'Deschide';
+
+  @override
+  String get openLinkFailed =>
+      'Nicio aplicație de pe acest dispozitiv nu a putut deschide linkul.';
 }

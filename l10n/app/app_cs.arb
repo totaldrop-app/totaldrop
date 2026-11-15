@@ -184,5 +184,11 @@
   "setupBackgroundAutostart": "Otevřít Automatické spuštění",
   "setupBackgroundSkip": "Teď ne",
   "settingsBackground": "Přenosy na pozadí",
-  "settingsBackgroundOpen": "Nastavení baterie"
+  "settingsBackgroundOpen": "Nastavení baterie",
+  "shareText": "Sdílet text",
+  "openLink": "Otevřít odkaz",
+  "openLinkTitle": "Otevřít tento odkaz?",
+  "openLinkBody": "Adresa níže se otevře v prohlížeči.",
+  "openLinkConfirm": "Otevřít",
+  "openLinkFailed": "Žádná aplikace v tomto zařízení nedokázala odkaz otevřít."
 }

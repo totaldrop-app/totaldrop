@@ -48,6 +48,10 @@ class _Rust implements RustLibApi {
       ShownText(text: text, short: false, hidden: text.contains('\u202E'));
 
   @override
+  String? crateApiL10NSingleWebUrl({required String text}) =>
+      text.startsWith('https://') ? text : null;
+
+  @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 

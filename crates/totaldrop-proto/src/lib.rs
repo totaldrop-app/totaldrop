@@ -218,6 +218,9 @@ pub fn strip_invisible_format(text: &str) -> String {
         .collect()
 }
 
+pub mod web_url;
+pub use web_url::{MAX_WEB_URL_BYTES, single_web_url};
+
 /// `text` with Arabic-Indic (U+0660 to U+0669) and Extended Arabic-Indic
 /// (U+06F0 to U+06F9) digits replaced by ASCII digits. Arabic, Persian and
 /// Urdu keyboards type these for the number keys. Only these two ranges:

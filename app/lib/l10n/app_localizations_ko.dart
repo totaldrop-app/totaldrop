@@ -639,4 +639,22 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => '배터리 설정';
+
+  @override
+  String get shareText => '텍스트 공유';
+
+  @override
+  String get openLink => '링크 열기';
+
+  @override
+  String get openLinkTitle => '이 링크를 여시겠습니까?';
+
+  @override
+  String get openLinkBody => '아래 주소가 브라우저에서 열립니다.';
+
+  @override
+  String get openLinkConfirm => '열기';
+
+  @override
+  String get openLinkFailed => '이 기기에서 링크를 열 수 있는 앱이 없습니다.';
 }

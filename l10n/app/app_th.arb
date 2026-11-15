@@ -184,5 +184,11 @@
   "setupBackgroundAutostart": "เปิดการเริ่มอัตโนมัติ",
   "setupBackgroundSkip": "ไว้ทีหลัง",
   "settingsBackground": "การโอนในเบื้องหลัง",
-  "settingsBackgroundOpen": "การตั้งค่าแบตเตอรี่"
+  "settingsBackgroundOpen": "การตั้งค่าแบตเตอรี่",
+  "shareText": "แชร์ข้อความ",
+  "openLink": "เปิดลิงก์",
+  "openLinkTitle": "เปิดลิงก์นี้หรือไม่",
+  "openLinkBody": "ที่อยู่ด้านล่างจะเปิดในเบราว์เซอร์ของคุณ",
+  "openLinkConfirm": "เปิด",
+  "openLinkFailed": "ไม่มีแอปใดในอุปกรณ์นี้ที่เปิดลิงก์ได้"
 }

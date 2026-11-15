@@ -692,4 +692,23 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'Nastavení baterie';
+
+  @override
+  String get shareText => 'Sdílet text';
+
+  @override
+  String get openLink => 'Otevřít odkaz';
+
+  @override
+  String get openLinkTitle => 'Otevřít tento odkaz?';
+
+  @override
+  String get openLinkBody => 'Adresa níže se otevře v prohlížeči.';
+
+  @override
+  String get openLinkConfirm => 'Otevřít';
+
+  @override
+  String get openLinkFailed =>
+      'Žádná aplikace v tomto zařízení nedokázala odkaz otevřít.';
 }
