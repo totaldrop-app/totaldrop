@@ -3,13 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>TotalDrop: send files directly, encrypted end to end</title>
-  <meta name="description" content="TotalDrop is a free, open-source app that sends files directly from one device to another, encrypted end to end. No account, no email, no phone number.">
-  <meta name="theme-color" content="#F4F2FB" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#140E33" media="(prefers-color-scheme: dark)">
+  <title>TotalDrop: send files and text directly, encrypted end to end</title>
+  <meta name="description" content="TotalDrop is a free, open-source app that sends files, folders and text directly from one device to another, encrypted end to end. No account, no email, no phone number.">
+  <meta name="theme-color" content="#F7F7F5" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0F1116" media="(prefers-color-scheme: dark)">
   <link rel="canonical" href="https://totaldrop.app/">
-  <meta property="og:title" content="TotalDrop">
-  <meta property="og:description" content="Send files directly from your device to theirs. Free, open source, end-to-end encrypted.">
+  <meta property="og:title" content="TotalDrop: send files and text directly, encrypted end to end">
+  <meta property="og:description" content="TotalDrop is a free, open-source app that sends files, folders and text directly from one device to another, encrypted end to end. No account, no email, no phone number.">
   <meta property="og:url" content="https://totaldrop.app/">
   <meta property="og:type" content="website">
   <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
@@ -17,7 +17,7 @@
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="alternate" type="application/atom+xml" title="TotalDrop releases" href="https://github.com/totaldrop-app/totaldrop/releases.atom">
   <link rel="preload" href="/fonts/bricolage-grotesque-latin-800-normal.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="/styles.css?v=019f3c6e87">
+  <link rel="stylesheet" href="/styles.css?v=fb5276a1fb">
 </head>
 <body>
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -28,6 +28,7 @@
       <span>TotalDrop</span>
     </a>
     <nav class="top-nav" aria-label="Main" data-i18n-label="nav.label">
+      <a href="#apps" data-i18n="nav.apps">Apps</a>
       <a href="#why" data-i18n="nav.why">Why TotalDrop</a>
       <a href="#how" data-i18n="nav.how">How it works</a>
       <a href="#security" data-i18n="nav.security">Security</a>
@@ -40,12 +41,17 @@
     <section class="hero" aria-labelledby="hero-title">
       <div class="hero-copy">
         <p class="eyebrow" data-i18n="hero.eyebrow">Free · Open source · Beta</p>
-        <h1 id="hero-title" data-i18n="hero.title">Send a file straight to another device.</h1>
-        <p class="lede" data-i18n="hero.lede">TotalDrop moves files directly from your device to theirs, encrypted end to end. You share a short code; nobody in between can read what you send. No account, no email, no phone number.</p>
+        <h1 id="hero-title" data-i18n="hero.title">Send files and text straight to another device.</h1>
+        <p class="lede" data-i18n="hero.lede">TotalDrop moves files, whole folders and clipboard text directly from your device to theirs, encrypted end to end with post-quantum keys. Share a short code; nobody in between can read what you send. No account, no email, no phone number.</p>
         <div class="actions">
           <a class="btn btn-primary" href="https://download.totaldrop.app/" data-i18n="hero.cta">Download the beta</a>
           <a class="btn btn-quiet" href="https://github.com/totaldrop-app/totaldrop" data-i18n="hero.source">Read the code</a>
         </div>
+        <ul class="hero-highlights">
+          <li data-i18n="hero.h1">Android, Linux and CLI today</li>
+          <li data-i18n="hero.h2">Post-quantum ML-KEM-768</li>
+          <li data-i18n="hero.h3">35 languages, zero trackers</li>
+        </ul>
       </div>
 
       <figure class="hero-figure" aria-labelledby="hero-caption">
@@ -57,13 +63,70 @@
           <g class="dv dv-nw" transform="translate(-32 -30)"><rect x="3.5" y="2" width="17" height="20" rx="2.5"/><path d="M11 18h2"/></g>
         </svg>
         <div class="code-card">
-          <p class="code-label" data-i18n="code.label">Transfer code</p>
-          <p class="code" lang="en">7-harbor-rocket</p>
+          <div class="code-row">
+            <p class="code-label" data-i18n="code.label">Transfer code</p>
+            <button class="code-cycle" id="code-cycle" type="button" aria-controls="hero-specimen" hidden data-i18n="code.try">Another example</button>
+          </div>
+          <div class="specimen-live" id="hero-specimen" aria-live="polite" aria-atomic="true">
+            <p class="code" id="hero-code" lang="en">7-harbor-rocket</p>
+            <div class="verify-block">
+              <p class="code-label" data-i18n="code.verify">Four verification words</p>
+              <ul class="verify-words" id="hero-words" lang="en">
+                <li>north</li>
+                <li>valley</li>
+                <li>river</li>
+                <li>forest</li>
+              </ul>
+            </div>
+          </div>
         </div>
         <figcaption id="hero-caption" data-i18n="code.caption">Say the code out loud or paste it in a message. Whoever types it in gets the files.</figcaption>
       </figure>
     </section>
 
+    <section class="block" id="apps" aria-labelledby="apps-title">
+      <div class="block-head">
+        <p class="eyebrow" data-i18n="apps.eyebrow">Native on every desktop and phone</p>
+        <h2 id="apps-title" data-i18n="apps.title">Built to belong to your system</h2>
+        <p data-i18n="apps.lede">TotalDrop takes its colours, typography, dark mode and share menus from the operating system you run. Send from your gallery, selected text, clipboard or file manager without opening a browser tab first.</p>
+      </div>
+      <ul class="showcase-grid">
+        <li class="app-card">
+          <div class="app-shot">
+            <img src="/assets/android.png" alt="TotalDrop on Android in light and dark Material You themes" data-i18n-label="apps.android.alt" aria-label="TotalDrop on Android in light and dark Material You themes" width="1600" height="849" loading="lazy" decoding="async">
+          </div>
+          <div class="app-body">
+            <header>
+              <h3 data-i18n="dl.android">Android</h3>
+              <span class="pill is-beta">0.3.0-beta.7</span>
+            </header>
+            <p data-i18n="apps.android.d">Material You dynamic colours and Material 3 Expressive controls. Share files or selected text straight from any app, or hold the launcher icon to send your clipboard.</p>
+            <ul class="app-tags">
+              <li data-i18n="apps.tag.share">System share sheet</li>
+              <li data-i18n="apps.tag.text">Text and clipboard</li>
+              <li data-i18n="apps.tag.m3">Material You</li>
+            </ul>
+          </div>
+        </li>
+        <li class="app-card">
+          <div class="app-shot">
+            <img src="/assets/linux.png" alt="TotalDrop native Qt 6 Wayland app on Linux" data-i18n-label="apps.linux.alt" aria-label="TotalDrop native Qt 6 Wayland app on Linux" width="1228" height="824" loading="lazy" decoding="async">
+          </div>
+          <div class="app-body">
+            <header>
+              <h3 data-i18n="dl.linux">Linux app</h3>
+              <span class="pill is-beta">0.3.0-beta.6</span>
+            </header>
+            <p data-i18n="apps.linux.d">Native Qt 6 and QML for Wayland, following KDE Plasma, Hyprland, Omarchy and GNOME live. Right-click any file or folder in Dolphin, Files or Nemo to send at once.</p>
+            <ul class="app-tags">
+              <li data-i18n="apps.tag.fm">Dolphin, Files, Nemo</li>
+              <li data-i18n="apps.tag.arch">x86-64 and ARM64</li>
+              <li data-i18n="apps.tag.pkg">Native and Flatpak</li>
+            </ul>
+          </div>
+        </li>
+      </ul>
+    </section>
 
     <section class="block" id="why" aria-labelledby="why-title">
       <h2 id="why-title" data-i18n="why.title">Why TotalDrop</h2>
@@ -81,8 +144,8 @@
           <p data-i18n="why.r3.d">Android, Linux and the command line today; Windows, macOS and iOS on the way. Phone to laptop, any brand to any brand.</p>
         </li>
         <li>
-          <h3 data-i18n="why.r4.t">No size limit from us</h3>
-          <p data-i18n="why.r4.d">Whole folders, long videos, original-quality photos. Only your disk and your connection set the limit.</p>
+          <h3 data-i18n="why.r4.t">Files, folders and clipboard text</h3>
+          <p data-i18n="why.r4.d">Send original-quality photos, huge folders or a copied note. Text arrives ready to copy with hidden characters named, never written to disk.</p>
         </li>
         <li>
           <h3 data-i18n="why.r5.t">Verified, not trusted</h3>
@@ -114,8 +177,8 @@
       <h2 id="how-title" data-i18n="how.title">Three steps</h2>
       <ol class="steps">
         <li>
-          <h3 data-i18n="how.s1.t">Choose files</h3>
-          <p data-i18n="how.s1.d">Any type, as many as you like. The receiver gets only what you chose.</p>
+          <h3 data-i18n="how.s1.t">Choose files or text</h3>
+          <p data-i18n="how.s1.d">Pick files, whole folders or clipboard text—or send straight from your system share menu or file manager.</p>
         </li>
         <li>
           <h3 data-i18n="how.s2.t">Share the code</h3>
@@ -130,23 +193,26 @@
     </section>
 
     <section class="block" id="security" aria-labelledby="sec-title">
-      <h2 id="sec-title" data-i18n="sec.title">Only you and the receiver can open it</h2>
+      <div class="block-head">
+        <p class="eyebrow" data-i18n="sec.eyebrow">Cryptography and formal verification</p>
+        <h2 id="sec-title" data-i18n="sec.title">Only you and the receiver can open it</h2>
+      </div>
       <dl class="facts">
         <div>
           <dt data-i18n="sec.f1.t">Encrypted before it leaves</dt>
           <dd data-i18n="sec.f1.d">Files are encrypted on your device and decrypted only on the receiver's. The keys never exist anywhere else.</dd>
         </div>
         <div>
-          <dt data-i18n="sec.f2.t">The code cannot be guessed offline</dt>
-          <dd data-i18n="sec.f2.d">The code turns into a key through a PAKE handshake, so a wrong guess fails at once and the attempt is burned. Key exchange includes post-quantum ML-KEM.</dd>
+          <dt data-i18n="sec.f2.t">Post-quantum PAKE handshake</dt>
+          <dd data-i18n="sec.f2.d">The code drives a CPace handshake that seeds Noise XXpsk3 with hybrid X25519 and ML-KEM-768 keys. A wrong guess fails at once and burns the attempt.</dd>
         </div>
         <div>
           <dt data-i18n="sec.f3.t">Our server only introduces</dt>
-          <dd data-i18n="sec.f3.d">It sees your IP address and the code's number, never the words, the file names or the files. It keeps no logs.</dd>
+          <dd data-i18n="sec.f3.d">It sees your IP address and the code's number, never the words, the file names or the files. With Privacy Mode on, even the other device never learns your IP address.</dd>
         </div>
         <div>
-          <dt data-i18n="sec.f4.t">Code anyone can check</dt>
-          <dd data-i18n="sec.f4.d">Every line is public. Version 1.0 ships only after an independent security audit.</dd>
+          <dt data-i18n="sec.f4.t">Proved with Tamarin, audited before 1.0</dt>
+          <dd data-i18n="sec.f4.d">Six symbolic models, 61 machine-checked lemmas and 27 regression mutants verify the upcoming server-blind Ghost Ring account in the Tamarin prover. Version 1.0 waits for an independent audit.</dd>
         </div>
       </dl>
       <p class="note"><a href="/privacy" data-i18n="sec.privacy">Read the privacy policy</a></p>
@@ -217,6 +283,6 @@
   </footer>
 
   <script src="/lang.js?v=107288c166" defer></script>
-  <script src="/app.js?v=d6d7a2f5cf" defer></script>
+  <script src="/app.js?v=06d492cb93" defer></script>
 </body>
 </html>
