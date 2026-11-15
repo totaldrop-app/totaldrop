@@ -40,6 +40,12 @@ jobs:
       - run: npm run --if-present test
       # The deploy health probe (deploy.yml) at least parses.
       - run: node --check ../tools/probe.mjs
+      # The documented relay edge rate-limit rule (#526) parses and its drift
+      # check passes its unit tests.
+      - if: matrix.worker == 'relay-worker'
+        run: |
+          node --test ../tools/test-relay-ratelimit.mjs
+          node ../tools/check-relay-ratelimit.mjs
 
   end-to-end:
     name: End to end against both Workers

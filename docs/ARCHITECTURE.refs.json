@@ -22,7 +22,7 @@
     "- run: cargo fmt -p totaldrop-linux -- --check",
     "run: linux/tests/qml/run.sh"
   ],
-  ".github/workflows/server.yml:103-105": [
+  ".github/workflows/server.yml:109-111": [
     "TOTALDROP_TEST_SERVER: ws://127.0.0.1:8787",
     "TOTALDROP_TEST_RELAY: ws://127.0.0.1:8788/v0/relay"
   ],
@@ -33,14 +33,14 @@
   ".github/workflows/server.yml:40": [
     "- run: npm run --if-present test"
   ],
-  ".github/workflows/server.yml:44-106": [
+  ".github/workflows/server.yml:50-112": [
     "end-to-end:",
     "run: cargo test -p totaldrop-cli --test end_to_end --locked"
   ],
-  ".github/workflows/server.yml:82": [
+  ".github/workflows/server.yml:88": [
     "--var RATE_BURST:1000 >\"$RUNNER_TEMP/rendezvous.log\" 2>&1 &"
   ],
-  ".github/workflows/server.yml:86": [
+  ".github/workflows/server.yml:92": [
     "--var RATE_BURST:4 --var RATE_INTERVAL_MS:5000 >\"$RUNNER_TEMP/rendezvous-limited.log\" 2>&1 &"
   ],
   ".github/workflows/site.yml:27-47": [
