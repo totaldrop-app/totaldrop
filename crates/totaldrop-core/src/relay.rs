@@ -70,13 +70,17 @@ struct Limits {
     time: Duration,
     /// Bytes sent.
     bytes: u64,
-    /// Tries in a row that did not get signed in.
+    /// Tries in a row that carried nothing from the other device.
     refused: u32,
     /// How long datagrams may go out with nothing at all coming back
     /// before the connection counts as dead.
     silence: Duration,
     /// How often an idle connection is pinged.
     keepalive: Duration,
+    /// First wait before trying again.
+    retry_first: Duration,
+    /// Longest wait between two tries.
+    retry_max: Duration,
 }
 
 /// The relays' limits for one connection (protocol notes, item 23): the
@@ -88,6 +92,8 @@ const LIMITS: Limits = Limits {
     refused: 10,
     silence: SILENCE,
     keepalive: KEEPALIVE,
+    retry_first: RETRY_FIRST,
+    retry_max: RETRY_MAX,
 };
 
 /// Check a relay URL the same way as a rendezvous server address:
@@ -377,8 +383,8 @@ impl Drop for Link {
 /// pause (#185): both relays end the other side's connection when one
 /// side's closes, and QUIC rides out a short gap. The relay lets a new
 /// sign-in with the same key replace a socket that died unnoticed (#190).
-/// After [`Limits::refused`] tries in a row that never signed
-/// in, the link gives up. Failures are otherwise silent: the relay is only
+/// After [`Limits::refused`] tries in a row that carried nothing from the
+/// peer, the link gives up. Failures are otherwise silent: the relay is only
 /// one of the paths. A connection that dies without either end noticing
 /// is given up once datagrams go out and nothing comes back for 10 seconds
 /// ([`SILENCE`]).
@@ -422,7 +428,7 @@ fn spawn_with(
         };
         let mut sent = 0u64;
         let mut refused = 0u32;
-        let mut pause = RETRY_FIRST;
+        let mut pause = limits.retry_first;
         loop {
             let started = tokio::time::Instant::now();
             if started >= end || sent >= limits.bytes || refused >= limits.refused {
@@ -447,7 +453,7 @@ fn spawn_with(
             } else {
                 None
             };
-            let mut signed_in = false;
+            let mut carried = false;
             let ended = tokio::time::timeout_at(
                 end,
                 run(
@@ -457,7 +463,7 @@ fn spawn_with(
                     Conn {
                         pipes: &mut pipes,
                         sent: &mut sent,
-                        signed_in: &mut signed_in,
+                        carried: &mut carried,
                         silence: limits.silence,
                         keepalive: limits.keepalive,
                         first,
@@ -466,21 +472,24 @@ fn spawn_with(
                 ),
             )
             .await;
-            match ended {
+            let parked = match ended {
                 // The endpoint is gone, or the time is up.
                 Ok(Ok(Ended::Outgoing)) | Err(_) => return,
-                Ok(Ok(Ended::Relay) | Err(_)) => {}
-            }
-            refused = if signed_in {
-                0
-            } else {
-                refused.saturating_add(1)
+                Ok(Ok(Ended::Parked)) => true,
+                Ok(Ok(Ended::Relay) | Err(_)) => false,
             };
-            if started.elapsed() >= RETRY_RESET {
-                pause = RETRY_FIRST;
+            if carried {
+                refused = 0;
+                if started.elapsed() >= RETRY_RESET {
+                    pause = limits.retry_first;
+                }
+            } else if !parked {
+                refused = refused.saturating_add(1);
             }
-            tokio::time::sleep(pause).await;
-            pause = pause.saturating_mul(2).min(RETRY_MAX);
+            if !parked {
+                tokio::time::sleep(pause).await;
+                pause = pause.saturating_mul(2).min(limits.retry_max);
+            }
         }
     });
     Link { task, park }
@@ -490,7 +499,10 @@ fn spawn_with(
 enum Ended {
     /// This side has nothing more to send: the endpoint was dropped.
     Outgoing,
-    /// The relay closed the connection.
+    /// This side closed the connection because the link is parked on the
+    /// direct path.
+    Parked,
+    /// The relay closed the connection, or stopped answering.
     Relay,
 }
 
@@ -499,8 +511,8 @@ struct Conn<'a> {
     pipes: &'a mut RelayPipes,
     /// Bytes sent over all connections.
     sent: &'a mut u64,
-    /// Set once the relay accepted the endpoint key.
-    signed_in: &'a mut bool,
+    /// Set once a datagram from the other device came through.
+    carried: &'a mut bool,
     silence: Duration,
     keepalive: Duration,
     /// A datagram to send as soon as the connection is up.
@@ -535,7 +547,7 @@ async fn run(url: &str, own: &EndpointKey, peer: [u8; 32], c: Conn<'_>) -> Resul
     let Conn {
         pipes,
         sent,
-        signed_in,
+        carried,
         silence,
         keepalive,
         first,
@@ -567,10 +579,13 @@ async fn run(url: &str, own: &EndpointKey, peer: [u8; 32], c: Conn<'_>) -> Resul
     })
     .await
     .map_err(|_| Error::Connect("relay: timed out".into()))??;
-    *signed_in = true;
+    // Since when datagrams went out with nothing coming back. A dead TCP
+    // connection is not reported for minutes; this notices it in time.
+    let mut unanswered: Option<tokio::time::Instant> = None;
     if let Some(d) = first {
         let message = wire::frame(&peer, &d);
         *sent = sent.saturating_add(u64::try_from(message.len()).unwrap_or(u64::MAX));
+        unanswered = Some(tokio::time::Instant::now());
         match tokio::time::timeout(silence, ws.send(Message::Binary(message.into()))).await {
             Ok(written) => written.map_err(|e| Error::Connect(format!("relay: {e}")))?,
             Err(_) => return Ok(Ended::Relay),
@@ -586,9 +601,6 @@ async fn run(url: &str, own: &EndpointKey, peer: [u8; 32], c: Conn<'_>) -> Resul
     let mut liveness = tokio::time::interval(LIVENESS);
     liveness.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);
     liveness.tick().await;
-    // Since when datagrams went out with nothing coming back. A dead TCP
-    // connection is not reported for minutes; this notices it in time.
-    let mut unanswered: Option<tokio::time::Instant> = None;
     let far = tokio::time::Instant::now()
         .checked_add(LIMITS.time)
         .ok_or(Error::Connect("relay: time".into()))?;
@@ -652,6 +664,7 @@ async fn run(url: &str, own: &EndpointKey, peer: [u8; 32], c: Conn<'_>) -> Resul
                     if let Some((from, datagrams)) = wire::parse_frame(&b)
                         && from == peer
                     {
+                        *carried = true;
                         for d in datagrams {
                             let _ = pipes.incoming.try_send(d.to_vec());
                         }
@@ -668,13 +681,13 @@ async fn run(url: &str, own: &EndpointKey, peer: [u8; 32], c: Conn<'_>) -> Resul
             () = park.notify.notified() => {
                 if !park.carries() {
                     close(&mut ws, silence).await;
-                    return Ok(Ended::Relay);
+                    return Ok(Ended::Parked);
                 }
             }
             _ = idle.tick(), if park.fallback.get().is_some() => {
                 if !park.carries() && last_out.elapsed() >= PARKED_IDLE {
                     close(&mut ws, silence).await;
-                    return Ok(Ended::Relay);
+                    return Ok(Ended::Parked);
                 }
             }
             _ = ping.tick() => {
@@ -1069,8 +1082,7 @@ mod tests {
             time: Duration::from_millis(1200),
             bytes: u64::MAX,
             refused: u32::MAX,
-            silence: SILENCE,
-            keepalive: KEEPALIVE,
+            ..LIMITS
         };
         let _link = spawn_with(url, own, peer.public(), pipes, gate, limits);
         // Tries at 0 and 0.5 seconds; the next would be at 1.5.
@@ -1101,8 +1113,7 @@ mod tests {
             time: Duration::from_secs(3600),
             bytes: 1000,
             refused: u32::MAX,
-            silence: SILENCE,
-            keepalive: KEEPALIVE,
+            ..LIMITS
         };
         let _link = spawn_with(url, own, peer.public(), pipes, gate, limits);
         let mut ws = sign_in(&relay).await;
@@ -1443,7 +1454,7 @@ mod tests {
     }
 
     /// A relay that keeps refusing the link is not tried for ever: after
-    /// `refused` tries in a row that never signed in, the link gives up.
+    /// `refused` tries in a row without peer data, the link gives up.
     #[tokio::test]
     async fn link_gives_up_on_a_relay_that_keeps_refusing() {
         let relay = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
@@ -1459,8 +1470,7 @@ mod tests {
             time: Duration::from_secs(3600),
             bytes: u64::MAX,
             refused: 3,
-            silence: SILENCE,
-            keepalive: KEEPALIVE,
+            ..LIMITS
         };
         let _link = spawn_with(url, own, peer.public(), pipes, gate, limits);
         // Tries at 0, 0.5 and 1.5 seconds; the next would be at 3.5.
@@ -1473,5 +1483,160 @@ mod tests {
         }
         let after = tokio::time::timeout(Duration::from_secs(4), relay.accept()).await;
         assert!(after.is_err(), "the link kept trying a relay that refuses");
+    }
+
+    /// #460: a relay that accepts sign-in and then stops reading without
+    /// carrying data is counted against `refused` too, while a session that
+    /// carried a peer datagram resets the counter.
+    #[tokio::test]
+    async fn link_gives_up_on_a_relay_that_stalls_after_signing_in() {
+        let relay = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let url = format!("ws://{}/v0/relay", relay.local_addr().unwrap());
+        let (own, peer) = (
+            Arc::new(EndpointKey::generate().unwrap()),
+            EndpointKey::generate().unwrap(),
+        );
+        let (out_tx, outgoing) = tokio::sync::mpsc::channel(16);
+        let (incoming, mut in_rx) = tokio::sync::mpsc::channel(16);
+        let gate = Gate::default();
+        gate.open();
+        let limits = Limits {
+            time: Duration::from_secs(3600),
+            bytes: u64::MAX,
+            refused: 3,
+            silence: Duration::from_millis(300),
+            keepalive: Duration::from_millis(80),
+            retry_first: Duration::from_millis(50),
+            retry_max: Duration::from_millis(200),
+        };
+        let _link = spawn_with(
+            url,
+            own,
+            peer.public(),
+            RelayPipes { outgoing, incoming },
+            gate,
+            limits,
+        );
+
+        // Two failed tries, then a session that carries a peer datagram:
+        // `refused` resets to 0, so three more stalled sessions are allowed.
+        for _ in 0..2 {
+            let (stream, _) = tokio::time::timeout(Duration::from_secs(5), relay.accept())
+                .await
+                .expect("the link did not try again")
+                .unwrap();
+            drop(stream);
+        }
+        let mut healthy = sign_in(&relay).await;
+        healthy
+            .send(Message::Binary(
+                wire::frame(&peer.public(), &[9; 32]).into(),
+            ))
+            .await
+            .unwrap();
+        assert_eq!(in_rx.recv().await.as_deref(), Some(&[9u8; 32][..]));
+        drop(healthy);
+
+        // Now the relay signs in and stops reading on three sessions in a row.
+        let mut tasks = Vec::new();
+        for _ in 0..3 {
+            let mut ws = sign_in(&relay).await;
+            tasks.push(tokio::spawn(async move {
+                while ws.send(Message::Ping(vec![0; 125].into())).await.is_ok() {}
+            }));
+        }
+        let gave_up = tokio::time::timeout(Duration::from_secs(5), async {
+            tokio::select! {
+                () = out_tx.closed() => true,
+                _ = relay.accept() => false,
+            }
+        })
+        .await;
+        for t in tasks {
+            t.abort();
+        }
+        assert_eq!(
+            gave_up,
+            Ok(true),
+            "the link did not give up after three stalled sign-ins"
+        );
+    }
+
+    /// #460: closing a relay session because our own link parked on the
+    /// direct path neither spends one of `refused` nor resets a prior fault,
+    /// and a parked reconnect whose `first` datagram goes unanswered counts
+    /// as dead within `silence`.
+    #[tokio::test]
+    async fn parking_neither_spends_nor_resets_refused_tries() {
+        let relay = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let url = format!("ws://{}/v0/relay", relay.local_addr().unwrap());
+        let (own, peer) = (
+            Arc::new(EndpointKey::generate().unwrap()),
+            EndpointKey::generate().unwrap(),
+        );
+        let (out, pipes) = pipes();
+        let gate = Gate::default();
+        gate.open();
+        let limits = Limits {
+            time: Duration::from_secs(3600),
+            bytes: u64::MAX,
+            refused: 2,
+            silence: Duration::from_millis(300),
+            keepalive: KEEPALIVE,
+            retry_first: Duration::from_millis(50),
+            retry_max: Duration::from_millis(200),
+        };
+        let link = spawn_with(url, own, peer.public(), pipes, gate, limits);
+
+        // First try fails (`refused` = 1 of 2).
+        let (stream, _) = tokio::time::timeout(Duration::from_secs(5), relay.accept())
+            .await
+            .expect("the link did not connect")
+            .unwrap();
+        drop(stream);
+
+        // Second session signs in and is closed by our own `park()`, with no
+        // peer data carried: `refused` stays 1 (neither 2 nor 0).
+        let mut ws = sign_in(&relay).await;
+        let fallback = Fallback::new(tokio::sync::mpsc::channel(1).0);
+        link.park(&fallback);
+        let closed = tokio::time::timeout(Duration::from_secs(5), async {
+            loop {
+                match ws.next().await {
+                    Some(Ok(Message::Close(_))) | None | Some(Err(_)) => break,
+                    Some(Ok(_)) => {}
+                }
+            }
+        })
+        .await;
+        assert!(closed.is_ok(), "parking did not close the connection");
+
+        // Moving onto the relay still connects (`refused` was not spent). On
+        // this session the relay signs in, reads `first`, and then stays
+        // silent: `first` arms `unanswered`, so the session ends after
+        // `silence`, brings `refused` to 2 of 2, and the link gives up
+        // (`refused` was not reset by parking either).
+        fallback.set_moved(true);
+        out.send(vec![1; 64]).await.unwrap();
+        let mut stalled = sign_in(&relay).await;
+        let _first = tokio::time::timeout(Duration::from_secs(5), stalled.next())
+            .await
+            .expect("the waiting datagram was not sent")
+            .unwrap()
+            .unwrap();
+
+        let gave_up = tokio::time::timeout(Duration::from_secs(5), async {
+            tokio::select! {
+                () = out.closed() => true,
+                _ = relay.accept() => false,
+            }
+        })
+        .await;
+        drop(stalled);
+        assert_eq!(
+            gave_up,
+            Ok(true),
+            "parking reset or stalled the retry limit"
+        );
     }
 }
