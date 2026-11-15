@@ -108,8 +108,8 @@ TotalDrop'un web'deki ve sosyal medyadaki resmî hesapları şunlardır:
 - Threads: [threads.com/@totaldropapp](https://www.threads.com/@totaldropapp) (@totaldropapp)
 
 Bunların dışında proje yalnızca şu kanalları kullanır: uygulamalar Google
-Play'den ve GitHub sürümlerinden dağıtılır, bağışlar GitHub Sponsors
-üzerinden alınır ([github.com/sponsors/ozdil](https://github.com/sponsors/ozdil)),
+Play'den ve GitHub sürümlerinden dağıtılır, bağışlar Open Collective
+üzerinden alınır ([opencollective.com/totaldrop](https://opencollective.com/totaldrop)),
 e-postalar yalnızca `@totaldrop.app` adreslerinden gelir.
 
 Yeni bir platformda hesap açılırsa mümkünse `totaldropapp` adı kullanılır

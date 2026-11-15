@@ -2,9 +2,13 @@
 
 Donations received and money spent, month by month. The same lines are
 published in the table on
-[totaldrop.app/donate](https://totaldrop.app/donate/); both change
-together. "In" counts both channels, GitHub Sponsors and Buy Me a Coffee.
-Rules: [decision 0017](kararlar/0017-bagis-kisisel-sayfa.md).
+[totaldrop.app/donate](https://totaldrop.app/donate/) alongside Open
+Collective's public ledger at
+[opencollective.com/totaldrop](https://opencollective.com/totaldrop); both
+change together. Months before the Open Collective cutover counted the
+interim GitHub Sponsors and Buy Me a Coffee channels under
+[decision 0017](kararlar/0017-bagis-kisisel-sayfa.md). Rules:
+[decision 0024](kararlar/0024-team-donations.md).
 
 | Month | In | Out | For |
 | --- | --- | --- | --- |
