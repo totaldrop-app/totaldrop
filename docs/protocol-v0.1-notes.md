@@ -439,7 +439,9 @@ treated as final.
       enforces a bound of its own with probes (item 20, #190).
     - A relay link that loses its connection, or does not get one, connects
       again after 0.5 seconds, doubling up to 4 seconds, and gives up after
-      10 tries in a row that did not sign in. It keeps the limits below
+      10 tries in a row that ended without carrying any datagram from the
+      other device (sessions the link closes itself while parked do not
+      count, #460). It keeps the limits below
       over all its own connections together; the relays count them per
       connection (#190). When datagrams went out and nothing at all (no
       datagram, no pong to those pings) came back for 10 seconds, the link
