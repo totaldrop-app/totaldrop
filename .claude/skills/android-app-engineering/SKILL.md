@@ -34,7 +34,11 @@ rules in `app/README.md`.
   Permissions for it: `RUN_USER_INITIATED_JOBS`, `POST_NOTIFICATIONS` (asked
   at the first transfer; the transfer works without it),
   `ACCESS_NETWORK_STATE`; the app as a whole also needs `INTERNET`
-  (`app/android/app/src/main/AndroidManifest.xml`).
+  (`app/android/app/src/main/AndroidManifest.xml`). `NetworkBridge` uses
+  `ConnectivityManager.registerDefaultNetworkCallback` over
+  `ACCESS_NETWORK_STATE` to pass the active network's unicast IPv4 gateway
+  and network-change signal to `app/rust` (#406, #32; ignored in privacy
+  mode).
 - Material You colours (`dynamic_color`) and Material 3; Expressive parts only
   as the official `material_ui` package provides them; icon buttons in text
   fields and list rows wrapped with `KeepIconButtonVariant` (#259).

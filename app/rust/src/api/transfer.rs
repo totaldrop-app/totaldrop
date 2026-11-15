@@ -329,13 +329,58 @@ impl SendSession {
     }
 }
 
-/// The paths a transfer may take. With `privacy`, only the relay: the
-/// other device never learns this one's IP address.
-fn route(privacy: bool) -> PathOptions {
+impl Drop for SendSession {
+    fn drop(&mut self) {
+        let _guard = RUNTIME.enter();
+        if let Ok(mut guard) = self.inner.lock() {
+            let _ = guard.take();
+        }
+    }
+}
+
+static NETWORK_GATEWAY: Mutex<Option<std::net::Ipv4Addr>> = Mutex::new(None);
+
+static NETWORK_CHANGE: LazyLock<totaldrop_core::path::NetworkChange> =
+    LazyLock::new(totaldrop_core::path::NetworkChange::new);
+
+fn parse_gateway(gateway: Option<&str>) -> Option<std::net::Ipv4Addr> {
+    let ip: std::net::Ipv4Addr = gateway?.trim().parse().ok()?;
+    if ip.is_unspecified() || ip.is_loopback() || ip.is_multicast() || ip.is_broadcast() {
+        return None;
+    }
+    Some(ip)
+}
+
+fn current_gateway() -> totaldrop_core::portmap::Gateway {
+    match NETWORK_GATEWAY.lock().ok().and_then(|g| *g) {
+        Some(ip) => totaldrop_core::portmap::Gateway::at_ip(ip),
+        None => totaldrop_core::portmap::Gateway::Auto,
+    }
+}
+
+fn route_with(privacy: bool, gateway: Option<std::net::Ipv4Addr>) -> PathOptions {
+    let gateway = if privacy {
+        totaldrop_core::portmap::Gateway::Off
+    } else {
+        match gateway {
+            Some(ip) => totaldrop_core::portmap::Gateway::at_ip(ip),
+            None => totaldrop_core::portmap::Gateway::Auto,
+        }
+    };
     PathOptions {
         relay_only: privacy,
+        gateway,
+        network_change: Some(NETWORK_CHANGE.clone()),
         ..PathOptions::default()
     }
+}
+
+/// The paths a transfer may take. With `privacy`, only the relay: the
+/// other device never learns this one's IP address, and no router port is
+/// requested.
+fn route(privacy: bool) -> PathOptions {
+    let gateway = NETWORK_GATEWAY.lock().ok().and_then(|g| *g);
+    route_with(privacy, gateway)
 }
 
 /// Scan and hash `paths`, reserve a code. `strong` adds a third word;
@@ -416,9 +461,12 @@ pub fn max_text_bytes() -> i64 {
 pub async fn run_send(session: &SendSession, stopper: &Stopper, sink: StreamSink<TransferEvent>) {
     let sink: Sink = Arc::new(Mutex::new(sink));
     let prepared = session.inner.lock().ok().and_then(|mut g| g.take());
-    let Some(prepared) = prepared else {
+    let Some(mut prepared) = prepared else {
         return finish(&sink, Err(TransferError::other("this send already ran")));
     };
+    // Refresh the active gateway right when the send begins, in case the
+    // network changed while large files were being hashed (#406).
+    prepared.set_gateway(current_gateway());
     let events = core_events(sink.clone());
     let stop = stopper.stop.clone();
     let result = on_runtime(async move {
@@ -448,6 +496,18 @@ pub struct Offer {
     names: Vec<String>,
     words: Vec<String>,
     is_text: bool,
+}
+
+impl Drop for Offer {
+    fn drop(&mut self) {
+        // Enter `RUNTIME` so `Mapping::drop` can spawn the UPnP delete and
+        // the second PCP/NAT-PMP release packet (#502) even when Dart's
+        // finalizer drops an unanswered offer outside `on_runtime`.
+        let _guard = RUNTIME.enter();
+        if let Ok(mut guard) = self.inner.lock() {
+            let _ = guard.take();
+        }
+    }
 }
 
 impl Offer {
@@ -628,6 +688,26 @@ pub fn code_from_link(link: String) -> Option<String> {
     totaldrop_proto::TransferCode::from_link(&link).map(|c| c.to_string())
 }
 
+/// Record the active network's default IPv4 gateway (`None` when the active
+/// link has none, such as IPv6-only or cellular point-to-point), so
+/// [`totaldrop_core::portmap`] can ask the router on platforms where
+/// `/proc/net/route` is unreadable (#406, decision 0018).
+#[frb(sync)]
+pub fn set_network_gateway(gateway: Option<String>) {
+    let parsed = parse_gateway(gateway.as_deref());
+    if let Ok(mut slot) = NETWORK_GATEWAY.lock() {
+        *slot = parsed;
+    }
+}
+
+/// Tell active transfers that the system's default network changed, so
+/// direct connections move onto the relay and open relay links reconnect at
+/// once instead of waiting out their silence timers (#32, decision 0018).
+#[frb(sync)]
+pub fn notify_network_changed() {
+    NETWORK_CHANGE.notify();
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -759,5 +839,47 @@ mod tests {
             );
         }
         assert_eq!(normalize_code("\u{2068}\u{2069}".into()), None);
+    }
+
+    #[test]
+    fn network_gateway_filters_non_unicast_and_respects_privacy() {
+        use std::net::Ipv4Addr;
+        use totaldrop_core::portmap::Gateway;
+
+        assert_eq!(
+            parse_gateway(Some(" 192.168.1.1 ")),
+            Some(Ipv4Addr::new(192, 168, 1, 1))
+        );
+        for bad in [
+            None,
+            Some(""),
+            Some("0.0.0.0"),
+            Some("127.0.0.1"),
+            Some("224.0.0.1"),
+            Some("255.255.255.255"),
+            Some("fe80::1"),
+            Some("not-an-ip"),
+        ] {
+            assert_eq!(parse_gateway(bad), None, "{bad:?}");
+        }
+
+        set_network_gateway(Some("192.168.1.1".into()));
+        let direct = route(false);
+        assert!(!direct.relay_only);
+        assert_eq!(
+            direct.gateway,
+            Gateway::at_ip(Ipv4Addr::new(192, 168, 1, 1))
+        );
+        assert!(direct.network_change.is_some());
+
+        // Privacy mode never contacts a router even when a gateway is known.
+        let private = route(true);
+        assert!(private.relay_only);
+        assert_eq!(private.gateway, Gateway::Off);
+        assert!(private.network_change.is_some());
+
+        set_network_gateway(None);
+        assert_eq!(route(false).gateway, Gateway::Auto);
+        notify_network_changed();
     }
 }

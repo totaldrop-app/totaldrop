@@ -76,6 +76,23 @@ class MainActivity : FlutterActivity() {
                 else -> result.notImplemented()
             }
         }
+        // Default IPv4 gateway for router port mapping (#406) and immediate
+        // network-change notifications (#32).
+        val network = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, NETWORK_CHANNEL)
+        networkBridge?.stop()
+        val bridge = NetworkBridge(applicationContext) { event ->
+            network.invokeMethod(
+                "update",
+                mapOf("gateway" to event.gateway, "changed" to event.changed),
+            )
+        }
+        networkBridge = bridge
+        network.setMethodCallHandler { call, result ->
+            when (call.method) {
+                "ready" -> result.success(mapOf("gateway" to bridge.start()))
+                else -> result.notImplemented()
+            }
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -165,6 +182,8 @@ class MainActivity : FlutterActivity() {
 
     override fun cleanUpFlutterEngine(flutterEngine: FlutterEngine) {
         launches.detach()
+        networkBridge?.stop()
+        networkBridge = null
         // Nothing would be left to end the job: end it, and its
         // notification, with the engine.
         TransferJob.onStop = null
@@ -185,6 +204,7 @@ class MainActivity : FlutterActivity() {
     }
 
     private var askedForNotifications = false
+    private var networkBridge: NetworkBridge? = null
     private val launches = Launches()
     private val main = Handler(Looper.getMainLooper())
     private val copier by lazy { copierFor(this) }
@@ -207,6 +227,7 @@ class MainActivity : FlutterActivity() {
         const val SHARE_CHANNEL = "app.totaldrop/launch"
         const val BACKGROUND_CHANNEL = "app.totaldrop/background"
         const val STORAGE_CHANNEL = "app.totaldrop/storage"
+        const val NETWORK_CHANNEL = "app.totaldrop/network"
         // The launcher shortcuts (res/xml/shortcuts.xml).
         const val ACTION_SHORTCUT_SEND = "app.totaldrop.action.SEND"
         const val ACTION_SHORTCUT_RECEIVE = "app.totaldrop.action.RECEIVE"
