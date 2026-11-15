@@ -173,8 +173,7 @@ class _Entering extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    return ListView(
-      padding: const EdgeInsets.all(24),
+    return ColumnListView(
       children: [
         const Center(child: TotalDropMark(size: 96)),
         Gap.l,
@@ -248,8 +247,7 @@ class _Offered extends StatelessWidget {
     final o = vm.offer!;
     final names = o.names;
     if (vm.isText) return _OfferedText(vm: vm);
-    return ListView(
-      padding: const EdgeInsets.all(24),
+    return ColumnListView(
       children: [
         Announced(Text(l.receiveOffer, style: theme.textTheme.headlineSmall)),
         Gap.s,
@@ -322,8 +320,7 @@ class _OfferedText extends StatelessWidget {
     final l = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final o = vm.offer!;
-    return ListView(
-      padding: const EdgeInsets.all(24),
+    return ColumnListView(
       children: [
         Announced(
           Text(l.receiveOfferText, style: theme.textTheme.headlineSmall),
@@ -367,8 +364,7 @@ class _Transferring extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    return ListView(
-      padding: const EdgeInsets.all(24),
+    return ColumnListView(
       children: [
         const Center(child: TotalDropMark(size: 140, sending: true)),
         Gap.l,
@@ -398,8 +394,7 @@ class _Done extends StatelessWidget {
     final theme = Theme.of(context);
     final s = vm.summary;
     if (vm.receivedText case final text?) return _TextDone(vm: vm, text: text);
-    return ListView(
-      padding: const EdgeInsets.all(24),
+    return ColumnListView(
       children: [
         const Center(child: DoneBadge()),
         Gap.l,
@@ -469,8 +464,7 @@ class _TextDone extends StatelessWidget {
     // The text scrolls in its own box, at most half the screen high, and
     // the page scrolls when large type leaves no room.
     final boxHeight = MediaQuery.sizeOf(context).height / 2;
-    return ListView(
-      padding: const EdgeInsets.all(24),
+    return ColumnListView(
       children: [
         const Center(child: DoneBadge()),
         Gap.l,

@@ -204,6 +204,21 @@ ThemeData buildTheme(ColorScheme scheme) {
         ),
       ),
     ),
+    segmentedButtonTheme: SegmentedButtonThemeData(
+      style: SegmentedButton.styleFrom(
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        minimumSize: const Size(64, 48),
+        side: BorderSide(color: scheme.outline),
+        selectedBackgroundColor: scheme.secondaryContainer,
+        selectedForegroundColor: scheme.onSecondaryContainer,
+        textStyle: const TextStyle(
+          fontFamily: _body,
+          fontWeight: FontWeight.w700,
+          fontSize: 15,
+        ),
+      ),
+    ),
     inputDecorationTheme: InputDecorationTheme(
       border: const OutlineInputBorder(
         borderRadius: BorderRadius.all(Radius.circular(16)),

@@ -11,6 +11,7 @@ import 'package:totaldrop/data/background_access.dart';
 import 'package:totaldrop/data/settings_repository.dart';
 import 'package:totaldrop/l10n/app_localizations.dart';
 import 'package:totaldrop/src/rust/frb_generated.dart';
+import 'package:totaldrop/ui/core/common.dart';
 import 'package:totaldrop/ui/core/theme.dart';
 import 'package:totaldrop/ui/settings/settings_view.dart';
 
@@ -175,7 +176,7 @@ void main() {
       expect(tester.getTopLeft(find.byType(ListView)).dx, 18);
       expect(tester.getTopRight(find.byType(ListView)).dx, 800 - 22);
       final list = tester.widget<ListView>(find.byType(ListView));
-      expect(list.padding, const EdgeInsets.fromLTRB(24, 24, 24, 24 + 48));
+      expect(list.padding, columnPadding(800 - 18 - 22, bottom: 24 + 48));
     },
   );
 

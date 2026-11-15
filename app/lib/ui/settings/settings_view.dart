@@ -6,6 +6,7 @@ import 'package:material_ui/material_ui.dart';
 import '../../data/background_access.dart';
 import '../../data/settings_repository.dart';
 import '../../l10n/app_localizations.dart';
+import '../core/common.dart';
 import '../core/l10n.dart';
 import '../core/theme.dart';
 import '../setup/background_setup_view.dart';
@@ -82,13 +83,8 @@ class _SettingsViewState extends State<SettingsView> {
       appBar: AppBar(title: Text(l.settings)),
       body: SafeArea(
         bottom: false,
-        child: ListView(
-          padding: EdgeInsets.fromLTRB(
-            24,
-            24,
-            24,
-            24 + MediaQuery.paddingOf(context).bottom,
-          ),
+        child: ColumnListView(
+          bottom: 24 + MediaQuery.paddingOf(context).bottom,
           children: [
             Semantics(
               header: true,
