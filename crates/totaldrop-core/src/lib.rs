@@ -528,6 +528,7 @@ impl PreparedSend {
             );
             let (conn, send, recv) =
                 transport::sender_connection(&endpoint, &paths, ACCEPT_TIMEOUT).await?;
+            fallback.watch_closing(conn.remote_address());
             // The receiver meets us on the relay only if it is also its own.
             let shared = shares_relay(&paired.hints, &self.paths);
             let _link = standby(&conn, &paths, link, &fallback, shared);
@@ -556,7 +557,7 @@ impl PreparedSend {
         events(Event::Connected {
             words: words(chan.verification),
         });
-        let report = transfer::send_files(
+        let report = transfer::send_files_on(
             &conn,
             chan,
             &self.keys,
@@ -564,6 +565,7 @@ impl PreparedSend {
             self.text,
             progress_from(&events),
             &stop,
+            Some(&fallback),
         )
         .await;
         if report.is_err() {
@@ -575,15 +577,18 @@ impl PreparedSend {
     }
 }
 
-/// How long a stopping caller waits inline after draining when its cancel
-/// notice went unacknowledged, so a short-lived process such as the CLI keeps
-/// its socket open until the peer's next packet is answered (#512).
+/// How long an exiting process ([`portmap::released`]) waits for a lingering
+/// stop endpoint to answer at least one post-drain packet before dropping its
+/// socket and relay link (#512, #555).
 const POST_DRAIN_WAIT: Duration = Duration::from_millis(500);
 
-/// How long an endpoint whose stop notice was never acknowledged stays
-/// behind in the background after [`POST_DRAIN_WAIT`], so a peer whose probe
-/// timeout backed off further still gets `CONNECTION_CLOSE` in long-lived
-/// app processes (#512).
+/// How long an endpoint whose stop notice went unacknowledged stays behind in
+/// the background so a peer whose probe timeout backed off further still gets
+/// `CONNECTION_CLOSE` in long-lived app processes (#512). Returning before
+/// this wait keeps Android and Linux stop UI transitions immediate; if the
+/// process exits meanwhile ([`portmap::released`], #433), the task wakes early
+/// and bounds its remaining wait to [`POST_DRAIN_WAIT`] so a relay link is not
+/// held open for the full 3 seconds (#555).
 const STOP_LINGER: Duration = Duration::from_secs(3);
 
 async fn linger_or_wait(
@@ -594,11 +599,7 @@ async fn linger_or_wait(
 ) {
     let _ = tokio::time::timeout(idle_wait, endpoint.wait_idle()).await;
     if fallback.lingers() {
-        let _ = tokio::time::timeout(POST_DRAIN_WAIT, fallback.answered()).await;
-        tokio::spawn(async move {
-            let _keep = (endpoint, link);
-            tokio::time::sleep(STOP_LINGER).await;
-        });
+        spawn_stop_linger((endpoint, link), fallback.clone());
     }
 }
 
@@ -680,8 +681,14 @@ impl IncomingOffer {
     /// [`Error::Stopped`]. For a person who leaves while the offer is shown.
     pub async fn stop(mut self) -> Error {
         let id = self.offer.transfer_id();
-        let e = transfer::tell_stopped(&self.conn, &mut self.chan.sealer, &mut self.chan.send, id)
-            .await;
+        let e = transfer::tell_stopped(
+            &self.conn,
+            Some(&self.fallback),
+            &mut self.chan.sealer,
+            &mut self.chan.send,
+            id,
+        )
+        .await;
         linger_or_wait(
             self.endpoint,
             self._link,
@@ -717,6 +724,7 @@ impl IncomingOffer {
             pipes,
         );
         let conn = transport::receiver_connection(&endpoint, &paths, CONNECT_TIMEOUT).await?;
+        fallback.watch_closing(conn.remote_address());
         // `relay` is set only when it is the sender's relay too.
         let link = standby(&conn, &paths, link, &fallback, relay.is_some());
         let mut chan = secure::handshake(
@@ -769,13 +777,14 @@ impl IncomingOffer {
         events: Events,
         stop: &Stop,
     ) -> Result<ReceiveReport> {
-        let report = transfer::accept(
+        let report = transfer::accept_on(
             &self.conn,
             self.chan,
             self.offer,
             dest,
             progress_from(&events),
             stop,
+            Some(&self.fallback),
         )
         .await;
         self.conn.close(0u32.into(), b"done");
@@ -798,7 +807,14 @@ impl IncomingOffer {
 
     /// Like [`IncomingOffer::accept_text`], until `stop` is stopped.
     pub async fn accept_text_with(self, stop: &Stop) -> Result<ReceiveReport> {
-        let report = transfer::accept_text(&self.conn, self.chan, self.offer, stop).await;
+        let report = transfer::accept_text_on(
+            &self.conn,
+            self.chan,
+            self.offer,
+            stop,
+            Some(&self.fallback),
+        )
+        .await;
         self.conn.close(0u32.into(), b"done");
         linger_or_wait(
             self.endpoint,
@@ -819,11 +835,168 @@ impl IncomingOffer {
     }
 }
 
+#[derive(Default)]
+struct LingerSlot {
+    exiting_flag: std::sync::atomic::AtomicBool,
+    exiting: tokio::sync::Notify,
+    done_flag: std::sync::atomic::AtomicBool,
+    done: tokio::sync::Notify,
+}
+
+type LingerSlots = std::sync::Mutex<Vec<std::sync::Weak<LingerSlot>>>;
+
+static LINGERING: LingerSlots = std::sync::Mutex::new(Vec::new());
+
+fn spawn_stop_linger<K: Send + 'static>(keep: K, fallback: path::Fallback) {
+    spawn_stop_linger_in(&LINGERING, keep, fallback);
+}
+
+fn spawn_stop_linger_in<K: Send + 'static>(slots: &LingerSlots, keep: K, fallback: path::Fallback) {
+    struct DoneGuard(Arc<LingerSlot>);
+    impl Drop for DoneGuard {
+        fn drop(&mut self) {
+            self.0
+                .done_flag
+                .store(true, std::sync::atomic::Ordering::Release);
+            self.0.done.notify_waiters();
+        }
+    }
+
+    let start = tokio::time::Instant::now();
+    let deadline = start.checked_add(STOP_LINGER).unwrap_or(start);
+    let slot = Arc::new(LingerSlot::default());
+    if let Ok(mut list) = slots.lock() {
+        list.retain(|w| {
+            w.upgrade()
+                .is_some_and(|s| !s.done_flag.load(std::sync::atomic::Ordering::Acquire))
+        });
+        list.push(Arc::downgrade(&slot));
+    }
+    let guard = DoneGuard(slot.clone());
+    tokio::spawn(async move {
+        let _done = guard;
+        let keep = keep;
+        let notified = slot.exiting.notified();
+        if !slot.exiting_flag.load(std::sync::atomic::Ordering::Acquire) {
+            tokio::select! {
+                () = tokio::time::sleep_until(deadline) => {
+                    drop(keep);
+                    return;
+                }
+                () = notified => {}
+            }
+        }
+        let now = tokio::time::Instant::now();
+        let grace = now
+            .checked_add(POST_DRAIN_WAIT)
+            .unwrap_or(now)
+            .min(deadline);
+        let _ = tokio::time::timeout_at(grace, fallback.answered()).await;
+        drop(keep);
+    });
+}
+
+/// Wake any detached `STOP_LINGER` tasks on process shutdown
+/// ([`portmap::released`], #433, #555) so each bounds its remaining wait to
+/// [`POST_DRAIN_WAIT`] (clamped to its original [`STOP_LINGER`] deadline, or
+/// returning at once when a post-drain packet has already been answered) and
+/// drops `(endpoint, link)` cleanly instead of holding a relay link open for
+/// [`STOP_LINGER`].
+pub(crate) async fn finish_lingering_stops() {
+    finish_lingering_stops_in(&LINGERING).await;
+}
+
+async fn finish_lingering_stops_in(slots: &LingerSlots) {
+    let active: Vec<Arc<LingerSlot>> = match slots.lock() {
+        Ok(mut list) => {
+            let mut active = Vec::with_capacity(list.len());
+            list.retain(|w| match w.upgrade() {
+                Some(s) if !s.done_flag.load(std::sync::atomic::Ordering::Acquire) => {
+                    active.push(s);
+                    true
+                }
+                _ => false,
+            });
+            active
+        }
+        Err(_) => return,
+    };
+    for slot in &active {
+        slot.exiting_flag
+            .store(true, std::sync::atomic::Ordering::Release);
+        slot.exiting.notify_waiters();
+    }
+    for slot in active {
+        loop {
+            let notified = slot.done.notified();
+            if slot.done_flag.load(std::sync::atomic::Ordering::Acquire) {
+                break;
+            }
+            notified.await;
+        }
+    }
+    if let Ok(mut list) = slots.lock() {
+        list.retain(|w| {
+            w.upgrade()
+                .is_some_and(|s| !s.done_flag.load(std::sync::atomic::Ordering::Acquire))
+        });
+    }
+}
+
 #[cfg(test)]
 mod tests {
     #![allow(clippy::unwrap_used, clippy::expect_used)]
 
     use super::*;
+
+    #[tokio::test(start_paused = true)]
+    async fn stop_linger_does_not_delay_caller_and_closes_on_release() {
+        struct TrackDrop(Arc<std::sync::atomic::AtomicBool>);
+        impl Drop for TrackDrop {
+            fn drop(&mut self) {
+                self.0.store(true, std::sync::atomic::Ordering::SeqCst);
+            }
+        }
+
+        let make_fb = || {
+            let peer: SocketAddr = "192.0.2.50:5000".parse().unwrap();
+            let tokens = path::ResetTokens::new().unwrap();
+            let (tx, _rx) = tokio::sync::mpsc::channel(1);
+            let fb = path::Fallback::with_reset_tokens(tx, Some(tokens));
+            fb.arm_closing(peer);
+            assert!(fb.lingers());
+            fb
+        };
+
+        let slots = LingerSlots::new(Vec::new());
+        let dropped = Arc::new(std::sync::atomic::AtomicBool::new(false));
+        let start = tokio::time::Instant::now();
+        spawn_stop_linger_in(&slots, TrackDrop(dropped.clone()), make_fb());
+        // Spawning the linger task adds zero inline wait for Android/Linux UI.
+        assert_eq!(start.elapsed(), Duration::ZERO);
+        assert!(!dropped.load(std::sync::atomic::Ordering::SeqCst));
+
+        // Concurrent `finish_lingering_stops_in` callers both observe active
+        // slots until `keep` is dropped at `POST_DRAIN_WAIT` (500 ms).
+        tokio::join!(
+            finish_lingering_stops_in(&slots),
+            finish_lingering_stops_in(&slots),
+        );
+        assert!(dropped.load(std::sync::atomic::Ordering::SeqCst));
+        assert_eq!(start.elapsed(), POST_DRAIN_WAIT);
+
+        // Waking near the end of `STOP_LINGER` (e.g. at 2.9 s) clamps the
+        // shutdown grace to the original 3.0 s deadline instead of extending
+        // total lifetime to 3.4 s.
+        let late_dropped = Arc::new(std::sync::atomic::AtomicBool::new(false));
+        let late_start = tokio::time::Instant::now();
+        spawn_stop_linger_in(&slots, TrackDrop(late_dropped.clone()), make_fb());
+        tokio::time::sleep(Duration::from_millis(2900)).await;
+        assert!(!late_dropped.load(std::sync::atomic::Ordering::SeqCst));
+        finish_lingering_stops_in(&slots).await;
+        assert!(late_dropped.load(std::sync::atomic::Ordering::SeqCst));
+        assert_eq!(late_start.elapsed(), STOP_LINGER);
+    }
 
     fn hints(relay: Option<&str>) -> Hints {
         Hints {

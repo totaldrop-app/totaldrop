@@ -26,6 +26,7 @@ webpki-roots = "1"
 zeroize = "1.9.1"
 
 [dev-dependencies]
+tempfile = "3.27.0"
 tokio = { version = "1.54.1", features = ["test-util"] }
 
 [lints]

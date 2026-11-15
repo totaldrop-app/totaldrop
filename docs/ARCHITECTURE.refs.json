@@ -210,22 +210,22 @@
   "crates/totaldrop-core/src/lib.rs:501": [
     "pub async fn run_with(self, events: Events, stop: Stop) -> Result<SendReport> {"
   ],
-  "crates/totaldrop-core/src/lib.rs:624": [
+  "crates/totaldrop-core/src/lib.rs:625": [
     "pub struct ReceiveOptions {"
   ],
-  "crates/totaldrop-core/src/lib.rs:643": [
+  "crates/totaldrop-core/src/lib.rs:644": [
     "pub struct IncomingOffer {"
   ],
-  "crates/totaldrop-core/src/lib.rs:667": [
+  "crates/totaldrop-core/src/lib.rs:668": [
     "pub async fn connect_with(opts: &ReceiveOptions, code: &str, stop: &Stop) -> Result<Self> {"
   ],
-  "crates/totaldrop-core/src/lib.rs:696": [
+  "crates/totaldrop-core/src/lib.rs:703": [
     "pub async fn connect(opts: &ReceiveOptions, code: &str) -> Result<Self> {"
   ],
-  "crates/totaldrop-core/src/lib.rs:699": [
+  "crates/totaldrop-core/src/lib.rs:706": [
     "let mailbox = rendezvous::Mailbox::claim(&opts.server, code.nameplate(), None).await?;"
   ],
-  "crates/totaldrop-core/src/lib.rs:766": [
+  "crates/totaldrop-core/src/lib.rs:774": [
     "pub async fn accept_with("
   ],
   "crates/totaldrop-core/src/lib.rs:95": [
@@ -252,13 +252,13 @@
   "crates/totaldrop-core/src/path.rs:86": [
     "pub const FALLBACK_SILENCE: Duration = Duration::from_secs(8);"
   ],
-  "crates/totaldrop-core/src/portmap.rs:230": [
+  "crates/totaldrop-core/src/portmap.rs:234": [
     "/// answer (#425)."
   ],
-  "crates/totaldrop-core/src/portmap.rs:298": [
+  "crates/totaldrop-core/src/portmap.rs:302": [
     "pub fn start(gateway: Gateway, port: u16) -> Asking {"
   ],
-  "crates/totaldrop-core/src/portmap.rs:346": [
+  "crates/totaldrop-core/src/portmap.rs:350": [
     "pub async fn wait(mut self, grace: Duration) -> Option<Mapping> {"
   ],
   "crates/totaldrop-core/src/portmap.rs:58": [
@@ -292,40 +292,40 @@
   "crates/totaldrop-core/src/secure.rs:98": [
     "pub async fn handshake("
   ],
-  "crates/totaldrop-core/src/transfer.rs:1137": [
+  "crates/totaldrop-core/src/transfer.rs:1175": [
     "pub async fn accept_text("
   ],
-  "crates/totaldrop-core/src/transfer.rs:1264": [
+  "crates/totaldrop-core/src/transfer.rs:1319": [
     "pub async fn accept("
   ],
-  "crates/totaldrop-core/src/transfer.rs:189": [
+  "crates/totaldrop-core/src/transfer.rs:210": [
     "const PARALLEL_STREAMS: usize = 4;"
   ],
-  "crates/totaldrop-core/src/transfer.rs:225": [
+  "crates/totaldrop-core/src/transfer.rs:246": [
     "pub fn text_entry(text: &str, name: &str) -> Result<SourceEntry> {"
   ],
-  "crates/totaldrop-core/src/transfer.rs:336": [
+  "crates/totaldrop-core/src/transfer.rs:357": [
     "pub fn scan(paths: &[PathBuf]) -> Result<(Vec<SourceEntry>, usize)> {"
   ],
-  "crates/totaldrop-core/src/transfer.rs:520": [
+  "crates/totaldrop-core/src/transfer.rs:541": [
     "pub async fn send_files("
   ],
-  "crates/totaldrop-core/src/transfer.rs:776": [
+  "crates/totaldrop-core/src/transfer.rs:814": [
     "pub async fn receive_offer(chan: &mut SecureChannel, peer: &Certificate) -> Result<VerifiedOffer> {"
   ],
-  "crates/totaldrop-core/src/transfer.rs:835": [
+  "crates/totaldrop-core/src/transfer.rs:873": [
     "pub async fn decline(chan: &mut SecureChannel, offer: &VerifiedOffer) -> Result<()> {"
   ],
-  "crates/totaldrop-core/src/transfer.rs:876": [
+  "crates/totaldrop-core/src/transfer.rs:914": [
     "fn place_no_clobber(tmp: &Path, dir: &Path, name: &str) -> Result<PathBuf> {"
   ],
-  "crates/totaldrop-core/src/transfer.rs:908": [
+  "crates/totaldrop-core/src/transfer.rs:946": [
     "fn check_beneath(dest: &Path, path: &Path) -> Result<()> {"
   ],
-  "crates/totaldrop-core/src/transfer.rs:925": [
+  "crates/totaldrop-core/src/transfer.rs:963": [
     "fn make_dir(path: &Path) -> Result<bool> {"
   ],
-  "crates/totaldrop-core/src/transport.rs:1054": [
+  "crates/totaldrop-core/src/transport.rs:1131": [
     "std::env::var_os(\"TOTALDROP_REQUIRE_IPV6\").is_none(),"
   ],
   "crates/totaldrop-core/src/transport.rs:306": [
@@ -334,23 +334,23 @@
   "crates/totaldrop-core/src/transport.rs:438": [
     "pub fn endpoint("
   ],
-  "crates/totaldrop-core/src/transport.rs:569": [
+  "crates/totaldrop-core/src/transport.rs:544": [
     "const REVERSE_DELAY: Duration = Duration::from_millis(400);"
   ],
-  "crates/totaldrop-core/src/transport.rs:573": [
+  "crates/totaldrop-core/src/transport.rs:548": [
     "const RELAY_DELAY: Duration = Duration::from_millis(1200);"
   ],
-  "crates/totaldrop-core/src/transport.rs:597": [
+  "crates/totaldrop-core/src/transport.rs:572": [
     "pub async fn receiver_connection("
   ],
-  "crates/totaldrop-core/src/transport.rs:629": [
+  "crates/totaldrop-core/src/transport.rs:604": [
     "pub async fn sender_connection("
+  ],
+  "crates/totaldrop-core/src/transport.rs:710": [
+    "pub async fn connect_any(endpoint: &quinn::Endpoint, paths: &Paths) -> Result<quinn::Connection> {"
   ],
   "crates/totaldrop-core/src/transport.rs:73": [
     "pub fn generate() -> Result<Self> {"
-  ],
-  "crates/totaldrop-core/src/transport.rs:735": [
-    "pub async fn connect_any(endpoint: &quinn::Endpoint, paths: &Paths) -> Result<quinn::Connection> {"
   ],
   "crates/totaldrop-crypto/src/channel.rs:114": [
     "pub fn session_keys(handshake_hash: &[u8], kem_secret: &[u8; 32]) -> ([u8; 32], [u8; 32]) {"

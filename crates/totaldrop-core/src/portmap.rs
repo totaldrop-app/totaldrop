@@ -150,15 +150,16 @@ impl Drop for Pending {
 
 /// Wait, at most [`LIMIT`], until no UPnP attempt is still under way,
 /// every dropped UPnP mapping has been deleted, every PCP or NAT-PMP
-/// release has gone out twice (#502), and every PCP or NAT-PMP race loser
-/// has had its answer and released a second mapping (#461). What is still
-/// under way when `LIMIT` runs out is not waited for. A
-/// process about to exit calls this before it shuts its runtime down;
-/// without it the delete or release dies with the runtime and the port
-/// stays open until its lease runs out.
+/// release has gone out twice (#502), every PCP or NAT-PMP race loser has
+/// had its answer and released a second mapping (#461), and any stopped
+/// transfer's detached linger task has finished its brief post-drain wait
+/// and dropped its endpoint and relay link (#555). What is still under way
+/// when `LIMIT` runs out is not waited for. A process about to exit calls
+/// this before it shuts its runtime down; without it the delete, release or
+/// post-drain `CONNECTION_CLOSE` dies with the runtime.
 pub async fn released() {
     use std::sync::atomic::Ordering;
-    let _ = tokio::time::timeout(LIMIT, async {
+    let ports = async {
         loop {
             let notified = RELEASED.notified();
             if RELEASING.load(Ordering::Acquire) == 0 {
@@ -166,6 +167,9 @@ pub async fn released() {
             }
             notified.await;
         }
+    };
+    let _ = tokio::time::timeout(LIMIT, async {
+        tokio::join!(ports, crate::finish_lingering_stops());
     })
     .await;
 }
