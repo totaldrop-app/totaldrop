@@ -184,5 +184,11 @@
   "setupBackgroundAutostart": "آٹو اسٹارٹ کھولیں",
   "setupBackgroundSkip": "ابھی نہیں",
   "settingsBackground": "پس منظر میں منتقلی",
-  "settingsBackgroundOpen": "بیٹری کی ترتیبات"
+  "settingsBackgroundOpen": "بیٹری کی ترتیبات",
+  "shareText": "متن شیئر کریں",
+  "openLink": "لنک کھولیں",
+  "openLinkTitle": "یہ لنک کھولیں؟",
+  "openLinkBody": "نیچے دیا گیا پتہ آپ کے براؤزر میں کھلے گا۔",
+  "openLinkConfirm": "کھولیں",
+  "openLinkFailed": "اس آلے پر کوئی ایپ لنک نہیں کھول سکی۔"
 }

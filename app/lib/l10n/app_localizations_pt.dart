@@ -698,6 +698,25 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'Configurações de bateria';
+
+  @override
+  String get shareText => 'Compartilhar texto';
+
+  @override
+  String get openLink => 'Abrir link';
+
+  @override
+  String get openLinkTitle => 'Abrir este link?';
+
+  @override
+  String get openLinkBody => 'O endereço abaixo será aberto no navegador.';
+
+  @override
+  String get openLinkConfirm => 'Abrir';
+
+  @override
+  String get openLinkFailed =>
+      'Nenhum aplicativo neste dispositivo pôde abrir o link.';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -1393,6 +1412,25 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get settingsBackgroundOpen => 'Configurações de bateria';
+
+  @override
+  String get shareText => 'Compartilhar texto';
+
+  @override
+  String get openLink => 'Abrir link';
+
+  @override
+  String get openLinkTitle => 'Abrir este link?';
+
+  @override
+  String get openLinkBody => 'O endereço abaixo será aberto no navegador.';
+
+  @override
+  String get openLinkConfirm => 'Abrir';
+
+  @override
+  String get openLinkFailed =>
+      'Nenhum aplicativo neste dispositivo pôde abrir o link.';
 }
 
 /// The translations for Portuguese, as used in Portugal (`pt_PT`).
@@ -2090,4 +2128,23 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
 
   @override
   String get settingsBackgroundOpen => 'Definições da bateria';
+
+  @override
+  String get shareText => 'Partilhar texto';
+
+  @override
+  String get openLink => 'Abrir ligação';
+
+  @override
+  String get openLinkTitle => 'Abrir esta ligação?';
+
+  @override
+  String get openLinkBody => 'O endereço abaixo será aberto no navegador.';
+
+  @override
+  String get openLinkConfirm => 'Abrir';
+
+  @override
+  String get openLinkFailed =>
+      'Nenhuma aplicação neste dispositivo conseguiu abrir a ligação.';
 }

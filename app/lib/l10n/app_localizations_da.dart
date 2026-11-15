@@ -682,4 +682,22 @@ class AppLocalizationsDa extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'Batteriindstillinger';
+
+  @override
+  String get shareText => 'Del tekst';
+
+  @override
+  String get openLink => 'Åbn link';
+
+  @override
+  String get openLinkTitle => 'Åbn dette link?';
+
+  @override
+  String get openLinkBody => 'Adressen nedenfor åbnes i din browser.';
+
+  @override
+  String get openLinkConfirm => 'Åbn';
+
+  @override
+  String get openLinkFailed => 'Ingen app på denne enhed kunne åbne linket.';
 }

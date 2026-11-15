@@ -184,5 +184,11 @@
   "setupBackgroundAutostart": "Åpne Autostart",
   "setupBackgroundSkip": "Ikke nå",
   "settingsBackground": "Overføringer i bakgrunnen",
-  "settingsBackgroundOpen": "Batteriinnstillinger"
+  "settingsBackgroundOpen": "Batteriinnstillinger",
+  "shareText": "Del tekst",
+  "openLink": "Åpne lenke",
+  "openLinkTitle": "Åpne denne lenken?",
+  "openLinkBody": "Adressen nedenfor åpnes i nettleseren din.",
+  "openLinkConfirm": "Åpne",
+  "openLinkFailed": "Ingen app på denne enheten kunne åpne lenken."
 }

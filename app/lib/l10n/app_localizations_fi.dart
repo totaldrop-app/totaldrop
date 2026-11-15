@@ -684,4 +684,23 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'Akkuasetukset';
+
+  @override
+  String get shareText => 'Jaa teksti';
+
+  @override
+  String get openLink => 'Avaa linkki';
+
+  @override
+  String get openLinkTitle => 'Avataanko tämä linkki?';
+
+  @override
+  String get openLinkBody => 'Alla oleva osoite avautuu selaimessasi.';
+
+  @override
+  String get openLinkConfirm => 'Avaa';
+
+  @override
+  String get openLinkFailed =>
+      'Mikään tämän laitteen sovellus ei voinut avata linkkiä.';
 }

@@ -184,5 +184,11 @@
   "setupBackgroundAutostart": "Abrir Inicio automático",
   "setupBackgroundSkip": "Ahora no",
   "settingsBackground": "Transferencias en segundo plano",
-  "settingsBackgroundOpen": "Ajustes de batería"
+  "settingsBackgroundOpen": "Ajustes de batería",
+  "shareText": "Compartir texto",
+  "openLink": "Abrir enlace",
+  "openLinkTitle": "¿Abrir este enlace?",
+  "openLinkBody": "La dirección de abajo se abrirá en el navegador.",
+  "openLinkConfirm": "Abrir",
+  "openLinkFailed": "Ninguna aplicación de este dispositivo pudo abrir el enlace."
 }

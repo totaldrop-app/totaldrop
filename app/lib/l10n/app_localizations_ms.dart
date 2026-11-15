@@ -672,4 +672,23 @@ class AppLocalizationsMs extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'Tetapan bateri';
+
+  @override
+  String get shareText => 'Kongsi teks';
+
+  @override
+  String get openLink => 'Buka pautan';
+
+  @override
+  String get openLinkTitle => 'Buka pautan ini?';
+
+  @override
+  String get openLinkBody => 'Alamat di bawah akan dibuka dalam pelayar anda.';
+
+  @override
+  String get openLinkConfirm => 'Buka';
+
+  @override
+  String get openLinkFailed =>
+      'Tiada aplikasi pada peranti ini dapat membuka pautan tersebut.';
 }

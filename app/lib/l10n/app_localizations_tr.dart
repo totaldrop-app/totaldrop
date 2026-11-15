@@ -668,4 +668,23 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'Pil ayarları';
+
+  @override
+  String get shareText => 'Metni paylaş';
+
+  @override
+  String get openLink => 'Bağlantıyı aç';
+
+  @override
+  String get openLinkTitle => 'Bu bağlantı açılsın mı?';
+
+  @override
+  String get openLinkBody => 'Aşağıdaki adres tarayıcınızda açılır.';
+
+  @override
+  String get openLinkConfirm => 'Aç';
+
+  @override
+  String get openLinkFailed =>
+      'Bu cihazda bağlantıyı açabilecek bir uygulama bulunamadı.';
 }

@@ -694,4 +694,23 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'Настройки батареи';
+
+  @override
+  String get shareText => 'Поделиться текстом';
+
+  @override
+  String get openLink => 'Открыть ссылку';
+
+  @override
+  String get openLinkTitle => 'Открыть эту ссылку?';
+
+  @override
+  String get openLinkBody => 'Адрес ниже откроется в вашем браузере.';
+
+  @override
+  String get openLinkConfirm => 'Открыть';
+
+  @override
+  String get openLinkFailed =>
+      'Ни одно приложение на этом устройстве не смогло открыть ссылку.';
 }

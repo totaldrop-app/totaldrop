@@ -76,6 +76,13 @@ pub fn has_draft_translation(tag: String) -> bool {
     totaldrop_l10n::has_drafts(&tag)
 }
 
+/// Normalized ASCII `http://` or `https://` URL when `text` is a single safe
+/// web link (#53), or `None` otherwise.
+#[flutter_rust_bridge::frb(sync)]
+pub fn single_web_url(text: String) -> Option<String> {
+    totaldrop_proto::single_web_url(&text)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -115,5 +122,18 @@ mod tests {
         assert!(!needs_english("xx".into(), "settings".into()));
         // No file for xx: the text is English already.
         assert!(!needs_english("xx".into(), "verificationTitle".into()));
+    }
+
+    #[test]
+    fn web_links() {
+        assert_eq!(
+            single_web_url("https://totaldrop.app/docs".into()).as_deref(),
+            Some("https://totaldrop.app/docs")
+        );
+        assert_eq!(single_web_url("not a link".into()), None);
+        assert_eq!(
+            single_web_url("https://google.com@evil.example.com".into()),
+            None
+        );
     }
 }

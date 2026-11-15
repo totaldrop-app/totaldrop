@@ -29,7 +29,7 @@
 
 use crate::api::transfer::*;
 use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, ReadBytesExt, WriteBytesExt};
-use flutter_rust_bridge::for_generated::{transform_result_dco, Lifetimeable, Lockable};
+use flutter_rust_bridge::for_generated::{Lifetimeable, Lockable, transform_result_dco};
 use flutter_rust_bridge::{Handler, IntoIntoDart};
 
 // Section: boilerplate
@@ -40,7 +40,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.13.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 363949791;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -1201474734;
 
 // Section: executor
 
@@ -1279,6 +1279,36 @@ fn wire__crate__api__l10n__shown_text_impl(
         },
     )
 }
+fn wire__crate__api__l10n__single_web_url_impl(
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "single_web_url",
+            port: None,
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_text = <String>::sse_decode(&mut deserializer);
+            deserializer.end();
+            transform_result_sse::<_, ()>((move || {
+                let output_ok = Ok::<_, ()>(crate::api::l10n::single_web_url(api_text))?;
+                std::result::Result::Ok(output_ok)
+            })())
+        },
+    )
+}
 fn wire__crate__api__transfer__stop_transfer_impl(
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
@@ -1685,7 +1715,7 @@ fn pde_ffi_dispatcher_primary_impl(
         22 => wire__crate__api__transfer__prepare_send_impl(port, ptr, rust_vec_len, data_len),
         23 => wire__crate__api__transfer__prepare_send_text_impl(port, ptr, rust_vec_len, data_len),
         25 => wire__crate__api__transfer__run_send_impl(port, ptr, rust_vec_len, data_len),
-        28 => wire__crate__api__transfer__transfer_summary_default_impl(
+        29 => wire__crate__api__transfer__transfer_summary_default_impl(
             port,
             ptr,
             rust_vec_len,
@@ -1722,7 +1752,8 @@ fn pde_ffi_dispatcher_sync_impl(
         21 => wire__crate__api__transfer__normalize_code_impl(ptr, rust_vec_len, data_len),
         24 => wire__crate__api__l10n__reveal_controls_impl(ptr, rust_vec_len, data_len),
         26 => wire__crate__api__l10n__shown_text_impl(ptr, rust_vec_len, data_len),
-        27 => wire__crate__api__transfer__stop_transfer_impl(ptr, rust_vec_len, data_len),
+        27 => wire__crate__api__l10n__single_web_url_impl(ptr, rust_vec_len, data_len),
+        28 => wire__crate__api__transfer__stop_transfer_impl(ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -2196,7 +2227,7 @@ mod io {
     use flutter_rust_bridge::for_generated::byteorder::{
         NativeEndian, ReadBytesExt, WriteBytesExt,
     };
-    use flutter_rust_bridge::for_generated::{transform_result_dco, Lifetimeable, Lockable};
+    use flutter_rust_bridge::for_generated::{Lifetimeable, Lockable, transform_result_dco};
     use flutter_rust_bridge::{Handler, IntoIntoDart};
 
     // Section: boilerplate
@@ -2263,7 +2294,7 @@ mod web {
     };
     use flutter_rust_bridge::for_generated::wasm_bindgen;
     use flutter_rust_bridge::for_generated::wasm_bindgen::prelude::*;
-    use flutter_rust_bridge::for_generated::{transform_result_dco, Lifetimeable, Lockable};
+    use flutter_rust_bridge::for_generated::{Lifetimeable, Lockable, transform_result_dco};
     use flutter_rust_bridge::{Handler, IntoIntoDart};
 
     // Section: boilerplate

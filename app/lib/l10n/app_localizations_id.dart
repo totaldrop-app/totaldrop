@@ -670,4 +670,24 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'Setelan baterai';
+
+  @override
+  String get shareText => 'Bagikan teks';
+
+  @override
+  String get openLink => 'Buka tautan';
+
+  @override
+  String get openLinkTitle => 'Buka tautan ini?';
+
+  @override
+  String get openLinkBody =>
+      'Alamat di bawah ini akan dibuka di peramban Anda.';
+
+  @override
+  String get openLinkConfirm => 'Buka';
+
+  @override
+  String get openLinkFailed =>
+      'Tidak ada aplikasi di perangkat ini yang dapat membuka tautan.';
 }

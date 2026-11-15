@@ -684,4 +684,22 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'Batteriinnstillinger';
+
+  @override
+  String get shareText => 'Del tekst';
+
+  @override
+  String get openLink => 'Åpne lenke';
+
+  @override
+  String get openLinkTitle => 'Åpne denne lenken?';
+
+  @override
+  String get openLinkBody => 'Adressen nedenfor åpnes i nettleseren din.';
+
+  @override
+  String get openLinkConfirm => 'Åpne';
+
+  @override
+  String get openLinkFailed => 'Ingen app på denne enheten kunne åpne lenken.';
 }

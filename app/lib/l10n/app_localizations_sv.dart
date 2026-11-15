@@ -684,4 +684,23 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'Batteriinställningar';
+
+  @override
+  String get shareText => 'Dela text';
+
+  @override
+  String get openLink => 'Öppna länk';
+
+  @override
+  String get openLinkTitle => 'Öppna den här länken?';
+
+  @override
+  String get openLinkBody => 'Adressen nedan öppnas i din webbläsare.';
+
+  @override
+  String get openLinkConfirm => 'Öppna';
+
+  @override
+  String get openLinkFailed =>
+      'Ingen app på den här enheten kunde öppna länken.';
 }

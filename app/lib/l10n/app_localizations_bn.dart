@@ -671,4 +671,22 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'ব্যাটারি সেটিংস';
+
+  @override
+  String get shareText => 'লেখা শেয়ার করুন';
+
+  @override
+  String get openLink => 'লিঙ্ক খুলুন';
+
+  @override
+  String get openLinkTitle => 'এই লিঙ্কটি খুলবেন?';
+
+  @override
+  String get openLinkBody => 'নিচের ঠিকানাটি আপনার ব্রাউজারে খুলবে।';
+
+  @override
+  String get openLinkConfirm => 'খুলুন';
+
+  @override
+  String get openLinkFailed => 'এই ডিভাইসের কোনো অ্যাপ লিঙ্কটি খুলতে পারেনি।';
 }

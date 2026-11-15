@@ -184,5 +184,11 @@
   "setupBackgroundAutostart": "Autostart öffnen",
   "setupBackgroundSkip": "Nicht jetzt",
   "settingsBackground": "Übertragungen im Hintergrund",
-  "settingsBackgroundOpen": "Akkueinstellungen"
+  "settingsBackgroundOpen": "Akkueinstellungen",
+  "shareText": "Text teilen",
+  "openLink": "Link öffnen",
+  "openLinkTitle": "Diesen Link öffnen?",
+  "openLinkBody": "Die Adresse unten wird in Ihrem Browser geöffnet.",
+  "openLinkConfirm": "Öffnen",
+  "openLinkFailed": "Keine App auf diesem Gerät konnte den Link öffnen."
 }

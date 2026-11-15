@@ -184,5 +184,11 @@
   "setupBackgroundAutostart": "פתיחת ההפעלה האוטומטית",
   "setupBackgroundSkip": "לא עכשיו",
   "settingsBackground": "העברות ברקע",
-  "settingsBackgroundOpen": "הגדרות סוללה"
+  "settingsBackgroundOpen": "הגדרות סוללה",
+  "shareText": "שיתוף טקסט",
+  "openLink": "פתיחת קישור",
+  "openLinkTitle": "לפתוח את הקישור הזה?",
+  "openLinkBody": "הכתובת שלהלן תיפתח בדפדפן שלך.",
+  "openLinkConfirm": "פתיחה",
+  "openLinkFailed": "אף יישום במכשיר זה לא הצליח לפתוח את הקישור."
 }
