@@ -10,7 +10,7 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tokio::io::AsyncReadExt;
 use tokio::sync::{Semaphore, mpsc};
 use totaldrop_crypto::identity::{DeviceKeys, verify_signature};
 use totaldrop_crypto::{CHUNK_SIZE, ContentKey, EntryCipher, TAG_SIZE};
@@ -41,9 +41,9 @@ const PROGRESS_EVERY: Duration = Duration::from_millis(250);
 /// More than a sender's count of bytes handed to QUIC can be ahead of what
 /// the receiver has written. QUIC charges flow control when the
 /// application writes, so what it has taken is at most what the receiver
-/// has read plus the connection window (16 MiB, see `transport`); the
-/// receiver writes what it has read after at most `PARALLEL_STREAMS`
-/// chunks (4 MiB). Twice the window rounds that up.
+/// has read plus the connection window (16 MiB, see `transport`); each of
+/// `PARALLEL_STREAMS` reads at most `STREAM_PIPELINE + 1` chunks (16 MiB
+/// in all) ahead of what is written, giving twice the window (32 MiB).
 const MAX_IN_FLIGHT: u64 = 2 * crate::transport::CONNECTION_WINDOW as u64;
 
 /// Check a receiver's progress report against the last one: it must grow,
@@ -956,9 +956,52 @@ struct Target {
     final_path: PathBuf,
 }
 
+/// Ciphertext chunks queued between the QUIC reader and the blocking
+/// decrypt/hash/write worker of one stream (#341): 3 queued plus 1 in the
+/// worker keeps at most 4 MiB per stream (`PARALLEL_STREAMS × 4 MiB = 16 MiB`
+/// across all streams, within `MAX_IN_FLIGHT`).
+const STREAM_PIPELINE: usize = 3;
+
+/// Coalesces decrypted 1 MiB chunks into 4 MiB `write()` calls (#341), cutting
+/// per-syscall round-trips through Android Scoped Storage's FUSE mount by 4×.
+const WRITE_BUFFER: usize = 4 * 1024 * 1024;
+
+struct GuardedPart {
+    part: PartFile,
+    _permit: tokio::sync::OwnedSemaphorePermit,
+}
+
+struct PartSink {
+    file: Option<std::fs::File>,
+    #[cfg(test)]
+    slow_write: Option<(Duration, Arc<std::sync::atomic::AtomicUsize>)>,
+}
+
+impl std::io::Write for PartSink {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        let Some(f) = self.file.as_mut() else {
+            return Ok(buf.len());
+        };
+        #[cfg(test)]
+        if let Some((d, ref calls)) = self.slow_write {
+            calls.fetch_add(1, Ordering::Relaxed);
+            std::thread::sleep(d);
+        }
+        f.write(buf)
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        match self.file.as_mut() {
+            Some(f) => f.flush(),
+            None => Ok(()),
+        }
+    }
+}
+
 #[allow(clippy::too_many_arguments)]
 async fn receive_stream(
     mut stream: quinn::RecvStream,
+    permit: tokio::sync::OwnedSemaphorePermit,
     targets: Arc<Vec<Option<Target>>>,
     claimed: Arc<std::sync::Mutex<HashSet<u64>>>,
     ck: ContentKey,
@@ -987,6 +1030,7 @@ async fn receive_stream(
         }
     }
     let size = target.entry.size;
+    let entry_mtime = target.entry.mtime;
     let expected_hash = target
         .entry
         .hash
@@ -1015,88 +1059,180 @@ async fn receive_stream(
         .create_new(true)
         .open(&tmp_path)?;
     // From here on the partial file goes away unless it is placed, also
-    // when this task is aborted.
-    let mut part = PartFile {
-        path: tmp_path.clone(),
-        keep: false,
+    // when this task is aborted. `part` is declared before `_permit` so the
+    // file is closed and removed before `accept`'s error cleanup returns.
+    let guard = GuardedPart {
+        part: PartFile {
+            path: tmp_path.clone(),
+            keep: false,
+        },
+        _permit: permit,
     };
-    let mut file = tokio::fs::File::from_std(std_file);
 
-    let result: Result<bool> = async {
-        let mut hasher = blake3::Hasher::new();
-        let mut remaining = size;
+    let (chunk_tx, mut chunk_rx) = mpsc::channel::<(u32, bool, Vec<u8>)>(STREAM_PIPELINE);
+    let abort_write = Arc::new(std::sync::atomic::AtomicBool::new(false));
+    let writer_task = {
+        let abort_write = Arc::clone(&abort_write);
+        let abandoned = Arc::clone(&abandoned);
+        #[cfg(test)]
+        let slow_write = tests::slow_write(&parent);
+        let buf_cap =
+            usize::try_from(size.clamp(4096, WRITE_BUFFER as u64)).unwrap_or(WRITE_BUFFER);
+        tokio::task::spawn_blocking(move || -> Result<(GuardedPart, bool)> {
+            let guard = guard;
+            let mut writer = std::io::BufWriter::with_capacity(
+                buf_cap,
+                PartSink {
+                    file: Some(std_file),
+                    #[cfg(test)]
+                    slow_write,
+                },
+            );
+            let mut hasher = blake3::Hasher::new();
+            let mut remaining = size;
+            while let Some((idx, last, ct)) = chunk_rx.blocking_recv() {
+                if abandoned.load(Ordering::Relaxed) || abort_write.load(Ordering::Relaxed) {
+                    writer.get_mut().file = None;
+                    return Err(Error::Stopped);
+                }
+                let plain = match cipher.open(idx, last, &ct) {
+                    Ok(p) => p,
+                    Err(e) => {
+                        writer.get_mut().file = None;
+                        return Err(e.into());
+                    }
+                };
+                let want = remaining.min(limits::CHUNK_SIZE);
+                if plain.len() as u64 != want {
+                    writer.get_mut().file = None;
+                    return Err(Error::Protocol("chunk has the wrong length"));
+                }
+                hasher.update(&plain);
+                if let Err(e) = std::io::Write::write_all(&mut writer, &plain) {
+                    writer.get_mut().file = None;
+                    return Err(Error::Io(e));
+                }
+                remaining = remaining.saturating_sub(want);
+                let now = done.fetch_add(want, Ordering::Relaxed).saturating_add(want);
+                progress(now, total);
+            }
+            if abandoned.load(Ordering::Relaxed)
+                || abort_write.load(Ordering::Relaxed)
+                || remaining != 0
+            {
+                writer.get_mut().file = None;
+                return Err(Error::Stopped);
+            }
+            let hash_ok = hasher.finalize().as_bytes() == &expected_hash;
+            if !hash_ok {
+                writer.get_mut().file = None;
+                return Ok((guard, false));
+            }
+            if let Err(e) = std::io::Write::flush(&mut writer) {
+                writer.get_mut().file = None;
+                return Err(Error::Io(e));
+            }
+            let Some(std_file) = writer.get_mut().file.take() else {
+                return Err(Error::Protocol("missing partial file"));
+            };
+            std_file.sync_all()?;
+            if let Some(m) = entry_mtime
+                && let Some(t) = SystemTime::UNIX_EPOCH.checked_add(Duration::from_secs(m))
+            {
+                let _ = std_file.set_modified(t);
+            }
+            drop(std_file);
+            Ok((guard, true))
+        })
+    };
+
+    let mut writer_failed_early = false;
+    let read_res: Result<()> = async {
         for i in 0..chunks {
-            let ct = expect_frame(&mut stream, MAX_FRAME).await?;
+            // Reserve a pipeline slot before reading from QUIC so at most
+            // `STREAM_PIPELINE + 1` chunks per stream are read ahead of
+            // `done` (`MAX_IN_FLIGHT`), and stop at once if the writer fails.
+            let Ok(slot) = chunk_tx.reserve().await else {
+                writer_failed_early = true;
+                return Ok(());
+            };
+            let ct = tokio::select! {
+                biased;
+                () = chunk_tx.closed() => {
+                    writer_failed_early = true;
+                    return Ok(());
+                }
+                r = expect_frame(&mut stream, MAX_FRAME) => r?,
+            };
             if ct.len() > CHUNK_SIZE.saturating_add(TAG_SIZE) {
                 return Err(Error::Protocol("chunk too large"));
             }
             let last = i.saturating_add(1) == chunks;
             let idx = u32::try_from(i).map_err(|_| Error::Protocol("chunk index"))?;
-            let plain = cipher.open(idx, last, &ct)?;
-            let want = remaining.min(limits::CHUNK_SIZE);
-            if plain.len() as u64 != want {
-                return Err(Error::Protocol("chunk has the wrong length"));
-            }
-            hasher.update(&plain);
-            file.write_all(&plain).await?;
-            remaining = remaining.saturating_sub(want);
-            let now = done.fetch_add(want, Ordering::Relaxed).saturating_add(want);
-            progress(now, total);
+            slot.send((idx, last, ct));
         }
-        if read_frame(&mut stream, MAX_FRAME).await?.is_some() {
-            return Err(Error::Protocol("data after the final chunk"));
-        }
-        file.flush().await?;
-        file.sync_all().await?;
-        Ok(hasher.finalize().as_bytes() == &expected_hash)
+        Ok(())
     }
     .await;
-
-    match result {
-        Ok(true) => {
-            if let Some(m) = target.entry.mtime {
-                let std_file = file.into_std().await;
-                if let Some(t) = SystemTime::UNIX_EPOCH.checked_add(Duration::from_secs(m)) {
-                    let _ = std_file.set_modified(t);
-                }
-                drop(std_file);
-            } else {
-                drop(file);
+    if read_res.is_err() {
+        abort_write.store(true, Ordering::SeqCst);
+    }
+    // Closing the queue lets the blocking writer flush and fsync in parallel
+    // while we check that no extra frame follows on the stream.
+    drop(chunk_tx);
+    let trailing_res: Result<()> = if read_res.is_ok() && !writer_failed_early {
+        match read_frame(&mut stream, MAX_FRAME).await {
+            Ok(Some(_)) => {
+                abort_write.store(true, Ordering::SeqCst);
+                Err(Error::Protocol("data after the final chunk"))
             }
-            // Never overwrite: if something appeared at the final path in
-            // the meantime, pick a fresh name next to it.
-            let name = target
-                .final_path
-                .file_name()
-                .and_then(|n| n.to_str())
-                .ok_or(Error::Protocol("bad file name"))?;
-            let placed = {
-                let (parent, name, tmp) = (parent.clone(), name.to_owned(), tmp_path.clone());
-                // Placing cannot be aborted once it runs, so it checks first
-                // whether the receive was given up meanwhile.
-                tokio::task::spawn_blocking(move || {
-                    if abandoned.load(Ordering::SeqCst) {
-                        return Err(Error::Stopped);
-                    }
-                    place_no_clobber(&tmp, &parent, &name)
-                })
-                .await
-                .map_err(|_| Error::Protocol("placement task failed"))?
-            };
-            // Placing moved or linked the file away; whatever is left at
-            // the temporary path is removed by the guard.
-            placed?;
-            part.keep = !tmp_path.exists();
-            Ok((index, true))
+            Ok(None) => Ok(()),
+            Err(e) => {
+                abort_write.store(true, Ordering::SeqCst);
+                Err(e)
+            }
         }
-        Ok(false) => {
-            drop(file);
-            Ok((index, false))
-        }
-        Err(e) => {
-            drop(file);
-            Err(e)
-        }
+    } else {
+        Ok(())
+    };
+    let write_res = writer_task
+        .await
+        .map_err(|_| Error::Protocol("write task failed"))?;
+    if writer_failed_early {
+        let (_, _) = write_res?;
+        return Err(Error::Protocol("write task stopped early"));
+    }
+    read_res?;
+    trailing_res?;
+    let (guard, hash_ok) = write_res?;
+
+    if hash_ok {
+        // Never overwrite: if something appeared at the final path in
+        // the meantime, pick a fresh name next to it.
+        let name = target
+            .final_path
+            .file_name()
+            .and_then(|n| n.to_str())
+            .ok_or(Error::Protocol("bad file name"))?
+            .to_owned();
+        let tmp = tmp_path.clone();
+        // Placing cannot be aborted once it runs: check `abandoned` first
+        // and keep `guard` inside the blocking task until placement finishes
+        // so neither `PartFile` nor `_permit` drops concurrently with it.
+        tokio::task::spawn_blocking(move || -> Result<()> {
+            let mut guard = guard;
+            if abandoned.load(Ordering::SeqCst) {
+                return Err(Error::Stopped);
+            }
+            place_no_clobber(&tmp, &parent, &name)?;
+            guard.part.keep = !tmp.exists();
+            Ok(())
+        })
+        .await
+        .map_err(|_| Error::Protocol("placement task failed"))??;
+        Ok((index, true))
+    } else {
+        Ok((index, false))
     }
 }
 
@@ -1415,8 +1551,8 @@ pub async fn accept(
                     // keeps hearing stops, cancels and the inactivity timer.
                     streams.spawn(async move {
                         let r = match permits.acquire_owned().await {
-                            Ok(_permit) => {
-                                receive_stream(stream, targets, claimed, ck, transfer_id, done, total, progress, abandoned).await
+                            Ok(permit) => {
+                                receive_stream(stream, permit, targets, claimed, ck, transfer_id, done, total, progress, abandoned).await
                             }
                             Err(_) => Err(Error::Protocol("semaphore closed")),
                         };
@@ -1468,10 +1604,14 @@ pub async fn accept(
     }
     .await;
     if let Err(e) = outcome {
-        // No file is placed from now on; let every stream task end and drop
-        // its partial file before the folders this transfer created go.
+        // No file is placed from now on; let every stream task and its
+        // blocking writer close and drop its partial file before the folders
+        // this transfer created go.
         abandoned.store(true, Ordering::SeqCst);
         streams.shutdown().await;
+        let _ = permits
+            .acquire_many(u32::try_from(PARALLEL_STREAMS).unwrap_or(4))
+            .await;
         return Err(e);
     }
     created.keep = true;
@@ -2020,5 +2160,361 @@ mod tests {
         // The probe leaves nothing behind.
         assert_eq!(std::fs::read_dir(&real).unwrap().count(), 0);
         std::fs::remove_dir_all(&base).unwrap();
+    }
+
+    /// #341: receiving a multi-chunk file over a fast LAN link into a folder
+    /// with high per-write syscall latency (such as Android Scoped Storage's
+    /// `/storage/emulated/0/Download` FUSE mount) must overlap network reads
+    /// with decryption, hashing and coalesced writes so throughput stays
+    /// within ~20% of the link rate instead of dropping below half.
+    #[tokio::test]
+    async fn receive_pipeline_keeps_up_with_slow_writes() {
+        // In debug builds unoptimized Rust crypto runs around 3–4 MiB/s, so
+        // pace the link below that ceiling (2 MiB/s over 12 MiB) so the link,
+        // not debug CPU, governs the baseline on slow CI runners; in release
+        // builds test 16 MiB over a 32 MiB/s (~33.6 MB/s) Wi-Fi LAN link.
+        let (chunks, link_rate) = if cfg!(debug_assertions) {
+            (12u64, 2 * limits::CHUNK_SIZE)
+        } else {
+            (16u64, 32 * limits::CHUNK_SIZE)
+        };
+        let size = chunks * limits::CHUNK_SIZE;
+        let payload = vec![0x5a_u8; usize::try_from(size).unwrap()];
+
+        let (raw_elapsed, raw_writes) = run_receive_bench(&payload, link_rate, None, "raw").await;
+        assert_eq!(raw_writes, 0);
+        // Model Android Scoped Storage FUSE latency where each uncoalesced
+        // write() syscall costs ~1.5× one 1 MiB link chunk (~47 ms at
+        // 32 MiB/s). Without pipelining + 4 MiB write coalescing, per-chunk
+        // writes drop receive speed below 60% of the raw rate (40% in debug);
+        // with 4 MiB coalescing overlapped on a blocking worker, writes are
+        // coalesced 4× and receive speed stays well above 72% (~89–93% ideal).
+        let link_chunk_s = limits::CHUNK_SIZE as f64 / link_rate as f64;
+        let fuse_syscall = Duration::from_secs_f64(link_chunk_s * 1.5);
+        let (slow_elapsed, fuse_writes) =
+            run_receive_bench(&payload, link_rate, Some(fuse_syscall), "fuse").await;
+
+        let expected_writes = usize::try_from(chunks.div_ceil(4)).unwrap();
+        assert_eq!(
+            fuse_writes, expected_writes,
+            "expected 4 MiB write coalescing ({expected_writes} writes for {chunks} MiB), got {fuse_writes}"
+        );
+
+        let raw_mib_s = (size as f64 / (1024.0 * 1024.0)) / raw_elapsed.as_secs_f64();
+        let slow_mib_s = (size as f64 / (1024.0 * 1024.0)) / slow_elapsed.as_secs_f64();
+        let ratio = slow_mib_s / raw_mib_s;
+        eprintln!(
+            "#341 benchmark ({size} B, fuse_syscall={fuse_syscall:?}, writes={fuse_writes}): \
+             raw={raw_mib_s:.2} MiB/s ({raw_elapsed:?}), \
+             fuse={slow_mib_s:.2} MiB/s ({slow_elapsed:?}) -> {:.1}% of raw rate",
+            ratio * 100.0,
+        );
+        assert!(
+            ratio >= 0.72,
+            "receive throughput {slow_mib_s:.2} MiB/s fell below 72% of raw rate {raw_mib_s:.2} MiB/s \
+             (ratio {:.1}%, raw {raw_elapsed:?}, fuse {slow_elapsed:?})",
+            ratio * 100.0,
+        );
+    }
+
+    async fn run_receive_bench(
+        payload: &[u8],
+        link_rate: u64,
+        write_delay: Option<Duration>,
+        tag: &str,
+    ) -> (Duration, usize) {
+        let dir = std::env::temp_dir().join(format!("td-fuse-bench-{tag}-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        let (src, dest) = (dir.join("src"), dir.join("dest"));
+        std::fs::create_dir_all(&src).unwrap();
+        std::fs::create_dir_all(&dest).unwrap();
+        std::fs::write(src.join("video.mp4"), payload).unwrap();
+        let (entries, _) = scan(&[src.join("video.mp4")]).unwrap();
+
+        // Key by `&dest` directly (not `canonicalize(&dest)`): `check_destination`
+        // intentionally returns the un-canonicalized path so macOS (`/var/…`)
+        // and Windows (`C:\…`) match `parent` inside `receive_stream`.
+        let calls = set_slow_write(&dest, write_delay);
+        let (sender, receiver) = crate::transport::testing::over_paced_link(link_rate).await;
+        let (schan, mut rchan, skeys, scert) = secure_pair(&sender, &receiver).await;
+
+        let start = tokio::time::Instant::now();
+        let send = {
+            let sender = sender.clone();
+            tokio::spawn(async move {
+                send_files(
+                    &sender,
+                    schan,
+                    &skeys,
+                    entries,
+                    false,
+                    Arc::new(|_, _| {}),
+                    &Stop::new(),
+                )
+                .await
+            })
+        };
+        let offer = receive_offer(&mut rchan, &scert).await.unwrap();
+        let received = accept(
+            &receiver,
+            rchan,
+            offer,
+            &dest,
+            Arc::new(|_, _| {}),
+            &Stop::new(),
+        )
+        .await
+        .unwrap();
+        let sent = send.await.unwrap().unwrap();
+        let elapsed = start.elapsed();
+        set_slow_write(&dest, None);
+
+        assert_eq!((sent.files_ok, received.files_ok), (1, 1));
+        assert_eq!(
+            std::fs::metadata(dest.join("video.mp4")).unwrap().len(),
+            payload.len() as u64
+        );
+        let writes = calls.map_or(0, |c| c.load(Ordering::Relaxed));
+        let _ = std::fs::remove_dir_all(&dir);
+        (elapsed, writes)
+    }
+
+    type SlowWriteEntry = (Duration, Arc<std::sync::atomic::AtomicUsize>);
+
+    static SLOW_WRITE_DIRS: std::sync::LazyLock<
+        std::sync::Mutex<std::collections::HashMap<PathBuf, SlowWriteEntry>>,
+    > = std::sync::LazyLock::new(|| std::sync::Mutex::new(std::collections::HashMap::new()));
+
+    fn set_slow_write(
+        dir: &Path,
+        delay: Option<Duration>,
+    ) -> Option<Arc<std::sync::atomic::AtomicUsize>> {
+        let mut map = SLOW_WRITE_DIRS.lock().ok()?;
+        match delay {
+            Some(d) => {
+                let calls = Arc::new(std::sync::atomic::AtomicUsize::new(0));
+                map.insert(dir.to_path_buf(), (d, Arc::clone(&calls)));
+                Some(calls)
+            }
+            None => {
+                map.remove(dir);
+                None
+            }
+        }
+    }
+
+    pub(super) fn slow_write(dir: &Path) -> Option<SlowWriteEntry> {
+        SLOW_WRITE_DIRS
+            .lock()
+            .ok()
+            .and_then(|map| map.get(dir).cloned())
+    }
+
+    /// Corrupt ciphertext on chunk 0 of a multi-chunk file aborts the stream
+    /// read immediately (even if the sender stalls before chunk 1) and removes
+    /// both the `.totaldrop-*.part` file and empty created subdirectories.
+    #[tokio::test]
+    async fn pipeline_cleans_up_on_corrupt_early_chunk() {
+        let (sender, receiver) = crate::transport::testing::over_paced_link(50_000_000).await;
+        let (mut schan, mut rchan, skeys, scert) = secure_pair(&sender, &receiver).await;
+        let dest = std::env::temp_dir().join(format!("td-corrupt-early-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dest);
+        std::fs::create_dir_all(&dest).unwrap();
+
+        let transfer_id = [0x11; 16];
+        let ck = ContentKey::generate().unwrap();
+        let size = 2 * limits::CHUNK_SIZE;
+        let manifest = Manifest {
+            transfer_id,
+            entries: vec![
+                Entry {
+                    path: vec!["sub".into()],
+                    kind: EntryKind::Dir,
+                    size: 0,
+                    hash: None,
+                    mtime: None,
+                },
+                Entry {
+                    path: vec!["sub".into(), "broken.bin".into()],
+                    kind: EntryKind::File,
+                    size,
+                    hash: Some([0x22; 32]),
+                    mtime: None,
+                },
+            ],
+            total_size: size,
+            chunk_size: limits::CHUNK_SIZE,
+        };
+        let signature = skeys.sign(&manifest.signed_bytes());
+        send_control(
+            &mut schan.sealer,
+            &mut schan.send,
+            &Control::Offer {
+                manifest,
+                content_key: *ck.as_bytes(),
+                signature,
+                progress: false,
+                text: false,
+            },
+        )
+        .await
+        .unwrap();
+
+        let peer = tokio::spawn(async move {
+            let (_reader, mut ctl_rx) = control_reader(schan.opener, schan.recv);
+            let _ = ctl_rx.recv().await;
+            let mut uni = sender.open_uni().await.unwrap();
+            let hdr = DataHeader {
+                transfer_id,
+                entry: 1,
+                first_chunk: 0,
+            };
+            write_frame(&mut uni, &hdr.encode()).await.unwrap();
+            // Invalid AEAD tag on chunk 0, then stall without sending chunk 1.
+            write_frame(&mut uni, &vec![0xfe_u8; CHUNK_SIZE + TAG_SIZE])
+                .await
+                .unwrap();
+            tokio::time::sleep(Duration::from_secs(30)).await;
+            let _ = uni;
+        });
+
+        let offer = receive_offer(&mut rchan, &scert).await.unwrap();
+        let err = tokio::time::timeout(
+            Duration::from_secs(5),
+            accept(
+                &receiver,
+                rchan,
+                offer,
+                &dest,
+                Arc::new(|_, _| {}),
+                &Stop::new(),
+            ),
+        )
+        .await
+        .unwrap()
+        .unwrap_err();
+        peer.abort();
+
+        assert!(
+            matches!(err, Error::Protocol(_)),
+            "unexpected error: {err:?}"
+        );
+        assert!(
+            names(&dest).is_empty(),
+            "leftover files: {:?}",
+            names(&dest)
+        );
+        let _ = std::fs::remove_dir_all(&dest);
+    }
+
+    /// Extra data after the final chunk fails with a protocol error and leaves
+    /// neither `.totaldrop-*.part` files nor empty created folders behind.
+    #[tokio::test]
+    async fn pipeline_cleans_up_on_trailing_data() {
+        let (sender, receiver) =
+            crate::transport::testing::over_slow_relay(Duration::from_millis(1)).await;
+        let (mut schan, mut rchan, skeys, scert) = secure_pair(&sender, &receiver).await;
+        let dest = std::env::temp_dir().join(format!("td-trailing-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dest);
+        std::fs::create_dir_all(&dest).unwrap();
+
+        let transfer_id = [0x33; 16];
+        let ck = ContentKey::generate().unwrap();
+        let plain = b"sixteen-byte-msg";
+        let manifest = Manifest {
+            transfer_id,
+            entries: vec![
+                Entry {
+                    path: vec!["sub".into()],
+                    kind: EntryKind::Dir,
+                    size: 0,
+                    hash: None,
+                    mtime: None,
+                },
+                Entry {
+                    path: vec!["sub".into(), "extra.bin".into()],
+                    kind: EntryKind::File,
+                    size: plain.len() as u64,
+                    hash: Some(*blake3::hash(plain).as_bytes()),
+                    mtime: None,
+                },
+            ],
+            total_size: plain.len() as u64,
+            chunk_size: limits::CHUNK_SIZE,
+        };
+        let signature = skeys.sign(&manifest.signed_bytes());
+        send_control(
+            &mut schan.sealer,
+            &mut schan.send,
+            &Control::Offer {
+                manifest,
+                content_key: *ck.as_bytes(),
+                signature,
+                progress: false,
+                text: false,
+            },
+        )
+        .await
+        .unwrap();
+
+        let peer = tokio::spawn(async move {
+            let (_reader, mut ctl_rx) = control_reader(schan.opener, schan.recv);
+            let _ = ctl_rx.recv().await;
+            let mut uni = sender.open_uni().await.unwrap();
+            let hdr = DataHeader {
+                transfer_id,
+                entry: 1,
+                first_chunk: 0,
+            };
+            let cipher = EntryCipher::new(&ck, &transfer_id, 1);
+            let ct = cipher.seal(0, true, plain).unwrap();
+            write_frame(&mut uni, &hdr.encode()).await.unwrap();
+            write_frame(&mut uni, &ct).await.unwrap();
+            write_frame(&mut uni, b"unexpected").await.unwrap();
+            let _ = uni.finish();
+            tokio::time::sleep(Duration::from_secs(5)).await;
+        });
+
+        let offer = receive_offer(&mut rchan, &scert).await.unwrap();
+        let err = accept(
+            &receiver,
+            rchan,
+            offer,
+            &dest,
+            Arc::new(|_, _| {}),
+            &Stop::new(),
+        )
+        .await
+        .unwrap_err();
+        peer.abort();
+
+        assert!(
+            matches!(err, Error::Protocol("data after the final chunk")),
+            "unexpected error: {err:?}"
+        );
+        assert!(
+            names(&dest).is_empty(),
+            "leftover files: {:?}",
+            names(&dest)
+        );
+        let _ = std::fs::remove_dir_all(&dest);
+    }
+
+    /// A file whose decrypted bytes do not match its manifest BLAKE3 hash is
+    /// discarded without placing it or leaving a `.totaldrop-*.part` file.
+    #[tokio::test]
+    async fn pipeline_cleans_up_on_hash_mismatch() {
+        let bad = bytes_entry(&["tampered.bin"], b"actual bytes", [0xaa; 32]);
+        let (_, report, sent, dest) = send_text(vec![bad], false, Take::Saved, "bad-hash").await;
+        assert_eq!((report.files_ok, report.files_failed), (0, 1));
+        assert!(!dest.join("tampered.bin").exists());
+        assert!(
+            names(&dest).is_empty(),
+            "leftover files: {:?}",
+            names(&dest)
+        );
+        let sent = sent.unwrap();
+        assert_eq!((sent.files_ok, sent.files_failed), (0, 1));
+        let _ = std::fs::remove_dir_all(&dest);
     }
 }

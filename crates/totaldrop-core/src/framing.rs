@@ -9,9 +9,9 @@ use crate::error::{Error, Result};
 
 /// Write one frame: LEB128 length, then the bytes.
 pub async fn write_frame(send: &mut quinn::SendStream, data: &[u8]) -> Result<()> {
-    let mut buf = encode_length(data.len());
-    buf.extend_from_slice(data);
-    send.write_all(&buf).await?;
+    let prefix = encode_length(data.len());
+    send.write_all(&prefix).await?;
+    send.write_all(data).await?;
     Ok(())
 }
 
