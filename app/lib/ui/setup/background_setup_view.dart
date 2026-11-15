@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../data/background_access.dart';
 import '../../l10n/app_localizations.dart';
+import '../core/common.dart';
 import '../core/theme.dart';
 
 /// Asks the person to lift the battery restrictions that stop a transfer
@@ -86,8 +87,8 @@ class _BackgroundSetupViewState extends State<BackgroundSetupView>
     return Scaffold(
       appBar: widget.firstRun ? null : AppBar(),
       body: SafeArea(
-        child: ListView(
-          padding: EdgeInsets.fromLTRB(24, widget.firstRun ? 24 : 0, 24, 24),
+        child: ColumnListView(
+          top: widget.firstRun ? 24 : 0,
           children: [
             Icon(
               Icons.battery_charging_full_rounded,
