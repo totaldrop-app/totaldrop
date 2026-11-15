@@ -124,8 +124,8 @@ function page(tag, body, d) {
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>${esc(s("meta.privacy.title"))}</title>
   <meta name="description" content="${esc(s("meta.privacy.desc"))}">
-  <meta name="theme-color" content="#F4F2FB" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#140E33" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#F7F7F5" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0F1116" media="(prefers-color-scheme: dark)">
   <link rel="canonical" href="${url}">
 ${alternates}
   <link rel="alternate" hreflang="x-default" href="${SITE}/privacy">

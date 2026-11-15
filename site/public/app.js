@@ -77,8 +77,14 @@
       if (translated) { el.removeAttribute("lang"); el.removeAttribute("dir"); } else { el.lang = "en"; el.dir = "ltr"; }
     });
     labelled.forEach((el) => {
-      const label = t(el.dataset.i18nLabel);
-      if (typeof label === "string") el.setAttribute("aria-label", label);
+      const key = el.dataset.i18nLabel;
+      const translated = tag === "en" || has(d, key);
+      const label = t(key);
+      if (typeof label === "string") {
+        el.setAttribute("aria-label", label);
+        if (el.getAttribute("alt")) el.setAttribute("alt", label);
+      }
+      if (translated) { el.removeAttribute("lang"); el.removeAttribute("dir"); } else { el.lang = "en"; el.dir = "ltr"; }
     });
     document.documentElement.lang = tag;
     document.documentElement.dir = isRtl(tag) ? "rtl" : "ltr";
@@ -199,4 +205,24 @@
       }
     });
   });
+
+  // Home page specimen: let visitors cycle real BIP-39 transfer codes and
+  // four-word verification sets without contacting any server.
+  const cycle = document.querySelector("#code-cycle");
+  const sampleCode = document.querySelector("#hero-code");
+  const sampleWords = document.querySelectorAll("#hero-words li");
+  if (cycle && sampleCode && sampleWords.length === 4) {
+    const samples = [
+      ["7-harbor-rocket", ["north", "valley", "river", "forest"]],
+      ["4-planet-silver", ["meadow", "anchor", "bridge", "velvet"]],
+      ["12-ocean-marble", ["canyon", "orbit", "timber", "garden"]]
+    ];
+    let idx = 0;
+    cycle.hidden = false;
+    cycle.addEventListener("click", () => {
+      idx = (idx + 1) % samples.length;
+      sampleCode.textContent = samples[idx][0];
+      samples[idx][1].forEach((w, i) => { sampleWords[i].textContent = w; });
+    });
+  }
 })();
