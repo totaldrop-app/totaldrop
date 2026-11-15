@@ -26,9 +26,10 @@
 # too. A dependency update that matters to the CLI, a security fix say,
 # still calls for a new CLI version; that is the releaser's call.
 #
-# Every version must have the beta form 0.MINOR.PATCH-beta.N; from 1.0 this
-# check has to learn the final form. Needs the full history and the tags
-# (actions/checkout with fetch-depth: 0).
+# Every 0.x version has the beta form 0.MINOR.PATCH-beta.N; from 1.0.0 full
+# SemVer 2.0 (MAJOR.MINOR.PATCH and -{alpha,beta,rc}.N) is ordered too
+# (docs/kararlar/0026-automated-component-versioning.md). Needs the full
+# history and the tags (actions/checkout with fetch-depth: 0).
 #
 #   packaging/check-cli-version.sh [REV]     (default: HEAD)
 set -eu
@@ -49,39 +50,73 @@ version_at() {
   git show "$1:Cargo.toml" 2>/dev/null |
     sed -n '/^\[workspace\.package\]/,/^\[/s/^version = "\(.*\)"/\1/p' | head -1
 }
-# "MINOR PATCH N" of a 0.MINOR.PATCH-beta.N version, or nothing.
+# "MAJOR MINOR PATCH RANK PRE" of a valid version (RANK: alpha=1, beta=2,
+# rc=3, final=4), or nothing. Before 1.0 only 0.MINOR.PATCH-beta.N is valid.
 parts() {
-  printf '%s\n' "$1" | grep -Eq '^0\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)-beta\.[1-9][0-9]*$' || return 0
-  rest=${1#0.}
+  if printf '%s\n' "$1" | grep -Eq '^0\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)-beta\.[1-9][0-9]*$'; then
+    rest=${1#0.}
+    minor=${rest%%.*}
+    rest=${rest#*.}
+    echo "0 $minor ${rest%%-*} 2 ${rest##*.}"
+    return 0
+  fi
+  printf '%s\n' "$1" |
+    grep -Eq '^[1-9][0-9]*\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-(alpha|beta|rc)\.[1-9][0-9]*)?$' || return 0
+  base=${1%%-*}
+  major=${base%%.*}
+  rest=${base#*.}
   minor=${rest%%.*}
-  rest=${rest#*.}
-  echo "$minor ${rest%%-*} ${rest##*.}"
+  patch=${rest#*.}
+  if [ "$base" = "$1" ]; then
+    echo "$major $minor $patch 4 0"
+    return 0
+  fi
+  suf=${1#*-}
+  chan=${suf%%.*}
+  pre=${suf#*.}
+  case $chan in
+    alpha) rank=1 ;;
+    beta) rank=2 ;;
+    rc) rank=3 ;;
+    *) return 0 ;;
+  esac
+  echo "$major $minor $patch $rank $pre"
 }
-# Whether $1 > $2, both "MINOR PATCH N".
+# Whether $1 > $2, both "MAJOR MINOR PATCH RANK PRE".
 newer() {
   # shellcheck disable=SC2086
   set -- $1 $2
-  [ "$1" -gt "$4" ] && return 0
-  [ "$1" -lt "$4" ] && return 1
-  [ "$2" -gt "$5" ] && return 0
-  [ "$2" -lt "$5" ] && return 1
-  [ "$3" -gt "$6" ]
+  [ "$1" -gt "$6" ] && return 0
+  [ "$1" -lt "$6" ] && return 1
+  [ "$2" -gt "$7" ] && return 0
+  [ "$2" -lt "$7" ] && return 1
+  [ "$3" -gt "$8" ] && return 0
+  [ "$3" -lt "$8" ] && return 1
+  [ "$4" -gt "$9" ] && return 0
+  [ "$4" -lt "$9" ] && return 1
+  [ "$5" -gt "${10}" ]
 }
 # The checked version's parts at REV, or at a release tag; fails closed.
 checked_parts() {
   ver=$(version_at "$1")
   [ -n "$ver" ] || err "no [workspace.package] version in Cargo.toml at $1"
   p=$(parts "$ver")
-  [ -n "$p" ] || err "version '$ver' at $1 is not of the form 0.MINOR.PATCH-beta.N"
+  [ -n "$p" ] || err "version '$ver' at $1 is not of the form 0.MINOR.PATCH-beta.N or MAJOR.MINOR.PATCH[-{alpha,beta,rc}.N]"
   echo "$p"
 }
 
 version=$(version_at "$rev")
 v=$(checked_parts "$rev") || exit 1
 
-# The releases before REV; a tag on REV itself is the one being made.
+# The releases before REV across all merge parents; a tag on REV itself is the
+# one being made.
 git rev-parse --verify -q "$rev^" >/dev/null || err "'$rev' has no parent, so no release before it"
-tags=$(git tag --merged "$rev^" -l 'linux-v*' 'cli-v*')
+rev_commit=$(git rev-parse "$rev^{commit}")
+tags=
+for cand in $(git tag --merged "$rev_commit" -l 'linux-v*' 'cli-v*' 'core-v*'); do
+  [ "$(git rev-parse "$cand^{commit}")" = "$rev_commit" ] && continue
+  tags="$tags $cand"
+done
 [ -n "$tags" ] || err "no linux-v* or cli-v* tag before '$rev'"
 
 top="" top_ver="" top_tag=""
