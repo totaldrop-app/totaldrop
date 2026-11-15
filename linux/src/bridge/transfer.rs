@@ -385,11 +385,11 @@ fn kind(e: &totaldrop_core::Error) -> &'static str {
         E::Stopped => "Stopped",
         E::Code(_) => "InvalidCode",
         E::Rendezvous(_) if e.is_bad_server_address() => "BadServer",
-        E::Rendezvous(_) => "Server",
+        E::Rendezvous(_) | E::RendezvousTimeout => "Server",
         E::Connect(_) => "Connect",
         E::InvalidOffer(_) => "InvalidOffer",
         E::Io(_) => "Storage",
-        _ => "Other",
+        E::Protocol(_) | E::Random => "Other",
     }
 }
 
@@ -1104,5 +1104,13 @@ mod tests {
     fn a_bad_server_address_is_named() {
         let e = E::Rendezvous("the server address must start with wss://".into());
         assert_eq!(kind(&e), "BadServer");
+    }
+
+    #[test]
+    fn rendezvous_timeout_reports_server_with_timed_out_cause() {
+        assert_eq!(kind(&E::RendezvousTimeout), "Server");
+        assert_eq!(connect_kind(&E::RendezvousTimeout), "Server");
+        assert_eq!(send_kind(&E::RendezvousTimeout), "Server");
+        assert_eq!(E::RendezvousTimeout.cause().as_str(), "TimedOut");
     }
 }

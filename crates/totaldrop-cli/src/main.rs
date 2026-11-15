@@ -767,7 +767,7 @@ fn error_key(e: &totaldrop_core::Error, sending: bool) -> &'static str {
         E::Rendezvous(r) if sending && r == "mailbox expired" => "cliErrCodeExpired",
         E::Rendezvous(_) if e.is_code_not_in_use() => "cliErrCodeNotInUse",
         E::Rendezvous(_) if e.is_bad_server_address() => "cliErrBadServer",
-        E::Rendezvous(_) => "cliErrServer",
+        E::Rendezvous(_) | E::RendezvousTimeout => "cliErrServer",
         E::Connect(_) => "cliErrConnect",
         E::InvalidOffer(_) => "cliErrInvalidOffer",
         E::Io(_) => "cliErrStorage",
@@ -1035,6 +1035,7 @@ mod tests {
             Error::Io(std::io::Error::other("x")),
             Error::Code(totaldrop_proto::TransferCode::parse("x").unwrap_err()),
             Error::Random,
+            Error::RendezvousTimeout,
         ];
         let strings = |tag: &str| {
             Strings::new(
@@ -1079,6 +1080,12 @@ mod tests {
         // A failed claim of the sender's own number is not that.
         let claim = Error::Rendezvous("unknown nameplate".into());
         assert_eq!(error_key(&claim, true), "cliErrCodeNotInUse");
+        assert_eq!(
+            Error::RendezvousTimeout.cause(),
+            totaldrop_core::Cause::TimedOut
+        );
+        assert_eq!(error_key(&Error::RendezvousTimeout, false), "cliErrServer");
+        assert_eq!(error_key(&Error::RendezvousTimeout, true), "cliErrServer");
     }
 
     /// The detail of an error can carry text the other side chose: the
