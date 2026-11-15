@@ -269,6 +269,50 @@ class TransferProgress extends StatelessWidget {
   }
 }
 
+/// Maximum width of a screen's main column on tablets, foldables and
+/// wide landscape windows, matching Linux's `Theme.columnWidth` (#545).
+const double maxColumnWidth = 560;
+
+/// Equal horizontal padding that keeps at least [minHorizontal] on each
+/// side on phones and centres a [maxColumnWidth] column on wider screens
+/// while keeping the full viewport scrollable (#545).
+EdgeInsets columnPadding(
+  double availableWidth, {
+  double minHorizontal = 24,
+  double top = 24,
+  double bottom = 24,
+}) {
+  final extra = math.max(
+    0.0,
+    (availableWidth - maxColumnWidth - minHorizontal * 2) / 2,
+  );
+  final h = minHorizontal + extra;
+  return EdgeInsets.fromLTRB(h, top, h, bottom);
+}
+
+/// A scrollable screen column constrained to [maxColumnWidth] on wide
+/// screens while keeping full-viewport scroll gestures (#545).
+class ColumnListView extends StatelessWidget {
+  const ColumnListView({
+    super.key,
+    required this.children,
+    this.top = 24,
+    this.bottom = 24,
+  });
+
+  final List<Widget> children;
+  final double top;
+  final double bottom;
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) => ListView(
+      padding: columnPadding(constraints.maxWidth, top: top, bottom: bottom),
+      children: children,
+    ),
+  );
+}
+
 /// A screen's content, centred, that scrolls when it is taller than the
 /// screen: with the largest text, a long language or "More information"
 /// open, nothing runs off the bottom (#322).
@@ -290,7 +334,12 @@ class CenteredScroll extends StatelessWidget {
         constraints: BoxConstraints(
           minHeight: math.max(0, constraints.maxHeight - padding.vertical),
         ),
-        child: Center(child: child),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: maxColumnWidth),
+            child: child,
+          ),
+        ),
       ),
     ),
   );

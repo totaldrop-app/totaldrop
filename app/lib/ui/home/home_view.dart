@@ -4,6 +4,7 @@
 import 'package:material_ui/material_ui.dart';
 
 import '../../l10n/app_localizations.dart';
+import '../core/common.dart';
 import '../core/mark.dart';
 import '../core/theme.dart';
 
@@ -34,8 +35,8 @@ class HomeView extends StatelessWidget {
         ],
       ),
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+        child: ColumnListView(
+          top: 0,
           children: [
             const Align(
               alignment: AlignmentDirectional.centerStart,
