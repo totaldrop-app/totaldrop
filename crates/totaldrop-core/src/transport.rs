@@ -494,53 +494,28 @@ fn endpoint_on(
     let reset_tokens = crate::path::ResetTokens::new()?;
     let (socket, pipes, fallback) =
         crate::path::PathSocket::with_reset_tokens(inner, reset_tokens.clone());
-    if let Ok(mut sockets) = SOCKETS.lock() {
-        sockets.retain(|(_, w)| w.is_alive());
-        sockets.push((*peer, fallback.downgrade()));
-    }
-    let mut endpoint = quinn::Endpoint::new_with_abstract_socket(
-        quinn::EndpointConfig::new(reset_tokens),
-        Some(server),
-        socket,
-        runtime,
-    )?;
+    let mut ep_config = quinn::EndpointConfig::new(reset_tokens);
+    ep_config.cid_generator(|| Box::new(crate::path::FixedCidGenerator));
+    let mut endpoint =
+        quinn::Endpoint::new_with_abstract_socket(ep_config, Some(server), socket, runtime)?;
     endpoint.set_default_client_config(client);
     Ok((endpoint, pipes, fallback))
 }
 
-static SOCKETS: std::sync::Mutex<Vec<([u8; 32], crate::path::FallbackWeak)>> =
-    std::sync::Mutex::new(Vec::new());
-
-/// Close `conn` with application reason `"stopped"`, arming its
-/// [`PathSocket`](crate::path::PathSocket) first when `unheard` is set so
-/// post-drain packets from the peer receive the saved `CONNECTION_CLOSE`
-/// instead of a stateless reset (#512).
-pub(crate) fn close_stopped(conn: &quinn::Connection, unheard: bool) {
-    if unheard
-        && conn.close_reason().is_none()
-        && let Some(peer) = peer_key_of(conn)
-    {
-        let fallback = SOCKETS.lock().ok().and_then(|mut sockets| {
-            sockets.retain(|(_, w)| w.is_alive());
-            sockets
-                .iter()
-                .rev()
-                .find(|(k, _)| k == &peer)
-                .and_then(|(_, w)| w.upgrade())
-        });
-        if let Some(fallback) = fallback {
-            fallback.arm_closing(conn.remote_address());
-        }
+/// Close `conn` with application reason `"stopped"`, finishing the closing
+/// watch on `fallback` so post-drain packets from an unacknowledged peer
+/// receive the saved `CONNECTION_CLOSE` instead of a stateless reset (#512,
+/// #555).
+pub(crate) fn close_stopped(
+    conn: &quinn::Connection,
+    fallback: Option<&crate::path::Fallback>,
+    unheard: bool,
+) {
+    if let Some(fallback) = fallback {
+        let arm = unheard && conn.close_reason().is_none();
+        fallback.finish_closing(arm, conn.remote_address());
     }
     conn.close(0u32.into(), b"stopped");
-}
-
-fn peer_key_of(conn: &quinn::Connection) -> Option<[u8; 32]> {
-    let any = conn.peer_identity()?;
-    let certs = any.downcast_ref::<Vec<CertificateDer<'static>>>()?;
-    let spki = certs.first()?.as_ref();
-    let key = spki.strip_prefix(&ED25519_SPKI_PREFIX)?;
-    <[u8; 32]>::try_from(key).ok()
 }
 
 /// The next incoming connection whose handshake completes; the pinned key
@@ -868,6 +843,12 @@ pub(crate) mod testing {
     pub(crate) struct Cut {
         pub(crate) outgoing: std::sync::atomic::AtomicBool,
         pub(crate) incoming: std::sync::atomic::AtomicBool,
+        outgoing_limit: std::sync::atomic::AtomicU64,
+        sent_after_arm: std::sync::atomic::AtomicU64,
+        incoming_limit: std::sync::atomic::AtomicU64,
+        rcvd_after_arm: std::sync::atomic::AtomicU64,
+        tripped_flag: std::sync::atomic::AtomicBool,
+        tripped: tokio::sync::Notify,
     }
 
     impl Cut {
@@ -876,6 +857,38 @@ pub(crate) mod testing {
                 .store(outgoing, std::sync::atomic::Ordering::SeqCst);
             self.incoming
                 .store(incoming, std::sync::atomic::Ordering::SeqCst);
+        }
+
+        /// Cut outgoing packets once `bytes` of UDP payload have been passed
+        /// to `try_send`, then wake [`Self::tripped`].
+        pub(crate) fn trip_outgoing_after(&self, bytes: u64) {
+            self.sent_after_arm
+                .store(0, std::sync::atomic::Ordering::SeqCst);
+            self.tripped_flag
+                .store(false, std::sync::atomic::Ordering::SeqCst);
+            self.outgoing_limit
+                .store(bytes, std::sync::atomic::Ordering::SeqCst);
+        }
+
+        /// Cut both directions once `bytes` of UDP payload have arrived via
+        /// `poll_recv`, then wake [`Self::tripped`].
+        pub(crate) fn trip_both_after_incoming(&self, bytes: u64) {
+            self.rcvd_after_arm
+                .store(0, std::sync::atomic::Ordering::SeqCst);
+            self.tripped_flag
+                .store(false, std::sync::atomic::Ordering::SeqCst);
+            self.incoming_limit
+                .store(bytes, std::sync::atomic::Ordering::SeqCst);
+        }
+
+        pub(crate) async fn tripped(&self) {
+            loop {
+                let notified = self.tripped.notified();
+                if self.tripped_flag.load(std::sync::atomic::Ordering::SeqCst) {
+                    return;
+                }
+                notified.await;
+            }
         }
     }
 
@@ -896,10 +909,33 @@ pub(crate) mod testing {
 
         fn try_send(&self, transmit: &quinn::udp::Transmit) -> std::io::Result<()> {
             if self.cut.outgoing.load(std::sync::atomic::Ordering::SeqCst) {
-                Ok(())
-            } else {
-                self.inner.try_send(transmit)
+                return Ok(());
             }
+            let limit = self
+                .cut
+                .outgoing_limit
+                .load(std::sync::atomic::Ordering::SeqCst);
+            if limit > 0 {
+                let len = u64::try_from(transmit.contents.len()).unwrap_or(0);
+                let prev = self
+                    .cut
+                    .sent_after_arm
+                    .fetch_add(len, std::sync::atomic::Ordering::SeqCst);
+                if prev.saturating_add(len) >= limit {
+                    self.cut
+                        .outgoing_limit
+                        .store(0, std::sync::atomic::Ordering::SeqCst);
+                    self.cut
+                        .outgoing
+                        .store(true, std::sync::atomic::Ordering::SeqCst);
+                    self.cut
+                        .tripped_flag
+                        .store(true, std::sync::atomic::Ordering::SeqCst);
+                    self.cut.tripped.notify_waiters();
+                    return Ok(());
+                }
+            }
+            self.inner.try_send(transmit)
         }
 
         fn poll_recv(
@@ -910,8 +946,40 @@ pub(crate) mod testing {
         ) -> std::task::Poll<std::io::Result<usize>> {
             loop {
                 match self.inner.poll_recv(cx, bufs, meta) {
-                    std::task::Poll::Ready(Ok(_))
-                        if self.cut.incoming.load(std::sync::atomic::Ordering::SeqCst) => {}
+                    std::task::Poll::Ready(Ok(n)) => {
+                        if self.cut.incoming.load(std::sync::atomic::Ordering::SeqCst) {
+                            continue;
+                        }
+                        let limit = self
+                            .cut
+                            .incoming_limit
+                            .load(std::sync::atomic::Ordering::SeqCst);
+                        if limit > 0 {
+                            let got = meta
+                                .get(..n)
+                                .unwrap_or_default()
+                                .iter()
+                                .fold(0u64, |acc, m| {
+                                    acc.saturating_add(u64::try_from(m.len).unwrap_or(0))
+                                });
+                            let prev = self
+                                .cut
+                                .rcvd_after_arm
+                                .fetch_add(got, std::sync::atomic::Ordering::SeqCst);
+                            if prev.saturating_add(got) >= limit {
+                                self.cut
+                                    .incoming_limit
+                                    .store(0, std::sync::atomic::Ordering::SeqCst);
+                                self.cut.set(true, true);
+                                self.cut
+                                    .tripped_flag
+                                    .store(true, std::sync::atomic::Ordering::SeqCst);
+                                self.cut.tripped.notify_waiters();
+                                continue;
+                            }
+                        }
+                        return std::task::Poll::Ready(Ok(n));
+                    }
                     other => return other,
                 }
             }
@@ -934,17 +1002,22 @@ pub(crate) mod testing {
         }
     }
 
+    pub(crate) struct CuttableDirect {
+        pub(crate) sender_conn: quinn::Connection,
+        pub(crate) receiver_conn: quinn::Connection,
+        pub(crate) sender_ep: quinn::Endpoint,
+        pub(crate) receiver_ep: quinn::Endpoint,
+        pub(crate) sender_cut: Arc<Cut>,
+        pub(crate) receiver_cut: Arc<Cut>,
+        pub(crate) sender_fallback: crate::path::Fallback,
+        pub(crate) receiver_fallback: crate::path::Fallback,
+    }
+
     /// Direct sender and receiver connections whose sockets can be cut off,
-    /// together with the endpoints so a test can wait for a closed
-    /// connection to drain (#512).
-    pub(crate) async fn over_cuttable_direct() -> (
-        quinn::Connection,
-        quinn::Connection,
-        quinn::Endpoint,
-        quinn::Endpoint,
-        Arc<Cut>,
-        Arc<Cut>,
-    ) {
+    /// together with their endpoints and [`Fallback`](crate::path::Fallback)
+    /// handles so a test can wait for a closed connection to drain (#512,
+    /// #555).
+    pub(crate) async fn over_cuttable_direct() -> CuttableDirect {
         let (ka, kb) = (
             EndpointKey::generate().unwrap(),
             EndpointKey::generate().unwrap(),
@@ -956,7 +1029,7 @@ pub(crate) mod testing {
         let runtime = quinn::default_runtime().unwrap();
         let sender_cut = Arc::new(Cut::default());
         let receiver_cut = Arc::new(Cut::default());
-        let (sender, _, _) = endpoint_on(
+        let (sender_ep, _, sender_fallback) = endpoint_on(
             Arc::new(Cuttable {
                 inner: runtime.wrap_udp_socket(sa).unwrap(),
                 cut: sender_cut.clone(),
@@ -965,7 +1038,7 @@ pub(crate) mod testing {
             &kb.public(),
         )
         .unwrap();
-        let (receiver, _, _) = endpoint_on(
+        let (receiver_ep, _, receiver_fallback) = endpoint_on(
             Arc::new(Cuttable {
                 inner: runtime.wrap_udp_socket(sb).unwrap(),
                 cut: receiver_cut.clone(),
@@ -986,7 +1059,7 @@ pub(crate) mod testing {
             relay_only: false,
         };
         let recv_side = async {
-            let conn = receiver_connection(&receiver, &to_sender, wait)
+            let conn = receiver_connection(&receiver_ep, &to_sender, wait)
                 .await
                 .unwrap();
             let (mut send, _recv) = conn.open_bi().await.unwrap();
@@ -994,20 +1067,24 @@ pub(crate) mod testing {
             (conn, send)
         };
         let send_side = async {
-            sender_connection(&sender, &to_receiver, wait)
+            sender_connection(&sender_ep, &to_receiver, wait)
                 .await
                 .unwrap()
         };
         let ((receiver_conn, _ctl), (sender_conn, _send, _recv)) =
             tokio::join!(recv_side, send_side);
-        (
+        sender_fallback.watch_closing(sender_conn.remote_address());
+        receiver_fallback.watch_closing(receiver_conn.remote_address());
+        CuttableDirect {
             sender_conn,
             receiver_conn,
-            sender,
-            receiver,
+            sender_ep,
+            receiver_ep,
             sender_cut,
             receiver_cut,
-        )
+            sender_fallback,
+            receiver_fallback,
+        }
     }
 }
 

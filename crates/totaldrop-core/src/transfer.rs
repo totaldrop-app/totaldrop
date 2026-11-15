@@ -76,35 +76,60 @@ pub(crate) fn peer_closed(conn: &quinn::Connection) -> bool {
     )
 }
 
+/// Write `notice` and wait until the peer acknowledges our FIN (`Ok(None)`) or
+/// ends the stream with `STOP_SENDING` (`Ok(Some(_))` or `WriteError::Stopped`),
+/// returning `true` when the peer already heard or ended the stream (#555).
+async fn send_stop_notice(
+    sealer: &mut Sealer,
+    send: &mut quinn::SendStream,
+    notice: &Control,
+) -> bool {
+    let Ok(ct) = sealer.seal(&notice.encode()) else {
+        return false;
+    };
+    let mut buf = totaldrop_proto::wire::encode_length(ct.len());
+    buf.extend_from_slice(&ct);
+    match send.write_all(&buf).await {
+        Ok(()) => {
+            let _ = send.finish();
+            send.stopped().await.is_ok()
+        }
+        Err(quinn::WriteError::Stopped(_)) => true,
+        Err(_) => false,
+    }
+}
+
 /// Tell the other side this one stopped, best effort and briefly, and close
 /// the connection unless the peer already closed it. Returns the error the
 /// stopped side reports.
 pub(crate) async fn tell_stopped(
     conn: &quinn::Connection,
+    fallback: Option<&crate::path::Fallback>,
     sealer: &mut Sealer,
     send: &mut quinn::SendStream,
     transfer_id: [u8; 16],
 ) -> Error {
+    if let Some(fallback) = fallback {
+        fallback.watch_closing(conn.remote_address());
+    }
     let notice = Control::Cancel {
         transfer_id,
         reason: "stopped".into(),
     };
     let heard = matches!(
         tokio::time::timeout(STOP_NOTICE, async {
-            send_control(sealer, send, &notice).await?;
-            let _ = send.finish();
-            // Give the message a moment to leave before the connection closes.
-            let res = send.stopped().await;
-            if matches!(res, Ok(None)) {
+            let heard = send_stop_notice(sealer, send, &notice).await;
+            if heard {
+                // Let the peer's close arrive so passive draining can be skipped.
                 let _ = tokio::time::timeout(Duration::from_millis(500), conn.closed()).await;
             }
-            Ok::<_, Error>(res)
+            heard
         })
         .await,
-        Ok(Ok(Ok(None)))
+        Ok(true)
     );
     if !peer_closed(conn) {
-        crate::transport::close_stopped(conn, !heard);
+        crate::transport::close_stopped(conn, fallback, !heard);
     }
     Error::Stopped
 }
@@ -538,12 +563,26 @@ pub struct SendReport {
 /// Offer `entries` and send them over an established session.
 pub async fn send_files(
     conn: &quinn::Connection,
+    chan: SecureChannel,
+    keys: &DeviceKeys,
+    entries: Vec<SourceEntry>,
+    text: bool,
+    progress: Progress,
+    stop: &Stop,
+) -> Result<SendReport> {
+    send_files_on(conn, chan, keys, entries, text, progress, stop, None).await
+}
+
+#[allow(clippy::too_many_arguments)]
+pub(crate) async fn send_files_on(
+    conn: &quinn::Connection,
     mut chan: SecureChannel,
     keys: &DeviceKeys,
     entries: Vec<SourceEntry>,
     text: bool,
     progress: Progress,
     stop: &Stop,
+    fallback: Option<&crate::path::Fallback>,
 ) -> Result<SendReport> {
     let transfer_id = totaldrop_crypto::new_transfer_id()?;
     let ck = ContentKey::generate()?;
@@ -576,7 +615,7 @@ pub async fn send_files(
     let decision = tokio::select! {
         biased;
         () = stop.stopped() => {
-            return Err(tell_stopped(conn, &mut sealer, &mut send, transfer_id).await);
+            return Err(tell_stopped(conn, fallback, &mut sealer, &mut send, transfer_id).await);
         }
         msg = ctl_rx.recv() => match msg {
             Some(m) => m?,
@@ -648,12 +687,15 @@ pub async fn send_files(
         tokio::select! {
             biased;
             () = stop.stopped() => {
+                if let Some(fallback) = fallback {
+                    fallback.watch_closing(conn.remote_address());
+                }
                 // Every task hears the stop too and resets its stream, which
                 // drops what has not been sent or read yet. Let them reset in
                 // parallel while Control::Cancel is on the wire, and abort any
                 // straggler once `tell_stopped` has closed the connection (#651).
                 let e = tokio::select! {
-                    e = tell_stopped(conn, &mut sealer, &mut send, transfer_id) => e,
+                    e = tell_stopped(conn, fallback, &mut sealer, &mut send, transfer_id) => e,
                     () = async {
                         while tasks.join_next().await.is_some() {}
                         std::future::pending::<()>().await;
@@ -1185,9 +1227,19 @@ pub fn check_destination(dest: &Path) -> Result<PathBuf> {
 /// dropped: the report then counts a failed file and holds no text.
 pub async fn accept_text(
     conn: &quinn::Connection,
+    chan: SecureChannel,
+    offer: VerifiedOffer,
+    stop: &Stop,
+) -> Result<ReceiveReport> {
+    accept_text_on(conn, chan, offer, stop, None).await
+}
+
+pub(crate) async fn accept_text_on(
+    conn: &quinn::Connection,
     mut chan: SecureChannel,
     offer: VerifiedOffer,
     stop: &Stop,
+    fallback: Option<&crate::path::Fallback>,
 ) -> Result<ReceiveReport> {
     let transfer_id = offer.manifest.transfer_id;
     let entry = match offer.manifest.entries.first() {
@@ -1195,7 +1247,14 @@ pub async fn accept_text(
         _ => return Err(Error::Protocol("not a text")),
     };
     if stop.is_stopped() {
-        return Err(tell_stopped(conn, &mut chan.sealer, &mut chan.send, transfer_id).await);
+        return Err(tell_stopped(
+            conn,
+            fallback,
+            &mut chan.sealer,
+            &mut chan.send,
+            transfer_id,
+        )
+        .await);
     }
     // One chunk at most: no progress reports are needed.
     send_control(
@@ -1224,7 +1283,7 @@ pub async fn accept_text(
     let got = tokio::select! {
         biased;
         () = stop.stopped() => {
-            return Err(tell_stopped(conn, &mut sealer, &mut send, transfer_id).await);
+            return Err(tell_stopped(conn, fallback, &mut sealer, &mut send, transfer_id).await);
         }
         msg = ctl_rx.recv() => match msg {
             Some(Ok(Control::Cancel { reason, .. })) => return Err(Error::Cancelled(reason)),
@@ -1318,6 +1377,19 @@ pub async fn accept(
     progress: Progress,
     stop: &Stop,
 ) -> Result<ReceiveReport> {
+    accept_on(conn, chan, offer, dest, progress, stop, None).await
+}
+
+#[allow(clippy::too_many_arguments)]
+pub(crate) async fn accept_on(
+    conn: &quinn::Connection,
+    chan: SecureChannel,
+    offer: VerifiedOffer,
+    dest: &Path,
+    progress: Progress,
+    stop: &Stop,
+    fallback: Option<&crate::path::Fallback>,
+) -> Result<ReceiveReport> {
     accept_with_hooks(
         conn,
         chan,
@@ -1325,6 +1397,7 @@ pub async fn accept(
         dest,
         progress,
         stop,
+        fallback,
         |p| fs4::available_space(p),
         probe_destination_writable,
         |_| {},
@@ -1386,6 +1459,7 @@ async fn accept_with_hooks<S, P, D>(
     dest: &Path,
     progress: Progress,
     stop: &Stop,
+    fallback: Option<&crate::path::Fallback>,
     space_fn: S,
     probe_fn: P,
     mut on_dir: D,
@@ -1397,7 +1471,14 @@ where
 {
     let transfer_id = offer.manifest.transfer_id;
     if stop.is_stopped() {
-        return Err(tell_stopped(conn, &mut chan.sealer, &mut chan.send, transfer_id).await);
+        return Err(tell_stopped(
+            conn,
+            fallback,
+            &mut chan.sealer,
+            &mut chan.send,
+            transfer_id,
+        )
+        .await);
     }
 
     let dest_owned = dest.to_path_buf();
@@ -1532,7 +1613,7 @@ where
         biased;
         () = stop.stopped() => {
             let (e, _) = tokio::join!(
-                tell_stopped(conn, &mut chan.sealer, &mut chan.send, transfer_id),
+                tell_stopped(conn, fallback, &mut chan.sealer, &mut chan.send, transfer_id),
                 tokio::time::timeout(STOP_NOTICE, &mut prep),
             );
             return Err(e);
@@ -1542,7 +1623,14 @@ where
 
     let (offer, renames, targets, wanted, mut created) = match prep {
         PrepareOutcome::Stopped => {
-            return Err(tell_stopped(conn, &mut chan.sealer, &mut chan.send, transfer_id).await);
+            return Err(tell_stopped(
+                conn,
+                fallback,
+                &mut chan.sealer,
+                &mut chan.send,
+                transfer_id,
+            )
+            .await);
         }
         PrepareOutcome::NoSpace(io_err) => {
             return Err(reject_no_space(conn, &mut chan, transfer_id, io_err).await);
@@ -1628,7 +1716,7 @@ where
                     // Cancel and close first: dropping a stream that is still
                     // reading tells the sender to stop sending, which would
                     // reach it before the cancel.
-                    let e = tell_stopped(conn, &mut sealer, &mut send, transfer_id).await;
+                    let e = tell_stopped(conn, fallback, &mut sealer, &mut send, transfer_id).await;
                     streams.abort_all();
                     return Err(e);
                 }
@@ -2021,28 +2109,34 @@ mod tests {
         let _ = std::fs::remove_dir_all(&dir);
     }
 
-    /// #512: when the receiver's cancel and initial `CONNECTION_CLOSE` are
-    /// lost and the receiver's connection finishes draining (three probe
+    /// #512, #555: when the receiver's cancel and initial `CONNECTION_CLOSE`
+    /// are lost and the receiver's connection finishes draining (three probe
     /// timeouts) before the sender's next packet arrives, the sender still
     /// hears that the receiver stopped instead of getting a stateless reset
     /// (`Error::Connect("reset by peer")`).
     #[tokio::test]
     async fn receiver_stops_when_stop_packets_are_lost() {
-        let (sender, receiver, _sender_ep, receiver_ep, _sender_cut, receiver_cut) =
-            crate::transport::testing::over_cuttable_direct().await;
+        let crate::transport::testing::CuttableDirect {
+            sender_conn: sender,
+            receiver_conn: receiver,
+            sender_ep: _sender_ep,
+            receiver_ep,
+            sender_cut: _sender_cut,
+            receiver_cut,
+            sender_fallback,
+            receiver_fallback,
+        } = crate::transport::testing::over_cuttable_direct().await;
         let (schan, mut rchan, skeys, scert) = secure_pair(&sender, &receiver).await;
-        let dir = std::env::temp_dir().join(format!("td-rstop-lost-{}", std::process::id()));
-        let (src, dest) = (dir.join("src"), dir.join("dest"));
+        let dir = tempfile::tempdir().unwrap();
+        let (src, dest) = (dir.path().join("src"), dir.path().join("dest"));
         std::fs::create_dir_all(src.join("f")).unwrap();
         std::fs::create_dir_all(&dest).unwrap();
-        for n in 0..2 {
-            std::fs::write(src.join("f").join(format!("{n}.bin")), vec![1u8; 16 << 20]).unwrap();
-        }
+        std::fs::write(src.join("f").join("0.bin"), vec![1u8; 1 << 20]).unwrap();
         let (entries, _) = scan(&[src.join("f")]).unwrap();
         let send = {
             let sender = sender.clone();
             tokio::spawn(async move {
-                send_files(
+                send_files_on(
                     &sender,
                     schan,
                     &skeys,
@@ -2050,25 +2144,36 @@ mod tests {
                     false,
                     Arc::new(|_, _| {}),
                     &Stop::new(),
+                    Some(&sender_fallback),
                 )
                 .await
             })
         };
         let offer = receive_offer(&mut rchan, &scert).await.unwrap();
         let stop = Stop::new();
-        let on_receive: Progress = {
-            let (stop, cut) = (stop.clone(), receiver_cut.clone());
-            Arc::new(move |n, _| {
-                if n >= 1 << 20 {
-                    cut.set(true, false);
-                    stop.stop();
-                }
-            })
-        };
-        let r = accept(&receiver, rchan, offer, &dest, on_receive, &stop).await;
+        receiver_cut.trip_both_after_incoming(256 << 10);
+        {
+            let (cut, stop) = (receiver_cut.clone(), stop.clone());
+            tokio::spawn(async move {
+                cut.tripped().await;
+                stop.stop();
+            });
+        }
+        let r = accept_on(
+            &receiver,
+            rchan,
+            offer,
+            &dest,
+            Arc::new(|_, _| {}),
+            &stop,
+            Some(&receiver_fallback),
+        )
+        .await;
         assert!(matches!(r, Err(Error::Stopped)), "{r:?}");
         drop(receiver);
-        receiver_ep.wait_idle().await;
+        tokio::time::timeout(Duration::from_secs(5), receiver_ep.wait_idle())
+            .await
+            .unwrap();
         receiver_cut.set(false, false);
         let s = tokio::time::timeout(Duration::from_secs(10), send)
             .await
@@ -2079,31 +2184,36 @@ mod tests {
             "{s:?}"
         );
         assert_eq!(std::fs::read_dir(&dest).unwrap().count(), 0);
-        let _ = std::fs::remove_dir_all(&dir);
     }
 
     /// Symmetric case of `receiver_stops_when_stop_packets_are_lost`: the
     /// sender stops while its outgoing datagrams are lost, its connection
     /// finishes draining, and the receiver's next packet still gets the
-    /// saved `CONNECTION_CLOSE` instead of a stateless reset (#512).
+    /// saved `CONNECTION_CLOSE` instead of a stateless reset (#512, #555).
     #[tokio::test]
     async fn sender_stops_when_stop_packets_are_lost() {
-        let (sender, receiver, sender_ep, _receiver_ep, sender_cut, _receiver_cut) =
-            crate::transport::testing::over_cuttable_direct().await;
+        let crate::transport::testing::CuttableDirect {
+            sender_conn: sender,
+            receiver_conn: receiver,
+            sender_ep,
+            receiver_ep: _receiver_ep,
+            sender_cut,
+            receiver_cut: _receiver_cut,
+            sender_fallback,
+            receiver_fallback,
+        } = crate::transport::testing::over_cuttable_direct().await;
         let (schan, mut rchan, skeys, scert) = secure_pair(&sender, &receiver).await;
-        let dir = std::env::temp_dir().join(format!("td-sstop-lost-{}", std::process::id()));
-        let (src, dest) = (dir.join("src"), dir.join("dest"));
+        let dir = tempfile::tempdir().unwrap();
+        let (src, dest) = (dir.path().join("src"), dir.path().join("dest"));
         std::fs::create_dir_all(src.join("f")).unwrap();
         std::fs::create_dir_all(&dest).unwrap();
-        for n in 0..2 {
-            std::fs::write(src.join("f").join(format!("{n}.bin")), vec![1u8; 16 << 20]).unwrap();
-        }
+        std::fs::write(src.join("f").join("0.bin"), vec![1u8; 1 << 20]).unwrap();
         let (entries, _) = scan(&[src.join("f")]).unwrap();
         let stop = Stop::new();
         let send = {
             let (sender, stop) = (sender.clone(), stop.clone());
             tokio::spawn(async move {
-                send_files(
+                send_files_on(
                     &sender,
                     schan,
                     &skeys,
@@ -2111,22 +2221,32 @@ mod tests {
                     false,
                     Arc::new(|_, _| {}),
                     &stop,
+                    Some(&sender_fallback),
                 )
                 .await
             })
         };
         let offer = receive_offer(&mut rchan, &scert).await.unwrap();
-        let on_receive: Progress = {
-            let (stop, cut) = (stop.clone(), sender_cut.clone());
-            Arc::new(move |n, _| {
-                if n >= 1 << 20 {
-                    cut.set(true, false);
-                    stop.stop();
-                }
-            })
-        };
+        sender_cut.trip_outgoing_after(256 << 10);
+        {
+            let (cut, stop) = (sender_cut.clone(), stop.clone());
+            tokio::spawn(async move {
+                cut.tripped().await;
+                stop.stop();
+            });
+        }
+        let recv_dest = dest.clone();
         let recv = tokio::spawn(async move {
-            accept(&receiver, rchan, offer, &dest, on_receive, &Stop::new()).await
+            accept_on(
+                &receiver,
+                rchan,
+                offer,
+                &recv_dest,
+                Arc::new(|_, _| {}),
+                &Stop::new(),
+                Some(&receiver_fallback),
+            )
+            .await
         });
         let s = tokio::time::timeout(Duration::from_secs(10), send)
             .await
@@ -2134,7 +2254,9 @@ mod tests {
             .unwrap();
         assert!(matches!(s, Err(Error::Stopped)), "{s:?}");
         drop(sender);
-        sender_ep.wait_idle().await;
+        tokio::time::timeout(Duration::from_secs(5), sender_ep.wait_idle())
+            .await
+            .unwrap();
         sender_cut.set(false, false);
         let r = tokio::time::timeout(Duration::from_secs(10), recv)
             .await
@@ -2144,7 +2266,39 @@ mod tests {
             matches!(r, Err(Error::Cancelled(ref reason)) if reason == "stopped"),
             "{r:?}"
         );
-        let _ = std::fs::remove_dir_all(&dir);
+        assert_eq!(std::fs::read_dir(&dest).unwrap().count(), 0);
+    }
+
+    /// If the peer already sent `STOP_SENDING` on the control stream before
+    /// `tell_stopped` writes `Control::Cancel`, `WriteError::Stopped` still
+    /// counts as heard so post-drain linger is not armed (#555).
+    #[tokio::test]
+    async fn tell_stopped_does_not_linger_when_peer_already_stopped_control_stream() {
+        let crate::transport::testing::CuttableDirect {
+            sender_conn: sender,
+            receiver_conn: receiver,
+            sender_ep: _sender_ep,
+            receiver_ep: _receiver_ep,
+            sender_cut: _sender_cut,
+            receiver_cut: _receiver_cut,
+            sender_fallback,
+            receiver_fallback: _receiver_fallback,
+        } = crate::transport::testing::over_cuttable_direct().await;
+        let (mut schan, mut rchan, _skeys, _scert) = secure_pair(&sender, &receiver).await;
+        rchan.recv.stop(0u32.into()).unwrap();
+        // Wait for the peer's `STOP_SENDING` frame to reach `schan.send`
+        // before `tell_stopped` writes to it.
+        assert!(matches!(schan.send.stopped().await, Ok(Some(_))));
+        let err = tell_stopped(
+            &sender,
+            Some(&sender_fallback),
+            &mut schan.sealer,
+            &mut schan.send,
+            [9u8; 16],
+        )
+        .await;
+        assert!(matches!(err, Error::Stopped));
+        assert!(!sender_fallback.lingers());
     }
 
     /// How the test receiver takes an offer.
@@ -2588,6 +2742,7 @@ mod tests {
                 &dest,
                 Arc::new(|_, _| {}),
                 &stop,
+                None,
                 |p| fs4::available_space(p),
                 probe_destination_writable,
                 move |_dir| {
@@ -2692,6 +2847,7 @@ mod tests {
                     &dest_clone,
                     Arc::new(|_, _| {}),
                     &stop_clone,
+                    None,
                     |p| fs4::available_space(p),
                     probe_destination_writable,
                     move |_dir| {
@@ -2836,6 +2992,7 @@ mod tests {
                 &dest,
                 Arc::new(|_, _| {}),
                 &Stop::new(),
+                None,
                 space_fn,
                 probe_fn,
                 |_| {},
@@ -2924,6 +3081,7 @@ mod tests {
                 &dest,
                 Arc::new(|_, _| {}),
                 &Stop::new(),
+                None,
                 space_fn,
                 probe_destination_writable,
                 |_| {},
