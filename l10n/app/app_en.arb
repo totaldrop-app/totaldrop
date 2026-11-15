@@ -275,5 +275,17 @@
   "settingsBackground": "Background transfers",
   "@settingsBackground": {"description": "Settings: heading of the section about background transfers"},
   "settingsBackgroundOpen": "Battery settings",
-  "@settingsBackgroundOpen": {"description": "Settings: button that opens the background transfers page"}
+  "@settingsBackgroundOpen": {"description": "Settings: button that opens the background transfers page"},
+  "shareText": "Share text",
+  "@shareText": {"description": "Receive result: button that shares the received text through the system share sheet (#53)"},
+  "openLink": "Open link",
+  "@openLink": {"description": "Receive result: button shown when the received text is a single web link (#53)"},
+  "openLinkTitle": "Open this link?",
+  "@openLinkTitle": {"description": "Confirmation dialog heading shown with the full URL before opening a received link (#53)"},
+  "openLinkBody": "This opens the address below in your browser.",
+  "@openLinkBody": {"description": "Confirmation dialog explanation above the full URL before opening a received link (#53)"},
+  "openLinkConfirm": "Open",
+  "@openLinkConfirm": {"description": "Confirmation dialog button that opens the shown URL in the browser (#53)"},
+  "openLinkFailed": "No app on this device could open the link.",
+  "@openLinkFailed": {"description": "Shown when no browser or app handles opening the received web link (#53)"}
 }

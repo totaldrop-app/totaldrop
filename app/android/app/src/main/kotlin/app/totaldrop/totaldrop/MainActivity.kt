@@ -55,6 +55,14 @@ class MainActivity : FlutterActivity() {
                     else -> result.notImplemented()
                 }
             }
+        // Opening a confirmed http(s) URL from a received text (#53).
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, OPEN_URL_CHANNEL)
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "open" -> result.success(WebLinks.open(this, call.arguments as? String))
+                    else -> result.notImplemented()
+                }
+            }
         val channel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL)
         TransferJob.onStop = { channel.invokeMethod("stop", null) }
         channel.setMethodCallHandler { call, result ->
@@ -207,6 +215,7 @@ class MainActivity : FlutterActivity() {
         const val SHARE_CHANNEL = "app.totaldrop/launch"
         const val BACKGROUND_CHANNEL = "app.totaldrop/background"
         const val STORAGE_CHANNEL = "app.totaldrop/storage"
+        const val OPEN_URL_CHANNEL = "app.totaldrop/open_url"
         // The launcher shortcuts (res/xml/shortcuts.xml).
         const val ACTION_SHORTCUT_SEND = "app.totaldrop.action.SEND"
         const val ACTION_SHORTCUT_RECEIVE = "app.totaldrop.action.RECEIVE"

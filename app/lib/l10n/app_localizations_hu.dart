@@ -674,4 +674,23 @@ class AppLocalizationsHu extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'Akkumulátorbeállítások';
+
+  @override
+  String get shareText => 'Szöveg megosztása';
+
+  @override
+  String get openLink => 'Hivatkozás megnyitása';
+
+  @override
+  String get openLinkTitle => 'Megnyitja ezt a hivatkozást?';
+
+  @override
+  String get openLinkBody => 'Az alábbi cím a böngészőben nyílik meg.';
+
+  @override
+  String get openLinkConfirm => 'Megnyitás';
+
+  @override
+  String get openLinkFailed =>
+      'Egyetlen alkalmazás sem tudta megnyitni a hivatkozást ezen az eszközön.';
 }

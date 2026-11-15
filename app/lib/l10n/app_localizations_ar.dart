@@ -688,4 +688,23 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'إعدادات البطارية';
+
+  @override
+  String get shareText => 'مشاركة النص';
+
+  @override
+  String get openLink => 'فتح الرابط';
+
+  @override
+  String get openLinkTitle => 'فتح هذا الرابط؟';
+
+  @override
+  String get openLinkBody => 'سيُفتح العنوان أدناه في المتصفح.';
+
+  @override
+  String get openLinkConfirm => 'فتح';
+
+  @override
+  String get openLinkFailed =>
+      'لم يتمكن أي تطبيق على هذا الجهاز من فتح الرابط.';
 }

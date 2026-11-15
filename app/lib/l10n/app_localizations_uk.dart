@@ -692,4 +692,23 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'Налаштування батареї';
+
+  @override
+  String get shareText => 'Поділитися текстом';
+
+  @override
+  String get openLink => 'Відкрити посилання';
+
+  @override
+  String get openLinkTitle => 'Відкрити це посилання?';
+
+  @override
+  String get openLinkBody => 'Адреса нижче відкриється у вашому браузері.';
+
+  @override
+  String get openLinkConfirm => 'Відкрити';
+
+  @override
+  String get openLinkFailed =>
+      'Жодна програма на цьому пристрої не змогла відкрити посилання.';
 }

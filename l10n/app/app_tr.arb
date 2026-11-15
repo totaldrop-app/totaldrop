@@ -184,5 +184,11 @@
   "setupBackgroundAutostart": "Otomatik başlatmayı aç",
   "setupBackgroundSkip": "Şimdi değil",
   "settingsBackground": "Arka planda aktarım",
-  "settingsBackgroundOpen": "Pil ayarları"
+  "settingsBackgroundOpen": "Pil ayarları",
+  "shareText": "Metni paylaş",
+  "openLink": "Bağlantıyı aç",
+  "openLinkTitle": "Bu bağlantı açılsın mı?",
+  "openLinkBody": "Aşağıdaki adres tarayıcınızda açılır.",
+  "openLinkConfirm": "Aç",
+  "openLinkFailed": "Bu cihazda bağlantıyı açabilecek bir uygulama bulunamadı."
 }

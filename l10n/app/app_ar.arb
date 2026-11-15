@@ -184,5 +184,11 @@
   "setupBackgroundAutostart": "فتح التشغيل التلقائي",
   "setupBackgroundSkip": "ليس الآن",
   "settingsBackground": "النقل في الخلفية",
-  "settingsBackgroundOpen": "إعدادات البطارية"
+  "settingsBackgroundOpen": "إعدادات البطارية",
+  "shareText": "مشاركة النص",
+  "openLink": "فتح الرابط",
+  "openLinkTitle": "فتح هذا الرابط؟",
+  "openLinkBody": "سيُفتح العنوان أدناه في المتصفح.",
+  "openLinkConfirm": "فتح",
+  "openLinkFailed": "لم يتمكن أي تطبيق على هذا الجهاز من فتح الرابط."
 }

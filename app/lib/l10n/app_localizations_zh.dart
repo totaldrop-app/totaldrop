@@ -629,6 +629,24 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => '电池设置';
+
+  @override
+  String get shareText => '分享文本';
+
+  @override
+  String get openLink => '打开链接';
+
+  @override
+  String get openLinkTitle => '打开此链接？';
+
+  @override
+  String get openLinkBody => '下方地址将在浏览器中打开。';
+
+  @override
+  String get openLinkConfirm => '打开';
+
+  @override
+  String get openLinkFailed => '此设备上没有应用可以打开该链接。';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hans`).
@@ -1255,6 +1273,24 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
 
   @override
   String get settingsBackgroundOpen => '电池设置';
+
+  @override
+  String get shareText => '分享文本';
+
+  @override
+  String get openLink => '打开链接';
+
+  @override
+  String get openLinkTitle => '打开此链接？';
+
+  @override
+  String get openLinkBody => '下方地址将在浏览器中打开。';
+
+  @override
+  String get openLinkConfirm => '打开';
+
+  @override
+  String get openLinkFailed => '此设备上没有应用可以打开该链接。';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -1880,4 +1916,22 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get settingsBackgroundOpen => '電池設定';
+
+  @override
+  String get shareText => '分享文字';
+
+  @override
+  String get openLink => '開啟連結';
+
+  @override
+  String get openLinkTitle => '要開啟此連結嗎？';
+
+  @override
+  String get openLinkBody => '下方網址將在瀏覽器中開啟。';
+
+  @override
+  String get openLinkConfirm => '開啟';
+
+  @override
+  String get openLinkFailed => '此裝置上沒有應用程式可開啟該連結。';
 }

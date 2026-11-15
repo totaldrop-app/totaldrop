@@ -660,4 +660,22 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'การตั้งค่าแบตเตอรี่';
+
+  @override
+  String get shareText => 'แชร์ข้อความ';
+
+  @override
+  String get openLink => 'เปิดลิงก์';
+
+  @override
+  String get openLinkTitle => 'เปิดลิงก์นี้หรือไม่';
+
+  @override
+  String get openLinkBody => 'ที่อยู่ด้านล่างจะเปิดในเบราว์เซอร์ของคุณ';
+
+  @override
+  String get openLinkConfirm => 'เปิด';
+
+  @override
+  String get openLinkFailed => 'ไม่มีแอปใดในอุปกรณ์นี้ที่เปิดลิงก์ได้';
 }

@@ -184,5 +184,11 @@
   "setupBackgroundAutostart": "Buka Automula",
   "setupBackgroundSkip": "Bukan sekarang",
   "settingsBackground": "Pemindahan di latar belakang",
-  "settingsBackgroundOpen": "Tetapan bateri"
+  "settingsBackgroundOpen": "Tetapan bateri",
+  "shareText": "Kongsi teks",
+  "openLink": "Buka pautan",
+  "openLinkTitle": "Buka pautan ini?",
+  "openLinkBody": "Alamat di bawah akan dibuka dalam pelayar anda.",
+  "openLinkConfirm": "Buka",
+  "openLinkFailed": "Tiada aplikasi pada peranti ini dapat membuka pautan tersebut."
 }

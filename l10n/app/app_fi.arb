@@ -184,5 +184,11 @@
   "setupBackgroundAutostart": "Avaa Automaattinen käynnistys",
   "setupBackgroundSkip": "Ei nyt",
   "settingsBackground": "Siirrot taustalla",
-  "settingsBackgroundOpen": "Akkuasetukset"
+  "settingsBackgroundOpen": "Akkuasetukset",
+  "shareText": "Jaa teksti",
+  "openLink": "Avaa linkki",
+  "openLinkTitle": "Avataanko tämä linkki?",
+  "openLinkBody": "Alla oleva osoite avautuu selaimessasi.",
+  "openLinkConfirm": "Avaa",
+  "openLinkFailed": "Mikään tämän laitteen sovellus ei voinut avata linkkiä."
 }
