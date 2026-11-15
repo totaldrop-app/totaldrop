@@ -1,8 +1,30 @@
 // SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-(() => {
+((root) => {
   "use strict";
+
+  const ANDROID_PACKAGE = "app.totaldrop";
+  // Blink and Gecko freeze navigator.platform to "Linux armv81" on Android
+  // even when "Desktop site" (on by default on Android tablets) rewrites the
+  // UA and userAgentData.platform to Linux; desktop Linux never reports "81".
+  function isAndroid(nav) {
+    const hint = (nav && nav.userAgentData && nav.userAgentData.platform) || "";
+    const ua = (nav && nav.userAgent) || "";
+    const plat = (nav && nav.platform) || "";
+    return /^android$/i.test(hint) || /android/i.test(ua) || /^linux armv81$/i.test(plat);
+  }
+  // On Android, an intent:// URL names our package so no other app that
+  // declared totaldrop:// can claim the transfer code (#507). Elsewhere
+  // (Linux registers totaldrop:// in its desktop file) the plain scheme stays.
+  function receiveHref(code, nav) {
+    const encoded = encodeURIComponent(code);
+    return isAndroid(nav)
+      ? "intent://r/" + encoded + "#Intent;scheme=totaldrop;package=" + ANDROID_PACKAGE + ";end"
+      : "totaldrop://r/" + encoded;
+  }
+  root.TDApp = { ANDROID_PACKAGE, isAndroid, receiveHref };
+  if (typeof document === "undefined") return;
 
   // Interface language (ADR 0008). English is the page itself; other
   // languages come from /i18n/<tag>.json on this same domain. The choice
@@ -11,7 +33,7 @@
   // The languages, which are reviewed, and how one is chosen: lang.js.
   // If lang.js did not load, the page stays in English and the rest
   // (downloads, copy buttons, /r) still works.
-  const { LANGUAGES, REVIEWED, negotiate } = window.TDLang
+  const { LANGUAGES, REVIEWED, negotiate } = root.TDLang
     || { LANGUAGES: [["en", "English"]], REVIEWED: ["en"], negotiate: () => "en" };
   // Right to left: languages whose likely script is one of these (the
   // same rule as msg.js).
@@ -145,7 +167,7 @@
   if (cards.length) {
     const ua = navigator.userAgent || "";
     const hint = (navigator.userAgentData && navigator.userAgentData.platform) || "";
-    const p = /android/i.test(ua) ? "android"
+    const p = isAndroid(navigator) ? "android"
       : /iphone|ipad|ipod/i.test(ua) ? "ios"
       : /mac/i.test(hint || ua) ? "macos"
       : /win/i.test(hint || ua) ? "windows"
@@ -177,7 +199,7 @@
     document.getElementById(ok ? "r-has-code" : "r-no-code").hidden = false;
     if (ok) {
       document.getElementById("r-code").textContent = raw;
-      document.getElementById("r-open").href = "totaldrop://r/" + raw;
+      document.getElementById("r-open").href = receiveHref(raw, navigator);
       const copy = document.getElementById("r-copy");
       copy.addEventListener("click", async () => {
         try {
@@ -199,4 +221,4 @@
       }
     });
   });
-})();
+})(typeof window !== "undefined" ? window : globalThis);
