@@ -543,12 +543,12 @@ impl PreparedSend {
                 false,
             )
             .await?;
-            Ok::<_, Error>((endpoint, conn, chan, _link, mapping))
+            Ok::<_, Error>((endpoint, conn, chan, _link, fallback, mapping))
         };
         // A session that is already up wins over a stop at the same moment:
         // send_files then sees the stop and tells the receiver.
         // The router keeps the port open until the transfer ends.
-        let (endpoint, conn, chan, _link, _mapping) = tokio::select! {
+        let (endpoint, conn, chan, link, fallback, _mapping) = tokio::select! {
             biased;
             r = setup => r?,
             () = stop.stopped() => return Err(Error::Stopped),
@@ -571,8 +571,38 @@ impl PreparedSend {
             // Free the connection at once instead of waiting for it to idle.
             conn.close(0u32.into(), b"failed");
         }
-        finish_endpoint(endpoint, drained, Duration::from_secs(5)).await;
+        linger_or_wait(endpoint, link, &fallback, drained, Duration::from_secs(5)).await;
         report
+    }
+}
+
+/// How long a stopping caller waits inline after draining when its cancel
+/// notice went unacknowledged, so a short-lived process such as the CLI keeps
+/// its socket open until the peer's next packet is answered (#512).
+const POST_DRAIN_WAIT: Duration = Duration::from_millis(500);
+
+/// How long an endpoint whose stop notice was never acknowledged stays
+/// behind in the background after [`POST_DRAIN_WAIT`], so a peer whose probe
+/// timeout backed off further still gets `CONNECTION_CLOSE` in long-lived
+/// app processes (#512).
+const STOP_LINGER: Duration = Duration::from_secs(3);
+
+async fn linger_or_wait(
+    endpoint: quinn::Endpoint,
+    link: Standby,
+    fallback: &path::Fallback,
+    drained: bool,
+    idle_wait: Duration,
+) {
+    if !drained {
+        let _ = tokio::time::timeout(idle_wait, endpoint.wait_idle()).await;
+    }
+    if fallback.lingers() {
+        let _ = tokio::time::timeout(POST_DRAIN_WAIT, fallback.answered()).await;
+        tokio::spawn(async move {
+            let _keep = (endpoint, link);
+            tokio::time::sleep(STOP_LINGER).await;
+        });
     }
 }
 
@@ -622,6 +652,7 @@ pub struct IncomingOffer {
     words: Vec<String>,
     _peer: Certificate,
     _link: Standby,
+    fallback: path::Fallback,
     _mapping: Option<portmap::Mapping>,
 }
 
@@ -655,8 +686,10 @@ impl IncomingOffer {
         let id = self.offer.transfer_id();
         let e = transfer::tell_stopped(&self.conn, &mut self.chan.sealer, &mut self.chan.send, id)
             .await;
-        finish_endpoint(
+        linger_or_wait(
             self.endpoint,
+            self._link,
+            &self.fallback,
             transfer::peer_closed(&self.conn),
             Duration::from_secs(2),
         )
@@ -712,6 +745,7 @@ impl IncomingOffer {
             words,
             _peer: paired.peer.clone(),
             _link: link,
+            fallback,
             _mapping: mapping,
         })
     }
@@ -753,7 +787,14 @@ impl IncomingOffer {
         if !drained {
             self.conn.close(0u32.into(), b"done");
         }
-        finish_endpoint(self.endpoint, drained, Duration::from_secs(2)).await;
+        linger_or_wait(
+            self.endpoint,
+            self._link,
+            &self.fallback,
+            drained,
+            Duration::from_secs(2),
+        )
+        .await;
         report
     }
 
@@ -771,7 +812,14 @@ impl IncomingOffer {
         if !drained {
             self.conn.close(0u32.into(), b"done");
         }
-        finish_endpoint(self.endpoint, drained, Duration::from_secs(2)).await;
+        linger_or_wait(
+            self.endpoint,
+            self._link,
+            &self.fallback,
+            drained,
+            Duration::from_secs(2),
+        )
+        .await;
         report
     }
 

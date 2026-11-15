@@ -114,6 +114,106 @@ const PAUSED: Duration = Duration::from_secs(2);
 #[derive(Debug, Clone)]
 pub struct Fallback(Arc<FallbackState>);
 
+/// Maximum number of local connection ID reset tokens remembered per
+/// single-use endpoint (#512). Quinn issues up to eight active CIDs at a
+/// time; keeping more covers CID rotation while bounding memory.
+const MAX_RESET_TOKENS: usize = 32;
+
+/// [`quinn::crypto::HmacKey`] for an endpoint's stateless-reset key that
+/// remembers the 16-byte reset tokens derived from it (#512).
+pub(crate) struct ResetTokens {
+    key: ring::hmac::Key,
+    issued: Mutex<VecDeque<[u8; 16]>>,
+}
+
+impl core::fmt::Debug for ResetTokens {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.debug_struct("ResetTokens").finish_non_exhaustive()
+    }
+}
+
+impl ResetTokens {
+    pub(crate) fn new() -> Result<Arc<Self>, crate::error::Error> {
+        let mut raw = [0u8; 64];
+        getrandom::fill(&mut raw).map_err(|_| crate::error::Error::Random)?;
+        let key = ring::hmac::Key::new(ring::hmac::HMAC_SHA256, &raw);
+        zeroize::Zeroize::zeroize(&mut raw);
+        Ok(Arc::new(Self {
+            key,
+            issued: Mutex::new(VecDeque::with_capacity(MAX_RESET_TOKENS)),
+        }))
+    }
+
+    /// Whether `segment` is an outgoing QUIC stateless reset carrying one of
+    /// this endpoint's reset tokens in its last 16 bytes (RFC 9000, section
+    /// 10.3).
+    fn is_reset(&self, segment: &[u8]) -> bool {
+        if segment.len() < 21 || segment.first().is_some_and(|b| b & 0x80 != 0) {
+            return false;
+        }
+        let Some(tail) = segment
+            .len()
+            .checked_sub(16)
+            .and_then(|i| segment.get(i..))
+            .and_then(|s| <[u8; 16]>::try_from(s).ok())
+        else {
+            return false;
+        };
+        self.issued
+            .lock()
+            .is_ok_and(|issued| issued.iter().any(|t| t == &tail))
+    }
+}
+
+impl quinn::crypto::HmacKey for ResetTokens {
+    fn sign(&self, data: &[u8], out: &mut [u8]) {
+        let tag = ring::hmac::sign(&self.key, data);
+        out.copy_from_slice(tag.as_ref());
+        if let Some(token) = tag
+            .as_ref()
+            .get(..16)
+            .and_then(|s| <[u8; 16]>::try_from(s).ok())
+            && let Ok(mut issued) = self.issued.lock()
+            && !issued.contains(&token)
+        {
+            if issued.len() >= MAX_RESET_TOKENS {
+                issued.pop_front();
+            }
+            issued.push_back(token);
+        }
+    }
+
+    fn signature_len(&self) -> usize {
+        32
+    }
+
+    fn verify(&self, data: &[u8], signature: &[u8]) -> Result<(), quinn::crypto::CryptoError> {
+        ring::hmac::verify(&self.key, data, signature).map_err(|_| quinn::crypto::CryptoError)
+    }
+}
+
+/// Maximum number of post-drain `CONNECTION_CLOSE` replays sent for a single
+/// stopped session, spaced at power-of-two incoming packet counts (`1, 2, 4,
+/// 8, 16, 32`) per RFC 9000, section 10.2.1 (#512).
+const MAX_CLOSE_REPLAYS: u8 = 6;
+
+/// Saved `CONNECTION_CLOSE` state for a stopped session (#512).
+#[derive(Debug, Default)]
+struct Closing {
+    /// Canonical address of the authenticated peer whose connection is
+    /// closing with `stopped`.
+    peer: Option<SocketAddr>,
+    /// Latest encrypted short-header `CONNECTION_CLOSE` packet sent to
+    /// `peer`, re-sent in place of post-drain stateless resets (RFC 9000,
+    /// section 10.2.1).
+    saved: Option<Vec<u8>>,
+    /// Number of post-drain datagrams from `peer` that triggered a stateless
+    /// reset check.
+    post_drain_hits: u32,
+    /// Number of `saved` replays sent so far (at most [`MAX_CLOSE_REPLAYS`]).
+    replays_sent: u8,
+}
+
 #[derive(Debug)]
 struct FallbackState {
     /// The direct address being watched: the connection's remote address,
@@ -140,10 +240,27 @@ struct FallbackState {
     rerouted_total: AtomicU64,
     /// The real UDP socket, to send `rerouted` again on coming back.
     socket: OnceLock<Arc<dyn AsyncUdpSocket>>,
+    /// Stateless-reset tokens issued by the QUIC endpoint on this socket.
+    reset_tokens: Option<Arc<ResetTokens>>,
+    /// Fast-path flag set once [`Fallback::arm_closing`] is called.
+    closing_armed: AtomicBool,
+    /// Saved `CONNECTION_CLOSE` packet for post-drain peers (#512).
+    closing: Mutex<Closing>,
+    /// Woken when a post-drain packet from the peer has been answered with
+    /// the saved `CONNECTION_CLOSE` (#512).
+    answered: tokio::sync::Notify,
 }
 
 impl Fallback {
+    #[cfg(test)]
     pub(crate) fn new(relay: mpsc::Sender<Vec<u8>>) -> Self {
+        Self::with_reset_tokens(relay, None)
+    }
+
+    pub(crate) fn with_reset_tokens(
+        relay: mpsc::Sender<Vec<u8>>,
+        reset_tokens: Option<Arc<ResetTokens>>,
+    ) -> Self {
         Self(Arc::new(FallbackState {
             direct: RwLock::new(None),
             moved: AtomicBool::new(false),
@@ -156,7 +273,99 @@ impl Fallback {
             #[cfg(test)]
             rerouted_total: AtomicU64::new(0),
             socket: OnceLock::new(),
+            reset_tokens,
+            closing_armed: AtomicBool::new(false),
+            closing: Mutex::new(Closing::default()),
+            answered: tokio::sync::Notify::new(),
         }))
+    }
+
+    pub(crate) fn downgrade(&self) -> FallbackWeak {
+        FallbackWeak(Arc::downgrade(&self.0))
+    }
+
+    /// Record that `peer` is about to be closed with `stopped` after its
+    /// cancel notice went unacknowledged (#512).
+    pub(crate) fn arm_closing(&self, peer: SocketAddr) {
+        if let Ok(mut closing) = self.0.closing.lock() {
+            closing.peer = Some(canonical(peer));
+        }
+        self.0.closing_armed.store(true, Ordering::Release);
+    }
+
+    /// Whether [`Fallback::arm_closing`] armed post-drain linger for a stop
+    /// whose cancel notice had not been acknowledged by the peer.
+    pub(crate) fn lingers(&self) -> bool {
+        self.0.closing_armed.load(Ordering::Acquire)
+    }
+
+    /// Wait until at least one post-drain packet from the closing peer has
+    /// been answered with the saved `CONNECTION_CLOSE` (#512).
+    pub(crate) async fn answered(&self) {
+        let notified = self.0.answered.notified();
+        if self.0.closing.lock().is_ok_and(|c| c.replays_sent > 0) {
+            return;
+        }
+        notified.await;
+    }
+
+    /// Inspect an outgoing `transmit` once closing is armed (#512). Returns
+    /// `None` for normal packets (saving the closing connection's non-GSO
+    /// short-header packet to `peer`) and `Some(replacement)` when `transmit`
+    /// is a stateless reset that should be replaced with `CONNECTION_CLOSE`
+    /// (or dropped when `None`).
+    fn on_send(&self, transmit: &Transmit) -> Option<Option<Vec<u8>>> {
+        if !self.0.closing_armed.load(Ordering::Acquire) {
+            return None;
+        }
+        if transmit.segment_size.is_none()
+            && self
+                .0
+                .reset_tokens
+                .as_ref()
+                .is_some_and(|rt| rt.is_reset(transmit.contents))
+        {
+            let replacement = self.0.closing.lock().ok().and_then(|mut c| {
+                // Never answer third-party addresses with the saved packet or
+                // a stateless reset: a single-use endpoint talks only to its
+                // authenticated peer.
+                if c.peer != Some(canonical(transmit.destination)) {
+                    return None;
+                }
+                let saved = c.saved.as_ref()?.clone();
+                c.post_drain_hits = c.post_drain_hits.saturating_add(1);
+                // Exponential packet-count backoff (RFC 9000, section 10.2.1)
+                // also guarantees that two drained endpoints stop after two
+                // exchanges instead of ping-ponging.
+                if !c.post_drain_hits.is_power_of_two() || c.replays_sent >= MAX_CLOSE_REPLAYS {
+                    return None;
+                }
+                c.replays_sent = c.replays_sent.saturating_add(1);
+                Some(saved)
+            });
+            if replacement.is_some() {
+                self.0.answered.notify_waiters();
+            }
+            return Some(replacement);
+        }
+        if transmit.segment_size.is_none()
+            && transmit.contents.len() >= 21
+            && transmit.contents.first().is_some_and(|b| b & 0x80 == 0)
+            && let Ok(mut closing) = self.0.closing.lock()
+            && closing.peer == Some(canonical(transmit.destination))
+        {
+            // Keep the first connection's 8-byte QUIC DCID (`1..9`) so a
+            // losing dual-dial connection draining on the same socket cannot
+            // overwrite the winning connection's `CONNECTION_CLOSE`.
+            let same_dcid = closing
+                .saved
+                .as_ref()
+                .is_none_or(|prev| prev.get(1..9) == transmit.contents.get(1..9));
+            if same_dcid {
+                closing.saved = Some(transmit.contents.to_vec());
+            }
+        }
+        None
     }
 
     /// Note one segment of `transmit`, sent through the relay instead.
@@ -466,6 +675,20 @@ impl Drop for Watch {
     }
 }
 
+/// Non-owning handle to a [`Fallback`] while its [`PathSocket`] lives.
+#[derive(Debug, Clone)]
+pub(crate) struct FallbackWeak(std::sync::Weak<FallbackState>);
+
+impl FallbackWeak {
+    pub(crate) fn upgrade(&self) -> Option<Fallback> {
+        self.0.upgrade().map(Fallback)
+    }
+
+    pub(crate) fn is_alive(&self) -> bool {
+        self.0.strong_count() > 0
+    }
+}
+
 /// A UDP socket that also reaches the other device through the relay.
 #[derive(Debug)]
 pub struct PathSocket {
@@ -484,9 +707,23 @@ impl PathSocket {
     /// full, or when no link runs, they are dropped. The [`Fallback`] moves a
     /// direct connection onto the relay.
     pub fn new(inner: Arc<dyn AsyncUdpSocket>) -> (Arc<Self>, RelayPipes, Fallback) {
+        Self::build(inner, None)
+    }
+
+    pub(crate) fn with_reset_tokens(
+        inner: Arc<dyn AsyncUdpSocket>,
+        reset_tokens: Arc<ResetTokens>,
+    ) -> (Arc<Self>, RelayPipes, Fallback) {
+        Self::build(inner, Some(reset_tokens))
+    }
+
+    fn build(
+        inner: Arc<dyn AsyncUdpSocket>,
+        reset_tokens: Option<Arc<ResetTokens>>,
+    ) -> (Arc<Self>, RelayPipes, Fallback) {
         let (to_relay, outgoing) = mpsc::channel(QUEUE);
         let (incoming, from_relay) = mpsc::channel(QUEUE);
-        let fallback = Fallback::new(to_relay.clone());
+        let fallback = Fallback::with_reset_tokens(to_relay.clone(), reset_tokens);
         let _ = fallback.0.socket.set(inner.clone());
         let ipv6 = inner.local_addr().is_ok_and(|a| a.is_ipv6());
         (
@@ -500,6 +737,27 @@ impl PathSocket {
             RelayPipes { outgoing, incoming },
             fallback,
         )
+    }
+
+    fn send_one(&self, transmit: &Transmit, record_rerouted: bool) -> io::Result<()> {
+        if is_relay(transmit.destination) {
+            self.relay_send(transmit);
+            Ok(())
+        } else if self.fallback.reroutes(transmit.destination) {
+            self.relay_send(transmit);
+            if record_rerouted {
+                let size = transmit
+                    .segment_size
+                    .unwrap_or(transmit.contents.len())
+                    .max(1);
+                for segment in transmit.contents.chunks(size) {
+                    self.fallback.rerouted(transmit, segment);
+                }
+            }
+            Ok(())
+        } else {
+            self.inner.try_send(transmit)
+        }
     }
 
     fn relay_send(&self, transmit: &Transmit) {
@@ -558,22 +816,23 @@ impl AsyncUdpSocket for PathSocket {
     }
 
     fn try_send(&self, transmit: &Transmit) -> io::Result<()> {
-        if is_relay(transmit.destination) {
-            self.relay_send(transmit);
-            Ok(())
-        } else if self.fallback.reroutes(transmit.destination) {
-            self.relay_send(transmit);
-            let size = transmit
-                .segment_size
-                .unwrap_or(transmit.contents.len())
-                .max(1);
-            for segment in transmit.contents.chunks(size) {
-                self.fallback.rerouted(transmit, segment);
+        if let Some(saved) = self.fallback.on_send(transmit) {
+            // Post-drain packet after `close_stopped` (#512): answer with
+            // the saved `CONNECTION_CLOSE` instead of a stateless reset
+            // (RFC 9000, section 10.2.1), or drop the reset if none fits.
+            if let Some(contents) = saved {
+                let replacement = Transmit {
+                    destination: transmit.destination,
+                    ecn: None,
+                    contents: &contents,
+                    segment_size: None,
+                    src_ip: transmit.src_ip,
+                };
+                let _ = self.send_one(&replacement, false);
             }
-            Ok(())
-        } else {
-            self.inner.try_send(transmit)
+            return Ok(());
         }
+        self.send_one(transmit, true)
     }
 
     fn poll_recv(
@@ -610,7 +869,7 @@ impl AsyncUdpSocket for PathSocket {
 }
 
 #[cfg(test)]
-#[allow(clippy::panic)]
+#[allow(clippy::panic, clippy::unwrap_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 
@@ -898,5 +1157,95 @@ mod tests {
             ..seen()
         };
         assert_eq!(step(&late, SILENCE), Step::Recount(19_900));
+    }
+
+    #[tokio::test]
+    async fn post_drain_close_replay_guards_peer_dcid_and_backoff() {
+        use quinn::crypto::HmacKey;
+
+        let peer: SocketAddr = "192.0.2.10:5000".parse().unwrap();
+        let stranger: SocketAddr = "198.51.100.99:5000".parse().unwrap();
+        let tokens = ResetTokens::new().unwrap();
+        let (tx, _rx) = mpsc::channel(4);
+        let fb = Fallback::with_reset_tokens(tx, Some(tokens.clone()));
+        fb.arm_closing(peer);
+
+        // A 240-byte short-header CONNECTION_CLOSE carrying multi-range ACKs
+        // with winning DCID `[1; 8]`.
+        let mut close_pkt = vec![0x40u8; 240];
+        close_pkt[1..9].copy_from_slice(&[1u8; 8]);
+        assert!(
+            fb.on_send(&Transmit {
+                destination: peer,
+                ecn: None,
+                contents: &close_pkt,
+                segment_size: None,
+                src_ip: None,
+            })
+            .is_none()
+        );
+
+        // A losing dual-dial connection with DCID `[2; 8]` on the same peer
+        // address cannot overwrite the saved packet.
+        let mut losing_pkt = vec![0x40u8; 48];
+        losing_pkt[1..9].copy_from_slice(&[2u8; 8]);
+        assert!(
+            fb.on_send(&Transmit {
+                destination: peer,
+                ecn: None,
+                contents: &losing_pkt,
+                segment_size: None,
+                src_ip: None,
+            })
+            .is_none()
+        );
+
+        // Build a 21-byte minimum stateless reset carrying a valid token.
+        let mut sig = [0u8; 32];
+        tokens.sign(b"cid-0", &mut sig);
+        let mut reset = [0x40u8; 21];
+        reset[5..21].copy_from_slice(&sig[..16]);
+
+        // Spoofed third-party source address: reset is dropped (`Some(None)`),
+        // nothing is reflected, and `answered` is not woken.
+        assert_eq!(
+            fb.on_send(&Transmit {
+                destination: stranger,
+                ecn: None,
+                contents: &reset,
+                segment_size: None,
+                src_ip: None,
+            }),
+            Some(None)
+        );
+        assert!(
+            tokio::time::timeout(Duration::ZERO, fb.answered())
+                .await
+                .is_err()
+        );
+
+        // Legitimate peer: even a 21-byte reset gets the 240-byte saved close
+        // on power-of-two hits `1, 2, 4, 8, 16, 32` (6 total) and drops all
+        // others (so two drained endpoints stop after hit 2 instead of looping).
+        let mut sent_at = Vec::new();
+        for hit in 1..=70u32 {
+            let out = fb.on_send(&Transmit {
+                destination: peer,
+                ecn: None,
+                contents: &reset,
+                segment_size: None,
+                src_ip: None,
+            });
+            match out {
+                Some(Some(pkt)) => {
+                    assert_eq!(pkt, close_pkt);
+                    sent_at.push(hit);
+                }
+                Some(None) => {}
+                None => panic!("stateless reset was not intercepted at hit {hit}"),
+            }
+        }
+        assert_eq!(sent_at, vec![1, 2, 4, 8, 16, 32]);
+        fb.answered().await;
     }
 }

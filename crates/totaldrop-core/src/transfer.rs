@@ -89,18 +89,22 @@ pub(crate) async fn tell_stopped(
         transfer_id,
         reason: "stopped".into(),
     };
-    let _ = tokio::time::timeout(STOP_NOTICE, async {
-        send_control(sealer, send, &notice).await?;
-        let _ = send.finish();
-        // Give the message a moment to leave before the connection closes,
-        // and let the peer's close arrive so passive draining can be skipped.
-        let _ = send.stopped().await;
-        let _ = tokio::time::timeout(Duration::from_millis(500), conn.closed()).await;
-        Ok::<_, Error>(())
-    })
-    .await;
+    let heard = matches!(
+        tokio::time::timeout(STOP_NOTICE, async {
+            send_control(sealer, send, &notice).await?;
+            let _ = send.finish();
+            // Give the message a moment to leave before the connection closes.
+            let res = send.stopped().await;
+            if matches!(res, Ok(None)) {
+                let _ = tokio::time::timeout(Duration::from_millis(500), conn.closed()).await;
+            }
+            Ok::<_, Error>(res)
+        })
+        .await,
+        Ok(Ok(Ok(None)))
+    );
     if !peer_closed(conn) {
-        conn.close(0u32.into(), b"stopped");
+        crate::transport::close_stopped(conn, !heard);
     }
     Error::Stopped
 }
@@ -2014,6 +2018,132 @@ mod tests {
         );
         assert!(stopped_at.elapsed() < Duration::from_secs(2));
         assert_eq!(std::fs::read_dir(dir.join("dest")).unwrap().count(), 0);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// #512: when the receiver's cancel and initial `CONNECTION_CLOSE` are
+    /// lost and the receiver's connection finishes draining (three probe
+    /// timeouts) before the sender's next packet arrives, the sender still
+    /// hears that the receiver stopped instead of getting a stateless reset
+    /// (`Error::Connect("reset by peer")`).
+    #[tokio::test]
+    async fn receiver_stops_when_stop_packets_are_lost() {
+        let (sender, receiver, _sender_ep, receiver_ep, _sender_cut, receiver_cut) =
+            crate::transport::testing::over_cuttable_direct().await;
+        let (schan, mut rchan, skeys, scert) = secure_pair(&sender, &receiver).await;
+        let dir = std::env::temp_dir().join(format!("td-rstop-lost-{}", std::process::id()));
+        let (src, dest) = (dir.join("src"), dir.join("dest"));
+        std::fs::create_dir_all(src.join("f")).unwrap();
+        std::fs::create_dir_all(&dest).unwrap();
+        for n in 0..2 {
+            std::fs::write(src.join("f").join(format!("{n}.bin")), vec![1u8; 16 << 20]).unwrap();
+        }
+        let (entries, _) = scan(&[src.join("f")]).unwrap();
+        let send = {
+            let sender = sender.clone();
+            tokio::spawn(async move {
+                send_files(
+                    &sender,
+                    schan,
+                    &skeys,
+                    entries,
+                    false,
+                    Arc::new(|_, _| {}),
+                    &Stop::new(),
+                )
+                .await
+            })
+        };
+        let offer = receive_offer(&mut rchan, &scert).await.unwrap();
+        let stop = Stop::new();
+        let on_receive: Progress = {
+            let (stop, cut) = (stop.clone(), receiver_cut.clone());
+            Arc::new(move |n, _| {
+                if n >= 1 << 20 {
+                    cut.set(true, false);
+                    stop.stop();
+                }
+            })
+        };
+        let r = accept(&receiver, rchan, offer, &dest, on_receive, &stop).await;
+        assert!(matches!(r, Err(Error::Stopped)), "{r:?}");
+        drop(receiver);
+        receiver_ep.wait_idle().await;
+        receiver_cut.set(false, false);
+        let s = tokio::time::timeout(Duration::from_secs(10), send)
+            .await
+            .unwrap()
+            .unwrap();
+        assert!(
+            matches!(s, Err(Error::Cancelled(ref reason)) if reason == "stopped"),
+            "{s:?}"
+        );
+        assert_eq!(std::fs::read_dir(&dest).unwrap().count(), 0);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// Symmetric case of `receiver_stops_when_stop_packets_are_lost`: the
+    /// sender stops while its outgoing datagrams are lost, its connection
+    /// finishes draining, and the receiver's next packet still gets the
+    /// saved `CONNECTION_CLOSE` instead of a stateless reset (#512).
+    #[tokio::test]
+    async fn sender_stops_when_stop_packets_are_lost() {
+        let (sender, receiver, sender_ep, _receiver_ep, sender_cut, _receiver_cut) =
+            crate::transport::testing::over_cuttable_direct().await;
+        let (schan, mut rchan, skeys, scert) = secure_pair(&sender, &receiver).await;
+        let dir = std::env::temp_dir().join(format!("td-sstop-lost-{}", std::process::id()));
+        let (src, dest) = (dir.join("src"), dir.join("dest"));
+        std::fs::create_dir_all(src.join("f")).unwrap();
+        std::fs::create_dir_all(&dest).unwrap();
+        for n in 0..2 {
+            std::fs::write(src.join("f").join(format!("{n}.bin")), vec![1u8; 16 << 20]).unwrap();
+        }
+        let (entries, _) = scan(&[src.join("f")]).unwrap();
+        let stop = Stop::new();
+        let send = {
+            let (sender, stop) = (sender.clone(), stop.clone());
+            tokio::spawn(async move {
+                send_files(
+                    &sender,
+                    schan,
+                    &skeys,
+                    entries,
+                    false,
+                    Arc::new(|_, _| {}),
+                    &stop,
+                )
+                .await
+            })
+        };
+        let offer = receive_offer(&mut rchan, &scert).await.unwrap();
+        let on_receive: Progress = {
+            let (stop, cut) = (stop.clone(), sender_cut.clone());
+            Arc::new(move |n, _| {
+                if n >= 1 << 20 {
+                    cut.set(true, false);
+                    stop.stop();
+                }
+            })
+        };
+        let recv = tokio::spawn(async move {
+            accept(&receiver, rchan, offer, &dest, on_receive, &Stop::new()).await
+        });
+        let s = tokio::time::timeout(Duration::from_secs(10), send)
+            .await
+            .unwrap()
+            .unwrap();
+        assert!(matches!(s, Err(Error::Stopped)), "{s:?}");
+        drop(sender);
+        sender_ep.wait_idle().await;
+        sender_cut.set(false, false);
+        let r = tokio::time::timeout(Duration::from_secs(10), recv)
+            .await
+            .unwrap()
+            .unwrap();
+        assert!(
+            matches!(r, Err(Error::Cancelled(ref reason)) if reason == "stopped"),
+            "{r:?}"
+        );
         let _ = std::fs::remove_dir_all(&dir);
     }
 
