@@ -251,18 +251,19 @@ treated as final.
       the 1.6-second attempt; a mapping request cut off there may leave a
       mapping until its 120-second lease runs out. An HTTP response is
       read up to 1 MiB.
-    - Before the process exits, the apps release what they mapped (#433).
-      The command line runs a send or receive as a task, so a panic in it
-      still drops the mapping, and waits for the UPnP delete, a PCP or
+    - Before the process exits, the apps release what they mapped (#433,
+      #527). Both the Linux window (when closed or sent `SIGTERM`, `SIGHUP`
+      or `SIGINT`) and the command line (on `SIGINT`, `SIGTERM`, `SIGHUP`,
+      normal completion or a panic) run the transfer as a task, stop active
+      transfers and decline unanswered offers on a signal, wait at most 1.5
+      seconds for that work to end (telling a silent peer can take longer),
+      drop what is still running so its mapping is released (up to 0.2
+      seconds to unwind), and then wait for the UPnP delete, a PCP or
       NAT-PMP race loser's release (#461, #463) and the second copy of a
-      PCP or NAT-PMP release (#502), at most 1.6 seconds in all, before it
-      exits; a second Ctrl-C exits at once. The Linux
-      window, once closed, stops a running transfer as Cancel does and
-      declines an unanswered offer. It waits at most 1.5 seconds for that
-      work to end (telling a silent peer can take longer), drops what is
-      still running, so its mapping is released, and then waits for the
-      same releases: some 3.3 seconds in all. Android asks no router (it
-      cannot read the gateway), so it has nothing to release.
+      PCP or NAT-PMP release (#502), at most 1.6 seconds more: some 3.3
+      seconds in all. A second Ctrl-C at a terminal exits at once. Android
+      asks no router (it cannot read the gateway), so it has nothing to
+      release.
 11. **Session after the hybrid step.**
     - Each direction has its own ChaCha20-Poly1305 key (`k_i2r`, `k_r2i`).
     - Nonces follow Noise: four zero bytes, then a 64-bit little-endian
