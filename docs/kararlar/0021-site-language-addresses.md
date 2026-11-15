@@ -1,6 +1,7 @@
 # 0021: The site has an address for every page in every language, written by a build step
 
-- **Status:** Accepted, 13 November 2026 (Ozan, #513)
+- **Status:** Accepted, 14 November 2026 (proposed by Ozan on 13 November
+  2026, approved by Sadık on 14 November 2026; #513)
 - **Context:** The site was written in English and translated in the
   browser: `app.js` chose a language from the browser's settings, fetched
   `/i18n/<tag>.json` and replaced the text at the same address. Checked on

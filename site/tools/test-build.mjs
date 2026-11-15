@@ -9,15 +9,20 @@
 // download host name follow.
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, readFileSync, readdirSync, existsSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { spawnSync } from "node:child_process";
+import { lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, existsSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { homedir, tmpdir } from "node:os";
+import { join, parse } from "node:path";
+import { fileURLToPath } from "node:url";
 import vm from "node:vm";
 import { build, pub, PAGES, TAGS, REVIEWED, translate, withAlternates, addressIn, canonicalOf, isRtl } from "./build.mjs";
 import { onRequest } from "../functions/_middleware.js";
 
-const out = mkdtempSync(join(tmpdir(), "totaldrop-site-"));
-test.after(() => rmSync(out, { recursive: true, force: true }));
+const siteDir = join(pub, "..");
+const out = mkdtempSync(join(siteDir, ".test-build-"));
+const cleanupOut = () => rmSync(out, { recursive: true, force: true });
+process.on("exit", cleanupOut);
+test.after(cleanupOut);
 const built = build(out);
 const read = (...p) => readFileSync(join(...p), "utf8");
 const dict = (tag) => JSON.parse(read(pub, "i18n", tag + ".json"));
@@ -121,8 +126,83 @@ test("addresses that existed before answer as before", () => {
   }
 });
 
-test("the build refuses to empty its own source", () => {
-  for (const bad of [pub, join(pub, ".."), join(pub, "i18n")]) assert.throws(() => build(bad), /refusing to write/);
+test("the build refuses paths outside site/, tracked paths, symlinks, or non-empty unbuilt folders", () => {
+  const bad = [
+    "",
+    "   ",
+    parse(pub).root,
+    tmpdir(),
+    join(homedir(), "Documents"),
+    join(siteDir, ".."),
+    siteDir,
+    pub,
+    join(pub, "i18n"),
+    join(pub, "..foo"),
+    join(siteDir, "tools"),
+    join(siteDir, "tools", "..foo"),
+    join(siteDir, "functions"),
+    join(siteDir, "privacy"),
+    join(siteDir, "team"),
+    join(siteDir, "README.md"),
+    join(siteDir, "wrangler.toml"),
+    join(siteDir, ".wrangler"),
+  ];
+  for (const p of bad) assert.throws(() => build(p), /refusing to write/, String(p));
+
+  const scratch = mkdtempSync(join(siteDir, ".test-guard-"));
+  try {
+    // Non-empty unbuilt folder is preserved.
+    const nonempty = join(scratch, "nonempty");
+    mkdirSync(nonempty);
+    writeFileSync(join(nonempty, "keep.txt"), "do not delete");
+    assert.throws(() => build(nonempty), /non-empty folder has no previous site build/);
+    assert.equal(readFileSync(join(nonempty, "keep.txt"), "utf8"), "do not delete");
+
+    // Unprotected regular file (and path beneath it) is refused as not a folder.
+    const plainFile = join(scratch, "plain.txt");
+    writeFileSync(plainFile, "stay");
+    assert.throws(() => build(plainFile), /not a folder/);
+    assert.throws(() => build(join(plainFile, "sub")), /not a folder/);
+    assert.equal(readFileSync(plainFile, "utf8"), "stay");
+
+    // Symlink to outside site/, symlink to tracked folder, and broken symlink.
+    const outsideTarget = mkdtempSync(join(tmpdir(), "td-outside-"));
+    try {
+      writeFileSync(join(outsideTarget, "outside.txt"), "safe");
+      const linkOutside = join(scratch, "link-outside");
+      const linkTools = join(scratch, "link-tools");
+      const linkBroken = join(scratch, "link-broken");
+      symlinkSync(outsideTarget, linkOutside);
+      symlinkSync(join(siteDir, "tools"), linkTools);
+      symlinkSync(join(scratch, "does-not-exist"), linkBroken);
+
+      for (const p of [linkOutside, join(linkOutside, "sub"), linkTools, join(linkTools, "sub"), linkBroken, join(linkBroken, "sub")]) {
+        assert.throws(() => build(p), /refusing to write/, String(p));
+      }
+      assert.ok(lstatSync(linkOutside).isSymbolicLink());
+      assert.ok(lstatSync(linkTools).isSymbolicLink());
+      assert.ok(lstatSync(linkBroken).isSymbolicLink());
+      assert.equal(readFileSync(join(outsideTarget, "outside.txt"), "utf8"), "safe");
+    } finally {
+      rmSync(outsideTarget, { recursive: true, force: true });
+    }
+
+    // A ..* folder directly under site/ (not overlapping tracked files) is allowed, and rebuilding succeeds.
+    const dotdotOut = join(scratch, "..preview");
+    assert.equal(build(dotdotOut).written, 35 * PAGES.length);
+    assert.equal(build(dotdotOut).written, 35 * PAGES.length);
+  } finally {
+    rmSync(scratch, { recursive: true, force: true });
+  }
+
+  // CLI flag validation (--out, --out=, and stray arguments).
+  const script = fileURLToPath(new URL("./build.mjs", import.meta.url));
+  for (const cliArgs of [["--out"], ["--out", "--help"], ["--out="], ["--out=/"], [parse(pub).root], ["--unknown"], ["--out", out, "--out", out]]) {
+    const res = spawnSync(process.execPath, [script, ...cliArgs], { encoding: "utf8" });
+    assert.notEqual(res.status, 0, `expected failure for ${JSON.stringify(cliArgs)}`);
+    assert.match(res.stderr, /refusing to write/);
+  }
+
   assert.ok(existsSync(join(pub, "index.html")));
 });
 
