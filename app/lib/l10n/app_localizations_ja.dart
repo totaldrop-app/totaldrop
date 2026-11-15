@@ -639,4 +639,18 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'バッテリー設定';
+
+  @override
+  String get receiveScanQr => 'QRコードを読み取る';
+
+  @override
+  String get receiveScanQrHint => '送信側の画面にあるQRコードにカメラを向けてください。';
+
+  @override
+  String get receiveCameraDenied =>
+      'カメラへのアクセスが許可されませんでした。コードの入力や貼り付けは引き続き使えます。';
+
+  @override
+  String get receiveCameraUnavailable =>
+      'この端末ではカメラを利用できません。コードを入力するか貼り付けてください。';
 }

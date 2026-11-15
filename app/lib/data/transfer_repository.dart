@@ -84,6 +84,10 @@ class TransferRepository {
   /// The code in a TotalDrop link, read strictly (#445).
   String? codeFromLink(String link) => bridge.codeFromLink(link: link);
 
+  /// The code in a TotalDrop QR code (`https://totaldrop.app/r#…` or
+  /// `totaldrop://r/…`), read strictly in Rust (#29).
+  String? codeFromQr(String text) => bridge.codeFromQr(text: text);
+
   /// Where received files go: Download/TotalDrop on Android, so they are
   /// easy to find in the Files app. Falls back to the app's own folder if
   /// shared storage cannot be written.

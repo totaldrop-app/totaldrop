@@ -184,5 +184,9 @@
   "setupBackgroundAutostart": "打开自启动",
   "setupBackgroundSkip": "以后再说",
   "settingsBackground": "后台传输",
-  "settingsBackgroundOpen": "电池设置"
+  "settingsBackgroundOpen": "电池设置",
+  "receiveScanQr": "扫描二维码",
+  "receiveScanQrHint": "将相机对准发送方屏幕上的二维码。",
+  "receiveCameraDenied": "未允许访问相机。您仍可输入或粘贴代码。",
+  "receiveCameraUnavailable": "此设备没有可用相机。请改为输入或粘贴代码。"
 }

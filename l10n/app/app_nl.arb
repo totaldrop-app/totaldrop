@@ -184,5 +184,9 @@
   "setupBackgroundAutostart": "Autostart openen",
   "setupBackgroundSkip": "Niet nu",
   "settingsBackground": "Overdrachten op de achtergrond",
-  "settingsBackgroundOpen": "Batterij-instellingen"
+  "settingsBackgroundOpen": "Batterij-instellingen",
+  "receiveScanQr": "QR-code scannen",
+  "receiveScanQrHint": "Richt de camera op de QR-code op het scherm van de verzender.",
+  "receiveCameraDenied": "Cameratoegang is niet toegestaan. U kunt de code nog steeds typen of plakken.",
+  "receiveCameraUnavailable": "Er is geen camera beschikbaar op dit apparaat. Typ of plak in plaats daarvan de code."
 }

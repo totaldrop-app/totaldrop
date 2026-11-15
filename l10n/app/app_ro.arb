@@ -184,5 +184,9 @@
   "setupBackgroundAutostart": "Deschideți Pornire automată",
   "setupBackgroundSkip": "Nu acum",
   "settingsBackground": "Transferuri în fundal",
-  "settingsBackgroundOpen": "Setările bateriei"
+  "settingsBackgroundOpen": "Setările bateriei",
+  "receiveScanQr": "Scanează codul QR",
+  "receiveScanQrHint": "Îndreptați camera spre codul QR de pe ecranul expeditorului.",
+  "receiveCameraDenied": "Accesul la cameră nu a fost permis. Puteți în continuare să tastați sau să lipiți codul.",
+  "receiveCameraUnavailable": "Nu este disponibilă nicio cameră pe acest dispozitiv. Tastați sau lipiți codul în schimb."
 }

@@ -184,5 +184,9 @@
   "setupBackgroundAutostart": "ऑटोस्टार्ट खोलें",
   "setupBackgroundSkip": "अभी नहीं",
   "settingsBackground": "बैकग्राउंड में ट्रांसफ़र",
-  "settingsBackgroundOpen": "बैटरी सेटिंग"
+  "settingsBackgroundOpen": "बैटरी सेटिंग",
+  "receiveScanQr": "QR कोड स्कैन करें",
+  "receiveScanQrHint": "भेजने वाले की स्क्रीन पर दिख रहे QR कोड की ओर कैमरा करें।",
+  "receiveCameraDenied": "कैमरे की अनुमति नहीं दी गई। आप अब भी कोड लिख या पेस्ट कर सकते हैं।",
+  "receiveCameraUnavailable": "इस डिवाइस पर कोई कैमरा उपलब्ध नहीं है। इसके बजाय कोड लिखें या पेस्ट करें।"
 }

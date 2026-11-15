@@ -11,4 +11,7 @@
     <string name="process_text">Küldés a TotalDroppal</string>
     <string name="shortcut_receive_short">Fogadás</string>
     <string name="shortcut_receive_long">Fájlok fogadása</string>
+    <string name="qr_scan_title">QR-kód beolvasása</string>
+    <string name="qr_scan_hint">Irányítsa a kamerát a küldő képernyőjén látható QR-kódra.</string>
+    <string name="qr_scan_close">Mégse</string>
 </resources>

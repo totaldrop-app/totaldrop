@@ -703,4 +703,19 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'Réglages de batterie';
+
+  @override
+  String get receiveScanQr => 'Scanner le code QR';
+
+  @override
+  String get receiveScanQrHint =>
+      'Pointez l\'appareil photo vers le code QR sur l\'écran de l\'expéditeur.';
+
+  @override
+  String get receiveCameraDenied =>
+      'L\'accès à l\'appareil photo n\'a pas été autorisé. Vous pouvez toujours saisir ou coller le code.';
+
+  @override
+  String get receiveCameraUnavailable =>
+      'Aucun appareil photo n\'est disponible sur cet appareil. Saisissez ou collez le code.';
 }

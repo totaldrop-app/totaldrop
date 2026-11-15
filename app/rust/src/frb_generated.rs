@@ -29,7 +29,7 @@
 
 use crate::api::transfer::*;
 use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, ReadBytesExt, WriteBytesExt};
-use flutter_rust_bridge::for_generated::{transform_result_dco, Lifetimeable, Lockable};
+use flutter_rust_bridge::for_generated::{Lifetimeable, Lockable, transform_result_dco};
 use flutter_rust_bridge::{Handler, IntoIntoDart};
 
 // Section: boilerplate
@@ -40,7 +40,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.13.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 363949791;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -585568549;
 
 // Section: executor
 
@@ -665,6 +665,36 @@ fn wire__crate__api__transfer__code_from_link_impl(
         },
     )
 }
+fn wire__crate__api__transfer__code_from_qr_impl(
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "code_from_qr",
+            port: None,
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_text = <String>::sse_decode(&mut deserializer);
+            deserializer.end();
+            transform_result_sse::<_, ()>((move || {
+                let output_ok = Ok::<_, ()>(crate::api::transfer::code_from_qr(api_text))?;
+                std::result::Result::Ok(output_ok)
+            })())
+        },
+    )
+}
 fn wire__crate__api__transfer__connect_receive_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
@@ -1135,6 +1165,36 @@ fn wire__crate__api__transfer__prepare_send_text_impl(
         },
     )
 }
+fn wire__crate__api__transfer__qr_for_code_impl(
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "qr_for_code",
+            port: None,
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_code = <String>::sse_decode(&mut deserializer);
+            deserializer.end();
+            transform_result_sse::<_, ()>((move || {
+                let output_ok = Ok::<_, ()>(crate::api::transfer::qr_for_code(api_code))?;
+                std::result::Result::Ok(output_ok)
+            })())
+        },
+    )
+}
 fn wire__crate__api__l10n__reveal_controls_impl(
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
@@ -1583,6 +1643,18 @@ impl SseDecode for Option<crate::api::transfer::TransferSummary> {
     }
 }
 
+impl SseDecode for crate::api::transfer::QrGrid {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_modules = <String>::sse_decode(deserializer);
+        let mut var_width = <i32>::sse_decode(deserializer);
+        return crate::api::transfer::QrGrid {
+            modules: var_modules,
+            width: var_width,
+        };
+    }
+}
+
 impl SseDecode for crate::api::l10n::ShownText {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -1680,12 +1752,12 @@ fn pde_ffi_dispatcher_primary_impl(
     match func_id {
         10 => wire__crate__api__transfer__accept_offer_impl(port, ptr, rust_vec_len, data_len),
         11 => wire__crate__api__transfer__accept_text_impl(port, ptr, rust_vec_len, data_len),
-        13 => wire__crate__api__transfer__connect_receive_impl(port, ptr, rust_vec_len, data_len),
-        14 => wire__crate__api__transfer__decline_offer_impl(port, ptr, rust_vec_len, data_len),
-        22 => wire__crate__api__transfer__prepare_send_impl(port, ptr, rust_vec_len, data_len),
-        23 => wire__crate__api__transfer__prepare_send_text_impl(port, ptr, rust_vec_len, data_len),
-        25 => wire__crate__api__transfer__run_send_impl(port, ptr, rust_vec_len, data_len),
-        28 => wire__crate__api__transfer__transfer_summary_default_impl(
+        14 => wire__crate__api__transfer__connect_receive_impl(port, ptr, rust_vec_len, data_len),
+        15 => wire__crate__api__transfer__decline_offer_impl(port, ptr, rust_vec_len, data_len),
+        23 => wire__crate__api__transfer__prepare_send_impl(port, ptr, rust_vec_len, data_len),
+        24 => wire__crate__api__transfer__prepare_send_text_impl(port, ptr, rust_vec_len, data_len),
+        27 => wire__crate__api__transfer__run_send_impl(port, ptr, rust_vec_len, data_len),
+        30 => wire__crate__api__transfer__transfer_summary_default_impl(
             port,
             ptr,
             rust_vec_len,
@@ -1713,16 +1785,18 @@ fn pde_ffi_dispatcher_sync_impl(
         8 => wire__crate__api__transfer__SendSession_items_impl(ptr, rust_vec_len, data_len),
         9 => wire__crate__api__transfer__SendSession_total_bytes_impl(ptr, rust_vec_len, data_len),
         12 => wire__crate__api__transfer__code_from_link_impl(ptr, rust_vec_len, data_len),
-        15 => wire__crate__api__transfer__default_server_impl(ptr, rust_vec_len, data_len),
-        16 => wire__crate__api__l10n__has_draft_translation_impl(ptr, rust_vec_len, data_len),
-        17 => wire__crate__api__transfer__max_text_bytes_impl(ptr, rust_vec_len, data_len),
-        18 => wire__crate__api__l10n__needs_english_impl(ptr, rust_vec_len, data_len),
-        19 => wire__crate__api__l10n__negotiate_locale_impl(ptr, rust_vec_len, data_len),
-        20 => wire__crate__api__transfer__new_stopper_impl(ptr, rust_vec_len, data_len),
-        21 => wire__crate__api__transfer__normalize_code_impl(ptr, rust_vec_len, data_len),
-        24 => wire__crate__api__l10n__reveal_controls_impl(ptr, rust_vec_len, data_len),
-        26 => wire__crate__api__l10n__shown_text_impl(ptr, rust_vec_len, data_len),
-        27 => wire__crate__api__transfer__stop_transfer_impl(ptr, rust_vec_len, data_len),
+        13 => wire__crate__api__transfer__code_from_qr_impl(ptr, rust_vec_len, data_len),
+        16 => wire__crate__api__transfer__default_server_impl(ptr, rust_vec_len, data_len),
+        17 => wire__crate__api__l10n__has_draft_translation_impl(ptr, rust_vec_len, data_len),
+        18 => wire__crate__api__transfer__max_text_bytes_impl(ptr, rust_vec_len, data_len),
+        19 => wire__crate__api__l10n__needs_english_impl(ptr, rust_vec_len, data_len),
+        20 => wire__crate__api__l10n__negotiate_locale_impl(ptr, rust_vec_len, data_len),
+        21 => wire__crate__api__transfer__new_stopper_impl(ptr, rust_vec_len, data_len),
+        22 => wire__crate__api__transfer__normalize_code_impl(ptr, rust_vec_len, data_len),
+        25 => wire__crate__api__transfer__qr_for_code_impl(ptr, rust_vec_len, data_len),
+        26 => wire__crate__api__l10n__reveal_controls_impl(ptr, rust_vec_len, data_len),
+        28 => wire__crate__api__l10n__shown_text_impl(ptr, rust_vec_len, data_len),
+        29 => wire__crate__api__transfer__stop_transfer_impl(ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -1829,6 +1903,24 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::transfer::EventKind>
     for crate::api::transfer::EventKind
 {
     fn into_into_dart(self) -> crate::api::transfer::EventKind {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::transfer::QrGrid {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.modules.into_into_dart().into_dart(),
+            self.width.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::transfer::QrGrid {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::transfer::QrGrid>
+    for crate::api::transfer::QrGrid
+{
+    fn into_into_dart(self) -> crate::api::transfer::QrGrid {
         self
     }
 }
@@ -2121,6 +2213,14 @@ impl SseEncode for Option<crate::api::transfer::TransferSummary> {
     }
 }
 
+impl SseEncode for crate::api::transfer::QrGrid {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.modules, serializer);
+        <i32>::sse_encode(self.width, serializer);
+    }
+}
+
 impl SseEncode for crate::api::l10n::ShownText {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -2196,7 +2296,7 @@ mod io {
     use flutter_rust_bridge::for_generated::byteorder::{
         NativeEndian, ReadBytesExt, WriteBytesExt,
     };
-    use flutter_rust_bridge::for_generated::{transform_result_dco, Lifetimeable, Lockable};
+    use flutter_rust_bridge::for_generated::{Lifetimeable, Lockable, transform_result_dco};
     use flutter_rust_bridge::{Handler, IntoIntoDart};
 
     // Section: boilerplate
@@ -2263,7 +2363,7 @@ mod web {
     };
     use flutter_rust_bridge::for_generated::wasm_bindgen;
     use flutter_rust_bridge::for_generated::wasm_bindgen::prelude::*;
-    use flutter_rust_bridge::for_generated::{transform_result_dco, Lifetimeable, Lockable};
+    use flutter_rust_bridge::for_generated::{Lifetimeable, Lockable, transform_result_dco};
     use flutter_rust_bridge::{Handler, IntoIntoDart};
 
     // Section: boilerplate

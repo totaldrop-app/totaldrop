@@ -11,4 +11,7 @@
     <string name="process_text">Gửi bằng TotalDrop</string>
     <string name="shortcut_receive_short">Nhận</string>
     <string name="shortcut_receive_long">Nhận tệp</string>
+    <string name="qr_scan_title">Quét mã QR</string>
+    <string name="qr_scan_hint">Hướng camera vào mã QR trên màn hình người gửi.</string>
+    <string name="qr_scan_close">Hủy</string>
 </resources>

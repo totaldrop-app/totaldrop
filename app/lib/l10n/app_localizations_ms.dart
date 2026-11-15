@@ -672,4 +672,19 @@ class AppLocalizationsMs extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'Tetapan bateri';
+
+  @override
+  String get receiveScanQr => 'Imbas kod QR';
+
+  @override
+  String get receiveScanQrHint =>
+      'Halakan kamera ke kod QR pada skrin penghantar.';
+
+  @override
+  String get receiveCameraDenied =>
+      'Akses kamera tidak dibenarkan. Anda masih boleh menaip atau menampal kod.';
+
+  @override
+  String get receiveCameraUnavailable =>
+      'Tiada kamera tersedia pada peranti ini. Taip atau tampal kod sebaliknya.';
 }

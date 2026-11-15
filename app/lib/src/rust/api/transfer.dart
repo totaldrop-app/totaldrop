@@ -8,7 +8,7 @@ import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
 // These functions are ignored because they are not marked as `pub`: `b`, `core_events`, `emit`, `finish`, `n`, `of`, `on_connect`, `on_runtime`, `on_send`, `other`, `route`, `stopped`, `text_summary`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `assert_fields_are_eq`, `clone`, `clone`, `clone`, `clone`, `clone`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`
 
 /// A new, unstopped stopper.
 Stopper newStopper() => RustLib.instance.api.crateApiTransferNewStopper();
@@ -126,6 +126,17 @@ String? normalizeCode({required String input}) =>
 String? codeFromLink({required String link}) =>
     RustLib.instance.api.crateApiTransferCodeFromLink(link: link);
 
+/// QR modules for `https://totaldrop.app/r#<code>` at error-correction
+/// level M, matching Linux (`linux/src/desktop.rs`, #29).
+QrGrid qrForCode({required String code}) =>
+    RustLib.instance.api.crateApiTransferQrForCode(code: code);
+
+/// The code in a scanned QR code (`https://totaldrop.app/r#…` or
+/// `totaldrop://r/…`, #29), in its English form. Rejects bare codes,
+/// `http://`, and unrelated QR payloads.
+String? codeFromQr({required String text}) =>
+    RustLib.instance.api.crateApiTransferCodeFromQr(text: text);
+
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<Offer>>
 abstract class Offer implements RustOpaqueInterface {
   /// Number of files.
@@ -228,6 +239,28 @@ enum EventKind {
 
   /// Failed; `error` is set. Always the last event on failure.
   failed,
+}
+
+/// Row-major QR modules (`'1'` dark, `'0'` light) and side length (#29).
+class QrGrid {
+  /// Row-major `'1'` and `'0'` characters (`width * width` long).
+  final String modules;
+
+  /// Number of modules per side, or `0` if `code` is invalid.
+  final int width;
+
+  const QrGrid({required this.modules, required this.width});
+
+  @override
+  int get hashCode => modules.hashCode ^ width.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is QrGrid &&
+          runtimeType == other.runtimeType &&
+          modules == other.modules &&
+          width == other.width;
 }
 
 /// Why a transfer ended.

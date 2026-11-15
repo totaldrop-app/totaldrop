@@ -2355,6 +2355,7 @@ name = "rust_lib_totaldrop"
 version = "0.3.0-beta.7"
 dependencies = [
  "flutter_rust_bridge",
+ "qrcode",
  "tokio",
  "totaldrop-core",
  "totaldrop-l10n",

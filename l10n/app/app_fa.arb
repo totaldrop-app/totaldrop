@@ -184,5 +184,9 @@
   "setupBackgroundAutostart": "باز کردن شروع خودکار",
   "setupBackgroundSkip": "اکنون نه",
   "settingsBackground": "انتقال در پس‌زمینه",
-  "settingsBackgroundOpen": "تنظیمات باتری"
+  "settingsBackgroundOpen": "تنظیمات باتری",
+  "receiveScanQr": "اسکن کد QR",
+  "receiveScanQrHint": "دوربین را به سمت کد QR روی صفحهٔ فرستنده بگیرید.",
+  "receiveCameraDenied": "دسترسی به دوربین مجاز نشد. همچنان می‌توانید کد را بنویسید یا جای‌گذاری کنید.",
+  "receiveCameraUnavailable": "دوربینی در این دستگاه در دسترس نیست. به جای آن کد را بنویسید یا جای‌گذاری کنید."
 }

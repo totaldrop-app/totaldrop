@@ -24,24 +24,41 @@ fuzz_target!(|data: &[u8]| {
             TransferCode::parse(&ascii_digits(s))
         );
         let linked = TransferCode::from_link(s);
+        let qr = TransferCode::from_qr(s);
         if s.len() > MAX_LINK_BYTES {
             assert_eq!(linked, None);
+            assert_eq!(qr, None);
         } else {
             if let Ok(code) = TransferCode::parse(s) {
                 assert_eq!(linked.as_ref(), Some(&code));
+                assert_eq!(qr, None, "bare codes are rejected by from_qr");
             }
             assert_eq!(TransferCode::from_link(&format!("{s}?x")), None, "{s:?}");
+            assert_eq!(TransferCode::from_qr(&format!("{s}?x")), None, "{s:?}");
         }
         if let Ok(code) = TransferCode::parse(s) {
             let english = code.to_english();
             let link = |l: String| TransferCode::from_link(&l);
             assert_eq!(link(format!("totaldrop://r/{english}")), Some(code.clone()));
             assert_eq!(
+                TransferCode::from_qr(&format!("totaldrop://r/{english}")),
+                Some(code.clone())
+            );
+            assert_eq!(TransferCode::from_qr(&code.qr_link()), Some(code.clone()));
+            assert_eq!(
                 link(format!("https://totaldrop.app/r#{}", escaped(&english))),
                 Some(code.clone())
             );
             assert_eq!(
+                TransferCode::from_qr(&format!("https://totaldrop.app/r#{}", escaped(&english))),
+                Some(code.clone())
+            );
+            assert_eq!(
                 link(format!("totaldrop://r/{}", escaped(&escaped(&english)))),
+                None
+            );
+            assert_eq!(
+                TransferCode::from_qr(&format!("totaldrop://r/{}", escaped(&escaped(&english)))),
                 None
             );
         }

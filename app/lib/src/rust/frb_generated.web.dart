@@ -137,6 +137,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   TransferSummary? dco_decode_opt_box_autoadd_transfer_summary(dynamic raw);
 
   @protected
+  QrGrid dco_decode_qr_grid(dynamic raw);
+
+  @protected
   ShownText dco_decode_shown_text(dynamic raw);
 
   @protected
@@ -265,6 +268,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   TransferSummary? sse_decode_opt_box_autoadd_transfer_summary(
     SseDeserializer deserializer,
   );
+
+  @protected
+  QrGrid sse_decode_qr_grid(SseDeserializer deserializer);
 
   @protected
   ShownText sse_decode_shown_text(SseDeserializer deserializer);
@@ -415,6 +421,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
     TransferSummary? self,
     SseSerializer serializer,
   );
+
+  @protected
+  void sse_encode_qr_grid(QrGrid self, SseSerializer serializer);
 
   @protected
   void sse_encode_shown_text(ShownText self, SseSerializer serializer);

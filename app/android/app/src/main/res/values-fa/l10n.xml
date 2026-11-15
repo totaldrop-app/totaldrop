@@ -11,4 +11,7 @@
     <string name="process_text">ارسال با TotalDrop</string>
     <string name="shortcut_receive_short">دریافت</string>
     <string name="shortcut_receive_long">دریافت فایل</string>
+    <string name="qr_scan_title">اسکن کد QR</string>
+    <string name="qr_scan_hint">دوربین را به سمت کد QR روی صفحهٔ فرستنده بگیرید.</string>
+    <string name="qr_scan_close">لغو</string>
 </resources>

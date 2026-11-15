@@ -184,5 +184,9 @@
   "setupBackgroundAutostart": "開啟自動啟動",
   "setupBackgroundSkip": "以後再說",
   "settingsBackground": "背景傳輸",
-  "settingsBackgroundOpen": "電池設定"
+  "settingsBackgroundOpen": "電池設定",
+  "receiveScanQr": "掃描 QR 碼",
+  "receiveScanQrHint": "將相機對準傳送者畫面上的 QR 碼。",
+  "receiveCameraDenied": "未允許存取相機。您仍可輸入或貼上代碼。",
+  "receiveCameraUnavailable": "此裝置沒有可用的相機。請改為輸入或貼上代碼。"
 }

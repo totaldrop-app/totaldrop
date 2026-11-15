@@ -639,4 +639,18 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => '배터리 설정';
+
+  @override
+  String get receiveScanQr => 'QR 코드 스캔';
+
+  @override
+  String get receiveScanQrHint => '보내는 사람의 화면에 있는 QR 코드에 카메라를 비추세요.';
+
+  @override
+  String get receiveCameraDenied =>
+      '카메라 접근이 허용되지 않았습니다. 코드를 직접 입력하거나 붙여넣을 수 있습니다.';
+
+  @override
+  String get receiveCameraUnavailable =>
+      '이 기기에서 사용할 수 있는 카메라가 없습니다. 대신 코드를 입력하거나 붙여넣으세요.';
 }

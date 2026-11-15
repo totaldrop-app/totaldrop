@@ -19,6 +19,7 @@ tokio = { version = "1.54.1", features = ["macros", "rt-multi-thread"] }
 totaldrop-core = { version = "0.2.0-beta.5", path = "../../crates/totaldrop-core" }
 totaldrop-proto = { version = "0.2.0-beta.5", path = "../../crates/totaldrop-proto" }
 totaldrop-l10n = { version = "0.2.0-beta.5", path = "../../crates/totaldrop-l10n" }
+qrcode = { version = "0.14", default-features = false }
 
 [lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(frb_expand)'] }

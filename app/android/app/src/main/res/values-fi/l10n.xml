@@ -11,4 +11,7 @@
     <string name="process_text">Lähetä TotalDropilla</string>
     <string name="shortcut_receive_short">Vastaanota</string>
     <string name="shortcut_receive_long">Vastaanota tiedostoja</string>
+    <string name="qr_scan_title">Lue QR-koodi</string>
+    <string name="qr_scan_hint">Osoita kameralla lähettäjän näytöllä näkyvää QR-koodia.</string>
+    <string name="qr_scan_close">Peruuta</string>
 </resources>

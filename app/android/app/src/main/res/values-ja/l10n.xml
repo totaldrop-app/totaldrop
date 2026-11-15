@@ -11,4 +11,7 @@
     <string name="process_text">TotalDrop で送信</string>
     <string name="shortcut_receive_short">受信</string>
     <string name="shortcut_receive_long">ファイルを受信</string>
+    <string name="qr_scan_title">QRコードを読み取る</string>
+    <string name="qr_scan_hint">送信側の画面にあるQRコードにカメラを向けてください。</string>
+    <string name="qr_scan_close">キャンセル</string>
 </resources>

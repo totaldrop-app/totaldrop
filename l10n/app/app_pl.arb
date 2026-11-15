@@ -184,5 +184,9 @@
   "setupBackgroundAutostart": "Otwórz Autostart",
   "setupBackgroundSkip": "Nie teraz",
   "settingsBackground": "Przesyłanie w tle",
-  "settingsBackgroundOpen": "Ustawienia baterii"
+  "settingsBackgroundOpen": "Ustawienia baterii",
+  "receiveScanQr": "Zeskanuj kod QR",
+  "receiveScanQrHint": "Skieruj aparat na kod QR na ekranie nadawcy.",
+  "receiveCameraDenied": "Nie przyznano dostępu do aparatu. Nadal możesz wpisać lub wkleić kod.",
+  "receiveCameraUnavailable": "Na tym urządzeniu nie ma dostępnego aparatu. Zamiast tego wpisz lub wklej kod."
 }

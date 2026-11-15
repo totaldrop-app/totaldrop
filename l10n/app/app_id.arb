@@ -184,5 +184,9 @@
   "setupBackgroundAutostart": "Buka Mulai otomatis",
   "setupBackgroundSkip": "Nanti saja",
   "settingsBackground": "Transfer di latar belakang",
-  "settingsBackgroundOpen": "Setelan baterai"
+  "settingsBackgroundOpen": "Setelan baterai",
+  "receiveScanQr": "Pindai kode QR",
+  "receiveScanQrHint": "Arahkan kamera ke kode QR di layar pengirim.",
+  "receiveCameraDenied": "Akses kamera tidak diizinkan. Anda tetap dapat mengetik atau menempelkan kode.",
+  "receiveCameraUnavailable": "Tidak ada kamera yang tersedia di perangkat ini. Ketik atau tempelkan kode sebagai gantinya."
 }
