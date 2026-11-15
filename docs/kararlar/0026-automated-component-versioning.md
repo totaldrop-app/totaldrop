@@ -1,6 +1,9 @@
 # 0026: Single-source component versioning and deterministic release automation
 
 - **Status:** Proposed, 15 November 2026 (#558)
+- **Numbering:** Numbers `0020`–`0025` are allocated on open pull requests
+  (`0020` #499, `0021` #514, `0022` #529, `0023` #542, `0024` #368, and
+  `0025` #553).
 - **Context:** TotalDrop releases its deliverables on independent schedules
   under Semantic Versioning 2.0 ([versioning.md](../versioning.md)):
   `Android` (`0.3.0-beta.7+14`), `Linux` (`0.3.0-beta.6`), `Core and CLI`
@@ -106,13 +109,23 @@
      `totaldrop-ios-tvos`.
 
 - **Consequences:**
-  - `node tools/version.mjs bump <component>` replaces error-prone multi-file
-    hand edits, and `node tools/version.mjs check` runs on every pull
-    request and release tag alongside the existing packaging checks.
-  - Signed Android App Bundles receive `TOTALDROP_VERSION` explicitly from
-    the verified `android-v*` tag and reject off-`main` tags, SemVer
-    regressions, and reused `versionCode` values before touching signing
-    secrets.
-  - Moving from `0.x-beta.N` to `1.0.0-rc.1` and `1.0.0` requires flipping
-    `"stage": "stable"` in `versions.json` rather than rewriting shell
-    parsers.
+  - **Gains:**
+    - `node tools/version.mjs bump <component>` replaces error-prone
+      multi-file hand edits, and `node tools/version.mjs check` runs on every
+      pull request and release tag alongside the existing packaging checks.
+    - Signed Android App Bundles receive `TOTALDROP_VERSION` explicitly from
+      the verified `android-v*` tag and reject off-`main` tags, SemVer
+      regressions, and reused `versionCode` values before touching signing
+      secrets.
+    - Moving from `0.x-beta.N` to `1.0.0-rc.1` and `1.0.0` requires flipping
+      `"stage": "stable"` in `versions.json` rather than rewriting shell
+      parsers.
+  - **Costs and trade-offs:**
+    - Every release still requires a reviewed preparation pull request running
+      `node tools/version.mjs bump <component>` before cutting the tag so
+      `versions.json`, lockfiles, and packaging recipes stay committed on
+      `main` under branch protection (`bypass_actors: []`).
+    - Adding a new packaging target or manifest format requires extending
+      `tools/version.mjs` and `tools/test-version.mjs` in lockstep, and once
+      modular repositories cut over (#548), the canonical copy of
+      `tools/version.mjs` must be kept synchronized across repositories via CI.
