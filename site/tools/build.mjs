@@ -3,7 +3,7 @@
 //
 // Writes the folder that is published (ADR 0021, #513):
 //   node site/tools/build.mjs                 site/public → site/dist
-//   node site/tools/build.mjs --out <folder>  somewhere else
+//   node site/tools/build.mjs --out <folder>  another folder under site/
 //
 // site/public is copied as it is, so every address that worked keeps its
 // content. Then each of PAGES is written once per language under /<tag>/,
@@ -21,13 +21,55 @@
 // data-i18n element, aria-label of every data-i18n-label element; a missing
 // or empty translation stays English and is marked lang="en" dir="ltr".
 // Tested by: node --test site/tools/test-build.mjs
-import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { dirname, join, resolve, sep } from "node:path";
+import { cpSync, existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, realpathSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import vm from "node:vm";
 
 const here = dirname(fileURLToPath(import.meta.url));
-export const pub = join(here, "..", "public");
+const siteRoot = realpathSync(resolve(here, ".."));
+export const pub = join(siteRoot, "public");
+const PROTECTED = ["public", "tools", "functions", "privacy", "team", "README.md", "wrangler.toml", ".wrangler"].map((p) => {
+  const full = join(siteRoot, p);
+  return existsSync(full) ? realpathSync(full) : full;
+});
+
+function within(parent, child) {
+  const rel = relative(parent, child);
+  return rel === "" || (rel !== ".." && !rel.startsWith(".." + sep) && !isAbsolute(rel));
+}
+
+function canonicalTarget(out) {
+  let cur = resolve(out);
+  const tail = [];
+  while (true) {
+    let st;
+    try {
+      st = lstatSync(cur, { throwIfNoEntry: false });
+    } catch (e) {
+      if (e.code === "ENOTDIR") throw new Error(`refusing to write to ${out}: not a folder`);
+      throw new Error(`refusing to write to ${out}: broken or invalid path`);
+    }
+    if (st) {
+      if (tail.length === 0) {
+        if (st.isSymbolicLink()) throw new Error(`refusing to write to ${out}: output path is a symlink`);
+        if (!st.isDirectory()) throw new Error(`refusing to write to ${out}: not a folder`);
+      }
+      let realBase;
+      try {
+        realBase = realpathSync(cur);
+      } catch {
+        throw new Error(`refusing to write to ${out}: broken or invalid path`);
+      }
+      if (!statSync(realBase).isDirectory()) throw new Error(`refusing to write to ${out}: not a folder`);
+      return join(realBase, ...tail.reverse());
+    }
+    const parent = dirname(cur);
+    if (parent === cur) throw new Error(`refusing to write to ${out}: broken or invalid path`);
+    tail.push(basename(cur));
+    cur = parent;
+  }
+}
 
 // The pages that get an address per language. Not here: the privacy policy
 // (its own pages, site/tools/privacy.mjs), /r (the code after "#" must keep
@@ -158,51 +200,90 @@ export function missingFiles(html, out) {
 }
 
 export function build(out) {
-  // The folder is emptied first, so it must not be the source or hold it.
-  const target = resolve(out);
-  const source = resolve(pub);
-  if (target === source || source.startsWith(target + sep) || target.startsWith(source + sep)) throw new Error(`refusing to write to ${out}: it is or holds site/public`);
-  rmSync(out, { recursive: true, force: true });
-  cpSync(pub, out, { recursive: true });
+  if (typeof out !== "string" || !out.trim()) throw new Error("refusing to write: empty output path");
+  // The folder is emptied first, so it must live under site/, never overlap
+  // tracked files, and never wipe a non-empty folder without a prior build.
+  const target = canonicalTarget(out);
+  if (target === siteRoot || !within(siteRoot, target)) {
+    throw new Error(`refusing to write to ${out}: output folder must be under site/`);
+  }
+  for (const kept of PROTECTED) {
+    if (within(target, kept) || within(kept, target)) {
+      throw new Error(`refusing to write to ${out}: overlaps tracked files in site/`);
+    }
+  }
+  if (existsSync(target) && readdirSync(target).length > 0) {
+    const markerSitemap = lstatSync(join(target, "sitemap.xml"), { throwIfNoEntry: false });
+    const markerTr = lstatSync(join(target, "tr", "index.html"), { throwIfNoEntry: false });
+    if (!markerSitemap?.isFile() || !markerTr?.isFile()) {
+      throw new Error(`refusing to write to ${out}: non-empty folder has no previous site build`);
+    }
+  }
   for (const tag of TAGS) {
     if (tag !== "en" && existsSync(join(pub, tag))) throw new Error(`site/public/${tag} would be hidden by the language ${tag}`);
   }
   const dicts = new Map(TAGS.filter((t) => t !== "en").map((t) => [t, JSON.parse(readFileSync(join(pub, "i18n", t + ".json"), "utf8"))]));
   const canonicals = [];
+  const rendered = [];
   const errors = [];
-  let written = 0;
   for (const page of PAGES) {
     const english = readFileSync(join(pub, page), "utf8");
     const canonical = canonicalOf(english);
     canonicals.push(canonical);
     for (const tag of TAGS) {
-      const file = tag === "en" ? join(out, page) : join(out, tag, page);
+      const relFile = tag === "en" ? page : join(tag, page);
       const html = withAlternates(translate(english, tag, dicts.get(tag)), canonical);
-      mkdirSync(dirname(file), { recursive: true });
-      writeFileSync(file, html);
-      written += 1;
-    }
-  }
-  // Checked once everything is written, since the pages link to each other.
-  for (const page of PAGES) {
-    for (const tag of TAGS) {
-      const file = tag === "en" ? join(out, page) : join(out, tag, page);
-      for (const ref of missingFiles(readFileSync(file, "utf8"), out)) errors.push(`${tag === "en" ? "" : tag + "/"}${page} → ${ref} missing`);
+      rendered.push({ relFile, html });
     }
   }
   const sitemap = readFileSync(join(pub, "sitemap.xml"), "utf8");
   if (!sitemap.includes("</urlset>")) throw new Error("sitemap.xml: no </urlset>");
   for (const c of canonicals) if (!sitemap.includes(`<loc>${c}</loc>`)) errors.push(`sitemap.xml: ${c} missing`);
   const added = addedAddresses(canonicals).map((a) => `  <url><loc>${a}</loc></url>\n`).join("");
-  writeFileSync(join(out, "sitemap.xml"), sitemap.replace("</urlset>", added + "</urlset>"));
+  const builtSitemap = sitemap.replace("</urlset>", added + "</urlset>");
+
+  rmSync(target, { recursive: true, force: true });
+  cpSync(pub, target, { recursive: true });
+  for (const { relFile, html } of rendered) {
+    const file = join(target, relFile);
+    mkdirSync(dirname(file), { recursive: true });
+    writeFileSync(file, html);
+  }
+  writeFileSync(join(target, "sitemap.xml"), builtSitemap);
+
+  // Checked once everything is written, since the pages link to each other.
+  for (const { relFile, html } of rendered) {
+    for (const ref of missingFiles(html, target)) errors.push(`${relFile} → ${ref} missing`);
+  }
   if (errors.length) throw new Error(errors.join("\n"));
-  return { written, languages: TAGS.length };
+  return { written: rendered.length, languages: TAGS.length };
 }
 
-if (import.meta.url === pathToFileURL(process.argv[1] || "").href) {
-  const at = process.argv.indexOf("--out");
-  const out = at > 0 ? process.argv[at + 1] : join(here, "..", "dist");
+export function parseCliOut(args) {
+  let out;
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (arg === "--out") {
+      if (out !== undefined || i + 1 >= args.length || !args[i + 1] || args[i + 1].startsWith("-")) {
+        throw new Error("refusing to write: usage: node site/tools/build.mjs [--out <folder>]");
+      }
+      out = args[++i];
+    } else if (arg.startsWith("--out=")) {
+      const val = arg.slice("--out=".length);
+      if (out !== undefined || !val) {
+        throw new Error("refusing to write: usage: node site/tools/build.mjs [--out <folder>]");
+      }
+      out = val;
+    } else {
+      throw new Error(`refusing to write: unexpected argument ${arg}`);
+    }
+  }
+  return out ?? join(siteRoot, "dist");
+}
+
+if (process.argv[1] && existsSync(process.argv[1]) && realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
   try {
+    const out = parseCliOut(process.argv.slice(2));
     const { written, languages } = build(out);
     console.log(`site: ${written} pages in ${languages} languages written to ${out}`);
   } catch (e) {
