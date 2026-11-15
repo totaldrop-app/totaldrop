@@ -12,7 +12,7 @@
 
 use std::future::Future;
 use std::sync::Mutex;
-use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicI32, AtomicUsize, Ordering};
 use std::time::Duration;
 
 use tokio::sync::Notify;
@@ -29,6 +29,79 @@ const ABORTED: Duration = Duration::from_millis(200);
 
 /// Transfers and declines, which may hold a router port.
 pub static TRANSFERS: Tasks = Tasks::new();
+
+/// Termination signals (`SIGTERM`, `SIGHUP`, `SIGINT`) caught while the
+/// window lives (#527).
+pub static SIGNALS: SignalExit = SignalExit::new();
+
+/// Records a termination signal and asks the window's event loop to end so
+/// [`finish`] can stop transfers and release router ports before exit (#527).
+#[derive(Debug, Default)]
+pub struct SignalExit {
+    code: AtomicI32,
+}
+
+impl SignalExit {
+    /// Unsignalled; `const`, so it can be a static.
+    pub const fn new() -> Self {
+        Self {
+            code: AtomicI32::new(0),
+        }
+    }
+
+    /// Whether a termination signal has already arrived.
+    pub fn signaled(&self) -> bool {
+        self.code.load(Ordering::Acquire) != 0
+    }
+
+    /// The process exit code: the signal's (`143` for `SIGTERM`, `129` for
+    /// `SIGHUP`, `130` for `SIGINT`) if one ended the window, otherwise
+    /// `app_code`.
+    pub fn exit_code(&self, app_code: i32) -> i32 {
+        let sig = self.code.load(Ordering::Acquire);
+        if sig != 0 { sig } else { app_code }
+    }
+
+    /// Listen for `SIGTERM`, `SIGHUP` and `SIGINT` on `runtime` and call
+    /// `quit_app` when the first arrives so the window's event loop ends and
+    /// [`finish`] runs (#527).
+    #[cfg(unix)]
+    pub fn watch(&'static self, runtime: &tokio::runtime::Runtime, quit_app: fn()) {
+        use tokio::signal::unix::{Signal, SignalKind, signal};
+
+        async fn recv(sig: &mut Option<Signal>) -> Option<()> {
+            match sig {
+                Some(s) => s.recv().await,
+                None => None,
+            }
+        }
+
+        let _enter = runtime.enter();
+        let (mut terminate, mut hangup, mut interrupt) = (
+            signal(SignalKind::terminate()).ok(),
+            signal(SignalKind::hangup()).ok(),
+            signal(SignalKind::interrupt()).ok(),
+        );
+        runtime.spawn(async move {
+            let first = tokio::select! {
+                Some(()) = recv(&mut terminate) => 143,
+                Some(()) = recv(&mut hangup) => 129,
+                Some(()) = recv(&mut interrupt) => 130,
+                else => return,
+            };
+            let _ = self
+                .code
+                .compare_exchange(0, first, Ordering::AcqRel, Ordering::Acquire);
+            quit_app();
+            // A second Ctrl-C at a terminal exits at once; SIGHUP and
+            // SIGTERM arriving together at logout must not cut port release
+            // short.
+            if first == 130 && recv(&mut interrupt).await.is_some() {
+                std::process::exit(130);
+            }
+        });
+    }
+}
 
 /// The tasks that run, so quitting can wait for them and drop the rest.
 #[derive(Debug)]
@@ -262,5 +335,74 @@ mod tests {
         TASKS.spawn(&rt, async {});
         assert!(rt.block_on(finish(&TASKS, async {}, Duration::from_secs(1))));
         go.notify_waiters();
+    }
+
+    /// `SIGTERM` and `SIGHUP` invoke the window quit callback and report
+    /// their signal exit codes (`143` and `129`), while an unsignalled run
+    /// keeps Qt's own exit code (#527). Signals are sent inside a dedicated
+    /// child test process so process-wide signals cannot interrupt sibling
+    /// tests (such as socket reads with timeouts in `sleep::tests`) or leave
+    /// signal handlers installed in the runner.
+    #[cfg(unix)]
+    #[test]
+    fn sigterm_and_sighup_quit_the_event_loop_and_record_exit_code() {
+        use super::SignalExit;
+        use tokio::sync::Notify;
+
+        const VAR: &str = "TOTALDROP_TEST_QUIT_SIGNAL";
+
+        if let Ok(sig) = std::env::var(VAR) {
+            static EXIT: SignalExit = SignalExit::new();
+            static QUIT: Notify = Notify::const_new();
+            fn on_quit() {
+                QUIT.notify_waiters();
+            }
+
+            let expected = if sig == "TERM" {
+                143
+            } else {
+                assert_eq!(sig, "HUP");
+                129
+            };
+            let rt = runtime();
+            let notified = QUIT.notified();
+            EXIT.watch(&rt, on_quit);
+            let status = std::process::Command::new("kill")
+                .args(["-s", &sig, &std::process::id().to_string()])
+                .status()
+                .unwrap();
+            assert!(status.success());
+            rt.block_on(async {
+                tokio::time::timeout(Duration::from_secs(2), notified)
+                    .await
+                    .unwrap();
+            });
+            assert!(EXIT.signaled());
+            assert_eq!(EXIT.exit_code(0), expected);
+            return;
+        }
+
+        static IDLE: SignalExit = SignalExit::new();
+        assert!(!IDLE.signaled());
+        assert_eq!(IDLE.exit_code(0), 0);
+        assert_eq!(IDLE.exit_code(4), 4);
+
+        let exe = std::env::current_exe().unwrap();
+        for sig in ["TERM", "HUP"] {
+            let out = std::process::Command::new(&exe)
+                .env(VAR, sig)
+                .args([
+                    "--nocapture",
+                    "sigterm_and_sighup_quit_the_event_loop_and_record_exit_code",
+                ])
+                .output()
+                .unwrap();
+            assert!(
+                out.status.success(),
+                "{sig} child failed ({}):\n{}",
+                out.status,
+                String::from_utf8_lossy(&out.stderr)
+            );
+        }
     }
 }

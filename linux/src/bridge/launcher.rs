@@ -28,6 +28,9 @@ pub mod qobject {
 
         /// Give Qt the token to activate the window with; see `launcher.h`.
         fn set_activation_token(token: &QString);
+
+        /// Ask Qt's event loop to end from any thread; see `launcher.h`.
+        fn quit_application();
     }
 
     extern "RustQt" {
@@ -50,6 +53,8 @@ pub mod qobject {
     impl cxx_qt::Threading for Launcher {}
     impl cxx_qt::Initialize for Launcher {}
 }
+
+pub use qobject::quit_application;
 
 /// Backing state of [`qobject::Launcher`].
 #[derive(Default)]

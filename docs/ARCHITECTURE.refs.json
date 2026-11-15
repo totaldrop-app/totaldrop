@@ -95,63 +95,66 @@
     "totaldrop-relay = { version = \"0.1.0-beta.1\", path = \"../../server/totaldrop-relay\" }",
     "totaldrop-rendezvous = { version = \"0.1.0-beta.1\", path = \"../../server/totaldrop-rendezvous\" }"
   ],
-  "crates/totaldrop-cli/src/main.rs:232": [
+  "crates/totaldrop-cli/src/main.rs:237": [
+    "if let Ok(val) = std::env::var(\"TOTALDROP_TEST_GATEWAY\") {"
+  ],
+  "crates/totaldrop-cli/src/main.rs:250": [
     "fn paths(relay: Option<String>, stun: Option<String>, relay_only: bool) -> PathOptions {"
   ],
-  "crates/totaldrop-cli/src/main.rs:33": [
+  "crates/totaldrop-cli/src/main.rs:34": [
     "#[arg(long, global = true, env = \"TOTALDROP_SERVER\")]"
   ],
-  "crates/totaldrop-cli/src/main.rs:38": [
+  "crates/totaldrop-cli/src/main.rs:39": [
     "#[arg(long, global = true, env = \"TOTALDROP_RELAY\")]"
   ],
-  "crates/totaldrop-cli/src/main.rs:385": [
-    "async fn send("
-  ],
-  "crates/totaldrop-cli/src/main.rs:395": [
-    "words: if strong { 3 } else { 2 },"
-  ],
-  "crates/totaldrop-cli/src/main.rs:403": [
-    "What::Files(files) => PreparedSend::new(&opts, files.clone()).await,"
-  ],
-  "crates/totaldrop-cli/src/main.rs:42": [
+  "crates/totaldrop-cli/src/main.rs:43": [
     "#[arg(long, global = true, env = \"TOTALDROP_STUN\")]"
   ],
-  "crates/totaldrop-cli/src/main.rs:432": [
+  "crates/totaldrop-cli/src/main.rs:482": [
+    "async fn send("
+  ],
+  "crates/totaldrop-cli/src/main.rs:493": [
+    "words: if strong { 3 } else { 2 },"
+  ],
+  "crates/totaldrop-cli/src/main.rs:500": [
+    "What::Files(files) => PreparedSend::new(&opts, files.clone()).await,"
+  ],
+  "crates/totaldrop-cli/src/main.rs:527": [
     "let report = prepared.run_with(printer(Arc::clone(&s)), stop).await?;"
   ],
-  "crates/totaldrop-cli/src/main.rs:459": [
+  "crates/totaldrop-cli/src/main.rs:551": [
     "async fn receive("
   ],
-  "crates/totaldrop-cli/src/main.rs:526": [
+  "crates/totaldrop-cli/src/main.rs:618": [
     "IncomingOffer::connect_with(&ReceiveOptions { server, paths }, &code, &stop).await?;"
   ],
-  "crates/totaldrop-cli/src/main.rs:596": [
+  "crates/totaldrop-cli/src/main.rs:702": [
     ".accept_with(&dest, printer(Arc::clone(&s)), &stop)"
   ],
-  "crates/totaldrop-cli/src/main.rs:643": [
+  "crates/totaldrop-cli/src/main.rs:746": [
     "fn main() -> ExitCode {"
   ],
-  "crates/totaldrop-cli/src/main.rs:659": [
+  "crates/totaldrop-cli/src/main.rs:762": [
     "let route = paths(cli.relay, cli.stun, cli.relay_only);"
   ],
-  "crates/totaldrop-cli/src/main.rs:660-663": [
+  "crates/totaldrop-cli/src/main.rs:763-766": [
     "if route.relay_only && route.relay.is_empty() {",
     "}"
   ],
-  "crates/totaldrop-cli/src/main.rs:680": [
+  "crates/totaldrop-cli/src/main.rs:784": [
     "Command::Send {"
   ],
-  "crates/totaldrop-cli/src/main.rs:701": [
+  "crates/totaldrop-cli/src/main.rs:810": [
     "Command::Receive { code, out, yes } => run_then_release("
   ],
-  "crates/totaldrop-cli/src/main.rs:719-741": [
+  "crates/totaldrop-cli/src/main.rs:839-864": [
     "match result {",
     "}"
   ],
-  "crates/totaldrop-cli/src/main.rs:747": [
+  "crates/totaldrop-cli/src/main.rs:870": [
     "fn detail_line(e: &totaldrop_core::Error) -> String {"
   ],
-  "crates/totaldrop-cli/src/main.rs:755": [
+  "crates/totaldrop-cli/src/main.rs:878": [
     "fn error_key(e: &totaldrop_core::Error, sending: bool) -> &'static str {"
   ],
   "crates/totaldrop-cli/tests/end_to_end.rs:28": [
