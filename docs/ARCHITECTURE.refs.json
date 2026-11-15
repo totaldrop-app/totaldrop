@@ -280,10 +280,10 @@
   "crates/totaldrop-core/src/relay.rs:521": [
     "async fn ping_within(ws: &mut crate::rendezvous::Ws, wait: Duration) -> Result<bool> {"
   ],
-  "crates/totaldrop-core/src/rendezvous.rs:175": [
+  "crates/totaldrop-core/src/rendezvous.rs:202": [
     "pub async fn allocate(server: &str) -> Result<Allocation> {"
   ],
-  "crates/totaldrop-core/src/rendezvous.rs:202": [
+  "crates/totaldrop-core/src/rendezvous.rs:231": [
     "pub async fn claim(server: &str, nameplate: u32, token: Option<&Allocation>) -> Result<Self> {"
   ],
   "crates/totaldrop-core/src/secure.rs:112": [
@@ -387,17 +387,17 @@
     "/// Reads `LANGUAGE`, `LC_ALL`, `LC_MESSAGES`, `LC_NUMERIC` and `LANG`.",
     "if !c_locale && let Some(list) = get(\"LANGUAGE\") {"
   ],
-  "crates/totaldrop-proto/src/lib.rs:101": [
+  "crates/totaldrop-proto/src/lib.rs:103": [
     "pub fn validate_path<S: AsRef<str>>(segments: &[S]) -> Result<SafePath, PathError> {"
   ],
   "crates/totaldrop-proto/src/lib.rs:13-29": [
     "pub mod limits {",
     "pub const MAX_CHUNKS: u64 = 1 << 32;"
   ],
-  "crates/totaldrop-proto/src/lib.rs:183": [
+  "crates/totaldrop-proto/src/lib.rs:185": [
     "pub struct TransferCode {"
   ],
-  "crates/totaldrop-proto/src/lib.rs:66": [
+  "crates/totaldrop-proto/src/lib.rs:68": [
     "pub struct SafePath(Vec<String>);"
   ],
   "crates/totaldrop-proto/src/relay.rs:157": [
@@ -659,14 +659,14 @@
   "server/totaldrop-rendezvous/src/lib.rs:128": [
     "fn token_matches(given: Option<[u8; 16]>, ours: &[u8; 16]) -> bool {"
   ],
-  "server/totaldrop-rendezvous/src/lib.rs:236-239": [
+  "server/totaldrop-rendezvous/src/lib.rs:235-238": [
     "struct State {",
     "cooling: HashMap<u32, Instant>,"
   ],
-  "server/totaldrop-rendezvous/src/lib.rs:343": [
+  "server/totaldrop-rendezvous/src/lib.rs:342": [
     "pub async fn serve(self, listener: TcpListener) {"
   ],
-  "server/totaldrop-rendezvous/src/lib.rs:47": [
+  "server/totaldrop-rendezvous/src/lib.rs:48": [
     "pub struct Config {"
   ],
   "server/totaldrop-rendezvous/src/main.rs:12-15": [

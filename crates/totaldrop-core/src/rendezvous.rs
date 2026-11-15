@@ -10,6 +10,7 @@ use tokio::net::TcpStream;
 use tokio_tungstenite::tungstenite::Message;
 use tokio_tungstenite::tungstenite::protocol::WebSocketConfig;
 use tokio_tungstenite::{Connector, MaybeTlsStream, WebSocketStream};
+use totaldrop_proto::limits::RENDEZVOUS_IO_TIMEOUT;
 use totaldrop_proto::wire::{ClientMessage, MAX_MAILBOX_BODY, Mood, ServerMessage};
 
 use crate::error::{Error, Result};
@@ -119,37 +120,63 @@ pub(crate) async fn open_ws(url: &str, max: usize) -> Result<Ws> {
     Ok(ws)
 }
 
+async fn write_within(ws: &mut Ws, msg: Message, wait: std::time::Duration) -> Result<()> {
+    match tokio::time::timeout(wait, ws.send(msg)).await {
+        Ok(written) => written.map_err(|e| Error::Rendezvous(e.to_string())),
+        Err(_) => Err(Error::RendezvousTimeout),
+    }
+}
+
 async fn send(ws: &mut Ws, msg: ClientMessage) -> Result<()> {
-    ws.send(Message::Binary(msg.encode().into()))
-        .await
-        .map_err(|e| Error::Rendezvous(e.to_string()))
+    write_within(
+        ws,
+        Message::Binary(msg.encode().into()),
+        RENDEZVOUS_IO_TIMEOUT,
+    )
+    .await
 }
 
 /// Wait for the next server message, pinging while idle.
 async fn recv(ws: &mut Ws) -> Result<ServerMessage> {
-    let mut ping = tokio::time::interval(KEEPALIVE);
+    recv_with(ws, KEEPALIVE, RENDEZVOUS_IO_TIMEOUT).await.0
+}
+
+/// Wait for the next server message; the boolean says whether `ws` may still
+/// be written to (`false` once a write failed or timed out, or the stream
+/// closed).
+async fn recv_with(
+    ws: &mut Ws,
+    keepalive: std::time::Duration,
+    io_timeout: std::time::Duration,
+) -> (Result<ServerMessage>, bool) {
+    let mut ping = tokio::time::interval(keepalive);
     ping.tick().await;
     loop {
         tokio::select! {
             frame = ws.next() => match frame {
                 Some(Ok(Message::Binary(b))) => {
-                    let msg = ServerMessage::decode(&b)?;
-                    if let ServerMessage::Error { reason } = msg {
-                        return Err(Error::Rendezvous(reason));
-                    }
-                    return Ok(msg);
+                    return match ServerMessage::decode(&b) {
+                        Ok(ServerMessage::Error { reason }) => {
+                            (Err(Error::Rendezvous(reason)), false)
+                        }
+                        Ok(msg) => (Ok(msg), true),
+                        Err(e) => (Err(e.into()), true),
+                    };
                 }
                 Some(Ok(Message::Ping(_) | Message::Pong(_))) => {}
                 Some(Ok(Message::Close(_))) | None => {
-                    return Err(Error::Rendezvous("connection closed".into()));
+                    return (Err(Error::Rendezvous("connection closed".into())), false);
                 }
-                Some(Ok(_)) => return Err(Error::Protocol("unexpected rendezvous frame")),
-                Some(Err(e)) => return Err(Error::Rendezvous(e.to_string())),
+                Some(Ok(_)) => return (Err(Error::Protocol("unexpected rendezvous frame")), true),
+                Some(Err(e)) => return (Err(Error::Rendezvous(e.to_string())), false),
             },
             _ = ping.tick() => {
-                ws.send(Message::Ping(Vec::new().into()))
-                    .await
-                    .map_err(|e| Error::Rendezvous(e.to_string()))?;
+                // A server that stopped reading must not hold a waiting
+                // client in a full send buffer (#459).
+                if let Err(e) = write_within(ws, Message::Ping(Vec::new().into()), io_timeout).await
+                {
+                    return (Err(e), false);
+                }
             }
         }
     }
@@ -175,8 +202,10 @@ impl core::fmt::Debug for Allocation {
 pub async fn allocate(server: &str) -> Result<Allocation> {
     let mut ws = open(&join(server, ALLOCATE_PATH)).await?;
     send(&mut ws, ClientMessage::Allocate).await?;
-    let reply = recv(&mut ws).await;
-    let _ = ws.close(None).await;
+    let (reply, writable) = recv_with(&mut ws, KEEPALIVE, RENDEZVOUS_IO_TIMEOUT).await;
+    if writable {
+        let _ = tokio::time::timeout(CLOSE_WAIT, ws.close(None)).await;
+    }
     match reply? {
         ServerMessage::Allocated { nameplate, token } => Ok(Allocation { nameplate, token }),
         _ => Err(Error::Protocol("expected allocated")),
@@ -185,7 +214,7 @@ pub async fn allocate(server: &str) -> Result<Allocation> {
 
 /// A claimed mailbox on the rendezvous server.
 pub struct Mailbox {
-    ws: Ws,
+    ws: Option<Ws>,
     /// The mailbox ID (CPace session ID).
     pub id: [u8; 16],
 }
@@ -210,26 +239,55 @@ impl Mailbox {
         )
         .await?;
         match recv(&mut ws).await? {
-            ServerMessage::Claimed { mailbox } => Ok(Self { ws, id: mailbox }),
+            ServerMessage::Claimed { mailbox } => Ok(Self {
+                ws: Some(ws),
+                id: mailbox,
+            }),
             _ => Err(Error::Protocol("expected claimed")),
         }
     }
 
     /// `ADD`: post a message to the other side.
     pub async fn add(&mut self, phase: &str, body: Vec<u8>) -> Result<()> {
-        send(
-            &mut self.ws,
+        let ws = self
+            .ws
+            .as_mut()
+            .ok_or_else(|| Error::Rendezvous("connection closed".into()))?;
+        let sent = send(
+            ws,
             ClientMessage::Add {
                 phase: phase.to_owned(),
                 body,
             },
         )
-        .await
+        .await;
+        if sent.is_err() {
+            self.ws = None;
+        }
+        sent
     }
 
     /// Wait for the other side's next message, which must be of `phase`.
     pub async fn expect(&mut self, phase: &str) -> Result<Vec<u8>> {
-        match recv(&mut self.ws).await? {
+        self.expect_within(phase, KEEPALIVE, RENDEZVOUS_IO_TIMEOUT)
+            .await
+    }
+
+    async fn expect_within(
+        &mut self,
+        phase: &str,
+        keepalive: std::time::Duration,
+        io_timeout: std::time::Duration,
+    ) -> Result<Vec<u8>> {
+        let ws = self
+            .ws
+            .as_mut()
+            .ok_or_else(|| Error::Rendezvous("connection closed".into()))?;
+        let (reply, writable) = recv_with(ws, keepalive, io_timeout).await;
+        if !writable {
+            self.ws = None;
+        }
+        match reply? {
             ServerMessage::Message { phase: p, body } if p == phase => Ok(body),
             ServerMessage::Message { .. } => Err(Error::Protocol("unexpected mailbox phase")),
             ServerMessage::PeerClosed { mood: Mood::Scary } => Err(Error::WrongCode),
@@ -248,13 +306,18 @@ impl Mailbox {
     /// the socket was dropped with unread data, so it was reset and frames
     /// not yet forwarded were discarded; that part is not confirmed.
     pub async fn close(mut self, mood: Mood) {
+        let Some(mut ws) = self.ws.take() else {
+            return;
+        };
         let now = tokio::time::Instant::now();
         let deadline = now.checked_add(CLOSE_WAIT).unwrap_or(now);
+        let mut sent_close = false;
         let _ = tokio::time::timeout_at(deadline, async {
-            send(&mut self.ws, ClientMessage::Close { mood }).await?;
+            send(&mut ws, ClientMessage::Close { mood }).await?;
+            sent_close = true;
             // Whatever still arrives (such as the other side's
             // `peer_closed`) no longer matters; only the end does.
-            while let Some(Ok(frame)) = self.ws.next().await {
+            while let Some(Ok(frame)) = ws.next().await {
                 if matches!(frame, Message::Close(_)) {
                     break;
                 }
@@ -262,7 +325,9 @@ impl Mailbox {
             Ok::<(), Error>(())
         })
         .await;
-        let _ = tokio::time::timeout_at(deadline, self.ws.close(None)).await;
+        if sent_close {
+            let _ = tokio::time::timeout_at(deadline, ws.close(None)).await;
+        }
     }
 }
 
@@ -357,6 +422,62 @@ mod tests {
             "close waited too long"
         );
         assert!(stand_in.await.unwrap(), "close never hung up");
+    }
+
+    /// #459: a waiting mailbox whose server stops reading fails within the
+    /// write time limit when a keep-alive ping finds the send buffer full,
+    /// instead of hanging until the kernel drops the TCP connection.
+    ///
+    /// Uses real time rather than `start_paused = true`: while the server
+    /// floods pings and the client reads them to fill the kernel TCP send
+    /// buffer with pongs, tasks stay continuously runnable, so paused time
+    /// would never auto-advance to the keep-alive tick.
+    #[tokio::test]
+    async fn expect_gives_up_when_a_ping_finds_the_server_stuck() {
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let server = format!("ws://{}", listener.local_addr().unwrap());
+        let pinging = tokio::spawn(async move {
+            let (stream, _) = listener.accept().await.unwrap();
+            let mut ws = tokio_tungstenite::accept_async(MaybeTlsStream::Plain(stream))
+                .await
+                .unwrap();
+            assert!(matches!(
+                next_client(&mut ws).await,
+                Some(ClientMessage::Claim { .. })
+            ));
+            let claimed = ServerMessage::Claimed { mailbox: [7; 16] };
+            ws.send(Message::Binary(claimed.encode().into()))
+                .await
+                .unwrap();
+            // Keep pinging without reading so the client's Pong replies fill
+            // its TCP send buffer while it waits for `pake`.
+            while ws.send(Message::Ping(vec![0; 125].into())).await.is_ok() {}
+        });
+        let mut mailbox = Mailbox::claim(&server, 5, None).await.unwrap();
+        let outcome = tokio::time::timeout(
+            std::time::Duration::from_secs(5),
+            mailbox.expect_within(
+                "pake",
+                std::time::Duration::from_millis(200),
+                std::time::Duration::from_secs(1),
+            ),
+        )
+        .await;
+        assert!(
+            matches!(outcome, Ok(Err(Error::RendezvousTimeout))),
+            "keep-alive ping hung on a server that stopped reading: {outcome:?}"
+        );
+        assert!(
+            mailbox.ws.is_none(),
+            "timed-out socket must be dropped, not reused"
+        );
+        let closed = tokio::time::timeout(
+            std::time::Duration::from_secs(1),
+            mailbox.close(Mood::Lonely),
+        )
+        .await;
+        pinging.abort();
+        assert!(closed.is_ok(), "close waited on an already dropped socket");
     }
 
     #[test]

@@ -11,7 +11,7 @@ pub mod wire;
 use unicode_normalization::UnicodeNormalization;
 
 pub mod limits {
-    //! Limits from spec section 11. A receiver must reject anything beyond them.
+    //! Limits from spec section 11 and protocol I/O time limits.
 
     /// Maximum number of entries in one transfer.
     pub const MAX_ENTRIES: usize = 100_000;
@@ -27,6 +27,8 @@ pub mod limits {
     pub const CHUNK_SIZE: u64 = 1 << 20;
     /// Maximum number of chunks in one file.
     pub const MAX_CHUNKS: u64 = 1 << 32;
+    /// Maximum time a rendezvous WebSocket handshake or write may wait (#459).
+    pub const RENDEZVOUS_IO_TIMEOUT: core::time::Duration = core::time::Duration::from_secs(10);
 }
 
 /// Number of chunks a file of `size` bytes is split into. An empty file is one
