@@ -8,6 +8,7 @@ import 'package:material_ui/material_ui.dart';
 
 import 'data/background_access.dart';
 import 'data/launch_source.dart';
+import 'data/network_bridge.dart';
 import 'data/settings_repository.dart';
 import 'data/transfer_keep_alive.dart';
 import 'data/transfer_repository.dart';
@@ -33,6 +34,9 @@ const appVersion = String.fromEnvironment(
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await RustLib.init();
+  if (Platform.isAndroid) {
+    await AndroidNetworkBridge.start();
+  }
   final settings = await SettingsRepository.load();
   final transfers = TransferRepository(settings);
   // The notification that keeps a transfer going in the background speaks

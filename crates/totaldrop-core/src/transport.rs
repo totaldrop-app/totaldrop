@@ -1955,4 +1955,84 @@ mod tests {
             d.sender.stats().path
         );
     }
+
+    /// Decision 0018 (step 3) / #32: when the system reports that the active
+    /// network changed, both sides move onto the relay at once instead of
+    /// waiting out `FALLBACK_SILENCE`. Here `silence` is 60 seconds, yet the
+    /// 4 MiB transfer completes well before that once `notify()` fires.
+    #[tokio::test]
+    async fn a_network_change_moves_onto_the_relay_without_waiting_for_silence() {
+        let d = direct().await;
+        let silence = Duration::from_secs(60);
+        let send_change = crate::path::NetworkChange::new();
+        let recv_change = crate::path::NetworkChange::new();
+        let _w1 = crate::path::Watch::spawn_with(
+            &d.sender_fallback,
+            d.sender.clone(),
+            d.send_gate.clone(),
+            silence,
+            Some(send_change.clone()),
+        );
+        let _w2 = crate::path::Watch::spawn_with(
+            &d.receiver_fallback,
+            d.receiver.clone(),
+            d.recv_gate.clone(),
+            silence,
+            Some(recv_change.clone()),
+        );
+        let arrived = send_across(
+            &d,
+            || {
+                d.sender_cut.set(true, true);
+                d.receiver_cut.set(true, true);
+                send_change.notify();
+                recv_change.notify();
+            },
+            Duration::from_secs(10),
+        )
+        .await;
+        assert!(
+            arrived,
+            "the transfer did not move onto the relay on network change"
+        );
+        assert!(d.sender_fallback.moved() && d.receiver_fallback.moved());
+        assert!(d.send_gate.is_open() && d.recv_gate.is_open());
+    }
+
+    /// If the system signals a network change while the direct path still
+    /// carries packets (for instance, a secondary interface changed), the
+    /// side moves back to the direct path as soon as datagrams keep arriving
+    /// after `LATE`.
+    #[tokio::test]
+    async fn a_network_change_while_direct_still_works_comes_back() {
+        let d = direct().await;
+        let send_change = crate::path::NetworkChange::new();
+        let _w = crate::path::Watch::spawn_with(
+            &d.sender_fallback,
+            d.sender.clone(),
+            d.send_gate.clone(),
+            Duration::from_secs(60),
+            Some(send_change.clone()),
+        );
+        send_change.notify();
+        let moved = tokio::time::timeout(Duration::from_secs(5), async {
+            while !d.sender_fallback.moved() {
+                tokio::time::sleep(Duration::from_millis(10)).await;
+            }
+        })
+        .await
+        .is_ok();
+        assert!(moved, "the sender did not move on network change");
+        let came_back = tokio::time::timeout(Duration::from_secs(10), async {
+            while d.sender_fallback.moved() {
+                tokio::time::sleep(Duration::from_millis(20)).await;
+            }
+        })
+        .await
+        .is_ok();
+        assert!(
+            came_back,
+            "the sender stayed on the relay despite direct keep-alives"
+        );
+    }
 }

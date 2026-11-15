@@ -7,8 +7,8 @@ import '../frb_generated.dart';
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `b`, `core_events`, `emit`, `finish`, `n`, `of`, `on_connect`, `on_runtime`, `on_send`, `other`, `route`, `stopped`, `text_summary`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `assert_fields_are_eq`, `clone`, `clone`, `clone`, `clone`, `clone`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`
+// These functions are ignored because they are not marked as `pub`: `b`, `core_events`, `current_gateway`, `emit`, `finish`, `n`, `of`, `on_connect`, `on_runtime`, `on_send`, `other`, `parse_gateway`, `route_with`, `route`, `stopped`, `text_summary`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `assert_fields_are_eq`, `clone`, `clone`, `clone`, `clone`, `clone`, `drop`, `drop`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`
 
 /// A new, unstopped stopper.
 Stopper newStopper() => RustLib.instance.api.crateApiTransferNewStopper();
@@ -125,6 +125,19 @@ String? normalizeCode({required String input}) =>
 /// the whole rest of the link must be the code, or this is `None`.
 String? codeFromLink({required String link}) =>
     RustLib.instance.api.crateApiTransferCodeFromLink(link: link);
+
+/// Record the active network's default IPv4 gateway (`None` when the active
+/// link has none, such as IPv6-only or cellular point-to-point), so
+/// [`totaldrop_core::portmap`] can ask the router on platforms where
+/// `/proc/net/route` is unreadable (#406, decision 0018).
+void setNetworkGateway({String? gateway}) =>
+    RustLib.instance.api.crateApiTransferSetNetworkGateway(gateway: gateway);
+
+/// Tell active transfers that the system's default network changed, so
+/// direct connections move onto the relay and open relay links reconnect at
+/// once instead of waiting out their silence timers (#32, decision 0018).
+void notifyNetworkChanged() =>
+    RustLib.instance.api.crateApiTransferNotifyNetworkChanged();
 
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<Offer>>
 abstract class Offer implements RustOpaqueInterface {
