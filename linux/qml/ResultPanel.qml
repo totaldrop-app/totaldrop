@@ -69,7 +69,7 @@ ColumnLayout {
         }
     }
 
-    Label {
+    StageHeading {
         text: r.title
         color: Theme.ink
         font.pointSize: Qt.application.font.pointSize * 1.5

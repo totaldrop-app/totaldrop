@@ -21,6 +21,7 @@ ReceivePage 1.0 ReceivePage.qml
 ResultPanel 1.0 ResultPanel.qml
 SecondaryButton 1.0 SecondaryButton.qml
 SendPage 1.0 SendPage.qml
+StageHeading 1.0 StageHeading.qml
 Toggle 1.0 Toggle.qml
 TransferProgress 1.0 TransferProgress.qml
 VerificationWords 1.0 VerificationWords.qml

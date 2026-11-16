@@ -21,6 +21,7 @@ fn main() {
         QmlFile::from("qml/Toggle.qml"),
         QmlFile::from("qml/Divider.qml"),
         QmlFile::from("qml/FocusScroller.qml"),
+        QmlFile::from("qml/StageHeading.qml"),
         QmlFile::from("qml/VerificationWords.qml"),
         QmlFile::from("qml/QrCode.qml"),
         QmlFile::from("qml/TransferProgress.qml"),
