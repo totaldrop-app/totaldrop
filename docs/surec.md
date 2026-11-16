@@ -245,7 +245,15 @@ elle bakar.
    `flatpak install --user totaldrop-<sürüm>-<mimari>.flatpak` ile kurulup
    açılır.
 6. Yayın notları 35 dilde yazılır, taslak yayımlanır.
-7. Site güncellenir ve indirme bağlantılarının her biri denenir.
+7. Update the site and READMEs, and try every download link. On a Linux
+   release, `node tools/linux-release-links.mjs write <tag> <SHA256SUMS>`
+   updates the package links, the version in the download table, and the
+   `gh attestation verify` command across `README.md`,
+   `docs/readme/README.*.md` and `site/public/download/index.html`; the
+   system requirement line (`dl.req.linux` in
+   `site/public/download/index.html` and `site/public/i18n/*.json`) stays
+   manual and changes only when a build base moves, alongside `dl.version`,
+   `dl.date` and `dl.new.*`.
 8. Android'de CI'ın imzaladığı paket Play Console'a yüklenir. Bundan önce
    `https://totaldrop.app/.well-known/assetlinks.json` yayında olmalıdır
    (sitenin dağıtım sonrası denetimi `server/tools/probe.mjs` bunu sınar):
