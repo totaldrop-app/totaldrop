@@ -23,6 +23,7 @@ import shlex
 import subprocess
 import sys
 import tempfile
+import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 CHAIN = os.path.join(HERE, "hayalet-halka-zincir.spthy")
@@ -745,16 +746,51 @@ def main():
         with tempfile.NamedTemporaryFile("w", suffix=".spthy", delete=False, encoding="utf-8") as f:
             f.write(text)
             path = f.name
+        timed_out = False
+        run = None
         try:
+            deadline = time.monotonic() + TIMEOUT
             run = subprocess.run(
                 tamarin + ["--derivcheck-timeout=0", "--prove=attack", path, "+RTS", "-M8G", "-RTS"],
                 capture_output=True, text=True, env=env, timeout=TIMEOUT)
             out = run.stdout + run.stderr
+            # Tamarin 1.12.0 enables GHC's threaded RTS (-N) by default
+            # (-with-rtsopts=-N). On an observed nondeterministic
+            # `tamarin-prover: <<loop>>` abort (upstream root cause
+            # unconfirmed), retry once with single-threaded -N1 within the
+            # remaining LEMMA_TIMEOUT budget (#569).
+            if (
+                (run.returncode != 0 or not re.search(r"^  attack \(exists-trace\): verified", out, re.M))
+                and "tamarin-prover: <<loop>>" in out
+            ):
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    print(
+                        f"{mutant['name']}: tamarin hit <<loop>>, "
+                        f"but {TIMEOUT}s budget is exhausted; not retrying"
+                    )
+                    out = "timed out"
+                    timed_out = True
+                else:
+                    print(
+                        f"{mutant['name']}: tamarin hit <<loop>>; "
+                        f"retrying with +RTS -N1 -M8G -RTS ({remaining:.1f}s remaining)"
+                    )
+                    run = subprocess.run(
+                        tamarin + ["--derivcheck-timeout=0", "--prove=attack", path, "+RTS", "-N1", "-M8G", "-RTS"],
+                        capture_output=True, text=True, env=env, timeout=remaining)
+                    out = run.stdout + run.stderr
         except subprocess.TimeoutExpired:
             out = "timed out"
+            timed_out = True
         finally:
             os.unlink(path)
-        found = re.search(r"^  attack \(exists-trace\): verified", out, re.M)
+        found = (
+            not timed_out
+            and run is not None
+            and run.returncode == 0
+            and re.search(r"^  attack \(exists-trace\): verified", out, re.M) is not None
+        )
         print(f"{mutant['name']}: {'attack found' if found else 'NO ATTACK FOUND'} ({mutant['why']})")
         if not found:
             failed = 1
