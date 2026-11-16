@@ -16,8 +16,17 @@ tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
 mod="$tmp/app/totaldrop"
 mkdir -p "$mod"
-cp "$here/stub/qmldir" "$here/stub/Theme.qml" "$mod/"
-cp "$here/../../qml/ActionCard.qml" "$mod/"
+cp "$here/stub/qmldir" \
+   "$here/stub/SystemTheme.qml" \
+   "$here/stub/Theme.qml" \
+   "$here/stub/Strings.qml" \
+   "$here/stub/Transfer.qml" \
+   "$mod/"
+for f in ActionCard Divider Field FocusScroller IconButton Mark PageHeader \
+         PrimaryButton QrCode ReceivePage ResultPanel SecondaryButton \
+         SendPage Toggle TransferProgress VerificationWords; do
+  cp "$here/../../qml/$f.qml" "$mod/"
+done
 # The platform theme decides which keys press a button; the caller's
 # (QT_QPA_PLATFORMTHEME) would make the results differ from CI's.
 QT_QPA_PLATFORM=offscreen QT_QPA_PLATFORMTHEME= QT_QUICK_BACKEND=software \
