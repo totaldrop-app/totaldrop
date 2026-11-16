@@ -210,8 +210,9 @@ treated as final.
       description. These requests only read; they go to the gateway on
       every transfer outside privacy mode, also where PCP answers. SOAP
       actions follow only if neither PCP nor NAT-PMP has mapped a port 250
-      ms after the first request: `GetExternalIPAddress`, then the
-      mapping. A UPnP mapping takes about five requests; at home
+      ms after the first request: `GetExternalIPAddress`, a bounded sweep of
+      stale mappings, then the mapping. A UPnP mapping takes about six
+      requests; at home
       (miniupnpd) the search alone took about 85 ms, so a mapping that
       started only at 250 ms came a few milliseconds after `HINTS` and was
       released at once. Once the gateway has answered the search, `HINTS`
@@ -229,7 +230,18 @@ treated as final.
       router that answers it offers only permanent mappings (UPnP error
       725) gets none; one that silently ignores the lease keeps the port
       until it is deleted or the router restarts, so a crash can leave it
-      open. The first mapping wins; a PCP refusal ends the attempt, and a
+      open. Before asking for a mapping, TotalDrop therefore reads up to 64
+      existing entries with `GetGenericPortMappingEntry` (within a 500 ms
+      slice of the 1.6-second attempt, stopping the scan by 350 ms once at
+      least one stale entry has been found so time remains to delete it)
+      and deletes any wildcard UDP rule described as `TotalDrop` whose
+      internal client is our own IPv4 address and whose internal port is
+      held neither by a live mapping in this process nor by another open
+      local UDP socket (#462); entries of other programs, entries for other
+      LAN addresses, a rule whose crashed port another local process has
+      already bound, and entries beyond the first 64 (or left behind if
+      TotalDrop never runs on that address again) remain until the router
+      restarts. The first mapping wins; a PCP refusal ends the attempt, and a
       UPnP mapping that completes after a PCP or NAT-PMP one is deleted
       at once. A PCP or NAT-PMP request still in flight when UPnP wins is
       not waited for; the router keeps what it made until its lease (120
