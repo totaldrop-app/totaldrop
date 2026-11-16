@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Why TotalDrop needs donations</title>
   <meta name="description" content="TotalDrop is free and has no ads or investors. Here is every cost of running it, today and on the way to version 1.0, and what donations pay for.">
+  <meta name="color-scheme" content="light dark">
+  <meta name="text-scale" content="scale">
   <meta name="theme-color" content="#F7F7F5" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0F1116" media="(prefers-color-scheme: dark)">
   <link rel="canonical" href="https://totaldrop.app/donate/">
@@ -16,7 +18,8 @@
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="preload" href="/fonts/bricolage-grotesque-latin-800-normal.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="/styles.css?v=9140fe2630">
+  <link rel="preload" href="/fonts/atkinson-hyperlegible-latin-400-normal.woff2" as="font" type="font/woff2" fetchpriority="low" crossorigin>
+  <link rel="stylesheet" href="/styles.css?v=979ab1a55d">
 </head>
 <body data-page="donate">
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -52,11 +55,11 @@
         <div><dt data-i18n="don.raised.t2">39.20 USD spent</dt><dd data-i18n="don.raised.d2">The domain and the Google Play account, paid by the maintainer so far. The Claude seats count here once donations pay for them</dd></div>
         <div><dt data-i18n="don.raised.t3">2,575 USD goal</dt><dd data-i18n="don.raised.d3">What one year of every cost on this page comes to</dd></div>
       </dl>
-      <progress class="goal" value="0" max="2575" aria-labelledby="don-goal-label">0%</progress>
+      <progress class="goal" value="0" max="2575" aria-labelledby="don-goal-label"></progress>
       <p class="note" id="don-goal-label" data-i18n="don.raised.goal">0 of 2,575 USD for the first year: 0%. Updated 11 November 2026.</p>
-      <div class="compare-wrap">
+      <div class="compare-wrap" tabindex="0" role="region" aria-labelledby="don-ledger-caption">
         <table class="req narrow">
-          <caption data-i18n="don.ledger.caption">Every month, line by line</caption>
+          <caption id="don-ledger-caption" data-i18n="don.ledger.caption">Every month, line by line</caption>
           <thead><tr><th scope="col" data-i18n="don.ledger.month">Month</th><th scope="col" data-i18n="don.ledger.in">In</th><th scope="col" data-i18n="don.ledger.out">Out</th><th scope="col" data-i18n="don.ledger.what">What for</th></tr></thead>
           <tbody>
             <tr><th scope="row" data-i18n="don.ledger.m1">October 2026</th><td>0 USD</td><td data-i18n="don.m.3920">39.20 USD</td><td data-i18n="don.ledger.m1.w">totaldrop.app domain, 14.20 USD; Google Play developer account, 25 USD</td></tr>
@@ -67,7 +70,7 @@
 
     <section class="block" aria-labelledby="don-budget">
       <h2 id="don-budget" data-i18n="don.budget.title">Every cost, line by line</h2>
-      <div class="compare-wrap">
+      <div class="compare-wrap" tabindex="0" role="region" aria-labelledby="don-budget">
         <table class="req stack">
           <thead><tr><th scope="col" data-i18n="don.col.item">Item</th><th scope="col" data-i18n="don.col.for">What it is for</th><th scope="col" data-i18n="don.col.when">When</th><th scope="col" data-i18n="don.col.year">Per year</th></tr></thead>
           <tbody>
@@ -87,7 +90,7 @@
     <section class="block" aria-labelledby="don-relay">
       <h2 id="don-relay" data-i18n="don.relay.title">If the relay grows</h2>
       <p data-i18n="don.relay.d">Most transfers connect directly and cost nothing. The ones that cannot go through the relay. If it needs more speed, Cloudflare Realtime TURN carries them over UDP close to each user: the first 1,000 GB a month are free, then 0.05 USD per GB. Donations will pay for this as traffic grows.</p>
-      <div class="compare-wrap">
+      <div class="compare-wrap" tabindex="0" role="region" aria-labelledby="don-relay">
         <table class="req narrow">
           <thead><tr><th scope="col" data-i18n="don.relay.c1">Relayed traffic a month</th><th scope="col" data-i18n="don.relay.c2">Per month</th><th scope="col" data-i18n="don.relay.c3">Per year</th></tr></thead>
           <tbody>
@@ -140,6 +143,6 @@
   </footer>
 
   <script src="/lang.js?v=496d43e3b9" defer></script>
-  <script src="/app.js?v=f7855fc583" defer></script>
+  <script src="/app.js?v=6788d1b4d3" defer></script>
 </body>
 </html>

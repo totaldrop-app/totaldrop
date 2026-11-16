@@ -39,7 +39,7 @@ test("hero.source links directly to totaldrop-app/totaldrop", () => {
   assert.match(match[0], /\bhref="https:\/\/github\.com\/totaldrop-app\/totaldrop"/);
 });
 
-test("every HTML page sets Mineral light and dark theme-color meta tags", () => {
+test("every HTML page sets Mineral theme-color, color-scheme, and text-scale meta tags", () => {
   const pages = [
     "index.html",
     "download/index.html",
@@ -55,6 +55,16 @@ test("every HTML page sets Mineral light and dark theme-color meta tags", () => 
     const html = read(`site/public/${page}`);
     assert.match(
       html,
+      /<meta name="color-scheme" content="light dark">/,
+      `${page}: color-scheme meta`,
+    );
+    assert.match(
+      html,
+      /<meta name="text-scale" content="scale">/,
+      `${page}: text-scale meta`,
+    );
+    assert.match(
+      html,
       /<meta name="theme-color" content="#F7F7F5" media="\(prefers-color-scheme: light\)">/,
       `${page}: light theme-color`,
     );
@@ -65,3 +75,25 @@ test("every HTML page sets Mineral light and dark theme-color meta tags", () => 
     );
   }
 });
+
+test("styles.css uses zoom-safe rem+vw fluid font-size clamps and metric fallback adjustment", () => {
+  const css = read("site/public/styles.css");
+  assert.match(css, /font-size-adjust:\s*from-font;/);
+  const clamps = [...css.matchAll(/font-size:\s*clamp\(([^)]+)\)/g)].map((m) => m[1]);
+  assert.ok(clamps.length >= 8, "expected fluid font-size clamp rules");
+  for (const expr of clamps) {
+    const parts = expr.split(",").map((s) => s.trim());
+    assert.equal(parts.length, 3, `clamp(${expr}) has 3 arguments`);
+    assert.match(parts[1], /rem\s*\+\s*[\d.]+vw/, `clamp(${expr}) preferred value mixes rem + vw`);
+  }
+});
+
+test("team page governance copy reflects co-maintainer merges and project-lead releases", () => {
+  const team = read("site/public/team/index.html");
+  const en = JSON.parse(read("site/public/i18n/en.json"));
+  assert.doesNotMatch(team, /only the project lead can merge/i);
+  assert.doesNotMatch(team, /Only the project lead merges/i);
+  assert.match(en["tm.tools.lede"], /maintainer approves or merges every change/);
+  assert.match(en["tm.how.h3"], /Maintainers merge reviewed changes/);
+});
+

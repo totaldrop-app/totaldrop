@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>TotalDrop: send files and text directly, encrypted end to end</title>
   <meta name="description" content="TotalDrop is a free, open-source app that sends files, folders and text directly from one device to another, encrypted end to end. No account, no email, no phone number.">
+  <meta name="color-scheme" content="light dark">
+  <meta name="text-scale" content="scale">
   <meta name="theme-color" content="#F7F7F5" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0F1116" media="(prefers-color-scheme: dark)">
   <link rel="canonical" href="https://totaldrop.app/">
@@ -17,7 +19,8 @@
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="alternate" type="application/atom+xml" title="TotalDrop releases" href="https://github.com/totaldrop-app/totaldrop/releases.atom">
   <link rel="preload" href="/fonts/bricolage-grotesque-latin-800-normal.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="/styles.css?v=9140fe2630">
+  <link rel="preload" href="/fonts/atkinson-hyperlegible-latin-400-normal.woff2" as="font" type="font/woff2" fetchpriority="low" crossorigin>
+  <link rel="stylesheet" href="/styles.css?v=979ab1a55d">
 </head>
 <body>
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -47,7 +50,7 @@
           <a class="btn btn-primary" href="https://download.totaldrop.app/" data-i18n="hero.cta">Download the beta</a>
           <a class="btn btn-quiet" href="https://github.com/totaldrop-app/totaldrop" data-i18n="hero.source">Read the code</a>
         </div>
-        <ul class="hero-highlights">
+        <ul class="hero-highlights" role="list">
           <li data-i18n="hero.h1">Android, Linux and CLI today</li>
           <li data-i18n="hero.h2">Post-quantum ML-KEM-768</li>
           <li data-i18n="hero.h3">35 languages, zero trackers</li>
@@ -71,7 +74,7 @@
             <p class="code" id="hero-code" lang="en">7-harbor-rocket</p>
             <div class="verify-block">
               <p class="code-label" data-i18n="code.verify">Four verification words</p>
-              <ul class="verify-words" id="hero-words" lang="en">
+              <ul class="verify-words" id="hero-words" lang="en" role="list">
                 <li>north</li>
                 <li>valley</li>
                 <li>river</li>
@@ -90,7 +93,7 @@
         <h2 id="apps-title" data-i18n="apps.title">Built to belong to your system</h2>
         <p data-i18n="apps.lede">TotalDrop takes its colours, typography, dark mode and share menus from the operating system you run. Send from your gallery, selected text, clipboard or file manager without opening a browser tab first.</p>
       </div>
-      <ul class="showcase-grid">
+      <ul class="showcase-grid" role="list">
         <li class="app-card">
           <div class="app-shot">
             <img src="/assets/android.png" alt="TotalDrop on Android in light and dark Material You themes" data-i18n-label="apps.android.alt" aria-label="TotalDrop on Android in light and dark Material You themes" width="1600" height="849" loading="lazy" decoding="async">
@@ -101,7 +104,7 @@
               <span class="pill is-beta">0.3.0-beta.7</span>
             </header>
             <p data-i18n="apps.android.d">Material You dynamic colours and Material 3 Expressive controls. Share files or selected text straight from any app, or hold the launcher icon to send your clipboard.</p>
-            <ul class="app-tags">
+            <ul class="app-tags" role="list">
               <li data-i18n="apps.tag.share">System share sheet</li>
               <li data-i18n="apps.tag.text">Text and clipboard</li>
               <li data-i18n="apps.tag.m3">Material You</li>
@@ -118,7 +121,7 @@
               <span class="pill is-beta">0.3.0-beta.6</span>
             </header>
             <p data-i18n="apps.linux.d">Native Qt 6 and QML for Wayland, following KDE Plasma, Hyprland, Omarchy and GNOME live. Right-click any file or folder in Dolphin, Files or Nemo to send at once.</p>
-            <ul class="app-tags">
+            <ul class="app-tags" role="list">
               <li data-i18n="apps.tag.fm">Dolphin, Files, Nemo</li>
               <li data-i18n="apps.tag.arch">x86-64 and ARM64</li>
               <li data-i18n="apps.tag.pkg">Native and Flatpak</li>
@@ -130,7 +133,7 @@
 
     <section class="block" id="why" aria-labelledby="why-title">
       <h2 id="why-title" data-i18n="why.title">Why TotalDrop</h2>
-      <ul class="reasons">
+      <ul class="reasons" role="list">
         <li>
           <h3 data-i18n="why.r1.t">Nothing is uploaded</h3>
           <p data-i18n="why.r1.d">Files go from your device to theirs. No copy waits on a company's server, and no link expires in a week.</p>
@@ -156,9 +159,9 @@
           <p data-i18n="why.r6.d">Open source under the GPL, paid for by donations. No ads, no tracking, no premium tier.</p>
         </li>
       </ul>
-      <div class="compare-wrap">
+      <div class="compare-wrap" tabindex="0" role="region" aria-labelledby="why-cmp-caption">
         <table class="compare cards">
-          <caption data-i18n="why.cmp.caption">How TotalDrop compares with the usual ways to send a file</caption>
+          <caption id="why-cmp-caption" data-i18n="why.cmp.caption">How TotalDrop compares with the usual ways to send a file</caption>
           <thead>
             <tr><th scope="col"><span class="visually-hidden" data-i18n="why.cmp.feature">Feature</span></th><th scope="col" class="is-us">TotalDrop</th><th scope="col" data-i18n="why.cmp.cloud">Cloud links</th><th scope="col" data-i18n="why.cmp.nearby">Nearby sharing</th></tr>
           </thead>
@@ -175,7 +178,7 @@
 
     <section class="block" id="how" aria-labelledby="how-title">
       <h2 id="how-title" data-i18n="how.title">Three steps</h2>
-      <ol class="steps">
+      <ol class="steps" role="list">
         <li>
           <h3 data-i18n="how.s1.t">Choose files or text</h3>
           <p data-i18n="how.s1.d">Pick files, whole folders or clipboard text—or send straight from your system share menu or file manager.</p>
@@ -220,7 +223,7 @@
 
     <section class="block" id="roadmap" aria-labelledby="road-title">
       <h2 id="road-title" data-i18n="road.title">Where we are</h2>
-      <ol class="roadmap">
+      <ol class="roadmap" role="list">
         <li class="is-done">
           <span class="road-state" data-i18n="road.done">Done</span>
           <h3 data-i18n="road.p0">Open protocol, command-line client, Android beta and Linux app</h3>
@@ -283,6 +286,6 @@
   </footer>
 
   <script src="/lang.js?v=496d43e3b9" defer></script>
-  <script src="/app.js?v=f7855fc583" defer></script>
+  <script src="/app.js?v=6788d1b4d3" defer></script>
 </body>
 </html>
