@@ -271,13 +271,13 @@
   "crates/totaldrop-core/src/relay.rs:112": [
     "pub async fn discover(socket: &UdpSocket, server: &str) -> Vec<SocketAddr> {"
   ],
-  "crates/totaldrop-core/src/relay.rs:222": [
-    "async fn collect_stun_replies<R>("
+  "crates/totaldrop-core/src/relay.rs:240": [
+    "mut asked: Vec<(SocketAddr, [u8; 12])>,"
   ],
-  "crates/totaldrop-core/src/relay.rs:373": [
+  "crates/totaldrop-core/src/relay.rs:385": [
     "pub fn spawn("
   ],
-  "crates/totaldrop-core/src/relay.rs:509": [
+  "crates/totaldrop-core/src/relay.rs:521": [
     "async fn ping_within(ws: &mut crate::rendezvous::Ws, wait: Duration) -> Result<bool> {"
   ],
   "crates/totaldrop-core/src/rendezvous.rs:175": [
