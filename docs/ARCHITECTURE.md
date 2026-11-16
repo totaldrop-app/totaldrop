@@ -596,4 +596,4 @@ dokunan bulguları ve bu belgedeki yerleri:
 | #425 | Düzeltildi: yarışı kaybeden eşleme de kapatılır (`crates/totaldrop-core/src/portmap.rs:230`) | 2.1 (`own_hints`) |
 | #426 | Düzeltildi: sayım `server/relay-worker/src/count.ts:36` `noteGiven` | 3.2 (`Pair`), 5.2 |
 | #427 | Düzeltildi: klasör URL ile açılır (`linux/qml/ResultPanel.qml:135`) | — (arayüz) |
-| #428 | Düzeltildi: STUN hata döngüsü (`crates/totaldrop-core/src/relay.rs:240` `collect_stun_replies`), Rust rendezvous jetonu (`server/totaldrop-rendezvous/src/lib.rs:128` `token_matches`); açık: `snow` | 2.1, 2.4, 7.5 |
+| #428 | Düzeltildi: STUN hata döngüsü (`crates/totaldrop-core/src/relay.rs:238` `collect_stun_replies`), Rust rendezvous jetonu (`server/totaldrop-rendezvous/src/lib.rs:128` `token_matches`); açık: `snow` | 2.1, 2.4, 7.5 |
