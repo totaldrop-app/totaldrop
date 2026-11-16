@@ -1,4 +1,4 @@
-<!-- Translated from README.md 4cb259c278ef. -->
+<!-- Translated from README.md 3f56eaf00030. -->
 <div align="center">
 
 <picture>
@@ -55,7 +55,7 @@
 | **Linux** (ARM64) | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop_0.3.0.beta.6-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop-0.3.0.beta.6-1.fc43.aarch64.rpm) · [Flatpak](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop-0.3.0-beta.6-aarch64.flatpak) | 0.3.0-beta.6, Qt 6.8 বা নতুনতর |
 | **Android** | [বিটাতে যোগ দিন](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.7, Android 15 বা নতুনতর, Google Play-তে আমন্ত্রণের মাধ্যমে |
 | **কমান্ড লাইন** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux, macOS, Windows |
-| **Windows, macOS, iOS** | আসছে | অনুদানের টাকা প্রথমে এগুলোর কোড সাইনিংয়েই খরচ হবে |
+| **Windows, macOS, iOS** | আসছে | Windows অ্যাপে Microsoft Store স্বাক্ষর করে; অনুদানের টাকা প্রথমে macOS ও iOS-এ Apple-এর কোড সাইনিংয়েই খরচ হবে |
 
 একবারে একটি Linux প্যাকেজ ব্যবহার করুন। Flatpak এবং .pkg, .deb বা .rpm প্যাকেজের নাম একই, তাই একটি খোলা থাকলে অন্যটি চালু করলে দ্বিতীয় উইন্ডো খোলে না, খোলা উইন্ডোটি সামনে আসে।
 
@@ -85,7 +85,7 @@ TotalDrop 35টি ভাষায় কথা বলে এবং আপনা
 
 ## প্রকল্পটিকে সমর্থন করুন
 
-মানুষ অবদান রাখেন বলেই TotalDrop বিনামূল্যে থাকে। অনুদান দিয়ে রিলে সার্ভার, Windows ও macOS-এর প্রয়োজনীয় কোড-সাইনিং সার্টিফিকেট, এবং 1.0-এর আগে একটি স্বাধীন নিরাপত্তা অডিটের খরচ মেটানো হয়। প্রতিটি খরচ, লাইন ধরে ধরে, এবং এ পর্যন্ত কত উঠেছে: [totaldrop.app/donate](https://totaldrop.app/donate/)।
+মানুষ অবদান রাখেন বলেই TotalDrop বিনামূল্যে থাকে। অনুদান দিয়ে রিলে সার্ভার, macOS ও iOS-এ কোড সাইনিংয়ের জন্য প্রয়োজনীয় Apple Developer Program, এবং 1.0-এর আগে একটি স্বাধীন নিরাপত্তা অডিটের খরচ মেটানো হয়। প্রতিটি খরচ, লাইন ধরে ধরে, এবং এ পর্যন্ত কত উঠেছে: [totaldrop.app/donate](https://totaldrop.app/donate/)।
 
 <a href="https://github.com/sponsors/ozdil"><img src="https://img.shields.io/badge/Sponsor%20on%20GitHub-EA4AAA?logo=githubsponsors&logoColor=white&style=for-the-badge" alt="GitHub-এ স্পনসর করুন"></a>
 

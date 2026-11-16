@@ -1,4 +1,4 @@
-<!-- Translated from README.md 4cb259c278ef. -->
+<!-- Translated from README.md 3f56eaf00030. -->
 <div align="center">
 
 <picture>
@@ -55,7 +55,7 @@
 | **Linux** (ARM64) | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop_0.3.0.beta.6-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop-0.3.0.beta.6-1.fc43.aarch64.rpm) · [Flatpak](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop-0.3.0-beta.6-aarch64.flatpak) | 0.3.0-beta.6, Qt 6.8 ขึ้นไป |
 | **Android** | [เข้าร่วมเบต้า](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.7, Android 15 ขึ้นไป, Google Play ตามคำเชิญ |
 | **บรรทัดคำสั่ง** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux, macOS, Windows |
-| **Windows, macOS, iOS** | กำลังมา | การเซ็นโค้ดสำหรับแพลตฟอร์มเหล่านี้คือสิ่งแรกที่เงินบริจาคจะนำไปจ่าย |
+| **Windows, macOS, iOS** | กำลังมา | Microsoft Store เป็นผู้เซ็นแอป Windows ส่วนการเซ็นของ Apple สำหรับ macOS และ iOS คือสิ่งแรกที่เงินบริจาคจะนำไปจ่าย |
 
 ใช้แพ็กเกจ Linux ครั้งละหนึ่งแพ็กเกจ Flatpak กับแพ็กเกจ .pkg, .deb หรือ .rpm ใช้ชื่อเดียวกัน ขณะที่อันหนึ่งเปิดอยู่ การเปิดอีกอันจะนำหน้าต่างที่เปิดอยู่ขึ้นมาด้านหน้าแทนการเปิดหน้าต่างที่สอง
 
@@ -85,7 +85,7 @@ TotalDrop รองรับ 35 ภาษา และใช้รูปแบ�
 
 ## สนับสนุนโครงการ
 
-TotalDrop ฟรีได้เพราะมีผู้คนช่วยกันสนับสนุน เงินบริจาคใช้จ่ายค่ารีเลย์ ค่าใบรับรองการเซ็นโค้ดที่ Windows และ macOS กำหนด และค่าการตรวจสอบความปลอดภัยโดยอิสระก่อนเวอร์ชัน 1.0 ดูค่าใช้จ่ายทุกรายการ ทีละบรรทัด และยอดที่ระดมได้จนถึงตอนนี้ได้ที่ [totaldrop.app/donate](https://totaldrop.app/donate/)
+TotalDrop ฟรีได้เพราะมีผู้คนช่วยกันสนับสนุน เงินบริจาคใช้จ่ายค่ารีเลย์ ค่า Apple Developer Program สำหรับการเซ็นโค้ดบน macOS และ iOS และค่าการตรวจสอบความปลอดภัยโดยอิสระก่อนเวอร์ชัน 1.0 ดูค่าใช้จ่ายทุกรายการ ทีละบรรทัด และยอดที่ระดมได้จนถึงตอนนี้ได้ที่ [totaldrop.app/donate](https://totaldrop.app/donate/)
 
 <a href="https://github.com/sponsors/ozdil"><img src="https://img.shields.io/badge/Sponsor%20on%20GitHub-EA4AAA?logo=githubsponsors&logoColor=white&style=for-the-badge" alt="สนับสนุนบน GitHub"></a>
 

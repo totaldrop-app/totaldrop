@@ -1,4 +1,4 @@
-<!-- Translated from README.md 4cb259c278ef. -->
+<!-- Translated from README.md 3f56eaf00030. -->
 <div align="center">
 
 <picture>
@@ -55,7 +55,7 @@ Ingyenes és nyílt forráskódú. Végpontok közötti titkosítás. Nincs e-ma
 | **Linux** (ARM64) | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop_0.3.0.beta.6-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop-0.3.0.beta.6-1.fc43.aarch64.rpm) · [Flatpak](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop-0.3.0-beta.6-aarch64.flatpak) | 0.3.0-beta.6, Qt 6.8 vagy újabb |
 | **Android** | [Csatlakozz a bétához](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.7, Android 15 vagy újabb, Google Play meghívással |
 | **Parancssor** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux, macOS, Windows |
-| **Windows, macOS, iOS** | Úton van | Ezek kódaláírását fedezik elsőként az adományok |
+| **Windows, macOS, iOS** | Úton van | A Windows-alkalmazást a Microsoft Store írja alá; a macOS és az iOS Apple-aláírását fedezik elsőként az adományok |
 
 Egyszerre csak egy Linux-csomagot használjon. A Flatpak és a .pkg, .deb vagy .rpm csomag neve azonos, ezért ha az egyik nyitva van, a másik indítása nem nyit új ablakot, hanem előtérbe hozza a nyitottat.
 
@@ -85,7 +85,7 @@ Esetlen mondatot találtál? [Segíts a fordításban](../../docs/ceviri.md).
 
 ## Támogasd a projektet
 
-A TotalDrop azért marad ingyenes, mert az emberek beszállnak. Az adományok fedezik a továbbító szervert, a Windows és a macOS által megkövetelt kódaláíró tanúsítványokat, valamint egy független biztonsági auditot az 1.0 előtt. Minden költség tételesen, és az, hogy eddig mennyi gyűlt össze: [totaldrop.app/donate](https://totaldrop.app/donate/).
+A TotalDrop azért marad ingyenes, mert az emberek beszállnak. Az adományok fedezik a továbbító szervert, a macOS és az iOS kódaláírásához szükséges Apple Developer Programot, valamint egy független biztonsági auditot az 1.0 előtt. Minden költség tételesen, és az, hogy eddig mennyi gyűlt össze: [totaldrop.app/donate](https://totaldrop.app/donate/).
 
 <a href="https://github.com/sponsors/ozdil"><img src="https://img.shields.io/badge/Sponsor%20on%20GitHub-EA4AAA?logo=githubsponsors&logoColor=white&style=for-the-badge" alt="Támogatás a GitHubon"></a>
 

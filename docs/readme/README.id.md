@@ -1,4 +1,4 @@
-<!-- Translated from README.md 4cb259c278ef. -->
+<!-- Translated from README.md 3f56eaf00030. -->
 <div align="center">
 
 <picture>
@@ -55,7 +55,7 @@ Gratis dan open source. Terenkripsi end-to-end. Tanpa email, tanpa nomor telepon
 | **Linux** (ARM64) | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop_0.3.0.beta.6-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop-0.3.0.beta.6-1.fc43.aarch64.rpm) · [Flatpak](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop-0.3.0-beta.6-aarch64.flatpak) | 0.3.0-beta.6, Qt 6.8 atau yang lebih baru |
 | **Android** | [Ikut beta](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.7, Android 15 atau yang lebih baru, Google Play dengan undangan |
 | **Baris perintah** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux, macOS, Windows |
-| **Windows, macOS, iOS** | Segera hadir | Penandatanganan kode untuk platform ini adalah hal pertama yang dibiayai donasi |
+| **Windows, macOS, iOS** | Segera hadir | Microsoft Store menandatangani aplikasi Windows; penandatanganan Apple untuk macOS dan iOS adalah hal pertama yang dibiayai donasi |
 
 Gunakan satu paket Linux dalam satu waktu. Flatpak dan paket .pkg, .deb, atau .rpm memakai nama yang sama, jadi saat salah satunya terbuka, menjalankan yang lain akan memunculkan jendela yang terbuka alih-alih membuka jendela kedua.
 
@@ -85,7 +85,7 @@ Menemukan kalimat yang janggal? [Bantu terjemahkan](../../docs/ceviri.md).
 
 ## Dukung proyek ini
 
-TotalDrop tetap gratis karena orang-orang ikut menyumbang. Donasi membiayai server relai, sertifikat penandatanganan kode yang diwajibkan Windows dan macOS, serta audit keamanan independen sebelum versi 1.0. Setiap biaya, baris demi baris, dan dana yang terkumpul sejauh ini: [totaldrop.app/donate](https://totaldrop.app/donate/).
+TotalDrop tetap gratis karena orang-orang ikut menyumbang. Donasi membiayai server relai, Apple Developer Program untuk penandatanganan kode di macOS dan iOS, serta audit keamanan independen sebelum versi 1.0. Setiap biaya, baris demi baris, dan dana yang terkumpul sejauh ini: [totaldrop.app/donate](https://totaldrop.app/donate/).
 
 <a href="https://github.com/sponsors/ozdil"><img src="https://img.shields.io/badge/Sponsor%20on%20GitHub-EA4AAA?logo=githubsponsors&logoColor=white&style=for-the-badge" alt="Sponsori di GitHub"></a>
 

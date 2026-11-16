@@ -1,4 +1,4 @@
-<!-- Translated from README.md 4cb259c278ef. -->
+<!-- Translated from README.md 3f56eaf00030. -->
 <div align="center">
 
 <picture>
@@ -55,7 +55,7 @@ Za darmo i na otwartych źródłach. Szyfrowanie end-to-end. Bez e-maila, bez nu
 | **Linux** (ARM64) | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop_0.3.0.beta.6-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop-0.3.0.beta.6-1.fc43.aarch64.rpm) · [Flatpak](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop-0.3.0-beta.6-aarch64.flatpak) | 0.3.0-beta.6, Qt 6.8 lub nowszy |
 | **Android** | [Dołącz do bety](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.7, Android 15 lub nowszy, Google Play na zaproszenie |
 | **Wiersz poleceń** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux, macOS, Windows |
-| **Windows, macOS, iOS** | W drodze | Podpisywanie kodu dla tych systemów to pierwsze, na co pójdą darowizny |
+| **Windows, macOS, iOS** | W drodze | Aplikację dla Windows podpisuje Microsoft Store; podpisywanie Apple dla macOS i iOS to pierwsze, na co pójdą darowizny |
 
 Używaj jednocześnie tylko jednego pakietu dla Linuksa. Flatpak i pakiet .pkg, .deb lub .rpm mają wspólną nazwę, więc gdy jeden jest otwarty, uruchomienie drugiego przywołuje otwarte okno zamiast otwierać drugie.
 
@@ -85,7 +85,7 @@ Zauważyłeś niezgrabne zdanie? [Pomóż w tłumaczeniu](../../docs/ceviri.md).
 
 ## Wesprzyj projekt
 
-TotalDrop pozostaje darmowy, bo ludzie się dokładają. Darowizny opłacają serwer pośredniczący, certyfikaty podpisywania kodu wymagane przez Windows i macOS oraz niezależny audyt bezpieczeństwa przed wersją 1.0. Każdy koszt, pozycja po pozycji, i to, ile udało się dotąd zebrać: [totaldrop.app/donate](https://totaldrop.app/donate/).
+TotalDrop pozostaje darmowy, bo ludzie się dokładają. Darowizny opłacają serwer pośredniczący, Apple Developer Program do podpisywania kodu na macOS i iOS oraz niezależny audyt bezpieczeństwa przed wersją 1.0. Każdy koszt, pozycja po pozycji, i to, ile udało się dotąd zebrać: [totaldrop.app/donate](https://totaldrop.app/donate/).
 
 <a href="https://github.com/sponsors/ozdil"><img src="https://img.shields.io/badge/Sponsor%20on%20GitHub-EA4AAA?logo=githubsponsors&logoColor=white&style=for-the-badge" alt="Wesprzyj na GitHubie"></a>
 

@@ -1,4 +1,4 @@
-<!-- Translated from README.md 4cb259c278ef. -->
+<!-- Translated from README.md 3f56eaf00030. -->
 <div align="center">
 
 <picture>
@@ -55,7 +55,7 @@
 | **Linux** (ARM64) | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop_0.3.0.beta.6-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop-0.3.0.beta.6-1.fc43.aarch64.rpm) · [Flatpak](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop-0.3.0-beta.6-aarch64.flatpak) | 0.3.0-beta.6, Qt 6.8 이상 |
 | **Android** | [베타 참여하기](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.7, Android 15 이상, Google Play 초대제 |
 | **명령줄** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux, macOS, Windows |
-| **Windows, macOS, iOS** | 준비 중 | 후원금은 가장 먼저 이 플랫폼들의 코드 서명에 쓰입니다 |
+| **Windows, macOS, iOS** | 준비 중 | Windows 앱은 Microsoft Store가 서명하며, 후원금은 가장 먼저 macOS와 iOS의 Apple 서명에 쓰입니다 |
 
 Linux 패키지는 한 번에 하나만 사용하세요. Flatpak과 .pkg, .deb 또는 .rpm 패키지는 같은 이름을 쓰기 때문에, 하나가 열려 있을 때 다른 하나를 실행하면 두 번째 창이 열리지 않고 열려 있는 창이 앞으로 나옵니다.
 
@@ -85,7 +85,7 @@ TotalDrop은 35개 언어를 지원하며 사용자 지역의 숫자 형식을 �
 
 ## 프로젝트 후원하기
 
-TotalDrop이 무료로 유지되는 것은 사람들이 힘을 보태 주기 때문입니다. 후원금은 릴레이, Windows와 macOS에 필요한 코드 서명 인증서, 그리고 1.0 이전의 독립 보안 감사에 쓰입니다. 모든 비용의 항목별 내역과 지금까지 모인 금액: [totaldrop.app/donate](https://totaldrop.app/donate/)
+TotalDrop이 무료로 유지되는 것은 사람들이 힘을 보태 주기 때문입니다. 후원금은 릴레이, macOS와 iOS 코드 서명에 필요한 Apple Developer Program, 그리고 1.0 이전의 독립 보안 감사에 쓰입니다. 모든 비용의 항목별 내역과 지금까지 모인 금액: [totaldrop.app/donate](https://totaldrop.app/donate/)
 
 <a href="https://github.com/sponsors/ozdil"><img src="https://img.shields.io/badge/Sponsor%20on%20GitHub-EA4AAA?logo=githubsponsors&logoColor=white&style=for-the-badge" alt="GitHub에서 후원하기"></a>
 

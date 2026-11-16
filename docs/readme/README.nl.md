@@ -1,4 +1,4 @@
-<!-- Translated from README.md 4cb259c278ef. -->
+<!-- Translated from README.md 3f56eaf00030. -->
 <div align="center">
 
 <picture>
@@ -55,7 +55,7 @@ Gratis en open source. End-to-end versleuteld. Geen e-mail, geen telefoonnummer,
 | **Linux** (ARM64) | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop_0.3.0.beta.6-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop-0.3.0.beta.6-1.fc43.aarch64.rpm) · [Flatpak](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop-0.3.0-beta.6-aarch64.flatpak) | 0.3.0-beta.6, Qt 6.8 of nieuwer |
 | **Android** | [Doe mee met de bèta](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.7, Android 15 of nieuwer, Google Play op uitnodiging |
 | **Opdrachtregel** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux, macOS, Windows |
-| **Windows, macOS, iOS** | Onderweg | Codeondertekening voor deze platforms is het eerste waar donaties voor betalen |
+| **Windows, macOS, iOS** | Onderweg | De Microsoft Store ondertekent de Windows-app; Apple-ondertekening voor macOS en iOS is het eerste waar donaties voor betalen |
 
 Gebruik één Linux-pakket tegelijk. Het Flatpak-pakket en het .pkg-, .deb- of .rpm-pakket delen één naam, dus terwijl het ene open is, haalt het starten van het andere het open venster naar voren in plaats van een tweede te openen.
 
@@ -85,7 +85,7 @@ Een onhandige zin gezien? [Help mee met vertalen](../../docs/ceviri.md).
 
 ## Steun het project
 
-TotalDrop blijft gratis omdat mensen bijdragen. Donaties betalen de relayserver, de certificaten voor codeondertekening die Windows en macOS vereisen, en een onafhankelijke beveiligingsaudit vóór 1.0. Alle kosten, post voor post, en wat er tot nu toe is opgehaald: [totaldrop.app/donate](https://totaldrop.app/donate/).
+TotalDrop blijft gratis omdat mensen bijdragen. Donaties betalen de relayserver, het Apple Developer Program voor codeondertekening op macOS en iOS, en een onafhankelijke beveiligingsaudit vóór 1.0. Alle kosten, post voor post, en wat er tot nu toe is opgehaald: [totaldrop.app/donate](https://totaldrop.app/donate/).
 
 <a href="https://github.com/sponsors/ozdil"><img src="https://img.shields.io/badge/Sponsor%20on%20GitHub-EA4AAA?logo=githubsponsors&logoColor=white&style=for-the-badge" alt="Sponsor op GitHub"></a>
 

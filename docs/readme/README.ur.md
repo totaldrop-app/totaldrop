@@ -1,4 +1,4 @@
-<!-- Translated from README.md 4cb259c278ef. -->
+<!-- Translated from README.md 3f56eaf00030. -->
 <div align="center">
 
 <picture>
@@ -55,7 +55,7 @@
 | **Linux** (ARM64) | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop_0.3.0.beta.6-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop-0.3.0.beta.6-1.fc43.aarch64.rpm) · [Flatpak](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop-0.3.0-beta.6-aarch64.flatpak) | 0.3.0-beta.6، Qt 6.8 یا نیا |
 | **Android** | [بیٹا میں شامل ہوں](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.7، Android 15 یا نیا، Google Play پر دعوت کے ذریعے |
 | **کمانڈ لائن** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux، macOS، Windows |
-| **Windows، macOS، iOS** | جلد آ رہا ہے | ان کے لیے کوڈ سائننگ وہ پہلی چیز ہے جس کا خرچ عطیات اٹھاتے ہیں |
+| **Windows، macOS، iOS** | جلد آ رہا ہے | Windows ایپ پر Microsoft Store دستخط کرتا ہے؛ macOS اور iOS کے لیے Apple سائننگ وہ پہلی چیز ہے جس کا خرچ عطیات اٹھاتے ہیں |
 
 ایک وقت میں ایک ہی Linux پیکیج استعمال کریں۔ Flatpak اور .pkg، .deb یا .rpm پیکیج کا نام ایک ہی ہے، اس لیے جب ایک کھلا ہو تو دوسرا چلانے سے دوسری ونڈو نہیں کھلتی بلکہ کھلی ونڈو سامنے آ جاتی ہے۔
 
@@ -85,7 +85,7 @@ TotalDrop 35 زبانیں بولتا ہے اور آپ کے علاقے کے نم�
 
 ## پروجیکٹ کی مدد کریں
 
-TotalDrop اس لیے مفت ہے کہ لوگ اپنا حصہ ڈالتے ہیں۔ عطیات ریلے، Windows اور macOS کے لیے لازمی کوڈ سائننگ سرٹیفکیٹس، اور 1.0 سے پہلے ایک آزاد سیکیورٹی آڈٹ کا خرچ اٹھاتے ہیں۔ ہر خرچ، سطر بہ سطر، اور اب تک کتنا جمع ہوا: [totaldrop.app/donate](https://totaldrop.app/donate/)۔
+TotalDrop اس لیے مفت ہے کہ لوگ اپنا حصہ ڈالتے ہیں۔ عطیات ریلے، macOS اور iOS پر کوڈ سائننگ کے لیے Apple Developer Program، اور 1.0 سے پہلے ایک آزاد سیکیورٹی آڈٹ کا خرچ اٹھاتے ہیں۔ ہر خرچ، سطر بہ سطر، اور اب تک کتنا جمع ہوا: [totaldrop.app/donate](https://totaldrop.app/donate/)۔
 
 <a href="https://github.com/sponsors/ozdil"><img src="https://img.shields.io/badge/Sponsor%20on%20GitHub-EA4AAA?logo=githubsponsors&logoColor=white&style=for-the-badge" alt="GitHub پر اسپانسر کریں"></a>
 

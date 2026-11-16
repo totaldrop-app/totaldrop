@@ -1,4 +1,4 @@
-<!-- Translated from README.md 4cb259c278ef. -->
+<!-- Translated from README.md 3f56eaf00030. -->
 <div align="center">
 
 <picture>
@@ -55,7 +55,7 @@ Gratuit et open source. Chiffré de bout en bout. Pas d'e-mail, pas de numéro d
 | **Linux** (ARM64) | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop_0.3.0.beta.6-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop-0.3.0.beta.6-1.fc43.aarch64.rpm) · [Flatpak](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop-0.3.0-beta.6-aarch64.flatpak) | 0.3.0-beta.6, Qt 6.8 ou plus récent |
 | **Android** | [Rejoindre la bêta](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.7, Android 15 ou plus récent, Google Play sur invitation |
 | **Ligne de commande** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux, macOS, Windows |
-| **Windows, macOS, iOS** | En préparation | La signature de code de ces plateformes est la première chose que financent les dons |
+| **Windows, macOS, iOS** | En préparation | Le Microsoft Store signe l'application Windows ; la signature Apple pour macOS et iOS est la première chose que financent les dons |
 
 Utilisez un seul paquet Linux à la fois. Le Flatpak et le paquet .pkg, .deb ou .rpm partagent un même nom : quand l'un est ouvert, lancer l'autre ramène la fenêtre ouverte au premier plan au lieu d'en ouvrir une seconde.
 
@@ -85,7 +85,7 @@ Vous avez repéré une phrase maladroite ? [Aidez à traduire](../../docs/cevir
 
 ## Soutenir le projet
 
-TotalDrop reste gratuit parce que des gens y contribuent. Les dons paient le serveur relais, les certificats de signature de code qu'exigent Windows et macOS, et un audit de sécurité indépendant avant la 1.0. Chaque coût, poste par poste, et ce qui a été collecté jusqu'ici : [totaldrop.app/donate](https://totaldrop.app/donate/).
+TotalDrop reste gratuit parce que des gens y contribuent. Les dons paient le serveur relais, l'Apple Developer Program pour la signature de code sur macOS et iOS, et un audit de sécurité indépendant avant la 1.0. Chaque coût, poste par poste, et ce qui a été collecté jusqu'ici : [totaldrop.app/donate](https://totaldrop.app/donate/).
 
 <a href="https://github.com/sponsors/ozdil"><img src="https://img.shields.io/badge/Sponsor%20on%20GitHub-EA4AAA?logo=githubsponsors&logoColor=white&style=for-the-badge" alt="Soutenir sur GitHub"></a>
 

@@ -1,4 +1,4 @@
-<!-- Translated from README.md 4cb259c278ef. -->
+<!-- Translated from README.md 3f56eaf00030. -->
 <div align="center">
 
 <picture>
@@ -55,7 +55,7 @@ Miễn phí và mã nguồn mở. Mã hóa đầu cuối. Không cần email, s�
 | **Linux** (ARM64) | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop_0.3.0.beta.6-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop-0.3.0.beta.6-1.fc43.aarch64.rpm) · [Flatpak](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop-0.3.0-beta.6-aarch64.flatpak) | 0.3.0-beta.6, Qt 6.8 trở lên |
 | **Android** | [Tham gia bản beta](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.7, Android 15 trở lên, Google Play theo lời mời |
 | **Dòng lệnh** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux, macOS, Windows |
-| **Windows, macOS, iOS** | Sắp có | Ký mã cho các nền tảng này là khoản đầu tiên tiền quyên góp sẽ chi trả |
+| **Windows, macOS, iOS** | Sắp có | Microsoft Store ký ứng dụng Windows; ký mã của Apple cho macOS và iOS là khoản đầu tiên tiền quyên góp sẽ chi trả |
 
 Mỗi lúc chỉ dùng một gói Linux. Bản Flatpak và gói .pkg, .deb hoặc .rpm dùng chung một tên, nên khi một bản đang mở, khởi động bản kia sẽ đưa cửa sổ đang mở lên trước thay vì mở cửa sổ thứ hai.
 
@@ -85,7 +85,7 @@ Thấy một câu vụng về? [Giúp dịch](../../docs/ceviri.md).
 
 ## Ủng hộ dự án
 
-TotalDrop vẫn miễn phí nhờ mọi người cùng góp sức. Tiền quyên góp chi trả cho máy chủ chuyển tiếp, các chứng chỉ ký mã mà Windows và macOS yêu cầu, và một đợt kiểm định bảo mật độc lập trước phiên bản 1.0. Mọi khoản chi, từng dòng một, và số tiền quyên góp được đến nay: [totaldrop.app/donate](https://totaldrop.app/donate/).
+TotalDrop vẫn miễn phí nhờ mọi người cùng góp sức. Tiền quyên góp chi trả cho máy chủ chuyển tiếp, Apple Developer Program để ký mã trên macOS và iOS, và một đợt kiểm định bảo mật độc lập trước phiên bản 1.0. Mọi khoản chi, từng dòng một, và số tiền quyên góp được đến nay: [totaldrop.app/donate](https://totaldrop.app/donate/).
 
 <a href="https://github.com/sponsors/ozdil"><img src="https://img.shields.io/badge/Sponsor%20on%20GitHub-EA4AAA?logo=githubsponsors&logoColor=white&style=for-the-badge" alt="Tài trợ trên GitHub"></a>
 

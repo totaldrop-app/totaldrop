@@ -1,4 +1,4 @@
-<!-- Translated from README.md 4cb259c278ef. -->
+<!-- Translated from README.md 3f56eaf00030. -->
 <div align="center">
 
 <picture>
@@ -55,7 +55,7 @@ Gratis og open source. End-to-end-krypteret. Ingen e-mail, intet telefonnummer, 
 | **Linux** (ARM64) | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop_0.3.0.beta.6-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop-0.3.0.beta.6-1.fc43.aarch64.rpm) · [Flatpak](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop-0.3.0-beta.6-aarch64.flatpak) | 0.3.0-beta.6, Qt 6.8 eller nyere |
 | **Android** | [Deltag i betaen](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.7, Android 15 eller nyere, Google Play efter invitation |
 | **Kommandolinje** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux, macOS, Windows |
-| **Windows, macOS, iOS** | På vej | Kodesignering til disse er det, donationerne betaler for først |
+| **Windows, macOS, iOS** | På vej | Microsoft Store signerer Windows-appen; Apple-signering til macOS og iOS er det, donationerne betaler for først |
 
 Brug én Linux-pakke ad gangen. Flatpak-pakken og .pkg-, .deb- eller .rpm-pakken deler ét navn, så mens den ene er åben, bringer start af den anden det åbne vindue frem i stedet for at åbne et nyt.
 
@@ -85,7 +85,7 @@ Har du set en klodset sætning? [Hjælp med at oversætte](../../docs/ceviri.md)
 
 ## Støt projektet
 
-TotalDrop forbliver gratis, fordi folk giver et bidrag. Donationerne betaler for relæserveren, de kodesigneringscertifikater, som Windows og macOS kræver, og en uafhængig sikkerhedsrevision før 1.0. Hver udgift, linje for linje, og hvad der er indsamlet indtil nu: [totaldrop.app/donate](https://totaldrop.app/donate/).
+TotalDrop forbliver gratis, fordi folk giver et bidrag. Donationerne betaler for relæserveren, Apple Developer Program til kodesignering på macOS og iOS og en uafhængig sikkerhedsrevision før 1.0. Hver udgift, linje for linje, og hvad der er indsamlet indtil nu: [totaldrop.app/donate](https://totaldrop.app/donate/).
 
 <a href="https://github.com/sponsors/ozdil"><img src="https://img.shields.io/badge/Sponsor%20on%20GitHub-EA4AAA?logo=githubsponsors&logoColor=white&style=for-the-badge" alt="Sponsorér på GitHub"></a>
 

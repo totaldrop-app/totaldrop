@@ -1,4 +1,4 @@
-<!-- Translated from README.md 4cb259c278ef. -->
+<!-- Translated from README.md 3f56eaf00030. -->
 <div align="center">
 
 <picture>
@@ -55,7 +55,7 @@
 | **Linux** (ARM64) | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop_0.3.0.beta.6-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop-0.3.0.beta.6-1.fc43.aarch64.rpm) · [Flatpak](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop-0.3.0-beta.6-aarch64.flatpak) | 0.3.0-beta.6, Qt 6.8 или новее |
 | **Android** | [Присоединиться к бете](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.7, Android 15 или новее, Google Play по приглашению |
 | **Командная строка** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux, macOS, Windows |
-| **Windows, macOS, iOS** | Скоро | Подпись кода для этих систем — первое, на что пойдут пожертвования |
+| **Windows, macOS, iOS** | Скоро | Приложение для Windows подписывает Microsoft Store; подпись Apple для macOS и iOS — первое, на что пойдут пожертвования |
 
 Используйте одновременно только один пакет для Linux. У Flatpak и пакета .pkg, .deb или .rpm одно имя, поэтому, пока один открыт, запуск другого выводит открытое окно на передний план, а не открывает второе.
 
@@ -85,7 +85,7 @@ TotalDrop говорит на 35 языках и следует числовым
 
 ## Поддержать проект
 
-TotalDrop остаётся бесплатным, потому что люди помогают. Пожертвования оплачивают ретранслятор, сертификаты подписи кода, которых требуют Windows и macOS, и независимый аудит безопасности до версии 1.0. Все расходы построчно и сколько уже собрано: [totaldrop.app/donate](https://totaldrop.app/donate/).
+TotalDrop остаётся бесплатным, потому что люди помогают. Пожертвования оплачивают ретранслятор, участие в Apple Developer Program для подписи кода на macOS и iOS и независимый аудит безопасности до версии 1.0. Все расходы построчно и сколько уже собрано: [totaldrop.app/donate](https://totaldrop.app/donate/).
 
 <a href="https://github.com/sponsors/ozdil"><img src="https://img.shields.io/badge/Sponsor%20on%20GitHub-EA4AAA?logo=githubsponsors&logoColor=white&style=for-the-badge" alt="Поддержать на GitHub"></a>
 

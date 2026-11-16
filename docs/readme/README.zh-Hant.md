@@ -1,4 +1,4 @@
-<!-- Translated from README.md 4cb259c278ef. -->
+<!-- Translated from README.md 3f56eaf00030. -->
 <div align="center">
 
 <picture>
@@ -55,7 +55,7 @@
 | **Linux**（ARM64） | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop_0.3.0.beta.6-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop-0.3.0.beta.6-1.fc43.aarch64.rpm) · [Flatpak](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop-0.3.0-beta.6-aarch64.flatpak) | 0.3.0-beta.6，Qt 6.8 或更新版本 |
 | **Android** | [加入測試版](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.7，Android 15 或更新版本，透過邀請在 Google Play 上提供 |
 | **命令列** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux、macOS、Windows |
-| **Windows、macOS、iOS** | 即將推出 | 捐款會優先用於這些平台的程式碼簽署 |
+| **Windows、macOS、iOS** | 即將推出 | Windows 應用程式由 Microsoft Store 簽署；捐款會優先用於 macOS 與 iOS 的 Apple 簽署 |
 
 請一次只使用一個 Linux 套件。Flatpak 與 .pkg、.deb 或 .rpm 套件使用同一個名稱，因此當其中一個已開啟時，啟動另一個只會把已開啟的視窗帶到前景，而不會再開啟一個視窗。
 
@@ -85,7 +85,7 @@ TotalDrop 支援 35 種語言，並依照你所在地區的數字格式。英文
 
 ## 支持本專案
 
-TotalDrop 能保持免費，是因為大家出手相助。捐款用於支付中繼伺服器、Windows 和 macOS 要求的程式碼簽署憑證，以及 1.0 之前的獨立安全稽核。每一項費用的明細，以及目前已募得的金額：[totaldrop.app/donate](https://totaldrop.app/donate/)。
+TotalDrop 能保持免費，是因為大家出手相助。捐款用於支付中繼伺服器、macOS 與 iOS 程式碼簽署所需的 Apple Developer Program，以及 1.0 之前的獨立安全稽核。每一項費用的明細，以及目前已募得的金額：[totaldrop.app/donate](https://totaldrop.app/donate/)。
 
 <a href="https://github.com/sponsors/ozdil"><img src="https://img.shields.io/badge/Sponsor%20on%20GitHub-EA4AAA?logo=githubsponsors&logoColor=white&style=for-the-badge" alt="在 GitHub 上贊助"></a>
 
