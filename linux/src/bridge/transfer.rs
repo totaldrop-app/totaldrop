@@ -236,6 +236,31 @@ struct Session {
     generation: AtomicU64,
 }
 
+impl Session {
+    /// Stop the running operation and decline any unanswered offer, as
+    /// Cancel does.
+    fn cancel(&self) {
+        self.generation.fetch_add(1, Ordering::SeqCst);
+        if let Ok(s) = self.stop.lock() {
+            s.stop();
+        }
+        let pending = self.offer.lock().ok().and_then(|mut o| o.take());
+        if let Some(offer) = pending {
+            TRANSFERS.spawn(&RUNTIME, async move {
+                let _ = offer.decline().await;
+            });
+        }
+    }
+}
+
+impl Drop for Session {
+    fn drop(&mut self) {
+        // If QML destroys `Transfer` before `stop_all` runs, `SESSIONS` can
+        // no longer upgrade its `Weak<Session>` (#359).
+        self.cancel();
+    }
+}
+
 /// The sessions of every `Transfer` the window made, so quitting can stop
 /// them (#433).
 static SESSIONS: Mutex<Vec<Weak<Session>>> = Mutex::new(Vec::new());
@@ -247,19 +272,14 @@ static SESSIONS: Mutex<Vec<Weak<Session>>> = Mutex::new(Vec::new());
 pub fn stop_all() {
     let sessions: Vec<Arc<Session>> = SESSIONS
         .lock()
-        .map(|s| s.iter().filter_map(Weak::upgrade).collect())
+        .map(|mut s| {
+            let live = s.iter().filter_map(Weak::upgrade).collect();
+            s.retain(|w| w.strong_count() > 0);
+            live
+        })
         .unwrap_or_default();
     for session in sessions {
-        session.generation.fetch_add(1, Ordering::SeqCst);
-        if let Ok(s) = session.stop.lock() {
-            s.stop();
-        }
-        let pending = session.offer.lock().ok().and_then(|mut o| o.take());
-        if let Some(offer) = pending {
-            TRANSFERS.spawn(&RUNTIME, async move {
-                let _ = offer.decline().await;
-            });
-        }
+        session.cancel();
     }
 }
 
@@ -704,7 +724,7 @@ impl qobject::Transfer {
             server: self.opts_server(),
             paths: self.route(),
         };
-        let session = self.rust().session.clone();
+        let session = Arc::downgrade(&self.rust().session);
         let stop = self.stop_handle();
         self.spawn(async move {
             match IncomingOffer::connect_with(&opts, &code, &stop).await {
@@ -712,14 +732,18 @@ impl qobject::Transfer {
                     let s = offer.summary().clone();
                     let words = offer.words().to_vec();
                     // Cancel bumps the generation before it takes the offer,
-                    // so an offer that comes back after a cancel is told to
-                    // stop here instead of being kept.
-                    let stale = match session.offer.lock() {
-                        Ok(mut o) if session.generation.load(Ordering::SeqCst) == g => {
-                            *o = Some(offer);
-                            None
-                        }
-                        _ => Some(offer),
+                    // so an offer that comes back after a cancel (or after
+                    // the session was dropped) is told to stop here instead
+                    // of being kept.
+                    let stale = match session.upgrade() {
+                        Some(session) => match session.offer.lock() {
+                            Ok(mut o) if session.generation.load(Ordering::SeqCst) == g => {
+                                *o = Some(offer);
+                                None
+                            }
+                            _ => Some(offer),
+                        },
+                        None => Some(offer),
                     };
                     if let Some(offer) = stale {
                         let _ = offer.stop().await;
@@ -856,25 +880,9 @@ impl qobject::Transfer {
     }
 
     fn cancel(mut self: Pin<&mut Self>) {
-        self.rust()
-            .session
-            .generation
-            .fetch_add(1, Ordering::SeqCst);
-        // The running operation tells the other side and cleans up.
-        self.stop_handle().stop();
-        // An unanswered offer is declined, so the sender hears why.
-        let pending = self
-            .rust()
-            .session
-            .offer
-            .lock()
-            .ok()
-            .and_then(|mut o| o.take());
-        if let Some(offer) = pending {
-            TRANSFERS.spawn(&RUNTIME, async move {
-                let _ = offer.decline().await;
-            });
-        }
+        // The running operation tells the other side and cleans up; an
+        // unanswered offer is declined, so the sender hears why.
+        self.rust().session.cancel();
         // A received text is kept no longer than it is on screen.
         self.as_mut().set_received_text(QString::default());
         self.as_mut().set_shown_text(QString::default());
@@ -1025,12 +1033,39 @@ impl cxx_qt::Initialize for qobject::Transfer {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
-    use std::sync::Arc;
-    use std::sync::atomic::Ordering;
+    use std::future::Future;
+    use std::net::{SocketAddr, UdpSocket};
+    use std::path::PathBuf;
+    use std::sync::atomic::{AtomicBool, Ordering};
+    use std::sync::{Arc, Mutex};
+    use std::time::{Duration, Instant};
 
-    use super::{SESSIONS, SHOWN_CHARS, Session, connect_kind, kind, send_kind, shown, stop_all};
+    use super::{
+        RUNTIME, SESSIONS, SHOWN_CHARS, Session, TRANSFERS, connect_kind, kind, send_kind, shown,
+        stop_all,
+    };
     use totaldrop_core::Error as E;
+    use totaldrop_core::pairing::{DeviceKeys, issue_certificate};
+    use totaldrop_core::relay::Gate;
+    use totaldrop_core::secure::{HandshakeInput, handshake_on};
+    use totaldrop_core::transfer::{
+        Progress, Source, SourceEntry, accept, receive_offer, send_files,
+    };
+    use totaldrop_core::transport::{
+        EndpointKey, Paths, endpoint, receiver_connection, sender_connection,
+    };
+    use totaldrop_core::{ReceiveReport, Result as CoreResult, SendReport, Stop};
+    use totaldrop_proto::wire::{Entry, EntryKind};
+
+    /// `SESSIONS` and `TRANSFERS` are process-wide statics, so tests that
+    /// drive them run one at a time.
+    static SERIAL: Mutex<()> = Mutex::new(());
+
+    fn lock_serial() -> std::sync::MutexGuard<'static, ()> {
+        SERIAL.lock().unwrap_or_else(|e| e.into_inner())
+    }
 
     /// Quitting stops a live transfer as Cancel does: its stop is set,
     /// and its generation moves on, so what it still queues for the
@@ -1038,6 +1073,7 @@ mod tests {
     /// `Transfer` only registers its session.
     #[test]
     fn quitting_stops_every_live_transfer() {
+        let _turn = lock_serial();
         let session = Arc::new(Session::default());
         if let Ok(mut sessions) = SESSIONS.lock() {
             sessions.push(Arc::downgrade(&session));
@@ -1051,6 +1087,346 @@ mod tests {
             before,
             "its later events are dropped"
         );
+    }
+
+    /// If QML destroys `Transfer` before `stop_all` runs, `SESSIONS` can no
+    /// longer upgrade its `Weak<Session>`; dropping `Session` itself must
+    /// stop the running transfer (#359).
+    #[test]
+    fn dropping_a_session_stops_its_transfer() {
+        let _turn = lock_serial();
+        let session = Arc::new(Session::default());
+        if let Ok(mut sessions) = SESSIONS.lock() {
+            sessions.push(Arc::downgrade(&session));
+        }
+        let stop = session.stop.lock().map(|s| s.clone()).unwrap_or_default();
+        drop(session);
+        stop_all();
+        assert!(
+            stop.is_stopped(),
+            "dropping the session stopped its transfer"
+        );
+    }
+
+    fn memory_entries() -> Vec<SourceEntry> {
+        let bytes: Arc<[u8]> = Arc::from(vec![0x5a_u8; 6 << 20]);
+        (0..3)
+            .map(|n| SourceEntry {
+                entry: Entry {
+                    path: vec![format!("part-{n}.bin")],
+                    kind: EntryKind::File,
+                    size: bytes.len() as u64,
+                    // Stream reset cuts the file before its hash is checked.
+                    hash: Some([0u8; 32]),
+                    mtime: None,
+                },
+                source: Some(Source::Bytes(Arc::clone(&bytes))),
+            })
+            .collect()
+    }
+
+    fn temp_dest(tag: &str) -> PathBuf {
+        let dir = std::env::temp_dir().join(format!("td-linux-close-{tag}-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        dir
+    }
+
+    /// Two authenticated loopback QUIC endpoints and their secure session,
+    /// connected over a paced pipe (~9 MB/s) whose `silent` flag can drop
+    /// every packet in both directions to simulate a peer that disappeared.
+    /// Returns the sender future, receiver future, a `Notify` signalled once
+    /// the first MiB has arrived, the `silent` switch, and both endpoints so
+    /// their UDP drivers live for the whole test.
+    async fn loopback_transfer(
+        dest: PathBuf,
+        send_stop: Stop,
+        recv_stop: Stop,
+    ) -> (
+        impl Future<Output = CoreResult<SendReport>> + Send + 'static,
+        impl Future<Output = CoreResult<ReceiveReport>> + Send + 'static,
+        Arc<tokio::sync::Notify>,
+        Arc<AtomicBool>,
+        impl Send + 'static,
+    ) {
+        let (ka, kb) = (
+            EndpointKey::generate().unwrap(),
+            EndpointKey::generate().unwrap(),
+        );
+        let sa = UdpSocket::bind(SocketAddr::from(([127, 0, 0, 1], 0))).unwrap();
+        let sb = UdpSocket::bind(SocketAddr::from(([127, 0, 0, 1], 0))).unwrap();
+        let (sender_ep, pa, _) = endpoint(sa, &ka, &kb.public()).unwrap();
+        let (receiver_ep, pb, _) = endpoint(sb, &kb, &ka.public()).unwrap();
+        let (mut a_out, a_in, mut b_out, b_in) =
+            (pa.outgoing, pa.incoming, pb.outgoing, pb.incoming);
+        let silent = Arc::new(AtomicBool::new(false));
+        let silent_ab = Arc::clone(&silent);
+        tokio::spawn(async move {
+            while let Some(first) = a_out.recv().await {
+                tokio::time::sleep(Duration::from_millis(1)).await;
+                if !silent_ab.load(Ordering::SeqCst) {
+                    let _ = b_in.send(first).await;
+                }
+                for _ in 1..16 {
+                    let Ok(d) = a_out.try_recv() else { break };
+                    if !silent_ab.load(Ordering::SeqCst) {
+                        let _ = b_in.send(d).await;
+                    }
+                }
+            }
+        });
+        let silent_ba = Arc::clone(&silent);
+        tokio::spawn(async move {
+            while let Some(d) = b_out.recv().await {
+                if !silent_ba.load(Ordering::SeqCst) {
+                    let _ = a_in.send(d).await;
+                }
+            }
+        });
+        let gate = Gate::default();
+        gate.open();
+        let paths = Paths {
+            direct: Vec::new(),
+            relay: Some(gate),
+            relay_only: true,
+        };
+        let (skeys, rkeys) = (
+            DeviceKeys::generate().unwrap(),
+            DeviceKeys::generate().unwrap(),
+        );
+        let (scert, rcert) = (issue_certificate(&skeys), issue_certificate(&rkeys));
+        let input = |keys, peer| HandshakeInput {
+            keys,
+            peer,
+            psk: [9; 32],
+            mailbox_id: [5; 16],
+        };
+        let wait = Duration::from_secs(10);
+        let recv_side = async {
+            let conn = receiver_connection(&receiver_ep, &paths, wait)
+                .await
+                .unwrap();
+            let (send, recv) = conn.open_bi().await.unwrap();
+            let chan = handshake_on(send, recv, input(&rkeys, &scert), true)
+                .await
+                .unwrap();
+            (conn, chan)
+        };
+        let send_side = async {
+            let (conn, send, recv) = sender_connection(&sender_ep, &paths, wait).await.unwrap();
+            let chan = handshake_on(send, recv, input(&skeys, &rcert), false)
+                .await
+                .unwrap();
+            (conn, chan)
+        };
+        let ((receiver, mut rchan), (sender, schan)) = tokio::join!(recv_side, send_side);
+        let entries = memory_entries();
+        let started = Arc::new(tokio::sync::Notify::new());
+        let started_tx = Arc::clone(&started);
+
+        let send_fut = async move {
+            let r = send_files(
+                &sender,
+                schan,
+                &skeys,
+                entries,
+                false,
+                Arc::new(|_, _| {}),
+                &send_stop,
+            )
+            .await;
+            if r.is_err() {
+                sender.close(0u32.into(), b"failed");
+            }
+            r
+        };
+        let recv_fut = async move {
+            let offer = receive_offer(&mut rchan, &scert).await?;
+            let on_progress: Progress = Arc::new(move |done, _| {
+                if done >= 1 << 20 {
+                    started_tx.notify_one();
+                }
+            });
+            let r = accept(&receiver, rchan, offer, &dest, on_progress, &recv_stop).await;
+            receiver.close(0u32.into(), b"done");
+            r
+        };
+        (
+            send_fut,
+            recv_fut,
+            started,
+            silent,
+            (sender_ep, receiver_ep),
+        )
+    }
+
+    struct AbortOnDrop(tokio::task::AbortHandle);
+
+    impl Drop for AbortOnDrop {
+        fn drop(&mut self) {
+            self.0.abort();
+        }
+    }
+
+    fn close_while_sending(drop_session_first: bool) {
+        let _turn = lock_serial();
+        let dest = temp_dest(if drop_session_first { "drop" } else { "send" });
+        let session = Arc::new(Session::default());
+        if let Ok(mut sessions) = SESSIONS.lock() {
+            sessions.push(Arc::downgrade(&session));
+        }
+        let stop = session.stop.lock().map(|s| s.clone()).unwrap_or_default();
+        let (send_fut, recv_fut, started, _, _eps) =
+            RUNTIME.block_on(loopback_transfer(dest.clone(), stop, Stop::new()));
+
+        TRANSFERS.spawn(&RUNTIME, async move {
+            let _ = send_fut.await;
+        });
+        let recv = RUNTIME.spawn(recv_fut);
+        let _guard = AbortOnDrop(recv.abort_handle());
+
+        RUNTIME.block_on(async {
+            tokio::time::timeout(Duration::from_secs(10), started.notified())
+                .await
+                .expect("the transfer started moving bytes");
+        });
+
+        let closed_at = Instant::now();
+        if drop_session_first {
+            drop(session);
+        }
+        stop_all();
+        let ended = RUNTIME.block_on(crate::quit::finish(
+            &TRANSFERS,
+            totaldrop_core::portmap::released(),
+            crate::quit::STOPPING,
+        ));
+        assert!(ended, "the stopped send finished within quit::STOPPING");
+        assert!(closed_at.elapsed() < Duration::from_secs(2));
+
+        let err = RUNTIME
+            .block_on(async { tokio::time::timeout(Duration::from_secs(2), recv).await })
+            .expect("the receiver heard the cancel within 2 s")
+            .unwrap()
+            .expect_err("the transfer was cancelled");
+        assert!(
+            matches!(err, E::Cancelled(ref reason) if reason == "stopped"),
+            "expected Cancelled(\"stopped\"), got {err:?}"
+        );
+        assert_eq!(kind(&err), "Cancelled");
+        assert_eq!(std::fs::read_dir(&dest).unwrap().count(), 0);
+        let _ = std::fs::remove_dir_all(&dest);
+    }
+
+    /// #359: closing the window while sending sends the same cancel as Stop
+    /// within quit::STOPPING, and the receiver sees `Cancelled("stopped")`
+    /// rather than a connection error.
+    #[test]
+    fn closing_the_window_while_sending_tells_the_receiver() {
+        close_while_sending(false);
+    }
+
+    /// #359: if QML drops `Transfer` before `stop_all` runs, the receiver
+    /// still hears `Cancelled("stopped")` within quit::STOPPING.
+    #[test]
+    fn dropping_session_while_sending_tells_the_receiver() {
+        close_while_sending(true);
+    }
+
+    /// #359: closing the window while receiving tells the sender it stopped
+    /// and removes partial files before exiting.
+    #[test]
+    fn closing_the_window_while_receiving_tells_the_sender() {
+        let _turn = lock_serial();
+        let dest = temp_dest("recv");
+        let session = Arc::new(Session::default());
+        if let Ok(mut sessions) = SESSIONS.lock() {
+            sessions.push(Arc::downgrade(&session));
+        }
+        let stop = session.stop.lock().map(|s| s.clone()).unwrap_or_default();
+        let (send_fut, recv_fut, started, _, _eps) =
+            RUNTIME.block_on(loopback_transfer(dest.clone(), Stop::new(), stop));
+
+        let send = RUNTIME.spawn(send_fut);
+        let _guard = AbortOnDrop(send.abort_handle());
+        TRANSFERS.spawn(&RUNTIME, async move {
+            let _ = recv_fut.await;
+        });
+
+        RUNTIME.block_on(async {
+            tokio::time::timeout(Duration::from_secs(10), started.notified())
+                .await
+                .expect("the transfer started moving bytes");
+        });
+
+        let closed_at = Instant::now();
+        stop_all();
+        let ended = RUNTIME.block_on(crate::quit::finish(
+            &TRANSFERS,
+            totaldrop_core::portmap::released(),
+            crate::quit::STOPPING,
+        ));
+        assert!(ended, "the stopped receive finished within quit::STOPPING");
+        assert!(closed_at.elapsed() < Duration::from_secs(2));
+
+        let err = RUNTIME
+            .block_on(async { tokio::time::timeout(Duration::from_secs(2), send).await })
+            .expect("the sender heard the cancel within 2 s")
+            .unwrap()
+            .expect_err("the transfer was cancelled");
+        assert!(
+            matches!(err, E::Cancelled(ref reason) if reason == "stopped"),
+            "expected Cancelled(\"stopped\"), got {err:?}"
+        );
+        assert_eq!(send_kind(&err), "Cancelled");
+        assert_eq!(std::fs::read_dir(&dest).unwrap().count(), 0);
+        let _ = std::fs::remove_dir_all(&dest);
+    }
+
+    /// #359: closing the window when the peer is gone does not hang; `finish`
+    /// bounds the wait to `quit::STOPPING` (1.5 s) and drops the stuck task.
+    #[test]
+    fn closing_the_window_with_a_silent_peer_is_bounded() {
+        let _turn = lock_serial();
+        let dest = temp_dest("silent");
+        let session = Arc::new(Session::default());
+        if let Ok(mut sessions) = SESSIONS.lock() {
+            sessions.push(Arc::downgrade(&session));
+        }
+        let stop = session.stop.lock().map(|s| s.clone()).unwrap_or_default();
+        let (send_fut, recv_fut, started, silent, _eps) =
+            RUNTIME.block_on(loopback_transfer(dest.clone(), stop, Stop::new()));
+
+        TRANSFERS.spawn(&RUNTIME, async move {
+            let _ = send_fut.await;
+        });
+        let recv = RUNTIME.spawn(recv_fut);
+
+        RUNTIME.block_on(async {
+            tokio::time::timeout(Duration::from_secs(10), started.notified())
+                .await
+                .expect("the transfer started moving bytes");
+        });
+
+        // All packets in both directions are dropped from here on.
+        silent.store(true, Ordering::SeqCst);
+        let closed_at = Instant::now();
+        stop_all();
+        let ended = RUNTIME.block_on(crate::quit::finish(
+            &TRANSFERS,
+            totaldrop_core::portmap::released(),
+            crate::quit::STOPPING,
+        ));
+        let elapsed = closed_at.elapsed();
+        assert!(!ended, "the silent peer kept tell_stopped past STOPPING");
+        assert!(
+            elapsed < Duration::from_millis(2200),
+            "closing hung for {elapsed:?}"
+        );
+
+        recv.abort();
+        let _ = RUNTIME.block_on(recv);
+        let _ = std::fs::remove_dir_all(&dest);
     }
 
     #[test]

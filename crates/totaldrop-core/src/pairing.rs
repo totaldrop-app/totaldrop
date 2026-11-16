@@ -8,7 +8,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use totaldrop_crypto::channel::MailboxCipher;
 use totaldrop_crypto::cpace::{Cpace, Role};
-use totaldrop_crypto::identity::{DeviceKeys, verify_signature};
+use totaldrop_crypto::identity::verify_signature;
 use totaldrop_crypto::{Purpose, derive_key};
 use totaldrop_proto::TransferCode;
 use totaldrop_proto::wire::{Certificate, Hints, Mood};
@@ -150,3 +150,5 @@ async fn run(
         mailbox_id,
     })
 }
+
+pub use totaldrop_crypto::identity::DeviceKeys;

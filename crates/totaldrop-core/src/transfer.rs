@@ -64,8 +64,21 @@ fn lower_bound(confirmed: u64, handed_over: u64) -> u64 {
     confirmed.max(handed_over.saturating_sub(MAX_IN_FLIGHT))
 }
 
+/// Whether the other side already closed `conn`, leaving our endpoint in
+/// QUIC's passive draining state rather than actively closing.
+pub(crate) fn peer_closed(conn: &quinn::Connection) -> bool {
+    matches!(
+        conn.close_reason(),
+        Some(
+            quinn::ConnectionError::ApplicationClosed(_)
+                | quinn::ConnectionError::ConnectionClosed(_)
+        )
+    )
+}
+
 /// Tell the other side this one stopped, best effort and briefly, and close
-/// the connection. Returns the error the stopped side reports.
+/// the connection unless the peer already closed it. Returns the error the
+/// stopped side reports.
 pub(crate) async fn tell_stopped(
     conn: &quinn::Connection,
     sealer: &mut Sealer,
@@ -79,12 +92,16 @@ pub(crate) async fn tell_stopped(
     let _ = tokio::time::timeout(STOP_NOTICE, async {
         send_control(sealer, send, &notice).await?;
         let _ = send.finish();
-        // Give the message a moment to leave before the connection closes.
+        // Give the message a moment to leave before the connection closes,
+        // and let the peer's close arrive so passive draining can be skipped.
         let _ = send.stopped().await;
+        let _ = tokio::time::timeout(Duration::from_millis(500), conn.closed()).await;
         Ok::<_, Error>(())
     })
     .await;
-    conn.close(0u32.into(), b"stopped");
+    if !peer_closed(conn) {
+        conn.close(0u32.into(), b"stopped");
+    }
     Error::Stopped
 }
 
@@ -1659,8 +1676,134 @@ mod tests {
             .await
             .unwrap()
             .unwrap();
-        assert!(matches!(s, Err(Error::Cancelled(_))), "{s:?}");
+        assert!(
+            matches!(s, Err(Error::Cancelled(ref reason)) if reason == "stopped"),
+            "{s:?}"
+        );
         assert_eq!(std::fs::read_dir(&dest).unwrap().count(), 0);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// A sender and receiver over a relay stand-in that forwards up to 16
+    /// sender datagrams per millisecond (~9 MB/s): slow enough to catch a
+    /// multi-megabyte transfer in flight, without queueing > 2 s of packets
+    /// behind Tokio's 1 ms timer wheel.
+    async fn paced_pair() -> (quinn::Connection, quinn::Connection) {
+        use crate::transport::{
+            EndpointKey, Paths, endpoint, receiver_connection, sender_connection,
+        };
+        use std::net::{SocketAddr, UdpSocket};
+
+        let (ka, kb) = (
+            EndpointKey::generate().unwrap(),
+            EndpointKey::generate().unwrap(),
+        );
+        let sa = UdpSocket::bind(SocketAddr::from(([127, 0, 0, 1], 0))).unwrap();
+        let sb = UdpSocket::bind(SocketAddr::from(([127, 0, 0, 1], 0))).unwrap();
+        let (sender, pa, _) = endpoint(sa, &ka, &kb.public()).unwrap();
+        let (receiver, pb, _) = endpoint(sb, &kb, &ka.public()).unwrap();
+        let (mut a_out, a_in, mut b_out, b_in) =
+            (pa.outgoing, pa.incoming, pb.outgoing, pb.incoming);
+        tokio::spawn(async move {
+            while let Some(first) = a_out.recv().await {
+                tokio::time::sleep(Duration::from_millis(1)).await;
+                let _ = b_in.send(first).await;
+                for _ in 1..16 {
+                    let Ok(d) = a_out.try_recv() else { break };
+                    let _ = b_in.send(d).await;
+                }
+            }
+        });
+        tokio::spawn(async move {
+            while let Some(d) = b_out.recv().await {
+                let _ = a_in.send(d).await;
+            }
+        });
+        let gate = crate::relay::Gate::default();
+        gate.open();
+        let paths = Paths {
+            direct: Vec::new(),
+            relay: Some(gate),
+            relay_only: true,
+        };
+        let wait = Duration::from_secs(10);
+        let recv_side = async {
+            let conn = receiver_connection(&receiver, &paths, wait).await.unwrap();
+            let (mut send, _recv) = conn.open_bi().await.unwrap();
+            send.write_all(b"x").await.unwrap();
+            (conn, send)
+        };
+        let send_side = async { sender_connection(&sender, &paths, wait).await.unwrap() };
+        let ((receiver_conn, _ctl), (sender_conn, _send, _recv)) =
+            tokio::join!(recv_side, send_side);
+        (sender_conn, receiver_conn)
+    }
+
+    /// The sender stops mid-transfer (#359): both sides end within 2 s, the
+    /// receiver hears `Cancelled("stopped")` rather than a connection error,
+    /// and partial files and created folders are removed.
+    #[tokio::test]
+    async fn sender_stops_while_sending() {
+        let (sender, receiver) = paced_pair().await;
+        let (schan, mut rchan, skeys, scert) = secure_pair(&sender, &receiver).await;
+        let dir = std::env::temp_dir().join(format!("td-sstop-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        let (src, dest) = (dir.join("src"), dir.join("dest"));
+        std::fs::create_dir_all(src.join("f")).unwrap();
+        std::fs::create_dir_all(&dest).unwrap();
+        for n in 0..3 {
+            std::fs::write(src.join("f").join(format!("{n}.bin")), vec![2u8; 6 << 20]).unwrap();
+        }
+        let (entries, _) = scan(&[src.join("f")]).unwrap();
+        let stop = Stop::new();
+        let send = {
+            let (sender, stop) = (sender.clone(), stop.clone());
+            tokio::spawn(async move {
+                send_files(
+                    &sender,
+                    schan,
+                    &skeys,
+                    entries,
+                    false,
+                    Arc::new(|_, _| {}),
+                    &stop,
+                )
+                .await
+            })
+        };
+        let offer = receive_offer(&mut rchan, &scert).await.unwrap();
+        let started = Arc::new(tokio::sync::Notify::new());
+        let on_receive: Progress = {
+            let started = Arc::clone(&started);
+            Arc::new(move |n, _| {
+                if n >= 1 << 20 {
+                    started.notify_one();
+                }
+            })
+        };
+        let recv = tokio::spawn(async move {
+            accept(&receiver, rchan, offer, &dest, on_receive, &Stop::new()).await
+        });
+        tokio::time::timeout(Duration::from_secs(10), started.notified())
+            .await
+            .unwrap();
+        let stopped_at = tokio::time::Instant::now();
+        stop.stop();
+        let s = tokio::time::timeout(Duration::from_secs(2), send)
+            .await
+            .unwrap()
+            .unwrap();
+        assert!(matches!(s, Err(Error::Stopped)), "{s:?}");
+        let r = tokio::time::timeout(Duration::from_secs(2), recv)
+            .await
+            .unwrap()
+            .unwrap();
+        assert!(
+            matches!(r, Err(Error::Cancelled(ref reason)) if reason == "stopped"),
+            "{r:?}"
+        );
+        assert!(stopped_at.elapsed() < Duration::from_secs(2));
+        assert_eq!(std::fs::read_dir(dir.join("dest")).unwrap().count(), 0);
         let _ = std::fs::remove_dir_all(&dir);
     }
 
