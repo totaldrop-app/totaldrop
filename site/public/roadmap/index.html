@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>TotalDrop roadmap</title>
   <meta name="description" content="What is done, what comes next and what comes later in TotalDrop, platform by platform, on the way to version 1.0.">
+  <meta name="color-scheme" content="light dark">
+  <meta name="text-scale" content="scale">
   <meta name="theme-color" content="#F7F7F5" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0F1116" media="(prefers-color-scheme: dark)">
   <link rel="canonical" href="https://totaldrop.app/roadmap/">
@@ -16,7 +18,8 @@
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="preload" href="/fonts/bricolage-grotesque-latin-800-normal.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="/styles.css?v=fb5276a1fb">
+  <link rel="preload" href="/fonts/atkinson-hyperlegible-latin-400-normal.woff2" as="font" type="font/woff2" fetchpriority="low" crossorigin>
+  <link rel="stylesheet" href="/styles.css?v=a89b4f4e21">
 </head>
 <body data-page="roadmap">
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -47,7 +50,7 @@
         <span class="road-state" data-i18n="rm.done.state">Done</span>
         <h2 id="rm-done" data-i18n="rm.done.when">October 2026</h2>
       </header>
-      <ul class="rm-items">
+      <ul class="rm-items" role="list">
           <li>
             <h3 data-i18n="rm.d1.t">An open protocol</h3>
             <p data-i18n="rm.d1.d">TotalDrop Protocol v0: transfer codes with CPace, Noise XXpsk3 with post-quantum ML-KEM-768, QUIC with single-use keys. Written down so anyone can build a compatible app.</p>
@@ -105,7 +108,7 @@
         <span class="road-state" data-i18n="rm.now.state">Now</span>
         <h2 id="rm-now" data-i18n="rm.now.when">November 2026</h2>
       </header>
-      <ul class="rm-items">
+      <ul class="rm-items" role="list">
           <li>
             <h3 data-i18n="rm.x1.t">Scan the QR code with the camera</h3>
             <p data-i18n="rm.x1.d">Point the phone at the sender&#x27;s screen instead of typing the code.</p>
@@ -123,7 +126,7 @@
         <span class="road-state" data-i18n="rm.next.state">Next</span>
         <h2 id="rm-next" data-i18n="rm.next.when">Winter 2026–27</h2>
       </header>
-      <ul class="rm-items">
+      <ul class="rm-items" role="list">
           <li>
             <h3 data-i18n="rm.x3.t">Resume interrupted transfers</h3>
             <p data-i18n="rm.x3.d">A dropped connection picks up where it stopped, without sending what already arrived.</p>
@@ -151,7 +154,7 @@
         <span class="road-state" data-i18n="rm.later.state">Later</span>
         <h2 id="rm-later" data-i18n="rm.later.when">2027</h2>
       </header>
-      <ul class="rm-items">
+      <ul class="rm-items" role="list">
           <li>
             <h3 data-i18n="rm.l1.t">iPhone, iPad and Mac</h3>
             <p data-i18n="rm.l1.d">Native apps, once donations cover Apple&#x27;s developer account.</p>
@@ -184,7 +187,7 @@
         <span class="road-state" data-i18n="rm.v1.state">Version 1.0</span>
         <h2 id="rm-v1" data-i18n="rm.v1.when">After the audit</h2>
       </header>
-      <ul class="rm-items">
+      <ul class="rm-items" role="list">
           <li>
             <h3 data-i18n="rm.v1.t">Independent security audit</h3>
             <p data-i18n="rm.v1.d">An outside firm reviews the protocol, the cryptography and the code that handles untrusted input. The full report is published.</p>
@@ -236,6 +239,6 @@
   </footer>
 
   <script src="/lang.js?v=107288c166" defer></script>
-  <script src="/app.js?v=06d492cb93" defer></script>
+  <script src="/app.js?v=14446991b4" defer></script>
 </body>
 </html>

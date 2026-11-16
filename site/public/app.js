@@ -101,7 +101,7 @@
       if (tag === "en") { a.setAttribute("href", base); a.removeAttribute("hreflang"); } else { a.setAttribute("href", base + "/" + tag); a.hreflang = tag; }
     });
     nodes.forEach((el) => {
-      const key = el.dataset.i18n;
+      const key = el.dataset.copiedKey || el.dataset.i18n;
       const translated = tag === "en" || has(d, key);
       const text = t(key);
       if (typeof text === "string") el.textContent = text;
@@ -138,7 +138,7 @@
   // Only the latest choice is applied, however the downloads finish; the
   // choice is saved once its language has loaded.
   let request = 0;
-  const reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const reducedMotion = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
   async function show(tag, { save = false, animate = false } = {}) {
     const mine = ++request;
     let d = EN;
@@ -156,7 +156,7 @@
     }
     if (mine !== request) return;
     if (save) store.set(tag);
-    if (animate && !reduced && document.startViewTransition) document.startViewTransition(() => apply(tag, d));
+    if (animate && !(reducedMotion && reducedMotion.matches) && document.startViewTransition) document.startViewTransition(() => apply(tag, d));
     else apply(tag, d);
   }
 
@@ -192,6 +192,47 @@
     const initial = pathTag !== "en" ? pathTag : (LANGUAGES.some((l) => l[0] === chosen) ? chosen : negotiate(prefs));
     if (picker) picker.value = initial;
     if (initial !== "en") show(initial);
+  }
+
+  // Copy feedback: keep the button enabled, revert its label after a short
+  // pause, and announce repeated copies reliably in VoiceOver.
+  const copyTimers = new WeakMap();
+  let copyStatus = null;
+  let lastAnnouncement = "";
+  function syncNodeLang(el, key) {
+    const tag = document.documentElement.lang || "en";
+    if (tag === "en" || has(dict, key)) { el.removeAttribute("lang"); el.removeAttribute("dir"); }
+    else { el.lang = "en"; el.dir = "ltr"; }
+  }
+  function reportCopy(button, copiedKey) {
+    if (!copyStatus) {
+      copyStatus = document.createElement("p");
+      copyStatus.className = "visually-hidden";
+      copyStatus.setAttribute("role", "status");
+      copyStatus.setAttribute("aria-live", "polite");
+      document.body.append(copyStatus);
+    }
+    clearTimeout(copyTimers.get(button));
+    button.dataset.copiedKey = copiedKey;
+    button.setAttribute("data-copied", "");
+    const label = t(copiedKey);
+    button.textContent = label;
+    syncNodeLang(button, copiedKey);
+    let message = label;
+    if (message === lastAnnouncement) message += "\u00a0";
+    lastAnnouncement = message;
+    copyStatus.textContent = "";
+    requestAnimationFrame(() => { if (copyStatus) copyStatus.textContent = message; });
+    copyTimers.set(button, setTimeout(() => {
+      delete button.dataset.copiedKey;
+      button.removeAttribute("data-copied");
+      const restKey = button.dataset.i18n;
+      if (restKey) {
+        button.textContent = t(restKey);
+        syncNodeLang(button, restKey);
+      }
+      if (copyStatus) copyStatus.textContent = "";
+    }, 2000));
   }
 
   // Download page: mark the card for the device in hand, and copy commands.
@@ -236,7 +277,7 @@
       copy.addEventListener("click", async () => {
         try {
           await navigator.clipboard.writeText(raw);
-          copy.textContent = t("r.copied");
+          reportCopy(copy, "r.copied");
         } catch (e) { window.getSelection().selectAllChildren(document.getElementById("r-code")); }
       });
     }
@@ -246,7 +287,7 @@
     b.addEventListener("click", async () => {
       try {
         await navigator.clipboard.writeText(b.dataset.copy);
-        b.textContent = t("dl.copied");
+        reportCopy(b, "dl.copied");
       } catch (e) {
         const pre = b.previousElementSibling;
         if (pre) window.getSelection().selectAllChildren(pre);

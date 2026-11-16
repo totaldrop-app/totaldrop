@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>TotalDrop brand</title>
   <meta name="description" content="The TotalDrop mark, its motion, colours, type, buttons and icons, how to use them, and the logo files to download.">
+  <meta name="color-scheme" content="light dark">
+  <meta name="text-scale" content="scale">
   <meta name="theme-color" content="#F7F7F5" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0F1116" media="(prefers-color-scheme: dark)">
   <link rel="canonical" href="https://totaldrop.app/brand/">
@@ -16,7 +18,8 @@
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="preload" href="/fonts/bricolage-grotesque-latin-800-normal.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="/styles.css?v=fb5276a1fb">
+  <link rel="preload" href="/fonts/atkinson-hyperlegible-latin-400-normal.woff2" as="font" type="font/woff2" fetchpriority="low" crossorigin>
+  <link rel="stylesheet" href="/styles.css?v=a89b4f4e21">
 </head>
 <body data-page="brand">
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -67,7 +70,7 @@
     <section class="block" id="principles" aria-labelledby="principles-title">
       <h2 id="principles-title" data-i18n="bk.p.title">Less, but better</h2>
       <p data-i18n="bk.p.lede">TotalDrop follows Dieter Rams: every element has a job, and whatever has none is left out.</p>
-      <ul class="reasons">
+      <ul class="reasons" role="list">
         <li>
           <h3 data-i18n="bk.p1.t">Part of the system</h3>
           <p data-i18n="bk.p1.d">The apps take their colours, light or dark theme, icons and windows from the system, and on Linux the fonts too. Only the mark and its colours stay the same everywhere.</p>
@@ -198,7 +201,7 @@
       <div class="bk-grid bk-grid-2">
         <figure class="bk-fig">
           <div class="bk-stage bk-on-light bk-wide">
-            <img src="/brand/files/totaldrop-logo.svg" alt="TotalDrop" width="456" height="97">
+            <img src="/brand/files/totaldrop-logo.svg" alt="TotalDrop" width="456" height="97" loading="lazy" decoding="async">
           </div>
           <figcaption>
             <span class="bk-cap-t" data-i18n="bk.logo.word">Logo</span>
@@ -207,7 +210,7 @@
         </figure>
         <figure class="bk-fig">
           <div class="bk-stage bk-on-dark bk-wide">
-            <img src="/brand/files/totaldrop-logo-dark.svg" alt="TotalDrop" width="456" height="97">
+            <img src="/brand/files/totaldrop-logo-dark.svg" alt="TotalDrop" width="456" height="97" loading="lazy" decoding="async">
           </div>
           <figcaption>
             <span class="bk-cap-t" data-i18n="bk.logo.dark">Logo on dark grounds</span>
@@ -250,7 +253,7 @@
     <section class="block" id="misuse" aria-labelledby="misuse-title">
       <h2 id="misuse-title" data-i18n="bk.no.title">What not to do</h2>
       <p data-i18n="bk.no.lede">The mark is one flat colour, used as it is. These are the common mistakes.</p>
-      <ul class="bk-grid bk-grid-4 bk-donts">
+      <ul class="bk-grid bk-grid-4 bk-donts" role="list">
         <li class="bk-fig">
           <div class="bk-stage"><svg viewBox="0 0 112 112" aria-hidden="true"><path class="mk" d="M55 15H83A14 14 0 0 1 97 29V57A42 42 0 1 1 55 15Z"/></svg></div>
           <p class="bk-no" data-i18n="bk.no.label">Don't</p>
@@ -306,9 +309,9 @@
         <div class="bk-sw"><span class="bk-chip bk-c-alabaster"></span><span class="bk-sw-name">Alabaster</span><code>#F7F7F5</code><span class="bk-sw-use" data-i18n="bk.col.paper">Light page ground, paired with pure white cards.</span></div>
         <div class="bk-sw"><span class="bk-chip bk-c-obsidian"></span><span class="bk-sw-name">Obsidian</span><code>#0F1116</code><span class="bk-sw-use" data-i18n="bk.col.night">Dark page ground, paired with graphite cards.</span></div>
       </div>
-      <div class="compare-wrap">
+      <div class="compare-wrap" tabindex="0" role="region" aria-labelledby="bk-col-tokens">
         <table class="req bk-tokens">
-          <caption data-i18n="bk.col.tokens">Colour roles, light and dark theme</caption>
+          <caption id="bk-col-tokens" data-i18n="bk.col.tokens">Colour roles, light and dark theme</caption>
           <thead>
             <tr><th scope="col" data-i18n="bk.col.role">Role</th><th scope="col" data-i18n="bk.col.light">Light</th><th scope="col" data-i18n="bk.col.dark">Dark</th><th scope="col" data-i18n="bk.col.use">Use</th></tr>
           </thead>
@@ -349,9 +352,9 @@
           <p data-i18n="bk.type.body">Everything else: running text, buttons and fields. Made by the Braille Institute so that similar letters such as I, l and 1 stay apart.</p>
         </div>
       </div>
-      <ol class="bk-scale">
-        <li><span class="bk-scale-meta"><code>h1</code> <span>Bricolage 800 · clamp(2.15rem, 5.8vw, 4.4rem) · −0.035em</span></span><span class="bk-t-hero" data-i18n="bk.type.s1">Every device to every device</span></li>
-        <li><span class="bk-scale-meta"><code>h2</code> <span>Bricolage 800 · clamp(1.65rem, 3.5vw, 2.45rem) · −0.025em</span></span><span class="bk-t-section" data-i18n="nav.how">How it works</span></li>
+      <ol class="bk-scale" role="list">
+        <li><span class="bk-scale-meta"><code>h1</code> <span>Bricolage 800 · clamp(2.15rem, 1.1rem + 4.4vw, 4.4rem) · −0.035em</span></span><span class="bk-t-hero" data-i18n="bk.type.s1">Every device to every device</span></li>
+        <li><span class="bk-scale-meta"><code>h2</code> <span>Bricolage 800 · clamp(1.65rem, 1.1rem + 2vw, 2.45rem) · −0.025em</span></span><span class="bk-t-section" data-i18n="nav.how">How it works</span></li>
         <li><span class="bk-scale-meta"><code>h3</code> <span>Bricolage 700 · 1.225rem</span></span><span class="bk-t-title" data-i18n="how.s2.t">Share the code</span></li>
         <li><span class="bk-scale-meta"><code>body</code> <span>Atkinson 400 · 1.0625rem · 1.6</span></span><span class="bk-t-body" data-i18n="why.r1.d">Files go from your device to theirs. No copy waits on a company's server, and no link expires in a week.</span></li>
         <li><span class="bk-scale-meta"><code>small</code> <span>Atkinson 700 · 0.8125rem · +0.06em</span></span><span class="eyebrow" data-i18n="hero.eyebrow">Free · Open source · Beta</span></li>
@@ -459,7 +462,7 @@
       <div class="bk-grid bk-grid-2">
         <div class="bk-col">
           <h3 data-i18n="bk.sp.scale">Spacing</h3>
-          <ul class="bk-bars">
+          <ul class="bk-bars" role="list">
             <li><span class="bk-bar bk-w8"></span><code>8</code><span data-i18n="bk.sp.8">Icon to label, heading to text</span></li>
             <li><span class="bk-bar bk-w16"></span><code>16</code><span data-i18n="bk.sp.16">Between cards, inside a block</span></li>
             <li><span class="bk-bar bk-w24"></span><code>24</code><span data-i18n="bk.sp.24">Inside a card, screen edge (16 on phones)</span></li>
@@ -469,7 +472,7 @@
         </div>
         <div class="bk-col">
           <h3 data-i18n="bk.sp.radius">Corners</h3>
-          <ul class="bk-radii">
+          <ul class="bk-radii" role="list">
             <li><span class="bk-rad bk-r8"></span><code>8</code><span data-i18n="bk.sp.r8">Progress bar</span></li>
             <li><span class="bk-rad bk-r16"></span><code>16</code><span data-i18n="bk.sp.r16">Text field, code box</span></li>
             <li><span class="bk-rad bk-r28"></span><code>28</code><span data-i18n="bk.sp.r28">Cards</span></li>
@@ -501,7 +504,7 @@
 
     <section class="block" id="voice" aria-labelledby="voice-title">
       <h2 id="voice-title" data-i18n="bk.vo.title">Voice</h2>
-      <ul class="reasons">
+      <ul class="reasons" role="list">
         <li>
           <h3 data-i18n="bk.vo1.t">Say what happens</h3>
           <p data-i18n="bk.vo1.d">A button names its action: "Choose files", "Accept". An error says what went wrong and what to do next, without apologising.</p>
@@ -524,7 +527,7 @@
     <section class="block" id="use" aria-labelledby="use-title">
       <h2 id="use-title" data-i18n="bk.use.title">Using the name and mark</h2>
       <p data-i18n="bk.use.lede">TotalDrop is open source, but its licences cover the code, not the TotalDrop name and mark. These rules exist so that an app called TotalDrop really comes from this project.</p>
-      <ul class="reasons bk-use-yes">
+      <ul class="reasons bk-use-yes" role="list">
         <li>
           <h3 data-i18n="bk.use1.t">Write about it</h3>
           <p data-i18n="bk.use1.d">Link to totaldrop.app and mention TotalDrop in articles, reviews, videos and lessons, with the name and the unchanged mark. There is no need to ask.</p>
@@ -542,7 +545,7 @@
           <p data-i18n="bk.use4.d">The licences let you change the code. Publish your version under its own name and mark. You may say that it is based on TotalDrop, but not suggest that TotalDrop endorses it.</p>
         </li>
       </ul>
-      <ul class="reasons bk-use-no">
+      <ul class="reasons bk-use-no" role="list">
         <li>
           <p class="bk-no" data-i18n="bk.no.label">Don't</p>
           <p data-i18n="bk.use.no1">Present anything as an official TotalDrop release, partner or endorsed product.</p>
@@ -571,34 +574,34 @@
     <section class="block" id="files" aria-labelledby="files-title">
       <h2 id="files-title" data-i18n="bk.files.title">Downloads</h2>
       <p data-i18n="bk.files.lede">Vector files (SVG) for print and screens, and PNG files with a transparent background. Use them as they are.</p>
-      <ul class="platforms bk-files">
+      <ul class="platforms bk-files" role="list">
         <li class="platform">
-          <div class="bk-stage bk-on-light bk-file-prev"><img src="/brand/files/totaldrop-mark.svg" alt="" width="96" height="96"></div>
+          <div class="bk-stage bk-on-light bk-file-prev"><img src="/brand/files/totaldrop-mark.svg" alt="" width="96" height="96" loading="lazy" decoding="async"></div>
           <h3 id="f-mark" data-i18n="bk.f.mark">Mark for light grounds</h3>
           <p class="actions"><a class="btn btn-quiet" aria-describedby="f-mark" href="/brand/files/totaldrop-mark.svg" download>SVG</a><a class="btn btn-quiet" aria-describedby="f-mark" href="/brand/files/totaldrop-mark.png" download>PNG · 1024</a></p>
         </li>
         <li class="platform">
-          <div class="bk-stage bk-on-dark bk-file-prev"><img src="/brand/files/totaldrop-mark-dark.svg" alt="" width="96" height="96"></div>
+          <div class="bk-stage bk-on-dark bk-file-prev"><img src="/brand/files/totaldrop-mark-dark.svg" alt="" width="96" height="96" loading="lazy" decoding="async"></div>
           <h3 id="f-markdark" data-i18n="bk.f.markdark">Mark for dark grounds</h3>
           <p class="actions"><a class="btn btn-quiet" aria-describedby="f-markdark" href="/brand/files/totaldrop-mark-dark.svg" download>SVG</a><a class="btn btn-quiet" aria-describedby="f-markdark" href="/brand/files/totaldrop-mark-dark.png" download>PNG · 1024</a></p>
         </li>
         <li class="platform">
-          <div class="bk-stage bk-on-light bk-file-prev"><img src="/brand/files/totaldrop-logo.svg" alt="" width="226" height="48"></div>
+          <div class="bk-stage bk-on-light bk-file-prev"><img src="/brand/files/totaldrop-logo.svg" alt="" width="226" height="48" loading="lazy" decoding="async"></div>
           <h3 id="f-logo" data-i18n="bk.f.logo">Logo for light grounds</h3>
           <p class="actions"><a class="btn btn-quiet" aria-describedby="f-logo" href="/brand/files/totaldrop-logo.svg" download>SVG</a><a class="btn btn-quiet" aria-describedby="f-logo" href="/brand/files/totaldrop-logo.png" download>PNG · 2400</a></p>
         </li>
         <li class="platform">
-          <div class="bk-stage bk-on-dark bk-file-prev"><img src="/brand/files/totaldrop-logo-dark.svg" alt="" width="226" height="48"></div>
+          <div class="bk-stage bk-on-dark bk-file-prev"><img src="/brand/files/totaldrop-logo-dark.svg" alt="" width="226" height="48" loading="lazy" decoding="async"></div>
           <h3 id="f-logodark" data-i18n="bk.f.logodark">Logo for dark grounds</h3>
           <p class="actions"><a class="btn btn-quiet" aria-describedby="f-logodark" href="/brand/files/totaldrop-logo-dark.svg" download>SVG</a><a class="btn btn-quiet" aria-describedby="f-logodark" href="/brand/files/totaldrop-logo-dark.png" download>PNG · 2400</a></p>
         </li>
         <li class="platform">
-          <div class="bk-stage bk-file-prev"><img src="/brand/files/totaldrop-icon.svg" alt="" width="96" height="96"></div>
+          <div class="bk-stage bk-file-prev"><img src="/brand/files/totaldrop-icon.svg" alt="" width="96" height="96" loading="lazy" decoding="async"></div>
           <h3 id="f-icon" data-i18n="bk.f.icon">App icon</h3>
           <p class="actions"><a class="btn btn-quiet" aria-describedby="f-icon" href="/brand/files/totaldrop-icon.svg" download>SVG</a><a class="btn btn-quiet" aria-describedby="f-icon" href="/brand/files/totaldrop-icon.png" download>PNG · 1024</a></p>
         </li>
         <li class="platform">
-          <div class="bk-stage bk-mono bk-file-prev"><img src="/brand/files/totaldrop-mark-black.svg" alt="" width="48" height="48"><img class="bk-on-black" src="/brand/files/totaldrop-mark-white.svg" alt="" width="48" height="48"></div>
+          <div class="bk-stage bk-mono bk-file-prev"><img src="/brand/files/totaldrop-mark-black.svg" alt="" width="48" height="48" loading="lazy" decoding="async"><img class="bk-on-black" src="/brand/files/totaldrop-mark-white.svg" alt="" width="48" height="48" loading="lazy" decoding="async"></div>
           <h3 id="f-mono" data-i18n="bk.f.mono">One colour, black or white</h3>
           <p data-i18n="bk.f.mono.d">Only where colour cannot be printed, such as stamps or engraving.</p>
           <p class="actions"><a class="btn btn-quiet" aria-describedby="f-mono" href="/brand/files/totaldrop-mark-black.svg" download data-i18n="bk.f.black">Black SVG</a><a class="btn btn-quiet" aria-describedby="f-mono" href="/brand/files/totaldrop-mark-white.svg" download data-i18n="bk.f.white">White SVG</a></p>
@@ -629,6 +632,6 @@
   </footer>
 
   <script src="/lang.js?v=107288c166" defer></script>
-  <script src="/app.js?v=06d492cb93" defer></script>
+  <script src="/app.js?v=14446991b4" defer></script>
 </body>
 </html>
