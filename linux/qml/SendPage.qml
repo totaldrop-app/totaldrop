@@ -375,7 +375,7 @@ Page {
             // its implicit width, and the stack leaves it at the left.
             Item { Layout.fillHeight: true; Layout.fillWidth: true }
             Mark { size: 140; sending: page.phase === "preparing"; Layout.alignment: Qt.AlignHCenter }
-            Label { text: Strings.s.sendPreparing; color: Theme.muted; Layout.alignment: Qt.AlignHCenter }
+            StageHeading { text: Strings.s.sendPreparing; color: Theme.muted; Layout.alignment: Qt.AlignHCenter }
             Item { Layout.fillHeight: true }
         }
 
@@ -396,7 +396,7 @@ Page {
                 spacing: Theme.s16
 
                 Mark { size: 96; sending: page.phase === "waiting"; Layout.alignment: Qt.AlignHCenter }
-                Label {
+                StageHeading {
                     text: Strings.s.sendWaiting
                     color: Theme.muted
                     Layout.alignment: Qt.AlignHCenter
@@ -488,7 +488,7 @@ Page {
             Item { Layout.fillHeight: true }
             Mark { size: 96; sending: page.phase === "connected"; Layout.alignment: Qt.AlignHCenter }
             VerificationWords { words: page.transfer.words; Layout.fillWidth: true }
-            Label {
+            StageHeading {
                 text: Strings.s.sendWaitingAccept
                 color: Theme.muted
                 wrapMode: Text.Wrap
