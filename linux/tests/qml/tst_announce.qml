@@ -12,11 +12,14 @@ import app.totaldrop
 TestCase {
     id: tc
     name: "Announce"
+    visible: true
     when: windowShown
     width: 480
     height: 720
 
     property int ticks: 0
+    property var pages: []
+    property var transfers: []
 
     Component {
         id: transferComponent
@@ -43,6 +46,22 @@ TestCase {
         failOnWarning(/.*/)
     }
 
+    // Destroy pages before their Transfer stand-ins: createTemporaryObject
+    // deletes in creation order, which would null out page.transfer while
+    // SendPage or ReceivePage bindings are still live.
+    function cleanup() {
+        for (let i = 0; i < pages.length; i++)
+            pages[i].destroy()
+        pages = []
+        settle()
+    }
+
+    function cleanupTestCase() {
+        for (let i = 0; i < transfers.length; i++)
+            transfers[i].destroy()
+        transfers = []
+    }
+
     // Waits on a condition with TestCase's deadline until queued Qt.callLater
     // callbacks have drained, without a fixed sleep.
     function settle() {
@@ -51,36 +70,42 @@ TestCase {
         tryCompare(tc, "ticks", next)
     }
 
-    function watchHeadings(root, spoken) {
-        const kids = root.children
-        for (let i = 0; i < kids.length; i++) {
-            const child = kids[i]
-            if (child.announced && typeof child.announced.connect === "function")
-                child.announced.connect((msg) => spoken.push(msg))
-            watchHeadings(child, spoken)
-        }
+    function forEachItem(item, fn, seen) {
+        if (!item) return
+        seen = seen || []
+        if (seen.indexOf(item) >= 0) return
+        seen.push(item)
+        fn(item)
+        if (item.contentItem) forEachItem(item.contentItem, fn, seen)
+        const kids = item.children || []
+        for (let i = 0; i < kids.length; i++)
+            forEachItem(kids[i], fn, seen)
     }
 
-    function visibleHeadings(root, out) {
-        out = out || []
-        if (!root.visible) return out
-        const kids = root.children
-        for (let i = 0; i < kids.length; i++) {
-            const child = kids[i]
-            if (!child.visible) continue
-            if (typeof child.text === "string"
-                    && child.Accessible.role === Accessible.Heading)
-                out.push(child.Accessible.name)
-            visibleHeadings(child, out)
-        }
+    function watchHeadings(page, spoken) {
+        forEachItem(page, (item) => {
+            if (item.announced && typeof item.announced.connect === "function")
+                item.announced.connect((msg) => spoken.push(msg))
+        })
+    }
+
+    function visibleHeadings(page) {
+        const out = []
+        forEachItem(page, (item) => {
+            if (item.visible && typeof item.text === "string"
+                    && item.Accessible.role === Accessible.Heading)
+                out.push(item.Accessible.name)
+        })
         return out
     }
 
     function openPage(component) {
-        const xfer = createTemporaryObject(transferComponent, tc)
+        const xfer = transferComponent.createObject(tc)
         verify(xfer)
-        const page = createTemporaryObject(component, tc, { transfer: xfer })
+        transfers.push(xfer)
+        const page = component.createObject(tc, { transfer: xfer })
         verify(page)
+        pages.push(page)
         const spoken = []
         watchHeadings(page, spoken)
         // Drain initial 0-ms focus timer and any creation-time callLater.
