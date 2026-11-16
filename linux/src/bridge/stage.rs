@@ -300,4 +300,65 @@ mod tests {
         assert!(!looks_like_a_name("Send a text"));
         assert!(!looks_like_a_name(""));
     }
+
+    /// Every non-idle stage on SendPage and ReceivePage announces its
+    /// headline once through `StageHeading`, while idle screens and
+    /// `TransferProgress` byte/percent counters stay plain `Label`s (#273).
+    #[test]
+    fn non_idle_stages_announce_their_headings_and_not_progress() {
+        let send = include_str!("../../qml/SendPage.qml");
+        let receive = include_str!("../../qml/ReceivePage.qml");
+        let progress = include_str!("../../qml/TransferProgress.qml");
+        let result = include_str!("../../qml/ResultPanel.qml");
+
+        assert_eq!(send.matches("StageHeading {").count(), 3);
+        for key in ["sendPreparing", "sendWaiting", "sendWaitingAccept"] {
+            assert!(
+                send.split("StageHeading {").skip(1).any(|block| block
+                    .split('}')
+                    .next()
+                    .unwrap_or_default()
+                    .contains(key)),
+                "SendPage does not announce {key} with StageHeading"
+            );
+        }
+
+        assert_eq!(receive.matches("StageHeading {").count(), 2);
+        for key in ["receiveConnecting", "receiveOffer"] {
+            assert!(
+                receive.split("StageHeading {").skip(1).any(|block| block
+                    .split('}')
+                    .next()
+                    .unwrap_or_default()
+                    .contains(key)),
+                "ReceivePage does not announce {key} with StageHeading"
+            );
+        }
+
+        assert_eq!(progress.matches("StageHeading {").count(), 1);
+        assert!(
+            !progress
+                .split("StageHeading {")
+                .nth(1)
+                .and_then(|block| block.split('}').next())
+                .unwrap_or_default()
+                .contains("progressPercent"),
+            "TransferProgress must not announce progress percentages"
+        );
+        assert_eq!(result.matches("StageHeading {").count(), 1);
+
+        let heading_path =
+            std::path::Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/qml/StageHeading.qml"));
+        let heading = std::fs::read_to_string(heading_path).unwrap_or_default();
+        assert!(heading.contains("Accessible.role: Accessible.Heading"));
+        assert!(heading.contains("Accessible.name: text"));
+        assert!(heading.contains("Accessible.announce(text, Accessible.Polite)"));
+
+        let build_rs = include_str!("../../build.rs");
+        let qmldir = include_str!("../../tests/qml/stub/qmldir");
+        let run_sh = include_str!("../../tests/qml/run.sh");
+        assert!(build_rs.contains("qml/StageHeading.qml"));
+        assert!(qmldir.contains("StageHeading 1.0 StageHeading.qml"));
+        assert!(run_sh.contains("StageHeading"));
+    }
 }
