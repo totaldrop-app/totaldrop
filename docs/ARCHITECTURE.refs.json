@@ -271,8 +271,8 @@
   "crates/totaldrop-core/src/relay.rs:112": [
     "pub async fn discover(socket: &UdpSocket, server: &str) -> Vec<SocketAddr> {"
   ],
-  "crates/totaldrop-core/src/relay.rs:240": [
-    "mut asked: Vec<(SocketAddr, [u8; 12])>,"
+  "crates/totaldrop-core/src/relay.rs:238": [
+    "async fn collect_stun_replies<S: StunSocket>("
   ],
   "crates/totaldrop-core/src/relay.rs:385": [
     "pub fn spawn("
