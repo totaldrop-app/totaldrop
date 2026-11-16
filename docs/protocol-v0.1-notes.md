@@ -277,6 +277,11 @@ treated as final.
 17. **Data stream header.** A CBOR map: key 1 is the transfer ID, key 2 the
     entry index, key 3 the first chunk.
 18. **Placement.**
+    - Before accepting, the receiver checks free space on the destination
+      filesystem; if it reports fewer free bytes than the offer's total
+      size, the receiver sends `reject` (reason `no_space`) and stops with
+      a disk-full error, whereas if free space cannot be read it proceeds
+      (#455).
     - The receiver never merges into or overwrites anything already on disk.
     - If a top-level item already exists, it is saved as `name (2)`,
       `name (3)` and so on. The same applies to a file that appears at its

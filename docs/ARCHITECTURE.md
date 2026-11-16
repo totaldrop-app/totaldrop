@@ -116,7 +116,7 @@ Kurallar ve kanıtları:
 | --- | --- |
 | `proto` ve `crypto` hiçbir iç crate'e bağlı değildir | `crates/totaldrop-proto/Cargo.toml`, `crates/totaldrop-crypto/Cargo.toml` (`[dependencies]` içinde `totaldrop-*` yok) |
 | `l10n` hiçbir iç crate'e bağlı değildir; `proto`'yu yalnızca testinde kullanır (her dilin paylaşım metni kodu geri vermeli, #148) | `crates/totaldrop-l10n/Cargo.toml:21-23` |
-| `core` yalnızca `crypto` ve `proto`'ya bağlıdır; arayüz metni bilmez | `crates/totaldrop-core/Cargo.toml:23-24` |
+| `core` yalnızca `crypto` ve `proto`'ya bağlıdır; arayüz metni bilmez | `crates/totaldrop-core/Cargo.toml:24-25` |
 | Sunucular yalnızca `proto`'yu bağlar: kriptografi ve istemci motoru sunucuya hiç girmez | `server/totaldrop-rendezvous/Cargo.toml:20`, `server/totaldrop-relay/Cargo.toml:18` |
 | Uygulamalar `core`, `proto`, `l10n` kullanır; hiçbir şey bir uygulamaya bağlı değildir | `crates/totaldrop-cli/Cargo.toml:20-22`, `linux/Cargo.toml:22-24`, `app/rust/Cargo.toml:19-21` |
 | CLI, uçtan uca testler için iki Rust sunucusunu yalnızca test bağımlılığı olarak kullanır | `crates/totaldrop-cli/Cargo.toml:28-29` |
@@ -256,10 +256,10 @@ Adım adım:
    `secure::handshake` (`crates/totaldrop-core/src/secure.rs:98`), `transfer::receive_offer`
    (`crates/totaldrop-core/src/transfer.rs:774`): manifest doğrulanır, diske hiçbir şey yazılmaz.
 5. Kişi kabul ederse `accept_with` (`crates/totaldrop-cli/src/main.rs:596` → `crates/totaldrop-core/src/lib.rs:731`) →
-   `transfer::accept` (`crates/totaldrop-core/src/transfer.rs:1262`). Yazma yolu: `check_beneath`
+   `transfer::accept` (`crates/totaldrop-core/src/transfer.rs:1272`). Yazma yolu: `check_beneath`
    (`crates/totaldrop-core/src/transfer.rs:906`), sembolik bağlantı izlemeyen `make_dir`
    (`crates/totaldrop-core/src/transfer.rs:923`), üzerine yazmayan `place_no_clobber`
-   (`crates/totaldrop-core/src/transfer.rs:874`). Metin için `accept_text` (`crates/totaldrop-core/src/transfer.rs:1135`),
+   (`crates/totaldrop-core/src/transfer.rs:874`). Metin için `accept_text` (`crates/totaldrop-core/src/transfer.rs:1145`),
    ret için `decline` (`crates/totaldrop-core/src/transfer.rs:833`).
 
 ### 2.3 Aynı akış uygulamalarda

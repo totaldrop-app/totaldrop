@@ -1100,13 +1100,7 @@ async fn receive_stream(
     }
 }
 
-/// Check the folder a receive will write into, before anything is shared:
-/// it must exist, be a folder and be writable. A symbolic link given as the
-/// folder itself is followed; nothing beneath it ever is. Returns the folder
-/// as given, so paths shown to the person keep their spelling (no `/private`
-/// on macOS, no `\\?\` on Windows). Errors are [`Error::Io`] with kind
-/// `NotFound`, `NotADirectory` or the reason writing failed.
-pub fn check_destination(dest: &Path) -> Result<PathBuf> {
+fn resolve_destination_dir(dest: &Path) -> Result<PathBuf> {
     let dir = std::fs::canonicalize(dest)?;
     if !std::fs::metadata(&dir)?.is_dir() {
         return Err(Error::Io(std::io::Error::new(
@@ -1114,6 +1108,10 @@ pub fn check_destination(dest: &Path) -> Result<PathBuf> {
             format!("{} is not a directory", dest.display()),
         )));
     }
+    Ok(dir)
+}
+
+fn probe_destination_writable(dir: &Path) -> Result<()> {
     let mut tag = [0u8; 8];
     getrandom::fill(&mut tag).map_err(|_| Error::Random)?;
     let probe = dir.join(format!(
@@ -1125,6 +1123,18 @@ pub fn check_destination(dest: &Path) -> Result<PathBuf> {
         .create_new(true)
         .open(&probe)?;
     let _ = std::fs::remove_file(&probe);
+    Ok(())
+}
+
+/// Check the folder a receive will write into, before anything is shared:
+/// it must exist, be a folder and be writable. A symbolic link given as the
+/// folder itself is followed; nothing beneath it ever is. Returns the folder
+/// as given, so paths shown to the person keep their spelling (no `/private`
+/// on macOS, no `\\?\` on Windows). Errors are [`Error::Io`] with kind
+/// `NotFound`, `NotADirectory` or the reason writing failed.
+pub fn check_destination(dest: &Path) -> Result<PathBuf> {
+    let dir = resolve_destination_dir(dest)?;
+    probe_destination_writable(&dir)?;
     Ok(dest.to_path_buf())
 }
 
@@ -1261,88 +1271,252 @@ async fn read_text(
 /// offered this way is saved as the file it also is.
 pub async fn accept(
     conn: &quinn::Connection,
-    mut chan: SecureChannel,
+    chan: SecureChannel,
     offer: VerifiedOffer,
     dest: &Path,
     progress: Progress,
     stop: &Stop,
 ) -> Result<ReceiveReport> {
-    let resolved = check_destination(dest)?;
-    let dest = resolved.as_path();
+    accept_with_hooks(
+        conn,
+        chan,
+        offer,
+        dest,
+        progress,
+        stop,
+        |p| fs4::available_space(p),
+        probe_destination_writable,
+        |_| {},
+    )
+    .await
+}
+
+/// Tell the sender there is not enough free space on `dest` and wait briefly
+/// for the message to be acknowledged and the sender to close before the
+/// caller closes the connection (#455).
+async fn reject_no_space(
+    conn: &quinn::Connection,
+    chan: &mut SecureChannel,
+    transfer_id: [u8; 16],
+    io_err: std::io::Error,
+) -> Error {
+    let _ = tokio::time::timeout(STOP_NOTICE, async {
+        send_control(
+            &mut chan.sealer,
+            &mut chan.send,
+            &Control::Reject {
+                transfer_id,
+                reason: RejectReason::NoSpace,
+            },
+        )
+        .await?;
+        let _ = chan.send.finish();
+        let _ = chan.send.stopped().await;
+        let _ = tokio::time::timeout(Duration::from_millis(500), conn.closed()).await;
+        Ok::<_, Error>(())
+    })
+    .await;
+    Error::Io(io_err)
+}
+
+async fn drop_created_blocking(created: CreatedDirs) {
+    if !created.keep && !created.dirs.is_empty() {
+        let _ = tokio::task::spawn_blocking(move || drop(created)).await;
+    }
+}
+
+enum PrepareOutcome {
+    Ready {
+        offer: Box<VerifiedOffer>,
+        renames: Vec<(String, String)>,
+        targets: Vec<Option<Target>>,
+        wanted: Vec<(u64, Vec<u8>)>,
+        created: CreatedDirs,
+    },
+    NoSpace(std::io::Error),
+    Stopped,
+}
+
+#[allow(clippy::too_many_arguments)]
+async fn accept_with_hooks<S, P, D>(
+    conn: &quinn::Connection,
+    mut chan: SecureChannel,
+    offer: VerifiedOffer,
+    dest: &Path,
+    progress: Progress,
+    stop: &Stop,
+    space_fn: S,
+    probe_fn: P,
+    mut on_dir: D,
+) -> Result<ReceiveReport>
+where
+    S: FnOnce(&Path) -> std::io::Result<u64> + Send + 'static,
+    P: FnOnce(&Path) -> Result<()> + Send + 'static,
+    D: FnMut(&Path) + Send + 'static,
+{
     let transfer_id = offer.manifest.transfer_id;
     if stop.is_stopped() {
         return Err(tell_stopped(conn, &mut chan.sealer, &mut chan.send, transfer_id).await);
     }
 
-    // Every top-level item gets a name that does not exist yet, so nothing
-    // already on disk is ever merged into or overwritten.
-    // Names the other top-level items keep are taken too. Built once, so a
-    // transfer of many loose files stays linear.
-    let mut taken: HashSet<String> = offer
-        .summary
-        .top_level
-        .iter()
-        .map(|t| t.to_lowercase())
-        .collect();
-    let mut renames: Vec<(String, String)> = Vec::new();
-    for top in &offer.summary.top_level {
-        let own = top.to_lowercase();
-        taken.remove(&own);
-        let free = if std::fs::symlink_metadata(dest.join(top)).is_ok() {
-            free_name(dest, top, &taken)?
-        } else {
-            top.clone()
-        };
-        taken.insert(free.to_lowercase());
-        if free.to_lowercase() != own {
-            // The original name stays reserved for nobody else to take.
-            taken.insert(own);
+    let dest_owned = dest.to_path_buf();
+    let dest_buf = dest_owned.clone();
+    let stop_prep = stop.clone();
+    let mut prep = tokio::task::spawn_blocking(move || -> Result<PrepareOutcome> {
+        let dest = dest_buf.as_path();
+        if stop_prep.is_stopped() {
+            return Ok(PrepareOutcome::Stopped);
         }
-        renames.push((top.clone(), free));
-    }
-    let rename_map: std::collections::HashMap<&str, &str> = renames
-        .iter()
-        .map(|(from, to)| (from.as_str(), to.as_str()))
-        .collect();
-    let rename_top = |seg: &str| {
-        rename_map
-            .get(seg)
-            .map_or_else(|| seg.to_owned(), |t| (*t).to_owned())
-    };
-
-    let mut targets: Vec<Option<Target>> = Vec::with_capacity(offer.paths.len());
-    let mut wanted = Vec::new();
-    let mut created = CreatedDirs {
-        dirs: Vec::new(),
-        keep: false,
-    };
-    for (i, (entry, safe)) in offer.manifest.entries.iter().zip(&offer.paths).enumerate() {
-        let mut path = dest.to_path_buf();
-        for (n, seg) in safe.segments().iter().enumerate() {
-            if n == 0 {
-                path.push(rename_top(seg));
-            } else {
-                path.push(seg);
-            }
-            check_beneath(dest, &path)?;
-            if (n.saturating_add(1) < safe.segments().len() || entry.kind == EntryKind::Dir)
-                && make_dir(&path)?
+        let canonical_dir = resolve_destination_dir(dest)?;
+        if stop_prep.is_stopped() {
+            return Ok(PrepareOutcome::Stopped);
+        }
+        if let Ok(free) = space_fn(&canonical_dir)
+            && free < offer.manifest.total_size
+        {
+            return Ok(PrepareOutcome::NoSpace(std::io::Error::new(
+                std::io::ErrorKind::StorageFull,
+                "not enough free disk space",
+            )));
+        }
+        if stop_prep.is_stopped() {
+            return Ok(PrepareOutcome::Stopped);
+        }
+        match probe_fn(&canonical_dir) {
+            Ok(()) => {}
+            Err(Error::Io(e))
+                if matches!(
+                    e.kind(),
+                    std::io::ErrorKind::StorageFull | std::io::ErrorKind::QuotaExceeded
+                ) =>
             {
-                created.dirs.push(path.clone());
+                return Ok(PrepareOutcome::NoSpace(e));
+            }
+            Err(e) => return Err(e),
+        }
+        if stop_prep.is_stopped() {
+            return Ok(PrepareOutcome::Stopped);
+        }
+
+        // Every top-level item gets a name that does not exist yet, so nothing
+        // already on disk is ever merged into or overwritten.
+        // Names the other top-level items keep are taken too. Built once, so a
+        // transfer of many loose files stays linear.
+        let mut taken: HashSet<String> = offer
+            .summary
+            .top_level
+            .iter()
+            .map(|t| t.to_lowercase())
+            .collect();
+        let mut renames: Vec<(String, String)> = Vec::new();
+        for top in &offer.summary.top_level {
+            if stop_prep.is_stopped() {
+                return Ok(PrepareOutcome::Stopped);
+            }
+            let own = top.to_lowercase();
+            taken.remove(&own);
+            let free = if std::fs::symlink_metadata(dest.join(top)).is_ok() {
+                free_name(dest, top, &taken)?
+            } else {
+                top.clone()
+            };
+            taken.insert(free.to_lowercase());
+            if free.to_lowercase() != own {
+                // The original name stays reserved for nobody else to take.
+                taken.insert(own);
+            }
+            renames.push((top.clone(), free));
+        }
+        let rename_map: std::collections::HashMap<&str, &str> = renames
+            .iter()
+            .map(|(from, to)| (from.as_str(), to.as_str()))
+            .collect();
+        let rename_top = |seg: &str| {
+            rename_map
+                .get(seg)
+                .map_or_else(|| seg.to_owned(), |t| (*t).to_owned())
+        };
+
+        let mut targets: Vec<Option<Target>> = Vec::with_capacity(offer.paths.len());
+        let mut wanted = Vec::new();
+        let mut created = CreatedDirs {
+            dirs: Vec::new(),
+            keep: false,
+        };
+        for (i, (entry, safe)) in offer.manifest.entries.iter().zip(&offer.paths).enumerate() {
+            if stop_prep.is_stopped() {
+                return Ok(PrepareOutcome::Stopped);
+            }
+            let mut path = dest.to_path_buf();
+            for (n, seg) in safe.segments().iter().enumerate() {
+                if n == 0 {
+                    path.push(rename_top(seg));
+                } else {
+                    path.push(seg);
+                }
+                check_beneath(dest, &path)?;
+                if n.saturating_add(1) < safe.segments().len() || entry.kind == EntryKind::Dir {
+                    if stop_prep.is_stopped() {
+                        return Ok(PrepareOutcome::Stopped);
+                    }
+                    if make_dir(&path)? {
+                        created.dirs.push(path.clone());
+                        on_dir(&path);
+                    }
+                }
+            }
+            if entry.kind == EntryKind::File {
+                wanted.push((i as u64, Vec::new()));
+                targets.push(Some(Target {
+                    entry: entry.clone(),
+                    final_path: path,
+                }));
+            } else {
+                targets.push(None);
             }
         }
-        if entry.kind == EntryKind::File {
-            wanted.push((i as u64, Vec::new()));
-            targets.push(Some(Target {
-                entry: entry.clone(),
-                final_path: path,
-            }));
-        } else {
-            targets.push(None);
+        if stop_prep.is_stopped() {
+            return Ok(PrepareOutcome::Stopped);
         }
-    }
+        Ok(PrepareOutcome::Ready {
+            offer: Box::new(offer),
+            renames,
+            targets,
+            wanted,
+            created,
+        })
+    });
 
-    send_control(
+    let prep = tokio::select! {
+        biased;
+        () = stop.stopped() => {
+            let (e, _) = tokio::join!(
+                tell_stopped(conn, &mut chan.sealer, &mut chan.send, transfer_id),
+                tokio::time::timeout(STOP_NOTICE, &mut prep),
+            );
+            return Err(e);
+        }
+        res = &mut prep => res.map_err(|_| Error::Protocol("preparation task failed"))??,
+    };
+
+    let (offer, renames, targets, wanted, mut created) = match prep {
+        PrepareOutcome::Stopped => {
+            return Err(tell_stopped(conn, &mut chan.sealer, &mut chan.send, transfer_id).await);
+        }
+        PrepareOutcome::NoSpace(io_err) => {
+            return Err(reject_no_space(conn, &mut chan, transfer_id, io_err).await);
+        }
+        PrepareOutcome::Ready {
+            offer,
+            renames,
+            targets,
+            wanted,
+            created,
+        } => (*offer, renames, targets, wanted, created),
+    };
+    let dest = dest_owned.as_path();
+
+    if let Err(e) = send_control(
         &mut chan.sealer,
         &mut chan.send,
         &Control::Accept {
@@ -1351,7 +1525,11 @@ pub async fn accept(
             progress: offer.reports,
         },
     )
-    .await?;
+    .await
+    {
+        drop_created_blocking(created).await;
+        return Err(e);
+    }
 
     let total = offer.manifest.total_size;
     let targets = Arc::new(targets);
@@ -1472,6 +1650,7 @@ pub async fn accept(
         // its partial file before the folders this transfer created go.
         abandoned.store(true, Ordering::SeqCst);
         streams.shutdown().await;
+        drop_created_blocking(created).await;
         return Err(e);
     }
     created.keep = true;
@@ -2020,5 +2199,438 @@ mod tests {
         // The probe leaves nothing behind.
         assert_eq!(std::fs::read_dir(&real).unwrap().count(), 0);
         std::fs::remove_dir_all(&base).unwrap();
+    }
+
+    fn temp_test_dir(label: &str) -> PathBuf {
+        let mut tag = [0u8; 6];
+        getrandom::fill(&mut tag).unwrap();
+        let dir = std::env::temp_dir().join(format!(
+            "td-455-{label}-{}",
+            tag.iter().map(|b| format!("{b:02x}")).collect::<String>()
+        ));
+        std::fs::create_dir_all(&dir).unwrap();
+        dir
+    }
+
+    /// #455: directory creation runs on `spawn_blocking` rather than stalling
+    /// a single-threaded async executor, checks `stop` between directories,
+    /// cleans up directories already created, and tells the sender.
+    #[test]
+    fn directory_creation_runs_off_the_async_thread_and_stops_cleanly() {
+        let rt = tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+            .unwrap();
+        let runtime_thread = std::thread::current().id();
+        let base = temp_test_dir("dirs");
+        let dest = base.join("dest");
+        std::fs::create_dir_all(&dest).unwrap();
+
+        rt.block_on(async {
+            let (sender, receiver) =
+                crate::transport::testing::over_slow_relay(Duration::from_millis(1)).await;
+            let (schan, mut rchan, skeys, scert) = secure_pair(&sender, &receiver).await;
+            let entries = vec![
+                bytes_entry(
+                    &["dir_a", "sub", "one.bin"],
+                    b"hello",
+                    *blake3::hash(b"hello").as_bytes(),
+                ),
+                bytes_entry(
+                    &["dir_b", "sub", "two.bin"],
+                    b"world",
+                    *blake3::hash(b"world").as_bytes(),
+                ),
+            ];
+            let send = {
+                let sender = sender.clone();
+                tokio::spawn(async move {
+                    send_files(
+                        &sender,
+                        schan,
+                        &skeys,
+                        entries,
+                        false,
+                        Arc::new(|_, _| {}),
+                        &Stop::new(),
+                    )
+                    .await
+                })
+            };
+
+            let offer = receive_offer(&mut rchan, &scert).await.unwrap();
+            let stop = Stop::new();
+            let (entered_tx, entered_rx) = tokio::sync::oneshot::channel::<()>();
+            let (resume_tx, resume_rx) = std::sync::mpsc::channel::<()>();
+            let dirs_created = Arc::new(AtomicU64::new(0));
+            let ran_off_async_thread = Arc::new(std::sync::atomic::AtomicBool::new(false));
+
+            let stopper = {
+                let stop = stop.clone();
+                tokio::spawn(async move {
+                    entered_rx.await.unwrap();
+                    stop.stop();
+                    resume_tx.send(()).unwrap();
+                })
+            };
+
+            let dirs_seen = Arc::clone(&dirs_created);
+            let off_thread = Arc::clone(&ran_off_async_thread);
+            let mut entered_tx = Some(entered_tx);
+            let r = accept_with_hooks(
+                &receiver,
+                rchan,
+                offer,
+                &dest,
+                Arc::new(|_, _| {}),
+                &stop,
+                |p| fs4::available_space(p),
+                probe_destination_writable,
+                move |_dir| {
+                    let seen = dirs_seen.fetch_add(1, Ordering::SeqCst).saturating_add(1);
+                    off_thread.store(
+                        std::thread::current().id() != runtime_thread,
+                        Ordering::SeqCst,
+                    );
+                    if seen == 2
+                        && let Some(tx) = entered_tx.take()
+                    {
+                        let _ = tx.send(());
+                        assert!(
+                            resume_rx.recv_timeout(Duration::from_secs(10)).is_ok(),
+                            "directory creation blocked the single-threaded async runtime"
+                        );
+                    }
+                },
+            )
+            .await;
+
+            stopper.await.unwrap();
+            assert!(
+                ran_off_async_thread.load(Ordering::SeqCst),
+                "directory creation ran on the async runtime thread"
+            );
+            assert_eq!(
+                dirs_created.load(Ordering::SeqCst),
+                2,
+                "stop did not halt directory creation before dir_b"
+            );
+            assert!(
+                matches!(r, Err(Error::Stopped)),
+                "expected Stopped, got {r:?}"
+            );
+            let s = tokio::time::timeout(Duration::from_secs(5), send)
+                .await
+                .unwrap()
+                .unwrap();
+            assert!(
+                matches!(s, Err(Error::Cancelled(ref reason)) if reason == "stopped"),
+                "expected Cancelled(\"stopped\"), got {s:?}"
+            );
+            assert_eq!(
+                std::fs::read_dir(&dest).unwrap().count(),
+                0,
+                "created directory was not removed on stop"
+            );
+        });
+
+        let _ = std::fs::remove_dir_all(&base);
+    }
+
+    /// #455: pressing stop while a directory syscall is still hung notifies
+    /// the sender immediately via `tokio::select!` without waiting for the
+    /// blocking syscall to return first.
+    #[tokio::test]
+    async fn stop_notifies_sender_before_hung_directory_syscall_returns() {
+        let base = temp_test_dir("hung-stop");
+        let dest = base.join("dest");
+        std::fs::create_dir_all(&dest).unwrap();
+
+        let (sender, receiver) =
+            crate::transport::testing::over_slow_relay(Duration::from_millis(1)).await;
+        let (schan, mut rchan, skeys, scert) = secure_pair(&sender, &receiver).await;
+        let entries = vec![bytes_entry(
+            &["dir_a", "one.bin"],
+            b"hello",
+            *blake3::hash(b"hello").as_bytes(),
+        )];
+        let send = {
+            let sender = sender.clone();
+            tokio::spawn(async move {
+                send_files(
+                    &sender,
+                    schan,
+                    &skeys,
+                    entries,
+                    false,
+                    Arc::new(|_, _| {}),
+                    &Stop::new(),
+                )
+                .await
+            })
+        };
+
+        let offer = receive_offer(&mut rchan, &scert).await.unwrap();
+        let stop = Stop::new();
+        let (entered_tx, entered_rx) = tokio::sync::oneshot::channel::<()>();
+        let (resume_tx, resume_rx) = std::sync::mpsc::channel::<()>();
+
+        let recv_task = {
+            let receiver = receiver.clone();
+            let dest_clone = dest.clone();
+            let stop_clone = stop.clone();
+            let mut entered_tx = Some(entered_tx);
+            tokio::spawn(async move {
+                accept_with_hooks(
+                    &receiver,
+                    rchan,
+                    offer,
+                    &dest_clone,
+                    Arc::new(|_, _| {}),
+                    &stop_clone,
+                    |p| fs4::available_space(p),
+                    probe_destination_writable,
+                    move |_dir| {
+                        if let Some(tx) = entered_tx.take() {
+                            let _ = tx.send(());
+                            assert!(
+                                resume_rx.recv_timeout(Duration::from_secs(10)).is_ok(),
+                                "hung directory syscall was never resumed"
+                            );
+                        }
+                    },
+                )
+                .await
+            })
+        };
+
+        entered_rx.await.unwrap();
+        // Trigger stop while `on_dir` is still blocked on `resume_rx`.
+        stop.stop();
+        // Prove the sender receives Control::Cancel("stopped") BEFORE the
+        // hung syscall is unblocked!
+        let s = tokio::time::timeout(Duration::from_secs(5), send)
+            .await
+            .unwrap()
+            .unwrap();
+        assert!(
+            matches!(s, Err(Error::Cancelled(ref reason)) if reason == "stopped"),
+            "expected sender to hear Cancelled(\"stopped\") while syscall is hung, got {s:?}"
+        );
+
+        // Now unblock the hung syscall and verify receiver cleanup completes.
+        resume_tx.send(()).unwrap();
+        let r = tokio::time::timeout(Duration::from_secs(5), recv_task)
+            .await
+            .unwrap()
+            .unwrap();
+        assert!(
+            matches!(r, Err(Error::Stopped)),
+            "expected Stopped, got {r:?}"
+        );
+        assert_eq!(
+            std::fs::read_dir(&dest).unwrap().count(),
+            0,
+            "created directory must be removed once the blocking task finishes"
+        );
+
+        let _ = std::fs::remove_dir_all(&base);
+    }
+
+    /// #455: when free space on `dest` is less than `offer.manifest.total_size`
+    /// OR when the destination write probe fails with `StorageFull` /
+    /// `QuotaExceeded` (e.g. 0 free inodes or user quota exhausted), `accept`
+    /// rejects with `RejectReason::NoSpace`, returns `Cause::DiskFull` locally,
+    /// and creates nothing under `dest` — both when the sender closes on error
+    /// like `PreparedSend::run_with` and when the receiver immediately closes
+    /// with `b"done"` like `IncomingOffer::accept_with`.
+    #[tokio::test]
+    async fn insufficient_disk_space_rejects_with_no_space() {
+        let base = temp_test_dir("nospace");
+
+        type SpaceHook = Box<dyn FnOnce(&Path) -> std::io::Result<u64> + Send>;
+        type ProbeHook = Box<dyn FnOnce(&Path) -> Result<()> + Send>;
+        let cases: Vec<(&str, bool, SpaceHook, ProbeHook, std::io::ErrorKind)> = vec![
+            (
+                "short-bytes-sender-closes",
+                true,
+                Box::new(|_| Ok(4095)),
+                Box::new(probe_destination_writable),
+                std::io::ErrorKind::StorageFull,
+            ),
+            (
+                "short-bytes-receiver-closes-first",
+                false,
+                Box::new(|_| Ok(4095)),
+                Box::new(probe_destination_writable),
+                std::io::ErrorKind::StorageFull,
+            ),
+            (
+                "probe-storage-full",
+                true,
+                Box::new(|_| Ok(u64::MAX)),
+                Box::new(|_| {
+                    Err(Error::Io(std::io::Error::new(
+                        std::io::ErrorKind::StorageFull,
+                        "no inodes left",
+                    )))
+                }),
+                std::io::ErrorKind::StorageFull,
+            ),
+            (
+                "probe-quota-exceeded",
+                true,
+                Box::new(|_| Err(std::io::Error::from(std::io::ErrorKind::Unsupported))),
+                Box::new(|_| {
+                    Err(Error::Io(std::io::Error::new(
+                        std::io::ErrorKind::QuotaExceeded,
+                        "disk quota exceeded",
+                    )))
+                }),
+                std::io::ErrorKind::QuotaExceeded,
+            ),
+        ];
+
+        for (label, sender_closes_on_err, space_fn, probe_fn, expected_kind) in cases {
+            let dest = base.join(label);
+            std::fs::create_dir_all(&dest).unwrap();
+
+            let (sender, receiver) =
+                crate::transport::testing::over_slow_relay(Duration::from_millis(1)).await;
+            let (schan, mut rchan, skeys, scert) = secure_pair(&sender, &receiver).await;
+            let payload = vec![0x5a_u8; 4096];
+            let entries = vec![bytes_entry(
+                &["album", "photo.bin"],
+                &payload,
+                *blake3::hash(&payload).as_bytes(),
+            )];
+            let send = {
+                let sender = sender.clone();
+                tokio::spawn(async move {
+                    let r = send_files(
+                        &sender,
+                        schan,
+                        &skeys,
+                        entries,
+                        false,
+                        Arc::new(|_, _| {}),
+                        &Stop::new(),
+                    )
+                    .await;
+                    if sender_closes_on_err && r.is_err() {
+                        sender.close(0u32.into(), b"failed");
+                    }
+                    r
+                })
+            };
+
+            let offer = receive_offer(&mut rchan, &scert).await.unwrap();
+            let r = accept_with_hooks(
+                &receiver,
+                rchan,
+                offer,
+                &dest,
+                Arc::new(|_, _| {}),
+                &Stop::new(),
+                space_fn,
+                probe_fn,
+                |_| {},
+            )
+            .await;
+            // Match IncomingOffer::accept_with closing right after accept returns.
+            receiver.close(0u32.into(), b"done");
+
+            let err = r.unwrap_err();
+            assert!(
+                matches!(err, Error::Io(ref e) if e.kind() == expected_kind),
+                "case {label}: expected {expected_kind:?} Io error, got {err:?}"
+            );
+            assert_eq!(err.cause(), crate::error::Cause::DiskFull, "case {label}");
+
+            let s = tokio::time::timeout(Duration::from_secs(5), send)
+                .await
+                .unwrap()
+                .unwrap();
+            assert!(
+                matches!(s, Err(Error::Rejected(RejectReason::NoSpace))),
+                "case {label}: expected Rejected(NoSpace), got {s:?}"
+            );
+            assert_eq!(
+                std::fs::read_dir(&dest).unwrap().count(),
+                0,
+                "case {label}: rejecting for low space must create nothing under dest"
+            );
+        }
+
+        let _ = std::fs::remove_dir_all(&base);
+    }
+
+    /// #455: exact fit (`free == total_size`), 0-byte offers (`free == 0`), and
+    /// filesystems where `available_space` returns `Err` all proceed normally.
+    #[tokio::test]
+    async fn exact_space_zero_byte_and_unqueryable_filesystems_accept() {
+        let base = temp_test_dir("space-ok");
+        assert!(
+            fs4::available_space(&base).is_ok(),
+            "fs4::available_space should succeed on the temporary directory"
+        );
+
+        type SpaceHook = Box<dyn FnOnce(&Path) -> std::io::Result<u64> + Send>;
+        let cases: Vec<(&str, &[u8], SpaceHook)> = vec![
+            ("exact", b"exact-fit", Box::new(|_| Ok(9))),
+            ("zero", b"", Box::new(|_| Ok(0))),
+            (
+                "unsupported",
+                b"virtual-fs",
+                Box::new(|_| Err(std::io::Error::from(std::io::ErrorKind::Unsupported))),
+            ),
+        ];
+
+        for (name, bytes, space_fn) in cases {
+            let dest = base.join(name);
+            std::fs::create_dir_all(&dest).unwrap();
+            let (sender, receiver) =
+                crate::transport::testing::over_slow_relay(Duration::from_millis(1)).await;
+            let (schan, mut rchan, skeys, scert) = secure_pair(&sender, &receiver).await;
+            let entries = vec![bytes_entry(
+                &["item.bin"],
+                bytes,
+                *blake3::hash(bytes).as_bytes(),
+            )];
+            let send = {
+                let sender = sender.clone();
+                tokio::spawn(async move {
+                    send_files(
+                        &sender,
+                        schan,
+                        &skeys,
+                        entries,
+                        false,
+                        Arc::new(|_, _| {}),
+                        &Stop::new(),
+                    )
+                    .await
+                })
+            };
+            let offer = receive_offer(&mut rchan, &scert).await.unwrap();
+            let received = accept_with_hooks(
+                &receiver,
+                rchan,
+                offer,
+                &dest,
+                Arc::new(|_, _| {}),
+                &Stop::new(),
+                space_fn,
+                probe_destination_writable,
+                |_| {},
+            )
+            .await
+            .unwrap();
+            let sent = send.await.unwrap().unwrap();
+            assert_eq!((sent.files_ok, received.files_ok), (1, 1), "case {name}");
+            assert_eq!(std::fs::read(dest.join("item.bin")).unwrap(), bytes);
+        }
+
+        let _ = std::fs::remove_dir_all(&base);
     }
 }
