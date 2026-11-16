@@ -784,21 +784,35 @@ enum UpnpCleanup {
     Stopped,
 }
 
-/// Whether a local UDP socket already holds `port` on `local_ip` (or on the
-/// wildcard address, including a dual-stack `[::]:port` QUIC socket in another
-/// TotalDrop process) (#462).
+/// Whether a local UDP socket already holds `port` on `local_ip` or on the
+/// IPv4/IPv6 wildcard address (including a dual-stack `[::]:port` QUIC socket
+/// in another TotalDrop process on Windows, where WinSock2 permits `AF_INET`
+/// binds alongside a non-exclusive `AF_INET6` wildcard socket) (#462).
 fn udp_port_in_use(local_ip: Ipv4Addr, port: u16) -> bool {
-    let busy = |ip: Ipv4Addr| {
+    let in_use = |err: &std::io::Error| {
         matches!(
-            std::net::UdpSocket::bind(SocketAddr::from((ip, port))),
-            Err(e)
-                if matches!(
-                    e.kind(),
-                    std::io::ErrorKind::AddrInUse | std::io::ErrorKind::PermissionDenied
-                )
+            err.kind(),
+            std::io::ErrorKind::AddrInUse | std::io::ErrorKind::PermissionDenied
         )
     };
-    busy(local_ip) || (local_ip != Ipv4Addr::UNSPECIFIED && busy(Ipv4Addr::UNSPECIFIED))
+    let busy_v4 = |ip: Ipv4Addr| {
+        std::net::UdpSocket::bind(SocketAddr::from((ip, port)))
+            .err()
+            .is_some_and(|e| in_use(&e))
+    };
+    let busy_v6 = || {
+        use socket2::{Domain, Protocol, Socket, Type};
+        let Ok(sock) = Socket::new(Domain::IPV6, Type::DGRAM, Some(Protocol::UDP)) else {
+            return false;
+        };
+        let _ = sock.set_only_v6(false);
+        sock.bind(&SocketAddr::from((std::net::Ipv6Addr::UNSPECIFIED, port)).into())
+            .err()
+            .is_some_and(|e| in_use(&e))
+    };
+    busy_v4(local_ip)
+        || (local_ip != Ipv4Addr::UNSPECIFIED && busy_v4(Ipv4Addr::UNSPECIFIED))
+        || busy_v6()
 }
 
 /// Whether a UPnP mapping entry on `gateway` is a leftover
