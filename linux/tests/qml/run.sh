@@ -24,7 +24,7 @@ cp "$here/stub/qmldir" \
    "$mod/"
 for f in ActionCard Divider Field FocusScroller IconButton Mark PageHeader \
          PrimaryButton QrCode ReceivePage ResultPanel SecondaryButton \
-         SendPage Toggle TransferProgress VerificationWords; do
+         SendPage StageHeading Toggle TransferProgress VerificationWords; do
   cp "$here/../../qml/$f.qml" "$mod/"
 done
 # The platform theme decides which keys press a button; the caller's

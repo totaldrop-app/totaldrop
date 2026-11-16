@@ -205,7 +205,7 @@ Page {
             // its implicit width, and the stack leaves it at the left.
             Item { Layout.fillHeight: true; Layout.fillWidth: true }
             Mark { size: 140; sending: page.phase === "connecting"; Layout.alignment: Qt.AlignHCenter }
-            Label { text: Strings.s.receiveConnecting; color: Theme.muted; Layout.alignment: Qt.AlignHCenter }
+            StageHeading { text: Strings.s.receiveConnecting; color: Theme.muted; Layout.alignment: Qt.AlignHCenter }
             Label {
                 text: page.connectingCode
                 visible: text !== ""
@@ -224,7 +224,7 @@ Page {
         ColumnLayout {
             spacing: Theme.s16
 
-            Label {
+            StageHeading {
                 text: page.transfer.isText ? Strings.s.receiveOfferText : Strings.s.receiveOffer
                 color: Theme.ink
                 font.pointSize: Qt.application.font.pointSize * 1.5
