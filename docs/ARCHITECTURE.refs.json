@@ -101,57 +101,57 @@
   "crates/totaldrop-cli/src/main.rs:33": [
     "#[arg(long, global = true, env = \"TOTALDROP_SERVER\")]"
   ],
-  "crates/totaldrop-cli/src/main.rs:355": [
-    "async fn send("
-  ],
-  "crates/totaldrop-cli/src/main.rs:365": [
-    "words: if strong { 3 } else { 2 },"
-  ],
-  "crates/totaldrop-cli/src/main.rs:373": [
-    "What::Files(files) => PreparedSend::new(&opts, files.clone()).await,"
-  ],
   "crates/totaldrop-cli/src/main.rs:38": [
     "#[arg(long, global = true, env = \"TOTALDROP_RELAY\")]"
   ],
-  "crates/totaldrop-cli/src/main.rs:402": [
-    "let report = prepared.run_with(printer(Arc::clone(&s)), stop).await?;"
+  "crates/totaldrop-cli/src/main.rs:385": [
+    "async fn send("
+  ],
+  "crates/totaldrop-cli/src/main.rs:395": [
+    "words: if strong { 3 } else { 2 },"
+  ],
+  "crates/totaldrop-cli/src/main.rs:403": [
+    "What::Files(files) => PreparedSend::new(&opts, files.clone()).await,"
   ],
   "crates/totaldrop-cli/src/main.rs:42": [
     "#[arg(long, global = true, env = \"TOTALDROP_STUN\")]"
   ],
-  "crates/totaldrop-cli/src/main.rs:429": [
+  "crates/totaldrop-cli/src/main.rs:432": [
+    "let report = prepared.run_with(printer(Arc::clone(&s)), stop).await?;"
+  ],
+  "crates/totaldrop-cli/src/main.rs:459": [
     "async fn receive("
   ],
-  "crates/totaldrop-cli/src/main.rs:496": [
+  "crates/totaldrop-cli/src/main.rs:526": [
     "IncomingOffer::connect_with(&ReceiveOptions { server, paths }, &code, &stop).await?;"
   ],
-  "crates/totaldrop-cli/src/main.rs:566": [
+  "crates/totaldrop-cli/src/main.rs:596": [
     ".accept_with(&dest, printer(Arc::clone(&s)), &stop)"
   ],
-  "crates/totaldrop-cli/src/main.rs:613": [
+  "crates/totaldrop-cli/src/main.rs:643": [
     "fn main() -> ExitCode {"
   ],
-  "crates/totaldrop-cli/src/main.rs:629": [
+  "crates/totaldrop-cli/src/main.rs:659": [
     "let route = paths(cli.relay, cli.stun, cli.relay_only);"
   ],
-  "crates/totaldrop-cli/src/main.rs:630-633": [
+  "crates/totaldrop-cli/src/main.rs:660-663": [
     "if route.relay_only && route.relay.is_empty() {",
     "}"
   ],
-  "crates/totaldrop-cli/src/main.rs:650": [
+  "crates/totaldrop-cli/src/main.rs:680": [
     "Command::Send {"
   ],
-  "crates/totaldrop-cli/src/main.rs:664": [
-    "Command::Receive { code, out, yes } => {"
+  "crates/totaldrop-cli/src/main.rs:701": [
+    "Command::Receive { code, out, yes } => run_then_release("
   ],
-  "crates/totaldrop-cli/src/main.rs:674-696": [
+  "crates/totaldrop-cli/src/main.rs:719-741": [
     "match result {",
     "}"
   ],
-  "crates/totaldrop-cli/src/main.rs:702": [
+  "crates/totaldrop-cli/src/main.rs:747": [
     "fn detail_line(e: &totaldrop_core::Error) -> String {"
   ],
-  "crates/totaldrop-cli/src/main.rs:710": [
+  "crates/totaldrop-cli/src/main.rs:755": [
     "fn error_key(e: &totaldrop_core::Error, sending: bool) -> &'static str {"
   ],
   "crates/totaldrop-cli/tests/end_to_end.rs:28": [
@@ -441,26 +441,26 @@
   "linux/src/bridge/stage.rs:18": [
     "pub enum Stage {"
   ],
-  "linux/src/bridge/transfer.rs:53-64": [
+  "linux/src/bridge/transfer.rs:54-65": [
     "#[qproperty(QString, state, READ, NOTIFY)]",
     "#[qproperty(i32, offer_files, cxx_name = \"offerFiles\")]"
   ],
-  "linux/src/bridge/transfer.rs:600": [
+  "linux/src/bridge/transfer.rs:628": [
     "fn start_send(mut self: Pin<&mut Self>, source: Source, strong: bool) {"
   ],
-  "linux/src/bridge/transfer.rs:617": [
+  "linux/src/bridge/transfer.rs:645": [
     "Source::Paths(paths) => PreparedSend::new(&opts, paths.clone()).await,"
   ],
-  "linux/src/bridge/transfer.rs:653": [
+  "linux/src/bridge/transfer.rs:681": [
     ".run_with(Self::events(thread.clone(), g), stop)"
   ],
-  "linux/src/bridge/transfer.rs:671": [
+  "linux/src/bridge/transfer.rs:699": [
     "fn receive(mut self: Pin<&mut Self>, code: &QString) {"
   ],
-  "linux/src/bridge/transfer.rs:682": [
+  "linux/src/bridge/transfer.rs:710": [
     "match IncomingOffer::connect_with(&opts, &code, &stop).await {"
   ],
-  "linux/src/bridge/transfer.rs:754": [
+  "linux/src/bridge/transfer.rs:782": [
     ".accept_with(&dest, Self::events(thread.clone(), g), &stop)"
   ],
   "linux/src/instance.rs:528": [
@@ -472,11 +472,11 @@
   "linux/src/instance.rs:644": [
     "std::env::var_os(\"CI\").is_none(),"
   ],
-  "linux/src/main.rs:55-58": [
+  "linux/src/main.rs:56-59": [
     "std::env::var_os(\"WAYLAND_DISPLAY\").is_some() || std::env::var_os(\"DISPLAY\").is_some();",
     "unsafe { std::env::set_var(\"QT_QPA_PLATFORMTHEME\", \"gtk3\") };"
   ],
-  "linux/src/main.rs:80": [
+  "linux/src/main.rs:81": [
     "if std::env::var_os(\"QT_QUICK_CONTROLS_STYLE\").is_none() {"
   ],
   "linux/src/settings.rs:12-17": [
