@@ -20,8 +20,8 @@ use tokio::task::AbortHandle;
 
 /// How long a stopped transfer may take to tell the other side and end.
 /// One still running then is dropped: its port mapping goes with it, and
-/// the release starts. Telling a silent peer can take longer (QUIC waits
-/// up to 5 s for an idle endpoint); the port matters more.
+/// the release starts. Telling a silent peer can take longer (`STOP_NOTICE`
+/// is 2 s); the port matters more.
 pub const STOPPING: Duration = Duration::from_millis(1500);
 
 /// How long dropped tasks get to unwind on the runtime's threads.
