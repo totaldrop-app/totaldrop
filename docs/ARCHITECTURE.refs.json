@@ -268,13 +268,16 @@
     "pub enum Gateway {",
     "At(SocketAddr),"
   ],
-  "crates/totaldrop-core/src/relay.rs:106": [
+  "crates/totaldrop-core/src/relay.rs:112": [
     "pub async fn discover(socket: &UdpSocket, server: &str) -> Vec<SocketAddr> {"
   ],
-  "crates/totaldrop-core/src/relay.rs:302": [
+  "crates/totaldrop-core/src/relay.rs:222": [
+    "async fn collect_stun_replies<R>("
+  ],
+  "crates/totaldrop-core/src/relay.rs:373": [
     "pub fn spawn("
   ],
-  "crates/totaldrop-core/src/relay.rs:438": [
+  "crates/totaldrop-core/src/relay.rs:509": [
     "async fn ping_within(ws: &mut crate::rendezvous::Ws, wait: Duration) -> Result<bool> {"
   ],
   "crates/totaldrop-core/src/rendezvous.rs:175": [
@@ -652,6 +655,9 @@
   ],
   "server/totaldrop-rendezvous/Cargo.toml:20": [
     "totaldrop-proto = { version = \"0.2.0-beta.5\", path = \"../../crates/totaldrop-proto\" }"
+  ],
+  "server/totaldrop-rendezvous/src/lib.rs:128": [
+    "fn token_matches(given: Option<[u8; 16]>, ours: &[u8; 16]) -> bool {"
   ],
   "server/totaldrop-rendezvous/src/lib.rs:236-239": [
     "struct State {",
