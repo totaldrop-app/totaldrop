@@ -1,4 +1,4 @@
-<!-- Translated from README.md 4cb259c278ef. -->
+<!-- Translated from README.md 3f56eaf00030. -->
 <div align="center">
 
 <picture>
@@ -55,7 +55,7 @@ Bure na chanzo huria. Imesimbwa fiche kutoka mwanzo hadi mwisho. Hakuna barua pe
 | **Linux** (ARM64) | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop_0.3.0.beta.6-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop-0.3.0.beta.6-1.fc43.aarch64.rpm) · [Flatpak](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop-0.3.0-beta.6-aarch64.flatpak) | 0.3.0-beta.6, Qt 6.8 au mpya zaidi |
 | **Android** | [Jiunge na beta](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.7, Android 15 au mpya zaidi, Google Play kwa mwaliko |
 | **Mstari wa amri** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux, macOS, Windows |
-| **Windows, macOS, iOS** | Inakuja | Kutia sahihi msimbo kwa mifumo hii ndicho kitu cha kwanza ambacho michango italipia |
+| **Windows, macOS, iOS** | Inakuja | Microsoft Store hutia sahihi programu ya Windows; utiaji sahihi wa Apple kwa macOS na iOS ndicho kitu cha kwanza ambacho michango italipia |
 
 Tumia kifurushi kimoja cha Linux kwa wakati mmoja. Flatpak na kifurushi cha .pkg, .deb au .rpm vinashiriki jina moja, kwa hivyo kimoja kikiwa wazi, kuanzisha kingine huleta dirisha lililo wazi mbele badala ya kufungua dirisha la pili.
 
@@ -85,7 +85,7 @@ Umeona sentensi isiyokaa vizuri? [Saidia kutafsiri](../../docs/ceviri.md).
 
 ## Saidia mradi
 
-TotalDrop inabaki bure kwa sababu watu wanachangia. Michango hulipia seva ya kati, vyeti vya kutia sahihi msimbo ambavyo Windows na macOS vinahitaji, na ukaguzi huru wa usalama kabla ya toleo 1.0. Kila gharama, mstari kwa mstari, na kiasi kilichopatikana hadi sasa: [totaldrop.app/donate](https://totaldrop.app/donate/).
+TotalDrop inabaki bure kwa sababu watu wanachangia. Michango hulipia seva ya kati, Apple Developer Program kwa ajili ya kutia sahihi msimbo kwenye macOS na iOS, na ukaguzi huru wa usalama kabla ya toleo 1.0. Kila gharama, mstari kwa mstari, na kiasi kilichopatikana hadi sasa: [totaldrop.app/donate](https://totaldrop.app/donate/).
 
 <a href="https://github.com/sponsors/ozdil"><img src="https://img.shields.io/badge/Sponsor%20on%20GitHub-EA4AAA?logo=githubsponsors&logoColor=white&style=for-the-badge" alt="Dhamini kwenye GitHub"></a>
 

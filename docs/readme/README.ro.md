@@ -1,4 +1,4 @@
-<!-- Translated from README.md 4cb259c278ef. -->
+<!-- Translated from README.md 3f56eaf00030. -->
 <div align="center">
 
 <picture>
@@ -55,7 +55,7 @@ Gratuit și open source. Criptat end-to-end. Fără e-mail, fără număr de tel
 | **Linux** (ARM64) | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop_0.3.0.beta.6-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop-0.3.0.beta.6-1.fc43.aarch64.rpm) · [Flatpak](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop-0.3.0-beta.6-aarch64.flatpak) | 0.3.0-beta.6, Qt 6.8 sau mai nou |
 | **Android** | [Intrați în beta](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.7, Android 15 sau mai nou, Google Play pe bază de invitație |
 | **Linie de comandă** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux, macOS, Windows |
-| **Windows, macOS, iOS** | În curând | Semnarea codului pentru acestea este primul lucru pe care îl plătesc donațiile |
+| **Windows, macOS, iOS** | În curând | Microsoft Store semnează aplicația pentru Windows; semnarea Apple pentru macOS și iOS este primul lucru pe care îl plătesc donațiile |
 
 Folosiți un singur pachet Linux odată. Flatpak-ul și pachetul .pkg, .deb sau .rpm au același nume, așa că, dacă unul este deschis, pornirea celuilalt aduce în față fereastra deschisă în loc să deschidă una nouă.
 
@@ -85,7 +85,7 @@ Ați găsit o frază stângace? [Ajutați la traducere](../../docs/ceviri.md).
 
 ## Susțineți proiectul
 
-TotalDrop rămâne gratuit pentru că oamenii contribuie. Donațiile plătesc serverul releu, certificatele de semnare a codului cerute de Windows și macOS și un audit de securitate independent înainte de 1.0. Fiecare cost, linie cu linie, și cât s-a strâns până acum: [totaldrop.app/donate](https://totaldrop.app/donate/).
+TotalDrop rămâne gratuit pentru că oamenii contribuie. Donațiile plătesc serverul releu, Apple Developer Program pentru semnarea codului pe macOS și iOS și un audit de securitate independent înainte de 1.0. Fiecare cost, linie cu linie, și cât s-a strâns până acum: [totaldrop.app/donate](https://totaldrop.app/donate/).
 
 <a href="https://github.com/sponsors/ozdil"><img src="https://img.shields.io/badge/Sponsor%20on%20GitHub-EA4AAA?logo=githubsponsors&logoColor=white&style=for-the-badge" alt="Sponsorizați pe GitHub"></a>
 

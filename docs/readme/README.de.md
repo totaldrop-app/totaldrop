@@ -1,4 +1,4 @@
-<!-- Translated from README.md 4cb259c278ef. -->
+<!-- Translated from README.md 3f56eaf00030. -->
 <div align="center">
 
 <picture>
@@ -55,7 +55,7 @@ Kostenlos und quelloffen. Ende-zu-Ende-verschlüsselt. Keine E-Mail, keine Telef
 | **Linux** (ARM64) | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop_0.3.0.beta.6-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop-0.3.0.beta.6-1.fc43.aarch64.rpm) · [Flatpak](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop-0.3.0-beta.6-aarch64.flatpak) | 0.3.0-beta.6, Qt 6.8 oder neuer |
 | **Android** | [An der Beta teilnehmen](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.7, Android 15 oder neuer, Google Play auf Einladung |
 | **Kommandozeile** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux, macOS, Windows |
-| **Windows, macOS, iOS** | In Arbeit | Die Codesignatur für diese Plattformen bezahlen Spenden als Erstes |
+| **Windows, macOS, iOS** | In Arbeit | Die Windows-App signiert der Microsoft Store; die Apple-Signatur für macOS und iOS bezahlen Spenden als Erstes |
 
 Verwenden Sie unter Linux jeweils nur ein Paket. Das Flatpak und das .pkg-, .deb- oder .rpm-Paket teilen sich einen Namen: Ist eines geöffnet, holt der Start des anderen das offene Fenster nach vorn, statt ein zweites zu öffnen.
 
@@ -85,7 +85,7 @@ Einen holprigen Satz entdeckt? [Beim Übersetzen helfen](../../docs/ceviri.md).
 
 ## Das Projekt unterstützen
 
-TotalDrop bleibt kostenlos, weil Menschen etwas beitragen. Spenden bezahlen den Relay-Server, die Codesignaturzertifikate, die Windows und macOS verlangen, und ein unabhängiges Sicherheitsaudit vor 1.0. Alle Kosten, Posten für Posten, und was bisher gesammelt wurde: [totaldrop.app/donate](https://totaldrop.app/donate/).
+TotalDrop bleibt kostenlos, weil Menschen etwas beitragen. Spenden bezahlen den Relay-Server, das Apple Developer Program für die Codesignatur unter macOS und iOS und ein unabhängiges Sicherheitsaudit vor 1.0. Alle Kosten, Posten für Posten, und was bisher gesammelt wurde: [totaldrop.app/donate](https://totaldrop.app/donate/).
 
 <a href="https://github.com/sponsors/ozdil"><img src="https://img.shields.io/badge/Sponsor%20on%20GitHub-EA4AAA?logo=githubsponsors&logoColor=white&style=for-the-badge" alt="Auf GitHub unterstützen"></a>
 

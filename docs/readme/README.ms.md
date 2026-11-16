@@ -1,4 +1,4 @@
-<!-- Translated from README.md 4cb259c278ef. -->
+<!-- Translated from README.md 3f56eaf00030. -->
 <div align="center">
 
 <picture>
@@ -55,7 +55,7 @@ Percuma dan sumber terbuka. Disulitkan hujung ke hujung. Tiada e-mel, tiada nomb
 | **Linux** (ARM64) | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop_0.3.0.beta.6-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop-0.3.0.beta.6-1.fc43.aarch64.rpm) · [Flatpak](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop-0.3.0-beta.6-aarch64.flatpak) | 0.3.0-beta.6, Qt 6.8 atau lebih baharu |
 | **Android** | [Sertai beta](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.7, Android 15 atau lebih baharu, Google Play melalui jemputan |
 | **Baris perintah** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux, macOS, Windows |
-| **Windows, macOS, iOS** | Akan datang | Penandatanganan kod untuk platform ini ialah perkara pertama yang dibiayai oleh derma |
+| **Windows, macOS, iOS** | Akan datang | Microsoft Store menandatangani aplikasi Windows; penandatanganan Apple untuk macOS dan iOS ialah perkara pertama yang dibiayai oleh derma |
 
 Gunakan satu pakej Linux pada satu masa. Flatpak dan pakej .pkg, .deb atau .rpm berkongsi satu nama, jadi semasa salah satunya dibuka, memulakan yang lain akan membawa tetingkap yang terbuka ke hadapan dan bukannya membuka tetingkap kedua.
 
@@ -85,7 +85,7 @@ Terjumpa ayat yang janggal? [Bantu menterjemah](../../docs/ceviri.md).
 
 ## Sokong projek ini
 
-TotalDrop kekal percuma kerana orang ramai menyumbang. Derma membiayai pelayan geganti, sijil penandatanganan kod yang diwajibkan oleh Windows dan macOS, dan audit keselamatan bebas sebelum versi 1.0. Setiap kos, baris demi baris, dan jumlah yang terkumpul setakat ini: [totaldrop.app/donate](https://totaldrop.app/donate/).
+TotalDrop kekal percuma kerana orang ramai menyumbang. Derma membiayai pelayan geganti, Apple Developer Program untuk penandatanganan kod pada macOS dan iOS, dan audit keselamatan bebas sebelum versi 1.0. Setiap kos, baris demi baris, dan jumlah yang terkumpul setakat ini: [totaldrop.app/donate](https://totaldrop.app/donate/).
 
 <a href="https://github.com/sponsors/ozdil"><img src="https://img.shields.io/badge/Sponsor%20on%20GitHub-EA4AAA?logo=githubsponsors&logoColor=white&style=for-the-badge" alt="Taja di GitHub"></a>
 

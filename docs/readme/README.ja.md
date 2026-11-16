@@ -1,4 +1,4 @@
-<!-- Translated from README.md 4cb259c278ef. -->
+<!-- Translated from README.md 3f56eaf00030. -->
 <div align="center">
 
 <picture>
@@ -55,7 +55,7 @@
 | **Linux**（ARM64） | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop_0.3.0.beta.6-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop-0.3.0.beta.6-1.fc43.aarch64.rpm) · [Flatpak](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop-0.3.0-beta.6-aarch64.flatpak) | 0.3.0-beta.6、Qt 6.8 以降 |
 | **Android** | [ベータに参加する](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.7、Android 15 以降、Google Play で招待制 |
 | **コマンドライン** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux、macOS、Windows |
-| **Windows、macOS、iOS** | 準備中 | 寄付でまず賄うのは、これらのコード署名です |
+| **Windows、macOS、iOS** | 準備中 | Windows アプリは Microsoft Store が署名します。寄付でまず賄うのは macOS と iOS 向けの Apple 署名です |
 
 Linux のパッケージは一度に 1 つだけ使ってください。Flatpak と .pkg・.deb・.rpm パッケージは同じ名前を使うため、一方を開いている間にもう一方を起動すると、2 つ目のウィンドウは開かず、開いているウィンドウが前面に出ます。
 
@@ -85,7 +85,7 @@ TotalDrop は35の言語に対応し、地域の数値形式に従います。�
 
 ## プロジェクトを支援する
 
-TotalDrop が無料であり続けられるのは、支えてくれる人がいるからです。寄付は、リレー、Windows と macOS が求めるコード署名証明書、そして 1.0 の前に行う独立したセキュリティ監査に使われます。すべての費用の明細と、これまでに集まった額はこちら：[totaldrop.app/donate](https://totaldrop.app/donate/)
+TotalDrop が無料であり続けられるのは、支えてくれる人がいるからです。寄付は、リレー、macOS と iOS のコード署名に必要な Apple Developer Program、そして 1.0 の前に行う独立したセキュリティ監査に使われます。すべての費用の明細と、これまでに集まった額はこちら：[totaldrop.app/donate](https://totaldrop.app/donate/)
 
 <a href="https://github.com/sponsors/ozdil"><img src="https://img.shields.io/badge/Sponsor%20on%20GitHub-EA4AAA?logo=githubsponsors&logoColor=white&style=for-the-badge" alt="GitHub でスポンサーになる"></a>
 

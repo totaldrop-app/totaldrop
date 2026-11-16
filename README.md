@@ -51,7 +51,7 @@ Free and open source. End-to-end encrypted. No email, no phone number, no accoun
 | **Linux** (ARM64) | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop_0.3.0.beta.6-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop-0.3.0.beta.6-1.fc43.aarch64.rpm) · [Flatpak](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop-0.3.0-beta.6-aarch64.flatpak) | 0.3.0-beta.6, Qt 6.8 or newer |
 | **Android** | [Join the beta](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.7, Android 15 or newer, Google Play by invitation |
 | **Command line** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux, macOS, Windows |
-| **Windows, macOS, iOS** | Coming | Code signing for these is what donations pay for first |
+| **Windows, macOS, iOS** | Coming | The Microsoft Store signs the Windows app; Apple signing for macOS and iOS is what donations pay for first |
 
 Use one Linux package at a time. The Flatpak and the .pkg, .deb or .rpm package share one name, so while one of them is open, starting the other brings the open window forward instead of opening a second one.
 
@@ -81,7 +81,7 @@ Spotted a clumsy sentence? [Help translate](docs/ceviri.md).
 
 ## Support the project
 
-TotalDrop stays free because people chip in. Donations pay for the relay, the code-signing certificates that Windows and macOS require, and an independent security audit before 1.0. Every cost, line by line, and what has been raised so far: [totaldrop.app/donate](https://totaldrop.app/donate/).
+TotalDrop stays free because people chip in. Donations pay for the relay, the Apple Developer Program for code signing on macOS and iOS, and an independent security audit before 1.0. Every cost, line by line, and what has been raised so far: [totaldrop.app/donate](https://totaldrop.app/donate/).
 
 <a href="https://github.com/sponsors/ozdil"><img src="https://img.shields.io/badge/Sponsor%20on%20GitHub-EA4AAA?logo=githubsponsors&logoColor=white&style=for-the-badge" alt="Sponsor on GitHub"></a>
 

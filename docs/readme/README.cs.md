@@ -1,4 +1,4 @@
-<!-- Translated from README.md 4cb259c278ef. -->
+<!-- Translated from README.md 3f56eaf00030. -->
 <div align="center">
 
 <picture>
@@ -55,7 +55,7 @@ Zdarma a s otevřeným kódem. Koncové šifrování. Žádný e-mail, žádné 
 | **Linux** (ARM64) | [Debian / Ubuntu](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop_0.3.0.beta.6-1_arm64.deb) · [Fedora](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop-0.3.0.beta.6-1.fc43.aarch64.rpm) · [Flatpak](https://github.com/totaldrop-app/totaldrop/releases/download/linux-v0.3.0-beta.6/totaldrop-0.3.0-beta.6-aarch64.flatpak) | 0.3.0-beta.6, Qt 6.8 nebo novější |
 | **Android** | [Připojit se k betě](mailto:hello@totaldrop.app?subject=TotalDrop%20Android%20beta) | 0.3.0-beta.7, Android 15 nebo novější, Google Play na pozvání |
 | **Příkazový řádek** | `cargo install --git https://github.com/totaldrop-app/totaldrop totaldrop-cli` | Linux, macOS, Windows |
-| **Windows, macOS, iOS** | Připravujeme | Podepisování kódu pro tyto systémy je první, co dary zaplatí |
+| **Windows, macOS, iOS** | Připravujeme | Aplikaci pro Windows podepisuje Microsoft Store; podepisování u Applu pro macOS a iOS je první, co dary zaplatí |
 
 Používejte vždy jen jeden linuxový balíček. Flatpak a balíček .pkg, .deb nebo .rpm sdílejí jeden název, takže když je jeden otevřený, spuštění druhého jen přenese otevřené okno do popředí, místo aby otevřelo druhé.
 
@@ -85,7 +85,7 @@ Narazili jste na neobratnou větu? [Pomozte s překladem](../../docs/ceviri.md).
 
 ## Podpořte projekt
 
-TotalDrop zůstává zdarma, protože lidé přispívají. Dary platí zprostředkující server, certifikáty pro podepisování kódu, které vyžadují Windows a macOS, a nezávislý bezpečnostní audit před verzí 1.0. Všechny náklady položku po položce a kolik se zatím vybralo: [totaldrop.app/donate](https://totaldrop.app/donate/).
+TotalDrop zůstává zdarma, protože lidé přispívají. Dary platí zprostředkující server, Apple Developer Program pro podepisování kódu na macOS a iOS a nezávislý bezpečnostní audit před verzí 1.0. Všechny náklady položku po položce a kolik se zatím vybralo: [totaldrop.app/donate](https://totaldrop.app/donate/).
 
 <a href="https://github.com/sponsors/ozdil"><img src="https://img.shields.io/badge/Sponsor%20on%20GitHub-EA4AAA?logo=githubsponsors&logoColor=white&style=for-the-badge" alt="Podpořit na GitHubu"></a>
 
