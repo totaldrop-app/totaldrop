@@ -3,7 +3,6 @@
   "people": [
     { "login": "ozdil", "kind": "person", "role": "maintainer", "bio": "Leads product, design and releases." },
     { "login": "sadikkuzu", "kind": "person", "role": "principal", "areas": ["core", "cli"], "name": "Sadık Kuzu" },
-    { "login": "mstfyrdmc", "kind": "person", "role": "tester", "areas": ["ios", "macos"], "name": "Mustafa Yardımcı" },
     { "login": "zaforcan", "kind": "person", "role": "contributor" },
     { "login": "claude", "kind": "ai" },
     { "login": "dependabot[bot]", "kind": "bot" }
