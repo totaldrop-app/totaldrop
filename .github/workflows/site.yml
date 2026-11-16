@@ -58,3 +58,5 @@ jobs:
             done
           done
           exit $status
+      - name: Linux release links match across READMEs and the download page
+        run: node --test tools/test-linux-release-links.mjs && node tools/linux-release-links.mjs check
