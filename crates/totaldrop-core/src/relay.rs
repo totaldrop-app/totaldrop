@@ -143,7 +143,7 @@ async fn discover_at(socket: &UdpSocket, pending: Vec<SocketAddr>) -> Vec<Socket
     let ipv6 = local.is_ipv6();
     // A dual-stack socket sends to IPv4 through IPv4-mapped addresses and
     // reports them as such; compare in canonical form.
-    let Some(udp) = socket
+    let Some(mut udp) = socket
         .try_clone()
         .ok()
         .filter(|c| c.set_nonblocking(true).is_ok())
@@ -151,13 +151,36 @@ async fn discover_at(socket: &UdpSocket, pending: Vec<SocketAddr>) -> Vec<Socket
     else {
         return Vec::new();
     };
-    discover_rounds(
-        pending,
-        ipv6,
-        async |buf, addr| udp.send_to(buf, addr).await.map(|_| ()),
-        async |buf| udp.recv_from(buf).await,
-    )
-    .await
+    discover_rounds(&mut udp, pending, ipv6).await
+}
+
+/// Abstract UDP transport for STUN discovery so `discover_rounds` and
+/// `collect_stun_replies` stay `Send` inside `tokio::spawn` without
+/// higher-ranked closure lifetimes (#428).
+trait StunSocket: Send {
+    fn send_stun(
+        &mut self,
+        req: [u8; 20],
+        target: SocketAddr,
+    ) -> impl std::future::Future<Output = std::io::Result<()>> + Send;
+
+    fn recv_stun(
+        &mut self,
+    ) -> impl std::future::Future<Output = std::io::Result<([u8; 512], usize, SocketAddr)>> + Send;
+}
+
+impl StunSocket for tokio::net::UdpSocket {
+    async fn send_stun(&mut self, req: [u8; 20], target: SocketAddr) -> std::io::Result<()> {
+        tokio::net::UdpSocket::send_to(self, &req, target)
+            .await
+            .map(|_| ())
+    }
+
+    async fn recv_stun(&mut self) -> std::io::Result<([u8; 512], usize, SocketAddr)> {
+        let mut buf = [0u8; 512];
+        let (n, from) = tokio::net::UdpSocket::recv_from(self, &mut buf).await?;
+        Ok((buf, n, from))
+    }
 }
 
 /// How one STUN probe round ended (#428).
@@ -173,16 +196,11 @@ enum StunRound {
 /// Run up to two STUN probe rounds over `pending`, stopping once a server
 /// answers, none remain reachable, or [`StunRound::SocketBroken`] reports a
 /// persistently failing socket (#428).
-async fn discover_rounds<S, R>(
+async fn discover_rounds<S: StunSocket>(
+    udp: &mut S,
     mut pending: Vec<SocketAddr>,
     ipv6: bool,
-    mut send: S,
-    mut recv: R,
-) -> Vec<SocketAddr>
-where
-    S: AsyncFnMut(&[u8], SocketAddr) -> std::io::Result<()>,
-    R: AsyncFnMut(&mut [u8]) -> std::io::Result<(usize, SocketAddr)>,
-{
+) -> Vec<SocketAddr> {
     let mut seen = Vec::new();
     for _ in 0..2 {
         let mut asked: Vec<(SocketAddr, [u8; 12])> = Vec::new();
@@ -192,12 +210,13 @@ where
                 return seen;
             }
             // A family without a route fails here at once and is dropped.
-            if send(
-                &wire::stun_request(&id),
-                crate::path::in_family(*server, ipv6),
-            )
-            .await
-            .is_ok()
+            if udp
+                .send_stun(
+                    wire::stun_request(&id),
+                    crate::path::in_family(*server, ipv6),
+                )
+                .await
+                .is_ok()
             {
                 asked.push((*server, id));
             }
@@ -206,10 +225,7 @@ where
         let Some(deadline) = tokio::time::Instant::now().checked_add(PROBE_WAIT) else {
             return seen;
         };
-        let outcome = collect_stun_replies(asked, &mut pending, &mut seen, deadline, async |buf| {
-            recv(buf).await
-        })
-        .await;
+        let outcome = collect_stun_replies(udp, asked, &mut pending, &mut seen, deadline).await;
         if outcome == StunRound::SocketBroken || pending.is_empty() || !seen.is_empty() {
             break;
         }
@@ -219,17 +235,13 @@ where
 
 /// Read STUN answers for `asked` until all have answered, `deadline` expires,
 /// or [`MAX_RECV_ERRORS`] `recv_from` errors happen in a row (#428).
-async fn collect_stun_replies<R>(
+async fn collect_stun_replies<S: StunSocket>(
+    udp: &mut S,
     mut asked: Vec<(SocketAddr, [u8; 12])>,
     pending: &mut Vec<SocketAddr>,
     seen: &mut Vec<SocketAddr>,
     mut deadline: tokio::time::Instant,
-    mut recv: R,
-) -> StunRound
-where
-    R: AsyncFnMut(&mut [u8]) -> std::io::Result<(usize, SocketAddr)>,
-{
-    let mut buf = [0u8; 512];
+) -> StunRound {
     let mut errors = 0usize;
     while !asked.is_empty() {
         // `timeout_at` polls the socket before checking the clock, so a stream
@@ -238,7 +250,7 @@ where
         if tokio::time::Instant::now() >= deadline {
             break;
         }
-        let (n, from) = match tokio::time::timeout_at(deadline, recv(&mut buf)).await {
+        let (buf, n, from) = match tokio::time::timeout_at(deadline, udp.recv_stun()).await {
             Ok(Ok(packet)) => {
                 errors = 0;
                 packet
@@ -751,6 +763,74 @@ mod tests {
         assert!(start.elapsed() < PROBE_WAIT / 2, "{:?}", start.elapsed());
     }
 
+    enum FakeRecv {
+        Reset,
+        Packet(Vec<u8>, SocketAddr),
+        ReplyToLast(SocketAddr, SocketAddr),
+        SleepThenPacket(Duration, Vec<u8>, SocketAddr),
+        Pending,
+    }
+
+    struct FakeStun {
+        sends: usize,
+        recvs: usize,
+        last_id: [u8; 12],
+        script: std::collections::VecDeque<FakeRecv>,
+        tail: FakeRecv,
+    }
+
+    impl FakeStun {
+        fn new(script: impl IntoIterator<Item = FakeRecv>, tail: FakeRecv) -> Self {
+            Self {
+                sends: 0,
+                recvs: 0,
+                last_id: [0u8; 12],
+                script: script.into_iter().collect(),
+                tail,
+            }
+        }
+    }
+
+    fn pack_datagram(bytes: &[u8], from: SocketAddr) -> ([u8; 512], usize, SocketAddr) {
+        let mut buf = [0u8; 512];
+        buf.get_mut(..bytes.len()).unwrap().copy_from_slice(bytes);
+        (buf, bytes.len(), from)
+    }
+
+    impl StunSocket for FakeStun {
+        async fn send_stun(&mut self, req: [u8; 20], _target: SocketAddr) -> std::io::Result<()> {
+            self.sends = self.sends.saturating_add(1);
+            self.last_id = wire::parse_stun_request(&req).unwrap();
+            Ok(())
+        }
+
+        async fn recv_stun(&mut self) -> std::io::Result<([u8; 512], usize, SocketAddr)> {
+            self.recvs = self.recvs.saturating_add(1);
+            let action = self.script.pop_front().unwrap_or_else(|| match &self.tail {
+                FakeRecv::Reset => FakeRecv::Reset,
+                FakeRecv::Packet(p, from) => FakeRecv::Packet(p.clone(), *from),
+                FakeRecv::ReplyToLast(seen, from) => FakeRecv::ReplyToLast(*seen, *from),
+                FakeRecv::SleepThenPacket(d, p, from) => {
+                    FakeRecv::SleepThenPacket(*d, p.clone(), *from)
+                }
+                FakeRecv::Pending => FakeRecv::Pending,
+            });
+            match action {
+                FakeRecv::Reset => Err(std::io::Error::from(std::io::ErrorKind::ConnectionReset)),
+                FakeRecv::Packet(bytes, from) => Ok(pack_datagram(&bytes, from)),
+                FakeRecv::ReplyToLast(seen, from) => {
+                    let reply = wire::stun_response(&self.last_id, seen);
+                    Ok(pack_datagram(&reply, from))
+                }
+                FakeRecv::SleepThenPacket(delay, bytes, from) => {
+                    tokio::time::sleep(delay).await;
+                    Ok(pack_datagram(&bytes, from))
+                }
+                FakeRecv::Pending => std::future::pending().await,
+            }
+        }
+    }
+
     /// #428: on Windows, an unreachable STUN server makes the shared UDP
     /// socket report ICMP "port unreachable" as `ConnectionReset`
     /// (`WSAECONNRESET`); the receive loop keeps waiting so another server's
@@ -762,51 +842,39 @@ mod tests {
         let id_dead = [0x11; 12];
         let id_live = [0x22; 12];
         let seen_addr: SocketAddr = "[2001:db8::99]:40000".parse().unwrap();
+        let stray = wire::stun_response(&[0xee; 12], "198.51.100.9:9".parse().unwrap());
         let reply = wire::stun_response(&id_live, seen_addr);
+
+        let mut script = Vec::new();
+        // MAX_RECV_ERRORS - 1 consecutive resets, then a stray datagram
+        // (resets the consecutive counter), then one more reset before the
+        // real STUN reply arrives.
+        for _ in 1..MAX_RECV_ERRORS {
+            script.push(FakeRecv::Reset);
+        }
+        script.push(FakeRecv::Packet(stray.to_vec(), live));
+        script.push(FakeRecv::Reset);
+        script.push(FakeRecv::Packet(reply.to_vec(), live));
+        let mut fake = FakeStun::new(script, FakeRecv::Pending);
 
         let mut pending = vec![dead, live];
         let mut seen = Vec::new();
         let start = tokio::time::Instant::now();
         let deadline = start.checked_add(PROBE_WAIT).unwrap();
-        let mut step = 0usize;
 
         let outcome = collect_stun_replies(
+            &mut fake,
             vec![(dead, id_dead), (live, id_live)],
             &mut pending,
             &mut seen,
             deadline,
-            async |buf| {
-                step = step.saturating_add(1);
-                match step {
-                    // MAX_RECV_ERRORS - 1 consecutive resets, then a stray
-                    // datagram (resets the consecutive counter), then one more
-                    // reset before the real STUN reply arrives.
-                    s if s < MAX_RECV_ERRORS => {
-                        Err(std::io::Error::from(std::io::ErrorKind::ConnectionReset))
-                    }
-                    s if s == MAX_RECV_ERRORS => {
-                        let stray =
-                            wire::stun_response(&[0xee; 12], "198.51.100.9:9".parse().unwrap());
-                        buf.get_mut(..stray.len()).unwrap().copy_from_slice(&stray);
-                        Ok((stray.len(), live))
-                    }
-                    s if s == MAX_RECV_ERRORS.saturating_add(1) => {
-                        Err(std::io::Error::from(std::io::ErrorKind::ConnectionReset))
-                    }
-                    s if s == MAX_RECV_ERRORS.saturating_add(2) => {
-                        buf.get_mut(..reply.len()).unwrap().copy_from_slice(&reply);
-                        Ok((reply.len(), live))
-                    }
-                    _ => std::future::pending().await,
-                }
-            },
         )
         .await;
 
         assert_eq!(outcome, StunRound::Completed);
         assert_eq!(seen, vec![seen_addr]);
         assert_eq!(pending, vec![dead]);
-        assert_eq!(step, MAX_RECV_ERRORS.saturating_add(3));
+        assert_eq!(fake.recvs, MAX_RECV_ERRORS.saturating_add(3));
         assert_eq!(start.elapsed(), AFTER_ANSWER);
     }
 
@@ -817,38 +885,20 @@ mod tests {
         let target: SocketAddr = "192.0.2.1:3478".parse().unwrap();
         let seen_addr: SocketAddr = "203.0.113.5:40000".parse().unwrap();
         let start = tokio::time::Instant::now();
-        let last_id = std::sync::Mutex::new([0u8; 12]);
-        let mut sends = 0usize;
-        let mut recvs = 0usize;
+        let mut fake = FakeStun::new(
+            [
+                FakeRecv::Reset,
+                FakeRecv::Pending,
+                FakeRecv::ReplyToLast(seen_addr, target),
+            ],
+            FakeRecv::Pending,
+        );
 
-        let got = discover_rounds(
-            vec![target],
-            false,
-            async |pkt, _addr| {
-                sends = sends.saturating_add(1);
-                *last_id.lock().unwrap() = wire::parse_stun_request(pkt).unwrap();
-                Ok(())
-            },
-            async |buf| {
-                recvs = recvs.saturating_add(1);
-                match recvs {
-                    1 => Err(std::io::Error::from(std::io::ErrorKind::ConnectionReset)),
-                    2 => std::future::pending().await,
-                    3 => {
-                        let id = *last_id.lock().unwrap();
-                        let reply = wire::stun_response(&id, seen_addr);
-                        buf.get_mut(..reply.len()).unwrap().copy_from_slice(&reply);
-                        Ok((reply.len(), target))
-                    }
-                    _ => std::future::pending().await,
-                }
-            },
-        )
-        .await;
+        let got = discover_rounds(&mut fake, vec![target], false).await;
 
         assert_eq!(got, vec![seen_addr]);
-        assert_eq!(sends, 2);
-        assert_eq!(recvs, 3);
+        assert_eq!(fake.sends, 2);
+        assert_eq!(fake.recvs, 3);
         assert_eq!(start.elapsed(), PROBE_WAIT);
     }
 
@@ -859,26 +909,13 @@ mod tests {
     async fn stun_stops_after_repeated_recv_errors() {
         let target: SocketAddr = "192.0.2.1:3478".parse().unwrap();
         let start = tokio::time::Instant::now();
-        let mut sends = 0usize;
-        let mut calls = 0usize;
+        let mut fake = FakeStun::new([], FakeRecv::Reset);
 
-        let got = discover_rounds(
-            vec![target],
-            false,
-            async |_pkt, _addr| {
-                sends = sends.saturating_add(1);
-                Ok(())
-            },
-            async |_buf| {
-                calls = calls.saturating_add(1);
-                Err(std::io::Error::from(std::io::ErrorKind::ConnectionReset))
-            },
-        )
-        .await;
+        let got = discover_rounds(&mut fake, vec![target], false).await;
 
         assert!(got.is_empty());
-        assert_eq!(sends, 1);
-        assert_eq!(calls, MAX_RECV_ERRORS);
+        assert_eq!(fake.sends, 1);
+        assert_eq!(fake.recvs, MAX_RECV_ERRORS);
         assert_eq!(start.elapsed(), Duration::ZERO);
     }
 
@@ -893,30 +930,42 @@ mod tests {
         let mut seen = Vec::new();
         let start = tokio::time::Instant::now();
         let deadline = start.checked_add(PROBE_WAIT).unwrap();
-        let mut calls = 0usize;
+        let mut fake = FakeStun::new(
+            [
+                FakeRecv::SleepThenPacket(PROBE_WAIT / 2, stray.to_vec(), target),
+                FakeRecv::SleepThenPacket(PROBE_WAIT / 2, stray.to_vec(), target),
+            ],
+            FakeRecv::Packet(stray.to_vec(), target),
+        );
 
         let outcome = collect_stun_replies(
+            &mut fake,
             vec![(target, [0x44; 12])],
             &mut pending,
             &mut seen,
             deadline,
-            async |buf| {
-                calls = calls.saturating_add(1);
-                assert!(calls <= 10, "collect_stun_replies spun past deadline");
-                if calls <= 2 {
-                    tokio::time::sleep(PROBE_WAIT / 2).await;
-                }
-                buf.get_mut(..stray.len()).unwrap().copy_from_slice(&stray);
-                Ok((stray.len(), target))
-            },
         )
         .await;
 
         assert_eq!(outcome, StunRound::Completed);
         assert!(seen.is_empty());
         assert_eq!(pending, vec![target]);
-        assert_eq!(calls, 2);
+        assert_eq!(fake.recvs, 2);
         assert_eq!(start.elapsed(), PROBE_WAIT);
+    }
+
+    /// #428: `discover` must remain `Send` across `.await` points so callers
+    /// such as `tokio::spawn(PreparedSend::run_with(..))` compile cleanly.
+    #[tokio::test]
+    async fn stun_discover_future_is_send_in_tokio_spawn() {
+        let seen: SocketAddr = "203.0.113.5:40000".parse().unwrap();
+        let server = stun_server(seen).await;
+        let ours = crate::transport::bind_socket().unwrap();
+        let target = server.to_string();
+        let got = tokio::spawn(async move { discover(&ours, &target).await })
+            .await
+            .unwrap();
+        assert_eq!(got, vec![seen]);
     }
 
     /// A link whose gate stays shut never connects to the relay; once the
