@@ -115,11 +115,11 @@ const MAX_PENDING_BYTES: usize = 32 * 1024;
 const COOLDOWN: Duration = Duration::from_secs(10 * 60);
 /// How long the WebSocket handshake and each write may take.
 const IO_TIMEOUT: Duration = Duration::from_secs(10);
-/// How long a refused connection is kept open for the client to close it.
-/// The client sends its first message right after the handshake; closing
-/// the socket with it unread resets the connection, and Windows then drops
-/// the refusal before the client reads it (#442).
-const REFUSAL_LINGER: Duration = Duration::from_secs(2);
+/// How long a server-closed connection stays open for the client to close it.
+/// Closing the socket while client frames sit unread resets TCP, and Windows
+/// then drops the error frame before the client reads it (#442, #447). Both
+/// rate refusals and later server closes drain up to this bound.
+const CLOSE_LINGER: Duration = Duration::from_secs(2);
 /// What a client over its rate is told.
 pub const TOO_MANY: &str = "too many requests";
 
@@ -417,21 +417,9 @@ impl Server {
             let refusal = ServerMessage::Error {
                 reason: TOO_MANY.into(),
             };
-            let _ = tokio::time::timeout(IO_TIMEOUT, async {
-                let _ = ws.send(Message::Binary(refusal.encode().into())).await;
-                let _ = ws.close(None).await;
-            })
-            .await;
-            // Read what the client sent until it closes too (RFC 6455,
-            // section 7.1.1: the server closes the TCP connection after the
-            // closing handshake), so that nothing is left unread.
-            let _ = tokio::time::timeout(REFUSAL_LINGER, async {
-                while let Some(Ok(_)) = ws.next().await {}
-            })
-            .await;
+            close_and_drain(ws, Some(refusal)).await;
             return;
         }
-        let (mut sink, mut source) = ws.split();
         let (outbox, mut inbox) = mpsc::channel::<ServerMessage>(64);
 
         let conn = {
@@ -440,28 +428,24 @@ impl Server {
             st.next_conn
         };
 
-        // Writer: forwards queued server messages; an error, a failed write
-        // or a client that stops reading ends the connection.
-        let writer = tokio::spawn(async move {
-            while let Some(msg) = inbox.recv().await {
-                let fatal = matches!(msg, ServerMessage::Error { .. });
-                let sent = tokio::time::timeout(
-                    IO_TIMEOUT,
-                    sink.send(Message::Binary(msg.encode().into())),
-                )
-                .await;
-                if !matches!(sent, Ok(Ok(()))) || fatal {
-                    break;
-                }
-            }
-            let _ = tokio::time::timeout(IO_TIMEOUT, sink.close()).await;
-        });
-
         let mut held: Held = None;
+        let mut final_msg: Option<ServerMessage> = None;
+        let mut exit = Exit::ServerClose;
         // Until it allocates or claims, a connection has a fixed deadline
         // that pings do not move, so idle sockets cannot use up the slots.
         let claim_deadline = tokio::time::Instant::now().checked_add(self.config.claim_timeout);
-        loop {
+        'conn: loop {
+            while let Ok(msg) = inbox.try_recv() {
+                let fatal = matches!(msg, ServerMessage::Error { .. });
+                if !send_server_msg(&mut ws, msg).await {
+                    exit = Exit::Aborted;
+                    break 'conn;
+                }
+                if fatal {
+                    exit = Exit::FatalSent;
+                    break 'conn;
+                }
+            }
             let wait = match (held, claim_deadline) {
                 (None, Some(d)) => {
                     let left = d.saturating_duration_since(tokio::time::Instant::now());
@@ -475,13 +459,27 @@ impl Server {
                 (Some(_), _) => self.config.idle_timeout,
             };
             let next = tokio::select! {
-                n = tokio::time::timeout(wait, source.next()) => n,
-                // The writer ended (expiry, error, or a client that stopped reading).
-                () = async { while !writer.is_finished() { tokio::time::sleep(Duration::from_millis(200)).await } } => break,
+                Some(msg) = inbox.recv() => {
+                    let fatal = matches!(msg, ServerMessage::Error { .. });
+                    if !send_server_msg(&mut ws, msg).await {
+                        exit = Exit::Aborted;
+                        break 'conn;
+                    }
+                    if fatal {
+                        exit = Exit::FatalSent;
+                        break 'conn;
+                    }
+                    continue;
+                }
+                n = tokio::time::timeout(wait, ws.next()) => n,
             };
             let frame = match next {
                 Ok(Some(Ok(frame))) => frame,
-                _ => break,
+                Ok(None | Some(Err(_))) => {
+                    exit = Exit::Aborted;
+                    break;
+                }
+                Err(_) => break,
             };
             let data = match frame {
                 Message::Binary(b) => b,
@@ -489,6 +487,10 @@ impl Server {
                 // mailbox: expiry runs on the mailbox's own clock and
                 // disconnects its holders. Before a claim they change nothing.
                 Message::Ping(_) | Message::Pong(_) => continue,
+                Message::Close(_) => {
+                    exit = Exit::ClientClosedWs;
+                    break;
+                }
                 _ => break,
             };
             let reply = match ClientMessage::decode(&data) {
@@ -497,7 +499,7 @@ impl Server {
             };
             if let Err(reason) = reply {
                 if reason != "done" {
-                    let _ = outbox.try_send(ServerMessage::Error {
+                    final_msg = Some(ServerMessage::Error {
                         reason: reason.into(),
                     });
                 }
@@ -509,7 +511,28 @@ impl Server {
             self.close(conn, held, Mood::Lonely).await;
         }
         drop(outbox);
-        let _ = writer.await;
+        match exit {
+            Exit::ServerClose => {
+                while let Ok(msg) = inbox.try_recv() {
+                    let fatal = matches!(msg, ServerMessage::Error { .. });
+                    if !send_server_msg(&mut ws, msg).await {
+                        return;
+                    }
+                    if fatal {
+                        final_msg = None;
+                        break;
+                    }
+                }
+                close_and_drain(ws, final_msg).await;
+            }
+            Exit::FatalSent => {
+                close_and_drain(ws, None).await;
+            }
+            Exit::ClientClosedWs => {
+                let _ = tokio::time::timeout(IO_TIMEOUT, ws.flush()).await;
+            }
+            Exit::Aborted => {}
+        }
     }
 
     async fn on_message(
@@ -543,6 +566,12 @@ impl Server {
                 getrandom::fill(&mut mailbox).map_err(|_| "server error")?;
                 let mut token = [0u8; 16];
                 getrandom::fill(&mut token).map_err(|_| "server error")?;
+                outbox
+                    .try_send(ServerMessage::Allocated {
+                        nameplate: n,
+                        token,
+                    })
+                    .map_err(|_| "closed")?;
                 st.nameplates.insert(
                     n,
                     Nameplate {
@@ -556,14 +585,6 @@ impl Server {
                     },
                 );
                 st.cooling.remove(&n);
-                drop(st);
-                outbox
-                    .send(ServerMessage::Allocated {
-                        nameplate: n,
-                        token,
-                    })
-                    .await
-                    .map_err(|_| "closed")?;
                 // An allocation connection does nothing else.
                 Err("done")
             }
@@ -585,30 +606,28 @@ impl Server {
                     // anyone else claiming an empty nameplate is guessing.
                     return Err("unknown nameplate");
                 }
+                let mailbox = np.mailbox;
+                // Queue `Claimed` and any messages the other side posted
+                // before `outbox` joins `np.sides`, so no live message can
+                // overtake them and we never await our own `inbox`.
+                outbox
+                    .try_send(ServerMessage::Claimed { mailbox })
+                    .map_err(|_| "closed")?;
+                for (from, phase, body) in np.pending.drain(..) {
+                    if from != conn {
+                        outbox
+                            .try_send(ServerMessage::Message { phase, body })
+                            .map_err(|_| "closed")?;
+                    }
+                }
+                np.pending_bytes = 0;
                 np.sides.push(Side {
                     conn,
                     outbox: outbox.clone(),
                     posted: 0,
                     closed: false,
                 });
-                let mailbox = np.mailbox;
                 *held = Some((nameplate, mailbox));
-                // Hand over anything the other side posted before we came.
-                let mut deliver = Vec::new();
-                for (from, phase, body) in np.pending.drain(..) {
-                    if from != conn {
-                        deliver.push(ServerMessage::Message { phase, body });
-                    }
-                }
-                np.pending_bytes = 0;
-                drop(st);
-                outbox
-                    .send(ServerMessage::Claimed { mailbox })
-                    .await
-                    .map_err(|_| "closed")?;
-                for m in deliver {
-                    outbox.send(m).await.map_err(|_| "closed")?;
-                }
                 Ok(())
             }
             ClientMessage::Add { phase, body } => {
@@ -737,6 +756,63 @@ fn refuse_browsers(req: &Request, resp: Response) -> Result<Response, ErrorRespo
         return Err(refused);
     }
     Ok(resp)
+}
+
+#[derive(Clone, Copy)]
+enum Exit {
+    /// The server is ending the connection and should drain unread frames.
+    ServerClose,
+    /// A fatal `ServerMessage::Error` was already sent; close and drain only.
+    FatalSent,
+    /// The client sent a WebSocket `Close` frame; flush our reply `Close`.
+    ClientClosedWs,
+    /// The transport failed or reached EOF; drop the socket without waiting.
+    Aborted,
+}
+
+async fn send_server_msg(
+    ws: &mut tokio_tungstenite::WebSocketStream<TcpStream>,
+    msg: ServerMessage,
+) -> bool {
+    matches!(
+        tokio::time::timeout(IO_TIMEOUT, ws.send(Message::Binary(msg.encode().into()))).await,
+        Ok(Ok(()))
+    )
+}
+
+/// Send an optional final message and WebSocket `Close`, then drain incoming
+/// frames until the client closes too (RFC 6455, section 7.1.1: the server
+/// closes the TCP connection after the closing handshake), bounded by
+/// [`CLOSE_LINGER`], so unread frames do not turn the TCP close into a reset
+/// that discards our reason on Windows (#442, #447).
+async fn close_and_drain(
+    mut ws: tokio_tungstenite::WebSocketStream<TcpStream>,
+    final_msg: Option<ServerMessage>,
+) {
+    let sent = tokio::time::timeout(IO_TIMEOUT, async {
+        match final_msg {
+            Some(msg) => {
+                if ws.send(Message::Binary(msg.encode().into())).await.is_err() {
+                    return false;
+                }
+            }
+            None => {
+                // Flush any queued control reply (such as a `Pong` buffered by
+                // tungstenite on a prior `Ping`) so `Close` is always last.
+                if ws.flush().await.is_err() {
+                    return false;
+                }
+            }
+        }
+        ws.close(None).await.is_ok()
+    })
+    .await;
+    if matches!(sent, Ok(true)) {
+        let _ = tokio::time::timeout(CLOSE_LINGER, async {
+            while let Some(Ok(_)) = ws.next().await {}
+        })
+        .await;
+    }
 }
 
 #[cfg(test)]

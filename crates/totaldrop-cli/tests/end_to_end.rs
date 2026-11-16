@@ -573,6 +573,262 @@ async fn every_refusal_reaches_the_client() {
     );
 }
 
+/// #447: every server-initiated close after the handshake (an `on_message`
+/// error while pipelined `add`s are still arriving, or the sweeper's
+/// `"mailbox expired"` while frames are in flight) drains unread frames so
+/// the TCP close is a clean FIN rather than a reset (`ConnectionReset`, or on
+/// Windows `WSAECONNABORTED` dropping the reason before it is read).
+#[tokio::test(flavor = "multi_thread")]
+async fn server_closes_deliver_their_reason_over_pipelined_writes() {
+    use futures_util::{SinkExt, StreamExt};
+    use std::net::SocketAddr;
+    use tokio::io::{AsyncReadExt, AsyncWriteExt};
+    use tokio_tungstenite::tungstenite::Message;
+    use totaldrop_proto::wire::{ClientMessage, ServerMessage};
+
+    async fn connect_raw(
+        addr: SocketAddr,
+        path: &str,
+    ) -> tokio_tungstenite::WebSocketStream<tokio::net::TcpStream> {
+        let tcp = tokio::net::TcpStream::connect(addr).await.unwrap();
+        tcp.set_nodelay(true).unwrap();
+        let (ws, _) = tokio_tungstenite::client_async(format!("ws://{addr}{path}"), tcp)
+            .await
+            .unwrap();
+        ws
+    }
+
+    async fn allocate_raw(addr: SocketAddr) -> (u32, [u8; 16]) {
+        let mut ws = connect_raw(addr, "/v0/allocate").await;
+        ws.send(Message::Binary(ClientMessage::Allocate.encode().into()))
+            .await
+            .unwrap();
+        while let Some(Ok(frame)) = ws.next().await {
+            if let Message::Binary(b) = frame
+                && let ServerMessage::Allocated { nameplate, token } =
+                    ServerMessage::decode(&b).unwrap()
+            {
+                let _ = ws.close(None).await;
+                let _ = ws.flush().await;
+                return (nameplate, token);
+            }
+        }
+        panic!("missing Allocated reply");
+    }
+
+    // 1. `on_message` error ("too many messages") on its own server (default
+    //    15-minute `unclaimed_ttl`, so expiry cannot race) while ~192 KiB of
+    //    pipelined `add`s sit unread past tungstenite's 128 KiB
+    //    `read_buffer_size`, leaving >60 KiB in the kernel TCP receive buffer.
+    let (addr1, _server1, _task1) = totaldrop_rendezvous::spawn(
+        "127.0.0.1:0".parse().unwrap(),
+        totaldrop_rendezvous::Config {
+            max_messages_per_side: 2,
+            rate_burst: 10_000,
+            ..Default::default()
+        },
+    )
+    .await
+    .unwrap();
+
+    for round in 0..20 {
+        let (nameplate, token) = allocate_raw(addr1).await;
+        let mut ws = connect_raw(addr1, &format!("/v0/mailbox/{nameplate}")).await;
+        let claim = ClientMessage::Claim {
+            nameplate,
+            token: Some(token),
+        };
+        ws.feed(Message::Binary(claim.encode().into()))
+            .await
+            .unwrap();
+        for i in 0..48u8 {
+            let add = ClientMessage::Add {
+                phase: format!("p{i}"),
+                body: vec![i; 4096],
+            };
+            ws.feed(Message::Binary(add.encode().into())).await.unwrap();
+        }
+        ws.flush().await.unwrap();
+
+        let mut reason = None;
+        let mut saw_close = false;
+        while let Some(item) = ws.next().await {
+            let frame =
+                item.unwrap_or_else(|e| panic!("round {round}: read failed before close: {e}"));
+            match frame {
+                Message::Binary(b) => {
+                    if let ServerMessage::Error { reason: r } = ServerMessage::decode(&b).unwrap() {
+                        reason = Some(r);
+                    }
+                }
+                Message::Close(_) => {
+                    saw_close = true;
+                    ws.flush().await.unwrap_or_else(|e| {
+                        panic!("round {round}: server reset TCP on Close reply: {e}")
+                    });
+                    break;
+                }
+                _ => {}
+            }
+        }
+        assert_eq!(
+            reason.as_deref(),
+            Some("too many messages"),
+            "round {round}"
+        );
+        assert!(saw_close, "round {round}: missing WebSocket Close frame");
+        let mut tcp = ws.into_inner();
+        tcp.shutdown()
+            .await
+            .unwrap_or_else(|e| panic!("round {round}: shutdown failed: {e}"));
+        let mut eof = [0u8; 1];
+        assert_eq!(
+            tcp.read(&mut eof)
+                .await
+                .unwrap_or_else(|e| panic!("round {round}: server reset TCP instead of FIN: {e}")),
+            0,
+            "round {round}"
+        );
+    }
+
+    // 2. Sweeper-initiated close ("mailbox expired") on a dedicated server
+    //    with a 600 ms `unclaimed_ttl` (generous headroom for loaded Windows
+    //    CI runners), awaiting `Claimed` first and running 15 rounds
+    //    concurrently while valid RFC 6455 (<=125-byte) ping bursts are in
+    //    flight across the expiry boundary.
+    let (addr2, _server2, _task2) = totaldrop_rendezvous::spawn(
+        "127.0.0.1:0".parse().unwrap(),
+        totaldrop_rendezvous::Config {
+            unclaimed_ttl: Duration::from_millis(600),
+            sweep_interval: Duration::from_millis(20),
+            rate_burst: 10_000,
+            ..Default::default()
+        },
+    )
+    .await
+    .unwrap();
+
+    let mut expiry_set = tokio::task::JoinSet::new();
+    for round in 0..15 {
+        expiry_set.spawn(async move {
+            let (nameplate, token) = allocate_raw(addr2).await;
+            let mut ws = connect_raw(addr2, &format!("/v0/mailbox/{nameplate}")).await;
+            let claim = ClientMessage::Claim {
+                nameplate,
+                token: Some(token),
+            };
+            ws.send(Message::Binary(claim.encode().into()))
+                .await
+                .unwrap();
+            loop {
+                match ws.next().await.expect("missing Claimed reply").unwrap() {
+                    Message::Binary(b)
+                        if matches!(
+                            ServerMessage::decode(&b).unwrap(),
+                            ServerMessage::Claimed { .. }
+                        ) =>
+                    {
+                        break;
+                    }
+                    Message::Ping(_) | Message::Pong(_) => {}
+                    other => panic!("expiry round {round}: expected Claimed, got {other:?}"),
+                }
+            }
+
+            let mut tick = tokio::time::interval(Duration::from_millis(10));
+            tick.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);
+            let mut reason = None;
+            let mut saw_close = false;
+            loop {
+                tokio::select! {
+                    biased;
+                    item = ws.next() => {
+                        let Some(item) = item else { break };
+                        let frame = item.unwrap_or_else(|e| {
+                            panic!("expiry round {round}: read failed before close: {e}")
+                        });
+                        match frame {
+                            Message::Binary(b) => {
+                                if let ServerMessage::Error { reason: r } =
+                                    ServerMessage::decode(&b).unwrap()
+                                {
+                                    reason = Some(r);
+                                }
+                            }
+                            Message::Close(_) => {
+                                saw_close = true;
+                                ws.flush().await.unwrap_or_else(|e| {
+                                    panic!(
+                                        "expiry round {round}: server reset TCP on Close reply: {e}"
+                                    )
+                                });
+                                break;
+                            }
+                            _ => {}
+                        }
+                    }
+                    _ = tick.tick() => {
+                        for _ in 0..48 {
+                            if ws.feed(Message::Ping(vec![0u8; 64].into())).await.is_err() {
+                                break;
+                            }
+                        }
+                        let _ = ws.flush().await;
+                    }
+                }
+            }
+            assert_eq!(
+                reason.as_deref(),
+                Some("mailbox expired"),
+                "expiry round {round}"
+            );
+            assert!(
+                saw_close,
+                "expiry round {round}: missing WebSocket Close frame"
+            );
+            let mut tcp = ws.into_inner();
+            tcp.shutdown()
+                .await
+                .unwrap_or_else(|e| panic!("expiry round {round}: shutdown failed: {e}"));
+            let mut eof = [0u8; 1];
+            assert_eq!(
+                tcp.read(&mut eof).await.unwrap_or_else(|e| {
+                    panic!("expiry round {round}: server reset TCP instead of FIN: {e}")
+                }),
+                0,
+                "expiry round {round}"
+            );
+        });
+    }
+    while let Some(res) = expiry_set.join_next().await {
+        res.unwrap();
+    }
+
+    // 3. Server close with no final error frame (`claim_timeout` right after
+    //    a `Ping`) flushes any pending `Pong` before `Close`, never emitting
+    //    a trailing `Pong` after `Close` (`ReceivedAfterClosing`).
+    let (addr3, _server3, _task3) = totaldrop_rendezvous::spawn(
+        "127.0.0.1:0".parse().unwrap(),
+        totaldrop_rendezvous::Config {
+            claim_timeout: Duration::from_millis(200),
+            ..Default::default()
+        },
+    )
+    .await
+    .unwrap();
+    let mut ws = connect_raw(addr3, "/v0/mailbox/7").await;
+    ws.send(Message::Ping(vec![7u8; 16].into())).await.unwrap();
+    let mut saw_close = false;
+    while let Some(item) = ws.next().await {
+        let frame = item.unwrap_or_else(|e| panic!("post-ping close failed: {e}"));
+        if matches!(frame, Message::Close(_)) {
+            saw_close = true;
+            ws.flush().await.unwrap();
+        }
+    }
+    assert!(saw_close, "missing Close frame on claim_timeout");
+}
+
 /// A claimed connection keeps waiting past the claim deadline: senders
 /// wait for their receiver much longer than ten seconds.
 #[tokio::test(flavor = "multi_thread")]
