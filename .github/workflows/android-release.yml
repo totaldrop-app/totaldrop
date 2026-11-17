@@ -1,6 +1,6 @@
 # Android release: from an `android-v*` tag, the Android checks a PR runs,
-# then the Play bundle signed with the upload key. Only bundles built here
-# are uploaded to Google Play (docs/surec.md).
+# then the Play bundle signed with the upload key and (when configured)
+# uploaded to Google Play Console (docs/surec.md, docs/play-release.md).
 name: Android release
 
 on:
@@ -108,3 +108,45 @@ jobs:
           name: play-bundle
           path: dist/
           retention-days: 30
+      # When GOOGLE_PLAY_SERVICE_ACCOUNT_JSON is set in play-release (#581,
+      # docs/play-release.md), probe totaldrop.app App Links (#445) and upload
+      # the verified bundle to Google Play Console. Upload keystore secrets are
+      # absent from this step's environment and upload.jks was removed above.
+      - name: Upload to Google Play
+        working-directory: .
+        env:
+          GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+          PLAY_TRACK: ${{ vars.GOOGLE_PLAY_TRACK }}
+          PLAY_STATUS: ${{ vars.GOOGLE_PLAY_RELEASE_STATUS }}
+          PLAY_USER_FRACTION: ${{ vars.GOOGLE_PLAY_USER_FRACTION }}
+          PLAY_NOT_FOR_REVIEW: ${{ vars.GOOGLE_PLAY_CHANGES_NOT_SENT_FOR_REVIEW }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          if [ -z "$GOOGLE_PLAY_SERVICE_ACCOUNT_JSON" ]; then
+            if [ -n "${PLAY_TRACK}${PLAY_STATUS}${PLAY_USER_FRACTION}${PLAY_NOT_FOR_REVIEW}" ]; then
+              echo "::error::GOOGLE_PLAY_* configuration variables are set in play-release, but GOOGLE_PLAY_SERVICE_ACCOUNT_JSON is missing."
+              exit 1
+            fi
+            echo "::notice::GOOGLE_PLAY_SERVICE_ACCOUNT_JSON is not set in play-release; skipping Google Play upload (see docs/play-release.md)."
+            exit 0
+          fi
+          env -u GOOGLE_PLAY_SERVICE_ACCOUNT_JSON node server/tools/probe.mjs site
+          set -- --bundle "dist/TotalDrop-${TAG#android-v}.aab" --tag "$TAG"
+          if [ -n "$PLAY_TRACK" ]; then
+            set -- "$@" --track "$PLAY_TRACK"
+          fi
+          if [ -n "$PLAY_STATUS" ]; then
+            set -- "$@" --status "$PLAY_STATUS"
+          fi
+          if [ -n "$PLAY_USER_FRACTION" ]; then
+            set -- "$@" --user-fraction "$PLAY_USER_FRACTION"
+          fi
+          case "$PLAY_NOT_FOR_REVIEW" in
+            ""|0|false|FALSE|False|no|NO|No) ;;
+            1|true|TRUE|True|yes|YES|Yes) set -- "$@" --changes-not-sent-for-review ;;
+            *)
+              echo "::error::Invalid GOOGLE_PLAY_CHANGES_NOT_SENT_FOR_REVIEW value '$PLAY_NOT_FOR_REVIEW' (expected true/false, 1/0, or yes/no)."
+              exit 1
+              ;;
+          esac
+          node tools/play-upload.mjs "$@"
