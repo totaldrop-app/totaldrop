@@ -4,7 +4,7 @@
 # move last-reviewed forward when you check it against the repository.
 header:
   schema-version: 2.2.0
-  last-updated: '2026-11-08'
+  last-updated: '2026-11-16'
   last-reviewed: '2026-11-04'
   url: https://raw.githubusercontent.com/totaldrop-app/totaldrop/main/SECURITY-INSIGHTS.yml
 
@@ -17,6 +17,9 @@ project:
     - name: Ozan
       social: https://github.com/ozdil
       primary: true
+    - name: Sadık Kuzu
+      social: https://github.com/sadikkuzu
+      primary: false
   documentation:
     quickstart-guide: https://github.com/totaldrop-app/totaldrop#readme
     code-of-conduct: https://github.com/totaldrop-app/totaldrop/blob/main/CODE_OF_CONDUCT.md
@@ -79,7 +82,7 @@ repository:
           Linux packages and the Android bundle are built only in GitHub Actions, from a tag, and carry signed build provenance. Check a Linux package with "gh attestation verify <file> --repo totaldrop-app/totaldrop", or offline against the attached .sigstore.json with --bundle.
     distribution-points:
       - uri: https://github.com/totaldrop-app/totaldrop/releases
-        comment: Linux packages (.deb, .rpm, Arch), SHA256SUMS and the .sigstore.json build provenance
+        comment: Linux packages (.deb, .rpm, Arch, Flatpak), SHA256SUMS and the .sigstore.json build provenance
       - uri: https://totaldrop.app/download/
         comment: Download page
   security:
@@ -137,3 +140,10 @@ repository:
           adhoc: true
           ci: true
           release: false
+        comment: |
+          Runs on main and weekly (.github/workflows/scorecard.yml). Three
+          Branch-Protection settings stay off intentionally in a two-maintainer
+          team (two approvals, last-push approval and strict up-to-date
+          branches), and Maintained scores 0 during the repository's first 90
+          days (opened 2026-10-27, until 2027-01-25); see
+          GOVERNANCE.md#branch-protection-and-scorecard.
