@@ -132,5 +132,7 @@ personal machine is published.
 
 On Android, the signed Play package is built from the `android-v*` tag with
 `--dart-define=TOTALDROP_VERSION=<version>`, only with the upload key in the
-secrets of the `play-release` environment; the package is downloaded as a
-GitHub Actions artifact and uploaded to the Play Console.
+secrets of the `play-release` environment; the bundle is saved as the
+`play-bundle` GitHub Actions artifact and, when
+`GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` is set in `play-release`, uploaded to Google
+Play Console ([play-release.md](play-release.md)).
