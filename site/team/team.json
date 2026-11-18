@@ -5,6 +5,8 @@
     { "login": "sadikkuzu", "kind": "person", "role": "principal", "areas": ["core", "cli"], "name": "Sadık Kuzu" },
     { "login": "zaforcan", "kind": "person", "role": "contributor" },
     { "login": "claude", "kind": "ai" },
+    { "login": "antigravity", "kind": "ai" },
+    { "login": "gemini", "kind": "ai" },
     { "login": "dependabot[bot]", "kind": "bot" }
   ],
   "disciplines": [

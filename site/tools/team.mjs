@@ -146,7 +146,7 @@ function validateConfig(c, i18n = I18N) {
     if (seen.has(p.login)) fail(`team.json: ${p.login} listed twice`);
     seen.add(p.login);
     if (!KINDS.includes(p.kind)) fail(`team.json: ${p.login}: kind must be one of ${KINDS.join(", ")}`);
-    if (p.kind === "person" && !ROLES.includes(p.role)) fail(`team.json: ${p.login}: role must be one of ${ROLES.join(", ")}`);
+    if (p.kind === "person" && !ROLES.includes(p.role)) fail(`team.json: ${p.login}: role must be one of ${ROLES.join(", ")}`); else if (p.kind !== "person" && !(p.login in HELPERS)) fail(`team.json: ${p.login}: unknown ${p.kind}`);
     for (const a of p.areas || []) if (!(a in AREAS)) fail(`team.json: ${p.login}: unknown area ${a}`);
     // A display name, when the person prefers another spelling than their
     // GitHub profile's (for example the profile is in capitals).
@@ -307,12 +307,35 @@ export function series(c, login) {
   return `s-${p.kind}`;
 }
 
+const HELPERS = {
+  claude: {
+    name: "Claude",
+    key: "tm.ai.d",
+    text: "Writes much of the code and runs the independent review of each pull request. It holds no role in the project: a maintainer makes or approves every merge, and the project lead approves every release and deployment.",
+  },
+  antigravity: {
+    name: "Antigravity",
+    key: "tm.ai.antigravity.d",
+    text: "Pairs with the project lead on code, web pages, translations and pull request updates. Its commits appear under his GitHub account, and it holds no role in the project: maintainers review and merge every change.",
+  },
+  gemini: {
+    name: "Gemini",
+    key: "tm.ai.gemini.d",
+    text: "Google DeepMind's model powering Antigravity for engineering, code review and translations across all 35 languages. It holds no role in the project: maintainers review and approve every merge.",
+  },
+  "dependabot[bot]": {
+    name: "Dependabot",
+    key: "tm.bot.d",
+    text: "Opens a pull request when a dependency has a new version. Each one is reviewed like any other change.",
+    github: ["https://github.com/apps/dependabot", "dependabot"],
+  },
+};
+
 // How a GitHub login is named on the page.
 function who(c, s, login) {
   const p = c.people.find((x) => x.login === login);
   if (login === "") return `<span data-i18n="tm.others">Others without a linked GitHub account</span>`;
-  if (p && p.kind === "ai") return "Claude";
-  if (p && p.kind === "bot") return "Dependabot";
+  if (p && (p.kind === "ai" || p.kind === "bot")) return esc(p.name || HELPERS[login].name);
   if (p && s.profiles[login]) return `<bdi>${esc(p.name || s.profiles[login].name)}</bdi>`;
   const bot = /^(.+)\[bot\]$/.exec(login);
   const href = bot ? `https://github.com/apps/${bot[1]}` : `https://github.com/${login}`;
@@ -344,22 +367,25 @@ function personCard(c, s, p) {
   return lines.join("\n");
 }
 
-function helperCard(c, s, p) {
+export function helperCard(c, s, p) {
+  const h = HELPERS[p.login];
   const st = stat(s.totals[p.login]);
   const ai = p.kind === "ai";
   const lines = [
     `        <li class="helper">`,
     `          <span class="avatar avatar-sign" aria-hidden="true">${ai ? "AI" : "BOT"}</span>`,
     `          <div class="person-body">`,
-    `            <h3>${ai ? "Claude" : "Dependabot"}</h3>`,
+    `            <h3>${esc(p.name || h.name)}</h3>`,
     ai ? `            <p class="role" data-i18n="tm.role.ai">AI development assistant</p>` : `            <p class="role" data-i18n="tm.role.bot">Automation</p>`,
-    ai ? `            <p data-i18n="tm.ai.d">Writes much of the code and runs the independent review of each pull request. It holds no role in the project: a maintainer makes or approves every merge, and the project lead approves every release and deployment.</p>`
-       : `            <p data-i18n="tm.bot.d">Opens a pull request when a dependency has a new version. Each one is reviewed like any other change.</p>`,
-    `            <div class="person-foot">`,
+    `            <p data-i18n="${h.key}">${esc(h.text)}</p>`,
   ];
-  if (st) lines.push(`              ${st}`);
-  if (!ai) lines.push(`              <ul class="links">${githubLink("https://github.com/apps/dependabot", "dependabot")}</ul>`);
-  lines.push(`            </div>`, `          </div>`, `        </li>`);
+  if (st || h.github) {
+    lines.push(`            <div class="person-foot">`);
+    if (st) lines.push(`              ${st}`);
+    if (h.github) lines.push(`              <ul class="links">${githubLink(h.github[0], h.github[1])}</ul>`);
+    lines.push(`            </div>`);
+  }
+  lines.push(`          </div>`, `        </li>`);
   return lines.join("\n");
 }
 

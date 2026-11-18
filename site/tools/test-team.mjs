@@ -139,4 +139,26 @@ test("team.json rejects a bio that is bad, untranslated or on a non-person (#408
   assert.match(errs((c) => { person(c, "ozdil").bio = " padded"; }), /ozdil: bad bio/);
   assert.match(errs((c) => { person(c, "sadikkuzu").bio = "Untranslated."; }), /sadikkuzu: tm\.bio\.sadikkuzu is not translated in [a-z]{2,3}(-[A-Za-z0-9]+)*\.json/);
   assert.match(errs((c) => { person(c, "claude").bio = "x"; }), /claude: only people have a bio/);
+  assert.match(errs((c) => { c.people.push({ login: "unknown-ai", kind: "ai" }); }), /unknown-ai: unknown ai/);
+});
+
+test("each AI and automation helper renders its own name, i18n key and optional footer (#598)", async () => {
+  const { helperCard } = await import("./team.mjs");
+  const c = { people: [{ login: "claude", kind: "ai" }, { login: "antigravity", kind: "ai" }, { login: "gemini", kind: "ai" }, { login: "dependabot[bot]", kind: "bot" }] };
+  const s = { totals: { claude: 195, "dependabot[bot]": 9 } };
+
+  const claude = helperCard(c, s, c.people[0]);
+  assert.match(claude, /<h3>Claude<\/h3>/);
+  assert.match(claude, /data-i18n="tm\.ai\.d"/);
+  assert.match(claude, /<dd>195<\/dd>/);
+
+  const agy = helperCard(c, s, c.people[1]);
+  assert.match(agy, /<h3>Antigravity<\/h3>/);
+  assert.match(agy, /data-i18n="tm\.ai\.antigravity\.d"/);
+  assert.doesNotMatch(agy, /person-foot/);
+
+  const gemini = helperCard(c, s, c.people[2]);
+  assert.match(gemini, /<h3>Gemini<\/h3>/);
+  assert.match(gemini, /data-i18n="tm\.ai\.gemini\.d"/);
+  assert.doesNotMatch(gemini, /person-foot/);
 });
