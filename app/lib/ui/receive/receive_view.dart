@@ -30,6 +30,16 @@ class _ReceiveViewState extends State<ReceiveView> {
   }
 
   @override
+  void didUpdateWidget(ReceiveView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.viewModel != widget.viewModel) {
+      oldWidget.viewModel.removeListener(_showInput);
+      widget.viewModel.addListener(_showInput);
+      _showInput();
+    }
+  }
+
+  @override
   void dispose() {
     widget.viewModel.removeListener(_showInput);
     _controller.dispose();
@@ -130,28 +140,34 @@ class _ReceiveViewState extends State<ReceiveView> {
                               style: Theme.of(context).textTheme.titleLarge,
                             ),
                           ],
+                          Gap.l,
+                          TextButton(
+                            onPressed: vm.stopConnecting,
+                            child: Text(l.cancel),
+                          ),
                         ],
                       ),
                     ),
                     ReceiveStage.offered => _Offered(vm: vm),
-                    ReceiveStage.transferring => _Transferring(vm: vm),
+                    ReceiveStage.transferring => _Transferring(
+                      vm: vm,
+                      onStop: () async {
+                        if (await _confirmStop(context)) vm.reset();
+                      },
+                    ),
                     ReceiveStage.done => _Done(vm: vm),
                     ReceiveStage.declined => _Message(
                       icon: Icons.block,
-                      text: l.receiveDeclined,
+                      text: vm.isText
+                          ? l.receiveTextDeclined
+                          : l.receiveDeclined,
                       onDone: () {
                         vm.reset();
                         Navigator.pop(context);
                       },
                     ),
                     ReceiveStage.failed => CenteredScroll(
-                      child: ErrorPanel(
-                        error: vm.error!,
-                        onRetry: () {
-                          vm.reset();
-                          _controller.clear();
-                        },
-                      ),
+                      child: ErrorPanel(error: vm.error!, onRetry: vm.retry),
                     ),
                   },
                 ),
@@ -361,8 +377,9 @@ class _OfferedText extends StatelessWidget {
 }
 
 class _Transferring extends StatelessWidget {
-  const _Transferring({required this.vm});
+  const _Transferring({required this.vm, required this.onStop});
   final ReceiveViewModel vm;
+  final VoidCallback onStop;
 
   @override
   Widget build(BuildContext context) {
@@ -383,6 +400,8 @@ class _Transferring extends StatelessWidget {
         TransferProgress(done: vm.done, total: vm.total),
         Gap.l,
         if (vm.offer != null) VerificationWords(words: vm.offer!.words),
+        Gap.l,
+        OutlinedButton(onPressed: onStop, child: Text(l.stop)),
       ],
     );
   }

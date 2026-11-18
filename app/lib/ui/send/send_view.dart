@@ -94,10 +94,24 @@ class SendView extends StatelessWidget {
                     SendStage.preparing => _Centered(
                       logo: const TotalDropMark(size: 120, sending: true),
                       text: l.sendPreparing,
+                      action: TextButton(
+                        onPressed: vm.stopToSelection,
+                        child: Text(l.cancel),
+                      ),
                     ),
                     SendStage.waiting => _Waiting(vm: vm),
-                    SendStage.connected => _Connected(vm: vm),
-                    SendStage.transferring => _Transferring(vm: vm),
+                    SendStage.connected => _Connected(
+                      vm: vm,
+                      onStop: () async {
+                        if (await _confirmStop(context)) vm.stopToSelection();
+                      },
+                    ),
+                    SendStage.transferring => _Transferring(
+                      vm: vm,
+                      onStop: () async {
+                        if (await _confirmStop(context)) vm.stopToSelection();
+                      },
+                    ),
                     SendStage.done => _Done(vm: vm),
                     SendStage.failed => CenteredScroll(
                       child: ErrorPanel(error: vm.error!, onRetry: vm.start),
@@ -593,6 +607,8 @@ class _Waiting extends StatelessWidget {
         ),
         Gap.xl,
         const SameNetworkNote(),
+        Gap.l,
+        OutlinedButton(onPressed: vm.stopToSelection, child: Text(l.stop)),
       ],
     );
   }
@@ -600,8 +616,9 @@ class _Waiting extends StatelessWidget {
 
 /// The receiver came and decides: the words to compare, nothing sent yet.
 class _Connected extends StatelessWidget {
-  const _Connected({required this.vm});
+  const _Connected({required this.vm, required this.onStop});
   final SendViewModel vm;
+  final VoidCallback onStop;
 
   @override
   Widget build(BuildContext context) {
@@ -622,14 +639,17 @@ class _Connected extends StatelessWidget {
             ),
           ),
         ),
+        Gap.l,
+        OutlinedButton(onPressed: onStop, child: Text(l.stop)),
       ],
     );
   }
 }
 
 class _Transferring extends StatelessWidget {
-  const _Transferring({required this.vm});
+  const _Transferring({required this.vm, required this.onStop});
   final SendViewModel vm;
+  final VoidCallback onStop;
 
   @override
   Widget build(BuildContext context) {
@@ -650,6 +670,8 @@ class _Transferring extends StatelessWidget {
         TransferProgress(done: vm.done, total: vm.total),
         Gap.l,
         if (vm.words.isNotEmpty) VerificationWords(words: vm.words),
+        Gap.l,
+        OutlinedButton(onPressed: onStop, child: Text(l.stop)),
       ],
     );
   }

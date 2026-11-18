@@ -153,6 +153,7 @@ class ErrorPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final theme = Theme.of(context);
+    final stopped = error.kind == ErrorKind.stopped;
     final wrongCode = error.kind == ErrorKind.wrongCode;
     final cause = causeMessage(context, error.cause);
     return Column(
@@ -160,9 +161,13 @@ class ErrorPanel extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Icon(
-          wrongCode ? Icons.gpp_bad_outlined : Icons.error_outline,
+          stopped
+              ? Icons.stop_circle_outlined
+              : (wrongCode ? Icons.gpp_bad_outlined : Icons.error_outline),
           size: 56,
-          color: theme.colorScheme.error,
+          color: stopped
+              ? theme.colorScheme.onSurfaceVariant
+              : theme.colorScheme.error,
         ),
         Gap.m,
         Announced(
