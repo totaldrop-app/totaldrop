@@ -26,9 +26,14 @@
   const PAGE = document.body.dataset.page || "home";
   const store = {
     get() { try { return localStorage.getItem("td-lang"); } catch (e) { return null; } },
-    set(v) { try { localStorage.setItem("td-lang", v); } catch (e) { /* storage unavailable */ } }
+    set(v) { try { localStorage.setItem("td-lang", v); return true; } catch (e) { return false; } }
   };
   const saved = store.get();
+  const queryLang = new URL(location.search || "", "https://totaldrop.app").searchParams.get("lang");
+  // When storage is unavailable, ?lang=en carries an explicit choice of
+  // English so redirect() does not send the visitor back to their browser's
+  // language, and addressed links on the page keep that marker.
+  const chosen = saved || (queryLang === "en" ? "en" : null);
   const prefs = navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language];
   // Where this page is among its languages, or null on /r and the 404 page
   // (and when lang.js did not load: the page then stays as it was sent).
@@ -37,8 +42,19 @@
   // has not chosen English, goes to that language's address. The part
   // after "#" goes along and is never sent to the server.
   if (HERE) {
-    const to = window.TDLang.redirect(location.pathname, saved, prefs);
+    const to = window.TDLang.redirect(location.pathname, chosen, prefs);
     if (to) { location.replace(to + location.search + location.hash); return; }
+    if (!saved && queryLang === "en") {
+      const paths = window.TDLang.ADDRESSED.map((p) => (p === "home" ? "/" : "/" + p + "/"));
+      document.querySelectorAll("a[href]").forEach((a) => {
+        const href = a.getAttribute("href");
+        const m = /^(https:\/\/(?:download\.)?totaldrop\.app)?(\/[^#?]*)?(#.*)?$/.exec(href);
+        if (!m || (m[1] === undefined && m[2] === undefined)) return;
+        const path = m[2] || "/";
+        if (!paths.includes(path)) return;
+        a.setAttribute("href", (m[1] || "") + path + "?lang=en" + (m[3] || ""));
+      });
+    }
   }
 
   const nodes = Array.from(document.querySelectorAll("[data-i18n]"));
@@ -150,8 +166,13 @@
     picker.addEventListener("change", () => {
       if (!HERE) { show(picker.value, { save: true, animate: true }); return; }
       // The same page, and the same part of it, in the chosen language.
-      store.set(picker.value);
-      location.assign(window.TDLang.address(picker.value, HERE.rest) + location.search + location.hash);
+      // When storage throws, ?lang=en carries an English choice to the next page.
+      const kept = store.set(picker.value);
+      const params = new URL(location.search || "", "https://totaldrop.app").searchParams;
+      if (!kept && picker.value === "en") params.set("lang", "en");
+      else params.delete("lang");
+      const qs = params.toString();
+      location.assign(window.TDLang.address(picker.value, HERE.rest) + (qs ? "?" + qs : "") + location.hash);
     });
   }
 
@@ -161,7 +182,8 @@
     here();
     window.addEventListener("pageshow", here);
   } else {
-    const initial = LANGUAGES.some((l) => l[0] === saved) ? saved : negotiate(prefs);
+    const pathTag = window.TDLang ? window.TDLang.locate(location.pathname).tag : "en";
+    const initial = pathTag !== "en" ? pathTag : (LANGUAGES.some((l) => l[0] === chosen) ? chosen : negotiate(prefs));
     if (picker) picker.value = initial;
     if (initial !== "en") show(initial);
   }

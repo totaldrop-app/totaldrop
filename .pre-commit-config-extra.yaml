@@ -117,6 +117,13 @@ repos:
         files: ^(site/|l10n/)
         pass_filenames: false
 
+      - id: site-build
+        name: site language pages
+        language: system
+        entry: sh -c 'node --test site/tools/test-build.mjs && node site/tools/build.mjs'
+        files: ^site/
+        pass_filenames: false
+
       # --- Every change (ci.yml) ---
       - id: changelog-tool
         name: the changelog tool works
