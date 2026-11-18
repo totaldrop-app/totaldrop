@@ -99,10 +99,24 @@ class SendView extends StatelessWidget {
                     SendStage.preparing => _Centered(
                       logo: const TotalDropMark(size: 120, sending: true),
                       text: l.sendPreparing,
+                      action: TextButton(
+                        onPressed: vm.stopToSelection,
+                        child: Text(l.cancel),
+                      ),
                     ),
                     SendStage.waiting => _Waiting(vm: vm),
-                    SendStage.connected => _Connected(vm: vm),
-                    SendStage.transferring => _Transferring(vm: vm),
+                    SendStage.connected => _Connected(
+                      vm: vm,
+                      onStop: () async {
+                        if (await _confirmStop(context)) vm.stopToSelection();
+                      },
+                    ),
+                    SendStage.transferring => _Transferring(
+                      vm: vm,
+                      onStop: () async {
+                        if (await _confirmStop(context)) vm.stopToSelection();
+                      },
+                    ),
                     SendStage.done => _Done(vm: vm),
                     SendStage.failed => AdaptiveErrorStage(
                       error: vm.error!,
@@ -979,6 +993,11 @@ class _Waiting extends StatelessWidget {
       style: theme.textTheme.bodyLarge,
     );
 
+    final stopButton = OutlinedButton(
+      onPressed: vm.stopToSelection,
+      child: Text(l.stop),
+    );
+
     return AdaptivePaneLayout(
       primary: Builder(
         builder: (context) {
@@ -1007,6 +1026,8 @@ class _Waiting extends StatelessWidget {
                 Gap.m,
                 codeHint,
                 if (isTabletop) ...[Gap.l, const SameNetworkNote()],
+                Gap.l,
+                stopButton,
               ],
             ),
           );
@@ -1021,6 +1042,8 @@ class _Waiting extends StatelessWidget {
           codeHint,
           Gap.xl,
           const SameNetworkNote(),
+          Gap.l,
+          stopButton,
         ],
       ),
     );
@@ -1029,8 +1052,9 @@ class _Waiting extends StatelessWidget {
 
 /// The receiver came and decides: the words to compare, nothing sent yet.
 class _Connected extends StatelessWidget {
-  const _Connected({required this.vm});
+  const _Connected({required this.vm, required this.onStop});
   final SendViewModel vm;
+  final VoidCallback onStop;
 
   @override
   Widget build(BuildContext context) {
@@ -1044,6 +1068,7 @@ class _Connected extends StatelessWidget {
       ),
     );
     final words = VerificationWords(words: vm.words);
+    final stopButton = OutlinedButton(onPressed: onStop, child: Text(l.stop));
 
     return AdaptivePaneLayout(
       primary: Builder(
@@ -1067,7 +1092,13 @@ class _Connected extends StatelessWidget {
           );
         },
       ),
-      secondary: CenteredScroll(child: words),
+      secondary: CenteredScroll(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [words, Gap.l, stopButton],
+        ),
+      ),
       singlePane: ColumnListView(
         children: [
           const Center(child: TotalDropMark(size: 120, sending: true)),
@@ -1075,6 +1106,8 @@ class _Connected extends StatelessWidget {
           words,
           Gap.m,
           waitingText,
+          Gap.l,
+          stopButton,
         ],
       ),
     );
@@ -1082,12 +1115,14 @@ class _Connected extends StatelessWidget {
 }
 
 class _Transferring extends StatelessWidget {
-  const _Transferring({required this.vm});
+  const _Transferring({required this.vm, required this.onStop});
   final SendViewModel vm;
+  final VoidCallback onStop;
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
+    final stopButton = OutlinedButton(onPressed: onStop, child: Text(l.stop));
     Widget buildStatus({required bool isTabletop}) => Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1116,6 +1151,8 @@ class _Transferring extends StatelessWidget {
           builder: (context) => ColumnListView(
             children: [
               buildStatus(isTabletop: AdaptivePaneLayout.isTabletopOf(context)),
+              Gap.l,
+              stopButton,
             ],
           ),
         ),
@@ -1130,9 +1167,21 @@ class _Transferring extends StatelessWidget {
           ),
         ),
       ),
-      secondary: CenteredScroll(child: words),
+      secondary: CenteredScroll(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [words, Gap.l, stopButton],
+        ),
+      ),
       singlePane: ColumnListView(
-        children: [buildStatus(isTabletop: false), Gap.l, words],
+        children: [
+          buildStatus(isTabletop: false),
+          Gap.l,
+          words,
+          Gap.l,
+          stopButton,
+        ],
       ),
     );
   }

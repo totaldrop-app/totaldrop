@@ -31,6 +31,16 @@ class _ReceiveViewState extends State<ReceiveView> {
   }
 
   @override
+  void didUpdateWidget(ReceiveView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.viewModel != widget.viewModel) {
+      oldWidget.viewModel.removeListener(_showInput);
+      widget.viewModel.addListener(_showInput);
+      _showInput();
+    }
+  }
+
+  @override
   void dispose() {
     widget.viewModel.removeListener(_showInput);
     _controller.dispose();
@@ -131,15 +141,27 @@ class _ReceiveViewState extends State<ReceiveView> {
                               style: Theme.of(context).textTheme.titleLarge,
                             ),
                           ],
+                          Gap.l,
+                          TextButton(
+                            onPressed: vm.stopConnecting,
+                            child: Text(l.cancel),
+                          ),
                         ],
                       ),
                     ),
                     ReceiveStage.offered => _Offered(vm: vm),
-                    ReceiveStage.transferring => _Transferring(vm: vm),
+                    ReceiveStage.transferring => _Transferring(
+                      vm: vm,
+                      onStop: () async {
+                        if (await _confirmStop(context)) vm.reset();
+                      },
+                    ),
                     ReceiveStage.done => _Done(vm: vm),
                     ReceiveStage.declined => _Message(
                       icon: Icons.block,
-                      text: l.receiveDeclined,
+                      text: vm.isText
+                          ? l.receiveTextDeclined
+                          : l.receiveDeclined,
                       onDone: () {
                         vm.reset();
                         Navigator.pop(context);
@@ -147,10 +169,7 @@ class _ReceiveViewState extends State<ReceiveView> {
                     ),
                     ReceiveStage.failed => AdaptiveErrorStage(
                       error: vm.error!,
-                      onRetry: () {
-                        vm.reset();
-                        _controller.clear();
-                      },
+                      onRetry: vm.retry,
                     ),
                   },
                 ),
@@ -447,12 +466,14 @@ class _OfferedText extends StatelessWidget {
 }
 
 class _Transferring extends StatelessWidget {
-  const _Transferring({required this.vm});
+  const _Transferring({required this.vm, required this.onStop});
   final ReceiveViewModel vm;
+  final VoidCallback onStop;
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
+    final stopButton = OutlinedButton(onPressed: onStop, child: Text(l.stop));
     Widget buildStatus({required bool isTabletop}) => Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -481,6 +502,8 @@ class _Transferring extends StatelessWidget {
           builder: (context) => ColumnListView(
             children: [
               buildStatus(isTabletop: AdaptivePaneLayout.isTabletopOf(context)),
+              Gap.l,
+              stopButton,
             ],
           ),
         ),
@@ -495,9 +518,21 @@ class _Transferring extends StatelessWidget {
           ),
         ),
       ),
-      secondary: CenteredScroll(child: words),
+      secondary: CenteredScroll(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [words, Gap.l, stopButton],
+        ),
+      ),
       singlePane: ColumnListView(
-        children: [buildStatus(isTabletop: false), Gap.l, words],
+        children: [
+          buildStatus(isTabletop: false),
+          Gap.l,
+          words,
+          Gap.l,
+          stopButton,
+        ],
       ),
     );
   }

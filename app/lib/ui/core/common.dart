@@ -155,15 +155,20 @@ class ErrorPanel extends StatelessWidget {
 
   static Widget _header(BuildContext context, TransferError error) {
     final theme = Theme.of(context);
+    final stopped = error.kind == ErrorKind.stopped;
     final wrongCode = error.kind == ErrorKind.wrongCode;
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Icon(
-          wrongCode ? Icons.gpp_bad_outlined : Icons.error_outline,
+          stopped
+              ? Icons.stop_circle_outlined
+              : (wrongCode ? Icons.gpp_bad_outlined : Icons.error_outline),
           size: 56,
-          color: theme.colorScheme.error,
+          color: stopped
+              ? theme.colorScheme.onSurfaceVariant
+              : theme.colorScheme.error,
         ),
         Gap.m,
         Announced(
