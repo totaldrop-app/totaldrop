@@ -37,7 +37,7 @@
 
   <main id="main">
     <section class="dl-hero" aria-labelledby="rm-title">
-      <p class="eyebrow" data-i18n="rm.eyebrow">Roadmap · updated 11 November 2026</p>
+      <p class="eyebrow" data-i18n="rm.eyebrow">Roadmap · updated 18 November 2026</p>
       <h1 id="rm-title" data-i18n="rm.title">What is coming to TotalDrop</h1>
       <p class="lede" data-i18n="rm.lede">Dates are aims, not promises: a feature ships only when it is safe. Every step can be followed in the open repository.</p>
     </section>
@@ -73,9 +73,9 @@
         </li>
         <li>
           <h3 data-i18n="rm.d2.t">Command-line client</h3>
-          <p data-i18n="rm.d2.d">Send and receive from a terminal on Linux, macOS and Windows.</p>
+          <p data-i18n="rm.d2.d">Send and receive from a Linux terminal, or build from source with Cargo (prebuilt macOS and Windows binaries planned).</p>
           <p class="rm-meta">
-            <span class="rm-plat">Linux · macOS · Windows</span>
+            <span class="rm-plat">Linux</span>
           </p>
         </li>
         <li>
@@ -104,7 +104,7 @@
           <h3 data-i18n="rm.n2.t">Privacy mode in the command line</h3>
           <p data-i18n="rm.n2.d">Relay only: the other side never learns your IP address.</p>
           <p class="rm-meta">
-            <span class="rm-plat">Linux · macOS · Windows</span>
+            <span class="rm-plat">Linux</span>
             <a class="rm-issue" href="https://github.com/totaldrop-app/totaldrop/issues/68"><span class="visually-hidden" data-i18n="rm.issue">Issue</span> #68</a>
           </p>
         </li>
@@ -136,18 +136,9 @@
           <h3 data-i18n="rm.d6.t">Send text and the clipboard</h3>
           <p data-i18n="rm.d6.d">Send a note, a link or what you copied. It arrives as text you can copy, not as a file.</p>
           <p class="rm-meta">
-            <span class="rm-plat">Android · Linux · macOS · Windows</span>
+            <span class="rm-plat">Android · Linux</span>
             <a class="rm-issue" href="https://github.com/totaldrop-app/totaldrop/issues/313"><span class="visually-hidden" data-i18n="rm.issue">Issue</span> #313</a>
             <a class="rm-issue" href="https://github.com/totaldrop-app/totaldrop/issues/326"><span class="visually-hidden" data-i18n="rm.issue">Issue</span> #326</a>
-          </p>
-        </li>
-        <li>
-          <h3 data-i18n="rm.d8.t">Direct connections more often</h3>
-          <p data-i18n="rm.d8.d">IPv6 paths, and on Linux a port opened on your home router only for the transfer and closed after it, so fewer transfers need the relay. In the code; it arrives with the next releases.</p>
-          <p class="rm-meta">
-            <span class="rm-plat" data-i18n="rm.all">All platforms</span>
-            <a class="rm-issue" href="https://github.com/totaldrop-app/totaldrop/issues/403"><span class="visually-hidden" data-i18n="rm.issue">Issue</span> #403</a>
-            <a class="rm-issue" href="https://github.com/totaldrop-app/totaldrop/issues/406"><span class="visually-hidden" data-i18n="rm.issue">Issue</span> #406</a>
           </p>
         </li>
       </ul>
@@ -169,9 +160,19 @@
           </p>
         </li>
         <li>
+          <h3 data-i18n="rm.d8.t">Direct connections more often</h3>
+          <p data-i18n="rm.d8.d">IPv6 paths, and on Linux a port opened on your home router only for the transfer and closed after it, so fewer transfers need the relay.</p>
+          <p class="rm-status" data-i18n="rm.d8.s">In the next releases: IPv6 on all platforms, router port on Linux.</p>
+          <p class="rm-meta">
+            <span class="rm-plat" data-i18n="rm.all">All platforms</span>
+            <a class="rm-issue" href="https://github.com/totaldrop-app/totaldrop/issues/403"><span class="visually-hidden" data-i18n="rm.issue">Issue</span> #403</a>
+            <a class="rm-issue" href="https://github.com/totaldrop-app/totaldrop/issues/406"><span class="visually-hidden" data-i18n="rm.issue">Issue</span> #406</a>
+          </p>
+        </li>
+        <li>
           <h3 data-i18n="rm.f1.t">Send from where you are</h3>
           <p data-i18n="rm.f1.d">Send without opening TotalDrop first: from the share menu, a text selection or the file manager.</p>
-          <p class="rm-status" data-i18n="rm.f1.s">Done: share menu, text selection, clipboard and icon shortcuts on Android; right-click in Dolphin, Nautilus and Nemo on Linux. Next: a Quick Settings tile, receive links that open the app, and KDE&#x27;s Share menu.</p>
+          <p class="rm-status" data-i18n="rm.f1.s">Done: share menu, text selection, clipboard and icon shortcuts on Android; receive links, clipboard launcher action, and right-click in Dolphin, Nautilus and Nemo on Linux. In the next releases: receive links that open the app on Android. Next: a Quick Settings tile on Android and KDE&#x27;s Share menu on Linux.</p>
           <p class="rm-meta">
             <span class="rm-plat">Android · Linux</span>
             <a class="rm-issue" href="https://github.com/totaldrop-app/totaldrop/issues/53"><span class="visually-hidden" data-i18n="rm.issue">Issue</span> #53</a>
@@ -197,7 +198,7 @@
       <ul class="rm-items">
         <li>
           <h3 data-i18n="rm.x3.t">Resume interrupted transfers</h3>
-          <p data-i18n="rm.x3.d">A dropped connection picks up where it stopped. The receiver keeps what already arrived, so sending again sends only what is missing; later it reconnects on its own.</p>
+          <p data-i18n="rm.x3.d">A dropped connection picks up where it stopped, without sending what already arrived.</p>
           <p class="rm-meta">
             <span class="rm-plat" data-i18n="rm.all">All platforms</span>
             <a class="rm-issue" href="https://github.com/totaldrop-app/totaldrop/issues/31"><span class="visually-hidden" data-i18n="rm.issue">Issue</span> #31</a>
