@@ -334,16 +334,31 @@ test("download.totaldrop.app/<tag>/ is the download page in that language", asyn
 
 // app.js itself, with just enough of a browser around it to see where it
 // sends the visitor and what it asks the server for.
-function open(page, pathname, { languages = ["en-US"], saved = null, langJs = true, hash = "" } = {}) {
+function open(page, pathname, { languages = ["en-US"], saved = null, langJs = true, search = "?a=1", hash = "", storageThrows = false, hrefs = [] } = {}) {
   const calls = [];
+  const anchors = hrefs.map((h) => {
+    let cur = h;
+    return { getAttribute: (k) => (k === "href" ? cur : ""), setAttribute: (k, v) => { if (k === "href") cur = v; }, get href() { return cur; } };
+  });
   const el = () => ({ dataset: {}, hidden: true, value: "", append() {}, prepend() {}, setAttribute() {}, removeAttribute() {}, getAttribute: () => "", addEventListener(type, fn) { this["on" + type] = fn; } });
   const picker = el();
+  const localStorage = storageThrows
+    ? { getItem() { throw new Error("storage blocked"); }, setItem() { throw new Error("storage blocked"); } }
+    : { getItem: () => saved, setItem: (k, v) => calls.push(`save:${v}`) };
   const w = {
     Intl, URL, decodeURIComponent,
-    document: { body: { dataset: page === "home" ? {} : { page } }, documentElement: {}, title: "", querySelectorAll: () => [], querySelector: () => null, getElementById: (id) => (id === "lang-select" ? picker : el()), createElement: el },
-    location: { pathname, search: "?a=1", hash, replace: (u) => calls.push("replace:" + u), assign: (u) => calls.push("assign:" + u), reload() {} },
+    document: {
+      body: { dataset: page === "home" ? {} : { page } },
+      documentElement: {},
+      title: "",
+      querySelectorAll: (sel) => (sel === "a[href]" ? anchors : []),
+      querySelector: () => null,
+      getElementById: (id) => (id === "lang-select" ? picker : el()),
+      createElement: el,
+    },
+    location: { pathname, search, hash, replace: (u) => calls.push("replace:" + u), assign: (u) => calls.push("assign:" + u), reload() {} },
     navigator: { languages, userAgent: "" },
-    localStorage: { getItem: () => saved, setItem: (k, v) => calls.push(`save:${v}`) },
+    localStorage,
     fetch: async (u) => { calls.push("fetch:" + u); return { ok: true, json: async () => ({}) }; },
     matchMedia: () => ({ matches: false }), addEventListener() {},
   };
@@ -351,7 +366,7 @@ function open(page, pathname, { languages = ["en-US"], saved = null, langJs = tr
   vm.createContext(w);
   if (langJs) vm.runInContext(read(pub, "lang.js"), w);
   vm.runInContext(read(pub, "app.js"), w);
-  return { calls, picker };
+  return { calls, picker, anchors };
 }
 
 test("app.js sends a visitor on an English address to their language, with the part after #", () => {
@@ -376,8 +391,34 @@ test("the picker goes to the same page in the chosen language and remembers the 
   assert.equal(open("home", "/tr/", { langJs: false }).picker.hidden, true, "no list, no picker");
 });
 
+test("with localStorage throwing, a visitor can still pick English and stay on English pages", () => {
+  const onTr = open("home", "/tr/", { languages: ["tr-TR"], search: "", storageThrows: true });
+  onTr.picker.value = "en";
+  onTr.picker.onchange();
+  assert.deepEqual(onTr.calls, ["assign:/?lang=en"]);
+
+  const onEn = open("home", "/", {
+    languages: ["tr-TR"],
+    search: "?lang=en",
+    storageThrows: true,
+    hrefs: ["/roadmap/", "https://download.totaldrop.app/", "/donate/#ways", "#why", "/privacy", "https://github.com/totaldrop-app/totaldrop"],
+  });
+  assert.deepEqual(onEn.calls, [], "stays on English instead of bouncing back to /tr/");
+  assert.deepEqual(
+    onEn.anchors.map((a) => a.href),
+    ["/roadmap/?lang=en", "https://download.totaldrop.app/?lang=en", "/donate/?lang=en#ways", "#why", "/privacy", "https://github.com/totaldrop-app/totaldrop"],
+  );
+
+  // Picking another language drops the ?lang=en query marker.
+  onEn.picker.value = "de";
+  onEn.picker.onchange();
+  assert.deepEqual(onEn.calls, ["assign:/de/"]);
+});
+
 test("/r and the 404 page keep their address and are translated in place", () => {
   assert.deepEqual(open("receive", "/r", { languages: ["tr-TR"], hash: "#7-harbor-rocket" }).calls, ["fetch:/i18n/tr.json"]);
   assert.deepEqual(open("notfound", "/tr/nope", { languages: ["tr-TR"] }).calls, ["fetch:/i18n/tr.json"]);
+  assert.deepEqual(open("notfound", "/ja/nope", { languages: ["tr-TR"], saved: "tr" }).calls, ["fetch:/i18n/ja.json"], "404 under /<tag>/ uses the address language");
+  assert.deepEqual(open("notfound", "/nope", { languages: ["tr-TR"] }).calls, ["fetch:/i18n/tr.json"]);
   assert.deepEqual(open("receive", "/r", { languages: ["en-US"] }).calls, []);
 });
