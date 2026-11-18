@@ -279,7 +279,7 @@ select.lang {
   .compare.cards tbody th { grid-column: 1 / -1; }
   .compare.cards span::before { width: 1.1em; text-indent: 0; }
   .compare.cards td { padding-inline-start: 1.1em; text-indent: -1.1em; }
-  .compare.cards .col { display: inline-block; position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .compare.cards .col { display: inline-block; }
   .compare.cards .col::after { content: ":"; }
 }
 
