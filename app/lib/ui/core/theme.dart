@@ -38,7 +38,6 @@ SystemUiOverlayStyle systemOverlayStyleFor(Brightness brightness) {
     systemNavigationBarColor: Colors.transparent,
     systemNavigationBarDividerColor: Colors.transparent,
     systemNavigationBarIconBrightness: iconBrightness,
-    systemNavigationBarContrastEnforced: false,
   );
 }
 
@@ -255,11 +254,8 @@ class SystemMotion extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final overlay =
-        theme.appBarTheme.systemOverlayStyle ??
-        systemOverlayStyleFor(theme.brightness);
     Widget content = AnnotatedRegion<SystemUiOverlayStyle>(
-      value: overlay,
+      value: systemOverlayStyleFor(theme.brightness),
       child: child,
     );
     if (!(MediaQuery.maybeDisableAnimationsOf(context) ?? false)) {

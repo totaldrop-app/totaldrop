@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-// Android 15+ Predictive Back, edge-to-edge system bar styles, and the
+// Android 13+ Predictive Back, edge-to-edge system bar styles, and the
 // Settings screen's SafeArea, TalkBack section headings, and Save button
 // state (#590).
 import 'package:flutter/services.dart';
@@ -110,12 +110,14 @@ void main() {
       expect(lightBars.systemNavigationBarColor, Colors.transparent);
       expect(lightBars.statusBarIconBrightness, Brightness.dark);
       expect(lightBars.systemNavigationBarIconBrightness, Brightness.dark);
+      expect(lightBars.systemNavigationBarContrastEnforced, isNull);
 
       final darkBars = dark.appBarTheme.systemOverlayStyle!;
       expect(darkBars.statusBarColor, Colors.transparent);
       expect(darkBars.systemNavigationBarColor, Colors.transparent);
       expect(darkBars.statusBarIconBrightness, Brightness.light);
       expect(darkBars.systemNavigationBarIconBrightness, Brightness.light);
+      expect(darkBars.systemNavigationBarContrastEnforced, isNull);
     },
   );
 
@@ -125,12 +127,25 @@ void main() {
       await tester.pumpWidget(
         _app(brightness: Brightness.dark, child: const Scaffold()),
       );
-      final region = tester.widget<AnnotatedRegion<SystemUiOverlayStyle>>(
+      final dark = tester.widget<AnnotatedRegion<SystemUiOverlayStyle>>(
         find.byType(AnnotatedRegion<SystemUiOverlayStyle>).first,
       );
-      expect(region.value.statusBarIconBrightness, Brightness.light);
-      expect(region.value.systemNavigationBarIconBrightness, Brightness.light);
-      expect(region.value.systemNavigationBarColor, Colors.transparent);
+      expect(dark.value.statusBarIconBrightness, Brightness.light);
+      expect(dark.value.systemNavigationBarIconBrightness, Brightness.light);
+      expect(dark.value.systemNavigationBarColor, Colors.transparent);
+      expect(dark.value.systemNavigationBarContrastEnforced, isNull);
+
+      await tester.pumpWidget(
+        _app(brightness: Brightness.light, child: const Scaffold()),
+      );
+      await tester.pumpAndSettle();
+      final light = tester.widget<AnnotatedRegion<SystemUiOverlayStyle>>(
+        find.byType(AnnotatedRegion<SystemUiOverlayStyle>).first,
+      );
+      expect(light.value.statusBarIconBrightness, Brightness.dark);
+      expect(light.value.systemNavigationBarIconBrightness, Brightness.dark);
+      expect(light.value.systemNavigationBarColor, Colors.transparent);
+      expect(light.value.systemNavigationBarContrastEnforced, isNull);
     },
   );
 
@@ -150,7 +165,15 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.byType(SafeArea), findsWidgets);
+      final safeArea = tester.widget<SafeArea>(
+        find.ancestor(
+          of: find.byType(ListView),
+          matching: find.byType(SafeArea),
+        ),
+      );
+      expect(safeArea.bottom, isFalse);
+      expect(tester.getTopLeft(find.byType(ListView)).dx, 18);
+      expect(tester.getTopRight(find.byType(ListView)).dx, 800 - 22);
       final list = tester.widget<ListView>(find.byType(ListView));
       expect(list.padding, const EdgeInsets.fromLTRB(24, 24, 24, 24 + 48));
     },
@@ -244,6 +267,10 @@ void main() {
       await tester.pumpAndSettle();
       expect(settings.server, settings.defaultServer);
       expect(saveButton().onPressed, isNull);
+
+      await settings.setServer('wss://other.example.org');
+      await tester.pump();
+      expect(saveButton().onPressed, isNotNull);
     },
   );
 }
