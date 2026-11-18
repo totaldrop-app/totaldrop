@@ -54,6 +54,18 @@ Future<void> _settle(WidgetTester tester) async {
   await tester.pump(const Duration(milliseconds: 350));
 }
 
+/// Scrolls the stage's ListView until [target] is built and visible, then taps it.
+Future<void> _scrollAndTap(WidgetTester tester, Finder target) async {
+  await tester.scrollUntilVisible(
+    target,
+    200,
+    scrollable: find.byType(Scrollable).first,
+  );
+  await _settle(tester);
+  await tester.tap(target);
+  await _settle(tester);
+}
+
 void main() {
   setUpAll(() => RustLib.initMock(api: _Rust()));
 
@@ -94,6 +106,9 @@ void main() {
     testWidgets('Stop while waiting returns directly to chosen text', (
       tester,
     ) async {
+      await tester.binding.setSurfaceSize(const Size(360, 520));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
       final repo = FakeRepository();
       final vm = SendViewModel(repository: repo, fileSource: FakeFileSource())
         ..takeText('hello world');
@@ -106,11 +121,7 @@ void main() {
       await _settle(tester);
       expect(vm.stage, SendStage.waiting);
 
-      final stopButton = find.widgetWithText(OutlinedButton, l.stop);
-      await tester.ensureVisible(stopButton);
-      await tester.pump();
-      await tester.tap(stopButton);
-      await _settle(tester);
+      await _scrollAndTap(tester, find.widgetWithText(OutlinedButton, l.stop));
 
       expect(vm.stage, SendStage.picking);
       expect(vm.textMode, isTrue);
@@ -144,11 +155,10 @@ void main() {
         await _settle(tester);
         expect(vm.stage, SendStage.connected);
 
-        final stopInConnected = find.widgetWithText(OutlinedButton, l.stop);
-        await tester.ensureVisible(stopInConnected);
-        await tester.pump();
-        await tester.tap(stopInConnected);
-        await _settle(tester);
+        await _scrollAndTap(
+          tester,
+          find.widgetWithText(OutlinedButton, l.stop),
+        );
         expect(find.text(l.cancelTransferTitle), findsOneWidget);
 
         // Choosing "Keep going" keeps the connected session alive.
@@ -171,11 +181,10 @@ void main() {
         await _settle(tester);
         expect(vm.stage, SendStage.transferring);
 
-        final stopInTransferring = find.widgetWithText(OutlinedButton, l.stop);
-        await tester.ensureVisible(stopInTransferring);
-        await tester.pump();
-        await tester.tap(stopInTransferring);
-        await _settle(tester);
+        await _scrollAndTap(
+          tester,
+          find.widgetWithText(OutlinedButton, l.stop),
+        );
         await tester.tap(find.widgetWithText(FilledButton, l.stop));
         await _settle(tester);
 
@@ -240,11 +249,10 @@ void main() {
         await _settle(tester);
         expect(vm.stage, ReceiveStage.transferring);
 
-        final stopButton = find.widgetWithText(OutlinedButton, l.stop);
-        await tester.ensureVisible(stopButton);
-        await tester.pump();
-        await tester.tap(stopButton);
-        await _settle(tester);
+        await _scrollAndTap(
+          tester,
+          find.widgetWithText(OutlinedButton, l.stop),
+        );
         await tester.tap(find.widgetWithText(FilledButton, l.stop));
         await _settle(tester);
 
