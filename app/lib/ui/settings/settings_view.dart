@@ -78,165 +78,162 @@ class _SettingsViewState extends State<SettingsView> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    final dirty = _server.text.trim() != widget.settings.server;
     return Scaffold(
       appBar: AppBar(title: Text(l.settings)),
       body: SafeArea(
         bottom: false,
-        child: Builder(
-          builder: (context) => ListView(
-            padding: EdgeInsets.fromLTRB(
-              24,
-              24,
-              24,
-              24 + MediaQuery.paddingOf(context).bottom,
+        child: ListView(
+          padding: EdgeInsets.fromLTRB(
+            24,
+            24,
+            24,
+            24 + MediaQuery.paddingOf(context).bottom,
+          ),
+          children: [
+            Semantics(
+              header: true,
+              child: Text(l.settingsServer, style: theme.textTheme.titleLarge),
             ),
-            children: [
+            Gap.s,
+            Text(l.settingsServerHelp, style: theme.textTheme.bodyMedium),
+            Gap.m,
+            TextField(
+              controller: _server,
+              autocorrect: false,
+              keyboardType: TextInputType.url,
+              // An address reads left to right in every language.
+              textDirection: TextDirection.ltr,
+              decoration: InputDecoration(
+                errorText: _invalid ? l.settingsServerInvalid : null,
+                prefixIcon: const Icon(Icons.dns_outlined),
+              ),
+              onChanged: (_) => setState(() => _invalid = false),
+              onSubmitted: (_) => _save(),
+            ),
+            Gap.m,
+            ListenableBuilder(
+              listenable: widget.settings,
+              builder: (context, _) {
+                final dirty = _server.text.trim() != widget.settings.server;
+                return FilledButton.tonal(
+                  onPressed: dirty ? _save : null,
+                  child: Text(l.settingsSave),
+                );
+              },
+            ),
+            Gap.s,
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: TextButton(
+                onPressed: () async {
+                  await widget.settings.resetServer();
+                  if (!mounted) return;
+                  setState(() {
+                    _server.text = widget.settings.server;
+                    _invalid = false;
+                  });
+                },
+                child: Text(l.settingsServerReset),
+              ),
+            ),
+            Gap.l,
+            const Divider(),
+            Gap.l,
+            Semantics(
+              header: true,
+              child: Text(l.settingsPrivacy, style: theme.textTheme.titleLarge),
+            ),
+            Gap.s,
+            Text(l.settingsPrivacyBody, style: theme.textTheme.bodyMedium),
+            Gap.m,
+            ListenableBuilder(
+              listenable: widget.settings,
+              builder: (context, _) => SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(l.privacyMode),
+                subtitle: Text(l.privacyModeHint),
+                value: widget.settings.privacyMode,
+                onChanged: (on) async {
+                  if (on && !await _confirmPrivacy(context)) return;
+                  try {
+                    await widget.settings.setPrivacyMode(on);
+                  } on Exception {
+                    // Not saved: the switch keeps showing the setting in force.
+                  }
+                },
+              ),
+            ),
+            if (widget.background is! NoBackgroundLimits) ...[
+              Gap.l,
+              const Divider(),
+              Gap.l,
               Semantics(
                 header: true,
                 child: Text(
-                  l.settingsServer,
+                  l.settingsBackground,
                   style: theme.textTheme.titleLarge,
                 ),
               ),
               Gap.s,
-              Text(l.settingsServerHelp, style: theme.textTheme.bodyMedium),
+              Text(l.setupBackgroundBody, style: theme.textTheme.bodyMedium),
               Gap.m,
-              TextField(
-                controller: _server,
-                autocorrect: false,
-                keyboardType: TextInputType.url,
-                // An address reads left to right in every language.
-                textDirection: TextDirection.ltr,
-                decoration: InputDecoration(
-                  errorText: _invalid ? l.settingsServerInvalid : null,
-                  prefixIcon: const Icon(Icons.dns_outlined),
-                ),
-                onChanged: (_) => setState(() => _invalid = false),
-                onSubmitted: (_) => _save(),
-              ),
-              Gap.m,
-              FilledButton.tonal(
-                onPressed: dirty ? _save : null,
-                child: Text(l.settingsSave),
-              ),
-              Gap.s,
               Align(
                 alignment: AlignmentDirectional.centerStart,
-                child: TextButton(
-                  onPressed: () async {
-                    await widget.settings.resetServer();
-                    setState(() {
-                      _server.text = widget.settings.server;
-                      _invalid = false;
-                    });
-                  },
-                  child: Text(l.settingsServerReset),
-                ),
-              ),
-              Gap.l,
-              const Divider(),
-              Gap.l,
-              Semantics(
-                header: true,
-                child: Text(
-                  l.settingsPrivacy,
-                  style: theme.textTheme.titleLarge,
-                ),
-              ),
-              Gap.s,
-              Text(l.settingsPrivacyBody, style: theme.textTheme.bodyMedium),
-              Gap.m,
-              ListenableBuilder(
-                listenable: widget.settings,
-                builder: (context, _) => SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(l.privacyMode),
-                  subtitle: Text(l.privacyModeHint),
-                  value: widget.settings.privacyMode,
-                  onChanged: (on) async {
-                    if (on && !await _confirmPrivacy(context)) return;
-                    try {
-                      await widget.settings.setPrivacyMode(on);
-                    } on Exception {
-                      // Not saved: the switch keeps showing the setting in force.
-                    }
-                  },
-                ),
-              ),
-              if (widget.background is! NoBackgroundLimits) ...[
-                Gap.l,
-                const Divider(),
-                Gap.l,
-                Semantics(
-                  header: true,
-                  child: Text(
-                    l.settingsBackground,
-                    style: theme.textTheme.titleLarge,
-                  ),
-                ),
-                Gap.s,
-                Text(l.setupBackgroundBody, style: theme.textTheme.bodyMedium),
-                Gap.m,
-                Align(
-                  alignment: AlignmentDirectional.centerStart,
-                  child: FilledButton.tonal(
-                    onPressed: () => Navigator.push(
-                      context,
-                      MaterialPageRoute<void>(
-                        builder: (context) => BackgroundSetupView(
-                          access: widget.background,
-                          onDone: ({required skipped}) =>
-                              Navigator.pop(context),
-                        ),
+                child: FilledButton.tonal(
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute<void>(
+                      builder: (context) => BackgroundSetupView(
+                        access: widget.background,
+                        onDone: ({required skipped}) => Navigator.pop(context),
                       ),
                     ),
-                    child: Text(l.settingsBackgroundOpen),
                   ),
-                ),
-              ],
-              Gap.l,
-              const Divider(),
-              Gap.l,
-              Semantics(
-                header: true,
-                child: Text(l.settingsAbout, style: theme.textTheme.titleLarge),
-              ),
-              Gap.s,
-              Text(l.settingsAboutBody, style: theme.textTheme.bodyMedium),
-              // The code and the verification words come from one English
-              // word list, so devices in different languages match (ADR 0008).
-              Gap.s,
-              Text(
-                l.settingsWordsEnglish,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
+                  child: Text(l.settingsBackgroundOpen),
                 ),
               ),
-              if (hasDraftTranslation(context)) ...[
-                Gap.s,
-                Text(
-                  l.draftTranslation,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
+            ],
+            Gap.l,
+            const Divider(),
+            Gap.l,
+            Semantics(
+              header: true,
+              child: Text(l.settingsAbout, style: theme.textTheme.titleLarge),
+            ),
+            Gap.s,
+            Text(l.settingsAboutBody, style: theme.textTheme.bodyMedium),
+            // The code and the verification words come from one English
+            // word list, so devices in different languages match (ADR 0008).
+            Gap.s,
+            Text(
+              l.settingsWordsEnglish,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            if (hasDraftTranslation(context)) ...[
               Gap.s,
               Text(
-                l.settingsVersion(isolate(widget.version)),
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-              Text(
-                'totaldrop.app',
+                l.draftTranslation,
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
             ],
-          ),
+            Gap.s,
+            Text(
+              l.settingsVersion(isolate(widget.version)),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            Text(
+              'totaldrop.app',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
         ),
       ),
     );

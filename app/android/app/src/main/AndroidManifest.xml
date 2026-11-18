@@ -6,6 +6,9 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <!-- Required for a job with a network constraint. -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <!-- Predictive Back is on by default on API 36+ (targetSdk 37); keeping
+         enableOnBackInvokedCallback explicit opts API 33-35 devices into the
+         same back dispatcher (#590). -->
     <application
         android:label="TotalDrop"
         android:allowBackup="false"
