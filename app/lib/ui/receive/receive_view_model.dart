@@ -208,6 +208,9 @@ class ReceiveViewModel extends ChangeNotifier {
         stage = ReceiveStage.done;
         _sub?.cancel();
         _release();
+        if (!isText && e.summary != null && e.summary!.saved.isNotEmpty) {
+          unawaited(_repo.scanSavedFiles(e.summary!.saved));
+        }
       case EventKind.failed:
         _fail(
           e.error ??
