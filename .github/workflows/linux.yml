@@ -143,9 +143,12 @@ jobs:
           flatpak-builder-lint --exceptions
           --user-exceptions packaging/flatpak/lint-exceptions.json
           manifest packaging/flatpak/app.totaldrop.TotalDrop.yml
+      # The pinned image already ships org.kde.Platform and org.kde.Sdk 6.11;
+      # do not pass --install-deps-from=flathub, which mutates /var/lib/flatpak
+      # across container overlay layers (EXDEV on ubuntu-26.04 runners, #582).
       - name: Build
         run: >-
-          flatpak-builder --disable-rofiles-fuse --install-deps-from=flathub
+          flatpak-builder --disable-rofiles-fuse
           --force-clean --repo=flatpak-repo flatpak-build
           packaging/flatpak/app.totaldrop.TotalDrop.yml
       - name: Bundle
