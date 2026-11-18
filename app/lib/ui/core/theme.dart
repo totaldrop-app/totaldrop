@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// TotalDrop's brand colours (the Aurora palette). The app follows the
@@ -22,6 +23,24 @@ abstract final class Brand {
 
 const _display = 'BricolageGrotesque';
 const _body = 'AtkinsonHyperlegible';
+
+/// Transparent edge-to-edge system bars with icon brightness matching
+/// [brightness], for both screens with an AppBar and screens without one.
+SystemUiOverlayStyle systemOverlayStyleFor(Brightness brightness) {
+  final iconBrightness = brightness == Brightness.light
+      ? Brightness.dark
+      : Brightness.light;
+  return SystemUiOverlayStyle(
+    statusBarColor: Colors.transparent,
+    statusBarIconBrightness: iconBrightness,
+    statusBarBrightness: brightness,
+    systemStatusBarContrastEnforced: false,
+    systemNavigationBarColor: Colors.transparent,
+    systemNavigationBarDividerColor: Colors.transparent,
+    systemNavigationBarIconBrightness: iconBrightness,
+    systemNavigationBarContrastEnforced: false,
+  );
+}
 
 /// The Aurora palette as a Material scheme, for when the system offers no
 /// colours of its own. Values are the design system's tokens: `bg`,
@@ -101,15 +120,22 @@ TextTheme _text(TextTheme base) {
 /// Every elevation is 0 and no surface takes the primary tint.
 ThemeData buildTheme(ColorScheme scheme) {
   final base = ThemeData(colorScheme: scheme, useMaterial3: true);
+  final overlayStyle = systemOverlayStyleFor(scheme.brightness);
   return base.copyWith(
     textTheme: _text(base.textTheme),
     scaffoldBackgroundColor: scheme.surface,
+    pageTransitionsTheme: const PageTransitionsTheme(
+      builders: {
+        TargetPlatform.android: PredictiveBackPageTransitionsBuilder(),
+      },
+    ),
     appBarTheme: AppBarTheme(
       centerTitle: false,
       elevation: 0,
       scrolledUnderElevation: 0,
       backgroundColor: scheme.surface,
       surfaceTintColor: Colors.transparent,
+      systemOverlayStyle: overlayStyle,
     ),
     cardTheme: const CardThemeData(
       elevation: 0,
@@ -228,7 +254,17 @@ class SystemMotion extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (!(MediaQuery.maybeDisableAnimationsOf(context) ?? false)) return child;
+    final theme = Theme.of(context);
+    final overlay =
+        theme.appBarTheme.systemOverlayStyle ??
+        systemOverlayStyleFor(theme.brightness);
+    Widget content = AnnotatedRegion<SystemUiOverlayStyle>(
+      value: overlay,
+      child: child,
+    );
+    if (!(MediaQuery.maybeDisableAnimationsOf(context) ?? false)) {
+      return content;
+    }
     final icons = IconButtonTheme.of(context);
     return IconButtonTheme(
       data: IconButtonThemeData(
@@ -237,7 +273,7 @@ class SystemMotion extends StatelessWidget {
           animationDuration: Duration.zero,
         ),
       ),
-      child: child,
+      child: content,
     );
   }
 }
