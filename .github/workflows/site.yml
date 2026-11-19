@@ -30,7 +30,7 @@ jobs:
       - name: Site icons in shape and declared on every page
         run: node --test site/tools/test-favicons.mjs && node site/tools/favicons.mjs
       - name: Privacy policy pages, one per language, up to date and in shape
-        run: node site/tools/privacy.mjs
+        run: node --test site/tools/test-privacy.mjs && node site/tools/privacy.mjs
       - name: Brand page downloads made from the mark and up to date
         run: node site/tools/brand-files.mjs
       - name: Team page made from the GitHub snapshot and up to date
