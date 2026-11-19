@@ -28,6 +28,12 @@ pub mod qobject {
 
         /// Give Qt the token to activate the window with; see `launcher.h`.
         fn set_activation_token(token: &QString);
+
+        /// Update `_NET_WM_USER_TIME` before raising on X11; see `launcher.h`.
+        fn prepare_x11_activation(timestamp: u32);
+
+        /// Activate with `_TIME` and send `remove: ID="…"` on X11; see `launcher.h`.
+        fn finish_x11_startup(timestamp: u32, remove_chunks: &[u8]);
     }
 
     extern "RustQt" {
@@ -75,7 +81,21 @@ impl cxx_qt::Initialize for qobject::Launcher {
                 if let Some(t) = &o.token {
                     qobject::set_activation_token(&QString::from(t.as_str()));
                 }
+                let x11_startup = o.startup_id.as_deref().map(|id| {
+                    (
+                        instance::startup_timestamp(id).unwrap_or(0),
+                        instance::startup_remove_chunks(id),
+                    )
+                });
+                if let Some((ts, _)) = &x11_startup
+                    && *ts != 0
+                {
+                    qobject::prepare_x11_activation(*ts);
+                }
                 obj.opened(list(o.request.args()));
+                if let Some((ts, chunks)) = &x11_startup {
+                    qobject::finish_x11_startup(*ts, chunks.as_flattened());
+                }
             });
         });
     }
