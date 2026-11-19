@@ -572,6 +572,10 @@ class AppLocalizationsHe extends AppLocalizations {
       'TotalDrop כבר פתוח מחבילת .pkg, .deb או .rpm, ולכן החלון הפתוח הובא לחזית. השתמשו בחבילה אחת בכל פעם: צאו מהחלון הפתוח כדי לפתוח את זו.';
 
   @override
+  String get sendFlatpakUnreadable =>
+      'לא ניתן לקרוא את הקובץ הזה מ־Flatpak. בחרו אותו דרך הוספת קבצים, או סגרו את החלון הזה ונסו שוב.';
+
+  @override
   String get sendText => 'שליחת טקסט';
 
   @override

@@ -154,6 +154,7 @@
   "metainfoOnePackage": "Używaj jednocześnie tylko jednego pakietu dla Linuksa. Flatpak i pakiet .pkg, .deb lub .rpm mają wspólną nazwę, więc gdy jeden jest otwarty, uruchomienie drugiego przywołuje otwarte okno zamiast otwierać drugie.",
   "otherPackageFlatpak": "TotalDrop jest już otwarty z Flatpaka, więc przywołano to okno. Używaj jednocześnie tylko jednego pakietu: zamknij tamto okno, aby otworzyć ten.",
   "otherPackageSystem": "TotalDrop jest już otwarty z pakietu .pkg, .deb lub .rpm, więc przywołano to okno. Używaj jednocześnie tylko jednego pakietu: zamknij tamto okno, aby otworzyć ten.",
+  "sendFlatpakUnreadable": "Nie można odczytać tego pliku z Flatpaka. Wybierz go przyciskiem Dodaj pliki albo zamknij to okno i spróbuj ponownie.",
   "sendText": "Wyślij tekst",
   "sendTextHint": "Wpisz lub wklej tekst do wysłania",
   "sendTextTooLong": "Tekst może mieć najwyżej {size}. Dłuższy wyślij jako plik.",
