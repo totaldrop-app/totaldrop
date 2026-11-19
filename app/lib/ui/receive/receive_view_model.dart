@@ -125,11 +125,15 @@ class ReceiveViewModel extends ChangeNotifier {
     notifyListeners();
     try {
       final o = await _repo.connect(code, stopper);
+      if (generation != _generation) {
+        // Arrived just after a stop: tell the sender, do not keep it open.
+        unawaited(_repo.decline(o).catchError((Object _) {}));
+        return;
+      }
       // A text is shown, not saved: it needs no folder, and a folder that
       // cannot be made does not stand in its way.
       final f = o.isText ? null : await _repo.receiveFolder();
       if (generation != _generation) {
-        // Arrived just after a stop: tell the sender, do not keep it open.
         unawaited(_repo.decline(o).catchError((Object _) {}));
         return;
       }
@@ -284,6 +288,7 @@ class ReceiveViewModel extends ChangeNotifier {
       unawaited(_repo.decline(o).catchError((Object _) {}));
     }
     cancel();
+    _generation++;
     _sub?.cancel();
     _release();
     super.dispose();

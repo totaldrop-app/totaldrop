@@ -86,6 +86,13 @@ repos:
         files: ^app/.*\.dart$|^app/(pubspec\.(yaml|lock)|analysis_options\.yaml)$
         pass_filenames: false
 
+      - id: android-state-machines
+        name: Android state machines and generation checks
+        language: system
+        entry: sh -c 'node --test tools/test-check-state-machines.mjs && node tools/check-state-machines.mjs'
+        files: ^app/lib/.*\.dart$|^tools/(test-)?check-state-machines\.mjs$
+        pass_filenames: false
+
       # --- Workers (server.yml); run npm ci in each worker first ---
       - id: worker-tsc
         name: tsc (workers)
