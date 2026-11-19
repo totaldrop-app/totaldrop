@@ -137,7 +137,9 @@ select.lang {
 /* Firefox colours the chosen and hovered option from its own sheet, which the rule
    above would override; keep that highlight in the theme's accent. */
 .lang option:checked { background-color: var(--accent); color: var(--on-accent); }
-@media (max-width: 40rem) { .top-nav a { display: none; } .top-nav-links { display: none; } }
+.top-nav a.lang-jump:not([hidden]) { display: inline-flex; align-items: center; min-height: 44px; }
+.lang-jump[hidden] { display: none; }
+@media (max-width: 40rem) { .top-nav a:not(.lang-jump) { display: none; } .top-nav-links { display: none; } }
 
 /* Buttons: one filled per view, the rest outlined */
 .actions { display: flex; flex-wrap: wrap; gap: 0.75rem; }
@@ -372,8 +374,9 @@ pre.cmd { white-space: pre-wrap; overflow-wrap: break-word; margin: 0; padding: 
 /* Privacy policy in every language: the note on a translation, and the
    list of the other languages under the text (#207). */
 .prose .lang-note { padding: 0; }
-.lang-list { display: grid; gap: var(--s16); border-top: 1px solid var(--rule); padding-top: 3rem; }
-.prose .lang-list ul { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: var(--s8) var(--s24); }
+.lang-list { max-width: var(--wrap); margin: 0 auto; padding: clamp(3rem, 7vw, 5.5rem) var(--gutter); display: grid; gap: var(--s16); border-top: 1px solid var(--rule); }
+.prose .lang-list { max-width: none; margin: 0; padding: 3rem 0 0; }
+.lang-list ul, .prose .lang-list ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--s8) var(--s24); }
 .lang-list a { display: inline-block; padding-block: 0.6rem; }
 .lang-list a[aria-current="page"] { color: var(--text); font-weight: 700; text-decoration: none; }
 

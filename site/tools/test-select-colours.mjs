@@ -57,3 +57,15 @@ test("every select on the site is a .lang select, so the rule reaches it", () =>
   }
   assert.ok(selects > 0);
 });
+
+test("the no-JS language jump link stays visible on narrow screens until hidden, and #languages styles its list outside .prose", () => {
+  assert.equal(declarations(".lang-jump[hidden]")["display"], "none");
+  assert.equal(declarations(".top-nav a.lang-jump:not([hidden])")["min-height"], "44px");
+  assert.match(css, /@media\s*\(max-width:\s*40rem\)\s*\{[^}]*\.top-nav a:not\(\.lang-jump\)\s*\{\s*display:\s*none;?\s*\}/);
+  for (const sel of [".lang-list ul", ".prose .lang-list ul"]) {
+    const ul = declarations(sel);
+    assert.equal(ul["list-style"], "none");
+    assert.equal(ul["display"], "flex");
+  }
+});
+

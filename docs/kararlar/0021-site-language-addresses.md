@@ -53,54 +53,65 @@
     pages. The download page is `download.totaldrop.app/<tag>/`; the
     middleware picks the file on that host name.
   - Each generated page says its language in the HTML: `lang`, `dir`,
-    title, description, `og:` tags, a canonical of its own. Every version
-    of a page, English included, carries the same 35 `hreflang` links and
-    `x-default`. The sitemap lists every address.
+    title, description, `og:` tags, a canonical of its own, and a
+    `#languages` `<nav>` at the end of `<main>` listing all 35 languages
+    (linked from `<header>` until JavaScript shows `#lang-select`), so
+    language switching works without JavaScript too. Every version of a
+    page, English included, carries the same 35 `hreflang` links and
+    `x-default`. The sitemap lists every address, and `/i18n/*` carries
+    `X-Robots-Tag: noindex`.
   - The address decides the language. The picker goes to the same page,
     and the same `#part`, in the chosen language. A visitor on an English
     address whose browser prefers another language, and who has not chosen
     English, is sent to that language's address; a translated address
-    never redirects. The choice is still remembered only in the browser.
+    never redirects. `/en/...` (including `download.totaldrop.app/en/`,
+    #554) and non-canonical case or slash variants of supported language
+    tags redirect with `301` to their canonical address. The choice is
+    still remembered only in the browser.
   - `/r`, the 404 page and the privacy pages do not change. `/r` keeps one
     address and is translated in the browser as before, so every receive
     link ever shared keeps working and the code after `#` still never
     reaches the server.
-  - No new user-facing text: titles and descriptions were already
-    translated (`meta.<page>.title`, `meta.<page>.desc`).
+  - No new user-facing text: titles, descriptions and the `Language`
+    heading were already translated (`meta.<page>.title`,
+    `meta.<page>.desc`, `lang.label`).
 
 - **Why:** Plain files are the most robust answer a server can give. The
   only code at request time is the middleware that was already there, with
-  one more rule for the download host name; the content security policy
-  stays as it is. Building in CI is how every other TotalDrop package is made. One
-  source keeps a design change from becoming 35 changes.
+  rules for the download host name and for canonical language tags; the
+  content security policy stays as it is. Building in CI is how every other
+  TotalDrop package is made. One source keeps a design change from becoming
+  35 changes.
 
 - **Consequences:**
 
   - The site now has a build step. What is published is not in the
     repository; the tests in `site/tools/test-build.mjs` check its shape
     (language and direction, no translated text left in English, self
-    canonical, reciprocal `hreflang`, links that exist, the old addresses
-    unchanged), and anyone can write the same folder with one command.
+    canonical, reciprocal `hreflang`, the 35-language `#languages` list,
+    links that exist, the old addresses unchanged), and anyone can write
+    the same folder with one command.
   - Translations that no native speaker has reviewed (all but English and
     Turkish today) become pages a search can find. They carry the draft
     note in the page, as they did when shown by the script.
   - Sending a visitor to their language from an English address is what
     the site already did in place; search engines advise against
     redirecting by language when it hides versions from them. Here every
-    version is linked with `hreflang` and listed in the sitemap, the
-    picker is on every page, and a client whose language is English is
-    never redirected.
-  - The choice of language is kept per host name (the browser's storage
-    is). A visitor whose browser prefers Turkish and who chose English on
-    totaldrop.app is sent to Turkish the first time they open
-    download.totaldrop.app, and has to choose English there once too.
-    Before, that page was also shown in Turkish, but its links led back to
-    English addresses. Carrying the choice between the two host names is
-    tracked in #513.
-  - Not done here, tracked in #513: language links that work without
-    JavaScript, `noindex` for the raw translation files, redirects for
-    `/en/` and lower-case tags, and moving the `?v=` versions and the
+    version is linked with `hreflang`, in `#languages` and in the sitemap,
+    the picker (or the header link to `#languages` without JavaScript) is
+    on every page, and a client whose language is English is never
+    redirected.
+  - Browser storage is kept per host name, so when a visitor has explicitly
+    chosen a language (`td-lang`, or `?lang=en` when storage is blocked),
+    `app.js` appends `?lang=<tag>` to links crossing between `totaldrop.app`
+    and `download.totaldrop.app`. On arrival, the receiving host saves the
+    choice in its own storage and strips `lang` from the address bar with
+    `history.replaceState` (keeping `?lang=en` on links when storage is
+    unavailable).
+  - Still tracked in #513 and #554: moving the `?v=` asset versions and the
     privacy pages into the build so that generated files leave the
-    repository.
+    repository, and measuring first-visit redirect LCP at `390 px` after
+    deployment.
   - Not decided here: `og:locale`. Its values name a territory
     (`tr_TR`), which a language tag such as `ar` does not give.
+

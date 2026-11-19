@@ -183,6 +183,33 @@ export function withAlternates(html, canonical) {
   return html.replace(re, (_, a) => `${a}${alternates(canonical)}\n`);
 }
 
+// A list of all 35 languages at the end of <main>, so language switching works
+// without JavaScript too (as on the privacy policy pages, #513).
+export function withLanguages(html, canonical, tag, dict = {}, enDict = {}) {
+  const re = /\n  <\/main>/;
+  if (!re.test(html)) throw new Error("a page without a closing </main> on its own line");
+  const u = new URL(canonical);
+  const enHeading = has(enDict, "lang.label") ? enDict["lang.label"] : "Language";
+  const heading = tag === "en" || has(dict, "lang.label")
+    ? `<h2 id="languages-title">${text(tag === "en" ? enHeading : dict["lang.label"])}</h2>`
+    : `<h2 id="languages-title" lang="en" dir="ltr">${text(enHeading)}</h2>`;
+  const items = Array.from(LANGUAGES, ([t, name]) => {
+    const href = u.hostname === "download.totaldrop.app" ? addressIn(canonical, t) : address(t, u.pathname);
+    const tdir = isRtl(t) === isRtl(tag) ? "" : ` dir="${isRtl(t) ? "rtl" : "ltr"}"`;
+    const cur = t === tag ? ' aria-current="page"' : "";
+    return `        <li><a href="${href}" lang="${t}" hreflang="${t}"${tdir}${cur}>${text(name)}</a></li>`;
+  }).join("\n");
+  const nav = [
+    `    <nav class="lang-list" id="languages" aria-labelledby="languages-title">`,
+    `      ${heading}`,
+    `      <ul>`,
+    items,
+    `      </ul>`,
+    `    </nav>`,
+  ].join("\n");
+  return html.replace(re, `\n\n${nav}\n  </main>`);
+}
+
 // Every address the build adds, for the sitemap.
 export function addedAddresses(canonicals) {
   return canonicals.flatMap((c) => TAGS.filter((t) => t !== "en").map((t) => addressIn(c, t)));
@@ -222,7 +249,8 @@ export function build(out) {
   for (const tag of TAGS) {
     if (tag !== "en" && existsSync(join(pub, tag))) throw new Error(`site/public/${tag} would be hidden by the language ${tag}`);
   }
-  const dicts = new Map(TAGS.filter((t) => t !== "en").map((t) => [t, JSON.parse(readFileSync(join(pub, "i18n", t + ".json"), "utf8"))]));
+  const enDict = JSON.parse(readFileSync(join(pub, "i18n", "en.json"), "utf8"));
+  const dicts = new Map(TAGS.map((t) => [t, t === "en" ? enDict : JSON.parse(readFileSync(join(pub, "i18n", t + ".json"), "utf8"))]));
   const canonicals = [];
   const rendered = [];
   const errors = [];
@@ -232,7 +260,8 @@ export function build(out) {
     canonicals.push(canonical);
     for (const tag of TAGS) {
       const relFile = tag === "en" ? page : join(tag, page);
-      const html = withAlternates(translate(english, tag, dicts.get(tag)), canonical);
+      const translated = translate(english, tag, dicts.get(tag));
+      const html = withLanguages(withAlternates(translated, canonical), canonical, tag, dicts.get(tag), enDict);
       rendered.push({ relFile, html });
     }
   }
