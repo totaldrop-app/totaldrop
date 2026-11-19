@@ -187,6 +187,23 @@ jobs:
       - run: tools/test-advisory-ignores.sh
       - run: tools/check-advisory-ignores.sh
 
+  # Weak test patterns from docs/surec.md (#316, #395, #399): catch-all error
+  # matchers and unallowlisted fixed sleeps before assertions. Cheap, so it
+  # runs on every change.
+  test-patterns:
+    name: Test patterns
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+      - name: The test-pattern check works
+        run: node --test tools/test-check-test-patterns.mjs
+      - run: node tools/check-test-patterns.mjs
+
   # Every file carries its copyright and license, in its own SPDX lines or
   # in REUSE.toml (REUSE 3.3, #249), and every source file in its own lines.
   # Cheap, so it runs on every change.
@@ -289,7 +306,7 @@ jobs:
   gate:
     name: CI
     if: always()
-    needs: [changes, changelog, versions, layers, advisories, secrets, reuse, core, android, linux, server, site, formal]
+    needs: [changes, changelog, versions, layers, advisories, test-patterns, secrets, reuse, core, android, linux, server, site, formal]
     runs-on: ubuntu-latest
     steps:
       - env:
