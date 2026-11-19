@@ -13,6 +13,20 @@ import 'package:totaldrop/ui/send/send_view_model.dart';
 
 import 'fakes.dart';
 
+class _HeldClipboard implements TextClipboard {
+  final pending = Completer<String?>();
+
+  @override
+  Future<String?> read() => pending.future;
+}
+
+class _HeldFolderRepository extends FakeRepository {
+  final folder = Completer<String>();
+
+  @override
+  Future<String> receiveFolder() => folder.future;
+}
+
 /// A receive view model showing [offer].
 Future<ReceiveViewModel> offered(FakeRepository repo, FakeOffer offer) async {
   final vm = ReceiveViewModel(repository: repo);
@@ -96,6 +110,64 @@ void main() {
       expect(vm.stage, ReceiveStage.declined);
       expect(repo.accepted, isEmpty);
     });
+
+    test(
+      'disposing while connecting declines a late offer without notifying',
+      () async {
+        final repo = FakeRepository();
+        final vm = ReceiveViewModel(repository: repo);
+        vm.setInput('7-harbor-rocket');
+        final connecting = vm.connect();
+        expect(vm.stage, ReceiveStage.connecting);
+        vm.dispose();
+        expect(repo.stoppers.single.stopped, isTrue);
+        final late = FakeOffer();
+        repo.connected.complete(late);
+        await connecting;
+        await pumpEventQueue();
+        expect(repo.declined, [late]);
+        expect(vm.offer, isNull);
+      },
+    );
+
+    test(
+      'disposing while connecting ignores a late failure without notifying',
+      () async {
+        final repo = FakeRepository();
+        final vm = ReceiveViewModel(repository: repo);
+        vm.setInput('7-harbor-rocket');
+        final connecting = vm.connect();
+        vm.dispose();
+        repo.connected.completeError(
+          const TransferError(
+            kind: ErrorKind.cancelled,
+            detail: 'stopped',
+            cause: '',
+          ),
+        );
+        await connecting;
+        expect(vm.error, isNull);
+      },
+    );
+
+    test(
+      'disposing while preparing the receive folder declines the offer',
+      () async {
+        final repo = _HeldFolderRepository();
+        final vm = ReceiveViewModel(repository: repo);
+        vm.setInput('7-harbor-rocket');
+        final connecting = vm.connect();
+        final offer = FakeOffer();
+        repo.connected.complete(offer);
+        await pumpEventQueue();
+        vm.dispose();
+        repo.folder.complete('/tmp/TotalDrop');
+        await connecting;
+        await pumpEventQueue();
+        expect(repo.declined, [offer]);
+        expect(vm.offer, isNull);
+      },
+    );
   });
 
   group('send', () {
@@ -148,6 +220,95 @@ void main() {
       vm.reset();
       expect(repo.stoppers.single.stopped, isTrue);
       expect(vm.stage, SendStage.picking);
+    });
+
+    test(
+      'disposing while preparing releases the late session without notifying',
+      () async {
+        final repo = FakeRepository();
+        final vm = SendViewModel(repository: repo);
+        vm.addFakeFileForTest('a.txt');
+        final starting = vm.start();
+        expect(vm.stage, SendStage.preparing);
+        vm.dispose();
+        expect(repo.stoppers.single.stopped, isTrue);
+        final late = FakeSession();
+        repo.prepared.complete(late);
+        await starting;
+        expect(late.disposed, isTrue);
+        expect(vm.code, isNull);
+      },
+    );
+
+    test(
+      'disposing while preparing ignores a late failure without notifying',
+      () async {
+        final repo = FakeRepository();
+        final vm = SendViewModel(repository: repo);
+        vm.addFakeFileForTest('a.txt');
+        final starting = vm.start();
+        vm.dispose();
+        repo.prepared.completeError(
+          const TransferError(
+            kind: ErrorKind.cancelled,
+            detail: 'stopped',
+            cause: '',
+          ),
+        );
+        await starting;
+        expect(vm.error, isNull);
+      },
+    );
+
+    test(
+      'disposing while picking clears late copies without notifying',
+      () async {
+        final source = FakeFileSource();
+        final vm = SendViewModel(
+          repository: FakeRepository(),
+          fileSource: source,
+        );
+        final adding = vm.addFiles();
+        source.startCopy();
+        vm.dispose();
+        source.finish([pickedFile('film.mkv')]);
+        await adding;
+        await pumpEventQueue();
+        expect(source.clears, 1);
+        expect(vm.files, isEmpty);
+      },
+    );
+
+    test(
+      'resetting and re-entering text mode ignores an earlier clipboard read',
+      () async {
+        final clipboard = _HeldClipboard();
+        final vm = SendViewModel(
+          repository: FakeRepository(),
+          textClipboard: clipboard,
+        );
+        final pasting = vm.pasteClipboard();
+        expect(vm.textMode, isTrue);
+        vm.reset();
+        vm.setTextMode(true);
+        clipboard.pending.complete('stale');
+        await pasting;
+        expect(vm.text, isEmpty);
+        expect(vm.textNotice, TextNotice.none);
+      },
+    );
+
+    test('disposing while reading the clipboard does not notify', () async {
+      final clipboard = _HeldClipboard();
+      final vm = SendViewModel(
+        repository: FakeRepository(),
+        textClipboard: clipboard,
+      );
+      final pasting = vm.pasteClipboard();
+      vm.dispose();
+      clipboard.pending.complete('late');
+      await pasting;
+      expect(vm.text, isEmpty);
     });
   });
 }

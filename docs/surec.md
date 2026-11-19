@@ -119,7 +119,10 @@ elle bakar.
   denetler.
 - Bir işlem yalnızca geçerli olduğu aşamada çalışır.
 - Denetim: Linux'ta QML'in karşılaştırdığı durum adlarını sınayan test
-  (`linux/src/bridge/stage.rs`); geri kalanı elle.
+  (`linux/src/bridge/stage.rs`); Android'de `ChangeNotifier` aşamalarının
+  enum olduğunu, `await` sonrası nesil denetimlerini ve `dispose()`
+  geçersizleştirmesini denetleyen `tools/check-state-machines.mjs` ile
+  `app/test/stage_test.dart` (#399); geri kalanı elle.
 
 ### Söz ile kod uyuşmuyor (#368, #393, #394)
 

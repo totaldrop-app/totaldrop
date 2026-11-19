@@ -229,7 +229,7 @@ class SendViewModel extends ChangeNotifier {
   Future<void> addFiles() async {
     // One picker at a time: the plugin refuses a second one anyway. Not
     // while a share copies either.
-    if (_picking || sharing) return;
+    if (_disposed || _picking || sharing) return;
     _picking = true;
     final resets = _resets;
     if (addFailed) {
@@ -239,7 +239,7 @@ class SendViewModel extends ChangeNotifier {
     try {
       final picked = await _source.pick(
         onCopying: (c) {
-          if (copying == c) return;
+          if (_disposed || copying == c) return;
           copying = c;
           notifyListeners();
         },
@@ -267,9 +267,11 @@ class SendViewModel extends ChangeNotifier {
     } finally {
       // The plugin says the copy ended just before it returns, but only
       // while someone listens; end it here too.
-      _picking = false;
-      copying = false;
-      notifyListeners();
+      if (!_disposed) {
+        _picking = false;
+        copying = false;
+        notifyListeners();
+      }
     }
   }
 
@@ -321,12 +323,14 @@ class SendViewModel extends ChangeNotifier {
   /// Send clipboard: the clipboard's text, into an empty box. A text
   /// already typed is kept, and the screen says so.
   Future<void> pasteClipboard() async {
-    if (busy) return;
+    if (_disposed || busy) return;
     if (stage != SendStage.picking) reset();
     // As with a shared text: the text is what the person chose last.
     cancelShares();
     textMode = true;
     textNotice = TextNotice.none;
+    final generation = _generation;
+    final resets = _resets;
     notifyListeners();
     String? clip;
     try {
@@ -334,7 +338,8 @@ class SendViewModel extends ChangeNotifier {
     } on PlatformException catch (e) {
       debugPrint('clipboard: $e');
     }
-    if (busy || !textMode) return;
+    if (_disposed || generation != _generation) return;
+    if (resets != _resets || busy || !textMode) return;
     if (_text.isNotEmpty) {
       textNotice = TextNotice.clipboardKept;
     } else if (clip == null || clip.isEmpty) {
@@ -526,9 +531,14 @@ class SendViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  bool _disposed = false;
+
   @override
   void dispose() {
+    _disposed = true;
     cancel();
+    _generation++;
+    _resets++;
     _sub?.cancel();
     _release();
     super.dispose();
