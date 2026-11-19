@@ -20,6 +20,8 @@ expect_used = "warn"
 panic = "warn"
 indexing_slicing = "warn"
 arithmetic_side_effects = "warn"
+disallowed_macros = "allow"
+disallowed_methods = "allow"
 
 [profile.release]
 lto = true

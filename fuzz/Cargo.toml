@@ -54,3 +54,7 @@ path = "fuzz_targets/portmap.rs"
 test = false
 doc = false
 bench = false
+
+[lints.clippy]
+disallowed_macros = "allow"
+disallowed_methods = "allow"

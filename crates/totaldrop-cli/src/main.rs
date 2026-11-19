@@ -3,8 +3,10 @@
 //
 //! `totaldrop`: the command-line client.
 
-use std::io::{IsTerminal as _, Write as _};
-use std::path::PathBuf;
+#![deny(clippy::disallowed_macros, clippy::disallowed_methods)]
+
+use std::io::IsTerminal as _;
+use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU8, AtomicU64, Ordering};
@@ -16,10 +18,13 @@ use clap::{
 use totaldrop_core::{
     Event, Events, IncomingOffer, PathOptions, PreparedSend, ReceiveOptions, SendOptions, Stop,
 };
-use totaldrop_l10n::{Arg, Domain, Strings, is_yes, reveal_controls as visible, reveal_text};
+use totaldrop_l10n::{Domain, Strings, is_yes};
 use totaldrop_proto::TransferCode;
 
+use crate::term::{Clean, CleanArg};
+
 mod sandbox;
+mod term;
 
 // The doc comments are the English help; `help` puts each in the person's
 // language from l10n/cli under the key named next to it.
@@ -86,46 +91,34 @@ enum Command {
     },
 }
 
-/// Write a line to standard error without panicking if the terminal has hung
-/// up (`EIO` on `SIGHUP`) or the pipe has closed.
-fn errln(msg: &str) {
-    let _ = writeln!(std::io::stderr(), "{msg}");
-}
-
 /// Prints events to stderr; progress at most once per percent.
 fn printer(s: Arc<Strings>) -> Events {
     let last = Arc::new(AtomicU64::new(u64::MAX));
     Arc::new(move |event| match event {
-        Event::Waiting => errln(&s.get("cliWaiting", &[])),
+        Event::Waiting => term::errln(&Clean::msg(&s, "cliWaiting", &[])),
         Event::Connected { words } => {
-            errln(&s.get("cliConnected", &[]));
-            let words = words.join(" ");
-            errln(&s.get("cliVerification", &[("words", Arg::Text(&words))]));
+            term::errln(&Clean::msg(&s, "cliConnected", &[]));
+            let words = Clean::visible(&words.join(" "));
+            term::errln(&Clean::msg(
+                &s,
+                "cliVerification",
+                &[("words", CleanArg::Text(&words))],
+            ));
         }
         Event::Progress { done, total } => {
             let pct = done.saturating_mul(100).checked_div(total).unwrap_or(100);
             if last.swap(pct, Ordering::Relaxed) != pct {
-                let (done_s, total_s) = (s.bytes(done), s.bytes(total));
-                let line = s.get(
+                let (done_s, total_s) = (Clean::bytes(&s, done), Clean::bytes(&s, total));
+                let line = Clean::msg(
+                    &s,
                     "cliProgress",
                     &[
-                        ("percent", Arg::Count(pct)),
-                        ("done", Arg::Text(&done_s)),
-                        ("total", Arg::Text(&total_s)),
+                        ("percent", CleanArg::Count(pct)),
+                        ("done", CleanArg::Text(&done_s)),
+                        ("total", CleanArg::Text(&total_s)),
                     ],
                 );
-                // On a terminal, clear the rest of the line: a shorter
-                // translation must not leave old characters behind.
-                let clear = if std::io::stderr().is_terminal() {
-                    "\x1b[K"
-                } else {
-                    ""
-                };
-                let _ = write!(std::io::stderr(), "\r{line}{clear}");
-                let _ = std::io::stderr().flush();
-                if done >= total {
-                    errln("");
-                }
+                term::progress(&line, done >= total);
             }
         }
     })
@@ -210,14 +203,17 @@ fn help(s: &Strings) -> clap::Command {
         }
         cmd
     };
-    let cmd = Cli::command().disable_version_flag(true).arg(
-        ClapArg::new("version")
-            .short('V')
-            .long("version")
-            .action(ArgAction::Version)
-            .help(t("cliHelpVersion"))
-            .display_order(LAST),
-    );
+    let cmd = Cli::command()
+        .styles(clap::builder::styling::Styles::plain())
+        .disable_version_flag(true)
+        .arg(
+            ClapArg::new("version")
+                .short('V')
+                .long("version")
+                .action(ArgAction::Version)
+                .help(t("cliHelpVersion"))
+                .display_order(LAST),
+        );
     let mut cmd = localize("", cmd).mut_subcommands(|sub| {
         let name = sub.get_name().to_owned();
         localize(&name, sub)
@@ -325,8 +321,8 @@ impl SignalStop {
             };
             let _ = code.compare_exchange(0, first, Ordering::AcqRel, Ordering::Acquire);
             if first == 130 {
-                errln("");
-                errln(&s.get("cliStopping", &[]));
+                term::err_blank();
+                term::errln(&Clean::msg(&s, "cliStopping", &[]));
             }
             handle.stop();
             #[cfg(unix)]
@@ -396,7 +392,7 @@ fn run_then_release<T: Send + 'static>(
             // Not cancelled by `stop`, and no panic hook saw it: told here,
             // and kept as a panic so it is not lost.
             Err(e) => {
-                errln(&format!("totaldrop: {e}"));
+                term::err_totaldrop(&Clean::error(&e));
                 Box::new(e.to_string())
             }
         }),
@@ -433,7 +429,7 @@ fn what_to_send(
                 } else {
                     "cliTypeText"
                 };
-                eprintln!("{}", s.get(key, &[]));
+                term::errln(&Clean::msg(s, key, &[]));
             }
             let mut bytes = Vec::new();
             // One byte more than allowed is enough to know it is too long.
@@ -445,19 +441,19 @@ fn what_to_send(
             match String::from_utf8(bytes) {
                 Ok(t) => t,
                 Err(_) => {
-                    eprintln!("totaldrop: {}", s.get("cliTextNotUtf8", &[]));
+                    term::err_totaldrop(&Clean::msg(s, "cliTextNotUtf8", &[]));
                     return Err(Failure::Shown);
                 }
             }
         }
         (None, _) if paths.iter().any(|p| p.as_os_str() == "-") => {
-            eprintln!("totaldrop: {}", s.get("cliDashAlone", &[]));
+            term::err_totaldrop(&Clean::msg(s, "cliDashAlone", &[]));
             return Err(Failure::Shown);
         }
         _ => return Ok(What::Files(paths)),
     };
     if text.is_empty() {
-        eprintln!("totaldrop: {}", s.get("cliTextEmpty", &[]));
+        term::err_totaldrop(&Clean::msg(s, "cliTextEmpty", &[]));
         return Err(Failure::Shown);
     }
     if text.len() as u64 > totaldrop_core::MAX_TEXT {
@@ -467,22 +463,13 @@ fn what_to_send(
 }
 
 fn too_long(s: &Strings) -> Failure {
-    let size = s.bytes(totaldrop_core::MAX_TEXT);
-    eprintln!(
-        "totaldrop: {}",
-        s.get("cliTextTooLong", &[("size", Arg::Text(&size))])
-    );
+    let size = Clean::bytes(s, totaldrop_core::MAX_TEXT);
+    term::err_totaldrop(&Clean::msg(
+        s,
+        "cliTextTooLong",
+        &[("size", CleanArg::Text(&size))],
+    ));
     Failure::Shown
-}
-
-/// A received text as the terminal should show it ([`reveal_text`]);
-/// into a pipe or a file it goes as it came.
-fn shown_text(text: &str, terminal: bool) -> String {
-    if terminal {
-        reveal_text(text)
-    } else {
-        text.to_owned()
-    }
 }
 
 async fn send(
@@ -493,7 +480,7 @@ async fn send(
     strong: bool,
     stop: Stop,
 ) -> Result<(), Failure> {
-    errln(&s.get("cliPreparing", &[]));
+    term::errln(&Clean::msg(&s, "cliPreparing", &[]));
     let opts = SendOptions {
         server,
         words: if strong { 3 } else { 2 },
@@ -512,31 +499,50 @@ async fn send(
     let (entries, total) = prepared.totals();
     if prepared.skipped() > 0 {
         let n = u64::try_from(prepared.skipped()).unwrap_or(u64::MAX);
-        errln(&s.get("cliSkipping", &[("count", Arg::Count(n))]));
-    }
-    let size = s.bytes(total);
-    let entries = u64::try_from(entries).unwrap_or(u64::MAX);
-    if is_text {
-        errln(&s.get("cliSendingText", &[("size", Arg::Text(&size))]));
-    } else {
-        errln(&s.get(
-            "cliSending",
-            &[("count", Arg::Count(entries)), ("size", Arg::Text(&size))],
+        term::errln(&Clean::msg(
+            &s,
+            "cliSkipping",
+            &[("count", CleanArg::Count(n))],
         ));
     }
-    errln("");
-    errln(&s.get("cliRunThis", &[]));
+    let size = Clean::bytes(&s, total);
+    let entries = u64::try_from(entries).unwrap_or(u64::MAX);
+    if is_text {
+        term::errln(&Clean::msg(
+            &s,
+            "cliSendingText",
+            &[("size", CleanArg::Text(&size))],
+        ));
+    } else {
+        term::errln(&Clean::msg(
+            &s,
+            "cliSending",
+            &[
+                ("count", CleanArg::Count(entries)),
+                ("size", CleanArg::Text(&size)),
+            ],
+        ));
+    }
+    term::err_blank();
+    term::errln(&Clean::msg(&s, "cliRunThis", &[]));
     // The command itself is never translated: it is what the other side types.
-    let _ = writeln!(std::io::stdout(), "totaldrop receive {}", prepared.code());
-    let _ = std::io::stdout().flush();
-    errln("");
+    term::out_receive_command(prepared.code());
+    term::err_blank();
     let report = prepared.run_with(printer(Arc::clone(&s)), stop).await?;
     if report.files_failed > 0 {
         let n = u64::try_from(report.files_failed).unwrap_or(u64::MAX);
-        errln(&s.get("cliSendSomeFailed", &[("count", Arg::Count(n))]));
+        term::errln(&Clean::msg(
+            &s,
+            "cliSendSomeFailed",
+            &[("count", CleanArg::Count(n))],
+        ));
     } else {
         let n = u64::try_from(report.files_ok).unwrap_or(u64::MAX);
-        errln(&s.get("cliSendDone", &[("count", Arg::Count(n))]));
+        term::errln(&Clean::msg(
+            &s,
+            "cliSendDone",
+            &[("count", CleanArg::Count(n))],
+        ));
     }
     Ok(())
 }
@@ -548,10 +554,38 @@ async fn send(
 fn connecting_line(
     s: &Strings,
     typed: &str,
-) -> Result<(String, String), totaldrop_proto::CodeError> {
+) -> Result<(String, Clean), totaldrop_proto::CodeError> {
     let code = TransferCode::parse(typed)?.to_english();
-    let line = s.get("cliConnectingCode", &[("code", Arg::Text(&code))]);
+    let shown = Clean::visible(&code);
+    let line = Clean::msg(s, "cliConnectingCode", &[("code", CleanArg::Text(&shown))]);
     Ok((code, line))
+}
+
+fn destination_error_line(s: &Strings, dest: &Path, kind: std::io::ErrorKind) -> Clean {
+    let shown = Clean::path(dest);
+    let key = match kind {
+        std::io::ErrorKind::NotFound | std::io::ErrorKind::NotADirectory => "cliNoFolder",
+        _ => "cliFolderNotWritable",
+    };
+    Clean::msg(s, key, &[("folder", CleanArg::Text(&shown))])
+}
+
+fn folder_not_kept_line(s: &Strings, folder: &Path, downloads: &Path) -> Clean {
+    let shown = Clean::path(folder);
+    let kept = Clean::path(downloads);
+    Clean::msg(
+        s,
+        "cliFolderNotKept",
+        &[
+            ("folder", CleanArg::Text(&shown)),
+            ("downloads", CleanArg::Text(&kept)),
+        ],
+    )
+}
+
+fn save_prompt(s: &Strings, dest: &Path) -> Clean {
+    let shown = Clean::path(dest);
+    Clean::msg(s, "cliPromptSave", &[("folder", CleanArg::Text(&shown))])
 }
 
 async fn receive(
@@ -581,17 +615,9 @@ async fn receive(
     let dest = match totaldrop_core::check_destination(&dest) {
         Ok(d) => d,
         Err(totaldrop_core::Error::Io(e)) => {
-            let shown = dest.display().to_string();
-            let key = match e.kind() {
-                std::io::ErrorKind::NotFound | std::io::ErrorKind::NotADirectory => "cliNoFolder",
-                _ => "cliFolderNotWritable",
-            };
             // Said here, with the folder's name: better than any generic
             // sentence main could choose.
-            errln(&format!(
-                "totaldrop: {}",
-                s.get(key, &[("folder", Arg::Text(&shown))])
-            ));
+            term::err_totaldrop(&destination_error_line(&s, &dest, e.kind()));
             return Err(Failure::Shown);
         }
         Err(e) => return Err(e.into()),
@@ -604,70 +630,56 @@ async fn receive(
         && let Ok(real) = std::fs::canonicalize(&dest)
         && !sandbox::kept(&table, &real)
     {
-        let shown = dest.display().to_string();
-        let kept = sandbox::downloads().display().to_string();
-        errln(&format!(
-            "totaldrop: {}",
-            s.get(
-                "cliFolderNotKept",
-                &[
-                    ("folder", Arg::Text(&shown)),
-                    ("downloads", Arg::Text(&kept))
-                ],
-            )
-        ));
+        term::err_totaldrop(&folder_not_kept_line(&s, &dest, &sandbox::downloads()));
         return Err(Failure::Shown);
     }
     let (code, line) = connecting_line(&s, &code).map_err(totaldrop_core::Error::Code)?;
-    errln(&line);
+    term::errln(&line);
     let offer =
         IncomingOffer::connect_with(&ReceiveOptions { server, paths }, &code, &stop).await?;
     let summary = offer.summary().clone();
-    errln(&s.get("cliConnected", &[]));
-    let words = offer.words().join(" ");
-    errln(&s.get("cliVerification", &[("words", Arg::Text(&words))]));
-    let size = s.bytes(summary.total_size);
-    let count = |n: usize| Arg::Count(u64::try_from(n).unwrap_or(u64::MAX));
+    term::errln(&Clean::msg(&s, "cliConnected", &[]));
+    let words = Clean::visible(&offer.words().join(" "));
+    term::errln(&Clean::msg(
+        &s,
+        "cliVerification",
+        &[("words", CleanArg::Text(&words))],
+    ));
+    let size = Clean::bytes(&s, summary.total_size);
+    let count = |n: usize| CleanArg::Count(u64::try_from(n).unwrap_or(u64::MAX));
     let prompt = if summary.text {
         // A text is shown here, not saved (#313).
-        errln(&s.get("cliOfferedText", &[("size", Arg::Text(&size))]));
-        s.get("cliPromptShow", &[])
+        term::errln(&Clean::msg(
+            &s,
+            "cliOfferedText",
+            &[("size", CleanArg::Text(&size))],
+        ));
+        Clean::msg(&s, "cliPromptShow", &[])
     } else {
-        errln(&s.get(
+        term::errln(&Clean::msg(
+            &s,
             "cliOffered",
             &[
                 ("files", count(summary.files)),
                 ("dirs", count(summary.dirs)),
-                ("size", Arg::Text(&size)),
+                ("size", CleanArg::Text(&size)),
             ],
         ));
         for name in summary.top_level.iter().take(10) {
-            errln(&format!("  {}", visible(name)));
+            term::err_indented(&Clean::visible(name));
         }
         if summary.top_level.len() > 10 {
             let more = summary.top_level.len().saturating_sub(10);
-            errln(&format!(
-                "  {}",
-                s.get("cliAndMore", &[("count", count(more))])
-            ));
+            term::err_indented(&Clean::msg(&s, "cliAndMore", &[("count", count(more))]));
         }
-        let shown = dest.display().to_string();
-        s.get("cliPromptSave", &[("folder", Arg::Text(&shown))])
+        save_prompt(&s, &dest)
     };
     let yes_words = s.get("cliYes", &[]);
     let accepted = if yes {
         Some(true)
     } else {
         let answer = tokio::task::spawn_blocking(move || {
-            // The answer shows in the log only when both are terminals.
-            let typed = std::io::stdin().is_terminal() && std::io::stderr().is_terminal();
-            let line = ask(
-                &prompt,
-                &mut std::io::stdin().lock(),
-                &mut std::io::stderr(),
-                typed,
-            );
-            line.map(|l| is_yes(&l, &yes_words))
+            term::ask_stderr(&prompt).map(|l| is_yes(&l, &yes_words))
         });
         tokio::select! {
             // Join error or a read error on stdin (such as `EIO` when a
@@ -697,7 +709,7 @@ async fn receive(
             return Err(totaldrop_core::Error::Stopped.into());
         }
         declined?;
-        errln(&s.get("cliDeclined", &[]));
+        term::errln(&Clean::msg(&s, "cliDeclined", &[]));
         return Ok(());
     }
     let report = if summary.text {
@@ -709,51 +721,39 @@ async fn receive(
             .await?
     };
     if let Some(text) = &report.text {
-        let terminal = std::io::stdout().is_terminal();
-        let mut out = std::io::stdout().lock();
-        write!(out, "{}", shown_text(text, terminal))?;
-        if terminal && !text.ends_with('\n') {
-            writeln!(out)?;
-        }
-        out.flush()?;
+        term::write_received_stdout(text)?;
     }
     for p in &report.placed {
-        let name = visible(&p.display().to_string());
-        errln(&s.get("cliSaved", &[("name", Arg::Text(&name))]));
+        let name = Clean::path(p);
+        term::errln(&Clean::msg(
+            &s,
+            "cliSaved",
+            &[("name", CleanArg::Text(&name))],
+        ));
     }
     if report.files_failed > 0 {
         let n = u64::try_from(report.files_failed).unwrap_or(u64::MAX);
-        errln(&s.get("cliReceiveSomeFailed", &[("count", Arg::Count(n))]));
+        term::errln(&Clean::msg(
+            &s,
+            "cliReceiveSomeFailed",
+            &[("count", CleanArg::Count(n))],
+        ));
     }
     Ok(())
 }
 
-/// Asks `prompt` on `out` and reads one line of answer from `input`:
-/// `None` on a read error, empty at the end of input. A terminal echoes what
-/// is `typed`, Enter included; an answer from a pipe or a file is not
-/// echoed, and Ctrl-D echoes no Enter, so then the line is ended here and
-/// what comes next does not follow the question (#163).
-fn ask(
-    prompt: &str,
-    input: &mut impl std::io::BufRead,
-    out: &mut impl std::io::Write,
-    typed: bool,
-) -> Option<String> {
-    let _ = write!(out, "{prompt}");
-    let _ = out.flush();
-    let mut line = String::new();
-    let read = input.read_line(&mut line);
-    if !typed || !line.ends_with('\n') {
-        let _ = writeln!(out);
-    }
-    read.ok().map(|_| line)
-}
-
 fn main() -> ExitCode {
     let strings = Arc::new(Strings::system(Domain::Cli));
-    let cli = match Cli::from_arg_matches(&help(&strings).get_matches()) {
+    let matches = match help(&strings).try_get_matches() {
+        Ok(m) => m,
+        Err(e) => return term::exit_clap(&e),
+    };
+    let cli = match Cli::from_arg_matches(&matches) {
         Ok(cli) => cli,
-        Err(e) => e.exit(),
+        Err(e) => {
+            let mut cmd = help(&strings);
+            return term::exit_clap(&e.format(&mut cmd));
+        }
     };
     let runtime = match tokio::runtime::Builder::new_multi_thread()
         .enable_all()
@@ -761,13 +761,13 @@ fn main() -> ExitCode {
     {
         Ok(rt) => rt,
         Err(e) => {
-            eprintln!("totaldrop: {e}");
+            term::err_totaldrop(&Clean::error(&e));
             return ExitCode::FAILURE;
         }
     };
     let route = paths(cli.relay, cli.stun, cli.relay_only);
     if route.relay_only && route.relay.is_empty() {
-        eprintln!("totaldrop: {}", strings.get("cliRelayOnlyNeedsRelay", &[]));
+        term::err_totaldrop(&Clean::msg(&strings, "cliRelayOnlyNeedsRelay", &[]));
         return ExitCode::from(2);
     }
     let strings_for_exit = Arc::clone(&strings);
@@ -777,12 +777,11 @@ fn main() -> ExitCode {
         Command::Code { code } => {
             return match TransferCode::parse(&code) {
                 Ok(c) => {
-                    println!("code:      {c}");
-                    println!("canonical: {}", c.canonical());
+                    term::out_code(&c);
                     ExitCode::SUCCESS
                 }
                 Err(e) => {
-                    errln(&format!("totaldrop: invalid code: {e}"));
+                    term::err_invalid_code(&e);
                     ExitCode::from(2)
                 }
             };
@@ -846,25 +845,23 @@ fn main() -> ExitCode {
         Ok(()) => ExitCode::SUCCESS,
         Err(Failure::Shown) => ExitCode::FAILURE,
         Err(Failure::Core(totaldrop_core::Error::Stopped)) => {
-            errln(&strings_for_exit.get("cliStopped", &[]));
+            term::errln(&Clean::msg(&strings_for_exit, "cliStopped", &[]));
             signal.exit_code()
         }
         Err(Failure::Core(e)) => {
             // One sentence in the person's language, then the detail for a
             // bug report, which stays English.
-            errln(&format!(
-                "totaldrop: {}",
-                strings_for_exit.get(error_key(&e, sending), &[])
-            ));
+            term::err_totaldrop(&Clean::msg(&strings_for_exit, error_key(&e, sending), &[]));
             // Why, also in the person's language (#212).
             let cause = e.cause().as_str();
             if !cause.is_empty() {
-                errln(&format!(
-                    "  {}",
-                    strings_for_exit.get(&format!("cause{cause}"), &[])
+                term::err_indented(&Clean::msg(
+                    &strings_for_exit,
+                    &format!("cause{cause}"),
+                    &[],
                 ));
             }
-            errln(&detail_line(&e));
+            term::errln(&detail_line(&e));
             ExitCode::FAILURE
         }
     }
@@ -873,8 +870,8 @@ fn main() -> ExitCode {
 /// The English detail of an error, for a bug report. It can carry text the
 /// other side chose (the reason of its `cancel`, its QUIC close reason), so
 /// every control and hidden character is named, as in a received name (T17).
-fn detail_line(e: &totaldrop_core::Error) -> String {
-    format!("  ({})", visible(&e.to_string()))
+fn detail_line(e: &totaldrop_core::Error) -> Clean {
+    Clean::detail(e)
 }
 
 /// The message for each kind of failure, as the apps show it. Every variant
@@ -955,12 +952,16 @@ fn proc_status_ignores_sighup(status: &str) -> bool {
 mod tests {
     #![allow(clippy::unwrap_used)]
 
+    use std::path::Path;
+
     use super::{
-        ARG_HELP, COMMAND_HELP, What, ask, connecting_line, detail_line, error_key, help,
-        proc_status_ignores_sighup, run_then_release, shown_text, what_to_send,
+        ARG_HELP, COMMAND_HELP, What, connecting_line, destination_error_line, detail_line,
+        error_key, folder_not_kept_line, help, proc_status_ignores_sighup, run_then_release,
+        save_prompt, what_to_send,
     };
+    use crate::term::{Clean, ask, shown_text};
     use totaldrop_core::{Error, Stop};
-    use totaldrop_l10n::{Domain, Strings};
+    use totaldrop_l10n::{Domain, Strings, is_hidden, reveal_text};
     use totaldrop_proto::wire::RejectReason;
 
     /// A panic in a send or receive must not skip the release of a router
@@ -1162,11 +1163,15 @@ mod tests {
         ] {
             let (code, line) = connecting_line(&en, typed).unwrap();
             assert_eq!(code, "7-harbor-rocket");
-            assert_eq!(line, "Connecting with 7-harbor-rocket…", "{typed:?}");
+            assert_eq!(
+                line.as_str(),
+                "Connecting with 7-harbor-rocket…",
+                "{typed:?}"
+            );
             assert!(code.is_ascii());
         }
         let (_, line) = connecting_line(&strings("tr"), "\u{202E}7-harbor-rocket").unwrap();
-        assert_eq!(line, "7-harbor-rocket koduyla bağlanılıyor…");
+        assert_eq!(line.as_str(), "7-harbor-rocket koduyla bağlanılıyor…");
         assert!(connecting_line(&en, "7-harbor").is_err());
     }
 
@@ -1221,23 +1226,24 @@ mod tests {
     /// question ends its own line: what comes next starts on a new one (#163).
     #[test]
     fn an_answer_from_a_pipe_ends_the_line() {
+        let prompt = Clean::visible("Save? ");
         for (typed, shown) in [(false, "Save? \n"), (true, "Save? ")] {
             let mut out = Vec::new();
-            let line = ask("Save? ", &mut &b"y\n"[..], &mut out, typed);
+            let line = ask(&prompt, &mut &b"y\n"[..], &mut out, typed);
             assert_eq!(line.as_deref(), Some("y\n"));
             assert_eq!(String::from_utf8(out).unwrap(), shown, "typed: {typed}");
         }
         // Nothing to read: no answer, and the line still ends.
         let mut out = Vec::new();
         assert_eq!(
-            ask("Save? ", &mut &b""[..], &mut out, false).as_deref(),
+            ask(&prompt, &mut &b""[..], &mut out, false).as_deref(),
             Some("")
         );
         assert_eq!(out, b"Save? \n");
         // Ctrl-D at a terminal: no Enter is echoed, so the line ends here.
         let mut out = Vec::new();
         assert_eq!(
-            ask("Save? ", &mut &b""[..], &mut out, true).as_deref(),
+            ask(&prompt, &mut &b""[..], &mut out, true).as_deref(),
             Some("")
         );
         assert_eq!(out, b"Save? \n");
@@ -1322,11 +1328,15 @@ mod tests {
             Error::Connect(format!("closed by peer: 0: {hostile}")),
         ] {
             let line = detail_line(&e);
-            assert!(line.contains("<U+001B>[2J<U+009B>31mok<U+0007>"), "{line}");
-            assert!(!line.chars().any(char::is_control), "{line:?}");
+            assert!(
+                line.as_str().contains("<U+001B>[2J<U+009B>31mok<U+0007>"),
+                "{}",
+                line.as_str()
+            );
+            assert!(!line.as_str().chars().any(char::is_control), "{line:?}");
         }
         assert_eq!(
-            detail_line(&Error::Cancelled("stopped".into())),
+            detail_line(&Error::Cancelled("stopped".into())).as_str(),
             "  (cancelled by the other side: stopped)"
         );
     }
@@ -1343,5 +1353,87 @@ mod tests {
         assert!(!proc_status_ignores_sighup("SigIgn:\t0000000000000002\n"));
         assert!(!proc_status_ignores_sighup("SigIgn:\tnot-hex\n"));
         assert!(!proc_status_ignores_sighup(""));
+    }
+
+    /// Every folder path formatted into `cliNoFolder`, `cliFolderNotWritable`,
+    /// `cliFolderNotKept` (including `XDG_DOWNLOAD_DIR`) or `cliPromptSave`
+    /// names hidden control and Bidi characters instead of sending them raw
+    /// to the terminal (#399).
+    #[test]
+    fn destination_and_sandbox_lines_name_hidden_characters() {
+        let s = Strings::new(
+            Domain::Cli,
+            &[totaldrop_l10n::locale::parse("en").unwrap()],
+            None,
+        );
+        let folder = Path::new("/tmp/out-\x1b[31m-\u{202e}fdp.exe");
+        let downloads = Path::new("/home/ada/dl-\x1b]2;pwnd\x07-\u{2066}TotalDrop");
+
+        let missing = destination_error_line(&s, folder, std::io::ErrorKind::NotFound);
+        assert!(!missing.as_str().chars().any(is_hidden));
+        assert!(
+            missing
+                .as_str()
+                .contains("/tmp/out-<U+001B>[31m-<U+202E>fdp.exe")
+        );
+
+        let unwritable = destination_error_line(&s, folder, std::io::ErrorKind::PermissionDenied);
+        assert!(!unwritable.as_str().chars().any(is_hidden));
+        assert!(unwritable.as_str().contains("Cannot write to"));
+        assert!(
+            unwritable
+                .as_str()
+                .contains("/tmp/out-<U+001B>[31m-<U+202E>fdp.exe")
+        );
+
+        let not_kept = folder_not_kept_line(&s, folder, downloads);
+        assert!(!not_kept.as_str().chars().any(is_hidden));
+        assert!(
+            not_kept
+                .as_str()
+                .contains("/tmp/out-<U+001B>[31m-<U+202E>fdp.exe")
+        );
+        assert!(
+            not_kept
+                .as_str()
+                .contains("/home/ada/dl-<U+001B>]2;pwnd<U+0007>-<U+2066>TotalDrop")
+        );
+
+        let prompt = save_prompt(&s, folder);
+        assert!(!prompt.as_str().chars().any(is_hidden));
+        assert!(
+            prompt
+                .as_str()
+                .contains("/tmp/out-<U+001B>[31m-<U+202E>fdp.exe")
+        );
+    }
+
+    /// Sanitising Clap's rendered `--help` with `reveal_text` preserves every
+    /// localized CLI help screen unchanged (#399).
+    #[test]
+    fn reveal_text_preserves_localized_help_in_every_language() {
+        let mut tags = totaldrop_l10n::available(Domain::Cli);
+        tags.extend(totaldrop_l10n::PSEUDO.iter().map(|s| (*s).to_owned()));
+        for tag in tags {
+            let s = Strings::new(
+                Domain::Cli,
+                &[totaldrop_l10n::locale::parse(&tag).unwrap()],
+                None,
+            );
+            let mut cmd = help(&s);
+            for sub in ["", "send", "receive", "code"] {
+                let rendered = match sub {
+                    "" => cmd.render_help().ansi().to_string(),
+                    _ => cmd
+                        .find_subcommand_mut(sub)
+                        .unwrap()
+                        .render_help()
+                        .ansi()
+                        .to_string(),
+                };
+                assert!(!rendered.contains("<U+"), "{tag} {sub}: {rendered}");
+                assert_eq!(reveal_text(&rendered), rendered, "{tag} {sub}");
+            }
+        }
     }
 }
