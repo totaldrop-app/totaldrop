@@ -176,16 +176,28 @@ fn receiving_into_a_missing_folder_fails_before_connecting() {
     assert!(stderr(&out).contains("not-here"), "{}", stderr(&out));
 }
 
+// Windows rejects ASCII C0 controls (`0x00..=0x1F`, including `\x1b`) when
+// creating real files or folders on NTFS, whereas C1 CSI (`\u{009b}`) and
+// Bidi overrides (`\u{202e}`) are valid NTFS names on every OS.
+#[cfg(unix)]
+const ON_DISK_HOSTILE: (&str, &str) = (
+    "\x1b[31m-\u{009b}31m-\u{202e}",
+    "<U+001B>[31m-<U+009B>31m-<U+202E>",
+);
+#[cfg(not(unix))]
+const ON_DISK_HOSTILE: (&str, &str) = ("\u{009b}31m-\u{202e}", "<U+009B>31m-<U+202E>");
+
 #[test]
 fn destination_errors_name_hidden_characters() {
     let dir = Scratch::new("hostile-out");
-    let missing = dir.join("missing-\x1b[31m-\u{202e}fdp.exe");
-    let regular = dir.join("file-\x1b[31m-\u{202e}fdp.exe");
+    let missing = dir.join("missing-\x1b[31m-\u{009b}31m-\u{202e}fdp.exe");
+    let regular = dir.join(format!("file-{}fdp.exe", ON_DISK_HOSTILE.0));
     std::fs::write(&regular, b"x").unwrap();
+    let expected_regular = format!("file-{}fdp.exe", ON_DISK_HOSTILE.1);
 
     for (path, expected_tail) in [
-        (&missing, "missing-<U+001B>[31m-<U+202E>fdp.exe"),
-        (&regular, "file-<U+001B>[31m-<U+202E>fdp.exe"),
+        (&missing, "missing-<U+001B>[31m-<U+009B>31m-<U+202E>fdp.exe"),
+        (&regular, expected_regular.as_str()),
     ] {
         let out = totaldrop("ws://127.0.0.1:1")
             .args(["receive", "7-harbor-rocket", "--yes", "--out"])
@@ -195,7 +207,7 @@ fn destination_errors_name_hidden_characters() {
         let err = stderr(&out);
         assert_eq!(out.status.code(), Some(1), "{err}");
         assert!(
-            !err.contains('\x1b') && !err.contains('\u{202e}'),
+            !err.contains('\x1b') && !err.contains('\u{009b}') && !err.contains('\u{202e}'),
             "{err:?}"
         );
         assert!(err.contains(expected_tail), "{err}");
@@ -408,7 +420,7 @@ async fn the_save_prompt_names_hidden_characters_in_the_destination_folder() {
     let file = src.join("note.txt");
     std::fs::write(&file, b"hello").unwrap();
     let base = Scratch::new("prompt-dest");
-    let dest = base.join("save-\x1b[31m-\u{202e}here");
+    let dest = base.join(format!("save-{}here", ON_DISK_HOSTILE.0));
     std::fs::create_dir_all(&dest).unwrap();
 
     let (sender, _stdout, code) = start_send(&server, &file);
@@ -424,10 +436,13 @@ async fn the_save_prompt_names_hidden_characters_in_the_destination_folder() {
     let err = stderr(&got);
     assert!(got.status.success(), "receiver: {err}");
     assert!(
-        !err.contains('\x1b') && !err.contains('\u{202e}'),
+        !err.contains('\x1b') && !err.contains('\u{009b}') && !err.contains('\u{202e}'),
         "{err:?}"
     );
-    assert!(err.contains("save-<U+001B>[31m-<U+202E>here"), "{err}");
+    assert!(
+        err.contains(&format!("save-{}here", ON_DISK_HOSTILE.1)),
+        "{err}"
+    );
 }
 
 #[cfg(unix)]
