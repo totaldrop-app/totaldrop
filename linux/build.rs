@@ -29,7 +29,7 @@ fn main() {
         QmlFile::from("qml/ReceivePage.qml"),
         QmlFile::from("qml/SettingsPage.qml"),
     ];
-    CxxQtBuilder::new_qml_module(QmlModule::new("app.totaldrop").qml_files(qml))
+    let mut builder = CxxQtBuilder::new_qml_module(QmlModule::new("app.totaldrop").qml_files(qml))
         .qt_module("Gui")
         .qt_module("Quick")
         .qt_module("QuickControls2")
@@ -41,6 +41,48 @@ fn main() {
             "src/bridge/texts.rs",
             "src/bridge/theme.rs",
             "src/bridge/transfer.rs",
-        ])
-        .build();
+        ]);
+
+    #[cfg(target_os = "linux")]
+    if let Ok(out) = std::process::Command::new("pkg-config")
+        .args(["--cflags-only-I", "xcb"])
+        .output()
+        && out.status.success()
+        && let Ok(text) = std::str::from_utf8(&out.stdout)
+    {
+        let dirs: Vec<&str> = text
+            .split_whitespace()
+            .filter_map(|flag| flag.strip_prefix("-I"))
+            .collect();
+        if !dirs.is_empty() {
+            // SAFETY: only adds `libxcb` include directories from `pkg-config`
+            // without altering CXX-Qt's own compiler flags or sources.
+            builder = unsafe {
+                builder.cc_builder(|cc| {
+                    for dir in &dirs {
+                        cc.include(dir);
+                    }
+                })
+            };
+        }
+    }
+
+    builder.build();
+
+    #[cfg(target_os = "linux")]
+    {
+        if let Ok(out) = std::process::Command::new("pkg-config")
+            .args(["--libs-only-L", "xcb"])
+            .output()
+            && out.status.success()
+            && let Ok(text) = std::str::from_utf8(&out.stdout)
+        {
+            for flag in text.split_whitespace() {
+                if let Some(dir) = flag.strip_prefix("-L") {
+                    println!("cargo:rustc-link-search=native={dir}");
+                }
+            }
+        }
+        println!("cargo:rustc-link-lib=xcb");
+    }
 }
