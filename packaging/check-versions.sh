@@ -15,9 +15,11 @@
 #
 # The tools: every pinned Rust version (the Flatpak's too) equals
 # rust-toolchain.toml, every pinned Flutter version is the same, every
-# Node in the workflows and @types/node have the same major, and the Arch
-# check container uses the same base image as the Arch package (Dependabot
-# updates only the latter), and no workflow runs npm install scripts.
+# Node in the workflows and @types/node have the same major, the Arch
+# check container and the Flatpak build container use the same digest-pinned
+# images as packaging/containers/{arch,flatpak}.Dockerfile (which Dependabot
+# updates) with the Flatpak image's kde-<version> tag matching the manifest's
+# runtime-version, and no workflow runs npm install scripts.
 #
 # The recipes: every Linux package recipe and the Flatpak keep build times
 # out of the Qt resources in the same way, and the AppStream metainfo names
@@ -226,6 +228,66 @@ base=$(sed -n 's/^FROM \(archlinux:[^ ]*\).*/\1/p' "$root/packaging/containers/a
 check=$(sed -n 's/^ *container: *\(archlinux:[^ ]*\).*/\1/p' "$root/.github/workflows/linux.yml" | head -1)
 [ -n "$base" ] || fail "no archlinux FROM in packaging/containers/arch.Dockerfile"
 same ".github/workflows/linux.yml (container)" "$check" "$base"
+
+# The Flatpak job's container image (#601): Dependabot updates its @sha256
+# digest in flatpak.Dockerfile, linux.yml uses the exact same image, and its
+# kde-<version> tag matches runtime-version in the Flatpak manifest.
+fp_df=packaging/containers/flatpak.Dockerfile
+fp_manifest=packaging/flatpak/app.totaldrop.TotalDrop.yml
+fp_base=
+if [ -f "$root/$fp_df" ]; then
+  fp_base=$(sed -n 's/^FROM \(ghcr\.io\/flathub-infra\/flatpak-github-actions:[^[:space:]#]*\).*/\1/p' "$root/$fp_df" | head -1)
+fi
+fp_runtime=$(sed -n 's/^runtime-version:[[:space:]]*//p' "$root/$fp_manifest" | head -1 |
+  sed "s/[[:space:]]*#.*$//; s/[[:space:]]*$//; s/^[\"']//; s/[\"']$//")
+[ -n "$fp_runtime" ] || fail "no runtime-version in $fp_manifest"
+fp_job=$(awk -v q="'" '
+  /^[[:space:]]*(#.*)?$/ { next }
+  /^jobs:[[:space:]]*(#.*)?$/ { injobs = 1; jind = -1; next }
+  /^[^[:space:]]/ { injobs = 0; in_fp = 0; cind = -1 }
+  injobs {
+    match($0, /^ */); ind = RLENGTH
+    if (jind < 0) jind = ind
+    if (ind == jind && $0 ~ "^ *[\"" q "]?[A-Za-z0-9_-]+[\"" q "]?:[[:space:]]*(#.*)?$") {
+      in_fp = ($0 ~ "^ *[\"" q "]?flatpak[\"" q "]?:[[:space:]]*(#.*)?$")
+      cind = -1
+      next
+    }
+  }
+  in_fp {
+    if (cind >= 0 && ind <= cind) cind = -1
+    if (ind == jind + 2 && /^ +container:([[:space:]]|$)/) {
+      v = $0
+      sub(/[[:space:]]+#.*$/, "", v)
+      sub(/^ +container:[[:space:]]*/, "", v)
+      sub(/[[:space:]]+$/, "", v)
+      if (v != "") {
+        gsub("[\"" q "]", "", v)
+        print v; exit
+      }
+      cind = ind; cchild = -1; next
+    }
+    if (cind >= 0 && cchild < 0) cchild = ind
+    if (cind >= 0 && ind == cchild && /^ +image:([[:space:]]|$)/) {
+      v = $0
+      sub(/[[:space:]]+#.*$/, "", v)
+      sub(/^ +image:[[:space:]]*/, "", v)
+      sub(/[[:space:]]+$/, "", v)
+      gsub("[\"" q "]", "", v)
+      print v; exit
+    }
+  }
+' "$root/.github/workflows/linux.yml")
+if [ -z "$fp_base" ]; then
+  fail "no flatpak-github-actions FROM in $fp_df"
+else
+  printf '%s' "$fp_base" | grep -qE '@sha256:[0-9a-f]{64}$' ||
+    fail "$fp_df: image '$fp_base' must pin a @sha256 digest"
+  fp_tag=${fp_base#ghcr.io/flathub-infra/flatpak-github-actions:}
+  fp_tag=${fp_tag%@sha256:*}
+  [ -n "$fp_runtime" ] && same "$fp_df (tag)" "$fp_tag" "kde-$fp_runtime"
+  same ".github/workflows/linux.yml (flatpak container)" "$fp_job" "$fp_base"
+fi
 
 # The deb and rpm images pin the same rustup-init release and checksums.
 rustup_args() { grep -E '^ARG RUSTUP_(VERSION|SHA256_[A-Z0-9_]+)=' "$root/packaging/containers/$1.Dockerfile" | sort; }
