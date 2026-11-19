@@ -177,6 +177,121 @@ fn receiving_into_a_missing_folder_fails_before_connecting() {
 }
 
 #[test]
+fn destination_errors_name_hidden_characters() {
+    let dir = Scratch::new("hostile-out");
+    let missing = dir.join("missing-\x1b[31m-\u{202e}fdp.exe");
+    let regular = dir.join("file-\x1b[31m-\u{202e}fdp.exe");
+    std::fs::write(&regular, b"x").unwrap();
+
+    for (path, expected_tail) in [
+        (&missing, "missing-<U+001B>[31m-<U+202E>fdp.exe"),
+        (&regular, "file-<U+001B>[31m-<U+202E>fdp.exe"),
+    ] {
+        let out = totaldrop("ws://127.0.0.1:1")
+            .args(["receive", "7-harbor-rocket", "--yes", "--out"])
+            .arg(path)
+            .output()
+            .unwrap();
+        let err = stderr(&out);
+        assert_eq!(out.status.code(), Some(1), "{err}");
+        assert!(
+            !err.contains('\x1b') && !err.contains('\u{202e}'),
+            "{err:?}"
+        );
+        assert!(err.contains(expected_tail), "{err}");
+    }
+
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt as _;
+        let ro = dir.join("readonly-\x1b[31m-\u{202e}dir");
+        std::fs::create_dir_all(&ro).unwrap();
+        std::fs::set_permissions(&ro, std::fs::Permissions::from_mode(0o555)).unwrap();
+        let unprivileged = std::fs::File::create(ro.join("probe")).is_err();
+        let out = totaldrop("ws://127.0.0.1:1")
+            .args(["receive", "7-harbor-rocket", "--yes", "--out"])
+            .arg(&ro)
+            .output()
+            .unwrap();
+        std::fs::set_permissions(&ro, std::fs::Permissions::from_mode(0o755)).unwrap();
+        if unprivileged {
+            let err = stderr(&out);
+            assert_eq!(out.status.code(), Some(1), "{err}");
+            assert!(
+                !err.contains('\x1b') && !err.contains('\u{202e}'),
+                "{err:?}"
+            );
+            assert!(err.contains("Cannot write to"), "{err}");
+            assert!(err.contains("readonly-<U+001B>[31m-<U+202E>dir"), "{err}");
+        }
+    }
+}
+
+#[test]
+fn argument_and_code_errors_name_hidden_characters() {
+    let out = totaldrop("ws://127.0.0.1:1")
+        .arg("--\x1b[31m\x1b]2;pwnd\x07\r\u{009b}31m\u{202e}relay-only")
+        .output()
+        .unwrap();
+    let err = stderr(&out);
+    assert_eq!(out.status.code(), Some(2), "{err}");
+    assert!(
+        !err.contains('\x1b')
+            && !err.contains('\x07')
+            && !err.contains('\r')
+            && !err.contains('\u{009b}')
+            && !err.contains('\u{202e}'),
+        "{err:?}"
+    );
+    assert!(
+        err.contains("<U+001B>[31m<U+001B>]2;pwnd<U+0007><U+000D><U+009B>31m<U+202E>relay-only"),
+        "{err}"
+    );
+
+    for code in ["7-\u{202e}notaword-rocket", "7-\x1b\u{009b}notaword-rocket"] {
+        let out = totaldrop("ws://127.0.0.1:1")
+            .args(["code", code])
+            .output()
+            .unwrap();
+        let err = stderr(&out);
+        assert_eq!(out.status.code(), Some(2), "{err}");
+        assert!(
+            !err.contains('\x1b') && !err.contains('\u{009b}') && !err.contains('\u{202e}'),
+            "{err:?}"
+        );
+        assert!(err.contains("invalid code"), "{err}");
+    }
+
+    #[cfg(unix)]
+    {
+        use std::os::unix::process::CommandExt as _;
+        let out = Command::new(env!("CARGO_BIN_EXE_totaldrop"))
+            .arg0("evil-\x1b[31m\x1b]2;pwnd\x07\r\u{009b}31m\u{202e}bin")
+            .env("LC_ALL", "en_US.UTF-8")
+            .env("LANG", "en_US.UTF-8")
+            .arg("--help")
+            .output()
+            .unwrap();
+        let err = stderr(&out);
+        let stdout = String::from_utf8(out.stdout).unwrap();
+        assert!(out.status.success(), "{err}");
+        assert!(
+            !stdout.contains('\x1b')
+                && !stdout.contains('\x07')
+                && !stdout.contains('\r')
+                && !stdout.contains('\u{009b}')
+                && !stdout.contains('\u{202e}'),
+            "{stdout:?}"
+        );
+        assert!(
+            stdout
+                .contains("evil-<U+001B>[31m<U+001B>]2;pwnd<U+0007><U+000D><U+009B>31m<U+202E>bin"),
+            "{stdout}"
+        );
+    }
+}
+
+#[test]
 fn a_failed_connection_says_why_and_exits_with_1() {
     let dir = Scratch::new("noserver");
     let file = dir.join("a.txt");
@@ -284,6 +399,35 @@ async fn no_answer_declines_and_the_sender_is_told() {
         stderr(&sent)
     );
     assert!(!dest.join("note.txt").exists());
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn the_save_prompt_names_hidden_characters_in_the_destination_folder() {
+    let server = server().await;
+    let src = Scratch::new("prompt-src");
+    let file = src.join("note.txt");
+    std::fs::write(&file, b"hello").unwrap();
+    let base = Scratch::new("prompt-dest");
+    let dest = base.join("save-\x1b[31m-\u{202e}here");
+    std::fs::create_dir_all(&dest).unwrap();
+
+    let (sender, _stdout, code) = start_send(&server, &file);
+    let receiver = totaldrop(&server)
+        .args(["receive", &code, "--out"])
+        .arg(&dest)
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .unwrap();
+    let (got, _sent) = tokio::join!(finish(receiver), finish(sender));
+    let err = stderr(&got);
+    assert!(got.status.success(), "receiver: {err}");
+    assert!(
+        !err.contains('\x1b') && !err.contains('\u{202e}'),
+        "{err:?}"
+    );
+    assert!(err.contains("save-<U+001B>[31m-<U+202E>here"), "{err}");
 }
 
 #[cfg(unix)]
