@@ -17,3 +17,7 @@
 /.well-known/security.txt
   ! Content-Type
   Content-Type: text/plain; charset=utf-8
+
+/i18n/*
+  X-Robots-Tag: noindex
+
