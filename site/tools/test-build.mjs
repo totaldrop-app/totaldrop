@@ -15,7 +15,9 @@ import { homedir, tmpdir } from "node:os";
 import { join, parse } from "node:path";
 import { fileURLToPath } from "node:url";
 import vm from "node:vm";
+import * as buildMod from "./build.mjs";
 import { build, pub, PAGES, TAGS, REVIEWED, translate, withAlternates, addressIn, canonicalOf, isRtl } from "./build.mjs";
+import * as middlewareMod from "../functions/_middleware.js";
 import { onRequest } from "../functions/_middleware.js";
 
 const siteDir = join(pub, "..");
@@ -113,8 +115,12 @@ test("every version names itself as canonical and lists all 35 and x-default", (
 test("addresses that existed before answer as before", () => {
   for (const page of PAGES) {
     const source = read(pub, page);
-    const lines = read(out, page).split("\n").filter((l) => !l.includes('<link rel="alternate" hreflang="'));
-    assert.equal(lines.join("\n"), source, `${page}: only the hreflang lines are new`);
+    const withoutGenerated = read(out, page)
+      .replace(/\n\n    <nav class="lang-list" id="languages"[\s\S]*?<\/nav>/, "")
+      .split("\n")
+      .filter((l) => !l.includes('<link rel="alternate" hreflang="'))
+      .join("\n");
+    assert.equal(withoutGenerated, source, `${page}: only hreflang and #languages are generated`);
   }
   // Everything else, /r, the 404 page and the privacy pages among it, is
   // copied as it is.
@@ -124,6 +130,51 @@ test("addresses that existed before answer as before", () => {
     if (PAGES.includes(same.split("\\").join("/")) || same === "sitemap.xml") continue;
     assert.ok(readFileSync(join(out, same)).equals(readFileSync(join(pub, same))), `${same} is copied as it is`);
   }
+});
+
+test("every addressed page has a header jump link and a 35-language list that works without JavaScript", () => {
+  const nameOf = Object.fromEntries(buildMod.LANGUAGES || []);
+  for (const page of PAGES) {
+    const english = canonicalOf(read(pub, page));
+    const u = new URL(english);
+    for (const tag of TAGS) {
+      const d = dict(tag);
+      const html = read(fileOf(addressIn(english, tag)));
+      assert.ok(
+        html.includes(`<a class="lang-jump" href="#languages" data-i18n="lang.label">${esc(d["lang.label"])}</a>`),
+        `${tag}/${page} header jump link`,
+      );
+      const navMatch = /<nav class="lang-list" id="languages" aria-labelledby="languages-title">\n      <h2 id="languages-title">([^<]+)<\/h2>\n      <ul>\n([\s\S]*?)\n      <\/ul>\n    <\/nav>\n  <\/main>/.exec(html);
+      assert.ok(navMatch, `${tag}/${page} #languages nav before </main>`);
+      assert.equal(navMatch[1], esc(d["lang.label"]), `${tag}/${page} #languages heading`);
+      const items = [...navMatch[2].matchAll(/<li><a href="([^"]+)" lang="([^"]+)" hreflang="([^"]+)"( dir="(rtl|ltr)")?( aria-current="page")?>([^<]+)<\/a><\/li>/g)];
+      assert.equal(items.length, 35, `${tag}/${page} lists 35 languages`);
+      assert.deepEqual(items.map((m) => m[2]), TAGS, `${tag}/${page} language order`);
+      for (const m of items) {
+        const [, href, ltag, hlang, , dirAttr, curAttr, label] = m;
+        assert.equal(hlang, ltag);
+        assert.equal(label, esc(nameOf[ltag]));
+        const wantHref = u.hostname === "download.totaldrop.app"
+          ? addressIn(english, ltag)
+          : (ltag === "en" ? u.pathname : `/${ltag}${u.pathname}`);
+        assert.equal(href, wantHref, `${tag}/${page} -> ${ltag} href`);
+        assert.ok(existsSync(fileOf(addressIn(english, ltag))), `${wantHref} file exists`);
+        const wantDir = isRtl(ltag) === isRtl(tag) ? undefined : (isRtl(ltag) ? "rtl" : "ltr");
+        assert.equal(dirAttr, wantDir, `${tag}/${page} -> ${ltag} dir`);
+        assert.equal(Boolean(curAttr), ltag === tag, `${tag}/${page} -> ${ltag} aria-current`);
+      }
+    }
+  }
+  // Unit check: when a draft language lacks lang.label, the fallback heading is marked as English.
+  const minimal = '<!doctype html>\n<html lang="ar" dir="rtl">\n<head><link rel="canonical" href="https://totaldrop.app/"></head>\n<body>\n  <main id="main">\n    <p>x</p>\n  </main>\n</body>\n</html>\n';
+  assert.equal(typeof buildMod.withLanguages, "function");
+  const withNav = buildMod.withLanguages(minimal, "https://totaldrop.app/", "ar", {}, { "lang.label": "Language" });
+  assert.ok(withNav.includes('<h2 id="languages-title" lang="en" dir="ltr">Language</h2>'));
+});
+
+test("/i18n/* carries X-Robots-Tag: noindex in _headers", () => {
+  const headers = read(out, "_headers");
+  assert.match(headers, /(?:^|\n)\/i18n\/\*\n(?:  [^\n]+\n)*  X-Robots-Tag: noindex(?:\n|$)/);
 });
 
 test("the build refuses paths outside site/, tracked paths, symlinks, or non-empty unbuilt folders", () => {
@@ -332,31 +383,122 @@ test("download.totaldrop.app/<tag>/ is the download page in that language", asyn
   assert.equal(www.res.headers.get("location"), "https://totaldrop.app/tr/?a=1");
 });
 
+test("middleware redirects /en/ and non-canonical language tags with 301 without open redirects", async () => {
+  assert.deepEqual(middlewareMod.TAGS, TAGS);
+  const subpages = PAGES.filter((p) => p !== "index.html").map((p) => p.replace(/\/index\.html$/, "")).sort();
+  assert.deepEqual([...(middlewareMod.SUBPAGES || [])].sort(), subpages);
+
+  const redirects = [
+    // download.totaldrop.app (#554 item 2 and #513 PR 2)
+    ["https://download.totaldrop.app/en/", "https://download.totaldrop.app/"],
+    ["https://download.totaldrop.app/en", "https://download.totaldrop.app/"],
+    ["https://download.totaldrop.app/en/index.html", "https://download.totaldrop.app/"],
+    ["https://download.totaldrop.app/EN/?a=1", "https://download.totaldrop.app/?a=1"],
+    ["https://download.totaldrop.app/pt-br/", "https://download.totaldrop.app/pt-BR/"],
+    ["https://download.totaldrop.app/PT-BR", "https://download.totaldrop.app/pt-BR/"],
+    ["https://download.totaldrop.app/zh-hans/?x=1", "https://download.totaldrop.app/zh-Hans/?x=1"],
+    ["https://download.totaldrop.app/zh-hant", "https://download.totaldrop.app/zh-Hant/"],
+    ["https://download.totaldrop.app/TR/", "https://download.totaldrop.app/tr/"],
+    ["https://download.totaldrop.app/tr?k=2", "https://download.totaldrop.app/tr/?k=2"],
+    // totaldrop.app
+    ["https://totaldrop.app/en", "https://totaldrop.app/"],
+    ["https://totaldrop.app/en/", "https://totaldrop.app/"],
+    ["https://totaldrop.app/en/index.html", "https://totaldrop.app/"],
+    ["https://totaldrop.app/EN/?a=1", "https://totaldrop.app/?a=1"],
+    ["https://totaldrop.app/en/roadmap", "https://totaldrop.app/roadmap/"],
+    ["https://totaldrop.app/en/roadmap/", "https://totaldrop.app/roadmap/"],
+    ["https://totaldrop.app/en/roadmap/index.html", "https://totaldrop.app/roadmap/"],
+    ["https://totaldrop.app/EN/donate/?s=1", "https://totaldrop.app/donate/?s=1"],
+    ["https://totaldrop.app/en/download/", "https://totaldrop.app/download/"],
+    ["https://totaldrop.app/en/team/", "https://totaldrop.app/team/"],
+    ["https://totaldrop.app/en/brand/", "https://totaldrop.app/brand/"],
+    ["https://totaldrop.app/pt-br", "https://totaldrop.app/pt-BR/"],
+    ["https://totaldrop.app/pt-br/", "https://totaldrop.app/pt-BR/"],
+    ["https://totaldrop.app/PT-BR/donate", "https://totaldrop.app/pt-BR/donate/"],
+    ["https://totaldrop.app/zh-hans/", "https://totaldrop.app/zh-Hans/"],
+    ["https://totaldrop.app/zh-hant/team?q=1", "https://totaldrop.app/zh-Hant/team/?q=1"],
+    ["https://totaldrop.app/TR/brand/", "https://totaldrop.app/tr/brand/"],
+    ["https://totaldrop.app/tr", "https://totaldrop.app/tr/"],
+    ["https://totaldrop.app/tr/roadmap", "https://totaldrop.app/tr/roadmap/"],
+    ["https://totaldrop.app/tr/index.html", "https://totaldrop.app/tr/"],
+    ["https://www.totaldrop.app/en/roadmap?a=1", "https://totaldrop.app/roadmap/?a=1"],
+  ];
+  for (const [from, to] of redirects) {
+    const { res } = await ask(from);
+    assert.equal(res.status, 301, `${from} status`);
+    assert.equal(res.headers.get("location"), to, `${from} -> ${to}`);
+  }
+
+  // Unknown suffixes and protocol-relative lookalikes must fall through, never redirect.
+  const passthrough = [
+    "https://totaldrop.app/en/nope",
+    "https://totaldrop.app/en/nope/",
+    "https://totaldrop.app/en/r",
+    "https://totaldrop.app/en/privacy",
+    "https://totaldrop.app/pt-br/nope",
+    "https://totaldrop.app/tr/nope",
+    "https://totaldrop.app//evil.example/",
+    "https://totaldrop.app//en/",
+    "https://totaldrop.app/en//roadmap/",
+    "https://download.totaldrop.app//evil.example/",
+    "https://download.totaldrop.app//en/",
+    "https://download.totaldrop.app/en/roadmap/",
+  ];
+  for (const url of passthrough) {
+    const { res, body } = await ask(url);
+    assert.equal(res.status, 200, `${url} falls through`);
+    assert.equal(body, "next", `${url} body`);
+  }
+});
+
 // app.js itself, with just enough of a browser around it to see where it
 // sends the visitor and what it asks the server for.
-function open(page, pathname, { languages = ["en-US"], saved = null, langJs = true, search = "?a=1", hash = "", storageThrows = false, hrefs = [] } = {}) {
+function open(page, pathname, { hostname, languages = ["en-US"], saved = null, langJs = true, search = "?a=1", hash = "", storageThrows = false, hrefs = [], langLinks = [] } = {}) {
   const calls = [];
-  const anchors = hrefs.map((h) => {
-    let cur = h;
-    return { getAttribute: (k) => (k === "href" ? cur : ""), setAttribute: (k, v) => { if (k === "href") cur = v; }, get href() { return cur; } };
-  });
-  const el = () => ({ dataset: {}, hidden: true, value: "", append() {}, prepend() {}, setAttribute() {}, removeAttribute() {}, getAttribute: () => "", addEventListener(type, fn) { this["on" + type] = fn; } });
+  const makeAnchor = (spec) => {
+    const init = typeof spec === "string" ? { href: spec } : spec;
+    let cur = init.href;
+    const attrs = { ...(init.hreflang ? { hreflang: init.hreflang } : {}), ...(init.lang ? { lang: init.lang } : {}) };
+    return {
+      getAttribute: (k) => (k === "href" ? cur : (attrs[k] ?? null)),
+      hasAttribute: (k) => k === "href" || Object.hasOwn(attrs, k),
+      setAttribute: (k, v) => { if (k === "href") cur = v; else attrs[k] = v; },
+      removeAttribute: (k) => { delete attrs[k]; },
+      addEventListener(type, fn) { this["on" + type] = fn; },
+      get href() { return cur; },
+    };
+  };
+  const anchors = hrefs.map(makeAnchor);
+  const languageAnchors = langLinks.map(makeAnchor);
+  const allAnchors = [...anchors, ...languageAnchors];
+  const el = () => ({ dataset: {}, hidden: true, value: "", append() {}, prepend() {}, setAttribute() {}, removeAttribute() {}, hasAttribute: () => false, getAttribute: () => "", addEventListener(type, fn) { this["on" + type] = fn; } });
   const picker = el();
+  const jump = { ...el(), hidden: false };
+  let stored = saved;
   const localStorage = storageThrows
     ? { getItem() { throw new Error("storage blocked"); }, setItem() { throw new Error("storage blocked"); } }
-    : { getItem: () => saved, setItem: (k, v) => calls.push(`save:${v}`) };
+    : { getItem: () => stored, setItem: (k, v) => { stored = v; calls.push(`save:${v}`); } };
+  const host = hostname || (page === "download" && !pathname.endsWith("/download/") ? "download.totaldrop.app" : "totaldrop.app");
   const w = {
     Intl, URL, decodeURIComponent,
+    history: { replaceState: (_s, _t, u) => calls.push("replaceState:" + u) },
     document: {
       body: { dataset: page === "home" ? {} : { page } },
       documentElement: {},
       title: "",
-      querySelectorAll: (sel) => (sel === "a[href]" ? anchors : []),
-      querySelector: () => null,
+      querySelectorAll: (sel) => {
+        if (sel === "a[href]") return allAnchors;
+        if (sel === "#languages a[hreflang]") return languageAnchors;
+        if (sel === 'a[href="/privacy"], a[href="https://totaldrop.app/privacy"]') {
+          return allAnchors.filter((a) => a.href === "/privacy" || a.href === "https://totaldrop.app/privacy");
+        }
+        return [];
+      },
+      querySelector: (sel) => (sel === ".lang-jump" ? jump : null),
       getElementById: (id) => (id === "lang-select" ? picker : el()),
       createElement: el,
     },
-    location: { pathname, search, hash, replace: (u) => calls.push("replace:" + u), assign: (u) => calls.push("assign:" + u), reload() {} },
+    location: { hostname: host, origin: "https://" + host, pathname, search, hash, replace: (u) => calls.push("replace:" + u), assign: (u) => calls.push("assign:" + u), reload() {} },
     navigator: { languages, userAgent: "" },
     localStorage,
     fetch: async (u) => { calls.push("fetch:" + u); return { ok: true, json: async () => ({}) }; },
@@ -366,7 +508,7 @@ function open(page, pathname, { languages = ["en-US"], saved = null, langJs = tr
   vm.createContext(w);
   if (langJs) vm.runInContext(read(pub, "lang.js"), w);
   vm.runInContext(read(pub, "app.js"), w);
-  return { calls, picker, anchors };
+  return { calls, picker, jump, anchors, languageAnchors };
 }
 
 test("app.js sends a visitor on an English address to their language, with the part after #", () => {
@@ -441,4 +583,154 @@ test("every public page declares the social preview image and omits cancelled br
     const rm = read(out, tag === "en" ? "roadmap/index.html" : join(tag, "roadmap/index.html"));
     assert.ok(!rm.includes('data-i18n="rm.x2.t"'), `${tag}/roadmap omits cancelled browser-receive item`);
   }
+});
+
+test("header jump link hides only when the picker is ready, and clicking #languages saves the choice", () => {
+  const ready = open("home", "/tr/", {
+    languages: ["tr-TR"],
+    search: "",
+    langLinks: [
+      { href: "/", hreflang: "en", lang: "en" },
+      { href: "/de/", hreflang: "de", lang: "de" },
+    ],
+  });
+  assert.equal(ready.picker.hidden, false);
+  assert.equal(ready.jump.hidden, true);
+
+  const noLangJs = open("home", "/tr/", { langJs: false });
+  assert.equal(noLangJs.picker.hidden, true);
+  assert.equal(noLangJs.jump.hidden, false, "fallback jump link stays visible if lang.js fails");
+
+  // Modified click does not hijack browser new-tab behaviour.
+  let prevented = false;
+  ready.languageAnchors[0].onclick({ button: 0, metaKey: true, preventDefault() { prevented = true; } });
+  assert.equal(prevented, false);
+  assert.deepEqual(ready.calls, []);
+
+  // Normal click on English from /tr/ saves "en" so landing on / does not bounce back.
+  ready.languageAnchors[0].onclick({ button: 0, preventDefault() { prevented = true; } });
+  assert.equal(prevented, false);
+  assert.deepEqual(ready.calls, ["save:en"]);
+
+  // With blocked storage, clicking English in #languages appends ?lang=en.
+  const noStorage = open("home", "/tr/", {
+    languages: ["tr-TR"],
+    search: "",
+    storageThrows: true,
+    langLinks: [{ href: "/", hreflang: "en", lang: "en" }],
+  });
+  let blockedPrevented = false;
+  noStorage.languageAnchors[0].onclick({ button: 0, preventDefault() { blockedPrevented = true; } });
+  assert.equal(blockedPrevented, true);
+  assert.deepEqual(noStorage.calls, ["assign:/?lang=en"]);
+});
+
+test("chosen language is carried between totaldrop.app and download.totaldrop.app and cleaned on arrival", () => {
+  // On totaldrop.app with saved "en": cross-host download link carries ?lang=en; same-host links stay clean.
+  const onHomeEn = open("home", "/", {
+    hostname: "totaldrop.app",
+    languages: ["tr-TR"],
+    saved: "en",
+    search: "",
+    hrefs: ["/roadmap/", "https://totaldrop.app/team/", "https://download.totaldrop.app/", "#why", "/privacy"],
+    langLinks: [{ href: "/tr/", hreflang: "tr", lang: "tr" }],
+  });
+  assert.deepEqual(onHomeEn.calls, []);
+  assert.deepEqual(
+    onHomeEn.anchors.map((a) => a.href),
+    ["/roadmap/", "https://totaldrop.app/team/", "https://download.totaldrop.app/?lang=en", "#why", "/privacy"],
+  );
+  assert.equal(onHomeEn.languageAnchors[0].href, "/tr/", "#languages links keep their own target language");
+
+  // On totaldrop.app/de/ with saved "de": cross-host download link carries /de/?lang=de.
+  const onHomeDe = open("home", "/de/", {
+    hostname: "totaldrop.app",
+    languages: ["tr-TR"],
+    saved: "de",
+    search: "",
+    hrefs: ["/de/roadmap/", "https://download.totaldrop.app/de/"],
+  });
+  assert.deepEqual(onHomeDe.anchors.map((a) => a.href), ["/de/roadmap/", "https://download.totaldrop.app/de/?lang=de"]);
+
+  // Arriving on download.totaldrop.app/?lang=en&utm=1#top saves "en" (overriding stale "de"), strips lang, and rewrites links back to totaldrop.app.
+  const onDownloadEn = open("download", "/", {
+    hostname: "download.totaldrop.app",
+    languages: ["tr-TR"],
+    saved: "de",
+    search: "?lang=en&utm=1",
+    hash: "#top",
+    hrefs: ["https://totaldrop.app/", "https://totaldrop.app/#why", "https://totaldrop.app/roadmap/", "https://download.totaldrop.app/", "https://totaldrop.app/privacy"],
+    langLinks: [{ href: "https://download.totaldrop.app/tr/", hreflang: "tr", lang: "tr" }],
+  });
+  assert.deepEqual(onDownloadEn.calls, ["save:en", "replaceState:/?utm=1#top"]);
+  assert.deepEqual(
+    onDownloadEn.anchors.map((a) => a.href),
+    ["https://totaldrop.app/?lang=en", "https://totaldrop.app/?lang=en#why", "https://totaldrop.app/roadmap/?lang=en", "https://download.totaldrop.app/", "https://totaldrop.app/privacy"],
+  );
+  assert.equal(onDownloadEn.languageAnchors[0].href, "https://download.totaldrop.app/tr/");
+
+  // Invalid ?lang= value is ignored.
+  const badQuery = open("home", "/", { hostname: "totaldrop.app", languages: ["en-US"], search: "?lang=xx" });
+  assert.deepEqual(badQuery.calls, []);
+});
+
+test("changing #lang-select on /r re-syncs cross-host and storage-blocked links", async () => {
+  // 1. Empty localStorage on /r: picking "de" then "en" updates the Download link each time.
+  const firstVisit = open("receive", "/r", {
+    hostname: "totaldrop.app",
+    languages: ["en-US"],
+    search: "",
+    hash: "#7-harbor-rocket",
+    hrefs: ["https://download.totaldrop.app/", "https://totaldrop.app/roadmap/", "https://totaldrop.app/privacy"],
+  });
+  assert.deepEqual(
+    firstVisit.anchors.map((a) => a.href),
+    ["https://download.totaldrop.app/", "https://totaldrop.app/roadmap/", "https://totaldrop.app/privacy"],
+  );
+  firstVisit.picker.value = "de";
+  await firstVisit.picker.onchange();
+  assert.deepEqual(
+    firstVisit.anchors.map((a) => a.href),
+    ["https://download.totaldrop.app/de/?lang=de", "https://totaldrop.app/de/roadmap/", "https://totaldrop.app/privacy/de"],
+  );
+  firstVisit.picker.value = "en";
+  await firstVisit.picker.onchange();
+  assert.deepEqual(
+    firstVisit.anchors.map((a) => a.href),
+    ["https://download.totaldrop.app/?lang=en", "https://totaldrop.app/roadmap/", "https://totaldrop.app/privacy"],
+  );
+
+  // 2. Returning visit with saved "fr": switching #lang-select to "de" replaces stale /fr/?lang=fr.
+  const returning = open("receive", "/r", {
+    hostname: "totaldrop.app",
+    languages: ["en-US"],
+    saved: "fr",
+    search: "",
+    hrefs: ["https://download.totaldrop.app/", "https://totaldrop.app/roadmap/"],
+  });
+  assert.deepEqual(
+    returning.anchors.map((a) => a.href),
+    ["https://download.totaldrop.app/fr/?lang=fr", "https://totaldrop.app/fr/roadmap/"],
+  );
+  returning.picker.value = "de";
+  await returning.picker.onchange();
+  assert.deepEqual(
+    returning.anchors.map((a) => a.href),
+    ["https://download.totaldrop.app/de/?lang=de", "https://totaldrop.app/de/roadmap/"],
+  );
+
+  // 3. Storage-blocked on /r: picking "tr" carries ?lang=tr on both cross-host and same-host addressed links.
+  const blocked = open("receive", "/r", {
+    hostname: "totaldrop.app",
+    languages: ["en-US"],
+    storageThrows: true,
+    search: "",
+    hrefs: ["https://download.totaldrop.app/", "https://totaldrop.app/roadmap/"],
+  });
+  blocked.picker.value = "tr";
+  await blocked.picker.onchange();
+  assert.deepEqual(
+    blocked.anchors.map((a) => a.href),
+    ["https://download.totaldrop.app/tr/?lang=tr", "https://totaldrop.app/tr/roadmap/?lang=tr"],
+  );
 });
