@@ -88,6 +88,10 @@ jobs:
           cd ../relay-worker
           nohup npx wrangler dev --local --ip 127.0.0.1 --port 8788 --inspector-port 9230 >"$RUNNER_TEMP/relay.log" 2>&1 &
           echo "relay $! 8788" >>"$RUNNER_TEMP/workers"
+          nohup npx wrangler dev --local --ip 127.0.0.1 --port 8790 --inspector-port 9232 \
+            --persist-to "$RUNNER_TEMP/relay-limited-state" \
+            --var SESSION_BYTES:2000 --var SESSION_TIME_MS:1800 >"$RUNNER_TEMP/relay-limited.log" 2>&1 &
+          echo "relay-limited $! 8790" >>"$RUNNER_TEMP/workers"
           while read -r name pid port; do
             for _ in $(seq 120); do
               curl -fs -o /dev/null "http://127.0.0.1:$port/" && continue 2
@@ -103,11 +107,12 @@ jobs:
           TOTALDROP_TEST_SERVER: ws://127.0.0.1:8787
           TOTALDROP_TEST_SERVER_LIMITED: ws://127.0.0.1:8789
           TOTALDROP_TEST_RELAY: ws://127.0.0.1:8788/v0/relay
+          TOTALDROP_TEST_RELAY_LIMITED: ws://127.0.0.1:8790/v0/relay
         run: cargo test -p totaldrop-cli --test end_to_end --locked
       - name: Worker logs
         if: always()
         run: |
-          for name in rendezvous rendezvous-limited relay; do
+          for name in rendezvous rendezvous-limited relay relay-limited; do
             echo "::group::$name"
             cat "$RUNNER_TEMP/$name.log" || true
             echo "::endgroup::"

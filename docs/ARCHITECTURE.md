@@ -147,7 +147,7 @@ Sınırlar:
 - Denetim yalnızca Rust crate'leri arasıdır. Dart (`app/lib`) ve
   TypeScript (`server/*-worker`) tarafı ayrı derleme birimleridir; Worker'lar
   Rust kodu kullanmaz, kablo biçimini kendileri yeniden yazar
-  (`server/rendezvous-worker/src/cbor.ts`, `server/relay-worker/src/pair.ts`).
+  (`server/rendezvous-worker/src/cbor.ts`, `server/relay-worker/src/pair-core.ts`).
   İki uygulamanın uyumunu ortak uçtan uca test takımı korur
   ([5. bölüm](#5-test-derleme-ve-kapsam)).
 - `fuzz/` çalışma alanı dışındadır (`Cargo.toml:4`), denetlenmez; yalnızca
@@ -299,17 +299,17 @@ arayüz durumuna çevirir: Linux'ta Qt özellikleri
    `webSocketClose` (`server/rendezvous-worker/src/mailbox.ts:365`), `alarm` (`server/rendezvous-worker/src/mailbox.ts:375`). Platformun ara sıra verdiği
    "internal error" için yeniden deneme `withRetry`
    (`server/rendezvous-worker/src/retry.ts`, #119).
-5. Aktarma Worker'ı aynı kalıptadır: `server/relay-worker/src/index.ts:27`.
+5. Aktarma Worker'ı aynı kalıptadır: `server/relay-worker/src/index.ts:31`.
    `Origin` başlıklı yükseltme burada da 403 alır
-   (`server/relay-worker/src/index.ts:33-35`), `PREFIX` yol denetiminden
-   (`server/relay-worker/src/index.ts:36`) önce. Sonra
-   → `PAIR.getByName(name).fetch` (`server/relay-worker/src/index.ts:41`) → `Pair.fetch`
-   (`server/relay-worker/src/pair.ts:173`), `webSocketMessage` (`server/relay-worker/src/pair.ts:194`),
-   `alarm` (`server/relay-worker/src/pair.ts:397`).
+   (`server/relay-worker/src/index.ts:37-39`), `PREFIX` yol denetiminden
+   (`server/relay-worker/src/index.ts:40`) önce. Sonra
+   → `PAIR.getByName(name).fetch` (`server/relay-worker/src/index.ts:45`) → `Pair.fetch`
+   (`server/relay-worker/src/pair.ts:34`), `webSocketMessage` (`server/relay-worker/src/pair.ts:46`),
+   `alarm` (`server/relay-worker/src/pair.ts:58`); durum makinesi `PairCore` içindedir (`server/relay-worker/src/pair-core.ts:159`).
 
 Rust sunucuları aynı protokolün ikinci uygulamasıdır:
 `server/totaldrop-rendezvous/src/lib.rs:343` `serve`,
-`server/totaldrop-relay/src/lib.rs:144` `serve`.
+`server/totaldrop-relay/src/lib.rs:335` `serve`.
 
 ## 3. Veri modeli ve durum
 
@@ -360,11 +360,15 @@ Süreler: tutulmamış kutu 15 dk, kutu en çok 60 dk
 (`server/rendezvous-worker/src/directory.ts:16`, `server/rendezvous-worker/src/directory.ts:18`). `pending` iki taraf da kapanınca ya da yanlış
 kodda silinir (`server/rendezvous-worker/src/mailbox.ts:335`).
 
-**`Pair`** (aktarma; anahtar çifti başına bir örnek): SQL tablosu yoktur.
+**`Pair`** (aktarma; anahtar çifti başına bir örnek): özel SQL tablosu yoktur.
 Soket başına durum WebSocket eki olarak tutulur (`Attachment`,
-`server/relay-worker/src/pair.ts:62-82`: meydan okuma, anahtar, sayaçlar,
-yanıtsız yoklamalar); depoda yalnızca alarm vardır (`server/relay-worker/src/pair.ts:392-411`).
-Doğrulama: `pair.ts` içinde `sql.exec` geçmez (grep ile bakıldı).
+`server/relay-worker/src/pair-core.ts:58-82`: meydan okuma, anahtar, kapatma
+işareti, yanıtsız yoklamalar); yeniden bağlantılar boyunca çiftin başlangıç
+zamanı ve anahtar başına gönderilen bayt toplamları `ctx.storage.kv` içinde
+`"totals"` altında (`PairTotals`, `server/relay-worker/src/totals.ts:56`),
+6 saatlik pencere bittiğinde bütün depoyu silen alarmla birlikte tutulur
+(`server/relay-worker/src/pair-core.ts:509-548`). Doğrulama: `pair.ts`,
+`pair-core.ts` ve `totals.ts` içinde `sql.exec` geçmez (grep ile bakıldı).
 
 ### 3.3 Durum nerede tutulur
 
@@ -374,8 +378,8 @@ Doğrulama: `pair.ts` içinde `sql.exec` geçmez (grep ile bakıldı).
 | Linux | `~/.config/totaldrop/settings.toml`: sunucu ve gizlilik modu (`linux/src/settings.rs:4`, `linux/src/settings.rs:12-17`); arayüz aşaması `Stage`/`Role` türleri (`linux/src/bridge/stage.rs:18`, `linux/src/bridge/stage.rs:101`) | Ayar kalıcı, aşama bellekte |
 | Android | `SharedPreferencesWithCache`: `rendezvous_server`, `privacy_mode`, arka plan izni işaretleri (`app/lib/data/settings_repository.dart:13-17`); aşamalar `SendStage`, `ReceiveStage` (`app/lib/ui/send/send_view_model.dart:20`, `app/lib/ui/receive/receive_view_model.dart:27`) | Ayar kalıcı, aşama bellekte |
 | Rendezvous Worker | Yukarıdaki SQLite tabloları; hız sınırı sayaçları bellekte (`server/rendezvous-worker/src/limit.ts:98` `RateLimiter`) | Kutu en çok 60 dk; sayaçlar nesne uyuyunca düşer |
-| Aktarma Worker | WebSocket ekleri + alarm | Bağlantı süresince |
-| Rust sunucuları | Yalnızca bellekte: `HashMap` (`server/totaldrop-rendezvous/src/lib.rs:236-239`, `server/totaldrop-relay/src/lib.rs:88`) | Süreç yeniden başlayınca düşer |
+| Aktarma Worker | WebSocket ekleri + DO KV içinde çift başına `"totals"` + alarm | Çift penceresi en çok 6 saat, sonunda `deleteAll()` |
+| Rust sunucuları | Yalnızca bellekte: `HashMap` (`server/totaldrop-rendezvous/src/lib.rs:236-239`, `server/totaldrop-relay/src/lib.rs:153-165`) | Çift toplamları 6 saatte süpürülür; süreç yeniden başlayınca düşer |
 
 ## 4. Yapılandırma
 
@@ -392,12 +396,13 @@ sayılmadı.
 | `XDG_CURRENT_DESKTOP`, `QT_QPA_PLATFORMTHEME`, `HYPRLAND_INSTANCE_SIGNATURE`, `HOST_XDG_CONFIG_HOME`, `HOST_XDG_DATA_HOME` | Linux tema algılama (`linux/src/theme/mod.rs:70-72`, `linux/src/theme/hyprland.rs:17`, `linux/src/theme/host.rs:28`, `linux/src/theme/host.rs:39`) | Masaüstüne uyum; `HOST_*` Flatpak içinden ana makinenin temasını bulur |
 | `XDG_ACTIVATION_TOKEN`, `DESKTOP_STARTUP_ID` | Linux tek pencere (`linux/src/instance.rs:528`, `linux/src/instance.rs:532`) | İkinci açılışta var olan pencereyi öne getirir |
 | `LANGUAGE`, `LC_ALL`, `LC_MESSAGES`, `LC_NUMERIC`, `LANG` | `totaldrop-l10n` (`crates/totaldrop-l10n/src/locale.rs:91-109`) | Arayüz dili ve sayı biçimi (gettext sırası) |
-| `TOTALDROP_TEST_SERVER`, `TOTALDROP_TEST_SERVER_LIMITED`, `TOTALDROP_TEST_RELAY` | Uçtan uca testler (`crates/totaldrop-cli/tests/end_to_end.rs:28`, `crates/totaldrop-cli/tests/end_to_end.rs:49`, `crates/totaldrop-cli/tests/end_to_end.rs:79`) | Testi Rust sunucusu yerine Worker'a (`wrangler dev`) karşı çalıştırır (`.github/workflows/server.yml:103-105`) |
+| `TOTALDROP_TEST_SERVER`, `TOTALDROP_TEST_SERVER_LIMITED`, `TOTALDROP_TEST_RELAY`, `TOTALDROP_TEST_RELAY_LIMITED` | Uçtan uca testler (`crates/totaldrop-cli/tests/end_to_end.rs:28`, `crates/totaldrop-cli/tests/end_to_end.rs:49`, `crates/totaldrop-cli/tests/end_to_end.rs:79`, `crates/totaldrop-cli/tests/end_to_end.rs:94`) | Testi Rust sunucusu yerine Worker'a (`wrangler dev`) karşı çalıştırır (`.github/workflows/server.yml:107-110`) |
 | `TOTALDROP_REQUIRE_IPV6` | Çekirdek testleri (`crates/totaldrop-core/src/transport.rs:866`) | IPv6 olmayan makinede testi geçmek yerine kırar |
 | `CI` | Linux testleri (`linux/src/instance.rs:644`, `linux/src/sleep.rs:203`) | Masaüstü oturumu gerektiren denemeleri CI'da ayarlar |
 | `ANDROID_UPLOAD_STORE_FILE`, `ANDROID_UPLOAD_PASSWORD`, `ANDROID_UPLOAD_ALIAS`, `TOTALDROP_REQUIRE_RELEASE_KEY` | Android derlemesi (`app/android/app/build.gradle.kts:22-61`) | Yükleme anahtarı yalnızca CI ortam sırrından; `REQUIRE` varken anahtarsız derleme başarısız olur |
 | `CLOUDFLARE_API_TOKEN` | Yalnızca dağıtım adımı (`.github/workflows/deploy.yml:138`) | `cloudflare` ortamı onayıyla |
 | `RATE_BURST`, `RATE_INTERVAL_MS` | Rendezvous Worker değişkeni (`server/rendezvous-worker/src/directory.ts:50`) | İstemci başına oran sınırı; üretimde tanımlı değil, varsayılanlar `limit.ts` içinde; CI `--var` ile düşük değerler verir (`.github/workflows/server.yml:82`, `.github/workflows/server.yml:86`) |
+| `SESSION_BYTES`, `SESSION_TIME_MS` | Aktarma Worker değişkeni (`server/relay-worker/src/pair-core.ts:184-192`) | Anahtar başına bayt ve çift başına süre sınırı; üretimde tanımlı değil, CI yerel `wrangler dev --var` ile düşük değerler verir (`.github/workflows/server.yml:93`) |
 | `WAYLAND_DISPLAY`, `DISPLAY`, `QT_QPA_PLATFORMTHEME`, `QT_QUICK_CONTROLS_STYLE` | Linux açılışı (`linux/src/main.rs:56-59`, `linux/src/main.rs:81`) | Ekran varsa ve tema eklentisi seçilmemişse `QT_QPA_PLATFORMTHEME=gtk3` **atanır**; denetim stili yoksa atanır |
 | `XDG_RUNTIME_DIR` | Linux Hyprland algılama (`linux/src/theme/hyprland.rs:18`) | Hyprland soketini bulur |
 | `TOTALDROP_VERSION` | Dart derleme tanımı (`app/lib/main.dart:28-29`) | Ayarlar'da gösterilen sürüm |
@@ -426,7 +431,7 @@ Aktarma sunucusu iki argüman alır: WebSocket adresi ve UDP keşif adresi
 `Config` yapısının varsayılanlarıyla gelir (`Config::default()`,
 `server/totaldrop-rendezvous/src/main.rs:20`; yapılar
 `server/totaldrop-rendezvous/src/lib.rs:47`,
-`server/totaldrop-relay/src/lib.rs:40`); dosya ya da ortam değişkeni
+`server/totaldrop-relay/src/lib.rs:42`); dosya ya da ortam değişkeni
 okunmaz.
 
 ### 4.3 Özellik bayrakları
@@ -459,7 +464,7 @@ Zorunlu denetim CI'dır; yerel kopyası `.pre-commit-config-extra.yaml`
 | Linux | `cargo test -p totaldrop-linux`; QML: `linux/tests/qml/run.sh` (qmltestrunner) | `.github/workflows/linux.yml:40-45` |
 | Android | `flutter analyze`, `flutter test` (`app/test/`, 20 dosya) | `.github/workflows/android.yml:38`, `.github/workflows/android.yml:48` |
 | Worker'lar | `npm run check` (`tsc`), `npm run --if-present test` | `.github/workflows/server.yml:38-40` |
-| İki sunucu uygulaması, aynı test | `cargo test -p totaldrop-cli --test end_to_end` önce Rust sunucularına, sonra `wrangler dev` altındaki Worker'lara | `.github/workflows/server.yml:44-106` |
+| İki sunucu uygulaması, aynı test | `cargo test -p totaldrop-cli --test end_to_end` önce Rust sunucularına, sonra `wrangler dev` altındaki Worker'lara | `.github/workflows/server.yml:44-111` |
 | Fuzz | `cargo fuzz run <hedef>` (6 hedef: `code`, `message`, `path`, `portmap`, `relay`, `wire`) | `.github/workflows/fuzz.yml` (zamanlı) |
 | Biçimsel model | Tamarin (#251) | `.github/workflows/formal.yml` |
 | Site | `site/tools/*.mjs` denetimleri | `.github/workflows/site.yml:27-47` |
@@ -489,9 +494,11 @@ Hiç ölçülmeyenler (CI'da kapsam yok):
 - **Worker'lar**: TypeScript için kapsam ölçülmez. Testler
   `.github/workflows/server.yml:40` adımında çalışır: rendezvous Worker'ın
   `server/rendezvous-worker/test/` altında 3 dosyası, aktarma Worker'ının
-  yalnızca sayım mantığı için bir dosyası var
-  (`server/relay-worker/test/count.test.ts`, #426 ile geldi). `Pair`'in
-  geri kalanını yalnızca uçtan uca test sınar.
+  `server/relay-worker/test/` altında 3 dosyası vardır
+  (`server/relay-worker/test/count.test.ts`,
+  `server/relay-worker/test/totals.test.ts`,
+  `server/relay-worker/test/pair.test.ts`; #426 ve #190). Durable Object
+  sarmalayıcısını da ortak uçtan uca test sınar.
 - **`linux/` ve `app/rust`**: `cargo test` çalışır ama llvm-cov
   ölçümüne dahil değil (`.github/workflows/core.yml:20` `EXCLUDE`).
 - **Dart**: `flutter test` kapsam raporu üretmiyor.
@@ -568,8 +575,8 @@ için öneri değil, yalnızca durum yazılıdır; iş gerekirse issue açılır
    Uyum ortak uçtan uca testle korunur; Worker tarafında fuzz hedefi yoktur.
 3. **Sunucular istemci kriptografisine bağlanmaz.** Sunucu crate'leri
    yalnızca `proto`'yu bağlar; aktarma sunucusu meydan okuma imzasını
-   `ring` ile (`server/totaldrop-relay/src/lib.rs:212-213`), Worker Web
-   Crypto ile (`server/relay-worker/src/pair.ts:113-116`) kendisi denetler.
+   `ring` ile (`server/totaldrop-relay/src/lib.rs:408-409`), Worker Web
+   Crypto ile (`server/relay-worker/src/pair-core.ts:151-153`) kendisi denetler.
    "Sunucu içeriği çözemez" sözünü bu kural sağlamaz: o, anahtarların
    sunucuya hiç gitmemesinden gelir (CPace ve Noise anahtarları iki cihazda
    kalır, [tehdit-modeli.md](tehdit-modeli.md)). Buradaki kural daha dardır:

@@ -73,9 +73,9 @@ struct Limits {
     keepalive: Duration,
 }
 
-/// The relays' limits for one connection (protocol notes, item 23): the
-/// link keeps them over all its connections, so that its own reconnects do
-/// not get round them. The relays count per connection only.
+/// The relays' limits for one pair and key (protocol notes, item 23): the
+/// link keeps them over all its own connections too, so it stops trying once
+/// they are spent (#189, #190).
 const LIMITS: Limits = Limits {
     time: Duration::from_secs(6 * 60 * 60),
     bytes: 32 * 1024 * 1024 * 1024,

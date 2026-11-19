@@ -22,9 +22,9 @@
     "- run: cargo fmt -p totaldrop-linux -- --check",
     "run: linux/tests/qml/run.sh"
   ],
-  ".github/workflows/server.yml:103-105": [
+  ".github/workflows/server.yml:107-110": [
     "TOTALDROP_TEST_SERVER: ws://127.0.0.1:8787",
-    "TOTALDROP_TEST_RELAY: ws://127.0.0.1:8788/v0/relay"
+    "TOTALDROP_TEST_RELAY_LIMITED: ws://127.0.0.1:8790/v0/relay"
   ],
   ".github/workflows/server.yml:38-40": [
     "- run: npm run check",
@@ -33,7 +33,7 @@
   ".github/workflows/server.yml:40": [
     "- run: npm run --if-present test"
   ],
-  ".github/workflows/server.yml:44-106": [
+  ".github/workflows/server.yml:44-111": [
     "end-to-end:",
     "run: cargo test -p totaldrop-cli --test end_to_end --locked"
   ],
@@ -42,6 +42,9 @@
   ],
   ".github/workflows/server.yml:86": [
     "--var RATE_BURST:4 --var RATE_INTERVAL_MS:5000 >\"$RUNNER_TEMP/rendezvous-limited.log\" 2>&1 &"
+  ],
+  ".github/workflows/server.yml:93": [
+    "--var SESSION_BYTES:2000 --var SESSION_TIME_MS:1800 >\"$RUNNER_TEMP/relay-limited.log\" 2>&1 &"
   ],
   ".github/workflows/site.yml:27-47": [
     "run: node --check site/public/app.js && node --check site/public/lang.js && node --check site/public/msg.js && node --check site/functions/_middleware.js",
@@ -162,6 +165,9 @@
   ],
   "crates/totaldrop-cli/tests/end_to_end.rs:79": [
     "if let Ok(url) = std::env::var(\"TOTALDROP_TEST_RELAY\") {"
+  ],
+  "crates/totaldrop-cli/tests/end_to_end.rs:94": [
+    "if let Ok(url) = std::env::var(\"TOTALDROP_TEST_RELAY_LIMITED\") {"
   ],
   "crates/totaldrop-core/Cargo.toml:23-24": [
     "totaldrop-crypto = { version = \"0.2.0-beta.5\", path = \"../totaldrop-crypto\" }",
@@ -511,39 +517,49 @@
   "server/relay-worker/src/count.ts:36": [
     "export function noteGiven(att: Counted, after: number): boolean {"
   ],
-  "server/relay-worker/src/index.ts:27": [
+  "server/relay-worker/src/index.ts:31": [
     "async fetch(request: Request, env: Env): Promise<Response> {"
   ],
-  "server/relay-worker/src/index.ts:33-35": [
+  "server/relay-worker/src/index.ts:37-39": [
     "if (upgrade && request.headers.has(\"Origin\")) {",
     "}"
   ],
-  "server/relay-worker/src/index.ts:36": [
+  "server/relay-worker/src/index.ts:40": [
     "if (!url.pathname.startsWith(PREFIX)) {"
   ],
-  "server/relay-worker/src/index.ts:41": [
+  "server/relay-worker/src/index.ts:45": [
     "return env.PAIR.getByName(name).fetch(request);"
   ],
-  "server/relay-worker/src/pair.ts:113-116": [
-    "async function verify(key: Uint8Array, signature: Uint8Array, message: Uint8Array): Promise<boolean> {",
+  "server/relay-worker/src/pair-core.ts:151-153": [
+    "try {",
     "return await crypto.subtle.verify({ name: \"Ed25519\" }, k, signature, message);"
   ],
-  "server/relay-worker/src/pair.ts:173": [
+  "server/relay-worker/src/pair-core.ts:159": [
+    "export class PairCore<S extends RelaySocket = RelaySocket> {"
+  ],
+  "server/relay-worker/src/pair-core.ts:184-192": [
+    "sessionBytes(): number {",
+    "}"
+  ],
+  "server/relay-worker/src/pair-core.ts:509-548": [
+    "async expireSession(): Promise<void> {",
+    "}"
+  ],
+  "server/relay-worker/src/pair-core.ts:58-82": [
+    "export interface Attachment {",
+    "}"
+  ],
+  "server/relay-worker/src/pair.ts:34": [
     "async fetch(request: Request): Promise<Response> {"
   ],
-  "server/relay-worker/src/pair.ts:194": [
+  "server/relay-worker/src/pair.ts:46": [
     "async webSocketMessage(ws: WebSocket, data: string | ArrayBuffer): Promise<void> {"
   ],
-  "server/relay-worker/src/pair.ts:392-411": [
-    "if (next === Infinity) await this.ctx.storage.deleteAlarm();",
-    "if (next !== Infinity) await this.ctx.storage.setAlarm(next);"
-  ],
-  "server/relay-worker/src/pair.ts:397": [
+  "server/relay-worker/src/pair.ts:58": [
     "async alarm(): Promise<void> {"
   ],
-  "server/relay-worker/src/pair.ts:62-82": [
-    "interface Attachment {",
-    "}"
+  "server/relay-worker/src/totals.ts:56": [
+    "export class PairTotals {"
   ],
   "server/rendezvous-worker/src/directory.ts:16": [
     "unclaimedTtl: 15 * 60_000,"
@@ -633,18 +649,19 @@
   "server/totaldrop-relay/Cargo.toml:18": [
     "totaldrop-proto = { version = \"0.2.0-beta.5\", path = \"../../crates/totaldrop-proto\" }"
   ],
-  "server/totaldrop-relay/src/lib.rs:144": [
+  "server/totaldrop-relay/src/lib.rs:153-165": [
+    "struct State {",
+    "}"
+  ],
+  "server/totaldrop-relay/src/lib.rs:335": [
     "pub async fn serve(self, listener: TcpListener) {"
   ],
-  "server/totaldrop-relay/src/lib.rs:212-213": [
+  "server/totaldrop-relay/src/lib.rs:408-409": [
     "ring::signature::UnparsedPublicKey::new(&ring::signature::ED25519, key)",
     ".verify(&wire::signed_bytes(&challenge), &signature)"
   ],
-  "server/totaldrop-relay/src/lib.rs:40": [
+  "server/totaldrop-relay/src/lib.rs:42": [
     "pub struct Config {"
-  ],
-  "server/totaldrop-relay/src/lib.rs:88": [
-    "type Clients = HashMap<[u8; 32], Client>;"
   ],
   "server/totaldrop-relay/src/main.rs:20-24": [
     "let mut args = std::env::args().skip(1);",
