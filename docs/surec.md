@@ -219,8 +219,10 @@ elle bakar.
    derlenip korumalı alanda çalıştırılır. Flatpak tarifi Rust'ı
    `static.rust-lang.org`'un sürüm arşivinden sha256 ile alır; Rust
    yükseltilirken iki arşivin adresi ve sha256 değeri birlikte değişir
-   (`check-versions.sh` sürümü denetler). KDE çalışma zamanı ve derleme
-   imajı (`linux.yml`, özetle sabit) birlikte yükseltilir. Crate listesi
+   (`check-versions.sh` sürümü denetler). KDE çalışma zamanı
+   (`runtime-version`) ile derleme imajının `kde-…` etiketi
+   (`flatpak.Dockerfile` ve `linux.yml`, özetle sabit) birlikte
+   yükseltilir; `check-versions.sh` bunları karşılaştırır. Crate listesi
    (`cargo-sources.json`) depoda tutulmaz; her derlemeden önce
    `node tools/flatpak-cargo-sources.mjs write` ile `Cargo.lock`'tan
    yazılır.
@@ -229,9 +231,10 @@ elle bakar.
    denetler), taban imajlar özetle (digest) sabittir ve kaynak arşivi son
    commit'in zamanıyla (`SOURCE_DATE_EPOCH`) üretilir. Taban imajın sabit
    olması paketleri sabitlemez: kapta kurulan dağıtım paketleri o günün
-   sürümleridir. Dependabot Arch imajının özetini yalnız
-   `arch.Dockerfile`'da günceller; aynı PR'da `linux.yml`'deki `container:`
-   satırı da elle aynı özete getirilir, yoksa sürüm denetimi PR'ı durdurur.
+   sürümleridir. Dependabot Arch ve Flatpak imajlarının özetini yalnız
+   `arch.Dockerfile` ve `flatpak.Dockerfile`'da günceller (#601); aynı
+   PR'da `linux.yml`'deki `container:` satırları da elle aynı özete
+   getirilir, yoksa sürüm denetimi PR'ı durdurur.
    deb ve rpm imajları rustup-init'i sabit bir rustup sürümünden indirir ve
    sha256 ile doğrular. Sürüm yükseltilirken iki Dockerfile'daki
    `RUSTUP_VERSION` ile iki `RUSTUP_SHA256_*` birlikte değiştirilir;
@@ -314,9 +317,9 @@ CI'dan geçer ama tür denetimine Node 24'te olmayan API'leri kabul ettirir.
 Aynı ana sürüm içindeki `@types/node` güncellemeleri Dependabot'tan gelir.
 
 **İstisna:** Flatpak işi (`linux.yml`, `flatpak`) Node'u Flathub'ın
-özetle (digest) sabitlenmiş derleme imajından alır. O Node yalnızca imaj
-yükseltilince değişir ve bu denetimin dışındadır; yalnızca
-`tools/flatpak-cargo-sources.mjs`'i çalıştırır.
+özetle (digest) sabitlenmiş derleme imajından alır (`flatpak.Dockerfile`,
+#601). O Node yalnızca imaj yükseltilince değişir ve bu denetimin
+dışındadır; yalnızca `tools/flatpak-cargo-sources.mjs`'i çalıştırır.
 
 ## Dağıtım
 

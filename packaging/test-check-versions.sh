@@ -3,11 +3,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # Tests for check-versions.sh: its Node part (docs/surec.md, "Node"), the
-# recipes' Qt resource options and their one license (#266). Each
-# case copies the files the check reads, changes one thing and runs it. A
-# case that should fail must also print the message it names, so a failure
-# for another reason does not count. The copy sits under a path with a
-# space, as a checkout might.
+# Flatpak build container (#601), the recipes' Qt resource options and
+# their one license (#266). Each case copies the files the check reads,
+# changes one thing and runs it. A case that should fail must also print
+# the message it names, so a failure for another reason does not count.
+# The copy sits under a path with a space, as a checkout might.
 #
 #   packaging/test-check-versions.sh
 set -eu
@@ -248,5 +248,64 @@ expect fail "yarn" "$wf/server.yml:$last: pnpm and yarn are not used here" \
   "printf '      - run: yarn install\\n' >> $wf/server.yml"
 expect pass "a comment that mentions npm ci" \
   "printf '      # npm ci runs above\\n' >> $wf/server.yml"
+
+# #601: the Flatpak build container image in packaging/containers/flatpak.Dockerfile
+# pins a @sha256 digest, matches .github/workflows/linux.yml, and carries the
+# kde-<runtime-version> tag from packaging/flatpak/app.totaldrop.TotalDrop.yml.
+fp_df=packaging/containers/flatpak.Dockerfile
+fp_rt=$(sed -n 's/^runtime-version: *"\([^"]*\)".*/\1/p' "$root/$fp" | head -1)
+[ -n "$fp_rt" ] || { echo "no runtime-version in $fp" >&2; exit 1; }
+fp_next="${fp_rt%.*}.$(( ${fp_rt#*.} + 1 ))"
+other_sum=0000000000000000000000000000000000000000000000000000000000000000
+expect fail "Flatpak Dockerfile digest ahead of linux.yml" \
+  ".github/workflows/linux.yml (flatpak container)" \
+  "edit $fp_df 's|@sha256:[0-9a-f]*|@sha256:$other_sum|'"
+expect fail "linux.yml Flatpak container digest ahead of Dockerfile" \
+  ".github/workflows/linux.yml (flatpak container)" \
+  "edit $wf/linux.yml 's|\(flatpak-github-actions:kde-[^@]*\)@sha256:[0-9a-f]*|\1@sha256:$other_sum|'"
+expect fail "linux.yml flatpak job without container image" \
+  ".github/workflows/linux.yml (flatpak container)" \
+  "edit $wf/linux.yml '/flatpak-github-actions:/d'"
+expect fail "Flatpak container image without a @sha256 digest" \
+  "$fp_df: image 'ghcr.io/flathub-infra/flatpak-github-actions:kde-$fp_rt' must pin a @sha256 digest" \
+  "edit $fp_df 's|@sha256:[0-9a-f]*||'
+   edit $wf/linux.yml 's|\(flatpak-github-actions:kde-[^@]*\)@sha256:[0-9a-f]*|\1|'"
+expect fail "Flatpak container image with a truncated @sha256 digest" \
+  "must pin a @sha256 digest" \
+  "edit $fp_df 's|@sha256:[0-9a-f]*|@sha256:deadbeef|'
+   edit $wf/linux.yml 's|\(flatpak-github-actions:kde-[^@]*\)@sha256:[0-9a-f]*|\1@sha256:deadbeef|'"
+expect fail "Flatpak container kde tag ahead of manifest runtime-version" \
+  "$fp_df (tag) says 'kde-$fp_next', expected 'kde-$fp_rt'" \
+  "edit $fp_df 's|:kde-$fp_rt@|:kde-$fp_next@|'
+   edit $wf/linux.yml 's|:kde-$fp_rt@|:kde-$fp_next@|'"
+expect fail "manifest runtime-version ahead of Flatpak container kde tag" \
+  "$fp_df (tag) says 'kde-$fp_rt', expected 'kde-$fp_next'" \
+  "edit $fp 's|^runtime-version:.*|runtime-version: \"$fp_next\"|'"
+expect fail "Flatpak Dockerfile without its FROM line" \
+  "no flatpak-github-actions FROM in $fp_df" \
+  "edit $fp_df '/^FROM /d'"
+expect fail "missing Flatpak Dockerfile" \
+  "no flatpak-github-actions FROM in $fp_df" \
+  "rm $fp_df"
+expect fail "Flatpak manifest without runtime-version" \
+  "no runtime-version in $fp" \
+  "edit $fp '/^runtime-version:/d'"
+fp_img=$(sed -n 's/^FROM //p' "$root/$fp_df" | head -1)
+expect pass "Flatpak runtime-version, Dockerfile and linux.yml upgraded together" \
+  "edit $fp 's|^runtime-version:.*|runtime-version: \"$fp_next\"|'
+   edit $fp_df 's|:kde-$fp_rt@sha256:[0-9a-f]*|:kde-$fp_next@sha256:$other_sum|'
+   edit $wf/linux.yml 's|:kde-$fp_rt@sha256:[0-9a-f]*|:kde-$fp_next@sha256:$other_sum|'"
+expect pass "shorthand scalar container: on the flatpak job in linux.yml" \
+  "edit $wf/linux.yml 's|^    container:\$|    container: $fp_img # scalar|; /^      image:/d; /^      options:/d'"
+expect pass "an inline comment on container: in linux.yml" \
+  "edit $wf/linux.yml 's|^    container:\$|    container: # Flathub image|'"
+expect fail "a quoted job after flatpak with its own container does not cover flatpak" \
+  ".github/workflows/linux.yml (flatpak container)" \
+  "edit $wf/linux.yml '/^    container:\$/d; /^      image:/d; /^      options:/d'
+   printf '  \"after\":\\n    runs-on: ubuntu-latest\\n    container:\\n      image: %s\\n    steps:\\n      - run: true\\n' '$fp_img' >> $wf/linux.yml"
+expect fail "an extra @ in the Flatpak container tag before @sha256:" \
+  "$fp_df (tag) says 'kde-$fp_rt@extra', expected 'kde-$fp_rt'" \
+  "edit $fp_df 's|:kde-$fp_rt@sha256:|:kde-$fp_rt@extra@sha256:|'
+   edit $wf/linux.yml 's|:kde-$fp_rt@sha256:|:kde-$fp_rt@extra@sha256:|'"
 
 exit $failed

@@ -32,8 +32,8 @@ updates:
       - dependency-name: "@types/node"
         update-types: ["version-update:semver-major"]
   # Base images are pinned by digest; Dependabot bumps the digests. A new
-  # major version (fedora:45) changes the oldest supported system, so it is
-  # a decision, not an update.
+  # major version (fedora:45) or KDE Flatpak runtime branch (kde-6.12, #601)
+  # changes the target system or runtime, so it is a decision, not an update.
   - package-ecosystem: docker
     directory: /packaging/containers
     schedule:
@@ -41,6 +41,8 @@ updates:
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
+      - dependency-name: "*flatpak-github-actions"
+        update-types: ["version-update:semver-minor", "version-update:semver-patch"]
   # Actions are pinned to commit SHAs (threat model T11); Dependabot keeps
   # the SHA and the version comment current.
   - package-ecosystem: github-actions
