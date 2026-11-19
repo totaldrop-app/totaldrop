@@ -164,7 +164,7 @@ ApplicationWindow {
     }
     Component {
         id: receivePage
-        ReceivePage { transfer: xfer; onClose: stack.pop(); onAskCancel: stopDialog.open() }
+        ReceivePage { transfer: xfer; launcher: launcher; onClose: stack.pop(); onAskCancel: stopDialog.open() }
     }
     Component {
         id: settingsPage

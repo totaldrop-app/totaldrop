@@ -11,6 +11,7 @@ Page {
     id: page
 
     required property Transfer transfer
+    property var launcher: null
     property string initialCode: ""
     // A code typed in: another launch does not replace it.
     readonly property bool hasInput: field.text.trim() !== ""
@@ -319,6 +320,8 @@ Page {
             shownText: page.phase === "done" ? page.transfer.shownText : ""
             shortened: page.phase === "done" && page.transfer.shownShort
             hidden: page.phase === "done" && page.transfer.shownHidden
+            webUrl: page.phase === "done" ? (page.transfer.webUrl || "") : ""
+            launcher: page.launcher
             onCopyText: page.transfer.copyText(page.transfer.receivedText)
             detail: page.phase === "failed" ? page.transfer.errorDetail : ""
             cause: page.phase === "failed" ? page.transfer.errorCause : ""

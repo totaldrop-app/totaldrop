@@ -435,7 +435,7 @@
     "totaldrop-core = { version = \"0.2.0-beta.5\", path = \"../crates/totaldrop-core\" }",
     "totaldrop-l10n = { version = \"0.2.0-beta.5\", path = \"../crates/totaldrop-l10n\" }"
   ],
-  "linux/qml/ResultPanel.qml:135": [
+  "linux/qml/ResultPanel.qml:183": [
     "onClicked: Qt.openUrlExternally(r.folderUrl)"
   ],
   "linux/src/bridge/stage.rs:101": [
@@ -448,22 +448,22 @@
     "#[qproperty(QString, state, READ, NOTIFY)]",
     "#[qproperty(i32, offer_files, cxx_name = \"offerFiles\")]"
   ],
-  "linux/src/bridge/transfer.rs:628": [
+  "linux/src/bridge/transfer.rs:649": [
     "fn start_send(mut self: Pin<&mut Self>, source: Source, strong: bool) {"
   ],
-  "linux/src/bridge/transfer.rs:645": [
+  "linux/src/bridge/transfer.rs:666": [
     "Source::Paths(paths) => PreparedSend::new(&opts, paths.clone()).await,"
   ],
-  "linux/src/bridge/transfer.rs:681": [
+  "linux/src/bridge/transfer.rs:702": [
     ".run_with(Self::events(thread.clone(), g), stop)"
   ],
-  "linux/src/bridge/transfer.rs:699": [
+  "linux/src/bridge/transfer.rs:720": [
     "fn receive(mut self: Pin<&mut Self>, code: &QString) {"
   ],
-  "linux/src/bridge/transfer.rs:710": [
+  "linux/src/bridge/transfer.rs:731": [
     "match IncomingOffer::connect_with(&opts, &code, &stop).await {"
   ],
-  "linux/src/bridge/transfer.rs:782": [
+  "linux/src/bridge/transfer.rs:803": [
     ".accept_with(&dest, Self::events(thread.clone(), g), &stop)"
   ],
   "linux/src/instance.rs:528": [

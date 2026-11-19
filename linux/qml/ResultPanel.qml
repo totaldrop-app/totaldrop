@@ -35,6 +35,11 @@ ColumnLayout {
     property bool shortened: false
     // The text holds characters shown by their code.
     property bool hidden: false
+    // Normalized single http(s) URL when the received text is one web
+    // link (#54); empty otherwise. Validated in Rust, never in QML.
+    property string webUrl: ""
+    property var launcher: null
+    property bool linkOpenFailed: false
 
     signal finished()
     signal retry()
@@ -48,9 +53,23 @@ ColumnLayout {
     // for the next result.
     // A received text hands it to Copy instead: one Enter too many on
     // Done would throw the text away.
-    onVisibleChanged: if (visible) {
-        more.checked = false
-        Qt.callLater(() => (r.shownText !== "" ? copyButton : doneButton).forceActiveFocus())
+    onVisibleChanged: {
+        if (visible) {
+            more.checked = false
+            r.linkOpenFailed = false
+            Qt.callLater(() => {
+                if (!r || !r.visible) return
+                const target = r.shownText !== "" ? copyButton : doneButton
+                if (target) target.forceActiveFocus()
+            })
+        } else {
+            openLinkDialog.close()
+            r.linkOpenFailed = false
+        }
+    }
+    onWebUrlChanged: {
+        r.linkOpenFailed = false
+        if (r.webUrl === "") openLinkDialog.close()
     }
 
     Item {
@@ -116,17 +135,46 @@ ColumnLayout {
         wrapMode: Text.Wrap
         Layout.fillWidth: true
     }
-    SecondaryButton {
-        id: copyButton
+    Flow {
         visible: r.shownText !== ""
-        text: Strings.s.copyText
-        icon.name: Theme.icon("edit-copy")
-        // Straight to the clipboard: a text box would change the text.
-        onClicked: { r.copyText(); textCopied.start() }
-        Timer { id: textCopied; interval: 2000 }
-        ToolTip.visible: textCopied.running
-        ToolTip.text: Strings.s.textCopied
+        spacing: Theme.s8
+        readonly property real singleRowWidth: copyButton.implicitWidth
+            + (openLinkButton.visible ? spacing + openLinkButton.implicitWidth : 0)
+        Layout.preferredWidth: r.width > 0 ? Math.min(r.width, singleRowWidth) : singleRowWidth
         Layout.alignment: Qt.AlignHCenter
+
+        SecondaryButton {
+            id: copyButton
+            objectName: "copyButton"
+            text: Strings.s.copyText
+            icon.name: Theme.icon("edit-copy")
+            // Straight to the clipboard: a text box would change the text.
+            onClicked: { r.copyText(); textCopied.start() }
+            Timer { id: textCopied; interval: 2000 }
+            ToolTip.visible: textCopied.running
+            ToolTip.text: Strings.s.textCopied
+        }
+        SecondaryButton {
+            id: openLinkButton
+            objectName: "openLinkButton"
+            visible: r.webUrl !== ""
+            text: Strings.s.openLink || ""
+            icon.name: Theme.icon("insert-link")
+            onClicked: {
+                r.linkOpenFailed = false
+                openLinkDialog.open()
+            }
+        }
+    }
+    Label {
+        id: openLinkFailedLabel
+        objectName: "openLinkFailedLabel"
+        visible: r.linkOpenFailed && r.webUrl !== ""
+        text: Strings.s.openLinkFailed || ""
+        color: Theme.error
+        wrapMode: Text.Wrap
+        horizontalAlignment: Text.AlignHCenter
+        Layout.fillWidth: true
     }
     SecondaryButton {
         visible: r.folderUrl !== ""
@@ -191,6 +239,86 @@ ColumnLayout {
             id: doneButton
             text: Strings.s.done
             onClicked: r.finished()
+        }
+    }
+
+    Dialog {
+        id: openLinkDialog
+        objectName: "openLinkDialog"
+        parent: r.Overlay.overlay ? r.Overlay.overlay : r
+        anchors.centerIn: parent
+        modal: true
+        focus: true
+        Component.onCompleted: if (Theme.fusion) Overlay.modal = Theme.dim
+        title: Strings.s.openLinkTitle || ""
+        // A fixed text width: wrapped text in a self-sizing popup loops.
+        readonly property int boxWidth: Math.max(200, Math.min(380,
+            (r.Overlay.overlay ? r.Overlay.overlay.width : r.width + 2 * Theme.s24) - 4 * Theme.s24))
+        contentWidth: boxWidth
+        onOpened: Qt.callLater(() => {
+            if (openLinkDialog && openLinkDialog.opened && cancelLinkButton)
+                cancelLinkButton.forceActiveFocus()
+        })
+        onClosed: if (r.visible && openLinkButton.visible) {
+            Qt.callLater(() => {
+                if (r && r.visible && openLinkButton && openLinkButton.visible)
+                    openLinkButton.forceActiveFocus()
+            })
+        }
+        onAccepted: {
+            const ok = r.launcher !== null && r.launcher.openWebUrl(r.webUrl)
+            r.linkOpenFailed = !ok
+        }
+
+        Column {
+            width: openLinkDialog.boxWidth
+            spacing: Theme.s16
+
+            Label {
+                width: openLinkDialog.boxWidth
+                text: Strings.s.openLinkBody || ""
+                wrapMode: Text.Wrap
+                color: Theme.ink
+            }
+            ScrollView {
+                id: linkScroll
+                width: openLinkDialog.boxWidth
+                contentWidth: availableWidth
+                height: Math.min(linkAddress.implicitHeight + linkScroll.topPadding + linkScroll.bottomPadding, 160)
+                clip: true
+                TextArea {
+                    id: linkAddress
+                    objectName: "linkAddress"
+                    width: linkScroll.availableWidth
+                    // Normalized ASCII/Punycode URL, always left to right so
+                    // right-to-left locales never reorder domain labels (T17, #509, #54).
+                    LayoutMirroring.enabled: false
+                    LayoutMirroring.childrenInherit: true
+                    horizontalAlignment: TextEdit.AlignLeft
+                    text: r.webUrl
+                    textFormat: TextEdit.PlainText
+                    readOnly: true
+                    selectByMouse: true
+                    wrapMode: TextEdit.WrapAnywhere
+                    font.family: "monospace"
+                    Accessible.name: r.webUrl
+                }
+            }
+        }
+
+        footer: DialogButtonBox {
+            SecondaryButton {
+                id: cancelLinkButton
+                objectName: "cancelLinkButton"
+                text: Strings.s.cancel || ""
+                DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
+            }
+            PrimaryButton {
+                id: confirmLinkButton
+                objectName: "confirmLinkButton"
+                text: Strings.s.openLinkConfirm || ""
+                DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
+            }
         }
     }
 }

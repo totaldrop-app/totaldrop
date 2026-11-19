@@ -27,7 +27,7 @@ for f in ActionCard Divider Field FocusScroller IconButton Mark PageHeader \
          SendPage StageHeading Toggle TransferProgress VerificationWords; do
   cp "$here/../../qml/$f.qml" "$mod/"
 done
-# The platform theme decides which keys press a button; the caller's
-# (QT_QPA_PLATFORMTHEME) would make the results differ from CI's.
-QT_QPA_PLATFORM=offscreen QT_QPA_PLATFORMTHEME= QT_QUICK_BACKEND=software \
-  "$runner" -import "$tmp" -input "$here"
+# The platform theme and Controls style decide which keys press a button and
+# how popups transition; pinning them keeps local runs identical to CI.
+QT_QPA_PLATFORM=offscreen QT_QPA_PLATFORMTHEME= QT_QUICK_CONTROLS_STYLE=Basic \
+  QT_QUICK_BACKEND=software "$runner" -import "$tmp" -input "$here"
