@@ -584,6 +584,10 @@ class AppLocalizationsAr extends AppLocalizations {
       'TotalDrop مفتوح بالفعل من حزمة .pkg أو .deb أو .rpm، لذا أُبرزت تلك النافذة. استخدم حزمة واحدة في كل مرة: أغلق تلك النافذة لفتح هذه.';
 
   @override
+  String get sendFlatpakUnreadable =>
+      'لا يمكن قراءة هذا الملف من حزمة Flatpak. اختره عبر «إضافة ملفات»، أو أغلق هذه النافذة وحاول مرة أخرى.';
+
+  @override
   String get sendText => 'إرسال نص';
 
   @override

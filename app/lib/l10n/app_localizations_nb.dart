@@ -578,6 +578,10 @@ class AppLocalizationsNb extends AppLocalizations {
       'TotalDrop er allerede åpen fra .pkg-, .deb- eller .rpm-pakken, så det vinduet ble hentet frem. Bruk én pakke om gangen: avslutt det vinduet for å åpne denne.';
 
   @override
+  String get sendFlatpakUnreadable =>
+      'Denne filen kan ikke leses fra Flatpak. Velg den med Legg til filer, eller lukk dette vinduet og prøv igjen.';
+
+  @override
   String get sendText => 'Send tekst';
 
   @override

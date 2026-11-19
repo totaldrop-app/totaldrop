@@ -62,7 +62,7 @@ fn list(items: Vec<String>) -> QStringList {
 impl qobject::Launcher {
     fn start_args(&self) -> QStringList {
         let cwd = std::env::current_dir().unwrap_or_default();
-        list(Request::from_args(std::env::args_os().skip(1), &cwd).args())
+        list(Request::for_current_window(std::env::args_os().skip(1), &cwd).args())
     }
 }
 
