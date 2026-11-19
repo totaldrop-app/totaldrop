@@ -10,7 +10,7 @@ const css = assetRef("styles.css");
 
 test("the address carries 10 hex digits of the file's hash", () => {
   assert.match(css, /^\/styles\.css\?v=[0-9a-f]{10}$/);
-  assert.throws(() => assetRef("other.css"));
+  assert.throws(() => assetRef("other.css"), /not a versioned asset/);
 });
 
 test("a bare or old reference is rewritten, and rewriting twice changes nothing", () => {
