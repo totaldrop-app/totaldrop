@@ -657,4 +657,24 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get openLinkFailed => 'この端末にはリンクを開けるアプリがありません。';
+
+  @override
+  String get settingsShortcut => 'キーボードショートカット';
+
+  @override
+  String get settingsShortcutBody =>
+      'どこからでもクリップボードのテキストを送信できる状態で TotalDrop を開きます。コードを作成するまで何も送信されません。';
+
+  @override
+  String get settingsShortcutUnset => '未設定';
+
+  @override
+  String get settingsShortcutSet => 'ショートカットを設定';
+
+  @override
+  String get settingsShortcutChange => 'ショートカットを変更';
+
+  @override
+  String get settingsShortcutManual =>
+      'このデスクトップではここからアプリのショートカットを設定できません。デスクトップまたはウィンドウマネージャーの設定でキーを次のコマンドに割り当ててください：';
 }

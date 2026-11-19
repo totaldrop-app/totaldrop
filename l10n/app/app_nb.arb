@@ -190,5 +190,11 @@
   "openLinkTitle": "Åpne denne lenken?",
   "openLinkBody": "Adressen nedenfor åpnes i nettleseren din.",
   "openLinkConfirm": "Åpne",
-  "openLinkFailed": "Ingen app på denne enheten kunne åpne lenken."
+  "openLinkFailed": "Ingen app på denne enheten kunne åpne lenken.",
+  "settingsShortcut": "Tastatursnarvei",
+  "settingsShortcutBody": "Åpne TotalDrop hvor som helst med teksten på utklippstavlen klar til å sendes. Ingenting sendes før du lager en kode.",
+  "settingsShortcutUnset": "Ikke satt",
+  "settingsShortcutSet": "Velg snarvei",
+  "settingsShortcutChange": "Endre snarvei",
+  "settingsShortcutManual": "Dette skrivebordet setter ikke appsnarveier herfra. Knytt en tast i innstillingene for skrivebordet eller vindusbehandleren til:"
 }

@@ -8,7 +8,7 @@ import QtQuick
 // so QML component tests can instantiate ResultPanel and sibling components
 // without a Rust build.
 QtObject {
-    readonly property bool rtl: false
+    property bool rtl: false
     readonly property bool draft: false
 
     readonly property var s: ({
@@ -138,7 +138,13 @@ QtObject {
         openLinkTitle: "Open this link?",
         openLinkBody: "This opens the address below in your browser.",
         openLinkConfirm: "Open",
-        openLinkFailed: "No app on this device could open the link."
+        openLinkFailed: "No app on this device could open the link.",
+        settingsShortcut: "Keyboard shortcut",
+        settingsShortcutBody: "Open TotalDrop from anywhere with the clipboard's text ready to send. Nothing is sent until you create a code.",
+        settingsShortcutUnset: "Not set",
+        settingsShortcutSet: "Set shortcut",
+        settingsShortcutChange: "Change shortcut",
+        settingsShortcutManual: "This desktop does not set app shortcuts from here. Bind a key in your desktop or window manager settings to:"
     })
 
     function f(key, args) {

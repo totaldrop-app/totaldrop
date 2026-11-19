@@ -472,11 +472,11 @@
   "linux/src/instance.rs:644": [
     "std::env::var_os(\"CI\").is_none(),"
   ],
-  "linux/src/main.rs:56-59": [
+  "linux/src/main.rs:57-60": [
     "std::env::var_os(\"WAYLAND_DISPLAY\").is_some() || std::env::var_os(\"DISPLAY\").is_some();",
     "unsafe { std::env::set_var(\"QT_QPA_PLATFORMTHEME\", \"gtk3\") };"
   ],
-  "linux/src/main.rs:81": [
+  "linux/src/main.rs:82": [
     "if std::env::var_os(\"QT_QUICK_CONTROLS_STYLE\").is_none() {"
   ],
   "linux/src/settings.rs:12-17": [

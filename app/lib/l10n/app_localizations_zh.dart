@@ -647,6 +647,25 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get openLinkFailed => '此设备上没有应用可以打开该链接。';
+
+  @override
+  String get settingsShortcut => '键盘快捷键';
+
+  @override
+  String get settingsShortcutBody =>
+      '在任何位置打开 TotalDrop，剪贴板中的文字已准备好发送。在你创建代码前不会发送任何内容。';
+
+  @override
+  String get settingsShortcutUnset => '未设置';
+
+  @override
+  String get settingsShortcutSet => '设置快捷键';
+
+  @override
+  String get settingsShortcutChange => '更改快捷键';
+
+  @override
+  String get settingsShortcutManual => '当前桌面不支持在此处设置应用快捷键。请在桌面或窗口管理器设置中将按键绑定到：';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hans`).
@@ -1291,6 +1310,25 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
 
   @override
   String get openLinkFailed => '此设备上没有应用可以打开该链接。';
+
+  @override
+  String get settingsShortcut => '键盘快捷键';
+
+  @override
+  String get settingsShortcutBody =>
+      '在任何位置打开 TotalDrop，剪贴板中的文字已准备好发送。在你创建代码前不会发送任何内容。';
+
+  @override
+  String get settingsShortcutUnset => '未设置';
+
+  @override
+  String get settingsShortcutSet => '设置快捷键';
+
+  @override
+  String get settingsShortcutChange => '更改快捷键';
+
+  @override
+  String get settingsShortcutManual => '当前桌面不支持在此处设置应用快捷键。请在桌面或窗口管理器设置中将按键绑定到：';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -1934,4 +1972,24 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get openLinkFailed => '此裝置上沒有應用程式可開啟該連結。';
+
+  @override
+  String get settingsShortcut => '鍵盤快捷鍵';
+
+  @override
+  String get settingsShortcutBody =>
+      '在任何位置開啟 TotalDrop，剪貼簿中的文字已準備好傳送。在你建立代碼前不會傳送任何內容。';
+
+  @override
+  String get settingsShortcutUnset => '未設定';
+
+  @override
+  String get settingsShortcutSet => '設定快捷鍵';
+
+  @override
+  String get settingsShortcutChange => '變更快捷鍵';
+
+  @override
+  String get settingsShortcutManual =>
+      '目前桌面不支援在此處設定應用程式快捷鍵。請在桌面或視窗管理員設定中將按鍵綁定到：';
 }

@@ -686,4 +686,24 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String get openLinkFailed =>
       'Không có ứng dụng nào trên thiết bị này mở được liên kết.';
+
+  @override
+  String get settingsShortcut => 'Phím tắt';
+
+  @override
+  String get settingsShortcutBody =>
+      'Mở TotalDrop từ bất cứ đâu với văn bản trong khay nhớ tạm sẵn sàng để gửi. Không có gì được gửi cho đến khi bạn tạo mã.';
+
+  @override
+  String get settingsShortcutUnset => 'Chưa đặt';
+
+  @override
+  String get settingsShortcutSet => 'Đặt phím tắt';
+
+  @override
+  String get settingsShortcutChange => 'Đổi phím tắt';
+
+  @override
+  String get settingsShortcutManual =>
+      'Môi trường màn hình này không đặt phím tắt ứng dụng từ đây. Hãy gán một phím trong cài đặt màn hình hoặc trình quản lý cửa sổ cho lệnh:';
 }

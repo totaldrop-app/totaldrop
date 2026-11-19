@@ -718,4 +718,24 @@ class AppLocalizationsPl extends AppLocalizations {
   @override
   String get openLinkFailed =>
       'Żadna aplikacja na tym urządzeniu nie mogła otworzyć linku.';
+
+  @override
+  String get settingsShortcut => 'Skrót klawiszowy';
+
+  @override
+  String get settingsShortcutBody =>
+      'Otwórz TotalDrop z dowolnego miejsca z tekstem ze schowka gotowym do wysłania. Nic nie zostanie wysłane, dopóki nie utworzysz kodu.';
+
+  @override
+  String get settingsShortcutUnset => 'Nie ustawiono';
+
+  @override
+  String get settingsShortcutSet => 'Ustaw skrót';
+
+  @override
+  String get settingsShortcutChange => 'Zmień skrót';
+
+  @override
+  String get settingsShortcutManual =>
+      'To środowisko nie ustawia tutaj skrótów aplikacji. Przypisz klawisz w ustawieniach środowiska lub menedżera okien do polecenia:';
 }

@@ -700,4 +700,24 @@ class AppLocalizationsUr extends AppLocalizations {
 
   @override
   String get openLinkFailed => 'اس آلے پر کوئی ایپ لنک نہیں کھول سکی۔';
+
+  @override
+  String get settingsShortcut => 'کی بورڈ شارٹ کٹ';
+
+  @override
+  String get settingsShortcutBody =>
+      'کلپ بورڈ کے متن کو بھیجنے کے لیے تیار رکھتے ہوئے کہیں سے بھی TotalDrop کھولیں۔ جب تک آپ کوڈ نہیں بناتے، کچھ بھی نہیں بھیجا جاتا۔';
+
+  @override
+  String get settingsShortcutUnset => 'مقرر نہیں';
+
+  @override
+  String get settingsShortcutSet => 'شارٹ کٹ مقرر کریں';
+
+  @override
+  String get settingsShortcutChange => 'شارٹ کٹ بدلیں';
+
+  @override
+  String get settingsShortcutManual =>
+      'یہ ڈیسک ٹاپ یہاں سے ایپ شارٹ کٹ مقرر نہیں کرتا۔ اپنے ڈیسک ٹاپ یا ونڈو مینیجر کی ترتیبات میں کوئی کلید اس کمانڈ سے جوڑیں:';
 }

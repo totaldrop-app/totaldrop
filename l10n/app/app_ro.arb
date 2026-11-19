@@ -190,5 +190,11 @@
   "openLinkTitle": "Deschideți acest link?",
   "openLinkBody": "Adresa de mai jos se va deschide în browser.",
   "openLinkConfirm": "Deschide",
-  "openLinkFailed": "Nicio aplicație de pe acest dispozitiv nu a putut deschide linkul."
+  "openLinkFailed": "Nicio aplicație de pe acest dispozitiv nu a putut deschide linkul.",
+  "settingsShortcut": "Scurtătură de tastatură",
+  "settingsShortcutBody": "Deschideți TotalDrop de oriunde cu textul din clipboard pregătit pentru trimitere. Nimic nu se trimite până nu creați un cod.",
+  "settingsShortcutUnset": "Nesetată",
+  "settingsShortcutSet": "Setează scurtătura",
+  "settingsShortcutChange": "Schimbă scurtătura",
+  "settingsShortcutManual": "Acest mediu desktop nu setează scurtături de aplicații de aici. Asociați o tastă în setările mediului desktop sau ale gestionarului de ferestre cu:"
 }

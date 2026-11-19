@@ -190,5 +190,11 @@
   "openLinkTitle": "打开此链接？",
   "openLinkBody": "下方地址将在浏览器中打开。",
   "openLinkConfirm": "打开",
-  "openLinkFailed": "此设备上没有应用可以打开该链接。"
+  "openLinkFailed": "此设备上没有应用可以打开该链接。",
+  "settingsShortcut": "键盘快捷键",
+  "settingsShortcutBody": "在任何位置打开 TotalDrop，剪贴板中的文字已准备好发送。在你创建代码前不会发送任何内容。",
+  "settingsShortcutUnset": "未设置",
+  "settingsShortcutSet": "设置快捷键",
+  "settingsShortcutChange": "更改快捷键",
+  "settingsShortcutManual": "当前桌面不支持在此处设置应用快捷键。请在桌面或窗口管理器设置中将按键绑定到："
 }

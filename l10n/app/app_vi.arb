@@ -190,5 +190,11 @@
   "openLinkTitle": "Mở liên kết này?",
   "openLinkBody": "Địa chỉ bên dưới sẽ được mở trong trình duyệt của bạn.",
   "openLinkConfirm": "Mở",
-  "openLinkFailed": "Không có ứng dụng nào trên thiết bị này mở được liên kết."
+  "openLinkFailed": "Không có ứng dụng nào trên thiết bị này mở được liên kết.",
+  "settingsShortcut": "Phím tắt",
+  "settingsShortcutBody": "Mở TotalDrop từ bất cứ đâu với văn bản trong khay nhớ tạm sẵn sàng để gửi. Không có gì được gửi cho đến khi bạn tạo mã.",
+  "settingsShortcutUnset": "Chưa đặt",
+  "settingsShortcutSet": "Đặt phím tắt",
+  "settingsShortcutChange": "Đổi phím tắt",
+  "settingsShortcutManual": "Môi trường màn hình này không đặt phím tắt ứng dụng từ đây. Hãy gán một phím trong cài đặt màn hình hoặc trình quản lý cửa sổ cho lệnh:"
 }

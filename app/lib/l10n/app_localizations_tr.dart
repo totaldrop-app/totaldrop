@@ -687,4 +687,24 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get openLinkFailed =>
       'Bu cihazda bağlantıyı açabilecek bir uygulama bulunamadı.';
+
+  @override
+  String get settingsShortcut => 'Klavye kısayolu';
+
+  @override
+  String get settingsShortcutBody =>
+      'Panodaki metin göndermeye hazır biçimde TotalDrop\'u her yerden açın. Siz kod oluşturana kadar hiçbir şey gönderilmez.';
+
+  @override
+  String get settingsShortcutUnset => 'Ayarlanmadı';
+
+  @override
+  String get settingsShortcutSet => 'Kısayol ayarla';
+
+  @override
+  String get settingsShortcutChange => 'Kısayolu değiştir';
+
+  @override
+  String get settingsShortcutManual =>
+      'Bu masaüstü uygulama kısayollarını buradan ayarlamaz. Masaüstü veya pencere yöneticisi ayarlarınızda bir tuşu şu komuta bağlayın:';
 }

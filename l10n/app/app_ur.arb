@@ -190,5 +190,11 @@
   "openLinkTitle": "یہ لنک کھولیں؟",
   "openLinkBody": "نیچے دیا گیا پتہ آپ کے براؤزر میں کھلے گا۔",
   "openLinkConfirm": "کھولیں",
-  "openLinkFailed": "اس آلے پر کوئی ایپ لنک نہیں کھول سکی۔"
+  "openLinkFailed": "اس آلے پر کوئی ایپ لنک نہیں کھول سکی۔",
+  "settingsShortcut": "کی بورڈ شارٹ کٹ",
+  "settingsShortcutBody": "کلپ بورڈ کے متن کو بھیجنے کے لیے تیار رکھتے ہوئے کہیں سے بھی TotalDrop کھولیں۔ جب تک آپ کوڈ نہیں بناتے، کچھ بھی نہیں بھیجا جاتا۔",
+  "settingsShortcutUnset": "مقرر نہیں",
+  "settingsShortcutSet": "شارٹ کٹ مقرر کریں",
+  "settingsShortcutChange": "شارٹ کٹ بدلیں",
+  "settingsShortcutManual": "یہ ڈیسک ٹاپ یہاں سے ایپ شارٹ کٹ مقرر نہیں کرتا۔ اپنے ڈیسک ٹاپ یا ونڈو مینیجر کی ترتیبات میں کوئی کلید اس کمانڈ سے جوڑیں:"
 }

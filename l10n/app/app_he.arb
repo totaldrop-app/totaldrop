@@ -190,5 +190,11 @@
   "openLinkTitle": "לפתוח את הקישור הזה?",
   "openLinkBody": "הכתובת שלהלן תיפתח בדפדפן שלך.",
   "openLinkConfirm": "פתיחה",
-  "openLinkFailed": "אף יישום במכשיר זה לא הצליח לפתוח את הקישור."
+  "openLinkFailed": "אף יישום במכשיר זה לא הצליח לפתוח את הקישור.",
+  "settingsShortcut": "קיצור מקלדת",
+  "settingsShortcutBody": "פתיחת TotalDrop מכל מקום כשהטקסט מהלוח מוכן לשליחה. דבר אינו נשלח עד ליצירת קוד.",
+  "settingsShortcutUnset": "לא הוגדר",
+  "settingsShortcutSet": "הגדרת קיצור",
+  "settingsShortcutChange": "שינוי קיצור",
+  "settingsShortcutManual": "שולחן עבודה זה אינו מגדיר מכאן קיצורי יישומים. יש לשייך מקש בהגדרות שולחן העבודה או מנהל החלונות לפקודה:"
 }

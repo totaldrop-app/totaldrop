@@ -190,5 +190,11 @@
   "openLinkTitle": "Otevřít tento odkaz?",
   "openLinkBody": "Adresa níže se otevře v prohlížeči.",
   "openLinkConfirm": "Otevřít",
-  "openLinkFailed": "Žádná aplikace v tomto zařízení nedokázala odkaz otevřít."
+  "openLinkFailed": "Žádná aplikace v tomto zařízení nedokázala odkaz otevřít.",
+  "settingsShortcut": "Klávesová zkratka",
+  "settingsShortcutBody": "Otevřete TotalDrop odkudkoli s textem ze schránky připraveným k odeslání. Nic se neodešle, dokud nevytvoříte kód.",
+  "settingsShortcutUnset": "Nenastaveno",
+  "settingsShortcutSet": "Nastavit zkratku",
+  "settingsShortcutChange": "Změnit zkratku",
+  "settingsShortcutManual": "Toto prostředí nenastavuje zkratky aplikací odtud. Přiřaďte klávesu v nastavení prostředí nebo správce oken příkazu:"
 }
