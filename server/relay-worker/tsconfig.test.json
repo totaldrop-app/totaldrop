@@ -7,5 +7,5 @@
     "allowImportingTsExtensions": true,
     "noEmit": true
   },
-  "include": ["src/count.ts", "test"]
+  "include": ["src/count.ts", "src/totals.ts", "src/pair-core.ts", "test"]
 }
