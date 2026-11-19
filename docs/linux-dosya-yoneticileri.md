@@ -4,7 +4,10 @@ Select one or more files and folders in the file manager and right-click,
 and "Send with TotalDrop" appears (#303, the first step of #54). TotalDrop
 opens, or its open window comes to the front; the selection is listed on
 the Send screen. If the app is open, no second window opens; the selection
-is added to the open window (`linux/src/instance.rs`).
+is added to the open window (`linux/src/instance.rs`), which uses the
+launch's activation token on Wayland (`XDG_ACTIVATION_TOKEN`) and finishes
+its startup notification and user timestamp on X11 (`DESKTOP_STARTUP_ID`,
+`linux/src/bridge/launcher.h`, #184).
 
 | File manager | How | Comes with the package |
 | --- | --- | --- |

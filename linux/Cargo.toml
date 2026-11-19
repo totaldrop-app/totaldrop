@@ -43,7 +43,8 @@ cxx-qt-build = "0.10"
 
 # cxx-qt bridges are `unsafe extern "C++"` blocks by construction, so this
 # crate cannot take the workspace's `unsafe_code = "forbid"`. All unsafe
-# stays inside the generated bridge modules; the rest of the crate is safe.
+# stays inside the generated bridge modules and `build.rs` (`cc_builder`);
+# the rest of the crate is safe.
 [lints.rust]
 missing_docs = "warn"
 

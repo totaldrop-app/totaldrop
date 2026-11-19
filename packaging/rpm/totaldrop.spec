@@ -18,6 +18,7 @@ Source0:        https://github.com/totaldrop-app/totaldrop/archive/refs/tags/lin
 BuildRequires:  gcc-c++
 BuildRequires:  lld
 BuildRequires:  pkgconf
+BuildRequires:  libxcb-devel
 BuildRequires:  cmake(Qt6Core)
 BuildRequires:  cmake(Qt6Gui)
 BuildRequires:  cmake(Qt6Qml)
