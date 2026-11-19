@@ -137,17 +137,19 @@ select.lang {
 /* Firefox colours the chosen and hovered option from its own sheet, which the rule
    above would override; keep that highlight in the theme's accent. */
 .lang option:checked { background-color: var(--accent); color: var(--on-accent); }
+.top-nav a.lang-jump:not([hidden]) { display: inline-flex; align-items: center; min-height: 44px; }
+.lang-jump[hidden] { display: none; }
 /* On a phone the header keeps one way forward: Download, as a round icon
    button beside the language picker, its name still read out. The page
    already open is not offered again. Brand, button and picker stay on one
    line; a long language name gives way first (#477). */
 .nav-dl-icon { display: none; width: 1.375rem; height: 1.375rem; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 @media (max-width: 40rem) {
+  .top-nav a:not(.lang-jump) { display: none; }
   .top { flex-wrap: nowrap; gap: 0.75rem; }
   .brand { flex: none; font-size: 1.3rem; gap: 0.5rem; }
   .brand .mark { width: 1.75rem; height: 1.75rem; }
   .top-nav { flex-wrap: nowrap; gap: 0.5rem; min-width: 0; }
-  .top-nav a { display: none; }
   .top-nav a.nav-dl:not([aria-current]) {
     display: inline-flex; align-items: center; justify-content: center; flex: none;
     width: 2.75rem; height: 2.75rem; min-width: 44px; min-height: 44px; padding: 0; border: 1px solid var(--outline); border-radius: 999px; color: var(--text);
@@ -400,8 +402,9 @@ pre.cmd { white-space: pre-wrap; overflow-wrap: break-word; margin: 0; padding: 
 /* Privacy policy in every language: the note on a translation, and the
    list of the other languages under the text (#207). */
 .prose .lang-note { padding: 0; }
-.lang-list { display: grid; gap: var(--s16); border-top: 1px solid var(--rule); padding-top: 3rem; }
-.prose .lang-list ul { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: var(--s8) var(--s24); }
+.lang-list { max-width: var(--wrap); margin: 0 auto; padding: clamp(3rem, 7vw, 5.5rem) var(--gutter); display: grid; gap: var(--s16); border-top: 1px solid var(--rule); }
+.prose .lang-list { max-width: none; margin: 0; padding: 3rem 0 0; }
+.lang-list ul, .prose .lang-list ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--s8) var(--s24); }
 .lang-list a { display: inline-block; padding-block: 0.6rem; }
 .lang-list a[aria-current="page"] { color: var(--text); font-weight: 700; text-decoration: none; }
 

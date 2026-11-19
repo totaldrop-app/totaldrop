@@ -23,39 +23,87 @@
   const isRtl = (tag) => {
     try { return RTL_SCRIPTS.includes(new Intl.Locale(tag).maximize().script); } catch (e) { return false; }
   };
+  const TAGS = LANGUAGES.map((l) => l[0]);
+  const isTag = (v) => Boolean(v && window.TDLang && TAGS.includes(v));
   const PAGE = document.body.dataset.page || "home";
   const store = {
     get() { try { return localStorage.getItem("td-lang"); } catch (e) { return null; } },
     set(v) { try { localStorage.setItem("td-lang", v); return true; } catch (e) { return false; } }
   };
-  const saved = store.get();
-  const queryLang = new URL(location.search || "", "https://totaldrop.app").searchParams.get("lang");
-  // When storage is unavailable, ?lang=en carries an explicit choice of
-  // English so redirect() does not send the visitor back to their browser's
-  // language, and addressed links on the page keep that marker.
-  const chosen = saved || (queryLang === "en" ? "en" : null);
   const prefs = navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language];
   // Where this page is among its languages, or null on /r and the 404 page
   // (and when lang.js did not load: the page then stays as it was sent).
   const HERE = window.TDLang && window.TDLang.ADDRESSED.includes(PAGE) ? window.TDLang.locate(location.pathname) : null;
+  const currentHost = location.hostname
+    || (PAGE === "download" && !(HERE && HERE.rest === "/download/") ? "download.totaldrop.app" : "totaldrop.app");
+
+  const urlParams = new URL(location.search || "", "https://totaldrop.app").searchParams;
+  const rawQueryLang = urlParams.get("lang");
+  const queryLang = isTag(rawQueryLang) ? rawQueryLang : null;
+  const storedLang = store.get();
+  let saved = isTag(storedLang) ? storedLang : null;
+  let keptStorage = saved !== null;
+  if (queryLang) {
+    keptStorage = store.set(queryLang);
+    if (keptStorage) {
+      saved = queryLang;
+      urlParams.delete("lang");
+    }
+  }
+  const cleanQs = urlParams.toString();
+  const effectiveSearch = queryLang && keptStorage ? (cleanQs ? "?" + cleanQs : "") : location.search;
+  const chosen = saved || queryLang;
+
   // A visitor on an English address whose language is another one, and who
   // has not chosen English, goes to that language's address. The part
   // after "#" goes along and is never sent to the server.
   if (HERE) {
     const to = window.TDLang.redirect(location.pathname, chosen, prefs);
-    if (to) { location.replace(to + location.search + location.hash); return; }
-    if (!saved && queryLang === "en") {
-      const paths = window.TDLang.ADDRESSED.map((p) => (p === "home" ? "/" : "/" + p + "/"));
-      document.querySelectorAll("a[href]").forEach((a) => {
-        const href = a.getAttribute("href");
-        const m = /^(https:\/\/(?:download\.)?totaldrop\.app)?(\/[^#?]*)?(#.*)?$/.exec(href);
-        if (!m || (m[1] === undefined && m[2] === undefined)) return;
-        const path = m[2] || "/";
-        if (!paths.includes(path)) return;
-        a.setAttribute("href", (m[1] || "") + path + "?lang=en" + (m[3] || ""));
-      });
+    if (to) { location.replace(to + effectiveSearch + location.hash); return; }
+    if (queryLang && keptStorage && window.history && typeof window.history.replaceState === "function") {
+      window.history.replaceState(null, "", location.pathname + effectiveSearch + location.hash);
     }
+  } else if (queryLang && keptStorage && window.history && typeof window.history.replaceState === "function") {
+    window.history.replaceState(null, "", location.pathname + effectiveSearch + location.hash);
   }
+
+  // Carry an explicit language choice across the two host names (localStorage
+  // is per origin, ADR 0021), and across same-host pages too when storage is
+  // unavailable. Captured once so show() can re-sync links on /r and 404.html.
+  const candidateLinks = [];
+  if (window.TDLang) {
+    const paths = window.TDLang.ADDRESSED.map((p) => (p === "home" ? "/" : "/" + p + "/"));
+    document.querySelectorAll("a[href]").forEach((a) => {
+      if (a.hasAttribute("hreflang")) return;
+      const href = a.getAttribute("href");
+      const m = /^(https:\/\/(?:download\.)?totaldrop\.app)?(\/[^#?]*)?(#.*)?$/.exec(href);
+      if (!m || (m[1] === undefined && m[2] === undefined)) return;
+      const linkHost = m[1] ? m[1].slice("https://".length) : currentHost;
+      const loc = window.TDLang.locate(m[2] || "/");
+      const addressed = linkHost === "download.totaldrop.app" ? loc.rest === "/" : paths.includes(loc.rest);
+      if (!addressed) return;
+      candidateLinks.push({
+        el: a,
+        orig: href,
+        prefix: m[1] || "",
+        rest: loc.rest,
+        hash: m[3] || "",
+        crossHost: linkHost !== currentHost,
+      });
+    });
+  }
+  function syncChosenLinks(lang, storageOk) {
+    candidateLinks.forEach((item) => {
+      if (!isTag(lang)) {
+        item.el.setAttribute("href", item.orig);
+      } else if (item.crossHost || (!storageOk && (!HERE || lang === "en"))) {
+        item.el.setAttribute("href", item.prefix + window.TDLang.address(lang, item.rest) + "?lang=" + lang + item.hash);
+      } else {
+        item.el.setAttribute("href", HERE ? item.orig : item.prefix + window.TDLang.address(lang, item.rest) + item.hash);
+      }
+    });
+  }
+  if (chosen && (!HERE || HERE.tag === chosen)) syncChosenLinks(chosen, keptStorage);
 
   const nodes = Array.from(document.querySelectorAll("[data-i18n]"));
   const descTag = document.querySelector('meta[name="description"]');
@@ -77,6 +125,7 @@
   const t = (key) => (has(dict, key) ? dict[key] : EN[key]);
 
   const picker = document.getElementById("lang-select");
+  const jump = document.querySelector(".lang-jump");
   // The draft note opens the main content, so it is read (and found by
   // landmark navigation) before the translated text. A page with its own
   // address already carries it.
@@ -149,7 +198,10 @@
       }
     }
     if (mine !== request) return;
-    if (save) store.set(tag);
+    if (save) {
+      const savedOk = store.set(tag);
+      syncChosenLinks(tag, savedOk);
+    }
     if (animate && !reduced && document.startViewTransition) document.startViewTransition(() => apply(tag, d));
     else apply(tag, d);
   }
@@ -162,9 +214,10 @@
       o.textContent = name;
       picker.append(o);
     });
+    if (jump) jump.hidden = true;
     picker.hidden = false;
     picker.addEventListener("change", () => {
-      if (!HERE) { show(picker.value, { save: true, animate: true }); return; }
+      if (!HERE) return show(picker.value, { save: true, animate: true });
       // The same page, and the same part of it, in the chosen language.
       // When storage throws, ?lang=en carries an English choice to the next page.
       const kept = store.set(picker.value);
@@ -173,6 +226,26 @@
       else params.delete("lang");
       const qs = params.toString();
       location.assign(window.TDLang.address(picker.value, HERE.rest) + (qs ? "?" + qs : "") + location.hash);
+    });
+  }
+
+  if (window.TDLang) {
+    const baseOrigin = location.origin || ("https://" + currentHost);
+    document.querySelectorAll("#languages a[hreflang]").forEach((a) => {
+      a.addEventListener("click", (e) => {
+        if (e && (e.defaultPrevented || (typeof e.button === "number" && e.button !== 0) || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey)) return;
+        const tag = a.getAttribute("hreflang");
+        if (!isTag(tag)) return;
+        const kept = store.set(tag);
+        const rawHref = a.getAttribute("href");
+        const target = new URL(rawHref, baseOrigin);
+        const crossHost = target.hostname !== currentHost;
+        if ((!kept && tag === "en") || crossHost) {
+          target.searchParams.set("lang", tag);
+          if (e && typeof e.preventDefault === "function") e.preventDefault();
+          location.assign(rawHref.startsWith("https://") ? target.toString() : target.pathname + target.search + target.hash);
+        }
+      });
     });
   }
 
