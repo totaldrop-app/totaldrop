@@ -711,4 +711,24 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get openLinkFailed =>
       'Жодна програма на цьому пристрої не змогла відкрити посилання.';
+
+  @override
+  String get settingsShortcut => 'Комбінація клавіш';
+
+  @override
+  String get settingsShortcutBody =>
+      'Відкривайте TotalDrop звідки завгодно з текстом із буфера обміну, готовим до надсилання. Нічого не надсилається, доки ви не створите код.';
+
+  @override
+  String get settingsShortcutUnset => 'Не задано';
+
+  @override
+  String get settingsShortcutSet => 'Задати комбінацію';
+
+  @override
+  String get settingsShortcutChange => 'Змінити комбінацію';
+
+  @override
+  String get settingsShortcutManual =>
+      'Це середовище не налаштовує комбінації клавіш програм звідси. Призначте клавішу в налаштуваннях стільниці або віконного менеджера для команди:';
 }

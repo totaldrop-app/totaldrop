@@ -190,5 +190,11 @@
   "openLinkTitle": "Megnyitja ezt a hivatkozást?",
   "openLinkBody": "Az alábbi cím a böngészőben nyílik meg.",
   "openLinkConfirm": "Megnyitás",
-  "openLinkFailed": "Egyetlen alkalmazás sem tudta megnyitni a hivatkozást ezen az eszközön."
+  "openLinkFailed": "Egyetlen alkalmazás sem tudta megnyitni a hivatkozást ezen az eszközön.",
+  "settingsShortcut": "Gyorsbillentyű",
+  "settingsShortcutBody": "Nyissa meg bárhonnan a TotalDropot a vágólap küldésre kész szövegével. Semmi sem indul el, amíg kódot nem hoz létre.",
+  "settingsShortcutUnset": "Nincs megadva",
+  "settingsShortcutSet": "Gyorsbillentyű megadása",
+  "settingsShortcutChange": "Gyorsbillentyű módosítása",
+  "settingsShortcutManual": "Ez az asztali környezet nem állít be innen alkalmazás-gyorsbillentyűket. Rendeljen billentyűt az asztali környezet vagy az ablakkezelő beállításaiban ehhez:"
 }

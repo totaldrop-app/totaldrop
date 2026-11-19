@@ -711,4 +711,24 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get openLinkFailed =>
       'Keine App auf diesem Gerät konnte den Link öffnen.';
+
+  @override
+  String get settingsShortcut => 'Tastenkürzel';
+
+  @override
+  String get settingsShortcutBody =>
+      'TotalDrop von überall mit dem Text aus der Zwischenablage versandbereit öffnen. Nichts wird gesendet, bevor Sie einen Code erstellen.';
+
+  @override
+  String get settingsShortcutUnset => 'Nicht festgelegt';
+
+  @override
+  String get settingsShortcutSet => 'Tastenkürzel festlegen';
+
+  @override
+  String get settingsShortcutChange => 'Tastenkürzel ändern';
+
+  @override
+  String get settingsShortcutManual =>
+      'Diese Arbeitsumgebung richtet App-Tastenkürzel nicht von hier aus ein. Weisen Sie in den Einstellungen Ihrer Arbeitsumgebung oder Ihres Fenstermanagers diesem Befehl eine Taste zu:';
 }

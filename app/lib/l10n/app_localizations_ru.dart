@@ -713,4 +713,24 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get openLinkFailed =>
       'Ни одно приложение на этом устройстве не смогло открыть ссылку.';
+
+  @override
+  String get settingsShortcut => 'Сочетание клавиш';
+
+  @override
+  String get settingsShortcutBody =>
+      'Открывайте TotalDrop откуда угодно с уже подставленным текстом из буфера обмена. Ничего не отправляется, пока вы не создадите код.';
+
+  @override
+  String get settingsShortcutUnset => 'Не задано';
+
+  @override
+  String get settingsShortcutSet => 'Задать сочетание';
+
+  @override
+  String get settingsShortcutChange => 'Изменить сочетание';
+
+  @override
+  String get settingsShortcutManual =>
+      'Это окружение не настраивает сочетания клавиш приложений отсюда. Назначьте клавишу в настройках рабочего стола или оконного менеджера для команды:';
 }

@@ -989,4 +989,51 @@ mod tests {
             }
         }
     }
+
+    #[test]
+    fn shortcut_keys_are_translated_in_every_language() {
+        const KEYS: [&str; 6] = [
+            "settingsShortcut",
+            "settingsShortcutBody",
+            "settingsShortcutUnset",
+            "settingsShortcutSet",
+            "settingsShortcutChange",
+            "settingsShortcutManual",
+        ];
+        let app_files: Vec<&File> = catalog()
+            .files
+            .iter()
+            .filter(|f| f.domain == "app")
+            .collect();
+        assert!(
+            app_files.len() >= 35,
+            "expected >= 35 app locales, got {}",
+            app_files.len()
+        );
+        for file in app_files {
+            for key in KEYS {
+                let raw = file.raw.get(key).map(|v| v.trim()).unwrap_or_default();
+                assert!(
+                    !raw.is_empty(),
+                    "{}: `{key}` is missing or empty",
+                    file.locale
+                );
+            }
+        }
+        let tags = available(Domain::App);
+        assert!(tags.len() >= 35, "{tags:?}");
+        for tag in tags {
+            let s = strings(&tag);
+            let keys = s.keys();
+            for key in KEYS {
+                assert!(
+                    keys.contains(key),
+                    "{tag}: `{key}` missing from Strings::keys"
+                );
+                let text = s.get(key, &[]);
+                assert!(!text.trim().is_empty(), "{tag}: `{key}` formatted empty");
+                assert_ne!(text, key, "{tag}: `{key}` fell back to key name");
+            }
+        }
+    }
 }

@@ -713,4 +713,24 @@ class AppLocalizationsEl extends AppLocalizations {
   @override
   String get openLinkFailed =>
       'Καμία εφαρμογή σε αυτήν τη συσκευή δεν μπόρεσε να ανοίξει τον σύνδεσμο.';
+
+  @override
+  String get settingsShortcut => 'Συντόμευση πληκτρολογίου';
+
+  @override
+  String get settingsShortcutBody =>
+      'Ανοίξτε το TotalDrop από οπουδήποτε με το κείμενο του προχείρου έτοιμο για αποστολή. Τίποτα δεν αποστέλλεται μέχρι να δημιουργήσετε κωδικό.';
+
+  @override
+  String get settingsShortcutUnset => 'Δεν έχει οριστεί';
+
+  @override
+  String get settingsShortcutSet => 'Ορισμός συντόμευσης';
+
+  @override
+  String get settingsShortcutChange => 'Αλλαγή συντόμευσης';
+
+  @override
+  String get settingsShortcutManual =>
+      'Αυτό το περιβάλλον εργασίας δεν ορίζει συντομεύσεις εφαρμογών από εδώ. Αντιστοιχίστε ένα πλήκτρο στις ρυθμίσεις του περιβάλλοντος ή του διαχειριστή παραθύρων στην εντολή:';
 }

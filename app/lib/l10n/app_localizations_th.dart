@@ -678,4 +678,24 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get openLinkFailed => 'ไม่มีแอปใดในอุปกรณ์นี้ที่เปิดลิงก์ได้';
+
+  @override
+  String get settingsShortcut => 'ปุ่มลัดแป้นพิมพ์';
+
+  @override
+  String get settingsShortcutBody =>
+      'เปิด TotalDrop จากที่ใดก็ได้พร้อมข้อความในคลิปบอร์ดที่เตรียมไว้ส่ง จะไม่มีการส่งใด ๆ จนกว่าคุณจะสร้างรหัส';
+
+  @override
+  String get settingsShortcutUnset => 'ไม่ได้ตั้งค่า';
+
+  @override
+  String get settingsShortcutSet => 'ตั้งปุ่มลัด';
+
+  @override
+  String get settingsShortcutChange => 'เปลี่ยนปุ่มลัด';
+
+  @override
+  String get settingsShortcutManual =>
+      'เดสก์ท็อปนี้ไม่รองรับการตั้งปุ่มลัดของแอปจากที่นี่ กำหนดปุ่มในการตั้งค่าเดสก์ท็อปหรือตัวจัดการหน้าต่างของคุณให้กับคำสั่ง:';
 }

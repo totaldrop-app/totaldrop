@@ -190,5 +190,11 @@
   "openLinkTitle": "¿Abrir este enlace?",
   "openLinkBody": "La dirección de abajo se abrirá en el navegador.",
   "openLinkConfirm": "Abrir",
-  "openLinkFailed": "Ninguna aplicación de este dispositivo pudo abrir el enlace."
+  "openLinkFailed": "Ninguna aplicación de este dispositivo pudo abrir el enlace.",
+  "settingsShortcut": "Atajo de teclado",
+  "settingsShortcutBody": "Abre TotalDrop desde cualquier lugar con el texto del portapapeles listo para enviar. No se envía nada hasta que crees un código.",
+  "settingsShortcutUnset": "Sin asignar",
+  "settingsShortcutSet": "Asignar atajo",
+  "settingsShortcutChange": "Cambiar atajo",
+  "settingsShortcutManual": "Este escritorio no configura atajos de aplicaciones desde aquí. Asigna una tecla en los ajustes de tu escritorio o gestor de ventanas a:"
 }

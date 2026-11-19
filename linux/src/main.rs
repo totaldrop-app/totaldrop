@@ -16,6 +16,7 @@ mod instance;
 mod quit;
 mod runtime;
 mod settings;
+mod shortcuts;
 mod sleep;
 mod theme;
 

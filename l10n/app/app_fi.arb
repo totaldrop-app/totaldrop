@@ -190,5 +190,11 @@
   "openLinkTitle": "Avataanko tämä linkki?",
   "openLinkBody": "Alla oleva osoite avautuu selaimessasi.",
   "openLinkConfirm": "Avaa",
-  "openLinkFailed": "Mikään tämän laitteen sovellus ei voinut avata linkkiä."
+  "openLinkFailed": "Mikään tämän laitteen sovellus ei voinut avata linkkiä.",
+  "settingsShortcut": "Pikanäppäin",
+  "settingsShortcutBody": "Avaa TotalDrop mistä tahansa leikepöydän teksti valmiina lähetettäväksi. Mitään ei lähetetä ennen kuin luot koodin.",
+  "settingsShortcutUnset": "Ei asetettu",
+  "settingsShortcutSet": "Aseta pikanäppäin",
+  "settingsShortcutChange": "Vaihda pikanäppäin",
+  "settingsShortcutManual": "Tämä työpöytä ei aseta sovellusten pikanäppäimiä täältä. Sido näppäin työpöydän tai ikkunointiohjelman asetuksissa komentoon:"
 }

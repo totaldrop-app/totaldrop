@@ -4,8 +4,8 @@
 import QtQuick
 
 // Stand-in for the Rust Transfer QObject (linux/src/bridge/transfer.rs),
-// exposing the same properties, signals and methods so SendPage and
-// ReceivePage can be driven through every stage in QML tests.
+// exposing the same properties, signals and methods so SendPage,
+// ReceivePage, and SettingsPage can be driven in QML tests.
 QtObject {
     property string state: "idle"
     property string role: ""
@@ -75,7 +75,11 @@ QtObject {
     function localPaths(urls) { return [] }
     function pickFiles(title) {}
     function readQrImage(title) {}
-    function saveServer(url) { server = url; return true }
+    function saveServer(url) {
+        if (!url.startsWith("wss://")) return false
+        server = url
+        return true
+    }
     function savePrivacyMode(on) { privacyMode = on; return true }
     function resetServer() { server = defaultServer }
     function notify(title, body) {}

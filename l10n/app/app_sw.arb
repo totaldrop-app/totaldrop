@@ -190,5 +190,11 @@
   "openLinkTitle": "Fungua kiungo hiki?",
   "openLinkBody": "Anwani iliyo hapa chini itafunguliwa kwenye kivinjari chako.",
   "openLinkConfirm": "Fungua",
-  "openLinkFailed": "Hakuna programu kwenye kifaa hiki iliyoweza kufungua kiungo."
+  "openLinkFailed": "Hakuna programu kwenye kifaa hiki iliyoweza kufungua kiungo.",
+  "settingsShortcut": "Njia ya mkato ya kibodi",
+  "settingsShortcutBody": "Fungua TotalDrop popote ukiwa na maandishi ya ubao wa kunakili tayari kutumwa. Hakuna kinachotumwa hadi uunde msimbo.",
+  "settingsShortcutUnset": "Haijawekwa",
+  "settingsShortcutSet": "Weka njia ya mkato",
+  "settingsShortcutChange": "Badilisha njia ya mkato",
+  "settingsShortcutManual": "Eneo-kazi hili haliweki njia za mkato za programu kutokea hapa. Unganisha kitufe katika mipangilio ya eneo-kazi au kidhibiti madirisha na amri:"
 }

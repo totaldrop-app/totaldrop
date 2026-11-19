@@ -190,5 +190,11 @@
   "openLinkTitle": "Åbn dette link?",
   "openLinkBody": "Adressen nedenfor åbnes i din browser.",
   "openLinkConfirm": "Åbn",
-  "openLinkFailed": "Ingen app på denne enhed kunne åbne linket."
+  "openLinkFailed": "Ingen app på denne enhed kunne åbne linket.",
+  "settingsShortcut": "Tastaturgenvej",
+  "settingsShortcutBody": "Åbn TotalDrop hvor som helst med teksten fra udklipsholderen klar til at blive sendt. Intet sendes, før du opretter en kode.",
+  "settingsShortcutUnset": "Ikke angivet",
+  "settingsShortcutSet": "Angiv genvej",
+  "settingsShortcutChange": "Skift genvej",
+  "settingsShortcutManual": "Dette skrivebord indstiller ikke appgenveje herfra. Knyt en tast i indstillingerne for dit skrivebord eller din vindueshåndtering til:"
 }

@@ -1255,6 +1255,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No app on this device could open the link.'**
   String get openLinkFailed;
+
+  /// Linux Settings: heading of the section for the desktop-wide Send clipboard keyboard shortcut (#54)
+  ///
+  /// In en, this message translates to:
+  /// **'Keyboard shortcut'**
+  String get settingsShortcut;
+
+  /// Linux Settings: explains what the Send clipboard keyboard shortcut does and that nothing is sent automatically (#54)
+  ///
+  /// In en, this message translates to:
+  /// **'Open TotalDrop from anywhere with the clipboard\'s text ready to send. Nothing is sent until you create a code.'**
+  String get settingsShortcutBody;
+
+  /// Linux Settings: shown next to Send clipboard when no key combination is assigned yet (#54)
+  ///
+  /// In en, this message translates to:
+  /// **'Not set'**
+  String get settingsShortcutUnset;
+
+  /// Linux Settings: button that opens the desktop's shortcut dialog to assign a key combination (#54)
+  ///
+  /// In en, this message translates to:
+  /// **'Set shortcut'**
+  String get settingsShortcutSet;
+
+  /// Linux Settings: button that opens the desktop's shortcut dialog when a key combination is already assigned (#54)
+  ///
+  /// In en, this message translates to:
+  /// **'Change shortcut'**
+  String get settingsShortcutChange;
+
+  /// Linux Settings: shown above the command to bind by hand when the desktop has no GlobalShortcuts portal (#54)
+  ///
+  /// In en, this message translates to:
+  /// **'This desktop does not set app shortcuts from here. Bind a key in your desktop or window manager settings to:'**
+  String get settingsShortcutManual;
 }
 
 class _AppLocalizationsDelegate

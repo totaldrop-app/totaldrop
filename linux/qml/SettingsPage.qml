@@ -10,6 +10,12 @@ Page {
     id: page
 
     required property Transfer transfer
+    property Launcher launcher: null
+    readonly property bool shortcutSupported: page.launcher !== null && page.launcher.shortcutSupported
+    readonly property string shortcutTrigger: page.launcher !== null ? page.launcher.shortcutTrigger : ""
+    readonly property string shortcutCommand: page.launcher !== null && page.launcher.shortcutCommand !== ""
+        ? page.launcher.shortcutCommand
+        : "totaldrop-desktop --screen=clipboard"
     // A server address not yet saved: another launch does not replace it.
     readonly property bool hasInput: server.text.trim() !== page.transfer.server
     signal close()
@@ -116,6 +122,94 @@ Page {
                 wrapMode: Text.Wrap
                 Layout.fillWidth: true
                 Layout.leftMargin: privacy.indicator ? privacy.indicator.width + privacy.spacing : 0
+            }
+
+            Divider { Layout.fillWidth: true; Layout.topMargin: Theme.s16; Layout.bottomMargin: Theme.s16 }
+
+            Label {
+                text: Strings.s.settingsShortcut || ""
+                color: Theme.ink
+                font.pointSize: Qt.application.font.pointSize * 1.25
+                font.weight: Font.DemiBold
+            }
+            Label {
+                text: Strings.s.settingsShortcutBody || ""
+                color: Theme.ink
+                wrapMode: Text.Wrap
+                Layout.fillWidth: true
+            }
+            RowLayout {
+                id: shortcutStatusRow
+                objectName: "shortcutStatusRow"
+                visible: page.shortcutSupported
+                spacing: Theme.s8
+                Layout.fillWidth: true
+                Layout.topMargin: Theme.s8
+                Label {
+                    text: Strings.s.sendClipboard || ""
+                    color: Theme.ink
+                    wrapMode: Text.Wrap
+                    Layout.fillWidth: true
+                }
+                Label {
+                    id: shortcutTriggerLabel
+                    objectName: "shortcutTriggerLabel"
+                    // Key combinations like "Meta+Shift+V" stay left to right in
+                    // right-to-left locales; "Not set" follows the locale (#54).
+                    LayoutMirroring.enabled: page.shortcutTrigger === "" ? Strings.rtl : false
+                    LayoutMirroring.childrenInherit: true
+                    horizontalAlignment: page.shortcutTrigger !== "" || !Strings.rtl
+                        ? Text.AlignLeft
+                        : Text.AlignRight
+                    text: page.shortcutTrigger !== ""
+                        ? page.shortcutTrigger
+                        : (Strings.s.settingsShortcutUnset || "")
+                    textFormat: Text.PlainText
+                    color: page.shortcutTrigger !== "" ? Theme.ink : Theme.muted
+                    font.weight: page.shortcutTrigger !== "" ? Font.DemiBold : Font.Normal
+                    wrapMode: Text.Wrap
+                    Layout.maximumWidth: col.width * 0.6
+                }
+            }
+            RowLayout {
+                visible: page.shortcutSupported
+                spacing: Theme.s8
+                Layout.topMargin: Theme.s8
+                SecondaryButton {
+                    id: configureShortcutButton
+                    objectName: "configureShortcutButton"
+                    text: page.shortcutTrigger !== ""
+                        ? (Strings.s.settingsShortcutChange || "")
+                        : (Strings.s.settingsShortcutSet || "")
+                    onClicked: if (page.launcher !== null) page.launcher.configureShortcut()
+                }
+            }
+            Label {
+                id: shortcutManualLabel
+                objectName: "shortcutManualLabel"
+                visible: !page.shortcutSupported
+                text: Strings.s.settingsShortcutManual || ""
+                color: Theme.muted
+                wrapMode: Text.Wrap
+                Layout.fillWidth: true
+                Layout.topMargin: Theme.s8
+            }
+            TextArea {
+                id: shortcutCommandBox
+                objectName: "shortcutCommandBox"
+                visible: !page.shortcutSupported && page.shortcutCommand !== ""
+                // Shell or compositor command is always ASCII left to right (#54).
+                LayoutMirroring.enabled: false
+                LayoutMirroring.childrenInherit: true
+                horizontalAlignment: TextEdit.AlignLeft
+                text: page.shortcutCommand
+                textFormat: TextEdit.PlainText
+                readOnly: true
+                selectByMouse: true
+                wrapMode: TextEdit.WrapAnywhere
+                font.family: "monospace"
+                Layout.fillWidth: true
+                Accessible.name: page.shortcutCommand
             }
 
             Divider { Layout.fillWidth: true; Layout.topMargin: Theme.s16; Layout.bottomMargin: Theme.s16 }

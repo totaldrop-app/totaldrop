@@ -693,4 +693,24 @@ class AppLocalizationsHe extends AppLocalizations {
 
   @override
   String get openLinkFailed => 'אף יישום במכשיר זה לא הצליח לפתוח את הקישור.';
+
+  @override
+  String get settingsShortcut => 'קיצור מקלדת';
+
+  @override
+  String get settingsShortcutBody =>
+      'פתיחת TotalDrop מכל מקום כשהטקסט מהלוח מוכן לשליחה. דבר אינו נשלח עד ליצירת קוד.';
+
+  @override
+  String get settingsShortcutUnset => 'לא הוגדר';
+
+  @override
+  String get settingsShortcutSet => 'הגדרת קיצור';
+
+  @override
+  String get settingsShortcutChange => 'שינוי קיצור';
+
+  @override
+  String get settingsShortcutManual =>
+      'שולחן עבודה זה אינו מגדיר מכאן קיצורי יישומים. יש לשייך מקש בהגדרות שולחן העבודה או מנהל החלונות לפקודה:';
 }

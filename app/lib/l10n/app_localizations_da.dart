@@ -700,4 +700,24 @@ class AppLocalizationsDa extends AppLocalizations {
 
   @override
   String get openLinkFailed => 'Ingen app på denne enhed kunne åbne linket.';
+
+  @override
+  String get settingsShortcut => 'Tastaturgenvej';
+
+  @override
+  String get settingsShortcutBody =>
+      'Åbn TotalDrop hvor som helst med teksten fra udklipsholderen klar til at blive sendt. Intet sendes, før du opretter en kode.';
+
+  @override
+  String get settingsShortcutUnset => 'Ikke angivet';
+
+  @override
+  String get settingsShortcutSet => 'Angiv genvej';
+
+  @override
+  String get settingsShortcutChange => 'Skift genvej';
+
+  @override
+  String get settingsShortcutManual =>
+      'Dette skrivebord indstiller ikke appgenveje herfra. Knyt en tast i indstillingerne for dit skrivebord eller din vindueshåndtering til:';
 }
