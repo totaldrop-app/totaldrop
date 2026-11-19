@@ -566,6 +566,10 @@ class AppLocalizationsHu extends AppLocalizations {
       'A TotalDrop már nyitva van a .pkg, .deb vagy .rpm csomagból, ezért az az ablak került előtérbe. Egyszerre csak egy csomagot használjon: ennek megnyitásához lépjen ki abból az ablakból.';
 
   @override
+  String get sendFlatpakUnreadable =>
+      'Ez a fájl nem olvasható be a Flatpakból. Válassza ki a Fájlok hozzáadása gombbal, vagy zárja be ezt az ablakot, és próbálja újra.';
+
+  @override
   String get sendText => 'Szöveg küldése';
 
   @override

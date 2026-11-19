@@ -154,6 +154,7 @@
   "metainfoOnePackage": "Använd ett Linux-paket i taget. Flatpak-paketet och .pkg-, .deb- eller .rpm-paketet delar ett namn, så medan det ena är öppet tar en start av det andra fram det öppna fönstret i stället för att öppna ett nytt.",
   "otherPackageFlatpak": "TotalDrop är redan öppet från Flatpak, så det fönstret togs fram. Använd ett paket i taget: avsluta det fönstret för att öppna det här.",
   "otherPackageSystem": "TotalDrop är redan öppet från .pkg-, .deb- eller .rpm-paketet, så det fönstret togs fram. Använd ett paket i taget: avsluta det fönstret för att öppna det här.",
+  "sendFlatpakUnreadable": "Den här filen kan inte läsas från Flatpak. Välj den med Lägg till filer, eller stäng det här fönstret och försök igen.",
   "sendText": "Skicka text",
   "sendTextHint": "Skriv eller klistra in texten som ska skickas",
   "sendTextTooLong": "En text får vara högst {size}. Skicka en längre text som fil.",

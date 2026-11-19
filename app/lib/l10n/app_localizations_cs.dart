@@ -586,6 +586,10 @@ class AppLocalizationsCs extends AppLocalizations {
       'TotalDrop je už otevřený z balíčku .pkg, .deb nebo .rpm, takže se jeho okno přeneslo do popředí. Používejte vždy jen jeden balíček: pro otevření tohoto ukončete to okno.';
 
   @override
+  String get sendFlatpakUnreadable =>
+      'Tento soubor nelze z Flatpaku přečíst. Vyberte jej pomocí Přidat soubory, nebo toto okno zavřete a zkuste to znovu.';
+
+  @override
   String get sendText => 'Odeslat text';
 
   @override

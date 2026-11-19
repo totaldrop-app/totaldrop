@@ -18,6 +18,9 @@ Page {
     readonly property bool running: ["preparing", "waiting", "connected", "transferring"].indexOf(phase) >= 0
     property bool strong: false
     property var initialFiles: []
+    // Opened when a launch handed this Flatpak window paths it cannot read (#357).
+    property bool flatpakUnreadable: false
+    property string fileNotice: ""
     // Opened by "Send clipboard": the text on the clipboard, filled in.
     property bool pasteOnOpen: false
     // What is sent: the files listed, or a text the receiver shows (#326).
@@ -46,6 +49,7 @@ Page {
     property bool pasteWhenActive: false
     Component.onCompleted: {
         if (initialFiles.length > 0) add(initialFiles)
+        if (flatpakUnreadable) showFlatpakUnreadable()
         if (pasteOnOpen) Qt.callLater(page.pasteClipboard)
     }
     Connections {
@@ -68,6 +72,7 @@ Page {
     // already typed is kept.
     function pasteClipboard() {
         page.mode = "text"
+        page.fileNotice = ""
         page.textNotice = ""
         const w = page.Window.window
         if (w && !w.active) { page.pasteWhenActive = true; return }
@@ -101,7 +106,20 @@ Page {
         page.pasted = ""
         textBox.clear()
     }
+    function showFlatpakUnreadable() {
+        const msg = Strings.s.sendFlatpakUnreadable || ""
+        if (page.textMode && (textBox.text !== "" || page.bigText !== "")) {
+            page.textNotice = msg
+            Qt.callLater(() => textBox.forceActiveFocus())
+            return
+        }
+        page.mode = "files"
+        page.fileNotice = msg
+        Qt.callLater(() => (files.count > 0 ? createButton : addButton).forceActiveFocus())
+    }
     function sendIt() {
+        page.fileNotice = ""
+        page.textNotice = ""
         if (page.textMode) page.transfer.sendText(page.outgoing, page.strong)
         else page.transfer.send(page.paths(), page.strong)
     }
@@ -135,8 +153,10 @@ Page {
     ListModel { id: files }
 
     function add(paths) {
+        // A text already typed is kept, as DropArea and pasteClipboard do.
+        if (page.textMode && (textBox.text !== "" || page.bigText !== "")) return
         // Files asked to be sent show the file list.
-        if (paths.length > 0) page.mode = "files"
+        if (paths.length > 0) { page.mode = "files"; page.fileNotice = "" }
         for (const p of paths) {
             let known = false
             for (let i = 0; i < files.count; i++) if (files.get(i).path === p) known = true
@@ -248,6 +268,18 @@ Page {
                     Layout.maximumWidth: 380
                     Layout.alignment: Qt.AlignHCenter
                 }
+                Label {
+                    visible: page.fileNotice !== ""
+                    text: page.fileNotice
+                    textFormat: Text.PlainText
+                    color: Theme.error
+                    wrapMode: Text.Wrap
+                    horizontalAlignment: Text.AlignHCenter
+                    Layout.fillWidth: true
+                    Layout.maximumWidth: 380
+                    Layout.alignment: Qt.AlignHCenter
+                    Layout.topMargin: Theme.s8
+                }
                 PrimaryButton {
                     id: addButton
                     text: Strings.s.sendAddFiles
@@ -259,7 +291,7 @@ Page {
                 SecondaryButton {
                     text: Strings.s.sendText
                     icon.name: Theme.icon("insert-text")
-                    onClicked: { page.mode = "text"; Qt.callLater(() => textBox.forceActiveFocus()) }
+                    onClicked: { page.fileNotice = ""; page.mode = "text"; Qt.callLater(() => textBox.forceActiveFocus()) }
                     Layout.alignment: Qt.AlignHCenter
                 }
                 Item { Layout.fillHeight: true }
@@ -329,6 +361,14 @@ Page {
                     border.width: 2
                     border.color: Theme.accent
                 }
+            }
+            Label {
+                visible: files.count > 0 && page.fileNotice !== ""
+                text: page.fileNotice
+                textFormat: Text.PlainText
+                color: Theme.error
+                wrapMode: Text.Wrap
+                Layout.fillWidth: true
             }
             Item { visible: files.count > 0; Layout.fillHeight: true }
 
@@ -535,7 +575,7 @@ Page {
             onRetry: page.sendIt()
             onFinished: {
                 page.transfer.reset(); files.clear(); page.recalc()
-                page.clearText(); page.mode = "files"; page.close()
+                page.fileNotice = ""; page.clearText(); page.mode = "files"; page.close()
             }
         }
 

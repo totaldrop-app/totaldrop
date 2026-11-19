@@ -71,6 +71,11 @@ const MAX_PENDING: usize = 16;
 /// Platform-data key for the screen, which `Open` has no argument for.
 const SCREEN_KEY: &str = "app.totaldrop.screen";
 
+/// Flag [`Request::args`] adds when a Flatpak window drops paths it cannot
+/// read (#357). Options from outside never enter `items`, so only `args`
+/// produces it.
+const FLATPAK_UNREADABLE_ARG: &str = "--flatpak-unreadable";
+
 /// What a launch asks the window to show.
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct Request {
@@ -79,6 +84,9 @@ pub struct Request {
     pub items: Vec<String>,
     /// `send`, `receive` or `settings`.
     pub screen: Option<String>,
+    /// At least one local path could not be read inside the Flatpak
+    /// sandbox and was left out (#357).
+    pub unreadable_in_flatpak: bool,
 }
 
 impl Request {
@@ -116,9 +124,23 @@ impl Request {
         out
     }
 
-    /// The list QML reads: the items, then `--screen=…`.
+    /// Like [`Self::from_args`], filtered for the current window's
+    /// sandbox so an unreadable host path on the first Flatpak launch is
+    /// explained rather than listed as an empty file (#357).
+    pub fn for_current_window(args: impl IntoIterator<Item = OsString>, cwd: &Path) -> Self {
+        let req = Self::from_args(args, cwd);
+        let package = Package::current();
+        let mountinfo = mountinfo_for(package, &req);
+        filter_for_window(req, package, mountinfo.as_deref())
+    }
+
+    /// The list QML reads: the items, `--flatpak-unreadable` when the
+    /// sandbox could not read a handed-over path, then `--screen=…`.
     pub fn args(&self) -> Vec<String> {
         let mut out = self.items.clone();
+        if self.unreadable_in_flatpak {
+            out.push(FLATPAK_UNREADABLE_ARG.to_owned());
+        }
         if let Some(s) = &self.screen {
             out.push(format!("--screen={s}"));
         }
@@ -164,6 +186,7 @@ impl Request {
         Self {
             items,
             screen: screen.filter(|s| SCREENS.contains(s)).map(str::to_owned),
+            unreadable_in_flatpak: false,
         }
     }
 }
@@ -276,7 +299,9 @@ fn token(platform_data: &HashMap<String, OwnedVariant>) -> Option<String> {
 
 /// `org.freedesktop.Application`, as the Desktop Entry Specification
 /// defines it.
-struct Application;
+struct Application {
+    package: Package,
+}
 
 #[zbus::interface(name = "org.freedesktop.Application")]
 impl Application {
@@ -289,8 +314,10 @@ impl Application {
 
     fn open(&self, uris: Vec<String>, platform_data: HashMap<String, OwnedVariant>) {
         let screen = text(&platform_data, SCREEN_KEY);
+        let req = Request::from_open(&uris, screen.as_deref());
+        let mountinfo = mountinfo_for(self.package, &req);
         push(Opened {
-            request: Request::from_open(&uris, screen.as_deref()),
+            request: filter_for_window(req, self.package, mountinfo.as_deref()),
             token: token(&platform_data),
         });
     }
@@ -308,6 +335,7 @@ impl Application {
             request: Request {
                 items: Vec::new(),
                 screen: Some(action_name),
+                unreadable_in_flatpak: false,
             },
             token: token(&platform_data),
         });
@@ -357,6 +385,102 @@ impl Package {
             Self::System => "otherPackageSystem",
         }
     }
+}
+
+/// Read `/proc/self/mountinfo` only when a real Flatpak window has local
+/// paths to check.
+fn mountinfo_for(package: Package, req: &Request) -> Option<String> {
+    (package == Package::Flatpak
+        && crate::theme::host::sandboxed()
+        && req.items.iter().any(|i| i.starts_with('/')))
+    .then(|| std::fs::read_to_string("/proc/self/mountinfo").ok())
+    .flatten()
+}
+
+/// Leave out local paths a Flatpak window cannot read (#357), and set
+/// [`Request::unreadable_in_flatpak`] when any were dropped.
+fn filter_for_window(mut req: Request, package: Package, mountinfo: Option<&str>) -> Request {
+    if package != Package::Flatpak {
+        return req;
+    }
+    let before = req.items.len();
+    req.items
+        .retain(|item| !item.starts_with('/') || readable_in_sandbox(Path::new(item), mountinfo));
+    req.unreadable_in_flatpak = req.items.len() < before;
+    req
+}
+
+/// Whether the Flatpak sandbox can read `path` from the host: it must be a
+/// readable regular file or folder, and not one of the memory-only parent
+/// folders (`~`, `~/Downloads`) bubblewrap makes on its own tmpfs.
+fn readable_in_sandbox(path: &Path, mountinfo: Option<&str>) -> bool {
+    let Ok(meta) = std::fs::metadata(path) else {
+        return false;
+    };
+    let ok = if meta.is_dir() {
+        std::fs::read_dir(path).is_ok()
+    } else if meta.is_file() {
+        std::fs::File::open(path).is_ok()
+    } else {
+        false
+    };
+    if !ok {
+        return false;
+    }
+    if let Some(table) = mountinfo {
+        let resolved = std::fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf());
+        if !from_host(table, &resolved) {
+            return false;
+        }
+    }
+    true
+}
+
+/// Whether `path` (canonical) sits on a mount other than bubblewrap's own
+/// tmpfs; same rule as `kept` in `crates/totaldrop-cli/src/sandbox.rs`.
+fn from_host(mountinfo: &str, path: &Path) -> bool {
+    use std::os::unix::ffi::OsStrExt as _;
+    let mut sandbox_memory = None;
+    for line in mountinfo.lines() {
+        let mut halves = line.splitn(2, " - ");
+        let (Some(left), Some(right)) = (halves.next(), halves.next()) else {
+            continue;
+        };
+        let mut fields = left.split(' ');
+        let (Some(point), Some(kind)) = (fields.nth(4), right.split(' ').next()) else {
+            continue;
+        };
+        let bytes = unescape_mount(point);
+        if !path.starts_with(Path::new(std::ffi::OsStr::from_bytes(&bytes))) {
+            continue;
+        }
+        let shared = fields
+            .skip(1)
+            .any(|f| f.starts_with("master:") || f.starts_with("shared:"));
+        sandbox_memory = Some(matches!(kind, "tmpfs" | "ramfs") && !shared);
+    }
+    sandbox_memory != Some(true)
+}
+
+/// Undo `\040`-style octal escapes in a `mountinfo` mount point.
+fn unescape_mount(field: &str) -> Vec<u8> {
+    let mut out = Vec::with_capacity(field.len());
+    let mut rest = field.as_bytes();
+    while let Some((&b, tail)) = rest.split_first() {
+        if b == b'\\'
+            && let Some((digits, after)) = tail.split_first_chunk::<3>()
+            && digits.iter().all(|d| (b'0'..=b'7').contains(d))
+            && let Ok(s) = std::str::from_utf8(digits)
+            && let Ok(v) = u8::from_str_radix(s, 8)
+        {
+            out.push(v);
+            rest = after;
+        } else {
+            out.push(b);
+            rest = tail;
+        }
+    }
+    out
 }
 
 /// `app.totaldrop.TotalDrop.Instance`: what a later launch may ask the
@@ -427,7 +551,7 @@ async fn hand_off(
     // The interfaces are served before the name is taken, so no call can
     // arrive at a name without them.
     let conn = bus
-        .serve_at(OBJECT_PATH, Application)
+        .serve_at(OBJECT_PATH, Application { package: ours })
         .serve_at(OBJECT_PATH, Instance { package: ours })
         .method_timeout(TIMEOUT)
         .build()
@@ -656,6 +780,7 @@ mod tests {
         let second = Request {
             items: vec!["/tmp/td-a.txt".into()],
             screen: Some("send".into()),
+            unreadable_in_flatpak: false,
         };
         let claim = try_claim_on(bus.builder(), &second, Package::System).await;
         // Same package: nothing to explain.
@@ -714,7 +839,12 @@ mod tests {
         listen(move |o| tx.send(o).unwrap());
         let old = bus
             .builder()
-            .serve_at(OBJECT_PATH, Application)
+            .serve_at(
+                OBJECT_PATH,
+                Application {
+                    package: Package::System,
+                },
+            )
             .build()
             .await
             .unwrap();
@@ -879,6 +1009,7 @@ mod tests {
         let r = Request {
             items: vec!["/tmp/ğüş #1%.txt".into(), "7-a-b".into()],
             screen: None,
+            unreadable_in_flatpak: false,
         };
         let uris = r.uris();
         assert_eq!(uris[0], "file:///tmp/%C4%9F%C3%BC%C5%9F%20%231%25.txt");
@@ -944,7 +1075,12 @@ mod tests {
         let (_server, client) = futures_util::try_join!(
             Builder::authenticated_socket(a, guid.clone())
                 .p2p()
-                .serve_at(OBJECT_PATH, Application)
+                .serve_at(
+                    OBJECT_PATH,
+                    Application {
+                        package: Package::System,
+                    },
+                )
                 .build(),
             Builder::authenticated_socket(b, guid).p2p().build(),
         )
@@ -1021,5 +1157,184 @@ mod tests {
 
         call("Activate", vec![], None).await.unwrap();
         assert_eq!(rx.recv().unwrap().request, Request::default());
+    }
+
+    /// When the Flatpak window is open and the system package's "Send with
+    /// TotalDrop" hands over host paths over `org.freedesktop.Application.Open`
+    /// (#357), paths the sandbox cannot read are left out and flagged so the
+    /// window tells the person why, while readable paths and links still
+    /// come through.
+    #[tokio::test]
+    async fn a_flatpak_window_flags_unreadable_paths_from_open() {
+        let _one = ONE_INBOX.lock().await;
+        let Some(bus) = PrivateBus::start() else {
+            assert!(
+                std::env::var_os("CI").is_none(),
+                "no private session bus: dbus-daemon is missing or failed (see its stderr)"
+            );
+            eprintln!("skipped: dbus-daemon is not installed");
+            return;
+        };
+        let (tx, rx) = std::sync::mpsc::channel();
+        listen(move |o| tx.send(o).unwrap());
+
+        let d = tmp();
+        let readable = d.join("portal-file.txt");
+        std::fs::write(&readable, b"ok").unwrap();
+        let readable_str = readable.display().to_string();
+        let missing = d.join("host-only.pdf").display().to_string();
+
+        let flatpak_win = try_claim_on(bus.builder(), &Request::default(), Package::Flatpak).await;
+        assert!(matches!(flatpak_win, Ok(Claim::Owner(_))), "Flatpak window");
+
+        // Only an unreadable host path: dropped, and `--flatpak-unreadable`
+        // tells QML to open Send and explain why.
+        let from_menu = Request {
+            items: vec![missing.clone()],
+            screen: None,
+            unreadable_in_flatpak: false,
+        };
+        let claim = try_claim_on(bus.builder(), &from_menu, Package::System).await;
+        assert!(matches!(
+            claim,
+            Ok(Claim::Forwarded {
+                other: Some(Package::Flatpak)
+            })
+        ));
+        let got = rx.recv_timeout(TIMEOUT).unwrap();
+        assert!(got.request.items.is_empty());
+        assert!(got.request.unreadable_in_flatpak);
+        assert_eq!(got.request.args(), [FLATPAK_UNREADABLE_ARG]);
+
+        // One readable path (as from ~/Downloads/TotalDrop or the portal)
+        // together with one unreadable host path: the readable file is kept
+        // and the unreadable one is flagged.
+        let mixed = Request {
+            items: vec![readable_str.clone(), missing],
+            screen: None,
+            unreadable_in_flatpak: false,
+        };
+        try_claim_on(bus.builder(), &mixed, Package::System)
+            .await
+            .unwrap();
+        let got = rx.recv_timeout(TIMEOUT).unwrap();
+        assert_eq!(got.request.items, [readable_str.as_str()]);
+        assert!(got.request.unreadable_in_flatpak);
+        assert_eq!(
+            got.request.args(),
+            [readable_str.as_str(), FLATPAK_UNREADABLE_ARG]
+        );
+
+        // Readable paths and TotalDrop links pass through without the flag.
+        let ok = Request {
+            items: vec![readable_str.clone(), "totaldrop:7-abandon-ability".into()],
+            screen: None,
+            unreadable_in_flatpak: false,
+        };
+        try_claim_on(bus.builder(), &ok, Package::System)
+            .await
+            .unwrap();
+        let got = rx.recv_timeout(TIMEOUT).unwrap();
+        assert_eq!(
+            got.request.items,
+            [readable_str.as_str(), "totaldrop:7-abandon-ability"]
+        );
+        assert!(!got.request.unreadable_in_flatpak);
+        assert_eq!(
+            got.request.args(),
+            [readable_str.as_str(), "totaldrop:7-abandon-ability"]
+        );
+    }
+
+    /// Folders bubblewrap synthesizes on its own tmpfs (`~`, `~/Downloads`)
+    /// exist inside the sandbox as empty stubs, not the host's folders:
+    /// `from_host` rejects them while keeping host-bound and portal mounts.
+    #[test]
+    fn flatpak_tmpfs_folders_are_flagged_as_unreadable() {
+        let table = "\
+708 707 0:84 / / rw,nosuid,nodev,relatime - tmpfs tmpfs rw,uid=1000,gid=1000
+798 708 0:29 /@home/ada/Downloads/TotalDrop /home/ada/Downloads/TotalDrop rw,nosuid master:162 - btrfs /dev/mapper/root rw
+799 708 0:90 / /run/user/1000/doc rw,nosuid - fuse.portal portal rw
+800 708 0:91 / /home/ada/My\\040Share rw shared:7 - tmpfs tmpfs rw
+";
+        assert!(!from_host(table, Path::new("/home/ada")));
+        assert!(!from_host(table, Path::new("/home/ada/Downloads")));
+        assert!(from_host(
+            table,
+            Path::new("/home/ada/Downloads/TotalDrop/a.pdf")
+        ));
+        assert!(from_host(
+            table,
+            Path::new("/run/user/1000/doc/9f8e7d/photo.jpg")
+        ));
+        assert!(from_host(table, Path::new("/home/ada/My Share/file.txt")));
+
+        let d = tmp();
+        let stub_table = format!("1 0 0:1 / {} rw - tmpfs tmpfs rw\n", d.display());
+        let r = Request {
+            items: vec![d.display().to_string()],
+            screen: None,
+            unreadable_in_flatpak: false,
+        };
+        let filtered = filter_for_window(r, Package::Flatpak, Some(&stub_table));
+        assert!(filtered.items.is_empty());
+        assert!(filtered.unreadable_in_flatpak);
+    }
+
+    /// `readable_in_sandbox` checks `metadata` before opening, so a named
+    /// pipe (FIFO) with no writer is dropped at once without blocking
+    /// `Open` (and even under `uid 0` in the CI container); also checks
+    /// [`Request::args`] order when both `unreadable_in_flatpak` and
+    /// `screen` are set.
+    #[tokio::test]
+    async fn special_files_do_not_block_and_args_keep_screen() {
+        let d = tmp();
+        let fifo = d.join("pipe");
+        let status = std::process::Command::new("mkfifo")
+            .arg(&fifo)
+            .status()
+            .unwrap();
+        assert!(status.success());
+
+        let r = Request {
+            items: vec![fifo.display().to_string()],
+            screen: Some("send".into()),
+            unreadable_in_flatpak: false,
+        };
+        let filtered = tokio::time::timeout(
+            Duration::from_secs(2),
+            tokio::task::spawn_blocking(move || filter_for_window(r, Package::Flatpak, None)),
+        )
+        .await
+        .expect("checking a FIFO does not block")
+        .unwrap();
+
+        assert!(filtered.items.is_empty());
+        assert!(filtered.unreadable_in_flatpak);
+        assert_eq!(filtered.args(), [FLATPAK_UNREADABLE_ARG, "--screen=send"]);
+
+        let with_item = Request {
+            items: vec!["/ok.txt".into()],
+            screen: Some("send".into()),
+            unreadable_in_flatpak: true,
+        };
+        assert_eq!(
+            with_item.args(),
+            ["/ok.txt", FLATPAK_UNREADABLE_ARG, "--screen=send"]
+        );
+    }
+
+    /// Check that `Main.qml` and `SendPage.qml` name the same flag, method
+    /// and L10n key as Rust (`FLATPAK_UNREADABLE_ARG`, `sendFlatpakUnreadable`,
+    /// #357); does not instantiate QML.
+    #[test]
+    fn qml_wires_the_flatpak_unreadable_notice() {
+        let main_qml = include_str!("../qml/Main.qml");
+        let send_qml = include_str!("../qml/SendPage.qml");
+        assert!(main_qml.contains(FLATPAK_UNREADABLE_ARG));
+        assert!(main_qml.contains("showFlatpakUnreadable"));
+        assert!(send_qml.contains("function showFlatpakUnreadable()"));
+        assert!(send_qml.contains("sendFlatpakUnreadable"));
+        assert!(send_qml.contains("page.textNotice = msg"));
     }
 }

@@ -588,6 +588,10 @@ class AppLocalizationsRu extends AppLocalizations {
       'TotalDrop уже открыт из пакета .pkg, .deb или .rpm, поэтому то окно выведено на передний план. Используйте одновременно только один пакет: закройте то окно, чтобы открыть этот.';
 
   @override
+  String get sendFlatpakUnreadable =>
+      'Этот файл нельзя прочитать из Flatpak. Выберите его через «Добавить файлы» или закройте это окно и попробуйте ещё раз.';
+
+  @override
   String get sendText => 'Отправить текст';
 
   @override
