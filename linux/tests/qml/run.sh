@@ -16,9 +16,15 @@ tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
 mod="$tmp/app/totaldrop"
 mkdir -p "$mod"
-cp "$here/stub/qmldir" "$here/stub/Theme.qml" "$mod/"
-cp "$here/../../qml/ActionCard.qml" "$mod/"
-# The platform theme decides which keys press a button; the caller's
-# (QT_QPA_PLATFORMTHEME) would make the results differ from CI's.
-QT_QPA_PLATFORM=offscreen QT_QPA_PLATFORMTHEME= QT_QUICK_BACKEND=software \
-  "$runner" -import "$tmp" -input "$here"
+cp "$here/stub/qmldir" \
+   "$here/stub/SystemTheme.qml" \
+   "$here/stub/Theme.qml" \
+   "$here/stub/Strings.qml" \
+   "$mod/"
+for f in ActionCard Mark PrimaryButton ResultPanel SecondaryButton; do
+  cp "$here/../../qml/$f.qml" "$mod/"
+done
+# The platform theme and Controls style decide which keys press a button and
+# how popups transition; pinning them keeps local runs identical to CI.
+QT_QPA_PLATFORM=offscreen QT_QPA_PLATFORMTHEME= QT_QUICK_CONTROLS_STYLE=Basic \
+  QT_QUICK_BACKEND=software "$runner" -import "$tmp" -input "$here"

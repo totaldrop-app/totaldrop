@@ -943,4 +943,50 @@ mod tests {
         assert!(parse_file("app", "{\"@@locale\": \"xx\", \"a\": 1}").is_err());
         assert!(parse_file("app", "{\"@@locale\": \"xx\", \"a\": \"1\", \"a\": \"2\"}").is_err());
     }
+
+    #[test]
+    fn open_link_keys_are_translated_in_every_language() {
+        const KEYS: [&str; 5] = [
+            "openLink",
+            "openLinkTitle",
+            "openLinkBody",
+            "openLinkConfirm",
+            "openLinkFailed",
+        ];
+        let app_files: Vec<&File> = catalog()
+            .files
+            .iter()
+            .filter(|f| f.domain == "app")
+            .collect();
+        assert!(
+            app_files.len() >= 35,
+            "expected >= 35 app locales, got {}",
+            app_files.len()
+        );
+        for file in app_files {
+            for key in KEYS {
+                let raw = file.raw.get(key).map(|v| v.trim()).unwrap_or_default();
+                assert!(
+                    !raw.is_empty(),
+                    "{}: `{key}` is missing or empty",
+                    file.locale
+                );
+            }
+        }
+        let tags = available(Domain::App);
+        assert!(tags.len() >= 35, "{tags:?}");
+        for tag in tags {
+            let s = strings(&tag);
+            let keys = s.keys();
+            for key in KEYS {
+                assert!(
+                    keys.contains(key),
+                    "{tag}: `{key}` missing from Strings::keys"
+                );
+                let text = s.get(key, &[]);
+                assert!(!text.trim().is_empty(), "{tag}: `{key}` formatted empty");
+                assert_ne!(text, key, "{tag}: `{key}` fell back to key name");
+            }
+        }
+    }
 }

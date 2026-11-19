@@ -4,5 +4,11 @@
 # A stand-in for the app's QML module (linux/build.rs) for the QML tests.
 # run.sh copies the components under test next to this file.
 module app.totaldrop
+singleton SystemTheme 1.0 SystemTheme.qml
 singleton Theme 1.0 Theme.qml
+singleton Strings 1.0 Strings.qml
 ActionCard 1.0 ActionCard.qml
+Mark 1.0 Mark.qml
+PrimaryButton 1.0 PrimaryButton.qml
+ResultPanel 1.0 ResultPanel.qml
+SecondaryButton 1.0 SecondaryButton.qml

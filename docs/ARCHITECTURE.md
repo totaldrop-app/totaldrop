@@ -267,7 +267,7 @@ Adım adım:
 | Giriş | Gönderme | Alma |
 | --- | --- | --- |
 | CLI | `crates/totaldrop-cli/src/main.rs:403`, `crates/totaldrop-cli/src/main.rs:432` | `crates/totaldrop-cli/src/main.rs:526`, `crates/totaldrop-cli/src/main.rs:596` |
-| Linux (QML → CXX-Qt) | `linux/src/bridge/transfer.rs:628` `start_send` → `linux/src/bridge/transfer.rs:645`, `linux/src/bridge/transfer.rs:681` | `linux/src/bridge/transfer.rs:699` `receive` → `linux/src/bridge/transfer.rs:710`, `linux/src/bridge/transfer.rs:782` |
+| Linux (QML → CXX-Qt) | `linux/src/bridge/transfer.rs:649` `start_send` → `linux/src/bridge/transfer.rs:666`, `linux/src/bridge/transfer.rs:702` | `linux/src/bridge/transfer.rs:720` `receive` → `linux/src/bridge/transfer.rs:731`, `linux/src/bridge/transfer.rs:803` |
 | Android (Dart → flutter_rust_bridge) | `app/rust/src/api/transfer.rs:343` `prepare_send` → `app/rust/src/api/transfer.rs:362`; `app/rust/src/api/transfer.rs:416` `run_send` → `app/rust/src/api/transfer.rs:426` | `app/rust/src/api/transfer.rs:494` `connect_receive` |
 
 Uygulamalar olayları (`Event`, `crates/totaldrop-core/src/lib.rs:50`) kendi
@@ -495,7 +495,7 @@ Hiç ölçülmeyenler (CI'da kapsam yok):
 - **`linux/` ve `app/rust`**: `cargo test` çalışır ama llvm-cov
   ölçümüne dahil değil (`.github/workflows/core.yml:20` `EXCLUDE`).
 - **Dart**: `flutter test` kapsam raporu üretmiyor.
-- **QML**: tek bileşen testi var (`linux/tests/qml/tst_actioncard.qml`).
+- **QML**: iki bileşen testi var (`linux/tests/qml/tst_actioncard.qml`, `linux/tests/qml/tst_resultpanel.qml`).
 
 ## 6. Tarihçe: sıcak noktalar
 
@@ -595,5 +595,5 @@ dokunan bulguları ve bu belgedeki yerleri:
 | #424 | Düzeltildi: ping süre sınırlı (`crates/totaldrop-core/src/relay.rs:438` `ping_within`) | 2.1 (aktarma yedeği) |
 | #425 | Düzeltildi: yarışı kaybeden eşleme de kapatılır (`crates/totaldrop-core/src/portmap.rs:230`) | 2.1 (`own_hints`) |
 | #426 | Düzeltildi: sayım `server/relay-worker/src/count.ts:36` `noteGiven` | 3.2 (`Pair`), 5.2 |
-| #427 | Düzeltildi: klasör URL ile açılır (`linux/qml/ResultPanel.qml:135`) | — (arayüz) |
+| #427 | Düzeltildi: klasör URL ile açılır (`linux/qml/ResultPanel.qml:183`) | — (arayüz) |
 | #428 | STUN, Rust rendezvous jetonu, `snow` | 7.5 |
