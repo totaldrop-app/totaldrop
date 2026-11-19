@@ -190,5 +190,11 @@
   "openLinkTitle": "Ouvrir ce lien ?",
   "openLinkBody": "L'adresse ci-dessous s'ouvrira dans votre navigateur.",
   "openLinkConfirm": "Ouvrir",
-  "openLinkFailed": "Aucune application sur cet appareil n'a pu ouvrir le lien."
+  "openLinkFailed": "Aucune application sur cet appareil n'a pu ouvrir le lien.",
+  "settingsShortcut": "Raccourci clavier",
+  "settingsShortcutBody": "Ouvrez TotalDrop de n'importe où avec le texte du presse-papiers prêt à être envoyé. Rien n'est envoyé tant que vous ne créez pas de code.",
+  "settingsShortcutUnset": "Non défini",
+  "settingsShortcutSet": "Définir un raccourci",
+  "settingsShortcutChange": "Modifier le raccourci",
+  "settingsShortcutManual": "Ce bureau ne configure pas les raccourcis d'application d'ici. Associez une touche dans les paramètres de votre bureau ou gestionnaire de fenêtres à :"
 }

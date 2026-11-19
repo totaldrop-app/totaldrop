@@ -190,5 +190,11 @@
   "openLinkTitle": "این پیوند باز شود؟",
   "openLinkBody": "نشانی زیر در مرورگر شما باز می‌شود.",
   "openLinkConfirm": "باز کردن",
-  "openLinkFailed": "هیچ برنامه‌ای در این دستگاه نتوانست پیوند را باز کند."
+  "openLinkFailed": "هیچ برنامه‌ای در این دستگاه نتوانست پیوند را باز کند.",
+  "settingsShortcut": "میانبر صفحه‌کلید",
+  "settingsShortcutBody": "TotalDrop را از هر جا با متن آمادهٔ ارسالِ کلیپ‌بورد باز کنید. تا زمانی که کد نسازید چیزی ارسال نمی‌شود.",
+  "settingsShortcutUnset": "تنظیم‌نشده",
+  "settingsShortcutSet": "تنظیم میانبر",
+  "settingsShortcutChange": "تغییر میانبر",
+  "settingsShortcutManual": "این میزکار میانبرهای برنامه را از اینجا تنظیم نمی‌کند. در تنظیمات میزکار یا مدیر پنجره، کلیدی را به این فرمان اختصاص دهید:"
 }

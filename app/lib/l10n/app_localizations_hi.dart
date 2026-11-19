@@ -701,4 +701,24 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get openLinkFailed => 'इस डिवाइस का कोई भी ऐप लिंक नहीं खोल सका।';
+
+  @override
+  String get settingsShortcut => 'कीबोर्ड शॉर्टकट';
+
+  @override
+  String get settingsShortcutBody =>
+      'क्लिपबोर्ड के टेक्स्ट को भेजने के लिए तैयार रखकर कहीं से भी TotalDrop खोलें। जब तक आप कोड नहीं बनाते, कुछ भी भेजा नहीं जाता।';
+
+  @override
+  String get settingsShortcutUnset => 'सेट नहीं है';
+
+  @override
+  String get settingsShortcutSet => 'शॉर्टकट सेट करें';
+
+  @override
+  String get settingsShortcutChange => 'शॉर्टकट बदलें';
+
+  @override
+  String get settingsShortcutManual =>
+      'यह डेस्कटॉप यहाँ से ऐप शॉर्टकट सेट नहीं करता। अपने डेस्कटॉप या विंडो मैनेजर की सेटिंग में इस कमांड के लिए कोई कुंजी जोड़ें:';
 }

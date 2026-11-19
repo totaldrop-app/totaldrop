@@ -190,5 +190,11 @@
   "openLinkTitle": "Öppna den här länken?",
   "openLinkBody": "Adressen nedan öppnas i din webbläsare.",
   "openLinkConfirm": "Öppna",
-  "openLinkFailed": "Ingen app på den här enheten kunde öppna länken."
+  "openLinkFailed": "Ingen app på den här enheten kunde öppna länken.",
+  "settingsShortcut": "Kortkommando",
+  "settingsShortcutBody": "Öppna TotalDrop var som helst med texten från urklipp redo att skickas. Ingenting skickas förrän du skapar en kod.",
+  "settingsShortcutUnset": "Inte inställt",
+  "settingsShortcutSet": "Ange kortkommando",
+  "settingsShortcutChange": "Ändra kortkommando",
+  "settingsShortcutManual": "Det här skrivbordet ställer inte in programgenvägar härifrån. Knyt en tangent i inställningarna för ditt skrivbord eller din fönsterhanterare till:"
 }

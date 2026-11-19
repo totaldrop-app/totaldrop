@@ -703,4 +703,24 @@ class AppLocalizationsSv extends AppLocalizations {
   @override
   String get openLinkFailed =>
       'Ingen app på den här enheten kunde öppna länken.';
+
+  @override
+  String get settingsShortcut => 'Kortkommando';
+
+  @override
+  String get settingsShortcutBody =>
+      'Öppna TotalDrop var som helst med texten från urklipp redo att skickas. Ingenting skickas förrän du skapar en kod.';
+
+  @override
+  String get settingsShortcutUnset => 'Inte inställt';
+
+  @override
+  String get settingsShortcutSet => 'Ange kortkommando';
+
+  @override
+  String get settingsShortcutChange => 'Ändra kortkommando';
+
+  @override
+  String get settingsShortcutManual =>
+      'Det här skrivbordet ställer inte in programgenvägar härifrån. Knyt en tangent i inställningarna för ditt skrivbord eller din fönsterhanterare till:';
 }

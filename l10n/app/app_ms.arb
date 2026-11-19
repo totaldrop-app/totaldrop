@@ -190,5 +190,11 @@
   "openLinkTitle": "Buka pautan ini?",
   "openLinkBody": "Alamat di bawah akan dibuka dalam pelayar anda.",
   "openLinkConfirm": "Buka",
-  "openLinkFailed": "Tiada aplikasi pada peranti ini dapat membuka pautan tersebut."
+  "openLinkFailed": "Tiada aplikasi pada peranti ini dapat membuka pautan tersebut.",
+  "settingsShortcut": "Pintasan papan kekunci",
+  "settingsShortcutBody": "Buka TotalDrop dari mana-mana sahaja dengan teks papan keratan sedia untuk dihantar. Tiada apa-apa dihantar sehingga anda mencipta kod.",
+  "settingsShortcutUnset": "Belum ditetapkan",
+  "settingsShortcutSet": "Tetapkan pintasan",
+  "settingsShortcutChange": "Tukar pintasan",
+  "settingsShortcutManual": "Desktop ini tidak menetapkan pintasan aplikasi dari sini. Ikat kekunci dalam tetapan desktop atau pengurus tetingkap anda kepada:"
 }

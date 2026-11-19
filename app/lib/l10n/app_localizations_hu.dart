@@ -693,4 +693,24 @@ class AppLocalizationsHu extends AppLocalizations {
   @override
   String get openLinkFailed =>
       'Egyetlen alkalmazás sem tudta megnyitni a hivatkozást ezen az eszközön.';
+
+  @override
+  String get settingsShortcut => 'Gyorsbillentyű';
+
+  @override
+  String get settingsShortcutBody =>
+      'Nyissa meg bárhonnan a TotalDropot a vágólap küldésre kész szövegével. Semmi sem indul el, amíg kódot nem hoz létre.';
+
+  @override
+  String get settingsShortcutUnset => 'Nincs megadva';
+
+  @override
+  String get settingsShortcutSet => 'Gyorsbillentyű megadása';
+
+  @override
+  String get settingsShortcutChange => 'Gyorsbillentyű módosítása';
+
+  @override
+  String get settingsShortcutManual =>
+      'Ez az asztali környezet nem állít be innen alkalmazás-gyorsbillentyűket. Rendeljen billentyűt az asztali környezet vagy az ablakkezelő beállításaiban ehhez:';
 }

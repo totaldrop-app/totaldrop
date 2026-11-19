@@ -700,4 +700,24 @@ class AppLocalizationsFa extends AppLocalizations {
   @override
   String get openLinkFailed =>
       'هیچ برنامه‌ای در این دستگاه نتوانست پیوند را باز کند.';
+
+  @override
+  String get settingsShortcut => 'میانبر صفحه‌کلید';
+
+  @override
+  String get settingsShortcutBody =>
+      'TotalDrop را از هر جا با متن آمادهٔ ارسالِ کلیپ‌بورد باز کنید. تا زمانی که کد نسازید چیزی ارسال نمی‌شود.';
+
+  @override
+  String get settingsShortcutUnset => 'تنظیم‌نشده';
+
+  @override
+  String get settingsShortcutSet => 'تنظیم میانبر';
+
+  @override
+  String get settingsShortcutChange => 'تغییر میانبر';
+
+  @override
+  String get settingsShortcutManual =>
+      'این میزکار میانبرهای برنامه را از اینجا تنظیم نمی‌کند. در تنظیمات میزکار یا مدیر پنجره، کلیدی را به این فرمان اختصاص دهید:';
 }

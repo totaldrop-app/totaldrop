@@ -715,4 +715,24 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get openLinkFailed =>
       'Ninguna aplicación de este dispositivo pudo abrir el enlace.';
+
+  @override
+  String get settingsShortcut => 'Atajo de teclado';
+
+  @override
+  String get settingsShortcutBody =>
+      'Abre TotalDrop desde cualquier lugar con el texto del portapapeles listo para enviar. No se envía nada hasta que crees un código.';
+
+  @override
+  String get settingsShortcutUnset => 'Sin asignar';
+
+  @override
+  String get settingsShortcutSet => 'Asignar atajo';
+
+  @override
+  String get settingsShortcutChange => 'Cambiar atajo';
+
+  @override
+  String get settingsShortcutManual =>
+      'Este escritorio no configura atajos de aplicaciones desde aquí. Asigna una tecla en los ajustes de tu escritorio o gestor de ventanas a:';
 }

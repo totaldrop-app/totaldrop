@@ -702,4 +702,24 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get openLinkFailed => 'Ingen app på denne enheten kunne åpne lenken.';
+
+  @override
+  String get settingsShortcut => 'Tastatursnarvei';
+
+  @override
+  String get settingsShortcutBody =>
+      'Åpne TotalDrop hvor som helst med teksten på utklippstavlen klar til å sendes. Ingenting sendes før du lager en kode.';
+
+  @override
+  String get settingsShortcutUnset => 'Ikke satt';
+
+  @override
+  String get settingsShortcutSet => 'Velg snarvei';
+
+  @override
+  String get settingsShortcutChange => 'Endre snarvei';
+
+  @override
+  String get settingsShortcutManual =>
+      'Dette skrivebordet setter ikke appsnarveier herfra. Knytt en tast i innstillingene for skrivebordet eller vindusbehandleren til:';
 }

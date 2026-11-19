@@ -190,5 +190,11 @@
   "openLinkTitle": "فتح هذا الرابط؟",
   "openLinkBody": "سيُفتح العنوان أدناه في المتصفح.",
   "openLinkConfirm": "فتح",
-  "openLinkFailed": "لم يتمكن أي تطبيق على هذا الجهاز من فتح الرابط."
+  "openLinkFailed": "لم يتمكن أي تطبيق على هذا الجهاز من فتح الرابط.",
+  "settingsShortcut": "اختصار لوحة المفاتيح",
+  "settingsShortcutBody": "افتح TotalDrop من أي مكان مع تجهيز نص الحافظة للإرسال. لا يُرسل شيء حتى تنشئ رمزًا.",
+  "settingsShortcutUnset": "غير معيّن",
+  "settingsShortcutSet": "تعيين اختصار",
+  "settingsShortcutChange": "تغيير الاختصار",
+  "settingsShortcutManual": "لا تضبط بيئة سطح المكتب هذه اختصارات التطبيقات من هنا. اربط مفتاحًا في إعدادات سطح المكتب أو مدير النوافذ بالأمر:"
 }

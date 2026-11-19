@@ -168,7 +168,7 @@ ApplicationWindow {
     }
     Component {
         id: settingsPage
-        SettingsPage { transfer: xfer; onClose: stack.pop() }
+        SettingsPage { transfer: xfer; launcher: launcher; onClose: stack.pop() }
     }
 
     Dialog {

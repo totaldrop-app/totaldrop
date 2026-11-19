@@ -711,4 +711,24 @@ class AppLocalizationsCs extends AppLocalizations {
   @override
   String get openLinkFailed =>
       'Žádná aplikace v tomto zařízení nedokázala odkaz otevřít.';
+
+  @override
+  String get settingsShortcut => 'Klávesová zkratka';
+
+  @override
+  String get settingsShortcutBody =>
+      'Otevřete TotalDrop odkudkoli s textem ze schránky připraveným k odeslání. Nic se neodešle, dokud nevytvoříte kód.';
+
+  @override
+  String get settingsShortcutUnset => 'Nenastaveno';
+
+  @override
+  String get settingsShortcutSet => 'Nastavit zkratku';
+
+  @override
+  String get settingsShortcutChange => 'Změnit zkratku';
+
+  @override
+  String get settingsShortcutManual =>
+      'Toto prostředí nenastavuje zkratky aplikací odtud. Přiřaďte klávesu v nastavení prostředí nebo správce oken příkazu:';
 }

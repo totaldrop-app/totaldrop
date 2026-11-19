@@ -713,4 +713,24 @@ class AppLocalizationsRo extends AppLocalizations {
   @override
   String get openLinkFailed =>
       'Nicio aplicație de pe acest dispozitiv nu a putut deschide linkul.';
+
+  @override
+  String get settingsShortcut => 'Scurtătură de tastatură';
+
+  @override
+  String get settingsShortcutBody =>
+      'Deschideți TotalDrop de oriunde cu textul din clipboard pregătit pentru trimitere. Nimic nu se trimite până nu creați un cod.';
+
+  @override
+  String get settingsShortcutUnset => 'Nesetată';
+
+  @override
+  String get settingsShortcutSet => 'Setează scurtătura';
+
+  @override
+  String get settingsShortcutChange => 'Schimbă scurtătura';
+
+  @override
+  String get settingsShortcutManual =>
+      'Acest mediu desktop nu setează scurtături de aplicații de aici. Asociați o tastă în setările mediului desktop sau ale gestionarului de ferestre cu:';
 }

@@ -190,5 +190,11 @@
   "openLinkTitle": "要開啟此連結嗎？",
   "openLinkBody": "下方網址將在瀏覽器中開啟。",
   "openLinkConfirm": "開啟",
-  "openLinkFailed": "此裝置上沒有應用程式可開啟該連結。"
+  "openLinkFailed": "此裝置上沒有應用程式可開啟該連結。",
+  "settingsShortcut": "鍵盤快捷鍵",
+  "settingsShortcutBody": "在任何位置開啟 TotalDrop，剪貼簿中的文字已準備好傳送。在你建立代碼前不會傳送任何內容。",
+  "settingsShortcutUnset": "未設定",
+  "settingsShortcutSet": "設定快捷鍵",
+  "settingsShortcutChange": "變更快捷鍵",
+  "settingsShortcutManual": "目前桌面不支援在此處設定應用程式快捷鍵。請在桌面或視窗管理員設定中將按鍵綁定到："
 }

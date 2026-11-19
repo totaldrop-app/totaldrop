@@ -190,5 +190,11 @@
   "openLinkTitle": "Diesen Link öffnen?",
   "openLinkBody": "Die Adresse unten wird in Ihrem Browser geöffnet.",
   "openLinkConfirm": "Öffnen",
-  "openLinkFailed": "Keine App auf diesem Gerät konnte den Link öffnen."
+  "openLinkFailed": "Keine App auf diesem Gerät konnte den Link öffnen.",
+  "settingsShortcut": "Tastenkürzel",
+  "settingsShortcutBody": "TotalDrop von überall mit dem Text aus der Zwischenablage versandbereit öffnen. Nichts wird gesendet, bevor Sie einen Code erstellen.",
+  "settingsShortcutUnset": "Nicht festgelegt",
+  "settingsShortcutSet": "Tastenkürzel festlegen",
+  "settingsShortcutChange": "Tastenkürzel ändern",
+  "settingsShortcutManual": "Diese Arbeitsumgebung richtet App-Tastenkürzel nicht von hier aus ein. Weisen Sie in den Einstellungen Ihrer Arbeitsumgebung oder Ihres Fenstermanagers diesem Befehl eine Taste zu:"
 }
