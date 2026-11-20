@@ -169,3 +169,63 @@ test("writes to storage are batched by SENT_STEP and never fire on consecutive s
   pair.flushSide(0);
   assert.ok(kv.writes <= 8, `expected <= 8 total KV writes, saw ${kv.writes}`);
 });
+
+test("isOver is read-only when absent and detects over-limit after cold wake (#78)", () => {
+  const kv = new FakeStorage();
+  const limit = 2_000;
+  let pair = new PairTotals(kv);
+
+  // Absent totals: read-only check must not write to KV.
+  assert.equal(pair.isOver(limit), false);
+  assert.equal(kv.writes, 0);
+  assert.equal(kv.empty, true);
+
+  // Spend past the limit, hibernate, and wake cold: isOver must return true
+  // even if deadline() ran first without sessionBytes.
+  assert.equal(pair.admitSignIn(1_000, 6 * HOUR, limit), true);
+  assert.equal(pair.spend(0, 1_500, limit), true);
+  // Simulate hibernation with unflushed bytes (1_500 + SENT_STEP > 2_000) while stored over === false.
+  pair = new PairTotals(kv);
+  assert.equal(pair.deadline(6 * HOUR), 1_000 + 6 * HOUR);
+  assert.equal(pair.isOver(limit), true);
+  assert.equal(pair.admitSignIn(2_000, 6 * HOUR, limit), false);
+
+  // Explicit stored over === true also detected cold.
+  const kv2 = new FakeStorage();
+  let p2 = new PairTotals(kv2);
+  p2.admitSignIn(1_000, 6 * HOUR, limit);
+  assert.equal(p2.spend(0, 2_001, limit), false);
+  p2 = new PairTotals(kv2);
+  assert.equal(p2.isOver(limit), true);
+});
+
+test("clear() preserves in-memory totals when kv.delete throws synchronously (#78)", () => {
+  const kv = new FakeStorage();
+  const limit = 2_000;
+  const pair = new PairTotals(kv);
+
+  assert.equal(pair.admitSignIn(1_000, 6 * HOUR, limit), true);
+  assert.equal(pair.spend(0, 2_001, limit), false);
+  assert.equal(pair.isOver(limit), true);
+
+  let failOnce = true;
+  const origDelete = kv.delete.bind(kv);
+  kv.delete = (key: string): boolean => {
+    if (failOnce) {
+      failOnce = false;
+      throw new Error("transient SQLite kv.delete fault");
+    }
+    return origDelete(key);
+  };
+
+  assert.throws(() => pair.clear(), /transient SQLite kv\.delete fault/);
+  assert.equal(kv.empty, false, "KV must retain totals when kv.delete throws");
+  assert.equal(pair.isOver(limit), true, "memory must stay consistent with KV after failed clear()");
+  assert.equal(pair.isExpired(1_000 + 6 * HOUR, 6 * HOUR), true);
+
+  // Retry succeeds and clears both KV and in-memory state.
+  pair.clear();
+  assert.equal(kv.empty, true);
+  assert.equal(pair.isOver(limit), false);
+  assert.equal(pair.deadline(6 * HOUR), null);
+});

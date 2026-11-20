@@ -127,10 +127,21 @@ export class PairTotals {
     return end !== null && now >= end;
   }
 
+  /** Whether an active pair has already spent its byte limit (read-only:
+   * never creates `"totals"` in KV if absent, #78). */
+  isOver(sessionBytes?: number): boolean {
+    const t = this.load(sessionBytes);
+    if (!t) return false;
+    return (
+      t.over ||
+      (sessionBytes !== undefined && (t.sent[0] > sessionBytes || t.sent[1] > sessionBytes))
+    );
+  }
+
   /** Erase all stored totals for this pair. */
   clear(): void {
-    this.mem = null;
     this.kv.delete(KEY);
+    this.mem = null;
   }
 
   /** Admit a verified sign-in at `now`: starts the pair's window on the
@@ -150,7 +161,10 @@ export class PairTotals {
       this.save(t);
       return true;
     }
-    return !t.over && now < t.started + sessionTime;
+    const over =
+      t.over ||
+      (sessionBytes !== undefined && (t.sent[0] > sessionBytes || t.sent[1] > sessionBytes));
+    return !over && now < t.started + sessionTime;
   }
 
   /** Count `bytes` sent by `side`; `false` when `sessionBytes` is strictly

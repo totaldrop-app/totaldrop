@@ -8,10 +8,15 @@
 import { give, restore } from "./count.ts";
 import { PairTotals, type Side, type TotalsKv } from "./totals.ts";
 
-export const MAGIC = new TextEncoder().encode("TDR0");
-export const AUTH_CONTEXT = new TextEncoder().encode("totaldrop relay v0 auth");
-export const OK = new Uint8Array([...MAGIC, ...new TextEncoder().encode("ok")]);
-export const PROBE = new Uint8Array([...MAGIC, ...new TextEncoder().encode("probe")]);
+const TEXT_ENCODER = new TextEncoder();
+
+export const MAGIC = TEXT_ENCODER.encode("TDR0");
+export const AUTH_CONTEXT = TEXT_ENCODER.encode("totaldrop relay v0 auth");
+export const CONNECT_CONTEXT = TEXT_ENCODER.encode("totaldrop relay v0 connect");
+export const AUTH_HEADER = "X-TotalDrop-Auth";
+export const RELAY_PREFIX = "/v0/relay/";
+export const OK = new Uint8Array([...MAGIC, ...TEXT_ENCODER.encode("ok")]);
+export const PROBE = new Uint8Array([...MAGIC, ...TEXT_ENCODER.encode("probe")]);
 /** A probe: TDR0 || "probe" || 16 random bytes (protocol note 20). */
 export const PROBE_LENGTH = PROBE.length + 16;
 
@@ -75,6 +80,8 @@ export interface Attachment {
   given?: number;
   /** Bytes given to it when its last answered probe went out. */
   answered?: number;
+  /** Endpoint key hex verified via `X-TotalDrop-Auth` on Upgrade (#78). */
+  preauth?: string;
   /** Probes not answered yet, oldest first: nonce hex and bytes given when
    * it went out. At most UNANSWERED / PROBE_STEP + 1 (one goes out at the
    * first bytes), a few hundred bytes. */
@@ -128,6 +135,14 @@ function unhex(s: string): Uint8Array {
   return out;
 }
 
+export interface ConnectAuth {
+  header: string | null;
+}
+
+export interface PairNamespace {
+  getByName(name: string): { fetch(request: Request): Promise<Response> };
+}
+
 /** The two keys of `<key A>-<key B>`: lowercase hex, A strictly lower. */
 export function parsePairName(name: string): [string, string] | null {
   const m = /^([0-9a-f]{64})-([0-9a-f]{64})$/.exec(name);
@@ -135,11 +150,19 @@ export function parsePairName(name: string): [string, string] | null {
   return [m[1], m[2]];
 }
 
+/** Strict `<64-hex-key>.<128-hex-sig>` in lowercase ASCII hex (193 chars, #78). */
+export function parseAuthHeader(value: string): [string, string] | null {
+  if (value.length !== 193) return null;
+  const m = /^([0-9a-f]{64})\.([0-9a-f]{128})$/.exec(value);
+  if (!m || !m[1] || !m[2]) return null;
+  return [m[1], m[2]];
+}
+
 function startsWith(m: Uint8Array, prefix: Uint8Array): boolean {
   return m.length >= prefix.length && prefix.every((b, i) => m[i] === b);
 }
 
-async function bytes(data: string | ArrayBuffer): Promise<Uint8Array | null> {
+function bytes(data: string | ArrayBuffer): Uint8Array | null {
   return typeof data === "string" ? null : new Uint8Array(data);
 }
 
@@ -154,6 +177,51 @@ export async function verifySignature(
   } catch {
     return false;
   }
+}
+
+/** Verify `X-TotalDrop-Auth` against `name`; returns the authenticated
+ * endpoint key hex or `null` (#78). Does not bind to `Sec-WebSocket-Key`
+ * because HTTP/WebSocket proxies (including Cloudflare edge and `workerd`)
+ * regenerate that hop-by-hop header; `TDR0` still proves challenge freshness. */
+export async function verifyConnectAuth(name: string, header: string): Promise<string | null> {
+  const pair = parsePairName(name);
+  if (!pair) return null;
+  const parsed = parseAuthHeader(header);
+  if (!parsed) return null;
+  const [keyHex, sigHex] = parsed;
+  if (keyHex !== pair[0] && keyHex !== pair[1]) return null;
+  const nameBytes = TEXT_ENCODER.encode(name);
+  const signed = new Uint8Array(CONNECT_CONTEXT.length + nameBytes.length);
+  signed.set(CONNECT_CONTEXT, 0);
+  signed.set(nameBytes, CONNECT_CONTEXT.length);
+  const ok = await verifySignature(unhex(keyHex), unhex(sigHex), signed);
+  return ok ? keyHex : null;
+}
+
+/** Validate an incoming edge HTTP request before waking or forwarding to a
+ * `Pair` Durable Object (#78, #450). */
+export async function handleRelayRequest(
+  request: Request,
+  pair: PairNamespace,
+): Promise<Response> {
+  const url = new URL(request.url);
+  const upgrade = request.headers.get("Upgrade")?.toLowerCase() === "websocket";
+  if (request.method !== "GET") return new Response(null, { status: 405 });
+  // A web page's WebSocket always carries Origin; the apps and the
+  // command line never send it (#450).
+  if (upgrade && request.headers.has("Origin")) {
+    return new Response("browsers are not served\n", { status: 403 });
+  }
+  if (!url.pathname.startsWith(RELAY_PREFIX)) {
+    return new Response("TotalDrop relay", { status: upgrade ? 404 : 200 });
+  }
+  const name = url.pathname.slice(RELAY_PREFIX.length);
+  if (!upgrade || !parsePairName(name)) return new Response(null, { status: 400 });
+  if (request.headers.has(AUTH_HEADER)) {
+    const ok = await verifyConnectAuth(name, request.headers.get(AUTH_HEADER) ?? "");
+    if (!ok) return new Response(null, { status: 403 });
+  }
+  return pair.getByName(name).fetch(request);
 }
 
 export class PairCore<S extends RelaySocket = RelaySocket> {
@@ -175,10 +243,26 @@ export class PairCore<S extends RelaySocket = RelaySocket> {
   private stale = new Map<string, number>();
   /** Signed-in sockets by key, rebuilt after the object wakes. */
   private byKey = new Map<string, S>();
+  /** In-flight `expireSession()` promise, serializing async KV/alarm teardown
+   * against concurrent `accept()`, `onMessage()`, `end()`, `schedule()`, and
+   * `alarm()` continuations (#78). */
+  private expiring: Promise<void> | null = null;
 
   constructor(host: PairHost<S>) {
     this.host = host;
     this.totals = new PairTotals(host.storage.kv);
+  }
+
+  private async waitExpiring(): Promise<void> {
+    while (this.expiring !== null) {
+      const pending = this.expiring;
+      try {
+        await pending;
+      } catch {
+        // The initiating expireSession() caller observes the rejection.
+      }
+      if (this.expiring === pending) this.expiring = null;
+    }
   }
 
   sessionBytes(): number {
@@ -233,22 +317,76 @@ export class PairCore<S extends RelaySocket = RelaySocket> {
   }
 
   /** Accept a newly paired server socket for `name`; returns HTTP status
-   * (`101` on success, `400` on a bad pair name, `409` when slots are full). */
-  async accept(name: string, makeServer: () => S, now: number = Date.now()): Promise<101 | 400 | 409> {
+   * (`101` on success, `400` on a bad pair name, `403` on invalid
+   * `X-TotalDrop-Auth` or an already-over-limit pair, `409` when slots are
+   * full, #78). */
+  async accept(
+    name: string,
+    makeServer: () => S,
+    now?: number,
+    auth?: ConnectAuth,
+  ): Promise<101 | 400 | 403 | 409> {
     if (!parsePairName(name)) return 400;
-    this.seedPreDeployTotals(now);
-    if (this.totals.isExpired(now, this.sessionTime())) {
-      await this.expireSession();
+    let preauthKey: string | null = null;
+    if (auth?.header !== null && auth?.header !== undefined) {
+      preauthKey = await verifyConnectAuth(name, auth.header);
+      if (preauthKey === null) return 403;
     }
-    const waiting = this.live().filter((o) => attachment(o)?.key === null).length;
-    if (waiting >= MAX_WAITING || this.host.getWebSockets().length >= MAX_SOCKETS) return 409;
+    if (this.expiring !== null) await this.waitExpiring();
+    // Re-evaluate time and live state strictly after any await.
+    let effectiveNow = now ?? Date.now();
+    this.seedPreDeployTotals(effectiveNow);
+    if (this.totals.isExpired(effectiveNow, this.sessionTime())) {
+      await this.expireSession();
+      if (this.expiring !== null) await this.waitExpiring();
+      effectiveNow = now ?? Date.now();
+      this.seedPreDeployTotals(effectiveNow);
+    }
+    if (preauthKey !== null) {
+      if (this.totals.isOver(this.sessionBytes())) return 403;
+      const sockets = this.host.getWebSockets();
+      if (sockets.length >= MAX_SOCKETS) {
+        const authenticatedSockets = sockets.filter((o) => {
+          const att = attachment(o);
+          return att !== null && (att.key !== null || att.preauth !== undefined);
+        }).length;
+        if (authenticatedSockets >= MAX_SOCKETS) return 409;
+      }
+      // Deduplicate any prior waiting socket pre-authenticated by the same key.
+      for (const o of this.live()) {
+        const att = attachment(o);
+        if (att?.key === null && att.preauth === preauthKey) {
+          this.shut(o, 1000, "replaced");
+        }
+      }
+      if (this.host.getWebSockets().length >= MAX_SOCKETS) {
+        let oldest: { ws: S; since: number } | null = null;
+        for (const o of this.live()) {
+          const att = attachment(o);
+          if (att?.key === null && att.preauth === undefined) {
+            if (oldest === null || att.since < oldest.since) {
+              oldest = { ws: o, since: att.since };
+            }
+          }
+        }
+        if (oldest !== null) {
+          this.shut(oldest.ws, 1008, "evicted");
+        }
+      }
+    } else {
+      const waiting = this.live().filter((o) => attachment(o)?.key === null).length;
+      if (waiting >= MAX_WAITING || this.host.getWebSockets().length >= MAX_SOCKETS) return 409;
+    }
     const server = makeServer();
     const challenge = crypto.getRandomValues(new Uint8Array(32));
     this.host.acceptWebSocket(server, [name]);
-    const att: Attachment = { challenge: hex(challenge), key: null, since: now };
+    const att: Attachment =
+      preauthKey !== null
+        ? { challenge: hex(challenge), key: null, since: effectiveNow, preauth: preauthKey }
+        : { challenge: hex(challenge), key: null, since: effectiveNow };
     server.serializeAttachment(att);
     server.send(new Uint8Array([...MAGIC, ...challenge]));
-    await this.schedule(now);
+    await this.schedule(effectiveNow);
     return 101;
   }
 
@@ -284,6 +422,7 @@ export class PairCore<S extends RelaySocket = RelaySocket> {
   }
 
   async onMessage(ws: S, data: string | ArrayBuffer, now?: number): Promise<void> {
+    if (this.expiring !== null) await this.waitExpiring();
     const entryNow = now ?? Date.now();
     const att0 = attachment(ws);
     // A socket this object closed or replaced may still send before tearing
@@ -294,7 +433,7 @@ export class PairCore<S extends RelaySocket = RelaySocket> {
       await this.expireSession();
       return;
     }
-    const m = await bytes(data);
+    const m = bytes(data);
     const own = this.keyOf(ws);
     if (!m || m.length > MAX_MESSAGE) return this.fail(ws, own, "bad message");
     if (own !== null && m.length === PROBE_LENGTH && startsWith(m, PROBE)) return this.answered(ws, m);
@@ -309,10 +448,15 @@ export class PairCore<S extends RelaySocket = RelaySocket> {
     const key = m.slice(4, 36);
     const keyHex = hex(key);
     if (keyHex !== pair[0] && keyHex !== pair[1]) return this.shut(ws, 1008, "not this pair");
+    if (att.preauth !== undefined && keyHex !== att.preauth) {
+      return this.shut(ws, 1008, "not this pair");
+    }
     const signed = new Uint8Array([...AUTH_CONTEXT, ...unhex(att.challenge)]);
-    if (!(await verifySignature(key, m.slice(36), signed))) return this.shut(ws, 1008, "bad signature");
-    // Other events can run during verifySignature(); re-check socket state.
-    if (ws.readyState !== OPEN || this.isClosed(ws)) return;
+    const ok = await verifySignature(key, m.slice(36), signed);
+    if (this.expiring !== null) await this.waitExpiring();
+    // Other events can run during verifySignature() or expireSession(); re-check socket state.
+    if (ws.readyState !== OPEN || this.isClosed(ws) || this.keyOf(ws) !== null) return;
+    if (!ok) return this.shut(ws, 1008, "bad signature");
     const effectiveNow = now ?? Date.now();
     this.seedPreDeployTotals(effectiveNow);
     if (this.totals.isExpired(effectiveNow, this.sessionTime())) {
@@ -477,6 +621,12 @@ export class PairCore<S extends RelaySocket = RelaySocket> {
    * by a newer replacement (`this.socketFor(att.key) !== ws`) takes nobody
    * with it and never touches the replacement's totals. */
   async end(ws: S): Promise<void> {
+    if (this.expiring !== null) {
+      if (!this.isClosed(ws)) this.shut(ws, 1000, "closed");
+      await this.waitExpiring();
+      await this.schedule();
+      return;
+    }
     const att = attachment(ws);
     const alreadyClosed = this.isClosed(ws, att);
     if (att?.key) {
@@ -507,19 +657,37 @@ export class PairCore<S extends RelaySocket = RelaySocket> {
 
   /** End the pair's session window and erase all stored state (#190). */
   async expireSession(): Promise<void> {
-    for (const ws of this.live()) this.shut(ws, 1008, "session over");
-    this.byKey.clear();
-    this.stale.clear();
-    this.totals.clear();
-    await this.host.storage.deleteAll();
-    await this.host.storage.deleteAlarm();
+    if (this.expiring !== null) return this.expiring;
+    let settled = false;
+    const run = (async () => {
+      try {
+        for (const ws of this.host.getWebSockets()) {
+          if (!this.isClosed(ws)) this.shut(ws, 1008, "session over");
+        }
+        for (const ws of this.byKey.values()) {
+          if (!this.isClosed(ws)) this.shut(ws, 1008, "session over");
+        }
+        this.byKey.clear();
+        this.stale.clear();
+        this.totals.clear();
+        await this.host.storage.deleteAll();
+        await this.host.storage.deleteAlarm();
+      } finally {
+        settled = true;
+        this.expiring = null;
+      }
+    })();
+    if (!settled) this.expiring = run;
+    return run;
   }
 
   /** Set the one alarm to the earliest sign-in timeout or the pair's session
    * deadline, so a sign-in does not push back another socket's sign-in
    * timeout and stored pair totals are always deleted when the window ends. */
-  async schedule(now: number = Date.now()): Promise<void> {
-    this.seedPreDeployTotals(now);
+  async schedule(now?: number): Promise<void> {
+    if (this.expiring !== null) await this.waitExpiring();
+    const effectiveNow = now ?? Date.now();
+    this.seedPreDeployTotals(effectiveNow);
     let next = this.totals.deadline(this.sessionTime()) ?? Infinity;
     for (const ws of this.live()) {
       const att = attachment(ws);
@@ -531,18 +699,20 @@ export class PairCore<S extends RelaySocket = RelaySocket> {
 
   /** Close sockets that did not sign in in time, or end the pair's session
    * window and delete its stored totals. */
-  async alarm(now: number = Date.now()): Promise<void> {
-    this.seedPreDeployTotals(now);
-    if (this.totals.isExpired(now, this.sessionTime())) {
+  async alarm(now?: number): Promise<void> {
+    if (this.expiring !== null) await this.waitExpiring();
+    const effectiveNow = now ?? Date.now();
+    this.seedPreDeployTotals(effectiveNow);
+    if (this.totals.isExpired(effectiveNow, this.sessionTime())) {
       await this.expireSession();
       return;
     }
     for (const ws of this.live()) {
       const att = attachment(ws);
-      if (att && att.key === null && now >= att.since + SIGN_IN_TIMEOUT) {
+      if (att && att.key === null && effectiveNow >= att.since + SIGN_IN_TIMEOUT) {
         this.shut(ws, 1008, "sign-in timeout");
       }
     }
-    await this.schedule(now);
+    await this.schedule(effectiveNow);
   }
 }
