@@ -32,7 +32,7 @@ class FakeSession extends _Opaque implements SendSession {
 }
 
 class FakeOffer extends _Opaque implements Offer {
-  FakeOffer({this.isText = false});
+  FakeOffer({this.isText = false, this.totalBytes = 10});
   @override
   final bool isText;
   @override
@@ -42,7 +42,7 @@ class FakeOffer extends _Opaque implements Offer {
   @override
   List<String> get names => const ['a.txt'];
   @override
-  PlatformInt64 get totalBytes => 10;
+  final PlatformInt64 totalBytes;
   @override
   List<String> get words => const ['one', 'two', 'three', 'four'];
 }
@@ -162,13 +162,19 @@ TransferEvent event(EventKind kind) => TransferEvent(
 /// press the notification's Stop.
 class FakeKeepAlive implements TransferKeepAlive {
   final calls = <String>[];
+  int? lastBytes;
   void Function()? onStop;
 
   bool get active => calls.isNotEmpty && calls.last.startsWith('begin');
 
   @override
-  Future<void> begin(TransferDirection direction, void Function() onStop) {
+  Future<void> begin(
+    TransferDirection direction,
+    void Function() onStop, {
+    int? bytes,
+  }) {
     calls.add('begin ${direction.name}');
+    lastBytes = bytes;
     this.onStop = onStop;
     return Future.value();
   }
