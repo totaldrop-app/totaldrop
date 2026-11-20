@@ -6,7 +6,6 @@
     { "login": "zaforcan", "kind": "person", "role": "contributor" },
     { "login": "claude", "kind": "ai" },
     { "login": "antigravity", "kind": "ai" },
-    { "login": "gemini", "kind": "ai" },
     { "login": "dependabot[bot]", "kind": "bot" }
   ],
   "disciplines": [

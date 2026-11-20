@@ -140,11 +140,29 @@ test("team.json rejects a bio that is bad, untranslated or on a non-person (#408
   assert.match(errs((c) => { person(c, "sadikkuzu").bio = "Untranslated."; }), /sadikkuzu: tm\.bio\.sadikkuzu is not translated in [a-z]{2,3}(-[A-Za-z0-9]+)*\.json/);
   assert.match(errs((c) => { person(c, "claude").bio = "x"; }), /claude: only people have a bio/);
   assert.match(errs((c) => { c.people.push({ login: "unknown-ai", kind: "ai" }); }), /unknown-ai: unknown ai/);
+  assert.match(errs((c) => { c.people.push({ login: "gemini", kind: "ai" }); }), /gemini: unknown ai/);
+  assert.match(errs((c) => { person(c, "claude").kind = "bot"; }), /claude: unknown bot/);
 });
 
-test("each AI and automation helper renders its own name, i18n key and optional footer (#598)", async () => {
+test("team.json rejects a helper whose English text is missing from en.json (#598)", async (t) => {
+  const { configErrors } = await import("./team.mjs");
+  const orig = JSON.parse(readFileSync(new URL("../team/team.json", import.meta.url), "utf8"));
+  const dir = scratch(t, {
+    "en.json": JSON.stringify({
+      "tm.bio.ozdil": "Leads.",
+      "tm.ai.d": "Claude text.",
+      "tm.bot.d": "Bot text.",
+    }),
+  });
+  const errs = configErrors(structuredClone(orig), dir);
+  assert.ok(errs.some((e) => /antigravity: tm\.ai\.antigravity\.d is missing from en\.json/.test(e)), errs.join("\n"));
+  assert.ok(!errs.some((e) => /claude: tm\.ai\.d/.test(e)), errs.join("\n"));
+  assert.ok(!errs.some((e) => /dependabot\[bot\]: tm\.bot\.d/.test(e)), errs.join("\n"));
+});
+
+test("each AI and automation helper renders its own name, i18n text and optional footer (#598)", async () => {
   const { helperCard } = await import("./team.mjs");
-  const c = { people: [{ login: "claude", kind: "ai" }, { login: "antigravity", kind: "ai" }, { login: "gemini", kind: "ai" }, { login: "dependabot[bot]", kind: "bot" }] };
+  const c = { people: [{ login: "claude", kind: "ai" }, { login: "antigravity", kind: "ai" }, { login: "dependabot[bot]", kind: "bot" }] };
   const s = { totals: { claude: 195, "dependabot[bot]": 9 } };
 
   const claude = helperCard(c, s, c.people[0]);
@@ -153,12 +171,17 @@ test("each AI and automation helper renders its own name, i18n key and optional 
   assert.match(claude, /<dd>195<\/dd>/);
 
   const agy = helperCard(c, s, c.people[1]);
-  assert.match(agy, /<h3>Antigravity<\/h3>/);
+  assert.match(agy, /<h3>Antigravity \(Gemini\)<\/h3>/);
   assert.match(agy, /data-i18n="tm\.ai\.antigravity\.d"/);
   assert.doesNotMatch(agy, /person-foot/);
 
-  const gemini = helperCard(c, s, c.people[2]);
-  assert.match(gemini, /<h3>Gemini<\/h3>/);
-  assert.match(gemini, /data-i18n="tm\.ai\.gemini\.d"/);
-  assert.doesNotMatch(gemini, /person-foot/);
+  const bot = helperCard(c, s, c.people[2]);
+  assert.match(bot, /<h3>Dependabot<\/h3>/);
+  assert.match(bot, /data-i18n="tm\.bot\.d"/);
+  assert.match(bot, /person-foot/);
+  assert.match(bot, /<dd>9<\/dd>/);
+  assert.match(bot, /https:\/\/github\.com\/apps\/dependabot/);
+
+  const custom = helperCard(c, s, c.people[0], { "tm.ai.d": `A <b> & "c"` });
+  assert.match(custom, /<p data-i18n="tm\.ai\.d">A &lt;b&gt; &amp; &quot;c&quot;<\/p>/);
 });

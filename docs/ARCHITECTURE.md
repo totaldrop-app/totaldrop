@@ -401,7 +401,7 @@ sayılmadı.
 | `WAYLAND_DISPLAY`, `DISPLAY`, `QT_QPA_PLATFORMTHEME`, `QT_QUICK_CONTROLS_STYLE` | Linux açılışı (`linux/src/main.rs:56-59`, `linux/src/main.rs:81`) | Ekran varsa ve tema eklentisi seçilmemişse `QT_QPA_PLATFORMTHEME=gtk3` **atanır**; denetim stili yoksa atanır |
 | `XDG_RUNTIME_DIR` | Linux Hyprland algılama (`linux/src/theme/hyprland.rs:18`) | Hyprland soketini bulur |
 | `TOTALDROP_VERSION` | Dart derleme tanımı (`app/lib/main.dart:28-29`) | Ayarlar'da gösterilen sürüm |
-| `GITHUB_TOKEN` | Site aracı (`site/tools/team.mjs:175`) | `--fetch` için daha yüksek API sınırı; yazdırılmaz |
+| `GITHUB_TOKEN` | Site aracı (`site/tools/team.mjs:196`) | `--fetch` için daha yüksek API sınırı; yazdırılmaz |
 
 ### 4.2 Ayar ve yapılandırma dosyaları
 

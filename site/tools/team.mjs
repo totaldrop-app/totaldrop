@@ -92,21 +92,29 @@ export const badBio = (b) => b !== undefined && (typeof b !== "string" || b === 
 // The language files in an i18n folder (<tag>.json), sorted.
 const langFiles = (dir) => readdirSync(dir).filter((f) => /^[a-z]{2,3}(-[A-Za-z0-9]+)*\.json$/.test(f)).sort();
 
+// Read and parse one language file; failures are recorded in errors.
+function readLangFile(dir, f) {
+  const shownAs = relative(root, join(dir, f));
+  let text, v;
+  try { text = readFileSync(join(dir, f), "utf8"); } catch (e) { fail(`${shownAs}: cannot be read (${e.code || e.message})`); return null; }
+  try { v = JSON.parse(text); } catch { fail(`${shownAs}: not valid JSON`); return null; }
+  if (v === null || typeof v !== "object" || Array.isArray(v)) { fail(`${shownAs}: not a JSON object`); return null; }
+  return v;
+}
+
 // The language files of an i18n folder, read once, as { tag: messages }.
 // A file that cannot be read, is not valid JSON or is not an object is
 // left out and reported to the error list (see collectErrors).
 export function readLangs(dir) {
   const langs = {};
   for (const f of langFiles(dir)) {
-    const shownAs = relative(root, join(dir, f));
-    let text, v;
-    try { text = readFileSync(join(dir, f), "utf8"); } catch (e) { fail(`${shownAs}: cannot be read (${e.code || e.message})`); continue; }
-    try { v = JSON.parse(text); } catch { fail(`${shownAs}: not valid JSON`); continue; }
-    if (v === null || typeof v !== "object" || Array.isArray(v)) { fail(`${shownAs}: not a JSON object`); continue; }
-    langs[f.slice(0, -5)] = v;
+    const v = readLangFile(dir, f);
+    if (v !== null) langs[f.slice(0, -5)] = v;
   }
   return langs;
 }
+
+const loadEn = (dir = I18N) => JSON.parse(readFileSync(join(dir, "en.json"), "utf8"));
 
 // The languages (from readLangs) that lack a non-empty tm.bio.<login>: a
 // bio is shown only once all 35 have it.
@@ -140,13 +148,26 @@ function validateConfig(c, i18n = I18N) {
   if (!/^[A-Za-z0-9-]+\/[A-Za-z0-9._-]+$/.test(c.repo)) fail(`team.json: bad repo ${c.repo}`);
   const seen = new Set();
   // Read once, so a broken language file is reported once, not per bio.
-  const langs = c.people.some((p) => p.bio !== undefined) ? readLangs(i18n) : {};
+  const hasBio = c.people.some((p) => p.bio !== undefined);
+  const hasHelper = c.people.some((p) => p.kind !== "person");
+  const langs = hasBio ? readLangs(i18n) : {};
+  const en = hasBio ? (langs.en ?? null) : hasHelper ? readLangFile(i18n, "en.json") : null;
+  if (hasBio && hasHelper && en === null && !existsSync(join(i18n, "en.json"))) {
+    fail(`${relative(root, join(i18n, "en.json"))}: cannot be read (ENOENT)`);
+  }
   for (const p of c.people) {
     if (!LOGIN.test(p.login)) fail(`team.json: bad login ${JSON.stringify(p.login)}`);
     if (seen.has(p.login)) fail(`team.json: ${p.login} listed twice`);
     seen.add(p.login);
-    if (!KINDS.includes(p.kind)) fail(`team.json: ${p.login}: kind must be one of ${KINDS.join(", ")}`);
-    if (p.kind === "person" && !ROLES.includes(p.role)) fail(`team.json: ${p.login}: role must be one of ${ROLES.join(", ")}`); else if (p.kind !== "person" && !(p.login in HELPERS)) fail(`team.json: ${p.login}: unknown ${p.kind}`);
+    if (!KINDS.includes(p.kind)) {
+      fail(`team.json: ${p.login}: kind must be one of ${KINDS.join(", ")}`);
+    } else if (p.kind === "person") {
+      if (!ROLES.includes(p.role)) fail(`team.json: ${p.login}: role must be one of ${ROLES.join(", ")}`);
+    } else if (!(p.login in HELPERS) || HELPERS[p.login].kind !== p.kind) {
+      fail(`team.json: ${p.login}: unknown ${p.kind}`);
+    } else if (en && (typeof en[HELPERS[p.login].key] !== "string" || en[HELPERS[p.login].key].trim() === "")) {
+      fail(`team.json: ${p.login}: ${HELPERS[p.login].key} is missing from en.json`);
+    }
     for (const a of p.areas || []) if (!(a in AREAS)) fail(`team.json: ${p.login}: unknown area ${a}`);
     // A display name, when the person prefers another spelling than their
     // GitHub profile's (for example the profile is in capitals).
@@ -307,26 +328,16 @@ export function series(c, login) {
   return `s-${p.kind}`;
 }
 
+// AI assistants and bots listed under "AI and automation". Their English
+// descriptions live in site/public/i18n/en.json under `key`, so the HTML
+// fallback and translations cannot drift apart.
 const HELPERS = {
-  claude: {
-    name: "Claude",
-    key: "tm.ai.d",
-    text: "Writes much of the code and runs the independent review of each pull request. It holds no role in the project: a maintainer makes or approves every merge, and the project lead approves every release and deployment.",
-  },
-  antigravity: {
-    name: "Antigravity",
-    key: "tm.ai.antigravity.d",
-    text: "Pairs with the project lead on code, web pages, translations and pull request updates. Its commits appear under his GitHub account, and it holds no role in the project: maintainers review and merge every change.",
-  },
-  gemini: {
-    name: "Gemini",
-    key: "tm.ai.gemini.d",
-    text: "Google DeepMind's model powering Antigravity for engineering, code review and translations across all 35 languages. It holds no role in the project: maintainers review and approve every merge.",
-  },
+  claude: { kind: "ai", name: "Claude", key: "tm.ai.d" },
+  antigravity: { kind: "ai", name: "Antigravity (Gemini)", key: "tm.ai.antigravity.d" },
   "dependabot[bot]": {
+    kind: "bot",
     name: "Dependabot",
     key: "tm.bot.d",
-    text: "Opens a pull request when a dependency has a new version. Each one is reviewed like any other change.",
     github: ["https://github.com/apps/dependabot", "dependabot"],
   },
 };
@@ -367,8 +378,10 @@ function personCard(c, s, p) {
   return lines.join("\n");
 }
 
-export function helperCard(c, s, p) {
+export function helperCard(c, s, p, en = loadEn()) {
   const h = HELPERS[p.login];
+  const text = en[h.key];
+  if (typeof text !== "string" || text.trim() === "") throw new Error(`${p.login}: ${h.key} is missing from en.json`);
   const st = stat(s.totals[p.login]);
   const ai = p.kind === "ai";
   const lines = [
@@ -377,7 +390,7 @@ export function helperCard(c, s, p) {
     `          <div class="person-body">`,
     `            <h3>${esc(p.name || h.name)}</h3>`,
     ai ? `            <p class="role" data-i18n="tm.role.ai">AI development assistant</p>` : `            <p class="role" data-i18n="tm.role.bot">Automation</p>`,
-    `            <p data-i18n="${h.key}">${esc(h.text)}</p>`,
+    `            <p data-i18n="${h.key}">${esc(text)}</p>`,
   ];
   if (st || h.github) {
     lines.push(`            <div class="person-foot">`);
@@ -437,11 +450,11 @@ function stats(c, s) {
   ].join("\n");
 }
 
-function render(c, s, html) {
+function render(c, s, html, en = loadEn()) {
   const regions = {
     stats: stats(c, s),
     people: `      <ul class="people">\n${c.people.filter((p) => p.kind === "person").map((p) => personCard(c, s, p)).join("\n")}\n      </ul>`,
-    helpers: `      <ul class="helpers">\n${c.people.filter((p) => p.kind !== "person").map((p) => helperCard(c, s, p)).join("\n")}\n      </ul>`,
+    helpers: `      <ul class="helpers">\n${c.people.filter((p) => p.kind !== "person").map((p) => helperCard(c, s, p, en)).join("\n")}\n      </ul>`,
     areas: `      <ul class="areas">\n${c.disciplines.map((d) => areaCard(c, s, d)).join("\n")}\n      </ul>`,
     date: `<time datetime="${s.fetched}">${s.fetched}</time>`,
   };
