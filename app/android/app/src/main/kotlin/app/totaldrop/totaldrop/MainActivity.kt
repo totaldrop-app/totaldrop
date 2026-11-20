@@ -66,8 +66,17 @@ class MainActivity : FlutterActivity() {
                         text = call.argument<String>("text") ?: "",
                         stop = call.argument<String>("stop") ?: "Stop",
                     )
+                    val downloadBytes = call.argument<Number>("downloadBytes")?.toLong()
+                    val uploadBytes = call.argument<Number>("uploadBytes")?.toLong()
                     askForNotifications()
-                    result.success(TransferJob.begin(this, notice))
+                    result.success(
+                        TransferJob.begin(
+                            this,
+                            notice,
+                            downloadBytes = downloadBytes,
+                            uploadBytes = uploadBytes,
+                        ),
+                    )
                 }
                 "end" -> {
                     TransferJob.end(this)

@@ -3,6 +3,7 @@
 
 package app.totaldrop.totaldrop
 
+import android.app.job.JobInfo
 import android.app.job.JobParameters
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -11,8 +12,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
-/** What a stop of the transfer job by the system does to the transfer
- * (#260). The job's own Android calls are not touched here. */
+/** What a stop of the transfer job by the system or the person does to the
+ * transfer (#260, #593). The job's own Android calls are not touched here. */
 class TransferJobTest {
     private val notice = TransferJob.Notice("channel", "title", "text", "stop")
     private var stops = 0
@@ -26,6 +27,7 @@ class TransferJobTest {
     @After
     fun forget() {
         TransferJob.onStop = null
+        TransferJob.clearActive()
     }
 
     /** Airplane mode, a tunnel, a Wi-Fi that drops: the job loses its
@@ -78,5 +80,47 @@ class TransferJobTest {
 
         assertFalse(again)
         assertEquals(0, stops)
+    }
+
+    /** Known non-negative sizes pass through; missing or negative values map
+     * to JobInfo.NETWORK_BYTES_UNKNOWN (#593). */
+    @Test
+    fun networkBytesMapsKnownAndUnknownValues() {
+        val unknown = JobInfo.NETWORK_BYTES_UNKNOWN.toLong()
+        assertEquals(unknown, TransferJob.networkBytes(null))
+        assertEquals(unknown, TransferJob.networkBytes(-1L))
+        assertEquals(0L, TransferJob.networkBytes(0L))
+        assertEquals(5_368_709_120L, TransferJob.networkBytes(5_368_709_120L))
+    }
+
+    /** Tapping Stop on the notification dismisses the job immediately and
+     * still notifies Dart so a stalled socket cannot leave the notice up (#593).
+     *
+     * This host-JVM test verifies the dismiss-before-stop ordering via the
+     * lambda overload; `end(context)`'s `JobScheduler` and `NotificationManager`
+     * calls belong to the Android framework and are not executed here. */
+    @Test
+    fun stoppedByPersonDismissesImmediatelyThenNotifiesDart() {
+        val generation = TransferJob.prepare(notice)
+        val events = mutableListOf<String>()
+        TransferJob.onStop = { events += "stop" }
+
+        TransferJob.stoppedByPerson {
+            TransferJob.clearActive()
+            events += "dismiss"
+        }
+
+        assertEquals(listOf("dismiss", "stop"), events)
+        assertFalse(TransferJob.accepts(generation))
+
+        // Without an attached engine, dismissing still clears the active job.
+        val orphan = TransferJob.prepare(notice)
+        TransferJob.onStop = null
+        TransferJob.stoppedByPerson {
+            TransferJob.clearActive()
+            events += "dismiss-orphan"
+        }
+        assertEquals(listOf("dismiss", "stop", "dismiss-orphan"), events)
+        assertFalse(TransferJob.accepts(orphan))
     }
 }
