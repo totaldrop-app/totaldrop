@@ -24,11 +24,13 @@ use std::time::Duration;
 
 use futures_util::{SinkExt, StreamExt};
 use tokio::net::{TcpListener, TcpStream, UdpSocket};
-use tokio::sync::{Mutex, Notify, Semaphore, mpsc};
+use tokio::sync::{Notify, Semaphore, mpsc, oneshot};
 use tokio::time::Instant;
 use tokio_tungstenite::tungstenite::Message;
 use tokio_tungstenite::tungstenite::handshake::server::{ErrorResponse, Request, Response};
-use tokio_tungstenite::tungstenite::protocol::WebSocketConfig;
+use tokio_tungstenite::tungstenite::http::StatusCode;
+use tokio_tungstenite::tungstenite::protocol::frame::coding::CloseCode;
+use tokio_tungstenite::tungstenite::protocol::{CloseFrame, WebSocketConfig};
 use totaldrop_proto::relay as wire;
 
 /// The WebSocket path of forwarding.
@@ -36,6 +38,10 @@ pub const PATH: &str = "/v0/relay";
 
 /// How long the WebSocket handshake, signing in and every write may take.
 const IO_TIMEOUT: Duration = Duration::from_secs(10);
+
+/// Open sockets on one pair waiting to sign in without `X-TotalDrop-Auth`
+/// (matches `MAX_WAITING` in `server/relay-worker`, #78).
+const MAX_WAITING: usize = 2;
 
 /// Limits. The defaults suit one small server.
 #[derive(Debug, Clone)]
@@ -250,10 +256,45 @@ impl State {
     }
 }
 
+type WaitingMap = HashMap<Tag, VecDeque<(u64, Arc<Notify>)>>;
+
+fn lock_state(state: &std::sync::Mutex<State>) -> std::sync::MutexGuard<'_, State> {
+    state
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+}
+
+fn lock_waiting(waiting: &std::sync::Mutex<WaitingMap>) -> std::sync::MutexGuard<'_, WaitingMap> {
+    waiting
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+}
+
+/// Removes an unsigned waiting socket from `Relay::waiting` on drop and
+/// deletes empty pair entries so the map never leaks (#78).
+struct WaitingGuard {
+    waiting: Arc<std::sync::Mutex<WaitingMap>>,
+    ptag: Tag,
+    id: u64,
+}
+
+impl Drop for WaitingGuard {
+    fn drop(&mut self) {
+        let mut map = lock_waiting(&self.waiting);
+        if let Some(queue) = map.get_mut(&self.ptag) {
+            queue.retain(|(id, _)| *id != self.id);
+            if queue.is_empty() {
+                map.remove(&self.ptag);
+            }
+        }
+    }
+}
+
 /// A running relay.
 #[derive(Debug, Clone)]
 pub struct Relay {
-    state: Arc<Mutex<State>>,
+    state: Arc<std::sync::Mutex<State>>,
+    waiting: Arc<std::sync::Mutex<WaitingMap>>,
     secret: Arc<ring::hmac::Key>,
     next: Arc<std::sync::atomic::AtomicU64>,
     accepted: Arc<std::sync::atomic::AtomicU64>,
@@ -267,6 +308,7 @@ impl Relay {
     pub fn new(config: Config) -> Self {
         Self {
             state: Arc::default(),
+            waiting: Arc::default(),
             secret: Arc::new(hmac_key()),
             next: Arc::default(),
             accepted: Arc::default(),
@@ -278,12 +320,12 @@ impl Relay {
 
     /// Devices signed in right now, for tests and health checks.
     pub async fn client_count(&self) -> usize {
-        self.state.lock().await.clients.len()
+        lock_state(&self.state).clients.len()
     }
 
     /// Pairs whose running totals are currently held in memory, for tests.
     pub async fn pair_count(&self) -> usize {
-        self.state.lock().await.pairs.len()
+        lock_state(&self.state).pairs.len()
     }
 
     /// TCP connections accepted since start: one total, for tests.
@@ -310,10 +352,7 @@ impl Relay {
         ticker.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);
         loop {
             ticker.tick().await;
-            self.state
-                .lock()
-                .await
-                .sweep(Instant::now(), self.config.session_time);
+            lock_state(&self.state).sweep(Instant::now(), self.config.session_time);
         }
     }
 
@@ -364,10 +403,82 @@ impl Relay {
         let mut ws_config = WebSocketConfig::default();
         ws_config.max_message_size = Some(wire::MAX_MESSAGE);
         ws_config.max_frame_size = Some(wire::MAX_MESSAGE);
-        let mut path = String::new();
+        let mut parsed_pair: Option<Pair> = None;
+        let mut preauth_key: Option<[u8; 32]> = None;
+        let mut waiting_guard: Option<WaitingGuard> = None;
+        let mut wait_evict: Option<Arc<Notify>> = None;
         let callback = |req: &Request, resp: Response| {
-            path = req.uri().path().to_owned();
-            refuse_browsers(req, resp)
+            let resp = refuse_browsers(req, resp)?;
+            // `/v0/relay/<pair>` names the only two keys that may sign in here,
+            // and the only two that datagrams may pass between (as on the
+            // Cloudflare relay). Any other path is refused with 400.
+            let Some((pair_str, pair)) = req
+                .uri()
+                .path()
+                .strip_prefix(PATH)
+                .and_then(|rest| rest.strip_prefix('/'))
+                .and_then(|s| wire::parse_pair_name(s).map(|p| (s, p)))
+            else {
+                return Err(http_error(StatusCode::BAD_REQUEST, None));
+            };
+            let ptag = pair_tag(&self.secret, &pair);
+            let mut auth_headers = req.headers().get_all(wire::AUTH_HEADER).iter();
+            match (auth_headers.next(), auth_headers.next()) {
+                (Some(_), Some(_)) => {
+                    return Err(http_error(StatusCode::FORBIDDEN, None));
+                }
+                (Some(raw), None) => {
+                    let Some(key) = verify_connect_auth(pair_str, pair, raw) else {
+                        return Err(http_error(StatusCode::FORBIDDEN, None));
+                    };
+                    let now = Instant::now();
+                    let ktag = key_tag(&self.secret, &key);
+                    {
+                        let state = lock_state(&self.state);
+                        if state.clients.get(&key).is_some_and(|old| old.pair != pair) {
+                            return Err(http_error(StatusCode::FORBIDDEN, None));
+                        }
+                        if let Some(&(bound, _, started)) = state.key_pair.get(&ktag)
+                            && now.saturating_duration_since(started) < self.config.session_time
+                            && bound != ptag
+                        {
+                            return Err(http_error(StatusCode::FORBIDDEN, None));
+                        }
+                        if let Some(rec) = state.pairs.get(&ptag)
+                            && now.saturating_duration_since(rec.started) < self.config.session_time
+                            && rec.over
+                        {
+                            return Err(http_error(StatusCode::FORBIDDEN, None));
+                        }
+                    }
+                    preauth_key = Some(key);
+                    let mut map = lock_waiting(&self.waiting);
+                    if let Some(queue) = map.get_mut(&ptag)
+                        && queue.len() >= MAX_WAITING
+                        && let Some((_, victim)) = queue.pop_front()
+                    {
+                        victim.notify_one();
+                    }
+                }
+                (None, _) => {
+                    let mut map = lock_waiting(&self.waiting);
+                    let queue = map.entry(ptag).or_default();
+                    if queue.len() >= MAX_WAITING {
+                        return Err(http_error(StatusCode::CONFLICT, None));
+                    }
+                    let wait_id = self.next.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+                    let evict = Arc::new(Notify::new());
+                    queue.push_back((wait_id, Arc::clone(&evict)));
+                    waiting_guard = Some(WaitingGuard {
+                        waiting: Arc::clone(&self.waiting),
+                        ptag,
+                        id: wait_id,
+                    });
+                    wait_evict = Some(evict);
+                }
+            }
+            parsed_pair = Some(pair);
+            Ok(resp)
         };
         let Ok(Ok(mut ws)) = tokio::time::timeout(
             IO_TIMEOUT,
@@ -377,14 +488,7 @@ impl Relay {
         else {
             return;
         };
-        // `/v0/relay/<pair>` names the only two keys that may sign in here,
-        // and the only two that datagrams may pass between (as on the
-        // Cloudflare relay). Any other path is refused.
-        let Some(pair) = path
-            .strip_prefix(PATH)
-            .and_then(|rest| rest.strip_prefix('/'))
-            .and_then(wire::parse_pair_name)
-        else {
+        let Some(pair) = parsed_pair else {
             return;
         };
 
@@ -393,25 +497,75 @@ impl Relay {
         if getrandom::fill(&mut challenge).is_err() {
             return;
         }
-        let key = tokio::time::timeout(IO_TIMEOUT, async {
-            ws.send(Message::Binary(wire::challenge(&challenge).into()))
+        enum SignIn {
+            Ok([u8; 32]),
+            Mismatch,
+            Failed,
+        }
+        let sign_in = async {
+            if ws
+                .send(Message::Binary(wire::challenge(&challenge).into()))
                 .await
-                .ok()?;
+                .is_err()
+            {
+                return SignIn::Failed;
+            }
             let hello = match ws.next().await {
-                Some(Ok(Message::Binary(b))) => wire::parse_hello(&b)?,
-                _ => return None,
+                Some(Ok(Message::Binary(b))) => match wire::parse_hello(&b) {
+                    Some(h) => h,
+                    None => return SignIn::Failed,
+                },
+                _ => return SignIn::Failed,
             };
             let (key, signature) = hello;
             if key != pair.0 && key != pair.1 {
-                return None;
+                return SignIn::Failed;
             }
-            ring::signature::UnparsedPublicKey::new(&ring::signature::ED25519, key)
+            if preauth_key.is_some_and(|k| k != key) {
+                return SignIn::Mismatch;
+            }
+            if ring::signature::UnparsedPublicKey::new(&ring::signature::ED25519, key)
                 .verify(&wire::signed_bytes(&challenge), &signature)
-                .ok()?;
-            Some(key)
-        })
-        .await;
-        let Ok(Some(key)) = key else { return };
+                .is_err()
+            {
+                return SignIn::Failed;
+            }
+            SignIn::Ok(key)
+        };
+        let signed_in = if let Some(evict) = wait_evict.as_ref() {
+            tokio::select! {
+                () = evict.notified() => {
+                    let _ = tokio::time::timeout(
+                        Duration::from_secs(1),
+                        ws.close(Some(CloseFrame {
+                            code: CloseCode::Policy,
+                            reason: "evicted".into(),
+                        })),
+                    )
+                    .await;
+                    return;
+                }
+                res = tokio::time::timeout(IO_TIMEOUT, sign_in) => res,
+            }
+        } else {
+            tokio::time::timeout(IO_TIMEOUT, sign_in).await
+        };
+        drop(waiting_guard);
+        let key = match signed_in {
+            Ok(SignIn::Ok(key)) => key,
+            Ok(SignIn::Mismatch) => {
+                let _ = tokio::time::timeout(
+                    Duration::from_secs(1),
+                    ws.close(Some(CloseFrame {
+                        code: CloseCode::Policy,
+                        reason: "not this pair".into(),
+                    })),
+                )
+                .await;
+                return;
+            }
+            _ => return,
+        };
         let second_side = key != pair.0;
         let other = if second_side { pair.0 } else { pair.1 };
 
@@ -427,7 +581,7 @@ impl Relay {
 
         let admitted = {
             let now = Instant::now();
-            let mut state = self.state.lock().await;
+            let mut state = lock_state(&self.state);
             state.sweep(now, self.config.session_time);
 
             // One pair per key: keys are single-use, so a key on a second
@@ -533,18 +687,39 @@ impl Relay {
             tokio::time::timeout(IO_TIMEOUT, ws.send(Message::Binary(wire::ok().into()))).await,
             Ok(Ok(()))
         ) {
-            self.leave(&key, id).await;
+            self.leave(&key, id);
             return;
         }
 
+        let (close_tx, mut close_rx) = oneshot::channel::<CloseFrame>();
         let (mut sink, mut source) = ws.split();
-        let writer = tokio::spawn(async move {
-            while let Some(frame) = inbox.recv().await {
-                let sent =
-                    tokio::time::timeout(IO_TIMEOUT, sink.send(Message::Binary(frame.into())))
-                        .await;
-                if !matches!(sent, Ok(Ok(()))) {
-                    break;
+        let mut writer = tokio::spawn(async move {
+            loop {
+                tokio::select! {
+                    biased;
+                    frame = &mut close_rx => {
+                        if let Ok(close) = frame {
+                            let _ = tokio::time::timeout(
+                                Duration::from_secs(1),
+                                sink.send(Message::Close(Some(close))),
+                            )
+                            .await;
+                        }
+                        return;
+                    }
+                    msg = inbox.recv() => match msg {
+                        Some(frame) => {
+                            let sent = tokio::time::timeout(
+                                IO_TIMEOUT,
+                                sink.send(Message::Binary(frame.into())),
+                            )
+                            .await;
+                            if !matches!(sent, Ok(Ok(()))) {
+                                break;
+                            }
+                        }
+                        None => break,
+                    },
                 }
             }
             let _ = tokio::time::timeout(IO_TIMEOUT, sink.close()).await;
@@ -555,6 +730,7 @@ impl Relay {
         let mut last_data = Instant::now();
         let mut budget = Budget::new(self.config.rate);
         let mut local_total: u64 = 0;
+        let mut session_over = false;
         loop {
             if writer.is_finished() {
                 break;
@@ -564,6 +740,7 @@ impl Relay {
                 .checked_duration_since(now)
                 .filter(|w| !w.is_zero())
             else {
+                session_over = true;
                 break;
             };
             let Some(until_idle) = self
@@ -576,9 +753,16 @@ impl Relay {
             };
             let wait = until_end.min(until_idle);
             let next = tokio::select! {
-                () = end.notified() => break,
+                () = end.notified() => {
+                    session_over = Instant::now() >= deadline;
+                    break;
+                }
                 next = tokio::time::timeout(wait, source.next()) => match next {
                     Ok(Some(Ok(m))) => m,
+                    Err(_) => {
+                        session_over = Instant::now() >= deadline;
+                        break;
+                    }
                     _ => break,
                 },
             };
@@ -598,20 +782,14 @@ impl Relay {
             let payload: usize = datagrams.iter().map(|d| d.len()).sum();
             let size = u64::try_from(frame.len()).unwrap_or(u64::MAX);
             local_total = local_total.saturating_add(size);
-            if !self
-                .spend_pair_bytes(&ptag, pair_gen, second_side, size, local_total)
-                .await
-            {
+            if !self.spend_pair_bytes(&ptag, pair_gen, second_side, size, local_total) {
                 break;
             }
             // Slow the sender down instead of dropping: TCP pushes back.
             budget.spend(size).await;
             // The target must have signed in on this same pair: a key that is
             // part of two pairs is reachable only from the one it chose.
-            let target = self
-                .state
-                .lock()
-                .await
+            let target = lock_state(&self.state)
                 .clients
                 .get(&to)
                 .filter(|c| c.pair == pair)
@@ -630,11 +808,25 @@ impl Relay {
                 }
             }
         }
-        writer.abort();
-        self.leave(&key, id).await;
+        if session_over {
+            let _ = close_tx.send(CloseFrame {
+                code: CloseCode::Policy,
+                reason: "session over".into(),
+            });
+            self.leave(&key, id);
+            if tokio::time::timeout(Duration::from_secs(1), &mut writer)
+                .await
+                .is_err()
+            {
+                writer.abort();
+            }
+        } else {
+            writer.abort();
+            self.leave(&key, id);
+        }
     }
 
-    async fn spend_pair_bytes(
+    fn spend_pair_bytes(
         &self,
         ptag: &Tag,
         pair_gen: u64,
@@ -642,7 +834,7 @@ impl Relay {
         size: u64,
         local_total: u64,
     ) -> bool {
-        let mut state = self.state.lock().await;
+        let mut state = lock_state(&self.state);
         if let Some(rec) = state
             .pairs
             .get_mut(ptag)
@@ -666,8 +858,8 @@ impl Relay {
     /// connection (not replaced), the transfer is over, however it ended:
     /// the other signed-in side of its pair is ended too, as on the
     /// Cloudflare relay (protocol notes, item 20).
-    async fn leave(&self, key: &[u8; 32], id: u64) {
-        let mut state = self.state.lock().await;
+    fn leave(&self, key: &[u8; 32], id: u64) {
+        let mut state = lock_state(&self.state);
         if !state.clients.get(key).is_some_and(|c| c.id == id) {
             return;
         }
@@ -773,15 +965,42 @@ pub async fn spawn_local(
     Ok((format!("ws://{ws}{PATH}"), udp.to_string(), relay, task))
 }
 
+fn http_error(status: StatusCode, body: Option<&str>) -> ErrorResponse {
+    let mut resp = ErrorResponse::new(body.map(str::to_owned));
+    *resp.status_mut() = status;
+    resp
+}
+
+/// Verify an `X-TotalDrop-Auth` Upgrade header against `pair_str`, returning
+/// the authenticated endpoint key (#78). Does not bind to `Sec-WebSocket-Key`
+/// because reverse proxies regenerate that hop-by-hop header; `TDR0` still
+/// proves freshness against a server nonce.
+fn verify_connect_auth(
+    pair_str: &str,
+    pair: Pair,
+    raw: &tokio_tungstenite::tungstenite::http::HeaderValue,
+) -> Option<[u8; 32]> {
+    let header = raw.to_str().ok()?;
+    let (key, signature) = wire::parse_auth_header(header)?;
+    if key != pair.0 && key != pair.1 {
+        return None;
+    }
+    ring::signature::UnparsedPublicKey::new(&ring::signature::ED25519, key)
+        .verify(&wire::connect_signed_bytes(pair_str), &signature)
+        .ok()?;
+    Some(key)
+}
+
 /// #450: a WebSocket opened by a web page always carries `Origin`; the
 /// apps and the command line never send it. Refusing those keeps a page
 /// from opening connections from its visitors' browsers.
 #[allow(clippy::result_large_err)] // the type tungstenite asks for
 fn refuse_browsers(req: &Request, resp: Response) -> Result<Response, ErrorResponse> {
     if req.headers().contains_key("origin") {
-        let mut refused = ErrorResponse::new(Some("browsers are not served\n".to_owned()));
-        *refused.status_mut() = tokio_tungstenite::tungstenite::http::StatusCode::FORBIDDEN;
-        return Err(refused);
+        return Err(http_error(
+            StatusCode::FORBIDDEN,
+            Some("browsers are not served\n"),
+        ));
     }
     Ok(resp)
 }
@@ -875,6 +1094,18 @@ mod tests {
                 Err(_) => return false,
                 Ok(None | Some(Err(_)) | Some(Ok(Message::Close(_)))) => return true,
                 Ok(Some(Ok(_))) => {}
+            }
+        }
+    }
+
+    /// The `CloseFrame` sent by the relay on `ws` within `wait`, if any.
+    async fn next_close_frame(ws: &mut Ws, wait: Duration) -> Option<CloseFrame> {
+        let deadline = tokio::time::Instant::now().checked_add(wait).unwrap();
+        loop {
+            match tokio::time::timeout_at(deadline, ws.next()).await {
+                Ok(Some(Ok(Message::Close(frame)))) => return frame,
+                Ok(Some(Ok(_))) => {}
+                _ => return None,
             }
         }
     }
@@ -1131,7 +1362,7 @@ mod tests {
         // already expired and been swept before `leave()` ran.
         {
             let (tx, _rx) = mpsc::channel(1);
-            let mut state = relay.state.lock().await;
+            let mut state = lock_state(&relay.state);
             state.next_gen = 1;
             state.clients.insert(
                 a,
@@ -1151,7 +1382,7 @@ mod tests {
         let ab = format!("{url}/{}", wire::pair_name(&a, &b));
         let mut wa = sign_in(&ab, &ka, &a).await.unwrap();
         assert_eq!(
-            relay.state.lock().await.pairs.get(&ptag).map(|r| r.live),
+            lock_state(&relay.state).pairs.get(&ptag).map(|r| r.live),
             Some(1),
             "generation 1 must record live == 1 after replacing generation 0"
         );
@@ -1164,10 +1395,7 @@ mod tests {
         let mut wc = sign_in(&cd, &kc, &c).await.unwrap();
         wc.close(None).await.unwrap();
         assert_eq!(
-            relay
-                .state
-                .lock()
-                .await
+            lock_state(&relay.state)
                 .pairs
                 .get(&ptag)
                 .map(|r| r.generation),
@@ -1312,5 +1540,426 @@ mod tests {
             state.inactive.len()
         );
         assert_eq!(state.inactive.front().map(|e| e.0), Some(p1));
+    }
+
+    fn connect_request_with_auth(
+        url: &str,
+        pair_str: &str,
+        kp: &ring::signature::Ed25519KeyPair,
+        public: &[u8; 32],
+    ) -> tokio_tungstenite::tungstenite::http::Request<()> {
+        use tokio_tungstenite::tungstenite::client::IntoClientRequest as _;
+        use tokio_tungstenite::tungstenite::http::header::{HeaderName, HeaderValue};
+
+        let mut req = url.into_client_request().unwrap();
+        let sig: [u8; 64] = kp
+            .sign(&wire::connect_signed_bytes(pair_str))
+            .as_ref()
+            .try_into()
+            .unwrap();
+        req.headers_mut().insert(
+            HeaderName::from_bytes(wire::AUTH_HEADER.as_bytes()).unwrap(),
+            HeaderValue::from_str(&wire::format_auth_header(public, &sig)).unwrap(),
+        );
+        req
+    }
+
+    async fn sign_in_preauth(
+        url: &str,
+        pair_str: &str,
+        kp: &ring::signature::Ed25519KeyPair,
+        public: &[u8; 32],
+    ) -> Option<Ws> {
+        let req = connect_request_with_auth(url, pair_str, kp, public);
+        let (mut ws, _) = tokio_tungstenite::connect_async(req).await.ok()?;
+        let challenge = match tokio::time::timeout(Duration::from_secs(2), ws.next()).await {
+            Ok(Some(Ok(Message::Binary(b)))) => wire::parse_challenge(&b)?,
+            _ => return None,
+        };
+        let sig: [u8; 64] = kp
+            .sign(&wire::signed_bytes(&challenge))
+            .as_ref()
+            .try_into()
+            .ok()?;
+        ws.send(Message::Binary(wire::hello(public, &sig).into()))
+            .await
+            .ok()?;
+        match tokio::time::timeout(Duration::from_secs(2), ws.next()).await {
+            Ok(Some(Ok(Message::Binary(b)))) if wire::is_ok(&b) => Some(ws),
+            _ => None,
+        }
+    }
+
+    async fn expect_http_status(
+        req: tokio_tungstenite::tungstenite::http::Request<()>,
+    ) -> StatusCode {
+        let err = tokio_tungstenite::connect_async(req)
+            .await
+            .expect_err("expected HTTP error response");
+        let tokio_tungstenite::tungstenite::Error::Http(resp) = err else {
+            return StatusCode::IM_A_TEAPOT;
+        };
+        resp.status()
+    }
+
+    /// #78: unsigned squatters hit `MAX_WAITING` (409), invalid `X-TotalDrop-Auth`
+    /// gets 403 without evicting anyone, valid pre-auth bypasses `MAX_WAITING` and
+    /// evicts the oldest unsigned waiter with `(1008, "evicted")`, and `WaitingGuard`
+    /// leaves zero entries behind once waiters exit.
+    #[tokio::test]
+    async fn preauth_bypasses_max_waiting_and_evicts_oldest_unsigned_waiter() {
+        use tokio_tungstenite::tungstenite::client::IntoClientRequest as _;
+        use tokio_tungstenite::tungstenite::http::header::{HeaderName, HeaderValue};
+
+        let (url, _stun, relay, _task) = spawn_local(Config::default()).await.unwrap();
+        let (ka, a) = keypair();
+        let (kb, b) = keypair();
+        let (kc, c) = keypair();
+        let pair_str = wire::pair_name(&a, &b);
+        let other_pair_str = wire::pair_name(&a, &c);
+        let ab = format!("{url}/{pair_str}");
+
+        // Invalid path returns HTTP 400.
+        let bad_path = format!("{url}/not-a-pair").into_client_request().unwrap();
+        assert_eq!(expect_http_status(bad_path).await, StatusCode::BAD_REQUEST);
+
+        // Two unsigned waiters fill MAX_WAITING = 2.
+        let (mut u1, _) = tokio_tungstenite::connect_async(&ab).await.unwrap();
+        let (mut u2, _) = tokio_tungstenite::connect_async(&ab).await.unwrap();
+        // Read challenges so both waiters are confirmed in the waiting loop.
+        assert!(next_frame(&mut u1, Duration::from_secs(2)).await.is_some());
+        assert!(next_frame(&mut u2, Duration::from_secs(2)).await.is_some());
+
+        // Third unsigned caller gets 409 Conflict.
+        assert_eq!(
+            expect_http_status(ab.as_str().into_client_request().unwrap()).await,
+            StatusCode::CONFLICT
+        );
+
+        // Bad X-TotalDrop-Auth variants all return 403 WITHOUT evicting u1 or u2.
+        let header_name = HeaderName::from_bytes(wire::AUTH_HEADER.as_bytes()).unwrap();
+        let malformed = {
+            let mut req = ab.as_str().into_client_request().unwrap();
+            req.headers_mut()
+                .insert(header_name.clone(), HeaderValue::from_static("not-hex"));
+            req
+        };
+        assert_eq!(expect_http_status(malformed).await, StatusCode::FORBIDDEN);
+
+        let wrong_key = connect_request_with_auth(&ab, &pair_str, &kc, &c);
+        assert_eq!(expect_http_status(wrong_key).await, StatusCode::FORBIDDEN);
+
+        let wrong_pair = connect_request_with_auth(&ab, &other_pair_str, &ka, &a);
+        assert_eq!(expect_http_status(wrong_pair).await, StatusCode::FORBIDDEN);
+
+        let dup_auth = {
+            let mut req = connect_request_with_auth(&ab, &pair_str, &ka, &a);
+            let existing = req.headers().get(&header_name).unwrap().clone();
+            req.headers_mut().append(header_name.clone(), existing);
+            req
+        };
+        assert_eq!(expect_http_status(dup_auth).await, StatusCode::FORBIDDEN);
+
+        let upper_auth = {
+            let mut req = connect_request_with_auth(&ab, &pair_str, &ka, &a);
+            let upper = req
+                .headers()
+                .get(&header_name)
+                .unwrap()
+                .to_str()
+                .unwrap()
+                .to_uppercase();
+            req.headers_mut()
+                .insert(header_name.clone(), HeaderValue::from_str(&upper).unwrap());
+            req
+        };
+        assert_eq!(expect_http_status(upper_auth).await, StatusCode::FORBIDDEN);
+
+        assert!(!closed(&mut u1, Duration::from_millis(150)).await);
+        assert!(!closed(&mut u2, Duration::from_millis(150)).await);
+
+        // Valid pre-auth for A succeeds, evicts oldest waiter u1 with (1008, "evicted"),
+        // and leaves u2 open.
+        let mut wa = sign_in_preauth(&ab, &pair_str, &ka, &a)
+            .await
+            .expect("valid pre-auth must succeed while unsigned squatters hold waiting slots");
+        let close_frame = tokio::time::timeout(Duration::from_secs(2), async {
+            loop {
+                match u1.next().await {
+                    Some(Ok(Message::Close(f))) => break f,
+                    Some(Ok(_)) => continue,
+                    _ => break None,
+                }
+            }
+        })
+        .await
+        .expect("oldest unsigned waiter must be evicted");
+        let close_frame = close_frame.expect("expected CloseFrame on evicted waiter");
+        assert_eq!(close_frame.code, CloseCode::Policy);
+        assert_eq!(close_frame.reason.as_str(), "evicted");
+        assert!(!closed(&mut u2, Duration::from_millis(150)).await);
+
+        // Peer B with valid pre-auth also signs in and exchanges datagrams with A.
+        let mut wb = sign_in_preauth(&ab, &pair_str, &kb, &b).await.unwrap();
+        wa.send(Message::Binary(wire::frame(&b, b"through").into()))
+            .await
+            .unwrap();
+        let got = next_frame(&mut wb, Duration::from_secs(2)).await.unwrap();
+        let (from, datagrams) = wire::parse_frame(&got).unwrap();
+        assert_eq!(from, a);
+        assert_eq!(datagrams, vec![&b"through"[..]]);
+
+        // Closing u2 cleans the waiting map completely via WaitingGuard.
+        let _ = u2.close(None).await;
+        drop(u2);
+        let deadline = Instant::now().checked_add(Duration::from_secs(2)).unwrap();
+        while !lock_waiting(&relay.waiting).is_empty() && Instant::now() < deadline {
+            tokio::time::sleep(Duration::from_millis(10)).await;
+        }
+        assert!(
+            lock_waiting(&relay.waiting).is_empty(),
+            "waiting map leaked entries"
+        );
+    }
+
+    /// #78: a socket pre-authenticated as key A cannot complete TDR0 hello as key B.
+    #[tokio::test]
+    async fn preauth_key_mismatch_on_hello_is_refused() {
+        let (url, _stun, _relay, _task) = spawn_local(Config::default()).await.unwrap();
+        let (ka, a) = keypair();
+        let (kb, b) = keypair();
+        let pair_str = wire::pair_name(&a, &b);
+        let ab = format!("{url}/{pair_str}");
+
+        let req = connect_request_with_auth(&ab, &pair_str, &ka, &a);
+        let (mut ws, _) = tokio_tungstenite::connect_async(req).await.unwrap();
+        let frame = next_frame(&mut ws, Duration::from_secs(2))
+            .await
+            .expect("expected challenge");
+        let challenge = wire::parse_challenge(&frame).unwrap();
+        let sig_b: [u8; 64] = kb
+            .sign(&wire::signed_bytes(&challenge))
+            .as_ref()
+            .try_into()
+            .unwrap();
+        ws.send(Message::Binary(wire::hello(&b, &sig_b).into()))
+            .await
+            .unwrap();
+        let close_frame = tokio::time::timeout(Duration::from_secs(2), async {
+            loop {
+                match ws.next().await {
+                    Some(Ok(Message::Close(f))) => break f,
+                    Some(Ok(_)) => continue,
+                    _ => break None,
+                }
+            }
+        })
+        .await
+        .expect("mismatched preauth hello must close");
+        let close_frame = close_frame.expect("expected CloseFrame on preauth mismatch");
+        assert_eq!(close_frame.code, CloseCode::Policy);
+        assert_eq!(close_frame.reason.as_str(), "not this pair");
+    }
+
+    /// #78: an over-byte-limit pair refuses valid pre-auth with 403 without evicting waiters.
+    #[tokio::test]
+    async fn over_limit_pair_rejects_preauth_with_403_without_evicting() {
+        let config = Config {
+            session_bytes: 500,
+            ..Config::default()
+        };
+        let (url, _stun, _relay, _task) = spawn_local(config).await.unwrap();
+        let (ka, a) = keypair();
+        let (kb, b) = keypair();
+        let pair_str = wire::pair_name(&a, &b);
+        let ab = format!("{url}/{pair_str}");
+
+        let mut wa = sign_in_preauth(&ab, &pair_str, &ka, &a).await.unwrap();
+        let mut wb = sign_in_preauth(&ab, &pair_str, &kb, &b).await.unwrap();
+        let _ = wa
+            .send(Message::Binary(wire::frame(&b, &[9u8; 600]).into()))
+            .await;
+        assert!(closed(&mut wa, Duration::from_secs(2)).await);
+        assert!(closed(&mut wb, Duration::from_secs(2)).await);
+
+        let (mut u1, _) = tokio_tungstenite::connect_async(&ab).await.unwrap();
+        let (mut u2, _) = tokio_tungstenite::connect_async(&ab).await.unwrap();
+        assert!(next_frame(&mut u1, Duration::from_secs(2)).await.is_some());
+        assert!(next_frame(&mut u2, Duration::from_secs(2)).await.is_some());
+
+        let req = connect_request_with_auth(&ab, &pair_str, &ka, &a);
+        assert_eq!(expect_http_status(req).await, StatusCode::FORBIDDEN);
+        assert!(!closed(&mut u1, Duration::from_millis(150)).await);
+        assert!(!closed(&mut u2, Duration::from_millis(150)).await);
+    }
+
+    /// #78: when the pair's shared session time expires, both signed-in peers
+    /// close together even when the second peer joined later.
+    #[tokio::test]
+    async fn session_over_closes_both_signed_in_peers_simultaneously() {
+        let config = Config {
+            session_time: Duration::from_millis(600),
+            ..Config::default()
+        };
+        let (url, _stun, _relay, _task) = spawn_local(config).await.unwrap();
+        let (ka, a) = keypair();
+        let (kb, b) = keypair();
+        let pair_str = wire::pair_name(&a, &b);
+        let ab = format!("{url}/{pair_str}");
+
+        let mut wa = sign_in_preauth(&ab, &pair_str, &ka, &a).await.unwrap();
+        tokio::time::sleep(Duration::from_millis(250)).await;
+        let mut wb = sign_in_preauth(&ab, &pair_str, &kb, &b).await.unwrap();
+
+        wa.send(Message::Binary(wire::frame(&b, b"ping").into()))
+            .await
+            .unwrap();
+        assert!(next_frame(&mut wb, Duration::from_secs(2)).await.is_some());
+
+        // Both must close with (1008, "session over") around t = 600 ms
+        // (within 550 ms from now), not 250 + 600 ms.
+        let (fa, fb) = tokio::join!(
+            next_close_frame(&mut wa, Duration::from_millis(550)),
+            next_close_frame(&mut wb, Duration::from_millis(550)),
+        );
+        let fa = fa.expect("first peer did not receive CloseFrame at pair deadline");
+        let fb = fb.expect("second peer did not receive CloseFrame together at pair deadline");
+        assert_eq!(fa.code, CloseCode::Policy);
+        assert_eq!(fa.reason.as_str(), "session over");
+        assert_eq!(fb.code, CloseCode::Policy);
+        assert_eq!(fb.reason.as_str(), "session over");
+    }
+
+    /// #78: over-limit `403` holds unconditionally without evicting waiters even
+    /// under heavy concurrent multi-pair forwarding traffic contending `Relay::state`.
+    #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+    async fn over_limit_403_holds_under_concurrent_traffic_without_evicting() {
+        use std::sync::atomic::{AtomicBool, Ordering};
+
+        let config = Config {
+            session_bytes: 500,
+            ..Config::default()
+        };
+        let (url, _stun, relay, _task) = spawn_local(config).await.unwrap();
+
+        // Exhaust byte limit on target pair (A, B).
+        let (ka, a) = keypair();
+        let (kb, b) = keypair();
+        let pair_str = wire::pair_name(&a, &b);
+        let ab = format!("{url}/{pair_str}");
+        let mut wa = sign_in_preauth(&ab, &pair_str, &ka, &a).await.unwrap();
+        let mut wb = sign_in_preauth(&ab, &pair_str, &kb, &b).await.unwrap();
+        let _ = wa
+            .send(Message::Binary(wire::frame(&b, &[9u8; 600]).into()))
+            .await;
+        assert!(closed(&mut wa, Duration::from_secs(2)).await);
+        assert!(closed(&mut wb, Duration::from_secs(2)).await);
+
+        // Two unsigned waiters on (A, B) must never be evicted by over-limit pre-auth.
+        let (mut u1, _) = tokio_tungstenite::connect_async(&ab).await.unwrap();
+        let (mut u2, _) = tokio_tungstenite::connect_async(&ab).await.unwrap();
+        assert!(next_frame(&mut u1, Duration::from_secs(2)).await.is_some());
+        assert!(next_frame(&mut u2, Duration::from_secs(2)).await.is_some());
+
+        // Spawn background pairs exchanging small frames + state readers to contend `state`.
+        let stop = Arc::new(AtomicBool::new(false));
+        let mut bg = Vec::new();
+        for _ in 0..4 {
+            let (kx, x) = keypair();
+            let (ky, y) = keypair();
+            let xy_str = wire::pair_name(&x, &y);
+            let xy = format!("{url}/{xy_str}");
+            let mut wx = sign_in_preauth(&xy, &xy_str, &kx, &x).await.unwrap();
+            let mut wy = sign_in_preauth(&xy, &xy_str, &ky, &y).await.unwrap();
+            let stop_c = Arc::clone(&stop);
+            bg.push(tokio::spawn(async move {
+                while !stop_c.load(Ordering::Relaxed) {
+                    if wx
+                        .send(Message::Binary(wire::frame(&y, b"hi").into()))
+                        .await
+                        .is_err()
+                    {
+                        break;
+                    }
+                    let _ = next_frame(&mut wy, Duration::from_millis(50)).await;
+                }
+            }));
+        }
+        for _ in 0..2 {
+            let r = relay.clone();
+            let stop_c = Arc::clone(&stop);
+            bg.push(tokio::spawn(async move {
+                while !stop_c.load(Ordering::Relaxed) {
+                    let _ = r.pair_count().await;
+                    let _ = r.client_count().await;
+                    tokio::task::yield_now().await;
+                }
+            }));
+        }
+
+        // Every single over-limit pre-auth attempt must return 403, never 101.
+        for _ in 0..40 {
+            let req = connect_request_with_auth(&ab, &pair_str, &ka, &a);
+            assert_eq!(expect_http_status(req).await, StatusCode::FORBIDDEN);
+        }
+
+        stop.store(true, Ordering::Relaxed);
+        for h in bg {
+            let _ = h.await;
+        }
+        assert!(!closed(&mut u1, Duration::from_millis(150)).await);
+        assert!(!closed(&mut u2, Duration::from_millis(150)).await);
+    }
+
+    /// #78: a single-use key bound to active pair (A, B) is rejected at Upgrade
+    /// with 403 on (A, C) without evicting (A, C)'s waiters, and is admitted
+    /// once (A, B)'s session window expires.
+    #[tokio::test]
+    async fn single_use_key_bound_to_other_pair_gets_403_without_evicting_until_expiry() {
+        let config = Config {
+            session_time: Duration::from_millis(300),
+            ..Config::default()
+        };
+        let (url, _stun, _relay, _task) = spawn_local(config).await.unwrap();
+        let (ka, a) = keypair();
+        let (_kb, b) = keypair();
+        let (_kc, c) = keypair();
+        let ab_str = wire::pair_name(&a, &b);
+        let ac_str = wire::pair_name(&a, &c);
+        let ab = format!("{url}/{ab_str}");
+        let ac = format!("{url}/{ac_str}");
+
+        // Bind key A to (A, B).
+        let mut wa = sign_in_preauth(&ab, &ab_str, &ka, &a).await.unwrap();
+
+        // Fill (A, C)'s unsigned waiting queue.
+        let (mut cu1, _) = tokio_tungstenite::connect_async(&ac).await.unwrap();
+        let (mut cu2, _) = tokio_tungstenite::connect_async(&ac).await.unwrap();
+        assert!(next_frame(&mut cu1, Duration::from_secs(2)).await.is_some());
+        assert!(next_frame(&mut cu2, Duration::from_secs(2)).await.is_some());
+
+        // While A is live on (A, B): pre-auth on (A, C) returns 403 without evicting cu1/cu2.
+        let req = connect_request_with_auth(&ac, &ac_str, &ka, &a);
+        assert_eq!(expect_http_status(req).await, StatusCode::FORBIDDEN);
+
+        // After A disconnects from (A, B) within session_time: still 403 without evicting.
+        wa.close(None).await.unwrap();
+        drop(wa);
+        tokio::time::sleep(Duration::from_millis(40)).await;
+        let req = connect_request_with_auth(&ac, &ac_str, &ka, &a);
+        assert_eq!(expect_http_status(req).await, StatusCode::FORBIDDEN);
+        assert!(!closed(&mut cu1, Duration::from_millis(80)).await);
+        assert!(!closed(&mut cu2, Duration::from_millis(80)).await);
+
+        // Once (A, B)'s 300 ms window expires, A may connect to (A, C) and evicts cu1.
+        tokio::time::sleep(Duration::from_millis(250)).await;
+        let _wa_ac = sign_in_preauth(&ac, &ac_str, &ka, &a)
+            .await
+            .expect("key A must be allowed on (A, C) after (A, B) expires");
+        let evict_frame = next_close_frame(&mut cu1, Duration::from_secs(2))
+            .await
+            .expect("expected CloseFrame on evicted waiter cu1");
+        assert_eq!(evict_frame.code, CloseCode::Policy);
+        assert_eq!(evict_frame.reason.as_str(), "evicted");
     }
 }

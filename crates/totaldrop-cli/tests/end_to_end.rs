@@ -1480,6 +1480,169 @@ async fn reconnecting_on_a_pair_does_not_reset_its_time_limit() {
     );
 }
 
+/// Holding `MAX_WAITING` unsigned WebSockets on a pair causes 409 for a third
+/// unsigned client, invalid `X-TotalDrop-Auth` returns 403 without evicting
+/// them, and real `totaldrop-core` links (which send valid `X-TotalDrop-Auth`)
+/// still connect and forward datagrams both ways on both relays (#78).
+#[tokio::test(flavor = "multi_thread")]
+async fn unsigned_slot_holders_cannot_block_preauthenticated_peers() {
+    use futures_util::StreamExt;
+    use std::sync::Arc;
+    use tokio::sync::mpsc;
+    use tokio_tungstenite::tungstenite::client::IntoClientRequest as _;
+    use tokio_tungstenite::tungstenite::http::StatusCode;
+    use tokio_tungstenite::tungstenite::http::header::{HeaderName, HeaderValue};
+    use tokio_tungstenite::tungstenite::{Error as WsError, Message};
+    use totaldrop_core::path::RelayPipes;
+    use totaldrop_core::relay::{Gate, spawn as spawn_relay_link};
+    use totaldrop_core::transport::EndpointKey;
+    use totaldrop_proto::relay as wire;
+
+    let (relay, _stun, _r) = relay().await;
+    let (a, b) = (
+        Arc::new(EndpointKey::generate().unwrap()),
+        Arc::new(EndpointKey::generate().unwrap()),
+    );
+    let pair = wire::pair_name(&a.public(), &b.public());
+    let url = format!("{relay}/{pair}");
+
+    // Two unsigned squatters fill MAX_WAITING = 2 and wait without answering TDR0.
+    let (mut hold1, _) = tokio_tungstenite::connect_async(&url).await.unwrap();
+    let (mut hold2, _) = tokio_tungstenite::connect_async(&url).await.unwrap();
+    for hold in [&mut hold1, &mut hold2] {
+        let frame = tokio::time::timeout(Duration::from_secs(5), hold.next())
+            .await
+            .expect("expected challenge for unsigned waiter")
+            .unwrap()
+            .unwrap();
+        assert!(matches!(frame, Message::Binary(b) if wire::parse_challenge(&b).is_some()));
+    }
+
+    // Third unsigned WebSocket gets 409 Conflict.
+    match tokio_tungstenite::connect_async(&url).await {
+        Err(WsError::Http(resp)) => assert_eq!(resp.status(), StatusCode::CONFLICT),
+        other => panic!("expected 409 Conflict for 3rd unsigned client, got {other:?}"),
+    }
+
+    // Invalid X-TotalDrop-Auth gets 403 Forbidden and leaves both waiters open.
+    let mut bad_req = url.as_str().into_client_request().unwrap();
+    bad_req.headers_mut().insert(
+        HeaderName::from_bytes(wire::AUTH_HEADER.as_bytes()).unwrap(),
+        HeaderValue::from_static("not-a-valid-auth-header"),
+    );
+    match tokio_tungstenite::connect_async(bad_req).await {
+        Err(WsError::Http(resp)) => assert_eq!(resp.status(), StatusCode::FORBIDDEN),
+        other => panic!("expected 403 Forbidden for bad X-TotalDrop-Auth, got {other:?}"),
+    }
+    assert!(!relay_closes(&mut hold1, Duration::from_millis(150)).await);
+    assert!(!relay_closes(&mut hold2, Duration::from_millis(150)).await);
+
+    // Real totaldrop-core relay links authenticate on Upgrade and exchange datagrams.
+    let (a_out_tx, a_out_rx) = mpsc::channel(16);
+    let (a_in_tx, mut a_in_rx) = mpsc::channel(16);
+    let (b_out_tx, b_out_rx) = mpsc::channel(16);
+    let (b_in_tx, mut b_in_rx) = mpsc::channel(16);
+    let gate_a = Gate::default();
+    let gate_b = Gate::default();
+    gate_a.open();
+    gate_b.open();
+    let _link_a = spawn_relay_link(
+        relay.clone(),
+        Arc::clone(&a),
+        b.public(),
+        RelayPipes {
+            outgoing: a_out_rx,
+            incoming: a_in_tx,
+        },
+        gate_a,
+    );
+    let _link_b = spawn_relay_link(
+        relay,
+        Arc::clone(&b),
+        a.public(),
+        RelayPipes {
+            outgoing: b_out_rx,
+            incoming: b_in_tx,
+        },
+        gate_b,
+    );
+
+    async fn deliver(
+        tx: &mpsc::Sender<Vec<u8>>,
+        rx: &mut mpsc::Receiver<Vec<u8>>,
+        msg: &'static [u8],
+    ) {
+        let deadline = tokio::time::Instant::now()
+            .checked_add(Duration::from_secs(10))
+            .unwrap();
+        loop {
+            let _ = tx.try_send(msg.to_vec());
+            match tokio::time::timeout(Duration::from_millis(50), rx.recv()).await {
+                Ok(Some(got)) if got == msg => return,
+                Ok(Some(_)) => continue,
+                Ok(None) => panic!("relay link pipe closed unexpectedly"),
+                Err(_) => assert!(
+                    tokio::time::Instant::now() < deadline,
+                    "timed out exchanging datagram through pre-authenticated relay links"
+                ),
+            }
+        }
+    }
+
+    deliver(&a_out_tx, &mut b_in_rx, b"hello-from-a").await;
+    deliver(&b_out_tx, &mut a_in_rx, b"hello-from-b").await;
+    drop(hold1);
+    drop(hold2);
+}
+
+/// When a pair's shared session time expires, both signed-in peers close
+/// together with `(1008, "session over")` even when the second peer signed in
+/// later (#78).
+#[tokio::test(flavor = "multi_thread")]
+async fn session_over_closes_both_signed_in_peers_together() {
+    use futures_util::StreamExt;
+    use tokio_tungstenite::tungstenite::Message;
+    use tokio_tungstenite::tungstenite::protocol::CloseFrame;
+    use tokio_tungstenite::tungstenite::protocol::frame::coding::CloseCode;
+    use totaldrop_core::transport::EndpointKey;
+
+    async fn next_close_frame(ws: &mut RelayWs, wait: Duration) -> Option<CloseFrame> {
+        let deadline = tokio::time::Instant::now().checked_add(wait).unwrap();
+        loop {
+            match tokio::time::timeout_at(deadline, ws.next()).await {
+                Ok(Some(Ok(Message::Close(frame)))) => return frame,
+                Ok(Some(Ok(_))) => continue,
+                _ => return None,
+            }
+        }
+    }
+
+    let relay = limited_relay().await;
+    let (a, b) = (
+        EndpointKey::generate().unwrap(),
+        EndpointKey::generate().unwrap(),
+    );
+
+    let mut a_ws = relay_sign_in(&relay, &a, &b.public()).await.unwrap();
+    tokio::time::sleep(Duration::from_millis(600)).await;
+    let mut b_ws = relay_sign_in(&relay, &b, &a.public()).await.unwrap();
+    relay_passes(&mut a_ws, &mut b_ws, a.public(), b.public()).await;
+
+    // 1,200 ms remain on the 1,800 ms pair window; both must close with
+    // (1008, "session over") before B's own 1,800 ms.
+    let (a_frame, b_frame) = tokio::join!(
+        next_close_frame(&mut a_ws, Duration::from_millis(1_650)),
+        next_close_frame(&mut b_ws, Duration::from_millis(1_650)),
+    );
+    let a_frame = a_frame.expect("first peer did not receive CloseFrame at pair deadline");
+    let b_frame =
+        b_frame.expect("second peer did not receive CloseFrame together at pair deadline");
+    assert_eq!(a_frame.code, CloseCode::Policy);
+    assert_eq!(a_frame.reason.as_str(), "session over");
+    assert_eq!(b_frame.code, CloseCode::Policy);
+    assert_eq!(b_frame.reason.as_str(), "session over");
+}
+
 // --- Cloudflare relay buffer bound (#190) ---
 
 /// Send `total` bytes of datagram messages from `from` to `to` on `ws`

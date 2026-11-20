@@ -283,10 +283,10 @@
   "crates/totaldrop-core/src/relay.rs:438": [
     "async fn ping_within(ws: &mut crate::rendezvous::Ws, wait: Duration) -> Result<bool> {"
   ],
-  "crates/totaldrop-core/src/rendezvous.rs:175": [
+  "crates/totaldrop-core/src/rendezvous.rs:201": [
     "pub async fn allocate(server: &str) -> Result<Allocation> {"
   ],
-  "crates/totaldrop-core/src/rendezvous.rs:202": [
+  "crates/totaldrop-core/src/rendezvous.rs:228": [
     "pub async fn claim(server: &str, nameplate: u32, token: Option<&Allocation>) -> Result<Self> {"
   ],
   "crates/totaldrop-core/src/secure.rs:112": [
@@ -403,7 +403,7 @@
   "crates/totaldrop-proto/src/lib.rs:66": [
     "pub struct SafePath(Vec<String>);"
   ],
-  "crates/totaldrop-proto/src/relay.rs:157": [
+  "crates/totaldrop-proto/src/relay.rs:197": [
     "pub struct Batch {"
   ],
   "crates/totaldrop-proto/src/wire.rs:1000": [
@@ -517,45 +517,48 @@
   "server/relay-worker/src/count.ts:36": [
     "export function noteGiven(att: Counted, after: number): boolean {"
   ],
-  "server/relay-worker/src/index.ts:31": [
+  "server/relay-worker/src/index.ts:30": [
     "async fetch(request: Request, env: Env): Promise<Response> {"
   ],
-  "server/relay-worker/src/index.ts:37-39": [
-    "if (upgrade && request.headers.has(\"Origin\")) {",
-    "}"
-  ],
-  "server/relay-worker/src/index.ts:40": [
-    "if (!url.pathname.startsWith(PREFIX)) {"
-  ],
-  "server/relay-worker/src/index.ts:45": [
-    "return env.PAIR.getByName(name).fetch(request);"
-  ],
-  "server/relay-worker/src/pair-core.ts:151-153": [
+  "server/relay-worker/src/pair-core.ts:174-176": [
     "try {",
     "return await crypto.subtle.verify({ name: \"Ed25519\" }, k, signature, message);"
   ],
-  "server/relay-worker/src/pair-core.ts:159": [
+  "server/relay-worker/src/pair-core.ts:203": [
+    "export async function handleRelayRequest("
+  ],
+  "server/relay-worker/src/pair-core.ts:212-214": [
+    "if (upgrade && request.headers.has(\"Origin\")) {",
+    "}"
+  ],
+  "server/relay-worker/src/pair-core.ts:215": [
+    "if (!url.pathname.startsWith(RELAY_PREFIX)) {"
+  ],
+  "server/relay-worker/src/pair-core.ts:224": [
+    "return pair.getByName(name).fetch(request);"
+  ],
+  "server/relay-worker/src/pair-core.ts:227": [
     "export class PairCore<S extends RelaySocket = RelaySocket> {"
   ],
-  "server/relay-worker/src/pair-core.ts:184-192": [
+  "server/relay-worker/src/pair-core.ts:268-276": [
     "sessionBytes(): number {",
     "}"
   ],
-  "server/relay-worker/src/pair-core.ts:509-548": [
-    "async expireSession(): Promise<void> {",
+  "server/relay-worker/src/pair-core.ts:63-89": [
+    "export interface Attachment {",
     "}"
   ],
-  "server/relay-worker/src/pair-core.ts:58-82": [
-    "export interface Attachment {",
+  "server/relay-worker/src/pair-core.ts:659-717": [
+    "async expireSession(): Promise<void> {",
     "}"
   ],
   "server/relay-worker/src/pair.ts:34": [
     "async fetch(request: Request): Promise<Response> {"
   ],
-  "server/relay-worker/src/pair.ts:46": [
+  "server/relay-worker/src/pair.ts:53": [
     "async webSocketMessage(ws: WebSocket, data: string | ArrayBuffer): Promise<void> {"
   ],
-  "server/relay-worker/src/pair.ts:58": [
+  "server/relay-worker/src/pair.ts:65": [
     "async alarm(): Promise<void> {"
   ],
   "server/relay-worker/src/totals.ts:56": [
@@ -649,19 +652,19 @@
   "server/totaldrop-relay/Cargo.toml:18": [
     "totaldrop-proto = { version = \"0.2.0-beta.5\", path = \"../../crates/totaldrop-proto\" }"
   ],
-  "server/totaldrop-relay/src/lib.rs:153-165": [
+  "server/totaldrop-relay/src/lib.rs:159-171": [
     "struct State {",
     "}"
   ],
-  "server/totaldrop-relay/src/lib.rs:335": [
+  "server/totaldrop-relay/src/lib.rs:374": [
     "pub async fn serve(self, listener: TcpListener) {"
   ],
-  "server/totaldrop-relay/src/lib.rs:408-409": [
-    "ring::signature::UnparsedPublicKey::new(&ring::signature::ED25519, key)",
-    ".verify(&wire::signed_bytes(&challenge), &signature)"
-  ],
-  "server/totaldrop-relay/src/lib.rs:42": [
+  "server/totaldrop-relay/src/lib.rs:48": [
     "pub struct Config {"
+  ],
+  "server/totaldrop-relay/src/lib.rs:527-528": [
+    "if ring::signature::UnparsedPublicKey::new(&ring::signature::ED25519, key)",
+    ".verify(&wire::signed_bytes(&challenge), &signature)"
   ],
   "server/totaldrop-relay/src/main.rs:20-24": [
     "let mut args = std::env::args().skip(1);",

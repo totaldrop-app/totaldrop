@@ -34,12 +34,25 @@ and cannot reach each other directly. The relay server does two jobs:
   single-use keys (`/v0/relay/<key A>-<key B>`). There the server accepts
   only these two keys and carries packets only between them; nobody else
   can get in between.
+- On the WebSocket HTTP Upgrade itself, a device sends `X-TotalDrop-Auth`
+  carrying an Ed25519 signature over `"totaldrop relay v0 connect" ||
+  <pair>`, and then still answers the `TDR0` challenge with a fresh server
+  nonce ([#78](https://github.com/totaldrop-app/totaldrop/issues/78)). That
+  keeps an outsider who learns the pair name from holding waiting slots and
+  blocking the real peer with HTTP 409, while remaining proxy-safe (HTTP
+  proxies and Cloudflare Workers regenerate hop-by-hop `Sec-WebSocket-Key`).
+  Malformed or invalid headers are refused with HTTP 403 (before waking the
+  `Pair` object on Cloudflare), while valid headers bypass the per-pair
+  unsigned waiting limit and evict the oldest unsigned waiter if slots are
+  full. Older beta clients that omit the header remain accepted behind the
+  unsigned waiting limit.
 - The server keeps no record of addresses or traffic; the self-hosted relay
   writes nothing to disk, and the Cloudflare relay keeps only each pair's
   start time and per-key byte counts in its object storage until the 6-hour
   limit window ends.
 - Every transfer is limited: at most 32 GiB sent per key and 6 hours per
-  pair, counted across reconnects.
+  pair, counted across reconnects; when the 6-hour pair window expires,
+  both signed-in peers are closed together (`session over`).
 - The receiver uses the relay server that the sender reported in `HINTS`.
   This address can only be `wss://`.
 

@@ -452,19 +452,37 @@ treated as final.
 23. **Relay limits.** Per pair: 6 hours from the first sign-in, and 32 GiB
     sent per key across reconnects; ten seconds to sign in (#190). Once a
     pair reaches its byte or time limit, further sign-ins on that pair are
-    refused until its 6-hour window expires. Both relays refuse an upgrade
-    that carries `Origin` with HTTP 403 (#450), accept only the pair path
-    `/v0/relay/<key A>-<key B>` and forward only to the other key of that
-    pair. The self-hosted relay also refuses a key that signed in on another
-    pair within that window, caps each connection at 8 MiB/s, keeps at most
-    100,000 pair totals in memory under a random-keyed hash until their
-    6-hour window ends (evicting the oldest inactive pair if full), and
-    closes a connection after 60 seconds without datagrams (pings do not
-    count), which ends the other side too. The Cloudflare relay keeps each
-    pair's start time and per-key byte counts in the `Pair` object's storage
-    until its 6-hour alarm deletes them, and drops datagrams for a
-    connection with 32 MiB unanswered (item 20). Neither logs client data or
-    stores addresses; the self-hosted relay keeps nothing on disk.
+    refused until its 6-hour window expires; when the 6-hour window ends,
+    both signed-in peers are closed together (`1008`, `session over`, #78).
+    Both relays refuse an upgrade that carries `Origin` with HTTP 403
+    (#450), accept only the pair path `/v0/relay/<key A>-<key B>` and
+    forward only to the other key of that pair. To keep unsigned callers
+    who know the pair name from holding waiting slots and returning HTTP
+    409 to a real peer, clients attach `X-TotalDrop-Auth:
+    <64-hex-key>.<128-hex-sig>` on HTTP Upgrade, signing `"totaldrop relay
+    v0 connect" || pair_name` with Ed25519 while keeping the `TDR0`
+    challenge-response intact (#78). (`Sec-WebSocket-Key` is not signed
+    because reverse proxies and Cloudflare Workers regenerate that
+    hop-by-hop header; `TDR0` still proves freshness against a random
+    server challenge.) Both relays refuse
+    any malformed, duplicate, or invalid `X-TotalDrop-Auth` (or a valid one
+    on an already-over-limit pair) with HTTP 403 without evicting existing
+    waiters — on Cloudflare at the edge Worker before waking the `Pair`
+    object — and let a valid key holder bypass the per-pair unsigned
+    waiting cap (`2`), evict the oldest unsigned waiter (`1008`, `evicted`)
+    when needed, and bind its `TDR0` `hello` to that authenticated key.
+    Older beta clients omitting `X-TotalDrop-Auth` remain supported behind
+    the unsigned waiting cap. The self-hosted relay also refuses a key that
+    signed in on another pair within that window, caps each connection at
+    8 MiB/s, keeps at most 100,000 pair totals in memory under a
+    random-keyed hash until their 6-hour window ends (evicting the oldest
+    inactive pair if full), and closes a connection after 60 seconds
+    without datagrams (pings do not count), which ends the other side too.
+    The Cloudflare relay keeps each pair's start time and per-key byte
+    counts in the `Pair` object's storage until its 6-hour alarm deletes
+    them, and drops datagrams for a connection with 32 MiB unanswered (item
+    20). Neither logs client data or stores addresses; the self-hosted
+    relay keeps nothing on disk.
 
 ## Section 8, continued: progress
 

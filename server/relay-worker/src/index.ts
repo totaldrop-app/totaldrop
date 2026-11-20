@@ -13,7 +13,8 @@
 //
 // The Worker keeps no state and logs nothing.
 
-import { Pair, parsePairName } from "./pair";
+import { Pair } from "./pair.ts";
+import { handleRelayRequest } from "./pair-core.ts";
 
 export { Pair };
 
@@ -25,23 +26,8 @@ export interface Env {
   SESSION_TIME_MS?: string;
 }
 
-const PREFIX = "/v0/relay/";
-
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
-    const url = new URL(request.url);
-    const upgrade = request.headers.get("Upgrade")?.toLowerCase() === "websocket";
-    if (request.method !== "GET") return new Response(null, { status: 405 });
-    // A web page's WebSocket always carries Origin; the apps and the
-    // command line never send it (#450).
-    if (upgrade && request.headers.has("Origin")) {
-      return new Response("browsers are not served\n", { status: 403 });
-    }
-    if (!url.pathname.startsWith(PREFIX)) {
-      return new Response("TotalDrop relay", { status: upgrade ? 404 : 200 });
-    }
-    const name = url.pathname.slice(PREFIX.length);
-    if (!upgrade || !parsePairName(name)) return new Response(null, { status: 400 });
-    return env.PAIR.getByName(name).fetch(request);
+    return handleRelayRequest(request, env.PAIR);
   },
 } satisfies ExportedHandler<Env>;
