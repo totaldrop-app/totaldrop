@@ -1,107 +1,109 @@
-# Geliştirme düzeni
+# Development layout
 
-Bu belge deponun nasıl düzenlendiğini, hangi branch'te ne yapıldığını ve
-platformların birbirini bozmadan nasıl güncellendiğini anlatır. Bir işin
-issue'dan yayına giden yolu, bitti tanımı ve inceleme kuralı
-[surec.md](surec.md), parçaların üst düzey mimarisi [mimari.md](mimari.md)
-içindedir.
+This document explains how the repository is organised, what happens on
+each branch and how platforms are updated without breaking one another.
+The path from an issue to a release, the definition of done and the review
+rule are in [surec.md](surec.md); the high-level architecture of the
+parts is in [mimari.md](mimari.md).
 
-## İlke: tek depo, bağımsız platformlar
+## Principle: one repository, independent platforms
 
-Bütün platformlar aynı Rust çekirdeğini ve aynı protokolü kullanır. Bu yüzden
-kod tek depoda, tek `main` branch'inde durur. Platformlar birbirinden şu
-yollarla ayrılır:
+Every platform uses the same Rust core and the same protocol. Because of
+this, the code lives in one repository, on a single `main` branch.
+Platforms are kept separate in these ways:
 
-- **Klasör:** her platformun kendi klasörü vardır.
-- **Sürüm:** her platformun kendi sürüm numarası ve etiketi vardır
+- **Folder:** each platform has its own folder.
+- **Version:** each platform has its own version number and tag
   ([versioning.md](versioning.md)).
-- **Derleme hattı:** her platformun kendi CI iş akışı vardır. Her PR'da
-  `ci.yml` çalışır, hangi klasörlerin değiştiğine bakar ve yalnızca ilgili
-  iş akışlarını çağırır. Sondaki `CI` işi `main` için tek zorunlu
-  kontroldür. Sürümleri `android-release.yml` ve `linux-release.yml`
-  etiketten derler.
-- **Paket:** Linux'ta Arch, Debian ve RPM paketleri ayrı tariflerden, ayrı
-  kaplarda derlenir.
+- **Build pipeline:** each platform has its own CI workflow. On every PR,
+  `ci.yml` runs, checks which folders changed and calls only the relevant
+  workflows. The final `CI` job is the single required check for `main`.
+  Releases are built from tags by `android-release.yml` and
+  `linux-release.yml`.
+- **Package:** on Linux, the Arch, Debian and RPM packages are built from
+  separate recipes, in separate containers.
 
-Bir güvenlik düzeltmesi çekirdeğe bir kez girer ve bütün platformlara aynı
-anda ulaşır. Her platform kendi temposunda yayınlanır.
+A security fix goes into the core once and reaches every platform at the
+same time. Each platform is released at its own pace.
 
-## Klasörler
+## Folders
 
-| Klasör | İçerik | CI |
+| Folder | Contents | CI |
 | --- | --- | --- |
-| `crates/` | Protokol çekirdeği (`totaldrop-crypto`, `-proto`, `-core`) ve CLI | `core.yml` |
-| `linux/` | Linux masaüstü uygulaması (Qt 6, QML, CXX-Qt) | `linux.yml` |
-| `packaging/` | Linux paket tarifleri ve derleme kapları | `linux.yml` |
-| `app/` | Android uygulaması (Flutter); ileride iOS | `android.yml` |
-| `server/` | Rendezvous ve aktarma sunucuları (Rust ve Cloudflare Workers sürümleri), e-posta Worker'ı | `core.yml`, `server.yml` |
-| `site/` | totaldrop.app, download.totaldrop.app ve QR bağlantı sayfası | `site.yml` |
-| `fuzz/` | Ayrıştırıcıların fuzz hedefleri | `fuzz.yml` (haftalık) |
-| `formal/` | Hesap tasarımının Tamarin modeli ve mutant sınamaları (#251) | `formal.yml` |
-| `docs/` | Tasarım kuralları, sürümler, protokol notları, bu belge | |
-| `tools/` | Depo araçları: changelog, bileşen sürümleri, crate katmanlarının denetimi ([ARCHITECTURE.md](ARCHITECTURE.md#1-katmanlar-ve-bağımlılık-yönü)), `deny.toml` ile `osv-scanner.toml`'un aynı danışma kayıtlarını yok saydığının denetimi | `ci.yml` |
-| `.github/` | İş akışları; ayrıca `main`'de ve haftalık OpenSSF Scorecard, her PR'da ve `main`'de CodeQL kod taraması (GitHub varsayılan kurulumu, depo ayarlarında) | `ci.yml`, `scorecard.yml` |
+| `crates/` | Protocol core (`totaldrop-crypto`, `-proto`, `-core`) and CLI | `core.yml` |
+| `linux/` | Linux desktop app (Qt 6, QML, CXX-Qt) | `linux.yml` |
+| `packaging/` | Linux package recipes and build containers | `linux.yml` |
+| `app/` | Android app (Flutter); iOS later | `android.yml` |
+| `server/` | Rendezvous and relay servers (Rust and Cloudflare Workers versions), email Worker | `core.yml`, `server.yml` |
+| `site/` | totaldrop.app, download.totaldrop.app and the QR link page | `site.yml` |
+| `fuzz/` | Fuzz targets for the parsers | `fuzz.yml` (weekly) |
+| `formal/` | Tamarin model of the account design and mutant checks (#251) | `formal.yml` |
+| `docs/` | Design rules, versions, protocol notes, this document | |
+| `tools/` | Repository tools: changelog, component versions, crate layer check ([ARCHITECTURE.md](ARCHITECTURE.md#1-katmanlar-ve-bağımlılık-yönü)), checking that `deny.toml` and `osv-scanner.toml` ignore the same advisories | `ci.yml` |
+| `.github/` | Workflows; also OpenSSF Scorecard on `main` and weekly, and CodeQL code scanning on every PR and on `main` (GitHub default setup, in repository settings) | `ci.yml`, `scorecard.yml` |
 
-Kökteki `deny.toml` (cargo-deny) ve `osv-scanner.toml` (OpenSSF Scorecard'ın
-kullandığı OSV-Scanner) aynı danışma kayıtlarını, aynı gerekçeyle yok sayar.
-`SECURITY-INSIGHTS.yml` güvenlik bilgilerini araçların okuyabileceği
-biçimde özetler. Anlattığı bir şeyi değiştiren PR onu da günceller.
+At the root, `deny.toml` (cargo-deny) and `osv-scanner.toml` (OSV-Scanner,
+used by OpenSSF Scorecard) ignore the same advisories for the same
+reasons. `SECURITY-INSIGHTS.yml` summarises the security information in a
+machine-readable form. Any PR that changes something it describes updates
+it too.
 
-Windows ve macOS geldiğinde kendi klasörlerini (`windows/`, `macos/`) ve
-kendi iş akışlarını alır.
+When Windows and macOS arrive, they get their own folders (`windows/`,
+`macos/`) and their own workflows.
 
-## Branch'ler
+## Branches
 
-- **`main`:** her zaman derlenen, testleri geçen hâl. Doğrudan push ve
-  force push kapalıdır; değişiklik yalnızca PR ile, rebase ederek birleşir.
-- **İş branch'leri:** kısa ömürlüdür ve adı platformu söyler:
+- **`main`:** always builds and passes tests. Direct push and force push
+  are disabled; changes merge only through a PR, by rebasing.
+- **Work branches:** short-lived, and the name says which platform:
 
-  | Branch | Ne için |
+  | Branch | What it is for |
   | --- | --- |
-  | `feat/linux-...` | Linux uygulamasında yeni özellik |
-  | `fix/android-...` | Android'de hata düzeltmesi |
-  | `feat/core-...` | Çekirdekte değişiklik (bütün platformları etkiler) |
-  | `build/packaging-...` | Paket tarifleri |
-  | `docs/...` | Belgeler |
+  | `feat/linux-...` | New feature in the Linux app |
+  | `fix/android-...` | Bug fix on Android |
+  | `feat/core-...` | Change in the core (affects every platform) |
+  | `build/packaging-...` | Package recipes |
+  | `docs/...` | Documentation |
 
-- İş bitince branch `main`'e birleşir ve silinir. Aylarca yaşayan platform
-  branch'leri açılmaz: ayrılırlarsa çekirdekteki bir düzeltmeyi her birine
-  ayrı taşımak gerekir ve biri unutulur.
-- Çekirdekte bir değişiklik bütün platform iş akışlarını çalıştırır. Bir
-  platformu bozan çekirdek değişikliği `main`'e giremez: `CI` kontrolü
-  kırmızıyken birleştirme kapalıdır.
+- When the work is done, the branch is merged into `main` and deleted.
+  Long-lived platform branches are not opened: if they drift apart, a fix
+  in the core has to be ported to each one separately, and one gets
+  forgotten.
+- A change in the core runs every platform's workflow. A core change that
+  breaks a platform cannot enter `main`: merging is blocked while the
+  `CI` check is red.
 
-## Yerel denetimler
+## Local checks
 
-Zorunlu denetim CI'dır. [pre-commit](https://pre-commit.com/) yalnızca
-hatayı push'tan önce gösterir (#376). İki dosya vardır:
+CI is the required check. [pre-commit](https://pre-commit.com/) only shows
+errors before you push (#376). There are two files:
 
-- **`.pre-commit-config.yaml`** her commit'te çalışır ve hiçbir derleme
-  aracı istemez. Birleştirme çakışması işaretlerini, YAML ve TOML
-  sözdizimini, büyük dosyaları, özel anahtarları ve gizli bilgileri
-  (gitleaks), dosya sonu satırını, satır sonu boşluklarını ve LF satır
-  sonlarını denetler. `key.properties` ile `.jks`, `.keystore`, `.p12`,
-  `.pfx` ve `.pepk` dosyalarını reddeder. gitleaks yalnızca commit'e
-  eklenen değişikliklere bakar, bütün ağaca değil. `git commit
-  --no-verify` bu denetimleri atlar; gizli bilgi ve imza dosyası
-  denetimlerinin karşılığı CI'daki `Secrets` işidir ve atlanamaz (#378,
-  [surec.md](surec.md#gizli-bilgiler)). Bir kez kurulur:
+- **`.pre-commit-config.yaml`** runs on every commit and needs no build
+  tools. It checks for merge conflict markers, YAML and TOML syntax, large
+  files, private keys and secrets (gitleaks), end-of-file newlines,
+  trailing whitespace and LF line endings. It rejects `key.properties` as
+  well as `.jks`, `.keystore`, `.p12`, `.pfx` and `.pepk` files. gitleaks
+  inspects only the changes being committed, not the whole tree.
+  `git commit --no-verify` skips these checks; the secrets and
+  signing-file checks are mirrored by the `Secrets` job in CI and cannot
+  be skipped (#378, [surec.md](surec.md#gizli-bilgiler)). Install it once:
 
   ```sh
   pre-commit install
   ```
 
-- **`.pre-commit-config-extra.yaml`** CI denetimlerinin yerel kopyasıdır:
-  `cargo fmt`, `clippy` ve `test`, `dart format`, `flutter analyze`,
-  Worker'ların `tsc` denetimi, site betikleri, changelog, SPDX, REUSE,
-  sürüm denetimleri, crate katmanlarının denetimi ve
-  [ARCHITECTURE.md](ARCHITECTURE.md)'nin koda bağlantılarının denetimi
-  (`check-doc-refs` hook'u yalnızca denetler: kayan satırlarda uyarır,
-  numaralar için `node tools/check-doc-refs.mjs --fix`; değişen satırda
-  kırılır, iddia yeniden okunup `--accept`). Git hook'u olarak kurulmaz,
-  elle çalıştırılır. Her
-  hook kendi aracını (`cargo`, `dart`, `flutter`, `node`, `npm`) ister;
-  ortamınızda olmayanları `SKIP` ile atlayın, CI onları yine çalıştırır:
+- **`.pre-commit-config-extra.yaml`** is a local copy of the CI checks:
+  `cargo fmt`, `clippy` and `test`, `dart format`, `flutter analyze`, the
+  Workers' `tsc` check, site scripts, changelog, SPDX, REUSE, version
+  checks, the crate layer check and checking the code references in
+  [ARCHITECTURE.md](ARCHITECTURE.md) (the `check-doc-refs` hook only
+  checks: it warns when lines have shifted, in which case update the
+  numbers with `node tools/check-doc-refs.mjs --fix`, and fails when a
+  cited line has changed, in which case re-read the claim and run
+  `--accept`). It is not installed as a git hook; it is run by hand. Each
+  hook needs its own tool (`cargo`, `dart`, `flutter`, `node`, `npm`);
+  skip the ones you do not have installed with `SKIP`, and CI will still
+  run them:
 
   ```sh
   pre-commit run -c .pre-commit-config-extra.yaml --all-files
@@ -109,59 +111,62 @@ hatayı push'tan önce gösterir (#376). İki dosya vardır:
   SKIP=flutter-analyze,worker-tsc pre-commit run -c .pre-commit-config-extra.yaml --all-files
   ```
 
-  `cargo fmt` ve `dart format` dosyaları düzeltir (CI yalnızca denetler);
-  çıkan değişikliği commit'e ekleyin. Linux uygulamasının (`linux/`)
-  `clippy` ve testleri Qt 6 ister, yalnızca CI'da çalışır. Arayüz
-  bileşenlerinin QML testleri (`linux/tests/qml/`) Rust derlemesi
-  istemez; Qt 6 kurulu bir Linux'ta `linux/tests/qml/run.sh` ile ekransız
-  çalışır (`qmltestrunner` `/usr/lib/qt6/bin` dışındaysa, ör. Fedora'da,
-  `QMLTESTRUNNER=/usr/lib64/qt6/bin/qmltestrunner`). Bileşenler uygulamanın `app.totaldrop` modülü yerine oradaki
-  sahte modülle (`stub/`, sabit bir `Theme`) yüklenir; yeni bir bileşen
-  test edilecekse `stub/qmldir`'e ve `run.sh`'deki kopyalama satırına
-  eklenir.
-  `flutter analyze`'dan önce `app/` içinde `flutter pub get`, Worker'ların
-  `tsc` denetiminden önce her Worker klasöründe `npm ci` çalıştırın.
+  `cargo fmt` and `dart format` rewrite files in place (CI only checks);
+  add the resulting changes to your commit. `clippy` and the tests for the
+  Linux app (`linux/`) require Qt 6 and run only in CI. The QML tests for
+  the UI components (`linux/tests/qml/`) do not require building Rust; on
+  a Linux machine with Qt 6 installed they run headless via
+  `linux/tests/qml/run.sh` (if `qmltestrunner` is outside
+  `/usr/lib/qt6/bin`, for example on Fedora, set
+  `QMLTESTRUNNER=/usr/lib64/qt6/bin/qmltestrunner`). The components are
+  loaded with the stub module there (`stub/`, a fixed `Theme`) instead of
+  the app's `app.totaldrop` module; when adding tests for a new component,
+  add it to `stub/qmldir` and to the copy line in `run.sh`. Before
+  `flutter analyze`, run `flutter pub get` inside `app/`; before the
+  Workers' `tsc` check, run `npm ci` in each Worker folder.
 
-  Dalın `changelog.d/` girdisi eklediğini denetleyen `changelog-require`
-  yalnızca elle çalışır, çünkü `main`'de ve girdi commit'lenmeden önce
-  hata verir. Dalı son çekilen `origin/main` ile karşılaştırır:
+  `changelog-require`, which checks that the branch adds a `changelog.d/`
+  entry, runs only by hand, because it fails on `main` and before the
+  entry is committed. It compares the branch against the last fetched
+  `origin/main`:
 
   ```sh
   pre-commit run -c .pre-commit-config-extra.yaml changelog-require --hook-stage manual
   ```
 
-Bir iş akışındaki denetim değişirse ek dosyadaki karşılığı da aynı PR'da
-değişir. Üretilmiş dosyalar iki dosyada da aynı `exclude` listesiyle
-dışarıda kalır. Dış hook'lar commit SHA'sıyla sabittir; ana dosyadakiler
-`pre-commit autoupdate --freeze` ile yükseltilir. Ek dosyadaki REUSE
-hook'u `ci.yml`'deki `reuse` imajıyla aynı sürümde kalır ve yalnızca o
-imajla birlikte, elle yükseltilir.
+When a check in a workflow changes, its counterpart in the extra file
+changes in the same PR. Generated files are left out in both files with
+the same `exclude` list. External hooks are pinned by commit SHA; those in
+the main file are updated with `pre-commit autoupdate --freeze`. The REUSE
+hook in the extra file stays on the same version as the `reuse` image in
+`ci.yml` and is upgraded by hand together with that image.
 
-## Linux paketleri
+## Linux packages
 
-Her biçim ayrı tariften ve ayrı kaptan derlenir:
+Each format is built from a separate recipe and in a separate container:
 
-| Biçim | Tarif | Derleme kabı | Hedef |
+| Format | Recipe | Build container | Target |
 | --- | --- | --- | --- |
 | Arch | `packaging/arch/PKGBUILD` | `archlinux:latest` | Arch, Omarchy, EndeavourOS, Manjaro; AUR |
-| Debian | `packaging/debian/` | `debian:trixie` (Qt 6.8) | Debian 13+, Ubuntu 25.04+ ve türevleri |
-| RPM | `packaging/rpm/totaldrop.spec` | `fedora:44` (Qt 6.11) | Fedora 44+ (openSUSE için ayrı bir tarif gerekir) |
+| Debian | `packaging/debian/` | `debian:trixie` (Qt 6.8) | Debian 13+, Ubuntu 25.04+ and derivatives |
+| RPM | `packaging/rpm/totaldrop.spec` | `fedora:44` (Qt 6.11) | Fedora 44+ (openSUSE needs a separate recipe) |
 
-Ortak dosyalar (`.desktop`, AppStream, simgeler, kurulum betiği)
-`packaging/linux/` altındadır. Üç paket de aynı dosyaları aynı yerlere
-kurar.
+Shared files (`.desktop`, AppStream, icons, install script) live under
+`packaging/linux/`. All three packages install the same files to the same
+locations.
 
-Yerelde bir paket derlemek için (Docker gerekir):
+To build a package locally (requires Docker):
 
 ```bash
-packaging/build.sh arch   # ya da deb, rpm
+packaging/build.sh arch   # or deb, rpm
 ls dist/packages/
 ```
 
-Flatpak tarifi `packaging/flatpak/` altındadır ([karar 0014](kararlar/0014-steam-deck.md)).
-Derleme ağsız çalışır: `Cargo.lock`taki her crate tarifin bir kaynağıdır.
-Bu liste depoda tutulmaz, derlemeden önce yazılır. Yerelde denemek için
-`flatpak-builder` ve Flathub deposu gerekir:
+The Flatpak recipe lives under `packaging/flatpak/`
+([decision 0014](kararlar/0014-steam-deck.md)). The build runs offline:
+every crate in `Cargo.lock` is a source in the recipe. That list is not
+kept in the repository; it is generated before building. To try it
+locally, you need `flatpak-builder` and the Flathub remote:
 
 ```bash
 node tools/flatpak-cargo-sources.mjs write
@@ -169,33 +174,36 @@ flatpak-builder --user --force-clean --install-deps-from=flathub \
   flatpak-build packaging/flatpak/app.totaldrop.TotalDrop.yml
 ```
 
-Paketler yeniden üretilebilir olmalıdır: aynı kaynaktan ikinci bir
-derleme bayt bayt aynı paketi vermelidir. `Reproducible` iş akışı
-(`.github/workflows/reproducible.yml`) bunu denetler: her formatı aynı
-commit'in iki temiz kopyasından iki kez derleyip karşılaştırır. Kabın
-içindeki derleme yolu her zaman aynıdır (`build.sh` çalışma klasörünü
-`/w`'ye bağlar), yani denetim yoldan bağımsızlığı değil, zaman damgalarını,
-sıralamayı ve derleme ortamını sınar. Haftada bir, elle ya da `packaging/`, `linux/build.rs`, `linux/Cargo.toml` veya `Cargo.lock` değişince
-çalışır. Paketler farklıysa ikisini de iş çıktısı olarak bırakır, fark
-`diffoscope` ile incelenir. Aynılık aynı derleme imajı için geçerlidir:
-kapta kurulan dağıtım paketleri günden güne değişir ([surec.md](surec.md),
-sürüm adımı 4). Yerelde denemek için aynı commit'in iki temiz kopyasında
-(`build.sh` çalışma ağacını, commit edilmemiş değişikliklerle birlikte
-paketler) aynı komut çalıştırılır ve `sha256sum dist/packages/*`
-çıktıları karşılaştırılır.
+Packages must be reproducible: a second build from the same source must
+produce a byte-for-byte identical package. The `Reproducible` workflow
+(`.github/workflows/reproducible.yml`) checks this: it builds each format
+twice from two clean copies of the same commit and compares them. The
+build path inside the container is always the same (`build.sh` mounts the
+working directory at `/w`), so the check tests timestamps, ordering and
+the build environment rather than path independence. It runs weekly,
+manually, or whenever `packaging/`, `linux/build.rs`, `linux/Cargo.toml`
+or `Cargo.lock` changes. If the packages differ, both are kept as job
+artifacts so the difference can be inspected with `diffoscope`. Identical
+output holds for the same build image: the distribution packages installed
+inside the container change from day to day ([surec.md](surec.md), release
+step 4). To test locally, run the same command in two clean copies of the
+same commit (`build.sh` packages the working tree, including uncommitted
+changes) and compare the output of `sha256sum dist/packages/*`.
 
-Karşılaştırmayı `packaging/compare-packages.sh` yapar: paketler aynı
-değilse içlerindeki dosyaları tek tek karşılaştırır ve her farkta başarısız
-olur. Tek istisna bilinen bir farktır: cxx-qt Qt kitaplıklarını rastgele
-sırayla bağladığı için `totaldrop-desktop` ikilisi derlemeden derlemeye
-değişebilir (#256). Bu ikilide salt okunur veri (Qt kaynakları dahil),
-bağlanan kitaplıklar ve kodun boyutu yine aynı olmalıdır; öyleyse fark yalnızca
-uyarı olarak yazılır. İkili farklıyken paket üst verisi (ikilinin sağlama
-toplamını içerir) karşılaştırılmaz. Denetim yalnızca x86_64 paketlerini
-derler; arm64 paketleri aynı betiklerden çıkar.
+`packaging/compare-packages.sh` performs the comparison: if the packages
+are not identical, it compares the files inside them one by one and fails
+on any difference. The single exception is a known difference: because
+cxx-qt links Qt libraries in a random order, the `totaldrop-desktop`
+binary can vary from build to build (#256). Even then, its read-only data
+(including Qt resources), linked libraries and code size must still match;
+if they do, the difference is logged only as a warning. When the binary
+differs, package metadata (which contains the binary's checksum) is not
+compared. The check builds only the x86_64 packages; the arm64 packages
+come from the same scripts.
 
-## Arayüz değişiklikleri
+## Interface changes
 
-[tasarim.md](tasarim.md) bağlayıcıdır. Arayüzü değiştiren her değişiklikten
-sonra uygulama açık ve koyu temada şu ortamlarda denenir ve PR'a ekran
-görüntüsü eklenir: Omarchy, Hyprland (Omarchy olmadan), KDE Plasma.
+[tasarim.md](tasarim.md) is binding. After every change that alters the
+interface, the app is tested in the light and dark themes in these
+environments and screenshots are attached to the PR: Omarchy, Hyprland
+(without Omarchy) and KDE Plasma.
