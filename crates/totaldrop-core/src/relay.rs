@@ -1055,7 +1055,8 @@ mod tests {
     /// `InvalidInput` error when `src_ip` is unassigned, `send_stun_probe`
     /// falls back to `udp.send_to` on safe loopback, sends directly with
     /// `IPV6_PKTINFO` when `src_ip = ::1`, reads replies on the same `udp`
-    /// socket, and still carries IPv4 probes on a dual-stack socket.
+    /// socket, still carries IPv4 probes on a dual-stack socket, and returns
+    /// `false` without fallback on non-source-address send errors.
     #[tokio::test]
     async fn send_stun_from_and_probe_fall_back_on_real_ipv6_loopback() {
         let Ok(v6_server) = tokio::net::UdpSocket::bind("[::1]:0").await else {
@@ -1215,6 +1216,43 @@ mod tests {
             .unwrap()
             .unwrap();
         assert_eq!(buf.get(..n).and_then(wire::parse_stun_request), Some(id_v4));
+
+        // 6. A non-source-address sendmsg error (EMSGSIZE / WSAEMSGSIZE for a
+        //    payload > 65,535 bytes) returns false at once without falling back
+        //    or delivering anything to `v6_server`.
+        let oversized = vec![0u8; 70_000];
+        let err = send_stun_from(
+            &udp,
+            &state,
+            server_addr,
+            std::net::Ipv6Addr::LOCALHOST,
+            &oversized,
+        )
+        .await
+        .unwrap_err();
+        assert!(
+            !matches!(
+                err.kind(),
+                std::io::ErrorKind::AddrNotAvailable | std::io::ErrorKind::InvalidInput
+            ),
+            "expected non-source-addr error (EMSGSIZE/WSAEMSGSIZE), got {err:?}"
+        );
+        assert!(
+            !send_stun_probe(
+                &udp,
+                &mut pktinfo_state,
+                server_addr,
+                server_addr,
+                &oversized,
+                Some(std::net::Ipv6Addr::LOCALHOST),
+            )
+            .await
+        );
+        let mut stray = [0u8; 1];
+        assert_eq!(
+            v6_server.try_recv_from(&mut stray).unwrap_err().kind(),
+            std::io::ErrorKind::WouldBlock
+        );
     }
 
     /// #405: `send_stun_probe` refuses plain `udp.send_to` for an IPv6 target
@@ -1257,18 +1295,7 @@ mod tests {
             )
             .await
         );
-        // Unroutable destination with a valid local source also returns false.
-        assert!(
-            !send_stun_probe(
-                &udp,
-                &mut pktinfo_state,
-                unsafe_v6,
-                unsafe_v6,
-                &req,
-                Some(std::net::Ipv6Addr::LOCALHOST),
-            )
-            .await
-        );
+        assert!(pktinfo_state.is_some());
     }
 
     /// A link whose gate stays shut never connects to the relay; once the
