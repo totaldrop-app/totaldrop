@@ -1,109 +1,112 @@
-# Mimari
+# Architecture
 
-Bu belge TotalDrop'un parçalarını ve bir aktarımın bu parçalar arasında
-nasıl ilerlediğini üst düzeyde anlatır. Ayrıntılar başka belgelerde durur:
-protokol [protocol-v0.1-notes.md](protocol-v0.1-notes.md), tehditler ve
-güven sınırları [tehdit-modeli.md](tehdit-modeli.md), kararların nedenleri
-[kararlar/](kararlar/README.md), depo düzeni [gelistirme.md](gelistirme.md).
-Aynı yapının kod düzeyindeki haritası (katman diyagramı, `dosya:satır`
-ile akış takibi, veri modeli, yapılandırma, test ve sıcak noktalar)
-[ARCHITECTURE.md](ARCHITECTURE.md) içindedir.
+This document gives a high-level overview of TotalDrop's parts and how a
+transfer moves through them. The details live in other documents: the
+protocol in [protocol-v0.1-notes.md](protocol-v0.1-notes.md), threats and
+trust boundaries in [tehdit-modeli.md](tehdit-modeli.md), the reasons
+behind decisions in [kararlar/](kararlar/README.md) and the repository
+layout in [gelistirme.md](gelistirme.md). A code-level map of the same
+structure (layer diagram, flow traces with `file:line` references, data
+model, configuration, tests and hot spots) is in
+[ARCHITECTURE.md](ARCHITECTURE.md).
 
-## Parçalar
+## Parts
 
 ```
- Gönderen cihaz                                         Alan cihaz
+ Sending device                                 Receiving device
 ┌──────────────────────┐                       ┌──────────────────────┐
-│ Uygulama (arayüz)    │                       │ Uygulama (arayüz)    │
+│ App (interface)      │                       │ App (interface)      │
 │ Linux: Qt 6 + QML    │                       │ Android: Flutter     │
 ├──────────────────────┤                       ├──────────────────────┤
 │ totaldrop-core       │ ── QUIC + Noise ────▶ │ totaldrop-core       │
-│ totaldrop-proto      │   (doğrudan ya da     │ totaldrop-proto      │
-│ totaldrop-crypto     │    aktarma üzerinden) │ totaldrop-crypto     │
+│ totaldrop-proto      │   (direct or over     │ totaldrop-proto      │
+│ totaldrop-crypto     │    the relay)         │ totaldrop-crypto     │
 └──────────┬───────────┘                       └───────────┬──────────┘
-           │ WebSocket (TLS); STUN için UDP                │
+           │ WebSocket (TLS); UDP for STUN                 │
            ▼                                               ▼
-     ┌──────────────────┐   ┌──────────────────┐   ┌──────────────┐
-     │ Rendezvous       │   │ Aktarma (relay)  │   │ STUN         │
-     │ kod ve posta     │   │ şifreli trafiği  │   │ dış adres    │
-     │ kutusu           │   │ iletir           │   │ öğrenme      │
-     └──────────────────┘   └──────────────────┘   └──────────────┘
+     ┌──────────────────┐   ┌────────────────────┐   ┌────────────────┐
+     │ Rendezvous       │   │ Relay              │   │ STUN           │
+     │ code and         │   │ forwards encrypted │   │ public address │
+     │ mailbox          │   │ traffic            │   │ discovery      │
+     └──────────────────┘   └────────────────────┘   └────────────────┘
 ```
 
-**Çekirdek (Rust, `crates/`).** Bütün platformlar aynı kodu kullanır, bu
-yüzden protokol ve kriptografi tek bir yerde durur:
+**Core (Rust, `crates/`).** Every platform uses the same code, so the
+protocol and cryptography live in one place:
 
-- `totaldrop-crypto`: CPace, anahtar türetme, posta kutusu ve oturum
-  şifrelemesi, cihaz anahtarları, STREAM parça şifrelemesi.
-- `totaldrop-proto`: aktarım kodları, sınırlar, yol güvenliği ve kablo
-  mesajları (CBOR; aktarma çerçeveleri kendi ikili biçiminde). İstemcide
-  karşı cihazdan ve sunuculardan gelen veri burada ayrıştırılır; bu
-  ayrıştırıcıların `fuzz/` altında fuzz hedefleri vardır.
-- `totaldrop-core`: istemci motoru. Rendezvous ile konuşur, ham açık
-  anahtarlı QUIC bağlantısını kurar, Noise XXpsk3 + ML-KEM-768 el
-  sıkışmasını yapar, dosyaları gönderir ve alır, gerekirse aktarma
-  sunucusuna geçer.
-- `totaldrop-l10n`: Rust programlarının arayüz metinleri (35 dil).
+- `totaldrop-crypto`: CPace, key derivation, mailbox and session
+  encryption, device keys, STREAM chunk encryption.
+- `totaldrop-proto`: transfer codes, limits, path safety and wire messages
+  (CBOR; relay frames use their own binary format). Data arriving at the
+  client from the peer and from the servers is parsed here; these parsers
+  have fuzz targets under `fuzz/`.
+- `totaldrop-core`: the client engine. It talks to rendezvous, sets up the
+  QUIC connection with raw public keys, runs the Noise XXpsk3 + ML-KEM-768
+  handshake, sends and receives files and falls back to the relay server
+  when needed.
+- `totaldrop-l10n`: interface strings for the Rust programs (35
+  languages).
 
-**Uygulamalar.** Arayüz platformun kendi araçlarıyla yazılır, çekirdeği
-çağırır, kriptografi yapmaz:
+**Apps.** The interface is built with each platform's own toolkit, calls
+into the core and does no cryptography:
 
-- Linux (`linux/`): Qt 6 ve QML; çekirdeğe CXX-Qt köprüsüyle bağlanır
-  ([0006](kararlar/0006-linux-qt.md)).
-- Android (`app/`): Flutter; çekirdeğe `app/rust` ve flutter_rust_bridge
-  ile bağlanır. Aktarım arka planda kullanıcının başlattığı iş olarak
-  sürer ([0010](kararlar/0010-android-arka-plan-aktarim.md)).
-- Komut satırı (`crates/totaldrop-cli`): çekirdeğin ince bir kabuğu.
+- Linux (`linux/`): Qt 6 and QML; bound to the core through a CXX-Qt
+  bridge ([0006](kararlar/0006-linux-qt.md)).
+- Android (`app/`): Flutter; bound to the core through `app/rust` and
+  flutter_rust_bridge. Transfers continue in the background as a
+  user-initiated job ([0010](kararlar/0010-android-arka-plan-aktarim.md)).
+- Command line (`crates/totaldrop-cli`): a thin wrapper around the core.
 
-**Sunucular (`server/`).** Projenin iki sunucusu vardır. İkisi de dosya
-içeriğini göremez ve kayıt tutmaz. Her birinin iki uygulaması vardır: kendi sunucusunu kurmak ve
-testler için Rust, `totaldrop.app` için Cloudflare Workers ve Durable
-Objects ([0003](kararlar/0003-cloudflare-altyapi.md)). İki uygulama aynı
-uçtan uca test takımından geçer.
+**Servers (`server/`).** The project has two servers. Neither can see file
+contents and neither keeps logs. Each has two implementations: Rust for
+self-hosting and tests, and Cloudflare Workers with Durable Objects for
+`totaldrop.app` ([0003](kararlar/0003-cloudflare-altyapi.md)). Both
+implementations pass the same end-to-end test suite.
 
-- Rendezvous (`totaldrop-rendezvous`, `rendezvous-worker`): kodun numara
-  kısmını (nameplate) ayırır ve iki cihaz buluşana kadar şifreli
-  mesajları taşıyan posta kutusunu tutar. Kodun geri kalanını cihaz üretir;
-  sunucu onu görmez.
-- Aktarma (`totaldrop-relay`, `relay-worker`): şifreli QUIC trafiğini iki
-  cihaz arasında iletir. Yalnızca o aktarımın iki
-  anahtarını, imzalı bir meydan okumayla kabul eder.
+- Rendezvous (`totaldrop-rendezvous`, `rendezvous-worker`): allocates the
+  numeric part of the code (the nameplate) and holds the mailbox that
+  carries encrypted messages until the two devices meet. The device
+  generates the rest of the code; the server never sees it.
+- Relay (`totaldrop-relay`, `relay-worker`): forwards encrypted QUIC
+  traffic between the two devices. It accepts only the two keys for that
+  transfer, through a signed challenge.
 
-Proje adreslerine (`hello@totaldrop.app` gibi) gelen e-postayı
-bakımcılara ileten e-posta Worker'ı (`mail-worker`) da `server/`
-altındadır. Protokolün parçası değildir ve uygulamalar onu hiç kullanmaz
-([Dağıtım](surec.md#e-posta-yönlendirmesi)).
+The email Worker (`mail-worker`), which forwards email sent to project
+addresses (such as `hello@totaldrop.app`) to the maintainers, also lives
+under `server/`. It is not part of the protocol and the apps never use it
+([Deployment](surec.md#e-posta-yönlendirmesi)).
 
-STUN projenin sunucusu değildir: cihazlar dış adreslerini varsayılan
-olarak Cloudflare'in STUN sunucusundan (`stun.cloudflare.com`, UDP) ya da
-kişinin kendi kurduğu aktarma sunucusundan öğrenir. Ayrıntılar
-[aktarma.md](aktarma.md) içinde.
+STUN is not a project server: devices learn their public address by
+default from Cloudflare's STUN server (`stun.cloudflare.com`, UDP) or from
+a self-hosted relay server. Details are in [aktarma.md](aktarma.md).
 
-**Site (`site/`).** totaldrop.app, indirme sayfası ve QR bağlantılarının
-açtığı sayfa Cloudflare Pages'te durur ve dışarıdan hiçbir şey yüklemez.
-Gönderme yalnızca uygulamalardan yapılır, tarayıcıdan yapılmaz.
+**Site (`site/`).** totaldrop.app, the download page and the page opened
+by QR links are hosted on Cloudflare Pages and load nothing from outside.
+Sending is done only from the apps, not from a browser.
 
-## Bir aktarım
+## A transfer
 
-1. Gönderen rendezvous'tan bir numara (nameplate) ayırır, kodun geri
-   kalanını cihazında üretir ve kodu karşı tarafa söyler.
-2. İki cihaz posta kutusunda buluşur ve koddan CPace ile ortak bir anahtar
-   türetir. Sunucu kodu ve anahtarı bilmez; posta kutusundaki mesajlar bu
-   anahtarla şifrelidir.
-3. Cihazlar posta kutusu üzerinden adreslerini ve tek kullanımlık uç nokta
-   anahtarlarını değiş tokuş eder. Doğrudan yol ile aktarma yolu birlikte
-   denenir, ilk yanıt veren kullanılır; bu yüzden aktarma sunucusu doğrudan
-   aktarımlarda da iki cihazın IP adresini görebilir
-   ([tehdit modeli](tehdit-modeli.md) T5, #63).
-4. QUIC içinde Noise XXpsk3 + ML-KEM-768 el sıkışması yapılır; iki taraf
-   dört doğrulama kelimesini görür.
-5. Gönderen dosya listesini (manifest) yollar, alan kabul eder; dosyalar
-   1 MiB'lik parçalar halinde STREAM ile şifreli akar, her parça gelince
-   doğrulanır. Dosya, BLAKE3 doğrulamasından sonra alma klasörüne konur.
+1. The sender allocates a number (nameplate) from rendezvous, generates
+   the rest of the code on their device and shares the code with the other
+   side.
+2. Both devices meet in the mailbox and derive a shared key from the code
+   with CPace. The server knows neither the code nor the key; messages in
+   the mailbox are encrypted with this key.
+3. Through the mailbox, the devices exchange their addresses and
+   single-use endpoint keys. The direct path and the relay path are tried
+   together and the first one to answer is used; because of this, the
+   relay server can see both devices' IP addresses even on direct
+   transfers ([threat model](tehdit-modeli.md) T5, #63).
+4. Inside QUIC, a Noise XXpsk3 + ML-KEM-768 handshake runs; both sides see
+   four verification words.
+5. The sender sends the file list (manifest) and the receiver accepts it;
+   files stream encrypted with STREAM in 1 MiB chunks, each verified as it
+   arrives. After BLAKE3 verification, the file is placed in the receive
+   folder.
 
-## Derleme ve dağıtım
+## Building and deployment
 
-Her şey bu depodan, GitHub Actions'ta derlenir: Linux paketleri ve Android
-paketi etiketten, sunucular ve site `main`'den, sahibin onayıyla
-([surec.md](surec.md)). Kişisel bir makinede derlenen hiçbir şey
-yayınlanmaz.
+Everything is built from this repository on GitHub Actions: the Linux
+packages and the Android package from tags, and the servers and the site
+from `main`, with the owner's approval ([surec.md](surec.md)). Nothing
+built on a personal machine is ever published.
