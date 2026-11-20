@@ -170,65 +170,65 @@
   "crates/totaldrop-core/Cargo.toml:4": [
     "license = \"MIT OR Apache-2.0\""
   ],
-  "crates/totaldrop-core/src/lib.rs:101": [
+  "crates/totaldrop-core/src/lib.rs:102": [
     "async fn own_hints("
   ],
-  "crates/totaldrop-core/src/lib.rs:154": [
+  "crates/totaldrop-core/src/lib.rs:155": [
     "pub struct PathOptions {"
   ],
-  "crates/totaldrop-core/src/lib.rs:164": [
+  "crates/totaldrop-core/src/lib.rs:165": [
     "pub relay_only: bool,"
   ],
-  "crates/totaldrop-core/src/lib.rs:231": [
+  "crates/totaldrop-core/src/lib.rs:232": [
     "fn receiver_relay<'a>(hints: &Hints, own: &'a PathOptions) -> Result<Option<&'a str>> {"
   ],
-  "crates/totaldrop-core/src/lib.rs:287": [
+  "crates/totaldrop-core/src/lib.rs:288": [
     "fn paths_to("
   ],
-  "crates/totaldrop-core/src/lib.rs:338": [
+  "crates/totaldrop-core/src/lib.rs:339": [
     "enum Keep {"
   ],
-  "crates/totaldrop-core/src/lib.rs:395": [
+  "crates/totaldrop-core/src/lib.rs:396": [
     "pub struct SendOptions {"
   ],
-  "crates/totaldrop-core/src/lib.rs:415": [
+  "crates/totaldrop-core/src/lib.rs:416": [
     "pub struct PreparedSend {"
   ],
-  "crates/totaldrop-core/src/lib.rs:434": [
+  "crates/totaldrop-core/src/lib.rs:435": [
     "pub async fn new(opts: &SendOptions, paths: Vec<PathBuf>) -> Result<Self> {"
   ],
-  "crates/totaldrop-core/src/lib.rs:445": [
+  "crates/totaldrop-core/src/lib.rs:446": [
     "pub async fn text(opts: &SendOptions, text: &str, name: &str) -> Result<Self> {"
   ],
-  "crates/totaldrop-core/src/lib.rs:450-461": [
+  "crates/totaldrop-core/src/lib.rs:451-462": [
     "async fn ready(",
     "rendezvous::Mailbox::claim(&opts.server, nameplate, Some(&allocation)).await?;"
   ],
-  "crates/totaldrop-core/src/lib.rs:50": [
-    "pub enum Event {"
-  ],
-  "crates/totaldrop-core/src/lib.rs:501": [
+  "crates/totaldrop-core/src/lib.rs:502": [
     "pub async fn run_with(self, events: Events, stop: Stop) -> Result<SendReport> {"
   ],
-  "crates/totaldrop-core/src/lib.rs:597": [
+  "crates/totaldrop-core/src/lib.rs:51": [
+    "pub enum Event {"
+  ],
+  "crates/totaldrop-core/src/lib.rs:598": [
     "pub struct ReceiveOptions {"
   ],
-  "crates/totaldrop-core/src/lib.rs:616": [
+  "crates/totaldrop-core/src/lib.rs:617": [
     "pub struct IncomingOffer {"
   ],
-  "crates/totaldrop-core/src/lib.rs:639": [
+  "crates/totaldrop-core/src/lib.rs:640": [
     "pub async fn connect_with(opts: &ReceiveOptions, code: &str, stop: &Stop) -> Result<Self> {"
   ],
-  "crates/totaldrop-core/src/lib.rs:662": [
+  "crates/totaldrop-core/src/lib.rs:663": [
     "pub async fn connect(opts: &ReceiveOptions, code: &str) -> Result<Self> {"
   ],
-  "crates/totaldrop-core/src/lib.rs:665": [
+  "crates/totaldrop-core/src/lib.rs:666": [
     "let mailbox = rendezvous::Mailbox::claim(&opts.server, code.nameplate(), None).await?;"
   ],
-  "crates/totaldrop-core/src/lib.rs:731": [
+  "crates/totaldrop-core/src/lib.rs:732": [
     "pub async fn accept_with("
   ],
-  "crates/totaldrop-core/src/lib.rs:95": [
+  "crates/totaldrop-core/src/lib.rs:96": [
     "const MAPPING_GRACE: Duration = Duration::from_millis(300);"
   ],
   "crates/totaldrop-core/src/pairing.rs:107-110": [
@@ -246,10 +246,10 @@
   "crates/totaldrop-core/src/pairing.rs:73": [
     "pub async fn exchange("
   ],
-  "crates/totaldrop-core/src/path.rs:115": [
+  "crates/totaldrop-core/src/path.rs:120": [
     "pub struct Fallback(Arc<FallbackState>);"
   ],
-  "crates/totaldrop-core/src/path.rs:86": [
+  "crates/totaldrop-core/src/path.rs:91": [
     "pub const FALLBACK_SILENCE: Duration = Duration::from_secs(8);"
   ],
   "crates/totaldrop-core/src/portmap.rs:319": [
@@ -331,28 +331,28 @@
   "crates/totaldrop-core/src/transport.rs:306": [
     "pub fn bind_socket() -> Result<UdpSocket> {"
   ],
-  "crates/totaldrop-core/src/transport.rs:438": [
+  "crates/totaldrop-core/src/transport.rs:439": [
     "pub fn endpoint("
   ],
-  "crates/totaldrop-core/src/transport.rs:528": [
+  "crates/totaldrop-core/src/transport.rs:529": [
     "const REVERSE_DELAY: Duration = Duration::from_millis(400);"
   ],
-  "crates/totaldrop-core/src/transport.rs:532": [
+  "crates/totaldrop-core/src/transport.rs:533": [
     "const RELAY_DELAY: Duration = Duration::from_millis(1200);"
   ],
-  "crates/totaldrop-core/src/transport.rs:556": [
+  "crates/totaldrop-core/src/transport.rs:557": [
     "pub async fn receiver_connection("
   ],
-  "crates/totaldrop-core/src/transport.rs:588": [
+  "crates/totaldrop-core/src/transport.rs:589": [
     "pub async fn sender_connection("
   ],
-  "crates/totaldrop-core/src/transport.rs:694": [
+  "crates/totaldrop-core/src/transport.rs:695": [
     "pub async fn connect_any(endpoint: &quinn::Endpoint, paths: &Paths) -> Result<quinn::Connection> {"
   ],
   "crates/totaldrop-core/src/transport.rs:73": [
     "pub fn generate() -> Result<Self> {"
   ],
-  "crates/totaldrop-core/src/transport.rs:866": [
+  "crates/totaldrop-core/src/transport.rs:867": [
     "std::env::var_os(\"TOTALDROP_REQUIRE_IPV6\").is_none(),"
   ],
   "crates/totaldrop-crypto/src/channel.rs:114": [
