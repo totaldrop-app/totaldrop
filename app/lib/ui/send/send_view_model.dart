@@ -116,6 +116,11 @@ class SendViewModel extends ChangeNotifier {
   List<PickedFile> get files => List.unmodifiable(_files);
   int get totalSize => _files.fold(0, (a, f) => a + f.size);
 
+  /// Total size of the chosen files for UIDT scheduling, or `null` when any
+  /// chosen file's size could not be read (#593).
+  int? get estimatedBytes =>
+      _files.every((f) => f.sizeKnown) ? totalSize : null;
+
   bool strong = false;
 
   /// Sending a text instead of files (#326). The files chosen stay, for
@@ -276,8 +281,16 @@ class SendViewModel extends ChangeNotifier {
   }
 
   @visibleForTesting
-  void addFakeFileForTest(String name) =>
-      _files.add(PickedFile(name: name, path: '/tmp/$name', size: 1));
+  void addFakeFileForTest(String name, {int size = 1, bool sizeKnown = true}) {
+    _files.add(
+      PickedFile(
+        name: name,
+        path: '/tmp/$name',
+        size: size,
+        sizeKnown: sizeKnown,
+      ),
+    );
+  }
 
   void remove(PickedFile f) {
     _files.remove(f);
@@ -382,7 +395,7 @@ class SendViewModel extends ChangeNotifier {
     final generation = ++_generation;
     final stopper = _repo.newStopper();
     _stopper = stopper;
-    _keepGoing();
+    _keepGoing(bytes: sendText ? textBytes : estimatedBytes);
     notifyListeners();
     final SendSession session;
     try {
@@ -483,9 +496,9 @@ class SendViewModel extends ChangeNotifier {
 
   /// Keep the send going while the person shares the code in another app
   /// (#194). The notification's Stop stops it.
-  void _keepGoing() {
+  void _keepGoing({int? bytes}) {
     _keptAlive = true;
-    unawaited(_keeper.begin(TransferDirection.sending, cancel));
+    unawaited(_keeper.begin(TransferDirection.sending, cancel, bytes: bytes));
   }
 
   void _release() {
