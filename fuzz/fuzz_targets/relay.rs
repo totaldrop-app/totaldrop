@@ -26,6 +26,9 @@ fuzz_target!(|data: &[u8]| {
         if let Some((a, b)) = relay::parse_pair_name(s) {
             assert_eq!(relay::pair_name(&a, &b), s);
         }
+        if let Some((k, sig)) = relay::parse_auth_header(s) {
+            assert_eq!(relay::format_auth_header(&k, &sig), s);
+        }
     }
     let _ = relay::parse_stun_request(data);
     let _ = relay::parse_stun_response(data, &[0u8; 12]);

@@ -204,7 +204,7 @@ Adım adım:
    `PreparedSend::text` (`crates/totaldrop-core/src/lib.rs:445`, `crates/totaldrop-core/src/transfer.rs:223` `text_entry`).
 3. `ready` cihaz anahtarlarını üretir, rendezvous'tan numara ayırır, kodu
    cihazda üretir ve kutuyu tutar (`crates/totaldrop-core/src/lib.rs:450-461`;
-   `crates/totaldrop-core/src/rendezvous.rs:175` `allocate`, `crates/totaldrop-core/src/rendezvous.rs:202`
+   `crates/totaldrop-core/src/rendezvous.rs:201` `allocate`, `crates/totaldrop-core/src/rendezvous.rs:228`
    `Mailbox::claim`; `crates/totaldrop-proto/src/lib.rs:183`
    `TransferCode`).
 4. `run_with` (`crates/totaldrop-core/src/lib.rs:501`):
@@ -299,17 +299,19 @@ arayüz durumuna çevirir: Linux'ta Qt özellikleri
    `webSocketClose` (`server/rendezvous-worker/src/mailbox.ts:365`), `alarm` (`server/rendezvous-worker/src/mailbox.ts:375`). Platformun ara sıra verdiği
    "internal error" için yeniden deneme `withRetry`
    (`server/rendezvous-worker/src/retry.ts`, #119).
-5. Aktarma Worker'ı aynı kalıptadır: `server/relay-worker/src/index.ts:31`.
-   `Origin` başlıklı yükseltme burada da 403 alır
-   (`server/relay-worker/src/index.ts:37-39`), `PREFIX` yol denetiminden
-   (`server/relay-worker/src/index.ts:40`) önce. Sonra
-   → `PAIR.getByName(name).fetch` (`server/relay-worker/src/index.ts:45`) → `Pair.fetch`
-   (`server/relay-worker/src/pair.ts:34`), `webSocketMessage` (`server/relay-worker/src/pair.ts:46`),
-   `alarm` (`server/relay-worker/src/pair.ts:58`); durum makinesi `PairCore` içindedir (`server/relay-worker/src/pair-core.ts:159`).
+5. Aktarma Worker'ı aynı kalıptadır: `server/relay-worker/src/index.ts:30`,
+   istekleri `handleRelayRequest` (`server/relay-worker/src/pair-core.ts:203`)
+   üzerinden doğrular. `Origin` başlıklı yükseltme burada da 403 alır
+   (`server/relay-worker/src/pair-core.ts:212-214`), `RELAY_PREFIX` yol
+   denetiminden (`server/relay-worker/src/pair-core.ts:215`) önce; geçersiz
+   `X-TotalDrop-Auth` başlığı da Nesne uyanmadan 403 alır (#78). Sonra
+   → `pair.getByName(name).fetch` (`server/relay-worker/src/pair-core.ts:224`) → `Pair.fetch`
+   (`server/relay-worker/src/pair.ts:34`), `webSocketMessage` (`server/relay-worker/src/pair.ts:53`),
+   `alarm` (`server/relay-worker/src/pair.ts:65`); durum makinesi `PairCore` içindedir (`server/relay-worker/src/pair-core.ts:227`).
 
 Rust sunucuları aynı protokolün ikinci uygulamasıdır:
 `server/totaldrop-rendezvous/src/lib.rs:343` `serve`,
-`server/totaldrop-relay/src/lib.rs:336` `serve`.
+`server/totaldrop-relay/src/lib.rs:375` `serve`.
 
 ## 3. Veri modeli ve durum
 
@@ -323,7 +325,7 @@ Rust sunucuları aynı protokolün ikinci uygulamasıdır:
 | `ClientMessage` / `ServerMessage` | `crates/totaldrop-proto/src/wire.rs:236`, `crates/totaldrop-proto/src/wire.rs:323` | Rendezvous kablo iletileri (CBOR) |
 | `Certificate`, `Hints` | `crates/totaldrop-proto/src/wire.rs:422`, `crates/totaldrop-proto/src/wire.rs:533` | Cihaz sertifikası; adresler, uç nokta anahtarı, aktarma URL'si |
 | `Manifest`, `Entry`, `Control`, `DataHeader` | `crates/totaldrop-proto/src/wire.rs:727`, `crates/totaldrop-proto/src/wire.rs:614`, `crates/totaldrop-proto/src/wire.rs:760`, `crates/totaldrop-proto/src/wire.rs:1000` | Teklif, girdiler, kontrol iletileri, veri akışı başlığı |
-| `Batch` | `crates/totaldrop-proto/src/relay.rs:157` | Aktarma çerçeveleri (kendi ikili biçimi) |
+| `Batch` | `crates/totaldrop-proto/src/relay.rs:197` | Aktarma çerçeveleri (kendi ikili biçimi) |
 | `DeviceKeys` | `crates/totaldrop-crypto/src/identity.rs:30` | Her aktarımda yeniden üretilen Ed25519 + X25519 + ML-KEM anahtarları |
 | `Cpace`, `MailboxCipher`, `Sealer`/`Opener`, `EntryCipher` | `crates/totaldrop-crypto/src/cpace.rs:138`, `crates/totaldrop-crypto/src/channel.rs:33`, `crates/totaldrop-crypto/src/channel.rs:164`/`crates/totaldrop-crypto/src/channel.rs:170`, `crates/totaldrop-crypto/src/lib.rs:148` | Anahtar anlaşması ve şifreleme durumları |
 | `SendOptions`, `ReceiveOptions`, `PathOptions` | `crates/totaldrop-core/src/lib.rs:395`, `crates/totaldrop-core/src/lib.rs:597`, `crates/totaldrop-core/src/lib.rs:154` | İstemci motorunun girdileri |
@@ -362,12 +364,12 @@ kodda silinir (`server/rendezvous-worker/src/mailbox.ts:335`).
 
 **`Pair`** (aktarma; anahtar çifti başına bir örnek): özel SQL tablosu yoktur.
 Soket başına durum WebSocket eki olarak tutulur (`Attachment`,
-`server/relay-worker/src/pair-core.ts:58-82`: meydan okuma, anahtar, kapatma
-işareti, yanıtsız yoklamalar); yeniden bağlantılar boyunca çiftin başlangıç
+`server/relay-worker/src/pair-core.ts:63-89`: meydan okuma, anahtar,
+ön doğrulama, kapatma işareti, yanıtsız yoklamalar); yeniden bağlantılar boyunca çiftin başlangıç
 zamanı ve anahtar başına gönderilen bayt toplamları `ctx.storage.kv` içinde
 `"totals"` altında (`PairTotals`, `server/relay-worker/src/totals.ts:56`),
 6 saatlik pencere bittiğinde bütün depoyu silen alarmla birlikte tutulur
-(`server/relay-worker/src/pair-core.ts:509-548`). Doğrulama: `pair.ts`,
+(`server/relay-worker/src/pair-core.ts:659-717`). Doğrulama: `pair.ts`,
 `pair-core.ts` ve `totals.ts` içinde `sql.exec` geçmez (grep ile bakıldı).
 
 ### 3.3 Durum nerede tutulur
@@ -379,7 +381,7 @@ zamanı ve anahtar başına gönderilen bayt toplamları `ctx.storage.kv` içind
 | Android | `SharedPreferencesWithCache`: `rendezvous_server`, `privacy_mode`, arka plan izni işaretleri (`app/lib/data/settings_repository.dart:13-17`); aşamalar `SendStage`, `ReceiveStage` (`app/lib/ui/send/send_view_model.dart:20`, `app/lib/ui/receive/receive_view_model.dart:27`) | Ayar kalıcı, aşama bellekte |
 | Rendezvous Worker | Yukarıdaki SQLite tabloları; hız sınırı sayaçları bellekte (`server/rendezvous-worker/src/limit.ts:98` `RateLimiter`) | Kutu en çok 60 dk; sayaçlar nesne uyuyunca düşer |
 | Aktarma Worker | WebSocket ekleri + DO KV içinde çift başına `"totals"` + alarm | Çift penceresi en çok 6 saat, sonunda `deleteAll()` |
-| Rust sunucuları | Yalnızca bellekte: `HashMap` (`server/totaldrop-rendezvous/src/lib.rs:236-239`, `server/totaldrop-relay/src/lib.rs:148-160`) | Çift toplamları 6 saatte süpürülür; süreç yeniden başlayınca düşer |
+| Rust sunucuları | Yalnızca bellekte: `HashMap` (`server/totaldrop-rendezvous/src/lib.rs:236-239`, `server/totaldrop-relay/src/lib.rs:154-166`) | Çift toplamları 6 saatte süpürülür; süreç yeniden başlayınca düşer |
 
 ## 4. Yapılandırma
 
@@ -402,7 +404,7 @@ sayılmadı.
 | `ANDROID_UPLOAD_STORE_FILE`, `ANDROID_UPLOAD_PASSWORD`, `ANDROID_UPLOAD_ALIAS`, `TOTALDROP_REQUIRE_RELEASE_KEY` | Android derlemesi (`app/android/app/build.gradle.kts:22-61`) | Yükleme anahtarı yalnızca CI ortam sırrından; `REQUIRE` varken anahtarsız derleme başarısız olur |
 | `CLOUDFLARE_API_TOKEN` | Yalnızca dağıtım adımı (`.github/workflows/deploy.yml:139`) | `cloudflare` ortamı onayıyla |
 | `RATE_BURST`, `RATE_INTERVAL_MS` | Rendezvous Worker değişkeni (`server/rendezvous-worker/src/directory.ts:50`) | İstemci başına oran sınırı; üretimde tanımlı değil, varsayılanlar `limit.ts` içinde; CI `--var` ile düşük değerler verir (`.github/workflows/server.yml:82`, `.github/workflows/server.yml:86`) |
-| `SESSION_BYTES`, `SESSION_TIME_MS` | Aktarma Worker değişkeni (`server/relay-worker/src/pair-core.ts:184-192`) | Anahtar başına bayt ve çift başına süre sınırı; üretimde tanımlı değil, CI yerel `wrangler dev --var` ile düşük değerler verir (`.github/workflows/server.yml:93`) |
+| `SESSION_BYTES`, `SESSION_TIME_MS` | Aktarma Worker değişkeni (`server/relay-worker/src/pair-core.ts:268-276`) | Anahtar başına bayt ve çift başına süre sınırı; üretimde tanımlı değil, CI yerel `wrangler dev --var` ile düşük değerler verir (`.github/workflows/server.yml:93`) |
 | `WAYLAND_DISPLAY`, `DISPLAY`, `QT_QPA_PLATFORMTHEME`, `QT_QUICK_CONTROLS_STYLE` | Linux açılışı (`linux/src/main.rs:56-59`, `linux/src/main.rs:81`) | Ekran varsa ve tema eklentisi seçilmemişse `QT_QPA_PLATFORMTHEME=gtk3` **atanır**; denetim stili yoksa atanır |
 | `XDG_RUNTIME_DIR` | Linux Hyprland algılama (`linux/src/theme/hyprland.rs:18`) | Hyprland soketini bulur |
 | `TOTALDROP_VERSION` | Dart derleme tanımı (`app/lib/main.dart:28-29`) | Ayarlar'da gösterilen sürüm |
@@ -431,7 +433,7 @@ Aktarma sunucusu iki argüman alır: WebSocket adresi ve UDP keşif adresi
 `Config` yapısının varsayılanlarıyla gelir (`Config::default()`,
 `server/totaldrop-rendezvous/src/main.rs:20`; yapılar
 `server/totaldrop-rendezvous/src/lib.rs:47`,
-`server/totaldrop-relay/src/lib.rs:42`); dosya ya da ortam değişkeni
+`server/totaldrop-relay/src/lib.rs:48`); dosya ya da ortam değişkeni
 okunmaz.
 
 ### 4.3 Özellik bayrakları
@@ -575,8 +577,8 @@ için öneri değil, yalnızca durum yazılıdır; iş gerekirse issue açılır
    Uyum ortak uçtan uca testle korunur; Worker tarafında fuzz hedefi yoktur.
 3. **Sunucular istemci kriptografisine bağlanmaz.** Sunucu crate'leri
    yalnızca `proto`'yu bağlar; aktarma sunucusu meydan okuma imzasını
-   `ring` ile (`server/totaldrop-relay/src/lib.rs:409-410`), Worker Web
-   Crypto ile (`server/relay-worker/src/pair-core.ts:151-153`) kendisi denetler.
+   `ring` ile (`server/totaldrop-relay/src/lib.rs:528-529`), Worker Web
+   Crypto ile (`server/relay-worker/src/pair-core.ts:174-176`) kendisi denetler.
    "Sunucu içeriği çözemez" sözünü bu kural sağlamaz: o, anahtarların
    sunucuya hiç gitmemesinden gelir (CPace ve Noise anahtarları iki cihazda
    kalır, [tehdit-modeli.md](tehdit-modeli.md)). Buradaki kural daha dardır:

@@ -85,7 +85,7 @@ export class PairTotals {
    * Evaluated against current `t.sent` rather than cached at first `load()`, so
    * callers that inspect `deadline()` before `admitSignIn()` still see a
    * wake-inflated count above `sessionBytes`. */
-  private isOver(t: LiveTotals, sessionBytes?: number): boolean {
+  private exceedsLimit(t: LiveTotals, sessionBytes?: number): boolean {
     return (
       t.over ||
       (sessionBytes !== undefined &&
@@ -135,10 +135,17 @@ export class PairTotals {
     return end !== null && now >= end;
   }
 
+  /** Whether an active pair has already spent its byte limit (read-only:
+   * never creates `"totals"` in KV if absent, #78). */
+  isOver(sessionBytes?: number): boolean {
+    const t = this.load();
+    return t !== null && this.exceedsLimit(t, sessionBytes);
+  }
+
   /** Erase all stored totals for this pair. */
   clear(): void {
-    this.mem = null;
     this.kv.delete(KEY);
+    this.mem = null;
   }
 
   /** Admit a verified sign-in at `now`: starts the pair's window on the
@@ -158,7 +165,7 @@ export class PairTotals {
       this.save(t);
       return true;
     }
-    if (this.isOver(t, sessionBytes)) {
+    if (this.exceedsLimit(t, sessionBytes)) {
       if (!t.over) {
         t.over = true;
         this.save(t);
@@ -185,7 +192,7 @@ export class PairTotals {
       t = this.load();
       if (!t) return false;
     }
-    if (this.isOver(t, sessionBytes)) {
+    if (this.exceedsLimit(t, sessionBytes)) {
       if (!t.over) {
         t.over = true;
         this.save(t);
