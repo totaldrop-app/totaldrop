@@ -1,13 +1,13 @@
-# 0005: Gelir yalnızca bağış
+# 0005: Donations are the only revenue
 
-- **Durum:** Kabul, 27 Ekim 2026. Sayfanın kimin adına açıldığı, ikinci
-  kanal (Buy Me a Coffee) ve ne zaman değişeceği:
+- **Status:** Accepted, 27 October 2026. In whose name the page is opened,
+  the second channel (Buy Me a Coffee) and when that changes:
   [0017](0017-bagis-kisisel-sayfa.md).
-- **Karar:** TotalDrop ücretsiz kalır: reklam, ücretli sürüm ve yatırımcı
-  yok. Bağışlar yalnızca GitHub Sponsors üzerinden alınır
-  (github.com/sponsors/ozdil). Bütün maliyetler ve aylık gelir-gider
-  totaldrop.app/donate sayfasında kalem kalem yayımlanır.
-- **Neden:** Kullanıcının verisini satma ya da onu ücretli sürüme itme
-  baskısı olmaz. Tek bir bağış kanalı güven verir ve yönetimi kolaydır.
-- **Sonuçlar:** Bağış hiçbir özellik ya da öncelik satın almaz. Yeni bir
-  maliyet doğduğunda önce bağış sayfası güncellenir.
+- **Decision:** TotalDrop stays free: no ads, no paid edition and no
+  investors. Donations are taken only through GitHub Sponsors
+  (github.com/sponsors/ozdil). All costs and monthly income and expenses
+  are published item by item on totaldrop.app/donate.
+- **Why:** There is no pressure to sell users' data or push them towards a
+  paid edition. A single donation channel builds trust and is easy to run.
+- **Consequences:** Donations buy no features or priority. When a new cost
+  arises, the donation page is updated first.
