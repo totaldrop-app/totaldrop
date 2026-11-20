@@ -129,6 +129,68 @@ fn stun_targets(found: &[SocketAddr], ipv6: bool) -> Vec<SocketAddr> {
     .collect()
 }
 
+/// Send one STUN datagram from `src_ip` via `IPV6_PKTINFO` (#405), waiting
+/// for writability on `WouldBlock` and returning real `sendmsg` errors (unlike
+/// `quinn::TokioRuntime::wrap_udp_socket`, which converts them to `Ok(())`).
+async fn send_stun_from(
+    udp: &tokio::net::UdpSocket,
+    state: &quinn::udp::UdpSocketState,
+    dest: SocketAddr,
+    src_ip: std::net::Ipv6Addr,
+    payload: &[u8],
+) -> std::io::Result<()> {
+    let transmit = quinn::udp::Transmit {
+        destination: dest,
+        ecn: None,
+        contents: payload,
+        segment_size: None,
+        src_ip: Some(std::net::IpAddr::V6(src_ip)),
+    };
+    tokio::time::timeout(
+        PROBE_WAIT,
+        udp.async_io(tokio::io::Interest::WRITABLE, || {
+            state.try_send(udp.into(), &transmit)
+        }),
+    )
+    .await
+    .unwrap_or_else(|_| Err(std::io::Error::from(std::io::ErrorKind::TimedOut)))
+}
+
+/// Send one STUN request to `server`, preferring `temp` via `IPV6_PKTINFO`
+/// when available (#405). On `AddrNotAvailable` / `InvalidInput`, if
+/// `UdpSocketState` cannot be initialized, or when `temp` is `None` for an
+/// IPv6 server, falls back to the plain socket only when the system's own IPv6
+/// source is loopback or announceable — never modified EUI-64.
+async fn send_stun_probe(
+    udp: &tokio::net::UdpSocket,
+    pktinfo_state: &mut Option<quinn::udp::UdpSocketState>,
+    server: SocketAddr,
+    dest: SocketAddr,
+    payload: &[u8],
+    temp: Option<std::net::Ipv6Addr>,
+) -> bool {
+    if server.is_ipv4() {
+        return udp.send_to(payload, dest).await.is_ok();
+    }
+    if let Some(src_v6) = temp {
+        if pktinfo_state.is_none() {
+            *pktinfo_state = quinn::udp::UdpSocketState::new(udp.into()).ok();
+        }
+        if let Some(state) = pktinfo_state.as_ref() {
+            match send_stun_from(udp, state, dest, src_v6, payload).await {
+                Ok(()) => return true,
+                Err(e)
+                    if matches!(
+                        e.kind(),
+                        std::io::ErrorKind::AddrNotAvailable | std::io::ErrorKind::InvalidInput
+                    ) => {}
+                Err(_) => return false,
+            }
+        }
+    }
+    crate::ipv6::is_safe_default_v6_for_stun(server) && udp.send_to(payload, dest).await.is_ok()
+}
+
 /// [`discover`], asking each of `pending` once per round.
 async fn discover_at(socket: &UdpSocket, mut pending: Vec<SocketAddr>) -> Vec<SocketAddr> {
     let Ok(local) = socket.local_addr() else {
@@ -145,6 +207,7 @@ async fn discover_at(socket: &UdpSocket, mut pending: Vec<SocketAddr>) -> Vec<So
     else {
         return Vec::new();
     };
+    let mut pktinfo_state: Option<quinn::udp::UdpSocketState> = None;
     let mut seen = Vec::new();
     for _ in 0..2 {
         let mut asked: Vec<(SocketAddr, [u8; 12])> = Vec::new();
@@ -153,15 +216,13 @@ async fn discover_at(socket: &UdpSocket, mut pending: Vec<SocketAddr>) -> Vec<So
             if getrandom::fill(&mut id).is_err() {
                 return seen;
             }
+            let req = wire::stun_request(&id);
+            let dest = crate::path::in_family(*server, ipv6);
+            let temp = ipv6
+                .then(|| crate::ipv6::temporary_source_v6(*server))
+                .flatten();
             // A family without a route fails here at once and is dropped.
-            if udp
-                .send_to(
-                    &wire::stun_request(&id),
-                    crate::path::in_family(*server, ipv6),
-                )
-                .await
-                .is_ok()
-            {
+            if send_stun_probe(&udp, &mut pktinfo_state, *server, dest, &req, temp).await {
                 asked.push((*server, id));
             }
         }
@@ -678,6 +739,226 @@ mod tests {
         let start = tokio::time::Instant::now();
         assert_eq!(discover_at(&ours, vec![answers, silent]).await, vec![seen]);
         assert!(start.elapsed() < PROBE_WAIT / 2, "{:?}", start.elapsed());
+    }
+
+    /// #405: `send_stun_from` returns a real OS `AddrNotAvailable` /
+    /// `InvalidInput` error when `src_ip` is unassigned, `send_stun_probe`
+    /// falls back to `udp.send_to` on safe loopback, sends directly with
+    /// `IPV6_PKTINFO` when `src_ip = ::1`, reads replies on the same `udp`
+    /// socket, and still carries IPv4 probes on a dual-stack socket.
+    #[tokio::test]
+    async fn send_stun_from_and_probe_fall_back_on_real_ipv6_loopback() {
+        let Ok(v6_server) = tokio::net::UdpSocket::bind("[::1]:0").await else {
+            assert!(
+                std::env::var_os("TOTALDROP_REQUIRE_IPV6").is_none(),
+                "TOTALDROP_REQUIRE_IPV6 is set but IPv6 loopback is unavailable"
+            );
+            return;
+        };
+        let server_addr = v6_server.local_addr().unwrap();
+        let ours = crate::transport::bind_socket().unwrap();
+        let udp = {
+            let c = ours.try_clone().unwrap();
+            c.set_nonblocking(true).unwrap();
+            tokio::net::UdpSocket::from_std(c).unwrap()
+        };
+
+        // 1. Direct `send_stun_from` with an unassigned RFC 3849 address MUST
+        //    surface a real kernel AddrNotAvailable / InvalidInput error.
+        let bogus: std::net::Ipv6Addr = "2001:db8::dead:beef".parse().unwrap();
+        let state = quinn::udp::UdpSocketState::new((&udp).into()).unwrap();
+        let id_bad = [0x11; 12];
+        let req_bad = wire::stun_request(&id_bad);
+        let err = send_stun_from(&udp, &state, server_addr, bogus, &req_bad)
+            .await
+            .unwrap_err();
+        assert!(
+            matches!(
+                err.kind(),
+                std::io::ErrorKind::AddrNotAvailable | std::io::ErrorKind::InvalidInput
+            ),
+            "expected AddrNotAvailable/InvalidInput from OS kernel, got {err:?}"
+        );
+
+        // 2. `send_stun_probe` with the unassigned `src_ip` lazily initializes
+        //    `UdpSocketState`, observes the kernel error, falls back to
+        //    `udp.send_to` (safe loopback), and receives the reply on `udp`.
+        let mut pktinfo_state = None;
+        let id_fb = [0x42; 12];
+        let req_fb = wire::stun_request(&id_fb);
+        assert!(
+            send_stun_probe(
+                &udp,
+                &mut pktinfo_state,
+                server_addr,
+                server_addr,
+                &req_fb,
+                Some(bogus),
+            )
+            .await
+        );
+        assert!(pktinfo_state.is_some());
+        let mut buf = [0u8; 64];
+        let (n, from) = tokio::time::timeout(PROBE_WAIT, v6_server.recv_from(&mut buf))
+            .await
+            .unwrap()
+            .unwrap();
+        assert_eq!(buf.get(..n).and_then(wire::parse_stun_request), Some(id_fb));
+        let seen_fb: SocketAddr = "[2001:db8::8]:41234".parse().unwrap();
+        v6_server
+            .send_to(&wire::stun_response(&id_fb, seen_fb), from)
+            .await
+            .unwrap();
+        let (rn, rfrom) = tokio::time::timeout(PROBE_WAIT, udp.recv_from(&mut buf))
+            .await
+            .unwrap()
+            .unwrap();
+        assert_eq!(crate::path::canonical(rfrom), server_addr);
+        assert_eq!(
+            buf.get(..rn)
+                .and_then(|m| wire::parse_stun_response(m, &id_fb)),
+            Some(seen_fb)
+        );
+
+        // 3. `send_stun_probe` with valid `src_ip = ::1` succeeds via
+        //    `IPV6_PKTINFO` and reads the reply on the same `udp` socket.
+        let id_ok = [0x77; 12];
+        let req_ok = wire::stun_request(&id_ok);
+        assert!(
+            send_stun_probe(
+                &udp,
+                &mut pktinfo_state,
+                server_addr,
+                server_addr,
+                &req_ok,
+                Some(std::net::Ipv6Addr::LOCALHOST),
+            )
+            .await
+        );
+        let (n, from) = tokio::time::timeout(PROBE_WAIT, v6_server.recv_from(&mut buf))
+            .await
+            .unwrap()
+            .unwrap();
+        assert_eq!(
+            from.ip(),
+            std::net::IpAddr::V6(std::net::Ipv6Addr::LOCALHOST)
+        );
+        assert_eq!(buf.get(..n).and_then(wire::parse_stun_request), Some(id_ok));
+        let seen_ok: SocketAddr = "[2001:db8::9]:41234".parse().unwrap();
+        v6_server
+            .send_to(&wire::stun_response(&id_ok, seen_ok), from)
+            .await
+            .unwrap();
+        let (rn, rfrom) = tokio::time::timeout(PROBE_WAIT, udp.recv_from(&mut buf))
+            .await
+            .unwrap()
+            .unwrap();
+        assert_eq!(crate::path::canonical(rfrom), server_addr);
+        assert_eq!(
+            buf.get(..rn)
+                .and_then(|m| wire::parse_stun_response(m, &id_ok)),
+            Some(seen_ok)
+        );
+
+        // 4. `send_stun_probe` with `temp = None` on safe loopback sends cleanly.
+        let id_def = [0x88; 12];
+        let req_def = wire::stun_request(&id_def);
+        assert!(
+            send_stun_probe(
+                &udp,
+                &mut pktinfo_state,
+                server_addr,
+                server_addr,
+                &req_def,
+                None,
+            )
+            .await
+        );
+        let (n, _) = tokio::time::timeout(PROBE_WAIT, v6_server.recv_from(&mut buf))
+            .await
+            .unwrap()
+            .unwrap();
+        assert_eq!(
+            buf.get(..n).and_then(wire::parse_stun_request),
+            Some(id_def)
+        );
+
+        // 5. IPv4 server on a dual-stack socket uses the plain `udp.send_to`
+        //    path regardless of IPv6 source checks.
+        let v4_server = tokio::net::UdpSocket::bind("127.0.0.1:0").await.unwrap();
+        let v4_addr = v4_server.local_addr().unwrap();
+        let id_v4 = [0x99; 12];
+        let req_v4 = wire::stun_request(&id_v4);
+        assert!(
+            send_stun_probe(
+                &udp,
+                &mut pktinfo_state,
+                v4_addr,
+                crate::path::in_family(v4_addr, true),
+                &req_v4,
+                None,
+            )
+            .await
+        );
+        let (n, _) = tokio::time::timeout(PROBE_WAIT, v4_server.recv_from(&mut buf))
+            .await
+            .unwrap()
+            .unwrap();
+        assert_eq!(buf.get(..n).and_then(wire::parse_stun_request), Some(id_v4));
+    }
+
+    /// #405: `send_stun_probe` refuses plain `udp.send_to` for an IPv6 target
+    /// whose default source is neither loopback nor `announceable_v6` — both
+    /// when `temp` is `None` (TOCTOU) and when `IPV6_PKTINFO` fails.
+    #[tokio::test]
+    async fn send_stun_probe_refuses_unsafe_ipv6_default_with_and_without_temp() {
+        let ours = crate::transport::bind_socket().unwrap();
+        if !ours.local_addr().unwrap().is_ipv6() {
+            assert!(
+                std::env::var_os("TOTALDROP_REQUIRE_IPV6").is_none(),
+                "TOTALDROP_REQUIRE_IPV6 is set but IPv6 socket is unavailable"
+            );
+            return;
+        }
+        let udp = {
+            let c = ours.try_clone().unwrap();
+            c.set_nonblocking(true).unwrap();
+            tokio::net::UdpSocket::from_std(c).unwrap()
+        };
+        let req = wire::stun_request(&[0x55; 12]);
+        // Unscoped link-local has no safe default route on any OS.
+        let unsafe_v6: SocketAddr = "[fe80::1]:3478".parse().unwrap();
+        let bogus: std::net::Ipv6Addr = "2001:db8::dead:beef".parse().unwrap();
+        let mut pktinfo_state = None;
+
+        // TOCTOU case: temp = None must refuse without initializing state.
+        assert!(!send_stun_probe(&udp, &mut pktinfo_state, unsafe_v6, unsafe_v6, &req, None).await);
+        assert!(pktinfo_state.is_none());
+
+        // Fallback case: rejected IPV6_PKTINFO must NOT fall back to udp.send_to.
+        assert!(
+            !send_stun_probe(
+                &udp,
+                &mut pktinfo_state,
+                unsafe_v6,
+                unsafe_v6,
+                &req,
+                Some(bogus),
+            )
+            .await
+        );
+        // Unroutable destination with a valid local source also returns false.
+        assert!(
+            !send_stun_probe(
+                &udp,
+                &mut pktinfo_state,
+                unsafe_v6,
+                unsafe_v6,
+                &req,
+                Some(std::net::Ipv6Addr::LOCALHOST),
+            )
+            .await
+        );
     }
 
     /// A link whose gate stays shut never connects to the relay; once the

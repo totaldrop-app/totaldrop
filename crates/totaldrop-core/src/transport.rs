@@ -335,8 +335,10 @@ fn widen(socket: &UdpSocket) {
 
 /// The addresses at which `socket` can likely be reached: loopback, the
 /// IPv4 address of the interface that holds the default route, and on a
-/// dual-stack socket the IPv6 address the system would send from (#403).
-/// Finding these with an unconnected UDP `connect` sends no packet.
+/// dual-stack socket the preferred IPv6 source address (a temporary
+/// address on Linux when one is available, #405; otherwise the system's
+/// own choice, #403). Finding these with an unconnected UDP `connect`
+/// sends no packet.
 pub fn local_addresses(socket: &UdpSocket) -> Result<Vec<SocketAddr>> {
     let local = socket.local_addr()?;
     let port = local.port();
@@ -351,8 +353,7 @@ pub fn local_addresses(socket: &UdpSocket) -> Result<Vec<SocketAddr>> {
     // 2001:db8::1 is in the documentation prefix (RFC 3849).
     let doc = std::net::Ipv6Addr::new(0x2001, 0xdb8, 0, 0, 0, 0, 0, 1);
     if local.is_ipv6()
-        && let Some(std::net::IpAddr::V6(ip)) = source_for(SocketAddr::from((doc, 9)))
-        && announceable_v6(ip)
+        && let Some(ip) = crate::ipv6::preferred_source_v6(SocketAddr::from((doc, 9)))
     {
         out.push(SocketAddr::new(ip.into(), port));
     }
@@ -363,10 +364,11 @@ pub fn local_addresses(socket: &UdpSocket) -> Result<Vec<SocketAddr>> {
 /// `0.0.0.0/8` or IPv4-compatible IPv6 ones (`::a.b.c.d`), which name no
 /// peer; not broadcast or multicast ones (#450: a peer's `HINTS` must not
 /// make this device send to every device on the LAN); not IPv6 link-local
-/// ones, which need an interface scope that `HINTS` do not carry; and for IPv6, only when the system would send
-/// from an address [`announceable_v6`] accepts: dialling from a hardware
-/// (EUI-64) address would show the peer the very address this device
-/// keeps out of its own `HINTS`.
+/// ones, which need an interface scope that `HINTS` do not carry; and for
+/// IPv6, only when this device has a loopback or [`announceable_v6`]
+/// source to send from (preferring a temporary address on Linux, #405):
+/// dialling from a hardware (EUI-64) address would show the peer the very
+/// address this device keeps out of its own `HINTS`.
 pub fn dialable(target: SocketAddr) -> bool {
     match target.ip() {
         std::net::IpAddr::V4(ip) => {
@@ -381,13 +383,14 @@ pub fn dialable(target: SocketAddr) -> bool {
         std::net::IpAddr::V6(ip) => {
             ip.is_loopback()
                 || (announceable_v6(ip)
-                    && matches!(source_for(target), Some(std::net::IpAddr::V6(src)) if src.is_loopback() || announceable_v6(src)))
+                    && (crate::ipv6::preferred_source_v6(target).is_some()
+                        || matches!(source_for(target), Some(std::net::IpAddr::V6(src)) if src.is_loopback())))
         }
     }
 }
 
 /// The address this device would send to `target` from, if it has a route.
-fn source_for(target: SocketAddr) -> Option<std::net::IpAddr> {
+pub(crate) fn source_for(target: SocketAddr) -> Option<std::net::IpAddr> {
     let any: SocketAddr = if target.is_ipv4() {
         SocketAddr::from(([0, 0, 0, 0], 0))
     } else {
@@ -405,16 +408,14 @@ fn source_for(target: SocketAddr) -> Option<std::net::IpAddr> {
 /// same on every network and would let a peer recognise the device from
 /// one transfer to the next.
 ///
-/// The address is the one the system picks as its source. Android, iOS,
-/// macOS and Windows use temporary addresses (RFC 8981) by default, and so
-/// pick one that changes over time. Linux picks a temporary address only
-/// where they are turned on (`use_tempaddr` 2, as NetworkManager does on
-/// many distributions); otherwise it picks a stable-privacy address (RFC
-/// 7217), which stays the same on one network, so two transfers from the
-/// same network can be linked to each other by their address, as with a
-/// public IPv4 address. Choosing among the interface's addresses
-/// ourselves is #405. Either way the first 64 bits name the network line,
-/// as a public IPv4 address does.
+/// Android, iOS, macOS and Windows use temporary addresses (RFC 8981) by
+/// default, and so pick one that changes over time. On Linux, where the
+/// kernel picks a temporary address only with `use_tempaddr = 2`,
+/// [`crate::ipv6`] prefers a usable temporary address on the same
+/// interface and prefix when one exists (#405); only when none is present
+/// does it fall back to the system's own choice (such as a stable-privacy
+/// address, RFC 7217, which stays the same on one network). Either way the
+/// first 64 bits name the network line, as a public IPv4 address does.
 pub fn announceable_v6(ip: std::net::Ipv6Addr) -> bool {
     let o = ip.octets();
     let link_local = ip.segments().first().is_some_and(|s| s & 0xffc0 == 0xfe80);
@@ -444,8 +445,8 @@ pub fn endpoint(
     crate::path::RelayPipes,
     crate::path::Fallback,
 )> {
-    let runtime = quinn::default_runtime().ok_or(Error::Connect("no async runtime".into()))?;
-    let inner = runtime.wrap_udp_socket(socket)?;
+    let _runtime = quinn::default_runtime().ok_or(Error::Connect("no async runtime".into()))?;
+    let inner = crate::path::wrap_udp_socket(socket)?;
     endpoint_on(inner, own, peer)
 }
 
@@ -1098,6 +1099,28 @@ mod tests {
         let addr = socket.local_addr().unwrap();
         assert!(addr.is_ipv6() && addr.ip().is_unspecified());
         assert!(!socket2::SockRef::from(&socket).only_v6().unwrap());
+    }
+
+    /// #405: `source_for` and `dialable` stay consistent with preferred IPv6
+    /// source selection for loopback and non-loopback targets.
+    #[test]
+    fn ipv6_source_and_dialable_respect_preferred_v6() {
+        let doc: SocketAddr = "[2001:db8::1]:9".parse().unwrap();
+        let expected_doc = crate::ipv6::preferred_source_v6(doc).is_some()
+            || matches!(source_for(doc), Some(std::net::IpAddr::V6(s)) if s.is_loopback());
+        assert_eq!(dialable(doc), expected_doc);
+        assert!(!dialable("[fe80::1]:9".parse().unwrap()));
+        assert!(!dialable(
+            "[2a02:4e0:2d8a:1b00:21a:2bff:fe3c:4d5e]:9".parse().unwrap()
+        ));
+        if has_ipv6() {
+            let lo: SocketAddr = "[::1]:9".parse().unwrap();
+            assert_eq!(
+                source_for(lo),
+                Some(std::net::IpAddr::V6(std::net::Ipv6Addr::LOCALHOST))
+            );
+            assert!(dialable(lo));
+        }
     }
 
     /// Carry datagrams between two endpoints' relay pipes, as a relay would:
