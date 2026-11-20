@@ -13,13 +13,13 @@ The model grows piece by piece. Each piece is a separate PR:
 | A1 | Membership chain: `create`, `add`, `remove`, `rotate` | In this folder |
 | A2 | Multi-valued transparency log, witnesses, enforced inclusion (P2) | In this folder |
 | A3 | Settling of a rotate and the writer's freshness (the fix for the gap found in A2); ring secret, offers, freshness when sending and when receiving (P3) | In this folder |
-| A4 | Recovery and the recovery part of P7 (A4a); strict mode (A4b), `resolve_fork` (A4c), writing the design rules into `hesap.md` (A4d) | A4a and A4b in this folder, the rest next |
-| A5 | TLA+ evaluation of the waiting times | Next |
+| A4 | Recovery and the recovery part of P7 (A4a); strict mode (A4b); `resolve_fork`, `change_phrase`, policy transitions, and late forks (A4c); writing settled rules into `hesap.md` (A4d) | A4a, A4b, and A4c in this folder; A4d applied to `docs/hesap.md` |
+| A5 | TLA+ evaluation of the waiting times and clock-skew bounds | `GhostRingTiming.tla` and `GhostRingTiming.cfg` in this folder |
 
 ## Running it
 
-It needs Tamarin 1.12.0 and Maude 3.5.1. CI downloads both at a fixed
-version and checks their SHA-256 (`.github/workflows/formal.yml`).
+The Tamarin models need Tamarin 1.12.0 and Maude 3.5.1. CI downloads both at
+a fixed version and checks their SHA-256 (`.github/workflows/formal.yml`).
 
 ```sh
 formal/check.sh          # proves each lemma separately
@@ -34,6 +34,15 @@ by default; when it hits an observed nondeterministic
 runners retry that lemma or mutant once with single-threaded
 `+RTS -N1 -M8G -RTS` within the same `LEMMA_TIMEOUT` budget (#569). The
 time limit per lemma is set with `LEMMA_TIMEOUT` (seconds, default 600).
+
+The TLA+ timing model (`GhostRingTiming.tla`) runs under TLC (tested with
+TLC 2.19 from `tla2tools.jar` v1.7.4):
+
+```sh
+java -XX:+UseParallelGC -cp tla2tools.jar tlc2.TLC \
+  -deadlock -workers auto \
+  -config formal/GhostRingTiming.cfg formal/GhostRingTiming.tla
+```
 
 ## A1: membership chain (`hayalet-halka-zincir.spthy`)
 
@@ -723,7 +732,7 @@ The second review (b7a25cf) gave three important findings, all fixed:
 
 | Abstraction | Why | When it widens |
 | --- | --- | --- |
-| The ring is strict from the first record (the policy field is in the first record); no switching on and off with a `policy` record | Switching off needs the number of signatures strict mode asks for, so it is a proposal; it falls under the same rule | A4c or stage C |
+| The ring is strict from the first record (the policy field is in the first record); no switching on and off with a `policy` record | Switching strict mode off requires two distinct members' `AK` signatures (no single-signature downgrade proposal); modelled in A4c | A4c |
 | The first record carries two devices | Strict mode is recommended for two or more devices | Stage C |
 | No two-signature `add` and `remove` | With two slots there can be no two-signature `add`. A two-signature `remove` (two members' signatures, at once) is the honest way, but removing the device in the second slot needs its signature too; that is not possible in the stolen-device scenario. Its interaction with proposals was not modelled | A4c |
 | No `rotate` | Proposals are written against the period and `rotate` does not change the period; A4a showed that `rotate` blocks neither recovery nor reject | Does not change |
@@ -827,3 +836,232 @@ reader rules as in A4a.
   of the period.
 - A real reader measures that a reject entered the log "before settling"
   with witness time (A5).
+
+## A4c: fork resolution, phrase rotation, and policy transitions (`ghost-ring-fork.spthy`)
+
+Part 4c (`theory GhostRingFork`, English filename per ADR 0019) models a
+**3-device ring** `(d1, d2, d3)` and covers the remaining protocol
+mechanisms from `docs/hesap.md`:
+
+- **Mutual removal forks and late forks:** two members removing each other
+  at the same head (`d1` removes `d2` while `d2` removes `d1`), and a
+  removed device whose `AK` halves leak later writing a conflicting record
+  under the old head (`Log_Read_AK` forces readers to fail closed rather
+  than silently follow the removed device).
+- **`resolve_fork` with active `RK`:** resolves a real fork by naming the
+  digest `h(chosen)` of one validly logged branch
+  (`!LogAK(h(<'log', hh>), chosen, csig1, csig2)`) and verifying its member
+  `AK` hybrid signatures, waiting to settle (`Settled_Old`), enforcing a
+  single resolution per `(ring, head, active RK)` (`Resolve_Single`),
+  overriding fork rule 4 for contacts already on the losing branch
+  (`Contact_Accept_Resolve_Fork_Override`), and requiring out-of-band
+  contact re-verification bound to the `resolve_fork` digest
+  (`!Reverify(r, h(rf_body))`). Remaining honest devices
+  (`Device_Accept_Resolve_Fork_1`) follow a settled `resolve_fork` without
+  out-of-band re-verification.
+- **Phrase rotation (`change_phrase`) and revocation (`recovery_reject`):**
+  `change_phrase` rotates `RK` to a fresh key in both `'default'` (1 `AK`)
+  and `'strict'` (2 distinct `AK`s) modes, waiting to settle before
+  activation; the old `RK` is rejected at the new head. An undisputed
+  `recovery_reject` moves `RK` to `'revoked'`, making `resolve_fork`
+  impossible at that head, while on a forked head `Log_Read_AK` prevents a
+  disputed reject from revoking `RK`.
+- **Policy transitions and 2-signature strict operations:** switching from
+  `'default'` to `'strict'` takes 1 `AK`, whereas switching back from
+  `'strict'` to `'default'`, immediate strict `remove`, and strict
+  `change_phrase` each require 2 distinct members' hybrid `AK` signatures
+  (`Neq(s1, s2)`).
+- **Competing recoveries:** `Owner_Recover`, `Log_Write_Recovery`, and
+  `Contact_Accept_Recovery` with `Rec_Single` verify that two competing
+  `recovery_add` records under the same head and active `RK` never split
+  readers.
+
+To keep Tamarin's source-saturation precomputation fast and free of
+open-chain blowup, `GhostRingFork` is structured in strict layers with
+namespace-separated flat log facts (`!LogAK`, `!LogAK2`, `!LogRf`,
+`!LogRec`) and tag-discriminated `Log_Age_*` rules: Layer 0 generates
+device hybrid `AK` keys (`Device_New`) and phrase keys (`Phrase_New` ->
+`!RKKey`, `UnusedRK`), Layer 1/2 manage honest ring heads and writes with
+zero log facts on LHS, Layer 3 models attacker log writes, Layer 4 models
+settling and owner `RK` actions with digest-bound `resolve_fork`
+(`h(chosen)`), and Layer 5 models contacts through a strictly acyclic
+linear stage graph (`ContactView0 -> ContactView1 -> ContactView2 /
+ContactRem1 / ContactRem2`) alongside empty-RHS
+`Device_Accept_Resolve_Fork_1`. Four Tamarin proof-search tactics
+(`sig_first`, `phrase_first`, `rf_sig_first`, `sanity_cp`) guide goal
+priorities without adding assumptions.
+
+### Abstractions
+
+| Abstraction | Why | When it widens |
+| --- | --- | --- |
+| Honest devices read `!Head` rather than maintaining a separate `Accept` loop into `!Head`; contacts use acyclic stages (`ContactView0 -> ContactView1 -> ContactView2 / ContactRem1 / ContactRem2`) | Eliminates `!Head <-> log` and `ContactView` self-loop cycles so source saturation finishes in Step 1 without open-chain warnings and every lemma proves cleanly in CI | Does not change (readers are modelled separately in Layer 5) |
+| Rotates and `IK` are omitted; each device holds its hybrid Ed25519/ML-DSA-65 `AK` pair `<pk(~a1), pk(~a2)>` | Rotates and `IK` freshness were already proved in A3/A3b/A4a; omitting unused `IK` terms keeps Maude unification compact | Does not change |
+| `Log_Write_AK`, `Log_Write_AK2`, and `Owner_Resolve_Fork` use the same over-approximations as A4b (`Log_Write_RKR`, `Member_Reject`) | Avoids reading `!Head` / `!LogAK` on attacker/owner writer LHS; only adds attacker traces while readers enforce membership and `!LogAK` branch signatures | Does not change |
+| `resolve_fork` commits to `h(chosen)` among single-signature `'remove'` branches | Matches the protocol's digest commitment and canonical mutual-removal real fork in `docs/hesap.md`; other `AK` forks obey the exact same `Log_Read_AK` + `Resolve_Single` rules | Stage C |
+| `Contact_Accept_Resolve_Fork_Override` moves one way from `ContactRem2` (branch 2) to branch 1 | Symmetric by slot renaming; preserves the pre-fork head and slot-1 member without introducing a 2-cycle | Does not change |
+| `Device_Accept_Resolve_Fork_1` has an empty RHS | Models device acceptance of `resolve_fork` (without `!Reverify`) without feeding back into `!Head` | Does not change |
+| `Reveal_Phrase` emits `RevPhrase(rkp)` keyed by `pk(~rk)` | Each fresh phrase key `~rk` from `Phrase_New` is consumed linearly (`UnusedRK`) by at most one ring/rotation, distinguishing compromise of an old rotated-out phrase from the active phrase | Does not change |
+| Out-of-band contact re-verification is modelled as `!Reverify(r, h(record))` | Same human-recognition assumption as `!Words` in A4a/A4b, bound to the exact record digest | Does not change; explained to users |
+
+### Lemmas
+
+All 19 lemmas (8 sanity `exists-trace`, 3 `[reuse]` helpers, 8 security
+`all-traces`) verify with `tamarin-prover 1.12.0` + `maude 3.5.1` via
+`formal/check.sh` with zero wellformedness or open-chain warnings:
+
+| Lemma | Kind | What it says |
+| --- | --- | --- |
+| `sanity_resolve_real_fork` | exists-trace | Mutual removal fork on a 3-device ring is resolved by the owner with `RK`, settles, and is accepted by both a contact (with `!Reverify`) and the third honest device |
+| `sanity_late_fork_fails_closed_then_resolves` | exists-trace | After `d1` removes `d2`, leaked `d2` logs a late conflicting removal; the owner resolves to `d1`'s branch and a late contact follows via `resolve_fork` |
+| `sanity_resolve_overrides_losing_branch` | exists-trace | A contact that accepted the losing branch before the fork is moved to the winning branch by `resolve_fork` (fork rule 7 overriding rule 4) |
+| `sanity_change_phrase_invalidates_old_rk` | exists-trace | After `change_phrase` rotates `rkp0 -> rkp1` and settles, a subsequent fork is resolved under `rkp1` |
+| `sanity_recovery_reject_revokes_rk` | exists-trace | An honest member writes an undisputed `recovery_reject` and a contact accepts it, moving the head to `'revoked'` (non-vacuity of `revoked_rk_cannot_resolve`) |
+| `sanity_policy_switch_to_strict` | exists-trace | Ring switches `'default' -> 'strict'` and performs a 2-signature strict removal (`d1` + `d3` removing `d2`) |
+| `sanity_policy_downgrade_strict_to_default` | exists-trace | Ring switches `'default' -> 'strict'` and downgrades back `'strict' -> 'default'` with two distinct members' `AK` signatures |
+| `sanity_owner_recovers_after_removal` | exists-trace | After a removal frees a slot, the owner recovers a new device and a contact follows after re-verification |
+| `read_resolve_was_logged`, `read_rec_was_logged`, `resolved_after_phrase_change_uses_new_rk` | all-traces, `[reuse]` | Helper lemmas: every accepted `resolve_fork` or `recovery_add` was logged first, and any `resolve_fork` accepted at a post-`change_phrase` head uses `rkp_new` rather than `rkp_old` |
+| `resolved_branch_has_valid_lineage` | all-traces | **P1:** every resolved fork branch was validly logged under `h(<'log', hh>)` before acceptance and signed by honest member `s` (unless both halves of `s`'s `AK` leaked); a stolen `RK` alone cannot fabricate an unlogged branch |
+| `strict_ops_need_two_distinct_members` | all-traces | **P1 (strict policy):** 2-signature strict `remove`, `policy('default')`, and `change_phrase` require two distinct members `s1 != s2`, each having signed honestly or lost both `AK` halves |
+| `no_split_fork_resolution` | all-traces | **P2:** no two readers accept different `resolve_fork` branches for the same `(r, hh, rkp)` |
+| `no_split_competing_recovery` | all-traces | **P2:** no two readers accept different `recovery_add` records for the same `(r, hh, rkp)` |
+| `late_fork_never_hijacks_contact` | all-traces | **P2 (late fork):** once honest member `d` removes `x` at `hh`, no contact accepts a normal `AK` record signed by `x` at `hh` afterwards, even if both `AK` halves of `x` leak |
+| `resolve_fork_requires_contact_reverification` | all-traces | **P7:** a contact accepts `resolve_fork` only if the owner created it (`OwnerResolved`) and it settled in the log first; holds even if `RK` and a device's `AK` both leak |
+| `old_phrase_cannot_resolve_after_change_phrase` | all-traces | **P7 (phrase rotation):** after `change_phrase` rotates `rkp_old -> rkp_new` at `hh`, no reader accepts a `resolve_fork` at `hh` under `rkp_old`; accepting under honest `rkp_new` requires `OwnerResolved` or `RevPhrase(rkp_new)` |
+| `revoked_rk_cannot_resolve` | all-traces | **P7 (undisputed revocation):** after an undisputed `recovery_reject` transitions a head to `'revoked'`, no reader accepts `resolve_fork` there |
+
+### Mutant checks (`mutants.py`)
+
+Six single-fault mutants target `ghost-ring-fork.spthy` (each dropping
+unused rules so the attack search completes in seconds):
+
+| Mutant | Broken check | Expected attack |
+| --- | --- | --- |
+| `resolve_without_reverify` | Removes `!Reverify` from `Contact_Accept_Resolve_Fork_1` | A phrase thief moves a contact via `resolve_fork` without `OwnerResolved` (breaks `resolve_fork_requires_contact_reverification`) |
+| `old_rk_accepted_after_change_phrase` | `Device_Accept_Resolve_Fork_1` verifies against `!GenesisRK` instead of the head's current `rkp` | After `change_phrase`, leaking only the old phrase allows forging a `resolve_fork` at the new head (breaks `old_phrase_cannot_resolve_after_change_phrase`) |
+| `late_fork_overwrites_head` | Removes `restriction Log_Read_AK` | After `d1` removes `d2`, leaked `d2` gets a late conflicting removal accepted by a contact (breaks `late_fork_never_hijacks_contact`) |
+| `fork_allows_two_resolutions` | Removes `restriction Resolve_Single` | Two contacts accept two different `resolve_fork` branches for the same forked head (breaks `no_split_fork_resolution`) |
+| `resolve_unlogged_branch` | Removes `!LogAK(h(<'log', hh>), ...)` and branch `AK` checks from `Device_Accept_Resolve_Fork_1` | A phrase thief resolves to an unlogged branch never signed by any member (breaks `resolved_branch_has_valid_lineage`) |
+| `strict_policy_downgrade_single_ak` | Removes `Neq(s1, s2)` from `Log_Write_AK2` and `Contact_Accept_Policy_Default` | One compromised member downgrades a strict ring to default by signing twice (breaks `strict_ops_need_two_distinct_members`) |
+
+### Not proven yet
+
+- **Denial of service by a phrase thief:** a thief holding only `RK` can
+  log a competing `resolve_fork` or `recovery_add` that stalls resolution
+  (`Resolve_Single` / `Rec_Single`) until contacts re-pair out of band.
+  This is an accepted liveness risk recorded in `docs/hesap.md` and does
+  not violate P7.
+- **Unbounded multi-epoch induction after `resolve_fork`:** as in A1–A4b,
+  unbounded cross-epoch induction over arbitrary chain lengths is left out;
+  all safety properties are proved at the relevant head/period transition.
+
+## A4d: settled rules written into `docs/hesap.md`
+
+All design feedback from A2, A3, A3b, A4a, A4b, A4c, and A5 has been
+written into [docs/hesap.md](../docs/hesap.md), closing all four items
+under `"Rules to settle in the formal model"` (heading preserved verbatim):
+
+- **Witness threshold (A2):** updated from `k > n/2` to `2k - n > f`
+  (single view) and `f < k` (no censorship).
+- **`rotate` settling, writer freshness, and root binding (A3/A3b/A5):**
+  `D = 4 hours` for contacts, `D_device = 6 hours` for ring devices
+  (including the rotating device itself), `D_w = 0` writer freshness (the
+  writer's checked root shows no value under the head's key yet; once a
+  `rotate` is visible, the device stops writing from the pre-rotate head,
+  waits until `D_device = 6 hours`, and writes from the post-rotate head),
+  and binding every `AK` record to its `<= 1h`-fresh checked witnessed root
+  with a `2 hours + 2 * Delta` (`T_ROOT_FRESH + T_INCLUSION + 2 * Delta`,
+  i.e. 2 hours 10 minutes for `Delta <= 5 minutes`) witness-time acceptance
+  window derived from A5's inclusion-plus-freshness bound (refining A3's
+  earlier `1h + clock skew` sketch so honest on-time writers are never
+  rejected while delayed uploads remain strictly `< D = 4 hours`).
+- **Loosened send/receive freshness (A3b):** contacts check that `L_{e+1}`
+  has neither a valid `AK` record nor a settled value (an unsettled
+  `rotate` does not pause transfers).
+- **Post-removal window with clock skew (A5):** refined to
+  `2 hours + 2 * Delta` (2 hours 10 minutes for `Delta <= 5 minutes`).
+- **Period keys, strict-mode queue, targeted rejects, and `rk_remove`
+  (A4a/A4b/A5):** default `recovery_add` under `H("log recovery proposal", m)`
+  (checking every head of period `m`, freshness-independent
+  `recovery_reject`, two recoveries = real fork); strict-mode unified queue
+  `H("log prop", m)` with first-writer-wins single change per period,
+  witness-time late-reject determinism, distinct `reject_pending(digest)`
+  vs `recovery_reject`, and `rk_remove(IK)` requiring `RK` + a staying
+  member's `AK`.
+- **Late forks, `resolve_fork`, `change_phrase`, policy transitions, and P7
+  (A4c):** late forks fail closed with re-pairing as the boundary in rings
+  without a phrase; `resolve_fork` requires the active `RK`, validly logged
+  member branch lineage, single resolution per forked head, waiting, rule-4
+  override on losing branches, and out-of-band human re-verification bound
+  to the record digest; disabling strict mode (`policy`) or rotating the
+  phrase (`change_phrase`) in strict mode requires two distinct members'
+  `AK` signatures (no single-signature downgrade path); competing-`RK` and
+  strict-veto DoS risks and offer `IK` signature bindings are documented
+  explicitly.
+
+*Scope note:* `docs/tehdit-modeli.md` is deliberately left untouched in
+this PR to avoid merge conflicts with active PRs currently modifying it;
+its threat-table entries will be synchronised in a dedicated follow-up
+once those PRs land.
+
+## A5: TLA+ timing evaluation (`GhostRingTiming.tla`)
+
+The Tamarin models abstract time to discrete ordering events (`Old`,
+`Settled`). `formal/GhostRingTiming.tla` and `formal/GhostRingTiming.cfg`
+exhaustively model-check the concrete numeric timing inequalities under
+monotonically non-decreasing witness root timestamps (`wTime' >= wTime`),
+bounded witness inclusion (`T_INCLUSION`), bounded root age
+(`T_ROOT_FRESH`), and bounded clock skew (`+/- DELTA`) between real time,
+witnesses, and participants.
+
+### Derived inequalities and production parameters
+
+| Parameter / bound | Exact condition | Real value (`Delta <= 5m`) | Model value (`GhostRingTiming.cfg`) |
+| --- | --- | --- | --- |
+| Inclusion bound (`T_INCLUSION`) | Honest record enters a root within `T_INCLUSION` | `1 hour` | `2` ticks |
+| Root freshness (`T_ROOT_FRESH`) | Accepted root age on local clock `<= T_ROOT_FRESH` | `1 hour` | `2` ticks |
+| Clock skew (`DELTA`) | `\|clock - now\| <= DELTA` and `\|wTime - now\| <= DELTA` | `<= 5 minutes` | `1` tick (wider stress test) |
+| Post-removal window (P3) | `<= T_INCLUSION + T_ROOT_FRESH + 2 * DELTA` | `<= 2h 10m` | `<= 6` ticks (tight) |
+| `rotate` settling (`D_ROTATE`, A3) | `D_ROTATE > T_INCLUSION + T_ROOT_FRESH + 2 * DELTA` | `4 hours` (`> 2h 10m`, 110m margin) | `7` ticks (`> 6`, tight by 1 tick) |
+| Device follow margin (`D_ROTATE_DEVICE`, A3b) | `D_ROTATE_DEVICE >= D_ROTATE + T_ROOT_FRESH + 2 * DELTA` | `6 hours` (`>= 5h 10m`, 50m margin) | `11` ticks (`>= 11`, exact boundary) |
+| Proposal settling (`T_SETTLE`, A4a–A4c) | `T_SETTLE > T_INCLUSION + 2 * DELTA`; timely reject if submitted `< propEntry + T_SETTLE - T_INCLUSION - DELTA` | `72 hours` / `7 days` | `7` ticks (`> 4`) |
+
+### Disjoint scenarios and invariants
+
+`Init` chooses `scenario \in {"proposal", "removal", "rotate"}` so TLC
+exhaustively checks the sum of the three mechanisms:
+
+- `TypeOK` — domain and clock-skew bounds (`now - DELTA <= wTime <= now + DELTA`).
+- `SafetyNoAcceptBeforeSettle` — no reader accepts a proposal before
+  `propEntry + T_SETTLE` of witness time (immune to local clock spoofing).
+- `SafetyRejectBeforeSettleVoids` — any targeted reject with witness entry
+  timestamp `< propEntry + T_SETTLE` prevents acceptance (relying on
+  witness timestamp monotonicity).
+- `SafetyLateRejectDoesNotSplit` — early and late readers never split on a
+  proposal when a late reject arrives at or after `propEntry + T_SETTLE`.
+- `SafetyTimelyRejectGuaranteed` — any reject submitted strictly more than
+  `T_INCLUSION + DELTA` before `propEntry + T_SETTLE` enters before the
+  settling deadline.
+- `SafetyPostRemovalWindowBounded` — no contact passes a freshness check
+  with a pre-removal root past
+  `remSubmitted + T_INCLUSION + T_ROOT_FRESH + 2 * DELTA`.
+- `SafetyRemoveEntersBeforeRotateSettles` — an honest `remove` checked
+  against a pre-rotate root (`D_w = 0`) enters a witnessed root strictly
+  before `rotEntryW + D_ROTATE`.
+- `SafetyNoStaleSendAfterDeviceFollowsRotate` — once the rotating device
+  follows its `rotate` at `wTime >= rotEntryW + D_ROTATE_DEVICE`, no
+  contact with a skewed local clock can still treat an unsettled-`rotate`
+  root as fresh.
+
+### TLC verification results
+
+Checked with **TLC 2.19** (`tla2tools.jar` v1.7.4, OpenJDK 17, 2 workers):
+
+- **Valid constants (`GhostRingTiming.cfg`):** `771,732` states generated,
+  `275,681` distinct states found, search depth `20`, `0` errors (`6s`).
+- **Tightness and mutation checks (all produced the expected counterexample):**
+  - Lowering `D_ROTATE` by 1 tick (`7 -> 6`) violates `SafetyRemoveEntersBeforeRotateSettles`.
+  - Lowering `D_ROTATE_DEVICE` by 1 tick (`11 -> 10`) violates `SafetyNoStaleSendAfterDeviceFollowsRotate`.
+  - Tightening the P3 bound by 1 tick (`- 1`) violates `SafetyPostRemovalWindowBounded`.
+  - Removing witness inclusion enforcement on rejects violates `SafetyTimelyRejectGuaranteed`.
+  - Reachability assertions confirmed non-vacuity for late-reject dual acceptance, timely-reject dual rejection, and rotating-device follow transitions.

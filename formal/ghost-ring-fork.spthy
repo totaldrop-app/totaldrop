@@ -1,0 +1,1036 @@
+// SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+/*
+ * Ghost ring (docs/hesap.md, decision 0013), part 4c of the formal model
+ * (#251): fork resolution (resolve_fork), late forks, phrase rotation
+ * (change_phrase), recovery_reject, policy transitions, and competing
+ * recoveries on a 3-device ring.
+ *
+ * Strictly layered architecture with namespace-separated log facts
+ * (!LogAK, !LogAK2, !LogRf, !LogRec), Layer-0 key generation (Device_New,
+ * Phrase_New), digest-bound resolve_fork (h(chosen)), and an acyclic
+ * Layer-5 reader view graph (ContactView0 -> ContactView1 -> ContactView2 /
+ * ContactRem1 / ContactRem2) so Tamarin source saturation finishes in Step 1
+ * without open-chain blowup:
+ *  - Layer 0: devices (hybrid Ed25519/ML-DSA-65 AK), phrase keys (RK), and
+ *    independent key leaks (Reveal_A1, Reveal_A2, Reveal_Phrase).
+ *  - Layer 1: 3-device ring genesis (d1, d2, d3) in 'default' policy with
+ *    initial recovery key RK.
+ *  - Layer 2: honest member operations (default 1-AK remove, policy
+ *    transitions default <-> strict, strict 2-AK remove, change_phrase in
+ *    default and strict modes settling before activation, undisputed
+ *    recovery_reject revoking RK). None of these rules read log facts.
+ *  - Layer 3: attacker log writes (1-AK, 2-AK, resolve_fork, recovery_add).
+ *  - Layer 4: time passing (Log_Age_* -> Old) and owner RK operations
+ *    (Owner_Resolve_Fork, Owner_Recover) emitting authentic out-of-band
+ *    re-verification (!Reverify) bound to the record digest.
+ *  - Layer 5: readers (acyclic linear ContactView0/1/2 + ContactRem1/2 for
+ *    contacts and empty-RHS Device_Accept_Resolve_Fork_1 for honest
+ *    devices), including Rule 7 overriding Rule 4 on a losing branch
+ *    (Contact_Accept_Resolve_Fork_Override).
+ *
+ * Properties proved:
+ *  - P1: resolved_branch_has_valid_lineage, strict_ops_need_two_distinct_members
+ *  - P2: no_split_fork_resolution, no_split_competing_recovery,
+ *        late_fork_never_hijacks_contact
+ *  - P7: resolve_fork_requires_contact_reverification,
+ *        old_phrase_cannot_resolve_after_change_phrase,
+ *        revoked_rk_cannot_resolve
+ */
+
+theory GhostRingFork
+begin
+
+builtins: signing, hashing
+
+restriction Eq: "All x y #i. Eq(x, y) @ i ==> x = y"
+
+restriction Neq: "All x y #i. Neq(x, y) @ i ==> not (x = y)"
+
+restriction NotEmpty: "All x #i. NotEmpty(x) @ i ==> not (x = 'empty')"
+
+restriction InRing3: "All s m1 m2 m3 #i. InRing3(s, m1, m2, m3) @ i ==> s = m1 | s = m2 | s = m3"
+
+/* --- Layer 0: Devices, phrase keys, and key leaks --------------------- */
+
+rule Device_New:
+    let d = <pk(~a1), pk(~a2)>
+    in
+    [ Fr(~a1), Fr(~a2) ]
+  --[ DeviceNew(d) ]->
+    [ !DevKey(d, ~a1, ~a2), Unused(d), Out(d) ]
+
+rule Phrase_New:
+    [ Fr(~rk) ]
+  -->
+    [ !RKKey(pk(~rk), ~rk), UnusedRK(pk(~rk), ~rk), Out(pk(~rk)) ]
+
+rule Reveal_A1:
+    [ !DevKey(d, ~a1, ~a2) ] --[ RevA1(d) ]-> [ Out(~a1) ]
+
+rule Reveal_A2:
+    [ !DevKey(d, ~a1, ~a2) ] --[ RevA2(d) ]-> [ Out(~a2) ]
+
+rule Reveal_Phrase:
+    [ !RKKey(rkp, ~rk) ] --[ RevPhrase(rkp) ]-> [ Out(~rk) ]
+
+/* --- Layer 1: 3-device ring genesis ----------------------------------- */
+
+rule Ring_Create:
+    let d1 = <pk(~a11), pk(~a12)>
+        d2 = <pk(~a21), pk(~a22)>
+        d3 = <pk(~a31), pk(~a32)>
+        r = h(<'ring', ~rid>)
+        h0 = h(<'create', ~rid, pk(~rk)>)
+    in
+    [ Unused(d1), Unused(d2), Unused(d3),
+      !DevKey(d1, ~a11, ~a12),
+      !DevKey(d2, ~a21, ~a22),
+      !DevKey(d3, ~a31, ~a32),
+      UnusedRK(pk(~rk), ~rk), Fr(~rid) ]
+  --[ Created(r, d1, d2, d3),
+      GenesisHead(r, h0, pk(~rk)),
+      NewPhraseKey(r, pk(~rk)) ]->
+    [ !Genesis(r, h0, 'default', pk(~rk), d1, d2, d3),
+      !GenesisRK(r, pk(~rk)),
+      !Head(r, h0, 'default', pk(~rk), d1, d2, d3),
+      Out(r), Out(h0) ]
+
+/* --- Layer 2: Honest member operations (no log facts on LHS) ---------- */
+
+rule Member_Remove_Default_1:
+    let r = h(rb)
+        hh = h(hb)
+        d1 = <pk(~a11), pk(~a12)>
+        body = <'rec', r, hh, 'remove', h(m2), d1>
+        sig1 = sign(<'ed', body>, ~a11)
+        sig2 = sign(<'ml', body>, ~a12)
+    in
+    [ !Head(r, hh, 'default', rkp, d1, m2, m3), !DevKey(d1, ~a11, ~a12) ]
+  --[ NotEmpty(m2), NotEmpty(m3),
+      LogValid(h(<'log', hh>), body, 'ak'),
+      SignedRemove(d1, r, hh, h(m2)),
+      SignedBranch(d1, r, hh, body),
+      Step('MR1') ]->
+    [ !Head(r, h(body), 'default', rkp, d1, 'empty', m3),
+      !LogAK(h(<'log', hh>), body, sig1, sig2),
+      Out(body), Out(sig1), Out(sig2) ]
+
+rule Member_Remove_Default_2:
+    let r = h(rb)
+        hh = h(hb)
+        d2 = <pk(~a21), pk(~a22)>
+        body = <'rec', r, hh, 'remove', h(m1), d2>
+        sig1 = sign(<'ed', body>, ~a21)
+        sig2 = sign(<'ml', body>, ~a22)
+    in
+    [ !Head(r, hh, 'default', rkp, m1, d2, m3), !DevKey(d2, ~a21, ~a22) ]
+  --[ NotEmpty(m1), NotEmpty(m3),
+      LogValid(h(<'log', hh>), body, 'ak'),
+      SignedRemove(d2, r, hh, h(m1)),
+      SignedBranch(d2, r, hh, body),
+      Step('MR2') ]->
+    [ !Head(r, h(body), 'default', rkp, 'empty', d2, m3),
+      !LogAK(h(<'log', hh>), body, sig1, sig2),
+      Out(body), Out(sig1), Out(sig2) ]
+
+rule Member_Policy_Strict:
+    let r = h(rb)
+        hh = h(hb)
+        d1 = <pk(~a11), pk(~a12)>
+        body = <'rec', r, hh, 'policy', 'strict', d1>
+        sig1 = sign(<'ed', body>, ~a11)
+        sig2 = sign(<'ml', body>, ~a12)
+    in
+    [ !Head(r, hh, 'default', rkp, d1, m2, m3), !DevKey(d1, ~a11, ~a12) ]
+  --[ NotEmpty(m2), NotEmpty(m3),
+      LogValid(h(<'log', hh>), body, 'ak'),
+      Step('MPS') ]->
+    [ !Head(r, h(body), 'strict', rkp, d1, m2, m3),
+      !LogAK(h(<'log', hh>), body, sig1, sig2),
+      Out(body), Out(sig1), Out(sig2) ]
+
+rule Member_Policy_Default:
+    let r = h(rb)
+        hh = h(hb)
+        d1 = <pk(~a11), pk(~a12)>
+        d2 = <pk(~a21), pk(~a22)>
+        body = <'rec2', r, hh, 'policy', 'default', d1, d2>
+        s1a = sign(<'ed', body>, ~a11)
+        s1b = sign(<'ml', body>, ~a12)
+        s2a = sign(<'ed', body>, ~a21)
+        s2b = sign(<'ml', body>, ~a22)
+    in
+    [ !Head(r, hh, 'strict', rkp, d1, d2, m3),
+      !DevKey(d1, ~a11, ~a12), !DevKey(d2, ~a21, ~a22) ]
+  --[ NotEmpty(m3), Neq(d1, d2),
+      LogValid(h(<'log', hh>), body, 'ak'),
+      SignedStrict2(d1, r, hh, 'policy', 'default'),
+      SignedStrict2(d2, r, hh, 'policy', 'default'),
+      Step('MPD') ]->
+    [ !Head(r, h(body), 'default', rkp, d1, d2, m3),
+      !LogAK2(h(<'log', hh>), body, s1a, s1b, s2a, s2b),
+      Out(body), Out(s1a), Out(s1b), Out(s2a), Out(s2b) ]
+
+rule Member_Remove_Strict_1:
+    let r = h(rb)
+        hh = h(hb)
+        d1 = <pk(~a11), pk(~a12)>
+        d3 = <pk(~a31), pk(~a32)>
+        body = <'rec2', r, hh, 'remove', h(m2), d1, d3>
+        s1a = sign(<'ed', body>, ~a11)
+        s1b = sign(<'ml', body>, ~a12)
+        s2a = sign(<'ed', body>, ~a31)
+        s2b = sign(<'ml', body>, ~a32)
+    in
+    [ !Head(r, hh, 'strict', rkp, d1, m2, d3),
+      !DevKey(d1, ~a11, ~a12), !DevKey(d3, ~a31, ~a32) ]
+  --[ NotEmpty(m2), Neq(d1, d3),
+      LogValid(h(<'log', hh>), body, 'ak'),
+      SignedRemove(d1, r, hh, h(m2)),
+      SignedStrict2(d1, r, hh, 'remove', h(m2)),
+      SignedStrict2(d3, r, hh, 'remove', h(m2)),
+      Step('MRS') ]->
+    [ !Head(r, h(body), 'strict', rkp, d1, 'empty', d3),
+      !LogAK2(h(<'log', hh>), body, s1a, s1b, s2a, s2b),
+      Out(body), Out(s1a), Out(s1b), Out(s2a), Out(s2b) ]
+
+rule Member_Change_Phrase_Default:
+    let r = h(rb)
+        hh = h(hb)
+        d1 = <pk(~a11), pk(~a12)>
+        body = <'rec', r, hh, 'change_phrase', pk(~rk2), d1>
+        sig1 = sign(<'ed', body>, ~a11)
+        sig2 = sign(<'ml', body>, ~a12)
+    in
+    [ !Head(r, hh, 'default', rkp_old, d1, m2, m3),
+      !DevKey(d1, ~a11, ~a12), UnusedRK(pk(~rk2), ~rk2) ]
+  --[ NotEmpty(m2), NotEmpty(m3), Neq(rkp_old, pk(~rk2)),
+      LogValid(h(<'log', hh>), body, 'ak'),
+      NewPhraseKey(r, pk(~rk2)),
+      Step('MCP') ]->
+    [ PendingPhraseDef(r, hh, d1, rkp_old, pk(~rk2), m2, m3),
+      !LogAK(h(<'log', hh>), body, sig1, sig2),
+      Out(body), Out(sig1), Out(sig2) ]
+
+rule Device_Activate_Change_Phrase_Default:
+    let body = <'rec', r, hh, 'change_phrase', rkp_new, d1>
+    in
+    [ PendingPhraseDef(r, hh, d1, rkp_old, rkp_new, m2, m3) ]
+  --[ Neq(rkp_old, rkp_new),
+      Settled(h(<'log', hh>), body),
+      ReadL(h(<'log', hh>), body, 'ak'),
+      PhraseChanged(d1, r, h(body), rkp_old, rkp_new),
+      Step('ACP') ]->
+    [ !Head(r, h(body), 'default', rkp_new, d1, m2, m3) ]
+
+rule Member_Change_Phrase_Strict:
+    let r = h(rb)
+        hh = h(hb)
+        d1 = <pk(~a11), pk(~a12)>
+        d2 = <pk(~a21), pk(~a22)>
+        body = <'rec2', r, hh, 'change_phrase', pk(~rk2), d1, d2>
+        s1a = sign(<'ed', body>, ~a11)
+        s1b = sign(<'ml', body>, ~a12)
+        s2a = sign(<'ed', body>, ~a21)
+        s2b = sign(<'ml', body>, ~a22)
+    in
+    [ !Head(r, hh, 'strict', rkp_old, d1, d2, m3),
+      !DevKey(d1, ~a11, ~a12), !DevKey(d2, ~a21, ~a22), UnusedRK(pk(~rk2), ~rk2) ]
+  --[ NotEmpty(m3), Neq(d1, d2), Neq(rkp_old, pk(~rk2)),
+      LogValid(h(<'log', hh>), body, 'ak'),
+      SignedStrict2(d1, r, hh, 'change_phrase', pk(~rk2)),
+      SignedStrict2(d2, r, hh, 'change_phrase', pk(~rk2)),
+      NewPhraseKey(r, pk(~rk2)),
+      Step('MCPS') ]->
+    [ PendingPhraseStr(r, hh, d1, d2, rkp_old, pk(~rk2), m3),
+      !LogAK2(h(<'log', hh>), body, s1a, s1b, s2a, s2b),
+      Out(body), Out(s1a), Out(s1b), Out(s2a), Out(s2b) ]
+
+rule Device_Activate_Change_Phrase_Strict:
+    let body = <'rec2', r, hh, 'change_phrase', rkp_new, d1, d2>
+    in
+    [ PendingPhraseStr(r, hh, d1, d2, rkp_old, rkp_new, m3) ]
+  --[ Neq(rkp_old, rkp_new),
+      Settled(h(<'log', hh>), body),
+      ReadL(h(<'log', hh>), body, 'ak'),
+      PhraseChanged(d1, r, h(body), rkp_old, rkp_new),
+      Step('ACPS') ]->
+    [ !Head(r, h(body), 'strict', rkp_new, d1, d2, m3) ]
+
+/* Undisputed recovery_reject revokes RK (rkp -> 'revoked'). On a forked
+   head, Log_Read_AK blocks readers from following a disputed reject, so
+   RK remains usable for resolve_fork (fork rules 5 and 7). */
+rule Member_Recovery_Reject:
+    let r = h(rb)
+        hh = h(hb)
+        rkp = pk(rks)
+        d1 = <pk(~a11), pk(~a12)>
+        body = <'rec', r, hh, 'recovery_reject', rkp, d1>
+        sig1 = sign(<'ed', body>, ~a11)
+        sig2 = sign(<'ml', body>, ~a12)
+    in
+    [ !Head(r, hh, pol, rkp, d1, m2, m3), !DevKey(d1, ~a11, ~a12) ]
+  --[ NotEmpty(m2), NotEmpty(m3), Neq(rkp, 'revoked'),
+      LogValid(h(<'log', hh>), body, 'ak'),
+      RecoveryRejectedAt(d1, r, h(body), rkp),
+      Step('MRJ') ]->
+    [ !Head(r, h(body), pol, 'revoked', d1, m2, m3),
+      !LogAK(h(<'log', hh>), body, sig1, sig2),
+      Out(body), Out(sig1), Out(sig2) ]
+
+/* --- Layer 3: Attacker log writes ------------------------------------- */
+
+/* As in A4b (Log_Write_RKR), Log_Write_AK and Log_Write_AK2 verify the
+   hybrid AK signatures without reading !Head (readers check membership
+   against their own view); this over-approximation only adds attacker
+   traces while keeping source saturation fast. */
+rule Log_Write_AK:
+    let s = <sa1, sa2>
+        body = <'rec', r, hh, op, payload, s>
+    in
+    [ In(<body, sig1, sig2>) ]
+  --[ Eq(verify(sig1, <'ed', body>, sa1), true),
+      Eq(verify(sig2, <'ml', body>, sa2), true),
+      NotEmpty(s),
+      LogValid(h(<'log', hh>), body, 'ak') ]->
+    [ !LogAK(h(<'log', hh>), body, sig1, sig2) ]
+
+rule Log_Write_AK2:
+    let s1 = <s1a1, s1a2>
+        s2 = <s2a1, s2a2>
+        body = <'rec2', r, hh, op, payload, s1, s2>
+    in
+    [ In(<body, s1a, s1b, s2a, s2b>) ]
+  --[ Eq(verify(s1a, <'ed', body>, s1a1), true),
+      Eq(verify(s1b, <'ml', body>, s1a2), true),
+      Eq(verify(s2a, <'ed', body>, s2a1), true),
+      Eq(verify(s2b, <'ml', body>, s2a2), true),
+      NotEmpty(s1), NotEmpty(s2), Neq(s1, s2),
+      LogValid(h(<'log', hh>), body, 'ak') ]->
+    [ !LogAK2(h(<'log', hh>), body, s1a, s1b, s2a, s2b) ]
+
+rule Log_Write_Resolve:
+    let rf_body = <'resolve', r, hh, h_chosen, rkp>
+    in
+    [ In(<rf_body, sigr>), !RKKey(rkp, ~rk) ]
+  --[ Eq(verify(sigr, <'rf', rf_body>, rkp), true),
+      ResolveLogged(r, hh, rkp, rf_body) ]->
+    [ !LogRf(h(<'rflog', hh>), rf_body, sigr) ]
+
+rule Log_Write_Recovery:
+    let rec_body = <'recover', r, hh, n, rkp>
+    in
+    [ In(<rec_body, sigr>), !RKKey(rkp, ~rk) ]
+  --[ Eq(verify(sigr, <'rk', rec_body>, rkp), true),
+      RecLogged(r, hh, rkp, rec_body) ]->
+    [ !LogRec(h(<'rlog', hh>), rec_body, sigr) ]
+
+/* --- Layer 4: Time passing and owner RK actions ----------------------- */
+
+rule Log_Age_AK:
+    let body = <'rec', r, hh, op, payload, s>
+    in
+    [ !LogAK(h(<'log', hh>), body, sig1, sig2) ] --[ Old(h(<'log', hh>), body) ]-> [ ]
+
+rule Log_Age_AK2:
+    let body = <'rec2', r, hh, op, payload, s1, s2>
+    in
+    [ !LogAK2(h(<'log', hh>), body, s1a, s1b, s2a, s2b) ] --[ Old(h(<'log', hh>), body) ]-> [ ]
+
+rule Log_Age_Rf:
+    let rf_body = <'resolve', r, hh, h_chosen, rkp>
+    in
+    [ !LogRf(h(<'rflog', hh>), rf_body, sigr) ] --[ Old(h(<'rflog', hh>), rf_body) ]-> [ ]
+
+rule Log_Age_Rec:
+    let rec_body = <'recover', r, hh, n, rkp>
+    in
+    [ !LogRec(h(<'rlog', hh>), rec_body, sigr) ] --[ Old(h(<'rlog', hh>), rec_body) ]-> [ ]
+
+/* Owner resolves a fork by naming the winning branch digest h(chosen).
+   Reading chosen from In over-approximates "seen in the log" (as in A4b's
+   Member_Reject), avoiding !LogAK -> !LogRf chaining during source
+   saturation; every reader still checks !LogAK and both member AK halves. */
+rule Owner_Resolve_Fork:
+    let r = h(rb)
+        hh = h(hb)
+        chosen = <'rec', r, hh, 'remove', hx, s>
+        rf_body = <'resolve', r, hh, h(chosen), pk(~rk)>
+        sigr = sign(<'rf', rf_body>, ~rk)
+    in
+    [ !RKKey(pk(~rk), ~rk), In(chosen) ]
+  --[ OwnerResolved(r, hh, chosen, pk(~rk)),
+      ResolveLogged(r, hh, pk(~rk), rf_body),
+      Step('ORF') ]->
+    [ !Reverify(r, h(rf_body)),
+      !LogRf(h(<'rflog', hh>), rf_body, sigr),
+      Out(rf_body), Out(sigr) ]
+
+rule Owner_Recover:
+    let r = h(rb)
+        hh = h(hb)
+        n = <pk(na1), pk(na2)>
+        rec_body = <'recover', r, hh, n, pk(~rk)>
+        sigr = sign(<'rk', rec_body>, ~rk)
+    in
+    [ !RKKey(pk(~rk), ~rk), Unused(n), !Head(r, hh, pol, pk(~rk), m1, 'empty', m3) ]
+  --[ NotEmpty(m1), NotEmpty(m3),
+      OwnerRecovered(r, hh, n, pk(~rk)),
+      RecLogged(r, hh, pk(~rk), rec_body),
+      Step('OR') ]->
+    [ !Reverify(r, h(rec_body)),
+      !LogRec(h(<'rlog', hh>), rec_body, sigr),
+      Out(rec_body), Out(sigr) ]
+
+/* --- Layer 5: Readers (strictly acyclic contact stages + devices) ----- */
+
+rule Contact_Pin:
+    [ !Genesis(r, h0, pol, rkp, d1, d2, d3), Fr(~c) ]
+  --[ Pin(~c, r, h0) ]->
+    [ ContactView0(~c, r, h0, pol, rkp, d1, d2, d3) ]
+
+rule Contact_Stay_01:
+    [ ContactView0(c, r, hh, pol, rkp, m1, m2, m3) ]
+  -->
+    [ ContactView1(c, r, hh, pol, rkp, m1, m2, m3) ]
+
+rule Contact_Accept_Policy_Strict:
+    let m1 = <m1a1, m1a2>
+        body = <'rec', r, hh, 'policy', 'strict', m1>
+    in
+    [ ContactView0(c, r, hh, 'default', rkp, m1, m2, m3),
+      !LogAK(h(<'log', hh>), body, sig1, sig2) ]
+  --[ Eq(verify(sig1, <'ed', body>, m1a1), true),
+      Eq(verify(sig2, <'ml', body>, m1a2), true),
+      NotEmpty(m1),
+      ReadL(h(<'log', hh>), body, 'ak'),
+      AcceptNormal(c, r, hh, 'policy', 'strict', m1),
+      Step('APS') ]->
+    [ ContactView1(c, r, h(body), 'strict', rkp, m1, m2, m3) ]
+
+rule Contact_Accept_Change_Phrase_Default:
+    let m1 = <m1a1, m1a2>
+        body = <'rec', r, hh, 'change_phrase', rkp_new, m1>
+    in
+    [ ContactView0(c, r, hh, 'default', rkp_old, m1, m2, m3),
+      !LogAK(h(<'log', hh>), body, sig1, sig2) ]
+  --[ Eq(verify(sig1, <'ed', body>, m1a1), true),
+      Eq(verify(sig2, <'ml', body>, m1a2), true),
+      NotEmpty(m1), Neq(rkp_old, rkp_new),
+      Settled(h(<'log', hh>), body),
+      ReadL(h(<'log', hh>), body, 'ak'),
+      AcceptNormal(c, r, hh, 'change_phrase', rkp_new, m1),
+      PhraseChanged(c, r, h(body), rkp_old, rkp_new),
+      Step('ACPD') ]->
+    [ ContactView1(c, r, h(body), 'default', rkp_new, m1, m2, m3) ]
+
+rule Contact_Accept_Recovery_Reject:
+    let m1 = <m1a1, m1a2>
+        body = <'rec', r, hh, 'recovery_reject', rkp, m1>
+    in
+    [ ContactView0(c, r, hh, pol, rkp, m1, m2, m3),
+      !LogAK(h(<'log', hh>), body, sig1, sig2) ]
+  --[ Eq(verify(sig1, <'ed', body>, m1a1), true),
+      Eq(verify(sig2, <'ml', body>, m1a2), true),
+      NotEmpty(m1), Neq(rkp, 'revoked'),
+      ReadL(h(<'log', hh>), body, 'ak'),
+      AcceptNormal(c, r, hh, 'recovery_reject', rkp, m1),
+      RecoveryRejectedAt(c, r, h(body), rkp),
+      Step('ARJ') ]->
+    [ ContactView1(c, r, h(body), pol, 'revoked', m1, m2, m3) ]
+
+rule Contact_Stay_12:
+    [ ContactView1(c, r, hh, pol, rkp, m1, m2, m3) ]
+  -->
+    [ ContactView2(c, r, hh, pol, rkp, m1, m2, m3) ]
+
+rule Contact_Accept_Change_Phrase_Strict:
+    let m1 = <m1a1, m1a2>
+        m2 = <m2a1, m2a2>
+        body = <'rec2', r, hh, 'change_phrase', rkp_new, m1, m2>
+    in
+    [ ContactView1(c, r, hh, 'strict', rkp_old, m1, m2, m3),
+      !LogAK2(h(<'log', hh>), body, s1a, s1b, s2a, s2b) ]
+  --[ Eq(verify(s1a, <'ed', body>, m1a1), true),
+      Eq(verify(s1b, <'ml', body>, m1a2), true),
+      Eq(verify(s2a, <'ed', body>, m2a1), true),
+      Eq(verify(s2b, <'ml', body>, m2a2), true),
+      NotEmpty(m1), NotEmpty(m2), Neq(m1, m2), Neq(rkp_old, rkp_new),
+      Settled(h(<'log', hh>), body),
+      ReadL(h(<'log', hh>), body, 'ak'),
+      AcceptStrict2(c, r, hh, 'change_phrase', rkp_new, m1, m2),
+      PhraseChanged(c, r, h(body), rkp_old, rkp_new),
+      Step('ACPC') ]->
+    [ ContactView2(c, r, h(body), 'strict', rkp_new, m1, m2, m3) ]
+
+rule Contact_Accept_Remove_Default_1:
+    let m1 = <m1a1, m1a2>
+        body = <'rec', r, hh, 'remove', h(m2), m1>
+    in
+    [ ContactView1(c, r, hh, 'default', rkp, m1, m2, m3),
+      !LogAK(h(<'log', hh>), body, sig1, sig2) ]
+  --[ Eq(verify(sig1, <'ed', body>, m1a1), true),
+      Eq(verify(sig2, <'ml', body>, m1a2), true),
+      NotEmpty(m1), NotEmpty(m2),
+      ReadL(h(<'log', hh>), body, 'ak'),
+      AcceptNormal(c, r, hh, 'remove', h(m2), m1),
+      Step('AR1') ]->
+    [ ContactRem1(c, r, h(body), 'default', rkp, m1, m3) ]
+
+rule Contact_Accept_Remove_Default_2:
+    let m2 = <m2a1, m2a2>
+        body = <'rec', r, hh, 'remove', h(m1), m2>
+    in
+    [ ContactView1(c, r, hh, 'default', rkp, m1, m2, m3),
+      !LogAK(h(<'log', hh>), body, sig1, sig2) ]
+  --[ Eq(verify(sig1, <'ed', body>, m2a1), true),
+      Eq(verify(sig2, <'ml', body>, m2a2), true),
+      NotEmpty(m1), NotEmpty(m2),
+      ReadL(h(<'log', hh>), body, 'ak'),
+      AcceptNormal(c, r, hh, 'remove', h(m1), m2),
+      Step('AR2') ]->
+    [ ContactRem2(c, r, hh, 'default', rkp, m1, m2, m3) ]
+
+rule Contact_Accept_Remove_Strict_1:
+    let m1 = <m1a1, m1a2>
+        m3 = <m3a1, m3a2>
+        body = <'rec2', r, hh, 'remove', h(m2), m1, m3>
+    in
+    [ ContactView1(c, r, hh, 'strict', rkp, m1, m2, m3),
+      !LogAK2(h(<'log', hh>), body, s1a, s1b, s2a, s2b) ]
+  --[ Eq(verify(s1a, <'ed', body>, m1a1), true),
+      Eq(verify(s1b, <'ml', body>, m1a2), true),
+      Eq(verify(s2a, <'ed', body>, m3a1), true),
+      Eq(verify(s2b, <'ml', body>, m3a2), true),
+      NotEmpty(m1), NotEmpty(m2), NotEmpty(m3), Neq(m1, m3),
+      ReadL(h(<'log', hh>), body, 'ak'),
+      AcceptStrict2(c, r, hh, 'remove', h(m2), m1, m3),
+      Step('ARS') ]->
+    [ ContactRem1(c, r, h(body), 'strict', rkp, m1, m3) ]
+
+rule Contact_Accept_Policy_Default:
+    let s1 = <s1a1, s1a2>
+        s2 = <s2a1, s2a2>
+        body = <'rec2', r, hh, 'policy', 'default', s1, s2>
+    in
+    [ ContactView1(c, r, hh, 'strict', rkp, m1, m2, m3),
+      !LogAK2(h(<'log', hh>), body, s1a, s1b, s2a, s2b) ]
+  --[ Eq(verify(s1a, <'ed', body>, s1a1), true),
+      Eq(verify(s1b, <'ml', body>, s1a2), true),
+      Eq(verify(s2a, <'ed', body>, s2a1), true),
+      Eq(verify(s2b, <'ml', body>, s2a2), true),
+      InRing3(s1, m1, m2, m3), InRing3(s2, m1, m2, m3),
+      NotEmpty(s1), NotEmpty(s2), Neq(s1, s2),
+      ReadL(h(<'log', hh>), body, 'ak'),
+      AcceptStrict2(c, r, hh, 'policy', 'default', s1, s2),
+      Step('APD') ]->
+    [ ]
+
+rule Contact_Accept_Resolve_Fork_1:
+    let m1 = <m1a1, m1a2>
+        chosen = <'rec', r, hh, 'remove', h(m2), m1>
+        rf_body = <'resolve', r, hh, h(chosen), rkp>
+    in
+    [ ContactView2(c, r, hh, pol, rkp, m1, m2, m3),
+      !LogRf(h(<'rflog', hh>), rf_body, sigr),
+      !LogAK(h(<'log', hh>), chosen, csig1, csig2),
+      !Reverify(r, h(rf_body)) ]
+  --[ Eq(verify(sigr, <'rf', rf_body>, rkp), true),
+      Eq(verify(csig1, <'ed', chosen>, m1a1), true),
+      Eq(verify(csig2, <'ml', chosen>, m1a2), true),
+      NotEmpty(m1), NotEmpty(m2),
+      Settled(h(<'rflog', hh>), rf_body),
+      ReadResolve(r, hh, rkp, rf_body),
+      AcceptResolveBranch(c, r, hh, chosen, m1, rkp),
+      ContactResolved(c, r, hh, chosen, rkp),
+      ResolvedAt(c, r, hh, chosen, rkp),
+      Step('CR1') ]->
+    [ ]
+
+rule Contact_Accept_Resolve_Fork_2:
+    let m2 = <m2a1, m2a2>
+        chosen = <'rec', r, hh, 'remove', h(m1), m2>
+        rf_body = <'resolve', r, hh, h(chosen), rkp>
+    in
+    [ ContactView2(c, r, hh, pol, rkp, m1, m2, m3),
+      !LogRf(h(<'rflog', hh>), rf_body, sigr),
+      !LogAK(h(<'log', hh>), chosen, csig1, csig2),
+      !Reverify(r, h(rf_body)) ]
+  --[ Eq(verify(sigr, <'rf', rf_body>, rkp), true),
+      Eq(verify(csig1, <'ed', chosen>, m2a1), true),
+      Eq(verify(csig2, <'ml', chosen>, m2a2), true),
+      NotEmpty(m1), NotEmpty(m2),
+      Settled(h(<'rflog', hh>), rf_body),
+      ReadResolve(r, hh, rkp, rf_body),
+      AcceptResolveBranch(c, r, hh, chosen, m2, rkp),
+      ContactResolved(c, r, hh, chosen, rkp),
+      ResolvedAt(c, r, hh, chosen, rkp),
+      Step('CR2') ]->
+    [ ]
+
+/* Fork rule 7 overrides rule 4: a contact that already followed the losing
+   branch (m2 removing m1, recorded in ContactRem2 with the pre-fork head
+   and member m1) moves to the owner's chosen winning branch (m1 removing
+   m2) once resolve_fork settles and out-of-band re-verification succeeds. */
+rule Contact_Accept_Resolve_Fork_Override:
+    let m1 = <m1a1, m1a2>
+        chosen = <'rec', r, hh, 'remove', h(m2), m1>
+        rf_body = <'resolve', r, hh, h(chosen), rkp>
+    in
+    [ ContactRem2(c, r, hh, pol, rkp, m1, m2, m3),
+      !LogRf(h(<'rflog', hh>), rf_body, sigr),
+      !LogAK(h(<'log', hh>), chosen, csig1, csig2),
+      !Reverify(r, h(rf_body)) ]
+  --[ Eq(verify(sigr, <'rf', rf_body>, rkp), true),
+      Eq(verify(csig1, <'ed', chosen>, m1a1), true),
+      Eq(verify(csig2, <'ml', chosen>, m1a2), true),
+      NotEmpty(m1), NotEmpty(m2),
+      Settled(h(<'rflog', hh>), rf_body),
+      ReadResolve(r, hh, rkp, rf_body),
+      AcceptResolveBranch(c, r, hh, chosen, m1, rkp),
+      ContactResolved(c, r, hh, chosen, rkp),
+      ContactOverrideResolved(c, r, hh, chosen, rkp),
+      ResolvedAt(c, r, hh, chosen, rkp),
+      Step('CRO') ]->
+    [ ]
+
+/* Honest remaining device (slot 3) follows a settled resolve_fork without
+   out-of-band re-verification (devices do not compare words with themselves).
+   Empty RHS avoids any !Head <-> log cycle. */
+rule Device_Accept_Resolve_Fork_1:
+    let m1 = <m1a1, m1a2>
+        chosen = <'rec', r, hh, 'remove', h(m2), m1>
+        rf_body = <'resolve', r, hh, h(chosen), rkp>
+    in
+    [ !Head(r, hh, pol, rkp, m1, m2, m3), !DevKey(m3, ~a1, ~a2),
+      !LogRf(h(<'rflog', hh>), rf_body, sigr),
+      !LogAK(h(<'log', hh>), chosen, csig1, csig2) ]
+  --[ Eq(verify(sigr, <'rf', rf_body>, rkp), true),
+      Eq(verify(csig1, <'ed', chosen>, m1a1), true),
+      Eq(verify(csig2, <'ml', chosen>, m1a2), true),
+      NotEmpty(m1), NotEmpty(m2), NotEmpty(m3),
+      Settled(h(<'rflog', hh>), rf_body),
+      ReadResolve(r, hh, rkp, rf_body),
+      AcceptResolveBranch(m3, r, hh, chosen, m1, rkp),
+      ResolvedAt(m3, r, hh, chosen, rkp),
+      Step('DR') ]->
+    [ ]
+
+rule Contact_Accept_Recovery:
+    let rec_body = <'recover', r, hh, n, rkp>
+    in
+    [ ContactRem1(c, r, hh, pol, rkp, m1, m3),
+      !LogRec(h(<'rlog', hh>), rec_body, sigr),
+      !Reverify(r, h(rec_body)) ]
+  --[ Eq(verify(sigr, <'rk', rec_body>, rkp), true),
+      NotEmpty(m1), NotEmpty(m3), NotEmpty(n),
+      Settled(h(<'rlog', hh>), rec_body),
+      ReadRec(r, hh, rkp, rec_body),
+      ContactRecovered(c, r, hh, n, rkp),
+      Step('CK') ]->
+    [ ]
+
+/* --- Log and settling restrictions ------------------------------------ */
+
+restriction Settled_Old:
+  "All L v #i. Settled(L, v) @ i ==> Ex #t. Old(L, v) @ t & #t < #i"
+
+restriction Log_Read_AK:
+  "All L v v2 #i #t. ReadL(L, v, 'ak') @ i & LogValid(L, v2, 'ak') @ t & #t < #i ==> v = v2"
+
+restriction Resolve_Single:
+  "All r hh rkp v v2 #i #t. ReadResolve(r, hh, rkp, v) @ i & ResolveLogged(r, hh, rkp, v2) @ t & #t < #i ==> v = v2"
+
+restriction Rec_Single:
+  "All r hh rkp v v2 #i #t. ReadRec(r, hh, rkp, v) @ i & RecLogged(r, hh, rkp, v2) @ t & #t < #i ==> v = v2"
+
+
+tactic: sig_first
+presort: S
+prio:
+  regex "AcceptResolveBranch|AcceptStrict2|DeviceNew"
+prio:
+  regex "!LogAK2|!LogAK"
+prio:
+  regex "!KU\( ~"
+prio:
+  regex "!KU\( sign\("
+deprio:
+  regex "ContactView|ContactRem|!Head|!LogRf|!Reverify|Settled|Old|ReadResolve|ReadL"
+
+tactic: phrase_first
+presort: S
+prio:
+  regex "PhraseChanged|ResolvedAt"
+prio:
+  regex "ContactView2|ContactRem2|!Head|PendingPhrase"
+prio:
+  regex "ContactView1"
+prio:
+  regex "!Reverify"
+prio:
+  regex "NewPhraseKey"
+prio:
+  regex "!LogRf"
+prio:
+  regex "!KU\( ~"
+prio:
+  regex "!KU\( sign\("
+deprio:
+  regex "!LogAK|!LogAK2|Settled|Old|ReadResolve|ReadL|ContactView0"
+
+tactic: rf_sig_first
+presort: S
+prio:
+  regex "ResolvedAt|NewPhraseKey"
+prio:
+  regex "!Reverify|!LogRf"
+prio:
+  regex "!KU\( ~"
+prio:
+  regex "!KU\( sign\("
+deprio:
+  regex "PhraseChanged|ContactView|ContactRem|!Head|!LogAK|!LogAK2|Settled|Old|ReadResolve|ReadL"
+
+tactic: sanity_cp
+presort: S
+prio:
+  regex "PhraseChanged|ContactResolved|OwnerResolved|SignedRemove|Pin|Created"
+prio:
+  regex "ContactView|PendingPhrase|!Head|!Reverify|Unused|!DevKey|!RKKey|!Genesis"
+prio:
+  regex "!LogAK|!LogRf|Old\("
+deprio:
+  regex "!KU\("
+
+/* --- Sanity lemmas (executability and non-vacuity) -------------------- */
+
+lemma sanity_resolve_real_fork [heuristic=S]:
+  exists-trace
+  "Ex c r h0 d1 d2 d3 rkp #q #p #t1 #t2 #o #k1 #k2.
+      Created(r, d1, d2, d3) @ q
+    & GenesisHead(r, h0, rkp) @ q
+    & Pin(c, r, h0) @ p
+    & SignedRemove(d1, r, h0, h(d2)) @ t1
+    & SignedRemove(d2, r, h0, h(d1)) @ t2
+    & OwnerResolved(r, h0, <'rec', r, h0, 'remove', h(d2), d1>, rkp) @ o
+    & ContactResolved(c, r, h0, <'rec', r, h0, 'remove', h(d2), d1>, rkp) @ k1
+    & ResolvedAt(d3, r, h0, <'rec', r, h0, 'remove', h(d2), d1>, rkp) @ k2
+    & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)
+    & (All r2 a b e #y. Created(r2, a, b, e) @ y ==> #y = #q)
+    & (All c2 r2 hh2 #y. Pin(c2, r2, hh2) @ y ==> #y = #p)
+    & (All r2 h2 k2v v2 #y. ResolveLogged(r2, h2, k2v, v2) @ y ==> #y = #o)
+    & not (Ex d #x. RevA1(d) @ x) & not (Ex d #x. RevA2(d) @ x)
+    & not (Ex k #x. RevPhrase(k) @ x)
+    & not (Ex #x. Step('MPS') @ x) & not (Ex #x. Step('MPD') @ x)
+    & not (Ex #x. Step('MRS') @ x) & not (Ex #x. Step('MCP') @ x)
+    & not (Ex #x. Step('MCPS') @ x) & not (Ex #x. Step('ACP') @ x)
+    & not (Ex #x. Step('ACPS') @ x) & not (Ex #x. Step('MRJ') @ x)
+    & not (Ex #x. Step('OR') @ x) & not (Ex #x. Step('AR1') @ x)
+    & not (Ex #x. Step('AR2') @ x) & not (Ex #x. Step('ARS') @ x)
+    & not (Ex #x. Step('APS') @ x) & not (Ex #x. Step('APD') @ x)
+    & not (Ex #x. Step('ACPD') @ x) & not (Ex #x. Step('ACPC') @ x)
+    & not (Ex #x. Step('ARJ') @ x) & not (Ex #x. Step('CR2') @ x)
+    & not (Ex #x. Step('CRO') @ x) & not (Ex #x. Step('CK') @ x)"
+
+lemma sanity_late_fork_fails_closed_then_resolves [heuristic=S]:
+  exists-trace
+  "Ex c r h0 d1 d2 d3 rkp #q #p #t1 #r1 #r2 #l2 #o #k.
+      Created(r, d1, d2, d3) @ q
+    & GenesisHead(r, h0, rkp) @ q
+    & Pin(c, r, h0) @ p
+    & SignedRemove(d1, r, h0, h(d2)) @ t1
+    & RevA1(d2) @ r1 & RevA2(d2) @ r2
+    & LogValid(h(<'log', h0>), <'rec', r, h0, 'remove', h(d1), d2>, 'ak') @ l2
+    & #t1 < #l2
+    & OwnerResolved(r, h0, <'rec', r, h0, 'remove', h(d2), d1>, rkp) @ o
+    & ContactResolved(c, r, h0, <'rec', r, h0, 'remove', h(d2), d1>, rkp) @ k
+    & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)
+    & (All r2v a b e #y. Created(r2v, a, b, e) @ y ==> #y = #q)
+    & (All c2 r2v hh2 #y. Pin(c2, r2v, hh2) @ y ==> #y = #p)
+    & (All r2v h2 k2v v2 #y. ResolveLogged(r2v, h2, k2v, v2) @ y ==> #y = #o)
+    & (All L v #y. LogValid(L, v, 'ak') @ y ==> #y = #t1 | #y = #l2)
+    & (All d #x. RevA1(d) @ x ==> d = d2) & (All d #x. RevA2(d) @ x ==> d = d2)
+    & not (Ex k2v #x. RevPhrase(k2v) @ x)
+    & not (Ex #x. Step('MR2') @ x) & not (Ex #x. Step('DR') @ x)
+    & not (Ex #x. Step('MPS') @ x) & not (Ex #x. Step('MPD') @ x)
+    & not (Ex #x. Step('MRS') @ x) & not (Ex #x. Step('MCP') @ x)
+    & not (Ex #x. Step('MCPS') @ x) & not (Ex #x. Step('ACP') @ x)
+    & not (Ex #x. Step('ACPS') @ x) & not (Ex #x. Step('MRJ') @ x)
+    & not (Ex #x. Step('OR') @ x) & not (Ex #x. Step('AR1') @ x)
+    & not (Ex #x. Step('AR2') @ x) & not (Ex #x. Step('ARS') @ x)
+    & not (Ex #x. Step('APS') @ x) & not (Ex #x. Step('APD') @ x)
+    & not (Ex #x. Step('ACPD') @ x) & not (Ex #x. Step('ACPC') @ x)
+    & not (Ex #x. Step('ARJ') @ x) & not (Ex #x. Step('CR2') @ x)
+    & not (Ex #x. Step('CRO') @ x) & not (Ex #x. Step('CK') @ x)"
+
+lemma sanity_resolve_overrides_losing_branch [heuristic=c]:
+  exists-trace
+  "Ex c r h0 d1 d2 d3 rkp #q #p #t2 #a2 #t1 #o #k.
+      Created(r, d1, d2, d3) @ q
+    & GenesisHead(r, h0, rkp) @ q
+    & Pin(c, r, h0) @ p
+    & SignedRemove(d2, r, h0, h(d1)) @ t2
+    & AcceptNormal(c, r, h0, 'remove', h(d1), d2) @ a2
+    & SignedRemove(d1, r, h0, h(d2)) @ t1
+    & #t2 < #a2 & #a2 < #t1
+    & OwnerResolved(r, h0, <'rec', r, h0, 'remove', h(d2), d1>, rkp) @ o
+    & ContactOverrideResolved(c, r, h0, <'rec', r, h0, 'remove', h(d2), d1>, rkp) @ k
+    & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)
+    & (All r2 a b e #y. Created(r2, a, b, e) @ y ==> #y = #q)
+    & (All c2 r2 hh2 #y. Pin(c2, r2, hh2) @ y ==> #y = #p)
+    & (All r2 h2 k2v v2 #y. ResolveLogged(r2, h2, k2v, v2) @ y ==> #y = #o)
+    & not (Ex d #x. RevA1(d) @ x) & not (Ex d #x. RevA2(d) @ x)
+    & not (Ex k2v #x. RevPhrase(k2v) @ x)
+    & not (Ex #x. Step('MPS') @ x) & not (Ex #x. Step('MPD') @ x)
+    & not (Ex #x. Step('MRS') @ x) & not (Ex #x. Step('MCP') @ x)
+    & not (Ex #x. Step('MCPS') @ x) & not (Ex #x. Step('ACP') @ x)
+    & not (Ex #x. Step('ACPS') @ x) & not (Ex #x. Step('MRJ') @ x)
+    & not (Ex #x. Step('OR') @ x) & not (Ex #x. Step('AR1') @ x)
+    & not (Ex #x. Step('ARS') @ x) & not (Ex #x. Step('APS') @ x)
+    & not (Ex #x. Step('APD') @ x) & not (Ex #x. Step('ACPD') @ x)
+    & not (Ex #x. Step('ACPC') @ x) & not (Ex #x. Step('ARJ') @ x)
+    & not (Ex #x. Step('CR1') @ x) & not (Ex #x. Step('CR2') @ x)
+    & not (Ex #x. Step('DR') @ x) & not (Ex #x. Step('CK') @ x)"
+
+lemma sanity_change_phrase_invalidates_old_rk [heuristic={sanity_cp}]:
+  exists-trace
+  "Ex c r h0 h1 d1 d2 d3 rkp0 rkp1 #q #p #m #pd #pc #t1 #t2 #o #k.
+      Created(r, d1, d2, d3) @ q
+    & GenesisHead(r, h0, rkp0) @ q
+    & Pin(c, r, h0) @ p
+    & h1 = h(<'rec', r, h0, 'change_phrase', rkp1, d1>)
+    & LogValid(h(<'log', h0>), <'rec', r, h0, 'change_phrase', rkp1, d1>, 'ak') @ m
+    & PhraseChanged(d1, r, h1, rkp0, rkp1) @ pd
+    & PhraseChanged(c, r, h1, rkp0, rkp1) @ pc
+    & SignedRemove(d1, r, h1, h(d2)) @ t1
+    & SignedRemove(d2, r, h1, h(d1)) @ t2
+    & OwnerResolved(r, h1, <'rec', r, h1, 'remove', h(d2), d1>, rkp1) @ o
+    & ContactResolved(c, r, h1, <'rec', r, h1, 'remove', h(d2), d1>, rkp1) @ k
+    & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)
+    & (All r2 a b e #y. Created(r2, a, b, e) @ y ==> #y = #q)
+    & (All c2 r2 hh2 #y. Pin(c2, r2, hh2) @ y ==> #y = #p)
+    & (All L v #y. LogValid(L, v, 'ak') @ y ==> #y = #m | #y = #t1 | #y = #t2)
+    & (All r2 h2 k2v v2 #y. ResolveLogged(r2, h2, k2v, v2) @ y ==> #y = #o)
+    & not (Ex d #x. RevA1(d) @ x) & not (Ex d #x. RevA2(d) @ x)
+    & not (Ex k2v #x. RevPhrase(k2v) @ x)
+    & not (Ex #x. Step('MPS') @ x) & not (Ex #x. Step('MPD') @ x)
+    & not (Ex #x. Step('MRS') @ x) & not (Ex #x. Step('MCPS') @ x)
+    & not (Ex #x. Step('ACPS') @ x) & not (Ex #x. Step('MRJ') @ x)
+    & not (Ex #x. Step('OR') @ x) & not (Ex #x. Step('AR1') @ x)
+    & not (Ex #x. Step('AR2') @ x) & not (Ex #x. Step('ARS') @ x)
+    & not (Ex #x. Step('APS') @ x) & not (Ex #x. Step('APD') @ x)
+    & not (Ex #x. Step('ACPC') @ x) & not (Ex #x. Step('ARJ') @ x)
+    & not (Ex #x. Step('CR2') @ x) & not (Ex #x. Step('CRO') @ x)
+    & not (Ex #x. Step('DR') @ x) & not (Ex #x. Step('CK') @ x)"
+
+lemma sanity_recovery_reject_revokes_rk [heuristic=c]:
+  exists-trace
+  "Ex c r h0 h1 d1 d2 d3 rkp0 #q #p #rd #rc.
+      Created(r, d1, d2, d3) @ q
+    & GenesisHead(r, h0, rkp0) @ q
+    & Pin(c, r, h0) @ p
+    & h1 = h(<'rec', r, h0, 'recovery_reject', rkp0, d1>)
+    & RecoveryRejectedAt(d1, r, h1, rkp0) @ rd
+    & RecoveryRejectedAt(c, r, h1, rkp0) @ rc
+    & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)
+    & (All r2 a b e #y. Created(r2, a, b, e) @ y ==> #y = #q)
+    & (All c2 r2 hh2 #y. Pin(c2, r2, hh2) @ y ==> #y = #p)
+    & not (Ex d #x. RevA1(d) @ x) & not (Ex d #x. RevA2(d) @ x)
+    & not (Ex k2v #x. RevPhrase(k2v) @ x)
+    & not (Ex #x. Step('MR1') @ x) & not (Ex #x. Step('MR2') @ x)
+    & not (Ex #x. Step('MPS') @ x) & not (Ex #x. Step('MPD') @ x)
+    & not (Ex #x. Step('MRS') @ x) & not (Ex #x. Step('MCP') @ x)
+    & not (Ex #x. Step('MCPS') @ x) & not (Ex #x. Step('ACP') @ x)
+    & not (Ex #x. Step('ACPS') @ x) & not (Ex #x. Step('ORF') @ x)
+    & not (Ex #x. Step('OR') @ x) & not (Ex #x. Step('AR1') @ x)
+    & not (Ex #x. Step('AR2') @ x) & not (Ex #x. Step('ARS') @ x)
+    & not (Ex #x. Step('APS') @ x) & not (Ex #x. Step('APD') @ x)
+    & not (Ex #x. Step('ACPD') @ x) & not (Ex #x. Step('ACPC') @ x)
+    & not (Ex #x. Step('CR1') @ x) & not (Ex #x. Step('CR2') @ x)
+    & not (Ex #x. Step('CRO') @ x) & not (Ex #x. Step('DR') @ x)
+    & not (Ex #x. Step('CK') @ x)"
+
+lemma sanity_policy_switch_to_strict [heuristic=c]:
+  exists-trace
+  "Ex c r h0 h1 d1 d2 d3 #q #p #ps #k.
+      Created(r, d1, d2, d3) @ q
+    & Pin(c, r, h0) @ p
+    & AcceptNormal(c, r, h0, 'policy', 'strict', d1) @ ps
+    & h1 = h(<'rec', r, h0, 'policy', 'strict', d1>)
+    & AcceptStrict2(c, r, h1, 'remove', h(d2), d1, d3) @ k
+    & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)
+    & (All r2 a b e #y. Created(r2, a, b, e) @ y ==> #y = #q)
+    & (All c2 r2 hh2 #y. Pin(c2, r2, hh2) @ y ==> #y = #p)
+    & not (Ex d #x. RevA1(d) @ x) & not (Ex d #x. RevA2(d) @ x)
+    & not (Ex k2v #x. RevPhrase(k2v) @ x)
+    & not (Ex #x. Step('MR1') @ x) & not (Ex #x. Step('MR2') @ x)
+    & not (Ex #x. Step('MPD') @ x) & not (Ex #x. Step('MCP') @ x)
+    & not (Ex #x. Step('MCPS') @ x) & not (Ex #x. Step('ACP') @ x)
+    & not (Ex #x. Step('ACPS') @ x) & not (Ex #x. Step('MRJ') @ x)
+    & not (Ex #x. Step('ORF') @ x) & not (Ex #x. Step('OR') @ x)
+    & not (Ex #x. Step('AR1') @ x) & not (Ex #x. Step('AR2') @ x)
+    & not (Ex #x. Step('APD') @ x) & not (Ex #x. Step('ACPD') @ x)
+    & not (Ex #x. Step('ACPC') @ x) & not (Ex #x. Step('ARJ') @ x)
+    & not (Ex #x. Step('CR1') @ x) & not (Ex #x. Step('CR2') @ x)
+    & not (Ex #x. Step('CRO') @ x) & not (Ex #x. Step('DR') @ x)
+    & not (Ex #x. Step('CK') @ x)"
+
+lemma sanity_policy_downgrade_strict_to_default [heuristic=c]:
+  exists-trace
+  "Ex c r h0 h1 d1 d2 d3 #q #p #ps #pd.
+      Created(r, d1, d2, d3) @ q
+    & Pin(c, r, h0) @ p
+    & AcceptNormal(c, r, h0, 'policy', 'strict', d1) @ ps
+    & h1 = h(<'rec', r, h0, 'policy', 'strict', d1>)
+    & AcceptStrict2(c, r, h1, 'policy', 'default', d1, d2) @ pd
+    & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)
+    & (All r2 a b e #y. Created(r2, a, b, e) @ y ==> #y = #q)
+    & (All c2 r2 hh2 #y. Pin(c2, r2, hh2) @ y ==> #y = #p)
+    & not (Ex d #x. RevA1(d) @ x) & not (Ex d #x. RevA2(d) @ x)
+    & not (Ex k2v #x. RevPhrase(k2v) @ x)
+    & not (Ex #x. Step('MR1') @ x) & not (Ex #x. Step('MR2') @ x)
+    & not (Ex #x. Step('MRS') @ x) & not (Ex #x. Step('MCP') @ x)
+    & not (Ex #x. Step('MCPS') @ x) & not (Ex #x. Step('ACP') @ x)
+    & not (Ex #x. Step('ACPS') @ x) & not (Ex #x. Step('MRJ') @ x)
+    & not (Ex #x. Step('ORF') @ x) & not (Ex #x. Step('OR') @ x)
+    & not (Ex #x. Step('AR1') @ x) & not (Ex #x. Step('AR2') @ x)
+    & not (Ex #x. Step('ARS') @ x) & not (Ex #x. Step('ACPD') @ x)
+    & not (Ex #x. Step('ACPC') @ x) & not (Ex #x. Step('ARJ') @ x)
+    & not (Ex #x. Step('CR1') @ x) & not (Ex #x. Step('CR2') @ x)
+    & not (Ex #x. Step('CRO') @ x) & not (Ex #x. Step('DR') @ x)
+    & not (Ex #x. Step('CK') @ x)"
+
+lemma sanity_owner_recovers_after_removal [heuristic=c]:
+  exists-trace
+  "Ex c r h0 h1 d1 d2 d3 n rkp #q #p #a1 #o #k.
+      Created(r, d1, d2, d3) @ q
+    & GenesisHead(r, h0, rkp) @ q
+    & Pin(c, r, h0) @ p
+    & AcceptNormal(c, r, h0, 'remove', h(d2), d1) @ a1
+    & h1 = h(<'rec', r, h0, 'remove', h(d2), d1>)
+    & OwnerRecovered(r, h1, n, rkp) @ o
+    & ContactRecovered(c, r, h1, n, rkp) @ k
+    & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)
+    & (All r2 a b e #y. Created(r2, a, b, e) @ y ==> #y = #q)
+    & (All c2 r2 hh2 #y. Pin(c2, r2, hh2) @ y ==> #y = #p)
+    & (All r2 h2 k2v v2 #y. RecLogged(r2, h2, k2v, v2) @ y ==> #y = #o)
+    & not (Ex d #x. RevA1(d) @ x) & not (Ex d #x. RevA2(d) @ x)
+    & not (Ex k2v #x. RevPhrase(k2v) @ x)
+    & not (Ex #x. Step('MR2') @ x) & not (Ex #x. Step('MPS') @ x)
+    & not (Ex #x. Step('MPD') @ x) & not (Ex #x. Step('MRS') @ x)
+    & not (Ex #x. Step('MCP') @ x) & not (Ex #x. Step('MCPS') @ x)
+    & not (Ex #x. Step('ACP') @ x) & not (Ex #x. Step('ACPS') @ x)
+    & not (Ex #x. Step('MRJ') @ x) & not (Ex #x. Step('ORF') @ x)
+    & not (Ex #x. Step('AR2') @ x) & not (Ex #x. Step('ARS') @ x)
+    & not (Ex #x. Step('APS') @ x) & not (Ex #x. Step('APD') @ x)
+    & not (Ex #x. Step('ACPD') @ x) & not (Ex #x. Step('ACPC') @ x)
+    & not (Ex #x. Step('ARJ') @ x) & not (Ex #x. Step('CR1') @ x)
+    & not (Ex #x. Step('CR2') @ x) & not (Ex #x. Step('CRO') @ x)
+    & not (Ex #x. Step('DR') @ x)"
+
+/* --- Helper lemmas ([reuse]) ------------------------------------------ */
+
+lemma read_resolve_was_logged [reuse, heuristic=c]:
+  "All r hh rkp v #i.
+      ReadResolve(r, hh, rkp, v) @ i
+    ==> Ex #l. ResolveLogged(r, hh, rkp, v) @ l & #l < #i"
+
+lemma read_rec_was_logged [reuse, heuristic=c]:
+  "All r hh rkp v #i.
+      ReadRec(r, hh, rkp, v) @ i
+    ==> Ex #l. RecLogged(r, hh, rkp, v) @ l & #l < #i"
+
+/* --- Security lemmas (P1, P2, P7) ------------------------------------- */
+
+/* P1: Every resolved fork branch was validly logged under h(<'log', hh>)
+   before acceptance and signed by honest member s (unless both AK halves
+   of s leaked). A stolen RK alone cannot fabricate an unlogged branch. */
+lemma resolved_branch_has_valid_lineage [heuristic={sig_first}]:
+  "All o r hh chosen s rkp #k #n.
+      AcceptResolveBranch(o, r, hh, chosen, s, rkp) @ k
+    & DeviceNew(s) @ n
+    ==> (Ex #l. LogValid(h(<'log', hh>), chosen, 'ak') @ l & #l < #k)
+      & ( (Ex #w. SignedBranch(s, r, hh, chosen) @ w & #w < #k)
+        | ((Ex #a1. RevA1(s) @ a1) & (Ex #a2. RevA2(s) @ a2)) )"
+
+/* P1 (strict policy): Every 2-signature strict operation (strict remove,
+   policy downgrade to default, strict change_phrase) requires two distinct
+   members s1 != s2, each having signed honestly or lost both AK halves. */
+lemma strict_ops_need_two_distinct_members [heuristic={sig_first}]:
+  "All c r hh op payload s1 s2 #k #n1 #n2.
+      AcceptStrict2(c, r, hh, op, payload, s1, s2) @ k
+    & DeviceNew(s1) @ n1
+    & DeviceNew(s2) @ n2
+    ==> not (s1 = s2)
+      & ( (Ex #w1. SignedStrict2(s1, r, hh, op, payload) @ w1 & #w1 < #k)
+        | ((Ex #a1. RevA1(s1) @ a1) & (Ex #a2. RevA2(s1) @ a2)) )
+      & ( (Ex #w2. SignedStrict2(s2, r, hh, op, payload) @ w2 & #w2 < #k)
+        | ((Ex #b1. RevA1(s2) @ b1) & (Ex #b2. RevA2(s2) @ b2)) )"
+
+/* P2: No two readers accept different resolve_fork branches for the same
+   ring, forked head, and active RK. */
+lemma no_split_fork_resolution [heuristic=S]:
+  "All r hh rkp v1 v2 #i #j.
+      ReadResolve(r, hh, rkp, v1) @ i & ReadResolve(r, hh, rkp, v2) @ j
+    ==> v1 = v2"
+
+/* P2 (competing recovery): No two readers accept different recovery_add
+   records for the same ring, head, and active RK. */
+lemma no_split_competing_recovery [heuristic=S]:
+  "All r hh rkp v1 v2 #i #j.
+      ReadRec(r, hh, rkp, v1) @ i & ReadRec(r, hh, rkp, v2) @ j
+    ==> v1 = v2"
+
+/* P2 (late fork): Once honest member d removes x at hh, no contact accepts
+   a normal AK record signed by x at hh afterwards, even if both AK halves
+   of x leak. Late forks fail closed rather than silently hijacking contacts. */
+lemma late_fork_never_hijacks_contact [heuristic=c]:
+  "All d x c r hh op payload #t #i.
+      SignedRemove(d, r, hh, h(x)) @ t
+    & AcceptNormal(c, r, hh, op, payload, x) @ i
+    & #t < #i
+    & not (d = x)
+    ==> F"
+
+/* P7 (contact re-verification): A contact accepts resolve_fork only if the
+   owner created it (bound via out-of-band !Reverify) and it settled in the
+   log first. Holds even if both RK and a device's AK leak. */
+lemma resolve_fork_requires_contact_reverification [heuristic=c]:
+  "All c r hh chosen rkp #k.
+      ContactResolved(c, r, hh, chosen, rkp) @ k
+    ==> (Ex #o. OwnerResolved(r, hh, chosen, rkp) @ o & #o < #k)
+      & (Ex #s. Old(h(<'rflog', hh>), <'resolve', r, hh, h(chosen), rkp>) @ s & #s < #k)"
+
+lemma resolved_after_phrase_change_uses_new_rk [reuse, heuristic={phrase_first}]:
+  "All o1 o2 r hh rkp_old rkp_new chosen rk_used #p #k.
+      PhraseChanged(o1, r, hh, rkp_old, rkp_new) @ p
+    & ResolvedAt(o2, r, hh, chosen, rk_used) @ k
+    ==> rk_used = rkp_new & not (rk_used = rkp_old)"
+
+/* P7 (phrase rotation): After change_phrase settles and rotates rkp_old to
+   an honest new phrase key rkp_new at head hh, no reader (device or contact)
+   accepts a resolve_fork at hh under rkp_old; accepting under rkp_new
+   requires OwnerResolved or RevPhrase(rkp_new) (leaking rkp_old never
+   suffices). */
+lemma old_phrase_cannot_resolve_after_change_phrase [heuristic={rf_sig_first}]:
+  "All o1 o2 r hh rkp_old rkp_new chosen rk_used #p #np #k.
+      PhraseChanged(o1, r, hh, rkp_old, rkp_new) @ p
+    & NewPhraseKey(r, rkp_new) @ np
+    & ResolvedAt(o2, r, hh, chosen, rk_used) @ k
+    ==> not (rk_used = rkp_old)
+      & rk_used = rkp_new
+      & ( (Ex #w. OwnerResolved(r, hh, chosen, rkp_new) @ w & #w < #k)
+        | (Ex #rev. RevPhrase(rkp_new) @ rev & #rev < #k) )"
+
+/* P7 (undisputed revocation): After an undisputed recovery_reject moves
+   a ring head to rkp = 'revoked', no reader accepts resolve_fork there. */
+lemma revoked_rk_cannot_resolve [heuristic=c]:
+  "All o1 o2 r hh rkp_old chosen rk_used #rj #k.
+      RecoveryRejectedAt(o1, r, hh, rkp_old) @ rj
+    & ResolvedAt(o2, r, hh, chosen, rk_used) @ k
+    ==> F"
+
+end

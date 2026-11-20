@@ -32,6 +32,7 @@ FRESH = os.path.join(HERE, "hayalet-halka-tazelik.spthy")
 SECRET = os.path.join(HERE, "hayalet-halka-gizlilik.spthy")
 RECOVERY = os.path.join(HERE, "hayalet-halka-kurtarma.spthy")
 STRICT = os.path.join(HERE, "hayalet-halka-sikimod.spthy")
+FORK = os.path.join(HERE, "ghost-ring-fork.spthy")
 TIMEOUT = int(os.environ.get("LEMMA_TIMEOUT", "600"))
 
 BOUND_ONE_STEP = """
@@ -154,6 +155,29 @@ IMMEDIATE_REMOVE = r"""rule Accept_Immediate_Remove_1:
       NotEmpty(x), ReadChange(r, m, body, 'none'), Accept(o, r, m, 'premove', h(x), s) ]->
     [ View(o, r, h(body), s, 'empty'), !Head(r, h(body), s, 'empty') ]
 """
+
+
+# Part 4c: unused rule groups dropped per mutant to keep attack searches fast.
+FORK_POLICY = [
+    "Member_Policy_Strict", "Member_Policy_Default", "Member_Remove_Strict_1",
+    "Contact_Accept_Remove_Strict_1", "Contact_Accept_Policy_Strict",
+    "Contact_Accept_Policy_Default",
+]
+FORK_PHRASE = [
+    "Member_Change_Phrase_Default", "Device_Activate_Change_Phrase_Default",
+    "Member_Change_Phrase_Strict", "Device_Activate_Change_Phrase_Strict",
+    "Contact_Accept_Change_Phrase_Default",
+    "Contact_Accept_Change_Phrase_Strict",
+]
+FORK_RECOVERY = [
+    "Member_Recovery_Reject", "Log_Write_Recovery", "Log_Age_Rec",
+    "Owner_Recover", "Contact_Accept_Recovery_Reject",
+    "Contact_Accept_Recovery",
+]
+FORK_CONTACTS_RESOLVE = [
+    "Contact_Accept_Resolve_Fork_1", "Contact_Accept_Resolve_Fork_2",
+    "Contact_Accept_Resolve_Fork_Override",
+]
 
 
 MUTANTS = [
@@ -709,6 +733,225 @@ lemma attack [heuristic=c]:
     & (All c2 r2 m2 #y. Pin(c2, r2, m2) @ y ==> #y = #p)
     & (All r2 m2 v2 x2 #y. Logged(r2, m2, v2, x2) @ y ==> #y = #v1 | #y = #v2)
     & (All r2 m2 v2 x2 #y. ReadChange(r2, m2, v2, x2) @ y ==> #y = #i | #y = #j)"
+""",
+    },
+    {
+        "name": "resolve_without_reverify",
+        "why": "a contact accepts resolve_fork without out-of-band re-verification",
+        "model": FORK,
+        "edits": [
+            ("Contact_Accept_Resolve_Fork_1 reverify",
+             r"(rule Contact_Accept_Resolve_Fork_1:(?:(?!\nrule ).)*?),\n      !Reverify\(r, h\(rf_body\)\) \]",
+             r"\1 ]", 1),
+        ],
+        "drop": FORK_POLICY + FORK_PHRASE + FORK_RECOVERY + [
+            "Member_Remove_Default_2", "Log_Write_AK2", "Log_Age_AK",
+            "Log_Age_AK2", "Contact_Accept_Remove_Default_1",
+            "Contact_Accept_Remove_Default_2",
+            "Contact_Accept_Resolve_Fork_2",
+            "Contact_Accept_Resolve_Fork_Override",
+            "Device_Accept_Resolve_Fork_1",
+        ],
+        "lemma": """
+lemma attack [heuristic=S]:
+  exists-trace
+  "Ex c r h0 d1 d2 d3 chosen rkp #q #p #k.
+      Created(r, d1, d2, d3) @ q
+    & GenesisHead(r, h0, rkp) @ q
+    & Pin(c, r, h0) @ p
+    & ContactResolved(c, r, h0, chosen, rkp) @ k
+    & not (Ex #o. OwnerResolved(r, h0, chosen, rkp) @ o)
+    & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)
+    & (All r2 a b e #y. Created(r2, a, b, e) @ y ==> #y = #q)
+    & (All c2 r2 hh2 #y. Pin(c2, r2, hh2) @ y ==> #y = #p)
+    & not (Ex #x. Step('ORF') @ x)
+    & not (Ex d #x. RevA1(d) @ x) & not (Ex d #x. RevA2(d) @ x)"
+""",
+    },
+    {
+        "name": "old_rk_accepted_after_change_phrase",
+        "why": "a reader checks resolve_fork against the genesis RK instead of the head's current RK",
+        "model": FORK,
+        "edits": [
+            ("Device_Accept_Resolve_Fork_1 genesis RK premise",
+             r"(rule Device_Accept_Resolve_Fork_1:(?:(?!\nrule ).)*?)\[ !Head\(r, hh, pol, rkp, m1, m2, m3\), ",
+             r"\1[ !Head(r, hh, pol, rkp, m1, m2, m3), !GenesisRK(r, rkp0), ", 1),
+            ("Device_Accept_Resolve_Fork_1 body uses rkp0",
+             r"(rule Device_Accept_Resolve_Fork_1:(?:(?!\nrule ).)*?)rf_body = <'resolve', r, hh, h\(chosen\), rkp>",
+             r"\1rf_body = <'resolve', r, hh, h(chosen), rkp0>", 1),
+            ("Device_Accept_Resolve_Fork_1 verify uses rkp0",
+             r"(rule Device_Accept_Resolve_Fork_1:(?:(?!\nrule ).)*?)Eq\(verify\(sigr, <'rf', rf_body>, rkp\), true\)",
+             r"\1Eq(verify(sigr, <'rf', rf_body>, rkp0), true)", 1),
+            ("Device_Accept_Resolve_Fork_1 actions use rkp0",
+             r"(rule Device_Accept_Resolve_Fork_1:(?:(?!\nrule ).)*?)"
+             r"ReadResolve\(r, hh, rkp, rf_body\),\n"
+             r"      AcceptResolveBranch\(m3, r, hh, chosen, m1, rkp\),\n"
+             r"      ResolvedAt\(m3, r, hh, chosen, rkp\),",
+             r"\1ReadResolve(r, hh, rkp0, rf_body),\n"
+             r"      AcceptResolveBranch(m3, r, hh, chosen, m1, rkp0),\n"
+             r"      ResolvedAt(m3, r, hh, chosen, rkp0),", 1),
+        ],
+        "drop": FORK_POLICY + FORK_RECOVERY + FORK_CONTACTS_RESOLVE + [
+            "Member_Remove_Default_2", "Member_Change_Phrase_Strict",
+            "Device_Activate_Change_Phrase_Strict", "Log_Write_AK",
+            "Log_Write_AK2", "Log_Age_AK2", "Owner_Resolve_Fork",
+            "Contact_Pin", "Contact_Stay_01", "Contact_Stay_12",
+            "Contact_Accept_Remove_Default_1",
+            "Contact_Accept_Remove_Default_2",
+            "Contact_Accept_Change_Phrase_Default",
+            "Contact_Accept_Change_Phrase_Strict",
+        ],
+        "lemma": """
+lemma attack [heuristic=S]:
+  exists-trace
+  "Ex o1 o2 r h1 rkp_old rkp_new chosen d1 d2 d3 #q #p #np #k.
+      Created(r, d1, d2, d3) @ q
+    & PhraseChanged(o1, r, h1, rkp_old, rkp_new) @ p
+    & NewPhraseKey(r, rkp_new) @ np
+    & ResolvedAt(o2, r, h1, chosen, rkp_old) @ k
+    & not (Ex #rev. RevPhrase(rkp_new) @ rev)
+    & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)
+    & (All r2 a b e #y. Created(r2, a, b, e) @ y ==> #y = #q)
+    & not (Ex d #x. RevA1(d) @ x) & not (Ex d #x. RevA2(d) @ x)"
+""",
+    },
+    {
+        "name": "late_fork_overwrites_head",
+        "why": "a reader ignores a conflicting AK record logged earlier under the same head",
+        "model": FORK,
+        "edits": [
+            ("restriction Log_Read_AK",
+             r"restriction Log_Read_AK:\n  \"[^\"]*\"\n", "", 1),
+        ],
+        "drop": FORK_POLICY + FORK_PHRASE + FORK_RECOVERY + FORK_CONTACTS_RESOLVE + [
+            "Member_Remove_Default_2", "Log_Write_AK2", "Log_Write_Resolve",
+            "Log_Age_AK", "Log_Age_AK2", "Log_Age_Rf", "Owner_Resolve_Fork",
+            "Contact_Stay_12", "Contact_Accept_Remove_Default_1",
+            "Device_Accept_Resolve_Fork_1",
+        ],
+        "lemma": """
+lemma attack [heuristic=c]:
+  exists-trace
+  "Ex d1 d2 d3 c r h0 #q #p #t #i.
+      Created(r, d1, d2, d3) @ q
+    & Pin(c, r, h0) @ p
+    & SignedRemove(d1, r, h0, h(d2)) @ t
+    & AcceptNormal(c, r, h0, 'remove', h(d1), d2) @ i
+    & #t < #i
+    & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)
+    & (All r2 a b e #y. Created(r2, a, b, e) @ y ==> #y = #q)
+    & (All c2 r2 hh2 #y. Pin(c2, r2, hh2) @ y ==> #y = #p)
+    & not (Ex k #x. RevPhrase(k) @ x)"
+""",
+    },
+    {
+        "name": "fork_allows_two_resolutions",
+        "why": "readers accept two competing resolve_fork records for the same forked head",
+        "model": FORK,
+        "edits": [
+            ("restriction Resolve_Single",
+             r"restriction Resolve_Single:\n  \"[^\"]*\"\n", "", 1),
+        ],
+        "drop": FORK_POLICY + FORK_PHRASE + FORK_RECOVERY + [
+            "Log_Write_AK", "Log_Write_AK2", "Log_Write_Resolve",
+            "Log_Age_AK", "Log_Age_AK2",
+            "Contact_Accept_Remove_Default_1",
+            "Contact_Accept_Remove_Default_2",
+            "Contact_Accept_Resolve_Fork_Override",
+            "Device_Accept_Resolve_Fork_1",
+        ],
+        "lemma": """
+lemma attack [heuristic={sanity_cp}]:
+  exists-trace
+  "Ex c1 c2 r h0 rkp v1 v2 d1 d2 d3 #q #p1 #p2 #t1 #t2 #i #j.
+      Created(r, d1, d2, d3) @ q
+    & GenesisHead(r, h0, rkp) @ q
+    & Pin(c1, r, h0) @ p1 & Pin(c2, r, h0) @ p2
+    & SignedRemove(d1, r, h0, h(d2)) @ t1
+    & SignedRemove(d2, r, h0, h(d1)) @ t2
+    & v1 = <'resolve', r, h0, h(<'rec', r, h0, 'remove', h(d2), d1>), rkp>
+    & v2 = <'resolve', r, h0, h(<'rec', r, h0, 'remove', h(d1), d2>), rkp>
+    & ContactResolved(c1, r, h0, <'rec', r, h0, 'remove', h(d2), d1>, rkp) @ i
+    & ContactResolved(c2, r, h0, <'rec', r, h0, 'remove', h(d1), d2>, rkp) @ j
+    & ReadResolve(r, h0, rkp, v1) @ i
+    & ReadResolve(r, h0, rkp, v2) @ j
+    & not (v1 = v2)
+    & (All u #x #y. Step(u) @ x & Step(u) @ y & not (u = 'ORF') ==> #x = #y)
+    & (All r2 a b e #y. Created(r2, a, b, e) @ y ==> #y = #q)
+    & (All c r2 hh2 #y. Pin(c, r2, hh2) @ y ==> #y = #p1 | #y = #p2)
+    & not (Ex d #x. RevA1(d) @ x) & not (Ex d #x. RevA2(d) @ x)
+    & not (Ex k #x. RevPhrase(k) @ x)"
+""",
+    },
+    {
+        "name": "resolve_unlogged_branch",
+        "why": "resolve_fork accepts a branch without checking that it was validly logged under the forked head",
+        "model": FORK,
+        "edits": [
+            ("Device_Accept_Resolve_Fork_1 branch log premise",
+             r"(rule Device_Accept_Resolve_Fork_1:(?:(?!\nrule ).)*?),\n      !LogAK\(h\(<'log', hh>\), chosen, csig1, csig2\) \]",
+             r"\1 ]", 1),
+            ("Device_Accept_Resolve_Fork_1 branch AK checks",
+             r"(rule Device_Accept_Resolve_Fork_1:(?:(?!\nrule ).)*?)\n      Eq\(verify\(csig1, <'ed', chosen>, m1a1\), true\),\n      Eq\(verify\(csig2, <'ml', chosen>, m1a2\), true\),",
+             r"\1", 1),
+        ],
+        "drop": FORK_POLICY + FORK_PHRASE + FORK_RECOVERY + FORK_CONTACTS_RESOLVE + [
+            "Member_Remove_Default_1", "Member_Remove_Default_2",
+            "Log_Write_AK", "Log_Write_AK2", "Log_Age_AK", "Log_Age_AK2",
+            "Owner_Resolve_Fork", "Contact_Pin", "Contact_Stay_01",
+            "Contact_Stay_12", "Contact_Accept_Remove_Default_1",
+            "Contact_Accept_Remove_Default_2",
+        ],
+        "lemma": """
+lemma attack [heuristic=c]:
+  exists-trace
+  "Ex o r h0 chosen d1 d2 d3 rkp #q #n #k.
+      Created(r, d1, d2, d3) @ q
+    & GenesisHead(r, h0, rkp) @ q
+    & DeviceNew(d1) @ n
+    & AcceptResolveBranch(o, r, h0, chosen, d1, rkp) @ k
+    & not (Ex #l. LogValid(h(<'log', h0>), chosen, 'ak') @ l)
+    & not (Ex d #x. RevA1(d) @ x) & not (Ex d #x. RevA2(d) @ x)
+    & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)
+    & (All r2 a b e #y. Created(r2, a, b, e) @ y ==> #y = #q)"
+""",
+    },
+    {
+        "name": "strict_policy_downgrade_single_ak",
+        "why": "a strict policy downgrade accepts the same compromised member signing twice",
+        "model": FORK,
+        "edits": [
+            ("Log_Write_AK2 distinct signers",
+             r"(rule Log_Write_AK2:(?:(?!\nrule ).)*?), Neq\(s1, s2\)",
+             r"\1", 1),
+            ("Contact_Accept_Policy_Default distinct signers",
+             r"(rule Contact_Accept_Policy_Default:(?:(?!\nrule ).)*?), Neq\(s1, s2\)",
+             r"\1", 1),
+        ],
+        "drop": FORK_PHRASE + FORK_RECOVERY + FORK_CONTACTS_RESOLVE + [
+            "Member_Remove_Default_1", "Member_Remove_Default_2",
+            "Member_Policy_Default", "Member_Remove_Strict_1",
+            "Log_Write_AK", "Log_Write_Resolve", "Log_Age_AK", "Log_Age_AK2",
+            "Log_Age_Rf", "Owner_Resolve_Fork", "Contact_Stay_01",
+            "Contact_Stay_12", "Contact_Accept_Remove_Default_1",
+            "Contact_Accept_Remove_Default_2",
+            "Contact_Accept_Remove_Strict_1", "Device_Accept_Resolve_Fork_1",
+        ],
+        "lemma": """
+lemma attack [heuristic=c]:
+  exists-trace
+  "Ex c r h0 h1 d1 d2 d3 #q #p #n #ps #k.
+      Created(r, d1, d2, d3) @ q
+    & Pin(c, r, h0) @ p
+    & DeviceNew(d2) @ n
+    & AcceptNormal(c, r, h0, 'policy', 'strict', d1) @ ps
+    & h1 = h(<'rec', r, h0, 'policy', 'strict', d1>)
+    & AcceptStrict2(c, r, h1, 'policy', 'default', d2, d2) @ k
+    & (All u #x #y. Step(u) @ x & Step(u) @ y ==> #x = #y)
+    & (All r2 a b e #y. Created(r2, a, b, e) @ y ==> #y = #q)
+    & (All c2 r2 hh2 #y. Pin(c2, r2, hh2) @ y ==> #y = #p)
+    & (All d #x. RevA1(d) @ x ==> d = d2) & (All d #x. RevA2(d) @ x ==> d = d2)
+    & not (Ex k2v #x. RevPhrase(k2v) @ x)"
 """,
     },
 ]
