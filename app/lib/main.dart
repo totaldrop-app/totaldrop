@@ -4,6 +4,7 @@
 import 'dart:io';
 
 import 'package:dynamic_color/dynamic_color.dart';
+import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'data/background_access.dart';
@@ -32,6 +33,9 @@ const appVersion = String.fromEnvironment(
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  if (Platform.isAndroid) {
+    await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  }
   await RustLib.init();
   final settings = await SettingsRepository.load();
   final transfers = TransferRepository(settings);
