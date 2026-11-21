@@ -422,7 +422,13 @@ void main() {
       await settle(tester);
       expect(find.byType(SendView), findsOneWidget);
       expect(send.textMode, isTrue);
-      expect(find.text('Send text'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(AppBar),
+          matching: find.text('Send text'),
+        ),
+        findsOneWidget,
+      );
       expect(find.text('https://example.org/'), findsOneWidget);
     });
 

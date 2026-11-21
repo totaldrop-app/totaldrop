@@ -1,6 +1,10 @@
 // SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+import 'dart:math' as math;
+import 'dart:ui' show lerpDouble;
+
+import 'package:flutter/foundation.dart' show clampDouble, visibleForTesting;
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
@@ -139,6 +143,241 @@ class _Centered extends StatelessWidget {
   );
 }
 
+/// Default M3 icon size in `SegmentedButton` (`_SegmentedButtonDefaultsM3`).
+const _kSegmentedDefaultIconSize = 18.0;
+
+/// Base font size used by Flutter's `SegmentedButton` when scaling segment
+/// padding and icon spacing with `MediaQuery.textScalerOf`.
+const _kSegmentedBaseFontSize = 14.0;
+
+/// Fallback minimum segment height when the theme omits `minimumSize`.
+const _kSegmentedFallbackMinHeight = 48.0;
+
+/// M3 `SegmentedButton` icon-segment padding before text-scale scaling
+/// (matches `TextButton.icon` inside Flutter's `_SegmentedButtonState.build`).
+const _kSegmentedPadding1x = EdgeInsetsDirectional.fromSTEB(12, 8, 16, 8);
+const _kSegmentedPaddingScaled = EdgeInsets.symmetric(horizontal: 4);
+
+/// M3 `SegmentedButton` gap between icon and label (`lerpDouble(8, 4, scale)`).
+const _kSegmentedIconGap1x = 8.0;
+const _kSegmentedIconGap2x = 4.0;
+
+/// Two equal segments share outer left, middle divider, and outer right borders.
+const _kSegmentedBordersPerSegment = 1.5;
+
+/// Maximum label lines permitted inside each segment before falling back to
+/// stacked full-width buttons.
+const _kSegmentedMaxLines = 2;
+
+/// Measured layout result for two equal `SegmentedButton` segments.
+typedef _SegmentedLayoutMetrics = ({bool fits, double minHeight});
+
+_SegmentedLayoutMetrics _measureSegmentedLayout({
+  required ThemeData theme,
+  required TextScaler textScaler,
+  required TextDirection textDirection,
+  required double availableWidth,
+  required List<String> labels,
+}) {
+  final style = theme.segmentedButtonTheme.style;
+  final textStyle =
+      style?.textStyle?.resolve(const {}) ?? theme.textTheme.labelLarge;
+  final defaultFontSize = textStyle?.fontSize ?? _kSegmentedBaseFontSize;
+  final effectiveTextScale =
+      textScaler.scale(defaultFontSize) / _kSegmentedBaseFontSize;
+  final scaledPadding = ButtonStyleButton.scaledPadding(
+    _kSegmentedPadding1x,
+    _kSegmentedPaddingScaled,
+    _kSegmentedPaddingScaled,
+    effectiveTextScale,
+  ).resolve(textDirection);
+  final iconSize =
+      style?.iconSize?.resolve(const {}) ?? _kSegmentedDefaultIconSize;
+  final scaleT = clampDouble(effectiveTextScale, 1.0, 2.0) - 1.0;
+  final iconGap = lerpDouble(
+    _kSegmentedIconGap1x,
+    _kSegmentedIconGap2x,
+    scaleT,
+  )!;
+  final borderWidth = style?.side?.resolve(const {})?.width ?? 1.0;
+  final segmentChrome =
+      scaledPadding.horizontal +
+      iconSize +
+      iconGap +
+      borderWidth * _kSegmentedBordersPerSegment;
+  final maxLabelWidth = (availableWidth / 2) - segmentChrome;
+  final minHeight =
+      style?.minimumSize?.resolve(const {})?.height ??
+      _kSegmentedFallbackMinHeight;
+  if (maxLabelWidth <= 0) return (fits: false, minHeight: minHeight);
+
+  var maxRenderedLabelHeight = 0.0;
+  for (final label in labels) {
+    // For space-delimited scripts, require each word to fit so Flutter never
+    // chops a word mid-word inside a segment.
+    if (label.contains(RegExp(r'\s'))) {
+      for (final word in label.split(RegExp(r'\s+'))) {
+        if (word.isEmpty) continue;
+        final wordPainter = TextPainter(
+          text: TextSpan(text: word, style: textStyle),
+          textDirection: textDirection,
+          textScaler: textScaler,
+          maxLines: 1,
+        )..layout();
+        final wordWidth = wordPainter.width;
+        wordPainter.dispose();
+        if (wordWidth > maxLabelWidth) {
+          return (fits: false, minHeight: minHeight);
+        }
+      }
+    }
+
+    final painter = TextPainter(
+      text: TextSpan(text: label, style: textStyle),
+      textDirection: textDirection,
+      textScaler: textScaler,
+      maxLines: _kSegmentedMaxLines,
+    )..layout(maxWidth: maxLabelWidth);
+    final labelHeight = painter.height;
+    final fits = !painter.didExceedMaxLines && labelHeight <= minHeight;
+    painter.dispose();
+    if (!fits) return (fits: false, minHeight: minHeight);
+    maxRenderedLabelHeight = math.max(maxRenderedLabelHeight, labelHeight);
+  }
+
+  // Flutter's `_RenderSegmentedButton.computeMaxIntrinsicHeight` passes the
+  // full width rather than `width / childCount` to each segment, so a label
+  // that wraps to 2 lines under half width would under-report its intrinsic
+  // height to `SliverFillRemaining(hasScrollBody: false)`. Reporting the
+  // wrapped minimum height prevents bottom overflow near the viewport fold.
+  final expectedHeight = math.max(
+    minHeight,
+    maxRenderedLabelHeight + scaledPadding.vertical + borderWidth * 2,
+  );
+  return (fits: true, minHeight: expectedHeight);
+}
+
+/// Returns whether two equal `SegmentedButton` segments inside [availableWidth]
+/// can lay out [labels] using [theme]'s `segmentedButtonTheme` metrics without
+/// mid-word breaks, exceeding [_kSegmentedMaxLines], or overflowing the
+/// segment's minimum height budget.
+@visibleForTesting
+bool sendModeSwitchFitsSegmented({
+  required ThemeData theme,
+  required TextScaler textScaler,
+  required TextDirection textDirection,
+  required double availableWidth,
+  required List<String> labels,
+}) => _measureSegmentedLayout(
+  theme: theme,
+  textScaler: textScaler,
+  textDirection: textDirection,
+  availableWidth: availableWidth,
+  labels: labels,
+).fits;
+
+/// Switches between sending files and sending text while keeping any
+/// picked files and typed text intact (#545, ADR 0011). Allows up to two
+/// wrapped label lines inside each segment so long translations stay on
+/// `SegmentedButton` at 1.0x, and falls back to stacked full-width buttons
+/// when large text scales or narrow viewports exceed that budget.
+class _SendModeSwitch extends StatelessWidget {
+  const _SendModeSwitch({required this.vm, required this.availableWidth});
+  final SendViewModel vm;
+  final double availableWidth;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final metrics = _measureSegmentedLayout(
+      theme: Theme.of(context),
+      textScaler: MediaQuery.textScalerOf(context),
+      textDirection: Directionality.of(context),
+      availableWidth: availableWidth,
+      labels: [l.sendTitle, l.sendText],
+    );
+
+    if (metrics.fits) {
+      return ConstrainedBox(
+        constraints: BoxConstraints(minHeight: metrics.minHeight),
+        child: SegmentedButton<bool>(
+          expandedInsets: EdgeInsets.zero,
+          showSelectedIcon: false,
+          selected: {vm.textMode},
+          onSelectionChanged: (selected) => vm.setTextMode(selected.first),
+          segments: [
+            ButtonSegment<bool>(
+              value: false,
+              icon: const Icon(Icons.attach_file),
+              label: Text(
+                l.sendTitle,
+                maxLines: _kSegmentedMaxLines,
+                softWrap: true,
+                textAlign: TextAlign.center,
+              ),
+            ),
+            ButtonSegment<bool>(
+              value: true,
+              icon: const Icon(Icons.notes),
+              label: Text(
+                l.sendText,
+                maxLines: _kSegmentedMaxLines,
+                softWrap: true,
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    Widget modeButton({
+      required bool selected,
+      required IconData icon,
+      required String label,
+      required VoidCallback onPressed,
+    }) {
+      final button = selected
+          ? FilledButton.tonalIcon(
+              onPressed: onPressed,
+              icon: Icon(icon),
+              label: Text(label, textAlign: TextAlign.center),
+            )
+          : OutlinedButton.icon(
+              onPressed: onPressed,
+              icon: Icon(icon),
+              label: Text(label, textAlign: TextAlign.center),
+            );
+      return MergeSemantics(
+        child: Semantics(
+          selected: selected,
+          inMutuallyExclusiveGroup: true,
+          child: button,
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        modeButton(
+          selected: !vm.textMode,
+          icon: Icons.attach_file,
+          label: l.sendTitle,
+          onPressed: () => vm.setTextMode(false),
+        ),
+        Gap.s,
+        modeButton(
+          selected: vm.textMode,
+          icon: Icons.notes,
+          label: l.sendText,
+          onPressed: () => vm.setTextMode(true),
+        ),
+      ],
+    );
+  }
+}
+
 class _Picking extends StatelessWidget {
   const _Picking({required this.vm});
   final SendViewModel vm;
@@ -147,152 +386,178 @@ class _Picking extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    if (vm.files.isEmpty) {
-      // One screen, one job: the only action is choosing files. With the
-      // largest text the page scrolls instead of running off (#322).
-      return CustomScrollView(
-        slivers: [
-          SliverFillRemaining(
-            hasScrollBody: false,
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const Spacer(),
-                  Icon(
-                    Icons.upload_file_outlined,
-                    size: 56,
-                    color: theme.colorScheme.onSurfaceVariant,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (vm.files.isEmpty) {
+          final pad = columnPadding(constraints.maxWidth, top: 8, bottom: 24);
+          final innerWidth = math.max(
+            0.0,
+            constraints.maxWidth - pad.horizontal,
+          );
+          // One screen, one job: choosing files (with the mode switch at
+          // the top). With the largest text the page scrolls instead of
+          // running off (#322).
+          return CustomScrollView(
+            slivers: [
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: Padding(
+                  padding: pad,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _SendModeSwitch(vm: vm, availableWidth: innerWidth),
+                      // Minimum clearance when Spacer collapses to 0 at 200%.
+                      Gap.m,
+                      const Spacer(),
+                      Icon(
+                        Icons.upload_file_outlined,
+                        size: 56,
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                      Gap.m,
+                      Text(
+                        l.sendEmpty,
+                        style: theme.textTheme.headlineSmall,
+                        textAlign: TextAlign.center,
+                      ),
+                      Gap.s,
+                      Text(
+                        l.sendEmptyHint,
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      const Spacer(),
+                      // Minimum clearance when Spacer collapses to 0 at 200%.
+                      Gap.m,
+                      if (vm.addFailed) ...[
+                        const _AddFailed(textAlign: TextAlign.center),
+                        Gap.m,
+                      ],
+                      FilledButton.icon(
+                        onPressed: vm.addFiles,
+                        icon: const Icon(Icons.attach_file),
+                        label: Text(l.sendAddFiles),
+                      ),
+                    ],
                   ),
-                  Gap.m,
-                  Text(
-                    l.sendEmpty,
-                    style: theme.textTheme.headlineSmall,
-                    textAlign: TextAlign.center,
-                  ),
-                  Gap.s,
-                  Text(
-                    l.sendEmptyHint,
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.bodyLarge?.copyWith(
+                ),
+              ),
+            ],
+          );
+        }
+        final listPad = columnPadding(constraints.maxWidth, top: 8, bottom: 8);
+        final innerWidth = math.max(
+          0.0,
+          constraints.maxWidth - listPad.horizontal,
+        );
+        return Column(
+          children: [
+            Expanded(
+              child: ListView.separated(
+                padding: listPad,
+                itemCount: vm.files.length + 2,
+                separatorBuilder: (_, i) => i == 0 ? Gap.s : const Divider(),
+                itemBuilder: (context, i) {
+                  if (i == 0) {
+                    return _SendModeSwitch(vm: vm, availableWidth: innerWidth);
+                  }
+                  if (i == vm.files.length + 1) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        TextButton.icon(
+                          onPressed: vm.addFiles,
+                          icon: const Icon(Icons.add),
+                          label: Text(l.sendAddFiles),
+                        ),
+                        if (vm.addFailed)
+                          const Padding(
+                            padding: EdgeInsetsDirectional.fromSTEB(
+                              12,
+                              0,
+                              12,
+                              8,
+                            ),
+                            child: _AddFailed(textAlign: TextAlign.start),
+                          ),
+                      ],
+                    );
+                  }
+                  final f = vm.files[i - 1];
+                  return ListTile(
+                    leading: Icon(
+                      Icons.insert_drive_file_outlined,
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
-                  ),
-                  const Spacer(),
-                  if (vm.addFailed) ...[
-                    const _AddFailed(textAlign: TextAlign.center),
-                    Gap.m,
-                  ],
-                  FilledButton.icon(
-                    onPressed: vm.addFiles,
-                    icon: const Icon(Icons.attach_file),
-                    label: Text(l.sendAddFiles),
-                  ),
-                  Gap.s,
-                  OutlinedButton.icon(
-                    onPressed: () => vm.setTextMode(true),
-                    icon: const Icon(Icons.notes),
-                    label: Text(l.sendText),
-                  ),
-                ],
+                    title: Text(
+                      f.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    subtitle: Text(
+                      formatBytes(l, f.size),
+                      style: const TextStyle(
+                        fontFeatures: [FontFeature.tabularFigures()],
+                      ),
+                    ),
+                    trailing: KeepIconButtonVariant(
+                      child: IconButton(
+                        tooltip: l.sendRemove,
+                        icon: const Icon(Icons.close),
+                        onPressed: () => vm.remove(f),
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
-          ),
-        ],
-      );
-    }
-    return Column(
-      children: [
-        Expanded(
-          child: ListView.separated(
-            padding: const EdgeInsets.fromLTRB(24, 8, 24, 8),
-            itemCount: vm.files.length + 1,
-            separatorBuilder: (_, _) => const Divider(),
-            itemBuilder: (context, i) {
-              if (i == vm.files.length) {
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+            const Divider(),
+            // Pinned under the list. With the largest text it takes at most
+            // half the screen and scrolls itself, so the list keeps its room
+            // (#322).
+            ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.sizeOf(context).height / 2,
+              ),
+              child: SingleChildScrollView(
+                padding: columnPadding(
+                  constraints.maxWidth,
+                  top: 8,
+                  bottom: 24,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    TextButton.icon(
-                      onPressed: vm.addFiles,
-                      icon: const Icon(Icons.add),
-                      label: Text(l.sendAddFiles),
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(l.sendStrongCode),
+                      subtitle: Text(l.sendStrongCodeHint),
+                      value: vm.strong,
+                      onChanged: vm.setStrong,
                     ),
-                    if (vm.addFailed)
-                      const Padding(
-                        padding: EdgeInsetsDirectional.fromSTEB(12, 0, 12, 8),
-                        child: _AddFailed(textAlign: TextAlign.start),
+                    Gap.s,
+                    FilledButton.icon(
+                      onPressed: vm.start,
+                      icon: const Icon(Icons.key_outlined),
+                      // Read out when the list appears after the picker's copy
+                      // and when it changes, so a screen reader is not left
+                      // silent where "Add files" was (#271).
+                      label: Announced(
+                        Text(
+                          '${l.sendCreateCode} · ${l.itemsAndSize(vm.files.length, formatBytes(l, vm.totalSize))}',
+                        ),
                       ),
-                  ],
-                );
-              }
-              final f = vm.files[i];
-              return ListTile(
-                leading: Icon(
-                  Icons.insert_drive_file_outlined,
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-                title: Text(
-                  f.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                subtitle: Text(
-                  formatBytes(l, f.size),
-                  style: const TextStyle(
-                    fontFeatures: [FontFeature.tabularFigures()],
-                  ),
-                ),
-                trailing: KeepIconButtonVariant(
-                  child: IconButton(
-                    tooltip: l.sendRemove,
-                    icon: const Icon(Icons.close),
-                    onPressed: () => vm.remove(f),
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-        const Divider(),
-        // Pinned under the list. With the largest text it takes at most
-        // half the screen and scrolls itself, so the list keeps its room
-        // (#322).
-        ConstrainedBox(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.sizeOf(context).height / 2,
-          ),
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(l.sendStrongCode),
-                  subtitle: Text(l.sendStrongCodeHint),
-                  value: vm.strong,
-                  onChanged: vm.setStrong,
-                ),
-                Gap.s,
-                FilledButton.icon(
-                  onPressed: vm.start,
-                  icon: const Icon(Icons.key_outlined),
-                  // Read out when the list appears after the picker's copy
-                  // and when it changes, so a screen reader is not left
-                  // silent where "Add files" was (#271).
-                  label: Announced(
-                    Text(
-                      '${l.sendCreateCode} · ${l.itemsAndSize(vm.files.length, formatBytes(l, vm.totalSize))}',
                     ),
-                  ),
+                  ],
                 ),
-              ],
+              ),
             ),
-          ),
-        ),
-      ],
+          ],
+        );
+      },
     );
   }
 }
@@ -366,111 +631,110 @@ class _TextPickingState extends State<_TextPicking> {
     final hidden = vm.text.isNotEmpty && shownText(vm.text).hidden;
     // The box takes the room left; with the keyboard up or large type,
     // the page scrolls instead of overflowing.
-    return CustomScrollView(
-      slivers: [
-        SliverFillRemaining(
-          hasScrollBody: false,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(minHeight: 160),
-                    child: TextField(
-                      controller: _controller,
-                      // A long text cannot be edited, only taken away.
-                      readOnly: vm.bigText,
-                      autofocus: vm.text.isEmpty,
-                      maxLines: null,
-                      expands: true,
-                      textAlignVertical: TextAlignVertical.top,
-                      keyboardType: TextInputType.multiline,
-                      decoration: InputDecoration(
-                        hintText: l.sendTextHint,
-                        border: const OutlineInputBorder(),
-                      ),
-                      onChanged: vm.setText,
-                    ),
-                  ),
-                ),
-                if (notice != null) ...[
-                  Gap.s,
-                  Announced(
-                    Text(
-                      notice,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: warn
-                            ? theme.colorScheme.error
-                            : theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
-                ],
-                if (hidden) ...[
-                  Gap.s,
-                  Announced(
-                    Text(
-                      l.sendTextHidden,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
-                ],
-                Gap.s,
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  crossAxisAlignment: WrapCrossAlignment.center,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final pad = columnPadding(constraints.maxWidth, top: 8, bottom: 24);
+        final innerWidth = math.max(0.0, constraints.maxWidth - pad.horizontal);
+        return CustomScrollView(
+          slivers: [
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: Padding(
+                padding: pad,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    if (vm.text.isEmpty)
-                      OutlinedButton.icon(
-                        onPressed: vm.pasteClipboard,
-                        icon: const Icon(Icons.content_paste),
-                        label: Text(l.receivePaste),
-                      )
-                    else
-                      OutlinedButton.icon(
-                        onPressed: () => vm.setText(''),
-                        icon: const Icon(Icons.clear),
-                        label: Text(l.sendRemove),
+                    _SendModeSwitch(vm: vm, availableWidth: innerWidth),
+                    Gap.m,
+                    Expanded(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(minHeight: 160),
+                        child: TextField(
+                          controller: _controller,
+                          // A long text cannot be edited, only taken away.
+                          readOnly: vm.bigText,
+                          autofocus: vm.text.isEmpty,
+                          maxLines: null,
+                          expands: true,
+                          textAlignVertical: TextAlignVertical.top,
+                          keyboardType: TextInputType.multiline,
+                          decoration: InputDecoration(
+                            hintText: l.sendTextHint,
+                            border: const OutlineInputBorder(),
+                          ),
+                          onChanged: vm.setText,
+                        ),
                       ),
-                    if (vm.text.isEmpty)
-                      OutlinedButton.icon(
-                        onPressed: () {
-                          vm.setTextMode(false);
-                          if (vm.files.isEmpty) vm.addFiles();
-                        },
-                        icon: const Icon(Icons.attach_file),
-                        label: Text(l.sendAddFiles),
+                    ),
+                    if (notice != null) ...[
+                      Gap.s,
+                      Announced(
+                        Text(
+                          notice,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: warn
+                                ? theme.colorScheme.error
+                                : theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
                       ),
+                    ],
+                    if (hidden) ...[
+                      Gap.s,
+                      Announced(
+                        Text(
+                          l.sendTextHidden,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                    ],
+                    Gap.s,
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        if (vm.text.isEmpty)
+                          OutlinedButton.icon(
+                            onPressed: vm.pasteClipboard,
+                            icon: const Icon(Icons.content_paste),
+                            label: Text(l.receivePaste),
+                          )
+                        else
+                          OutlinedButton.icon(
+                            onPressed: () => vm.setText(''),
+                            icon: const Icon(Icons.clear),
+                            label: Text(l.sendRemove),
+                          ),
+                      ],
+                    ),
+                    const Divider(height: 24),
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(l.sendStrongCode),
+                      subtitle: Text(l.sendStrongCodeHint),
+                      value: vm.strong,
+                      onChanged: vm.setStrong,
+                    ),
+                    Gap.s,
+                    FilledButton.icon(
+                      onPressed: vm.canStart ? vm.start : null,
+                      icon: const Icon(Icons.key_outlined),
+                      label: Text(
+                        vm.text.isEmpty
+                            ? l.sendCreateCode
+                            : '${l.sendCreateCode} · ${formatBytes(l, vm.textBytes)}',
+                      ),
+                    ),
                   ],
                 ),
-                const Divider(height: 24),
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(l.sendStrongCode),
-                  subtitle: Text(l.sendStrongCodeHint),
-                  value: vm.strong,
-                  onChanged: vm.setStrong,
-                ),
-                Gap.s,
-                FilledButton.icon(
-                  onPressed: vm.canStart ? vm.start : null,
-                  icon: const Icon(Icons.key_outlined),
-                  label: Text(
-                    vm.text.isEmpty
-                        ? l.sendCreateCode
-                        : '${l.sendCreateCode} · ${formatBytes(l, vm.textBytes)}',
-                  ),
-                ),
-              ],
+              ),
             ),
-          ),
-        ),
-      ],
+          ],
+        );
+      },
     );
   }
 }
@@ -520,8 +784,7 @@ class _Waiting extends StatelessWidget {
       );
     }
 
-    return ListView(
-      padding: const EdgeInsets.all(24),
+    return ColumnListView(
       children: [
         const Center(child: TotalDropMark(size: 120, sending: true)),
         Gap.s,
@@ -606,8 +869,7 @@ class _Connected extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    return ListView(
-      padding: const EdgeInsets.all(24),
+    return ColumnListView(
       children: [
         const Center(child: TotalDropMark(size: 120, sending: true)),
         Gap.l,
@@ -634,8 +896,7 @@ class _Transferring extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    return ListView(
-      padding: const EdgeInsets.all(24),
+    return ColumnListView(
       children: [
         const Center(child: TotalDropMark(size: 140, sending: true)),
         Gap.l,
