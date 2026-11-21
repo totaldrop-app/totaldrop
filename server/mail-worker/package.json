@@ -1,0 +1,20 @@
+{
+  "name": "totaldrop-mail-worker",
+  "version": "0.1.0",
+  "private": true,
+  "license": "AGPL-3.0-or-later",
+  "description": "Forwards mail for totaldrop.app addresses to every maintainer, on Cloudflare Email Routing",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "check": "tsc --noEmit && tsc -p tsconfig.test.json",
+    "test": "node --test \"test/*.test.ts\"",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "5.20261110.1",
+    "@types/node": "24.19.2",
+    "typescript": "7.0.2",
+    "wrangler": "4.160.0"
+  }
+}

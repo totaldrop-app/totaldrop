@@ -91,9 +91,9 @@ repos:
         name: tsc (workers)
         language: system
         entry: >-
-          bash -c 'for d in server/rendezvous-worker server/relay-worker;
+          bash -c 'for d in server/rendezvous-worker server/relay-worker server/mail-worker;
           do (cd "$d" && npm run --silent check) || exit 1; done'
-        files: ^server/(rendezvous|relay)-worker/
+        files: ^server/(rendezvous|relay|mail)-worker/
         pass_filenames: false
 
       # --- Site (site.yml) ---
