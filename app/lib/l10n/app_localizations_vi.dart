@@ -559,6 +559,10 @@ class AppLocalizationsVi extends AppLocalizations {
       'TotalDrop đang mở từ gói .pkg, .deb hoặc .rpm, nên cửa sổ đó đã được đưa lên trước. Mỗi lúc chỉ dùng một gói: thoát cửa sổ đó để mở bản này.';
 
   @override
+  String get sendFlatpakUnreadable =>
+      'Không thể đọc tệp này từ bản Flatpak. Hãy chọn tệp bằng Thêm tệp, hoặc đóng cửa sổ này rồi thử lại.';
+
+  @override
   String get sendText => 'Gửi văn bản';
 
   @override

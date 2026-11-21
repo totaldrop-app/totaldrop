@@ -103,16 +103,17 @@ ApplicationWindow {
         }
         let code = ""
         for (const a of args) {
-            if (a.startsWith("--screen=")) continue
+            if (a.startsWith("--")) continue
             code = xfer.codeFromLink(a)
             if (code !== "") break
         }
         const files = args.filter(a => a.startsWith("/"))
+        const unreadable = args.indexOf("--flatpak-unreadable") >= 0
         const screens = { "--screen=send": sendPage, "--screen=receive": receivePage, "--screen=settings": settingsPage }
         let page = null
         for (const a of args) if (screens[a]) page = screens[a]
         if (code !== "") show(receivePage, { initialCode: code })
-        else if (files.length > 0) show(sendPage, { initialFiles: files })
+        else if (files.length > 0 || unreadable) show(sendPage, { initialFiles: files, flatpakUnreadable: unreadable })
         // "Send clipboard": Send with the clipboard's text filled in (#326).
         else if (args.indexOf("--screen=clipboard") >= 0) show(sendPage, { pasteOnOpen: true })
         else if (page) show(page, {})
@@ -132,7 +133,8 @@ ApplicationWindow {
         for (let i = Math.max(at, 0) + 1; i < stack.depth; i++) if (stack.get(i).hasInput) inputAbove = true
         if (at >= 0) {
             const open = stack.get(at)
-            if (props.initialFiles) open.add(props.initialFiles)
+            if (props.initialFiles && props.initialFiles.length > 0) open.add(props.initialFiles)
+            if (props.flatpakUnreadable) open.showFlatpakUnreadable()
             if (props.initialCode) open.useCode(props.initialCode)
             if (props.pasteOnOpen) open.pasteClipboard()
             // Brought up unless that would close a screen with input; then
