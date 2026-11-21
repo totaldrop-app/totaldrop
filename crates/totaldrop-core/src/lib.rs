@@ -566,11 +566,12 @@ impl PreparedSend {
             &stop,
         )
         .await;
-        if report.is_err() {
+        let drained = transfer::peer_closed(&conn);
+        if report.is_err() && !drained {
             // Free the connection at once instead of waiting for it to idle.
             conn.close(0u32.into(), b"failed");
         }
-        let _ = tokio::time::timeout(Duration::from_secs(5), endpoint.wait_idle()).await;
+        finish_endpoint(endpoint, drained, Duration::from_secs(5)).await;
         report
     }
 }
@@ -654,7 +655,12 @@ impl IncomingOffer {
         let id = self.offer.transfer_id();
         let e = transfer::tell_stopped(&self.conn, &mut self.chan.sealer, &mut self.chan.send, id)
             .await;
-        let _ = tokio::time::timeout(Duration::from_secs(2), self.endpoint.wait_idle()).await;
+        finish_endpoint(
+            self.endpoint,
+            transfer::peer_closed(&self.conn),
+            Duration::from_secs(2),
+        )
+        .await;
         e
     }
 
@@ -743,8 +749,11 @@ impl IncomingOffer {
             stop,
         )
         .await;
-        self.conn.close(0u32.into(), b"done");
-        let _ = tokio::time::timeout(Duration::from_secs(2), self.endpoint.wait_idle()).await;
+        let drained = transfer::peer_closed(&self.conn);
+        if !drained {
+            self.conn.close(0u32.into(), b"done");
+        }
+        finish_endpoint(self.endpoint, drained, Duration::from_secs(2)).await;
         report
     }
 
@@ -758,8 +767,11 @@ impl IncomingOffer {
     /// Like [`IncomingOffer::accept_text`], until `stop` is stopped.
     pub async fn accept_text_with(self, stop: &Stop) -> Result<ReceiveReport> {
         let report = transfer::accept_text(&self.conn, self.chan, self.offer, stop).await;
-        self.conn.close(0u32.into(), b"done");
-        let _ = tokio::time::timeout(Duration::from_secs(2), self.endpoint.wait_idle()).await;
+        let drained = transfer::peer_closed(&self.conn);
+        if !drained {
+            self.conn.close(0u32.into(), b"done");
+        }
+        finish_endpoint(self.endpoint, drained, Duration::from_secs(2)).await;
         report
     }
 
@@ -769,6 +781,17 @@ impl IncomingOffer {
         let _ = tokio::time::timeout(Duration::from_secs(2), self.conn.closed()).await;
         self.conn.close(0u32.into(), b"declined");
         Ok(())
+    }
+}
+
+/// Wait up to `limit` for `endpoint` to finish closing, unless the peer
+/// already closed the connection (`drained`): then the endpoint is only in
+/// QUIC's passive `3 * PTO` draining state and needs no outgoing packet,
+/// whereas when `drained` is `false` the endpoint and relay link must stay
+/// alive to transmit `CONNECTION_CLOSE` (#359, #512).
+async fn finish_endpoint(endpoint: quinn::Endpoint, drained: bool, limit: Duration) {
+    if !drained {
+        let _ = tokio::time::timeout(limit, endpoint.wait_idle()).await;
     }
 }
 
@@ -1043,6 +1066,166 @@ mod tests {
                 &unsafe_relay
             )
             .is_err()
+        );
+    }
+
+    async fn delayed_endpoints(
+        one_way: Duration,
+    ) -> (
+        quinn::Endpoint,
+        quinn::Connection,
+        secure::SecureChannel,
+        quinn::Endpoint,
+        quinn::Connection,
+        secure::SecureChannel,
+        std::sync::Arc<std::sync::atomic::AtomicBool>,
+    ) {
+        use std::net::{SocketAddr, UdpSocket};
+        use std::sync::Arc;
+        use std::sync::atomic::{AtomicBool, Ordering};
+
+        let (ka, kb) = (
+            transport::EndpointKey::generate().unwrap(),
+            transport::EndpointKey::generate().unwrap(),
+        );
+        let sa = UdpSocket::bind(SocketAddr::from(([127, 0, 0, 1], 0))).unwrap();
+        let sb = UdpSocket::bind(SocketAddr::from(([127, 0, 0, 1], 0))).unwrap();
+        let (sender_ep, pa, _) = transport::endpoint(sa, &ka, &kb.public()).unwrap();
+        let (receiver_ep, pb, _) = transport::endpoint(sb, &kb, &ka.public()).unwrap();
+        let silent = Arc::new(AtomicBool::new(false));
+        let forward = |mut rx: tokio::sync::mpsc::Receiver<Vec<u8>>,
+                       tx: tokio::sync::mpsc::Sender<Vec<u8>>,
+                       silent: Arc<AtomicBool>| {
+            let (q_tx, mut q_rx) =
+                tokio::sync::mpsc::unbounded_channel::<(tokio::time::Instant, Vec<u8>)>();
+            tokio::spawn(async move {
+                while let Some(d) = rx.recv().await {
+                    if !silent.load(Ordering::SeqCst) {
+                        let due = tokio::time::Instant::now().checked_add(one_way).unwrap();
+                        let _ = q_tx.send((due, d));
+                    }
+                }
+            });
+            tokio::spawn(async move {
+                while let Some((due, d)) = q_rx.recv().await {
+                    tokio::time::sleep_until(due).await;
+                    let _ = tx.send(d).await;
+                }
+            });
+        };
+        forward(pa.outgoing, pb.incoming, Arc::clone(&silent));
+        forward(pb.outgoing, pa.incoming, Arc::clone(&silent));
+
+        let gate = relay::Gate::default();
+        gate.open();
+        let paths = transport::Paths {
+            direct: Vec::new(),
+            relay: Some(gate),
+            relay_only: true,
+        };
+        let (sk, rk) = (
+            DeviceKeys::generate().unwrap(),
+            DeviceKeys::generate().unwrap(),
+        );
+        let (sc, rc) = (
+            pairing::issue_certificate(&sk),
+            pairing::issue_certificate(&rk),
+        );
+        let input = |keys, peer| secure::HandshakeInput {
+            keys,
+            peer,
+            psk: [6; 32],
+            mailbox_id: [8; 16],
+        };
+        let wait = Duration::from_secs(10);
+        let recv_side = async {
+            let conn = transport::receiver_connection(&receiver_ep, &paths, wait)
+                .await
+                .unwrap();
+            let (send, recv) = conn.open_bi().await.unwrap();
+            let chan = secure::handshake_on(send, recv, input(&rk, &sc), true)
+                .await
+                .unwrap();
+            (conn, chan)
+        };
+        let send_side = async {
+            let (conn, send, recv) = transport::sender_connection(&sender_ep, &paths, wait)
+                .await
+                .unwrap();
+            let chan = secure::handshake_on(send, recv, input(&sk, &rc), false)
+                .await
+                .unwrap();
+            (conn, chan)
+        };
+        let ((rconn, rchan), (sconn, schan)) = tokio::join!(recv_side, send_side);
+        (sender_ep, sconn, schan, receiver_ep, rconn, rchan, silent)
+    }
+
+    /// #359: once the peer acknowledges `cancel` and closes the connection,
+    /// `finish_endpoint` skips QUIC's passive `3 * PTO` draining wait so
+    /// stopping ends well within Linux's 1.5 s window-close budget.
+    #[tokio::test]
+    async fn acknowledged_stop_skips_passive_draining_wait() {
+        let (sender_ep, sconn, mut schan, receiver_ep, rconn, mut rchan, _) =
+            delayed_endpoints(Duration::from_millis(120)).await;
+        let peer = tokio::spawn(async move {
+            let msg = crate::framing::read_frame(&mut rchan.recv, 64 * 1024)
+                .await
+                .unwrap()
+                .unwrap();
+            let plain = rchan.opener.open(&msg).unwrap();
+            let ctl = totaldrop_proto::wire::Control::decode(&plain).unwrap();
+            assert!(
+                matches!(ctl, totaldrop_proto::wire::Control::Cancel { ref reason, .. } if reason == "stopped")
+            );
+            rconn.close(0u32.into(), b"done");
+            let _ = tokio::time::timeout(Duration::from_secs(2), receiver_ep.wait_idle()).await;
+        });
+
+        let err = transfer::tell_stopped(&sconn, &mut schan.sealer, &mut schan.send, [1; 16]).await;
+        assert!(matches!(err, Error::Stopped));
+        assert!(
+            transfer::peer_closed(&sconn),
+            "peer's CONNECTION_CLOSE put sender into passive draining"
+        );
+        let drain_started = tokio::time::Instant::now();
+        finish_endpoint(
+            sender_ep,
+            transfer::peer_closed(&sconn),
+            Duration::from_secs(5),
+        )
+        .await;
+        let elapsed = drain_started.elapsed();
+        assert!(
+            elapsed < Duration::from_millis(200),
+            "passive draining still waited {elapsed:?}"
+        );
+        peer.abort();
+    }
+
+    /// #359, #512: when the peer is silent and never sends `CONNECTION_CLOSE`,
+    /// `peer_closed` is `false` (`LocallyClosed`), so `finish_endpoint` keeps
+    /// the endpoint alive for `wait_idle` up to `limit` instead of dropping it
+    /// early before `CONNECTION_CLOSE` can leave.
+    #[tokio::test]
+    async fn silent_peer_keeps_endpoint_waiting_in_closing_state() {
+        let (sender_ep, sconn, mut schan, _receiver_ep, _rconn, _rchan, silent) =
+            delayed_endpoints(Duration::from_millis(120)).await;
+        silent.store(true, std::sync::atomic::Ordering::SeqCst);
+
+        let err = transfer::tell_stopped(&sconn, &mut schan.sealer, &mut schan.send, [2; 16]).await;
+        assert!(matches!(err, Error::Stopped));
+        assert!(
+            !transfer::peer_closed(&sconn),
+            "local close after timeout must not look peer-closed"
+        );
+        let limit = Duration::from_millis(350);
+        let wait_started = tokio::time::Instant::now();
+        finish_endpoint(sender_ep, transfer::peer_closed(&sconn), limit).await;
+        let elapsed = wait_started.elapsed();
+        assert!(
+            elapsed >= Duration::from_millis(300),
+            "finish_endpoint skipped wait_idle early ({elapsed:?}) while actively closing"
         );
     }
 }

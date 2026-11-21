@@ -973,7 +973,10 @@ async fn receiver_stops_mid_transfer() {
         .await
         .unwrap()
         .unwrap();
-    assert!(matches!(s, Err(Error::Cancelled(_))), "{s:?}");
+    assert!(
+        matches!(s, Err(Error::Cancelled(ref reason)) if reason == "stopped"),
+        "{s:?}"
+    );
     left_nothing(&dest);
     std::fs::remove_dir_all(src).unwrap();
     std::fs::remove_dir_all(dest).unwrap();
@@ -995,7 +998,10 @@ async fn sender_stops_mid_folder() {
     let o = offer(server, &code).await;
     // The receiver is the slow side here.
     let r = o.accept(&dest, counting(Default::default(), true)).await;
-    assert!(matches!(r, Err(Error::Cancelled(_))), "{r:?}");
+    assert!(
+        matches!(r, Err(Error::Cancelled(ref reason)) if reason == "stopped"),
+        "{r:?}"
+    );
     let s = sender.await.unwrap();
     assert!(matches!(s, Err(Error::Stopped)), "{s:?}");
     let sent = moved.load(std::sync::atomic::Ordering::SeqCst);
@@ -1029,7 +1035,10 @@ async fn receiver_stops_at_the_offer() {
         .await
         .unwrap()
         .unwrap();
-    assert!(matches!(s, Err(Error::Cancelled(_))), "{s:?}");
+    assert!(
+        matches!(s, Err(Error::Cancelled(ref reason)) if reason == "stopped"),
+        "{s:?}"
+    );
     std::fs::remove_dir_all(src).unwrap();
 }
 
@@ -1385,4 +1394,172 @@ async fn the_relay_passes_everything_to_a_receiver_that_answers() {
     let (got, probes) = relay_flood(&mut a_ws, &mut b_ws, keys, total, true, idle).await;
     assert!(got >= total, "only {got} of {total} bytes arrived");
     assert_eq!(probes > 0, relay_probes(), "{probes} probes");
+}
+
+/// Forward a `ws://127.0.0.1:<port>/...` relay URL through a local TCP proxy
+/// that adds pure propagation delay `one_way` to every chunk in each
+/// direction, giving QUIC a realistic WAN RTT (`4 * one_way` end-to-end when
+/// both sides connect through it) so `3 * PTO` exceeds Linux's 1.5 s
+/// window-close budget (`quit::STOPPING`).
+async fn delayed_ws_url(ws_url: &str, one_way: Duration) -> String {
+    let rest = ws_url.strip_prefix("ws://").unwrap();
+    let (host_port, path) = rest.split_once('/').unwrap();
+    let upstream: std::net::SocketAddr = host_port.parse().unwrap();
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let local = listener.local_addr().unwrap();
+    tokio::spawn(async move {
+        while let Ok((client, _)) = listener.accept().await {
+            tokio::spawn(async move {
+                let Ok(server) = tokio::net::TcpStream::connect(upstream).await else {
+                    return;
+                };
+                let _ = client.set_nodelay(true);
+                let _ = server.set_nodelay(true);
+                let (cr, cw) = client.into_split();
+                let (sr, sw) = server.into_split();
+                let pipe = |mut r: tokio::net::tcp::OwnedReadHalf,
+                            mut w: tokio::net::tcp::OwnedWriteHalf| async move {
+                    use tokio::io::{AsyncReadExt, AsyncWriteExt};
+                    let (tx, mut rx) =
+                        tokio::sync::mpsc::unbounded_channel::<(tokio::time::Instant, Vec<u8>)>();
+                    let reader = async move {
+                        let mut buf = vec![0u8; 64 * 1024];
+                        while let Ok(n) = r.read(&mut buf).await {
+                            if n == 0 {
+                                break;
+                            }
+                            let due = tokio::time::Instant::now().checked_add(one_way).unwrap();
+                            if tx.send((due, buf[..n].to_vec())).is_err() {
+                                break;
+                            }
+                        }
+                    };
+                    let writer = async move {
+                        while let Some((due, chunk)) = rx.recv().await {
+                            tokio::time::sleep_until(due).await;
+                            if w.write_all(&chunk).await.is_err() {
+                                return;
+                            }
+                        }
+                        let _ = w.shutdown().await;
+                    };
+                    let _ = tokio::join!(reader, writer);
+                };
+                let _ = tokio::join!(pipe(cr, sw), pipe(sr, cw));
+            });
+        }
+    });
+    format!("ws://{local}/{path}")
+}
+
+/// #359: stopping a real `PreparedSend::run_with` or `IncomingOffer::accept_with`
+/// over a high-RTT relay (~320 ms RTT, where QUIC's `3 * PTO` exceeds 1.5 s)
+/// finishes within Linux's 1.5 s window-close budget once the peer closes.
+#[tokio::test(flavor = "multi_thread", worker_threads = 8)]
+async fn stopped_relay_transfer_ends_within_window_close_budget() {
+    let server = server().await;
+    let (raw_relay, _stun, _relay) = relay().await;
+    let relay_url = delayed_ws_url(&raw_relay, Duration::from_millis(80)).await;
+    let paths = PathOptions {
+        relay: relay_url,
+        stun: String::new(),
+        relay_only: true,
+        gateway: totaldrop_core::portmap::Gateway::Off,
+    };
+
+    for sender_stops in [true, false] {
+        let (src, dest) = (scratch("src"), scratch("dest"));
+        let p = PreparedSend::new(
+            &SendOptions {
+                server: server.clone(),
+                words: 2,
+                paths: paths.clone(),
+            },
+            vec![folder(&src, 6, 3 << 20)],
+        )
+        .await
+        .unwrap();
+        let code = p.code().to_string();
+        let stop = totaldrop_core::Stop::new();
+        let moved = std::sync::Arc::new(std::sync::atomic::AtomicU64::new(0));
+        let stopped_at = std::sync::Arc::new(std::sync::OnceLock::new());
+        {
+            let stop = stop.clone();
+            let moved = std::sync::Arc::clone(&moved);
+            let stopped_at = std::sync::Arc::clone(&stopped_at);
+            tokio::spawn(async move {
+                while moved.load(std::sync::atomic::Ordering::SeqCst) < (1 << 20) {
+                    tokio::time::sleep(Duration::from_millis(5)).await;
+                }
+                let _ = stopped_at.set(std::time::Instant::now());
+                stop.stop();
+            });
+        }
+
+        if sender_stops {
+            let sender = tokio::spawn(p.run_with(no_events(), stop));
+            let o = IncomingOffer::connect(
+                &ReceiveOptions {
+                    server: server.clone(),
+                    paths: paths.clone(),
+                },
+                &code,
+            )
+            .await
+            .unwrap();
+            let dest_recv = dest.clone();
+            let recv =
+                tokio::spawn(async move { o.accept(&dest_recv, counting(moved, false)).await });
+            let s = sender.await.unwrap();
+            let elapsed = stopped_at
+                .get()
+                .expect("the transfer moved 1 MiB before stopping")
+                .elapsed();
+            assert!(matches!(s, Err(Error::Stopped)), "{s:?}");
+            assert!(
+                elapsed < Duration::from_millis(1500),
+                "PreparedSend::run_with took {elapsed:?} after stop (exceeds 1.5 s window-close budget)"
+            );
+            let r = tokio::time::timeout(Duration::from_secs(10), recv)
+                .await
+                .unwrap()
+                .unwrap();
+            assert!(
+                matches!(r, Err(Error::Cancelled(ref reason)) if reason == "stopped"),
+                "{r:?}"
+            );
+        } else {
+            let sender = tokio::spawn(p.run(no_events()));
+            let o = IncomingOffer::connect(
+                &ReceiveOptions {
+                    server: server.clone(),
+                    paths: paths.clone(),
+                },
+                &code,
+            )
+            .await
+            .unwrap();
+            let r = o.accept_with(&dest, counting(moved, false), &stop).await;
+            let elapsed = stopped_at
+                .get()
+                .expect("the transfer moved 1 MiB before stopping")
+                .elapsed();
+            assert!(matches!(r, Err(Error::Stopped)), "{r:?}");
+            assert!(
+                elapsed < Duration::from_millis(1500),
+                "IncomingOffer::accept_with took {elapsed:?} after stop (exceeds 1.5 s window-close budget)"
+            );
+            let s = tokio::time::timeout(Duration::from_secs(10), sender)
+                .await
+                .unwrap()
+                .unwrap();
+            assert!(
+                matches!(s, Err(Error::Cancelled(ref reason)) if reason == "stopped"),
+                "{s:?}"
+            );
+            left_nothing(&dest);
+        }
+        std::fs::remove_dir_all(src).unwrap();
+        std::fs::remove_dir_all(dest).unwrap();
+    }
 }
