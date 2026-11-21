@@ -1,0 +1,50 @@
+# SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+# End-of-life check (#399, #392): compares the container base images in
+# packaging/containers/ (Debian, Fedora; Arch is rolling) and the pinned Node
+# major in .github/workflows/ against endoflife.date, failing 60 days ahead of
+# end of life so an upgrade can be planned calmly. Pull requests run only the
+# offline unit tests and target extraction so external downtime never blocks a
+# merge; the weekly schedule and manual runs query endoflife.date live.
+name: End of life
+
+on:
+  schedule:
+    - cron: "23 4 * * 1"
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "tools/check-eol.mjs"
+      - "tools/test-check-eol.mjs"
+      - "packaging/containers/**"
+      - ".github/workflows/**"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: eol-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Base images and Node
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+      - name: Test the end-of-life check
+        run: node --test tools/test-check-eol.mjs
+      - name: Extract tracked versions offline
+        run: node tools/check-eol.mjs --extract
+      - name: Compare against endoflife.date (60-day warning)
+        if: github.event_name != 'pull_request'
+        run: node tools/check-eol.mjs
