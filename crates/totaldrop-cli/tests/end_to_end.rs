@@ -85,6 +85,24 @@ async fn relay() -> (String, String, Option<totaldrop_relay::Relay>) {
     (url, stun, Some(relay))
 }
 
+/// Small per-pair relay limits for reconnect enforcement tests (#190); the
+/// second relay Worker in `.github/workflows/server.yml` gets the same values.
+const TEST_RELAY_BYTES: u64 = 2_000;
+const TEST_RELAY_TIME: Duration = Duration::from_millis(1_800);
+
+async fn limited_relay() -> String {
+    if let Ok(url) = std::env::var("TOTALDROP_TEST_RELAY_LIMITED") {
+        return url;
+    }
+    let config = totaldrop_relay::Config {
+        session_bytes: TEST_RELAY_BYTES,
+        session_time: TEST_RELAY_TIME,
+        ..Default::default()
+    };
+    let (url, _stun, _relay, _task) = totaldrop_relay::spawn_local(config).await.unwrap();
+    url
+}
+
 fn scratch(name: &str) -> PathBuf {
     let mut rnd = [0u8; 6];
     getrandom::fill(&mut rnd).unwrap();
@@ -1201,6 +1219,265 @@ async fn the_relay_ends_the_pair_when_one_side_leaves() {
     relay_passes(&mut a_ws, &mut b_ws, a.public(), b.public()).await;
     a_ws.close(None).await.unwrap();
     assert!(relay_closes(&mut b_ws, Duration::from_secs(5)).await);
+}
+
+/// Cutting one side's relay WebSocket mid-transfer while its upstream half to
+/// the relay stays open (as on a Wi-Fi switch or NAT rebinding where the
+/// relay notices nothing): the cut side signs in again, the relay replaces
+/// and closes the dead upstream socket while keeping the peer's socket, and
+/// QUIC finishes the file intact (#190).
+#[tokio::test(flavor = "multi_thread", worker_threads = 8)]
+async fn cutting_one_relay_socket_mid_transfer_still_finishes() {
+    use std::sync::Arc;
+    use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
+    use tokio::io::AsyncReadExt as _;
+
+    let server = server().await;
+    let (relay_url, _stun, _relay) = relay().await;
+    let (upstream, relay_path) = match relay_url.strip_prefix("ws://") {
+        Some(rest) => match rest.split_once('/') {
+            Some((addr, path)) => (addr.to_owned(), format!("/{path}")),
+            None => (rest.to_owned(), String::new()),
+        },
+        None => {
+            let (u, _, _r, _t) = totaldrop_relay::spawn_local(Default::default())
+                .await
+                .unwrap();
+            let rest = u.strip_prefix("ws://").unwrap();
+            let (addr, path) = rest.split_once('/').unwrap();
+            (addr.to_owned(), format!("/{path}"))
+        }
+    };
+
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let proxy_url = format!("ws://{}{relay_path}", listener.local_addr().unwrap());
+    let accepted = Arc::new(AtomicUsize::new(0));
+    let severed = Arc::new(AtomicBool::new(false));
+    let replaced_closed = Arc::new(AtomicBool::new(false));
+    let cut = Arc::new(tokio::sync::Notify::new());
+
+    let proxy = {
+        let accepted = Arc::clone(&accepted);
+        let severed = Arc::clone(&severed);
+        let replaced_closed = Arc::clone(&replaced_closed);
+        let cut = Arc::clone(&cut);
+        tokio::spawn(async move {
+            while let Ok((mut client, _)) = listener.accept().await {
+                let n = accepted.fetch_add(1, Ordering::SeqCst);
+                let upstream = upstream.clone();
+                let severed = Arc::clone(&severed);
+                let replaced_closed = Arc::clone(&replaced_closed);
+                let cut = Arc::clone(&cut);
+                tokio::spawn(async move {
+                    let Ok(mut up) = tokio::net::TcpStream::connect(&upstream).await else {
+                        return;
+                    };
+                    let _ = client.set_nodelay(true);
+                    let _ = up.set_nodelay(true);
+                    if n == 0 {
+                        tokio::select! {
+                            _ = tokio::io::copy_bidirectional(&mut client, &mut up) => {}
+                            () = cut.notified() => {
+                                severed.store(true, Ordering::SeqCst);
+                                // Drop only the client side: to the relay, the
+                                // old socket is still open until replaced.
+                                // Rust closes TCP after its close frame;
+                                // Workers sends Close(1000, "replaced") and
+                                // waits in CLOSING for the client's reply.
+                                drop(client);
+                                const WS_REPLACED: &[u8] = b"\x88\x0a\x03\xe8replaced";
+                                let mut tail = Vec::new();
+                                let mut drain = [0u8; 4096];
+                                loop {
+                                    match up.read(&mut drain).await {
+                                        Ok(0) | Err(_) => {
+                                            replaced_closed.store(true, Ordering::SeqCst);
+                                            break;
+                                        }
+                                        Ok(k) => {
+                                            if let Some(chunk) = drain.get(..k) {
+                                                tail.extend_from_slice(chunk);
+                                            }
+                                            if tail.windows(WS_REPLACED.len()).any(|w| w == WS_REPLACED) {
+                                                replaced_closed.store(true, Ordering::SeqCst);
+                                                break;
+                                            }
+                                            if tail.len() > WS_REPLACED.len() {
+                                                let keep_from = tail.len().saturating_sub(WS_REPLACED.len());
+                                                tail.drain(..keep_from);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        let _ = tokio::io::copy_bidirectional(&mut client, &mut up).await;
+                    }
+                });
+            }
+        })
+    };
+
+    let (src, dest) = (scratch("src"), scratch("dest"));
+    std::fs::write(src.join("film.bin"), pseudo_random(16 << 20, 11)).unwrap();
+    let only = PathOptions {
+        relay: proxy_url,
+        stun: String::new(),
+        relay_only: true,
+        gateway: totaldrop_core::portmap::Gateway::Off,
+    };
+    let prepared = PreparedSend::new(
+        &SendOptions {
+            server: server.clone(),
+            words: 2,
+            paths: only.clone(),
+        },
+        vec![src.join("film.bin")],
+    )
+    .await
+    .unwrap();
+    let code = prepared.code().to_string();
+    let sender = tokio::spawn(prepared.run(no_events()));
+    let offer = IncomingOffer::connect(
+        &ReceiveOptions {
+            server,
+            paths: only,
+        },
+        &code,
+    )
+    .await
+    .unwrap();
+
+    let moved = Arc::new(AtomicU64::new(0));
+    {
+        let moved = Arc::clone(&moved);
+        let cut = Arc::clone(&cut);
+        tokio::spawn(async move {
+            while moved.load(Ordering::SeqCst) < 3 << 20 {
+                tokio::time::sleep(Duration::from_millis(5)).await;
+            }
+            cut.notify_one();
+        });
+    }
+
+    let received = offer.accept(&dest, counting(moved, true)).await.unwrap();
+    let sent = sender.await.unwrap().unwrap();
+    assert_eq!((sent.files_ok, received.files_ok), (1, 1));
+    same_tree(&src, &dest);
+    assert!(severed.load(Ordering::SeqCst), "socket was never cut");
+    let wait_started = tokio::time::Instant::now();
+    while !replaced_closed.load(Ordering::SeqCst) && wait_started.elapsed() < Duration::from_secs(5)
+    {
+        tokio::time::sleep(Duration::from_millis(20)).await;
+    }
+    assert!(
+        replaced_closed.load(Ordering::SeqCst),
+        "the relay did not close the replaced upstream socket"
+    );
+    assert!(
+        accepted.load(Ordering::SeqCst) >= 3,
+        "expected a reconnect through the proxy"
+    );
+
+    proxy.abort();
+    std::fs::remove_dir_all(src).unwrap();
+    std::fs::remove_dir_all(dest).unwrap();
+}
+
+/// Reconnecting on the same pair does not reset a key's byte limit on either
+/// relay, while the other key keeps its own independent allowance (#190).
+#[tokio::test(flavor = "multi_thread")]
+async fn reconnecting_on_a_pair_does_not_reset_its_byte_limit() {
+    use futures_util::{SinkExt, StreamExt};
+    use tokio_tungstenite::tungstenite::Message;
+    use totaldrop_core::transport::EndpointKey;
+    use totaldrop_proto::relay as wire;
+
+    async fn recv_datagram(ws: &mut RelayWs, wait: Duration) -> bool {
+        let deadline = tokio::time::Instant::now().checked_add(wait).unwrap();
+        loop {
+            match tokio::time::timeout_at(deadline, ws.next()).await {
+                Ok(Some(Ok(Message::Binary(b)))) => {
+                    if wire::is_probe(&b) {
+                        continue;
+                    }
+                    return wire::parse_frame(&b).is_some();
+                }
+                Ok(Some(Ok(Message::Ping(_) | Message::Pong(_)))) => continue,
+                _ => return false,
+            }
+        }
+    }
+
+    let relay = limited_relay().await;
+    let (a, b) = (
+        EndpointKey::generate().unwrap(),
+        EndpointKey::generate().unwrap(),
+    );
+
+    let mut a_ws = relay_sign_in(&relay, &a, &b.public()).await.unwrap();
+    let mut b_ws = relay_sign_in(&relay, &b, &a.public()).await.unwrap();
+    a_ws.send(Message::Binary(
+        wire::frame(&b.public(), &[1u8; 1_400]).into(),
+    ))
+    .await
+    .unwrap();
+    assert!(recv_datagram(&mut b_ws, Duration::from_secs(2)).await);
+    a_ws.close(None).await.unwrap();
+    assert!(relay_closes(&mut b_ws, Duration::from_secs(2)).await);
+
+    // Reconnect both sides on the same pair: Key B still has its own 2 KB
+    // allowance, while Key A crosses 2 KB and ends the pair.
+    let mut a_ws = relay_sign_in(&relay, &a, &b.public()).await.unwrap();
+    let mut b_ws = relay_sign_in(&relay, &b, &a.public()).await.unwrap();
+    b_ws.send(Message::Binary(
+        wire::frame(&a.public(), &[2u8; 1_400]).into(),
+    ))
+    .await
+    .unwrap();
+    assert!(recv_datagram(&mut a_ws, Duration::from_secs(2)).await);
+
+    let _ = a_ws
+        .send(Message::Binary(
+            wire::frame(&b.public(), &[3u8; 1_000]).into(),
+        ))
+        .await;
+    assert!(
+        !recv_datagram(&mut b_ws, Duration::from_millis(250)).await,
+        "frame past the per-key byte limit must not be forwarded"
+    );
+    assert!(relay_closes(&mut a_ws, Duration::from_secs(2)).await);
+    assert!(relay_closes(&mut b_ws, Duration::from_secs(2)).await);
+    assert!(
+        relay_sign_in(&relay, &a, &b.public()).await.is_none(),
+        "further sign-ins must be refused once the pair's byte limit is spent"
+    );
+}
+
+/// Reconnecting on the same pair keeps the pair's original session deadline
+/// rather than starting a fresh `session_time` window (#190).
+#[tokio::test(flavor = "multi_thread")]
+async fn reconnecting_on_a_pair_does_not_reset_its_time_limit() {
+    use totaldrop_core::transport::EndpointKey;
+
+    let relay = limited_relay().await;
+    let (a, b) = (
+        EndpointKey::generate().unwrap(),
+        EndpointKey::generate().unwrap(),
+    );
+
+    let mut a_ws = relay_sign_in(&relay, &a, &b.public()).await.unwrap();
+    tokio::time::sleep(Duration::from_millis(900)).await;
+    a_ws.close(None).await.unwrap();
+
+    // Reconnect halfway through the 1,800 ms window: must close near the
+    // original 1,800 ms mark, well before 900 + 1,800 ms.
+    let mut a_ws2 = relay_sign_in(&relay, &a, &b.public()).await.unwrap();
+    assert!(
+        relay_closes(&mut a_ws2, Duration::from_millis(1_350)).await,
+        "reconnected socket outlived the pair's original session deadline"
+    );
 }
 
 // --- Cloudflare relay buffer bound (#190) ---

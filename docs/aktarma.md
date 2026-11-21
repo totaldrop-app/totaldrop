@@ -34,9 +34,12 @@ and cannot reach each other directly. The relay server does two jobs:
   single-use keys (`/v0/relay/<key A>-<key B>`). There the server accepts
   only these two keys and carries packets only between them; nobody else
   can get in between.
-- The server keeps no record of addresses, keys or traffic; it writes
-  nothing to disk.
-- Every transfer is limited: at most 32 GiB and 6 hours.
+- The server keeps no record of addresses or traffic; the self-hosted relay
+  writes nothing to disk, and the Cloudflare relay keeps only each pair's
+  start time and per-key byte counts in its object storage until the 6-hour
+  limit window ends.
+- Every transfer is limited: at most 32 GiB sent per key and 6 hours per
+  pair, counted across reconnects.
 - The receiver uses the relay server that the sender reported in `HINTS`.
   This address can only be `wss://`.
 

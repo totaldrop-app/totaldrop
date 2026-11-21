@@ -19,6 +19,10 @@ export { Pair };
 
 export interface Env {
   PAIR: DurableObjectNamespace<Pair>;
+  /** Overrides of the pair limits, for local tests only (`wrangler dev --var`);
+   * production sets neither. */
+  SESSION_BYTES?: string;
+  SESSION_TIME_MS?: string;
 }
 
 const PREFIX = "/v0/relay/";
