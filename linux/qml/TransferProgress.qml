@@ -20,7 +20,7 @@ ColumnLayout {
 
     Mark { size: 140; sending: true; Layout.alignment: Qt.AlignHCenter; Layout.bottomMargin: Theme.s16 }
 
-    Label {
+    StageHeading {
         text: p.title
         color: Theme.ink
         font.pointSize: Qt.application.font.pointSize * 1.5
