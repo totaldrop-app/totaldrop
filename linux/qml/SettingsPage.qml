@@ -11,11 +11,10 @@ Page {
 
     required property Transfer transfer
     property Launcher launcher: null
+    readonly property bool shortcutReady: page.launcher !== null && page.launcher.shortcutReady
     readonly property bool shortcutSupported: page.launcher !== null && page.launcher.shortcutSupported
     readonly property string shortcutTrigger: page.launcher !== null ? page.launcher.shortcutTrigger : ""
-    readonly property string shortcutCommand: page.launcher !== null && page.launcher.shortcutCommand !== ""
-        ? page.launcher.shortcutCommand
-        : "totaldrop-desktop --screen=clipboard"
+    readonly property string shortcutCommand: page.launcher !== null ? page.launcher.shortcutCommand : ""
     // A server address not yet saved: another launch does not replace it.
     readonly property bool hasInput: server.text.trim() !== page.transfer.server
     signal close()
@@ -141,7 +140,7 @@ Page {
             RowLayout {
                 id: shortcutStatusRow
                 objectName: "shortcutStatusRow"
-                visible: page.shortcutSupported
+                visible: page.shortcutReady && page.shortcutSupported
                 spacing: Theme.s8
                 Layout.fillWidth: true
                 Layout.topMargin: Theme.s8
@@ -172,7 +171,7 @@ Page {
                 }
             }
             RowLayout {
-                visible: page.shortcutSupported
+                visible: page.shortcutReady && page.shortcutSupported
                 spacing: Theme.s8
                 Layout.topMargin: Theme.s8
                 SecondaryButton {
@@ -187,7 +186,7 @@ Page {
             Label {
                 id: shortcutManualLabel
                 objectName: "shortcutManualLabel"
-                visible: !page.shortcutSupported
+                visible: page.shortcutReady && !page.shortcutSupported
                 text: Strings.s.settingsShortcutManual || ""
                 color: Theme.muted
                 wrapMode: Text.Wrap
@@ -197,7 +196,7 @@ Page {
             TextArea {
                 id: shortcutCommandBox
                 objectName: "shortcutCommandBox"
-                visible: !page.shortcutSupported && page.shortcutCommand !== ""
+                visible: page.shortcutReady && !page.shortcutSupported && page.shortcutCommand !== ""
                 // Shell or compositor command is always ASCII left to right (#54).
                 LayoutMirroring.enabled: false
                 LayoutMirroring.childrenInherit: true
