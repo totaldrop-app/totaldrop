@@ -37,7 +37,7 @@ The route in `wrangler.jsonc` attaches the Worker to the custom domain `relay.to
 
 ## Edge rate limit
 
-Anyone can sign in to the relay with any key, and nothing in the Worker limits how many pairs one address opens. So a rate limiting rule at Cloudflare's edge, on the `totaldrop.app` zone, turns away an address that opens connections too fast (#510). It lives in the dashboard (Security → Security rules → Rate limiting rules), not in `wrangler.jsonc`, so this section is its record. Change the two together (#526 tracks detecting when they differ).
+Anyone can sign in to the relay with any key, and nothing in the Worker limits how many pairs one address opens. So a rate limiting rule at Cloudflare's edge, on the `totaldrop.app` zone, turns away an address that opens connections too fast (#510). It lives in the dashboard (Security → Security rules → Rate limiting rules), not in `wrangler.jsonc`, so this section is its record. Change the two together; `server/tools/check-relay-ratelimit.mjs` checks this table in CI and compares it with the live zone ruleset each day and after each relay deploy (`.github/workflows/relay-ratelimit.yml`, #526).
 
 | Setting | Value |
 | --- | --- |
@@ -54,3 +54,4 @@ Anyone can sign in to the relay with any key, and nothing in the Worker limits h
 - A self-hosted relay (`server/totaldrop-relay`) has no per-IP connection limit of its own; put one at its reverse proxy.
 - Cloudflare records each blocked request in the zone's Security Events (sampled; source IP, path, time and rule), kept for at least 31 days (Cloudflare documents this as a minimum and gives no deletion date). Requests the rule lets through are not recorded by it, though any request can appear in the zone's sampled request analytics, which the [privacy policy](https://totaldrop.app/privacy) describes.
 - Checked on 13 November 2026, with the project lead's approval: 300 parallel requests from a machine that sends from about six addresses got 164 × 200 and 136 × 429; a single request four seconds later got 200.
+- Drift check (#526): `.github/workflows/relay-ratelimit.yml` (daily and manual) and the post-deploy relay step in `.github/workflows/deploy.yml` run `node server/tools/check-relay-ratelimit.mjs --live` against `GET /zones/<id>/rulesets/phases/http_ratelimit/entrypoint`, sending no traffic to `relay.totaldrop.app`. Configure repository secret `CLOUDFLARE_WAF_READ_TOKEN` as a read-only Cloudflare API token scoped to the `totaldrop.app` zone with `Zone → Zone WAF: Read` (plus `Zone → Zone: Read` only when repository variable `CLOUDFLARE_ZONE_ID` is unset); `CLOUDFLARE_API_TOKEN` stays in `deploy.yml` only.

@@ -160,10 +160,23 @@ jobs:
         env:
           TARGET: ${{ matrix.target }}
         run: node server/tools/probe.mjs "$TARGET"
+      - name: Check edge rate-limit rule
+        id: ratelimit
+        if: matrix.target == 'relay'
+        env:
+          CLOUDFLARE_WAF_READ_TOKEN: ${{ secrets.CLOUDFLARE_WAF_READ_TOKEN }}
+          CLOUDFLARE_ZONE_ID: ${{ vars.CLOUDFLARE_ZONE_ID }}
+        run: node server/tools/check-relay-ratelimit.mjs --live
       - name: How to roll back
         if: failure()
         env:
           TARGET: ${{ matrix.target }}
+          RATELIMIT_OUTCOME: ${{ steps.ratelimit.outcome }}
         run: |
-          echo "::error::The $TARGET deploy or its probe failed."
-          echo "Roll back as described in docs/surec.md, section Dağıtım."
+          if [ "$RATELIMIT_OUTCOME" = failure ]; then
+            echo "::error::The live Cloudflare relay rate-limit rule does not match server/relay-worker/README.md."
+            echo "Reconcile the dashboard rule (Security -> Security rules -> Rate limiting rules) and server/relay-worker/README.md; rolling back the Worker does not change the zone rule."
+          else
+            echo "::error::The $TARGET deploy or its probe failed."
+            echo "Roll back as described in docs/surec.md, section Dağıtım."
+          fi
