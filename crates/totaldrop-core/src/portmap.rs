@@ -51,6 +51,20 @@ const SSDP_PORT: u16 = 1900;
 /// How the mapping is labelled in the router's list.
 const UPNP_DESCRIPTION: &str = "TotalDrop";
 
+/// Maximum number of existing UPnP mappings inspected when clearing stale
+/// [`UPNP_DESCRIPTION`] rules left by a crash (#462).
+const UPNP_SCAN_LIMIT: u32 = 64;
+
+/// Maximum slice of [`LIMIT`] spent listing and deleting stale UPnP rules so a
+/// slow router with a crowded table still has time left to grant the transfer's
+/// own mapping (#462).
+const UPNP_CLEANUP_BUDGET: Duration = Duration::from_millis(500);
+
+/// Latest point within [`UPNP_CLEANUP_BUDGET`] at which listing continues once
+/// at least one stale rule has been found, reserving the remaining time for
+/// `DeletePortMapping` (#462).
+const UPNP_SCAN_BUDGET: Duration = Duration::from_millis(350);
+
 type Igd = igd_next::aio::Gateway<Tokio>;
 
 /// Which router to ask.
@@ -170,6 +184,71 @@ pub async fn released() {
     .await;
 }
 
+/// A UPnP mapping held or being requested by this process, so
+/// [`clear_stale_upnp`] never deletes a live sibling transfer's port (#462).
+#[derive(Clone, Copy, Debug)]
+struct ActiveUpnpEntry {
+    id: u64,
+    gateway: SocketAddr,
+    internal_port: u16,
+    external_port: Option<u16>,
+}
+
+static ACTIVE_UPNP_NEXT_ID: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(1);
+static ACTIVE_UPNP: std::sync::Mutex<Vec<ActiveUpnpEntry>> = std::sync::Mutex::new(Vec::new());
+
+/// Guard keeping an active UPnP mapping registered in [`ACTIVE_UPNP`] until its
+/// [`Mapping`] is released (#462).
+#[derive(Debug)]
+struct ActiveUpnp(u64);
+
+impl ActiveUpnp {
+    fn register(gateway: SocketAddr, internal_port: u16) -> Self {
+        let id = ACTIVE_UPNP_NEXT_ID.fetch_add(1, Ordering::Relaxed);
+        let mut active = ACTIVE_UPNP
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        active.push(ActiveUpnpEntry {
+            id,
+            gateway,
+            internal_port,
+            external_port: None,
+        });
+        Self(id)
+    }
+
+    fn set_external(&self, external_port: u16) {
+        let mut active = ACTIVE_UPNP
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        if let Some(entry) = active.iter_mut().find(|e| e.id == self.0) {
+            entry.external_port = Some(external_port);
+        }
+    }
+}
+
+impl Drop for ActiveUpnp {
+    fn drop(&mut self) {
+        let mut active = ACTIVE_UPNP
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        active.retain(|e| e.id != self.0);
+    }
+}
+
+fn is_active_upnp(gateway: SocketAddr, internal_port: u16, external_port: u16) -> bool {
+    let active = ACTIVE_UPNP
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    active.iter().any(|e| {
+        e.gateway == gateway
+            && match e.external_port {
+                Some(ext) => ext == external_port,
+                None => e.internal_port == internal_port,
+            }
+    })
+}
+
 /// What it takes to ask the router to close a port.
 #[derive(Debug)]
 enum Release {
@@ -181,6 +260,7 @@ enum Release {
     Upnp {
         gateway: Arc<Igd>,
         external_port: u16,
+        active: ActiveUpnp,
     },
 }
 
@@ -209,11 +289,13 @@ impl Release {
             Self::Upnp {
                 gateway,
                 external_port,
+                active,
             } => {
                 if let Ok(rt) = tokio::runtime::Handle::try_current() {
                     let pending = Pending::new();
                     rt.spawn(async move {
                         let _pending = pending;
+                        let _active = active;
                         let _ = tokio::time::timeout(
                             LIMIT,
                             gateway.remove_port(PortMappingProtocol::UDP, external_port),
@@ -655,6 +737,15 @@ async fn upnp_with(
     if !public(external_ip) || stopped(&mut stop) {
         return None;
     }
+    if !local.ip().is_ipv4() {
+        return None;
+    }
+    if clear_stale_upnp(&gateway, local, deadline, &mut stop).await == UpnpCleanup::Stopped
+        || stopped(&mut stop)
+    {
+        return None;
+    }
+    let active = ActiveUpnp::register(gateway.addr, local.port());
     // Cut off at the deadline, a request the router has already carried
     // out leaves a mapping we never learn of, open until its lease ends.
     let external_port = tokio::time::timeout_at(
@@ -665,6 +756,7 @@ async fn upnp_with(
     .ok()?
     .ok()
     .filter(|p| *p != 0)?;
+    active.set_external(external_port);
     let gateway = Arc::new(gateway);
     let renew = tokio::spawn(renew_upnp(
         Arc::clone(&gateway),
@@ -678,10 +770,137 @@ async fn upnp_with(
         release: Some(Release::Upnp {
             gateway,
             external_port,
+            active,
         }),
         pending: None,
         later: LaterSlot::default(),
     })
+}
+
+/// Whether [`clear_stale_upnp`] finished normally or observed cancellation (#462).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum UpnpCleanup {
+    Proceed,
+    Stopped,
+}
+
+/// Whether a local UDP socket already holds `port` on `local_ip` or on the
+/// IPv4/IPv6 wildcard address (including a dual-stack `[::]:port` QUIC socket
+/// in another TotalDrop process on Windows, where WinSock2 permits `AF_INET`
+/// binds alongside a non-exclusive `AF_INET6` wildcard socket) (#462).
+fn udp_port_in_use(local_ip: Ipv4Addr, port: u16) -> bool {
+    let in_use = |err: &std::io::Error| {
+        matches!(
+            err.kind(),
+            std::io::ErrorKind::AddrInUse | std::io::ErrorKind::PermissionDenied
+        )
+    };
+    let busy_v4 = |ip: Ipv4Addr| {
+        std::net::UdpSocket::bind(SocketAddr::from((ip, port)))
+            .err()
+            .is_some_and(|e| in_use(&e))
+    };
+    let busy_v6 = || {
+        use socket2::{Domain, Protocol, Socket, Type};
+        let Ok(sock) = Socket::new(Domain::IPV6, Type::DGRAM, Some(Protocol::UDP)) else {
+            return false;
+        };
+        let _ = sock.set_only_v6(false);
+        sock.bind(&SocketAddr::from((std::net::Ipv6Addr::UNSPECIFIED, port)).into())
+            .err()
+            .is_some_and(|e| in_use(&e))
+    };
+    busy_v4(local_ip)
+        || (local_ip != Ipv4Addr::UNSPECIFIED && busy_v4(Ipv4Addr::UNSPECIFIED))
+        || busy_v6()
+}
+
+/// Whether a UPnP mapping entry on `gateway` is a leftover
+/// [`UPNP_DESCRIPTION`] wildcard UDP forward to `local`'s IPv4 address that is
+/// held neither by this process nor by another open local UDP socket (#462).
+fn is_stale_totaldrop_entry(
+    entry: &igd_next::PortMappingEntry,
+    gateway: SocketAddr,
+    local: SocketAddr,
+) -> bool {
+    let IpAddr::V4(local_ip) = local.ip() else {
+        return false;
+    };
+    entry.port_mapping_description == UPNP_DESCRIPTION
+        && entry.protocol == PortMappingProtocol::UDP
+        && entry.remote_host.is_empty()
+        && entry.external_port != 0
+        && entry.internal_port != 0
+        && entry.internal_client.trim().parse::<Ipv4Addr>() == Ok(local_ip)
+        && !is_active_upnp(gateway, entry.internal_port, entry.external_port)
+        && (entry.internal_port == local.port() || !udp_port_in_use(local_ip, entry.internal_port))
+}
+
+/// Scan up to [`UPNP_SCAN_LIMIT`] existing mappings on `gateway` within
+/// [`UPNP_CLEANUP_BUDGET`] (capped at `deadline`, and stopping the scan at
+/// [`UPNP_SCAN_BUDGET`] once at least one stale rule has been found so time
+/// remains to delete it), collecting stale [`UPNP_DESCRIPTION`] UDP rules for
+/// `local` first so index shifts from `DeletePortMapping` cannot skip
+/// back-to-back stale entries, then delete them (#462). Listing or deletion
+/// errors are ignored so a minimal IGD still proceeds to `add_any_port`.
+async fn clear_stale_upnp(
+    gateway: &Igd,
+    local: SocketAddr,
+    deadline: Instant,
+    stop: &mut oneshot::Receiver<()>,
+) -> UpnpCleanup {
+    if !gateway.control_schema.contains_key("DeletePortMapping") {
+        return UpnpCleanup::Proceed;
+    }
+    let now = Instant::now();
+    let cleanup_deadline = now
+        .checked_add(UPNP_CLEANUP_BUDGET)
+        .map_or(deadline, |d| d.min(deadline));
+    let scan_with_stale_deadline = now
+        .checked_add(UPNP_SCAN_BUDGET)
+        .map_or(cleanup_deadline, |d| d.min(cleanup_deadline));
+    let mut stale: Vec<u16> = Vec::new();
+    for index in 0..UPNP_SCAN_LIMIT {
+        let step_deadline = if stale.is_empty() {
+            cleanup_deadline
+        } else {
+            scan_with_stale_deadline
+        };
+        if Instant::now() >= step_deadline {
+            break;
+        }
+        let fetched = tokio::select! {
+            _ = &mut *stop => return UpnpCleanup::Stopped,
+            got = tokio::time::timeout_at(
+                step_deadline,
+                gateway.get_generic_port_mapping_entry(index),
+            ) => got,
+        };
+        let Ok(Ok(entry)) = fetched else {
+            break;
+        };
+        if is_stale_totaldrop_entry(&entry, gateway.addr, local)
+            && !stale.contains(&entry.external_port)
+        {
+            stale.push(entry.external_port);
+        }
+    }
+    for external_port in stale {
+        if Instant::now() >= cleanup_deadline {
+            break;
+        }
+        let deleted = tokio::select! {
+            _ = &mut *stop => return UpnpCleanup::Stopped,
+            got = tokio::time::timeout_at(
+                cleanup_deadline,
+                gateway.remove_port(PortMappingProtocol::UDP, external_port),
+            ) => got,
+        };
+        if deleted.is_err() {
+            break;
+        }
+    }
+    UpnpCleanup::Proceed
 }
 
 /// Keep a UPnP mapping alive: asking again for the same external port
@@ -1682,7 +1901,35 @@ mod tests {
         );
     }
 
-    /// What the fake IGD does with `AddPortMapping`.
+    /// One rule in the fake IGD's port mapping table (#462).
+    #[derive(Clone, Debug, PartialEq, Eq)]
+    struct FakeEntry {
+        remote_host: String,
+        external_port: u16,
+        protocol: &'static str,
+        internal_port: u16,
+        internal_client: String,
+        description: String,
+        lease_duration: u32,
+    }
+
+    impl FakeEntry {
+        fn udp(external_port: u16, client: &str, internal_port: u16, description: &str) -> Self {
+            Self {
+                remote_host: String::new(),
+                external_port,
+                protocol: "UDP",
+                internal_port,
+                internal_client: client.to_string(),
+                description: description.to_string(),
+                lease_duration: 0,
+            }
+        }
+    }
+
+    type IgdTable = Arc<std::sync::Mutex<Vec<FakeEntry>>>;
+
+    /// What the fake IGD does with `AddPortMapping` and listing.
     #[derive(Clone, Copy)]
     enum Igd {
         Maps,
@@ -1693,6 +1940,8 @@ mod tests {
         PermanentOnly,
         /// Its external address is behind another NAT.
         Private,
+        /// Refuses `GetGenericPortMappingEntry` with UPnP error 401.
+        NoListing,
     }
 
     /// A UPnP gateway on loopback: an SSDP responder whose LOCATION points
@@ -1706,11 +1955,25 @@ mod tests {
         ip: &str,
         kind: Igd,
     ) -> (SocketAddr, mpsc::UnboundedReceiver<(String, String)>) {
+        let (at, rx, _) = igd_with_entries(ip, kind, Vec::new()).await;
+        (at, rx)
+    }
+
+    async fn igd_with_entries(
+        ip: &str,
+        kind: Igd,
+        initial: Vec<FakeEntry>,
+    ) -> (
+        SocketAddr,
+        mpsc::UnboundedReceiver<(String, String)>,
+        IgdTable,
+    ) {
         use tokio::io::{AsyncReadExt, AsyncWriteExt};
         let ssdp = UdpSocket::bind((ip, 0)).await.unwrap();
         let http = tokio::net::TcpListener::bind((ip, 0)).await.unwrap();
         let at = ssdp.local_addr().unwrap();
         let location = format!("http://{}/rootDesc.xml", http.local_addr().unwrap());
+        let table: IgdTable = Arc::new(std::sync::Mutex::new(initial));
         tokio::spawn(async move {
             let mut buf = [0u8; 1500];
             loop {
@@ -1731,9 +1994,11 @@ mod tests {
             }
         });
         let (tx, rx) = mpsc::unbounded_channel();
+        let table_http = Arc::clone(&table);
         tokio::spawn(async move {
             while let Ok((mut c, _)) = http.accept().await {
                 let tx = tx.clone();
+                let table = Arc::clone(&table_http);
                 tokio::spawn(async move {
                     let mut req = Vec::new();
                     let mut buf = [0u8; 4096];
@@ -1775,7 +2040,7 @@ mod tests {
                     if matches!(kind, Igd::Slow) {
                         tokio::time::sleep(Duration::from_millis(60)).await;
                     }
-                    let (status, xml) = respond(kind, &head, &action);
+                    let (status, xml) = respond(kind, &head, &action, &body, &table);
                     if !action.is_empty() {
                         let _ = tx.send((action, body));
                     }
@@ -1789,12 +2054,18 @@ mod tests {
                 });
             }
         });
-        (at, rx)
+        (at, rx, table)
     }
 
     const WANIP: &str = "urn:schemas-upnp-org:service:WANIPConnection:1";
 
-    fn respond(kind: Igd, head: &str, action: &str) -> (&'static str, String) {
+    fn respond(
+        kind: Igd,
+        head: &str,
+        action: &str,
+        body: &str,
+        table: &IgdTable,
+    ) -> (&'static str, String) {
         let envelope = |inner: String| {
             format!(
                 "<?xml version=\"1.0\"?><s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\" \
@@ -1805,6 +2076,16 @@ mod tests {
             envelope(format!(
                 "<u:{name}Response xmlns:u=\"{WANIP}\">{args}</u:{name}Response>"
             ))
+        };
+        let fault = |code: u16, desc: &str| {
+            (
+                "500 Internal Server Error",
+                envelope(format!(
+                    "<s:Fault><faultcode>s:Client</faultcode><faultstring>UPnPError</faultstring><detail>\
+                     <UPnPError xmlns=\"urn:schemas-upnp-org:control-1-0\"><errorCode>{code}</errorCode>\
+                     <errorDescription>{desc}</errorDescription></UPnPError></detail></s:Fault>"
+                )),
+            )
         };
         if head.starts_with("GET /rootDesc.xml") {
             return (
@@ -1830,11 +2111,17 @@ mod tests {
                     .collect();
                 format!("<action><name>{name}</name><argumentList>{args}</argumentList></action>")
             };
+            let listing = if matches!(kind, Igd::NoListing) {
+                String::new()
+            } else {
+                action("GetGenericPortMappingEntry", &["NewPortMappingIndex"])
+            };
             return (
                 "200 OK",
                 format!(
-                    "<?xml version=\"1.0\"?><scpd xmlns=\"urn:schemas-upnp-org:service-1-0\"><actionList>{}{}{}</actionList></scpd>",
+                    "<?xml version=\"1.0\"?><scpd xmlns=\"urn:schemas-upnp-org:service-1-0\"><actionList>{}{}{}{}</actionList></scpd>",
                     action("GetExternalIPAddress", &[]),
+                    listing,
                     action(
                         "AddPortMapping",
                         &[
@@ -1856,14 +2143,120 @@ mod tests {
             );
         }
         match (action, kind) {
-            ("GetExternalIPAddress", Igd::Private) => ("200 OK", ok(action, "<NewExternalIPAddress>192.168.100.2</NewExternalIPAddress>")),
-            ("GetExternalIPAddress", _) => ("200 OK", ok(action, &format!("<NewExternalIPAddress>{PUBLIC}</NewExternalIPAddress>"))),
-            ("AddPortMapping", Igd::PermanentOnly) => ("500 Internal Server Error", envelope(
-                "<s:Fault><faultcode>s:Client</faultcode><faultstring>UPnPError</faultstring><detail>\
-                 <UPnPError xmlns=\"urn:schemas-upnp-org:control-1-0\"><errorCode>725</errorCode>\
-                 <errorDescription>OnlyPermanentLeasesSupported</errorDescription></UPnPError></detail></s:Fault>".to_string(),
-            )),
-            ("AddPortMapping" | "DeletePortMapping", _) => ("200 OK", ok(action, "")),
+            ("GetExternalIPAddress", Igd::Private) => (
+                "200 OK",
+                ok(
+                    action,
+                    "<NewExternalIPAddress>192.168.100.2</NewExternalIPAddress>",
+                ),
+            ),
+            ("GetExternalIPAddress", _) => (
+                "200 OK",
+                ok(
+                    action,
+                    &format!("<NewExternalIPAddress>{PUBLIC}</NewExternalIPAddress>"),
+                ),
+            ),
+            ("GetGenericPortMappingEntry", Igd::NoListing) => fault(401, "Invalid Action"),
+            ("GetGenericPortMappingEntry", _) => {
+                let Some(idx) =
+                    arg(body, "NewPortMappingIndex").and_then(|s| s.parse::<usize>().ok())
+                else {
+                    return fault(402, "Invalid Args");
+                };
+                let entries = table.lock().unwrap();
+                let Some(e) = entries.get(idx) else {
+                    return fault(713, "SpecifiedArrayIndexInvalid");
+                };
+                (
+                    "200 OK",
+                    ok(
+                        action,
+                        &format!(
+                            "<NewRemoteHost>{}</NewRemoteHost>\
+                             <NewExternalPort>{}</NewExternalPort>\
+                             <NewProtocol>{}</NewProtocol>\
+                             <NewInternalPort>{}</NewInternalPort>\
+                             <NewInternalClient>{}</NewInternalClient>\
+                             <NewEnabled>1</NewEnabled>\
+                             <NewPortMappingDescription>{}</NewPortMappingDescription>\
+                             <NewLeaseDuration>{}</NewLeaseDuration>",
+                            e.remote_host,
+                            e.external_port,
+                            e.protocol,
+                            e.internal_port,
+                            e.internal_client,
+                            e.description,
+                            e.lease_duration,
+                        ),
+                    ),
+                )
+            }
+            ("AddPortMapping", Igd::PermanentOnly) => fault(725, "OnlyPermanentLeasesSupported"),
+            ("AddPortMapping", _) => {
+                let remote_host = arg(body, "NewRemoteHost").unwrap_or_default();
+                let external_port = arg(body, "NewExternalPort")
+                    .and_then(|s| s.parse::<u16>().ok())
+                    .unwrap_or(0);
+                let protocol = match arg(body, "NewProtocol").as_deref() {
+                    Some("TCP") => "TCP",
+                    _ => "UDP",
+                };
+                let internal_port = arg(body, "NewInternalPort")
+                    .and_then(|s| s.parse::<u16>().ok())
+                    .unwrap_or(0);
+                let internal_client = arg(body, "NewInternalClient").unwrap_or_default();
+                let description = arg(body, "NewPortMappingDescription").unwrap_or_default();
+                let lease_duration = arg(body, "NewLeaseDuration")
+                    .and_then(|s| s.parse::<u32>().ok())
+                    .unwrap_or(0);
+                let mut entries = table.lock().unwrap();
+                if let Some(existing) = entries.iter_mut().find(|e| {
+                    e.remote_host == remote_host
+                        && e.external_port == external_port
+                        && e.protocol == protocol
+                }) {
+                    if existing.internal_client != internal_client
+                        || existing.internal_port != internal_port
+                    {
+                        return fault(718, "ConflictInMappingEntry");
+                    }
+                    existing.description = description;
+                    existing.lease_duration = lease_duration;
+                } else {
+                    entries.push(FakeEntry {
+                        remote_host,
+                        external_port,
+                        protocol,
+                        internal_port,
+                        internal_client,
+                        description,
+                        lease_duration,
+                    });
+                }
+                ("200 OK", ok(action, ""))
+            }
+            ("DeletePortMapping", _) => {
+                let remote_host = arg(body, "NewRemoteHost").unwrap_or_default();
+                let external_port = arg(body, "NewExternalPort")
+                    .and_then(|s| s.parse::<u16>().ok())
+                    .unwrap_or(0);
+                let protocol = arg(body, "NewProtocol").unwrap_or_default();
+                let mut entries = table.lock().unwrap();
+                let before = entries.len();
+                // Like a real UPnP router, deleting an entry shifts subsequent
+                // entries down in the array (#462).
+                entries.retain(|e| {
+                    !(e.remote_host == remote_host
+                        && e.external_port == external_port
+                        && e.protocol == protocol)
+                });
+                if entries.len() == before {
+                    fault(714, "NoSuchEntryInArray")
+                } else {
+                    ("200 OK", ok(action, ""))
+                }
+            }
             _ => ("404 Not Found", String::new()),
         }
     }
@@ -1892,6 +2285,8 @@ mod tests {
         assert_eq!(m.external().ip(), IpAddr::V4(PUBLIC));
         let (action, _) = seen.recv().await.unwrap();
         assert_eq!(action, "GetExternalIPAddress");
+        let (action, _) = seen.recv().await.unwrap();
+        assert_eq!(action, "GetGenericPortMappingEntry");
         let (action, body) = seen.recv().await.unwrap();
         assert_eq!(action, "AddPortMapping");
         assert_eq!(arg(&body, "NewProtocol").as_deref(), Some("UDP"));
@@ -1927,6 +2322,7 @@ mod tests {
             .unwrap()
             .unwrap();
         assert_eq!(seen.recv().await.unwrap().0, "GetExternalIPAddress");
+        assert_eq!(seen.recv().await.unwrap().0, "GetGenericPortMappingEntry");
         assert_eq!(seen.recv().await.unwrap().0, "AddPortMapping");
         drop(m);
         released().await;
@@ -1956,6 +2352,7 @@ mod tests {
             actions,
             [
                 "GetExternalIPAddress",
+                "GetGenericPortMappingEntry",
                 "AddPortMapping",
                 "DeletePortMapping"
             ]
@@ -1982,6 +2379,7 @@ mod tests {
         assert!(started.elapsed() < LIMIT, "{:?}", started.elapsed());
         assert_eq!(m.external().ip(), IpAddr::V4(PUBLIC));
         assert_eq!(seen.recv().await.unwrap().0, "GetExternalIPAddress");
+        assert_eq!(seen.recv().await.unwrap().0, "GetGenericPortMappingEntry");
         assert_eq!(seen.recv().await.unwrap().0, "AddPortMapping");
         drop(m);
     }
@@ -2147,5 +2545,269 @@ mod tests {
         assert_eq!(arg(&body, "NewLeaseDuration").as_deref(), Some("2"));
         renew.abort();
         drop(m);
+    }
+
+    /// #462: two back-to-back stale `TotalDrop` UDP mappings for our IP are
+    /// both deleted before the new mapping is added (even though deleting the
+    /// first shifts the second down to index 0), while another program's
+    /// entry, an entry for another LAN IP, a TCP entry, and a source-specific
+    /// entry are left untouched.
+    #[tokio::test]
+    async fn upnp_clears_stale_totaldrop_mappings_for_our_ip_before_mapping() {
+        let (Gateway::At(silent), _) = router(Router::Silent).await else {
+            unreachable!()
+        };
+        let other_app = FakeEntry::udp(50_003, "127.0.0.1", 29_003, "OtherApp");
+        let other_ip = FakeEntry::udp(50_004, "192.0.2.99", 29_004, UPNP_DESCRIPTION);
+        let tcp_entry = FakeEntry {
+            protocol: "TCP",
+            ..FakeEntry::udp(50_005, "127.0.0.1", 29_005, UPNP_DESCRIPTION)
+        };
+        let remote_filtered = FakeEntry {
+            remote_host: "198.51.100.1".to_string(),
+            ..FakeEntry::udp(50_006, "127.0.0.1", 29_006, UPNP_DESCRIPTION)
+        };
+        let initial = vec![
+            FakeEntry::udp(50_001, "127.0.0.1", 29_001, UPNP_DESCRIPTION),
+            FakeEntry::udp(50_002, " 127.0.0.1 ", 29_002, UPNP_DESCRIPTION),
+            other_app.clone(),
+            other_ip.clone(),
+            tcp_entry.clone(),
+            remote_filtered.clone(),
+        ];
+        let (ssdp, mut seen, table) = igd_with_entries("127.0.0.1", Igd::Maps, initial).await;
+
+        let m = tokio::time::timeout(LIMIT, map_with(silent, Some(ssdp), 40_000, unseen(), None))
+            .await
+            .unwrap()
+            .unwrap();
+
+        let mut deleted_before_add = Vec::new();
+        loop {
+            let (action, body) = seen.recv().await.unwrap();
+            if action == "DeletePortMapping" {
+                deleted_before_add.push(arg(&body, "NewExternalPort").unwrap());
+            } else if action == "AddPortMapping" {
+                break;
+            }
+        }
+        assert_eq!(deleted_before_add, ["50001", "50002"]);
+
+        let new_port = m.external().port();
+        {
+            let entries = table.lock().unwrap();
+            let ports: Vec<u16> = entries.iter().map(|e| e.external_port).collect();
+            assert_eq!(ports, vec![50_003, 50_004, 50_005, 50_006, new_port]);
+        }
+
+        drop(m);
+        released().await;
+        let entries = table.lock().unwrap().clone();
+        assert_eq!(
+            entries,
+            vec![other_app, other_ip, tcp_entry, remote_filtered]
+        );
+    }
+
+    /// #462: listing stops at `UPNP_SCAN_LIMIT` entries (and on a slow router,
+    /// stops at `UPNP_SCAN_BUDGET` once a stale entry is found so time remains
+    /// within `UPNP_CLEANUP_BUDGET` to delete it) without starving
+    /// `AddPortMapping`.
+    #[tokio::test]
+    async fn upnp_scan_stops_at_entry_limit_and_still_maps() {
+        let (Gateway::At(silent), _) = router(Router::Silent).await else {
+            unreachable!()
+        };
+        let mut initial: Vec<FakeEntry> = (0..UPNP_SCAN_LIMIT.saturating_add(10))
+            .map(|i| {
+                let off = u16::try_from(i).unwrap();
+                FakeEntry::udp(
+                    52_000u16.saturating_add(off),
+                    "127.0.0.1",
+                    20_000u16.saturating_add(off),
+                    "OtherApp",
+                )
+            })
+            .collect();
+        initial[5] = FakeEntry::udp(52_005, "127.0.0.1", 20_005, UPNP_DESCRIPTION);
+        let beyond = usize::try_from(UPNP_SCAN_LIMIT.saturating_add(2)).unwrap();
+        initial[beyond] = FakeEntry::udp(59_999, "127.0.0.1", 29_999, UPNP_DESCRIPTION);
+
+        let (ssdp, mut seen, table) = igd_with_entries("127.0.0.1", Igd::Maps, initial).await;
+        let m = tokio::time::timeout(LIMIT, map_with(silent, Some(ssdp), 40_000, unseen(), None))
+            .await
+            .unwrap()
+            .unwrap();
+
+        let mut list_calls = 0u32;
+        loop {
+            let (action, _) = seen.recv().await.unwrap();
+            if action == "GetGenericPortMappingEntry" {
+                list_calls = list_calls.saturating_add(1);
+            } else if action == "AddPortMapping" {
+                break;
+            }
+        }
+        assert_eq!(list_calls, UPNP_SCAN_LIMIT);
+        {
+            let entries = table.lock().unwrap();
+            assert!(!entries.iter().any(|e| e.external_port == 52_005));
+            assert!(entries.iter().any(|e| e.external_port == 59_999));
+        }
+        drop(m);
+        released().await;
+
+        let mut slow_initial: Vec<FakeEntry> = (0..UPNP_SCAN_LIMIT)
+            .map(|i| {
+                let off = u16::try_from(i).unwrap();
+                FakeEntry::udp(
+                    53_000u16.saturating_add(off),
+                    "127.0.0.1",
+                    21_000u16.saturating_add(off),
+                    "OtherApp",
+                )
+            })
+            .collect();
+        slow_initial[0] = FakeEntry::udp(53_000, "127.0.0.1", 21_000, UPNP_DESCRIPTION);
+        let (ssdp_slow, mut seen_slow, slow_table) =
+            igd_with_entries("127.0.0.1", Igd::Slow, slow_initial).await;
+        let m_slow = tokio::time::timeout(
+            LIMIT,
+            map_with(silent, Some(ssdp_slow), 40_004, unseen(), None),
+        )
+        .await
+        .unwrap()
+        .unwrap();
+        let mut slow_lists = 0u32;
+        let mut slow_deleted = Vec::new();
+        loop {
+            let (action, body) = seen_slow.recv().await.unwrap();
+            if action == "GetGenericPortMappingEntry" {
+                slow_lists = slow_lists.saturating_add(1);
+            } else if action == "DeletePortMapping" {
+                slow_deleted.push(arg(&body, "NewExternalPort").unwrap());
+            } else if action == "AddPortMapping" {
+                break;
+            }
+        }
+        assert!(
+            (1..UPNP_SCAN_LIMIT).contains(&slow_lists),
+            "expected time budget to stop slow scan early, got {slow_lists} calls"
+        );
+        assert_eq!(
+            slow_deleted,
+            ["53000"],
+            "stale rule found before scan deadline must still be deleted"
+        );
+        assert!(
+            !slow_table
+                .lock()
+                .unwrap()
+                .iter()
+                .any(|e| e.external_port == 53_000)
+        );
+        drop(m_slow);
+        released().await;
+    }
+
+    /// #462: an active `Mapping` held in this process, as well as a UDP port
+    /// bound by another live TotalDrop process (dual-stack `bind_socket` or
+    /// IPv4 socket, with `ACTIVE_UPNP` empty for it), is preserved when
+    /// clearing stale rules; a minimal IGD that refuses
+    /// `GetGenericPortMappingEntry` still maps too.
+    #[tokio::test]
+    async fn upnp_keeps_an_active_mapping_and_tolerates_unlisted_gateways() {
+        let (Gateway::At(silent), _) = router(Router::Silent).await else {
+            unreachable!()
+        };
+        let other_proc_quic = crate::transport::bind_socket().unwrap();
+        let quic_port = other_proc_quic.local_addr().unwrap().port();
+        let other_proc_v4 = std::net::UdpSocket::bind("127.0.0.1:0").unwrap();
+        let v4_port = other_proc_v4.local_addr().unwrap().port();
+
+        let (ssdp, _seen, table) = igd_with_entries("127.0.0.1", Igd::Maps, Vec::new()).await;
+
+        let m1 = tokio::time::timeout(LIMIT, map_with(silent, Some(ssdp), 40_001, unseen(), None))
+            .await
+            .unwrap()
+            .unwrap();
+        let port1 = m1.external().port();
+        {
+            let mut entries = table.lock().unwrap();
+            entries.push(FakeEntry::udp(
+                50_097,
+                "127.0.0.1",
+                quic_port,
+                UPNP_DESCRIPTION,
+            ));
+            entries.push(FakeEntry::udp(
+                50_098,
+                "127.0.0.1",
+                v4_port,
+                UPNP_DESCRIPTION,
+            ));
+            entries.push(FakeEntry::udp(
+                50_099,
+                "127.0.0.1",
+                29_099,
+                UPNP_DESCRIPTION,
+            ));
+        }
+
+        let m2 = tokio::time::timeout(LIMIT, map_with(silent, Some(ssdp), 40_002, unseen(), None))
+            .await
+            .unwrap()
+            .unwrap();
+        let port2 = m2.external().port();
+
+        {
+            let entries = table.lock().unwrap();
+            let ports: Vec<u16> = entries.iter().map(|e| e.external_port).collect();
+            assert!(
+                ports.contains(&port1),
+                "active mapping {port1} was deleted: {ports:?}"
+            );
+            assert!(
+                ports.contains(&50_097),
+                "dual-stack sibling process socket on {quic_port} was deleted: {ports:?}"
+            );
+            assert!(
+                ports.contains(&50_098),
+                "IPv4 sibling process socket on {v4_port} was deleted: {ports:?}"
+            );
+            assert!(
+                ports.contains(&port2),
+                "second mapping {port2} missing: {ports:?}"
+            );
+            assert!(
+                !ports.contains(&50_099),
+                "stale mapping 50099 stayed: {ports:?}"
+            );
+        }
+
+        drop(m1);
+        drop(m2);
+        drop(other_proc_quic);
+        drop(other_proc_v4);
+        released().await;
+        let remaining: Vec<u16> = table
+            .lock()
+            .unwrap()
+            .iter()
+            .map(|e| e.external_port)
+            .collect();
+        assert_eq!(remaining, vec![50_097, 50_098]);
+
+        let (ssdp_min, _seen_min) = igd(Igd::NoListing).await;
+        let m_min = tokio::time::timeout(
+            LIMIT,
+            map_with(silent, Some(ssdp_min), 40_003, unseen(), None),
+        )
+        .await
+        .unwrap()
+        .unwrap();
+        assert_eq!(m_min.external().ip(), IpAddr::V4(PUBLIC));
+        drop(m_min);
+        released().await;
     }
 }

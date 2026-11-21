@@ -213,10 +213,10 @@ Adım adım:
    - `own_hints` (`crates/totaldrop-core/src/lib.rs:101`): yerel adresler, STUN
      (`crates/totaldrop-core/src/relay.rs:106` `discover`) ve aynı anda
      yönlendiriciden port isteği: PCP ve NAT-PMP yarışır, ikisi de
-     susarsa UPnP IGD denenir (`crates/totaldrop-core/src/portmap.rs:298`
+     susarsa UPnP IGD denenir (`crates/totaldrop-core/src/portmap.rs:380`
      `start`). Bekleme en çok `MAPPING_GRACE` = 300 ms'dir
      (`crates/totaldrop-core/src/lib.rs:95`); ağ geçidi UPnP ile yanıt
-     verdiyse deneme bitene kadar sürer (`crates/totaldrop-core/src/portmap.rs:346`
+     verdiyse deneme bitene kadar sürer (`crates/totaldrop-core/src/portmap.rs:428`
      `Asking::wait`).
    - `pairing::exchange` (`crates/totaldrop-core/src/pairing.rs:73`):
      kutuda `pake` (CPace, `crates/totaldrop-core/src/pairing.rs:107-110`), `confirm` (sertifika,
@@ -440,9 +440,9 @@ değiştirmez. Davranışı değiştiren seçenekler
 
 - **Gizlilik modu** (`PathOptions.relay_only`, `crates/totaldrop-core/src/lib.rs:164`):
   adres duyurulmaz, doğrudan bağlantı ve port açma yapılmaz.
-- **Port açma ağ geçidi** `portmap::Gateway` (`crates/totaldrop-core/src/portmap.rs:58`):
+- **Port açma ağ geçidi** `portmap::Gateway` (`crates/totaldrop-core/src/portmap.rs:72`):
   `Auto` (varsayılan yolun ağ geçidi, bugün yalnızca Linux), `Off`, ya da
-  `At(adres)` (testler; ileride Android) (`crates/totaldrop-core/src/portmap.rs:58-67`).
+  `At(adres)` (testler; ileride Android) (`crates/totaldrop-core/src/portmap.rs:72-81`).
 - **Kod gücü** `--strong` (2 yerine 3 kelime, `crates/totaldrop-cli/src/main.rs:395`).
 
 ## 5. Test, derleme ve kapsam
@@ -593,7 +593,7 @@ dokunan bulguları ve bu belgedeki yerleri:
 | Issue | Yer | Bu belgede |
 | --- | --- | --- |
 | #424 | Düzeltildi: ping süre sınırlı (`crates/totaldrop-core/src/relay.rs:438` `ping_within`) | 2.1 (aktarma yedeği) |
-| #425 | Düzeltildi: yarışı kaybeden eşleme de kapatılır (`crates/totaldrop-core/src/portmap.rs:230`) | 2.1 (`own_hints`) |
+| #425 | Düzeltildi: yarışı kaybeden eşleme de kapatılır (`crates/totaldrop-core/src/portmap.rs:312`) | 2.1 (`own_hints`) |
 | #426 | Düzeltildi: sayım `server/relay-worker/src/count.ts:36` `noteGiven` | 3.2 (`Pair`), 5.2 |
 | #427 | Düzeltildi: klasör URL ile açılır (`linux/qml/ResultPanel.qml:135`) | — (arayüz) |
 | #428 | STUN, Rust rendezvous jetonu, `snow` | 7.5 |
