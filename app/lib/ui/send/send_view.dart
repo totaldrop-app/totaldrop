@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import 'dart:math' as math;
+import 'dart:ui' show lerpDouble;
 
+import 'package:flutter/foundation.dart' show clampDouble, visibleForTesting;
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
@@ -49,8 +51,6 @@ class SendView extends StatelessWidget {
       listenable: viewModel,
       builder: (context, _) {
         final vm = viewModel;
-        final choosingMode =
-            vm.stage == SendStage.picking && !vm.copying && !vm.sharing;
         return PopScope(
           canPop: !vm.busy,
           onPopInvokedWithResult: (didPop, _) async {
@@ -71,11 +71,7 @@ class SendView extends StatelessWidget {
             }
           },
           child: Scaffold(
-            appBar: AppBar(
-              title: choosingMode
-                  ? null
-                  : Text(vm.textMode ? l.sendText : l.sendTitle),
-            ),
+            appBar: AppBar(title: Text(vm.textMode ? l.sendText : l.sendTitle)),
             body: SafeArea(
               child: AnimatedSwitcher(
                 duration: const Duration(milliseconds: 250),
@@ -147,10 +143,144 @@ class _Centered extends StatelessWidget {
   );
 }
 
+/// Default M3 icon size in `SegmentedButton` (`_SegmentedButtonDefaultsM3`).
+const _kSegmentedDefaultIconSize = 18.0;
+
+/// Base font size used by Flutter's `SegmentedButton` when scaling segment
+/// padding and icon spacing with `MediaQuery.textScalerOf`.
+const _kSegmentedBaseFontSize = 14.0;
+
+/// Fallback minimum segment height when the theme omits `minimumSize`.
+const _kSegmentedFallbackMinHeight = 48.0;
+
+/// M3 `SegmentedButton` icon-segment padding before text-scale scaling
+/// (matches `TextButton.icon` inside Flutter's `_SegmentedButtonState.build`).
+const _kSegmentedPadding1x = EdgeInsetsDirectional.fromSTEB(12, 8, 16, 8);
+const _kSegmentedPaddingScaled = EdgeInsets.symmetric(horizontal: 4);
+
+/// M3 `SegmentedButton` gap between icon and label (`lerpDouble(8, 4, scale)`).
+const _kSegmentedIconGap1x = 8.0;
+const _kSegmentedIconGap2x = 4.0;
+
+/// Two equal segments share outer left, middle divider, and outer right borders.
+const _kSegmentedBordersPerSegment = 1.5;
+
+/// Maximum label lines permitted inside each segment before falling back to
+/// stacked full-width buttons.
+const _kSegmentedMaxLines = 2;
+
+/// Measured layout result for two equal `SegmentedButton` segments.
+typedef _SegmentedLayoutMetrics = ({bool fits, double minHeight});
+
+_SegmentedLayoutMetrics _measureSegmentedLayout({
+  required ThemeData theme,
+  required TextScaler textScaler,
+  required TextDirection textDirection,
+  required double availableWidth,
+  required List<String> labels,
+}) {
+  final style = theme.segmentedButtonTheme.style;
+  final textStyle =
+      style?.textStyle?.resolve(const {}) ?? theme.textTheme.labelLarge;
+  final defaultFontSize = textStyle?.fontSize ?? _kSegmentedBaseFontSize;
+  final effectiveTextScale =
+      textScaler.scale(defaultFontSize) / _kSegmentedBaseFontSize;
+  final scaledPadding = ButtonStyleButton.scaledPadding(
+    _kSegmentedPadding1x,
+    _kSegmentedPaddingScaled,
+    _kSegmentedPaddingScaled,
+    effectiveTextScale,
+  ).resolve(textDirection);
+  final iconSize =
+      style?.iconSize?.resolve(const {}) ?? _kSegmentedDefaultIconSize;
+  final scaleT = clampDouble(effectiveTextScale, 1.0, 2.0) - 1.0;
+  final iconGap = lerpDouble(
+    _kSegmentedIconGap1x,
+    _kSegmentedIconGap2x,
+    scaleT,
+  )!;
+  final borderWidth = style?.side?.resolve(const {})?.width ?? 1.0;
+  final segmentChrome =
+      scaledPadding.horizontal +
+      iconSize +
+      iconGap +
+      borderWidth * _kSegmentedBordersPerSegment;
+  final maxLabelWidth = (availableWidth / 2) - segmentChrome;
+  final minHeight =
+      style?.minimumSize?.resolve(const {})?.height ??
+      _kSegmentedFallbackMinHeight;
+  if (maxLabelWidth <= 0) return (fits: false, minHeight: minHeight);
+
+  var maxRenderedLabelHeight = 0.0;
+  for (final label in labels) {
+    // For space-delimited scripts, require each word to fit so Flutter never
+    // chops a word mid-word inside a segment.
+    if (label.contains(RegExp(r'\s'))) {
+      for (final word in label.split(RegExp(r'\s+'))) {
+        if (word.isEmpty) continue;
+        final wordPainter = TextPainter(
+          text: TextSpan(text: word, style: textStyle),
+          textDirection: textDirection,
+          textScaler: textScaler,
+          maxLines: 1,
+        )..layout();
+        final wordWidth = wordPainter.width;
+        wordPainter.dispose();
+        if (wordWidth > maxLabelWidth) {
+          return (fits: false, minHeight: minHeight);
+        }
+      }
+    }
+
+    final painter = TextPainter(
+      text: TextSpan(text: label, style: textStyle),
+      textDirection: textDirection,
+      textScaler: textScaler,
+      maxLines: _kSegmentedMaxLines,
+    )..layout(maxWidth: maxLabelWidth);
+    final labelHeight = painter.height;
+    final fits = !painter.didExceedMaxLines && labelHeight <= minHeight;
+    painter.dispose();
+    if (!fits) return (fits: false, minHeight: minHeight);
+    maxRenderedLabelHeight = math.max(maxRenderedLabelHeight, labelHeight);
+  }
+
+  // Flutter's `_RenderSegmentedButton.computeMaxIntrinsicHeight` passes the
+  // full width rather than `width / childCount` to each segment, so a label
+  // that wraps to 2 lines under half width would under-report its intrinsic
+  // height to `SliverFillRemaining(hasScrollBody: false)`. Reporting the
+  // wrapped minimum height prevents bottom overflow near the viewport fold.
+  final expectedHeight = math.max(
+    minHeight,
+    maxRenderedLabelHeight + scaledPadding.vertical + borderWidth * 2,
+  );
+  return (fits: true, minHeight: expectedHeight);
+}
+
+/// Returns whether two equal `SegmentedButton` segments inside [availableWidth]
+/// can lay out [labels] using [theme]'s `segmentedButtonTheme` metrics without
+/// mid-word breaks, exceeding [_kSegmentedMaxLines], or overflowing the
+/// segment's minimum height budget.
+@visibleForTesting
+bool sendModeSwitchFitsSegmented({
+  required ThemeData theme,
+  required TextScaler textScaler,
+  required TextDirection textDirection,
+  required double availableWidth,
+  required List<String> labels,
+}) => _measureSegmentedLayout(
+  theme: theme,
+  textScaler: textScaler,
+  textDirection: textDirection,
+  availableWidth: availableWidth,
+  labels: labels,
+).fits;
+
 /// Switches between sending files and sending text while keeping any
-/// picked files and typed text intact (#545, ADR 0011). Falls back to
-/// stacked full-width buttons when large text scales cannot fit both
-/// labels side by side on one line.
+/// picked files and typed text intact (#545, ADR 0011). Allows up to two
+/// wrapped label lines inside each segment so long translations stay on
+/// `SegmentedButton` at 1.0x, and falls back to stacked full-width buttons
+/// when large text scales or narrow viewports exceed that budget.
 class _SendModeSwitch extends StatelessWidget {
   const _SendModeSwitch({required this.vm, required this.availableWidth});
   final SendViewModel vm;
@@ -159,49 +289,45 @@ class _SendModeSwitch extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    final theme = Theme.of(context);
-    final scaler = MediaQuery.textScalerOf(context);
-    final direction = Directionality.of(context);
-    final textStyle =
-        theme.segmentedButtonTheme.style?.textStyle?.resolve(const {}) ??
-        theme.textTheme.labelLarge;
-
-    double segmentWidth(String label) {
-      final painter = TextPainter(
-        text: TextSpan(text: label, style: textStyle),
-        textDirection: direction,
-        textScaler: scaler,
-        maxLines: 1,
-      )..layout();
-      final w = painter.width;
-      painter.dispose();
-      // Horizontal segment padding (28), icon (24), gap (8) and slack (12).
-      return w + 72;
-    }
-
-    final needed = math.max(
-      segmentWidth(l.sendTitle),
-      segmentWidth(l.sendText),
+    final metrics = _measureSegmentedLayout(
+      theme: Theme.of(context),
+      textScaler: MediaQuery.textScalerOf(context),
+      textDirection: Directionality.of(context),
+      availableWidth: availableWidth,
+      labels: [l.sendTitle, l.sendText],
     );
 
-    if (availableWidth / 2 >= needed) {
-      return SegmentedButton<bool>(
-        expandedInsets: EdgeInsets.zero,
-        showSelectedIcon: false,
-        selected: {vm.textMode},
-        onSelectionChanged: (selected) => vm.setTextMode(selected.first),
-        segments: [
-          ButtonSegment<bool>(
-            value: false,
-            icon: const Icon(Icons.attach_file),
-            label: Text(l.sendTitle, maxLines: 1, softWrap: false),
-          ),
-          ButtonSegment<bool>(
-            value: true,
-            icon: const Icon(Icons.notes),
-            label: Text(l.sendText, maxLines: 1, softWrap: false),
-          ),
-        ],
+    if (metrics.fits) {
+      return ConstrainedBox(
+        constraints: BoxConstraints(minHeight: metrics.minHeight),
+        child: SegmentedButton<bool>(
+          expandedInsets: EdgeInsets.zero,
+          showSelectedIcon: false,
+          selected: {vm.textMode},
+          onSelectionChanged: (selected) => vm.setTextMode(selected.first),
+          segments: [
+            ButtonSegment<bool>(
+              value: false,
+              icon: const Icon(Icons.attach_file),
+              label: Text(
+                l.sendTitle,
+                maxLines: _kSegmentedMaxLines,
+                softWrap: true,
+                textAlign: TextAlign.center,
+              ),
+            ),
+            ButtonSegment<bool>(
+              value: true,
+              icon: const Icon(Icons.notes),
+              label: Text(
+                l.sendText,
+                maxLines: _kSegmentedMaxLines,
+                softWrap: true,
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ],
+        ),
       );
     }
 
@@ -281,6 +407,7 @@ class _Picking extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       _SendModeSwitch(vm: vm, availableWidth: innerWidth),
+                      // Minimum clearance when Spacer collapses to 0 at 200%.
                       Gap.m,
                       const Spacer(),
                       Icon(
@@ -303,6 +430,7 @@ class _Picking extends StatelessWidget {
                         ),
                       ),
                       const Spacer(),
+                      // Minimum clearance when Spacer collapses to 0 at 200%.
                       Gap.m,
                       if (vm.addFailed) ...[
                         const _AddFailed(textAlign: TextAlign.center),
