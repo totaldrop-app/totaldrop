@@ -681,4 +681,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'تنظیمات باتری';
+
+  @override
+  String get receiveWith => 'دریافت با TotalDrop';
 }

@@ -629,6 +629,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => '电池设置';
+
+  @override
+  String get receiveWith => '用 TotalDrop 接收';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hans`).
@@ -1255,6 +1258,9 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
 
   @override
   String get settingsBackgroundOpen => '电池设置';
+
+  @override
+  String get receiveWith => '用 TotalDrop 接收';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -1880,4 +1886,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get settingsBackgroundOpen => '電池設定';
+
+  @override
+  String get receiveWith => '以 TotalDrop 接收';
 }

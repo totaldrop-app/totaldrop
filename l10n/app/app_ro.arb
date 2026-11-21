@@ -184,5 +184,6 @@
   "setupBackgroundAutostart": "Deschideți Pornire automată",
   "setupBackgroundSkip": "Nu acum",
   "settingsBackground": "Transferuri în fundal",
-  "settingsBackgroundOpen": "Setările bateriei"
+  "settingsBackgroundOpen": "Setările bateriei",
+  "receiveWith": "Primește cu TotalDrop"
 }

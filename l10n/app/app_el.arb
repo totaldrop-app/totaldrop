@@ -184,5 +184,6 @@
   "setupBackgroundAutostart": "Άνοιγμα Αυτόματης εκκίνησης",
   "setupBackgroundSkip": "Όχι τώρα",
   "settingsBackground": "Μεταφορές στο παρασκήνιο",
-  "settingsBackgroundOpen": "Ρυθμίσεις μπαταρίας"
+  "settingsBackgroundOpen": "Ρυθμίσεις μπαταρίας",
+  "receiveWith": "Λήψη με το TotalDrop"
 }

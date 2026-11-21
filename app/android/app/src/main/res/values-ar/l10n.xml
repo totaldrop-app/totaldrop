@@ -11,4 +11,5 @@
     <string name="process_text">إرسال باستخدام TotalDrop</string>
     <string name="shortcut_receive_short">استلام</string>
     <string name="shortcut_receive_long">استلام الملفات</string>
+    <string name="tile_receive">الاستلام عبر TotalDrop</string>
 </resources>

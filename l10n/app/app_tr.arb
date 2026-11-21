@@ -184,5 +184,6 @@
   "setupBackgroundAutostart": "Otomatik başlatmayı aç",
   "setupBackgroundSkip": "Şimdi değil",
   "settingsBackground": "Arka planda aktarım",
-  "settingsBackgroundOpen": "Pil ayarları"
+  "settingsBackgroundOpen": "Pil ayarları",
+  "receiveWith": "TotalDrop ile al"
 }

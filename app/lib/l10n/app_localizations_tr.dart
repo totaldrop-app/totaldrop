@@ -668,4 +668,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'Pil ayarları';
+
+  @override
+  String get receiveWith => 'TotalDrop ile al';
 }

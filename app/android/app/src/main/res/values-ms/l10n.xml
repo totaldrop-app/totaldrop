@@ -11,4 +11,5 @@
     <string name="process_text">Hantar dengan TotalDrop</string>
     <string name="shortcut_receive_short">Terima</string>
     <string name="shortcut_receive_long">Terima fail</string>
+    <string name="tile_receive">Terima dengan TotalDrop</string>
 </resources>

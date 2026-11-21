@@ -682,4 +682,7 @@ class AppLocalizationsUr extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'بیٹری کی ترتیبات';
+
+  @override
+  String get receiveWith => 'TotalDrop سے وصول کریں';
 }

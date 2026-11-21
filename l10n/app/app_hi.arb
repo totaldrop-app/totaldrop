@@ -184,5 +184,6 @@
   "setupBackgroundAutostart": "ऑटोस्टार्ट खोलें",
   "setupBackgroundSkip": "अभी नहीं",
   "settingsBackground": "बैकग्राउंड में ट्रांसफ़र",
-  "settingsBackgroundOpen": "बैटरी सेटिंग"
+  "settingsBackgroundOpen": "बैटरी सेटिंग",
+  "receiveWith": "TotalDrop से प्राप्त करें"
 }

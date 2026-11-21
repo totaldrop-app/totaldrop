@@ -639,4 +639,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'バッテリー設定';
+
+  @override
+  String get receiveWith => 'TotalDropで受信';
 }

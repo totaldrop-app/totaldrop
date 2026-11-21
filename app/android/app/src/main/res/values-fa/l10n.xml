@@ -11,4 +11,5 @@
     <string name="process_text">ارسال با TotalDrop</string>
     <string name="shortcut_receive_short">دریافت</string>
     <string name="shortcut_receive_long">دریافت فایل</string>
+    <string name="tile_receive">دریافت با TotalDrop</string>
 </resources>

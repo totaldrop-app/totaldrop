@@ -675,4 +675,7 @@ class AppLocalizationsHe extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'הגדרות סוללה';
+
+  @override
+  String get receiveWith => 'קבלה עם TotalDrop';
 }

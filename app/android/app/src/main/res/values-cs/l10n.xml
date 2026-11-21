@@ -11,4 +11,5 @@
     <string name="process_text">Odeslat pomocí TotalDrop</string>
     <string name="shortcut_receive_short">Přijmout</string>
     <string name="shortcut_receive_long">Přijmout soubory</string>
+    <string name="tile_receive">Přijmout přes TotalDrop</string>
 </resources>

@@ -184,5 +184,6 @@
   "setupBackgroundAutostart": "Otevřít Automatické spuštění",
   "setupBackgroundSkip": "Teď ne",
   "settingsBackground": "Přenosy na pozadí",
-  "settingsBackgroundOpen": "Nastavení baterie"
+  "settingsBackgroundOpen": "Nastavení baterie",
+  "receiveWith": "Přijmout přes TotalDrop"
 }

@@ -11,4 +11,5 @@
     <string name="process_text">Αποστολή με το TotalDrop</string>
     <string name="shortcut_receive_short">Λήψη</string>
     <string name="shortcut_receive_long">Λήψη αρχείων</string>
+    <string name="tile_receive">Λήψη με το TotalDrop</string>
 </resources>

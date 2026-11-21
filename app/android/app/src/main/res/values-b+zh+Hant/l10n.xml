@@ -11,4 +11,5 @@
     <string name="process_text">用 TotalDrop 傳送</string>
     <string name="shortcut_receive_short">接收</string>
     <string name="shortcut_receive_long">接收檔案</string>
+    <string name="tile_receive">以 TotalDrop 接收</string>
 </resources>

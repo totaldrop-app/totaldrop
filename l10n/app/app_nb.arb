@@ -184,5 +184,6 @@
   "setupBackgroundAutostart": "Åpne Autostart",
   "setupBackgroundSkip": "Ikke nå",
   "settingsBackground": "Overføringer i bakgrunnen",
-  "settingsBackgroundOpen": "Batteriinnstillinger"
+  "settingsBackgroundOpen": "Batteriinnstillinger",
+  "receiveWith": "Motta med TotalDrop"
 }
