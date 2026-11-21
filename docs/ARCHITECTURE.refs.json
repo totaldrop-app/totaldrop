@@ -163,7 +163,7 @@
   "crates/totaldrop-cli/tests/end_to_end.rs:79": [
     "if let Ok(url) = std::env::var(\"TOTALDROP_TEST_RELAY\") {"
   ],
-  "crates/totaldrop-core/Cargo.toml:23-24": [
+  "crates/totaldrop-core/Cargo.toml:24-25": [
     "totaldrop-crypto = { version = \"0.2.0-beta.5\", path = \"../totaldrop-crypto\" }",
     "totaldrop-proto = { version = \"0.2.0-beta.5\", path = \"../totaldrop-proto\" }"
   ],
@@ -292,10 +292,10 @@
   "crates/totaldrop-core/src/secure.rs:98": [
     "pub async fn handshake("
   ],
-  "crates/totaldrop-core/src/transfer.rs:1135": [
+  "crates/totaldrop-core/src/transfer.rs:1145": [
     "pub async fn accept_text("
   ],
-  "crates/totaldrop-core/src/transfer.rs:1262": [
+  "crates/totaldrop-core/src/transfer.rs:1272": [
     "pub async fn accept("
   ],
   "crates/totaldrop-core/src/transfer.rs:187": [
