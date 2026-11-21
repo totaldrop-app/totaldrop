@@ -115,11 +115,6 @@ pub(crate) fn parse_if_inet6(input: &str) -> Vec<InterfaceV6> {
     out
 }
 
-/// Whether `ip` is a Unique Local Address (`fc00::/7`, RFC 4193).
-fn is_ula(ip: Ipv6Addr) -> bool {
-    ip.segments().first().is_some_and(|&s| s & 0xfe00 == 0xfc00)
-}
-
 /// Whether `e` is a usable non-deprecated temporary IPv6 address that this
 /// device may announce and send from.
 fn is_usable_temp(e: &InterfaceV6) -> bool {
@@ -137,56 +132,33 @@ fn same_prefix64(a: Ipv6Addr, b: Ipv6Addr) -> bool {
     a.octets().get(..8) == b.octets().get(..8)
 }
 
-/// Pick a usable temporary IPv6 address matching the interface and scope of
-/// `sys_src` from parsed `/proc/net/if_inet6` entries.
+/// Pick a usable temporary IPv6 address matching the interface, scope, and
+/// `/64` prefix of `sys_src` from parsed `/proc/net/if_inet6` entries.
 ///
 /// Honors `sys_src` immediately when it is already a usable temporary address
-/// (`use_tempaddr = 2`). Otherwise prefers a temporary address on the same
-/// interface, scope, and `/64` prefix; for global-scope routes (`scope == 0`)
-/// falls back to another temporary address on the same interface with matching
-/// ULA vs. global-unicast class.
+/// (`use_tempaddr = 2`). Otherwise matches strictly on the same interface,
+/// scope, and `/64` prefix (respecting RFC 6724 rule 5.5 so multi-prefix LANs
+/// never trigger silent BCP 38 ingress drops).
 pub(crate) fn select_temporary(entries: &[InterfaceV6], sys_src: Ipv6Addr) -> Option<Ipv6Addr> {
     let sys = entries.iter().find(|e| e.addr == sys_src)?;
     if is_usable_temp(sys) {
         return Some(sys_src);
     }
-    if let Some(found) = entries.iter().find(|e| {
-        e.ifindex == sys.ifindex
-            && e.scope == sys.scope
-            && same_prefix64(e.addr, sys.addr)
-            && is_usable_temp(e)
-    }) {
-        return Some(found.addr);
-    }
-    if sys.scope == 0x00 {
-        return entries
-            .iter()
-            .find(|e| {
-                e.ifindex == sys.ifindex
-                    && e.scope == 0x00
-                    && is_ula(e.addr) == is_ula(sys.addr)
-                    && is_usable_temp(e)
-            })
-            .map(|e| e.addr);
-    }
-    None
+    entries
+        .iter()
+        .find(|e| {
+            e.ifindex == sys.ifindex
+                && e.scope == sys.scope
+                && same_prefix64(e.addr, sys.addr)
+                && is_usable_temp(e)
+        })
+        .map(|e| e.addr)
 }
 
 #[cfg(target_os = "linux")]
 fn read_if_inet6() -> Option<Vec<InterfaceV6>> {
     let text = std::fs::read_to_string("/proc/net/if_inet6").ok()?;
     Some(parse_if_inet6(&text))
-}
-
-#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
-fn preferred_with_entries(entries: Option<&[InterfaceV6]>, sys_src: Ipv6Addr) -> Option<Ipv6Addr> {
-    if !sys_src.is_loopback()
-        && let Some(entries) = entries
-        && let Some(temp) = select_temporary(entries, sys_src)
-    {
-        return Some(temp);
-    }
-    crate::transport::announceable_v6(sys_src).then_some(sys_src)
 }
 
 /// Outbound IPv6 source policy for one destination (#405).
@@ -196,9 +168,11 @@ pub(crate) enum V6Source {
     /// falling back to `src_ip: None` cannot leak a non-announceable (EUI-64)
     /// source.
     Temporary { addr: Ipv6Addr, safe_default: bool },
-    /// Kernel default (`src_ip: None`) is safe (no route, loopback, or
-    /// `announceable_v6`).
-    SystemDefault,
+    /// Kernel default (`src_ip: None`) is safe; holds `Some(sys_src)` when
+    /// `target` is routable and the kernel's default source is
+    /// [`crate::transport::announceable_v6`], or `None` for no route / loopback
+    /// / non-routable targets.
+    SystemDefault(Option<Ipv6Addr>),
     /// Kernel default is unsafe (e.g. modified EUI-64) and no temporary IPv6
     /// is available: suppress direct sends rather than leaking it on the wire.
     UnsafeDefault,
@@ -206,7 +180,7 @@ pub(crate) enum V6Source {
 
 fn source_policy_with_entries(entries: Option<&[InterfaceV6]>, sys_src: Ipv6Addr) -> V6Source {
     if sys_src.is_loopback() {
-        return V6Source::SystemDefault;
+        return V6Source::SystemDefault(None);
     }
     let safe_default = crate::transport::announceable_v6(sys_src);
     if let Some(entries) = entries
@@ -215,7 +189,7 @@ fn source_policy_with_entries(entries: Option<&[InterfaceV6]>, sys_src: Ipv6Addr
         return V6Source::Temporary { addr, safe_default };
     }
     if safe_default {
-        V6Source::SystemDefault
+        V6Source::SystemDefault(Some(sys_src))
     } else {
         V6Source::UnsafeDefault
     }
@@ -238,10 +212,10 @@ pub(crate) fn routable_v6_ip(addr: SocketAddr) -> Option<Ipv6Addr> {
 /// Decide the outbound IPv6 source policy for direct sends to `target` (#405).
 pub(crate) fn source_policy_v6(target: SocketAddr) -> V6Source {
     if routable_v6_ip(target).is_none() {
-        return V6Source::SystemDefault;
+        return V6Source::SystemDefault(None);
     }
     let Some(IpAddr::V6(sys_src)) = crate::transport::source_for(target) else {
-        return V6Source::SystemDefault;
+        return V6Source::SystemDefault(None);
     };
     #[cfg(target_os = "linux")]
     let entries = read_if_inet6();
@@ -276,21 +250,9 @@ pub(crate) fn is_safe_default_v6_for_stun(server: SocketAddr) -> bool {
 /// multicast targets, when no route exists, or on non-Linux systems (which
 /// already prefer temporary IPv6 addresses natively).
 pub(crate) fn temporary_source_v6(target: SocketAddr) -> Option<Ipv6Addr> {
-    #[cfg(target_os = "linux")]
-    {
-        routable_v6_ip(target)?;
-        let IpAddr::V6(sys_src) = crate::transport::source_for(target)? else {
-            return None;
-        };
-        if sys_src.is_loopback() {
-            return None;
-        }
-        select_temporary(&read_if_inet6()?, sys_src)
-    }
-    #[cfg(not(target_os = "linux"))]
-    {
-        let _ = target;
-        None
+    match source_policy_v6(target) {
+        V6Source::Temporary { addr, .. } => Some(addr),
+        V6Source::SystemDefault(_) | V6Source::UnsafeDefault => None,
     }
 }
 
@@ -299,18 +261,10 @@ pub(crate) fn temporary_source_v6(target: SocketAddr) -> Option<Ipv6Addr> {
 /// otherwise the system's own source if [`crate::transport::announceable_v6`]
 /// accepts it.
 pub(crate) fn preferred_source_v6(target: SocketAddr) -> Option<Ipv6Addr> {
-    routable_v6_ip(target)?;
-    let IpAddr::V6(sys_src) = crate::transport::source_for(target)? else {
-        return None;
-    };
-    #[cfg(target_os = "linux")]
-    {
-        let entries = read_if_inet6();
-        preferred_with_entries(entries.as_deref(), sys_src)
-    }
-    #[cfg(not(target_os = "linux"))]
-    {
-        crate::transport::announceable_v6(sys_src).then_some(sys_src)
+    match source_policy_v6(target) {
+        V6Source::Temporary { addr, .. } => Some(addr),
+        V6Source::SystemDefault(addr) => addr,
+        V6Source::UnsafeDefault => None,
     }
 }
 
@@ -517,23 +471,25 @@ fe800000000000001c2d3e4f5a6b7c8d 02 40 20 80   wlan0
         ];
         assert_eq!(select_temporary(&gua_only_for_ula, ula_sys), None);
 
-        // Global-scope fallback allows another /64 of the same class on the same interface.
-        let same_class = vec![
+        // Different /64 prefix on the same interface is NEVER selected (RFC 6724
+        // rule 5.5 / BCP 38 ingress filtering), for either GUA or ULA.
+        let other_prefix = vec![
             entry(&gua_sys.to_string(), 2, 0x00, IFA_F_STABLE_PRIVACY),
             entry(&ula_sys.to_string(), 2, 0x00, IFA_F_STABLE_PRIVACY),
             entry(&ula_other_prefix.to_string(), 2, 0x00, IFA_F_TEMPORARY),
             entry(&gua_other_prefix.to_string(), 2, 0x00, IFA_F_TEMPORARY),
         ];
-        assert_eq!(
-            select_temporary(&same_class, gua_sys),
-            Some(gua_other_prefix)
-        );
-        assert_eq!(
-            select_temporary(&same_class, ula_sys),
-            Some(ula_other_prefix)
-        );
+        assert_eq!(select_temporary(&other_prefix, gua_sys), None);
+        assert_eq!(select_temporary(&other_prefix, ula_sys), None);
 
-        // Non-global scope does not fall back to global scope across prefixes.
+        // Same /64 prefix on the same interface IS selected for ULA too.
+        let same_ula = vec![
+            entry(&ula_sys.to_string(), 2, 0x00, IFA_F_STABLE_PRIVACY),
+            entry(&ula_temp.to_string(), 2, 0x00, IFA_F_TEMPORARY),
+        ];
+        assert_eq!(select_temporary(&same_ula, ula_sys), Some(ula_temp));
+
+        // Non-global scope does not match global scope even on the same interface.
         let site_sys: Ipv6Addr = "fec0::1".parse().unwrap();
         let site_entries = vec![
             entry(&site_sys.to_string(), 2, 0x40, IFA_F_PERMANENT),
@@ -543,38 +499,7 @@ fe800000000000001c2d3e4f5a6b7c8d 02 40 20 80   wlan0
 
         // Missing sys_src returns None.
         let missing: Ipv6Addr = "2001:db8::99".parse().unwrap();
-        assert_eq!(select_temporary(&same_class, missing), None);
-    }
-
-    #[test]
-    fn preferred_with_entries_falls_back_safely_without_leaking_eui64() {
-        let stable: Ipv6Addr = "2a02:4e0:2d8a:1b00:5d1c:8f3e:91a2:6b47".parse().unwrap();
-        let eui64: Ipv6Addr = "2a02:4e0:2d8a:1b00:21a:2bff:fe3c:4d5e".parse().unwrap();
-        let temp: Ipv6Addr = "2a02:4e0:2d8a:1b00:abcd:ef01:2345:6789".parse().unwrap();
-
-        let with_temp = vec![
-            entry(&stable.to_string(), 2, 0x00, IFA_F_STABLE_PRIVACY),
-            entry(&eui64.to_string(), 2, 0x00, IFA_F_PERMANENT),
-            entry(&temp.to_string(), 2, 0x00, IFA_F_TEMPORARY),
-        ];
-        assert_eq!(preferred_with_entries(Some(&with_temp), stable), Some(temp));
-        assert_eq!(preferred_with_entries(Some(&with_temp), eui64), Some(temp));
-
-        let without_temp = vec![
-            entry(&stable.to_string(), 2, 0x00, IFA_F_STABLE_PRIVACY),
-            entry(&eui64.to_string(), 2, 0x00, IFA_F_PERMANENT),
-        ];
-        assert_eq!(
-            preferred_with_entries(Some(&without_temp), stable),
-            Some(stable)
-        );
-        assert_eq!(preferred_with_entries(Some(&without_temp), eui64), None);
-        assert_eq!(preferred_with_entries(None, stable), Some(stable));
-        assert_eq!(preferred_with_entries(None, eui64), None);
-        assert_eq!(
-            preferred_with_entries(Some(&with_temp), Ipv6Addr::LOCALHOST),
-            None
-        );
+        assert_eq!(select_temporary(&other_prefix, missing), None);
     }
 
     #[test]
@@ -604,7 +529,7 @@ fe800000000000001c2d3e4f5a6b7c8d 02 40 20 80   wlan0
         );
         assert_eq!(
             source_policy_with_entries(Some(&with_temp), Ipv6Addr::LOCALHOST),
-            V6Source::SystemDefault
+            V6Source::SystemDefault(None)
         );
 
         let without_temp = vec![
@@ -613,7 +538,7 @@ fe800000000000001c2d3e4f5a6b7c8d 02 40 20 80   wlan0
         ];
         assert_eq!(
             source_policy_with_entries(Some(&without_temp), stable),
-            V6Source::SystemDefault
+            V6Source::SystemDefault(Some(stable))
         );
         assert_eq!(
             source_policy_with_entries(Some(&without_temp), eui64),
@@ -621,7 +546,7 @@ fe800000000000001c2d3e4f5a6b7c8d 02 40 20 80   wlan0
         );
         assert_eq!(
             source_policy_with_entries(None, stable),
-            V6Source::SystemDefault
+            V6Source::SystemDefault(Some(stable))
         );
         assert_eq!(
             source_policy_with_entries(None, eui64),
@@ -646,7 +571,7 @@ fe800000000000001c2d3e4f5a6b7c8d 02 40 20 80   wlan0
             assert_eq!(preferred_source_v6(target), None, "{target}");
             assert_eq!(
                 source_policy_v6(target),
-                V6Source::SystemDefault,
+                V6Source::SystemDefault(None),
                 "{target}"
             );
         }

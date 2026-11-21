@@ -148,16 +148,16 @@ treated as final.
       Linux (where the kernel picks a temporary address only with
       `use_tempaddr = 2`), the client reads `/proc/net/if_inet6` and
       prefers a non-deprecated, non-tentative, non-DAD-failed temporary
-      address (`IFA_F_TEMPORARY`) on the same interface and prefix (or
-      same global-scope address class, keeping ULA and global unicast
-      separate) as the kernel's chosen source, stamping it as the source
+      address (`IFA_F_TEMPORARY`) on the same interface, scope, and `/64`
+      prefix as the kernel's chosen source, stamping it as the source
       address via `IPV6_PKTINFO` for outbound QUIC datagrams and IPv6 STUN
-      probes. When no usable temporary address exists or `IPV6_PKTINFO` is
-      rejected with `EADDRNOTAVAIL`/`EINVAL`, the client falls back to the
-      kernel's own source only if that default is announceable (such as a
-      stable-privacy address, RFC 7217, which stays the same on one
-      network); it never falls back to a modified EUI-64 address, dropping
-      direct IPv6 sends instead so IPv4 or the relay carries the transfer.
+      probes. When no usable temporary address exists in that `/64` or
+      `IPV6_PKTINFO` is rejected with `EADDRNOTAVAIL`/`EINVAL`, the client
+      falls back to the kernel's own source only if that default is
+      announceable (such as a stable-privacy address, RFC 7217, which stays
+      the same on one network); it never falls back to a modified EUI-64
+      address, dropping direct IPv6 sends instead so IPv4 or the relay
+      carries the transfer.
       A device dials the other's addresses once each, in canonical form,
       and leaves out unspecified and IPv6 link-local ones and IPv6 targets
       it would reach only from an address it does not announce. A side whose
