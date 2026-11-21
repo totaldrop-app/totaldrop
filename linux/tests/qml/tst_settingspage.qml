@@ -154,5 +154,40 @@ Item {
 
             Strings.rtl = false
         }
+
+        function test_hidesShortcutRowsUntilPortalReady() {
+            const ctx = make({
+                shortcutReady: false,
+                shortcutSupported: false,
+                shortcutCommand: "totaldrop-desktop --screen=clipboard"
+            })
+            const row = findChild(ctx.page, "shortcutStatusRow")
+            const btn = findChild(ctx.page, "configureShortcutButton")
+            const manual = findChild(ctx.page, "shortcutManualLabel")
+            const cmdBox = findChild(ctx.page, "shortcutCommandBox")
+
+            verify(row !== null && !row.visible)
+            verify(btn !== null && !btn.visible)
+            verify(manual !== null && !manual.visible)
+            verify(cmdBox !== null && !cmdBox.visible)
+
+            // First portal state callback sets shortcutReady = true and reveals
+            // the matching row without flashing the manual command first.
+            ctx.launcher.shortcutSupported = true
+            ctx.launcher.shortcutReady = true
+            verify(row.visible)
+            verify(btn.visible)
+            verify(!manual.visible)
+            verify(!cmdBox.visible)
+
+            // When launcher is absent (and no stub command), shortcutCommand is "".
+            const bare = createTemporaryObject(pageBox, stage, {
+                transfer: sharedTransfer,
+                launcher: null
+            })
+            verify(bare !== null)
+            compare(bare.shortcutReady, false)
+            compare(bare.shortcutCommand, "")
+        }
     }
 }

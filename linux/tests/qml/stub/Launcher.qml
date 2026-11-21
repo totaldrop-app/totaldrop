@@ -7,6 +7,7 @@ import QtQuick
 // QML component tests can resolve ReceivePage and SettingsPage bindings
 // without a Rust build.
 QtObject {
+    property bool shortcutReady: true
     property bool shortcutSupported: false
     property string shortcutTrigger: ""
     property string shortcutCommand: "totaldrop-desktop --screen=clipboard"

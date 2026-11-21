@@ -7,7 +7,6 @@
 //! [`crate::shortcuts`].
 
 use std::pin::Pin;
-use std::sync::Mutex;
 
 use cxx_qt::{CxxQtType, Threading};
 use cxx_qt_lib::{QString, QStringList};
@@ -33,6 +32,10 @@ pub mod qobject {
         /// Give Qt the token to activate the window with; see `launcher.h`.
         fn set_activation_token(token: &QString);
 
+        /// Focused/visible X11 window ID (0 on Wayland / headless); see
+        /// `launcher.h`.
+        fn parent_x11_xid() -> u64;
+
         /// Open a validated http(s) URL in the desktop's browser; see
         /// `launcher.h`.
         fn open_web_url_cpp(url: &QString) -> bool;
@@ -42,6 +45,7 @@ pub mod qobject {
         /// Files, links, screens and global shortcuts for the window.
         #[qobject]
         #[qml_element]
+        #[qproperty(bool, shortcut_ready, cxx_name = "shortcutReady")]
         #[qproperty(bool, shortcut_supported, cxx_name = "shortcutSupported")]
         #[qproperty(QString, shortcut_trigger, cxx_name = "shortcutTrigger")]
         #[qproperty(QString, shortcut_command, cxx_name = "shortcutCommand")]
@@ -79,10 +83,11 @@ pub mod qobject {
 /// Backing state of [`qobject::Launcher`].
 #[derive(Default)]
 pub struct LauncherRust {
+    shortcut_ready: bool,
     shortcut_supported: bool,
     shortcut_trigger: QString,
     shortcut_command: QString,
-    shortcuts: Mutex<shortcuts::Handle>,
+    shortcuts: shortcuts::Handle,
 }
 
 fn list(items: Vec<String>) -> QStringList {
@@ -208,12 +213,17 @@ impl qobject::Launcher {
 
     fn configure_shortcut(&self) {
         let description = crate::bridge::texts::strings().get("sendClipboard", &[]);
-        let token = std::env::var("XDG_ACTIVATION_TOKEN")
-            .ok()
-            .and_then(|t| shortcuts::valid_token(&t));
-        if let Ok(handle) = self.rust().shortcuts.lock() {
-            handle.configure(description, token);
-        }
+        // Do not read `XDG_ACTIVATION_TOKEN`: Qt's Wayland plugin consumes and
+        // unsets the launch-time token at startup, and any leftover token is
+        // stale and single-use. Requesting a fresh `xdg_activation_v1` token
+        // and Wayland `zxdg_exporter_v2` parent handle is tracked in #631.
+        let parent_xid = match qobject::parent_x11_xid() {
+            0 => None,
+            xid => Some(xid),
+        };
+        self.rust()
+            .shortcuts
+            .configure(description, None, parent_xid);
     }
 }
 
@@ -238,6 +248,7 @@ impl cxx_qt::Initialize for qobject::Launcher {
         let handle = shortcuts::start(shortcuts::Callbacks {
             state: Box::new(move |supported, trigger| {
                 let _ = state_thread.queue(move |mut obj| {
+                    obj.as_mut().set_shortcut_ready(true);
                     obj.as_mut().set_shortcut_supported(supported);
                     obj.as_mut()
                         .set_shortcut_trigger(QString::from(trigger.as_str()));
@@ -252,9 +263,7 @@ impl cxx_qt::Initialize for qobject::Launcher {
                 });
             }),
         });
-        if let Ok(mut slot) = self.rust().shortcuts.lock() {
-            *slot = handle;
-        }
+        self.as_mut().rust_mut().shortcuts = handle;
     }
 }
 

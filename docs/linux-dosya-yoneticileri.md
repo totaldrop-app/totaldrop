@@ -82,7 +82,9 @@ front on the Send screen with the clipboard's text filled in (waiting for
 Wayland focus before reading the clipboard when needed); nothing is sent
 until the user clicks **Create code**. Trigger descriptions returned by the
 portal are sanitized with `totaldrop_l10n::reveal_controls` and rendered
-left to right.
+left to right. If the desktop portal closes the session (for example during a
+portal restart or update), TotalDrop automatically recreates the session with
+bounded exponential backoff (1 s to 30 s) without requiring an app restart.
 
 On desktops whose `GlobalShortcuts` portal has no interactive shortcut
 picker (`xdg-desktop-portal-hyprland` on Hyprland and Omarchy, which
