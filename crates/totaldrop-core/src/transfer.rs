@@ -151,31 +151,74 @@ impl Drop for AbortOnDrop {
     }
 }
 
+/// Shared cleanup state for an active `accept` call (#528).
+///
+/// Locking `ReceiveState` serializes `.part` creation, final placement, and
+/// abort-time cleanup so an aborted `accept` task synchronously removes every
+/// active `.part` file and empty created folder before its stack frame
+/// finishes dropping, and no running stream or blocking placement task can
+/// create or place a file afterwards.
+#[derive(Default)]
+struct ReceiveState {
+    abandoned: bool,
+    parts: HashSet<PathBuf>,
+}
+
 /// A partial file that is removed unless it was placed. Dropping it (an
-/// error, a stop, an aborted task) removes the file.
+/// error, a stop, an aborted task) removes the file unless `ReceiveCleanup`
+/// already removed it on abort.
 struct PartFile {
     path: PathBuf,
+    state: Arc<std::sync::Mutex<ReceiveState>>,
     keep: bool,
 }
 
 impl Drop for PartFile {
     fn drop(&mut self) {
+        let mut st = self
+            .state
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
         if !self.keep {
             let _ = std::fs::remove_file(&self.path);
         }
+        st.parts.remove(&self.path);
     }
 }
 
-/// Directories this transfer created. Unless the transfer finishes, the
-/// empty ones are removed again, deepest first; anything with content stays.
-struct CreatedDirs {
+/// Directories and active `.part` files belonging to one `accept` call (#528).
+/// Unless the transfer finishes, dropping it marks the receive abandoned,
+/// removes every unplaced `.part` file first, and then removes empty created
+/// folders deepest first; folders holding already-placed whole files stay.
+struct ReceiveCleanup {
+    state: Arc<std::sync::Mutex<ReceiveState>>,
     dirs: Vec<PathBuf>,
     keep: bool,
 }
 
-impl Drop for CreatedDirs {
+impl ReceiveCleanup {
+    fn abandon(&self) {
+        let mut st = self
+            .state
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        st.abandoned = true;
+    }
+}
+
+impl Drop for ReceiveCleanup {
     fn drop(&mut self) {
         if !self.keep {
+            {
+                let mut st = self
+                    .state
+                    .lock()
+                    .unwrap_or_else(std::sync::PoisonError::into_inner);
+                st.abandoned = true;
+                for part in st.parts.drain() {
+                    let _ = std::fs::remove_file(&part);
+                }
+            }
             for dir in self.dirs.iter().rev() {
                 let _ = std::fs::remove_dir(dir);
             }
@@ -966,7 +1009,7 @@ async fn receive_stream(
     done: Arc<AtomicU64>,
     total: u64,
     progress: Progress,
-    abandoned: Arc<std::sync::atomic::AtomicBool>,
+    state: Arc<std::sync::Mutex<ReceiveState>>,
 ) -> Result<(u64, bool)> {
     let header = DataHeader::decode(&expect_frame(&mut stream, 1024).await?)?;
     if header.transfer_id != transfer_id || header.first_chunk != 0 {
@@ -1008,16 +1051,28 @@ async fn receive_stream(
             .map(|b| format!("{b:02x}"))
             .collect::<String>()
     ));
-    // Opened right here, not on a blocking thread: an abort between an
-    // asynchronous open finishing and the guard below would leave the file.
-    let std_file = std::fs::OpenOptions::new()
-        .write(true)
-        .create_new(true)
-        .open(&tmp_path)?;
+    // Opened and registered under `state` right here, not on a blocking
+    // thread: an abort either sees `tmp_path` in `parts` and removes it, or
+    // runs first so `abandoned` refuses to create it (#528).
+    let std_file = {
+        let mut st = state
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        if st.abandoned {
+            return Err(Error::Stopped);
+        }
+        let f = std::fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&tmp_path)?;
+        st.parts.insert(tmp_path.clone());
+        f
+    };
     // From here on the partial file goes away unless it is placed, also
-    // when this task is aborted.
+    // when this task or `accept` itself is aborted.
     let mut part = PartFile {
         path: tmp_path.clone(),
+        state: Arc::clone(&state),
         keep: false,
     };
     let mut file = tokio::fs::File::from_std(std_file);
@@ -1071,14 +1126,26 @@ async fn receive_stream(
                 .and_then(|n| n.to_str())
                 .ok_or(Error::Protocol("bad file name"))?;
             let placed = {
-                let (parent, name, tmp) = (parent.clone(), name.to_owned(), tmp_path.clone());
-                // Placing cannot be aborted once it runs, so it checks first
-                // whether the receive was given up meanwhile.
+                let (parent, name, tmp, state) = (
+                    parent.clone(),
+                    name.to_owned(),
+                    tmp_path.clone(),
+                    Arc::clone(&state),
+                );
+                // Placing cannot be aborted once it runs, so it checks and
+                // places under `state` (#528).
                 tokio::task::spawn_blocking(move || {
-                    if abandoned.load(Ordering::SeqCst) {
+                    let mut st = state
+                        .lock()
+                        .unwrap_or_else(std::sync::PoisonError::into_inner);
+                    if st.abandoned {
                         return Err(Error::Stopped);
                     }
-                    place_no_clobber(&tmp, &parent, &name)
+                    let res = place_no_clobber(&tmp, &parent, &name);
+                    if res.is_ok() && !tmp.exists() {
+                        st.parts.remove(&tmp);
+                    }
+                    res
                 })
                 .await
                 .map_err(|_| Error::Protocol("placement task failed"))?
@@ -1312,7 +1379,9 @@ pub async fn accept(
 
     let mut targets: Vec<Option<Target>> = Vec::with_capacity(offer.paths.len());
     let mut wanted = Vec::new();
-    let mut created = CreatedDirs {
+    let state = Arc::new(std::sync::Mutex::new(ReceiveState::default()));
+    let mut cleanup = ReceiveCleanup {
+        state: Arc::clone(&state),
         dirs: Vec::new(),
         keep: false,
     };
@@ -1328,7 +1397,7 @@ pub async fn accept(
             if (n.saturating_add(1) < safe.segments().len() || entry.kind == EntryKind::Dir)
                 && make_dir(&path)?
             {
-                created.dirs.push(path.clone());
+                cleanup.dirs.push(path.clone());
             }
         }
         if entry.kind == EntryKind::File {
@@ -1369,9 +1438,8 @@ pub async fn accept(
         ..
     } = chan;
     let (_reader, mut ctl_rx) = control_reader(opener, recv);
-    let abandoned = Arc::new(std::sync::atomic::AtomicBool::new(false));
-    // Every data stream task belongs to this call: returning for any reason
-    // (done, an error, a stop) aborts the ones still running.
+    // Every data stream task belongs to this call: returning or aborting for
+    // any reason aborts the ones still running before `cleanup` drops (#528).
     let mut streams = tokio::task::JoinSet::new();
 
     let mut report = ReceiveReport::default();
@@ -1407,16 +1475,16 @@ pub async fn accept(
                 stream = conn.accept_uni() => {
                     let stream = stream?;
                     let tx = result_tx.clone();
-                    let (targets, claimed, ck, done, progress, permits, abandoned) = (
+                    let (targets, claimed, ck, done, progress, permits, state) = (
                         targets.clone(), claimed.clone(), offer.content_key.clone(),
-                        done.clone(), progress.clone(), permits.clone(), abandoned.clone(),
+                        done.clone(), progress.clone(), permits.clone(), Arc::clone(&state),
                     );
                     // The permit is waited for inside the task, so this loop
                     // keeps hearing stops, cancels and the inactivity timer.
                     streams.spawn(async move {
                         let r = match permits.acquire_owned().await {
                             Ok(_permit) => {
-                                receive_stream(stream, targets, claimed, ck, transfer_id, done, total, progress, abandoned).await
+                                receive_stream(stream, targets, claimed, ck, transfer_id, done, total, progress, state).await
                             }
                             Err(_) => Err(Error::Protocol("semaphore closed")),
                         };
@@ -1454,11 +1522,13 @@ pub async fn accept(
                     }
                 }
                 () = stop.stopped() => {
-                    // Cancel and close first: dropping a stream that is still
-                    // reading tells the sender to stop sending, which would
-                    // reach it before the cancel.
+                    // Forbid placing any further files right away while
+                    // `tell_stopped` runs: dropping a stream that is still
+                    // reading would send `STOP_SENDING` ahead of the cancel,
+                    // so streams stay open until `tell_stopped` finishes,
+                    // without placing anything meanwhile (#528).
+                    cleanup.abandon();
                     let e = tell_stopped(conn, &mut sealer, &mut send, transfer_id).await;
-                    abandoned.store(true, Ordering::SeqCst);
                     streams.abort_all();
                     return Err(e);
                 }
@@ -1469,12 +1539,12 @@ pub async fn accept(
     .await;
     if let Err(e) = outcome {
         // No file is placed from now on; let every stream task end and drop
-        // its partial file before the folders this transfer created go.
-        abandoned.store(true, Ordering::SeqCst);
+        // its partial file before `cleanup` removes created folders.
+        cleanup.abandon();
         streams.shutdown().await;
         return Err(e);
     }
-    created.keep = true;
+    cleanup.keep = true;
     report.bytes = done.load(Ordering::Relaxed);
     let _ = send.finish();
     // Wait briefly for the sender to close, so our last messages arrive.
@@ -1661,6 +1731,153 @@ mod tests {
             .unwrap();
         assert!(matches!(s, Err(Error::Cancelled(_))), "{s:?}");
         assert_eq!(std::fs::read_dir(&dest).unwrap().count(), 0);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// Aborting `accept` mid-receive (as `linux/src/quit.rs` does when a
+    /// stopped transfer exceeds its 1.5 s quit budget) removes partial `.part`
+    /// files and empty created folders before the task's drop completes (#528).
+    #[tokio::test]
+    async fn aborted_accept_removes_partial_files_and_created_dirs() {
+        let (sender, receiver) =
+            crate::transport::testing::over_slow_relay(Duration::from_millis(2)).await;
+        let (schan, mut rchan, skeys, scert) = secure_pair(&sender, &receiver).await;
+        let dir = std::env::temp_dir().join(format!("td-rabort-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        let (src, dest) = (dir.join("src"), dir.join("dest"));
+        std::fs::create_dir_all(src.join("f").join("sub")).unwrap();
+        std::fs::create_dir_all(&dest).unwrap();
+        std::fs::write(src.join("f").join("sub").join("0.bin"), vec![7u8; 4 << 20]).unwrap();
+        let (entries, _) = scan(&[src.join("f")]).unwrap();
+        let send = {
+            let sender = sender.clone();
+            tokio::spawn(async move {
+                send_files(
+                    &sender,
+                    schan,
+                    &skeys,
+                    entries,
+                    false,
+                    Arc::new(|_, _| {}),
+                    &Stop::new(),
+                )
+                .await
+            })
+        };
+        let offer = receive_offer(&mut rchan, &scert).await.unwrap();
+        let wrote = Arc::new(tokio::sync::Notify::new());
+        let on_receive: Progress = {
+            let wrote = Arc::clone(&wrote);
+            Arc::new(move |n, _| {
+                if n >= 512 << 10 {
+                    wrote.notify_one();
+                }
+            })
+        };
+        let dest_in_task = dest.clone();
+        let recv_task = tokio::spawn(async move {
+            accept(
+                &receiver,
+                rchan,
+                offer,
+                &dest_in_task,
+                on_receive,
+                &Stop::new(),
+            )
+            .await
+        });
+        wrote.notified().await;
+        recv_task.abort();
+        let join_err = recv_task.await.unwrap_err();
+        assert!(join_err.is_cancelled());
+        // Right when the aborted `accept` task finishes unwinding (before any
+        // detached child tasks may have finished unwinding on other threads),
+        // neither `.totaldrop-*.part` nor created folders may remain in `dest`.
+        let remaining: Vec<_> = std::fs::read_dir(&dest)
+            .unwrap()
+            .map(|e| e.unwrap().path())
+            .collect();
+        assert!(
+            remaining.is_empty(),
+            "left behind in dest after abort: {remaining:?}"
+        );
+        send.abort();
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// When a multi-file receive is stopped and aborted after one file has
+    /// already been verified and placed, that whole file stays while the
+    /// in-flight `.part` file and its empty folder are removed (#528).
+    #[tokio::test]
+    async fn aborted_accept_keeps_whole_placed_files_and_removes_partials() {
+        let (sender, receiver) =
+            crate::transport::testing::over_slow_relay(Duration::from_millis(2)).await;
+        let (schan, mut rchan, skeys, scert) = secure_pair(&sender, &receiver).await;
+        let dir = std::env::temp_dir().join(format!("td-rabort-keep-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        let (src, dest) = (dir.join("src"), dir.join("dest"));
+        std::fs::create_dir_all(src.join("f").join("00_done")).unwrap();
+        std::fs::create_dir_all(src.join("f").join("01_pending")).unwrap();
+        std::fs::create_dir_all(&dest).unwrap();
+        let small = vec![3u8; 4096];
+        std::fs::write(src.join("f").join("00_done").join("a.bin"), &small).unwrap();
+        std::fs::write(
+            src.join("f").join("01_pending").join("b.bin"),
+            vec![9u8; 4 << 20],
+        )
+        .unwrap();
+        let (entries, _) = scan(&[src.join("f")]).unwrap();
+        let send = {
+            let sender = sender.clone();
+            tokio::spawn(async move {
+                send_files(
+                    &sender,
+                    schan,
+                    &skeys,
+                    entries,
+                    false,
+                    Arc::new(|_, _| {}),
+                    &Stop::new(),
+                )
+                .await
+            })
+        };
+        let offer = receive_offer(&mut rchan, &scert).await.unwrap();
+        let ready = Arc::new(tokio::sync::Notify::new());
+        let placed_small = dest.join("f").join("00_done").join("a.bin");
+        let on_receive: Progress = {
+            let (ready, placed_small) = (Arc::clone(&ready), placed_small.clone());
+            Arc::new(move |n, _| {
+                if n >= (512 << 10) && placed_small.exists() {
+                    ready.notify_one();
+                }
+            })
+        };
+        let stop = Stop::new();
+        let stop_in_task = stop.clone();
+        let dest_in_task = dest.clone();
+        let recv_task = tokio::spawn(async move {
+            accept(
+                &receiver,
+                rchan,
+                offer,
+                &dest_in_task,
+                on_receive,
+                &stop_in_task,
+            )
+            .await
+        });
+        ready.notified().await;
+        stop.stop();
+        tokio::task::yield_now().await;
+        recv_task.abort();
+        let _ = recv_task.await;
+        assert_eq!(std::fs::read(&placed_small).unwrap(), small);
+        assert!(
+            !dest.join("f").join("01_pending").exists(),
+            "empty pending folder or .part file remained"
+        );
+        send.abort();
         let _ = std::fs::remove_dir_all(&dir);
     }
 

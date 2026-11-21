@@ -292,37 +292,37 @@
   "crates/totaldrop-core/src/secure.rs:98": [
     "pub async fn handshake("
   ],
-  "crates/totaldrop-core/src/transfer.rs:1135": [
+  "crates/totaldrop-core/src/transfer.rs:1202": [
     "pub async fn accept_text("
   ],
-  "crates/totaldrop-core/src/transfer.rs:1262": [
+  "crates/totaldrop-core/src/transfer.rs:1329": [
     "pub async fn accept("
   ],
-  "crates/totaldrop-core/src/transfer.rs:187": [
+  "crates/totaldrop-core/src/transfer.rs:230": [
     "const PARALLEL_STREAMS: usize = 4;"
   ],
-  "crates/totaldrop-core/src/transfer.rs:223": [
+  "crates/totaldrop-core/src/transfer.rs:266": [
     "pub fn text_entry(text: &str, name: &str) -> Result<SourceEntry> {"
   ],
-  "crates/totaldrop-core/src/transfer.rs:334": [
+  "crates/totaldrop-core/src/transfer.rs:377": [
     "pub fn scan(paths: &[PathBuf]) -> Result<(Vec<SourceEntry>, usize)> {"
   ],
-  "crates/totaldrop-core/src/transfer.rs:518": [
+  "crates/totaldrop-core/src/transfer.rs:561": [
     "pub async fn send_files("
   ],
-  "crates/totaldrop-core/src/transfer.rs:774": [
+  "crates/totaldrop-core/src/transfer.rs:817": [
     "pub async fn receive_offer(chan: &mut SecureChannel, peer: &Certificate) -> Result<VerifiedOffer> {"
   ],
-  "crates/totaldrop-core/src/transfer.rs:833": [
+  "crates/totaldrop-core/src/transfer.rs:876": [
     "pub async fn decline(chan: &mut SecureChannel, offer: &VerifiedOffer) -> Result<()> {"
   ],
-  "crates/totaldrop-core/src/transfer.rs:874": [
+  "crates/totaldrop-core/src/transfer.rs:917": [
     "fn place_no_clobber(tmp: &Path, dir: &Path, name: &str) -> Result<PathBuf> {"
   ],
-  "crates/totaldrop-core/src/transfer.rs:906": [
+  "crates/totaldrop-core/src/transfer.rs:949": [
     "fn check_beneath(dest: &Path, path: &Path) -> Result<()> {"
   ],
-  "crates/totaldrop-core/src/transfer.rs:923": [
+  "crates/totaldrop-core/src/transfer.rs:966": [
     "fn make_dir(path: &Path) -> Result<bool> {"
   ],
   "crates/totaldrop-core/src/transport.rs:306": [
