@@ -130,7 +130,7 @@ change linux/main.rs
 change crates/totaldrop-cli/src/main.rs
 expect fail "a lightweight tag is a release too" "shipped in linux-v0.1.0-beta.1"
 
-# old new: a downgrade, or a version not of the beta form.
+# old new: a downgrade, or a version not of the valid SemVer form.
 while read -r old new msg; do
   repo "$old"
   release linux-v0.1.0-beta.1
@@ -140,10 +140,18 @@ done <<EOF
 0.2.0-beta.1 0.1.9-beta.9 is lower than 0.2.0-beta.1
 0.1.0-beta.10 0.1.0-beta.9 is lower than 0.1.0-beta.10
 0.1.1-beta.1 0.1.0-beta.5 is lower than 0.1.1-beta.1
+1.0.0 1.0.0-rc.9 is lower than 1.0.0
+1.0.0-rc.1 1.0.0-beta.9 is lower than 1.0.0-rc.1
+1.0.0-beta.1 1.0.0-alpha.9 is lower than 1.0.0-beta.1
+1.0.0-alpha.10 1.0.0-alpha.9 is lower than 1.0.0-alpha.10
+1.0.0-beta.2 0.9.0-beta.9 is lower than 1.0.0-beta.2
 0.1.0-beta.2 0.1.0 is not of the form
 0.1.0-beta.2 0.2.0-rc.1 is not of the form
 0.1.0-beta.2 0.02.0-beta.1 is not of the form
 0.1.0-beta.2 0.1.0-beta.0 is not of the form
+0.2.0-beta.1 1.0.0-rc.0 is not of the form
+0.2.0-beta.1 01.0.0 is not of the form
+0.2.0-beta.1 1.0.0-gamma.1 is not of the form
 EOF
 while read -r old new; do
   repo "$old"
@@ -155,7 +163,25 @@ done <<EOF
 0.1.0-beta.5 0.1.1-beta.1
 0.9.0-beta.1 0.10.0-beta.1
 0.1.9-beta.9 0.2.0-beta.1
+0.9.0-beta.4 1.0.0-alpha.1
+1.0.0-alpha.1 1.0.0-alpha.2
+1.0.0-alpha.9 1.0.0-beta.1
+1.0.0-beta.3 1.0.0-rc.1
+1.0.0-rc.2 1.0.0
+1.0.0 1.0.1-alpha.1
+1.0.0 1.0.1
+1.0.1 1.1.0-rc.1
+1.2.0 2.0.0
 EOF
+
+repo 1.0.0
+release linux-v1.0.0
+expect pass "1.0.0 released, nothing in the CLI changed"
+change crates/totaldrop-cli/src/main.rs
+expect fail "1.0.0 released, then the CLI changed" \
+  "CLI version 1.0.0 shipped in linux-v1.0.0"
+bump 1.0.1
+expect pass "1.0.0 released, changed, then raised to 1.0.1"
 
 repo 0.1.0
 release linux-v0.1.0-beta.1
@@ -183,6 +209,13 @@ expect fail "a cli-v* tag is a release too" "shipped in cli-v0.2.0-beta.1"
 
 repo 0.1.0-beta.2
 release linux-v0.1.0-beta.1
+bump 0.2.0-beta.1
+release core-v0.2.0-beta.1
+change crates/totaldrop-cli/src/main.rs
+expect fail "a core-v* tag is a release too" "shipped in core-v0.2.0-beta.1"
+
+repo 0.1.0-beta.2
+release linux-v0.1.0-beta.1
 git -C "$r" checkout -q -b side
 bump 0.2.0-beta.1
 release linux-v0.2.0-beta.1
@@ -205,6 +238,19 @@ git -C "$r" merge -q --no-edit side
 change crates/totaldrop-cli/src/main.rs
 expect fail "the highest release counts, not the nearest" \
   "CLI version 0.2.0-beta.1 shipped in linux-v0.3.0-beta.1"
+
+# Even when REV itself is a merge commit whose higher release sits on HEAD^2
+# (second parent), check-cli-version.sh still sees it.
+repo 0.1.0-beta.2
+release linux-v0.1.0-beta.1
+git -C "$r" checkout -q -b side
+bump 0.3.0-beta.1
+release linux-v0.3.0-beta.1
+git -C "$r" checkout -q main
+bump 0.2.0-beta.1
+git -C "$r" merge -q --strategy=ours --no-edit side
+expect fail "higher release on second merge parent (HEAD^2) is still enforced" \
+  "CLI version 0.2.0-beta.1 is lower than 0.3.0-beta.1, released in linux-v0.3.0-beta.1"
 
 # Several releases with the same version: the code must match every one.
 repo 0.1.0-beta.2

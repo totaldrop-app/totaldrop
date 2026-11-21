@@ -11,8 +11,23 @@ permissions:
   contents: read
 
 jobs:
+  tag:
+    name: Tag matches and is on main
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+      - name: Versions, build number and main ancestry agree with the tag
+        run: node tools/version.mjs check --tag "$GITHUB_REF_NAME"
+
   verify:
     name: Checks
+    needs: tag
     uses: ./.github/workflows/android.yml
 
   release:
@@ -44,21 +59,14 @@ jobs:
       - name: Rust toolchain and Android targets
         working-directory: .
         run: rustup show active-toolchain || rustup toolchain install
-      # The version must match the tag, and the build number (versionCode)
-      # must be higher than the last release's: Google Play refuses reuse.
+      # Defense in depth inside play-release: verify the tag and monotonic
+      # versionCode across all merged android-v* tags before signing.
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
       - name: Version and build number
-        env:
-          TAG: ${{ github.ref_name }}
-        run: |
-          want="${TAG#android-v}"
-          have=$(sed -n 's/^version: \([^+]*\)+.*/\1/p' pubspec.yaml)
-          code=$(sed -n 's/^version: [^+]*+\([0-9]*\).*/\1/p' pubspec.yaml)
-          [ "$want" = "$have" ] || { echo "tag $want, pubspec $have"; exit 1; }
-          prev=$(git describe --tags --abbrev=0 --match 'android-v*' "${TAG}^" 2>/dev/null || true)
-          if [ -n "$prev" ]; then
-            old=$(git show "$prev:app/pubspec.yaml" | sed -n 's/^version: [^+]*+\([0-9]*\).*/\1/p')
-            [ "$code" -gt "$old" ] || { echo "build number $code is not above $old ($prev)"; exit 1; }
-          fi
+        working-directory: .
+        run: node tools/version.mjs check --tag "$GITHUB_REF_NAME"
       - run: flutter pub get --enforce-lockfile
       # The upload key lives only in this environment's secrets and reaches
       # Gradle through environment variables, so the password never touches
@@ -68,11 +76,12 @@ jobs:
           KEYSTORE: ${{ secrets.ANDROID_UPLOAD_KEYSTORE }}
           ANDROID_UPLOAD_PASSWORD: ${{ secrets.ANDROID_UPLOAD_PASSWORD }}
           TOTALDROP_REQUIRE_RELEASE_KEY: "1"
+          TAG: ${{ github.ref_name }}
         run: |
           [ -n "$KEYSTORE" ] && [ -n "$ANDROID_UPLOAD_PASSWORD" ] || { echo "upload key secrets missing"; exit 1; }
           umask 077
           printf '%s' "$KEYSTORE" | base64 -d > "$RUNNER_TEMP/upload.jks"
-          ANDROID_UPLOAD_STORE_FILE="$RUNNER_TEMP/upload.jks" flutter build appbundle --release
+          ANDROID_UPLOAD_STORE_FILE="$RUNNER_TEMP/upload.jks" flutter build appbundle --release --dart-define="TOTALDROP_VERSION=${TAG#android-v}"
           rm -f "$RUNNER_TEMP/upload.jks"
       - name: Signed with the upload key
         env:
