@@ -496,6 +496,25 @@ class SendViewModel extends ChangeNotifier {
     if (s != null) _repo.stop(s);
   }
 
+  /// Stop the active send and return to choosing, keeping the files or
+  /// text already selected so they do not have to be chosen again (#591).
+  void stopToSelection() {
+    if (!busy) return;
+    cancel();
+    _generation++;
+    _sub?.cancel();
+    _sub = null;
+    _release();
+    stage = SendStage.picking;
+    code = null;
+    words = const [];
+    done = 0;
+    total = 0;
+    summary = null;
+    error = null;
+    notifyListeners();
+  }
+
   /// Back to an empty selection.
   void reset() {
     cancel();
