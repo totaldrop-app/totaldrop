@@ -821,6 +821,81 @@ pub(crate) mod testing {
             tokio::join!(recv_side, send_side);
         (sender_conn, receiver_conn)
     }
+
+    /// A sender's and a receiver's connection over a link paced at
+    /// `bytes_per_sec` (#341), modelling a Wi-Fi LAN rate without per-packet
+    /// sleep granularity limits.
+    pub(crate) async fn over_paced_link(
+        bytes_per_sec: u64,
+    ) -> (quinn::Connection, quinn::Connection) {
+        let (ka, kb) = (
+            EndpointKey::generate().unwrap(),
+            EndpointKey::generate().unwrap(),
+        );
+        let sa = UdpSocket::bind(SocketAddr::from(([127, 0, 0, 1], 0))).unwrap();
+        let sb = UdpSocket::bind(SocketAddr::from(([127, 0, 0, 1], 0))).unwrap();
+        let (sender, pa, _) = endpoint(sa, &ka, &kb.public()).unwrap();
+        let (receiver, pb, _) = endpoint(sb, &kb, &ka.public()).unwrap();
+        let (mut a_out, a_in, mut b_out, b_in) =
+            (pa.outgoing, pa.incoming, pb.outgoing, pb.incoming);
+        let (q_tx, mut q_rx) = tokio::sync::mpsc::unbounded_channel();
+        tokio::spawn(async move {
+            while let Some(d) = a_out.recv().await {
+                if q_tx.send(d).is_err() {
+                    break;
+                }
+            }
+        });
+        tokio::spawn(async move {
+            let burst = Duration::from_millis(5);
+            let mut next_free: Option<tokio::time::Instant> = None;
+            while let Some(d) = q_rx.recv().await {
+                let now = tokio::time::Instant::now();
+                // Allow 5 ms of Tokio 1 ms timer-wheel slack so sub-millisecond
+                // packet intervals are not rounded up to 1 ms per datagram,
+                // while capping any credit across idle setup gaps to <= 5 ms.
+                let floor = now.checked_sub(burst).unwrap_or(now);
+                let start = next_free.map_or(now, |t| t.max(floor));
+                let tx_ns = u128::from(d.len() as u64)
+                    .saturating_mul(1_000_000_000)
+                    .checked_div(u128::from(bytes_per_sec.max(1)))
+                    .unwrap_or(0);
+                let due = start
+                    .checked_add(Duration::from_nanos(
+                        u64::try_from(tx_ns).unwrap_or(u64::MAX),
+                    ))
+                    .unwrap_or(start);
+                next_free = Some(due);
+                if due > now {
+                    tokio::time::sleep_until(due).await;
+                }
+                let _ = b_in.send(d).await;
+            }
+        });
+        tokio::spawn(async move {
+            while let Some(d) = b_out.recv().await {
+                let _ = a_in.send(d).await;
+            }
+        });
+        let gate = crate::relay::Gate::default();
+        gate.open();
+        let paths = Paths {
+            direct: Vec::new(),
+            relay: Some(gate),
+            relay_only: true,
+        };
+        let wait = Duration::from_secs(10);
+        let recv_side = async {
+            let conn = receiver_connection(&receiver, &paths, wait).await.unwrap();
+            let (mut send, _recv) = conn.open_bi().await.unwrap();
+            send.write_all(b"x").await.unwrap();
+            (conn, send)
+        };
+        let send_side = async { sender_connection(&sender, &paths, wait).await.unwrap() };
+        let ((receiver_conn, _ctl), (sender_conn, _send, _recv)) =
+            tokio::join!(recv_side, send_side);
+        (sender_conn, receiver_conn)
+    }
 }
 
 #[cfg(test)]
