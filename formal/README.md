@@ -24,11 +24,16 @@ version and checks their SHA-256 (`.github/workflows/formal.yml`).
 ```sh
 formal/check.sh          # proves each lemma separately
 formal/mutants.py        # checks that the attack is found in broken models
+formal/test-runners.sh   # regression tests for the runner scripts
 ```
 
 Both commands end with a non-zero exit code if a lemma is not proven or an
-attack is not found. The time limit per lemma is set with `LEMMA_TIMEOUT`
-(seconds, default 600).
+attack is not found. Tamarin 1.12.0 enables GHC's threaded runtime (`-N`)
+by default; when it hits an observed nondeterministic
+`tamarin-prover: <<loop>>` abort (upstream root cause unconfirmed), both
+runners retry that lemma or mutant once with single-threaded
+`+RTS -N1 -M8G -RTS` within the same `LEMMA_TIMEOUT` budget (#569). The
+time limit per lemma is set with `LEMMA_TIMEOUT` (seconds, default 600).
 
 ## A1: membership chain (`hayalet-halka-zincir.spthy`)
 
