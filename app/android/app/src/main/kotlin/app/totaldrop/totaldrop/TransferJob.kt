@@ -54,17 +54,32 @@ object TransferJob {
     /** Called when the person or the system stops the transfer. */
     var onStop: (() -> Unit)? = null
 
+    private val UNKNOWN_BYTES: Long = JobInfo.NETWORK_BYTES_UNKNOWN.toLong()
+
+    /** Maps a byte count to a `JobInfo` network byte estimate. */
+    internal fun networkBytes(value: Long?): Long =
+        if (value != null && value >= 0L) value else UNKNOWN_BYTES
+
     /** Start holding the process up. Must be called while the app is visible. */
-    fun begin(context: Context, notice: Notice): Boolean {
+    fun begin(
+        context: Context,
+        notice: Notice,
+        downloadBytes: Long? = null,
+        uploadBytes: Long? = null,
+    ): Boolean {
         val generation = prepare(notice)
         val app = context.applicationContext
         val scheduler = app.getSystemService(JobScheduler::class.java) ?: return false
-        val job = JobInfo.Builder(JOB_ID, ComponentName(app, TransferJobService::class.java))
+        val dl = networkBytes(downloadBytes)
+        val ul = networkBytes(uploadBytes)
+        val builder = JobInfo.Builder(JOB_ID, ComponentName(app, TransferJobService::class.java))
             .setUserInitiated(true)
             .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
             .setExtras(PersistableBundle().apply { putLong(GENERATION, generation) })
-            .build()
-        return scheduler.schedule(job) == JobScheduler.RESULT_SUCCESS
+        if (dl != UNKNOWN_BYTES || ul != UNKNOWN_BYTES) {
+            builder.setEstimatedNetworkBytes(dl, ul)
+        }
+        return scheduler.schedule(builder.build()) == JobScheduler.RESULT_SUCCESS
     }
 
     /** Make [notice]'s transfer the one under way, and return its
@@ -83,12 +98,18 @@ object TransferJob {
     internal fun accepts(generation: Long): Boolean =
         notice != null && generation == this.generation
 
-    /** The transfer ended: drop the job and its notification. */
-    fun end(context: Context) {
+    /** Clears the active transfer state and returns the running job, if any. */
+    internal fun clearActive(): Pair<TransferJobService, JobParameters>? {
         notice = null
         generation += 1
         val r = running
         running = null
+        return r
+    }
+
+    /** The transfer ended: drop the job and its notification. */
+    fun end(context: Context) {
+        val r = clearActive()
         val app = context.applicationContext
         if (r != null) {
             r.first.jobFinished(r.second, false)
@@ -147,14 +168,26 @@ object TransferJob {
     }
 
     internal fun stoppedByPerson(context: Context) {
+        stoppedByPerson { end(context) }
+    }
+
+    /**
+     * Dismisses the job and its notification at once via [dismiss], then
+     * notifies [onStop] so the notification never lingers while a stalled
+     * socket closes (#593).
+     *
+     * Kotlin cannot cancel the Rust `Stopper` directly: that handle lives in
+     * the Dart isolate and is triggered through [onStop] (wired to the
+     * `MethodChannel` in `MainActivity`). Dismissing first immediately drops
+     * Android's UIDT background network exemption and removes the notification
+     * even if the Flutter engine is no longer attached (`MainActivity` clears
+     * [onStop] and calls [end] in `cleanUpFlutterEngine`, and everything here
+     * runs on the main thread).
+     */
+    internal fun stoppedByPerson(dismiss: () -> Unit) {
         val stop = onStop
-        if (stop != null) {
-            stop()
-        } else {
-            // No app left to stop the transfer: at least end the job, so
-            // the notification does not stay behind.
-            end(context)
-        }
+        dismiss()
+        stop?.invoke()
     }
 
     private fun build(context: Context, n: Notice): Notification {

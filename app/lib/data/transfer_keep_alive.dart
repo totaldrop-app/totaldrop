@@ -22,7 +22,11 @@ abstract class TransferKeepAlive {
   ///
   /// One transfer at a time: the send and receive screens never run
   /// together, so one instance serves both.
-  Future<void> begin(TransferDirection direction, void Function() onStop);
+  Future<void> begin(
+    TransferDirection direction,
+    void Function() onStop, {
+    int? bytes,
+  });
 
   /// The transfer ended, for whatever reason.
   Future<void> end();
@@ -33,8 +37,11 @@ class NoKeepAlive implements TransferKeepAlive {
   const NoKeepAlive();
 
   @override
-  Future<void> begin(TransferDirection direction, void Function() onStop) =>
-      Future.value();
+  Future<void> begin(
+    TransferDirection direction,
+    void Function() onStop, {
+    int? bytes,
+  }) => Future.value();
 
   @override
   Future<void> end() => Future.value();
@@ -57,10 +64,15 @@ class AndroidTransferKeepAlive implements TransferKeepAlive {
   @override
   Future<void> begin(
     TransferDirection direction,
-    void Function() onStop,
-  ) async {
+    void Function() onStop, {
+    int? bytes,
+  }) async {
     _onStop = onStop;
     final l = _strings();
+    final bytesKey = switch (direction) {
+      TransferDirection.sending => 'uploadBytes',
+      TransferDirection.receiving => 'downloadBytes',
+    };
     try {
       await _channel.invokeMethod<bool>('begin', {
         'channel': l.transferNoticeChannel,
@@ -70,6 +82,7 @@ class AndroidTransferKeepAlive implements TransferKeepAlive {
         },
         'text': l.transferNoticeBody,
         'stop': l.stop,
+        if (bytes != null && bytes >= 0) bytesKey: bytes,
       });
     } on PlatformException {
       // The transfer still runs while the app is visible.

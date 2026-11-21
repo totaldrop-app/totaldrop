@@ -9,10 +9,15 @@ class PickedFile {
     required this.name,
     required this.path,
     required this.size,
+    this.sizeKnown = true,
   });
   final String name;
   final String path;
   final int size;
+
+  /// Whether [size] came from the file rather than a fallback when the picker
+  /// could not read its length (#593).
+  final bool sizeKnown;
 }
 
 /// Where the files to send come from: the system picker on a device, a
@@ -45,15 +50,21 @@ class PlatformFileSource implements FileSource {
     final picked = await FilePicker.pickFiles(
       onFileLoading: (status) => onCopying(status == FilePickerStatus.picking),
     );
-    return [
-      for (final f in picked)
-        if (f.path case final path?)
+    final files = <PickedFile>[];
+    for (final f in picked) {
+      if (f.path case final path?) {
+        final length = f.lengthSync() ?? await f.length();
+        files.add(
           PickedFile(
             name: f.name,
             path: path,
-            size: f.lengthSync() ?? await f.length() ?? 0,
+            size: length ?? 0,
+            sizeKnown: length != null,
           ),
-    ];
+        );
+      }
+    }
+    return files;
   }
 
   @override

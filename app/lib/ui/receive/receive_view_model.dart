@@ -163,6 +163,9 @@ class ReceiveViewModel extends ChangeNotifier {
     if (dest == null && !o.isText) return;
     stage = ReceiveStage.transferring;
     total = o.totalBytes;
+    // The manifest size is known now and the app is in the foreground; update
+    // the UIDT job with the download byte estimate (#593).
+    _keepGoing(bytes: o.totalBytes);
     notifyListeners();
     final events = o.isText
         ? _repo.acceptText(o, stopper)
@@ -228,9 +231,15 @@ class ReceiveViewModel extends ChangeNotifier {
 
   /// Keep the receive going while the app is in the background (#194).
   /// The notification's Stop stops it.
-  void _keepGoing() {
+  void _keepGoing({int? bytes}) {
     _keptAlive = true;
-    unawaited(_keeper.begin(TransferDirection.receiving, _stoppedFromNotice));
+    unawaited(
+      _keeper.begin(
+        TransferDirection.receiving,
+        _stoppedFromNotice,
+        bytes: bytes,
+      ),
+    );
   }
 
   /// Stop on the notification. While an offer waits for an answer no

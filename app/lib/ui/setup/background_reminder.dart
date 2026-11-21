@@ -25,12 +25,18 @@ class WatchedKeepAlive extends ChangeNotifier implements TransferKeepAlive {
   }
 
   @override
-  Future<void> begin(TransferDirection direction, void Function() onStop) {
+  Future<void> begin(
+    TransferDirection direction,
+    void Function() onStop, {
+    int? bytes,
+  }) {
     _set(true);
-    return _inner.begin(direction, () {
+    void stop() {
       _set(false);
       onStop();
-    });
+    }
+
+    return _inner.begin(direction, stop, bytes: bytes);
   }
 
   @override

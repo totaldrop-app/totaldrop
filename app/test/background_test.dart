@@ -58,8 +58,9 @@ class _KeepAlive implements TransferKeepAlive {
   @override
   Future<void> begin(
     TransferDirection direction,
-    void Function() onStop,
-  ) async {
+    void Function() onStop, {
+    int? bytes,
+  }) async {
     stop = onStop;
   }
 
