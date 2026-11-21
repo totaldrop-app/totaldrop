@@ -34,6 +34,14 @@ AppLocalizations safeL10n(BuildContext context, String key) {
   return AppLocalizations.of(context);
 }
 
+/// Left-to-right when [safeL10n] falls back to English (#509), null when
+/// the language's own translation is shown so it keeps the screen's
+/// direction.
+TextDirection? safeDirection(BuildContext context, String key) {
+  final tag = Localizations.localeOf(context).toLanguageTag();
+  return rust.needsEnglish(tag: tag, key: key) ? TextDirection.ltr : null;
+}
+
 /// Whether some text in the current language is an unreviewed draft.
 bool hasDraftTranslation(BuildContext context) => rust.hasDraftTranslation(
   tag: Localizations.localeOf(context).toLanguageTag(),

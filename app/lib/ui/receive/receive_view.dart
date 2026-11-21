@@ -301,10 +301,12 @@ class _Offered extends StatelessWidget {
           outlined: PairedButton(
             safeL10n(context, 'receiveDecline').receiveDecline,
             vm.decline,
+            textDirection: safeDirection(context, 'receiveDecline'),
           ),
           filled: PairedButton(
             safeL10n(context, 'receiveAccept').receiveAccept,
             vm.accept,
+            textDirection: safeDirection(context, 'receiveAccept'),
           ),
         ),
       ],
@@ -349,10 +351,12 @@ class _OfferedText extends StatelessWidget {
           outlined: PairedButton(
             safeL10n(context, 'receiveDecline').receiveDecline,
             vm.decline,
+            textDirection: safeDirection(context, 'receiveDecline'),
           ),
           filled: PairedButton(
             safeL10n(context, 'receiveAccept').receiveAccept,
             vm.accept,
+            textDirection: safeDirection(context, 'receiveAccept'),
           ),
         ),
       ],
