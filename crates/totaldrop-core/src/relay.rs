@@ -26,6 +26,12 @@ pub const DEFAULT_STUN: &str = wire::DEFAULT_STUN;
 const PROBE_WAIT: Duration = Duration::from_millis(700);
 /// How much longer a STUN round waits once one server has answered.
 const AFTER_ANSWER: Duration = Duration::from_millis(150);
+/// Maximum consecutive `recv_from` errors tolerated in one STUN probe round
+/// before giving up (#428). Windows reports ICMP "port unreachable" from an
+/// unresponsive STUN server as `WSAECONNRESET` on the shared UDP socket;
+/// continuing lets another server's answer arrive, while capping consecutive
+/// errors stops a broken socket from spinning until the probe deadline.
+const MAX_RECV_ERRORS: usize = 16;
 
 /// How often an idle relay link pings, so proxies keep it open.
 const KEEPALIVE: Duration = Duration::from_secs(20);
@@ -130,14 +136,14 @@ fn stun_targets(found: &[SocketAddr], ipv6: bool) -> Vec<SocketAddr> {
 }
 
 /// [`discover`], asking each of `pending` once per round.
-async fn discover_at(socket: &UdpSocket, mut pending: Vec<SocketAddr>) -> Vec<SocketAddr> {
+async fn discover_at(socket: &UdpSocket, pending: Vec<SocketAddr>) -> Vec<SocketAddr> {
     let Ok(local) = socket.local_addr() else {
         return Vec::new();
     };
     let ipv6 = local.is_ipv6();
     // A dual-stack socket sends to IPv4 through IPv4-mapped addresses and
     // reports them as such; compare in canonical form.
-    let Some(udp) = socket
+    let Some(mut udp) = socket
         .try_clone()
         .ok()
         .filter(|c| c.set_nonblocking(true).is_ok())
@@ -145,6 +151,56 @@ async fn discover_at(socket: &UdpSocket, mut pending: Vec<SocketAddr>) -> Vec<So
     else {
         return Vec::new();
     };
+    discover_rounds(&mut udp, pending, ipv6).await
+}
+
+/// Abstract UDP transport for STUN discovery so `discover_rounds` and
+/// `collect_stun_replies` stay `Send` inside `tokio::spawn` without
+/// higher-ranked closure lifetimes (#428).
+trait StunSocket: Send {
+    fn send_stun(
+        &mut self,
+        req: [u8; 20],
+        target: SocketAddr,
+    ) -> impl std::future::Future<Output = std::io::Result<()>> + Send;
+
+    fn recv_stun(
+        &mut self,
+    ) -> impl std::future::Future<Output = std::io::Result<([u8; 512], usize, SocketAddr)>> + Send;
+}
+
+impl StunSocket for tokio::net::UdpSocket {
+    async fn send_stun(&mut self, req: [u8; 20], target: SocketAddr) -> std::io::Result<()> {
+        tokio::net::UdpSocket::send_to(self, &req, target)
+            .await
+            .map(|_| ())
+    }
+
+    async fn recv_stun(&mut self) -> std::io::Result<([u8; 512], usize, SocketAddr)> {
+        let mut buf = [0u8; 512];
+        let (n, from) = tokio::net::UdpSocket::recv_from(self, &mut buf).await?;
+        Ok((buf, n, from))
+    }
+}
+
+/// How one STUN probe round ended (#428).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum StunRound {
+    /// Every asked server answered, or the round's deadline elapsed.
+    Completed,
+    /// `recv_from` failed [`MAX_RECV_ERRORS`] times in a row, so the socket is
+    /// unusable and another round must not be started.
+    SocketBroken,
+}
+
+/// Run up to two STUN probe rounds over `pending`, stopping once a server
+/// answers, none remain reachable, or [`StunRound::SocketBroken`] reports a
+/// persistently failing socket (#428).
+async fn discover_rounds<S: StunSocket>(
+    udp: &mut S,
+    mut pending: Vec<SocketAddr>,
+    ipv6: bool,
+) -> Vec<SocketAddr> {
     let mut seen = Vec::new();
     for _ in 0..2 {
         let mut asked: Vec<(SocketAddr, [u8; 12])> = Vec::new();
@@ -155,8 +211,8 @@ async fn discover_at(socket: &UdpSocket, mut pending: Vec<SocketAddr>) -> Vec<So
             }
             // A family without a route fails here at once and is dropped.
             if udp
-                .send_to(
-                    &wire::stun_request(&id),
+                .send_stun(
+                    wire::stun_request(&id),
                     crate::path::in_family(*server, ipv6),
                 )
                 .await
@@ -166,40 +222,67 @@ async fn discover_at(socket: &UdpSocket, mut pending: Vec<SocketAddr>) -> Vec<So
             }
         }
         pending.retain(|s| asked.iter().any(|(a, _)| a == s));
-        let Some(mut deadline) = tokio::time::Instant::now().checked_add(PROBE_WAIT) else {
+        let Some(deadline) = tokio::time::Instant::now().checked_add(PROBE_WAIT) else {
             return seen;
         };
-        let mut buf = [0u8; 512];
-        while !asked.is_empty()
-            && let Ok(Ok((n, from))) =
-                tokio::time::timeout_at(deadline, udp.recv_from(&mut buf)).await
-        {
-            let from = crate::path::canonical(from);
-            let answer = asked.iter().position(|(server, id)| {
-                *server == from
-                    && buf
-                        .get(..n)
-                        .and_then(|m| wire::parse_stun_response(m, id))
-                        .is_some()
-            });
-            if let Some(i) = answer {
-                let (server, id) = asked.swap_remove(i);
-                if let Some(addr) = buf.get(..n).and_then(|m| wire::parse_stun_response(m, &id)) {
-                    seen.push(crate::path::canonical(addr));
-                }
-                pending.retain(|s| *s != server);
-                // One answer is enough to go on with; the other family
-                // gets only a short while more.
-                if let Some(soon) = tokio::time::Instant::now().checked_add(AFTER_ANSWER) {
-                    deadline = deadline.min(soon);
-                }
-            }
-        }
-        if pending.is_empty() || !seen.is_empty() {
+        let outcome = collect_stun_replies(udp, asked, &mut pending, &mut seen, deadline).await;
+        if outcome == StunRound::SocketBroken || pending.is_empty() || !seen.is_empty() {
             break;
         }
     }
     seen
+}
+
+/// Read STUN answers for `asked` until all have answered, `deadline` expires,
+/// or [`MAX_RECV_ERRORS`] `recv_from` errors happen in a row (#428).
+async fn collect_stun_replies<S: StunSocket>(
+    udp: &mut S,
+    mut asked: Vec<(SocketAddr, [u8; 12])>,
+    pending: &mut Vec<SocketAddr>,
+    seen: &mut Vec<SocketAddr>,
+    mut deadline: tokio::time::Instant,
+) -> StunRound {
+    let mut errors = 0usize;
+    while !asked.is_empty() {
+        // `timeout_at` polls the socket before checking the clock, so a stream
+        // of unmatched datagrams that keeps `recv` ready must not run past
+        // `deadline` (#428).
+        if tokio::time::Instant::now() >= deadline {
+            break;
+        }
+        let (buf, n, from) = match tokio::time::timeout_at(deadline, udp.recv_stun()).await {
+            Ok(Ok(packet)) => {
+                errors = 0;
+                packet
+            }
+            Ok(Err(_)) => {
+                errors = errors.saturating_add(1);
+                if errors >= MAX_RECV_ERRORS {
+                    return StunRound::SocketBroken;
+                }
+                continue;
+            }
+            Err(_) => break,
+        };
+        let from = crate::path::canonical(from);
+        let answer = asked.iter().enumerate().find_map(|(i, (server, id))| {
+            (*server == from)
+                .then(|| buf.get(..n).and_then(|m| wire::parse_stun_response(m, id)))
+                .flatten()
+                .map(|addr| (i, addr))
+        });
+        if let Some((i, addr)) = answer {
+            let (server, _) = asked.swap_remove(i);
+            seen.push(crate::path::canonical(addr));
+            pending.retain(|s| *s != server);
+            // One answer is enough to go on with; the other family
+            // gets only a short while more.
+            if let Some(soon) = tokio::time::Instant::now().checked_add(AFTER_ANSWER) {
+                deadline = deadline.min(soon);
+            }
+        }
+    }
+    StunRound::Completed
 }
 
 /// Holds a relay link back until a connection attempt needs the relay, so
@@ -678,6 +761,211 @@ mod tests {
         let start = tokio::time::Instant::now();
         assert_eq!(discover_at(&ours, vec![answers, silent]).await, vec![seen]);
         assert!(start.elapsed() < PROBE_WAIT / 2, "{:?}", start.elapsed());
+    }
+
+    enum FakeRecv {
+        Reset,
+        Packet(Vec<u8>, SocketAddr),
+        ReplyToLast(SocketAddr, SocketAddr),
+        SleepThenPacket(Duration, Vec<u8>, SocketAddr),
+        Pending,
+    }
+
+    struct FakeStun {
+        sends: usize,
+        recvs: usize,
+        last_id: [u8; 12],
+        script: std::collections::VecDeque<FakeRecv>,
+        tail: FakeRecv,
+    }
+
+    impl FakeStun {
+        fn new(script: impl IntoIterator<Item = FakeRecv>, tail: FakeRecv) -> Self {
+            Self {
+                sends: 0,
+                recvs: 0,
+                last_id: [0u8; 12],
+                script: script.into_iter().collect(),
+                tail,
+            }
+        }
+    }
+
+    fn pack_datagram(bytes: &[u8], from: SocketAddr) -> ([u8; 512], usize, SocketAddr) {
+        let mut buf = [0u8; 512];
+        buf.get_mut(..bytes.len()).unwrap().copy_from_slice(bytes);
+        (buf, bytes.len(), from)
+    }
+
+    impl StunSocket for FakeStun {
+        async fn send_stun(&mut self, req: [u8; 20], _target: SocketAddr) -> std::io::Result<()> {
+            self.sends = self.sends.saturating_add(1);
+            self.last_id = wire::parse_stun_request(&req).unwrap();
+            Ok(())
+        }
+
+        async fn recv_stun(&mut self) -> std::io::Result<([u8; 512], usize, SocketAddr)> {
+            self.recvs = self.recvs.saturating_add(1);
+            let action = self.script.pop_front().unwrap_or_else(|| match &self.tail {
+                FakeRecv::Reset => FakeRecv::Reset,
+                FakeRecv::Packet(p, from) => FakeRecv::Packet(p.clone(), *from),
+                FakeRecv::ReplyToLast(seen, from) => FakeRecv::ReplyToLast(*seen, *from),
+                FakeRecv::SleepThenPacket(d, p, from) => {
+                    FakeRecv::SleepThenPacket(*d, p.clone(), *from)
+                }
+                FakeRecv::Pending => FakeRecv::Pending,
+            });
+            match action {
+                FakeRecv::Reset => Err(std::io::Error::from(std::io::ErrorKind::ConnectionReset)),
+                FakeRecv::Packet(bytes, from) => Ok(pack_datagram(&bytes, from)),
+                FakeRecv::ReplyToLast(seen, from) => {
+                    let reply = wire::stun_response(&self.last_id, seen);
+                    Ok(pack_datagram(&reply, from))
+                }
+                FakeRecv::SleepThenPacket(delay, bytes, from) => {
+                    tokio::time::sleep(delay).await;
+                    Ok(pack_datagram(&bytes, from))
+                }
+                FakeRecv::Pending => std::future::pending().await,
+            }
+        }
+    }
+
+    /// #428: on Windows, an unreachable STUN server makes the shared UDP
+    /// socket report ICMP "port unreachable" as `ConnectionReset`
+    /// (`WSAECONNRESET`); the receive loop keeps waiting so another server's
+    /// answer is not lost.
+    #[tokio::test(start_paused = true)]
+    async fn stun_keeps_waiting_after_a_recv_error() {
+        let dead: SocketAddr = "192.0.2.1:3478".parse().unwrap();
+        let live: SocketAddr = "[2001:db8::2]:3478".parse().unwrap();
+        let id_dead = [0x11; 12];
+        let id_live = [0x22; 12];
+        let seen_addr: SocketAddr = "[2001:db8::99]:40000".parse().unwrap();
+        let stray = wire::stun_response(&[0xee; 12], "198.51.100.9:9".parse().unwrap());
+        let reply = wire::stun_response(&id_live, seen_addr);
+
+        let mut script = Vec::new();
+        // MAX_RECV_ERRORS - 1 consecutive resets, then a stray datagram
+        // (resets the consecutive counter), then one more reset before the
+        // real STUN reply arrives.
+        for _ in 1..MAX_RECV_ERRORS {
+            script.push(FakeRecv::Reset);
+        }
+        script.push(FakeRecv::Packet(stray.to_vec(), live));
+        script.push(FakeRecv::Reset);
+        script.push(FakeRecv::Packet(reply.to_vec(), live));
+        let mut fake = FakeStun::new(script, FakeRecv::Pending);
+
+        let mut pending = vec![dead, live];
+        let mut seen = Vec::new();
+        let start = tokio::time::Instant::now();
+        let deadline = start.checked_add(PROBE_WAIT).unwrap();
+
+        let outcome = collect_stun_replies(
+            &mut fake,
+            vec![(dead, id_dead), (live, id_live)],
+            &mut pending,
+            &mut seen,
+            deadline,
+        )
+        .await;
+
+        assert_eq!(outcome, StunRound::Completed);
+        assert_eq!(seen, vec![seen_addr]);
+        assert_eq!(pending, vec![dead]);
+        assert_eq!(fake.recvs, MAX_RECV_ERRORS.saturating_add(3));
+        assert_eq!(start.elapsed(), AFTER_ANSWER);
+    }
+
+    /// #428: when a transient `recv_from` error and silence empty the first
+    /// round, the second round still asks again and records the answer.
+    #[tokio::test(start_paused = true)]
+    async fn stun_recovers_in_second_round_after_recv_error_and_timeout() {
+        let target: SocketAddr = "192.0.2.1:3478".parse().unwrap();
+        let seen_addr: SocketAddr = "203.0.113.5:40000".parse().unwrap();
+        let start = tokio::time::Instant::now();
+        let mut fake = FakeStun::new(
+            [
+                FakeRecv::Reset,
+                FakeRecv::Pending,
+                FakeRecv::ReplyToLast(seen_addr, target),
+            ],
+            FakeRecv::Pending,
+        );
+
+        let got = discover_rounds(&mut fake, vec![target], false).await;
+
+        assert_eq!(got, vec![seen_addr]);
+        assert_eq!(fake.sends, 2);
+        assert_eq!(fake.recvs, 3);
+        assert_eq!(start.elapsed(), PROBE_WAIT);
+    }
+
+    /// #428: a broken socket that fails every `recv_from` returns
+    /// `StunRound::SocketBroken` after `MAX_RECV_ERRORS` and aborts discovery
+    /// without starting a second round.
+    #[tokio::test(start_paused = true)]
+    async fn stun_stops_after_repeated_recv_errors() {
+        let target: SocketAddr = "192.0.2.1:3478".parse().unwrap();
+        let start = tokio::time::Instant::now();
+        let mut fake = FakeStun::new([], FakeRecv::Reset);
+
+        let got = discover_rounds(&mut fake, vec![target], false).await;
+
+        assert!(got.is_empty());
+        assert_eq!(fake.sends, 1);
+        assert_eq!(fake.recvs, MAX_RECV_ERRORS);
+        assert_eq!(start.elapsed(), Duration::ZERO);
+    }
+
+    /// #428: because `timeout_at` polls the socket before checking the clock,
+    /// a flood of unmatched UDP datagrams that stays continuously ready must
+    /// still stop as soon as `deadline` is reached.
+    #[tokio::test(start_paused = true)]
+    async fn stun_stops_at_deadline_despite_unmatched_flood() {
+        let target: SocketAddr = "192.0.2.1:3478".parse().unwrap();
+        let stray = wire::stun_response(&[0xee; 12], "198.51.100.9:9".parse().unwrap());
+        let mut pending = vec![target];
+        let mut seen = Vec::new();
+        let start = tokio::time::Instant::now();
+        let deadline = start.checked_add(PROBE_WAIT).unwrap();
+        let mut fake = FakeStun::new(
+            [
+                FakeRecv::SleepThenPacket(PROBE_WAIT / 2, stray.to_vec(), target),
+                FakeRecv::SleepThenPacket(PROBE_WAIT / 2, stray.to_vec(), target),
+            ],
+            FakeRecv::Packet(stray.to_vec(), target),
+        );
+
+        let outcome = collect_stun_replies(
+            &mut fake,
+            vec![(target, [0x44; 12])],
+            &mut pending,
+            &mut seen,
+            deadline,
+        )
+        .await;
+
+        assert_eq!(outcome, StunRound::Completed);
+        assert!(seen.is_empty());
+        assert_eq!(pending, vec![target]);
+        assert_eq!(fake.recvs, 2);
+        assert_eq!(start.elapsed(), PROBE_WAIT);
+    }
+
+    /// #428: `discover` must remain `Send` across `.await` points so callers
+    /// such as `tokio::spawn(PreparedSend::run_with(..))` compile cleanly.
+    #[tokio::test]
+    async fn stun_discover_future_is_send_in_tokio_spawn() {
+        let seen: SocketAddr = "203.0.113.5:40000".parse().unwrap();
+        let server = stun_server(seen).await;
+        let ours = crate::transport::bind_socket().unwrap();
+        let target = server.to_string();
+        let got = tokio::spawn(async move { discover(&ours, &target).await })
+            .await
+            .unwrap();
+        assert_eq!(got, vec![seen]);
     }
 
     /// A link whose gate stays shut never connects to the relay; once the

@@ -211,7 +211,7 @@ Adım adım:
    - UDP soketi (`crates/totaldrop-core/src/transport.rs:306`
      `bind_socket`) ve tek kullanımlık uç nokta anahtarı (`crates/totaldrop-core/src/transport.rs:73`).
    - `own_hints` (`crates/totaldrop-core/src/lib.rs:101`): yerel adresler, STUN
-     (`crates/totaldrop-core/src/relay.rs:106` `discover`) ve aynı anda
+     (`crates/totaldrop-core/src/relay.rs:112` `discover`) ve aynı anda
      yönlendiriciden port isteği: PCP ve NAT-PMP yarışır, ikisi de
      susarsa UPnP IGD denenir (`crates/totaldrop-core/src/portmap.rs:298`
      `start`). Bekleme en çok `MAPPING_GRACE` = 300 ms'dir
@@ -222,7 +222,7 @@ Adım adım:
      kutuda `pake` (CPace, `crates/totaldrop-core/src/pairing.rs:107-110`), `confirm` (sertifika,
      `crates/totaldrop-core/src/pairing.rs:119-129`), `hints` (`crates/totaldrop-core/src/pairing.rs:135-139`; adresler şifreli).
    - `transport::endpoint` (`crates/totaldrop-core/src/transport.rs:438`) ve yollar (`crates/totaldrop-core/src/lib.rs:287`
-     `paths_to`): aktarma bağlantısı (`crates/totaldrop-core/src/relay.rs:302` `spawn`) ve doğrudan
+     `paths_to`): aktarma bağlantısı (`crates/totaldrop-core/src/relay.rs:385` `spawn`) ve doğrudan
      adayların hepsi birlikte denenir; `sender_connection`
      (`crates/totaldrop-core/src/transport.rs:588`) → `connect_any` (`crates/totaldrop-core/src/transport.rs:694`). Ters yön
      400 ms, aktarma 1200 ms gecikmeyle başlar (`crates/totaldrop-core/src/transport.rs:528`, `crates/totaldrop-core/src/transport.rs:532`).
@@ -592,8 +592,8 @@ dokunan bulguları ve bu belgedeki yerleri:
 
 | Issue | Yer | Bu belgede |
 | --- | --- | --- |
-| #424 | Düzeltildi: ping süre sınırlı (`crates/totaldrop-core/src/relay.rs:438` `ping_within`) | 2.1 (aktarma yedeği) |
+| #424 | Düzeltildi: ping süre sınırlı (`crates/totaldrop-core/src/relay.rs:521` `ping_within`) | 2.1 (aktarma yedeği) |
 | #425 | Düzeltildi: yarışı kaybeden eşleme de kapatılır (`crates/totaldrop-core/src/portmap.rs:230`) | 2.1 (`own_hints`) |
 | #426 | Düzeltildi: sayım `server/relay-worker/src/count.ts:36` `noteGiven` | 3.2 (`Pair`), 5.2 |
 | #427 | Düzeltildi: klasör URL ile açılır (`linux/qml/ResultPanel.qml:135`) | — (arayüz) |
-| #428 | STUN, Rust rendezvous jetonu, `snow` | 7.5 |
+| #428 | Düzeltildi: STUN hata döngüsü (`crates/totaldrop-core/src/relay.rs:238` `collect_stun_replies`), Rust rendezvous jetonu (`server/totaldrop-rendezvous/src/lib.rs:128` `token_matches`); açık: `snow` | 2.1, 2.4, 7.5 |
