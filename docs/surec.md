@@ -20,7 +20,9 @@ için [versioning.md](versioning.md) bağlayıcıdır.
 5. **Bağımsız inceleme:** Her PR'ı, kodu yazmamış biri okur: bir bakımcı
    ya da değişikliği yazan oturumdan ayrı çalışan bir inceleme ajanı. Ajan
    yalnızca diff'i ve ilgili kodu görür, yazarın gerekçesini görmez.
-   Bakımcının kendi PR'ını öteki bakımcı ya da inceleme ajanı okur. Bulunan
+   Bakımcının kendi PR'ında da ayrı inceleme ajanı (ya da yalnızca belge
+   ve ayar PR'larında Copilot) bağımsız okumayı yapar; bu okuma 6.
+   adımdaki öteki bakımcının GitHub onayının yerine geçmez. Bulunan
    her doğruluk ya da güvenlik sorunu birleştirmeden önce düzeltilir;
    düzeltilmeyenler için gerekçe PR'a yazılır.
 
@@ -39,24 +41,32 @@ için [versioning.md](versioning.md) bağlayıcıdır.
    yanıt olarak yazılır. Copilot'un incelemesi hiçbir PR'da bakımcı
    onayının yerini tutmaz; kural setinde sayılmaz (#467).
 6. **Birleştirme:** `main`'e yalnızca PR ile, rebase ile birleştirilir;
-   geçmiş doğrusal kalır. Doğrudan push ve force push kapalıdır. `CI`
-   kontrolü yeşil olmadan kural (`main`, kimse atlayamaz) birleştirmeye
-   izin vermez. Her dosyanın kod sahibi `@totaldrop-app/maintainers`
-   takımıdır (`.github/CODEOWNERS`); takım dışından gelen bir PR, bir
-   bakımcı onaylamadan birleştirilmez (kural `main review`). Bakımcılar
-   başkasının PR'ını onay vererek birleştirir. Kendi PR'larını onaysız
-   birleştirebilirler; bağımsız inceleme onlar için de şarttır, ama bunu
-   GitHub zorlamaz: inceleme sonucu PR'a yazılmadan birleştirmemek
-   bakımcıların aralarındaki anlaşmadır.
-   Birleştirmeden hemen önce dal güncel `main` üstüne yeniden tabanlanır
-   ve `CI` o hâliyle yeşil beklenir. Kural `main` bunu zorlamaz (dalın
-   güncel olması şartı kapalıdır, çünkü her birleşmede açık bütün PR'ları
-   yeniden CI'a sokar), o yüzden birleştiren kişinin işidir: ayrı ayrı
+   geçmiş doğrusal kalır. Doğrudan push, force push ve dal silme
+   kapalıdır. `CI` kontrolü yeşil olmadan kural (`main`, kimse atlayamaz)
+   birleştirmeye izin vermez. Her dosyanın kod sahibi
+   `@totaldrop-app/maintainers` takımıdır (`.github/CODEOWNERS`);
+   `main review` kural setini de kimse atlayamaz: yeni push geldiğinde
+   önceki onay düşer, bütün inceleme konuşmaları çözülür ve her PR, PR'ı
+   açmamış bir bakımcının GitHub onayı olmadan birleştirilemez
+   (dolayısıyla bakımcının kendi PR'ı öteki bakımcının onayını ister;
+   acil bir güvenlik düzeltmesi ya da üretim kesintisinde öteki bakımcıya
+   ulaşılamıyorsa izlenecek denetim kayıtlı yol:
+   [GOVERNANCE.md](../GOVERNANCE.md#branch-protection-and-scorecard)).
+   Birleştirmeden hemen önce dal güncel `main` üstüne yeniden tabanlanır,
+   `CI` o hâliyle yeşil beklenir ve yeniden tabanlama önceki onayı
+   düşürdüğü için onay (ya da yeniden onay) birleşecek commit üstüne
+   verilir. Kural `main` dalın güncel olması şartını kapalı tutar (açık
+   olsa her birleşmede açık bütün PR'lar güncel değil sayılır; yeniden
+   tabanlama, yeni `CI` çalıştırması ve düşen onayın yenilenmesi
+   gerekir), o yüzden birleştiren kişinin işidir: ayrı ayrı
    yeşil iki PR art arda birleşince `main` kırmızıya düşebilir (#453).
+   `main review` iki bakımcılı ekipte kilitlenme olmaması için onay
+   sayısını 1'de ve "son push onayı" şartını kapalı tutar.
    `docs/ARCHITECTURE.md`'de yalnızca yer değiştiren satırlar CI'da uyarı
    verir, kırmaz; numaraları güncellemek için
    `node tools/check-doc-refs.mjs --fix` çalıştırılır.
-   Roller: [GOVERNANCE.md](../GOVERNANCE.md).
+   Roller ve Scorecard gerekçeleri:
+   [GOVERNANCE.md](../GOVERNANCE.md#branch-protection-and-scorecard).
 7. **Yayın:** [Sürüm listesi](#sürüm-listesi) adım adım izlenir.
 
 ## Bitti tanımı
@@ -98,8 +108,9 @@ elle bakar.
   adımı geçerlidir: ya düzeltilir ya da nedeni PR'a yazılır ve ayrı bir
   issue açılır. Koddan bağımsız bir altyapı hatası (ör. indirme zaman
   aşımı) yeniden çalıştırılarak gösterilir.
-- Bakımcı atlama izniyle birleştirilmez.
-- Denetim: elle.
+- Bakımcı atlama izniyle ya da `CI` / inceleme atlanarak birleştirilmez.
+- Denetim: GitHub'da `main` ve `main review` kural setleri (ikisinde de
+  atlama izni yok); taslak durumu ve zorunlu olmayan kontroller elle.
 
 ### Zayıf test (#316, #395)
 
