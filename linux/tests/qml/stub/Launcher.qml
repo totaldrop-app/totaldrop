@@ -7,6 +7,7 @@ import QtQuick
 // so QML component tests can bind to global-shortcut properties and
 // observe configureShortcut() calls without a Rust build.
 QtObject {
+    property bool shortcutReady: true
     property bool shortcutSupported: false
     property string shortcutTrigger: ""
     property string shortcutCommand: "totaldrop-desktop --screen=clipboard"

@@ -24,12 +24,12 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 
-use ashpd::ActivationToken;
 use ashpd::desktop::global_shortcuts::{
     BindShortcutsOptions, ConfigureShortcutsOptions, GlobalShortcuts, ListShortcutsOptions,
     NewShortcut, Shortcut,
 };
 use ashpd::desktop::{CreateSessionOptions, Session};
+use ashpd::{ActivationToken, WindowIdentifier};
 use futures_util::StreamExt as _;
 
 use crate::instance::Package;
@@ -42,6 +42,12 @@ pub const MAX_TRIGGER_CHARS: usize = 128;
 
 /// Startup timeout for reaching `org.freedesktop.portal.GlobalShortcuts`.
 const SETUP_TIMEOUT: Duration = Duration::from_secs(5);
+
+/// Initial delay before recreating a `GlobalShortcuts` session after `Closed`.
+const RECONNECT_INITIAL_BACKOFF: Duration = Duration::from_secs(1);
+
+/// Maximum delay between `GlobalShortcuts` session reconnect attempts.
+const RECONNECT_MAX_BACKOFF: Duration = Duration::from_secs(30);
 
 /// Command to bind in a desktop or window manager when the `GlobalShortcuts`
 /// portal is unavailable (#54).
@@ -103,6 +109,13 @@ fn trigger_from_portal(shortcuts: &[Shortcut]) -> Option<String> {
     extract_trigger(shortcuts.iter().map(|s| (s.id(), s.trigger_description())))
 }
 
+/// Extracts the D-Bus object path of an `ashpd::desktop::Session`.
+///
+/// `ashpd 0.14.0` keeps `Session::path()` `pub(crate)` while its `Serialize`
+/// impl serializes `ObjectPath` as a string (required by D-Bus signature `o`).
+/// Guarded by `session_object_path_matches_real_dbus_session_handle` so an
+/// `ashpd` update changing the serialized form fails CI instead of silently
+/// dropping `Activated` events.
 fn session_object_path(session: &Session<GlobalShortcuts>) -> Option<String> {
     match serde_json::to_value(session).ok()? {
         serde_json::Value::String(path) if !path.is_empty() => Some(path),
@@ -112,6 +125,31 @@ fn session_object_path(session: &Session<GlobalShortcuts>) -> Option<String> {
 
 fn session_matches(expected: Option<&str>, got: &str) -> bool {
     expected.is_some_and(|e| e == got)
+}
+
+fn parent_window_identifier(parent_xid: Option<u64>) -> Option<WindowIdentifier> {
+    parent_xid
+        .filter(|&xid| xid != 0)
+        .and_then(|xid| std::os::raw::c_ulong::try_from(xid).ok())
+        .map(WindowIdentifier::from_xid)
+}
+
+/// Decides whether Settings should show the interactive portal button
+/// (`true`) or fall back to the manual `--screen=clipboard` command (`false`).
+///
+/// Portal v2+ (`ConfigureShortcuts`) and any non-empty bound trigger always
+/// show the portal UI. Portal v1 on Hyprland/Omarchy has no interactive picker
+/// when unbound (`false`). Other v1 backends keep `prev` (`true` at startup or
+/// after a cancelled dialog; `false` once a bind attempt returned empty or
+/// failed).
+fn supported(version: u32, hyprland: bool, trigger: &str, prev: bool) -> bool {
+    if version >= 2 || !trigger.is_empty() {
+        true
+    } else if hyprland {
+        false
+    } else {
+        prev
+    }
 }
 
 /// Callbacks from the `GlobalShortcuts` portal task to the window.
@@ -129,6 +167,9 @@ pub struct Configure {
     pub description: String,
     /// Optional activation token for focusing the desktop's shortcut dialog.
     pub token: Option<String>,
+    /// Optional X11 window ID for parenting portal dialogs on X11 (#54;
+    /// Wayland xdg-foreign parenting is tracked in #631).
+    pub parent_xid: Option<u64>,
 }
 
 struct HandleInner {
@@ -153,7 +194,7 @@ pub struct Handle {
 impl Handle {
     /// Asks the portal task to bind or configure `send-clipboard`. Ignored if
     /// no portal task is running or a configuration dialog is already open.
-    pub fn configure(&self, description: String, token: Option<String>) {
+    pub fn configure(&self, description: String, token: Option<String>, parent_xid: Option<u64>) {
         let Some(inner) = &self.inner else {
             return;
         };
@@ -161,7 +202,14 @@ impl Handle {
             .configuring
             .compare_exchange(false, true, Ordering::AcqRel, Ordering::Acquire)
             .is_ok()
-            && inner.tx.try_send(Configure { description, token }).is_err()
+            && inner
+                .tx
+                .try_send(Configure {
+                    description,
+                    token,
+                    parent_xid,
+                })
+                .is_err()
         {
             inner.configuring.store(false, Ordering::Release);
         }
@@ -186,6 +234,7 @@ pub fn start(callbacks: Callbacks) -> Handle {
     let task_inner = Arc::clone(&inner);
     crate::runtime::RUNTIME.spawn(async move {
         let Ok(conn) = zbus::Connection::session().await else {
+            (callbacks.state)(false, String::new());
             return;
         };
         let register_host = !crate::theme::host::sandboxed();
@@ -199,7 +248,7 @@ pub fn start(callbacks: Callbacks) -> Handle {
 struct PortalSetup {
     portal: GlobalShortcuts,
     session: Session<GlobalShortcuts>,
-    session_path: Option<String>,
+    session_path: String,
     session_closed: zbus::proxy::SignalStream<'static>,
     bound: bool,
     trigger: String,
@@ -207,9 +256,9 @@ struct PortalSetup {
 
 async fn watch_session_closed(
     conn: &zbus::Connection,
-    session_path: Option<&str>,
+    session_path: &str,
 ) -> Option<zbus::proxy::SignalStream<'static>> {
-    let path = zbus::wire::OwnedObjectPath::try_from(session_path?.to_owned()).ok()?;
+    let path = zbus::wire::OwnedObjectPath::try_from(session_path.to_owned()).ok()?;
     let proxy: zbus::Proxy<'static> = zbus::proxy::Builder::new(conn)
         .destination("org.freedesktop.portal.Desktop")
         .path(path)
@@ -231,13 +280,25 @@ async fn setup_portal(conn: &zbus::Connection, register_host: bool) -> Option<Po
         .create_session(CreateSessionOptions::default())
         .await
         .ok()?;
-    let session_path = session_object_path(&session);
-    let session_closed = watch_session_closed(conn, session_path.as_deref()).await?;
-    let listed = portal
+    let Some(session_path) = session_object_path(&session) else {
+        let _ = session.close().await;
+        return None;
+    };
+    let Some(session_closed) = watch_session_closed(conn, &session_path).await else {
+        let _ = session.close().await;
+        return None;
+    };
+    let Ok(listed) = portal
         .list_shortcuts(&session, ListShortcutsOptions::default())
         .await
-        .ok()?;
-    let response = listed.response().ok()?;
+    else {
+        let _ = session.close().await;
+        return None;
+    };
+    let Ok(response) = listed.response() else {
+        let _ = session.close().await;
+        return None;
+    };
     let found = trigger_from_portal(response.shortcuts());
     Some(PortalSetup {
         portal,
@@ -252,13 +313,14 @@ async fn setup_portal(conn: &zbus::Connection, register_host: bool) -> Option<Po
 async fn open_configure_dialog(
     portal: &GlobalShortcuts,
     session: &Session<GlobalShortcuts>,
+    parent: Option<&WindowIdentifier>,
     token: Option<&str>,
 ) {
     let mut opts = ConfigureShortcutsOptions::default();
     if let Some(tok) = token {
         opts = opts.set_activation_token(ActivationToken::from(tok));
     }
-    let _ = portal.configure_shortcuts(session, None, opts).await;
+    let _ = portal.configure_shortcuts(session, parent, opts).await;
 }
 
 async fn refresh_from_list(
@@ -273,28 +335,32 @@ async fn refresh_from_list(
     Some(trigger_from_portal(resp.shortcuts()))
 }
 
-/// Runs the `GlobalShortcuts` session loop on `conn` (testable on a `PrivateBus`).
-async fn run_on(
-    conn: zbus::Connection,
-    register_host: bool,
+enum SessionEnd {
+    /// Window dropped its handle or the session bus went away: exit task.
+    Stop,
+    /// Portal closed our session (e.g. portal restart/update): reconnect with
+    /// backoff.
+    Closed,
+}
+
+async fn run_session(
+    conn: &zbus::Connection,
     hyprland: bool,
-    callbacks: Callbacks,
-    mut rx: tokio::sync::mpsc::Receiver<Configure>,
-    inner: Arc<HandleInner>,
-) {
-    let Ok(Some(setup)) =
-        tokio::time::timeout(SETUP_TIMEOUT, setup_portal(&conn, register_host)).await
-    else {
-        return;
-    };
+    callbacks: &Callbacks,
+    rx: &mut tokio::sync::mpsc::Receiver<Configure>,
+    inner: &Arc<HandleInner>,
+    setup: PortalSetup,
+) -> SessionEnd {
     let portal = setup.portal;
     let Ok(activated_raw) = portal.receive_activated().await else {
         let _ = setup.session.close().await;
-        return;
+        (callbacks.state)(false, String::new());
+        return SessionEnd::Stop;
     };
     let Ok(changed_raw) = portal.receive_shortcuts_changed().await else {
         let _ = setup.session.close().await;
-        return;
+        (callbacks.state)(false, String::new());
+        return SessionEnd::Stop;
     };
     let mut activated = Box::pin(activated_raw);
     let mut changed = Box::pin(changed_raw);
@@ -304,61 +370,70 @@ async fn run_on(
     let mut bound = setup.bound;
     let mut bind_attempted = false;
     let mut trigger = setup.trigger;
-    let mut supported = !(portal.version() < 2 && hyprland && trigger.is_empty());
+    let mut is_supported = supported(portal.version(), hyprland, &trigger, true);
 
-    (callbacks.state)(supported, trigger.clone());
+    (callbacks.state)(is_supported, trigger.clone());
 
     loop {
         tokio::select! {
             ev = activated.next() => {
-                let Some(ev) = ev else { break };
-                if session_matches(session_path.as_deref(), ev.session_handle().as_str())
+                let Some(ev) = ev else {
+                    let _ = session.close().await;
+                    return SessionEnd::Stop;
+                };
+                if session_matches(Some(&session_path), ev.session_handle().as_str())
                     && ev.shortcut_id() == SEND_CLIPBOARD_ID
                 {
                     (callbacks.activated)(activation_token(ev.options()));
                 }
             }
             ev = changed.next() => {
-                let Some(ev) = ev else { break };
-                if !session_matches(session_path.as_deref(), ev.session_handle().as_str()) {
+                let Some(ev) = ev else {
+                    let _ = session.close().await;
+                    return SessionEnd::Stop;
+                };
+                if !session_matches(Some(&session_path), ev.session_handle().as_str()) {
                     continue;
                 }
                 let found = trigger_from_portal(ev.shortcuts());
                 bound = found.is_some();
                 let next_trigger = found.unwrap_or_default();
-                let next_supported = if !next_trigger.is_empty() || portal.version() >= 2 {
-                    true
-                } else if hyprland {
-                    false
-                } else {
-                    supported
-                };
-                if next_supported != supported || next_trigger != trigger {
-                    supported = next_supported;
+                let next_supported = supported(portal.version(), hyprland, &next_trigger, is_supported);
+                if next_supported != is_supported || next_trigger != trigger {
+                    is_supported = next_supported;
                     trigger = next_trigger;
-                    (callbacks.state)(supported, trigger.clone());
+                    (callbacks.state)(is_supported, trigger.clone());
                 }
             }
             closed = session_closed.next() => {
-                if closed.is_some() && supported {
-                    (callbacks.state)(false, String::new());
+                if closed.is_some() {
+                    if is_supported || !trigger.is_empty() {
+                        (callbacks.state)(false, String::new());
+                    }
+                    return SessionEnd::Closed;
                 }
-                break;
+                return SessionEnd::Stop;
             }
             cmd = rx.recv() => {
                 let Some(req) = cmd else {
                     let _ = session.close().await;
-                    break;
+                    return SessionEnd::Stop;
                 };
                 let _guard = ResetConfiguring(&inner.configuring);
+                let parent = parent_window_identifier(req.parent_xid);
                 if !bound && !(portal.version() < 2 && bind_attempted) {
                     bind_attempted = true;
                     let item = NewShortcut::new(SEND_CLIPBOARD_ID, req.description);
                     let Ok(request) = portal
-                        .bind_shortcuts(&session, &[item], None, BindShortcutsOptions::default())
+                        .bind_shortcuts(
+                            &session,
+                            &[item],
+                            parent.as_ref(),
+                            BindShortcutsOptions::default(),
+                        )
                         .await
                     else {
-                        supported = false;
+                        is_supported = false;
                         trigger.clear();
                         (callbacks.state)(false, String::new());
                         continue;
@@ -369,7 +444,7 @@ async fn run_on(
                             continue;
                         }
                         Err(_) => {
-                            supported = false;
+                            is_supported = false;
                             trigger.clear();
                             (callbacks.state)(false, String::new());
                             continue;
@@ -381,39 +456,39 @@ async fn run_on(
                             if next_trigger.is_empty() && portal.version() >= 2 {
                                 // Portal v2 (e.g. KDE Plasma) binds silently and configures
                                 // keys in ConfigureShortcuts.
-                                open_configure_dialog(&portal, &session, req.token.as_deref()).await;
+                                open_configure_dialog(
+                                    &portal,
+                                    &session,
+                                    parent.as_ref(),
+                                    req.token.as_deref(),
+                                )
+                                .await;
                                 if let Some(Some(refreshed)) = refresh_from_list(&portal, &session).await {
                                     trigger = refreshed;
                                 }
-                                supported = true;
-                                (callbacks.state)(supported, trigger.clone());
-                            } else if next_trigger.is_empty() {
-                                // Portal v1 backend without an interactive picker (such as
-                                // xdg-desktop-portal-hyprland): reveal manual command while
-                                // keeping the session alive for ShortcutsChanged / Activated.
-                                supported = false;
-                                trigger.clear();
-                                (callbacks.state)(false, String::new());
+                                is_supported = true;
+                                (callbacks.state)(is_supported, trigger.clone());
                             } else {
-                                supported = true;
-                                trigger = next_trigger;
-                                (callbacks.state)(true, trigger.clone());
+                                is_supported = supported(portal.version(), hyprland, &next_trigger, false);
+                                trigger = if is_supported { next_trigger } else { String::new() };
+                                (callbacks.state)(is_supported, trigger.clone());
                             }
                         }
                         None if portal.version() < 2 => {
-                            supported = false;
+                            is_supported = false;
                             trigger.clear();
                             (callbacks.state)(false, String::new());
                         }
                         None => {}
                     }
                 } else if portal.version() >= 2 {
-                    open_configure_dialog(&portal, &session, req.token.as_deref()).await;
+                    open_configure_dialog(&portal, &session, parent.as_ref(), req.token.as_deref())
+                        .await;
                     if let Some(found) = refresh_from_list(&portal, &session).await {
                         bound = found.is_some();
                         let refreshed = found.unwrap_or_default();
-                        if !supported || refreshed != trigger {
-                            supported = true;
+                        if !is_supported || refreshed != trigger {
+                            is_supported = true;
                             trigger = refreshed;
                             (callbacks.state)(true, trigger.clone());
                         }
@@ -424,13 +499,17 @@ async fn run_on(
                     let _ = session.close().await;
                     let Ok(new_session) = portal.create_session(CreateSessionOptions::default()).await else {
                         (callbacks.state)(false, String::new());
-                        break;
+                        return SessionEnd::Stop;
                     };
-                    let next_path = session_object_path(&new_session);
-                    let Some(new_closed) = watch_session_closed(&conn, next_path.as_deref()).await else {
+                    let Some(next_path) = session_object_path(&new_session) else {
                         let _ = new_session.close().await;
                         (callbacks.state)(false, String::new());
-                        break;
+                        return SessionEnd::Stop;
+                    };
+                    let Some(new_closed) = watch_session_closed(conn, &next_path).await else {
+                        let _ = new_session.close().await;
+                        (callbacks.state)(false, String::new());
+                        return SessionEnd::Stop;
                     };
                     session_path = next_path;
                     session_closed = new_closed;
@@ -438,7 +517,12 @@ async fn run_on(
                     bind_attempted = true;
                     let item = NewShortcut::new(SEND_CLIPBOARD_ID, req.description);
                     let rebound = match portal
-                        .bind_shortcuts(&session, &[item], None, BindShortcutsOptions::default())
+                        .bind_shortcuts(
+                            &session,
+                            &[item],
+                            parent.as_ref(),
+                            BindShortcutsOptions::default(),
+                        )
                         .await
                     {
                         Ok(request) => match request.response() {
@@ -453,11 +537,11 @@ async fn run_on(
                     match rebound {
                         Ok(Some(next_trigger)) => {
                             bound = true;
-                            let next_supported = !next_trigger.is_empty();
-                            if next_supported != supported || next_trigger != trigger {
-                                supported = next_supported;
+                            let next_supported = supported(portal.version(), hyprland, &next_trigger, false);
+                            if next_supported != is_supported || next_trigger != trigger {
+                                is_supported = next_supported;
                                 trigger = next_trigger;
-                                (callbacks.state)(supported, trigger.clone());
+                                (callbacks.state)(is_supported, trigger.clone());
                             }
                         }
                         Ok(None) | Err(_) => {
@@ -465,28 +549,98 @@ async fn run_on(
                             if let Some(found) = refresh_from_list(&portal, &session).await {
                                 bound = found.is_some();
                                 let next_trigger = found.unwrap_or_default();
-                                let next_supported = if !next_trigger.is_empty() {
-                                    true
-                                } else if hyprland || !cancelled {
-                                    false
-                                } else {
-                                    supported
-                                };
-                                if next_supported != supported || next_trigger != trigger {
-                                    supported = next_supported;
+                                let next_supported = supported(
+                                    portal.version(),
+                                    hyprland,
+                                    &next_trigger,
+                                    cancelled && is_supported,
+                                );
+                                if next_supported != is_supported || next_trigger != trigger {
+                                    is_supported = next_supported;
                                     trigger = next_trigger;
-                                    (callbacks.state)(supported, trigger.clone());
+                                    (callbacks.state)(is_supported, trigger.clone());
                                 }
                             } else {
                                 bound = false;
-                                if supported || !trigger.is_empty() {
-                                    supported = false;
+                                if is_supported || !trigger.is_empty() {
+                                    is_supported = false;
                                     trigger.clear();
                                     (callbacks.state)(false, String::new());
                                 }
                             }
                         }
                     }
+                }
+            }
+        }
+    }
+}
+
+/// Runs the `GlobalShortcuts` session loop on `conn` (testable on a `PrivateBus`).
+async fn run_on(
+    conn: zbus::Connection,
+    register_host: bool,
+    hyprland: bool,
+    callbacks: Callbacks,
+    rx: tokio::sync::mpsc::Receiver<Configure>,
+    inner: Arc<HandleInner>,
+) {
+    run_on_with_backoff(
+        conn,
+        register_host,
+        hyprland,
+        callbacks,
+        rx,
+        inner,
+        RECONNECT_INITIAL_BACKOFF,
+        RECONNECT_MAX_BACKOFF,
+    )
+    .await;
+}
+
+#[allow(clippy::too_many_arguments)]
+async fn run_on_with_backoff(
+    conn: zbus::Connection,
+    register_host: bool,
+    hyprland: bool,
+    callbacks: Callbacks,
+    mut rx: tokio::sync::mpsc::Receiver<Configure>,
+    inner: Arc<HandleInner>,
+    initial_backoff: Duration,
+    max_backoff: Duration,
+) {
+    let Ok(Some(mut setup)) =
+        tokio::time::timeout(SETUP_TIMEOUT, setup_portal(&conn, register_host)).await
+    else {
+        (callbacks.state)(false, String::new());
+        return;
+    };
+
+    loop {
+        match run_session(&conn, hyprland, &callbacks, &mut rx, &inner, setup).await {
+            SessionEnd::Stop => return,
+            SessionEnd::Closed => {}
+        }
+
+        // Portal closed the session (e.g. portal restart or update): recreate
+        // with bounded exponential backoff while the window remains open.
+        let mut backoff = initial_backoff;
+        loop {
+            tokio::select! {
+                cmd = rx.recv() => {
+                    if cmd.is_none() {
+                        return;
+                    }
+                    let _guard = ResetConfiguring(&inner.configuring);
+                }
+                () = tokio::time::sleep(backoff) => {
+                    if let Ok(Some(reconnected)) =
+                        tokio::time::timeout(SETUP_TIMEOUT, setup_portal(&conn, register_host)).await
+                    {
+                        setup = reconnected;
+                        break;
+                    }
+                    backoff = backoff.saturating_mul(2).min(max_backoff);
                 }
             }
         }
@@ -700,18 +854,26 @@ mod tests {
         session_path: String,
         shortcuts: Vec<(String, String)>,
         create_session_calls: usize,
+        close_calls: usize,
         bind_calls: usize,
         configure_calls: usize,
+        last_bind_parent: String,
+        last_configure_parent: String,
+        fail_list_shortcuts: bool,
         bind_outcome: MockBindOutcome,
         bound_trigger_on_configure: String,
         clear_shortcuts_on_create_session: bool,
     }
 
-    struct MockSession;
+    struct MockSession {
+        state: Arc<Mutex<MockState>>,
+    }
 
     #[zbus::interface(name = "org.freedesktop.portal.Session")]
     impl MockSession {
-        fn close(&self) {}
+        fn close(&self) {
+            self.state.lock().unwrap().close_calls += 1;
+        }
     }
 
     struct MockPortal {
@@ -743,7 +905,16 @@ mod tests {
                 &sender,
                 &token_of(&options, "session_handle_token"),
             );
-            let _ = self.conn.object_server().at(&sess, MockSession).await;
+            let _ = self
+                .conn
+                .object_server()
+                .at(
+                    &sess,
+                    MockSession {
+                        state: Arc::clone(&self.state),
+                    },
+                )
+                .await;
             {
                 let mut st = self.state.lock().unwrap();
                 st.create_session_calls += 1;
@@ -785,11 +956,27 @@ mod tests {
                 &sender,
                 &token_of(&options, "handle_token"),
             );
-            let current = self.state.lock().unwrap().shortcuts.clone();
+            let (current, fail) = {
+                let st = self.state.lock().unwrap();
+                (st.shortcuts.clone(), st.fail_list_shortcuts)
+            };
             let conn = self.conn.clone();
             let req_emit = req.clone();
             tokio::spawn(async move {
                 tokio::time::sleep(Duration::from_millis(15)).await;
+                if fail {
+                    let res: HashMap<&str, Variant<'_>> = HashMap::new();
+                    let _ = conn
+                        .emit_signal(
+                            Some(sender.as_str()),
+                            &req_emit,
+                            "org.freedesktop.portal.Request",
+                            "Response",
+                            &(2u32, res),
+                        )
+                        .await;
+                    return;
+                }
                 let encoded: Vec<(String, HashMap<&str, Variant<'_>>)> = current
                     .iter()
                     .map(|(id, trig)| {
@@ -819,7 +1006,7 @@ mod tests {
             #[zbus(header)] hdr: zbus::message::Header<'_>,
             _session_handle: OwnedObjectPath,
             shortcuts: Vec<(String, HashMap<String, zbus::OwnedVariant>)>,
-            _parent_window: String,
+            parent_window: String,
             options: HashMap<String, zbus::OwnedVariant>,
         ) -> OwnedObjectPath {
             let sender = hdr.sender().unwrap().as_str().to_owned();
@@ -832,6 +1019,7 @@ mod tests {
             let outcome = {
                 let mut st = self.state.lock().unwrap();
                 st.bind_calls += 1;
+                st.last_bind_parent = parent_window;
                 let out = st.bind_outcome.clone();
                 if let MockBindOutcome::BindTrigger(ref trig) = out {
                     st.shortcuts = ids.iter().map(|id| (id.clone(), trig.clone())).collect();
@@ -900,13 +1088,14 @@ mod tests {
             &self,
             #[zbus(header)] hdr: zbus::message::Header<'_>,
             session_handle: OwnedObjectPath,
-            _parent_window: String,
+            parent_window: String,
             _options: HashMap<String, zbus::OwnedVariant>,
         ) {
             let sender = hdr.sender().unwrap().as_str().to_owned();
             let updated = {
                 let mut st = self.state.lock().unwrap();
                 st.configure_calls += 1;
+                st.last_configure_parent = parent_window;
                 let trig = st.bound_trigger_on_configure.clone();
                 for (_, t) in &mut st.shortcuts {
                     *t = trig.clone();
@@ -960,7 +1149,9 @@ mod tests {
             inner,
         )
         .await;
-        assert!(seen.lock().unwrap().is_empty());
+        // Notifies the window once so `shortcutReady` flips to `true` and
+        // Settings reveals the manual command fallback.
+        assert_eq!(*seen.lock().unwrap(), vec![(false, String::new())]);
     }
 
     async fn wait_until_idle(inner: &HandleInner) {
@@ -1038,9 +1229,13 @@ mod tests {
         assert_eq!(initial, (true, String::new()));
         assert_eq!(state.lock().unwrap().bind_calls, 0);
 
-        // 2. Clicking Set shortcut binds `send-clipboard` and (on v2 when trigger
-        //    is still empty) opens ConfigureShortcuts, sanitizing Bidi chars.
-        handle.configure("Send clipboard".to_owned(), Some("tok_cfg".to_owned()));
+        // 2. Clicking Set shortcut binds `send-clipboard` (passing X11 parent
+        //    window ID when available) and opens ConfigureShortcuts on v2.
+        handle.configure(
+            "Send clipboard".to_owned(),
+            Some("tok_cfg".to_owned()),
+            Some(0x2a),
+        );
         let mut last = initial;
         while last.1.is_empty() {
             last = tokio::time::timeout(Duration::from_secs(3), state_rx.recv())
@@ -1049,8 +1244,13 @@ mod tests {
                 .unwrap();
         }
         assert_eq!(last, (true, "Meta+Shift+V<U+202E>".to_owned()));
-        assert_eq!(state.lock().unwrap().bind_calls, 1);
-        assert_eq!(state.lock().unwrap().configure_calls, 1);
+        {
+            let st = state.lock().unwrap();
+            assert_eq!(st.bind_calls, 1);
+            assert_eq!(st.configure_calls, 1);
+            assert_eq!(st.last_bind_parent, "x11:2a");
+            assert_eq!(st.last_configure_parent, "x11:2a");
+        }
 
         // 3. Unrelated shortcut IDs are ignored; `send-clipboard` fires `activated`
         //    with the validated activation token.
@@ -1148,7 +1348,7 @@ mod tests {
         assert_eq!(initial, (true, String::new()));
 
         // v1 backend returns Ok with empty trigger -> switches to manual fallback.
-        handle.configure("Send clipboard".to_owned(), None);
+        handle.configure("Send clipboard".to_owned(), None, None);
         let fallback = tokio::time::timeout(Duration::from_secs(3), state_rx.recv())
             .await
             .unwrap()
@@ -1242,7 +1442,7 @@ mod tests {
         assert_eq!(state.lock().unwrap().bind_calls, 0);
 
         // Reconfiguring an already-bound shortcut calls ConfigureShortcuts directly.
-        handle.configure("Send clipboard".to_owned(), None);
+        handle.configure("Send clipboard".to_owned(), None, None);
         let updated = tokio::time::timeout(Duration::from_secs(3), state_rx.recv())
             .await
             .unwrap()
@@ -1421,14 +1621,14 @@ mod tests {
         assert_eq!(initial, (true, String::new()));
 
         // 1. Response(1, {}) (`Cancelled`) preserves `(true, "")` silently.
-        handle.configure("Send clipboard".to_owned(), None);
+        handle.configure("Send clipboard".to_owned(), None, None);
         wait_until_idle(&inner).await;
         assert_eq!(state.lock().unwrap().bind_calls, 1);
         assert!(state_rx.try_recv().is_err());
 
         // 2. Returning `shortcuts = []` on v1 falls back to `(false, "")`.
         state.lock().unwrap().bind_outcome = MockBindOutcome::EmptyList;
-        handle.configure("Send clipboard".to_owned(), None);
+        handle.configure("Send clipboard".to_owned(), None, None);
         let empty_fallback = tokio::time::timeout(Duration::from_secs(3), state_rx.recv())
             .await
             .unwrap()
@@ -1493,7 +1693,7 @@ mod tests {
             .unwrap();
         assert_eq!(initial2, (true, String::new()));
 
-        handle2.configure("Send clipboard".to_owned(), None);
+        handle2.configure("Send clipboard".to_owned(), None, None);
         let err_fallback = tokio::time::timeout(Duration::from_secs(3), state_rx2.recv())
             .await
             .unwrap()
@@ -1567,7 +1767,7 @@ mod tests {
 
         // 1. When the v1 backend keeps `"Alt+Shift+V"` across sessions and the user
         //    cancels re-bind, `refresh_from_list` preserves `bound = true` and trigger.
-        handle.configure("Send clipboard".to_owned(), None);
+        handle.configure("Send clipboard".to_owned(), None, None);
         wait_until_idle(&inner).await;
         assert_eq!(state.lock().unwrap().create_session_calls, 2);
         assert!(state_rx.try_recv().is_err());
@@ -1575,13 +1775,268 @@ mod tests {
         // 2. When recreating the v1 session drops the old binding and the user cancels,
         //    `refresh_from_list` clears the stale trigger so UI matches `new_session`.
         state.lock().unwrap().clear_shortcuts_on_create_session = true;
-        handle.configure("Send clipboard".to_owned(), None);
+        handle.configure("Send clipboard".to_owned(), None, None);
         let synced = tokio::time::timeout(Duration::from_secs(3), state_rx.recv())
             .await
             .unwrap()
             .unwrap();
         assert_eq!(synced, (true, String::new()));
         assert_eq!(state.lock().unwrap().create_session_calls, 3);
+
+        drop(handle);
+        let _ = tokio::time::timeout(Duration::from_secs(2), task).await;
+    }
+
+    #[test]
+    fn supported_rules_table() {
+        // (version, hyprland, trigger, prev) -> expected
+        let cases: &[(u32, bool, &str, bool, bool)] = &[
+            // Portal v2+ is always supported regardless of hyprland/trigger/prev.
+            (2, false, "", false, true),
+            (2, false, "", true, true),
+            (2, false, "Meta+Shift+V", false, true),
+            (2, false, "Meta+Shift+V", true, true),
+            (2, true, "", false, true),
+            (2, true, "", true, true),
+            (2, true, "Meta+Shift+V", false, true),
+            (2, true, "Meta+Shift+V", true, true),
+            // Portal v1 with a non-empty bound trigger is always supported.
+            (1, false, "Meta+Shift+V", false, true),
+            (1, false, "Meta+Shift+V", true, true),
+            (1, true, "Meta+Shift+V", false, true),
+            (1, true, "Meta+Shift+V", true, true),
+            // Portal v1 on Hyprland/Omarchy with empty trigger falls back to manual.
+            (1, true, "", false, false),
+            (1, true, "", true, false),
+            // Other v1 backends with empty trigger preserve `prev`.
+            (1, false, "", false, false),
+            (1, false, "", true, true),
+        ];
+        for &(version, hyprland, trigger, prev, expect) in cases {
+            assert_eq!(
+                supported(version, hyprland, trigger, prev),
+                expect,
+                "version={version} hyprland={hyprland} trigger={trigger:?} prev={prev}"
+            );
+        }
+        assert!(parent_window_identifier(None).is_none());
+        assert!(parent_window_identifier(Some(0)).is_none());
+        assert_eq!(
+            parent_window_identifier(Some(0x2a)).map(|w| w.to_string()),
+            Some("x11:2a".to_owned())
+        );
+    }
+
+    /// Fails immediately if a future `ashpd` update changes `Session`'s
+    /// `Serialize` representation away from its D-Bus object path string.
+    #[tokio::test]
+    async fn session_object_path_matches_real_dbus_session_handle() {
+        let Some(bus) = PrivateBus::start() else {
+            return skip_without_dbus("dbus-daemon is not installed");
+        };
+        let server = bus.connect().await;
+        let state = Arc::new(Mutex::new(MockState::default()));
+        server
+            .object_server()
+            .at(
+                "/org/freedesktop/portal/desktop",
+                MockPortal {
+                    conn: server.clone(),
+                    version: 2,
+                    state: Arc::clone(&state),
+                },
+            )
+            .await
+            .unwrap();
+        server
+            .request_name("org.freedesktop.portal.Desktop")
+            .await
+            .unwrap();
+
+        let client = bus.connect().await;
+        let portal = GlobalShortcuts::with_connection(client).await.unwrap();
+        let session = portal
+            .create_session(CreateSessionOptions::default())
+            .await
+            .unwrap();
+        let expected = state.lock().unwrap().session_path.clone();
+        assert!(!expected.is_empty());
+        assert_eq!(
+            session_object_path(&session).as_deref(),
+            Some(expected.as_str())
+        );
+        let _ = session.close().await;
+    }
+
+    #[tokio::test]
+    async fn setup_failure_after_create_session_closes_session_and_notifies_window() {
+        let Some(bus) = PrivateBus::start() else {
+            return skip_without_dbus("dbus-daemon is not installed");
+        };
+        let server = bus.connect().await;
+        let state = Arc::new(Mutex::new(MockState {
+            fail_list_shortcuts: true,
+            ..MockState::default()
+        }));
+        server
+            .object_server()
+            .at(
+                "/org/freedesktop/portal/desktop",
+                MockPortal {
+                    conn: server.clone(),
+                    version: 2,
+                    state: Arc::clone(&state),
+                },
+            )
+            .await
+            .unwrap();
+        server
+            .request_name("org.freedesktop.portal.Desktop")
+            .await
+            .unwrap();
+
+        let client = bus.connect().await;
+        let seen = Arc::new(Mutex::new(Vec::<(bool, String)>::new()));
+        let seen_cb = Arc::clone(&seen);
+        let (tx, rx) = tokio::sync::mpsc::channel(1);
+        let inner = Arc::new(HandleInner {
+            tx,
+            configuring: AtomicBool::new(false),
+        });
+        run_on(
+            client,
+            false,
+            false,
+            Callbacks {
+                state: Box::new(move |sup, trig| seen_cb.lock().unwrap().push((sup, trig))),
+                activated: Box::new(|_| {}),
+            },
+            rx,
+            inner,
+        )
+        .await;
+        let st = state.lock().unwrap();
+        assert_eq!(st.create_session_calls, 1);
+        assert_eq!(st.close_calls, 1);
+        assert_eq!(*seen.lock().unwrap(), vec![(false, String::new())]);
+    }
+
+    #[tokio::test]
+    async fn portal_session_closed_reconnects_with_backoff_and_receives_activated() {
+        let Some(bus) = PrivateBus::start() else {
+            return skip_without_dbus("dbus-daemon is not installed");
+        };
+        let server = bus.connect().await;
+        let state = Arc::new(Mutex::new(MockState {
+            shortcuts: vec![(SEND_CLIPBOARD_ID.to_owned(), "Alt+Shift+V".to_owned())],
+            ..MockState::default()
+        }));
+        server
+            .object_server()
+            .at(
+                "/org/freedesktop/portal/desktop",
+                MockPortal {
+                    conn: server.clone(),
+                    version: 2,
+                    state: Arc::clone(&state),
+                },
+            )
+            .await
+            .unwrap();
+        server
+            .request_name("org.freedesktop.portal.Desktop")
+            .await
+            .unwrap();
+
+        let client = bus.connect().await;
+        let client_name = client.unique_name().unwrap().to_string();
+        let (state_tx, mut state_rx) = tokio::sync::mpsc::unbounded_channel();
+        let (act_tx, mut act_rx) = tokio::sync::mpsc::unbounded_channel();
+        let (cmd_tx, cmd_rx) = tokio::sync::mpsc::channel(1);
+        let inner = Arc::new(HandleInner {
+            tx: cmd_tx,
+            configuring: AtomicBool::new(false),
+        });
+        let handle = Handle {
+            inner: Some(Arc::clone(&inner)),
+        };
+
+        let task = tokio::spawn(run_on_with_backoff(
+            client,
+            false,
+            false,
+            Callbacks {
+                state: Box::new(move |sup, trig| {
+                    let _ = state_tx.send((sup, trig));
+                }),
+                activated: Box::new(move |tok| {
+                    let _ = act_tx.send(tok);
+                }),
+            },
+            cmd_rx,
+            inner,
+            Duration::from_millis(10),
+            Duration::from_millis(40),
+        ));
+
+        let initial = tokio::time::timeout(Duration::from_secs(3), state_rx.recv())
+            .await
+            .unwrap()
+            .unwrap();
+        assert_eq!(initial, (true, "Alt+Shift+V".to_owned()));
+        let first_session = state.lock().unwrap().session_path.clone();
+
+        // Simulate a portal restart closing the active session.
+        let closed_details: HashMap<&str, Variant<'_>> = HashMap::new();
+        server
+            .emit_signal(
+                Some(client_name.as_str()),
+                ObjectPath::try_from(first_session.as_str()).unwrap(),
+                "org.freedesktop.portal.Session",
+                "Closed",
+                &(closed_details,),
+            )
+            .await
+            .unwrap();
+
+        let dropped = tokio::time::timeout(Duration::from_secs(3), state_rx.recv())
+            .await
+            .unwrap()
+            .unwrap();
+        assert_eq!(dropped, (false, String::new()));
+
+        let recovered = tokio::time::timeout(Duration::from_secs(3), state_rx.recv())
+            .await
+            .unwrap()
+            .unwrap();
+        assert_eq!(recovered, (true, "Alt+Shift+V".to_owned()));
+        let second_session = state.lock().unwrap().session_path.clone();
+        assert_eq!(state.lock().unwrap().create_session_calls, 2);
+        assert_ne!(second_session, first_session);
+
+        // Activated on the recreated session reaches the window.
+        let mut opts: HashMap<&str, Variant<'_>> = HashMap::new();
+        opts.insert("activation_token", Variant::from("tok_after_reconnect"));
+        server
+            .emit_signal(
+                Some(client_name.as_str()),
+                "/org/freedesktop/portal/desktop",
+                "org.freedesktop.portal.GlobalShortcuts",
+                "Activated",
+                &(
+                    ObjectPath::try_from(second_session.as_str()).unwrap(),
+                    SEND_CLIPBOARD_ID,
+                    55u64,
+                    opts,
+                ),
+            )
+            .await
+            .unwrap();
+        let got_tok = tokio::time::timeout(Duration::from_secs(3), act_rx.recv())
+            .await
+            .unwrap()
+            .unwrap();
+        assert_eq!(got_tok.as_deref(), Some("tok_after_reconnect"));
 
         drop(handle);
         let _ = tokio::time::timeout(Duration::from_secs(2), task).await;
