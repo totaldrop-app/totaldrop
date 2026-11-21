@@ -154,8 +154,9 @@ addresses.
 - **Address discovery:** Cloudflare's STUN server, `stun.cloudflare.com:3478`.
 - **For those who want to run it on their own server:**
   `server/totaldrop-relay` speaks the same protocol and also answers STUN
-  itself. There are systemd, Caddy and nftables files under `deploy/`; the
-  setup script asks for the server's name: `sh install.sh relay.example.org`.
+  itself; it has no per-IP connection limit of its own, so put one at its
+  reverse proxy. There are systemd, Caddy and nftables files under `deploy/`;
+  the setup script asks for the server's name: `sh install.sh relay.example.org`.
 - **Later:** if usage grows or the speed is not enough, Cloudflare Realtime
   TURN can be added as a second relay path (1,000 GB a month free, then
   USD 0.05 per GB).

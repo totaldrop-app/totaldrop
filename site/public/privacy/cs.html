@@ -5,7 +5,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Zásady ochrany soukromí · TotalDrop</title>
-  <meta name="description" content="Co TotalDrop shromažďuje (nic), co vidí jeho servery a jak dlouho se cokoli uchovává.">
+  <meta name="description" content="Co TotalDrop shromažďuje (téměř nic), co vidí jeho servery a Cloudflare a jak dlouho se cokoli uchovává.">
   <meta name="theme-color" content="#F4F2FB" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#140E33" media="(prefers-color-scheme: dark)">
   <link rel="canonical" href="https://totaldrop.app/privacy/cs">
@@ -46,7 +46,7 @@
   <link rel="alternate" hreflang="zh-Hant" href="https://totaldrop.app/privacy/zh-Hant">
   <link rel="alternate" hreflang="x-default" href="https://totaldrop.app/privacy">
   <meta property="og:title" content="Zásady ochrany soukromí · TotalDrop">
-  <meta property="og:description" content="Co TotalDrop shromažďuje (nic), co vidí jeho servery a jak dlouho se cokoli uchovává.">
+  <meta property="og:description" content="Co TotalDrop shromažďuje (téměř nic), co vidí jeho servery a Cloudflare a jak dlouho se cokoli uchovává.">
   <meta property="og:url" content="https://totaldrop.app/privacy/cs">
   <meta property="og:type" content="website">
   <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
@@ -75,9 +75,9 @@
   <main id="main" class="prose">
     <article lang="cs">
       <p class="lang-note" role="note">Tento překlad je koncept a prochází kontrolou. Závazným textem je anglická verze: pokud se od sebe liší, platí anglická verze. <a href="/privacy" hreflang="en">Přečíst anglickou verzi</a></p>
-      <p class="eyebrow">Zásady ochrany soukromí · verze 7 · 8. listopadu 2026</p>
-      <h1>Nic o vás neshromažďujeme.</h1>
-      <p class="lead">TotalDrop nemá účty, analytiku, reklamy ani hlášení pádů. Tato stránka přesně vysvětluje, co mohou naše servery vidět, zatímco přenášíte soubory, a jak rychle to zmizí.</p>
+      <p class="eyebrow">Zásady ochrany soukromí · verze 8 · 13. listopadu 2026</p>
+      <h1>Neshromažďujeme o vás téměř nic.</h1>
+      <p class="lead">TotalDrop nemá účty, analytiku ani sledovací kód, reklamy ani hlášení pádů. Tato stránka přesně vysvětluje, co mohou naše servery a Cloudflare, který je provozuje, vidět, zatímco přenášíte soubory, a jak rychle to zmizí.</p>
 
       <h2>Kdo jsme</h2>
       <p>TotalDrop je bezplatný open source projekt, který spravuje Ozan Özdil. Tyto zásady platí pro aplikace TotalDrop, klienta pro příkazový řádek a servery na <code>totaldrop.app</code>. Kontakt: <a href="mailto:privacy@totaldrop.app">privacy@totaldrop.app</a>.</p>
@@ -96,7 +96,7 @@
         <li>kdy se připojíte a velikost krátkých zpráv, které si zařízení vymění. Po prvních dvou jsou tyto zprávy šifrované tak, aby je mohlo přečíst jen druhé zařízení.</li>
       </ul>
       <p>Server nic z toho nezapisuje do protokolu. Schránka i vše v ní se smaže, jakmile ji obě zařízení opustí, nejpozději po jedné hodině. Po každém přenosu číslo kódu 10 minut odpočívá, než je znovu přiděleno; po neúspěšném pokusu o kód 24 hodin. Aby omezil zneužívání, server také počítá, kolik spojení otevírá každá IP adresa (u IPv6 prvních 64 bitů adresy). Tyto počty uchovává jen v paměti, pod kódem odvozeným z adresy náhodným klíčem, a ne pod adresou samotnou, každý zapomene nejpozději zhruba dvě minuty po posledním spojení a nikdy je nezapisuje na disk ani do protokolu.</p>
-      <p>Cloudflare jako náš poskytovatel infrastruktury zpracovává IP adresy, aby službu doručil a ochránil, podle svých vlastních <a href="https://www.cloudflare.com/privacypolicy/">zásad ochrany soukromí</a>. Totéž platí pro přenosový server. Pro oba servery jsme vypnuli protokoly požadavků a protokolování Workers.</p>
+      <p>Cloudflare jako náš poskytovatel infrastruktury zpracovává IP adresy, aby službu doručil a ochránil, podle svých vlastních <a href="https://www.cloudflare.com/privacypolicy/">zásad ochrany soukromí</a>. Totéž platí pro přenosový server. Pro oba servery jsme vypnuli protokoly požadavků a protokolování Workers. Co Cloudflare přesto uchovává, popisuje níže oddíl „Co uchovává Cloudflare“.</p>
 
       <h2>Hledání přímé cesty</h2>
       <p>Aby se zařízení mohlo připojit přes internet, nejprve se zeptá serveru STUN, pod jakou veřejnou IP adresou a portem je vidět. Ve výchozím nastavení je to bezplatná služba STUN od Cloudflare na <code>stun.cloudflare.com</code>. Vidí vaši IP adresu, jako každý server na internetu, a nic jiného. V režimu soukromí (viz níže) se jí zařízení neptá.</p>
@@ -108,9 +108,18 @@
         <li>dva náhodné klíče vytvořené jen pro tento jeden přenos a už nikdy nepoužité;</li>
         <li>kdy se každé zařízení připojilo a odpojilo a kolik šifrovaných dat prošlo.</li>
       </ul>
-      <p>Klíče nespojují jeden přenos s jiným, ale vaše IP adresa může: přenosový server i zprostředkující server, které oba provozujeme na Cloudflare, ji vidí s odstupem několika okamžiků. Přenosový server nemůže číst soubory, jejich názvy ani nic o tom, kdo jste. Nic nezapisuje do protokolu a po skončení přenosu o něm nic neuchovává.</p>
+      <p>Klíče nespojují jeden přenos s jiným, ale vaše IP adresa může: přenosový server i zprostředkující server, které oba provozujeme na Cloudflare, ji vidí s odstupem několika okamžiků. Přenosový server nemůže číst soubory, jejich názvy ani nic o tom, kdo jste. Nic nezapisuje do protokolu a po skončení přenosu o něm nic neuchovává. Aby omezil zneužívání, Cloudflare počítá, kolik spojení otevře každá IP adresa k přenosovému serveru: adresa, která jich za 10 sekund otevře více než 30, je na 10 sekund odmítnuta.</p>
       <p>Adresa přenosového serveru každého zařízení se druhému zařízení sdílí šifrovaně. Pokud odesílatel používá vlastní přenosový server (volba <code>--relay</code> příkazového řádku nebo <code>TOTALDROP_RELAY</code>), od verze 0.2.0-beta.1 ho přijímající zařízení použije jen tehdy, když je to také přenosový server nastavený u příjemce; jinak ho nikdy nekontaktuje. Kdo provozuje přenosový server, ke kterému se zařízení připojí, vidí to, co je uvedeno výše. Když obě zařízení používají různé přenosové servery a nemají přímou cestu, přenos se zastaví s chybou.</p>
       <p>Režim soukromí („Skrýt mou adresu před druhým zařízením“ v Nastavení aplikací od verze 0.2.0-beta.1, <code>--relay-only</code> v příkazovém řádku): vaše zařízení neoznámí druhému zařízení žádnou IP adresu, neptá se serveru STUN, nikdy se k druhému zařízení nepřipojuje přímo a odmítne přímé spojení i od spárovaného zařízení. Každý přenos jde přes přenosový server, takže druhé zařízení se vaši IP adresu nedozví, ať odesíláte, nebo přijímáte. Je to pomalejší a přenosový server i zprostředkující server vaši IP adresu stále vidí. Druhé zařízení musí používat stejný přenosový server jako vy, ať odesíláte, nebo přijímáte (všechny aplikace používají náš); jinak se přenos zastaví s chybou.</p>
+
+      <h2>Co uchovává Cloudflare</h2>
+      <p>Cloudflare provozuje tento web i oba servery. I s vypnutými protokoly uchovává vzorek požadavků na <code>totaldrop.app</code> a jeho subdomény, včetně tohoto webu, zprostředkujícího serveru a přenosového serveru, a tento vzorek nám ukazuje ve svém ovládacím panelu. U každého požadavku ve vzorku zaznamenává:</p>
+      <ul>
+        <li>IP adresu a zemi a síť, ze které pochází;</li>
+        <li>čas, požadovanou URL a kolik dat bylo odesláno zpět. U zprostředkujícího serveru tato URL obsahuje číslo kódu, u přenosového serveru oba klíče přenosu, takže vzorek může ukázat, že se dvě IP adresy účastnily stejného přenosu;</li>
+        <li>technické údaje o spojení, například název prohlížeče nebo programu, pokud ho posílá.</li>
+      </ul>
+      <p>Cloudflare vybírá, které požadavky se do vzorku dostanou, a uchovává ho nejméně 31 dní. Dělá to u každého tarifu a nenašli jsme nastavení, které by to vypnulo. Požadavky, které odmítne bezpečnostní pravidlo, například výše popsaný limit přenosového serveru, se také uchovávají i s IP adresou nejméně 31 dní. Do těchto záznamů se díváme jen kvůli řešení zneužití a poruch a nikam jinam je nekopírujeme.</p>
 
       <h2>Co vidí druhé zařízení</h2>
       <p>Aby se mohla připojit přímo, obě zařízení si šifrovaně vymění své síťové adresy. Každé zařízení se proto dozví místní a veřejnou IP adresu druhého, jako u každého přímého spojení. Zařízení v režimu soukromí žádnou adresu neoznámí, takže ji druhé zařízení nezjistí.</p>
@@ -119,13 +128,13 @@
       <p>Přijaté soubory se ukládají do <em>Download/TotalDrop</em> v Androidu a do <em>~/Downloads/TotalDrop</em> v Linuxu. Jsou to běžné sdílené soubory, se kterými se zachází jako s vašimi ostatními staženými soubory. Když odesíláte z Androidu, vybrané soubory se zkopírují do mezipaměti aplikace. Kopie se smažou, když zavřete dokončené odesílání nebo nějaké zastavíte. Kopie souborů, které jste vybrali, ale neodeslali (vrátili jste se před odesláním, odebrali jste je ze seznamu nebo Android aplikaci zavřel), mohou zůstat, dokud se pozdější odesílání nezavře nebo nezastaví, nebo dokud Android mezipaměť nevyčistí. Aplikace uchovávají dvě nastavení: adresu zprostředkujícího serveru a to, zda je zapnutý režim soukromí (v Linuxu v <em>~/.config/totaldrop/settings.toml</em>). Vlastní data aplikace pro Android, tyto kopie a nastavení, se nikdy nedostanou do cloudových záloh ani do přenosů mezi zařízeními.</p>
 
       <h2>Děti</h2>
-      <p>TotalDrop není určen dětem a od nikoho neshromažďuje osobní údaje.</p>
+      <p>TotalDrop není určen dětem a od nikoho nežádá osobní údaje.</p>
 
       <h2>Vaše práva</h2>
-      <p>Kromě krátkodobých počtů popsaných výše, které do několika minut zmizí, o vás neuchováváme žádné osobní údaje, a proto není k čemu získat přístup, co opravit ani co vymazat. Máte-li otázku nebo stížnost, napište nám na adresu uvedenou výše. Máte také právo podat stížnost u svého úřadu pro ochranu osobních údajů.</p>
+      <p>Kromě krátkodobých počtů popsaných výše, které do několika minut zmizí, a záznamů Cloudflare o vás neuchováváme žádné osobní údaje. IP adresa v těchto záznamech nám neřekne, kdo jste. Máte-li otázku, stížnost nebo žádost týkající se vašich údajů, napište nám na adresu uvedenou výše. Máte také právo podat stížnost u svého úřadu pro ochranu osobních údajů.</p>
 
       <h2>Změny</h2>
-      <p>Verze 7 uvádí, že zprostředkující server počítá spojení každé IP adresy krátce, jen v paměti, aby omezil zneužívání; co vidí, se nemění. Verze 6 navazuje na verze pro Android a Linux po 0.3.0-beta.3, v nichž se přímé spojení, které utichne, přesune na přenosový server, takže přenosový server může vidět přenos, který začal přímým spojením. Verze 5 uvádí oprávnění, o která žádají verze Androidu po 0.3.0-beta.2 a díky nimž může přenos pokračovat na pozadí s oznámením; co vidí naše servery, se nemění. Verze 4 odpovídá Androidu a Linuxu 0.2.0-beta.1, které změnily, co vidí přenosový server a druhé zařízení. V těchto verzích zařízení kontaktují přenosový server jen tehdy, když přímé spojení není zvoleno včas nebo není žádná přímá cesta k vyzkoušení, a ne na začátku každého přenosu. Příjemce už nepoužívá přenosový server, který zvolil jen odesílatel, takže režim soukromí teď skrývá i adresu příjemce. Režim soukromí je teď také v Nastavení aplikací a odmítá přímá spojení. Verze 4 také říká, co si aplikace pro Android uchovává v mezipaměti. Verze 3 opravila verzi 2, která tvrdila, že se aplikace k přenosovému serveru připojí jen tehdy, když nefunguje žádná přímá cesta (tehdy se k němu připojovaly na začátku každého přenosu), a že režim soukromí skrývá adresu příjemce, což tehdy nedělal. Uvedla také soubory aplikace pro Linux. Verze 2 přidala službu STUN a přenosový server. Funkce plánované pro pozdější verze (odkazy, volitelné anonymní účty) změní, co naše servery zpracovávají. Tyto zásady aktualizujeme dříve, než taková funkce vyjde, a každou jejich verzi uchováme ve veřejném repozitáři projektu.</p>
+      <p>Verze 8 uvádí, co uchovává Cloudflare: vzorek požadavků s jejich IP adresami a číslem kódu nebo klíči přenosového serveru, který můžeme vidět 31 dní, a požadavky, které odmítnou jeho bezpečnostní pravidla. Uvádí také, že přenosový server odmítne IP adresu, která za 10 sekund otevře více než 30 spojení. Verze 7 uvádí, že zprostředkující server počítá spojení každé IP adresy krátce, jen v paměti, aby omezil zneužívání; co vidí, se nemění. Verze 6 navazuje na verze pro Android a Linux po 0.3.0-beta.3, v nichž se přímé spojení, které utichne, přesune na přenosový server, takže přenosový server může vidět přenos, který začal přímým spojením. Verze 5 uvádí oprávnění, o která žádají verze Androidu po 0.3.0-beta.2 a díky nimž může přenos pokračovat na pozadí s oznámením; co vidí naše servery, se nemění. Verze 4 odpovídá Androidu a Linuxu 0.2.0-beta.1, které změnily, co vidí přenosový server a druhé zařízení. V těchto verzích zařízení kontaktují přenosový server jen tehdy, když přímé spojení není zvoleno včas nebo není žádná přímá cesta k vyzkoušení, a ne na začátku každého přenosu. Příjemce už nepoužívá přenosový server, který zvolil jen odesílatel, takže režim soukromí teď skrývá i adresu příjemce. Režim soukromí je teď také v Nastavení aplikací a odmítá přímá spojení. Verze 4 také říká, co si aplikace pro Android uchovává v mezipaměti. Verze 3 opravila verzi 2, která tvrdila, že se aplikace k přenosovému serveru připojí jen tehdy, když nefunguje žádná přímá cesta (tehdy se k němu připojovaly na začátku každého přenosu), a že režim soukromí skrývá adresu příjemce, což tehdy nedělal. Uvedla také soubory aplikace pro Linux. Verze 2 přidala službu STUN a přenosový server. Funkce plánované pro pozdější verze (odkazy, volitelné anonymní účty) změní, co naše servery zpracovávají. Tyto zásady aktualizujeme dříve, než taková funkce vyjde, a každou jejich verzi uchováme ve veřejném repozitáři projektu.</p>
     </article>
 
     <nav class="lang-list" id="languages" aria-labelledby="languages-title">

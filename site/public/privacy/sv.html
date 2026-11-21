@@ -5,7 +5,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Integritetspolicy · TotalDrop</title>
-  <meta name="description" content="Vad TotalDrop samlar in (ingenting), vad dess servrar kan se och hur länge något sparas.">
+  <meta name="description" content="Vad TotalDrop samlar in (nästan ingenting), vad dess servrar och Cloudflare kan se och hur länge något sparas.">
   <meta name="theme-color" content="#F4F2FB" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#140E33" media="(prefers-color-scheme: dark)">
   <link rel="canonical" href="https://totaldrop.app/privacy/sv">
@@ -46,7 +46,7 @@
   <link rel="alternate" hreflang="zh-Hant" href="https://totaldrop.app/privacy/zh-Hant">
   <link rel="alternate" hreflang="x-default" href="https://totaldrop.app/privacy">
   <meta property="og:title" content="Integritetspolicy · TotalDrop">
-  <meta property="og:description" content="Vad TotalDrop samlar in (ingenting), vad dess servrar kan se och hur länge något sparas.">
+  <meta property="og:description" content="Vad TotalDrop samlar in (nästan ingenting), vad dess servrar och Cloudflare kan se och hur länge något sparas.">
   <meta property="og:url" content="https://totaldrop.app/privacy/sv">
   <meta property="og:type" content="website">
   <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
@@ -75,9 +75,9 @@
   <main id="main" class="prose">
     <article lang="sv">
       <p class="lang-note" role="note">Den här översättningen är ett utkast och granskas. Den engelska versionen är den gällande texten: om de skiljer sig åt gäller den engelska versionen. <a href="/privacy" hreflang="en">Läs den engelska versionen</a></p>
-      <p class="eyebrow">Integritetspolicy · version 7 · 8 november 2026</p>
-      <h1>Vi samlar inte in något om dig.</h1>
-      <p class="lead">TotalDrop har inga konton, ingen analys, ingen reklam och ingen kraschrapportering. Den här sidan förklarar exakt vad våra servrar kan se medan du överför filer, och hur snabbt det försvinner.</p>
+      <p class="eyebrow">Integritetspolicy · version 8 · 13 november 2026</p>
+      <h1>Vi samlar in nästan ingenting om dig.</h1>
+      <p class="lead">TotalDrop har inga konton, ingen analys eller spårningskod, ingen reklam och ingen kraschrapportering. Den här sidan förklarar exakt vad våra servrar och Cloudflare, som driver dem, kan se medan du överför filer, och hur snabbt det försvinner.</p>
 
       <h2>Vilka vi är</h2>
       <p>TotalDrop är ett kostnadsfritt projekt med öppen källkod som underhålls av Ozan Özdil. Policyn gäller TotalDrop-apparna, kommandoradsklienten och servrarna på <code>totaldrop.app</code>. Kontakt: <a href="mailto:privacy@totaldrop.app">privacy@totaldrop.app</a>.</p>
@@ -96,7 +96,7 @@
         <li>när du ansluter och storleken på de korta meddelanden som de två enheterna utbyter. Efter de två första är meddelandena krypterade så att bara den andra enheten kan läsa dem.</li>
       </ul>
       <p>Servern skriver inget av detta till någon logg. En brevlåda och allt i den raderas så snart båda enheterna lämnar den, och senast efter en timme. Efter varje överföring vilar kodens siffra i 10 minuter innan den delas ut igen; efter ett misslyckat kodförsök i 24 timmar. För att begränsa missbruk räknar servern också hur många anslutningar varje IP-adress öppnar (för IPv6 de första 64 bitarna av adressen). Den håller räkningarna enbart i minnet, under en kod som härletts ur adressen med en slumpmässig nyckel i stället för under själva adressen, glömmer varje räkning senast ungefär två minuter efter den senaste anslutningen och skriver dem aldrig till disk eller till en logg.</p>
-      <p>Cloudflare behandlar som vår infrastrukturleverantör IP-adresser för att leverera och skydda tjänsten enligt sin egen <a href="https://www.cloudflare.com/privacypolicy/">integritetspolicy</a>. Detsamma gäller reläet. Vi har stängt av förfrågningsloggar och Workers-loggning för båda servrarna.</p>
+      <p>Cloudflare behandlar som vår infrastrukturleverantör IP-adresser för att leverera och skydda tjänsten enligt sin egen <a href="https://www.cloudflare.com/privacypolicy/">integritetspolicy</a>. Detsamma gäller reläet. Vi har stängt av förfrågningsloggar och Workers-loggning för båda servrarna. Vad Cloudflare ändå sparar beskrivs längre ner, under ”Vad Cloudflare sparar”.</p>
 
       <h2>Att hitta en direkt väg</h2>
       <p>För att ansluta över internet frågar varje enhet först en STUN-server vilken offentlig IP-adress och port den verkar ha. Som standard är det Cloudflares kostnadsfria STUN-tjänst på <code>stun.cloudflare.com</code>. Den ser din IP-adress, som alla servrar på internet gör, och inget annat. I integritetsläget (se nedan) frågar enheten den inte.</p>
@@ -108,9 +108,18 @@
         <li>två slumpmässiga nycklar som skapats för just den här överföringen och aldrig används igen;</li>
         <li>när varje enhet anslöt och kopplade från, och hur mycket krypterad data som passerade.</li>
       </ul>
-      <p>Nycklarna kopplar inte ihop en överföring med en annan, men din IP-adress kan göra det: reläet och mötesservern, som vi båda kör på Cloudflare, ser den med några ögonblicks mellanrum. Reläet kan inte läsa filerna, deras namn eller något om vem du är. Det skriver inget till någon logg och sparar inget om överföringen när den är klar.</p>
+      <p>Nycklarna kopplar inte ihop en överföring med en annan, men din IP-adress kan göra det: reläet och mötesservern, som vi båda kör på Cloudflare, ser den med några ögonblicks mellanrum. Reläet kan inte läsa filerna, deras namn eller något om vem du är. Det skriver inget till någon logg och sparar inget om överföringen när den är klar. För att begränsa missbruk räknar Cloudflare hur många anslutningar varje IP-adress öppnar till reläet: en adress som öppnar fler än 30 på 10 sekunder nekas i 10 sekunder.</p>
       <p>Varje enhets reläadress delas krypterad med den andra enheten. Om avsändaren använder ett eget relä (kommandoradens alternativ <code>--relay</code> eller <code>TOTALDROP_RELAY</code>) använder den mottagande enheten i 0.2.0-beta.1 och senare det bara om det också är mottagarens egen reläinställning; annars kontaktar den det aldrig. Den som driver ett relä som en enhet ansluter till ser det som står ovan. När de två enheterna använder olika reläer och inte har någon direkt väg stoppas överföringen med ett fel.</p>
       <p>Integritetsläge (”Dölj min adress för den andra enheten” i apparnas Inställningar sedan 0.2.0-beta.1, <code>--relay-only</code> i kommandoraden): din enhet meddelar ingen IP-adress till den andra enheten, frågar inte STUN-servern, ringer aldrig upp den andra enheten direkt och avvisar en direkt anslutning, även från den parkopplade enheten. Varje överföring går via reläet, så den andra enheten får inte veta din IP-adress, oavsett om du skickar eller tar emot. Det är långsammare, och reläet och mötesservern ser fortfarande din IP-adress. Den andra enheten måste använda samma relä som du, oavsett om du skickar eller tar emot (alla appar använder vårt); annars stoppas överföringen med ett fel.</p>
+
+      <h2>Vad Cloudflare sparar</h2>
+      <p>Cloudflare driver den här webbplatsen och båda servrarna. Även med loggning avstängd sparar det ett urval av förfrågningarna till <code>totaldrop.app</code> och dess underdomäner, bland annat den här webbplatsen, mötesservern och reläet, och visar oss urvalet i sin kontrollpanel. För varje förfrågan i urvalet registrerar det:</p>
+      <ul>
+        <li>IP-adressen och landet och nätverket den kommer från;</li>
+        <li>tiden, den begärda URL:en och hur mycket data som skickades tillbaka. På mötesservern innehåller den URL:en siffran i koden, och på reläet överföringens två nycklar, så urvalet kan visa att två IP-adresser deltog i samma överföring;</li>
+        <li>tekniska uppgifter om anslutningen, till exempel namnet på webbläsaren eller programmet, när det skickar ett.</li>
+      </ul>
+      <p>Cloudflare väljer vilka förfrågningar som hamnar i urvalet och sparar det i minst 31 dagar. Det gör så på alla abonnemang, och vi har inte hittat någon inställning för att stänga av det. Förfrågningar som en säkerhetsregel nekar, till exempel reläets gräns ovan, sparas också med sin IP-adress i minst 31 dagar. Vi tittar på dessa uppgifter bara för att hantera missbruk och fel, och vi kopierar dem inte någon annanstans.</p>
 
       <h2>Vad den andra enheten ser</h2>
       <p>För att ansluta direkt utbyter de två enheterna sina nätverksadresser med varandra, krypterade. Varje enhet får därför veta den andras lokala och offentliga IP-adress, som vid alla direkta anslutningar. En enhet i integritetsläget meddelar ingen adress, så den andra enheten får inte veta den.</p>
@@ -119,13 +128,13 @@
       <p>Mottagna filer sparas i <em>Download/TotalDrop</em> på Android och i <em>~/Downloads/TotalDrop</em> på Linux. De är vanliga delade filer som hanteras som dina andra nedladdningar. När du skickar från Android kopieras filerna du väljer till appens cache. Kopiorna raderas när du stänger en avslutad sändning eller stoppar en. Kopior av filer som du valde men inte skickade (du gick tillbaka innan du skickade, tog bort dem från listan eller Android stängde appen) kan ligga kvar tills en senare sändning stängs eller stoppas, eller tills Android rensar cachen. Apparna sparar två inställningar: mötesserverns adress och om integritetsläget är på (på Linux i <em>~/.config/totaldrop/settings.toml</em>). Android-appens egna data, dessa kopior och inställningar, kommer aldrig med i molnsäkerhetskopior eller överföringar från enhet till enhet.</p>
 
       <h2>Barn</h2>
-      <p>TotalDrop riktar sig inte till barn och samlar inte in personuppgifter från någon.</p>
+      <p>TotalDrop riktar sig inte till barn och ber ingen om personuppgifter.</p>
 
       <h2>Dina rättigheter</h2>
-      <p>Förutom de kortlivade räkningarna som beskrivs ovan, som försvinner inom några minuter, har vi inga personuppgifter om dig, så det finns inget att få tillgång till, rätta eller radera. Om du har en fråga eller ett klagomål kan du skriva till oss på adressen ovan. Du har också rätt att klaga hos din dataskyddsmyndighet.</p>
+      <p>Förutom de kortlivade räkningarna som beskrivs ovan, som försvinner inom några minuter, och Cloudflares uppgifter har vi inga personuppgifter om dig. En IP-adress i de uppgifterna berättar inte för oss vem du är. Om du har en fråga, ett klagomål eller en begäran om dina uppgifter kan du skriva till oss på adressen ovan. Du har också rätt att klaga hos din dataskyddsmyndighet.</p>
 
       <h2>Ändringar</h2>
-      <p>Version 7 anger att mötesservern räknar anslutningarna från varje IP-adress under en kort tid, enbart i minnet, för att begränsa missbruk; vad den ser ändras inte. Version 6 följer Android- och Linux-versionerna efter 0.3.0-beta.3, där en direkt anslutning som tystnar flyttas till reläet, så att reläet kan se en överföring som började på en direkt anslutning. Version 5 räknar upp de behörigheter som Android-versioner efter 0.3.0-beta.2 ber om, och som låter en överföring fortsätta i bakgrunden med en avisering; vad våra servrar ser ändras inte. Version 4 följer Android och Linux 0.2.0-beta.1, som ändrade vad reläet och den andra enheten ser. I dessa versioner kontaktar enheter reläet bara när ingen direkt anslutning väljs i tid eller det inte finns någon direkt väg att prova, i stället för i början av varje överföring. En mottagare använder inte längre ett relä som bara avsändaren valt, så integritetsläget döljer nu också mottagarens adress. Integritetsläget finns nu också i apparnas Inställningar och avvisar direkta anslutningar. Version 4 berättar också vad Android-appen sparar i sin cache. Version 3 rättade version 2, som sade att apparna bara når reläet när ingen direkt väg fungerar (då anslöt de till det i början av varje överföring) och att integritetsläget dolde mottagarens adress, vilket det då inte gjorde. Den nämnde också Linux-appens filer. Version 2 lade till STUN-tjänsten och reläet. Funktioner som planeras för senare versioner (länkar, valfria anonyma konton) kommer att ändra vad våra servrar hanterar. Vi uppdaterar policyn innan en sådan funktion släpps, och sparar varje version i projektets offentliga kodförråd.</p>
+      <p>Version 8 anger vad Cloudflare sparar: ett urval av förfrågningar med deras IP-adresser och siffran i koden eller reläets nycklar, som vi kan se i 31 dagar, och de förfrågningar som dess säkerhetsregler nekar. Den anger också att reläet nekar en IP-adress som öppnar fler än 30 anslutningar på 10 sekunder. Version 7 anger att mötesservern räknar anslutningarna från varje IP-adress under en kort tid, enbart i minnet, för att begränsa missbruk; vad den ser ändras inte. Version 6 följer Android- och Linux-versionerna efter 0.3.0-beta.3, där en direkt anslutning som tystnar flyttas till reläet, så att reläet kan se en överföring som började på en direkt anslutning. Version 5 räknar upp de behörigheter som Android-versioner efter 0.3.0-beta.2 ber om, och som låter en överföring fortsätta i bakgrunden med en avisering; vad våra servrar ser ändras inte. Version 4 följer Android och Linux 0.2.0-beta.1, som ändrade vad reläet och den andra enheten ser. I dessa versioner kontaktar enheter reläet bara när ingen direkt anslutning väljs i tid eller det inte finns någon direkt väg att prova, i stället för i början av varje överföring. En mottagare använder inte längre ett relä som bara avsändaren valt, så integritetsläget döljer nu också mottagarens adress. Integritetsläget finns nu också i apparnas Inställningar och avvisar direkta anslutningar. Version 4 berättar också vad Android-appen sparar i sin cache. Version 3 rättade version 2, som sade att apparna bara når reläet när ingen direkt väg fungerar (då anslöt de till det i början av varje överföring) och att integritetsläget dolde mottagarens adress, vilket det då inte gjorde. Den nämnde också Linux-appens filer. Version 2 lade till STUN-tjänsten och reläet. Funktioner som planeras för senare versioner (länkar, valfria anonyma konton) kommer att ändra vad våra servrar hanterar. Vi uppdaterar policyn innan en sådan funktion släpps, och sparar varje version i projektets offentliga kodförråd.</p>
     </article>
 
     <nav class="lang-list" id="languages" aria-labelledby="languages-title">

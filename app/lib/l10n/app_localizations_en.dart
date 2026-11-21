@@ -371,7 +371,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsPrivacyBody =>
-      'The rendezvous server, the relay and Cloudflare\'s STUN server see your IP address, and so does the other device when you connect directly (unless privacy mode is on). None of them sees file names, contents or keys, and our servers keep no logs. Files go directly between the devices when they can, otherwise through the relay; they are encrypted end to end either way.';
+      'The rendezvous server, the relay and Cloudflare\'s STUN server see your IP address, and so does the other device when you connect directly (unless privacy mode is on). None of them sees file names, contents or keys. Our servers keep no logs of their own, but Cloudflare, which runs them, keeps a sample of requests with IP addresses for at least 31 days. Files go directly between the devices when they can, otherwise through the relay; they are encrypted end to end either way.';
 
   @override
   String get privacyMode => 'Hide my address from the other device';

@@ -96,7 +96,7 @@
   "settingsAbout": "O aplikacji",
   "settingsAboutBody": "TotalDrop jest darmowy i ma otwarte źródła, a utrzymuje się z darowizn. Licencja GPL-3.0-or-later.",
   "settingsPrivacy": "Prywatność",
-  "settingsPrivacyBody": "Serwer spotkań, serwer pośredniczący i serwer STUN Cloudflare widzą twój adres IP, podobnie jak drugie urządzenie przy połączeniu bezpośrednim (chyba że włączony jest tryb prywatności). Żaden z nich nie widzi nazw plików, ich zawartości ani kluczy, a nasze serwery nie prowadzą logów. Pliki trafiają bezpośrednio między urządzeniami, gdy to możliwe, a w przeciwnym razie przez serwer pośredniczący; w obu przypadkach są szyfrowane end-to-end.",
+  "settingsPrivacyBody": "Serwer spotkań, serwer pośredniczący i serwer STUN Cloudflare widzą twój adres IP, podobnie jak drugie urządzenie przy połączeniu bezpośrednim (chyba że włączony jest tryb prywatności). Żaden z nich nie widzi nazw plików, ich zawartości ani kluczy. Nasze serwery same nie prowadzą logów, ale obsługujący je Cloudflare przechowuje próbkę żądań z adresami IP przez co najmniej 31 dni. Pliki trafiają bezpośrednio między urządzeniami, gdy to możliwe, a w przeciwnym razie przez serwer pośredniczący; w obu przypadkach są szyfrowane end-to-end.",
   "privacyMode": "Ukryj mój adres przed drugim urządzeniem",
   "privacyModeHint": "Tryb prywatności: wszystko przechodzi przez serwer pośredniczący, więc drugie urządzenie nigdy nie pozna twojego adresu IP. Działa wolniej, a drugie urządzenie musi używać tego samego serwera pośredniczącego (domyślny to zapewnia).",
   "privacyModeConfirmTitle": "Włączyć tryb prywatności?",

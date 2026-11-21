@@ -380,7 +380,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get settingsPrivacyBody =>
-      'Le serveur de rendez-vous, le serveur relais et le serveur STUN de Cloudflare voient votre adresse IP, tout comme l\'autre appareil lors d\'une connexion directe (sauf si le mode confidentialité est activé). Aucun d\'eux ne voit les noms de fichiers, leur contenu ni les clés, et nos serveurs ne conservent aucun journal. Les fichiers passent directement d\'un appareil à l\'autre quand c\'est possible, sinon par le serveur relais ; ils sont chiffrés de bout en bout dans les deux cas.';
+      'Le serveur de rendez-vous, le serveur relais et le serveur STUN de Cloudflare voient votre adresse IP, tout comme l\'autre appareil lors d\'une connexion directe (sauf si le mode confidentialité est activé). Aucun d\'eux ne voit les noms de fichiers, leur contenu ni les clés. Nos serveurs ne conservent eux-mêmes aucun journal, mais Cloudflare, qui les fait fonctionner, conserve un échantillon des requêtes avec les adresses IP pendant au moins 31 jours. Les fichiers passent directement d\'un appareil à l\'autre quand c\'est possible, sinon par le serveur relais ; ils sont chiffrés de bout en bout dans les deux cas.';
 
   @override
   String get privacyMode => 'Masquer mon adresse à l\'autre appareil';
