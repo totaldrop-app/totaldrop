@@ -668,4 +668,19 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'Pil ayarları';
+
+  @override
+  String get receiveScanQr => 'QR kodu tara';
+
+  @override
+  String get receiveScanQrHint =>
+      'Kamerayı gönderenin ekranındaki QR koda tutun.';
+
+  @override
+  String get receiveCameraDenied =>
+      'Kamera izni verilmedi. Kodu yine yazabilir ya da yapıştırabilirsiniz.';
+
+  @override
+  String get receiveCameraUnavailable =>
+      'Bu cihazda kullanılabilir kamera yok. Bunun yerine kodu yazın ya da yapıştırın.';
 }

@@ -108,6 +108,22 @@ class ReceiveViewModel extends ChangeNotifier {
     return code != null;
   }
 
+  /// Fills in the code decoded from a scanned QR link (#29), without
+  /// connecting automatically: the person still taps Connect. A link whose
+  /// prefix matched `QrScanActivity` but whose code part is rejected by
+  /// Rust empties the box and shows the invalid-code message.
+  bool takeQr(String text) {
+    if (!canTakeLink) return false;
+    final code = _repo.codeFromQr(text);
+    if (stage != ReceiveStage.entering) reset();
+    setInput(code ?? '');
+    if (code == null) {
+      showInvalid = true;
+      notifyListeners();
+    }
+    return code != null;
+  }
+
   Future<void> connect() async {
     final code = normalized;
     if (code == null) {

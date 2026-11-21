@@ -184,5 +184,9 @@
   "setupBackgroundAutostart": "Avaa Automaattinen käynnistys",
   "setupBackgroundSkip": "Ei nyt",
   "settingsBackground": "Siirrot taustalla",
-  "settingsBackgroundOpen": "Akkuasetukset"
+  "settingsBackgroundOpen": "Akkuasetukset",
+  "receiveScanQr": "Lue QR-koodi",
+  "receiveScanQrHint": "Osoita kameralla lähettäjän näytöllä näkyvää QR-koodia.",
+  "receiveCameraDenied": "Kameran käyttöä ei sallittu. Voit silti kirjoittaa tai liittää koodin.",
+  "receiveCameraUnavailable": "Tässä laitteessa ei ole käytettävää kameraa. Kirjoita tai liitä koodi sen sijaan."
 }

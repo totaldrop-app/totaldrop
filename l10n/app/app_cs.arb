@@ -184,5 +184,9 @@
   "setupBackgroundAutostart": "Otevřít Automatické spuštění",
   "setupBackgroundSkip": "Teď ne",
   "settingsBackground": "Přenosy na pozadí",
-  "settingsBackgroundOpen": "Nastavení baterie"
+  "settingsBackgroundOpen": "Nastavení baterie",
+  "receiveScanQr": "Naskenovat QR kód",
+  "receiveScanQrHint": "Namiřte fotoaparát na QR kód na obrazovce odesílatele.",
+  "receiveCameraDenied": "Přístup k fotoaparátu nebyl povolen. Kód můžete dál napsat nebo vložit.",
+  "receiveCameraUnavailable": "Na tomto zařízení není dostupný fotoaparát. Kód napište nebo vložte."
 }

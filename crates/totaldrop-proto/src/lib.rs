@@ -413,10 +413,35 @@ impl TransferCode {
         let t = t.trim();
         let raw = t
             .strip_prefix("https://totaldrop.app/r#")
+            .or_else(|| t.strip_prefix("https://totaldrop.app/r/#"))
             .or_else(|| t.strip_prefix("http://totaldrop.app/r#"))
+            .or_else(|| t.strip_prefix("http://totaldrop.app/r/#"))
             .or_else(|| t.strip_prefix("totaldrop://r/"))
             .or_else(|| t.strip_prefix("totaldrop:"))
             .unwrap_or(t);
+        Self::parse(&percent_decode(raw)).ok()
+    }
+
+    /// The link a QR code carries (`https://totaldrop.app/r#…`). The code
+    /// sits after `#`, so it never reaches a web server (#29).
+    pub fn qr_link(&self) -> String {
+        format!("https://totaldrop.app/r#{self}")
+    }
+
+    /// The code in a scanned QR code (`https://totaldrop.app/r#…`,
+    /// `https://totaldrop.app/r/#…` or `totaldrop://r/…`, #29). Unlike
+    /// [`TransferCode::from_link`], bare codes, `http://`, and `totaldrop:`
+    /// without `//r/` are refused so an unrelated QR code in view is never
+    /// read as a transfer code.
+    pub fn from_qr(text: &str) -> Option<Self> {
+        if text.len() > MAX_LINK_BYTES {
+            return None;
+        }
+        let clean = strip_invisible_format(text);
+        let t = clean.trim();
+        let raw = strip_prefix_ascii_case(t, "https://totaldrop.app/r#")
+            .or_else(|| strip_prefix_ascii_case(t, "https://totaldrop.app/r/#"))
+            .or_else(|| strip_prefix_ascii_case(t, "totaldrop://r/"))?;
         Self::parse(&percent_decode(raw)).ok()
     }
 
@@ -445,6 +470,13 @@ impl TransferCode {
         }
         s
     }
+}
+
+fn strip_prefix_ascii_case<'a>(s: &'a str, prefix: &str) -> Option<&'a str> {
+    let head = s.get(..prefix.len())?;
+    head.eq_ignore_ascii_case(prefix)
+        .then(|| s.get(prefix.len()..))
+        .flatten()
 }
 
 impl core::fmt::Display for TransferCode {
@@ -813,5 +845,44 @@ mod tests {
             link(&format!("totaldrop://r/7-abandon-ability{just}")),
             Some("7-abandon-ability".into())
         );
+    }
+
+    #[test]
+    fn qr_codes_accept_only_totaldrop_https_and_custom_scheme_links() {
+        let qr = |s: &str| TransferCode::from_qr(s).map(|c| c.to_string());
+        let parsed = TransferCode::parse("7-harbor-rocket").unwrap();
+        assert_eq!(parsed.qr_link(), "https://totaldrop.app/r#7-harbor-rocket");
+        assert_eq!(qr(&parsed.qr_link()), Some("7-harbor-rocket".into()));
+        assert_eq!(
+            qr("  \u{00AD}\u{2068}HTTPS://TOTALDROP.APP/R#7-Harbor-Rocket\u{2069} "),
+            Some("7-harbor-rocket".into())
+        );
+        assert_eq!(
+            qr("https://totaldrop.app/r/#7-harbor-rocket"),
+            Some("7-harbor-rocket".into())
+        );
+        assert_eq!(
+            qr("totaldrop://r/7%20harbor%20rocket"),
+            Some("7-harbor-rocket".into())
+        );
+        assert_eq!(
+            qr("TOTALDROP://R/12-zoo-zone-able"),
+            Some("12-zoo-zone-able".into())
+        );
+
+        for rejected in [
+            "7-harbor-rocket",
+            "http://totaldrop.app/r#7-harbor-rocket",
+            "totaldrop:7-harbor-rocket",
+            "https://totaldrop.app/r/7-harbor-rocket",
+            "https://totaldrop.app/r?c=7-harbor-rocket",
+            "https://totaldrop.app/r#7-harbor-rocket?x=1",
+            "https://evil.example/r#7-harbor-rocket",
+            "totaldrop://r/%2537-harbor-rocket",
+            "WIFI:S:Home;T:WPA;P:secret;;",
+            "",
+        ] {
+            assert_eq!(qr(rejected), None, "{rejected:?}");
+        }
     }
 }

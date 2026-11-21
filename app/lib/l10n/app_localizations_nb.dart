@@ -684,4 +684,19 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'Batteriinnstillinger';
+
+  @override
+  String get receiveScanQr => 'Skann QR-kode';
+
+  @override
+  String get receiveScanQrHint =>
+      'Rett kameraet mot QR-koden på avsenderens skjerm.';
+
+  @override
+  String get receiveCameraDenied =>
+      'Kameratilgang ble ikke tillatt. Du kan fortsatt skrive eller lime inn koden.';
+
+  @override
+  String get receiveCameraUnavailable =>
+      'Ingen kamera er tilgjengelig på denne enheten. Skriv eller lim inn koden i stedet.';
 }

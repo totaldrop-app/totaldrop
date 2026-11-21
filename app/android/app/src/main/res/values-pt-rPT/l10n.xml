@@ -11,4 +11,7 @@
     <string name="process_text">Enviar com o TotalDrop</string>
     <string name="shortcut_receive_short">Receber</string>
     <string name="shortcut_receive_long">Receber ficheiros</string>
+    <string name="qr_scan_title">Ler código QR</string>
+    <string name="qr_scan_hint">Aponte a câmara para o código QR no ecrã do remetente.</string>
+    <string name="qr_scan_close">Cancelar</string>
 </resources>

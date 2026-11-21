@@ -666,4 +666,19 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'Cài đặt pin';
+
+  @override
+  String get receiveScanQr => 'Quét mã QR';
+
+  @override
+  String get receiveScanQrHint =>
+      'Hướng camera vào mã QR trên màn hình người gửi.';
+
+  @override
+  String get receiveCameraDenied =>
+      'Chưa cho phép truy cập camera. Bạn vẫn có thể nhập hoặc dán mã.';
+
+  @override
+  String get receiveCameraUnavailable =>
+      'Thiết bị này không có camera khả dụng. Hãy nhập hoặc dán mã thay thế.';
 }

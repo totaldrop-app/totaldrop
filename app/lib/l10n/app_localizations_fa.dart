@@ -681,4 +681,19 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'تنظیمات باتری';
+
+  @override
+  String get receiveScanQr => 'اسکن کد QR';
+
+  @override
+  String get receiveScanQrHint =>
+      'دوربین را به سمت کد QR روی صفحهٔ فرستنده بگیرید.';
+
+  @override
+  String get receiveCameraDenied =>
+      'دسترسی به دوربین مجاز نشد. همچنان می‌توانید کد را بنویسید یا جای‌گذاری کنید.';
+
+  @override
+  String get receiveCameraUnavailable =>
+      'دوربینی در این دستگاه در دسترس نیست. به جای آن کد را بنویسید یا جای‌گذاری کنید.';
 }

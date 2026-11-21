@@ -675,4 +675,18 @@ class AppLocalizationsHe extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'הגדרות סוללה';
+
+  @override
+  String get receiveScanQr => 'סריקת קוד QR';
+
+  @override
+  String get receiveScanQrHint => 'כוון את המצלמה אל קוד ה-QR שעל מסך השולח.';
+
+  @override
+  String get receiveCameraDenied =>
+      'הגישה למצלמה לא אושרה. עדיין אפשר להקליד או להדביק את הקוד.';
+
+  @override
+  String get receiveCameraUnavailable =>
+      'אין מצלמה זמינה במכשיר זה. הקלד או הדבק את הקוד במקום זאת.';
 }

@@ -11,4 +11,7 @@
     <string name="process_text">Надіслати через TotalDrop</string>
     <string name="shortcut_receive_short">Отримати</string>
     <string name="shortcut_receive_long">Отримання файлів</string>
+    <string name="qr_scan_title">Сканувати QR-код</string>
+    <string name="qr_scan_hint">Наведіть камеру на QR-код на екрані відправника.</string>
+    <string name="qr_scan_close">Скасувати</string>
 </resources>

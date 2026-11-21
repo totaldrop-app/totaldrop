@@ -1219,6 +1219,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Battery settings'**
   String get settingsBackgroundOpen;
+
+  /// Receive screen button and camera screen heading for scanning the transfer QR code (#29)
+  ///
+  /// In en, this message translates to:
+  /// **'Scan QR code'**
+  String get receiveScanQr;
+
+  /// Instruction shown on the camera QR scanner screen (#29)
+  ///
+  /// In en, this message translates to:
+  /// **'Point the camera at the QR code on the sender\'s screen.'**
+  String get receiveScanQrHint;
+
+  /// Shown on the Receive screen when camera permission is denied (#29)
+  ///
+  /// In en, this message translates to:
+  /// **'Camera access was not allowed. You can still type or paste the code.'**
+  String get receiveCameraDenied;
+
+  /// Shown on the Receive screen when the device has no usable camera (#29)
+  ///
+  /// In en, this message translates to:
+  /// **'No camera is available on this device. Type or paste the code instead.'**
+  String get receiveCameraUnavailable;
 }
 
 class _AppLocalizationsDelegate

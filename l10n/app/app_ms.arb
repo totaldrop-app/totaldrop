@@ -184,5 +184,9 @@
   "setupBackgroundAutostart": "Buka Automula",
   "setupBackgroundSkip": "Bukan sekarang",
   "settingsBackground": "Pemindahan di latar belakang",
-  "settingsBackgroundOpen": "Tetapan bateri"
+  "settingsBackgroundOpen": "Tetapan bateri",
+  "receiveScanQr": "Imbas kod QR",
+  "receiveScanQrHint": "Halakan kamera ke kod QR pada skrin penghantar.",
+  "receiveCameraDenied": "Akses kamera tidak dibenarkan. Anda masih boleh menaip atau menampal kod.",
+  "receiveCameraUnavailable": "Tiada kamera tersedia pada peranti ini. Taip atau tampal kod sebaliknya."
 }

@@ -11,4 +11,7 @@
     <string name="process_text">ส่งด้วย TotalDrop</string>
     <string name="shortcut_receive_short">รับ</string>
     <string name="shortcut_receive_long">รับไฟล์</string>
+    <string name="qr_scan_title">สแกนคิวอาร์โค้ด</string>
+    <string name="qr_scan_hint">หันกล้องไปที่คิวอาร์โค้ดบนหน้าจอของผู้ส่ง</string>
+    <string name="qr_scan_close">ยกเลิก</string>
 </resources>

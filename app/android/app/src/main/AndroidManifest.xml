@@ -6,9 +6,15 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <!-- Required for a job with a network constraint. -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <!-- Scanning the sender's QR code on the Receive screen (#29); asked only
+         there, and optional so devices without a camera still install. -->
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-feature android:name="android.hardware.camera" android:required="false"/>
+    <uses-feature android:name="android.hardware.camera.any" android:required="false"/>
     <application
         android:label="TotalDrop"
         android:allowBackup="false"
+        android:supportsRtl="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:localeConfig="@xml/locales_config"
         android:name="${applicationName}"
@@ -99,6 +105,13 @@
         <receiver
             android:name=".StopTransferReceiver"
             android:exported="false"/>
+        <!-- Camera QR scanner opened only from the Receive screen (#29). -->
+        <activity
+            android:name=".QrScanActivity"
+            android:exported="false"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
+            android:label="@string/qr_scan_title"
+            android:theme="@android:style/Theme.DeviceDefault.NoActionBar"/>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

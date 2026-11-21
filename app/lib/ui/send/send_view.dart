@@ -10,6 +10,7 @@ import '../../l10n/app_localizations.dart';
 import '../core/common.dart';
 import '../core/l10n.dart';
 import '../core/mark.dart';
+import '../core/qr_code_view.dart';
 import '../core/theme.dart';
 import 'send_view_model.dart';
 
@@ -590,6 +591,22 @@ class _Waiting extends StatelessWidget {
           l.sendCodeHint,
           textAlign: TextAlign.center,
           style: theme.textTheme.bodyLarge,
+        ),
+        Gap.l,
+        Center(
+          child: QrCodeView(
+            code: code,
+            dismissListenable: vm,
+            shouldDismiss: () => vm.stage != SendStage.waiting,
+          ),
+        ),
+        Gap.s,
+        Text(
+          l.sendQrHint,
+          textAlign: TextAlign.center,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
         ),
         Gap.xl,
         const SameNetworkNote(),

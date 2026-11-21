@@ -135,6 +135,20 @@ class FakeRepository implements TransferRepository {
     return RegExp(r'^\d+(-[a-z]+){2,3}$').hasMatch(code) ? code : null;
   }
 
+  @override
+  String? codeFromQr(String text) {
+    for (final prefix in const [
+      'https://totaldrop.app/r#',
+      'https://totaldrop.app/r/#',
+      'totaldrop://r/',
+    ]) {
+      if (!text.startsWith(prefix)) continue;
+      final code = text.substring(prefix.length);
+      return RegExp(r'^\d+(-[a-z]+){2,3}$').hasMatch(code) ? code : null;
+    }
+    return null;
+  }
+
   /// Thrown by [receiveFolder] when set.
   Object? folderError;
 

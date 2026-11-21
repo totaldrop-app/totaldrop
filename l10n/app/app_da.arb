@@ -184,5 +184,9 @@
   "setupBackgroundAutostart": "Åbn Autostart",
   "setupBackgroundSkip": "Ikke nu",
   "settingsBackground": "Overførsler i baggrunden",
-  "settingsBackgroundOpen": "Batteriindstillinger"
+  "settingsBackgroundOpen": "Batteriindstillinger",
+  "receiveScanQr": "Scan QR-kode",
+  "receiveScanQrHint": "Ret kameraet mod QR-koden på afsenderens skærm.",
+  "receiveCameraDenied": "Kameraadgang blev ikke tilladt. Du kan stadig skrive eller indsætte koden.",
+  "receiveCameraUnavailable": "Der er intet kamera tilgængeligt på denne enhed. Skriv eller indsæt koden i stedet."
 }

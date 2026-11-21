@@ -693,4 +693,19 @@ class AppLocalizationsEl extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'Ρυθμίσεις μπαταρίας';
+
+  @override
+  String get receiveScanQr => 'Σάρωση κωδικού QR';
+
+  @override
+  String get receiveScanQrHint =>
+      'Στρέψτε την κάμερα στον κωδικό QR στην οθόνη του αποστολέα.';
+
+  @override
+  String get receiveCameraDenied =>
+      'Δεν επιτράπηκε η πρόσβαση στην κάμερα. Μπορείτε ακόμη να πληκτρολογήσετε ή να επικολλήσετε τον κωδικό.';
+
+  @override
+  String get receiveCameraUnavailable =>
+      'Δεν υπάρχει διαθέσιμη κάμερα σε αυτήν τη συσκευή. Πληκτρολογήστε ή επικολλήστε τον κωδικό.';
 }

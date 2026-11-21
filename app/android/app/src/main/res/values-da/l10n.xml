@@ -11,4 +11,7 @@
     <string name="process_text">Send med TotalDrop</string>
     <string name="shortcut_receive_short">Modtag</string>
     <string name="shortcut_receive_long">Modtag filer</string>
+    <string name="qr_scan_title">Scan QR-kode</string>
+    <string name="qr_scan_hint">Ret kameraet mod QR-koden på afsenderens skærm.</string>
+    <string name="qr_scan_close">Annuller</string>
 </resources>

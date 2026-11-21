@@ -184,5 +184,9 @@
   "setupBackgroundAutostart": "Automatikus indítás megnyitása",
   "setupBackgroundSkip": "Most nem",
   "settingsBackground": "Átvitel a háttérben",
-  "settingsBackgroundOpen": "Akkumulátorbeállítások"
+  "settingsBackgroundOpen": "Akkumulátorbeállítások",
+  "receiveScanQr": "QR-kód beolvasása",
+  "receiveScanQrHint": "Irányítsa a kamerát a küldő képernyőjén látható QR-kódra.",
+  "receiveCameraDenied": "A kamerához való hozzáférés nem lett engedélyezve. A kódot továbbra is beírhatja vagy beillesztheti.",
+  "receiveCameraUnavailable": "Ezen az eszközön nem érhető el kamera. Írja be vagy illessze be a kódot."
 }

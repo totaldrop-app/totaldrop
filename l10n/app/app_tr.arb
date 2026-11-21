@@ -184,5 +184,9 @@
   "setupBackgroundAutostart": "Otomatik başlatmayı aç",
   "setupBackgroundSkip": "Şimdi değil",
   "settingsBackground": "Arka planda aktarım",
-  "settingsBackgroundOpen": "Pil ayarları"
+  "settingsBackgroundOpen": "Pil ayarları",
+  "receiveScanQr": "QR kodu tara",
+  "receiveScanQrHint": "Kamerayı gönderenin ekranındaki QR koda tutun.",
+  "receiveCameraDenied": "Kamera izni verilmedi. Kodu yine yazabilir ya da yapıştırabilirsiniz.",
+  "receiveCameraUnavailable": "Bu cihazda kullanılabilir kamera yok. Bunun yerine kodu yazın ya da yapıştırın."
 }

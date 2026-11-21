@@ -184,5 +184,9 @@
   "setupBackgroundAutostart": "פתיחת ההפעלה האוטומטית",
   "setupBackgroundSkip": "לא עכשיו",
   "settingsBackground": "העברות ברקע",
-  "settingsBackgroundOpen": "הגדרות סוללה"
+  "settingsBackgroundOpen": "הגדרות סוללה",
+  "receiveScanQr": "סריקת קוד QR",
+  "receiveScanQrHint": "כוון את המצלמה אל קוד ה-QR שעל מסך השולח.",
+  "receiveCameraDenied": "הגישה למצלמה לא אושרה. עדיין אפשר להקליד או להדביק את הקוד.",
+  "receiveCameraUnavailable": "אין מצלמה זמינה במכשיר זה. הקלד או הדבק את הקוד במקום זאת."
 }

@@ -8,6 +8,7 @@ import 'package:material_ui/material_ui.dart';
 
 import 'data/background_access.dart';
 import 'data/launch_source.dart';
+import 'data/qr_scanner.dart';
 import 'data/settings_repository.dart';
 import 'data/transfer_keep_alive.dart';
 import 'data/transfer_repository.dart';
@@ -57,12 +58,16 @@ Future<void> main() async {
   final LaunchSource launches = Platform.isAndroid
       ? AndroidLaunchSource()
       : const NoLaunches();
+  final QrScanner qrScanner = Platform.isAndroid
+      ? const AndroidQrScanner()
+      : const NoQrScanner();
   runApp(
     TotalDropApp(
       settings: settings,
       launches: launches,
       keepAlive: keepAlive,
       background: background,
+      qrScanner: qrScanner,
       send: SendViewModel(
         repository: transfers,
         keepAlive: keepAlive,
@@ -82,6 +87,7 @@ class TotalDropApp extends StatelessWidget {
     required this.keepAlive,
     this.launches = const NoLaunches(),
     this.background = const NoBackgroundLimits(),
+    this.qrScanner = const NoQrScanner(),
   });
 
   final SettingsRepository settings;
@@ -93,6 +99,7 @@ class TotalDropApp extends StatelessWidget {
   /// that leaves the screen is known (#338).
   final WatchedKeepAlive keepAlive;
   final BackgroundAccess background;
+  final QrScanner qrScanner;
   late final _prompts = BackgroundPrompts(
     settings: settings,
     access: background,
@@ -107,7 +114,7 @@ class TotalDropApp extends StatelessWidget {
 
   Route<void> _receiveRoute() => MaterialPageRoute<void>(
     settings: const RouteSettings(name: receiveRoute),
-    builder: (_) => ReceiveView(viewModel: receive),
+    builder: (_) => ReceiveView(viewModel: receive, qrScanner: qrScanner),
   );
 
   @override

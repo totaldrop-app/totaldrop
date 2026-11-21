@@ -660,4 +660,18 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'การตั้งค่าแบตเตอรี่';
+
+  @override
+  String get receiveScanQr => 'สแกนคิวอาร์โค้ด';
+
+  @override
+  String get receiveScanQrHint => 'หันกล้องไปที่คิวอาร์โค้ดบนหน้าจอของผู้ส่ง';
+
+  @override
+  String get receiveCameraDenied =>
+      'ไม่ได้รับอนุญาตให้ใช้กล้อง คุณยังพิมพ์หรือวางรหัสได้';
+
+  @override
+  String get receiveCameraUnavailable =>
+      'ไม่มีกล้องที่ใช้งานได้ในอุปกรณ์นี้ โปรดพิมพ์หรือวางรหัสแทน';
 }

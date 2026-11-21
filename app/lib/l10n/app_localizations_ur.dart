@@ -682,4 +682,19 @@ class AppLocalizationsUr extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'بیٹری کی ترتیبات';
+
+  @override
+  String get receiveScanQr => 'QR کوڈ اسکین کریں';
+
+  @override
+  String get receiveScanQrHint =>
+      'بھیجنے والے کی اسکرین پر موجود QR کوڈ کی طرف کیمرہ کریں۔';
+
+  @override
+  String get receiveCameraDenied =>
+      'کیمرے تک رسائی کی اجازت نہیں ملی۔ آپ پھر بھی کوڈ لکھ یا پیسٹ کر سکتے ہیں۔';
+
+  @override
+  String get receiveCameraUnavailable =>
+      'اس آلے پر کوئی کیمرہ دستیاب نہیں ہے۔ اس کے بجائے کوڈ لکھیں یا پیسٹ کریں۔';
 }
