@@ -30,10 +30,12 @@ rules in `app/README.md`.
 
 - Minimum Android 15 (`minSdk 35`); target the newest SDK the build uses.
 - Background: a user-initiated job keeps process and network alive while a
-  transfer runs, with a notification and a Stop button (decision 0010).
+  transfer runs, with a notification, a Stop button, a `WifiLock` and a
+  bounded `PARTIAL_WAKE_LOCK` (decision 0010, #340).
   Permissions for it: `RUN_USER_INITIATED_JOBS`, `POST_NOTIFICATIONS` (asked
   at the first transfer; the transfer works without it),
-  `ACCESS_NETWORK_STATE`; the app as a whole also needs `INTERNET`
+  `ACCESS_NETWORK_STATE`, `ACCESS_WIFI_STATE` and `WAKE_LOCK`; the app as a
+  whole also needs `INTERNET`
   (`app/android/app/src/main/AndroidManifest.xml`).
 - Material You colours (`dynamic_color`) and Material 3; Expressive parts only
   as the official `material_ui` package provides them; icon buttons in text
