@@ -57,7 +57,7 @@ repos:
         entry: >-
           cargo clippy --workspace --exclude totaldrop-linux
           --exclude rust_lib_totaldrop --all-targets --locked -- -D warnings
-        files: \.rs$|Cargo\.(toml|lock)$|^rust-toolchain\.toml$
+        files: \.rs$|Cargo\.(toml|lock)$|^(rust-toolchain|clippy)\.toml$
         pass_filenames: false
         require_serial: true
 
@@ -67,7 +67,7 @@ repos:
         entry: >-
           cargo test --workspace --exclude totaldrop-linux
           --exclude rust_lib_totaldrop --locked
-        files: \.rs$|Cargo\.(toml|lock)$|^rust-toolchain\.toml$|^l10n/
+        files: \.rs$|Cargo\.(toml|lock)$|^(rust-toolchain|clippy)\.toml$|^l10n/
         pass_filenames: false
         require_serial: true
 

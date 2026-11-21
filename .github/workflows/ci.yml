@@ -42,7 +42,7 @@ jobs:
           BASE: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha || github.event.before }}
           HEAD: ${{ github.sha }}
         run: |
-          shared='Cargo\.toml$|Cargo\.lock$|rust-toolchain\.toml$'
+          shared='Cargo\.toml$|Cargo\.lock$|rust-toolchain\.toml$|clippy\.toml$'
           declare -A area=(
             [core]="^(crates/|l10n/|server/totaldrop-(rendezvous|relay)/|fuzz/|deny\.toml$|$shared|\.github/workflows/core\.yml$)"
             [android]="^(app/|l10n/|crates/totaldrop-(core|crypto|proto|l10n)/|$shared|\.github/workflows/android(-release)?\.yml$)"

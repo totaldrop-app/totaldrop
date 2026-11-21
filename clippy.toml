@@ -1,0 +1,37 @@
+# SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Compile-time terminal-sanitisation rules enforced in `totaldrop-cli` (#399).
+# Other workspace crates keep `disallowed_macros` and `disallowed_methods`
+# allowed in `[workspace.lints.clippy]`; `crates/totaldrop-cli/src/main.rs`
+# denies both at the crate root and scopes the sole allowance to the minimal
+# terminal sink functions in `crates/totaldrop-cli/src/term.rs`.
+
+disallowed-macros = [
+  { path = "std::print", reason = "write terminal output through crates/totaldrop-cli/src/term.rs so untrusted text is sanitised (#399)" },
+  { path = "std::println", reason = "write terminal output through crates/totaldrop-cli/src/term.rs so untrusted text is sanitised (#399)" },
+  { path = "std::eprint", reason = "write terminal output through crates/totaldrop-cli/src/term.rs so untrusted text is sanitised (#399)" },
+  { path = "std::eprintln", reason = "write terminal output through crates/totaldrop-cli/src/term.rs so untrusted text is sanitised (#399)" },
+  { path = "std::dbg", reason = "write terminal output through crates/totaldrop-cli/src/term.rs so untrusted text is sanitised (#399)" },
+  { path = "core::write", reason = "write terminal output through crates/totaldrop-cli/src/term.rs so untrusted text is sanitised (#399)" },
+  { path = "core::writeln", reason = "write terminal output through crates/totaldrop-cli/src/term.rs so untrusted text is sanitised (#399)" },
+]
+
+disallowed-methods = [
+  { path = "std::io::stdout", reason = "access stdout only inside crates/totaldrop-cli/src/term.rs via sanitised Clean values (#399)" },
+  { path = "std::io::stderr", reason = "access stderr only inside crates/totaldrop-cli/src/term.rs via sanitised Clean values (#399)" },
+  { path = "std::io::Write::write", reason = "write terminal output through crates/totaldrop-cli/src/term.rs so untrusted text is sanitised (#399)" },
+  { path = "std::io::Write::write_vectored", reason = "write terminal output through crates/totaldrop-cli/src/term.rs so untrusted text is sanitised (#399)" },
+  { path = "std::io::Write::write_all", reason = "write terminal output through crates/totaldrop-cli/src/term.rs so untrusted text is sanitised (#399)" },
+  { path = "std::io::Write::write_fmt", reason = "write terminal output through crates/totaldrop-cli/src/term.rs so untrusted text is sanitised (#399)" },
+  { path = "clap::Command::get_matches", reason = "use try_get_matches and term::exit_clap so CLI parse errors sanitise untrusted arguments (#399)" },
+  { path = "clap::Command::get_matches_from", reason = "use try_get_matches_from and term::exit_clap so CLI parse errors sanitise untrusted arguments (#399)" },
+  { path = "clap::Command::get_matches_mut", reason = "use try_get_matches_from_mut and term::exit_clap so CLI parse errors sanitise untrusted arguments (#399)" },
+  { path = "clap::Command::print_help", reason = "render help through term::exit_clap so argv[0] is sanitised before writing to the terminal (#399)" },
+  { path = "clap::Command::print_long_help", reason = "render help through term::exit_clap so argv[0] is sanitised before writing to the terminal (#399)" },
+  { path = "clap::Parser::parse", reason = "use try_get_matches and term::exit_clap so CLI parse errors sanitise untrusted arguments (#399)" },
+  { path = "clap::Parser::parse_from", reason = "use try_parse_from and term::exit_clap so CLI parse errors sanitise untrusted arguments (#399)" },
+  { path = "clap::Parser::update_from", reason = "use try_update_from and term::exit_clap so CLI parse errors sanitise untrusted arguments (#399)" },
+  { path = "clap::error::Error::exit", reason = "use term::exit_clap so CLI parse errors sanitise untrusted arguments before writing to the terminal (#399)" },
+  { path = "clap::error::Error::print", reason = "use term::exit_clap so CLI parse errors sanitise untrusted arguments before writing to the terminal (#399)" },
+]
