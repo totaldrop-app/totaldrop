@@ -4,7 +4,7 @@ The full brand book lives in the TotalDrop design system. This file holds the bi
 
 ## 1. Match the system one hundred percent
 
-On every platform, TotalDrop looks like part of that system. Colour, the light or dark theme, the accent colour, the text scale, icons and window behaviour come from the system. The Aurora palette is used only when the system gives no colour at all. The only thing that does not change is the mark (Köşe) and its colours.
+On every platform, TotalDrop looks like part of that system. Colour, the light or dark theme, the accent colour, the text scale, icons and window behaviour come from the system. The Aurora fallback palette is used in an app only when the operating environment exposes no theme colours at all; on the website, the Mineral surface and colour system is used ([decision 0022](kararlar/0022-mineral-web-design-system.md)). The one thing that never changes across apps or web is the mark (Köşe) and its colours.
 
 When you change the system theme, the app switches to the new theme without a restart.
 
@@ -52,3 +52,34 @@ While a transfer runs, the mark turns a quarter turn clockwise around the circle
 - **Reduce motion:** if this setting is on in the system, the mark stays at rest.
 
 In the hero section of the website, around the mark and outside its clear space, a generic device line icon stands in each direction the corner points to at the end of each quarter: a desktop at the top right (the resting direction), a phone at the bottom right, a laptop at the bottom left, a tablet at the top left. When the corner reaches a direction, that icon turns to the accent colour (`dv-lit`, the same 3.2 second cycle). The icons are not part of the mark: the mark's path, colour and motion do not change, and the apps have no icons. No platform or manufacturer logos (Apple, Android, Windows) are used. With reduce motion on, the icons stay equal and still. They are decoration and are hidden from screen readers. The icons do not count as a frame or a ring: they do not surround the mark, are not connected to one another, stand separately in the directions the corner points to, and stay outside the mark's clear space.
+
+## 3. Colour and surfaces: Mineral on the web, system in the apps
+
+Following Dieter Rams, every surface and colour token has one job. No drop shadows, gradients, glass blur or glow are used: surfaces are separated by tonal contrast (`bg`, `surface`, `bg-raised`) and 1 px hairlines (`rule`).
+
+On the website (`site/public/styles.css`, [decision 0022](kararlar/0022-mineral-web-design-system.md)), neutral **Mineral** grounds and cobalt interactive accents keep reading calm, high-contrast, and distinct from the violet **Köşe** mark, matching how the native apps look on neutral Material You and desktop themes:
+
+| Token | Light | Dark | Role |
+|---|---|---|---|
+| `--mark` | `#6D4AE0` (Violet) | `#A68BFF` (Glow) | The **Köşe** mark only (never buttons or running text) |
+| `--bg` | `#F7F7F5` (Alabaster) | `#0F1116` (Obsidian) | Page ground and `<meta name="theme-color">` |
+| `--surface` | `#FFFFFF` (Paper) | `#161922` (Graphite) | Cards, code specimens, app frames and comparison tables |
+| `--bg-raised` | `#EEEEEC` (Stone) | `#1E222E` (Slate) | Recessed code blocks, quiet chips and secondary blocks |
+| `--rule` | `#DFDFE2` | `#282E3D` | 1 px structural hairlines (decorative separation) |
+| `--outline` | `#646A78` | `#8790A1` | Borders of buttons, fields and selects (5.0:1+ on `bg`) |
+| `--text` | `#14161D` | `#F2F4F8` | Primary text and headings (16.8:1 light, 17.2:1 dark on `bg`) |
+| `--text-2` | `#4A4F5C` | `#A3ABB9` | Secondary descriptions, captions and metadata (7.6:1 light, 8.2:1 dark on `bg`) |
+| `--accent` | `#1E47B8` (Cobalt) | `#7DB4FF` (Ice Cobalt) | Primary action, links, active states and focus ring (7.4:1 light, 8.9:1 dark on `bg`) |
+| `--accent-soft` | `#E7EEFC` | `#182642` | Quiet wash for active badges and highlights |
+| `--on-accent` | `#FFFFFF` | `#0B1220` | Label on an `--accent` fill (7.9:1 light, 8.8:1 dark) |
+| `--success` | `#0B6E4F` | `#6EE7B7` | Verified or completed state, always paired with a word or icon |
+| `--error` | `#B81D24` | `#FCA5A5` | Error state, always paired with a word or icon |
+
+In the native apps, when an environment provides no system palette at all, the built-in `Aurora` fallback (`linux/qml/Theme.qml`, `app/`) remains available; downloadable logo lockups (`site/tools/brand-files.mjs`) and app icons (`packaging/linux/app.totaldrop.TotalDrop.svg`) retain the canonical `#6D4AE0` / `#A68BFF` mark with `#22184F` / `#F4F2FB` wordmark lockups.
+
+## 4. Web typography, controls and responsive grid
+
+- **Typefaces:** `Bricolage Grotesque` (700, 800, tight negative tracking on headings; zero letter-spacing in Arabic-script languages) for display headings, transfer codes, step numbers and the wordmark; `Atkinson Hyperlegible` (400, 700) for body copy, buttons and tables so `I`, `l` and `1` stay unmistakable. Both are self-hosted `.woff2` files under the SIL Open Font License; system fonts take over for scripts outside Latin.
+- **Hierarchy and measure:** running prose stays at or under `44rem` (`65ch`); tabular numerals (`font-variant-numeric: tabular-nums`) are used wherever counts, sizes, percentages or prices align.
+- **Buttons and touch targets:** one filled `--accent` button per view; secondary actions use a 1 px `--outline` border with no fill; inline actions (such as copying a command) use bold `--accent` text. Every interactive control meets at least a `44 × 44 px` target (`56 px` height on primary/secondary buttons) and shows a `3 px` `--accent` `:focus-visible` ring `3 px` out.
+- **Responsive floor:** layouts are mobile-first and tested down to `320 px` viewport width across Latin, long-word (German, Finnish), RTL (Arabic) and CJK (Japanese) pages with zero horizontal scroll (`scrollWidth <= innerWidth`).
