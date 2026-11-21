@@ -1,11 +1,12 @@
 // SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-// Wide-screen 560 dp column constraint and Send Files / Text mode switcher
+// Wide-screen 560 dp column constraint and Send files / Send text mode switcher
 // (#545, ADR 0011).
 
 import 'dart:async';
 
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:totaldrop/data/background_access.dart';
@@ -89,12 +90,23 @@ class _Limits implements BackgroundAccess {
 const _tablet = Size(840, 600);
 const _phone = Size(360, 640);
 
+Future<void> _loadBundledFonts() async {
+  final body = FontLoader('AtkinsonHyperlegible')
+    ..addFont(rootBundle.load('assets/fonts/AtkinsonHyperlegible-Regular.ttf'))
+    ..addFont(rootBundle.load('assets/fonts/AtkinsonHyperlegible-Bold.ttf'));
+  final display = FontLoader('BricolageGrotesque')
+    ..addFont(rootBundle.load('assets/fonts/BricolageGrotesque.ttf'));
+  await body.load();
+  await display.load();
+}
+
 Widget _app(
   Widget home, {
   Locale locale = const Locale('en'),
+  Brightness brightness = Brightness.light,
   double textScale = 1.0,
 }) => MaterialApp(
-  theme: buildTheme(fallbackScheme(Brightness.light)),
+  theme: buildTheme(fallbackScheme(brightness)),
   locale: locale,
   localizationsDelegates: const [
     AppLocalizations.delegate,
@@ -117,101 +129,164 @@ void _expectCentredColumn(WidgetTester tester, Finder finder) {
   expect(rect.right, lessThanOrEqualTo(700.5));
 }
 
+double _findSegmentThresholdWidth({
+  required ThemeData theme,
+  required TextScaler textScaler,
+  required TextDirection textDirection,
+  required List<String> labels,
+}) {
+  var lo = 0.0;
+  var hi = 1200.0;
+  for (var i = 0; i < 30; i++) {
+    final mid = (lo + hi) / 2;
+    if (sendModeSwitchFitsSegmented(
+      theme: theme,
+      textScaler: textScaler,
+      textDirection: textDirection,
+      availableWidth: mid,
+      labels: labels,
+    )) {
+      hi = mid;
+    } else {
+      lo = mid;
+    }
+  }
+  return hi;
+}
+
 void main() {
-  setUpAll(() => RustLib.initMock(api: _Rust()));
+  setUpAll(() async {
+    TestWidgetsFlutterBinding.ensureInitialized();
+    await _loadBundledFonts();
+    RustLib.initMock(api: _Rust());
+  });
 
   group('wide-screen 560 dp column (#545)', () {
-    testWidgets('HomeView centres action cards within 560 dp on a tablet', (
-      tester,
-    ) async {
-      await tester.binding.setSurfaceSize(_tablet);
-      addTearDown(() => tester.binding.setSurfaceSize(null));
+    for (final variant in [
+      (locale: const Locale('en'), brightness: Brightness.light),
+      (locale: const Locale('en'), brightness: Brightness.dark),
+      (locale: const Locale('ar'), brightness: Brightness.light),
+      (locale: const Locale('ar'), brightness: Brightness.dark),
+      (locale: const Locale('ja'), brightness: Brightness.light),
+      (locale: const Locale('ja'), brightness: Brightness.dark),
+    ]) {
+      testWidgets(
+        'HomeView, SendView, ReceiveView, SettingsView and BackgroundSetupView '
+        'stay within 560 dp on a tablet in '
+        '${variant.locale.languageCode} (${variant.brightness.name})',
+        (tester) async {
+          await tester.binding.setSurfaceSize(_tablet);
+          addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      await tester.pumpWidget(
-        _app(HomeView(onSend: () {}, onReceive: () {}, onSettings: () {})),
+          final l = lookupAppLocalizations(variant.locale);
+
+          // HomeView.
+          await tester.pumpWidget(
+            _app(
+              HomeView(onSend: () {}, onReceive: () {}, onSettings: () {}),
+              locale: variant.locale,
+              brightness: variant.brightness,
+            ),
+          );
+          await tester.pump();
+          expect(tester.takeException(), isNull);
+          final cards = find.byType(Card);
+          expect(cards, findsNWidgets(2));
+          _expectCentredColumn(tester, cards.first);
+          _expectCentredColumn(tester, cards.last);
+
+          // SendView: empty file picking, text mode, and populated file list.
+          final sendVm = SendViewModel(
+            repository: FakeRepository(),
+            fileSource: FakeFileSource(),
+          );
+          await tester.pumpWidget(
+            _app(
+              SendView(viewModel: sendVm),
+              locale: variant.locale,
+              brightness: variant.brightness,
+            ),
+          );
+          await tester.pump();
+          expect(tester.takeException(), isNull);
+          _expectCentredColumn(tester, find.byType(SegmentedButton<bool>));
+          _expectCentredColumn(tester, find.byType(FilledButton));
+
+          sendVm.setTextMode(true);
+          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 300));
+          expect(tester.takeException(), isNull);
+          _expectCentredColumn(tester, find.byType(TextField));
+
+          sendVm
+            ..setTextMode(false)
+            ..addFakeFileForTest('archive.tar.zst');
+          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 300));
+          expect(tester.takeException(), isNull);
+          _expectCentredColumn(tester, find.byType(ListTile).first);
+          _expectCentredColumn(tester, find.byType(SwitchListTile));
+
+          // ReceiveView (entering stage + error stage via CenteredScroll).
+          final repo = FakeRepository();
+          final receiveVm = ReceiveViewModel(repository: repo)
+            ..setInput('7-harbor-rocket');
+          await tester.pumpWidget(
+            _app(
+              ReceiveView(viewModel: receiveVm),
+              locale: variant.locale,
+              brightness: variant.brightness,
+            ),
+          );
+          await tester.pump();
+          expect(tester.takeException(), isNull);
+          _expectCentredColumn(tester, find.byType(TextField));
+
+          unawaited(receiveVm.connect());
+          repo.connected.completeError(
+            const TransferError(kind: ErrorKind.connect, detail: '', cause: ''),
+          );
+          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 300));
+          expect(tester.takeException(), isNull);
+          _expectCentredColumn(
+            tester,
+            find.widgetWithText(FilledButton, l.tryAgain),
+          );
+
+          // SettingsView.
+          await tester.pumpWidget(
+            _app(
+              SettingsView(
+                settings: _Settings(),
+                version: '0.3.0',
+                background: const _Limits(),
+              ),
+              locale: variant.locale,
+              brightness: variant.brightness,
+            ),
+          );
+          await tester.pump();
+          expect(tester.takeException(), isNull);
+          _expectCentredColumn(tester, find.byType(TextField));
+
+          // BackgroundSetupView.
+          await tester.pumpWidget(
+            _app(
+              BackgroundSetupView(
+                access: const _Limits(),
+                onDone: ({required skipped}) {},
+              ),
+              locale: variant.locale,
+              brightness: variant.brightness,
+            ),
+          );
+          await tester.pump();
+          expect(tester.takeException(), isNull);
+          _expectCentredColumn(tester, find.byType(FilledButton).first);
+        },
       );
-      await tester.pump();
-
-      final cards = find.byType(Card);
-      expect(cards, findsNWidgets(2));
-      _expectCentredColumn(tester, cards.first);
-      _expectCentredColumn(tester, cards.last);
-    });
-
-    testWidgets('SendView, ReceiveView, SettingsView and BackgroundSetupView '
-        'stay within 560 dp on a tablet', (tester) async {
-      await tester.binding.setSurfaceSize(_tablet);
-      addTearDown(() => tester.binding.setSurfaceSize(null));
-
-      // SendView: empty file-picking state (SliverFillRemaining), Text mode
-      // (SliverFillRemaining), and populated file list + pinned footer.
-      final sendVm = SendViewModel(
-        repository: FakeRepository(),
-        fileSource: FakeFileSource(),
-      );
-      await tester.pumpWidget(_app(SendView(viewModel: sendVm)));
-      await tester.pump();
-      _expectCentredColumn(tester, find.byType(SegmentedButton<bool>));
-      _expectCentredColumn(tester, find.byType(FilledButton));
-
-      sendVm.setTextMode(true);
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
-      _expectCentredColumn(tester, find.byType(TextField));
-
-      sendVm
-        ..setTextMode(false)
-        ..addFakeFileForTest('archive.tar.zst');
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
-      _expectCentredColumn(tester, find.byType(ListTile).first);
-      _expectCentredColumn(tester, find.byType(SwitchListTile));
-
-      // ReceiveView (entering stage + error stage via CenteredScroll).
-      final repo = FakeRepository();
-      final receiveVm = ReceiveViewModel(repository: repo)
-        ..setInput('7-harbor-rocket');
-      await tester.pumpWidget(_app(ReceiveView(viewModel: receiveVm)));
-      await tester.pump();
-      _expectCentredColumn(tester, find.byType(TextField));
-
-      unawaited(receiveVm.connect());
-      repo.connected.completeError(
-        const TransferError(kind: ErrorKind.connect, detail: '', cause: ''),
-      );
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
-      final l = lookupAppLocalizations(const Locale('en'));
-      _expectCentredColumn(
-        tester,
-        find.widgetWithText(FilledButton, l.tryAgain),
-      );
-
-      // SettingsView.
-      await tester.pumpWidget(
-        _app(
-          SettingsView(
-            settings: _Settings(),
-            version: '0.3.0',
-            background: const _Limits(),
-          ),
-        ),
-      );
-      await tester.pump();
-      _expectCentredColumn(tester, find.byType(TextField));
-
-      // BackgroundSetupView.
-      await tester.pumpWidget(
-        _app(
-          BackgroundSetupView(
-            access: const _Limits(),
-            onDone: ({required skipped}) {},
-          ),
-        ),
-      );
-      await tester.pump();
-      _expectCentredColumn(tester, find.byType(FilledButton).first);
-    });
+    }
 
     testWidgets('phones keep 24 dp margins without shrinking the column', (
       tester,
@@ -230,9 +305,54 @@ void main() {
     });
   });
 
-  group('Send Files / Text mode switcher (#545)', () {
+  group('Send files / Send text mode switcher (#545)', () {
     testWidgets(
-      'switches between Files and Text without losing files or draft text',
+      'keeps the AppBar TalkBack heading while picking and updates on mode switch',
+      (tester) async {
+        await tester.binding.setSurfaceSize(_phone);
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        final l = lookupAppLocalizations(const Locale('en'));
+        final vm = SendViewModel(
+          repository: FakeRepository(),
+          fileSource: FakeFileSource(),
+        );
+        await tester.pumpWidget(_app(SendView(viewModel: vm)));
+        await tester.pump();
+
+        final filesHeading = find.descendant(
+          of: find.byType(AppBar),
+          matching: find.text(l.sendTitle),
+        );
+        expect(filesHeading, findsOneWidget);
+        expect(
+          tester.getSemantics(filesHeading),
+          isSemantics(isHeader: true, label: l.sendTitle),
+        );
+
+        await tester.tap(
+          find.descendant(
+            of: find.byType(SegmentedButton<bool>),
+            matching: find.text(l.sendText),
+          ),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+
+        final textHeading = find.descendant(
+          of: find.byType(AppBar),
+          matching: find.text(l.sendText),
+        );
+        expect(textHeading, findsOneWidget);
+        expect(
+          tester.getSemantics(textHeading),
+          isSemantics(isHeader: true, label: l.sendText),
+        );
+      },
+    );
+
+    testWidgets(
+      'switches between Send files and Send text without losing files or draft text',
       (tester) async {
         await tester.binding.setSurfaceSize(_tablet);
         addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -246,10 +366,9 @@ void main() {
         await tester.pumpWidget(_app(SendView(viewModel: vm)));
         await tester.pump();
 
-        expect(find.byType(SegmentedButton<bool>), findsOneWidget);
-        final theme = Theme.of(
-          tester.element(find.byType(SegmentedButton<bool>)),
-        );
+        final segmented = find.byType(SegmentedButton<bool>);
+        expect(segmented, findsOneWidget);
+        final theme = Theme.of(tester.element(segmented));
         expect(
           theme.segmentedButtonTheme.style?.elevation?.resolve(const {}),
           0,
@@ -261,7 +380,9 @@ void main() {
         expect(find.text('report.pdf'), findsOneWidget);
 
         // Switch to Text mode even though a file is already picked.
-        await tester.tap(find.text(l.sendText));
+        await tester.tap(
+          find.descendant(of: segmented, matching: find.text(l.sendText)),
+        );
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 300));
         expect(vm.textMode, isTrue);
@@ -272,14 +393,18 @@ void main() {
 
         // Switch back to Files: the picked file is still listed and the draft
         // text stays intact when switching back to Text again.
-        await tester.tap(find.text(l.sendTitle));
+        await tester.tap(
+          find.descendant(of: segmented, matching: find.text(l.sendTitle)),
+        );
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 300));
         expect(vm.textMode, isFalse);
         expect(find.text('report.pdf'), findsOneWidget);
         expect(vm.text, 'secret note');
 
-        await tester.tap(find.text(l.sendText));
+        await tester.tap(
+          find.descendant(of: segmented, matching: find.text(l.sendText)),
+        );
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 300));
         expect(vm.textMode, isTrue);
@@ -288,13 +413,104 @@ void main() {
     );
 
     testWidgets(
-      'handles 200% text scale on a narrow phone in German and Arabic with '
-      'TalkBack selection semantics',
+      'keeps SegmentedButton on a 360 dp phone at 1.0x across short and long '
+      'translations by wrapping up to 2 lines',
       (tester) async {
         await tester.binding.setSurfaceSize(_phone);
         addTearDown(() => tester.binding.setSurfaceSize(null));
 
-        for (final locale in [const Locale('de'), const Locale('ar')]) {
+        for (final locale in const [
+          Locale('en'),
+          Locale('de'),
+          Locale('fr'),
+          Locale('nl'),
+          Locale('ar'),
+          Locale('ja'),
+        ]) {
+          final vm = SendViewModel(
+            repository: FakeRepository(),
+            fileSource: FakeFileSource(),
+          );
+          await tester.pumpWidget(
+            _app(SendView(viewModel: vm), locale: locale, textScale: 1.0),
+          );
+          await tester.pump();
+          expect(
+            tester.takeException(),
+            isNull,
+            reason: 'locale ${locale.languageCode} overflowed at 1.0x',
+          );
+          expect(
+            find.byType(SegmentedButton<bool>),
+            findsOneWidget,
+            reason:
+                'locale ${locale.languageCode} should stay on SegmentedButton '
+                'at 360 dp / 1.0x',
+          );
+        }
+      },
+    );
+
+    testWidgets('switches cleanly across the exact theme-derived threshold width at 1.0x '
+        'and 2.0x', (tester) async {
+      final theme = buildTheme(fallbackScheme(Brightness.light));
+      final l = lookupAppLocalizations(const Locale('en'));
+      final labels = [l.sendTitle, l.sendText];
+
+      for (final scale in const [1.0, 2.0]) {
+        final threshold = _findSegmentThresholdWidth(
+          theme: theme,
+          textScaler: TextScaler.linear(scale),
+          textDirection: TextDirection.ltr,
+          labels: labels,
+        );
+        expect(threshold, greaterThan(100));
+        expect(threshold, lessThan(1000));
+
+        // columnPadding adds 48 dp horizontal padding for viewports <= 608 dp,
+        // and caps inner width at maxColumnWidth (560 dp) above 608 dp.
+        for (final shouldFit in const [false, true]) {
+          final innerWidth = shouldFit ? threshold + 2.0 : threshold - 2.0;
+          final viewportWidth = innerWidth <= maxColumnWidth
+              ? innerWidth + 48.0
+              : innerWidth + 48.0;
+          if (innerWidth > maxColumnWidth) continue;
+
+          await tester.binding.setSurfaceSize(Size(viewportWidth, 640));
+          final vm = SendViewModel(
+            repository: FakeRepository(),
+            fileSource: FakeFileSource(),
+          );
+          await tester.pumpWidget(
+            _app(SendView(viewModel: vm), textScale: scale),
+          );
+          await tester.pump();
+          expect(tester.takeException(), isNull);
+          expect(
+            find.byType(SegmentedButton<bool>),
+            shouldFit ? findsOneWidget : findsNothing,
+            reason:
+                'scale=$scale innerWidth=${innerWidth.toStringAsFixed(1)} '
+                '(threshold=${threshold.toStringAsFixed(1)})',
+          );
+        }
+      }
+      await tester.binding.setSurfaceSize(null);
+    });
+
+    testWidgets(
+      'handles 200% text scale on a narrow phone in English, German, French '
+      'and Arabic with stacked TalkBack semantics and minimum spacing',
+      (tester) async {
+        await tester.binding.setSurfaceSize(_phone);
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        for (final locale in const [
+          Locale('en'),
+          Locale('de'),
+          Locale('fr'),
+          Locale('ar'),
+        ]) {
           final l = lookupAppLocalizations(locale);
           final vm = SendViewModel(
             repository: FakeRepository(),
@@ -305,9 +521,34 @@ void main() {
           );
           await tester.pump();
           expect(tester.takeException(), isNull);
-          expect(find.byType(SegmentedButton<bool>), findsNothing);
           expect(
-            tester.getSemantics(find.text(l.sendTitle)),
+            find.byType(SegmentedButton<bool>),
+            findsNothing,
+            reason:
+                'locale ${locale.languageCode} stayed on SegmentedButton at '
+                '360 dp / 2.0x',
+          );
+
+          final filesBtn = find.widgetWithText(FilledButton, l.sendTitle);
+          final textBtn = find.widgetWithText(OutlinedButton, l.sendText);
+          expect(filesBtn, findsOneWidget);
+          expect(textBtn, findsOneWidget);
+
+          // Gap.m (16 dp) keeps clearance even when Spacer collapses to 0.
+          final switchBottom = tester.getRect(textBtn).bottom;
+          final uploadTop = tester
+              .getRect(find.byIcon(Icons.upload_file_outlined))
+              .top;
+          expect(uploadTop - switchBottom, greaterThanOrEqualTo(15.5));
+
+          final hintBottom = tester.getRect(find.text(l.sendEmptyHint)).bottom;
+          final addFilesTop = tester
+              .getRect(find.widgetWithText(FilledButton, l.sendAddFiles))
+              .top;
+          expect(addFilesTop - hintBottom, greaterThanOrEqualTo(15.5));
+
+          expect(
+            tester.getSemantics(filesBtn),
             isSemantics(
               isButton: true,
               isSelected: true,
@@ -315,7 +556,7 @@ void main() {
             ),
           );
           expect(
-            tester.getSemantics(find.text(l.sendText)),
+            tester.getSemantics(textBtn),
             isSemantics(
               isButton: true,
               isSelected: false,
@@ -323,13 +564,15 @@ void main() {
             ),
           );
 
-          await tester.tap(find.text(l.sendText));
+          await tester.tap(textBtn);
           await tester.pump();
           await tester.pump(const Duration(milliseconds: 300));
           expect(vm.textMode, isTrue);
           expect(tester.takeException(), isNull);
           expect(
-            tester.getSemantics(find.text(l.sendTitle)),
+            tester.getSemantics(
+              find.widgetWithText(OutlinedButton, l.sendTitle),
+            ),
             isSemantics(
               isButton: true,
               isSelected: false,
@@ -337,7 +580,7 @@ void main() {
             ),
           );
           expect(
-            tester.getSemantics(find.text(l.sendText)),
+            tester.getSemantics(find.widgetWithText(FilledButton, l.sendText)),
             isSemantics(
               isButton: true,
               isSelected: true,
@@ -345,6 +588,23 @@ void main() {
             ),
           );
         }
+
+        // Japanese also renders cleanly at 200% on a 360 dp phone (note:
+        // AtkinsonHyperlegible.ttf omits CJK glyphs in headless tests, so
+        // real-device CJK wrapping is additionally verified visually).
+        final jaVm = SendViewModel(
+          repository: FakeRepository(),
+          fileSource: FakeFileSource(),
+        );
+        await tester.pumpWidget(
+          _app(
+            SendView(viewModel: jaVm),
+            locale: const Locale('ja'),
+            textScale: 2.0,
+          ),
+        );
+        await tester.pump();
+        expect(tester.takeException(), isNull);
       },
     );
   });
