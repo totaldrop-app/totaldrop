@@ -15,6 +15,8 @@ pub enum Error {
     PeerLeft,
     /// The rendezvous server refused a request or could not be reached.
     Rendezvous(String),
+    /// A write to the rendezvous server did not finish in time.
+    RendezvousTimeout,
     /// No network path to the other device worked.
     Connect(String),
     /// The other side broke the protocol.
@@ -43,6 +45,7 @@ impl core::fmt::Display for Error {
             ),
             Error::PeerLeft => f.write_str("the other side left"),
             Error::Rendezvous(m) => write!(f, "rendezvous server: {m}"),
+            Error::RendezvousTimeout => f.write_str("rendezvous server: timed out"),
             Error::Connect(m) => write!(f, "could not connect to the other device: {m}"),
             Error::Protocol(m) => write!(f, "protocol error: {m}"),
             Error::InvalidOffer(m) => write!(f, "invalid offer: {m}"),
@@ -206,6 +209,7 @@ impl Error {
     pub fn cause(&self) -> Cause {
         use std::io::ErrorKind as K;
         match self {
+            Error::RendezvousTimeout => Cause::TimedOut,
             Error::Connect(m) => connect_cause(m),
             Error::Protocol(m) => protocol_cause(m),
             Error::Io(e) => match e.kind() {
@@ -401,6 +405,13 @@ mod tests {
             Error::Rendezvous("connection refused".into()).cause(),
             Cause::Unknown
         );
+        assert_eq!(Error::RendezvousTimeout.cause(), Cause::TimedOut);
+        assert_eq!(
+            Error::RendezvousTimeout.to_string(),
+            "rendezvous server: timed out"
+        );
+        assert!(!Error::RendezvousTimeout.is_code_not_in_use());
+        assert!(!Error::RendezvousTimeout.is_bad_server_address());
         assert_eq!(
             Error::Protocol("undecodable message").cause(),
             Cause::Protocol

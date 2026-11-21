@@ -204,8 +204,8 @@ Adım adım:
    `PreparedSend::text` (`crates/totaldrop-core/src/lib.rs:445`, `crates/totaldrop-core/src/transfer.rs:223` `text_entry`).
 3. `ready` cihaz anahtarlarını üretir, rendezvous'tan numara ayırır, kodu
    cihazda üretir ve kutuyu tutar (`crates/totaldrop-core/src/lib.rs:450-461`;
-   `crates/totaldrop-core/src/rendezvous.rs:175` `allocate`, `crates/totaldrop-core/src/rendezvous.rs:202`
-   `Mailbox::claim`; `crates/totaldrop-proto/src/lib.rs:183`
+   `crates/totaldrop-core/src/rendezvous.rs:202` `allocate`, `crates/totaldrop-core/src/rendezvous.rs:231`
+   `Mailbox::claim`; `crates/totaldrop-proto/src/lib.rs:185`
    `TransferCode`).
 4. `run_with` (`crates/totaldrop-core/src/lib.rs:501`):
    - UDP soketi (`crates/totaldrop-core/src/transport.rs:306`
@@ -308,7 +308,7 @@ arayüz durumuna çevirir: Linux'ta Qt özellikleri
    `alarm` (`server/relay-worker/src/pair.ts:397`).
 
 Rust sunucuları aynı protokolün ikinci uygulamasıdır:
-`server/totaldrop-rendezvous/src/lib.rs:343` `serve`,
+`server/totaldrop-rendezvous/src/lib.rs:342` `serve`,
 `server/totaldrop-relay/src/lib.rs:144` `serve`.
 
 ## 3. Veri modeli ve durum
@@ -317,9 +317,9 @@ Rust sunucuları aynı protokolün ikinci uygulamasıdır:
 
 | Yapı | Yer | Ne taşır |
 | --- | --- | --- |
-| `TransferCode` | `crates/totaldrop-proto/src/lib.rs:183` | Numara + kelimeler; ayrıştırma ve kanonik biçim |
+| `TransferCode` | `crates/totaldrop-proto/src/lib.rs:185` | Numara + kelimeler; ayrıştırma ve kanonik biçim |
 | `limits` | `crates/totaldrop-proto/src/lib.rs:13-29` | 100 000 girdi, 16 MiB manifest, 64 derinlik, 1 MiB parça |
-| `SafePath` | `crates/totaldrop-proto/src/lib.rs:66`, `crates/totaldrop-proto/src/lib.rs:101` `validate_path` | Doğrulanmış göreli yol |
+| `SafePath` | `crates/totaldrop-proto/src/lib.rs:68`, `crates/totaldrop-proto/src/lib.rs:103` `validate_path` | Doğrulanmış göreli yol |
 | `ClientMessage` / `ServerMessage` | `crates/totaldrop-proto/src/wire.rs:236`, `crates/totaldrop-proto/src/wire.rs:323` | Rendezvous kablo iletileri (CBOR) |
 | `Certificate`, `Hints` | `crates/totaldrop-proto/src/wire.rs:422`, `crates/totaldrop-proto/src/wire.rs:533` | Cihaz sertifikası; adresler, uç nokta anahtarı, aktarma URL'si |
 | `Manifest`, `Entry`, `Control`, `DataHeader` | `crates/totaldrop-proto/src/wire.rs:727`, `crates/totaldrop-proto/src/wire.rs:614`, `crates/totaldrop-proto/src/wire.rs:760`, `crates/totaldrop-proto/src/wire.rs:1000` | Teklif, girdiler, kontrol iletileri, veri akışı başlığı |
@@ -375,7 +375,7 @@ Doğrulama: `pair.ts` içinde `sql.exec` geçmez (grep ile bakıldı).
 | Android | `SharedPreferencesWithCache`: `rendezvous_server`, `privacy_mode`, arka plan izni işaretleri (`app/lib/data/settings_repository.dart:13-17`); aşamalar `SendStage`, `ReceiveStage` (`app/lib/ui/send/send_view_model.dart:20`, `app/lib/ui/receive/receive_view_model.dart:27`) | Ayar kalıcı, aşama bellekte |
 | Rendezvous Worker | Yukarıdaki SQLite tabloları; hız sınırı sayaçları bellekte (`server/rendezvous-worker/src/limit.ts:98` `RateLimiter`) | Kutu en çok 60 dk; sayaçlar nesne uyuyunca düşer |
 | Aktarma Worker | WebSocket ekleri + alarm | Bağlantı süresince |
-| Rust sunucuları | Yalnızca bellekte: `HashMap` (`server/totaldrop-rendezvous/src/lib.rs:236-239`, `server/totaldrop-relay/src/lib.rs:88`) | Süreç yeniden başlayınca düşer |
+| Rust sunucuları | Yalnızca bellekte: `HashMap` (`server/totaldrop-rendezvous/src/lib.rs:235-238`, `server/totaldrop-relay/src/lib.rs:88`) | Süreç yeniden başlayınca düşer |
 
 ## 4. Yapılandırma
 
@@ -425,7 +425,7 @@ Aktarma sunucusu iki argüman alır: WebSocket adresi ve UDP keşif adresi
 `server/totaldrop-relay/src/main.rs:20-24`). Süre ve sınırlar koddaki
 `Config` yapısının varsayılanlarıyla gelir (`Config::default()`,
 `server/totaldrop-rendezvous/src/main.rs:20`; yapılar
-`server/totaldrop-rendezvous/src/lib.rs:47`,
+`server/totaldrop-rendezvous/src/lib.rs:48`,
 `server/totaldrop-relay/src/lib.rs:40`); dosya ya da ortam değişkeni
 okunmaz.
 
