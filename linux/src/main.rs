@@ -111,6 +111,8 @@ fn main() {
     };
 
     let mut app = QGuiApplication::new();
+    #[cfg(unix)]
+    quit::SIGNALS.watch(&runtime::RUNTIME, bridge::launcher::quit_application);
     QGuiApplication::set_desktop_file_name(&QString::from(APP_ID));
     if let Some(mut app) = app.as_mut() {
         app.as_mut()
@@ -132,20 +134,24 @@ fn main() {
         engine.load(&QUrl::from("qrc:/qt/qml/app/totaldrop/qml/Main.qml"));
     }
     if let Some(app) = app.as_mut() {
-        let code = app.exec();
-        // The window is closed. The process exits without dropping the
-        // runtime, so a running transfer, or a UPnP delete just started,
-        // would leave a router port open until its lease ends: stop what
-        // runs, drop what has not ended within `quit::STOPPING`, and wait
-        // for the releases (#433). Until then this process still holds
-        // the single-window name, so a launch in those few seconds is
-        // handed to it and opens no window.
+        let code = if quit::SIGNALS.signaled() {
+            0
+        } else {
+            app.exec()
+        };
+        // The window is closed, or a signal asked the process to exit (#527).
+        // The process exits without dropping the runtime, so a running
+        // transfer, or a UPnP delete just started, would leave a router port
+        // open until its lease ends: stop what runs, drop what has not ended
+        // within `quit::STOPPING`, and wait for the releases (#433). Until
+        // then this process still holds the single-window name, so a launch
+        // in those few seconds is handed to it and opens no window.
         bridge::transfer::stop_all();
         runtime::RUNTIME.block_on(quit::finish(
             &quit::TRANSFERS,
             totaldrop_core::portmap::released(),
             quit::STOPPING,
         ));
-        std::process::exit(code);
+        std::process::exit(quit::SIGNALS.exit_code(code));
     }
 }
