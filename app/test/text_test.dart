@@ -1,15 +1,54 @@
 // SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-// Sending and receiving a text (#326): what the send screen's text box
-// holds, where the clipboard and a shared text go, and that a text offer
-// is received as a text.
+// Sending and receiving a text (#326, #53): what the send screen's text box
+// holds, where the clipboard and a shared text go, that a text offer is
+// received as a text, and how Share text and confirmed Open link behave.
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:totaldrop/l10n/app_localizations.dart';
+import 'package:totaldrop/src/rust/api/l10n.dart' show ShownText;
 import 'package:totaldrop/src/rust/api/transfer.dart';
+import 'package:totaldrop/src/rust/frb_generated.dart';
+import 'package:totaldrop/ui/core/theme.dart';
+import 'package:totaldrop/ui/receive/receive_view.dart';
 import 'package:totaldrop/ui/receive/receive_view_model.dart';
 import 'package:totaldrop/ui/send/send_view_model.dart';
 
 import 'fakes.dart';
+
+class _Rust implements RustLibApi {
+  @override
+  ShownText crateApiL10NShownText({required String text}) => ShownText(
+    text: text.length > 16384 ? text.substring(0, 16384) : text,
+    short: text.length > 16384,
+    hidden: text.contains('\u202E'),
+  );
+
+  @override
+  String? crateApiL10NSingleWebUrl({required String text}) => switch (text) {
+    'https://totaldrop.app/docs' => 'https://totaldrop.app/docs',
+    'https://münchen.de/rathaus' => 'https://xn--mnchen-3ya.de/rathaus',
+    _ => null,
+  };
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+Widget _receiveApp(
+  ReceiveViewModel vm, {
+  Future<void> Function(String text)? onShareText,
+}) => MaterialApp(
+  theme: buildTheme(fallbackScheme(Brightness.light)),
+  localizationsDelegates: const [
+    AppLocalizations.delegate,
+    ...GlobalMaterialLocalizations.delegates,
+  ],
+  supportedLocales: AppLocalizations.supportedLocales,
+  home: ReceiveView(viewModel: vm, onShareText: onShareText),
+);
 
 TransferEvent finished({int ok = 1, int failed = 0, String? text}) =>
     TransferEvent(
@@ -28,6 +67,8 @@ TransferEvent finished({int ok = 1, int failed = 0, String? text}) =>
     );
 
 void main() {
+  setUpAll(() => RustLib.initMock(api: _Rust()));
+
   group('send', () {
     late FakeRepository repo;
 
@@ -189,5 +230,155 @@ void main() {
       await vm.accept();
       expect(repo.accepted, ['files']);
     });
+
+    testWidgets('plain received text shares as it came and hides Open link', (
+      tester,
+    ) async {
+      final shared = <String>[];
+      final repo = FakeRepository();
+      final vm = ReceiveViewModel(repository: repo)..setInput('7-a-b');
+      final connected = vm.connect();
+      repo.connected.complete(FakeOffer(isText: true));
+      await connected;
+      await vm.accept();
+      repo.events.add(finished(text: 'meeting notes\r\nline 2'));
+      await tester.pump();
+
+      await tester.pumpWidget(
+        _receiveApp(vm, onShareText: (t) async => shared.add(t)),
+      );
+      await tester.pump();
+
+      expect(find.text('Open link'), findsNothing);
+      expect(find.text('Copy text'), findsOneWidget);
+      expect(find.text('Share text'), findsOneWidget);
+
+      await Scrollable.ensureVisible(tester.element(find.text('Share text')));
+      await tester.pump();
+      await tester.tap(find.text('Share text'));
+      await tester.pump();
+      expect(shared, ['meeting notes\r\nline 2']);
+    });
+
+    testWidgets(
+      'oversized received text omits Share text and handles share PlatformException',
+      (tester) async {
+        final repo = FakeRepository();
+        final vm = ReceiveViewModel(repository: repo)..setInput('7-a-b');
+        final connected = vm.connect();
+        repo.connected.complete(FakeOffer(isText: true));
+        await connected;
+        await vm.accept();
+        repo.events.add(finished(text: 'x' * (maxSharedTextChars + 1)));
+        await tester.pump();
+
+        await tester.pumpWidget(_receiveApp(vm));
+        await tester.pump();
+        final outer = tester.state<ScrollableState>(
+          find.byType(Scrollable).first,
+        );
+        outer.position.jumpTo(outer.position.maxScrollExtent);
+        await tester.pump();
+
+        expect(find.text('Copy text'), findsOneWidget);
+        expect(find.text('Share text'), findsNothing);
+
+        // A normal-sized text handles PlatformException from the share sheet cleanly.
+        final repo2 = FakeRepository();
+        final vm2 = ReceiveViewModel(repository: repo2)..setInput('7-a-b');
+        final connected2 = vm2.connect();
+        repo2.connected.complete(FakeOffer(isText: true));
+        await connected2;
+        await vm2.accept();
+        repo2.events.add(finished(text: 'short text'));
+        await tester.pump();
+
+        await tester.pumpWidget(
+          _receiveApp(
+            vm2,
+            onShareText: (_) => Future.error(PlatformException(code: 'FAILED')),
+          ),
+        );
+        await tester.pump();
+        await Scrollable.ensureVisible(tester.element(find.text('Share text')));
+        await tester.pump();
+        await tester.tap(find.text('Share text'));
+        await tester.pump();
+        expect(tester.takeException(), isNull);
+      },
+    );
+
+    testWidgets(
+      'a received web link shows its full normalized URL before opening',
+      (tester) async {
+        final opened = <String>[];
+        var browserAvailable = true;
+        const channel = MethodChannel('app.totaldrop/open_url');
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(channel, (call) async {
+              expect(call.method, 'open');
+              opened.add(call.arguments as String);
+              return browserAvailable;
+            });
+        addTearDown(
+          () => TestDefaultBinaryMessengerBinding
+              .instance
+              .defaultBinaryMessenger
+              .setMockMethodCallHandler(channel, null),
+        );
+
+        final repo = FakeRepository();
+        final vm = ReceiveViewModel(repository: repo)..setInput('7-a-b');
+        final connected = vm.connect();
+        repo.connected.complete(FakeOffer(isText: true));
+        await connected;
+        await vm.accept();
+        repo.events.add(finished(text: 'https://münchen.de/rathaus'));
+        await tester.pump();
+
+        await tester.pumpWidget(_receiveApp(vm));
+        await tester.pump();
+
+        expect(find.text('Open link'), findsOneWidget);
+        await Scrollable.ensureVisible(tester.element(find.text('Open link')));
+        await tester.pump();
+        await tester.tap(find.text('Open link'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+
+        // Full normalized Punycode URL is shown before any external launch.
+        expect(opened, isEmpty);
+        expect(find.text('Open this link?'), findsOneWidget);
+        expect(find.text('https://xn--mnchen-3ya.de/rathaus'), findsOneWidget);
+
+        // Cancel leaves the browser closed.
+        await tester.tap(find.text('Cancel'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+        expect(opened, isEmpty);
+
+        // Confirm launches the normalized URL.
+        await tester.tap(find.text('Open link'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.tap(find.text('Open'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+        expect(opened, ['https://xn--mnchen-3ya.de/rathaus']);
+
+        // When no browser handles the intent, the person is told.
+        browserAvailable = false;
+        await tester.tap(find.text('Open link'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.tap(find.text('Open'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+        expect(
+          find.text('No app on this device could open the link.'),
+          findsOneWidget,
+        );
+      },
+    );
   });
 }

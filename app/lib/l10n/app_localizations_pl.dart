@@ -699,4 +699,23 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'Ustawienia baterii';
+
+  @override
+  String get shareText => 'Udostępnij tekst';
+
+  @override
+  String get openLink => 'Otwórz link';
+
+  @override
+  String get openLinkTitle => 'Otworzyć ten link?';
+
+  @override
+  String get openLinkBody => 'Poniższy adres zostanie otwarty w przeglądarce.';
+
+  @override
+  String get openLinkConfirm => 'Otwórz';
+
+  @override
+  String get openLinkFailed =>
+      'Żadna aplikacja na tym urządzeniu nie mogła otworzyć linku.';
 }

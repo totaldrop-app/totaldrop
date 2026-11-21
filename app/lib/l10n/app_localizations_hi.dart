@@ -683,4 +683,22 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'बैटरी सेटिंग';
+
+  @override
+  String get shareText => 'टेक्स्ट साझा करें';
+
+  @override
+  String get openLink => 'लिंक खोलें';
+
+  @override
+  String get openLinkTitle => 'यह लिंक खोलें?';
+
+  @override
+  String get openLinkBody => 'नीचे दिया गया पता आपके ब्राउज़र में खुलेगा।';
+
+  @override
+  String get openLinkConfirm => 'खोलें';
+
+  @override
+  String get openLinkFailed => 'इस डिवाइस का कोई भी ऐप लिंक नहीं खोल सका।';
 }

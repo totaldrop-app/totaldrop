@@ -692,4 +692,24 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'Batterij-instellingen';
+
+  @override
+  String get shareText => 'Tekst delen';
+
+  @override
+  String get openLink => 'Link openen';
+
+  @override
+  String get openLinkTitle => 'Deze link openen?';
+
+  @override
+  String get openLinkBody =>
+      'Het onderstaande adres wordt geopend in uw browser.';
+
+  @override
+  String get openLinkConfirm => 'Openen';
+
+  @override
+  String get openLinkFailed =>
+      'Geen enkele app op dit apparaat kon de link openen.';
 }

@@ -681,4 +681,23 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'تنظیمات باتری';
+
+  @override
+  String get shareText => 'هم‌رسانی متن';
+
+  @override
+  String get openLink => 'باز کردن پیوند';
+
+  @override
+  String get openLinkTitle => 'این پیوند باز شود؟';
+
+  @override
+  String get openLinkBody => 'نشانی زیر در مرورگر شما باز می‌شود.';
+
+  @override
+  String get openLinkConfirm => 'باز کردن';
+
+  @override
+  String get openLinkFailed =>
+      'هیچ برنامه‌ای در این دستگاه نتوانست پیوند را باز کند.';
 }

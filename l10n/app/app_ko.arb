@@ -184,5 +184,11 @@
   "setupBackgroundAutostart": "자동 시작 열기",
   "setupBackgroundSkip": "나중에",
   "settingsBackground": "백그라운드 전송",
-  "settingsBackgroundOpen": "배터리 설정"
+  "settingsBackgroundOpen": "배터리 설정",
+  "shareText": "텍스트 공유",
+  "openLink": "링크 열기",
+  "openLinkTitle": "이 링크를 여시겠습니까?",
+  "openLinkBody": "아래 주소가 브라우저에서 열립니다.",
+  "openLinkConfirm": "열기",
+  "openLinkFailed": "이 기기에서 링크를 열 수 있는 앱이 없습니다."
 }

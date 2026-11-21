@@ -184,5 +184,11 @@
   "setupBackgroundAutostart": "自動起動を開く",
   "setupBackgroundSkip": "後で",
   "settingsBackground": "バックグラウンドでの転送",
-  "settingsBackgroundOpen": "バッテリー設定"
+  "settingsBackgroundOpen": "バッテリー設定",
+  "shareText": "テキストを共有",
+  "openLink": "リンクを開く",
+  "openLinkTitle": "このリンクを開きますか？",
+  "openLinkBody": "下のアドレスがブラウザーで開きます。",
+  "openLinkConfirm": "開く",
+  "openLinkFailed": "この端末にはリンクを開けるアプリがありません。"
 }

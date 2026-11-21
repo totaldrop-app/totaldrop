@@ -184,5 +184,11 @@
   "setupBackgroundAutostart": "باز کردن شروع خودکار",
   "setupBackgroundSkip": "اکنون نه",
   "settingsBackground": "انتقال در پس‌زمینه",
-  "settingsBackgroundOpen": "تنظیمات باتری"
+  "settingsBackgroundOpen": "تنظیمات باتری",
+  "shareText": "هم‌رسانی متن",
+  "openLink": "باز کردن پیوند",
+  "openLinkTitle": "این پیوند باز شود؟",
+  "openLinkBody": "نشانی زیر در مرورگر شما باز می‌شود.",
+  "openLinkConfirm": "باز کردن",
+  "openLinkFailed": "هیچ برنامه‌ای در این دستگاه نتوانست پیوند را باز کند."
 }

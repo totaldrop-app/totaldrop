@@ -666,4 +666,24 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'Cài đặt pin';
+
+  @override
+  String get shareText => 'Chia sẻ văn bản';
+
+  @override
+  String get openLink => 'Mở liên kết';
+
+  @override
+  String get openLinkTitle => 'Mở liên kết này?';
+
+  @override
+  String get openLinkBody =>
+      'Địa chỉ bên dưới sẽ được mở trong trình duyệt của bạn.';
+
+  @override
+  String get openLinkConfirm => 'Mở';
+
+  @override
+  String get openLinkFailed =>
+      'Không có ứng dụng nào trên thiết bị này mở được liên kết.';
 }

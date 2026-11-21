@@ -184,5 +184,11 @@
   "setupBackgroundAutostart": "Automatikus indítás megnyitása",
   "setupBackgroundSkip": "Most nem",
   "settingsBackground": "Átvitel a háttérben",
-  "settingsBackgroundOpen": "Akkumulátorbeállítások"
+  "settingsBackgroundOpen": "Akkumulátorbeállítások",
+  "shareText": "Szöveg megosztása",
+  "openLink": "Hivatkozás megnyitása",
+  "openLinkTitle": "Megnyitja ezt a hivatkozást?",
+  "openLinkBody": "Az alábbi cím a böngészőben nyílik meg.",
+  "openLinkConfirm": "Megnyitás",
+  "openLinkFailed": "Egyetlen alkalmazás sem tudta megnyitni a hivatkozást ezen az eszközön."
 }

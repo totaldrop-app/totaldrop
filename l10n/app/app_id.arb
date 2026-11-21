@@ -184,5 +184,11 @@
   "setupBackgroundAutostart": "Buka Mulai otomatis",
   "setupBackgroundSkip": "Nanti saja",
   "settingsBackground": "Transfer di latar belakang",
-  "settingsBackgroundOpen": "Setelan baterai"
+  "settingsBackgroundOpen": "Setelan baterai",
+  "shareText": "Bagikan teks",
+  "openLink": "Buka tautan",
+  "openLinkTitle": "Buka tautan ini?",
+  "openLinkBody": "Alamat di bawah ini akan dibuka di peramban Anda.",
+  "openLinkConfirm": "Buka",
+  "openLinkFailed": "Tidak ada aplikasi di perangkat ini yang dapat membuka tautan."
 }
