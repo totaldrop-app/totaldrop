@@ -4,19 +4,19 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Download TotalDrop</title>
-  <meta name="description" content="Download TotalDrop for Linux, Android and the command line. Windows, macOS, iOS and the browser are on the way.">
+  <meta name="description" content="Download TotalDrop for Linux, Android and the command line. Windows, macOS and iOS are on the way.">
   <meta name="theme-color" content="#F4F2FB" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#140E33" media="(prefers-color-scheme: dark)">
   <link rel="canonical" href="https://download.totaldrop.app/">
   <meta property="og:title" content="Download TotalDrop">
-  <meta property="og:description" content="Download TotalDrop for Linux, Android and the command line. Windows, macOS, iOS and the browser are on the way.">
+  <meta property="og:description" content="Download TotalDrop for Linux, Android and the command line. Windows, macOS and iOS are on the way.">
   <meta property="og:url" content="https://download.totaldrop.app/">
   <meta property="og:type" content="website">
   <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="preload" href="/fonts/bricolage-grotesque-latin-800-normal.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="/styles.css?v=d075185718">
+  <link rel="stylesheet" href="/styles.css?v=af12b64003">
 </head>
 <body data-page="download">
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -58,7 +58,7 @@
         <li class="platform" data-platform="cli">
           <span class="yours" data-i18n="dl.yours">For this device</span>
           <header><h3 data-i18n="dl.cli">Command line</h3><span class="pill is-ready" data-i18n="dl.ready">Available</span></header>
-          <p data-i18n="dl.cli.d">For Linux, macOS and Windows terminals. Sends files and whole folders.</p>
+          <p data-i18n="dl.cli.d">Prebuilt in the Linux packages today, or built from source with Cargo. Sends files, whole folders and text from arguments or standard input.</p>
           <pre class="cmd" tabindex="0" role="group" aria-label="Install command" data-i18n-label="dl.cmd.install"><code>cargo install --locked \
   --git https://github.com/totaldrop-app/totaldrop \
   totaldrop-cli</code></pre>
@@ -89,15 +89,10 @@ totaldrop receive 7-harbor-rocket</code></pre>
     <section class="block" aria-labelledby="dl-soon">
       <h2 id="dl-soon" data-i18n="dl.soon">On the way</h2>
       <ul class="platforms soon">
-        <li class="platform" data-platform="web">
-          <span class="yours" data-i18n="dl.yours">For this device</span>
-          <header><h3 data-i18n="dl.web">In the browser</h3><span class="pill" data-i18n="rm.now.when">November 2026</span></header>
-          <p data-i18n="dl.web.d">Receive without installing anything: open a link, type the code, save the files.</p>
-        </li>
         <li class="platform" data-platform="windows">
           <span class="yours" data-i18n="dl.yours">For this device</span>
-          <header><h3 data-i18n="dl.windows">Windows</h3><span class="pill" data-i18n="rm.next.when">Winter 2026–27</span></header>
-          <p data-i18n="dl.windows.d">For Windows 11. The first builds are unsigned, so Windows will warn before the first run until code signing is funded.</p>
+          <header><h3 data-i18n="dl.windows">Windows</h3><span class="pill" data-i18n="rm.later.when">2027</span></header>
+          <p data-i18n="dl.windows.d">For Windows 11, from the Microsoft Store.</p>
         </li>
         <li class="platform" data-platform="macos">
           <span class="yours" data-i18n="dl.yours">For this device</span>
@@ -144,7 +139,7 @@ totaldrop receive 7-harbor-rocket</code></pre>
           <tbody>
             <tr><th scope="row">Android</th><td data-i18n="dl.req.android">Android 15, 64-bit ARM</td><td data-i18n="dl.req.android.n">Internet permission only</td></tr>
             <tr><th scope="row">Linux</th><td data-i18n="dl.req.linux">Qt 6.8: Debian 13, Ubuntu 25.04, Fedora 43, Arch</td><td data-i18n="dl.req.linux.n">Wayland or X11; x86-64 and ARM64 (.deb, .rpm, Flatpak; Arch x86-64 only)</td></tr>
-            <tr><th scope="row" data-i18n="dl.cli">Command line</th><td data-i18n="dl.req.cli">Rust 1.99 to build</td><td data-i18n="dl.req.cli.n">Linux, macOS, Windows</td></tr>
+            <tr><th scope="row" data-i18n="dl.cli">Command line</th><td data-i18n="dl.req.cli">Rust 1.99 to build</td><td data-i18n="dl.req.cli.n">Prebuilt on Linux; built from source with Cargo elsewhere (prebuilt macOS and Windows binaries planned)</td></tr>
             <tr><th scope="row" data-i18n="dl.req.net">Network</th><td data-i18n="dl.req.net.m">Internet, or the same network</td><td data-i18n="dl.req.net.n">Directly where possible, otherwise through the relay</td></tr>
           </tbody>
         </table>
