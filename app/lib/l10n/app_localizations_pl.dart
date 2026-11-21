@@ -295,6 +295,10 @@ class AppLocalizationsPl extends AppLocalizations {
       'Adres serwera jest nieprawidłowy. Musi zaczynać się od wss://.';
 
   @override
+  String get errorRateLimited =>
+      'Zbyt wiele prób w krótkim czasie; odczekaj chwilę i spróbuj ponownie.';
+
+  @override
   String get errorConnect =>
       'Nie można połączyć się z drugim urządzeniem. Sprawdź, czy oba urządzenia są online, i spróbuj ponownie.';
 

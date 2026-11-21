@@ -192,6 +192,10 @@ enum ErrorKind {
   /// The rendezvous server address in the settings is not valid.
   badServer,
 
+  /// The rendezvous server refused because this address sent too many
+  /// requests (#394).
+  rateLimited,
+
   /// The rendezvous server could not be reached or refused.
   server,
 

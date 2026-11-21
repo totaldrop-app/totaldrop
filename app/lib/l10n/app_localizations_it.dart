@@ -293,6 +293,10 @@ class AppLocalizationsIt extends AppLocalizations {
       'L\'indirizzo del server non è valido. Deve iniziare con wss://.';
 
   @override
+  String get errorRateLimited =>
+      'Troppi tentativi ravvicinati; attendi un momento e riprova.';
+
+  @override
   String get errorConnect =>
       'Impossibile connettersi all\'altro dispositivo. Controlla che entrambi i dispositivi siano online e riprova.';
 

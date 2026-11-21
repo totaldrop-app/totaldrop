@@ -266,6 +266,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get errorBadServer => '서버 주소가 유효하지 않습니다. \'wss://\'로 시작해야 합니다.';
 
   @override
+  String get errorRateLimited => '너무 자주 시도했습니다. 잠시 기다렸다가 다시 시도하세요.';
+
+  @override
   String get errorConnect =>
       '다른 기기에 연결할 수 없습니다. 두 기기가 모두 온라인 상태인지 확인하고 다시 시도하세요.';
 

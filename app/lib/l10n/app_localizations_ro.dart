@@ -292,6 +292,10 @@ class AppLocalizationsRo extends AppLocalizations {
       'Adresa serverului nu este validă. Trebuie să înceapă cu wss://.';
 
   @override
+  String get errorRateLimited =>
+      'Prea multe încercări într-un timp scurt; așteptați puțin și încercați din nou.';
+
+  @override
   String get errorConnect =>
       'Nu s-a putut realiza conexiunea cu celălalt dispozitiv. Verificați că ambele dispozitive sunt online și încercați din nou.';
 

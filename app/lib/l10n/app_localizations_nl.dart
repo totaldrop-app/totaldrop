@@ -288,6 +288,10 @@ class AppLocalizationsNl extends AppLocalizations {
       'Het serveradres is niet geldig. Het moet beginnen met wss://.';
 
   @override
+  String get errorRateLimited =>
+      'Te vaak achter elkaar geprobeerd; wacht even en probeer het opnieuw.';
+
+  @override
   String get errorConnect =>
       'Kan geen verbinding maken met het andere apparaat. Controleer of beide apparaten online zijn en probeer het opnieuw.';
 

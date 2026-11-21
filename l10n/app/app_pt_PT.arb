@@ -72,6 +72,7 @@
   "errorCodeNotInUse": "Esse código não está em uso: foi mal escrito, expirou ou já foi usado. Peça um novo a quem está a enviar.",
   "errorCodeExpired": "O código expirou antes de alguém o usar. Envie de novo para obter um código novo.",
   "errorBadServer": "O endereço do servidor não é válido. Tem de começar por wss://.",
+  "errorRateLimited": "Demasiadas tentativas seguidas; aguarde um momento e tente novamente.",
   "errorConnect": "Não foi possível ligar ao outro dispositivo. Verifique se ambos os dispositivos estão online e tente novamente.",
   "errorInvalidOffer": "A oferta violou uma regra de segurança e por isso foi recusada.",
   "errorStorage": "Não foi possível ler ou guardar um ficheiro.",

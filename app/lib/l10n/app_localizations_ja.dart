@@ -266,6 +266,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get errorBadServer => 'サーバーのアドレスが無効です。「wss://」で始まる必要があります。';
 
   @override
+  String get errorRateLimited => '試行の間隔が短すぎます。少し待ってからやり直してください。';
+
+  @override
   String get errorConnect =>
       '相手のデバイスに接続できませんでした。両方のデバイスがオンラインであることを確認して、もう一度お試しください。';
 

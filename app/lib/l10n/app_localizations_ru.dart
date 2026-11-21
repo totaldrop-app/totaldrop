@@ -295,6 +295,10 @@ class AppLocalizationsRu extends AppLocalizations {
       'Неверный адрес сервера. Он должен начинаться с wss://.';
 
   @override
+  String get errorRateLimited =>
+      'Слишком частые попытки; подождите немного и попробуйте снова.';
+
+  @override
   String get errorConnect =>
       'Не удалось подключиться к другому устройству. Убедитесь, что оба устройства в сети, и повторите попытку.';
 

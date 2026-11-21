@@ -101,6 +101,9 @@ pub enum ErrorKind {
     CodeExpired,
     /// The rendezvous server address in the settings is not valid.
     BadServer,
+    /// The rendezvous server refused because this address sent too many
+    /// requests (#394).
+    RateLimited,
     /// The rendezvous server could not be reached or refused.
     Server,
     /// No network path to the other device worked.
@@ -151,6 +154,7 @@ impl From<totaldrop_core::Error> for TransferError {
             E::Stopped => ErrorKind::Stopped,
             E::Code(_) => ErrorKind::InvalidCode,
             E::Rendezvous(_) if e.is_bad_server_address() => ErrorKind::BadServer,
+            E::Rendezvous(_) if e.is_rate_limited() => ErrorKind::RateLimited,
             E::Rendezvous(_) => ErrorKind::Server,
             E::Connect(_) => ErrorKind::Connect,
             E::InvalidOffer(_) => ErrorKind::InvalidOffer,
@@ -686,6 +690,23 @@ mod tests {
             "the server address must start with wss://".into(),
         ));
         assert_eq!(e.kind, ErrorKind::BadServer);
+    }
+
+    #[test]
+    fn a_rate_limited_refusal_is_named() {
+        use totaldrop_core::Error as E;
+        assert_eq!(
+            TransferError::from(E::Rendezvous("too many requests".into())).kind,
+            ErrorKind::RateLimited
+        );
+        assert_eq!(
+            TransferError::on_connect(E::Rendezvous("too many requests".into())).kind,
+            ErrorKind::RateLimited
+        );
+        assert_eq!(
+            TransferError::on_send(E::Rendezvous("too many requests".into())).kind,
+            ErrorKind::RateLimited
+        );
     }
 
     #[test]

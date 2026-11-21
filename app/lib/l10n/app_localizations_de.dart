@@ -288,6 +288,10 @@ class AppLocalizationsDe extends AppLocalizations {
       'Die Serveradresse ist ungültig. Sie muss mit wss:// beginnen.';
 
   @override
+  String get errorRateLimited =>
+      'Zu viele Versuche kurz hintereinander; warten Sie einen Moment und versuchen Sie es erneut.';
+
+  @override
   String get errorConnect =>
       'Keine Verbindung zum anderen Gerät möglich. Prüfen Sie, ob beide Geräte online sind, und versuchen Sie es erneut.';
 

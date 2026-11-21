@@ -294,6 +294,10 @@ class AppLocalizationsCs extends AppLocalizations {
       'Adresa serveru není platná. Musí začínat wss://.';
 
   @override
+  String get errorRateLimited =>
+      'Příliš mnoho pokusů za sebou; chvíli počkejte a zkuste to znovu.';
+
+  @override
   String get errorConnect =>
       'Nelze se připojit k druhému zařízení. Zkontrolujte, že jsou obě zařízení online, a zkuste to znovu.';
 

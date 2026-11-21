@@ -385,6 +385,7 @@ fn kind(e: &totaldrop_core::Error) -> &'static str {
         E::Stopped => "Stopped",
         E::Code(_) => "InvalidCode",
         E::Rendezvous(_) if e.is_bad_server_address() => "BadServer",
+        E::Rendezvous(_) if e.is_rate_limited() => "RateLimited",
         E::Rendezvous(_) => "Server",
         E::Connect(_) => "Connect",
         E::InvalidOffer(_) => "InvalidOffer",
@@ -1104,5 +1105,13 @@ mod tests {
     fn a_bad_server_address_is_named() {
         let e = E::Rendezvous("the server address must start with wss://".into());
         assert_eq!(kind(&e), "BadServer");
+    }
+
+    #[test]
+    fn a_rate_limited_refusal_is_named() {
+        let e = E::Rendezvous("too many requests".into());
+        assert_eq!(kind(&e), "RateLimited");
+        assert_eq!(connect_kind(&e), "RateLimited");
+        assert_eq!(send_kind(&e), "RateLimited");
     }
 }

@@ -106,4 +106,28 @@ void main() {
       }
     }
   });
+
+  testWidgets(
+    'a rate-limited refusal shows its own message, not server error',
+    (tester) async {
+      for (final locale in [
+        const Locale('en'),
+        const Locale('tr'),
+        const Locale('de'),
+      ]) {
+        await _show(
+          tester,
+          locale,
+          const TransferError(
+            kind: ErrorKind.rateLimited,
+            detail: 'rendezvous server: too many requests',
+            cause: '',
+          ),
+        );
+        final l = await AppLocalizations.delegate.load(locale);
+        expect(find.text(l.errorRateLimited), findsOneWidget);
+        expect(find.text(l.errorServer), findsNothing);
+      }
+    },
+  );
 }

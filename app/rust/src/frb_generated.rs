@@ -29,7 +29,7 @@
 
 use crate::api::transfer::*;
 use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, ReadBytesExt, WriteBytesExt};
-use flutter_rust_bridge::for_generated::{transform_result_dco, Lifetimeable, Lockable};
+use flutter_rust_bridge::for_generated::{Lifetimeable, Lockable, transform_result_dco};
 use flutter_rust_bridge::{Handler, IntoIntoDart};
 
 // Section: boilerplate
@@ -1482,12 +1482,13 @@ impl SseDecode for crate::api::transfer::ErrorKind {
             6 => crate::api::transfer::ErrorKind::CodeNotInUse,
             7 => crate::api::transfer::ErrorKind::CodeExpired,
             8 => crate::api::transfer::ErrorKind::BadServer,
-            9 => crate::api::transfer::ErrorKind::Server,
-            10 => crate::api::transfer::ErrorKind::Connect,
-            11 => crate::api::transfer::ErrorKind::InvalidOffer,
-            12 => crate::api::transfer::ErrorKind::Storage,
-            13 => crate::api::transfer::ErrorKind::TextDamaged,
-            14 => crate::api::transfer::ErrorKind::Other,
+            9 => crate::api::transfer::ErrorKind::RateLimited,
+            10 => crate::api::transfer::ErrorKind::Server,
+            11 => crate::api::transfer::ErrorKind::Connect,
+            12 => crate::api::transfer::ErrorKind::InvalidOffer,
+            13 => crate::api::transfer::ErrorKind::Storage,
+            14 => crate::api::transfer::ErrorKind::TextDamaged,
+            15 => crate::api::transfer::ErrorKind::Other,
             _ => unreachable!("Invalid variant for ErrorKind: {}", inner),
         };
     }
@@ -1787,12 +1788,13 @@ impl flutter_rust_bridge::IntoDart for crate::api::transfer::ErrorKind {
             Self::CodeNotInUse => 6.into_dart(),
             Self::CodeExpired => 7.into_dart(),
             Self::BadServer => 8.into_dart(),
-            Self::Server => 9.into_dart(),
-            Self::Connect => 10.into_dart(),
-            Self::InvalidOffer => 11.into_dart(),
-            Self::Storage => 12.into_dart(),
-            Self::TextDamaged => 13.into_dart(),
-            Self::Other => 14.into_dart(),
+            Self::RateLimited => 9.into_dart(),
+            Self::Server => 10.into_dart(),
+            Self::Connect => 11.into_dart(),
+            Self::InvalidOffer => 12.into_dart(),
+            Self::Storage => 13.into_dart(),
+            Self::TextDamaged => 14.into_dart(),
+            Self::Other => 15.into_dart(),
             _ => unreachable!(),
         }
     }
@@ -2023,12 +2025,13 @@ impl SseEncode for crate::api::transfer::ErrorKind {
                 crate::api::transfer::ErrorKind::CodeNotInUse => 6,
                 crate::api::transfer::ErrorKind::CodeExpired => 7,
                 crate::api::transfer::ErrorKind::BadServer => 8,
-                crate::api::transfer::ErrorKind::Server => 9,
-                crate::api::transfer::ErrorKind::Connect => 10,
-                crate::api::transfer::ErrorKind::InvalidOffer => 11,
-                crate::api::transfer::ErrorKind::Storage => 12,
-                crate::api::transfer::ErrorKind::TextDamaged => 13,
-                crate::api::transfer::ErrorKind::Other => 14,
+                crate::api::transfer::ErrorKind::RateLimited => 9,
+                crate::api::transfer::ErrorKind::Server => 10,
+                crate::api::transfer::ErrorKind::Connect => 11,
+                crate::api::transfer::ErrorKind::InvalidOffer => 12,
+                crate::api::transfer::ErrorKind::Storage => 13,
+                crate::api::transfer::ErrorKind::TextDamaged => 14,
+                crate::api::transfer::ErrorKind::Other => 15,
                 _ => {
                     unimplemented!("");
                 }
@@ -2196,7 +2199,7 @@ mod io {
     use flutter_rust_bridge::for_generated::byteorder::{
         NativeEndian, ReadBytesExt, WriteBytesExt,
     };
-    use flutter_rust_bridge::for_generated::{transform_result_dco, Lifetimeable, Lockable};
+    use flutter_rust_bridge::for_generated::{Lifetimeable, Lockable, transform_result_dco};
     use flutter_rust_bridge::{Handler, IntoIntoDart};
 
     // Section: boilerplate
@@ -2263,7 +2266,7 @@ mod web {
     };
     use flutter_rust_bridge::for_generated::wasm_bindgen;
     use flutter_rust_bridge::for_generated::wasm_bindgen::prelude::*;
-    use flutter_rust_bridge::for_generated::{transform_result_dco, Lifetimeable, Lockable};
+    use flutter_rust_bridge::for_generated::{Lifetimeable, Lockable, transform_result_dco};
     use flutter_rust_bridge::{Handler, IntoIntoDart};
 
     // Section: boilerplate
