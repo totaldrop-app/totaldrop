@@ -46,27 +46,51 @@ void main() {
   }
 
   test('a link fills in its code and does not connect', () {
-    vm.setInput('3-old-code');
-    expect(vm.takeLink(_link), isTrue);
-    expect(vm.input, '7-harbor-rocket');
-    expect(vm.stage, ReceiveStage.entering);
-    expect(repo.stoppers, isEmpty, reason: 'nothing was started');
+    for (final link in [
+      _link,
+      'https://totaldrop.app/r#7-harbor-rocket',
+      'http://totaldrop.app/r#7-harbor-rocket',
+      'totaldrop:7-harbor-rocket',
+    ]) {
+      vm.setInput('3-old-code');
+      expect(vm.takeLink(link), isTrue, reason: link);
+      expect(vm.input, '7-harbor-rocket', reason: link);
+      expect(vm.stage, ReceiveStage.entering, reason: link);
+      expect(repo.stoppers, isEmpty, reason: 'nothing was started');
+    }
   });
 
   test('a link whose code is not a code empties the box and says so', () {
-    vm.setInput('3-old-code');
-    expect(vm.takeLink('totaldrop://r/x?c=7-harbor-rocket'), isFalse);
-    expect(vm.input, isEmpty, reason: 'not the code typed before');
-    expect(vm.showInvalid, isTrue);
+    for (final link in [
+      'totaldrop://r/x?c=7-harbor-rocket',
+      'totaldrop://r?c=7-harbor-rocket',
+      'https://totaldrop.app/r?x#7-harbor-rocket',
+      'https://totaldrop.app/r?x=1',
+      'https://totaldrop.app/r#7-harbor',
+      'https://totaldrop.app/r#?',
+      'https://totaldrop.app/r#[bad]',
+      'http://totaldrop.app/r#7-harbor',
+      'totaldrop:7-harbor',
+    ]) {
+      vm.setInput('3-old-code');
+      expect(vm.takeLink(link), isFalse, reason: link);
+      expect(vm.input, isEmpty, reason: '$link: not the code typed before');
+      expect(vm.showInvalid, isTrue, reason: link);
+    }
   });
 
   test('a link with nothing where the code goes changes nothing', () {
     vm.setInput('3-old-code');
     for (final link in [
+      'totaldrop:',
       'totaldrop://r',
       'totaldrop://r/',
       'https://totaldrop.app/r',
       'https://totaldrop.app/r#',
+      'https://totaldrop.app/r?',
+      'https://totaldrop.app/r?#',
+      'http://totaldrop.app/r',
+      'http://totaldrop.app/r#',
     ]) {
       expect(vm.takeLink(link), isFalse, reason: link);
       expect(vm.input, '3-old-code', reason: link);
