@@ -190,5 +190,11 @@
   "openLinkTitle": "このリンクを開きますか？",
   "openLinkBody": "下のアドレスがブラウザーで開きます。",
   "openLinkConfirm": "開く",
-  "openLinkFailed": "この端末にはリンクを開けるアプリがありません。"
+  "openLinkFailed": "この端末にはリンクを開けるアプリがありません。",
+  "settingsShortcut": "キーボードショートカット",
+  "settingsShortcutBody": "どこからでもクリップボードのテキストを送信できる状態で TotalDrop を開きます。コードを作成するまで何も送信されません。",
+  "settingsShortcutUnset": "未設定",
+  "settingsShortcutSet": "ショートカットを設定",
+  "settingsShortcutChange": "ショートカットを変更",
+  "settingsShortcutManual": "このデスクトップではここからアプリのショートカットを設定できません。デスクトップまたはウィンドウマネージャーの設定でキーを次のコマンドに割り当ててください："
 }

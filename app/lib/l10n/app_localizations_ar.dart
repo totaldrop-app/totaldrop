@@ -707,4 +707,24 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get openLinkFailed =>
       'لم يتمكن أي تطبيق على هذا الجهاز من فتح الرابط.';
+
+  @override
+  String get settingsShortcut => 'اختصار لوحة المفاتيح';
+
+  @override
+  String get settingsShortcutBody =>
+      'افتح TotalDrop من أي مكان مع تجهيز نص الحافظة للإرسال. لا يُرسل شيء حتى تنشئ رمزًا.';
+
+  @override
+  String get settingsShortcutUnset => 'غير معيّن';
+
+  @override
+  String get settingsShortcutSet => 'تعيين اختصار';
+
+  @override
+  String get settingsShortcutChange => 'تغيير الاختصار';
+
+  @override
+  String get settingsShortcutManual =>
+      'لا تضبط بيئة سطح المكتب هذه اختصارات التطبيقات من هنا. اربط مفتاحًا في إعدادات سطح المكتب أو مدير النوافذ بالأمر:';
 }

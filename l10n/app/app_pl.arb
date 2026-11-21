@@ -190,5 +190,11 @@
   "openLinkTitle": "Otworzyć ten link?",
   "openLinkBody": "Poniższy adres zostanie otwarty w przeglądarce.",
   "openLinkConfirm": "Otwórz",
-  "openLinkFailed": "Żadna aplikacja na tym urządzeniu nie mogła otworzyć linku."
+  "openLinkFailed": "Żadna aplikacja na tym urządzeniu nie mogła otworzyć linku.",
+  "settingsShortcut": "Skrót klawiszowy",
+  "settingsShortcutBody": "Otwórz TotalDrop z dowolnego miejsca z tekstem ze schowka gotowym do wysłania. Nic nie zostanie wysłane, dopóki nie utworzysz kodu.",
+  "settingsShortcutUnset": "Nie ustawiono",
+  "settingsShortcutSet": "Ustaw skrót",
+  "settingsShortcutChange": "Zmień skrót",
+  "settingsShortcutManual": "To środowisko nie ustawia tutaj skrótów aplikacji. Przypisz klawisz w ustawieniach środowiska lub menedżera okien do polecenia:"
 }

@@ -716,4 +716,24 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get openLinkFailed =>
       'Nessuna app su questo dispositivo ha potuto aprire il link.';
+
+  @override
+  String get settingsShortcut => 'Scorciatoia da tastiera';
+
+  @override
+  String get settingsShortcutBody =>
+      'Apri TotalDrop da qualsiasi punto con il testo degli appunti pronto da inviare. Non viene inviato nulla finché non crei un codice.';
+
+  @override
+  String get settingsShortcutUnset => 'Non impostata';
+
+  @override
+  String get settingsShortcutSet => 'Imposta scorciatoia';
+
+  @override
+  String get settingsShortcutChange => 'Cambia scorciatoia';
+
+  @override
+  String get settingsShortcutManual =>
+      'Questo desktop non imposta da qui le scorciatoie delle applicazioni. Associa un tasto nelle impostazioni del desktop o del gestore di finestre a:';
 }

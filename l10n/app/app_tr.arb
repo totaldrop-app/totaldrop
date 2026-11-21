@@ -190,5 +190,11 @@
   "openLinkTitle": "Bu bağlantı açılsın mı?",
   "openLinkBody": "Aşağıdaki adres tarayıcınızda açılır.",
   "openLinkConfirm": "Aç",
-  "openLinkFailed": "Bu cihazda bağlantıyı açabilecek bir uygulama bulunamadı."
+  "openLinkFailed": "Bu cihazda bağlantıyı açabilecek bir uygulama bulunamadı.",
+  "settingsShortcut": "Klavye kısayolu",
+  "settingsShortcutBody": "Panodaki metin göndermeye hazır biçimde TotalDrop'u her yerden açın. Siz kod oluşturana kadar hiçbir şey gönderilmez.",
+  "settingsShortcutUnset": "Ayarlanmadı",
+  "settingsShortcutSet": "Kısayol ayarla",
+  "settingsShortcutChange": "Kısayolu değiştir",
+  "settingsShortcutManual": "Bu masaüstü uygulama kısayollarını buradan ayarlamaz. Masaüstü veya pencere yöneticisi ayarlarınızda bir tuşu şu komuta bağlayın:"
 }

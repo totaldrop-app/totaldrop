@@ -703,4 +703,24 @@ class AppLocalizationsFi extends AppLocalizations {
   @override
   String get openLinkFailed =>
       'Mikään tämän laitteen sovellus ei voinut avata linkkiä.';
+
+  @override
+  String get settingsShortcut => 'Pikanäppäin';
+
+  @override
+  String get settingsShortcutBody =>
+      'Avaa TotalDrop mistä tahansa leikepöydän teksti valmiina lähetettäväksi. Mitään ei lähetetä ennen kuin luot koodin.';
+
+  @override
+  String get settingsShortcutUnset => 'Ei asetettu';
+
+  @override
+  String get settingsShortcutSet => 'Aseta pikanäppäin';
+
+  @override
+  String get settingsShortcutChange => 'Vaihda pikanäppäin';
+
+  @override
+  String get settingsShortcutManual =>
+      'Tämä työpöytä ei aseta sovellusten pikanäppäimiä täältä. Sido näppäin työpöydän tai ikkunointiohjelman asetuksissa komentoon:';
 }

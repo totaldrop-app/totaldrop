@@ -37,6 +37,18 @@ default opener for unknown files and folders: `xdg-open folder` would open
 TotalDrop. TotalDrop still appears in the "Open with → Other application"
 list.
 
+## KDE Share menu (`Purpose`)
+
+In Dolphin, TotalDrop integrates via a top-level KIO service menu
+(`/usr/share/kio/servicemenus/app.totaldrop.TotalDrop.send.desktop`,
+`X-KDE-Priority=TopLevel`) rather than KDE's **Share** submenu
+(`KF6::Purpose`). `KF6::Purpose` requires loading an in-process C++ plugin
+(`.so`) linked against the host KDE Frameworks ABI directly into Dolphin
+and Gwenview, which a standalone Rust binary and sandboxed Flatpak cannot
+ship without pulling KDE Frameworks runtime dependencies onto non-KDE
+systems. The KIO service menu is pure declarative `.desktop` metadata and
+places "Send with TotalDrop" directly in Dolphin's top-level context menu.
+
 ## Flatpak
 
 Flatpak does not let an app add itself to other programs' menus; in the
@@ -56,6 +68,55 @@ by hand: Edit → Configure custom actions → +
 - Icon: `app.totaldrop.TotalDrop`
 - On the appearance conditions tab: file pattern `*`, every type and
   "Directories" ticked.
+
+## Keyboard shortcut
+
+Settings → **Keyboard shortcut** registers a desktop-wide `send-clipboard`
+action through `org.freedesktop.portal.GlobalShortcuts`
+(`linux/src/shortcuts.rs`, #54). At startup TotalDrop opens a portal session
+and reads `ListShortcuts` without opening any system dialog; clicking **Set
+shortcut** or **Change shortcut** binds `send-clipboard` and opens the
+desktop's shortcut configuration dialog (such as KDE Plasma System Settings
+or GNOME Settings). Pressing the assigned shortcut brings TotalDrop to the
+front on the Send screen with the clipboard's text filled in (waiting for
+Wayland focus before reading the clipboard when needed); nothing is sent
+until the user clicks **Create code**. Trigger descriptions returned by the
+portal are sanitized with `totaldrop_l10n::reveal_controls` and rendered
+left to right. If the desktop portal closes the session (for example during a
+portal restart or update), TotalDrop automatically recreates the session with
+bounded exponential backoff (1 s to 30 s) without requiring an app restart.
+
+On desktops whose `GlobalShortcuts` portal has no interactive shortcut
+picker (`xdg-desktop-portal-hyprland` on Hyprland and Omarchy, which
+exposes portal version 1) or where no `GlobalShortcuts` portal is running
+(such as Sway or Xfce), Settings immediately shows the command to bind in
+the desktop or window manager (`totaldrop-desktop --screen=clipboard`, or
+`flatpak run app.totaldrop.TotalDrop --screen=clipboard` for the Flatpak).
+Binding `exec` also launches TotalDrop when closed, whereas Hyprland's
+`global, app.totaldrop.TotalDrop:send-clipboard` portal shortcut only
+reaches an already-running window (TotalDrop keeps its portal session open
+so live `ShortcutsChanged` and `Activated` signals still work if a `global`
+shortcut is configured).
+
+**Hyprland** (`~/.config/hypr/hyprland.conf`):
+
+```ini
+# System package (.deb, .rpm, Arch)
+bind = SUPER SHIFT, V, exec, totaldrop-desktop --screen=clipboard
+
+# Flatpak
+bind = SUPER SHIFT, V, exec, flatpak run app.totaldrop.TotalDrop --screen=clipboard
+```
+
+**Omarchy** (`~/.config/hypr/bindings.conf`):
+
+```ini
+# System package
+bindd = SUPER SHIFT, V, Send clipboard with TotalDrop, exec, totaldrop-desktop --screen=clipboard
+
+# Flatpak
+bindd = SUPER SHIFT, V, Send clipboard with TotalDrop, exec, flatpak run app.totaldrop.TotalDrop --screen=clipboard
+```
 
 ## Texts
 

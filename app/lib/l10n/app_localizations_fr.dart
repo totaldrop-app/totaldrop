@@ -723,4 +723,24 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get openLinkFailed =>
       'Aucune application sur cet appareil n\'a pu ouvrir le lien.';
+
+  @override
+  String get settingsShortcut => 'Raccourci clavier';
+
+  @override
+  String get settingsShortcutBody =>
+      'Ouvrez TotalDrop de n\'importe où avec le texte du presse-papiers prêt à être envoyé. Rien n\'est envoyé tant que vous ne créez pas de code.';
+
+  @override
+  String get settingsShortcutUnset => 'Non défini';
+
+  @override
+  String get settingsShortcutSet => 'Définir un raccourci';
+
+  @override
+  String get settingsShortcutChange => 'Modifier le raccourci';
+
+  @override
+  String get settingsShortcutManual =>
+      'Ce bureau ne configure pas les raccourcis d\'application d\'ici. Associez une touche dans les paramètres de votre bureau ou gestionnaire de fenêtres à :';
 }

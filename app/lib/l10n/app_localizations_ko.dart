@@ -657,4 +657,24 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get openLinkFailed => '이 기기에서 링크를 열 수 있는 앱이 없습니다.';
+
+  @override
+  String get settingsShortcut => '키보드 단축키';
+
+  @override
+  String get settingsShortcutBody =>
+      '어디서든 클립보드의 텍스트를 바로 보낼 수 있게 채운 상태로 TotalDrop을 엽니다. 코드를 만들기 전까지는 아무것도 전송되지 않습니다.';
+
+  @override
+  String get settingsShortcutUnset => '설정 안 됨';
+
+  @override
+  String get settingsShortcutSet => '단축키 설정';
+
+  @override
+  String get settingsShortcutChange => '단축키 변경';
+
+  @override
+  String get settingsShortcutManual =>
+      '이 데스크톱에서는 여기서 앱 단축키를 설정할 수 없습니다. 데스크톱이나 창 관리자 설정에서 다음 명령에 키를 지정하세요:';
 }

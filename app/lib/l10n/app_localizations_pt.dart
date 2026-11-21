@@ -717,6 +717,26 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get openLinkFailed =>
       'Nenhum aplicativo neste dispositivo pôde abrir o link.';
+
+  @override
+  String get settingsShortcut => 'Atalho de teclado';
+
+  @override
+  String get settingsShortcutBody =>
+      'Abra o TotalDrop de qualquer lugar com o texto da área de transferência pronto para enviar. Nada é enviado até você criar um código.';
+
+  @override
+  String get settingsShortcutUnset => 'Não definido';
+
+  @override
+  String get settingsShortcutSet => 'Definir atalho';
+
+  @override
+  String get settingsShortcutChange => 'Alterar atalho';
+
+  @override
+  String get settingsShortcutManual =>
+      'Este ambiente não define atalhos de aplicativos por aqui. Associe uma tecla nas configurações do seu ambiente ou gerenciador de janelas a:';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -1431,6 +1451,26 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String get openLinkFailed =>
       'Nenhum aplicativo neste dispositivo pôde abrir o link.';
+
+  @override
+  String get settingsShortcut => 'Atalho de teclado';
+
+  @override
+  String get settingsShortcutBody =>
+      'Abra o TotalDrop de qualquer lugar com o texto da área de transferência pronto para enviar. Nada é enviado até você criar um código.';
+
+  @override
+  String get settingsShortcutUnset => 'Não definido';
+
+  @override
+  String get settingsShortcutSet => 'Definir atalho';
+
+  @override
+  String get settingsShortcutChange => 'Alterar atalho';
+
+  @override
+  String get settingsShortcutManual =>
+      'Este ambiente não define atalhos de aplicativos por aqui. Associe uma tecla nas configurações do seu ambiente ou gerenciador de janelas a:';
 }
 
 /// The translations for Portuguese, as used in Portugal (`pt_PT`).
@@ -2147,4 +2187,24 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
   @override
   String get openLinkFailed =>
       'Nenhuma aplicação neste dispositivo conseguiu abrir a ligação.';
+
+  @override
+  String get settingsShortcut => 'Atalho de teclado';
+
+  @override
+  String get settingsShortcutBody =>
+      'Abra o TotalDrop a partir de qualquer lugar com o texto da área de transferência pronto a enviar. Nada é enviado até criar um código.';
+
+  @override
+  String get settingsShortcutUnset => 'Não definido';
+
+  @override
+  String get settingsShortcutSet => 'Definir atalho';
+
+  @override
+  String get settingsShortcutChange => 'Alterar atalho';
+
+  @override
+  String get settingsShortcutManual =>
+      'Este ambiente não define atalhos de aplicações a partir daqui. Associe uma tecla nas definições do ambiente de trabalho ou do gestor de janelas a:';
 }

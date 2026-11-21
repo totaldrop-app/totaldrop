@@ -691,4 +691,24 @@ class AppLocalizationsMs extends AppLocalizations {
   @override
   String get openLinkFailed =>
       'Tiada aplikasi pada peranti ini dapat membuka pautan tersebut.';
+
+  @override
+  String get settingsShortcut => 'Pintasan papan kekunci';
+
+  @override
+  String get settingsShortcutBody =>
+      'Buka TotalDrop dari mana-mana sahaja dengan teks papan keratan sedia untuk dihantar. Tiada apa-apa dihantar sehingga anda mencipta kod.';
+
+  @override
+  String get settingsShortcutUnset => 'Belum ditetapkan';
+
+  @override
+  String get settingsShortcutSet => 'Tetapkan pintasan';
+
+  @override
+  String get settingsShortcutChange => 'Tukar pintasan';
+
+  @override
+  String get settingsShortcutManual =>
+      'Desktop ini tidak menetapkan pintasan aplikasi dari sini. Ikat kekunci dalam tetapan desktop atau pengurus tetingkap anda kepada:';
 }

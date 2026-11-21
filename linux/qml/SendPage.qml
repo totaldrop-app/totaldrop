@@ -55,7 +55,7 @@ Page {
                 page.pasteWhenActive = false
                 // The click that brought the window up may have pasted
                 // already (the Paste button); then there is nothing to say.
-                Qt.callLater(() => { if (!page.hasInput) page.pasteClipboard() })
+                Qt.callLater(() => { if (textBox.text === "" && page.bigText === "") page.pasteClipboard() })
             }
         }
     }
@@ -69,10 +69,14 @@ Page {
     function pasteClipboard() {
         page.mode = "text"
         page.textNotice = ""
+        if (textBox.text !== "" || page.bigText !== "") {
+            page.textNotice = Strings.s.sendClipboardKept
+            textBox.forceActiveFocus()
+            return
+        }
         const w = page.Window.window
         if (w && !w.active) { page.pasteWhenActive = true; return }
-        if (textBox.text === "" && page.bigText === "") page.pasteText()
-        else page.textNotice = Strings.s.sendClipboardKept
+        page.pasteText()
         if (textBox.text === "" && page.bigText === "") page.textNotice = Strings.s.sendClipboardEmpty
         textBox.forceActiveFocus()
     }

@@ -689,4 +689,24 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get openLinkFailed => 'এই ডিভাইসের কোনো অ্যাপ লিঙ্কটি খুলতে পারেনি।';
+
+  @override
+  String get settingsShortcut => 'কীবোর্ড শর্টকাট';
+
+  @override
+  String get settingsShortcutBody =>
+      'যেকোনো জায়গা থেকে ক্লিপবোর্ডের লেখা পাঠানোর জন্য প্রস্তুত রেখে TotalDrop খুলুন। আপনি কোড তৈরি না করা পর্যন্ত কিছু পাঠানো হয় না।';
+
+  @override
+  String get settingsShortcutUnset => 'সেট করা নেই';
+
+  @override
+  String get settingsShortcutSet => 'শর্টকাট সেট করুন';
+
+  @override
+  String get settingsShortcutChange => 'শর্টকাট বদলান';
+
+  @override
+  String get settingsShortcutManual =>
+      'এই ডেস্কটপ এখান থেকে অ্যাপের শর্টকাট সেট করে না। আপনার ডেস্কটপ বা উইন্ডো ম্যানেজারের সেটিংসে একটি কী যুক্ত করুন:';
 }

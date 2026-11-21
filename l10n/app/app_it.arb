@@ -190,5 +190,11 @@
   "openLinkTitle": "Aprire questo link?",
   "openLinkBody": "L'indirizzo qui sotto si aprirà nel browser.",
   "openLinkConfirm": "Apri",
-  "openLinkFailed": "Nessuna app su questo dispositivo ha potuto aprire il link."
+  "openLinkFailed": "Nessuna app su questo dispositivo ha potuto aprire il link.",
+  "settingsShortcut": "Scorciatoia da tastiera",
+  "settingsShortcutBody": "Apri TotalDrop da qualsiasi punto con il testo degli appunti pronto da inviare. Non viene inviato nulla finché non crei un codice.",
+  "settingsShortcutUnset": "Non impostata",
+  "settingsShortcutSet": "Imposta scorciatoia",
+  "settingsShortcutChange": "Cambia scorciatoia",
+  "settingsShortcutManual": "Questo desktop non imposta da qui le scorciatoie delle applicazioni. Associa un tasto nelle impostazioni del desktop o del gestore di finestre a:"
 }

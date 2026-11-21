@@ -712,4 +712,24 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get openLinkFailed =>
       'Geen enkele app op dit apparaat kon de link openen.';
+
+  @override
+  String get settingsShortcut => 'Sneltoets';
+
+  @override
+  String get settingsShortcutBody =>
+      'Open TotalDrop overal met de tekst van het klembord klaar om te versturen. Er wordt niets verstuurd totdat je een code aanmaakt.';
+
+  @override
+  String get settingsShortcutUnset => 'Niet ingesteld';
+
+  @override
+  String get settingsShortcutSet => 'Sneltoets instellen';
+
+  @override
+  String get settingsShortcutChange => 'Sneltoets wijzigen';
+
+  @override
+  String get settingsShortcutManual =>
+      'Deze werkomgeving stelt hier geen programmasneltoetsen in. Koppel in de instellingen van je werkomgeving of vensterbeheerder een toets aan:';
 }

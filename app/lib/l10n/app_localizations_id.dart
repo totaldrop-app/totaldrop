@@ -690,4 +690,24 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get openLinkFailed =>
       'Tidak ada aplikasi di perangkat ini yang dapat membuka tautan.';
+
+  @override
+  String get settingsShortcut => 'Pintasan papan ketik';
+
+  @override
+  String get settingsShortcutBody =>
+      'Buka TotalDrop dari mana saja dengan teks papan klip siap dikirim. Tidak ada yang dikirim sampai Anda membuat kode.';
+
+  @override
+  String get settingsShortcutUnset => 'Belum diatur';
+
+  @override
+  String get settingsShortcutSet => 'Atur pintasan';
+
+  @override
+  String get settingsShortcutChange => 'Ubah pintasan';
+
+  @override
+  String get settingsShortcutManual =>
+      'Desktop ini tidak mengatur pintasan aplikasi dari sini. Tetapkan tombol di pengaturan desktop atau pengelola jendela Anda ke:';
 }

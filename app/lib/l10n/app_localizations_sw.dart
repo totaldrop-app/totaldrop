@@ -699,4 +699,24 @@ class AppLocalizationsSw extends AppLocalizations {
   @override
   String get openLinkFailed =>
       'Hakuna programu kwenye kifaa hiki iliyoweza kufungua kiungo.';
+
+  @override
+  String get settingsShortcut => 'Njia ya mkato ya kibodi';
+
+  @override
+  String get settingsShortcutBody =>
+      'Fungua TotalDrop popote ukiwa na maandishi ya ubao wa kunakili tayari kutumwa. Hakuna kinachotumwa hadi uunde msimbo.';
+
+  @override
+  String get settingsShortcutUnset => 'Haijawekwa';
+
+  @override
+  String get settingsShortcutSet => 'Weka njia ya mkato';
+
+  @override
+  String get settingsShortcutChange => 'Badilisha njia ya mkato';
+
+  @override
+  String get settingsShortcutManual =>
+      'Eneo-kazi hili haliweki njia za mkato za programu kutokea hapa. Unganisha kitufe katika mipangilio ya eneo-kazi au kidhibiti madirisha na amri:';
 }

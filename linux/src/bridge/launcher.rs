@@ -1,16 +1,18 @@
 // SPDX-FileCopyrightText: 2026 The TotalDrop Contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-//! `Launcher`, what the command line and later launches ask the window to
-//! show (#178), and opening a confirmed web link in the browser (#54). See
-//! [`crate::instance`].
+//! `Launcher`, what the command line, later launches (#178) and the global
+//! keyboard shortcut (#54) ask the window to show, plus opening a confirmed
+//! web link in the browser (#54). See [`crate::instance`] and
+//! [`crate::shortcuts`].
 
 use std::pin::Pin;
 
-use cxx_qt::Threading;
+use cxx_qt::{CxxQtType, Threading};
 use cxx_qt_lib::{QString, QStringList};
 
 use crate::instance::{self, Request};
+use crate::shortcuts;
 
 #[cxx_qt::bridge]
 pub mod qobject {
@@ -30,15 +32,23 @@ pub mod qobject {
         /// Give Qt the token to activate the window with; see `launcher.h`.
         fn set_activation_token(token: &QString);
 
+        /// Focused/visible X11 window ID (0 on Wayland / headless); see
+        /// `launcher.h`.
+        fn parent_x11_xid() -> u64;
+
         /// Open a validated http(s) URL in the desktop's browser; see
         /// `launcher.h`.
         fn open_web_url_cpp(url: &QString) -> bool;
     }
 
     extern "RustQt" {
-        /// Files, links and screens to open.
+        /// Files, links, screens and global shortcuts for the window.
         #[qobject]
         #[qml_element]
+        #[qproperty(bool, shortcut_ready, cxx_name = "shortcutReady")]
+        #[qproperty(bool, shortcut_supported, cxx_name = "shortcutSupported")]
+        #[qproperty(QString, shortcut_trigger, cxx_name = "shortcutTrigger")]
+        #[qproperty(QString, shortcut_command, cxx_name = "shortcutCommand")]
         type Launcher = super::LauncherRust;
 
         /// This process's command line, as a list of items and
@@ -54,7 +64,14 @@ pub mod qobject {
         #[cxx_name = "openWebUrl"]
         fn open_web_url(self: &Launcher, url: &QString) -> bool;
 
-        /// A later launch asks for `args`; the window comes to the front.
+        /// Bind or change the desktop-wide "Send clipboard" keyboard
+        /// shortcut through `org.freedesktop.portal.GlobalShortcuts` (#54).
+        #[qinvokable]
+        #[cxx_name = "configureShortcut"]
+        fn configure_shortcut(self: &Launcher);
+
+        /// A later launch or global shortcut asks for `args`; the window
+        /// comes to the front.
         #[qsignal]
         fn opened(self: Pin<&mut Launcher>, args: QStringList);
     }
@@ -65,7 +82,13 @@ pub mod qobject {
 
 /// Backing state of [`qobject::Launcher`].
 #[derive(Default)]
-pub struct LauncherRust {}
+pub struct LauncherRust {
+    shortcut_ready: bool,
+    shortcut_supported: bool,
+    shortcut_trigger: QString,
+    shortcut_command: QString,
+    shortcuts: shortcuts::Handle,
+}
 
 fn list(items: Vec<String>) -> QStringList {
     items.iter().map(|s| QString::from(s.as_str())).collect()
@@ -181,10 +204,28 @@ impl qobject::Launcher {
             qobject::open_web_url_cpp(&QString::from(clean))
         })
     }
+
+    fn configure_shortcut(&self) {
+        let description = crate::bridge::texts::strings().get("sendClipboard", &[]);
+        // Do not read `XDG_ACTIVATION_TOKEN`: Qt's Wayland plugin consumes and
+        // unsets the launch-time token at startup, and any leftover token is
+        // stale and single-use. Requesting a fresh `xdg_activation_v1` token
+        // and Wayland `zxdg_exporter_v2` parent handle is tracked in #631.
+        let parent_xid = match qobject::parent_x11_xid() {
+            0 => None,
+            xid => Some(xid),
+        };
+        self.rust()
+            .shortcuts
+            .configure(description, None, parent_xid);
+    }
 }
 
 impl cxx_qt::Initialize for qobject::Launcher {
-    fn initialize(self: Pin<&mut Self>) {
+    fn initialize(mut self: Pin<&mut Self>) {
+        let cmd = shortcuts::command_for(instance::Package::current());
+        self.as_mut().set_shortcut_command(QString::from(cmd));
+
         let thread = self.qt_thread();
         instance::listen(move |o| {
             // Gone with the window: nothing is left to show it in.
@@ -195,6 +236,28 @@ impl cxx_qt::Initialize for qobject::Launcher {
                 obj.opened(list(o.request.args()));
             });
         });
+
+        let state_thread = self.qt_thread();
+        let act_thread = self.qt_thread();
+        let handle = shortcuts::start(shortcuts::Callbacks {
+            state: Box::new(move |supported, trigger| {
+                let _ = state_thread.queue(move |mut obj| {
+                    obj.as_mut().set_shortcut_ready(true);
+                    obj.as_mut().set_shortcut_supported(supported);
+                    obj.as_mut()
+                        .set_shortcut_trigger(QString::from(trigger.as_str()));
+                });
+            }),
+            activated: Box::new(move |token| {
+                let _ = act_thread.queue(move |obj| {
+                    if let Some(t) = &token {
+                        qobject::set_activation_token(&QString::from(t.as_str()));
+                    }
+                    obj.opened(list(vec!["--screen=clipboard".to_owned()]));
+                });
+            }),
+        });
+        self.as_mut().rust_mut().shortcuts = handle;
     }
 }
 

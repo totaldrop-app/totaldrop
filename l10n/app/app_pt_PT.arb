@@ -190,5 +190,11 @@
   "openLinkTitle": "Abrir esta ligação?",
   "openLinkBody": "O endereço abaixo será aberto no navegador.",
   "openLinkConfirm": "Abrir",
-  "openLinkFailed": "Nenhuma aplicação neste dispositivo conseguiu abrir a ligação."
+  "openLinkFailed": "Nenhuma aplicação neste dispositivo conseguiu abrir a ligação.",
+  "settingsShortcut": "Atalho de teclado",
+  "settingsShortcutBody": "Abra o TotalDrop a partir de qualquer lugar com o texto da área de transferência pronto a enviar. Nada é enviado até criar um código.",
+  "settingsShortcutUnset": "Não definido",
+  "settingsShortcutSet": "Definir atalho",
+  "settingsShortcutChange": "Alterar atalho",
+  "settingsShortcutManual": "Este ambiente não define atalhos de aplicações a partir daqui. Associe uma tecla nas definições do ambiente de trabalho ou do gestor de janelas a:"
 }

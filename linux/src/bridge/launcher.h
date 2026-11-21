@@ -5,12 +5,15 @@
 // a confirmed web link in the desktop's browser (#54).
 #pragma once
 
+#include <cstdint>
+
 #include <QtCore/QByteArray>
 #include <QtCore/QString>
 #include <QtCore/QUrl>
 #include <QtCore/QtGlobal>
 #include <QtGui/QDesktopServices>
 #include <QtGui/QGuiApplication>
+#include <QtGui/QWindow>
 
 namespace totaldrop {
 
@@ -24,6 +27,26 @@ inline void set_activation_token(const QString &token)
 {
     if (QGuiApplication::platformName().startsWith(QLatin1String("wayland")))
         qputenv("XDG_ACTIVATION_TOKEN", token.toUtf8());
+}
+
+// X11 window ID of the focused (or first visible) TotalDrop window, or 0 on
+// Wayland / headless, so GlobalShortcuts portal dialogs can parent to it
+// (#54). Wayland xdg-foreign parenting and fresh activation tokens are
+// tracked in #631.
+inline std::uint64_t parent_x11_xid()
+{
+    if (QGuiApplication::platformName() != QLatin1String("xcb"))
+        return 0;
+    QWindow *window = QGuiApplication::focusWindow();
+    if (!window) {
+        for (QWindow *top : QGuiApplication::topLevelWindows()) {
+            if (top && top->isVisible()) {
+                window = top;
+                break;
+            }
+        }
+    }
+    return window ? static_cast<std::uint64_t>(window->winId()) : 0;
 }
 
 // Checks with QUrl::StrictMode (RFC 3986) that `url` is a valid http(s)

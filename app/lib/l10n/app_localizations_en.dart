@@ -700,4 +700,24 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get openLinkFailed => 'No app on this device could open the link.';
+
+  @override
+  String get settingsShortcut => 'Keyboard shortcut';
+
+  @override
+  String get settingsShortcutBody =>
+      'Open TotalDrop from anywhere with the clipboard\'s text ready to send. Nothing is sent until you create a code.';
+
+  @override
+  String get settingsShortcutUnset => 'Not set';
+
+  @override
+  String get settingsShortcutSet => 'Set shortcut';
+
+  @override
+  String get settingsShortcutChange => 'Change shortcut';
+
+  @override
+  String get settingsShortcutManual =>
+      'This desktop does not set app shortcuts from here. Bind a key in your desktop or window manager settings to:';
 }

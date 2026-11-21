@@ -287,5 +287,17 @@
   "openLinkConfirm": "Open",
   "@openLinkConfirm": {"description": "Confirmation dialog button that opens the shown URL in the browser (#53)"},
   "openLinkFailed": "No app on this device could open the link.",
-  "@openLinkFailed": {"description": "Shown when no browser or app handles opening the received web link (#53)"}
+  "@openLinkFailed": {"description": "Shown when no browser or app handles opening the received web link (#53)"},
+  "settingsShortcut": "Keyboard shortcut",
+  "@settingsShortcut": {"description": "Linux Settings: heading of the section for the desktop-wide Send clipboard keyboard shortcut (#54)"},
+  "settingsShortcutBody": "Open TotalDrop from anywhere with the clipboard's text ready to send. Nothing is sent until you create a code.",
+  "@settingsShortcutBody": {"description": "Linux Settings: explains what the Send clipboard keyboard shortcut does and that nothing is sent automatically (#54)"},
+  "settingsShortcutUnset": "Not set",
+  "@settingsShortcutUnset": {"description": "Linux Settings: shown next to Send clipboard when no key combination is assigned yet (#54)"},
+  "settingsShortcutSet": "Set shortcut",
+  "@settingsShortcutSet": {"description": "Linux Settings: button that opens the desktop's shortcut dialog to assign a key combination (#54)"},
+  "settingsShortcutChange": "Change shortcut",
+  "@settingsShortcutChange": {"description": "Linux Settings: button that opens the desktop's shortcut dialog when a key combination is already assigned (#54)"},
+  "settingsShortcutManual": "This desktop does not set app shortcuts from here. Bind a key in your desktop or window manager settings to:",
+  "@settingsShortcutManual": {"description": "Linux Settings: shown above the command to bind by hand when the desktop has no GlobalShortcuts portal (#54)"}
 }

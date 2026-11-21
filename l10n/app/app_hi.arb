@@ -190,5 +190,11 @@
   "openLinkTitle": "यह लिंक खोलें?",
   "openLinkBody": "नीचे दिया गया पता आपके ब्राउज़र में खुलेगा।",
   "openLinkConfirm": "खोलें",
-  "openLinkFailed": "इस डिवाइस का कोई भी ऐप लिंक नहीं खोल सका।"
+  "openLinkFailed": "इस डिवाइस का कोई भी ऐप लिंक नहीं खोल सका।",
+  "settingsShortcut": "कीबोर्ड शॉर्टकट",
+  "settingsShortcutBody": "क्लिपबोर्ड के टेक्स्ट को भेजने के लिए तैयार रखकर कहीं से भी TotalDrop खोलें। जब तक आप कोड नहीं बनाते, कुछ भी भेजा नहीं जाता।",
+  "settingsShortcutUnset": "सेट नहीं है",
+  "settingsShortcutSet": "शॉर्टकट सेट करें",
+  "settingsShortcutChange": "शॉर्टकट बदलें",
+  "settingsShortcutManual": "यह डेस्कटॉप यहाँ से ऐप शॉर्टकट सेट नहीं करता। अपने डेस्कटॉप या विंडो मैनेजर की सेटिंग में इस कमांड के लिए कोई कुंजी जोड़ें:"
 }
