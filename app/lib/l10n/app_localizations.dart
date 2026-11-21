@@ -872,7 +872,7 @@ abstract class AppLocalizations {
   /// **'Suggestions'**
   String get codeSuggestions;
 
-  /// Transfer progress; use your language's percent style
+  /// Unused since #483 and #491; apps format percents from the region
   ///
   /// In en, this message translates to:
   /// **'{percent}%'**
