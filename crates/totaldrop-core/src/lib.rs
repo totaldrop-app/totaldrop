@@ -19,6 +19,7 @@
 
 pub mod error;
 pub mod framing;
+pub(crate) mod ipv6;
 pub mod pairing;
 pub mod path;
 pub mod portmap;

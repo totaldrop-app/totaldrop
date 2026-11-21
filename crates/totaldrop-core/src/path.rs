@@ -20,18 +20,23 @@
 //! sees the same address throughout, so neither side has to migrate, and
 //! each side can move on its own clock, and back (#185).
 
-use std::collections::VecDeque;
+use std::collections::{HashMap, VecDeque};
+use std::fmt;
+use std::future::Future;
 use std::io::{self, IoSliceMut};
-use std::net::{IpAddr, Ipv4Addr, SocketAddr, SocketAddrV4, SocketAddrV6};
+use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6};
 use std::pin::Pin;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, OnceLock, RwLock};
-use std::task::{Context, Poll};
-use std::time::Duration;
+use std::task::{Context, Poll, ready};
+use std::time::{Duration, Instant};
 
-use quinn::udp::{EcnCodepoint, RecvMeta, Transmit};
+use quinn::udp::{EcnCodepoint, RecvMeta, Transmit, UdpSocketState};
 use quinn::{AsyncUdpSocket, UdpPoller};
+use tokio::io::Interest;
 use tokio::sync::mpsc;
+
+use crate::ipv6::V6Source;
 
 /// The stand-in address of the other device through the relay. 240.0.0.0/4
 /// is reserved (RFC 1112) and never routed, so it cannot collide with a real
@@ -160,7 +165,7 @@ impl Fallback {
     }
 
     /// Note one segment of `transmit`, sent through the relay instead.
-    fn rerouted(&self, transmit: &Transmit, segment: &[u8]) {
+    fn rerouted(&self, transmit: &Transmit, src: ReplaySrc, segment: &[u8]) {
         #[cfg(test)]
         self.0.rerouted_total.fetch_add(1, Ordering::AcqRel);
         if let Ok(mut kept) = self.0.rerouted.lock() {
@@ -173,7 +178,7 @@ impl Fallback {
                 // would take the acknowledged copy for a network that
                 // clears marks and turn ECN off.
                 ecn: transmit.ecn,
-                src_ip: transmit.src_ip,
+                src,
                 datagram: segment.to_vec(),
             });
         }
@@ -215,12 +220,17 @@ impl Fallback {
             if Some(canonical(r.destination)) != direct {
                 continue;
             }
-            let transmit = Transmit {
+            let (initial_src, safe_default) = match r.src {
+                ReplaySrc::Default => (None, true),
+                ReplaySrc::Explicit { ip, safe_default } => (Some(ip), safe_default),
+                ReplaySrc::Suppress => continue,
+            };
+            let mut transmit = Transmit {
                 destination: r.destination,
                 ecn: r.ecn,
                 contents: &r.datagram,
                 segment_size: None,
-                src_ip: r.src_ip,
+                src_ip: initial_src,
             };
             // Best effort, briefly: a socket that stays full drops it, as
             // the network could, and QUIC's own resend still follows.
@@ -233,6 +243,13 @@ impl Fallback {
                                 .await
                                 .is_err()
                             {
+                                return;
+                            }
+                        }
+                        Err(e) if transmit.src_ip.is_some() && is_source_addr_error(&e) => {
+                            if safe_default && !crate::ipv6::is_unsafe_default_v6(r.destination) {
+                                transmit.src_ip = None;
+                            } else {
                                 return;
                             }
                         }
@@ -364,12 +381,27 @@ impl Fallback {
     }
 }
 
+/// How [`Fallback::replay`] should pick the source IP when sending a kept
+/// datagram directly again (#405).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum ReplaySrc {
+    /// Send with `src_ip: None` (IPv4, loopback, or announceable IPv6 default).
+    Default,
+    /// Send with an explicit `src_ip`; fall back to `None` on source-address
+    /// rejection only when `safe_default` is true and the kernel default is not
+    /// modified EUI-64.
+    Explicit { ip: IpAddr, safe_default: bool },
+    /// Kernel default is unsafe (modified EUI-64) and no temporary IPv6 exists:
+    /// skip direct replay so the hardware address is never leaked.
+    Suppress,
+}
+
 /// A datagram sent through the relay while moved, kept to send again.
 #[derive(Debug)]
 struct Rerouted {
     destination: SocketAddr,
     ecn: Option<EcnCodepoint>,
-    src_ip: Option<IpAddr>,
+    src: ReplaySrc,
     datagram: Vec<u8>,
 }
 
@@ -466,6 +498,156 @@ impl Drop for Watch {
     }
 }
 
+/// Maximum distinct IPv6 destinations cached per [`PathSocket`].
+const MAX_PREFERRED_V6_CACHE: usize = 32;
+
+/// Re-resolve cached IPv6 source policies after this interval so a temporary
+/// address that becomes `IFA_F_DEPRECATED` (still accepted by the kernel) or a
+/// newly acquired temporary address is picked up on long-lived endpoints
+/// (#405).
+const PREFERRED_V6_TTL: Duration = Duration::from_secs(10 * 60);
+
+/// One cached IPv6 source decision and when it was resolved.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct CachedV6Source {
+    policy: V6Source,
+    resolved_at: Instant,
+}
+
+/// Preferred temporary IPv6 source selection for outbound datagrams (#405).
+#[derive(Debug)]
+enum PreferredV6 {
+    /// Resolved per distinct routable IPv6 destination with TTL expiry and
+    /// oldest-entry eviction once `MAX_PREFERRED_V6_CACHE` is reached.
+    Dynamic(HashMap<Ipv6Addr, CachedV6Source>),
+    /// Fixed source policy for unit tests (updated on send error).
+    #[cfg(test)]
+    Fixed(V6Source),
+}
+
+/// Whether `e` indicates that an explicit `src_ip` could not be used.
+fn is_source_addr_error(e: &io::Error) -> bool {
+    matches!(
+        e.kind(),
+        io::ErrorKind::AddrNotAvailable | io::ErrorKind::InvalidInput
+    )
+}
+
+type WritableFuture = Pin<Box<dyn Future<Output = io::Result<()>> + Send + Sync>>;
+
+/// Tokio-backed [`AsyncUdpSocket`] that propagates `AddrNotAvailable` and
+/// `InvalidInput` when `transmit.src_ip` is set (#405).
+///
+/// Mirrors `quinn::TokioRuntime::wrap_udp_socket` from `quinn 0.11.12` /
+/// `quinn-udp 0.5.16`, where `UdpSocketState::send` converts every
+/// non-`WouldBlock` error (including `EADDRNOTAVAIL` and `EINVAL` from
+/// `IPV6_PKTINFO`) into `Ok(())`. Calling `UdpSocketState::try_send` for
+/// explicit `src_ip` transmits lets [`PathSocket`] and [`Fallback`] detect a
+/// rejected temporary address and recover instead of blackholing the direct
+/// path. The test `quinn_default_wrap_still_swallows_bad_src_ip` fails if a
+/// future `quinn` / `quinn-udp` upgrade stops swallowing these errors so this
+/// wrapper can be removed.
+#[derive(Debug)]
+struct WrappedUdpSocket {
+    io: tokio::net::UdpSocket,
+    state: UdpSocketState,
+}
+
+struct WrappedUdpPoller {
+    socket: Arc<WrappedUdpSocket>,
+    fut: Option<WritableFuture>,
+}
+
+impl fmt::Debug for WrappedUdpPoller {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("WrappedUdpPoller").finish_non_exhaustive()
+    }
+}
+
+impl UdpPoller for WrappedUdpPoller {
+    fn poll_writable(self: Pin<&mut Self>, cx: &mut Context) -> Poll<io::Result<()>> {
+        let this = self.get_mut();
+        let fut = this.fut.get_or_insert_with(|| {
+            let socket = this.socket.clone();
+            Box::pin(async move { socket.io.writable().await })
+        });
+        let result = fut.as_mut().poll(cx);
+        if result.is_ready() {
+            this.fut = None;
+        }
+        result
+    }
+}
+
+impl AsyncUdpSocket for WrappedUdpSocket {
+    fn create_io_poller(self: Arc<Self>) -> Pin<Box<dyn UdpPoller>> {
+        Box::pin(WrappedUdpPoller {
+            socket: self,
+            fut: None,
+        })
+    }
+
+    fn try_send(&self, transmit: &Transmit) -> io::Result<()> {
+        if transmit.src_ip.is_some() {
+            match self.io.try_io(Interest::WRITABLE, || {
+                self.state.try_send((&self.io).into(), transmit)
+            }) {
+                Ok(()) => Ok(()),
+                Err(e) if e.kind() == io::ErrorKind::WouldBlock || is_source_addr_error(&e) => {
+                    Err(e)
+                }
+                // Match `UdpSocketState::send`: non-fatal UDP errors such as
+                // `EMSGSIZE` or `ENETUNREACH` drop the datagram rather than
+                // aborting quinn's connection driver.
+                Err(_) => Ok(()),
+            }
+        } else {
+            self.io.try_io(Interest::WRITABLE, || {
+                self.state.send((&self.io).into(), transmit)
+            })
+        }
+    }
+
+    fn poll_recv(
+        &self,
+        cx: &mut Context,
+        bufs: &mut [IoSliceMut<'_>],
+        meta: &mut [RecvMeta],
+    ) -> Poll<io::Result<usize>> {
+        loop {
+            ready!(self.io.poll_recv_ready(cx))?;
+            if let Ok(res) = self.io.try_io(Interest::READABLE, || {
+                self.state.recv((&self.io).into(), bufs, meta)
+            }) {
+                return Poll::Ready(Ok(res));
+            }
+        }
+    }
+
+    fn local_addr(&self) -> io::Result<SocketAddr> {
+        self.io.local_addr()
+    }
+
+    fn may_fragment(&self) -> bool {
+        self.state.may_fragment()
+    }
+
+    fn max_transmit_segments(&self) -> usize {
+        self.state.max_gso_segments()
+    }
+
+    fn max_receive_segments(&self) -> usize {
+        self.state.gro_segments()
+    }
+}
+
+/// Wrap `sock` for QUIC with real `IPV6_PKTINFO` error propagation (#405).
+pub(crate) fn wrap_udp_socket(sock: std::net::UdpSocket) -> io::Result<Arc<dyn AsyncUdpSocket>> {
+    let state = UdpSocketState::new((&sock).into())?;
+    let io = tokio::net::UdpSocket::from_std(sock)?;
+    Ok(Arc::new(WrappedUdpSocket { io, state }))
+}
+
 /// A UDP socket that also reaches the other device through the relay.
 #[derive(Debug)]
 pub struct PathSocket {
@@ -476,6 +658,8 @@ pub struct PathSocket {
     /// Whether `inner` is an IPv6 (dual-stack) socket, so that datagrams
     /// from the relay carry a source address in its family.
     ipv6: bool,
+    /// Preferred temporary IPv6 source address cache (#405).
+    preferred_v6: RwLock<PreferredV6>,
 }
 
 impl PathSocket {
@@ -484,6 +668,21 @@ impl PathSocket {
     /// full, or when no link runs, they are dropped. The [`Fallback`] moves a
     /// direct connection onto the relay.
     pub fn new(inner: Arc<dyn AsyncUdpSocket>) -> (Arc<Self>, RelayPipes, Fallback) {
+        Self::with_policy(inner, PreferredV6::Dynamic(HashMap::new()))
+    }
+
+    #[cfg(test)]
+    pub(crate) fn with_preferred_v6(
+        inner: Arc<dyn AsyncUdpSocket>,
+        policy: V6Source,
+    ) -> (Arc<Self>, RelayPipes, Fallback) {
+        Self::with_policy(inner, PreferredV6::Fixed(policy))
+    }
+
+    fn with_policy(
+        inner: Arc<dyn AsyncUdpSocket>,
+        preferred_v6: PreferredV6,
+    ) -> (Arc<Self>, RelayPipes, Fallback) {
         let (to_relay, outgoing) = mpsc::channel(QUEUE);
         let (incoming, from_relay) = mpsc::channel(QUEUE);
         let fallback = Fallback::new(to_relay.clone());
@@ -496,10 +695,138 @@ impl PathSocket {
                 from_relay: Mutex::new(from_relay),
                 fallback: fallback.clone(),
                 ipv6,
+                preferred_v6: RwLock::new(preferred_v6),
             }),
             RelayPipes { outgoing, incoming },
             fallback,
         )
+    }
+
+    fn insert_v6_cache(
+        cache: &mut HashMap<Ipv6Addr, CachedV6Source>,
+        dest_v6: Ipv6Addr,
+        policy: V6Source,
+        now: Instant,
+    ) {
+        if !cache.contains_key(&dest_v6) && cache.len() >= MAX_PREFERRED_V6_CACHE {
+            cache.retain(|_, entry| {
+                now.saturating_duration_since(entry.resolved_at) < PREFERRED_V6_TTL
+            });
+            if cache.len() >= MAX_PREFERRED_V6_CACHE
+                && let Some(&oldest) = cache
+                    .iter()
+                    .min_by_key(|(_, entry)| entry.resolved_at)
+                    .map(|(k, _)| k)
+            {
+                cache.remove(&oldest);
+            }
+        }
+        cache.insert(
+            dest_v6,
+            CachedV6Source {
+                policy,
+                resolved_at: now,
+            },
+        );
+    }
+
+    fn resolve_v6_source(&self, destination: SocketAddr, dest_v6: Ipv6Addr) -> V6Source {
+        self.resolve_v6_source_at(destination, dest_v6, Instant::now())
+    }
+
+    fn resolve_v6_source_at(
+        &self,
+        destination: SocketAddr,
+        dest_v6: Ipv6Addr,
+        now: Instant,
+    ) -> V6Source {
+        {
+            let guard = self
+                .preferred_v6
+                .read()
+                .unwrap_or_else(std::sync::PoisonError::into_inner);
+            match &*guard {
+                PreferredV6::Dynamic(cache) => {
+                    if let Some(&cached) = cache.get(&dest_v6)
+                        && now.saturating_duration_since(cached.resolved_at) < PREFERRED_V6_TTL
+                    {
+                        return cached.policy;
+                    }
+                }
+                #[cfg(test)]
+                PreferredV6::Fixed(policy) => return *policy,
+            }
+        }
+        let resolved = crate::ipv6::source_policy_v6(destination);
+        let mut guard = self
+            .preferred_v6
+            .write()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        match &mut *guard {
+            PreferredV6::Dynamic(cache) => {
+                if let Some(&existing) = cache.get(&dest_v6)
+                    && now.saturating_duration_since(existing.resolved_at) < PREFERRED_V6_TTL
+                {
+                    return existing.policy;
+                }
+                Self::insert_v6_cache(cache, dest_v6, resolved, now);
+            }
+            #[cfg(test)]
+            PreferredV6::Fixed(_) => {}
+        }
+        resolved
+    }
+
+    fn set_v6_source(&self, dest_v6: Ipv6Addr, next: V6Source) {
+        let now = Instant::now();
+        let mut guard = self
+            .preferred_v6
+            .write()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        match &mut *guard {
+            PreferredV6::Dynamic(cache) => Self::insert_v6_cache(cache, dest_v6, next, now),
+            #[cfg(test)]
+            PreferredV6::Fixed(policy) => *policy = next,
+        }
+    }
+
+    /// Retry a segmented (`UDP_SEGMENT` / GSO) transmit as individual
+    /// single-segment datagrams while keeping `src_ip` intact (#405).
+    ///
+    /// Returns `Ok(true)` when GSO itself caused `InvalidInput` and the first
+    /// single-segment datagram succeeded (preserving the cached temporary IPv6
+    /// source), `Ok(false)` when the first single-segment send also failed with
+    /// a source-address error (proving `src_ip` itself is unusable), or
+    /// `Err(e)` for `WouldBlock` or other errors.
+    fn try_send_split_segments(&self, patched: &Transmit) -> io::Result<bool> {
+        let size = patched
+            .segment_size
+            .unwrap_or(patched.contents.len())
+            .max(1);
+        let mut segments = patched.contents.chunks(size);
+        let Some(first) = segments.next() else {
+            return Ok(true);
+        };
+        let single = |contents| Transmit {
+            segment_size: None,
+            contents,
+            ..patched.clone()
+        };
+        match self.inner.try_send(&single(first)) {
+            Ok(()) => {}
+            Err(e) if is_source_addr_error(&e) => return Ok(false),
+            Err(e) => return Err(e),
+        }
+        for segment in segments {
+            match self.inner.try_send(&single(segment)) {
+                Ok(()) => {}
+                Err(e) if e.kind() == io::ErrorKind::WouldBlock => return Err(e),
+                // Remaining segments are best-effort once the first succeeded;
+                // QUIC retransmits any dropped datagram.
+                Err(_) => break,
+            }
+        }
+        Ok(true)
     }
 
     fn relay_send(&self, transmit: &Transmit) {
@@ -560,19 +887,89 @@ impl AsyncUdpSocket for PathSocket {
     fn try_send(&self, transmit: &Transmit) -> io::Result<()> {
         if is_relay(transmit.destination) {
             self.relay_send(transmit);
-            Ok(())
-        } else if self.fallback.reroutes(transmit.destination) {
+            return Ok(());
+        }
+        let v6_policy = if transmit.src_ip.is_none() {
+            crate::ipv6::routable_v6_ip(transmit.destination).map(|dest_v6| {
+                (
+                    dest_v6,
+                    self.resolve_v6_source(transmit.destination, dest_v6),
+                )
+            })
+        } else {
+            None
+        };
+        if self.fallback.reroutes(transmit.destination) {
             self.relay_send(transmit);
+            let replay_src = match (transmit.src_ip, v6_policy) {
+                (Some(ip), _) => ReplaySrc::Explicit {
+                    ip,
+                    safe_default: true,
+                },
+                (None, Some((_, V6Source::Temporary { addr, safe_default }))) => {
+                    ReplaySrc::Explicit {
+                        ip: IpAddr::V6(addr),
+                        safe_default,
+                    }
+                }
+                (None, Some((_, V6Source::UnsafeDefault))) => ReplaySrc::Suppress,
+                (None, Some((_, V6Source::SystemDefault(_)))) | (None, None) => ReplaySrc::Default,
+            };
             let size = transmit
                 .segment_size
                 .unwrap_or(transmit.contents.len())
                 .max(1);
             for segment in transmit.contents.chunks(size) {
-                self.fallback.rerouted(transmit, segment);
+                self.fallback.rerouted(transmit, replay_src, segment);
             }
-            Ok(())
-        } else {
-            self.inner.try_send(transmit)
+            return Ok(());
+        }
+        match v6_policy {
+            // Returning `Err` from `AsyncUdpSocket::try_send` terminates quinn's
+            // `ConnectionDriver` for the entire dual-stack endpoint (including
+            // IPv4 and relay paths). Dropping the direct IPv6 datagram with
+            // `Ok(())` lets IPv4 or `Fallback` carry the transfer instead of
+            // leaking a modified EUI-64 address; `PREFERRED_V6_TTL` re-resolves
+            // the cache entry if a temporary address later appears.
+            Some((_, V6Source::UnsafeDefault)) => Ok(()),
+            Some((dest_v6, V6Source::Temporary { addr, safe_default })) => {
+                let patched = Transmit {
+                    src_ip: Some(IpAddr::V6(addr)),
+                    ..transmit.clone()
+                };
+                match self.inner.try_send(&patched) {
+                    Ok(()) => Ok(()),
+                    Err(e) if is_source_addr_error(&e) => {
+                        if e.kind() == io::ErrorKind::InvalidInput
+                            && patched
+                                .segment_size
+                                .is_some_and(|s| s > 0 && s < patched.contents.len())
+                        {
+                            match self.try_send_split_segments(&patched) {
+                                Ok(true) => return Ok(()),
+                                Ok(false) => {}
+                                Err(err) => return Err(err),
+                            }
+                        }
+                        if safe_default && !crate::ipv6::is_unsafe_default_v6(transmit.destination)
+                        {
+                            self.set_v6_source(dest_v6, V6Source::SystemDefault(None));
+                            self.inner.try_send(transmit)
+                        } else {
+                            self.set_v6_source(dest_v6, V6Source::UnsafeDefault);
+                            Ok(())
+                        }
+                    }
+                    Err(e) => Err(e),
+                }
+            }
+            // Never return a source-address error to quinn when quinn itself
+            // echoed `RecvMeta.dst_ip`: `ConnectionDriver` terminates on any
+            // non-`WouldBlock` error from `try_send`.
+            Some((_, V6Source::SystemDefault(_))) | None => match self.inner.try_send(transmit) {
+                Err(e) if transmit.src_ip.is_some() && is_source_addr_error(&e) => Ok(()),
+                other => other,
+            },
         }
     }
 
@@ -898,5 +1295,889 @@ mod tests {
             ..seen()
         };
         assert_eq!(step(&late, SILENCE), Step::Recount(19_900));
+    }
+
+    #[derive(Debug)]
+    struct ReadyPoller;
+
+    impl UdpPoller for ReadyPoller {
+        fn poll_writable(self: Pin<&mut Self>, _cx: &mut Context) -> Poll<io::Result<()>> {
+            Poll::Ready(Ok(()))
+        }
+    }
+
+    type RecordedSend = (SocketAddr, Option<IpAddr>, Vec<u8>);
+
+    #[derive(Debug)]
+    struct FakeSocket {
+        sent: Mutex<Vec<RecordedSend>>,
+        outcomes: Mutex<VecDeque<io::Result<()>>>,
+        fail_gso: AtomicBool,
+    }
+
+    impl FakeSocket {
+        fn new(outcomes: Vec<io::Result<()>>) -> Arc<Self> {
+            Arc::new(Self {
+                sent: Mutex::new(Vec::new()),
+                outcomes: Mutex::new(outcomes.into()),
+                fail_gso: AtomicBool::new(false),
+            })
+        }
+
+        fn gso_rejecting() -> Arc<Self> {
+            Arc::new(Self {
+                sent: Mutex::new(Vec::new()),
+                outcomes: Mutex::new(VecDeque::new()),
+                fail_gso: AtomicBool::new(true),
+            })
+        }
+
+        fn recorded(&self) -> Vec<RecordedSend> {
+            self.sent
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner)
+                .clone()
+        }
+    }
+
+    impl AsyncUdpSocket for FakeSocket {
+        fn create_io_poller(self: Arc<Self>) -> Pin<Box<dyn UdpPoller>> {
+            Box::pin(ReadyPoller)
+        }
+
+        fn try_send(&self, transmit: &Transmit) -> io::Result<()> {
+            self.sent
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner)
+                .push((
+                    transmit.destination,
+                    transmit.src_ip,
+                    transmit.contents.to_vec(),
+                ));
+            if self.fail_gso.load(Ordering::Acquire) && transmit.segment_size.is_some() {
+                return Err(io::Error::from(io::ErrorKind::InvalidInput));
+            }
+            self.outcomes
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner)
+                .pop_front()
+                .unwrap_or(Ok(()))
+        }
+
+        fn poll_recv(
+            &self,
+            _cx: &mut Context,
+            _bufs: &mut [IoSliceMut<'_>],
+            _meta: &mut [RecvMeta],
+        ) -> Poll<io::Result<usize>> {
+            Poll::Pending
+        }
+
+        fn local_addr(&self) -> io::Result<SocketAddr> {
+            Ok(SocketAddr::from((Ipv6Addr::UNSPECIFIED, 5000)))
+        }
+    }
+
+    /// #405: `wrap_udp_socket` propagates real OS `AddrNotAvailable` /
+    /// `InvalidInput` when `src_ip` is unassigned (rather than swallowing it as
+    /// `Ok(())`), while delivering valid sends and receiving via `poll_recv`.
+    #[tokio::test]
+    #[allow(clippy::unwrap_used)]
+    async fn wrap_udp_socket_propagates_bad_src_ip_and_delivers_valid_loopback() {
+        let Ok(peer_std) = std::net::UdpSocket::bind("[::1]:0") else {
+            assert!(
+                std::env::var_os("TOTALDROP_REQUIRE_IPV6").is_none(),
+                "TOTALDROP_REQUIRE_IPV6 is set but IPv6 loopback is unavailable"
+            );
+            return;
+        };
+        let peer_addr = peer_std.local_addr().unwrap();
+        let peer = wrap_udp_socket(peer_std).unwrap();
+        let sender_std = crate::transport::bind_socket().unwrap();
+        let sender = wrap_udp_socket(sender_std).unwrap();
+
+        assert!(sender.local_addr().unwrap().is_ipv6());
+        assert!(sender.max_transmit_segments() >= 1);
+        assert!(sender.max_receive_segments() >= 1);
+        let _ = sender.may_fragment();
+
+        let mut poller = sender.clone().create_io_poller();
+        assert!(format!("{poller:?}").contains("WrappedUdpPoller"));
+        std::future::poll_fn(|cx| poller.as_mut().poll_writable(cx))
+            .await
+            .unwrap();
+
+        // Unassigned RFC 3849 address MUST fail with AddrNotAvailable or
+        // InvalidInput on the real OS kernel, NOT return Ok(()).
+        let bogus: Ipv6Addr = "2001:db8::dead:beef".parse().unwrap();
+        let err = sender
+            .try_send(&Transmit {
+                destination: peer_addr,
+                ecn: None,
+                contents: b"bad-src",
+                segment_size: None,
+                src_ip: Some(IpAddr::V6(bogus)),
+            })
+            .unwrap_err();
+        assert!(
+            is_source_addr_error(&err),
+            "expected AddrNotAvailable/InvalidInput from OS kernel, got {err:?}"
+        );
+
+        // Subsequent valid sends (explicit ::1 and default src_ip: None) must
+        // succeed on the same WrappedUdpSocket and arrive via poll_recv.
+        for (src_ip, payload) in [
+            (Some(IpAddr::V6(Ipv6Addr::LOCALHOST)), &b"ok-pktinfo"[..]),
+            (None, &b"ok-default"[..]),
+        ] {
+            sender
+                .try_send(&Transmit {
+                    destination: peer_addr,
+                    ecn: None,
+                    contents: payload,
+                    segment_size: None,
+                    src_ip,
+                })
+                .unwrap();
+            let mut buf = [0u8; 64];
+            let mut meta = [RecvMeta::default()];
+            let n = tokio::time::timeout(
+                Duration::from_millis(500),
+                std::future::poll_fn(|cx| {
+                    let mut slices = [IoSliceMut::new(&mut buf)];
+                    peer.poll_recv(cx, &mut slices, &mut meta)
+                }),
+            )
+            .await
+            .unwrap()
+            .unwrap();
+            assert_eq!(n, 1);
+            assert_eq!(buf.get(..meta[0].len), Some(payload));
+        }
+    }
+
+    /// #405: guard against silent drift from `quinn 0.11.12` / `quinn-udp
+    /// 0.5.16`. If a future `quinn` upgrade stops swallowing
+    /// `AddrNotAvailable` / `InvalidInput` inside
+    /// `TokioRuntime::wrap_udp_socket`, this test fails so [`WrappedUdpSocket`]
+    /// can be deleted in favor of `quinn::default_runtime()?.wrap_udp_socket`.
+    #[tokio::test]
+    #[allow(clippy::unwrap_used)]
+    async fn quinn_default_wrap_still_swallows_bad_src_ip() {
+        let Ok(peer_std) = std::net::UdpSocket::bind("[::1]:0") else {
+            assert!(
+                std::env::var_os("TOTALDROP_REQUIRE_IPV6").is_none(),
+                "TOTALDROP_REQUIRE_IPV6 is set but IPv6 loopback is unavailable"
+            );
+            return;
+        };
+        let peer_addr = peer_std.local_addr().unwrap();
+        let sender_std = crate::transport::bind_socket().unwrap();
+        let sender = quinn::default_runtime()
+            .unwrap()
+            .wrap_udp_socket(sender_std)
+            .unwrap();
+        let mut poller = sender.clone().create_io_poller();
+        std::future::poll_fn(|cx| poller.as_mut().poll_writable(cx))
+            .await
+            .unwrap();
+
+        let bogus: Ipv6Addr = "2001:db8::dead:beef".parse().unwrap();
+        let res = sender.try_send(&Transmit {
+            destination: peer_addr,
+            ecn: None,
+            contents: b"bad-src",
+            segment_size: None,
+            src_ip: Some(IpAddr::V6(bogus)),
+        });
+        assert!(
+            res.is_ok(),
+            "quinn's default TokioRuntime::wrap_udp_socket now propagates bad src_ip ({res:?}); \
+             WrappedUdpSocket can be removed"
+        );
+    }
+
+    /// #405: `PathSocket` stamps preferred temporary IPv6 `src_ip` only on
+    /// routable unicast IPv6 destinations when `src_ip` is unset, leaving
+    /// explicit `src_ip`, IPv4, IPv4-mapped IPv6, loopback, unspecified,
+    /// multicast, and relay transmits untouched.
+    #[test]
+    #[allow(clippy::unwrap_used)]
+    fn preferred_v6_stamps_only_real_ipv6_without_existing_src_ip() {
+        let temp: Ipv6Addr = "2a02:4e0:2d8a:1b00:abcd:ef01:2345:6789".parse().unwrap();
+        let explicit: Ipv6Addr = "2a02:4e0:2d8a:1b00:1111:2222:3333:4444".parse().unwrap();
+        let fake = FakeSocket::new(Vec::new());
+        let (socket, mut pipes, _fallback) = PathSocket::with_preferred_v6(
+            fake.clone(),
+            V6Source::Temporary {
+                addr: temp,
+                safe_default: true,
+            },
+        );
+
+        let global_v6: SocketAddr = "[2001:db8::1]:4000".parse().unwrap();
+        let mapped_v6: SocketAddr = "[::ffff:192.0.2.7]:4000".parse().unwrap();
+        let loopback_v6: SocketAddr = "[::1]:4000".parse().unwrap();
+        let unspec_v6: SocketAddr = "[::]:4000".parse().unwrap();
+        let mcast_v6: SocketAddr = "[ff02::1]:4000".parse().unwrap();
+
+        let send = |destination: SocketAddr, src_ip: Option<IpAddr>, payload: &[u8]| {
+            socket
+                .try_send(&Transmit {
+                    destination,
+                    ecn: None,
+                    contents: payload,
+                    segment_size: None,
+                    src_ip,
+                })
+                .unwrap();
+        };
+
+        send(global_v6, None, b"g1");
+        send(global_v6, Some(IpAddr::V6(explicit)), b"g2");
+        send(A, None, b"v4");
+        send(mapped_v6, None, b"mp");
+        send(loopback_v6, None, b"lo");
+        send(unspec_v6, None, b"un");
+        send(mcast_v6, None, b"mc");
+        send(RELAY_PEER, None, b"rl");
+
+        assert_eq!(
+            fake.recorded(),
+            vec![
+                (global_v6, Some(IpAddr::V6(temp)), b"g1".to_vec()),
+                (global_v6, Some(IpAddr::V6(explicit)), b"g2".to_vec()),
+                (A, None, b"v4".to_vec()),
+                (mapped_v6, None, b"mp".to_vec()),
+                (loopback_v6, None, b"lo".to_vec()),
+                (unspec_v6, None, b"un".to_vec()),
+                (mcast_v6, None, b"mc".to_vec()),
+            ]
+        );
+        assert_eq!(pipes.outgoing.try_recv().ok(), Some(b"rl".to_vec()));
+    }
+
+    /// #405: `AddrNotAvailable` and `InvalidInput` transition `safe_default:
+    /// true` to `SystemDefault` and retry with `src_ip: None`, preserve cache
+    /// on `WouldBlock` and unrelated errors, and absorb source-address errors
+    /// on quinn-stamped transmits so `ConnectionDriver` is never killed.
+    #[test]
+    #[allow(clippy::unwrap_used)]
+    fn preferred_v6_clears_and_retries_on_source_addr_errors() {
+        let temp: Ipv6Addr = "2a02:4e0:2d8a:1b00:abcd:ef01:2345:6789".parse().unwrap();
+        let dest: SocketAddr = "[2001:db8::2]:4000".parse().unwrap();
+
+        for kind in [io::ErrorKind::AddrNotAvailable, io::ErrorKind::InvalidInput] {
+            let fake = FakeSocket::new(vec![Err(io::Error::from(kind)), Ok(()), Ok(())]);
+            let (socket, _pipes, _fallback) = PathSocket::with_preferred_v6(
+                fake.clone(),
+                V6Source::Temporary {
+                    addr: temp,
+                    safe_default: true,
+                },
+            );
+
+            let tx = Transmit {
+                destination: dest,
+                ecn: None,
+                contents: b"first",
+                segment_size: None,
+                src_ip: None,
+            };
+            socket.try_send(&tx).unwrap();
+            let tx2 = Transmit {
+                destination: dest,
+                ecn: None,
+                contents: b"second",
+                segment_size: None,
+                src_ip: None,
+            };
+            socket.try_send(&tx2).unwrap();
+
+            assert_eq!(
+                fake.recorded(),
+                vec![
+                    (dest, Some(IpAddr::V6(temp)), b"first".to_vec()),
+                    (dest, None, b"first".to_vec()),
+                    (dest, None, b"second".to_vec()),
+                ]
+            );
+        }
+
+        // WouldBlock propagates to quinn and preserves Temporary in cache.
+        let fake = FakeSocket::new(vec![
+            Err(io::Error::from(io::ErrorKind::WouldBlock)),
+            Ok(()),
+        ]);
+        let (socket, _pipes, _fallback) = PathSocket::with_preferred_v6(
+            fake.clone(),
+            V6Source::Temporary {
+                addr: temp,
+                safe_default: true,
+            },
+        );
+        let wb = socket
+            .try_send(&Transmit {
+                destination: dest,
+                ecn: None,
+                contents: b"wb",
+                segment_size: None,
+                src_ip: None,
+            })
+            .unwrap_err();
+        assert_eq!(wb.kind(), io::ErrorKind::WouldBlock);
+        socket
+            .try_send(&Transmit {
+                destination: dest,
+                ecn: None,
+                contents: b"after-wb",
+                segment_size: None,
+                src_ip: None,
+            })
+            .unwrap();
+        assert_eq!(
+            fake.recorded(),
+            vec![
+                (dest, Some(IpAddr::V6(temp)), b"wb".to_vec()),
+                (dest, Some(IpAddr::V6(temp)), b"after-wb".to_vec()),
+            ]
+        );
+
+        // Unrelated errors propagate without clearing or retrying.
+        let fake = FakeSocket::new(vec![Err(io::Error::from(io::ErrorKind::PermissionDenied))]);
+        let (socket, _pipes, _fallback) = PathSocket::with_preferred_v6(
+            fake.clone(),
+            V6Source::Temporary {
+                addr: temp,
+                safe_default: true,
+            },
+        );
+        let err = socket
+            .try_send(&Transmit {
+                destination: dest,
+                ecn: None,
+                contents: b"perm",
+                segment_size: None,
+                src_ip: None,
+            })
+            .unwrap_err();
+        assert_eq!(err.kind(), io::ErrorKind::PermissionDenied);
+        assert_eq!(
+            fake.recorded(),
+            vec![(dest, Some(IpAddr::V6(temp)), b"perm".to_vec())]
+        );
+
+        // Pre-stamped src_ip from quinn: source-address errors convert to Ok(())
+        // rather than killing ConnectionDriver; WouldBlock still propagates.
+        let fake = FakeSocket::new(vec![
+            Err(io::Error::from(io::ErrorKind::AddrNotAvailable)),
+            Err(io::Error::from(io::ErrorKind::InvalidInput)),
+            Err(io::Error::from(io::ErrorKind::WouldBlock)),
+        ]);
+        let (socket, _pipes, _fallback) = PathSocket::new(fake);
+        let tx = Transmit {
+            destination: dest,
+            ecn: None,
+            contents: b"echo",
+            segment_size: None,
+            src_ip: Some(IpAddr::V6(temp)),
+        };
+        socket.try_send(&tx).unwrap();
+        socket.try_send(&tx).unwrap();
+        assert_eq!(
+            socket.try_send(&tx).unwrap_err().kind(),
+            io::ErrorKind::WouldBlock
+        );
+    }
+
+    /// #405: when the kernel's default IPv6 source is unsafe (modified EUI-64),
+    /// neither fallback nor TOCTOU ever sends a direct packet with `src_ip:
+    /// None`; direct packets drop cleanly with `Ok(())` so IPv4 or relay wins.
+    #[test]
+    #[allow(clippy::unwrap_used)]
+    fn unsafe_default_suppresses_direct_sends_without_leaking_eui64() {
+        let temp: Ipv6Addr = "2a02:4e0:2d8a:1b00:abcd:ef01:2345:6789".parse().unwrap();
+        let dest: SocketAddr = "[2001:db8::40]:4000".parse().unwrap();
+
+        for kind in [io::ErrorKind::AddrNotAvailable, io::ErrorKind::InvalidInput] {
+            let fake = FakeSocket::new(vec![Err(io::Error::from(kind))]);
+            let (socket, _pipes, _fallback) = PathSocket::with_preferred_v6(
+                fake.clone(),
+                V6Source::Temporary {
+                    addr: temp,
+                    safe_default: false,
+                },
+            );
+            socket
+                .try_send(&Transmit {
+                    destination: dest,
+                    ecn: None,
+                    contents: b"first",
+                    segment_size: None,
+                    src_ip: None,
+                })
+                .unwrap();
+            // Subsequent send hits cached UnsafeDefault and never touches inner.
+            socket
+                .try_send(&Transmit {
+                    destination: dest,
+                    ecn: None,
+                    contents: b"second",
+                    segment_size: None,
+                    src_ip: None,
+                })
+                .unwrap();
+            assert_eq!(
+                fake.recorded(),
+                vec![(dest, Some(IpAddr::V6(temp)), b"first".to_vec())]
+            );
+        }
+
+        // Direct UnsafeDefault (TOCTOU miss) drops without calling inner.
+        let fake = FakeSocket::new(Vec::new());
+        let (socket, _pipes, _fallback) =
+            PathSocket::with_preferred_v6(fake.clone(), V6Source::UnsafeDefault);
+        socket
+            .try_send(&Transmit {
+                destination: dest,
+                ecn: None,
+                contents: b"drop-me",
+                segment_size: None,
+                src_ip: None,
+            })
+            .unwrap();
+        assert!(fake.recorded().is_empty());
+    }
+
+    /// #405: GSO-only `InvalidInput` splits into individual segments keeping
+    /// `src_ip` and preserves `Temporary` in cache; if single-segment sends
+    /// also fail with a source-address error, normal fallback/suppression runs.
+    #[test]
+    #[allow(clippy::unwrap_used)]
+    fn gso_einval_preserves_temporary_source_while_real_src_error_falls_back() {
+        let temp: Ipv6Addr = "2a02:4e0:2d8a:1b00:abcd:ef01:2345:6789".parse().unwrap();
+        let dest: SocketAddr = "[2001:db8::50]:4000".parse().unwrap();
+
+        // GSO rejected, single segments succeed with the same temp src_ip.
+        let fake = FakeSocket::gso_rejecting();
+        let (socket, _pipes, _fallback) = PathSocket::with_preferred_v6(
+            fake.clone(),
+            V6Source::Temporary {
+                addr: temp,
+                safe_default: true,
+            },
+        );
+        socket
+            .try_send(&Transmit {
+                destination: dest,
+                ecn: None,
+                contents: b"aabbcc",
+                segment_size: Some(2),
+                src_ip: None,
+            })
+            .unwrap();
+        // Next single transmit must STILL carry `src_ip: Some(temp)`.
+        socket
+            .try_send(&Transmit {
+                destination: dest,
+                ecn: None,
+                contents: b"next",
+                segment_size: None,
+                src_ip: None,
+            })
+            .unwrap();
+        assert_eq!(
+            fake.recorded(),
+            vec![
+                (dest, Some(IpAddr::V6(temp)), b"aabbcc".to_vec()),
+                (dest, Some(IpAddr::V6(temp)), b"aa".to_vec()),
+                (dest, Some(IpAddr::V6(temp)), b"bb".to_vec()),
+                (dest, Some(IpAddr::V6(temp)), b"cc".to_vec()),
+                (dest, Some(IpAddr::V6(temp)), b"next".to_vec()),
+            ]
+        );
+
+        // When BOTH GSO and the first split segment fail with InvalidInput,
+        // `src_ip` itself is rejected -> fall back when safe_default is true.
+        let fake = FakeSocket::new(vec![
+            Err(io::Error::from(io::ErrorKind::InvalidInput)),
+            Err(io::Error::from(io::ErrorKind::InvalidInput)),
+            Ok(()),
+            Ok(()),
+        ]);
+        let (socket, _pipes, _fallback) = PathSocket::with_preferred_v6(
+            fake.clone(),
+            V6Source::Temporary {
+                addr: temp,
+                safe_default: true,
+            },
+        );
+        socket
+            .try_send(&Transmit {
+                destination: dest,
+                ecn: None,
+                contents: b"aabb",
+                segment_size: Some(2),
+                src_ip: None,
+            })
+            .unwrap();
+        socket
+            .try_send(&Transmit {
+                destination: dest,
+                ecn: None,
+                contents: b"after",
+                segment_size: None,
+                src_ip: None,
+            })
+            .unwrap();
+        assert_eq!(
+            fake.recorded(),
+            vec![
+                (dest, Some(IpAddr::V6(temp)), b"aabb".to_vec()),
+                (dest, Some(IpAddr::V6(temp)), b"aa".to_vec()),
+                (dest, None, b"aabb".to_vec()),
+                (dest, None, b"after".to_vec()),
+            ]
+        );
+
+        // WouldBlock on a split segment propagates WouldBlock and preserves temp.
+        let fake = FakeSocket::new(vec![
+            Err(io::Error::from(io::ErrorKind::InvalidInput)),
+            Ok(()),
+            Err(io::Error::from(io::ErrorKind::WouldBlock)),
+            Ok(()),
+        ]);
+        let (socket, _pipes, _fallback) = PathSocket::with_preferred_v6(
+            fake.clone(),
+            V6Source::Temporary {
+                addr: temp,
+                safe_default: true,
+            },
+        );
+        let wb = socket
+            .try_send(&Transmit {
+                destination: dest,
+                ecn: None,
+                contents: b"xxyy",
+                segment_size: Some(2),
+                src_ip: None,
+            })
+            .unwrap_err();
+        assert_eq!(wb.kind(), io::ErrorKind::WouldBlock);
+        socket
+            .try_send(&Transmit {
+                destination: dest,
+                ecn: None,
+                contents: b"keep",
+                segment_size: None,
+                src_ip: None,
+            })
+            .unwrap();
+        assert_eq!(
+            fake.recorded().last(),
+            Some(&(dest, Some(IpAddr::V6(temp)), b"keep".to_vec()))
+        );
+    }
+
+    /// #405: `PreferredV6::Dynamic` caches per-destination lookups up to
+    /// `MAX_PREFERRED_V6_CACHE` entries, evicts the oldest entry when full so
+    /// new destinations are cached once, and updates existing entries on
+    /// source-address errors.
+    #[test]
+    #[allow(clippy::unwrap_used)]
+    fn dynamic_preferred_v6_caches_lookup_bounds_size_and_updates_on_error() {
+        let dest1_ip: Ipv6Addr = "2001:db8::10".parse().unwrap();
+        let dest1 = SocketAddr::new(IpAddr::V6(dest1_ip), 4000);
+        let dest2_ip: Ipv6Addr = "2001:db8::20".parse().unwrap();
+        let dest2 = SocketAddr::new(IpAddr::V6(dest2_ip), 4000);
+        let temp: Ipv6Addr = "2a02:4e0:2d8a:1b00:abcd:ef01:2345:6789".parse().unwrap();
+
+        let fake = FakeSocket::new(vec![
+            Ok(()),
+            Ok(()),
+            Ok(()),
+            Err(io::Error::from(io::ErrorKind::AddrNotAvailable)),
+            Ok(()),
+            Ok(()),
+        ]);
+        let (socket, _pipes, _fallback) = PathSocket::new(fake.clone());
+
+        // Cache miss then cache hit for dest1.
+        for payload in [&b"m1"[..], b"m2"] {
+            socket
+                .try_send(&Transmit {
+                    destination: dest1,
+                    ecn: None,
+                    contents: payload,
+                    segment_size: None,
+                    src_ip: None,
+                })
+                .unwrap();
+        }
+        // Fill cache to MAX_PREFERRED_V6_CACHE with distinct monotonic
+        // timestamps so `oldest_ip` is unambiguously the oldest entry and
+        // `dest2_ip` is the newest.
+        let base = Instant::now();
+        let oldest_ip = Ipv6Addr::new(0x2001, 0xdb8, 1, 0, 0, 0, 0, 1);
+        if let PreferredV6::Dynamic(cache) = &mut *socket
+            .preferred_v6
+            .write()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+        {
+            cache.clear();
+            for i in 0..u16::try_from(MAX_PREFERRED_V6_CACHE - 1).unwrap() {
+                let ip = Ipv6Addr::new(0x2001, 0xdb8, 1, 0, 0, 0, 0, i.saturating_add(1));
+                cache.insert(
+                    ip,
+                    CachedV6Source {
+                        policy: V6Source::SystemDefault(None),
+                        resolved_at: base + Duration::from_millis(u64::from(i)),
+                    },
+                );
+            }
+            cache.insert(
+                dest2_ip,
+                CachedV6Source {
+                    policy: V6Source::Temporary {
+                        addr: temp,
+                        safe_default: true,
+                    },
+                    resolved_at: base + Duration::from_secs(1),
+                },
+            );
+            assert_eq!(cache.len(), MAX_PREFERRED_V6_CACHE);
+        }
+        // 33rd distinct destination MUST evict the oldest entry and cache
+        // itself so subsequent datagrams hit the cache instead of re-reading
+        // `/proc/net/if_inet6`.
+        let dest33_ip: Ipv6Addr = "2001:db8:2::33".parse().unwrap();
+        let dest33 = SocketAddr::new(IpAddr::V6(dest33_ip), 4000);
+        socket
+            .try_send(&Transmit {
+                destination: dest33,
+                ecn: None,
+                contents: b"d33",
+                segment_size: None,
+                src_ip: None,
+            })
+            .unwrap();
+        if let PreferredV6::Dynamic(cache) = &*socket
+            .preferred_v6
+            .read()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+        {
+            assert_eq!(cache.len(), MAX_PREFERRED_V6_CACHE);
+            assert!(!cache.contains_key(&oldest_ip));
+            assert!(cache.contains_key(&dest33_ip));
+            assert!(cache.contains_key(&dest2_ip));
+        }
+
+        // Existing entry dest2 in the full cache MUST still update on error.
+        socket
+            .try_send(&Transmit {
+                destination: dest2,
+                ecn: None,
+                contents: b"d1",
+                segment_size: None,
+                src_ip: None,
+            })
+            .unwrap();
+        socket
+            .try_send(&Transmit {
+                destination: dest2,
+                ecn: None,
+                contents: b"d2",
+                segment_size: None,
+                src_ip: None,
+            })
+            .unwrap();
+
+        let recorded = fake.recorded();
+        let tail = recorded.get(3..).unwrap();
+        assert_eq!(
+            tail,
+            [
+                (dest2, Some(IpAddr::V6(temp)), b"d1".to_vec()),
+                (dest2, None, b"d1".to_vec()),
+                (dest2, None, b"d2".to_vec()),
+            ]
+        );
+    }
+
+    /// #405: cached `PreferredV6::Dynamic` entries expire after
+    /// `PREFERRED_V6_TTL` so a temporary address that became deprecated on a
+    /// long-lived endpoint is re-resolved without waiting for a kernel error.
+    #[test]
+    #[allow(clippy::unwrap_used)]
+    fn dynamic_preferred_v6_re_resolves_after_ttl() {
+        let dest_ip: Ipv6Addr = "2001:db8::99".parse().unwrap();
+        let dest = SocketAddr::new(IpAddr::V6(dest_ip), 4000);
+        let stale_temp: Ipv6Addr = "2a02:4e0:2d8a:1b00:dead:beef:0:1".parse().unwrap();
+        let fake = FakeSocket::new(Vec::new());
+        let (socket, _pipes, _fallback) = PathSocket::new(fake);
+
+        let t0 = Instant::now();
+        let cached_policy = V6Source::Temporary {
+            addr: stale_temp,
+            safe_default: true,
+        };
+        if let PreferredV6::Dynamic(cache) = &mut *socket
+            .preferred_v6
+            .write()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+        {
+            cache.insert(
+                dest_ip,
+                CachedV6Source {
+                    policy: cached_policy,
+                    resolved_at: t0,
+                },
+            );
+        }
+
+        // Before TTL elapses, the cached entry is returned untouched.
+        let just_before = t0 + PREFERRED_V6_TTL.saturating_sub(Duration::from_secs(1));
+        assert_eq!(
+            socket.resolve_v6_source_at(dest, dest_ip, just_before),
+            cached_policy
+        );
+
+        // Once TTL has elapsed, the entry is re-resolved and its timestamp refreshes.
+        let at_expiry = t0 + PREFERRED_V6_TTL;
+        let fresh = socket.resolve_v6_source_at(dest, dest_ip, at_expiry);
+        assert_ne!(fresh, cached_policy);
+        if let PreferredV6::Dynamic(cache) = &*socket
+            .preferred_v6
+            .read()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+        {
+            let entry = cache.get(&dest_ip).unwrap();
+            assert_eq!(entry.policy, fresh);
+            assert_eq!(entry.resolved_at, at_expiry);
+        }
+    }
+
+    /// #405: `Fallback::rerouted` preserves the resolved temporary IPv6
+    /// `src_ip` and fallback safety, `Fallback::replay` recovers safely when
+    /// `safe_default` is true, and never leaks EUI-64 when `safe_default` is
+    /// false or when `V6Source::UnsafeDefault` suppressed direct sends.
+    #[tokio::test]
+    #[allow(clippy::unwrap_used)]
+    async fn fallback_reroute_and_replay_preserve_and_recover_preferred_v6() {
+        let temp: Ipv6Addr = "2a02:4e0:2d8a:1b00:abcd:ef01:2345:6789".parse().unwrap();
+        let dest: SocketAddr = "[2001:db8::30]:4000".parse().unwrap();
+
+        // safe_default: true recovers across WouldBlock + AddrNotAvailable/InvalidInput.
+        let fake = FakeSocket::new(vec![
+            Err(io::Error::from(io::ErrorKind::WouldBlock)),
+            Err(io::Error::from(io::ErrorKind::AddrNotAvailable)),
+            Ok(()),
+            Err(io::Error::from(io::ErrorKind::InvalidInput)),
+            Ok(()),
+        ]);
+        let (socket, mut pipes, f) = PathSocket::with_preferred_v6(
+            fake.clone(),
+            V6Source::Temporary {
+                addr: temp,
+                safe_default: true,
+            },
+        );
+        if let Ok(mut d) = f.0.direct.write() {
+            *d = Some(dest);
+        }
+        f.set_moved(true);
+        for payload in [&b"p1"[..], b"p2"] {
+            socket
+                .try_send(&Transmit {
+                    destination: dest,
+                    ecn: None,
+                    contents: payload,
+                    segment_size: None,
+                    src_ip: None,
+                })
+                .unwrap();
+        }
+        assert_eq!(pipes.outgoing.try_recv().ok(), Some(b"p1".to_vec()));
+        assert_eq!(pipes.outgoing.try_recv().ok(), Some(b"p2".to_vec()));
+        assert!(fake.recorded().is_empty());
+
+        f.set_moved(false);
+        f.replay().await;
+        assert_eq!(f.replayed(), 2);
+        assert_eq!(
+            fake.recorded(),
+            vec![
+                (dest, Some(IpAddr::V6(temp)), b"p1".to_vec()),
+                (dest, Some(IpAddr::V6(temp)), b"p1".to_vec()),
+                (dest, None, b"p1".to_vec()),
+                (dest, Some(IpAddr::V6(temp)), b"p2".to_vec()),
+                (dest, None, b"p2".to_vec()),
+            ]
+        );
+
+        // safe_default: false MUST NOT retry with src_ip: None on replay.
+        let fake = FakeSocket::new(vec![
+            Err(io::Error::from(io::ErrorKind::AddrNotAvailable)),
+            Err(io::Error::from(io::ErrorKind::InvalidInput)),
+        ]);
+        let (socket, mut pipes, f) = PathSocket::with_preferred_v6(
+            fake.clone(),
+            V6Source::Temporary {
+                addr: temp,
+                safe_default: false,
+            },
+        );
+        if let Ok(mut d) = f.0.direct.write() {
+            *d = Some(dest);
+        }
+        f.set_moved(true);
+        for payload in [&b"u1"[..], b"u2"] {
+            socket
+                .try_send(&Transmit {
+                    destination: dest,
+                    ecn: None,
+                    contents: payload,
+                    segment_size: None,
+                    src_ip: None,
+                })
+                .unwrap();
+        }
+        assert_eq!(pipes.outgoing.try_recv().ok(), Some(b"u1".to_vec()));
+        assert_eq!(pipes.outgoing.try_recv().ok(), Some(b"u2".to_vec()));
+        f.set_moved(false);
+        f.replay().await;
+        assert_eq!(f.replayed(), 0);
+        assert_eq!(
+            fake.recorded(),
+            vec![
+                (dest, Some(IpAddr::V6(temp)), b"u1".to_vec()),
+                (dest, Some(IpAddr::V6(temp)), b"u2".to_vec()),
+            ]
+        );
+
+        // UnsafeDefault still forwards over the relay while moved, and never
+        // replays directly.
+        let fake = FakeSocket::new(Vec::new());
+        let (socket, mut pipes, f) =
+            PathSocket::with_preferred_v6(fake.clone(), V6Source::UnsafeDefault);
+        if let Ok(mut d) = f.0.direct.write() {
+            *d = Some(dest);
+        }
+        f.set_moved(true);
+        socket
+            .try_send(&Transmit {
+                destination: dest,
+                ecn: None,
+                contents: b"sup",
+                segment_size: None,
+                src_ip: None,
+            })
+            .unwrap();
+        assert_eq!(pipes.outgoing.try_recv().ok(), Some(b"sup".to_vec()));
+        assert_eq!(f.rerouted_total(), 1);
+        f.set_moved(false);
+        f.replay().await;
+        assert_eq!(f.replayed(), 0);
+        assert!(fake.recorded().is_empty());
     }
 }

@@ -137,24 +137,36 @@ treated as final.
     accepted per list.
     - Since #403 the QUIC socket is dual-stack where the system has IPv6:
       one port for both families. Local addresses are loopback, the IPv4
-      address of the default-route interface and the IPv6 address the
-      system would send from; public addresses are what STUN answers over
-      IPv4 and, on a dual-stack socket, over IPv6. An IPv6 address is
-      announced only if another device can reach it (not loopback,
-      unspecified, link-local or IPv4-mapped) and its interface part is
-      not built from the network card's hardware address (modified
-      EUI-64), which would stay the same on every network. The address
-      is the system's own choice of source; where Linux has no temporary
-      addresses (RFC 8981) it is a stable-privacy one (RFC 7217), the same
-      on one network (#405). A device dials the other's addresses once
-      each, in canonical form, and leaves out unspecified and IPv6
-      link-local ones and IPv6 targets it would reach only from an address
-      it does not announce. A side whose socket is IPv4 only fails just
-      the dial to an IPv6 address; the other paths race on. IPv6 needs no
-      NAT punching, but home routers usually keep a stateful firewall that
-      drops a dial nobody asked for; it opens because both sides dial each
-      other (note 8). On a dual-stack socket QUIC sees IPv4 addresses, the
-      relay stand-in among them, as IPv4-mapped IPv6 ones.
+      address of the default-route interface and the preferred IPv6 source
+      address; public addresses are what STUN answers over IPv4 and, on a
+      dual-stack socket, over IPv6. An IPv6 address is announced only if
+      another device can reach it (not loopback, unspecified, link-local
+      or IPv4-mapped) and its interface part is not built from the network
+      card's hardware address (modified EUI-64), which would stay the same
+      on every network. Android, iOS, macOS and Windows already pick a
+      temporary address (RFC 8981) as their default source. Since #405, on
+      Linux (where the kernel picks a temporary address only with
+      `use_tempaddr = 2`), the client reads `/proc/net/if_inet6` and
+      prefers a non-deprecated, non-tentative, non-DAD-failed temporary
+      address (`IFA_F_TEMPORARY`) on the same interface, scope, and `/64`
+      prefix as the kernel's chosen source, stamping it as the source
+      address via `IPV6_PKTINFO` for outbound QUIC datagrams and IPv6 STUN
+      probes. When no usable temporary address exists in that `/64` or
+      `IPV6_PKTINFO` is rejected with `EADDRNOTAVAIL`/`EINVAL`, the client
+      falls back to the kernel's own source only if that default is
+      announceable (such as a stable-privacy address, RFC 7217, which stays
+      the same on one network); it never falls back to a modified EUI-64
+      address, dropping direct IPv6 sends instead so IPv4 or the relay
+      carries the transfer.
+      A device dials the other's addresses once each, in canonical form,
+      and leaves out unspecified and IPv6 link-local ones and IPv6 targets
+      it would reach only from an address it does not announce. A side whose
+      socket is IPv4 only fails just the dial to an IPv6 address; the other
+      paths race on. IPv6 needs no NAT punching, but home routers usually keep a
+      stateful firewall that drops a dial nobody asked for; it opens
+      because both sides dial each other (note 8). On a dual-stack socket
+      QUIC sees IPv4 addresses, the relay stand-in among them, as
+      IPv4-mapped IPv6 ones.
     - Since #406 a device also asks its router for a port: the gateway of
       the default IPv4 route with the lowest metric (read from
       `/proc/net/route` on Linux; other systems ask no one yet) gets a PCP
