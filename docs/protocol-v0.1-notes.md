@@ -157,7 +157,9 @@ treated as final.
       relay stand-in among them, as IPv4-mapped IPv6 ones.
     - Since #406 a device also asks its router for a port: the gateway of
       the default IPv4 route with the lowest metric (read from
-      `/proc/net/route` on Linux; other systems ask no one yet) gets a PCP
+      `/proc/net/route` on Linux, and passed in from `ConnectivityManager`'s
+      active network `LinkProperties` on Android; other systems ask no one
+      yet) gets a PCP
       MAP request (RFC 6887) for UDP on the QUIC socket's port, with no
       suggested external port or address (`::ffff:0.0.0.0`), and a NAT-PMP
       one (RFC 6886) if it answers "unsupported version" or has not
@@ -247,8 +249,12 @@ treated as final.
       declines an unanswered offer. It waits at most 1.5 seconds for that
       work to end (telling a silent peer can take longer), drops what is
       still running, so its mapping is released, and then waits for the
-      same releases: some 3.3 seconds in all. Android asks no router (it
-      cannot read the gateway), so it has nothing to release.
+      same releases: some 3.3 seconds in all. On Android the app process
+      stays alive across transfers, so dropping a finished, stopped or
+      declined transfer (or an unanswered offer) releases its mapping on
+      the background runtime; if the system kills the process, the mapping
+      stays until its 120-second lease runs out (or, on a router that
+      ignores UPnP lease times, until the router restarts).
 11. **Session after the hybrid step.**
     - Each direction has its own ChaCha20-Poly1305 key (`k_i2r`, `k_r2i`).
     - Nonces follow Noise: four zero bytes, then a 64-bit little-endian
@@ -449,6 +455,14 @@ treated as final.
       the keep-alive ping and the closing of the connection included: a
       relay that stopped reading would otherwise hold the link in a write
       with a full send buffer, where it cannot notice anything (#424).
+    - When the operating system reports that the active default network
+      changed (`ConnectivityManager` on Android, #32; decision 0018), a
+      watched direct connection moves onto the relay at once without waiting
+      out the 8-second silence (going back as usual if direct datagrams keep
+      arriving past the 0.5-second window), and an open, dialling or
+      backed-off relay link drops the socket on the old route and connects
+      again at once (resetting the consecutive-refusal count at most 10
+      times per transfer).
 23. **Relay limits.** Per connection: 32 GiB and 6 hours; ten seconds to
     sign in. Both refuse an upgrade that carries `Origin` with HTTP 403
     (#450), accept only the pair path `/v0/relay/<key A>-<key B>` and
