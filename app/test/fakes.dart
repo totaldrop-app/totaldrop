@@ -145,6 +145,14 @@ class FakeRepository implements TransferRepository {
     return '/tmp/TotalDrop';
   }
 
+  /// Paths handed to [scanSavedFiles] after a file receive finishes (#592).
+  final scannedFiles = <String>[];
+
+  @override
+  Future<void> scanSavedFiles(List<String> paths) async {
+    scannedFiles.addAll(paths);
+  }
+
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }

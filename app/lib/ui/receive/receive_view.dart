@@ -413,9 +413,7 @@ class _Done extends StatelessWidget {
         Gap.s,
         if (vm.folder != null)
           Text(
-            l.receiveSaveTo(
-              isolate(vm.folder!.replaceFirst('/storage/emulated/0/', '')),
-            ),
+            l.receiveSaveTo(isolate(displayReceiveFolder(vm.folder!))),
             textAlign: TextAlign.center,
           ),
         if (s != null && s.filesFailed > 0) ...[
@@ -565,3 +563,8 @@ class _Message extends StatelessWidget {
     );
   }
 }
+
+/// Shortens `/storage/emulated/<userId>/Download/TotalDrop` to
+/// `Download/TotalDrop` for primary, secondary, and work-profile users (#592).
+String displayReceiveFolder(String path) =>
+    path.replaceFirst(RegExp(r'^/storage/emulated/\d+/'), '');

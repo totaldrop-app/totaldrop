@@ -6,13 +6,29 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 
 import '../src/rust/api/transfer.dart' as bridge;
+import 'downloads_storage.dart';
 import 'settings_repository.dart';
 
 /// The single way the UI reaches the Rust core.
 class TransferRepository {
-  TransferRepository(this._settings);
+  TransferRepository(
+    this._settings, {
+    DownloadsStorage? storage,
+    bool? isAndroid,
+    Future<Directory?> Function()? externalStorageDirectory,
+  }) : _isAndroid = isAndroid ?? Platform.isAndroid,
+       _storage =
+           storage ??
+           ((isAndroid ?? Platform.isAndroid)
+               ? const AndroidDownloadsStorage()
+               : const NoDownloadsStorage()),
+       _externalStorageDirectory =
+           externalStorageDirectory ?? getExternalStorageDirectory;
 
   final SettingsRepository _settings;
+  final DownloadsStorage _storage;
+  final bool _isAndroid;
+  final Future<Directory?> Function() _externalStorageDirectory;
 
   /// One per transfer: every call of that transfer takes it, and
   /// [stop] ends the transfer at whatever stage it is in.
@@ -84,12 +100,15 @@ class TransferRepository {
   /// The code in a TotalDrop link, read strictly (#445).
   String? codeFromLink(String link) => bridge.codeFromLink(link: link);
 
-  /// Where received files go: Download/TotalDrop on Android, so they are
-  /// easy to find in the Files app. Falls back to the app's own folder if
-  /// shared storage cannot be written.
+  /// Where received files go: `<public Downloads>/TotalDrop` on Android,
+  /// queried via the platform API so secondary users and Work Profiles save
+  /// into their own public Downloads (#592). Falls back to the app's own
+  /// folder if shared storage cannot be written.
   Future<String> receiveFolder() async {
-    if (Platform.isAndroid) {
-      final shared = Directory('/storage/emulated/0/Download/TotalDrop');
+    if (_isAndroid) {
+      final publicDownloads =
+          await _storage.downloadsDirectory() ?? '/storage/emulated/0/Download';
+      final shared = Directory('$publicDownloads/TotalDrop');
       try {
         await shared.create(recursive: true);
         final probe = File('${shared.path}/.totaldrop-write-test');
@@ -99,11 +118,15 @@ class TransferRepository {
       } on FileSystemException {
         // Fall through to the app folder.
       }
-      final own = await getExternalStorageDirectory();
+      final own = await _externalStorageDirectory();
       if (own != null) return '${own.path}/TotalDrop';
     }
     final downloads = await getDownloadsDirectory();
     final base = downloads ?? await getApplicationDocumentsDirectory();
     return '${base.path}/TotalDrop';
   }
+
+  /// Indexes received files in Android's `MediaStore` so they appear right
+  /// away in Gallery and the system Files app (#592).
+  Future<void> scanSavedFiles(List<String> paths) => _storage.scanFiles(paths);
 }
