@@ -255,7 +255,7 @@ Page {
                             color: Theme.ink
                             elide: Text.ElideMiddle
                             textFormat: Text.PlainText
-                            Layout.fillWidth: true
+                            Layout.maximumWidth: parent.width
                             Layout.topMargin: Theme.s8
                             Layout.bottomMargin: Theme.s8
                         }

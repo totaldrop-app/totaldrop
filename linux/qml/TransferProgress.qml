@@ -43,7 +43,8 @@ ColumnLayout {
         }
         Item { Layout.fillWidth: true }
         Label {
-            text: Strings.size(p.done) + " / " + Strings.size(p.total)
+            // Keep "done / total" left to right and each size intact in RTL (#493).
+            text: "\u2066\u2068" + Strings.size(p.done) + "\u2069 / \u2068" + Strings.size(p.total) + "\u2069\u2069"
             color: Theme.muted
             font.features: { "tnum": 1 }
         }

@@ -22,9 +22,10 @@ QtObject {
         return Texts.format(key, JSON.stringify(args || {}))
     }
 
-    // "1,5 MB" in the region's format.
+    // "1,5 MB" in the region's format, direction-isolated so right-to-left
+    // labels and notifications do not reorder the number and unit (#493).
     function size(bytes) {
-        return Texts.bytes(bytes)
+        return "\u2068" + Texts.bytes(bytes) + "\u2069"
     }
 
     // A name from the other side, with hidden direction characters shown.
