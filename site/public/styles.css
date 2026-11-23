@@ -274,10 +274,11 @@ select.lang {
 
 /* Support */
 .costs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s24); }
+.costs.costs-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .costs div { display: flex; flex-direction: column; gap: 0.25rem; padding: var(--s24); background: var(--bg-raised); border-radius: 28px; }
 .costs dt { font-weight: 700; }
 .costs dd { color: var(--text-2); font-size: 0.975rem; }
-@media (max-width: 44rem) { .costs { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 44rem) { .costs, .costs.costs-2 { grid-template-columns: minmax(0, 1fr); } }
 
 /* Language switch: a quiet cross-fade where View Transitions exist. */
 ::view-transition-old(root), ::view-transition-new(root) { animation-duration: 180ms; }
@@ -336,13 +337,9 @@ pre.cmd { white-space: pre-wrap; overflow-wrap: break-word; margin: 0; padding: 
 .top-nav a[aria-current="page"] { color: var(--text); }
 #r-has-code:not([hidden]) { display: flex; flex-direction: column; gap: var(--s24); }
 
-/* Donation goal: a plain bar in the accent colour. */
-.goal { width: 100%; max-width: 40rem; height: 0.75rem; appearance: none; border: 0; border-radius: 999px; background: var(--bg-raised); overflow: hidden; }
-.goal::-webkit-progress-bar { background: var(--bg-raised); border-radius: 999px; }
-.goal::-webkit-progress-value { background: var(--accent); border-radius: 999px; }
-.goal::-moz-progress-bar { background: var(--accent); border-radius: 999px; }
 .req caption { text-align: start; color: var(--text-2); padding-bottom: var(--s16); }
 .req.narrow { min-width: 0; }
+.req.stack td.cost { white-space: nowrap; }
 .req tfoot th, .req tfoot td { border-bottom: 0; padding-top: var(--s16); color: var(--text); font-weight: 700; }
 /* On a phone, wide tables become one block per row: item, explanation,
    then when and how much. */
@@ -353,8 +350,8 @@ pre.cmd { white-space: pre-wrap; overflow-wrap: break-word; margin: 0; padding: 
   .req.stack tr { padding: var(--s16) 0; border-bottom: 1px solid var(--rule); }
   .req.stack th, .req.stack td { border: 0; padding: 0.15rem 0; }
   .req.stack td.when, .req.stack td.cost { display: inline; }
-  .req.stack td.when::after { content: " · "; }
-  .req.stack td.cost { color: var(--text); font-weight: 700; }
+  .req.stack td.when::after { content: " · "; content: " · " / ""; }
+  .req.stack td.cost { color: var(--text); font-weight: 700; white-space: normal; }
   .req.stack tfoot tr { border-bottom: 0; }
 }
 

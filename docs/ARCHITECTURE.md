@@ -462,7 +462,7 @@ Zorunlu denetim CI'dır; yerel kopyası `.pre-commit-config-extra.yaml`
 | İki sunucu uygulaması, aynı test | `cargo test -p totaldrop-cli --test end_to_end` önce Rust sunucularına, sonra `wrangler dev` altındaki Worker'lara | `.github/workflows/server.yml:44-106` |
 | Fuzz | `cargo fuzz run <hedef>` (6 hedef: `code`, `message`, `path`, `portmap`, `relay`, `wire`) | `.github/workflows/fuzz.yml` (zamanlı) |
 | Biçimsel model | Tamarin (#251) | `.github/workflows/formal.yml` |
-| Site | `site/tools/*.mjs` denetimleri | `.github/workflows/site.yml:27-47` |
+| Site | `site/tools/*.mjs` denetimleri | `.github/workflows/site.yml:27-49` |
 | Katmanlar | `node --test tools/test-check-layers.mjs && node tools/check-layers.mjs` | `.github/workflows/ci.yml` `Crate layers` |
 
 ### 5.2 Kapsamın zayıf olduğu yerler

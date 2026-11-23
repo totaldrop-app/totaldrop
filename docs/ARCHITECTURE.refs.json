@@ -43,7 +43,7 @@
   ".github/workflows/server.yml:86": [
     "--var RATE_BURST:4 --var RATE_INTERVAL_MS:5000 >\"$RUNNER_TEMP/rendezvous-limited.log\" 2>&1 &"
   ],
-  ".github/workflows/site.yml:27-47": [
+  ".github/workflows/site.yml:27-49": [
     "run: node --check site/public/app.js && node --check site/public/lang.js && node --check site/public/msg.js && node --check site/functions/_middleware.js",
     "run: node --test site/tools/test-security-txt.mjs"
   ],
