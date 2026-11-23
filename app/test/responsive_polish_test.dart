@@ -6,6 +6,7 @@
 
 import 'dart:async';
 
+import 'package:flutter/rendering.dart' show RenderParagraph;
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -412,91 +413,141 @@ void main() {
       },
     );
 
-    testWidgets(
-      'keeps SegmentedButton on a 360 dp phone at 1.0x across short and long '
-      'translations by wrapping up to 2 lines',
-      (tester) async {
-        await tester.binding.setSurfaceSize(_phone);
-        addTearDown(() => tester.binding.setSurfaceSize(null));
+    testWidgets('keeps SegmentedButton on a 360 dp phone at 1.0x across short and long '
+        'translations by wrapping up to 2 lines', (tester) async {
+      await tester.binding.setSurfaceSize(_phone);
+      addTearDown(() => tester.binding.setSurfaceSize(null));
 
-        for (final locale in const [
-          Locale('en'),
-          Locale('de'),
-          Locale('fr'),
-          Locale('nl'),
-          Locale('ar'),
-          Locale('ja'),
-        ]) {
-          final vm = SendViewModel(
-            repository: FakeRepository(),
-            fileSource: FakeFileSource(),
-          );
-          await tester.pumpWidget(
-            _app(SendView(viewModel: vm), locale: locale, textScale: 1.0),
-          );
-          await tester.pump();
-          expect(
-            tester.takeException(),
-            isNull,
-            reason: 'locale ${locale.languageCode} overflowed at 1.0x',
-          );
-          expect(
-            find.byType(SegmentedButton<bool>),
-            findsOneWidget,
-            reason:
-                'locale ${locale.languageCode} should stay on SegmentedButton '
-                'at 360 dp / 1.0x',
-          );
-        }
-      },
-    );
-
-    testWidgets('switches cleanly across the exact theme-derived threshold width at 1.0x '
-        'and 2.0x', (tester) async {
-      final theme = buildTheme(fallbackScheme(Brightness.light));
-      final l = lookupAppLocalizations(const Locale('en'));
-      final labels = [l.sendTitle, l.sendText];
-
-      for (final scale in const [1.0, 2.0]) {
-        final threshold = _findSegmentThresholdWidth(
-          theme: theme,
-          textScaler: TextScaler.linear(scale),
-          textDirection: TextDirection.ltr,
-          labels: labels,
+      for (final locale in const [
+        Locale('en'),
+        Locale('de'),
+        Locale('fr'),
+        Locale('nl'),
+        Locale('ar'),
+        Locale('ja'),
+      ]) {
+        final l = lookupAppLocalizations(locale);
+        final vm = SendViewModel(
+          repository: FakeRepository(),
+          fileSource: FakeFileSource(),
         );
-        expect(threshold, greaterThan(100));
-        expect(threshold, lessThan(1000));
-
-        // columnPadding adds 48 dp horizontal padding for viewports <= 608 dp,
-        // and caps inner width at maxColumnWidth (560 dp) above 608 dp.
-        for (final shouldFit in const [false, true]) {
-          final innerWidth = shouldFit ? threshold + 2.0 : threshold - 2.0;
-          final viewportWidth = innerWidth <= maxColumnWidth
-              ? innerWidth + 48.0
-              : innerWidth + 48.0;
-          if (innerWidth > maxColumnWidth) continue;
-
-          await tester.binding.setSurfaceSize(Size(viewportWidth, 640));
-          final vm = SendViewModel(
-            repository: FakeRepository(),
-            fileSource: FakeFileSource(),
+        await tester.pumpWidget(
+          _app(SendView(viewModel: vm), locale: locale, textScale: 1.0),
+        );
+        await tester.pump();
+        expect(
+          tester.takeException(),
+          isNull,
+          reason: 'locale ${locale.languageCode} overflowed at 1.0x',
+        );
+        final segmented = find.byType(SegmentedButton<bool>);
+        expect(
+          segmented,
+          findsOneWidget,
+          reason:
+              'locale ${locale.languageCode} should stay on SegmentedButton '
+              'at 360 dp / 1.0x',
+        );
+        for (final label in [l.sendTitle, l.sendText]) {
+          final textFinder = find.descendant(
+            of: segmented,
+            matching: find.text(label),
           );
-          await tester.pumpWidget(
-            _app(SendView(viewModel: vm), textScale: scale),
-          );
-          await tester.pump();
-          expect(tester.takeException(), isNull);
+          expect(textFinder, findsOneWidget);
+          final paragraph = tester.renderObject<RenderParagraph>(textFinder);
           expect(
-            find.byType(SegmentedButton<bool>),
-            shouldFit ? findsOneWidget : findsNothing,
+            paragraph.didExceedMaxLines,
+            isFalse,
             reason:
-                'scale=$scale innerWidth=${innerWidth.toStringAsFixed(1)} '
-                '(threshold=${threshold.toStringAsFixed(1)})',
+                'locale ${locale.languageCode} label "$label" clipped past maxLines',
+          );
+          expect(
+            paragraph.size.width,
+            lessThanOrEqualTo(paragraph.constraints.maxWidth),
+            reason:
+                'locale ${locale.languageCode} label "$label" exceeded maxWidth',
           );
         }
       }
-      await tester.binding.setSurfaceSize(null);
     });
+
+    testWidgets(
+      'switches cleanly across the exact theme-derived threshold width at 1.0x '
+      'and 2.0x and renders unclipped segment paragraphs at threshold + 2',
+      (tester) async {
+        final theme = buildTheme(fallbackScheme(Brightness.light));
+        final l = lookupAppLocalizations(const Locale('en'));
+        final labels = [l.sendTitle, l.sendText];
+
+        for (final scale in const [1.0, 2.0]) {
+          final threshold = _findSegmentThresholdWidth(
+            theme: theme,
+            textScaler: TextScaler.linear(scale),
+            textDirection: TextDirection.ltr,
+            labels: labels,
+          );
+          expect(threshold, greaterThan(100));
+          expect(threshold, lessThan(1000));
+
+          // columnPadding adds 48 dp horizontal padding for viewports <= 608 dp,
+          // and caps inner width at maxColumnWidth (560 dp) above 608 dp.
+          for (final shouldFit in const [false, true]) {
+            final innerWidth = shouldFit ? threshold + 2.0 : threshold - 2.0;
+            if (innerWidth > maxColumnWidth) continue;
+            final viewportWidth = innerWidth + 48.0;
+
+            await tester.binding.setSurfaceSize(Size(viewportWidth, 640));
+            final vm = SendViewModel(
+              repository: FakeRepository(),
+              fileSource: FakeFileSource(),
+            );
+            await tester.pumpWidget(
+              _app(SendView(viewModel: vm), textScale: scale),
+            );
+            await tester.pump();
+            expect(tester.takeException(), isNull);
+            final segmented = find.byType(SegmentedButton<bool>);
+            expect(
+              segmented,
+              shouldFit ? findsOneWidget : findsNothing,
+              reason:
+                  'scale=$scale innerWidth=${innerWidth.toStringAsFixed(1)} '
+                  '(threshold=${threshold.toStringAsFixed(1)})',
+            );
+            if (shouldFit) {
+              // Verify the real rendered SegmentedButton (not just the
+              // measurement helper) fits both labels without clipping so any
+              // future material_ui chrome drift fails this test.
+              for (final label in labels) {
+                final textFinder = find.descendant(
+                  of: segmented,
+                  matching: find.text(label),
+                );
+                expect(textFinder, findsOneWidget);
+                final paragraph = tester.renderObject<RenderParagraph>(
+                  textFinder,
+                );
+                expect(
+                  paragraph.didExceedMaxLines,
+                  isFalse,
+                  reason:
+                      'segment label "$label" exceeded maxLines at '
+                      'scale=$scale innerWidth=${innerWidth.toStringAsFixed(1)}',
+                );
+                expect(
+                  paragraph.size.width,
+                  lessThanOrEqualTo(paragraph.constraints.maxWidth),
+                  reason:
+                      'segment label "$label" exceeded maxWidth at '
+                      'scale=$scale innerWidth=${innerWidth.toStringAsFixed(1)}',
+                );
+              }
+            }
+          }
+        }
+        await tester.binding.setSurfaceSize(null);
+      },
+    );
 
     testWidgets(
       'handles 200% text scale on a narrow phone in English, German, French '
