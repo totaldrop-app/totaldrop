@@ -670,7 +670,7 @@
   "server/totaldrop-rendezvous/src/main.rs:20": [
     "match totaldrop_rendezvous::spawn(addr, totaldrop_rendezvous::Config::default()).await {"
   ],
-  "site/tools/team.mjs:196": [
+  "site/tools/team.mjs:208": [
     "if (process.env.GITHUB_TOKEN && url.startsWith(API)) headers.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`;"
   ]
 }
