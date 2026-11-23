@@ -139,20 +139,40 @@ fn same_prefix64(a: Ipv6Addr, b: Ipv6Addr) -> bool {
 /// (`use_tempaddr = 2`). Otherwise matches strictly on the same interface,
 /// scope, and `/64` prefix (respecting RFC 6724 rule 5.5 so multi-prefix LANs
 /// never trigger silent BCP 38 ingress drops).
+#[cfg(test)]
 pub(crate) fn select_temporary(entries: &[InterfaceV6], sys_src: Ipv6Addr) -> Option<Ipv6Addr> {
+    select_temporary_preserving(entries, sys_src, None)
+}
+
+/// Like [`select_temporary`], but keeps `previous` when it is still a usable
+/// non-deprecated temporary address on the same interface, scope, and `/64`
+/// prefix as `sys_src`.
+///
+/// Used when re-resolving an expired [`crate::path::PathSocket`] cache entry so
+/// a newly generated temporary address listed first in `/proc/net/if_inet6`
+/// does not trigger an unnecessary mid-transfer QUIC migration while the
+/// current temporary address is still preferred (#405).
+pub(crate) fn select_temporary_preserving(
+    entries: &[InterfaceV6],
+    sys_src: Ipv6Addr,
+    previous: Option<Ipv6Addr>,
+) -> Option<Ipv6Addr> {
     let sys = entries.iter().find(|e| e.addr == sys_src)?;
+    let matches_sys = |e: &InterfaceV6| {
+        e.ifindex == sys.ifindex
+            && e.scope == sys.scope
+            && same_prefix64(e.addr, sys.addr)
+            && is_usable_temp(e)
+    };
+    if let Some(prev) = previous
+        && entries.iter().any(|e| e.addr == prev && matches_sys(e))
+    {
+        return Some(prev);
+    }
     if is_usable_temp(sys) {
         return Some(sys_src);
     }
-    entries
-        .iter()
-        .find(|e| {
-            e.ifindex == sys.ifindex
-                && e.scope == sys.scope
-                && same_prefix64(e.addr, sys.addr)
-                && is_usable_temp(e)
-        })
-        .map(|e| e.addr)
+    entries.iter().find(|e| matches_sys(e)).map(|e| e.addr)
 }
 
 #[cfg(target_os = "linux")]
@@ -170,21 +190,27 @@ pub(crate) enum V6Source {
     Temporary { addr: Ipv6Addr, safe_default: bool },
     /// Kernel default (`src_ip: None`) is safe; holds `Some(sys_src)` when
     /// `target` is routable and the kernel's default source is
-    /// [`crate::transport::announceable_v6`], or `None` for no route / loopback
-    /// / non-routable targets.
+    /// [`crate::transport::announceable_v6`], or `None` when the default
+    /// address is unknown (for example after a runtime `IPV6_PKTINFO` fallback
+    /// in [`crate::path::PathSocket`]) or for no-route / loopback /
+    /// non-routable targets.
     SystemDefault(Option<Ipv6Addr>),
     /// Kernel default is unsafe (e.g. modified EUI-64) and no temporary IPv6
     /// is available: suppress direct sends rather than leaking it on the wire.
     UnsafeDefault,
 }
 
-fn source_policy_with_entries(entries: Option<&[InterfaceV6]>, sys_src: Ipv6Addr) -> V6Source {
+pub(crate) fn source_policy_with_entries(
+    entries: Option<&[InterfaceV6]>,
+    sys_src: Ipv6Addr,
+    previous: Option<Ipv6Addr>,
+) -> V6Source {
     if sys_src.is_loopback() {
         return V6Source::SystemDefault(None);
     }
     let safe_default = crate::transport::announceable_v6(sys_src);
     if let Some(entries) = entries
-        && let Some(addr) = select_temporary(entries, sys_src)
+        && let Some(addr) = select_temporary_preserving(entries, sys_src, previous)
     {
         return V6Source::Temporary { addr, safe_default };
     }
@@ -211,6 +237,16 @@ pub(crate) fn routable_v6_ip(addr: SocketAddr) -> Option<Ipv6Addr> {
 
 /// Decide the outbound IPv6 source policy for direct sends to `target` (#405).
 pub(crate) fn source_policy_v6(target: SocketAddr) -> V6Source {
+    source_policy_v6_preserving(target, None)
+}
+
+/// Like [`source_policy_v6`], preserving `previous` across cache TTL expiry
+/// while it remains a usable non-deprecated temporary address on the same
+/// interface, scope, and `/64` prefix (#405).
+pub(crate) fn source_policy_v6_preserving(
+    target: SocketAddr,
+    previous: Option<Ipv6Addr>,
+) -> V6Source {
     if routable_v6_ip(target).is_none() {
         return V6Source::SystemDefault(None);
     }
@@ -221,7 +257,7 @@ pub(crate) fn source_policy_v6(target: SocketAddr) -> V6Source {
     let entries = read_if_inet6();
     #[cfg(not(target_os = "linux"))]
     let entries: Option<Vec<InterfaceV6>> = None;
-    source_policy_with_entries(entries.as_deref(), sys_src)
+    source_policy_with_entries(entries.as_deref(), sys_src, previous)
 }
 
 /// Whether the kernel's current default source for `target` is an
@@ -514,21 +550,21 @@ fe800000000000001c2d3e4f5a6b7c8d 02 40 20 80   wlan0
             entry(&temp.to_string(), 2, 0x00, IFA_F_TEMPORARY),
         ];
         assert_eq!(
-            source_policy_with_entries(Some(&with_temp), stable),
+            source_policy_with_entries(Some(&with_temp), stable, None),
             V6Source::Temporary {
                 addr: temp,
                 safe_default: true,
             }
         );
         assert_eq!(
-            source_policy_with_entries(Some(&with_temp), eui64),
+            source_policy_with_entries(Some(&with_temp), eui64, None),
             V6Source::Temporary {
                 addr: temp,
                 safe_default: false,
             }
         );
         assert_eq!(
-            source_policy_with_entries(Some(&with_temp), Ipv6Addr::LOCALHOST),
+            source_policy_with_entries(Some(&with_temp), Ipv6Addr::LOCALHOST, None),
             V6Source::SystemDefault(None)
         );
 
@@ -537,20 +573,86 @@ fe800000000000001c2d3e4f5a6b7c8d 02 40 20 80   wlan0
             entry(&eui64.to_string(), 2, 0x00, IFA_F_PERMANENT),
         ];
         assert_eq!(
-            source_policy_with_entries(Some(&without_temp), stable),
+            source_policy_with_entries(Some(&without_temp), stable, None),
             V6Source::SystemDefault(Some(stable))
         );
         assert_eq!(
-            source_policy_with_entries(Some(&without_temp), eui64),
+            source_policy_with_entries(Some(&without_temp), eui64, None),
             V6Source::UnsafeDefault
         );
         assert_eq!(
-            source_policy_with_entries(None, stable),
+            source_policy_with_entries(None, stable, None),
             V6Source::SystemDefault(Some(stable))
         );
         assert_eq!(
-            source_policy_with_entries(None, eui64),
+            source_policy_with_entries(None, eui64, None),
             V6Source::UnsafeDefault
+        );
+    }
+
+    #[test]
+    fn select_temporary_preserving_keeps_cached_temp_when_newer_temp_is_listed_first() {
+        let stable: Ipv6Addr = "2a02:4e0:2d8a:1b00:5d1c:8f3e:91a2:6b47".parse().unwrap();
+        let new_temp: Ipv6Addr = "2a02:4e0:2d8a:1b00:aaaa:bbbb:cccc:dddd".parse().unwrap();
+        let cached_temp: Ipv6Addr = "2a02:4e0:2d8a:1b00:1111:2222:3333:4444".parse().unwrap();
+        let other_prefix_sys: Ipv6Addr = "2a02:4e0:2d8a:2::1".parse().unwrap();
+        let other_prefix_temp: Ipv6Addr = "2a02:4e0:2d8a:2::9999".parse().unwrap();
+
+        // Both temporary addresses are usable and the newer one appears first.
+        // Preserving the cached one avoids an unprovoked mid-transfer migration.
+        let both_usable = vec![
+            entry(&new_temp.to_string(), 2, 0x00, IFA_F_TEMPORARY),
+            entry(&cached_temp.to_string(), 2, 0x00, IFA_F_TEMPORARY),
+            entry(&stable.to_string(), 2, 0x00, IFA_F_STABLE_PRIVACY),
+        ];
+        assert_eq!(select_temporary(&both_usable, stable), Some(new_temp));
+        assert_eq!(
+            select_temporary_preserving(&both_usable, stable, Some(cached_temp)),
+            Some(cached_temp)
+        );
+        // Even under use_tempaddr = 2 (where sys_src is the newest temp),
+        // keep the cached temp while it is still preferred on the same prefix.
+        assert_eq!(
+            select_temporary_preserving(&both_usable, new_temp, Some(cached_temp)),
+            Some(cached_temp)
+        );
+
+        // Once the cached temporary becomes deprecated, switch to the fresh one.
+        let cached_deprecated = vec![
+            entry(&new_temp.to_string(), 2, 0x00, IFA_F_TEMPORARY),
+            entry(
+                &cached_temp.to_string(),
+                2,
+                0x00,
+                IFA_F_TEMPORARY | IFA_F_DEPRECATED,
+            ),
+            entry(&stable.to_string(), 2, 0x00, IFA_F_STABLE_PRIVACY),
+        ];
+        assert_eq!(
+            select_temporary_preserving(&cached_deprecated, stable, Some(cached_temp)),
+            Some(new_temp)
+        );
+
+        // Once the cached temporary disappears, switch to the fresh one.
+        let cached_gone = vec![
+            entry(&new_temp.to_string(), 2, 0x00, IFA_F_TEMPORARY),
+            entry(&stable.to_string(), 2, 0x00, IFA_F_STABLE_PRIVACY),
+        ];
+        assert_eq!(
+            select_temporary_preserving(&cached_gone, stable, Some(cached_temp)),
+            Some(new_temp)
+        );
+
+        // If the route moves to a different /64 prefix, do not cling to a
+        // cached temporary from the previous prefix.
+        let switched_prefix = vec![
+            entry(&cached_temp.to_string(), 2, 0x00, IFA_F_TEMPORARY),
+            entry(&other_prefix_sys.to_string(), 2, 0x00, IFA_F_STABLE_PRIVACY),
+            entry(&other_prefix_temp.to_string(), 2, 0x00, IFA_F_TEMPORARY),
+        ];
+        assert_eq!(
+            select_temporary_preserving(&switched_prefix, other_prefix_sys, Some(cached_temp)),
+            Some(other_prefix_temp)
         );
     }
 

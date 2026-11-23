@@ -740,24 +740,42 @@ impl PathSocket {
         dest_v6: Ipv6Addr,
         now: Instant,
     ) -> V6Source {
-        {
+        self.resolve_v6_source_with(destination, dest_v6, now, |dst, previous| {
+            crate::ipv6::source_policy_v6_preserving(dst, previous)
+        })
+    }
+
+    fn resolve_v6_source_with(
+        &self,
+        destination: SocketAddr,
+        dest_v6: Ipv6Addr,
+        now: Instant,
+        resolve: impl FnOnce(SocketAddr, Option<Ipv6Addr>) -> V6Source,
+    ) -> V6Source {
+        let previous = {
             let guard = self
                 .preferred_v6
                 .read()
                 .unwrap_or_else(std::sync::PoisonError::into_inner);
             match &*guard {
                 PreferredV6::Dynamic(cache) => {
-                    if let Some(&cached) = cache.get(&dest_v6)
-                        && now.saturating_duration_since(cached.resolved_at) < PREFERRED_V6_TTL
-                    {
-                        return cached.policy;
+                    if let Some(&cached) = cache.get(&dest_v6) {
+                        if now.saturating_duration_since(cached.resolved_at) < PREFERRED_V6_TTL {
+                            return cached.policy;
+                        }
+                        match cached.policy {
+                            V6Source::Temporary { addr, .. } => Some(addr),
+                            V6Source::SystemDefault(_) | V6Source::UnsafeDefault => None,
+                        }
+                    } else {
+                        None
                     }
                 }
                 #[cfg(test)]
                 PreferredV6::Fixed(policy) => return *policy,
             }
-        }
-        let resolved = crate::ipv6::source_policy_v6(destination);
+        };
+        let resolved = resolve(destination, previous);
         let mut guard = self
             .preferred_v6
             .write()
@@ -2055,6 +2073,93 @@ mod tests {
             assert_eq!(entry.policy, fresh);
             assert_eq!(entry.resolved_at, at_expiry);
         }
+    }
+
+    /// #405: when `PREFERRED_V6_TTL` expires, `PathSocket` keeps the cached
+    /// `Temporary { addr }` while it is still usable even if a newer temporary
+    /// address appears first in `/proc/net/if_inet6`, and switches only once
+    /// the cached address becomes deprecated or disappears.
+    #[test]
+    #[allow(clippy::unwrap_used)]
+    fn dynamic_preferred_v6_keeps_usable_cached_temp_on_ttl_expiry() {
+        const IFA_F_TEMPORARY: u32 = 0x01;
+        const IFA_F_DEPRECATED: u32 = 0x20;
+        const IFA_F_STABLE_PRIVACY: u32 = 0x800;
+
+        let dest_ip: Ipv6Addr = "2001:db8::aa".parse().unwrap();
+        let dest = SocketAddr::new(IpAddr::V6(dest_ip), 4000);
+        let stable: Ipv6Addr = "2a02:4e0:2d8a:1b00:5d1c:8f3e:91a2:6b47".parse().unwrap();
+        let new_temp: Ipv6Addr = "2a02:4e0:2d8a:1b00:aaaa:bbbb:cccc:dddd".parse().unwrap();
+        let cached_temp: Ipv6Addr = "2a02:4e0:2d8a:1b00:1111:2222:3333:4444".parse().unwrap();
+
+        let make_entry = |addr: Ipv6Addr, flags: u32| crate::ipv6::InterfaceV6 {
+            addr,
+            ifindex: 2,
+            prefix_len: 64,
+            scope: 0x00,
+            flags,
+        };
+
+        let fake = FakeSocket::new(Vec::new());
+        let (socket, _pipes, _fallback) = PathSocket::new(fake);
+        let t0 = Instant::now();
+        let cached_policy = V6Source::Temporary {
+            addr: cached_temp,
+            safe_default: true,
+        };
+        if let PreferredV6::Dynamic(cache) = &mut *socket
+            .preferred_v6
+            .write()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+        {
+            cache.insert(
+                dest_ip,
+                CachedV6Source {
+                    policy: cached_policy,
+                    resolved_at: t0,
+                },
+            );
+        }
+
+        // At TTL expiry, a newer usable temporary address is listed first, but
+        // `cached_temp` is still usable -> keep `cached_temp` to avoid
+        // unnecessary mid-transfer QUIC migration.
+        let both_usable = vec![
+            make_entry(new_temp, IFA_F_TEMPORARY),
+            make_entry(cached_temp, IFA_F_TEMPORARY),
+            make_entry(stable, IFA_F_STABLE_PRIVACY),
+        ];
+        let t1 = t0 + PREFERRED_V6_TTL;
+        let kept = socket.resolve_v6_source_with(dest, dest_ip, t1, |_, prev| {
+            crate::ipv6::source_policy_with_entries(Some(&both_usable), stable, prev)
+        });
+        assert_eq!(kept, cached_policy);
+
+        // At the next TTL expiry, `cached_temp` is deprecated -> switch to `new_temp`.
+        let deprecated = vec![
+            make_entry(new_temp, IFA_F_TEMPORARY),
+            make_entry(cached_temp, IFA_F_TEMPORARY | IFA_F_DEPRECATED),
+            make_entry(stable, IFA_F_STABLE_PRIVACY),
+        ];
+        let t2 = t1 + PREFERRED_V6_TTL;
+        let switched = socket.resolve_v6_source_with(dest, dest_ip, t2, |_, prev| {
+            crate::ipv6::source_policy_with_entries(Some(&deprecated), stable, prev)
+        });
+        assert_eq!(
+            switched,
+            V6Source::Temporary {
+                addr: new_temp,
+                safe_default: true,
+            }
+        );
+
+        // At the following TTL expiry, `new_temp` is gone -> fall back to `SystemDefault`.
+        let gone = vec![make_entry(stable, IFA_F_STABLE_PRIVACY)];
+        let t3 = t2 + PREFERRED_V6_TTL;
+        let fallback_policy = socket.resolve_v6_source_with(dest, dest_ip, t3, |_, prev| {
+            crate::ipv6::source_policy_with_entries(Some(&gone), stable, prev)
+        });
+        assert_eq!(fallback_policy, V6Source::SystemDefault(Some(stable)));
     }
 
     /// #405: `Fallback::rerouted` preserves the resolved temporary IPv6
