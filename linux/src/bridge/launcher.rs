@@ -28,6 +28,7 @@ pub mod qobject {
     #[namespace = "totaldrop"]
     unsafe extern "C++" {
         include!("totaldrop-linux/src/bridge/launcher.h");
+        include!("totaldrop-linux/src/bridge/wayland_parent.h");
 
         /// Give Qt the token to activate the window with; see `launcher.h`.
         fn set_activation_token(token: &QString);
@@ -35,6 +36,14 @@ pub mod qobject {
         /// Focused/visible X11 window ID (0 on Wayland / headless); see
         /// `launcher.h`.
         fn parent_x11_xid() -> u64;
+
+        /// Export the focused Wayland toplevel via `zxdg_exporter_v2` and ask
+        /// for a fresh `xdg_activation_v1` token; see `wayland_parent.h`.
+        fn acquire_wayland_dialog_context(handle: &mut QString, token: &mut QString) -> u64;
+
+        /// Destroy a previously exported `zxdg_exported_v2` handle on the Qt
+        /// GUI thread; see `wayland_parent.h`.
+        fn release_wayland_parent(export_id: u64);
 
         /// Open a validated http(s) URL in the desktop's browser; see
         /// `launcher.h`.
@@ -199,6 +208,35 @@ fn open_validated_web_url(raw: &str, open: impl FnOnce(&str) -> bool) -> bool {
     open(&clean)
 }
 
+/// Validates compositor strings from `acquire_wayland_dialog_context` with
+/// [`shortcuts::valid_token`], releases `export_id` immediately if the Wayland
+/// handle is rejected, and falls back to `parent_x11_xid` on X11 (#631).
+fn build_dialog_context<F>(
+    export_id: u64,
+    raw_wayland_handle: &str,
+    raw_wayland_token: &str,
+    parent_xid: u64,
+    release_now: impl FnOnce(u64),
+    make_unexport: F,
+) -> (Option<String>, Option<shortcuts::ParentWindow>)
+where
+    F: FnOnce(u64) -> Box<dyn FnOnce() + Send>,
+{
+    let token = shortcuts::valid_token(raw_wayland_token);
+    if let Some(handle) = shortcuts::valid_token(raw_wayland_handle) {
+        let unexport = (export_id != 0).then(|| make_unexport(export_id));
+        return (
+            token,
+            Some(shortcuts::ParentWindow::Wayland { handle, unexport }),
+        );
+    }
+    if export_id != 0 {
+        release_now(export_id);
+    }
+    let parent = (parent_xid != 0).then_some(shortcuts::ParentWindow::X11(parent_xid));
+    (token, parent)
+}
+
 impl qobject::Launcher {
     fn start_args(&self) -> QStringList {
         let cwd = std::env::current_dir().unwrap_or_default();
@@ -213,17 +251,33 @@ impl qobject::Launcher {
 
     fn configure_shortcut(&self) {
         let description = crate::bridge::texts::strings().get("sendClipboard", &[]);
-        // Do not read `XDG_ACTIVATION_TOKEN`: Qt's Wayland plugin consumes and
-        // unsets the launch-time token at startup, and any leftover token is
-        // stale and single-use. Requesting a fresh `xdg_activation_v1` token
-        // and Wayland `zxdg_exporter_v2` parent handle is tracked in #631.
-        let parent_xid = match qobject::parent_x11_xid() {
-            0 => None,
-            xid => Some(xid),
+        // Acquire Wayland xdg-foreign-v2 parent handle and a fresh
+        // xdg-activation-v1 token on the Qt GUI thread (#631); on X11 or
+        // headless, fall back to the X11 window ID (#54).
+        let mut raw_handle = QString::default();
+        let mut raw_token = QString::default();
+        let export_id = qobject::acquire_wayland_dialog_context(&mut raw_handle, &mut raw_token);
+        let parent_xid = if export_id == 0 {
+            qobject::parent_x11_xid()
+        } else {
+            0
         };
-        self.rust()
-            .shortcuts
-            .configure(description, None, parent_xid);
+        let qt_thread = self.qt_thread();
+        let (token, parent) = build_dialog_context(
+            export_id,
+            &raw_handle.to_string(),
+            &raw_token.to_string(),
+            parent_xid,
+            qobject::release_wayland_parent,
+            |id| {
+                Box::new(move || {
+                    let _ = qt_thread.queue(move |_| {
+                        qobject::release_wayland_parent(id);
+                    });
+                })
+            },
+        );
+        self.rust().shortcuts.configure(description, token, parent);
     }
 }
 
@@ -364,5 +418,92 @@ mod tests {
 
         let over_proto = format!("{prefix}{}", "a".repeat(2040));
         assert_eq!(rfc3986_web_url(&over_proto), None);
+    }
+
+    #[test]
+    fn dialog_context_validates_wayland_strings_and_cleans_up_exports() {
+        use std::sync::Arc;
+        use std::sync::atomic::{AtomicU64, Ordering};
+
+        use super::build_dialog_context;
+        use crate::shortcuts::ParentWindow;
+
+        // 1. Valid Wayland handle + fresh activation token -> keeps export until drop.
+        let released = Arc::new(AtomicU64::new(0));
+        let rel_cb = Arc::clone(&released);
+        let mut eager_1 = 0u64;
+        let (tok, parent) = build_dialog_context(
+            7,
+            "wayland-export-handle_1",
+            "xdg-act-token-42",
+            0,
+            |id| eager_1 = id,
+            |id| {
+                Box::new(move || {
+                    rel_cb.store(id, Ordering::Release);
+                })
+            },
+        );
+        assert_eq!(eager_1, 0);
+        assert_eq!(tok.as_deref(), Some("xdg-act-token-42"));
+        assert!(matches!(
+            parent.as_ref(),
+            Some(ParentWindow::Wayland { handle, .. }) if handle == "wayland-export-handle_1"
+        ));
+        assert_eq!(released.load(Ordering::Acquire), 0);
+        drop(parent);
+        assert_eq!(released.load(Ordering::Acquire), 7);
+
+        // 2. Malformed Wayland handle with non-zero export_id -> releases immediately.
+        let mut eager_2 = 0u64;
+        let mut deferred_2 = false;
+        let (tok_bad, parent_bad) = build_dialog_context(
+            9,
+            "bad\nhandle",
+            "good-token",
+            0,
+            |id| eager_2 = id,
+            |_| {
+                deferred_2 = true;
+                Box::new(|| {})
+            },
+        );
+        assert_eq!(eager_2, 9);
+        assert!(!deferred_2);
+        assert_eq!(tok_bad.as_deref(), Some("good-token"));
+        assert!(parent_bad.is_none());
+
+        // 3. Malformed activation token is stripped while valid Wayland handle stays.
+        let mut eager_3 = 0u64;
+        let (tok_stripped, parent_ok) = build_dialog_context(
+            11,
+            "good-handle",
+            "bad token with space",
+            0,
+            |id| eager_3 = id,
+            |_| Box::new(|| {}),
+        );
+        assert_eq!(eager_3, 0);
+        assert_eq!(tok_stripped, None);
+        assert!(matches!(parent_ok, Some(ParentWindow::Wayland { .. })));
+
+        // 4. Non-Wayland (export_id == 0) falls back to X11 XID.
+        let mut eager_4 = 0u64;
+        let mut deferred_4 = false;
+        let (tok_x11, parent_x11) = build_dialog_context(
+            0,
+            "",
+            "",
+            0x2a,
+            |id| eager_4 = id,
+            |_| {
+                deferred_4 = true;
+                Box::new(|| {})
+            },
+        );
+        assert_eq!(eager_4, 0);
+        assert!(!deferred_4);
+        assert_eq!(tok_x11, None);
+        assert!(matches!(parent_x11, Some(ParentWindow::X11(0x2a))));
     }
 }
