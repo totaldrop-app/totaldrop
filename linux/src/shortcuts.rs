@@ -43,11 +43,19 @@ pub const MAX_TRIGGER_CHARS: usize = 128;
 /// Startup timeout for reaching `org.freedesktop.portal.GlobalShortcuts`.
 const SETUP_TIMEOUT: Duration = Duration::from_secs(5);
 
+/// Bounded wait when closing a half-initialized portal session after timeout.
+const CLOSE_TIMEOUT: Duration = Duration::from_secs(2);
+
 /// Initial delay before recreating a `GlobalShortcuts` session after `Closed`.
 const RECONNECT_INITIAL_BACKOFF: Duration = Duration::from_secs(1);
 
 /// Maximum delay between `GlobalShortcuts` session reconnect attempts.
 const RECONNECT_MAX_BACKOFF: Duration = Duration::from_secs(30);
+
+/// Consecutive failed reconnect attempts after `Session::Closed` before falling
+/// back to `(false, "")` so a brief portal restart never flashes the manual
+/// `--screen=clipboard` instruction in Settings (#638).
+const RECONNECT_FALLBACK_ATTEMPTS: usize = 3;
 
 /// Command to bind in a desktop or window manager when the `GlobalShortcuts`
 /// portal is unavailable (#54).
@@ -270,33 +278,62 @@ async fn watch_session_closed(
     proxy.receive_signal("Closed").await.ok()
 }
 
-async fn setup_portal(conn: &zbus::Connection, register_host: bool) -> Option<PortalSetup> {
-    if register_host && let Ok(app_id) = ashpd::AppID::try_from(crate::APP_ID) {
-        // Best-effort: older xdg-desktop-portal releases have no host Registry.
-        let _ = ashpd::register_host_app_with_connection(conn.clone(), app_id).await;
+async fn close_session_bounded(session: Session<GlobalShortcuts>) {
+    let _ = tokio::time::timeout(CLOSE_TIMEOUT, session.close()).await;
+}
+
+fn emit_state(
+    callbacks: &Callbacks,
+    last_state: &mut Option<(bool, String)>,
+    supported: bool,
+    trigger: String,
+) {
+    if last_state
+        .as_ref()
+        .is_some_and(|(prev_sup, prev_trig)| *prev_sup == supported && *prev_trig == trigger)
+    {
+        return;
     }
-    let portal = GlobalShortcuts::with_connection(conn.clone()).await.ok()?;
-    let session = portal
-        .create_session(CreateSessionOptions::default())
+    *last_state = Some((supported, trigger.clone()));
+    (callbacks.state)(supported, trigger);
+}
+
+async fn setup_portal(
+    conn: &zbus::Connection,
+    deadline: tokio::time::Instant,
+) -> Option<PortalSetup> {
+    let portal = tokio::time::timeout_at(deadline, GlobalShortcuts::with_connection(conn.clone()))
         .await
+        .ok()?
         .ok()?;
+    let session = tokio::time::timeout_at(
+        deadline,
+        portal.create_session(CreateSessionOptions::default()),
+    )
+    .await
+    .ok()?
+    .ok()?;
     let Some(session_path) = session_object_path(&session) else {
-        let _ = session.close().await;
+        close_session_bounded(session).await;
         return None;
     };
-    let Some(session_closed) = watch_session_closed(conn, &session_path).await else {
-        let _ = session.close().await;
-        return None;
-    };
-    let Ok(listed) = portal
-        .list_shortcuts(&session, ListShortcutsOptions::default())
-        .await
+    let Ok(Some(session_closed)) =
+        tokio::time::timeout_at(deadline, watch_session_closed(conn, &session_path)).await
     else {
-        let _ = session.close().await;
+        close_session_bounded(session).await;
+        return None;
+    };
+    let Ok(Ok(listed)) = tokio::time::timeout_at(
+        deadline,
+        portal.list_shortcuts(&session, ListShortcutsOptions::default()),
+    )
+    .await
+    else {
+        close_session_bounded(session).await;
         return None;
     };
     let Ok(response) = listed.response() else {
-        let _ = session.close().await;
+        close_session_bounded(session).await;
         return None;
     };
     let found = trigger_from_portal(response.shortcuts());
@@ -347,19 +384,20 @@ async fn run_session(
     conn: &zbus::Connection,
     hyprland: bool,
     callbacks: &Callbacks,
+    last_state: &mut Option<(bool, String)>,
     rx: &mut tokio::sync::mpsc::Receiver<Configure>,
     inner: &Arc<HandleInner>,
     setup: PortalSetup,
 ) -> SessionEnd {
     let portal = setup.portal;
     let Ok(activated_raw) = portal.receive_activated().await else {
-        let _ = setup.session.close().await;
-        (callbacks.state)(false, String::new());
+        close_session_bounded(setup.session).await;
+        emit_state(callbacks, last_state, false, String::new());
         return SessionEnd::Stop;
     };
     let Ok(changed_raw) = portal.receive_shortcuts_changed().await else {
-        let _ = setup.session.close().await;
-        (callbacks.state)(false, String::new());
+        close_session_bounded(setup.session).await;
+        emit_state(callbacks, last_state, false, String::new());
         return SessionEnd::Stop;
     };
     let mut activated = Box::pin(activated_raw);
@@ -372,13 +410,13 @@ async fn run_session(
     let mut trigger = setup.trigger;
     let mut is_supported = supported(portal.version(), hyprland, &trigger, true);
 
-    (callbacks.state)(is_supported, trigger.clone());
+    emit_state(callbacks, last_state, is_supported, trigger.clone());
 
     loop {
         tokio::select! {
             ev = activated.next() => {
                 let Some(ev) = ev else {
-                    let _ = session.close().await;
+                    close_session_bounded(session).await;
                     return SessionEnd::Stop;
                 };
                 if session_matches(Some(&session_path), ev.session_handle().as_str())
@@ -389,7 +427,7 @@ async fn run_session(
             }
             ev = changed.next() => {
                 let Some(ev) = ev else {
-                    let _ = session.close().await;
+                    close_session_bounded(session).await;
                     return SessionEnd::Stop;
                 };
                 if !session_matches(Some(&session_path), ev.session_handle().as_str()) {
@@ -402,21 +440,21 @@ async fn run_session(
                 if next_supported != is_supported || next_trigger != trigger {
                     is_supported = next_supported;
                     trigger = next_trigger;
-                    (callbacks.state)(is_supported, trigger.clone());
+                    emit_state(callbacks, last_state, is_supported, trigger.clone());
                 }
             }
             closed = session_closed.next() => {
                 if closed.is_some() {
-                    if is_supported || !trigger.is_empty() {
-                        (callbacks.state)(false, String::new());
-                    }
+                    // Keep the last known UI state during transient portal
+                    // restarts so Settings does not flash the manual fallback;
+                    // the reconnect loop falls back only after repeated failures (#638).
                     return SessionEnd::Closed;
                 }
                 return SessionEnd::Stop;
             }
             cmd = rx.recv() => {
                 let Some(req) = cmd else {
-                    let _ = session.close().await;
+                    close_session_bounded(session).await;
                     return SessionEnd::Stop;
                 };
                 let _guard = ResetConfiguring(&inner.configuring);
@@ -435,7 +473,7 @@ async fn run_session(
                     else {
                         is_supported = false;
                         trigger.clear();
-                        (callbacks.state)(false, String::new());
+                        emit_state(callbacks, last_state, false, String::new());
                         continue;
                     };
                     let resp = match request.response() {
@@ -446,7 +484,7 @@ async fn run_session(
                         Err(_) => {
                             is_supported = false;
                             trigger.clear();
-                            (callbacks.state)(false, String::new());
+                            emit_state(callbacks, last_state, false, String::new());
                             continue;
                         }
                     };
@@ -467,17 +505,17 @@ async fn run_session(
                                     trigger = refreshed;
                                 }
                                 is_supported = true;
-                                (callbacks.state)(is_supported, trigger.clone());
+                                emit_state(callbacks, last_state, is_supported, trigger.clone());
                             } else {
                                 is_supported = supported(portal.version(), hyprland, &next_trigger, false);
                                 trigger = if is_supported { next_trigger } else { String::new() };
-                                (callbacks.state)(is_supported, trigger.clone());
+                                emit_state(callbacks, last_state, is_supported, trigger.clone());
                             }
                         }
                         None if portal.version() < 2 => {
                             is_supported = false;
                             trigger.clear();
-                            (callbacks.state)(false, String::new());
+                            emit_state(callbacks, last_state, false, String::new());
                         }
                         None => {}
                     }
@@ -490,25 +528,25 @@ async fn run_session(
                         if !is_supported || refreshed != trigger {
                             is_supported = true;
                             trigger = refreshed;
-                            (callbacks.state)(true, trigger.clone());
+                            emit_state(callbacks, last_state, true, trigger.clone());
                         }
                     }
                 } else {
                     // Portal v1 allows BindShortcuts once per session; recreate the
                     // session so a v1 dialog backend can rebind.
-                    let _ = session.close().await;
+                    close_session_bounded(session).await;
                     let Ok(new_session) = portal.create_session(CreateSessionOptions::default()).await else {
-                        (callbacks.state)(false, String::new());
+                        emit_state(callbacks, last_state, false, String::new());
                         return SessionEnd::Stop;
                     };
                     let Some(next_path) = session_object_path(&new_session) else {
-                        let _ = new_session.close().await;
-                        (callbacks.state)(false, String::new());
+                        close_session_bounded(new_session).await;
+                        emit_state(callbacks, last_state, false, String::new());
                         return SessionEnd::Stop;
                     };
                     let Some(new_closed) = watch_session_closed(conn, &next_path).await else {
-                        let _ = new_session.close().await;
-                        (callbacks.state)(false, String::new());
+                        close_session_bounded(new_session).await;
+                        emit_state(callbacks, last_state, false, String::new());
                         return SessionEnd::Stop;
                     };
                     session_path = next_path;
@@ -541,7 +579,7 @@ async fn run_session(
                             if next_supported != is_supported || next_trigger != trigger {
                                 is_supported = next_supported;
                                 trigger = next_trigger;
-                                (callbacks.state)(is_supported, trigger.clone());
+                                emit_state(callbacks, last_state, is_supported, trigger.clone());
                             }
                         }
                         Ok(None) | Err(_) => {
@@ -558,14 +596,14 @@ async fn run_session(
                                 if next_supported != is_supported || next_trigger != trigger {
                                     is_supported = next_supported;
                                     trigger = next_trigger;
-                                    (callbacks.state)(is_supported, trigger.clone());
+                                    emit_state(callbacks, last_state, is_supported, trigger.clone());
                                 }
                             } else {
                                 bound = false;
                                 if is_supported || !trigger.is_empty() {
                                     is_supported = false;
                                     trigger.clear();
-                                    (callbacks.state)(false, String::new());
+                                    emit_state(callbacks, last_state, false, String::new());
                                 }
                             }
                         }
@@ -604,20 +642,66 @@ async fn run_on_with_backoff(
     register_host: bool,
     hyprland: bool,
     callbacks: Callbacks,
-    mut rx: tokio::sync::mpsc::Receiver<Configure>,
+    rx: tokio::sync::mpsc::Receiver<Configure>,
     inner: Arc<HandleInner>,
     initial_backoff: Duration,
     max_backoff: Duration,
 ) {
-    let Ok(Some(mut setup)) =
-        tokio::time::timeout(SETUP_TIMEOUT, setup_portal(&conn, register_host)).await
-    else {
-        (callbacks.state)(false, String::new());
+    run_on_with_timeouts(
+        conn,
+        register_host,
+        hyprland,
+        callbacks,
+        rx,
+        inner,
+        SETUP_TIMEOUT,
+        initial_backoff,
+        max_backoff,
+    )
+    .await;
+}
+
+#[allow(clippy::too_many_arguments)]
+async fn run_on_with_timeouts(
+    conn: zbus::Connection,
+    register_host: bool,
+    hyprland: bool,
+    callbacks: Callbacks,
+    mut rx: tokio::sync::mpsc::Receiver<Configure>,
+    inner: Arc<HandleInner>,
+    setup_timeout: Duration,
+    initial_backoff: Duration,
+    max_backoff: Duration,
+) {
+    let mut last_state: Option<(bool, String)> = None;
+    let initial_deadline = tokio::time::Instant::now() + setup_timeout;
+    if register_host && let Ok(app_id) = ashpd::AppID::try_from(crate::APP_ID) {
+        // Register once per D-Bus connection rather than on every session
+        // reconnect (#638); best-effort for older portals without Registry.
+        let _ = tokio::time::timeout_at(
+            initial_deadline,
+            ashpd::register_host_app_with_connection(conn.clone(), app_id),
+        )
+        .await;
+    }
+
+    let Some(mut setup) = setup_portal(&conn, initial_deadline).await else {
+        emit_state(&callbacks, &mut last_state, false, String::new());
         return;
     };
 
     loop {
-        match run_session(&conn, hyprland, &callbacks, &mut rx, &inner, setup).await {
+        match run_session(
+            &conn,
+            hyprland,
+            &callbacks,
+            &mut last_state,
+            &mut rx,
+            &inner,
+            setup,
+        )
+        .await
+        {
             SessionEnd::Stop => return,
             SessionEnd::Closed => {}
         }
@@ -625,6 +709,7 @@ async fn run_on_with_backoff(
         // Portal closed the session (e.g. portal restart or update): recreate
         // with bounded exponential backoff while the window remains open.
         let mut backoff = initial_backoff;
+        let mut failed_attempts: usize = 0;
         loop {
             tokio::select! {
                 cmd = rx.recv() => {
@@ -634,11 +719,14 @@ async fn run_on_with_backoff(
                     let _guard = ResetConfiguring(&inner.configuring);
                 }
                 () = tokio::time::sleep(backoff) => {
-                    if let Ok(Some(reconnected)) =
-                        tokio::time::timeout(SETUP_TIMEOUT, setup_portal(&conn, register_host)).await
-                    {
+                    let deadline = tokio::time::Instant::now() + setup_timeout;
+                    if let Some(reconnected) = setup_portal(&conn, deadline).await {
                         setup = reconnected;
                         break;
+                    }
+                    failed_attempts = failed_attempts.saturating_add(1);
+                    if failed_attempts >= RECONNECT_FALLBACK_ATTEMPTS {
+                        emit_state(&callbacks, &mut last_state, false, String::new());
                     }
                     backoff = backoff.saturating_mul(2).min(max_backoff);
                 }
@@ -853,6 +941,7 @@ mod tests {
     struct MockState {
         session_path: String,
         shortcuts: Vec<(String, String)>,
+        register_calls: usize,
         create_session_calls: usize,
         close_calls: usize,
         bind_calls: usize,
@@ -860,9 +949,21 @@ mod tests {
         last_bind_parent: String,
         last_configure_parent: String,
         fail_list_shortcuts: bool,
+        list_shortcuts_delay: Option<Duration>,
         bind_outcome: MockBindOutcome,
         bound_trigger_on_configure: String,
         clear_shortcuts_on_create_session: bool,
+    }
+
+    struct MockRegistry {
+        state: Arc<Mutex<MockState>>,
+    }
+
+    #[zbus::interface(name = "org.freedesktop.host.portal.Registry")]
+    impl MockRegistry {
+        fn register(&self, _app_id: String, _options: HashMap<String, zbus::OwnedVariant>) {
+            self.state.lock().unwrap().register_calls += 1;
+        }
     }
 
     struct MockSession {
@@ -956,14 +1057,18 @@ mod tests {
                 &sender,
                 &token_of(&options, "handle_token"),
             );
-            let (current, fail) = {
+            let (current, fail, delay) = {
                 let st = self.state.lock().unwrap();
-                (st.shortcuts.clone(), st.fail_list_shortcuts)
+                (
+                    st.shortcuts.clone(),
+                    st.fail_list_shortcuts,
+                    st.list_shortcuts_delay.unwrap_or(Duration::from_millis(15)),
+                )
             };
             let conn = self.conn.clone();
             let req_emit = req.clone();
             tokio::spawn(async move {
-                tokio::time::sleep(Duration::from_millis(15)).await;
+                tokio::time::sleep(delay).await;
                 if fail {
                     let res: HashMap<&str, Variant<'_>> = HashMap::new();
                     let _ = conn
@@ -1922,7 +2027,197 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn portal_session_closed_reconnects_with_backoff_and_receives_activated() {
+    async fn portal_session_closed_reconnects_without_fallback_flash_and_registers_host_once() {
+        let Some(bus) = PrivateBus::start() else {
+            return skip_without_dbus("dbus-daemon is not installed");
+        };
+        let server = bus.connect().await;
+        let state = Arc::new(Mutex::new(MockState {
+            shortcuts: vec![(SEND_CLIPBOARD_ID.to_owned(), "Alt+Shift+V".to_owned())],
+            ..MockState::default()
+        }));
+        server
+            .object_server()
+            .at(
+                "/org/freedesktop/portal/desktop",
+                MockPortal {
+                    conn: server.clone(),
+                    version: 2,
+                    state: Arc::clone(&state),
+                },
+            )
+            .await
+            .unwrap();
+        server
+            .object_server()
+            .at(
+                "/org/freedesktop/portal/desktop",
+                MockRegistry {
+                    state: Arc::clone(&state),
+                },
+            )
+            .await
+            .unwrap();
+        server
+            .request_name("org.freedesktop.portal.Desktop")
+            .await
+            .unwrap();
+
+        let client = bus.connect().await;
+        let client_name = client.unique_name().unwrap().to_string();
+        let (state_tx, mut state_rx) = tokio::sync::mpsc::unbounded_channel();
+        let (act_tx, mut act_rx) = tokio::sync::mpsc::unbounded_channel();
+        let (cmd_tx, cmd_rx) = tokio::sync::mpsc::channel(1);
+        let inner = Arc::new(HandleInner {
+            tx: cmd_tx,
+            configuring: AtomicBool::new(false),
+        });
+        let handle = Handle {
+            inner: Some(Arc::clone(&inner)),
+        };
+
+        let task = tokio::spawn(run_on_with_backoff(
+            client,
+            true,
+            false,
+            Callbacks {
+                state: Box::new(move |sup, trig| {
+                    let _ = state_tx.send((sup, trig));
+                }),
+                activated: Box::new(move |tok| {
+                    let _ = act_tx.send(tok);
+                }),
+            },
+            cmd_rx,
+            inner,
+            Duration::from_millis(10),
+            Duration::from_millis(40),
+        ));
+
+        let initial = tokio::time::timeout(Duration::from_secs(3), state_rx.recv())
+            .await
+            .unwrap()
+            .unwrap();
+        assert_eq!(initial, (true, "Alt+Shift+V".to_owned()));
+        let first_session = state.lock().unwrap().session_path.clone();
+        let expected_registers = usize::from(!ashpd::is_sandboxed());
+        assert_eq!(state.lock().unwrap().register_calls, expected_registers);
+
+        // Update the trigger returned after portal restart so the new session emits
+        // a distinct state callback directly without any intermediate `(false, "")` flash.
+        state.lock().unwrap().shortcuts =
+            vec![(SEND_CLIPBOARD_ID.to_owned(), "Super+Shift+V".to_owned())];
+
+        // Simulate a portal restart closing the active session.
+        let closed_details: HashMap<&str, Variant<'_>> = HashMap::new();
+        server
+            .emit_signal(
+                Some(client_name.as_str()),
+                ObjectPath::try_from(first_session.as_str()).unwrap(),
+                "org.freedesktop.portal.Session",
+                "Closed",
+                &(closed_details,),
+            )
+            .await
+            .unwrap();
+
+        let recovered = tokio::time::timeout(Duration::from_secs(3), state_rx.recv())
+            .await
+            .unwrap()
+            .unwrap();
+        assert_eq!(recovered, (true, "Super+Shift+V".to_owned()));
+        let second_session = state.lock().unwrap().session_path.clone();
+        assert_eq!(state.lock().unwrap().create_session_calls, 2);
+        assert_eq!(state.lock().unwrap().register_calls, expected_registers);
+        assert_ne!(second_session, first_session);
+
+        // Activated on the recreated session reaches the window.
+        let mut opts: HashMap<&str, Variant<'_>> = HashMap::new();
+        opts.insert("activation_token", Variant::from("tok_after_reconnect"));
+        server
+            .emit_signal(
+                Some(client_name.as_str()),
+                "/org/freedesktop/portal/desktop",
+                "org.freedesktop.portal.GlobalShortcuts",
+                "Activated",
+                &(
+                    ObjectPath::try_from(second_session.as_str()).unwrap(),
+                    SEND_CLIPBOARD_ID,
+                    55u64,
+                    opts,
+                ),
+            )
+            .await
+            .unwrap();
+        let got_tok = tokio::time::timeout(Duration::from_secs(3), act_rx.recv())
+            .await
+            .unwrap()
+            .unwrap();
+        assert_eq!(got_tok.as_deref(), Some("tok_after_reconnect"));
+
+        drop(handle);
+        let _ = tokio::time::timeout(Duration::from_secs(2), task).await;
+    }
+
+    #[tokio::test]
+    async fn portal_timeout_closes_half_initialized_session() {
+        let Some(bus) = PrivateBus::start() else {
+            return skip_without_dbus("dbus-daemon is not installed");
+        };
+        let server = bus.connect().await;
+        let state = Arc::new(Mutex::new(MockState {
+            shortcuts: vec![(SEND_CLIPBOARD_ID.to_owned(), "Alt+Shift+V".to_owned())],
+            list_shortcuts_delay: Some(Duration::from_secs(5)),
+            ..MockState::default()
+        }));
+        server
+            .object_server()
+            .at(
+                "/org/freedesktop/portal/desktop",
+                MockPortal {
+                    conn: server.clone(),
+                    version: 2,
+                    state: Arc::clone(&state),
+                },
+            )
+            .await
+            .unwrap();
+        server
+            .request_name("org.freedesktop.portal.Desktop")
+            .await
+            .unwrap();
+
+        let client = bus.connect().await;
+        let seen = Arc::new(Mutex::new(Vec::<(bool, String)>::new()));
+        let seen_cb = Arc::clone(&seen);
+        let (tx, rx) = tokio::sync::mpsc::channel(1);
+        let inner = Arc::new(HandleInner {
+            tx,
+            configuring: AtomicBool::new(false),
+        });
+        run_on_with_timeouts(
+            client,
+            false,
+            false,
+            Callbacks {
+                state: Box::new(move |sup, trig| seen_cb.lock().unwrap().push((sup, trig))),
+                activated: Box::new(|_| {}),
+            },
+            rx,
+            inner,
+            Duration::from_millis(120),
+            Duration::from_millis(10),
+            Duration::from_millis(40),
+        )
+        .await;
+        let st = state.lock().unwrap();
+        assert_eq!(st.create_session_calls, 1);
+        assert_eq!(st.close_calls, 1);
+        assert_eq!(*seen.lock().unwrap(), vec![(false, String::new())]);
+    }
+
+    #[tokio::test]
+    async fn portal_prolonged_disconnect_emits_fallback_then_recovers() {
         let Some(bus) = PrivateBus::start() else {
             return skip_without_dbus("dbus-daemon is not installed");
         };
@@ -1951,7 +2246,6 @@ mod tests {
         let client = bus.connect().await;
         let client_name = client.unique_name().unwrap().to_string();
         let (state_tx, mut state_rx) = tokio::sync::mpsc::unbounded_channel();
-        let (act_tx, mut act_rx) = tokio::sync::mpsc::unbounded_channel();
         let (cmd_tx, cmd_rx) = tokio::sync::mpsc::channel(1);
         let inner = Arc::new(HandleInner {
             tx: cmd_tx,
@@ -1969,14 +2263,12 @@ mod tests {
                 state: Box::new(move |sup, trig| {
                     let _ = state_tx.send((sup, trig));
                 }),
-                activated: Box::new(move |tok| {
-                    let _ = act_tx.send(tok);
-                }),
+                activated: Box::new(|_| {}),
             },
             cmd_rx,
             inner,
             Duration::from_millis(10),
-            Duration::from_millis(40),
+            Duration::from_millis(20),
         ));
 
         let initial = tokio::time::timeout(Duration::from_secs(3), state_rx.recv())
@@ -1986,7 +2278,8 @@ mod tests {
         assert_eq!(initial, (true, "Alt+Shift+V".to_owned()));
         let first_session = state.lock().unwrap().session_path.clone();
 
-        // Simulate a portal restart closing the active session.
+        // Keep portal failing across RECONNECT_FALLBACK_ATTEMPTS so fallback triggers.
+        state.lock().unwrap().fail_list_shortcuts = true;
         let closed_details: HashMap<&str, Variant<'_>> = HashMap::new();
         server
             .emit_signal(
@@ -1999,44 +2292,24 @@ mod tests {
             .await
             .unwrap();
 
-        let dropped = tokio::time::timeout(Duration::from_secs(3), state_rx.recv())
+        let fallback = tokio::time::timeout(Duration::from_secs(3), state_rx.recv())
             .await
             .unwrap()
             .unwrap();
-        assert_eq!(dropped, (false, String::new()));
+        assert_eq!(fallback, (false, String::new()));
+        {
+            let st = state.lock().unwrap();
+            assert!(st.create_session_calls > RECONNECT_FALLBACK_ATTEMPTS);
+            assert!(st.close_calls >= RECONNECT_FALLBACK_ATTEMPTS);
+        }
 
+        // Restoring the portal brings the shortcut state back cleanly.
+        state.lock().unwrap().fail_list_shortcuts = false;
         let recovered = tokio::time::timeout(Duration::from_secs(3), state_rx.recv())
             .await
             .unwrap()
             .unwrap();
         assert_eq!(recovered, (true, "Alt+Shift+V".to_owned()));
-        let second_session = state.lock().unwrap().session_path.clone();
-        assert_eq!(state.lock().unwrap().create_session_calls, 2);
-        assert_ne!(second_session, first_session);
-
-        // Activated on the recreated session reaches the window.
-        let mut opts: HashMap<&str, Variant<'_>> = HashMap::new();
-        opts.insert("activation_token", Variant::from("tok_after_reconnect"));
-        server
-            .emit_signal(
-                Some(client_name.as_str()),
-                "/org/freedesktop/portal/desktop",
-                "org.freedesktop.portal.GlobalShortcuts",
-                "Activated",
-                &(
-                    ObjectPath::try_from(second_session.as_str()).unwrap(),
-                    SEND_CLIPBOARD_ID,
-                    55u64,
-                    opts,
-                ),
-            )
-            .await
-            .unwrap();
-        let got_tok = tokio::time::timeout(Duration::from_secs(3), act_rx.recv())
-            .await
-            .unwrap()
-            .unwrap();
-        assert_eq!(got_tok.as_deref(), Some("tok_after_reconnect"));
 
         drop(handle);
         let _ = tokio::time::timeout(Duration::from_secs(2), task).await;
