@@ -143,22 +143,26 @@ class _Centered extends StatelessWidget {
   );
 }
 
-/// Default M3 icon size in `SegmentedButton` (`_SegmentedButtonDefaultsM3`).
+/// Default M3 icon size in `material_ui 1.11.1` (`_SegmentedButtonDefaultsM3`
+/// in `lib/src/generated/segmented_button_defaults_m3.g.dart:82`).
 const _kSegmentedDefaultIconSize = 18.0;
 
-/// Base font size used by Flutter's `SegmentedButton` when scaling segment
-/// padding and icon spacing with `MediaQuery.textScalerOf`.
+/// Base font size divisor used by `material_ui 1.11.1` (`SegmentedButton` in
+/// `lib/src/segmented_button.dart:600-603`, matching `_TextButtonWithIconChild`
+/// in `lib/src/text_button.dart:480-483`):
+/// `MediaQuery.textScalerOf(context).scale(defaultFontSize) / 14.0`.
 const _kSegmentedBaseFontSize = 14.0;
 
 /// Fallback minimum segment height when the theme omits `minimumSize`.
 const _kSegmentedFallbackMinHeight = 48.0;
 
-/// M3 `SegmentedButton` icon-segment padding before text-scale scaling
-/// (matches `TextButton.icon` inside Flutter's `_SegmentedButtonState.build`).
+/// M3 `SegmentedButton` icon-segment padding before text-scale scaling in
+/// `material_ui 1.11.1` (`lib/src/segmented_button.dart:604-611`).
 const _kSegmentedPadding1x = EdgeInsetsDirectional.fromSTEB(12, 8, 16, 8);
 const _kSegmentedPaddingScaled = EdgeInsets.symmetric(horizontal: 4);
 
-/// M3 `SegmentedButton` gap between icon and label (`lerpDouble(8, 4, scale)`).
+/// M3 `SegmentedButton` gap between icon and label in `material_ui 1.11.1`
+/// (`lib/src/segmented_button.dart:615-623`: `lerpDouble(8, 4, scale)`).
 const _kSegmentedIconGap1x = 8.0;
 const _kSegmentedIconGap2x = 4.0;
 
@@ -183,6 +187,10 @@ _SegmentedLayoutMetrics _measureSegmentedLayout({
   final textStyle =
       style?.textStyle?.resolve(const {}) ?? theme.textTheme.labelLarge;
   final defaultFontSize = textStyle?.fontSize ?? _kSegmentedBaseFontSize;
+  // Matches `material_ui 1.11.1` `lib/src/segmented_button.dart:600-603`
+  // verbatim (even when the theme's `labelLarge` is 15 sp, giving ~1.07 at
+  // 1.0x). Guarded against future package drift by the `RenderParagraph`
+  // threshold assertions in `app/test/responsive_polish_test.dart`.
   final effectiveTextScale =
       textScaler.scale(defaultFontSize) / _kSegmentedBaseFontSize;
   final scaledPadding = ButtonStyleButton.scaledPadding(
@@ -239,17 +247,22 @@ _SegmentedLayoutMetrics _measureSegmentedLayout({
       maxLines: _kSegmentedMaxLines,
     )..layout(maxWidth: maxLabelWidth);
     final labelHeight = painter.height;
+    // Two-line wrapping is intentional only near 1.0x so long translations
+    // stay on `SegmentedButton` without inflating segments into oversized
+    // double-height pills at large accessibility scales (where stacked
+    // full-width single-line buttons are easier to scan and tap).
     final fits = !painter.didExceedMaxLines && labelHeight <= minHeight;
     painter.dispose();
     if (!fits) return (fits: false, minHeight: minHeight);
     maxRenderedLabelHeight = math.max(maxRenderedLabelHeight, labelHeight);
   }
 
-  // Flutter's `_RenderSegmentedButton.computeMaxIntrinsicHeight` passes the
-  // full width rather than `width / childCount` to each segment, so a label
-  // that wraps to 2 lines under half width would under-report its intrinsic
-  // height to `SliverFillRemaining(hasScrollBody: false)`. Reporting the
-  // wrapped minimum height prevents bottom overflow near the viewport fold.
+  // `material_ui 1.11.1`'s `_RenderSegmentedButton.computeMaxIntrinsicHeight`
+  // (`lib/src/segmented_button.dart:913-923`) passes the full width rather
+  // than `width / childCount` to each segment, so a label that wraps to 2
+  // lines under half width would under-report its intrinsic height to
+  // `SliverFillRemaining(hasScrollBody: false)`. Reporting the wrapped minimum
+  // height prevents bottom overflow near the viewport fold.
   final expectedHeight = math.max(
     minHeight,
     maxRenderedLabelHeight + scaledPadding.vertical + borderWidth * 2,
