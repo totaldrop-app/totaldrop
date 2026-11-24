@@ -169,6 +169,15 @@ repos:
         always_run: true
         pass_filenames: false
 
+      # The same step as `site.yml` (#414): the Linux download links in the
+      # READMEs and the download page agree with README.md.
+      - id: linux-release-links
+        name: Linux release links match across READMEs and the download page
+        language: system
+        entry: sh -c 'node --test tools/test-linux-release-links.mjs && node tools/linux-release-links.mjs check'
+        files: ^(README\.md|docs/readme/README\..+\.md|site/public/download/index\.html|site/public/lang\.js|tools/(test-)?linux-release-links\.mjs)$
+        pass_filenames: false
+
       - id: advisory-ignores
         name: cargo-deny and OSV ignores match
         language: system
