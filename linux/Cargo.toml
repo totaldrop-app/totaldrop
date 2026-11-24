@@ -26,11 +26,11 @@ ashpd = { version = "0.14", default-features = false, features = ["tokio", "sett
 toml = "1.1"
 serde = { version = "1", features = ["derive"] }
 dirs = "7"
-notify = "8"
+notify = "9"
 serde_json = "1"
 futures-util = "0.3"
 zbus = { version = "6", default-features = false, features = ["tokio", "service"] }
-qrcode = { version = "0.14", default-features = false }
+qrcode = { version = "0.15", default-features = false }
 rqrr = "0.11"
 image = { version = "0.25", default-features = false, features = ["png", "jpeg", "webp"] }
 
