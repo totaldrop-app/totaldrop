@@ -31,8 +31,8 @@ inline void set_activation_token(const QString &token)
 
 // X11 window ID of the focused (or first visible) TotalDrop window, or 0 on
 // Wayland / headless, so GlobalShortcuts portal dialogs can parent to it
-// (#54). Wayland xdg-foreign parenting and fresh activation tokens are
-// tracked in #631.
+// (#54). Wayland xdg-foreign-v2 parenting and fresh xdg-activation-v1 tokens
+// live in `wayland_parent.h` (#631).
 inline std::uint64_t parent_x11_xid()
 {
     if (QGuiApplication::platformName() != QLatin1String("xcb"))

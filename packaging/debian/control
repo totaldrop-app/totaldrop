@@ -4,11 +4,15 @@ Priority: optional
 Maintainer: TotalDrop <hello@totaldrop.app>
 Build-Depends: debhelper-compat (= 13),
                g++,
+               libwayland-bin,
+               libwayland-dev,
                lld,
                pkgconf,
                qt6-base-dev,
                qt6-base-dev-tools,
+               qt6-base-private-dev,
                qt6-declarative-dev,
+               wayland-protocols,
                ca-certificates
 Standards-Version: 4.7.2
 Homepage: https://totaldrop.app
