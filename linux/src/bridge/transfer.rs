@@ -359,10 +359,12 @@ fn shown(text: &str) -> Shown {
     // Only named characters make it differ; \r\n is shown as \n.
     let hidden = revealed != text.replace("\r\n", "\n");
     // Never offer Open link when the payload holds hidden characters (#54, T17).
+    // Store the exact RFC 3986-encoded form passed to QDesktopServices::openUrl
+    // so the confirmation dialog always shows the exact URL that will open.
     let web_url = if hidden {
         String::new()
     } else {
-        totaldrop_proto::single_web_url(text).unwrap_or_default()
+        crate::bridge::launcher::rfc3986_web_url(text).unwrap_or_default()
     };
     match revealed.char_indices().nth(SHOWN_CHARS) {
         Some((at, _)) => Shown {
@@ -548,10 +550,6 @@ impl qobject::Transfer {
         self.as_mut().set_error_kind(QString::from(kind));
         self.as_mut().set_error_detail(QString::from(detail));
         self.as_mut().set_error_cause(QString::from(cause));
-        self.as_mut().set_received_text(QString::default());
-        self.as_mut().set_shown_text(QString::default());
-        self.as_mut().set_shown_short(false);
-        self.as_mut().set_shown_hidden(false);
         self.as_mut().set_web_url(QString::default());
         let stage = if kind == "Declined" && self.side() == Role::Send {
             Stage::Declined
@@ -1516,6 +1514,15 @@ mod tests {
             shown("https://аррӏе.com/login").web_url,
             "https://xn--80ak6aa92e.com/login"
         );
+        // The shown URL uses the exact RFC 3986 encoding opened by Launcher::openWebUrl.
+        assert_eq!(
+            shown("https://en.wikipedia.org/w/api.php?action=query&titles=A|B").web_url,
+            "https://en.wikipedia.org/w/api.php?action=query&titles=A%7CB"
+        );
+        assert_eq!(
+            shown("https://example.com/docs#a#b").web_url,
+            "https://example.com/docs#a%23b"
+        );
         // Payloads with hidden characters (bidi/control, lone \r, Unicode
         // noncharacters) never offer Open link alongside receiveTextHidden.
         for hidden_payload in [
@@ -1532,6 +1539,11 @@ mod tests {
         assert_eq!(crlf.web_url, "https://example.com/");
         for non_link in [
             "plain note",
+            "http:/é",
+            "http:/éx",
+            "https:/é",
+            "https:/éx",
+            "http://[::ffff:127.0.0.1]/",
             "See https://totaldrop.app",
             "file:///etc/passwd",
             "javascript:alert(1)",

@@ -20,6 +20,7 @@ cp "$here/stub/qmldir" \
    "$here/stub/SystemTheme.qml" \
    "$here/stub/Theme.qml" \
    "$here/stub/Strings.qml" \
+   "$here/stub/Launcher.qml" \
    "$here/stub/Transfer.qml" \
    "$mod/"
 for f in ActionCard Divider Field FocusScroller IconButton Mark PageHeader \

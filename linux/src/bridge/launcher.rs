@@ -118,6 +118,12 @@ fn rfc3986_encode_normalized(clean: &str) -> Option<String> {
         return None;
     };
     let after_scheme = clean.get(scheme_len..)?;
+    // WHATWG URL serialization for special schemes (`http`/`https`) always
+    // writes an authority followed by a `/`-prefixed path (`https://host/`).
+    debug_assert!(
+        after_scheme.contains('/'),
+        "WHATWG http(s) URL serialization always includes a '/' path"
+    );
     let slash_offset = after_scheme.find('/')?;
     let split_at = scheme_len.checked_add(slash_offset)?;
     let origin = clean.get(..split_at)?;
@@ -155,7 +161,7 @@ fn rfc3986_encode_normalized(clean: &str) -> Option<String> {
 /// Validates `raw` with [`totaldrop_proto::single_web_url`] and encodes its
 /// path, query and fragment to strict RFC 3986 form for `QUrl::StrictMode`
 /// (#54).
-fn rfc3986_web_url(raw: &str) -> Option<String> {
+pub(crate) fn rfc3986_web_url(raw: &str) -> Option<String> {
     let clean = totaldrop_proto::single_web_url(raw)?;
     rfc3986_encode_normalized(&clean)
 }

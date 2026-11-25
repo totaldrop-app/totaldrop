@@ -158,7 +158,7 @@ ColumnLayout {
             id: openLinkButton
             objectName: "openLinkButton"
             visible: r.webUrl !== ""
-            text: Strings.s.openLink || ""
+            text: Strings.s.openLink
             icon.name: Theme.icon("insert-link")
             onClicked: {
                 r.linkOpenFailed = false
@@ -170,7 +170,7 @@ ColumnLayout {
         id: openLinkFailedLabel
         objectName: "openLinkFailedLabel"
         visible: r.linkOpenFailed && r.webUrl !== ""
-        text: Strings.s.openLinkFailed || ""
+        text: Strings.s.openLinkFailed
         color: Theme.error
         wrapMode: Text.Wrap
         horizontalAlignment: Text.AlignHCenter
@@ -250,7 +250,7 @@ ColumnLayout {
         modal: true
         focus: true
         Component.onCompleted: if (Theme.fusion) Overlay.modal = Theme.dim
-        title: Strings.s.openLinkTitle || ""
+        title: Strings.s.openLinkTitle
         // A fixed text width: wrapped text in a self-sizing popup loops.
         readonly property int boxWidth: Math.max(200, Math.min(380,
             (r.Overlay.overlay ? r.Overlay.overlay.width : r.width + 2 * Theme.s24) - 4 * Theme.s24))
@@ -276,7 +276,7 @@ ColumnLayout {
 
             Label {
                 width: openLinkDialog.boxWidth
-                text: Strings.s.openLinkBody || ""
+                text: Strings.s.openLinkBody
                 wrapMode: Text.Wrap
                 color: Theme.ink
             }
@@ -310,13 +310,13 @@ ColumnLayout {
             SecondaryButton {
                 id: cancelLinkButton
                 objectName: "cancelLinkButton"
-                text: Strings.s.cancel || ""
+                text: Strings.s.cancel
                 DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
             }
             PrimaryButton {
                 id: confirmLinkButton
                 objectName: "confirmLinkButton"
-                text: Strings.s.openLinkConfirm || ""
+                text: Strings.s.openLinkConfirm
                 DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
             }
         }

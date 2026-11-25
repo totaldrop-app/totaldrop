@@ -267,7 +267,7 @@ Adım adım:
 | Giriş | Gönderme | Alma |
 | --- | --- | --- |
 | CLI | `crates/totaldrop-cli/src/main.rs:403`, `crates/totaldrop-cli/src/main.rs:432` | `crates/totaldrop-cli/src/main.rs:526`, `crates/totaldrop-cli/src/main.rs:596` |
-| Linux (QML → CXX-Qt) | `linux/src/bridge/transfer.rs:649` `start_send` → `linux/src/bridge/transfer.rs:666`, `linux/src/bridge/transfer.rs:702` | `linux/src/bridge/transfer.rs:720` `receive` → `linux/src/bridge/transfer.rs:731`, `linux/src/bridge/transfer.rs:803` |
+| Linux (QML → CXX-Qt) | `linux/src/bridge/transfer.rs:667` `start_send` → `linux/src/bridge/transfer.rs:684`, `linux/src/bridge/transfer.rs:720` | `linux/src/bridge/transfer.rs:738` `receive` → `linux/src/bridge/transfer.rs:749`, `linux/src/bridge/transfer.rs:825` |
 | Android (Dart → flutter_rust_bridge) | `app/rust/src/api/transfer.rs:343` `prepare_send` → `app/rust/src/api/transfer.rs:362`; `app/rust/src/api/transfer.rs:416` `run_send` → `app/rust/src/api/transfer.rs:426` | `app/rust/src/api/transfer.rs:494` `connect_receive` |
 
 Uygulamalar olayları (`Event`, `crates/totaldrop-core/src/lib.rs:50`) kendi
@@ -495,7 +495,7 @@ Hiç ölçülmeyenler (CI'da kapsam yok):
 - **`linux/` ve `app/rust`**: `cargo test` çalışır ama llvm-cov
   ölçümüne dahil değil (`.github/workflows/core.yml:20` `EXCLUDE`).
 - **Dart**: `flutter test` kapsam raporu üretmiyor.
-- **QML**: iki bileşen testi var (`linux/tests/qml/tst_actioncard.qml`, `linux/tests/qml/tst_resultpanel.qml`).
+- **QML**: üç bileşen testi var (`linux/tests/qml/tst_actioncard.qml`, `linux/tests/qml/tst_announce.qml`, `linux/tests/qml/tst_resultpanel.qml`).
 
 ## 6. Tarihçe: sıcak noktalar
 
