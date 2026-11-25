@@ -27,6 +27,9 @@ allow = [
     "ISC",
     # webpki-roots (the Mozilla root list as data): permissive, compatible.
     "CDLA-Permissive-2.0",
+    # xxhash-rust (via notify 9 in totaldrop-linux): Boost Software License 1.0,
+    # permissive and compatible with MIT/Apache-2.0 and GPL/AGPL-3.0-or-later.
+    "BSL-1.0",
 ]
 # Add a license here only after checking that it is compatible with every
 # license in LICENSING.md, and say why in the pull request.
