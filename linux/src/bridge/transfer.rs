@@ -81,6 +81,7 @@ pub mod qobject {
         #[qproperty(QString, shown_text, cxx_name = "shownText")]
         #[qproperty(bool, shown_short, cxx_name = "shownShort")]
         #[qproperty(bool, shown_hidden, cxx_name = "shownHidden")]
+        #[qproperty(QString, web_url, cxx_name = "webUrl")]
         type Transfer = super::TransferRust;
 
         /// Scan `paths`, reserve a code, then wait for the receiver and send.
@@ -326,6 +327,9 @@ pub struct TransferRust {
     shown_short: bool,
     /// The text holds characters `shown_text` names by their code.
     shown_hidden: bool,
+    /// Normalized single `http://` or `https://` URL when the received
+    /// text is one safe web link, or empty (#54).
+    web_url: QString,
     session: Arc<Session>,
 }
 
@@ -345,22 +349,35 @@ struct Shown {
     short: bool,
     /// Some characters are named by their code.
     hidden: bool,
+    /// Normalized ASCII `http://` or `https://` URL when `text` is a single
+    /// safe web link (#54), or empty.
+    web_url: String,
 }
 
 fn shown(text: &str) -> Shown {
     let revealed = reveal_text(text);
     // Only named characters make it differ; \r\n is shown as \n.
     let hidden = revealed != text.replace("\r\n", "\n");
+    // Never offer Open link when the payload holds hidden characters (#54, T17).
+    // Store the exact RFC 3986-encoded form passed to QDesktopServices::openUrl
+    // so the confirmation dialog always shows the exact URL that will open.
+    let web_url = if hidden {
+        String::new()
+    } else {
+        crate::bridge::launcher::rfc3986_web_url(text).unwrap_or_default()
+    };
     match revealed.char_indices().nth(SHOWN_CHARS) {
         Some((at, _)) => Shown {
             text: revealed[..at].to_owned(),
             short: true,
             hidden,
+            web_url,
         },
         None => Shown {
             text: revealed,
             short: false,
             hidden,
+            web_url,
         },
     }
 }
@@ -518,6 +535,7 @@ impl qobject::Transfer {
         self.as_mut().set_shown_text(QString::default());
         self.as_mut().set_shown_short(false);
         self.as_mut().set_shown_hidden(false);
+        self.as_mut().set_web_url(QString::default());
         self.as_mut().set_stage(stage);
         g
     }
@@ -532,6 +550,7 @@ impl qobject::Transfer {
         self.as_mut().set_error_kind(QString::from(kind));
         self.as_mut().set_error_detail(QString::from(detail));
         self.as_mut().set_error_cause(QString::from(cause));
+        self.as_mut().set_web_url(QString::default());
         let stage = if kind == "Declined" && self.side() == Role::Send {
             Stage::Declined
         } else {
@@ -847,6 +866,8 @@ impl qobject::Transfer {
                                 .set_shown_text(QString::from(seen.text.as_str()));
                             obj.as_mut().set_shown_short(seen.short);
                             obj.as_mut().set_shown_hidden(seen.hidden);
+                            obj.as_mut()
+                                .set_web_url(QString::from(seen.web_url.as_str()));
                             obj.as_mut().set_received_text(QString::from(text.as_str()));
                             obj.as_mut().set_stage(Stage::Done);
                         }
@@ -888,6 +909,7 @@ impl qobject::Transfer {
         self.as_mut().set_shown_text(QString::default());
         self.as_mut().set_shown_short(false);
         self.as_mut().set_shown_hidden(false);
+        self.as_mut().set_web_url(QString::default());
         self.as_mut().set_is_text(false);
         self.as_mut().set_stage(Stage::Idle);
     }
@@ -1480,5 +1502,55 @@ mod tests {
     fn a_bad_server_address_is_named() {
         let e = E::Rendezvous("the server address must start with wss://".into());
         assert_eq!(kind(&e), "BadServer");
+    }
+
+    #[test]
+    fn shown_extracts_normalized_single_web_url() {
+        assert_eq!(
+            shown("  HTTPS://münchen.de/rathaus\r\n").web_url,
+            "https://xn--mnchen-3ya.de/rathaus"
+        );
+        assert_eq!(
+            shown("https://аррӏе.com/login").web_url,
+            "https://xn--80ak6aa92e.com/login"
+        );
+        // The shown URL uses the exact RFC 3986 encoding opened by Launcher::openWebUrl.
+        assert_eq!(
+            shown("https://en.wikipedia.org/w/api.php?action=query&titles=A|B").web_url,
+            "https://en.wikipedia.org/w/api.php?action=query&titles=A%7CB"
+        );
+        assert_eq!(
+            shown("https://example.com/docs#a#b").web_url,
+            "https://example.com/docs#a%23b"
+        );
+        // Payloads with hidden characters (bidi/control, lone \r, Unicode
+        // noncharacters) never offer Open link alongside receiveTextHidden.
+        for hidden_payload in [
+            "https://example.com/\u{202E}fdp.exe",
+            "https://example.com/\r",
+            "https://example.com/\u{FDD0}",
+        ] {
+            let s = shown(hidden_payload);
+            assert!(s.hidden, "{hidden_payload:?} should flag hidden");
+            assert_eq!(s.web_url, "", "{hidden_payload:?} must clear web_url");
+        }
+        let crlf = shown("https://example.com/\r\n");
+        assert!(!crlf.hidden);
+        assert_eq!(crlf.web_url, "https://example.com/");
+        for non_link in [
+            "plain note",
+            "http:/é",
+            "http:/éx",
+            "https:/é",
+            "https:/éx",
+            "http://[::ffff:127.0.0.1]/",
+            "See https://totaldrop.app",
+            "file:///etc/passwd",
+            "javascript:alert(1)",
+            "totaldrop://r/7-harbor-rocket",
+            "https://user:pass@evil.example.com/",
+        ] {
+            assert_eq!(shown(non_link).web_url, "", "{non_link:?}");
+        }
     }
 }

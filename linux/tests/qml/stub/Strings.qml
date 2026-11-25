@@ -132,7 +132,13 @@ QtObject {
         receiveTextShortened: "Only the beginning of the text is shown. Copy text copies all of it.",
         copyText: "Copy text",
         textCopied: "Text copied",
-        errorTextDamaged: "The text did not arrive intact, so it is not shown."
+        errorTextDamaged: "The text did not arrive intact, so it is not shown.",
+        shareText: "Share text",
+        openLink: "Open link",
+        openLinkTitle: "Open this link?",
+        openLinkBody: "This opens the address below in your browser.",
+        openLinkConfirm: "Open",
+        openLinkFailed: "No app on this device could open the link."
     })
 
     function f(key, args) {

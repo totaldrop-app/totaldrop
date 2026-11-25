@@ -36,6 +36,7 @@ QtObject {
     property string shownText: ""
     property bool shownShort: false
     property bool shownHidden: false
+    property string webUrl: ""
 
     signal picked(var paths)
     signal codeFound(string code)

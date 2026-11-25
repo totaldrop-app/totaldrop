@@ -7,6 +7,7 @@ module app.totaldrop
 singleton SystemTheme 1.0 SystemTheme.qml
 singleton Theme 1.0 Theme.qml
 singleton Strings 1.0 Strings.qml
+Launcher 1.0 Launcher.qml
 Transfer 1.0 Transfer.qml
 ActionCard 1.0 ActionCard.qml
 Divider 1.0 Divider.qml

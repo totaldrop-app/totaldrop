@@ -68,7 +68,7 @@ ApplicationWindow {
     // TotalDrop") open Send with them listed; otherwise --screen=… opens
     // that screen. Launcher has already made paths absolute.
     Launcher {
-        id: launcher
+        id: launcherObj
         onOpened: (args) => {
             win.raiseWindow()
             win.openArgs(args)
@@ -155,7 +155,7 @@ ApplicationWindow {
             onReceive: stack.push(receivePage)
             onSettings: stack.push(settingsPage)
         }
-        Component.onCompleted: Qt.callLater(() => win.openArgs(launcher.startArgs()))
+        Component.onCompleted: Qt.callLater(() => win.openArgs(launcherObj.startArgs()))
     }
 
     Component {
@@ -164,7 +164,7 @@ ApplicationWindow {
     }
     Component {
         id: receivePage
-        ReceivePage { transfer: xfer; onClose: stack.pop(); onAskCancel: stopDialog.open() }
+        ReceivePage { transfer: xfer; launcher: launcherObj; onClose: stack.pop(); onAskCancel: stopDialog.open() }
     }
     Component {
         id: settingsPage
