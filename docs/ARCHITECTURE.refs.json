@@ -466,13 +466,13 @@
   "linux/src/bridge/transfer.rs:782": [
     ".accept_with(&dest, Self::events(thread.clone(), g), &stop)"
   ],
-  "linux/src/instance.rs:652": [
+  "linux/src/instance.rs:671": [
     "let token = std::env::var(\"XDG_ACTIVATION_TOKEN\").ok();"
   ],
-  "linux/src/instance.rs:656": [
+  "linux/src/instance.rs:675": [
     "let startup = std::env::var(\"DESKTOP_STARTUP_ID\").ok();"
   ],
-  "linux/src/instance.rs:768": [
+  "linux/src/instance.rs:787": [
     "std::env::var_os(\"CI\").is_none(),"
   ],
   "linux/src/main.rs:56-59": [
