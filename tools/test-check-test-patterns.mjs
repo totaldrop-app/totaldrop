@@ -155,6 +155,8 @@ test("catches catch-all error matchers in Dart unit and integration tests (#316)
     "    expect(() => doWork(), throwsA(isException));",
     "    expect(() => doWork(), throwsA(isA<Exception>()));",
     "    expect(() => doWork(), throwsA(isA<Error>()));",
+    "    expect(() => doWork(), throwsA(isInstanceOf<Exception>()));",
+    "    expect(() => doWork(), throwsA(predicate((e) => true)));",
     "  });",
     "}",
   ].join("\n");
@@ -170,10 +172,12 @@ test("catches catch-all error matchers in Dart unit and integration tests (#316)
       ["any thrown error", "any-error-matcher", 13],
       ["any thrown error", "any-error-matcher", 14],
       ["any thrown error", "any-error-matcher", 15],
+      ["any thrown error", "any-error-matcher", 16],
+      ["any thrown error", "any-error-matcher", 17],
     ],
   );
   const { problems } = checkPatterns([["app/integration_test/weak_error_test.dart", dart]], []);
-  assert.equal(problems.length, 7);
+  assert.equal(problems.length, 9);
   assert.match(
     problems[0],
     /app\/integration_test\/weak_error_test\.dart:4 \(overflow check\): \[any-error-matcher\]/,
@@ -191,6 +195,10 @@ test("catches bare, null, trivial-regex and catch-all assert.throws/rejects in J
     "  assert.throws(() => parse('w'), /.*/);",
     "  assert.throws(() => parse('v'), /(?:)/);",
     "  await assert.rejects(async () => load(), () => true);",
+    "  assert.throws(() => parse('a'), /[\\s\\S]*/);",
+    "  assert.throws(() => parse('b'), /./);",
+    "  assert.throws(() => parse('c'), {});",
+    "  assert.throws(() => parse('d'), (e) => e instanceof Error);",
     "});",
   ].join("\n");
 
@@ -204,6 +212,10 @@ test("catches bare, null, trivial-regex and catch-all assert.throws/rejects in J
       ["weak js throws", "any-error-matcher", 7],
       ["weak js throws", "any-error-matcher", 8],
       ["weak js throws", "any-error-matcher", 9],
+      ["weak js throws", "any-error-matcher", 10],
+      ["weak js throws", "any-error-matcher", 11],
+      ["weak js throws", "any-error-matcher", 12],
+      ["weak js throws", "any-error-matcher", 13],
     ],
   );
 });
@@ -213,6 +225,8 @@ test("catches fixed sleep followed by assert or panic in Rust, Dart, JS and QML 
     "#[cfg(test)]",
     "mod tests {",
     "    use std::time::Duration;",
+    "",
+    "    fn check_ready() { Some(1).expect(\"ready\"); }",
     "",
     "    #[tokio::test]",
     "    async fn waits_with_tokio_sleep() {",
@@ -273,6 +287,14 @@ test("catches fixed sleep followed by assert or panic in Rust, Dart, JS and QML 
     "        let _h = Held;",
     "        assert!(true);",
     "    }",
+    "",
+    "    #[tokio::test]",
+    "    async fn sleep_before_expect_and_helper_is_caught() {",
+    "        tokio::time::sleep(Duration::from_millis(50)).await;",
+    "        Some(1).unwrap();",
+    "        tokio::time::sleep(Duration::from_millis(50)).await;",
+    "        check_ready();",
+    "    }",
     "}",
   ].join("\n");
 
@@ -280,13 +302,35 @@ test("catches fixed sleep followed by assert or panic in Rust, Dart, JS and QML 
   assert.deepEqual(
     rustFindings.map((f) => [f.test, f.rule, f.line]),
     [
-      ["waits_with_tokio_sleep", "sleep-before-assert", 7],
-      ["waits_with_thread_sleep", "sleep-before-assert", 13],
-      ["spawned_fixed_sleep_before_assert", "sleep-before-assert", 20],
-      ["table_for_loop_without_break_is_caught_even_when_assert_follows_loop", "sleep-before-assert", 30],
-      ["while_true_without_real_condition_is_caught", "sleep-before-assert", 40],
-      ["sleep_before_pause_is_still_caught", "sleep-before-assert", 47],
-      ["impl_for_inside_test_is_not_mistaken_for_a_polling_loop", "sleep-before-assert", 58],
+      ["waits_with_tokio_sleep", "sleep-before-assert", 9],
+      ["waits_with_thread_sleep", "sleep-before-assert", 15],
+      ["spawned_fixed_sleep_before_assert", "sleep-before-assert", 22],
+      ["table_for_loop_without_break_is_caught_even_when_assert_follows_loop", "sleep-before-assert", 32],
+      ["while_true_without_real_condition_is_caught", "sleep-before-assert", 42],
+      ["sleep_before_pause_is_still_caught", "sleep-before-assert", 49],
+      ["impl_for_inside_test_is_not_mistaken_for_a_polling_loop", "sleep-before-assert", 60],
+      ["sleep_before_expect_and_helper_is_caught", "sleep-before-assert", 69],
+      ["sleep_before_expect_and_helper_is_caught", "sleep-before-assert", 71],
+    ],
+  );
+
+  const jsSleeps = [
+    'import { test } from "node:test";',
+    'import assert from "node:assert/strict";',
+    'test("js setTimeout promise forms", async () => {',
+    "  await new Promise(r => setTimeout(r, 50));",
+    "  await new Promise((r) => setTimeout(r, 50));",
+    "  await new Promise((resolve) => { setTimeout(resolve, 50); });",
+    "  assert.equal(1, 1);",
+    "});",
+  ].join("\n");
+  const jsSleepFindings = scanFile("tools/test-sleep.mjs", jsSleeps);
+  assert.deepEqual(
+    jsSleepFindings.map((f) => [f.test, f.rule, f.line]),
+    [
+      ["js setTimeout promise forms", "sleep-before-assert", 4],
+      ["js setTimeout promise forms", "sleep-before-assert", 5],
+      ["js setTimeout promise forms", "sleep-before-assert", 6],
     ],
   );
 

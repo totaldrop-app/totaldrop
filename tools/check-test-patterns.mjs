@@ -84,6 +84,13 @@ export const ALLOWLIST = [
   },
   {
     file: "crates/totaldrop-cli/tests/end_to_end.rs",
+    test: "relay_flood",
+    rule: "sleep-before-assert",
+    reason:
+      "Backpressure pacing loop pauses 5 ms while 16 MiB is in flight until the receiver reports progress.",
+  },
+  {
+    file: "crates/totaldrop-cli/tests/end_to_end.rs",
     test: "stop_while_waiting_and_while_connecting",
     rule: "sleep-before-assert",
     reason:
@@ -112,10 +119,25 @@ export const ALLOWLIST = [
   },
   {
     file: "crates/totaldrop-core/src/relay.rs",
+    test: "a_parked_link_does_not_wait_on_a_stuck_close",
+    rule: "sleep-before-assert",
+    count: 2,
+    reason:
+      "Fills the relay send buffer (no buffer-full event exists) and lets the link observe park() before set_moved(true) so it takes the stuck-close branch.",
+  },
+  {
+    file: "crates/totaldrop-core/src/relay.rs",
     test: "a_parked_link_drops_what_waited_behind_its_gate",
     rule: "sleep-before-assert",
     reason:
       "Lets the spawned link task wake on gate.open() and discard the pre-gate datagram before queuing the post-gate datagram.",
+  },
+  {
+    file: "crates/totaldrop-core/src/relay.rs",
+    test: "recv_stun",
+    rule: "sleep-before-assert",
+    reason:
+      "FakeStunSocket::recv_stun simulates delayed STUN replies under #[tokio::test(start_paused = true)] tests.",
   },
   {
     file: "crates/totaldrop-core/src/stop.rs",
@@ -745,7 +767,22 @@ function scanRust(file, source, wholeFile) {
   const fns = [];
   for (const r of regions) extractRustFunctions(masked, r.start, r.end, fns);
 
-  const assertRe = /\b(?:(?:debug_)?assert(?:_eq|_ne)?|panic)\s*!|\bassert_[A-Za-z0-9_]*\s*\(/g;
+  const baseAssertRe =
+    /\b(?:(?:debug_)?assert(?:_eq|_ne)?|panic)\s*!|\bassert_[A-Za-z0-9_]*\s*\(|\.\s*(?:unwrap|expect)\s*\(/g;
+  const helperNames = new Set();
+  for (const fn of fns) {
+    if (/\btest\b/.test(fn.attrs)) continue;
+    const body = masked.slice(fn.bodyStart, fn.bodyEnd);
+    baseAssertRe.lastIndex = 0;
+    if (baseAssertRe.test(body)) helperNames.add(fn.name);
+  }
+  const helperAlt = [...helperNames]
+    .sort()
+    .map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+    .join("|");
+  const assertRe = helperAlt
+    ? new RegExp(`${baseAssertRe.source}|\\b(?:${helperAlt})\\s*\\(`, "g")
+    : baseAssertRe;
   const sleepRe =
     /(?:(?:\bstd\s*::\s*)?\bthread\s*::\s*sleep|(?:\btokio\s*::\s*)?\btime\s*::\s*sleep|(?<![.\w])sleep)\s*\(/g;
   const pauseRe = /\b(?:tokio\s*::\s*time\s*::\s*|time\s*::\s*)pause\s*\(/;
@@ -843,7 +880,7 @@ function enclosingScopeName(scopes, pos) {
 }
 
 const DART_CATCH_ALL_INNER =
-  /^(?:anything|isNotNull|isException|isFlutterError|isA<(?:Object|dynamic|Exception|Error|FlutterError)>\(\))$/;
+  /^(?:anything|isNotNull|isException|isFlutterError|(?:isA|isInstanceOf)<(?:Object|dynamic|Exception|Error|FlutterError)>\(\)|predicate\(\([^)]*\)(?:=>true|\{returntrue;?\})\))$/;
 
 function isWeakDartMatcher(actualCompact, matcherCompact) {
   if (/\btakeException\(\)/.test(actualCompact) && DART_CATCH_ALL_INNER.test(matcherCompact)) {
@@ -917,17 +954,34 @@ function scanDart(file, source) {
   return findings;
 }
 
-const TRIVIAL_REGEX_RE = /^\/(?:\.\*|\[\^\]\*|\[\s\S\]\*|\(\?:\)|\^|\$)?\/[dgimsuvy]*$/;
+const TRIVIAL_REGEX_RE = /^\/(?:\.|\.\*|\[\^\]\*|\[\\s\\S\]\*|\(\?:\)|\^|\$)?\/[dgimsuvy]*$/;
 const TRIVIAL_REGEXP_CTOR_RE =
-  /^(?:new\s+)?RegExp\s*\(\s*(?:""|''|``|"\.\*"|'\.\*'|`\.\*`)?\s*\)$/;
+  /^(?:new\s+)?RegExp\s*\(\s*(?:""|''|``|"\.\*"|'\.\*'|`\.\*`|"\."|'\.'|`\.`)?\s*\)$/;
 
 function isWeakJsErrorArg(errMasked, errRaw) {
   const t = errMasked.trim();
   if (t === "" || t === "undefined" || t === "null" || t === "Error" || t === "Object") {
     return true;
   }
-  if (/^(?:async\b\s*)?(?:\([^)]*\)|[A-Za-z_$][\w$]*)\s*=>\s*true$/.test(t)) return true;
+  if (/^\{\s*\}$/.test(t)) return true;
+  if (/^(?:async\b\s*)?(?:\([^)]*\)|[A-Za-z_$][\w$]*)\s*=>\s*(?:true|\{\s*return\s+true\s*(?:;\s*)?\})$/.test(t)) {
+    return true;
+  }
   if (/^function\s*\([^)]*\)\s*\{\s*return\s+true\s*(?:;\s*)?\}$/.test(t)) return true;
+  if (
+    /^(?:async\b\s*)?(?:\(\s*[A-Za-z_$][\w$]*\s*\)|[A-Za-z_$][\w$]*)\s*=>\s*(?:[A-Za-z_$][\w$]*\s+instanceof\s+(?:Error|Object)|\{\s*return\s+[A-Za-z_$][\w$]*\s+instanceof\s+(?:Error|Object)\s*(?:;\s*)?\})$/.test(
+      t,
+    )
+  ) {
+    return true;
+  }
+  if (
+    /^function\s*\(\s*[A-Za-z_$][\w$]*\s*\)\s*\{\s*return\s+[A-Za-z_$][\w$]*\s+instanceof\s+(?:Error|Object)\s*(?:;\s*)?\}$/.test(
+      t,
+    )
+  ) {
+    return true;
+  }
   const raw = errRaw.trim();
   if (TRIVIAL_REGEX_RE.test(raw) || TRIVIAL_REGEXP_CTOR_RE.test(raw)) return true;
   return false;
@@ -962,16 +1016,22 @@ function scanJs(file, source) {
   // 2. Fixed `setTimeout` sleep before `assert`.
   const checkRegions = scopes.length > 0 ? scopes : [{ name: "<top-level>", start: 0, end: masked.length }];
   const assertRe = /\bassert\s*(?:\.|\()/g;
-  const sleepRe = /\bnew\s+Promise\s*\([^()\n]*\bsetTimeout\b|\bawait\s+setTimeout\s*\(/g;
+  const sleepStartRe = /\bnew\s+Promise\s*\(|\bawait\s+setTimeout\s*\(/g;
 
   for (const scope of checkRegions) {
     const body = masked.slice(scope.start, scope.end);
     const asserts = extractAssertionSpans(body, assertRe);
     if (asserts.length === 0) continue;
     const loops = findPollingLoops(body, "js");
-    for (const m of body.matchAll(sleepRe)) {
+    for (const m of body.matchAll(sleepStartRe)) {
       const sleepIdx = m.index;
-      const sleepEnd = sleepIdx + m[0].length;
+      const openParen = sleepIdx + m[0].length - 1;
+      const closeParen = findMatching(body, openParen, "(", ")");
+      if (m[0].startsWith("new")) {
+        if (closeParen === -1) continue;
+        if (!/\bsetTimeout\b/.test(body.slice(openParen + 1, closeParen))) continue;
+      }
+      const sleepEnd = closeParen === -1 ? openParen + 1 : closeParen + 1;
       if (isExemptByPollingLoop(loops, asserts, sleepIdx, sleepEnd)) continue;
       if (asserts.some((a) => a.index > sleepEnd)) {
         findings.push({
