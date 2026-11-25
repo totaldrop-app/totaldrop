@@ -78,6 +78,16 @@ class MainActivity : FlutterActivity() {
                         ),
                     )
                 }
+                "update" -> {
+                    val downloadBytes = call.argument<Number>("downloadBytes")?.toLong()
+                    val uploadBytes = call.argument<Number>("uploadBytes")?.toLong()
+                    result.success(
+                        TransferJob.update(
+                            downloadBytes = downloadBytes,
+                            uploadBytes = uploadBytes,
+                        ),
+                    )
+                }
                 "end" -> {
                     TransferJob.end(this)
                     result.success(null)

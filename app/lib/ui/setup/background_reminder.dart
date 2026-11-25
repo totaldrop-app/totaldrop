@@ -40,6 +40,10 @@ class WatchedKeepAlive extends ChangeNotifier implements TransferKeepAlive {
   }
 
   @override
+  Future<void> update(TransferDirection direction, {required int bytes}) =>
+      _inner.update(direction, bytes: bytes);
+
+  @override
   Future<void> end() {
     _set(false);
     return _inner.end();

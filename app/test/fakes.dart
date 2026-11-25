@@ -206,7 +206,9 @@ class FakeKeepAlive implements TransferKeepAlive {
   int? lastBytes;
   void Function()? onStop;
 
-  bool get active => calls.isNotEmpty && calls.last.startsWith('begin');
+  bool get active =>
+      calls.isNotEmpty &&
+      (calls.last.startsWith('begin') || calls.last.startsWith('update'));
 
   @override
   Future<void> begin(
@@ -217,6 +219,13 @@ class FakeKeepAlive implements TransferKeepAlive {
     calls.add('begin ${direction.name}');
     lastBytes = bytes;
     this.onStop = onStop;
+    return Future.value();
+  }
+
+  @override
+  Future<void> update(TransferDirection direction, {required int bytes}) {
+    calls.add('update ${direction.name}');
+    lastBytes = bytes;
     return Future.value();
   }
 

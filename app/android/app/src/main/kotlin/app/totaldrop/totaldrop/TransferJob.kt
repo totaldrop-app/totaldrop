@@ -44,8 +44,32 @@ object TransferJob {
 
     private const val GENERATION = "generation"
 
+    /** Thin handle over the active [JobService] execution so JVM unit tests
+     * can verify in-place estimate updates never finish the running job (#593). */
+    internal interface RunningJob {
+        fun finish()
+        fun updateEstimatedNetworkBytes(downloadBytes: Long, uploadBytes: Long)
+    }
+
+    private class AndroidRunningJob(
+        private val service: TransferJobService,
+        private val params: JobParameters,
+    ) : RunningJob {
+        override fun finish() {
+            service.jobFinished(params, false)
+        }
+
+        override fun updateEstimatedNetworkBytes(downloadBytes: Long, uploadBytes: Long) {
+            service.updateEstimatedNetworkBytes(params, downloadBytes, uploadBytes)
+        }
+    }
+
+    private val UNKNOWN_BYTES: Long = JobInfo.NETWORK_BYTES_UNKNOWN.toLong()
+
     private var notice: Notice? = null
-    private var running: Pair<TransferJobService, JobParameters>? = null
+    private var running: RunningJob? = null
+    private var pendingDownloadBytes: Long = UNKNOWN_BYTES
+    private var pendingUploadBytes: Long = UNKNOWN_BYTES
 
     /** Which transfer a job belongs to. The system hands each callback its
      * own JobParameters, so they cannot be compared by identity. */
@@ -53,8 +77,6 @@ object TransferJob {
 
     /** Called when the person or the system stops the transfer. */
     var onStop: (() -> Unit)? = null
-
-    private val UNKNOWN_BYTES: Long = JobInfo.NETWORK_BYTES_UNKNOWN.toLong()
 
     /** Maps a byte count to a `JobInfo` network byte estimate. */
     internal fun networkBytes(value: Long?): Long =
@@ -82,13 +104,36 @@ object TransferJob {
         return scheduler.schedule(builder.build()) == JobScheduler.RESULT_SUCCESS
     }
 
+    /**
+     * Update the estimated network bytes on the running user-initiated job
+     * in place (API 34+ [JobService.updateEstimatedNetworkBytes]) without
+     * finishing or re-scheduling it (#593). If the job has not entered
+     * [started] yet (or is awaiting a network reconnect), the estimate is
+     * remembered and applied as soon as it starts.
+     */
+    fun update(
+        downloadBytes: Long? = null,
+        uploadBytes: Long? = null,
+    ): Boolean {
+        if (notice == null) return false
+        val dl = networkBytes(downloadBytes)
+        val ul = networkBytes(uploadBytes)
+        if (dl == UNKNOWN_BYTES && ul == UNKNOWN_BYTES) return false
+        pendingDownloadBytes = dl
+        pendingUploadBytes = ul
+        running?.updateEstimatedNetworkBytes(dl, ul)
+        return true
+    }
+
     /** Make [notice]'s transfer the one under way, and return its
      * generation. */
     internal fun prepare(notice: Notice): Long {
         // A job still running from the transfer before ends quietly:
         // replacing it would stop it, and that reads as a stop of this one.
-        running?.let { (service, params) -> service.jobFinished(params, false) }
+        running?.finish()
         running = null
+        pendingDownloadBytes = UNKNOWN_BYTES
+        pendingUploadBytes = UNKNOWN_BYTES
         this.notice = notice
         generation += 1
         return generation
@@ -99,9 +144,11 @@ object TransferJob {
         notice != null && generation == this.generation
 
     /** Clears the active transfer state and returns the running job, if any. */
-    internal fun clearActive(): Pair<TransferJobService, JobParameters>? {
+    internal fun clearActive(): RunningJob? {
         notice = null
         generation += 1
+        pendingDownloadBytes = UNKNOWN_BYTES
+        pendingUploadBytes = UNKNOWN_BYTES
         val r = running
         running = null
         return r
@@ -112,7 +159,7 @@ object TransferJob {
         val r = clearActive()
         val app = context.applicationContext
         if (r != null) {
-            r.first.jobFinished(r.second, false)
+            r.finish()
         } else {
             // Also a job waiting to run again after the network went away.
             app.getSystemService(JobScheduler::class.java)?.cancel(JOB_ID)
@@ -121,10 +168,21 @@ object TransferJob {
         app.getSystemService(NotificationManager::class.java)?.cancel(NOTIFICATION_ID)
     }
 
+    /** Records a started job for [generation] and applies any estimate update
+     * that arrived before `onStartJob`. */
+    internal fun attachStarted(generation: Long, job: RunningJob): Boolean {
+        if (!accepts(generation)) return false
+        running = job
+        if (pendingDownloadBytes != UNKNOWN_BYTES || pendingUploadBytes != UNKNOWN_BYTES) {
+            job.updateEstimatedNetworkBytes(pendingDownloadBytes, pendingUploadBytes)
+        }
+        return true
+    }
+
     internal fun started(service: TransferJobService, params: JobParameters): Boolean {
         val n = notice ?: return false
-        if (!accepts(params.extras.getLong(GENERATION))) return false
-        running = service to params
+        val jobGeneration = params.extras.getLong(GENERATION)
+        if (!accepts(jobGeneration)) return false
         service.setNotification(
             params,
             NOTIFICATION_ID,
@@ -134,7 +192,7 @@ object TransferJob {
             // [end] and [stoppedBySystem] remove it.
             JobService.JOB_END_NOTIFICATION_POLICY_DETACH,
         )
-        return true
+        return attachStarted(jobGeneration, AndroidRunningJob(service, params))
     }
 
     /** The system stopped the job; see [stoppedBySystem]. */
@@ -162,6 +220,8 @@ object TransferJob {
             return true
         }
         notice = null
+        pendingDownloadBytes = UNKNOWN_BYTES
+        pendingUploadBytes = UNKNOWN_BYTES
         this.generation += 1
         onStop?.invoke()
         return false
