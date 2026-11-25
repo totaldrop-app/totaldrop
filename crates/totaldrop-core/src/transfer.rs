@@ -645,13 +645,16 @@ pub async fn send_files(
             biased;
             () = stop.stopped() => {
                 // Every task hears the stop too and resets its stream, which
-                // drops what has not been sent or read yet. Let them,
-                // briefly, before the cancel and the close.
-                let _ = tokio::time::timeout(STOP_NOTICE, async {
-                    while tasks.join_next().await.is_some() {}
-                })
-                .await;
-                let e = tell_stopped(conn, &mut sealer, &mut send, transfer_id).await;
+                // drops what has not been sent or read yet. Let them reset in
+                // parallel while Control::Cancel is on the wire, and abort any
+                // straggler once `tell_stopped` has closed the connection (#651).
+                let e = tokio::select! {
+                    e = tell_stopped(conn, &mut sealer, &mut send, transfer_id) => e,
+                    () = async {
+                        while tasks.join_next().await.is_some() {}
+                        std::future::pending::<()>().await;
+                    } => Error::Stopped,
+                };
                 tasks.abort_all();
                 return Err(e);
             }
@@ -675,7 +678,12 @@ pub async fn send_files(
                         progress(shown, wanted_bytes);
                     }
                 }
-                Some(Ok(Control::Cancel { reason, .. })) => return Err(Error::Cancelled(reason)),
+                Some(Ok(Control::Cancel { reason, .. })) => {
+                    // Close before dropping tasks so CONNECTION_CLOSE leaves
+                    // immediately and the peer enters passive draining (#651).
+                    conn.close(0u32.into(), b"done");
+                    return Err(Error::Cancelled(reason));
+                }
                 Some(Ok(_)) => return Err(Error::Protocol("unexpected control message")),
                 Some(Err(e)) => return Err(e),
                 None => return Err(control_ended(conn)),
@@ -1043,6 +1051,12 @@ async fn receive_stream(
         let mut hasher = blake3::Hasher::new();
         let mut remaining = size;
         for i in 0..chunks {
+            if abandoned.load(Ordering::SeqCst) {
+                // Keep `stream` open until `accept` aborts us after
+                // `tell_stopped`, so no `STOP_SENDING` races ahead of
+                // `Control::Cancel`, while halting CPU and disk work now (#651).
+                std::future::pending::<()>().await;
+            }
             let ct = expect_frame(&mut stream, MAX_FRAME).await?;
             if ct.len() > CHUNK_SIZE.saturating_add(TAG_SIZE) {
                 return Err(Error::Protocol("chunk too large"));
@@ -1055,6 +1069,9 @@ async fn receive_stream(
                 return Err(Error::Protocol("chunk has the wrong length"));
             }
             hasher.update(&plain);
+            if abandoned.load(Ordering::SeqCst) {
+                std::future::pending::<()>().await;
+            }
             file.write_all(&plain).await?;
             remaining = remaining.saturating_sub(want);
             let now = done.fetch_add(want, Ordering::Relaxed).saturating_add(want);
@@ -1062,6 +1079,9 @@ async fn receive_stream(
         }
         if read_frame(&mut stream, MAX_FRAME).await?.is_some() {
             return Err(Error::Protocol("data after the final chunk"));
+        }
+        if abandoned.load(Ordering::SeqCst) {
+            return Err(Error::Stopped);
         }
         file.flush().await?;
         file.sync_all().await?;
@@ -1594,10 +1614,39 @@ where
                 .checked_add(INACTIVITY_TIMEOUT)
                 .unwrap_or(last_activity);
             tokio::select! {
-                () = tokio::time::sleep_until(deadline) => {
-                    if done_at_check.load(Ordering::Relaxed) == seen_bytes {
-                        return Err(Error::Connect(crate::error::msg::SENDER_STOPPED_SENDING.into()));
-                    }
+                biased;
+                () = stop.stopped() => {
+                    // Stop running streams from decrypting, fsyncing, or
+                    // placing files while we wait for the cancel notice,
+                    // without dropping RecvStreams yet (which would send
+                    // STOP_SENDING ahead of Control::Cancel) (#651).
+                    abandoned.store(true, Ordering::SeqCst);
+                    // Cancel and close first: dropping a stream that is still
+                    // reading tells the sender to stop sending, which would
+                    // reach it before the cancel.
+                    let e = tell_stopped(conn, &mut sealer, &mut send, transfer_id).await;
+                    streams.abort_all();
+                    return Err(e);
+                }
+                msg = ctl_rx.recv() => match msg {
+                    Some(Ok(Control::Cancel { reason, .. })) => return Err(Error::Cancelled(reason)),
+                    Some(Ok(_)) => return Err(Error::Protocol("unexpected control message")),
+                    Some(Err(e)) => return Err(e),
+                    None => return Err(control_ended(conn)),
+                },
+                Some(r) = result_rx.recv() => {
+                    last_activity = tokio::time::Instant::now();
+                    let (index, ok) = match r {
+                    Ok(v) => v,
+                    // A stream can break because the sender stopped; its
+                    // cancel may still be on the way on the control stream.
+                    Err(e) => return Err(cancel_or(e, &mut ctl_rx).await),
+                };
+                    if ok { report.files_ok = report.files_ok.saturating_add(1); }
+                    else { report.files_failed = report.files_failed.saturating_add(1); }
+                    send_control(&mut sealer, &mut send,
+                        &Control::EntryDone { transfer_id, index, ok }).await?;
+                    pending = pending.saturating_sub(1);
                 }
                 stream = conn.accept_uni() => {
                     let stream = stream?;
@@ -1620,26 +1669,6 @@ where
                     // Reap finished tasks so the set does not grow.
                     while streams.try_join_next().is_some() {}
                 }
-                Some(r) = result_rx.recv() => {
-                    last_activity = tokio::time::Instant::now();
-                    let (index, ok) = match r {
-                    Ok(v) => v,
-                    // A stream can break because the sender stopped; its
-                    // cancel may still be on the way on the control stream.
-                    Err(e) => return Err(cancel_or(e, &mut ctl_rx).await),
-                };
-                    if ok { report.files_ok = report.files_ok.saturating_add(1); }
-                    else { report.files_failed = report.files_failed.saturating_add(1); }
-                    send_control(&mut sealer, &mut send,
-                        &Control::EntryDone { transfer_id, index, ok }).await?;
-                    pending = pending.saturating_sub(1);
-                }
-                msg = ctl_rx.recv() => match msg {
-                    Some(Ok(Control::Cancel { reason, .. })) => return Err(Error::Cancelled(reason)),
-                    Some(Ok(_)) => return Err(Error::Protocol("unexpected control message")),
-                    Some(Err(e)) => return Err(e),
-                    None => return Err(control_ended(conn)),
-                },
                 _ = report_tick.tick(), if offer.reports => {
                     let bytes = done_at_check.load(Ordering::Relaxed);
                     if bytes != told {
@@ -1648,14 +1677,10 @@ where
                         told = bytes;
                     }
                 }
-                () = stop.stopped() => {
-                    // Cancel and close first: dropping a stream that is still
-                    // reading tells the sender to stop sending, which would
-                    // reach it before the cancel.
-                    let e = tell_stopped(conn, &mut sealer, &mut send, transfer_id).await;
-                    abandoned.store(true, Ordering::SeqCst);
-                    streams.abort_all();
-                    return Err(e);
+                () = tokio::time::sleep_until(deadline) => {
+                    if done_at_check.load(Ordering::Relaxed) == seen_bytes {
+                        return Err(Error::Connect(crate::error::msg::SENDER_STOPPED_SENDING.into()));
+                    }
                 }
             }
         }
@@ -1663,6 +1688,12 @@ where
     }
     .await;
     if let Err(e) = outcome {
+        // Tell the peer the connection is closed before waiting on local
+        // stream teardown and disk cleanup, so a stopped sender enters
+        // passive draining right away instead of waiting out 3 * PTO (#651).
+        if !matches!(e, Error::Stopped) && !peer_closed(conn) {
+            conn.close(0u32.into(), b"done");
+        }
         // No file is placed from now on; let every stream task end and drop
         // its partial file before the folders this transfer created go.
         abandoned.store(true, Ordering::SeqCst);
@@ -2774,6 +2805,113 @@ mod tests {
             assert_eq!(std::fs::read(dest.join("item.bin")).unwrap(), bytes);
         }
 
+        let _ = std::fs::remove_dir_all(&base);
+    }
+
+    /// #651: the control stream is given higher QUIC priority than bulk file
+    /// streams so `Control::Cancel` preempts queued file data on busy paths.
+    #[tokio::test]
+    async fn control_stream_has_higher_priority_than_bulk_data_streams() {
+        let (sender, receiver) =
+            crate::transport::testing::over_slow_relay(Duration::from_millis(1)).await;
+        let (schan, rchan, _skeys, _scert) = secure_pair(&sender, &receiver).await;
+        let bulk = sender.open_uni().await.unwrap();
+        let bulk_prio = bulk.priority().unwrap();
+        assert!(
+            schan.send.priority().unwrap() > bulk_prio,
+            "sender control stream priority should exceed bulk stream priority"
+        );
+        assert!(
+            rchan.send.priority().unwrap() > bulk_prio,
+            "receiver control stream priority should exceed bulk stream priority"
+        );
+    }
+
+    /// #651: `accept` closes the QUIC connection as soon as it receives
+    /// `Control::Cancel` (without waiting for the caller's outer close), so a
+    /// stopped sender observes `peer_closed` and skips passive draining.
+    #[tokio::test]
+    async fn accept_closes_connection_immediately_on_sender_cancel() {
+        let (sender, receiver) = paced_pair().await;
+        let (schan, mut rchan, skeys, scert) = secure_pair(&sender, &receiver).await;
+        let base = std::env::temp_dir().join(format!(
+            "td-cancel-close-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let (src, dest) = (base.join("src"), base.join("dest"));
+        std::fs::create_dir_all(src.join("f")).unwrap();
+        std::fs::create_dir_all(&dest).unwrap();
+        for n in 0..2 {
+            std::fs::write(src.join("f").join(format!("{n}.bin")), vec![3u8; 4 << 20]).unwrap();
+        }
+        let (entries, _) = scan(&[src.join("f")]).unwrap();
+        let stop = Stop::new();
+        let send = {
+            let (sender, stop) = (sender.clone(), stop.clone());
+            tokio::spawn(async move {
+                send_files(
+                    &sender,
+                    schan,
+                    &skeys,
+                    entries,
+                    false,
+                    Arc::new(|_, _| {}),
+                    &stop,
+                )
+                .await
+            })
+        };
+        let offer = receive_offer(&mut rchan, &scert).await.unwrap();
+        let started = Arc::new(tokio::sync::Notify::new());
+        let on_receive: Progress = {
+            let started = Arc::clone(&started);
+            Arc::new(move |n, _| {
+                if n >= 512 * 1024 {
+                    started.notify_one();
+                }
+            })
+        };
+        let recv = {
+            let receiver = receiver.clone();
+            let dest = dest.clone();
+            tokio::spawn(async move {
+                accept(&receiver, rchan, offer, &dest, on_receive, &Stop::new()).await
+            })
+        };
+        tokio::time::timeout(Duration::from_secs(10), started.notified())
+            .await
+            .unwrap();
+        stop.stop();
+        let s = tokio::time::timeout(Duration::from_secs(5), send)
+            .await
+            .unwrap()
+            .unwrap();
+        assert!(matches!(s, Err(Error::Stopped)), "{s:?}");
+        let r = tokio::time::timeout(Duration::from_secs(5), recv)
+            .await
+            .unwrap()
+            .unwrap();
+        assert!(
+            matches!(r, Err(Error::Cancelled(ref reason)) if reason == "stopped"),
+            "{r:?}"
+        );
+        assert!(
+            matches!(
+                receiver.close_reason(),
+                Some(quinn::ConnectionError::LocallyClosed)
+            ),
+            "accept should close the connection locally on cancel: {:?}",
+            receiver.close_reason()
+        );
+        assert!(
+            peer_closed(&sender),
+            "sender should see peer's close to skip passive draining: {:?}",
+            sender.close_reason()
+        );
         let _ = std::fs::remove_dir_all(&base);
     }
 }

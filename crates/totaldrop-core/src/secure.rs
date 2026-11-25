@@ -189,6 +189,10 @@ pub async fn handshake_on(
         return Err(Error::Protocol("expected key confirmation"));
     }
 
+    // Control frames (cancel, progress, entry_done) preempt bulk file streams
+    // (which use Quinn's default priority 0) when the send window is busy (#651).
+    let _ = send.set_priority(1);
+
     Ok(SecureChannel {
         sealer,
         opener,
