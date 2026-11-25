@@ -28,6 +28,10 @@ abstract class TransferKeepAlive {
     int? bytes,
   });
 
+  /// Update the estimated network byte count of the running background job
+  /// in place once the size is known, without re-scheduling it (#593).
+  Future<void> update(TransferDirection direction, {required int bytes});
+
   /// The transfer ended, for whatever reason.
   Future<void> end();
 }
@@ -42,6 +46,10 @@ class NoKeepAlive implements TransferKeepAlive {
     void Function() onStop, {
     int? bytes,
   }) => Future.value();
+
+  @override
+  Future<void> update(TransferDirection direction, {required int bytes}) =>
+      Future.value();
 
   @override
   Future<void> end() => Future.value();
@@ -86,6 +94,20 @@ class AndroidTransferKeepAlive implements TransferKeepAlive {
       });
     } on PlatformException {
       // The transfer still runs while the app is visible.
+    }
+  }
+
+  @override
+  Future<void> update(TransferDirection direction, {required int bytes}) async {
+    if (bytes < 0) return;
+    final bytesKey = switch (direction) {
+      TransferDirection.sending => 'uploadBytes',
+      TransferDirection.receiving => 'downloadBytes',
+    };
+    try {
+      await _channel.invokeMethod<bool>('update', {bytesKey: bytes});
+    } on PlatformException {
+      // The running job stays active with its previous estimate.
     }
   }
 

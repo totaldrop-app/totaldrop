@@ -65,6 +65,12 @@ class _KeepAlive implements TransferKeepAlive {
   }
 
   @override
+  Future<void> update(
+    TransferDirection direction, {
+    required int bytes,
+  }) async {}
+
+  @override
   Future<void> end() async => ended++;
 }
 

@@ -123,4 +123,70 @@ class TransferJobTest {
         assertEquals(listOf("dismiss", "stop", "dismiss-orphan"), events)
         assertFalse(TransferJob.accepts(orphan))
     }
+
+    private class FakeRunningJob : TransferJob.RunningJob {
+        var finished = 0
+        val updates = mutableListOf<Pair<Long, Long>>()
+
+        override fun finish() {
+            finished += 1
+        }
+
+        override fun updateEstimatedNetworkBytes(downloadBytes: Long, uploadBytes: Long) {
+            updates += downloadBytes to uploadBytes
+        }
+    }
+
+    /** Updating the receive byte estimate after the offer arrives calls
+     * `updateEstimatedNetworkBytes` on the running job and never finishes it
+     * or changes its generation (#593). */
+    @Test
+    fun estimateUpdateDoesNotFinishTheRunningJob() {
+        val unknown = JobInfo.NETWORK_BYTES_UNKNOWN.toLong()
+        val generation = TransferJob.prepare(notice)
+        val running = FakeRunningJob()
+        assertTrue(TransferJob.attachStarted(generation, running))
+
+        assertTrue(TransferJob.update(downloadBytes = 4096L))
+
+        assertEquals(0, running.finished)
+        assertEquals(listOf(4096L to unknown), running.updates)
+        assertTrue(TransferJob.accepts(generation))
+        assertEquals(0, stops)
+
+        // Starting a new transfer still finishes the previous running job.
+        TransferJob.prepare(notice)
+        assertEquals(1, running.finished)
+    }
+
+    /** An estimate update arriving before `onStartJob` (or while waiting for a
+     * network reconnect) is applied as soon as the job starts (#593). */
+    @Test
+    fun estimateUpdateBeforeStartAppliesWhenJobStarts() {
+        val unknown = JobInfo.NETWORK_BYTES_UNKNOWN.toLong()
+        val generation = TransferJob.prepare(notice)
+
+        assertTrue(TransferJob.update(downloadBytes = 8192L))
+
+        val running = FakeRunningJob()
+        assertTrue(TransferJob.attachStarted(generation, running))
+        assertEquals(0, running.finished)
+        assertEquals(listOf(8192L to unknown), running.updates)
+    }
+
+    /** Estimate updates do nothing when no transfer is active or both counts
+     * are unknown/negative (#593). */
+    @Test
+    fun estimateUpdateIgnoresInactiveOrUnknown() {
+        assertFalse(TransferJob.update(downloadBytes = 1024L))
+
+        val generation = TransferJob.prepare(notice)
+        val running = FakeRunningJob()
+        assertTrue(TransferJob.attachStarted(generation, running))
+
+        assertFalse(TransferJob.update(downloadBytes = null, uploadBytes = null))
+        assertFalse(TransferJob.update(downloadBytes = -1L, uploadBytes = -5L))
+        assertEquals(0, running.finished)
+        assertTrue(running.updates.isEmpty())
+    }
 }

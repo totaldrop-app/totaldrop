@@ -134,7 +134,7 @@ void main() {
       repo.events.add(finished());
       await pumpEventQueue();
       expect(vm.stage, ReceiveStage.done);
-      expect(keep.calls, ['begin receiving', 'begin receiving', 'end']);
+      expect(keep.calls, ['begin receiving', 'update receiving', 'end']);
     });
 
     test('is released when the person declines', () async {
@@ -221,7 +221,7 @@ void main() {
       expect(keep.lastBytes, isNull);
     });
 
-    test('ReceiveViewModel passes offer totalBytes on accept', () async {
+    test('ReceiveViewModel updates estimate in place on accept', () async {
       final repo = FakeRepository();
       final keep = FakeKeepAlive();
       final vm = ReceiveViewModel(repository: repo, keepAlive: keep);
@@ -234,7 +234,7 @@ void main() {
       repo.connected.complete(FakeOffer(totalBytes: 4096));
       await pumpEventQueue();
       unawaited(vm.accept());
-      expect(keep.calls, ['begin receiving', 'begin receiving']);
+      expect(keep.calls, ['begin receiving', 'update receiving']);
       expect(keep.lastBytes, 4096);
 
       vm.reset();
@@ -247,36 +247,63 @@ void main() {
       repo.connected.complete(FakeOffer(isText: true, totalBytes: 64));
       await pumpEventQueue();
       unawaited(vm.accept());
+      expect(keep.calls, [
+        'begin receiving',
+        'update receiving',
+        'end',
+        'begin receiving',
+        'update receiving',
+      ]);
       expect(keep.lastBytes, 64);
       expect(repo.accepted, ['files', 'text']);
     });
 
-    test('AndroidTransferKeepAlive forwards byte estimates', () async {
-      TestWidgetsFlutterBinding.ensureInitialized();
-      const channel = MethodChannel('app.totaldrop/transfer_job');
-      final calls = <MethodCall>[];
-      final messenger =
-          TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
-      messenger.setMockMethodCallHandler(channel, (call) async {
-        calls.add(call);
-        return true;
-      });
-      addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+    test(
+      'AndroidTransferKeepAlive forwards begin and update byte estimates',
+      () async {
+        TestWidgetsFlutterBinding.ensureInitialized();
+        const channel = MethodChannel('app.totaldrop/transfer_job');
+        final calls = <MethodCall>[];
+        final messenger =
+            TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+        messenger.setMockMethodCallHandler(channel, (call) async {
+          calls.add(call);
+          return true;
+        });
+        addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
 
-      final l = await AppLocalizations.delegate.load(const Locale('en'));
-      final keepAlive = AndroidTransferKeepAlive(() => l);
+        final l = await AppLocalizations.delegate.load(const Locale('en'));
+        final keepAlive = AndroidTransferKeepAlive(() => l);
 
-      await keepAlive.begin(TransferDirection.sending, () {}, bytes: 1048576);
-      await keepAlive.begin(TransferDirection.receiving, () {}, bytes: 2097152);
-      await keepAlive.begin(TransferDirection.receiving, () {});
+        await keepAlive.begin(TransferDirection.sending, () {}, bytes: 1048576);
+        await keepAlive.begin(TransferDirection.receiving, () {});
+        await keepAlive.update(TransferDirection.receiving, bytes: 2097152);
+        await keepAlive.update(TransferDirection.sending, bytes: 512);
+        await keepAlive.update(TransferDirection.receiving, bytes: -1);
 
-      expect(calls, hasLength(3));
-      expect((calls[0].arguments as Map)['uploadBytes'], 1048576);
-      expect((calls[0].arguments as Map).containsKey('downloadBytes'), isFalse);
-      expect((calls[1].arguments as Map)['downloadBytes'], 2097152);
-      expect((calls[1].arguments as Map).containsKey('uploadBytes'), isFalse);
-      expect((calls[2].arguments as Map).containsKey('uploadBytes'), isFalse);
-      expect((calls[2].arguments as Map).containsKey('downloadBytes'), isFalse);
-    });
+        expect(calls, hasLength(4));
+        expect(calls[0].method, 'begin');
+        expect((calls[0].arguments as Map)['uploadBytes'], 1048576);
+        expect(
+          (calls[0].arguments as Map).containsKey('downloadBytes'),
+          isFalse,
+        );
+        expect(calls[1].method, 'begin');
+        expect((calls[1].arguments as Map).containsKey('uploadBytes'), isFalse);
+        expect(
+          (calls[1].arguments as Map).containsKey('downloadBytes'),
+          isFalse,
+        );
+        expect(calls[2].method, 'update');
+        expect((calls[2].arguments as Map)['downloadBytes'], 2097152);
+        expect((calls[2].arguments as Map).containsKey('uploadBytes'), isFalse);
+        expect(calls[3].method, 'update');
+        expect((calls[3].arguments as Map)['uploadBytes'], 512);
+        expect(
+          (calls[3].arguments as Map).containsKey('downloadBytes'),
+          isFalse,
+        );
+      },
+    );
   });
 }
