@@ -315,10 +315,29 @@ impl Application {
     fn open(&self, uris: Vec<String>, platform_data: HashMap<String, OwnedVariant>) {
         let screen = text(&platform_data, SCREEN_KEY);
         let req = Request::from_open(&uris, screen.as_deref());
-        let mountinfo = mountinfo_for(self.package, &req);
+        let tok = token(&platform_data);
+        // Probing host paths (`metadata` / `read_dir` / `canonicalize`) can
+        // block on a stalled FUSE or NFS mount; run it off the D-Bus handler
+        // so `Open` returns before the second launch's `TIMEOUT` (#357).
+        if self.package == Package::Flatpak && req.items.iter().any(|i| i.starts_with('/')) {
+            let package = self.package;
+            let filter_and_push = move || {
+                let mountinfo = mountinfo_for(package, &req);
+                push(Opened {
+                    request: filter_for_window(req, package, mountinfo.as_deref()),
+                    token: tok,
+                });
+            };
+            if let Ok(rt) = tokio::runtime::Handle::try_current() {
+                rt.spawn_blocking(filter_and_push);
+            } else {
+                std::thread::spawn(filter_and_push);
+            }
+            return;
+        }
         push(Opened {
-            request: filter_for_window(req, self.package, mountinfo.as_deref()),
-            token: token(&platform_data),
+            request: req,
+            token: tok,
         });
     }
 
@@ -1270,7 +1289,8 @@ mod tests {
         assert!(from_host(table, Path::new("/home/ada/My Share/file.txt")));
 
         let d = tmp();
-        let stub_table = format!("1 0 0:1 / {} rw - tmpfs tmpfs rw\n", d.display());
+        let canon = std::fs::canonicalize(&d).unwrap();
+        let stub_table = format!("1 0 0:1 / {} rw - tmpfs tmpfs rw\n", canon.display());
         let r = Request {
             items: vec![d.display().to_string()],
             screen: None,
@@ -1286,8 +1306,8 @@ mod tests {
     /// `Open` (and even under `uid 0` in the CI container); also checks
     /// [`Request::args`] order when both `unreadable_in_flatpak` and
     /// `screen` are set.
-    #[tokio::test]
-    async fn special_files_do_not_block_and_args_keep_screen() {
+    #[test]
+    fn special_files_do_not_block_and_args_keep_screen() {
         let d = tmp();
         let fifo = d.join("pipe");
         let status = std::process::Command::new("mkfifo")
@@ -1301,13 +1321,16 @@ mod tests {
             screen: Some("send".into()),
             unreadable_in_flatpak: false,
         };
-        let filtered = tokio::time::timeout(
-            Duration::from_secs(2),
-            tokio::task::spawn_blocking(move || filter_for_window(r, Package::Flatpak, None)),
-        )
-        .await
-        .expect("checking a FIFO does not block")
-        .unwrap();
+        // Use a detached OS thread + mpsc deadline rather than a Tokio
+        // blocking task so a regression fails with the message instead of
+        // hanging runtime drop.
+        let (tx, rx) = std::sync::mpsc::channel();
+        std::thread::spawn(move || {
+            let _ = tx.send(filter_for_window(r, Package::Flatpak, None));
+        });
+        let filtered = rx
+            .recv_timeout(Duration::from_secs(2))
+            .expect("checking a FIFO does not block");
 
         assert!(filtered.items.is_empty());
         assert!(filtered.unreadable_in_flatpak);
@@ -1322,19 +1345,5 @@ mod tests {
             with_item.args(),
             ["/ok.txt", FLATPAK_UNREADABLE_ARG, "--screen=send"]
         );
-    }
-
-    /// Check that `Main.qml` and `SendPage.qml` name the same flag, method
-    /// and L10n key as Rust (`FLATPAK_UNREADABLE_ARG`, `sendFlatpakUnreadable`,
-    /// #357); does not instantiate QML.
-    #[test]
-    fn qml_wires_the_flatpak_unreadable_notice() {
-        let main_qml = include_str!("../qml/Main.qml");
-        let send_qml = include_str!("../qml/SendPage.qml");
-        assert!(main_qml.contains(FLATPAK_UNREADABLE_ARG));
-        assert!(main_qml.contains("showFlatpakUnreadable"));
-        assert!(send_qml.contains("function showFlatpakUnreadable()"));
-        assert!(send_qml.contains("sendFlatpakUnreadable"));
-        assert!(send_qml.contains("page.textNotice = msg"));
     }
 }

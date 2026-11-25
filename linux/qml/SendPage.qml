@@ -21,6 +21,10 @@ Page {
     // Opened when a launch handed this Flatpak window paths it cannot read (#357).
     property bool flatpakUnreadable: false
     property string fileNotice: ""
+    // Files handed over while a text is being written wait here until the text
+    // is sent or cleared, so nothing is silently lost (#357).
+    property var pendingFiles: []
+    property bool pendingFlatpakUnreadable: false
     // Opened by "Send clipboard": the text on the clipboard, filled in.
     property bool pasteOnOpen: false
     // What is sent: the files listed, or a text the receiver shows (#326).
@@ -105,11 +109,25 @@ Page {
         page.bigText = ""
         page.pasted = ""
         textBox.clear()
+        Qt.callLater(page.drainPendingFiles)
+    }
+    function drainPendingFiles() {
+        if (page.phase !== "idle") return
+        if (page.pendingFiles.length === 0 && !page.pendingFlatpakUnreadable) return
+        if (page.textMode && (textBox.text !== "" || page.bigText !== "")) return
+        const queued = page.pendingFiles
+        const unreadable = page.pendingFlatpakUnreadable
+        page.pendingFiles = []
+        page.pendingFlatpakUnreadable = false
+        if (queued.length > 0) page.add(queued)
+        if (unreadable) page.showFlatpakUnreadable()
+        else Qt.callLater(() => (files.count > 0 ? createButton : addButton).forceActiveFocus())
     }
     function showFlatpakUnreadable() {
         const msg = Strings.s.sendFlatpakUnreadable || ""
         if (page.textMode && (textBox.text !== "" || page.bigText !== "")) {
             page.textNotice = msg
+            if (page.pendingFiles.length > 0) page.pendingFlatpakUnreadable = true
             Qt.callLater(() => textBox.forceActiveFocus())
             return
         }
@@ -153,10 +171,21 @@ Page {
     ListModel { id: files }
 
     function add(paths) {
-        // A text already typed is kept, as DropArea and pasteClipboard do.
-        if (page.textMode && (textBox.text !== "" || page.bigText !== "")) return
+        if (!paths || paths.length === 0) return
+        // Keep a text already typed, and queue the files until the text is
+        // sent or cleared so nothing handed over is silently lost (#357).
+        if (page.textMode && (textBox.text !== "" || page.bigText !== "")) {
+            const queued = page.pendingFiles.slice()
+            for (const p of paths) {
+                if (queued.length >= 1024) break
+                if (queued.indexOf(p) < 0) queued.push(p)
+            }
+            page.pendingFiles = queued
+            return
+        }
         // Files asked to be sent show the file list.
-        if (paths.length > 0) { page.mode = "files"; page.fileNotice = "" }
+        page.mode = "files"
+        page.fileNotice = ""
         for (const p of paths) {
             let known = false
             for (let i = 0; i < files.count; i++) if (files.get(i).path === p) known = true
@@ -574,8 +603,11 @@ Page {
             canRetry: page.phase === "failed" || textFailed
             onRetry: page.sendIt()
             onFinished: {
+                const hadPending = page.pendingFiles.length > 0 || page.pendingFlatpakUnreadable
                 page.transfer.reset(); files.clear(); page.recalc()
-                page.fileNotice = ""; page.clearText(); page.mode = "files"; page.close()
+                page.fileNotice = ""; page.mode = "files"; page.clearText()
+                if (hadPending) page.drainPendingFiles()
+                else page.close()
             }
         }
 
@@ -596,7 +628,10 @@ Page {
                     wrapMode: TextEdit.Wrap
                     selectByMouse: true
                     Accessible.name: Strings.s.sendText
-                    onTextChanged: page.textNotice = ""
+                    onTextChanged: {
+                        page.textNotice = ""
+                        if (textBox.text === "" && page.bigText === "") Qt.callLater(page.drainPendingFiles)
+                    }
                     // Ctrl+V pastes as the Paste button does.
                     Keys.onPressed: (e) => {
                         if (e.matches(StandardKey.Paste)) { page.pasteText(); e.accepted = true }

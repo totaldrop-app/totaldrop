@@ -116,6 +116,7 @@ QtObject {
         openFolder: "Open folder",
         back: "Back",
         codeSuggestions: "Suggestions",
+        sendFlatpakUnreadable: "This file cannot be read from the Flatpak. Choose it with Add files, or close this window and try again.",
         sendText: "Send text",
         sendTextHint: "Type or paste the text to send",
         sendTextDone: "The text arrived intact.",
