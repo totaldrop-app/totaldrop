@@ -160,12 +160,18 @@ test("passes when all EOL dates are strictly more than 60 days ahead", async () 
       const fetchImpl = mockJsonFetch({
         "https://endoflife.date/api/debian.json": () =>
           jsonResponse([
-            { cycle: "13", codename: "Trixie", eol: "2028-08-09", extendedSupport: "2030-06-30" },
+            {
+              cycle: "13",
+              codename: "Trixie",
+              support: "2028-08-09",
+              eol: "2030-06-30",
+              extendedSupport: "2035-06-30",
+            },
           ]),
         "https://endoflife.date/api/fedora.json": () =>
           jsonResponse([{ cycle: "44", eol: "2027-06-02" }]),
         "https://endoflife.date/api/nodejs.json": () =>
-          jsonResponse([{ cycle: "24", eol: "2028-04-30" }]),
+          jsonResponse([{ cycle: "24", support: "2026-10-20", eol: "2028-04-30" }]),
       });
 
       const report = await runCheck({
@@ -177,9 +183,17 @@ test("passes when all EOL dates are strictly more than 60 days ahead", async () 
       assert.equal(report.ok, true);
       assert.equal(report.failures.length, 0);
       assert.equal(report.results.length, 5);
+      const debian = report.results.find((r) => r.target.product === "debian");
+      assert.equal(debian.eol, "2028-08-09");
+      assert.ok(debian.message.includes("support 2028-08-09"));
       const fedora = report.results.find((r) => r.target.product === "fedora");
       assert.equal(fedora.daysRemaining, 195);
       assert.equal(fedora.status, "ok");
+      // Node 24 stays ok after its Active LTS `support` date (2026-10-20) has
+      // passed because Maintenance LTS security support runs until `eol`.
+      const nodejs = report.results.find((r) => r.target.product === "nodejs");
+      assert.equal(nodejs.status, "ok");
+      assert.equal(nodejs.eol, "2028-04-30");
     },
   );
 });
@@ -199,11 +213,11 @@ test("fails at 60-day boundary, 13-day Fedora #392 case, and already-expired -5 
   ];
   const releasesByProduct = new Map([
     // Exactly 60 days ahead of 2026-11-18 -> 2027-01-17: boundary must warn/fail.
-    ["debian", [{ cycle: "12", codename: "Bookworm", eol: "2027-01-17" }]],
+    ["debian", [{ cycle: "12", codename: "Bookworm", support: "2027-01-17", eol: "2028-06-30" }]],
     // 13 days ahead of 2026-11-18 -> 2026-12-01 (Fedora 43 in #392).
     ["fedora", [{ cycle: "43", eol: "2026-12-01" }]],
     // Expired 5 days ago -> 2026-11-13.
-    ["nodejs", [{ cycle: "20", eol: "2026-11-13" }]],
+    ["nodejs", [{ cycle: "20", support: "2024-10-22", eol: "2026-11-13" }]],
   ]);
 
   const report = evaluateTargets(targets, releasesByProduct, {
@@ -232,27 +246,39 @@ test("fails at 60-day boundary, 13-day Fedora #392 case, and already-expired -5 
   // Verify 61 days ahead passes.
   const passReport = evaluateTargets(
     [parseContainerImage("FROM debian:bookworm", "packaging/containers/debian.Dockerfile", 1)],
-    new Map([["debian", [{ cycle: "12", codename: "Bookworm", eol: "2027-01-18" }]]]),
+    new Map([
+      ["debian", [{ cycle: "12", codename: "Bookworm", support: "2027-01-18", eol: "2028-06-30" }]],
+    ]),
     { now: "2026-11-18", warnDays: 60 },
   );
   assert.equal(passReport.ok, true);
   assert.equal(passReport.results[0].daysRemaining, 61);
 
-  // Standard `eol` governs the warning even when Debian `extendedSupport` is years away.
-  const debianExtendedReport = evaluateTargets(
+  // Regular Debian `support` governs the warning even when LTS `eol` and ELTS
+  // `extendedSupport` are years away (matches live endoflife.date Debian 13).
+  const debianSupportReport = evaluateTargets(
     [parseContainerImage("FROM debian:trixie", "packaging/containers/debian.Dockerfile", 1)],
     new Map([
       [
         "debian",
-        [{ cycle: "13", codename: "Trixie", eol: "2028-08-09", extendedSupport: "2030-06-30" }],
+        [
+          {
+            cycle: "13",
+            codename: "Trixie",
+            support: "2028-08-09",
+            eol: "2030-06-30",
+            extendedSupport: "2035-06-30",
+          },
+        ],
       ],
     ]),
     { now: "2028-07-01", warnDays: 60 },
   );
-  assert.equal(debianExtendedReport.ok, false);
-  assert.equal(debianExtendedReport.failures.length, 1);
-  assert.equal(debianExtendedReport.failures[0].status, "warning");
-  assert.equal(debianExtendedReport.failures[0].daysRemaining, 39);
+  assert.equal(debianSupportReport.ok, false);
+  assert.equal(debianSupportReport.failures.length, 1);
+  assert.equal(debianSupportReport.failures[0].status, "warning");
+  assert.equal(debianSupportReport.failures[0].eol, "2028-08-09");
+  assert.equal(debianSupportReport.failures[0].daysRemaining, 39);
 });
 
 test("handles boolean eol: true (expired) and eol: false (supported without scheduled date)", () => {
@@ -262,7 +288,7 @@ test("handles boolean eol: true (expired) and eol: false (supported without sche
   ];
   const releasesByProduct = new Map([
     ["fedora", [{ cycle: "41", eol: true }]],
-    ["debian", [{ cycle: "14", codename: "Forky", eol: false }]],
+    ["debian", [{ cycle: "14", codename: "Forky", support: false, eol: false }]],
   ]);
 
   const report = evaluateTargets(targets, releasesByProduct, {

@@ -765,10 +765,16 @@ export function evaluateTargets(targets, releasesByProduct, options = {}) {
         : "";
     const subject = `${sanitizeForLog(target.product)} ${cycleTag}${codenameNote} [${safeSource}]`;
 
-    // Check standard `eol` intentionally rather than `extendedSupport` (e.g.
-    // Debian paid/extended ELTS) so upgrades are planned before regular
-    // distribution support ends.
-    if (match.eol === false) {
+    // For Debian, endoflife.date splits regular Security Team support into
+    // `support`, Debian LTS into `eol`, and ELTS into `extendedSupport`. Plan
+    // Debian upgrades before regular `support` ends, while keeping `eol` for
+    // Fedora (no `support` field) and Node.js (where `support` only marks the
+    // Active-to-Maintenance LTS transition and security fixes run until `eol`).
+    const usesSupportField = target.product === "debian" && match.support !== undefined;
+    const fieldName = usesSupportField ? "support" : "eol";
+    const cutoff = usesSupportField ? match.support : match.eol;
+
+    if (cutoff === false) {
       results.push({
         target,
         status: "ok",
@@ -779,35 +785,35 @@ export function evaluateTargets(targets, releasesByProduct, options = {}) {
       continue;
     }
 
-    if (match.eol === true) {
+    if (cutoff === true) {
       const item = {
         target,
         status: "expired",
         eol: true,
         daysRemaining: null,
-        message: `${subject}: already end of life (eol: true)`,
+        message: `${subject}: already end of life (${fieldName}: true)`,
       };
       results.push(item);
       failures.push(item);
       continue;
     }
 
-    if (typeof match.eol !== "string") {
+    if (typeof cutoff !== "string") {
       throw new EolCheckError(
         "INVALID_EOL_FIELD",
-        `${subject}: unexpected "eol" field "${sanitizeForLog(match.eol, 64)}"`,
+        `${subject}: unexpected "${fieldName}" field "${sanitizeForLog(cutoff, 64)}"`,
       );
     }
 
-    const eolEpochDay = parseUtcDate(match.eol, "INVALID_EOL_FIELD", `${subject} eol`);
-    const safeEol = sanitizeForLog(match.eol, 32);
+    const eolEpochDay = parseUtcDate(cutoff, "INVALID_EOL_FIELD", `${subject} ${fieldName}`);
+    const safeEol = sanitizeForLog(cutoff, 32);
     const daysRemaining = eolEpochDay - nowEpochDay;
 
     if (daysRemaining < 0) {
       const item = {
         target,
         status: "expired",
-        eol: match.eol,
+        eol: cutoff,
         daysRemaining,
         message: `${subject}: reached end of life ${daysLabel(daysRemaining)} ago on ${safeEol}`,
       };
@@ -817,7 +823,7 @@ export function evaluateTargets(targets, releasesByProduct, options = {}) {
       const item = {
         target,
         status: "warning",
-        eol: match.eol,
+        eol: cutoff,
         daysRemaining,
         message: `${subject}: reaches end of life in ${daysLabel(daysRemaining)} on ${safeEol} (warning threshold: ${warnDays} days)`,
       };
@@ -827,9 +833,9 @@ export function evaluateTargets(targets, releasesByProduct, options = {}) {
       results.push({
         target,
         status: "ok",
-        eol: match.eol,
+        eol: cutoff,
         daysRemaining,
-        message: `${subject}: eol ${safeEol} (${daysLabel(daysRemaining)} remaining)`,
+        message: `${subject}: ${fieldName} ${safeEol} (${daysLabel(daysRemaining)} remaining)`,
       });
     }
   }
