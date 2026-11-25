@@ -10,8 +10,6 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
-#include <stdint.h>
-#include <stdlib.h>
 #include <string>
 #include <unordered_map>
 #include <wayland-util.h>
@@ -20,7 +18,6 @@
 #include <QtCore/QMetaObject>
 #include <QtCore/QObject>
 #include <QtCore/QThread>
-#include <QtCore/QVersionNumber>
 #include <QtCore/QtGlobal>
 #include <QtGui/QGuiApplication>
 #include <QtGui/QWindow>
@@ -35,12 +32,8 @@
 #define TOTALDROP_HAS_QT_WAYLAND_NATIVE 0
 #endif
 
-#if TOTALDROP_HAS_QT_WAYLAND_NATIVE && QT_VERSION < QT_VERSION_CHECK(6, 9, 0) \
-    && __has_include(<qpa/qplatformnativeinterface.h>)
+#if TOTALDROP_HAS_QT_WAYLAND_NATIVE
 #include <qpa/qplatformnativeinterface.h>
-#define TOTALDROP_HAS_QPA_NATIVE_INTERFACE 1
-#else
-#define TOTALDROP_HAS_QPA_NATIVE_INTERFACE 0
 #endif
 
 extern "C" {
@@ -332,19 +325,18 @@ struct wl_surface *wayland_surface_for(QWindow *window)
 {
     if (!window)
         return nullptr;
-    // Qt 6.9+ returns reinterpret_cast<WId>(wlSurface()) from
-    // QWaylandWindow::winId(), requiring no private Qt headers or QPA vtable.
-    if (QVersionNumber::fromString(QString::fromLatin1(qVersion())) >= QVersionNumber(6, 9, 0))
-        return reinterpret_cast<struct wl_surface *>(window->winId());
-#if TOTALDROP_HAS_QPA_NATIVE_INTERFACE
-    // Qt 6.5..6.8: QWaylandWindow::winId() returned a sequential integer, so
-    // query the QPA native interface via virtual dispatch (reachable only when
-    // runtime Qt is < 6.9).
+    // Query QPlatformNativeInterface::nativeResourceForWindow("surface") on
+    // every Qt 6.5+ version rather than assuming QWaylandWindow::winId()
+    // returns a wl_surface*. Checking QPlatformNativeInterface::staticMetaObject
+    // also records an explicit Qt_6_PRIVATE_API ELF reference so dpkg-shlibdeps
+    // (Debian qt6-base-private-abi) and RPM find-requires automatically pin the
+    // Qt private ABI across upgrades.
     if (QPlatformNativeInterface *pni = QGuiApplication::platformNativeInterface()) {
-        if (void *surface = pni->nativeResourceForWindow(QByteArrayLiteral("surface"), window))
-            return static_cast<struct wl_surface *>(surface);
+        if (QPlatformNativeInterface::staticMetaObject.cast(pni)) {
+            if (void *surface = pni->nativeResourceForWindow(QByteArrayLiteral("surface"), window))
+                return static_cast<struct wl_surface *>(surface);
+        }
     }
-#endif
     return nullptr;
 }
 #endif

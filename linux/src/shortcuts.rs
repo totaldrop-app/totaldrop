@@ -46,6 +46,11 @@ const SETUP_TIMEOUT: Duration = Duration::from_secs(5);
 /// Bounded wait when closing a half-initialized portal session after timeout.
 const CLOSE_TIMEOUT: Duration = Duration::from_secs(2);
 
+/// Maximum time a Wayland xdg-foreign parent handle stays exported after a
+/// non-blocking `ConfigureShortcuts` call if `ShortcutsChanged` never arrives
+/// (for example when the user closes the portal dialog without saving) (#631).
+const CONFIGURE_PARENT_TTL: Duration = Duration::from_secs(120);
+
 /// Initial delay before recreating a `GlobalShortcuts` session after `Closed`.
 const RECONNECT_INITIAL_BACKOFF: Duration = Duration::from_secs(1);
 
@@ -429,6 +434,7 @@ enum SessionEnd {
     Closed,
 }
 
+#[allow(clippy::too_many_arguments)]
 async fn run_session(
     conn: &zbus::Connection,
     hyprland: bool,
@@ -436,6 +442,7 @@ async fn run_session(
     last_state: &mut Option<(bool, String)>,
     rx: &mut tokio::sync::mpsc::Receiver<Configure>,
     configuring: &AtomicBool,
+    configure_parent_ttl: Duration,
     setup: PortalSetup,
 ) -> SessionEnd {
     let portal = setup.portal;
@@ -460,14 +467,19 @@ async fn run_session(
     let mut is_supported = supported(portal.version(), hyprland, &trigger, true);
     // `ConfigureShortcuts` is a non-blocking D-Bus call that returns before the
     // desktop's shortcut dialog finishes importing the Wayland xdg-foreign
-    // handle; retain the active handle until the next configure call or session
-    // end so the dialog stays parented above TotalDrop (#631).
+    // handle; retain the active handle until `ShortcutsChanged`, a newer
+    // configure call, `configure_parent_ttl`, or session end (#631).
     let mut active_configure_parent: Option<ParentWindow> = None;
+    let configure_parent_expiry = tokio::time::sleep(Duration::ZERO);
+    tokio::pin!(configure_parent_expiry);
 
     emit_state(callbacks, last_state, is_supported, trigger.clone());
 
     loop {
         tokio::select! {
+            () = &mut configure_parent_expiry, if active_configure_parent.is_some() => {
+                let _expired = active_configure_parent.take();
+            }
             ev = activated.next() => {
                 let Some(ev) = ev else {
                     close_session_bounded(session).await;
@@ -487,6 +499,7 @@ async fn run_session(
                 if !session_matches(Some(&session_path), ev.session_handle().as_str()) {
                     continue;
                 }
+                let _released = active_configure_parent.take();
                 let found = trigger_from_portal(ev.shortcuts());
                 bound = found.is_some();
                 let next_trigger = found.unwrap_or_default();
@@ -557,7 +570,12 @@ async fn run_session(
                                 .await
                                 {
                                     let _previous = match (parent.is_some(), req.parent.take()) {
-                                        (true, Some(kept)) => active_configure_parent.replace(kept),
+                                        (true, Some(kept)) => {
+                                            configure_parent_expiry.as_mut().reset(
+                                                tokio::time::Instant::now() + configure_parent_ttl,
+                                            );
+                                            active_configure_parent.replace(kept)
+                                        }
                                         _ => active_configure_parent.take(),
                                     };
                                 }
@@ -584,7 +602,12 @@ async fn run_session(
                         .await
                     {
                         let _previous = match (parent.is_some(), req.parent.take()) {
-                            (true, Some(kept)) => active_configure_parent.replace(kept),
+                            (true, Some(kept)) => {
+                                configure_parent_expiry.as_mut().reset(
+                                    tokio::time::Instant::now() + configure_parent_ttl,
+                                );
+                                active_configure_parent.replace(kept)
+                            }
                             _ => active_configure_parent.take(),
                         };
                     }
@@ -733,11 +756,39 @@ async fn run_on_with_timeouts(
     register_host: bool,
     hyprland: bool,
     callbacks: Callbacks,
+    rx: tokio::sync::mpsc::Receiver<Configure>,
+    configuring: Arc<AtomicBool>,
+    setup_timeout: Duration,
+    initial_backoff: Duration,
+    max_backoff: Duration,
+) {
+    run_on_with_parent_ttl(
+        conn,
+        register_host,
+        hyprland,
+        callbacks,
+        rx,
+        configuring,
+        setup_timeout,
+        initial_backoff,
+        max_backoff,
+        CONFIGURE_PARENT_TTL,
+    )
+    .await;
+}
+
+#[allow(clippy::too_many_arguments)]
+async fn run_on_with_parent_ttl(
+    conn: zbus::Connection,
+    register_host: bool,
+    hyprland: bool,
+    callbacks: Callbacks,
     mut rx: tokio::sync::mpsc::Receiver<Configure>,
     configuring: Arc<AtomicBool>,
     setup_timeout: Duration,
     initial_backoff: Duration,
     max_backoff: Duration,
+    configure_parent_ttl: Duration,
 ) {
     let mut last_state: Option<(bool, String)> = None;
     let initial_deadline = tokio::time::Instant::now() + setup_timeout;
@@ -764,6 +815,7 @@ async fn run_on_with_timeouts(
             &mut last_state,
             &mut rx,
             &configuring,
+            configure_parent_ttl,
             setup,
         )
         .await
@@ -1019,6 +1071,7 @@ mod tests {
         list_shortcuts_delay: Option<Duration>,
         bind_outcome: MockBindOutcome,
         bound_trigger_on_configure: String,
+        suppress_changed_on_configure: bool,
         clear_shortcuts_on_create_session: bool,
     }
 
@@ -1264,7 +1317,7 @@ mod tests {
             options: HashMap<String, zbus::OwnedVariant>,
         ) {
             let sender = hdr.sender().unwrap().as_str().to_owned();
-            let updated = {
+            let (updated, suppress_changed) = {
                 let mut st = self.state.lock().unwrap();
                 st.configure_calls += 1;
                 st.last_configure_parent = parent_window;
@@ -1276,8 +1329,11 @@ mod tests {
                 for (_, t) in &mut st.shortcuts {
                     *t = trig.clone();
                 }
-                st.shortcuts.clone()
+                (st.shortcuts.clone(), st.suppress_changed_on_configure)
             };
+            if suppress_changed {
+                return;
+            }
             let encoded: Vec<(String, HashMap<&str, Variant<'_>>)> = updated
                 .iter()
                 .map(|(id, trig)| {
@@ -2435,6 +2491,7 @@ mod tests {
         let server = bus.connect().await;
         let state = Arc::new(Mutex::new(MockState {
             bound_trigger_on_configure: "Meta+Shift+V".to_owned(),
+            suppress_changed_on_configure: true,
             ..Default::default()
         }));
         server
@@ -2765,6 +2822,189 @@ mod tests {
 
         drop(handle);
         tokio::time::timeout(Duration::from_secs(2), task)
+            .await
+            .expect("portal task must exit when Handle drops")
+            .unwrap();
+    }
+
+    #[tokio::test]
+    async fn portal_v2_wayland_parent_unexports_on_shortcuts_changed_and_ttl_expiry() {
+        let Some(bus) = PrivateBus::start() else {
+            skip_without_dbus("dbus-daemon unavailable");
+            return;
+        };
+        let server = bus.connect().await;
+        let state = Arc::new(Mutex::new(MockState {
+            shortcuts: vec![(SEND_CLIPBOARD_ID.to_owned(), "Alt+V".to_owned())],
+            bound_trigger_on_configure: "Alt+V".to_owned(),
+            suppress_changed_on_configure: true,
+            ..Default::default()
+        }));
+        server
+            .object_server()
+            .at(
+                "/org/freedesktop/portal/desktop",
+                MockPortal {
+                    conn: server.clone(),
+                    version: 2,
+                    state: Arc::clone(&state),
+                },
+            )
+            .await
+            .unwrap();
+        server
+            .request_name("org.freedesktop.portal.Desktop")
+            .await
+            .unwrap();
+
+        let client = bus.connect().await;
+        let client_name = client.unique_name().unwrap().as_str().to_owned();
+        let (state_tx, mut state_rx) = tokio::sync::mpsc::unbounded_channel();
+        let (cmd_tx, cmd_rx) = tokio::sync::mpsc::channel(1);
+        let configuring = Arc::new(AtomicBool::new(false));
+        let inner = Arc::new(HandleInner {
+            tx: cmd_tx,
+            configuring: Arc::clone(&configuring),
+        });
+        let handle = Handle {
+            inner: Some(Arc::clone(&inner)),
+        };
+
+        let task = tokio::spawn(run_on_with_parent_ttl(
+            client,
+            false,
+            false,
+            Callbacks {
+                state: Box::new(move |sup, trig| {
+                    let _ = state_tx.send((sup, trig));
+                }),
+                activated: Box::new(|_| {}),
+            },
+            cmd_rx,
+            configuring,
+            SETUP_TIMEOUT,
+            RECONNECT_INITIAL_BACKOFF,
+            RECONNECT_MAX_BACKOFF,
+            Duration::from_secs(60),
+        ));
+
+        let initial = tokio::time::timeout(Duration::from_secs(3), state_rx.recv())
+            .await
+            .unwrap()
+            .unwrap();
+        assert_eq!(initial, (true, "Alt+V".to_owned()));
+
+        // 1. ShortcutsChanged releases the retained Wayland parent export immediately.
+        let (unexport_tx, mut unexport_rx) = tokio::sync::oneshot::channel();
+        let unexport_slot = Mutex::new(Some(unexport_tx));
+        handle.configure(
+            "Send clipboard".to_owned(),
+            Some("tok-changed".to_owned()),
+            Some(ParentWindow::Wayland {
+                handle: "wl-handle-changed".to_owned(),
+                unexport: Some(Box::new(move || {
+                    if let Some(tx) = unexport_slot.lock().unwrap().take() {
+                        let _ = tx.send(());
+                    }
+                })),
+            }),
+        );
+        wait_until_idle(&inner).await;
+        assert!(
+            unexport_rx.try_recv().is_err(),
+            "handle must stay exported until ShortcutsChanged arrives"
+        );
+
+        let sess_path = ObjectPath::try_from(state.lock().unwrap().session_path.clone()).unwrap();
+        let mut meta = HashMap::new();
+        meta.insert("description", Variant::from("Send clipboard"));
+        meta.insert("trigger_description", Variant::from("Super+V"));
+        server
+            .emit_signal(
+                Some(client_name.as_str()),
+                "/org/freedesktop/portal/desktop",
+                "org.freedesktop.portal.GlobalShortcuts",
+                "ShortcutsChanged",
+                &(&sess_path, vec![(SEND_CLIPBOARD_ID.to_owned(), meta)]),
+            )
+            .await
+            .unwrap();
+
+        tokio::time::timeout(Duration::from_secs(3), unexport_rx)
+            .await
+            .expect("ShortcutsChanged must release the retained Wayland parent export")
+            .unwrap();
+        let updated = tokio::time::timeout(Duration::from_secs(3), state_rx.recv())
+            .await
+            .unwrap()
+            .unwrap();
+        assert_eq!(updated, (true, "Super+V".to_owned()));
+
+        drop(inner);
+        drop(handle);
+        tokio::time::timeout(Duration::from_secs(2), task)
+            .await
+            .expect("portal task must exit when Handle drops")
+            .unwrap();
+
+        // 2. When ShortcutsChanged never arrives (e.g. cancelled dialog), TTL expiry
+        //    automatically releases the Wayland parent export.
+        let client2 = bus.connect().await;
+        let (state_tx2, mut state_rx2) = tokio::sync::mpsc::unbounded_channel();
+        let (cmd_tx2, cmd_rx2) = tokio::sync::mpsc::channel(1);
+        let configuring2 = Arc::new(AtomicBool::new(false));
+        let handle2 = Handle {
+            inner: Some(Arc::new(HandleInner {
+                tx: cmd_tx2,
+                configuring: Arc::clone(&configuring2),
+            })),
+        };
+        let task2 = tokio::spawn(run_on_with_parent_ttl(
+            client2,
+            false,
+            false,
+            Callbacks {
+                state: Box::new(move |sup, trig| {
+                    let _ = state_tx2.send((sup, trig));
+                }),
+                activated: Box::new(|_| {}),
+            },
+            cmd_rx2,
+            configuring2,
+            SETUP_TIMEOUT,
+            RECONNECT_INITIAL_BACKOFF,
+            RECONNECT_MAX_BACKOFF,
+            Duration::from_millis(50),
+        ));
+
+        let initial2 = tokio::time::timeout(Duration::from_secs(3), state_rx2.recv())
+            .await
+            .unwrap()
+            .unwrap();
+        assert_eq!(initial2, (true, "Alt+V".to_owned()));
+
+        let (ttl_tx, ttl_rx) = tokio::sync::oneshot::channel();
+        let ttl_slot = Mutex::new(Some(ttl_tx));
+        handle2.configure(
+            "Send clipboard".to_owned(),
+            Some("tok-ttl".to_owned()),
+            Some(ParentWindow::Wayland {
+                handle: "wl-handle-ttl".to_owned(),
+                unexport: Some(Box::new(move || {
+                    if let Some(tx) = ttl_slot.lock().unwrap().take() {
+                        let _ = tx.send(());
+                    }
+                })),
+            }),
+        );
+
+        tokio::time::timeout(Duration::from_secs(3), ttl_rx)
+            .await
+            .expect("TTL expiry must unexport retained Wayland parent handle")
+            .unwrap();
+
+        drop(handle2);
+        tokio::time::timeout(Duration::from_secs(2), task2)
             .await
             .expect("portal task must exit when Handle drops")
             .unwrap();

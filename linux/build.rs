@@ -61,41 +61,108 @@ fn run_wayland_scanner(
     Ok(())
 }
 
-fn qmake_query(var: &str) -> Option<String> {
-    let qmake = env::var_os("QMAKE").unwrap_or_else(|| "qmake".into());
-    let out = Command::new(qmake).args(["-query", var]).output().ok()?;
+fn pkg_config_libs(pkg: &str) -> Result<Vec<String>, Box<dyn Error>> {
+    let out = Command::new("pkg-config")
+        .args(["--libs", pkg])
+        .output()
+        .map_err(|e| format!("failed to run pkg-config --libs {pkg}: {e}"))?;
     if !out.status.success() {
-        return None;
+        let stderr = String::from_utf8_lossy(&out.stderr);
+        return Err(format!(
+            "pkg-config --libs {pkg} failed ({}): {}",
+            out.status,
+            stderr.trim()
+        )
+        .into());
     }
-    let val = String::from_utf8(out.stdout).ok()?;
-    let trimmed = val.trim();
-    (!trimmed.is_empty()).then(|| trimmed.to_owned())
+    let flags = String::from_utf8(out.stdout)
+        .map_err(|e| format!("pkg-config --libs {pkg} returned non-UTF-8 output: {e}"))?;
+    Ok(flags.split_whitespace().map(str::to_owned).collect())
 }
 
-/// Returns the QtGui private-headers include directory ONLY on Qt 6.5..6.8
-/// where `QWaylandWindow::winId()` did not yet return `wl_surface*` (#631).
-/// Qt 6.9+ uses public `QWindow::winId()` with zero private headers.
-fn qt68_qpa_include_dir() -> Option<PathBuf> {
-    let version = qmake_query("QT_VERSION")?;
-    let mut parts = version.split('.');
-    let major: u32 = parts.next()?.parse().ok()?;
-    let minor: u32 = parts.next()?.parse().ok()?;
-    if major != 6 || !(5..9).contains(&minor) {
-        return None;
+fn wayland_scanner_program() -> std::ffi::OsString {
+    if let Some(env_scanner) = env::var_os("WAYLAND_SCANNER")
+        && !env_scanner.is_empty()
+    {
+        return env_scanner;
     }
-    let headers = PathBuf::from(qmake_query("QT_INSTALL_HEADERS")?);
+    if let Some(pc_scanner) = pkg_config_var("wayland-scanner", "wayland_scanner") {
+        return pc_scanner.into();
+    }
+    "wayland-scanner".into()
+}
+
+fn qmake_query(var: &str) -> Option<String> {
+    let candidates: Vec<std::ffi::OsString> = match env::var_os("QMAKE") {
+        Some(v) if !v.is_empty() => vec![v],
+        _ => vec!["qmake6".into(), "qmake".into()],
+    };
+    for qmake in candidates {
+        let Ok(out) = Command::new(qmake).args(["-query", var]).output() else {
+            continue;
+        };
+        if !out.status.success() {
+            continue;
+        }
+        let Ok(val) = String::from_utf8(out.stdout) else {
+            continue;
+        };
+        let trimmed = val.trim();
+        if !trimmed.is_empty() {
+            return Some(trimmed.to_owned());
+        }
+    }
+    None
+}
+
+/// Returns the QtGui private-headers include directory for Qt 6.5+ so
+/// `wayland_parent.cpp` always resolves `QPlatformNativeInterface` across
+/// every supported Qt 6 version (#631). Fails the build loudly if private
+/// headers are missing on Qt 6.5+ instead of silently disabling parenting.
+fn qt6_qpa_include_dir() -> Result<Option<PathBuf>, Box<dyn Error>> {
+    let Some(version) = qmake_query("QT_VERSION") else {
+        return Err(
+            "failed to query QT_VERSION via QMAKE/qmake6/qmake (install Qt 6 dev tools)".into(),
+        );
+    };
+    let mut parts = version.split('.');
+    let major: u32 = parts
+        .next()
+        .and_then(|s| s.parse().ok())
+        .ok_or_else(|| format!("unexpected QT_VERSION format: {version}"))?;
+    let minor: u32 = parts
+        .next()
+        .and_then(|s| s.parse().ok())
+        .ok_or_else(|| format!("unexpected QT_VERSION format: {version}"))?;
+    if major != 6 || minor < 5 {
+        return Ok(None);
+    }
+    let headers = PathBuf::from(
+        qmake_query("QT_INSTALL_HEADERS")
+            .ok_or("failed to query QT_INSTALL_HEADERS via QMAKE/qmake6/qmake")?,
+    );
     let qpa_root = headers.join("QtGui").join(&version).join("QtGui");
-    qpa_root
+    if qpa_root
         .join("qpa")
         .join("qplatformnativeinterface.h")
         .is_file()
-        .then_some(qpa_root)
+    {
+        Ok(Some(qpa_root))
+    } else {
+        Err(format!(
+            "Qt {version} private Gui headers not found at {} \
+             (install qt6-base-private-dev on Debian/Ubuntu or qt6-qtbase-private-devel on Fedora)",
+            qpa_root.display()
+        )
+        .into())
+    }
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
     println!("cargo::rerun-if-env-changed=QMAKE");
     println!("cargo::rerun-if-env-changed=WAYLAND_SCANNER");
     println!("cargo::rerun-if-env-changed=PKG_CONFIG_PATH");
+    println!("cargo::rerun-if-env-changed=PKG_CONFIG_LIBDIR");
     println!("cargo::rerun-if-changed=src/bridge/wayland_parent.h");
 
     let out_dir = PathBuf::from(env::var_os("OUT_DIR").ok_or("OUT_DIR not set")?);
@@ -103,7 +170,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     fs::create_dir_all(&wl_dir)?;
 
     let protocols_dir = wayland_protocols_dir()?;
-    let scanner = env::var_os("WAYLAND_SCANNER").unwrap_or_else(|| "wayland-scanner".into());
+    let scanner = wayland_scanner_program();
+    let wayland_libs = pkg_config_libs("wayland-client")?;
+    let qpa_dir = qt6_qpa_include_dir()?;
 
     let foreign_xml = protocols_dir
         .join("unstable")
@@ -166,11 +235,21 @@ fn main() -> Result<(), Box<dyn Error>> {
             "src/bridge/theme.rs",
             "src/bridge/transfer.rs",
         ]);
-    if let Some(qpa_dir) = qt68_qpa_include_dir() {
+    if let Some(qpa_dir) = qpa_dir {
         builder = builder.include_dir(qpa_dir);
     }
     builder.build();
-    println!("cargo::rustc-link-lib=wayland-client");
+    for flag in wayland_libs {
+        if let Some(dir) = flag.strip_prefix("-L")
+            && !dir.is_empty()
+        {
+            println!("cargo::rustc-link-search=native={dir}");
+        } else if let Some(lib) = flag.strip_prefix("-l")
+            && !lib.is_empty()
+        {
+            println!("cargo::rustc-link-lib={lib}");
+        }
+    }
 
     Ok(())
 }
