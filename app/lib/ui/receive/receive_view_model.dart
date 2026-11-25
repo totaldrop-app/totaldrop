@@ -280,15 +280,16 @@ class ReceiveViewModel extends ChangeNotifier {
   }
 
   /// Back to code entry after a failure: keeps what was typed when the
-  /// failure did not spend a one-time code, so a transient error or a
-  /// typo can be retried or fixed without retyping (#591).
+  /// failure did not spend a one-time code, so a transient server error before
+  /// an offer arrives or a typo can be retried or fixed without retyping (#591).
+  /// `ErrorKind.connect` happens only after the mailbox is claimed and PAKE
+  /// starts, so its code is already spent and cleared.
   void retry() {
     final keepCode = switch (error?.kind) {
       ErrorKind.invalidCode ||
       ErrorKind.codeNotInUse ||
-      ErrorKind.badServer ||
-      ErrorKind.server ||
-      ErrorKind.connect => true,
+      ErrorKind.badServer => true,
+      ErrorKind.server => offer == null,
       _ => false,
     };
     final saved = keepCode ? input : '';

@@ -266,6 +266,56 @@ void main() {
       });
 
       testWidgets(
+        'confirming Stop after transfer finishes keeps the Done screen',
+        (tester) async {
+          final repo = FakeRepository();
+          final vm = ReceiveViewModel(repository: repo)
+            ..setInput('7-harbor-rocket');
+
+          await tester.pumpWidget(_wrap(ReceiveView(viewModel: vm)));
+          final l = await AppLocalizations.delegate.load(const Locale('en'));
+
+          unawaited(vm.connect());
+          repo.connected.complete(FakeOffer());
+          await _settle(tester);
+          await vm.accept();
+          await _settle(tester);
+          expect(vm.stage, ReceiveStage.transferring);
+
+          await _scrollAndTap(
+            tester,
+            find.widgetWithText(OutlinedButton, l.stop),
+          );
+          expect(find.text(l.cancelTransferTitle), findsOneWidget);
+
+          // Transfer finishes while the confirmation dialog is open.
+          repo.events.add(
+            const TransferEvent(
+              kind: EventKind.finished,
+              words: [],
+              done: 100,
+              total: 100,
+              summary: TransferSummary(
+                filesOk: 1,
+                filesFailed: 0,
+                bytes: 100,
+                saved: ['/tmp/doc.pdf'],
+              ),
+              error: null,
+            ),
+          );
+          await _settle(tester);
+          expect(vm.stage, ReceiveStage.done);
+
+          // Tapping Stop must not wipe the finished result screen.
+          await tester.tap(find.widgetWithText(FilledButton, l.stop));
+          await _settle(tester);
+          expect(vm.stage, ReceiveStage.done);
+          expect(find.text(l.receiveDone), findsOneWidget);
+        },
+      );
+
+      testWidgets(
         'Try again keeps unspent Receive code and clears spent Receive code',
         (tester) async {
           final l = await AppLocalizations.delegate.load(const Locale('en'));
@@ -275,7 +325,6 @@ void main() {
             ErrorKind.codeNotInUse,
             ErrorKind.badServer,
             ErrorKind.server,
-            ErrorKind.connect,
           ]) {
             final repo = FakeRepository();
             final vm = ReceiveViewModel(repository: repo)
@@ -301,6 +350,7 @@ void main() {
           }
 
           for (final spent in const [
+            ErrorKind.connect,
             ErrorKind.wrongCode,
             ErrorKind.codeExpired,
             ErrorKind.peerLeft,

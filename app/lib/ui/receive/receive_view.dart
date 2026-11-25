@@ -100,7 +100,7 @@ class _ReceiveViewState extends State<ReceiveView> {
               if (context.mounted) Navigator.pop(context);
               return;
             }
-            if (await _confirmStop(context)) {
+            if (await _confirmStop(context) && vm.busy) {
               vm.reset();
               if (context.mounted) Navigator.pop(context);
             }
@@ -153,7 +153,10 @@ class _ReceiveViewState extends State<ReceiveView> {
                     ReceiveStage.transferring => _Transferring(
                       vm: vm,
                       onStop: () async {
-                        if (await _confirmStop(context)) vm.reset();
+                        if (await _confirmStop(context) &&
+                            vm.stage == ReceiveStage.transferring) {
+                          vm.reset();
+                        }
                       },
                     ),
                     ReceiveStage.done => _Done(vm: vm),
