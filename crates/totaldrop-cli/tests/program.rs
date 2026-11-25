@@ -492,4 +492,76 @@ mod unix_signals {
             "expected both PCP release copies before exit, saw {seen:?}"
         );
     }
+
+    /// Under `nohup` (`SIG_IGN` inherited for `SIGHUP`), Linux keeps ignoring
+    /// `SIGHUP` so `totaldrop send` stays alive and finishes the transfer
+    /// instead of exiting with 129 (#527).
+    #[cfg(target_os = "linux")]
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+    async fn ignored_sighup_keeps_send_running_and_completes_transfer() {
+        let server = server().await;
+        let src = Scratch::new("sig-nohup-src");
+        let file = src.join("payload.bin");
+        let payload = vec![7u8; 32_768];
+        std::fs::write(&file, &payload).unwrap();
+
+        let mut sender = Command::new("sh")
+            .args([
+                "-c",
+                "trap '' HUP; exec \"$@\"",
+                "_",
+                env!("CARGO_BIN_EXE_totaldrop"),
+                "--server",
+                &server,
+                "send",
+            ])
+            .arg(&file)
+            .env("LC_ALL", "C")
+            .env("LANGUAGE", "en")
+            .env("TOTALDROP_TEST_GATEWAY", "")
+            .stdin(Stdio::null())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+            .unwrap();
+        let pid = sender.id();
+        let mut stdout = BufReader::new(sender.stdout.take().unwrap());
+        let mut line = String::new();
+        stdout.read_line(&mut line).unwrap();
+        let Some(code) = line.trim().strip_prefix("totaldrop receive ") else {
+            let out = sender.wait_with_output().unwrap();
+            panic!("no receive line on stdout: {line:?}\n{}", stderr(&out));
+        };
+        let code = code.to_owned();
+
+        let offer = IncomingOffer::connect(
+            &ReceiveOptions {
+                server: server.clone(),
+                paths: local_paths(),
+            },
+            &code,
+        )
+        .await
+        .unwrap();
+
+        // Deliver SIGHUP after signal handlers are installed and peer connected.
+        send_signal(pid, "HUP");
+
+        let dest = Scratch::new("sig-nohup-dest");
+        let recv_res = offer.accept(&dest, Arc::new(|_| {})).await;
+        let sent = finish(sender).await;
+
+        assert!(
+            recv_res.is_ok(),
+            "ignored SIGHUP must not cancel transfer, got: {recv_res:?}\nstderr: {}",
+            stderr(&sent)
+        );
+        assert!(
+            sent.status.success(),
+            "expected exit 0 with ignored SIGHUP, got {}:\n{}",
+            sent.status,
+            stderr(&sent)
+        );
+        assert_eq!(std::fs::read(dest.join("payload.bin")).unwrap(), payload);
+    }
 }
