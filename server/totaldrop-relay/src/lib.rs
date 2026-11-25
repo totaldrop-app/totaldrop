@@ -80,16 +80,11 @@ type Pair = ([u8; 32], [u8; 32]);
 /// not stay in memory after their sockets close.
 type Tag = [u8; 32];
 
-fn hmac_key() -> ring::hmac::Key {
+fn hmac_key() -> std::io::Result<ring::hmac::Key> {
     let mut secret = [0u8; 32];
-    if getrandom::fill(&mut secret).is_err() {
-        use std::hash::{BuildHasher, RandomState};
-        for chunk in secret.as_chunks_mut::<8>().0 {
-            let h = RandomState::new().hash_one(0u8);
-            *chunk = h.to_le_bytes();
-        }
-    }
-    ring::hmac::Key::new(ring::hmac::HMAC_SHA256, &secret)
+    getrandom::fill(&mut secret)
+        .map_err(|e| std::io::Error::other(format!("OS randomness unavailable: {e}")))?;
+    Ok(ring::hmac::Key::new(ring::hmac::HMAC_SHA256, &secret))
 }
 
 fn pair_tag(secret: &ring::hmac::Key, pair: &Pair) -> Tag {
@@ -247,6 +242,11 @@ impl State {
                 }
             }
         }
+        if self.order.len() > max_pairs.saturating_mul(2).max(64) {
+            let pairs = &self.pairs;
+            self.order
+                .retain(|&(pt, g, _, _)| pairs.get(&pt).is_some_and(|r| r.generation == g));
+        }
     }
 }
 
@@ -263,17 +263,18 @@ pub struct Relay {
 }
 
 impl Relay {
-    /// A relay with the given limits.
-    pub fn new(config: Config) -> Self {
-        Self {
+    /// A relay with the given limits. Fails closed if OS randomness for the
+    /// per-process HMAC key is unavailable.
+    pub fn new(config: Config) -> std::io::Result<Self> {
+        Ok(Self {
             state: Arc::default(),
-            secret: Arc::new(hmac_key()),
+            secret: Arc::new(hmac_key()?),
             next: Arc::default(),
             accepted: Arc::default(),
             forwarded: Arc::default(),
             slots: Arc::new(Semaphore::new(config.max_clients)),
             config: Arc::new(config),
-        }
+        })
     }
 
     /// Devices signed in right now, for tests and health checks.
@@ -452,26 +453,30 @@ impl Relay {
                 }
                 (rec.generation, rec.started)
             } else {
+                // Refuse sign-in when no pair record can be created so live
+                // load can never bypass per-pair reconnect limits (#190).
+                if self.config.max_pairs == 0 {
+                    return;
+                }
+                state.make_room(self.config.max_pairs);
+                if state.pairs.len() >= self.config.max_pairs {
+                    return;
+                }
                 let generation = state.next_gen;
                 state.next_gen = state.next_gen.wrapping_add(1);
-                if self.config.max_pairs > 0 {
-                    state.make_room(self.config.max_pairs);
-                    if state.pairs.len() < self.config.max_pairs {
-                        state.pairs.insert(
-                            ptag,
-                            PairRecord {
-                                generation,
-                                started: now,
-                                keys: ktags,
-                                sent: (0, 0),
-                                over: false,
-                                live: 0,
-                                inactive_stamp: 0,
-                            },
-                        );
-                        state.order.push_back((ptag, generation, now, ktags));
-                    }
-                }
+                state.pairs.insert(
+                    ptag,
+                    PairRecord {
+                        generation,
+                        started: now,
+                        keys: ktags,
+                        sent: (0, 0),
+                        over: false,
+                        live: 0,
+                        inactive_stamp: 0,
+                    },
+                );
+                state.order.push_back((ptag, generation, now, ktags));
                 (generation, now)
             };
 
@@ -481,13 +486,7 @@ impl Relay {
             else {
                 return;
             };
-            if state
-                .pairs
-                .get(&ptag)
-                .is_some_and(|r| r.generation == pair_gen)
-            {
-                state.key_pair.insert(ktag, (ptag, pair_gen, started));
-            }
+            state.key_pair.insert(ktag, (ptag, pair_gen, started));
             // The holder of the key signed in again on its pair: its old
             // socket died without this relay noticing (a Wi-Fi switch, NAT
             // rebinding). The new one takes over at once, before QUIC gives
@@ -554,7 +553,6 @@ impl Relay {
         // do not keep a connection that carries nothing.
         let mut last_data = Instant::now();
         let mut budget = Budget::new(self.config.rate);
-        let mut local_total: u64 = 0;
         loop {
             if writer.is_finished() {
                 break;
@@ -597,25 +595,16 @@ impl Relay {
             last_data = Instant::now();
             let payload: usize = datagrams.iter().map(|d| d.len()).sum();
             let size = u64::try_from(frame.len()).unwrap_or(u64::MAX);
-            local_total = local_total.saturating_add(size);
-            if !self
-                .spend_pair_bytes(&ptag, pair_gen, second_side, size, local_total)
+            // Charge the sender's allowance and look up the peer's outbox
+            // under a single state lock (#190).
+            let Some(target) = self
+                .spend_and_lookup(&ptag, pair_gen, second_side, size, &to, &pair)
                 .await
-            {
+            else {
                 break;
-            }
+            };
             // Slow the sender down instead of dropping: TCP pushes back.
             budget.spend(size).await;
-            // The target must have signed in on this same pair: a key that is
-            // part of two pairs is reachable only from the one it chose.
-            let target = self
-                .state
-                .lock()
-                .await
-                .clients
-                .get(&to)
-                .filter(|c| c.pair == pair)
-                .map(|c| c.outbox.clone());
             if let Some(target) = target {
                 // A full queue drops, like a busy network; QUIC recovers.
                 // Same message with the source key in place of the target's.
@@ -634,32 +623,41 @@ impl Relay {
         self.leave(&key, id).await;
     }
 
-    async fn spend_pair_bytes(
+    /// Charge `size` bytes to `ptag`/`pair_gen` and resolve `to`'s outbox
+    /// under one lock acquisition (#190). Returns `None` once the byte limit
+    /// is exceeded (or the pair record has expired).
+    async fn spend_and_lookup(
         &self,
         ptag: &Tag,
         pair_gen: u64,
         second_side: bool,
         size: u64,
-        local_total: u64,
-    ) -> bool {
+        to: &[u8; 32],
+        pair: &Pair,
+    ) -> Option<Option<Outbox>> {
         let mut state = self.state.lock().await;
-        if let Some(rec) = state
+        let rec = state
             .pairs
             .get_mut(ptag)
-            .filter(|r| r.generation == pair_gen)
-        {
-            let slot = if second_side {
-                &mut rec.sent.1
-            } else {
-                &mut rec.sent.0
-            };
-            *slot = slot.saturating_add(size);
-            if *slot > self.config.session_bytes || rec.over {
-                rec.over = true;
-                return false;
-            }
+            .filter(|r| r.generation == pair_gen)?;
+        let slot = if second_side {
+            &mut rec.sent.1
+        } else {
+            &mut rec.sent.0
+        };
+        *slot = slot.saturating_add(size);
+        if *slot > self.config.session_bytes || rec.over {
+            rec.over = true;
+            return None;
         }
-        local_total <= self.config.session_bytes
+        // The target must have signed in on this same pair: a key that is
+        // part of two pairs is reachable only from the one it chose.
+        let target = state
+            .clients
+            .get(to)
+            .filter(|c| c.pair == *pair)
+            .map(|c| c.outbox.clone());
+        Some(target)
     }
 
     /// Remove the connection `id` of `key`. When it was still the key's
@@ -750,7 +748,7 @@ pub async fn spawn(
     let listener = TcpListener::bind(ws).await?;
     let socket = UdpSocket::bind(udp).await?;
     let (ws, udp) = (listener.local_addr()?, socket.local_addr()?);
-    let relay = Relay::new(config);
+    let relay = Relay::new(config)?;
     let serving = relay.clone();
     let task = tokio::spawn(async move {
         tokio::join!(serving.serve(listener), Relay::discovery(socket));
@@ -1092,7 +1090,8 @@ mod tests {
         let relay = Relay::new(Config {
             session_time: Duration::from_millis(120),
             ..Config::default()
-        });
+        })
+        .unwrap();
         let serving = relay.clone();
         let _task = tokio::spawn(async move { serving.serve(listener).await });
 
@@ -1156,13 +1155,16 @@ mod tests {
             "generation 1 must record live == 1 after replacing generation 0"
         );
 
-        // Another pair signs in while only Key A is live on (a, b): because
-        // max_pairs is 1 and (a, b) is live, (a, b) must NOT be evicted.
+        // Another pair tries to sign in while only Key A is live on (a, b):
+        // because max_pairs is 1 and (a, b) is live, (c, d) is refused and
+        // (a, b) is NOT evicted.
         let (kc, c) = keypair();
         let (_kd, d) = keypair();
         let cd = format!("{url}/{}", wire::pair_name(&c, &d));
-        let mut wc = sign_in(&cd, &kc, &c).await.unwrap();
-        wc.close(None).await.unwrap();
+        assert!(
+            sign_in(&cd, &kc, &c).await.is_none(),
+            "full live pair table must refuse new pairs instead of admitting untracked"
+        );
         assert_eq!(
             relay
                 .state
@@ -1312,5 +1314,90 @@ mod tests {
             state.inactive.len()
         );
         assert_eq!(state.inactive.front().map(|e| e.0), Some(p1));
+    }
+
+    /// #190: churning many short-lived pairs with `make_room` compacts
+    /// `State::order` in place so memory stays bounded by `max_pairs` even
+    /// before `session_time` expires.
+    #[test]
+    fn order_queue_stays_bounded_under_pair_churn() {
+        let now = Instant::now();
+        let max_pairs = 2;
+        let mut state = State::default();
+        for i in 0u64..200 {
+            state.make_room(max_pairs);
+            let mut ptag = [0u8; 32];
+            ptag[..8].copy_from_slice(&i.to_le_bytes());
+            let ktags = (ptag, [i as u8; 32]);
+            state.pairs.insert(
+                ptag,
+                PairRecord {
+                    generation: i,
+                    started: now,
+                    keys: ktags,
+                    sent: (0, 0),
+                    over: false,
+                    live: 0,
+                    inactive_stamp: 0,
+                },
+            );
+            state.order.push_back((ptag, i, now, ktags));
+            state.note_inactive(ptag);
+        }
+        assert!(
+            state.pairs.len() <= max_pairs,
+            "pairs grew past max_pairs: {}",
+            state.pairs.len()
+        );
+        assert!(
+            state.order.len() <= 65,
+            "order queue grew unbounded under churn: {}",
+            state.order.len()
+        );
+    }
+
+    /// #190: when `max_pairs == 0` or every pair slot holds a live pair, new
+    /// sign-ins are refused rather than admitted untracked.
+    #[tokio::test]
+    async fn full_live_pair_table_and_zero_max_pairs_refuse_sign_in() {
+        let (url0, _stun0, _relay0, _task0) = spawn_local(Config {
+            max_pairs: 0,
+            ..Config::default()
+        })
+        .await
+        .unwrap();
+        let (ka, a) = keypair();
+        let (_kb, b) = keypair();
+        let ab0 = format!("{url0}/{}", wire::pair_name(&a, &b));
+        assert!(
+            sign_in(&ab0, &ka, &a).await.is_none(),
+            "max_pairs == 0 must refuse sign-in"
+        );
+
+        let (url, _stun, relay, _task) = spawn_local(Config {
+            max_pairs: 1,
+            ..Config::default()
+        })
+        .await
+        .unwrap();
+        let ab = format!("{url}/{}", wire::pair_name(&a, &b));
+        let mut wa = sign_in(&ab, &ka, &a).await.unwrap();
+        let (kc, c) = keypair();
+        let (_kd, d) = keypair();
+        let cd = format!("{url}/{}", wire::pair_name(&c, &d));
+        assert!(
+            sign_in(&cd, &kc, &c).await.is_none(),
+            "new pair must be refused while all max_pairs slots are live"
+        );
+        // Once the live pair disconnects, its inactive slot can be evicted for a new pair.
+        wa.close(None).await.unwrap();
+        let deadline = Instant::now().checked_add(Duration::from_secs(1)).unwrap();
+        while relay.client_count().await > 0 && Instant::now() < deadline {
+            tokio::time::sleep(Duration::from_millis(10)).await;
+        }
+        assert!(
+            sign_in(&cd, &kc, &c).await.is_some(),
+            "new pair must succeed once an inactive slot can be evicted"
+        );
     }
 }

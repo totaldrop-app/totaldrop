@@ -61,7 +61,7 @@ export class PairTotals {
     this.kv = kv;
   }
 
-  private load(sessionBytes?: number): LiveTotals | null {
+  private load(): LiveTotals | null {
     if (this.mem !== undefined) return this.mem;
     const s = this.kv.get<StoredTotals>(KEY);
     if (!s) {
@@ -70,19 +70,27 @@ export class PairTotals {
     }
     const sent0 = s.unflushed[0] ? s.sent[0] + SENT_STEP : s.sent[0];
     const sent1 = s.unflushed[1] ? s.sent[1] + SENT_STEP : s.sent[1];
-    // Strict `>` matches `spend()` and the Rust relay (`*slot > session_bytes`).
-    const over =
-      s.over ||
-      (sessionBytes !== undefined && (sent0 > sessionBytes || sent1 > sessionBytes));
     this.mem = {
       started: s.started,
       sent: [sent0, sent1],
       diskSent: [s.sent[0], s.sent[1]],
       sinceWrite: [s.unflushed[0] ? SENT_STEP : 0, s.unflushed[1] ? SENT_STEP : 0],
       unflushed: [s.unflushed[0], s.unflushed[1]],
-      over,
+      over: s.over,
     };
     return this.mem;
+  }
+
+  /** Strict `>` matches `spend()` and the Rust relay (`*slot > session_bytes`).
+   * Evaluated against current `t.sent` rather than cached at first `load()`, so
+   * callers that inspect `deadline()` before `admitSignIn()` still see a
+   * wake-inflated count above `sessionBytes`. */
+  private isOver(t: LiveTotals, sessionBytes?: number): boolean {
+    return (
+      t.over ||
+      (sessionBytes !== undefined &&
+        (t.sent[0] > sessionBytes || t.sent[1] > sessionBytes))
+    );
   }
 
   private save(t: LiveTotals): void {
@@ -98,7 +106,7 @@ export class PairTotals {
   /** Lazily initialize `"totals"` if an already-signed-in hibernated socket
    * wakes after a rolling deploy before `"totals"` exists in KV. */
   ensure(started: number, seedSent: [number, number] = [0, 0], sessionBytes?: number): void {
-    if (this.load(sessionBytes)) return;
+    if (this.load()) return;
     const over =
       sessionBytes !== undefined &&
       (seedSent[0] > sessionBytes || seedSent[1] > sessionBytes);
@@ -136,7 +144,7 @@ export class PairTotals {
   /** Admit a verified sign-in at `now`: starts the pair's window on the
    * first sign-in, and refuses once the byte or time limit is spent. */
   admitSignIn(now: number, sessionTime: number, sessionBytes?: number): boolean {
-    let t = this.load(sessionBytes);
+    let t = this.load();
     if (!t) {
       t = {
         started: now,
@@ -150,7 +158,14 @@ export class PairTotals {
       this.save(t);
       return true;
     }
-    return !t.over && now < t.started + sessionTime;
+    if (this.isOver(t, sessionBytes)) {
+      if (!t.over) {
+        t.over = true;
+        this.save(t);
+      }
+      return false;
+    }
+    return now < t.started + sessionTime;
   }
 
   /** Count `bytes` sent by `side`; `false` when `sessionBytes` is strictly
@@ -163,14 +178,20 @@ export class PairTotals {
     fallbackStart?: number,
     seedSent?: [number, number],
   ): boolean {
-    let t = this.load(sessionBytes);
+    let t = this.load();
     if (!t) {
       if (fallbackStart === undefined) return false;
       this.ensure(fallbackStart, seedSent ?? [0, 0], sessionBytes);
-      t = this.load(sessionBytes);
+      t = this.load();
       if (!t) return false;
     }
-    if (t.over) return false;
+    if (this.isOver(t, sessionBytes)) {
+      if (!t.over) {
+        t.over = true;
+        this.save(t);
+      }
+      return false;
+    }
     const after = t.sent[side] + bytes;
     t.sent[side] = after;
     if (after > sessionBytes) {
@@ -203,8 +224,8 @@ export class PairTotals {
   }
 
   /** Current counted bytes for `side` (for tests). */
-  counted(side: Side, sessionBytes?: number): number {
-    const t = this.load(sessionBytes);
+  counted(side: Side): number {
+    const t = this.load();
     return t ? t.sent[side] : 0;
   }
 }

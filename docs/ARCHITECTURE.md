@@ -309,7 +309,7 @@ arayüz durumuna çevirir: Linux'ta Qt özellikleri
 
 Rust sunucuları aynı protokolün ikinci uygulamasıdır:
 `server/totaldrop-rendezvous/src/lib.rs:343` `serve`,
-`server/totaldrop-relay/src/lib.rs:335` `serve`.
+`server/totaldrop-relay/src/lib.rs:336` `serve`.
 
 ## 3. Veri modeli ve durum
 
@@ -379,7 +379,7 @@ zamanı ve anahtar başına gönderilen bayt toplamları `ctx.storage.kv` içind
 | Android | `SharedPreferencesWithCache`: `rendezvous_server`, `privacy_mode`, arka plan izni işaretleri (`app/lib/data/settings_repository.dart:13-17`); aşamalar `SendStage`, `ReceiveStage` (`app/lib/ui/send/send_view_model.dart:20`, `app/lib/ui/receive/receive_view_model.dart:27`) | Ayar kalıcı, aşama bellekte |
 | Rendezvous Worker | Yukarıdaki SQLite tabloları; hız sınırı sayaçları bellekte (`server/rendezvous-worker/src/limit.ts:98` `RateLimiter`) | Kutu en çok 60 dk; sayaçlar nesne uyuyunca düşer |
 | Aktarma Worker | WebSocket ekleri + DO KV içinde çift başına `"totals"` + alarm | Çift penceresi en çok 6 saat, sonunda `deleteAll()` |
-| Rust sunucuları | Yalnızca bellekte: `HashMap` (`server/totaldrop-rendezvous/src/lib.rs:236-239`, `server/totaldrop-relay/src/lib.rs:153-165`) | Çift toplamları 6 saatte süpürülür; süreç yeniden başlayınca düşer |
+| Rust sunucuları | Yalnızca bellekte: `HashMap` (`server/totaldrop-rendezvous/src/lib.rs:236-239`, `server/totaldrop-relay/src/lib.rs:148-160`) | Çift toplamları 6 saatte süpürülür; süreç yeniden başlayınca düşer |
 
 ## 4. Yapılandırma
 
@@ -575,7 +575,7 @@ için öneri değil, yalnızca durum yazılıdır; iş gerekirse issue açılır
    Uyum ortak uçtan uca testle korunur; Worker tarafında fuzz hedefi yoktur.
 3. **Sunucular istemci kriptografisine bağlanmaz.** Sunucu crate'leri
    yalnızca `proto`'yu bağlar; aktarma sunucusu meydan okuma imzasını
-   `ring` ile (`server/totaldrop-relay/src/lib.rs:408-409`), Worker Web
+   `ring` ile (`server/totaldrop-relay/src/lib.rs:409-410`), Worker Web
    Crypto ile (`server/relay-worker/src/pair-core.ts:151-153`) kendisi denetler.
    "Sunucu içeriği çözemez" sözünü bu kural sağlamaz: o, anahtarların
    sunucuya hiç gitmemesinden gelir (CPace ve Noise anahtarları iki cihazda

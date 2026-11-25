@@ -467,21 +467,26 @@ treated as final.
       relay that stopped reading would otherwise hold the link in a write
       with a full send buffer, where it cannot notice anything (#424).
 23. **Relay limits.** Per pair: 6 hours from the first sign-in, and 32 GiB
-    sent per key across reconnects; ten seconds to sign in (#190). Once a
-    pair reaches its byte or time limit, further sign-ins on that pair are
-    refused until its 6-hour window expires. Both relays refuse an upgrade
-    that carries `Origin` with HTTP 403 (#450), accept only the pair path
-    `/v0/relay/<key A>-<key B>` and forward only to the other key of that
-    pair. The self-hosted relay also refuses a key that signed in on another
-    pair within that window, caps each connection at 8 MiB/s, keeps at most
-    100,000 pair totals in memory under a random-keyed hash until their
-    6-hour window ends (evicting the oldest inactive pair if full), and
-    closes a connection after 60 seconds without datagrams (pings do not
-    count), which ends the other side too. The Cloudflare relay keeps each
-    pair's start time and per-key byte counts in the `Pair` object's storage
-    until its 6-hour alarm deletes them, and drops datagrams for a
-    connection with 32 MiB unanswered (item 20). Neither logs client data or
-    stores addresses; the self-hosted relay keeps nothing on disk.
+    sent per key across reconnects; ten seconds to sign in (#190). Both
+    relays count each received datagram frame toward the sender's 32 GiB
+    limit before checking whether the peer is connected or backpressured, so
+    frames dropped by the relay for an absent or slow peer still count
+    against that key's allowance. Once a pair reaches its byte or time
+    limit, further sign-ins on that pair are refused until its 6-hour window
+    expires. Both relays refuse an upgrade that carries `Origin` with HTTP
+    403 (#450), accept only the pair path `/v0/relay/<key A>-<key B>` and
+    forward only to the other key of that pair. The self-hosted relay also
+    refuses a key that signed in on another pair within that window, caps
+    each connection at 8 MiB/s, keeps at most 100,000 pair totals in memory
+    under a random-keyed hash until their 6-hour window ends (evicting the
+    oldest inactive pair if full, and refusing new pairs if all slots hold
+    live pairs), and closes a connection after 60 seconds without datagrams
+    (pings do not count), which ends the other side too. The Cloudflare
+    relay keeps each pair's start time and per-key byte counts in the `Pair`
+    object's storage until its 6-hour alarm deletes them, and drops
+    datagrams for a connection with 32 MiB unanswered (item 20). Neither
+    logs client data or stores addresses; the self-hosted relay keeps
+    nothing on disk.
 
 ## Section 8, continued: progress
 

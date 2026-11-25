@@ -47,7 +47,7 @@ test("reconnecting below SENT_STEP keeps exact byte totals per key (#190)", () =
   // Simulate hibernation and reconnect of both sides.
   pair = new PairTotals(kv);
   assert.equal(pair.admitSignIn(2_000, 6 * HOUR, limit), true);
-  assert.equal(pair.counted(0, limit), 1_400);
+  assert.equal(pair.counted(0), 1_400);
   // Side 1 has its own independent allowance.
   assert.equal(pair.spend(1, 1_400, limit), true);
   // Side 0 crosses 2,000 B across its two connections.
@@ -78,6 +78,24 @@ test("exact sessionBytes boundary uses strict > across reconnects and wakes", ()
   // One extra byte (2,001 > 2,000) crosses the limit.
   assert.equal(pair.spend(0, 1, limit), false);
   assert.equal(pair.admitSignIn(1_900, 6 * HOUR, limit), false);
+});
+
+test("calling deadline() before admitSignIn() still rejects wake-inflated totals above sessionBytes", () => {
+  const kv = new FakeStorage();
+  const limit = S + 100;
+  let pair = new PairTotals(kv);
+
+  assert.equal(pair.admitSignIn(1_000, 6 * HOUR, limit), true);
+  // Leaves unflushed[0] = true with stored sent[0] = 500; on wake sent[0]
+  // inflates to 500 + SENT_STEP > limit.
+  assert.equal(pair.spend(0, 500, limit), true);
+
+  // Simulate hibernation wake where seedPreDeployTotals() calls deadline()
+  // (no sessionBytes) before admitSignIn() checks the byte limit.
+  pair = new PairTotals(kv);
+  assert.equal(pair.deadline(6 * HOUR), 1_000 + 6 * HOUR);
+  assert.equal(pair.admitSignIn(2_000, 6 * HOUR, limit), false);
+  assert.equal(pair.spend(0, 1, limit), false);
 });
 
 test("rolling-deploy wake without stored totals initializes lazily instead of dropping", () => {

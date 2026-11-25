@@ -5,6 +5,7 @@
 // cleanup, and rolling-deploy wake tests for PairCore (#190).
 
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { test } from "node:test";
 
 import {
@@ -378,5 +379,14 @@ test("alarm follows sign-in start time rather than accept time, and post-expiry 
   assert.equal(sA2.readyState, OPEN, "post-expiry sign-in before alarm() must succeed");
   assert.deepEqual(sA2.backing.sent[1], OK);
   assert.equal(doEnv.alarmAt, 6_010 + sessionTime);
+});
+
+test("production wrangler.jsonc never overrides SESSION_BYTES or SESSION_TIME_MS (#190)", () => {
+  const wrangler = readFileSync(new URL("../wrangler.jsonc", import.meta.url), "utf8");
+  assert.doesNotMatch(
+    wrangler,
+    /\bSESSION_BYTES\b|\bSESSION_TIME_MS\b/,
+    "production wrangler.jsonc must not override relay session limits",
+  );
 });
 

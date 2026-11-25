@@ -652,14 +652,14 @@
   "server/totaldrop-relay/Cargo.toml:18": [
     "totaldrop-proto = { version = \"0.2.0-beta.5\", path = \"../../crates/totaldrop-proto\" }"
   ],
-  "server/totaldrop-relay/src/lib.rs:153-165": [
+  "server/totaldrop-relay/src/lib.rs:148-160": [
     "struct State {",
     "}"
   ],
-  "server/totaldrop-relay/src/lib.rs:335": [
+  "server/totaldrop-relay/src/lib.rs:336": [
     "pub async fn serve(self, listener: TcpListener) {"
   ],
-  "server/totaldrop-relay/src/lib.rs:408-409": [
+  "server/totaldrop-relay/src/lib.rs:409-410": [
     "ring::signature::UnparsedPublicKey::new(&ring::signature::ED25519, key)",
     ".verify(&wire::signed_bytes(&challenge), &signature)"
   ],
