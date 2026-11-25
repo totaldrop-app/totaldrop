@@ -234,6 +234,7 @@ fn server(cli: Option<String>) -> String {
 }
 
 fn gateway() -> totaldrop_core::portmap::Gateway {
+    #[cfg(debug_assertions)]
     if let Ok(val) = std::env::var("TOTALDROP_TEST_GATEWAY") {
         if val.is_empty() {
             return totaldrop_core::portmap::Gateway::Off;
@@ -282,7 +283,8 @@ impl SignalStop {
     /// Register the signal handlers on `runtime` before any transfer starts,
     /// so no signal slips past. Ctrl-C tells the person how to exit at once
     /// with a second Ctrl-C; `SIGTERM` and `SIGHUP` stop quietly because a
-    /// closing terminal or session may send both together.
+    /// closing terminal or session may send both together. On Linux, an
+    /// inherited ignored `SIGHUP` (such as under `nohup`) is left ignored.
     fn install(&self, runtime: &tokio::runtime::Runtime, s: &Arc<Strings>) -> Stop {
         let (handle, code, s) = (self.stop.clone(), Arc::clone(&self.code), Arc::clone(s));
         let _enter = runtime.enter();
@@ -292,7 +294,11 @@ impl SignalStop {
             (
                 signal(SignalKind::interrupt()).ok(),
                 signal(SignalKind::terminate()).ok(),
-                signal(SignalKind::hangup()).ok(),
+                if sighup_ignored() {
+                    None
+                } else {
+                    signal(SignalKind::hangup()).ok()
+                },
             )
         };
         runtime.spawn(async move {
@@ -919,13 +925,39 @@ impl From<std::io::Error> for Failure {
     }
 }
 
+/// On Linux, checks `/proc/self/status` `SigIgn` bit 0 (`SIGHUP`, signal 1)
+/// without `unsafe` so a process launched under `nohup` (or `trap '' HUP`)
+/// keeps ignoring `SIGHUP` instead of installing a handler (#527).
+#[cfg(unix)]
+fn sighup_ignored() -> bool {
+    #[cfg(target_os = "linux")]
+    {
+        std::fs::read_to_string("/proc/self/status")
+            .ok()
+            .is_some_and(|s| proc_status_ignores_sighup(&s))
+    }
+    #[cfg(not(target_os = "linux"))]
+    {
+        false
+    }
+}
+
+#[cfg(any(target_os = "linux", test))]
+fn proc_status_ignores_sighup(status: &str) -> bool {
+    status.lines().any(|line| {
+        line.strip_prefix("SigIgn:")
+            .and_then(|hex| u64::from_str_radix(hex.trim(), 16).ok())
+            .is_some_and(|mask| (mask & 1) != 0)
+    })
+}
+
 #[cfg(test)]
 mod tests {
     #![allow(clippy::unwrap_used)]
 
     use super::{
         ARG_HELP, COMMAND_HELP, What, ask, connecting_line, detail_line, error_key, help,
-        run_then_release, shown_text, what_to_send,
+        proc_status_ignores_sighup, run_then_release, shown_text, what_to_send,
     };
     use totaldrop_core::{Error, Stop};
     use totaldrop_l10n::{Domain, Strings};
@@ -1297,5 +1329,19 @@ mod tests {
             detail_line(&Error::Cancelled("stopped".into())),
             "  (cancelled by the other side: stopped)"
         );
+    }
+
+    #[test]
+    fn proc_status_detects_ignored_sighup() {
+        assert!(proc_status_ignores_sighup(
+            "Name:\ttotaldrop\nSigIgn:\t0000000000000001\n"
+        ));
+        assert!(proc_status_ignores_sighup("SigIgn:\t0000000000001003\n"));
+        assert!(!proc_status_ignores_sighup(
+            "Name:\ttotaldrop\nSigIgn:\t0000000000000000\n"
+        ));
+        assert!(!proc_status_ignores_sighup("SigIgn:\t0000000000000002\n"));
+        assert!(!proc_status_ignores_sighup("SigIgn:\tnot-hex\n"));
+        assert!(!proc_status_ignores_sighup(""));
     }
 }

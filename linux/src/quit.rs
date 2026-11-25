@@ -64,7 +64,8 @@ impl SignalExit {
 
     /// Listen for `SIGTERM`, `SIGHUP` and `SIGINT` on `runtime` and call
     /// `quit_app` when the first arrives so the window's event loop ends and
-    /// [`finish`] runs (#527).
+    /// [`finish`] runs (#527). On Linux, an inherited ignored `SIGHUP` (as
+    /// under `nohup`) is left ignored.
     #[cfg(unix)]
     pub fn watch(&'static self, runtime: &tokio::runtime::Runtime, quit_app: fn()) {
         use tokio::signal::unix::{Signal, SignalKind, signal};
@@ -79,7 +80,11 @@ impl SignalExit {
         let _enter = runtime.enter();
         let (mut terminate, mut hangup, mut interrupt) = (
             signal(SignalKind::terminate()).ok(),
-            signal(SignalKind::hangup()).ok(),
+            if sighup_ignored() {
+                None
+            } else {
+                signal(SignalKind::hangup()).ok()
+            },
             signal(SignalKind::interrupt()).ok(),
         );
         runtime.spawn(async move {
@@ -101,6 +106,32 @@ impl SignalExit {
             }
         });
     }
+}
+
+/// On Linux, checks `/proc/self/status` `SigIgn` bit 0 (`SIGHUP`, signal 1)
+/// without `unsafe` so a process started under `nohup` keeps ignoring `SIGHUP`
+/// (#527).
+#[cfg(unix)]
+fn sighup_ignored() -> bool {
+    #[cfg(target_os = "linux")]
+    {
+        std::fs::read_to_string("/proc/self/status")
+            .ok()
+            .is_some_and(|s| proc_status_ignores_sighup(&s))
+    }
+    #[cfg(not(target_os = "linux"))]
+    {
+        false
+    }
+}
+
+#[cfg(any(target_os = "linux", test))]
+fn proc_status_ignores_sighup(status: &str) -> bool {
+    status.lines().any(|line| {
+        line.strip_prefix("SigIgn:")
+            .and_then(|hex| u64::from_str_radix(hex.trim(), 16).ok())
+            .is_some_and(|mask| (mask & 1) != 0)
+    })
 }
 
 /// The tasks that run, so quitting can wait for them and drop the rest.
@@ -404,5 +435,80 @@ mod tests {
                 String::from_utf8_lossy(&out.stderr)
             );
         }
+    }
+
+    #[test]
+    fn proc_status_detects_ignored_sighup() {
+        assert!(super::proc_status_ignores_sighup(
+            "Name:\ttotaldrop\nSigIgn:\t0000000000000001\n"
+        ));
+        assert!(!super::proc_status_ignores_sighup(
+            "Name:\ttotaldrop\nSigIgn:\t0000000000000002\n"
+        ));
+        assert!(!super::proc_status_ignores_sighup(""));
+    }
+
+    /// Under `nohup` (`trap '' HUP`), `SignalExit::watch` on Linux keeps
+    /// ignoring `SIGHUP` while still catching `SIGTERM` (`143`) (#527).
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn ignored_sighup_is_not_caught_on_linux() {
+        use super::SignalExit;
+        use tokio::sync::Notify;
+
+        const VAR: &str = "TOTALDROP_TEST_IGNORE_HUP";
+
+        if std::env::var_os(VAR).is_some() {
+            static EXIT: SignalExit = SignalExit::new();
+            static QUIT: Notify = Notify::const_new();
+            fn on_quit() {
+                QUIT.notify_waiters();
+            }
+
+            assert!(super::sighup_ignored(), "child must inherit ignored SIGHUP");
+            let rt = runtime();
+            let notified = QUIT.notified();
+            EXIT.watch(&rt, on_quit);
+            let pid = std::process::id().to_string();
+            assert!(
+                std::process::Command::new("kill")
+                    .args(["-s", "HUP", &pid])
+                    .status()
+                    .unwrap()
+                    .success()
+            );
+            assert!(
+                std::process::Command::new("kill")
+                    .args(["-s", "TERM", &pid])
+                    .status()
+                    .unwrap()
+                    .success()
+            );
+            rt.block_on(async {
+                tokio::time::timeout(Duration::from_secs(2), notified)
+                    .await
+                    .unwrap();
+            });
+            assert_eq!(EXIT.exit_code(0), 143);
+            return;
+        }
+
+        let exe = std::env::current_exe().unwrap();
+        let out = std::process::Command::new("sh")
+            .env(VAR, "1")
+            .args([
+                "-c",
+                "trap '' HUP; exec \"$1\" --nocapture ignored_sighup_is_not_caught_on_linux",
+                "_",
+            ])
+            .arg(&exe)
+            .output()
+            .unwrap();
+        assert!(
+            out.status.success(),
+            "ignored-HUP child failed ({}):\n{}",
+            out.status,
+            String::from_utf8_lossy(&out.stderr)
+        );
     }
 }
