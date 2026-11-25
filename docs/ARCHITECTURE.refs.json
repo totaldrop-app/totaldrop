@@ -119,39 +119,39 @@
   "crates/totaldrop-cli/src/main.rs:432": [
     "let report = prepared.run_with(printer(Arc::clone(&s)), stop).await?;"
   ],
-  "crates/totaldrop-cli/src/main.rs:459": [
+  "crates/totaldrop-cli/src/main.rs:469": [
     "async fn receive("
   ],
-  "crates/totaldrop-cli/src/main.rs:526": [
-    "IncomingOffer::connect_with(&ReceiveOptions { server, paths }, &code, &stop).await?;"
+  "crates/totaldrop-cli/src/main.rs:535": [
+    "let offer = IncomingOffer::connect_with("
   ],
-  "crates/totaldrop-cli/src/main.rs:596": [
+  "crates/totaldrop-cli/src/main.rs:614": [
     ".accept_with(&dest, printer(Arc::clone(&s)), &stop)"
   ],
-  "crates/totaldrop-cli/src/main.rs:643": [
+  "crates/totaldrop-cli/src/main.rs:661": [
     "fn main() -> ExitCode {"
   ],
-  "crates/totaldrop-cli/src/main.rs:659": [
+  "crates/totaldrop-cli/src/main.rs:677": [
     "let route = paths(cli.relay, cli.stun, cli.relay_only);"
   ],
-  "crates/totaldrop-cli/src/main.rs:660-663": [
+  "crates/totaldrop-cli/src/main.rs:678-681": [
     "if route.relay_only && route.relay.is_empty() {",
     "}"
   ],
-  "crates/totaldrop-cli/src/main.rs:680": [
+  "crates/totaldrop-cli/src/main.rs:698": [
     "Command::Send {"
   ],
-  "crates/totaldrop-cli/src/main.rs:701": [
+  "crates/totaldrop-cli/src/main.rs:719": [
     "Command::Receive { code, out, yes } => run_then_release("
   ],
-  "crates/totaldrop-cli/src/main.rs:719-741": [
+  "crates/totaldrop-cli/src/main.rs:737-759": [
     "match result {",
     "}"
   ],
-  "crates/totaldrop-cli/src/main.rs:747": [
+  "crates/totaldrop-cli/src/main.rs:765": [
     "fn detail_line(e: &totaldrop_core::Error) -> String {"
   ],
-  "crates/totaldrop-cli/src/main.rs:755": [
+  "crates/totaldrop-cli/src/main.rs:773": [
     "fn error_key(e: &totaldrop_core::Error, sending: bool) -> &'static str {"
   ],
   "crates/totaldrop-cli/tests/end_to_end.rs:28": [
@@ -170,65 +170,65 @@
   "crates/totaldrop-core/Cargo.toml:4": [
     "license = \"MIT OR Apache-2.0\""
   ],
-  "crates/totaldrop-core/src/lib.rs:101": [
+  "crates/totaldrop-core/src/lib.rs:102": [
     "async fn own_hints("
   ],
-  "crates/totaldrop-core/src/lib.rs:154": [
+  "crates/totaldrop-core/src/lib.rs:155": [
     "pub struct PathOptions {"
   ],
-  "crates/totaldrop-core/src/lib.rs:164": [
+  "crates/totaldrop-core/src/lib.rs:165": [
     "pub relay_only: bool,"
   ],
-  "crates/totaldrop-core/src/lib.rs:231": [
+  "crates/totaldrop-core/src/lib.rs:232": [
     "fn receiver_relay<'a>(hints: &Hints, own: &'a PathOptions) -> Result<Option<&'a str>> {"
   ],
-  "crates/totaldrop-core/src/lib.rs:287": [
+  "crates/totaldrop-core/src/lib.rs:288": [
     "fn paths_to("
   ],
-  "crates/totaldrop-core/src/lib.rs:338": [
+  "crates/totaldrop-core/src/lib.rs:339": [
     "enum Keep {"
   ],
-  "crates/totaldrop-core/src/lib.rs:395": [
+  "crates/totaldrop-core/src/lib.rs:396": [
     "pub struct SendOptions {"
   ],
-  "crates/totaldrop-core/src/lib.rs:415": [
+  "crates/totaldrop-core/src/lib.rs:416": [
     "pub struct PreparedSend {"
   ],
-  "crates/totaldrop-core/src/lib.rs:434": [
+  "crates/totaldrop-core/src/lib.rs:435": [
     "pub async fn new(opts: &SendOptions, paths: Vec<PathBuf>) -> Result<Self> {"
   ],
-  "crates/totaldrop-core/src/lib.rs:445": [
+  "crates/totaldrop-core/src/lib.rs:446": [
     "pub async fn text(opts: &SendOptions, text: &str, name: &str) -> Result<Self> {"
   ],
-  "crates/totaldrop-core/src/lib.rs:450-461": [
+  "crates/totaldrop-core/src/lib.rs:451-462": [
     "async fn ready(",
     "rendezvous::Mailbox::claim(&opts.server, nameplate, Some(&allocation)).await?;"
   ],
-  "crates/totaldrop-core/src/lib.rs:50": [
-    "pub enum Event {"
-  ],
-  "crates/totaldrop-core/src/lib.rs:501": [
+  "crates/totaldrop-core/src/lib.rs:502": [
     "pub async fn run_with(self, events: Events, stop: Stop) -> Result<SendReport> {"
   ],
-  "crates/totaldrop-core/src/lib.rs:597": [
+  "crates/totaldrop-core/src/lib.rs:51": [
+    "pub enum Event {"
+  ],
+  "crates/totaldrop-core/src/lib.rs:598": [
     "pub struct ReceiveOptions {"
   ],
-  "crates/totaldrop-core/src/lib.rs:616": [
+  "crates/totaldrop-core/src/lib.rs:623": [
     "pub struct IncomingOffer {"
   ],
-  "crates/totaldrop-core/src/lib.rs:639": [
+  "crates/totaldrop-core/src/lib.rs:647": [
     "pub async fn connect_with(opts: &ReceiveOptions, code: &str, stop: &Stop) -> Result<Self> {"
   ],
-  "crates/totaldrop-core/src/lib.rs:662": [
+  "crates/totaldrop-core/src/lib.rs:670": [
     "pub async fn connect(opts: &ReceiveOptions, code: &str) -> Result<Self> {"
   ],
-  "crates/totaldrop-core/src/lib.rs:665": [
+  "crates/totaldrop-core/src/lib.rs:673": [
     "let mailbox = rendezvous::Mailbox::claim(&opts.server, code.nameplate(), None).await?;"
   ],
-  "crates/totaldrop-core/src/lib.rs:731": [
+  "crates/totaldrop-core/src/lib.rs:740": [
     "pub async fn accept_with("
   ],
-  "crates/totaldrop-core/src/lib.rs:95": [
+  "crates/totaldrop-core/src/lib.rs:96": [
     "const MAPPING_GRACE: Duration = Duration::from_millis(300);"
   ],
   "crates/totaldrop-core/src/pairing.rs:107-110": [
@@ -292,38 +292,38 @@
   "crates/totaldrop-core/src/secure.rs:98": [
     "pub async fn handshake("
   ],
-  "crates/totaldrop-core/src/transfer.rs:1135": [
-    "pub async fn accept_text("
-  ],
-  "crates/totaldrop-core/src/transfer.rs:1262": [
-    "pub async fn accept("
-  ],
-  "crates/totaldrop-core/src/transfer.rs:187": [
-    "const PARALLEL_STREAMS: usize = 4;"
-  ],
-  "crates/totaldrop-core/src/transfer.rs:223": [
-    "pub fn text_entry(text: &str, name: &str) -> Result<SourceEntry> {"
-  ],
-  "crates/totaldrop-core/src/transfer.rs:334": [
-    "pub fn scan(paths: &[PathBuf]) -> Result<(Vec<SourceEntry>, usize)> {"
-  ],
-  "crates/totaldrop-core/src/transfer.rs:518": [
-    "pub async fn send_files("
-  ],
-  "crates/totaldrop-core/src/transfer.rs:774": [
-    "pub async fn receive_offer(chan: &mut SecureChannel, peer: &Certificate) -> Result<VerifiedOffer> {"
-  ],
-  "crates/totaldrop-core/src/transfer.rs:833": [
-    "pub async fn decline(chan: &mut SecureChannel, offer: &VerifiedOffer) -> Result<()> {"
-  ],
-  "crates/totaldrop-core/src/transfer.rs:874": [
-    "fn place_no_clobber(tmp: &Path, dir: &Path, name: &str) -> Result<PathBuf> {"
-  ],
-  "crates/totaldrop-core/src/transfer.rs:906": [
+  "crates/totaldrop-core/src/transfer.rs:1005": [
     "fn check_beneath(dest: &Path, path: &Path) -> Result<()> {"
   ],
-  "crates/totaldrop-core/src/transfer.rs:923": [
+  "crates/totaldrop-core/src/transfer.rs:1022": [
     "fn make_dir(path: &Path) -> Result<bool> {"
+  ],
+  "crates/totaldrop-core/src/transfer.rs:1297": [
+    "pub async fn accept_text("
+  ],
+  "crates/totaldrop-core/src/transfer.rs:1555": [
+    "pub async fn accept("
+  ],
+  "crates/totaldrop-core/src/transfer.rs:230": [
+    "const PARALLEL_STREAMS: usize = 4;"
+  ],
+  "crates/totaldrop-core/src/transfer.rs:266": [
+    "pub fn text_entry(text: &str, name: &str) -> Result<SourceEntry> {"
+  ],
+  "crates/totaldrop-core/src/transfer.rs:377": [
+    "pub fn scan(paths: &[PathBuf]) -> Result<(Vec<SourceEntry>, usize)> {"
+  ],
+  "crates/totaldrop-core/src/transfer.rs:605": [
+    "pub async fn send_files("
+  ],
+  "crates/totaldrop-core/src/transfer.rs:873": [
+    "pub async fn receive_offer(chan: &mut SecureChannel, peer: &Certificate) -> Result<VerifiedOffer> {"
+  ],
+  "crates/totaldrop-core/src/transfer.rs:932": [
+    "pub async fn decline(chan: &mut SecureChannel, offer: &VerifiedOffer) -> Result<()> {"
+  ],
+  "crates/totaldrop-core/src/transfer.rs:973": [
+    "fn place_no_clobber(tmp: &Path, dir: &Path, name: &str) -> Result<PathBuf> {"
   ],
   "crates/totaldrop-core/src/transport.rs:306": [
     "pub fn bind_socket() -> Result<UdpSocket> {"
@@ -457,10 +457,10 @@
   "linux/src/bridge/transfer.rs:699": [
     "fn receive(mut self: Pin<&mut Self>, code: &QString) {"
   ],
-  "linux/src/bridge/transfer.rs:710": [
+  "linux/src/bridge/transfer.rs:711": [
     "match IncomingOffer::connect_with(&opts, &code, &stop).await {"
   ],
-  "linux/src/bridge/transfer.rs:782": [
+  "linux/src/bridge/transfer.rs:783": [
     ".accept_with(&dest, Self::events(thread.clone(), g), &stop)"
   ],
   "linux/src/instance.rs:528": [
