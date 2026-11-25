@@ -155,8 +155,15 @@ repos:
       - id: component-versions
         name: component versions
         language: system
-        entry: tools/check-component-versions.sh
-        files: Cargo\.(toml|lock)$|package(-lock)?\.json$|pubspec\.yaml$
+        entry: sh -c 'node --test tools/test-version.mjs && node tools/version.mjs check && tools/check-component-versions.sh'
+        files: (^|/)Cargo\.(toml|lock)$|package(-lock)?\.json$|pubspec\.yaml$|^app/lib/main\.dart$|^versions\.json$|^tools/(test-)?version\.mjs$
+        pass_filenames: false
+
+      - id: play-upload-tool
+        name: the Play upload tool works
+        language: system
+        entry: node --test tools/test-play-upload.mjs
+        files: ^tools/(test-)?play-upload\.mjs$
         pass_filenames: false
 
       - id: crate-layers

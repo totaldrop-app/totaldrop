@@ -63,12 +63,13 @@ rules in `app/README.md`.
 
 ## Release
 
-- Bump `version` with the build number (`+N`, higher on every upload) in
-  `app/pubspec.yaml`, and the same version without `+N` in
-  `app/rust/Cargo.toml` and `Cargo.lock` (`docs/surec.md`, "Sürüm listesi").
-- Built only in CI (`.github/workflows/android-release.yml`); it produces the
-  `.aab` as an artifact and does not upload to Play. The maintainer uploads
-  and presses "Publish".
+- Bump Android atomically with `node tools/version.mjs bump android` (updating
+  `versions.json`, `app/pubspec.yaml` with higher `+N`, `app/lib/main.dart`,
+  `app/rust/Cargo.toml`, and `Cargo.lock`; `docs/versioning.md`).
+- Built only in CI (`.github/workflows/android-release.yml`): it produces the
+  signed `.aab` as the `play-bundle` artifact and, when
+  `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` is configured in `play-release`, uploads it
+  to Google Play Console via `tools/play-upload.mjs` (`docs/play-release.md`).
 - `key.properties` and the upload key are never read or committed. A
   debug APK is signed with another key, so it does not install over the
   Play build.
