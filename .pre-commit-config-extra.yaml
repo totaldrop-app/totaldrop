@@ -145,6 +145,13 @@ repos:
         files: \.(rs|ts|js|mjs|dart|qml|h|cpp|kt|kts|gradle|sh|py|css)$
         pass_filenames: false
 
+      - id: component-versions-manifest
+        name: versions.json matches manifests, lockfiles, and recipes
+        language: system
+        entry: sh -c 'node --test tools/test-version.mjs && node tools/version.mjs check'
+        files: ^versions\.json$|(^|/)Cargo\.(toml|lock)$|(^|/)package(-lock)?\.json$|^app/(pubspec\.yaml|lib/main\.dart)$|^packaging/(arch/PKGBUILD|rpm/totaldrop\.spec|debian/changelog|linux/app\.totaldrop\.TotalDrop\.metainfo\.xml)$|^docs/ARCHITECTURE\.refs\.json$|^tools/(test-)?version\.mjs$
+        pass_filenames: false
+
       - id: component-versions
         name: component versions
         language: system

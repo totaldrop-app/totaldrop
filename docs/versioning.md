@@ -126,8 +126,9 @@ under the release heading with `tools/changelog.mjs release`, verify with
 `node tools/version.mjs check`, review and merge the release PR, and tag the
 commit on `main`. CI verifies the tag with
 `node tools/version.mjs check --tag`, builds the packages from the tag, adds
-build provenance and opens a draft release. Nothing built on a personal
-machine is published.
+build provenance and opens a draft release (marking it as a GitHub pre-release
+only when the version carries a `-` pre-release suffix). Nothing built on a
+personal machine is published.
 
 On Android, the signed Play package is built from the `android-v*` tag with
 `--dart-define=TOTALDROP_VERSION=<version>`, only with the upload key in the
