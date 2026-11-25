@@ -529,6 +529,13 @@ treated as final.
       (`totaldrop_core::TEXT_FILE`). An old sender never sets it. Absent
       means `false`.
     - The receiver shows a text as data: it never opens a link on its own.
+      When the entire received text is a single `http://` or `https://` web
+      URL (`totaldrop_proto::single_web_url`, capped at `MAX_WEB_URL_BYTES` =
+      2048 UTF-8 bytes both before and after normalization, refusing
+      userinfo, backslashes, invisible marks, obfuscated IPv4, and
+      IPv4-mapped IPv6, and normalizing IDNs to ASCII Punycode, #53), the
+      apps may offer an "Open link" action that opens the browser only after
+      an explicit confirmation showing the normalized destination address.
       The command line names control, format and separator characters
       (`U+202E`, `U+001B`, a `\r` inside a line) instead of letting a
       terminal act on them; the joiners `U+200C`/`U+200D` stay, since

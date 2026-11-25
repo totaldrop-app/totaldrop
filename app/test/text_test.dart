@@ -280,10 +280,16 @@ void main() {
         outer.position.jumpTo(outer.position.maxScrollExtent);
         await tester.pump();
 
+        expect(
+          find.text(
+            'Only the beginning of the text is shown. Copy text copies all of it.',
+          ),
+          findsOneWidget,
+        );
         expect(find.text('Copy text'), findsOneWidget);
         expect(find.text('Share text'), findsNothing);
 
-        // A normal-sized text handles PlatformException from the share sheet cleanly.
+        // A normal-sized text surfaces a snackbar on share PlatformException.
         final repo2 = FakeRepository();
         final vm2 = ReceiveViewModel(repository: repo2)..setInput('7-a-b');
         final connected2 = vm2.connect();
@@ -304,7 +310,9 @@ void main() {
         await tester.pump();
         await tester.tap(find.text('Share text'));
         await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
         expect(tester.takeException(), isNull);
+        expect(find.text('Something went wrong.'), findsOneWidget);
       },
     );
 
@@ -313,10 +321,13 @@ void main() {
       (tester) async {
         final opened = <String>[];
         var browserAvailable = true;
+        Object? channelError;
         const channel = MethodChannel('app.totaldrop/open_url');
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
             .setMockMethodCallHandler(channel, (call) async {
               expect(call.method, 'open');
+              final error = channelError;
+              if (error != null) throw error;
               opened.add(call.arguments as String);
               return browserAvailable;
             });
@@ -378,6 +389,27 @@ void main() {
           find.text('No app on this device could open the link.'),
           findsOneWidget,
         );
+        await tester.pump(const Duration(seconds: 5));
+
+        // PlatformException and MissingPluginException are caught and show openLinkFailed.
+        for (final error in <Object>[
+          PlatformException(code: 'FAILED'),
+          MissingPluginException('missing'),
+        ]) {
+          channelError = error;
+          await tester.tap(find.text('Open link'));
+          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 300));
+          await tester.tap(find.text('Open'));
+          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 300));
+          expect(tester.takeException(), isNull);
+          expect(
+            find.text('No app on this device could open the link.'),
+            findsOneWidget,
+          );
+          await tester.pump(const Duration(seconds: 5));
+        }
       },
     );
   });

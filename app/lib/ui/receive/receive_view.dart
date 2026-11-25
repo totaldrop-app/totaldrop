@@ -517,7 +517,14 @@ class _TextDone extends StatelessWidget {
       ),
     );
     if (confirmed != true) return;
-    final opened = await _openUrlChannel.invokeMethod<bool>('open', url);
+    bool? opened;
+    try {
+      opened = await _openUrlChannel.invokeMethod<bool>('open', url);
+    } on PlatformException {
+      opened = false;
+    } on MissingPluginException {
+      opened = false;
+    }
     if (!(opened ?? false) && context.mounted) {
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(l.openLinkFailed)));
@@ -586,6 +593,8 @@ class _TextDone extends StatelessWidget {
           label: Text(l.copyText),
         ),
         Gap.s,
+        // Any text above 128 Ki UTF-16 code units exceeds SHOWN_CHARS (16 Ki
+        // scalar values), so receiveTextShortened above already points to Copy text.
         if (text.length <= maxSharedTextChars) ...[
           OutlinedButton.icon(
             onPressed: () async {
@@ -597,7 +606,10 @@ class _TextDone extends StatelessWidget {
                   await SharePlus.instance.share(ShareParams(text: text));
                 }
               } on PlatformException {
-                // Keep UI responsive if the system share sheet fails.
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context)
+                      .showSnackBar(SnackBar(content: Text(l.errorOther)));
+                }
               }
             },
             icon: const Icon(Icons.share_outlined),

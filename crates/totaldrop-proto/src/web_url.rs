@@ -39,10 +39,18 @@ pub fn single_web_url(text: &str) -> Option<String> {
         return None;
     }
 
-    let rest = if trimmed.len() > 8 && trimmed[..8].eq_ignore_ascii_case("https://") {
-        &trimmed[8..]
-    } else if trimmed.len() > 7 && trimmed[..7].eq_ignore_ascii_case("http://") {
-        &trimmed[7..]
+    let rest = if trimmed
+        .as_bytes()
+        .get(..8)
+        .is_some_and(|p| p.eq_ignore_ascii_case(b"https://"))
+    {
+        trimmed.get(8..)?
+    } else if trimmed
+        .as_bytes()
+        .get(..7)
+        .is_some_and(|p| p.eq_ignore_ascii_case(b"http://"))
+    {
+        trimmed.get(7..)?
     } else {
         return None;
     };
@@ -77,8 +85,13 @@ pub fn single_web_url(text: &str) -> Option<String> {
                 return None;
             }
         }
-        Host::Ipv6(_) => {
-            if !authority.starts_with('[') || !authority.contains(']') {
+        Host::Ipv6(ip) => {
+            // Reject IPv4-mapped IPv6 literals (`[::ffff:127.0.0.1]`,
+            // `[::ffff:7f00:1]`) consistently with the IPv4 obfuscation rule.
+            if ip.to_ipv4_mapped().is_some()
+                || !authority.starts_with('[')
+                || !authority.contains(']')
+            {
                 return None;
             }
         }
@@ -177,6 +190,10 @@ mod tests {
             "",
             "   ",
             "totaldrop.app",
+            "http:/é",
+            "http:/éx",
+            "https:/é",
+            "https:/éx",
             "javascript:alert(1)",
             "data:text/html,<script>alert(1)</script>",
             "file:///etc/passwd",
@@ -205,6 +222,9 @@ mod tests {
             "https://１２７.１/",
             "https://127。1/",
             "https://127.0.0.1./",
+            "http://[::ffff:127.0.0.1]/",
+            "https://[::ffff:7f00:1]/",
+            "http://[0:0:0:0:0:ffff:127.0.0.1]/",
             "https://intranet/",
             "https://.",
             "https://example..com/",
