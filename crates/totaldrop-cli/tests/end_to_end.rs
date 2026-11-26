@@ -1420,25 +1420,48 @@ async fn delayed_ws_url(ws_url: &str, one_way: Duration) -> String {
                 let pipe = |mut r: tokio::net::tcp::OwnedReadHalf,
                             mut w: tokio::net::tcp::OwnedWriteHalf| async move {
                     use tokio::io::{AsyncReadExt, AsyncWriteExt};
+                    // Bound in-flight bytes per hop (32 * 16 KiB = 512 KiB) so
+                    // TCP backpressure limits bulk queue depth like a real WAN
+                    // link instead of burying `Control::Cancel` behind tens of
+                    // megabytes of buffered frames (#654).
                     let (tx, mut rx) =
-                        tokio::sync::mpsc::unbounded_channel::<(tokio::time::Instant, Vec<u8>)>();
+                        tokio::sync::mpsc::channel::<(tokio::time::Instant, Vec<u8>)>(32);
                     let reader = async move {
-                        let mut buf = vec![0u8; 64 * 1024];
+                        let mut buf = vec![0u8; 16 * 1024];
                         while let Ok(n) = r.read(&mut buf).await {
                             if n == 0 {
                                 break;
                             }
                             let due = tokio::time::Instant::now().checked_add(one_way).unwrap();
-                            if tx.send((due, buf[..n].to_vec())).is_err() {
+                            if tx.send((due, buf[..n].to_vec())).await.is_err() {
                                 break;
                             }
                         }
                     };
                     let writer = async move {
-                        while let Some((due, chunk)) = rx.recv().await {
-                            tokio::time::sleep_until(due).await;
+                        let mut next = rx.recv().await;
+                        while let Some((due, mut chunk)) = next {
+                            if tokio::time::Instant::now() < due {
+                                tokio::time::sleep_until(due).await;
+                            }
+                            // Coalesce chunks whose propagation delay has
+                            // already elapsed so coarse OS timers (e.g.
+                            // Windows's 15.6 ms tick) do not multiply wakeups.
+                            let now = tokio::time::Instant::now();
+                            next = None;
+                            while let Ok((d, c)) = rx.try_recv() {
+                                if d <= now {
+                                    chunk.extend_from_slice(&c);
+                                } else {
+                                    next = Some((d, c));
+                                    break;
+                                }
+                            }
                             if w.write_all(&chunk).await.is_err() {
                                 return;
+                            }
+                            if next.is_none() {
+                                next = rx.recv().await;
                             }
                         }
                         let _ = w.shutdown().await;
