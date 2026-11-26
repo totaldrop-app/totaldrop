@@ -571,7 +571,12 @@ impl PreparedSend {
             // Free the connection at once instead of waiting for it to idle.
             conn.close(0u32.into(), b"failed");
         }
-        finish_endpoint(endpoint, drained, Duration::from_secs(5)).await;
+        finish_endpoint(
+            endpoint,
+            drained,
+            close_wait_limit(&report, Duration::from_secs(5)),
+        )
+        .await;
         report
     }
 }
@@ -658,7 +663,7 @@ impl IncomingOffer {
         finish_endpoint(
             self.endpoint,
             transfer::peer_closed(&self.conn),
-            Duration::from_secs(2),
+            STOP_CLOSE_WAIT,
         )
         .await;
         e
@@ -753,7 +758,12 @@ impl IncomingOffer {
         if !drained {
             self.conn.close(0u32.into(), b"done");
         }
-        finish_endpoint(self.endpoint, drained, Duration::from_secs(2)).await;
+        finish_endpoint(
+            self.endpoint,
+            drained,
+            close_wait_limit(&report, Duration::from_secs(2)),
+        )
+        .await;
         report
     }
 
@@ -771,7 +781,12 @@ impl IncomingOffer {
         if !drained {
             self.conn.close(0u32.into(), b"done");
         }
-        finish_endpoint(self.endpoint, drained, Duration::from_secs(2)).await;
+        finish_endpoint(
+            self.endpoint,
+            drained,
+            close_wait_limit(&report, Duration::from_secs(2)),
+        )
+        .await;
         report
     }
 
@@ -781,6 +796,25 @@ impl IncomingOffer {
         let _ = tokio::time::timeout(Duration::from_secs(2), self.conn.closed()).await;
         self.conn.close(0u32.into(), b"declined");
         Ok(())
+    }
+}
+
+/// How long [`finish_endpoint`] keeps an actively closing endpoint alive after
+/// [`Error::Stopped`] when the peer did not already close during
+/// `tell_stopped`'s `STOP_NOTICE` wait (#654). Long enough for the locally
+/// generated `CONNECTION_CLOSE` datagram to leave the socket or relay link
+/// (#512) without stacking another full 2 s–5 s drain timeout on top of
+/// `STOP_NOTICE`.
+const STOP_CLOSE_WAIT: Duration = Duration::from_millis(350);
+
+/// Drain limit for [`finish_endpoint`]: uses [`STOP_CLOSE_WAIT`] after an
+/// explicit [`Error::Stopped`] (where `tell_stopped` already ran its own
+/// `STOP_NOTICE` wait and closed the connection), and `normal` otherwise (#654).
+fn close_wait_limit<T>(report: &Result<T>, normal: Duration) -> Duration {
+    if matches!(report, Err(Error::Stopped)) {
+        STOP_CLOSE_WAIT
+    } else {
+        normal
     }
 }
 
@@ -1226,6 +1260,55 @@ mod tests {
         assert!(
             elapsed >= Duration::from_millis(300),
             "finish_endpoint skipped wait_idle early ({elapsed:?}) while actively closing"
+        );
+    }
+
+    /// #654: after `Error::Stopped`, `close_wait_limit` bounds the post-stop
+    /// endpoint flush to `STOP_CLOSE_WAIT` rather than stacking another full
+    /// 2 s–5 s drain timeout on top of `STOP_NOTICE`, while normal completion
+    /// and non-stop errors keep their full drain limits.
+    #[tokio::test]
+    async fn stopped_close_wait_caps_silent_peer_drain_without_skipping_flush() {
+        let sender_normal = Duration::from_secs(5);
+        let receiver_normal = Duration::from_secs(2);
+        assert_eq!(
+            close_wait_limit(&Ok::<(), Error>(()), sender_normal),
+            sender_normal
+        );
+        assert_eq!(
+            close_wait_limit(
+                &Err::<(), Error>(Error::Cancelled("stopped".into())),
+                receiver_normal
+            ),
+            receiver_normal
+        );
+        assert_eq!(
+            close_wait_limit(&Err::<(), Error>(Error::Stopped), sender_normal),
+            STOP_CLOSE_WAIT
+        );
+        assert_eq!(
+            close_wait_limit(&Err::<(), Error>(Error::Stopped), receiver_normal),
+            STOP_CLOSE_WAIT
+        );
+
+        let (sender_ep, sconn, mut schan, _receiver_ep, _rconn, _rchan, silent) =
+            delayed_endpoints(Duration::from_millis(120)).await;
+        silent.store(true, std::sync::atomic::Ordering::SeqCst);
+
+        let err = transfer::tell_stopped(&sconn, &mut schan.sealer, &mut schan.send, [3; 16]).await;
+        assert!(matches!(err, Error::Stopped));
+        let report: Result<()> = Err(err);
+        let wait_started = tokio::time::Instant::now();
+        finish_endpoint(
+            sender_ep,
+            transfer::peer_closed(&sconn),
+            close_wait_limit(&report, sender_normal),
+        )
+        .await;
+        let elapsed = wait_started.elapsed();
+        assert!(
+            elapsed >= Duration::from_millis(300) && elapsed < Duration::from_secs(1),
+            "post-stop flush wait should stay near STOP_CLOSE_WAIT ({STOP_CLOSE_WAIT:?}), got {elapsed:?}"
         );
     }
 }
