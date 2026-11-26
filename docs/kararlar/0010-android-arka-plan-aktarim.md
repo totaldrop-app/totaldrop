@@ -28,9 +28,12 @@
   use, is deleted from the server after 15 minutes if unused, and the
   verification words are compared.
 - **Consequences:**
-  - New permissions: `RUN_USER_INITIATED_JOBS`, `POST_NOTIFICATIONS` (asked
+  - Permissions: `RUN_USER_INITIATED_JOBS`, `POST_NOTIFICATIONS` (asked
     on the first transfer; if refused, the transfer still continues, only
-    without a notification) and `ACCESS_NETWORK_STATE`.
+    without a notification), `ACCESS_NETWORK_STATE`, `ACCESS_WIFI_STATE`
+    and `WAKE_LOCK` (`TransferJob` also holds a non-reference-counted
+    `WifiLock` and a 6-hour-bounded `PARTIAL_WAKE_LOCK` while a transfer
+    is active so Wi-Fi and CPU do not sleep when the screen locks, #340).
   - The notification texts are in `l10n/app/`, in 35 languages.
   - If the system stops the job, or the person stops it from the task
     manager, the transfer stops too.
