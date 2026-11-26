@@ -12,7 +12,7 @@ pkgdesc='Send files straight to another device, end-to-end encrypted'
 arch=('x86_64' 'aarch64')
 url='https://totaldrop.app'
 license=('GPL-3.0-or-later' 'MIT OR Apache-2.0')
-depends=('qt6-base' 'qt6-declarative' 'qt6-wayland' 'qt6-svg'
+depends=('qt6-base' 'qt6-declarative' 'qt6-wayland' 'qt6-svg' 'libxcb'
          'xdg-desktop-portal' 'hicolor-icon-theme' 'ttf-font' 'gcc-libs' 'glibc')
 makedepends=('cargo')
 optdepends=('qqc2-desktop-style: Breeze controls under KDE Plasma'

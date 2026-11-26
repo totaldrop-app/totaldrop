@@ -231,11 +231,14 @@ fn has_scheme(s: &str) -> bool {
 }
 
 /// A request the window has to show, with the launcher's activation token
-/// (Wayland `xdg-activation`), which lets the window come to the front.
+/// (Wayland `xdg-activation`) and X11 startup notification id
+/// (`DESKTOP_STARTUP_ID`), which let the window come to the front and end
+/// the desktop's busy cursor (#178, #184).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Opened {
     pub request: Request,
     pub token: Option<String>,
+    pub startup_id: Option<String>,
 }
 
 type Deliver = Box<dyn Fn(Opened) + Send>;
@@ -356,6 +359,7 @@ fn start_args_with(req: Request, package: Package, queue: &DeliveryQueue) -> Vec
             Opened {
                 request: req,
                 token: None,
+                startup_id: None,
             },
             Some(package),
         );
@@ -379,6 +383,75 @@ fn token(platform_data: &HashMap<String, OwnedVariant>) -> Option<String> {
         .filter(|t| t.bytes().all(|b| b.is_ascii_graphic()))
 }
 
+/// Validate a freedesktop `desktop-startup-id`. The Startup Notification
+/// spec sets no length cap, so this intentionally shares `MAX_TOKEN_BYTES`
+/// (1024 bytes) with `activation-token` to bound untrusted D-Bus input.
+fn valid_startup_id(id: &str) -> bool {
+    !id.is_empty() && id.len() <= MAX_TOKEN_BYTES && !id.chars().any(char::is_control)
+}
+
+/// The X11 startup notification id in `platform_data` (#184): non-empty
+/// text of a sane length with no control characters. Unlike
+/// `activation-token`, a startup id may hold spaces, quotes or non-ASCII
+/// letters from the launcher's or host's name.
+fn startup_id(platform_data: &HashMap<String, OwnedVariant>) -> Option<String> {
+    text(platform_data, "desktop-startup-id").filter(|s| valid_startup_id(s))
+}
+
+/// Extract the X11 server timestamp from a freedesktop `DESKTOP_STARTUP_ID`
+/// (`…_TIME<timestamp>`, Startup Notification Protocol, #184).
+///
+/// Reads the suffix after the last `_TIME`, accepts unsigned 32-bit decimal
+/// values as well as signed negative 32-bit decimal values (written by Xlib
+/// launchers once server time passes `2^31` ms), and rejects `0`
+/// (`XCB_CURRENT_TIME`, which in `_NET_WM_USER_TIME` means "do not focus").
+pub fn startup_timestamp(id: &str) -> Option<u32> {
+    let (_, tail) = id.rsplit_once("_TIME")?;
+    let ts = if !tail.is_empty() && tail.bytes().all(|b| b.is_ascii_digit()) {
+        tail.parse::<u32>().ok()?
+    } else if let Some(digits) = tail.strip_prefix('-')
+        && !digits.is_empty()
+        && digits.bytes().all(|b| b.is_ascii_digit())
+    {
+        tail.parse::<i32>().ok()?.cast_unsigned()
+    } else {
+        return None;
+    };
+    (ts != 0).then_some(ts)
+}
+
+/// Format the X11 `_NET_STARTUP_INFO` `remove: ID="…"` client-message
+/// payload in NUL-terminated, zero-padded 20-byte chunks (#184).
+///
+/// Every `\` and `"` inside `id` is escaped with `\` as required by the
+/// freedesktop Startup Notification Protocol, so an untrusted `id` cannot
+/// close the quote or inject keys. Invalid ids yield an empty vector.
+pub fn startup_remove_chunks(id: &str) -> Vec<[u8; 20]> {
+    if !valid_startup_id(id) {
+        return Vec::new();
+    }
+    let mut raw = Vec::with_capacity(id.len().saturating_mul(2).saturating_add(14));
+    raw.extend_from_slice(b"remove: ID=\"");
+    for &b in id.as_bytes() {
+        if b == b'\\' || b == b'"' {
+            raw.push(b'\\');
+        }
+        raw.push(b);
+    }
+    raw.push(b'"');
+    raw.push(0);
+
+    raw.chunks(20)
+        .map(|part| {
+            let mut chunk = [0u8; 20];
+            for (dst, &src) in chunk.iter_mut().zip(part) {
+                *dst = src;
+            }
+            chunk
+        })
+        .collect()
+}
+
 /// `org.freedesktop.Application`, as the Desktop Entry Specification
 /// defines it.
 struct Application {
@@ -392,6 +465,7 @@ impl Application {
             Opened {
                 request: Request::default(),
                 token: token(&platform_data),
+                startup_id: startup_id(&platform_data),
             },
             None,
         );
@@ -409,6 +483,7 @@ impl Application {
             Opened {
                 request: req,
                 token: token(&platform_data),
+                startup_id: startup_id(&platform_data),
             },
             filter,
         );
@@ -431,6 +506,7 @@ impl Application {
                     unreadable_in_flatpak: false,
                 },
                 token: token(&platform_data),
+                startup_id: startup_id(&platform_data),
             },
             None,
         );
@@ -744,16 +820,25 @@ fn gone(e: &zbus::Error) -> bool {
 }
 
 /// Call the running window with `request` and this launch's activation
-/// token.
+/// token and X11 startup notification id.
 pub async fn forward(conn: &zbus::Connection, request: &Request) -> zbus::Result<()> {
-    let mut platform_data: HashMap<&str, zbus::Variant<'_>> = HashMap::new();
     let token = std::env::var("XDG_ACTIVATION_TOKEN").ok();
-    if let Some(t) = &token {
-        platform_data.insert("activation-token", zbus::Variant::from(t.as_str()));
-    }
     let startup = std::env::var("DESKTOP_STARTUP_ID").ok();
-    if let Some(s) = &startup {
-        platform_data.insert("desktop-startup-id", zbus::Variant::from(s.as_str()));
+    forward_with(conn, request, token.as_deref(), startup.as_deref()).await
+}
+
+async fn forward_with(
+    conn: &zbus::Connection,
+    request: &Request,
+    token: Option<&str>,
+    startup: Option<&str>,
+) -> zbus::Result<()> {
+    let mut platform_data: HashMap<&str, zbus::Variant<'_>> = HashMap::new();
+    if let Some(t) = token {
+        platform_data.insert("activation-token", zbus::Variant::from(t));
+    }
+    if let Some(s) = startup {
+        platform_data.insert("desktop-startup-id", zbus::Variant::from(s));
     }
     if !request.items.is_empty() {
         if let Some(s) = &request.screen {
@@ -888,6 +973,22 @@ mod tests {
         );
         let o = rx.recv_timeout(TIMEOUT).unwrap();
         assert_eq!(o.request, second);
+
+        // Forwarding over the bus carries both Wayland's activation token
+        // and X11's DESKTOP_STARTUP_ID (#184).
+        let caller = bus.builder().build().await.unwrap();
+        forward_with(
+            &caller,
+            &second,
+            Some("wayland-tok"),
+            Some("kwin;1_TIME777"),
+        )
+        .await
+        .unwrap();
+        let o = rx.recv_timeout(TIMEOUT).unwrap();
+        assert_eq!(o.request, second);
+        assert_eq!(o.token.as_deref(), Some("wayland-tok"));
+        assert_eq!(o.startup_id.as_deref(), Some("kwin;1_TIME777"));
 
         // The Flatpak started while the distribution package's window is
         // open still hands over, and learns which package has the window
@@ -1159,6 +1260,140 @@ mod tests {
         assert_eq!(token(&HashMap::new()), None);
     }
 
+    #[test]
+    fn startup_ids_are_checked() {
+        let pd = |s: &str| {
+            HashMap::from([(
+                "desktop-startup-id".to_owned(),
+                zbus::Variant::from(s).try_to_owned().unwrap(),
+            )])
+        };
+        let kde = "box;1700000000;123456;789-totaldrop_TIME424242";
+        assert_eq!(startup_id(&pd(kde)).as_deref(), Some(kde));
+        let gnome = "Files/TotalDrop_1234_0-çiçek host_TIME99";
+        assert_eq!(startup_id(&pd(gnome)).as_deref(), Some(gnome));
+        let quoted = r#"my "launcher"\app_TIME7"#;
+        assert_eq!(startup_id(&pd(quoted)).as_deref(), Some(quoted));
+        let max = "x".repeat(MAX_TOKEN_BYTES);
+        assert_eq!(startup_id(&pd(&max)).as_deref(), Some(max.as_str()));
+
+        assert_eq!(startup_id(&pd("")), None);
+        assert_eq!(startup_id(&pd(&"x".repeat(MAX_TOKEN_BYTES + 1))), None);
+        for bad in [
+            "a\0b",
+            "a\nb",
+            "a\rb",
+            "a\tb",
+            "a\x1bb",
+            "a\x7fb",
+            "a\u{0085}b",
+        ] {
+            assert_eq!(startup_id(&pd(bad)), None, "{bad:?}");
+        }
+        let wrong_type = HashMap::from([(
+            "desktop-startup-id".to_owned(),
+            zbus::Variant::from(42u32).try_to_owned().unwrap(),
+        )]);
+        assert_eq!(startup_id(&wrong_type), None);
+        assert_eq!(startup_id(&HashMap::new()), None);
+    }
+
+    #[test]
+    fn startup_timestamps_are_parsed() {
+        assert_eq!(
+            startup_timestamp("box;1700000000;123;456-totaldrop_TIME424242"),
+            Some(424242)
+        );
+        assert_eq!(startup_timestamp("id_TIME1"), Some(1));
+        assert_eq!(startup_timestamp("id_TIME4294967295"), Some(u32::MAX));
+        // Last `_TIME` wins when the launcher or host name contains `_TIME`.
+        assert_eq!(startup_timestamp("host_TIME1_app_TIME98765"), Some(98765));
+        // Xlib launchers that format 32-bit Time with `%d` past 2^31 ms.
+        assert_eq!(startup_timestamp("id_TIME-1"), Some(u32::MAX));
+        assert_eq!(startup_timestamp("id_TIME-2147483648"), Some(0x8000_0000));
+
+        // 0 is XCB_CURRENT_TIME / "do not focus" in _NET_WM_USER_TIME.
+        assert_eq!(startup_timestamp("id_TIME0"), None);
+        assert_eq!(startup_timestamp("id_TIME000"), None);
+        assert_eq!(startup_timestamp("id_TIME-0"), None);
+
+        for missing_or_bad in [
+            "plain-startup-id",
+            "id_TIME",
+            "id_TIME-",
+            "id_TIME+42",
+            "id_TIME42ms",
+            "id_TIME 42",
+            "id_TIME4294967296",
+            "id_TIME-2147483649",
+            "ok_TIME42_bad_TIME",
+        ] {
+            assert_eq!(
+                startup_timestamp(missing_or_bad),
+                None,
+                "{missing_or_bad:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn startup_remove_messages_are_escaped_and_chunked() {
+        let decode = |chunks: &[[u8; 20]]| -> Vec<u8> { chunks.as_flattened().to_vec() };
+
+        // Quotes and backslashes inside ID="…" are escaped so an untrusted id
+        // cannot close the quote or inject keys; spaces and UTF-8 stay as-is.
+        let tricky = r#"a" KEY="evil\çiçek"#;
+        let chunks = startup_remove_chunks(tricky);
+        let flat = decode(&chunks);
+        let expected = b"remove: ID=\"a\\\" KEY=\\\"evil\\\\\xC3\xA7i\xC3\xA7ek\"\0";
+        assert_eq!(&flat[..expected.len()], expected);
+        assert!(flat[expected.len()..].iter().all(|&b| b == 0));
+
+        // Boundary 19 bytes before NUL (`remove: ID="123456"` = 19 + 1 = 20):
+        // fits in a single 20-byte ClientMessage ending with NUL.
+        let c19 = startup_remove_chunks("123456");
+        assert_eq!(c19.len(), 1);
+        assert_eq!(&c19[0], b"remove: ID=\"123456\"\0");
+
+        // Boundary 20 bytes before NUL (`remove: ID="1234567"` = 20 + 1 = 21):
+        // needs a second 20-byte ClientMessage carrying the terminating NUL.
+        let c20 = startup_remove_chunks("1234567");
+        assert_eq!(c20.len(), 2);
+        assert_eq!(&c20[0], b"remove: ID=\"1234567\"");
+        assert_eq!(c20[1], [0u8; 20]);
+
+        // Boundary 21 bytes before NUL (`remove: ID="12345678"` = 21 + 1 = 22):
+        // second chunk carries closing `"` + NUL + 18 padding zeros.
+        let c21 = startup_remove_chunks("12345678");
+        assert_eq!(c21.len(), 2);
+        assert_eq!(&c21[0], b"remove: ID=\"12345678");
+        let mut tail = [0u8; 20];
+        tail[0] = b'"';
+        assert_eq!(c21[1], tail);
+
+        // Escaped quote at / straddling the 20-byte chunk boundary:
+        // `"123456\""` puts `\` at 18 and `"` at 19, with closing `"` + NUL in chunk 1;
+        // `"1234567\""` splits `\` (byte 19, chunk 0) and `"` (byte 0, chunk 1).
+        let eq_end = startup_remove_chunks("123456\"");
+        assert_eq!(eq_end.len(), 2);
+        assert_eq!(&eq_end[0], b"remove: ID=\"123456\\\"");
+        assert_eq!(eq_end[1], tail);
+
+        let eq_split = startup_remove_chunks("1234567\"");
+        assert_eq!(eq_split.len(), 2);
+        assert_eq!(&eq_split[0], b"remove: ID=\"1234567\\");
+        let mut split_tail = [0u8; 20];
+        split_tail[0] = b'"';
+        split_tail[1] = b'"';
+        assert_eq!(eq_split[1], split_tail);
+
+        // Invalid inputs produce no chunks even if called directly.
+        assert!(startup_remove_chunks("").is_empty());
+        assert!(startup_remove_chunks(&"x".repeat(MAX_TOKEN_BYTES + 1)).is_empty());
+        assert!(startup_remove_chunks("bad\nid").is_empty());
+        assert!(startup_remove_chunks("bad\0id").is_empty());
+    }
+
     /// The hand-off end to end over a private bus connection: each call
     /// arrives in the inbox as the running window will see it.
     #[tokio::test]
@@ -1184,11 +1419,15 @@ mod tests {
         )
         .unwrap();
 
-        let call = |method: &'static str, uris: Vec<String>, screen: Option<&'static str>| {
+        let call = |method: &'static str,
+                    uris: Vec<String>,
+                    screen: Option<&'static str>,
+                    startup: &'static str| {
             let client = client.clone();
             async move {
                 let mut pd: HashMap<&str, zbus::Variant<'_>> = HashMap::new();
                 pd.insert("activation-token", zbus::Variant::from("tok"));
+                pd.insert("desktop-startup-id", zbus::Variant::from(startup));
                 if let Some(s) = screen {
                     pd.insert(SCREEN_KEY, zbus::Variant::from(s));
                 }
@@ -1235,6 +1474,7 @@ mod tests {
             "Open",
             vec!["file:///tmp/a%20b".into(), "totaldrop:7-a-b".into()],
             Some("send"),
+            "dolphin;1_TIME101",
         )
         .await
         .unwrap();
@@ -1242,19 +1482,33 @@ mod tests {
         assert_eq!(o.request.items, ["/tmp/a b", "totaldrop:7-a-b"]);
         assert_eq!(o.request.screen.as_deref(), Some("send"));
         assert_eq!(o.token.as_deref(), Some("tok"));
+        assert_eq!(o.startup_id.as_deref(), Some("dolphin;1_TIME101"));
 
-        call("ActivateAction", vec![], Some("receive"))
+        call("ActivateAction", vec![], Some("receive"), "panel;2_TIME202")
             .await
             .unwrap();
-        assert_eq!(rx.recv().unwrap().request.args(), ["--screen=receive"]);
+        let o = rx.recv().unwrap();
+        assert_eq!(o.request.args(), ["--screen=receive"]);
+        assert_eq!(o.startup_id.as_deref(), Some("panel;2_TIME202"));
         assert!(
-            call("ActivateAction", vec![], Some("format-disk"))
+            call("ActivateAction", vec![], Some("format-disk"), "panel;3")
                 .await
                 .is_err()
         );
 
-        call("Activate", vec![], None).await.unwrap();
-        assert_eq!(rx.recv().unwrap().request, Request::default());
+        call("Activate", vec![], None, "launcher;4_TIME404")
+            .await
+            .unwrap();
+        let o = rx.recv().unwrap();
+        assert_eq!(o.request, Request::default());
+        assert_eq!(o.startup_id.as_deref(), Some("launcher;4_TIME404"));
+
+        // A malformed startup id is dropped while the call itself still lands.
+        call("Activate", vec![], None, "bad\nstartup")
+            .await
+            .unwrap();
+        let o = rx.recv().unwrap();
+        assert_eq!(o.startup_id, None);
     }
 
     /// When the Flatpak window is open and the system package's "Send with
@@ -1464,6 +1718,7 @@ mod tests {
                 unreadable_in_flatpak: false,
             },
             token: Some("t1".into()),
+            startup_id: None,
         };
         let second = Opened {
             request: Request {
@@ -1472,6 +1727,7 @@ mod tests {
                 unreadable_in_flatpak: false,
             },
             token: Some("t2".into()),
+            startup_id: None,
         };
         let third = Opened {
             request: Request {
@@ -1480,6 +1736,7 @@ mod tests {
                 unreadable_in_flatpak: false,
             },
             token: Some("t3".into()),
+            startup_id: None,
         };
 
         assert!(queue.enqueue(first, Some(Package::Flatpak)));
@@ -1531,6 +1788,7 @@ mod tests {
                 unreadable_in_flatpak: false,
             },
             token: None,
+            startup_id: None,
         };
         assert!(queue.enqueue(blocked, Some(Package::Flatpak)));
         entered_rx
@@ -1545,6 +1803,7 @@ mod tests {
                     unreadable_in_flatpak: false,
                 },
                 token: None,
+                startup_id: None,
             };
             assert!(queue.enqueue(job, None), "slot {i} fits in bounded queue");
         }
@@ -1555,6 +1814,7 @@ mod tests {
                 unreadable_in_flatpak: false,
             },
             token: None,
+            startup_id: None,
         };
         assert!(
             !queue.enqueue(overflow, None),

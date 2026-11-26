@@ -47,6 +47,9 @@
     "run: node --check site/public/app.js && node --check site/public/lang.js && node --check site/public/msg.js && node --check site/functions/_middleware.js",
     "run: node --test site/tools/test-security-txt.mjs"
   ],
+  "Cargo.toml:4": [
+    "exclude = [\"fuzz\"]"
+  ],
   "app/android/app/build.gradle.kts:22-61": [
     "val envStoreFile: String? = System.getenv(\"ANDROID_UPLOAD_STORE_FILE\")",
     "keyAlias = System.getenv(\"ANDROID_UPLOAD_ALIAS\") ?: \"upload\""
@@ -83,9 +86,6 @@
   ],
   "app/rust/src/api/transfer.rs:494": [
     "pub async fn connect_receive("
-  ],
-  "Cargo.toml:4": [
-    "exclude = [\"fuzz\"]"
   ],
   "crates/totaldrop-cli/Cargo.toml:20-22": [
     "totaldrop-core = { version = \"0.2.0-beta.5\", path = \"../totaldrop-core\" }",
@@ -466,13 +466,13 @@
   "linux/src/bridge/transfer.rs:782": [
     ".accept_with(&dest, Self::events(thread.clone(), g), &stop)"
   ],
-  "linux/src/instance.rs:750": [
+  "linux/src/instance.rs:825": [
     "let token = std::env::var(\"XDG_ACTIVATION_TOKEN\").ok();"
   ],
-  "linux/src/instance.rs:754": [
+  "linux/src/instance.rs:826": [
     "let startup = std::env::var(\"DESKTOP_STARTUP_ID\").ok();"
   ],
-  "linux/src/instance.rs:866": [
+  "linux/src/instance.rs:951": [
     "std::env::var_os(\"CI\").is_none(),"
   ],
   "linux/src/main.rs:56-59": [
