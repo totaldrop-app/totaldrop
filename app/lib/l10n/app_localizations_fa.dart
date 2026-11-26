@@ -574,7 +574,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get sendFlatpakUnreadable =>
-      'این فایل از Flatpak خوانده نمی‌شود. آن را با «افزودن فایل» انتخاب کنید، یا این پنجره را ببندید و دوباره امتحان کنید.';
+      'برخی موارد از Flatpak خوانده نمی‌شوند. آن‌ها را با «افزودن فایل» انتخاب کنید، یا این پنجره را ببندید و دوباره امتحان کنید.';
 
   @override
   String get sendText => 'ارسال متن';

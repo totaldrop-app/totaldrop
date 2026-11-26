@@ -567,7 +567,7 @@ class AppLocalizationsHu extends AppLocalizations {
 
   @override
   String get sendFlatpakUnreadable =>
-      'Ez a fájl nem olvasható be a Flatpakból. Válassza ki a Fájlok hozzáadása gombbal, vagy zárja be ezt az ablakot, és próbálja újra.';
+      'Néhány elem nem olvasható be a Flatpakból. Válassza ki őket a Fájlok hozzáadása gombbal, vagy zárja be ezt az ablakot, és próbálja újra.';
 
   @override
   String get sendText => 'Szöveg küldése';

@@ -540,7 +540,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get sendFlatpakUnreadable =>
-      'このファイルは Flatpak 版からは読み取れません。「ファイルを追加」で選ぶか、このウィンドウを閉じてやり直してください。';
+      '一部の項目は Flatpak 版からは読み取れません。「ファイルを追加」で選ぶか、このウィンドウを閉じてやり直してください。';
 
   @override
   String get sendText => 'テキストを送信';

@@ -214,7 +214,7 @@
   "@otherPackageFlatpak": {"description": "Linux desktop notification when TotalDrop is started from the distribution package while the Flatpak window is already open; that window comes forward instead (#351)"},
   "otherPackageSystem": "TotalDrop is already open from the .pkg, .deb or .rpm package, so that window was brought forward. Use one package at a time: quit that window to open this one.",
   "@otherPackageSystem": {"description": "Linux desktop notification when TotalDrop is started from the Flatpak while the window of the .pkg, .deb or .rpm package is already open; that window comes forward instead (#351)"},
-  "sendFlatpakUnreadable": "This file cannot be read from the Flatpak. Choose it with Add files, or close this window and try again.",
+  "sendFlatpakUnreadable": "Some items cannot be read from the Flatpak. Choose them with Add files, or close this window and try again.",
   "@sendFlatpakUnreadable": {"description": "Linux: shown on the Send screen when another launch hands over a path on the computer that the Flatpak window cannot read (#357). Add files is the sendAddFiles button on the same screen, which opens the file chooser; keep Flatpak as it is"},
   "sendText": "Send text",
   "@sendText": {"description": "Send screen: button and screen title for sending a piece of text instead of files"},

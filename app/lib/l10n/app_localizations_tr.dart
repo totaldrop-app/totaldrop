@@ -563,7 +563,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get sendFlatpakUnreadable =>
-      'Bu dosya Flatpak\'ten okunamıyor. Dosya ekle ile seçin ya da bu pencereyi kapatıp yeniden deneyin.';
+      'Bazı öğeler Flatpak\'ten okunamıyor. Dosya ekle ile seçin ya da bu pencereyi kapatıp yeniden deneyin.';
 
   @override
   String get sendText => 'Metin gönder';

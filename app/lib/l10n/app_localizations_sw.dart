@@ -573,7 +573,7 @@ class AppLocalizationsSw extends AppLocalizations {
 
   @override
   String get sendFlatpakUnreadable =>
-      'Faili hii haiwezi kusomwa kutoka Flatpak. Ichague kupitia Ongeza faili, au funga dirisha hili kisha ujaribu tena.';
+      'Baadhi ya vipengee haviwezi kusomwa kutoka Flatpak. Vichague kupitia Ongeza faili, au funga dirisha hili kisha ujaribu tena.';
 
   @override
   String get sendText => 'Tuma maandishi';

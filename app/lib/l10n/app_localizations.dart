@@ -1037,7 +1037,7 @@ abstract class AppLocalizations {
   /// Linux: shown on the Send screen when another launch hands over a path on the computer that the Flatpak window cannot read (#357). Add files is the sendAddFiles button on the same screen, which opens the file chooser; keep Flatpak as it is
   ///
   /// In en, this message translates to:
-  /// **'This file cannot be read from the Flatpak. Choose it with Add files, or close this window and try again.'**
+  /// **'Some items cannot be read from the Flatpak. Choose them with Add files, or close this window and try again.'**
   String get sendFlatpakUnreadable;
 
   /// Send screen: button and screen title for sending a piece of text instead of files

@@ -587,7 +587,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get sendFlatpakUnreadable =>
-      'Цей файл не вдається прочитати з Flatpak. Виберіть його через «Додати файли» або закрийте це вікно й спробуйте ще раз.';
+      'Деякі елементи не вдається прочитати з Flatpak. Виберіть їх через «Додати файли» або закрийте це вікно й спробуйте ще раз.';
 
   @override
   String get sendText => 'Надіслати текст';

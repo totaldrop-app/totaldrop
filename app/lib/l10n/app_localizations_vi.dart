@@ -560,7 +560,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get sendFlatpakUnreadable =>
-      'Không thể đọc tệp này từ bản Flatpak. Hãy chọn tệp bằng Thêm tệp, hoặc đóng cửa sổ này rồi thử lại.';
+      'Không thể đọc một số mục từ bản Flatpak. Hãy chọn chúng bằng Thêm tệp, hoặc đóng cửa sổ này rồi thử lại.';
 
   @override
   String get sendText => 'Gửi văn bản';

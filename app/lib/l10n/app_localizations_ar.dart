@@ -585,7 +585,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get sendFlatpakUnreadable =>
-      'لا يمكن قراءة هذا الملف من حزمة Flatpak. اختره عبر «إضافة ملفات»، أو أغلق هذه النافذة وحاول مرة أخرى.';
+      'لا يمكن قراءة بعض العناصر من حزمة Flatpak. اخترها عبر «إضافة ملفات»، أو أغلق هذه النافذة وحاول مرة أخرى.';
 
   @override
   String get sendText => 'إرسال نص';

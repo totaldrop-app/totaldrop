@@ -573,7 +573,7 @@ class AppLocalizationsHe extends AppLocalizations {
 
   @override
   String get sendFlatpakUnreadable =>
-      'לא ניתן לקרוא את הקובץ הזה מ־Flatpak. בחרו אותו דרך הוספת קבצים, או סגרו את החלון הזה ונסו שוב.';
+      'לא ניתן לקרוא חלק מהפריטים מ־Flatpak. בחרו אותם דרך הוספת קבצים, או סגרו את החלון הזה ונסו שוב.';
 
   @override
   String get sendText => 'שליחת טקסט';

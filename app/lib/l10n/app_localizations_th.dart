@@ -556,7 +556,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get sendFlatpakUnreadable =>
-      'อ่านไฟล์นี้จาก Flatpak ไม่ได้ ให้เลือกผ่าน เพิ่มไฟล์ หรือปิดหน้าต่างนี้แล้วลองอีกครั้ง';
+      'อ่านบางรายการจาก Flatpak ไม่ได้ ให้เลือกผ่าน เพิ่มไฟล์ หรือปิดหน้าต่างนี้แล้วลองอีกครั้ง';
 
   @override
   String get sendText => 'ส่งข้อความ';

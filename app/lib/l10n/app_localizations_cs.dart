@@ -587,7 +587,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get sendFlatpakUnreadable =>
-      'Tento soubor nelze z Flatpaku přečíst. Vyberte jej pomocí Přidat soubory, nebo toto okno zavřete a zkuste to znovu.';
+      'Některé položky nelze z Flatpaku přečíst. Vyberte je pomocí Přidat soubory, nebo toto okno zavřete a zkuste to znovu.';
 
   @override
   String get sendText => 'Odeslat text';

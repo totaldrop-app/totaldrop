@@ -591,7 +591,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get sendFlatpakUnreadable =>
-      'Este arquivo não pode ser lido pelo Flatpak. Escolha-o em Adicionar arquivos ou feche esta janela e tente novamente.';
+      'Alguns itens não podem ser lidos pelo Flatpak. Escolha-os em Adicionar arquivos ou feche esta janela e tente novamente.';
 
   @override
   String get sendText => 'Enviar texto';
@@ -1290,7 +1290,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get sendFlatpakUnreadable =>
-      'Este arquivo não pode ser lido pelo Flatpak. Escolha-o em Adicionar arquivos ou feche esta janela e tente novamente.';
+      'Alguns itens não podem ser lidos pelo Flatpak. Escolha-os em Adicionar arquivos ou feche esta janela e tente novamente.';
 
   @override
   String get sendText => 'Enviar texto';
@@ -1991,7 +1991,7 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
 
   @override
   String get sendFlatpakUnreadable =>
-      'Este ficheiro não pode ser lido a partir do Flatpak. Escolha-o em Adicionar ficheiros ou feche esta janela e tente novamente.';
+      'Alguns itens não podem ser lidos a partir do Flatpak. Escolha-os em Adicionar ficheiros ou feche esta janela e tente novamente.';
 
   @override
   String get sendText => 'Enviar texto';
