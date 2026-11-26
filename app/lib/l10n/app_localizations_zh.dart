@@ -531,7 +531,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get sendFlatpakUnreadable =>
-      '无法从 Flatpak 读取此文件。请通过“添加文件”选择它，或关闭此窗口后重试。';
+      '无法从 Flatpak 读取某些项目。请通过“添加文件”选择它们，或关闭此窗口后重试。';
 
   @override
   String get sendText => '发送文本';
@@ -1161,7 +1161,7 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
 
   @override
   String get sendFlatpakUnreadable =>
-      '无法从 Flatpak 读取此文件。请通过“添加文件”选择它，或关闭此窗口后重试。';
+      '无法从 Flatpak 读取某些项目。请通过“添加文件”选择它们，或关闭此窗口后重试。';
 
   @override
   String get sendText => '发送文本';
@@ -1790,7 +1790,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get sendFlatpakUnreadable =>
-      '無法從 Flatpak 讀取此檔案。請透過「新增檔案」選擇它，或關閉此視窗後再試一次。';
+      '無法從 Flatpak 讀取某些項目。請透過「新增檔案」選擇它們，或關閉此視窗後再試一次。';
 
   @override
   String get sendText => '傳送文字';

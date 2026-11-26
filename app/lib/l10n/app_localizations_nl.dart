@@ -584,7 +584,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get sendFlatpakUnreadable =>
-      'Dit bestand kan niet vanuit de Flatpak worden gelezen. Kies het met Bestanden toevoegen, of sluit dit venster en probeer het opnieuw.';
+      'Sommige items kunnen niet vanuit de Flatpak worden gelezen. Kies ze met Bestanden toevoegen, of sluit dit venster en probeer het opnieuw.';
 
   @override
   String get sendText => 'Tekst versturen';

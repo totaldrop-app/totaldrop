@@ -1,0 +1,11 @@
+708 707 0:84 / / rw,nosuid,nodev,relatime - tmpfs tmpfs rw,uid=1000,gid=1000,inode64
+709 708 0:29 /@home/ada/.local/share/flatpak/runtime/org.kde.Platform/x86_64/6.11/active/files /usr ro,nosuid,nodev,relatime master:162 - btrfs /dev/mapper/root rw,compress=zstd:3,subvol=/@home
+767 708 0:29 /@home/ada/.var/app/app.totaldrop.TotalDrop/cache/tmp /var/tmp rw,nosuid,nodev,relatime master:162 - btrfs /dev/mapper/root rw,compress=zstd:3,subvol=/@home
+779 708 0:29 /@home/ada/.cache/.flatpak/app.totaldrop.TotalDrop/xdg-run /run/user/1000 rw,nosuid,nodev,relatime master:162 - btrfs /dev/mapper/root rw,compress=zstd:3,subvol=/@home
+790 708 0:29 /@home/ada/.cache/.flatpak/app.totaldrop.TotalDrop/tmp /tmp rw,nosuid,nodev,relatime master:162 - btrfs /dev/mapper/root rw,compress=zstd:3,subvol=/@home
+797 708 0:29 /@home/ada/.var/app/app.totaldrop.TotalDrop /home/ada/.var/app/app.totaldrop.TotalDrop rw,nosuid,nodev,relatime master:162 - btrfs /dev/mapper/root rw,compress=zstd:3,subvol=/@home
+798 708 0:29 /@home/ada/Downloads/TotalDrop /home/ada/Downloads/TotalDrop rw,nosuid,nodev,relatime master:162 - btrfs /dev/mapper/root rw,compress=zstd:3,subvol=/@home
+799 708 0:90 / /run/user/1000/doc rw,nosuid - fuse.portal portal rw
+800 708 0:91 / /home/ada/My\040Share rw shared:7 - tmpfs tmpfs rw
+804 797 0:85 /bindfileta5rPB//deleted /home/ada/.var/app/app.totaldrop.TotalDrop/config/user-dirs.dirs ro,nosuid,nodev,relatime - tmpfs tmpfs rw,uid=1000,gid=1000,inode64,huge=advise
+811 708 0:86 / /dev/shm rw,nosuid,nodev - tmpfs tmpfs rw

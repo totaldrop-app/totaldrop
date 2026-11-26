@@ -36,6 +36,7 @@ QtObject {
     property string shownText: ""
     property bool shownShort: false
     property bool shownHidden: false
+    property int pickFilesCalls: 0
 
     signal picked(var paths)
     signal codeFound(string code)
@@ -72,7 +73,7 @@ QtObject {
     function describe(path) { return path.split("/").pop() + "\t10\t0" }
     function measure(path) {}
     function localPaths(urls) { return [] }
-    function pickFiles(title) {}
+    function pickFiles(title) { pickFilesCalls += 1 }
     function readQrImage(title) {}
     function saveServer(url) { server = url; return true }
     function savePrivacyMode(on) { privacyMode = on; return true }

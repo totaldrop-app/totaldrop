@@ -154,7 +154,7 @@
   "metainfoOnePackage": "Mỗi lúc chỉ dùng một gói Linux. Bản Flatpak và gói .pkg, .deb hoặc .rpm dùng chung một tên, nên khi một bản đang mở, khởi động bản kia sẽ đưa cửa sổ đang mở lên trước thay vì mở cửa sổ thứ hai.",
   "otherPackageFlatpak": "TotalDrop đang mở từ bản Flatpak, nên cửa sổ đó đã được đưa lên trước. Mỗi lúc chỉ dùng một gói: thoát cửa sổ đó để mở bản này.",
   "otherPackageSystem": "TotalDrop đang mở từ gói .pkg, .deb hoặc .rpm, nên cửa sổ đó đã được đưa lên trước. Mỗi lúc chỉ dùng một gói: thoát cửa sổ đó để mở bản này.",
-  "sendFlatpakUnreadable": "Không thể đọc tệp này từ bản Flatpak. Hãy chọn tệp bằng Thêm tệp, hoặc đóng cửa sổ này rồi thử lại.",
+  "sendFlatpakUnreadable": "Không thể đọc một số mục từ bản Flatpak. Hãy chọn chúng bằng Thêm tệp, hoặc đóng cửa sổ này rồi thử lại.",
   "sendText": "Gửi văn bản",
   "sendTextHint": "Nhập hoặc dán văn bản cần gửi",
   "sendTextTooLong": "Văn bản tối đa {size}. Hãy gửi văn bản dài hơn dưới dạng tệp.",

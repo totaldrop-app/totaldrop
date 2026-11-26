@@ -540,7 +540,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get sendFlatpakUnreadable =>
-      'Flatpak에서는 이 파일을 읽을 수 없습니다. 파일 추가로 선택하거나 이 창을 닫고 다시 시도하세요.';
+      'Flatpak에서는 일부 항목을 읽을 수 없습니다. 파일 추가로 선택하거나 이 창을 닫고 다시 시도하세요.';
 
   @override
   String get sendText => '텍스트 보내기';

@@ -57,6 +57,10 @@ pub fn default_destination(
 /// folder of the person's own that Flatpak was allowed to see is bound in
 /// from outside and carries `master:` or `shared:`, so it is kept. An
 /// unreadable table says nothing, so the folder counts as kept.
+///
+/// Keep in sync with `from_host` and `unescape_mount` in
+/// `linux/src/instance.rs`; both crates test the shared fixture
+/// `crates/totaldrop-cli/tests/flatpak-mountinfo.txt`.
 pub fn kept(mountinfo: &str, dir: &Path) -> bool {
     // Every mount point that holds `dir` lies on its path, so a later one
     // covers the earlier ones: the last line that holds `dir` is the mount
@@ -99,6 +103,7 @@ fn path_of(bytes: &[u8]) -> PathBuf {
 }
 
 /// Undoes the octal escapes (`\040` for a space) of a mountinfo field.
+/// Keep in sync with `unescape_mount` in `linux/src/instance.rs`.
 fn unescape(field: &str) -> Vec<u8> {
     let mut out = Vec::with_capacity(field.len());
     let mut rest = field.as_bytes();
@@ -134,19 +139,10 @@ mod tests {
 
     /// The mount table inside the beta.6 Flatpak on Omarchy, shortened
     /// (`flatpak run --command=cat app.totaldrop.TotalDrop
-    /// /proc/self/mountinfo`, 7 Nov 2026), with the user renamed. The root
-    /// is the sandbox's tmpfs; the home folder has no mount of its own.
-    const FLATPAK: &str = "\
-708 707 0:84 / / rw,nosuid,nodev,relatime - tmpfs tmpfs rw,uid=1000,gid=1000,inode64
-709 708 0:29 /@home/ada/.local/share/flatpak/runtime/org.kde.Platform/x86_64/6.11/active/files /usr ro,nosuid,nodev,relatime master:162 - btrfs /dev/mapper/root rw,compress=zstd:3,subvol=/@home
-767 708 0:29 /@home/ada/.var/app/app.totaldrop.TotalDrop/cache/tmp /var/tmp rw,nosuid,nodev,relatime master:162 - btrfs /dev/mapper/root rw,compress=zstd:3,subvol=/@home
-779 708 0:29 /@home/ada/.cache/.flatpak/app.totaldrop.TotalDrop/xdg-run /run/user/1000 rw,nosuid,nodev,relatime master:162 - btrfs /dev/mapper/root rw,compress=zstd:3,subvol=/@home
-790 708 0:29 /@home/ada/.cache/.flatpak/app.totaldrop.TotalDrop/tmp /tmp rw,nosuid,nodev,relatime master:162 - btrfs /dev/mapper/root rw,compress=zstd:3,subvol=/@home
-797 708 0:29 /@home/ada/.var/app/app.totaldrop.TotalDrop /home/ada/.var/app/app.totaldrop.TotalDrop rw,nosuid,nodev,relatime master:162 - btrfs /dev/mapper/root rw,compress=zstd:3,subvol=/@home
-798 708 0:29 /@home/ada/Downloads/TotalDrop /home/ada/Downloads/TotalDrop rw,nosuid,nodev,relatime master:162 - btrfs /dev/mapper/root rw,compress=zstd:3,subvol=/@home
-804 797 0:85 /bindfileta5rPB//deleted /home/ada/.var/app/app.totaldrop.TotalDrop/config/user-dirs.dirs ro,nosuid,nodev,relatime - tmpfs tmpfs rw,uid=1000,gid=1000,inode64,huge=advise
-811 708 0:86 / /dev/shm rw,nosuid,nodev - tmpfs tmpfs rw
-";
+    /// /proc/self/mountinfo`, 7 Nov 2026), with the user renamed plus a
+    /// portal mount and an escaped host tmpfs share. Shared with
+    /// `linux/src/instance.rs` so both mountinfo parsers stay in sync.
+    const FLATPAK: &str = include_str!("../tests/flatpak-mountinfo.txt");
 
     #[test]
     fn the_downloads_folder_is_always_absolute() {
@@ -210,9 +206,15 @@ mod tests {
             FLATPAK,
             Path::new("/home/ada/.var/app/app.totaldrop.TotalDrop/data")
         ));
-        // Flatpak keeps the app's /tmp and /run/user on disk.
+        // Flatpak keeps the app's /tmp, /run/user, portal mounts, and
+        // host-bound tmpfs shares.
         assert!(kept(FLATPAK, Path::new("/tmp/x")));
         assert!(kept(FLATPAK, Path::new("/run/user/1000/x")));
+        assert!(kept(
+            FLATPAK,
+            Path::new("/run/user/1000/doc/9f8e7d/photo.jpg")
+        ));
+        assert!(kept(FLATPAK, Path::new("/home/ada/My Share/file.txt")));
     }
 
     #[test]

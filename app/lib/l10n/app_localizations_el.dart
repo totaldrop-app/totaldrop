@@ -585,7 +585,7 @@ class AppLocalizationsEl extends AppLocalizations {
 
   @override
   String get sendFlatpakUnreadable =>
-      'Δεν είναι δυνατή η ανάγνωση αυτού του αρχείου από το Flatpak. Επιλέξτε το με την Προσθήκη αρχείων ή κλείστε αυτό το παράθυρο και δοκιμάστε ξανά.';
+      'Δεν είναι δυνατή η ανάγνωση ορισμένων στοιχείων από το Flatpak. Επιλέξτε τα με την Προσθήκη αρχείων ή κλείστε αυτό το παράθυρο και δοκιμάστε ξανά.';
 
   @override
   String get sendText => 'Αποστολή κειμένου';

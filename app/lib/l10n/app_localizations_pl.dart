@@ -592,7 +592,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get sendFlatpakUnreadable =>
-      'Nie można odczytać tego pliku z Flatpaka. Wybierz go przyciskiem Dodaj pliki albo zamknij to okno i spróbuj ponownie.';
+      'Nie można odczytać niektórych elementów z Flatpaka. Wybierz je przyciskiem Dodaj pliki albo zamknij to okno i spróbuj ponownie.';
 
   @override
   String get sendText => 'Wyślij tekst';

@@ -588,7 +588,7 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get sendFlatpakUnreadable =>
-      'Acest fișier nu poate fi citit din Flatpak. Alegeți-l cu Adaugă fișiere sau închideți această fereastră și încercați din nou.';
+      'Unele elemente nu pot fi citite din Flatpak. Alegeți-le cu Adaugă fișiere sau închideți această fereastră și încercați din nou.';
 
   @override
   String get sendText => 'Trimite text';

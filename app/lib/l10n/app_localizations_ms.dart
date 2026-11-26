@@ -567,7 +567,7 @@ class AppLocalizationsMs extends AppLocalizations {
 
   @override
   String get sendFlatpakUnreadable =>
-      'Fail ini tidak dapat dibaca daripada Flatpak. Pilihnya melalui Tambah fail, atau tutup tetingkap ini dan cuba lagi.';
+      'Sesetengah item tidak dapat dibaca daripada Flatpak. Pilihnya melalui Tambah fail, atau tutup tetingkap ini dan cuba lagi.';
 
   @override
   String get sendText => 'Hantar teks';
