@@ -422,3 +422,21 @@ test("/r and the 404 page keep their address and are translated in place", () =>
   assert.deepEqual(open("notfound", "/nope", { languages: ["tr-TR"] }).calls, ["fetch:/i18n/tr.json"]);
   assert.deepEqual(open("receive", "/r", { languages: ["en-US"] }).calls, []);
 });
+
+test("every public page declares the social preview image and omits cancelled browser-receive cards", () => {
+  const repoRoot = join(siteDir, "..");
+  const canonical = readFileSync(join(repoRoot, "docs", "assets", "social-preview.png"));
+  const published = readFileSync(join(out, "social-preview.png"));
+  assert.ok(published.equals(canonical), "site/public/social-preview.png matches docs/assets/social-preview.png");
+  for (const tag of TAGS) {
+    for (const page of PAGES) {
+      const html = read(out, tag === "en" ? page : join(tag, page));
+      assert.ok(html.includes('<meta property="og:image" content="https://totaldrop.app/social-preview.png">'), `${tag}/${page} og:image`);
+      assert.ok(html.includes('<meta name="twitter:card" content="summary_large_image">'), `${tag}/${page} twitter:card`);
+    }
+    const dl = read(out, tag === "en" ? "download/index.html" : join(tag, "download/index.html"));
+    assert.ok(!dl.includes('data-platform="web"') && !dl.includes('data-i18n="dl.web"'), `${tag}/download omits cancelled web card`);
+    const rm = read(out, tag === "en" ? "roadmap/index.html" : join(tag, "roadmap/index.html"));
+    assert.ok(!rm.includes('data-i18n="rm.x2.t"'), `${tag}/roadmap omits cancelled browser-receive item`);
+  }
+});
