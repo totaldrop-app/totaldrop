@@ -542,13 +542,17 @@ async fn run(url: &str, own: &EndpointKey, peer: [u8; 32], c: Conn<'_>) -> Resul
         park,
     } = c;
     // Both sides meet under the name of their two keys.
-    let url = format!(
-        "{}/{}",
-        url.trim_end_matches('/'),
-        wire::pair_name(&own.public(), &peer)
-    );
+    let pair = wire::pair_name(&own.public(), &peer);
+    let url = format!("{}/{pair}", url.trim_end_matches('/'));
+    let connect_sig = own.sign(&wire::connect_signed_bytes(&pair))?;
+    let auth_header = wire::format_auth_header(&own.public(), &connect_sig);
     let mut ws = tokio::time::timeout(CONNECT_WAIT, async {
-        let mut ws = crate::rendezvous::open_ws(&url, wire::MAX_MESSAGE).await?;
+        let mut ws = crate::rendezvous::open_ws_with_headers(
+            &url,
+            wire::MAX_MESSAGE,
+            &[(wire::AUTH_HEADER, &auth_header)],
+        )
+        .await?;
         let challenge = match ws.next().await {
             Some(Ok(Message::Binary(b))) => wire::parse_challenge(&b),
             _ => None,
@@ -1473,5 +1477,72 @@ mod tests {
         }
         let after = tokio::time::timeout(Duration::from_secs(4), relay.accept()).await;
         assert!(after.is_err(), "the link kept trying a relay that refuses");
+    }
+
+    /// #78: the client signs `CONNECT_CONTEXT || pair_name` with its endpoint
+    /// key and sends `X-TotalDrop-Auth` on HTTP Upgrade, while still completing
+    /// the `TDR0` challenge -> hello -> ok exchange.
+    #[tokio::test]
+    #[allow(clippy::result_large_err)] // fixed by tungstenite's handshake callback
+    async fn link_sends_valid_connect_auth_header_on_upgrade() {
+        use tokio_tungstenite::tungstenite::handshake::server::{Request, Response};
+
+        let relay = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let url = format!("ws://{}/v0/relay", relay.local_addr().unwrap());
+        let (own, peer) = (
+            Arc::new(EndpointKey::generate().unwrap()),
+            EndpointKey::generate().unwrap(),
+        );
+        let expected_pair = wire::pair_name(&own.public(), &peer.public());
+        let (_out, pipes) = pipes();
+        let gate = Gate::default();
+        gate.open();
+        let _link = spawn_with(url, Arc::clone(&own), peer.public(), pipes, gate, LIMITS);
+
+        let (stream, _) = tokio::time::timeout(Duration::from_secs(5), relay.accept())
+            .await
+            .expect("the link did not connect")
+            .unwrap();
+        let mut captured: Option<(String, String)> = None;
+        let callback = |req: &Request, resp: Response| {
+            let path = req.uri().path().to_owned();
+            let auth = req
+                .headers()
+                .get(wire::AUTH_HEADER)
+                .and_then(|v| v.to_str().ok())
+                .unwrap()
+                .to_owned();
+            captured = Some((path, auth));
+            Ok(resp)
+        };
+        let mut ws = tokio_tungstenite::accept_hdr_async(
+            tokio_tungstenite::MaybeTlsStream::Plain(stream),
+            callback,
+        )
+        .await
+        .unwrap();
+
+        let (path, auth) = captured.unwrap();
+        assert_eq!(path, format!("/v0/relay/{expected_pair}"));
+        let (key, sig) = wire::parse_auth_header(&auth).expect("valid auth header");
+        assert_eq!(key, own.public());
+        ring::signature::UnparsedPublicKey::new(&ring::signature::ED25519, key)
+            .verify(&wire::connect_signed_bytes(&expected_pair), &sig)
+            .expect("Ed25519 upgrade signature must verify");
+
+        // The TDR0 challenge -> hello -> ok handshake remains intact.
+        let nonce = [0x42u8; 32];
+        ws.send(Message::Binary(wire::challenge(&nonce).into()))
+            .await
+            .unwrap();
+        let hello = match ws.next().await.unwrap().unwrap() {
+            Message::Binary(b) => wire::parse_hello(&b).unwrap(),
+            other => panic!("expected binary hello, got {other:?}"),
+        };
+        assert_eq!(hello.0, own.public());
+        ring::signature::UnparsedPublicKey::new(&ring::signature::ED25519, hello.0)
+            .verify(&wire::signed_bytes(&nonce), &hello.1)
+            .expect("TDR0 hello signature must verify");
+        ws.send(Message::Binary(wire::ok().into())).await.unwrap();
     }
 }

@@ -8,7 +8,7 @@
 
 import { DurableObject } from "cloudflare:workers";
 import type { Env } from "./index.ts";
-import { PairCore, parsePairName } from "./pair-core.ts";
+import { AUTH_HEADER, PairCore, parsePairName } from "./pair-core.ts";
 
 export { parsePairName };
 
@@ -34,11 +34,18 @@ export class Pair extends DurableObject<Env> {
   async fetch(request: Request): Promise<Response> {
     const name = new URL(request.url).pathname.split("/").pop() ?? "";
     let client: WebSocket | undefined;
-    const status = await this.core.accept(name, () => {
-      const [c, server] = Object.values(new WebSocketPair()) as [WebSocket, WebSocket];
-      client = c;
-      return server;
-    });
+    const status = await this.core.accept(
+      name,
+      () => {
+        const [c, server] = Object.values(new WebSocketPair()) as [WebSocket, WebSocket];
+        client = c;
+        return server;
+      },
+      undefined,
+      {
+        header: request.headers.get(AUTH_HEADER),
+      },
+    );
     if (status !== 101 || !client) return new Response(null, { status });
     return new Response(null, { status: 101, webSocket: client });
   }

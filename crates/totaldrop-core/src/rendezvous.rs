@@ -103,7 +103,29 @@ async fn open(url: &str) -> Result<Ws> {
 /// Open a WebSocket to `url`, which must pass [`check_url`], accepting
 /// messages up to `max` bytes.
 pub(crate) async fn open_ws(url: &str, max: usize) -> Result<Ws> {
+    open_ws_with_headers(url, max, &[]).await
+}
+
+/// Open a WebSocket to `url`, attaching `extra` HTTP request headers to the
+/// Upgrade handshake (such as `X-TotalDrop-Auth`, #78).
+pub(crate) async fn open_ws_with_headers(
+    url: &str,
+    max: usize,
+    extra: &[(&str, &str)],
+) -> Result<Ws> {
+    use tokio_tungstenite::tungstenite::client::IntoClientRequest as _;
+    use tokio_tungstenite::tungstenite::http::header::{HeaderName, HeaderValue};
+
     check_url(url)?;
+    let mut request = url
+        .into_client_request()
+        .map_err(|e| Error::Rendezvous(e.to_string()))?;
+    for &(name, value) in extra {
+        let name = HeaderName::from_bytes(name.as_bytes())
+            .map_err(|e| Error::Rendezvous(e.to_string()))?;
+        let value = HeaderValue::from_str(value).map_err(|e| Error::Rendezvous(e.to_string()))?;
+        request.headers_mut().insert(name, value);
+    }
     let mut config = WebSocketConfig::default();
     config.max_message_size = Some(max);
     config.max_frame_size = Some(max);
@@ -112,10 +134,14 @@ pub(crate) async fn open_ws(url: &str, max: usize) -> Result<Ws> {
     } else {
         Connector::Plain
     };
-    let (ws, _) =
-        tokio_tungstenite::connect_async_tls_with_config(url, Some(config), true, Some(connector))
-            .await
-            .map_err(|e| Error::Rendezvous(e.to_string()))?;
+    let (ws, _) = tokio_tungstenite::connect_async_tls_with_config(
+        request,
+        Some(config),
+        true,
+        Some(connector),
+    )
+    .await
+    .map_err(|e| Error::Rendezvous(e.to_string()))?;
     Ok(ws)
 }
 
@@ -370,5 +396,55 @@ mod tests {
         assert!(check_url("http://127.0.0.1").is_err());
         assert!(check_url("ws://localhost:4000@evil.com/").is_err());
         assert!(check_url("ws://127.0.0.1@evil.com").is_err());
+    }
+
+    #[tokio::test]
+    #[allow(clippy::result_large_err)] // fixed by tungstenite's handshake callback
+    async fn open_ws_with_headers_sends_extra_headers_and_rejects_bad_inputs() {
+        use tokio_tungstenite::tungstenite::handshake::server::{Request, Response};
+
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let url = format!("ws://{}/v0/test", listener.local_addr().unwrap());
+
+        let server = tokio::spawn(async move {
+            let (stream, _) = listener.accept().await.unwrap();
+            let mut seen = None;
+            let callback = |req: &Request, resp: Response| {
+                seen = req
+                    .headers()
+                    .get("X-Test-Header")
+                    .and_then(|v| v.to_str().ok())
+                    .map(str::to_owned);
+                Ok(resp)
+            };
+            let _ws = tokio_tungstenite::accept_hdr_async(stream, callback)
+                .await
+                .unwrap();
+            seen
+        });
+
+        let mut ws = open_ws_with_headers(&url, 1024, &[("X-Test-Header", "hello-upgrade")])
+            .await
+            .unwrap();
+        let _ = ws.close(None).await;
+
+        assert_eq!(server.await.unwrap().as_deref(), Some("hello-upgrade"));
+
+        // Error paths: invalid header name, invalid header value, bad URL.
+        assert!(
+            open_ws_with_headers(&url, 1024, &[("bad\nname", "ok")])
+                .await
+                .is_err()
+        );
+        assert!(
+            open_ws_with_headers(&url, 1024, &[("X-Test", "bad\r\nval")])
+                .await
+                .is_err()
+        );
+        assert!(
+            open_ws_with_headers("ws://example.com/v0", 1024, &[])
+                .await
+                .is_err()
+        );
     }
 }

@@ -52,6 +52,16 @@ pub const MAGIC: &[u8; 4] = b"TDR0";
 /// anywhere else.
 pub const AUTH_CONTEXT: &[u8] = b"totaldrop relay v0 auth";
 
+/// Signed together with the pair name to authenticate the HTTP Upgrade
+/// request before holding a slot (#78). Does not include `Sec-WebSocket-Key`
+/// because HTTP/WebSocket proxies (including Cloudflare edge and `workerd`)
+/// regenerate that hop-by-hop header; freshness is still proved by `TDR0`.
+pub const CONNECT_CONTEXT: &[u8] = b"totaldrop relay v0 connect";
+
+/// HTTP request header carrying `<64-hex-key>.<128-hex-sig>` on Upgrade
+/// so a relay can admit key holders ahead of unsigned waiters (#78).
+pub const AUTH_HEADER: &str = "X-TotalDrop-Auth";
+
 /// Largest datagram a relay forwards. QUIC never sends more than about
 /// 1,500 bytes per datagram; the margin covers jumbo paths.
 pub const MAX_DATAGRAM: usize = 9_000;
@@ -121,15 +131,26 @@ pub fn is_probe(m: &[u8]) -> bool {
     m.len() == 25 && m.starts_with(MAGIC) && m.get(4..9) == Some(b"probe".as_slice())
 }
 
-fn hex(key: &[u8; 32]) -> String {
-    key.iter().map(|b| format!("{b:02x}")).collect()
+/// What a device signs for [`AUTH_HEADER`] on the HTTP Upgrade request:
+/// [`CONNECT_CONTEXT`] ‖ `pair_name` (#78).
+pub fn connect_signed_bytes(pair_name: &str) -> Vec<u8> {
+    let cap = CONNECT_CONTEXT.len().saturating_add(pair_name.len());
+    let mut m = Vec::with_capacity(cap);
+    m.extend_from_slice(CONNECT_CONTEXT);
+    m.extend_from_slice(pair_name.as_bytes());
+    m
 }
 
-fn unhex(s: &str) -> Option<[u8; 32]> {
-    if s.len() != 64 || !s.bytes().all(|c| matches!(c, b'0'..=b'9' | b'a'..=b'f')) {
+fn hex_bytes(bytes: &[u8]) -> String {
+    bytes.iter().map(|b| format!("{b:02x}")).collect()
+}
+
+fn unhex_exact<const N: usize>(s: &str) -> Option<[u8; N]> {
+    let expected = N.checked_mul(2)?;
+    if s.len() != expected || !s.bytes().all(|c| matches!(c, b'0'..=b'9' | b'a'..=b'f')) {
         return None;
     }
-    let mut out = [0u8; 32];
+    let mut out = [0u8; N];
     for (i, b) in out.iter_mut().enumerate() {
         let at = i.checked_mul(2)?;
         *b = u8::from_str_radix(s.get(at..at.checked_add(2)?)?, 16).ok()?;
@@ -137,17 +158,36 @@ fn unhex(s: &str) -> Option<[u8; 32]> {
     Some(out)
 }
 
+/// Format the [`AUTH_HEADER`] value: `<64-hex-key>.<128-hex-sig>` in
+/// lowercase ASCII hex (193 bytes) (#78).
+pub fn format_auth_header(key: &[u8; 32], signature: &[u8; 64]) -> String {
+    format!("{}.{}", hex_bytes(key), hex_bytes(signature))
+}
+
+/// Parse a strict [`AUTH_HEADER`] value into `(endpoint_key, signature)`.
+///
+/// Accepts only exact 193-byte lowercase ASCII hex `<64-hex>.<128-hex>`;
+/// rejects wrong lengths, uppercase hex, whitespace, extra dots, or
+/// non-hex characters (#78).
+pub fn parse_auth_header(value: &str) -> Option<([u8; 32], [u8; 64])> {
+    if value.len() != 193 {
+        return None;
+    }
+    let (key, sig) = value.split_once('.')?;
+    Some((unhex_exact::<32>(key)?, unhex_exact::<64>(sig)?))
+}
+
 /// The path segment naming the pair of keys `a` and `b`: both in lowercase
 /// hex, the lower key first, joined by `-`. Both devices compute the same.
 pub fn pair_name(a: &[u8; 32], b: &[u8; 32]) -> String {
     let (lo, hi) = if a <= b { (a, b) } else { (b, a) };
-    format!("{}-{}", hex(lo), hex(hi))
+    format!("{}-{}", hex_bytes(lo), hex_bytes(hi))
 }
 
 /// The two keys of a pair name, if it is one.
 pub fn parse_pair_name(s: &str) -> Option<([u8; 32], [u8; 32])> {
     let (a, b) = s.split_once('-')?;
-    let (a, b) = (unhex(a)?, unhex(b)?);
+    let (a, b) = (unhex_exact::<32>(a)?, unhex_exact::<32>(b)?);
     (a < b).then_some((a, b))
 }
 
@@ -420,6 +460,78 @@ mod tests {
         assert_eq!(parse_pair_name(&pair_name(&a, &a)), None);
         assert_eq!(parse_pair_name(&n.to_uppercase()), None);
         assert_eq!(parse_pair_name("x-y"), None);
+    }
+
+    #[test]
+    fn auth_header_round_trip_and_strict_parsing() {
+        let key: [u8; 32] = core::array::from_fn(|i| i as u8);
+        let sig: [u8; 64] = core::array::from_fn(|i| 0xf0u8.wrapping_add(i as u8));
+        let formatted = format_auth_header(&key, &sig);
+        assert_eq!(formatted.len(), 193);
+        assert_eq!(AUTH_HEADER, "X-TotalDrop-Auth");
+        assert_eq!(parse_auth_header(&formatted), Some((key, sig)));
+
+        // Exact signed bytes layout and domain separation from AUTH_CONTEXT.
+        let pair = pair_name(&[0x01; 32], &[0x02; 32]);
+        let signed = connect_signed_bytes(&pair);
+        let mut expected = b"totaldrop relay v0 connect".to_vec();
+        expected.extend_from_slice(pair.as_bytes());
+        assert_eq!(signed, expected);
+        assert_ne!(CONNECT_CONTEXT, AUTH_CONTEXT);
+
+        // Wrong lengths and empty.
+        assert_eq!(parse_auth_header(""), None);
+        assert_eq!(parse_auth_header(&formatted[..192]), None);
+        assert_eq!(parse_auth_header(&format!("{formatted}0")), None);
+
+        // Uppercase hex in key or signature.
+        let (k_hex, s_hex) = formatted.split_once('.').unwrap();
+        assert_eq!(
+            parse_auth_header(&format!("{}.{s_hex}", k_hex.to_uppercase())),
+            None
+        );
+        assert_eq!(
+            parse_auth_header(&format!("{k_hex}.{}", s_hex.to_uppercase())),
+            None
+        );
+
+        // Whitespace and comma-joined duplicate headers.
+        assert_eq!(parse_auth_header(&format!(" {formatted}")), None);
+        assert_eq!(parse_auth_header(&format!("{formatted} ")), None);
+        assert_eq!(
+            parse_auth_header(&format!("{formatted}, {formatted}")),
+            None
+        );
+
+        // Missing dot, wrong dot offset, extra dot.
+        assert_eq!(parse_auth_header(&format!("{k_hex}0{s_hex}")), None);
+        assert_eq!(
+            parse_auth_header(&format!("{}.0{s_hex}", &k_hex[..63])),
+            None
+        );
+        assert_eq!(
+            parse_auth_header(&format!("{k_hex}0.{}", &s_hex[..127])),
+            None
+        );
+        assert_eq!(
+            parse_auth_header(&format!("{k_hex}.{}.{}", &s_hex[..63], &s_hex[64..])),
+            None
+        );
+
+        // Non-hex ASCII and non-ASCII UTF-8 (same 193-byte length).
+        assert_eq!(
+            parse_auth_header(&format!("g{}.{s_hex}", &k_hex[1..])),
+            None
+        );
+        assert_eq!(
+            parse_auth_header(&format!("{k_hex}.z{}", &s_hex[1..])),
+            None
+        );
+        // 'é' is 2 UTF-8 bytes; replacing 2 ASCII bytes preserves byte length 193.
+        assert_eq!(
+            parse_auth_header(&format!("é{}.{s_hex}", &k_hex[2..])),
+            None
+        );
     }
 
     #[test]
