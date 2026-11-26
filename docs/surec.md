@@ -146,7 +146,11 @@ elle bakar.
   bilgiler](#gizli-bilgiler)).
 - Denetim: CodeQL (temizleme hataları), `Secrets` işi (gizli bilgiler),
   `check-i18n.mjs` ve `check-readmes.mjs` (çevirilerde kontrol
-  karakterleri). Terminale yazılan dış metin elle.
+  karakterleri), komut satırında terminale yazılan her metnin
+  `crates/totaldrop-cli/src/term.rs` (`term::Clean` ve `reveal_text`)
+  üzerinden geçmesini zorunlu kılan `clippy::disallowed_macros` ve
+  `clippy::disallowed_methods` kuralları (`clippy.toml`, #399); grafik
+  arayüzlerdeki dış metin elle.
 
 ### Sürüm ve taban sürüklenmesi (#369, #390, #392)
 
