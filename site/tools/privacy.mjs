@@ -124,8 +124,10 @@ function page(tag, body, d) {
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>${esc(s("meta.privacy.title"))}</title>
   <meta name="description" content="${esc(s("meta.privacy.desc"))}">
-  <meta name="theme-color" content="#F4F2FB" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#140E33" media="(prefers-color-scheme: dark)">
+  <meta name="color-scheme" content="light dark">
+  <meta name="text-scale" content="scale">
+  <meta name="theme-color" content="#F7F7F5" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0F1116" media="(prefers-color-scheme: dark)">
   <link rel="canonical" href="${url}">
 ${alternates}
   <link rel="alternate" hreflang="x-default" href="${SITE}/privacy">
@@ -136,6 +138,8 @@ ${alternates}
   <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="preload" href="/fonts/bricolage-grotesque-latin-800-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/atkinson-hyperlegible-latin-400-normal.woff2" as="font" type="font/woff2" fetchpriority="low" crossorigin>
   <link rel="stylesheet" href="${assetRef("styles.css")}">
 </head>
 <body>
