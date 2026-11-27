@@ -11,10 +11,12 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.view.DragEvent
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 import java.io.File
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 
 class MainActivity : FlutterActivity() {
@@ -102,6 +104,9 @@ class MainActivity : FlutterActivity() {
         // A new activity has a new Flutter engine, which knows no copy from
         // before: they all go, before any new one is written.
         copier.clearAll()
+        // Multi-window Drag & Drop (#632): cross-app drops route through the
+        // same ShareCopier / SharedFiles trust boundary as Share intents.
+        installDragDrop()
         // A share or a shortcut that started the app. Not when the activity
         // comes back after the system ended it: that intent was handled.
         if (savedInstanceState == null) take(intent)
@@ -111,6 +116,64 @@ class MainActivity : FlutterActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         take(intent)
+    }
+
+    /** Accepts files or plain text dragged from another app in split-screen or
+     * unfolded multi-window mode (#632). Local drags inside TotalDrop's own
+     * views (`localState != null`) are ignored so text editing stays intact. */
+    private fun installDragDrop() {
+        window?.decorView?.setOnDragListener { _, event ->
+            when (event.action) {
+                DragEvent.ACTION_DRAG_STARTED -> {
+                    val desc = event.clipDescription
+                    event.localState == null && desc != null &&
+                        SharedFiles.acceptsDragMimeTypes(
+                            List(desc.mimeTypeCount) { desc.getMimeType(it) },
+                        )
+                }
+                DragEvent.ACTION_DRAG_ENTERED,
+                DragEvent.ACTION_DRAG_LOCATION,
+                DragEvent.ACTION_DRAG_EXITED,
+                DragEvent.ACTION_DRAG_ENDED -> true
+                DragEvent.ACTION_DROP -> takeDrop(event)
+                else -> false
+            }
+        }
+    }
+
+    private fun takeDrop(event: DragEvent): Boolean {
+        if (event.localState != null) return false
+        val clip = event.clipData ?: return false
+        return when (val payload = SharedFiles.dragPayloadOf(clip)) {
+            is SharedFiles.DragPayload.Files -> {
+                val permissions = requestDragAndDropPermissions(event)
+                val released = AtomicBoolean(false)
+                // DragAndDropPermissions.release() is thread-safe; release
+                // immediately in ShareCopier's finally block rather than
+                // posting to main, which delays release and can be dropped if
+                // the activity finishes first.
+                val release = permissions?.let { p ->
+                    {
+                        if (released.compareAndSet(false, true)) {
+                            try {
+                                p.release()
+                            } catch (e: Exception) {
+                                android.util.Log.w(
+                                    "TotalDrop",
+                                    "drag permissions could not be released: ${e.javaClass.simpleName}",
+                                )
+                            }
+                        }
+                    }
+                }
+                takeSharedUris(payload.uris, onRelease = release)
+            }
+            is SharedFiles.DragPayload.Text -> {
+                launches.send(mapOf("screen" to "send", "text" to payload.text))
+                true
+            }
+            SharedFiles.DragPayload.Empty -> false
+        }
     }
 
     /** What the person asked for by sharing to TotalDrop, with a launcher
@@ -164,21 +227,33 @@ class MainActivity : FlutterActivity() {
             forgetText(intent)
             return
         }
+        takeSharedUris(uris)
+    }
+
+    private fun takeSharedUris(uris: List<Uri>, onRelease: (() -> Unit)? = null): Boolean {
         val id = nextShare.incrementAndGet()
         launches.send(mapOf("id" to id, "screen" to "send", "copying" to true))
-        // The read grant lasts while this activity does, so the copy starts
-        // at once, off the main thread.
-        copier.copy(id, uris) { copied ->
-            val event: Map<String, Any> = if (copied == null) {
-                mapOf("id" to id, "failed" to true)
-            } else {
-                mapOf(
-                    "id" to id,
-                    "files" to copied.items.map { mapOf("name" to it.name, "path" to it.path, "size" to it.size) },
-                    "skipped" to copied.skipped,
-                )
+        // The read grant lasts while this activity does (or until onRelease),
+        // so the copy starts at once, off the main thread.
+        return try {
+            copier.copy(id, uris, onRelease = onRelease) { copied ->
+                val event: Map<String, Any> = if (copied == null) {
+                    mapOf("id" to id, "failed" to true)
+                } else {
+                    mapOf(
+                        "id" to id,
+                        "files" to copied.items.map { mapOf("name" to it.name, "path" to it.path, "size" to it.size) },
+                        "skipped" to copied.skipped,
+                    )
+                }
+                main.post { launches.send(event) }
             }
-            main.post { launches.send(event) }
+            true
+        } catch (e: Exception) {
+            onRelease?.invoke()
+            android.util.Log.w("TotalDrop", "shared files could not be queued: ${e.javaClass.simpleName}")
+            launches.send(mapOf("id" to id, "failed" to true))
+            false
         }
     }
 

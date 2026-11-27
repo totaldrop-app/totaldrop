@@ -16,6 +16,7 @@ import 'package:totaldrop/l10n/app_localizations.dart';
 import 'package:totaldrop/src/rust/api/l10n.dart' show ShownText;
 import 'package:totaldrop/src/rust/api/transfer.dart';
 import 'package:totaldrop/src/rust/frb_generated.dart';
+import 'package:totaldrop/ui/core/adaptive.dart';
 import 'package:totaldrop/ui/core/common.dart';
 import 'package:totaldrop/ui/core/theme.dart';
 import 'package:totaldrop/ui/home/home_view.dart';
@@ -130,6 +131,15 @@ void _expectCentredColumn(WidgetTester tester, Finder finder) {
   expect(rect.right, lessThanOrEqualTo(700.5));
 }
 
+void _expectPaneColumn(WidgetTester tester, Finder finder) {
+  final rect = tester.getRect(finder);
+  expect(rect.width, lessThanOrEqualTo(maxColumnWidth + 0.5));
+  // On an 840 dp tablet two-pane screens split into two 420 dp halves (#632).
+  final inLeftPane = rect.left >= 0 && rect.right <= 420.5;
+  final inRightPane = rect.left >= 419.5 && rect.right <= 840.5;
+  expect(inLeftPane || inRightPane, isTrue, reason: 'rect=$rect');
+}
+
 double _findSegmentThresholdWidth({
   required ThemeData theme,
   required TextScaler textScaler,
@@ -181,7 +191,7 @@ void main() {
 
           final l = lookupAppLocalizations(variant.locale);
 
-          // HomeView.
+          // HomeView (two-pane on 840 dp tablet, #632).
           await tester.pumpWidget(
             _app(
               HomeView(onSend: () {}, onReceive: () {}, onSettings: () {}),
@@ -193,8 +203,8 @@ void main() {
           expect(tester.takeException(), isNull);
           final cards = find.byType(Card);
           expect(cards, findsNWidgets(2));
-          _expectCentredColumn(tester, cards.first);
-          _expectCentredColumn(tester, cards.last);
+          _expectPaneColumn(tester, cards.first);
+          _expectPaneColumn(tester, cards.last);
 
           // SendView: empty file picking, text mode, and populated file list.
           final sendVm = SendViewModel(
@@ -210,14 +220,14 @@ void main() {
           );
           await tester.pump();
           expect(tester.takeException(), isNull);
-          _expectCentredColumn(tester, find.byType(SegmentedButton<bool>));
-          _expectCentredColumn(tester, find.byType(FilledButton));
+          _expectPaneColumn(tester, find.byType(SegmentedButton<bool>));
+          _expectPaneColumn(tester, find.byType(FilledButton));
 
           sendVm.setTextMode(true);
           await tester.pump();
           await tester.pump(const Duration(milliseconds: 300));
           expect(tester.takeException(), isNull);
-          _expectCentredColumn(tester, find.byType(TextField));
+          _expectPaneColumn(tester, find.byType(TextField));
 
           sendVm
             ..setTextMode(false)
@@ -225,10 +235,10 @@ void main() {
           await tester.pump();
           await tester.pump(const Duration(milliseconds: 300));
           expect(tester.takeException(), isNull);
-          _expectCentredColumn(tester, find.byType(ListTile).first);
-          _expectCentredColumn(tester, find.byType(SwitchListTile));
+          _expectPaneColumn(tester, find.byType(ListTile).first);
+          _expectPaneColumn(tester, find.byType(SwitchListTile));
 
-          // ReceiveView (entering stage + error stage via CenteredScroll).
+          // ReceiveView (two-pane entering stage + centred single-pane error).
           final repo = FakeRepository();
           final receiveVm = ReceiveViewModel(repository: repo)
             ..setInput('7-harbor-rocket');
@@ -241,7 +251,7 @@ void main() {
           );
           await tester.pump();
           expect(tester.takeException(), isNull);
-          _expectCentredColumn(tester, find.byType(TextField));
+          _expectPaneColumn(tester, find.byType(TextField));
 
           unawaited(receiveVm.connect());
           repo.connected.completeError(
@@ -255,7 +265,7 @@ void main() {
             find.widgetWithText(FilledButton, l.tryAgain),
           );
 
-          // SettingsView.
+          // SettingsView (single-column 560 dp on flat tablet, #545, #632).
           await tester.pumpWidget(
             _app(
               SettingsView(
@@ -271,7 +281,7 @@ void main() {
           expect(tester.takeException(), isNull);
           _expectCentredColumn(tester, find.byType(TextField));
 
-          // BackgroundSetupView.
+          // BackgroundSetupView (two-pane on 840 dp tablet, #632).
           await tester.pumpWidget(
             _app(
               BackgroundSetupView(
@@ -284,7 +294,7 @@ void main() {
           );
           await tester.pump();
           expect(tester.takeException(), isNull);
-          _expectCentredColumn(tester, find.byType(FilledButton).first);
+          _expectPaneColumn(tester, find.byType(FilledButton).first);
         },
       );
     }
@@ -489,12 +499,15 @@ void main() {
           expect(threshold, greaterThan(100));
           expect(threshold, lessThan(1000));
 
-          // columnPadding adds 48 dp horizontal padding for viewports <= 608 dp,
-          // and caps inner width at maxColumnWidth (560 dp) above 608 dp.
+          // columnPadding adds 32 dp horizontal padding under
+          // coverScreenThreshold (360 dp), 48 dp up to 608 dp, and caps inner
+          // width at maxColumnWidth (560 dp) above 608 dp (#545, #632).
           for (final shouldFit in const [false, true]) {
             final innerWidth = shouldFit ? threshold + 2.0 : threshold - 2.0;
             if (innerWidth > maxColumnWidth) continue;
-            final viewportWidth = innerWidth + 48.0;
+            final viewportWidth = innerWidth + 48.0 >= coverScreenThreshold
+                ? innerWidth + 48.0
+                : innerWidth + 32.0;
 
             await tester.binding.setSurfaceSize(Size(viewportWidth, 640));
             final vm = SendViewModel(

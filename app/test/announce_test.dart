@@ -213,10 +213,21 @@ void main() {
       // copy says what is now selected.
       final create = find.textContaining(l.sendCreateCode);
       expect(create, findsOneWidget);
+      final button = find.ancestor(
+        of: create,
+        matching: find.byType(FilledButton),
+      );
+      expect(button, findsOneWidget);
+      final buttonSemantics = tester.getSemantics(button);
       expect(
-        tester.getSemantics(create),
-        isSemantics(isLiveRegion: true),
-        reason: 'the selection is read out when the copy ends',
+        buttonSemantics,
+        isSemantics(isButton: true, isLiveRegion: true),
+        reason: 'the selection is read out on the button when the copy ends',
+      );
+      expect(
+        buttonSemantics.label,
+        contains(l.sendCreateCode),
+        reason: 'Announced must not detach the button label in TalkBack',
       );
       semantics.dispose();
     });

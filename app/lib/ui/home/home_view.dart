@@ -4,6 +4,7 @@
 import 'package:material_ui/material_ui.dart';
 
 import '../../l10n/app_localizations.dart';
+import '../core/adaptive.dart';
 import '../core/common.dart';
 import '../core/mark.dart';
 import '../core/theme.dart';
@@ -24,6 +25,70 @@ class HomeView extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final theme = Theme.of(context);
+
+    Widget buildBrand({required bool compact}) => Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: TotalDropMark(size: compact ? 72 : 88),
+        ),
+        Gap.m,
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: AlignmentDirectional.centerStart,
+          child: Text('TotalDrop', style: theme.textTheme.displaySmall),
+        ),
+        Text(
+          l.appTagline,
+          style: theme.textTheme.bodyLarge?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ],
+    );
+
+    final sendCard = _ActionCard(
+      icon: Icons.north_east_rounded,
+      title: l.homeSendTitle,
+      body: l.homeSendBody,
+      background: theme.colorScheme.primary,
+      foreground: theme.colorScheme.onPrimary,
+      onTap: onSend,
+    );
+
+    final receiveCard = _ActionCard(
+      icon: Icons.south_west_rounded,
+      title: l.homeReceiveTitle,
+      body: l.homeReceiveBody,
+      // One accent per screen: the primary action carries it; receiving
+      // sits on a quiet surface.
+      background: theme.colorScheme.surfaceContainerHigh,
+      foreground: theme.colorScheme.onSurface,
+      onTap: onReceive,
+    );
+
+    final footer = Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(
+          Icons.lock_outline,
+          size: 20,
+          color: theme.colorScheme.onSurfaceVariant,
+        ),
+        Gap.s,
+        Expanded(
+          child: Text(
+            l.homeFooter,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+      ],
+    );
+
     return Scaffold(
       appBar: AppBar(
         actions: [
@@ -35,62 +100,56 @@ class HomeView extends StatelessWidget {
         ],
       ),
       body: SafeArea(
-        child: ColumnListView(
-          top: 0,
-          children: [
-            const Align(
-              alignment: AlignmentDirectional.centerStart,
-              child: TotalDropMark(size: 88),
-            ),
-            Gap.m,
-            Text('TotalDrop', style: theme.textTheme.displaySmall),
-            Text(
-              l.appTagline,
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-            Gap.xl,
-            _ActionCard(
-              icon: Icons.north_east_rounded,
-              title: l.homeSendTitle,
-              body: l.homeSendBody,
-              background: theme.colorScheme.primary,
-              foreground: theme.colorScheme.onPrimary,
-              onTap: onSend,
-            ),
-            Gap.m,
-            _ActionCard(
-              icon: Icons.south_west_rounded,
-              title: l.homeReceiveTitle,
-              body: l.homeReceiveBody,
-              // One accent per screen: the primary action carries it; receiving
-              // sits on a quiet surface.
-              background: theme.colorScheme.surfaceContainerHigh,
-              foreground: theme.colorScheme.onSurface,
-              onTap: onReceive,
-            ),
-            Gap.xl,
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+        child: AdaptivePaneLayout(
+          primary: Builder(
+            builder: (context) {
+              final isTabletop = AdaptivePaneLayout.isTabletopOf(context);
+              return CenteredScroll(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    buildBrand(compact: isTabletop),
+                    if (!isTabletop) ...[Gap.xl, footer],
+                  ],
+                ),
+              );
+            },
+          ),
+          secondary: Builder(
+            builder: (context) {
+              final isTabletop = AdaptivePaneLayout.isTabletopOf(context);
+              return CenteredScroll(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    sendCard,
+                    Gap.m,
+                    receiveCard,
+                    if (isTabletop) ...[Gap.l, footer],
+                  ],
+                ),
+              );
+            },
+          ),
+          singlePane: LayoutBuilder(
+            builder: (context, constraints) => ColumnListView(
+              top: 0,
+              bottom: 24,
               children: [
-                Icon(
-                  Icons.lock_outline,
-                  size: 20,
-                  color: theme.colorScheme.onSurfaceVariant,
+                buildBrand(
+                  compact: constraints.maxWidth < coverScreenThreshold,
                 ),
-                Gap.s,
-                Expanded(
-                  child: Text(
-                    l.homeFooter,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ),
+                Gap.xl,
+                sendCard,
+                Gap.m,
+                receiveCard,
+                Gap.xl,
+                footer,
               ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -117,49 +176,72 @@ class _ActionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Card(
-      color: background,
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Row(
-            children: [
-              Container(
-                width: 64,
-                height: 64,
-                decoration: BoxDecoration(
-                  color: foreground.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Icon(icon, size: 32, color: foreground),
-              ),
-              Gap.m,
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: theme.textTheme.headlineMedium?.copyWith(
-                        color: foreground,
-                      ),
-                    ),
-                    Text(
-                      body,
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        color: foreground,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(Icons.chevron_right, color: foreground),
-            ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Standard 360 dp phones give 312 dp card width; tighter cover screens
+        // and narrow split panes use compact card chrome so labels keep room.
+        final compact = constraints.maxWidth < 300;
+        final largeText = MediaQuery.textScalerOf(context).scale(16) >= 24;
+        final boxSize = compact ? 48.0 : 64.0;
+        final iconSize = compact ? 24.0 : 32.0;
+        final cardPad = compact ? 16.0 : 24.0;
+        final boxRadius = compact ? 16.0 : 20.0;
+        final badge = Container(
+          width: boxSize,
+          height: boxSize,
+          decoration: BoxDecoration(
+            color: foreground.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(boxRadius),
           ),
-        ),
-      ),
+          child: Icon(icon, size: iconSize, color: foreground),
+        );
+        final copy = Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: theme.textTheme.headlineMedium?.copyWith(
+                color: foreground,
+              ),
+            ),
+            Text(
+              body,
+              style: theme.textTheme.bodyLarge?.copyWith(color: foreground),
+            ),
+          ],
+        );
+        final chevron = Icon(Icons.chevron_right, color: foreground);
+        return Card(
+          color: background,
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: onTap,
+            child: Padding(
+              padding: EdgeInsets.all(cardPad),
+              child: compact && largeText
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [badge, chevron],
+                        ),
+                        Gap.s,
+                        copy,
+                      ],
+                    )
+                  : Row(
+                      children: [
+                        badge,
+                        Gap.m,
+                        Expanded(child: copy),
+                        chevron,
+                      ],
+                    ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
