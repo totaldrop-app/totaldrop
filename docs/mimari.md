@@ -13,7 +13,7 @@ model, configuration, tests and hot spots) is in
 ## Parts
 
 ```
- Sending device                                 Receiving device
+ Sending device                                        Receiving device
 ┌──────────────────────┐                       ┌──────────────────────┐
 │ App (interface)      │                       │ App (interface)      │
 │ Linux: Qt 6 + QML    │                       │ Android: Flutter     │
@@ -74,7 +74,7 @@ implementations pass the same end-to-end test suite.
 The email Worker (`mail-worker`), which forwards email sent to project
 addresses (such as `hello@totaldrop.app`) to the maintainers, also lives
 under `server/`. It is not part of the protocol and the apps never use it
-([Deployment](surec.md#e-posta-yönlendirmesi)).
+([Email forwarding](surec.md#e-posta-yönlendirmesi)).
 
 STUN is not a project server: devices learn their public address by
 default from Cloudflare's STUN server (`stun.cloudflare.com`, UDP) or from

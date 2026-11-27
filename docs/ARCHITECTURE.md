@@ -450,7 +450,7 @@ değiştirmez. Davranışı değiştiren seçenekler
 ### 5.1 Nasıl çalıştırılır
 
 Zorunlu denetim CI'dır; yerel kopyası `.pre-commit-config-extra.yaml`
-([gelistirme.md](gelistirme.md#yerel-denetimler)).
+([gelistirme.md](gelistirme.md#local-checks)).
 
 | Alan | Komut | CI işi |
 | --- | --- | --- |

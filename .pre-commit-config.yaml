@@ -4,7 +4,7 @@
 # Fast local checks on every commit; they need no toolchain. CI stays the
 # required check (docs/surec.md). Toolchain checks (cargo, dart, flutter,
 # node): .pre-commit-config-extra.yaml.
-# Setup: pre-commit install (docs/gelistirme.md, "Yerel denetimler")
+# Setup: pre-commit install (docs/gelistirme.md, "Local checks")
 minimum_pre_commit_version: "4.0.0"
 
 # Generated or copied files, as in CI. Keep in step with
