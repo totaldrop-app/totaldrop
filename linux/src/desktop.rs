@@ -116,9 +116,12 @@ pub fn completions(prefix: &str, limit: usize) -> Vec<&'static str> {
 }
 
 /// The link a QR code carries. The code sits after `#`, so it never
-/// reaches a web server.
+/// reaches a web server (shared with Android via [`totaldrop_proto::TransferCode::qr_link`]).
 pub fn link_for(code: &str) -> String {
-    format!("https://totaldrop.app/r#{code}")
+    totaldrop_proto::TransferCode::parse(code).map_or_else(
+        |_| format!("https://totaldrop.app/r#{code}"),
+        |parsed| parsed.qr_link(),
+    )
 }
 
 /// The code in a TotalDrop link or a bare code, normalized; strict, so a

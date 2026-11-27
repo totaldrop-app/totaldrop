@@ -11,4 +11,7 @@
     <string name="process_text">שליחה עם TotalDrop</string>
     <string name="shortcut_receive_short">קבלה</string>
     <string name="shortcut_receive_long">קבלת קבצים</string>
+    <string name="qr_scan_title">סריקת קוד QR</string>
+    <string name="qr_scan_hint">כוון את המצלמה אל קוד ה-QR שעל מסך השולח.</string>
+    <string name="qr_scan_close">ביטול</string>
 </resources>

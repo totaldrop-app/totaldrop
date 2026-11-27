@@ -11,4 +11,7 @@
     <string name="process_text">Odeslat pomocí TotalDrop</string>
     <string name="shortcut_receive_short">Přijmout</string>
     <string name="shortcut_receive_long">Přijmout soubory</string>
+    <string name="qr_scan_title">Naskenovat QR kód</string>
+    <string name="qr_scan_hint">Namiřte fotoaparát na QR kód na obrazovce odesílatele.</string>
+    <string name="qr_scan_close">Zrušit</string>
 </resources>

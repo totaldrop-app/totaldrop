@@ -15,6 +15,7 @@ import '../core/adaptive.dart';
 import '../core/common.dart';
 import '../core/l10n.dart';
 import '../core/mark.dart';
+import '../core/qr_code_view.dart';
 import '../core/theme.dart';
 import 'send_view_model.dart';
 
@@ -979,6 +980,22 @@ class _Waiting extends StatelessWidget {
       style: theme.textTheme.bodyLarge,
     );
 
+    final qrCode = Center(
+      child: QrCodeView(
+        code: code,
+        dismissListenable: vm,
+        shouldDismiss: () => vm.stage != SendStage.waiting,
+      ),
+    );
+
+    final qrHint = Text(
+      l.sendQrHint,
+      textAlign: TextAlign.center,
+      style: theme.textTheme.bodyMedium?.copyWith(
+        color: theme.colorScheme.onSurfaceVariant,
+      ),
+    );
+
     return AdaptivePaneLayout(
       primary: Builder(
         builder: (context) {
@@ -1006,6 +1023,10 @@ class _Waiting extends StatelessWidget {
                 codeCard,
                 Gap.m,
                 codeHint,
+                Gap.l,
+                qrCode,
+                Gap.s,
+                qrHint,
                 if (isTabletop) ...[Gap.l, const SameNetworkNote()],
               ],
             ),
@@ -1019,6 +1040,10 @@ class _Waiting extends StatelessWidget {
           codeCard,
           Gap.m,
           codeHint,
+          Gap.l,
+          qrCode,
+          Gap.s,
+          qrHint,
           Gap.xl,
           const SameNetworkNote(),
         ],

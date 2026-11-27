@@ -27,6 +27,7 @@ fuzz_target!(|data: &[u8]| {
         );
         let linked = TransferCode::from_link(s);
         let classified = TransferCode::classify_link(s);
+        let qr = TransferCode::from_qr(s);
         assert_eq!(
             linked.as_ref(),
             match &classified {
@@ -35,9 +36,17 @@ fuzz_target!(|data: &[u8]| {
             },
             "{s:?}"
         );
+        if let Some(code) = &qr {
+            assert_eq!(
+                classified,
+                ReceiveLink::Code(code.clone()),
+                "from_qr must be a strict subset of classify_link: {s:?}"
+            );
+        }
         if s.len() > MAX_LINK_BYTES {
             assert_eq!(linked, None);
             assert_eq!(classified, ReceiveLink::Invalid);
+            assert_eq!(qr, None);
         } else {
             assert_eq!(
                 classified,
@@ -46,8 +55,10 @@ fuzz_target!(|data: &[u8]| {
             );
             if let Ok(code) = TransferCode::parse(s) {
                 assert_eq!(linked.as_ref(), Some(&code));
+                assert_eq!(qr, None, "bare codes are rejected by from_qr");
             }
             assert_eq!(TransferCode::from_link(&format!("{s}?x")), None, "{s:?}");
+            assert_eq!(TransferCode::from_qr(&format!("{s}?x")), None, "{s:?}");
             if s.len().saturating_add(2) <= MAX_LINK_BYTES {
                 assert_eq!(
                     TransferCode::classify_link(&format!("{s}?x")),
@@ -61,11 +72,41 @@ fuzz_target!(|data: &[u8]| {
             let link = |l: String| TransferCode::from_link(&l);
             assert_eq!(link(format!("totaldrop://r/{english}")), Some(code.clone()));
             assert_eq!(
+                TransferCode::from_qr(&format!("totaldrop://r/{english}")),
+                Some(code.clone())
+            );
+            assert_eq!(TransferCode::from_qr(&code.qr_link()), Some(code.clone()));
+            assert_eq!(link(code.qr_link()), Some(code.clone()));
+            assert_eq!(
+                link(format!("https://totaldrop.app/r/#{english}")),
+                Some(code.clone())
+            );
+            assert_eq!(
+                TransferCode::from_qr(&format!("https://totaldrop.app/r/#{english}")),
+                Some(code.clone())
+            );
+            assert_eq!(
+                link(format!("HTTPS://TOTALDROP.APP/R#{english}")),
+                Some(code.clone())
+            );
+            assert_eq!(
+                TransferCode::from_qr(&format!("HTTPS://TOTALDROP.APP/R#{english}")),
+                Some(code.clone())
+            );
+            assert_eq!(
                 link(format!("https://totaldrop.app/r#{}", escaped(&english))),
                 Some(code.clone())
             );
             assert_eq!(
+                TransferCode::from_qr(&format!("https://totaldrop.app/r#{}", escaped(&english))),
+                Some(code.clone())
+            );
+            assert_eq!(
                 link(format!("totaldrop://r/{}", escaped(&escaped(&english)))),
+                None
+            );
+            assert_eq!(
+                TransferCode::from_qr(&format!("totaldrop://r/{}", escaped(&escaped(&english)))),
                 None
             );
         }

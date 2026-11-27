@@ -679,4 +679,19 @@ class AppLocalizationsSw extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'Mipangilio ya betri';
+
+  @override
+  String get receiveScanQr => 'Changanua msimbo wa QR';
+
+  @override
+  String get receiveScanQrHint =>
+      'Elekeza kamera kwenye msimbo wa QR kwenye skrini ya mtumaji.';
+
+  @override
+  String get receiveCameraDenied =>
+      'Ruhusa ya kamera haikutolewa. Bado unaweza kuandika au kubandika msimbo.';
+
+  @override
+  String get receiveCameraUnavailable =>
+      'Hakuna kamera inayopatikana kwenye kifaa hiki. Andika au bandika msimbo badala yake.';
 }

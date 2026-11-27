@@ -102,6 +102,10 @@ class TransferRepository {
   /// the code goes, or `null` when the link is invalid.
   String? codeFromLink(String link) => bridge.codeFromLink(link: link);
 
+  /// The code in a TotalDrop QR code (`https://totaldrop.app/r#…` or
+  /// `totaldrop://r/…`), read strictly in Rust (#29).
+  String? codeFromQr(String text) => bridge.codeFromQr(text: text);
+
   /// Where received files go: `<public Downloads>/TotalDrop` on Android,
   /// queried via the platform API so secondary users and Work Profiles save
   /// into their own public Downloads (#592). Falls back to the app's own

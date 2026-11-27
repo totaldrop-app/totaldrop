@@ -11,4 +11,7 @@
     <string name="process_text">用 TotalDrop 傳送</string>
     <string name="shortcut_receive_short">接收</string>
     <string name="shortcut_receive_long">接收檔案</string>
+    <string name="qr_scan_title">掃描 QR 碼</string>
+    <string name="qr_scan_hint">將相機對準傳送者畫面上的 QR 碼。</string>
+    <string name="qr_scan_close">取消</string>
 </resources>

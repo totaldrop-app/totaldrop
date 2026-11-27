@@ -11,4 +11,7 @@
     <string name="process_text">Kirim dengan TotalDrop</string>
     <string name="shortcut_receive_short">Terima</string>
     <string name="shortcut_receive_long">Terima file</string>
+    <string name="qr_scan_title">Pindai kode QR</string>
+    <string name="qr_scan_hint">Arahkan kamera ke kode QR di layar pengirim.</string>
+    <string name="qr_scan_close">Batal</string>
 </resources>

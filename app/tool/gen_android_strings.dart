@@ -19,6 +19,9 @@ const strings = {
   'process_text': 'desktopSendWith',
   'shortcut_receive_short': 'homeReceiveTitle',
   'shortcut_receive_long': 'receiveTitle',
+  'qr_scan_title': 'receiveScanQr',
+  'qr_scan_hint': 'receiveScanQrHint',
+  'qr_scan_close': 'cancel',
 };
 
 const res = 'android/app/src/main/res';

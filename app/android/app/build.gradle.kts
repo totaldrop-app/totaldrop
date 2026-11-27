@@ -97,6 +97,15 @@ flutter {
 }
 
 dependencies {
+    // Camera preview and QR decoding on the Receive screen (#29, ADR 0023):
+    // Jetpack CameraX (Apache-2.0, Google AndroidX) and zxing-cpp Android
+    // wrapper (Apache-2.0, zxing-cpp maintainers; no Play Services / ML Kit).
+    implementation("androidx.camera:camera-core:1.4.2")
+    implementation("androidx.camera:camera-camera2:1.4.2")
+    implementation("androidx.camera:camera-lifecycle:1.4.2")
+    implementation("androidx.camera:camera-view:1.4.2")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
+    implementation("io.github.zxing-cpp:android:3.1.1")
     // JVM unit tests of the Kotlin code (#260); test only, not shipped.
     testImplementation("junit:junit:4.13.2")
 }

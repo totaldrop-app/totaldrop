@@ -184,5 +184,9 @@
   "setupBackgroundAutostart": "Autostart öffnen",
   "setupBackgroundSkip": "Nicht jetzt",
   "settingsBackground": "Übertragungen im Hintergrund",
-  "settingsBackgroundOpen": "Akkueinstellungen"
+  "settingsBackgroundOpen": "Akkueinstellungen",
+  "receiveScanQr": "QR-Code scannen",
+  "receiveScanQrHint": "Richten Sie die Kamera auf den QR-Code auf dem Bildschirm des Senders.",
+  "receiveCameraDenied": "Der Kamerazugriff wurde nicht erlaubt. Sie können den Code weiterhin eingeben oder einfügen.",
+  "receiveCameraUnavailable": "Auf diesem Gerät ist keine Kamera verfügbar. Geben Sie den Code ein oder fügen Sie ihn ein."
 }

@@ -688,4 +688,18 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'إعدادات البطارية';
+
+  @override
+  String get receiveScanQr => 'مسح رمز QR';
+
+  @override
+  String get receiveScanQrHint => 'وجّه الكاميرا إلى رمز QR على شاشة المرسِل.';
+
+  @override
+  String get receiveCameraDenied =>
+      'لم يُسمح بالوصول إلى الكاميرا. ما زال بإمكانك كتابة الرمز أو لصقه.';
+
+  @override
+  String get receiveCameraUnavailable =>
+      'لا تتوفر كاميرا على هذا الجهاز. اكتب الرمز أو الصقه بدلاً من ذلك.';
 }

@@ -184,5 +184,9 @@
   "setupBackgroundAutostart": "Открыть автозапуск",
   "setupBackgroundSkip": "Не сейчас",
   "settingsBackground": "Передача в фоне",
-  "settingsBackgroundOpen": "Настройки батареи"
+  "settingsBackgroundOpen": "Настройки батареи",
+  "receiveScanQr": "Сканировать QR-код",
+  "receiveScanQrHint": "Наведите камеру на QR-код на экране отправителя.",
+  "receiveCameraDenied": "Доступ к камере не разрешён. Вы по-прежнему можете ввести или вставить код.",
+  "receiveCameraUnavailable": "На этом устройстве нет доступной камеры. Введите или вставьте код вручную."
 }

@@ -692,4 +692,19 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'Налаштування батареї';
+
+  @override
+  String get receiveScanQr => 'Сканувати QR-код';
+
+  @override
+  String get receiveScanQrHint =>
+      'Наведіть камеру на QR-код на екрані відправника.';
+
+  @override
+  String get receiveCameraDenied =>
+      'Доступ до камери не надано. Ви все одно можете ввести або вставити код.';
+
+  @override
+  String get receiveCameraUnavailable =>
+      'На цьому пристрої немає доступної камери. Введіть або вставте код вручну.';
 }

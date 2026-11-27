@@ -674,4 +674,19 @@ class AppLocalizationsHu extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'Akkumulátorbeállítások';
+
+  @override
+  String get receiveScanQr => 'QR-kód beolvasása';
+
+  @override
+  String get receiveScanQrHint =>
+      'Irányítsa a kamerát a küldő képernyőjén látható QR-kódra.';
+
+  @override
+  String get receiveCameraDenied =>
+      'A kamerához való hozzáférés nem lett engedélyezve. A kódot továbbra is beírhatja vagy beillesztheti.';
+
+  @override
+  String get receiveCameraUnavailable =>
+      'Ezen az eszközön nem érhető el kamera. Írja be vagy illessze be a kódot.';
 }

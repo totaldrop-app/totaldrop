@@ -275,5 +275,13 @@
   "settingsBackground": "Background transfers",
   "@settingsBackground": {"description": "Settings: heading of the section about background transfers"},
   "settingsBackgroundOpen": "Battery settings",
-  "@settingsBackgroundOpen": {"description": "Settings: button that opens the background transfers page"}
+  "@settingsBackgroundOpen": {"description": "Settings: button that opens the background transfers page"},
+  "receiveScanQr": "Scan QR code",
+  "@receiveScanQr": {"description": "Receive screen button and camera screen heading for scanning the transfer QR code (#29)"},
+  "receiveScanQrHint": "Point the camera at the QR code on the sender's screen.",
+  "@receiveScanQrHint": {"description": "Instruction shown on the camera QR scanner screen (#29)"},
+  "receiveCameraDenied": "Camera access was not allowed. You can still type or paste the code.",
+  "@receiveCameraDenied": {"description": "Shown on the Receive screen when camera permission is denied (#29)"},
+  "receiveCameraUnavailable": "No camera is available on this device. Type or paste the code instead.",
+  "@receiveCameraUnavailable": {"description": "Shown on the Receive screen when the device has no usable camera (#29)"}
 }

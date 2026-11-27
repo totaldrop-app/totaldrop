@@ -11,4 +11,7 @@
     <string name="process_text">Send med TotalDrop</string>
     <string name="shortcut_receive_short">Motta</string>
     <string name="shortcut_receive_long">Motta filer</string>
+    <string name="qr_scan_title">Skann QR-kode</string>
+    <string name="qr_scan_hint">Rett kameraet mot QR-koden på avsenderens skjerm.</string>
+    <string name="qr_scan_close">Avbryt</string>
 </resources>

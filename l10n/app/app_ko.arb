@@ -184,5 +184,9 @@
   "setupBackgroundAutostart": "자동 시작 열기",
   "setupBackgroundSkip": "나중에",
   "settingsBackground": "백그라운드 전송",
-  "settingsBackgroundOpen": "배터리 설정"
+  "settingsBackgroundOpen": "배터리 설정",
+  "receiveScanQr": "QR 코드 스캔",
+  "receiveScanQrHint": "보내는 사람의 화면에 있는 QR 코드에 카메라를 비추세요.",
+  "receiveCameraDenied": "카메라 접근이 허용되지 않았습니다. 코드를 직접 입력하거나 붙여넣을 수 있습니다.",
+  "receiveCameraUnavailable": "이 기기에서 사용할 수 있는 카메라가 없습니다. 대신 코드를 입력하거나 붙여넣으세요."
 }

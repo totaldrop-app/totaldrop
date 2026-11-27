@@ -17,6 +17,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/intl.dart' as intl;
 import 'package:material_ui/material_ui.dart';
 import 'package:totaldrop/data/background_access.dart';
+import 'package:totaldrop/data/qr_scanner.dart';
 import 'package:totaldrop/data/settings_repository.dart';
 import 'package:totaldrop/l10n/app_localizations.dart';
 import 'package:totaldrop/src/rust/api/l10n.dart' show ShownText;
@@ -56,7 +57,21 @@ class _Rust implements RustLibApi {
   String crateApiTransferDefaultServer() => 'wss://rendezvous.totaldrop.app';
 
   @override
+  QrGrid crateApiTransferQrForCode({required String code}) =>
+      QrGrid(modules: '${'10' * 220}1', width: 21);
+
+  @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _DenyQrScanner extends QrScanner {
+  const _DenyQrScanner();
+
+  @override
+  bool get available => true;
+
+  @override
+  Future<QrScanResult> scan() async => const QrCameraDenied();
 }
 
 const _longName = 'Rapport annuel 2026 (version finale).pdf';
@@ -143,6 +158,7 @@ final _shows = <String, Object>{
   'send done': (AppLocalizations l) => l.sendDone,
   'send failed, details open': 'wss://relay.totaldrop.app',
   'receive an invalid code': (AppLocalizations l) => l.receiveCodeInvalid,
+  'receive, camera denied': (AppLocalizations l) => l.receiveCameraDenied,
   'receive connecting': '7-harbor-rocket',
   'receive an offer of many files': (AppLocalizations l) => l.receiveAndMore(4),
   'receiving a large file': _expectedHalfwayPercent,
@@ -495,8 +511,24 @@ void main() {
         'receive': () => (
           ReceiveView(
             viewModel: ReceiveViewModel(repository: FakeRepository()),
+            qrScanner: const _DenyQrScanner(),
           ),
           (_) async {},
+        ),
+        'receive, camera denied': () => (
+          ReceiveView(
+            viewModel: ReceiveViewModel(repository: FakeRepository()),
+            qrScanner: const _DenyQrScanner(),
+          ),
+          (tester) async {
+            await tester.pump();
+            final l = AppLocalizations.of(
+              tester.element(find.byType(Scaffold).first),
+            );
+            await tester.ensureVisible(find.text(l.receiveScanQr));
+            await tester.pump();
+            await tester.tap(find.text(l.receiveScanQr));
+          },
         ),
         'receive an offer': () {
           final repo = FakeRepository();
