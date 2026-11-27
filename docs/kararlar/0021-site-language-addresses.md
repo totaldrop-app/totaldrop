@@ -1,7 +1,8 @@
 # 0021: The site has an address for every page in every language, written by a build step
 
 - **Status:** Accepted, 14 November 2026 (proposed by Ozan on 13 November
-  2026, approved by Sadık on 14 November 2026; #513)
+  2026, approved by Sadık on 14 November 2026; #513). Updated 27 November
+  2026 (#610), approved by Sadık.
 - **Context:** The site was written in English and translated in the
   browser: `app.js` chose a language from the browser's settings, fetched
   `/i18n/<tag>.json` and replaced the text at the same address. Checked on
@@ -107,7 +108,11 @@
     and `download.totaldrop.app`. On arrival, the receiving host saves the
     choice in its own storage and strips `lang` from the address bar with
     `history.replaceState` (keeping `?lang=en` on links when storage is
-    unavailable).
+    unavailable). Because any link carrying a supported `?lang=<tag>`
+    triggers the same handler, an external link can set the visitor's
+    saved language preference in `localStorage`; this is intentional and
+    low impact because the value is validated against the 35 built-in tags,
+    stays strictly in browser storage, and never reaches a server.
   - Still tracked in #513 and #554: moving the `?v=` asset versions and the
     privacy pages into the build so that generated files leave the
     repository, and measuring first-visit redirect LCP at `390 px` after
