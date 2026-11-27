@@ -213,10 +213,10 @@ Adım adım:
    - `own_hints` (`crates/totaldrop-core/src/lib.rs:101`): yerel adresler, STUN
      (`crates/totaldrop-core/src/relay.rs:112` `discover`) ve aynı anda
      yönlendiriciden port isteği: PCP ve NAT-PMP yarışır, ikisi de
-     susarsa UPnP IGD denenir (`crates/totaldrop-core/src/portmap.rs:380`
+     susarsa UPnP IGD denenir (`crates/totaldrop-core/src/portmap.rs:448`
      `start`). Bekleme en çok `MAPPING_GRACE` = 300 ms'dir
      (`crates/totaldrop-core/src/lib.rs:95`); ağ geçidi UPnP ile yanıt
-     verdiyse deneme bitene kadar sürer (`crates/totaldrop-core/src/portmap.rs:428`
+     verdiyse deneme bitene kadar sürer (`crates/totaldrop-core/src/portmap.rs:506`
      `Asking::wait`).
    - `pairing::exchange` (`crates/totaldrop-core/src/pairing.rs:73`):
      kutuda `pake` (CPace, `crates/totaldrop-core/src/pairing.rs:107-110`), `confirm` (sertifika,
@@ -593,7 +593,7 @@ dokunan bulguları ve bu belgedeki yerleri:
 | Issue | Yer | Bu belgede |
 | --- | --- | --- |
 | #424 | Düzeltildi: ping süre sınırlı (`crates/totaldrop-core/src/relay.rs:521` `ping_within`) | 2.1 (aktarma yedeği) |
-| #425 | Düzeltildi: yarışı kaybeden eşleme de kapatılır (`crates/totaldrop-core/src/portmap.rs:312`) | 2.1 (`own_hints`) |
+| #425 | Düzeltildi: yarışı kaybeden eşleme de kapatılır (`crates/totaldrop-core/src/portmap.rs:319`) | 2.1 (`own_hints`) |
 | #426 | Düzeltildi: sayım `server/relay-worker/src/count.ts:36` `noteGiven` | 3.2 (`Pair`), 5.2 |
 | #427 | Düzeltildi: klasör URL ile açılır (`linux/qml/ResultPanel.qml:135`) | — (arayüz) |
 | #428 | Düzeltildi: STUN hata döngüsü (`crates/totaldrop-core/src/relay.rs:238` `collect_stun_replies`), Rust rendezvous jetonu (`server/totaldrop-rendezvous/src/lib.rs:128` `token_matches`); açık: `snow` | 2.1, 2.4, 7.5 |
