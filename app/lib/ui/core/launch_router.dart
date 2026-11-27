@@ -59,19 +59,33 @@ class _LaunchRouterState extends State<LaunchRouter> {
     super.dispose();
   }
 
-  /// A send or receive that leaving its screen would end, or a receive
-  /// that waits for the person's answer.
-  bool get _blocked =>
+  /// A send or receive currently running or waiting for the person's answer.
+  bool get _transferActive =>
       widget.send.busy ||
       widget.receive.busy ||
       widget.receive.stage == ReceiveStage.offered;
+
+  /// An unsaved received text currently shown on screen (#632).
+  bool get _showingReceivedText =>
+      widget.receive.stage == ReceiveStage.done && widget.receive.isText;
+
+  /// A send or receive that leaving its screen would end, a receive waiting
+  /// for the person's answer, or an unsaved received text currently on screen
+  /// (#326, #632).
+  bool get _blocked => widget.send.busy || !widget.receive.canTakeLink;
+
+  /// Reuse [AppLocalizations.linkBusy] when only an unsaved received text is
+  /// blocking a share/drop/clipboard launch so we never falsely claim a
+  /// transfer is still running (#632).
+  String _shareBlockedMessage(AppLocalizations l) =>
+      (!_transferActive && _showingReceivedText) ? l.linkBusy : l.shareBusy;
 
   void _on(Launch launch) {
     switch (launch) {
       case OpenScreen(screen: clipboardScreen):
         if (_blocked) {
           _showRunning();
-          _tell((l) => l.shareBusy);
+          _tell(_shareBlockedMessage);
         } else {
           _show(sendRoute);
           // Android gives the clipboard only to the app whose window has
@@ -93,7 +107,7 @@ class _LaunchRouterState extends State<LaunchRouter> {
         } else {
           widget.send.refuseShare(id);
           _showRunning();
-          _tell((l) => l.shareBusy);
+          _tell(_shareBlockedMessage);
         }
       case SharedFiles(id: final id, files: final files, skipped: final n):
         if (widget.send.addShared(id, files) && n > 0) {
@@ -104,7 +118,7 @@ class _LaunchRouterState extends State<LaunchRouter> {
       case OpenLink(link: final link):
         // A link without a code still opens Receive, to type one in. Not
         // over a received text either: it is shown, never saved.
-        if (_blocked || !widget.receive.canTakeLink) {
+        if (_blocked) {
           _showRunning();
           _tell((l) => l.linkBusy);
         } else {
@@ -116,7 +130,7 @@ class _LaunchRouterState extends State<LaunchRouter> {
           _show(sendRoute);
         } else {
           _showRunning();
-          _tell((l) => l.shareBusy);
+          _tell(_shareBlockedMessage);
         }
     }
   }

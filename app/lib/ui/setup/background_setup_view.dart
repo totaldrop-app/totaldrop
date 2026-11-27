@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../data/background_access.dart';
 import '../../l10n/app_localizations.dart';
+import '../core/adaptive.dart';
 import '../core/common.dart';
 import '../core/theme.dart';
 
@@ -83,108 +84,125 @@ class _BackgroundSetupViewState extends State<BackgroundSetupView>
     final muted = theme.textTheme.bodyMedium?.copyWith(
       color: theme.colorScheme.onSurfaceVariant,
     );
+
+    final overview = <Widget>[
+      Icon(
+        Icons.battery_charging_full_rounded,
+        size: 48,
+        color: theme.colorScheme.primary,
+      ),
+      Gap.m,
+      Semantics(
+        header: true,
+        child: Text(
+          l.setupBackgroundTitle,
+          style: theme.textTheme.headlineMedium,
+        ),
+      ),
+      Gap.s,
+      Text(l.setupBackgroundBody, style: theme.textTheme.bodyLarge),
+      if (state != null) ...[
+        Gap.l,
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(
+              state.exempt
+                  ? Icons.check_circle_outline_rounded
+                  : Icons.info_outline_rounded,
+              size: 20,
+              color: state.exempt
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.onSurfaceVariant,
+            ),
+            Gap.s,
+            Expanded(
+              child: Text(
+                state.exempt
+                    ? l.setupBackgroundAllowed
+                    : l.setupBackgroundRestricted,
+                style: muted,
+              ),
+            ),
+          ],
+        ),
+      ],
+    ];
+
+    final actions = <Widget>[
+      FilledButton(
+        onPressed: () => _open(BackgroundPage.battery),
+        child: Text(l.setupBackgroundBattery),
+      ),
+      Gap.s,
+      Text(l.setupBackgroundBatteryHint, style: muted),
+      if (state?.maker case final maker?) ...[
+        Gap.l,
+        const Divider(),
+        Gap.l,
+        Semantics(
+          header: true,
+          child: Text(
+            l.setupBackgroundMaker(maker),
+            style: theme.textTheme.titleLarge,
+          ),
+        ),
+        Gap.s,
+        Text(l.setupBackgroundMakerBody, style: theme.textTheme.bodyMedium),
+        Gap.m,
+        FilledButton.tonal(
+          onPressed: () => _open(BackgroundPage.maker),
+          child: Text(l.setupBackgroundMakerOpen),
+        ),
+        if (state?.autostart ?? false) ...[
+          Gap.s,
+          OutlinedButton(
+            onPressed: () => _open(BackgroundPage.autostart),
+            child: Text(l.setupBackgroundAutostart),
+          ),
+        ],
+      ],
+      Gap.xl,
+      Wrap(
+        alignment: WrapAlignment.end,
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          if (widget.firstRun)
+            TextButton(
+              onPressed: () => widget.onDone(skipped: true),
+              child: Text(l.setupBackgroundSkip),
+            ),
+          FilledButton.tonal(
+            onPressed: () => widget.onDone(skipped: false),
+            child: Text(l.done),
+          ),
+        ],
+      ),
+    ];
+
     // At first start the page is the first route: back leaves the app.
     return Scaffold(
       appBar: widget.firstRun ? null : AppBar(),
       body: SafeArea(
-        child: ColumnListView(
-          top: widget.firstRun ? 24 : 0,
-          children: [
-            Icon(
-              Icons.battery_charging_full_rounded,
-              size: 48,
-              color: theme.colorScheme.primary,
+        child: AdaptivePaneLayout(
+          primary: CenteredScroll(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: overview,
             ),
-            Gap.m,
-            Semantics(
-              header: true,
-              child: Text(
-                l.setupBackgroundTitle,
-                style: theme.textTheme.headlineMedium,
-              ),
-            ),
-            Gap.s,
-            Text(l.setupBackgroundBody, style: theme.textTheme.bodyLarge),
-            Gap.l,
-            if (state != null) ...[
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(
-                    state.exempt
-                        ? Icons.check_circle_outline_rounded
-                        : Icons.info_outline_rounded,
-                    size: 20,
-                    color: state.exempt
-                        ? theme.colorScheme.primary
-                        : theme.colorScheme.onSurfaceVariant,
-                  ),
-                  Gap.s,
-                  Expanded(
-                    child: Text(
-                      state.exempt
-                          ? l.setupBackgroundAllowed
-                          : l.setupBackgroundRestricted,
-                      style: muted,
-                    ),
-                  ),
-                ],
-              ),
-              Gap.m,
-            ],
-            FilledButton(
-              onPressed: () => _open(BackgroundPage.battery),
-              child: Text(l.setupBackgroundBattery),
-            ),
-            Gap.s,
-            Text(l.setupBackgroundBatteryHint, style: muted),
-            if (state?.maker case final maker?) ...[
-              Gap.l,
-              const Divider(),
-              Gap.l,
-              Semantics(
-                header: true,
-                child: Text(
-                  l.setupBackgroundMaker(maker),
-                  style: theme.textTheme.titleLarge,
-                ),
-              ),
-              Gap.s,
-              Text(
-                l.setupBackgroundMakerBody,
-                style: theme.textTheme.bodyMedium,
-              ),
-              Gap.m,
-              FilledButton.tonal(
-                onPressed: () => _open(BackgroundPage.maker),
-                child: Text(l.setupBackgroundMakerOpen),
-              ),
-              if (state?.autostart ?? false) ...[
-                Gap.s,
-                OutlinedButton(
-                  onPressed: () => _open(BackgroundPage.autostart),
-                  child: Text(l.setupBackgroundAutostart),
-                ),
-              ],
-            ],
-            Gap.xl,
-            Wrap(
-              alignment: WrapAlignment.end,
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                if (widget.firstRun)
-                  TextButton(
-                    onPressed: () => widget.onDone(skipped: true),
-                    child: Text(l.setupBackgroundSkip),
-                  ),
-                FilledButton.tonal(
-                  onPressed: () => widget.onDone(skipped: false),
-                  child: Text(l.done),
-                ),
-              ],
-            ),
-          ],
+          ),
+          secondary: ColumnListView(
+            top: widget.firstRun ? 24 : 16,
+            bottom: 24,
+            children: actions,
+          ),
+          singlePane: ColumnListView(
+            top: widget.firstRun ? 24 : 0,
+            bottom: 24,
+            children: [...overview, state != null ? Gap.m : Gap.l, ...actions],
+          ),
         ),
       ),
     );

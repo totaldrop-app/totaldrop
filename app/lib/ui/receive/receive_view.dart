@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 
 import '../../l10n/app_localizations.dart';
+import '../core/adaptive.dart';
 import '../core/common.dart';
 import '../core/l10n.dart';
 import '../core/mark.dart';
@@ -144,14 +145,12 @@ class _ReceiveViewState extends State<ReceiveView> {
                         Navigator.pop(context);
                       },
                     ),
-                    ReceiveStage.failed => CenteredScroll(
-                      child: ErrorPanel(
-                        error: vm.error!,
-                        onRetry: () {
-                          vm.reset();
-                          _controller.clear();
-                        },
-                      ),
+                    ReceiveStage.failed => AdaptiveErrorStage(
+                      error: vm.error!,
+                      onRetry: () {
+                        vm.reset();
+                        _controller.clear();
+                      },
                     ),
                   },
                 ),
@@ -164,74 +163,134 @@ class _ReceiveViewState extends State<ReceiveView> {
   }
 }
 
-class _Entering extends StatelessWidget {
+class _Entering extends StatefulWidget {
   const _Entering({required this.vm, required this.controller});
   final ReceiveViewModel vm;
   final TextEditingController controller;
 
   @override
+  State<_Entering> createState() => _EnteringState();
+}
+
+class _EnteringState extends State<_Entering> {
+  // Owned inside AnimatedSwitcher's child state so rapid stage transitions
+  // never collide on GlobalKey while AdaptivePaneLayout posture/keyboard
+  // switches preserve focus and prevent autofocus bounce loops (#632).
+  final _fieldKey = GlobalKey();
+  final _focusNode = FocusNode();
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final vm = widget.vm;
+    final controller = widget.controller;
     final l = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    return ColumnListView(
-      children: [
-        const Center(child: TotalDropMark(size: 96)),
-        Gap.l,
-        TextField(
-          controller: controller,
-          autofocus: true,
-          // The code is English words, left to right in every language.
-          textDirection: TextDirection.ltr,
-          autocorrect: false,
-          enableSuggestions: false,
-          keyboardType: TextInputType.visiblePassword,
-          textInputAction: TextInputAction.go,
-          style: theme.textTheme.headlineSmall,
-          decoration: InputDecoration(
-            labelText: l.receiveCodeLabel,
-            hintText: l.receiveCodeHint,
-            // The example code must never read as typed text.
-            hintStyle: theme.textTheme.headlineSmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.45),
-              fontWeight: FontWeight.w500,
-            ),
-            helperText: l.receiveCodeHelp,
-            errorText: vm.showInvalid ? l.receiveCodeInvalid : null,
-            // All of it, in every language and text size: at 200 % the
-            // Japanese message ran past three lines and lost its end
-            // (#480). errorText cannot go without a limit, so the limit is
-            // one no message reaches; errorText, not the error widget,
-            // because only it is read out with the field.
-            errorMaxLines: 99,
-            prefixIcon: const Icon(Icons.key_outlined),
-            suffixIcon: KeepIconButtonVariant(
-              child: IconButton(
-                tooltip: l.receivePaste,
-                icon: const Icon(Icons.content_paste),
-                onPressed: () async {
-                  final data = await Clipboard.getData(Clipboard.kTextPlain);
-                  final text = data?.text;
-                  if (text == null) return;
-                  final value = codeFromPaste(text);
-                  if (value.isEmpty) return;
-                  controller.text = value;
-                  vm.setInput(value);
-                },
-              ),
-            ),
+
+    final field = TextField(
+      key: _fieldKey,
+      focusNode: _focusNode,
+      controller: controller,
+      autofocus: true,
+      // The code is English words, left to right in every language.
+      textDirection: TextDirection.ltr,
+      autocorrect: false,
+      enableSuggestions: false,
+      keyboardType: TextInputType.visiblePassword,
+      textInputAction: TextInputAction.go,
+      style: theme.textTheme.headlineSmall,
+      decoration: InputDecoration(
+        labelText: l.receiveCodeLabel,
+        hintText: l.receiveCodeHint,
+        // The example code must never read as typed text.
+        hintStyle: theme.textTheme.headlineSmall?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.45),
+          fontWeight: FontWeight.w500,
+        ),
+        helperText: l.receiveCodeHelp,
+        errorText: vm.showInvalid ? l.receiveCodeInvalid : null,
+        // All of it, in every language and text size: at 200 % the
+        // Japanese message ran past three lines and lost its end
+        // (#480). errorText cannot go without a limit, so the limit is
+        // one no message reaches; errorText, not the error widget,
+        // because only it is read out with the field.
+        errorMaxLines: 99,
+        prefixIcon: const Icon(Icons.key_outlined),
+        suffixIcon: KeepIconButtonVariant(
+          child: IconButton(
+            tooltip: l.receivePaste,
+            icon: const Icon(Icons.content_paste),
+            onPressed: () async {
+              final data = await Clipboard.getData(Clipboard.kTextPlain);
+              final text = data?.text;
+              if (text == null) return;
+              final value = codeFromPaste(text);
+              if (value.isEmpty) return;
+              controller.text = value;
+              vm.setInput(value);
+            },
           ),
-          onChanged: vm.setInput,
-          onSubmitted: (_) => vm.connect(),
         ),
-        Gap.l,
-        FilledButton.icon(
-          onPressed: vm.input.trim().isEmpty ? null : vm.connect,
-          icon: const Icon(Icons.link),
-          label: Text(l.receiveConnect),
-        ),
-        Gap.l,
-        const SameNetworkNote(),
-      ],
+      ),
+      onChanged: vm.setInput,
+      onSubmitted: (_) => vm.connect(),
+    );
+
+    final connectButton = FilledButton.icon(
+      onPressed: vm.input.trim().isEmpty ? null : vm.connect,
+      icon: const Icon(Icons.link),
+      label: Text(l.receiveConnect),
+    );
+
+    return AdaptivePaneLayout(
+      primary: Builder(
+        builder: (context) {
+          final isTabletop = AdaptivePaneLayout.isTabletopOf(context);
+          return CenteredScroll(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(child: TotalDropMark(size: isTabletop ? 80 : 96)),
+                if (!isTabletop) ...[Gap.xl, const SameNetworkNote()],
+              ],
+            ),
+          );
+        },
+      ),
+      secondary: Builder(
+        builder: (context) {
+          final isTabletop = AdaptivePaneLayout.isTabletopOf(context);
+          return CenteredScroll(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                field,
+                Gap.l,
+                connectButton,
+                if (isTabletop) ...[Gap.l, const SameNetworkNote()],
+              ],
+            ),
+          );
+        },
+      ),
+      singlePane: ColumnListView(
+        children: [
+          const Center(child: TotalDropMark(size: 96)),
+          Gap.l,
+          field,
+          Gap.l,
+          connectButton,
+          Gap.l,
+          const SameNetworkNote(),
+        ],
+      ),
     );
   }
 }
@@ -247,65 +306,78 @@ class _Offered extends StatelessWidget {
     final o = vm.offer!;
     final names = o.names;
     if (vm.isText) return _OfferedText(vm: vm);
-    return ColumnListView(
-      children: [
-        Announced(Text(l.receiveOffer, style: theme.textTheme.headlineSmall)),
-        Gap.s,
-        Text(
-          l.receiveOfferSummary(o.files, formatBytes(l, o.totalBytes)),
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontFeatures: const [FontFeature.tabularFigures()],
+
+    final offerItems = <Widget>[
+      Announced(Text(l.receiveOffer, style: theme.textTheme.headlineSmall)),
+      Gap.s,
+      Text(
+        l.receiveOfferSummary(o.files, formatBytes(l, o.totalBytes)),
+        style: theme.textTheme.titleMedium?.copyWith(
+          fontFeatures: const [FontFeature.tabularFigures()],
+        ),
+      ),
+      Gap.m,
+      const Divider(),
+      for (final n in names.take(6)) ...[
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: Row(
+            children: [
+              Icon(
+                Icons.insert_drive_file_outlined,
+                size: 20,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+              Gap.s,
+              // Names come from the other side: hidden direction
+              // characters are shown, not obeyed.
+              Expanded(
+                child: Text(
+                  revealControls(n),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
           ),
         ),
-        Gap.m,
         const Divider(),
-        for (final n in names.take(6)) ...[
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.insert_drive_file_outlined,
-                  size: 20,
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-                Gap.s,
-                // Names come from the other side: hidden direction
-                // characters are shown, not obeyed.
-                Expanded(
-                  child: Text(
-                    revealControls(n),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Divider(),
-        ],
-        if (names.length > 6)
-          Padding(
-            padding: const EdgeInsets.only(top: 12),
-            child: Text(
-              l.receiveAndMore(names.length - 6),
-              style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
-            ),
-          ),
-        Gap.l,
-        VerificationWords(words: o.words),
-        Gap.l,
-        ButtonPair(
-          outlined: PairedButton(
-            safeL10n(context, 'receiveDecline').receiveDecline,
-            vm.decline,
-          ),
-          filled: PairedButton(
-            safeL10n(context, 'receiveAccept').receiveAccept,
-            vm.accept,
+      ],
+      if (names.length > 6)
+        Padding(
+          padding: const EdgeInsets.only(top: 12),
+          child: Text(
+            l.receiveAndMore(names.length - 6),
+            style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
           ),
         ),
-      ],
+    ];
+
+    final decision = <Widget>[
+      VerificationWords(words: o.words),
+      Gap.l,
+      ButtonPair(
+        outlined: PairedButton(
+          safeL10n(context, 'receiveDecline').receiveDecline,
+          vm.decline,
+        ),
+        filled: PairedButton(
+          safeL10n(context, 'receiveAccept').receiveAccept,
+          vm.accept,
+        ),
+      ),
+    ];
+
+    return AdaptivePaneLayout(
+      primary: ColumnListView(children: offerItems),
+      secondary: CenteredScroll(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: decision,
+        ),
+      ),
+      singlePane: ColumnListView(children: [...offerItems, Gap.l, ...decision]),
     );
   }
 }
@@ -320,39 +392,56 @@ class _OfferedText extends StatelessWidget {
     final l = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final o = vm.offer!;
-    return ColumnListView(
-      children: [
-        Announced(
-          Text(l.receiveOfferText, style: theme.textTheme.headlineSmall),
+
+    final summary = <Widget>[
+      Announced(Text(l.receiveOfferText, style: theme.textTheme.headlineSmall)),
+      Gap.s,
+      Text(
+        formatBytes(l, o.totalBytes),
+        style: theme.textTheme.titleMedium?.copyWith(
+          fontFeatures: const [FontFeature.tabularFigures()],
         ),
-        Gap.s,
-        Text(
-          formatBytes(l, o.totalBytes),
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontFeatures: const [FontFeature.tabularFigures()],
-          ),
+      ),
+      Gap.s,
+      Text(
+        l.receiveOfferTextNote,
+        style: theme.textTheme.bodyMedium?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
         ),
-        Gap.s,
-        Text(
-          l.receiveOfferTextNote,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
+      ),
+    ];
+
+    final decision = <Widget>[
+      VerificationWords(words: o.words),
+      Gap.l,
+      ButtonPair(
+        outlined: PairedButton(
+          safeL10n(context, 'receiveDecline').receiveDecline,
+          vm.decline,
         ),
-        Gap.l,
-        VerificationWords(words: o.words),
-        Gap.l,
-        ButtonPair(
-          outlined: PairedButton(
-            safeL10n(context, 'receiveDecline').receiveDecline,
-            vm.decline,
-          ),
-          filled: PairedButton(
-            safeL10n(context, 'receiveAccept').receiveAccept,
-            vm.accept,
-          ),
+        filled: PairedButton(
+          safeL10n(context, 'receiveAccept').receiveAccept,
+          vm.accept,
         ),
-      ],
+      ),
+    ];
+
+    return AdaptivePaneLayout(
+      primary: CenteredScroll(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: summary,
+        ),
+      ),
+      secondary: CenteredScroll(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: decision,
+        ),
+      ),
+      singlePane: ColumnListView(children: [...summary, Gap.l, ...decision]),
     );
   }
 }
@@ -364,22 +453,52 @@ class _Transferring extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    return ColumnListView(
+    Widget buildStatus({required bool isTabletop}) => Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Center(child: TotalDropMark(size: 140, sending: true)),
+        Center(
+          child: TotalDropMark(size: isTabletop ? 96 : 140, sending: true),
+        ),
         Gap.l,
+        // Keep the live-region headline separate from the sibling
+        // TransferProgress bar inside two-pane layouts.
         Announced(
           Text(
             l.receiveReceiving,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.headlineSmall,
           ),
+          container: true,
         ),
         Gap.m,
         TransferProgress(done: vm.done, total: vm.total),
-        Gap.l,
-        if (vm.offer != null) VerificationWords(words: vm.offer!.words),
       ],
+    );
+    if (vm.offer == null) {
+      return AdaptiveSinglePane(
+        child: Builder(
+          builder: (context) => ColumnListView(
+            children: [
+              buildStatus(isTabletop: AdaptivePaneLayout.isTabletopOf(context)),
+            ],
+          ),
+        ),
+      );
+    }
+    final words = VerificationWords(words: vm.offer!.words);
+    return AdaptivePaneLayout(
+      primary: Builder(
+        builder: (context) => CenteredScroll(
+          child: buildStatus(
+            isTabletop: AdaptivePaneLayout.isTabletopOf(context),
+          ),
+        ),
+      ),
+      secondary: CenteredScroll(child: words),
+      singlePane: ColumnListView(
+        children: [buildStatus(isTabletop: false), Gap.l, words],
+      ),
     );
   }
 }
@@ -394,54 +513,96 @@ class _Done extends StatelessWidget {
     final theme = Theme.of(context);
     final s = vm.summary;
     if (vm.receivedText case final text?) return _TextDone(vm: vm, text: text);
-    return ColumnListView(
-      children: [
-        const Center(child: DoneBadge()),
-        Gap.l,
-        Announced(
-          Text(
-            l.receiveDone,
-            textAlign: TextAlign.center,
-            style: theme.textTheme.headlineSmall,
-          ),
+
+    final header = <Widget>[
+      const Center(child: DoneBadge()),
+      Gap.l,
+      Announced(
+        Text(
+          l.receiveDone,
+          textAlign: TextAlign.center,
+          style: theme.textTheme.headlineSmall,
         ),
+      ),
+      Gap.s,
+      if (vm.folder != null)
+        Text(
+          l.receiveSaveTo(isolate(displayReceiveFolder(vm.folder!))),
+          textAlign: TextAlign.center,
+        ),
+      if (s != null && s.filesFailed > 0) ...[
         Gap.s,
-        if (vm.folder != null)
-          Text(
-            l.receiveSaveTo(isolate(displayReceiveFolder(vm.folder!))),
-            textAlign: TextAlign.center,
-          ),
-        if (s != null && s.filesFailed > 0) ...[
-          Gap.s,
-          Text(
-            l.sendSomeFailed(s.filesFailed),
-            textAlign: TextAlign.center,
-            style: TextStyle(color: theme.colorScheme.error),
-          ),
-        ],
-        Gap.m,
-        if (s != null)
-          for (final p in s.saved)
-            ListTile(
-              leading: Icon(
-                Icons.check,
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-              title: Text(
-                revealControls(p.split('/').last),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-        Gap.l,
-        FilledButton(
-          onPressed: () {
-            vm.reset();
-            Navigator.pop(context);
-          },
-          child: Text(l.done),
+        Text(
+          l.sendSomeFailed(s.filesFailed),
+          textAlign: TextAlign.center,
+          style: TextStyle(color: theme.colorScheme.error),
         ),
       ],
+    ];
+
+    final savedTiles = <Widget>[
+      if (s != null)
+        for (final p in s.saved)
+          ListTile(
+            leading: Icon(
+              Icons.check,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+            title: Text(
+              revealControls(p.split('/').last),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+    ];
+
+    final doneButton = FilledButton(
+      onPressed: () {
+        vm.reset();
+        Navigator.pop(context);
+      },
+      child: Text(l.done),
+    );
+
+    if (savedTiles.isEmpty) {
+      return AdaptivePaneLayout(
+        allowFlatTwoPane: false,
+        primary: CenteredScroll(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: header,
+          ),
+        ),
+        secondary: CenteredScroll(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [doneButton],
+          ),
+        ),
+        singlePane: CenteredScroll(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [...header, Gap.l, doneButton],
+          ),
+        ),
+      );
+    }
+
+    return AdaptivePaneLayout(
+      primary: CenteredScroll(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: header,
+        ),
+      ),
+      secondary: ColumnListView(children: [...savedTiles, Gap.l, doneButton]),
+      singlePane: ColumnListView(
+        children: [...header, Gap.m, ...savedTiles, Gap.l, doneButton],
+      ),
     );
   }
 }
@@ -461,58 +622,82 @@ class _TextDone extends StatelessWidget {
     final note = theme.textTheme.bodyMedium?.copyWith(
       color: theme.colorScheme.onSurfaceVariant,
     );
-    // The text scrolls in its own box, at most half the screen high, and
-    // the page scrolls when large type leaves no room.
-    final boxHeight = MediaQuery.sizeOf(context).height / 2;
-    return ColumnListView(
-      children: [
-        const Center(child: DoneBadge()),
-        Gap.l,
-        Announced(
-          Text(
-            l.receiveTextDone,
-            textAlign: TextAlign.center,
-            style: theme.textTheme.headlineSmall,
+    final screenHeight = MediaQuery.sizeOf(context).height;
+
+    List<Widget> buildTextSection({required bool isTabletop}) => <Widget>[
+      const Center(child: DoneBadge()),
+      Gap.l,
+      Announced(
+        Text(
+          l.receiveTextDone,
+          textAlign: TextAlign.center,
+          style: theme.textTheme.headlineSmall,
+        ),
+      ),
+      Gap.m,
+      // The text scrolls in its own box, at most half the screen high (or 30%
+      // when actively split in tabletop), and the page scrolls when large type
+      // leaves no room.
+      ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: screenHeight * (isTabletop ? 0.3 : 0.5),
+        ),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            border: Border.all(color: theme.colorScheme.outlineVariant),
+            borderRadius: const BorderRadius.all(Radius.circular(12)),
+          ),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            // Plain text: nothing in it is a link or markup.
+            child: SelectableText(shown.text),
           ),
         ),
-        Gap.m,
-        ConstrainedBox(
-          constraints: BoxConstraints(maxHeight: boxHeight),
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              border: Border.all(color: theme.colorScheme.outlineVariant),
-              borderRadius: const BorderRadius.all(Radius.circular(12)),
-            ),
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              // Plain text: nothing in it is a link or markup.
-              child: SelectableText(shown.text),
-            ),
+      ),
+      if (shown.short) ...[Gap.s, Text(l.receiveTextShortened, style: note)],
+      if (shown.hidden) ...[Gap.s, Text(l.receiveTextHidden, style: note)],
+    ];
+
+    final actions = <Widget>[
+      OutlinedButton.icon(
+        onPressed: () async {
+          await Clipboard.setData(ClipboardData(text: text));
+          if (context.mounted) {
+            ScaffoldMessenger.of(context)
+                .showSnackBar(SnackBar(content: Text(l.textCopied)));
+          }
+        },
+        icon: const Icon(Icons.copy),
+        label: Text(l.copyText),
+      ),
+      Gap.s,
+      FilledButton(
+        onPressed: () {
+          vm.reset();
+          Navigator.pop(context);
+        },
+        child: Text(l.done),
+      ),
+    ];
+
+    return AdaptivePaneLayout(
+      primary: Builder(
+        builder: (context) => ColumnListView(
+          children: buildTextSection(
+            isTabletop: AdaptivePaneLayout.isTabletopOf(context),
           ),
         ),
-        if (shown.short) ...[Gap.s, Text(l.receiveTextShortened, style: note)],
-        if (shown.hidden) ...[Gap.s, Text(l.receiveTextHidden, style: note)],
-        Gap.m,
-        OutlinedButton.icon(
-          onPressed: () async {
-            await Clipboard.setData(ClipboardData(text: text));
-            if (context.mounted) {
-              ScaffoldMessenger.of(context)
-                  .showSnackBar(SnackBar(content: Text(l.textCopied)));
-            }
-          },
-          icon: const Icon(Icons.copy),
-          label: Text(l.copyText),
+      ),
+      secondary: CenteredScroll(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: actions,
         ),
-        Gap.s,
-        FilledButton(
-          onPressed: () {
-            vm.reset();
-            Navigator.pop(context);
-          },
-          child: Text(l.done),
-        ),
-      ],
+      ),
+      singlePane: ColumnListView(
+        children: [...buildTextSection(isTabletop: false), Gap.m, ...actions],
+      ),
     );
   }
 }
@@ -529,30 +714,47 @@ class _Message extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CenteredScroll(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Icon(
-            icon,
-            size: 56,
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
-          Gap.m,
-          Announced(
-            Text(
-              text,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-          ),
-          Gap.l,
-          FilledButton(
-            onPressed: onDone,
-            child: Text(AppLocalizations.of(context).done),
-          ),
-        ],
+    final header = <Widget>[
+      Icon(
+        icon,
+        size: 56,
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
+      ),
+      Gap.m,
+      Announced(
+        Text(
+          text,
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+      ),
+    ];
+    final doneButton = FilledButton(
+      onPressed: onDone,
+      child: Text(AppLocalizations.of(context).done),
+    );
+    return AdaptivePaneLayout(
+      allowFlatTwoPane: false,
+      primary: CenteredScroll(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: header,
+        ),
+      ),
+      secondary: CenteredScroll(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [doneButton],
+        ),
+      ),
+      singlePane: CenteredScroll(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [...header, Gap.l, doneButton],
+        ),
       ),
     );
   }

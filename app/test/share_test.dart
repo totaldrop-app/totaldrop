@@ -653,5 +653,66 @@ void main() {
       expect(receive.receivedText, 'only here', reason: 'nowhere else');
       expect(find.byType(ReceiveView), findsOneWidget);
     });
+
+    testWidgets(
+      'a share or multi-window drop leaves a received text on the screen',
+      (tester) async {
+        await pumpApp(tester);
+        repo
+          ..connected = Completer()
+          ..events = StreamController();
+        receive.setInput('3-old-code');
+        final connected = receive.connect();
+        repo.connected.complete(FakeOffer(isText: true));
+        await connected;
+        await receive.accept();
+        repo.events.add(
+          TransferEvent(
+            kind: EventKind.finished,
+            words: const [],
+            done: 0,
+            total: 0,
+            summary: TransferSummary(
+              filesOk: 0,
+              filesFailed: 0,
+              bytes: 9,
+              saved: const [],
+              text: 'only here',
+            ),
+            error: null,
+          ),
+        );
+        await settle(tester);
+        expect(receive.receivedText, 'only here');
+
+        launches.add(const ShareCopying(9));
+        await settle(tester);
+        expect(launches.dropped, [9], reason: 'its copy is deleted');
+        expect(receive.receivedText, 'only here', reason: 'not replaced');
+        expect(find.byType(ReceiveView), findsOneWidget);
+        expect(find.byType(SendView), findsNothing);
+        expect(
+          find.text(
+            'Finish or stop what is on the screen, then open the link again.',
+          ),
+          findsOneWidget,
+        );
+        expect(
+          find.textContaining('A transfer is still running'),
+          findsNothing,
+        );
+
+        launches.add(const SharedText('dropped text'));
+        await settle(tester);
+        expect(send.text, isEmpty);
+        expect(receive.receivedText, 'only here', reason: 'still on screen');
+        expect(find.byType(ReceiveView), findsOneWidget);
+        expect(find.byType(SendView), findsNothing);
+        expect(
+          find.textContaining('A transfer is still running'),
+          findsNothing,
+        );
+      },
+    );
   });
 }

@@ -74,6 +74,12 @@ jobs:
           printf '%s' "$KEYSTORE" | base64 -d > "$RUNNER_TEMP/upload.jks"
           ANDROID_UPLOAD_STORE_FILE="$RUNNER_TEMP/upload.jks" flutter build appbundle --release
           rm -f "$RUNNER_TEMP/upload.jks"
+      # Verify ELF PT_LOAD >= 16 KB alignment inside the release AAB.
+      # Uncompressed APK zip alignment (--require-uncompressed) is checked on
+      # the debug APK in android.yml and enforced by Google Play when building
+      # Play-split APKs.
+      - name: Verify 16 KB ELF PT_LOAD alignment
+        run: python3 tool/check_16kb_elf.py build/app/outputs/bundle/release/app-release.aab
       - name: Signed with the upload key
         env:
           # SHA-256 of the upload certificate registered with Google Play.

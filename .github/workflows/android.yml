@@ -82,6 +82,10 @@ jobs:
         run: rustup show active-toolchain || rustup toolchain install
       - run: flutter pub get --enforce-lockfile
       - run: flutter build apk --debug --target-platform android-arm64
+      - name: Verify 16 KB ELF alignment and uncompressed jniLibs
+        run: |
+          python3 -m unittest discover -s tool -p 'test_*.py'
+          python3 tool/check_16kb_elf.py --require-uncompressed build/app/outputs/flutter-apk/app-debug.apk
       # The build writes the Gradle wrapper script (android/gradlew).
       - name: Kotlin unit tests
         working-directory: app/android

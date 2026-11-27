@@ -75,6 +75,15 @@ android {
             signingConfig = signingConfigs.getByName(if (hasReleaseKey) "release" else "debug")
         }
     }
+
+    // Explicit guard: keep native libraries uncompressed for Android 15+ 16 KB
+    // page alignment (#632). Already AGP's default at minSdk = 35, retained so
+    // a future minSdk or AGP change cannot silently re-enable compressed jniLibs.
+    packaging {
+        jniLibs {
+            useLegacyPackaging = false
+        }
+    }
 }
 
 kotlin {
