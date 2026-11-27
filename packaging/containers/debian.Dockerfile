@@ -1,5 +1,5 @@
 # Build environment for the .deb: Debian 13 (Qt 6.8) and newer.
-FROM debian:trixie@sha256:9c6e381421d0f48d1b8133e573f33c185ee16cbf505eda9c4a8a4791b25ea8a6
+FROM debian:trixie@sha256:3cda3ca472ce45507a5109c6a3907093e24d9ae67d55954c9a07a45665dafba2
 RUN apt-get update && apt-get install -y --no-install-recommends \
       build-essential debhelper devscripts fakeroot lld pkgconf ca-certificates curl git \
       qt6-base-dev qt6-base-dev-tools qt6-declarative-dev lintian \
