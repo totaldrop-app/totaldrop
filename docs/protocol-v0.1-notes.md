@@ -241,19 +241,21 @@ treated as final.
       LAN addresses, a rule whose crashed port another local process has
       already bound, and entries beyond the first 64 (or left behind if
       TotalDrop never runs on that address again) remain until the router
-      restarts. The first mapping wins; a PCP refusal ends the attempt, and a
+      restarts. The first mapping wins; a PCP refusal ends the attempt, a
       UPnP mapping that completes after a PCP or NAT-PMP one is deleted
-      at once. A PCP or NAT-PMP request still in flight when UPnP wins is
-      not waited for; the router keeps what it made until its lease (120
-      seconds asked) runs out. The search and the HTTP requests end with
+      at once, and a PCP or NAT-PMP mapping request already sent when UPnP
+      wins sends no further retries, is listened for (at least 250 ms after
+      UPnP wins, within the 1.6-second bound) and closed with lifetime 0 if
+      on another port, or held until the UPnP mapping is dropped if on the
+      same port (#463). The search and the HTTP requests end with
       the 1.6-second attempt; a mapping request cut off there may leave a
       mapping until its 120-second lease runs out. An HTTP response is
       read up to 1 MiB.
     - Before the process exits, the apps release what they mapped (#433).
       The command line runs a send or receive as a task, so a panic in it
       still drops the mapping, and waits for the UPnP delete, a PCP or
-      NAT-PMP race loser's release (#461) and the second copy of a PCP
-      or NAT-PMP release (#502), at most 1.6 seconds in all, before it
+      NAT-PMP race loser's release (#461, #463) and the second copy of a
+      PCP or NAT-PMP release (#502), at most 1.6 seconds in all, before it
       exits; a second Ctrl-C exits at once. The Linux
       window, once closed, stops a running transfer as Cancel does and
       declines an unanswered offer. It waits at most 1.5 seconds for that

@@ -135,10 +135,10 @@ static RELEASING: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsiz
 static RELEASED: tokio::sync::Notify = tokio::sync::Notify::const_new();
 
 /// Counts, for [`released`], one UPnP attempt, mapping or delete, one
-/// PCP or NAT-PMP race loser waiting for its answer (#461), or the second
-/// copy of a PCP or NAT-PMP release (#502), that may still leave a port
-/// open. Dropping it, also with a future that never ran, takes it off the
-/// count.
+/// PCP or NAT-PMP race loser waiting for its answer (#461, #463), or the
+/// second copy of a PCP or NAT-PMP release (#502), that may still leave a
+/// port open. Dropping it, also with a future that never ran, takes it off
+/// the count.
 #[derive(Debug)]
 struct Pending;
 
@@ -165,8 +165,8 @@ impl Drop for Pending {
 /// Wait, at most [`LIMIT`], until no UPnP attempt is still under way,
 /// every dropped UPnP mapping has been deleted, every PCP or NAT-PMP
 /// release has gone out twice (#502), and every PCP or NAT-PMP race loser
-/// has had its answer and released a second mapping (#461). What is still
-/// under way when `LIMIT` runs out is not waited for. A
+/// has had its answer and released a second mapping (#461, #463). What is
+/// still under way when `LIMIT` runs out is not waited for. A
 /// process about to exit calls this before it shuts its runtime down;
 /// without it the delete or release dies with the runtime and the port
 /// stays open until its lease runs out.
@@ -308,11 +308,17 @@ impl Release {
     }
 }
 
-/// The protocol that lost the race for the mapping, still waiting for its
-/// answer (#425).
-struct Loser {
-    answer: std::pin::Pin<Box<dyn Future<Output = Option<SocketAddr>> + Send>>,
+/// What a race loser eventually opened (#425, #463).
+struct LoserAnswer {
+    external: SocketAddr,
     release: Release,
+    chained: Option<LaterSlot>,
+}
+
+/// The protocol that lost the race for the mapping, still waiting for its
+/// answer (#425, #463).
+struct Loser {
+    answer: std::pin::Pin<Box<dyn Future<Output = Option<LoserAnswer>> + Send>>,
 }
 
 /// A loser's release that waits for the winner's [`Mapping`] to go.
@@ -321,18 +327,52 @@ struct Later {
     /// The mapping was dropped (or never made): send at once.
     now: bool,
     release: Option<Release>,
+    chained: Option<LaterSlot>,
 }
 
 type LaterSlot = Arc<std::sync::Mutex<Later>>;
 
 impl Loser {
+    fn udp(
+        answer: impl Future<Output = Option<SocketAddr>> + Send + 'static,
+        release: Release,
+    ) -> Self {
+        Self {
+            answer: Box::pin(async move {
+                Some(LoserAnswer {
+                    external: answer.await?,
+                    release,
+                    chained: None,
+                })
+            }),
+        }
+    }
+
+    fn from_map_udp(udp: impl Future<Output = Udp> + Send + 'static) -> Self {
+        Self {
+            answer: Box::pin(async move {
+                let Udp::Mapped(mut m) = udp.await else {
+                    return None;
+                };
+                m.renew.abort();
+                let release = m.release.take()?;
+                let chained = std::mem::take(&mut m.later);
+                Some(LoserAnswer {
+                    external: m.external,
+                    release,
+                    chained: Some(chained),
+                })
+            }),
+        }
+    }
+
     /// What to do with the loser's mapping once its answer comes, if it
     /// comes within [`LIMIT`] (a later one is not waited for, and the
     /// router closes that mapping once its lifetime ends):
     /// - on another external port than the winner's, `kept`, it is a
     ///   second mapping: released at once;
     /// - on the same port it is, in a router that keeps one table for
-    ///   both protocols, the winner's own mapping, perhaps now held under
+    ///   these protocols, the winner's own mapping, perhaps now held under
     ///   the loser's protocol (miniupnpd relabels a rule that NAT-PMP
     ///   asks for again; unverified). Releasing it now would close the
     ///   port in use, so the release waits in `later` and goes with the
@@ -340,11 +380,19 @@ impl Loser {
     /// - with no winner kept (`None`: its mapping was not usable), it is
     ///   released at once.
     async fn close(self, kept: Option<u16>, later: LaterSlot) {
-        let Ok(Some(external)) = tokio::time::timeout(LIMIT, self.answer).await else {
+        let Ok(Some(LoserAnswer {
+            external,
+            release,
+            chained,
+        })) = tokio::time::timeout(LIMIT, self.answer).await
+        else {
             return;
         };
         if kept != Some(external.port()) {
-            self.release.send();
+            release.send();
+            if let Some(c) = chained {
+                release_later(&c);
+            }
             return;
         }
         let mut slot = later
@@ -352,23 +400,43 @@ impl Loser {
             .unwrap_or_else(std::sync::PoisonError::into_inner);
         if slot.now {
             drop(slot);
-            self.release.send();
+            release.send();
+            if let Some(c) = chained {
+                release_later(&c);
+            }
         } else {
-            slot.release = Some(self.release);
+            slot.release = Some(release);
+            slot.chained = chained;
         }
     }
+}
+
+/// Spawn `loser` counted in [`RELEASING`] before the task runs, so a process
+/// that exits right after dropping the mapping still waits for it (#461, #463).
+fn spawn_loser(loser: Loser, kept: Option<u16>, later: &LaterSlot) {
+    let pending = Pending::new();
+    let later = Arc::clone(later);
+    tokio::spawn(async move {
+        let _pending = pending;
+        loser.close(kept, later).await;
+    });
 }
 
 /// Send a loser's release that waited for the mapping, or let a loser
 /// still waiting for its answer send it at once.
 fn release_later(later: &LaterSlot) {
-    let mut slot = later
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner);
-    slot.now = true;
-    if let Some(r) = slot.release.take() {
-        drop(slot);
+    let (release, chained) = {
+        let mut slot = later
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        slot.now = true;
+        (slot.release.take(), slot.chained.take())
+    };
+    if let Some(r) = release {
         r.send();
+    }
+    if let Some(c) = chained {
+        release_later(&c);
     }
 }
 
@@ -380,14 +448,14 @@ fn release_later(later: &LaterSlot) {
 pub fn start(gateway: Gateway, port: u16) -> Asking {
     match gateway.address() {
         Some(target) => start_at(target, Some(SocketAddr::new(target.ip(), SSDP_PORT)), port),
-        None => Asking {
-            task: tokio::spawn(async { None }),
-            upnp: watch::channel(Upnp::Searching).1,
-        },
+        None => Asking::none(),
     }
 }
 
 fn start_at(target: SocketAddr, ssdp: Option<SocketAddr>, port: u16) -> Asking {
+    if port == 0 || !target.is_ipv4() {
+        return Asking::none();
+    }
     let (upnp_tx, upnp) = watch::channel(Upnp::Searching);
     // Counted from now: the task may not have run yet when the process
     // decides to exit.
@@ -407,17 +475,27 @@ fn start_at(target: SocketAddr, ssdp: Option<SocketAddr>, port: u16) -> Asking {
             m
         })
     });
-    Asking { task, upnp }
+    Asking {
+        task: Some(task),
+        upnp,
+    }
 }
 
 /// A mapping being asked for, from [`start`].
 pub struct Asking {
-    task: tokio::task::JoinHandle<Option<Mapping>>,
+    task: Option<tokio::task::JoinHandle<Option<Mapping>>>,
     /// How far UPnP has got.
     upnp: watch::Receiver<Upnp>,
 }
 
 impl Asking {
+    fn none() -> Self {
+        Self {
+            task: None,
+            upnp: watch::channel(Upnp::Failed).1,
+        }
+    }
+
     /// The mapping, waiting at most `grace` more for it.
     ///
     /// PCP and NAT-PMP answer within milliseconds, but UPnP takes several
@@ -426,7 +504,8 @@ impl Asking {
     /// on until the attempt ends, at most [`LIMIT`] after [`start`]. A mapping
     /// that comes after the wait is dropped, which releases it.
     pub async fn wait(mut self, grace: Duration) -> Option<Mapping> {
-        match tokio::time::timeout(grace, &mut self.task).await {
+        let mut task = self.task.take()?;
+        match tokio::time::timeout(grace, &mut task).await {
             Ok(got) => got.ok().flatten(),
             Err(_) if *self.upnp.borrow() == Upnp::Found => {
                 let mut upnp = self.upnp;
@@ -438,7 +517,7 @@ impl Asking {
                     }
                 };
                 tokio::select! {
-                    got = self.task => got.ok().flatten(),
+                    got = task => got.ok().flatten(),
                     () = failed => None,
                 }
             }
@@ -460,8 +539,8 @@ enum Upnp {
 /// PCP and NAT-PMP at `target`, and UPnP at `ssdp` when given. UPnP runs
 /// alongside: whichever gives a mapping first is used. PCP and NAT-PMP
 /// usually answer within milliseconds, while UPnP is still searching, and
-/// then UPnP sends no SOAP action. `upnp` tells how far UPnP has got. A UPnP mapping that comes too late is dropped
-/// with its task, and so released.
+/// then UPnP sends no SOAP action. `upnp_state` tells how far UPnP has got.
+/// A loser's mapping that completes later is released (#425, #463).
 async fn map_with(
     target: SocketAddr,
     ssdp: Option<SocketAddr>,
@@ -478,8 +557,11 @@ async fn map_with(
     // exchange takes the other's answers.
     let pmp_socket = connected(target).await?;
 
-    // Dropping `stop` tells the UPnP task its mapping is not wanted.
+    // Dropping `stop` tells the UPnP task its mapping is not wanted; sending
+    // on `won` stops PCP and NAT-PMP from transmitting further requests once
+    // UPnP has already mapped a port (#463).
     let (stop, stopped) = oneshot::channel::<()>();
+    let (won_tx, won_rx) = watch::channel(None);
     let mut upnp = ssdp.map(|at| {
         tokio::spawn(upnp(
             at,
@@ -489,8 +571,7 @@ async fn map_with(
             pending,
         ))
     });
-    let udp = map_udp(pcp_socket, pmp_socket, client, port);
-    tokio::pin!(udp);
+    let mut udp = Box::pin(map_udp(pcp_socket, pmp_socket, client, port, won_rx));
     let result = match upnp.as_mut() {
         Some(task) => tokio::select! {
             got = &mut udp => match got {
@@ -499,7 +580,11 @@ async fn map_with(
                 Udp::Nothing => task.await.ok().flatten(),
             },
             got = &mut *task => match got.ok().flatten() {
-                Some(m) => Some(m),
+                Some(m) => {
+                    won_tx.send_replace(Some(Instant::now()));
+                    spawn_loser(Loser::from_map_udp(udp), Some(m.external.port()), &m.later);
+                    Some(m)
+                }
                 None => match udp.await {
                     Udp::Mapped(m) => Some(m),
                     Udp::Refused | Udp::Nothing => None,
@@ -528,6 +613,7 @@ async fn map_udp(
     pmp_socket: Arc<UdpSocket>,
     client: IpAddr,
     port: u16,
+    won: watch::Receiver<Option<Instant>>,
 ) -> Udp {
     let mut nonce = [0u8; 12];
     if getrandom::fill(&mut nonce).is_err() {
@@ -536,7 +622,8 @@ async fn map_udp(
     let pcp = Held::Pcp { nonce, client };
     let mut pcp_try = Box::pin({
         let socket = Arc::clone(&pcp_socket);
-        async move { ask(&socket, pcp, port).await }
+        let won = won.clone();
+        async move { ask(&socket, pcp, port, Some(&won)).await }
     });
     // Set once the NAT-PMP mapping request has gone out: from then on the
     // router may hold a NAT-PMP mapping even if PCP wins (#425).
@@ -547,9 +634,14 @@ async fn map_udp(
     let pmp_try = |wait: Duration| {
         let socket = Arc::clone(&pmp_socket);
         let asked = Arc::clone(&pmp_asked);
+        let mut won = won.clone();
         async move {
-            tokio::time::sleep(wait).await;
-            ask_pmp(&socket, port, &asked).await
+            tokio::select! {
+                biased;
+                () = upnp_won(&mut won) => return None,
+                () = tokio::time::sleep(wait) => {}
+            }
+            ask_pmp(&socket, port, &asked, won).await
         }
     };
     let mut pmp_soon = Box::pin(pmp_try(RESEND));
@@ -560,17 +652,19 @@ async fn map_udp(
                 // it keeps listening for the answer, so that a second
                 // mapping can be closed (#425); if not, it stops here and
                 // never asks.
-                let loser = pmp_asked.load(Ordering::Acquire).then(|| Loser {
-                    answer: Box::pin(async move {
-                        pmp_soon
-                            .await
-                            .and_then(|(e, l)| (l != 0 && e.port() != 0).then_some(e))
-                    }),
-                    release: Release::Udp {
-                        socket: Arc::clone(&pmp_socket),
-                        held: Held::Pmp,
-                        port,
-                    },
+                let loser = pmp_asked.load(Ordering::Acquire).then(|| {
+                    Loser::udp(
+                        async move {
+                            pmp_soon
+                                .await
+                                .and_then(|(e, l)| (l != 0 && e.port() != 0).then_some(e))
+                        },
+                        Release::Udp {
+                            socket: Arc::clone(&pmp_socket),
+                            held: Held::Pmp,
+                            port,
+                        },
+                    )
                 });
                 (pcp, pcp_socket, external, lifetime, loser)
             }
@@ -590,19 +684,19 @@ async fn map_udp(
         got = &mut pmp_soon => match got {
             Some((external, lifetime)) => {
                 // The PCP try lost; its request went out first of all.
-                let loser = Loser {
-                    answer: Box::pin(async move {
+                let loser = Loser::udp(
+                    async move {
                         match pcp_try.await {
                             Got::Mapped(e, l) if l != 0 => Some(e),
                             _ => None,
                         }
-                    }),
-                    release: Release::Udp {
+                    },
+                    Release::Udp {
                         socket: Arc::clone(&pcp_socket),
                         held: pcp,
                         port,
                     },
-                };
+                );
                 (Held::Pmp, pmp_socket, external, lifetime, Some(loser))
             }
             None => match pcp_try.await {
@@ -615,15 +709,7 @@ async fn map_udp(
     let usable = lifetime != 0 && public(external.ip());
     let later = LaterSlot::default();
     if let Some(loser) = loser {
-        let kept = usable.then_some(external.port());
-        // Counted from now, before the task runs: the process may exit
-        // as soon as the mapping goes (#461).
-        let pending = Pending::new();
-        let later = Arc::clone(&later);
-        tokio::spawn(async move {
-            let _pending = pending;
-            loser.close(kept, later).await;
-        });
+        spawn_loser(loser, usable.then_some(external.port()), &later);
     }
     let release = Release::Udp {
         socket: Arc::clone(&socket),
@@ -715,7 +801,10 @@ async fn upnp_with(
     // for `HINTS`.
     let gateway = tokio::select! {
         _ = &mut stop => return None,
-        got = tokio::time::timeout_at(deadline, igd_next::aio::tokio::search_gateway(options)) => got.ok()?.ok()?,
+        got = tokio::time::timeout_at(
+            deadline,
+            igd_next::aio::tokio::search_gateway(options),
+        ) => got.ok()?.ok()?,
     };
     // `igd-next` checks only that the description is on a trusted address
     // (the gateway's, see `search_options`) or on the address that
@@ -953,8 +1042,21 @@ fn request(held: Held, port: u16, lifetime: u32) -> Vec<u8> {
     }
 }
 
+/// Resolve once UPnP has won; if the sender is dropped without UPnP winning,
+/// wait forever (same pattern as [`Asking::wait`]) (#463).
+async fn upnp_won(won: &mut watch::Receiver<Option<Instant>>) {
+    if won.wait_for(Option::is_some).await.is_err() {
+        std::future::pending::<()>().await;
+    }
+}
+
 /// Send the mapping request for `held` and read the answer.
-async fn ask(socket: &UdpSocket, held: Held, port: u16) -> Got {
+async fn ask(
+    socket: &UdpSocket,
+    held: Held,
+    port: u16,
+    won: Option<&watch::Receiver<Option<Instant>>>,
+) -> Got {
     let msg = request(held, port, LIFETIME);
     let parse = |m: &[u8]| -> Option<Got> {
         match held {
@@ -975,17 +1077,34 @@ async fn ask(socket: &UdpSocket, held: Held, port: u16) -> Got {
             }),
         }
     };
-    exchange(socket, &msg, parse).await.unwrap_or(Got::Silent)
+    exchange(socket, &msg, won, parse)
+        .await
+        .unwrap_or(Got::Silent)
 }
 
 /// NAT-PMP: the public address, then the mapping.
-/// `asked` is set just before the mapping request goes out.
-async fn ask_pmp(socket: &UdpSocket, port: u16, asked: &AtomicBool) -> Option<(SocketAddr, u32)> {
-    let ip = exchange(socket, &wire::pmp_address(), wire::parse_pmp_address)
-        .await?
-        .ok()?;
+/// `asked` is set just before the mapping request goes out; if `won` fires
+/// before then (UPnP won), the address lookup stops at once and no mapping
+/// request is sent (#463).
+async fn ask_pmp(
+    socket: &UdpSocket,
+    port: u16,
+    asked: &AtomicBool,
+    mut won: watch::Receiver<Option<Instant>>,
+) -> Option<(SocketAddr, u32)> {
+    let addr_req = wire::pmp_address();
+    let ip = tokio::select! {
+        biased;
+        () = upnp_won(&mut won) => return None,
+        got = exchange(socket, &addr_req, None, wire::parse_pmp_address) => {
+            got?.ok()?
+        }
+    };
+    if won.borrow().is_some() {
+        return None;
+    }
     asked.store(true, Ordering::Release);
-    match ask(socket, Held::Pmp, port).await {
+    match ask(socket, Held::Pmp, port, Some(&won)).await {
         Got::Mapped(external, lifetime) => {
             Some((SocketAddr::from((ip, external.port())), lifetime))
         }
@@ -994,15 +1113,27 @@ async fn ask_pmp(socket: &UdpSocket, port: u16, asked: &AtomicBool) -> Option<(S
 }
 
 /// Send `msg` up to [`TRIES`] times and return the first datagram `parse`
-/// accepts. Datagrams it refuses (stray or forged answers) are skipped.
+/// accepts. Datagrams it refuses (stray or forged answers) are skipped. Once
+/// `won` records that UPnP has already mapped a port, no further packet is
+/// sent; if a packet already went out, we only finish listening up to
+/// [`RESEND`] after `won` for its in-flight answer (#463).
 async fn exchange<T>(
     socket: &UdpSocket,
     msg: &[u8],
+    won: Option<&watch::Receiver<Option<Instant>>>,
     parse: impl Fn(&[u8]) -> Option<T>,
 ) -> Option<T> {
+    let won_at = || won.and_then(|w| *w.borrow());
     let mut buf = [0u8; wire::PCP_MAX_LEN];
+    let mut sent = false;
+    let mut tail: Option<Instant> = None;
     for _ in 0..TRIES {
+        if let Some(at) = won_at() {
+            tail = sent.then(|| at.checked_add(RESEND)).flatten();
+            break;
+        }
         socket.send(msg).await.ok()?;
+        sent = true;
         let deadline = Instant::now().checked_add(RESEND)?;
         loop {
             let n = match tokio::time::timeout_at(deadline, socket.recv(&mut buf)).await {
@@ -1011,6 +1142,21 @@ async fn exchange<T>(
                 // error on a connected socket: no server there.
                 Ok(Err(_)) => return None,
                 Err(_) => break,
+            };
+            if let Some(got) = buf.get(..n).and_then(&parse) {
+                return Some(got);
+            }
+        }
+        if let Some(at) = won_at() {
+            tail = at.checked_add(RESEND);
+            break;
+        }
+    }
+    if let Some(deadline) = tail {
+        while Instant::now() < deadline {
+            let n = match tokio::time::timeout_at(deadline, socket.recv(&mut buf)).await {
+                Ok(Ok(n)) => n,
+                Ok(Err(_)) | Err(_) => break,
             };
             if let Some(got) = buf.get(..n).and_then(&parse) {
                 return Some(got);
@@ -1036,7 +1182,7 @@ async fn renew(socket: Arc<UdpSocket>, held: Held, port: u16, lifetime: u32) {
             return;
         };
         tokio::time::sleep_until(at).await;
-        if let Got::Mapped(_, granted) = ask(&socket, held, port).await
+        if let Got::Mapped(_, granted) = ask(&socket, held, port, None).await
             && granted != 0
         {
             (next, expiry) = granted_at(granted);
@@ -1873,7 +2019,8 @@ mod tests {
 
     #[test]
     fn default_route_gateway_is_read() {
-        let table = "Iface\tDestination\tGateway \tFlags\tRefCnt\tUse\tMetric\tMask\t\tMTU\tWindow\tIRTT\n\
+        let table = "Iface\tDestination\tGateway \tFlags\tRefCnt\tUse\tMetric\
+                     \tMask\t\tMTU\tWindow\tIRTT\n\
                      enp8s0\t0001A8C0\t00000000\t0001\t0\t0\t100\t00FFFFFF\t0\t0\t0\n\
                      wg0\t00000000\t00000000\t0001\t0\t0\t50\t00000000\t0\t0\t0\n\
                      enp8s0\t00000000\t0101A8C0\t0003\t0\t0\t100\t00000000\t0\t0\t0\n";
@@ -2068,8 +2215,10 @@ mod tests {
     ) -> (&'static str, String) {
         let envelope = |inner: String| {
             format!(
-                "<?xml version=\"1.0\"?><s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\" \
-                 s:encodingStyle=\"http://schemas.xmlsoap.org/soap/encoding/\"><s:Body>{inner}</s:Body></s:Envelope>"
+                "<?xml version=\"1.0\"?>\
+                 <s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\" \
+                 s:encodingStyle=\"http://schemas.xmlsoap.org/soap/encoding/\">\
+                 <s:Body>{inner}</s:Body></s:Envelope>"
             )
         };
         let ok = |name: &str, args: &str| {
@@ -2081,9 +2230,12 @@ mod tests {
             (
                 "500 Internal Server Error",
                 envelope(format!(
-                    "<s:Fault><faultcode>s:Client</faultcode><faultstring>UPnPError</faultstring><detail>\
-                     <UPnPError xmlns=\"urn:schemas-upnp-org:control-1-0\"><errorCode>{code}</errorCode>\
-                     <errorDescription>{desc}</errorDescription></UPnPError></detail></s:Fault>"
+                    "<s:Fault><faultcode>s:Client</faultcode>\
+                     <faultstring>UPnPError</faultstring><detail>\
+                     <UPnPError xmlns=\"urn:schemas-upnp-org:control-1-0\">\
+                     <errorCode>{code}</errorCode>\
+                     <errorDescription>{desc}</errorDescription>\
+                     </UPnPError></detail></s:Fault>"
                 )),
             )
         };
@@ -2091,13 +2243,18 @@ mod tests {
             return (
                 "200 OK",
                 format!(
-                    "<?xml version=\"1.0\"?><root xmlns=\"urn:schemas-upnp-org:device-1-0\"><device>\
-                 <deviceType>urn:schemas-upnp-org:device:InternetGatewayDevice:1</deviceType>\
-                 <deviceList><device><deviceType>urn:schemas-upnp-org:device:WANDevice:1</deviceType>\
-                 <deviceList><device><deviceType>urn:schemas-upnp-org:device:WANConnectionDevice:1</deviceType>\
-                 <serviceList><service><serviceType>{WANIP}</serviceType><serviceId>urn:upnp-org:serviceId:WANIPConn1</serviceId>\
-                 <SCPDURL>/scpd.xml</SCPDURL><controlURL>/ctl</controlURL><eventSubURL>/evt</eventSubURL></service></serviceList>\
-                 </device></deviceList></device></deviceList></device></root>"
+                    "<?xml version=\"1.0\"?>\
+                     <root xmlns=\"urn:schemas-upnp-org:device-1-0\"><device>\
+                     <deviceType>urn:schemas-upnp-org:device:InternetGatewayDevice:1</deviceType>\
+                     <deviceList><device>\
+                     <deviceType>urn:schemas-upnp-org:device:WANDevice:1</deviceType>\
+                     <deviceList><device>\
+                     <deviceType>urn:schemas-upnp-org:device:WANConnectionDevice:1</deviceType>\
+                     <serviceList><service><serviceType>{WANIP}</serviceType>\
+                     <serviceId>urn:upnp-org:serviceId:WANIPConn1</serviceId>\
+                     <SCPDURL>/scpd.xml</SCPDURL><controlURL>/ctl</controlURL>\
+                     <eventSubURL>/evt</eventSubURL></service></serviceList>\
+                     </device></deviceList></device></deviceList></device></root>"
                 ),
             );
         }
@@ -2119,7 +2276,9 @@ mod tests {
             return (
                 "200 OK",
                 format!(
-                    "<?xml version=\"1.0\"?><scpd xmlns=\"urn:schemas-upnp-org:service-1-0\"><actionList>{}{}{}{}</actionList></scpd>",
+                    "<?xml version=\"1.0\"?>\
+                     <scpd xmlns=\"urn:schemas-upnp-org:service-1-0\">\
+                     <actionList>{}{}{}{}</actionList></scpd>",
                     action("GetExternalIPAddress", &[]),
                     listing,
                     action(
@@ -2809,5 +2968,287 @@ mod tests {
         assert_eq!(m_min.external().ip(), IpAddr::V4(PUBLIC));
         drop(m_min);
         released().await;
+    }
+
+    /// #463: when UPnP wins while a PCP mapping request is already in flight,
+    /// the delayed PCP mapping on another port is closed with lifetime 0 and
+    /// [`released`] waits for both copies of that release before runtime
+    /// shutdown; on the same port it waits in `later` until the UPnP mapping
+    /// is dropped.
+    #[test]
+    fn a_pcp_mapping_that_lost_to_upnp_is_closed_and_waited_for() {
+        let (tx, rx) = std::sync::mpsc::channel();
+        let (pcp_seen_tx, pcp_seen_rx) = std::sync::mpsc::sync_channel(1);
+        let (reply_port_tx, reply_port_rx) = std::sync::mpsc::sync_channel::<u16>(1);
+        let gw = Arc::new(std::net::UdpSocket::bind("127.0.0.1:0").unwrap());
+        let at = gw.local_addr().unwrap();
+        let mut reply_port_rx = Some(reply_port_rx);
+        std::thread::spawn(move || {
+            let mut buf = [0u8; 1500];
+            loop {
+                let (n, from) = match gw.recv_from(&mut buf) {
+                    Ok(got) => got,
+                    Err(e) if e.kind() == std::io::ErrorKind::ConnectionReset => continue,
+                    Err(_) => break,
+                };
+                let m = buf[..n].to_vec();
+                let _ = tx.send(m.clone());
+                if m[0] == 2
+                    && m.len() == 60
+                    && lifetime_of(&m) != 0
+                    && let Some(port_rx) = reply_port_rx.take()
+                {
+                    let req: [u8; 60] = m[..].try_into().unwrap();
+                    let _ = pcp_seen_tx.try_send(());
+                    let gw = Arc::clone(&gw);
+                    std::thread::spawn(move || {
+                        if let Ok(port) = port_rx.recv() {
+                            let r = answer::pcp(&req, 0, (PUBLIC.into(), port), LIFETIME);
+                            let _ = gw.send_to(&r, from);
+                        }
+                    });
+                }
+            }
+        });
+
+        let rt = tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+            .unwrap();
+        rt.block_on(async {
+            let (ssdp, _igd_seen) = igd(Igd::Maps).await;
+            let m = start_at(at, Some(ssdp), 40_000).wait(LIMIT).await.unwrap();
+            pcp_seen_rx.recv_timeout(LIMIT).unwrap();
+            let other_port = if m.external().port() == OPENED {
+                OPENED.saturating_add(1)
+            } else {
+                OPENED
+            };
+            reply_port_tx.send(other_port).unwrap();
+            drop(m);
+            released().await;
+        });
+        rt.shutdown_background();
+
+        let mut all = Vec::new();
+        while let Ok(m) = rx.recv_timeout(Duration::from_millis(500)) {
+            all.push(m);
+        }
+        assert_eq!(
+            releases(&all, 2),
+            2,
+            "the losing PCP mapping was not closed and waited for before runtime shutdown"
+        );
+    }
+
+    /// #463: `start(Gateway::Off, ...)` spawns no Tokio task (works even with
+    /// no Tokio runtime active) and resolves to `None` immediately.
+    #[test]
+    fn start_without_gateway_spawns_no_task() {
+        let asking = start(Gateway::Off, 40_000);
+        assert!(matches!(
+            futures_util::FutureExt::now_or_never(asking.wait(LIMIT)),
+            Some(None)
+        ));
+    }
+
+    /// #463: when UPnP wins and the delayed PCP answer names the SAME external
+    /// port, nothing is closed while the UPnP mapping is in use, and both UPnP
+    /// and PCP release the port once the mapping is dropped.
+    #[tokio::test]
+    async fn a_shared_mapping_won_by_upnp_is_not_closed_for_the_loser() {
+        let socket = Arc::new(UdpSocket::bind("127.0.0.1:0").await.unwrap());
+        let at = socket.local_addr().unwrap();
+        let (tx, mut seen_udp) = mpsc::unbounded_channel();
+        let (port_tx, port_rx) = oneshot::channel::<u16>();
+        let (replied_tx, replied_rx) = oneshot::channel::<()>();
+        let mut trigger = Some((port_rx, replied_tx));
+        tokio::spawn(async move {
+            let mut buf = [0u8; 1500];
+            loop {
+                let (n, from) = match socket.recv_from(&mut buf).await {
+                    Ok(got) => got,
+                    Err(e) if e.kind() == std::io::ErrorKind::ConnectionReset => continue,
+                    Err(_) => break,
+                };
+                let m = buf[..n].to_vec();
+                let _ = tx.send(m.clone());
+                if m[0] == 2
+                    && m.len() == 60
+                    && lifetime_of(&m) != 0
+                    && let Some((rx, done)) = trigger.take()
+                {
+                    let req: [u8; 60] = m[..].try_into().unwrap();
+                    let socket = Arc::clone(&socket);
+                    tokio::spawn(async move {
+                        if let Ok(port) = rx.await {
+                            let r = answer::pcp(&req, 0, (PUBLIC.into(), port), LIFETIME);
+                            let _ = socket.send_to(&r, from).await;
+                            let _ = done.send(());
+                        }
+                    });
+                }
+            }
+        });
+
+        let (ssdp, mut seen_igd) = igd(Igd::Maps).await;
+        let m = start_at(at, Some(ssdp), 40_000).wait(LIMIT).await.unwrap();
+        let shared_port = m.external().port();
+        let _ = port_tx.send(shared_port);
+        tokio::time::timeout(LIMIT, replied_rx)
+            .await
+            .unwrap()
+            .unwrap();
+
+        // A window, not a condition: nothing may come while the mapping is used.
+        let mut all = seen_until(&mut seen_udp, Duration::from_millis(200)).await;
+        assert_eq!(
+            releases(&all, 2),
+            0,
+            "shared port was closed while UPnP mapping was still in use"
+        );
+
+        drop(m);
+        released().await;
+        let closed = seen_when(&mut seen_udp, &mut all, LIMIT, |a| releases(a, 2) >= 2).await;
+        assert!(closed, "shared mapping was not released over PCP on drop");
+        let mut igd_deleted = false;
+        while let Ok((action, _)) = seen_igd.try_recv() {
+            if action == "DeletePortMapping" {
+                igd_deleted = true;
+            }
+        }
+        assert!(
+            igd_deleted,
+            "shared mapping was not deleted over UPnP on drop"
+        );
+    }
+
+    /// #463: once UPnP wins, no further `PCP MAP`, `pmp_address`, or `NAT-PMP
+    /// MAP` retries are transmitted; a delayed `pmp_address` reply arriving
+    /// after UPnP won triggers zero `NAT-PMP MAP` requests; and an already
+    /// in-flight `NAT-PMP MAP` request still has its delayed mapping closed
+    /// with lifetime 0.
+    #[tokio::test]
+    async fn upnp_winner_stops_post_win_udp_retries_and_closes_nat_pmp_loser() {
+        // Case 1: delayed `pmp_address` reply after UPnP won sends zero
+        // `NAT-PMP MAP` packets and zero post-win PCP or `pmp_address` retries.
+        let sock1 = Arc::new(UdpSocket::bind("127.0.0.1:0").await.unwrap());
+        let at1 = sock1.local_addr().unwrap();
+        let (tx1, mut seen1) = mpsc::unbounded_channel();
+        let (addr_go_tx, addr_go_rx) = oneshot::channel::<()>();
+        let mut addr_go_rx = Some(addr_go_rx);
+        tokio::spawn(async move {
+            let mut buf = [0u8; 1500];
+            loop {
+                let (n, from) = match sock1.recv_from(&mut buf).await {
+                    Ok(got) => got,
+                    Err(e) if e.kind() == std::io::ErrorKind::ConnectionReset => continue,
+                    Err(_) => break,
+                };
+                let m = buf[..n].to_vec();
+                let _ = tx1.send(m.clone());
+                if m == [0, 0]
+                    && let Some(rx) = addr_go_rx.take()
+                {
+                    let sock1 = Arc::clone(&sock1);
+                    tokio::spawn(async move {
+                        if rx.await.is_ok() {
+                            let _ = sock1.send_to(&answer::pmp_address(0, PUBLIC), from).await;
+                        }
+                    });
+                }
+            }
+        });
+
+        let (ssdp1, _igd1) = igd(Igd::Maps).await;
+        let m1 = start_at(at1, Some(ssdp1), 40_000)
+            .wait(LIMIT)
+            .await
+            .unwrap();
+        // Flush any pre-win loopback datagrams, then release the delayed
+        // `pmp_address` answer and observe across a full retry window.
+        let before_win = seen_until(&mut seen1, Duration::from_millis(30)).await;
+        assert!(
+            before_win.iter().filter(|m| m.as_slice() == [0, 0]).count() <= 1,
+            "at most one pre-win pmp_address expected: {before_win:?}"
+        );
+        let _ = addr_go_tx.send(());
+        let after_win = seen_until(&mut seen1, RESEND.saturating_mul(2)).await;
+        assert!(
+            after_win.is_empty(),
+            "post-win UDP requests were transmitted after UPnP won: {after_win:?}"
+        );
+        drop(m1);
+        released().await;
+
+        // Case 2: `pmp_address` answered before `Igd::Slow` won, so one
+        // `NAT-PMP MAP` (12 bytes) is already in flight when UPnP wins; zero
+        // post-win `MAP` retries go out and the delayed `NAT-PMP` mapping is
+        // closed with lifetime 0.
+        let sock2 = Arc::new(UdpSocket::bind("127.0.0.1:0").await.unwrap());
+        let at2 = sock2.local_addr().unwrap();
+        let (tx2, mut seen2) = mpsc::unbounded_channel();
+        let (pmp_seen_tx, pmp_seen_rx) = oneshot::channel::<()>();
+        let (pmp_port_tx, pmp_port_rx) = oneshot::channel::<u16>();
+        let mut pmp_gate = Some((pmp_seen_tx, pmp_port_rx));
+        tokio::spawn(async move {
+            let mut buf = [0u8; 1500];
+            loop {
+                let (n, from) = match sock2.recv_from(&mut buf).await {
+                    Ok(got) => got,
+                    Err(e) if e.kind() == std::io::ErrorKind::ConnectionReset => continue,
+                    Err(_) => break,
+                };
+                let m = buf[..n].to_vec();
+                let _ = tx2.send(m.clone());
+                if m == [0, 0] {
+                    let _ = sock2.send_to(&answer::pmp_address(0, PUBLIC), from).await;
+                } else if m[0] == 0
+                    && m.len() == 12
+                    && lifetime_of(&m) != 0
+                    && let Some((seen_tx, port_rx)) = pmp_gate.take()
+                {
+                    let internal = u16::from_be_bytes(m[4..6].try_into().unwrap());
+                    let _ = seen_tx.send(());
+                    let sock2 = Arc::clone(&sock2);
+                    tokio::spawn(async move {
+                        if let Ok(port) = port_rx.await {
+                            let r = answer::pmp_map(0, internal, port, LIFETIME);
+                            let _ = sock2.send_to(&r, from).await;
+                        }
+                    });
+                }
+            }
+        });
+
+        let (ssdp2, _igd2) = igd(Igd::Slow).await;
+        let m2 = start_at(at2, Some(ssdp2), 40_000)
+            .wait(LIMIT)
+            .await
+            .unwrap();
+        tokio::time::timeout(LIMIT, pmp_seen_rx)
+            .await
+            .unwrap()
+            .unwrap();
+        let _pre = seen_until(&mut seen2, Duration::from_millis(20)).await;
+        let other_port = if m2.external().port() == OPENED {
+            OPENED.saturating_add(1)
+        } else {
+            OPENED
+        };
+        let _ = pmp_port_tx.send(other_port);
+        drop(m2);
+        released().await;
+
+        let mut post = Vec::new();
+        let closed = seen_when(&mut seen2, &mut post, LIMIT, |a| releases(a, 0) >= 2).await;
+        assert!(closed, "in-flight NAT-PMP loser was not closed: {post:?}");
+        post.extend(seen_until(&mut seen2, RESEND).await);
+        assert!(
+            post.iter()
+                .all(|m| m[0] == 0 && m.len() == 12 && lifetime_of(m) == 0),
+            "non-release UDP packet sent after UPnP won: {post:?}"
+        );
     }
 }
