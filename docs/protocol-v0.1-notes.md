@@ -100,6 +100,27 @@ treated as final.
    CPace always gets the canonical ASCII form (`7-840-1499`), so another
    implementation that skips these steps stays compatible; it only rejects
    more of what people type.
+9. **QR codes and receive links (#29, #445).** Senders encode their transfer
+   code in a QR code as `https://totaldrop.app/r#<code>`
+   (`TransferCode::qr_link`), keeping the code in the URL fragment so it
+   never reaches a web server.
+   - `TransferCode::from_qr` accepts only `https://totaldrop.app/r#…`,
+     `https://totaldrop.app/r/#…`, and `totaldrop://r/…` (prefix matched
+     ASCII-case-insensitively, up to `MAX_LINK_BYTES` = 1024 bytes, after
+     dropping `INVISIBLE_FORMAT` and decoding `%XX` once) and rejects bare
+     codes, `http://`, and trailing query/path text so unrelated QR codes
+     in view are ignored.
+   - `TransferCode::classify_link` (and `TransferCode::from_link`, which
+     delegates to it) applies the same ASCII-case-insensitive prefix and
+     empty-link matching (including `/r/#` and `http://` / `totaldrop:` /
+     bare codes), so `from_qr` is always a strict subset of `classify_link`
+     and Linux QR/link reads, the CLI, and Android camera scans agree on
+     uppercase QR encodings. On Android, `MainActivity.isReceiveLink` still
+     matches only path `/r` with lowercase scheme and host, so the
+     upper-case and `/r/#` widening applies to Linux, the CLI, and the QR
+     path rather than Android link intents.
+   - Scanning a QR code fills the normalized code into the Receive screen
+     without connecting automatically (threat model T19).
 
 ## Section 6: connections and the handshake
 

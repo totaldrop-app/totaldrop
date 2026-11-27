@@ -184,5 +184,9 @@
   "setupBackgroundAutostart": "Άνοιγμα Αυτόματης εκκίνησης",
   "setupBackgroundSkip": "Όχι τώρα",
   "settingsBackground": "Μεταφορές στο παρασκήνιο",
-  "settingsBackgroundOpen": "Ρυθμίσεις μπαταρίας"
+  "settingsBackgroundOpen": "Ρυθμίσεις μπαταρίας",
+  "receiveScanQr": "Σάρωση κωδικού QR",
+  "receiveScanQrHint": "Στρέψτε την κάμερα στον κωδικό QR στην οθόνη του αποστολέα.",
+  "receiveCameraDenied": "Δεν επιτράπηκε η πρόσβαση στην κάμερα. Μπορείτε ακόμη να πληκτρολογήσετε ή να επικολλήσετε τον κωδικό.",
+  "receiveCameraUnavailable": "Δεν υπάρχει διαθέσιμη κάμερα σε αυτήν τη συσκευή. Πληκτρολογήστε ή επικολλήστε τον κωδικό."
 }

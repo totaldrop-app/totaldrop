@@ -184,5 +184,9 @@
   "setupBackgroundAutostart": "Mở Tự khởi động",
   "setupBackgroundSkip": "Để sau",
   "settingsBackground": "Truyền ở chế độ nền",
-  "settingsBackgroundOpen": "Cài đặt pin"
+  "settingsBackgroundOpen": "Cài đặt pin",
+  "receiveScanQr": "Quét mã QR",
+  "receiveScanQrHint": "Hướng camera vào mã QR trên màn hình người gửi.",
+  "receiveCameraDenied": "Chưa cho phép truy cập camera. Bạn vẫn có thể nhập hoặc dán mã.",
+  "receiveCameraUnavailable": "Thiết bị này không có camera khả dụng. Hãy nhập hoặc dán mã thay thế."
 }

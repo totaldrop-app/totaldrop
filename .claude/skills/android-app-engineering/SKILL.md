@@ -7,8 +7,8 @@ description: "Use when changing the TotalDrop Android app (app/, Flutter with th
 
 Apply `software-engineering-discipline` for process. Binding: `docs/tasarim.md`
 (Android row of the table in section 1), decisions 0010 (background
-transfers) and 0011 (Material 3 Expressive) in `docs/kararlar/`, and the
-rules in `app/README.md`.
+transfers), 0011 (Material 3 Expressive) and 0023 (QR camera scanner) in
+`docs/kararlar/`, and the rules in `app/README.md`.
 
 ## Architecture rules
 
@@ -33,7 +33,9 @@ rules in `app/README.md`.
   transfer runs, with a notification and a Stop button (decision 0010).
   Permissions for it: `RUN_USER_INITIATED_JOBS`, `POST_NOTIFICATIONS` (asked
   at the first transfer; the transfer works without it),
-  `ACCESS_NETWORK_STATE`; the app as a whole also needs `INTERNET`
+  `ACCESS_NETWORK_STATE`; scanning QR codes on Receive adds optional `CAMERA`
+  (`android:required="false"`, asked only inside `QrScanActivity`, decision
+  0023); the app as a whole also needs `INTERNET`
   (`app/android/app/src/main/AndroidManifest.xml`).
 - Material You colours (`dynamic_color`) and Material 3; Expressive parts only
   as the official `material_ui` package provides them; icon buttons in text

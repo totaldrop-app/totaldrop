@@ -692,4 +692,19 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'Nastavení baterie';
+
+  @override
+  String get receiveScanQr => 'Naskenovat QR kód';
+
+  @override
+  String get receiveScanQrHint =>
+      'Namiřte fotoaparát na QR kód na obrazovce odesílatele.';
+
+  @override
+  String get receiveCameraDenied =>
+      'Přístup k fotoaparátu nebyl povolen. Kód můžete dál napsat nebo vložit.';
+
+  @override
+  String get receiveCameraUnavailable =>
+      'Na tomto zařízení není dostupný fotoaparát. Kód napište nebo vložte.';
 }

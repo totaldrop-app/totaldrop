@@ -412,9 +412,11 @@ impl TransferCode {
     }
 
     /// Classify a TotalDrop receive link (`https://totaldrop.app/r#…`,
-    /// `http://totaldrop.app/r#…`, `totaldrop://r/…`, `totaldrop:…`) or a bare
-    /// code into a valid [`ReceiveLink::Code`], an empty prefix
-    /// [`ReceiveLink::Empty`], or [`ReceiveLink::Invalid`].
+    /// `https://totaldrop.app/r/#…`, `http://totaldrop.app/r#…`,
+    /// `http://totaldrop.app/r/#…`, `totaldrop://r/…`, `totaldrop:…`, matched
+    /// ASCII-case-insensitively) or a bare code into a valid
+    /// [`ReceiveLink::Code`], an empty prefix [`ReceiveLink::Empty`], or
+    /// [`ReceiveLink::Invalid`].
     ///
     /// Strict, unlike [`TransferCode::find`]: after the prefix, the whole rest
     /// must be the code, with `%XX` escapes decoded once. Anything longer than
@@ -427,7 +429,7 @@ impl TransferCode {
         let t = strip_invisible_format(text);
         let t = t.trim();
         if matches!(
-            t,
+            t.to_ascii_lowercase().as_str(),
             "" | "totaldrop:"
                 | "totaldrop://r"
                 | "totaldrop://r/"
@@ -438,21 +440,30 @@ impl TransferCode {
                 | "totaldrop://r/#"
                 | "totaldrop://r/?#"
                 | "https://totaldrop.app/r"
+                | "https://totaldrop.app/r/"
                 | "https://totaldrop.app/r#"
+                | "https://totaldrop.app/r/#"
                 | "https://totaldrop.app/r?"
+                | "https://totaldrop.app/r/?"
                 | "https://totaldrop.app/r?#"
+                | "https://totaldrop.app/r/?#"
                 | "http://totaldrop.app/r"
+                | "http://totaldrop.app/r/"
                 | "http://totaldrop.app/r#"
+                | "http://totaldrop.app/r/#"
                 | "http://totaldrop.app/r?"
+                | "http://totaldrop.app/r/?"
                 | "http://totaldrop.app/r?#"
+                | "http://totaldrop.app/r/?#"
         ) {
             return ReceiveLink::Empty;
         }
-        let raw = t
-            .strip_prefix("https://totaldrop.app/r#")
-            .or_else(|| t.strip_prefix("http://totaldrop.app/r#"))
-            .or_else(|| t.strip_prefix("totaldrop://r/"))
-            .or_else(|| t.strip_prefix("totaldrop:"))
+        let raw = strip_prefix_ascii_case(t, "https://totaldrop.app/r#")
+            .or_else(|| strip_prefix_ascii_case(t, "https://totaldrop.app/r/#"))
+            .or_else(|| strip_prefix_ascii_case(t, "http://totaldrop.app/r#"))
+            .or_else(|| strip_prefix_ascii_case(t, "http://totaldrop.app/r/#"))
+            .or_else(|| strip_prefix_ascii_case(t, "totaldrop://r/"))
+            .or_else(|| strip_prefix_ascii_case(t, "totaldrop:"))
             .unwrap_or(t);
         match Self::parse(&percent_decode(raw)) {
             Ok(code) => ReceiveLink::Code(code),
@@ -461,17 +472,41 @@ impl TransferCode {
     }
 
     /// The code in a TotalDrop link (`https://totaldrop.app/r#…`,
-    /// `totaldrop://r/…`) or a bare code. Strict, unlike
-    /// [`TransferCode::find`]: after the prefix, the whole rest must be the
-    /// code, with `%XX` escapes decoded once. This reads command-line
-    /// arguments, QR codes and links that other apps hand to TotalDrop, so
-    /// a file name, a query or a text with a date in it must not become a
-    /// code. Anything longer than [`MAX_LINK_BYTES`] is refused unread.
+    /// `https://totaldrop.app/r/#…`, `totaldrop://r/…`) or a bare code.
+    /// Strict, unlike [`TransferCode::find`]: after the prefix, the whole rest
+    /// must be the code, with `%XX` escapes decoded once. This reads
+    /// command-line arguments, QR codes and links that other apps hand to
+    /// TotalDrop, so a file name, a query or a text with a date in it must not
+    /// become a code. Anything longer than [`MAX_LINK_BYTES`] is refused
+    /// unread.
     pub fn from_link(text: &str) -> Option<Self> {
         match Self::classify_link(text) {
             ReceiveLink::Code(code) => Some(code),
             ReceiveLink::Empty | ReceiveLink::Invalid => None,
         }
+    }
+
+    /// The link a QR code carries (`https://totaldrop.app/r#…`). The code
+    /// sits after `#`, so it never reaches a web server (#29).
+    pub fn qr_link(&self) -> String {
+        format!("https://totaldrop.app/r#{self}")
+    }
+
+    /// The code in a scanned QR code (`https://totaldrop.app/r#…`,
+    /// `https://totaldrop.app/r/#…` or `totaldrop://r/…`, #29). Unlike
+    /// [`TransferCode::from_link`], bare codes, `http://`, and `totaldrop:`
+    /// without `//r/` are refused so an unrelated QR code in view is never
+    /// read as a transfer code.
+    pub fn from_qr(text: &str) -> Option<Self> {
+        if text.len() > MAX_LINK_BYTES {
+            return None;
+        }
+        let clean = strip_invisible_format(text);
+        let t = clean.trim();
+        let raw = strip_prefix_ascii_case(t, "https://totaldrop.app/r#")
+            .or_else(|| strip_prefix_ascii_case(t, "https://totaldrop.app/r/#"))
+            .or_else(|| strip_prefix_ascii_case(t, "totaldrop://r/"))?;
+        Self::parse(&percent_decode(raw)).ok()
     }
 
     /// The nameplate number.
@@ -499,6 +534,13 @@ impl TransferCode {
         }
         s
     }
+}
+
+fn strip_prefix_ascii_case<'a>(s: &'a str, prefix: &str) -> Option<&'a str> {
+    let head = s.get(..prefix.len())?;
+    head.eq_ignore_ascii_case(prefix)
+        .then(|| s.get(prefix.len()..))
+        .flatten()
 }
 
 impl core::fmt::Display for TransferCode {
@@ -792,8 +834,13 @@ mod tests {
     fn codes_from_links() {
         for text in [
             "https://totaldrop.app/r#7-abandon-ability",
+            "https://totaldrop.app/r/#7-abandon-ability",
+            "HTTPS://TOTALDROP.APP/R#7-Abandon-Ability",
+            "HTTPS://TOTALDROP.APP/R/#7-Abandon-Ability",
             "http://totaldrop.app/r#7-abandon-ability",
+            "http://totaldrop.app/r/#7-abandon-ability",
             "totaldrop://r/7-abandon-ability",
+            "TOTALDROP://R/7-Abandon-Ability",
             "totaldrop:7-abandon-ability",
             "totaldrop://r/7%20abandon%20ability",
             " 7-abandon-ability ",
@@ -882,9 +929,16 @@ mod tests {
         let want = TransferCode::parse("7-harbor-rocket").unwrap();
         let valid = [
             "https://totaldrop.app/r#7-harbor-rocket",
+            "https://totaldrop.app/r/#7-harbor-rocket",
+            "HTTPS://TOTALDROP.APP/R#7-Harbor-Rocket",
+            "HTTPS://TOTALDROP.APP/R/#7-Harbor-Rocket",
             "http://totaldrop.app/r#7-harbor-rocket",
+            "http://totaldrop.app/r/#7-harbor-rocket",
+            "HTTP://TOTALDROP.APP/R/#7-Harbor-Rocket",
             "totaldrop://r/7-harbor-rocket",
+            "TOTALDROP://R/7-Harbor-Rocket",
             "totaldrop:7-harbor-rocket",
+            "TOTALDROP:7-Harbor-Rocket",
             "https://totaldrop.app/r#7%20harbor%20rocket",
             "totaldrop://r/%37-harbor-rocket",
             " \u{2068}https://totaldrop.app/r#7-harbor-rocket\u{2069} ",
@@ -902,22 +956,40 @@ mod tests {
             "   ",
             "\u{2068}\u{2069}",
             "totaldrop:",
+            "TOTALDROP:",
             "totaldrop://r",
             "totaldrop://r/",
+            "TOTALDROP://R/",
             "totaldrop://r?",
             "totaldrop://r#",
             "totaldrop://r?#",
             "totaldrop://r/?",
             "totaldrop://r/#",
             "totaldrop://r/?#",
+            "TOTALDROP://R/?#",
             "https://totaldrop.app/r",
+            "https://totaldrop.app/r/",
             "https://totaldrop.app/r#",
+            "https://totaldrop.app/r/#",
             "https://totaldrop.app/r?",
+            "https://totaldrop.app/r/?",
             "https://totaldrop.app/r?#",
+            "https://totaldrop.app/r/?#",
+            "HTTPS://TOTALDROP.APP/R",
+            "HTTPS://TOTALDROP.APP/R/",
+            "HTTPS://TOTALDROP.APP/R#",
+            "HTTPS://TOTALDROP.APP/R/#",
+            "HTTPS://TOTALDROP.APP/R/?",
+            "HTTPS://TOTALDROP.APP/R/?#",
             "http://totaldrop.app/r",
+            "http://totaldrop.app/r/",
             "http://totaldrop.app/r#",
+            "http://totaldrop.app/r/#",
             "http://totaldrop.app/r?",
+            "http://totaldrop.app/r/?",
             "http://totaldrop.app/r?#",
+            "http://totaldrop.app/r/?#",
+            "HTTP://TOTALDROP.APP/R/#",
             " \u{2068}https://totaldrop.app/r#\u{2069} ",
             "\u{FEFF}totaldrop://r/\u{200B}",
         ];
@@ -933,11 +1005,15 @@ mod tests {
             "totaldrop://r?c=7-harbor-rocket",
             "https://totaldrop.app/r?x#7-harbor-rocket",
             "https://totaldrop.app/r?x=1",
+            "https://totaldrop.app/r/?x=1",
             "https://totaldrop.app/r#7-harbor",
+            "https://totaldrop.app/r/#7-harbor",
+            "HTTPS://TOTALDROP.APP/R/#7-harbor",
             "https://totaldrop.app/r#?",
             "https://totaldrop.app/r#[bad]",
             "http://totaldrop.app/r?x=1",
             "http://totaldrop.app/r#7-harbor",
+            "http://totaldrop.app/r/#7-harbor",
             "totaldrop:7-harbor",
             "totaldrop://r/7-harbor",
             "totaldrop://r/7-harbor-rocket?x=1",
@@ -948,6 +1024,45 @@ mod tests {
             let classified = TransferCode::classify_link(s);
             assert_eq!(classified, ReceiveLink::Invalid, "{s:?}");
             assert_eq!(TransferCode::from_link(s), None, "{s:?}");
+        }
+    }
+
+    #[test]
+    fn qr_codes_accept_only_totaldrop_https_and_custom_scheme_links() {
+        let qr = |s: &str| TransferCode::from_qr(s).map(|c| c.to_string());
+        let parsed = TransferCode::parse("7-harbor-rocket").unwrap();
+        assert_eq!(parsed.qr_link(), "https://totaldrop.app/r#7-harbor-rocket");
+        assert_eq!(qr(&parsed.qr_link()), Some("7-harbor-rocket".into()));
+        assert_eq!(
+            qr("  \u{00AD}\u{2068}HTTPS://TOTALDROP.APP/R#7-Harbor-Rocket\u{2069} "),
+            Some("7-harbor-rocket".into())
+        );
+        assert_eq!(
+            qr("https://totaldrop.app/r/#7-harbor-rocket"),
+            Some("7-harbor-rocket".into())
+        );
+        assert_eq!(
+            qr("totaldrop://r/7%20harbor%20rocket"),
+            Some("7-harbor-rocket".into())
+        );
+        assert_eq!(
+            qr("TOTALDROP://R/12-zoo-zone-able"),
+            Some("12-zoo-zone-able".into())
+        );
+
+        for rejected in [
+            "7-harbor-rocket",
+            "http://totaldrop.app/r#7-harbor-rocket",
+            "totaldrop:7-harbor-rocket",
+            "https://totaldrop.app/r/7-harbor-rocket",
+            "https://totaldrop.app/r?c=7-harbor-rocket",
+            "https://totaldrop.app/r#7-harbor-rocket?x=1",
+            "https://evil.example/r#7-harbor-rocket",
+            "totaldrop://r/%2537-harbor-rocket",
+            "WIFI:S:Home;T:WPA;P:secret;;",
+            "",
+        ] {
+            assert_eq!(qr(rejected), None, "{rejected:?}");
         }
     }
 }

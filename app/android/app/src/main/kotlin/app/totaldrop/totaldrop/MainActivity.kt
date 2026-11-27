@@ -57,6 +57,14 @@ class MainActivity : FlutterActivity() {
                     else -> result.notImplemented()
                 }
             }
+        // Camera QR scanner on the Receive screen (#29).
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, QR_SCAN_CHANNEL)
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "scan" -> startQrScan(result)
+                    else -> result.notImplemented()
+                }
+            }
         val channel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL)
         TransferJob.onStop = { channel.invokeMethod("stop", null) }
         channel.setMethodCallHandler { call, result ->
@@ -258,12 +266,47 @@ class MainActivity : FlutterActivity() {
     }
 
     override fun cleanUpFlutterEngine(flutterEngine: FlutterEngine) {
+        pendingQrScan = null
         launches.detach()
         // Nothing would be left to end the job: end it, and its
         // notification, with the engine.
         TransferJob.onStop = null
         TransferJob.end(this)
         super.cleanUpFlutterEngine(flutterEngine)
+    }
+
+    /**
+     * Launches [QrScanActivity] and holds the Dart [MethodChannel.Result] in
+     * [pendingQrScan]. Because [MainActivity] extends [FlutterActivity] rather
+     * than a `ComponentActivity` with `ActivityResultRegistry`, this callback
+     * lives only in memory: if Android recreates [MainActivity] or kills the
+     * process while the camera is open, the pending callback is cleared and
+     * manual code entry / clipboard paste remain available (ADR 0023).
+     */
+    private fun startQrScan(result: MethodChannel.Result) {
+        if (pendingQrScan != null) {
+            result.success(mapOf("outcome" to QrScanActivity.OUTCOME_CANCELLED))
+            return
+        }
+        pendingQrScan = result
+        @Suppress("DEPRECATION")
+        startActivityForResult(Intent(this, QrScanActivity::class.java), REQUEST_QR_SCAN)
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        @Suppress("DEPRECATION")
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode != REQUEST_QR_SCAN) return
+        val callback = pendingQrScan ?: return
+        pendingQrScan = null
+        val outcome = if (resultCode == RESULT_OK) {
+            data?.getStringExtra(QrScanActivity.EXTRA_OUTCOME) ?: QrScanActivity.OUTCOME_CANCELLED
+        } else {
+            QrScanActivity.OUTCOME_CANCELLED
+        }
+        val link = data?.getStringExtra(QrScanActivity.EXTRA_LINK)
+        callback.success(mapOf("outcome" to outcome, "link" to link))
     }
 
     /** Asked once per launch at most. The transfer runs without it too; the
@@ -279,6 +322,7 @@ class MainActivity : FlutterActivity() {
     }
 
     private var askedForNotifications = false
+    private var pendingQrScan: MethodChannel.Result? = null
     private val launches = Launches()
     private val main = Handler(Looper.getMainLooper())
     private val copier by lazy { copierFor(this) }
@@ -288,6 +332,7 @@ class MainActivity : FlutterActivity() {
         // runs on its thread, before the next activity's clear-up.
         private var sharedCopier: ShareCopier? = null
         private val nextShare = AtomicLong()
+        private const val REQUEST_QR_SCAN = 2901
 
         @Synchronized
         private fun copierFor(activity: Activity): ShareCopier = sharedCopier ?: ShareCopier(
@@ -301,6 +346,7 @@ class MainActivity : FlutterActivity() {
         const val SHARE_CHANNEL = "app.totaldrop/launch"
         const val BACKGROUND_CHANNEL = "app.totaldrop/background"
         const val STORAGE_CHANNEL = "app.totaldrop/storage"
+        const val QR_SCAN_CHANNEL = "app.totaldrop/qr_scan"
         // The launcher shortcuts (res/xml/shortcuts.xml).
         const val ACTION_SHORTCUT_SEND = "app.totaldrop.action.SEND"
         const val ACTION_SHORTCUT_RECEIVE = "app.totaldrop.action.RECEIVE"

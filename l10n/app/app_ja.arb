@@ -184,5 +184,9 @@
   "setupBackgroundAutostart": "自動起動を開く",
   "setupBackgroundSkip": "後で",
   "settingsBackground": "バックグラウンドでの転送",
-  "settingsBackgroundOpen": "バッテリー設定"
+  "settingsBackgroundOpen": "バッテリー設定",
+  "receiveScanQr": "QRコードを読み取る",
+  "receiveScanQrHint": "送信側の画面にあるQRコードにカメラを向けてください。",
+  "receiveCameraDenied": "カメラへのアクセスが許可されませんでした。コードの入力や貼り付けは引き続き使えます。",
+  "receiveCameraUnavailable": "この端末ではカメラを利用できません。コードを入力するか貼り付けてください。"
 }

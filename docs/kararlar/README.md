@@ -30,6 +30,7 @@ In records written in English the statuses are "Proposed" (Önerilen),
 | [0018](0018-baglanti-yol-haritasi.md) | Bağlantı katmanı kendi yığınımızda kalır; IPv6, port açma ve ağ değişimine tepkiyle doğrudan yollar artırılır | Kabul |
 | [0019](0019-english-by-default.md) | The repository is written in English | Accepted |
 | [0021](0021-site-language-addresses.md) | The site has an address for every page in every language, written by a build step | Accepted |
+| [0023](0023-android-qr-camera-scanner.md) | On-device QR code display and CameraX + zxing-cpp scanner on Android | Accepted |
 
 Yeni bir karar için bir sonraki numarayla `NNNN-kisa-ad.md` açın ve bu
 tabloya ekleyin.

@@ -11,4 +11,7 @@
     <string name="process_text">Tuma kwa TotalDrop</string>
     <string name="shortcut_receive_short">Pokea</string>
     <string name="shortcut_receive_long">Pokea faili</string>
+    <string name="qr_scan_title">Changanua msimbo wa QR</string>
+    <string name="qr_scan_hint">Elekeza kamera kwenye msimbo wa QR kwenye skrini ya mtumaji.</string>
+    <string name="qr_scan_close">Ghairi</string>
 </resources>

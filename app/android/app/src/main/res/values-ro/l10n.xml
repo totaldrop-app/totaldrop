@@ -11,4 +11,7 @@
     <string name="process_text">Trimite cu TotalDrop</string>
     <string name="shortcut_receive_short">Primește</string>
     <string name="shortcut_receive_long">Primiți fișiere</string>
+    <string name="qr_scan_title">Scanează codul QR</string>
+    <string name="qr_scan_hint">Îndreptați camera spre codul QR de pe ecranul expeditorului.</string>
+    <string name="qr_scan_close">Anulează</string>
 </resources>

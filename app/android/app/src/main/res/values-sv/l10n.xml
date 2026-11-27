@@ -11,4 +11,7 @@
     <string name="process_text">Skicka med TotalDrop</string>
     <string name="shortcut_receive_short">Ta emot</string>
     <string name="shortcut_receive_long">Ta emot filer</string>
+    <string name="qr_scan_title">Skanna QR-kod</string>
+    <string name="qr_scan_hint">Rikta kameran mot QR-koden på avsändarens skärm.</string>
+    <string name="qr_scan_close">Avbryt</string>
 </resources>

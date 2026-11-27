@@ -184,5 +184,9 @@
   "setupBackgroundAutostart": "เปิดการเริ่มอัตโนมัติ",
   "setupBackgroundSkip": "ไว้ทีหลัง",
   "settingsBackground": "การโอนในเบื้องหลัง",
-  "settingsBackgroundOpen": "การตั้งค่าแบตเตอรี่"
+  "settingsBackgroundOpen": "การตั้งค่าแบตเตอรี่",
+  "receiveScanQr": "สแกนคิวอาร์โค้ด",
+  "receiveScanQrHint": "หันกล้องไปที่คิวอาร์โค้ดบนหน้าจอของผู้ส่ง",
+  "receiveCameraDenied": "ไม่ได้รับอนุญาตให้ใช้กล้อง คุณยังพิมพ์หรือวางรหัสได้",
+  "receiveCameraUnavailable": "ไม่มีกล้องที่ใช้งานได้ในอุปกรณ์นี้ โปรดพิมพ์หรือวางรหัสแทน"
 }

@@ -638,6 +638,52 @@ pub fn code_from_link(link: String) -> Option<String> {
     }
 }
 
+/// Row-major QR modules (`'1'` dark, `'0'` light) and side length (#29).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct QrGrid {
+    /// Row-major `'1'` and `'0'` characters (`width * width` long).
+    pub modules: String,
+    /// Number of modules per side, or `0` if `code` is invalid.
+    pub width: i32,
+}
+
+/// QR modules for `https://totaldrop.app/r#<code>` at error-correction
+/// level M, matching Linux (`linux/src/desktop.rs`, #29).
+#[frb(sync)]
+pub fn qr_for_code(code: String) -> QrGrid {
+    use qrcode::{Color, EcLevel, QrCode};
+    let Ok(parsed) = totaldrop_proto::TransferCode::parse(&code) else {
+        return QrGrid {
+            modules: String::new(),
+            width: 0,
+        };
+    };
+    let link = parsed.qr_link();
+    let Ok(qr) = QrCode::with_error_correction_level(link.as_bytes(), EcLevel::M) else {
+        return QrGrid {
+            modules: String::new(),
+            width: 0,
+        };
+    };
+    let modules: String = qr
+        .to_colors()
+        .iter()
+        .map(|c| if *c == Color::Dark { '1' } else { '0' })
+        .collect();
+    QrGrid {
+        modules,
+        width: i32::try_from(qr.width()).unwrap_or(0),
+    }
+}
+
+/// The code in a scanned QR code (`https://totaldrop.app/r#…` or
+/// `totaldrop://r/…`, #29), in its English form. Rejects bare codes,
+/// `http://`, and unrelated QR payloads.
+#[frb(sync)]
+pub fn code_from_qr(text: String) -> Option<String> {
+    totaldrop_proto::TransferCode::from_qr(&text).map(|c| c.to_string())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -702,8 +748,13 @@ mod tests {
     fn codes_from_links() {
         for link in [
             "totaldrop://r/7-abandon-ability",
+            "TOTALDROP://R/7-Abandon-Ability",
             "https://totaldrop.app/r#7%20abandon%20ability",
+            "https://totaldrop.app/r/#7-abandon-ability",
+            "HTTPS://TOTALDROP.APP/R#7-Abandon-Ability",
+            "HTTPS://TOTALDROP.APP/R/#7-Abandon-Ability",
             "http://totaldrop.app/r#7-abandon-ability",
+            "http://totaldrop.app/r/#7-abandon-ability",
             "totaldrop:7-abandon-ability",
         ] {
             assert_eq!(
@@ -714,12 +765,22 @@ mod tests {
         }
         for empty in [
             "https://totaldrop.app/r",
+            "https://totaldrop.app/r/",
             "https://totaldrop.app/r#",
+            "https://totaldrop.app/r/#",
             "https://totaldrop.app/r?",
+            "https://totaldrop.app/r/?",
             "https://totaldrop.app/r?#",
+            "https://totaldrop.app/r/?#",
+            "HTTPS://TOTALDROP.APP/R/#",
             "http://totaldrop.app/r",
+            "http://totaldrop.app/r/",
+            "http://totaldrop.app/r/#",
+            "http://totaldrop.app/r/?",
+            "http://totaldrop.app/r/?#",
             "totaldrop://r",
             "totaldrop://r/",
+            "TOTALDROP://R/",
             "totaldrop:",
             "",
         ] {
@@ -799,5 +860,39 @@ mod tests {
             );
         }
         assert_eq!(normalize_code("\u{2068}\u{2069}".into()), None);
+    }
+
+    #[test]
+    fn qr_grid_and_qr_link_parsing() {
+        let grid = qr_for_code("7-harbor-rocket".into());
+        assert!(grid.width >= 21);
+        assert_eq!(
+            grid.modules.len(),
+            usize::try_from(grid.width * grid.width).unwrap()
+        );
+        assert!(grid.modules.chars().all(|c| c == '0' || c == '1'));
+
+        let bad = qr_for_code("not-a-code".into());
+        assert_eq!(
+            bad,
+            QrGrid {
+                modules: String::new(),
+                width: 0
+            }
+        );
+
+        assert_eq!(
+            code_from_qr("https://totaldrop.app/r#7-harbor-rocket".into()),
+            Some("7-harbor-rocket".into())
+        );
+        assert_eq!(
+            code_from_qr("totaldrop://r/7-harbor-rocket".into()),
+            Some("7-harbor-rocket".into())
+        );
+        assert_eq!(code_from_qr("7-harbor-rocket".into()), None);
+        assert_eq!(
+            code_from_qr("http://totaldrop.app/r#7-harbor-rocket".into()),
+            None
+        );
     }
 }

@@ -684,4 +684,19 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'Akkuasetukset';
+
+  @override
+  String get receiveScanQr => 'Lue QR-koodi';
+
+  @override
+  String get receiveScanQrHint =>
+      'Osoita kameralla lähettäjän näytöllä näkyvää QR-koodia.';
+
+  @override
+  String get receiveCameraDenied =>
+      'Kameran käyttöä ei sallittu. Voit silti kirjoittaa tai liittää koodin.';
+
+  @override
+  String get receiveCameraUnavailable =>
+      'Tässä laitteessa ei ole käytettävää kameraa. Kirjoita tai liitä koodi sen sijaan.';
 }

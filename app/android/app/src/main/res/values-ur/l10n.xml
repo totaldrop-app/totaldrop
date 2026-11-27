@@ -11,4 +11,7 @@
     <string name="process_text">TotalDrop سے بھیجیں</string>
     <string name="shortcut_receive_short">وصول کریں</string>
     <string name="shortcut_receive_long">فائلیں وصول کریں</string>
+    <string name="qr_scan_title">QR کوڈ اسکین کریں</string>
+    <string name="qr_scan_hint">بھیجنے والے کی اسکرین پر موجود QR کوڈ کی طرف کیمرہ کریں۔</string>
+    <string name="qr_scan_close">منسوخ کریں</string>
 </resources>

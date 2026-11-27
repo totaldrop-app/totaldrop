@@ -48,6 +48,10 @@ class _Rust implements RustLibApi {
       ShownText(text: text, short: false, hidden: text.contains('\u202E'));
 
   @override
+  QrGrid crateApiTransferQrForCode({required String code}) =>
+      QrGrid(modules: '${'10' * 220}1', width: 21);
+
+  @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 

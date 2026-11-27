@@ -696,4 +696,19 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'Ajustes de batería';
+
+  @override
+  String get receiveScanQr => 'Escanear código QR';
+
+  @override
+  String get receiveScanQrHint =>
+      'Apunta la cámara al código QR en la pantalla del emisor.';
+
+  @override
+  String get receiveCameraDenied =>
+      'No se permitió el acceso a la cámara. Aún puedes escribir o pegar el código.';
+
+  @override
+  String get receiveCameraUnavailable =>
+      'No hay cámara disponible en este dispositivo. Escribe o pega el código.';
 }

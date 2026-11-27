@@ -11,4 +11,7 @@
     <string name="process_text">Αποστολή με το TotalDrop</string>
     <string name="shortcut_receive_short">Λήψη</string>
     <string name="shortcut_receive_long">Λήψη αρχείων</string>
+    <string name="qr_scan_title">Σάρωση κωδικού QR</string>
+    <string name="qr_scan_hint">Στρέψτε την κάμερα στον κωδικό QR στην οθόνη του αποστολέα.</string>
+    <string name="qr_scan_close">Ακύρωση</string>
 </resources>

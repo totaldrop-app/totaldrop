@@ -184,5 +184,9 @@
   "setupBackgroundAutostart": "فتح التشغيل التلقائي",
   "setupBackgroundSkip": "ليس الآن",
   "settingsBackground": "النقل في الخلفية",
-  "settingsBackgroundOpen": "إعدادات البطارية"
+  "settingsBackgroundOpen": "إعدادات البطارية",
+  "receiveScanQr": "مسح رمز QR",
+  "receiveScanQrHint": "وجّه الكاميرا إلى رمز QR على شاشة المرسِل.",
+  "receiveCameraDenied": "لم يُسمح بالوصول إلى الكاميرا. ما زال بإمكانك كتابة الرمز أو لصقه.",
+  "receiveCameraUnavailable": "لا تتوفر كاميرا على هذا الجهاز. اكتب الرمز أو الصقه بدلاً من ذلك."
 }

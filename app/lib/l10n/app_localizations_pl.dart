@@ -699,4 +699,19 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'Ustawienia baterii';
+
+  @override
+  String get receiveScanQr => 'Zeskanuj kod QR';
+
+  @override
+  String get receiveScanQrHint =>
+      'Skieruj aparat na kod QR na ekranie nadawcy.';
+
+  @override
+  String get receiveCameraDenied =>
+      'Nie przyznano dostępu do aparatu. Nadal możesz wpisać lub wkleić kod.';
+
+  @override
+  String get receiveCameraUnavailable =>
+      'Na tym urządzeniu nie ma dostępnego aparatu. Zamiast tego wpisz lub wklej kod.';
 }

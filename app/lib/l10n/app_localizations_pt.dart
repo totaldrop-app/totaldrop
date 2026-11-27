@@ -698,6 +698,21 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'Configurações de bateria';
+
+  @override
+  String get receiveScanQr => 'Ler código QR';
+
+  @override
+  String get receiveScanQrHint =>
+      'Aponte a câmera para o código QR na tela do remetente.';
+
+  @override
+  String get receiveCameraDenied =>
+      'O acesso à câmera não foi permitido. Você ainda pode digitar ou colar o código.';
+
+  @override
+  String get receiveCameraUnavailable =>
+      'Nenhuma câmera está disponível neste dispositivo. Digite ou cole o código.';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -1393,6 +1408,21 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get settingsBackgroundOpen => 'Configurações de bateria';
+
+  @override
+  String get receiveScanQr => 'Ler código QR';
+
+  @override
+  String get receiveScanQrHint =>
+      'Aponte a câmera para o código QR na tela do remetente.';
+
+  @override
+  String get receiveCameraDenied =>
+      'O acesso à câmera não foi permitido. Você ainda pode digitar ou colar o código.';
+
+  @override
+  String get receiveCameraUnavailable =>
+      'Nenhuma câmera está disponível neste dispositivo. Digite ou cole o código.';
 }
 
 /// The translations for Portuguese, as used in Portugal (`pt_PT`).
@@ -2090,4 +2120,19 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
 
   @override
   String get settingsBackgroundOpen => 'Definições da bateria';
+
+  @override
+  String get receiveScanQr => 'Ler código QR';
+
+  @override
+  String get receiveScanQrHint =>
+      'Aponte a câmara para o código QR no ecrã do remetente.';
+
+  @override
+  String get receiveCameraDenied =>
+      'O acesso à câmara não foi permitido. Ainda pode escrever ou colar o código.';
+
+  @override
+  String get receiveCameraUnavailable =>
+      'Não existe câmara disponível neste dispositivo. Escreva ou cole o código.';
 }

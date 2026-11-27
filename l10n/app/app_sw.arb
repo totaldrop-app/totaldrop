@@ -184,5 +184,9 @@
   "setupBackgroundAutostart": "Fungua Kuanza kiotomatiki",
   "setupBackgroundSkip": "Si sasa",
   "settingsBackground": "Uhamisho chinichini",
-  "settingsBackgroundOpen": "Mipangilio ya betri"
+  "settingsBackgroundOpen": "Mipangilio ya betri",
+  "receiveScanQr": "Changanua msimbo wa QR",
+  "receiveScanQrHint": "Elekeza kamera kwenye msimbo wa QR kwenye skrini ya mtumaji.",
+  "receiveCameraDenied": "Ruhusa ya kamera haikutolewa. Bado unaweza kuandika au kubandika msimbo.",
+  "receiveCameraUnavailable": "Hakuna kamera inayopatikana kwenye kifaa hiki. Andika au bandika msimbo badala yake."
 }

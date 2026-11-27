@@ -184,5 +184,9 @@
   "setupBackgroundAutostart": "Abrir Arranque automático",
   "setupBackgroundSkip": "Agora não",
   "settingsBackground": "Transferências em segundo plano",
-  "settingsBackgroundOpen": "Definições da bateria"
+  "settingsBackgroundOpen": "Definições da bateria",
+  "receiveScanQr": "Ler código QR",
+  "receiveScanQrHint": "Aponte a câmara para o código QR no ecrã do remetente.",
+  "receiveCameraDenied": "O acesso à câmara não foi permitido. Ainda pode escrever ou colar o código.",
+  "receiveCameraUnavailable": "Não existe câmara disponível neste dispositivo. Escreva ou cole o código."
 }

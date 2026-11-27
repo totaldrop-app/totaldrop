@@ -4,6 +4,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 
+import '../../data/qr_scanner.dart';
 import '../../l10n/app_localizations.dart';
 import '../core/adaptive.dart';
 import '../core/common.dart';
@@ -13,9 +14,14 @@ import '../core/theme.dart';
 import 'receive_view_model.dart';
 
 class ReceiveView extends StatefulWidget {
-  const ReceiveView({super.key, required this.viewModel});
+  const ReceiveView({
+    super.key,
+    required this.viewModel,
+    this.qrScanner = const NoQrScanner(),
+  });
 
   final ReceiveViewModel viewModel;
+  final QrScanner qrScanner;
 
   @override
   State<ReceiveView> createState() => _ReceiveViewState();
@@ -106,6 +112,7 @@ class _ReceiveViewState extends State<ReceiveView> {
                     ReceiveStage.entering => _Entering(
                       vm: vm,
                       controller: _controller,
+                      qrScanner: widget.qrScanner,
                     ),
                     ReceiveStage.connecting => CenteredScroll(
                       child: Column(
@@ -163,10 +170,18 @@ class _ReceiveViewState extends State<ReceiveView> {
   }
 }
 
+enum _QrNotice { denied, unavailable }
+
 class _Entering extends StatefulWidget {
-  const _Entering({required this.vm, required this.controller});
+  const _Entering({
+    required this.vm,
+    required this.controller,
+    required this.qrScanner,
+  });
+
   final ReceiveViewModel vm;
   final TextEditingController controller;
+  final QrScanner qrScanner;
 
   @override
   State<_Entering> createState() => _EnteringState();
@@ -178,11 +193,66 @@ class _EnteringState extends State<_Entering> {
   // switches preserve focus and prevent autofocus bounce loops (#632).
   final _fieldKey = GlobalKey();
   final _focusNode = FocusNode();
+  _QrNotice? _qrNotice;
+  bool _scanning = false;
+  late String _lastInput = widget.vm.input;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.vm.addListener(_onVmChanged);
+  }
+
+  @override
+  void didUpdateWidget(covariant _Entering oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.vm != widget.vm) {
+      oldWidget.vm.removeListener(_onVmChanged);
+      _lastInput = widget.vm.input;
+      widget.vm.addListener(_onVmChanged);
+    }
+  }
 
   @override
   void dispose() {
+    widget.vm.removeListener(_onVmChanged);
     _focusNode.dispose();
     super.dispose();
+  }
+
+  void _onVmChanged() {
+    if (widget.vm.input != _lastInput) {
+      _lastInput = widget.vm.input;
+      if (_qrNotice != null) {
+        setState(() => _qrNotice = null);
+      }
+    }
+  }
+
+  Future<void> _scan() async {
+    if (_scanning) return;
+    setState(() {
+      _scanning = true;
+      _qrNotice = null;
+    });
+    try {
+      final result = await widget.qrScanner.scan();
+      if (!mounted || widget.vm.stage != ReceiveStage.entering) return;
+      switch (result) {
+        case QrScanned(:final link):
+          widget.vm.takeQr(link);
+        case QrCameraDenied():
+          setState(() => _qrNotice = _QrNotice.denied);
+        case QrCameraUnavailable():
+          setState(() => _qrNotice = _QrNotice.unavailable);
+        case QrScanCancelled():
+          break;
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _scanning = false);
+      }
+    }
   }
 
   @override
@@ -231,13 +301,21 @@ class _EnteringState extends State<_Entering> {
               if (text == null) return;
               final value = codeFromPaste(text);
               if (value.isEmpty) return;
+              if (_qrNotice != null) {
+                setState(() => _qrNotice = null);
+              }
               controller.text = value;
               vm.setInput(value);
             },
           ),
         ),
       ),
-      onChanged: vm.setInput,
+      onChanged: (value) {
+        if (_qrNotice != null) {
+          setState(() => _qrNotice = null);
+        }
+        vm.setInput(value);
+      },
       onSubmitted: (_) => vm.connect(),
     );
 
@@ -246,6 +324,30 @@ class _EnteringState extends State<_Entering> {
       icon: const Icon(Icons.link),
       label: Text(l.receiveConnect),
     );
+
+    final scanQrButton = widget.qrScanner.available
+        ? OutlinedButton.icon(
+            onPressed: _scanning ? null : _scan,
+            icon: const Icon(Icons.qr_code_scanner),
+            label: Text(l.receiveScanQr),
+          )
+        : null;
+
+    final qrNoticeBanner = switch (_qrNotice) {
+      final notice? => Announced(
+        Text(
+          switch (notice) {
+            _QrNotice.denied => l.receiveCameraDenied,
+            _QrNotice.unavailable => l.receiveCameraUnavailable,
+          },
+          textAlign: TextAlign.center,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ),
+      null => null,
+    };
 
     return AdaptivePaneLayout(
       primary: Builder(
@@ -274,6 +376,8 @@ class _EnteringState extends State<_Entering> {
                 field,
                 Gap.l,
                 connectButton,
+                if (scanQrButton != null) ...[Gap.s, scanQrButton],
+                if (qrNoticeBanner != null) ...[Gap.s, qrNoticeBanner],
                 if (isTabletop) ...[Gap.l, const SameNetworkNote()],
               ],
             ),
@@ -287,6 +391,8 @@ class _EnteringState extends State<_Entering> {
           field,
           Gap.l,
           connectButton,
+          if (scanQrButton != null) ...[Gap.s, scanQrButton],
+          if (qrNoticeBanner != null) ...[Gap.s, qrNoticeBanner],
           Gap.l,
           const SameNetworkNote(),
         ],

@@ -671,4 +671,19 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'ব্যাটারি সেটিংস';
+
+  @override
+  String get receiveScanQr => 'QR কোড স্ক্যান করুন';
+
+  @override
+  String get receiveScanQrHint =>
+      'প্রেরকের স্ক্রিনে থাকা QR কোডের দিকে ক্যামেরা ধরুন।';
+
+  @override
+  String get receiveCameraDenied =>
+      'ক্যামেরার অনুমতি দেওয়া হয়নি। আপনি এখনও কোডটি টাইপ বা পেস্ট করতে পারেন।';
+
+  @override
+  String get receiveCameraUnavailable =>
+      'এই ডিভাইসে কোনো ক্যামেরা পাওয়া যায়নি। বদলে কোডটি টাইপ বা পেস্ট করুন।';
 }

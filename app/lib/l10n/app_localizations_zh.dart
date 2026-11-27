@@ -629,6 +629,18 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => '电池设置';
+
+  @override
+  String get receiveScanQr => '扫描二维码';
+
+  @override
+  String get receiveScanQrHint => '将相机对准发送方屏幕上的二维码。';
+
+  @override
+  String get receiveCameraDenied => '未允许访问相机。您仍可输入或粘贴代码。';
+
+  @override
+  String get receiveCameraUnavailable => '此设备没有可用相机。请改为输入或粘贴代码。';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hans`).
@@ -1255,6 +1267,18 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
 
   @override
   String get settingsBackgroundOpen => '电池设置';
+
+  @override
+  String get receiveScanQr => '扫描二维码';
+
+  @override
+  String get receiveScanQrHint => '将相机对准发送方屏幕上的二维码。';
+
+  @override
+  String get receiveCameraDenied => '未允许访问相机。您仍可输入或粘贴代码。';
+
+  @override
+  String get receiveCameraUnavailable => '此设备没有可用相机。请改为输入或粘贴代码。';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -1880,4 +1904,16 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get settingsBackgroundOpen => '電池設定';
+
+  @override
+  String get receiveScanQr => '掃描 QR 碼';
+
+  @override
+  String get receiveScanQrHint => '將相機對準傳送者畫面上的 QR 碼。';
+
+  @override
+  String get receiveCameraDenied => '未允許存取相機。您仍可輸入或貼上代碼。';
+
+  @override
+  String get receiveCameraUnavailable => '此裝置沒有可用的相機。請改為輸入或貼上代碼。';
 }

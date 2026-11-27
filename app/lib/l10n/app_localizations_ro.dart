@@ -694,4 +694,19 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'Setările bateriei';
+
+  @override
+  String get receiveScanQr => 'Scanează codul QR';
+
+  @override
+  String get receiveScanQrHint =>
+      'Îndreptați camera spre codul QR de pe ecranul expeditorului.';
+
+  @override
+  String get receiveCameraDenied =>
+      'Accesul la cameră nu a fost permis. Puteți în continuare să tastați sau să lipiți codul.';
+
+  @override
+  String get receiveCameraUnavailable =>
+      'Nu este disponibilă nicio cameră pe acest dispozitiv. Tastați sau lipiți codul în schimb.';
 }
