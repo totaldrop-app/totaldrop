@@ -432,7 +432,9 @@ test("every public page declares the social preview image and omits cancelled br
     for (const page of PAGES) {
       const html = read(out, tag === "en" ? page : join(tag, page));
       assert.ok(html.includes('<meta property="og:image" content="https://totaldrop.app/social-preview.png">'), `${tag}/${page} og:image`);
+      assert.ok(html.includes('<meta property="og:image:type" content="image/png">'), `${tag}/${page} og:image:type`);
       assert.ok(html.includes('<meta name="twitter:card" content="summary_large_image">'), `${tag}/${page} twitter:card`);
+      assert.ok(!html.includes('property="og:image:alt"'), `${tag}/${page} has no untranslated og:image:alt`);
     }
     const dl = read(out, tag === "en" ? "download/index.html" : join(tag, "download/index.html"));
     assert.ok(!dl.includes('data-platform="web"') && !dl.includes('data-i18n="dl.web"'), `${tag}/download omits cancelled web card`);
