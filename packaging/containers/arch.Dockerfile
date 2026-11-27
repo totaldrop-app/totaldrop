@@ -1,5 +1,5 @@
 # Build environment for the Arch package.
-FROM archlinux:latest@sha256:d4594bb2300cba11f41c2f27923eb56f63d9988909c402f9c95517d1e362c899
+FROM archlinux:latest@sha256:375a401bb3c6376b37f40b6dfa25067db37ec78d0b7af67ae6315f43a0184a9d
 RUN pacman -Syu --noconfirm --needed base-devel git rustup qt6-base qt6-declarative qt6-wayland qt6-svg \
       xdg-desktop-portal hicolor-icon-theme && pacman -Scc --noconfirm
 # The same Rust as every other build (rust-toolchain.toml), not Arch's.
