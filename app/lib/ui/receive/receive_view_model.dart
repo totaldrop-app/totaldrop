@@ -266,6 +266,37 @@ class ReceiveViewModel extends ChangeNotifier {
     if (s != null) _repo.stop(s);
   }
 
+  /// Stop waiting for the sender while connecting, keeping what was typed
+  /// so a mistyped code can be edited right away (#591).
+  void stopConnecting() {
+    if (stage != ReceiveStage.connecting) return;
+    cancel();
+    _generation++;
+    _release();
+    stage = ReceiveStage.entering;
+    connectingCode = null;
+    error = null;
+    notifyListeners();
+  }
+
+  /// Back to code entry after a failure: keeps what was typed when the
+  /// failure did not spend a one-time code, so a transient server error before
+  /// an offer arrives or a typo can be retried or fixed without retyping (#591).
+  /// `ErrorKind.connect` happens only after the mailbox is claimed and PAKE
+  /// starts, so its code is already spent and cleared.
+  void retry() {
+    final keepCode = switch (error?.kind) {
+      ErrorKind.invalidCode ||
+      ErrorKind.codeNotInUse ||
+      ErrorKind.badServer => true,
+      ErrorKind.server => offer == null,
+      _ => false,
+    };
+    final saved = keepCode ? input : '';
+    reset();
+    if (saved.isNotEmpty) setInput(saved);
+  }
+
   void reset() {
     cancel();
     _generation++;
