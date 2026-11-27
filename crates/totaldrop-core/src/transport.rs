@@ -491,15 +491,31 @@ fn endpoint_on(
     client.transport_config(transport_config());
 
     let runtime = quinn::default_runtime().ok_or(Error::Connect("no async runtime".into()))?;
-    let (socket, pipes, fallback) = crate::path::PathSocket::new(inner);
-    let mut endpoint = quinn::Endpoint::new_with_abstract_socket(
-        quinn::EndpointConfig::default(),
-        Some(server),
-        socket,
-        runtime,
-    )?;
+    let reset_tokens = crate::path::ResetTokens::new()?;
+    let (socket, pipes, fallback) =
+        crate::path::PathSocket::with_reset_tokens(inner, reset_tokens.clone());
+    let mut ep_config = quinn::EndpointConfig::new(reset_tokens);
+    ep_config.cid_generator(|| Box::new(crate::path::FixedCidGenerator));
+    let mut endpoint =
+        quinn::Endpoint::new_with_abstract_socket(ep_config, Some(server), socket, runtime)?;
     endpoint.set_default_client_config(client);
     Ok((endpoint, pipes, fallback))
+}
+
+/// Close `conn` with application reason `"stopped"`, finishing the closing
+/// watch on `fallback` so post-drain packets from an unacknowledged peer
+/// receive the saved `CONNECTION_CLOSE` instead of a stateless reset (#512,
+/// #555).
+pub(crate) fn close_stopped(
+    conn: &quinn::Connection,
+    fallback: Option<&crate::path::Fallback>,
+    unheard: bool,
+) {
+    if let Some(fallback) = fallback {
+        let arm = unheard && conn.close_reason().is_none();
+        fallback.finish_closing(arm, conn.remote_address());
+    }
+    conn.close(0u32.into(), b"stopped");
 }
 
 /// The next incoming connection whose handshake completes; the pinned key
@@ -820,6 +836,255 @@ pub(crate) mod testing {
         let ((receiver_conn, _ctl), (sender_conn, _send, _recv)) =
             tokio::join!(recv_side, send_side);
         (sender_conn, receiver_conn)
+    }
+
+    /// Which ways a [`Cuttable`] socket's traffic is cut off.
+    #[derive(Debug, Default)]
+    pub(crate) struct Cut {
+        pub(crate) outgoing: std::sync::atomic::AtomicBool,
+        pub(crate) incoming: std::sync::atomic::AtomicBool,
+        outgoing_limit: std::sync::atomic::AtomicU64,
+        sent_after_arm: std::sync::atomic::AtomicU64,
+        incoming_limit: std::sync::atomic::AtomicU64,
+        rcvd_after_arm: std::sync::atomic::AtomicU64,
+        tripped_flag: std::sync::atomic::AtomicBool,
+        tripped: tokio::sync::Notify,
+    }
+
+    impl Cut {
+        pub(crate) fn set(&self, outgoing: bool, incoming: bool) {
+            self.outgoing
+                .store(outgoing, std::sync::atomic::Ordering::SeqCst);
+            self.incoming
+                .store(incoming, std::sync::atomic::Ordering::SeqCst);
+        }
+
+        /// Cut outgoing packets once `bytes` of UDP payload have been passed
+        /// to `try_send`, then wake [`Self::tripped`].
+        pub(crate) fn trip_outgoing_after(&self, bytes: u64) {
+            self.sent_after_arm
+                .store(0, std::sync::atomic::Ordering::SeqCst);
+            self.tripped_flag
+                .store(false, std::sync::atomic::Ordering::SeqCst);
+            self.outgoing_limit
+                .store(bytes, std::sync::atomic::Ordering::SeqCst);
+        }
+
+        /// Cut both directions once `bytes` of UDP payload have arrived via
+        /// `poll_recv`, then wake [`Self::tripped`].
+        pub(crate) fn trip_both_after_incoming(&self, bytes: u64) {
+            self.rcvd_after_arm
+                .store(0, std::sync::atomic::Ordering::SeqCst);
+            self.tripped_flag
+                .store(false, std::sync::atomic::Ordering::SeqCst);
+            self.incoming_limit
+                .store(bytes, std::sync::atomic::Ordering::SeqCst);
+        }
+
+        pub(crate) async fn tripped(&self) {
+            loop {
+                let notified = self.tripped.notified();
+                if self.tripped_flag.load(std::sync::atomic::Ordering::SeqCst) {
+                    return;
+                }
+                notified.await;
+            }
+        }
+    }
+
+    /// A UDP socket whose traffic can be cut off while the connection over
+    /// it stays up: a Wi-Fi that drops, a NAT mapping that expires, a
+    /// network that lets the handshake through and then stops carrying
+    /// anything.
+    #[derive(Debug)]
+    pub(crate) struct Cuttable {
+        pub(crate) inner: Arc<dyn quinn::AsyncUdpSocket>,
+        pub(crate) cut: Arc<Cut>,
+    }
+
+    impl quinn::AsyncUdpSocket for Cuttable {
+        fn create_io_poller(self: Arc<Self>) -> std::pin::Pin<Box<dyn quinn::UdpPoller>> {
+            self.inner.clone().create_io_poller()
+        }
+
+        fn try_send(&self, transmit: &quinn::udp::Transmit) -> std::io::Result<()> {
+            if self.cut.outgoing.load(std::sync::atomic::Ordering::SeqCst) {
+                return Ok(());
+            }
+            let limit = self
+                .cut
+                .outgoing_limit
+                .load(std::sync::atomic::Ordering::SeqCst);
+            if limit > 0 {
+                let len = u64::try_from(transmit.contents.len()).unwrap_or(0);
+                let prev = self
+                    .cut
+                    .sent_after_arm
+                    .fetch_add(len, std::sync::atomic::Ordering::SeqCst);
+                if prev.saturating_add(len) >= limit {
+                    self.cut
+                        .outgoing_limit
+                        .store(0, std::sync::atomic::Ordering::SeqCst);
+                    self.cut
+                        .outgoing
+                        .store(true, std::sync::atomic::Ordering::SeqCst);
+                    self.cut
+                        .tripped_flag
+                        .store(true, std::sync::atomic::Ordering::SeqCst);
+                    self.cut.tripped.notify_waiters();
+                    return Ok(());
+                }
+            }
+            self.inner.try_send(transmit)
+        }
+
+        fn poll_recv(
+            &self,
+            cx: &mut std::task::Context,
+            bufs: &mut [std::io::IoSliceMut<'_>],
+            meta: &mut [quinn::udp::RecvMeta],
+        ) -> std::task::Poll<std::io::Result<usize>> {
+            loop {
+                match self.inner.poll_recv(cx, bufs, meta) {
+                    std::task::Poll::Ready(Ok(n)) => {
+                        if self.cut.incoming.load(std::sync::atomic::Ordering::SeqCst) {
+                            continue;
+                        }
+                        let limit = self
+                            .cut
+                            .incoming_limit
+                            .load(std::sync::atomic::Ordering::SeqCst);
+                        if limit > 0 {
+                            let got = meta
+                                .get(..n)
+                                .unwrap_or_default()
+                                .iter()
+                                .fold(0u64, |acc, m| {
+                                    acc.saturating_add(u64::try_from(m.len).unwrap_or(0))
+                                });
+                            let prev = self
+                                .cut
+                                .rcvd_after_arm
+                                .fetch_add(got, std::sync::atomic::Ordering::SeqCst);
+                            if prev.saturating_add(got) >= limit {
+                                self.cut
+                                    .incoming_limit
+                                    .store(0, std::sync::atomic::Ordering::SeqCst);
+                                self.cut.set(true, true);
+                                self.cut
+                                    .tripped_flag
+                                    .store(true, std::sync::atomic::Ordering::SeqCst);
+                                self.cut.tripped.notify_waiters();
+                                continue;
+                            }
+                        }
+                        return std::task::Poll::Ready(Ok(n));
+                    }
+                    other => return other,
+                }
+            }
+        }
+
+        fn local_addr(&self) -> std::io::Result<SocketAddr> {
+            self.inner.local_addr()
+        }
+
+        fn max_transmit_segments(&self) -> usize {
+            self.inner.max_transmit_segments()
+        }
+
+        fn max_receive_segments(&self) -> usize {
+            self.inner.max_receive_segments()
+        }
+
+        fn may_fragment(&self) -> bool {
+            self.inner.may_fragment()
+        }
+    }
+
+    pub(crate) struct CuttableDirect {
+        pub(crate) sender_conn: quinn::Connection,
+        pub(crate) receiver_conn: quinn::Connection,
+        pub(crate) sender_ep: quinn::Endpoint,
+        pub(crate) receiver_ep: quinn::Endpoint,
+        pub(crate) sender_cut: Arc<Cut>,
+        pub(crate) receiver_cut: Arc<Cut>,
+        pub(crate) sender_fallback: crate::path::Fallback,
+        pub(crate) receiver_fallback: crate::path::Fallback,
+    }
+
+    /// Direct sender and receiver connections whose sockets can be cut off,
+    /// together with their endpoints and [`Fallback`](crate::path::Fallback)
+    /// handles so a test can wait for a closed connection to drain (#512,
+    /// #555).
+    pub(crate) async fn over_cuttable_direct() -> CuttableDirect {
+        let (ka, kb) = (
+            EndpointKey::generate().unwrap(),
+            EndpointKey::generate().unwrap(),
+        );
+        let sa = UdpSocket::bind(SocketAddr::from(([127, 0, 0, 1], 0))).unwrap();
+        let sb = UdpSocket::bind(SocketAddr::from(([127, 0, 0, 1], 0))).unwrap();
+        let sender_addr = sa.local_addr().unwrap();
+        let receiver_addr = sb.local_addr().unwrap();
+        let runtime = quinn::default_runtime().unwrap();
+        let sender_cut = Arc::new(Cut::default());
+        let receiver_cut = Arc::new(Cut::default());
+        let (sender_ep, _, sender_fallback) = endpoint_on(
+            Arc::new(Cuttable {
+                inner: runtime.wrap_udp_socket(sa).unwrap(),
+                cut: sender_cut.clone(),
+            }),
+            &ka,
+            &kb.public(),
+        )
+        .unwrap();
+        let (receiver_ep, _, receiver_fallback) = endpoint_on(
+            Arc::new(Cuttable {
+                inner: runtime.wrap_udp_socket(sb).unwrap(),
+                cut: receiver_cut.clone(),
+            }),
+            &kb,
+            &ka.public(),
+        )
+        .unwrap();
+        let wait = Duration::from_secs(8);
+        let to_sender = Paths {
+            direct: vec![sender_addr],
+            relay: None,
+            relay_only: false,
+        };
+        let to_receiver = Paths {
+            direct: vec![receiver_addr],
+            relay: None,
+            relay_only: false,
+        };
+        let recv_side = async {
+            let conn = receiver_connection(&receiver_ep, &to_sender, wait)
+                .await
+                .unwrap();
+            let (mut send, _recv) = conn.open_bi().await.unwrap();
+            send.write_all(b"x").await.unwrap();
+            (conn, send)
+        };
+        let send_side = async {
+            sender_connection(&sender_ep, &to_receiver, wait)
+                .await
+                .unwrap()
+        };
+        let ((receiver_conn, _ctl), (sender_conn, _send, _recv)) =
+            tokio::join!(recv_side, send_side);
+        sender_fallback.watch_closing(sender_conn.remote_address());
+        receiver_fallback.watch_closing(receiver_conn.remote_address());
+        CuttableDirect {
+            sender_conn,
+            receiver_conn,
+            sender_ep,
+            receiver_ep,
+            sender_cut,
+            receiver_cut,
+            sender_fallback,
+            receiver_fallback,
+        }
     }
 }
 
@@ -1401,76 +1666,7 @@ mod tests {
         );
     }
 
-    /// Which ways a [`Cuttable`] socket's traffic is cut off.
-    #[derive(Debug, Default)]
-    struct Cut {
-        outgoing: std::sync::atomic::AtomicBool,
-        incoming: std::sync::atomic::AtomicBool,
-    }
-
-    impl Cut {
-        fn set(&self, outgoing: bool, incoming: bool) {
-            self.outgoing
-                .store(outgoing, std::sync::atomic::Ordering::SeqCst);
-            self.incoming
-                .store(incoming, std::sync::atomic::Ordering::SeqCst);
-        }
-    }
-
-    /// A UDP socket whose traffic can be cut off while the connection over
-    /// it stays up: a Wi-Fi that drops, a NAT mapping that expires, a
-    /// network that lets the handshake through and then stops carrying
-    /// anything.
-    #[derive(Debug)]
-    struct Cuttable {
-        inner: Arc<dyn quinn::AsyncUdpSocket>,
-        cut: Arc<Cut>,
-    }
-
-    impl quinn::AsyncUdpSocket for Cuttable {
-        fn create_io_poller(self: Arc<Self>) -> std::pin::Pin<Box<dyn quinn::UdpPoller>> {
-            self.inner.clone().create_io_poller()
-        }
-
-        fn try_send(&self, transmit: &quinn::udp::Transmit) -> std::io::Result<()> {
-            if self.cut.outgoing.load(std::sync::atomic::Ordering::SeqCst) {
-                Ok(())
-            } else {
-                self.inner.try_send(transmit)
-            }
-        }
-
-        fn poll_recv(
-            &self,
-            cx: &mut std::task::Context,
-            bufs: &mut [std::io::IoSliceMut<'_>],
-            meta: &mut [quinn::udp::RecvMeta],
-        ) -> std::task::Poll<std::io::Result<usize>> {
-            loop {
-                match self.inner.poll_recv(cx, bufs, meta) {
-                    std::task::Poll::Ready(Ok(_))
-                        if self.cut.incoming.load(std::sync::atomic::Ordering::SeqCst) => {}
-                    other => return other,
-                }
-            }
-        }
-
-        fn local_addr(&self) -> std::io::Result<SocketAddr> {
-            self.inner.local_addr()
-        }
-
-        fn max_transmit_segments(&self) -> usize {
-            self.inner.max_transmit_segments()
-        }
-
-        fn max_receive_segments(&self) -> usize {
-            self.inner.max_receive_segments()
-        }
-
-        fn may_fragment(&self) -> bool {
-            self.inner.may_fragment()
-        }
-    }
+    use super::testing::{Cut, Cuttable};
 
     /// An endpoint on loopback whose direct traffic is cut as `cut` says.
     fn cuttable_endpoint(
