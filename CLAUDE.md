@@ -35,7 +35,7 @@ Bu dosya, bu depoda çalışan Claude Code oturumlarına yol gösterir.
 
 ## Komutlar
 
-Zorunlu denetim CI'dır; aşağıdakiler aynı denetimlerin yerel karşılığıdır (ayrıntı: `docs/gelistirme.md`, "Yerel denetimler").
+Zorunlu denetim CI'dır; aşağıdakiler aynı denetimlerin yerel karşılığıdır (ayrıntı: `docs/gelistirme.md`, "Local checks").
 
 - Rust çekirdeği, CLI ve Rust sunucuları (`core.yml` ile aynı; `linux/` Qt 6 istediği için `linux.yml`'de, Android köprüsü `app/rust` `android.yml`'de derlenir, bu yüzden burada dışarıda). CI `RUSTFLAGS=-D warnings` ile derler; yerelde aynısını görmek için komutların başına `RUSTFLAGS="-D warnings"` ekle (ör. `RUSTFLAGS="-D warnings" cargo test …`):
   ```sh
