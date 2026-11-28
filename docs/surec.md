@@ -156,7 +156,9 @@ elle bakar.
 - Dependabot'un açmadığı ana sürüm geçişleri ve taban imajların destek
   bitiş tarihi bir issue'da izlenir.
 - Denetim: `packaging/check-versions.sh` (Node dahil, #369),
-  `tools/check-component-versions.sh`; destek bitiş tarihleri elle.
+  `tools/check-component-versions.sh` ve destek bitiş tarihleri için
+  haftalık `eol.yml` iş akışı (`tools/check-eol.mjs`, 60 gün önceden
+  uyarır).
 
 ## Sürüm listesi
 
