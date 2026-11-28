@@ -263,6 +263,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get errorBadServer => '服务器地址无效。必须以 wss:// 开头。';
 
   @override
+  String get errorRateLimited => '尝试过于频繁，请稍等片刻再试。';
+
+  @override
   String get errorConnect => '无法连接到另一台设备。请确认两台设备都已联网，然后重试。';
 
   @override
@@ -889,6 +892,9 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get errorBadServer => '服务器地址无效。必须以 wss:// 开头。';
 
   @override
+  String get errorRateLimited => '尝试过于频繁，请稍等片刻再试。';
+
+  @override
   String get errorConnect => '无法连接到另一台设备。请确认两台设备都已联网，然后重试。';
 
   @override
@@ -1512,6 +1518,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get errorBadServer => '伺服器位址無效。必須以 wss:// 開頭。';
+
+  @override
+  String get errorRateLimited => '嘗試過於頻繁，請稍候片刻再試。';
 
   @override
   String get errorConnect => '無法連線到另一部裝置。請確認兩部裝置都已連上網路，然後再試一次。';

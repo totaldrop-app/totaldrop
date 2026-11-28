@@ -295,6 +295,10 @@ class AppLocalizationsFr extends AppLocalizations {
       'L\'adresse du serveur n\'est pas valide. Elle doit commencer par wss://.';
 
   @override
+  String get errorRateLimited =>
+      'Trop de tentatives rapprochées ; patientez un instant puis réessayez.';
+
+  @override
   String get errorConnect =>
       'Impossible de se connecter à l\'autre appareil. Vérifiez que les deux appareils sont en ligne et réessayez.';
 

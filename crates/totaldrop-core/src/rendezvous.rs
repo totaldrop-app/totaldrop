@@ -30,6 +30,10 @@ pub(crate) const BAD_ADDRESS: [&str; 4] = [
 pub(crate) const CODE_NOT_IN_USE: [&str; 3] =
     ["unknown nameplate", "nameplate full", "mailbox expired"];
 
+/// What a rendezvous server answers when this client opened too many
+/// connections in a short time (#394).
+pub(crate) const RATE_LIMITED: &str = "too many requests";
+
 /// Unencrypted `ws://` is accepted only for a server on this machine, for
 /// development and tests. Everything else must be `wss://` (TLS 1.3).
 pub(crate) fn check_url(url: &str) -> Result<()> {

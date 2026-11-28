@@ -274,6 +274,10 @@ class AppLocalizationsTr extends AppLocalizations {
       'Sunucu adresi geçerli değil. wss:// ile başlamalı.';
 
   @override
+  String get errorRateLimited =>
+      'Çok sık denendi; biraz bekleyip yeniden deneyin.';
+
+  @override
   String get errorConnect =>
       'Diğer cihaza bağlanılamadı. İki cihazın da internete bağlı olduğundan emin olup yeniden deneyin.';
 

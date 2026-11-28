@@ -72,6 +72,7 @@
   "errorCodeNotInUse": "Dieser Code ist nicht in Gebrauch: Er wurde falsch eingegeben, ist abgelaufen oder wurde schon verwendet. Bitten Sie den Absender um einen neuen.",
   "errorCodeExpired": "Der Code ist abgelaufen, bevor ihn jemand verwendet hat. Senden Sie erneut, um einen neuen Code zu erhalten.",
   "errorBadServer": "Die Serveradresse ist ungültig. Sie muss mit wss:// beginnen.",
+  "errorRateLimited": "Zu viele Versuche kurz hintereinander; warten Sie einen Moment und versuchen Sie es erneut.",
   "errorConnect": "Keine Verbindung zum anderen Gerät möglich. Prüfen Sie, ob beide Geräte online sind, und versuchen Sie es erneut.",
   "errorInvalidOffer": "Das Angebot hat gegen eine Sicherheitsregel verstoßen und wurde deshalb abgelehnt.",
   "errorStorage": "Eine Datei konnte nicht gelesen oder gespeichert werden.",

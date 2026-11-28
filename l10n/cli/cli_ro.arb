@@ -33,6 +33,7 @@
   "cliErrCodeNotInUse": "Codul nu este folosit: a fost tastat greșit, a expirat sau a fost deja folosit. Cereți expeditorului unul nou.",
   "cliErrCodeExpired": "Codul a expirat înainte să îl folosească cineva. Trimiteți din nou pentru a primi un cod nou.",
   "cliErrBadServer": "Adresa serverului nu este validă. Trebuie să înceapă cu wss://.",
+  "cliErrRateLimited": "Prea multe încercări într-un timp scurt; așteptați puțin și încercați din nou.",
   "cliErrServer": "Serverul TotalDrop nu a putut fi contactat. Verificați conexiunea la internet.",
   "cliErrConnect": "Nu s-a putut realiza conexiunea cu celălalt dispozitiv. Verificați că ambele dispozitive sunt online și încercați din nou.",
   "cliErrInvalidOffer": "Oferta a încălcat o regulă de siguranță, așa că a fost refuzată.",

@@ -287,6 +287,10 @@ class AppLocalizationsUr extends AppLocalizations {
       'سرور کا پتہ درست نہیں۔ اسے wss:// سے شروع ہونا چاہیے۔';
 
   @override
+  String get errorRateLimited =>
+      'بہت تیزی سے بار بار کوشش کی جا رہی ہے؛ تھوڑا انتظار کریں اور دوبارہ کوشش کریں۔';
+
+  @override
   String get errorConnect =>
       'دوسرے آلے سے رابطہ نہیں ہو سکا۔ یقینی بنائیں کہ دونوں آلات آن لائن ہیں اور دوبارہ کوشش کریں۔';
 

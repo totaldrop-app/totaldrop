@@ -298,6 +298,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get errorBadServer => 'عنوان الخادم غير صالح. يجب أن يبدأ بـ wss://.';
 
   @override
+  String get errorRateLimited =>
+      'محاولات متكررة جدًا؛ انتظر لحظة ثم حاول مجددًا.';
+
+  @override
   String get errorConnect =>
       'تعذر الاتصال بالجهاز الآخر. تأكد من أن الجهازين كليهما متصلان بالإنترنت، ثم أعد المحاولة.';
 
