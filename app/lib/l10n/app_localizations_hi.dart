@@ -683,4 +683,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'बैटरी सेटिंग';
+
+  @override
+  String get receiveWith => 'TotalDrop से प्राप्त करें';
 }

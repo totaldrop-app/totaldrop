@@ -692,4 +692,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'Batterij-instellingen';
+
+  @override
+  String get receiveWith => 'Ontvangen met TotalDrop';
 }

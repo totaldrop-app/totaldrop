@@ -11,4 +11,5 @@
     <string name="process_text">Надіслати через TotalDrop</string>
     <string name="shortcut_receive_short">Отримати</string>
     <string name="shortcut_receive_long">Отримання файлів</string>
+    <string name="tile_receive">Отримати через TotalDrop</string>
 </resources>

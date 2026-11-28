@@ -11,4 +11,5 @@
     <string name="process_text">Skicka med TotalDrop</string>
     <string name="shortcut_receive_short">Ta emot</string>
     <string name="shortcut_receive_long">Ta emot filer</string>
+    <string name="tile_receive">Ta emot med TotalDrop</string>
 </resources>

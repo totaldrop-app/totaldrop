@@ -693,4 +693,7 @@ class AppLocalizationsEl extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'Ρυθμίσεις μπαταρίας';
+
+  @override
+  String get receiveWith => 'Λήψη με το TotalDrop';
 }

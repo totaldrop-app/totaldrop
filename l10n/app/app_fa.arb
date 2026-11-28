@@ -184,5 +184,6 @@
   "setupBackgroundAutostart": "باز کردن شروع خودکار",
   "setupBackgroundSkip": "اکنون نه",
   "settingsBackground": "انتقال در پس‌زمینه",
-  "settingsBackgroundOpen": "تنظیمات باتری"
+  "settingsBackgroundOpen": "تنظیمات باتری",
+  "receiveWith": "دریافت با TotalDrop"
 }

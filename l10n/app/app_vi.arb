@@ -184,5 +184,6 @@
   "setupBackgroundAutostart": "Mở Tự khởi động",
   "setupBackgroundSkip": "Để sau",
   "settingsBackground": "Truyền ở chế độ nền",
-  "settingsBackgroundOpen": "Cài đặt pin"
+  "settingsBackgroundOpen": "Cài đặt pin",
+  "receiveWith": "Nhận bằng TotalDrop"
 }

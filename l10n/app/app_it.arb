@@ -184,5 +184,6 @@
   "setupBackgroundAutostart": "Apri Avvio automatico",
   "setupBackgroundSkip": "Non ora",
   "settingsBackground": "Trasferimenti in background",
-  "settingsBackgroundOpen": "Impostazioni batteria"
+  "settingsBackgroundOpen": "Impostazioni batteria",
+  "receiveWith": "Ricevi con TotalDrop"
 }

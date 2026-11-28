@@ -670,4 +670,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'Setelan baterai';
+
+  @override
+  String get receiveWith => 'Terima dengan TotalDrop';
 }

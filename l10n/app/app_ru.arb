@@ -184,5 +184,6 @@
   "setupBackgroundAutostart": "Открыть автозапуск",
   "setupBackgroundSkip": "Не сейчас",
   "settingsBackground": "Передача в фоне",
-  "settingsBackgroundOpen": "Настройки батареи"
+  "settingsBackgroundOpen": "Настройки батареи",
+  "receiveWith": "Принять через TotalDrop"
 }

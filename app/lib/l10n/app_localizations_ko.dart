@@ -639,4 +639,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => '배터리 설정';
+
+  @override
+  String get receiveWith => 'TotalDrop으로 받기';
 }

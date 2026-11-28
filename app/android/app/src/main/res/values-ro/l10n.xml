@@ -11,4 +11,5 @@
     <string name="process_text">Trimite cu TotalDrop</string>
     <string name="shortcut_receive_short">Primește</string>
     <string name="shortcut_receive_long">Primiți fișiere</string>
+    <string name="tile_receive">Primește cu TotalDrop</string>
 </resources>

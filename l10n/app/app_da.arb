@@ -184,5 +184,6 @@
   "setupBackgroundAutostart": "Åbn Autostart",
   "setupBackgroundSkip": "Ikke nu",
   "settingsBackground": "Overførsler i baggrunden",
-  "settingsBackgroundOpen": "Batteriindstillinger"
+  "settingsBackgroundOpen": "Batteriindstillinger",
+  "receiveWith": "Modtag med TotalDrop"
 }

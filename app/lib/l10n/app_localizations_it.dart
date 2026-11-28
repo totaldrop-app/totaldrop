@@ -697,4 +697,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'Impostazioni batteria';
+
+  @override
+  String get receiveWith => 'Ricevi con TotalDrop';
 }

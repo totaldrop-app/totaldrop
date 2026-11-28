@@ -671,4 +671,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'ব্যাটারি সেটিংস';
+
+  @override
+  String get receiveWith => 'TotalDrop দিয়ে গ্রহণ করুন';
 }

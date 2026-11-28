@@ -184,5 +184,6 @@
   "setupBackgroundAutostart": "自動起動を開く",
   "setupBackgroundSkip": "後で",
   "settingsBackground": "バックグラウンドでの転送",
-  "settingsBackgroundOpen": "バッテリー設定"
+  "settingsBackgroundOpen": "バッテリー設定",
+  "receiveWith": "TotalDropで受信"
 }

@@ -11,4 +11,5 @@
     <string name="process_text">TotalDrop سے بھیجیں</string>
     <string name="shortcut_receive_short">وصول کریں</string>
     <string name="shortcut_receive_long">فائلیں وصول کریں</string>
+    <string name="tile_receive">TotalDrop سے وصول کریں</string>
 </resources>

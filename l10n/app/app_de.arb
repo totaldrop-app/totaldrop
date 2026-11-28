@@ -184,5 +184,6 @@
   "setupBackgroundAutostart": "Autostart öffnen",
   "setupBackgroundSkip": "Nicht jetzt",
   "settingsBackground": "Übertragungen im Hintergrund",
-  "settingsBackgroundOpen": "Akkueinstellungen"
+  "settingsBackgroundOpen": "Akkueinstellungen",
+  "receiveWith": "Mit TotalDrop empfangen"
 }

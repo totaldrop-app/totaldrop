@@ -184,5 +184,6 @@
   "setupBackgroundAutostart": "Avaa Automaattinen käynnistys",
   "setupBackgroundSkip": "Ei nyt",
   "settingsBackground": "Siirrot taustalla",
-  "settingsBackgroundOpen": "Akkuasetukset"
+  "settingsBackgroundOpen": "Akkuasetukset",
+  "receiveWith": "Vastaanota TotalDropilla"
 }

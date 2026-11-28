@@ -275,5 +275,7 @@
   "settingsBackground": "Background transfers",
   "@settingsBackground": {"description": "Settings: heading of the section about background transfers"},
   "settingsBackgroundOpen": "Battery settings",
-  "@settingsBackgroundOpen": {"description": "Settings: button that opens the background transfers page"}
+  "@settingsBackgroundOpen": {"description": "Settings: button that opens the background transfers page"},
+  "receiveWith": "Receive with TotalDrop",
+  "@receiveWith": {"description": "Android Quick Settings tile that opens the Receive screen directly (#53)"}
 }

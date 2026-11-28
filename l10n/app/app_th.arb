@@ -184,5 +184,6 @@
   "setupBackgroundAutostart": "เปิดการเริ่มอัตโนมัติ",
   "setupBackgroundSkip": "ไว้ทีหลัง",
   "settingsBackground": "การโอนในเบื้องหลัง",
-  "settingsBackgroundOpen": "การตั้งค่าแบตเตอรี่"
+  "settingsBackgroundOpen": "การตั้งค่าแบตเตอรี่",
+  "receiveWith": "รับด้วย TotalDrop"
 }

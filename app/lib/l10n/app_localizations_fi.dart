@@ -684,4 +684,7 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'Akkuasetukset';
+
+  @override
+  String get receiveWith => 'Vastaanota TotalDropilla';
 }

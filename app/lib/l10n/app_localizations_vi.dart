@@ -666,4 +666,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'Cài đặt pin';
+
+  @override
+  String get receiveWith => 'Nhận bằng TotalDrop';
 }

@@ -11,4 +11,5 @@
     <string name="process_text">TotalDrop से भेजें</string>
     <string name="shortcut_receive_short">प्राप्त करें</string>
     <string name="shortcut_receive_long">फ़ाइलें प्राप्त करें</string>
+    <string name="tile_receive">TotalDrop से प्राप्त करें</string>
 </resources>

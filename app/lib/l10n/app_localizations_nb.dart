@@ -684,4 +684,7 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'Batteriinnstillinger';
+
+  @override
+  String get receiveWith => 'Motta med TotalDrop';
 }

@@ -692,4 +692,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'Nastavení baterie';
+
+  @override
+  String get receiveWith => 'Přijmout přes TotalDrop';
 }

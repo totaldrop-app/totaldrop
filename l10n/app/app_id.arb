@@ -184,5 +184,6 @@
   "setupBackgroundAutostart": "Buka Mulai otomatis",
   "setupBackgroundSkip": "Nanti saja",
   "settingsBackground": "Transfer di latar belakang",
-  "settingsBackgroundOpen": "Setelan baterai"
+  "settingsBackgroundOpen": "Setelan baterai",
+  "receiveWith": "Terima dengan TotalDrop"
 }

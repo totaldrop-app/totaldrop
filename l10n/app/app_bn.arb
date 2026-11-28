@@ -184,5 +184,6 @@
   "setupBackgroundAutostart": "অটোস্টার্ট খুলুন",
   "setupBackgroundSkip": "এখন নয়",
   "settingsBackground": "ব্যাকগ্রাউন্ডে ট্রান্সফার",
-  "settingsBackgroundOpen": "ব্যাটারি সেটিংস"
+  "settingsBackgroundOpen": "ব্যাটারি সেটিংস",
+  "receiveWith": "TotalDrop দিয়ে গ্রহণ করুন"
 }

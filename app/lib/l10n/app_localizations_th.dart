@@ -660,4 +660,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'การตั้งค่าแบตเตอรี่';
+
+  @override
+  String get receiveWith => 'รับด้วย TotalDrop';
 }

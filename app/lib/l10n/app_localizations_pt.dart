@@ -698,6 +698,9 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'Configurações de bateria';
+
+  @override
+  String get receiveWith => 'Receber com o TotalDrop';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -1393,6 +1396,9 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get settingsBackgroundOpen => 'Configurações de bateria';
+
+  @override
+  String get receiveWith => 'Receber com o TotalDrop';
 }
 
 /// The translations for Portuguese, as used in Portugal (`pt_PT`).
@@ -2090,4 +2096,7 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
 
   @override
   String get settingsBackgroundOpen => 'Definições da bateria';
+
+  @override
+  String get receiveWith => 'Receber com o TotalDrop';
 }
