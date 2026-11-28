@@ -173,6 +173,19 @@ export function translate(html, tag, dict) {
       : `<p class="lang-note" role="note" lang="en" dir="ltr">This translation is a draft and is being reviewed.</p>`;
     once(/(<main id="main">\n)/, (_, a) => `${a}    ${note}\n`);
   }
+  // Translated addresses never redirect (ADR 0021, #554), so move lang.js
+  // out of <head> and defer it before app.js at the end of <body>.
+  const headLang = /[ \t]*<script src="\/lang\.js(?:\?v=([0-9a-f]+))?" data-redirect><\/script>\n/;
+  const headLangMatch = headLang.exec(html);
+  if (headLangMatch) {
+    const langSrc = headLangMatch[1] ? `/lang.js?v=${headLangMatch[1]}` : "/lang.js";
+    html = html.replace(headLang, "");
+    once(
+      /([ \t]*)(<script src="\/app\.js(?:\?v=[0-9a-f]+)?" defer><\/script>)/,
+      (_, appIndent, appTag) => `${appIndent}<script src="${attr(langSrc)}" defer></script>\n${appIndent}${appTag}`,
+    );
+  }
+
   return html;
 }
 

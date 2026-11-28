@@ -453,7 +453,7 @@ test("middleware redirects /en/ and non-canonical language tags with 301 without
 
 // app.js itself, with just enough of a browser around it to see where it
 // sends the visitor and what it asks the server for.
-function open(page, pathname, { hostname, languages = ["en-US"], saved = null, langJs = true, search = "?a=1", hash = "", storageThrows = false, hrefs = [], langLinks = [] } = {}) {
+function open(page, pathname, { hostname, languages = ["en-US"], saved = null, langJs = true, dataRedirect = false, search = "?a=1", hash = "", storageThrows = false, hrefs = [], langLinks = [] } = {}) {
   const calls = [];
   const makeAnchor = (spec) => {
     const init = typeof spec === "string" ? { href: spec } : spec;
@@ -483,6 +483,7 @@ function open(page, pathname, { hostname, languages = ["en-US"], saved = null, l
     Intl, URL, decodeURIComponent,
     history: { replaceState: (_s, _t, u) => calls.push("replaceState:" + u) },
     document: {
+      currentScript: dataRedirect ? { hasAttribute: (k) => k === "data-redirect" } : null,
       body: { dataset: page === "home" ? {} : { page } },
       documentElement: {},
       title: "",
@@ -507,6 +508,7 @@ function open(page, pathname, { hostname, languages = ["en-US"], saved = null, l
   w.window = w;
   vm.createContext(w);
   if (langJs) vm.runInContext(read(pub, "lang.js"), w);
+  w.document.currentScript = null;
   vm.runInContext(read(pub, "app.js"), w);
   return { calls, picker, jump, anchors, languageAnchors };
 }
@@ -732,5 +734,242 @@ test("changing #lang-select on /r re-syncs cross-host and storage-blocked links"
   assert.deepEqual(
     blocked.anchors.map((a) => a.href),
     ["https://download.totaldrop.app/tr/?lang=tr", "https://totaldrop.app/tr/roadmap/?lang=tr"],
+  );
+});
+
+test("English addressed pages run lang.js with data-redirect in <head> after styles.css; translated and single-address pages keep it deferred (#554)", () => {
+  const assertNoInlineScripts = (html, label) => {
+    const lower = html.replace(/[A-Z]/g, (c) => c.toLowerCase());
+    let pos = 0;
+    while ((pos = lower.indexOf("<script", pos)) !== -1) {
+      const next = lower[pos + 7];
+      if (next && !/[\s/>]/.test(next)) {
+        pos += 7;
+        continue;
+      }
+      const gt = html.indexOf(">", pos);
+      assert.notEqual(gt, -1, `${label}: unclosed <script> tag`);
+      const attrs = html.slice(pos + 7, gt);
+      const close = lower.indexOf("</script", gt + 1);
+      assert.notEqual(close, -1, `${label}: missing </script> closing tag`);
+      const body = html.slice(gt + 1, close);
+      assert.match(attrs, /\bsrc="\/[^"]+"/, `${label}: external script only (CSP script-src 'self')`);
+      assert.equal(body, "", `${label}: no inline script body`);
+      pos = close + 8;
+    }
+  };
+  const splitParts = (html, label) => {
+    const head = /<head>([\s\S]*?)<\/head>/.exec(html);
+    const body = /<body\b[^>]*>([\s\S]*?)<\/body>/.exec(html);
+    assert.ok(head && body, `${label}: has <head> and <body>`);
+    return { head: head[1], body: body[1] };
+  };
+
+  let expectedLangSrc = null;
+  let expectedAppSrc = null;
+  for (const page of PAGES) {
+    for (const [label, html] of [[`public/${page}`, read(pub, page)], [`dist/${page}`, read(out, page)]]) {
+      assertNoInlineScripts(html, label);
+      const { head, body } = splitParts(html, label);
+      const cssMatch = /<link rel="stylesheet" href="\/styles\.css\?v=[0-9a-f]{10}">/.exec(head);
+      const langMatch = /<script src="(\/lang\.js\?v=[0-9a-f]{10})" data-redirect><\/script>/.exec(head);
+      assert.ok(cssMatch, `${label}: stylesheet in <head>`);
+      assert.ok(langMatch, `${label}: non-deferred lang.js with data-redirect in <head>`);
+      assert.ok(langMatch.index > cssMatch.index, `${label}: lang.js comes after styles.css in <head>`);
+      assert.equal((head.match(/<script\b/gi) || []).length, 1, `${label}: only lang.js script in <head>`);
+      assert.ok(!/\bdefer\b/.test(langMatch[0]), `${label}: head lang.js is not deferred`);
+      assert.ok(!body.includes("lang.js"), `${label}: no duplicate lang.js in <body>`);
+      assert.ok(!body.includes("data-redirect"), `${label}: no data-redirect in <body>`);
+      const appMatch = /<script src="(\/app\.js\?v=[0-9a-f]{10})" defer><\/script>/.exec(body);
+      assert.ok(appMatch, `${label}: deferred app.js in <body>`);
+      expectedLangSrc ??= langMatch[1];
+      expectedAppSrc ??= appMatch[1];
+      assert.equal(langMatch[1], expectedLangSrc, `${label}: consistent lang.js version`);
+      assert.equal(appMatch[1], expectedAppSrc, `${label}: consistent app.js version`);
+    }
+  }
+
+  for (const tag of others) {
+    for (const page of PAGES) {
+      const label = `dist/${tag}/${page}`;
+      const html = read(out, tag, page);
+      assertNoInlineScripts(html, label);
+      const { head, body } = splitParts(html, label);
+      assert.ok(!head.includes("<script"), `${label}: no head-blocking scripts on translated page`);
+      assert.ok(!html.includes("data-redirect"), `${label}: no data-redirect on translated page`);
+      assert.ok(
+        body.includes(`<script src="${expectedLangSrc}" defer></script>\n  <script src="${expectedAppSrc}" defer></script>`),
+        `${label}: deferred lang.js immediately before app.js in <body>`,
+      );
+    }
+  }
+
+  for (const single of ["r/index.html", "404.html"]) {
+    for (const [label, html] of [[`public/${single}`, read(pub, single)], [`dist/${single}`, read(out, single)]]) {
+      assertNoInlineScripts(html, label);
+      const { head, body } = splitParts(html, label);
+      assert.ok(!head.includes("<script"), `${label}: no scripts in <head>`);
+      assert.ok(!html.includes("data-redirect"), `${label}: no data-redirect`);
+      assert.ok(
+        body.includes(`<script src="${expectedLangSrc}" defer></script>\n  <script src="${expectedAppSrc}" defer></script>`),
+        `${label}: deferred lang.js before app.js in <body>`,
+      );
+    }
+  }
+});
+
+test("lang.js with data-redirect redirects early and preserves app.js ?lang= cleanup (#554)", () => {
+  function runLang({
+    pathname = "/",
+    hostname = "totaldrop.app",
+    languages = ["en-US"],
+    language,
+    saved = null,
+    search = "",
+    hash = "",
+    storageThrows = false,
+    storageReadOnly = false,
+    storageGetterThrows = false,
+    dataRedirect = true,
+  } = {}) {
+    const calls = [];
+    let stored = saved;
+    const w = {
+      Intl, URL,
+      history: { replaceState: (_s, _t, u) => calls.push("replaceState:" + u) },
+      document: {
+        currentScript: { hasAttribute: (k) => k === "data-redirect" && dataRedirect },
+      },
+      location: {
+        hostname,
+        origin: "https://" + hostname,
+        pathname,
+        search,
+        hash,
+        replace: (u) => calls.push("replace:" + u),
+      },
+      navigator: language !== undefined ? { languages, language } : { languages },
+    };
+    if (storageGetterThrows) {
+      Object.defineProperty(w, "localStorage", {
+        get() { throw new Error("SecurityError: storage blocked"); },
+      });
+    } else if (storageThrows) {
+      w.localStorage = {
+        getItem() { throw new Error("storage blocked"); },
+        setItem() { throw new Error("storage blocked"); },
+      };
+    } else if (storageReadOnly) {
+      w.localStorage = {
+        getItem: () => stored,
+        setItem() { throw new Error("QuotaExceededError"); },
+      };
+    } else {
+      w.localStorage = {
+        getItem: () => stored,
+        setItem: (_k, v) => { stored = v; calls.push(`save:${v}`); },
+      };
+    }
+    w.window = w;
+    vm.createContext(w);
+    vm.runInContext(read(pub, "lang.js"), w);
+    return { calls, stored: () => stored, TDLang: w.TDLang };
+  }
+
+  // Redirects non-English visitors on /, /download/, and download.totaldrop.app/, preserving query and hash.
+  assert.deepEqual(
+    runLang({ pathname: "/", languages: ["tr-TR"], search: "?foo=1", hash: "#why" }).calls,
+    ["replace:/tr/?foo=1#why"],
+  );
+  assert.deepEqual(
+    runLang({ pathname: "/download/", languages: ["tr-TR"], search: "?foo=1", hash: "#linux" }).calls,
+    ["replace:/tr/download/?foo=1#linux"],
+  );
+  assert.deepEqual(
+    runLang({ hostname: "download.totaldrop.app", pathname: "/", languages: ["tr-TR"], search: "?foo=1", hash: "#android" }).calls,
+    ["replace:/tr/?foo=1#android"],
+  );
+  // Falls back to navigator.language when navigator.languages is empty.
+  assert.deepEqual(
+    runLang({ pathname: "/", languages: [], language: "tr-TR" }).calls,
+    ["replace:/tr/"],
+  );
+
+  // Saved "en" stays on English without redirecting or touching history.
+  assert.deepEqual(runLang({ pathname: "/", languages: ["tr-TR"], saved: "en" }).calls, []);
+
+  // ?lang=en stays on English and NEVER calls history.replaceState in lang.js
+  // (whether storage works, throws, getter throws, or is read-only).
+  const enWritable = runLang({ pathname: "/", languages: ["tr-TR"], saved: "de", search: "?lang=en&foo=1", hash: "#top" });
+  assert.deepEqual(enWritable.calls, ["save:en"]);
+  assert.equal(enWritable.stored(), "en");
+  assert.deepEqual(
+    runLang({ pathname: "/", languages: ["tr-TR"], search: "?lang=en&foo=1", hash: "#top", storageThrows: true }).calls,
+    [],
+  );
+  assert.deepEqual(
+    runLang({ pathname: "/", languages: ["tr-TR"], search: "?lang=en", storageGetterThrows: true }).calls,
+    [],
+  );
+  assert.deepEqual(
+    runLang({ pathname: "/", languages: ["tr-TR"], saved: "de", search: "?lang=en", storageReadOnly: true }).calls,
+    [],
+    "valid ?lang=en wins over stale saved language even if setItem throws",
+  );
+
+  // ?lang=de saves choice and strips lang from query on redirect when storage works; keeps it when storage throws.
+  const deWithOther = runLang({ pathname: "/", languages: ["en-US"], search: "?lang=de&foo=1", hash: "#sec" });
+  assert.deepEqual(deWithOther.calls, ["save:de", "replace:/de/?foo=1#sec"]);
+  const deOnly = runLang({ pathname: "/roadmap/", languages: ["en-US"], search: "?lang=de" });
+  assert.deepEqual(deOnly.calls, ["save:de", "replace:/de/roadmap/"]);
+  const deBlocked = runLang({ pathname: "/", languages: ["en-US"], search: "?lang=de&foo=1", hash: "#sec", storageThrows: true });
+  assert.deepEqual(deBlocked.calls, ["replace:/de/?lang=de&foo=1#sec"]);
+
+  // Invalid ?lang=xx is ignored (not saved, does not strip query).
+  assert.deepEqual(runLang({ pathname: "/", languages: ["tr-TR"], search: "?lang=xx" }).calls, ["replace:/tr/?lang=xx"]);
+  assert.deepEqual(runLang({ pathname: "/", languages: ["en-US"], search: "?lang=xx" }).calls, []);
+
+  // Translated addresses never redirect even with data-redirect, and without data-redirect lang.js never auto-redirects.
+  assert.deepEqual(runLang({ pathname: "/tr/", languages: ["de"], saved: "de", dataRedirect: true }).calls, []);
+  const noAttr = runLang({ pathname: "/", languages: ["tr-TR"], dataRedirect: false });
+  assert.deepEqual(noAttr.calls, []);
+  // Direct helper call still works deterministically for tests.
+  const directCalls = [];
+  const directTarget = noAttr.TDLang.earlyRedirect({
+    URL,
+    location: { pathname: "/", search: "?foo=1", hash: "#why", replace: (u) => directCalls.push(u) },
+    navigator: { languages: ["tr-TR"] },
+    localStorage: { getItem: () => null, setItem() {} },
+  });
+  assert.equal(directTarget, "/tr/?foo=1#why");
+  assert.deepEqual(directCalls, ["/tr/?foo=1#why"]);
+
+  // Full two-script lifecycle: lang.js (data-redirect) followed by deferred app.js on /?lang=en.
+  const bothWritable = open("home", "/", {
+    hostname: "totaldrop.app",
+    languages: ["tr-TR"],
+    saved: "de",
+    dataRedirect: true,
+    search: "?lang=en&utm=1",
+    hash: "#top",
+    hrefs: ["/roadmap/", "https://download.totaldrop.app/"],
+  });
+  assert.ok(bothWritable.calls.includes("replaceState:/?utm=1#top"), "app.js strips ?lang=en after lang.js stayed");
+  assert.ok(!bothWritable.calls.some((c) => c.startsWith("replace:")), "neither script redirects");
+  assert.deepEqual(bothWritable.anchors.map((a) => a.href), ["/roadmap/", "https://download.totaldrop.app/?lang=en"]);
+
+  const bothBlocked = open("home", "/", {
+    hostname: "totaldrop.app",
+    languages: ["tr-TR"],
+    dataRedirect: true,
+    search: "?lang=en",
+    storageThrows: true,
+    hrefs: ["/roadmap/", "https://download.totaldrop.app/"],
+  });
+  assert.deepEqual(bothBlocked.calls, [], "no redirect and no replaceState when storage throws");
+  assert.deepEqual(
+    bothBlocked.anchors.map((a) => a.href),
+    ["/roadmap/?lang=en", "https://download.totaldrop.app/?lang=en"],
+    "app.js still rewrites links via syncChosenLinks when storage throws",
   );
 });

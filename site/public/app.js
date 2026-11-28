@@ -27,7 +27,6 @@
   const isTag = (v) => Boolean(v && window.TDLang && TAGS.includes(v));
   const PAGE = document.body.dataset.page || "home";
   const store = {
-    get() { try { return localStorage.getItem("td-lang"); } catch (e) { return null; } },
     set(v) { try { localStorage.setItem("td-lang", v); return true; } catch (e) { return false; } }
   };
   const prefs = navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language];
@@ -37,26 +36,17 @@
   const currentHost = location.hostname
     || (PAGE === "download" && !(HERE && HERE.rest === "/download/") ? "download.totaldrop.app" : "totaldrop.app");
 
-  const urlParams = new URL(location.search || "", "https://totaldrop.app").searchParams;
-  const rawQueryLang = urlParams.get("lang");
-  const queryLang = isTag(rawQueryLang) ? rawQueryLang : null;
-  const storedLang = store.get();
-  let saved = isTag(storedLang) ? storedLang : null;
-  let keptStorage = saved !== null;
-  if (queryLang) {
-    keptStorage = store.set(queryLang);
-    if (keptStorage) {
-      saved = queryLang;
-      urlParams.delete("lang");
-    }
-  }
-  const cleanQs = urlParams.toString();
-  const effectiveSearch = queryLang && keptStorage ? (cleanQs ? "?" + cleanQs : "") : location.search;
-  const chosen = saved || queryLang;
+  const { queryLang, keptStorage, effectiveSearch, chosen } =
+    window.TDLang && typeof window.TDLang.readChoice === "function"
+      ? window.TDLang.readChoice(location.search, window)
+      : { queryLang: null, keptStorage: false, effectiveSearch: location.search, chosen: null };
 
   // A visitor on an English address whose language is another one, and who
   // has not chosen English, goes to that language's address. The part
-  // after "#" goes along and is never sent to the server.
+  // after "#" goes along and is never sent to the server. On the six
+  // English addressed pages, lang.js already runs this check in <head>
+  // before <body> is painted (#554); keeping it here handles fallback
+  // loads and cleans ?lang= after staying on the page.
   if (HERE) {
     const to = window.TDLang.redirect(location.pathname, chosen, prefs);
     if (to) { location.replace(to + effectiveSearch + location.hash); return; }

@@ -33,7 +33,8 @@ public/
   404.html            For every missing address; without it Pages serves the home
                       page with 200 for unknown paths
   styles.css          Aurora tokens, light and dark themes, turning mark
-  lang.js             Language list, reviewed languages, language negotiation and paths
+  lang.js             Language list, reviewed languages, language negotiation, paths
+                      and early first-visit redirect on English pages
   app.js              Applying translations, draft note, cross-host language carry,
                       platform detection, /r logic
   i18n/<tag>.json     Site strings in each language (docs/ceviri.md)
@@ -94,16 +95,20 @@ App Links file. Setup and rollback: [docs/surec.md](../docs/surec.md),
   see the new page with the old stylesheet or script (#291).
 - On the six pages that have an address per language, keep the English
   `canonical` and `og:url` hand-written in the page (the build reads the
-  address from there), and keep `<a class="lang-jump" href="#languages">` next
-  to `#lang-select` in `<header>`. `tools/build.mjs` generates the `hreflang`
-  lines, the `#languages` `<nav>` at the end of `<main>`, and the translated
-  pages' `canonical` and `og:` tags; do not write those by hand. Write links
-  between those pages from the root (`/roadmap/` or
-  `https://totaldrop.app/roadmap/`); the build adds the language prefix, and
-  `app.js` carries an explicit language choice across `totaldrop.app` and
-  `download.totaldrop.app` via `?lang=<tag>` (cleaned on arrival with
-  `history.replaceState`). An element with `data-i18n` holds text only. `/r`
-  and the 404 page stay at a single address and are translated in the browser.
+  address from there), keep `<script src="/lang.js?v=…" data-redirect></script>`
+  in `<head>` right after `styles.css` (so first-visit redirects run before
+  `<body>` is painted without inline scripts while warming the stylesheet cache),
+  and keep `<a class="lang-jump" href="#languages">` next to `#lang-select` in
+  `<header>`. `tools/build.mjs` generates the `hreflang` lines, the `#languages`
+  `<nav>` at the end of `<main>`, and the translated pages' `canonical` and `og:`
+  tags, and moves `lang.js` back to `defer` before `app.js` on the 34 translated
+  pages; do not write those by hand. Write links between those pages from the
+  root (`/roadmap/` or `https://totaldrop.app/roadmap/`); the build adds the
+  language prefix, and `app.js` carries an explicit language choice across
+  `totaldrop.app` and `download.totaldrop.app` via `?lang=<tag>` (cleaned on
+  arrival with `history.replaceState`). An element with `data-i18n` holds text
+  only. `/r` and the 404 page stay at a single address, keep `lang.js` deferred,
+  and are translated in the browser.
 - Never add third-party resources (CDNs, analytics, font services). The CSP
   blocks them already.
 - The privacy policy has its own address in every language (`/privacy`,

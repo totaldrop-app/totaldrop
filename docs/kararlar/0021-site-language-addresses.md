@@ -64,11 +64,15 @@
   - The address decides the language. The picker goes to the same page,
     and the same `#part`, in the chosen language. A visitor on an English
     address whose browser prefers another language, and who has not chosen
-    English, is sent to that language's address; a translated address
-    never redirects. `/en/...` (including `download.totaldrop.app/en/`,
-    #554) and non-canonical case or slash variants of supported language
-    tags redirect with `301` to their canonical address. The choice is
-    still remembered only in the browser.
+    English, is sent to that language's address before `<body>` is painted
+    by loading `lang.js` with `data-redirect` in `<head>` right after
+    `styles.css` (no inline scripts, keeping `script-src 'self'`; #554),
+    while the 34 generated translated pages keep `lang.js` deferred in
+    `<body>` because a translated address never redirects. `/en/...`
+    (including `download.totaldrop.app/en/`, #554) and non-canonical case
+    or slash variants of supported language tags redirect with `301` to
+    their canonical address. The choice is still remembered only in the
+    browser.
   - `/r`, the 404 page and the privacy pages do not change. `/r` keeps one
     address and is translated in the browser as before, so every receive
     link ever shared keeps working and the code after `#` still never
@@ -113,10 +117,8 @@
     saved language preference in `localStorage`; this is intentional and
     low impact because the value is validated against the 35 built-in tags,
     stays strictly in browser storage, and never reaches a server.
-  - Still tracked in #513 and #554: moving the `?v=` asset versions and the
-    privacy pages into the build so that generated files leave the
-    repository, and measuring first-visit redirect LCP at `390 px` after
-    deployment.
+  - Still tracked in #513: moving the `?v=` asset versions and the privacy
+    pages into the build so that generated files leave the repository.
   - Not decided here: `og:locale`. Its values name a territory
     (`tr_TR`), which a language tag such as `ar` does not give.
 
