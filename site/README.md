@@ -63,6 +63,8 @@ tools/team.mjs        Builds the team page from the snapshot (--write), fetches 
                       in CI; a new person is added only with their permission
 tools/asset-versions.mjs Appends file hashes to stylesheet and script URLs in pages
                       (`/styles.css?v=…`, --write) and checks them in CI
+tools/check-layout-320.mjs Checks in CI that none of the 9 pages scrolls horizontally at
+                      320 px in any of the 35 languages using headless Chrome over CDP
 tools/wordmark.py     Extracts the outlines of "TotalDrop" from the site's display font
 functions/
   _middleware.js      www -> root redirect; download subdomain -> /download/ and

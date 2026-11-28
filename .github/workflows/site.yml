@@ -62,3 +62,5 @@ jobs:
           exit $status
       - name: Linux release links match across READMEs and the download page
         run: node --test tools/test-linux-release-links.mjs && node tools/linux-release-links.mjs check
+      - name: No horizontal scroll at 320 px in any of the 35 languages
+        run: node --test site/tools/test-layout-320.mjs && node site/tools/check-layout-320.mjs
