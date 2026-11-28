@@ -199,6 +199,13 @@ repos:
         files: ^(deny|osv-scanner)\.toml$
         pass_filenames: false
 
+      - id: test-patterns
+        name: weak test patterns (docs/surec.md)
+        language: system
+        entry: sh -c 'node --test tools/test-check-test-patterns.mjs && node tools/check-test-patterns.mjs'
+        files: \.(rs|dart|mjs|js|ts|qml)$
+        pass_filenames: false
+
       # --- Linux (linux.yml) ---
       - id: linux-versions
         name: Linux package and tool versions (Rust, Flutter, Node)

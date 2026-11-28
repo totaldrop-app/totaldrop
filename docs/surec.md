@@ -110,7 +110,11 @@ elle bakar.
 - Zamanlama testleri sabit bir `sleep` yerine bir son süreyle koşulu
   bekler.
 - Testin yorumu, testin gerçekte yakaladığını söyler.
-- Denetim: elle.
+- Denetim: `tools/check-test-patterns.mjs` her hatayı geçiren yaygın hata
+  eşleyicilerini (Dart, JS/TS) ve izin listesinde gerekçesi olmayan iddia
+  öncesi sabit `sleep` çağrılarını (Rust, Dart, JS/TS, QML) yakalar (#399);
+  alışılmadık eşleyiciler, Rust hata çeşidi denetimi, ekran durumları ve
+  test yorumları elle.
 
 ### Örtük durum makinesi (#342, #343, #345)
 

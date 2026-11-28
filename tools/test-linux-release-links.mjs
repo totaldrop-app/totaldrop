@@ -493,11 +493,18 @@ test("escapes control characters and stays linear on adversarial inputs", () => 
     " | 1.0.0, Qt |\n" +
     "| b | https://github.com/totaldrop-app/totaldrop/releases/download/linux-v1.0.0/x | 1.0.0, Qt |\n";
   const t0 = performance.now();
-  assert.throws(() => parseTag(`linux-v0.3.0-${"a".repeat(30000)}!`));
-  assert.throws(() =>
-    rewriteDownloadHtml('<a href="x" '.repeat(20000), spec),
+  assert.throws(
+    () => parseTag(`linux-v0.3.0-${"a".repeat(30000)}!`),
+    /invalid version/,
   );
-  assert.throws(() => rewriteReadme(unclosedRowLinks, spec));
+  assert.throws(
+    () => rewriteDownloadHtml('<a href="x" '.repeat(20000), spec),
+    /expected 1 <a \.\.\. data-i18n=/,
+  );
+  assert.throws(
+    () => rewriteReadme(unclosedRowLinks, spec),
+    /expected 4 labeled links in row, found 0/,
+  );
   const elapsedMs = performance.now() - t0;
   assert.ok(elapsedMs < 250, `regex took too long: ${elapsedMs}ms`);
 });
