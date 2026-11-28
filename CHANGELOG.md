@@ -10,6 +10,297 @@ All notable changes to TotalDrop are recorded here. The format follows
 Entries for the next release are in [changelog.d/](changelog.d/), one file
 per change, and move here when it is released (docs/surec.md).
 
+## [linux-0.3.0-beta.7] - 2026-11-28
+
+### Added
+
+- **CI:** The version check also checks that every Linux package recipe
+  and the Flatpak keep build times out of the Qt resources with the same
+  options, and that the metainfo, the RPM spec and the PKGBUILD name the
+  same license (#266).
+- **CI:** Every Linux package build checks that the Dolphin, Nautilus and
+  Nemo menus are in the package and that Nautilus's Python bindings are
+  only suggested, not required; the Flatpak build checks that it carries
+  no menus (#319).
+- **Linux:** While a send or a receive is under way, TotalDrop asks the
+  system not to suspend, so that a transfer is not cut when the computer
+  would go to sleep on idle. The screen may still dim and lock. A suspend
+  you ask for yourself may be refused or ask for confirmation while a
+  transfer runs. It uses systemd-logind in the system packages and the
+  desktop portal in the Flatpak, where on Hyprland and Omarchy the portal
+  may not hold sleep (#340).
+- **Site:** The team page lists a new developer, Zafer Can (#363).
+- **Process:** Contributors can install pre-commit hooks that check every
+  commit for conflict markers, broken YAML or TOML, large files, private
+  keys, secrets, signing keys and whitespace, with no toolchain needed. A
+  second, optional configuration runs the CI checks locally (#376).
+- **CI:** Every pull request and every push to main is scanned for
+  secrets with gitleaks, and fails when a signing key or a
+  `key.properties` file is committed (#378).
+- **All platforms:** Where both devices have IPv6, a transfer also tries
+  a direct IPv6 path, which needs no way through a home router's NAT.
+  IPv4 works as before, also with older versions. An IPv6 address built
+  from the network card's hardware address is never shown to the other
+  device (#403).
+- **Linux:** During a transfer, TotalDrop asks the home router to open a
+  port for it, using PCP or NAT-PMP where the router offers them, so the
+  other device can connect directly more often instead of through the
+  relay. It asks for two minutes at a time, renews the port while the
+  transfer runs and closes it when the transfer ends; if TotalDrop stops
+  unexpectedly, the router closes it once the time it granted runs out.
+  Privacy mode asks the router nothing (#406).
+- **Linux:** Routers that offer UPnP but not PCP or NAT-PMP are now also
+  asked to open a port during a transfer. As with the other two, the port
+  is asked for two minutes at a time, renewed while the transfer runs and
+  closed when it ends; a router that says it only opens ports permanently
+  is not used. Privacy mode still asks the router nothing (#406).
+- **Site:** totaldrop.app/.well-known/security.txt (RFC 9116) names where
+  to report a security problem: security@totaldrop.app or GitHub's
+  private vulnerability reporting (#450).
+- **Site:** The project lead's card on the team page has a round coffee
+  button, beside the GitHub and web ones, that opens their personal Buy Me
+  a Coffee page, buymeacoffee.com/ozdil. It is a second way to donate,
+  and what comes in there is published in the same ledger (#486).
+- **Site:** The home, download, roadmap, donation, team and brand pages
+  now have an address in each of the 35 languages (totaldrop.app/tr/,
+  totaldrop.app/ar/roadmap/, download.totaldrop.app/ja/), so the site
+  can be found by a search in your language and a shared link opens in
+  the language it was shared in, also without JavaScript. Link previews
+  are in that language too. The English addresses stay where they were;
+  if your browser prefers another language they now take you to that
+  language's address instead of changing the text in place (#513).
+- **Site:** Every page with its own address now lists all 35 languages at
+  the bottom, linked from the header, so you can switch languages without
+  JavaScript too. A language you choose on totaldrop.app is carried over
+  to download.totaldrop.app and back, and `/en/` or supported language
+  tags in another case redirect to the page's canonical address (#513,
+  #554).
+
+### Changed
+
+- **CI:** cargo-deny and OSV-Scanner no longer ignore any advisory, since
+  the zbus 5 crates left the dependency tree, and the check that their
+  lists agree now reads every form cargo-deny accepts (#49).
+- **Site, README:** The download page and the README point at Linux
+  0.3.0-beta.6 and offer its Flatpak for x86-64 and ARM64. "What's new"
+  lists the Android 0.3.0-beta.7 and the Linux 0.3.0-beta.6 changes under
+  their own headings, in all 35 languages, worded as in the release notes;
+  the download page also says how to install a Flatpak (#330).
+- **Site, README:** The download page and the README point at Android
+  0.3.0-beta.7 and list what is new: sharing files to TotalDrop from any
+  app, sending and receiving a text, a verification heading that fits on
+  narrow screens, and no connection to a relay the other device will not
+  use (#336).
+- **All platforms:** The transfer socket asks the system for buffers of up
+  to 4 MiB each way, so bursts of packets on a fast local network are less
+  likely to be dropped by the receiver and slow the transfer down. How
+  much a device grants depends on its system (#341).
+- **Linux:** The Flatpak and the .pkg, .deb or .rpm package share one
+  name, so only one of them runs at a time. Starting the other one still
+  brings the open window forward, and now says in a notification which
+  package's window that is. The download page, the README and the
+  software-centre description say to use one Linux package at a time
+  (#351).
+- **Process:** Every file is owned by the maintainers team
+  (.github/CODEOWNERS), so a pull request from outside it needs a
+  maintainer's approval; GOVERNANCE.md names the project lead, the
+  maintainers, the developers and the testers (#365).
+- **Site:** The team page now shows Sadık Kuzu as principal engineer,
+  in all 35 languages (#367).
+- **CI:** Every workflow runs the same fixed Node major (24) instead of
+  following the newest LTS, `@types/node` keeps that major, and a check
+  fails a pull request where they disagree. Dependabot no longer proposes
+  `@types/node` majors on their own; a Node upgrade is one pull request
+  (#369).
+- **Site:** The privacy policy, version 7, says that the rendezvous server
+  counts each IP address's connections in memory for a short time, under a
+  randomly keyed code rather than the address, to limit abuse, and forgets
+  each count within about two minutes (#383, #46).
+- **Linux:** The .rpm package is built on Fedora 44 instead of Fedora 43,
+  which reaches its end of life in December 2026. It installs on Fedora
+  44 and newer; Fedora 43 is no longer supported (#392).
+- **Process:** The process document lists the kinds of bugs that reviews
+  found, with a rule and a check for each, and the pull request template
+  asks for them (#398).
+- **Site:** The team page introduces the project lead in one short line
+  about TotalDrop, "Leads product, design and releases.", in all 35
+  languages, in place of the GitHub profile text. Any listed person can
+  now have such a line in `site/team/team.json` (#408).
+- **Process:** AI sessions also run the securitymaxxing review commands
+  on security work, never check a leaked key with a live call, and attack
+  the live site or servers only with the project lead's approval (#422).
+- **Site:** On a phone, every page's header keeps a round Download button
+  beside the language picker, the comparison on the home page fits in
+  about one screen with each answer under its column, and the turning
+  mark above the transfer code is smaller (#477).
+- **Site:** The donations page lists the AI assistant the two maintainers
+  use, two premium seats on Anthropic's Claude Team plan (2,400 USD a year
+  billed yearly, 3,000 USD billed monthly), and says the seats count in the
+  money spent once donations pay for them. The Windows code signing
+  certificate leaves the list, because the Microsoft Store signs the Windows
+  app ([decision 0016](docs/kararlar/0016-windows-microsoft-store.md)). The
+  yearly total and goal rise from about 250 to about 2,575 USD (#478).
+- **Site:** The donation page says that donations go through the project
+  lead's personal GitHub Sponsors and Buy Me a Coffee pages for now and
+  will move to an account in TotalDrop's name when the project grows, in
+  all 35 languages; decision 0017 records why and when that happens (#487).
+- **Process:** The repository is written in English: the contributing
+  guide, the pull request and issue templates and the agent instructions
+  say so, and the remaining Turkish documents follow (#490).
+- **Site:** The roadmap page says the order we work in (stability, then the
+  optional account, then more platforms), what each item in progress has
+  finished and what comes next, links items to their issues, and lists
+  what we decided not to do. The Windows app now follows the account and
+  comes from the Microsoft Store, on the roadmap and on the download page.
+  Receiving in the browser is no longer planned, for the same reason as
+  sending (#30, #221), so the download page drops its browser card.
+  In all 35 languages (#500).
+- **Site:** The privacy policy, version 8, says what Cloudflare, which runs
+  the website and both servers, keeps on its own: a sample of requests with
+  the IP address, country, network, time, URL and program name, for at
+  least 31 days, and every connection the relay's limit turns away. The
+  home page, the README and its translations no longer say that the
+  servers keep no logs at all (#510).
+- **Linux:** The privacy text in Settings says that our servers
+  keep no logs of their own, but Cloudflare, which runs them, keeps a
+  sample of requests with IP addresses for at least 31 days (#510).
+- **Site:** Remove Mustafa Yardımcı from the team page and GOVERNANCE.md
+  (#567).
+- **Site:** The team page now lists Antigravity (Gemini) alongside Claude
+  and Dependabot under "AI and automation", in all 35 languages (#598).
+- **Site:** Restructure `/donate/` to remove the funding goal, progress
+  bar, and yearly total across all 35 languages, switching to a
+  spend-only-what-comes-in layout with priority-ordered reference costs and
+  a flexible AI development tools item (#636).
+- **Site:** Removed the cancelled browser-receive cards from `/download/`,
+  `/roadmap/`, and the home page across all 35 languages, and published
+  `/social-preview.png` with Open Graph and `twitter:card` metadata on all
+  public pages (#656, #30, #221).
+
+### Fixed
+
+- **Linux:** Enter and Return open the focused Send or Receive card on the
+  home screen under KDE Plasma too, where only Space did. On every
+  desktop the card now opens when the key goes down, as the app's other
+  buttons do, and once while the key is held (#182).
+- **Linux:** The Debian, RPM and Arch recipes keep build times out of the
+  desktop app's Qt resources themselves, so a package built straight from
+  `dpkg-buildpackage`, `rpmbuild` or `makepkg` is reproducible too, not
+  only one built by `packaging/build.sh` (#252, #266).
+- **Linux:** The AppStream metainfo names the same license as the
+  packages, GPL-3.0-or-later AND (MIT OR Apache-2.0) (#249, #266).
+- **Linux:** Screen readers such as Orca now read out the headline of each
+  step of a send (preparing, waiting for the receiver, comparing the words,
+  sending, sent, declined, failed) and of a receive (connecting, incoming
+  files or text, receiving, received, declined, failed) (#273).
+- **Linux (Flatpak):** `totaldrop receive` without `-o` saved into the
+  sandbox's memory-only home folder and said "Saved", and the file was
+  gone when the command ended. It now saves into `~/Downloads/TotalDrop`,
+  the same folder as the window, and refuses a folder that Flatpak would
+  not keep before the code is used up (#350).
+- **Linux:** Closing the window during a transfer now finishes telling the
+  other device before the app exits, even if the window tears down its
+  transfer view first, so the other side shows that the transfer was
+  stopped rather than a connection error (#359).
+- **Linux, CLI:** Stopping a transfer no longer waits extra
+  seconds after the other device has already closed the connection (#359).
+- **All platforms:** A transfer that falls back to the relay no longer
+  hangs for minutes when the network drops while the connection to the
+  relay is full: the keep-alive ping and the closing of the connection
+  now give up after 10 seconds, as every other write to the relay
+  already did, and the app connects again (#424).
+- **Linux:** When a router answers both PCP and NAT-PMP, the second port
+  it opens is now closed as soon as the router answers, and a port the
+  two share is released under both protocols when the transfer ends,
+  instead of staying open, unused, for up to two minutes (#425).
+- **Server:** The Cloudflare relay no longer counts too little of what a
+  device has not read yet after it wakes from hibernation, once or many
+  times, so its 32 MiB and 64 MiB limits on unread data hold there too
+  (#426).
+- **Linux:** Open folder, after a transfer, opens the folder the files
+  went to even when its name has `#`, `?` or `%` in it; before, it could
+  open a different folder (#427).
+- **Core:** Finding the device's public address via STUN no longer stops
+  waiting when an unreachable STUN address triggers a socket reset on
+  Windows, so a working IPv4 or IPv6 STUN reply on the other family is
+  still kept (#428).
+- **Linux, CLI:** closing the window during a transfer now stops the
+  transfer and asks the router to close the port it opened before the app
+  exits, in at most a few seconds; the command line does the same after
+  an internal error. Before, the port stayed open until the router's
+  lease ran out (two minutes asked) (#433).
+- **Transfers:** When a direct connection that had gone quiet comes back,
+  the transfer picks up within moments of the device returning to it,
+  instead of standing still for 10 seconds or more. The side that had
+  moved onto the relay sends its last few packets once more on the direct
+  path, which makes QUIC resend what was lost at once (#435).
+- **Linux:** The default folder for received files is now an absolute
+  path, made against the current folder. When no download folder was set
+  and the home folder was missing or given as a relative path, it was
+  relative, and "Open folder" asked for a wrong place (#441).
+- **Server:** A client over its connection rate is told "too many
+  requests" on Windows too. The Rust rendezvous server closed a refused
+  connection with the client's first message unread, which reset the
+  connection, and Windows dropped the refusal before the client read it
+  ("connection aborted"). The server now waits up to 2 seconds for the
+  client to close (#442).
+- **Linux, CLI:** Accepting a transfer checks free disk space
+  first and tells the sender when the destination has too little room,
+  and creates folders on a background thread so a large folder tree stays
+  responsive to stopping (#455).
+- **Command line:** A transfer that ends within moments of starting no
+  longer leaves the router's second port open when the command exits;
+  the command now waits briefly for it to close (#461).
+- **Core:** Before opening a UPnP port on the router, TotalDrop checks up
+  to 64 existing mappings and removes leftover `TotalDrop` UDP rules for
+  this device's address whose local UDP port is no longer in use, leaving
+  other programs' rules, other devices' rules, and any live transfer
+  untouched (#462).
+- **Core:** Release any in-flight PCP or NAT-PMP port mapping that
+  answers after UPnP has already won, and avoid spawning a background
+  task when port mapping is turned off or has no gateway (#463).
+- **Command line:** When the command exits right after a transfer, the
+  request asking the router to close the port now goes out twice, as it
+  does while the app keeps running, so one lost packet no longer leaves
+  the port open until the router's lease runs out (#502).
+- **Core:** Prioritize the QUIC control stream over bulk file streams,
+  overlap sender stream resets with stop cancellation, halt abandoned
+  receive streams before `fsync`, and close cancelled connections before
+  local disk cleanup so stopped relay transfers stay within the 1.5 s
+  window-close budget (#651).
+- **Core:** Cap the post-stop QUIC endpoint drain wait after
+  `Error::Stopped` so a silent or stalled peer does not stack another
+  2 s–5 s timeout on top of `STOP_NOTICE` (#654).
+
+### Security
+
+- **Server:** The rendezvous server, on Cloudflare and in Rust, now limits
+  each client (an IPv4 address or an IPv6 /64) to 60 new codes and
+  mailboxes at once and one more every second. A client over the limit is
+  told "too many requests". The counts are kept in memory only, under a
+  randomly keyed hash rather than the address, and are never written to
+  disk or a log (#46).
+- **Server:** The self-hosted rendezvous server in Rust compares the
+  token that lets a code's sender claim its mailbox in constant time, as
+  the one on Cloudflare already did (#428).
+- **Core:** A device no longer dials a broadcast or multicast address
+  that the other side names as one of its addresses, so a transfer
+  cannot make it send to every device on the local network (#450).
+- **Server:** The rendezvous server and the relay, on Cloudflare and in
+  Rust, refuse a WebSocket that a web page opens (one that carries an
+  `Origin` header). The apps and the command line never send one, so a
+  page can no longer open connections from its visitors' browsers, which
+  counted against their limits on the rendezvous server (#450).
+- **Server:** The relay at relay.totaldrop.app turns away an IP address
+  that opens more than 30 connections within 10 seconds, for 10 seconds,
+  with HTTP 429. A device holds one relay connection per transfer at a
+  time, but everyone behind one address (a large office, carrier-grade
+  NAT) shares the limit; a blocked device tries again a few times before
+  the transfer gives up (#510).
+- **Core:** Update the transitive `url` crate to 2.5.9 (with
+  `form_urlencoded` 1.2.3) to resolve RUSTSEC-2026-0592, a stack overflow in
+  `Url::origin()` on nested `blob:` URLs (#633).
+
 ## [linux-0.3.0-beta.6] - 2026-11-07
 
 ### Added
