@@ -199,6 +199,13 @@ repos:
         files: ^(deny|osv-scanner)\.toml$
         pass_filenames: false
 
+      - id: scorecard-dismiss-tool
+        name: Scorecard alert reconciliation tool works
+        language: system
+        entry: node --test tools/test-scorecard-dismiss.mjs
+        files: ^tools/(test-scorecard-dismiss|dismiss-scorecard-alerts)\.mjs$
+        pass_filenames: false
+
       # --- Linux (linux.yml) ---
       - id: linux-versions
         name: Linux package and tool versions (Rust, Flutter, Node)
