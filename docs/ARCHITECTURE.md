@@ -200,8 +200,8 @@ Adım adım:
    dalına girer (`crates/totaldrop-cli/src/main.rs:680`) ve `send()`'i çağırır (`crates/totaldrop-cli/src/main.rs:385`).
 2. `PreparedSend::new` dosyaları ayrı bir iş parçacığında tarar
    (`crates/totaldrop-core/src/lib.rs:434`,
-   `crates/totaldrop-core/src/transfer.rs:334` `scan`). Metin gönderiminde
-   `PreparedSend::text` (`crates/totaldrop-core/src/lib.rs:445`, `crates/totaldrop-core/src/transfer.rs:223` `text_entry`).
+   `crates/totaldrop-core/src/transfer.rs:428` `scan`). Metin gönderiminde
+   `PreparedSend::text` (`crates/totaldrop-core/src/lib.rs:445`, `crates/totaldrop-core/src/transfer.rs:317` `text_entry`).
 3. `ready` cihaz anahtarlarını üretir, rendezvous'tan numara ayırır, kodu
    cihazda üretir ve kutuyu tutar (`crates/totaldrop-core/src/lib.rs:450-461`;
    `crates/totaldrop-core/src/rendezvous.rs:175` `allocate`, `crates/totaldrop-core/src/rendezvous.rs:202`
@@ -234,8 +234,8 @@ Adım adım:
      Noise XXpsk3 (`crates/totaldrop-core/src/secure.rs:16`), ardından ML-KEM-768 ve dört doğrulama
      kelimesi (`crates/totaldrop-crypto/src/channel.rs:114` `session_keys`,
      `crates/totaldrop-crypto/src/channel.rs:129` `verification_indices`).
-   - `transfer::send_files` (`crates/totaldrop-core/src/transfer.rs:518`): manifest, 4 paralel akış
-     (`crates/totaldrop-core/src/transfer.rs:187`), parçalar STREAM ile şifreli
+   - `transfer::send_files` (`crates/totaldrop-core/src/transfer.rs:612`): manifest, 4 paralel akış
+     (`crates/totaldrop-core/src/transfer.rs:281`), parçalar STREAM ile şifreli
      (`crates/totaldrop-crypto/src/lib.rs:148` `EntryCipher`).
 5. Çıkış: `main` sonucu çıkış koduna çevirir (`crates/totaldrop-cli/src/main.rs:719-741`): başarı 0,
    durdurma 130, hata 1, kullanım hatası 2 (geçersiz kod, aktarmasız
@@ -254,13 +254,13 @@ Adım adım:
    adresini kendi sunucusuyla öğrenemesin).
 4. `transport::receiver_connection` (`crates/totaldrop-core/src/transport.rs:556`),
    `secure::handshake` (`crates/totaldrop-core/src/secure.rs:98`), `transfer::receive_offer`
-   (`crates/totaldrop-core/src/transfer.rs:774`): manifest doğrulanır, diske hiçbir şey yazılmaz.
+   (`crates/totaldrop-core/src/transfer.rs:868`): manifest doğrulanır, diske hiçbir şey yazılmaz.
 5. Kişi kabul ederse `accept_with` (`crates/totaldrop-cli/src/main.rs:596` → `crates/totaldrop-core/src/lib.rs:731`) →
-   `transfer::accept` (`crates/totaldrop-core/src/transfer.rs:1272`). Yazma yolu: `check_beneath`
-   (`crates/totaldrop-core/src/transfer.rs:906`), sembolik bağlantı izlemeyen `make_dir`
-   (`crates/totaldrop-core/src/transfer.rs:923`), üzerine yazmayan `place_no_clobber`
-   (`crates/totaldrop-core/src/transfer.rs:874`). Metin için `accept_text` (`crates/totaldrop-core/src/transfer.rs:1145`),
-   ret için `decline` (`crates/totaldrop-core/src/transfer.rs:833`).
+   `transfer::accept` (`crates/totaldrop-core/src/transfer.rs:1390`). Yazma yolu: `check_beneath`
+   (`crates/totaldrop-core/src/transfer.rs:1000`), sembolik bağlantı izlemeyen `make_dir`
+   (`crates/totaldrop-core/src/transfer.rs:1017`), üzerine yazmayan `place_no_clobber`
+   (`crates/totaldrop-core/src/transfer.rs:968`). Metin için `accept_text` (`crates/totaldrop-core/src/transfer.rs:1263`),
+   ret için `decline` (`crates/totaldrop-core/src/transfer.rs:927`).
 
 ### 2.3 Aynı akış uygulamalarda
 
