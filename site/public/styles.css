@@ -80,7 +80,8 @@ a { color: var(--accent); text-underline-offset: 0.18em; }
 a:hover { text-decoration-thickness: 2px; }
 :focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
 
-h1, h2, h3 { font-family: var(--display); color: var(--text); margin: 0; text-wrap: balance; }
+h1, h2, h3 { font-family: var(--display); color: var(--text); margin: 0; text-wrap: balance; overflow-wrap: break-word; }
+@media (max-width: 40rem) { h1, h2, h3 { hyphens: auto; } }
 h1 { font-weight: 800; font-size: clamp(2.6rem, 6.4vw, 4.75rem); line-height: 1.02; letter-spacing: -0.035em; }
 h2 { font-weight: 800; font-size: clamp(1.75rem, 3.6vw, 2.5rem); line-height: 1.1; letter-spacing: -0.025em; max-width: 22ch; }
 h3 { font-weight: 700; font-size: 1.25rem; line-height: 1.25; }
@@ -358,8 +359,8 @@ pre.cmd { white-space: pre-wrap; overflow-wrap: break-word; margin: 0; padding: 
 .foot a:hover { color: var(--text); }
 
 /* Long-form pages (privacy policy) */
-.prose { max-width: 44rem; margin: 0 auto; padding: 1rem var(--gutter) 4rem; display: grid; gap: 4rem; }
-.prose article { display: grid; gap: var(--s16); }
+.prose { max-width: 44rem; margin: 0 auto; padding: 1rem var(--gutter) 4rem; display: grid; grid-template-columns: minmax(0, 1fr); gap: 4rem; }
+.prose article { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s16); }
 .prose h1 { font-size: clamp(2.2rem, 5vw, 3.25rem); }
 .prose h2 { font-size: 1.5rem; margin-top: var(--s24); max-width: none; }
 .prose .lead { font-size: 1.25rem; color: var(--text-2); }
@@ -600,9 +601,9 @@ pre.cmd { white-space: pre-wrap; overflow-wrap: break-word; margin: 0; padding: 
 /* Disciplines: a share bar, then the figures it shows. */
 .areas { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr)); gap: var(--s24); }
 .area { display: flex; flex-direction: column; gap: var(--s16); padding: var(--s24); background: var(--bg-raised); border-radius: 28px; scroll-margin-top: var(--s24); }
-.area-head { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--s16); }
-.area-head h3 { font-size: 1.25rem; padding-top: 0.2rem; }
-.area-head .stat { align-items: flex-end; flex: none; }
+.area-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: var(--s8) var(--s16); }
+.area-head h3 { font-size: 1.25rem; padding-top: 0.2rem; flex: 1 1 8rem; min-width: 0; }
+.area-head .stat { align-items: flex-end; flex: none; margin-inline-start: auto; }
 .area > p { color: var(--text-2); font-size: 0.975rem; }
 .share { display: block; width: 100%; height: 8px; margin-top: auto; border-radius: 999px; overflow: hidden; background: var(--bg); }
 [dir="rtl"] .share { transform: scaleX(-1); }
