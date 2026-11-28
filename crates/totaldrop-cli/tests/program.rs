@@ -18,14 +18,15 @@ use std::path::{Path, PathBuf};
 use std::process::{Child, ChildStdout, Command, Output, Stdio};
 
 /// The program under test, with no setting from the person's environment:
-/// English, the given server, and no relay or STUN, so that nothing leaves
-/// this machine.
+/// English, the given server, and no relay, STUN or router gateway, so that
+/// nothing leaves this machine.
 fn totaldrop(server: &str) -> Command {
     let mut cmd = Command::new(env!("CARGO_BIN_EXE_totaldrop"));
     for var in [
         "TOTALDROP_SERVER",
         "TOTALDROP_RELAY",
         "TOTALDROP_STUN",
+        "TOTALDROP_TEST_GATEWAY",
         "LANGUAGE",
         "LC_MESSAGES",
         "LC_NUMERIC",
@@ -34,6 +35,7 @@ fn totaldrop(server: &str) -> Command {
     }
     cmd.env("LC_ALL", "en_US.UTF-8")
         .env("LANG", "en_US.UTF-8")
+        .env("TOTALDROP_TEST_GATEWAY", "")
         .args(["--server", server, "--relay", "", "--stun", ""]);
     cmd
 }
@@ -83,7 +85,16 @@ impl Drop for Scratch {
 /// printed. The code is the only thing on stdout; the reader is kept open
 /// with the child, so that the program never writes to a closed pipe.
 fn start_send(server: &str, what: &Path) -> (Child, BufReader<ChildStdout>, String) {
+    start_send_with_gateway(server, what, "")
+}
+
+fn start_send_with_gateway(
+    server: &str,
+    what: &Path,
+    gateway: &str,
+) -> (Child, BufReader<ChildStdout>, String) {
     let mut child = totaldrop(server)
+        .env("TOTALDROP_TEST_GATEWAY", gateway)
         .arg("send")
         .arg(what)
         .stdin(Stdio::null())
@@ -273,4 +284,284 @@ async fn no_answer_declines_and_the_sender_is_told() {
         stderr(&sent)
     );
     assert!(!dest.join("note.txt").exists());
+}
+
+#[cfg(unix)]
+mod unix_signals {
+    use super::*;
+    use std::net::{Ipv4Addr, SocketAddr};
+    use std::sync::Arc;
+    use tokio::net::UdpSocket;
+    use tokio::sync::mpsc;
+    use totaldrop_core::{
+        Error, IncomingOffer, PathOptions, PreparedSend, ReceiveOptions, SendOptions,
+        portmap::Gateway,
+    };
+    use totaldrop_proto::portmap::answer;
+    use totaldrop_proto::wire::RejectReason;
+
+    /// A loopback PCP router that grants external port 51000 and records the
+    /// requested lifetime of every PCP MAP packet (`0` is a release).
+    async fn pcp_router() -> (SocketAddr, mpsc::UnboundedReceiver<u32>) {
+        let socket = Arc::new(UdpSocket::bind("127.0.0.1:0").await.unwrap());
+        let addr = socket.local_addr().unwrap();
+        let (tx, rx) = mpsc::unbounded_channel();
+        tokio::spawn(async move {
+            let mut buf = [0u8; 1500];
+            while let Ok((n, from)) = socket.recv_from(&mut buf).await {
+                if n >= 60 && buf[0] == 2 {
+                    let req: [u8; 60] = buf[..60].try_into().unwrap();
+                    let lifetime = u32::from_be_bytes(req[4..8].try_into().unwrap());
+                    let _ = tx.send(lifetime);
+                    let reply = answer::pcp(
+                        &req,
+                        0,
+                        (Ipv4Addr::new(203, 0, 113, 7).into(), 51_000),
+                        lifetime,
+                    );
+                    let _ = socket.send_to(&reply, from).await;
+                }
+            }
+        });
+        (addr, rx)
+    }
+
+    fn send_signal(pid: u32, sig: &str) {
+        let status = Command::new("kill")
+            .args(["-s", sig, &pid.to_string()])
+            .status()
+            .unwrap();
+        assert!(status.success(), "kill -s {sig} {pid} failed: {status}");
+    }
+
+    fn local_paths() -> PathOptions {
+        PathOptions {
+            relay: String::new(),
+            stun: String::new(),
+            relay_only: false,
+            gateway: Gateway::Off,
+        }
+    }
+
+    /// `SIGTERM` and `SIGHUP` stop an active `totaldrop send`, tell the
+    /// connected receiver, send both copies of the PCP port release before
+    /// exiting, and return the signal's exit code (#527).
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+    async fn sigterm_and_sighup_stop_send_and_release_router_port() {
+        let server = server().await;
+        let src = Scratch::new("sig-send-src");
+        let file = src.join("payload.bin");
+        std::fs::write(&file, vec![9u8; 64_000]).unwrap();
+
+        for (sig, expected_code) in [("TERM", 143), ("HUP", 129)] {
+            let (router_addr, mut lifetimes) = pcp_router().await;
+            let (sender, _stdout, code) =
+                start_send_with_gateway(&server, &file, &router_addr.to_string());
+            let pid = sender.id();
+
+            let offer = IncomingOffer::connect(
+                &ReceiveOptions {
+                    server: server.clone(),
+                    paths: local_paths(),
+                },
+                &code,
+            )
+            .await
+            .unwrap();
+
+            send_signal(pid, sig);
+
+            let dest = Scratch::new("sig-send-dest");
+            // Hold `offer` at the prompt until `sender` has handled the signal
+            // and exited, so loopback `accept` cannot race ahead of the signal
+            // and complete the 64 kB transfer first.
+            let sent = finish(sender).await;
+            let recv_res = offer.accept(&dest, Arc::new(|_| {})).await;
+
+            assert_eq!(
+                sent.status.code(),
+                Some(expected_code),
+                "{sig} stderr: {}",
+                stderr(&sent)
+            );
+            assert!(
+                !stderr(&sent).contains("press Ctrl-C again"),
+                "{sig} must not print Ctrl-C hint: {}",
+                stderr(&sent)
+            );
+            assert!(
+                matches!(recv_res, Err(Error::Cancelled(_))),
+                "{sig} receiver should hear Cancelled, got: {recv_res:?}"
+            );
+
+            let mut seen = Vec::new();
+            while let Ok(lt) = lifetimes.try_recv() {
+                seen.push(lt);
+            }
+            assert!(
+                seen.iter().any(|&lt| lt > 0),
+                "{sig}: expected initial PCP map request, saw {seen:?}"
+            );
+            let releases = seen.iter().filter(|&&lt| lt == 0).count();
+            assert!(
+                releases >= 2,
+                "{sig}: expected both PCP release copies before exit (#502, #527), saw {seen:?}"
+            );
+        }
+    }
+
+    /// `SIGHUP` while `totaldrop receive` sits at the offer declines cleanly
+    /// and releases its mapped router port before exiting (#527).
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+    async fn sighup_at_the_offer_declines_and_releases_router_port() {
+        let server = server().await;
+        let src = Scratch::new("sig-recv-src");
+        let file = src.join("note.txt");
+        std::fs::write(&file, b"hello").unwrap();
+        let dest = Scratch::new("sig-recv-dest");
+
+        let prepared = PreparedSend::new(
+            &SendOptions {
+                server: server.clone(),
+                words: 2,
+                paths: local_paths(),
+            },
+            vec![file],
+        )
+        .await
+        .unwrap();
+        let code = prepared.code().to_string();
+        let sender_task = tokio::spawn(prepared.run(Arc::new(|_| {})));
+
+        let (router_addr, mut lifetimes) = pcp_router().await;
+        let mut receiver = totaldrop(&server)
+            .env("TOTALDROP_TEST_GATEWAY", router_addr.to_string())
+            .args(["receive", &code, "--out"])
+            .arg(&dest)
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+            .unwrap();
+        let pid = receiver.id();
+        // Keep stdin open so `receive` stays at the y/N prompt until SIGHUP.
+        let _stdin = receiver.stdin.take().unwrap();
+        let mut err_reader = BufReader::new(receiver.stderr.take().unwrap());
+        let err_reader = tokio::task::spawn_blocking(move || {
+            let mut line = String::new();
+            loop {
+                line.clear();
+                let n = err_reader.read_line(&mut line).unwrap();
+                assert!(n > 0, "receiver exited before showing offered file");
+                if line.contains("note.txt") {
+                    break;
+                }
+            }
+            err_reader
+        })
+        .await
+        .unwrap();
+
+        send_signal(pid, "HUP");
+
+        let (got_status, sent_res) = tokio::join!(
+            tokio::task::spawn_blocking(move || {
+                let status = receiver.wait().unwrap();
+                drop(err_reader);
+                status
+            }),
+            sender_task,
+        );
+        let got_status = got_status.unwrap();
+        let sent_res = sent_res.unwrap();
+
+        assert_eq!(got_status.code(), Some(129), "status: {got_status}");
+        assert!(
+            matches!(sent_res, Err(Error::Rejected(RejectReason::Declined))),
+            "sender should hear Declined, got: {sent_res:?}"
+        );
+        assert!(!dest.join("note.txt").exists());
+
+        let mut seen = Vec::new();
+        while let Ok(lt) = lifetimes.try_recv() {
+            seen.push(lt);
+        }
+        assert!(seen.iter().any(|&lt| lt > 0), "saw {seen:?}");
+        assert!(
+            seen.iter().filter(|&&lt| lt == 0).count() >= 2,
+            "expected both PCP release copies before exit, saw {seen:?}"
+        );
+    }
+
+    /// Under `nohup` (`SIG_IGN` inherited for `SIGHUP`), Linux keeps ignoring
+    /// `SIGHUP` so `totaldrop send` stays alive and finishes the transfer
+    /// instead of exiting with 129 (#527).
+    #[cfg(target_os = "linux")]
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+    async fn ignored_sighup_keeps_send_running_and_completes_transfer() {
+        let server = server().await;
+        let src = Scratch::new("sig-nohup-src");
+        let file = src.join("payload.bin");
+        let payload = vec![7u8; 32_768];
+        std::fs::write(&file, &payload).unwrap();
+
+        let mut sender = Command::new("sh")
+            .args([
+                "-c",
+                "trap '' HUP; exec \"$@\"",
+                "_",
+                env!("CARGO_BIN_EXE_totaldrop"),
+                "--server",
+                &server,
+                "send",
+            ])
+            .arg(&file)
+            .env("LC_ALL", "C")
+            .env("LANGUAGE", "en")
+            .env("TOTALDROP_TEST_GATEWAY", "")
+            .stdin(Stdio::null())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+            .unwrap();
+        let pid = sender.id();
+        let mut stdout = BufReader::new(sender.stdout.take().unwrap());
+        let mut line = String::new();
+        stdout.read_line(&mut line).unwrap();
+        let Some(code) = line.trim().strip_prefix("totaldrop receive ") else {
+            let out = sender.wait_with_output().unwrap();
+            panic!("no receive line on stdout: {line:?}\n{}", stderr(&out));
+        };
+        let code = code.to_owned();
+
+        let offer = IncomingOffer::connect(
+            &ReceiveOptions {
+                server: server.clone(),
+                paths: local_paths(),
+            },
+            &code,
+        )
+        .await
+        .unwrap();
+
+        // Deliver SIGHUP after signal handlers are installed and peer connected.
+        send_signal(pid, "HUP");
+
+        let dest = Scratch::new("sig-nohup-dest");
+        let recv_res = offer.accept(&dest, Arc::new(|_| {})).await;
+        let sent = finish(sender).await;
+
+        assert!(
+            recv_res.is_ok(),
+            "ignored SIGHUP must not cancel transfer, got: {recv_res:?}\nstderr: {}",
+            stderr(&sent)
+        );
+        assert!(
+            sent.status.success(),
+            "expected exit 0 with ignored SIGHUP, got {}:\n{}",
+            sent.status,
+            stderr(&sent)
+        );
+        assert_eq!(std::fs::read(dest.join("payload.bin")).unwrap(), payload);
+    }
 }

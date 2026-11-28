@@ -7,7 +7,8 @@ use std::io::{IsTerminal as _, Write as _};
 use std::path::PathBuf;
 use std::process::ExitCode;
 use std::sync::Arc;
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::atomic::{AtomicU8, AtomicU64, Ordering};
+use std::time::Duration;
 
 use clap::{
     Arg as ClapArg, ArgAction, CommandFactory as _, FromArgMatches as _, Parser, Subcommand,
@@ -85,18 +86,21 @@ enum Command {
     },
 }
 
+/// Write a line to standard error without panicking if the terminal has hung
+/// up (`EIO` on `SIGHUP`) or the pipe has closed.
+fn errln(msg: &str) {
+    let _ = writeln!(std::io::stderr(), "{msg}");
+}
+
 /// Prints events to stderr; progress at most once per percent.
 fn printer(s: Arc<Strings>) -> Events {
     let last = Arc::new(AtomicU64::new(u64::MAX));
     Arc::new(move |event| match event {
-        Event::Waiting => eprintln!("{}", s.get("cliWaiting", &[])),
+        Event::Waiting => errln(&s.get("cliWaiting", &[])),
         Event::Connected { words } => {
-            eprintln!("{}", s.get("cliConnected", &[]));
+            errln(&s.get("cliConnected", &[]));
             let words = words.join(" ");
-            eprintln!(
-                "{}",
-                s.get("cliVerification", &[("words", Arg::Text(&words))])
-            );
+            errln(&s.get("cliVerification", &[("words", Arg::Text(&words))]));
         }
         Event::Progress { done, total } => {
             let pct = done.saturating_mul(100).checked_div(total).unwrap_or(100);
@@ -117,10 +121,10 @@ fn printer(s: Arc<Strings>) -> Events {
                 } else {
                     ""
                 };
-                eprint!("\r{line}{clear}");
+                let _ = write!(std::io::stderr(), "\r{line}{clear}");
                 let _ = std::io::stderr().flush();
                 if done >= total {
-                    eprintln!();
+                    errln("");
                 }
             }
         }
@@ -229,75 +233,174 @@ fn server(cli: Option<String>) -> String {
     cli.unwrap_or_else(|| totaldrop_core::rendezvous::DEFAULT_SERVER.to_owned())
 }
 
+fn gateway() -> totaldrop_core::portmap::Gateway {
+    #[cfg(debug_assertions)]
+    if let Ok(val) = std::env::var("TOTALDROP_TEST_GATEWAY") {
+        if val.is_empty() {
+            return totaldrop_core::portmap::Gateway::Off;
+        }
+        if let Ok(addr) = val.parse::<std::net::SocketAddr>()
+            && addr.ip().is_loopback()
+        {
+            return totaldrop_core::portmap::Gateway::At(addr);
+        }
+    }
+    totaldrop_core::portmap::Gateway::Auto
+}
+
 fn paths(relay: Option<String>, stun: Option<String>, relay_only: bool) -> PathOptions {
     PathOptions {
         relay: relay.unwrap_or_else(|| totaldrop_core::relay::DEFAULT_RELAY.to_owned()),
         stun: stun.unwrap_or_else(|| totaldrop_core::relay::DEFAULT_STUN.to_owned()),
         relay_only,
-        gateway: totaldrop_core::portmap::Gateway::Auto,
+        gateway: gateway(),
     }
 }
 
-/// Ctrl-C stops the transfer cleanly: the other side is told and partial
-/// files are removed. A second Ctrl-C quits at once, cleanup or not.
-fn stop_on_ctrl_c(s: &Arc<Strings>) -> Stop {
-    let stop = Stop::new();
-    let (handle, s) = (stop.clone(), Arc::clone(s));
-    // Registered here, before anything runs, so no Ctrl-C slips past.
-    #[cfg(unix)]
-    let mut interrupt =
-        match tokio::signal::unix::signal(tokio::signal::unix::SignalKind::interrupt()) {
-            Ok(i) => i,
-            Err(_) => return stop,
-        };
-    tokio::spawn(async move {
-        #[cfg(unix)]
-        let first = interrupt.recv().await.is_some();
-        #[cfg(not(unix))]
-        let first = tokio::signal::ctrl_c().await.is_ok();
-        if !first {
-            return;
-        }
-        eprintln!();
-        eprintln!("{}", s.get("cliStopping", &[]));
-        handle.stop();
-        #[cfg(unix)]
-        let again = interrupt.recv().await.is_some();
-        #[cfg(not(unix))]
-        let again = tokio::signal::ctrl_c().await.is_ok();
-        if again {
-            std::process::exit(130);
-        }
-    });
-    stop
+/// How long a stopped transfer may take to tell the other side and end
+/// before it is dropped so its router port can close; matches the desktop
+/// window's quit bound (#433, #527).
+const STOPPING: Duration = Duration::from_millis(1500);
+
+/// How long an aborted task gets to unwind and drop what it held.
+const ABORTED: Duration = Duration::from_millis(200);
+
+/// Stops the transfer on `SIGINT`, `SIGTERM` or `SIGHUP` and remembers which
+/// signal arrived (`130`, `143` or `129`) for the process's exit code (#527).
+struct SignalStop {
+    stop: Stop,
+    code: Arc<AtomicU8>,
 }
 
-/// The outcome of [`run_then_release`]: the work's result, or the panic
-/// it ended with.
-type Ran<T> = Result<T, Box<dyn std::any::Any + Send>>;
+impl SignalStop {
+    fn new() -> Self {
+        Self {
+            stop: Stop::new(),
+            code: Arc::new(AtomicU8::new(0)),
+        }
+    }
 
-/// Run `work`, then `release`, on `runtime`. `release` runs also when
-/// `work` panics: what the work held (a router port, #433) is dropped and
-/// its release sent while the runtime still runs. The caller resumes the
-/// panic afterwards.
+    /// Register the signal handlers on `runtime` before any transfer starts,
+    /// so no signal slips past. Ctrl-C tells the person how to exit at once
+    /// with a second Ctrl-C; `SIGTERM` and `SIGHUP` stop quietly because a
+    /// closing terminal or session may send both together. On Linux, an
+    /// inherited ignored `SIGHUP` (such as under `nohup`) is left ignored.
+    fn install(&self, runtime: &tokio::runtime::Runtime, s: &Arc<Strings>) -> Stop {
+        let (handle, code, s) = (self.stop.clone(), Arc::clone(&self.code), Arc::clone(s));
+        let _enter = runtime.enter();
+        #[cfg(unix)]
+        let (mut interrupt, mut terminate, mut hangup) = {
+            use tokio::signal::unix::{SignalKind, signal};
+            (
+                signal(SignalKind::interrupt()).ok(),
+                signal(SignalKind::terminate()).ok(),
+                if sighup_ignored() {
+                    None
+                } else {
+                    signal(SignalKind::hangup()).ok()
+                },
+            )
+        };
+        runtime.spawn(async move {
+            #[cfg(unix)]
+            let first = {
+                async fn recv(sig: &mut Option<tokio::signal::unix::Signal>) -> Option<()> {
+                    match sig {
+                        Some(s) => s.recv().await,
+                        None => None,
+                    }
+                }
+                tokio::select! {
+                    Some(()) = recv(&mut interrupt) => 130_u8,
+                    Some(()) = recv(&mut terminate) => 143_u8,
+                    Some(()) = recv(&mut hangup) => 129_u8,
+                    else => return,
+                }
+            };
+            #[cfg(not(unix))]
+            let first = if tokio::signal::ctrl_c().await.is_ok() {
+                130_u8
+            } else {
+                return;
+            };
+            let _ = code.compare_exchange(0, first, Ordering::AcqRel, Ordering::Acquire);
+            if first == 130 {
+                errln("");
+                errln(&s.get("cliStopping", &[]));
+            }
+            handle.stop();
+            #[cfg(unix)]
+            let again = first == 130
+                && match &mut interrupt {
+                    Some(i) => i.recv().await.is_some(),
+                    None => false,
+                };
+            #[cfg(not(unix))]
+            let again = tokio::signal::ctrl_c().await.is_ok();
+            if again {
+                std::process::exit(130);
+            }
+        });
+        self.stop.clone()
+    }
+
+    fn exit_code(&self) -> ExitCode {
+        match self.code.load(Ordering::Acquire) {
+            0 => ExitCode::from(130),
+            c => ExitCode::from(c),
+        }
+    }
+}
+
+/// The outcome of [`run_then_release`]: `Some` of the work's result, `None`
+/// when a stopped task did not finish within `stopping` and was dropped so
+/// its router port could release (#527), or the panic it ended with (#433).
+type Ran<T> = Result<Option<T>, Box<dyn std::any::Any + Send>>;
+
+/// Run `work`, then `release`, on `runtime`. `release` runs also when `work`
+/// panics or when `stop` fires and a silent peer keeps `work` waiting past
+/// `stopping`: what the work held (a router port, #433, #527) is dropped and
+/// its release sent while the runtime still runs. The caller resumes a panic
+/// afterwards.
 fn run_then_release<T: Send + 'static>(
     runtime: &tokio::runtime::Runtime,
+    stop: &Stop,
+    stopping: Duration,
     work: impl std::future::Future<Output = T> + Send + 'static,
     release: impl std::future::Future<Output = ()>,
 ) -> Ran<T> {
-    // As a task, a panic unwinds only the task: its locals drop while the
-    // runtime runs, and the panic comes back as a value.
-    let ran = runtime
-        .block_on(runtime.spawn(work))
-        .map_err(|e| match e.try_into_panic() {
+    // As a task, a panic or post-stop abort unwinds only the task: its locals
+    // drop while the runtime runs, and a panic comes back as a value.
+    let outcome = runtime.block_on(async {
+        let mut task = runtime.spawn(work);
+        tokio::select! {
+            res = &mut task => Some(res),
+            () = stop.stopped() => match tokio::time::timeout(stopping, &mut task).await {
+                Ok(res) => Some(res),
+                Err(_) => {
+                    task.abort();
+                    match tokio::time::timeout(ABORTED, &mut task).await {
+                        Ok(Ok(val)) => Some(Ok(val)),
+                        Ok(Err(e)) if e.is_panic() => Some(Err(e)),
+                        Ok(Err(_)) | Err(_) => None,
+                    }
+                }
+            },
+        }
+    });
+    let ran = match outcome {
+        Some(Ok(val)) => Ok(Some(val)),
+        None => Ok(None),
+        Some(Err(e)) => Err(match e.try_into_panic() {
             Ok(panic) => panic,
-            // Not cancelled by anyone, and no panic hook saw it: told here,
+            // Not cancelled by `stop`, and no panic hook saw it: told here,
             // and kept as a panic so it is not lost.
             Err(e) => {
-                eprintln!("totaldrop: {e}");
+                errln(&format!("totaldrop: {e}"));
                 Box::new(e.to_string())
             }
-        });
+        }),
+    };
     runtime.block_on(release);
     ran
 }
@@ -388,14 +491,14 @@ async fn send(
     paths: PathOptions,
     what: What,
     strong: bool,
+    stop: Stop,
 ) -> Result<(), Failure> {
-    eprintln!("{}", s.get("cliPreparing", &[]));
+    errln(&s.get("cliPreparing", &[]));
     let opts = SendOptions {
         server,
         words: if strong { 3 } else { 2 },
         paths,
     };
-    let stop = stop_on_ctrl_c(&s);
     let is_text = matches!(what, What::Text(_));
     let prepared = tokio::select! {
         r = async {
@@ -409,36 +512,31 @@ async fn send(
     let (entries, total) = prepared.totals();
     if prepared.skipped() > 0 {
         let n = u64::try_from(prepared.skipped()).unwrap_or(u64::MAX);
-        eprintln!("{}", s.get("cliSkipping", &[("count", Arg::Count(n))]));
+        errln(&s.get("cliSkipping", &[("count", Arg::Count(n))]));
     }
     let size = s.bytes(total);
     let entries = u64::try_from(entries).unwrap_or(u64::MAX);
     if is_text {
-        eprintln!("{}", s.get("cliSendingText", &[("size", Arg::Text(&size))]));
+        errln(&s.get("cliSendingText", &[("size", Arg::Text(&size))]));
     } else {
-        eprintln!(
-            "{}",
-            s.get(
-                "cliSending",
-                &[("count", Arg::Count(entries)), ("size", Arg::Text(&size))]
-            )
-        );
+        errln(&s.get(
+            "cliSending",
+            &[("count", Arg::Count(entries)), ("size", Arg::Text(&size))],
+        ));
     }
-    eprintln!();
-    eprintln!("{}", s.get("cliRunThis", &[]));
+    errln("");
+    errln(&s.get("cliRunThis", &[]));
     // The command itself is never translated: it is what the other side types.
-    println!("totaldrop receive {}", prepared.code());
-    eprintln!();
+    let _ = writeln!(std::io::stdout(), "totaldrop receive {}", prepared.code());
+    let _ = std::io::stdout().flush();
+    errln("");
     let report = prepared.run_with(printer(Arc::clone(&s)), stop).await?;
     if report.files_failed > 0 {
         let n = u64::try_from(report.files_failed).unwrap_or(u64::MAX);
-        eprintln!(
-            "{}",
-            s.get("cliSendSomeFailed", &[("count", Arg::Count(n))])
-        );
+        errln(&s.get("cliSendSomeFailed", &[("count", Arg::Count(n))]));
     } else {
         let n = u64::try_from(report.files_ok).unwrap_or(u64::MAX);
-        eprintln!("{}", s.get("cliSendDone", &[("count", Arg::Count(n))]));
+        errln(&s.get("cliSendDone", &[("count", Arg::Count(n))]));
     }
     Ok(())
 }
@@ -463,6 +561,7 @@ async fn receive(
     code: String,
     out: Option<PathBuf>,
     yes: bool,
+    stop: Stop,
 ) -> Result<(), Failure> {
     let sandboxed = sandbox::sandboxed();
     let dest = match out {
@@ -489,10 +588,10 @@ async fn receive(
             };
             // Said here, with the folder's name: better than any generic
             // sentence main could choose.
-            eprintln!(
+            errln(&format!(
                 "totaldrop: {}",
                 s.get(key, &[("folder", Arg::Text(&shown))])
-            );
+            ));
             return Err(Failure::Shown);
         }
         Err(e) => return Err(e.into()),
@@ -507,7 +606,7 @@ async fn receive(
     {
         let shown = dest.display().to_string();
         let kept = sandbox::downloads().display().to_string();
-        eprintln!(
+        errln(&format!(
             "totaldrop: {}",
             s.get(
                 "cliFolderNotKept",
@@ -516,51 +615,49 @@ async fn receive(
                     ("downloads", Arg::Text(&kept))
                 ],
             )
-        );
+        ));
         return Err(Failure::Shown);
     }
     let (code, line) = connecting_line(&s, &code).map_err(totaldrop_core::Error::Code)?;
-    let stop = stop_on_ctrl_c(&s);
-    eprintln!("{line}");
+    errln(&line);
     let offer =
         IncomingOffer::connect_with(&ReceiveOptions { server, paths }, &code, &stop).await?;
     let summary = offer.summary().clone();
-    eprintln!("{}", s.get("cliConnected", &[]));
+    errln(&s.get("cliConnected", &[]));
     let words = offer.words().join(" ");
-    eprintln!(
-        "{}",
-        s.get("cliVerification", &[("words", Arg::Text(&words))])
-    );
+    errln(&s.get("cliVerification", &[("words", Arg::Text(&words))]));
     let size = s.bytes(summary.total_size);
     let count = |n: usize| Arg::Count(u64::try_from(n).unwrap_or(u64::MAX));
     let prompt = if summary.text {
         // A text is shown here, not saved (#313).
-        eprintln!("{}", s.get("cliOfferedText", &[("size", Arg::Text(&size))]));
+        errln(&s.get("cliOfferedText", &[("size", Arg::Text(&size))]));
         s.get("cliPromptShow", &[])
     } else {
-        eprintln!(
-            "{}",
-            s.get(
-                "cliOffered",
-                &[
-                    ("files", count(summary.files)),
-                    ("dirs", count(summary.dirs)),
-                    ("size", Arg::Text(&size)),
-                ],
-            )
-        );
+        errln(&s.get(
+            "cliOffered",
+            &[
+                ("files", count(summary.files)),
+                ("dirs", count(summary.dirs)),
+                ("size", Arg::Text(&size)),
+            ],
+        ));
         for name in summary.top_level.iter().take(10) {
-            eprintln!("  {}", visible(name));
+            errln(&format!("  {}", visible(name)));
         }
         if summary.top_level.len() > 10 {
             let more = summary.top_level.len().saturating_sub(10);
-            eprintln!("  {}", s.get("cliAndMore", &[("count", count(more))]));
+            errln(&format!(
+                "  {}",
+                s.get("cliAndMore", &[("count", count(more))])
+            ));
         }
         let shown = dest.display().to_string();
         s.get("cliPromptSave", &[("folder", Arg::Text(&shown))])
     };
     let yes_words = s.get("cliYes", &[]);
-    let accepted = yes || {
+    let accepted = if yes {
+        Some(true)
+    } else {
         let answer = tokio::task::spawn_blocking(move || {
             // The answer shows in the log only when both are terminals.
             let typed = std::io::stdin().is_terminal() && std::io::stderr().is_terminal();
@@ -570,22 +667,37 @@ async fn receive(
                 &mut std::io::stderr(),
                 typed,
             );
-            line.is_some_and(|l| is_yes(&l, &yes_words))
+            line.map(|l| is_yes(&l, &yes_words))
         });
         tokio::select! {
-            a = answer => a.unwrap_or(false),
-            // Ctrl-C at the question declines, so the sender is not left waiting.
-            () = stop.stopped() => false,
+            // Join error or a read error on stdin (such as `EIO` when a
+            // controlling terminal closes alongside `SIGHUP`) is not a
+            // normal "no": stop cleanly rather than exiting with 0 or 1.
+            a = answer => a.ok().flatten(),
+            // A signal at the question declines, so the sender is not left waiting.
+            () = stop.stopped() => None,
         }
     };
-    if stop.is_stopped() {
+    let Some(accepted) = accepted else {
         // Best effort: the sender may be gone already; stopping is the answer.
         let _ = offer.decline().await;
+        // When PTY hangup (`EIO` on stdin) woke `ask` just ahead of `SIGHUP`
+        // reaching the signal task, give the signal task a moment to record
+        // `129` before reading the exit code.
+        if !stop.is_stopped() {
+            let _ = tokio::time::timeout(Duration::from_millis(50), stop.stopped()).await;
+        }
         return Err(totaldrop_core::Error::Stopped.into());
-    }
+    };
     if !accepted {
-        offer.decline().await?;
-        eprintln!("{}", s.get("cliDeclined", &[]));
+        let declined = offer.decline().await;
+        // On BSD/macOS a closing terminal can wake `ask` with EOF (`Some("")`)
+        // alongside `SIGHUP`; if a signal arrived by now, report the stop.
+        if stop.is_stopped() {
+            return Err(totaldrop_core::Error::Stopped.into());
+        }
+        declined?;
+        errln(&s.get("cliDeclined", &[]));
         return Ok(());
     }
     let report = if summary.text {
@@ -607,14 +719,11 @@ async fn receive(
     }
     for p in &report.placed {
         let name = visible(&p.display().to_string());
-        eprintln!("{}", s.get("cliSaved", &[("name", Arg::Text(&name))]));
+        errln(&s.get("cliSaved", &[("name", Arg::Text(&name))]));
     }
     if report.files_failed > 0 {
         let n = u64::try_from(report.files_failed).unwrap_or(u64::MAX);
-        eprintln!(
-            "{}",
-            s.get("cliReceiveSomeFailed", &[("count", Arg::Count(n))])
-        );
+        errln(&s.get("cliReceiveSomeFailed", &[("count", Arg::Count(n))]));
     }
     Ok(())
 }
@@ -662,6 +771,7 @@ fn main() -> ExitCode {
         return ExitCode::from(2);
     }
     let strings_for_exit = Arc::clone(&strings);
+    let signal = SignalStop::new();
     let sending = matches!(cli.command, Command::Send { .. });
     let result = match cli.command {
         Command::Code { code } => {
@@ -672,7 +782,7 @@ fn main() -> ExitCode {
                     ExitCode::SUCCESS
                 }
                 Err(e) => {
-                    eprintln!("totaldrop: invalid code: {e}");
+                    errln(&format!("totaldrop: invalid code: {e}"));
                     ExitCode::from(2)
                 }
             };
@@ -690,22 +800,38 @@ fn main() -> ExitCode {
         ) {
             // A port the router opened over UPnP is closed with an HTTP
             // request, which dies with the runtime; wait for it, briefly
-            // (#406), also after a panic (#433).
-            Ok(what) => run_then_release(
-                &runtime,
-                send(strings, server(cli.server), route, what, strong),
-                totaldrop_core::portmap::released(),
-            ),
-            Err(e) => Ok(Err(e)),
+            // (#406), also after a panic (#433) or a signal (#527).
+            Ok(what) => {
+                let stop = signal.install(&runtime, &strings);
+                run_then_release(
+                    &runtime,
+                    &signal.stop,
+                    STOPPING,
+                    send(strings, server(cli.server), route, what, strong, stop),
+                    totaldrop_core::portmap::released(),
+                )
+            }
+            Err(e) => Ok(Some(Err(e))),
         },
         Command::Receive { code, out, yes } => run_then_release(
             &runtime,
-            receive(strings, server(cli.server), route, code, out, yes),
+            &signal.stop,
+            STOPPING,
+            receive(
+                strings,
+                server(cli.server),
+                route,
+                code,
+                out,
+                yes,
+                signal.install(&runtime, &strings_for_exit),
+            ),
             totaldrop_core::portmap::released(),
         ),
     };
     let result = match result {
-        Ok(result) => result,
+        Ok(Some(result)) => result,
+        Ok(None) => Err(Failure::Core(totaldrop_core::Error::Stopped)),
         Err(panic) => {
             // The panic hook, or `run_then_release` for a task that was
             // cancelled, has printed the message already.
@@ -720,22 +846,25 @@ fn main() -> ExitCode {
         Ok(()) => ExitCode::SUCCESS,
         Err(Failure::Shown) => ExitCode::FAILURE,
         Err(Failure::Core(totaldrop_core::Error::Stopped)) => {
-            eprintln!("{}", strings_for_exit.get("cliStopped", &[]));
-            ExitCode::from(130)
+            errln(&strings_for_exit.get("cliStopped", &[]));
+            signal.exit_code()
         }
         Err(Failure::Core(e)) => {
             // One sentence in the person's language, then the detail for a
             // bug report, which stays English.
-            eprintln!(
+            errln(&format!(
                 "totaldrop: {}",
                 strings_for_exit.get(error_key(&e, sending), &[])
-            );
+            ));
             // Why, also in the person's language (#212).
             let cause = e.cause().as_str();
             if !cause.is_empty() {
-                eprintln!("  {}", strings_for_exit.get(&format!("cause{cause}"), &[]));
+                errln(&format!(
+                    "  {}",
+                    strings_for_exit.get(&format!("cause{cause}"), &[])
+                ));
             }
-            eprintln!("{}", detail_line(&e));
+            errln(&detail_line(&e));
             ExitCode::FAILURE
         }
     }
@@ -796,15 +925,41 @@ impl From<std::io::Error> for Failure {
     }
 }
 
+/// On Linux, checks `/proc/self/status` `SigIgn` bit 0 (`SIGHUP`, signal 1)
+/// without `unsafe` so a process launched under `nohup` (or `trap '' HUP`)
+/// keeps ignoring `SIGHUP` instead of installing a handler (#527).
+#[cfg(unix)]
+fn sighup_ignored() -> bool {
+    #[cfg(target_os = "linux")]
+    {
+        std::fs::read_to_string("/proc/self/status")
+            .ok()
+            .is_some_and(|s| proc_status_ignores_sighup(&s))
+    }
+    #[cfg(not(target_os = "linux"))]
+    {
+        false
+    }
+}
+
+#[cfg(any(target_os = "linux", test))]
+fn proc_status_ignores_sighup(status: &str) -> bool {
+    status.lines().any(|line| {
+        line.strip_prefix("SigIgn:")
+            .and_then(|hex| u64::from_str_radix(hex.trim(), 16).ok())
+            .is_some_and(|mask| (mask & 1) != 0)
+    })
+}
+
 #[cfg(test)]
 mod tests {
     #![allow(clippy::unwrap_used)]
 
     use super::{
         ARG_HELP, COMMAND_HELP, What, ask, connecting_line, detail_line, error_key, help,
-        run_then_release, shown_text, what_to_send,
+        proc_status_ignores_sighup, run_then_release, shown_text, what_to_send,
     };
-    use totaldrop_core::Error;
+    use totaldrop_core::{Error, Stop};
     use totaldrop_l10n::{Domain, Strings};
     use totaldrop_proto::wire::RejectReason;
 
@@ -834,12 +989,15 @@ mod tests {
             .enable_all()
             .build()
             .unwrap();
+        let stop = Stop::new();
         let done = Arc::new(AtomicBool::new(false));
         let held = Held(Arc::clone(&done));
         let seen = Arc::clone(&done);
         let ran = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
             run_then_release(
                 &runtime,
+                &stop,
+                Duration::from_secs(2),
                 async move {
                     let _held = held;
                     tokio::task::yield_now().await;
@@ -860,6 +1018,78 @@ mod tests {
             "the panic comes back as a value, after the release"
         );
         assert!(done.load(Ordering::SeqCst), "the release finished");
+    }
+
+    /// A stopped transfer waiting on a silent peer past `stopping` is dropped
+    /// before `release` runs, so its held router port still closes within the
+    /// bounded quit timeout (#527).
+    #[test]
+    fn a_stopped_work_that_does_not_end_in_time_is_dropped_and_releases() {
+        use std::sync::Arc;
+        use std::sync::atomic::{AtomicBool, Ordering};
+        use std::time::{Duration, Instant};
+
+        struct Held {
+            dropped: Arc<AtomicBool>,
+            released: Arc<AtomicBool>,
+        }
+        impl Drop for Held {
+            fn drop(&mut self) {
+                self.dropped.store(true, Ordering::SeqCst);
+                let released = Arc::clone(&self.released);
+                tokio::spawn(async move {
+                    tokio::time::sleep(Duration::from_millis(20)).await;
+                    released.store(true, Ordering::SeqCst);
+                });
+            }
+        }
+
+        let runtime = tokio::runtime::Builder::new_multi_thread()
+            .enable_all()
+            .build()
+            .unwrap();
+        let stop = Stop::new();
+        let (dropped, released, dropped_before_release) = (
+            Arc::new(AtomicBool::new(false)),
+            Arc::new(AtomicBool::new(false)),
+            Arc::new(AtomicBool::new(false)),
+        );
+        let held = Held {
+            dropped: Arc::clone(&dropped),
+            released: Arc::clone(&released),
+        };
+        let (d, r, seen) = (
+            Arc::clone(&dropped),
+            Arc::clone(&released),
+            Arc::clone(&dropped_before_release),
+        );
+        stop.stop();
+        let started = Instant::now();
+        let ran = run_then_release(
+            &runtime,
+            &stop,
+            Duration::from_millis(50),
+            async move {
+                let _held = held;
+                std::future::pending::<()>().await
+            },
+            async move {
+                seen.store(d.load(Ordering::SeqCst), Ordering::SeqCst);
+                let _ = tokio::time::timeout(Duration::from_secs(2), async {
+                    while !r.load(Ordering::SeqCst) {
+                        tokio::time::sleep(Duration::from_millis(5)).await;
+                    }
+                })
+                .await;
+            },
+        );
+        assert!(matches!(ran, Ok(None)));
+        assert!(
+            dropped_before_release.load(Ordering::SeqCst),
+            "held resource dropped before release began"
+        );
+        assert!(released.load(Ordering::SeqCst), "release finished");
+        assert!(started.elapsed() < Duration::from_secs(1));
     }
 
     /// `--help` speaks the person's language, as every other line does
@@ -1099,5 +1329,19 @@ mod tests {
             detail_line(&Error::Cancelled("stopped".into())),
             "  (cancelled by the other side: stopped)"
         );
+    }
+
+    #[test]
+    fn proc_status_detects_ignored_sighup() {
+        assert!(proc_status_ignores_sighup(
+            "Name:\ttotaldrop\nSigIgn:\t0000000000000001\n"
+        ));
+        assert!(proc_status_ignores_sighup("SigIgn:\t0000000000001003\n"));
+        assert!(!proc_status_ignores_sighup(
+            "Name:\ttotaldrop\nSigIgn:\t0000000000000000\n"
+        ));
+        assert!(!proc_status_ignores_sighup("SigIgn:\t0000000000000002\n"));
+        assert!(!proc_status_ignores_sighup("SigIgn:\tnot-hex\n"));
+        assert!(!proc_status_ignores_sighup(""));
     }
 }
