@@ -184,5 +184,11 @@
   "setupBackgroundAutostart": "Deschideți Pornire automată",
   "setupBackgroundSkip": "Nu acum",
   "settingsBackground": "Transferuri în fundal",
-  "settingsBackgroundOpen": "Setările bateriei"
+  "settingsBackgroundOpen": "Setările bateriei",
+  "shareText": "Partajează textul",
+  "openLink": "Deschide linkul",
+  "openLinkTitle": "Deschideți acest link?",
+  "openLinkBody": "Adresa de mai jos se va deschide în browser.",
+  "openLinkConfirm": "Deschide",
+  "openLinkFailed": "Nicio aplicație de pe acest dispozitiv nu a putut deschide linkul."
 }

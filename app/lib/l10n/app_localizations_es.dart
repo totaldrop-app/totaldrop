@@ -696,4 +696,23 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'Ajustes de batería';
+
+  @override
+  String get shareText => 'Compartir texto';
+
+  @override
+  String get openLink => 'Abrir enlace';
+
+  @override
+  String get openLinkTitle => '¿Abrir este enlace?';
+
+  @override
+  String get openLinkBody => 'La dirección de abajo se abrirá en el navegador.';
+
+  @override
+  String get openLinkConfirm => 'Abrir';
+
+  @override
+  String get openLinkFailed =>
+      'Ninguna aplicación de este dispositivo pudo abrir el enlace.';
 }

@@ -639,4 +639,22 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'バッテリー設定';
+
+  @override
+  String get shareText => 'テキストを共有';
+
+  @override
+  String get openLink => 'リンクを開く';
+
+  @override
+  String get openLinkTitle => 'このリンクを開きますか？';
+
+  @override
+  String get openLinkBody => '下のアドレスがブラウザーで開きます。';
+
+  @override
+  String get openLinkConfirm => '開く';
+
+  @override
+  String get openLinkFailed => 'この端末にはリンクを開けるアプリがありません。';
 }

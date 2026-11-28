@@ -38,6 +38,11 @@ bool needsEnglish({required String tag, required String key}) =>
 bool hasDraftTranslation({required String tag}) =>
     RustLib.instance.api.crateApiL10NHasDraftTranslation(tag: tag);
 
+/// Normalized ASCII `http://` or `https://` URL when `text` is a single safe
+/// web link (#53), or `None` otherwise.
+String? singleWebUrl({required String text}) =>
+    RustLib.instance.api.crateApiL10NSingleWebUrl(text: text);
+
 /// How a received text is shown.
 class ShownText {
   /// Hidden characters named (`reveal_text`), then cut to

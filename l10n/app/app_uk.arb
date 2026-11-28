@@ -184,5 +184,11 @@
   "setupBackgroundAutostart": "Відкрити автозапуск",
   "setupBackgroundSkip": "Не зараз",
   "settingsBackground": "Передавання у фоні",
-  "settingsBackgroundOpen": "Налаштування батареї"
+  "settingsBackgroundOpen": "Налаштування батареї",
+  "shareText": "Поділитися текстом",
+  "openLink": "Відкрити посилання",
+  "openLinkTitle": "Відкрити це посилання?",
+  "openLinkBody": "Адреса нижче відкриється у вашому браузері.",
+  "openLinkConfirm": "Відкрити",
+  "openLinkFailed": "Жодна програма на цьому пристрої не змогла відкрити посилання."
 }

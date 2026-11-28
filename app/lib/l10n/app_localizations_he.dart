@@ -675,4 +675,22 @@ class AppLocalizationsHe extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'הגדרות סוללה';
+
+  @override
+  String get shareText => 'שיתוף טקסט';
+
+  @override
+  String get openLink => 'פתיחת קישור';
+
+  @override
+  String get openLinkTitle => 'לפתוח את הקישור הזה?';
+
+  @override
+  String get openLinkBody => 'הכתובת שלהלן תיפתח בדפדפן שלך.';
+
+  @override
+  String get openLinkConfirm => 'פתיחה';
+
+  @override
+  String get openLinkFailed => 'אף יישום במכשיר זה לא הצליח לפתוח את הקישור.';
 }

@@ -679,4 +679,24 @@ class AppLocalizationsSw extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'Mipangilio ya betri';
+
+  @override
+  String get shareText => 'Shiriki maandishi';
+
+  @override
+  String get openLink => 'Fungua kiungo';
+
+  @override
+  String get openLinkTitle => 'Fungua kiungo hiki?';
+
+  @override
+  String get openLinkBody =>
+      'Anwani iliyo hapa chini itafunguliwa kwenye kivinjari chako.';
+
+  @override
+  String get openLinkConfirm => 'Fungua';
+
+  @override
+  String get openLinkFailed =>
+      'Hakuna programu kwenye kifaa hiki iliyoweza kufungua kiungo.';
 }

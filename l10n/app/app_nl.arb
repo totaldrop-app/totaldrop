@@ -184,5 +184,11 @@
   "setupBackgroundAutostart": "Autostart openen",
   "setupBackgroundSkip": "Niet nu",
   "settingsBackground": "Overdrachten op de achtergrond",
-  "settingsBackgroundOpen": "Batterij-instellingen"
+  "settingsBackgroundOpen": "Batterij-instellingen",
+  "shareText": "Tekst delen",
+  "openLink": "Link openen",
+  "openLinkTitle": "Deze link openen?",
+  "openLinkBody": "Het onderstaande adres wordt geopend in uw browser.",
+  "openLinkConfirm": "Openen",
+  "openLinkFailed": "Geen enkele app op dit apparaat kon de link openen."
 }

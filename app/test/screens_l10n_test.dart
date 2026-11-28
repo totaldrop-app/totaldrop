@@ -53,6 +53,10 @@ class _Rust implements RustLibApi {
       ShownText(text: text, short: true, hidden: true);
 
   @override
+  String? crateApiL10NSingleWebUrl({required String text}) =>
+      text.startsWith('https://') ? text : null;
+
+  @override
   String crateApiTransferDefaultServer() => 'wss://rendezvous.totaldrop.app';
 
   @override
@@ -133,6 +137,8 @@ final _shows = <String, Object>{
   'send a text': 'Rapport annuel',
   'receive a text offer': 'one',
   'receive a text': 'Rapport annuel',
+  'receive a link': (AppLocalizations l) => l.openLink,
+  'receive a link, asked to open': (AppLocalizations l) => l.openLinkTitle,
   'send preparing': (AppLocalizations l) => l.sendPreparing,
   'send, a pick failed': (AppLocalizations l) => l.sendAddFailed,
   'send with files, a pick failed': (AppLocalizations l) => l.sendAddFailed,
@@ -163,6 +169,22 @@ TransferEvent _textReceived() => const TransferEvent(
     bytes: 40,
     saved: [],
     text: _longName,
+  ),
+  error: null,
+);
+
+/// A finished receive of a single web link (#53).
+TransferEvent _linkReceived() => const TransferEvent(
+  kind: EventKind.finished,
+  words: [],
+  done: 0,
+  total: 0,
+  summary: TransferSummary(
+    filesOk: 1,
+    filesFailed: 0,
+    bytes: 52,
+    saved: [],
+    text: 'https://totaldrop.app/documentation/getting-started',
   ),
   error: null,
 );
@@ -549,6 +571,48 @@ void main() {
               await tester.pump();
               await vm.accept();
               repo.events.add(_textReceived());
+            },
+          );
+        },
+        'receive a link': () {
+          final repo = FakeRepository();
+          final vm = ReceiveViewModel(repository: repo)
+            ..setInput('7-harbor-rocket');
+          return (
+            ReceiveView(viewModel: vm),
+            (tester) async {
+              unawaited(vm.connect());
+              repo.connected.complete(FakeOffer(isText: true));
+              await tester.pump();
+              await vm.accept();
+              repo.events.add(_linkReceived());
+            },
+          );
+        },
+        'receive a link, asked to open': () {
+          final repo = FakeRepository();
+          final vm = ReceiveViewModel(repository: repo)
+            ..setInput('7-harbor-rocket');
+          return (
+            ReceiveView(viewModel: vm),
+            (tester) async {
+              unawaited(vm.connect());
+              repo.connected.complete(FakeOffer(isText: true));
+              await tester.pump();
+              await vm.accept();
+              repo.events.add(_linkReceived());
+              await tester.pump();
+              await tester.pump(const Duration(milliseconds: 300));
+              final l = AppLocalizations.of(
+                tester.element(find.byType(Scaffold).first),
+              );
+              await tester.scrollUntilVisible(
+                find.text(l.openLink),
+                200,
+                scrollable: find.byType(Scrollable).first,
+              );
+              await tester.pump();
+              await tester.tap(find.text(l.openLink));
             },
           );
         },

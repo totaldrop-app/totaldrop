@@ -693,4 +693,24 @@ class AppLocalizationsEl extends AppLocalizations {
 
   @override
   String get settingsBackgroundOpen => 'Ρυθμίσεις μπαταρίας';
+
+  @override
+  String get shareText => 'Κοινοποίηση κειμένου';
+
+  @override
+  String get openLink => 'Άνοιγμα συνδέσμου';
+
+  @override
+  String get openLinkTitle => 'Άνοιγμα αυτού του συνδέσμου;';
+
+  @override
+  String get openLinkBody =>
+      'Η παρακάτω διεύθυνση θα ανοίξει στο πρόγραμμα περιήγησής σας.';
+
+  @override
+  String get openLinkConfirm => 'Άνοιγμα';
+
+  @override
+  String get openLinkFailed =>
+      'Καμία εφαρμογή σε αυτήν τη συσκευή δεν μπόρεσε να ανοίξει τον σύνδεσμο.';
 }

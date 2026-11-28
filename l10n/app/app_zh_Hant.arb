@@ -184,5 +184,11 @@
   "setupBackgroundAutostart": "開啟自動啟動",
   "setupBackgroundSkip": "以後再說",
   "settingsBackground": "背景傳輸",
-  "settingsBackgroundOpen": "電池設定"
+  "settingsBackgroundOpen": "電池設定",
+  "shareText": "分享文字",
+  "openLink": "開啟連結",
+  "openLinkTitle": "要開啟此連結嗎？",
+  "openLinkBody": "下方網址將在瀏覽器中開啟。",
+  "openLinkConfirm": "開啟",
+  "openLinkFailed": "此裝置上沒有應用程式可開啟該連結。"
 }

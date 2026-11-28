@@ -184,5 +184,11 @@
   "setupBackgroundAutostart": "Mở Tự khởi động",
   "setupBackgroundSkip": "Để sau",
   "settingsBackground": "Truyền ở chế độ nền",
-  "settingsBackgroundOpen": "Cài đặt pin"
+  "settingsBackgroundOpen": "Cài đặt pin",
+  "shareText": "Chia sẻ văn bản",
+  "openLink": "Mở liên kết",
+  "openLinkTitle": "Mở liên kết này?",
+  "openLinkBody": "Địa chỉ bên dưới sẽ được mở trong trình duyệt của bạn.",
+  "openLinkConfirm": "Mở",
+  "openLinkFailed": "Không có ứng dụng nào trên thiết bị này mở được liên kết."
 }

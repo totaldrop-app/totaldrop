@@ -49,6 +49,10 @@ class _Rust implements RustLibApi {
       ShownText(text: text, short: false, hidden: false);
 
   @override
+  String? crateApiL10NSingleWebUrl({required String text}) =>
+      text.startsWith('https://') ? text : null;
+
+  @override
   String crateApiTransferDefaultServer() => 'wss://rendezvous.totaldrop.app';
 
   @override

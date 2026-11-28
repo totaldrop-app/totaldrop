@@ -184,5 +184,11 @@
   "setupBackgroundAutostart": "Fungua Kuanza kiotomatiki",
   "setupBackgroundSkip": "Si sasa",
   "settingsBackground": "Uhamisho chinichini",
-  "settingsBackgroundOpen": "Mipangilio ya betri"
+  "settingsBackgroundOpen": "Mipangilio ya betri",
+  "shareText": "Shiriki maandishi",
+  "openLink": "Fungua kiungo",
+  "openLinkTitle": "Fungua kiungo hiki?",
+  "openLinkBody": "Anwani iliyo hapa chini itafunguliwa kwenye kivinjari chako.",
+  "openLinkConfirm": "Fungua",
+  "openLinkFailed": "Hakuna programu kwenye kifaa hiki iliyoweza kufungua kiungo."
 }

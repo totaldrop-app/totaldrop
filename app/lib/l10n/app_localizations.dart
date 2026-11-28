@@ -1219,6 +1219,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Battery settings'**
   String get settingsBackgroundOpen;
+
+  /// Receive result: button that shares the received text through the system share sheet (#53)
+  ///
+  /// In en, this message translates to:
+  /// **'Share text'**
+  String get shareText;
+
+  /// Receive result: button shown when the received text is a single web link (#53)
+  ///
+  /// In en, this message translates to:
+  /// **'Open link'**
+  String get openLink;
+
+  /// Confirmation dialog heading shown with the full URL before opening a received link (#53)
+  ///
+  /// In en, this message translates to:
+  /// **'Open this link?'**
+  String get openLinkTitle;
+
+  /// Confirmation dialog explanation above the full URL before opening a received link (#53)
+  ///
+  /// In en, this message translates to:
+  /// **'This opens the address below in your browser.'**
+  String get openLinkBody;
+
+  /// Confirmation dialog button that opens the shown URL in the browser (#53)
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get openLinkConfirm;
+
+  /// Shown when no browser or app handles opening the received web link (#53)
+  ///
+  /// In en, this message translates to:
+  /// **'No app on this device could open the link.'**
+  String get openLinkFailed;
 }
 
 class _AppLocalizationsDelegate
