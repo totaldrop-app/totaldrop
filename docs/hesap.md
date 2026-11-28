@@ -7,11 +7,12 @@
 - **Code:** none. This document binds the behaviour. The byte-level
   formats are added to the [protocol notes](protocol-v0.1-notes.md) before
   any code is written.
-- **Review:** before any code is written, the design will be tested with a
-  formal model (Tamarin) and an independent human cryptography review (see
-  "Verification"). The model is being written piece by piece in the
-  [formal/](../formal/README.md) folder (#251); the first piece is the
-  membership chain.
+- **Review:** before any code is written, the design is tested with a
+  formal model (Tamarin and TLA+) and an independent human cryptography
+  review (see "Order of verification and implementation"). The Tamarin
+  models (A1–A4c) and TLA+ timing evaluation (A5) are in
+  [formal/](../formal/README.md) (#251), and the rules they settled have
+  been written into this document.
 
 In TotalDrop the account is optional. Sending and receiving with a code
 keeps working without an account. An account gives two things:
@@ -99,16 +100,16 @@ one.
 
 | Operation | Default | Strict mode (setting) |
 | --- | --- | --- |
-| Adding a device | The management key on an existing device (biometrics or PIN) + verification words. A notification goes to the other devices at once; it can be undone with one tap within 24 hours (undoing is a `remove` record) | `add` carries the `AK` signatures of two devices. If the second signature does not come (or the ring has a single device), the record is written as **pending** with one signature and takes effect 72 hours later by witness time; during this time any device can write `reject_pending` |
-| Removing a device | The management key | The same rule as `add`: two signatures, or one signature pending for 72 hours. Because contacts do not see the number of devices, the rule is the same for every ring size. The cost: in strict mode you cannot remove a stolen device on your own at once; if the stolen device writes `reject_pending`, the removal is cancelled and the path goes through `RK` (the exact rule in the formal model, see "Rules to settle in the formal model") |
-| Turning strict mode on or off | The management key | Turning it off needs the number of signatures strict mode asks for |
-| Adding by recovery | 24 words + waiting + re-verification with contacts | Besides the 24 words, a YubiKey or the Shamir shares of 2 of 3 contacts |
-| Changing the recovery phrase | The management key + waiting (`change_phrase`) | A second device's signature is needed too |
+| Adding a device | The management key on an existing device (biometrics or PIN) + verification words. A notification goes to the other devices at once; it can be undone with one tap within 24 hours (undoing is a `remove` record) | `add` carries the `AK` signatures of two distinct devices (takes effect at once). If a second signature does not come (or the ring has a single device), the record enters the period proposal queue (`H("log prop", m)`) as **pending** with one signature and takes effect after 72 hours of witness time; any current device can cancel it before settling with a targeted `reject_pending` |
+| Removing a device | The management key | The same rule as `add`: two distinct signatures at once, or one signature pending in the period queue for 72 hours of witness time. Because contacts do not see the number of devices, the rule is the same for every ring size. If a stolen device vetoes its own removal with `reject_pending`, the owner writes `rk_remove(IK)` signed by both `RK` and a staying member's `AK` (waits 72 hours; the target's own `reject_pending` does not count, while any other member's timely `reject_pending` voids it) |
+| Turning strict mode on or off | One device's `AK` (`policy`) | Turning strict mode off needs two distinct devices' `AK` signatures (no single-signature downgrade path; if only one device survives, add a second device via a 72-hour pending `add` or `recovery_add` first and co-sign with two `AK`s, or pair again) |
+| Adding by recovery | 24 words (`RK`, logged under `H("log recovery proposal", m)`) + waiting + out-of-band re-verification with contacts | Besides the 24 words, a YubiKey or the Shamir shares of 2 of 3 contacts; the `recovery_add` joins the unified period queue `H("log prop", m)` |
+| Changing the recovery phrase | One device's `AK` + waiting (`change_phrase`); once settled, the old `RK` is invalid from that head onward | Two distinct devices' `AK` signatures + waiting (`change_phrase`) |
 | "Always accept" for a contact | The management key | The same |
 
 Strict mode is not just a device setting: it sits as a **policy field** in
-the chain and in the head sent to contacts. So contacts also check that a
-single-signature `add` or `remove` is invalid in strict mode.
+the chain and in the head sent to contacts. So contacts also check that an
+immediate single-signature `add` or `remove` is invalid in strict mode.
 
 There is no second factor on the server side (SMS, TOTP), and there will
 not be, because there is no account on the server. If the ring has 2 or
@@ -157,16 +158,17 @@ The operations are:
 
 | Operation | Signer | Note |
 | --- | --- | --- |
-| `create` | The first device's `AK` | Contains the `RK` and `RKK` public keys |
-| `add(IK, AK, KK)` | An existing device's `AK` (in strict mode two devices, or one signature pending) | |
-| `remove(IK)` | An existing device's `AK` (in strict mode two devices, or one signature pending) | In the default mode it is an emergency operation, done at once |
-| `reject_pending` | An existing device's `AK` | Cancels a pending single-signature record in strict mode |
-| `policy(strict mode)` | As many `AK`s as the current policy asks for | Turns strict mode on or off |
-| `rotate` | An existing device's `IK` | Only renews the secret; the member set does not change |
-| `recovery_add(IK, AK, KK)` | `RK` | Only adds, and waits |
-| `recovery_reject` | An existing device's `AK` | Cancels a pending recovery, invalidates `RK` |
-| `change_phrase(RK, RKK)` | An existing device's `AK` | A new phrase; has its own waiting period |
-| `resolve_fork` | `RK` | Waits, can be rejected |
+| `create` | The first device's `AK` | Contains the `RK` and `RKK` public keys and initial policy |
+| `add(IK, AK, KK)` | An existing device's `AK` (in strict mode two distinct devices at once, or one signature pending in `H("log prop", m)`) | |
+| `remove(IK)` | An existing device's `AK` (in strict mode two distinct devices at once, or one signature pending in `H("log prop", m)`) | In the default mode it is an emergency operation, done at once |
+| `rk_remove(IK)` | Active `RK` + a staying device's `AK` | Strict-mode escape when a stolen device vetoes its own removal; waits 72 hours in `H("log prop", m)`. The targeted device's own `reject_pending` does not count; any other member's timely `reject_pending` voids it. `RK` alone cannot create it |
+| `reject_pending(digest)` | An existing device's `AK` | Targeted cancellation of one pending proposal in strict mode; counts only if it enters a witnessed root before that proposal settles. Does not start a new period and does not revoke `RK` |
+| `policy(strict mode)` | `1 AK` to enable strict mode; `2 distinct AK`s in strict mode to turn it off | Turns strict mode on or off |
+| `rotate` | An existing device's `IK` | Only renews the secret; the member set and membership period `m` do not change. Contacts follow after `D = 4h` of witness time; ring devices follow after `D_device = 6h` |
+| `recovery_add(IK, AK, KK)` | Active `RK` | Adds into a free slot against membership period `m` (`H("log recovery proposal", m)` in default mode; `H("log prop", m)` in strict mode), waits by witness time, and needs out-of-band contact re-verification |
+| `recovery_reject` | An existing device's `AK` | Distinct from `reject_pending`. Cancels a pending `recovery_add` (independent of writer freshness) and, on an undisputed head, revokes `RK`; on a disputed branch of a real fork it does not revoke `RK` |
+| `change_phrase(RK, RKK)` | `1 AK` (default) or `2 distinct AK`s (strict) | Rotates to a new phrase after its waiting period settles; the old `RK` is rejected at the new head and its descendants |
+| `resolve_fork` | Active `RK` | Chooses one validly logged branch under a forked head, waits by witness time, overrides rule 4 on the losing branch, and requires out-of-band contact re-verification bound to its digest |
 
 The contact list and names are not in this chain; they are kept in a
 separate **contact book** inside the ring (see "The ring towards
@@ -205,10 +207,39 @@ device may have written its own continuation. The log keeps every valid
 continuation (see "Anonymous transparency log"). Everyone who reads
 applies these rules:
 
-1. **Priority:** an `AK`-signed membership record (`remove`, `add`)
-   takes priority over an `IK`-signed `rotate` in the same epoch. So a
-   `rotate` written at the same moment by a device about to be removed
-   cannot block the removal.
+1. **Priority and `rotate` settling:** an `AK`-signed membership record
+   (`remove`, `add`, `policy`, `change_phrase`, `recovery_reject`) takes
+   priority over an `IK`-signed `rotate` in the same epoch. To prevent a
+   removed device from stranding contacts on an early `rotate` branch (the
+   gap found in formal model A2):
+   - Contacts follow a `rotate` only once it has stood in the log for
+     **`D = 4 hours`** of witness time from the witnessed root in which it
+     first appeared (`T_entry`, where `D > 1h inclusion + 1h root age + 2 * Delta`).
+   - Before writing an `AK` record from the pre-rotate head, an honest ring
+     device checks a fresh witnessed root (at most 1 hour old) showing
+     **no value under the head's key yet (`D_w = 0`)**. A concurrent
+     `rotate` not yet present in that root does not block the write, and
+     the resulting `AK` record enters a witnessed root strictly before
+     `D = 4 hours` and beats the unsettled `rotate` by rule 1.
+   - Once a `rotate` is already visible in the writer's fresh witnessed
+     root (past `D_w = 0`), the ring device (including the rotating device
+     itself) **stops writing `AK` records from the pre-rotate head** — so
+     no late `AK` record can enter after `D = 4 hours` and split contacts —
+     waits until **`D_device = 6 hours`** of witness time
+     (`D_device >= D + 1h root age + 2 * Delta`, ensuring no contact can
+     still pass freshness on an unsettled root), and then follows the
+     `rotate` and writes `AK` records from the post-rotate head. (Contacts'
+     send/receive freshness check is looser: an unsettled `rotate` does not
+     block sending or receiving; see "Freshness".)
+   - Every `AK` record binds the `<= 1h`-fresh witnessed root it was
+     checked against; witnesses and readers reject any `AK` record that
+     enters a witnessed root more than **`2 hours + 2 * Delta`**
+     (`1h root age + 1h inclusion + 2 * Delta`, i.e. 2 hours 10 minutes for
+     `Delta <= 5 minutes`) after its bound root's witness timestamp (if
+     delayed past that window, the writer re-checks freshness and
+     re-signs). Because `2 hours + 2 * Delta < D = 4 hours`, an honest
+     on-time writer is never rejected while a delayed pre-signed `AK`
+     upload can never enter after the `rotate` settles.
 2. **Harmless fork:** concurrent `rotate` records with the same member set
    merge deterministically: the one with the smallest digest wins. Because
    the signer chooses `r`, it can grind which record wins; this is harmless,
@@ -217,37 +248,76 @@ applies these rules:
 3. **Real fork:** in every other case (e.g. two `remove`s removing each
    other) devices and contacts fail closed. Sending stops and a warning is
    shown.
-4. An observer ignores forks below the head it has pinned.
-5. A **disputed branch** is one of the branches of an unresolved real fork
+4. An observer ignores forks below the head it has pinned (except where
+   rule 7 overrides this on a losing branch).
+5. **Disputed branches, recovery period keys, and the strict-mode queue:**
+   a **disputed branch** is one of the branches of an unresolved real fork
    formed by two device-signed records. A reject by devices that are
    members only on a disputed branch does not count.
-   - **A recovery record does not open a fork.** If `recovery_add` conflicts
-     with a device record under the same key (even a `rotate`), this is not
-     a real fork: the device branch stays valid, and the recovery is
-     carried over to the following epochs as a pending proposal. An
-     `AK`-signed `recovery_reject` by any current device of the ring always
-     counts. A phone stolen while locked cannot use `AK`; its writing a
-     `rotate` neither cancels nor delays the recovery.
+   - **Default mode (`recovery_add`):** a recovery proposal is written not
+     under `L_{e+1}` but against the **membership period `m`** (the head of
+     the last membership record; `rotate` does not change `m`) under its own
+     log key `H("log recovery proposal", m)`. A pending recovery therefore
+     carries over subsequent `rotate`s without opening a fork, and a locked
+     stolen phone's `rotate` neither cancels nor delays it. Any valid `AK`
+     record written from **any** head of period `m` (readers check every
+     head of period `m`, including unfollowed `rotate` branches and forked
+     heads) beats the recovery by rule 1. A member writes `recovery_reject`
+     from its current head without depending on writer freshness, so even a
+     member on a forked or filled head can reject. **Two `recovery_add`
+     records against the same period `m` are a real fork** and readers
+     follow neither.
+   - **Strict mode (unified period queue):** every single-signature change
+     (`add`, `remove`, `recovery_add`, `rk_remove(x)`) is a proposal logged
+     under one shared period key **`H("log prop", m)`** and waits 72 hours
+     of witness time (7 days for single-device `recovery_add`). **One change
+     per period, first writer wins:** a reader follows a proposal `v` only
+     if it has settled, has no counted targeted reject (`reject_pending(H(v))`
+     for `AK`/`rk_remove` proposals, or `recovery_reject(H(v))` for
+     `recovery_add`), and every other proposal against `m` that entered a
+     witnessed root **before `v`** was voided by a counted reject. Proposals
+     logged after `v` lose to `v` and cannot freeze late readers. A targeted
+     reject counts **if and only if** it enters a witnessed root strictly
+     before `v`'s witness-time settling deadline
+     (`rejEntry < propEntry + T_SETTLE`, i.e. 72 hours or 7 days); late
+     rejects are ignored uniformly by all readers so early and late readers
+     never split. `reject_pending`
+     voids only its named proposal, does not start a new period, and is kept
+     separate from `recovery_reject` so a stolen device's veto never revokes
+     `RK`. For `rk_remove(x)`, `x`'s own `reject_pending` is exempt while
+     any other current member's timely `reject_pending` voids it.
 6. **A late fork is a fork too.** However late a value was written, it is
    not ignored; otherwise the first writer (e.g. a device stolen unlocked,
    while its owner's device is offline) would win for good. Rule 4 only
    protects the ring's own devices and contacts whose head has moved past
    the fork; a contact that pinned an old head sees a late fork and fails
-   closed. This is a loss of service, not a takeover (see "Remaining
+   closed (`late_fork_never_hijacks_contact`). In a ring without a recovery
+   phrase, no safer automatic rule exists: affected contacts pair again out
+   of band. This is a loss of service, not a takeover (see "Remaining
    risks").
-7. Only an `RK`-signed `resolve_fork` record resolves a real fork. This
-   record is also subject to the waiting period. `resolve_fork` overrides
-   rule 4: contacts that pinned their head on the losing branch also move
-   to the chosen branch. Contacts treat `resolve_fork` like a recovery: there
-   is no automatic acceptance, and the verification words are **compared
-   again**. So someone who has taken the phrase, even if they open a fork
-   with an old removed device and choose their own branch with `RK`,
-   cannot move the contacts silently. While the fork lasts, both branches
-   are disputed; a `recovery_reject` on a disputed branch does not
-   invalidate `RK`.
+7. **Fork resolution (`resolve_fork`):** only a `resolve_fork` record signed
+   by the head's **active** `RK` resolves a real fork (an old `RK` replaced
+   by a settled `change_phrase` or revoked by an undisputed
+   `recovery_reject` is rejected). The record must name a branch that was
+   **validly logged** under the forked head's key with a valid member `AK`
+   signature (`resolved_branch_has_valid_lineage`); a stolen `RK` alone
+   cannot fabricate an unlogged branch. Two competing `resolve_fork` records
+   for the same forked head and active `RK` are themselves a fork and
+   readers follow neither (`no_split_fork_resolution`). `resolve_fork` is
+   subject to the witness-time waiting period and **overrides rule 4**:
+   contacts that already pinned their head on the losing branch also move to
+   the chosen branch. Contacts treat `resolve_fork` like a recovery: there
+   is no automatic acceptance, and out-of-band human re-verification bound
+   to the `resolve_fork` digest is required
+   (`resolve_fork_requires_contact_reverification`). So someone who steals
+   the phrase — even together with an old or compromised device `AK` —
+   cannot move contacts silently. While the fork is unresolved, both
+   branches are disputed and a `recovery_reject` on a disputed branch does
+   not invalidate `RK`.
 8. If the fork cannot be resolved (the thief holds both a device and the
-   phrase), contacts pair with you again. The worst outcome is a loss of
-   service, not a silent takeover.
+   phrase, or stalls resolution with a competing `RK` record), contacts pair
+   with you again. The worst outcome is a loss of service, not a silent
+   takeover.
 
 ## Mailboxes
 
@@ -318,7 +388,9 @@ a separate item before the code.
   - `membership`: with a Merkle proof against `C_{e−1}`, as many `AK`
     signatures as the previous head's policy field asks for. In strict
     mode, a single-signature `add` or `remove` is valid only after waiting
-    72 hours by witness time and with no `reject_pending` seen.
+    72 hours by witness time, with no timely targeted `reject_pending` and
+    no unvoided earlier proposal against period `m` (fork rule 5;
+    including `rk_remove`).
   - `recovery`: an `RK` signature; the waiting and re-verification rules
     apply.
   - The proof is 4 steps and takes 128 bytes.
@@ -376,9 +448,12 @@ out-of-band verification. TotalDrop uses both in the first release.
 - **Enforcing inclusion:** if the witnesses only sign the root, the server
   can, by never writing an honest record (censorship), present a removed
   device's own `rotate` record as the only valid value. To prevent this:
-  - The app carries a fixed list of witnesses (n witnesses). Contacts
-    accept a root only with the signatures of at least k witnesses from
-    this list (k > n/2).
+  - The app carries a fixed list of witnesses (`n` witnesses). Contacts
+    accept a root only with the signatures of at least `k` witnesses from
+    this list, chosen for at most `f` colluding witnesses so that
+    **`2k - n > f`** (single view; an honest majority alone is not enough,
+    e.g. `n = 5, k = 4` tolerates `f <= 2` while `k = 3` tolerates only
+    `f = 0`) and **`f < k`** (no censorship).
   - The ring also sends every record, together with `L` and the encrypted
     value itself, to **all** the witnesses on the list (with an ARC token).
     The witness forwards the record to the log itself too, and gives the
@@ -390,25 +465,31 @@ out-of-band verification. TotalDrop uses both in the first release.
     Meaningless records stay under a random `L`, affect nobody, and are
     limited by ARC.
   - Every accepted root says that every witness included the record; so
-    censorship needs k witnesses to work together. This is the assumption
+    censorship needs `k` witnesses to work together. This is the assumption
     P2 and P3 already rest on.
   - Time limit: a record enters a root within 1 hour at the latest, and the
-    root a contact accepts is at most 1 hour old. The effect of a removal
-    reaches every contact within **2 hours** at the latest.
+    root a contact accepts is at most 1 hour old. Allowing bounded clock
+    skew `Delta` between participants and witnesses (verified tight in
+    `formal/GhostRingTiming.tla`), the effect of a removal reaches every
+    contact within **`2 hours + 2 * Delta`** at the latest (2 hours 10
+    minutes for `Delta <= 5 minutes`).
   - The witness sees an `L` that looks random and an encrypted value, and
     cannot read the content. But it sees the connection's IP and time (see
     "Remaining risks").
 - **Freshness:** before every send, the contact asks for a root that the
-  witnesses co-signed at most 1 hour ago, and gets a proof that in that
-  root there is **no** valid value under `L_{e+1}`. If there is one, or no
-  fresh root comes, it does not send. This stops, at the moment of sending,
-  a removed device from receiving files with an old head (the freeze
-  attack).
+  witnesses co-signed at most 1 hour ago, and checks that in that root
+  there is **no valid `AK` record and no settled value** under `L_{e+1}`
+  (an unsettled `rotate` does not block sending, avoiding a 4-hour pause
+  after every weekly `rotate`; this stays safe because no ring device
+  follows a `rotate` until `D_device = 6 hours`). If a valid `AK` record or
+  settled value is present, or no fresh root comes, it does not send. This
+  stops, at the moment of sending, a removed device from receiving files
+  with an old head (the freeze attack).
 - **Freshness when receiving too:** a ring that receives an offer does the
   same check for the sending ring before showing the offer: a fresh
-  witnessed root and a proof of absence of the epoch after the sender's
-  head. So a removed device cannot send files in "Mum"'s name with an old
-  head, even with "always accept" on.
+  witnessed root showing no valid `AK` record and no settled value under
+  the key after the sender's head. So a removed device cannot send files in
+  "Mum"'s name with an old head, even with "always accept" on.
 - **The ring's own check:** if the ring sees a valid value it does not know
   under its own keys, it understands the situation at once and warns the
   user. It also warns if its own record with a witness receipt does not
@@ -444,21 +525,36 @@ out-of-band verification. TotalDrop uses both in the first release.
   1. The new device derives `RKK` from the phrase, opens the latest
      recovery records in the log and learns the latest head. It does not
      learn the contacts.
-  2. It writes an `RK`-signed `recovery_add` under `L_{e+1}`. The record
-     names this head as its parent.
-  3. The waiting starts. The ring's remaining devices (if any) and the
-     contacts see the record in the log.
+  2. It writes an `RK`-signed `recovery_add` against the current membership
+     period `m` (the head of the last membership record; `rotate` does not
+     change `m`): under `H("log recovery proposal", m)` in default mode, or
+     in the unified period queue `H("log prop", m)` in strict mode.
+  3. The waiting starts (measured strictly in witness time). The ring's
+     remaining devices (if any) and the contacts see the record in the log.
 - **Waiting:** 72 hours if the ring has 2 or more devices, 7 days with a
   single device; measured by witness time.
-  - During the wait, any device can write `recovery_reject`. The reject
-    invalidates `RK`; a new phrase is given with `change_phrase`, with its
-    own waiting period.
-  - If under the same key there is also a valid `AK`-signed record by a
-    device, the device record takes priority and the recovery record is
-    considered invalid (the fork rule, an extension of rule 1). An
-    `IK`-signed `rotate` does not stop the recovery: a phone stolen while
-    locked that stays online cannot block the recovery by writing a
-    `rotate`.
+  - During the wait, any device can write `recovery_reject` from its
+    current head (independent of writer freshness). In default mode, an
+    undisputed `recovery_reject` stops the recovery against `m` and revokes
+    `RK` (a new phrase is given with `change_phrase`, with its own waiting
+    period). In strict mode, `recovery_reject` is targeted by proposal
+    digest and kept separate from `reject_pending`; it counts only if it
+    enters a witnessed root before the proposal settles (so submitting
+    strictly more than `1 hour + Delta` before the deadline guarantees
+    voiding).
+  - In default mode, any valid `AK` record written from any head of period
+    `m` takes priority and invalidates the recovery (fork rule 5); an
+    `IK`-signed `rotate` does not stop or delay the recovery, because it
+    does not change `m`. In default mode, two competing `recovery_add`
+    records against the same period `m` form a real fork and readers follow
+    neither. In strict mode, `recovery_add` shares the unified
+    first-writer-wins queue `H("log prop", m)` with `AK` proposals and
+    `rk_remove` (fork rule 5): a later `recovery_add` loses to an earlier
+    settled proposal and cannot freeze late readers, while if a phrase
+    thief writes an earlier `recovery_add`, an honest member voids it with
+    a timely targeted `recovery_reject` within 72 hours (and if no honest
+    device remains, contacts still refuse out-of-band re-verification and
+    pair again).
 - **Against a malicious server, the wait is not a veto window:** if the
   server, together with the witnesses, censors the reject record, the
   wait is only a delay. In that case P7 is provided by the contacts'
@@ -474,12 +570,14 @@ out-of-band verification. TotalDrop uses both in the first release.
     device listens to this mailbox for 30 days.
   - Others who know the head (such as a blocked contact) can also leave an
     offer in this mailbox. So the recovered ring treats every offer like a
-    new pairing: the verification words are **compared again**, a new
-    `k_AB` is set up, and the contact is given a name again. When the time
-    runs out, there is no automatic acceptance. The words only prove that
-    the channel was set up with the device showing the words; the contact
-    must verify out of band (face to face or with a voice call) that the
-    other side really is you.
+    new pairing: the verification words are **compared again** (bound to
+    the recovery record digest), a new `k_AB` is set up, and the contact is
+    given a name again. When the time runs out, there is no automatic
+    acceptance. Because the words only prove that the channel reaches the
+    device displaying them (a thief's device can display words too), the
+    contacts' half of P7 rests on the contact **recognising the other person
+    out of band** (face to face or by voice); user-facing prompts state
+    this plainly.
 - **Remaining risk:** if the phone and the phrase are stolen together, this
   layer does not protect.
 
@@ -490,8 +588,9 @@ out-of-band verification. TotalDrop uses both in the first release.
      from `r_e`).
    - The device that sends the offer signs it with its `IK` and adds a
      Merkle proof against the sending ring's current head. The signature
-     covers: the identities of both rings, the HPKE output and the
-     receiver's head as the sender knows it (head echo).
+     explicitly binds: the identities of both rings (the shared contact
+     context), the sender's head, the HPKE output, and the receiver's head
+     as the sender knows it (head echo).
    - The offer holds only the rendezvous information, not the file key.
 2. An online device in the receiving ring opens the offer. It starts the
    existing Noise + ML-KEM handshake
@@ -557,7 +656,7 @@ tied to a test or to a lemma in the formal model.
 | --- | --- |
 | P1 | **Membership integrity:** only an existing device, or (delayed) `RK`, adds records to the chain |
 | P2 | **Rollback and fork detection:** every valid continuation of an epoch appears in the log; more than one is a fork. The witnesses prevent two different views from being shown |
-| P3 | **Post-removal secrecy and authentication:** at most 2 hours after the removal record is reported to the witnesses, the removed device cannot read the content sent and cannot send files in the ring's name, even working with the server. This is provided by enforcing inclusion and the freshness check when sending and receiving. If the witnesses work with the server, this assurance does not hold |
+| P3 | **Post-removal secrecy and authentication:** at most `2 hours + 2 * Delta` (2 hours 10 minutes for `Delta <= 5 minutes`) after the removal record is reported to the witnesses, the removed device cannot read the content sent and cannot send files in the ring's name, even working with the server. This is provided by enforcing inclusion and the freshness check when sending and receiving. If the witnesses work with the server, this assurance does not hold |
 | P4 | **Forward secrecy:** transfer keys are ephemeral |
 | P5 | **No account table on the server:** accounts, device counts and contact relations cannot be extracted from the stored data without the keys. The IP and timing of live connections are out of this scope |
 | P6 | **Least information towards contacts:** the ring head does not show the number of devices. In which epoch the membership changed is visible |
@@ -579,7 +678,7 @@ tied to a test or to a lemma in the formal model.
   follow the later heads in the log: they see the times of membership
   changes, the operation type and the expiry dates, not the content or the
   number of devices. Cutting this needs per-contact head delivery or a
-  chain renewed on blocking; to be evaluated at the formal model stage.
+  chain renewed on blocking; left for a later design stage.
 - **Writing garbage into the log:** someone who knows an epoch's log key (a
   contact or a removed device) can slow readers down by writing many
   invalid values under that key. They cannot lock the epoch; ARC makes it
@@ -587,7 +686,22 @@ tied to a test or to a lemma in the formal model.
 - **The phrase together with an old removed device:** this is in the same
   class as "the phone and the phrase stolen together". It can open a fork
   and choose its own branch with `RK`; contacts are not moved unless they
-  re-verify.
+  re-verify out of band.
+- **Competing `recovery_add` or `resolve_fork` denial of service by a phrase
+  thief:** someone who stole only the recovery phrase cannot silently take
+  over the ring (P7), but can log a competing `recovery_add` against the
+  same membership period (stalling both records as a real fork in default
+  mode, or occupying strict mode's first-writer-wins queue `H("log prop", m)`
+  until an honest member voids it in time) or a second `resolve_fork`
+  against the same forked head (stalling resolution under the
+  single-resolution rule). When no honest device can clear the queue or
+  resolve the stall, contacts pair again out of band.
+- **Strict-mode veto denial of service:** a device stolen unlocked in strict
+  mode can veto single-signature `AK` proposals and submit earlier proposals
+  in the period queue that an honest member must reject within 72 hours
+  before `rk_remove` can win. This delays removal (loss of liveness) while
+  preserving security as long as an honest member comes online within the
+  wait.
 - **Traffic for following contacts:** every device follows the contact
   heads in the log once a day. The log server and the witnesses can link
   these queries by IP; the queries are paged and at random times, and
@@ -627,48 +741,90 @@ tied to a test or to a lemma in the formal model.
   - it cannot bring back a removed device;
   - it cannot show two contacts two different lists, or if it does, it is
     noticed.
-- **K2. After removal.** At most 2 hours after the removal record is
-  reported to the witnesses, the removed device cannot open the files sent
-  and cannot send files in the ring's name, even if the server helps it and
-  censors the honest record (while the witnesses are honest).
+- **K2. After removal.** At most `2 hours + 2 * Delta` (2 hours 10 minutes
+  for `Delta <= 5 minutes`) after the removal record is reported to the
+  witnesses, the removed device cannot open the files sent and cannot send
+  files in the ring's name, even if the server helps it and censors the
+  honest record (while the witnesses are honest).
 - **K3. Recovery.** Someone who knows the recovery phrase cannot add a
   device without the devices and the contacts noticing, and cannot learn
   the contact list without waiting. The test exercises the local clock, the
   waiting period, rejects and re-verification.
 - **K3b. Strict mode.** A contact rejects a single-signature `add` or
-  `remove` record of a ring in strict mode before the 72-hour wait is over,
-  or after a `reject_pending` has been seen.
+  `remove` proposal before 72 hours of witness time have passed, or after a
+  timely targeted `reject_pending` has entered a witnessed root before the
+  proposal settled; rejects an `rk_remove(x)` if any current member other
+  than `x` submitted a timely `reject_pending` (while ignoring `x`'s own
+  reject); enforces first-writer-wins single change per period (ignoring
+  late rejects and later competing proposals once an earlier live proposal
+  settles); and requires two distinct members' `AK` signatures to disable
+  strict mode (`policy`) or rotate the phrase (`change_phrase`) in strict
+  mode.
 - **K3c. Witnesses.** A made-up record report cannot stop the log; a record
   that the server dropped enters the root that contacts accept within 1
   hour at the latest, or the root is not signed.
 - **K4. Leaked database.** Even if the whole server database leaks, that
   two mailbox names belong to the same account cannot be found without the
   keys.
-- **K5. Formal model.** The protocol is modelled with Tamarin and P1–P8 are
-  proved as lemmas. The first lemma is the "bad server + old authority"
-  pattern. A separate model check (for example TLA+) is considered for the
-  waiting periods.
+- **K5. Formal model.** The protocol is modelled in Tamarin (`formal/`,
+  pieces A1–A4c) proving P1, P2, P3, and P7 with broken-model mutation tests
+  (including the "bad server + old authority" pattern; P4, P5, P6, and P8
+  rest on the underlying primitives and stage-C protocol notes), and the
+  waiting periods and clock-skew bounds are exhaustively model-checked in
+  TLA+ (`formal/GhostRingTiming.tla`, piece A5).
 - **K6. Fuzz.** There are fuzz targets for the chain, head, offer and log
   proof parsers, and for the fork merge rule.
 
 ## Rules to settle in the formal model
 
 In four review rounds, every patch opened a new corner case in the
-interaction of the fork and recovery rules. These rules are no longer
-patched by hand; in the Tamarin model before the code, the following
-questions are settled as lemmas:
+interaction of the fork and recovery rules. All four open questions have
+now been settled by the Tamarin models (A1–A4c) and the TLA+ timing model
+(A5) in [formal/](../formal/README.md) (#251):
 
-- In a ring without a recovery phrase, for contacts whose head has moved
-  past the fork, the only answer to a late fork is pairing again. Is there
-  a better rule?
-- If in strict mode a stolen device blocks a removal with
-  `reject_pending`, the exact definition of the path the owner follows with
-  `RK`.
-- How a pending single-signature record is ordered with the other records
-  under the same key.
-- That priority (rule 1), the recovery proposal and `resolve_fork`
-  together provide the property "no silent takeover with the phrase alone"
-  (P7).
+- **Late fork in a ring without a recovery phrase (settled — A4c, fork
+  rule 6):** no safer automatic rule exists. Ignoring late values would
+  allow an unlocked stolen device that writes first while the owner is
+  offline to hijack the ring permanently. Late forks fail closed
+  (`late_fork_never_hijacks_contact`), and contacts still pinned on the old
+  head pair again out of band (or follow `resolve_fork` when the ring has a
+  recovery phrase).
+- **Strict-mode escape when a stolen device vetoes its removal (settled —
+  A4b, `hayalet-halka-sikimod.spthy`):** the owner writes `rk_remove(x)`, a
+  pending proposal in `H("log prop", m)` signed by both the active `RK` and
+  a staying member's `AK` that waits 72 hours of witness time. `x`'s own
+  `reject_pending` does not count against it (and never revokes `RK`,
+  because `reject_pending` is separate from `recovery_reject`), while any
+  other current member's timely `reject_pending` voids it. Requiring the
+  staying member's `AK` ensures the phrase alone can never remove a device
+  (`rk_remove_needs_staying_device`).
+- **Ordering of pending single-signature records (settled — A4a/A4b/A5,
+  fork rule 5):** proposals are logged against the membership period `m`
+  (unchanged by `rotate`) rather than racing with `L_{e+1}` — under
+  `H("log recovery proposal", m)` in default mode and in one unified queue
+  `H("log prop", m)` in strict mode. In strict mode, **one change per
+  period, first writer wins**: a reader follows a proposal only once it has
+  waited 72 hours of witness time, has no counted targeted reject
+  (`rejEntry < propEntry + 72h` in witness time), and every earlier
+  proposal against `m` was voided by a counted reject (`no_split_change`,
+  `earlier_proposal_must_be_rejected`). Late rejects entering at or after
+  settling are ignored uniformly by all readers (`GhostRingTiming.tla`,
+  `SafetyLateRejectDoesNotSplit`).
+- **Priority (rule 1), recovery proposals, and `resolve_fork` together
+  provide P7 (settled — A4a/A4b/A4c):** in default mode, any `AK` record
+  from any head of period `m` (including a freshness-independent
+  `recovery_reject`) beats `recovery_add` (`ak_record_stops_recovery`),
+  while contacts require out-of-band human re-verification bound to the
+  record digest (`contact_not_moved_by_phrase_alone`). For forks,
+  `resolve_fork` requires the active `RK` (old phrases rotated out by
+  `change_phrase` or revoked by an undisputed `recovery_reject` are
+  rejected: `old_phrase_cannot_resolve_after_change_phrase`,
+  `revoked_rk_cannot_resolve`), a validly logged member branch
+  (`resolved_branch_has_valid_lineage`), single resolution per forked head
+  (`no_split_fork_resolution`), settling, and out-of-band contact
+  re-verification (`resolve_fork_requires_contact_reverification`). The
+  remaining phrase-only threat is denial of service via competing
+  `recovery_add`/`resolve_fork` records, not silent takeover.
 
 ## Order of verification and implementation
 
