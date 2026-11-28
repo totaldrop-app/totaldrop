@@ -23,10 +23,11 @@ from obra/superpowers (MIT, #469), in our own words.
   changes for users.
 
 Do not restate these documents in code comments or PRs; link them. Where a
-skill quotes a value from them (an SDK level, a timing, a CSP), the cited
-document is the source and wins; a PR that changes such a value updates
-the skill too (`grep -rn` it under `.claude/skills/`). A value a skill gives
-without a source is a recommendation, not a rule.
+skill quotes a value from them or a file (an SDK level, a timing, a CSP),
+the cited document or file is the source and wins; a PR that changes such a
+value updates the skill too (`grep -rn` it under `.claude/skills/`). A value
+a skill gives without a cited document or file is a recommendation, not a
+rule.
 
 ## Before writing code
 

@@ -44,9 +44,10 @@ built.
 
 ## Craft
 
-RTL mirroring, LTR codes and light/dark come from `docs/tasarim.md`; the
-other numbers here (320 px, 44 px, Web Vitals budgets) are recommended
-practice, not yet written there.
+RTL mirroring (with the mark never mirrored), LTR codes and light/dark come
+from `docs/tasarim.md:27, :29, :32, :44`, and native language names
+(never flags) from `docs/ceviri.md:107-109` (`site/public/lang.js:11`);
+everything else here is recommended practice, not yet in `docs/tasarim.md`.
 
 - Design tokens in `:root`; light and dark with `prefers-color-scheme`; no
   hard-coded colours in components. WCAG AA contrast; colour never the only
@@ -61,7 +62,7 @@ practice, not yet written there.
 
 ## Review and delivery
 
-Screenshots in the PR in light and dark, in at least one RTL (Arabic) and
-one CJK (Japanese) language (`docs/tasarim.md`); phone (390 px) and desktop
-(1280 px) widths are the usual choice. Validate HTML and check every link
-and asset exists.
+Screenshots in the PR in light and dark, in Turkish, English, plus one RTL
+(Arabic) and one CJK (Japanese) (`docs/surec.md`, "Bitti tanımı";
+`docs/tasarim.md:19, :32`); phone (390 px) and desktop (1280 px) widths are
+the usual choice. Validate HTML and check every link and asset exists.
