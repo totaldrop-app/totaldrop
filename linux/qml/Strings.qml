@@ -27,6 +27,11 @@ QtObject {
         return Texts.bytes(bytes)
     }
 
+    // "50%", "%50" or "50 %" in the region's format, rounded down (#491).
+    function percent(done, total) {
+        return Texts.percent(done, total)
+    }
+
     // A name from the other side, with hidden direction characters shown.
     function name(text) {
         return Texts.reveal(text)

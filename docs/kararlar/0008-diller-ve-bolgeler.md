@@ -74,13 +74,14 @@
   shown; the regional setting does not change the plural.
 - **Numbers, sizes and percentages** follow the regional setting: on Linux
   `LC_ALL` > `LC_NUMERIC` > `LANG` (as Qt does), on Android the device
-  region. The percent sign's position comes from the region too ("%50",
-  "50 %"); Android writes it that way (#483), while Linux still uses the
-  translated pattern (#491). The region's digit system (e.g. Arabic-Indic
-  digits) is kept on Linux and in the CLI; on Android and on the site this
-  is not claimed until it is tested separately (#483, 11 November 2026;
-  the earlier text did not mention percentages, and Android wrote the
-  percentage with the app language's pattern).
+  region. The percent sign's position and form come from the region too
+  ("%50", "50 %", "50%"); both Android (#483) and Linux (#491) write the
+  transfer percentage that way, while the CLI keeps `{percent}` inside its
+  translated `cliProgress` line. The region's digit system (e.g.
+  Arabic-Indic digits) is kept on Linux and in the CLI; on Android and on
+  the site this is not claimed until it is tested separately (#483,
+  11 November 2026; #491, 15 November 2026: Linux previously wrote the
+  percentage with the app language's `progressPercent` pattern).
 - **Text direction:** Derived from the language (Arabic, Persian, Hebrew
   and Urdu are right to left). On Linux the interface is mirrored in QML
   with `LayoutMirroring`; for Qt's own windows (e.g. menus) the app's

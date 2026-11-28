@@ -3,7 +3,8 @@
 //
 //! TotalDrop's interface text for the Rust programs (the Linux app and the
 //! command line): the strings in `l10n/`, the language the system asks
-//! for, and numbers, sizes and plurals in that language and region.
+//! for, and numbers, sizes, percentages and plurals in that language and
+//! region.
 //!
 //! The rules are in ADR 0008 (`docs/kararlar/0008-diller-ve-bolgeler.md`).
 //! The ARB files are compiled in, so a program never reads translations
@@ -251,23 +252,26 @@ pub fn available(domain: Domain) -> Vec<String> {
 /// without translations for it.
 pub struct Formats {
     rtl: bool,
+    numeric: Locale,
     plurals: Option<PluralRules>,
     decimal: Option<DecimalFormatter>,
 }
 
 impl Formats {
     /// Plural rules and direction of `language`, numbers of `numeric` (or
-    /// of `language` when `None`).
+    /// of `language` when `None`; `Locale::UNKNOWN` keeps ungrouped POSIX
+    /// `C` numbers).
     #[must_use]
     pub fn new(language: &Locale, numeric: Option<&Locale>) -> Self {
+        let numeric = numeric.unwrap_or(language);
+        let decimal = (*numeric != Locale::UNKNOWN)
+            .then(|| DecimalFormatter::try_new(numeric.into(), Default::default()).ok())
+            .flatten();
         Self {
             rtl: locale::is_rtl(language),
+            numeric: numeric.clone(),
             plurals: PluralRules::try_new_cardinal(language.into()).ok(),
-            decimal: DecimalFormatter::try_new(
-                numeric.unwrap_or(language).into(),
-                Default::default(),
-            )
-            .ok(),
+            decimal,
         }
     }
 
@@ -279,6 +283,64 @@ impl Formats {
             || format!("{}.{}", tenths / 10, tenths % 10),
             |f| f.format(&d).to_string(),
         )
+    }
+
+    /// `n` as a whole percent in `numeric`'s CLDR standard percent pattern
+    /// and digit system ("50%", "%50", "50\u{a0}%", "٥٠٪؜"; #491).
+    fn percent(&self, n: u64) -> String {
+        let digits = message::Locale::number(self, n);
+        let mut steps = locale::chain(&self.numeric);
+        // Non-default scripts (be_BY@latin -> be-Latn-BY, ku-Arab, zgh-Tfng)
+        // stop before <lang> in ICU4X's fallbacker; append <lang> last so
+        // regional overrides (ku-IQ, de-CH, es-419) still win first.
+        if !self.numeric.id.language.is_unknown() {
+            let lang = self.numeric.id.language.to_string();
+            if !steps.contains(&lang) {
+                steps.push(lang);
+            }
+        }
+        match message::Locale::number(self, 0).chars().next() {
+            // Eastern Arabic-Indic digits (arab: ar-EG, ar-SA, ckb, sd, ...).
+            Some('\u{0660}') => {
+                if steps.iter().any(|s| s == "ckb") {
+                    format!("{digits}\u{00A0}\u{066A}")
+                } else {
+                    format!("{digits}\u{066A}\u{061C}")
+                }
+            }
+            // Extended Arabic-Indic digits (arabext: fa, ps, ks, ur-IN,
+            // *-u-nu-arabext); CLDR's arabext root uses ٪, overridden in ur.
+            Some('\u{06F0}') => {
+                if steps.iter().any(|s| s == "ur") {
+                    format!("{digits}%")
+                } else {
+                    format!("{digits}\u{066A}")
+                }
+            }
+            _ => {
+                for step in &steps {
+                    match step.as_str() {
+                        "blo" | "eu" => return format!("%\u{00A0}{digits}"),
+                        "ku-IQ" | "de-CH" | "de-LI" | "fr-CH" | "es-419" | "es-US" => {
+                            return format!("{digits}%");
+                        }
+                        "tr" | "ku" => return format!("%{digits}"),
+                        "ar" => return format!("{digits}\u{200E}%\u{200E}"),
+                        "oc" => return format!("{digits}\u{202F}%"),
+                        "bas" | "be" | "br" | "bua" | "ca" | "ce" | "cs" | "cv" | "da" | "de"
+                        | "dsb" | "dua" | "dz" | "en-AT" | "en-DE" | "en-DK" | "en-FI"
+                        | "en-NO" | "en-SE" | "es" | "fi" | "fo" | "fr" | "gl" | "gsw" | "hr"
+                        | "hsb" | "kl" | "ksh" | "lb" | "lt" | "mk" | "nb" | "nds" | "nn"
+                        | "no" | "qu" | "rn" | "ro" | "ru" | "se" | "sk" | "sl" | "smn" | "sv"
+                        | "tk" | "tt" | "zgh" => {
+                            return format!("{digits}\u{00A0}%");
+                        }
+                        _ => {}
+                    }
+                }
+                format!("{digits}%")
+            }
+        }
     }
 }
 
@@ -499,6 +561,14 @@ impl Strings {
         message::Locale::number(&self.formats, n)
     }
 
+    /// The whole percent of `done` in `total`, rounded down so 100 means
+    /// finished, in the region's percent format ("50%", "%50", "50\u{a0}%";
+    /// #491).
+    #[must_use]
+    pub fn percent(&self, done: u64, total: u64) -> String {
+        self.formats.percent(whole_percent(done, total))
+    }
+
     /// A size in bytes, in SI units ("1.5 MB", "1,5 MB", "12 MB"): one
     /// decimal below 10 of a unit, whole numbers above, and the next unit
     /// once the rounded value reaches 1000.
@@ -537,6 +607,22 @@ impl Strings {
             divisor = divisor.saturating_mul(1000);
         }
     }
+}
+
+/// The whole percent of `done` in `total`, rounded down with integer
+/// arithmetic so that 100 means finished (#491, matching Android's
+/// `wholePercent` in #483).
+#[must_use]
+pub fn whole_percent(done: u64, total: u64) -> u64 {
+    if total == 0 {
+        return 0;
+    }
+    let pct = u128::from(done)
+        .saturating_mul(100)
+        .checked_div(u128::from(total))
+        .unwrap_or(0)
+        .min(100);
+    u64::try_from(pct).unwrap_or(100)
 }
 
 fn accented(text: &str) -> String {
@@ -798,6 +884,110 @@ mod tests {
         let s = Strings::new(Domain::App, &prefs, de.as_ref());
         assert_eq!(s.number(1_234_567), "1.234.567");
         assert_eq!(s.bytes(1_500_000), "1,5 MB");
+    }
+
+    #[test]
+    fn percents_follow_the_region_and_floor() {
+        let pair = |ui: &str, region: &str| {
+            let prefs: Vec<Locale> = locale::parse(ui).into_iter().collect();
+            let numeric = locale::parse(region);
+            Strings::new(Domain::App, &prefs, numeric.as_ref())
+        };
+        // Language and region separated (#491, matching Android's #483):
+        assert_eq!(pair("en", "en-US").percent(1, 2), "50%");
+        assert_eq!(pair("tr", "en-US").percent(1, 2), "50%");
+        assert_eq!(pair("en", "tr-TR").percent(1, 2), "%50");
+        assert_eq!(pair("en", "de-DE").percent(1, 2), "50\u{a0}%");
+        assert_eq!(pair("de", "de-CH").percent(1, 2), "50%");
+        assert_eq!(pair("fr", "fr-FR").percent(1, 2), "50\u{a0}%");
+        assert_eq!(pair("fr", "fr-CH").percent(1, 2), "50%");
+        assert_eq!(pair("es", "es-ES").percent(1, 2), "50\u{a0}%");
+        assert_eq!(pair("es", "es-MX").percent(1, 2), "50%");
+        assert_eq!(pair("es", "es-BR").percent(1, 2), "50%");
+        assert_eq!(pair("en", "en-DE").percent(1, 2), "50\u{a0}%");
+        assert_eq!(pair("en", "en-150").percent(1, 2), "50%");
+        assert_eq!(pair("ja", "ja-JP").percent(1, 2), "50%");
+        // Right-to-left and non-Latin digit systems, matching CLDR and #489:
+        assert_eq!(pair("ar", "ar").percent(1, 2), "50\u{200e}%\u{200e}");
+        assert_eq!(pair("ar", "ar-AE").percent(1, 2), "50\u{200e}%\u{200e}");
+        assert_eq!(
+            pair("ar", "ar-EG").percent(1, 2),
+            "\u{0665}\u{0660}\u{066a}\u{061c}"
+        );
+        assert_eq!(
+            pair("en", "ar-EG").percent(1, 2),
+            "\u{0665}\u{0660}\u{066a}\u{061c}"
+        );
+        assert_eq!(pair("ar", "en-US").percent(1, 2), "50%");
+        assert_eq!(
+            pair("fa", "fa-IR").percent(1, 2),
+            "\u{06f5}\u{06f0}\u{066a}"
+        );
+        assert_eq!(pair("fa", "en-US").percent(1, 2), "50%");
+        assert_eq!(
+            pair("en", "ps-AF").percent(1, 2),
+            "\u{06f5}\u{06f0}\u{066a}"
+        );
+        assert_eq!(
+            pair("en", "ks-IN").percent(1, 2),
+            "\u{06f5}\u{06f0}\u{066a}"
+        );
+        assert_eq!(pair("en", "ur-PK").percent(1, 2), "50%");
+        assert_eq!(pair("en", "ur-IN").percent(1, 2), "\u{06f5}\u{06f0}%");
+        assert_eq!(
+            pair("en", "ur-u-nu-arabext").percent(1, 2),
+            "\u{06f5}\u{06f0}%"
+        );
+        assert_eq!(pair("bn", "bn-BD").percent(1, 2), "\u{09eb}\u{09e6}%");
+        assert_eq!(pair("en", "eu-ES").percent(1, 2), "%\u{a0}50");
+        assert_eq!(pair("en", "blo").percent(1, 2), "%\u{a0}50");
+        assert_eq!(pair("en", "oc-FR").percent(1, 2), "50\u{202f}%");
+        assert_eq!(pair("en", "bas").percent(1, 2), "50\u{a0}%");
+        assert_eq!(pair("en", "bua").percent(1, 2), "50\u{a0}%");
+        // Non-default scripts keep their base language's CLDR pattern while
+        // still respecting regional overrides:
+        assert_eq!(pair("en", "be-Latn-BY").percent(1, 2), "50\u{a0}%");
+        assert_eq!(pair("en", "ku-Arab-IR").percent(1, 2), "%50");
+        assert_eq!(pair("en", "ku-IQ").percent(1, 2), "50%");
+        assert_eq!(pair("en", "zgh-Tfng-MA").percent(1, 2), "50\u{a0}%");
+        // POSIX LC_NUMERIC=C / C.UTF-8 / POSIX or unset LANG keeps C/ASCII
+        // numbers and "50%" even when the UI language is Turkish or Persian:
+        let from_env = |vars: &[(&str, &str)]| {
+            let sys = locale::System::from_vars(|k| {
+                vars.iter()
+                    .find(|(n, _)| *n == k)
+                    .map(|(_, v)| (*v).to_owned())
+            });
+            Strings::new(Domain::App, &sys.messages, sys.numeric.as_ref())
+        };
+        let tr_c = from_env(&[("LANG", "tr_TR.UTF-8"), ("LC_NUMERIC", "C.UTF-8")]);
+        assert_eq!(tr_c.tag(), "tr");
+        assert_eq!(tr_c.percent(1, 2), "50%");
+        assert_eq!(tr_c.bytes(1_500_000), "1.5 MB");
+        assert_eq!(tr_c.number(1_234_567), "1234567");
+        let fa_c = from_env(&[("LANG", "fa_IR.UTF-8"), ("LC_NUMERIC", "POSIX")]);
+        assert_eq!(fa_c.tag(), "fa");
+        assert_eq!(fa_c.percent(1, 2), "50%");
+        let tr_msg_only = from_env(&[("LC_MESSAGES", "tr_TR.UTF-8")]);
+        assert_eq!(tr_msg_only.tag(), "tr");
+        assert_eq!(tr_msg_only.percent(1, 2), "50%");
+        assert_eq!(
+            from_env(&[("LANG", "be_BY.UTF-8@latin")]).percent(1, 2),
+            "50\u{a0}%"
+        );
+        // When numeric=None is passed directly in Rust, formats follow the chosen language:
+        assert_eq!(strings("tr").percent(1, 2), "%50");
+        assert_eq!(strings("de").percent(1, 2), "50\u{a0}%");
+        // Integer flooring: 29/100 in f64*100 is 28.999..., and 995/1000 must stay 99%:
+        let en = pair("en", "en-US");
+        assert_eq!(en.percent(29, 100), "29%");
+        assert_eq!(en.percent(995, 1000), "99%");
+        assert_eq!(en.percent(0, 0), "0%");
+        assert_eq!(en.percent(5, 0), "0%");
+        assert_eq!(en.percent(1000, 1000), "100%");
+        assert_eq!(en.percent(1200, 1000), "100%");
+        assert_eq!(en.percent(u64::MAX - 1, u64::MAX), "99%");
+        assert_eq!(en.percent(u64::MAX, u64::MAX), "100%");
     }
 
     #[test]

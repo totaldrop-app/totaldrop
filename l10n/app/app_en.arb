@@ -159,7 +159,7 @@
   "back": "Back",
   "codeSuggestions": "Suggestions",
   "progressPercent": "{percent}%",
-  "@progressPercent": {"description": "Transfer progress; use your language's percent style", "placeholders": {"percent": {"type": "int", "format": "decimalPattern"}}},
+  "@progressPercent": {"description": "Unused since #483 and #491; apps format percents from the region", "placeholders": {"percent": {"type": "int", "format": "decimalPattern"}}},
 
   "editUndo": "Undo",
   "@editUndo": {"description": "Linux: in the right-click menu of text fields, which Qt draws; the system's usual word for the command"},

@@ -5,8 +5,9 @@
 //! language and region, from `totaldrop-l10n` (ADR 0008).
 //!
 //! The language is read once at start from `LANGUAGE`, `LC_ALL`,
-//! `LC_MESSAGES` and `LANG`; numbers follow `LC_NUMERIC`. QML reads plain
-//! strings from `strings` (JSON) and formats the rest through `format`.
+//! `LC_MESSAGES` and `LANG`; numbers, sizes and percentages follow
+//! `LC_NUMERIC`. QML reads plain strings from `strings` (JSON) and formats
+//! the rest through `format`.
 
 use std::sync::OnceLock;
 
@@ -40,6 +41,11 @@ pub mod qobject {
         /// A size in bytes in the region's format ("1,5 MB").
         #[qinvokable]
         fn bytes(self: &Texts, n: f64) -> QString;
+
+        /// A transfer's whole percent (`done` of `total`), rounded down, in
+        /// the region's format ("50%", "%50", "50\u{a0}%"; #491).
+        #[qinvokable]
+        fn percent(self: &Texts, done: f64, total: f64) -> QString;
 
         /// A name from the other side with hidden direction and control
         /// characters made visible.
@@ -121,14 +127,26 @@ impl qobject::Texts {
         QString::from(strings().bytes(count(n)).as_str())
     }
 
+    fn percent(&self, done: f64, total: f64) -> QString {
+        QString::from(format_percent(strings(), done, total).as_str())
+    }
+
     fn reveal(&self, name: &QString) -> QString {
         QString::from(totaldrop_l10n::reveal_controls(&name.to_string()).as_str())
     }
 }
 
+/// Formats `done` of `total` (as QML `real` counts) with `s`'s regional
+/// percent pattern.
+fn format_percent(s: &Strings, done: f64, total: f64) -> String {
+    s.percent(count(done), count(total))
+}
+
 #[cfg(test)]
 mod tests {
-    use super::count;
+    use totaldrop_l10n::{Domain, Strings, locale};
+
+    use super::{count, format_percent};
 
     #[test]
     fn counts_clamp() {
@@ -138,5 +156,25 @@ mod tests {
         assert_eq!(count(1.5e6), 1_500_000);
         assert_eq!(count(f64::INFINITY), u64::MAX);
         assert_eq!(count(f64::NEG_INFINITY), 0);
+    }
+
+    #[test]
+    fn bridge_percent_follows_region_and_floors_counts() {
+        let pair = |ui: &str, region: &str| {
+            let prefs: Vec<_> = locale::parse(ui).into_iter().collect();
+            let numeric = locale::parse(region);
+            Strings::new(Domain::App, &prefs, numeric.as_ref())
+        };
+        assert_eq!(format_percent(&pair("tr", "en-US"), 1.0, 2.0), "50%");
+        assert_eq!(format_percent(&pair("en", "tr-TR"), 1.0, 2.0), "%50");
+        assert_eq!(format_percent(&pair("en", "de-DE"), 1.0, 2.0), "50\u{a0}%");
+        assert_eq!(format_percent(&pair("en", "en-US"), 29.0, 100.0), "29%");
+        assert_eq!(format_percent(&pair("en", "en-US"), 995.0, 1000.0), "99%");
+        assert_eq!(format_percent(&pair("en", "en-US"), f64::NAN, 100.0), "0%");
+        assert_eq!(format_percent(&pair("en", "en-US"), -5.0, 100.0), "0%");
+        assert_eq!(
+            format_percent(&pair("en", "en-US"), f64::INFINITY, 100.0),
+            "100%"
+        );
     }
 }
