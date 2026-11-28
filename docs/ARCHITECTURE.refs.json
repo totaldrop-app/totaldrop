@@ -66,8 +66,8 @@
     "enum SendStage {"
   ],
   "app/rust/Cargo.toml:19-21": [
-    "totaldrop-core = { version = \"0.2.0-beta.5\", path = \"../../crates/totaldrop-core\" }",
-    "totaldrop-l10n = { version = \"0.2.0-beta.5\", path = \"../../crates/totaldrop-l10n\" }"
+    "totaldrop-core = { version = \"0.2.0-beta.6\", path = \"../../crates/totaldrop-core\" }",
+    "totaldrop-l10n = { version = \"0.2.0-beta.6\", path = \"../../crates/totaldrop-l10n\" }"
   ],
   "app/rust/src/api/transfer.rs:343": [
     "pub async fn prepare_send("
@@ -88,8 +88,8 @@
     "exclude = [\"fuzz\"]"
   ],
   "crates/totaldrop-cli/Cargo.toml:20-22": [
-    "totaldrop-core = { version = \"0.2.0-beta.5\", path = \"../totaldrop-core\" }",
-    "totaldrop-proto = { version = \"0.2.0-beta.5\", path = \"../totaldrop-proto\" }"
+    "totaldrop-core = { version = \"0.2.0-beta.6\", path = \"../totaldrop-core\" }",
+    "totaldrop-proto = { version = \"0.2.0-beta.6\", path = \"../totaldrop-proto\" }"
   ],
   "crates/totaldrop-cli/Cargo.toml:28-29": [
     "totaldrop-relay = { version = \"0.1.0-beta.1\", path = \"../../server/totaldrop-relay\" }",
@@ -164,8 +164,8 @@
     "if let Ok(url) = std::env::var(\"TOTALDROP_TEST_RELAY\") {"
   ],
   "crates/totaldrop-core/Cargo.toml:24-25": [
-    "totaldrop-crypto = { version = \"0.2.0-beta.5\", path = \"../totaldrop-crypto\" }",
-    "totaldrop-proto = { version = \"0.2.0-beta.5\", path = \"../totaldrop-proto\" }"
+    "totaldrop-crypto = { version = \"0.2.0-beta.6\", path = \"../totaldrop-crypto\" }",
+    "totaldrop-proto = { version = \"0.2.0-beta.6\", path = \"../totaldrop-proto\" }"
   ],
   "crates/totaldrop-core/Cargo.toml:4": [
     "license = \"MIT OR Apache-2.0\""
@@ -381,7 +381,7 @@
   ],
   "crates/totaldrop-l10n/Cargo.toml:21-23": [
     "[dev-dependencies]",
-    "totaldrop-proto = { version = \"0.2.0-beta.5\", path = \"../totaldrop-proto\" }"
+    "totaldrop-proto = { version = \"0.2.0-beta.6\", path = \"../totaldrop-proto\" }"
   ],
   "crates/totaldrop-l10n/src/locale.rs:91-109": [
     "/// Reads `LANGUAGE`, `LC_ALL`, `LC_MESSAGES`, `LC_NUMERIC` and `LANG`.",
@@ -432,8 +432,8 @@
     "totaldrop-l10n = { path = \"../crates/totaldrop-l10n\" }"
   ],
   "linux/Cargo.toml:22-24": [
-    "totaldrop-core = { version = \"0.2.0-beta.5\", path = \"../crates/totaldrop-core\" }",
-    "totaldrop-l10n = { version = \"0.2.0-beta.5\", path = \"../crates/totaldrop-l10n\" }"
+    "totaldrop-core = { version = \"0.2.0-beta.6\", path = \"../crates/totaldrop-core\" }",
+    "totaldrop-l10n = { version = \"0.2.0-beta.6\", path = \"../crates/totaldrop-l10n\" }"
   ],
   "linux/qml/ResultPanel.qml:135": [
     "onClicked: Qt.openUrlExternally(r.folderUrl)"
@@ -634,7 +634,7 @@
     ");"
   ],
   "server/totaldrop-relay/Cargo.toml:18": [
-    "totaldrop-proto = { version = \"0.2.0-beta.5\", path = \"../../crates/totaldrop-proto\" }"
+    "totaldrop-proto = { version = \"0.2.0-beta.6\", path = \"../../crates/totaldrop-proto\" }"
   ],
   "server/totaldrop-relay/src/lib.rs:144": [
     "pub async fn serve(self, listener: TcpListener) {"
@@ -654,7 +654,7 @@
     ") else {"
   ],
   "server/totaldrop-rendezvous/Cargo.toml:20": [
-    "totaldrop-proto = { version = \"0.2.0-beta.5\", path = \"../../crates/totaldrop-proto\" }"
+    "totaldrop-proto = { version = \"0.2.0-beta.6\", path = \"../../crates/totaldrop-proto\" }"
   ],
   "server/totaldrop-rendezvous/src/lib.rs:128": [
     "fn token_matches(given: Option<[u8; 16]>, ours: &[u8; 16]) -> bool {"

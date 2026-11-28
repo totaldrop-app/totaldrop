@@ -257,6 +257,16 @@
   </requires>
   <content_rating type="oars-1.1"/>
   <releases>
+    <release version="0.3.0~beta.7" date="2026-11-28" type="development">
+      <description>
+        <p>Where both devices have IPv6, transfers now also try a direct IPv6 path alongside IPv4 without exposing hardware-derived IPv6 addresses. During transfers, TotalDrop asks home routers for a temporary PCP, NAT-PMP or UPnP port mapping (never in Privacy mode), cleans up leftover TotalDrop UPnP rules, and releases mapped ports promptly when stopping or quitting.</p>
+        <p>While a transfer is under way, TotalDrop asks the system not to suspend on idle (using systemd-logind in distribution packages and the desktop portal in the Flatpak, where Hyprland and Omarchy may not hold sleep); the screen may still dim and lock.</p>
+        <p>Transfers request larger socket buffers (up to 4 MiB), pick up promptly when a quiet direct path returns, check free disk space before accepting, create large folder trees off the main thread, and finish stopping within the window-close budget without extra drain waits.</p>
+        <p>In the Flatpak, "totaldrop receive" without -o now saves into ~/Downloads/TotalDrop and refuses paths Flatpak would not keep. Starting a second Linux package brings the running window forward and notifies which package's window is open. Screen readers such as Orca now announce each transfer step, Enter and Return open focused cards under KDE Plasma, "Open folder" handles "#", "?" and "%" and uses an absolute default folder, and Settings reflects Cloudflare's request-sample retention.</p>
+        <p>The .rpm package is now built on Fedora 44 (supporting Fedora 44 and newer; Fedora 43 is no longer supported).</p>
+        <p>Security: devices no longer dial broadcast or multicast peer addresses, and the url crate is updated to 2.5.9 (RUSTSEC-2026-0592).</p>
+      </description>
+    </release>
     <release version="0.3.0~beta.6" date="2026-11-07" type="development">
       <description>
         <p>Send a text instead of files: "Send text" on the Send screen, or "Send clipboard" in the app's launcher menu. A text that arrives is shown, not saved, with any hidden characters named, and "Copy text" copies it exactly as it came. A receiver on 0.3.0-beta.5 or older saves the text as text.txt.</p>

@@ -2927,7 +2927,7 @@ checksum = "009dbb7700f11c55ef83aebbe4c0e9cf1f1ac0844bd8d6f00dc38f302026e13a"
 
 [[package]]
 name = "totaldrop-cli"
-version = "0.2.0-beta.5"
+version = "0.2.0-beta.6"
 dependencies = [
  "clap",
  "dirs",
@@ -2944,7 +2944,7 @@ dependencies = [
 
 [[package]]
 name = "totaldrop-core"
-version = "0.2.0-beta.5"
+version = "0.2.0-beta.6"
 dependencies = [
  "blake3",
  "fs4",
@@ -2966,7 +2966,7 @@ dependencies = [
 
 [[package]]
 name = "totaldrop-crypto"
-version = "0.2.0-beta.5"
+version = "0.2.0-beta.6"
 dependencies = [
  "blake3",
  "chacha20poly1305 0.11.0",
@@ -2980,7 +2980,7 @@ dependencies = [
 
 [[package]]
 name = "totaldrop-l10n"
-version = "0.2.0-beta.5"
+version = "0.2.0-beta.6"
 dependencies = [
  "icu_decimal",
  "icu_locale",
@@ -2994,7 +2994,7 @@ dependencies = [
 
 [[package]]
 name = "totaldrop-linux"
-version = "0.3.0-beta.6"
+version = "0.3.0-beta.7"
 dependencies = [
  "ashpd",
  "cxx",
@@ -3019,7 +3019,7 @@ dependencies = [
 
 [[package]]
 name = "totaldrop-proto"
-version = "0.2.0-beta.5"
+version = "0.2.0-beta.6"
 dependencies = [
  "bip39",
  "ciborium",

@@ -1,3 +1,28 @@
+totaldrop (0.3.0~beta.7-1) unstable; urgency=medium
+
+  * Direct IPv6 transfers alongside IPv4 when both devices have IPv6,
+    without exposing hardware-derived IPv6 addresses.
+  * Temporary router port mapping (PCP, NAT-PMP, and UPnP) during
+    transfers to establish direct connections more often; Privacy mode
+    asks the router nothing. Stale TotalDrop UPnP rules are cleaned up
+    and mapped ports are released promptly on stop or exit.
+  * Prevent idle suspend while a transfer is running (via systemd-logind
+    in distribution packages); the screen may still dim and lock.
+  * Faster local transfers (larger socket buffers up to 4 MiB), faster
+    recovery when a direct connection returns, free disk-space check
+    before accepting, background folder creation, and quicker stop and
+    window-close cleanup without extra drain waits.
+  * Accessibility and desktop fixes: Orca announces each transfer step,
+    Enter and Return open focused cards under KDE Plasma, "Open folder"
+    handles "#", "?" and "%" and uses an absolute default path, launching
+    a second Linux package brings the open window forward with a
+    notification, and Settings reflects Cloudflare's request-sample
+    retention.
+  * Security: refuse to dial broadcast or multicast addresses advertised
+    by a peer, and update the url crate to 2.5.9 (RUSTSEC-2026-0592).
+
+ -- TotalDrop <hello@totaldrop.app>  Sat, 28 Nov 2026 17:20:00 +0000
+
 totaldrop (0.3.0~beta.6-1) unstable; urgency=medium
 
   * Send a text instead of files: "Send text" on the Send screen, or

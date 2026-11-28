@@ -3,12 +3,12 @@
 # The Rust toolchain comes from rustup: rust-toolchain.toml pins the newest
 # stable Rust, which distributions do not ship yet.
 
-%global upstream_version 0.3.0-beta.6
+%global upstream_version 0.3.0-beta.7
 %global srcname totaldrop-linux-v%{upstream_version}
 %global debug_package %{nil}
 
 Name:           totaldrop
-Version:        0.3.0~beta.6
+Version:        0.3.0~beta.7
 Release:        1%{?dist}
 Summary:        Send files straight to another device, end-to-end encrypted
 License:        GPL-3.0-or-later AND (MIT OR Apache-2.0)
@@ -95,6 +95,28 @@ cargo test --release --locked -p totaldrop-linux -p totaldrop-proto
 %{_datadir}/nautilus-python/extensions/totaldrop_nautilus.py
 
 %changelog
+* Sat Nov 28 2026 TotalDrop <hello@totaldrop.app> - 0.3.0~beta.7-1
+- Build the RPM package on Fedora 44 (supports Fedora 44 and newer;
+  Fedora 43 reaches end of life in December 2026).
+- Direct IPv6 transfers alongside IPv4 when both devices have IPv6,
+  without exposing hardware-derived IPv6 addresses.
+- Temporary router port mapping (PCP, NAT-PMP, and UPnP) during
+  transfers; Privacy mode asks the router nothing. Stale TotalDrop UPnP
+  rules are cleaned up and mapped ports close promptly on stop or exit.
+- Prevent idle suspend while a transfer is running (via systemd-logind);
+  the screen may still dim and lock.
+- Faster local transfers (socket buffers up to 4 MiB), faster recovery
+  when a direct path returns, free disk-space check before accepting,
+  background folder creation, and quicker stop and window-close cleanup.
+- Accessibility and desktop fixes: Orca announces each transfer step,
+  Enter and Return open focused cards under KDE Plasma, "Open folder"
+  handles "#", "?" and "%" and uses an absolute default folder,
+  launching a second Linux package brings the open window forward with a
+  notification, and Settings reflects Cloudflare's request-sample
+  retention.
+- Security: refuse to dial broadcast or multicast peer addresses, and
+  update the url crate to 2.5.9 (RUSTSEC-2026-0592).
+
 * Sat Nov 07 2026 TotalDrop <hello@totaldrop.app> - 0.3.0~beta.6-1
 - Send a text instead of files, from the app ("Send text", "Send
   clipboard") or the command line; a text that arrives is shown, not
