@@ -9,7 +9,7 @@ use std::pin::Pin;
 use cxx_qt::Threading;
 use cxx_qt_lib::{QString, QStringList};
 
-use crate::instance::{self, Request};
+use crate::instance;
 
 #[cxx_qt::bridge]
 pub mod qobject {
@@ -37,12 +37,15 @@ pub mod qobject {
         type Launcher = super::LauncherRust;
 
         /// This process's command line, as a list of items and
-        /// `--screen=…` (the same list `opened` carries).
+        /// `--screen=…` (the same list `opened` carries). Inside Flatpak,
+        /// launches with local paths return empty here and arrive via
+        /// `opened` once filtered off-thread (#357).
         #[qinvokable]
         #[cxx_name = "startArgs"]
         fn start_args(self: &Launcher) -> QStringList;
 
-        /// A later launch asks for `args`; the window comes to the front.
+        /// A later launch asks for `args` (or first-launch Flatpak local
+        /// paths finish off-thread filtering); the window comes to the front.
         #[qsignal]
         fn opened(self: Pin<&mut Launcher>, args: QStringList);
     }
@@ -62,7 +65,7 @@ fn list(items: Vec<String>) -> QStringList {
 impl qobject::Launcher {
     fn start_args(&self) -> QStringList {
         let cwd = std::env::current_dir().unwrap_or_default();
-        list(Request::from_args(std::env::args_os().skip(1), &cwd).args())
+        list(instance::start_args(std::env::args_os().skip(1), &cwd))
     }
 }
 

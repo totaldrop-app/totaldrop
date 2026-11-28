@@ -1034,6 +1034,12 @@ abstract class AppLocalizations {
   /// **'TotalDrop is already open from the .pkg, .deb or .rpm package, so that window was brought forward. Use one package at a time: quit that window to open this one.'**
   String get otherPackageSystem;
 
+  /// Linux: shown on the Send screen when another launch hands over a path on the computer that the Flatpak window cannot read (#357). Add files is the sendAddFiles button on the same screen, which opens the file chooser; keep Flatpak as it is
+  ///
+  /// In en, this message translates to:
+  /// **'Some items cannot be read from the Flatpak. Choose them with Add files, or close this window and try again.'**
+  String get sendFlatpakUnreadable;
+
   /// Send screen: button and screen title for sending a piece of text instead of files
   ///
   /// In en, this message translates to:

@@ -154,6 +154,7 @@
   "metainfoOnePackage": "Linux'ta aynı anda tek paket kullanın. Flatpak ile .pkg, .deb ya da .rpm paketi aynı adı paylaşır; biri açıkken ötekini başlatmak ikinci bir pencere açmaz, açık pencereyi öne getirir.",
   "otherPackageFlatpak": "TotalDrop zaten Flatpak'ten açık, o pencere öne getirildi. Aynı anda tek paket kullanın: bunu açmak için o pencereden çıkın.",
   "otherPackageSystem": "TotalDrop zaten .pkg, .deb ya da .rpm paketinden açık, o pencere öne getirildi. Aynı anda tek paket kullanın: bunu açmak için o pencereden çıkın.",
+  "sendFlatpakUnreadable": "Bazı öğeler Flatpak'ten okunamıyor. Dosya ekle ile seçin ya da bu pencereyi kapatıp yeniden deneyin.",
   "sendText": "Metin gönder",
   "sendTextHint": "Göndermek istediğiniz metni yazın ya da yapıştırın",
   "sendTextTooLong": "Metin en çok {size} olabilir. Daha uzununu dosya olarak gönderin.",

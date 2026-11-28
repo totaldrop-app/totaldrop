@@ -564,6 +564,10 @@ class AppLocalizationsBn extends AppLocalizations {
       'TotalDrop ইতিমধ্যে .pkg, .deb বা .rpm প্যাকেজ থেকে খোলা আছে, তাই সেই উইন্ডোটি সামনে আনা হয়েছে। একবারে একটি প্যাকেজ ব্যবহার করুন: এটি খুলতে সেই উইন্ডোটি বন্ধ করুন।';
 
   @override
+  String get sendFlatpakUnreadable =>
+      'কিছু আইটেম Flatpak থেকে পড়া যাচ্ছে না। ফাইল যোগ করুন দিয়ে সেগুলো বেছে নিন, অথবা এই উইন্ডোটি বন্ধ করে আবার চেষ্টা করুন।';
+
+  @override
   String get sendText => 'লেখা পাঠান';
 
   @override

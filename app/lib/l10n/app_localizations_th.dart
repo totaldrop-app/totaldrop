@@ -555,6 +555,10 @@ class AppLocalizationsTh extends AppLocalizations {
       'TotalDrop เปิดอยู่แล้วจากแพ็กเกจ .pkg, .deb หรือ .rpm จึงนำหน้าต่างนั้นขึ้นมาด้านหน้า ใช้แพ็กเกจครั้งละหนึ่งแพ็กเกจ: ปิดหน้าต่างนั้นเพื่อเปิดอันนี้';
 
   @override
+  String get sendFlatpakUnreadable =>
+      'อ่านบางรายการจาก Flatpak ไม่ได้ ให้เลือกผ่าน เพิ่มไฟล์ หรือปิดหน้าต่างนี้แล้วลองอีกครั้ง';
+
+  @override
   String get sendText => 'ส่งข้อความ';
 
   @override

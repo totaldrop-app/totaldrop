@@ -539,6 +539,10 @@ class AppLocalizationsKo extends AppLocalizations {
       'TotalDrop이 이미 .pkg, .deb 또는 .rpm 패키지로 열려 있어 그 창을 앞으로 가져왔습니다. 패키지는 한 번에 하나만 사용하세요. 이 패키지를 열려면 그 창을 종료하세요.';
 
   @override
+  String get sendFlatpakUnreadable =>
+      'Flatpak에서는 일부 항목을 읽을 수 없습니다. 파일 추가로 선택하거나 이 창을 닫고 다시 시도하세요.';
+
+  @override
   String get sendText => '텍스트 보내기';
 
   @override

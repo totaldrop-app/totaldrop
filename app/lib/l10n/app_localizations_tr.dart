@@ -562,6 +562,10 @@ class AppLocalizationsTr extends AppLocalizations {
       'TotalDrop zaten .pkg, .deb ya da .rpm paketinden açık, o pencere öne getirildi. Aynı anda tek paket kullanın: bunu açmak için o pencereden çıkın.';
 
   @override
+  String get sendFlatpakUnreadable =>
+      'Bazı öğeler Flatpak\'ten okunamıyor. Dosya ekle ile seçin ya da bu pencereyi kapatıp yeniden deneyin.';
+
+  @override
   String get sendText => 'Metin gönder';
 
   @override

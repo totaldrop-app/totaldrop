@@ -587,6 +587,10 @@ class AppLocalizationsRo extends AppLocalizations {
       'TotalDrop este deja deschis din pachetul .pkg, .deb sau .rpm, așa că acea fereastră a fost adusă în față. Folosiți un singur pachet odată: închideți acea fereastră pentru a-l deschide pe acesta.';
 
   @override
+  String get sendFlatpakUnreadable =>
+      'Unele elemente nu pot fi citite din Flatpak. Alegeți-le cu Adaugă fișiere sau închideți această fereastră și încercați din nou.';
+
+  @override
   String get sendText => 'Trimite text';
 
   @override

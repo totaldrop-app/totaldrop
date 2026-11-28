@@ -42,7 +42,11 @@ list.
 Flatpak does not let an app add itself to other programs' menus; in the
 Flatpak release only "Open with" and drag and drop work.
 `packaging/linux/install.sh` does not install the menu files under the
-`/app` prefix.
+`/app` prefix. When both packages are installed and the Flatpak window is
+already open, a file-manager menu from the distribution package hands its
+paths over to that window (#351); if the Flatpak sandbox cannot read one,
+the Send screen says so and points to "Add files" or closing the window
+(#357).
 
 ## Thunar
 

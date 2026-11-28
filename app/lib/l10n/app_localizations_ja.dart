@@ -539,6 +539,10 @@ class AppLocalizationsJa extends AppLocalizations {
       'TotalDrop はすでに .pkg・.deb・.rpm パッケージ版で開いているため、そのウィンドウを前面に出しました。パッケージは一度に 1 つだけ使ってください。こちらを開くには、そのウィンドウを終了してください。';
 
   @override
+  String get sendFlatpakUnreadable =>
+      '一部の項目は Flatpak 版からは読み取れません。「ファイルを追加」で選ぶか、このウィンドウを閉じてやり直してください。';
+
+  @override
   String get sendText => 'テキストを送信';
 
   @override

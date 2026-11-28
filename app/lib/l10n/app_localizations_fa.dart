@@ -573,6 +573,10 @@ class AppLocalizationsFa extends AppLocalizations {
       'TotalDrop از قبل از بسته .pkg، .deb یا .rpm باز است، پس همان پنجره جلو آورده شد. هر بار فقط از یک بسته استفاده کنید: برای باز کردن این یکی، از آن پنجره خارج شوید.';
 
   @override
+  String get sendFlatpakUnreadable =>
+      'برخی موارد از Flatpak خوانده نمی‌شوند. آن‌ها را با «افزودن فایل» انتخاب کنید، یا این پنجره را ببندید و دوباره امتحان کنید.';
+
+  @override
   String get sendText => 'ارسال متن';
 
   @override

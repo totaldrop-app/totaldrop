@@ -18,14 +18,23 @@ Page {
     readonly property bool running: ["preparing", "waiting", "connected", "transferring"].indexOf(phase) >= 0
     property bool strong: false
     property var initialFiles: []
+    // Opened when a launch handed this Flatpak window paths it cannot read (#357).
+    property bool flatpakUnreadable: false
+    property string fileNotice: ""
+    // Files handed over while a text is being written wait here (capped at
+    // `maxPendingFiles`, matching `instance::MAX_ARGS`) until the text is sent,
+    // cleared, or the person switches back to files (#357).
+    readonly property int maxPendingFiles: 1024
+    property var pendingFiles: []
+    property bool pendingFlatpakUnreadable: false
     // Opened by "Send clipboard": the text on the clipboard, filled in.
     property bool pasteOnOpen: false
     // What is sent: the files listed, or a text the receiver shows (#326).
     property string mode: "files"
     readonly property bool textMode: mode === "text"
-    // Files listed or a text typed and not yet sent: another launch does
-    // not replace them.
-    readonly property bool hasInput: files.count > 0 || textBox.text !== "" || bigText !== ""
+    // Files listed, queued, or a text typed and not yet sent: another launch
+    // does not replace them.
+    readonly property bool hasInput: files.count > 0 || textBox.text !== "" || bigText !== "" || pendingFiles.length > 0
     // A text box holds text in a document that changes it on the way back
     // (a no-break space becomes a space, \r\n becomes \n), and lays out a
     // long line very slowly. A pasted text is therefore kept as it came:
@@ -46,6 +55,7 @@ Page {
     property bool pasteWhenActive: false
     Component.onCompleted: {
         if (initialFiles.length > 0) add(initialFiles)
+        if (flatpakUnreadable) showFlatpakUnreadable()
         if (pasteOnOpen) Qt.callLater(page.pasteClipboard)
     }
     Connections {
@@ -68,6 +78,7 @@ Page {
     // already typed is kept.
     function pasteClipboard() {
         page.mode = "text"
+        page.fileNotice = ""
         page.textNotice = ""
         const w = page.Window.window
         if (w && !w.active) { page.pasteWhenActive = true; return }
@@ -96,12 +107,47 @@ Page {
             textBox.insert(textBox.cursorPosition, t)
         }
     }
-    function clearText() {
+    function clearText(drain) {
         page.bigText = ""
         page.pasted = ""
         textBox.clear()
+        if (drain !== false) Qt.callLater(page.drainPendingFiles)
+    }
+    function drainPendingFiles() {
+        if (page.phase !== "idle") return
+        if (page.pendingFiles.length === 0 && !page.pendingFlatpakUnreadable) return
+        if (page.textMode && (textBox.text !== "" || page.bigText !== "")) return
+        const queued = page.pendingFiles
+        const unreadable = page.pendingFlatpakUnreadable
+        page.pendingFiles = []
+        page.pendingFlatpakUnreadable = false
+        if (queued.length > 0) page.add(queued)
+        if (unreadable) page.showFlatpakUnreadable()
+        else Qt.callLater(() => (files.count > 0 ? createButton : addButton).forceActiveFocus())
+    }
+    function showFlatpakUnreadable() {
+        const msg = Strings.s.sendFlatpakUnreadable || ""
+        if (page.textMode && (textBox.text !== "" || page.bigText !== "")) {
+            page.textNotice = msg
+            page.pendingFlatpakUnreadable = true
+            Qt.callLater(() => textBox.forceActiveFocus())
+            return
+        }
+        if (page.pendingFiles.length > 0) {
+            const queued = page.pendingFiles
+            page.pendingFiles = []
+            page.pendingFlatpakUnreadable = false
+            page.add(queued)
+        } else {
+            page.pendingFlatpakUnreadable = false
+        }
+        page.mode = "files"
+        page.fileNotice = msg
+        Qt.callLater(() => (files.count > 0 ? createButton : addButton).forceActiveFocus())
     }
     function sendIt() {
+        page.fileNotice = ""
+        page.textNotice = ""
         if (page.textMode) page.transfer.sendText(page.outgoing, page.strong)
         else page.transfer.send(page.paths(), page.strong)
     }
@@ -135,9 +181,29 @@ Page {
     ListModel { id: files }
 
     function add(paths) {
+        if (!paths || paths.length === 0) return
+        // Keep a text already typed, and queue up to `maxPendingFiles` paths
+        // (matching `instance::MAX_ARGS`) until the text is sent, cleared, or
+        // the person switches back to files (#357).
+        if (page.textMode && (textBox.text !== "" || page.bigText !== "")) {
+            const queued = page.pendingFiles.slice()
+            for (const p of paths) {
+                if (queued.length >= page.maxPendingFiles) break
+                if (queued.indexOf(p) < 0) queued.push(p)
+            }
+            page.pendingFiles = queued
+            return
+        }
+        const hadPending = page.pendingFiles
+        const hadUnreadable = page.pendingFlatpakUnreadable
+        if (hadPending.length > 0) page.pendingFiles = []
+        if (hadUnreadable) page.pendingFlatpakUnreadable = false
+        const all = hadPending.slice()
+        for (const p of paths) all.push(p)
         // Files asked to be sent show the file list.
-        if (paths.length > 0) page.mode = "files"
-        for (const p of paths) {
+        page.mode = "files"
+        page.fileNotice = hadUnreadable ? (Strings.s.sendFlatpakUnreadable || "") : ""
+        for (const p of all) {
             let known = false
             for (let i = 0; i < files.count; i++) if (files.get(i).path === p) known = true
             if (known) continue
@@ -248,6 +314,18 @@ Page {
                     Layout.maximumWidth: 380
                     Layout.alignment: Qt.AlignHCenter
                 }
+                Label {
+                    visible: page.fileNotice !== ""
+                    text: page.fileNotice
+                    textFormat: Text.PlainText
+                    color: Theme.error
+                    wrapMode: Text.Wrap
+                    horizontalAlignment: Text.AlignHCenter
+                    Layout.fillWidth: true
+                    Layout.maximumWidth: 380
+                    Layout.alignment: Qt.AlignHCenter
+                    Layout.topMargin: Theme.s8
+                }
                 PrimaryButton {
                     id: addButton
                     text: Strings.s.sendAddFiles
@@ -259,7 +337,7 @@ Page {
                 SecondaryButton {
                     text: Strings.s.sendText
                     icon.name: Theme.icon("insert-text")
-                    onClicked: { page.mode = "text"; Qt.callLater(() => textBox.forceActiveFocus()) }
+                    onClicked: { page.fileNotice = ""; page.mode = "text"; Qt.callLater(() => textBox.forceActiveFocus()) }
                     Layout.alignment: Qt.AlignHCenter
                 }
                 Item { Layout.fillHeight: true }
@@ -329,6 +407,14 @@ Page {
                     border.width: 2
                     border.color: Theme.accent
                 }
+            }
+            Label {
+                visible: files.count > 0 && page.fileNotice !== ""
+                text: page.fileNotice
+                textFormat: Text.PlainText
+                color: Theme.error
+                wrapMode: Text.Wrap
+                Layout.fillWidth: true
             }
             Item { visible: files.count > 0; Layout.fillHeight: true }
 
@@ -534,8 +620,11 @@ Page {
             canRetry: page.phase === "failed" || textFailed
             onRetry: page.sendIt()
             onFinished: {
+                const hadPending = page.pendingFiles.length > 0 || page.pendingFlatpakUnreadable
                 page.transfer.reset(); files.clear(); page.recalc()
-                page.clearText(); page.mode = "files"; page.close()
+                page.fileNotice = ""; page.mode = "files"; page.clearText(false)
+                if (hadPending) page.drainPendingFiles()
+                else page.close()
             }
         }
 
@@ -595,11 +684,19 @@ Page {
                     onClicked: { page.clearText(); textBox.forceActiveFocus() }
                 }
                 SecondaryButton {
-                    // Back to files, while nothing is typed.
+                    // Back to files, while nothing is typed. When files were
+                    // already queued from a hand-off, reveal them directly
+                    // instead of covering the populated list with a chooser;
+                    // the "Add files" row under the list stays one click away.
                     visible: textBox.text === ""
                     text: Strings.s.sendAddFiles
                     icon.name: Theme.icon("list-add")
-                    onClicked: { page.mode = "files"; page.transfer.pickFiles(Strings.s.pickTitle) }
+                    onClicked: {
+                        const hadQueued = page.pendingFiles.length > 0
+                        if (hadQueued || page.pendingFlatpakUnreadable) page.drainPendingFiles()
+                        else page.mode = "files"
+                        if (!hadQueued) page.transfer.pickFiles(Strings.s.pickTitle)
+                    }
                 }
                 Item { Layout.fillWidth: true }
                 Label {
@@ -639,7 +736,7 @@ Page {
         id: drop
         anchors.fill: parent
         // Files dropped while nothing is typed go back to the file list.
-        enabled: page.phase === "idle" && (!page.textMode || !page.hasInput)
+        enabled: page.phase === "idle" && (!page.textMode || (textBox.text === "" && page.bigText === ""))
         keys: ["text/uri-list"]
         onDropped: (d) => { if (d.hasUrls) { page.add(page.transfer.localPaths(d.urls)); d.accept(Qt.CopyAction) } }
     }

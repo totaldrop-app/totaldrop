@@ -572,6 +572,10 @@ class AppLocalizationsSw extends AppLocalizations {
       'TotalDrop tayari iko wazi kutoka kifurushi cha .pkg, .deb au .rpm, kwa hivyo dirisha hilo limeletwa mbele. Tumia kifurushi kimoja kwa wakati mmoja: funga dirisha hilo ili kufungua hiki.';
 
   @override
+  String get sendFlatpakUnreadable =>
+      'Baadhi ya vipengee haviwezi kusomwa kutoka Flatpak. Vichague kupitia Ongeza faili, au funga dirisha hili kisha ujaribu tena.';
+
+  @override
   String get sendText => 'Tuma maandishi';
 
   @override

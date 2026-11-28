@@ -24,6 +24,7 @@ pub mod path;
 pub mod portmap;
 pub mod relay;
 pub mod rendezvous;
+pub mod sandbox;
 pub mod secure;
 mod stop;
 pub mod transfer;

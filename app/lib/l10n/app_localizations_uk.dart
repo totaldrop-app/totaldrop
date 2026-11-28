@@ -586,6 +586,10 @@ class AppLocalizationsUk extends AppLocalizations {
       'TotalDrop уже відкрито з пакета .pkg, .deb чи .rpm, тож те вікно виведено на передній план. Використовуйте одночасно лише один пакет: закрийте те вікно, щоб відкрити цей.';
 
   @override
+  String get sendFlatpakUnreadable =>
+      'Деякі елементи не вдається прочитати з Flatpak. Виберіть їх через «Додати файли» або закрийте це вікно й спробуйте ще раз.';
+
+  @override
   String get sendText => 'Надіслати текст';
 
   @override

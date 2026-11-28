@@ -590,6 +590,10 @@ class AppLocalizationsPt extends AppLocalizations {
       'O TotalDrop já está aberto pelo pacote .pkg, .deb ou .rpm, então essa janela foi trazida para a frente. Use um pacote por vez: feche essa janela para abrir este.';
 
   @override
+  String get sendFlatpakUnreadable =>
+      'Alguns itens não podem ser lidos pelo Flatpak. Escolha-os em Adicionar arquivos ou feche esta janela e tente novamente.';
+
+  @override
   String get sendText => 'Enviar texto';
 
   @override
@@ -1283,6 +1287,10 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String get otherPackageSystem =>
       'O TotalDrop já está aberto pelo pacote .pkg, .deb ou .rpm, então essa janela foi trazida para a frente. Use um pacote por vez: feche essa janela para abrir este.';
+
+  @override
+  String get sendFlatpakUnreadable =>
+      'Alguns itens não podem ser lidos pelo Flatpak. Escolha-os em Adicionar arquivos ou feche esta janela e tente novamente.';
 
   @override
   String get sendText => 'Enviar texto';
@@ -1980,6 +1988,10 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
   @override
   String get otherPackageSystem =>
       'O TotalDrop já está aberto a partir do pacote .pkg, .deb ou .rpm, por isso essa janela foi trazida para a frente. Use um pacote de cada vez: feche essa janela para abrir este.';
+
+  @override
+  String get sendFlatpakUnreadable =>
+      'Alguns itens não podem ser lidos a partir do Flatpak. Escolha-os em Adicionar ficheiros ou feche esta janela e tente novamente.';
 
   @override
   String get sendText => 'Enviar texto';

@@ -562,6 +562,10 @@ class AppLocalizationsId extends AppLocalizations {
       'TotalDrop sudah terbuka dari paket .pkg, .deb, atau .rpm, jadi jendela itu dimunculkan. Gunakan satu paket dalam satu waktu: tutup jendela itu untuk membuka yang ini.';
 
   @override
+  String get sendFlatpakUnreadable =>
+      'Beberapa item tidak dapat dibaca dari Flatpak. Pilih lewat Tambahkan file, atau tutup jendela ini lalu coba lagi.';
+
+  @override
   String get sendText => 'Kirim teks';
 
   @override

@@ -530,6 +530,10 @@ class AppLocalizationsZh extends AppLocalizations {
       'TotalDrop 已从 .pkg、.deb 或 .rpm 软件包打开，因此已将该窗口带到前台。请一次只使用一个软件包：要打开这个，请先退出那个窗口。';
 
   @override
+  String get sendFlatpakUnreadable =>
+      '无法从 Flatpak 读取某些项目。请通过“添加文件”选择它们，或关闭此窗口后重试。';
+
+  @override
   String get sendText => '发送文本';
 
   @override
@@ -1156,6 +1160,10 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
       'TotalDrop 已从 .pkg、.deb 或 .rpm 软件包打开，因此已将该窗口带到前台。请一次只使用一个软件包：要打开这个，请先退出那个窗口。';
 
   @override
+  String get sendFlatpakUnreadable =>
+      '无法从 Flatpak 读取某些项目。请通过“添加文件”选择它们，或关闭此窗口后重试。';
+
+  @override
   String get sendText => '发送文本';
 
   @override
@@ -1779,6 +1787,10 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   @override
   String get otherPackageSystem =>
       'TotalDrop 已從 .pkg、.deb 或 .rpm 套件開啟，因此已將該視窗帶到前景。請一次只使用一個套件：要開啟這個，請先結束那個視窗。';
+
+  @override
+  String get sendFlatpakUnreadable =>
+      '無法從 Flatpak 讀取某些項目。請透過「新增檔案」選擇它們，或關閉此視窗後再試一次。';
 
   @override
   String get sendText => '傳送文字';
