@@ -111,5 +111,78 @@
     return want === "en" ? null : address(want, here.rest);
   }
 
-  root.TDLang = { LANGUAGES, REVIEWED, ADDRESSED, negotiate, locate, address, redirect };
+  // Read ?lang=<tag> and saved browser choice (td-lang), saving a valid
+  // ?lang= when storage is writable. Shared with app.js so early redirect
+  // and deferred page setup resolve the choice identically.
+  function readChoice(search, env) {
+    const rawSearch = search || "";
+    let urlParams = null;
+    let rawQueryLang = null;
+    const URLCtor = (env && env.URL) || (typeof URL !== "undefined" ? URL : null);
+    if (URLCtor) {
+      try {
+        urlParams = new URLCtor(rawSearch, "https://totaldrop.app").searchParams;
+        rawQueryLang = urlParams.get("lang");
+      } catch (e) { /* ignore malformed search strings */ }
+    }
+    const queryLang = rawQueryLang && TAGS.includes(rawQueryLang) ? rawQueryLang : null;
+    let storage = null;
+    try { storage = env && env.localStorage ? env.localStorage : null; } catch (e) { storage = null; }
+    let storedLang = null;
+    try { storedLang = storage ? storage.getItem("td-lang") : null; } catch (e) { storedLang = null; }
+    let saved = storedLang && TAGS.includes(storedLang) ? storedLang : null;
+    let keptStorage = saved !== null;
+    if (queryLang) {
+      try {
+        if (storage) {
+          storage.setItem("td-lang", queryLang);
+          keptStorage = true;
+        } else {
+          keptStorage = false;
+        }
+      } catch (e) {
+        keptStorage = false;
+      }
+      if (keptStorage) {
+        saved = queryLang;
+        urlParams.delete("lang");
+      }
+    }
+    const cleanQs = urlParams ? urlParams.toString() : "";
+    const effectiveSearch = queryLang && keptStorage ? (cleanQs ? "?" + cleanQs : "") : rawSearch;
+    const chosen = queryLang || saved;
+    return { queryLang, saved, keptStorage, effectiveSearch, chosen };
+  }
+
+  // First-visit redirect from an English address before <body> is painted
+  // (ADR 0021, #554). Runs when loaded with `data-redirect` in <head>, and
+  // leaves history.replaceState to app.js when staying on the page so
+  // ?lang=en stays visible even when browser storage throws.
+  function earlyRedirect(env) {
+    const win = env || root;
+    const loc = win && win.location;
+    if (!loc || typeof loc.pathname !== "string" || typeof loc.replace !== "function") return null;
+    const nav = win && win.navigator;
+    const prefs = nav && nav.languages && nav.languages.length
+      ? nav.languages
+      : (nav && nav.language ? [nav.language] : []);
+    const { effectiveSearch, chosen } = readChoice(loc.search, win);
+    const to = redirect(loc.pathname, chosen, prefs);
+    if (!to) return null;
+    const target = to + effectiveSearch + (loc.hash || "");
+    loc.replace(target);
+    return target;
+  }
+
+  root.TDLang = { LANGUAGES, REVIEWED, ADDRESSED, negotiate, locate, address, redirect, readChoice, earlyRedirect };
+
+  if (
+    typeof document !== "undefined" &&
+    document &&
+    document.currentScript &&
+    typeof document.currentScript.hasAttribute === "function" &&
+    document.currentScript.hasAttribute("data-redirect")
+  ) {
+    earlyRedirect(root);
+  }
 })(typeof window !== "undefined" ? window : globalThis);
