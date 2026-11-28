@@ -57,79 +57,13 @@ pub fn default_destination(
 /// folder of the person's own that Flatpak was allowed to see is bound in
 /// from outside and carries `master:` or `shared:`, so it is kept. An
 /// unreadable table says nothing, so the folder counts as kept.
-///
-/// Keep in sync with `from_host` and `unescape_mount` in
-/// `linux/src/instance.rs`; both crates test the shared fixture
-/// `crates/totaldrop-cli/tests/flatpak-mountinfo.txt`.
 pub fn kept(mountinfo: &str, dir: &Path) -> bool {
-    // Every mount point that holds `dir` lies on its path, so a later one
-    // covers the earlier ones: the last line that holds `dir` is the mount
-    // the file lands on.
-    let mut memory = None;
-    for line in mountinfo.lines() {
-        // id parent major:minor root mount-point options [optional…] - type source super
-        let mut halves = line.splitn(2, " - ");
-        let (Some(left), Some(right)) = (halves.next(), halves.next()) else {
-            continue;
-        };
-        let mut fields = left.split(' ');
-        let (Some(point), Some(kind)) = (fields.nth(4), right.split(' ').next()) else {
-            continue;
-        };
-        if !dir.starts_with(path_of(&unescape(point))) {
-            continue;
-        }
-        // After the options come the optional fields, such as master:1.
-        let from_outside = fields
-            .skip(1)
-            .any(|f| f.starts_with("master:") || f.starts_with("shared:"));
-        memory = Some(matches!(kind, "tmpfs" | "ramfs") && !from_outside);
-    }
-    memory != Some(true)
+    totaldrop_core::sandbox::from_host(mountinfo, dir)
 }
 
-/// A mount point's bytes as a path. Mount tables exist only where paths
-/// are bytes (Linux); elsewhere `kept` is never asked, as there is no
-/// Flatpak, and the bytes are read as UTF-8.
-#[cfg(unix)]
-fn path_of(bytes: &[u8]) -> PathBuf {
-    use std::os::unix::ffi::OsStrExt as _;
-    PathBuf::from(std::ffi::OsStr::from_bytes(bytes))
-}
-
-#[cfg(not(unix))]
-fn path_of(bytes: &[u8]) -> PathBuf {
-    PathBuf::from(String::from_utf8_lossy(bytes).into_owned())
-}
-
-/// Undoes the octal escapes (`\040` for a space) of a mountinfo field.
-/// Keep in sync with `unescape_mount` in `linux/src/instance.rs`.
+#[cfg(test)]
 fn unescape(field: &str) -> Vec<u8> {
-    let mut out = Vec::with_capacity(field.len());
-    let mut rest = field.as_bytes();
-    while let Some((&b, tail)) = rest.split_first() {
-        if b == b'\\'
-            && let Some((digits, after)) = tail.split_first_chunk::<3>()
-            && let Some(v) = octal(*digits)
-        {
-            out.push(v);
-            rest = after;
-        } else {
-            out.push(b);
-            rest = tail;
-        }
-    }
-    out
-}
-
-/// Three octal digits as one byte, if they are octal and fit in it.
-fn octal(digits: [u8; 3]) -> Option<u8> {
-    if !digits.iter().all(|d| (b'0'..=b'7').contains(d)) {
-        return None;
-    }
-    std::str::from_utf8(&digits)
-        .ok()
-        .and_then(|d| u8::from_str_radix(d, 8).ok())
+    totaldrop_core::sandbox::unescape_mount(field)
 }
 
 #[cfg(test)]
@@ -141,7 +75,7 @@ mod tests {
     /// (`flatpak run --command=cat app.totaldrop.TotalDrop
     /// /proc/self/mountinfo`, 7 Nov 2026), with the user renamed plus a
     /// portal mount and an escaped host tmpfs share. Shared with
-    /// `linux/src/instance.rs` so both mountinfo parsers stay in sync.
+    /// `linux/src/instance.rs` to exercise `totaldrop_core::sandbox::from_host`.
     const FLATPAK: &str = include_str!("../tests/flatpak-mountinfo.txt");
 
     #[test]

@@ -112,6 +112,8 @@ ApplicationWindow {
         const screens = { "--screen=send": sendPage, "--screen=receive": receivePage, "--screen=settings": settingsPage }
         let page = null
         for (const a of args) if (screens[a]) page = screens[a]
+        // A TotalDrop link opens Receive; an unreadable path in the same mixed
+        // launch is not shown there because Receive has no file-drop notice.
         if (code !== "") show(receivePage, { initialCode: code })
         else if (files.length > 0 || unreadable) show(sendPage, { initialFiles: files, flatpakUnreadable: unreadable })
         // "Send clipboard": Send with the clipboard's text filled in (#326).

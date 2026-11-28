@@ -107,11 +107,11 @@ Page {
             textBox.insert(textBox.cursorPosition, t)
         }
     }
-    function clearText() {
+    function clearText(drain) {
         page.bigText = ""
         page.pasted = ""
         textBox.clear()
-        Qt.callLater(page.drainPendingFiles)
+        if (drain !== false) Qt.callLater(page.drainPendingFiles)
     }
     function drainPendingFiles() {
         if (page.phase !== "idle") return
@@ -622,7 +622,7 @@ Page {
             onFinished: {
                 const hadPending = page.pendingFiles.length > 0 || page.pendingFlatpakUnreadable
                 page.transfer.reset(); files.clear(); page.recalc()
-                page.fileNotice = ""; page.mode = "files"; page.clearText()
+                page.fileNotice = ""; page.mode = "files"; page.clearText(false)
                 if (hadPending) page.drainPendingFiles()
                 else page.close()
             }
@@ -684,7 +684,10 @@ Page {
                     onClicked: { page.clearText(); textBox.forceActiveFocus() }
                 }
                 SecondaryButton {
-                    // Back to files, while nothing is typed.
+                    // Back to files, while nothing is typed. When files were
+                    // already queued from a hand-off, reveal them directly
+                    // instead of covering the populated list with a chooser;
+                    // the "Add files" row under the list stays one click away.
                     visible: textBox.text === ""
                     text: Strings.s.sendAddFiles
                     icon.name: Theme.icon("list-add")

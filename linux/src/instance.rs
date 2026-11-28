@@ -22,7 +22,7 @@
 use std::collections::{HashMap, VecDeque};
 use std::ffi::{OsStr, OsString};
 use std::path::Path;
-use std::sync::{Mutex, OnceLock, PoisonError};
+use std::sync::{Arc, Mutex, OnceLock, PoisonError};
 use std::time::Duration;
 
 use zbus::OwnedVariant;
@@ -61,6 +61,7 @@ const QT_VALUE_OPTIONS: [&str; 16] = [
 
 /// Limits on what another process may hand the window: every item is
 /// looked at on the GUI thread.
+/// Keep `MAX_ARGS` in sync with `maxPendingFiles` in `linux/qml/SendPage.qml`.
 const MAX_ARGS: usize = 1024;
 const MAX_ARG_BYTES: usize = 16 * 1024;
 const MAX_CALL_BYTES: usize = 1024 * 1024;
@@ -272,18 +273,23 @@ pub fn listen(deliver: impl Fn(Opened) + Send + 'static) {
     inbox.deliver = Some(Box::new(deliver));
 }
 
-/// One item waiting for the hand-off worker, in arrival order (#357).
+/// One Flatpak path probe waiting for the hand-off worker, in arrival order (#357).
 struct DeliveryJob {
     opened: Opened,
-    /// When `Some`, filter local paths for this package before delivering.
-    filter: Option<Package>,
+    package: Package,
 }
 
 /// One worker thread behind a bounded queue: keeps the D-Bus and GUI
-/// threads off the filesystem while preserving arrival order across all
-/// `Application` calls and capping queued work (#357).
+/// threads off the filesystem while serializing Flatpak path probes and
+/// capping queued work (#357).
+///
+/// Non-probing calls (`filter: None`: `Activate`, `ActivateAction`, and
+/// pathless `Open`) always deliver directly without entering the probe channel,
+/// so a stalled FUSE or NFS mount can never prevent the window from being
+/// raised or trap an activation arriving just after a probe was queued.
 struct DeliveryQueue {
     tx: Mutex<std::sync::mpsc::SyncSender<DeliveryJob>>,
+    deliver: Arc<Mutex<dyn Fn(Opened) + Send>>,
 }
 
 impl DeliveryQueue {
@@ -298,29 +304,52 @@ impl DeliveryQueue {
         deliver: impl Fn(Opened) + Send + 'static,
         filter: impl Fn(Request, Package) -> Request + Send + 'static,
     ) -> Self {
+        let deliver: Arc<Mutex<dyn Fn(Opened) + Send>> = Arc::new(Mutex::new(deliver));
         let (tx, rx) = std::sync::mpsc::sync_channel::<DeliveryJob>(MAX_PENDING);
+        let worker_deliver = Arc::clone(&deliver);
         let worker = move || {
             while let Ok(mut job) = rx.recv() {
-                if let Some(package) = job.filter {
-                    job.opened.request = filter(job.opened.request, package);
-                }
+                job.opened.request = filter(job.opened.request, job.package);
+                let deliver = worker_deliver
+                    .lock()
+                    .unwrap_or_else(PoisonError::into_inner);
                 deliver(job.opened);
             }
         };
         // If the OS refuses a thread, `rx` drops cleanly and `enqueue` returns
-        // `false` without panicking.
+        // `false` for path probes while non-probing calls still deliver directly.
         let _ = std::thread::Builder::new()
             .name("totaldrop-handoff".into())
             .spawn(worker);
-        Self { tx: Mutex::new(tx) }
+        Self {
+            tx: Mutex::new(tx),
+            deliver,
+        }
     }
 
-    /// Enqueue `opened` without blocking the caller. Returns `false` when
-    /// the bounded queue is full (for example while the worker is stuck on
-    /// a stalled mount) or the worker has exited.
+    fn deliver_now(&self, opened: Opened) {
+        let deliver = self.deliver.lock().unwrap_or_else(PoisonError::into_inner);
+        deliver(opened);
+    }
+
+    /// Enqueue `opened` without blocking the caller.
+    ///
+    /// Non-probing calls (`filter: None`) deliver directly so a stalled mount
+    /// can never block window activation. Path-carrying Flatpak probes
+    /// (`filter: Some`) serialize on the bounded worker and return `false`
+    /// (logging a warning) when the queue is full or the worker exited.
     fn enqueue(&self, opened: Opened, filter: Option<Package>) -> bool {
+        let Some(package) = filter else {
+            self.deliver_now(opened);
+            return true;
+        };
         let tx = self.tx.lock().unwrap_or_else(PoisonError::into_inner);
-        tx.try_send(DeliveryJob { opened, filter }).is_ok()
+        if tx.try_send(DeliveryJob { opened, package }).is_ok() {
+            true
+        } else {
+            eprintln!("totaldrop-desktop: hand-off queue full; dropping Flatpak path probe");
+            false
+        }
     }
 }
 
@@ -341,7 +370,9 @@ fn needs_sandbox_filter(package: Package, req: &Request) -> bool {
 /// [`Request::args`] immediately without probing sandbox mounts. Inside Flatpak
 /// with local paths, queues sandbox filtering on the hand-off worker so
 /// the filtered result arrives through [`listen`] instead of probing a
-/// potentially stalled mount on the GUI thread.
+/// potentially stalled mount on the GUI thread. If the worker queue cannot
+/// accept the job, falls back to returning the unfiltered arguments so
+/// first-launch paths are not silently dropped.
 pub fn start_args(args: impl IntoIterator<Item = OsString>, cwd: &Path) -> Vec<String> {
     start_args_with(
         Request::from_args(args, cwd),
@@ -352,14 +383,17 @@ pub fn start_args(args: impl IntoIterator<Item = OsString>, cwd: &Path) -> Vec<S
 
 fn start_args_with(req: Request, package: Package, queue: &DeliveryQueue) -> Vec<String> {
     if needs_sandbox_filter(package, &req) {
-        let _ = queue.enqueue(
+        let fallback = req.args();
+        if queue.enqueue(
             Opened {
                 request: req,
                 token: None,
             },
             Some(package),
-        );
-        return Vec::new();
+        ) {
+            return Vec::new();
+        }
+        return fallback;
     }
     req.args()
 }
@@ -521,64 +555,17 @@ fn readable_in_sandbox(path: &Path, mountinfo: Option<&str>) -> bool {
         return false;
     }
     if let Some(table) = mountinfo {
-        let resolved = std::fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf());
-        if !from_host(table, &resolved) {
+        // `canonicalize` can still fail after `metadata` if a parent folder is
+        // unlinked or loses execute permission concurrently; treat that as
+        // unreadable rather than checking a non-canonical path against mountinfo.
+        let Ok(resolved) = std::fs::canonicalize(path) else {
+            return false;
+        };
+        if !totaldrop_core::sandbox::from_host(table, &resolved) {
             return false;
         }
     }
     true
-}
-
-/// Whether `path` (canonical) sits on a mount other than bubblewrap's own
-/// tmpfs; same rule as `kept` in `crates/totaldrop-cli/src/sandbox.rs`.
-///
-/// Keep in sync with `kept` and `unescape` in
-/// `crates/totaldrop-cli/src/sandbox.rs`; both crates test the shared
-/// fixture `crates/totaldrop-cli/tests/flatpak-mountinfo.txt`.
-fn from_host(mountinfo: &str, path: &Path) -> bool {
-    use std::os::unix::ffi::OsStrExt as _;
-    let mut sandbox_memory = None;
-    for line in mountinfo.lines() {
-        let mut halves = line.splitn(2, " - ");
-        let (Some(left), Some(right)) = (halves.next(), halves.next()) else {
-            continue;
-        };
-        let mut fields = left.split(' ');
-        let (Some(point), Some(kind)) = (fields.nth(4), right.split(' ').next()) else {
-            continue;
-        };
-        let bytes = unescape_mount(point);
-        if !path.starts_with(Path::new(std::ffi::OsStr::from_bytes(&bytes))) {
-            continue;
-        }
-        let shared = fields
-            .skip(1)
-            .any(|f| f.starts_with("master:") || f.starts_with("shared:"));
-        sandbox_memory = Some(matches!(kind, "tmpfs" | "ramfs") && !shared);
-    }
-    sandbox_memory != Some(true)
-}
-
-/// Undo `\040`-style octal escapes in a `mountinfo` mount point.
-/// Keep in sync with `unescape` in `crates/totaldrop-cli/src/sandbox.rs`.
-fn unescape_mount(field: &str) -> Vec<u8> {
-    let mut out = Vec::with_capacity(field.len());
-    let mut rest = field.as_bytes();
-    while let Some((&b, tail)) = rest.split_first() {
-        if b == b'\\'
-            && let Some((digits, after)) = tail.split_first_chunk::<3>()
-            && digits.iter().all(|d| (b'0'..=b'7').contains(d))
-            && let Ok(s) = std::str::from_utf8(digits)
-            && let Ok(v) = u8::from_str_radix(s, 8)
-        {
-            out.push(v);
-            rest = after;
-        } else {
-            out.push(b);
-            rest = tail;
-        }
-    }
-    out
 }
 
 /// `app.totaldrop.TotalDrop.Instance`: what a later launch may ask the
@@ -1346,34 +1333,53 @@ mod tests {
 
     /// Folders bubblewrap synthesizes on its own tmpfs (`~`, `~/Downloads`)
     /// exist inside the sandbox as empty stubs, not the host's folders:
-    /// `from_host` rejects them while keeping host-bound and portal mounts.
+    /// `totaldrop_core::sandbox::from_host` rejects them while keeping
+    /// host-bound and portal mounts.
     /// Uses the shared fixture with `crates/totaldrop-cli/src/sandbox.rs`.
     #[test]
     fn flatpak_tmpfs_folders_are_flagged_as_unreadable() {
         const FLATPAK: &str =
             include_str!("../../crates/totaldrop-cli/tests/flatpak-mountinfo.txt");
-        assert!(!from_host(FLATPAK, Path::new("/home/ada")));
-        assert!(!from_host(FLATPAK, Path::new("/home/ada/Downloads")));
-        assert!(!from_host(
+        assert!(!totaldrop_core::sandbox::from_host(
+            FLATPAK,
+            Path::new("/home/ada")
+        ));
+        assert!(!totaldrop_core::sandbox::from_host(
+            FLATPAK,
+            Path::new("/home/ada/Downloads")
+        ));
+        assert!(!totaldrop_core::sandbox::from_host(
             FLATPAK,
             Path::new("/home/ada/Downloads/TotalDropX")
         ));
-        assert!(!from_host(FLATPAK, Path::new("/dev/shm/x")));
-        assert!(from_host(
+        assert!(!totaldrop_core::sandbox::from_host(
+            FLATPAK,
+            Path::new("/dev/shm/x")
+        ));
+        assert!(totaldrop_core::sandbox::from_host(
             FLATPAK,
             Path::new("/home/ada/Downloads/TotalDrop/a.pdf")
         ));
-        assert!(from_host(
+        assert!(totaldrop_core::sandbox::from_host(
             FLATPAK,
             Path::new("/home/ada/.var/app/app.totaldrop.TotalDrop/data")
         ));
-        assert!(from_host(FLATPAK, Path::new("/tmp/x")));
-        assert!(from_host(FLATPAK, Path::new("/run/user/1000/x")));
-        assert!(from_host(
+        assert!(totaldrop_core::sandbox::from_host(
+            FLATPAK,
+            Path::new("/tmp/x")
+        ));
+        assert!(totaldrop_core::sandbox::from_host(
+            FLATPAK,
+            Path::new("/run/user/1000/x")
+        ));
+        assert!(totaldrop_core::sandbox::from_host(
             FLATPAK,
             Path::new("/run/user/1000/doc/9f8e7d/photo.jpg")
         ));
-        assert!(from_host(FLATPAK, Path::new("/home/ada/My Share/file.txt")));
+        assert!(totaldrop_core::sandbox::from_host(
+            FLATPAK,
+            Path::new("/home/ada/My Share/file.txt")
+        ));
 
         let d = tmp();
         let canon = std::fs::canonicalize(&d).unwrap();
@@ -1434,11 +1440,12 @@ mod tests {
         );
     }
 
-    /// Every `Application` call flows through the single hand-off worker, so
-    /// a non-path `Open` or `ActivateAction` arriving while a Flatpak path
-    /// probe is still running cannot overtake it (#357).
+    /// Path-carrying Flatpak probes serialize in arrival order on the worker,
+    /// while non-probing calls (`Activate`, `ActivateAction`, pathless `Open`)
+    /// bypass an in-flight probe so a stalled mount cannot wedge window raise
+    /// (#357).
     #[test]
-    fn delivery_queue_preserves_order_across_slow_filter() {
+    fn delivery_queue_serializes_probes_and_unblocks_non_probe_calls() {
         let (delivered_tx, delivered_rx) = std::sync::mpsc::channel();
         let (entered_tx, entered_rx) = std::sync::mpsc::channel();
         let (release_tx, release_rx) = std::sync::mpsc::channel();
@@ -1457,7 +1464,7 @@ mod tests {
             },
         );
 
-        let first = Opened {
+        let first_probe = Opened {
             request: Request {
                 items: vec!["/slow".into()],
                 screen: None,
@@ -1465,51 +1472,65 @@ mod tests {
             },
             token: Some("t1".into()),
         };
-        let second = Opened {
+        let second_probe = Opened {
             request: Request {
-                items: vec!["totaldrop:7-a-b".into()],
+                items: vec!["/fast.pdf".into()],
                 screen: None,
                 unreadable_in_flatpak: false,
             },
             token: Some("t2".into()),
         };
-        let third = Opened {
+        let activate = Opened {
+            request: Request::default(),
+            token: Some("t-raise".into()),
+        };
+        let settings = Opened {
             request: Request {
                 items: Vec::new(),
                 screen: Some("settings".into()),
                 unreadable_in_flatpak: false,
             },
-            token: Some("t3".into()),
+            token: Some("t-settings".into()),
         };
 
-        assert!(queue.enqueue(first, Some(Package::Flatpak)));
+        assert!(queue.enqueue(first_probe, Some(Package::Flatpak)));
         entered_rx
             .recv_timeout(Duration::from_secs(2))
             .expect("worker enters slow filter");
-        assert!(queue.enqueue(second.clone(), None));
-        assert!(queue.enqueue(third.clone(), None));
-        assert!(
-            delivered_rx.try_recv().is_err(),
-            "later calls must wait behind the earlier path probe"
-        );
+        assert!(queue.enqueue(second_probe.clone(), Some(Package::Flatpak)));
+        // Second path probe waits behind the first.
+        assert!(delivered_rx.try_recv().is_err());
 
+        // Non-probing calls bypass the stalled probe immediately.
+        assert!(queue.enqueue(activate.clone(), None));
+        assert!(queue.enqueue(settings.clone(), None));
+        assert_eq!(
+            delivered_rx.recv_timeout(Duration::from_secs(2)).unwrap(),
+            activate
+        );
+        assert_eq!(
+            delivered_rx.recv_timeout(Duration::from_secs(2)).unwrap(),
+            settings
+        );
+        assert!(delivered_rx.try_recv().is_err());
+
+        // Once the stalled probe finishes, the two path probes drain in order.
         release_tx.send(()).unwrap();
         let got1 = delivered_rx.recv_timeout(Duration::from_secs(2)).unwrap();
         let got2 = delivered_rx.recv_timeout(Duration::from_secs(2)).unwrap();
-        let got3 = delivered_rx.recv_timeout(Duration::from_secs(2)).unwrap();
-
         assert!(got1.request.items.is_empty());
         assert!(got1.request.unreadable_in_flatpak);
         assert_eq!(got1.token.as_deref(), Some("t1"));
-        assert_eq!(got2, second);
-        assert_eq!(got3, third);
+        assert_eq!(got2, second_probe);
     }
 
-    /// When a stalled mount blocks the worker, `enqueue` caps pending work at
-    /// `MAX_PENDING` and returns immediately rather than spawning unbounded
-    /// threads or blocking the D-Bus handler (#357).
+    /// When a stalled mount blocks the worker, `enqueue` caps pending path
+    /// probes at `MAX_PENDING` without blocking or spawning unbounded threads,
+    /// while non-probing calls still deliver immediately and `start_args_with`
+    /// falls back to the unfiltered arguments instead of dropping first-launch
+    /// paths (#357).
     #[test]
-    fn delivery_queue_bounds_pending_work_without_blocking() {
+    fn delivery_queue_bounds_pending_probes_and_start_args_falls_back() {
         let (delivered_tx, delivered_rx) = std::sync::mpsc::channel();
         let (entered_tx, entered_rx) = std::sync::mpsc::channel();
         let (release_tx, release_rx) = std::sync::mpsc::channel();
@@ -1518,8 +1539,10 @@ mod tests {
                 let _ = delivered_tx.send(o);
             },
             move |req, _| {
-                let _ = entered_tx.send(());
-                let _ = release_rx.recv();
+                if req.items.iter().any(|i| i == "/stalled") {
+                    let _ = entered_tx.send(());
+                    let _ = release_rx.recv();
+                }
                 req
             },
         );
@@ -1540,32 +1563,57 @@ mod tests {
         for i in 0..MAX_PENDING {
             let job = Opened {
                 request: Request {
-                    items: vec![format!("totaldrop:7-{i}-a")],
+                    items: vec![format!("/queued-{i}.pdf")],
                     screen: None,
                     unreadable_in_flatpak: false,
                 },
                 token: None,
             };
-            assert!(queue.enqueue(job, None), "slot {i} fits in bounded queue");
+            assert!(
+                queue.enqueue(job, Some(Package::Flatpak)),
+                "slot {i} fits in bounded probe queue"
+            );
         }
         let overflow = Opened {
             request: Request {
-                items: vec!["totaldrop:7-overflow-a".into()],
+                items: vec!["/overflow.pdf".into()],
                 screen: None,
                 unreadable_in_flatpak: false,
             },
             token: None,
         };
         assert!(
-            !queue.enqueue(overflow, None),
-            "queue drops overflow without blocking once full"
+            !queue.enqueue(overflow, Some(Package::Flatpak)),
+            "probe queue drops overflow without blocking once full"
+        );
+
+        // Even with the probe queue completely full, Activate still delivers.
+        let raise = Opened {
+            request: Request::default(),
+            token: Some("raise".into()),
+        };
+        assert!(queue.enqueue(raise.clone(), None));
+        assert_eq!(
+            delivered_rx.recv_timeout(Duration::from_secs(2)).unwrap(),
+            raise
+        );
+
+        // And start_args_with falls back to unfiltered args when enqueue rejects.
+        let first_launch = Request {
+            items: vec!["/first-launch.pdf".into()],
+            screen: Some("send".into()),
+            unreadable_in_flatpak: false,
+        };
+        assert_eq!(
+            start_args_with(first_launch, Package::Flatpak, &queue),
+            ["/first-launch.pdf", "--screen=send"]
         );
 
         release_tx.send(()).unwrap();
         for _ in 0..=MAX_PENDING {
             delivered_rx
                 .recv_timeout(Duration::from_secs(2))
-                .expect("queued items drain once worker unblocks");
+                .expect("queued probes drain once worker unblocks");
         }
         assert!(delivered_rx.try_recv().is_err());
     }
