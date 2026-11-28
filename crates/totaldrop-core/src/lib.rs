@@ -165,6 +165,11 @@ pub struct PathOptions {
     /// Router to ask for a forwarded port (PCP or NAT-PMP) while the
     /// transfer runs; never asked in privacy mode (#406).
     pub gateway: portmap::Gateway,
+    /// Optional signal from the operating system (`ConnectivityManager`,
+    /// NetworkManager) that the active network changed, moving a direct
+    /// connection onto the relay without waiting out [`path::FALLBACK_SILENCE`]
+    /// (decision 0018, step 3).
+    pub network_change: Option<path::NetworkChange>,
 }
 
 impl Default for PathOptions {
@@ -174,6 +179,7 @@ impl Default for PathOptions {
             stun: relay::DEFAULT_STUN.into(),
             relay_only: false,
             gateway: portmap::Gateway::Auto,
+            network_change: None,
         }
     }
 }
@@ -370,6 +376,7 @@ fn standby(
     link: Option<relay::Link>,
     fallback: &path::Fallback,
     shared: bool,
+    network_change: Option<path::NetworkChange>,
 ) -> Standby {
     let gate = paths.relay.clone();
     match (
@@ -377,10 +384,24 @@ fn standby(
         link,
         gate,
     ) {
-        (Keep::Link, Some(link), _) => Standby::Link { _link: link },
+        (Keep::Link, Some(link), _) => {
+            if let Some(change) = &network_change {
+                link.reconnect_on(change);
+            }
+            Standby::Link { _link: link }
+        }
         (Keep::Fallback, Some(link), Some(gate)) => {
             link.park(fallback);
-            let watch = path::Watch::spawn(fallback, conn.clone(), gate, path::FALLBACK_SILENCE);
+            if let Some(change) = &network_change {
+                link.reconnect_on(change);
+            }
+            let watch = path::Watch::spawn_with(
+                fallback,
+                conn.clone(),
+                gate,
+                path::FALLBACK_SILENCE,
+                network_change,
+            );
             Standby::Fallback {
                 _link: link,
                 _watch: watch,
@@ -490,6 +511,15 @@ impl PreparedSend {
         )
     }
 
+    /// Update the router gateway used when [`PreparedSend::run`] or
+    /// [`PreparedSend::run_with`] starts, in case the active network changed
+    /// while files were being scanned (#406). Ignored in privacy mode.
+    pub fn set_gateway(&mut self, gateway: portmap::Gateway) {
+        if !self.paths.relay_only {
+            self.paths.gateway = gateway;
+        }
+    }
+
     /// Wait for the receiver and send.
     pub async fn run(self, events: Events) -> Result<SendReport> {
         self.run_with(events, Stop::new()).await
@@ -530,7 +560,14 @@ impl PreparedSend {
                 transport::sender_connection(&endpoint, &paths, ACCEPT_TIMEOUT).await?;
             // The receiver meets us on the relay only if it is also its own.
             let shared = shares_relay(&paired.hints, &self.paths);
-            let _link = standby(&conn, &paths, link, &fallback, shared);
+            let _link = standby(
+                &conn,
+                &paths,
+                link,
+                &fallback,
+                shared,
+                self.paths.network_change.clone(),
+            );
             let chan = secure::handshake_on(
                 send,
                 recv,
@@ -695,7 +732,14 @@ impl IncomingOffer {
         );
         let conn = transport::receiver_connection(&endpoint, &paths, CONNECT_TIMEOUT).await?;
         // `relay` is set only when it is the sender's relay too.
-        let link = standby(&conn, &paths, link, &fallback, relay.is_some());
+        let link = standby(
+            &conn,
+            &paths,
+            link,
+            &fallback,
+            relay.is_some(),
+            opts.paths.network_change.clone(),
+        );
         let mut chan = secure::handshake(
             &conn,
             secure::HandshakeInput {

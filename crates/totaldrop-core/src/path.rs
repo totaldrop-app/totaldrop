@@ -315,20 +315,78 @@ impl Fallback {
         gate: crate::relay::Gate,
         silence: Duration,
     ) {
+        self.watch_with(conn, gate, silence, None).await;
+    }
+
+    /// Like [`Fallback::watch`], also moving onto the relay at once when
+    /// `network_change` signals that the system's active network changed
+    /// (decision 0018, step 3). Should the direct path still carry packets,
+    /// the next datagram heard after `LATE` brings the connection back.
+    pub async fn watch_with(
+        &self,
+        conn: quinn::Connection,
+        gate: crate::relay::Gate,
+        silence: Duration,
+        network_change: Option<NetworkChange>,
+    ) {
+        let changes = network_change.as_ref().map(NetworkChange::subscribe);
+        self.watch_subscribed(conn, gate, silence, changes).await;
+    }
+
+    async fn watch_subscribed(
+        &self,
+        conn: quinn::Connection,
+        gate: crate::relay::Gate,
+        silence: Duration,
+        mut changes: Option<tokio::sync::watch::Receiver<u64>>,
+    ) {
         let silence = u64::try_from(silence.as_millis()).unwrap_or(u64::MAX);
         let mut tick = tokio::time::interval(WATCH_TICK);
         tick.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);
         let mut last = self.now();
         loop {
-            tick.tick().await;
+            let changed = async {
+                match changes.as_mut() {
+                    Some(rx) => rx.changed().await.is_ok(),
+                    None => std::future::pending().await,
+                }
+            };
+            let network_changed = tokio::select! {
+                biased;
+                _ = tick.tick() => false,
+                ok = changed => {
+                    if !ok {
+                        changes = None;
+                        continue;
+                    }
+                    true
+                }
+            };
             if conn.close_reason().is_some() {
                 return;
             }
             let now = self.now();
+            let remote = conn.remote_address();
+            if network_changed {
+                if !is_relay(remote) && !self.0.relay.is_closed() {
+                    if !self.moved() {
+                        if self.direct() != Some(remote)
+                            && let Ok(mut d) = self.0.direct.write()
+                        {
+                            *d = Some(remote);
+                        }
+                        self.move_now(now);
+                        gate.open();
+                    } else {
+                        self.0.moved_at.store(now, Ordering::Release);
+                    }
+                }
+                continue;
+            }
             let seen = Seen {
                 now,
                 last_tick: last,
-                remote: conn.remote_address(),
+                remote,
                 direct: self.direct(),
                 heard: self.0.heard.load(Ordering::Acquire),
                 moved: self.moved(),
@@ -361,6 +419,37 @@ impl Fallback {
                 }
             }
         }
+    }
+}
+
+/// Tells [`Fallback::watch_with`] that the system's active network changed
+/// (decision 0018, step 3), so a direct connection moves onto the relay at
+/// once instead of waiting out [`FALLBACK_SILENCE`]. Cloning shares the
+/// signal.
+#[derive(Debug, Clone)]
+pub struct NetworkChange(tokio::sync::watch::Sender<u64>);
+
+impl Default for NetworkChange {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl NetworkChange {
+    /// Create an unnotified signal.
+    pub fn new() -> Self {
+        Self(tokio::sync::watch::channel(0).0)
+    }
+
+    /// Signal that the active network changed.
+    pub fn notify(&self) {
+        self.0.send_modify(|n| *n = n.wrapping_add(1));
+    }
+
+    pub(crate) fn subscribe(&self) -> tokio::sync::watch::Receiver<u64> {
+        let mut rx = self.0.subscribe();
+        rx.mark_unchanged();
+        rx
     }
 }
 
@@ -453,9 +542,26 @@ impl Watch {
         gate: crate::relay::Gate,
         silence: Duration,
     ) -> Self {
+        Self::spawn_with(fallback, conn, gate, silence, None)
+    }
+
+    /// Run `fallback.watch_with(conn, gate, silence, network_change)` in the
+    /// background.
+    pub fn spawn_with(
+        fallback: &Fallback,
+        conn: quinn::Connection,
+        gate: crate::relay::Gate,
+        silence: Duration,
+        network_change: Option<NetworkChange>,
+    ) -> Self {
         let fallback = fallback.clone();
+        // Subscribe before spawning so a `notify()` called immediately after
+        // `spawn_with` returns is never missed.
+        let changes = network_change.as_ref().map(NetworkChange::subscribe);
         Self(tokio::spawn(async move {
-            fallback.watch(conn, gate, silence).await;
+            fallback
+                .watch_subscribed(conn, gate, silence, changes)
+                .await;
         }))
     }
 }

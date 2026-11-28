@@ -337,10 +337,11 @@ pub struct Link {
     park: Arc<Park>,
 }
 
-/// What [`Link::park`] tells the link's task.
+/// What [`Link::park`] and [`Link::reconnect_on`] tell the link's task.
 #[derive(Debug, Default)]
 struct Park {
     fallback: std::sync::OnceLock<Fallback>,
+    network_change: std::sync::Mutex<Option<tokio::sync::watch::Receiver<u64>>>,
     notify: tokio::sync::Notify,
 }
 
@@ -349,6 +350,10 @@ impl Park {
     /// parked for a direct connection that is on its direct path.
     fn carries(&self) -> bool {
         self.fallback.get().is_none_or(Fallback::moved)
+    }
+
+    fn take_network_change(&self) -> Option<tokio::sync::watch::Receiver<u64>> {
+        self.network_change.lock().ok().and_then(|mut g| g.take())
     }
 }
 
@@ -360,6 +365,21 @@ impl Link {
     /// are dropped. Calling it again does nothing.
     pub fn park(&self, fallback: &Fallback) {
         if self.park.fallback.set(fallback.clone()).is_ok() {
+            self.park.notify.notify_one();
+        }
+    }
+
+    /// Reconnect to the relay at once when `change` signals that the
+    /// system's active network changed (#32, decision 0018): a WebSocket
+    /// bound to the old route stalls silently until [`SILENCE`], whereas a
+    /// fresh sign-in with the same key replaces it immediately (#190).
+    pub fn reconnect_on(&self, change: &crate::path::NetworkChange) {
+        let rx = change.subscribe();
+        if let Ok(mut slot) = self.park.network_change.lock()
+            && slot.is_none()
+        {
+            *slot = Some(rx);
+            drop(slot);
             self.park.notify.notify_one();
         }
     }
@@ -392,6 +412,16 @@ pub fn spawn(
     spawn_with(url, own, peer, pipes, gate, LIMITS)
 }
 
+async fn network_changed(rx: &mut Option<tokio::sync::watch::Receiver<u64>>) {
+    if let Some(r) = rx.as_mut()
+        && r.changed().await.is_ok()
+    {
+        return;
+    }
+    *rx = None;
+    std::future::pending().await
+}
+
 fn spawn_with(
     url: String,
     own: Arc<EndpointKey>,
@@ -405,6 +435,7 @@ fn spawn_with(
     let task = tokio::spawn(async move {
         let park = parked;
         gate.opened().await;
+        let mut changes = park.take_network_change();
         if park.fallback.get().is_some() {
             // The gate opened because a parked link's connection moved:
             // what waited behind it belongs to the race that connection
@@ -413,6 +444,12 @@ fn spawn_with(
             // the connection's address. A datagram the connection queued
             // in the meantime may go too; QUIC sends it again.
             while pipes.outgoing.try_recv().is_ok() {}
+            // If `Fallback` opened the gate on a network change, consume
+            // that signal so the first connection on the new route is not
+            // dropped for it.
+            if let Some(rx) = changes.as_mut() {
+                rx.mark_unchanged();
+            }
         }
         if check_url(&url).is_err() {
             return;
@@ -422,11 +459,15 @@ fn spawn_with(
         };
         let mut sent = 0u64;
         let mut refused = 0u32;
+        let mut resets = 0u32;
         let mut pause = RETRY_FIRST;
         loop {
             let started = tokio::time::Instant::now();
             if started >= end || sent >= limits.bytes || refused >= limits.refused {
                 return;
+            }
+            if changes.is_none() {
+                changes = park.take_network_change();
             }
             // A parked link waits for a datagram that has to go through the
             // relay before it connects.
@@ -441,7 +482,15 @@ fn spawn_with(
                 })
                 .await;
                 match wanted {
-                    Ok(Some(d)) => Some(d),
+                    Ok(Some(d)) => {
+                        if changes.is_none() {
+                            changes = park.take_network_change();
+                        }
+                        if let Some(rx) = changes.as_mut() {
+                            rx.mark_unchanged();
+                        }
+                        Some(d)
+                    }
                     _ => return,
                 }
             } else {
@@ -462,6 +511,7 @@ fn spawn_with(
                         keepalive: limits.keepalive,
                         first,
                         park: &park,
+                        changes: &mut changes,
                     },
                 ),
             )
@@ -469,6 +519,18 @@ fn spawn_with(
             match ended {
                 // The endpoint is gone, or the time is up.
                 Ok(Ok(Ended::Outgoing)) | Err(_) => return,
+                Ok(Ok(Ended::NetworkChanged)) => {
+                    pause = RETRY_FIRST;
+                    if signed_in {
+                        refused = 0;
+                        continue;
+                    }
+                    if resets < limits.refused {
+                        resets = resets.saturating_add(1);
+                        refused = 0;
+                        continue;
+                    }
+                }
                 Ok(Ok(Ended::Relay) | Err(_)) => {}
             }
             refused = if signed_in {
@@ -479,8 +541,21 @@ fn spawn_with(
             if started.elapsed() >= RETRY_RESET {
                 pause = RETRY_FIRST;
             }
-            tokio::time::sleep(pause).await;
-            pause = pause.saturating_mul(2).min(RETRY_MAX);
+            if changes.is_none() {
+                changes = park.take_network_change();
+            }
+            tokio::select! {
+                () = tokio::time::sleep(pause) => {
+                    pause = pause.saturating_mul(2).min(RETRY_MAX);
+                }
+                () = network_changed(&mut changes) => {
+                    if resets < limits.refused {
+                        resets = resets.saturating_add(1);
+                        refused = 0;
+                    }
+                    pause = RETRY_FIRST;
+                }
+            }
         }
     });
     Link { task, park }
@@ -492,6 +567,8 @@ enum Ended {
     Outgoing,
     /// The relay closed the connection.
     Relay,
+    /// The system's active network changed; reconnect over the new route.
+    NetworkChanged,
 }
 
 /// The state one connection to the relay works with.
@@ -506,6 +583,7 @@ struct Conn<'a> {
     /// A datagram to send as soon as the connection is up.
     first: Option<Vec<u8>>,
     park: &'a Park,
+    changes: &'a mut Option<tokio::sync::watch::Receiver<u64>>,
 }
 
 /// Close `ws`, waiting at most `wait`: a relay that stopped reading never
@@ -540,6 +618,7 @@ async fn run(url: &str, own: &EndpointKey, peer: [u8; 32], c: Conn<'_>) -> Resul
         keepalive,
         first,
         park,
+        changes,
     } = c;
     // Both sides meet under the name of their two keys.
     let url = format!(
@@ -547,7 +626,7 @@ async fn run(url: &str, own: &EndpointKey, peer: [u8; 32], c: Conn<'_>) -> Resul
         url.trim_end_matches('/'),
         wire::pair_name(&own.public(), &peer)
     );
-    let mut ws = tokio::time::timeout(CONNECT_WAIT, async {
+    let dial = tokio::time::timeout(CONNECT_WAIT, async {
         let mut ws = crate::rendezvous::open_ws(&url, wire::MAX_MESSAGE).await?;
         let challenge = match ws.next().await {
             Some(Ok(Message::Binary(b))) => wire::parse_challenge(&b),
@@ -564,9 +643,11 @@ async fn run(url: &str, own: &EndpointKey, peer: [u8; 32], c: Conn<'_>) -> Resul
             Some(Ok(Message::Binary(b))) if wire::is_ok(&b) => Ok(ws),
             _ => Err(Error::Connect("relay refused the endpoint key".into())),
         }
-    })
-    .await
-    .map_err(|_| Error::Connect("relay: timed out".into()))??;
+    });
+    let mut ws = tokio::select! {
+        res = dial => res.map_err(|_| Error::Connect("relay: timed out".into()))??,
+        () = network_changed(changes) => return Ok(Ended::NetworkChanged),
+    };
     *signed_in = true;
     if let Some(d) = first {
         let message = wire::frame(&peer, &d);
@@ -670,6 +751,14 @@ async fn run(url: &str, own: &EndpointKey, peer: [u8; 32], c: Conn<'_>) -> Resul
                     close(&mut ws, silence).await;
                     return Ok(Ended::Relay);
                 }
+                if changes.is_none() {
+                    *changes = park.take_network_change();
+                }
+            }
+            () = network_changed(changes) => {
+                // Drop the socket on the old route without waiting for a
+                // close handshake that cannot cross a dead interface (#32).
+                return Ok(Ended::NetworkChanged);
             }
             _ = idle.tick(), if park.fallback.get().is_some() => {
                 if !park.carries() && last_out.elapsed() >= PARKED_IDLE {
@@ -1473,5 +1562,70 @@ mod tests {
         }
         let after = tokio::time::timeout(Duration::from_secs(4), relay.accept()).await;
         assert!(after.is_err(), "the link kept trying a relay that refuses");
+    }
+
+    /// #32: an open relay link whose underlying network changes drops the
+    /// stalled socket and signs in again at once instead of waiting out
+    /// `SILENCE`, including when `reconnect_on` was set after the initial
+    /// sign-in (as `standby` does when the relay won the path race).
+    #[tokio::test]
+    async fn link_reconnects_at_once_when_the_network_changes() {
+        let relay = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let url = format!("ws://{}/v0/relay", relay.local_addr().unwrap());
+        let (own, peer) = (
+            Arc::new(EndpointKey::generate().unwrap()),
+            EndpointKey::generate().unwrap(),
+        );
+        let (_out, pipes) = pipes();
+        let gate = Gate::default();
+        gate.open();
+        let link = spawn_with(url, own, peer.public(), pipes, gate, LIMITS);
+        let _old_ws = sign_in(&relay).await;
+        let change = crate::path::NetworkChange::new();
+        link.reconnect_on(&change);
+        change.notify();
+        let _new_ws = tokio::time::timeout(Duration::from_secs(2), sign_in(&relay))
+            .await
+            .expect("the link did not reconnect at once on network change");
+    }
+
+    /// #32 review: when `gate` opened earlier (e.g. after `RELAY_DELAY` when a
+    /// direct path won) and `NetworkChange::notify()` wakes the parked link,
+    /// the fresh WebSocket opened on the new network is kept instead of being
+    /// torn down by the same notification.
+    #[tokio::test]
+    async fn parked_link_keeps_its_new_connection_on_network_change() {
+        let relay = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let url = format!("ws://{}/v0/relay", relay.local_addr().unwrap());
+        let (own, peer) = (
+            Arc::new(EndpointKey::generate().unwrap()),
+            EndpointKey::generate().unwrap(),
+        );
+        let (out, pipes) = pipes();
+        let gate = Gate::default();
+        gate.open();
+        let link = spawn_with(url, own, peer.public(), pipes, gate, LIMITS);
+        let first_ws = sign_in(&relay).await;
+        let fallback = Fallback::new(tokio::sync::mpsc::channel(1).0);
+        let change = crate::path::NetworkChange::new();
+        link.park(&fallback);
+        link.reconnect_on(&change);
+        drop(first_ws);
+        // Let the parked link enter its `pipes.outgoing.recv()` wait with
+        // `changes` already populated.
+        tokio::time::sleep(Duration::from_millis(100)).await;
+
+        fallback.set_moved(true);
+        change.notify();
+        out.send(vec![7; 64]).await.unwrap();
+
+        let _fresh_ws = tokio::time::timeout(Duration::from_secs(2), sign_in(&relay))
+            .await
+            .expect("the parked link did not connect on network change");
+        let extra = tokio::time::timeout(Duration::from_millis(400), relay.accept()).await;
+        assert!(
+            extra.is_err(),
+            "the parked link dropped its fresh connection for the same network change"
+        );
     }
 }

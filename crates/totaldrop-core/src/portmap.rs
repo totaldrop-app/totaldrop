@@ -77,11 +77,16 @@ pub enum Gateway {
     /// Ask no one.
     Off,
     /// This address, for tests and for a platform that knows its gateway
-    /// and may pass it in (Android could; it does not yet).
+    /// and passes it in (as Android does from `LinkProperties`, #406).
     At(SocketAddr),
 }
 
 impl Gateway {
+    /// Ask `ip` at the standard PCP / NAT-PMP port (`5351`).
+    pub fn at_ip(ip: Ipv4Addr) -> Self {
+        Self::At(SocketAddr::from((ip, wire::SERVER_PORT)))
+    }
+
     fn address(&self) -> Option<SocketAddr> {
         match self {
             Self::Auto => default_gateway().map(|ip| SocketAddr::from((ip, wire::SERVER_PORT))),
@@ -1223,8 +1228,8 @@ fn public(ip: IpAddr) -> bool {
 /// The gateway of the default IPv4 route.
 #[cfg(target_os = "linux")]
 fn default_gateway() -> Option<Ipv4Addr> {
-    // Android does not let apps read this file; it may pass the gateway
-    // in as `Gateway::At` (not wired up yet, so Android asks no one).
+    // Android does not let apps read this file; it passes the active
+    // network's gateway in as `Gateway::At` (#406).
     std::fs::read_to_string("/proc/net/route")
         .ok()
         .and_then(|t| gateway_in_route_table(&t))
@@ -1936,6 +1941,7 @@ mod tests {
             stun: String::new(),
             relay_only: false,
             gateway: gw,
+            ..crate::PathOptions::default()
         };
         let (h, mapping) = crate::own_hints(&socket, &key, &paths).await.unwrap();
         let external = SocketAddr::from((PUBLIC, OPENED));
@@ -1973,6 +1979,7 @@ mod tests {
             stun: String::new(),
             relay_only: false,
             gateway: gw,
+            ..crate::PathOptions::default()
         };
         let started = std::time::Instant::now();
         let (_, mapping) = crate::own_hints(&socket, &key, &paths).await.unwrap();
