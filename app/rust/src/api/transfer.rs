@@ -151,11 +151,11 @@ impl From<totaldrop_core::Error> for TransferError {
             E::Stopped => ErrorKind::Stopped,
             E::Code(_) => ErrorKind::InvalidCode,
             E::Rendezvous(_) if e.is_bad_server_address() => ErrorKind::BadServer,
-            E::Rendezvous(_) => ErrorKind::Server,
+            E::Rendezvous(_) | E::RendezvousTimeout => ErrorKind::Server,
             E::Connect(_) => ErrorKind::Connect,
             E::InvalidOffer(_) => ErrorKind::InvalidOffer,
             E::Io(_) => ErrorKind::Storage,
-            _ => ErrorKind::Other,
+            E::Protocol(_) | E::Random => ErrorKind::Other,
         };
         Self {
             kind,
@@ -687,6 +687,15 @@ mod tests {
         assert_eq!(TransferError::from(E::Io(full)).cause, "DiskFull");
         let e = TransferError::on_connect(E::Rendezvous("unknown nameplate".into()));
         assert_eq!((e.kind, e.cause.as_str()), (ErrorKind::CodeNotInUse, ""));
+        for e in [
+            TransferError::from(E::RendezvousTimeout),
+            TransferError::on_connect(E::RendezvousTimeout),
+            TransferError::on_send(E::RendezvousTimeout),
+        ] {
+            assert_eq!(e.kind, ErrorKind::Server);
+            assert_eq!(e.cause, "TimedOut");
+            assert_eq!(e.detail, "rendezvous server: timed out");
+        }
     }
 
     #[test]

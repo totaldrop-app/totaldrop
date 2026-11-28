@@ -40,6 +40,7 @@ use tokio::sync::{Mutex, Semaphore, mpsc};
 use tokio_tungstenite::tungstenite::Message;
 use tokio_tungstenite::tungstenite::handshake::server::{ErrorResponse, Request, Response};
 use tokio_tungstenite::tungstenite::protocol::WebSocketConfig;
+use totaldrop_proto::limits::RENDEZVOUS_IO_TIMEOUT;
 use totaldrop_proto::wire::{ClientMessage, MAX_MAILBOX_BODY, Mood, ServerMessage};
 
 /// Limits and timings. The defaults are the protocol's; tests shorten them.
@@ -113,8 +114,6 @@ const MAX_PENDING_BYTES: usize = 32 * 1024;
 /// How long a freed nameplate rests before it is handed out again, so a
 /// late receiver with an old code does not walk into a stranger's mailbox.
 const COOLDOWN: Duration = Duration::from_secs(10 * 60);
-/// How long the WebSocket handshake and each write may take.
-const IO_TIMEOUT: Duration = Duration::from_secs(10);
 /// How long a refused connection is kept open for the client to close it.
 /// The client sends its first message right after the handshake; closing
 /// the socket with it unread resets the connection, and Windows then drops
@@ -388,7 +387,7 @@ impl Server {
             refuse_browsers(req, resp)
         };
         let accepted = tokio::time::timeout(
-            IO_TIMEOUT,
+            RENDEZVOUS_IO_TIMEOUT,
             tokio_tungstenite::accept_hdr_async_with_config(stream, callback, Some(ws_config)),
         )
         .await;
@@ -417,7 +416,7 @@ impl Server {
             let refusal = ServerMessage::Error {
                 reason: TOO_MANY.into(),
             };
-            let _ = tokio::time::timeout(IO_TIMEOUT, async {
+            let _ = tokio::time::timeout(RENDEZVOUS_IO_TIMEOUT, async {
                 let _ = ws.send(Message::Binary(refusal.encode().into())).await;
                 let _ = ws.close(None).await;
             })
@@ -446,7 +445,7 @@ impl Server {
             while let Some(msg) = inbox.recv().await {
                 let fatal = matches!(msg, ServerMessage::Error { .. });
                 let sent = tokio::time::timeout(
-                    IO_TIMEOUT,
+                    RENDEZVOUS_IO_TIMEOUT,
                     sink.send(Message::Binary(msg.encode().into())),
                 )
                 .await;
@@ -454,7 +453,7 @@ impl Server {
                     break;
                 }
             }
-            let _ = tokio::time::timeout(IO_TIMEOUT, sink.close()).await;
+            let _ = tokio::time::timeout(RENDEZVOUS_IO_TIMEOUT, sink.close()).await;
         });
 
         let mut held: Held = None;

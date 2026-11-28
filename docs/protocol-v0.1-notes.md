@@ -39,8 +39,10 @@ treated as final.
      and `error` (key 1 = reason), after which the server closes the
      connection.
    - Clients ping every 20 seconds while they wait, so idle connections are
-     not dropped. A connection must allocate or claim within 10 seconds of
-     opening; pings do not extend that.
+     not dropped; every client write, the keep-alive ping included, waits at
+     most 10 seconds so a server that stopped reading does not hold a waiting
+     client in a full send buffer (#459). A connection must allocate or claim
+     within 10 seconds of opening; pings do not extend that.
 5. **Claiming.**
    - The first claim of a nameplate must carry its allocator token. Only
      the sender has it, so anyone else claiming an empty nameplate is
